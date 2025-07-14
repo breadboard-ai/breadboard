@@ -78,32 +78,6 @@ class Files {
     return headers;
   }
 
-  #multipartRequest(
-    parts: Array<{ contentType: string; data: object | string }>
-  ) {
-    const boundary = globalThis.crypto.randomUUID();
-    const headers = this.#makeHeaders();
-    headers.set("Content-Type", `multipart/related; boundary=${boundary}`);
-    const body =
-      `--${boundary}\n` +
-      [
-        ...parts.map((part) => {
-          const data =
-            typeof part.data === "string"
-              ? part.data
-              : JSON.stringify(part.data, null, 2);
-
-          return `Content-Type: ${part.contentType}\n\n${data}\n`;
-        }),
-        "",
-      ].join(`\n--${boundary}`) +
-      `--`;
-    return {
-      headers,
-      body,
-    };
-  }
-
   makeChangeListRequest(startPageToken: string | null): Request {
     const url = this.#makeUrl(
       "drive/v3/changes?" +
