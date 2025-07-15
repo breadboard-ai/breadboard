@@ -7,7 +7,7 @@
 import fetch, { type FetchInputs } from "@fetch";
 import secrets from "@secrets";
 
-import { err, ok } from "./a2/utils";
+import { err, ok } from "../a2/utils";
 
 export {
   connect,

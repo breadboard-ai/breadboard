@@ -2,8 +2,8 @@
  * @fileoverview Helps create a system instruction.
  */
 
-import { llm } from "./a2/utils";
-import { listPrompt } from "./a2/lists";
+import { llm } from "../a2/utils";
+import { listPrompt } from "../a2/lists";
 
 export { createSystemInstruction, defaultSystemInstruction };
 

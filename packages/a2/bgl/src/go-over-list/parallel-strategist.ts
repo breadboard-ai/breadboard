@@ -2,8 +2,8 @@
  * @fileoverview Executes a parallel strategy.
  */
 
-import { report } from "./a2/output";
-import { ok } from "./a2/utils";
+import { report } from "../a2/output";
+import { ok } from "../a2/utils";
 import { plannerPrompt, getPlan } from "./planner-prompt";
 import { type Strategist, type Plan, type ExecuteStepFunction } from "./types";
 

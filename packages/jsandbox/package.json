@@ -7,7 +7,8 @@
     ".": "./dist/src/index.js",
     "./sandbox.wasm": "./sandbox.wasm",
     "./web": "./dist/src/web-exports.js",
-    "./node": "./dist/src/node-exports.js"
+    "./node": "./dist/src/node-exports.js",
+    "./environment.d.ts": "./src/environment.d.ts"
   },
   "types": "dist/src/index.d.ts",
   "type": "module",
@@ -107,7 +108,8 @@
   },
   "files": [
     "dist/src",
-    "sandbox.wasm"
+    "sandbox.wasm",
+    "src/environment.d.ts"
   ],
   "keywords": [],
   "author": "Google Labs Team",

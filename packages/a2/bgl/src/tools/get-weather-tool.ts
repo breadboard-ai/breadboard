@@ -5,9 +5,9 @@ import fetch from "@fetch";
 
 export { invoke as default, describe };
 
-import { ok, err } from "./a2/utils";
-import { executeTool } from "./a2/step-executor";
-import { toLLMContent } from "./a2/utils";
+import { ok, err } from "../a2/utils";
+import { executeTool } from "../a2/step-executor";
+import { toLLMContent } from "../a2/utils";
 
 const USE_METEO = false;
 

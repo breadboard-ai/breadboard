@@ -12,7 +12,8 @@
     "build": {
       "dependencies": [
         "<dependencies>#<this>",
-        "build:tsc"
+        "build:tsc",
+        "copy-environment"
       ]
     },
     "typescript-files-and-deps": {
@@ -21,18 +22,48 @@
       ],
       "files": [
         "src/**/*.ts",
-        "bgl/**/*.json",
-        "tsconfig.json",
+        "tsconfig-assemble.json",
         "../../core/tsconfig/base.json"
       ]
     },
-    "build:tsc": {
-      "command": "tsc -b --pretty",
+    "build:bgls": {
+      "command": "tsx scripts/build-bgls.ts",
+      "dependencies": [
+        "build:modules"
+      ],
+      "files": [
+        "bgl/src/**/bgl.json",
+        "scripts/build-bgls.ts"
+      ]
+    },
+    "build:modules": {
+      "command": "tsc -p tsconfig-modules.json --pretty",
       "env": {
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "typescript-files-and-deps"
+        "<dependencies>#build:tsc"
+      ],
+      "files": [
+        "bgl/src/**/*.ts",
+        "bgl/src/**/*.js",
+        "tsconfig-modules.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "dist/bgl/src",
+        "!dist/bgl/src/**/*.min.js{,.map}"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "build:tsc": {
+      "command": "tsc -p tsconfig-assemble.json --pretty",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "typescript-files-and-deps",
+        "build:bgls"
       ],
       "files": [],
       "output": [
@@ -40,6 +71,16 @@
         "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
+    },
+    "copy-environment": {
+      "command": "tsx scripts/copy-environment.ts",
+      "files": [],
+      "dependencies": [
+        "../jsandbox#build:tsc"
+      ],
+      "output": [
+        "bgl/src/environment.d.ts"
+      ]
     }
   },
   "repository": {
@@ -55,6 +96,7 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
+    "@breadboard-ai/jsandbox": "^0.7.0",
     "@google-cloud/firestore": "^7.11.0",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.35.0",

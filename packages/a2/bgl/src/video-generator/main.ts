@@ -6,7 +6,7 @@ import gemini, {
   defaultSafetySettings,
   type GeminiOutputs,
   type GeminiInputs,
-} from "./a2/gemini";
+} from "../a2/gemini";
 import {
   err,
   ok,
@@ -23,19 +23,19 @@ import {
   extractMediaData,
   extractTextData,
   defaultLLMContent,
-} from "./a2/utils";
-import { Template } from "./a2/template";
-import { ToolManager } from "./a2/tool-manager";
-import { type Params } from "./a2/common";
-import { type DescriberResult } from "./a2/common";
-import { ArgumentNameGenerator } from "./a2/introducer";
-import { ListExpander } from "./a2/lists";
+} from "../a2/utils";
+import { Template } from "../a2/template";
+import { ToolManager } from "../a2/tool-manager";
+import { type Params } from "../a2/common";
+import { type DescriberResult } from "../a2/common";
+import { ArgumentNameGenerator } from "../a2/introducer";
+import { ListExpander } from "../a2/lists";
 
 import {
   type ContentMap,
   type ExecuteStepRequest,
   executeStep,
-} from "./a2/step-executor";
+} from "../a2/step-executor";
 
 type Model = {
   id: string;

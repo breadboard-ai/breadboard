@@ -2,11 +2,11 @@
  * @fileoverview Plumbing that handles organizing/summarizing content at the end.
  */
 
-import { defaultSafetySettings } from "./a2/gemini";
-import { llm, ok } from "./a2/utils";
-import { GeminiPrompt } from "./a2/gemini-prompt";
+import { defaultSafetySettings } from "../a2/gemini";
+import { llm, ok } from "../a2/utils";
+import { GeminiPrompt } from "../a2/gemini-prompt";
 import { type Invokable } from "./types";
-import { listPrompt, listSchema, toList } from "./a2/lists";
+import { listPrompt, listSchema, toList } from "../a2/lists";
 import { defaultSystemInstruction } from "./system-instruction";
 
 export { organizerPrompt };

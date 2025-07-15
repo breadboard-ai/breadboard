@@ -4,7 +4,7 @@
 
 export { invoke as default, describe };
 
-import { ok, err, mergeTextParts } from "./a2/utils";
+import { ok, err, mergeTextParts } from "../a2/utils";
 
 import write from "@write";
 import read from "@read";
@@ -36,7 +36,7 @@ async function invoke({
   id,
   method,
   context,
-  info,
+  info: _info,
   "folio-mode": mode,
 }: Inputs): Promise<Outcome<Outputs>> {
   if (!context || context.length === 0) {

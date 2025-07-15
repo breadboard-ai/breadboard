@@ -7,7 +7,7 @@ import type {
   RichToken,
   ListToken,
 } from "./types";
-import { toText, mergeTextParts } from "./a2/utils";
+import { toText, mergeTextParts } from "../a2/utils";
 import transformBlob from "@blob";
 
 export { contextToRequests, markdownToContext, DOC_MIME_TYPE };
@@ -290,8 +290,8 @@ class TextStyles {
   parse() {
     let current = this.#offset;
     let text = "";
-    for (let token of this.#tokens) {
-      let tokenText = unescape("text" in token ? token.text : "");
+    for (const token of this.#tokens) {
+      const tokenText = unescape("text" in token ? token.text : "");
       const length = tokenText.length;
       text += tokenText;
       switch (token.type) {

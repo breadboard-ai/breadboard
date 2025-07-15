@@ -2,9 +2,9 @@
  * @fileoverview Joins user input and Agent Context
  */
 
-import { type AgentContext } from "./a2/common";
-import { isEmpty } from "./a2/utils";
-import { addContent } from "./a2/lists";
+import { type AgentContext } from "../a2/common";
+import { isEmpty } from "../a2/utils";
+import { addContent } from "../a2/lists";
 
 export { invoke as default, describe };
 

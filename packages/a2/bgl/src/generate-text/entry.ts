@@ -2,11 +2,11 @@
  * @fileoverview Manages the entry point: describer, passing the inputs, etc.
  */
 
-import { type Params } from "./a2/common";
+import { type Params } from "../a2/common";
 import type { SharedContext } from "./types";
-import { ok, toLLMContent, defaultLLMContent } from "./a2/utils";
-import { Template } from "./a2/template";
-import { readSettings } from "./a2/settings";
+import { ok, toLLMContent, defaultLLMContent } from "../a2/utils";
+import { Template } from "../a2/template";
+import { readSettings } from "../a2/settings";
 import { defaultSystemInstruction } from "./system-instruction";
 
 export { invoke as default, describe };

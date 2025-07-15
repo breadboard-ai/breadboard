@@ -1,18 +1,18 @@
 /**
  * @fileoverview Recursively search the web for in-depth answers to your query.
  */
-import { ToolManager, type ToolDescriptor } from "./a2/tool-manager";
-import { Template } from "./a2/template";
+import { ToolManager, type ToolDescriptor } from "../a2/tool-manager";
+import { Template } from "../a2/template";
 import invokeGraph from "@invoke";
 import invokeGemini, {
   type GeminiInputs,
   type Tool,
   defaultSafetySettings,
-} from "./a2/gemini";
-import { ok, err, llm, toLLMContent, toText, addUserTurn } from "./a2/utils";
-import { report } from "./a2/output";
-import { type Params } from "./a2/common";
-import { ArgumentNameGenerator } from "./a2/introducer";
+} from "../a2/gemini";
+import { ok, err, llm, toLLMContent, toText, addUserTurn } from "../a2/utils";
+import { report } from "../a2/output";
+import { type Params } from "../a2/common";
+import { ArgumentNameGenerator } from "../a2/introducer";
 
 export { invoke as default, describe };
 
@@ -104,7 +104,7 @@ A report must additionally contain references to the source (always cite your so
 }
 
 function reportWriterPrompt(
-  query: LLMContent,
+  _query: LLMContent,
   research: string[]
 ): GeminiInputs {
   return {

@@ -13,20 +13,20 @@ import {
 } from "./chat-tools";
 import { createSystemInstruction } from "./system-instruction";
 
-import { report } from "./a2/output";
-import { err, ok, defaultLLMContent, llm } from "./a2/utils";
-import { Template } from "./a2/template";
-import { ArgumentNameGenerator } from "./a2/introducer";
-import { ToolManager, type ToolHandle } from "./a2/tool-manager";
-import { ListExpander, listPrompt, toList, listSchema } from "./a2/lists";
+import { report } from "../a2/output";
+import { err, ok, defaultLLMContent, llm } from "../a2/utils";
+import { Template } from "../a2/template";
+import { ArgumentNameGenerator } from "../a2/introducer";
+import { ToolManager, type ToolHandle } from "../a2/tool-manager";
+import { ListExpander, listPrompt, toList, listSchema } from "../a2/lists";
 
 import {
   defaultSafetySettings,
   type GeminiInputs,
   type GeminiSchema,
   type Tool,
-} from "./a2/gemini";
-import { GeminiPrompt, type GeminiPromptOutput } from "./a2/gemini-prompt";
+} from "../a2/gemini";
+import { GeminiPrompt, type GeminiPromptOutput } from "../a2/gemini-prompt";
 
 export { invoke as default, describe };
 

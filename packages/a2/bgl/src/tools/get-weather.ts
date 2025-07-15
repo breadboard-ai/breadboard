@@ -2,12 +2,12 @@
  * @fileoverview Searches weather information on Google Search.
  */
 
-import { ok, err, toLLMContent, toText, defaultLLMContent } from "./a2/utils";
+import { ok, err, toLLMContent, toText, defaultLLMContent } from "../a2/utils";
 import getWeather, {
   describe as getWeatherDescriber,
   type WeatherInputs,
 } from "./get-weather-tool";
-import { Template } from "./a2/template";
+import { Template } from "../a2/template";
 
 export { invoke as default, describe };
 

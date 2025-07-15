@@ -2,7 +2,7 @@
  * @fileoverview Connector Load Export
  */
 import { type DescribeOutputs } from "@describe";
-import { toText, ok, err, llm } from "./a2/utils";
+import { toText, ok, err, llm } from "../a2/utils";
 import { contextToRequests, markdownToContext, DOC_MIME_TYPE } from "./docs";
 import { connect, query, exp } from "./api";
 import type { ConnectorConfiguration } from "./types";

@@ -3,8 +3,8 @@
  */
 
 import { type Strategist, type Plan, type ExecuteStepFunction } from "./types";
-import { ok, toLLMContent } from "./a2/utils";
-import { report } from "./a2/output";
+import { ok, toLLMContent } from "../a2/utils";
+import { report } from "../a2/output";
 import { organizerPrompt } from "./organizer-prompt";
 
 import {

@@ -2,10 +2,10 @@
  * @fileoverview Given a query, searches the Web with Google Search.
  */
 
-import gemini, { type GeminiInputs } from "./a2/gemini";
-import { Template } from "./a2/template";
-import { ToolManager } from "./a2/tool-manager";
-import { GeminiPrompt } from "./a2/gemini-prompt";
+import gemini, { type GeminiInputs } from "../a2/gemini";
+import { Template } from "../a2/template";
+import { ToolManager } from "../a2/tool-manager";
+import { GeminiPrompt } from "../a2/gemini-prompt";
 import {
   ok,
   err,
@@ -14,8 +14,8 @@ import {
   toLLMContent,
   addUserTurn,
   defaultLLMContent,
-} from "./a2/utils";
-import { ListExpander } from "./a2/lists";
+} from "../a2/utils";
+import { ListExpander } from "../a2/lists";
 import toolSearchWeb, {
   type SearchWebOutputs,
   describe as toolSearchWebDescribe,

@@ -7,15 +7,15 @@ import read from "@read";
 import write from "@write";
 import query from "@query";
 
-import { ok, err } from "./a2/utils";
+import { ok, err } from "../a2/utils";
 
 export { McpClient };
 
 export type InitializeResponse = {
   capabilities: {
-    resources?: {};
-    tools?: {};
-    prompts?: {};
+    resources?: JsonSerializable;
+    tools?: JsonSerializable;
+    prompts?: JsonSerializable;
   };
   protocolVersion: string;
   serverInfo: {
@@ -91,7 +91,7 @@ function sse<T extends JsonSerializable>(result: FileSystemReadResult) {
 
 function rpc<M extends MCPResponse>(
   result: FileSystemReadResult,
-  status: number
+  _status: number
 ) {
   const e = sse<JsonRpcResponse<M>>(result);
   if (!ok(e)) return e;

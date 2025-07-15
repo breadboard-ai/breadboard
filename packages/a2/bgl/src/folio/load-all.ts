@@ -2,7 +2,7 @@
  * @fileoverview Loads all of the folio into current context.
  */
 import read from "@read";
-import { ok } from "./a2/utils";
+import { ok } from "../a2/utils";
 
 export { invoke as default, describe };
 

@@ -1,8 +1,8 @@
 /**
  * @fileoverview Saves outputs using a provided connector.
  */
-import { Template } from "./a2/template";
-import { ok } from "./a2/utils";
+import { Template } from "../a2/template";
+import { ok } from "../a2/utils";
 
 export { invoke as default, describe };
 

@@ -195,7 +195,7 @@ class ListExpander {
     this.expand();
     const isList = this.#list.length > 1;
     const results = await Promise.all(
-      this.#list.map(async (item, index) => {
+      this.#list.map(async (item, _index) => {
         return transformer(
           item.instruction,
           [...item.prolog, ...item.context],
@@ -241,7 +241,7 @@ async function fanOutContext(
   instruction: LLMContent,
   context: LLMContent[] | undefined,
   transformer: ContentTransformer,
-  path?: number[]
+  _path?: number[]
 ): Promise<Outcome<LLMContent[]>> {
   context ??= [];
   const expander = new ListExpander(instruction, context);
@@ -276,7 +276,7 @@ function zipContexts(
   const result: LLMContent[] = [];
   for (let i = 0; i < maxLength; i++) {
     let role: string | undefined;
-    let zippedParts = [];
+    const zippedParts = [];
     for (const context of contexts) {
       const item = context.at(i);
       if (!item) continue;
@@ -300,7 +300,7 @@ function zipContexts(
 
 function flattenContent(
   content: LLMContent,
-  all = false,
+  _all = false,
   separatator = ""
 ): LLMContent[] {
   let hadList = false;

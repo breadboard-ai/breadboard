@@ -2,9 +2,9 @@
  * @fileoverview Contains the planner prompt for the conversational think as I go.
  */
 
-import { type GeminiSchema, defaultSafetySettings } from "./a2/gemini";
-import { GeminiPrompt } from "./a2/gemini-prompt";
-import { llm, err } from "./a2/utils";
+import { type GeminiSchema, defaultSafetySettings } from "../a2/gemini";
+import { GeminiPrompt } from "../a2/gemini-prompt";
+import { llm, err } from "../a2/utils";
 import { type Plan } from "./types";
 
 export { plannerPrompt, thinkingPlannerPrompt, getPlan };
@@ -90,7 +90,7 @@ function thinkingPlannerPrompt(
   context: LLMContent[],
   objective: LLMContent,
   plan: Plan,
-  steps: string[],
+  _steps: string[],
   extraPlannerPrompt: string
 ): GeminiPrompt {
   const instruction = llm`
@@ -170,7 +170,7 @@ ${extraPlannerPrompt}
 `.asContent();
 
   const contents = [instruction];
-  let prompt = new GeminiPrompt({
+  const prompt = new GeminiPrompt({
     body: {
       contents,
       safetySettings: defaultSafetySettings(),
@@ -198,7 +198,7 @@ Extra instructions:
 ${extraPlannerPrompt}
 `.asContent();
   const contents = [...context, instruction, epilogue];
-  let prompt = new GeminiPrompt({
+  const prompt = new GeminiPrompt({
     body: {
       contents,
       safetySettings: defaultSafetySettings(),

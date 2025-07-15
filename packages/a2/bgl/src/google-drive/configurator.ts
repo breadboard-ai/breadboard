@@ -2,8 +2,8 @@
  * @fileoverview Add a description for your module here.
  */
 
-import { err, ok } from "./a2/utils";
-import { createConfigurator } from "./a2/connector-manager";
+import { err, ok } from "../a2/utils";
+import { createConfigurator } from "../a2/connector-manager";
 import type { ConnectorConfiguration } from "./types";
 
 export { invoke as default, describe };
@@ -18,7 +18,7 @@ const { invoke, describe } = createConfigurator<
   initialize: async () => {
     return { title: "Untitled Drive File", configuration: {} };
   },
-  read: async ({ id, configuration }) => {
+  read: async ({ id: _id, configuration }) => {
     return {
       schema: {
         type: "object",

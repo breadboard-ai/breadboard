@@ -5,8 +5,8 @@
 import toolSearchHotels, {
   describe as toolSearchHotelsDescribe,
 } from "./tool-search-hotels";
-import { Template } from "./a2/template";
-import { err, ok, toText, toLLMContent, defaultLLMContent } from "./a2/utils";
+import { Template } from "../a2/template";
+import { err, ok, toText, toLLMContent, defaultLLMContent } from "../a2/utils";
 export { invoke as default, describe };
 
 type Inputs =

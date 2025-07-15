@@ -57,6 +57,15 @@ declare module "@fetch" {
      * with a redirect status.
      */
     redirect?: "follow" | "error" | "manual";
+    /**
+     * The FileSystem path to save the response to
+     */
+    file?: FileSystemPath;
+    /**
+     * If provided, saves the response as a stream file.
+     * Only valid when "file" is supplied as well.
+     */
+    stream?: "sse" | "text" | "json";
   };
 
   export type FetchOutputs = {
@@ -118,6 +127,17 @@ declare module "@invoke" {
   export default function invoke(inputs: InvokeInputs): Promise<InvokeOutputs>;
 }
 
+declare module "@input" {
+  export type InputInputs = {
+    $metadata?: NodeMetadata;
+    schema?: Schema;
+  } & Record<string, unknown>;
+
+  export type InputOutputs = Record<string, unknown>;
+
+  export default function input(inputs: InputInputs): Promise<InputOutputs>;
+}
+
 declare module "@output" {
   export type OutputInputs = {
     $metadata?: NodeMetadata;
@@ -144,9 +164,11 @@ declare module "@blob" {
 }
 
 declare module "@describe" {
+  export type InputValues = Record<string, unknown>;
+
   export type DescribeInputs = {
     url: string;
-    inputs?: Record<string, JsonSerializable>;
+    inputs?: InputValues;
     inputSchema?: Schema;
     outputSchema?: Schema;
   };
@@ -364,16 +386,20 @@ declare type BehaviorSchema =
    */
   | "hint-controller"
   /**
+   * In combination with "config", Indicates that this port is part of the
+   * advanced configuration.
+   */
+  | "hint-advanced"
+  /**
    * Hints that the node is in a chat mode: it interacts with the user
    * as part of its invocation
    */
   | "hint-chat-mode"
   /**
-   * In combination with "config", Indicates that this port is part of the
-   * advanced configuration.
+   * Hints that the node input is not a traditional LLM prompt, rather some other
+   * kind of textual input.
    */
-  | "hint-advanced"
-
+  | "hint-no-prompt"
   /**
    * Hints that the text is short (e.g. a query) and needs a single line treatment.
    */
@@ -455,6 +481,15 @@ declare type BehaviorSchema =
    */
   | "reactive";
 
+declare type SchemaEnumValue =
+  | string
+  | {
+      id: string;
+      title?: string;
+      description?: string;
+      icon?: string;
+    };
+
 declare type Schema = {
   title?: string;
   description?: string;
@@ -474,7 +509,7 @@ declare type Schema = {
    */
   icon?: string;
   transient?: boolean;
-  enum?: string[];
+  enum?: SchemaEnumValue[];
   /**
    * The default value of the schema. The UI can use this to pre-populate a
    * field with a value, if there is no "examples" present.

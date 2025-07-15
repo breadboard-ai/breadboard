@@ -4,8 +4,8 @@
 
 import { type Strategist, type Plan, type ExecuteStepFunction } from "./types";
 import { plannerPrompt, getPlan } from "./planner-prompt";
-import { toLLMContent, ok } from "./a2/utils";
-import { report } from "./a2/output";
+import { toLLMContent, ok } from "../a2/utils";
+import { report } from "../a2/output";
 
 export { SequentialStrategist };
 
