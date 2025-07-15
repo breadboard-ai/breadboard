@@ -87,7 +87,7 @@ const MODES: Mode[] = [
     title: "Deep Research with Gemini 2.5 Flash",
     description: "In-depth research on your topic",
     icon: "spark",
-    modelName: "gemini-2.5-flash-preview-04-17",
+    modelName: "gemini-2.5-flash",
     promptPlaceholderText:
       "Type your research query here. Use @ to include other content.",
   },
