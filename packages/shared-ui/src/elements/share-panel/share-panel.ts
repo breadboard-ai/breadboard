@@ -206,7 +206,7 @@ export class SharePanel extends LitElement {
           var(--bb-font-family);
         text-align: right;
         color: var(--bb-notify-500);
-        max-width: 350px;
+        max-width: 360px;
         align-self: flex-end;
         margin-top: var(--bb-grid-size-3);
         > a,
