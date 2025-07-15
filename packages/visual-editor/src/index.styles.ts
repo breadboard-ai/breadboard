@@ -15,7 +15,7 @@ export const styles = [
     }
 
     :host {
-      --header-height: var(--bb-grid-size-14);
+      --header-height: 0;
       flex: 1 0 auto;
       display: flex;
     }
@@ -23,11 +23,26 @@ export const styles = [
     #container {
       display: grid;
       flex: 1 0 auto;
-      grid-template-rows: var(--header-height) auto;
+      grid-template-rows: auto;
     }
 
     bb-ve-header {
       z-index: 1;
+      display: none;
+    }
+
+    @media (min-width: 600px) {
+      :host {
+        --header-height: var(--bb-grid-size-14);
+      }
+
+      #container {
+        grid-template-rows: var(--header-height) auto;
+      }
+
+      bb-ve-header {
+        display: block;
+      }
     }
 
     bb-toast {
