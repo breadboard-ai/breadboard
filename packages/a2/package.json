@@ -22,7 +22,7 @@
       ],
       "files": [
         "src/**/*.ts",
-        "tsconfig.json",
+        "tsconfig-assemble.json",
         "../../core/tsconfig/base.json"
       ]
     },
