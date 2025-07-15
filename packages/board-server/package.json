@@ -154,7 +154,7 @@
     "@google-labs/breadboard": "^0.35.0",
     "@google-labs/core-kit": "^0.19.1",
     "@types/express": "^5.0.1",
-    "better-sqlite3": "^11.9.1",
+    "better-sqlite3": "^12.2.0",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "lit": "^3.3.0",
