@@ -2,36 +2,27 @@
  * @fileoverview Generates an image using supplied context (generation only).
  */
 
-import invokeBoard from "@invoke";
-
-import gemini, {
-  defaultSafetySettings,
-  type GeminiOutputs,
-  type GeminiInputs,
-  type Tool,
-} from "./gemini";
+import { type DescriberResult, type Params } from "./common";
 import { GeminiPrompt } from "./gemini-prompt";
-import {
-  err,
-  ok,
-  toLLMContent,
-  defaultLLMContent,
-  toText,
-  addUserTurn,
-  toTextConcat,
-  joinContent,
-  llm,
-  extractMediaData,
-  extractTextData,
-  mergeContent,
-} from "./utils";
 import { callImageGen, promptExpander } from "./image-utils";
-import { Template } from "./template";
-import { ToolManager } from "./tool-manager";
-import { type Params, type DescriberResult } from "./common";
-import { report } from "./output";
 import { ArgumentNameGenerator } from "./introducer";
 import { ListExpander } from "./lists";
+import { report } from "./output";
+import { Template } from "./template";
+import { ToolManager } from "./tool-manager";
+import {
+  addUserTurn,
+  defaultLLMContent,
+  err,
+  extractMediaData,
+  extractTextData,
+  llm,
+  mergeContent,
+  ok,
+  toLLMContent,
+  toText,
+  toTextConcat,
+} from "./utils";
 
 const MAKE_IMAGE_ICON = "generative-image";
 const ASPECT_RATIOS = ["1:1", "9:16", "16:9", "4:3", "3:4"];
@@ -109,7 +100,6 @@ async function invoke({
     aspectRatio = "1:1";
   }
   let imageContext = extractMediaData(incomingContext);
-  const textContext = extractTextData(incomingContext);
   // Substitute params in instruction.
   const toolManager = new ToolManager(new ArgumentNameGenerator());
   const substituting = await new Template(instruction).substitute(

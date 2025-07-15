@@ -2,14 +2,10 @@
  * @fileoverview Manages the entry point: describer, passing the inputs, etc.
  */
 
-import {
-  type AgentContext,
-  type AgentInputs,
-  type DescribeInputs,
-} from "./common";
-import { ok, toLLMContent, defaultLLMContent } from "./utils";
-import { Template } from "./template";
+import { type AgentContext, type DescribeInputs } from "./common";
 import { readSettings } from "./settings";
+import { Template } from "./template";
+import { defaultLLMContent, ok } from "./utils";
 
 export { invoke as default, describe };
 

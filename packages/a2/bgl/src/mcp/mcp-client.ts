@@ -5,9 +5,8 @@
 import fetch from "@fetch";
 import read from "@read";
 import write from "@write";
-import query from "@query";
 
-import { ok, err } from "../a2/utils";
+import { err, ok } from "../a2/utils";
 
 export { McpClient };
 
@@ -133,7 +132,6 @@ class McpClient {
     const file = this.#path();
     const url = this.url;
 
-    const id = this.#newId();
     // send initialize request
     const calling = await fetch({
       url,
@@ -155,9 +153,6 @@ class McpClient {
   }
 
   async connect(): Promise<Outcome<InitializeResponse>> {
-    const file = this.#path();
-    const url = this.url;
-
     const id = this.#newId();
     // send initialize request
     const initializing = await this.call<InitializeResponse>({
@@ -177,7 +172,7 @@ class McpClient {
     });
     if (!ok(initializing)) return initializing;
 
-    const confirmInitialization = await this.notify({
+    await this.notify({
       jsonrpc: "2.0",
       method: "notifications/initialized",
     });
@@ -185,9 +180,7 @@ class McpClient {
   }
 
   async listTools(): Promise<Outcome<ListToolsTool[]>> {
-    const url = this.url;
     const id = this.#newId();
-    const file = this.#path();
     // get list of tools
     const askToListTools = await this.call<ListToolsResponse>({
       jsonrpc: "2.0",
@@ -202,9 +195,7 @@ class McpClient {
     name: string,
     args: Record<string, JsonSerializable>
   ): Promise<Outcome<CallToolContent[]>> {
-    const url = this.url;
     const id = this.#newId();
-    const file = this.#path();
 
     // Call tool
     const askToCallTool = await this.call<CallToolResponse>({

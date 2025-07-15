@@ -2,11 +2,11 @@
  * @fileoverview Search available hotels.
  */
 
+import { Template } from "../a2/template";
+import { defaultLLMContent, err, ok, toLLMContent, toText } from "../a2/utils";
 import toolSearchHotels, {
   describe as toolSearchHotelsDescribe,
 } from "./tool-search-hotels";
-import { Template } from "../a2/template";
-import { err, ok, toText, toLLMContent, defaultLLMContent } from "../a2/utils";
 export { invoke as default, describe };
 
 type Inputs =
@@ -80,7 +80,7 @@ export type DescribeInputs = {
   asType?: boolean;
 };
 
-async function describe({ asType, ...inputs }: DescribeInputs) {
+async function describe({ asType: _, ...inputs }: DescribeInputs) {
   const isTool = inputs && Object.keys(inputs).length === 1;
   if (isTool) {
     return toolSearchHotelsDescribe();

@@ -4,10 +4,10 @@
 
 import { type GeminiSchema, defaultSafetySettings } from "../a2/gemini";
 import { GeminiPrompt } from "../a2/gemini-prompt";
-import { llm, err } from "../a2/utils";
+import { err, llm } from "../a2/utils";
 import { type Plan } from "./types";
 
-export { plannerPrompt, thinkingPlannerPrompt, getPlan };
+export { getPlan, plannerPrompt, thinkingPlannerPrompt };
 
 function preamble(userObjective: string) {
   return llm`You are an adaptive AI agent controller.
@@ -77,13 +77,6 @@ function getPlan(content: LLMContent): Outcome<Plan> {
   }
   console.log("PLAN", planPart.json);
   return planPart.json as Plan;
-}
-
-function prependInstruction(text: string, plan: LLMContent): LLMContent {
-  return {
-    ...plan,
-    parts: [...plan.parts, { text }],
-  };
 }
 
 function thinkingPlannerPrompt(

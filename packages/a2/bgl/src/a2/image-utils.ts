@@ -2,27 +2,26 @@
  * @fileoverview Utilities for generating images.
  */
 
-import {
-  err,
-  ok,
-  isStoredData,
-  toLLMContent,
-  toLLMContentInline,
-  toLLMContentStored,
-  toInlineReference,
-  toInlineData,
-  toText,
-  addUserTurn,
-  llm,
-} from "./utils";
+import { GeminiPrompt } from "./gemini-prompt";
 import {
   type ContentMap,
   type ExecuteStepRequest,
   executeStep,
 } from "./step-executor";
-import { GeminiPrompt } from "./gemini-prompt";
+import {
+  addUserTurn,
+  err,
+  isStoredData,
+  llm,
+  ok,
+  toInlineData,
+  toInlineReference,
+  toLLMContent,
+  toLLMContentInline,
+  toLLMContentStored,
+} from "./utils";
 
-export { callImageGen, callGeminiImage, promptExpander };
+export { callGeminiImage, callImageGen, promptExpander };
 
 const STEP_NAME = "AI Image Tool";
 const OUTPUT_NAME = "generated_image";
@@ -206,7 +205,7 @@ You output will be fed directly into the text-to-image model, so it must be a pr
     body: {
       contents: addUserTurn(promptText.asContent(), contents),
       systemInstruction: toLLMContent(`
-You are a creative writer whose specialty is to write prompts for text-to-image models.
+You are a creative writer whose specialty is to write prompts for text-to-image models.
 
 The prompt must describe every object in the image in great detail and describe the style
 in terms of color scheme and vibe. Be sure to respect all user provided instructions.

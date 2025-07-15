@@ -2,11 +2,11 @@
  * @fileoverview Search an enterprise search engine.
  */
 
+import { Template } from "../a2/template";
+import { defaultLLMContent, err, ok, toLLMContent, toText } from "../a2/utils";
 import toolSearchEnterprise, {
   describe as toolSearchEnterpriseDescribe,
 } from "./tool-search-enterprise";
-import { Template } from "../a2/template";
-import { err, ok, toText, toLLMContent, defaultLLMContent } from "../a2/utils";
 export { invoke as default, describe };
 
 type Inputs =
@@ -87,7 +87,7 @@ export type DescribeInputs = {
   asType?: boolean;
 };
 
-async function describe({ asType, ...inputs }: DescribeInputs) {
+async function describe({ asType: _, ...inputs }: DescribeInputs) {
   const isTool = inputs && Object.keys(inputs).length === 1;
   if (isTool) {
     return toolSearchEnterpriseDescribe();

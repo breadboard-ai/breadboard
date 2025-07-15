@@ -117,6 +117,7 @@ export type GeminiInputs = {
 
 export type Tool = {
   functionDeclarations?: FunctionDeclaration[];
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   googleSearch?: {};
   codeExecution?: CodeExecution[];
 };
@@ -136,6 +137,7 @@ export type FunctionDeclaration = {
   parameters?: GeminiSchema;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export type CodeExecution = {
   // Type contains no fields.
 };
@@ -274,7 +276,7 @@ function textToJson(content: LLMContent): LLMContent {
       if ("text" in part) {
         try {
           return { json: JSON.parse(part.text) };
-        } catch (e) {
+        } catch {
           // fall through.
         }
       }
@@ -395,7 +397,7 @@ function maybeExtractError(e: string): string {
   try {
     const parsed = JSON.parse(e) as GeminiError;
     return parsed.error.message;
-  } catch (error) {
+  } catch {
     return e;
   }
 }

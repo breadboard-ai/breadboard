@@ -6,7 +6,6 @@ import describeGraph from "@describe";
 import invokeGraph from "@invoke";
 
 import { ok } from "../a2/utils";
-import { type Params } from "../a2/common";
 
 export { invoke as default, describe };
 
@@ -150,7 +149,6 @@ const modeMap = new Map(MODES.map((mode) => [mode.id, mode]));
 const PROMPT_PORT = "config$prompt";
 const ASK_USER_PORT = "config$ask-user";
 const LIST_PORT = "config$list";
-const MODEL_PORT = "modelName";
 
 // Maps the prompt port to various names of the other ports.
 const portMapForward = new Map<ModeId, Map<string, string>>([

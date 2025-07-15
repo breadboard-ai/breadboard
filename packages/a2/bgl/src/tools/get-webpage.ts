@@ -2,19 +2,19 @@
  * @fileoverview Given a URL of a webpage, returns its content as Markdown with a list of links and other metadata.
  */
 
+import { ListExpander } from "../a2/lists";
+import { Template } from "../a2/template";
+import {
+  defaultLLMContent,
+  err,
+  ok,
+  toLLMContent,
+  toText,
+  toTextConcat,
+} from "../a2/utils";
 import toolGetWebpage, {
   describe as toolGetWebpageDescribe,
 } from "./tool-get-webpage";
-import { Template } from "../a2/template";
-import {
-  ok,
-  err,
-  toText,
-  toLLMContent,
-  defaultLLMContent,
-  toTextConcat,
-} from "../a2/utils";
-import { ListExpander } from "../a2/lists";
 
 export { invoke as default, describe };
 
@@ -119,7 +119,7 @@ export type DescribeInputs = {
   inputSchema: Schema;
   asType?: boolean;
 };
-async function describe({ asType, ...inputs }: DescribeInputs) {
+async function describe({ asType: _, ...inputs }: DescribeInputs) {
   const isTool = inputs && Object.keys(inputs).length === 1;
   if (isTool) {
     return toolGetWebpageDescribe();

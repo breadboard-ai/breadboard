@@ -2,13 +2,9 @@
  * @fileoverview Generates audio output using supplied context.
  */
 
-import gemini, {
-  defaultSafetySettings,
-  type GeminiOutputs,
-  type GeminiInputs,
-} from "./gemini";
-import { err, ok, llm, toLLMContent, toText } from "./utils";
 import { type DescriberResult } from "./common";
+import gemini, { defaultSafetySettings } from "./gemini";
+import { err, ok } from "./utils";
 
 type AudioGeneratorInputs = {
   context: LLMContent[];

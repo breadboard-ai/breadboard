@@ -2,33 +2,26 @@
  * @fileoverview Generates audio (tts) output using supplied context.
  */
 
-import gemini, {
-  defaultSafetySettings,
-  type GeminiOutputs,
-  type GeminiInputs,
-} from "../a2/gemini";
-import {
-  err,
-  ok,
-  llm,
-  toLLMContent,
-  toLLMContentInline,
-  toLLMContentStored,
-  toTextConcat,
-  joinContent,
-  toText,
-  defaultLLMContent,
-} from "../a2/utils";
-import { Template } from "../a2/template";
-import { ToolManager } from "../a2/tool-manager";
 import { type DescriberResult } from "../a2/common";
 import { ArgumentNameGenerator } from "../a2/introducer";
+import { ListExpander } from "../a2/lists";
 import {
   type ContentMap,
   type ExecuteStepRequest,
   executeStep,
 } from "../a2/step-executor";
-import { ListExpander } from "../a2/lists";
+import { Template } from "../a2/template";
+import { ToolManager } from "../a2/tool-manager";
+import {
+  defaultLLMContent,
+  joinContent,
+  ok,
+  toLLMContent,
+  toLLMContentInline,
+  toLLMContentStored,
+  toText,
+  toTextConcat,
+} from "../a2/utils";
 
 type AudioGeneratorInputs = {
   context: LLMContent[];
@@ -98,7 +91,7 @@ async function callAudioGen(
   }
 
   let returnVal;
-  for (let value of Object.values(response.executionOutputs)) {
+  for (const value of Object.values(response.executionOutputs)) {
     const mimetype = value.chunks[0].mimetype;
     if (mimetype.startsWith("audio")) {
       if (mimetype.endsWith("/storedData")) {

@@ -2,48 +2,19 @@
  * @fileoverview Handles introduction of the step.
  */
 
-import { type Tool, defaultSafetySettings, type GeminiSchema } from "./gemini";
-import { toLLMContent, toText, ok, err, llm } from "./utils";
-import { ToolManager } from "./tool-manager";
-import { GeminiPrompt } from "./gemini-prompt";
 import {
   type DescriberResult,
   type DescriberResultTransformer,
 } from "./common";
+import { defaultSafetySettings, type GeminiSchema } from "./gemini";
+import { GeminiPrompt } from "./gemini-prompt";
+import { err, llm, ok } from "./utils";
 
 export { ArgumentNameGenerator };
 
 export type IntroPort = {
   $intro: boolean;
 };
-
-type Introduction = {
-  title: string;
-  abilities: string;
-  argument: string;
-};
-
-function introductionSchema(): GeminiSchema {
-  return {
-    type: "object",
-    properties: {
-      title: {
-        type: "string",
-        description: "The title of the agent",
-      },
-      abilities: {
-        type: "string",
-        description:
-          "Verb-first, third-person summary of the agent's abilities",
-      },
-      argument: {
-        type: "string",
-        description:
-          "The description of the single text argument that the agent takes as input",
-      },
-    },
-  };
-}
 
 type NamingResult = {
   description: string;

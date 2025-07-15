@@ -2,23 +2,21 @@
  * @fileoverview Connector Save Export.
  */
 import { type DescribeOutputs } from "@describe";
-import { toText, ok, err } from "../a2/utils";
-import { contextToRequests, DOC_MIME_TYPE } from "./docs";
-import { SLIDES_MIME_TYPE, SimpleSlideBuilder } from "./slides";
-import { SHEETS_MIME_TYPE } from "./sheets";
-import { inferSlideStructure } from "./slides-schema";
-import { inferSheetValues } from "./sheets";
+import { err, ok } from "../a2/utils";
 import {
+  appendSpreadsheetValues,
   connect,
-  query,
   create,
   getDoc,
+  getPresentation,
+  query,
   updateDoc,
   updatePresentation,
-  getPresentation,
-  createPresentation,
-  appendSpreadsheetValues,
 } from "./api";
+import { contextToRequests, DOC_MIME_TYPE } from "./docs";
+import { inferSheetValues, SHEETS_MIME_TYPE } from "./sheets";
+import { SimpleSlideBuilder, SLIDES_MIME_TYPE } from "./slides";
+import { inferSlideStructure } from "./slides-schema";
 import type { ConnectorConfiguration } from "./types";
 
 export { invoke as default, describe };
@@ -119,7 +117,7 @@ async function invoke({
         ]);
         if (!ok(gettingCollector)) return gettingCollector;
         if (!ok(result)) return result;
-        const { id, end, last } = gettingCollector;
+        const { id } = gettingCollector;
         console.log("VALUES", result);
         const appending = await appendSpreadsheetValues(
           token,

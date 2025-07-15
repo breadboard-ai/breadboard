@@ -2,14 +2,11 @@
  * @fileoverview The internal-only implementation of the Search Web tool.
  */
 
-import { ToolManager } from "../a2/tool-manager";
 import { GeminiPrompt } from "../a2/gemini-prompt";
-import { ok, err, toText } from "../a2/utils";
-import { executeTool } from "../a2/step-executor";
 import { StreamableReporter } from "../a2/output";
-
-import secrets from "@secrets";
-import fetch from "@fetch";
+import { executeTool } from "../a2/step-executor";
+import { ToolManager } from "../a2/tool-manager";
+import { ok, toText } from "../a2/utils";
 
 export { invoke as default, describe };
 
@@ -75,19 +72,6 @@ async function generateSummary(
     results += `\n## References:\n${chunks.join("\n")}\n`;
   }
   return `\n## Summary\n${results}`;
-}
-
-function formatSearchResults(results: CustomSearchEngineResponse) {
-  return `## Raw Search Results
-
-${results.items
-  .map((item) => {
-    return `- [${item.title}](${item.link})
-${item.snippet}
-`;
-  })
-  .join("\n\n")}
-`;
 }
 
 function formatBackendSearchResults(

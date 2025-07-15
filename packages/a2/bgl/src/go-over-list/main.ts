@@ -1,19 +1,18 @@
 /**
  * @fileoverview Break an objective into tasks and then execute them.
  */
-import { Template } from "../a2/template";
-import { ToolManager } from "../a2/tool-manager";
 import { type Params } from "../a2/common";
-import { ok, err, generateId } from "../a2/utils";
 import { ArgumentNameGenerator } from "../a2/introducer";
-import { Runtime } from "./runtime";
-import { ParallelStrategist } from "./parallel-strategist";
-import { SequentialStrategist } from "./sequential-strategist";
-import { ThinkStrategist } from "./think-strategist";
-import { ConversationalThinkStrategist } from "./conversational-think-strategist";
-import { type Strategist } from "./types";
 import { fanOutContext } from "../a2/lists";
 import { readSettings } from "../a2/settings";
+import { Template } from "../a2/template";
+import { ToolManager } from "../a2/tool-manager";
+import { err, generateId, ok } from "../a2/utils";
+import { ParallelStrategist } from "./parallel-strategist";
+import { Runtime } from "./runtime";
+import { SequentialStrategist } from "./sequential-strategist";
+import { ThinkStrategist } from "./think-strategist";
+import { type Strategist } from "./types";
 
 export { invoke as default, describe };
 

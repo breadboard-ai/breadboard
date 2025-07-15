@@ -2,15 +2,15 @@
  * @fileoverview Executes think-as-i strategy, but gently redirects off topic user input back on topic.
  */
 
-import { type Strategist, type Plan, type ExecuteStepFunction } from "./types";
-import { ok, toLLMContent } from "../a2/utils";
 import { report } from "../a2/output";
+import { ok, toLLMContent } from "../a2/utils";
 import { organizerPrompt } from "./organizer-prompt";
+import { type ExecuteStepFunction, type Strategist } from "./types";
 
 import {
+  getPlan,
   plannerPrompt,
   thinkingPlannerPrompt,
-  getPlan,
 } from "./conversational-planner-prompt";
 
 export { ConversationalThinkStrategist };

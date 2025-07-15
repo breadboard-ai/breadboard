@@ -1,16 +1,16 @@
-import { marked } from "./marked";
-import { unescape } from "./unescape";
-import type {
-  Token,
-  FormattingToken,
-  SpaceToken,
-  RichToken,
-  ListToken,
-} from "./types";
-import { toText, mergeTextParts } from "../a2/utils";
 import transformBlob from "@blob";
+import { mergeTextParts, toText } from "../a2/utils";
+import { marked } from "./marked";
+import type {
+  FormattingToken,
+  ListToken,
+  RichToken,
+  SpaceToken,
+  Token,
+} from "./types";
+import { unescape } from "./unescape";
 
-export { contextToRequests, markdownToContext, DOC_MIME_TYPE };
+export { contextToRequests, DOC_MIME_TYPE, markdownToContext };
 
 const DOC_MIME_TYPE = "application/vnd.google-apps.document";
 

@@ -2,14 +2,14 @@
  * @fileoverview Given a query, searches Wikipedia.
  */
 
+import { Template } from "../a2/template";
 import searchWikipedia, {
   describe as searchWikipediaDescriber,
   type WikipediaInputs,
   type WikipediaOutputs,
 } from "./tool-search-wikipedia";
-import { Template } from "../a2/template";
 
-import { ok, err, toText, toLLMContent, defaultLLMContent } from "../a2/utils";
+import { defaultLLMContent, err, ok, toLLMContent, toText } from "../a2/utils";
 
 export { invoke as default, describe };
 
@@ -84,7 +84,7 @@ export type DescribeInputs = {
   asType?: boolean;
 };
 
-async function describe({ asType, ...inputs }: DescribeInputs) {
+async function describe({ asType: _, ...inputs }: DescribeInputs) {
   const isTool = inputs && Object.keys(inputs).length === 1;
   if (isTool) {
     return searchWikipediaDescriber();

@@ -2,39 +2,31 @@
  * @fileoverview Generates video output using supplied context.
  */
 
-import gemini, {
-  defaultSafetySettings,
-  type GeminiOutputs,
-  type GeminiInputs,
-} from "../a2/gemini";
-import {
-  err,
-  ok,
-  llm,
-  isStoredData,
-  toTextConcat,
-  joinContent,
-  toLLMContent,
-  toInlineReference,
-  toLLMContentInline,
-  toLLMContentStored,
-  toText,
-  toInlineData,
-  extractMediaData,
-  extractTextData,
-  defaultLLMContent,
-} from "../a2/utils";
-import { Template } from "../a2/template";
-import { ToolManager } from "../a2/tool-manager";
-import { type Params } from "../a2/common";
 import { type DescriberResult } from "../a2/common";
 import { ArgumentNameGenerator } from "../a2/introducer";
 import { ListExpander } from "../a2/lists";
+import { Template } from "../a2/template";
+import { ToolManager } from "../a2/tool-manager";
+import {
+  defaultLLMContent,
+  extractMediaData,
+  extractTextData,
+  isStoredData,
+  joinContent,
+  ok,
+  toInlineData,
+  toInlineReference,
+  toLLMContent,
+  toLLMContentInline,
+  toLLMContentStored,
+  toText,
+  toTextConcat,
+} from "../a2/utils";
 
 import {
+  executeStep,
   type ContentMap,
   type ExecuteStepRequest,
-  executeStep,
 } from "../a2/step-executor";
 
 type Model = {
@@ -156,7 +148,7 @@ async function callVideoGen(
   }
 
   let returnVal;
-  for (let value of Object.values(response.executionOutputs)) {
+  for (const value of Object.values(response.executionOutputs)) {
     const mimetype = value.chunks[0].mimetype;
     if (mimetype.startsWith("video")) {
       if (mimetype.endsWith("/storedData")) {
@@ -183,7 +175,7 @@ async function invoke({
   "b-model-name": modelId,
   ...params
 }: VideoGeneratorInputs): Promise<Outcome<VideoGeneratorOutputs>> {
-  let { modelName } = getModel(modelId);
+  const { modelName } = getModel(modelId);
   context ??= [];
   let instructionText = "";
   if (instruction) {
