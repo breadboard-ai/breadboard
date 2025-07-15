@@ -395,9 +395,9 @@ export class VEHeader extends LitElement {
       ${this.#renderModeToggle()}
       <div id="right">
         ${[
+          this.#renderSaveStatusLabel(),
           this.#renderSharePublishButton(),
           this.#renderRemixButton(),
-          this.#renderSaveStatusLabel(),
           this.#renderItemSelect(),
           this.#renderUser(),
         ]}
