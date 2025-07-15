@@ -1,0 +1,63 @@
+{
+  "title": "Tools",
+  "description": "A collection of useful tools.",
+  "version": "0.0.1",
+  "nodes": [],
+  "edges": [],
+  "imports": {
+    "a2": {
+      "url": "./a2.bgl.json"
+    }
+  },
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-6fc8b597",
+        "text": "Intentionally Left Blank",
+        "metadata": {
+          "visual": {
+            "x": 7,
+            "y": -575,
+            "collapsed": "expanded",
+            "outputHeight": 0
+          }
+        }
+      }
+    ],
+    "visual": {
+      "presentation": {
+        "themes": {
+          "f90eb9c1-e12c-4864-ba74-a15a3b8d77f3": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "f90eb9c1-e12c-4864-ba74-a15a3b8d77f3"
+      }
+    },
+    "tags": [
+      "published",
+      "tool",
+      "component"
+    ]
+  },
+  "exports": [
+    "#module:get-weather",
+    "#module:search-web",
+    "#module:get-webpage",
+    "#module:search-maps",
+    "#module:search-internal"
+  ]
+}

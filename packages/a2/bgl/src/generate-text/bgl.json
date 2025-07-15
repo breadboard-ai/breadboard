@@ -1,0 +1,212 @@
+{
+  "title": "Generate Text",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [],
+  "edges": [],
+  "metadata": {
+    "comments": [
+      {
+        "id": "comment-cc94afe8",
+        "text": "Intentionally Left Blank",
+        "metadata": {
+          "title": "Comment",
+          "visual": {
+            "x": 531,
+            "y": 374,
+            "collapsed": "expanded",
+            "outputHeight": 0
+          }
+        }
+      }
+    ],
+    "visual": {
+      "presentation": {
+        "themes": {
+          "5f3ca599-8fee-46fb-951f-0d47b16a6d56": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "5f3ca599-8fee-46fb-951f-0d47b16a6d56"
+      }
+    },
+    "tags": [
+      "published",
+      "tool",
+      "component"
+    ],
+    "userModified": true
+  },
+  "imports": {
+    "a2": {
+      "url": "./a2.bgl.json"
+    }
+  },
+  "graphs": {
+    "daf082ca-c1aa-4aff-b2c8-abeb984ab66c": {
+      "title": "Make Text",
+      "description": "Generates text and so much more.",
+      "version": "0.0.1",
+      "describer": "module:entry",
+      "nodes": [
+        {
+          "type": "output",
+          "id": "output",
+          "configuration": {
+            "schema": {
+              "properties": {
+                "context": {
+                  "type": "array",
+                  "title": "Context",
+                  "items": {
+                    "type": "object",
+                    "behavior": [
+                      "llm-content"
+                    ]
+                  },
+                  "default": "null"
+                }
+              },
+              "type": "object",
+              "required": []
+            }
+          },
+          "metadata": {
+            "visual": {
+              "x": 720,
+              "y": 0,
+              "collapsed": "expanded",
+              "outputHeight": 44
+            }
+          }
+        },
+        {
+          "id": "board-f138aa03",
+          "type": "#module:entry",
+          "metadata": {
+            "visual": {
+              "x": -46.99999999999966,
+              "y": -71.99999999999898,
+              "collapsed": "expanded",
+              "outputHeight": 44
+            },
+            "title": "entry"
+          }
+        },
+        {
+          "id": "board-d340ad8f",
+          "type": "#module:main",
+          "metadata": {
+            "visual": {
+              "x": 340,
+              "y": 0,
+              "collapsed": "expanded",
+              "outputHeight": 44
+            },
+            "title": "Generating draft",
+            "logLevel": "info"
+          },
+          "configuration": {}
+        },
+        {
+          "id": "board-1946064a",
+          "type": "#module:join",
+          "metadata": {
+            "visual": {
+              "x": 1059.9999999999986,
+              "y": -159.99999999999886,
+              "collapsed": "expanded",
+              "outputHeight": 44
+            },
+            "title": "join"
+          }
+        },
+        {
+          "type": "input",
+          "id": "input",
+          "metadata": {
+            "visual": {
+              "x": 720.0000000000005,
+              "y": 160.00000000000114,
+              "collapsed": "advanced",
+              "outputHeight": 44
+            },
+            "title": "Waiting for user feedback",
+            "logLevel": "info"
+          },
+          "configuration": {}
+        }
+      ],
+      "edges": [
+        {
+          "from": "board-f138aa03",
+          "to": "board-d340ad8f",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "board-d340ad8f",
+          "to": "output",
+          "out": "done",
+          "in": "context"
+        },
+        {
+          "from": "input",
+          "to": "board-1946064a",
+          "out": "request",
+          "in": "request"
+        },
+        {
+          "from": "board-d340ad8f",
+          "to": "input",
+          "out": "toInput",
+          "in": "schema"
+        },
+        {
+          "from": "board-d340ad8f",
+          "to": "board-1946064a",
+          "out": "context",
+          "in": "context"
+        },
+        {
+          "from": "board-1946064a",
+          "to": "board-d340ad8f",
+          "out": "context",
+          "in": "context"
+        }
+      ],
+      "metadata": {
+        "visual": {
+          "minimized": false
+        },
+        "describer": "module:entry",
+        "tags": []
+      }
+    }
+  },
+  "exports": [
+    "#module:main"
+  ],
+  "assets": {
+    "@@thumbnail": {
+      "metadata": {
+        "title": "Thumbnail",
+        "type": "file"
+      },
+      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICAKICAgICAgPHJlY3QgeD0iMTM5LjA1IgogICAgICAgICAgICAgICAgICAgIHk9Ijg3Ljg5IgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI0My43NSIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjI0LjIzIgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgo8cmVjdCB4PSIxMC4wMCIKICAgICAgICAgICAgICAgICAgICB5PSI3NS43NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNDMuNzUiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyNC4yMyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KPHJlY3QgeD0iNzUuMTEiCiAgICAgICAgICAgICAgICAgICAgeT0iODcuODkiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjQzLjc1IgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iMjQuMjMiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyZThiZTgiIC8+CjxyZWN0IHg9IjE5Ni4yNSIKICAgICAgICAgICAgICAgICAgICB5PSI2MC45NyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNDMuNzUiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyNC4yMyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzJlOGJlOCIgLz4KPHJlY3QgeD0iMTM5LjA1IgogICAgICAgICAgICAgICAgICAgIHk9IjExNC44MSIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNDMuNzUiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSIyNC4yMyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzIwYTIwMiIgLz4KICAgIDwvc3ZnPg=="
+    }
+  }
+}

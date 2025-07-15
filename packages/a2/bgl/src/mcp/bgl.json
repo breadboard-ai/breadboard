@@ -1,0 +1,64 @@
+{
+  "title": "MCP Server",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [],
+  "edges": [],
+  "metadata": {
+    "icon": "generative",
+    "visual": {
+      "presentation": {
+        "themes": {
+          "f65ea9aa-b8c6-4c80-9667-a08c4f631013": {
+            "themeColors": {
+              "primaryColor": "#246db5",
+              "secondaryColor": "#5cadff",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "splashScreen": {
+              "storedData": {
+                "handle": "/images/app/generic-flow.jpg",
+                "mimeType": "image/jpeg"
+              }
+            }
+          }
+        },
+        "theme": "f65ea9aa-b8c6-4c80-9667-a08c4f631013"
+      }
+    },
+    "userModified": true,
+    "tags": [
+      "connector",
+      "connector-singleton",
+      "experimental",
+      "published"
+    ],
+    "comments": [
+      {
+        "id": "comment-c74afa15",
+        "text": "Intentionally Left Blank",
+        "metadata": {
+          "title": "Comment",
+          "visual": {
+            "x": 281,
+            "y": 501,
+            "collapsed": "expanded",
+            "outputHeight": 0
+          }
+        }
+      }
+    ]
+  },
+  "imports": {
+    "a2": {
+      "url": "./a2.bgl.json"
+    }
+  },
+  "exports": [
+    "#module:configurator",
+    "#module:connector-tools"
+  ]
+}
