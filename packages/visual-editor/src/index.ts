@@ -106,6 +106,7 @@ import {
   GlobalConfig,
   globalConfigContext,
 } from "@breadboard-ai/shared-ui/contexts";
+import { RuntimeBoardServerChangeEvent } from "./runtime/events.js";
 
 type RenderValues = {
   canSave: boolean;
@@ -171,7 +172,10 @@ export class Main extends SignalWatcher(LitElement) {
     createRef();
 
   readonly #boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
-  #boardServers: BoardServer[] = [];
+
+  @state()
+  accessor #boardServers: BoardServer[] = [];
+
   readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
   readonly #hideTooltipBound = this.#hideTooltip.bind(this);
   readonly #onKeyboardShortCut = this.#onKeyboardShortcut.bind(this);
@@ -385,6 +389,12 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.#graphStore = this.#runtime.board.getGraphStore();
     this.#boardServers = this.#runtime.board.getBoardServers() || [];
+    this.#runtime.board.addEventListener(
+      RuntimeBoardServerChangeEvent.eventName,
+      () => {
+        this.#boardServers = this.#runtime.board.getBoardServers() || [];
+      }
+    );
     this.sideBoardRuntime = this.#runtime.sideboards;
 
     // This is currently used only for legacy graph kits (Agent,
@@ -433,16 +443,7 @@ export class Main extends SignalWatcher(LitElement) {
       }
     }
 
-    let hasMountedBoardServer = false;
-    for (const server of this.#boardServers) {
-      if (server.url.href === args.boardServerUrl.href) {
-        hasMountedBoardServer = true;
-        this.#uiState.boardServer = server.name;
-        this.#uiState.boardLocation = server.url.href;
-        this.boardServer = server;
-        break;
-      }
-    }
+    const hasMountedBoardServer = this.#findSelectedBoardServer(args);
 
     if (!hasMountedBoardServer) {
       console.log(`Mounting server "${args.boardServerUrl.href}" ...`);
@@ -450,11 +451,26 @@ export class Main extends SignalWatcher(LitElement) {
         args.boardServerUrl.href
       );
       if (connecting?.success) {
+        this.#findSelectedBoardServer(args);
         console.log(`Connected to server`);
       }
     }
 
     this.#maybeNotifyAboutPreferredUrlForDomain();
+  }
+
+  #findSelectedBoardServer(args: MainArguments) {
+    let hasMountedBoardServer = false;
+    for (const server of this.#boardServers) {
+      if (server.url.href === args.boardServerUrl?.href) {
+        hasMountedBoardServer = true;
+        this.#uiState.boardServer = server.name;
+        this.#uiState.boardLocation = server.url.href;
+        this.boardServer = server;
+        break;
+      }
+    }
+    return hasMountedBoardServer;
   }
 
   async #maybeNotifyAboutPreferredUrlForDomain() {
