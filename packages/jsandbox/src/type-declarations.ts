@@ -174,9 +174,11 @@ declare module "@blob" {
 }
 
 declare module "@describe" {
+  export type InputValues = Record<string, unknown>;
+
   export type DescribeInputs = {
     url: string;
-    inputs?: Values;
+    inputs?: InputValues;
     inputSchema?: Schema;
     outputSchema?: Schema;
   };
@@ -727,14 +729,5 @@ declare module "@write" {
   export default function write(
     inputs: FileSystemWriteArguments
   ): Promise<FileSystemWriteResult>;
-}
-
-/** The TextEncoder interface takes a stream of code points as input and emits a stream of UTF-8 bytes. */
-declare class TextEncoder {
-  /**
-   * Encodes a string to a Uint8Array.
-   * @param input A string to encode.
-   */
-  encode(input: string): Uint8Array;
 }
 `

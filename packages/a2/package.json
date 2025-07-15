@@ -12,7 +12,8 @@
     "build": {
       "dependencies": [
         "<dependencies>#<this>",
-        "build:tsc"
+        "build:tsc",
+        "copy-environment"
       ]
     },
     "typescript-files-and-deps": {
@@ -40,6 +41,16 @@
         "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
+    },
+    "copy-environment": {
+      "command": "tsx scripts/copy-environment.ts",
+      "files": [],
+      "dependencies": [
+        "../jsandbox#build:tsc"
+      ],
+      "output": [
+        "bgl/src/environment.d.ts"
+      ]
     }
   },
   "repository": {
@@ -55,6 +66,7 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
+    "@breadboard-ai/jsandbox": "^0.7.0",
     "@google-cloud/firestore": "^7.11.0",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
