@@ -1,7 +1,7 @@
 /**
  * @fileoverview Recursively search the web for in-depth answers to your query.
  */
-import { ToolManager, type ToolDescriptor } from "../a2/tool-manager";
+import { ToolManager } from "../a2/tool-manager";
 import { Template } from "../a2/template";
 import invokeGraph from "@invoke";
 import invokeGemini, {
@@ -9,7 +9,7 @@ import invokeGemini, {
   type Tool,
   defaultSafetySettings,
 } from "../a2/gemini";
-import { ok, err, llm, toLLMContent, toText, addUserTurn } from "../a2/utils";
+import { ok, err, llm, toLLMContent, addUserTurn } from "../a2/utils";
 import { report } from "../a2/output";
 import { type Params } from "../a2/common";
 import { ArgumentNameGenerator } from "../a2/introducer";
@@ -42,7 +42,7 @@ const RESEARCH_TOOLS: DefaultToolDescriptor[] = [
   },
 ];
 
-const RESEARCH_MODEL = "gemini-2.5-flash-preview-04-17";
+const RESEARCH_MODEL = "gemini-2.5-flash";
 
 const MAX_ITERATIONS = 7;
 
