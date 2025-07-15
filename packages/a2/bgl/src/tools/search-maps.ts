@@ -6,8 +6,8 @@ import toolSearchMaps, {
   type SearchMapsOutputs,
   describe as toolSearchMapsDescribe,
 } from "./tool-search-maps";
-import { Template } from "./a2/template";
-import { err, ok, toText, toLLMContent, defaultLLMContent } from "./a2/utils";
+import { Template } from "../a2/template";
+import { err, ok, toText, toLLMContent, defaultLLMContent } from "../a2/utils";
 export { invoke as default, describe };
 
 type Inputs =

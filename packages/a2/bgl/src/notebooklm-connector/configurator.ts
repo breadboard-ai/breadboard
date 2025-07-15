@@ -2,9 +2,9 @@
  * @fileoverview Add a description for your module here.
  */
 
-import { err, ok } from "./a2/utils";
-import { createConfigurator } from "./a2/connector-manager";
-import { executeTool } from "./a2/step-executor";
+import { err, ok } from "../a2/utils";
+import { createConfigurator } from "../a2/connector-manager";
+import { executeTool } from "../a2/step-executor";
 import type { Configuration } from "./types";
 
 import read from "@read";
@@ -20,7 +20,7 @@ const { invoke, describe } = createConfigurator<Configuration, Configuration>({
       configuration: {},
     };
   },
-  read: async ({ id, configuration }) => {
+  read: async ({ configuration }) => {
     const readingNotebooks = await executeTool("notebooklm_list_projects", {});
     if (!ok(readingNotebooks)) return readingNotebooks;
     console.log("READING NOTEBOOKS", readingNotebooks);

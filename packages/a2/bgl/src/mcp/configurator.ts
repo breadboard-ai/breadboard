@@ -2,8 +2,8 @@
  * @fileoverview Add a description for your module here.
  */
 
-import { err, ok, llm } from "./a2/utils";
-import { createConfigurator } from "./a2/connector-manager";
+import { err, ok, llm } from "../a2/utils";
+import { createConfigurator } from "../a2/connector-manager";
 import { McpClient } from "./mcp-client";
 
 import read from "@read";
@@ -34,7 +34,7 @@ const { invoke, describe } = createConfigurator<McpConfiguration>({
       llm`**${info.serverInfo.name}**\nMCP server at ${endpoint}`.asContent(),
     ];
   },
-  read: async ({ id, configuration }) => {
+  read: async ({ configuration }) => {
     return {
       schema: {
         type: "object",

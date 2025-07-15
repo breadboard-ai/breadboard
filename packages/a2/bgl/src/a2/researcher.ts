@@ -111,7 +111,7 @@ A report must additionally contain references to the source (always cite your so
 }
 
 function reportWriterPrompt(
-  plan: LLMContent,
+  _plan: LLMContent,
   research: string[]
 ): GeminiInputs {
   return {

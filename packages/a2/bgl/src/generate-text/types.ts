@@ -2,7 +2,7 @@
  * @fileoverview Common type definitions
  */
 
-import type { Params } from "./a2/common";
+import type { Params } from "../a2/common";
 
 export type GenerateTextInputs = {
   /**

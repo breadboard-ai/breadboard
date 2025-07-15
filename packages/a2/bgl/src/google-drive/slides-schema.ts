@@ -2,9 +2,9 @@
  * @fileoverview Defines the schema for simple slides JSON output
  */
 
-import { type GeminiSchema } from "./a2/gemini";
-import { GeminiPrompt } from "./a2/gemini-prompt";
-import { toText, ok, err, llm } from "./a2/utils";
+import { type GeminiSchema } from "../a2/gemini";
+import { GeminiPrompt } from "../a2/gemini-prompt";
+import { toText, ok, err, llm } from "../a2/utils";
 import type { SimplePresentation } from "./types";
 
 export { inferSlideStructure };

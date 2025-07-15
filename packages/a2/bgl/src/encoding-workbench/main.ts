@@ -23,7 +23,7 @@ function decodeBase64(s: string): string {
 }
 
 async function invoke({
-  context,
+  context: _context,
 }: {
   context: LLMContent[];
 }): Promise<Outcome<{ context: LLMContent[] }>> {

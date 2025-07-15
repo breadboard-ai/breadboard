@@ -2,15 +2,15 @@
  * @fileoverview The tools export for the connector.
  */
 
-import { err, ok } from "./a2/utils";
+import { err, ok } from "../a2/utils";
 import { McpClient } from "./mcp-client";
 import type {
   ListToolResult,
   ListMethodOutput,
   InvokeMethodOutput,
   ConnectorInfo,
-} from "./a2/connector-manager";
-import { createTools } from "./a2/connector-manager";
+} from "../a2/connector-manager";
+import { createTools } from "../a2/connector-manager";
 
 export { invoke as default, describe };
 

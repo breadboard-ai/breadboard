@@ -69,7 +69,7 @@ type WriteInput<V extends Record<string, unknown>> = {
   values: V;
 };
 
-type WriteOutput = {};
+type WriteOutput = Record<string, unknown>;
 
 type Inputs<
   C extends Record<string, unknown>,
@@ -470,7 +470,7 @@ function getConnectorId(part: ConnectorConfig): Outcome<string> {
 function getExportUrl(tag: string, result: DescribeOutputs): Outcome<string> {
   const exports = result.exports;
   if (!exports) return err(`Invalid connector structure: must have exports`);
-  const assetExport = Object.entries(exports).find(([url, e]) =>
+  const assetExport = Object.entries(exports).find(([_url, e]) =>
     e.metadata?.tags?.includes(tag)
   );
   if (!assetExport)

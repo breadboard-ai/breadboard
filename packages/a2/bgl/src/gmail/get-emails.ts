@@ -3,7 +3,7 @@
  */
 
 import { type DescribeOutputs } from "@describe";
-import { err, decodeBase64 } from "./a2/utils";
+import { err, decodeBase64 } from "../a2/utils";
 import fetch from "@fetch";
 import secrets from "@secrets";
 
@@ -24,7 +24,7 @@ function maybeExtractError(e: string): string {
   }
 }
 
-import { ok } from "./a2/utils";
+import { ok } from "../a2/utils";
 
 export { invoke as default, describe };
 

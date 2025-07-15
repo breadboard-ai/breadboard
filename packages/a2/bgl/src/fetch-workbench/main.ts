@@ -8,8 +8,8 @@ import write from "@write";
 import query from "@query";
 import output from "@output";
 
-import { ok, err } from "./a2/utils";
-import { report } from "./a2/output";
+import { ok, err } from "../a2/utils";
+import { report } from "../a2/output";
 
 export { invoke as default, describe };
 

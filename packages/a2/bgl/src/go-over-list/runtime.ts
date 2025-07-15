@@ -2,15 +2,11 @@
  * @fileoverview The runtime that powers going over the list.
  */
 
-import { ToolManager } from "./a2/tool-manager";
+import { ToolManager } from "../a2/tool-manager";
 import { defaultSystemInstruction } from "./system-instruction";
-import { ok, toLLMContent } from "./a2/utils";
-import { GeminiPrompt } from "./a2/gemini-prompt";
-import {
-  type ExecuteStepFunction,
-  type Task,
-  type Strategist,
-} from "./types";
+import { ok, toLLMContent } from "../a2/utils";
+import { GeminiPrompt } from "../a2/gemini-prompt";
+import { type ExecuteStepFunction, type Task, type Strategist } from "./types";
 
 export { Runtime, generateId };
 
@@ -50,7 +46,7 @@ class Runtime {
     let contents;
     let toolConfig = {};
     if (!toolManager.hasTools()) {
-      contents = [ ... context, prompt];
+      contents = [...context, prompt];
     } else {
       toolConfig = {
         toolConfig: {

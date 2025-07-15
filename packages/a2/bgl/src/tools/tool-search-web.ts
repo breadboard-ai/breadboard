@@ -2,11 +2,11 @@
  * @fileoverview The internal-only implementation of the Search Web tool.
  */
 
-import { ToolManager } from "./a2/tool-manager";
-import { GeminiPrompt } from "./a2/gemini-prompt";
-import { ok, err, toText } from "./a2/utils";
-import { executeTool } from "./a2/step-executor";
-import { StreamableReporter } from "./a2/output";
+import { ToolManager } from "../a2/tool-manager";
+import { GeminiPrompt } from "../a2/gemini-prompt";
+import { ok, err, toText } from "../a2/utils";
+import { executeTool } from "../a2/step-executor";
+import { StreamableReporter } from "../a2/output";
 
 import secrets from "@secrets";
 import fetch from "@fetch";

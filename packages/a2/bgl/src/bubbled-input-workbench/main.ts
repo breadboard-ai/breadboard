@@ -6,7 +6,7 @@ import input from "@input";
 
 export { invoke as default, describe };
 
-async function invoke({ context }: { context: LLMContent[] }) {
+async function invoke({ context: _context }: { context: LLMContent[] }) {
   const result = await input({
     schema: {
       type: "object",

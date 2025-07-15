@@ -2,7 +2,7 @@
  * @fileoverview Default system instruction for the various prompts.
  */
 
-import { llm } from "./a2/utils";
+import { llm } from "../a2/utils";
 
 export { defaultSystemInstruction };
 

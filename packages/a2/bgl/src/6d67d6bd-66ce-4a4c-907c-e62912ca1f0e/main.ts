@@ -5,8 +5,8 @@
 import describeGraph from "@describe";
 import invokeGraph from "@invoke";
 
-import { ok } from "./a2/utils";
-import { type Params } from "./a2/common";
+import { ok } from "../a2/utils";
+import { type Params } from "../a2/common";
 
 export { invoke as default, describe };
 

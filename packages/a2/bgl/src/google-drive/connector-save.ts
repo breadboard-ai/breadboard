@@ -2,7 +2,7 @@
  * @fileoverview Connector Save Export.
  */
 import { type DescribeOutputs } from "@describe";
-import { toText, ok, err } from "./a2/utils";
+import { toText, ok, err } from "../a2/utils";
 import { contextToRequests, DOC_MIME_TYPE } from "./docs";
 import { SLIDES_MIME_TYPE, SimpleSlideBuilder } from "./slides";
 import { SHEETS_MIME_TYPE } from "./sheets";

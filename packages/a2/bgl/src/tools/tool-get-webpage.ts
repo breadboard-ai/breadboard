@@ -2,8 +2,8 @@
  * @fileoverview The guts of the Get webpage tool.
  */
 
-import { ok } from "./a2/utils";
-import { executeTool } from "./a2/step-executor";
+import { ok, err } from "../a2/utils";
+import { executeTool } from "../a2/step-executor";
 
 export { invoke as default, describe };
 
@@ -29,6 +29,9 @@ async function getContentFromUrl(url: string): Promise<Outcome<string>> {
   );
   if (!ok(executing)) return executing;
   console.log("GET CONTENT", executing);
+  if (typeof executing === "string") {
+    return err(`Unexpected string response from tool`);
+  }
   const { html_body, markdown } = executing;
   if (markdown) {
     return markdown;

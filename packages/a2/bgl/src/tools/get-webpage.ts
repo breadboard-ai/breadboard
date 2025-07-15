@@ -5,7 +5,7 @@
 import toolGetWebpage, {
   describe as toolGetWebpageDescribe,
 } from "./tool-get-webpage";
-import { Template } from "./a2/template";
+import { Template } from "../a2/template";
 import {
   ok,
   err,
@@ -13,8 +13,8 @@ import {
   toLLMContent,
   defaultLLMContent,
   toTextConcat,
-} from "./a2/utils";
-import { ListExpander } from "./a2/lists";
+} from "../a2/utils";
+import { ListExpander } from "../a2/lists";
 
 export { invoke as default, describe };
 
