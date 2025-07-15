@@ -71,6 +71,7 @@ export class VEHeader extends LitElement {
 
       :host {
         display: block;
+        overflow: hidden;
         height: 100%;
         width: 100%;
         container-type: inline-size;
@@ -145,24 +146,27 @@ export class VEHeader extends LitElement {
           align-items: center;
 
           bb-item-select {
-            --selected-item-padding-left: 0;
-            --selected-item-padding-right: 0;
+            --selected-item-padding-left: var(--bb-grid-size);
+            --selected-item-padding-right: var(--bb-grid-size);
+            --selected-item-hover-color: var(--n-95);
+            --selected-item-border-radius: 50%;
 
-            margin: 0 0 0 var(--bb-grid-size-6);
+            margin: 0 0 0 var(--bb-grid-size-3);
           }
 
           & #save-status-label {
+            display: none;
             font-size: 10px;
             line-height: 1;
             color: var(--ui-secondary-text);
-            margin: 0 0 0 var(--bb-grid-size-6);
+            margin: 0 0 0 var(--bb-grid-size-4);
             min-width: 45px;
           }
 
           & #toggle-user-menu {
             height: var(--bb-grid-size-7);
             padding: 0;
-            margin: 0 0 0 var(--bb-grid-size-6);
+            margin: 0 0 0 var(--bb-grid-size-4);
             background: none;
             border: none;
             cursor: pointer;
@@ -210,7 +214,7 @@ export class VEHeader extends LitElement {
             background: var(--n-0);
             border: none;
             border-radius: var(--bb-grid-size-16);
-            margin: 0 0 0 var(--bb-grid-size-6);
+            margin: 0 var(--bb-grid-size) 0 var(--bb-grid-size-6);
 
             color: var(--n-100);
             height: var(--bb-grid-size-8);
@@ -318,6 +322,12 @@ export class VEHeader extends LitElement {
         }
       }
 
+      @media (min-width: 620px) {
+        section #right #save-status-label {
+          display: block;
+        }
+      }
+
       @media (min-width: 820px) {
         #experiment {
           display: block;
@@ -398,7 +408,8 @@ export class VEHeader extends LitElement {
           this.#renderSaveStatusLabel(),
           this.#renderSharePublishButton(),
           this.#renderRemixButton(),
-          this.#renderItemSelect(),
+          this.#renderGraphItemSelect(),
+          this.#renderGlobalItemSelect(),
           this.#renderUser(),
         ]}
       </div>
@@ -444,7 +455,7 @@ export class VEHeader extends LitElement {
     </button>`;
   }
 
-  #renderItemSelect() {
+  #renderGraphItemSelect() {
     const options: EnumValue[] = [
       {
         id: "more",
@@ -486,17 +497,33 @@ export class VEHeader extends LitElement {
       });
     }
 
-    options.push({
-      id: "feedback",
-      title: Strings.from("COMMAND_SEND_FEEDBACK"),
-      icon: "flag",
-    });
+    return html`<bb-item-select
+      .showDownArrow=${false}
+      .freezeValue=${0}
+      .transparent=${true}
+      .values=${options}
+    ></bb-item-select>`;
+  }
 
-    options.push({
-      id: "chat",
-      title: Strings.from("COMMAND_JOIN_CHAT"),
-      icon: "open_in_new",
-    });
+  #renderGlobalItemSelect() {
+    const options: EnumValue[] = [
+      {
+        id: "settings",
+        title: "",
+        icon: "settings",
+        hidden: true,
+      },
+      {
+        id: "feedback",
+        title: Strings.from("COMMAND_SEND_FEEDBACK"),
+        icon: "flag",
+      },
+      {
+        id: "chat",
+        title: Strings.from("COMMAND_JOIN_CHAT"),
+        icon: "open_in_new",
+      },
+    ];
 
     return html`<bb-item-select
       .showDownArrow=${false}
@@ -562,7 +589,7 @@ export class VEHeader extends LitElement {
       ${this.loadState !== "Error" && this.loadState !== "Loading"
         ? html`<div id="right">
             <bb-homepage-search-button></bb-homepage-search-button>
-            ${[this.#renderItemSelect(), this.#renderUser()]}
+            ${[this.#renderGraphItemSelect(), this.#renderUser()]}
           </div>`
         : nothing}
     </section>`;
