@@ -16,6 +16,10 @@
       "default": "./dist/app-templates/basic/index.js",
       "types": "./dist/app-templates/basic/index.d.ts"
     },
+    "./utils/action-tracker": {
+      "default": "./dist/utils/action-tracker.js",
+      "types": "./dist/utils/action-tracker.d.ts"
+    },
     "./utils/signin-adapter": {
       "default": "./dist/utils/signin-adapter.js",
       "types": "./dist/utils/signin-adapter.d.ts"

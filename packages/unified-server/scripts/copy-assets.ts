@@ -12,6 +12,14 @@ const unifiedServerAssetsDir = join(unifiedServerRoot, "public");
 const unifiedServerIndexHtml = join(unifiedServerRoot, "index.html");
 const unifiedServerIconsDir = join(unifiedServerRoot, "icons");
 const unifiedServerOAuthDir = join(unifiedServerRoot, "oauth");
+const unifiedServerLandingStylesSrcDir = join(
+  unifiedServerRoot,
+  "landing/styles"
+);
+const unifiedServerLandingStylesDestDir = join(
+  unifiedServerRoot,
+  "public/styles/landing"
+);
 
 const visualEditorRoot = join(unifiedServerRoot, "../visual-editor");
 const visualEditorAssetsDir = join(visualEditorRoot, "public");
@@ -20,7 +28,7 @@ const visualEditorIconsDir = join(visualEditorRoot, "icons");
 const visualEditorOAuthDir = join(visualEditorRoot, "oauth");
 
 async function main() {
-  return Promise.all([
+  await Promise.all([
     cp(visualEditorAssetsDir, unifiedServerAssetsDir, {
       force: true,
       recursive: true,
@@ -35,6 +43,15 @@ async function main() {
     }),
     cp(visualEditorIndexHtml, unifiedServerIndexHtml),
   ]);
+
+  await cp(
+    unifiedServerLandingStylesSrcDir,
+    unifiedServerLandingStylesDestDir,
+    {
+      recursive: true,
+      force: true,
+    }
+  );
 }
 
 await main();

@@ -1998,11 +1998,7 @@ export class Main extends SignalWatcher(LitElement) {
       .mode=${this.#uiState.mode}
       @bbsignout=${async () => {
         await this.signinAdapter.signOut();
-        this.toast(
-          Strings.from("STATUS_LOGGED_OUT"),
-          BreadboardUI.Events.ToastType.INFORMATION
-        );
-        this.requestUpdate();
+        window.location.href = new URL("/", window.location.href).href;
       }}
       @bbclose=${() => {
         if (!this.#tab) {

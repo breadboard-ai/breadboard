@@ -120,7 +120,8 @@
         "../visual-editor#prepare-assets"
       ],
       "files": [
-        "scripts/copy-assets.ts"
+        "scripts/copy-assets.ts",
+        "landing/styles/**/*.css"
       ],
       "output": [
         "public/",
