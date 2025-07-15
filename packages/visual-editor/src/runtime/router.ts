@@ -26,6 +26,11 @@ export class Router extends EventTarget {
         urlWithParams.searchParams.delete(param);
         replaceParams = true;
       }
+
+      if (param === "redirect-from-landing") {
+        urlWithParams.searchParams.delete(param);
+        replaceParams = true;
+      }
     }
 
     if (!urlWithParams.searchParams.has("mode")) {

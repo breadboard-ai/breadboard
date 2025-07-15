@@ -1,0 +1,113 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { SETTINGS_TYPE } from "@breadboard-ai/shared-ui/types/types.js";
+import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
+import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
+import { createTokenVendor } from "@breadboard-ai/connection-client";
+import { GlobalConfig } from "@breadboard-ai/shared-ui/contexts";
+import { ActionTracker } from "@breadboard-ai/shared-ui/utils/action-tracker.js";
+import { discoverClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+
+const deploymentConfiguration = discoverClientDeploymentConfiguration();
+
+declare global {
+  interface Window {
+    dataLayer: Array<IArguments>;
+  }
+}
+
+function redirect() {
+  // Redirect to the main page.
+  window.location.href = new URL(
+    "/?redirect-from-landing=true",
+    window.location.href
+  ).href;
+}
+
+if (deploymentConfiguration?.MEASUREMENT_ID) {
+  const id = deploymentConfiguration.MEASUREMENT_ID;
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () {
+    // eslint-disable-next-line prefer-rest-params
+    window.dataLayer.push(arguments);
+  };
+  window.gtag("js", new Date());
+  // IP anonymized per OOGA policy.
+  window.gtag("config", id, { anonymize_ip: true });
+
+  const tagManagerScript = document.createElement("script");
+  tagManagerScript.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
+  tagManagerScript.async = true;
+  document.body.appendChild(tagManagerScript);
+}
+
+async function init() {
+  const globalConfig = {
+    connectionServerUrl: new URL("/connection/", window.location.href).href,
+    connectionRedirectUrl: "/oauth/",
+    requiresSignin: true,
+  } as GlobalConfig;
+
+  const { SettingsStore } = await import(
+    "@breadboard-ai/shared-ui/data/settings-store.js"
+  );
+  const settings = await SettingsStore.restoredInstance();
+  const settingsHelper = new SettingsHelperImpl(settings);
+  const tokenVendor = createTokenVendor(
+    {
+      get: (conectionId: string) => {
+        return settingsHelper.get(SETTINGS_TYPE.CONNECTIONS, conectionId)
+          ?.value as string;
+      },
+      set: async (connectionId: string, grant: string) => {
+        await settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connectionId, {
+          name: connectionId,
+          value: grant,
+        });
+      },
+    },
+    globalConfig
+  );
+
+  const signinAdapter = new SigninAdapter(
+    tokenVendor,
+    globalConfig as GlobalConfig,
+    settingsHelper
+  );
+
+  if (
+    signinAdapter.state === "anonymous" ||
+    signinAdapter.state === "signedin"
+  ) {
+    redirect();
+    return;
+  }
+
+  const signInButton = document.querySelector<HTMLAnchorElement>("#sign-in");
+  if (!signInButton) {
+    console.warn("Unable to locate sign-in button");
+    return;
+  }
+
+  signInButton.href = await signinAdapter.getSigninUrl();
+  signInButton.addEventListener("click", async () => {
+    if (!signinAdapter) {
+      return;
+    }
+
+    const result = await signinAdapter.signIn();
+    if (!result.ok) {
+      console.warn(result.error);
+      return;
+    }
+
+    ActionTracker.signInSuccess();
+    redirect();
+  });
+}
+
+init();
