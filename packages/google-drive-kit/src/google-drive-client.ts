@@ -589,7 +589,7 @@ export class GoogleDriveClient {
     const body = new FormData();
     body.append(
       "metadata",
-      new Blob([JSON.stringify(metadata)], {
+      new Blob([JSON.stringify(metadata ?? {})], {
         type: "application/json; charset=UTF-8",
       })
     );
@@ -697,6 +697,12 @@ export class GoogleDriveClient {
         ? { kind: "key", key: this.#publicApiKey }
         : undefined
     );
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive listFiles ${response.status} error: ` +
+          (await response.text())
+      );
+    }
     return await response.json();
   }
 
