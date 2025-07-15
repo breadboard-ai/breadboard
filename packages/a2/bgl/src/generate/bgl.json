@@ -55,6 +55,7 @@
       "url": "./a2.bgl.json"
     }
   },
+  "modules": {},
   "exports": [
     "#module:main"
   ],

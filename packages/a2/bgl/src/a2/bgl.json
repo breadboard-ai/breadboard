@@ -49,6 +49,7 @@
     ],
     "icon": "text"
   },
+  "modules": {},
   "exports": [
     "#module:researcher",
     "#module:image-generator",

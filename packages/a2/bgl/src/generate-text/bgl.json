@@ -197,6 +197,7 @@
       }
     }
   },
+  "modules": {},
   "exports": [
     "#module:main"
   ],

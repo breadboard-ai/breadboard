@@ -49,6 +49,7 @@
       "component"
     ]
   },
+  "modules": {},
   "imports": {
     "a2": {
       "url": "./a2.bgl.json"

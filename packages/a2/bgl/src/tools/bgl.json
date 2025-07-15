@@ -53,6 +53,7 @@
       "component"
     ]
   },
+  "modules": {},
   "exports": [
     "#module:get-weather",
     "#module:search-web",

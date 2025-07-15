@@ -49,7 +49,7 @@ const bgls = new Map<string, unknown>([
 
 await Promise.all(
   Array.from(bgls.entries()).map(([name, bgl]) => {
-    delete (bgl as Record<string, unknown>)["modules"];
+    (bgl as Record<string, unknown>)["modules"] = {};
     const json = JSON.stringify(bgl, null, 2);
     const path = join(ROOT_DIR, "bgl", "src", name, "bgl.json");
     return writeFile(path, json, "utf8");
