@@ -91,8 +91,7 @@ export const styles = [
       }
 
       &.selected {
-        background-color: var(--ui-custom-o-100);
-        color: var(--n-100);
+        outline: 1px solid var(--n-0);
       }
 
       &.invalid {
