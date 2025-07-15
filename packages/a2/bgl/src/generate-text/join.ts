@@ -3,8 +3,8 @@
  */
 
 import { type AgentContext } from "../a2/common";
-import { isEmpty } from "../a2/utils";
 import { addContent } from "../a2/lists";
+import { isEmpty } from "../a2/utils";
 
 export { invoke as default, describe };
 

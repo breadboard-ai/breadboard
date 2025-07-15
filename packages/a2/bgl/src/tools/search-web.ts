@@ -2,26 +2,20 @@
  * @fileoverview Given a query, searches the Web with Google Search.
  */
 
-import gemini, { type GeminiInputs } from "../a2/gemini";
+import { ListExpander } from "../a2/lists";
 import { Template } from "../a2/template";
-import { ToolManager } from "../a2/tool-manager";
-import { GeminiPrompt } from "../a2/gemini-prompt";
 import {
-  ok,
+  defaultLLMContent,
   err,
+  ok,
+  toLLMContent,
   toText,
   toTextConcat,
-  toLLMContent,
-  addUserTurn,
-  defaultLLMContent,
 } from "../a2/utils";
-import { ListExpander } from "../a2/lists";
 import toolSearchWeb, {
   type SearchWebOutputs,
   describe as toolSearchWebDescribe,
 } from "./tool-search-web";
-
-import fetch from "@fetch";
 
 export { invoke as default, describe };
 
@@ -61,7 +55,6 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
   let mode: "step" | "tool";
   if ("context" in inputs) {
     mode = "step";
-    const last = inputs.context?.at(-1);
     if (inputs.context) {
       query = inputs.context;
     } else {
@@ -112,7 +105,7 @@ export type DescribeInputs = {
   asType?: boolean;
 };
 
-async function describe({ asType, ...inputs }: DescribeInputs) {
+async function describe({ asType: _, ...inputs }: DescribeInputs) {
   const isTool = inputs && Object.keys(inputs).length === 1;
   if (isTool) {
     return toolSearchWebDescribe();

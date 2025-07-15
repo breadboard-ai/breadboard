@@ -4,41 +4,29 @@
 
 import output from "@output";
 
-import type { SharedContext } from "./types";
 import {
   createDoneTool,
-  createKeepChattingTool,
   createKeepChattingResult,
+  createKeepChattingTool,
   type ChatTool,
 } from "./chat-tools";
 import { createSystemInstruction } from "./system-instruction";
+import type { SharedContext } from "./types";
 
-import { report } from "../a2/output";
-import { err, ok, defaultLLMContent, llm } from "../a2/utils";
-import { Template } from "../a2/template";
 import { ArgumentNameGenerator } from "../a2/introducer";
-import { ToolManager, type ToolHandle } from "../a2/tool-manager";
-import { ListExpander, listPrompt, toList, listSchema } from "../a2/lists";
+import { ListExpander, listSchema, toList } from "../a2/lists";
+import { report } from "../a2/output";
+import { Template } from "../a2/template";
+import { ToolManager } from "../a2/tool-manager";
+import { defaultLLMContent, err, ok } from "../a2/utils";
 
-import {
-  defaultSafetySettings,
-  type GeminiInputs,
-  type GeminiSchema,
-  type Tool,
-} from "../a2/gemini";
+import { defaultSafetySettings, type GeminiInputs } from "../a2/gemini";
 import { GeminiPrompt, type GeminiPromptOutput } from "../a2/gemini-prompt";
 
 export { invoke as default, describe };
 
 type Inputs = {
   context: SharedContext;
-};
-
-type Outputs = {
-  $error?: string;
-  context?: SharedContext;
-  toInput?: Schema;
-  done?: LLMContent[];
 };
 
 class GenerateText {
@@ -199,7 +187,7 @@ class GenerateText {
             // Can't set to functionCallingConfig mode to NONE, as that seems to hallucinate tool use.
           }
         }
-        let keepCallingGemini = true;
+        const keepCallingGemini = true;
         let afterTools: GeminiPromptOutput | undefined = undefined;
         let turnCount = 0;
         while (keepCallingGemini) {
@@ -340,7 +328,7 @@ async function invoke({ context }: Inputs) {
   }
 
   // Check to see if the user ended chat and return early.
-  const { userEndedChat, userInputs, last } = context;
+  const { userEndedChat, last } = context;
   if (userEndedChat) {
     if (!last) {
       return err("Chat ended without any work");

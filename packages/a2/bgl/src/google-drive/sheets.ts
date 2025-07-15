@@ -3,10 +3,10 @@
  */
 import { type GeminiSchema } from "../a2/gemini";
 import { GeminiPrompt } from "../a2/gemini-prompt";
-import { toText, ok, err, llm } from "../a2/utils";
+import { err, llm, ok } from "../a2/utils";
 import type { SheetValues } from "./types";
 
-export { SHEETS_MIME_TYPE, inferSheetValues };
+export { inferSheetValues, SHEETS_MIME_TYPE };
 
 const SHEETS_MIME_TYPE = "application/vnd.google-apps.spreadsheet";
 

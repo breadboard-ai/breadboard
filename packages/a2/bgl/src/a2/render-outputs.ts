@@ -2,20 +2,11 @@
  * @fileoverview Renders multiple outputs into single display.
  */
 
-import { Template } from "./template";
-import {
-  ok,
-  err,
-  llm,
-  toText,
-  isEmpty,
-  mergeContent,
-  toLLMContent,
-} from "./utils";
-import { callGenWebpage } from "./html-generator";
-import { fanOutContext, flattenContext } from "./lists";
 import { ConnectorManager } from "./connector-manager";
-import { StreamableReporter } from "./output";
+import { callGenWebpage } from "./html-generator";
+import { flattenContext } from "./lists";
+import { Template } from "./template";
+import { err, llm, mergeContent, ok, toLLMContent, toText } from "./utils";
 
 import read from "@read";
 
@@ -328,7 +319,7 @@ async function invoke({
       return { context: [out] };
     case "HTML": {
       const palette = await getPaletteColors();
-      if (!!palette?.primary) {
+      if (palette?.primary) {
         systemText += getPalettePrompt(palette);
       } else {
         const themeColors = await getThemeColors();

@@ -2,12 +2,12 @@
  * @fileoverview Searches weather information on Google Search.
  */
 
-import { ok, err, toLLMContent, toText, defaultLLMContent } from "../a2/utils";
+import { Template } from "../a2/template";
+import { defaultLLMContent, err, ok, toLLMContent, toText } from "../a2/utils";
 import getWeather, {
   describe as getWeatherDescriber,
   type WeatherInputs,
 } from "./get-weather-tool";
-import { Template } from "../a2/template";
 
 export { invoke as default, describe };
 
@@ -41,9 +41,7 @@ export type Outputs = {
 
 async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
   let location;
-  let mode: ToolMode;
   if ("context" in inputs) {
-    mode = "step";
     const last = inputs.context?.at(-1);
     if (last) {
       location = toText(last);
@@ -52,10 +50,8 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
     }
   } else if ("p-location" in inputs) {
     location = await resolveInput(inputs["p-location"]);
-    mode = "step";
   } else {
     location = inputs.location;
-    mode = "tool";
   }
   location = (location || "").trim();
   if (!location) {
@@ -81,7 +77,7 @@ export type DescribeInputs = {
   asType: boolean;
 };
 
-async function describe({ asType, ...inputs }: DescribeInputs) {
+async function describe({ asType: _, ...inputs }: DescribeInputs) {
   const isTool = inputs && Object.keys(inputs).length === 1;
   if (isTool) {
     return getWeatherDescriber();

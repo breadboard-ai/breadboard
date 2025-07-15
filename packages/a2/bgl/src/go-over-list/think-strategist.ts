@@ -2,15 +2,15 @@
  * @fileoverview Executes think-as-i strategy.
  */
 
-import { type Strategist, type Plan, type ExecuteStepFunction } from "./types";
-import { ok, toLLMContent } from "../a2/utils";
 import { report } from "../a2/output";
+import { ok, toLLMContent } from "../a2/utils";
 import { organizerPrompt } from "./organizer-prompt";
+import { type ExecuteStepFunction, type Strategist } from "./types";
 
 import {
+  getPlan,
   plannerPrompt,
   thinkingPlannerPrompt,
-  getPlan,
 } from "./planner-prompt";
 
 export { ThinkStrategist };

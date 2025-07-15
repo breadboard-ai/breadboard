@@ -223,10 +223,6 @@ class StreamableReporter {
   }
 
   sendLinks(title: string, links: Link[], icon?: string) {
-    let linksParticle = {
-      text: JSON.stringify(links),
-      mimeType: "application/json",
-    };
     const group: SerializedGroupParticle["group"] = [
       ["title", { text: title }],
       [

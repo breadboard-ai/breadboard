@@ -3,27 +3,25 @@
  */
 
 import type {
-  SlidesRequest,
-  SlidesPredefinedLayout,
   SlidesCreateSlideRequest,
-  SlidesInsertTextRequest,
-  SlidesUpdateTextStyleRequest,
   SlidesLayoutPlaceholderIdMapping,
+  SlidesPredefinedLayout,
+  SlidesRequest,
   SlidesTextStyle,
 } from "./api";
+import { marked } from "./marked";
 import type {
-  Token,
-  ImageToken,
   FormattingToken,
-  ListToken,
   HeadingToken,
+  ImageToken,
   ListItemToken,
+  ListToken,
   SimpleSlide,
+  Token,
 } from "./types";
 import { unescape } from "./unescape";
-import { marked } from "./marked";
 
-export { SlideBuilder, SimpleSlideBuilder, slidesToRequests, SLIDES_MIME_TYPE };
+export { SimpleSlideBuilder, SlideBuilder, SLIDES_MIME_TYPE, slidesToRequests };
 
 const SLIDES_MIME_TYPE = "application/vnd.google-apps.presentation";
 
@@ -80,7 +78,7 @@ class SlideBuilder {
   }
 
   addMarkdown(markdown: string) {
-    let bodyText = this.#getBodyText();
+    const bodyText = this.#getBodyText();
     if (this.#slide.title || bodyText.text || bodyText.images?.length) {
       this.#newSlide();
     }
@@ -184,11 +182,9 @@ class SlideBuilder {
   }
 
   #addListToBody(token: ListToken) {
-    const slide = this.#slide;
-    const { ordered, items } = token;
-    let bulletedText = "";
+    const { items } = token;
     const bodyText = this.#getBodyText();
-    let listOffset = bodyText.text.length;
+    const listOffset = bodyText.text.length;
     let length = 0;
     let localOffset = listOffset;
     const addListItems = (depth: number, items: ListItemToken[]) => {
@@ -245,7 +241,6 @@ class SlideBuilder {
     const slide = this.#slide;
     if (!slide) return;
     const hasText = !!slide.body?.at(0)?.text?.text;
-    const hasImages = !!slide.body?.at(0)?.text?.images?.length;
     if (!hasText) {
       slide.layout = "TITLE";
     } else {
@@ -405,7 +400,7 @@ function getTextStyle(style: SlideStyle): {
   style: SlidesTextStyle;
   fields: string;
 } {
-  const { link: url, range: _, ...rest } = style;
+  const { link: url, ...rest } = style;
   const linkStyle = url ? { link: { url } } : {};
   const fields = Object.keys(rest);
   if (url) fields.push("link");

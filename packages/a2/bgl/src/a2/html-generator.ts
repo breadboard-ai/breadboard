@@ -2,20 +2,15 @@
  * @fileoverview Utility for calling generate_webpage tool.
  */
 
-import fetch from "@fetch";
-import secrets from "@secrets";
-
+import type { ContentMap, ExecuteStepRequest } from "./step-executor";
+import { executeStep } from "./step-executor";
 import {
+  decodeBase64,
   err,
   ok,
   toLLMContent,
   toLLMContentInline,
-  toText,
-  decodeBase64,
 } from "./utils";
-import { executeStep } from "./step-executor";
-import type { ExecuteStepRequest, Content, ContentMap } from "./step-executor";
-import { report } from "./output";
 
 export { callGenWebpage };
 
@@ -30,8 +25,8 @@ async function callGenWebpage(
   const executionInputs: ContentMap = {};
   const inputParameters: string[] = [];
   let i = 0;
-  for (let val of content) {
-    for (let part of val.parts) {
+  for (const val of content) {
+    for (const part of val.parts) {
       i++;
       if ("text" in part) {
         const key = `text_${i}`;
@@ -114,7 +109,7 @@ async function callGenWebpage(
   }
 
   let returnVal;
-  let outputChunk = response.executionOutputs[OUTPUT_KEY];
+  const outputChunk = response.executionOutputs[OUTPUT_KEY];
   if (!outputChunk) {
     return err("Error: Malformed response. No page generated.");
   }

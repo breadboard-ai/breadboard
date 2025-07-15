@@ -4,18 +4,13 @@
 
 import invokeBoard from "@invoke";
 
-import gemini, {
-  defaultSafetySettings,
-  type GeminiOutputs,
-  type GeminiInputs,
-  type Tool,
-} from "./gemini";
-import { err, ok, toLLMContent, toText, addUserTurn } from "./utils";
+import { type Params } from "./common";
+import gemini, { defaultSafetySettings, type GeminiInputs } from "./gemini";
+import { ArgumentNameGenerator } from "./introducer";
+import { report } from "./output";
 import { Template } from "./template";
 import { ToolManager } from "./tool-manager";
-import { type Params } from "./common";
-import { report } from "./output";
-import { ArgumentNameGenerator } from "./introducer";
+import { addUserTurn, err, ok, toLLMContent, toText } from "./utils";
 
 const MAKE_CODE_ICON = "generative-code";
 
@@ -98,7 +93,7 @@ You output will be fed directly into the text-to-${language} model, so it must b
     body: {
       contents: addUserTurn(promptText, contents),
       systemInstruction: toLLMContent(`
-You are a world-class ${language} developer whose specialty is to write prompts for text-to-${language} models that 
+You are a world-class ${language} developer whose specialty is to write prompts for text-to-${language} models that 
 always generate valid outputs.
 
 The prompt must describe every aspect of the functionality in great detail and describe the problem being solved 

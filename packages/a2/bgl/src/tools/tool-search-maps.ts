@@ -2,8 +2,8 @@
  * @fileoverview The guts of the Search Maps tool.
  */
 
-import { ok, err } from "../a2/utils";
 import { executeTool } from "../a2/step-executor";
+import { ok } from "../a2/utils";
 
 export { invoke as default, describe };
 

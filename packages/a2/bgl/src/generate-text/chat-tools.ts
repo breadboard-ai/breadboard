@@ -2,8 +2,8 @@
  * @fileoverview Tools for conversational ("chat") mode
  */
 
-import type { ToolHandle } from "../a2/tool-manager";
 import type { FunctionDeclaration } from "../a2/gemini";
+import type { ToolHandle } from "../a2/tool-manager";
 
 export type ChatTool = {
   readonly name: string;
@@ -12,7 +12,7 @@ export type ChatTool = {
   readonly invoked: boolean;
 };
 
-export { createDoneTool, createKeepChattingTool, createKeepChattingResult };
+export { createDoneTool, createKeepChattingResult, createKeepChattingTool };
 
 function createKeepChattingResult() {
   return {

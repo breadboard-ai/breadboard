@@ -3,11 +3,11 @@
  */
 
 import { type Params } from "../a2/common";
-import type { SharedContext } from "./types";
-import { ok, toLLMContent, defaultLLMContent } from "../a2/utils";
-import { Template } from "../a2/template";
 import { readSettings } from "../a2/settings";
+import { Template } from "../a2/template";
+import { defaultLLMContent, ok } from "../a2/utils";
 import { defaultSystemInstruction } from "./system-instruction";
+import type { SharedContext } from "./types";
 
 export { invoke as default, describe };
 

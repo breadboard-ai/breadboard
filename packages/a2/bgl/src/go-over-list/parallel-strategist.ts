@@ -4,8 +4,8 @@
 
 import { report } from "../a2/output";
 import { ok } from "../a2/utils";
-import { plannerPrompt, getPlan } from "./planner-prompt";
-import { type Strategist, type Plan, type ExecuteStepFunction } from "./types";
+import { getPlan, plannerPrompt } from "./planner-prompt";
+import { type ExecuteStepFunction, type Strategist } from "./types";
 
 export { ParallelStrategist };
 

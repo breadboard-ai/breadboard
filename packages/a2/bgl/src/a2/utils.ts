@@ -189,7 +189,7 @@ function joinContent(
   dropHistory: boolean = false
 ): LLMContent[] {
   if (dropHistory && context) {
-    let last = context.at(-1);
+    const last = context.at(-1);
     let retainedContext;
     if (last) {
       retainedContext = [last];
@@ -201,8 +201,8 @@ function joinContent(
 
 function extractInlineData(context: LLMContent[]): LLMContent[] {
   const results = [];
-  for (let el of context) {
-    for (let part of el.parts) {
+  for (const el of context) {
+    for (const part of el.parts) {
       if (part) {
         if ("inlineData" in part && part.inlineData) {
           results.push(
@@ -217,8 +217,8 @@ function extractInlineData(context: LLMContent[]): LLMContent[] {
 
 function extractMediaData(context: LLMContent[]): LLMContent[] {
   const results = [];
-  for (let el of context) {
-    for (let part of el.parts) {
+  for (const el of context) {
+    for (const part of el.parts) {
       if (part) {
         if ("inlineData" in part && part.inlineData) {
           results.push(
@@ -238,8 +238,8 @@ function extractMediaData(context: LLMContent[]): LLMContent[] {
 
 function extractTextData(context: LLMContent[]): LLMContent[] {
   const results = [];
-  for (let el of context) {
-    for (let part of el.parts) {
+  for (const el of context) {
+    for (const part of el.parts) {
       if (part) {
         if ("text" in part && part.text) {
           results.push(toLLMContent(part.text));

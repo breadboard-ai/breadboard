@@ -7,24 +7,24 @@
 import fetch, { type FetchInputs } from "@fetch";
 import secrets from "@secrets";
 
-import { err, ok } from "../a2/utils";
+import { err } from "../a2/utils";
 
 export {
-  connect,
-  get,
-  create,
-  del,
-  query,
-  createMultipart,
-  exp,
-  getDoc,
-  updateDoc,
-  createPresentation,
-  getPresentation,
-  updatePresentation,
-  createPermission,
-  updateSpreadsheetValues,
   appendSpreadsheetValues,
+  connect,
+  create,
+  createMultipart,
+  createPermission,
+  createPresentation,
+  del,
+  exp,
+  get,
+  getDoc,
+  getPresentation,
+  query,
+  updateDoc,
+  updatePresentation,
+  updateSpreadsheetValues,
 };
 
 // These are various Google Drive-specific types.

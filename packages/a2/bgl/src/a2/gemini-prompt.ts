@@ -4,13 +4,9 @@
 
 import invokeBoard from "@invoke";
 
-import gemini, {
-  type GeminiInputs,
-  type GeminiOutputs,
-  type Candidate,
-} from "./gemini";
+import gemini, { type Candidate, type GeminiInputs } from "./gemini";
 import { ToolManager } from "./tool-manager";
-import { ok, err, toLLMContent, addUserTurn } from "./utils";
+import { addUserTurn, err, ok } from "./utils";
 
 export { GeminiPrompt };
 
@@ -80,7 +76,7 @@ class GeminiPrompt {
     const args = a as Record<string, unknown>;
     const context = [...this.inputs.body.contents];
     const hasContext = "context" in args;
-    let contextArg = hasContext
+    const contextArg = hasContext
       ? {}
       : {
           context,

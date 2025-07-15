@@ -17,11 +17,6 @@ export type Requireds = {
   required?: Schema["required"];
 };
 
-type Location = {
-  part: LLMContent["parts"][0];
-  parts: LLMContent["parts"];
-};
-
 export type InParamPart = {
   type: "in";
   path: string;
@@ -56,10 +51,6 @@ export type ParamPart =
 export type TemplatePart = DataPart | ParamPart;
 
 export type ToolCallback = (param: ToolParamPart) => Promise<Outcome<string>>;
-
-function unique<T>(params: T[]): T[] {
-  return Array.from(new Set(params));
-}
 
 function isTool(param: ParamPart): param is ToolParamPart {
   return param.type === "tool" && !!param.path;
@@ -132,8 +123,6 @@ class Template {
       let start = 0;
       for (const match of matches) {
         const json = match.groups?.json;
-        const op = match.groups?.op;
-        const arg = match.groups?.arg;
         const end = match.index;
         if (end > start) {
           parts.push({ text: part.text.slice(start, end) });
@@ -156,7 +145,7 @@ class Template {
             } else {
               maybeTemplatePart = null;
             }
-          } catch (e) {
+          } catch {
             // do nothing
           } finally {
             if (!maybeTemplatePart) {
@@ -189,7 +178,7 @@ class Template {
     whenTool: ToolCallback
   ): Promise<Outcome<unknown>> {
     if (isIn(param)) {
-      const { type, title: name, path } = param;
+      const { title: name, path } = param;
       const paramName: `p-z-${string}` = `p-z-${path}`;
       if (paramName in params) {
         return params[paramName];
@@ -230,7 +219,7 @@ class Template {
         parts.push(part);
       }
     }
-    return { parts }
+    return { parts };
   }
 
   async substitute(

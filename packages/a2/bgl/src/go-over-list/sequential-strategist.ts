@@ -2,10 +2,10 @@
  * @fileoverview Executes sequential strategy.
  */
 
-import { type Strategist, type Plan, type ExecuteStepFunction } from "./types";
-import { plannerPrompt, getPlan } from "./planner-prompt";
-import { toLLMContent, ok } from "../a2/utils";
 import { report } from "../a2/output";
+import { ok, toLLMContent } from "../a2/utils";
+import { getPlan, plannerPrompt } from "./planner-prompt";
+import { type ExecuteStepFunction, type Strategist } from "./types";
 
 export { SequentialStrategist };
 

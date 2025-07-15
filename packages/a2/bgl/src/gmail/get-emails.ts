@@ -3,9 +3,9 @@
  */
 
 import { type DescribeOutputs } from "@describe";
-import { err, decodeBase64 } from "../a2/utils";
 import fetch from "@fetch";
 import secrets from "@secrets";
+import { decodeBase64, err } from "../a2/utils";
 
 type FetchErrorResponse = {
   $error: string;
@@ -19,7 +19,7 @@ function maybeExtractError(e: string): string {
   try {
     const parsed = JSON.parse(e);
     return parsed.error.message;
-  } catch (error) {
+  } catch {
     return e;
   }
 }

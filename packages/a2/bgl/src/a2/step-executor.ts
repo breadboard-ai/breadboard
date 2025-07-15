@@ -70,7 +70,7 @@ function maybeExtractError(e: string): string {
   try {
     const parsed = JSON.parse(e);
     return parsed.error.message;
-  } catch (error) {
+  } catch {
     return e;
   }
 }
@@ -108,7 +108,7 @@ async function executeTool<
   const jsonString = decodeBase64(data);
   try {
     return JSON.parse(jsonString) as T;
-  } catch (e) {
+  } catch {
     return jsonString;
   }
 }
