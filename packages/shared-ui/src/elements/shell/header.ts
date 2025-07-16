@@ -145,6 +145,10 @@ export class VEHeader extends LitElement {
           display: flex;
           align-items: center;
 
+          bb-homepage-search-button {
+            margin: 0 var(--bb-grid-size-6) 0 0;
+          }
+
           bb-item-select {
             --selected-item-padding-left: var(--bb-grid-size);
             --selected-item-padding-right: var(--bb-grid-size);
@@ -456,6 +460,10 @@ export class VEHeader extends LitElement {
   }
 
   #renderGraphItemSelect() {
+    if (!this.isMine) {
+      return nothing;
+    }
+
     const options: EnumValue[] = [
       {
         id: "more",
@@ -463,31 +471,27 @@ export class VEHeader extends LitElement {
         icon: "more_vert",
         hidden: true,
       },
+      {
+        id: "edit-title-and-description",
+        title: Strings.from("COMMAND_EDIT_PROJECT_INFORMATION"),
+        icon: "edit",
+      },
+      {
+        id: "delete",
+        title: Strings.from("COMMAND_DELETE_PROJECT"),
+        icon: "delete",
+      },
+      {
+        id: "duplicate",
+        title: Strings.from("COMMAND_COPY_PROJECT"),
+        icon: "file_copy",
+      },
+      {
+        id: "history",
+        title: Strings.from("COMMAND_SHOW_VERSION_HISTORY"),
+        icon: "history",
+      },
     ];
-    if (this.isMine) {
-      options.push(
-        {
-          id: "edit-title-and-description",
-          title: Strings.from("COMMAND_EDIT_PROJECT_INFORMATION"),
-          icon: "edit",
-        },
-        {
-          id: "delete",
-          title: Strings.from("COMMAND_DELETE_PROJECT"),
-          icon: "delete",
-        },
-        {
-          id: "duplicate",
-          title: Strings.from("COMMAND_COPY_PROJECT"),
-          icon: "file_copy",
-        },
-        {
-          id: "history",
-          title: Strings.from("COMMAND_SHOW_VERSION_HISTORY"),
-          icon: "history",
-        }
-      );
-    }
 
     return html`<bb-item-select
       .showDownArrow=${false}
