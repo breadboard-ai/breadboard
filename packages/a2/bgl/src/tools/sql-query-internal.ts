@@ -104,6 +104,7 @@ async function describe({ asType: _, ...inputs }: DescribeInputs) {
       };
 
   return {
+    title: "SQL Query Internal",
     inputSchema: {
       type: "object",
       properties: {

@@ -143,6 +143,7 @@ async function describe({ asType: _, ...inputs }: DescribeInputs) {
       };
 
   return {
+    title: "Get Webpage",
     inputSchema: {
       type: "object",
       properties: {

@@ -104,6 +104,7 @@ async function describe({ asType: _, ...inputs }: DescribeInputs) {
       };
 
   return {
+    title: "Search Moma",
     inputSchema: {
       type: "object",
       properties: {

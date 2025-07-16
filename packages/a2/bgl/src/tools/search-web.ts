@@ -129,6 +129,7 @@ async function describe({ asType: _, ...inputs }: DescribeInputs) {
       };
 
   return {
+    title: "Search Web",
     inputSchema: {
       type: "object",
       properties: {
