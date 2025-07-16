@@ -52,3 +52,19 @@ export const UnlockRoute: EventRoute<"host.unlock"> = {
     return false;
   },
 };
+
+export const FlagChangeRoute: EventRoute<"host.flagchange"> = {
+  event: "host.flagchange",
+
+  async do({ runtime, originalEvent }) {
+    if (typeof originalEvent.detail.value !== "undefined") {
+      await runtime.flags.override(
+        originalEvent.detail.flag,
+        originalEvent.detail.value
+      );
+    } else {
+      await runtime.flags.clearOverride(originalEvent.detail.flag);
+    }
+    return false;
+  },
+};

@@ -8,6 +8,7 @@
 export { VEEditBoardModal } from "./shell/edit-board.js";
 export { VEHeader } from "./shell/header.js";
 export { VEModal } from "./shell/modal.js";
+export { VERuntimeFlagsModal } from "./shell/runtime-flags.js";
 
 // Inputs.
 export { AddAssetButton } from "./input/add-asset/add-asset-button.js";

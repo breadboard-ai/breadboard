@@ -1400,6 +1400,9 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.show.has("BoardEditModal")
           ? this.#renderBoardEditModal()
           : nothing,
+        this.#uiState.show.has("RuntimeFlags")
+          ? this.#renderRuntimeFlagsModal()
+          : nothing,
         this.#renderTooltip(),
         this.#renderToasts(),
         this.#renderSnackbar(),
@@ -1574,6 +1577,15 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.show.delete("BoardEditModal");
       }}
     ></bb-edit-board-modal>`;
+  }
+
+  #renderRuntimeFlagsModal() {
+    return html`<bb-runtime-flags-modal
+      .flags=${this.#runtime.flags.flags()}
+      @bbmodaldismissed=${() => {
+        this.#uiState.show.delete("RuntimeFlags");
+      }}
+    ></bb-runtime-flags-modal>`;
   }
 
   #renderTosDialog() {
@@ -1860,6 +1872,11 @@ export class Main extends SignalWatcher(LitElement) {
             }
 
             this.#canvasControllerRef.value.sideNavItem = "edit-history";
+            break;
+          }
+
+          case "show-runtime-flags": {
+            this.#uiState.show.add("RuntimeFlags");
             break;
           }
 
