@@ -431,6 +431,7 @@ class DriveOperations {
           mimeType: GRAPH_MIME_TYPE,
         }
       );
+      console.debug(`[Google Drive Board Server] Saved graph`, descriptor);
 
       return { result: true };
     } catch (err) {

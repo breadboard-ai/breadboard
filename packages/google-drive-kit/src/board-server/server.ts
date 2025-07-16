@@ -268,7 +268,9 @@ class GoogleDriveBoardServer
     const fileId = getFileId(url.href);
     const response = await this.#googleDriveClient.getFileMedia(fileId);
     if (response.status === 200) {
-      return response.json();
+      const descriptor = await response.json();
+      console.debug(`[Google Drive Board Server] Loaded graph`, descriptor);
+      return descriptor;
     } else if (response.status === 404) {
       return null;
     } else {
