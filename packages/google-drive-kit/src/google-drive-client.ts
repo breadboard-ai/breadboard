@@ -619,6 +619,12 @@ export class GoogleDriveClient {
       `drive/v3/files/${encodeURIComponent(fileId)}`,
       this.#apiBaseUrl
     );
+    if (options?.addParents) {
+      url.searchParams.set("addParents", options.addParents.join(","));
+    }
+    if (options?.removeParents) {
+      url.searchParams.set("removeParents", options.removeParents.join(","));
+    }
     if (options?.fields?.length) {
       url.searchParams.set("fields", options.fields.join(","));
     }
@@ -777,6 +783,7 @@ export class GoogleDriveClient {
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/copy */
   async copyFile<const T extends CopyFileOptions>(
     fileId: string,
+    metadata?: gapi.client.drive.File,
     options?: T
   ): Promise<
     | { ok: true; value: NarrowedDriveFile<T["fields"]> }
@@ -792,6 +799,7 @@ export class GoogleDriveClient {
     const response = await this.#fetch(url, {
       method: "POST",
       signal: options?.signal,
+      body: JSON.stringify(metadata ?? {}),
     });
     return response.ok
       ? { ok: true, value: await response.json() }
