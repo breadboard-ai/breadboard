@@ -619,6 +619,12 @@ export class GoogleDriveClient {
       `drive/v3/files/${encodeURIComponent(fileId)}`,
       this.#apiBaseUrl
     );
+    if (options?.addParents) {
+      url.searchParams.set("addParents", options.addParents.join(","));
+    }
+    if (options?.removeParents) {
+      url.searchParams.set("removeParents", options.removeParents.join(","));
+    }
     if (options?.fields?.length) {
       url.searchParams.set("fields", options.fields.join(","));
     }
