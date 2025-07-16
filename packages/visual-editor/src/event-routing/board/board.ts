@@ -179,8 +179,8 @@ export const CreateRoute: EventRoute<"board.create"> = {
       location,
       fileName,
       originalEvent.detail.graph,
-      true,
-      originalEvent.detail.messages
+      false,
+      { start: "", end: "", error: "" }
     );
     uiState.blockingAction = false;
 

@@ -146,6 +146,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   #renderControls() {
     return html`<bb-app-header
+      .isEmpty=${this.isEmpty}
       .progress=${this.run?.progress}
       .replayActive=${true}
       .menuActive=${true}
