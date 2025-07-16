@@ -32,6 +32,11 @@ type Mode = {
   icon: string;
   modelName?: string;
   promptPlaceholderText?: string;
+  /**
+   * A brief message that can be presented to the user.
+   * Currently used to provide proactive quota notification.
+   */
+  info?: string;
 };
 
 const MODES: Mode[] = [
@@ -99,6 +104,7 @@ const MODES: Mode[] = [
     icon: "photo_spark",
     promptPlaceholderText:
       "Type your image prompt here. Use @ to include other content.",
+    info: "Image generation has limitied free quota",
   },
   {
     id: "image",
@@ -109,6 +115,7 @@ const MODES: Mode[] = [
     icon: "photo_spark",
     promptPlaceholderText:
       "Type your image prompt here. Use @ to include other content.",
+    info: "Image generation has limitied free quota",
   },
   {
     id: "audio",
@@ -119,6 +126,7 @@ const MODES: Mode[] = [
     icon: "audio_magic_eraser",
     promptPlaceholderText:
       "Type the text to speak here. Use @ to include other content.",
+    info: "Audio generation has limitied free quota",
   },
   {
     id: "video",
@@ -129,6 +137,7 @@ const MODES: Mode[] = [
     icon: "videocam_auto",
     promptPlaceholderText:
       "Type your video prompt here. Use @ to include other content.",
+    info: "Video generation has limitied free quota",
   },
   {
     id: "music",
@@ -139,6 +148,7 @@ const MODES: Mode[] = [
     icon: "audio_magic_eraser",
     promptPlaceholderText:
       "Type your music prompt here. Use @ to include other content.",
+    info: "Music generation has limitied free quota",
   },
 ] as const;
 

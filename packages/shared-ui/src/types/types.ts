@@ -610,6 +610,11 @@ export type EnumValue = {
   description?: string;
   tag?: string; // Typically used for keyboard shortcuts.
   hidden?: boolean;
+  /**
+   * A brief message that can be presented to the user.
+   * Currently used to provide proactive quota notification.
+   */
+  info?: string;
 };
 
 export enum SnackType {
