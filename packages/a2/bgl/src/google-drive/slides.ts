@@ -350,8 +350,8 @@ class SimpleSlideBuilder {
   readonly #objectToDelete: string | undefined;
   #depthAdjustment: number = 0;
 
-  constructor(startIndex: number = 0, objectId?: string) {
-    this.#startIndex = startIndex;
+  constructor(last: number = 0, objectId?: string) {
+    this.#startIndex = last + 1;
     this.#objectToDelete = objectId;
   }
 

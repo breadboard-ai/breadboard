@@ -64,7 +64,7 @@ If necessary, break down the deck into sections using title slides`.asContent(),
   const result = (invoking.last.parts?.at(0) as JSONPart)?.json;
   if (!result) {
     return err(
-      `Unable to infer slide structure. Invalide response from Gemini.`
+      `Unable to infer slide structure. Invalid response from Gemini.`
     );
   }
   return result as SimplePresentation;
