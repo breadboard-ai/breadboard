@@ -489,14 +489,6 @@ export class VEHeader extends LitElement {
       );
     }
 
-    if (this.hasActiveTab && this.showExperimentalComponents) {
-      options.push({
-        id: "jump-to-item",
-        title: "Jump to Item",
-        icon: "jump_to_element",
-      });
-    }
-
     return html`<bb-item-select
       .showDownArrow=${false}
       .freezeValue=${0}

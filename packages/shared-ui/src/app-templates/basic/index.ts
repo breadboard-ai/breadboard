@@ -44,6 +44,8 @@ import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js
 import { emptyStyles } from "../../styles/host/colors-empty.js";
 import { styles as appStyles } from "./index.styles.js";
 
+import "./header/header.js";
+
 import * as ParticlesUI from "@breadboard-ai/particles-ui";
 
 function isHTMLOutput(screen: AppScreenOutput): string | null {

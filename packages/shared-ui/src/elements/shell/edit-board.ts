@@ -10,7 +10,7 @@ import { type } from "../../styles/host/type";
 import { ModalDismissedEvent, StateEvent } from "../../events/events";
 
 @customElement("bb-edit-board-modal")
-export class EditBoardModal extends LitElement {
+export class VEEditBoardModal extends LitElement {
   @property()
   accessor boardTitle: string | null = null;
 

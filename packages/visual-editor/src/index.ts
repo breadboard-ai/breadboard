@@ -23,7 +23,6 @@ import {
   GraphDescriptor,
   SerializedRun,
   MutableGraphStore,
-  defaultModuleContent,
   createFileSystem,
   createEphemeralBlobStore,
   FileSystem,
@@ -53,11 +52,6 @@ import {
 } from "@breadboard-ai/connection-client";
 
 import { sandbox } from "./sandbox";
-import {
-  GraphIdentifier,
-  Module,
-  ModuleIdentifier,
-} from "@breadboard-ai/types";
 import { KeyboardCommandDeps } from "./commands/types";
 import {
   SIGN_IN_CONNECTION_ID,
@@ -67,12 +61,10 @@ import {
 import { sideBoardRuntime } from "@breadboard-ai/shared-ui/contexts/side-board-runtime.js";
 import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
-import { MAIN_BOARD_ID } from "@breadboard-ai/shared-ui/constants/constants.js";
 import { createA2Server } from "@breadboard-ai/a2";
 import { envFromSettings } from "./utils/env-from-settings";
 import { getGoogleDriveBoardService } from "@breadboard-ai/board-server-management";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import {
   CreateNewBoardMessage,
@@ -93,7 +85,6 @@ import {
 } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
 import { type GoogleDriveAssetShareDialog } from "@breadboard-ai/shared-ui/elements/elements.js";
 import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
-
 import { Admin } from "./admin";
 import { MainArguments } from "./types/types";
 import { classMap } from "lit/directives/class-map.js";
@@ -127,20 +118,14 @@ export class Main extends SignalWatcher(LitElement) {
   @provide({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig;
 
-  readonly #settings: SettingsStore;
-
   @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
   accessor settingsHelper: SettingsHelperImpl;
-
-  readonly #secretsHelper: SecretsHelper;
 
   @provide({ context: BreadboardUI.Elements.tokenVendorContext })
   accessor tokenVendor: TokenVendor;
 
   @provide({ context: signinAdapterContext })
   accessor signinAdapter: SigninAdapter;
-
-  readonly #apiClient: AppCatalystApiClient;
 
   @provide({ context: flowGeneratorContext })
   accessor flowGenerator: FlowGenerator;
@@ -160,34 +145,8 @@ export class Main extends SignalWatcher(LitElement) {
   @state()
   accessor #tab: Runtime.Types.Tab | null = null;
 
-  accessor #uiState!: BreadboardUI.State.UI;
-
-  readonly #googleDriveAssetShareDialogRef: Ref<GoogleDriveAssetShareDialog> =
-    createRef<GoogleDriveAssetShareDialog>();
-  readonly #canvasControllerRef: Ref<BreadboardUI.Elements.CanvasController> =
-    createRef();
-  readonly #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
-  readonly #snackbarRef: Ref<BreadboardUI.Elements.Snackbar> = createRef();
-  readonly #feedbackPanelRef: Ref<BreadboardUI.Elements.FeedbackPanel> =
-    createRef();
-
-  readonly #boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
-
   @state()
   accessor #boardServers: BoardServer[] = [];
-
-  readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
-  readonly #hideTooltipBound = this.#hideTooltip.bind(this);
-  readonly #onKeyboardShortCut = this.#onKeyboardShortcut.bind(this);
-  readonly #recentBoardStore = RecentBoardStore.instance();
-  #graphStore!: MutableGraphStore;
-  readonly #runStore = getRunStore();
-  readonly #fileSystem: FileSystem;
-  #selectionState: WorkspaceSelectionStateWithChangeId | null = null;
-  #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
-  readonly #lastPointerPosition = { x: 0, y: 0 };
-  #runtime!: Runtime.Runtime;
-  readonly #embedHandler?: EmbedHandler;
 
   /**
    * Monotonically increases whenever the graph topology of a graph in the
@@ -224,6 +183,48 @@ export class Main extends SignalWatcher(LitElement) {
 
   @state()
   accessor #ready = false;
+
+  // References.
+  readonly #googleDriveAssetShareDialogRef: Ref<GoogleDriveAssetShareDialog> =
+    createRef<GoogleDriveAssetShareDialog>();
+  readonly #canvasControllerRef: Ref<BreadboardUI.Elements.CanvasController> =
+    createRef();
+  readonly #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
+  readonly #feedbackPanelRef: Ref<BreadboardUI.Elements.FeedbackPanel> =
+    createRef();
+
+  // The snackbar is not held as a Ref because we need to track pending snackbar
+  // messages as they are coming in and, once the snackbar has rendered, we add
+  // them. This means we use the ref callback to handle this case instead of
+  // using to create and store the reference itself.
+  #snackbar: BreadboardUI.Elements.Snackbar | undefined = undefined;
+  #pendingSnackbarMessages: Array<{
+    message: BreadboardUI.Types.SnackbarMessage;
+    replaceAll: boolean;
+  }> = [];
+
+  // Created or set up in the constructor / #init.
+  #graphStore!: MutableGraphStore;
+  #selectionState: WorkspaceSelectionStateWithChangeId | null = null;
+  #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
+  #runtime!: Runtime.Runtime;
+
+  // Various bits of state.
+  readonly #boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
+  readonly #recentBoardStore = RecentBoardStore.instance();
+  readonly #runStore = getRunStore();
+  readonly #fileSystem: FileSystem;
+  readonly #lastPointerPosition = { x: 0, y: 0 };
+  readonly #embedHandler?: EmbedHandler;
+  accessor #uiState!: BreadboardUI.State.UI;
+  readonly #apiClient: AppCatalystApiClient;
+  readonly #secretsHelper: SecretsHelper;
+  readonly #settings: SettingsStore;
+
+  // Event Handlers.
+  readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
+  readonly #hideTooltipBound = this.#hideTooltip.bind(this);
+  readonly #onKeyboardShortCut = this.#onKeyboardShortcut.bind(this);
 
   static styles = mainStyles;
 
@@ -381,12 +382,6 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.#uiState = this.#runtime.state.getOrCreateUIState();
     this.#addRuntimeEventHandlers();
-
-    const admin = new Admin(args, this.globalConfig, this.googleDriveClient);
-    admin.runtime = this.#runtime;
-
-    admin.settingsHelper = this.settingsHelper;
-
     this.#graphStore = this.#runtime.board.getGraphStore();
     this.#boardServers = this.#runtime.board.getBoardServers() || [];
     this.#runtime.board.addEventListener(
@@ -395,12 +390,17 @@ export class Main extends SignalWatcher(LitElement) {
         this.#boardServers = this.#runtime.board.getBoardServers() || [];
       }
     );
-    this.sideBoardRuntime = this.#runtime.sideboards;
+
+    // Admin.
+    const admin = new Admin(args, this.globalConfig, this.googleDriveClient);
+    admin.runtime = this.#runtime;
+    admin.settingsHelper = this.settingsHelper;
 
     // This is currently used only for legacy graph kits (Agent,
     // Google Drive).
     args.graphStorePreloader?.(this.#graphStore);
 
+    this.sideBoardRuntime = this.#runtime.sideboards;
     this.sideBoardRuntime.addEventListener("empty", () => {
       this.#uiState.canRunMain = true;
     });
@@ -444,15 +444,14 @@ export class Main extends SignalWatcher(LitElement) {
     }
 
     const hasMountedBoardServer = this.#findSelectedBoardServer(args);
-
     if (!hasMountedBoardServer) {
-      console.log(`Mounting server "${args.boardServerUrl.href}" ...`);
+      console.log(`[Status] Mounting server "${args.boardServerUrl.href}" ...`);
       const connecting = await this.#runtime.board.connect(
         args.boardServerUrl.href
       );
       if (connecting?.success) {
         this.#findSelectedBoardServer(args);
-        console.log(`Connected to server`);
+        console.log(`[Status] Connected to server`);
       }
     }
 
@@ -482,12 +481,7 @@ export class Main extends SignalWatcher(LitElement) {
     if (!url) {
       return;
     }
-    for (let i = 0; !this.#snackbarRef.value && i < 5; i++) {
-      // It's tricky to know when the snackbar is going to be available.
-      // Possibly the snackbar should be a service that is always available, so
-      // that messages can be queued independent of rendering.
-      await this.updateComplete;
-    }
+
     this.snackbar(
       html`
         Users from ${domain} should prefer
@@ -925,7 +919,6 @@ export class Main extends SignalWatcher(LitElement) {
 
   #hideAllOverlays() {
     this.#uiState.show.delete("BoardEditModal");
-    this.#uiState.show.delete("ItemModal");
     this.#uiState.show.delete("BoardServerAddOverlay");
   }
 
@@ -967,7 +960,6 @@ export class Main extends SignalWatcher(LitElement) {
       target instanceof HTMLTextAreaElement ||
       target instanceof HTMLSelectElement ||
       target instanceof HTMLCanvasElement ||
-      target instanceof BreadboardUI.Elements.ModuleEditor ||
       (target instanceof HTMLElement &&
         (target.contentEditable === "true" ||
           target.contentEditable === "plaintext-only"))
@@ -981,7 +973,8 @@ export class Main extends SignalWatcher(LitElement) {
     }
 
     // Check if there's an input preference before actioning any main keyboard
-    // command.
+    // command. This is often something like the text inputs which have
+    // preference over these more general keyboard commands.
     if (
       evt.composedPath().some((target) => this.#receivesInputPreference(target))
     ) {
@@ -1075,7 +1068,7 @@ export class Main extends SignalWatcher(LitElement) {
     }
   }
 
-  untoast(id: string | undefined) {
+  untoast(id?: string) {
     if (!id) {
       return;
     }
@@ -1106,12 +1099,21 @@ export class Main extends SignalWatcher(LitElement) {
     id = globalThis.crypto.randomUUID(),
     replaceAll = false
   ) {
-    if (!this.#snackbarRef.value) {
-      console.error(`snackbar was not ready yet`, message);
+    if (!this.#snackbar) {
+      this.#pendingSnackbarMessages.push({
+        message: {
+          id,
+          message,
+          type,
+          persistent,
+          actions,
+        },
+        replaceAll,
+      });
       return;
     }
 
-    return this.#snackbarRef.value.show(
+    return this.#snackbar.show(
       {
         id,
         message,
@@ -1124,11 +1126,11 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   unsnackbar(id?: BreadboardUI.Types.SnackbarUUID) {
-    if (!this.#snackbarRef.value) {
+    if (!this.#snackbar) {
       return;
     }
 
-    this.#snackbarRef.value.hide(id);
+    this.#snackbar.hide(id);
   }
 
   #attemptImportFromDrop(evt: DragEvent) {
@@ -1145,69 +1147,6 @@ export class Main extends SignalWatcher(LitElement) {
     ): data is SerializedRun => {
       return "timeline" in data;
     };
-
-    const filesDropped = evt.dataTransfer.files;
-    if ([...filesDropped].some((file) => !file.type.includes("json"))) {
-      const wasDroppedOnAssetOrganizer = evt
-        .composedPath()
-        .some((el) => el instanceof BreadboardUI.Elements.AssetOrganizer);
-
-      if (!wasDroppedOnAssetOrganizer) {
-        return;
-      }
-
-      const assetLoad = [...filesDropped].map((file) => {
-        return new Promise<{
-          name: string;
-          type: string;
-          content: string | null;
-        }>((resolve) => {
-          const reader = new FileReader();
-          reader.addEventListener("loadend", () => {
-            resolve({
-              name: file.name,
-              type: file.type,
-              content: reader.result as string | null,
-            });
-          });
-          reader.readAsDataURL(file);
-        });
-      });
-
-      Promise.all(assetLoad).then((assets) => {
-        const projectState = this.#runtime.state.getOrCreateProjectState(
-          this.#tab?.mainGraphId,
-          this.#runtime.edit.getEditor(this.#tab)
-        );
-
-        if (!projectState) {
-          return;
-        }
-
-        for (const asset of assets) {
-          if (!asset.content) continue;
-          const [, mimeType, , data] = asset.content.split(/[:;,]/);
-          projectState.organizer.addGraphAsset({
-            path: asset.name,
-            metadata: {
-              title: asset.name,
-              type: "file",
-            },
-            data: [
-              {
-                parts: [
-                  {
-                    inlineData: { mimeType, data },
-                  },
-                ],
-                role: "user",
-              },
-            ],
-          });
-        }
-      });
-      return;
-    }
 
     const fileDropped = evt.dataTransfer.files[0];
     fileDropped.text().then((data) => {
@@ -1260,43 +1199,6 @@ export class Main extends SignalWatcher(LitElement) {
         );
       }
     });
-  }
-
-  #attemptModuleCreate(moduleId: ModuleIdentifier) {
-    if (!this.#tab) {
-      return;
-    }
-
-    const newModule: Module = {
-      code: defaultModuleContent(),
-      metadata: {},
-    };
-
-    const createAsTypeScript =
-      this.#settings
-        .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
-        .items.get("Use TypeScript as Module default language")?.value ?? false;
-    if (createAsTypeScript) {
-      newModule.metadata = {
-        source: {
-          code: defaultModuleContent("typescript"),
-          language: "typescript",
-        },
-      };
-    }
-
-    this.#runtime.edit.createModule(this.#tab, moduleId, newModule);
-  }
-
-  async #attemptToggleExport(
-    id: ModuleIdentifier | GraphIdentifier,
-    type: "imperative" | "declarative"
-  ) {
-    if (!this.#tab) {
-      return;
-    }
-
-    return this.#runtime.edit.toggleExport(this.#tab, id, type);
   }
 
   #getRenderValues(): RenderValues {
@@ -1361,9 +1263,7 @@ export class Main extends SignalWatcher(LitElement) {
       showingOverlay:
         this.#uiState.show.has("TOS") ||
         this.#uiState.show.has("BoardEditModal") ||
-        this.#uiState.show.has("ItemModal") ||
-        this.#uiState.show.has("BoardServerAddOverlay") ||
-        this.#uiState.show.has("NewWorkspaceItemOverlay"),
+        this.#uiState.show.has("BoardServerAddOverlay"),
       showExperimentalComponents,
       themeHash,
       tabStatus,
@@ -1494,17 +1394,12 @@ export class Main extends SignalWatcher(LitElement) {
         this.#renderHeader(renderValues),
         content,
         this.#uiState.show.has("TOS") ? this.#renderTosDialog() : nothing,
-        this.#uiState.show.has("NewWorkspaceItemOverlay")
-          ? this.#renderNewWorkspaceItemOverlay()
-          : nothing,
-
         this.#uiState.show.has("BoardServerAddOverlay")
           ? this.#renderBoardServerAddOverlay()
           : nothing,
         this.#uiState.show.has("BoardEditModal")
           ? this.#renderBoardEditModal()
           : nothing,
-        this.#uiState.show.has("ItemModal") ? this.#renderItemModal() : nothing,
         this.#renderTooltip(),
         this.#renderToasts(),
         this.#renderSnackbar(),
@@ -1629,101 +1524,6 @@ export class Main extends SignalWatcher(LitElement) {
 
         this.#runtime.board.clearPendingBoardSave(this.#tab.id);
       }}
-      @bbworkspacenewitemcreaterequest=${() => {
-        this.#uiState.show.add("NewWorkspaceItemOverlay");
-      }}
-      @bbsubgraphcreate=${async (
-        evt: BreadboardUI.Events.SubGraphCreateEvent
-      ) => {
-        const result = await this.#runtime.edit.createSubGraph(
-          this.#tab,
-          evt.subGraphTitle
-        );
-        if (!result) {
-          this.toast(
-            Strings.from("ERROR_GENERIC"),
-            BreadboardUI.Events.ToastType.ERROR
-          );
-          return;
-        }
-
-        if (!this.#tab) {
-          return;
-        }
-        this.#tab.subGraphId = result;
-        this.requestUpdate();
-      }}
-      @bbsubgraphdelete=${async (
-        evt: BreadboardUI.Events.SubGraphDeleteEvent
-      ) => {
-        await this.#runtime.edit.deleteSubGraph(this.#tab, evt.subGraphId);
-        if (!this.#tab) {
-          return;
-        }
-
-        this.#runtime.select.deselectAll(
-          this.#tab.id,
-          this.#runtime.util.createWorkspaceSelectionChangeId()
-        );
-      }}
-      @bbmodulechangelanguage=${(
-        evt: BreadboardUI.Events.ModuleChangeLanguageEvent
-      ) => {
-        if (!this.#tab) {
-          return;
-        }
-
-        this.#runtime.edit.changeModuleLanguage(
-          this.#tab,
-          evt.moduleId,
-          evt.moduleLanguage
-        );
-      }}
-      @bbmodulecreate=${(evt: BreadboardUI.Events.ModuleCreateEvent) => {
-        this.#attemptModuleCreate(evt.moduleId);
-      }}
-      @bbmoduledelete=${async (evt: BreadboardUI.Events.ModuleDeleteEvent) => {
-        if (!this.#tab) {
-          return;
-        }
-
-        await this.#runtime.edit.deleteModule(this.#tab, evt.moduleId);
-      }}
-      @bbmoduleedit=${async (evt: BreadboardUI.Events.ModuleEditEvent) => {
-        return this.#runtime.edit.editModule(
-          this.#tab,
-          evt.moduleId,
-          evt.code,
-          evt.metadata
-        );
-      }}
-      @bbtoggleexport=${async (evt: BreadboardUI.Events.ToggleExportEvent) => {
-        await this.#attemptToggleExport(evt.exportId, evt.exportType);
-      }}
-      @bbmovenodes=${async (evt: BreadboardUI.Events.MoveNodesEvent) => {
-        const { destinationGraphId } = evt;
-        for (const [sourceGraphId, nodes] of evt.sourceNodes) {
-          await this.#runtime.edit.moveNodesToGraph(
-            this.#tab,
-            nodes,
-            sourceGraphId === MAIN_BOARD_ID ? "" : sourceGraphId,
-            destinationGraphId === MAIN_BOARD_ID ? "" : destinationGraphId,
-            evt.positionDelta
-          );
-        }
-
-        if (!this.#tab) {
-          return;
-        }
-
-        // Clear all selections.
-        this.#runtime.select.processSelections(
-          this.#tab.id,
-          this.#runtime.util.createWorkspaceSelectionChangeId(),
-          null,
-          true
-        );
-      }}
       @bbiterateonprompt=${(iterateOnPromptEvent: IterateOnPromptEvent) => {
         const message: IterateOnPromptMessage = {
           type: "iterate_on_prompt",
@@ -1736,26 +1536,6 @@ export class Main extends SignalWatcher(LitElement) {
         this.#embedHandler?.sendToEmbedder(message);
       }}
     ></bb-canvas-controller>`;
-  }
-
-  #renderNewWorkspaceItemOverlay() {
-    return html`<bb-new-workspace-item-overlay
-      @bbworkspaceitemcreate=${async (
-        evt: BreadboardUI.Events.WorkspaceItemCreateEvent
-      ) => {
-        this.#uiState.show.delete("NewWorkspaceItemOverlay");
-
-        await this.#runtime.edit.createWorkspaceItem(
-          this.#tab,
-          evt.itemType,
-          evt.title,
-          this.#settings
-        );
-      }}
-      @bboverlaydismissed=${() => {
-        this.#uiState.show.delete("NewWorkspaceItemOverlay");
-      }}
-    ></bb-new-workspace-item-overlay>`;
   }
 
   #renderBoardServerAddOverlay() {
@@ -1794,47 +1574,6 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.show.delete("BoardEditModal");
       }}
     ></bb-edit-board-modal>`;
-  }
-
-  #renderItemModal() {
-    return html`<bb-item-modal
-      .graph=${this.#tab?.graph}
-      .selectionState=${this.#selectionState}
-      @bboverflowmenuaction=${(
-        evt: BreadboardUI.Events.OverflowMenuActionEvent
-      ) => {
-        evt.stopImmediatePropagation();
-        this.#uiState.show.delete("ItemModal");
-
-        if (evt.action === "new-item") {
-          this.#uiState.show.add("NewWorkspaceItemOverlay");
-          return;
-        }
-
-        const selections = BreadboardUI.Utils.Workspace.createSelection(
-          this.#selectionState?.selectionState ?? null,
-          null,
-          null,
-          evt.action === "flow" ? null : evt.action,
-          null,
-          true
-        );
-        if (!this.#tab) {
-          return;
-        }
-        const selectionChangeId = this.#runtime.select.generateId();
-        this.#runtime.select.processSelections(
-          this.#tab.id,
-          selectionChangeId,
-          selections,
-          true,
-          false
-        );
-      }}
-      @bbmodaldismissed=${() => {
-        this.#uiState.show.delete("ItemModal");
-      }}
-    ></bb-item-modal>`;
   }
 
   #renderTosDialog() {
@@ -1983,7 +1722,20 @@ export class Main extends SignalWatcher(LitElement) {
 
   #renderSnackbar() {
     return html`<bb-snackbar
-      ${ref(this.#snackbarRef)}
+      ${ref((el: Element | undefined) => {
+        if (!el) {
+          this.#snackbar = undefined;
+        }
+
+        this.#snackbar = el as BreadboardUI.Elements.Snackbar;
+        for (const pendingMessage of this.#pendingSnackbarMessages) {
+          const { message, id, persistent, type, actions } =
+            pendingMessage.message;
+          this.snackbar(message, type, actions, persistent, id);
+        }
+
+        this.#pendingSnackbarMessages.length = 0;
+      })}
       @bbsnackbaraction=${async (
         evt: BreadboardUI.Events.SnackbarActionEvent
       ) => {
@@ -2056,15 +1808,6 @@ export class Main extends SignalWatcher(LitElement) {
             }
 
             this.#uiState.show.add("BoardEditModal");
-            break;
-          }
-
-          case "jump-to-item": {
-            if (!this.#tab) {
-              return;
-            }
-
-            this.#uiState.show.add("ItemModal");
             break;
           }
 
