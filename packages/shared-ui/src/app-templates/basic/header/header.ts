@@ -37,6 +37,9 @@ export class Header extends LitElement {
   @property()
   accessor appURL: string | null = null;
 
+  @property({ reflect: true, type: Boolean })
+  accessor isEmpty = false;
+
   @query("#side-nav")
   accessor #sideNav: SideNav | null = null;
 
@@ -121,6 +124,7 @@ export class Header extends LitElement {
         }
       }
 
+      :host([isempty]) #progress-container > #progress,
       :host([neutral]) #progress-container > #progress {
         background: var(--s-80, var(--bb-neutral-200));
       }

@@ -6,7 +6,6 @@
 
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("ProjectListing");
-const GlobalStrings = StringsHelper.forSection("Global");
 
 import { LitElement, html, css, nothing, PropertyValueMap } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
@@ -203,6 +202,10 @@ export class ProjectListing extends LitElement {
             color: var(--n-0);
             transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
 
+            > * {
+              pointer-events: none;
+            }
+
             & .g-icon {
               display: flex;
               justify-content: center;
@@ -215,6 +218,20 @@ export class ProjectListing extends LitElement {
               border-radius: 50%;
               margin-bottom: var(--bb-grid-size-4);
               font-weight: 500;
+
+              &::after {
+                content: "add";
+              }
+            }
+
+            &[disabled] {
+              & .g-icon {
+                animation: rotate 1s linear infinite;
+
+                &::after {
+                  content: "progress_activity";
+                }
+              }
             }
 
             &:not([disabled]) {
@@ -245,9 +262,26 @@ export class ProjectListing extends LitElement {
             height: var(--bb-grid-size-10);
             padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
 
+            > * {
+              pointer-events: none;
+            }
+
             & .g-icon {
               color: var(--n-100);
               margin-right: var(--bb-grid-size-2);
+
+              &::after {
+                content: "add";
+              }
+            }
+
+            &[disabled] {
+              & .g-icon {
+                animation: rotate 1s linear infinite;
+                &::after {
+                  content: "progress_activity";
+                }
+              }
             }
 
             &:not([disabled]) {
@@ -452,6 +486,16 @@ export class ProjectListing extends LitElement {
         text-align: right;
         margin-top: -32px;
         padding: 0 var(--bb-grid-size-3);
+      }
+
+      @keyframes rotate {
+        from {
+          rotate: 0deg;
+        }
+
+        to {
+          rotate: 360deg;
+        }
       }
     `,
   ];
@@ -851,7 +895,7 @@ export class ProjectListing extends LitElement {
                               class="md-title-small sans-flex w-400 round"
                               @click=${this.#clickNewProjectButton}
                             >
-                              <span class="g-icon">add</span>
+                              <span class="g-icon"></span>
                               ${Strings.from("COMMAND_NEW_PROJECT")}
                             </button>
                           </div>
@@ -881,7 +925,7 @@ export class ProjectListing extends LitElement {
                               class="md-title-small sans-flex w-400 round"
                               @click=${this.#clickNewProjectButton}
                             >
-                              <span class="g-icon">add</span>
+                              <span class="g-icon"></span>
                               ${Strings.from("COMMAND_NEW_PROJECT")}
                             </button>
                           </div>`
@@ -1066,9 +1110,9 @@ export class ProjectListing extends LitElement {
         editHistoryCreator: { role: "user" },
         graph: blankBoard(),
         messages: {
-          start: GlobalStrings.from("STATUS_CREATING_PROJECT"),
-          end: GlobalStrings.from("STATUS_PROJECT_CREATED"),
-          error: GlobalStrings.from("ERROR_UNABLE_TO_CREATE_PROJECT"),
+          start: "",
+          end: "",
+          error: "",
         },
       })
     );
