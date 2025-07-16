@@ -42,7 +42,7 @@ export class HomepageSearchButton extends LitElement {
 
       input {
         border: 1px solid var(--n-70);
-        background: var(--ui-background);
+        background: var(--n-98);
         height: 100%;
         border-radius: var(--bb-grid-size-16);
         padding: 0 32px 0 var(--bb-grid-size-4);
@@ -84,12 +84,12 @@ export class HomepageSearchButton extends LitElement {
           @blur=${this.#onInputBlur}
           class="sans-flex round w-500"
         />
-        <span class="g-icon" id="search-icon">search</span>
+        <span class="g-icon filled round w-500" id="search-icon">search</span>
       `;
     } else {
       return html`
         <button @click=${this.#onButtonClick}>
-          <span class="g-icon">search</span>
+          <span class="g-icon filled round w-500">search</span>
           <span id="label" class="sans-flex round w-500">Search</span>
         </button>
       `;
