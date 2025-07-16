@@ -75,10 +75,6 @@ export const styles = [
         grid-template-columns: none;
       }
 
-      & bb-asset-organizer {
-        z-index: 12;
-      }
-
       & #create-view-popout {
         position: absolute;
         top: var(--bb-grid-size-3);

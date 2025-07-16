@@ -8,10 +8,6 @@ import type {
   GraphIdentifier,
   GraphMetadata,
   LLMContent,
-  ModuleCode,
-  ModuleIdentifier,
-  ModuleLanguage,
-  ModuleMetadata,
   NodeIdentifier,
   NodeValue,
 } from "@breadboard-ai/types";
@@ -450,119 +446,6 @@ export class WorkspaceItemVisualUpdateEvent extends Event {
     public readonly visual: GraphMetadata["visual"]
   ) {
     super(WorkspaceItemVisualUpdateEvent.eventName, { ...eventInit });
-  }
-}
-
-/**
- * Sub Graph Management
- */
-
-export class SubGraphChosenEvent extends Event {
-  static eventName = "bbsubgraphchosen";
-
-  constructor(
-    public readonly subGraphId: string,
-    public readonly zoomToNode: NodeIdentifier | null = null
-  ) {
-    super(SubGraphChosenEvent.eventName, { ...eventInit });
-  }
-}
-
-export class SubGraphDeleteEvent extends Event {
-  static eventName = "bbsubgraphdelete";
-
-  constructor(public readonly subGraphId: string) {
-    super(SubGraphDeleteEvent.eventName, { ...eventInit });
-  }
-}
-
-export class SubGraphCreateEvent extends Event {
-  static eventName = "bbsubgraphcreate";
-
-  constructor(public readonly subGraphTitle: string) {
-    super(SubGraphCreateEvent.eventName, { ...eventInit });
-  }
-}
-
-/**
- * Module Management
- */
-
-export class FormatModuleCodeEvent extends Event {
-  static readonly eventName = "bbformatmodulecode";
-
-  constructor() {
-    super(FormatModuleCodeEvent.eventName, { ...eventInit });
-  }
-}
-
-export class ToggleModulePreviewEvent extends Event {
-  static readonly eventName = "bbtogglepreview";
-
-  constructor() {
-    super(ToggleModulePreviewEvent.eventName, { ...eventInit });
-  }
-}
-
-export class ModuleChosenEvent extends Event {
-  static eventName = "bbmodulechosen";
-
-  constructor(public readonly moduleId: ModuleIdentifier | null) {
-    super(ModuleChosenEvent.eventName, { ...eventInit });
-  }
-}
-
-export class ModuleChangeLanguageEvent extends Event {
-  static eventName = "bbmodulechangelanguage";
-
-  constructor(
-    public readonly moduleId: ModuleIdentifier,
-    public readonly moduleLanguage: ModuleLanguage
-  ) {
-    super(ModuleChangeLanguageEvent.eventName, { ...eventInit });
-  }
-}
-
-export class ModuleEditEvent extends Event {
-  static eventName = "bbmoduleedit";
-
-  constructor(
-    public readonly moduleId: ModuleIdentifier,
-    public readonly code: ModuleCode,
-    public readonly metadata: ModuleMetadata
-  ) {
-    super(ModuleEditEvent.eventName, { ...eventInit });
-  }
-}
-
-export class ModuleDeleteEvent extends Event {
-  static eventName = "bbmoduledelete";
-
-  constructor(public readonly moduleId: ModuleIdentifier) {
-    super(ModuleDeleteEvent.eventName, { ...eventInit });
-  }
-}
-
-export class ModuleCreateEvent extends Event {
-  static eventName = "bbmodulecreate";
-
-  constructor(public readonly moduleId: ModuleIdentifier) {
-    super(ModuleCreateEvent.eventName, { ...eventInit });
-  }
-}
-
-/**
- * Exports management
- */
-
-export class ToggleExportEvent extends Event {
-  static eventName = "bbtoggleexport";
-
-  constructor(
-    public readonly exportId: ModuleIdentifier | GraphIdentifier,
-    public readonly exportType: "imperative" | "declarative"
-  ) {
-    super(ToggleExportEvent.eventName, { ...eventInit });
   }
 }
 

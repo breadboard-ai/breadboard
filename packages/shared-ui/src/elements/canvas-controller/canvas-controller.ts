@@ -12,7 +12,6 @@ import {
   EditHistory,
   EditableGraph,
   GraphDescriptor,
-  GraphProviderCapabilities,
   InspectableRun,
   InspectableRunEvent,
   Kit,
@@ -39,7 +38,6 @@ import {
   WorkspaceVisualChangeId,
 } from "../../types/types.js";
 import { styles as canvasControllerStyles } from "./canvas-controller.styles.js";
-import { ModuleEditor } from "../module-editor/module-editor.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
   CommandsSetSwitchEvent,
@@ -195,7 +193,6 @@ export class CanvasController extends LitElement {
     | "editor"
     | "app-view" = "editor";
   #entityEditorRef: Ref<EntityEditor> = createRef();
-  #moduleEditorRef: Ref<ModuleEditor> = createRef();
   #sharePanelRef: Ref<SharePanel> = createRef();
   #googleDriveAssetAccessPickerRef: Ref<GoogleDrivePicker> = createRef();
 
@@ -230,15 +227,6 @@ export class CanvasController extends LitElement {
         this.graph?.main
       ) {
         this.selectionState?.selectionState.modules.add(this.graph.main);
-      }
-
-      if (this.#moduleEditorRef.value) {
-        if (
-          !this.selectionState ||
-          this.selectionState.selectionState.modules.size === 0
-        ) {
-          this.#moduleEditorRef.value.destroyEditor();
-        }
       }
     }
 
@@ -364,25 +352,8 @@ export class CanvasController extends LitElement {
       : false;
 
     const showAssetsInGraph = true;
-
     const graph = this.editor?.inspect("") || null;
     const graphIsEmpty = isEmpty(graph?.raw() ?? null);
-
-    let capabilities: false | GraphProviderCapabilities = false;
-    for (const boardServer of this.boardServers) {
-      if (!this.graph || !this.graph.url) {
-        continue;
-      }
-
-      const canProvide = boardServer.canProvide(new URL(this.graph.url));
-      if (canProvide) {
-        capabilities = canProvide;
-        break;
-      }
-    }
-
-    const canUndo = this.history?.canUndo() ?? false;
-    const canRedo = this.history?.canRedo() ?? false;
 
     const graphEditor = guard(
       [
@@ -475,29 +446,6 @@ export class CanvasController extends LitElement {
         ></bb-renderer>`;
       }
     );
-
-    const selectedModules = this.selectionState?.selectionState.modules;
-    const modules = selectedModules ? [...selectedModules] : [];
-    if (modules.length > 0) {
-      // TODO.
-    }
-
-    let moduleEditor: HTMLTemplateResult | symbol = nothing;
-    if (graph && selectedModules && selectedModules.size > 0) {
-      moduleEditor = html`<bb-module-editor
-        ${ref(this.#moduleEditorRef)}
-        .canRedo=${canRedo}
-        .canUndo=${canUndo}
-        .capabilities=${capabilities}
-        .graph=${graph}
-        .moduleId=${modules[0]}
-        .modules=${graph.modules() ?? {}}
-        .readOnly=${this.readOnly}
-        .renderId=${crypto.randomUUID()}
-        .topGraphResult=${this.topGraphResult}
-        .graphStore=${this.graphStore}
-      ></bb-module-editor>`;
-    }
 
     let theme: string;
     let themes: Record<string, GraphTheme>;
@@ -604,18 +552,6 @@ export class CanvasController extends LitElement {
       ></bb-edit-history-panel>`,
     ];
 
-    let assetOrganizer: HTMLTemplateResult | symbol = nothing;
-    if (this.showAssetOrganizer) {
-      assetOrganizer = html`<bb-asset-organizer
-        .state=${this.projectState?.organizer ?? null}
-        .showGDrive=${this.signedIn}
-        .showExperimentalComponents=${showExperimentalComponents}
-        @bboverlaydismissed=${() => {
-          this.showAssetOrganizer = false;
-        }}
-      ></bb-asset-organizer>`;
-    }
-
     let themeEditor: HTMLTemplateResult | symbol = nothing;
     if (this.showThemeDesigner) {
       themeEditor = html`<bb-app-theme-creator
@@ -704,14 +640,11 @@ export class CanvasController extends LitElement {
           <div id="side-nav-content">${sideNavItem}</div>
         </div>
       </bb-splitter>
-      ${modules.length > 0 ? moduleEditor : nothing}
     `;
 
     return [
       graph
-        ? html`<section id="create-view">
-            ${assetOrganizer} ${contentContainer}
-          </section>`
+        ? html`<section id="create-view">${contentContainer}</section>`
         : html`<section id="content" class="welcome">${graphEditor}</section>`,
       html`
         <bb-share-panel .graph=${this.graph} ${ref(this.#sharePanelRef)}>

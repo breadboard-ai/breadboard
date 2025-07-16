@@ -12,7 +12,6 @@ import { customElement, property, state } from "lit/decorators.js";
 import {
   HideTooltipEvent,
   KitNodeChosenEvent,
-  ShowAssetOrganizerEvent,
   ShowTooltipEvent,
   ToastEvent,
   ToastType,
@@ -290,16 +289,6 @@ export class EditorControls extends LitElement {
             &:hover {
               opacity: 1;
             }
-          }
-
-          &#show-asset-organizer {
-            justify-content: center;
-            border-radius: 50%;
-            background: var(--bb-neutral-0);
-            width: var(--bb-grid-size-10);
-            height: var(--bb-grid-size-10);
-            box-shadow: var(--bb-elevation-16-heavy);
-            margin-left: var(--bb-grid-size-3);
           }
         }
       }
@@ -1058,29 +1047,6 @@ export class EditorControls extends LitElement {
       <div id="items">
         ${until(mainItems, html`<div class="loading">Loading steps...</div>`)}
       </div>
-
-      ${this.showExperimentalComponents
-        ? html`<button
-            id="show-asset-organizer"
-            @pointerover=${(evt: PointerEvent) => {
-              this.dispatchEvent(
-                new ShowTooltipEvent(
-                  Strings.from("COMMAND_ASSET_ORGANIZER"),
-                  evt.clientX,
-                  evt.clientY
-                )
-              );
-            }}
-            @pointerout=${() => {
-              this.dispatchEvent(new HideTooltipEvent());
-            }}
-            @click=${() => {
-              this.dispatchEvent(new ShowAssetOrganizerEvent());
-            }}
-          >
-            <span class="g-icon">more_vert</span>
-          </button>`
-        : nothing}
     </div>`;
 
     const shelf = html`<div id="shelf">

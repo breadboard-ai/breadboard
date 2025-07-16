@@ -12,14 +12,14 @@ import {
 } from "@google-labs/breadboard";
 import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Project } from "../../../state";
-import { TextEditor } from "../text-editor/text-editor";
+import { Project } from "../../state";
+import { TextEditor } from "../input/text-editor/text-editor";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { icons } from "../../../styles/icons.js";
-import { DrawableInput } from "../drawable/drawable";
-import { resolveImage } from "../../../utils/image";
+import { icons } from "../../styles/icons.js";
+import { DrawableInput } from "../input/drawable/drawable";
+import { resolveImage } from "../../utils/image";
 import { consume } from "@lit/context";
-import { googleDriveClientContext } from "../../../contexts/google-drive-client-context";
+import { googleDriveClientContext } from "../../contexts/google-drive-client-context";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 @customElement("bb-llm-part-input")

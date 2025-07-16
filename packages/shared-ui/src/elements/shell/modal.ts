@@ -14,7 +14,7 @@ import { behavior } from "../../styles/host/behavior";
 import { isCtrlCommand } from "../../utils/is-ctrl-command";
 
 @customElement("bb-modal")
-export class Modal extends LitElement {
+export class VEModal extends LitElement {
   @property()
   accessor icon: string | null = null;
 
