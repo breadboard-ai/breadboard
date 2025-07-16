@@ -101,6 +101,7 @@ async function describe({ asType: _, ...inputs }: DescribeInputs) {
         },
       };
   return {
+    title: "Get Weather",
     inputSchema: {
       type: "object",
       properties: {

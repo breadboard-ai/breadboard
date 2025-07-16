@@ -104,6 +104,7 @@ async function describe({ asType: _, ...inputs }: DescribeInputs) {
       };
 
   return {
+    title: "Search Jobs",
     inputSchema: {
       type: "object",
       properties: {
