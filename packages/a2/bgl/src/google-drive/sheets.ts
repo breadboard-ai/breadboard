@@ -53,7 +53,7 @@ Make sure that the values you generate reflect the input as precisely as possibl
   const result = (invoking.last.parts?.at(0) as JSONPart)?.json;
   if (!result) {
     return err(
-      `Unable to infer spreadsheet values. Invalide response from Gemini.`
+      `Unable to infer spreadsheet values. Invalid response from Gemini.`
     );
   }
   return (result as SheetValues).spreadsheet_values;
