@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { RuntimeFlags } from "@breadboard-ai/types";
 import {
   VisualEditorMode,
   WorkspaceSelectionChangeId,
@@ -47,4 +48,9 @@ export interface Lock extends BaseEventDetail<`${Namespace}.lock`> {
 export interface Unlock extends BaseEventDetail<`${Namespace}.unlock`> {
   /* Duped to avoid @typescript-eslint/no-empty-object-type */
   readonly eventType: `${Namespace}.unlock`;
+}
+
+export interface FlagChange extends BaseEventDetail<`${Namespace}.flagchange`> {
+  readonly flag: keyof RuntimeFlags;
+  readonly value: boolean | undefined;
 }

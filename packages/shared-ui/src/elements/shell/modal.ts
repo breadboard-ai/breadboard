@@ -65,8 +65,8 @@ export class VEModal extends LitElement {
         color: var(--n-0);
 
         & #container {
-          animation: fadeIn 0.3s cubic-bezier(0.5, 0, 0.3, 1) forwards;
-          opacity: 0;
+          animation: fadeAndScaleIn 0.3s cubic-bezier(0.5, 0, 0.3, 1) 0.15s
+            backwards;
           background: var(--n-100);
           padding: var(--bb-grid-size-4) var(--bb-grid-size-6);
           border-radius: var(--bb-grid-size-4);
@@ -142,11 +142,22 @@ export class VEModal extends LitElement {
         }
 
         &::backdrop {
+          animation: fadeIn 0.3s cubic-bezier(0, 0, 0.3, 1) forwards;
           background: var(--ui-scrim);
         }
       }
 
       @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadeAndScaleIn {
         from {
           transform: scale(0.9, 0.9);
           opacity: 0;

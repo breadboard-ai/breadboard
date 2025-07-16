@@ -517,6 +517,14 @@ export class VEHeader extends LitElement {
       },
     ];
 
+    if (this.showExperimentalComponents) {
+      options.push({
+        id: "show-runtime-flags",
+        title: "Show Experiments",
+        icon: "experiment",
+      });
+    }
+
     return html`<bb-item-select
       .showDownArrow=${false}
       .freezeValue=${0}

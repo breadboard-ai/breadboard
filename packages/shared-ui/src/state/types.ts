@@ -352,7 +352,11 @@ export type ConnectorState = {
   cancel(): Promise<void>;
 };
 
-export type UIOverlays = "BoardEditModal" | "BoardServerAddOverlay" | "TOS";
+export type UIOverlays =
+  | "BoardEditModal"
+  | "BoardServerAddOverlay"
+  | "TOS"
+  | "RuntimeFlags";
 
 export type UILoadState = "Home" | "Loading" | "Loaded" | "Error";
 

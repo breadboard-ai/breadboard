@@ -22,6 +22,7 @@ export const eventRoutes = new Map<
   [Host.SelectionStateChangeRoute.event, Host.SelectionStateChangeRoute],
   [Host.LockRoute.event, Host.LockRoute],
   [Host.UnlockRoute.event, Host.UnlockRoute],
+  [Host.FlagChangeRoute.event, Host.FlagChangeRoute],
 
   /** Board */
   [Board.CreateRoute.event, Board.CreateRoute],
