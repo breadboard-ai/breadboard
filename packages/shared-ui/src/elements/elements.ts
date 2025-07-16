@@ -5,9 +5,9 @@
  */
 
 // Shell.
-export { VEModal } from "./shell/modal.js";
 export { VEEditBoardModal } from "./shell/edit-board.js";
 export { VEHeader } from "./shell/header.js";
+export { VEModal } from "./shell/modal.js";
 
 // Inputs.
 export { AddAssetButton } from "./input/add-asset/add-asset-button.js";
@@ -19,6 +19,7 @@ export { CodeEditor } from "./input/code-editor/code-editor.js";
 export { DrawableInput } from "./input/drawable/drawable.js";
 export { FloatingInput } from "./input/floating-input/floating-input.js";
 export { ItemSelect } from "./input/item-select/item-select.js";
+export { LLMPartInput } from "./entity-editor/llm-part-input.js";
 export { SpeechToText } from "./input/speech-to-text/speech-to-text.js";
 export { TextEditor } from "./input/text-editor/text-editor.js";
 export { WebcamInput } from "./input/webcam/webcam.js";
@@ -51,14 +52,14 @@ export { EditorControls } from "./step-editor/editor-controls.js";
 export { EntityEditor } from "./entity-editor/entity-editor.js";
 export { FastAccessMenu } from "./fast-access-menu/fast-access-menu.js";
 export { FeedbackPanel } from "./feedback/feedback-panel.js";
+export { HomepageSearchButton } from "./welcome-panel/homepage-search-button.js";
+export { JSONTree } from "./json-tree/json-tree.js";
 export { OverflowMenu } from "./overflow-menu/overflow-menu.js";
 export { Overlay } from "./overlay/overlay.js";
 export { ProjectListing } from "./welcome-panel/project-listing.js";
 export { Renderer } from "./step-editor/renderer.js";
 export { SharePanel } from "./share-panel/share-panel.js";
 export { Snackbar } from "./toast/snackbar.js";
-export { HomepageSearchButton } from "./welcome-panel/homepage-search-button.js";
-export { JSONTree } from "./json-tree/json-tree.js";
 export { Splitter } from "./splitter/splitter.js";
 export { Toast } from "./toast/toast.js";
 export { Tooltip } from "./tooltip/tooltip.js";
