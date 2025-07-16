@@ -1685,6 +1685,10 @@ function enumValue(value: SchemaEnumValue): EnumValue {
     enumVal.description = value.description;
   }
 
+  if (value.info) {
+    enumVal.info = value.info;
+  }
+
   return enumVal;
 }
 

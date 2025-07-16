@@ -157,6 +157,11 @@ export type SchemaEnumValue =
       title?: string;
       description?: string;
       icon?: string;
+      /**
+       * A brief message that can be presented to the user.
+       * Currently used to provide proactive quota notification.
+       */
+      info?: string;
     };
 
 export type Schema = {
