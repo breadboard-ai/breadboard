@@ -494,10 +494,16 @@ class DriveOperations {
       return original;
     }
     const fileId = getFileId(sourceHandle);
+    const parentFolderId = await this.findOrCreateFolder();
+    if (typeof parentFolderId !== "string" || !parentFolderId) {
+      throw new Error(`Unexpected parent folder result ${parentFolderId}`);
+    }
     // First try to copy the file with a direct Google Drive copy operation.
-    const copiedFile = await this.#googleDriveClient.copyFile(fileId, {
-      fields: ["id"],
-    });
+    const copiedFile = await this.#googleDriveClient.copyFile(
+      fileId,
+      { parents: [parentFolderId] },
+      { fields: ["id"] }
+    );
     if (copiedFile.ok) {
       return {
         storedData: {
@@ -514,7 +520,10 @@ class DriveOperations {
 
       const uploadedFile = await this.#googleDriveClient.createFile(
         await content.blob(),
-        { mimeType: original.storedData.mimeType }
+        {
+          mimeType: original.storedData.mimeType,
+          parents: [parentFolderId],
+        }
       );
       return {
         storedData: {

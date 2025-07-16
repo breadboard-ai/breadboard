@@ -777,6 +777,7 @@ export class GoogleDriveClient {
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/copy */
   async copyFile<const T extends CopyFileOptions>(
     fileId: string,
+    metadata?: gapi.client.drive.File,
     options?: T
   ): Promise<
     | { ok: true; value: NarrowedDriveFile<T["fields"]> }
@@ -792,6 +793,7 @@ export class GoogleDriveClient {
     const response = await this.#fetch(url, {
       method: "POST",
       signal: options?.signal,
+      body: JSON.stringify(metadata ?? {}),
     });
     return response.ok
       ? { ok: true, value: await response.json() }
