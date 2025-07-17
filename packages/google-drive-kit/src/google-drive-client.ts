@@ -73,6 +73,13 @@ export interface ListChangesOptions extends BaseRequestOptions {
 /** The default properties you get when requesting no fields. */
 type DefaultFileFields = "id" | "kind" | "name" | "mimeType";
 
+const DEFAULT_FILE_FIELDS: ReadonlyArray<DefaultFileFields> = [
+  "id",
+  "kind",
+  "name",
+  "mimeType",
+];
+
 /**
  * Some properties can be undefined even when requested, either because they are
  * absent or because we don't have permission to read them.
@@ -319,9 +326,7 @@ export class GoogleDriveClient {
       body: JSON.stringify({
         fileId: fileId,
         getMode: "GET_MODE_METADATA",
-        metadata_fields: options?.fields?.length
-          ? options.fields.join(",")
-          : undefined,
+        metadata_fields: (options?.fields ?? DEFAULT_FILE_FIELDS).join(","),
       } satisfies GetFileProxyRequest),
       headers: {
         authorization: `Bearer ${await this.#getUserAccessToken()}`,
