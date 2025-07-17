@@ -4,7 +4,34 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { ActionTracker };
+export { ActionTracker, initializeAnalytics };
+
+declare global {
+  interface Window {
+    dataLayer: Array<IArguments>;
+  }
+}
+
+/**
+ * Initializes Google Analytics.
+ *
+ * @param id - Google Analytics measurement ID
+ */
+function initializeAnalytics(id: string) {
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () {
+    // eslint-disable-next-line prefer-rest-params
+    window.dataLayer.push(arguments);
+  };
+  window.gtag("js", new Date());
+  // IP anonymized per OOGA policy.
+  window.gtag("config", id, { anonymize_ip: true });
+
+  const tagManagerScript = document.createElement("script");
+  tagManagerScript.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
+  tagManagerScript.async = true;
+  document.body.appendChild(tagManagerScript);
+}
 
 /**
  * A simple wrapper to keep all GA invocations in one place.
