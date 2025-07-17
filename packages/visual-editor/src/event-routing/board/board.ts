@@ -190,7 +190,8 @@ export const CreateRoute: EventRoute<"board.create"> = {
 
     runtime.router.go(
       result.url.href,
-      uiState.mode,
+      // Ensure we always go back to the canvas when a board is created.
+      "canvas",
       tab?.id,
       originalEvent.detail.editHistoryCreator
     );
