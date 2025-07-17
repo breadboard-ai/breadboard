@@ -125,7 +125,7 @@ export function extractGoogleDriveFileId(str: string): string | null {
 
 /** Reads properties from the file, using both properties and appProperties (first priority). */
 export function readProperties(
-  file: NarrowedDriveFile<["properties", "appProperties"]>
+  file: NarrowedDriveFile<"properties" | "appProperties">
 ): AppProperties {
   const storedProperties: StoredProperties = {
     title: file.properties?.title || file.appProperties?.title,
