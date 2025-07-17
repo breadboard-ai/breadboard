@@ -12,17 +12,14 @@ import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { createTokenVendor } from "@breadboard-ai/connection-client";
 import { GlobalConfig } from "@breadboard-ai/shared-ui/contexts";
-import { ActionTracker } from "@breadboard-ai/shared-ui/utils/action-tracker.js";
+import {
+  ActionTracker,
+  initializeAnalytics,
+} from "@breadboard-ai/shared-ui/utils/action-tracker.js";
 import { discoverClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import * as Shell from "./shell.js";
 
 const deploymentConfiguration = discoverClientDeploymentConfiguration();
-
-declare global {
-  interface Window {
-    dataLayer: Array<IArguments>;
-  }
-}
 
 function redirect() {
   // Redirect to the main page.
@@ -33,20 +30,7 @@ function redirect() {
 }
 
 if (deploymentConfiguration?.MEASUREMENT_ID) {
-  const id = deploymentConfiguration.MEASUREMENT_ID;
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function () {
-    // eslint-disable-next-line prefer-rest-params
-    window.dataLayer.push(arguments);
-  };
-  window.gtag("js", new Date());
-  // IP anonymized per OOGA policy.
-  window.gtag("config", id, { anonymize_ip: true });
-
-  const tagManagerScript = document.createElement("script");
-  tagManagerScript.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
-  tagManagerScript.async = true;
-  document.body.appendChild(tagManagerScript);
+  initializeAnalytics(deploymentConfiguration.MEASUREMENT_ID, false);
 }
 
 async function init() {

@@ -14,15 +14,9 @@ import { JsonSerializable, LLMContent } from "@breadboard-ai/types";
 
 import { Handler } from "@breadboard-ai/embed";
 import { discoverClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { initializeAnalytics } from "@breadboard-ai/shared-ui/utils/action-tracker";
 
 const deploymentConfiguration = discoverClientDeploymentConfiguration();
-
-declare global {
-  interface Window {
-    dataLayer: IArguments[];
-    gtag: (...args: IArguments[]) => void;
-  }
-}
 
 if (!deploymentConfiguration.BACKEND_API_ENDPOINT) {
   throw new Error(`No BACKEND_API_ENDPOINT was configured`);
@@ -33,20 +27,7 @@ const executeStepEndpoint: string = new URL(
 ).href;
 
 if (deploymentConfiguration?.MEASUREMENT_ID) {
-  const id = deploymentConfiguration.MEASUREMENT_ID;
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function () {
-    // eslint-disable-next-line prefer-rest-params
-    window.dataLayer.push(arguments);
-  };
-  window.gtag("js", new Date());
-  // IP anonymized per OOGA policy.
-  window.gtag("config", id, { anonymize_ip: true });
-
-  const tagManagerScript = document.createElement("script");
-  tagManagerScript.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
-  tagManagerScript.async = true;
-  document.body.appendChild(tagManagerScript);
+  initializeAnalytics(deploymentConfiguration.MEASUREMENT_ID, true);
 }
 
 bootstrap({

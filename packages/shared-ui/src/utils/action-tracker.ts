@@ -4,7 +4,55 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { ActionTracker };
+export { ActionTracker, initializeAnalytics };
+
+declare global {
+  interface Window {
+    dataLayer: Array<IArguments>;
+  }
+}
+
+const LOCAL_STORAGE_KEY = "ga_user_id";
+
+/**
+ * Initializes Google Analytics.
+ *
+ * @param id - Google Analytics measurement ID
+ */
+function initializeAnalytics(id: string, signedIn: boolean) {
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () {
+    // eslint-disable-next-line prefer-rest-params
+    window.dataLayer.push(arguments);
+  };
+  window.gtag("js", new Date());
+  // IP anonymized per OOGA policy.
+  const userId = signedIn ? { user_id: getUserId() } : {};
+
+  window.gtag("config", id, {
+    anonymize_ip: true,
+    ...userId,
+  });
+
+  const tagManagerScript = document.createElement("script");
+  tagManagerScript.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
+  tagManagerScript.async = true;
+  document.body.appendChild(tagManagerScript);
+
+  function getUserId() {
+    let userId = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!userId) {
+      // Generate a random GUUID that will be associated with this user.
+      userId = crypto.randomUUID();
+      window.localStorage.setItem(LOCAL_STORAGE_KEY, userId);
+    }
+    return userId;
+  }
+}
+
+function resetAnalyticsUserId() {
+  window.localStorage.removeItem(LOCAL_STORAGE_KEY);
+}
 
 /**
  * A simple wrapper to keep all GA invocations in one place.
@@ -76,7 +124,13 @@ class ActionTracker {
     globalThis.gtag?.("event", "sign_in_page_view");
   }
 
+  static signOutSuccess() {
+    resetAnalyticsUserId();
+    globalThis.gtag?.("event", "sign_out_success");
+  }
+
   static signInSuccess() {
+    resetAnalyticsUserId();
     globalThis.gtag?.("event", "sign_in_success");
   }
 }
