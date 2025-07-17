@@ -4,13 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SETTINGS_TYPE } from "@breadboard-ai/shared-ui/types/types.js";
+import {
+  type LanguagePack,
+  SETTINGS_TYPE,
+} from "@breadboard-ai/shared-ui/types/types.js";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { createTokenVendor } from "@breadboard-ai/connection-client";
 import { GlobalConfig } from "@breadboard-ai/shared-ui/contexts";
 import { ActionTracker } from "@breadboard-ai/shared-ui/utils/action-tracker.js";
 import { discoverClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import * as Shell from "./shell.js";
 
 const deploymentConfiguration = discoverClientDeploymentConfiguration();
 
@@ -86,6 +90,24 @@ async function init() {
     redirect();
     return;
   }
+
+  const StringsHelper = await import("@breadboard-ai/shared-ui/strings");
+  await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
+  const Strings = StringsHelper.forSection("Global");
+
+  if (
+    Strings.from("PROVIDER_NAME") !== "PROVIDER_NAME" &&
+    Strings.from("PROVIDER_NAME") !== ""
+  ) {
+    Shell.showExperimental();
+  }
+
+  Shell.setPageInfo();
+  Shell.setPageTitle(
+    "Welcome",
+    Strings.from("APP_NAME"),
+    Strings.from("SUB_APP_NAME")
+  );
 
   const signInButton = document.querySelector<HTMLAnchorElement>("#sign-in");
   if (!signInButton) {

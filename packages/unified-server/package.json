@@ -121,7 +121,7 @@
       ],
       "files": [
         "scripts/copy-assets.ts",
-        "landing/styles/**/*.css"
+        "landing/styles/**/*.*"
       ],
       "output": [
         "public/",
