@@ -14,7 +14,7 @@ import type { DriveChange, GraphInfo } from "./operations.js";
 import { getSetsIntersection, getSetsUnion, readProperties } from "./utils.js";
 
 export type CachedGoogleDriveFile = NarrowedDriveFile<
-  ["id" | "name" | "modifiedTime" | "properties" | "appProperties"]
+  "id" | "name" | "modifiedTime" | "properties" | "appProperties"
 >;
 
 /** Caches list of GraphInfo objects. */

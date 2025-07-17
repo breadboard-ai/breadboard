@@ -8,6 +8,9 @@
 
 import { retryableFetch } from "./board-server/utils.js";
 
+type File = gapi.client.drive.File;
+type Permission = gapi.client.drive.Permission;
+
 export interface GoogleDriveClientOptions {
   apiBaseUrl: string;
   proxyUrl?: string;
@@ -21,17 +24,17 @@ export interface BaseRequestOptions {
 }
 
 export interface ReadFileOptions extends BaseRequestOptions {
-  fields?: Array<keyof gapi.client.drive.File>;
+  fields?: Array<keyof File>;
 }
 
 export interface UpdateFileMetadataOptions extends BaseRequestOptions {
-  fields?: Array<keyof gapi.client.drive.File>;
+  fields?: Array<keyof File>;
   addParents?: string[];
   removeParents?: string[];
 }
 
 export interface CopyFileOptions extends BaseRequestOptions {
-  fields?: Array<keyof gapi.client.drive.File>;
+  fields?: Array<keyof File>;
 }
 
 export interface ExportFileOptions extends BaseRequestOptions {
@@ -44,16 +47,16 @@ export interface WritePermissionOptions extends BaseRequestOptions {
 
 export interface ListFilesOptions extends BaseRequestOptions {
   auth?: "user" | "apikey";
-  fields?: Array<keyof gapi.client.drive.File>;
+  fields?: Array<keyof File>;
   orderBy?: Array<{
-    field: keyof gapi.client.drive.File;
+    field: keyof File;
     dir: "asc" | "desc";
   }>;
   pageSize?: number;
   pageToken?: string;
 }
 
-export interface ListFilesResponse<T extends gapi.client.drive.File> {
+export interface ListFilesResponse<T extends File> {
   files: T[];
   incompleteSearch: boolean;
   kind: "drive#fileList";
@@ -67,27 +70,86 @@ export interface ListChangesOptions extends BaseRequestOptions {
   includeCorpusRemovals?: boolean;
 }
 
+/** The default properties you get when requesting no fields. */
+type DefaultFileFields = "id" | "kind" | "name" | "mimeType";
+
+/**
+ * Some properties can be undefined even when requested, either because they are
+ * absent or because we don't have permission to read them.
+ */
+type AlwaysOptionalFileFields = "permissions" | "properties" | "appProperties";
+
 /**
  * A DriveFile (which usually has every field as optional) but where some of the
  * fields are required. Used when we know we are retrieving certain fields, so
  * we can assert that the values will be populated.
  */
 export type NarrowedDriveFile<
-  T extends Array<keyof gapi.client.drive.File> | undefined,
-> = {
-  [K in keyof Required<gapi.client.drive.File> as K extends (
-    T extends Array<keyof gapi.client.drive.File>
-      ? T[number]
-      : // The default properties that are returned when fields is not set.
-        "id" | "kind" | "name" | "mimeType"
-  )
-    ? K
-    : // Some properties can be undefined even when requested (either because
-      // they are absent or because we don't have permission to read them).
-      never]: K extends "permissions" | "properties" | "appProperties"
-    ? gapi.client.drive.File[K]
-    : Exclude<gapi.client.drive.File[K], undefined>;
-};
+  // Void here represents requesting no fields.
+  T extends keyof File | void,
+> = void extends T
+  ? NarrowedDriveFile<DefaultFileFields>
+  : MakeIntersectionTypeMoreReadable<
+      {
+        // Most fields will reliably be defined if requested.
+        [K in keyof Omit<File, AlwaysOptionalFileFields> as K extends T
+          ? K
+          : never]-?: File[K];
+      } & {
+        // Some fields can be omitted even when requested.
+        [K in AlwaysOptionalFileFields as K extends T ? K : never]?: File[K];
+      }
+    >;
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
+// $ExpectType { name: string; ownedByMe: boolean; properties?: { [x: string]: string; } | undefined;  }
+type NarrowedDriveFile_Test1 = NarrowedDriveFile<
+  "name" | "ownedByMe" | "properties"
+>;
+
+// $ExpectType { id: string; kind: string; mimeType: string; name: string; }
+type NarrowedDriveFile_Test2 = NarrowedDriveFile<void>;
+
+// $ExpectType { }
+type NarrowedDriveFile_Test3 = NarrowedDriveFile<never>;
+
+/* eslint-enable @typescript-eslint/no-unused-vars */
+
+/**
+ * A hack that usually makes intersections a bit more readable. For example,
+ * `{foo: string} & {bar: number}` becomes `{foo: string, bar: number}`.
+ *
+ * https://github.com/microsoft/TypeScript/issues/47980#issuecomment-1049304607
+ */
+type MakeIntersectionTypeMoreReadable<T> = T extends unknown
+  ? { [K in keyof T]: T[K] }
+  : never;
+
+type NarrowedDriveFileFromOptions<
+  T extends { fields?: Array<keyof File> | undefined },
+> = NarrowedDriveFile<
+  T["fields"] extends Array<infer U extends keyof File> ? U : void
+>;
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
+// $ExpectType { name: string; ownedByMe: boolean; properties?: { [x: string]: string; } | undefined; }
+type NarrowedDriveFileFromOptions_Test1 = NarrowedDriveFileFromOptions<{
+  fields: Array<"name" | "ownedByMe" | "properties">;
+}>;
+
+// $ExpectType { id: string; kind: string; mimeType: string; name: string; }
+type NarrowedDriveFileFromOptions_Test2 = NarrowedDriveFileFromOptions<{
+  fields: undefined;
+}>;
+
+// $ExpectType { }
+type NarrowedDriveFileFromOptions_Test3 = NarrowedDriveFileFromOptions<{
+  fields: [];
+}>;
+
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 type GoogleApiAuthorization =
   | { kind: "key"; key: string }
@@ -173,7 +235,7 @@ export class GoogleDriveClient {
   async getFileMetadata<const T extends ReadFileOptions>(
     fileId: string,
     options?: T
-  ): Promise<NarrowedDriveFile<T["fields"]>> {
+  ): Promise<NarrowedDriveFileFromOptions<T>> {
     // 1. Try directly with user credentials.
     const directResponseWithUserCreds = await this.#fetchFileMetadataDirectly(
       fileId,
@@ -241,7 +303,7 @@ export class GoogleDriveClient {
       `drive/v3/files/${encodeURIComponent(fileId)}`,
       this.#apiBaseUrl
     );
-    if (options?.fields?.length) {
+    if (options?.fields) {
       url.searchParams.set("fields", options.fields.join(","));
     }
     return this.#fetch(url, { signal: options?.signal }, authorization);
@@ -315,9 +377,7 @@ export class GoogleDriveClient {
           // base64 encoded.
           const proxyResult =
             (await proxyResponse.json()) as GetFileProxyResponse;
-          const metadata = JSON.parse(
-            proxyResult.metadata
-          ) as gapi.client.drive.File;
+          const metadata = JSON.parse(proxyResult.metadata) as File;
           return responseFromBase64(
             proxyResult.content,
             metadata.mimeType || "application/octet-stream"
@@ -464,11 +524,11 @@ export class GoogleDriveClient {
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/create#:~:text=metadata%2Donly */
   async createFileMetadata<const T extends ReadFileOptions>(
-    file: gapi.client.drive.File & { name: string; mimeType: string },
+    file: File & { name: string; mimeType: string },
     options?: T
-  ): Promise<NarrowedDriveFile<T["fields"]>> {
+  ): Promise<NarrowedDriveFileFromOptions<T>> {
     const url = new URL(`drive/v3/files`, this.#apiBaseUrl);
-    if (options?.fields?.length) {
+    if (options?.fields) {
       url.searchParams.set("fields", options.fields.join(","));
     }
     const response = await this.#fetch(url, {
@@ -491,28 +551,28 @@ export class GoogleDriveClient {
    */
   async createFile<const T extends ReadFileOptions>(
     data: Blob,
-    metadata?: gapi.client.drive.File,
+    metadata?: File,
     options?: T
-  ): Promise<NarrowedDriveFile<T["fields"]>>;
+  ): Promise<NarrowedDriveFileFromOptions<T>>;
 
   async createFile<const T extends ReadFileOptions>(
     data: string,
-    metadata: gapi.client.drive.File & { mimeType: string },
+    metadata: File & { mimeType: string },
     options?: T
-  ): Promise<NarrowedDriveFile<T["fields"]>>;
+  ): Promise<NarrowedDriveFileFromOptions<T>>;
 
   async createFile<const T extends ReadFileOptions>(
     data: Blob | string,
-    metadata?: gapi.client.drive.File,
+    metadata?: File,
     options?: T
-  ): Promise<NarrowedDriveFile<T["fields"]>> {
+  ): Promise<NarrowedDriveFileFromOptions<T>> {
     const file = await this.#uploadFileMultipart(
       undefined,
       data,
       metadata,
       options
     );
-    const fileId = (file as gapi.client.drive.File).id;
+    const fileId = (file as File).id;
     console.log(`[Google Drive] Created file`, {
       id: fileId,
       open: fileId ? `http://drive.google.com/open?id=${fileId}` : null,
@@ -531,23 +591,23 @@ export class GoogleDriveClient {
   async updateFile<const T extends ReadFileOptions>(
     fileId: string,
     data: Blob,
-    metadata?: gapi.client.drive.File,
+    metadata?: File,
     options?: T
-  ): Promise<NarrowedDriveFile<T["fields"]>>;
+  ): Promise<NarrowedDriveFileFromOptions<T>>;
 
   async updateFile<const T extends ReadFileOptions>(
     fileId: string,
     data: string,
-    metadata?: gapi.client.drive.File & { mimeType: string },
+    metadata?: File & { mimeType: string },
     options?: T
-  ): Promise<NarrowedDriveFile<T["fields"]>>;
+  ): Promise<NarrowedDriveFileFromOptions<T>>;
 
   async updateFile<const T extends ReadFileOptions>(
     fileId: string,
     data: Blob | string,
-    metadata?: gapi.client.drive.File,
+    metadata?: File,
     options?: T
-  ): Promise<NarrowedDriveFile<T["fields"]>> {
+  ): Promise<NarrowedDriveFileFromOptions<T>> {
     const result = this.#uploadFileMultipart(fileId, data, metadata, options);
     console.log(`[Google Drive] Updated file`, {
       id: fileId,
@@ -563,9 +623,9 @@ export class GoogleDriveClient {
   async #uploadFileMultipart<const T extends ReadFileOptions>(
     fileId: string | undefined,
     data: Blob | string,
-    metadata: gapi.client.drive.File | undefined,
+    metadata: File | undefined,
     options: T | undefined
-  ): Promise<NarrowedDriveFile<T["fields"]>> {
+  ): Promise<NarrowedDriveFileFromOptions<T>> {
     const isExistingFile = !!fileId;
     const isBlob = typeof data !== "string";
     if (isBlob && metadata?.mimeType && data.type !== metadata.mimeType) {
@@ -582,7 +642,7 @@ export class GoogleDriveClient {
       this.#apiBaseUrl
     );
     url.searchParams.set("uploadType", "multipart");
-    if (options?.fields?.length) {
+    if (options?.fields) {
       url.searchParams.set("fields", options.fields.join(","));
     }
 
@@ -612,9 +672,9 @@ export class GoogleDriveClient {
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/update */
   async updateFileMetadata<const T extends UpdateFileMetadataOptions>(
     fileId: string,
-    metadata: gapi.client.drive.File & { parents?: never },
+    metadata: File & { parents?: never },
     options?: T
-  ): Promise<NarrowedDriveFile<T["fields"]>> {
+  ): Promise<NarrowedDriveFileFromOptions<T>> {
     const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId)}`,
       this.#apiBaseUrl
@@ -625,7 +685,7 @@ export class GoogleDriveClient {
     if (options?.removeParents) {
       url.searchParams.set("removeParents", options.removeParents.join(","));
     }
-    if (options?.fields?.length) {
+    if (options?.fields) {
       url.searchParams.set("fields", options.fields.join(","));
     }
     const response = await this.#fetch(url, {
@@ -677,7 +737,7 @@ export class GoogleDriveClient {
   async listFiles<const T extends ListFilesOptions>(
     query: string,
     options?: T
-  ): Promise<ListFilesResponse<NarrowedDriveFile<T["fields"]>>> {
+  ): Promise<ListFilesResponse<NarrowedDriveFileFromOptions<T>>> {
     // TODO(aomarks) Make this an async iterator.
     const url = new URL(`drive/v3/files`, this.#apiBaseUrl);
     url.searchParams.set("q", query);
@@ -687,7 +747,7 @@ export class GoogleDriveClient {
     if (options?.pageToken) {
       url.searchParams.set("pageToken", options.pageToken);
     }
-    if (options?.fields?.length) {
+    if (options?.fields) {
       url.searchParams.set("fields", `files(${options.fields.join(",")})`);
     }
     if (options?.orderBy?.length) {
@@ -719,7 +779,7 @@ export class GoogleDriveClient {
   async getFilePermissions(
     fileId: string,
     options?: BaseRequestOptions
-  ): Promise<gapi.client.drive.Permission[]> {
+  ): Promise<Permission[]> {
     return (
       (
         await this.getFileMetadata(fileId, {
@@ -733,9 +793,9 @@ export class GoogleDriveClient {
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/create */
   async createPermission(
     fileId: string,
-    permission: gapi.client.drive.Permission,
+    permission: Permission,
     options: WritePermissionOptions
-  ): Promise<gapi.client.drive.Permission> {
+  ): Promise<Permission> {
     const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId)}/permissions`,
       this.#apiBaseUrl
@@ -755,7 +815,7 @@ export class GoogleDriveClient {
           (await response.text())
       );
     }
-    return (await response.json()) as gapi.client.drive.Permission;
+    return (await response.json()) as Permission;
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/delete */
@@ -783,17 +843,17 @@ export class GoogleDriveClient {
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/copy */
   async copyFile<const T extends CopyFileOptions>(
     fileId: string,
-    metadata?: gapi.client.drive.File,
+    metadata?: File,
     options?: T
   ): Promise<
-    | { ok: true; value: NarrowedDriveFile<T["fields"]> }
+    | { ok: true; value: NarrowedDriveFileFromOptions<T> }
     | { ok: false; error: { status: number } }
   > {
     const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId)}/copy`,
       this.#apiBaseUrl
     );
-    if (options?.fields?.length) {
+    if (options?.fields) {
       url.searchParams.set("fields", options.fields.join(","));
     }
     const response = await this.#fetch(url, {
@@ -897,8 +957,8 @@ function responseFromBase64(base64String: string, mimeType: string): Response {
  * permission includes any non-writable permissions.
  */
 export function onlyWritablePermissionFields(
-  permission: gapi.client.drive.Permission
-): gapi.client.drive.Permission {
+  permission: Permission
+): Permission {
   return {
     type: permission.type,
     emailAddress: permission.emailAddress,

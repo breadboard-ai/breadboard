@@ -13,7 +13,7 @@ import type { NarrowedDriveFile } from "../../src/google-drive-client.js";
 
 describe("create/readProperties", () => {
   let properties: Record<string, string>;
-  let file: NarrowedDriveFile<["properties", "appProperties"]> &
+  let file: NarrowedDriveFile<"properties" | "appProperties"> &
     gapi.client.drive.File;
 
   beforeEach(() => {
