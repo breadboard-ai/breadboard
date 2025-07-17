@@ -27,9 +27,11 @@ function initializeAnalytics(id: string, signedIn: boolean) {
   };
   window.gtag("js", new Date());
   // IP anonymized per OOGA policy.
+  const userId = signedIn ? { user_id: getUserId() } : {};
+
   window.gtag("config", id, {
     anonymize_ip: true,
-    user_id: signedIn ? getUserId() : null,
+    ...userId,
   });
 
   const tagManagerScript = document.createElement("script");
