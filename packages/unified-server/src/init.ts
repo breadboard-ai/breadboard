@@ -27,7 +27,7 @@ const executeStepEndpoint: string = new URL(
 ).href;
 
 if (deploymentConfiguration?.MEASUREMENT_ID) {
-  initializeAnalytics(deploymentConfiguration.MEASUREMENT_ID);
+  initializeAnalytics(deploymentConfiguration.MEASUREMENT_ID, true);
 }
 
 bootstrap({

@@ -12,12 +12,14 @@ declare global {
   }
 }
 
+const LOCAL_STORAGE_KEY = "ga_user_id";
+
 /**
  * Initializes Google Analytics.
  *
  * @param id - Google Analytics measurement ID
  */
-function initializeAnalytics(id: string) {
+function initializeAnalytics(id: string, signedIn: boolean) {
   window.dataLayer = window.dataLayer || [];
   window.gtag = function () {
     // eslint-disable-next-line prefer-rest-params
@@ -25,12 +27,29 @@ function initializeAnalytics(id: string) {
   };
   window.gtag("js", new Date());
   // IP anonymized per OOGA policy.
-  window.gtag("config", id, { anonymize_ip: true });
+  window.gtag("config", id, {
+    anonymize_ip: true,
+    user_id: signedIn ? getUserId() : null,
+  });
 
   const tagManagerScript = document.createElement("script");
   tagManagerScript.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
   tagManagerScript.async = true;
   document.body.appendChild(tagManagerScript);
+
+  function getUserId() {
+    let userId = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!userId) {
+      // Generate a random GUUID that will be associated with this user.
+      userId = crypto.randomUUID();
+      window.localStorage.setItem(LOCAL_STORAGE_KEY, userId);
+    }
+    return userId;
+  }
+}
+
+function resetAnalyticsUserId() {
+  window.localStorage.removeItem(LOCAL_STORAGE_KEY);
 }
 
 /**
@@ -103,7 +122,13 @@ class ActionTracker {
     globalThis.gtag?.("event", "sign_in_page_view");
   }
 
+  static signOutSuccess() {
+    resetAnalyticsUserId();
+    globalThis.gtag?.("event", "sign_out_success");
+  }
+
   static signInSuccess() {
+    resetAnalyticsUserId();
     globalThis.gtag?.("event", "sign_in_success");
   }
 }

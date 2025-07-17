@@ -9,36 +9,39 @@ import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import type {
-  RunErrorEvent,
-  RunSecretEvent,
-  BoardServer,
-} from "@breadboard-ai/types";
-import { createRef, ref, type Ref } from "lit/directives/ref.js";
-import { map } from "lit/directives/map.js";
-import { customElement, state } from "lit/decorators.js";
-import { HTMLTemplateResult, LitElement, html, nothing } from "lit";
 import {
-  createRunObserver,
-  GraphDescriptor,
-  SerializedRun,
-  MutableGraphStore,
-  createFileSystem,
-  createEphemeralBlobStore,
-  FileSystem,
-  addSandboxedRunModule,
-  hash,
-} from "@google-labs/breadboard";
+  createTokenVendor,
+  TokenVendor,
+} from "@breadboard-ai/connection-client";
 import {
   createFileSystemBackend,
   createFlagManager,
   getRunStore,
 } from "@breadboard-ai/data-store";
-import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import { provide } from "@lit/context";
-import { RecentBoardStore } from "./data/recent-boards";
-import { SecretsHelper } from "./utils/secrets-helper";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
+import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
+import type {
+  BoardServer,
+  RunErrorEvent,
+  RunSecretEvent,
+} from "@breadboard-ai/types";
+import {
+  addSandboxedRunModule,
+  createEphemeralBlobStore,
+  createFileSystem,
+  createRunObserver,
+  FileSystem,
+  GraphDescriptor,
+  hash,
+  MutableGraphStore,
+  SerializedRun,
+} from "@google-labs/breadboard";
+import { provide } from "@lit/context";
+import { html, HTMLTemplateResult, LitElement, nothing } from "lit";
+import { customElement, state } from "lit/decorators.js";
+import { map } from "lit/directives/map.js";
+import { createRef, ref, type Ref } from "lit/directives/ref.js";
+import { RecentBoardStore } from "./data/recent-boards";
 import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 import {
@@ -46,26 +49,10 @@ import {
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
 } from "./runtime/types";
-import {
-  createTokenVendor,
-  TokenVendor,
-} from "@breadboard-ai/connection-client";
+import { SecretsHelper } from "./utils/secrets-helper";
 
-import { sandbox } from "./sandbox";
-import { KeyboardCommandDeps } from "./commands/types";
-import {
-  SIGN_IN_CONNECTION_ID,
-  SigninAdapter,
-  signinAdapterContext,
-} from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
-import { sideBoardRuntime } from "@breadboard-ai/shared-ui/contexts/side-board-runtime.js";
-import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
-import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { createA2Server } from "@breadboard-ai/a2";
-import { envFromSettings } from "./utils/env-from-settings";
 import { getGoogleDriveBoardService } from "@breadboard-ai/board-server-management";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import {
   CreateNewBoardMessage,
   EmbedHandler,
@@ -74,6 +61,15 @@ import {
   IterateOnPromptMessage,
   ToggleIterateOnPromptMessage,
 } from "@breadboard-ai/embed";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import {
+  GlobalConfig,
+  globalConfigContext,
+} from "@breadboard-ai/shared-ui/contexts";
+import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
+import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
+import { sideBoardRuntime } from "@breadboard-ai/shared-ui/contexts/side-board-runtime.js";
+import { type GoogleDriveAssetShareDialog } from "@breadboard-ai/shared-ui/elements/elements.js";
 import { IterateOnPromptEvent } from "@breadboard-ai/shared-ui/events/events.js";
 import {
   AppCatalystApiClient,
@@ -83,21 +79,26 @@ import {
   FlowGenerator,
   flowGeneratorContext,
 } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
-import { type GoogleDriveAssetShareDialog } from "@breadboard-ai/shared-ui/elements/elements.js";
-import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
-import { Admin } from "./admin";
-import { MainArguments } from "./types/types";
-import { classMap } from "lit/directives/class-map.js";
-import { SignalWatcher } from "@lit-labs/signals";
-import { eventRoutes } from "./event-routing/event-routing";
-import { keyboardCommands } from "./commands/commands";
+import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { ReactiveAppScreen } from "@breadboard-ai/shared-ui/state/app-screen.js";
 import { type AppScreenOutput } from "@breadboard-ai/shared-ui/state/types.js";
+import { ActionTracker } from "@breadboard-ai/shared-ui/utils/action-tracker";
 import {
-  GlobalConfig,
-  globalConfigContext,
-} from "@breadboard-ai/shared-ui/contexts";
+  SIGN_IN_CONNECTION_ID,
+  SigninAdapter,
+  signinAdapterContext,
+} from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
+import { SignalWatcher } from "@lit-labs/signals";
+import { classMap } from "lit/directives/class-map.js";
+import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import { Admin } from "./admin";
+import { keyboardCommands } from "./commands/commands";
+import { KeyboardCommandDeps } from "./commands/types";
+import { eventRoutes } from "./event-routing/event-routing";
 import { RuntimeBoardServerChangeEvent } from "./runtime/events.js";
+import { sandbox } from "./sandbox";
+import { MainArguments } from "./types/types";
+import { envFromSettings } from "./utils/env-from-settings";
 
 type RenderValues = {
   canSave: boolean;
@@ -1778,6 +1779,7 @@ export class Main extends SignalWatcher(LitElement) {
       .mode=${this.#uiState.mode}
       @bbsignout=${async () => {
         await this.signinAdapter.signOut();
+        ActionTracker.signOutSuccess();
         window.location.href = new URL("/", window.location.href).href;
       }}
       @bbclose=${() => {

@@ -30,7 +30,7 @@ function redirect() {
 }
 
 if (deploymentConfiguration?.MEASUREMENT_ID) {
-  initializeAnalytics(deploymentConfiguration.MEASUREMENT_ID);
+  initializeAnalytics(deploymentConfiguration.MEASUREMENT_ID, false);
 }
 
 async function init() {
