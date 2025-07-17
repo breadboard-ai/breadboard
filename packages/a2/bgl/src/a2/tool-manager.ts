@@ -170,6 +170,7 @@ class ToolManager {
     let description = (await describeGraph({
       url,
     })) as Outcome<DescriberResult>;
+    console.log("DESCRIBER RESULT", description);
     let passContext = false;
     if (!ok(description)) return description;
 

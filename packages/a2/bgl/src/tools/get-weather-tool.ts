@@ -287,6 +287,8 @@ async function invoke({
 
 async function describe() {
   return {
+    title: "Get Weather",
+    description: "Searches weather information on Google Search.",
     inputSchema: {
       type: "object",
       properties: {

@@ -135,6 +135,8 @@ async function invoke({
 
 async function describe() {
   return {
+    title: "Search Web",
+    description: "Given a query, searches the Web with Google Search.",
     inputSchema: {
       type: "object",
       properties: {

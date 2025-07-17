@@ -28,6 +28,8 @@ async function invoke({
 
 async function describe() {
   return {
+    title: "Internal Search",
+    description: "Search using internal search engine.",
     inputSchema: {
       type: "object",
       properties: {
