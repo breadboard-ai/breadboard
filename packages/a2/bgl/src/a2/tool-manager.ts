@@ -257,6 +257,8 @@ class ToolManager {
   }
 
   async processResponse(response: LLMContent, callTool: CallToolCallback) {
+    if (!response.parts) return;
+
     for (const part of response.parts) {
       if ("functionCall" in part) {
         const { args, name } = part.functionCall;
