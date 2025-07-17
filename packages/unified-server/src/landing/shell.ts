@@ -9,6 +9,11 @@ export function setPageTitle(
   appName: string,
   appSubName: string
 ) {
+  const pageTitle = document.body.querySelector("#title");
+  if (pageTitle) {
+    pageTitle.textContent = appName;
+  }
+
   const suffix = `${appName} [${appSubName}]`;
   if (title) {
     title = title.trim();
