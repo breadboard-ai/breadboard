@@ -105,6 +105,7 @@ async function describe({ asType: _, ...inputs }: DescribeInputs) {
 
   return {
     title: "Search Hotels",
+    description: "Search available hotels.",
     inputSchema: {
       type: "object",
       properties: {
