@@ -110,6 +110,7 @@ async function describe({ asType: _, ...inputs }: DescribeInputs) {
 
   return {
     title: "Search Wikipedia",
+    description: "Given a query, searches Wikipedia.",
     inputSchema: {
       type: "object",
       properties: {

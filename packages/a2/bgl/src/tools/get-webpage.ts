@@ -144,6 +144,8 @@ async function describe({ asType: _, ...inputs }: DescribeInputs) {
 
   return {
     title: "Get Webpage",
+    description:
+      "Given a URL of a webpage, returns its content as Markdown with a list of links and other metadata.",
     inputSchema: {
       type: "object",
       properties: {

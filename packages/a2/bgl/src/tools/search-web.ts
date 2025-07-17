@@ -130,6 +130,7 @@ async function describe({ asType: _, ...inputs }: DescribeInputs) {
 
   return {
     title: "Search Web",
+    description: "Given a query, searches the Web with Google Search.",
     inputSchema: {
       type: "object",
       properties: {

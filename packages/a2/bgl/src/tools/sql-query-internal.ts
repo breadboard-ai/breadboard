@@ -105,6 +105,7 @@ async function describe({ asType: _, ...inputs }: DescribeInputs) {
 
   return {
     title: "SQL Query Internal",
+    description: "Query over data sources using internal SQL query engine.",
     inputSchema: {
       type: "object",
       properties: {
