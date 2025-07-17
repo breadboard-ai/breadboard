@@ -268,8 +268,8 @@ export class GoogleDriveClient {
           ` using API key fallback. Now trying proxy fallback.`
       );
       const proxyResponse = await this.#fetchFileMetadataViaProxy(
-        this.#proxyUrl,
         fileId,
+        this.#proxyUrl,
         options
       );
       if (proxyResponse.ok) {
