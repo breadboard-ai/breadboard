@@ -11,7 +11,7 @@ import {
   NodeValue,
   ParameterMetadata,
 } from "@breadboard-ai/types";
-import { Outcome } from "@google-labs/breadboard";
+import { isInlineData, Outcome } from "@google-labs/breadboard";
 import {
   ConnectorState,
   GraphAsset,
@@ -42,6 +42,13 @@ class ReactiveOrganizer implements Organizer {
 
   async addGraphAsset(asset: GraphAssetDescriptor): Promise<Outcome<void>> {
     const { data: assetData, metadata, path } = asset;
+    for (const data of assetData) {
+      for (const part of data.parts) {
+        if (isInlineData(part)) {
+          part.inlineData.title = metadata?.title;
+        }
+      }
+    }
     const data = (await this.#project.persistDataParts(assetData)) as NodeValue;
     return this.#project.edit(
       [{ type: "addasset", path, data, metadata }],
