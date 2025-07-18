@@ -351,11 +351,17 @@ class ReactiveProjectRun implements ProjectRun {
 
     let particleTree: EphemeralParticleTree | null = null;
     const particleStreamHandle = getParticleStreamHandle(schema, outputs);
-    if (particleStreamHandle && this.fileSystem) {
-      particleTree = new EphemeralParticleTreeImpl(
-        this.fileSystem,
-        particleStreamHandle
-      );
+    if (particleStreamHandle) {
+      if (!this.fileSystem) {
+        console.warn(
+          `Particle stream "${particleStreamHandle}" provided, but file system is not available`
+        );
+      } else {
+        particleTree = new EphemeralParticleTreeImpl(
+          this.fileSystem,
+          particleStreamHandle
+        );
+      }
     }
 
     this.current.get(topLevel(path))?.addOutput(event.data, particleTree);
