@@ -120,6 +120,10 @@ class ParticleWorkItem implements WorkItem {
     return this.#end;
   }
 
+  set end(_v) {
+    // ignore, since we're using the "done" flag instead.
+  }
+
   @signal
   get elapsed(): number {
     const end = this.end ?? now.get();
@@ -133,7 +137,7 @@ class ParticleWorkItem implements WorkItem {
     const consoleGroup = this.particleTree.tree.root.group.get(
       "console"
     ) as GroupParticle;
-    return consoleGroup?.group;
+    return consoleGroup?.group || new Map();
   }
 
   constructor(
