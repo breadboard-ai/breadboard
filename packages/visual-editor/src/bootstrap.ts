@@ -163,7 +163,21 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     }
 
     // Redirect to the landing page.
-    window.location.href = new URL("/landing/", window.location.href).href;
+    const landingRedirectUrl = new URL("/landing/", window.location.href);
+    const currentUrl = new URL(window.location.href);
+    if (currentUrl.searchParams.has("flow")) {
+      landingRedirectUrl.searchParams.set(
+        "flow",
+        currentUrl.searchParams.get("flow")!
+      );
+    }
+    if (currentUrl.searchParams.has("mode")) {
+      landingRedirectUrl.searchParams.set(
+        "mode",
+        currentUrl.searchParams.get("mode")!
+      );
+    }
+    window.location.href = decodeURIComponent(landingRedirectUrl.href);
     return;
   }
 }

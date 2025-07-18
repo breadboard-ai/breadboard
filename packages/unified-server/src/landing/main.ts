@@ -23,10 +23,18 @@ const deploymentConfiguration = discoverClientDeploymentConfiguration();
 
 function redirect() {
   // Redirect to the main page.
-  window.location.href = new URL(
-    "/?redirect-from-landing=true",
-    window.location.href
-  ).href;
+  const redirectUrl = new URL("/", window.location.href);
+  redirectUrl.searchParams.set("redirect-from-landing", "true");
+
+  const currentUrl = new URL(window.location.href);
+  if (currentUrl.searchParams.has("flow")) {
+    redirectUrl.searchParams.set("flow", currentUrl.searchParams.get("flow")!);
+  }
+  if (currentUrl.searchParams.has("mode")) {
+    redirectUrl.searchParams.set("mode", currentUrl.searchParams.get("mode")!);
+  }
+
+  window.location.href = redirectUrl.href;
 }
 
 if (deploymentConfiguration?.MEASUREMENT_ID) {
