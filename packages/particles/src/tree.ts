@@ -4,25 +4,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { SignalMap } from "signal-utils/map";
 import {
   GroupParticle,
   Particle,
   ParticleIdentifier,
   ParticleOperation,
+  ParticleTree,
   SerializedParticle,
 } from "./types.js";
+import { toParticle } from "./utils.js";
 
-export { ParticleTree };
+export { ParticleTreeImpl };
 
 export type ParticleFactory = {
   create(particle: SerializedParticle): Particle;
 };
 
-class ParticleTree {
+class ParticleTreeImpl implements ParticleTree {
   public readonly root: GroupParticle;
 
-  constructor(private readonly factory: ParticleFactory) {
-    this.root = factory.create({ group: [] }) as GroupParticle;
+  constructor() {
+    this.root = toParticle({ group: [] }) as GroupParticle;
   }
 
   apply(op: ParticleOperation) {
@@ -48,22 +51,21 @@ class ParticleTree {
       // Create missing parts of the path.
       while (path.length > 0) {
         const id = path.at(0)!;
-        const next = this.factory.create({ group: [] }) as GroupParticle;
+        const next = toParticle({ group: [] }) as GroupParticle;
         destination.group.set(id, next);
         destination = next;
         path.shift();
       }
       if (!before) {
         // Append the particle
-        destination.group.set(newId, this.factory.create(particle));
+        destination.group.set(newId, toParticle(particle));
       } else {
         // Insert the particle. Need to rebuild the map to do this.
-        // TODO: Fix this: a map is not a signalmap here.
-        const group = new Map<ParticleIdentifier, Particle>();
+        const group = new SignalMap<ParticleIdentifier, Particle>();
         let inserted = false;
         for (const [oldId, oldParticle] of destination.group.entries()) {
           if (oldId === before) {
-            group.set(newId, this.factory.create(particle));
+            group.set(newId, toParticle(particle));
             inserted = true;
           }
           if (inserted && oldId === newId) continue;

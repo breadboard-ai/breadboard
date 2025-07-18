@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { SignalMap } from "signal-utils/map";
 import { Particle, SerializedParticle } from "./types.js";
 
 export { isParticle, toParticle };
@@ -14,17 +15,14 @@ function isParticle(o: unknown): o is Particle {
   return "text" in p || "data" in p || "group" in p;
 }
 
-function toParticle(
-  serialized: SerializedParticle,
-  mapFactory?: () => Map<string, Particle>
-): Particle {
+function toParticle(serialized: SerializedParticle): Particle {
   return convert(serialized);
 
   function convert(serialized: SerializedParticle): Particle {
     if ("text" in serialized) return serialized;
     if ("data" in serialized) return serialized;
     if ("group" in serialized && Array.isArray(serialized.group)) {
-      const group = mapFactory ? mapFactory() : new Map<string, Particle>();
+      const group = new SignalMap<string, Particle>();
       for (const [key, value] of serialized.group) {
         group.set(key, convert(value));
       }

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { type ParticleTree, ParticleTreeImpl } from "@breadboard-ai/particles";
 import {
   HarnessRunner,
   RunConfig,
@@ -42,7 +43,6 @@ import {
   UserInput,
 } from "./types";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
-import { Particle, ParticleTree, toParticle } from "@breadboard-ai/particles";
 
 export {
   createProjectRunState,
@@ -409,11 +409,7 @@ class EphemeralParticleTreeImpl implements EphemeralParticleTree {
   accessor done = false;
 
   constructor(fileSystem: FileSystem, path: string) {
-    this.tree = new ParticleTree({
-      create(serialized) {
-        return toParticle(serialized, () => new SignalMap<string, Particle>());
-      },
-    });
+    this.tree = new ParticleTreeImpl();
     this.#start(fileSystem, path);
   }
 
