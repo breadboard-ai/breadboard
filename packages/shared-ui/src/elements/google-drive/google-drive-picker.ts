@@ -25,12 +25,29 @@ const BOARD_MIME_TYPES = [
 
 export type Mode = "pick-shared-board" | "pick-shared-assets";
 
+export type DriveFileIdWithOptionalResourceKey = {
+  id: string;
+  resourcekey?: string;
+};
+
 @customElement("bb-google-drive-picker")
 export class GoogleDrivePicker extends LitElement {
   static styles = [
     css`
       :host {
         display: none;
+      }
+      #invisible-resourcekey-iframes-container {
+        /* These styles are just here for debugging. Remove "display:none" from
+        the ":host" styles above to make the iframes visible during dev. */
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 250px;
+        display: flex;
+        background: magenta;
+        padding: 20px;
       }
     `,
   ];
@@ -40,7 +57,7 @@ export class GoogleDrivePicker extends LitElement {
   accessor signinAdapter: SigninAdapter | undefined = undefined;
 
   @property({ type: Array })
-  accessor fileIds: string[] = [];
+  accessor files: Array<DriveFileIdWithOptionalResourceKey> = [];
 
   @property()
   accessor mode: Mode = "pick-shared-board";
@@ -50,6 +67,7 @@ export class GoogleDrivePicker extends LitElement {
   }
 
   async open() {
+    await this.#preloadFilesThatNeedResourceKeys();
     switch (this.mode) {
       case "pick-shared-board": {
         // TODO(aomarks) There's a lot of shared code between the two modes, but
@@ -69,15 +87,59 @@ export class GoogleDrivePicker extends LitElement {
     }
   }
 
+  /**
+   * Some Drive files have a parameter called a _resource key_ which must be
+   * provided to read the file, even if your account otherwise would have read
+   * access. Read about them here:
+   * https://developers.google.com/workspace/drive/api/guides/resource-keys.
+   *
+   * However, the Google Drive picker library doesn't have a way to provide a
+   * resource key when asking it to display a specific file, meaning the picker
+   * will be blank.
+   *
+   * So we need a workaround. One characteristic of resource keys is that they
+   * are only required the very first time a user opens a given Drive file. So,
+   * we can get that bit flipped for the user by iframing a Drive preview URL,
+   * which _does_ take a resource key. After that iframe loads, the picker
+   * should be able to display the file, because the resource key will no longer
+   * be required for that user.
+   */
+  async #preloadFilesThatNeedResourceKeys() {
+    const filesWithResourceKeys = this.files.filter(
+      ({ resourcekey }) => resourcekey
+    ) as Array<Required<DriveFileIdWithOptionalResourceKey>>;
+    if (filesWithResourceKeys.length === 0) {
+      return;
+    }
+    const container = document.createElement("div");
+    container.id = "invisible-resourcekey-iframes-container";
+    const loadPromises = [];
+    for (const { id, resourcekey } of filesWithResourceKeys) {
+      const iframe = document.createElement("iframe");
+      iframe.src =
+        `https://drive.google.com/file/d/${encodeURIComponent(id)}/preview` +
+        `?resourcekey=${encodeURIComponent(resourcekey)}`;
+      loadPromises.push(
+        new Promise<void>((resolve) => {
+          iframe.addEventListener("load", () => resolve(), { once: true });
+        })
+      );
+      container.appendChild(iframe);
+    }
+    this.shadowRoot!.appendChild(container);
+    await Promise.all(loadPromises);
+    container.remove();
+  }
+
   async #openInPickSharedBoardMode() {
-    if (this.fileIds.length === 0) {
+    if (this.files.length === 0) {
       console.error("No file ids to pick");
       return;
     }
-    if (this.fileIds.length !== 1) {
+    if (this.files.length !== 1) {
       console.error(
         "Expected only one file id to pick, ignoring all but the first",
-        this.fileIds
+        this.files
       );
     }
     const pickerLib = await loadDrivePicker();
@@ -89,7 +151,7 @@ export class GoogleDrivePicker extends LitElement {
 
     const view = new pickerLib.DocsView(google.picker.ViewId.DOCS);
     view.setMimeTypes(BOARD_MIME_TYPES);
-    view.setFileIds(this.fileIds[0]);
+    view.setFileIds(this.files[0].id);
     view.setMode(google.picker.DocsViewMode.GRID);
 
     const underlay = document.createElement("bb-google-drive-picker-underlay");
@@ -167,7 +229,7 @@ export class GoogleDrivePicker extends LitElement {
   }
 
   async #openInPickSharedAssetsMode() {
-    if (this.fileIds.length === 0) {
+    if (this.files.length === 0) {
       console.error("No file ids to pick");
       return;
     }
@@ -179,7 +241,7 @@ export class GoogleDrivePicker extends LitElement {
     }
 
     const view = new pickerLib.DocsView(google.picker.ViewId.DOCS);
-    view.setFileIds(this.fileIds.join(","));
+    view.setFileIds(this.files.map(({ id }) => id).join(","));
     view.setMode(google.picker.DocsViewMode.GRID);
 
     const underlay = document.createElement("bb-google-drive-picker-underlay");
