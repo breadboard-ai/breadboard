@@ -426,6 +426,9 @@ export const styles: CSSResultGroup = [
             flex-direction: column;
             width: 80%;
             margin: 0 auto;
+            max-width: 270px;
+            text-align: center;
+            color: var(--n-0);
 
             & summary {
               list-style: none;
@@ -433,16 +436,6 @@ export const styles: CSSResultGroup = [
 
               & h1 {
                 margin: 0 0 var(--bb-grid-size-2) 0;
-                font: 400 var(--bb-title-large) /
-                  var(--bb-title-line-height-large) var(--bb-font-family);
-                color: var(--e-30);
-              }
-
-              & p {
-                font: 400 var(--bb-label-medium) /
-                  var(--bb-label-line-height-medium) var(--bb-font-family);
-                margin: 0;
-                color: oklch(from var(--text-color) l c h / calc(alpha - 0.6));
               }
             }
 

@@ -28,6 +28,7 @@ import type {
   WorkspaceVisualChangeId,
   SnackType,
   SnackbarAction,
+  SnackbarUUID,
 } from "../types/types.js";
 
 const eventInit = {
@@ -334,7 +335,7 @@ export class SnackbarEvent extends Event {
 export class UnsnackbarEvent extends Event {
   static eventName = "bbunsnackbar";
 
-  constructor() {
+  constructor(public readonly snackbarId?: SnackbarUUID) {
     super(UnsnackbarEvent.eventName, { ...eventInit });
   }
 }

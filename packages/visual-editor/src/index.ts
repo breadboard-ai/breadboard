@@ -1377,8 +1377,9 @@ export class Main extends SignalWatcher(LitElement) {
           snackbarEvent.replaceAll
         );
       }}
-      @bbunsnackbar=${() => {
-        this.unsnackbar();
+      @bbunsnackbar=${(evt: BreadboardUI.Events.UnsnackbarEvent) => {
+        this.unsnackbar(evt.snackbarId);
+        console.log("Removing", evt.snackbarId);
       }}
       @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
         this.toast(toastEvent.message, toastEvent.toastType);
