@@ -662,7 +662,7 @@ export class Board extends EventTarget {
           // an expected byproduct of using the drive.file OAuth scope).
           const picker = document.createElement("bb-google-drive-picker");
           picker.mode = "pick-shared-board";
-          picker.fileIds = [urlObj.pathname.replace(/^\/+/, "")];
+          picker.files = [{ id: urlObj.pathname.replace(/^\/+/, "") }];
 
           // Note we must put the picker in <bb-main>, because we need access to
           // a SigninAdapter which is provided via a Lit context provided there.

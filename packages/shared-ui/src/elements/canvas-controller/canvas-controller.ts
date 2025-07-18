@@ -75,6 +75,7 @@ const SIDE_ITEM_KEY = "bb-canvas-controller-side-nav-item";
 
 import "./empty-state.js";
 import { findGoogleDriveAssetsInGraph, isEmpty } from "../../utils/utils.js";
+import type { DriveFileIdWithOptionalResourceKey } from "../google-drive/google-drive-picker.js";
 
 @customElement("bb-canvas-controller")
 export class CanvasController extends LitElement {
@@ -693,24 +694,24 @@ export class CanvasController extends LitElement {
       console.error(`No googleDriveClient was provided`);
       return;
     }
-    const needsPicking: string[] = [];
+    const needsPicking: Array<DriveFileIdWithOptionalResourceKey> = [];
     await Promise.all(
       driveAssetFileIds.map(async (fileId) => {
         const readable = await googleDriveClient.isReadable(fileId);
         if (!readable) {
-          needsPicking.push(fileId);
+          needsPicking.push({ id: fileId });
         }
       })
     );
     if (needsPicking.length > 0) {
       const picker = this.#googleDriveAssetAccessPickerRef.value;
       if (picker) {
-        picker.fileIds = needsPicking;
+        picker.files = needsPicking;
         picker.open();
         picker.addEventListener(
           "bbgoogledrivepickerclose",
           ({ result }) => {
-            picker.fileIds = [];
+            picker.files = [];
             if (result.action === "picked") {
               // Reload so that any assets that might have failed to load while
               // the dialog was open will try again. It would be much better if
