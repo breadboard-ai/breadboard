@@ -612,14 +612,29 @@ export class EntityEditor extends SignalWatcher(LitElement) {
             border-bottom: 1px solid var(--bb-neutral-300);
           }
 
-          &:not(.stretch):has(+ .stretch) {
+          &:not(.stretch):not(.info):has(+ .stretch) {
             margin-bottom: var(--bb-grid-size-3);
             padding-bottom: var(--bb-grid-size-3);
             border-bottom: 1px solid var(--bb-neutral-300);
           }
 
-          &:not(.stretch):has(+ :not(.stretch)) {
+          &:not(.stretch):not(.info):has(+ :not(.stretch)) {
             margin-bottom: var(--bb-grid-size-2);
+          }
+
+          &.info {
+            height: var(--bb-grid-size-14);
+            background: var(--n-95);
+            border-top: 1px solid var(--n-90);
+            border-bottom: 1px solid var(--n-90);
+            display: flex;
+            align-items: center;
+            padding: 0 var(--bb-grid-size-6);
+            margin-bottom: var(--bb-grid-size-3);
+
+            & .g-icon {
+              margin-right: var(--bb-grid-size-2);
+            }
           }
 
           &.stretch {
@@ -1361,7 +1376,26 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       }
 
       classes["read-only"] = this.readOnly;
-      return html`<div class=${classMap(classes)}>${value} ${controls}</div>`;
+      const extendedInfo = port.schema.enum?.find((item) => {
+        if (typeof item === "string") {
+          return false;
+        }
+
+        return item.id === port.value && item.info !== undefined;
+      });
+
+      const extendedInfoOutput =
+        extendedInfo && typeof extendedInfo !== "string"
+          ? html`<div class="info">
+              <span class="g-icon round filled">warning</span
+              >${extendedInfo.info}
+            </div>`
+          : nothing;
+
+      return [
+        html`<div class=${classMap(classes)}>${value} ${controls}</div>`,
+        extendedInfoOutput,
+      ];
     };
 
     const basicPorts: PortLike[] = [];
