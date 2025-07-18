@@ -125,6 +125,10 @@ export const type = css`
 
   /** Weights **/
 
+  .w-700 {
+    font-weight: 700;
+  }
+
   .w-500 {
     font-weight: 500;
   }

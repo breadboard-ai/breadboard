@@ -9,7 +9,12 @@ const Strings = StringsHelper.forSection("Global");
 
 import { LitElement, html, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { AppTemplate, AppTemplateOptions, SnackType } from "../../types/types";
+import {
+  AppTemplate,
+  AppTemplateOptions,
+  SnackbarUUID,
+  SnackType,
+} from "../../types/types";
 
 import { classMap } from "lit/directives/class-map.js";
 import {
@@ -144,6 +149,15 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   static styles = appStyles;
 
+  #notifiedErrors = new Set<string>();
+  #clearNotifiedErrors() {
+    for (const errorId of this.#notifiedErrors) {
+      this.dispatchEvent(new UnsnackbarEvent(errorId as SnackbarUUID));
+    }
+
+    this.#notifiedErrors.clear();
+  }
+
   #renderControls() {
     return html`<bb-app-header
       .isEmpty=${this.isEmpty}
@@ -151,6 +165,13 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       .replayActive=${true}
       .menuActive=${true}
       .appTitle=${this.graph?.title}
+      @bbevent=${(evt: StateEvent<"board.stop">) => {
+        if (evt.detail.eventType !== "board.stop") {
+          return;
+        }
+
+        this.#clearNotifiedErrors();
+      }}
     ></bb-app-header>`;
   }
 
@@ -164,18 +185,36 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     let status: HTMLTemplateResult | symbol = nothing;
 
     const errors = this.run.errors;
+    if (this.#notifiedErrors.size > errors.size) {
+      this.#clearNotifiedErrors();
+    }
+
     if (errors.size > 0) {
+      for (const [errorId, error] of errors) {
+        if (this.#notifiedErrors.has(errorId)) {
+          continue;
+        }
+
+        this.#notifiedErrors.add(errorId);
+        this.dispatchEvent(
+          new SnackbarEvent(
+            errorId as SnackbarUUID,
+            error.message,
+            SnackType.ERROR,
+            [],
+            true,
+            true
+          )
+        );
+      }
+
       activityContents = html`
-        ${Array.from(errors.values()).map((error) => {
-          return html`<details class="error">
-            <summary>
-              <h1>We are sorry, but there was a problem with this flow.</h1>
-              <p>Tap for more details</p>
-            </summary>
-            <div>
-              <p>${error.message}</p>
-            </div>
-          </details>`;
+        ${Array.from(errors.values()).map(() => {
+          return html`<section class="error">
+            <h1 class="w-700 sans-flex round md-headline-large">
+              Oops, something went wrong
+            </h1>
+          </section>`;
         })}
       `;
     } else {
