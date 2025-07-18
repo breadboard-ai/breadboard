@@ -584,6 +584,7 @@ class DriveOperations {
     let fileId: string | undefined;
     let data: string | undefined;
     let mimeType: string;
+    let name: string | undefined;
     if ("storedData" in part) {
       fileId = part.storedData?.handle;
       // TODO(volodya): Add a check if data actually needs to be updated.
@@ -603,6 +604,7 @@ class DriveOperations {
       fileId = undefined;
       data = part.inlineData.data;
       mimeType = part.inlineData.mimeType;
+      name = part.inlineData.title;
     }
     const blob = b64toBlob(data, mimeType);
     const filePromise = fileId
@@ -615,7 +617,9 @@ class DriveOperations {
     }
     this.#googleDriveClient.updateFileMetadata(
       file.id,
-      {},
+      {
+        name,
+      },
       { addParents: [parent as string] }
     );
     const handle = `${PROTOCOL}/${file.id}`;

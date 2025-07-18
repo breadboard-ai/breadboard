@@ -124,5 +124,6 @@ export type InlineDataCapabilityPart = {
   inlineData: {
     mimeType: string;
     data: string;
+    title?: string;
   };
 };

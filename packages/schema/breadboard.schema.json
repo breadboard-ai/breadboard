@@ -535,6 +535,9 @@
 						},
 						"data": {
 							"type": "string"
+						},
+						"title": {
+							"type": "string"
 						}
 					},
 					"required": [
