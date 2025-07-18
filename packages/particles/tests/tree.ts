@@ -5,18 +5,13 @@
  */
 
 import { describe, it } from "node:test";
-import { ParticleTree } from "../src/tree.js";
-import { toParticle } from "../src/utils.js";
+import { ParticleTreeImpl } from "../src/tree.js";
 import { deepStrictEqual, equal, throws } from "node:assert";
 import { GroupParticle } from "../src/types.js";
 
 describe("ParticleTree", () => {
   it("Applies upsert operations", () => {
-    const tree = new ParticleTree({
-      create(particle) {
-        return toParticle(particle);
-      },
-    });
+    const tree = new ParticleTreeImpl();
 
     tree.apply({
       jsonrpc: "2.0",

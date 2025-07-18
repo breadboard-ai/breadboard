@@ -312,3 +312,11 @@ export type Presentation =
 export type Item = Record<string, unknown> & {
   presentation: Presentation;
 };
+
+/**
+ * Represents a particle tree.
+ */
+export type ParticleTree = {
+  readonly root: GroupParticle;
+  apply(operation: ParticleOperation): void;
+};

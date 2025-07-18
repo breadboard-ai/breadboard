@@ -4,26 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  Particle,
-  ParticleOperation,
-  toParticle,
-} from "@breadboard-ai/particles";
 import { FileDataPart, JSONPart, LLMContent } from "@breadboard-ai/types";
-import {
-  FileSystem,
-  FileSystemPath,
-  ok,
-  OutputValues,
-  Schema,
-} from "@google-labs/breadboard";
+import { OutputValues, Schema } from "@google-labs/breadboard";
 
 export {
-  isParticleMode,
-  toLLMContentArray,
+  getParticleStreamHandle,
   idFromPath,
+  isParticleMode,
   toJson,
-  ParticleReader,
+  toLLMContentArray,
+  getFirstFileDataPart,
 };
 
 const REPORT_STREAM_MIME_TYPE = "application/vnd.breadboard.report-stream";
@@ -36,6 +26,23 @@ export type Products = {
 
 function idFromPath(path: number[]): string {
   return `e-${path.join("-")}`;
+}
+
+function getParticleStreamHandle(
+  schema: Schema,
+  values: OutputValues
+): string | null {
+  const firstProperty = Object.entries(schema.properties || {}).at(0);
+  if (!firstProperty) return null;
+  const [name, propertySchema] = firstProperty;
+  if (!propertySchema?.behavior?.includes("llm-content")) {
+    return null;
+  }
+  const value = values[name] as LLMContent;
+  if (!value) return null;
+  const part = getFirstFileDataPart(value);
+  if (part?.fileData.mimeType !== REPORT_STREAM_MIME_TYPE) return null;
+  return part?.fileData.fileUri;
 }
 
 function isParticleMode(schema: Schema, values: OutputValues) {
@@ -134,83 +141,4 @@ function getFirstFileDataPart(content: LLMContent): FileDataPart | null {
 }
 function toJson(content: LLMContent[] | undefined): unknown | undefined {
   return (content?.at(0)?.parts.at(0) as JSONPart)?.json;
-}
-
-class ParticleReaderIterator implements AsyncIterator<Particle> {
-  #started = false;
-
-  constructor(
-    private readonly path: FileSystemPath,
-    private readonly fileSystem: FileSystem
-  ) {}
-
-  async #start(path: FileSystemPath) {
-    const readingStart = await this.fileSystem.read({ path });
-    if (!ok(readingStart)) {
-      console.warn(
-        `Failed to read start of streamable report`,
-        readingStart.$error
-      );
-      return;
-    }
-    if (toJson(readingStart.data) !== "start") {
-      console.warn(
-        `Invalid start sequence of streamable report`,
-        readingStart.data
-      );
-      return;
-    }
-  }
-
-  #end(): IteratorResult<Particle> {
-    return {
-      done: true,
-      value: null,
-    };
-  }
-
-  async next(): Promise<IteratorResult<Particle>> {
-    if (!this.#started) {
-      this.#started = true;
-      await this.#start(this.path);
-    }
-    const reading = await this.fileSystem.read({ path: this.path });
-    if (!ok(reading)) {
-      console.warn(`Failed to read from streamable report`, reading.$error);
-      throw new Error(reading.$error);
-    }
-    if ("done" in reading && reading.done) {
-      return this.#end();
-    }
-    const operation = toJson(reading.data) as ParticleOperation;
-    if (operation.method !== "suip/ops/upsert") {
-      throw new Error(`SUIP Method "${operation.method} is not supported`);
-    }
-    // TODO: Implement handling paths.
-    const particle = operation.params.particle;
-    if (!particle) {
-      const msg = `Invalid streamable report`;
-      console.warn(msg, reading.data);
-      throw new Error(msg);
-    }
-    return {
-      done: false,
-      value: toParticle(particle),
-    };
-  }
-}
-
-class ParticleReader implements AsyncIterable<Particle> {
-  path: FileSystemPath;
-
-  [Symbol.asyncIterator](): AsyncIterator<Particle> {
-    return new ParticleReaderIterator(this.path, this.fileSystem);
-  }
-
-  constructor(
-    private readonly fileSystem: FileSystem,
-    part: FileDataPart
-  ) {
-    this.path = part.fileData.fileUri as FileSystemPath;
-  }
 }

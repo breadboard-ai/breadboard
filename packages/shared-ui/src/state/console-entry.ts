@@ -10,17 +10,17 @@ import {
   NodeMetadata,
   NodeStartResponse,
 } from "@breadboard-ai/types";
-import { ConsoleEntry, WorkItem } from "./types";
-import { SignalMap } from "signal-utils/map";
 import {
   FileSystem,
   InputResponse,
   OutputResponse,
   Schema,
 } from "@google-labs/breadboard";
-import { idFromPath, toLLMContentArray } from "./common";
-import { ReactiveWorkItem } from "./work-item";
 import { signal } from "signal-utils";
+import { SignalMap } from "signal-utils/map";
+import { idFromPath, toLLMContentArray } from "./common";
+import { ConsoleEntry, EphemeralParticleTree, WorkItem } from "./types";
+import { ReactiveWorkItem } from "./work-item";
 
 export { ReactiveConsoleEntry };
 
@@ -117,15 +117,10 @@ class ReactiveConsoleEntry implements ConsoleEntry {
     this.work.set(id, item);
   }
 
-  addOutput(data: OutputResponse) {
-    const { bubbled } = data;
-    // The non-bubbled outputs are not supported: they aren't found in the
-    // new-style (A2-based) graphs.
-    if (!bubbled) return;
-
+  addOutput(data: OutputResponse, particleTree: EphemeralParticleTree | null) {
     this.work.set(
       ...ReactiveWorkItem.fromOutput(
-        this.fileSystem,
+        particleTree,
         data,
         this.#pendingTimestamp || 0
       )

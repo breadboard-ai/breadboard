@@ -5,11 +5,11 @@
  */
 
 import { NodeEndResponse } from "@breadboard-ai/types";
-import { AppScreen, AppScreenOutput } from "./types";
-import { SignalMap } from "signal-utils/map";
 import { OutputResponse, Schema } from "@google-labs/breadboard";
-import { idFromPath, isParticleMode } from "./common";
 import { signal } from "signal-utils";
+import { SignalMap } from "signal-utils/map";
+import { idFromPath, isParticleMode } from "./common";
+import { AppScreen, AppScreenOutput, EphemeralParticleTree } from "./types";
 
 export { ReactiveAppScreen };
 
@@ -45,12 +45,7 @@ class ReactiveAppScreen implements AppScreen {
    * part of the user input interaction, and much more in the Particle
    * future.
    */
-  addOutput(data: OutputResponse) {
-    const { bubbled } = data;
-    // The non-bubbled outputs are not supported: they aren't found in the
-    // new-style (A2-based) graphs.
-    if (!bubbled) return;
-
+  addOutput(data: OutputResponse, _particleTree: EphemeralParticleTree | null) {
     const { node, outputs, path } = data;
     const { configuration = {} } = node;
     const { schema: s = {} } = configuration;

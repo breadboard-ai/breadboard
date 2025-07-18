@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Particle } from "@breadboard-ai/particles";
+import { Particle, ParticleTree } from "@breadboard-ai/particles";
 import {
   AssetMetadata,
   AssetPath,
@@ -433,4 +433,9 @@ export type ProjectInternal = Project & {
   ): Outcome<{ id: PortIdentifier; title: string }>;
   connectorInstanceExists(url: string): boolean;
   addConnectorInstance(url: string): void;
+};
+
+export type EphemeralParticleTree = {
+  tree: ParticleTree;
+  done: boolean;
 };

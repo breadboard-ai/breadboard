@@ -80,5 +80,9 @@
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.2",
     "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "signal-polyfill": "^0.2.2",
+    "signal-utils": "^0.21.1"
   }
 }
