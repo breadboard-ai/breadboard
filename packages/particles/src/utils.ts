@@ -14,14 +14,17 @@ function isParticle(o: unknown): o is Particle {
   return "text" in p || "data" in p || "group" in p;
 }
 
-function toParticle(serialized: SerializedParticle): Particle {
+function toParticle(
+  serialized: SerializedParticle,
+  mapFactory?: () => Map<string, Particle>
+): Particle {
   return convert(serialized);
 
   function convert(serialized: SerializedParticle): Particle {
     if ("text" in serialized) return serialized;
     if ("data" in serialized) return serialized;
     if ("group" in serialized && Array.isArray(serialized.group)) {
-      const group = new Map<string, Particle>();
+      const group = mapFactory ? mapFactory() : new Map<string, Particle>();
       for (const [key, value] of serialized.group) {
         group.set(key, convert(value));
       }

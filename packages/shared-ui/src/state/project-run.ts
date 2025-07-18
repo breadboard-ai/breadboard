@@ -14,6 +14,7 @@ import {
   RunNodeEndEvent,
   RunNodeStartEvent,
   RunOutputEvent,
+  Schema,
 } from "@breadboard-ai/types";
 import {
   err,
@@ -30,15 +31,18 @@ import { formatError } from "../utils/format-error";
 import { getStepIcon } from "../utils/get-step-icon";
 import { ReactiveApp } from "./app";
 import { ReactiveAppScreen } from "./app-screen";
-import { idFromPath } from "./common";
+import { getParticleStreamHandle, idFromPath } from "./common";
 import { ReactiveConsoleEntry } from "./console-entry";
 import {
   AppScreenOutput,
   ConsoleEntry,
+  EphemeralParticleTree,
   ProjectRun,
   RunError,
   UserInput,
 } from "./types";
+import { ParticleOperationReader } from "./utils/particle-operation-reader";
+import { Particle, ParticleTree, toParticle } from "@breadboard-ai/particles";
 
 export {
   createProjectRunState,
@@ -329,18 +333,37 @@ class ReactiveProjectRun implements ProjectRun {
   }
 
   #output(event: RunOutputEvent) {
-    const { path } = event.data;
+    const { path, bubbled, node, outputs } = event.data;
     console.debug("Project Run: Output", event);
     if (!this.current) {
       console.warn(`No current console entry for output event`, event);
       return;
     }
-    this.current.get(topLevel(path))?.addOutput(event.data);
+
+    // The non-bubbled outputs are not supported: they aren't found in the
+    // new-style (A2-based) graphs.
+    if (!bubbled) return;
+
+    const { configuration = {} } = node;
+    const { schema: s = {} } = configuration;
+
+    const schema = s as Schema;
+
+    let particleTree: EphemeralParticleTree | null = null;
+    const particleStreamHandle = getParticleStreamHandle(schema, outputs);
+    if (particleStreamHandle && this.fileSystem) {
+      particleTree = new EphemeralParticleTreeImpl(
+        this.fileSystem,
+        particleStreamHandle
+      );
+    }
+
+    this.current.get(topLevel(path))?.addOutput(event.data, particleTree);
     if (!this.app.current) {
       console.warn(`No current screen for output event`, event);
       return;
     }
-    this.app.current.addOutput(event.data);
+    this.app.current.addOutput(event.data, particleTree);
   }
 
   #error(event: RunErrorEvent) {
@@ -376,5 +399,29 @@ class ReactiveProjectRun implements ProjectRun {
       runner,
       signal
     );
+  }
+}
+
+class EphemeralParticleTreeImpl implements EphemeralParticleTree {
+  public readonly tree: ParticleTree;
+
+  @signal
+  accessor done = false;
+
+  constructor(fileSystem: FileSystem, path: string) {
+    this.tree = new ParticleTree({
+      create(serialized) {
+        return toParticle(serialized, () => new SignalMap<string, Particle>());
+      },
+    });
+    this.#start(fileSystem, path);
+  }
+
+  async #start(fileSystem: FileSystem, path: string) {
+    const reader = new ParticleOperationReader(fileSystem, path);
+    for await (const operation of reader) {
+      this.tree.apply(operation);
+    }
+    this.done = true;
   }
 }

@@ -4,24 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { WorkItem } from "./types";
-import { signal } from "signal-utils";
+import { GroupParticle, Particle } from "@breadboard-ai/particles";
 import {
-  FileDataPart,
   LLMContent,
   NodeEndResponse,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
+import { timestamp } from "@breadboard-ai/utils";
+import { InputResponse, OutputResponse, Schema } from "@google-labs/breadboard";
 import { Signal } from "signal-polyfill";
+import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
-import {
-  FileSystem,
-  InputResponse,
-  OutputResponse,
-  Schema,
-} from "@google-labs/breadboard";
-import { idFromPath, ParticleReader, toLLMContentArray } from "./common";
-import { Particle } from "@breadboard-ai/particles";
+import { idFromPath, toLLMContentArray } from "./common";
+import { EphemeralParticleTree, WorkItem } from "./types";
 
 export { ReactiveWorkItem };
 
@@ -75,7 +70,7 @@ class ReactiveWorkItem implements WorkItem {
   }
 
   static fromOutput(
-    fileSystem: FileSystem | undefined,
+    particleTree: EphemeralParticleTree | null,
     data: OutputResponse,
     start: number
   ): [string, ReactiveWorkItem] {
@@ -87,31 +82,19 @@ class ReactiveWorkItem implements WorkItem {
     const title =
       metadata?.description || metadata?.title || DEFAULT_OUTPUT_TITLE;
     const icon = metadata?.icon || DEFAULT_OUTPUT_ICON;
-    const { products, chat, particleMode } = toLLMContentArray(
-      schema as Schema,
-      outputs
-    );
-    let item: ReactiveWorkItem;
-    if (particleMode) {
-      if (!fileSystem) {
-        console.warn(
-          "Particle emitted, but no file system was provided, ignoring"
-        );
-      } else {
-        const part = Object.values(products).at(0)!.parts.at(0) as FileDataPart;
-        item = new ParticleWorkItem(
-          type,
-          title,
-          icon,
-          start,
-          chat,
-          fileSystem,
-          part
-        );
-        return [id, item];
-      }
+    if (particleTree) {
+      const item = new ParticleWorkItem(
+        type,
+        title,
+        icon,
+        start,
+        false, // chat = false for particles
+        particleTree
+      );
+      return [id, item];
     }
-    item = new ReactiveWorkItem(type, title, icon, start, chat);
+    const { products, chat } = toLLMContentArray(schema as Schema, outputs);
+    const item = new ReactiveWorkItem(type, title, icon, start, chat);
     for (const [name, product] of Object.entries(products)) {
       item.product.set(name, product);
     }
@@ -128,8 +111,14 @@ class ReactiveWorkItem implements WorkItem {
 }
 
 class ParticleWorkItem implements WorkItem {
+  #end: number | null = null;
+
   @signal
-  accessor end: number | null = null;
+  get end(): number | null {
+    if (!this.particleTree.done) return null;
+    this.#end ??= timestamp();
+    return this.#end;
+  }
 
   @signal
   get elapsed(): number {
@@ -139,7 +128,13 @@ class ParticleWorkItem implements WorkItem {
 
   readonly awaitingUserInput = false;
 
-  product: Map<string, LLMContent | Particle> = new SignalMap();
+  @signal
+  get product(): Map<string, LLMContent | Particle> {
+    const consoleGroup = this.particleTree.tree.root.group.get(
+      "console"
+    ) as GroupParticle;
+    return consoleGroup?.group;
+  }
 
   constructor(
     public readonly type: NodeTypeIdentifier,
@@ -147,18 +142,6 @@ class ParticleWorkItem implements WorkItem {
     public readonly icon: string | undefined,
     public readonly start: number,
     public readonly chat: boolean,
-    private readonly fileSystem: FileSystem,
-    part: FileDataPart
-  ) {
-    this.#start(part);
-  }
-
-  async #start(part: FileDataPart) {
-    const reader = new ParticleReader(this.fileSystem, part);
-    for await (const particle of reader) {
-      const key = `${this.product.size + 1}`;
-      this.product.set(key, particle);
-    }
-    this.end = performance.now();
-  }
+    private readonly particleTree: EphemeralParticleTree
+  ) {}
 }

@@ -58,6 +58,7 @@ class ParticleTree {
         destination.group.set(newId, this.factory.create(particle));
       } else {
         // Insert the particle. Need to rebuild the map to do this.
+        // TODO: Fix this: a map is not a signalmap here.
         const group = new Map<ParticleIdentifier, Particle>();
         let inserted = false;
         for (const [oldId, oldParticle] of destination.group.entries()) {

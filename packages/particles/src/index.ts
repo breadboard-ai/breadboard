@@ -6,3 +6,4 @@
 
 export type * from "./types.js";
 export * from "./utils.js";
+export * from "./tree.js";
