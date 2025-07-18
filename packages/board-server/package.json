@@ -149,7 +149,7 @@
     "@breadboard-ai/types": "0.8.0",
     "@breadboard-ai/utils": "0.0.2",
     "@google-cloud/firestore": "^7.11.0",
-    "@google-cloud/secret-manager": "^6.0.1",
+    "@google-cloud/secret-manager": "^6.1.0",
     "@google-cloud/storage": "^7.15.2",
     "@google-labs/breadboard": "^0.35.0",
     "@google-labs/core-kit": "^0.19.1",
