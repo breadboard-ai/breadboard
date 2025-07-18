@@ -129,7 +129,7 @@
   "devDependencies": {
     "@ava/typescript": "6.0.0",
     "@google-labs/tsconfig": "^0.0.2",
-    "@types/node": "^22.0.0",
+    "@types/node": "^22.16.4",
     "ava": "6.4.0",
     "jsonschema": "^1.5.0",
     "typescript": "^5.8.3"

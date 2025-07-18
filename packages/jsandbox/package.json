@@ -120,7 +120,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.2",
-    "@types/node": "^22.0.0",
+    "@types/node": "^22.16.4",
     "eslint": "^8.57.1",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",

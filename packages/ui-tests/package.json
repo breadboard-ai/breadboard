@@ -9,7 +9,7 @@
   "type": "commonjs",
   "devDependencies": {
     "@playwright/test": "^1.53.1",
-    "@types/node": "^22.0.0"
+    "@types/node": "^22.16.4"
   },
   "dependencies": {
     "playwright": "^1.53.1"
