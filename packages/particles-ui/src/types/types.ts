@@ -19,7 +19,7 @@ export type ItemState = {
 };
 
 export type ItemList = {
-  items: Map<string, ItemState>;
+  group: Map<string, ItemState>;
   presentation: Presentation;
 };
 

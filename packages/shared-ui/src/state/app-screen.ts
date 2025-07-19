@@ -10,6 +10,7 @@ import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { idFromPath, isParticleMode } from "./common";
 import { AppScreen, AppScreenOutput, EphemeralParticleTree } from "./types";
+import { toParticle } from "@breadboard-ai/particles";
 
 export { ReactiveAppScreen };
 
@@ -25,6 +26,11 @@ class ReactiveAppScreen implements AppScreen {
   @signal
   get last() {
     return Array.from(this.outputs.values()).at(-1) || null;
+  }
+
+  @signal
+  get particle() {
+    return toParticle({ group: [] });
   }
 
   outputs: Map<string, AppScreenOutput> = new SignalMap();

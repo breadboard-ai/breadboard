@@ -217,7 +217,7 @@ export function appScreenToParticles(
   }
 
   return {
-    items,
+    group: items,
     presentation: {
       type: "list",
       orientation: "vertical",

@@ -99,7 +99,7 @@ export class ParticleUIList extends SignalWatcher(LitElement) {
       return nothing;
     }
 
-    const items = this.list.items;
+    const items = this.list.group;
     const theme = this.theme;
 
     return html`<section id="list" class=${classMap(theme.groups.list)}>

@@ -141,6 +141,10 @@ export type AppScreen = {
    * The last output for the screen
    */
   last: AppScreenOutput | null;
+  /**
+   * Outputs translated as particles
+   */
+  particle: Particle;
 };
 
 /**
