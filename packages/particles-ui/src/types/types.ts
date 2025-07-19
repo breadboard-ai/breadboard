@@ -8,18 +8,12 @@ import type {
   Field,
   FieldName,
   Orientation,
+  Particle,
   Presentation,
 } from "@breadboard-ai/particles";
 
-export type ItemData = Record<string, string | boolean | Date>;
-
-export type ItemState = {
-  data: ItemData | undefined;
-  presentation: Presentation;
-};
-
 export type ItemList = {
-  group: Map<string, ItemState>;
+  group: Map<string, Particle>;
   presentation: Presentation;
 };
 
@@ -28,7 +22,7 @@ export type TodoItemListTitle = string;
 export interface ParticleViewer extends HTMLElement {
   fieldName: FieldName | null;
   field: Field | null;
-  value: ItemData[string] | null; // TODO: Migrate this to a Particle.
+  value: Particle | null;
   containerOrientation: Orientation | null;
 }
 

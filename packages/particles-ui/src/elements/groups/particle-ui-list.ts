@@ -15,8 +15,13 @@ import * as Styles from "../../styles/index.js";
 import "./particle-ui-card.js";
 import "../viewers/particle-viewer-image.js";
 import "./particle-ui-segment.js";
-import { Orientation } from "@breadboard-ai/particles";
-import { ItemData, ItemList, UITheme } from "../../types/types.js";
+import {
+  isGroupParticle,
+  isParticle,
+  Orientation,
+  Particle,
+} from "@breadboard-ai/particles";
+import { ItemList, UITheme } from "../../types/types.js";
 import { merge } from "../../utils/utils.js";
 
 @customElement("particle-ui-list")
@@ -120,68 +125,72 @@ export class ParticleUIList extends SignalWatcher(LitElement) {
         ${items.size === 0
           ? html`<div>No items</div>`
           : repeat(items, ([id, item]) => {
-              switch (item.presentation.type) {
-                case "card": {
-                  const done = !!item.data?.["done"];
-                  return html`<particle-ui-card
-                    class=${classMap(theme.groups.card)}
-                    data-id=${id}
-                    .segments=${item.presentation.segments}
-                    .orientation=${item.presentation.orientation}
-                    .disabled=${done}
-                  >
-                    ${repeat(item.presentation.segments, (segment, idx) => {
-                      let classes = {};
-                      if (segment.orientation === "vertical") {
-                        if (segment.type === "media") {
-                          classes = merge(
-                            theme.groups.segmentVertical,
-                            theme.modifiers.media
-                          );
+              const presentation = item.presentation;
+              if (
+                isParticle(item) &&
+                presentation &&
+                typeof presentation !== "string"
+              ) {
+                switch (presentation.type) {
+                  case "card": {
+                    return html`<particle-ui-card
+                      class=${classMap(theme.groups.card)}
+                      data-id=${id}
+                      .segments=${presentation.segments}
+                      .orientation=${presentation.orientation}
+                    >
+                      ${repeat(presentation.segments, (segment, idx) => {
+                        let classes = {};
+                        if (segment.orientation === "vertical") {
+                          if (segment.type === "media") {
+                            classes = merge(
+                              theme.groups.segmentVertical,
+                              theme.modifiers.media
+                            );
+                          } else {
+                            classes = {
+                              ...theme.groups.segmentVerticalPadded,
+                            };
+                          }
                         } else {
-                          classes = {
-                            ...theme.groups.segmentVerticalPadded,
-                          };
-                        }
-                      } else {
-                        if (segment.type === "media") {
-                          classes = merge(
-                            theme.groups.segmentHorizontal,
-                            theme.modifiers.media
-                          );
-                        } else {
-                          classes = {
-                            ...theme.groups.segmentHorizontalPadded,
-                          };
-                        }
-                      }
-
-                      const values: Record<string, ItemData[string]> = {};
-                      for (const fieldName of Object.keys(segment.fields)) {
-                        const key = fieldName;
-                        const value = item.data?.[key];
-                        if (typeof value === "undefined") {
-                          continue;
+                          if (segment.type === "media") {
+                            classes = merge(
+                              theme.groups.segmentHorizontal,
+                              theme.modifiers.media
+                            );
+                          } else {
+                            classes = {
+                              ...theme.groups.segmentHorizontalPadded,
+                            };
+                          }
                         }
 
-                        values[key] = value;
-                      }
+                        const values: Record<string, Particle> = {};
+                        for (const fieldName of Object.keys(segment.fields)) {
+                          const key = fieldName;
+                          const value = item.group.get(key);
+                          if (typeof value === "undefined") {
+                            continue;
+                          }
 
-                      return html`<particle-ui-segment
-                        class=${classMap(
-                          merge(classes, {
-                            "layout-al-fs": true,
-                          })
-                        )}
-                        slot=${`slot-${idx}`}
-                        .containerOrientation=${item.presentation.orientation}
-                        .theme=${theme}
-                        .fields=${segment.fields}
-                        .values=${values}
-                        .disabled=${done}
-                      ></particle-ui-segment>`;
-                    })}
-                  </particle-ui-card>`;
+                          values[key] = value;
+                        }
+
+                        return html`<particle-ui-segment
+                          class=${classMap(
+                            merge(classes, {
+                              "layout-al-fs": true,
+                            })
+                          )}
+                          slot=${`slot-${idx}`}
+                          .containerOrientation=${presentation.orientation}
+                          .theme=${theme}
+                          .fields=${segment.fields}
+                          .values=${values}
+                        ></particle-ui-segment>`;
+                      })}
+                    </particle-ui-card>`;
+                  }
                 }
               }
 

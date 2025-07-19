@@ -3,12 +3,22 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
-import { Field, FieldName, Orientation } from "@breadboard-ai/particles";
-import { classMap } from "lit/directives/class-map.js";
+import {
+  Field,
+  FieldName,
+  isDataParticle,
+  Orientation,
+  Particle,
+} from "@breadboard-ai/particles";
 import { consume } from "@lit/context";
+import { LitElement, css, html, nothing } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
 import { until } from "lit/directives/until.js";
+import { themeContext } from "../../context/theme.js";
+import * as Styles from "../../styles/index.js";
+import { ParticleViewer, UITheme } from "../../types/types.js";
+import { merge } from "../../utils/utils.js";
 import {
   convertShareUriToEmbedUri,
   convertWatchOrShortsUriToEmbedUri,
@@ -17,18 +27,14 @@ import {
   isShortsUri,
   isWatchUri,
 } from "../../utils/youtube.js";
-import { themeContext } from "../../context/theme.js";
-import * as Styles from "../../styles/index.js";
-import { ItemData, ParticleViewer, UITheme } from "../../types/types.js";
-import { merge } from "../../utils/utils.js";
 
 @customElement("particle-viewer-video")
 export class ParticleViewerVideo extends LitElement implements ParticleViewer {
   @property({ reflect: true, type: String })
   accessor containerOrientation: Orientation | null = null;
 
-  @property({ attribute: true, type: String })
-  accessor value: ItemData[string] | null = null;
+  @property()
+  accessor value: Particle | null = null;
 
   @property()
   accessor fieldName: FieldName | null = null;
@@ -74,11 +80,13 @@ export class ParticleViewerVideo extends LitElement implements ParticleViewer {
       return nothing;
     }
 
-    if (typeof this.value !== "string") {
+    if (!isDataParticle(this.value)) return nothing;
+
+    if (typeof this.value.data !== "string") {
       return html`Unable to render audio: URL is not valid`;
     }
 
-    let uri: string | null = this.value;
+    let uri: string | null = this.value.data;
     if (isWatchUri(uri) || isShortsUri(uri)) {
       uri = convertWatchOrShortsUriToEmbedUri(uri);
     } else if (isShareUri(uri)) {

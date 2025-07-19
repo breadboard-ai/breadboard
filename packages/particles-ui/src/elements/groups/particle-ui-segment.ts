@@ -10,8 +10,8 @@ import { repeat } from "lit/directives/repeat.js";
 import { consume } from "@lit/context";
 import { themeContext } from "../../context/theme.js";
 
-import { Field, Orientation } from "@breadboard-ai/particles";
-import { ItemData, ParticleViewer, UITheme } from "../../types/types.js";
+import { Field, Orientation, Particle } from "@breadboard-ai/particles";
+import { ParticleViewer, UITheme } from "../../types/types.js";
 import * as Styles from "../../styles/index.js";
 
 @customElement("particle-ui-segment")
@@ -20,7 +20,7 @@ export class ParticleUISegment extends SignalWatcher(LitElement) {
   accessor fields: Record<string, Field> | null = null;
 
   @property()
-  accessor values: Record<string, ItemData[string]> | null = null;
+  accessor values: Record<string, Particle> | null = null;
 
   @property()
   accessor containerOrientation: Orientation = "vertical";
@@ -43,7 +43,7 @@ export class ParticleUISegment extends SignalWatcher(LitElement) {
   #renderField(
     fieldName: string,
     field: Field,
-    value: ItemData[string],
+    value: Particle,
     theme: UITheme
   ) {
     const ElementConstructor = customElements.get(field.as);

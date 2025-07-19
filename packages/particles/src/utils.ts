@@ -5,14 +5,44 @@
  */
 
 import { SignalMap } from "signal-utils/map";
-import { Particle, SerializedParticle } from "./types.js";
+import {
+  DataParticle,
+  GroupParticle,
+  Particle,
+  SerializedParticle,
+  TextParticle,
+} from "./types.js";
 
-export { isParticle, toParticle };
+export {
+  isParticle,
+  toParticle,
+  isGroupParticle,
+  isDataParticle,
+  isTextParticle,
+};
 
 function isParticle(o: unknown): o is Particle {
   if (!o || typeof o !== "object" || Array.isArray(o)) return false;
   const p = o as Particle;
   return "text" in p || "data" in p || "group" in p;
+}
+
+function isTextParticle(o: unknown): o is TextParticle {
+  if (!o || typeof o !== "object" || Array.isArray(o)) return false;
+  const p = o as Particle;
+  return "text" in p;
+}
+
+function isDataParticle(o: unknown): o is DataParticle {
+  if (!o || typeof o !== "object" || Array.isArray(o)) return false;
+  const p = o as Particle;
+  return "data" in p;
+}
+
+function isGroupParticle(o: unknown): o is GroupParticle {
+  if (!o || typeof o !== "object" || Array.isArray(o)) return false;
+  const p = o as Particle;
+  return "group" in p;
 }
 
 function toParticle(serialized: SerializedParticle): Particle {

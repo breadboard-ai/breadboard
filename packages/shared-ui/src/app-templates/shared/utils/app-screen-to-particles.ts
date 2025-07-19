@@ -15,7 +15,12 @@ import {
   isStoredData,
 } from "@google-labs/breadboard";
 import { isTextCapabilityPart } from "@google-labs/breadboard";
-import { BehaviorHint, Presentation, Field } from "@breadboard-ai/particles";
+import {
+  BehaviorHint,
+  Presentation,
+  Field,
+  Particle,
+} from "@breadboard-ai/particles";
 
 function as(mimeType: string, isStored = false): Field["as"] {
   const mimePrefix = mimeType.split("/").at(0);
@@ -165,31 +170,43 @@ function llmContentPartPresentation(
 
 function appendToItems(
   llmContent: LLMContent,
-  items: Map<string, ParticlesUI.Types.ItemState>,
+  items: Map<string, Particle>,
   behaviors: BehaviorHint[]
 ) {
   for (const part of llmContent.parts) {
-    let data = part as ParticlesUI.Types.ItemData;
-    if (isFileDataCapabilityPart(data)) {
-      data = { src: data.fileData.fileUri };
-    } else if (isStoredData(data)) {
-      data = { src: data.storedData.handle };
-    } else if (isInlineData(data)) {
-      if (data.inlineData.mimeType === "text/plain") {
-        data = { src: base64toUTF8(data.inlineData.data) };
+    let particle: Particle;
+    if (isFileDataCapabilityPart(part)) {
+      particle = {
+        data: part.fileData.fileUri,
+        mimeType: part.fileData.mimeType,
+      };
+    } else if (isStoredData(part)) {
+      particle = {
+        data: part.storedData.handle,
+        mimeType: part.storedData.handle,
+      };
+    } else if (isInlineData(part)) {
+      if (part.inlineData.mimeType === "text/plain") {
+        particle = {
+          text: base64toUTF8(part.inlineData.data),
+          mimeType: part.inlineData.mimeType,
+        };
       } else {
-        data = {
-          src: `data:${data.inlineData.mimeType};base64,${data.inlineData.data}`,
+        particle = {
+          data: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+          mimeType: part.inlineData.mimeType,
         };
       }
-    }
-
-    if (isTextCapabilityPart(data) && data.text.trim() === "") {
+    } else if (isTextCapabilityPart(part)) {
+      if (part.text.trim() === "") continue;
+      particle = { text: part.text };
+    } else {
+      console.warn("Unrecognized part: unable to convert to particle", part);
       continue;
     }
 
     items.set(globalThis.crypto.randomUUID(), {
-      data,
+      ...particle,
       presentation: llmContentPartPresentation(part, behaviors),
     });
   }
@@ -202,7 +219,7 @@ export function appScreenToParticles(
     return null;
   }
 
-  const items = new Map<string, ParticlesUI.Types.ItemState>();
+  const items = new Map<string, Particle>();
   for (const [name, outputData] of Object.entries(appScreenOutput.output)) {
     const behaviors =
       appScreenOutput.schema?.properties?.[name]?.behavior ?? [];
