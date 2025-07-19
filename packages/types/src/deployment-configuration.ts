@@ -14,6 +14,11 @@ export type ClientDeploymentConfiguration = {
   ENABLE_GOOGLE_FEEDBACK?: boolean;
   GOOGLE_FEEDBACK_PRODUCT_ID?: string;
   GOOGLE_FEEDBACK_BUCKET?: string;
+  /**
+   * Allow running 3P modules (modules that are other than A2). Default
+   * value is "false"
+   */
+  ALLOW_3P_MODULES?: string;
   domains?: Record<string, DomainConfiguration>;
   flags: RuntimeFlags;
 };
