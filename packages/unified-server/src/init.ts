@@ -37,7 +37,8 @@ bootstrap({
   kits: [asRuntimeKit(Core)],
   defaultBoardService: "/board/",
   moduleInvocationFilter: (context) => {
-    if (!import.meta.env.VITE_NO_3P_MODULES) return;
+    // If we allow 3P modules to run, we can exit quickly (no filter)
+    if (deploymentConfiguration.ALLOW_3P_MODULES) return;
     if (!isA2(baseURLFromContext(context))) {
       return err(`This module is not allowed to run in this configuration`);
     }
