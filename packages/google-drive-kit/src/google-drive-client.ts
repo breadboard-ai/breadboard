@@ -71,20 +71,25 @@ export interface ListChangesOptions extends BaseRequestOptions {
 }
 
 /** The default properties you get when requesting no fields. */
-type DefaultFileFields = "id" | "kind" | "name" | "mimeType";
+type DefaultFileFields = "id" | "kind" | "name" | "mimeType" | "resourceKey";
 
 const DEFAULT_FILE_FIELDS: ReadonlyArray<DefaultFileFields> = [
   "id",
   "kind",
   "name",
   "mimeType",
+  "resourceKey",
 ];
 
 /**
  * Some properties can be undefined even when requested, either because they are
  * absent or because we don't have permission to read them.
  */
-type AlwaysOptionalFileFields = "permissions" | "properties" | "appProperties";
+type AlwaysOptionalFileFields =
+  | "permissions"
+  | "properties"
+  | "appProperties"
+  | "resourceKey";
 
 /**
  * A DriveFile (which usually has every field as optional) but where some of the
