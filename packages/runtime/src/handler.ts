@@ -127,9 +127,10 @@ export async function getGraphHandlerFromMutableGraph(
 
 export async function getGraphHandler(
   type: NodeTypeIdentifier,
-  context: NodeHandlerContext
+  context: NodeHandlerContext,
+  allow3PModules = false
 ): Promise<NodeHandlerObject | undefined> {
-  if (is3pModule(type)) {
+  if (is3pModule(type) && !allow3PModules) {
     return undefined;
   }
   const nodeTypeUrl = graphUrlLike(type)
