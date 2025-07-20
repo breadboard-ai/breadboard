@@ -129,6 +129,9 @@ export async function getGraphHandler(
   type: NodeTypeIdentifier,
   context: NodeHandlerContext
 ): Promise<NodeHandlerObject | undefined> {
+  if (is3pModule(type)) {
+    return undefined;
+  }
   const nodeTypeUrl = graphUrlLike(type)
     ? getGraphUrl(type, context)
     : undefined;
@@ -149,4 +152,13 @@ export async function getGraphHandler(
     );
   }
   return new GraphBasedNodeHandler(loadResult, type);
+}
+
+/**
+ * This is a somewhat hacky module invocation filter.
+ * TODO: Instead of hard-coding the type, plumb the invocationFilter from
+ * the configuration here.
+ */
+function is3pModule(type: NodeTypeIdentifier) {
+  return !type.startsWith("embed://");
 }
