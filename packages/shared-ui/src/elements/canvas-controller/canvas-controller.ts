@@ -686,7 +686,9 @@ export class CanvasController extends LitElement {
     if (!this.graph) {
       return;
     }
-    const driveAssetFileIds = findGoogleDriveAssetsInGraph(this.graph);
+    const driveAssetFileIds = findGoogleDriveAssetsInGraph(this.graph).map(
+      ({ fileId }) => fileId
+    );
     if (driveAssetFileIds.length === 0) {
       return;
     }

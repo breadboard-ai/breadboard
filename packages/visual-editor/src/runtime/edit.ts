@@ -614,7 +614,9 @@ export class Edit extends EventTarget {
       return;
     }
 
-    const driveAssetFileIds = findGoogleDriveAssetsInGraph(graph);
+    const driveAssetFileIds = findGoogleDriveAssetsInGraph(graph).map(
+      ({ fileId }) => fileId
+    );
 
     if (driveAssetFileIds.length === 0) {
       return;

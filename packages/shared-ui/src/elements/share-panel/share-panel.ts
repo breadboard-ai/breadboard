@@ -666,7 +666,9 @@ export class SharePanel extends LitElement {
       oldState.shareableFile?.id ??
       (await this.#makeShareableCopy()).shareableCopyFileId;
 
-    const assetFileIds = findGoogleDriveAssetsInGraph(this.graph);
+    const assetFileIds = findGoogleDriveAssetsInGraph(this.graph).map(
+      ({ fileId }) => fileId
+    );
     if (assetFileIds.length === 0) {
       this.#state = {
         status: "granular",
@@ -1158,7 +1160,7 @@ export class SharePanel extends LitElement {
       console.error("No graph");
       return [];
     }
-    return findGoogleDriveAssetsInGraph(graph);
+    return findGoogleDriveAssetsInGraph(graph).map(({ fileId }) => fileId);
   }
 
   #getRequiredPublishPermissions(): gapi.client.drive.Permission[] {

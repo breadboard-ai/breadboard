@@ -165,9 +165,25 @@ export type AppProperties = {
   thumbnailUrl?: string;
 };
 
-export function findGoogleDriveAssetsInGraph(graph: GraphDescriptor): string[] {
-  // Use a set because there can be duplicates.
-  const fileIds = new Set<string>();
+export type GoogleDriveAsset = {
+  fileId: string;
+  /**
+   * How this asset came to be in the graph.
+   *
+   * This distinction is important for sharing: themes and uploaded assets are
+   * considered "owned" by this graph, so they will automatically have their
+   * sharing ACLs syncronized with the graph itself. Picked assets are
+   * considered external to the graph, so we always check with the user if it's
+   * OK to modify their sharing ACLs.
+   */
+  provenance: "theme" | "uploaded" | "picked";
+};
+
+export function findGoogleDriveAssetsInGraph(
+  graph: GraphDescriptor
+): GoogleDriveAsset[] {
+  // Use a map because there can be duplicates.
+  const files = new Map<string, GoogleDriveAsset>();
 
   if (graph.assets) {
     for (const asset of Object.values(graph.assets)) {
@@ -177,13 +193,16 @@ export function findGoogleDriveAssetsInGraph(graph: GraphDescriptor): string[] {
         if ("fileData" in firstPart && asset.metadata?.subType === "gdrive") {
           const fileId = firstPart.fileData?.fileUri;
           if (fileId) {
-            fileIds.add(fileId);
+            // TODO(aomarks) The "picked" vs "uploaded" distinction should
+            // really be stored explicitly on the handle. The "fileData" vs
+            // "storedData" distinction seems otherwise arbitrary/historical.
+            files.set(fileId, { fileId, provenance: "picked" });
           }
         }
         if ("storedData" in firstPart) {
           const fileId = extractGoogleDriveFileId(firstPart.storedData?.handle);
           if (fileId) {
-            fileIds.add(fileId);
+            files.set(fileId, { fileId, provenance: "uploaded" });
           }
         }
       }
@@ -198,11 +217,11 @@ export function findGoogleDriveAssetsInGraph(graph: GraphDescriptor): string[] {
       if (splashHandle) {
         const fileId = extractGoogleDriveFileId(splashHandle);
         if (fileId) {
-          fileIds.add(fileId);
+          files.set(fileId, { fileId, provenance: "theme" });
         }
       }
     }
   }
 
-  return [...fileIds];
+  return [...files.values()];
 }
