@@ -60,6 +60,7 @@ import { Autoname } from "@breadboard-ai/shared-ui/sideboards/autoname.js";
 import { StateManager } from "./state";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
+import { findGoogleDriveAssetsInGraph } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 
 export class Edit extends EventTarget {
   #editors = new Map<TabId, EditableGraph>();
@@ -613,8 +614,7 @@ export class Edit extends EventTarget {
       return;
     }
 
-    const driveAssetFileIds =
-      BreadboardUI.Utils.findGoogleDriveAssetsInGraph(graph);
+    const driveAssetFileIds = findGoogleDriveAssetsInGraph(graph);
 
     if (driveAssetFileIds.length === 0) {
       return;

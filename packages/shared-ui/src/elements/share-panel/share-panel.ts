@@ -40,7 +40,7 @@ import {
 import { type GoogleDriveSharePanel } from "../elements.js";
 import type { DomainConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 import { stringifyPermission } from "../../utils/stringify-permission.js";
-import { findGoogleDriveAssetsInGraph } from "../../utils/utils.js";
+import { findGoogleDriveAssetsInGraph } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
