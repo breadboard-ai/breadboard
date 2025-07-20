@@ -225,3 +225,48 @@ export function findGoogleDriveAssetsInGraph(
 
   return [...files.values()];
 }
+
+type Permission = gapi.client.drive.Permission;
+
+export function diffAssetReadPermissions({
+  actual,
+  expected,
+}: {
+  actual: Permission[];
+  expected: Permission[];
+}): { missing: Permission[]; excess: Permission[] } {
+  const missing = [];
+  {
+    const actualStrs = new Set(actual.map(stringifyAssetReadPermission));
+    for (const e of expected) {
+      if (!actualStrs.has(stringifyAssetReadPermission(e))) {
+        missing.push(e);
+      }
+    }
+  }
+
+  const excess = [];
+  {
+    const expectedStrs = new Set(expected.map(stringifyAssetReadPermission));
+    for (const a of actual) {
+      if (!expectedStrs.has(stringifyAssetReadPermission(a))) {
+        excess.push(a);
+      }
+    }
+  }
+
+  return { missing, excess };
+}
+
+/**
+ * Make a string from a permission object that can be used for Set membership.
+ * Note we ignore "role" here, because we only care about reading, and all roles
+ * can read.
+ */
+function stringifyAssetReadPermission(permission: Permission): string {
+  return JSON.stringify({
+    type: permission.type,
+    domain: permission.domain ?? undefined,
+    emailAddress: permission.emailAddress ?? undefined,
+  });
+}

@@ -11,9 +11,14 @@ import {
   MAIN_TO_SHAREABLE_COPY_PROPERTY,
   SHAREABLE_COPY_TO_MAIN_PROPERTY,
 } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
-import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
+import {
+  diffAssetReadPermissions,
+  extractGoogleDriveFileId,
+  findGoogleDriveAssetsInGraph,
+} from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { type GraphDescriptor } from "@breadboard-ai/types";
+import type { DomainConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 import { type BoardServer } from "@google-labs/breadboard";
 import { consume } from "@lit/context";
 import "@material/web/switch/switch.js";
@@ -38,9 +43,6 @@ import {
   type SigninAdapter,
 } from "../../utils/signin-adapter.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
-import type { DomainConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
-import { stringifyPermission } from "../../utils/stringify-permission.js";
-import { findGoogleDriveAssetsInGraph } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
@@ -837,33 +839,22 @@ export class SharePanel extends LitElement {
       await this.googleDriveClient.getFileMetadata(shareableCopyFileId, {
         fields: ["properties", "permissions"],
       });
-
-    const shareableCopyPermissions =
-      shareableCopyFileMetadata.permissions ?? [];
-    const missingPublishPermissions = new Set(
-      this.#getRequiredPublishPermissions().map(stringifyPermission)
-    );
-    const actualPublishPermissions = [];
-    const actualNonPublishPermissions = [];
-    for (const permission of shareableCopyPermissions) {
-      if (missingPublishPermissions.delete(stringifyPermission(permission))) {
-        actualPublishPermissions.push(permission);
-      } else {
-        actualNonPublishPermissions.push(permission);
-      }
-    }
+    const publishedPermissions = shareableCopyFileMetadata.permissions ?? [];
+    const diff = diffAssetReadPermissions({
+      actual: publishedPermissions,
+      expected: this.#getRequiredPublishPermissions(),
+    });
 
     this.#state = {
       status: "writable",
-      published: missingPublishPermissions.size === 0,
-      publishedPermissions: actualPublishPermissions,
+      published: diff.missing.length === 0,
+      publishedPermissions,
       granularlyShared:
         // We're granularly shared if there is any permission that is neither
         // one of the special publish permissions, nor the owner (since there
         // will always an owner).
-        actualNonPublishPermissions.find(
-          (permission) => permission.role !== "owner"
-        ) !== undefined,
+        diff.excess.find((permission) => permission.role !== "owner") !==
+        undefined,
       shareableFile: {
         id: shareableCopyFileId,
         stale:
