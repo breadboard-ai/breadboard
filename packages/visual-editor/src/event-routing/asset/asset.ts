@@ -76,8 +76,6 @@ export const AddRoute: EventRoute<"asset.add"> = {
       })
     );
 
-    await runtime.edit.checkGoogleDriveAssetShareStatus(tab, googleDriveClient);
-
     window.clearTimeout(longRunningTaskTimeout);
     if (snackbarId) {
       runtime.snackbar(
