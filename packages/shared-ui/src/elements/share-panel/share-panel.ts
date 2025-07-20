@@ -15,6 +15,9 @@ import {
   diffAssetReadPermissions,
   extractGoogleDriveFileId,
   findGoogleDriveAssetsInGraph,
+  isIntrinsicAsset,
+  permissionMatchesAnyOf,
+  type GoogleDriveAsset,
 } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { type GraphDescriptor } from "@breadboard-ai/types";
@@ -88,7 +91,7 @@ type State =
     }
   | {
       status: "granular";
-      fileIds: string[];
+      shareableFile: { id: string };
     };
 
 @customElement("bb-share-panel")
@@ -510,11 +513,7 @@ export class SharePanel extends LitElement {
       }),
       // Ensure all assets have the same permissions as the shareable file,
       // since they might have been added since the last publish.
-      this.#writePermissionsToShareableAssets(
-        oldState.shareableFile.permissions.filter(
-          (permission) => permission.role !== "owner"
-        )
-      ),
+      this.#handleAssetPermissions(oldState.shareableFile.id),
     ]);
 
     this.#state = {
@@ -643,7 +642,7 @@ export class SharePanel extends LitElement {
     return html`
       <bb-google-drive-share-panel
         ${ref(this.#googleDriveSharePanel)}
-        .fileIds=${this.#state.fileIds}
+        .fileIds=${[this.#state.shareableFile.id]}
         @close=${this.#onGoogleDriveSharePanelClose}
       ></bb-google-drive-share-panel>
     `;
@@ -668,42 +667,10 @@ export class SharePanel extends LitElement {
       oldState.shareableFile?.id ??
       (await this.#makeShareableCopy()).shareableCopyFileId;
 
-    const assetFileIds = findGoogleDriveAssetsInGraph(this.graph).map(
-      ({ fileId }) => fileId
-    );
-    if (assetFileIds.length === 0) {
-      this.#state = {
-        status: "granular",
-        fileIds: [shareableCopyFileId],
-      };
-    } else {
-      // The Google Drive sharing component will crash if you pass it file ids
-      // that the current user can't share. So, since it's possible to upload
-      // assets to a graph that you don't own/can't share, we need to filter the
-      // list down to only those that are shareable.
-      const { googleDriveClient } = this;
-      if (!googleDriveClient) {
-        console.error(`No google drive client provided`);
-        return;
-      }
-      const shareableAssetFileIds = (
-        await Promise.all(
-          assetFileIds.map((fileId) =>
-            googleDriveClient.getFileMetadata(fileId, {
-              fields: ["id", "capabilities"],
-            })
-          )
-        )
-      )
-        // TODO(aomarks) Show a warning to the user that this asset can't be
-        // shared.
-        .filter(({ capabilities }) => capabilities.canShare)
-        .map(({ id }) => id);
-      this.#state = {
-        status: "granular",
-        fileIds: [shareableCopyFileId, ...shareableAssetFileIds],
-      };
-    }
+    this.#state = {
+      status: "granular",
+      shareableFile: { id: shareableCopyFileId },
+    };
   }
 
   #onPublishedSwitchChange() {
@@ -760,9 +727,13 @@ export class SharePanel extends LitElement {
     return undefined;
   }
 
-  #onGoogleDriveSharePanelClose() {
-    // The user might have changed something that would affect the published
-    // state while they were in the Drive sharing modal, so we should reset.
+  async #onGoogleDriveSharePanelClose() {
+    if (this.#state.status !== "granular") {
+      return;
+    }
+    const graphFileId = this.#state.shareableFile.id;
+    this.#state = { status: "loading" };
+    await this.#handleAssetPermissions(graphFileId);
     this.#state = { status: "opening" };
     this.open();
   }
@@ -839,16 +810,21 @@ export class SharePanel extends LitElement {
       await this.googleDriveClient.getFileMetadata(shareableCopyFileId, {
         fields: ["properties", "permissions"],
       });
-    const publishedPermissions = shareableCopyFileMetadata.permissions ?? [];
+    const allGraphPermissions = shareableCopyFileMetadata.permissions ?? [];
     const diff = diffAssetReadPermissions({
-      actual: publishedPermissions,
+      actual: allGraphPermissions,
       expected: this.#getRequiredPublishPermissions(),
     });
 
     this.#state = {
       status: "writable",
       published: diff.missing.length === 0,
-      publishedPermissions,
+      publishedPermissions: allGraphPermissions.filter((permission) =>
+        permissionMatchesAnyOf(
+          permission,
+          this.#getRequiredPublishPermissions()
+        )
+      ),
       granularlyShared:
         // We're granularly shared if there is any permission that is neither
         // one of the special publish permissions, nor the owner (since there
@@ -874,6 +850,7 @@ export class SharePanel extends LitElement {
   }
 
   async #publish() {
+    console.log(`[Sharing Panel] Publishing`);
     const publishPermissions = this.#getRequiredPublishPermissions();
     if (publishPermissions.length === 0) {
       console.error("No publish permissions configured");
@@ -914,7 +891,7 @@ export class SharePanel extends LitElement {
       newLatestVersion = copyResult.newMainVersion;
     }
 
-    const graphPublishResponsesPromise = Promise.all(
+    const graphPublishPermissions = await Promise.all(
       publishPermissions.map((permission) =>
         googleDriveClient.createPermission(
           shareableFile.id,
@@ -924,29 +901,59 @@ export class SharePanel extends LitElement {
       )
     );
 
-    await this.#writePermissionsToShareableAssets(publishPermissions);
-
-    const relevantPermissions = await graphPublishResponsesPromise;
-
     console.debug(
       `[Sharing] Added ${publishPermissions.length} publish` +
         ` permission(s) to shareable graph copy "${shareableFile.id}".`
     );
 
+    await this.#handleAssetPermissions(shareableFile.id);
+
     this.#state = {
       status: "writable",
       published: true,
-      publishedPermissions: relevantPermissions,
+      publishedPermissions: graphPublishPermissions,
       granularlyShared: oldState.granularlyShared,
       shareableFile,
       latestVersion: newLatestVersion ?? oldState.latestVersion,
     };
   }
 
-  async #writePermissionsToShareableAssets(
-    permissions: gapi.client.drive.Permission[]
+  async #handleAssetPermissions(graphFileId: string): Promise<void> {
+    const assets = this.#getAssets();
+    if (assets.length === 0) {
+      return;
+    }
+    const intrinsicAssets: GoogleDriveAsset[] = [];
+    const extrinsicAssets: GoogleDriveAsset[] = [];
+    for (const asset of this.#getAssets()) {
+      if (isIntrinsicAsset(asset)) {
+        intrinsicAssets.push(asset);
+      } else {
+        extrinsicAssets.push(asset);
+      }
+    }
+
+    const { googleDriveClient } = this;
+    if (!googleDriveClient) {
+      throw new Error(`No google drive client provided`);
+    }
+    const graphPermissions =
+      (
+        await googleDriveClient.getFileMetadata(graphFileId, {
+          fields: ["permissions"],
+        })
+      ).permissions ?? [];
+    await this.#autoSyncIntrinsicAssetPermissions(
+      intrinsicAssets,
+      graphPermissions
+    );
+  }
+
+  async #autoSyncIntrinsicAssetPermissions(
+    intrinsicAssets: GoogleDriveAsset[],
+    graphPermissions: gapi.client.drive.Permission[]
   ): Promise<void> {
-    if (permissions.length === 0) {
+    if (intrinsicAssets.length === 0) {
       return;
     }
     const { googleDriveClient } = this;
@@ -954,34 +961,44 @@ export class SharePanel extends LitElement {
       throw new Error(`No google drive client provided`);
     }
     await Promise.all(
-      this.#getAssetFileIds().map(async (assetFileId) => {
-        const metadata = await googleDriveClient.getFileMetadata(assetFileId, {
-          fields: ["capabilities"],
-        });
-        if (metadata.capabilities.canShare) {
-          await Promise.all(
-            permissions.map((permission) =>
-              googleDriveClient.createPermission(
-                assetFileId,
-                { ...permission, role: "reader" },
-                { sendNotificationEmail: false }
-              )
-            )
-          );
-          console.debug(
-            `[Sharing] Added ${permissions.length} permission(s) to asset` +
-              ` "${assetFileId}".`
-          );
-        } else {
-          // TODO(aomarks) Show a warning to the user that this asset can't be
-          // shared.
-          console.warn(
+      intrinsicAssets.map(async (asset) => {
+        const { capabilities, permissions: assetPermissions } =
+          await googleDriveClient.getFileMetadata(asset.fileId, {
+            fields: ["capabilities", "permissions"],
+          });
+        if (!capabilities.canShare || !assetPermissions) {
+          console.error(
             `[Sharing] Could not add permission to asset ` +
-              `"${assetFileId}" because the current user does not have` +
+              `"${asset.fileId}" because the current user does not have` +
               ` sharing capability on it. Users who don't already have` +
               ` access to this asset may not be able to run this graph.`
           );
+          return;
         }
+        const { missing, excess } = diffAssetReadPermissions({
+          actual: assetPermissions,
+          expected: graphPermissions,
+        });
+        if (missing.length === 0 && excess.length === 0) {
+          return;
+        }
+        console.log(
+          `[Sharing Panel] Intrinsic asset ${asset.fileId}` +
+            ` has ${missing.length} missing permission(s)` +
+            ` and ${excess.length} excess permission(s). Synchronizing.`
+        );
+        await Promise.all([
+          ...missing.map((permission) =>
+            googleDriveClient.createPermission(
+              asset.fileId,
+              { ...permission, role: "reader" },
+              { sendNotificationEmail: false }
+            )
+          ),
+          ...excess.map((permission) =>
+            googleDriveClient.deletePermission(asset.fileId, permission.id!)
+          ),
+        ]);
       })
     );
   }
@@ -1007,21 +1024,23 @@ export class SharePanel extends LitElement {
       granularlyShared: oldState.granularlyShared,
       shareableFile,
     };
+
+    console.debug(
+      `[Sharing] Removing ${oldState.publishedPermissions.length} publish` +
+        ` permission(s) from shareable graph copy "${shareableFile.id}".`
+    );
     await Promise.all(
-      oldState.publishedPermissions.map((permission) => {
-        googleDriveClient.deletePermission(shareableFile.id, permission.id!);
+      oldState.publishedPermissions.map(async (permission) => {
+        if (permission.role !== "owner") {
+          await googleDriveClient.deletePermission(
+            shareableFile.id,
+            permission.id!
+          );
+        }
       })
     );
 
-    // Note we are not removing permissions from assets. That's because the
-    // asset might need to remain published (maybe it's used in another graph,
-    // or maybe it was already public in Drive for some other reason). Maybe
-    // we should inform the user about this.
-
-    console.debug(
-      `[Sharing] Removed ${oldState.publishedPermissions.length} publish` +
-        ` permission(s) from shareable graph copy "${shareableFile.id}".`
-    );
+    await this.#handleAssetPermissions(shareableFile.id);
 
     this.#state = {
       status: "writable",
@@ -1145,13 +1164,13 @@ export class SharePanel extends LitElement {
     return graphFileId;
   }
 
-  #getAssetFileIds(): string[] {
+  #getAssets(): GoogleDriveAsset[] {
     const graph = this.graph;
     if (!graph) {
       console.error("No graph");
       return [];
     }
-    return findGoogleDriveAssetsInGraph(graph).map(({ fileId }) => fileId);
+    return findGoogleDriveAssetsInGraph(graph);
   }
 
   #getRequiredPublishPermissions(): gapi.client.drive.Permission[] {

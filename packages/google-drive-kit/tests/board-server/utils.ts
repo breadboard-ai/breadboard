@@ -70,24 +70,24 @@ suite("stringifyPermissionIgnoringRole", () => {
   test("changed domain", () =>
     deepEqual(
       diffAssetReadPermissions({
-        actual: [{ type: "domain", domain: "bad.example.com" }],
+        actual: [{ id: "bad", type: "domain", domain: "bad.example.com" }],
         expected: [{ type: "domain", domain: "good.example.com" }],
       }),
       {
         missing: [{ type: "domain", domain: "good.example.com" }],
-        excess: [{ type: "domain", domain: "bad.example.com" }],
+        excess: [{ id: "bad", type: "domain", domain: "bad.example.com" }],
       }
     ));
 
   test("changed user", () =>
     deepEqual(
       diffAssetReadPermissions({
-        actual: [{ type: "user", emailAddress: "bad@example.com" }],
+        actual: [{ id: "bad", type: "user", emailAddress: "bad@example.com" }],
         expected: [{ type: "user", emailAddress: "good@example.com" }],
       }),
       {
         missing: [{ type: "user", emailAddress: "good@example.com" }],
-        excess: [{ type: "user", emailAddress: "bad@example.com" }],
+        excess: [{ id: "bad", type: "user", emailAddress: "bad@example.com" }],
       }
     ));
 });

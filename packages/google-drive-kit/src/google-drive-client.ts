@@ -825,7 +825,11 @@ export class GoogleDriveClient {
           (await response.text())
       );
     }
-    return (await response.json()) as Permission;
+    const result = (await response.json()) as Permission;
+    console.debug(
+      `[Google Drive Client] Created permission ${result.id} on file ${fileId}`
+    );
+    return result;
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/delete */
@@ -848,6 +852,10 @@ export class GoogleDriveClient {
           (await response.text())
       );
     }
+    console.debug(
+      `[Google Drive Client] Deleted permission ${permissionId}` +
+        ` from file ${fileId}`
+    );
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/copy */

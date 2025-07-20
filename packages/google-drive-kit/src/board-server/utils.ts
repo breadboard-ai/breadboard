@@ -226,15 +226,20 @@ export function findGoogleDriveAssetsInGraph(
   return [...files.values()];
 }
 
+export function isIntrinsicAsset(asset: GoogleDriveAsset): boolean {
+  return asset.provenance === "theme" || asset.provenance === "uploaded";
+}
+
 type Permission = gapi.client.drive.Permission;
 
-export function diffAssetReadPermissions({
-  actual,
-  expected,
-}: {
+export function diffAssetReadPermissions(permissions: {
   actual: Permission[];
   expected: Permission[];
 }): { missing: Permission[]; excess: Permission[] } {
+  // Just ignore owner. We can't change that.
+  const actual = permissions.actual.filter(({ role }) => role !== "owner");
+  const expected = permissions.expected.filter(({ role }) => role !== "owner");
+
   const missing = [];
   {
     const actualStrs = new Set(actual.map(stringifyAssetReadPermission));
@@ -269,4 +274,17 @@ function stringifyAssetReadPermission(permission: Permission): string {
     domain: permission.domain ?? undefined,
     emailAddress: permission.emailAddress ?? undefined,
   });
+}
+
+export function permissionMatchesAnyOf(
+  permission: Permission,
+  candidates: Permission[]
+): boolean {
+  const str = stringifyAssetReadPermission(permission);
+  for (const candidate of candidates) {
+    if (str === stringifyAssetReadPermission(candidate)) {
+      return true;
+    }
+  }
+  return false;
 }
