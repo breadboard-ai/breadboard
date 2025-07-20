@@ -271,31 +271,31 @@ export class GoogleDriveClient {
       if (directResponseWithApiKey.ok) {
         return directResponseWithApiKey.json();
       }
-    }
 
-    if (this.#proxyUrl) {
-      // 3. Try via our custom Drive proxy service, if enabled.
-      console.log(
-        `Received 404 response for Google Drive file metadata "${fileId}"` +
-          ` using API key fallback. Now trying proxy fallback.`
-      );
-      const proxyResponse = await this.#fetchFileMetadataViaProxy(
-        fileId,
-        this.#proxyUrl,
-        options
-      );
-      if (proxyResponse.ok) {
-        // The proxy response format is different to the direct API. Metadata is
-        // nested within a "metadata" property.
-        const proxyResult =
-          (await proxyResponse.json()) as GetFileProxyResponse;
-        return JSON.parse(proxyResult.metadata);
-      } else {
-        const { status } = proxyResponse;
+      if (this.#proxyUrl) {
+        // 3. Try via our custom Drive proxy service, if enabled.
         console.log(
-          `Received ${status} response for Google Drive file metadata "${fileId}"` +
-            ` using proxy fallback. The file is really not accessible!`
+          `Received 404 response for Google Drive file metadata "${fileId}"` +
+            ` using API key fallback. Now trying proxy fallback.`
         );
+        const proxyResponse = await this.#fetchFileMetadataViaProxy(
+          fileId,
+          this.#proxyUrl,
+          options
+        );
+        if (proxyResponse.ok) {
+          // The proxy response format is different to the direct API. Metadata is
+          // nested within a "metadata" property.
+          const proxyResult =
+            (await proxyResponse.json()) as GetFileProxyResponse;
+          return JSON.parse(proxyResult.metadata);
+        } else {
+          const { status } = proxyResponse;
+          console.log(
+            `Received ${status} response for Google Drive file metadata "${fileId}"` +
+              ` using proxy fallback. The file is really not accessible!`
+          );
+        }
       }
     }
 
