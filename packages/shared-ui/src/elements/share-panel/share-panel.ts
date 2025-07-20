@@ -92,7 +92,18 @@ type State =
   | {
       status: "granular";
       shareableFile: { id: string };
+    }
+  | {
+      status: "extrinsic-assets";
+      problems: ExtrinsicAssetProblem[];
+      oldState: State;
+      closed: { promise: Promise<void>; resolve: () => void };
     };
+
+type ExtrinsicAssetProblem = { asset: GoogleDriveAsset } & (
+  | { problem: "cant-share" }
+  | { problem: "missing"; missing: gapi.client.drive.Permission[] }
+);
 
 @customElement("bb-share-panel")
 export class SharePanel extends LitElement {
@@ -400,6 +411,9 @@ export class SharePanel extends LitElement {
     if (status === "readonly") {
       return this.#renderReadonlyModalContents();
     }
+    if (status === "extrinsic-assets") {
+      return this.#renderExtrinsicAssetsModalContents();
+    }
   }
 
   #renderLoading() {
@@ -423,7 +437,6 @@ export class SharePanel extends LitElement {
     if (status === "writable" || status === "updating") {
       return state.published || state.granularlyShared;
     }
-    status satisfies "closed" | "opening" | "loading" | "granular";
     return undefined;
   }
 
@@ -433,7 +446,6 @@ export class SharePanel extends LitElement {
     if (status === "writable" || status === "updating") {
       return state.shareableFile?.stale ?? false;
     }
-    status satisfies "closed" | "opening" | "loading" | "granular" | "readonly";
     return undefined;
   }
 
@@ -645,6 +657,17 @@ export class SharePanel extends LitElement {
         .fileIds=${[this.#state.shareableFile.id]}
         @close=${this.#onGoogleDriveSharePanelClose}
       ></bb-google-drive-share-panel>
+    `;
+  }
+
+  #renderExtrinsicAssetsModalContents() {
+    const state = this.#state;
+    if (state.status !== "extrinsic-assets") {
+      return nothing;
+    }
+    return html`
+      <pre>${JSON.stringify(state, null, 2)}</pre>
+      <button @click=${state.closed.resolve}>OK</button>
     `;
   }
 
@@ -943,10 +966,16 @@ export class SharePanel extends LitElement {
           fields: ["permissions"],
         })
       ).permissions ?? [];
-    await this.#autoSyncIntrinsicAssetPermissions(
-      intrinsicAssets,
-      graphPermissions
-    );
+    await Promise.all([
+      this.#autoSyncIntrinsicAssetPermissions(
+        intrinsicAssets,
+        graphPermissions
+      ),
+      this.#checkExtrinsicAssetPermissionsAndMaybePromptTheUser(
+        extrinsicAssets,
+        graphPermissions
+      ),
+    ]);
   }
 
   async #autoSyncIntrinsicAssetPermissions(
@@ -1001,6 +1030,62 @@ export class SharePanel extends LitElement {
         ]);
       })
     );
+  }
+
+  async #checkExtrinsicAssetPermissionsAndMaybePromptTheUser(
+    extrinsicAssets: GoogleDriveAsset[],
+    graphPermissions: gapi.client.drive.Permission[]
+  ): Promise<void> {
+    if (extrinsicAssets.length === 0) {
+      return;
+    }
+    const { googleDriveClient } = this;
+    if (!googleDriveClient) {
+      throw new Error(`No google drive client provided`);
+    }
+    const problems: ExtrinsicAssetProblem[] = [];
+    await Promise.all(
+      extrinsicAssets.map(async (asset) => {
+        const { capabilities, permissions: assetPermissions } =
+          await googleDriveClient.getFileMetadata(asset.fileId, {
+            fields: ["capabilities", "permissions"],
+          });
+        if (!capabilities.canShare || !assetPermissions) {
+          problems.push({ asset, problem: "cant-share" });
+          return;
+        }
+        const { missing } = diffAssetReadPermissions({
+          actual: assetPermissions,
+          expected: graphPermissions,
+        });
+        if (missing.length > 0) {
+          problems.push({ asset, problem: "missing", missing });
+          return;
+        }
+      })
+    );
+    if (problems.length === 0) {
+      return;
+    }
+    // TODO(aomarks) Bump es level so we can get Promise.withResolvers.
+    let closed: { promise: Promise<void>; resolve: () => void };
+    {
+      let resolve: () => void;
+      const promise = new Promise<void>((r) => (resolve = r));
+      closed = { promise, resolve: resolve! };
+    }
+    const oldState = this.#state;
+    this.#state = {
+      status: "extrinsic-assets",
+      problems,
+      oldState,
+      closed,
+    };
+    // Since the extrinsic asset dialog shows up in a few different flows, it's
+    // useful to make it so this function waits until it has been resolved.
+    // TODO(aomarks) This is a kinda weird pattern. Think about a refactor.
+    await closed.promise;
+    this.#state = oldState;
   }
 
   async #unpublish() {
