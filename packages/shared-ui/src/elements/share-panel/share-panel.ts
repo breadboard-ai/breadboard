@@ -666,9 +666,38 @@ export class SharePanel extends LitElement {
       return nothing;
     }
     return html`
-      <pre>${JSON.stringify(state, null, 2)}</pre>
-      <button @click=${state.closed.resolve}>OK</button>
+      <li>${state.problems.map((problem) => JSON.stringify(problem))}</li>
+      <button @click=${this.#onClickPublishExtrinsicAssets}>Fix</button>
     `;
+  }
+
+  async #onClickPublishExtrinsicAssets() {
+    const state = this.#state;
+    if (state.status !== "extrinsic-assets") {
+      return;
+    }
+    const { googleDriveClient } = this;
+    if (!googleDriveClient) {
+      console.error(`No google drive client provided`);
+      return;
+    }
+    this.#state = { status: "loading" };
+    await Promise.all(
+      state.problems.map(async (problem) => {
+        if (problem.problem === "missing") {
+          await Promise.all(
+            problem.missing.map((permission) =>
+              googleDriveClient.createPermission(
+                problem.asset.fileId,
+                permission,
+                { sendNotificationEmail: false }
+              )
+            )
+          );
+        }
+      })
+    );
+    state.closed.resolve();
   }
 
   async #onClickViewSharePermissions(event: MouseEvent) {
