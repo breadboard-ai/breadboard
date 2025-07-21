@@ -120,7 +120,7 @@ type NarrowedDriveFile_Test1 = NarrowedDriveFile<
   "name" | "ownedByMe" | "properties"
 >;
 
-// $ExpectType { id: string; kind: string; mimeType: string; name: string; }
+// $ExpectType { id: string; kind: string; mimeType: string; name: string; resourceKey?: string | undefined; }
 type NarrowedDriveFile_Test2 = NarrowedDriveFile<void>;
 
 // $ExpectType { }
@@ -151,7 +151,7 @@ type NarrowedDriveFileFromOptions_Test1 = NarrowedDriveFileFromOptions<{
   fields: Array<"name" | "ownedByMe" | "properties">;
 }>;
 
-// $ExpectType { id: string; kind: string; mimeType: string; name: string; }
+// $ExpectType { id: string; kind: string; mimeType: string; name: string; resourceKey?: string | undefined; }
 type NarrowedDriveFileFromOptions_Test2 = NarrowedDriveFileFromOptions<{
   fields: undefined;
 }>;
