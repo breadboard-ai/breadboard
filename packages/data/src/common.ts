@@ -211,9 +211,32 @@ export async function retrieveAsBlob(
   let { handle } = part.storedData;
   if (handle.startsWith(".") && graphUrl) {
     handle = new URL(handle, graphUrl).href;
+  } else {
+    let url: URL | null = null;
+    try {
+      url = new URL(handle);
+      if (!allowedBlobUrl(url)) {
+        throw new Error(`Unknown stored data URL: ${url.href}`);
+      }
+    } catch {
+      throw new Error("Invalid stored data URL");
+    }
+    handle = url.href;
   }
   const response = await fetch(handle);
   return await response.blob();
+
+  function allowedBlobUrl(url: URL) {
+    // Allow blob:/ URLs.
+    if (url.protocol === "blob:") return true;
+    // Allow drive:/ URLs
+    if (url.protocol === "drive:") return true;
+    // Allow board server URLs
+    if (url.href.match(/https?:\/\/[^/]+\/board\/blobs\/([a-z0-9-]+)/)) {
+      return true;
+    }
+    return false;
+  }
 }
 
 export async function toInlineDataPart(
