@@ -13,6 +13,7 @@ import {
   InputValues,
 } from "@google-labs/breadboard";
 import { addNodeProxyServerConfig } from "../../data/node-proxy-servers";
+import { RuntimeUnsnackbarEvent } from "../../runtime/events";
 
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
@@ -179,8 +180,8 @@ export const CreateRoute: EventRoute<"board.create"> = {
       location,
       fileName,
       originalEvent.detail.graph,
-      false,
-      { start: "", end: "", error: "" }
+      originalEvent.detail.messages.start !== "",
+      originalEvent.detail.messages
     );
     uiState.blockingAction = false;
 
@@ -211,6 +212,9 @@ export const RemixRoute: EventRoute<"board.remix"> = {
       (await graphStore.getLatest(addResult.mutable)).graph
     );
     graph.title = `${graph.title ?? "Untitled"} Remix`;
+
+    // Remove any snackbars.
+    runtime.dispatchEvent(new RuntimeUnsnackbarEvent());
 
     await CreateRoute.do({
       ...deps,
