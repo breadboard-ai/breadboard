@@ -21,6 +21,7 @@ interface Connection {
   title: string;
   description?: string;
   icon?: string;
+  scopes: Array<{ scope: string; optional: boolean }>;
 }
 
 /**
@@ -41,6 +42,9 @@ export async function list(
           clientId: config.oauth.client_id,
           authUrl: makeAuthorizationEndpointUrl(config),
           title: config.title ?? config.id,
+          scopes: config.oauth.scopes.map((scope) =>
+            typeof scope === "string" ? { scope, optional: false } : scope
+          ),
         };
         if (config.description) {
           connection.description = config.description;

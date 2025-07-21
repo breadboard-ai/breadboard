@@ -90,11 +90,18 @@ export class ConnectionBroker extends HTMLElement {
     let grantResponse: GrantResponse;
     try {
       grantResponse = await response.json();
-    } catch (e) {
+    } catch {
       grantResponse = {
         error: "Invalid response from connection server",
       };
     }
+
+    // Add the actual scopes the user selected.
+    if (grantResponse.error === undefined) {
+      grantResponse.scopes =
+        thisUrl.searchParams.get("scope")?.trim().split(/ +/) ?? [];
+    }
+
     // Send the grant response back to the originating tab and close up shop.
     channel.postMessage(grantResponse);
     this.#embedHandler?.sendToEmbedder({

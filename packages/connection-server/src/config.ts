@@ -29,7 +29,7 @@ export interface ConnectionConfig {
     client_secret: string;
     auth_uri: string;
     token_uri: string;
-    scopes: string[];
+    scopes: Array<string | { scope: string; optional: boolean }>;
   };
 }
 
