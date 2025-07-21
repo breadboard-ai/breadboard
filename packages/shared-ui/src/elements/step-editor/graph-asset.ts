@@ -403,7 +403,7 @@ export class GraphAsset
         </button>`;
     }
 
-    let icon = "alternate_email";
+    let icon = "text_fields";
     if (this.asset?.type === "file") {
       icon = "upload";
     }
