@@ -11,9 +11,20 @@ import {
   MAIN_TO_SHAREABLE_COPY_PROPERTY,
   SHAREABLE_COPY_TO_MAIN_PROPERTY,
 } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
-import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
-import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import {
+  diffAssetReadPermissions,
+  extractGoogleDriveFileId,
+  findGoogleDriveAssetsInGraph,
+  isManagedAsset,
+  permissionMatchesAnyOf,
+  type GoogleDriveAsset,
+} from "@breadboard-ai/google-drive-kit/board-server/utils.js";
+import {
+  NarrowedDriveFile,
+  type GoogleDriveClient,
+} from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { type GraphDescriptor } from "@breadboard-ai/types";
+import type { DomainConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 import { type BoardServer } from "@google-labs/breadboard";
 import { consume } from "@lit/context";
 import "@material/web/switch/switch.js";
@@ -38,9 +49,6 @@ import {
   type SigninAdapter,
 } from "../../utils/signin-adapter.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
-import type { DomainConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
-import { stringifyPermission } from "../../utils/stringify-permission.js";
-import { findGoogleDriveAssetsInGraph } from "../../utils/utils.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
@@ -86,8 +94,21 @@ type State =
     }
   | {
       status: "granular";
-      fileIds: string[];
+      shareableFile: { id: string };
+    }
+  | {
+      status: "unmanaged-assets";
+      problems: UnmanagedAssetProblem[];
+      oldState: State;
+      closed: { promise: Promise<void>; resolve: () => void };
     };
+
+type UnmanagedAssetProblem = {
+  asset: NarrowedDriveFile<"id" | "name" | "iconLink">;
+} & (
+  | { problem: "cant-share" }
+  | { problem: "missing"; missing: gapi.client.drive.Permission[] }
+);
 
 @customElement("bb-share-panel")
 export class SharePanel extends LitElement {
@@ -299,6 +320,57 @@ export class SharePanel extends LitElement {
           "GRAD" 0,
           "opsz" 48;
       }
+
+      #unmanaged-assets {
+        p {
+          font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+            var(--bb-font-family);
+          margin: var(--bb-grid-size-7) 0 var(--bb-grid-size) 0;
+          &:first-of-type {
+            margin-top: var(--bb-grid-size-5);
+          }
+        }
+
+        #asset-chips {
+          .asset-chip {
+            background: #fceee9;
+            padding: var(--bb-grid-size) var(--bb-grid-size-2);
+            border-radius: var(--bb-grid-size-3);
+            margin: var(--bb-grid-size-3) var(--bb-grid-size-3) 0 0;
+            display: inline-block;
+            font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+              var(--bb-font-family);
+            a,
+            a:visited {
+              text-decoration: none;
+              color: inherit;
+            }
+            img {
+              filter: grayscale();
+              vertical-align: middle;
+              margin: 0 6px 2px 0;
+            }
+          }
+        }
+
+        #unmanaged-asset-buttons {
+          display: flex;
+          align-items: flex-end;
+          justify-content: flex-end;
+          margin-top: var(--bb-grid-size-6);
+          flex: 1;
+          button {
+            margin-left: var(--bb-grid-size-3);
+          }
+          .bb-button-text {
+            color: #000;
+          }
+          .bb-button-filled {
+            background: #000;
+            color: #fff;
+          }
+        }
+      }
     `,
   ];
 
@@ -395,6 +467,9 @@ export class SharePanel extends LitElement {
     if (status === "readonly") {
       return this.#renderReadonlyModalContents();
     }
+    if (status === "unmanaged-assets") {
+      return this.#renderUnmanagedAssetsModalContents();
+    }
   }
 
   #renderLoading() {
@@ -418,7 +493,6 @@ export class SharePanel extends LitElement {
     if (status === "writable" || status === "updating") {
       return state.published || state.granularlyShared;
     }
-    status satisfies "closed" | "opening" | "loading" | "granular";
     return undefined;
   }
 
@@ -428,7 +502,6 @@ export class SharePanel extends LitElement {
     if (status === "writable" || status === "updating") {
       return state.shareableFile?.stale ?? false;
     }
-    status satisfies "closed" | "opening" | "loading" | "granular" | "readonly";
     return undefined;
   }
 
@@ -508,11 +581,7 @@ export class SharePanel extends LitElement {
       }),
       // Ensure all assets have the same permissions as the shareable file,
       // since they might have been added since the last publish.
-      this.#writePermissionsToShareableAssets(
-        oldState.shareableFile.permissions.filter(
-          (permission) => permission.role !== "owner"
-        )
-      ),
+      this.#handleAssetPermissions(oldState.shareableFile.id),
     ]);
 
     this.#state = {
@@ -641,10 +710,133 @@ export class SharePanel extends LitElement {
     return html`
       <bb-google-drive-share-panel
         ${ref(this.#googleDriveSharePanel)}
-        .fileIds=${this.#state.fileIds}
+        .fileIds=${[this.#state.shareableFile.id]}
         @close=${this.#onGoogleDriveSharePanelClose}
       ></bb-google-drive-share-panel>
     `;
+  }
+
+  #renderUnmanagedAssetsModalContents() {
+    const state = this.#state;
+    if (state.status !== "unmanaged-assets") {
+      return nothing;
+    }
+
+    const parts = [];
+
+    const missingProblems = state.problems.filter(
+      ({ problem }) => problem === "missing"
+    );
+    if (missingProblems.length > 0) {
+      const missingChips = missingProblems.map(({ asset }) => {
+        const url = `https://drive.google.com/open?id=${encodeURIComponent(asset.id)}`;
+        return html`
+          <span class="asset-chip">
+            <img src=${asset.iconLink} />
+            <a href=${url} target="_blank">${asset.name}</a>
+          </span>
+        `;
+      });
+      parts.push(html`
+        <p>
+          The following assets are owned by you, but are not yet shared with all
+          users of this app. To share them now, choose "Share my assets".
+        </p>
+        <div id="asset-chips">${missingChips}</div>
+      `);
+    }
+
+    const cantShareProblems = state.problems.filter(
+      ({ problem }) => problem === "cant-share"
+    );
+    if (cantShareProblems.length > 0) {
+      const cantShareChips = cantShareProblems.map(({ asset }) => {
+        const url = `https://drive.google.com/open?id=${encodeURIComponent(asset.id)}`;
+        return html`
+          <span class="asset-chip">
+            <img src=${asset.iconLink} />
+            <a href=${url} target="_blank">${asset.name}</a>
+          </span>
+        `;
+      });
+      parts.push(html`
+        <p>
+          The following assets are <strong>not</strong> owned by you, and we
+          unable to verify whether they are shared with all users of this app.
+          If you believe the assets are shared (e.g. they are public), you may
+          safely ignore this warning. If you are unsure, contact the owner of
+          the asset, or replace it with an asset you do own.
+        </p>
+        <div id="asset-chips">${cantShareChips}</div>
+      `);
+    }
+
+    if (missingProblems.length > 0) {
+      parts.push(html`
+        <div id="unmanaged-asset-buttons">
+          <button
+            class="bb-button-text"
+            @click=${this.#onClickDismissUnmanagedAssetProblems}
+          >
+            Ignore
+          </button>
+          <button
+            id="share-unmanaged-assets-button"
+            class="bb-button-filled"
+            @click=${this.#onClickFixUnmanagedAssetProblems}
+          >
+            Share my assets
+          </button>
+        </div>
+      `);
+    } else {
+      parts.push(html`
+        <div id="unmanaged-asset-buttons">
+          <button
+            class="bb-button-filled"
+            @click=${this.#onClickDismissUnmanagedAssetProblems}
+          >
+            I understand
+          </button>
+        </div>
+      `);
+    }
+    return html`<div id="unmanaged-assets">${parts}</div>`;
+  }
+
+  async #onClickDismissUnmanagedAssetProblems() {
+    const state = this.#state;
+    if (state.status !== "unmanaged-assets") {
+      return;
+    }
+    state.closed.resolve();
+  }
+
+  async #onClickFixUnmanagedAssetProblems() {
+    const state = this.#state;
+    if (state.status !== "unmanaged-assets") {
+      return;
+    }
+    const { googleDriveClient } = this;
+    if (!googleDriveClient) {
+      console.error(`No google drive client provided`);
+      return;
+    }
+    this.#state = { status: "loading" };
+    await Promise.all(
+      state.problems.map(async (problem) => {
+        if (problem.problem === "missing") {
+          await Promise.all(
+            problem.missing.map((permission) =>
+              googleDriveClient.createPermission(problem.asset.id, permission, {
+                sendNotificationEmail: false,
+              })
+            )
+          );
+        }
+      })
+    );
+    state.closed.resolve();
   }
 
   async #onClickViewSharePermissions(event: MouseEvent) {
@@ -666,40 +858,10 @@ export class SharePanel extends LitElement {
       oldState.shareableFile?.id ??
       (await this.#makeShareableCopy()).shareableCopyFileId;
 
-    const assetFileIds = findGoogleDriveAssetsInGraph(this.graph);
-    if (assetFileIds.length === 0) {
-      this.#state = {
-        status: "granular",
-        fileIds: [shareableCopyFileId],
-      };
-    } else {
-      // The Google Drive sharing component will crash if you pass it file ids
-      // that the current user can't share. So, since it's possible to upload
-      // assets to a graph that you don't own/can't share, we need to filter the
-      // list down to only those that are shareable.
-      const { googleDriveClient } = this;
-      if (!googleDriveClient) {
-        console.error(`No google drive client provided`);
-        return;
-      }
-      const shareableAssetFileIds = (
-        await Promise.all(
-          assetFileIds.map((fileId) =>
-            googleDriveClient.getFileMetadata(fileId, {
-              fields: ["id", "capabilities"],
-            })
-          )
-        )
-      )
-        // TODO(aomarks) Show a warning to the user that this asset can't be
-        // shared.
-        .filter(({ capabilities }) => capabilities.canShare)
-        .map(({ id }) => id);
-      this.#state = {
-        status: "granular",
-        fileIds: [shareableCopyFileId, ...shareableAssetFileIds],
-      };
-    }
+    this.#state = {
+      status: "granular",
+      shareableFile: { id: shareableCopyFileId },
+    };
   }
 
   #onPublishedSwitchChange() {
@@ -756,9 +918,13 @@ export class SharePanel extends LitElement {
     return undefined;
   }
 
-  #onGoogleDriveSharePanelClose() {
-    // The user might have changed something that would affect the published
-    // state while they were in the Drive sharing modal, so we should reset.
+  async #onGoogleDriveSharePanelClose() {
+    if (this.#state.status !== "granular") {
+      return;
+    }
+    const graphFileId = this.#state.shareableFile.id;
+    this.#state = { status: "loading" };
+    await this.#handleAssetPermissions(graphFileId);
     this.#state = { status: "opening" };
     this.open();
   }
@@ -835,33 +1001,27 @@ export class SharePanel extends LitElement {
       await this.googleDriveClient.getFileMetadata(shareableCopyFileId, {
         fields: ["properties", "permissions"],
       });
-
-    const shareableCopyPermissions =
-      shareableCopyFileMetadata.permissions ?? [];
-    const missingPublishPermissions = new Set(
-      this.#getRequiredPublishPermissions().map(stringifyPermission)
-    );
-    const actualPublishPermissions = [];
-    const actualNonPublishPermissions = [];
-    for (const permission of shareableCopyPermissions) {
-      if (missingPublishPermissions.delete(stringifyPermission(permission))) {
-        actualPublishPermissions.push(permission);
-      } else {
-        actualNonPublishPermissions.push(permission);
-      }
-    }
+    const allGraphPermissions = shareableCopyFileMetadata.permissions ?? [];
+    const diff = diffAssetReadPermissions({
+      actual: allGraphPermissions,
+      expected: this.#getRequiredPublishPermissions(),
+    });
 
     this.#state = {
       status: "writable",
-      published: missingPublishPermissions.size === 0,
-      publishedPermissions: actualPublishPermissions,
+      published: diff.missing.length === 0,
+      publishedPermissions: allGraphPermissions.filter((permission) =>
+        permissionMatchesAnyOf(
+          permission,
+          this.#getRequiredPublishPermissions()
+        )
+      ),
       granularlyShared:
         // We're granularly shared if there is any permission that is neither
         // one of the special publish permissions, nor the owner (since there
         // will always an owner).
-        actualNonPublishPermissions.find(
-          (permission) => permission.role !== "owner"
-        ) !== undefined,
+        diff.excess.find((permission) => permission.role !== "owner") !==
+        undefined,
       shareableFile: {
         id: shareableCopyFileId,
         stale:
@@ -881,6 +1041,7 @@ export class SharePanel extends LitElement {
   }
 
   async #publish() {
+    console.log(`[Sharing Panel] Publishing`);
     const publishPermissions = this.#getRequiredPublishPermissions();
     if (publishPermissions.length === 0) {
       console.error("No publish permissions configured");
@@ -921,7 +1082,7 @@ export class SharePanel extends LitElement {
       newLatestVersion = copyResult.newMainVersion;
     }
 
-    const graphPublishResponsesPromise = Promise.all(
+    const graphPublishPermissions = await Promise.all(
       publishPermissions.map((permission) =>
         googleDriveClient.createPermission(
           shareableFile.id,
@@ -931,29 +1092,62 @@ export class SharePanel extends LitElement {
       )
     );
 
-    await this.#writePermissionsToShareableAssets(publishPermissions);
-
-    const relevantPermissions = await graphPublishResponsesPromise;
-
     console.debug(
       `[Sharing] Added ${publishPermissions.length} publish` +
         ` permission(s) to shareable graph copy "${shareableFile.id}".`
     );
 
+    await this.#handleAssetPermissions(shareableFile.id);
+
     this.#state = {
       status: "writable",
       published: true,
-      publishedPermissions: relevantPermissions,
+      publishedPermissions: graphPublishPermissions,
       granularlyShared: oldState.granularlyShared,
       shareableFile,
       latestVersion: newLatestVersion ?? oldState.latestVersion,
     };
   }
 
-  async #writePermissionsToShareableAssets(
-    permissions: gapi.client.drive.Permission[]
+  async #handleAssetPermissions(graphFileId: string): Promise<void> {
+    const assets = this.#getAssets();
+    if (assets.length === 0) {
+      return;
+    }
+    const managedAssets: GoogleDriveAsset[] = [];
+    const unmanagedAssets: GoogleDriveAsset[] = [];
+    for (const asset of this.#getAssets()) {
+      if (isManagedAsset(asset)) {
+        managedAssets.push(asset);
+      } else {
+        unmanagedAssets.push(asset);
+      }
+    }
+
+    const { googleDriveClient } = this;
+    if (!googleDriveClient) {
+      throw new Error(`No google drive client provided`);
+    }
+    const graphPermissions =
+      (
+        await googleDriveClient.getFileMetadata(graphFileId, {
+          fields: ["permissions"],
+        })
+      ).permissions ?? [];
+    await Promise.all([
+      this.#autoSyncManagedAssetPermissions(managedAssets, graphPermissions),
+      this.#checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
+        unmanagedAssets,
+        graphPermissions
+      ),
+    ]);
+  }
+
+  async #autoSyncManagedAssetPermissions(
+    managedAssets: GoogleDriveAsset[],
+    graphPermissions: gapi.client.drive.Permission[]
   ): Promise<void> {
-    if (permissions.length === 0) {
+    if (managedAssets.length === 0) {
       return;
     }
     const { googleDriveClient } = this;
@@ -961,36 +1155,107 @@ export class SharePanel extends LitElement {
       throw new Error(`No google drive client provided`);
     }
     await Promise.all(
-      this.#getAssetFileIds().map(async (assetFileId) => {
-        const metadata = await googleDriveClient.getFileMetadata(assetFileId, {
-          fields: ["capabilities"],
-        });
-        if (metadata.capabilities.canShare) {
-          await Promise.all(
-            permissions.map((permission) =>
-              googleDriveClient.createPermission(
-                assetFileId,
-                { ...permission, role: "reader" },
-                { sendNotificationEmail: false }
-              )
-            )
-          );
-          console.debug(
-            `[Sharing] Added ${permissions.length} permission(s) to asset` +
-              ` "${assetFileId}".`
-          );
-        } else {
-          // TODO(aomarks) Show a warning to the user that this asset can't be
-          // shared.
-          console.warn(
+      managedAssets.map(async (asset) => {
+        const { capabilities, permissions: assetPermissions } =
+          await googleDriveClient.getFileMetadata(asset.fileId, {
+            fields: ["capabilities", "permissions"],
+          });
+        if (!capabilities.canShare || !assetPermissions) {
+          console.error(
             `[Sharing] Could not add permission to asset ` +
-              `"${assetFileId}" because the current user does not have` +
+              `"${asset.fileId}" because the current user does not have` +
               ` sharing capability on it. Users who don't already have` +
               ` access to this asset may not be able to run this graph.`
           );
+          return;
+        }
+        const { missing, excess } = diffAssetReadPermissions({
+          actual: assetPermissions,
+          expected: graphPermissions,
+        });
+        if (missing.length === 0 && excess.length === 0) {
+          return;
+        }
+        console.log(
+          `[Sharing Panel] Managed asset ${asset.fileId}` +
+            ` has ${missing.length} missing permission(s)` +
+            ` and ${excess.length} excess permission(s). Synchronizing.`
+        );
+        await Promise.all([
+          ...missing.map((permission) =>
+            googleDriveClient.createPermission(
+              asset.fileId,
+              { ...permission, role: "reader" },
+              { sendNotificationEmail: false }
+            )
+          ),
+          ...excess.map((permission) =>
+            googleDriveClient.deletePermission(asset.fileId, permission.id!)
+          ),
+        ]);
+      })
+    );
+  }
+
+  async #checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
+    unmanagedAssets: GoogleDriveAsset[],
+    graphPermissions: gapi.client.drive.Permission[]
+  ): Promise<void> {
+    if (unmanagedAssets.length === 0) {
+      return;
+    }
+    const { googleDriveClient } = this;
+    if (!googleDriveClient) {
+      throw new Error(`No google drive client provided`);
+    }
+    const problems: UnmanagedAssetProblem[] = [];
+    await Promise.all(
+      unmanagedAssets.map(async (asset) => {
+        const assetMetadata = await googleDriveClient.getFileMetadata(
+          asset.fileId,
+          {
+            fields: ["id", "name", "iconLink", "capabilities", "permissions"],
+          }
+        );
+        if (
+          !assetMetadata.capabilities.canShare ||
+          !assetMetadata.permissions
+        ) {
+          problems.push({ asset: assetMetadata, problem: "cant-share" });
+          return;
+        }
+        const { missing } = diffAssetReadPermissions({
+          actual: assetMetadata.permissions,
+          expected: graphPermissions,
+        });
+        if (missing.length > 0) {
+          problems.push({ asset: assetMetadata, problem: "missing", missing });
+          return;
         }
       })
     );
+    if (problems.length === 0) {
+      return;
+    }
+    // TODO(aomarks) Bump es level so we can get Promise.withResolvers.
+    let closed: { promise: Promise<void>; resolve: () => void };
+    {
+      let resolve: () => void;
+      const promise = new Promise<void>((r) => (resolve = r));
+      closed = { promise, resolve: resolve! };
+    }
+    const oldState = this.#state;
+    this.#state = {
+      status: "unmanaged-assets",
+      problems,
+      oldState,
+      closed,
+    };
+    // Since the unmanaged asset dialog shows up in a few different flows, it's
+    // useful to make it so this function waits until it has been resolved.
+    // TODO(aomarks) This is a kinda weird pattern. Think about a refactor.
+    await closed.promise;
+    this.#state = oldState;
   }
 
   async #unpublish() {
@@ -1014,21 +1279,23 @@ export class SharePanel extends LitElement {
       granularlyShared: oldState.granularlyShared,
       shareableFile,
     };
+
+    console.debug(
+      `[Sharing] Removing ${oldState.publishedPermissions.length} publish` +
+        ` permission(s) from shareable graph copy "${shareableFile.id}".`
+    );
     await Promise.all(
-      oldState.publishedPermissions.map((permission) => {
-        googleDriveClient.deletePermission(shareableFile.id, permission.id!);
+      oldState.publishedPermissions.map(async (permission) => {
+        if (permission.role !== "owner") {
+          await googleDriveClient.deletePermission(
+            shareableFile.id,
+            permission.id!
+          );
+        }
       })
     );
 
-    // Note we are not removing permissions from assets. That's because the
-    // asset might need to remain published (maybe it's used in another graph,
-    // or maybe it was already public in Drive for some other reason). Maybe
-    // we should inform the user about this.
-
-    console.debug(
-      `[Sharing] Removed ${oldState.publishedPermissions.length} publish` +
-        ` permission(s) from shareable graph copy "${shareableFile.id}".`
-    );
+    await this.#handleAssetPermissions(shareableFile.id);
 
     this.#state = {
       status: "writable",
@@ -1152,7 +1419,7 @@ export class SharePanel extends LitElement {
     return graphFileId;
   }
 
-  #getAssetFileIds(): string[] {
+  #getAssets(): GoogleDriveAsset[] {
     const graph = this.graph;
     if (!graph) {
       console.error("No graph");

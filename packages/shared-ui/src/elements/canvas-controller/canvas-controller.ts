@@ -74,7 +74,8 @@ import { emptyStyles } from "../../styles/host/colors-empty.js";
 const SIDE_ITEM_KEY = "bb-canvas-controller-side-nav-item";
 
 import "./empty-state.js";
-import { findGoogleDriveAssetsInGraph, isEmpty } from "../../utils/utils.js";
+import { findGoogleDriveAssetsInGraph } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
+import { isEmpty } from "../../utils/utils.js";
 import type { DriveFileIdWithOptionalResourceKey } from "../google-drive/google-drive-picker.js";
 
 @customElement("bb-canvas-controller")
@@ -685,7 +686,9 @@ export class CanvasController extends LitElement {
     if (!this.graph) {
       return;
     }
-    const driveAssetFileIds = findGoogleDriveAssetsInGraph(this.graph);
+    const driveAssetFileIds = findGoogleDriveAssetsInGraph(this.graph).map(
+      ({ fileId }) => fileId
+    );
     if (driveAssetFileIds.length === 0) {
       return;
     }

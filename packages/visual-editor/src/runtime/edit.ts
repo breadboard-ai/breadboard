@@ -34,7 +34,6 @@ import {
   RuntimeBoardEditEvent,
   RuntimeBoardEnhanceEvent,
   RuntimeErrorEvent,
-  RuntimeShareDialogRequestedEvent,
   RuntimeVisualChangeEvent,
 } from "./events";
 import {
@@ -58,8 +57,6 @@ import {
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { Autoname } from "@breadboard-ai/shared-ui/sideboards/autoname.js";
 import { StateManager } from "./state";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 
 export class Edit extends EventTarget {
   #editors = new Map<TabId, EditableGraph>();
@@ -597,103 +594,6 @@ export class Edit extends EventTarget {
       (comment) => comment.id !== id
     );
     this.dispatchEvent(new RuntimeBoardEditEvent(tab.id, [], false));
-  }
-
-  /**
-   * Finds all assets in the graph, checks if their sharing permissions match
-   * that of the main graph, and prompts the user to fix them if needed.
-   */
-  async checkGoogleDriveAssetShareStatus(
-    tab: Tab,
-    googleDriveClient: GoogleDriveClient
-  ): Promise<void> {
-    const graph = tab?.graph;
-    if (!graph) {
-      console.error(`No graph was found`);
-      return;
-    }
-
-    const driveAssetFileIds =
-      BreadboardUI.Utils.findGoogleDriveAssetsInGraph(graph);
-
-    if (driveAssetFileIds.length === 0) {
-      return;
-    }
-    if (!graph.url) {
-      console.error(`Graph had no URL`);
-      return;
-    }
-    const graphFileId = extractGoogleDriveFileId(graph.url);
-    if (!graphFileId) {
-      return;
-    }
-
-    // Retrieve all relevant permissions.
-    const rawAssetPermissionsPromise = Promise.all(
-      driveAssetFileIds.map(
-        async (assetFileId) =>
-          [
-            assetFileId,
-            await googleDriveClient.getFilePermissions(assetFileId),
-          ] as const
-      )
-    );
-
-    const processedGraphPermissions = (
-      await googleDriveClient.getFilePermissions(graphFileId)
-    )
-      .filter(
-        (permission) =>
-          // We're only concerned with how the graph is shared to others.
-          permission.role !== "owner"
-      )
-      .map((permission) => ({
-        ...permission,
-        // We only care about reading the file, so downgrade "writer",
-        // "commenter", and other roles to "reader" (note that all roles are
-        // supersets of of "reader", see
-        // https://developers.google.com/workspace/drive/api/guides/ref-roles).
-        role: "reader",
-      }));
-
-    // Look at each asset and determine whether it is missing any of the
-    // permissions that the graph has.
-    const assetToMissingPermissions = new Map<
-      string,
-      gapi.client.drive.Permission[]
-    >();
-    for (const [
-      assetFileId,
-      assetPermissions,
-    ] of await rawAssetPermissionsPromise) {
-      const missingPermissions = new Map(
-        processedGraphPermissions.map((graphPermission) => [
-          BreadboardUI.Utils.stringifyPermission(graphPermission),
-          graphPermission,
-        ])
-      );
-      for (const assetPermission of assetPermissions) {
-        missingPermissions.delete(
-          BreadboardUI.Utils.stringifyPermission({
-            ...assetPermission,
-            // See note above about "reader".
-            role: "reader",
-          })
-        );
-      }
-      if (missingPermissions.size > 0) {
-        assetToMissingPermissions.set(assetFileId, [
-          ...missingPermissions.values(),
-        ]);
-      }
-    }
-
-    // Prompt to sync the permissions.
-    if (assetToMissingPermissions.size > 0) {
-      this.dispatchEvent(
-        new RuntimeShareDialogRequestedEvent(assetToMissingPermissions)
-      );
-    }
   }
 
   updateBoardInfo(

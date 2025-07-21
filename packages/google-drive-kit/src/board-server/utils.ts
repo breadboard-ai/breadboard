@@ -4,9 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphTag } from "@breadboard-ai/types";
-import type { StoredProperties } from "./operations.js";
+import type {
+  GraphDescriptor,
+  GraphTag,
+  LLMContent,
+} from "@breadboard-ai/types";
 import type { NarrowedDriveFile } from "../google-drive-client.js";
+import type { StoredProperties } from "./operations.js";
 
 /** Delay between GDrive API retries. */
 const RETRY_MS = 200;
@@ -160,3 +164,127 @@ export type AppProperties = {
   tags: GraphTag[];
   thumbnailUrl?: string;
 };
+
+export type GoogleDriveAsset = {
+  fileId: string;
+  /**
+   * How this asset came to be in the graph.
+   *
+   * This distinction is important for sharing: themes and uploaded assets are
+   * considered "managed" by this graph, so they will automatically have their
+   * sharing ACLs syncronized with the graph itself. Picked assets are
+   * considered "unmanaged", so we always check with the user if it's OK to
+   * modify their sharing ACLs.
+   */
+  kind: "theme" | "uploaded" | "picked";
+};
+
+export function findGoogleDriveAssetsInGraph(
+  graph: GraphDescriptor
+): GoogleDriveAsset[] {
+  // Use a map because there can be duplicates.
+  const files = new Map<string, GoogleDriveAsset>();
+
+  if (graph.assets) {
+    for (const asset of Object.values(graph.assets)) {
+      // Cast needed because `data` is very broadly typed as `NodeValue`.
+      const firstPart = (asset.data as LLMContent[])[0]?.parts?.[0];
+      if (firstPart) {
+        if ("fileData" in firstPart && asset.metadata?.subType === "gdrive") {
+          const fileId = firstPart.fileData?.fileUri;
+          if (fileId) {
+            // TODO(aomarks) The "picked" vs "uploaded" distinction should
+            // really be stored explicitly on the handle. The "fileData" vs
+            // "storedData" distinction seems otherwise arbitrary/historical.
+            files.set(fileId, { fileId, kind: "picked" });
+          }
+        }
+        if ("storedData" in firstPart) {
+          const fileId = extractGoogleDriveFileId(firstPart.storedData?.handle);
+          if (fileId) {
+            files.set(fileId, { fileId, kind: "uploaded" });
+          }
+        }
+      }
+    }
+  }
+
+  // Theme splash images are not listed in assets.
+  const themes = graph.metadata?.visual?.presentation?.themes;
+  if (themes) {
+    for (const theme of Object.values(themes)) {
+      const splashHandle = theme.splashScreen?.storedData?.handle;
+      if (splashHandle) {
+        const fileId = extractGoogleDriveFileId(splashHandle);
+        if (fileId) {
+          files.set(fileId, { fileId, kind: "theme" });
+        }
+      }
+    }
+  }
+
+  return [...files.values()];
+}
+
+export function isManagedAsset(asset: GoogleDriveAsset): boolean {
+  return asset.kind === "theme" || asset.kind === "uploaded";
+}
+
+type Permission = gapi.client.drive.Permission;
+
+export function diffAssetReadPermissions(permissions: {
+  actual: Permission[];
+  expected: Permission[];
+}): { missing: Permission[]; excess: Permission[] } {
+  // Just ignore owner. We can't change that.
+  const actual = permissions.actual.filter(({ role }) => role !== "owner");
+  const expected = permissions.expected.filter(({ role }) => role !== "owner");
+
+  const missing = [];
+  {
+    const actualStrs = new Set(actual.map(stringifyAssetReadPermission));
+    for (const e of expected) {
+      if (!actualStrs.has(stringifyAssetReadPermission(e))) {
+        missing.push(e);
+      }
+    }
+  }
+
+  const excess = [];
+  {
+    const expectedStrs = new Set(expected.map(stringifyAssetReadPermission));
+    for (const a of actual) {
+      if (!expectedStrs.has(stringifyAssetReadPermission(a))) {
+        excess.push(a);
+      }
+    }
+  }
+
+  return { missing, excess };
+}
+
+/**
+ * Make a string from a permission object that can be used for Set membership.
+ * Note we ignore "role" here, because we only care about reading, and all roles
+ * can read.
+ */
+function stringifyAssetReadPermission(permission: Permission): string {
+  return JSON.stringify({
+    type: permission.type,
+    domain: permission.domain ?? undefined,
+    emailAddress: permission.emailAddress ?? undefined,
+  });
+}
+
+export function permissionMatchesAnyOf(
+  permission: Permission,
+  candidates: Permission[]
+): boolean {
+  const str = stringifyAssetReadPermission(permission);
+  for (const candidate of candidates) {
+    if (str === stringifyAssetReadPermission(candidate)) {
+      return true;
+    }
+  }
+  return false;
+}

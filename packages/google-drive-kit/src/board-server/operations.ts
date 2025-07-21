@@ -6,7 +6,6 @@
 
 /// <reference types="@types/gapi.client.drive-v3" />
 
-import type { TokenVendor } from "@breadboard-ai/connection-client";
 import type {
   Asset,
   GraphTag,

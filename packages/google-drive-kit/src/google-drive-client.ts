@@ -71,20 +71,25 @@ export interface ListChangesOptions extends BaseRequestOptions {
 }
 
 /** The default properties you get when requesting no fields. */
-type DefaultFileFields = "id" | "kind" | "name" | "mimeType";
+type DefaultFileFields = "id" | "kind" | "name" | "mimeType" | "resourceKey";
 
 const DEFAULT_FILE_FIELDS: ReadonlyArray<DefaultFileFields> = [
   "id",
   "kind",
   "name",
   "mimeType",
+  "resourceKey",
 ];
 
 /**
  * Some properties can be undefined even when requested, either because they are
  * absent or because we don't have permission to read them.
  */
-type AlwaysOptionalFileFields = "permissions" | "properties" | "appProperties";
+type AlwaysOptionalFileFields =
+  | "permissions"
+  | "properties"
+  | "appProperties"
+  | "resourceKey";
 
 /**
  * A DriveFile (which usually has every field as optional) but where some of the
@@ -115,7 +120,7 @@ type NarrowedDriveFile_Test1 = NarrowedDriveFile<
   "name" | "ownedByMe" | "properties"
 >;
 
-// $ExpectType { id: string; kind: string; mimeType: string; name: string; }
+// $ExpectType { id: string; kind: string; mimeType: string; name: string; resourceKey?: string | undefined; }
 type NarrowedDriveFile_Test2 = NarrowedDriveFile<void>;
 
 // $ExpectType { }
@@ -146,7 +151,7 @@ type NarrowedDriveFileFromOptions_Test1 = NarrowedDriveFileFromOptions<{
   fields: Array<"name" | "ownedByMe" | "properties">;
 }>;
 
-// $ExpectType { id: string; kind: string; mimeType: string; name: string; }
+// $ExpectType { id: string; kind: string; mimeType: string; name: string; resourceKey?: string | undefined; }
 type NarrowedDriveFileFromOptions_Test2 = NarrowedDriveFileFromOptions<{
   fields: undefined;
 }>;
@@ -266,31 +271,31 @@ export class GoogleDriveClient {
       if (directResponseWithApiKey.ok) {
         return directResponseWithApiKey.json();
       }
-    }
 
-    if (this.#proxyUrl) {
-      // 3. Try via our custom Drive proxy service, if enabled.
-      console.log(
-        `Received 404 response for Google Drive file metadata "${fileId}"` +
-          ` using API key fallback. Now trying proxy fallback.`
-      );
-      const proxyResponse = await this.#fetchFileMetadataViaProxy(
-        fileId,
-        this.#proxyUrl,
-        options
-      );
-      if (proxyResponse.ok) {
-        // The proxy response format is different to the direct API. Metadata is
-        // nested within a "metadata" property.
-        const proxyResult =
-          (await proxyResponse.json()) as GetFileProxyResponse;
-        return JSON.parse(proxyResult.metadata);
-      } else {
-        const { status } = proxyResponse;
+      if (this.#proxyUrl) {
+        // 3. Try via our custom Drive proxy service, if enabled.
         console.log(
-          `Received ${status} response for Google Drive file metadata "${fileId}"` +
-            ` using proxy fallback. The file is really not accessible!`
+          `Received 404 response for Google Drive file metadata "${fileId}"` +
+            ` using API key fallback. Now trying proxy fallback.`
         );
+        const proxyResponse = await this.#fetchFileMetadataViaProxy(
+          fileId,
+          this.#proxyUrl,
+          options
+        );
+        if (proxyResponse.ok) {
+          // The proxy response format is different to the direct API. Metadata is
+          // nested within a "metadata" property.
+          const proxyResult =
+            (await proxyResponse.json()) as GetFileProxyResponse;
+          return JSON.parse(proxyResult.metadata);
+        } else {
+          const { status } = proxyResponse;
+          console.log(
+            `Received ${status} response for Google Drive file metadata "${fileId}"` +
+              ` using proxy fallback. The file is really not accessible!`
+          );
+        }
       }
     }
 
@@ -820,7 +825,11 @@ export class GoogleDriveClient {
           (await response.text())
       );
     }
-    return (await response.json()) as Permission;
+    const result = (await response.json()) as Permission;
+    console.debug(
+      `[Google Drive Client] Created permission ${result.id} on file ${fileId}`
+    );
+    return result;
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/delete */
@@ -843,6 +852,10 @@ export class GoogleDriveClient {
           (await response.text())
       );
     }
+    console.debug(
+      `[Google Drive Client] Deleted permission ${permissionId}` +
+        ` from file ${fileId}`
+    );
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/copy */
