@@ -45,9 +45,11 @@ export class VEEditBoardModal extends LitElement {
           padding: var(--bb-grid-size-4);
           border-radius: var(--bb-grid-size-4);
           border: 1px solid var(--n-70);
+          box-sizing: border-box;
           resize: none;
           field-sizing: content;
           max-height: 300px;
+          max-width: 380px;
         }
       }
     `,
