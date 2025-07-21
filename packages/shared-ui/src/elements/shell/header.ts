@@ -493,6 +493,14 @@ export class VEHeader extends LitElement {
       },
     ];
 
+    if (this.showExperimentalComponents) {
+      options.push({
+        id: "copy-board-contents",
+        title: Strings.from("COMMAND_COPY_PROJECT_CONTENTS"),
+        icon: "content_copy",
+      });
+    }
+
     return html`<bb-item-select
       .showDownArrow=${false}
       .freezeValue=${0}

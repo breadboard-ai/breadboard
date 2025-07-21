@@ -1924,6 +1924,21 @@ export class Main extends SignalWatcher(LitElement) {
             break;
           }
 
+          case "copy-board-contents": {
+            if (!this.#tab) {
+              return;
+            }
+
+            await navigator.clipboard.writeText(
+              JSON.stringify(this.#tab.graph, null, 2)
+            );
+            this.toast(
+              Strings.from("STATUS_PROJECT_CONTENTS_COPIED"),
+              BreadboardUI.Events.ToastType.INFORMATION
+            );
+            break;
+          }
+
           default: {
             console.log("Action:", select.value);
             break;
