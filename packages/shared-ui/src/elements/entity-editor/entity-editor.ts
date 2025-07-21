@@ -1549,7 +1549,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
       value = [input, output];
     }
 
-    let icon: string | undefined | null = "alternate_email";
+    let icon: string | undefined | null = "text_fields";
     if (asset.type) {
       icon = iconSubstitute(asset.type);
     }

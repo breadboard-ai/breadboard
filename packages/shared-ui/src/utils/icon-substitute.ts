@@ -14,7 +14,7 @@ export function iconSubstitute(
 ): string | undefined | null {
   switch (src) {
     case "content":
-      return "alternate_email";
+      return "text_fields";
     case "generative":
       return "spark";
     case "ask-user":
