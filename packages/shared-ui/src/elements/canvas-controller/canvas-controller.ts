@@ -630,6 +630,12 @@ export class CanvasController extends LitElement {
                 Editor
               </button>
               <button
+                class=${classMap({
+                  "sans-flex": true,
+                  "w-500": true,
+                  round: true,
+                  invisible: !this.graphIsMine,
+                })}
                 @click=${() => {
                   this.sideNavItem = "app-view";
                   this.showThemeDesigner = true;

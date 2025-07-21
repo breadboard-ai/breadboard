@@ -5,9 +5,11 @@
  */
 import { css } from "lit";
 import { colorsLight } from "../../styles/host/colors-light";
+import { type } from "../../styles/host/type";
 
 export const styles = [
   colorsLight,
+  type,
   css`
     * {
       box-sizing: border-box;
