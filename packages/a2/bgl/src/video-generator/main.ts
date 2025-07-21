@@ -9,6 +9,7 @@ import { Template } from "../a2/template";
 import { ToolManager } from "../a2/tool-manager";
 import {
   defaultLLMContent,
+  err,
   extractMediaData,
   extractTextData,
   isStoredData,
@@ -79,7 +80,7 @@ async function callVideoGen(
   disablePromptRewrite: boolean,
   aspectRatio: string,
   modelName: string
-): Promise<LLMContent> {
+): Promise<Outcome<LLMContent>> {
   const executionInputs: ContentMap = {};
   const encodedPrompt = btoa(unescape(encodeURIComponent(prompt)));
   executionInputs["text_instruction"] = {
@@ -108,7 +109,7 @@ async function callVideoGen(
       imageChunk = toInlineData(imageContent);
     }
     if (!imageChunk || typeof imageChunk == "string") {
-      return toLLMContent("Image content did not have expected format");
+      return err("Image input did not have the expected format");
     }
     executionInputs["reference_image"] = {
       chunks: [
@@ -141,10 +142,10 @@ async function callVideoGen(
   console.log(body);
   const response = await executeStep(body);
   if (!ok(response)) {
-    return toLLMContent("Video generation failed: " + response.$error);
+    return err("Video generation failed: " + response.$error);
   }
   if (!response.executionOutputs) {
-    return toLLMContent("Video generation failed to generate video");
+    return err("Video generation failed: no outputs");
   }
 
   let returnVal;
@@ -162,7 +163,7 @@ async function callVideoGen(
     }
   }
   if (!returnVal) {
-    return toLLMContent("Error: No video returned from backend");
+    return err("Error: No video returned from backend");
   }
   return returnVal;
 }
@@ -218,7 +219,7 @@ async function invoke({
       // Validate that we did not find any images, given this isn't supported yet.
       imageContext = imageContext.concat(refImages);
       if (imageContext.length > 1) {
-        return toLLMContent(
+        return err(
           `Video generation expects either a single text description, or text plus a single image. Got ${imageContext.length} images.`
         );
       }
@@ -226,7 +227,7 @@ async function invoke({
         joinContent(toTextConcat(refText), textContext, false)
       );
       if (!combinedInstruction) {
-        return toLLMContent("A video instruction must be provided.");
+        return err("A video instruction must be provided.");
       }
 
       console.log(`PROMPT(${modelName}): ${combinedInstruction}`);

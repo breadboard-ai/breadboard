@@ -12,13 +12,13 @@
     "build": {
       "dependencies": [
         "<dependencies>#<this>",
-        "build:bgls"
+        "build:tsc"
       ]
     },
     "typescript-files-and-deps": {
       "dependencies": [
         "<dependencies>#build:tsc",
-        "copy-environment"
+        "build:bgls"
       ],
       "files": [
         "src/**/*.ts",
@@ -42,8 +42,7 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "<dependencies>#build:tsc",
-        "build:tsc"
+        "copy-environment"
       ],
       "files": [
         "bgl/src/**/*.ts",
@@ -68,6 +67,7 @@
       "files": [],
       "output": [
         "dist/",
+        "!dist/bgl/src",
         "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
