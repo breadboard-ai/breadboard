@@ -46,4 +46,5 @@ export interface Connection {
   title: string;
   description?: string;
   icon?: string;
+  scopes: Array<{ scope: string; optional: boolean }>;
 }

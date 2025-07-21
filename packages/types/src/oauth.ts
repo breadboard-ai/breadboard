@@ -18,4 +18,5 @@ export type GrantResponse =
        * https://developers.google.com/identity/openid-connect/openid-connect#authenticationuriparameters
        */
       domain?: string;
+      scopes?: string[];
     };

@@ -42,6 +42,10 @@ export const signinAdapterContext = createContext<SigninAdapter | undefined>(
   "SigninAdapter"
 );
 
+export type SignInError =
+  | { code: "missing-scopes"; missingScopes: string[] }
+  | { code: "other"; detail: string };
+
 /**
  * A specialized adapter to handle sign in using the connection server
  * machinery.
@@ -165,7 +169,7 @@ class SigninAdapter {
     return authUrl.href;
   }
 
-  async signIn(): Promise<{ ok: true } | { ok: false; error: string }> {
+  async signIn(): Promise<{ ok: true } | { ok: false; error: SignInError }> {
     const now = Date.now();
     // The OAuth broker page will know to broadcast the token on this unique
     // channel because it also knows the nonce (since we pack that in the OAuth
@@ -184,12 +188,33 @@ class SigninAdapter {
     if (grantResponse.error !== undefined) {
       // TODO(aomarks) Show error info in the UI.
       console.error(grantResponse.error);
-      return { ok: false, error: grantResponse.error };
+      return {
+        ok: false,
+        error: { code: "other", detail: grantResponse.error },
+      };
     }
 
     const connection = await this.#getConnection();
     if (!connection) {
-      return { ok: false, error: "Connection not found" };
+      return {
+        ok: false,
+        error: { code: "other", detail: "Connection not found" },
+      };
+    }
+
+    // Check for any missing required scopes.
+    const requiredScopes = connection.scopes
+      .filter(({ optional }) => !optional)
+      .map(({ scope }) => scope);
+    const actualScopes = new Set(grantResponse.scopes ?? []);
+    const missingScopes = requiredScopes.filter(
+      (scope) => !actualScopes.has(scope)
+    );
+    if (missingScopes.length > 0) {
+      return {
+        ok: false,
+        error: { code: "missing-scopes", missingScopes },
+      };
     }
 
     const settingsValue: TokenGrant = {

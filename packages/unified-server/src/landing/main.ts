@@ -112,21 +112,53 @@ async function init() {
     console.warn("Unable to locate sign-in button");
     return;
   }
+  const scopesErrorDialog = document.querySelector<HTMLDialogElement>(
+    "#scopes-error-dialog"
+  );
+  if (!scopesErrorDialog) {
+    console.warn("Unable to locate scopes error dialog");
+    return;
+  }
+  const scopesErrorSignInButton =
+    scopesErrorDialog.querySelector<HTMLAnchorElement>(".sign-in");
+  if (!scopesErrorSignInButton) {
+    console.warn("Unable to locate scopes error sign-in button");
+    return;
+  }
 
-  signInButton.href = await signinAdapter.getSigninUrl();
-  signInButton.addEventListener("click", async () => {
+  const setSignInUrls = async () => {
+    // Note we need a new sign-in URL for each attempt, because it has a unique
+    // nonce.
+    const signInUrl = await signinAdapter.getSigninUrl();
+    signInButton.href = signInUrl;
+    scopesErrorSignInButton.href = signInUrl;
+  };
+
+  const onClickSignIn = async () => {
     if (!signinAdapter) {
       return;
     }
 
     const result = await signinAdapter.signIn();
     if (!result.ok) {
-      console.warn(result.error);
+      const { error } = result;
+      console.warn(error);
+      await setSignInUrls();
+      if (error.code === "missing-scopes") {
+        scopesErrorDialog.showModal();
+      }
       return;
     }
 
     ActionTracker.signInSuccess();
     redirect();
+  };
+
+  await setSignInUrls();
+  signInButton.addEventListener("click", onClickSignIn);
+  scopesErrorSignInButton.addEventListener("click", () => {
+    onClickSignIn();
+    scopesErrorDialog.close();
   });
 }
 

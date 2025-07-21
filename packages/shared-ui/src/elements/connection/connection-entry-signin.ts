@@ -144,7 +144,8 @@ export class ConnectionEntrySignin extends LitElement {
       ActionTracker.signInSuccess();
       this.dispatchEvent(new SignInEvent());
     } else {
-      this.errorMessage = result.error;
+      console.warn(result.error);
+      this.errorMessage = result.error.code;
     }
   }
 }

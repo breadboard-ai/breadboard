@@ -379,6 +379,51 @@ main {
   }
 }
 
+#scopes-error-dialog {
+  border-radius: 16px;
+  min-height: 200px;
+  box-shadow: 0px 2px 6dvb 0px rgba(0, 0, 0, 0.2);
+  border: none;
+  padding: 24px;
+  max-width: 475px;
+
+  &::backdrop {
+    backdrop-filter: blur(5px);
+  }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+
+    .title {
+      margin-top: 0;
+    }
+    p {
+      margin-top: 0;
+    }
+    .screenshot-container {
+      display: flex;
+      justify-content: center;
+      box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.25);
+      padding: 12px;
+      border-radius: 8px;
+      margin: 12px 0 24px 0;
+    }
+    .sign-in {
+      display: inline-flex;
+      align-items: center;
+      height: var(--bb-grid-size-10);
+      border-radius: var(--bb-grid-size-16);
+      background: var(--n-0);
+      color: var(--n-100);
+      padding: 0 var(--bb-grid-size-4);
+      text-decoration: none;
+    }
+  }
+}
+
 #discord {
   display: inline-flex;
   align-items: center;
