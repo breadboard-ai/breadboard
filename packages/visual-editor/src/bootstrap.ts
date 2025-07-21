@@ -177,6 +177,12 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
         currentUrl.searchParams.get("mode")!
       );
     }
+    if (currentUrl.searchParams.has("shared")) {
+      landingRedirectUrl.searchParams.set(
+        "shared",
+        currentUrl.searchParams.get("shared")!
+      );
+    }
     window.location.href = decodeURIComponent(landingRedirectUrl.href);
     return;
   }

@@ -120,6 +120,14 @@ export class RuntimeBoardLoadErrorEvent extends Event {
   }
 }
 
+export class RuntimeShareMissingEvent extends Event {
+  static eventName = "runtimesharemissing" as const;
+
+  constructor() {
+    super(RuntimeShareMissingEvent.eventName, { ...eventInit });
+  }
+}
+
 export class RuntimeErrorEvent extends Event {
   static eventName = "runtimeerror" as const;
 

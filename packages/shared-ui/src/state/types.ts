@@ -356,7 +356,8 @@ export type UIOverlays =
   | "BoardEditModal"
   | "BoardServerAddOverlay"
   | "TOS"
-  | "RuntimeFlags";
+  | "RuntimeFlags"
+  | "MissingShare";
 
 export type UILoadState = "Home" | "Loading" | "Loaded" | "Error";
 

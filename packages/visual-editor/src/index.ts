@@ -502,6 +502,13 @@ export class Main extends SignalWatcher(LitElement) {
 
     const currentUrl = new URL(window.location.href);
 
+    this.#runtime.board.addEventListener(
+      Runtime.Events.RuntimeShareMissingEvent.eventName,
+      () => {
+        this.#uiState.show.add("MissingShare");
+      }
+    );
+
     this.#runtime.addEventListener(
       Runtime.Events.RuntimeToastEvent.eventName,
       (evt: Runtime.Events.RuntimeToastEvent) => {
@@ -921,6 +928,7 @@ export class Main extends SignalWatcher(LitElement) {
   #hideAllOverlays() {
     this.#uiState.show.delete("BoardEditModal");
     this.#uiState.show.delete("BoardServerAddOverlay");
+    this.#uiState.show.delete("MissingShare");
   }
 
   #onShowTooltip(evt: Event) {
@@ -1261,10 +1269,7 @@ export class Main extends SignalWatcher(LitElement) {
       canSave,
       projectState,
       saveStatus,
-      showingOverlay:
-        this.#uiState.show.has("TOS") ||
-        this.#uiState.show.has("BoardEditModal") ||
-        this.#uiState.show.has("BoardServerAddOverlay"),
+      showingOverlay: this.#uiState.show.size > 0,
       showExperimentalComponents,
       themeHash,
       tabStatus,
@@ -1319,7 +1324,7 @@ export class Main extends SignalWatcher(LitElement) {
       id="content"
       ?inert=${renderValues.showingOverlay || this.#uiState.blockingAction}
     >
-      ${this.#uiState.show.has("TOS")
+      ${this.#uiState.show.has("TOS") || this.#uiState.show.has("MissingShare")
         ? nothing
         : [
             this.#renderCanvasController(renderValues),
@@ -1395,6 +1400,9 @@ export class Main extends SignalWatcher(LitElement) {
       ${[
         this.#renderHeader(renderValues),
         content,
+        this.#uiState.show.has("MissingShare")
+          ? this.#renderMissingShareDialog()
+          : nothing,
         this.#uiState.show.has("TOS") ? this.#renderTosDialog() : nothing,
         this.#uiState.show.has("BoardServerAddOverlay")
           ? this.#renderBoardServerAddOverlay()
@@ -1588,6 +1596,39 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.show.delete("RuntimeFlags");
       }}
     ></bb-runtime-flags-modal>`;
+  }
+
+  #renderMissingShareDialog() {
+    return html`<dialog
+      id="missing-share-dialog"
+      @keydown=${(evt: KeyboardEvent) => {
+        if (evt.key !== "Escape") {
+          return;
+        }
+
+        evt.preventDefault();
+      }}
+      ${ref((el: Element | undefined) => {
+        const showModalIfNeeded = () => {
+          if (el && this.#uiState.show.has("MissingShare") && el.isConnected) {
+            const dialog = el as HTMLDialogElement;
+            if (!dialog.open) {
+              dialog.showModal();
+            }
+          }
+        };
+
+        requestAnimationFrame(showModalIfNeeded);
+      })}
+    >
+      <form method="dialog">
+        <h1>Oops, something went wrong</h1>
+        <p class="share-content">
+          It has not been possible to open this app. Please ask the author to
+          check that the app was published successfully and then try again.
+        </p>
+      </form>
+    </dialog>`;
   }
 
   #renderTosDialog() {
