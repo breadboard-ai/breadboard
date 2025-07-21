@@ -395,6 +395,14 @@ export class Main extends SignalWatcher(LitElement) {
       if (connecting?.success) {
         this.#findSelectedBoardServer(args);
         console.log(`[Status] Connected to server`);
+
+        // Since we late-mounted the server we have to add it to the state
+        // manager so it can be used by the Reactive Project.
+        const mountedServer = this.#runtime.board.getBoardServerForURL(
+          new URL(args.boardServerUrl.href)
+        );
+
+        this.#runtime.state.appendServer(mountedServer);
       }
     }
 
