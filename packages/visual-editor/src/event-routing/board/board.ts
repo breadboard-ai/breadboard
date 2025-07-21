@@ -207,7 +207,9 @@ export const RemixRoute: EventRoute<"board.remix"> = {
     const { runtime, originalEvent } = deps;
     const graphStore = runtime.board.getGraphStore();
     const addResult = graphStore.addByURL(originalEvent.detail.url, [], {});
-    const graph = (await graphStore.getLatest(addResult.mutable)).graph;
+    const graph = structuredClone(
+      (await graphStore.getLatest(addResult.mutable)).graph
+    );
     graph.title = `${graph.title ?? "Untitled"} Remix`;
 
     await CreateRoute.do({
