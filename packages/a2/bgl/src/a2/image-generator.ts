@@ -7,7 +7,6 @@ import { GeminiPrompt } from "./gemini-prompt";
 import { callImageGen, promptExpander } from "./image-utils";
 import { ArgumentNameGenerator } from "./introducer";
 import { ListExpander } from "./lists";
-import { report } from "./output";
 import { Template } from "./template";
 import { ToolManager } from "./tool-manager";
 import {
@@ -66,21 +65,6 @@ to be used to create an accurate prompt for a text-to-image model.
     },
     toolManager
   );
-}
-
-function gracefulExit(notOk: { $error: string }): Outcome<LLMContent> {
-  report({
-    actor: "Make Image",
-    category: "Warning",
-    name: "Graceful exit",
-    details: `I tried a couple of times, but the Gemini API failed to generate the image you requested with the following error:
-
-### ${notOk.$error}
-
-To keep things moving, I will return a blank result. My apologies!`,
-    icon: MAKE_IMAGE_ICON,
-  });
-  return toLLMContent(" ");
 }
 
 const MAX_RETRIES = 5;
@@ -157,9 +141,7 @@ async function invoke({
           return mergeContent(generatedImage, "model");
         }
       }
-      return gracefulExit(
-        err(`Failed to generate an image after ${MAX_RETRIES} tries.`)
-      );
+      return err(`Failed to generate an image after ${MAX_RETRIES} tries.`);
     }
   );
 
