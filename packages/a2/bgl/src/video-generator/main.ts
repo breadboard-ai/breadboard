@@ -219,7 +219,7 @@ async function invoke({
       // Validate that we did not find any images, given this isn't supported yet.
       imageContext = imageContext.concat(refImages);
       if (imageContext.length > 1) {
-        return toLLMContent(
+        return err(
           `Video generation expects either a single text description, or text plus a single image. Got ${imageContext.length} images.`
         );
       }
@@ -227,7 +227,7 @@ async function invoke({
         joinContent(toTextConcat(refText), textContext, false)
       );
       if (!combinedInstruction) {
-        return toLLMContent("A video instruction must be provided.");
+        return err("A video instruction must be provided.");
       }
 
       console.log(`PROMPT(${modelName}): ${combinedInstruction}`);
