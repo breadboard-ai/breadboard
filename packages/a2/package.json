@@ -12,13 +12,13 @@
     "build": {
       "dependencies": [
         "<dependencies>#<this>",
-        "build:tsc",
-        "copy-environment"
+        "build:bgls"
       ]
     },
     "typescript-files-and-deps": {
       "dependencies": [
-        "<dependencies>#build:tsc"
+        "<dependencies>#build:tsc",
+        "copy-environment"
       ],
       "files": [
         "src/**/*.ts",
@@ -42,7 +42,8 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "<dependencies>#build:tsc"
+        "<dependencies>#build:tsc",
+        "build:tsc"
       ],
       "files": [
         "bgl/src/**/*.ts",
@@ -62,8 +63,7 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "typescript-files-and-deps",
-        "build:bgls"
+        "typescript-files-and-deps"
       ],
       "files": [],
       "output": [
