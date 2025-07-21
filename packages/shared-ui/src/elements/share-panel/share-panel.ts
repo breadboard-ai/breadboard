@@ -19,7 +19,10 @@ import {
   permissionMatchesAnyOf,
   type GoogleDriveAsset,
 } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
-import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import {
+  NarrowedDriveFile,
+  type GoogleDriveClient,
+} from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { type GraphDescriptor } from "@breadboard-ai/types";
 import type { DomainConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 import { type BoardServer } from "@google-labs/breadboard";
@@ -100,7 +103,9 @@ type State =
       closed: { promise: Promise<void>; resolve: () => void };
     };
 
-type ExtrinsicAssetProblem = { asset: GoogleDriveAsset } & (
+type ExtrinsicAssetProblem = {
+  asset: NarrowedDriveFile<"id" | "name" | "iconLink">;
+} & (
   | { problem: "cant-share" }
   | { problem: "missing"; missing: gapi.client.drive.Permission[] }
 );
@@ -314,6 +319,57 @@ export class SharePanel extends LitElement {
           "wght" 600,
           "GRAD" 0,
           "opsz" 48;
+      }
+
+      #extrinsic-assets {
+        p {
+          font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+            var(--bb-font-family);
+          margin: var(--bb-grid-size-7) 0 var(--bb-grid-size) 0;
+          &:first-of-type {
+            margin-top: var(--bb-grid-size-5);
+          }
+        }
+
+        #asset-chips {
+          .asset-chip {
+            background: #fceee9;
+            padding: var(--bb-grid-size) var(--bb-grid-size-2);
+            border-radius: var(--bb-grid-size-3);
+            margin: var(--bb-grid-size-3) var(--bb-grid-size-3) 0 0;
+            display: inline-block;
+            font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+              var(--bb-font-family);
+            a,
+            a:visited {
+              text-decoration: none;
+              color: inherit;
+            }
+            img {
+              filter: grayscale();
+              vertical-align: middle;
+              margin: 0 6px 2px 0;
+            }
+          }
+        }
+
+        #extrinsic-asset-buttons {
+          display: flex;
+          align-items: flex-end;
+          justify-content: flex-end;
+          margin-top: var(--bb-grid-size-6);
+          flex: 1;
+          button {
+            margin-left: var(--bb-grid-size-3);
+          }
+          .bb-button-text {
+            color: #000;
+          }
+          .bb-button-filled {
+            background: #000;
+            color: #fff;
+          }
+        }
       }
     `,
   ];
@@ -665,13 +721,98 @@ export class SharePanel extends LitElement {
     if (state.status !== "extrinsic-assets") {
       return nothing;
     }
-    return html`
-      <li>${state.problems.map((problem) => JSON.stringify(problem))}</li>
-      <button @click=${this.#onClickPublishExtrinsicAssets}>Fix</button>
-    `;
+
+    const parts = [];
+
+    const missingProblems = state.problems.filter(
+      ({ problem }) => problem === "missing"
+    );
+    if (missingProblems.length > 0) {
+      const missingChips = missingProblems.map(({ asset }) => {
+        const url = `https://drive.google.com/open?id=${encodeURIComponent(asset.id)}`;
+        return html`
+          <span class="asset-chip">
+            <img src=${asset.iconLink} />
+            <a href=${url} target="_blank">${asset.name}</a>
+          </span>
+        `;
+      });
+      parts.push(html`
+        <p>
+          The following assets are owned by you, but are not yet shared with all
+          users of this app. To share them now, choose "Share my assets".
+        </p>
+        <div id="asset-chips">${missingChips}</div>
+      `);
+    }
+
+    const cantShareProblems = state.problems.filter(
+      ({ problem }) => problem === "cant-share"
+    );
+    if (cantShareProblems.length > 0) {
+      const cantShareChips = cantShareProblems.map(({ asset }) => {
+        const url = `https://drive.google.com/open?id=${encodeURIComponent(asset.id)}`;
+        return html`
+          <span class="asset-chip">
+            <img src=${asset.iconLink} />
+            <a href=${url} target="_blank">${asset.name}</a>
+          </span>
+        `;
+      });
+      parts.push(html`
+        <p>
+          The following assets are <strong>not</strong> owned by you, and we
+          unable to verify whether they are shared with all users of this app.
+          If you believe the assets are shared (e.g. they are public), you may
+          safely ignore this warning. If you are unsure, contact the owner of
+          the asset, or replace it with an asset you do own.
+        </p>
+        <div id="asset-chips">${cantShareChips}</div>
+      `);
+    }
+
+    if (missingProblems.length > 0) {
+      parts.push(html`
+        <div id="extrinsic-asset-buttons">
+          <button
+            class="bb-button-text"
+            @click=${this.#onClickDismissExtrinsicAssetProblems}
+          >
+            Ignore
+          </button>
+          <button
+            id="share-extrinsic-assets-button"
+            class="bb-button-filled"
+            @click=${this.#onClickFixExtrinsicAssetProblems}
+          >
+            Share my assets
+          </button>
+        </div>
+      `);
+    } else {
+      parts.push(html`
+        <div id="extrinsic-asset-buttons">
+          <button
+            class="bb-button-filled"
+            @click=${this.#onClickDismissExtrinsicAssetProblems}
+          >
+            I understand
+          </button>
+        </div>
+      `);
+    }
+    return html`<div id="extrinsic-assets">${parts}</div>`;
   }
 
-  async #onClickPublishExtrinsicAssets() {
+  async #onClickDismissExtrinsicAssetProblems() {
+    const state = this.#state;
+    if (state.status !== "extrinsic-assets") {
+      return;
+    }
+    state.closed.resolve();
+  }
+
+  async #onClickFixExtrinsicAssetProblems() {
     const state = this.#state;
     if (state.status !== "extrinsic-assets") {
       return;
@@ -687,11 +828,9 @@ export class SharePanel extends LitElement {
         if (problem.problem === "missing") {
           await Promise.all(
             problem.missing.map((permission) =>
-              googleDriveClient.createPermission(
-                problem.asset.fileId,
-                permission,
-                { sendNotificationEmail: false }
-              )
+              googleDriveClient.createPermission(problem.asset.id, permission, {
+                sendNotificationEmail: false,
+              })
             )
           );
         }
@@ -1075,20 +1214,25 @@ export class SharePanel extends LitElement {
     const problems: ExtrinsicAssetProblem[] = [];
     await Promise.all(
       extrinsicAssets.map(async (asset) => {
-        const { capabilities, permissions: assetPermissions } =
-          await googleDriveClient.getFileMetadata(asset.fileId, {
-            fields: ["capabilities", "permissions"],
-          });
-        if (!capabilities.canShare || !assetPermissions) {
-          problems.push({ asset, problem: "cant-share" });
+        const assetMetadata = await googleDriveClient.getFileMetadata(
+          asset.fileId,
+          {
+            fields: ["id", "name", "iconLink", "capabilities", "permissions"],
+          }
+        );
+        if (
+          !assetMetadata.capabilities.canShare ||
+          !assetMetadata.permissions
+        ) {
+          problems.push({ asset: assetMetadata, problem: "cant-share" });
           return;
         }
         const { missing } = diffAssetReadPermissions({
-          actual: assetPermissions,
+          actual: assetMetadata.permissions,
           expected: graphPermissions,
         });
         if (missing.length > 0) {
-          problems.push({ asset, problem: "missing", missing });
+          problems.push({ asset: assetMetadata, problem: "missing", missing });
           return;
         }
       })
