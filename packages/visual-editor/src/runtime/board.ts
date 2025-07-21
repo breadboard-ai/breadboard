@@ -524,13 +524,19 @@ export class Board extends EventTarget {
       handle.startsWith("https:")
     ) {
       splashUrl = new URL(handle);
-    } else if (handle.startsWith("drive:") && !this.googleDriveClient) {
-      return;
+    } else if (handle.startsWith("drive:")) {
+      if (!this.googleDriveClient) {
+        return;
+      }
+      splashUrl = new URL(handle);
     }
 
     if (!splashUrl) {
       return;
     }
+
+    console.warn(`[Runtime] Generated theme dynamically`);
+    console.warn(`[Runtime] Please regenerate the theme for this app`);
 
     const imgUrl = await loadImage(this.googleDriveClient!, splashUrl.href);
     if (!imgUrl) return;
@@ -576,7 +582,7 @@ export class Board extends EventTarget {
         },
         template: "basic",
         isDefaultTheme: true,
-        palette: generatePaletteFromColor("#330072"),
+        palette: generatePaletteFromColor("#a5a5a5"),
       };
 
       const themeId = globalThis.crypto.randomUUID();
