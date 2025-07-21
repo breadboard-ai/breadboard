@@ -33,6 +33,12 @@ function redirect() {
   if (currentUrl.searchParams.has("mode")) {
     redirectUrl.searchParams.set("mode", currentUrl.searchParams.get("mode")!);
   }
+  if (currentUrl.searchParams.has("shared")) {
+    redirectUrl.searchParams.set(
+      "shared",
+      currentUrl.searchParams.get("shared")!
+    );
+  }
 
   window.location.href = redirectUrl.href;
 }

@@ -239,8 +239,9 @@ export const styles = [
       height: 100%;
     }
 
+    #missing-share-dialog,
     #tos-dialog {
-      max-width: 800px;
+      max-width: 480px;
       border-radius: var(--bb-grid-size-4);
       border: none;
       padding: 0;
@@ -252,6 +253,7 @@ export const styles = [
         flex-direction: column;
         box-sizing: border-box;
         width: 100%;
+        max-width: 90svw;
         margin: auto;
         font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
           var(--bb-font-family);
@@ -268,6 +270,7 @@ export const styles = [
         padding: 0 var(--bb-grid-size-6);
       }
 
+      .share-content,
       .tos-content {
         flex-grow: 1;
         overflow-y: auto;

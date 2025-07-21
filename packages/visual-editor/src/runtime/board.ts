@@ -36,6 +36,7 @@ import {
   RuntimeBoardSaveStatusChangeEvent,
   RuntimeSnackbarEvent,
   RuntimeUnsnackbarEvent,
+  RuntimeShareMissingEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
@@ -661,6 +662,13 @@ export class Board extends EventTarget {
       }
 
       if (!graph) {
+        // Confirm that the user is using a shared URL.
+        const currentLocationHref = new URL(window.location.href);
+        if (!currentLocationHref.searchParams.has("shared")) {
+          this.dispatchEvent(new RuntimeShareMissingEvent());
+          return;
+        }
+
         const urlObj = new URL(url);
         if (urlObj.protocol === "drive:") {
           // If we can't load a Google Drive board, it's likely that the user
