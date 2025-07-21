@@ -44,6 +44,17 @@ class StateManager {
     return null;
   }
 
+  appendServer(boardServer: BoardServer | null) {
+    if (
+      !boardServer ||
+      this.#servers.findIndex((server) => server === boardServer) !== -1
+    ) {
+      return;
+    }
+
+    this.#servers.push(boardServer);
+  }
+
   getOrCreateUIState() {
     if (!this.#ui) {
       this.#ui = State.createUIState();
