@@ -15,7 +15,7 @@ import {
   diffAssetReadPermissions,
   extractGoogleDriveFileId,
   findGoogleDriveAssetsInGraph,
-  isIntrinsicAsset,
+  isManagedAsset,
   permissionMatchesAnyOf,
   type GoogleDriveAsset,
 } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
@@ -97,13 +97,13 @@ type State =
       shareableFile: { id: string };
     }
   | {
-      status: "extrinsic-assets";
-      problems: ExtrinsicAssetProblem[];
+      status: "unmanaged-assets";
+      problems: UnmanagedAssetProblem[];
       oldState: State;
       closed: { promise: Promise<void>; resolve: () => void };
     };
 
-type ExtrinsicAssetProblem = {
+type UnmanagedAssetProblem = {
   asset: NarrowedDriveFile<"id" | "name" | "iconLink">;
 } & (
   | { problem: "cant-share" }
@@ -321,7 +321,7 @@ export class SharePanel extends LitElement {
           "opsz" 48;
       }
 
-      #extrinsic-assets {
+      #unmanaged-assets {
         p {
           font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
@@ -353,7 +353,7 @@ export class SharePanel extends LitElement {
           }
         }
 
-        #extrinsic-asset-buttons {
+        #unmanaged-asset-buttons {
           display: flex;
           align-items: flex-end;
           justify-content: flex-end;
@@ -467,8 +467,8 @@ export class SharePanel extends LitElement {
     if (status === "readonly") {
       return this.#renderReadonlyModalContents();
     }
-    if (status === "extrinsic-assets") {
-      return this.#renderExtrinsicAssetsModalContents();
+    if (status === "unmanaged-assets") {
+      return this.#renderUnmanagedAssetsModalContents();
     }
   }
 
@@ -716,9 +716,9 @@ export class SharePanel extends LitElement {
     `;
   }
 
-  #renderExtrinsicAssetsModalContents() {
+  #renderUnmanagedAssetsModalContents() {
     const state = this.#state;
-    if (state.status !== "extrinsic-assets") {
+    if (state.status !== "unmanaged-assets") {
       return nothing;
     }
 
@@ -773,17 +773,17 @@ export class SharePanel extends LitElement {
 
     if (missingProblems.length > 0) {
       parts.push(html`
-        <div id="extrinsic-asset-buttons">
+        <div id="unmanaged-asset-buttons">
           <button
             class="bb-button-text"
-            @click=${this.#onClickDismissExtrinsicAssetProblems}
+            @click=${this.#onClickDismissUnmanagedAssetProblems}
           >
             Ignore
           </button>
           <button
-            id="share-extrinsic-assets-button"
+            id="share-unmanaged-assets-button"
             class="bb-button-filled"
-            @click=${this.#onClickFixExtrinsicAssetProblems}
+            @click=${this.#onClickFixUnmanagedAssetProblems}
           >
             Share my assets
           </button>
@@ -791,30 +791,30 @@ export class SharePanel extends LitElement {
       `);
     } else {
       parts.push(html`
-        <div id="extrinsic-asset-buttons">
+        <div id="unmanaged-asset-buttons">
           <button
             class="bb-button-filled"
-            @click=${this.#onClickDismissExtrinsicAssetProblems}
+            @click=${this.#onClickDismissUnmanagedAssetProblems}
           >
             I understand
           </button>
         </div>
       `);
     }
-    return html`<div id="extrinsic-assets">${parts}</div>`;
+    return html`<div id="unmanaged-assets">${parts}</div>`;
   }
 
-  async #onClickDismissExtrinsicAssetProblems() {
+  async #onClickDismissUnmanagedAssetProblems() {
     const state = this.#state;
-    if (state.status !== "extrinsic-assets") {
+    if (state.status !== "unmanaged-assets") {
       return;
     }
     state.closed.resolve();
   }
 
-  async #onClickFixExtrinsicAssetProblems() {
+  async #onClickFixUnmanagedAssetProblems() {
     const state = this.#state;
-    if (state.status !== "extrinsic-assets") {
+    if (state.status !== "unmanaged-assets") {
       return;
     }
     const { googleDriveClient } = this;
@@ -1114,13 +1114,13 @@ export class SharePanel extends LitElement {
     if (assets.length === 0) {
       return;
     }
-    const intrinsicAssets: GoogleDriveAsset[] = [];
-    const extrinsicAssets: GoogleDriveAsset[] = [];
+    const managedAssets: GoogleDriveAsset[] = [];
+    const unmanagedAssets: GoogleDriveAsset[] = [];
     for (const asset of this.#getAssets()) {
-      if (isIntrinsicAsset(asset)) {
-        intrinsicAssets.push(asset);
+      if (isManagedAsset(asset)) {
+        managedAssets.push(asset);
       } else {
-        extrinsicAssets.push(asset);
+        unmanagedAssets.push(asset);
       }
     }
 
@@ -1135,22 +1135,19 @@ export class SharePanel extends LitElement {
         })
       ).permissions ?? [];
     await Promise.all([
-      this.#autoSyncIntrinsicAssetPermissions(
-        intrinsicAssets,
-        graphPermissions
-      ),
-      this.#checkExtrinsicAssetPermissionsAndMaybePromptTheUser(
-        extrinsicAssets,
+      this.#autoSyncManagedAssetPermissions(managedAssets, graphPermissions),
+      this.#checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
+        unmanagedAssets,
         graphPermissions
       ),
     ]);
   }
 
-  async #autoSyncIntrinsicAssetPermissions(
-    intrinsicAssets: GoogleDriveAsset[],
+  async #autoSyncManagedAssetPermissions(
+    managedAssets: GoogleDriveAsset[],
     graphPermissions: gapi.client.drive.Permission[]
   ): Promise<void> {
-    if (intrinsicAssets.length === 0) {
+    if (managedAssets.length === 0) {
       return;
     }
     const { googleDriveClient } = this;
@@ -1158,7 +1155,7 @@ export class SharePanel extends LitElement {
       throw new Error(`No google drive client provided`);
     }
     await Promise.all(
-      intrinsicAssets.map(async (asset) => {
+      managedAssets.map(async (asset) => {
         const { capabilities, permissions: assetPermissions } =
           await googleDriveClient.getFileMetadata(asset.fileId, {
             fields: ["capabilities", "permissions"],
@@ -1180,7 +1177,7 @@ export class SharePanel extends LitElement {
           return;
         }
         console.log(
-          `[Sharing Panel] Intrinsic asset ${asset.fileId}` +
+          `[Sharing Panel] Managed asset ${asset.fileId}` +
             ` has ${missing.length} missing permission(s)` +
             ` and ${excess.length} excess permission(s). Synchronizing.`
         );
@@ -1200,20 +1197,20 @@ export class SharePanel extends LitElement {
     );
   }
 
-  async #checkExtrinsicAssetPermissionsAndMaybePromptTheUser(
-    extrinsicAssets: GoogleDriveAsset[],
+  async #checkUnmanagedAssetPermissionsAndMaybePromptTheUser(
+    unmanagedAssets: GoogleDriveAsset[],
     graphPermissions: gapi.client.drive.Permission[]
   ): Promise<void> {
-    if (extrinsicAssets.length === 0) {
+    if (unmanagedAssets.length === 0) {
       return;
     }
     const { googleDriveClient } = this;
     if (!googleDriveClient) {
       throw new Error(`No google drive client provided`);
     }
-    const problems: ExtrinsicAssetProblem[] = [];
+    const problems: UnmanagedAssetProblem[] = [];
     await Promise.all(
-      extrinsicAssets.map(async (asset) => {
+      unmanagedAssets.map(async (asset) => {
         const assetMetadata = await googleDriveClient.getFileMetadata(
           asset.fileId,
           {
@@ -1249,12 +1246,12 @@ export class SharePanel extends LitElement {
     }
     const oldState = this.#state;
     this.#state = {
-      status: "extrinsic-assets",
+      status: "unmanaged-assets",
       problems,
       oldState,
       closed,
     };
-    // Since the extrinsic asset dialog shows up in a few different flows, it's
+    // Since the unmanaged asset dialog shows up in a few different flows, it's
     // useful to make it so this function waits until it has been resolved.
     // TODO(aomarks) This is a kinda weird pattern. Think about a refactor.
     await closed.promise;

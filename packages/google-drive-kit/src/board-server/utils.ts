@@ -171,10 +171,10 @@ export type GoogleDriveAsset = {
    * How this asset came to be in the graph.
    *
    * This distinction is important for sharing: themes and uploaded assets are
-   * considered "owned" by this graph, so they will automatically have their
+   * considered "managed" by this graph, so they will automatically have their
    * sharing ACLs syncronized with the graph itself. Picked assets are
-   * considered external to the graph, so we always check with the user if it's
-   * OK to modify their sharing ACLs.
+   * considered "unmanaged", so we always check with the user if it's OK to
+   * modify their sharing ACLs.
    */
   provenance: "theme" | "uploaded" | "picked";
 };
@@ -226,7 +226,7 @@ export function findGoogleDriveAssetsInGraph(
   return [...files.values()];
 }
 
-export function isIntrinsicAsset(asset: GoogleDriveAsset): boolean {
+export function isManagedAsset(asset: GoogleDriveAsset): boolean {
   return asset.provenance === "theme" || asset.provenance === "uploaded";
 }
 
