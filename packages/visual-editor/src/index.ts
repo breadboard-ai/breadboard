@@ -380,17 +380,33 @@ export class Main extends SignalWatcher(LitElement) {
       appSubName: Strings.from("SUB_APP_NAME"),
       flags: createFlagManager(this.globalConfig.flags),
     });
-
-    this.#uiState = this.#runtime.state.getOrCreateUIState();
     this.#addRuntimeEventHandlers();
-    this.#graphStore = this.#runtime.board.getGraphStore();
+
     this.#boardServers = this.#runtime.board.getBoardServers() || [];
-    this.#runtime.board.addEventListener(
-      RuntimeBoardServerChangeEvent.eventName,
-      () => {
-        this.#boardServers = this.#runtime.board.getBoardServers() || [];
+    this.#uiState = this.#runtime.state.getOrCreateUIState();
+    this.#graphStore = this.#runtime.board.getGraphStore();
+
+    const hasMountedBoardServer = this.#findSelectedBoardServer(args);
+    if (!hasMountedBoardServer && args.boardServerUrl) {
+      console.log(`[Status] Mounting server "${args.boardServerUrl.href}" ...`);
+      const connecting = await this.#runtime.board.connect(
+        args.boardServerUrl.href
+      );
+      if (connecting?.success) {
+        this.#findSelectedBoardServer(args);
+        console.log(`[Status] Connected to server`);
       }
-    );
+    }
+
+    if (
+      args.boardServerUrl &&
+      args.boardServerUrl.protocol === GoogleDriveBoardServer.PROTOCOL
+    ) {
+      const gdrive = await getGoogleDriveBoardService();
+      if (gdrive) {
+        args.boardServerUrl = new URL(gdrive.url);
+      }
+    }
 
     // Admin.
     const admin = new Admin(args, this.globalConfig, this.googleDriveClient);
@@ -426,37 +442,14 @@ export class Main extends SignalWatcher(LitElement) {
       this.graphTopologyUpdateId++;
     });
 
-    await this.#runtime.router.init();
-    if (!args.boardServerUrl) {
-      return;
-    }
-
     // Once we've determined the sign-in status, relay it to an embedder.
     this.#embedHandler?.sendToEmbedder({
       type: "home_loaded",
       isSignedIn: this.signinAdapter.state === "signedin",
     });
 
-    if (args.boardServerUrl.protocol === GoogleDriveBoardServer.PROTOCOL) {
-      const gdrive = await getGoogleDriveBoardService();
-      if (gdrive) {
-        args.boardServerUrl = new URL(gdrive.url);
-      }
-    }
-
-    const hasMountedBoardServer = this.#findSelectedBoardServer(args);
-    if (!hasMountedBoardServer) {
-      console.log(`[Status] Mounting server "${args.boardServerUrl.href}" ...`);
-      const connecting = await this.#runtime.board.connect(
-        args.boardServerUrl.href
-      );
-      if (connecting?.success) {
-        this.#findSelectedBoardServer(args);
-        console.log(`[Status] Connected to server`);
-      }
-    }
-
     this.#maybeNotifyAboutPreferredUrlForDomain();
+    await this.#runtime.router.init();
   }
 
   #findSelectedBoardServer(args: MainArguments) {
@@ -501,6 +494,13 @@ export class Main extends SignalWatcher(LitElement) {
     }
 
     const currentUrl = new URL(window.location.href);
+
+    this.#runtime.board.addEventListener(
+      RuntimeBoardServerChangeEvent.eventName,
+      () => {
+        this.#boardServers = this.#runtime.board.getBoardServers() || [];
+      }
+    );
 
     this.#runtime.board.addEventListener(
       Runtime.Events.RuntimeShareMissingEvent.eventName,
