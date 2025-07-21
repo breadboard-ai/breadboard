@@ -58,11 +58,11 @@ export class Toast extends LitElement {
       }
 
       :host([type="warning"]) {
-        color: var(--e-60);
+        color: var(--e-90);
       }
 
       :host([type="error"]) {
-        color: var(--e-40);
+        color: var(--e-80);
       }
 
       :host(.toasted) {
