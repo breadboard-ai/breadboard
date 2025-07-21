@@ -176,7 +176,7 @@ export type GoogleDriveAsset = {
    * considered "unmanaged", so we always check with the user if it's OK to
    * modify their sharing ACLs.
    */
-  provenance: "theme" | "uploaded" | "picked";
+  kind: "theme" | "uploaded" | "picked";
 };
 
 export function findGoogleDriveAssetsInGraph(
@@ -196,13 +196,13 @@ export function findGoogleDriveAssetsInGraph(
             // TODO(aomarks) The "picked" vs "uploaded" distinction should
             // really be stored explicitly on the handle. The "fileData" vs
             // "storedData" distinction seems otherwise arbitrary/historical.
-            files.set(fileId, { fileId, provenance: "picked" });
+            files.set(fileId, { fileId, kind: "picked" });
           }
         }
         if ("storedData" in firstPart) {
           const fileId = extractGoogleDriveFileId(firstPart.storedData?.handle);
           if (fileId) {
-            files.set(fileId, { fileId, provenance: "uploaded" });
+            files.set(fileId, { fileId, kind: "uploaded" });
           }
         }
       }
@@ -217,7 +217,7 @@ export function findGoogleDriveAssetsInGraph(
       if (splashHandle) {
         const fileId = extractGoogleDriveFileId(splashHandle);
         if (fileId) {
-          files.set(fileId, { fileId, provenance: "theme" });
+          files.set(fileId, { fileId, kind: "theme" });
         }
       }
     }
@@ -227,7 +227,7 @@ export function findGoogleDriveAssetsInGraph(
 }
 
 export function isManagedAsset(asset: GoogleDriveAsset): boolean {
-  return asset.provenance === "theme" || asset.provenance === "uploaded";
+  return asset.kind === "theme" || asset.kind === "uploaded";
 }
 
 type Permission = gapi.client.drive.Permission;
