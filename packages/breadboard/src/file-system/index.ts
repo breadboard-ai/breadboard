@@ -169,6 +169,7 @@ class FileSystemImpl implements FileSystem {
   #graphUrl: string;
 
   #local: PersistentBackend;
+  #mnt: PersistentBackend;
   #env: FileMap;
   #assets: FileMap;
 
@@ -188,6 +189,12 @@ class FileSystemImpl implements FileSystem {
     if (!outer.local) {
       throw new Error("Must supply persistent backend for file system to work");
     }
+    if (!outer.mnt) {
+      throw new Error(
+        "Must supply `mnt` persistent backend for file system to work"
+      );
+    }
+    this.#mnt = outer.mnt;
     this.#local = outer.local;
     this.#env = SimpleFile.fromEntries(outer.env || []);
     this.#assets = SimpleFile.fromEntries(outer.assets || []);
@@ -214,6 +221,8 @@ class FileSystemImpl implements FileSystem {
 
     if (parsedPath.persistent) {
       return this.#local.query(this.#graphUrl, path);
+    } else if (parsedPath.mounted) {
+      return this.#mnt.query(this.#graphUrl, path);
     } else {
       const map = this.#getFileMap(parsedPath);
       if (!ok(map)) {
@@ -239,6 +248,9 @@ class FileSystemImpl implements FileSystem {
 
     if (parsedPath.persistent) {
       file = new PersistentFile(this.#graphUrl, path, this.#local);
+    } else if (parsedPath.mounted) {
+      // Treat it as if it's persistent file, but read from `mnt`.
+      file = new PersistentFile(this.#graphUrl, path, this.#mnt);
     } else {
       const map = this.#getFileMap(parsedPath);
       if (!ok(map)) {
@@ -298,6 +310,10 @@ class FileSystemImpl implements FileSystem {
         return sourcePath;
       }
 
+      if (parsedPath.mounted) {
+        return err(`Copying/moving files to mounted is not yet implemented`);
+      }
+
       if (parsedPath.persistent) {
         if (sourcePath.persistent) {
           // a) Persistent -> Persistent
@@ -317,8 +333,13 @@ class FileSystemImpl implements FileSystem {
             }
           }
           return;
+        } else if (sourcePath.mounted) {
+          // b) Mounted to persistent
+          return err(
+            `Copying/moving files from mounted to persistent is not yet implemented`
+          );
         } else {
-          // b) Ephemeral -> Persistent
+          // c) Ephemeral -> Persistent
           const sourceMap = this.#getFileMap(sourcePath);
           if (!ok(sourceMap)) {
             return sourceMap;
@@ -343,7 +364,7 @@ class FileSystemImpl implements FileSystem {
       }
 
       if (sourcePath.persistent) {
-        // c) Persistent -> Ephemeral
+        // d) Persistent -> Ephemeral
         const sourceFile = new PersistentFile(
           this.#graphUrl,
           source,
@@ -365,7 +386,13 @@ class FileSystemImpl implements FileSystem {
         return this.#local.delete(this.#graphUrl, source, false);
       }
 
-      // d) Ephemeral -> Ephemeral
+      if (sourcePath.mounted) {
+        return err(
+          `Copying/moving files from mounted to persistent is not yet implemented`
+        );
+      }
+
+      // e) Ephemeral -> Ephemeral
       const sourceMap = this.#getFileMap(sourcePath);
       if (!ok(sourceMap)) {
         return sourceMap;
@@ -392,6 +419,12 @@ class FileSystemImpl implements FileSystem {
     // 3) Handle stream case
     if ("stream" in args && args.stream) {
       if (parsedPath.persistent) {
+        return err(
+          `Creating streams in "${parsedPath.root}" is not yet supported`
+        );
+      }
+
+      if (parsedPath.mounted) {
         return err(
           `Creating streams in "${parsedPath.root}" is not yet supported`
         );
@@ -448,6 +481,10 @@ class FileSystemImpl implements FileSystem {
         return this.#local.append(this.#graphUrl, path, data);
       }
 
+      if (parsedPath.mounted) {
+        return this.#mnt.append(this.#graphUrl, path, data);
+      }
+
       const map = this.#getFileMap(parsedPath);
       if (!ok(map)) {
         return map;
@@ -468,6 +505,8 @@ class FileSystemImpl implements FileSystem {
     // 6) otherwise, fall through to create a new file
     if (parsedPath.persistent) {
       return this.#local.write(this.#graphUrl, path, data);
+    } else if (parsedPath.mounted) {
+      return this.#mnt.write(this.#graphUrl, path, data);
     } else {
       const deflated = await transformBlobs(path, data, [
         this.#blobs.deflator(),
@@ -619,6 +658,7 @@ class FileSystemImpl implements FileSystem {
     return new FileSystemImpl({
       graphUrl,
       local: this.#local,
+      mnt: this.#mnt,
       env: env || mapToEntries(this.#env),
       assets: mapToEntries(this.#assets),
       blobs: this.#blobs,
@@ -632,6 +672,7 @@ class FileSystemImpl implements FileSystem {
     return new FileSystemImpl({
       graphUrl,
       local: this.#local,
+      mnt: this.#mnt,
       env: env || mapToEntries(this.#env),
       assets: assets || mapToEntries(this.#assets),
       blobs: this.#blobs,

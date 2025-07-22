@@ -27,6 +27,7 @@ import type {
 } from "@breadboard-ai/types";
 import {
   addSandboxedRunModule,
+  composeFileSystemBackends,
   createEphemeralBlobStore,
   createFileSystem,
   createRunObserver,
@@ -304,6 +305,8 @@ export class Main extends SignalWatcher(LitElement) {
     this.#fileSystem = createFileSystem({
       env: [...envFromSettings(this.#settings), ...(args.env || [])],
       local: createFileSystemBackend(createEphemeralBlobStore()),
+      // TODO: Supply mounted backends
+      mnt: composeFileSystemBackends(new Map()),
     });
 
     this.#embedHandler = args.embedHandler;

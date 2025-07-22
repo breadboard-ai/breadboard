@@ -404,6 +404,7 @@ export type EphemeralBlobStore = {
 
 export type OuterFileSystems = {
   graphUrl: string;
+  mnt: PersistentBackend;
   local: PersistentBackend;
   env: FileSystemEntry[];
   blobs?: FileSystemBlobStore;
@@ -468,7 +469,7 @@ export type FileSystemBlobStore = {
 
 export type CreateRunFileSystemArgs = Omit<
   OuterFileSystems,
-  "blobs" | "session" | "run" | "local"
+  "blobs" | "session" | "run" | "local" | "mnt"
 >;
 
 export type CreateModuleFileSystemArgs = {

@@ -83,6 +83,7 @@ export { createEphemeralBlobStore } from "./file-system/ephemeral-blob-store.js"
 export { writablePathFromString } from "./file-system/path.js";
 
 export { createFileSystem } from "./file-system/index.js";
+export { composeFileSystemBackends } from "./file-system/composed-peristent-backend.js";
 export { transformBlobs } from "./file-system/blob-transform.js";
 
 export { StubFileSystem } from "./file-system/stub-file-system.js";
