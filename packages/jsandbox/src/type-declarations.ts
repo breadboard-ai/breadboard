@@ -265,6 +265,7 @@ declare type FileDataPart = {
      */
     fileUri: string;
     mimeType: string;
+    resourceKey?: string;
   };
 };
 
