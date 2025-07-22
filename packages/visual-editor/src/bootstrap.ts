@@ -183,6 +183,12 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
         currentUrl.searchParams.get("shared")!
       );
     }
+    if (currentUrl.searchParams.has("oauth_redirect")) {
+      landingRedirectUrl.searchParams.set(
+        "oauth_redirect",
+        currentUrl.searchParams.get("oauth_redirect")!
+      );
+    }
     window.location.href = decodeURIComponent(landingRedirectUrl.href);
     return;
   }
