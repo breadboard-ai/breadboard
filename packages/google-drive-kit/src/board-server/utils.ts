@@ -5,11 +5,12 @@
  */
 
 import type {
+  DataPart,
   GraphDescriptor,
   GraphTag,
   LLMContent,
 } from "@breadboard-ai/types";
-import type { NarrowedDriveFile } from "../google-drive-client.js";
+import type { DriveFileId, NarrowedDriveFile } from "../google-drive-client.js";
 import type { StoredProperties } from "./operations.js";
 
 /** Delay between GDrive API retries. */
@@ -190,20 +191,15 @@ export function findGoogleDriveAssetsInGraph(
       // Cast needed because `data` is very broadly typed as `NodeValue`.
       const firstPart = (asset.data as LLMContent[])[0]?.parts?.[0];
       if (firstPart) {
-        if ("fileData" in firstPart && asset.metadata?.subType === "gdrive") {
-          const fileId = firstPart.fileData?.fileUri;
-          if (fileId) {
+        const fileId = partToDriveFileId(firstPart);
+        if (fileId) {
+          files.set(fileId.id, {
+            fileId: fileId.id,
             // TODO(aomarks) The "picked" vs "uploaded" distinction should
             // really be stored explicitly on the handle. The "fileData" vs
             // "storedData" distinction seems otherwise arbitrary/historical.
-            files.set(fileId, { fileId, kind: "picked" });
-          }
-        }
-        if ("storedData" in firstPart) {
-          const fileId = extractGoogleDriveFileId(firstPart.storedData?.handle);
-          if (fileId) {
-            files.set(fileId, { fileId, kind: "uploaded" });
-          }
+            kind: asset.metadata?.type === "content" ? "picked" : "uploaded",
+          });
         }
       }
     }
@@ -212,18 +208,33 @@ export function findGoogleDriveAssetsInGraph(
   // Theme splash images are not listed in assets.
   const themes = graph.metadata?.visual?.presentation?.themes;
   if (themes) {
-    for (const theme of Object.values(themes)) {
-      const splashHandle = theme.splashScreen?.storedData?.handle;
-      if (splashHandle) {
-        const fileId = extractGoogleDriveFileId(splashHandle);
+    for (const { splashScreen } of Object.values(themes)) {
+      if (splashScreen) {
+        const fileId = partToDriveFileId(splashScreen);
         if (fileId) {
-          files.set(fileId, { fileId, kind: "theme" });
+          files.set(fileId.id, { fileId: fileId.id, kind: "theme" });
         }
       }
     }
   }
 
   return [...files.values()];
+}
+
+export function partToDriveFileId(part: DataPart): DriveFileId | undefined {
+  if ("storedData" in part) {
+    const { handle, resourceKey } = part.storedData;
+    const fileId = extractGoogleDriveFileId(handle);
+    if (fileId) {
+      return { id: fileId, resourceKey };
+    }
+  } else if ("fileData" in part) {
+    const { fileUri, resourceKey } = part.fileData;
+    if (fileUri.match(/^[a-zA-Z0-9_-]+$/)) {
+      return { id: fileUri, resourceKey };
+    }
+  }
+  return undefined;
 }
 
 export function isManagedAsset(asset: GoogleDriveAsset): boolean {
