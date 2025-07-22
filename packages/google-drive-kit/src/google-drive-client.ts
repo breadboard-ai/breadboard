@@ -161,6 +161,8 @@ type NarrowedDriveFileFromOptions_Test3 = NarrowedDriveFileFromOptions<{
   fields: [];
 }>;
 
+export type DriveFileId = { id: string; resourceKey?: string };
+
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
 type GoogleApiAuthorization =
@@ -245,9 +247,11 @@ export class GoogleDriveClient {
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/get#:~:text=metadata */
   async getFileMetadata<const T extends ReadFileOptions>(
-    fileId: string,
+    fileId: DriveFileId | string,
     options?: T
   ): Promise<NarrowedDriveFileFromOptions<T>> {
+    fileId = normalizeFileId(fileId);
+
     // 1. Try directly with user credentials.
     const directResponseWithUserCreds = await this.#fetchFileMetadataDirectly(
       fileId,
@@ -307,12 +311,12 @@ export class GoogleDriveClient {
   }
 
   #fetchFileMetadataDirectly(
-    fileId: string,
+    fileId: DriveFileId,
     options: ReadFileOptions | undefined,
     authorization?: GoogleApiAuthorization
   ): Promise<Response> {
     const url = new URL(
-      `drive/v3/files/${encodeURIComponent(fileId)}`,
+      `drive/v3/files/${encodeURIComponent(fileId.id)}`,
       this.#apiBaseUrl
     );
     if (options?.fields) {
@@ -322,14 +326,18 @@ export class GoogleDriveClient {
   }
 
   async #fetchFileMetadataViaProxy(
-    fileId: string,
+    fileId: DriveFileId,
     proxyUrl: string,
     options: ReadFileOptions | undefined
   ): Promise<Response> {
     return retryableFetch(proxyUrl, {
       method: "POST",
       body: JSON.stringify({
-        fileId: fileId,
+        fileId: fileId.id,
+        // Note the proxy doesn't support resource keys. But that doesn't
+        // matter, because the proxy is only used when a file is shared directly
+        // with the proxy user, which means it won't require a resource key
+        // (because direct account sharing never does).
         getMode: "GET_MODE_METADATA",
         metadata_fields: (options?.fields ?? DEFAULT_FILE_FIELDS).join(","),
       } satisfies GetFileProxyRequest),
@@ -343,9 +351,11 @@ export class GoogleDriveClient {
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/get#:~:text=media */
   async getFileMedia(
-    fileId: string,
+    fileId: DriveFileId | string,
     options?: BaseRequestOptions
   ): Promise<Response> {
+    fileId = normalizeFileId(fileId);
+
     // 1. Try directly with user credentials.
     const directResponseWithUserCreds = await this.#fetchFileMediaDirectly(
       fileId,
@@ -407,12 +417,12 @@ export class GoogleDriveClient {
   }
 
   #fetchFileMediaDirectly(
-    fileId: string,
+    fileId: DriveFileId,
     options: BaseRequestOptions | undefined,
     authorization?: GoogleApiAuthorization
   ): Promise<Response> {
     const url = new URL(
-      `drive/v3/files/${encodeURIComponent(fileId)}`,
+      `drive/v3/files/${encodeURIComponent(fileId.id)}`,
       this.#apiBaseUrl
     );
     url.searchParams.set("alt", "media");
@@ -420,14 +430,15 @@ export class GoogleDriveClient {
   }
 
   async #fetchFileMediaViaProxy(
-    fileId: string,
+    fileId: DriveFileId,
     proxyUrl: string,
     options: ReadFileOptions | undefined
   ): Promise<Response> {
     return retryableFetch(proxyUrl, {
       method: "POST",
       body: JSON.stringify({
-        fileId: fileId,
+        fileId: fileId.id,
+        // Resource key not needed for proxy (see other note above for details).
         getMode: "GET_MODE_GET_MEDIA",
       } satisfies GetFileProxyRequest),
       headers: {
@@ -440,9 +451,11 @@ export class GoogleDriveClient {
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/export */
   async exportFile(
-    fileId: string,
+    fileId: DriveFileId | string,
     options: ExportFileOptions
   ): Promise<Response> {
+    fileId = normalizeFileId(fileId);
+
     // 1. Try directly with user credentials.
     const directResponseWithUserCreds = await this.#fetchExportFileDirectly(
       fileId,
@@ -500,12 +513,12 @@ export class GoogleDriveClient {
   }
 
   #fetchExportFileDirectly(
-    fileId: string,
+    fileId: DriveFileId,
     options: ExportFileOptions,
     authorization?: GoogleApiAuthorization
   ): Promise<Response> {
     const url = new URL(
-      `drive/v3/files/${encodeURIComponent(fileId)}/export`,
+      `drive/v3/files/${encodeURIComponent(fileId.id)}/export`,
       this.#apiBaseUrl
     );
     url.searchParams.set("mimeType", options.mimeType);
@@ -513,14 +526,15 @@ export class GoogleDriveClient {
   }
 
   async #fetchExportFileViaProxy(
-    fileId: string,
+    fileId: DriveFileId,
     proxyUrl: string,
     options: ExportFileOptions
   ): Promise<Response> {
     return retryableFetch(proxyUrl, {
       method: "POST",
       body: JSON.stringify({
-        fileId: fileId,
+        fileId: fileId.id,
+        // Resource key not needed for proxy (see other note above for details).
         getMode: "GET_MODE_EXPORT",
         mimeType: options.mimeType,
       } satisfies GetFileProxyRequest),
@@ -730,7 +744,7 @@ export class GoogleDriveClient {
   }
 
   async isReadable(
-    fileId: string,
+    fileId: DriveFileId | string,
     options?: BaseRequestOptions
   ): Promise<boolean> {
     try {
@@ -845,15 +859,16 @@ export class GoogleDriveClient {
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/copy */
   async copyFile<const T extends CopyFileOptions>(
-    fileId: string,
+    fileId: DriveFileId | string,
     metadata?: File,
     options?: T
   ): Promise<
     | { ok: true; value: NarrowedDriveFileFromOptions<T> }
     | { ok: false; error: { status: number } }
   > {
+    fileId = normalizeFileId(fileId);
     const url = new URL(
-      `drive/v3/files/${encodeURIComponent(fileId)}/copy`,
+      `drive/v3/files/${encodeURIComponent(fileId.id)}/copy`,
       this.#apiBaseUrl
     );
     if (options?.fields) {
@@ -959,9 +974,7 @@ function responseFromBase64(base64String: string, mimeType: string): Response {
  * permission and then write it to another, because the API will error if the
  * permission includes any non-writable permissions.
  */
-export function onlyWritablePermissionFields(
-  permission: Permission
-): Permission {
+function onlyWritablePermissionFields(permission: Permission): Permission {
   return {
     type: permission.type,
     emailAddress: permission.emailAddress,
@@ -973,4 +986,8 @@ export function onlyWritablePermissionFields(
     pendingOwner: permission.pendingOwner,
     inheritedPermissionsDisabled: permission.inheritedPermissionsDisabled,
   };
+}
+
+function normalizeFileId(fileId: DriveFileId | string): DriveFileId {
+  return typeof fileId === "string" ? { id: fileId } : fileId;
 }
