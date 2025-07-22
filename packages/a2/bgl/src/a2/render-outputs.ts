@@ -21,7 +21,8 @@ type RenderType =
   | "HTML"
   | "GoogleDoc"
   | "GoogleSlides"
-  | "GoogleSheets";
+  | "GoogleSheets"
+  | "Code";
 
 type Mode = {
   id: string;
@@ -94,6 +95,13 @@ const MODES: Mode[] = [
     title: "Save to Google Sheets",
     icon: "sheets",
     description: "Save content as a Google Drive Spreadsheet",
+  },
+  {
+    id: "code",
+    renderType: "Code",
+    title: "Generate code project",
+    icon: "code",
+    description: "Save code to your local directory",
   },
 ] as const;
 
@@ -367,6 +375,9 @@ async function invoke({
         googleDocTitle
       );
       if (!ok(saving)) return saving;
+      return { context: [out] };
+    }
+    case "Code": {
       return { context: [out] };
     }
   }
