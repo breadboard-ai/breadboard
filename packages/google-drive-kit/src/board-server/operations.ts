@@ -635,6 +635,7 @@ class DriveOperations {
       result.storedData.handle = handle;
     }
     result.storedData.contentLength = data?.length;
+    result.storedData.resourceKey = file.resourceKey;
     // TODO(volodya): Populate contentHash.
     return result;
   }
