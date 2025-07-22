@@ -60,7 +60,7 @@ type State =
   | { status: "loading" }
   | {
       status: "readonly";
-      shareableFile: { id: string };
+      shareableFile: { id: string; resourceKey: string | undefined };
     }
   | {
       status: "writable";
@@ -69,6 +69,7 @@ type State =
       granularlyShared: boolean;
       shareableFile: {
         id: string;
+        resourceKey: string | undefined;
         stale: boolean;
         permissions: gapi.client.drive.Permission[];
       };
@@ -81,6 +82,7 @@ type State =
       shareableFile:
         | {
             id: string;
+            resourceKey: string | undefined;
             stale: boolean;
             permissions: gapi.client.drive.Permission[];
           }
@@ -91,7 +93,9 @@ type State =
       status: "updating";
       published: boolean;
       granularlyShared: boolean;
-      shareableFile: { id: string; stale: boolean } | undefined;
+      shareableFile:
+        | { id: string; resourceKey: string | undefined; stale: boolean }
+        | undefined;
     }
   | {
       status: "granular";
@@ -909,10 +913,17 @@ export class SharePanel extends LitElement {
         state.status === "readonly") &&
       state.shareableFile
     ) {
-      return new URL(
-        `/?flow=drive:/${encodeURIComponent(state.shareableFile.id)}&mode=app&shared=true`,
-        window.location.href
-      ).href;
+      const url = new URL(window.location.href);
+      url.searchParams.set("flow", `drive:/${state.shareableFile.id}`);
+      if (state.shareableFile.resourceKey) {
+        url.searchParams.set("resourcekey", state.shareableFile.resourceKey);
+      }
+      url.searchParams.set("mode", "app");
+      url.searchParams.set("shared", "true");
+      // Undo some of the automatic URL parameter escaping so that our URLs
+      // aren't quite so ugly since browsers will parse this case OK. But,
+      // really our URL file handles should not have ":" and "/" in them at all.
+      return url.href.replace("flow=drive%3A%2F", "flow=drive:/");
     }
     return undefined;
   }
@@ -960,7 +971,7 @@ export class SharePanel extends LitElement {
 
     const thisFileMetadata = await this.googleDriveClient.getFileMetadata(
       thisFileId,
-      { fields: ["properties", "ownedByMe", "version"] }
+      { fields: ["resourceKey", "properties", "ownedByMe", "version"] }
     );
 
     const thisFileIsAShareableCopy =
@@ -969,7 +980,10 @@ export class SharePanel extends LitElement {
     if (thisFileIsAShareableCopy) {
       this.#state = {
         status: "readonly",
-        shareableFile: { id: thisFileId },
+        shareableFile: {
+          id: thisFileId,
+          resourceKey: thisFileMetadata.resourceKey,
+        },
       };
       return;
     }
@@ -980,7 +994,20 @@ export class SharePanel extends LitElement {
     if (!thisFileMetadata.ownedByMe) {
       this.#state = {
         status: "readonly",
-        shareableFile: { id: shareableCopyFileId || thisFileId },
+        shareableFile: shareableCopyFileId
+          ? {
+              id: shareableCopyFileId,
+              resourceKey: (
+                await this.googleDriveClient.getFileMetadata(
+                  shareableCopyFileId,
+                  { fields: ["resourceKey"] }
+                )
+              ).resourceKey,
+            }
+          : {
+              id: thisFileId,
+              resourceKey: thisFileMetadata.resourceKey,
+            },
       };
       return;
     }
@@ -998,7 +1025,7 @@ export class SharePanel extends LitElement {
 
     const shareableCopyFileMetadata =
       await this.googleDriveClient.getFileMetadata(shareableCopyFileId, {
-        fields: ["properties", "permissions"],
+        fields: ["resourceKey", "properties", "permissions"],
       });
     const allGraphPermissions = shareableCopyFileMetadata.permissions ?? [];
     const diff = diffAssetReadPermissions({
@@ -1023,6 +1050,7 @@ export class SharePanel extends LitElement {
         undefined,
       shareableFile: {
         id: shareableCopyFileId,
+        resourceKey: shareableCopyFileMetadata.resourceKey,
         stale:
           thisFileMetadata.version !==
           shareableCopyFileMetadata.properties?.[
@@ -1075,6 +1103,7 @@ export class SharePanel extends LitElement {
       const copyResult = await this.#makeShareableCopy();
       shareableFile = {
         id: copyResult.shareableCopyFileId,
+        resourceKey: copyResult.shareableCopyResourceKey,
         stale: false,
         permissions: publishPermissions,
       };
@@ -1325,6 +1354,7 @@ export class SharePanel extends LitElement {
 
   async #makeShareableCopy(): Promise<{
     shareableCopyFileId: string;
+    shareableCopyResourceKey: string | undefined;
     newMainVersion: string;
   }> {
     if (!this.googleDriveClient) {
@@ -1381,13 +1411,18 @@ export class SharePanel extends LitElement {
       },
       { fields: ["version"] }
     );
-    await this.googleDriveClient.updateFileMetadata(shareableCopyFileId, {
-      properties: {
-        [SHAREABLE_COPY_TO_MAIN_PROPERTY]: mainFileId,
-        [LATEST_SHARED_VERSION_PROPERTY]: updateMainResult.version,
-        [IS_SHAREABLE_COPY_PROPERTY]: "true",
-      },
-    });
+    const shareableCopyMetadata =
+      await this.googleDriveClient.updateFileMetadata(
+        shareableCopyFileId,
+        {
+          properties: {
+            [SHAREABLE_COPY_TO_MAIN_PROPERTY]: mainFileId,
+            [LATEST_SHARED_VERSION_PROPERTY]: updateMainResult.version,
+            [IS_SHAREABLE_COPY_PROPERTY]: "true",
+          },
+        },
+        { fields: ["resourceKey"] }
+      );
 
     // TODO(aomarks) This shouldn't be necessary, but if we don't do this, the
     // copy will appear on the user's gallery page until the browser's site data
@@ -1402,6 +1437,7 @@ export class SharePanel extends LitElement {
     );
     return {
       shareableCopyFileId,
+      shareableCopyResourceKey: shareableCopyMetadata.resourceKey,
       newMainVersion: updateMainResult.version,
     };
   }
