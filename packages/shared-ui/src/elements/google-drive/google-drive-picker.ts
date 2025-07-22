@@ -15,6 +15,10 @@ import {
 import { loadDrivePicker } from "./google-apis.js";
 import { GoogleDrivePickerCloseEvent } from "../../events/events.js";
 import { getTopLevelOrigin } from "../../utils/embed-helpers.js";
+import {
+  DriveFileId,
+  normalizeFileId,
+} from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 const Strings = BreadboardUI.Strings.forSection("Global");
 
@@ -57,7 +61,7 @@ export class GoogleDrivePicker extends LitElement {
   accessor signinAdapter: SigninAdapter | undefined = undefined;
 
   @property({ type: Array })
-  accessor files: Array<DriveFileIdWithOptionalResourceKey> = [];
+  accessor files: Array<DriveFileId | string> = [];
 
   @property()
   accessor mode: Mode = "pick-shared-board";
@@ -105,20 +109,20 @@ export class GoogleDrivePicker extends LitElement {
    * be required for that user.
    */
   async #preloadFilesThatNeedResourceKeys() {
-    const filesWithResourceKeys = this.files.filter(
-      ({ resourcekey }) => resourcekey
-    ) as Array<Required<DriveFileIdWithOptionalResourceKey>>;
+    const filesWithResourceKeys = this.files
+      .map((fileId) => normalizeFileId(fileId))
+      .filter(({ resourceKey }) => resourceKey) as Array<Required<DriveFileId>>;
     if (filesWithResourceKeys.length === 0) {
       return;
     }
     const container = document.createElement("div");
     container.id = "invisible-resourcekey-iframes-container";
     const loadPromises = [];
-    for (const { id, resourcekey } of filesWithResourceKeys) {
+    for (const { id, resourceKey } of filesWithResourceKeys) {
       const iframe = document.createElement("iframe");
       iframe.src =
         `https://drive.google.com/file/d/${encodeURIComponent(id)}/preview` +
-        `?resourcekey=${encodeURIComponent(resourcekey)}`;
+        `?resourcekey=${encodeURIComponent(resourceKey)}`;
       loadPromises.push(
         new Promise<void>((resolve) => {
           iframe.addEventListener("load", () => resolve(), { once: true });
@@ -151,7 +155,7 @@ export class GoogleDrivePicker extends LitElement {
 
     const view = new pickerLib.DocsView(google.picker.ViewId.DOCS);
     view.setMimeTypes(BOARD_MIME_TYPES);
-    view.setFileIds(this.files[0].id);
+    view.setFileIds(normalizeFileId(this.files[0]).id);
     view.setMode(google.picker.DocsViewMode.GRID);
 
     const underlay = document.createElement("bb-google-drive-picker-underlay");
@@ -241,7 +245,9 @@ export class GoogleDrivePicker extends LitElement {
     }
 
     const view = new pickerLib.DocsView(google.picker.ViewId.DOCS);
-    view.setFileIds(this.files.map(({ id }) => id).join(","));
+    view.setFileIds(
+      this.files.map((fileId) => normalizeFileId(fileId).id).join(",")
+    );
     view.setMode(google.picker.DocsViewMode.GRID);
 
     const underlay = document.createElement("bb-google-drive-picker-underlay");

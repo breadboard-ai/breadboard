@@ -1016,7 +1016,7 @@ function onlyWritablePermissionFields(permission: Permission): Permission {
   };
 }
 
-function normalizeFileId(fileId: DriveFileId | string): DriveFileId {
+export function normalizeFileId(fileId: DriveFileId | string): DriveFileId {
   return typeof fileId === "string" ? { id: fileId } : fileId;
 }
 
