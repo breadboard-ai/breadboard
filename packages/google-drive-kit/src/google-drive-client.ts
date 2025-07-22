@@ -782,24 +782,6 @@ export class GoogleDriveClient {
     return await response.json();
   }
 
-  /**
-   * Convenience: exactly the same as calling `getFileMetadata` and asking for
-   * only permissions.
-   */
-  async getFilePermissions(
-    fileId: string,
-    options?: BaseRequestOptions
-  ): Promise<Permission[]> {
-    return (
-      (
-        await this.getFileMetadata(fileId, {
-          ...options,
-          fields: ["permissions"],
-        })
-      ).permissions ?? []
-    );
-  }
-
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/permissions/create */
   async createPermission(
     fileId: string,
