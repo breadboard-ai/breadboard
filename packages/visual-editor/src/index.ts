@@ -358,7 +358,24 @@ export class Main extends SignalWatcher(LitElement) {
       ],
       local: createFileSystemBackend(createEphemeralBlobStore()),
       mnt: composeFileSystemBackends(
-        new Map([["fs", new FileSystemPersistentBackend()]])
+        new Map([
+          [
+            "fs",
+            new FileSystemPersistentBackend(async (callback) => {
+              return new Promise((resolve) => {
+                // TOOD: Make this less terrible.
+                const b = document.createElement("button");
+                b.textContent = "Allow Access";
+                b.style.cssText = `position:absolute;left:0;top:0;z-index:10000`;
+                document.body.appendChild(b);
+                b.addEventListener("click", () => {
+                  resolve(callback());
+                  b.remove();
+                });
+              });
+            }),
+          ],
+        ])
       ),
     });
 

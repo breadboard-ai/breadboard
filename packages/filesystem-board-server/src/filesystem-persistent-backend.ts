@@ -22,6 +22,12 @@ type Mode = "read" | "readwrite";
 
 type HandleKey = [graphUrl: string, path: FileSystemPath];
 
+type FileSystemBackendHandle = {
+  handle: FileSystemDirectoryHandle;
+  graphUrl: string;
+  path: FileSystemPath;
+};
+
 interface Handles extends DBSchema {
   handles: {
     key: HandleKey;
@@ -37,6 +43,12 @@ interface Handles extends DBSchema {
 }
 
 export class FileSystemPersistentBackend implements PersistentBackend {
+  constructor(
+    private readonly userConsentCallback: (
+      createHandle: () => Promise<Outcome<FileSystemBackendHandle>>
+    ) => Promise<Outcome<FileSystemBackendHandle>>
+  ) {}
+
   async #db() {
     return openDB<Handles>(HANDLES_DB, 1, {
       upgrade(db) {
@@ -78,22 +90,24 @@ export class FileSystemPersistentBackend implements PersistentBackend {
   }
 
   async #createHandle(graphUrl: string, path: FileSystemPath, mode: Mode) {
-    try {
-      const handle = await window.showDirectoryPicker({
-        mode,
-      });
+    return this.userConsentCallback(async () => {
+      try {
+        const handle = await window.showDirectoryPicker({
+          mode,
+        });
 
-      if (handle) {
-        const handlesDb = await this.#db();
-        handlesDb.put("handles", { handle, graphUrl, path });
-        handlesDb.close();
+        if (handle) {
+          const handlesDb = await this.#db();
+          handlesDb.put("handles", { handle, graphUrl, path });
+          handlesDb.close();
+        }
+
+        return { handle, graphUrl, path };
+      } catch (e) {
+        console.warn(e);
+        return err((e as Error).message);
       }
-
-      return { handle, graphUrl, path };
-    } catch (err) {
-      console.warn(err);
-      return;
-    }
+    });
   }
 
   async #obtainHandle(key: HandleKey, mode: Mode, createIfNeeded = true) {
@@ -108,11 +122,10 @@ export class FileSystemPersistentBackend implements PersistentBackend {
 
     // 2. If the handle doesn't exist, create it.
     if (!handle) {
-      handle = await this.#createHandle(key[0], key[1], mode);
+      const creatingHandle = await this.#createHandle(key[0], key[1], mode);
+      if (!ok(creatingHandle)) return null;
 
-      if (!handle) {
-        return null;
-      }
+      handle = creatingHandle;
     }
 
     // 3. Check the permission on the handle.
