@@ -624,7 +624,7 @@ export class CanvasController extends LitElement {
                   this.sideNavItem = "editor";
                 }}
               >
-                Editor
+                Step
               </button>
               <button
                 class=${classMap({

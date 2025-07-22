@@ -58,7 +58,7 @@ export default {
     str: "Breadboards",
   },
   LABEL_WELCOME_MESSAGE_B: {
-    str: "are mini AI apps anyone can build",
+    str: "Build, edit and share mini-AI apps using natural language",
   },
   LABEL_WELCOME_CTA: {
     str: "Describe what you want to build",
