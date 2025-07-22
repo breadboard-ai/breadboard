@@ -51,8 +51,8 @@
         "../../core/tsconfig/base.json"
       ],
       "output": [
-        "dist/bgl/src",
-        "!dist/bgl/src/**/*.min.js{,.map}"
+        "out/bgl/src",
+        "!out/bgl/src/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
     },
@@ -67,7 +67,6 @@
       "files": [],
       "output": [
         "dist/",
-        "!dist/bgl/src",
         "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"

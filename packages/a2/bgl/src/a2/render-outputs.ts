@@ -5,6 +5,7 @@
 import { ConnectorManager } from "./connector-manager";
 import { callGenWebpage } from "./html-generator";
 import { flattenContext } from "./lists";
+import { readFlags } from "./settings";
 import { Template } from "./template";
 import { err, llm, mergeContent, ok, toLLMContent, toText } from "./utils";
 
@@ -21,7 +22,8 @@ type RenderType =
   | "HTML"
   | "GoogleDoc"
   | "GoogleSlides"
-  | "GoogleSheets";
+  | "GoogleSheets"
+  | "Code";
 
 type Mode = {
   id: string;
@@ -94,6 +96,13 @@ const MODES: Mode[] = [
     title: "Save to Google Sheets",
     icon: "sheets",
     description: "Save content as a Google Drive Spreadsheet",
+  },
+  {
+    id: "code",
+    renderType: "Code",
+    title: "Save as code",
+    icon: "code",
+    description: "Generate and save code to your folder",
   },
 ] as const;
 
@@ -277,6 +286,15 @@ async function saveToGoogleDrive(
   if (!ok(saving)) return saving;
 }
 
+async function saveAsCode(content: LLMContent): Promise<Outcome<void>> {
+  const manager = new ConnectorManager({
+    url: "embed://a2/file-system.bgl.json",
+    configuration: {},
+  });
+  const saving = await manager.save([content], {});
+  if (!ok(saving)) return saving;
+}
+
 async function invoke({
   text,
   "p-render-mode": renderMode,
@@ -369,6 +387,18 @@ async function invoke({
       if (!ok(saving)) return saving;
       return { context: [out] };
     }
+    case "Code": {
+      const generating = await callGenWebpage(
+        systemText,
+        [context],
+        "HTML",
+        modelName
+      );
+      if (!ok(generating)) return generating;
+      const saving = await saveAsCode(generating);
+      if (!ok(saving)) return saving;
+      return { context: [out] };
+    }
   }
   return { context: [out] };
 }
@@ -424,6 +454,22 @@ function advancedSettings(renderType: RenderType): Record<string, Schema> {
         },
       };
     }
+    case "Code":
+      return {
+        "b-system-instruction": {
+          type: "object",
+          behavior: ["llm-content", "config", "hint-advanced"],
+          title: "System Instruction",
+          description: "The system instruction used for generating code",
+        },
+        "b-render-model-name": {
+          type: "string",
+          enum: MODELS,
+          behavior: ["llm-content", "config", "hint-advanced"],
+          title: "Model",
+          description: "The model to use for generating code",
+        },
+      };
   }
   return {};
 }
@@ -431,6 +477,15 @@ function advancedSettings(renderType: RenderType): Record<string, Schema> {
 async function describe({
   inputs: { text, "p-render-mode": renderMode },
 }: DescribeInputs) {
+  let showSaveAsCode = false;
+  const flags = await readFlags();
+  if (ok(flags)) {
+    showSaveAsCode = flags["saveAsCode"];
+  }
+  let modes = MODES;
+  if (!showSaveAsCode) {
+    modes = MODES.filter(({ id }) => id !== "code");
+  }
   const template = new Template(text);
   const { renderType } = getMode(renderMode);
   return {
@@ -446,7 +501,7 @@ async function describe({
         },
         "p-render-mode": {
           type: "string",
-          enum: MODES,
+          enum: modes,
           title: "Display format",
           behavior: ["config", "hint-preview", "reactive", "hint-controller"],
           default: MANUAL_MODE,

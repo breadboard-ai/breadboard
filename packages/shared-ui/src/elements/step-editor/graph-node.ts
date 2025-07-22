@@ -199,6 +199,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       :host([icon="docs"]),
       :host([icon="drive_presentation"]),
       :host([icon="sheets"]),
+      :host([icon="code"]),
       :host([icon="web"]),
       :host([icon="responsive_layout"]) {
         --background: var(--ui-display);

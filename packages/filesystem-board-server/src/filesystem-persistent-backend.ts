@@ -12,7 +12,7 @@ import {
   Outcome,
   PersistentBackend,
 } from "@breadboard-ai/types";
-import { isLLMContentArray, ok } from "@google-labs/breadboard";
+import { err, isLLMContentArray, ok } from "@google-labs/breadboard";
 
 import { openDB, DBSchema } from "idb";
 
@@ -154,7 +154,7 @@ export class FileSystemPersistentBackend implements PersistentBackend {
   async #write(graphUrl: string, path: FileSystemPath, data: LLMContent[]) {
     const handle = await this.#obtainFileHandle(graphUrl, path, "readwrite");
     if (!handle) {
-      return { $error: "Permission to save to directory was refused" };
+      return err("Permission to save to directory was refused");
     }
 
     try {
@@ -163,12 +163,15 @@ export class FileSystemPersistentBackend implements PersistentBackend {
       });
       const outStream = await fileHandle.createWritable();
       const writer = outStream.getWriter();
-      const serializedData = JSON.stringify(data, null, 2);
-      await writer.write(serializedData);
+      const content = getContent(data);
+      if (!content) {
+        return err(`Nothing to write -- could not find content`);
+      }
+      await writer.write(content);
       await writer.close();
-    } catch (err) {
-      console.warn(err);
-      return { $error: `Unable to read file in directory: ${path}` };
+    } catch (e) {
+      console.warn(e);
+      return err(`Unable to read file in directory: ${path}`);
     }
   }
 
@@ -357,4 +360,25 @@ export class FileSystemPersistentBackend implements PersistentBackend {
   ): Promise<FileSystemWriteResult> {
     return this.#write(graphUrl, path, data);
   }
+}
+
+/**
+ * Attempts to create the best possible representation of an LLMContent as
+ * a file.
+ */
+function getContent(data: LLMContent[]): string | null {
+  const firstText = data
+    .at(0)
+    ?.parts?.filter((part) => "text" in part)
+    ?.at(0)?.text;
+  if (firstText) return firstText;
+  const firstInlineData = data
+    .at(0)
+    ?.parts?.filter((part) => "inlineData" in part)
+    ?.at(0)?.inlineData;
+  if (!firstInlineData) return null;
+  if (firstInlineData.mimeType?.startsWith("text/"))
+    return firstInlineData.data;
+
+  return null;
 }
