@@ -19,9 +19,10 @@ import {
   permissionMatchesAnyOf,
   type GoogleDriveAsset,
 } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
-import {
+import type {
+  DriveFileId,
+  GoogleDriveClient,
   NarrowedDriveFile,
-  type GoogleDriveClient,
 } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { type GraphDescriptor } from "@breadboard-ai/types";
 import type { DomainConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
@@ -104,7 +105,7 @@ type State =
     };
 
 type UnmanagedAssetProblem = {
-  asset: NarrowedDriveFile<"id" | "name" | "iconLink">;
+  asset: NarrowedDriveFile<"id" | "resourceKey" | "name" | "iconLink">;
 } & (
   | { problem: "cant-share" }
   | { problem: "missing"; missing: gapi.client.drive.Permission[] }
@@ -729,11 +730,10 @@ export class SharePanel extends LitElement {
     );
     if (missingProblems.length > 0) {
       const missingChips = missingProblems.map(({ asset }) => {
-        const url = `https://drive.google.com/open?id=${encodeURIComponent(asset.id)}`;
         return html`
           <span class="asset-chip">
             <img src=${asset.iconLink} />
-            <a href=${url} target="_blank">${asset.name}</a>
+            <a href=${driveOpenUrl(asset)} target="_blank">${asset.name}</a>
           </span>
         `;
       });
@@ -751,11 +751,10 @@ export class SharePanel extends LitElement {
     );
     if (cantShareProblems.length > 0) {
       const cantShareChips = cantShareProblems.map(({ asset }) => {
-        const url = `https://drive.google.com/open?id=${encodeURIComponent(asset.id)}`;
         return html`
           <span class="asset-chip">
             <img src=${asset.iconLink} />
-            <a href=${url} target="_blank">${asset.name}</a>
+            <a href=${driveOpenUrl(asset)} target="_blank">${asset.name}</a>
           </span>
         `;
       });
@@ -1214,7 +1213,14 @@ export class SharePanel extends LitElement {
         const assetMetadata = await googleDriveClient.getFileMetadata(
           asset.fileId,
           {
-            fields: ["id", "name", "iconLink", "capabilities", "permissions"],
+            fields: [
+              "id",
+              "resourceKey",
+              "name",
+              "iconLink",
+              "capabilities",
+              "permissions",
+            ],
           }
         );
         if (
@@ -1445,4 +1451,13 @@ declare global {
   interface HTMLElementTagNameMap {
     "bb-share-panel": SharePanel;
   }
+}
+
+function driveOpenUrl({ id, resourceKey }: DriveFileId): string {
+  const url = new URL("https://drive.google.com/open");
+  url.searchParams.set("id", id);
+  if (resourceKey) {
+    url.searchParams.set("resourcekey", resourceKey);
+  }
+  return url.href;
 }
