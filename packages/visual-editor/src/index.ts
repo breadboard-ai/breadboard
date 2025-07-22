@@ -27,7 +27,6 @@ import {
   createEphemeralBlobStore,
   createFileSystem,
   createRunObserver,
-  FileSystem,
   GraphDescriptor,
   hash,
   MutableGraphStore,
@@ -95,6 +94,7 @@ import { RuntimeBoardServerChangeEvent } from "./runtime/events.js";
 import { sandbox } from "./sandbox";
 import { MainArguments } from "./types/types";
 import { envFromSettings } from "./utils/env-from-settings";
+import { envFromFlags } from "./utils/env-from-flags";
 
 type RenderValues = {
   canSave: boolean;
@@ -208,7 +208,6 @@ export class Main extends SignalWatcher(LitElement) {
   readonly #boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
   readonly #recentBoardStore = RecentBoardStore.instance();
   readonly #runStore = getRunStore();
-  readonly #fileSystem: FileSystem;
   readonly #lastPointerPosition = { x: 0, y: 0 };
   readonly #embedHandler?: EmbedHandler;
   accessor #uiState!: BreadboardUI.State.UI;
@@ -295,13 +294,6 @@ export class Main extends SignalWatcher(LitElement) {
       },
     });
 
-    this.#fileSystem = createFileSystem({
-      env: [...envFromSettings(this.#settings), ...(args.env || [])],
-      local: createFileSystemBackend(createEphemeralBlobStore()),
-      // TODO: Supply mounted backends
-      mnt: composeFileSystemBackends(new Map()),
-    });
-
     this.#embedHandler = args.embedHandler;
 
     this.#init(args).then(() => {
@@ -354,6 +346,20 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   async #init(args: MainArguments) {
+    const flagManager = createFlagManager(this.globalConfig.flags);
+    const flags = await flagManager.flags();
+
+    const fileSystem = createFileSystem({
+      env: [
+        ...envFromSettings(this.#settings),
+        ...(args.env || []),
+        ...envFromFlags(flags),
+      ],
+      local: createFileSystemBackend(createEphemeralBlobStore()),
+      // TODO: Supply mounted backends
+      mnt: composeFileSystemBackends(new Map()),
+    });
+
     this.#runtime = await Runtime.create({
       recentBoardStore: this.#recentBoardStore,
       graphStore: this.#graphStore,
@@ -364,7 +370,7 @@ export class Main extends SignalWatcher(LitElement) {
       sandbox,
       settings: this.#settings,
       proxy: [],
-      fileSystem: this.#fileSystem,
+      fileSystem,
       builtInBoardServers: [createA2Server()],
       kits: addSandboxedRunModule(
         sandbox,
@@ -374,7 +380,7 @@ export class Main extends SignalWatcher(LitElement) {
       googleDriveClient: this.googleDriveClient,
       appName: Strings.from("APP_NAME"),
       appSubName: Strings.from("SUB_APP_NAME"),
-      flags: createFlagManager(this.globalConfig.flags),
+      flags: flagManager,
     });
     this.#addRuntimeEventHandlers();
 

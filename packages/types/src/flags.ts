@@ -16,10 +16,14 @@
  */
 export type RuntimeFlags = {
   /**
-   * Use the next-gen, planner-based runtime (PlanRuntime),
+   * Use the next-gen, planner-based runtime (PlanRunner),
    * instead of the current, VM-based runtime (LocalRunner).
    */
   usePlanRunner: boolean;
+  /**
+   * Add "Save As Code" option to the "Output" step.
+   */
+  saveAsCode: boolean;
 };
 
 /**

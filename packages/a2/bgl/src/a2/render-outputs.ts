@@ -5,6 +5,7 @@
 import { ConnectorManager } from "./connector-manager";
 import { callGenWebpage } from "./html-generator";
 import { flattenContext } from "./lists";
+import { readFlags } from "./settings";
 import { Template } from "./template";
 import { err, llm, mergeContent, ok, toLLMContent, toText } from "./utils";
 
@@ -99,9 +100,9 @@ const MODES: Mode[] = [
   {
     id: "code",
     renderType: "Code",
-    title: "Generate code project",
+    title: "Save as code",
     icon: "code",
-    description: "Save code to your local directory",
+    description: "Generate and save code to your folder",
   },
 ] as const;
 
@@ -442,6 +443,15 @@ function advancedSettings(renderType: RenderType): Record<string, Schema> {
 async function describe({
   inputs: { text, "p-render-mode": renderMode },
 }: DescribeInputs) {
+  let showSaveAsCode = false;
+  const flags = await readFlags();
+  if (ok(flags)) {
+    showSaveAsCode = flags["saveAsCode"];
+  }
+  let modes = MODES;
+  if (!showSaveAsCode) {
+    modes = MODES.filter(({ id }) => id !== "code");
+  }
   const template = new Template(text);
   const { renderType } = getMode(renderMode);
   return {
@@ -457,7 +467,7 @@ async function describe({
         },
         "p-render-mode": {
           type: "string",
-          enum: MODES,
+          enum: modes,
           title: "Display format",
           behavior: ["config", "hint-preview", "reactive", "hint-controller"],
           default: MANUAL_MODE,
