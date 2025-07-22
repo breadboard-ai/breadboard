@@ -200,6 +200,10 @@ export async function asBase64(file: File | Blob): Promise<string> {
   }
 }
 
+export async function asBase64DataUrl(blob: Blob): Promise<string> {
+  return `data:${blob.type};base64,${await asBase64(blob)}`;
+}
+
 export async function retrieveAsBlob(
   part: StoredDataCapabilityPart,
   graphUrl?: URL
