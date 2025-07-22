@@ -532,7 +532,7 @@ export class SharePanel extends LitElement {
           .disabled=${this.#state.status !== "writable"}
           @click=${this.#onClickPublishStale}
         >
-          Publish
+          Update
         </button>
       </div>
     `;
@@ -675,7 +675,7 @@ export class SharePanel extends LitElement {
           href="https://policies.google.com/terms/generative-ai/use-policy"
           target="_blank"
           >responsibly</a
-        >, unpublish anytime by clicking the 'Publish' button within this
+        >, unpublish anytime by clicking the 'Share app' button within this
         ${APP_NAME} app and change the publish toggle. All created and remixed
         ${APP_NAME} apps will be saved in your Drive.
       </p>
@@ -697,7 +697,7 @@ export class SharePanel extends LitElement {
           @change=${this.#onPublishedSwitchChange}
         ></md-switch>
         <label for="publishedSwitch">
-          ${published ? "Published" : "Private"}
+          ${published ? "Public" : "Private"}
         </label>
       </div>
     `;

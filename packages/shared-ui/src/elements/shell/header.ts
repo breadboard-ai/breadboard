@@ -454,7 +454,7 @@ export class VEHeader extends LitElement {
           "md-body-small": true,
           selected: this.mode === "canvas",
         })}
-        >Canvas</button
+        >Editor</button
       >
     </button>`;
   }
@@ -651,7 +651,7 @@ export class VEHeader extends LitElement {
           this.dispatchEvent(new ShareRequestedEvent());
         }}
       >
-        <span class="g-icon">publish</span>Publish
+        <span class="g-icon">share</span>Share app
       </button>`;
     }
 
@@ -662,7 +662,7 @@ export class VEHeader extends LitElement {
         this.dispatchEvent(new ShareRequestedEvent());
       }}
     >
-      <span class="g-icon">link</span>Share app
+      <span class="g-icon">share</span>Share app
     </button>`;
   }
 
