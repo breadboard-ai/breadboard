@@ -1,5 +1,6 @@
 {
-  "name": "ui-tests",
+  "name": "@breadboard-ai/ui-tests",
+  "private": true,
   "version": "1.1.0",
   "description": "",
   "main": "index.js",
