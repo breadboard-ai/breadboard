@@ -501,13 +501,14 @@ class DriveOperations {
     const copiedFile = await this.#googleDriveClient.copyFile(
       fileId,
       { parents: [parentFolderId] },
-      { fields: ["id"] }
+      { fields: ["id", "resourceKey"] }
     );
     if (copiedFile.ok) {
       return {
         storedData: {
           ...original.storedData,
           handle: `${PROTOCOL}/${copiedFile.value.id}`,
+          resourceKey: copiedFile.value.resourceKey,
         },
       };
     } else if (copiedFile.error.status === 404) {
@@ -522,12 +523,14 @@ class DriveOperations {
         {
           mimeType: original.storedData.mimeType,
           parents: [parentFolderId],
-        }
+        },
+        { fields: ["id", "resourceKey"] }
       );
       return {
         storedData: {
           ...original.storedData,
           handle: `${PROTOCOL}/${uploadedFile.id}`,
+          resourceKey: uploadedFile.resourceKey,
         },
       };
     } else {
