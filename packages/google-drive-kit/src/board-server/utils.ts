@@ -167,7 +167,7 @@ export type AppProperties = {
 };
 
 export type GoogleDriveAsset = {
-  fileId: string;
+  fileId: DriveFileId;
   /**
    * How this asset came to be in the graph.
    *
@@ -194,7 +194,7 @@ export function findGoogleDriveAssetsInGraph(
         const fileId = partToDriveFileId(firstPart);
         if (fileId) {
           files.set(fileId.id, {
-            fileId: fileId.id,
+            fileId,
             // TODO(aomarks) The "picked" vs "uploaded" distinction should
             // really be stored explicitly on the handle. The "fileData" vs
             // "storedData" distinction seems otherwise arbitrary/historical.
@@ -212,7 +212,7 @@ export function findGoogleDriveAssetsInGraph(
       if (splashScreen) {
         const fileId = partToDriveFileId(splashScreen);
         if (fileId) {
-          files.set(fileId.id, { fileId: fileId.id, kind: "theme" });
+          files.set(fileId.id, { fileId, kind: "theme" });
         }
       }
     }

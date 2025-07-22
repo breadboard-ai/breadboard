@@ -1184,13 +1184,13 @@ export class SharePanel extends LitElement {
         await Promise.all([
           ...missing.map((permission) =>
             googleDriveClient.createPermission(
-              asset.fileId,
+              asset.fileId.id,
               { ...permission, role: "reader" },
               { sendNotificationEmail: false }
             )
           ),
           ...excess.map((permission) =>
-            googleDriveClient.deletePermission(asset.fileId, permission.id!)
+            googleDriveClient.deletePermission(asset.fileId.id, permission.id!)
           ),
         ]);
       })
