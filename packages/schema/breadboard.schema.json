@@ -645,6 +645,9 @@
 						"mimeType": {
 							"type": "string"
 						},
+						"resourceKey": {
+							"type": "string"
+						},
 						"contentHash": {
 							"type": "string"
 						},
