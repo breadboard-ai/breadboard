@@ -2,8 +2,8 @@
  * @fileoverview Connector Save Export.
  */
 import { type DescribeOutputs } from "@describe";
-import { llm } from "../a2/utils";
-import type { ConnectorConfiguration } from "./types";
+import write from "@write";
+import { ok } from "../a2/utils";
 
 export { invoke as default, describe };
 
@@ -21,13 +21,15 @@ type Outputs =
       canSave: boolean;
     };
 
-async function invoke({
-  id,
-  method,
-  context,
-}: Inputs): Promise<Outcome<Outputs>> {
-  console.log("SAVING TO FILE SYSTEM", id, method, context);
-  return { context: [llm`Saved`.asContent()] };
+async function invoke({ id, context }: Inputs): Promise<Outcome<Outputs>> {
+  if (!context) {
+    console.warn("No data to save");
+    return { context: [] };
+  }
+  const path: FileSystemPath = `/mnt/fs/${id}/index.html`;
+  const writing = await write({ path, data: context });
+  if (!ok(writing)) return writing;
+  return { context };
 }
 
 async function describe() {
