@@ -388,7 +388,14 @@ async function invoke({
       return { context: [out] };
     }
     case "Code": {
-      const saving = await saveAsCode(out);
+      const generating = await callGenWebpage(
+        systemText,
+        [context],
+        "HTML",
+        modelName
+      );
+      if (!ok(generating)) return generating;
+      const saving = await saveAsCode(generating);
       if (!ok(saving)) return saving;
       return { context: [out] };
     }
@@ -447,6 +454,22 @@ function advancedSettings(renderType: RenderType): Record<string, Schema> {
         },
       };
     }
+    case "Code":
+      return {
+        "b-system-instruction": {
+          type: "object",
+          behavior: ["llm-content", "config", "hint-advanced"],
+          title: "System Instruction",
+          description: "The system instruction used for generating code",
+        },
+        "b-render-model-name": {
+          type: "string",
+          enum: MODELS,
+          behavior: ["llm-content", "config", "hint-advanced"],
+          title: "Model",
+          description: "The model to use for generating code",
+        },
+      };
   }
   return {};
 }
