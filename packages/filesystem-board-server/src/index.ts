@@ -4,7 +4,5 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export {
-  FileSystemBoardServer,
-  type FileSystemDirectoryHandle,
-} from "./filesystem-board-server.js";
+export { FileSystemBoardServer } from "./filesystem-board-server.js";
+export { FileSystemPersistentBackend } from "./filesystem-persistent-backend.js";
