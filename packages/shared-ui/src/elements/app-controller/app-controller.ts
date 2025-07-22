@@ -4,18 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor, LLMContent } from "@breadboard-ai/types";
+import { GraphDescriptor } from "@breadboard-ai/types";
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AppPreview");
 
 import { LitElement, PropertyValues, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import {
-  BoardServer,
-  InspectableRunEvent,
-  isInlineData,
-  isStoredData,
-} from "@google-labs/breadboard";
+import { InspectableRunEvent, isStoredData } from "@google-labs/breadboard";
 
 import { styles as appPreviewStyles } from "./app-controller.styles.js";
 import {
@@ -24,7 +19,6 @@ import {
   AppTheme,
   SettingsStore,
   STATUS,
-  TopGraphRunResult,
 } from "../../types/types.js";
 import { classMap } from "lit/directives/class-map.js";
 import { consume, provide } from "@lit/context";
@@ -73,7 +67,26 @@ export class AppController extends SignalWatcher(LitElement) {
   accessor graph: GraphDescriptor | null = null;
 
   @property()
+  accessor graphIsEmpty = false;
+
+  @property()
+  accessor isMine = false;
+
+  @property({ reflect: false })
+  @provide({ context: projectRunContext })
+  accessor projectRun: ProjectRun | null = null;
+
+  @property()
+  accessor settings: SettingsStore | null = null;
+
+  @property({ reflect: true })
+  accessor status = STATUS.RUNNING;
+
+  @property()
   accessor showGDrive = false;
+
+  @property()
+  accessor themeHash: string | null = null;
 
   @property()
   accessor readOnly = false;
@@ -85,12 +98,6 @@ export class AppController extends SignalWatcher(LitElement) {
   accessor templates = [{ title: "Basic", value: "basic" }];
 
   @property()
-  accessor isMine = false;
-
-  @property()
-  accessor topGraphResult: TopGraphRunResult | null = null;
-
-  @property()
   accessor appTitle: string | null = null;
 
   @property()
@@ -99,33 +106,14 @@ export class AppController extends SignalWatcher(LitElement) {
   @property()
   accessor theme: AppTheme = this.#createDefaultTheme();
 
-  @property()
-  accessor boardServers: BoardServer[] = [];
-
-  @property()
-  accessor themeHash: string | null = null;
-
-  @property()
-  accessor settings: SettingsStore | null = null;
-
   @state()
   accessor debugEvent: InspectableRunEvent | null = null;
-
-  @property({ reflect: true })
-  accessor status = STATUS.RUNNING;
-
-  @property()
-  accessor graphIsEmpty = false;
 
   @state()
   accessor _originalTheme: AppTheme | null = null;
 
   @consume({ context: googleDriveClientContext })
   accessor googleDriveClient!: GoogleDriveClient | undefined;
-
-  @property({ reflect: false })
-  @provide({ context: projectRunContext })
-  accessor projectRun: ProjectRun | null = null;
 
   static styles = appPreviewStyles;
 
@@ -136,8 +124,7 @@ export class AppController extends SignalWatcher(LitElement) {
   </div>`;
 
   #createDefaultTheme(): AppTheme {
-    const palette = generatePaletteFromColor("#f82506");
-
+    const palette = generatePaletteFromColor("#363636");
     return {
       ...palette,
       primaryColor: primaryColor,
@@ -300,60 +287,30 @@ export class AppController extends SignalWatcher(LitElement) {
     };
 
     if (changedProperties.has("graph") || changedProperties.has("themeHash")) {
-      if (this.graph?.metadata?.visual?.presentation) {
-        if (
-          this.graph?.metadata?.visual?.presentation?.theme &&
-          this.graph?.metadata?.visual?.presentation?.themes
-        ) {
-          const { themes, theme } = this.graph.metadata.visual.presentation;
-          if (themes[theme]) {
-            const appPalette =
-              themes[theme]?.palette ?? generatePaletteFromColor("#330072");
-            const themeColors = themes[theme]?.themeColors ?? {};
+      if (
+        this.graph?.metadata?.visual?.presentation &&
+        this.graph.metadata.visual.presentation.theme &&
+        this.graph.metadata.visual.presentation.themes
+      ) {
+        const { themes, theme } = this.graph.metadata.visual.presentation;
+        if (themes[theme]) {
+          const appPalette =
+            themes[theme]?.palette ?? generatePaletteFromColor("#363636");
+          const themeColors = themes[theme]?.themeColors ?? {};
 
-            this.template = themes[theme].template ?? "basic";
-            this.theme = {
-              ...appPalette,
-              primaryColor: themeColors?.["primaryColor"] ?? primaryColor,
-              secondaryColor: themeColors?.["secondaryColor"] ?? secondaryColor,
-              backgroundColor:
-                themeColors?.["backgroundColor"] ?? backgroundColor,
-              textColor: themeColors?.["textColor"] ?? textColor,
-              primaryTextColor:
-                themeColors?.["primaryTextColor"] ?? primaryTextColor,
-            };
+          this.template = themes[theme].template ?? "basic";
+          this.theme = {
+            ...appPalette,
+            primaryColor: themeColors?.["primaryColor"] ?? primaryColor,
+            secondaryColor: themeColors?.["secondaryColor"] ?? secondaryColor,
+            backgroundColor:
+              themeColors?.["backgroundColor"] ?? backgroundColor,
+            textColor: themeColors?.["textColor"] ?? textColor,
+            primaryTextColor:
+              themeColors?.["primaryTextColor"] ?? primaryTextColor,
+          };
 
-            this.theme.splashScreen = themes[theme].splashScreen;
-          } else {
-            setDefaultTheme();
-          }
-        } else if (this.graph.metadata.visual.presentation.template) {
-          this.template =
-            this.graph.metadata.visual.presentation.template ?? "basic";
-
-          const theme = this.graph.metadata.visual.presentation.themeColors;
-          const splashScreen = this.graph.assets?.["@@splash"];
-
-          if (theme) {
-            this.theme = {
-              ...generatePaletteFromColor("#330072"),
-              primaryColor: theme["primaryColor"] ?? primaryColor,
-              secondaryColor: theme["secondaryColor"] ?? secondaryColor,
-              backgroundColor: theme["backgroundColor"] ?? backgroundColor,
-              textColor: theme["textColor"] ?? textColor,
-              primaryTextColor: theme["primaryTextColor"] ?? primaryTextColor,
-            };
-
-            if (splashScreen) {
-              const splashScreenData = splashScreen.data as LLMContent[];
-              if (splashScreenData.length && splashScreenData[0].parts.length) {
-                const splash = splashScreenData[0].parts[0];
-                if (isInlineData(splash) || isStoredData(splash)) {
-                  this.theme.splashScreen = splash;
-                }
-              }
-            }
-          }
+          this.theme.splashScreen = themes[theme].splashScreen;
         } else {
           setDefaultTheme();
         }
