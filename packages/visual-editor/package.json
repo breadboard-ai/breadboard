@@ -211,6 +211,7 @@
     "@breadboard-ai/embed": "0.0.2",
     "@breadboard-ai/google-drive-kit": "0.7.0",
     "@breadboard-ai/idb-board-server": "1.19.5",
+    "@breadboard-ai/filesystem-board-server": "1.22.0",
     "@breadboard-ai/jsandbox": "0.7.0",
     "@breadboard-ai/runtime": "0.1.0",
     "@breadboard-ai/shared-ui": "1.26.0",

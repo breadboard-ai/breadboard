@@ -16,7 +16,7 @@ import {
 } from "@breadboard-ai/remote-board-server";
 import {
   FileSystemBoardServer,
-  type FileSystemDirectoryHandle,
+  type _FileSystemDirectoryHandle,
 } from "@breadboard-ai/filesystem-board-server";
 
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
@@ -41,6 +41,14 @@ interface BoardServerListing extends idb.DBSchema {
     key: "url";
     value: BoardServerItem;
   };
+}
+
+declare global {
+  // Augmented interface to the default one in TypeScript. This one accounts for
+  // the API added by Chrome.
+  interface FileSystemDirectoryHandle extends _FileSystemDirectoryHandle {
+    readonly kind: "directory";
+  }
 }
 
 export async function createGoogleDriveBoardServer(

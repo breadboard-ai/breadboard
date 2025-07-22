@@ -28,60 +28,6 @@ import {
 import { FileSystemDataPartTransformer } from "./data-part-transformer";
 import { Modules } from "@breadboard-ai/types";
 
-type FileSystemWalkerEntry = FileSystemDirectoryHandle | FileSystemFileHandle;
-
-interface FileSystemWalker {
-  [Symbol.asyncIterator](): AsyncIterator<[string, FileSystemWalkerEntry]>;
-}
-
-// Augmented interface to the default one in TypeScript. This one accounts for
-// the API added by Chrome.
-export interface FileSystemDirectoryHandle {
-  kind: "directory";
-  name: string;
-  entries(): FileSystemWalker;
-  queryPermission(options?: {
-    mode: "read" | "write" | "readwrite";
-  }): Promise<"prompt" | "granted">;
-  requestPermission(options?: {
-    mode: "read" | "write" | "readwrite";
-  }): Promise<"prompt" | "granted">;
-  removeEntry(name: string, options?: { recursive: boolean }): Promise<void>;
-  getFileHandle(
-    name: string,
-    options?: { create: boolean }
-  ): Promise<FileSystemFileHandle>;
-  getDirectoryHandle(
-    name: string,
-    options?: { create: boolean }
-  ): Promise<FileSystemDirectoryHandle>;
-}
-
-interface FileSystemFileHandle {
-  kind: "file";
-  name: string;
-  isSameEntry(other: FileSystemFileHandle): Promise<boolean>;
-  getFile(): Promise<File>;
-  createWritable(): Promise<FileSystemWritableFileStream>;
-  remove(): Promise<void>;
-}
-
-declare global {
-  interface Window {
-    showDirectoryPicker(options?: {
-      mode: string;
-    }): Promise<FileSystemDirectoryHandle>;
-
-    showSaveFilePicker(options?: {
-      excludeAcceptAllOptions?: boolean;
-      id?: string;
-      startIn?: FileSystemHandle | string;
-      suggestedName?: string;
-      types?: Array<{ description?: string; accept: Record<string, string[]> }>;
-    }): Promise<FileSystemFileHandle>;
-  }
-}
-
 type Config = {
   writeTypeScriptSources?: boolean;
 };
@@ -109,6 +55,7 @@ export class FileSystemBoardServer
         mode: "readwrite",
       });
     } catch (err) {
+      console.warn(err);
       return null;
     }
   }
@@ -462,6 +409,7 @@ export class FileSystemBoardServer
 
       return { result: true };
     } catch (err) {
+      console.warn(err);
       return { result: false };
     }
   }
