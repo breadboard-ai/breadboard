@@ -1487,18 +1487,14 @@ export class Main extends SignalWatcher(LitElement) {
     return html` <bb-app-controller
       class=${classMap({ active: this.#uiState.mode === "app" })}
       .graph=${this.#tab?.graph ?? null}
-      .projectRun=${renderValues.projectState?.run}
-      .topGraphResult=${renderValues.topGraphResult}
-      .showGDrive=${this.signinAdapter.state === "signedin"}
-      .settings=${this.#settings}
-      .boardServers=${this.#boardServers}
-      .status=${renderValues.tabStatus}
-      .history=${this.#runtime.edit.getHistory(this.#tab)}
-      .isMine=${this.#tab?.graphIsMine ?? false}
       .graphIsEmpty=${graphIsEmpty}
-      .showThemeEditing=${false}
-      .themeHash=${renderValues.themeHash}
+      .isMine=${this.#tab?.graphIsMine ?? false}
+      .projectRun=${renderValues.projectState?.run}
       .readOnly=${true}
+      .settings=${this.#settings}
+      .showGDrive=${this.signinAdapter.state === "signedin"}
+      .status=${renderValues.tabStatus}
+      .themeHash=${renderValues.themeHash}
     >
     </bb-app-controller>`;
   }

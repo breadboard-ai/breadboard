@@ -502,17 +502,14 @@ export class CanvasController extends LitElement {
               active: this.sideNavItem === "app-view",
             })}
             .graph=${this.graph}
-            .themeHash=${this.themeHash}
-            .projectRun=${this.projectState?.run}
-            .topGraphResult=${this.topGraphResult}
-            .showGDrive=${this.signedIn}
-            .settings=${this.settings}
-            .boardServers=${this.boardServers}
-            .status=${this.status}
-            .history=${this.history}
-            .isMine=${this.graphIsMine}
             .graphIsEmpty=${graphIsEmpty}
-            .showThemeEditing=${true}
+            .isMine=${this.graphIsMine}
+            .projectRun=${this.projectState?.run}
+            .readOnly=${!this.graphIsMine}
+            .settings=${this.settings}
+            .showGDrive=${this.signedIn}
+            .status=${this.status}
+            .themeHash=${this.themeHash}
             @bbthemeeditrequest=${(evt: ThemeEditRequestEvent) => {
               this.showThemeDesigner = true;
               this.#themeOptions = evt.themeOptions;
