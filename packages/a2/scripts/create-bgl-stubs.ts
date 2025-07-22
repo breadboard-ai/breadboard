@@ -14,6 +14,7 @@ import a2 from "../bgl/a2.bgl.json" with { type: "json" };
 import audioGenerator from "../bgl/audio-generator.bgl.json" with { type: "json" };
 import deepResearch from "../bgl/deep-research.bgl.json" with { type: "json" };
 import folio from "../bgl/folio.bgl.json" with { type: "json" };
+import fileSystem from "../bgl/file-system.bgl.json" with { type: "json " };
 import generateText from "../bgl/generate-text.bgl.json" with { type: "json" };
 import generate from "../bgl/generate.bgl.json" with { type: "json" };
 import gmail from "../bgl/gmail.bgl.json" with { type: "json" };
@@ -33,6 +34,7 @@ const ROOT_DIR = join(import.meta.dirname, "..");
 const bgls = new Map<string, unknown>([
   ["a2", a2],
   ["audio-generator", audioGenerator],
+  ["file-system", fileSystem],
   ["folio", folio],
   ["generate", generate],
   ["generate-text", generateText],

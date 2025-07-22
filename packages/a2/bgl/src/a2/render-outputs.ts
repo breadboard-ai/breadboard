@@ -286,6 +286,15 @@ async function saveToGoogleDrive(
   if (!ok(saving)) return saving;
 }
 
+async function saveAsCode(content: LLMContent): Promise<Outcome<void>> {
+  const manager = new ConnectorManager({
+    url: "embed://a2/file-system.bgl.json",
+    configuration: {},
+  });
+  const saving = await manager.save([content], {});
+  if (!ok(saving)) return saving;
+}
+
 async function invoke({
   text,
   "p-render-mode": renderMode,
@@ -379,6 +388,8 @@ async function invoke({
       return { context: [out] };
     }
     case "Code": {
+      const saving = await saveAsCode(out);
+      if (!ok(saving)) return saving;
       return { context: [out] };
     }
   }

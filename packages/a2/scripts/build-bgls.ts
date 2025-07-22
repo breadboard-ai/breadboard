@@ -18,6 +18,7 @@ import { join } from "path";
 const BGLS = [
   "a2",
   "audio-generator",
+  "file-system",
   "folio",
   "generate",
   "generate-text",
@@ -33,7 +34,7 @@ const BGLS = [
 ];
 
 const ROOT_DIR = join(import.meta.dirname, "..");
-const DIST_DIR = join(ROOT_DIR, "dist", "bgl", "src");
+const OUT_DIR = join(ROOT_DIR, "out", "bgl", "src");
 
 await Promise.all(
   BGLS.map(async (bgl) => {
@@ -47,8 +48,8 @@ await Promise.all(
       const moduleName = module.slice(0, -3);
       let source: string;
       if (isTypescript) {
-        // grab a source from dist
-        source = join(DIST_DIR, bgl, `${moduleName}.js`);
+        // grab a source from `out`
+        source = join(OUT_DIR, bgl, `${moduleName}.js`);
       } else if (isJavascript) {
         source = join(bglDir, module);
       } else {
