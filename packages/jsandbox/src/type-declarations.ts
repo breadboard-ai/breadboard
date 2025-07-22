@@ -539,6 +539,11 @@ declare type Outcome<T> = T | { $error: string };
 
 declare type FileSystemReadWriteRootDirectories =
   /**
+   * Mountable (and system-mounted) storage. This might not be actually
+   * storage per se, but anything that looks like a file system.
+   */
+  | "/mnt"
+  /**
    * Project-level persistent storage.
    * Lifetime = persistent, unmanaged
    */

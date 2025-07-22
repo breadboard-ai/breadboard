@@ -31,6 +31,7 @@ import {
   NodeDescriberResult,
   envFromGraphDescriptor,
   ErrorObject,
+  composeFileSystemBackends,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -104,6 +105,8 @@ class SideboardRuntimeImpl
     this.#fileSystem = createFileSystem({
       env: fileSystem?.env() || [],
       local: createFileSystemBackend(createEphemeralBlobStore()),
+      // TODO: Supply mounted backends
+      mnt: composeFileSystemBackends(new Map()),
     });
     this.#graphStore = createGraphStore({
       ...args,

@@ -24,15 +24,22 @@ type RootDirSpec = {
    * of FileSystem's in-memory store.
    */
   persistent: boolean;
+  /**
+   * Set to true when the files in this directory come from mounted sources.
+   * These files might not actually be files, but rather file-shaped objects
+   * that the system supplies.
+   */
+  mounted: boolean;
 };
 
 const ROOT_DIRS: readonly RootDirSpec[] = [
-  { name: "local", writable: true, persistent: true },
-  { name: "session", writable: true, persistent: false },
-  { name: "run", writable: true, persistent: false },
-  { name: "tmp", writable: true, persistent: false },
-  { name: "env", writable: false, persistent: false },
-  { name: "assets", writable: false, persistent: false },
+  { name: "local", writable: true, persistent: true, mounted: false },
+  { name: "mnt", writable: true, persistent: false, mounted: true },
+  { name: "session", writable: true, persistent: false, mounted: false },
+  { name: "run", writable: true, persistent: false, mounted: false },
+  { name: "tmp", writable: true, persistent: false, mounted: false },
+  { name: "env", writable: false, persistent: false, mounted: false },
+  { name: "assets", writable: false, persistent: false, mounted: false },
 ] as const;
 
 export function writablePathFromString(
@@ -54,9 +61,13 @@ class Path {
   static persistentRoots = new Set(
     ROOT_DIRS.filter((item) => item.persistent).map((item) => item.name)
   );
+  static mountedRoots = new Set(
+    ROOT_DIRS.filter((item) => item.mounted).map((item) => item.name)
+  );
 
   readonly writable: boolean;
   readonly persistent: boolean;
+  readonly mounted: boolean;
 
   constructor(
     public readonly root: string,
@@ -65,6 +76,7 @@ class Path {
   ) {
     this.writable = Path.writableRoots.has(this.root);
     this.persistent = Path.persistentRoots.has(this.root);
+    this.mounted = Path.mountedRoots.has(this.root);
   }
 
   static createRoots(): Path[] {

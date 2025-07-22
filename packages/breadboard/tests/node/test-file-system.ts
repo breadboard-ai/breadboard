@@ -30,19 +30,18 @@ function good<T>(o: Outcome<T>): o is T {
   return !error;
 }
 
-function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
+function mockPersistentBackend(name: string): PersistentBackend {
   const map = new Map<FileSystemPath, LLMContent[]>();
   // Add dummy file.
-  map.set("/local/dummy", makeCx("dummy"));
-  map.set("/local/dummy2", makeCx("dummy1", "dummy2"));
-
+  map.set(`/${name}/dummy` as FileSystemPath, makeCx("dummy"));
+  map.set(`/${name}/dummy2` as FileSystemPath, makeCx("dummy1", "dummy2"));
   function startWith(prefix: FileSystemPath) {
     return [...map.entries()].filter(([path]) => {
       return path.startsWith(prefix);
     });
   }
 
-  const local: PersistentBackend = {
+  const backend: PersistentBackend = {
     query: async (_graph, path) => {
       {
         return {
@@ -95,9 +94,16 @@ function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
       map.delete(source);
     },
   };
+  return backend;
+}
+
+function makeFs(env: FileSystemEntry[] = [], assets: FileSystemEntry[] = []) {
+  const local = mockPersistentBackend("local");
+  const mnt = mockPersistentBackend("mnt");
   return new FileSystemImpl({
     graphUrl: "https://example.com/",
     local,
+    mnt,
     env,
     assets,
   });

@@ -149,6 +149,11 @@ export type Outcome<T> = T | { $error: string };
 
 export type FileSystemReadWriteRootDirectories =
   /**
+   * Mountable (and system-mounted) storage. This might not be actually
+   * storage per se, but anything that looks like a file system.
+   */
+  | "/mnt"
+  /**
    * Project-level persistent storage.
    * Lifetime = persistent, unmanaged
    */
@@ -399,6 +404,7 @@ export type EphemeralBlobStore = {
 
 export type OuterFileSystems = {
   graphUrl: string;
+  mnt: PersistentBackend;
   local: PersistentBackend;
   env: FileSystemEntry[];
   blobs?: FileSystemBlobStore;
@@ -463,7 +469,7 @@ export type FileSystemBlobStore = {
 
 export type CreateRunFileSystemArgs = Omit<
   OuterFileSystems,
-  "blobs" | "session" | "run" | "local"
+  "blobs" | "session" | "run" | "local" | "mnt"
 >;
 
 export type CreateModuleFileSystemArgs = {
