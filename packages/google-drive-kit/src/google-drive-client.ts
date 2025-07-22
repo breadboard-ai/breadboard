@@ -734,7 +734,10 @@ export class GoogleDriveClient {
     options?: BaseRequestOptions
   ): Promise<boolean> {
     try {
-      await this.getFileMetadata(fileId, options);
+      await this.getFileMetadata(fileId, {
+        fields: [],
+        signal: options?.signal,
+      });
       return true;
     } catch {
       // TODO(aomarks) We should be a little more discerning here. Only a 404
