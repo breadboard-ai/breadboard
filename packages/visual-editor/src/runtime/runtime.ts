@@ -33,7 +33,6 @@ import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { Shell } from "./shell.js";
 import { RuntimeFlagManager } from "@breadboard-ai/types";
 import {
-  RuntimeShareDialogRequestedEvent,
   RuntimeSnackbarEvent,
   RuntimeToastEvent,
   RuntimeUnsnackbarEvent,
@@ -108,24 +107,12 @@ export class Runtime extends EventTarget {
 
   #setupPassthruHandlers() {
     const cancelClone = (
-      evt:
-        | RuntimeShareDialogRequestedEvent
-        | RuntimeToastEvent
-        | RuntimeSnackbarEvent
-        | RuntimeUnsnackbarEvent
+      evt: RuntimeToastEvent | RuntimeSnackbarEvent | RuntimeUnsnackbarEvent
     ) => {
       evt.stopPropagation();
       evt.preventDefault();
       return evt.clone();
     };
-
-    this.edit.addEventListener(
-      RuntimeShareDialogRequestedEvent.eventName,
-      (evt: RuntimeShareDialogRequestedEvent) => {
-        const newEvt = cancelClone(evt);
-        this.dispatchEvent(newEvt);
-      }
-    );
 
     this.board.addEventListener(
       RuntimeToastEvent.eventName,

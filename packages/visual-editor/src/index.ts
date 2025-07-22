@@ -66,7 +66,6 @@ import {
 import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
 import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
 import { sideBoardRuntime } from "@breadboard-ai/shared-ui/contexts/side-board-runtime.js";
-import { type GoogleDriveAssetShareDialog } from "@breadboard-ai/shared-ui/elements/elements.js";
 import { IterateOnPromptEvent } from "@breadboard-ai/shared-ui/events/events.js";
 import {
   AppCatalystApiClient,
@@ -183,8 +182,6 @@ export class Main extends SignalWatcher(LitElement) {
   accessor #ready = false;
 
   // References.
-  readonly #googleDriveAssetShareDialogRef: Ref<GoogleDriveAssetShareDialog> =
-    createRef<GoogleDriveAssetShareDialog>();
   readonly #canvasControllerRef: Ref<BreadboardUI.Elements.CanvasController> =
     createRef();
   readonly #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
@@ -541,18 +538,6 @@ export class Main extends SignalWatcher(LitElement) {
       Runtime.Events.RuntimeUnsnackbarEvent.eventName,
       () => {
         this.unsnackbar();
-      }
-    );
-
-    this.#runtime.addEventListener(
-      Runtime.Events.RuntimeShareDialogRequestedEvent.eventName,
-      (evt: Runtime.Events.RuntimeShareDialogRequestedEvent) => {
-        const dialog = this.#googleDriveAssetShareDialogRef.value;
-        if (!dialog) {
-          console.error(`Asset permissions dialog was not rendered`);
-          return;
-        }
-        dialog.open(evt.assets);
       }
     );
 
@@ -1419,7 +1404,6 @@ export class Main extends SignalWatcher(LitElement) {
         this.#renderTooltip(),
         this.#renderToasts(),
         this.#renderSnackbar(),
-        this.#renderGoogleDriveAssetShareDialog(),
         this.#renderFeedbackPanel(),
       ]}
     </div>`;
@@ -1681,14 +1665,6 @@ export class Main extends SignalWatcher(LitElement) {
         </div>
       </form>
     </dialog>`;
-  }
-
-  #renderGoogleDriveAssetShareDialog() {
-    return html`
-      <bb-google-drive-asset-share-dialog
-        ${ref(this.#googleDriveAssetShareDialogRef)}
-      ></bb-google-drive-asset-share-dialog>
-    `;
   }
 
   #renderFeedbackPanel() {
