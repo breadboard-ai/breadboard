@@ -198,13 +198,14 @@ export class GoogleDriveClient {
       // the object style.
       headers?: Record<string, string>;
     },
+    resourceKeys?: DriveFileId[],
     authorization?: GoogleApiAuthorization
   ): Promise<Response> {
     authorization ??= {
       kind: "bearer",
       token: await this.#getUserAccessToken(),
     };
-    const headers = this.#makeFetchAuthHeaders(authorization);
+    const headers = this.#makeFetchHeaders(authorization, resourceKeys);
     if (init?.headers) {
       for (const [key, val] of Object.entries(init.headers)) {
         headers.set(key, val);
@@ -232,7 +233,10 @@ export class GoogleDriveClient {
     return url;
   }
 
-  #makeFetchAuthHeaders(authorization: GoogleApiAuthorization): Headers {
+  #makeFetchHeaders(
+    authorization: GoogleApiAuthorization,
+    resourceKeys: DriveFileId[] | undefined
+  ): Headers {
     const headers = new Headers();
     const authKind = authorization.kind;
     if (authKind === "bearer") {
@@ -243,6 +247,12 @@ export class GoogleDriveClient {
       }
     } else {
       throw new Error(`Unhandled authorization kind`, authKind satisfies never);
+    }
+    if (resourceKeys) {
+      const resourceKeyHeader = makeResourceKeysHeaderValue(resourceKeys);
+      if (resourceKeyHeader) {
+        headers.set(RESOURCE_KEYS_HEADER_NAME, resourceKeyHeader);
+      }
     }
     return headers;
   }
@@ -324,7 +334,12 @@ export class GoogleDriveClient {
     if (options?.fields) {
       url.searchParams.set("fields", options.fields.join(","));
     }
-    return this.#fetch(url, { signal: options?.signal }, authorization);
+    return this.#fetch(
+      url,
+      { signal: options?.signal },
+      [fileId],
+      authorization
+    );
   }
 
   async #getFileMetadataViaProxy(
@@ -428,7 +443,12 @@ export class GoogleDriveClient {
       this.#apiBaseUrl
     );
     url.searchParams.set("alt", "media");
-    return this.#fetch(url, { signal: options?.signal }, authorization);
+    return this.#fetch(
+      url,
+      { signal: options?.signal },
+      [fileId],
+      authorization
+    );
   }
 
   async #fetchFileMediaViaProxy(
@@ -524,7 +544,12 @@ export class GoogleDriveClient {
       this.#apiBaseUrl
     );
     url.searchParams.set("mimeType", options.mimeType);
-    return this.#fetch(url, { signal: options?.signal }, authorization);
+    return this.#fetch(
+      url,
+      { signal: options?.signal },
+      [fileId],
+      authorization
+    );
   }
 
   async #fetchExportFileViaProxy(
@@ -788,6 +813,7 @@ export class GoogleDriveClient {
     const response = await this.#fetch(
       url,
       { signal: options?.signal },
+      undefined,
       options?.auth === "apikey"
         ? { kind: "key", key: this.#publicApiKey }
         : undefined
@@ -992,4 +1018,22 @@ function onlyWritablePermissionFields(permission: Permission): Permission {
 
 function normalizeFileId(fileId: DriveFileId | string): DriveFileId {
   return typeof fileId === "string" ? { id: fileId } : fileId;
+}
+
+/** https://developers.google.com/workspace/drive/api/guides/resource-keys#syntax */
+const RESOURCE_KEYS_HEADER_NAME = "X-Goog-Drive-Resource-Keys";
+
+/** https://developers.google.com/workspace/drive/api/guides/resource-keys#syntax */
+function makeResourceKeysHeaderValue(
+  resourceKeys: DriveFileId[]
+): string | undefined {
+  const headerParts = [];
+  for (const { id, resourceKey } of resourceKeys) {
+    if (resourceKey && !resourceKey.match(/[/,]/) && !id.match(/[/,]/)) {
+      headerParts.push(`${id}/${resourceKey}`);
+    }
+  }
+  if (headerParts.length) {
+    return headerParts.join(",");
+  }
 }
