@@ -44,6 +44,7 @@ import { Task } from "@lit/task";
 import { icons } from "../../../styles/icons.js";
 import { OverflowAction } from "../../../types/types.js";
 import { OverflowMenuActionEvent } from "../../../events/events.js";
+import { partToDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 
 const SANDBOX_RESTRICTIONS = "allow-scripts allow-forms";
 
@@ -739,8 +740,8 @@ export class LLMOutput extends LitElement {
               this.#outputLoaded();
               value = html`<div>Failed to retrieve stored data</div>`;
             } else {
-              if (url.startsWith("drive:/")) {
-                const fileId = url.replace(/^drive:\/+/, "");
+              const fileId = partToDriveFileId(part);
+              if (fileId) {
                 this.#outputLoaded();
 
                 value = html`<bb-google-drive-file-viewer
@@ -874,10 +875,10 @@ export class LLMOutput extends LitElement {
               default: {
                 this.#outputLoaded();
 
-                // Attempt to match on Drive IDs.
-                if (/^(?!http)[a-zA-Z0-9_-]+$/.test(part.fileData.fileUri)) {
+                const fileId = partToDriveFileId(part);
+                if (fileId) {
                   value = html`<bb-google-drive-file-viewer
-                    .fileId=${part.fileData.fileUri}
+                    .fileId=${fileId}
                   ></bb-google-drive-file-viewer>`;
                   break;
                 }
