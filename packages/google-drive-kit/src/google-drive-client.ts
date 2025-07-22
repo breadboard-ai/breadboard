@@ -23,17 +23,7 @@ export interface BaseRequestOptions {
   signal?: AbortSignal;
 }
 
-export interface ReadFileOptions extends BaseRequestOptions {
-  fields?: Array<keyof File>;
-}
-
-export interface UpdateFileMetadataOptions extends BaseRequestOptions {
-  fields?: Array<keyof File>;
-  addParents?: string[];
-  removeParents?: string[];
-}
-
-export interface CopyFileOptions extends BaseRequestOptions {
+export interface GetFileMetadataOptions extends BaseRequestOptions {
   fields?: Array<keyof File>;
 }
 
@@ -41,13 +31,19 @@ export interface ExportFileOptions extends BaseRequestOptions {
   mimeType: string;
 }
 
-export interface WritePermissionOptions extends BaseRequestOptions {
-  sendNotificationEmail: boolean;
+export type CreateFileMetadataOptions = GetFileMetadataOptions;
+
+export type CreateFileOptions = GetFileMetadataOptions;
+
+export interface UpdateFileOptions extends GetFileMetadataOptions {
+  addParents?: string[];
+  removeParents?: string[];
 }
 
-export interface ListFilesOptions extends BaseRequestOptions {
+export type UpdateFileMetadataOptions = UpdateFileOptions;
+
+export interface ListFilesOptions extends GetFileMetadataOptions {
   auth?: "user" | "apikey";
-  fields?: Array<keyof File>;
   orderBy?: Array<{
     field: keyof File;
     dir: "asc" | "desc";
@@ -68,6 +64,12 @@ export interface ListChangesOptions extends BaseRequestOptions {
   pageSize?: number;
   includeRemoved?: boolean;
   includeCorpusRemovals?: boolean;
+}
+
+export type CopyFileOptions = GetFileMetadataOptions;
+
+export interface CreatePermissionOptions extends BaseRequestOptions {
+  sendNotificationEmail: boolean;
 }
 
 /** The default properties you get when requesting no fields. */
@@ -202,7 +204,7 @@ export class GoogleDriveClient {
       kind: "bearer",
       token: await this.#getUserAccessToken(),
     };
-    const headers = this.#makeFetchHeaders(authorization);
+    const headers = this.#makeFetchAuthHeaders(authorization);
     if (init?.headers) {
       for (const [key, val] of Object.entries(init.headers)) {
         headers.set(key, val);
@@ -230,7 +232,7 @@ export class GoogleDriveClient {
     return url;
   }
 
-  #makeFetchHeaders(authorization: GoogleApiAuthorization): Headers {
+  #makeFetchAuthHeaders(authorization: GoogleApiAuthorization): Headers {
     const headers = new Headers();
     const authKind = authorization.kind;
     if (authKind === "bearer") {
@@ -246,14 +248,14 @@ export class GoogleDriveClient {
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/get#:~:text=metadata */
-  async getFileMetadata<const T extends ReadFileOptions>(
+  async getFileMetadata<const T extends GetFileMetadataOptions>(
     fileId: DriveFileId | string,
     options?: T
   ): Promise<NarrowedDriveFileFromOptions<T>> {
     fileId = normalizeFileId(fileId);
 
     // 1. Try directly with user credentials.
-    const directResponseWithUserCreds = await this.#fetchFileMetadataDirectly(
+    const directResponseWithUserCreds = await this.#getFileMetadataDirectly(
       fileId,
       options
     );
@@ -267,7 +269,7 @@ export class GoogleDriveClient {
         `Received 404 response for Google Drive file metadata "${fileId}"` +
           ` using user credentials. Now trying API key fallback.`
       );
-      const directResponseWithApiKey = await this.#fetchFileMetadataDirectly(
+      const directResponseWithApiKey = await this.#getFileMetadataDirectly(
         fileId,
         options,
         { kind: "key", key: this.#publicApiKey }
@@ -282,7 +284,7 @@ export class GoogleDriveClient {
           `Received 404 response for Google Drive file metadata "${fileId}"` +
             ` using API key fallback. Now trying proxy fallback.`
         );
-        const proxyResponse = await this.#fetchFileMetadataViaProxy(
+        const proxyResponse = await this.#getFileMetadataViaProxy(
           fileId,
           this.#proxyUrl,
           options
@@ -310,9 +312,9 @@ export class GoogleDriveClient {
     );
   }
 
-  #fetchFileMetadataDirectly(
+  #getFileMetadataDirectly(
     fileId: DriveFileId,
-    options: ReadFileOptions | undefined,
+    options: GetFileMetadataOptions | undefined,
     authorization?: GoogleApiAuthorization
   ): Promise<Response> {
     const url = new URL(
@@ -325,10 +327,10 @@ export class GoogleDriveClient {
     return this.#fetch(url, { signal: options?.signal }, authorization);
   }
 
-  async #fetchFileMetadataViaProxy(
+  async #getFileMetadataViaProxy(
     fileId: DriveFileId,
     proxyUrl: string,
-    options: ReadFileOptions | undefined
+    options: GetFileMetadataOptions | undefined
   ): Promise<Response> {
     return retryableFetch(proxyUrl, {
       method: "POST",
@@ -432,7 +434,7 @@ export class GoogleDriveClient {
   async #fetchFileMediaViaProxy(
     fileId: DriveFileId,
     proxyUrl: string,
-    options: ReadFileOptions | undefined
+    options: BaseRequestOptions | undefined
   ): Promise<Response> {
     return retryableFetch(proxyUrl, {
       method: "POST",
@@ -547,7 +549,7 @@ export class GoogleDriveClient {
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/create#:~:text=metadata%2Donly */
-  async createFileMetadata<const T extends ReadFileOptions>(
+  async createFileMetadata<const T extends CreateFileMetadataOptions>(
     file: File & { name: string; mimeType: string },
     options?: T
   ): Promise<NarrowedDriveFileFromOptions<T>> {
@@ -573,19 +575,19 @@ export class GoogleDriveClient {
    * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/create
    * https://developers.google.com/workspace/drive/api/guides/manage-uploads
    */
-  async createFile<const T extends ReadFileOptions>(
+  async createFile<const T extends CreateFileOptions>(
     data: Blob,
     metadata?: File,
     options?: T
   ): Promise<NarrowedDriveFileFromOptions<T>>;
 
-  async createFile<const T extends ReadFileOptions>(
+  async createFile<const T extends CreateFileOptions>(
     data: string,
     metadata: File & { mimeType: string },
     options?: T
   ): Promise<NarrowedDriveFileFromOptions<T>>;
 
-  async createFile<const T extends ReadFileOptions>(
+  async createFile<const T extends CreateFileOptions>(
     data: Blob | string,
     metadata?: File,
     options?: T
@@ -612,21 +614,21 @@ export class GoogleDriveClient {
    * https://developers.google.com/workspace/drive/api/reference/rest/v3/files/update
    * https://developers.google.com/workspace/drive/api/guides/manage-uploads
    */
-  async updateFile<const T extends ReadFileOptions>(
+  async updateFile<const T extends UpdateFileOptions>(
     fileId: string,
     data: Blob,
     metadata?: File,
     options?: T
   ): Promise<NarrowedDriveFileFromOptions<T>>;
 
-  async updateFile<const T extends ReadFileOptions>(
+  async updateFile<const T extends UpdateFileOptions>(
     fileId: string,
     data: string,
     metadata?: File & { mimeType: string },
     options?: T
   ): Promise<NarrowedDriveFileFromOptions<T>>;
 
-  async updateFile<const T extends ReadFileOptions>(
+  async updateFile<const T extends UpdateFileOptions>(
     fileId: string,
     data: Blob | string,
     metadata?: File,
@@ -644,7 +646,7 @@ export class GoogleDriveClient {
     return result;
   }
 
-  async #uploadFileMultipart<const T extends ReadFileOptions>(
+  async #uploadFileMultipart<const T extends GetFileMetadataOptions>(
     fileId: string | undefined,
     data: Blob | string,
     metadata: File | undefined,
@@ -803,7 +805,7 @@ export class GoogleDriveClient {
   async createPermission(
     fileId: string,
     permission: Permission,
-    options: WritePermissionOptions
+    options: CreatePermissionOptions
   ): Promise<Permission> {
     const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId)}/permissions`,
