@@ -20,11 +20,7 @@ import {
 } from "@breadboard-ai/data-store";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import type {
-  BoardServer,
-  RunErrorEvent,
-  RunSecretEvent,
-} from "@breadboard-ai/types";
+import type { BoardServer, RunSecretEvent } from "@breadboard-ai/types";
 import {
   addSandboxedRunModule,
   composeFileSystemBackends,
@@ -757,11 +753,6 @@ export class Main extends SignalWatcher(LitElement) {
           }
 
           case "error": {
-            const runEvt = evt.runEvt as RunErrorEvent;
-            this.toast(
-              BreadboardUI.Utils.formatError(runEvt.data.error),
-              BreadboardUI.Events.ToastType.ERROR
-            );
             this.#boardRunStatus.set(
               evt.tabId,
               BreadboardUI.Types.STATUS.STOPPED
@@ -1107,6 +1098,7 @@ export class Main extends SignalWatcher(LitElement) {
       message = message.slice(0, 74) + "...";
     }
 
+    console.warn(message);
     this.#uiState.toasts.set(id, { message, type, persistent });
     return id;
   }
