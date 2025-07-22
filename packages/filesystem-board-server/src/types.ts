@@ -8,6 +8,29 @@ export type FileSystemWalkerEntry =
   | FileSystemDirectoryHandle
   | FileSystemFileHandle;
 
+interface _FileSystemDirectoryHandle {
+  readonly kind: "directory";
+  name: string;
+  entries(): FileSystemWalker;
+  queryPermission(options?: {
+    mode: "read" | "write" | "readwrite";
+  }): Promise<"prompt" | "granted">;
+  requestPermission(options?: {
+    mode: "read" | "write" | "readwrite";
+  }): Promise<"prompt" | "granted">;
+  removeEntry(name: string, options?: { recursive: boolean }): Promise<void>;
+  getFileHandle(
+    name: string,
+    options?: { create: boolean }
+  ): Promise<FileSystemFileHandle>;
+  getDirectoryHandle(
+    name: string,
+    options?: { create: boolean }
+  ): Promise<FileSystemDirectoryHandle>;
+}
+
+export { type _FileSystemDirectoryHandle };
+
 declare global {
   interface FileSystemWalker {
     [Symbol.asyncIterator](): AsyncIterator<[string, FileSystemWalkerEntry]>;
@@ -24,25 +47,8 @@ declare global {
 
   // Augmented interface to the default one in TypeScript. This one accounts for
   // the API added by Chrome.
-  export interface FileSystemDirectoryHandle {
+  interface FileSystemDirectoryHandle extends _FileSystemDirectoryHandle {
     readonly kind: "directory";
-    name: string;
-    entries(): FileSystemWalker;
-    queryPermission(options?: {
-      mode: "read" | "write" | "readwrite";
-    }): Promise<"prompt" | "granted">;
-    requestPermission(options?: {
-      mode: "read" | "write" | "readwrite";
-    }): Promise<"prompt" | "granted">;
-    removeEntry(name: string, options?: { recursive: boolean }): Promise<void>;
-    getFileHandle(
-      name: string,
-      options?: { create: boolean }
-    ): Promise<FileSystemFileHandle>;
-    getDirectoryHandle(
-      name: string,
-      options?: { create: boolean }
-    ): Promise<FileSystemDirectoryHandle>;
   }
 
   interface Window {

@@ -6,3 +6,4 @@
 
 export { FileSystemBoardServer } from "./filesystem-board-server.js";
 export { FileSystemPersistentBackend } from "./filesystem-persistent-backend.js";
+export * from "./types.js";
