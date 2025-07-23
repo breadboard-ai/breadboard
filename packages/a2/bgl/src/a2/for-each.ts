@@ -45,7 +45,7 @@ const SAMPLE_RESPONSE_TWO: PromptList = {
 
 function systemInstruction(): LLMContent {
   return llm`
-You are a sub-prompt splitter. You take a prompt the user has written which involves some kind of list of repeating tasks and you return the best interpretation of how that prompt can be split into sub-prompts, one for each task within it.
+You are an expert at reinterpreting prompts so that they scaled into into multiple parallel invocations of LLM. You take a prompt the user has written which involves some kind of list of repeating tasks and you return the best interpretation of how that prompt can be split into sub-prompts, one for each task within it.
 
 When you encounter template placeholders in double braces, pass them as is to the sub-prompts: they will substituted with the actual values before the sub-prompt is supplied to an LLM.
 
