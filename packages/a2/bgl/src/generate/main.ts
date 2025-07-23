@@ -18,6 +18,7 @@ type ModeId = GenerationModes["id"];
 type Inputs = {
   context?: LLMContent[];
   "generation-mode"?: ModeId;
+  "p-for-each"?: boolean;
   [PROMPT_PORT]: LLMContent;
 } & Record<string, unknown>;
 
@@ -251,12 +252,16 @@ function getMode(modeId: ModeId | undefined): GenerationModes {
   return modeMap.get(modeId || DEFAULT_MODE.id) || DEFAULT_MODE;
 }
 
-async function invoke({ "generation-mode": mode, ...rest }: Inputs) {
+async function invoke({
+  "generation-mode": mode,
+  "p-for-each": useForEach,
+  ...rest
+}: Inputs) {
   const { url: $board, type, modelName } = getMode(mode);
   const flags = await readFlags();
   let generateForEach = false;
   if (ok(flags)) {
-    generateForEach = flags.generateForEach;
+    generateForEach = flags.generateForEach && !!useForEach;
   }
   // Model is treated as part of the Mode, but actually maps N:1
   // on actual underlying step type.

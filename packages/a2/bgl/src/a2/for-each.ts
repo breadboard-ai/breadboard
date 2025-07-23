@@ -47,7 +47,7 @@ function systemInstruction(): LLMContent {
   return llm`
 You are an expert at reinterpreting prompts so that they scaled into into multiple parallel invocations of LLM. You take a prompt the user has written which involves some kind of list of repeating tasks and you return the best interpretation of how that prompt can be split into sub-prompts, one for each task within it.
 
-When you encounter template placeholders in double braces, pass them as is to the sub-prompts: they will substituted with the actual values before the sub-prompt is supplied to an LLM.
+IMPORTANT: Make sure to add placeholders in double braces to the sub-prompts: they will substituted with the actual values before the sub-prompt is supplied to an LLM.
 
 Here's an example prompt 1:
 
@@ -97,11 +97,15 @@ function listPrompt(original: LLMContent, parts: DataPart[]): LLMContent {
   if (parts.length > 0) {
     assetReference = llm`
 
-For context, here are all the assets referenced by the templates:
+For context, here are all the values referenced by the placeholders:
 
 ${{
   parts,
-}}`.asContent();
+}}
+
+Do not substitute them. Instead, pass the placeholders as-is and only use these
+values to formulate better prompts.
+`.asContent();
   }
   return llm`
 Analyze the prompt below and instead of acting on it, discern the list of repeating tasks in this prompt and split this prompt into a list of sub-prompts:
@@ -125,7 +129,8 @@ async function forEach(
     Object.entries(inputs).filter(([key]) => key.startsWith("p-z-"))
   );
   const template = new Template(inputs.config$prompt);
-  const mappingAssets = await template.mapParams(
+  const collectedParts: DataPart[] = [];
+  const mappedParts = await template.mapParams(
     params,
     (param, part) => {
       const empty = [{ text: "" }];
@@ -135,14 +140,16 @@ async function forEach(
         case "param":
           return empty;
         case "asset":
-          return [{ text: `Asset: ${param.path}` }, part];
+          collectedParts.push(part);
+          return [{ text: `Type "asset": ${param.path}` }, part];
         case "in":
-          return [{ text: `Input: ${param.path}` }, part];
+          collectedParts.push(part);
+          return [{ text: `Type "in": ${param.path}` }, part];
       }
     },
     async () => ""
   );
-  if (!ok(mappingAssets)) return mappingAssets;
+  if (!ok(mappedParts)) return mappedParts;
   const splitPrompt = new GeminiPrompt({
     body: {
       safetySettings: defaultSafetySettings(),
@@ -151,7 +158,7 @@ async function forEach(
         responseMimeType: "application/json",
         responseSchema: listSchema(),
       },
-      contents: [listPrompt(inputs.config$prompt, mappingAssets)],
+      contents: [listPrompt(inputs.config$prompt, mappedParts)],
     },
   });
   const splitting = await splitPrompt.invoke();
