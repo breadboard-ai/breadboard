@@ -276,7 +276,7 @@ export class GoogleDriveClient {
     if (directResponseWithUserCreds.status === 404) {
       // 2. Try directly with a public API key.
       console.log(
-        `Received 404 response for Google Drive file metadata "${fileId}"` +
+        `Received 404 response for Google Drive file metadata "${fileId.id}"` +
           ` using user credentials. Now trying API key fallback.`
       );
       const directResponseWithApiKey = await this.#getFileMetadataDirectly(
@@ -291,7 +291,7 @@ export class GoogleDriveClient {
       if (this.#proxyUrl) {
         // 3. Try via our custom Drive proxy service, if enabled.
         console.log(
-          `Received 404 response for Google Drive file metadata "${fileId}"` +
+          `Received 404 response for Google Drive file metadata "${fileId.id}"` +
             ` using API key fallback. Now trying proxy fallback.`
         );
         const proxyResponse = await this.#getFileMetadataViaProxy(
@@ -308,7 +308,7 @@ export class GoogleDriveClient {
         } else {
           const { status } = proxyResponse;
           console.log(
-            `Received ${status} response for Google Drive file metadata "${fileId}"` +
+            `Received ${status} response for Google Drive file metadata "${fileId.id}"` +
               ` using proxy fallback. The file is really not accessible!`
           );
         }
@@ -385,7 +385,7 @@ export class GoogleDriveClient {
     if (directResponseWithUserCreds.status === 404) {
       // 2. Try directly with a public API key.
       console.log(
-        `Received 404 response for Google Drive file media "${fileId}"` +
+        `Received 404 response for Google Drive file media "${fileId.id}"` +
           ` using user credentials. Now trying API key fallback.`
       );
       const directResponseWithApiKey = await this.#fetchFileMediaDirectly(
@@ -400,7 +400,7 @@ export class GoogleDriveClient {
       if (this.#proxyUrl) {
         // 3. Try via our custom Drive proxy service, if enabled.
         console.log(
-          `Received 404 response for Google Drive file media "${fileId}"` +
+          `Received 404 response for Google Drive file media "${fileId.id}"` +
             ` using public fallback, trying domain proxy fallback.`
         );
         const proxyResponse = await this.#fetchFileMediaViaProxy(
@@ -422,7 +422,7 @@ export class GoogleDriveClient {
         } else {
           const { status } = proxyResponse;
           console.log(
-            `Received ${status} response for Google Drive file media "${fileId}"` +
+            `Received ${status} response for Google Drive file media "${fileId.id}"` +
               ` using proxy fallback. The file is really not accessible!`
           );
         }
@@ -490,7 +490,7 @@ export class GoogleDriveClient {
     if (directResponseWithUserCreds.status === 404) {
       // 2. Try directly with a public API key.
       console.log(
-        `Received 404 response for Google Drive file export "${fileId}"` +
+        `Received 404 response for Google Drive file export "${fileId.id}"` +
           ` using user credentials. Now trying API key fallback.`
       );
       const directResponseWithApiKey = await this.#fetchExportFileDirectly(
@@ -505,7 +505,7 @@ export class GoogleDriveClient {
       if (this.#proxyUrl) {
         // 3. Try via our custom Drive proxy service, if enabled.
         console.log(
-          `Received 404 response for Google Drive file export "${fileId}"` +
+          `Received 404 response for Google Drive file export "${fileId.id}"` +
             ` using public fallback, trying domain proxy fallback.`
         );
         const proxyResponse = await this.#fetchExportFileViaProxy(
@@ -523,7 +523,7 @@ export class GoogleDriveClient {
         } else {
           const { status } = proxyResponse;
           console.log(
-            `Received ${status} response for Google Drive file export "${fileId}"` +
+            `Received ${status} response for Google Drive file export "${fileId.id}"` +
               ` using proxy fallback. The file is really not accessible!`
           );
         }
