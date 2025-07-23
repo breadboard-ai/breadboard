@@ -595,6 +595,7 @@ export interface NewAsset {
   data: LLMContent;
   subType?: string;
   visual?: Record<string, number>;
+  managed?: boolean;
 }
 
 export interface AssetEdge {

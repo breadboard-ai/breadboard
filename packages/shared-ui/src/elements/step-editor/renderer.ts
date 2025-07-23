@@ -1401,6 +1401,7 @@ export class Renderer extends LitElement {
           description: graphAsset.description,
           subType: graphAsset.subType,
           visual,
+          managed: graphAsset.managed,
         };
 
         edits.push({

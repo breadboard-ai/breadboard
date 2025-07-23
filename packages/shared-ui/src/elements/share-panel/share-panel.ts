@@ -15,7 +15,6 @@ import {
   diffAssetReadPermissions,
   extractGoogleDriveFileId,
   findGoogleDriveAssetsInGraph,
-  isManagedAsset,
   permissionMatchesAnyOf,
   type GoogleDriveAsset,
 } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
@@ -1145,7 +1144,7 @@ export class SharePanel extends LitElement {
     const managedAssets: GoogleDriveAsset[] = [];
     const unmanagedAssets: GoogleDriveAsset[] = [];
     for (const asset of this.#getAssets()) {
-      if (isManagedAsset(asset)) {
+      if (asset.managed) {
         managedAssets.push(asset);
       } else {
         unmanagedAssets.push(asset);

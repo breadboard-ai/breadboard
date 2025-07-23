@@ -26,7 +26,8 @@ class ChangeAssetMetadata implements EditOperation {
       existing.title === incoming.title &&
       existing.description === incoming.description &&
       existing.type === incoming.type &&
-      existing.subType == incoming.subType
+      existing.subType == incoming.subType &&
+      existing.managed === incoming.managed
     );
   }
 

@@ -912,6 +912,7 @@ export class EditorControls extends LitElement {
                           path: globalThis.crypto.randomUUID(),
                           type: "file",
                           name: file.name,
+                          managed: true,
                           data: {
                             role: "user",
                             parts: [
@@ -1018,12 +1019,13 @@ export class EditorControls extends LitElement {
                       name: driveFile.preview,
                       type: "content",
                       subType: "gdrive",
+                      managed: false,
                       data: {
                         role: "user",
                         parts: [
                           {
-                            fileData: {
-                              fileUri: driveFile.id,
+                            storedData: {
+                              handle: `drive:/${driveFile.id}`,
                               mimeType: driveFile.mimeType,
                               resourceKey: driveFile.resourceKey,
                             },

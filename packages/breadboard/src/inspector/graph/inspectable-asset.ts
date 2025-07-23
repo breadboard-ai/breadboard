@@ -21,6 +21,7 @@ class InspectableAssetImpl implements InspectableAsset {
   readonly subType: string;
   readonly data: LLMContent[];
   readonly visual: Record<string, unknown>;
+  readonly managed: boolean;
 
   constructor(path: AssetPath, asset: Asset) {
     this.title = asset.metadata?.title || path;
@@ -29,5 +30,6 @@ class InspectableAssetImpl implements InspectableAsset {
     this.subType = asset.metadata?.subType || "";
     this.data = asset.data as LLMContent[];
     this.visual = (asset?.metadata?.visual as Record<string, unknown>) || {};
+    this.managed = asset.metadata?.managed ?? false;
   }
 }

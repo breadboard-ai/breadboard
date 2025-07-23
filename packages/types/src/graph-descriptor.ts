@@ -637,6 +637,7 @@ export type AssetMetadata = {
   type: AssetType;
   subType?: string;
   visual?: NodeValue;
+  managed?: boolean;
 };
 
 export type Asset = {

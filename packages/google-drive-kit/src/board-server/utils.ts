@@ -169,15 +169,11 @@ export type AppProperties = {
 export type GoogleDriveAsset = {
   fileId: DriveFileId;
   /**
-   * How this asset came to be in the graph.
-   *
-   * This distinction is important for sharing: themes and uploaded assets are
-   * considered "managed" by this graph, so they will automatically have their
-   * sharing ACLs syncronized with the graph itself. Picked assets are
-   * considered "unmanaged", so we always check with the user if it's OK to
-   * modify their sharing ACLs.
+   * If an asset is "managed" by this graph, then it will automatically have its
+   * sharing ACLs syncronized with the graph itself. If an asset is "unmanaged",
+   * we will ask the user before modifying sharing ACLs.
    */
-  kind: "theme" | "uploaded" | "picked";
+  managed: boolean;
 };
 
 export function findGoogleDriveAssetsInGraph(
@@ -195,10 +191,7 @@ export function findGoogleDriveAssetsInGraph(
         if (fileId) {
           files.set(fileId.id, {
             fileId,
-            // TODO(aomarks) The "picked" vs "uploaded" distinction should
-            // really be stored explicitly on the handle. The "fileData" vs
-            // "storedData" distinction seems otherwise arbitrary/historical.
-            kind: asset.metadata?.type === "content" ? "picked" : "uploaded",
+            managed: asset.metadata?.managed ?? false,
           });
         }
       }
@@ -212,7 +205,7 @@ export function findGoogleDriveAssetsInGraph(
       if (splashScreen) {
         const fileId = partToDriveFileId(splashScreen);
         if (fileId) {
-          files.set(fileId.id, { fileId, kind: "theme" });
+          files.set(fileId.id, { fileId, managed: true });
         }
       }
     }
@@ -236,11 +229,6 @@ export function partToDriveFileId(part: DataPart): DriveFileId | undefined {
   }
   return undefined;
 }
-
-export function isManagedAsset(asset: GoogleDriveAsset): boolean {
-  return asset.kind === "theme" || asset.kind === "uploaded";
-}
-
 type Permission = gapi.client.drive.Permission;
 
 export function diffAssetReadPermissions(permissions: {
