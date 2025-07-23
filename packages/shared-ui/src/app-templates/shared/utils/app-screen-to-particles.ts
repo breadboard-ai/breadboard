@@ -232,10 +232,18 @@ export function appScreenToParticles(
     const behaviors =
       appScreenOutput.schema?.properties?.[name]?.behavior ?? [];
 
-    if (isLLMContent(outputData)) {
-      appendToItems(outputData, group, behaviors);
-    } else if (isLLMContentArray(outputData)) {
-      for (const llmContent of outputData) {
+    let toAppend = outputData;
+    if (typeof outputData === "string") {
+      toAppend = {
+        role: "model",
+        parts: [{ text: outputData }],
+      } satisfies LLMContent;
+    }
+
+    if (isLLMContent(toAppend)) {
+      appendToItems(toAppend, group, behaviors);
+    } else if (isLLMContentArray(toAppend)) {
+      for (const llmContent of toAppend) {
         appendToItems(llmContent, group, behaviors);
       }
     }

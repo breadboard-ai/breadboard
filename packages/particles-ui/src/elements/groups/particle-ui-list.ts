@@ -112,9 +112,6 @@ export class ParticleUIList extends SignalWatcher(LitElement) {
 
     const particleGroup = this.group;
     const theme = this.theme;
-    if (particleGroup.group.size === 0) {
-      return nothing;
-    }
 
     return html`<section id="list" class=${classMap(theme.groups.list)}>
       ${this.group.presentation.behaviors.includes("editable")
