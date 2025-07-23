@@ -380,11 +380,12 @@ export class FileSystemPersistentBackend implements PersistentBackend {
  * a file.
  */
 function getContent(data: LLMContent[]): string | null {
-  const firstText = data
-    .at(0)
-    ?.parts?.filter((part) => "text" in part)
-    ?.at(0)?.text;
+  const parts = data.at(0)?.parts;
+  if (!parts) return null;
+  const firstText = parts.filter((part) => "text" in part)?.at(0)?.text;
   if (firstText) return firstText;
+  const firstJson = parts.filter((part) => "json" in part)?.at(0)?.json;
+  if (firstJson) return JSON.stringify(firstJson, null, 2);
   const firstInlineData = data
     .at(0)
     ?.parts?.filter((part) => "inlineData" in part)

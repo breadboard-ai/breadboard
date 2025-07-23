@@ -8,6 +8,7 @@
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
+    "allowJs": true,
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -21,6 +22,5 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["vite/client"]
   },
-  "include": ["bgl/src/**/*.ts", "bgl/src/**/*.js", "bgl/src/environment.d.ts"],
-  "extends": "@google-labs/tsconfig/base.json"
+  "include": ["bgl/src/**/*.ts", "bgl/src/**/*.js", "bgl/src/environment.d.ts"]
 }
