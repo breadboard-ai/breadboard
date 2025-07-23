@@ -98,8 +98,13 @@ class ActionTracker {
   }
 
   static flowGenEdit(url: string | undefined) {
-    globalThis.gtag?.("event", "app_flowgen_edit", { url });
-    globalThis.gtag?.("event", "app_engage", { url });
+    if (url) {
+      globalThis.gtag?.("event", "app_flowgen_edit", { url });
+      globalThis.gtag?.("event", "app_engage", { url });
+    } else {
+      // Count first run (no url) of edit as create.
+      this.flowGenCreate();
+    }
   }
 
   static runApp(
