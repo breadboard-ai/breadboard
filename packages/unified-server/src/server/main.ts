@@ -14,11 +14,14 @@ import { InputValues, NodeDescriptor } from "@breadboard-ai/types";
 import { makeDriveProxyMiddleware } from "./drive-proxy.js";
 import { allowListChecker } from "./allow-list-checker.js";
 import { getConfigFromSecretManager } from "./provide-config.js";
+import { makeCspHandler } from "./csp.js";
 
 const server = express();
 
 const { client: clientConfig, server: serverConfig } =
   await getConfigFromSecretManager();
+
+server.use(makeCspHandler());
 
 let googleDriveProxyUrl: string | undefined;
 if (serverConfig.ENABLE_GOOGLE_DRIVE_PROXY) {
