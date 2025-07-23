@@ -143,8 +143,6 @@ export class ParticleUIList extends SignalWatcher(LitElement) {
                       type: "card",
                     };
 
-              console.log(particle, presentation);
-
               switch (presentation.type) {
                 case "card": {
                   return html`<particle-ui-card
