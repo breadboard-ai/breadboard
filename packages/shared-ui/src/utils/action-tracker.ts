@@ -61,6 +61,7 @@ function resetAnalyticsUserId() {
 class ActionTracker {
   static openApp(url: string, source: "gallery" | "user") {
     globalThis.gtag?.("event", "app_open", { url, source });
+    globalThis.gtag?.("event", "app_engage", { url });
 
     if (source === "gallery") {
       globalThis.gtag?.("event", "app_open_gallery", { url });
@@ -71,6 +72,7 @@ class ActionTracker {
 
   static remixApp(url: string, source: "gallery" | "user" | "editor") {
     globalThis.gtag?.("event", "app_remix", { url, source });
+    globalThis.gtag?.("event", "app_engage", { url });
 
     switch (source) {
       case "gallery":
@@ -87,14 +89,17 @@ class ActionTracker {
 
   static createNew() {
     globalThis.gtag?.("event", "app_create_new");
+    globalThis.gtag?.("event", "app_engage", { url: "new" });
   }
 
   static flowGenCreate() {
     globalThis.gtag?.("event", "app_flowgen_create");
+    globalThis.gtag?.("event", "app_engage", { url: "new_flowgen" });
   }
 
   static flowGenEdit(url: string | undefined) {
     globalThis.gtag?.("event", "app_flowgen_edit", { url });
+    globalThis.gtag?.("event", "app_engage", { url });
   }
 
   static runApp(
@@ -102,6 +107,7 @@ class ActionTracker {
     source: "app_preview" | "app_view" | "console"
   ) {
     globalThis.gtag?.("event", "app_run", { url, source });
+    globalThis.gtag?.("event", "app_engage", { url });
 
     switch (source) {
       case "app_preview":
@@ -118,6 +124,7 @@ class ActionTracker {
 
   static publishApp(url: string | undefined) {
     globalThis.gtag?.("event", "app_publish", { url });
+    globalThis.gtag?.("event", "app_engage", { url });
   }
 
   static signInPageView() {
