@@ -17,6 +17,7 @@ import { type ClientDeploymentConfiguration } from "@breadboard-ai/types/deploym
 const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   usePlanRunner: false,
   saveAsCode: false,
+  generateForEach: false,
 };
 
 export function populateFlags(

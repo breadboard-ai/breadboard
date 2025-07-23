@@ -24,6 +24,10 @@ export type RuntimeFlags = {
    * Add "Save As Code" option to the "Output" step.
    */
   saveAsCode: boolean;
+  /**
+   * Add "For each" capability to the "Generate" step.
+   */
+  generateForEach: boolean;
 };
 
 /**
