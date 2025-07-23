@@ -188,8 +188,6 @@ export class ParticleUIList extends SignalWatcher(LitElement) {
                         values[key] = value;
                       }
 
-                      console.log(values);
-
                       return html`<particle-ui-segment
                         class=${classMap(
                           merge(classes, {
