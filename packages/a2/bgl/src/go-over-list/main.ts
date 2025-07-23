@@ -113,14 +113,14 @@ async function describe({ inputs: { plan } }: DescribeInputs) {
   let extra: Record<string, Schema> = {};
   if (experimental) {
     extra = {
-      "z-list": {
-        type: "boolean",
-        title: "Make a list",
-        behavior: ["config", "hint-preview", "hint-advanced"],
-        icon: "summarize",
-        description:
-          "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
-      },
+      // "z-list": {
+      //   type: "boolean",
+      //   title: "Make a list",
+      //   behavior: ["config", "hint-preview", "hint-advanced"],
+      //   icon: "summarize",
+      //   description:
+      //     "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
+      // },
     };
   }
   return {

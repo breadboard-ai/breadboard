@@ -69,14 +69,14 @@ async function describe({ inputs: { description } }: DescribeInputs) {
         description:
           "When checked, this step will chat with the user, asking to review work, requesting additional information, etc.",
       },
-      "p-list": {
-        type: "boolean",
-        title: "Make a list",
-        behavior: ["config", "hint-preview"],
-        icon: "summarize",
-        description:
-          "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
-      },
+      // "p-list": {
+      //   type: "boolean",
+      //   title: "Make a list",
+      //   behavior: ["config", "hint-preview"],
+      //   icon: "summarize",
+      //   description:
+      //     "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
+      // },
     };
   }
   return {
