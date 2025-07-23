@@ -69,6 +69,11 @@ export type BehaviorSchema =
    */
   | "hint-chat-mode"
   /**
+   * Hints that the node is in "for each" mode: itwill try to detect a list of
+   * items as its input and run for each item in the list
+   */
+  | "hint-for-each-mode"
+  /**
    * Hints that the text is short (e.g. a query) and needs a single line treatment.
    */
   | "hint-single-line"

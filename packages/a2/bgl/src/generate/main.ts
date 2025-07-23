@@ -6,6 +6,8 @@ import describeGraph from "@describe";
 import invokeGraph from "@invoke";
 
 import { ok } from "../a2/utils";
+import { readFlags } from "../a2/settings";
+import { forEach } from "../a2/for-each";
 
 export { invoke as default, describe };
 
@@ -16,6 +18,8 @@ type ModeId = GenerationModes["id"];
 type Inputs = {
   context?: LLMContent[];
   "generation-mode"?: ModeId;
+  "p-for-each"?: boolean;
+  [PROMPT_PORT]: LLMContent;
 } & Record<string, unknown>;
 
 type DescribeInputs = {
@@ -248,15 +252,32 @@ function getMode(modeId: ModeId | undefined): GenerationModes {
   return modeMap.get(modeId || DEFAULT_MODE.id) || DEFAULT_MODE;
 }
 
-async function invoke({ "generation-mode": mode, ...rest }: Inputs) {
+async function invoke({
+  "generation-mode": mode,
+  "p-for-each": useForEach,
+  ...rest
+}: Inputs) {
   const { url: $board, type, modelName } = getMode(mode);
+  const flags = await readFlags();
+  let generateForEach = false;
+  if (ok(flags)) {
+    generateForEach = flags.generateForEach && !!useForEach;
+  }
   // Model is treated as part of the Mode, but actually maps N:1
   // on actual underlying step type.
   if (modelName) {
     console.log(`Generating with ${modelName}`);
     rest["p-model-name"] = modelName;
   }
-  return await invokeGraph({ $board, ...forwardPorts(type, rest) });
+  if (generateForEach) {
+    return forEach(rest, async (prompt) => {
+      const ports = { ...rest };
+      ports[PROMPT_PORT] = prompt;
+      return invokeGraph({ $board, ...forwardPorts(type, ports) });
+    });
+  } else {
+    return invokeGraph({ $board, ...forwardPorts(type, rest) });
+  }
 }
 
 async function describe({
@@ -283,16 +304,33 @@ async function describe({
     };
   }
 
+  const flags = await readFlags();
+  let generateForEachSchema: Schema["properties"] = {};
+  const generateForEachBehavior: BehaviorSchema[] = [];
+  if (ok(flags) && flags.generateForEach) {
+    generateForEachSchema = {
+      "p-for-each": {
+        type: "boolean",
+        title: "Generate for each input",
+        behavior: ["config", "hint-preview", "hint-advanced"],
+        icon: "summarize",
+        description:
+          "When checked, this step will try to detect a list of items as its input and run for each item in the list",
+      },
+    };
+    generateForEachBehavior.push("hint-for-each-mode");
+  }
+
   const { url, type } = getMode(mode);
   const describing = await describeGraph({ url, inputs: rest });
-  let behavior: BehaviorSchema[] = [];
+  const behavior: BehaviorSchema[] = [...generateForEachBehavior];
   let modeSchema: Record<string, Schema> = {};
   if (ok(describing)) {
     modeSchema = receivePorts(
       type,
       describing.inputSchema.properties || modeSchema
     );
-    behavior = describing.inputSchema.behavior || [];
+    behavior.push(...(describing.inputSchema.behavior || []));
   }
 
   return {
@@ -318,6 +356,7 @@ async function describe({
           title: "Context in",
           behavior: ["main-port"],
         },
+        ...generateForEachSchema,
         ...modeSchema,
       },
       behavior,

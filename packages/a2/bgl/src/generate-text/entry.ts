@@ -76,14 +76,14 @@ async function describe({
   let extra: Record<string, Schema> = {};
   if (experimental) {
     extra = {
-      "p-list": {
-        type: "boolean",
-        title: "Make a list",
-        behavior: ["config", "hint-preview", "hint-advanced"],
-        icon: "summarize",
-        description:
-          "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
-      },
+      // "p-list": {
+      //   type: "boolean",
+      //   title: "Make a list",
+      //   behavior: ["config", "hint-preview", "hint-advanced"],
+      //   icon: "summarize",
+      //   description:
+      //     "When checked, this step will try to create a list as its output. Make sure that the prompt asks for a list of some sort",
+      // },
       "p-sequential-fc": {
         type: "boolean",
         title: "Allow multi-turn tool-calling",

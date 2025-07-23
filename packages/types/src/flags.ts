@@ -8,9 +8,14 @@
  * The list of run-time flags currently available in Breadboard.
  * Use this type to add a new flag or remove an existing flag.
  * The flag must be boolean. The default value is `false`.
+ *
  * When changing flags, also make changes in
- * packages/shared-ui/src/config/client-deployment-configuration.ts,
+ *
+ * 1) packages/shared-ui/src/config/client-deployment-configuration.ts,
  * where default values are set.
+ *
+ * 2) packages/a2/bgl/src/a2/settings.ts where this type is defined in
+ * A2.
  *
  * Add a comment to explain what the flag does.
  */
@@ -24,6 +29,10 @@ export type RuntimeFlags = {
    * Add "Save As Code" option to the "Output" step.
    */
   saveAsCode: boolean;
+  /**
+   * Add "For each" capability to the "Generate" step.
+   */
+  generateForEach: boolean;
 };
 
 /**

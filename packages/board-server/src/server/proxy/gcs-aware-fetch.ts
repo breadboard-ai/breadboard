@@ -153,7 +153,6 @@ async function prepareGcsData(
     bucket_name: bucketName,
   };
   body["output_gcs_config"] = gcsOutputConfig;
-  console.log("Set output_gcs_config: ", gcsOutputConfig);
   await convertToGcsReferences(
     body,
     blobStore,
@@ -234,7 +233,6 @@ async function convertToGcsReferences(
   accessToken: string,
   googleDriveProxyUrl: string | undefined
 ) {
-  console.log("Converting to GCS references");
   const executionInputs = maybeGetExecutionInputs(body);
   if (!executionInputs) {
     return;

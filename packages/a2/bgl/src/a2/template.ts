@@ -52,6 +52,8 @@ export type TemplatePart = DataPart | ParamPart;
 
 export type ToolCallback = (param: ToolParamPart) => Promise<Outcome<string>>;
 
+export type MapCallback = (param: ParamPart, dataPart: DataPart) => DataPart[];
+
 function isTool(param: ParamPart): param is ToolParamPart {
   return param.type === "tool" && !!param.path;
 }
@@ -220,6 +222,41 @@ class Template {
       }
     }
     return { parts };
+  }
+
+  async mapParams(
+    params: Params,
+    mapCallback: MapCallback,
+    whenTool: ToolCallback
+  ): Promise<Outcome<DataPart[]>> {
+    const mapped: DataPart[] = [];
+    for (const part of this.#parts) {
+      if ("type" in part) {
+        const value = await this.#replaceParam(part, params, whenTool);
+        if (value === null) {
+          // Ignore if null.
+          continue;
+        } else if (!ok(value)) {
+          return value;
+        } else if (typeof value === "string") {
+          mapped.push(...mapCallback(part, { text: value }));
+        } else if (isLLMContent(value)) {
+          for (const p of value.parts) {
+            mapped.push(...mapCallback(part, p));
+          }
+        } else if (isLLMContentArray(value)) {
+          const last = this.#getLastNonMetadata(value);
+          if (last) {
+            for (const p of last.parts) {
+              mapped.push(...mapCallback(part, p));
+            }
+          }
+        } else {
+          mapped.push(...mapCallback(part, { text: JSON.stringify(value) }));
+        }
+      }
+    }
+    return this.#mergeTextParts(mapped);
   }
 
   async substitute(
