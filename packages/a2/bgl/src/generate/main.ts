@@ -6,6 +6,7 @@ import describeGraph from "@describe";
 import invokeGraph from "@invoke";
 
 import { ok } from "../a2/utils";
+import { readFlags } from "../a2/settings";
 
 export { invoke as default, describe };
 
@@ -283,16 +284,33 @@ async function describe({
     };
   }
 
+  const flags = await readFlags();
+  let generateForEachSchema: Schema["properties"] = {};
+  const generateForEachBehavior: BehaviorSchema[] = [];
+  if (ok(flags) && flags["generateForEach"]) {
+    generateForEachSchema = {
+      "p-for-each": {
+        type: "boolean",
+        title: "Generate for each input",
+        behavior: ["config", "hint-preview", "hint-advanced"],
+        icon: "summarize",
+        description:
+          "When checked, this step will try to detect a list of items as its input and run for each item in the list",
+      },
+    };
+    generateForEachBehavior.push("hint-for-each-mode");
+  }
+
   const { url, type } = getMode(mode);
   const describing = await describeGraph({ url, inputs: rest });
-  let behavior: BehaviorSchema[] = [];
+  const behavior: BehaviorSchema[] = [...generateForEachBehavior];
   let modeSchema: Record<string, Schema> = {};
   if (ok(describing)) {
     modeSchema = receivePorts(
       type,
       describing.inputSchema.properties || modeSchema
     );
-    behavior = describing.inputSchema.behavior || [];
+    behavior.push(...(describing.inputSchema.behavior || []));
   }
 
   return {
@@ -318,6 +336,7 @@ async function describe({
           title: "Context in",
           behavior: ["main-port"],
         },
+        ...generateForEachSchema,
         ...modeSchema,
       },
       behavior,

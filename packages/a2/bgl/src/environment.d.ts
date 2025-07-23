@@ -398,6 +398,11 @@ declare type BehaviorSchema =
    */
   | "hint-chat-mode"
   /**
+   * Hints that the node is in "for each" mode: itwill try to detect a list of
+   * items as its input and run for each item in the list
+   */
+  | "hint-for-each-mode"
+  /**
    * Hints that the node input is not a traditional LLM prompt, rather some other
    * kind of textual input.
    */
