@@ -182,10 +182,7 @@ export class SharePanel extends LitElement {
         align-items: center;
         font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
           var(--bb-font-family);
-        .g-icon {
-          animation: rotate 1s linear infinite;
-          color: var(--bb-ui-600);
-          vertical-align: middle;
+        .spinner {
           margin-right: var(--bb-grid-size-2);
         }
       }
@@ -268,6 +265,9 @@ export class SharePanel extends LitElement {
       #published-switch-container {
         display: flex;
         align-items: center;
+        .spinner {
+          margin-right: var(--bb-grid-size-3);
+        }
         md-switch {
           --md-switch-track-width: 40px;
           --md-switch-track-height: 24px;
@@ -375,6 +375,12 @@ export class SharePanel extends LitElement {
           }
         }
       }
+
+      .spinner {
+        animation: rotate 1s linear infinite;
+        color: var(--bb-ui-600);
+        vertical-align: middle;
+      }
     `,
   ];
 
@@ -479,7 +485,7 @@ export class SharePanel extends LitElement {
   #renderLoading() {
     return html`
       <div id="loading">
-        <span class="g-icon">progress_activity</span>
+        <span class="g-icon spinner">progress_activity</span>
         Loading ...
       </div>
     `;
@@ -518,7 +524,9 @@ export class SharePanel extends LitElement {
         </div>
       `,
       this.#renderDisallowedPublishingNotice(),
-      this.#isShared ? this.#renderAppLink() : nothing,
+      this.#isShared && this.#state.status !== "updating"
+        ? this.#renderAppLink()
+        : nothing,
       this.#renderGranularSharingLink(),
       this.#renderAdvisory(),
     ];
@@ -634,7 +642,6 @@ export class SharePanel extends LitElement {
   #renderAppLink() {
     const appUrl = this.#appUrl;
     if (!appUrl) {
-      console.error("No app url");
       return nothing;
     }
     return html`
@@ -694,6 +701,9 @@ export class SharePanel extends LitElement {
       this.#userDomain.config.disallowPublicPublishing || status === "updating";
     return html`
       <div id="published-switch-container">
+        ${status === "updating"
+          ? html`<span class="g-icon spin spinner">progress_activity</span>`
+          : nothing}
         <md-switch
           ${ref(this.#publishedSwitch)}
           ?selected=${published}
