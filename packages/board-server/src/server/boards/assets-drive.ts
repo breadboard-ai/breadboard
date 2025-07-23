@@ -77,7 +77,7 @@ function extractDriveError(s: string): DriveError | null {
   const start = s.indexOf("{");
   try {
     return JSON.parse(s.substring(start));
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -133,6 +133,7 @@ export function makeHandleAssetsDriveRequest({
             res,
             `Unable to handle asset of type "${mimeType}": ${await gettingMedia.text()}`
           );
+          return;
         }
         arrayBuffer = await gettingMedia.arrayBuffer();
       } else {
