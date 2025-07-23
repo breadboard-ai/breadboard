@@ -5,12 +5,17 @@
  */
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Field, FieldName, Orientation } from "@breadboard-ai/particles";
+import {
+  Field,
+  FieldName,
+  Orientation,
+  ParticleData,
+} from "@breadboard-ai/particles";
 import { classMap } from "lit/directives/class-map.js";
 import { consume } from "@lit/context";
 import { themeContext } from "../../context/theme.js";
 import * as Styles from "../../styles/index.js";
-import { ItemData, ParticleViewer, UITheme } from "../../types/types.js";
+import { ParticleViewer, UITheme } from "../../types/types.js";
 import { merge } from "../../utils/utils.js";
 
 @customElement("particle-viewer-google-drive")
@@ -22,7 +27,7 @@ export class ParticleViewerGoogleDrive
   accessor containerOrientation: Orientation | null = null;
 
   @property({ attribute: true, type: String })
-  accessor value: ItemData[string] | null = null;
+  accessor value: ParticleData | null = null;
 
   @property()
   accessor fieldName: FieldName | null = null;
@@ -41,9 +46,9 @@ export class ParticleViewerGoogleDrive
         overflow: hidden;
       }
 
-      section {
-        display: grid;
-        height: 100%;
+      a {
+        display: inline-flex;
+        align-items: center;
       }
     `,
   ];
@@ -64,7 +69,7 @@ export class ParticleViewerGoogleDrive
       )}
       href=${`https://drive.google.com/open?id=${this.value}`}
       target="_blank"
-      >Google Drive File<span class="g-icon filled round layout-ml-2"
+      >Open Google Drive File<span class="g-icon filled round layout-ml-2"
         >open_in_new</span
       ></a
     >`;

@@ -239,11 +239,24 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
             sandbox="allow-scripts allow-forms"
           ></iframe>`;
         } else {
-          const list = appScreenToParticles(current.last);
+          // Convert app screen to particles. There's a belt-and-braces check
+          // afterwards to ensure that the top-level list has a valid
+          // presentation because by default a Particle doesn't have one but we
+          // still need it at this point.
+          // TODO: Remove this conversion when ProjectRun.app emits particles
+          const group = appScreenToParticles(current.last);
+          if (typeof group?.presentation === "string") {
+            group.presentation = {
+              behaviors: [],
+              orientation: "vertical",
+              type: "list",
+            };
+          }
+
           activityContents = html` <particle-ui-list
             class=${classMap(this.theme.groups.list)}
-            .list=${list}
-            .orientation=${list?.presentation.orientation}
+            .group=${group}
+            .orientation=${group?.presentation?.orientation}
           ></particle-ui-list>`;
         }
       }

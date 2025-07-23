@@ -5,7 +5,6 @@
  */
 
 import { DataPart, LLMContent } from "@breadboard-ai/types";
-import * as ParticlesUI from "@breadboard-ai/particles-ui";
 import { AppScreenOutput } from "../../../state";
 import {
   isFileDataCapabilityPart,
@@ -15,7 +14,16 @@ import {
   isStoredData,
 } from "@google-labs/breadboard";
 import { isTextCapabilityPart } from "@google-labs/breadboard";
-import { BehaviorHint, Presentation, Field } from "@breadboard-ai/particles";
+import {
+  BehaviorHint,
+  Presentation,
+  Field,
+  GroupParticle,
+  Particle,
+  ParticleIdentifier,
+} from "@breadboard-ai/particles";
+import { SignalMap } from "signal-utils/map";
+import { partToDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 
 function as(mimeType: string, isStored = false): Field["as"] {
   const mimePrefix = mimeType.split("/").at(0);
@@ -71,7 +79,7 @@ function llmContentPartPresentation(
         },
       ],
       orientation: "vertical",
-    };
+    } satisfies Presentation;
   } else if (isInlineData(part)) {
     const asType = as(part.inlineData.mimeType);
     return {
@@ -93,7 +101,7 @@ function llmContentPartPresentation(
         },
       ],
       orientation: "vertical",
-    };
+    } satisfies Presentation;
   } else if (isStoredData(part)) {
     const asType = as(part.storedData.mimeType, true);
     return {
@@ -115,7 +123,7 @@ function llmContentPartPresentation(
         },
       ],
       orientation: "vertical",
-    };
+    } satisfies Presentation;
   } else if (isFileDataCapabilityPart(part)) {
     if (part.fileData.mimeType.startsWith("video")) {
       return {
@@ -135,28 +143,32 @@ function llmContentPartPresentation(
           },
         ],
         orientation: "vertical",
-      };
-    } else if (
-      part.fileData.mimeType.startsWith("application/vnd.google-apps")
-    ) {
-      return {
-        behaviors: [],
-        type: "card",
-        segments: [
-          {
-            weight: 1,
-            type: "block",
-            fields: {
-              src: {
-                title: "Google Drive File",
-                as: "particle-viewer-google-drive",
+      } satisfies Presentation;
+    } else {
+      const possibleGDriveFileId = partToDriveFileId(part);
+      if (
+        part.fileData.mimeType.startsWith("application/vnd.google-apps") ||
+        possibleGDriveFileId
+      ) {
+        return {
+          behaviors: [],
+          type: "card",
+          segments: [
+            {
+              weight: 1,
+              type: "block",
+              fields: {
+                src: {
+                  title: "Google Drive File",
+                  as: "particle-viewer-google-drive",
+                },
               },
+              orientation: "vertical",
             },
-            orientation: "vertical",
-          },
-        ],
-        orientation: "vertical",
-      };
+          ],
+          orientation: "vertical",
+        } satisfies Presentation;
+      }
     }
   }
 
@@ -165,63 +177,76 @@ function llmContentPartPresentation(
 
 function appendToItems(
   llmContent: LLMContent,
-  items: Map<string, ParticlesUI.Types.ItemState>,
+  group: Map<ParticleIdentifier, Particle>,
   behaviors: BehaviorHint[]
 ) {
+  // Remap each part to a particle and append to the group.
   for (const part of llmContent.parts) {
-    let data = part as ParticlesUI.Types.ItemData;
-    if (isFileDataCapabilityPart(data)) {
-      data = { src: data.fileData.fileUri };
-    } else if (isStoredData(data)) {
-      data = { src: data.storedData.handle };
-    } else if (isInlineData(data)) {
-      if (data.inlineData.mimeType === "text/plain") {
-        data = { src: base64toUTF8(data.inlineData.data) };
+    let particle: Particle | undefined = undefined;
+    if (isFileDataCapabilityPart(part)) {
+      particle = {
+        data: part.fileData.fileUri,
+        mimeType: part.fileData.mimeType,
+      };
+    } else if (isStoredData(part)) {
+      particle = {
+        data: part.storedData.handle,
+        mimeType: part.storedData.mimeType,
+      };
+    } else if (isInlineData(part)) {
+      if (part.inlineData.mimeType === "text/plain") {
+        particle = { text: base64toUTF8(part.inlineData.data) };
       } else {
-        data = {
-          src: `data:${data.inlineData.mimeType};base64,${data.inlineData.data}`,
+        particle = {
+          data: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+          mimeType: part.inlineData.mimeType,
         };
       }
+    } else if (isTextCapabilityPart(part)) {
+      if (part.text.trim() === "") {
+        continue;
+      }
+      particle = { text: part.text };
     }
 
-    if (isTextCapabilityPart(data) && data.text.trim() === "") {
+    if (!particle) {
+      console.warn("[App View] Unexpected particle information", part);
       continue;
     }
 
-    items.set(globalThis.crypto.randomUUID(), {
-      data,
-      presentation: llmContentPartPresentation(part, behaviors),
-    });
+    // Append the presentation information.
+    particle.presentation = llmContentPartPresentation(part, behaviors);
+    group.set(globalThis.crypto.randomUUID(), particle);
   }
 }
 
 export function appScreenToParticles(
   appScreenOutput: AppScreenOutput
-): ParticlesUI.Types.ItemList | null {
+): GroupParticle | null {
   if (!appScreenOutput.output) {
     return null;
   }
 
-  const items = new Map<string, ParticlesUI.Types.ItemState>();
+  const group = new SignalMap<ParticleIdentifier, Particle>();
   for (const [name, outputData] of Object.entries(appScreenOutput.output)) {
     const behaviors =
       appScreenOutput.schema?.properties?.[name]?.behavior ?? [];
 
     if (isLLMContent(outputData)) {
-      appendToItems(outputData, items, behaviors);
+      appendToItems(outputData, group, behaviors);
     } else if (isLLMContentArray(outputData)) {
       for (const llmContent of outputData) {
-        appendToItems(llmContent, items, behaviors);
+        appendToItems(llmContent, group, behaviors);
       }
     }
   }
 
   return {
-    items,
+    group,
     presentation: {
-      type: "list",
       orientation: "vertical",
       behaviors: [],
+      type: "list",
     },
-  } satisfies ParticlesUI.Types.ItemList;
+  } satisfies GroupParticle;
 }

@@ -68,6 +68,8 @@ export type BehaviorHint = string;
 
 export type Particle = TextParticle | DataParticle | GroupParticle;
 
+export type ParticleData = TextParticle["text"] | DataParticle["data"];
+
 export type ParticleIdentifier = string;
 
 /**
