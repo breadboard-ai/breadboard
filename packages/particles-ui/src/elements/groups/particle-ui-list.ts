@@ -15,14 +15,20 @@ import * as Styles from "../../styles/index.js";
 import "./particle-ui-card.js";
 import "../viewers/particle-viewer-image.js";
 import "./particle-ui-segment.js";
-import { Orientation } from "@breadboard-ai/particles";
-import { ItemData, ItemList, UITheme } from "../../types/types.js";
+import {
+  extractValue,
+  FieldName,
+  GroupParticle,
+  Orientation,
+  ParticleData,
+} from "@breadboard-ai/particles";
+import { UITheme } from "../../types/types.js";
 import { merge } from "../../utils/utils.js";
 
 @customElement("particle-ui-list")
 export class ParticleUIList extends SignalWatcher(LitElement) {
   @property()
-  accessor list: ItemList | null = null;
+  accessor group: GroupParticle | null = null;
 
   @property({ reflect: true, type: String })
   accessor orientation: Orientation = "vertical";
@@ -95,15 +101,20 @@ export class ParticleUIList extends SignalWatcher(LitElement) {
   ];
 
   render() {
-    if (!this.list || !this.theme) {
+    if (
+      !this.group ||
+      !this.theme ||
+      !this.group.presentation ||
+      typeof this.group.presentation === "string"
+    ) {
       return nothing;
     }
 
-    const items = this.list.items;
+    const particleGroup = this.group;
     const theme = this.theme;
 
     return html`<section id="list" class=${classMap(theme.groups.list)}>
-      ${this.list.presentation.behaviors.includes("editable")
+      ${this.group.presentation.behaviors.includes("editable")
         ? html`<div class=${classMap(theme.layouts.verticalPadded)}>
             <div class=${classMap(theme.layouts.horizontal)}>
               <ui-button
@@ -117,20 +128,32 @@ export class ParticleUIList extends SignalWatcher(LitElement) {
           </div>`
         : nothing}
       <section id="items" class=${classMap(theme.groups.listItems)}>
-        ${items.size === 0
+        ${particleGroup.group.size === 0
           ? html`<div>No items</div>`
-          : repeat(items, ([id, item]) => {
-              switch (item.presentation.type) {
+          : repeat(particleGroup.group, ([id, particle]) => {
+              const presentation =
+                particle.presentation !== undefined &&
+                particle.presentation !== null &&
+                typeof particle.presentation !== "string"
+                  ? particle.presentation
+                  : {
+                      behaviors: [],
+                      orientation: "vertical",
+                      segments: [],
+                      type: "card",
+                    };
+
+              console.log(particle, presentation);
+
+              switch (presentation.type) {
                 case "card": {
-                  const done = !!item.data?.["done"];
                   return html`<particle-ui-card
                     class=${classMap(theme.groups.card)}
                     data-id=${id}
-                    .segments=${item.presentation.segments}
-                    .orientation=${item.presentation.orientation}
-                    .disabled=${done}
+                    .segments=${presentation.segments}
+                    .orientation=${presentation.orientation}
                   >
-                    ${repeat(item.presentation.segments, (segment, idx) => {
+                    ${repeat(presentation.segments, (segment, idx) => {
                       let classes = {};
                       if (segment.orientation === "vertical") {
                         if (segment.type === "media") {
@@ -156,16 +179,18 @@ export class ParticleUIList extends SignalWatcher(LitElement) {
                         }
                       }
 
-                      const values: Record<string, ItemData[string]> = {};
+                      const values: Record<FieldName, ParticleData> = {};
                       for (const fieldName of Object.keys(segment.fields)) {
-                        const key = fieldName;
-                        const value = item.data?.[key];
-                        if (typeof value === "undefined") {
+                        const key = fieldName as FieldName;
+                        const value = extractValue(particle);
+                        if (value === null) {
                           continue;
                         }
 
                         values[key] = value;
                       }
+
+                      console.log(values);
 
                       return html`<particle-ui-segment
                         class=${classMap(
@@ -174,11 +199,10 @@ export class ParticleUIList extends SignalWatcher(LitElement) {
                           })
                         )}
                         slot=${`slot-${idx}`}
-                        .containerOrientation=${item.presentation.orientation}
+                        .containerOrientation=${presentation.orientation}
                         .theme=${theme}
                         .fields=${segment.fields}
                         .values=${values}
-                        .disabled=${done}
                       ></particle-ui-segment>`;
                     })}
                   </particle-ui-card>`;

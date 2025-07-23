@@ -287,3 +287,6 @@ export const ParticleUIVideo = {
 export const ParticleUIText = {
   "layout-w-100": true,
 };
+
+export const ParticleUIGoogleDrive = {};
+export const ParticleUIFile = {};
