@@ -653,7 +653,16 @@ export class Board extends EventTarget {
         }
         if (boardServer && this.boardServers) {
           kits = (boardServer as BoardServer).kits ?? this.boardServerKits;
-          const loadResult = await this.boardServers.loader.load(url, { base });
+          const resourceKey = urlAtTimeOfCall
+            ? new URL(urlAtTimeOfCall).searchParams.get("resourcekey")
+            : null;
+          const urlMaybeWithResourceKey = resourceKey
+            ? url + `?resourcekey=${resourceKey}`
+            : url;
+          const loadResult = await this.boardServers.loader.load(
+            urlMaybeWithResourceKey,
+            { base }
+          );
           graph = loadResult.success ? loadResult.graph : null;
         } else {
           const loadResult = await this.loader.load(url, { base });

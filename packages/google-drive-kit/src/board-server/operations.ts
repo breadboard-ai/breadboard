@@ -843,7 +843,7 @@ export function getFileId(driveUrl: string): string {
     // Take the folderId off.
     driveUrl = driveUrl.split("/").at(-1)!;
   }
-  return driveUrl;
+  return driveUrl.replace(/\?resourcekey=[^/?&#]*/, "");
 }
 
 /**
