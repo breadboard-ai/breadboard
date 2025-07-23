@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Handler } from "@breadboard-ai/embed";
 import {
   type LanguagePack,
   SETTINGS_TYPE,
@@ -54,7 +53,6 @@ async function init() {
     connectionRedirectUrl: "/oauth/",
     requiresSignin: true,
   } as GlobalConfig;
-  const embedHandler = window.self !== window.top ? new Handler() : undefined;
 
   const { SettingsStore } = await import(
     "@breadboard-ai/shared-ui/data/settings-store.js"
@@ -90,8 +88,8 @@ async function init() {
     redirect();
     return;
   }
-  // Inform embedder if not signed in.
-  embedHandler?.sendToEmbedder({
+
+  Shell.dispatchToEmbed({
     type: "home_loaded",
     isSignedIn: false,
   });
