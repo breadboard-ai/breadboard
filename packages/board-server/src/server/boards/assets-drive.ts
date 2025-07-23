@@ -126,7 +126,7 @@ export function makeHandleAssetsDriveRequest({
     try {
       let arrayBuffer: ArrayBuffer;
 
-      if (mimeType) {
+      if (mimeType && !mimeType.startsWith("application/vnd.google-apps.")) {
         const gettingMedia = await googleDriveClient.getFileMedia(driveId);
         if (!gettingMedia.ok) {
           serverError(
