@@ -10,6 +10,7 @@ import { defaultSafetySettings, GeminiSchema } from "./gemini";
 import { GeminiPrompt } from "./gemini-prompt";
 import { Params } from "./common";
 import { Template } from "./template";
+import { flattenContext } from "./lists";
 
 export { forEach };
 
@@ -166,22 +167,27 @@ async function forEach(
     })
   );
   return {
-    context: [
-      {
-        parts: [
-          {
-            id: "for-each",
-            list: results
-              .filter((item) => !("$error" in item))
-              .map((outputs) => {
-                const context = (outputs as { context: LLMContent[] }).context;
-                return {
-                  content: context,
-                };
-              }),
-          },
-        ],
-      },
-    ] satisfies LLMContent[],
+    context: flattenContext(
+      [
+        {
+          parts: [
+            {
+              id: "for-each",
+              list: results
+                .filter((item) => !("$error" in item))
+                .map((outputs) => {
+                  const context = (outputs as { context: LLMContent[] })
+                    .context;
+                  return {
+                    content: context,
+                  };
+                }),
+            },
+          ],
+        },
+      ] satisfies LLMContent[],
+      false,
+      "\n\n"
+    ),
   };
 }
