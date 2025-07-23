@@ -403,6 +403,7 @@ export type InspectableAsset = {
   readonly subType: string;
   readonly data: LLMContent[];
   readonly visual: Record<string, unknown>;
+  readonly managed: boolean;
 };
 
 /**

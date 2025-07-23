@@ -62,6 +62,7 @@ export const AddRoute: EventRoute<"asset.add"> = {
           title: asset.name,
           type: asset.type,
           visual: asset.visual,
+          managed: asset.managed,
         };
 
         if (asset.subType) {
