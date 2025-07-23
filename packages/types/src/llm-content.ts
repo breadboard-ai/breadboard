@@ -31,6 +31,7 @@ export type StoredDataCapabilityPart = {
   storedData: {
     handle: DataStoreHandle;
     mimeType: string;
+    resourceKey?: string;
     contentHash?: string;
     contentLength?: number;
   };
@@ -45,6 +46,7 @@ export type FileDataPart = {
      */
     fileUri: string;
     mimeType: string;
+    resourceKey?: string;
   };
 };
 

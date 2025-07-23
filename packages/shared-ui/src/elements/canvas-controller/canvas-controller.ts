@@ -63,7 +63,10 @@ import { icons } from "../../styles/icons.js";
 import { type GoogleDrivePicker, EntityEditor } from "../elements.js";
 import { consume } from "@lit/context";
 import { SharePanel } from "../share-panel/share-panel.js";
-import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import {
+  DriveFileId,
+  type GoogleDriveClient,
+} from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { effects } from "../../styles/host/effects.js";
 import { GraphTheme } from "@breadboard-ai/types";
@@ -689,9 +692,7 @@ export class CanvasController extends LitElement {
     if (!this.graph) {
       return;
     }
-    const driveAssetFileIds = findGoogleDriveAssetsInGraph(this.graph).map(
-      ({ fileId }) => fileId
-    );
+    const driveAssetFileIds = findGoogleDriveAssetsInGraph(this.graph);
     if (driveAssetFileIds.length === 0) {
       return;
     }
@@ -700,12 +701,12 @@ export class CanvasController extends LitElement {
       console.error(`No googleDriveClient was provided`);
       return;
     }
-    const needsPicking: Array<DriveFileIdWithOptionalResourceKey> = [];
+    const needsPicking: Array<DriveFileId> = [];
     await Promise.all(
-      driveAssetFileIds.map(async (fileId) => {
+      driveAssetFileIds.map(async ({ fileId }) => {
         const readable = await googleDriveClient.isReadable(fileId);
         if (!readable) {
-          needsPicking.push({ id: fileId });
+          needsPicking.push(fileId);
         }
       })
     );

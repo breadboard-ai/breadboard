@@ -42,6 +42,7 @@ import { SIGN_IN_CONNECTION_ID } from "../../utils/signin-adapter.js";
 import { InputChangeEvent } from "../../plugins/input-plugin.js";
 import { icons } from "../../styles/icons.js";
 import { iconSubstitute } from "../../utils/icon-substitute.js";
+import type { PickedValue } from "../google-drive/google-drive-file-id.js";
 
 const QUICK_ADD_ADJUSTMENT = -20;
 
@@ -1008,11 +1009,7 @@ export class EditorControls extends LitElement {
               ${ref(this.#addDriveInputRef)}
               .connectionName=${SIGN_IN_CONNECTION_ID}
               @bb-input-change=${(evt: InputChangeEvent) => {
-                const driveFile = evt.value as {
-                  preview: string;
-                  id: string;
-                  mimeType: string;
-                };
+                const driveFile = evt.value as PickedValue;
 
                 this.dispatchEvent(
                   new CreateNewAssetsEvent([
@@ -1028,6 +1025,7 @@ export class EditorControls extends LitElement {
                             fileData: {
                               fileUri: driveFile.id,
                               mimeType: driveFile.mimeType,
+                              resourceKey: driveFile.resourceKey,
                             },
                           },
                         ],

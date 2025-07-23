@@ -37,7 +37,10 @@ import {
 } from "./operations.js";
 import { SaveDebouncer } from "./save-debouncer.js";
 import { RefreshEvent, SaveEvent } from "./events.js";
-import { type GoogleDriveClient } from "../google-drive-client.js";
+import {
+  type DriveFileId,
+  type GoogleDriveClient,
+} from "../google-drive-client.js";
 import { GoogleDriveDataPartTransformer } from "./data-part-transformer.js";
 import { visitGraphNodes } from "@breadboard-ai/data";
 
@@ -265,7 +268,10 @@ class GoogleDriveBoardServer
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {
-    const fileId = getFileId(url.href);
+    const fileId: DriveFileId = {
+      id: getFileId(url.href),
+      resourceKey: url.searchParams.get("resourcekey") ?? undefined,
+    };
     const response = await this.#googleDriveClient.getFileMedia(fileId);
     if (response.status === 200) {
       const descriptor = await response.json();

@@ -250,6 +250,7 @@ declare type StoredDataCapabilityPart = {
   storedData: {
     handle: DataStoreHandle;
     mimeType: string;
+    resourceKey?: string;
     contentHash?: string;
     contentLength?: number;
   };
@@ -264,6 +265,7 @@ declare type FileDataPart = {
      */
     fileUri: string;
     mimeType: string;
+    resourceKey?: string;
   };
 };
 

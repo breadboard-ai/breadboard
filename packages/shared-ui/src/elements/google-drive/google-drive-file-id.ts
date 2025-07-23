@@ -20,12 +20,13 @@ import { googleDriveClientContext } from "../../contexts/google-drive-client-con
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { consume } from "@lit/context";
 
-type PickedValue = {
+export type PickedValue = {
   // A special value recognized by the "GraphPortLabel": if present in an
   // object, will be used as the preview value.
   preview: string;
   id: string;
   mimeType: string;
+  resourceKey?: string;
   /** The connection name under which the file was requested */
   connectionName: string;
 };
@@ -326,11 +327,12 @@ export class GoogleDriveFileId extends LitElement {
         if (result.docs && result.docs.length > 0) {
           const doc = result.docs[0];
           if (!doc) return;
-          const { id, name = "", mimeType = "" } = doc;
+          const { id, name = "", mimeType = "", resourceKey } = doc;
           this.value = {
             id,
             preview: name,
             mimeType,
+            resourceKey,
             connectionName: this.connectionName,
           };
           this.docName = name;

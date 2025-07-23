@@ -12,7 +12,10 @@ import { Readable } from "node:stream";
 import { GeminiFileApi } from "../blobs/utils/gemini-file-api.js";
 import { hasExpired } from "../blobs/file-info.js";
 import type { ServerResponse } from "node:http";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import {
+  GoogleDriveClient,
+  type DriveFileId,
+} from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 type DriveError = {
   error: {
@@ -103,7 +106,10 @@ export function makeHandleAssetsDriveRequest({
     res: Response
   ): Promise<void> {
     const accessToken: string = res.locals.accessToken;
-    const driveId = req.params["driveId"] ?? "";
+    const driveId: DriveFileId = {
+      id: req.params["driveId"] ?? "",
+      resourceKey: req.query["resourceKey"] as string | undefined,
+    };
     let mimeType = (req.query["mimeType"] as string) ?? "";
     const googleDriveClient = initializeDriveClient(
       accessToken,
@@ -111,7 +117,7 @@ export function makeHandleAssetsDriveRequest({
       googleDriveProxyUrl
     );
 
-    const part = CavemanCache.instance().get(driveId);
+    const part = CavemanCache.instance().get(driveId.id);
     if (part) {
       success(res, part.fileUri, part.mimeType);
       return;
@@ -153,7 +159,7 @@ export function makeHandleAssetsDriveRequest({
       const uploading = await fileApi.upload(
         buffer.length,
         mimeType,
-        driveId,
+        driveId.id,
         readable
       );
       if (!ok(uploading)) {
@@ -163,7 +169,7 @@ export function makeHandleAssetsDriveRequest({
         );
         return;
       }
-      CavemanCache.instance().set(driveId, {
+      CavemanCache.instance().set(driveId.id, {
         fileUri: uploading.fileUri!,
         expirationTime: uploading.expirationTime!,
         mimeType,

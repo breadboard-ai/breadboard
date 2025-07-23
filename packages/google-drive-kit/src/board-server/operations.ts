@@ -501,13 +501,14 @@ class DriveOperations {
     const copiedFile = await this.#googleDriveClient.copyFile(
       fileId,
       { parents: [parentFolderId] },
-      { fields: ["id"] }
+      { fields: ["id", "resourceKey"] }
     );
     if (copiedFile.ok) {
       return {
         storedData: {
           ...original.storedData,
           handle: `${PROTOCOL}/${copiedFile.value.id}`,
+          resourceKey: copiedFile.value.resourceKey,
         },
       };
     } else if (copiedFile.error.status === 404) {
@@ -522,12 +523,14 @@ class DriveOperations {
         {
           mimeType: original.storedData.mimeType,
           parents: [parentFolderId],
-        }
+        },
+        { fields: ["id", "resourceKey"] }
       );
       return {
         storedData: {
           ...original.storedData,
           handle: `${PROTOCOL}/${uploadedFile.id}`,
+          resourceKey: uploadedFile.resourceKey,
         },
       };
     } else {
@@ -635,6 +638,7 @@ class DriveOperations {
       result.storedData.handle = handle;
     }
     result.storedData.contentLength = data?.length;
+    result.storedData.resourceKey = file.resourceKey;
     // TODO(volodya): Populate contentHash.
     return result;
   }
@@ -839,7 +843,7 @@ export function getFileId(driveUrl: string): string {
     // Take the folderId off.
     driveUrl = driveUrl.split("/").at(-1)!;
   }
-  return driveUrl;
+  return driveUrl.replace(/\?resourcekey=[^/?&#]*/, "");
 }
 
 /**

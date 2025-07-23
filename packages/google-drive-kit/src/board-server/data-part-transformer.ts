@@ -79,7 +79,11 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
         try {
           const fileId = part.fileData.fileUri;
           // TODO: Un-hardcode the path and get rid of the "@foo/bar".
-          const path = `/board/boards/@foo/bar/assets/drive/${fileId}`;
+          const path =
+            `/board/boards/@foo/bar/assets/drive/${fileId}` +
+            (part.fileData.resourceKey
+              ? `?resourceKey=${part.fileData.resourceKey}`
+              : "");
           const converting = await fetch(
             await this.#createRequest(path, { part })
           );
@@ -105,7 +109,11 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
           // TODO: Dedupe this code with above.
           const fileId = url.replace(/^drive:\/+/, "");
 
-          const path = `/board/boards/@foo/bar/assets/drive/${fileId}?mimeType=${mimeType}`;
+          const path =
+            `/board/boards/@foo/bar/assets/drive/${fileId}?mimeType=${mimeType}` +
+            (part.storedData.resourceKey
+              ? `&resourceKey=${part.storedData.resourceKey}`
+              : "");
           const converting = await fetch(
             await this.#createRequest(path, { part })
           );

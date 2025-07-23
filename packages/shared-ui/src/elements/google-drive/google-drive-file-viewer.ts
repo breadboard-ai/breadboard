@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import type {
+  DriveFileId,
+  GoogleDriveClient,
+} from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { consume } from "@lit/context";
 import { Task } from "@lit/task";
 import { LitElement, type PropertyValues, css, html } from "lit";
@@ -77,8 +80,25 @@ export class GoogleDriveFileViewer extends LitElement {
     `,
   ];
 
-  @property()
-  accessor fileId: string | null = null;
+  @property({
+    hasChanged: (
+      newVal: DriveFileId | string | null,
+      oldVal: DriveFileId | string | null
+    ): boolean => {
+      if (
+        newVal === null ||
+        oldVal === null ||
+        typeof newVal === "string" ||
+        typeof oldVal === "string"
+      ) {
+        return newVal !== oldVal;
+      }
+      return (
+        newVal.id !== oldVal.id || newVal.resourceKey !== oldVal.resourceKey
+      );
+    },
+  })
+  accessor fileId: DriveFileId | string | null = null;
 
   @consume({ context: googleDriveClientContext })
   @property({ attribute: false })

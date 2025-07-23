@@ -25,7 +25,7 @@ import { consume, provide } from "@lit/context";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { generatePaletteFromColor } from "@breadboard-ai/theme";
-import { loadPart } from "../../utils/data-parts.js";
+import { loadPartAsDataUrl } from "../../utils/data-parts.js";
 import { projectRunContext } from "../../contexts/project-run.js";
 import { ProjectRun } from "../../state/types.js";
 import { SignalWatcher } from "@lit-labs/signals";
@@ -204,7 +204,7 @@ export class AppController extends SignalWatcher(LitElement) {
               return;
             }
 
-            return loadPart(this.googleDriveClient!, splashScreen);
+            return loadPartAsDataUrl(this.googleDriveClient!, splashScreen);
           })
           .then((base64DataUrl) => {
             if (!this.#appTemplate) {
