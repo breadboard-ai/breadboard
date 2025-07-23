@@ -20,6 +20,7 @@ const CSP_CONFIG = {
   ],
   ["img-src"]: [
     "'self'",
+    "blob:",
     "data:",
     "https://*.google.com",
     "https://*.googleusercontent.com",
@@ -30,6 +31,7 @@ const CSP_CONFIG = {
   ["font-src"]: ["https://fonts.gstatic.com"],
   ["connect-src"]: [
     "'self'",
+    "data:",
     "https://play.google.com/log",
     "https://www.google-analytics.com",
     "https://www.googleapis.com/drive/",
@@ -40,7 +42,7 @@ const CSP_CONFIG = {
     "https://drive.google.com",
     "https://www.youtube.com",
   ],
-  ["object-src"]: ["'none'"],
+  ["media-src"]: ["'self'", "blob:"],
   ["base-uri"]: ["'none'"],
 };
 
