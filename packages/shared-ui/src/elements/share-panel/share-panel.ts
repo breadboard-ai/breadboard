@@ -742,8 +742,8 @@ export class SharePanel extends LitElement {
       });
       parts.push(html`
         <p>
-          The following assets are owned by you, but are not yet shared with all
-          users of this app. To share them now, choose "Share my assets".
+          The following assets are editable by you, but are not yet shared with
+          all users of this app. To share them now, choose "Share my assets".
         </p>
         <div id="asset-chips">${missingChips}</div>
       `);
@@ -763,7 +763,7 @@ export class SharePanel extends LitElement {
       });
       parts.push(html`
         <p>
-          The following assets are <strong>not</strong> owned by you, and we
+          The following assets are <strong>not</strong> editable by you, and we
           unable to verify whether they are shared with all users of this app.
           If you believe the assets are shared (e.g. they are public), you may
           safely ignore this warning. If you are unsure, contact the owner of
