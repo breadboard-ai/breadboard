@@ -21,14 +21,55 @@ type Outputs =
       canSave: boolean;
     };
 
+function createPackageJson(): LLMContent[] {
+  return [
+    {
+      parts: [
+        {
+          json: {
+            name: "new-project",
+            version: "1.0.0",
+            main: "index.js",
+            scripts: {
+              start: "http-server .",
+            },
+            keywords: [],
+            author: "",
+            license: "ISC",
+            description: "",
+            dependencies: {
+              "http-server": "^14.1.1",
+            },
+          },
+        },
+      ],
+    },
+  ];
+}
+
+async function writeFile(
+  dir: string,
+  name: string,
+  data: LLMContent[]
+): Promise<Outcome<void>> {
+  const path: FileSystemPath = `/mnt/fs/${dir}/${name}`;
+  return write({ path, data });
+}
+
 async function invoke({ id, context }: Inputs): Promise<Outcome<Outputs>> {
   if (!context) {
     console.warn("No data to save");
     return { context: [] };
   }
-  const path: FileSystemPath = `/mnt/fs/${id}/index.html`;
-  const writing = await write({ path, data: context });
-  if (!ok(writing)) return writing;
+  const writingIndex = await writeFile(id, "index.html", context);
+  if (!ok(writingIndex)) return writingIndex;
+
+  const writingPackage = await writeFile(
+    id,
+    "package.json",
+    createPackageJson()
+  );
+  if (!ok(writingPackage)) return writingPackage;
   return { context };
 }
 
