@@ -170,13 +170,16 @@ export class PDFViewer extends LitElement {
 
   async #loadLib() {
     const pdfjs = await import("pdfjs-dist");
+    // Here we must use the pdf.worker.mjs rather than the .min.mjs because the
+    // unminifed code includes a critical vite-ignore comment. When this comment
+    // is missing (as it is in the .min.mjs version), vite attempts to import
+    // wasm files up front and that fails.
     const pdfjsWorkerUrl = new URL(
-      "pdfjs-dist/build/pdf.worker.min.mjs",
+      "pdfjs-dist/build/pdf.worker.mjs",
       import.meta.url
     );
 
     pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl.href;
-
     return pdfjs;
   }
 
