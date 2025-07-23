@@ -7,6 +7,7 @@ import invokeGraph from "@invoke";
 
 import { ok } from "../a2/utils";
 import { readFlags } from "../a2/settings";
+import { forEach } from "../a2/for-each";
 
 export { invoke as default, describe };
 
@@ -17,6 +18,7 @@ type ModeId = GenerationModes["id"];
 type Inputs = {
   context?: LLMContent[];
   "generation-mode"?: ModeId;
+  [PROMPT_PORT]: LLMContent;
 } & Record<string, unknown>;
 
 type DescribeInputs = {
@@ -251,13 +253,26 @@ function getMode(modeId: ModeId | undefined): GenerationModes {
 
 async function invoke({ "generation-mode": mode, ...rest }: Inputs) {
   const { url: $board, type, modelName } = getMode(mode);
+  const flags = await readFlags();
+  let generateForEach = false;
+  if (ok(flags)) {
+    generateForEach = flags.generateForEach;
+  }
   // Model is treated as part of the Mode, but actually maps N:1
   // on actual underlying step type.
   if (modelName) {
     console.log(`Generating with ${modelName}`);
     rest["p-model-name"] = modelName;
   }
-  return await invokeGraph({ $board, ...forwardPorts(type, rest) });
+  if (generateForEach) {
+    return forEach(rest, async (prompt) => {
+      const ports = { ...rest };
+      ports[PROMPT_PORT] = prompt;
+      return invokeGraph({ $board, ...forwardPorts(type, ports) });
+    });
+  } else {
+    return invokeGraph({ $board, ...forwardPorts(type, rest) });
+  }
 }
 
 async function describe({
@@ -287,7 +302,7 @@ async function describe({
   const flags = await readFlags();
   let generateForEachSchema: Schema["properties"] = {};
   const generateForEachBehavior: BehaviorSchema[] = [];
-  if (ok(flags) && flags["generateForEach"]) {
+  if (ok(flags) && flags.generateForEach) {
     generateForEachSchema = {
       "p-for-each": {
         type: "boolean",
