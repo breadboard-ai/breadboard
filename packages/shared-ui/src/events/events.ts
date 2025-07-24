@@ -1157,7 +1157,8 @@ export class SnackbarActionEvent extends Event {
 
   constructor(
     public readonly action: string,
-    public readonly value?: string
+    public readonly value?: string,
+    public readonly callback?: () => void
   ) {
     super(SnackbarActionEvent.eventName, { ...eventInit });
   }

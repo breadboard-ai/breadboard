@@ -632,6 +632,7 @@ export type SnackbarAction = {
   title: string;
   action: string;
   value?: string;
+  callback?: () => void;
 };
 
 export type SnackbarMessage = {
