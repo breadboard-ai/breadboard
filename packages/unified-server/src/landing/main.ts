@@ -54,6 +54,7 @@ async function init() {
     connectionServerUrl: new URL("/connection/", window.location.href).href,
     connectionRedirectUrl: "/oauth/",
     requiresSignin: true,
+    ...deploymentConfiguration,
   } as GlobalConfig;
 
   const { SettingsStore } = await import(
