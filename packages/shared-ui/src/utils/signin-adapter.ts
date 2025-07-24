@@ -44,6 +44,7 @@ export const signinAdapterContext = createContext<SigninAdapter | undefined>(
 
 export type SignInError =
   | { code: "missing-scopes"; missingScopes: string[] }
+  | { code: "geo-restriction" }
   | { code: "other"; detail: string };
 
 /**
@@ -188,6 +189,12 @@ class SigninAdapter {
     if (grantResponse.error !== undefined) {
       // TODO(aomarks) Show error info in the UI.
       console.error(grantResponse.error);
+      if (grantResponse.error.includes("region")) {
+        return {
+          ok: false,
+          error: { code: "geo-restriction" },
+        };
+      }
       return {
         ok: false,
         error: { code: "other", detail: grantResponse.error },

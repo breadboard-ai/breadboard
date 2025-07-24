@@ -133,6 +133,14 @@ async function init() {
     return;
   }
 
+  const geoRestrictionErrorDialog = document.querySelector<HTMLDialogElement>(
+    "#geo-restriction-error-dialog"
+  );
+  if (!geoRestrictionErrorDialog) {
+    console.warn("Unable to find geo scopes error dialog");
+    return;
+  }
+
   const setSignInUrls = async () => {
     // Note we need a new sign-in URL for each attempt, because it has a unique
     // nonce.
@@ -153,6 +161,15 @@ async function init() {
       await setSignInUrls();
       if (error.code === "missing-scopes") {
         scopesErrorDialog.showModal();
+      } else if (error.code === "geo-restriction") {
+        const productName =
+          geoRestrictionErrorDialog.querySelector(".product-name");
+        if (productName) {
+          productName.textContent = Strings.from("APP_NAME");
+        } else {
+          console.warn("Unable to find product name span");
+        }
+        geoRestrictionErrorDialog.showModal();
       }
       return;
     }
