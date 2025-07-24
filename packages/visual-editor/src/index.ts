@@ -1925,6 +1925,11 @@ export class Main extends SignalWatcher(LitElement) {
             break;
           }
 
+          case "demo-video": {
+            this.#uiState.show.add("VideoModal");
+            break;
+          }
+
           case "history": {
             if (!this.#canvasControllerRef.value) {
               return;
