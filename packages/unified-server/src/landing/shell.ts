@@ -75,9 +75,9 @@ function createAnimatedGradient(
   const stop1 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
   const stop2 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
 
-  stop1.setAttribute("stop-color", "black");
+  stop1.setAttribute("stop-color", "#000000");
   stop1.setAttribute("offset", "0%");
-  stop2.setAttribute("stop-color", "black");
+  stop2.setAttribute("stop-color", "#000000");
   stop2.setAttribute("offset", "100%");
   gradient.setAttribute("id", `${id}-gradient`);
   gradient.appendChild(stop1);
@@ -89,7 +89,7 @@ function createAnimatedGradient(
     "animate"
   );
   animateStop1.setAttribute("attributeName", "stop-color");
-  animateStop1.setAttribute("values", "black;white");
+  animateStop1.setAttribute("values", "#000000;#ffffff");
   animateStop1.setAttribute("dur", "1.3s");
   animateStop1.setAttribute("begin", `${i}s`);
   animateStop1.setAttribute("repeatCount", "1");
@@ -100,7 +100,11 @@ function createAnimatedGradient(
 
   // Now duplicate the animation and go again for the second stop.
   const animateStop2 = animateStop1.cloneNode() as SVGAnimateElement;
-  animateStop2.setAttribute("begin", `${i + 0.5}s`);
+  animateStop2.setAttribute("values", "#000000;#000000;#ffffff");
+  animateStop2.setAttribute("dur", "1.8s");
+  animateStop2.setAttribute("keyTimes", "0;0.32;1");
+  animateStop2.setAttribute("keySplines", "0 0 1 1; 0.35 0 0.3 1");
+
   stop1.appendChild(animateStop1);
   stop2.appendChild(animateStop2);
 
@@ -129,13 +133,13 @@ function createImageMask(id: string, img: SVGImageElement): SVGMaskElement {
 
 export function showLandingImages() {
   const images = new Map([
-    ["#arrow-1", "/styles/landing/images/graph/arrow-1@2x.png"],
-    ["#input-1", "/styles/landing/images/graph/input@2x.png"],
-    ["#node-1", "/styles/landing/images/graph/node-1@2x.png"],
-    ["#arrow-2", "/styles/landing/images/graph/arrow-2@2x.png"],
-    ["#node-2", "/styles/landing/images/graph/node-2@2x.png"],
-    ["#arrow-3", "/styles/landing/images/graph/arrow-3@2x.png"],
-    ["#node-3", "/styles/landing/images/graph/node-3@2x.png"],
+    ["arrow-1", "/styles/landing/images/graph/arrow-1@2x.png"],
+    ["input-1", "/styles/landing/images/graph/input@2x.png"],
+    ["node-1", "/styles/landing/images/graph/node-1@2x.png"],
+    ["arrow-2", "/styles/landing/images/graph/arrow-2@2x.png"],
+    ["node-2", "/styles/landing/images/graph/node-2@2x.png"],
+    ["arrow-3", "/styles/landing/images/graph/arrow-3@2x.png"],
+    ["node-3", "/styles/landing/images/graph/node-3@2x.png"],
   ]);
 
   const showImages = () => {
@@ -144,7 +148,7 @@ export function showLandingImages() {
 
     let i = 0;
     for (const [id] of images) {
-      const img = document.querySelector<SVGImageElement>(id);
+      const img = document.querySelector<SVGImageElement>(`#${id}`);
       if (!img || !defs || !svg) {
         continue;
       }
@@ -154,6 +158,7 @@ export function showLandingImages() {
       defs.appendChild(gradient);
       svg.appendChild(mask);
       img.setAttribute("mask", `url(#${id}-mask)`);
+      img.classList.add("visible");
 
       i += 0.2;
     }
@@ -161,7 +166,7 @@ export function showLandingImages() {
 
   let pendingImages = images.size;
   for (const [id, src] of images) {
-    const img = document.querySelector<SVGImageElement>(id);
+    const img = document.querySelector<SVGImageElement>(`#${id}`);
     if (!img) {
       console.warn(`Unable to locate image with id ${id}`);
       continue;
