@@ -354,6 +354,7 @@ export type ConnectorState = {
 
 export type UIOverlays =
   | "BoardEditModal"
+  | "VideoModal"
   | "BoardServerAddOverlay"
   | "TOS"
   | "RuntimeFlags"

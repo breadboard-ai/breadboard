@@ -79,7 +79,6 @@ const SIDE_ITEM_KEY = "bb-canvas-controller-side-nav-item";
 import "./empty-state.js";
 import { findGoogleDriveAssetsInGraph } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 import { isEmpty } from "../../utils/utils.js";
-import type { DriveFileIdWithOptionalResourceKey } from "../google-drive/google-drive-picker.js";
 
 @customElement("bb-canvas-controller")
 export class CanvasController extends LitElement {
