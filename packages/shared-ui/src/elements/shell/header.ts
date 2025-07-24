@@ -249,7 +249,7 @@ export class VEHeader extends LitElement {
         display: flex;
         align-items: center;
 
-        & #app-title {
+        &#app-title {
           font-size: 26px;
         }
       }
