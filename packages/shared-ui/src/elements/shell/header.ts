@@ -527,6 +527,11 @@ export class VEHeader extends LitElement {
         title: Strings.from("COMMAND_JOIN_CHAT"),
         icon: "open_in_new",
       },
+      {
+        id: "demo-video",
+        title: Strings.from("COMMAND_WATCH_DEMO_VIDEO"),
+        icon: "videocam",
+      },
     ];
 
     if (this.showExperimentalComponents) {

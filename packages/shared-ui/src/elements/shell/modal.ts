@@ -62,12 +62,12 @@ export class VEModal extends LitElement {
         border: none;
         position: relative;
         background: transparent;
-        color: var(--n-0);
+        color: var(--color, var(--n-0));
 
         & #container {
           animation: fadeAndScaleIn 0.3s cubic-bezier(0.5, 0, 0.3, 1) 0.15s
             backwards;
-          background: var(--n-100);
+          background: var(--background, var(--n-100));
           padding: var(--bb-grid-size-4) var(--bb-grid-size-6);
           border-radius: var(--bb-grid-size-4);
           position: fixed;

@@ -939,6 +939,7 @@ export class Main extends SignalWatcher(LitElement) {
 
   #hideAllOverlays() {
     this.#uiState.show.delete("BoardEditModal");
+    this.#uiState.show.delete("VideoModal");
     this.#uiState.show.delete("BoardServerAddOverlay");
     this.#uiState.show.delete("MissingShare");
   }
@@ -1423,6 +1424,9 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.show.has("BoardEditModal")
           ? this.#renderBoardEditModal()
           : nothing,
+        this.#uiState.show.has("VideoModal")
+          ? this.#renderVideoModal()
+          : nothing,
         this.#uiState.show.has("RuntimeFlags")
           ? this.#renderRuntimeFlagsModal()
           : nothing,
@@ -1532,6 +1536,9 @@ export class Main extends SignalWatcher(LitElement) {
       .themeHash=${renderValues.themeHash}
       .topGraphResult=${renderValues.topGraphResult}
       .visualChangeId=${this.#lastVisualChangeId}
+      @bbshowvideomodal=${() => {
+        this.#uiState.show.add("VideoModal");
+      }}
       @bbeditorpositionchange=${(
         evt: BreadboardUI.Events.EditorPointerPositionChangeEvent
       ) => {
@@ -1595,6 +1602,14 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.show.delete("BoardEditModal");
       }}
     ></bb-edit-board-modal>`;
+  }
+
+  #renderVideoModal() {
+    return html`<bb-video-modal
+      @bbmodaldismissed=${() => {
+        this.#uiState.show.delete("VideoModal");
+      }}
+    ></bb-video-modal>`;
   }
 
   #renderRuntimeFlagsModal() {
@@ -1907,6 +1922,11 @@ export class Main extends SignalWatcher(LitElement) {
 
           case "chat": {
             window.open("https://discord.gg/googlelabs", "_blank");
+            break;
+          }
+
+          case "demo-video": {
+            this.#uiState.show.add("VideoModal");
             break;
           }
 

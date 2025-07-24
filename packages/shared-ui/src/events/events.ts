@@ -106,6 +106,14 @@ export class StateEvent<
 
 /** Legacy Event System */
 
+export class ShowVideoModalEvent extends Event {
+  static eventName = "bbshowvideomodal";
+
+  constructor() {
+    super(ShowVideoModalEvent.eventName, { ...eventInit });
+  }
+}
+
 /**
  * Board Management
  */

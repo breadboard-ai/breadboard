@@ -7,6 +7,7 @@ import { LitElement, html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 import { type } from "../../styles/host/type";
 import { colorsLight } from "../../styles/host/colors-light";
+import { ShowVideoModalEvent } from "../../events/events";
 
 @customElement("bb-empty-state")
 export class EmptyState extends LitElement {
@@ -81,6 +82,19 @@ export class EmptyState extends LitElement {
       #headline {
         translate: 0 -3svh;
         font-size: min(4svw, 70px);
+        text-align: center;
+      }
+
+      #tag {
+        translate: 0 -2svh;
+        font-size: min(2svw, 24px);
+        text-align: center;
+
+        & a {
+          color: var(--ui-custom-o-100);
+          text-decoration: none;
+          pointer-events: auto;
+        }
       }
 
       @keyframes fadeIn {
@@ -99,8 +113,21 @@ export class EmptyState extends LitElement {
     return html`<div id="top" class="message edu-sa-beginner">
         Add a step to get started <img src="/images/arrow-up.png" />
       </div>
-      <div id="headline" class="sans-flex round w-500">
-        Let&apos;s build your app
+      <div>
+        <div id="headline" class="sans-flex round w-500">
+          Let&apos;s build your app
+        </div>
+        <div id="tag" class="sans-flex round w-500">
+          Take a look at our
+          <a
+            @click=${(evt: Event) => {
+              evt.preventDefault();
+              this.dispatchEvent(new ShowVideoModalEvent());
+            }}
+            href="https://youtube.com/watch?v=E0hrcDO3Noc"
+            >demo video</a
+          >
+        </div>
       </div>
       <div id="bottom" class="message edu-sa-beginner">
         ... or type what you want to build <img src="/images/arrow-down.png" />

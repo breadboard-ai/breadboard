@@ -63,6 +63,9 @@ export default {
   COMMAND_JOIN_CHAT: {
     str: "Google Labs Discord",
   },
+  COMMAND_WATCH_DEMO_VIDEO: {
+    str: "Watch Demo Video",
+  },
   COMMAND_EXPORT_PROJECT: {
     str: "Export JSON",
   },
