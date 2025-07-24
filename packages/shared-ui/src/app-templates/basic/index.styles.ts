@@ -28,36 +28,34 @@ export const styles: CSSResultGroup = [
 
     /** Fonts */
 
-    @scope (.app-template) {
-      :scope {
-        --font-family: var(
-          --bb-font-family,
-          "Helvetica Neue",
-          Helvetica,
-          Arial,
-          sans-serif
-        );
-        --font-family-flex: var(
-          --bb-font-family-flex,
-          "Helvetica Neue",
-          Helvetica,
-          Arial,
-          sans-serif
-        );
-        --font-family-mono: var(
-          --bb-font-family-mono,
-          "Courier New",
-          Courier,
-          monospace
-        );
-        --font-style: normal;
+    .app-template {
+      --font-family: var(
+        --bb-font-family,
+        "Helvetica Neue",
+        Helvetica,
+        Arial,
+        sans-serif
+      );
+      --font-family-flex: var(
+        --bb-font-family-flex,
+        "Helvetica Neue",
+        Helvetica,
+        Arial,
+        sans-serif
+      );
+      --font-family-mono: var(
+        --bb-font-family-mono,
+        "Courier New",
+        Courier,
+        monospace
+      );
+      --font-style: normal;
 
-        /**
+      /**
            * Added so that any fixed position overlays are relative to this
            * scope rather than any containing document.
            */
-        transform: translateX(0);
-      }
+      transform: translateX(0);
     }
 
     /** General styles */
@@ -72,16 +70,14 @@ export const styles: CSSResultGroup = [
       }
     }
 
-    @scope (.app-template) {
-      :scope {
-        background: var(--s-90, var(--background-color));
-        color: var(--p-25, var(--text-color));
-        display: grid;
-        grid-template-rows: minmax(0, 1fr) max-content;
-        width: 100%;
-        height: 100%;
-        margin: 0;
-      }
+    .app-template {
+      background: var(--s-90, var(--background-color));
+      color: var(--p-25, var(--text-color));
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) max-content;
+      width: 100%;
+      height: 100%;
+      margin: 0;
 
       & #disclaimer {
         position: absolute;
@@ -782,7 +778,7 @@ export const styles: CSSResultGroup = [
     }
 
     :host([showsharebutton]) {
-      @scope (.app-template) {
+      .app-template {
         & #content {
           & #controls {
             & button#share {

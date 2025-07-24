@@ -42,11 +42,6 @@ export class ParticleViewerAudio extends LitElement implements ParticleViewer {
         display: block;
         overflow: hidden;
       }
-
-      section {
-        display: grid;
-        height: 100%;
-      }
     `,
   ];
 
