@@ -179,7 +179,6 @@ export class Renderer extends LitElement {
 
       :host {
         display: block;
-        background: var(--n-95);
         overflow: hidden;
         transform: translate(0, 0);
         contain: strict;
@@ -190,6 +189,7 @@ export class Renderer extends LitElement {
         outline: none;
         touch-action: none;
         position: relative;
+        z-index: 110;
       }
 
       :host([interactionmode="pan"]) {
