@@ -1809,6 +1809,7 @@ export class Main extends SignalWatcher(LitElement) {
       @bbsnackbaraction=${async (
         evt: BreadboardUI.Events.SnackbarActionEvent
       ) => {
+        evt.callback?.();
         switch (evt.action) {
           case "remix": {
             if (!evt.value) {

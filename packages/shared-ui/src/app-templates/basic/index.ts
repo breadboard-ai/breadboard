@@ -29,6 +29,7 @@ import {
 import { styleMap } from "lit/directives/style-map.js";
 import {
   ResizeEvent,
+  ShareRequestedEvent,
   SignInRequestedEvent,
   SnackbarEvent,
   StateEvent,
@@ -53,6 +54,14 @@ import "./header/header.js";
 
 import * as ParticlesUI from "@breadboard-ai/particles-ui";
 import { escapeStr } from "../../utils/escape-str.js";
+import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
+import {
+  MAIN_TO_SHAREABLE_COPY_PROPERTY,
+  SHAREABLE_COPY_TO_MAIN_PROPERTY,
+} from "@breadboard-ai/google-drive-kit/board-server/operations.js";
+import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
+import { ref, createRef } from "lit/directives/ref.js";
 
 function isHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -128,6 +137,11 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   @state()
   accessor resultsUrl: string | null = null;
+
+  @consume({ context: googleDriveClientContext })
+  accessor googleDriveClient!: GoogleDriveClient | undefined;
+
+  readonly #shareResultsButton = createRef<HTMLButtonElement>();
 
   get additionalOptions() {
     return {
@@ -293,6 +307,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               id="save-results-button"
               class="sans-flex w-500 round md-body-medium"
               @click=${this.#onClickSaveResults}
+              ${ref(this.#shareResultsButton)}
             >
               <span class="g-icon filled round">share</span>
               Share output
@@ -320,46 +335,101 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     );
   }
 
-  async #onClickSaveResults(evt: Event) {
+  async #onClickSaveResults() {
+    const btn = this.#shareResultsButton.value;
+    if (!btn) {
+      console.error("No share results button");
+      return;
+    }
     this.resultsUrl = null;
 
-    const lockButton = (btn: EventTarget | null) => {
-      if (!(btn instanceof HTMLButtonElement)) return;
+    const lockButton = () => {
       btn.disabled = true;
     };
-    const unlockButton = (btn: EventTarget | null) => {
-      if (!(btn instanceof HTMLButtonElement)) return;
+    const unlockButton = () => {
       btn.disabled = false;
     };
 
-    lockButton(evt.target);
+    lockButton();
 
     if (!this.run) {
       console.error(`No project run`);
-      unlockButton(evt.target);
+      unlockButton();
       return;
     }
+
+    // Check if we're published. We can only share results for published graphs.
+    if (!this.googleDriveClient) {
+      console.error(`No google drive client`);
+      unlockButton();
+      return;
+    }
+
+    const currentGraphUrl = this.graph?.url;
+    if (!currentGraphUrl) {
+      console.error(`No graph url`);
+      unlockButton();
+      return;
+    }
+    const currentGraphFileId = extractGoogleDriveFileId(currentGraphUrl);
+    if (!currentGraphFileId) {
+      console.error(`Graph URL is not drive:`, currentGraphUrl);
+      unlockButton();
+      return;
+    }
+
+    let shareableGraphFileId;
+    const metadata = await this.googleDriveClient.getFileMetadata(
+      currentGraphFileId,
+      { fields: ["properties"] }
+    );
+    const isPublishedCopy =
+      metadata.properties?.[SHAREABLE_COPY_TO_MAIN_PROPERTY];
+    if (isPublishedCopy) {
+      shareableGraphFileId = currentGraphFileId;
+    } else {
+      const publishedCopyFileId =
+        metadata.properties?.[MAIN_TO_SHAREABLE_COPY_PROPERTY];
+      if (publishedCopyFileId) {
+        shareableGraphFileId = publishedCopyFileId;
+      } else {
+        this.dispatchEvent(
+          new SnackbarEvent(
+            crypto.randomUUID(),
+            `Please share your ${Strings.from("APP_NAME")} first`,
+            SnackType.ERROR,
+            [
+              {
+                title: "Share",
+                action: "callback",
+                callback: () => this.dispatchEvent(new ShareRequestedEvent()),
+              },
+            ],
+            true,
+            true
+          )
+        );
+        unlockButton();
+        return;
+      }
+    }
+    const shareableGraphUrl = `drive:/${shareableGraphFileId}`;
+
     // Clone because we are going to inline content below.
     const finalOutputValues = structuredClone(this.run.finalOutput);
     if (!finalOutputValues) {
-      unlockButton(evt.target);
-      return;
-    }
-    const graphUrl = this.graph?.url;
-    if (!graphUrl) {
-      console.error(`No graph url`);
-      unlockButton(evt.target);
+      unlockButton();
       return;
     }
     const boardServer = this.boardServer;
     if (!boardServer) {
       console.error(`No board server`);
-      unlockButton(evt.target);
+      unlockButton();
       return;
     }
     if (!(boardServer instanceof GoogleDriveBoardServer)) {
       console.error(`Board server was not Google Drive`);
-      unlockButton(evt.target);
+      unlockButton();
       return;
     }
 
@@ -372,14 +442,14 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
         // Transform any inline data parts.
         const inlined = await transformDataParts(
-          new URL(graphUrl),
+          new URL(shareableGraphUrl),
           value,
           "inline",
-          boardServer.dataPartTransformer(new URL(graphUrl))
+          boardServer.dataPartTransformer(new URL(shareableGraphUrl))
         );
         if (!ok(inlined)) {
           console.error(`Error inlining results content for ${key}`, inlined);
-          unlockButton(evt.target);
+          unlockButton();
           return;
         }
 
@@ -415,7 +485,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     let resultsFileId: string;
     try {
       const result = await boardServer.ops.writeRunResults({
-        graphUrl,
+        graphUrl: shareableGraphUrl,
         finalOutputValues,
       });
       resultsFileId = result.id;
@@ -431,7 +501,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           true
         )
       );
-      unlockButton(evt.target);
+      unlockButton();
       return;
     }
 
@@ -459,17 +529,18 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           true
         )
       );
-      unlockButton(evt.target);
+      unlockButton();
       return;
     }
 
     const shareUrl = new URL(`/`, document.location.origin);
-    shareUrl.searchParams.set("flow", graphUrl);
+    shareUrl.searchParams.set("flow", shareableGraphUrl);
     shareUrl.searchParams.set("mode", "app");
     shareUrl.searchParams.set("results", resultsFileId);
+    shareUrl.searchParams.set("shared", "true");
 
     this.resultsUrl = shareUrl.href;
-    unlockButton(evt.target);
+    unlockButton();
 
     this.dispatchEvent(new UnsnackbarEvent());
   }

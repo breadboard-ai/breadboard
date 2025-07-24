@@ -261,7 +261,11 @@ export class Snackbar extends LitElement {
                   @click=${() => {
                     this.hide();
                     this.dispatchEvent(
-                      new SnackbarActionEvent(action.action, action.value)
+                      new SnackbarActionEvent(
+                        action.action,
+                        action.value,
+                        action.callback
+                      )
                     );
                   }}
                 >
