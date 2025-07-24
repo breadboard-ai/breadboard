@@ -187,7 +187,6 @@ class SigninAdapter {
     });
     channel.close();
     if (grantResponse.error !== undefined) {
-      // TODO(aomarks) Show error info in the UI.
       console.error(grantResponse.error);
       if (grantResponse.error.includes("region")) {
         return {
@@ -199,6 +198,32 @@ class SigninAdapter {
         ok: false,
         error: { code: "other", detail: grantResponse.error },
       };
+    }
+
+    try {
+      const geoAccessResponse = await fetch(
+        new URL(
+          "/v1beta1/checkAppAccess",
+          this.#globalConfig.BACKEND_API_ENDPOINT
+        ),
+        { headers: { Authorization: `Bearer ${grantResponse.access_token}` } }
+      );
+      if (!geoAccessResponse.ok) {
+        console.log(geoAccessResponse.status);
+        // return {
+        // ok: false,
+        // error: { code: "other", detail: "Error checking geo access" },
+        // };
+      }
+      const geoAccessResult = (await geoAccessResponse.json()) as {
+        canAccess: boolean;
+      };
+      console.log(geoAccessResult);
+      // if (!geoAccessResult.canAccess) {
+      // return { ok: false, error: { code: "geo-restriction" } };
+      // }
+    } catch {
+      // Ignore for now.
     }
 
     const connection = await this.#getConnection();
