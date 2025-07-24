@@ -29,6 +29,7 @@ import { maybeConvertToYouTube } from "../../../utils/substitute-input";
 import { LLMContent } from "@breadboard-ai/types";
 import { icons } from "../../../styles/icons";
 import { type } from "../../../styles/host/type";
+import { classMap } from "lit/directives/class-map.js";
 
 interface SupportedActions {
   allowAddAssets: boolean;
@@ -104,6 +105,11 @@ export class FloatingInput extends LitElement {
           min-height: var(--bb-grid-size-10);
           display: flex;
           align-items: center;
+
+          &.vertical {
+            flex-direction: column;
+            align-items: start;
+          }
 
           p {
             margin: 0 0 var(--bb-grid-size-2) 0;
@@ -384,7 +390,12 @@ export class FloatingInput extends LitElement {
 
           const hasAssetEntered =
             this.assetShelf === null || this.assetShelf.value.length === 0;
-          return html`<div class="user-input">
+          return html`<div
+            class=${classMap({
+              "user-input": true,
+              vertical: schema.description !== undefined,
+            })}
+          >
             ${schema.description ? html`<p>${schema.description}</p>` : nothing}
             ${supportedActions.textInput
               ? html`<textarea
