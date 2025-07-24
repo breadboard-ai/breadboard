@@ -304,6 +304,10 @@ export class GraphEdge extends Box {
     selectBox.width = intersectTR.x - intersectTL.x;
     selectBox.height = intersectBL.y - intersectTL.y;
 
+    if (!("checkIntersection" in this.#edgeRef.value)) {
+      return false;
+    }
+
     return this.#edgeRef.value.checkIntersection(
       this.#edgeHitAreaRef.value,
       selectBox
