@@ -48,6 +48,8 @@ if (deploymentConfiguration?.MEASUREMENT_ID) {
 }
 
 async function init() {
+  Shell.showLandingImages();
+
   const globalConfig = {
     connectionServerUrl: new URL("/connection/", window.location.href).href,
     connectionRedirectUrl: "/oauth/",
