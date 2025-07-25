@@ -200,23 +200,7 @@ class SigninAdapter {
       };
     }
 
-    const geoAccessResponse = await fetch(
-      new URL(
-        "/v1beta1/checkAppAccess",
-        this.#globalConfig.BACKEND_API_ENDPOINT
-      ),
-      { headers: { Authorization: `Bearer ${grantResponse.access_token}` } }
-    );
-    if (!geoAccessResponse.ok) {
-      return {
-        ok: false,
-        error: { code: "other", detail: "Error checking geo access" },
-      };
-    }
-    const geoAccessResult = (await geoAccessResponse.json()) as {
-      canAccess: boolean;
-    };
-    if (!geoAccessResult.canAccess) {
+    if (await this.userHasGeoRestriction(grantResponse.access_token)) {
       return { ok: false, error: { code: "geo-restriction" } };
     }
 
@@ -274,5 +258,20 @@ class SigninAdapter {
     }
     await this.#settingsHelper.delete(SETTINGS_TYPE.CONNECTIONS, connection.id);
     this.#state = { status: "signedout" };
+  }
+
+  async userHasGeoRestriction(accessToken: string): Promise<boolean> {
+    const response = await fetch(
+      new URL(
+        "/v1beta1/checkAppAccess",
+        this.#globalConfig.BACKEND_API_ENDPOINT
+      ),
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} error checking geo restriction`);
+    }
+    const result = (await response.json()) as { canAccess?: boolean };
+    return !result.canAccess;
   }
 }

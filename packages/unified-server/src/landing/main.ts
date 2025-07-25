@@ -156,6 +156,11 @@ async function init() {
     scopesErrorSignInButton.href = signInUrl;
   };
 
+  const showGeoRestrictionDialog = () => {
+    genericErrorDialogTitle.textContent = `${Strings.from("APP_NAME")} is not available in your country yet`;
+    genericErrorDialog.showModal();
+  };
+
   const onClickSignIn = async () => {
     if (!signinAdapter) {
       return;
@@ -169,8 +174,7 @@ async function init() {
       if (error.code === "missing-scopes") {
         scopesErrorDialog.showModal();
       } else if (error.code === "geo-restriction") {
-        genericErrorDialogTitle.textContent = `${Strings.from("APP_NAME")} is not available in your country yet`;
-        genericErrorDialog.showModal();
+        showGeoRestrictionDialog();
       } else {
         error.code satisfies "other";
         genericErrorDialogTitle.textContent = `An unexpected signin error occured`;
@@ -189,6 +193,13 @@ async function init() {
     onClickSignIn();
     scopesErrorDialog.close();
   });
+
+  const url = new URL(window.location.href);
+  if (url.searchParams.has("geo-restriction")) {
+    url.searchParams.delete("geo-restriction");
+    window.history.replaceState(null, "", url);
+    showGeoRestrictionDialog();
+  }
 }
 
 init();
