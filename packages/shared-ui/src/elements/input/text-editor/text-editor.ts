@@ -40,8 +40,7 @@ function chicletHtml(
 export class TextEditor extends LitElement {
   @property()
   set value(value: string) {
-    const escapedValue = escapeHTMLEntities(value);
-    const template = new Template(escapedValue);
+    const template = new Template(value);
     template.substitute((part) => {
       return chicletHtml(part, this.projectState, this.subGraphId);
     });
@@ -596,11 +595,10 @@ export class TextEditor extends LitElement {
       return;
     }
 
-    const value = (this.#editorRef.value.textContent ?? "").replace(
+    this.#value = (this.#editorRef.value.textContent ?? "").replace(
       /\uFEFF/gim,
       ""
     );
-    this.#value = escapeHTMLEntities(value);
     this.dispatchEvent(
       new InputEvent("input", {
         bubbles: true,
@@ -791,7 +789,7 @@ export class TextEditor extends LitElement {
       return;
     }
 
-    this.#editorRef.value.innerHTML = this.#renderableValue;
+    this.#editorRef.value.innerHTML = escapeHTMLEntities(this.#renderableValue);
     this.#ensureAllChicletsHaveSpace();
     this.#togglePlaceholder();
   }
