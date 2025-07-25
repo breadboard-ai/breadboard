@@ -53,7 +53,8 @@ export class Router extends EventTarget {
     url: string | null,
     mode: VisualEditorMode,
     id?: TabId,
-    creator?: EditHistoryCreator
+    creator?: EditHistoryCreator,
+    shared?: boolean
   ) {
     // Any invalid or null URLs should redirect to the origin.
     if (!url || !URL.canParse(url)) {
@@ -66,6 +67,9 @@ export class Router extends EventTarget {
     if (urlWithMode.origin !== window.location.origin) {
       const newURL = new URL(window.location.origin);
       newURL.searchParams.set("flow", url);
+      if (shared) {
+        newURL.searchParams.set("shared", "true");
+      }
       url = newURL.href;
       urlWithMode = new URL(url);
     }
