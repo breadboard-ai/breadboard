@@ -74,6 +74,7 @@ import { createThemeStyles } from "@breadboard-ai/theme";
 import { styleMap } from "lit/directives/style-map.js";
 import { emptyStyles } from "../../styles/host/colors-empty.js";
 
+const focusAppControllerWhenIn = ["canvas", "preview"];
 const SIDE_ITEM_KEY = "bb-canvas-controller-side-nav-item";
 
 import "./empty-state.js";
@@ -514,7 +515,7 @@ export class CanvasController extends LitElement {
             class=${classMap({
               active: this.sideNavItem === "app-view",
             })}
-            .focusWhenIn=${["canvas", "preview"]}
+            .focusWhenIn=${focusAppControllerWhenIn}
             .graph=${this.graph}
             .graphIsEmpty=${graphIsEmpty}
             .graphTopologyUpdateId=${this.graphTopologyUpdateId}
