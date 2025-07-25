@@ -14,7 +14,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { FastAccessSelectEvent } from "../../../events/events";
 import { Project } from "../../../state";
 import { FastAccessMenu } from "../../elements";
-import { escapeHTMLEntities } from "../../../utils";
+import { escapeHTMLEntities, unescapeHTMLEntities } from "../../../utils";
 import { styles as ChicletStyles } from "../../../styles/chiclet.js";
 import { getAssetType } from "../../../utils/mime-type";
 import { icons } from "../../../styles/icons";
@@ -51,7 +51,7 @@ export class TextEditor extends LitElement {
   }
 
   get value(): string {
-    return this.#value;
+    return unescapeHTMLEntities(this.#value);
   }
 
   get type(): string {
@@ -596,7 +596,7 @@ export class TextEditor extends LitElement {
       return;
     }
 
-    this.#value = (this.#editorRef.value.textContent ?? "").replace(
+    this.#value = (this.#editorRef.value.innerHTML ?? "").replace(
       /\uFEFF/gim,
       ""
     );
