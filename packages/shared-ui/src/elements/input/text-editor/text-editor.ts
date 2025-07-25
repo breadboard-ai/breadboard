@@ -40,7 +40,8 @@ function chicletHtml(
 export class TextEditor extends LitElement {
   @property()
   set value(value: string) {
-    const template = new Template(value);
+    const escapedValue = escapeHTMLEntities(value);
+    const template = new Template(escapedValue);
     template.substitute((part) => {
       return chicletHtml(part, this.projectState, this.subGraphId);
     });
@@ -789,7 +790,7 @@ export class TextEditor extends LitElement {
       return;
     }
 
-    this.#editorRef.value.innerHTML = escapeHTMLEntities(this.#renderableValue);
+    this.#editorRef.value.innerHTML = this.#renderableValue;
     this.#ensureAllChicletsHaveSpace();
     this.#togglePlaceholder();
   }
