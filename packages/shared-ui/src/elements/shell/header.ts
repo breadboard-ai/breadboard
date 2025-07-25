@@ -606,7 +606,7 @@ export class VEHeader extends LitElement {
       ${this.loadState !== "Error" && this.loadState !== "Loading"
         ? html`<div id="right">
             <bb-homepage-search-button></bb-homepage-search-button>
-            ${[this.#renderGraphItemSelect(), this.#renderUser()]}
+            ${[this.#renderGlobalItemSelect(), this.#renderUser()]}
           </div>`
         : nothing}
     </section>`;
