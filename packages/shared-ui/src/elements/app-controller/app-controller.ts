@@ -17,6 +17,7 @@ import {
   AppTemplate,
   AppTemplateOptions,
   AppTheme,
+  FloatingInputFocusState,
   SettingsStore,
   STATUS,
 } from "../../types/types.js";
@@ -71,6 +72,9 @@ export class AppController extends SignalWatcher(LitElement) {
 
   @property()
   accessor graphTopologyUpdateId = 0;
+
+  @property()
+  accessor focusWhenIn: FloatingInputFocusState = ["app"];
 
   @property()
   accessor isMine = false;
@@ -343,6 +347,7 @@ export class AppController extends SignalWatcher(LitElement) {
       this.#appTemplate.showShareButton = false;
       this.#appTemplate.showContentWarning = !this.isMine;
       this.#appTemplate.isEmpty = this.graphIsEmpty;
+      this.#appTemplate.focusWhenIn = this.focusWhenIn;
     }
 
     return html`

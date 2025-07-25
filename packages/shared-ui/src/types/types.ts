@@ -578,6 +578,7 @@ export interface AppTemplate extends LitElement {
   showContentWarning: boolean;
   showDisclaimer: boolean;
   isEmpty: boolean;
+  focusWhenIn: ["canvas", "preview" | "console"] | ["app"];
 }
 
 export interface Utterance {
@@ -695,3 +696,7 @@ export type ColorPalettes = {
 };
 
 export type VisualEditorMode = "app" | "canvas";
+
+export type FloatingInputFocusState =
+  | ["canvas", "preview" | "console"]
+  | ["app"];

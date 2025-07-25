@@ -12,6 +12,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import {
   AppTemplate,
   AppTemplateOptions,
+  FloatingInputFocusState,
   SnackbarUUID,
   SnackType,
 } from "../../types/types";
@@ -101,6 +102,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   @consume({ context: projectRunContext, subscribe: true })
   accessor run: ProjectRun | null = null;
+
+  @property()
+  accessor focusWhenIn: FloatingInputFocusState = ["app"];
 
   @property()
   accessor graph: GraphDescriptor | null = null;
@@ -557,6 +561,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     return html`<bb-floating-input
       .schema=${input.schema}
       .showDisclaimer=${this.showDisclaimer}
+      .focusWhenIn=${this.focusWhenIn}
       @bbresize=${(evt: ResizeEvent) => {
         this.style.setProperty(
           "--input-clearance",

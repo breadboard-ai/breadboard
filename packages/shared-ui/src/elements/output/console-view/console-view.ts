@@ -290,6 +290,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
     const PADDING = 24;
     return html`<bb-floating-input
       .schema=${input.schema}
+      .focusWhenIn=${["canvas", "console"]}
       @bbresize=${(evt: ResizeEvent) => {
         this.style.setProperty(
           "--input-clearance",

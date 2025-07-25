@@ -366,6 +366,7 @@ export type UI = {
   mode: VisualEditorMode;
   boardServer: string;
   boardLocation: string;
+  editorSection: "console" | "preview";
 
   /**
    * Indicates whether or not the UI can currently run a flow or not.
