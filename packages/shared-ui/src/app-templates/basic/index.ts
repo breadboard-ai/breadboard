@@ -7,7 +7,13 @@
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("Global");
 
-import { LitElement, html, nothing, HTMLTemplateResult } from "lit";
+import {
+  LitElement,
+  html,
+  nothing,
+  HTMLTemplateResult,
+  PropertyValues,
+} from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   AppTemplate,
@@ -100,6 +106,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @provide({ context: ParticlesUI.Context.themeContext })
   accessor theme: ParticlesUI.Types.UITheme = uiTheme;
 
+  @state()
   @consume({ context: projectRunContext, subscribe: true })
   accessor run: ProjectRun | null = null;
 
@@ -569,6 +576,12 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         );
       }}
     ></bb-floating-input>`;
+  }
+
+  protected willUpdate(_changedProperties: PropertyValues): void {
+    if (this.run?.status === "running" && this.resultsUrl) {
+      this.resultsUrl = null;
+    }
   }
 
   render() {
