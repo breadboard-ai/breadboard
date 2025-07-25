@@ -92,6 +92,8 @@ async function init() {
     return;
   }
 
+  ActionTracker.signInPageView();
+
   Shell.dispatchToEmbed({
     type: "home_loaded",
     isSignedIn: false,
