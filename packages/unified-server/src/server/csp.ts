@@ -33,7 +33,7 @@ const CSP_CONFIG = {
     "'self'",
     "data:",
     "https://play.google.com/log",
-    "https://www.google-analytics.com",
+    "https://*.google-analytics.com",
     "https://www.googleapis.com/drive/",
     "https://www.googleapis.com/upload/drive/",
   ],
