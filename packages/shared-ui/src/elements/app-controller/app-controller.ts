@@ -70,6 +70,9 @@ export class AppController extends SignalWatcher(LitElement) {
   accessor graphIsEmpty = false;
 
   @property()
+  accessor graphTopologyUpdateId = 0;
+
+  @property()
   accessor isMine = false;
 
   @property({ reflect: false })

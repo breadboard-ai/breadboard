@@ -497,6 +497,7 @@ export class CanvasController extends LitElement {
           selectionCount,
           this.boardServers,
           this.sideNavItem,
+          this.graphTopologyUpdateId,
         ],
         () => {
           return html`<bb-app-controller
@@ -505,6 +506,7 @@ export class CanvasController extends LitElement {
             })}
             .graph=${this.graph}
             .graphIsEmpty=${graphIsEmpty}
+            .graphTopologyUpdateId=${this.graphTopologyUpdateId}
             .isMine=${this.graphIsMine}
             .projectRun=${this.projectState?.run}
             .readOnly=${!this.graphIsMine}
