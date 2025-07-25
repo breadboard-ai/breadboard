@@ -200,30 +200,24 @@ class SigninAdapter {
       };
     }
 
-    try {
-      const geoAccessResponse = await fetch(
-        new URL(
-          "/v1beta1/checkAppAccess",
-          this.#globalConfig.BACKEND_API_ENDPOINT
-        ),
-        { headers: { Authorization: `Bearer ${grantResponse.access_token}` } }
-      );
-      if (!geoAccessResponse.ok) {
-        console.log(geoAccessResponse.status);
-        // return {
-        // ok: false,
-        // error: { code: "other", detail: "Error checking geo access" },
-        // };
-      }
-      const geoAccessResult = (await geoAccessResponse.json()) as {
-        canAccess: boolean;
+    const geoAccessResponse = await fetch(
+      new URL(
+        "/v1beta1/checkAppAccess",
+        this.#globalConfig.BACKEND_API_ENDPOINT
+      ),
+      { headers: { Authorization: `Bearer ${grantResponse.access_token}` } }
+    );
+    if (!geoAccessResponse.ok) {
+      return {
+        ok: false,
+        error: { code: "other", detail: "Error checking geo access" },
       };
-      console.log(geoAccessResult);
-      // if (!geoAccessResult.canAccess) {
-      // return { ok: false, error: { code: "geo-restriction" } };
-      // }
-    } catch {
-      // Ignore for now.
+    }
+    const geoAccessResult = (await geoAccessResponse.json()) as {
+      canAccess: boolean;
+    };
+    if (!geoAccessResult.canAccess) {
+      return { ok: false, error: { code: "geo-restriction" } };
     }
 
     const connection = await this.#getConnection();
