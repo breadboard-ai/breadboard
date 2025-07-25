@@ -1501,6 +1501,7 @@ export class Main extends SignalWatcher(LitElement) {
       class=${classMap({ active: this.#uiState.mode === "app" })}
       .graph=${this.#tab?.graph ?? null}
       .graphIsEmpty=${graphIsEmpty}
+      .graphTopologyUpdateId=${this.graphTopologyUpdateId}
       .isMine=${this.#tab?.graphIsMine ?? false}
       .projectRun=${renderValues.projectState?.run}
       .readOnly=${true}

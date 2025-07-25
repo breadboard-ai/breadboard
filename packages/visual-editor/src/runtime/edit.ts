@@ -534,52 +534,6 @@ export class Edit extends EventTarget {
     );
   }
 
-  async updateSubBoardInfo(
-    tab: Tab | null,
-    subGraphId: string,
-    title: string,
-    version: string,
-    description: string,
-    status: "published" | "draft" | null,
-    isTool: boolean | null,
-    isComponent: boolean | null
-  ) {
-    const editableGraph = this.getEditor(tab);
-    if (!editableGraph) {
-      this.dispatchEvent(
-        new RuntimeErrorEvent("Unable to edit subboard; no active board")
-      );
-      return;
-    }
-
-    const subGraph = editableGraph.raw().graphs?.[subGraphId];
-    if (!subGraph) {
-      this.dispatchEvent(
-        new RuntimeErrorEvent(`Unable to find subboard with id ${subGraphId}`)
-      );
-      return;
-    }
-
-    const subGraphDescriptor = subGraph;
-    this.#updateGraphValues(
-      subGraphDescriptor,
-      title,
-      version,
-      description,
-      status,
-      isTool,
-      isComponent
-    );
-
-    await editableGraph.edit(
-      [
-        { type: "removegraph", id: subGraphId },
-        { type: "addgraph", id: subGraphId, graph: subGraphDescriptor },
-      ],
-      `Replacing graph "${title}"`
-    );
-  }
-
   deleteComment(tab: Tab | null, id: string) {
     if (!tab) {
       this.dispatchEvent(new RuntimeErrorEvent("Unable to find tab"));
@@ -596,7 +550,7 @@ export class Edit extends EventTarget {
     this.dispatchEvent(new RuntimeBoardEditEvent(tab.id, [], false));
   }
 
-  updateBoardInfo(
+  async updateBoardInfo(
     tab: Tab | null,
     title: string,
     version: string,
@@ -610,8 +564,8 @@ export class Edit extends EventTarget {
       return null;
     }
 
-    this.#updateGraphValues(
-      tab.graph,
+    return this.#updateGraphValues(
+      tab,
       title,
       version,
       description,
@@ -626,25 +580,36 @@ export class Edit extends EventTarget {
     title: string | null,
     description: string | null
   ) {
-    if (!tab) {
-      this.dispatchEvent(new RuntimeErrorEvent("Unable to find tab"));
-      return null;
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph || !tab) {
+      this.dispatchEvent(
+        new RuntimeErrorEvent("Unable to edit subboard; no active board")
+      );
+      return;
     }
 
+    const newGraph = structuredClone(tab.graph);
     if (title !== null) {
-      tab.graph.title = title;
+      newGraph.title = title;
     }
     if (description !== null) {
-      tab.graph.description = description;
+      newGraph.description = description;
     }
 
-    tab.graph.metadata ??= {};
-    tab.graph.metadata.userModified = true;
-    this.dispatchEvent(new RuntimeBoardEditEvent(null, [], false));
+    await editableGraph.edit(
+      [
+        {
+          type: "replacegraph",
+          replacement: newGraph,
+          creator: { role: "user" },
+        },
+      ],
+      "Updating graph"
+    );
   }
 
-  #updateGraphValues(
-    graph: GraphDescriptor,
+  async #updateGraphValues(
+    tab: Tab | null,
     title: string,
     version: string,
     description: string,
@@ -652,50 +617,71 @@ export class Edit extends EventTarget {
     isTool: boolean | null,
     isComponent: boolean | null
   ) {
-    graph.title = title;
-    graph.version = version;
-    graph.description = description;
+    const editableGraph = this.getEditor(tab);
+    if (!editableGraph || !tab) {
+      this.dispatchEvent(
+        new RuntimeErrorEvent("Unable to edit subboard; no active board")
+      );
+      return;
+    }
 
-    graph.metadata ??= {};
-    graph.metadata.userModified = true;
+    const newGraph = structuredClone(tab.graph);
+    newGraph.title = title;
+    newGraph.version = version;
+    newGraph.description = description;
+
+    newGraph.metadata ??= {};
+    newGraph.metadata.userModified = true;
 
     if (status) {
-      graph.metadata.tags ??= [];
+      newGraph.metadata.tags ??= [];
 
       switch (status) {
         case "published": {
-          if (!graph.metadata.tags.includes("published")) {
-            graph.metadata.tags.push("published");
+          if (!newGraph.metadata.tags.includes("published")) {
+            newGraph.metadata.tags.push("published");
           }
-          graph.metadata.tags = graph.metadata.tags.filter(
+          newGraph.metadata.tags = newGraph.metadata.tags.filter(
             (tag) => tag !== "private"
           );
           break;
         }
 
         case "draft": {
-          graph.metadata.tags = graph.metadata.tags.filter(
+          newGraph.metadata.tags = newGraph.metadata.tags.filter(
             (tag) => tag !== "published" && tag !== "private"
           );
           break;
         }
 
         case "private": {
-          graph.metadata.tags = graph.metadata.tags.filter(
+          newGraph.metadata.tags = newGraph.metadata.tags.filter(
             (tag) => tag !== "published" && tag !== "private"
           );
-          graph.metadata.tags.push("private");
+          newGraph.metadata.tags.push("private");
         }
       }
     }
 
-    updateTag("tool", isTool);
-    updateTag("component", isComponent);
+    updateTag("tool", newGraph, isTool);
+    updateTag("component", newGraph, isComponent);
 
-    // TODO: Plumb Tab ID here.
-    this.dispatchEvent(new RuntimeBoardEditEvent(null, [], false));
+    await editableGraph.edit(
+      [
+        {
+          type: "replacegraph",
+          replacement: newGraph,
+          creator: { role: "user" },
+        },
+      ],
+      "Updating graph"
+    );
 
-    function updateTag(tagName: GraphTag, value: boolean | null) {
+    function updateTag(
+      tagName: GraphTag,
+      graph: GraphDescriptor,
+      value: boolean | null
+    ) {
       if (value !== null) {
         graph.metadata ??= {};
         graph.metadata.tags ??= [];
