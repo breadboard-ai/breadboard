@@ -40,6 +40,7 @@ export interface Delete extends BaseEventDetail<`${Namespace}.delete`> {
 
 export interface Load extends BaseEventDetail<`${Namespace}.load`> {
   readonly url: string;
+  readonly shared: boolean;
 }
 
 export interface Run extends BaseEventDetail<`${Namespace}.run`> {

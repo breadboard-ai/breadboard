@@ -72,7 +72,13 @@ export const LoadRoute: EventRoute<"board.load"> = {
   event: "board.load",
 
   async do({ runtime, originalEvent, uiState }) {
-    runtime.router.go(originalEvent.detail.url, uiState.mode);
+    runtime.router.go(
+      originalEvent.detail.url,
+      uiState.mode,
+      undefined,
+      undefined,
+      originalEvent.detail.shared
+    );
     return false;
   },
 };
