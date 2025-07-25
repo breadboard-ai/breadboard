@@ -51,7 +51,7 @@ import {
   MAIN_BOARD_ID,
 } from "../../constants/constants.js";
 import { classMap } from "lit/directives/class-map.js";
-import { Project } from "../../state/types.js";
+import { Project, UI } from "../../state/types.js";
 import "../../edit-history/edit-history-panel.js";
 import "../../edit-history/edit-history-overlay.js";
 import {
@@ -79,9 +79,13 @@ const SIDE_ITEM_KEY = "bb-canvas-controller-side-nav-item";
 import "./empty-state.js";
 import { findGoogleDriveAssetsInGraph } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 import { isEmpty } from "../../utils/utils.js";
+import { uiStateContext } from "../../contexts/ui-state.js";
 
 @customElement("bb-canvas-controller")
 export class CanvasController extends LitElement {
+  @consume({ context: uiStateContext })
+  accessor #uiState!: UI;
+
   @property()
   accessor boardServerKits: Kit[] = [];
 
@@ -168,6 +172,12 @@ export class CanvasController extends LitElement {
       globalThis.localStorage.setItem(SIDE_ITEM_KEY, item);
     } else {
       globalThis.localStorage.removeItem(SIDE_ITEM_KEY);
+    }
+
+    if (item === "app-view") {
+      this.#uiState.editorSection = "preview";
+    } else if (item === "activity") {
+      this.#uiState.editorSection = "console";
     }
   }
   get sideNavItem() {
@@ -504,6 +514,7 @@ export class CanvasController extends LitElement {
             class=${classMap({
               active: this.sideNavItem === "app-view",
             })}
+            .focusWhenIn=${["canvas", "preview"]}
             .graph=${this.graph}
             .graphIsEmpty=${graphIsEmpty}
             .graphTopologyUpdateId=${this.graphTopologyUpdateId}

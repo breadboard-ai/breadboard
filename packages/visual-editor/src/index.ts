@@ -63,6 +63,7 @@ import {
   globalConfigContext,
 } from "@breadboard-ai/shared-ui/contexts";
 import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
+import { uiStateContext } from "@breadboard-ai/shared-ui/contexts/ui-state.js";
 import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
 import { sideBoardRuntime } from "@breadboard-ai/shared-ui/contexts/side-board-runtime.js";
 import { IterateOnPromptEvent } from "@breadboard-ai/shared-ui/events/events.js";
@@ -140,6 +141,10 @@ export class Main extends SignalWatcher(LitElement) {
   @provide({ context: boardServerContext })
   accessor boardServer: BoardServer | undefined;
 
+  @provide({ context: uiStateContext })
+  @state()
+  accessor #uiState!: BreadboardUI.State.UI;
+
   @state()
   accessor #tab: Runtime.Types.Tab | null = null;
 
@@ -211,7 +216,6 @@ export class Main extends SignalWatcher(LitElement) {
   readonly #runStore = getRunStore();
   readonly #lastPointerPosition = { x: 0, y: 0 };
   readonly #embedHandler?: EmbedHandler;
-  accessor #uiState!: BreadboardUI.State.UI;
   readonly #apiClient: AppCatalystApiClient;
   readonly #secretsHelper: SecretsHelper;
   readonly #settings: SettingsStore;

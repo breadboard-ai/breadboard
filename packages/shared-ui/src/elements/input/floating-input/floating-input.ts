@@ -30,6 +30,10 @@ import { LLMContent } from "@breadboard-ai/types";
 import { icons } from "../../../styles/icons";
 import { type } from "../../../styles/host/type";
 import { classMap } from "lit/directives/class-map.js";
+import { consume } from "@lit/context";
+import { uiStateContext } from "../../../contexts/ui-state";
+import { UI } from "../../../state/types";
+import { FloatingInputFocusState } from "../../../types/types";
 
 interface SupportedActions {
   allowAddAssets: boolean;
@@ -50,6 +54,9 @@ export class FloatingInput extends LitElement {
   @property()
   accessor schema: Schema | null = null;
 
+  @property()
+  accessor focusWhenIn: FloatingInputFocusState = ["app"];
+
   @query("#asset-shelf")
   accessor assetShelf: AssetShelf | null = null;
 
@@ -61,6 +68,9 @@ export class FloatingInput extends LitElement {
 
   @state()
   accessor showAddAssetModal = false;
+
+  @consume({ context: uiStateContext })
+  accessor #uiState!: UI;
 
   static styles = [
     icons,
@@ -355,7 +365,24 @@ export class FloatingInput extends LitElement {
   }
 
   protected firstUpdated(): void {
+    // Ensure we only attempt to focus a visible text input.
     if (!this.textInput) {
+      return;
+    }
+
+    let attemptFocus = false;
+    if (this.focusWhenIn[0] === this.#uiState.mode) {
+      if (
+        this.focusWhenIn[1] !== undefined &&
+        this.#uiState.editorSection === this.focusWhenIn[1]
+      ) {
+        attemptFocus = true;
+      } else if (this.focusWhenIn[1] === undefined) {
+        attemptFocus = true;
+      }
+    }
+
+    if (!attemptFocus) {
       return;
     }
 

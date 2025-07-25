@@ -49,6 +49,9 @@ class ReactiveUIState implements UI {
   @signal
   accessor projectFilter: string | null = null;
 
+  @signal
+  accessor editorSection: "preview" | "console" = "preview";
+
   accessor show = new SignalSet<UIOverlays>();
 
   accessor toasts = new SignalMap<

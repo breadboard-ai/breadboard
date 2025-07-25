@@ -583,12 +583,10 @@ export const styles = [
       left: 0;
       top: 0;
       overflow: hidden;
-      pointer-events: none;
-      opacity: 0;
+      display: none;
 
       &.active {
-        opacity: 1;
-        pointer-events: auto;
+        display: block;
       }
     }
 
