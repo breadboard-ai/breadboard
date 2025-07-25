@@ -99,6 +99,6 @@ export function escapeHTMLEntities(str: string) {
   };
 
   return str
-    .replace(/&(?!lt|gt)/, "&amp;")
-    .replace(/[<>]/g, (char) => htmlEntities[char]);
+    .replace(/&(?!lt|gt|amp)/gim, "&amp;")
+    .replace(/[<>]/gim, (char) => htmlEntities[char]);
 }
