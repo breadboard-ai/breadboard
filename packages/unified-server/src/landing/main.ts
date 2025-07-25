@@ -134,11 +134,17 @@ async function init() {
     return;
   }
 
-  const geoRestrictionErrorDialog = document.querySelector<HTMLDialogElement>(
-    "#geo-restriction-error-dialog"
+  const genericErrorDialog = document.querySelector<HTMLDialogElement>(
+    "#generic-error-dialog"
   );
-  if (!geoRestrictionErrorDialog) {
-    console.warn("Unable to find geo scopes error dialog");
+  if (!genericErrorDialog) {
+    console.warn("Unable to find generic error dialog");
+    return;
+  }
+  const genericErrorDialogTitle =
+    genericErrorDialog.querySelector<HTMLHeadingElement>(".title");
+  if (!genericErrorDialogTitle) {
+    console.warn("Unable to find generic error dialog title");
     return;
   }
 
@@ -163,14 +169,12 @@ async function init() {
       if (error.code === "missing-scopes") {
         scopesErrorDialog.showModal();
       } else if (error.code === "geo-restriction") {
-        const productName =
-          geoRestrictionErrorDialog.querySelector(".product-name");
-        if (productName) {
-          productName.textContent = Strings.from("APP_NAME");
-        } else {
-          console.warn("Unable to find product name span");
-        }
-        geoRestrictionErrorDialog.showModal();
+        genericErrorDialogTitle.textContent = `${Strings.from("APP_NAME")} is not available in your country yet`;
+        genericErrorDialog.showModal();
+      } else {
+        error.code satisfies "other";
+        genericErrorDialogTitle.textContent = `An unexpected signin error occured`;
+        genericErrorDialog.showModal();
       }
       return;
     }
