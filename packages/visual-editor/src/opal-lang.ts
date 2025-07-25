@@ -83,7 +83,7 @@ export default {
       str: "Opal apps",
     },
     LABEL_TEAM_NAME: {
-      str: "Opals Team",
+      str: "Opal Team",
     },
     LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS: {
       str: "Your Opal apps",
