@@ -46,8 +46,6 @@ const RESEARCH_TOOLS: DefaultToolDescriptor[] = [
   },
 ];
 
-const RESEARCH_MODEL = "gemini-2.0-flash";
-
 const MAX_ITERATIONS = 7;
 
 function systemInstruction(first: boolean): string {
@@ -80,7 +78,6 @@ function researcherPrompt(
   first: boolean
 ): GeminiInputs {
   return {
-    model: RESEARCH_MODEL,
     body: {
       contents: addUserTurn(
         llm`
@@ -115,7 +112,6 @@ function reportWriterPrompt(
   research: string[]
 ): GeminiInputs {
   return {
-    model: RESEARCH_MODEL,
     body: {
       contents: [toLLMContent(research.join("\n\n"))],
       systemInstruction: toLLMContent(reportWriterInstruction()),

@@ -44,7 +44,6 @@ async function generateSummary(
   toolManager.addSearch();
   const result = await new GeminiPrompt(
     {
-      model: "gemini-2.0-flash",
       body: {
         contents: [{ parts: [{ text: query }] }],
         tools: toolManager.list(),

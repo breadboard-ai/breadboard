@@ -120,7 +120,6 @@ function codeRequest(prompt: LLMContent, language: string): GeminiPrompt {
   });
 
   return new GeminiPrompt({
-    model: "gemini-2.0-flash-exp",
     body: {
       contents: [prompt],
       generationConfig: {
