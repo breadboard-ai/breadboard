@@ -6,7 +6,7 @@
 
 import cors from "cors";
 import { Router, type Request, type Response } from "express";
-import { Readable } from "node:stream";
+import { Readable, PassThrough } from "node:stream";
 import { type ReadableStream } from "node:stream/web";
 
 const PRODUCTION_DRIVE_BASE_URL = "https://www.googleapis.com";
@@ -29,6 +29,14 @@ export function makeDriveProxyMiddleware({
     })
   );
   router.get("/:id", async (req: Request, res: Response) => {
+    const id = req.path;
+    const cached = DriveStoreCache.instance.get(id);
+    if (cached) {
+      res.setHeaders(cached.headers);
+      res.send(cached.body);
+      return;
+    }
+
     const productionDriveUrl = new URL(
       `/drive/v3/files${req.path}`,
       PRODUCTION_DRIVE_BASE_URL
@@ -49,7 +57,50 @@ export function makeDriveProxyMiddleware({
       },
     });
     res.status(userResponse.status);
-    Readable.fromWeb(userResponse.body as ReadableStream).pipe(res);
+    res.setHeaders(new Map(userResponse.headers.entries()));
+    Readable.fromWeb(userResponse.body as ReadableStream)
+      .pipe(
+        DriveStoreCache.instance.store(
+          userResponse.status,
+          userResponse.headers,
+          id
+        )
+      )
+      .pipe(res);
   });
   return router;
+}
+
+type CachedResponse = {
+  headers: Map<string, string>;
+  body: Buffer;
+};
+
+class DriveStoreCache {
+  readonly #cache = new Map<string, CachedResponse>();
+
+  private constructor() {}
+
+  get(id: string): CachedResponse | undefined {
+    return this.#cache.get(id);
+  }
+
+  store(status: number, responseHeaders: Headers, id: string): PassThrough {
+    const chunks: Buffer[] = [];
+    const passthrough = new PassThrough();
+    passthrough.on("data", (chunk) => {
+      chunks.push(chunk);
+    });
+    passthrough.on("end", () => {
+      const body = Buffer.concat(chunks);
+      const headers = new Map(responseHeaders.entries());
+      // Only cache successful results
+      if (status === 200) {
+        this.#cache.set(id, { headers, body });
+      }
+    });
+    return passthrough;
+  }
+
+  static readonly instance = new DriveStoreCache();
 }
