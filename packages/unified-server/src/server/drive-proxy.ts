@@ -12,14 +12,15 @@ import { type ReadableStream } from "node:stream/web";
 const PRODUCTION_DRIVE_BASE_URL = "https://www.googleapis.com";
 
 export type DriveProxyConfig = {
-  publicApiKey: string;
-  serverUrl: string;
+  publicApiKey?: string;
+  serverUrl?: string;
+  featuredGalleryFolderId?: string;
 };
 
 export function makeDriveProxyMiddleware({
   publicApiKey,
   serverUrl,
-}: DriveProxyConfig) {
+}: DriveProxyConfig): Router {
   const router = Router();
   router.use(
     cors({
@@ -28,8 +29,19 @@ export function makeDriveProxyMiddleware({
       maxAge: 24 * 60 * 60,
     })
   );
+  if (!publicApiKey) {
+    router.all(
+      "*",
+      createErrorHandler("GOOGLE_DRIVE_PUBLIC_API_KEY was not supplied")
+    );
+    return router;
+  }
+  if (!serverUrl) {
+    router.all("*", createErrorHandler("SERVER_URL was not supplied"));
+    return router;
+  }
   router.get("/:id", async (req: Request, res: Response) => {
-    const id = req.path;
+    const id = req.params.id;
     const cached = DriveStoreCache.instance.get(id);
     if (cached) {
       res.setHeaders(cached.headers);
@@ -38,7 +50,7 @@ export function makeDriveProxyMiddleware({
     }
 
     const productionDriveUrl = new URL(
-      `/drive/v3/files${req.path}`,
+      `/drive/v3/files/${id}`,
       PRODUCTION_DRIVE_BASE_URL
     );
     productionDriveUrl.search = new URL(
@@ -57,18 +69,28 @@ export function makeDriveProxyMiddleware({
       },
     });
     res.status(userResponse.status);
-    res.setHeaders(new Map(userResponse.headers.entries()));
+    const headers = getImportantHeaders(userResponse.headers);
+    res.setHeaders(headers);
     Readable.fromWeb(userResponse.body as ReadableStream)
-      .pipe(
-        DriveStoreCache.instance.store(
-          userResponse.status,
-          userResponse.headers,
-          id
-        )
-      )
+      .pipe(DriveStoreCache.instance.store(userResponse.status, headers, id))
       .pipe(res);
   });
   return router;
+}
+
+function createErrorHandler(message: string) {
+  console.warn(`The "/files" API will not be available: ${message}`);
+  return async (_req: Request, res: Response) => {
+    res.status(404).send(`Unable to serve file: ${message}`);
+  };
+}
+
+function getImportantHeaders(headers: Headers): Map<string, string> {
+  return new Map(
+    Array.from(headers.entries()).filter(
+      ([name]) => name.toLocaleLowerCase() === "content-type"
+    )
+  );
 }
 
 type CachedResponse = {
@@ -85,7 +107,7 @@ class DriveStoreCache {
     return this.#cache.get(id);
   }
 
-  store(status: number, responseHeaders: Headers, id: string): PassThrough {
+  store(status: number, headers: Map<string, string>, id: string): PassThrough {
     const chunks: Buffer[] = [];
     const passthrough = new PassThrough();
     passthrough.on("data", (chunk) => {
@@ -93,7 +115,6 @@ class DriveStoreCache {
     });
     passthrough.on("end", () => {
       const body = Buffer.concat(chunks);
-      const headers = new Map(responseHeaders.entries());
       // Only cache successful results
       if (status === 200) {
         this.#cache.set(id, { headers, body });

@@ -50,4 +50,8 @@ export type ServerDeploymentConfiguration = {
    * The URL of the deployed server.
    */
   SERVER_URL?: string;
+  /**
+   * The Drive Id of a folder containing featured gallery items
+   */
+  GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID?: string;
 };
