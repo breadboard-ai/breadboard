@@ -66,6 +66,8 @@ server.use(
   makeDriveProxyMiddleware({
     publicApiKey: serverConfig.GOOGLE_DRIVE_PUBLIC_API_KEY,
     serverUrl: serverConfig.SERVER_URL,
+    featuredGalleryFolderId:
+      serverConfig.GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID,
   })
 );
 

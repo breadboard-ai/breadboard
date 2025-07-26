@@ -14,6 +14,7 @@ const PRODUCTION_DRIVE_BASE_URL = "https://www.googleapis.com";
 export type DriveProxyConfig = {
   publicApiKey?: string;
   serverUrl?: string;
+  featuredGalleryFolderId?: string;
 };
 
 export function makeDriveProxyMiddleware({
