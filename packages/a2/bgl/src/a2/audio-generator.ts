@@ -31,7 +31,6 @@ async function invoke({
 
   // 2) Call Gemini to generate audio.
   const result = await gemini({
-    model: "gemini-2.0-flash-exp",
     body: {
       contents: [prompt],
       generationConfig: {
