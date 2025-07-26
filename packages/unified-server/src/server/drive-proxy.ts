@@ -29,7 +29,7 @@ export function makeDriveProxyMiddleware({
     })
   );
   router.get("/:id", async (req: Request, res: Response) => {
-    const id = req.path;
+    const id = req.params.id;
     const cached = DriveStoreCache.instance.get(id);
     if (cached) {
       res.setHeaders(cached.headers);
@@ -38,7 +38,7 @@ export function makeDriveProxyMiddleware({
     }
 
     const productionDriveUrl = new URL(
-      `/drive/v3/files${req.path}`,
+      `/drive/v3/files/${id}`,
       PRODUCTION_DRIVE_BASE_URL
     );
     productionDriveUrl.search = new URL(
@@ -57,18 +57,21 @@ export function makeDriveProxyMiddleware({
       },
     });
     res.status(userResponse.status);
-    res.setHeaders(new Map(userResponse.headers.entries()));
+    const headers = getImportantHeaders(userResponse.headers);
+    res.setHeaders(headers);
     Readable.fromWeb(userResponse.body as ReadableStream)
-      .pipe(
-        DriveStoreCache.instance.store(
-          userResponse.status,
-          userResponse.headers,
-          id
-        )
-      )
+      .pipe(DriveStoreCache.instance.store(userResponse.status, headers, id))
       .pipe(res);
   });
   return router;
+}
+
+function getImportantHeaders(headers: Headers): Map<string, string> {
+  return new Map(
+    Array.from(headers.entries()).filter(
+      ([name]) => name.toLocaleLowerCase() === "content-type"
+    )
+  );
 }
 
 type CachedResponse = {
@@ -85,7 +88,7 @@ class DriveStoreCache {
     return this.#cache.get(id);
   }
 
-  store(status: number, responseHeaders: Headers, id: string): PassThrough {
+  store(status: number, headers: Map<string, string>, id: string): PassThrough {
     const chunks: Buffer[] = [];
     const passthrough = new PassThrough();
     passthrough.on("data", (chunk) => {
@@ -93,7 +96,6 @@ class DriveStoreCache {
     });
     passthrough.on("end", () => {
       const body = Buffer.concat(chunks);
-      const headers = new Map(responseHeaders.entries());
       // Only cache successful results
       if (status === 200) {
         this.#cache.set(id, { headers, body });
