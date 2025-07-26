@@ -12,14 +12,14 @@ import { type ReadableStream } from "node:stream/web";
 const PRODUCTION_DRIVE_BASE_URL = "https://www.googleapis.com";
 
 export type DriveProxyConfig = {
-  publicApiKey: string;
-  serverUrl: string;
+  publicApiKey?: string;
+  serverUrl?: string;
 };
 
 export function makeDriveProxyMiddleware({
   publicApiKey,
   serverUrl,
-}: DriveProxyConfig) {
+}: DriveProxyConfig): Router {
   const router = Router();
   router.use(
     cors({
@@ -28,6 +28,17 @@ export function makeDriveProxyMiddleware({
       maxAge: 24 * 60 * 60,
     })
   );
+  if (!publicApiKey) {
+    router.all(
+      "*",
+      createErrorHandler("GOOGLE_DRIVE_PUBLIC_API_KEY was not supplied")
+    );
+    return router;
+  }
+  if (!serverUrl) {
+    router.all("*", createErrorHandler("SERVER_URL was not supplied"));
+    return router;
+  }
   router.get("/:id", async (req: Request, res: Response) => {
     const id = req.params.id;
     const cached = DriveStoreCache.instance.get(id);
@@ -64,6 +75,13 @@ export function makeDriveProxyMiddleware({
       .pipe(res);
   });
   return router;
+}
+
+function createErrorHandler(message: string) {
+  console.warn(`The "/files" API will not be available: ${message}`);
+  return async (_req: Request, res: Response) => {
+    res.status(404).send(`Unable to serve file: ${message}`);
+  };
 }
 
 function getImportantHeaders(headers: Headers): Map<string, string> {

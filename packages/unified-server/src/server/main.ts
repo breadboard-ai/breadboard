@@ -61,26 +61,13 @@ server.use(
 
 server.use("/app/@:user/:name", boardServer.middlewares.loadBoard());
 
-if (serverConfig.GOOGLE_DRIVE_PUBLIC_API_KEY && serverConfig.SERVER_URL) {
-  server.use(
-    "/files",
-    makeDriveProxyMiddleware({
-      publicApiKey: serverConfig.GOOGLE_DRIVE_PUBLIC_API_KEY,
-      serverUrl: serverConfig.SERVER_URL,
-    })
-  );
-} else {
-  if (!serverConfig.GOOGLE_DRIVE_PUBLIC_API_KEY) {
-    console.warn(
-      "GOOGLE_DRIVE_PUBLIC_API_KEY was not supplied, `files` API endpoint will not be available"
-    );
-  }
-  if (!serverConfig.SERVER_URL) {
-    console.warn(
-      "SERVER_URL was not supplied, `files` API endpoint will not be available"
-    );
-  }
-}
+server.use(
+  "/files",
+  makeDriveProxyMiddleware({
+    publicApiKey: serverConfig.GOOGLE_DRIVE_PUBLIC_API_KEY,
+    serverUrl: serverConfig.SERVER_URL,
+  })
+);
 
 server.use("/app", (req, res) => {
   // Redirect the old standalone app view to the new unified view with the app
