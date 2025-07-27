@@ -443,11 +443,12 @@ export class GoogleDriveClient {
     // API key and route over to the drive proxy.
     // TODO: Make this more explicit.
     if (authorization?.kind === "key") {
-      // Don't send the actual key: it will be provided by the proxy.
       url = new URL(
         `/files/${encodeURIComponent(fileId.id)}`,
         window.location.href
       );
+      // Don't send the actual key: it will be provided by the proxy.
+      authorization = undefined;
     } else {
       url = new URL(
         `drive/v3/files/${encodeURIComponent(fileId.id)}`,
