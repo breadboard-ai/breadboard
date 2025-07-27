@@ -170,7 +170,12 @@ class GalleryCache {
           referer: this.config.serverUrl,
         },
       });
-      if (!response.ok) return;
+      if (!response.ok) {
+        console.warn(
+          `Failed to read gallery list: got ${response.status} response`
+        );
+        return;
+      }
       const listResponse = (await response.json()) as {
         files: {
           id: string;
@@ -188,9 +193,8 @@ class GalleryCache {
         }
       });
       return Array.from(ids.values());
-    } catch {
-      // Swallow the error here. We will fail silently.
-      return;
+    } catch (e) {
+      console.warn("Failed to read gallery list", (e as Error).message);
     }
   }
 
@@ -199,8 +203,12 @@ class GalleryCache {
   ): Promise<[id: string, value: CachedResponse] | undefined> {
     try {
       const response = await fetchDriveFile(id, DOWNLOAD_PARAM, this.config);
-      if (!response.ok) return;
-      console.log("RESPONSE STATUS", response.status);
+      if (!response.ok) {
+        console.warn(
+          `Failed to get drive file: got ${response.status} response`
+        );
+        return;
+      }
       const headers = getImportantHeaders(response.headers);
       const arrayBuffer = await response.arrayBuffer();
       return [
@@ -210,9 +218,8 @@ class GalleryCache {
           headers,
         },
       ];
-    } catch {
-      // Swallow the error here. We will fail silently
-      return;
+    } catch (e) {
+      console.warn("Failed to read gallery list", (e as Error).message);
     }
   }
 
@@ -232,7 +239,6 @@ class GalleryCache {
     this.#status = "reloading";
 
     const list = await this.#readGalleryList();
-    console.log("LIST", list);
     if (!list) {
       this.#status = "error";
       this.#expiresAt = Date.now() + ERROR_RETRY_DURATION_MS;
@@ -247,7 +253,10 @@ class GalleryCache {
       );
       this.#cache = new Map(cachedValues.filter((item) => !!item));
       if (this.#cache.size === 0) {
-        // Treat not being able to load any of the files as an error
+        // Treat not being able to load any of the files as an error.
+        console.warn(
+          `Failed to reload cache: unable to load any of gallery files`
+        );
         this.#status = "error";
         this.#expiresAt = Date.now() + ERROR_RETRY_DURATION_MS;
         return;
@@ -255,8 +264,8 @@ class GalleryCache {
 
       this.#status = "ready";
       this.#expiresAt = Date.now() + CACHING_DURATION_MS;
-    } catch {
-      // Swallow the error. We will fail silently.
+    } catch (e) {
+      console.warn(`Failed to reload cache`, (e as Error).message);
       this.#status = "error";
       this.#expiresAt = Date.now() + ERROR_RETRY_DURATION_MS;
     }
