@@ -6,7 +6,7 @@
 
 import cors from "cors";
 import { Router, type Request, type Response } from "express";
-import { Readable, PassThrough } from "node:stream";
+import { Readable } from "node:stream";
 import { type ReadableStream } from "node:stream/web";
 
 const CACHING_DURATION_MS = 10 * 60 * 1000;
@@ -87,6 +87,7 @@ export function makeDriveProxyMiddleware({
         "https://placeholder.invalid"
       ).search;
 
+      // Only engage caching when this API is requesting media download.
       if (search === DOWNLOAD_PARAM) {
         const cached = gallery.get(id);
         if (cached) {
@@ -223,8 +224,7 @@ class GalleryCache {
       this.#reload();
       // ... and fall through to use stale values.
     }
-    // Treat error status as failure to cache.
-    if (this.#status === "error") return;
+    // Try serving stale results when in "error" status
     return this.#cache.get(id);
   }
 
