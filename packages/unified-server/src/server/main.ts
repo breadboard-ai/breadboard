@@ -15,6 +15,7 @@ import { makeDriveProxyMiddleware } from "./drive-proxy.js";
 import { allowListChecker } from "./allow-list-checker.js";
 import { getConfigFromSecretManager } from "./provide-config.js";
 import { makeCspHandler } from "./csp.js";
+import { createUpdatesHandler } from "./upates.js";
 
 const server = express();
 
@@ -70,6 +71,8 @@ server.use(
       serverConfig.GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID,
   })
 );
+
+server.use("/updates", createUpdatesHandler());
 
 server.use("/app", (req, res) => {
   // Redirect the old standalone app view to the new unified view with the app

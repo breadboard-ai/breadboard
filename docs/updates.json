@@ -3,5 +3,10 @@
     "date": "2025-07-28",
     "type": "warning",
     "text": "The Lyria 2 model is almost at capacity and may return \"quota exceeded\" errors. We're on it."
+  },
+  {
+    "date": "2025-07-25",
+    "type": "info",
+    "text": "Welcome to Opal! We're very experimental and apologize in advance all the construction debris: we wanted to have you over as early as possible to help us grow it into something you love."
   }
 ]
