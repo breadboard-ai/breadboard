@@ -259,6 +259,20 @@ export class RuntimeHostAPIEvent extends Event {
   }
 }
 
+export class RuntimeHostStatusUpdateEvent extends Event {
+  static eventName = "runtimehoststatusupdate" as const;
+
+  constructor(
+    public readonly updates: BreadboardUI.Types.VisualEditorStatusUpdate[]
+  ) {
+    super(RuntimeHostStatusUpdateEvent.eventName, { ...eventInit });
+  }
+
+  clone() {
+    return new RuntimeHostStatusUpdateEvent(this.updates);
+  }
+}
+
 type RuntimeEvents =
   | RuntimeBoardLoadErrorEvent
   | RuntimeErrorEvent

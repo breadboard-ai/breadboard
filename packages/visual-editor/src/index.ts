@@ -187,6 +187,27 @@ export class Main extends SignalWatcher(LitElement) {
   @state()
   accessor #ready = false;
 
+  @state()
+  set #statusUpdates(values: BreadboardUI.Types.VisualEditorStatusUpdate[]) {
+    values.sort((a, b) => {
+      const aDate = new Date(a.date);
+      const bDate = new Date(b.date);
+      return bDate.getTime() - aDate.getTime();
+    });
+
+    this.#statusUpdatesValues = values;
+    if (
+      values[0].type !== "info" &&
+      this.#uiState.showStatusUpdateChip === null
+    ) {
+      this.#uiState.showStatusUpdateChip = true;
+    }
+  }
+  get #statusUpdates() {
+    return this.#statusUpdatesValues;
+  }
+  #statusUpdatesValues: BreadboardUI.Types.VisualEditorStatusUpdate[] = [];
+
   // References.
   readonly #canvasControllerRef: Ref<BreadboardUI.Elements.CanvasController> =
     createRef();
@@ -496,6 +517,8 @@ export class Main extends SignalWatcher(LitElement) {
     });
 
     this.#maybeNotifyAboutPreferredUrlForDomain();
+
+    this.#runtime.shell.startTrackUpdates();
     await this.#runtime.router.init();
   }
 
@@ -581,6 +604,13 @@ export class Main extends SignalWatcher(LitElement) {
       Runtime.Events.RuntimeUnsnackbarEvent.eventName,
       () => {
         this.unsnackbar();
+      }
+    );
+
+    this.#runtime.addEventListener(
+      Runtime.Events.RuntimeHostStatusUpdateEvent.eventName,
+      (evt: Runtime.Events.RuntimeHostStatusUpdateEvent) => {
+        this.#statusUpdates = evt.updates;
       }
     );
 
@@ -957,9 +987,10 @@ export class Main extends SignalWatcher(LitElement) {
 
   #hideAllOverlays() {
     this.#uiState.show.delete("BoardEditModal");
-    this.#uiState.show.delete("VideoModal");
     this.#uiState.show.delete("BoardServerAddOverlay");
     this.#uiState.show.delete("MissingShare");
+    this.#uiState.show.delete("VideoModal");
+    this.#uiState.show.delete("StatusUpdateModal");
   }
 
   #onShowTooltip(evt: Event) {
@@ -1362,6 +1393,9 @@ export class Main extends SignalWatcher(LitElement) {
             this.#renderCanvasController(renderValues),
             this.#renderAppController(renderValues),
             this.#renderWelcomePanel(renderValues),
+            this.#uiState.showStatusUpdateChip
+              ? this.#renderStatusUpdateChip()
+              : nothing,
           ]}
     </div>`;
 
@@ -1444,6 +1478,9 @@ export class Main extends SignalWatcher(LitElement) {
           : nothing,
         this.#uiState.show.has("VideoModal")
           ? this.#renderVideoModal()
+          : nothing,
+        this.#uiState.show.has("StatusUpdateModal")
+          ? this.#renderStatusUpdateModal()
           : nothing,
         this.#uiState.show.has("RuntimeFlags")
           ? this.#renderRuntimeFlagsModal()
@@ -1629,6 +1666,68 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.show.delete("VideoModal");
       }}
     ></bb-video-modal>`;
+  }
+
+  #renderStatusUpdateChip() {
+    const classes: Record<string, boolean> = { "md-title-medium": true };
+    const newestUpdate = this.#statusUpdates.at(0);
+    if (!newestUpdate) {
+      return nothing;
+    }
+
+    classes[newestUpdate.type] = true;
+    let icon;
+    switch (newestUpdate.type) {
+      case "info":
+        icon = html`info`;
+        break;
+      case "warning":
+        icon = html`warning`;
+        break;
+      case "urgent":
+        icon = html`error`;
+        break;
+      default:
+        icon = nothing;
+        break;
+    }
+
+    const stopBounce = (evt: Event) => {
+      if (!(evt.target instanceof HTMLButtonElement)) {
+        return;
+      }
+
+      evt.target.classList.add("no-bounce");
+    };
+
+    return html`<button
+      id="status-update-chip"
+      class=${classMap(classes)}
+      @click=${() => {
+        this.#uiState.show.add("StatusUpdateModal");
+        this.#uiState.showStatusUpdateChip = false;
+      }}
+      @focus=${(evt: Event) => {
+        stopBounce(evt);
+      }}
+      @pointerover=${(evt: Event) => {
+        stopBounce(evt);
+      }}
+    >
+      <span class="g-icon round filled">${icon}</span> ${Strings.from(
+        "LABEL_STATUS_UPDATE"
+      )}
+    </button>`;
+  }
+
+  #renderStatusUpdateModal() {
+    return html`<bb-status-update-modal
+      .updates=${this.#statusUpdates}
+      @bbmodaldismissed=${() => {
+        this.#uiState.show.delete("StatusUpdateModal");
+        this.#uiState.showStatusUpdateChip = false;
+      }}
+    ></bb-status-update-modal>`;
   }
 
   #renderRuntimeFlagsModal() {
@@ -1964,6 +2063,12 @@ export class Main extends SignalWatcher(LitElement) {
 
           case "show-runtime-flags": {
             this.#uiState.show.add("RuntimeFlags");
+            break;
+          }
+
+          case "status-update": {
+            this.#uiState.show.add("StatusUpdateModal");
+            this.#uiState.showStatusUpdateChip = false;
             break;
           }
 

@@ -354,11 +354,12 @@ export type ConnectorState = {
 
 export type UIOverlays =
   | "BoardEditModal"
-  | "VideoModal"
   | "BoardServerAddOverlay"
-  | "TOS"
+  | "MissingShare"
   | "RuntimeFlags"
-  | "MissingShare";
+  | "TOS"
+  | "VideoModal"
+  | "StatusUpdateModal";
 
 export type UILoadState = "Home" | "Loading" | "Loaded" | "Error";
 
@@ -378,6 +379,7 @@ export type UI = {
   loadState: UILoadState;
   projectFilter: string | null;
   show: Set<UIOverlays>;
+  showStatusUpdateChip: boolean | null;
   toasts: Map<
     string,
     {

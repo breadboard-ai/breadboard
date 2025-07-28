@@ -33,6 +33,7 @@ import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { Shell } from "./shell.js";
 import { RuntimeFlagManager } from "@breadboard-ai/types";
 import {
+  RuntimeHostStatusUpdateEvent,
   RuntimeSnackbarEvent,
   RuntimeToastEvent,
   RuntimeUnsnackbarEvent,
@@ -107,7 +108,11 @@ export class Runtime extends EventTarget {
 
   #setupPassthruHandlers() {
     const cancelClone = (
-      evt: RuntimeToastEvent | RuntimeSnackbarEvent | RuntimeUnsnackbarEvent
+      evt:
+        | RuntimeToastEvent
+        | RuntimeSnackbarEvent
+        | RuntimeUnsnackbarEvent
+        | RuntimeHostStatusUpdateEvent
     ) => {
       evt.stopPropagation();
       evt.preventDefault();
@@ -133,6 +138,14 @@ export class Runtime extends EventTarget {
     this.board.addEventListener(
       RuntimeUnsnackbarEvent.eventName,
       (evt: RuntimeUnsnackbarEvent) => {
+        const newEvt = cancelClone(evt);
+        this.dispatchEvent(newEvt);
+      }
+    );
+
+    this.shell.addEventListener(
+      RuntimeHostStatusUpdateEvent.eventName,
+      (evt: RuntimeHostStatusUpdateEvent) => {
         const newEvt = cancelClone(evt);
         this.dispatchEvent(newEvt);
       }
@@ -210,9 +223,8 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
   ).createSideboardRuntime();
 
   const recentBoards = await config.recentBoardStore.restore();
-
   const state = new StateManager(graphStore, sideboards, servers);
-
+  const shell = new Shell(config.appName, config.appSubName);
   const flags = config.flags;
 
   return new Runtime({
@@ -242,7 +254,7 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
     select: new Select(),
     util: Util,
     kits,
-    shell: new Shell(config.appName, config.appSubName),
+    shell,
     flags,
   });
 }

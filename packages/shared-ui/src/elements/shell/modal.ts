@@ -82,6 +82,8 @@ export class VEModal extends LitElement {
             & h1 {
               margin: 0;
               flex: 1;
+              display: flex;
+              align-items: center;
 
               & .g-icon {
                 margin-right: var(--bb-grid-size-2);

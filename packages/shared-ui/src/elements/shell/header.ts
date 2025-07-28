@@ -523,6 +523,11 @@ export class VEHeader extends LitElement {
         icon: "flag",
       },
       {
+        id: "status-update",
+        title: Strings.from("COMMAND_STATUS_UPDATE"),
+        icon: "bigtop_updates",
+      },
+      {
         id: "chat",
         title: Strings.from("COMMAND_JOIN_CHAT"),
         icon: "open_in_new",
