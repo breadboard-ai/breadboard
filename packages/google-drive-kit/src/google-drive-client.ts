@@ -211,26 +211,10 @@ export class GoogleDriveClient {
         headers.set(key, val);
       }
     }
-    return retryableFetch(this.#makeFetchUrl(url, authorization), {
+    return retryableFetch(new URL(url, this.#apiBaseUrl), {
       ...init,
       headers,
     });
-  }
-
-  #makeFetchUrl(
-    path: string | URL,
-    authorization: GoogleApiAuthorization
-  ): URL {
-    const url = new URL(path, this.#apiBaseUrl);
-    const authKind = authorization.kind;
-    if (authKind === "bearer") {
-      // Nothing.
-    } else if (authKind === "key") {
-      url.searchParams.set("key", authorization.key);
-    } else {
-      throw new Error(`Unhandled authorization kind`, authKind satisfies never);
-    }
-    return url;
   }
 
   #makeFetchHeaders(
@@ -242,6 +226,7 @@ export class GoogleDriveClient {
     if (authKind === "bearer") {
       headers.set("authorization", `Bearer ${authorization.token}`);
     } else if (authKind === "key") {
+      headers.set("X-goog-api-key", this.#publicApiKey);
       if (this.#publicApiSpoofReferer) {
         headers.set("referer", this.#publicApiSpoofReferer);
       }
