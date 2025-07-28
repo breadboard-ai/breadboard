@@ -9,6 +9,7 @@ import { Template } from "../a2/template";
 import { ToolManager } from "../a2/tool-manager";
 import {
   defaultLLMContent,
+  encodeBase64,
   err,
   extractMediaData,
   extractTextData,
@@ -82,12 +83,11 @@ async function callVideoGen(
   modelName: string
 ): Promise<Outcome<LLMContent>> {
   const executionInputs: ContentMap = {};
-  const encodedPrompt = btoa(unescape(encodeURIComponent(prompt)));
   executionInputs["text_instruction"] = {
     chunks: [
       {
         mimetype: "text/plain",
-        data: encodedPrompt,
+        data: encodeBase64(prompt),
       },
     ],
   };
@@ -95,7 +95,7 @@ async function callVideoGen(
     chunks: [
       {
         mimetype: "text/plain",
-        data: btoa(aspectRatio),
+        data: encodeBase64(aspectRatio),
       },
     ],
   };

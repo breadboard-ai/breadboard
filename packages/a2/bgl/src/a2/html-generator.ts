@@ -6,6 +6,7 @@ import type { ContentMap, ExecuteStepRequest } from "./step-executor";
 import { executeStep } from "./step-executor";
 import {
   decodeBase64,
+  encodeBase64,
   err,
   ok,
   toLLMContent,
@@ -31,12 +32,11 @@ async function callGenWebpage(
       if ("text" in part) {
         const key = `text_${i}`;
         inputParameters.push(key);
-        const encodedText = btoa(unescape(encodeURIComponent(part.text)));
         executionInputs[key] = {
           chunks: [
             {
               mimetype: "text/plain",
-              data: encodedText,
+              data: encodeBase64(part.text),
             },
           ],
         };
@@ -63,7 +63,7 @@ async function callGenWebpage(
           chunks: [
             {
               mimetype: "url/" + part.storedData.mimeType,
-              data: btoa(unescape(encodeURIComponent(handle))),
+              data: encodeBase64(handle),
             },
           ],
         };

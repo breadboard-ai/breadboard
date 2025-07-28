@@ -26,6 +26,7 @@ export {
   extractTextData,
   extractInlineData,
   extractMediaData,
+  encodeBase64,
   decodeBase64,
 };
 
@@ -348,6 +349,10 @@ export function mergeContent(content: LLMContent[], role: string): LLMContent {
 
 function generateId() {
   return Math.random().toString(36).substring(2, 5);
+}
+
+function encodeBase64(value: string): string {
+  return btoa(unescape(encodeURIComponent(value)));
 }
 
 function decodeBase64(s: string): string {
