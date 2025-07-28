@@ -1,4 +1,4 @@
-import { Page, test as base } from "playwright/test";
+import { Locator, Page, test as base } from "playwright/test";
 
 export const test = base.extend<{ harness: BreadboardTestHarness }>({
   harness: async ({ page }, use) => {
@@ -16,7 +16,7 @@ interface NodeOptions {
 
 export interface NodeHarness {
   newUserInput(options?: NodeOptions): Promise<void>;
-  newDisplay(options?: NodeOptions): Promise<void>;
+  newOutput(options?: NodeOptions): Promise<void>;
 }
 
 /** UI Testing harness that wraps playwright commands into higher level functions for common operations.  */
@@ -24,7 +24,7 @@ export class BreadboardTestHarness implements NodeHarness {
   // TODO(volodya): Split this into separate harnesses per page.
   constructor(
     public page: Page,
-    private withContext?: Array<Promise<void>>
+    private withContext?: () => Promise<Locator | undefined>
   ) {}
 
   async getHeadings() {
@@ -32,22 +32,8 @@ export class BreadboardTestHarness implements NodeHarness {
     return headings.filter((h) => !!h);
   }
 
-  async getButtonsTexts() {
-    const buttons = await this.page.getByRole("button").allInnerTexts();
-    // Adding more weird buttons such as "asset" to the list
-    buttons.push(
-      ...(await this.page.locator("css=button span.title").allInnerTexts())
-    );
-    // Run button.
-    buttons.push(await this.page.locator("#click-run button#run").innerText());
-    // Icons - history and share.
-    buttons.push(await this.page.getByLabel("Edit History").innerText());
-    return buttons;
-  }
-
   async newFlow() {
-    await this.page.getByText(/Create New/).click();
-    await this.page.waitForURL(/\?tab0=/);
+    await this.page.getByRole("button", { name: "Create New" }).click();
   }
 
   async saveNodeEdit() {
@@ -65,57 +51,74 @@ export class BreadboardTestHarness implements NodeHarness {
    *
    */
   fromNode(name: string): NodeHarness {
-    return new BreadboardTestHarness(this.page, [
-      this.page.locator("bb-graph-node header", { hasText: name }).click(),
-    ]);
+    return new BreadboardTestHarness(this.page, async () => {
+      const node = this.page.locator("bb-graph-node header", { hasText: name });
+      await node.click();
+      return node;
+    });
   }
 
   async newUserInput(options?: NodeOptions) {
-    await this.waitForContext();
+    const context = await this.waitForContext();
+    if (context) {
+      await this.openConnection(context);
+    }
     await this.page.getByRole("button", { name: "User Input" }).click();
-    await this.page.getByTestId("default-add").click();
     await this.setNodeName(options?.name);
     await this.addNodeContent("#editor", options?.content);
     await this.saveNodeEdit();
   }
 
-  async newDisplay(options?: NodeOptions) {
-    await this.waitForContext();
-    await this.page.getByRole("button", { name: "Add Step" }).click();
-    await this.page
+  async newOutput(options?: NodeOptions) {
+    const context = await this.waitForContext();
+    let locator: Locator | Page = this.page;
+    if (context) {
+      await this.openConnection(context);
+      locator = this.page.locator("bb-component-selector-overlay");
+    }
+    await locator
       .getByRole("listitem")
-      .filter({ hasText: "Display" })
+      .filter({ hasText: "Output" })
+      .first()
       .click();
     await this.setNodeName(options?.name);
     await this.addNodeContent("#text #editor", options?.content);
     await this.saveNodeEdit();
   }
 
-  async run() {
-    if (
-      (
-        await this.page.locator("bb-app-controller").getAttribute("class")
-      )?.indexOf("active") ??
-      0 < 0
-    ) {
-      await this.page.getByRole("button", { name: "App view" }).click();
-    }
-
-    await this.page.getByRole("button", { name: "Start" }).click();
+  async openConnection(locator?: Locator) {
+    (locator ?? this.page)
+      .getByRole("button", { name: "Connect to.." })
+      .click();
   }
 
-  async getOutputs() {
+  async run() {
+    await this.page.getByRole("button", { name: "Start" }).click();
+    await this.waitForOutput();
+  }
+
+  async getLastOutput(): Promise<Locator> {
     return this.page
       .getByTestId("activity")
-      .locator("div.content span.value p")
-      .allTextContents();
+      .locator("particle-viewer-text section p")
+      .filter({ visible: true })
+      .last();
+  }
+
+  async getOutputs(): Promise<Array<string>> {
+    return this.page
+      .getByTestId("activity")
+      .locator("particle-viewer-text section p")
+      .filter({ visible: true })
+      .allInnerTexts();
   }
 
   async writeResponse(response: string) {
     await this.page
       .getByRole("textbox", { name: "Type or upload your response." })
       .fill(response);
-    await this.page.getByTestId("continue").click();
+    await this.page.getByRole("button", { name: "send" }).click();
+    await this.waitForOutput();
   }
 
   createRef(name: string): HarnessFunction {
@@ -129,11 +132,14 @@ export class BreadboardTestHarness implements NodeHarness {
   }
 
   async waitForContext() {
-    for (const context of this.withContext ?? []) {
-      await context;
+    if (!this.withContext) {
+      return undefined;
     }
-    // Reset the context after it was all run.
-    this.withContext = undefined;
+    return await this.withContext();
+  }
+
+  waitForOutput() {
+    return this.page.waitForSelector("particle-viewer-text section p");
   }
 
   private async setNodeName(name?: string) {
