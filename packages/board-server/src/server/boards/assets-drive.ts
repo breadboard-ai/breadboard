@@ -99,8 +99,11 @@ export function makeHandleAssetsDriveRequest({
     let mimeType = (req.query["mimeType"] as string) ?? "";
     const googleDriveClient = new GoogleDriveClient({
       domainProxyUrl,
-      publicApiKey: process.env["VITE_GOOGLE_DRIVE_PUBLIC_API_KEY"] ?? "",
-      publicApiSpoofReferer: req.headers.referer,
+      publicReadStrategy: {
+        kind: "direct",
+        apiKey: process.env["VITE_GOOGLE_DRIVE_PUBLIC_API_KEY"] ?? "",
+        referer: req.headers.referer,
+      },
       getUserAccessToken: async () => accessToken,
     });
 

@@ -279,8 +279,10 @@ async function fetchDriveAssetAsBuffer(
 ) {
   const driveClient = new GoogleDriveClient({
     domainProxyUrl,
-    publicApiKey: process.env["VITE_GOOGLE_DRIVE_PUBLIC_API_KEY"] ?? "",
-    publicApiSpoofReferer: "",
+    publicReadStrategy: {
+      kind: "direct",
+      apiKey: process.env["VITE_GOOGLE_DRIVE_PUBLIC_API_KEY"] ?? "",
+    },
     getUserAccessToken: async () => accessToken,
   });
   const gettingMedia = await driveClient.getFileMedia(driveId);

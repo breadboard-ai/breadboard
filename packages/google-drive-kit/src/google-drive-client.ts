@@ -13,10 +13,9 @@ type Permission = gapi.client.drive.Permission;
 
 export interface GoogleDriveClientOptions {
   apiBaseUrl?: string;
-  domainProxyUrl?: string;
   getUserAccessToken: () => Promise<string>;
-  publicApiKey: string;
-  publicApiSpoofReferer?: string;
+  publicReadStrategy: { kind: "direct"; apiKey: string; referer?: string };
+  domainProxyUrl?: string;
 }
 
 export interface BaseRequestOptions {
@@ -175,15 +174,13 @@ export class GoogleDriveClient {
   readonly #apiBaseUrl: string;
   readonly #domainProxyUrl?: string;
   readonly #getUserAccessToken: () => Promise<string>;
-  readonly #publicApiKey: string;
-  readonly #publicApiSpoofReferer?: string;
+  readonly #publicReadStrategy: GoogleDriveClientOptions["publicReadStrategy"];
 
   constructor(options: GoogleDriveClientOptions) {
     this.#apiBaseUrl = options.apiBaseUrl || "https://www.googleapis.com";
     this.#domainProxyUrl = options.domainProxyUrl;
     this.#getUserAccessToken = options.getUserAccessToken;
-    this.#publicApiKey = options.publicApiKey;
-    this.#publicApiSpoofReferer = options.publicApiSpoofReferer;
+    this.#publicReadStrategy = options.publicReadStrategy;
   }
 
   async accessToken(): Promise<string> {
@@ -223,9 +220,9 @@ export class GoogleDriveClient {
     if (authKind === "bearer") {
       headers.set("authorization", `Bearer ${authorization.token}`);
     } else if (authKind === "key") {
-      headers.set("X-goog-api-key", this.#publicApiKey);
-      if (this.#publicApiSpoofReferer) {
-        headers.set("referer", this.#publicApiSpoofReferer);
+      headers.set("X-goog-api-key", this.#publicReadStrategy.apiKey);
+      if (this.#publicReadStrategy.referer) {
+        headers.set("referer", this.#publicReadStrategy.referer);
       }
     } else {
       throw new Error(`Unhandled authorization kind`, authKind satisfies never);
@@ -264,7 +261,7 @@ export class GoogleDriveClient {
       const publicResponse = await this.#getFileMetadataWithRestApi(
         fileId,
         options,
-        { kind: "key", key: this.#publicApiKey }
+        { kind: "key", key: this.#publicReadStrategy.apiKey }
       );
       if (publicResponse.ok) {
         return publicResponse.json();
@@ -369,7 +366,7 @@ export class GoogleDriveClient {
       const publicResponse = await this.#getFileMediaWithRestApi(
         fileId,
         options,
-        { kind: "key", key: this.#publicApiKey }
+        { kind: "key", key: this.#publicReadStrategy.apiKey }
       );
       if (publicResponse.ok) {
         return publicResponse;
@@ -484,7 +481,7 @@ export class GoogleDriveClient {
       const publicResponse = await this.#exportFileWithRestApi(
         fileId,
         options,
-        { kind: "key", key: this.#publicApiKey }
+        { kind: "key", key: this.#publicReadStrategy.apiKey }
       );
       if (publicResponse.ok) {
         return publicResponse;
@@ -802,7 +799,7 @@ export class GoogleDriveClient {
       { signal: options?.signal },
       undefined,
       options?.auth === "apikey"
-        ? { kind: "key", key: this.#publicApiKey }
+        ? { kind: "key", key: this.#publicReadStrategy.apiKey }
         : undefined
     );
     if (!response.ok) {

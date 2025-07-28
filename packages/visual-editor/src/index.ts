@@ -324,7 +324,10 @@ export class Main extends SignalWatcher(LitElement) {
       domainProxyUrl: this.globalConfig.ENABLE_GOOGLE_DRIVE_PROXY
         ? new URL("v1beta1/getOpalFile", backendApiEndpoint).href
         : undefined,
-      publicApiKey: this.globalConfig.googleDrive.publicApiKey,
+      publicReadStrategy: {
+        kind: "direct",
+        apiKey: this.globalConfig.googleDrive.publicApiKey,
+      },
       getUserAccessToken: async () => {
         const token = await this.signinAdapter.token();
         if (token.state === "valid") {
