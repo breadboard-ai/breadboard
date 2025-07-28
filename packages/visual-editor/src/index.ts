@@ -197,7 +197,7 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.#statusUpdatesValues = values;
     if (
-      values[0].type !== "info" &&
+      values[0]?.type !== "info" &&
       this.#uiState.showStatusUpdateChip === null
     ) {
       this.#uiState.showStatusUpdateChip = true;
