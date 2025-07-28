@@ -85,11 +85,11 @@ function extractDriveError(s: string): DriveError | null {
 export function initializeDriveClient(
   accessToken: string,
   referrer: string | undefined,
-  proxyUrl: string | undefined
+  domainProxyUrl: string | undefined
 ): GoogleDriveClient {
   return new GoogleDriveClient({
     apiBaseUrl: "https://www.googleapis.com",
-    proxyUrl,
+    domainProxyUrl,
     publicApiKey: process.env["VITE_GOOGLE_DRIVE_PUBLIC_API_KEY"] ?? "",
     publicApiSpoofReferer: referrer,
     getUserAccessToken: async () => accessToken,

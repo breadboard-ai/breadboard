@@ -13,7 +13,7 @@ type Permission = gapi.client.drive.Permission;
 
 export interface GoogleDriveClientOptions {
   apiBaseUrl: string;
-  proxyUrl?: string;
+  domainProxyUrl?: string;
   getUserAccessToken: () => Promise<string>;
   publicApiKey: string;
   publicApiSpoofReferer?: string;
@@ -173,14 +173,14 @@ type GoogleApiAuthorization =
 
 export class GoogleDriveClient {
   readonly #apiBaseUrl: string;
-  readonly #proxyUrl?: string;
+  readonly #domainProxyUrl?: string;
   readonly #getUserAccessToken: () => Promise<string>;
   readonly #publicApiKey: string;
   readonly #publicApiSpoofReferer?: string;
 
   constructor(options: GoogleDriveClientOptions) {
     this.#apiBaseUrl = options.apiBaseUrl;
-    this.#proxyUrl = options.proxyUrl;
+    this.#domainProxyUrl = options.domainProxyUrl;
     this.#getUserAccessToken = options.getUserAccessToken;
     this.#publicApiKey = options.publicApiKey;
     this.#publicApiSpoofReferer = options.publicApiSpoofReferer;
@@ -247,51 +247,50 @@ export class GoogleDriveClient {
     fileId = normalizeFileId(fileId);
 
     // 1. Try directly with user credentials.
-    const directResponseWithUserCreds = await this.#getFileMetadataDirectly(
+    const userResponse = await this.#getFileMetadataWithRestApi(
       fileId,
       options
     );
-    if (directResponseWithUserCreds.ok) {
-      return directResponseWithUserCreds.json();
+    if (userResponse.ok) {
+      return userResponse.json();
     }
 
-    if (directResponseWithUserCreds.status === 404) {
-      // 2. Try directly with a public API key.
+    if (userResponse.status === 404) {
+      // 2. Try as a public file.
       console.log(
         `Received 404 response for Google Drive file metadata "${fileId.id}"` +
-          ` using user credentials. Now trying API key fallback.`
+          ` using user credentials. Now trying public fallback.`
       );
-      const directResponseWithApiKey = await this.#getFileMetadataDirectly(
+      const publicResponse = await this.#getFileMetadataWithRestApi(
         fileId,
         options,
         { kind: "key", key: this.#publicApiKey }
       );
-      if (directResponseWithApiKey.ok) {
-        return directResponseWithApiKey.json();
+      if (publicResponse.ok) {
+        return publicResponse.json();
       }
 
-      if (this.#proxyUrl) {
-        // 3. Try via our custom Drive proxy service, if enabled.
+      if (this.#domainProxyUrl) {
+        // 3. Try as a custom domain shared file.
         console.log(
           `Received 404 response for Google Drive file metadata "${fileId.id}"` +
-            ` using API key fallback. Now trying proxy fallback.`
+            ` using public fallback. Now trying custom domain fallback.`
         );
-        const proxyResponse = await this.#getFileMetadataViaProxy(
+        const domainResponse = await this.#getFileMetadataWithGrpcApi(
           fileId,
-          this.#proxyUrl,
+          this.#domainProxyUrl,
           options
         );
-        if (proxyResponse.ok) {
+        if (domainResponse.ok) {
           // The proxy response format is different to the direct API. Metadata is
           // nested within a "metadata" property.
-          const proxyResult =
-            (await proxyResponse.json()) as GetFileProxyResponse;
-          return JSON.parse(proxyResult.metadata);
+          const result = (await domainResponse.json()) as GrpcGetFileResponse;
+          return JSON.parse(result.metadata);
         } else {
-          const { status } = proxyResponse;
+          const { status } = domainResponse;
           console.log(
             `Received ${status} response for Google Drive file metadata "${fileId.id}"` +
-              ` using proxy fallback. The file is really not accessible!`
+              ` using custom domain fallback. The file is really not accessible!`
           );
         }
       }
@@ -299,12 +298,12 @@ export class GoogleDriveClient {
 
     throw new Error(
       `Google Drive getFileMetadata` +
-        ` ${directResponseWithUserCreds.status} error ` +
-        (await directResponseWithUserCreds.text())
+        ` ${userResponse.status} error ` +
+        (await userResponse.text())
     );
   }
 
-  #getFileMetadataDirectly(
+  #getFileMetadataWithRestApi(
     fileId: DriveFileId,
     options: GetFileMetadataOptions | undefined,
     authorization?: GoogleApiAuthorization
@@ -324,12 +323,12 @@ export class GoogleDriveClient {
     );
   }
 
-  async #getFileMetadataViaProxy(
+  async #getFileMetadataWithGrpcApi(
     fileId: DriveFileId,
-    proxyUrl: string,
+    domainProxyUrl: string,
     options: GetFileMetadataOptions | undefined
   ): Promise<Response> {
-    return retryableFetch(proxyUrl, {
+    return retryableFetch(domainProxyUrl, {
       method: "POST",
       body: JSON.stringify({
         fileId: fileId.id,
@@ -339,7 +338,7 @@ export class GoogleDriveClient {
         // (because direct account sharing never does).
         getMode: "GET_MODE_METADATA",
         metadata_fields: (options?.fields ?? DEFAULT_FILE_FIELDS).join(","),
-      } satisfies GetFileProxyRequest),
+      } satisfies GrpcGetFileRequest),
       headers: {
         authorization: `Bearer ${await this.#getUserAccessToken()}`,
         ["content-type"]: "application/json",
@@ -356,66 +355,62 @@ export class GoogleDriveClient {
     fileId = normalizeFileId(fileId);
 
     // 1. Try directly with user credentials.
-    const directResponseWithUserCreds = await this.#fetchFileMediaDirectly(
-      fileId,
-      options
-    );
-    if (directResponseWithUserCreds.ok) {
-      return directResponseWithUserCreds;
+    const userResponse = await this.#getFileMediaWithRestApi(fileId, options);
+    if (userResponse.ok) {
+      return userResponse;
     }
 
-    if (directResponseWithUserCreds.status === 404) {
-      // 2. Try directly with a public API key.
+    if (userResponse.status === 404) {
+      // 2. Try as a public file.
       console.log(
         `Received 404 response for Google Drive file media "${fileId.id}"` +
-          ` using user credentials. Now trying API key fallback.`
+          ` using user credentials. Now trying public fallback.`
       );
-      const directResponseWithApiKey = await this.#fetchFileMediaDirectly(
+      const publicResponse = await this.#getFileMediaWithRestApi(
         fileId,
         options,
         { kind: "key", key: this.#publicApiKey }
       );
-      if (directResponseWithApiKey.ok) {
-        return directResponseWithApiKey;
+      if (publicResponse.ok) {
+        return publicResponse;
       }
 
-      if (this.#proxyUrl) {
-        // 3. Try via our custom Drive proxy service, if enabled.
+      if (this.#domainProxyUrl) {
+        // 3. Try as a custom domain shared file.
         console.log(
           `Received 404 response for Google Drive file media "${fileId.id}"` +
-            ` using public fallback, trying domain proxy fallback.`
+            ` using public fallback, trying custom domain fallback.`
         );
-        const proxyResponse = await this.#fetchFileMediaViaProxy(
+        const domainResponse = await this.#getFileMediaWithGrpcApi(
           fileId,
-          this.#proxyUrl,
+          this.#domainProxyUrl,
           options
         );
-        if (proxyResponse.ok) {
+        if (domainResponse.ok) {
           // The proxy response format is different to the direct API. The file
           // bytes and mimeType are represented as JSON, with the bytes being
           // base64 encoded.
-          const proxyResult =
-            (await proxyResponse.json()) as GetFileProxyResponse;
-          const metadata = JSON.parse(proxyResult.metadata) as File;
+          const result = (await domainResponse.json()) as GrpcGetFileResponse;
+          const metadata = JSON.parse(result.metadata) as File;
           return responseFromBase64(
-            proxyResult.content,
+            result.content,
             metadata.mimeType || "application/octet-stream"
           );
         } else {
-          const { status } = proxyResponse;
+          const { status } = domainResponse;
           console.log(
             `Received ${status} response for Google Drive file media "${fileId.id}"` +
-              ` using proxy fallback. The file is really not accessible!`
+              ` using custom domain fallback. The file is really not accessible!`
           );
         }
       }
     }
 
     // The 404 or other error response.
-    return directResponseWithUserCreds;
+    return userResponse;
   }
 
-  #fetchFileMediaDirectly(
+  #getFileMediaWithRestApi(
     fileId: DriveFileId,
     options: BaseRequestOptions | undefined,
     authorization?: GoogleApiAuthorization
@@ -447,18 +442,18 @@ export class GoogleDriveClient {
     );
   }
 
-  async #fetchFileMediaViaProxy(
+  async #getFileMediaWithGrpcApi(
     fileId: DriveFileId,
-    proxyUrl: string,
+    domainProxyUrl: string,
     options: BaseRequestOptions | undefined
   ): Promise<Response> {
-    return retryableFetch(proxyUrl, {
+    return retryableFetch(domainProxyUrl, {
       method: "POST",
       body: JSON.stringify({
         fileId: fileId.id,
         // Resource key not needed for proxy (see other note above for details).
         getMode: "GET_MODE_GET_MEDIA",
-      } satisfies GetFileProxyRequest),
+      } satisfies GrpcGetFileRequest),
       headers: {
         authorization: `Bearer ${await this.#getUserAccessToken()}`,
         ["content-type"]: "application/json",
@@ -475,62 +470,58 @@ export class GoogleDriveClient {
     fileId = normalizeFileId(fileId);
 
     // 1. Try directly with user credentials.
-    const directResponseWithUserCreds = await this.#fetchExportFileDirectly(
-      fileId,
-      options
-    );
-    if (directResponseWithUserCreds.ok) {
-      return directResponseWithUserCreds;
+    const directResponse = await this.#exportFileWithRestApi(fileId, options);
+    if (directResponse.ok) {
+      return directResponse;
     }
 
-    if (directResponseWithUserCreds.status === 404) {
-      // 2. Try directly with a public API key.
+    if (directResponse.status === 404) {
+      // 2. Try as a public file.
       console.log(
         `Received 404 response for Google Drive file export "${fileId.id}"` +
-          ` using user credentials. Now trying API key fallback.`
+          ` using user credentials. Now trying public fallback.`
       );
-      const directResponseWithApiKey = await this.#fetchExportFileDirectly(
+      const publicResponse = await this.#exportFileWithRestApi(
         fileId,
         options,
         { kind: "key", key: this.#publicApiKey }
       );
-      if (directResponseWithApiKey.ok) {
-        return directResponseWithApiKey;
+      if (publicResponse.ok) {
+        return publicResponse;
       }
 
-      if (this.#proxyUrl) {
-        // 3. Try via our custom Drive proxy service, if enabled.
+      if (this.#domainProxyUrl) {
+        // 3. Try as a custom domain shared file.
         console.log(
           `Received 404 response for Google Drive file export "${fileId.id}"` +
-            ` using public fallback, trying domain proxy fallback.`
+            ` using public fallback. Now trying custom domain fallback.`
         );
-        const proxyResponse = await this.#fetchExportFileViaProxy(
+        const domainResponse = await this.#exportFileWithGrpcApi(
           fileId,
-          this.#proxyUrl,
+          this.#domainProxyUrl,
           options
         );
-        if (proxyResponse.ok) {
+        if (domainResponse.ok) {
           // The proxy response format is different to the direct API. The file
           // bytes and mimeType are represented as JSON, with the bytes being
           // base64 encoded.
-          const proxyResult =
-            (await proxyResponse.json()) as GetFileProxyResponse;
-          return responseFromBase64(proxyResult.content, options.mimeType);
+          const result = (await domainResponse.json()) as GrpcGetFileResponse;
+          return responseFromBase64(result.content, options.mimeType);
         } else {
-          const { status } = proxyResponse;
+          const { status } = domainResponse;
           console.log(
             `Received ${status} response for Google Drive file export "${fileId.id}"` +
-              ` using proxy fallback. The file is really not accessible!`
+              ` using custom domain fallback. The file is really not accessible!`
           );
         }
       }
     }
 
     // The 404 or other error response.
-    return directResponseWithUserCreds;
+    return directResponse;
   }
 
-  #fetchExportFileDirectly(
+  #exportFileWithRestApi(
     fileId: DriveFileId,
     options: ExportFileOptions,
     authorization?: GoogleApiAuthorization
@@ -548,7 +539,7 @@ export class GoogleDriveClient {
     );
   }
 
-  async #fetchExportFileViaProxy(
+  async #exportFileWithGrpcApi(
     fileId: DriveFileId,
     proxyUrl: string,
     options: ExportFileOptions
@@ -560,7 +551,7 @@ export class GoogleDriveClient {
         // Resource key not needed for proxy (see other note above for details).
         getMode: "GET_MODE_EXPORT",
         mimeType: options.mimeType,
-      } satisfies GetFileProxyRequest),
+      } satisfies GrpcGetFileRequest),
       headers: {
         authorization: `Bearer ${await this.#getUserAccessToken()}`,
         ["content-type"]: "application/json",
@@ -961,8 +952,9 @@ export class GoogleDriveClient {
   }
 }
 
-type GetFileProxyRequest =
+type GrpcGetFileRequest =
   | {
+      // 3. Try as a custom domain shared file.
       fileId: string;
       metadata_fields?: string;
       getMode: "GET_MODE_METADATA";
@@ -979,7 +971,7 @@ type GetFileProxyRequest =
       mimeType: string;
     };
 
-interface GetFileProxyResponse {
+interface GrpcGetFileResponse {
   /** JSON */
   metadata: string;
   /** base64 bytes */
