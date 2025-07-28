@@ -1723,6 +1723,10 @@ function enumValue(value: SchemaEnumValue): EnumValue {
     enumVal.info = value.info;
   }
 
+  if (value.hidden) {
+    enumVal.hidden = value.hidden;
+  }
+
   return enumVal;
 }
 
