@@ -191,7 +191,7 @@ export class GoogleDriveClient {
   }
 
   async #fetch(
-    url: string | URL,
+    url: URL,
     init?: RequestInit & {
       // We need to merge headers, and it's annoying to have to deal with the
       // other two forms of headers (array and Headers object), so only allow
@@ -211,10 +211,7 @@ export class GoogleDriveClient {
         headers.set(key, val);
       }
     }
-    return retryableFetch(new URL(url, this.#apiBaseUrl), {
-      ...init,
-      headers,
-    });
+    return retryableFetch(url, { ...init, headers });
   }
 
   #makeFetchHeaders(
@@ -758,7 +755,7 @@ export class GoogleDriveClient {
     options?: BaseRequestOptions
   ): Promise<void> {
     const response = await this.#fetch(
-      `drive/v3/files/${encodeURIComponent(fileId)}`,
+      new URL(`drive/v3/files/${encodeURIComponent(fileId)}`, this.#apiBaseUrl),
       { method: "DELETE", signal: options?.signal }
     );
     if (!response.ok) {
@@ -865,8 +862,11 @@ export class GoogleDriveClient {
     options?: BaseRequestOptions
   ): Promise<void> {
     const response = await this.#fetch(
-      `drive/v3/files/${encodeURIComponent(fileId)}` +
-        `/permissions/${encodeURIComponent(permissionId)}`,
+      new URL(
+        `drive/v3/files/${encodeURIComponent(fileId)}` +
+          `/permissions/${encodeURIComponent(permissionId)}`,
+        this.#apiBaseUrl
+      ),
       {
         method: "DELETE",
         signal: options?.signal,
@@ -915,9 +915,10 @@ export class GoogleDriveClient {
   async getChangesStartPageToken(
     options?: BaseRequestOptions
   ): Promise<string> {
-    const response = await this.#fetch(`drive/v3/changes/startPageToken`, {
-      signal: options?.signal,
-    });
+    const response = await this.#fetch(
+      new URL(`drive/v3/changes/startPageToken`, this.#apiBaseUrl),
+      { signal: options?.signal }
+    );
     if (!response.ok) {
       throw new Error(
         `Google Drive getChangesStartPageToken ${response.status} error: ` +
