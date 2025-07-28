@@ -697,6 +697,12 @@ export type ColorPalettes = {
 
 export type VisualEditorMode = "app" | "canvas";
 
+export interface VisualEditorStatusUpdate {
+  date: string;
+  text: string;
+  type: "info" | "warning" | "urgent";
+}
+
 export type FloatingInputFocusState =
   | ["canvas", "preview" | "console"]
   | ["app"];

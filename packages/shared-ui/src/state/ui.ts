@@ -52,6 +52,9 @@ class ReactiveUIState implements UI {
   @signal
   accessor editorSection: "preview" | "console" = "preview";
 
+  @signal
+  accessor showStatusUpdateChip = null;
+
   accessor show = new SignalSet<UIOverlays>();
 
   accessor toasts = new SignalMap<
