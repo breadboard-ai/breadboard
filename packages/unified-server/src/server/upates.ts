@@ -34,7 +34,7 @@ function createUpdatesHandler() {
       return await response.text();
     } catch (e) {
       console.warn("Unable to fetch update", (e as Error).message);
-      return "error";
+      return JSON.stringify("error");
     } finally {
       expiresOn = Date.now() + UPDATE_CACHE_DURATION_MS;
     }

@@ -99,37 +99,41 @@ export class VEStatusUpdateModal extends LitElement {
       .modalTitle=${"Status Update"}
       .showCloseButton=${true}
     >
-      <section id="update-list">
-        ${repeat(this.updates, (update) => {
-          let icon;
-          switch (update.type) {
-            case "info":
-              icon = html`info`;
-              break;
+      ${this.updates.length > 0
+        ? html`
+            <section id="update-list">
+              ${repeat(this.updates, (update) => {
+                let icon;
+                switch (update.type) {
+                  case "info":
+                    icon = html`info`;
+                    break;
 
-            case "warning":
-              icon = html`warning`;
-              break;
+                  case "warning":
+                    icon = html`warning`;
+                    break;
 
-            case "urgent":
-              icon = html`error`;
-              break;
+                  case "urgent":
+                    icon = html`error`;
+                    break;
 
-            default:
-              icon = nothing;
-              break;
-          }
+                  default:
+                    icon = nothing;
+                    break;
+                }
 
-          return html`<section
-            class=${classMap({ update: true, [update.type]: true })}
-          >
-            <h1 class="sans-flex md-title-medium w-400 round">
-              <span class="g-icon round">${icon}</span>${update.date}
-            </h1>
-            <p class="md-body-medium">${markdown(update.text)}</p>
-          </section>`;
-        })}
-      </section>
+                return html`<section
+                  class=${classMap({ update: true, [update.type]: true })}
+                >
+                  <h1 class="sans-flex md-title-medium w-400 round">
+                    <span class="g-icon round">${icon}</span>${update.date}
+                  </h1>
+                  <p class="md-body-medium">${markdown(update.text)}</p>
+                </section>`;
+              })}
+            </section>
+          `
+        : html`No recent updates`}
     </bb-modal>`;
   }
 }

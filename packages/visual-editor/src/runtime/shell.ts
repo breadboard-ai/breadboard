@@ -7,7 +7,7 @@
 import type * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { RuntimeHostStatusUpdateEvent } from "./events";
 
-const UPDATE_REFRESH_TIMEOUT = 30_000;
+const UPDATE_REFRESH_TIMEOUT = 10 * 60 * 1000; // 10 minutes
 
 export class Shell extends EventTarget {
   constructor(
@@ -33,6 +33,10 @@ export class Shell extends EventTarget {
   > {
     const response = await fetch("/updates");
     const updates = await response.json();
+    if (updates === "error") {
+      console.log("Unable to fetch updates from the server");
+      return [];
+    }
     return updates as BreadboardUI.Types.VisualEditorStatusUpdate[];
   }
 
