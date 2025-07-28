@@ -10,6 +10,7 @@ import {
 } from "./step-executor";
 import {
   addUserTurn,
+  encodeBase64,
   err,
   isStoredData,
   llm,
@@ -53,13 +54,12 @@ async function callGeminiImage(
     input_parameters.push("input_image");
   }
   console.log("Number of input images: " + String(imageChunks.length));
-  const encodedInstruction = btoa(unescape(encodeURIComponent(instruction)));
   const executionInputs: ContentMap = {
     input_instruction: {
       chunks: [
         {
           mimetype: "text/plain",
-          data: encodedInstruction,
+          data: encodeBase64(instruction),
         },
       ],
     },
@@ -67,7 +67,7 @@ async function callGeminiImage(
       chunks: [
         {
           mimetype: "text/plain",
-          data: btoa(aspectRatio),
+          data: encodeBase64(aspectRatio),
         },
       ],
     },
@@ -123,14 +123,11 @@ async function callImageGen(
   aspectRatio: string = "1:1"
 ): Promise<Outcome<LLMContent[]>> {
   const executionInputs: ContentMap = {};
-  const encodedInstruction = btoa(
-    unescape(encodeURIComponent(imageInstruction))
-  );
   executionInputs["image_prompt"] = {
     chunks: [
       {
         mimetype: "text/plain",
-        data: encodedInstruction,
+        data: encodeBase64(imageInstruction),
       },
     ],
   };
@@ -138,7 +135,7 @@ async function callImageGen(
     chunks: [
       {
         mimetype: "text/plain",
-        data: btoa(aspectRatio),
+        data: encodeBase64(aspectRatio),
       },
     ],
   };

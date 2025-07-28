@@ -14,6 +14,7 @@ import { Template } from "../a2/template";
 import { ToolManager } from "../a2/tool-manager";
 import {
   defaultLLMContent,
+  encodeBase64,
   joinContent,
   ok,
   toLLMContent,
@@ -54,12 +55,11 @@ async function callAudioGen(
     voiceParam = VoiceMap[voice as VoiceOption];
   }
   const executionInputs: ContentMap = {};
-  const encodedPrompt = btoa(unescape(encodeURIComponent(prompt)));
   executionInputs["text_to_speak"] = {
     chunks: [
       {
         mimetype: "text/plain",
-        data: encodedPrompt,
+        data: encodeBase64(prompt),
       },
     ],
   };
@@ -67,7 +67,7 @@ async function callAudioGen(
     chunks: [
       {
         mimetype: "text/plain",
-        data: btoa(voiceParam),
+        data: encodeBase64(voiceParam),
       },
     ],
   };

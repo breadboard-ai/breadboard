@@ -14,6 +14,7 @@ import { Template } from "../a2/template";
 import { ToolManager } from "../a2/tool-manager";
 import {
   defaultLLMContent,
+  encodeBase64,
   joinContent,
   ok,
   toLLMContent,
@@ -36,12 +37,11 @@ export { invoke as default, describe };
 
 async function callMusicGen(prompt: string): Promise<LLMContent> {
   const executionInputs: ContentMap = {};
-  const encodedPrompt = btoa(unescape(encodeURIComponent(prompt)));
   executionInputs["prompt"] = {
     chunks: [
       {
         mimetype: "text/plain",
-        data: encodedPrompt,
+        data: encodeBase64(prompt),
       },
     ],
   };
