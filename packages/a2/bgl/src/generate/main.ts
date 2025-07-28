@@ -41,6 +41,12 @@ type Mode = {
    * Currently used to provide proactive quota notification.
    */
   info?: string;
+  /**
+   * When true, the item does not appear in the drop-down. Useful when we want
+   * to deprecate an item in the drop-down: still use it for existing values,
+   * but stop showing it for new values.
+   */
+  hidden?: boolean;
 };
 
 const MODES: Mode[] = [
@@ -49,7 +55,8 @@ const MODES: Mode[] = [
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 2.0 Flash",
-    description: "For everyday tasks, plus more",
+    description: "Older model, use sparingly",
+    hidden: true,
     icon: "text_analysis",
     modelName: "gemini-2.0-flash",
     promptPlaceholderText:
@@ -60,7 +67,7 @@ const MODES: Mode[] = [
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
     title: "Gemini 2.5 Flash",
-    description: "Uses advanced reasoning",
+    description: "For everyday tasks, plus more",
     icon: "text_analysis",
     modelName: "gemini-2.5-flash-preview-05-20",
     promptPlaceholderText:
@@ -81,10 +88,10 @@ const MODES: Mode[] = [
     id: "think",
     type: "think",
     url: "embed://a2/go-over-list.bgl.json#module:main",
-    title: "Plan and Execute with Gemini 2.0 Flash",
+    title: "Plan and Execute with Gemini 2.5 Flash",
     description: "Plans and executes complex tasks",
     icon: "spark",
-    modelName: "gemini-2.0-flash",
+    modelName: "gemini-2.5-flash",
     promptPlaceholderText:
       "Type your goal here. Use @ to include other content.",
   },

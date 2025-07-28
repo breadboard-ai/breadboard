@@ -167,6 +167,12 @@ export type SchemaEnumValue =
        * Currently used to provide proactive quota notification.
        */
       info?: string;
+      /**
+       * When true, the item does not appear in the drop-down. Useful when we want
+       * to deprecate an item in the drop-down: still use it for existing values,
+       * but stop showing it for new values.
+       */
+      hidden?: boolean;
     };
 
 export type Schema = {
