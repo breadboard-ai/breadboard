@@ -522,11 +522,11 @@ export class VEHeader extends LitElement {
         title: Strings.from("COMMAND_SEND_FEEDBACK"),
         icon: "flag",
       },
-      {
-        id: "status-update",
-        title: Strings.from("COMMAND_STATUS_UPDATE"),
-        icon: "bigtop_updates",
-      },
+      // {
+      //   id: "status-update",
+      //   title: Strings.from("COMMAND_STATUS_UPDATE"),
+      //   icon: "bigtop_updates",
+      // },
       {
         id: "chat",
         title: Strings.from("COMMAND_JOIN_CHAT"),
