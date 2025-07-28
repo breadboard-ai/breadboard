@@ -12,7 +12,7 @@ type File = gapi.client.drive.File;
 type Permission = gapi.client.drive.Permission;
 
 export interface GoogleDriveClientOptions {
-  apiBaseUrl: string;
+  apiBaseUrl?: string;
   domainProxyUrl?: string;
   getUserAccessToken: () => Promise<string>;
   publicApiKey: string;
@@ -179,7 +179,7 @@ export class GoogleDriveClient {
   readonly #publicApiSpoofReferer?: string;
 
   constructor(options: GoogleDriveClientOptions) {
-    this.#apiBaseUrl = options.apiBaseUrl;
+    this.#apiBaseUrl = options.apiBaseUrl || "https://www.googleapis.com";
     this.#domainProxyUrl = options.domainProxyUrl;
     this.#getUserAccessToken = options.getUserAccessToken;
     this.#publicApiKey = options.publicApiKey;

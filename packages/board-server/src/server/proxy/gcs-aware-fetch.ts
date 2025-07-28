@@ -13,8 +13,8 @@ import {
 } from "@google-labs/breadboard";
 import type { BoardServerStore, ServerInfo } from "../store.js";
 import { GoogleStorageBlobStore } from "../blob-store.js";
-import { initializeDriveClient } from "../boards/assets-drive.js";
 import type { ServerConfig } from "../config.js";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 export { GcsAwareFetch };
 
@@ -275,13 +275,14 @@ async function convertToGcsReferences(
 async function fetchDriveAssetAsBuffer(
   driveId: string,
   accessToken: string,
-  googleDriveProxyUrl: string | undefined
+  domainProxyUrl: string | undefined
 ) {
-  const driveClient = initializeDriveClient(
-    accessToken,
-    "",
-    googleDriveProxyUrl
-  );
+  const driveClient = new GoogleDriveClient({
+    domainProxyUrl,
+    publicApiKey: process.env["VITE_GOOGLE_DRIVE_PUBLIC_API_KEY"] ?? "",
+    publicApiSpoofReferer: "",
+    getUserAccessToken: async () => accessToken,
+  });
   const gettingMedia = await driveClient.getFileMedia(driveId);
   const arrayBuffer = await gettingMedia.arrayBuffer();
   return Buffer.from(arrayBuffer);
