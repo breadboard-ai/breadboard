@@ -43,11 +43,12 @@ export type ErrorMetadata = {
    * Kind of the error
    * - capacity -- triggered by capacity issues (eg. quota exceeded)
    * - safety -- triggere by a safety checker
+   * - recitation -- triggered by recitation checker.
    * - config -- triggered by invalid configuration (can be fixed by user)
    * - bug -- triggered by a bug in code somewhere.
    * - unknown -- (default) unknown kind of error
    */
-  kind?: "capacity" | "safety" | "config" | "bug" | "unknown";
+  kind?: "capacity" | "safety" | "recitation" | "config" | "bug" | "unknown";
   /**
    * If relevant, the name of the model, that produced the error
    */

@@ -5,7 +5,7 @@
 import output from "@output";
 import write from "@write";
 
-import { generateId, ok } from "./utils";
+import { ErrorMetadata, generateId, ok } from "./utils";
 
 type ReportInputs = {
   /**
@@ -274,7 +274,7 @@ class StreamableReporter {
     });
   }
 
-  async sendError(error: { $error: string }) {
+  async sendError(error: { $error: string; metadata?: ErrorMetadata }) {
     await this.#sendUpsert({
       path: ["console"],
       id: `${this.#id}`,
