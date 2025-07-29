@@ -103,11 +103,18 @@ class GeminiPrompt {
     const invoking = await gemini(this.inputs);
     if (!ok(invoking)) return invoking;
     if ("context" in invoking) {
-      return err("Invalid output from Gemini -- must be candidates");
+      return err("Invalid output from Gemini -- must be candidates", {
+        origin: "server",
+        kind: "bug",
+      });
     }
     const candidate = invoking.candidates.at(0);
     const content = candidate?.content;
-    if (!content) return err("No content from Gemini");
+    if (!content)
+      return err("No content from Gemini", {
+        origin: "server",
+        kind: "bug",
+      });
     if (!content.parts) {
       return err(
         `Gemini failed to generate result due to ${candidate.finishReason}`

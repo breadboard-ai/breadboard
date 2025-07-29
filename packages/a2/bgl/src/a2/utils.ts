@@ -30,13 +30,37 @@ export {
   decodeBase64,
 };
 
+export type ErrorMetadata = {
+  /**
+   * Origin of the error:
+   * - client -- occured on the client (the step itself)
+   * - server -- comes from the server
+   * - system -- happened within the system (client, but outside of the step)
+   * - unknown -- origin of the error is unknown.
+   */
+  origin?: "client" | "server" | "system" | "unknown";
+  /**
+   * Kind of the error
+   * - capacity -- triggered by capacity issues (eg. quota exceeded)
+   * - safety -- triggere by a safety checker
+   * - config -- triggered by invalid configuration (can be fixed by user)
+   * - bug -- triggered by a bug in code somewhere.
+   * - unknown -- (default) unknown kind of error
+   */
+  kind?: "capacity" | "safety" | "config" | "bug" | "unknown";
+  /**
+   * If relevant, the name of the model, that produced the error
+   */
+  model?: string;
+};
+
 export type NonPromise<T> = T extends Promise<unknown> ? never : T;
 
 function ok<T>(o: Outcome<NonPromise<T>>): o is NonPromise<T> {
   return !(o && typeof o === "object" && "$error" in o);
 }
 
-function err($error: string, metadata?: Record<string, string>) {
+function err($error: string, metadata?: ErrorMetadata) {
   return { $error, ...(metadata && { metadata }) };
 }
 

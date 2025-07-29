@@ -43,12 +43,18 @@ async function invoke({
     return result;
   }
   if ("context" in result) {
-    return err("Invalid output from Gemini -- must be candidates");
+    return err("Invalid output from Gemini -- must be candidates", {
+      origin: "server",
+      kind: "bug",
+    });
   }
 
   const content = result.candidates.at(0)?.content;
   if (!content) {
-    return err("No content");
+    return err("No content", {
+      origin: "server",
+      kind: "bug",
+    });
   }
 
   return { context: [content] };

@@ -166,7 +166,10 @@ async function forEach(
   const list = (splitting.last?.parts?.at(0) as JSONPart)?.json as PromptList;
   if (!list) {
     // TODO: How to recover here?
-    return err(`Failed to execute for each: Invalid response from Gemini`);
+    return err(`Failed to execute for each: Invalid response from Gemini`, {
+      origin: "server",
+      kind: "bug",
+    });
   }
   const results = await Promise.all(
     list.list.map(async (itemPrompt) => {
