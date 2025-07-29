@@ -82,24 +82,10 @@ function extractDriveError(s: string): DriveError | null {
   }
 }
 
-export function initializeDriveClient(
-  accessToken: string,
-  referrer: string | undefined,
-  proxyUrl: string | undefined
-): GoogleDriveClient {
-  return new GoogleDriveClient({
-    apiBaseUrl: "https://www.googleapis.com",
-    proxyUrl,
-    publicApiKey: process.env["VITE_GOOGLE_DRIVE_PUBLIC_API_KEY"] ?? "",
-    publicApiSpoofReferer: referrer,
-    getUserAccessToken: async () => accessToken,
-  });
-}
-
 export function makeHandleAssetsDriveRequest({
-  googleDriveProxyUrl,
+  domainProxyUrl,
 }: {
-  googleDriveProxyUrl: string | undefined;
+  domainProxyUrl: string | undefined;
 }) {
   return async function handleAssetsDriveRequest(
     req: Request,
@@ -111,11 +97,15 @@ export function makeHandleAssetsDriveRequest({
       resourceKey: req.query["resourceKey"] as string | undefined,
     };
     let mimeType = (req.query["mimeType"] as string) ?? "";
-    const googleDriveClient = initializeDriveClient(
-      accessToken,
-      req.headers.referer,
-      googleDriveProxyUrl
-    );
+    const googleDriveClient = new GoogleDriveClient({
+      domainProxyUrl,
+      publicReadStrategy: {
+        kind: "direct",
+        apiKey: process.env["VITE_GOOGLE_DRIVE_PUBLIC_API_KEY"] ?? "",
+        referer: req.headers.referer,
+      },
+      getUserAccessToken: async () => accessToken,
+    });
 
     const part = CavemanCache.instance().get(driveId.id);
     if (part) {

@@ -173,7 +173,7 @@ class DriveOperations {
         "featured",
         `"${featuredGalleryFolderId}" in parents and ${BASE_FEATURED_QUERY}`,
         this.#googleDriveClient,
-        "apikey"
+        "public"
       );
     }
 
