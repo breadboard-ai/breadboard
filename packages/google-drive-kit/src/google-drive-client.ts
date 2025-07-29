@@ -445,24 +445,10 @@ export class GoogleDriveClient {
     apiUrl: string,
     authorization?: GoogleApiAuthorization
   ): Promise<Response> {
-    // TODO(aomarks) Temporarily disabled.
-    // let url;
-    // This is a bit hacky: we detect when we're trying to use the public
-    // API key and route over to the drive proxy.
-    // TODO: Make this more explicit.
-    // if (authorization?.kind === "key") {
-    //   url = new URL(
-    //     `/files/${encodeURIComponent(fileId.id)}`,
-    //     window.location.href
-    //   );
-    //   // Don't send the actual key: it will be provided by the proxy.
-    //   authorization = undefined;
-    // } else {
     const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId.id)}`,
       apiUrl
     );
-    // }
     url.searchParams.set("alt", "media");
     return this.#fetch(
       url,
