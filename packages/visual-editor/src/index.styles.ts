@@ -46,6 +46,8 @@ export const styles = [
       padding: var(--bb-grid-size-3) var(--bb-grid-size-6);
       border: none;
       user-select: none;
+      opacity: 0;
+      animation: fadeIn 0.4s cubic-bezier(0, 0, 0.3, 1) 1 forwards;
 
       > div {
         display: flex;
@@ -697,6 +699,16 @@ export const styles = [
       &:hover,
       &:focus {
         background-color: #96d6ff;
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
       }
     }
   `,

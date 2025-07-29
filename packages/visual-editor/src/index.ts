@@ -196,16 +196,20 @@ export class Main extends SignalWatcher(LitElement) {
     });
 
     this.#statusUpdatesValues = values;
+    const newestStatusDate = values.at(0)?.date ?? "";
     if (
       values[0]?.type !== "info" &&
-      this.#uiState.showStatusUpdateChip === null
+      (this.#uiState.showStatusUpdateChip === null ||
+        this.#lastStatusUpdateDateTime !== newestStatusDate)
     ) {
+      this.#lastStatusUpdateDateTime = newestStatusDate;
       this.#uiState.showStatusUpdateChip = true;
     }
   }
   get #statusUpdates() {
     return this.#statusUpdatesValues;
   }
+  #lastStatusUpdateDateTime: string = "";
   #statusUpdatesValues: BreadboardUI.Types.VisualEditorStatusUpdate[] = [];
 
   // References.
