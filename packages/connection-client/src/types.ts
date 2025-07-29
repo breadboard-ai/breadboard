@@ -80,6 +80,7 @@ export interface TokenGrant {
   name?: string;
   id?: string;
   domain: string | undefined;
+  scopes: string[] | undefined;
 }
 
 export type RefreshResponse =

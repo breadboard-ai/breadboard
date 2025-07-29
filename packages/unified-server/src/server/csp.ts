@@ -38,6 +38,7 @@ const CSP_CONFIG = {
     "https://*.google.com",
     "https://www.googleapis.com/drive/",
     "https://www.googleapis.com/upload/drive/",
+    "https://oauth2.googleapis.com/tokeninfo",
   ],
   ["frame-src"]: [
     "https://docs.google.com",

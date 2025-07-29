@@ -201,6 +201,8 @@ async function init() {
     url.searchParams.delete("geo-restriction");
     window.history.replaceState(null, "", url);
     showGeoRestrictionDialog();
+  } else if (url.searchParams.has("missing-scopes")) {
+    scopesErrorDialog.showModal();
   }
 }
 
