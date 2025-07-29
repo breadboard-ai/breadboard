@@ -100,6 +100,7 @@ export class AddAssetButton extends LitElement {
 
   render() {
     let overflowMenu: HTMLTemplateResult | symbol = nothing;
+    const overflowMenuPosition = { ...this.#overflowMenu };
     if (this._showOverflowMenu) {
       const actions: OverflowAction[] = [];
 
@@ -144,14 +145,14 @@ export class AddAssetButton extends LitElement {
       }
 
       if (this.anchor === "above") {
-        this.#overflowMenu.y -= 12; // Clearance.
-        this.#overflowMenu.y -= actions.length * BUTTON_HEIGHT; // Menu height.
+        overflowMenuPosition.y -= 12; // Clearance.
+        overflowMenuPosition.y -= actions.length * BUTTON_HEIGHT; // Menu height.
       }
 
       overflowMenu = html`<bb-overflow-menu
         style=${styleMap({
-          left: `${this.#overflowMenu.x}px`,
-          top: `${this.#overflowMenu.y}px`,
+          left: `${overflowMenuPosition.x}px`,
+          top: `${overflowMenuPosition.y}px`,
         })}
         .actions=${actions}
         .disabled=${false}
