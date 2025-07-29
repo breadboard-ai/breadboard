@@ -21,13 +21,13 @@ export type CachedGoogleDriveFile = NarrowedDriveFile<
 export class DriveListCache {
   #forceRefreshOnce: boolean;
   readonly #googleDriveClient: GoogleDriveClient;
-  readonly #auth: ListFilesOptions["auth"];
+  readonly #scope: ListFilesOptions["scope"];
 
   constructor(
     private readonly cacheKey: string,
     private readonly query: string,
     googleDriveClient: GoogleDriveClient,
-    auth: ListFilesOptions["auth"]
+    scope: ListFilesOptions["scope"]
   ) {
     // This is a hack to work around the problem where we don't track removals
     // of items from gallery.
@@ -35,7 +35,7 @@ export class DriveListCache {
       "force-refresh"
     );
     this.#googleDriveClient = googleDriveClient;
-    this.#auth = auth;
+    this.#scope = scope;
   }
 
   async #getCacheAndValue(skipValue: boolean = false) {
@@ -103,7 +103,7 @@ export class DriveListCache {
       }
 
       const response = await this.#googleDriveClient.listFiles(query, {
-        auth: this.#auth,
+        scope: this.#scope,
         fields: ["id", "name", "modifiedTime", "properties", "appProperties"],
         orderBy: [
           {

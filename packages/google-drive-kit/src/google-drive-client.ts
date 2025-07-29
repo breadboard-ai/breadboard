@@ -42,7 +42,7 @@ export interface UpdateFileOptions extends GetFileMetadataOptions {
 export type UpdateFileMetadataOptions = UpdateFileOptions;
 
 export interface ListFilesOptions extends GetFileMetadataOptions {
-  auth?: "user" | "apikey";
+  scope?: "user" | "public";
   orderBy?: Array<{
     field: keyof File;
     dir: "asc" | "desc";
@@ -798,7 +798,7 @@ export class GoogleDriveClient {
       url,
       { signal: options?.signal },
       undefined,
-      options?.auth === "apikey"
+      options?.scope === "public"
         ? { kind: "key", key: this.#publicReadStrategy.apiKey }
         : undefined
     );
