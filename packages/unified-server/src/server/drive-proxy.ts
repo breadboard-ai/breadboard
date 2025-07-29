@@ -10,8 +10,11 @@ import {
   type Request as ExpressRequest,
   type Response as ExpressResponse,
 } from "express";
-import { Readable } from "node:stream";
-import { type ReadableStream } from "node:stream/web";
+// import { Readable } from "node:stream";
+// import { type ReadableStream } from "node:stream/web";
+import https from "node:https";
+// import { OutgoingHttpHeaders } from "node:http2";
+import { GoogleAuth } from "google-auth-library";
 
 // const CACHING_DURATION_MS = 10 * 60 * 1000;
 // const ERROR_RETRY_DURATION_MS = 1 * 60 * 1000;
@@ -81,33 +84,76 @@ export function makeDriveProxyMiddleware({
 
   // const gallery = new GalleryCache(config);
 
-  async function proxyFetch(req: ExpressRequest): Promise<Response> {
-    const url = new URL(req.url, PRODUCTION_DRIVE_BASE_URL);
-    const headers = new Headers(req.headers as Record<string, string>);
-    // TODO(aomarks) Can we use service account credentials here instead of an
-    // API key?
-    headers.delete("authorization");
-    headers.set("x-goog-api-key", publicApiKey!);
-    return fetch(url, { method: req.method, headers });
+  const googleAuth = new GoogleAuth({
+    scopes: ["https://www.googleapis.com/auth/drive.readonly"],
+  });
+
+  // const oauthClient = new OAuth2Client();
+
+  async function proxyFetch(
+    clientReq: ExpressRequest,
+    clientRes: ExpressResponse
+  ): Promise<void> {
+    // const userAuthHeader = clientReq.headers.authorization;
+    // const userTokenMatch = userAuthHeader?.match(/^Bearer (.+)/);
+    // if (!userTokenMatch) {
+    //   clientRes.writeHead(401);
+    //   clientRes.end();
+    //   return;
+    // }
+    // const userToken = userTokenMatch[1];
+    // const ticket = await oauthClient.verifyIdToken({
+    //   idToken: userToken,
+    // });
+
+    const url = new URL(clientReq.url, PRODUCTION_DRIVE_BASE_URL);
+    const headers = structuredClone(clientReq.headers);
+
+    // The incoming request "host" header will be the hostname of this proxy
+    // server, but it needs to be the hostname of the destination server.
+    headers["host"] = url.hostname;
+
+    // Get an authentication token for the
+    const authClient = await googleAuth.getClient();
+    const token = await authClient.getAccessToken();
+    headers["authorization"] = `Bearer ${token.token}`;
+
+    // During local development we are using user credentials, which means we
+    // must explicitly set the billing GCP project. Not required in production,
+    // but doesn't hurt. See
+    // https://cloud.google.com/docs/authentication/rest#set-billing-project
+    headers["x-goog-user-project"] = await googleAuth.getProjectId();
+
+    const options: https.RequestOptions = {
+      hostname: url.hostname,
+      port: url.port,
+      path: url.pathname + url.search,
+      method: clientReq.method,
+      headers,
+    };
+    const proxyReq = https.request(options, (proxyRes) => {
+      clientRes.writeHead(proxyRes.statusCode!, proxyRes.headers);
+      proxyRes.pipe(clientRes, { end: true });
+    });
+    clientReq.pipe(proxyReq, { end: true });
   }
 
   router.get(
     "/drive/v3/files/:id",
     async (req: ExpressRequest, res: ExpressResponse) => {
-      const response = await proxyFetch(req);
-      res.status(response.status);
-      res.setHeaders(response.headers);
-      Readable.fromWeb(response.body as ReadableStream).pipe(res);
+      // TODO(aomarks) Intercept requests for featured gallery files, and use
+      // the cache.
+      proxyFetch(req, res);
     }
   );
 
   router.get(
     "/drive/v3/files",
     async (req: ExpressRequest, res: ExpressResponse) => {
-      const response = await proxyFetch(req);
-      res.status(response.status);
-      res.setHeaders(response.headers);
-      Readable.fromWeb(response.body as ReadableStream).pipe(res);
+      // TODO(aomarks) Consider intercepting requests for the featured gallery
+      // list query, and use the cache. Though, we need to be careful about the
+      // queries being in sync!
+      proxyFetch(req, res);
     }
   );
 
