@@ -36,8 +36,8 @@ function ok<T>(o: Outcome<NonPromise<T>>): o is NonPromise<T> {
   return !(o && typeof o === "object" && "$error" in o);
 }
 
-function err($error: string) {
-  return { $error };
+function err($error: string, metadata?: Record<string, string>) {
+  return { $error, ...(metadata && { metadata }) };
 }
 
 function mergeTextParts(
