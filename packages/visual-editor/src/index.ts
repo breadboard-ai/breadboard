@@ -1555,9 +1555,11 @@ export class Main extends SignalWatcher(LitElement) {
 
   #renderAppController(renderValues: RenderValues) {
     const graphIsEmpty = BreadboardUI.Utils.isEmpty(this.#tab?.graph ?? null);
+    const active =
+      this.#uiState.mode === "app" && this.#uiState.loadState !== "Home";
 
     return html` <bb-app-controller
-      class=${classMap({ active: this.#uiState.mode === "app" })}
+      class=${classMap({ active })}
       .graph=${this.#tab?.graph ?? null}
       .graphIsEmpty=${graphIsEmpty}
       .graphTopologyUpdateId=${this.graphTopologyUpdateId}
