@@ -138,7 +138,21 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   accessor readOnly = true;
 
   @property()
-  accessor showContentWarning = false;
+  set showContentWarning(value: null | boolean) {
+    // Once the content warning has been set to false, we ignore further
+    // updates. When the user goes to get a different board this component will
+    // be remounted and the original value of null will be set.
+    if (this.#showContentWarning === false) {
+      return;
+    }
+
+    this.#showContentWarning = value;
+  }
+  get showContentWarning() {
+    return this.#showContentWarning;
+  }
+
+  #showContentWarning: boolean | null = null;
 
   @consume({ context: boardServerContext, subscribe: true })
   accessor boardServer: BoardServer | undefined;
