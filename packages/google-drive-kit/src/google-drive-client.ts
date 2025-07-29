@@ -14,7 +14,9 @@ type Permission = gapi.client.drive.Permission;
 export interface GoogleDriveClientOptions {
   apiBaseUrl?: string;
   getUserAccessToken: () => Promise<string>;
-  publicReadStrategy: { kind: "direct"; apiKey: string; referer?: string };
+  publicReadStrategy:
+    | { kind: "direct"; apiKey: string; referer?: string }
+    | { kind: "proxy"; url: string };
   domainProxyUrl?: string;
 }
 
@@ -220,9 +222,13 @@ export class GoogleDriveClient {
     if (authKind === "bearer") {
       headers.set("authorization", `Bearer ${authorization.token}`);
     } else if (authKind === "key") {
-      headers.set("X-goog-api-key", this.#publicReadStrategy.apiKey);
-      if (this.#publicReadStrategy.referer) {
-        headers.set("referer", this.#publicReadStrategy.referer);
+      // TODO(aomarks) This is a little weird. Is authKind the right dimension
+      // to be looking at here, actually?
+      if (this.#publicReadStrategy.kind === "direct") {
+        headers.set("X-goog-api-key", this.#publicReadStrategy.apiKey);
+        if (this.#publicReadStrategy.referer) {
+          headers.set("referer", this.#publicReadStrategy.referer);
+        }
       }
     } else {
       throw new Error(`Unhandled authorization kind`, authKind satisfies never);
@@ -246,7 +252,8 @@ export class GoogleDriveClient {
     // 1. Try directly with user credentials.
     const userResponse = await this.#getFileMetadataWithRestApi(
       fileId,
-      options
+      options,
+      this.#apiBaseUrl
     );
     if (userResponse.ok) {
       return userResponse.json();
@@ -258,11 +265,21 @@ export class GoogleDriveClient {
         `Received 404 response for Google Drive file metadata "${fileId.id}"` +
           ` using user credentials. Now trying public fallback.`
       );
-      const publicResponse = await this.#getFileMetadataWithRestApi(
-        fileId,
-        options,
-        { kind: "key", key: this.#publicReadStrategy.apiKey }
-      );
+      let publicResponse;
+      if (this.#publicReadStrategy.kind === "direct") {
+        publicResponse = await this.#getFileMetadataWithRestApi(
+          fileId,
+          options,
+          this.#apiBaseUrl,
+          { kind: "key", key: this.#publicReadStrategy.apiKey }
+        );
+      } else {
+        publicResponse = await this.#getFileMetadataWithRestApi(
+          fileId,
+          options,
+          this.#publicReadStrategy.url
+        );
+      }
       if (publicResponse.ok) {
         return publicResponse.json();
       }
@@ -303,11 +320,12 @@ export class GoogleDriveClient {
   #getFileMetadataWithRestApi(
     fileId: DriveFileId,
     options: GetFileMetadataOptions | undefined,
+    apiUrl: string,
     authorization?: GoogleApiAuthorization
   ): Promise<Response> {
     const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId.id)}`,
-      this.#apiBaseUrl
+      apiUrl
     );
     if (options?.fields) {
       url.searchParams.set("fields", options.fields.join(","));
@@ -352,7 +370,11 @@ export class GoogleDriveClient {
     fileId = normalizeFileId(fileId);
 
     // 1. Try directly with user credentials.
-    const userResponse = await this.#getFileMediaWithRestApi(fileId, options);
+    const userResponse = await this.#getFileMediaWithRestApi(
+      fileId,
+      options,
+      this.#apiBaseUrl
+    );
     if (userResponse.ok) {
       return userResponse;
     }
@@ -363,11 +385,21 @@ export class GoogleDriveClient {
         `Received 404 response for Google Drive file media "${fileId.id}"` +
           ` using user credentials. Now trying public fallback.`
       );
-      const publicResponse = await this.#getFileMediaWithRestApi(
-        fileId,
-        options,
-        { kind: "key", key: this.#publicReadStrategy.apiKey }
-      );
+      let publicResponse;
+      if (this.#publicReadStrategy.kind === "direct") {
+        publicResponse = await this.#getFileMediaWithRestApi(
+          fileId,
+          options,
+          this.#apiBaseUrl,
+          { kind: "key", key: this.#publicReadStrategy.apiKey }
+        );
+      } else {
+        publicResponse = await this.#getFileMediaWithRestApi(
+          fileId,
+          options,
+          this.#publicReadStrategy.url
+        );
+      }
       if (publicResponse.ok) {
         return publicResponse;
       }
@@ -410,6 +442,7 @@ export class GoogleDriveClient {
   #getFileMediaWithRestApi(
     fileId: DriveFileId,
     options: BaseRequestOptions | undefined,
+    apiUrl: string,
     authorization?: GoogleApiAuthorization
   ): Promise<Response> {
     // TODO(aomarks) Temporarily disabled.
@@ -427,7 +460,7 @@ export class GoogleDriveClient {
     // } else {
     const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId.id)}`,
-      this.#apiBaseUrl
+      apiUrl
     );
     // }
     url.searchParams.set("alt", "media");
@@ -467,7 +500,11 @@ export class GoogleDriveClient {
     fileId = normalizeFileId(fileId);
 
     // 1. Try directly with user credentials.
-    const directResponse = await this.#exportFileWithRestApi(fileId, options);
+    const directResponse = await this.#exportFileWithRestApi(
+      fileId,
+      options,
+      this.#apiBaseUrl
+    );
     if (directResponse.ok) {
       return directResponse;
     }
@@ -478,11 +515,22 @@ export class GoogleDriveClient {
         `Received 404 response for Google Drive file export "${fileId.id}"` +
           ` using user credentials. Now trying public fallback.`
       );
-      const publicResponse = await this.#exportFileWithRestApi(
-        fileId,
-        options,
-        { kind: "key", key: this.#publicReadStrategy.apiKey }
-      );
+
+      let publicResponse;
+      if (this.#publicReadStrategy.kind === "direct") {
+        publicResponse = await this.#exportFileWithRestApi(
+          fileId,
+          options,
+          this.#apiBaseUrl,
+          { kind: "key", key: this.#publicReadStrategy.apiKey }
+        );
+      } else {
+        publicResponse = await this.#exportFileWithRestApi(
+          fileId,
+          options,
+          this.#publicReadStrategy.url
+        );
+      }
       if (publicResponse.ok) {
         return publicResponse;
       }
@@ -521,11 +569,12 @@ export class GoogleDriveClient {
   #exportFileWithRestApi(
     fileId: DriveFileId,
     options: ExportFileOptions,
+    apiUrl: string,
     authorization?: GoogleApiAuthorization
   ): Promise<Response> {
     const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId.id)}/export`,
-      this.#apiBaseUrl
+      apiUrl
     );
     url.searchParams.set("mimeType", options.mimeType);
     return this.#fetch(
@@ -777,7 +826,12 @@ export class GoogleDriveClient {
     options?: T
   ): Promise<ListFilesResponse<NarrowedDriveFileFromOptions<T>>> {
     // TODO(aomarks) Make this an async iterator.
-    const url = new URL(`drive/v3/files`, this.#apiBaseUrl);
+    const scope = options?.scope ?? "user";
+    const apiUrl =
+      options?.scope === "public" && this.#publicReadStrategy.kind === "proxy"
+        ? this.#publicReadStrategy.url
+        : this.#apiBaseUrl;
+    const url = new URL(`drive/v3/files`, apiUrl);
     url.searchParams.set("q", query);
     if (options?.pageSize) {
       url.searchParams.set("pageSize", String(options.pageSize));
@@ -794,14 +848,27 @@ export class GoogleDriveClient {
         options.orderBy.map(({ field, dir }) => `${field} ${dir}`).join(",")
       );
     }
-    const response = await this.#fetch(
-      url,
-      { signal: options?.signal },
-      undefined,
-      options?.scope === "public"
-        ? { kind: "key", key: this.#publicReadStrategy.apiKey }
-        : undefined
-    );
+    let response;
+    if (scope === "user") {
+      response = await this.#fetch(url, { signal: options?.signal });
+    } else {
+      scope satisfies "public";
+      if (this.#publicReadStrategy.kind === "direct") {
+        response = await this.#fetch(
+          url,
+          { signal: options?.signal },
+          undefined,
+          { kind: "key", key: this.#publicReadStrategy.apiKey }
+        );
+      } else {
+        this.#publicReadStrategy.kind satisfies "proxy";
+        response = await this.#fetch(
+          url,
+          { signal: options?.signal },
+          undefined
+        );
+      }
+    }
     if (!response.ok) {
       throw new Error(
         `Google Drive listFiles ${response.status} error: ` +
