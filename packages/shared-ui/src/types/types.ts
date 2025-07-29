@@ -575,7 +575,7 @@ export interface AppTemplate extends LitElement {
   showGDrive: boolean;
   readOnly: boolean;
   showShareButton: boolean;
-  showContentWarning: boolean;
+  showContentWarning: boolean | null;
   showDisclaimer: boolean;
   isEmpty: boolean;
   focusWhenIn: ["canvas", "preview" | "console"] | ["app"];
