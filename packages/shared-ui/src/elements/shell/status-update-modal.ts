@@ -51,7 +51,7 @@ export class VEStatusUpdateModal extends LitElement {
           margin-bottom: var(--bb-grid-size-2);
           border: 1px solid var(--n-90);
           border-radius: var(--bb-grid-size-3);
-          padding: var(--bb-grid-size-2);
+          padding: var(--bb-grid-size-4);
           background: var(--n-98);
 
           &.urgent {
@@ -70,7 +70,7 @@ export class VEStatusUpdateModal extends LitElement {
             display: flex;
             align-items: center;
             margin: 0;
-            padding: 0 0 var(--bb-grid-size) 0;
+            padding: 0 0 var(--bb-grid-size-2) 0;
           }
 
           & p {
@@ -92,6 +92,10 @@ export class VEStatusUpdateModal extends LitElement {
       }
     `,
   ];
+
+  #formatter = new Intl.DateTimeFormat([navigator.language, "en-US"], {
+    dateStyle: "long",
+  });
 
   render() {
     return html`<bb-modal
@@ -122,11 +126,17 @@ export class VEStatusUpdateModal extends LitElement {
                     break;
                 }
 
+                const dateTime = Date.parse(update.date);
+                let dateStr = html`Unknown Date`;
+                if (!Number.isNaN(dateTime)) {
+                  dateStr = html`${this.#formatter.format(new Date(dateTime))}`;
+                }
+
                 return html`<section
                   class=${classMap({ update: true, [update.type]: true })}
                 >
-                  <h1 class="sans-flex md-title-medium w-400 round">
-                    <span class="g-icon round">${icon}</span>${update.date}
+                  <h1 class="sans-flex md-title-medium w-500 round">
+                    <span class="g-icon round">${icon}</span>${dateStr}
                   </h1>
                   <p class="md-body-medium">${markdown(update.text)}</p>
                 </section>`;

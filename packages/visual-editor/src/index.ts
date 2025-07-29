@@ -1394,7 +1394,7 @@ export class Main extends SignalWatcher(LitElement) {
             this.#renderAppController(renderValues),
             this.#renderWelcomePanel(renderValues),
             this.#uiState.showStatusUpdateChip
-              ? this.#renderStatusUpdateChip()
+              ? this.#renderStatusUpdateBar()
               : nothing,
           ]}
     </div>`;
@@ -1668,8 +1668,8 @@ export class Main extends SignalWatcher(LitElement) {
     ></bb-video-modal>`;
   }
 
-  #renderStatusUpdateChip() {
-    const classes: Record<string, boolean> = { "md-title-medium": true };
+  #renderStatusUpdateBar() {
+    const classes: Record<string, boolean> = { "md-body-medium": true };
     const newestUpdate = this.#statusUpdates.at(0);
     if (!newestUpdate) {
       return nothing;
@@ -1692,32 +1692,30 @@ export class Main extends SignalWatcher(LitElement) {
         break;
     }
 
-    const stopBounce = (evt: Event) => {
-      if (!(evt.target instanceof HTMLButtonElement)) {
-        return;
-      }
-
-      evt.target.classList.add("no-bounce");
-    };
-
-    return html`<button
-      id="status-update-chip"
+    return html`<div
+      id="status-update-bar"
       class=${classMap(classes)}
+      aria-role="button"
       @click=${() => {
         this.#uiState.show.add("StatusUpdateModal");
         this.#uiState.showStatusUpdateChip = false;
       }}
-      @focus=${(evt: Event) => {
-        stopBounce(evt);
-      }}
-      @pointerover=${(evt: Event) => {
-        stopBounce(evt);
-      }}
     >
-      <span class="g-icon round filled">${icon}</span> ${Strings.from(
-        "LABEL_STATUS_UPDATE"
-      )}
-    </button>`;
+      <div>
+        <span class="g-icon round filled">${icon}</span>
+        <p>${newestUpdate.text}</p>
+      </div>
+      <button
+        class="close"
+        @click=${(evt: Event) => {
+          evt.preventDefault();
+          evt.stopImmediatePropagation();
+          this.#uiState.showStatusUpdateChip = false;
+        }}
+      >
+        <span class="g-icon round filled">close</span>
+      </button>
+    </div>`;
   }
 
   #renderStatusUpdateModal() {
