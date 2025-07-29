@@ -5,7 +5,11 @@
  */
 
 import cors from "cors";
-import { Router, type Request, type Response } from "express";
+import {
+  Router,
+  type Request as ExpressRequest,
+  type Response as ExpressResponse,
+} from "express";
 import { Readable } from "node:stream";
 import { type ReadableStream } from "node:stream/web";
 
@@ -77,41 +81,42 @@ export function makeDriveProxyMiddleware({
 
   // const gallery = new GalleryCache(config);
 
-  router.get("/:id", async (req: Request, res: Response) => {
-    const id = req.params.id;
-    try {
-      const search = new URL(
-        req.originalUrl,
-        // This is just to parse as a valid URL (since originalUrl doesn't have a
-        // protocol or origin) so we can read search params.
-        "https://placeholder.invalid"
-      ).search;
+  async function proxyFetch(req: ExpressRequest): Promise<Response> {
+    const url = new URL(req.url, PRODUCTION_DRIVE_BASE_URL);
+    const headers = new Headers(req.headers as Record<string, string>);
+    // TODO(aomarks) Can we use service account credentials here instead of an
+    // API key?
+    headers.delete("authorization");
+    headers.set("x-goog-api-key", publicApiKey!);
+    return fetch(url, { method: req.method, headers });
+  }
 
-      // Only engage caching when this API is requesting media download.
-      if (search === DOWNLOAD_PARAM) {
-        const cached = gallery.get(id);
-        if (cached) {
-          res.setHeaders(cached.headers);
-          res.send(cached.body);
-          return;
-        }
-      }
-
-      const userResponse = await fetchDriveFile(id, search, config);
-      res.status(userResponse.status);
-      const headers = getImportantHeaders(userResponse.headers);
-      res.setHeaders(headers);
-      Readable.fromWeb(userResponse.body as ReadableStream).pipe(res);
-    } catch (e) {
-      res.status(500).send((e as Error).message);
+  router.get(
+    "/drive/v3/files/:id",
+    async (req: ExpressRequest, res: ExpressResponse) => {
+      const response = await proxyFetch(req);
+      res.status(response.status);
+      res.setHeaders(response.headers);
+      Readable.fromWeb(response.body as ReadableStream).pipe(res);
     }
-  });
+  );
+
+  router.get(
+    "/drive/v3/files",
+    async (req: ExpressRequest, res: ExpressResponse) => {
+      const response = await proxyFetch(req);
+      res.status(response.status);
+      res.setHeaders(response.headers);
+      Readable.fromWeb(response.body as ReadableStream).pipe(res);
+    }
+  );
+
   return router;
 }
 
 function createErrorHandler(message: string) {
   console.warn(`The "/files" API will not be available: ${message}`);
-  return async (_req: Request, res: Response) => {
+  return async (_req: ExpressRequest, res: ExpressResponse) => {
     res.status(404).send(`Unable to serve file: ${message}`);
   };
 }
