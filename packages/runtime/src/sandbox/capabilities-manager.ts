@@ -70,12 +70,17 @@ function maybeUnwrapError(o: void | OutputValues): void | OutputValues {
 
   let { $error } = o;
 
+  let m = {};
+
   if ($error && typeof $error === "object" && "error" in $error) {
     const error = $error.error as { message: string };
+    if ("metadata" in $error) {
+      m = { metadata: $error.metadata };
+    }
     $error = error.message;
   }
 
-  return { ...o, $error };
+  return { ...o, $error, ...m };
 }
 
 function createInputHandler(context: NodeHandlerContext) {

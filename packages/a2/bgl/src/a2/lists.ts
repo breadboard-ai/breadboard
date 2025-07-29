@@ -8,6 +8,7 @@ import {
   mergeTextParts,
   toLLMContent,
   llm,
+  ErrorMetadata,
 } from "./utils";
 import { type GeminiSchema } from "./gemini";
 
@@ -203,7 +204,7 @@ class ListExpander {
         );
       })
     );
-    const errors: { $error: string }[] = [];
+    const errors: { $error: string; metadata?: ErrorMetadata }[] = [];
     const successes: LLMContent[] = [];
     results.forEach((result) => {
       if (!ok(result)) {
@@ -212,6 +213,9 @@ class ListExpander {
         successes.push(result);
       }
     });
+    if (errors.length === 1) {
+      return errors[0];
+    }
     if (errors.length > 0) {
       return err(errors.map((error) => error.$error).join("\n"));
     }

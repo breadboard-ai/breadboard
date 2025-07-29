@@ -309,15 +309,18 @@ function errFromFinishReason(
   reason: FinishReason,
   model?: string
 ): { $error: string; metadata?: ErrorMetadata } {
-  const e = structuredClone(
-    REASONS[reason] || {
+  let e: { $error: string; metadata?: ErrorMetadata } = REASONS[reason];
+  if (!e) {
+    e = {
       $error: "Model stopped generating tokens for unknown reason",
       metadata: {
         origin: "server",
       },
-    }
-  );
-  if (model) e.metadata!.model = model;
+    };
+  }
+  if (model) {
+    e = { ...e, metadata: { ...e.metadata, model } };
+  }
   return e;
 }
 
