@@ -210,6 +210,7 @@ export class CanvasController extends LitElement {
   #entityEditorRef: Ref<EntityEditor> = createRef();
   #sharePanelRef: Ref<SharePanel> = createRef();
   #googleDriveAssetAccessPickerRef: Ref<GoogleDrivePicker> = createRef();
+  #lastKnownNlEditValue = "";
 
   static styles = [icons, effects, canvasControllerStyles];
 
@@ -408,6 +409,25 @@ export class CanvasController extends LitElement {
           .readOnly=${this.readOnly}
           .showExperimentalComponents=${showExperimentalComponents}
           .topGraphResult=${this.topGraphResult}
+          @input=${(evt: Event) => {
+            const composedPath = evt.composedPath();
+            const isFromNLInput = composedPath.some((el) => {
+              return (
+                el instanceof HTMLElement &&
+                el.tagName.toLocaleLowerCase() === "bb-flowgen-editor-input"
+              );
+            });
+
+            if (isFromNLInput) {
+              const target = composedPath.at(0);
+              if (!(target instanceof HTMLTextAreaElement)) {
+                return;
+              }
+
+              this.#lastKnownNlEditValue = target.value;
+              this.requestUpdate();
+            }
+          }}
           @bbautofocuseditor=${() => {
             if (!this.#entityEditorRef.value) {
               return;
@@ -594,8 +614,8 @@ export class CanvasController extends LitElement {
         <div id="graph-container" slot="slot-0">
           <bb-edit-history-overlay .history=${this.history}>
           </bb-edit-history-overlay>
-          ${graphIsEmpty ? this.#renderEmptyState() : nothing} ${graphEditor}
-          ${themeEditor}
+          ${graphIsEmpty ? this.#maybeRenderEmptyState() : nothing}
+          ${graphEditor} ${themeEditor}
         </div>
         <div
           id="side-nav"
@@ -693,7 +713,11 @@ export class CanvasController extends LitElement {
     );
   }
 
-  #renderEmptyState() {
+  #maybeRenderEmptyState() {
+    if (this.#lastKnownNlEditValue !== "") {
+      return nothing;
+    }
+
     return html`<bb-empty-state></bb-empty-state>`;
   }
 
