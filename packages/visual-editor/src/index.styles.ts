@@ -33,6 +33,64 @@ export const styles = [
       display: none;
     }
 
+    #status-update-bar {
+      z-index: 180;
+      position: fixed;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100svw;
+      overflow: hidden;
+      top: 0;
+      left: 0;
+      padding: var(--bb-grid-size-3) var(--bb-grid-size-6);
+      border: none;
+      user-select: none;
+
+      > div {
+        display: flex;
+        align-items: center;
+        flex: 1;
+        padding-right: var(--bb-grid-size-10);
+
+        & p {
+          display: inline;
+          margin: 0;
+
+          &::after {
+            content: " More information";
+            cursor: pointer;
+            font-weight: 500;
+          }
+        }
+
+        & > .g-icon {
+          flex: 0 0 auto;
+          width: 20px;
+          height: 20px;
+          margin-right: var(--bb-grid-size-2);
+        }
+      }
+
+      &.urgent {
+        background: var(--e-90);
+        color: var(--e-40);
+      }
+
+      &.warning {
+        background: var(--ui-warning-background-color);
+        color: var(--ui-warning-text-color);
+      }
+
+      & .close {
+        padding: 0;
+        margin: 0;
+        background: none;
+        border: none;
+        cursor: pointer;
+      }
+    }
+
     @media (min-width: 600px) {
       :host {
         --header-height: var(--bb-grid-size-14);
@@ -45,56 +103,9 @@ export const styles = [
       bb-ve-header {
         display: block;
       }
-    }
 
-    #status-update-chip {
-      z-index: 60;
-      position: fixed;
-      border-radius: var(--bb-grid-size-5);
-      width: 40px;
-      height: 40px;
-      overflow: hidden;
-      bottom: 24px;
-      left: 24px;
-      display: flex;
-      align-items: center;
-      padding: 0;
-      transition: width 0.2s cubic-bezier(0, 0, 0.3, 1);
-      cursor: pointer;
-      white-space: nowrap;
-      border: none;
-
-      & > * {
-        pointer-events: none;
-      }
-
-      &.urgent {
-        animation: bounce 3s linear infinite 1.5s;
-        border: 1px solid var(--e-80);
-        background: var(--e-90);
-        color: var(--e-40);
-
-        &.no-bounce {
-          animation: none;
-        }
-      }
-
-      &.warning {
-        border: 1px solid
-          oklch(from var(--ui-warning-border-color) calc(l - 0.1) c h);
-        background: oklch(from var(--ui-warning-background-color) l c h);
-        color: var(--ui-warning-text-color);
-      }
-
-      & .g-icon {
-        flex: 0 0 auto;
-        width: 38px;
-        height: 20px;
-      }
-
-      &:hover {
-        animation: none;
-        width: 160px;
+      #status-update-bar {
+        top: var(--bb-grid-size-14);
       }
     }
 
@@ -686,92 +697,6 @@ export const styles = [
       &:hover,
       &:focus {
         background-color: #96d6ff;
-      }
-    }
-
-    @keyframes bounce {
-      0% {
-        translate: 0 0;
-      }
-
-      3% {
-        translate: 0 -23px;
-      }
-
-      5% {
-        translate: 0 -28px;
-      }
-
-      8% {
-        translate: 0 -23px;
-      }
-
-      10% {
-        translate: 0 0;
-      }
-
-      13% {
-        translate: 0 -14px;
-      }
-
-      15% {
-        translate: 0 -17px;
-      }
-
-      18% {
-        translate: 0 -14px;
-      }
-
-      20% {
-        translate: 0 0;
-      }
-
-      25% {
-        translate: 0 -7px;
-      }
-
-      25% {
-        translate: 0 -10px;
-      }
-
-      28% {
-        translate: 0 -7px;
-      }
-
-      30% {
-        translate: 0 0;
-      }
-
-      35% {
-        rotate: 0deg;
-      }
-
-      40% {
-        rotate: 45deg;
-      }
-
-      45% {
-        rotate: -45deg;
-      }
-
-      50% {
-        rotate: 25deg;
-      }
-
-      55% {
-        rotate: -25deg;
-      }
-
-      60% {
-        rotate: 5deg;
-      }
-
-      65% {
-        rotate: -5deg;
-      }
-
-      70% {
-        rotate: 0deg;
       }
     }
   `,

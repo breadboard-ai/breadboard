@@ -80,13 +80,13 @@ export class EmptyState extends LitElement {
       }
 
       #headline {
-        translate: 0 -3svh;
-        font-size: min(4svw, 70px);
+        translate: 0 -4svh;
+        font-size: min(3.5svw, 60px);
         text-align: center;
       }
 
       #tag {
-        translate: 0 -2svh;
+        translate: 0 -3.4svh;
         font-size: min(2svw, 24px);
         text-align: center;
 

@@ -190,9 +190,9 @@ export const colorsLight = css`
     --ui-theme-segment: #f1f4f8;
     --ui-theme-generating: #d6e2fb;
 
-    --ui-warning-border-color: #ffdeab;
-    --ui-warning-background-color: #fff5ea;
-    --ui-warning-text-color: #935100;
+    --ui-warning-border-color: #b2affbff;
+    --ui-warning-background-color: #d8d7fe;
+    --ui-warning-text-color: #33324f;
   }
 
   :host {
