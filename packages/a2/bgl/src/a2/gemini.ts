@@ -452,9 +452,13 @@ async function callAPI(
         }
       } else {
         const outputs = result.response as GeminiAPIOutputs;
-        const candidate = outputs.candidates?.at(0);
+        const candidate = outputs?.candidates?.at(0);
         if (!candidate) {
-          await reporter.sendUpdate("Model Response", outputs, "warning");
+          await reporter.sendUpdate(
+            "Model Response",
+            outputs || result,
+            "warning"
+          );
           return reporter.sendError(
             err("Unable to get a good response from Gemini", {
               origin: "server",
