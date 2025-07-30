@@ -215,7 +215,10 @@ class GenerateText {
           turnCount++;
         }
         if (!afterTools) {
-          return err(`Invalid state: Somehow, "afterTools" is undefined.`);
+          return err(`Invalid state: Somehow, "afterTools" is undefined.`, {
+            origin: "client",
+            kind: "bug",
+          });
         }
         if (makeList && !this.chat) {
           const list = toList(afterTools.last);
@@ -317,21 +320,24 @@ async function keepChatting(
 
 async function invoke({ context }: Inputs) {
   if (!context.description) {
-    const msg = "No instruction supplied";
+    const msg = "Please provide a prompt for the step";
     await report({
       actor: "Text Generator",
       name: msg,
       category: "Runtime error",
       details: `In order to run, I need to have an instruction.`,
     });
-    return err(msg);
+    return err(msg, { origin: "client", kind: "config" });
   }
 
   // Check to see if the user ended chat and return early.
   const { userEndedChat, last } = context;
   if (userEndedChat) {
     if (!last) {
-      return err("Chat ended without any work");
+      return err("Chat ended without any work", {
+        origin: "client",
+        kind: "bug",
+      });
     }
     return done([...context.context, last], context.makeList);
   }
@@ -352,7 +358,10 @@ async function invoke({ context }: Inputs) {
     // and return that.
     const previousResult = context.work.at(-2);
     if (!previousResult) {
-      return err(`Done chatting, but have nothing to pass along to next step.`);
+      return err(
+        `Done chatting, but have nothing to pass along to next step.`,
+        { origin: "client", kind: "bug" }
+      );
     }
     return done([previousResult], context.makeList);
   }

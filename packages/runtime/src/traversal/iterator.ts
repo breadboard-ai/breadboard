@@ -42,6 +42,7 @@ export class TraversalMachineIterator
         outputs.$error = {
           descriptor,
           ...($error as object),
+          ...("metadata" in outputs ? { metadata: outputs.metadata } : {}),
           inputs: { ...inputs, ...$error.inputs },
         };
         newOpportunities = newOpportunities.filter(

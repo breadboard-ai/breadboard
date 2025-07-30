@@ -12,6 +12,6 @@ function ok<T>(o: Outcome<Awaited<T>>): o is Awaited<T> {
   return !(o && typeof o === "object" && "$error" in o);
 }
 
-function err($error: string) {
-  return { $error };
+function err($error: string, metadata?: Record<string, string>) {
+  return { $error, ...(metadata && { metadata }) };
 }
