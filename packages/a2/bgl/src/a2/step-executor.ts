@@ -129,7 +129,7 @@ async function executeTool<
       ];
     })
   );
-  const response = await executeStep({
+  const response = await executeStep2({
     planStep: {
       stepName: api,
       modelApi: api,
@@ -141,17 +141,7 @@ async function executeTool<
   });
   if (!ok(response)) return response;
 
-  const output = parseExecutionOutput(
-    response?.executionOutputs["data"].chunks
-  );
-  if (!ok(output)) {
-    return err(`Invalid response from "${api}" backend`, {
-      origin: "server",
-      kind: "bug",
-    });
-  }
-
-  const data = output.chunks.at(0)?.data;
+  const { data } = response.chunks.at(0)!;
   const jsonString = decodeBase64(data!);
   try {
     return JSON.parse(jsonString) as T;
