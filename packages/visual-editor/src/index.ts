@@ -2054,10 +2054,7 @@ export class Main extends SignalWatcher(LitElement) {
           }
 
           case "chat": {
-            window.open(
-              "https://discord.com/channels/1172568727942860810/1397983123211288616",
-              "_blank"
-            );
+            window.open("https://discord.gg/googlelabs", "_blank");
             break;
           }
 
