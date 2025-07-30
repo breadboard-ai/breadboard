@@ -301,21 +301,32 @@ class SigninAdapter {
         canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
       }
     } else {
-      // See https://cloud.google.com/docs/authentication/token-types#access
-      const infoUrl = new URL("https://oauth2.googleapis.com/tokeninfo");
-      infoUrl.searchParams.set("access_token", settingsValue.access_token);
-      const result = (await (await fetch(infoUrl)).json()) as { scope: string };
-      const userScopesArr = result.scope.split(" ");
-      // Persist the scopes so that we don't hit the tokeninfo endpoint again.
-      await this.#settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connection.id, {
-        name: connection.id,
-        value: JSON.stringify({
-          ...settingsValue,
-          scopes: userScopesArr,
-        } satisfies TokenGrant),
-      });
-      for (const scope of userScopesArr) {
-        canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
+      try {
+        // See https://cloud.google.com/docs/authentication/token-types#access
+        const infoUrl = new URL("https://oauth2.googleapis.com/tokeninfo");
+        infoUrl.searchParams.set("access_token", settingsValue.access_token);
+        const result = (await (await fetch(infoUrl)).json()) as {
+          scope: string;
+        };
+        const userScopesArr = result.scope.split(" ");
+        // Persist the scopes so that we don't hit the tokeninfo endpoint again.
+        await this.#settingsHelper.set(
+          SETTINGS_TYPE.CONNECTIONS,
+          connection.id,
+          {
+            name: connection.id,
+            value: JSON.stringify({
+              ...settingsValue,
+              scopes: userScopesArr,
+            } satisfies TokenGrant),
+          }
+        );
+        for (const scope of userScopesArr) {
+          canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
+        }
+      } catch (err) {
+        console.warn("[Signin Adapter]", err);
+        return ["unable-to-check-scopes"];
       }
     }
 
