@@ -10,8 +10,6 @@ import read from "@read";
 import { ok, err, decodeBase64, encodeBase64 } from "./utils";
 import { StreamableReporter } from "./output";
 
-export { executeStep2 };
-
 const DEFAULT_BACKEND_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
 
@@ -129,7 +127,7 @@ async function executeTool<
       ];
     })
   );
-  const response = await executeStep2({
+  const response = await executeStep({
     planStep: {
       stepName: api,
       modelApi: api,
@@ -167,46 +165,7 @@ async function getBackendUrl() {
   return DEFAULT_BACKEND_ENDPOINT;
 }
 
-/**
- * @deprecated Replace with executeStep2 and remove
- */
 async function executeStep(
-  body: ExecuteStepRequest
-): Promise<Outcome<ExecuteStepResponse>> {
-  // Get an authentication token.
-  const key = "connection:$sign-in";
-  const token = (await secrets({ keys: [key] }))[key];
-  // Call the API.
-  const url = await getBackendUrl();
-  const fetchResult = await fetch({
-    url: url,
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: body,
-  });
-  let $error: string = "Unknown error";
-  if (!ok(fetchResult)) {
-    const { status, $error: errObject } = fetchResult as FetchErrorResponse;
-    console.warn("Error response", fetchResult);
-    if (!status) {
-      // This is not an error response, presume fatal error.
-      return { $error };
-    }
-    $error = maybeExtractError(errObject);
-    return { $error };
-  }
-  const response = fetchResult.response as ExecuteStepResponse;
-  if (response.errorMessage) {
-    $error = response.errorMessage;
-    return { $error };
-  }
-  return response;
-}
-
-async function executeStep2(
   body: ExecuteStepRequest
 ): Promise<Outcome<ExecutionOutput>> {
   const model = body.planStep.options?.modelName || body.planStep.stepName;

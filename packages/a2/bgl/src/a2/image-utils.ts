@@ -6,7 +6,7 @@ import { GeminiPrompt } from "./gemini-prompt";
 import {
   type ContentMap,
   type ExecuteStepRequest,
-  executeStep2,
+  executeStep,
 } from "./step-executor";
 import {
   addUserTurn,
@@ -89,7 +89,7 @@ async function callGeminiImage(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  const response = await executeStep2(body);
+  const response = await executeStep(body);
   if (!ok(response)) return response;
 
   return response.chunks.map((c) => {
@@ -132,7 +132,7 @@ async function callImageGen(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  const response = await executeStep2(body);
+  const response = await executeStep(body);
   if (!ok(response)) return response;
 
   return response.chunks.map((c) => {

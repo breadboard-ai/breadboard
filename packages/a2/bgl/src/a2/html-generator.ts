@@ -3,7 +3,7 @@
  */
 
 import type { ContentMap, ExecuteStepRequest } from "./step-executor";
-import { executeStep2 } from "./step-executor";
+import { executeStep } from "./step-executor";
 import {
   decodeBase64,
   encodeBase64,
@@ -93,7 +93,7 @@ async function callGenWebpage(
   // TODO(askerryryan): Remove once functional.
   console.log("request body");
   console.log(body);
-  const response = await executeStep2(body);
+  const response = await executeStep(body);
   if (!ok(response)) {
     let errorMessage;
     if (response.$error.includes("The service is currently unavailable")) {

@@ -8,7 +8,7 @@ import { ListExpander } from "../a2/lists";
 import {
   type ContentMap,
   type ExecuteStepRequest,
-  executeStep2,
+  executeStep,
 } from "../a2/step-executor";
 import { Template } from "../a2/template";
 import { ToolManager } from "../a2/tool-manager";
@@ -82,7 +82,7 @@ async function callAudioGen(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  const response = await executeStep2(body);
+  const response = await executeStep(body);
   if (!ok(response)) return response;
 
   const { mimeType, data } = response.chunks.at(0)!;

@@ -26,7 +26,7 @@ import {
 } from "../a2/utils";
 
 import {
-  executeStep2,
+  executeStep,
   type ContentMap,
   type ExecuteStepRequest,
 } from "../a2/step-executor";
@@ -137,7 +137,7 @@ async function callVideoGen(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  const response = await executeStep2(body);
+  const response = await executeStep(body);
   if (!ok(response)) return response;
 
   // Only take the first video output. The model can't produce

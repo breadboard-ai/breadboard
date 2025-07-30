@@ -6,7 +6,7 @@ import { type DescriberResult } from "../a2/common";
 import { ArgumentNameGenerator } from "../a2/introducer";
 import { ListExpander } from "../a2/lists";
 import {
-  executeStep2,
+  executeStep,
   type ContentMap,
   type ExecuteStepRequest,
 } from "../a2/step-executor";
@@ -56,7 +56,7 @@ async function callMusicGen(prompt: string): Promise<Outcome<LLMContent>> {
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  const response = await executeStep2(body);
+  const response = await executeStep(body);
   if (!ok(response)) return response;
 
   const { mimeType, data } = response.chunks.at(0)!;
