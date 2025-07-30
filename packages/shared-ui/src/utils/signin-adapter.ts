@@ -238,7 +238,7 @@ class SigninAdapter {
       picture: grantResponse.picture,
       id: grantResponse.id,
       domain: grantResponse.domain,
-      scopes: grantResponse.scopes?.map(canonicalizeOAuthScope),
+      scopes: grantResponse.scopes,
     };
     await this.#settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connection.id, {
       name: connection.id,
@@ -305,28 +305,26 @@ class SigninAdapter {
       const infoUrl = new URL("https://oauth2.googleapis.com/tokeninfo");
       infoUrl.searchParams.set("access_token", settingsValue.access_token);
       const result = (await (await fetch(infoUrl)).json()) as { scope: string };
-      const canonicalizedUserScopesArr = result.scope
-        .split(" ")
-        .map(canonicalizeOAuthScope);
+      const userScopesArr = result.scope.split(" ");
       // Persist the scopes so that we don't hit the tokeninfo endpoint again.
       await this.#settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connection.id, {
         name: connection.id,
         value: JSON.stringify({
           ...settingsValue,
-          scopes: canonicalizedUserScopesArr,
+          scopes: userScopesArr,
         } satisfies TokenGrant),
       });
-      for (const scope of canonicalizedUserScopesArr) {
-        canonicalizedUserScopes.add(scope);
+      for (const scope of userScopesArr) {
+        canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
       }
     }
 
-    const canonicalizedRequiredScopes = connection.scopes
+    const requiredScopes = connection.scopes
       .filter(({ optional }) => !optional)
-      .map(({ scope }) => canonicalizeOAuthScope(scope));
+      .map(({ scope }) => scope);
 
-    return canonicalizedRequiredScopes.filter(
-      (scope) => !canonicalizedUserScopes.has(scope)
+    return requiredScopes.filter(
+      (scope) => !canonicalizedUserScopes.has(canonicalizeOAuthScope(scope))
     );
   }
 }
