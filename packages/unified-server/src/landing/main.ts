@@ -184,9 +184,7 @@ async function init() {
       scopesErrorDialog.showModal();
       url.searchParams.delete("missing-scopes");
       window.history.replaceState(null, "", url);
-    }
-
-    if (url.searchParams.has("flow")) {
+    } else if (url.searchParams.has("flow")) {
       sharedFlowDialogTitle.textContent = Strings.from("LABEL_SHARE");
       sharedFlowDialog.showModal();
       sharedFlowDialogSignInButton.addEventListener("click", () => {
