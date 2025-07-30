@@ -445,7 +445,7 @@ export class FloatingInput extends LitElement {
                 ? html`<div class="no-text-input">
                       ${hasAssetEntered
                         ? "Upload your response."
-                        : "Press Submit to continue"}
+                        : "Press send to continue"}
                     </div>
                     <input
                       type="hidden"
