@@ -25,8 +25,7 @@ const PRODUCTION_DRIVE_BASE_URL = "https://www.googleapis.com";
 // These are copied from
 // packages/google-drive-kit/src/board-server/operations.ts
 // const GRAPH_MIME_TYPE = "application/vnd.breadboard.graph+json";
-// const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
-// const MIME_TYPE_QUERY = `(mimeType="${GRAPH_MIME_TYPE}" or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")`;
+// const MIME_TYPE_QUERY = `mimeType="${GRAPH_MIME_TYPE}"`;
 // const BASE_FEATURED_QUERY = `
 //   ${MIME_TYPE_QUERY}
 //   and trashed=false

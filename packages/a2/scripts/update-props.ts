@@ -12,7 +12,6 @@ import { readFile } from "fs/promises";
 import { GraphDescriptor } from "@breadboard-ai/types";
 
 const GRAPH_MIME_TYPE = "application/vnd.breadboard.graph+json";
-const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
 const MODULE_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = join(MODULE_DIR, "..");
 const OUT_DIR = join(ROOT_DIR, "out");
@@ -24,8 +23,7 @@ async function getIds(folderId: string, apiKey: string) {
 
   const query =
     `"${folderId}" in parents` +
-    ` and (mimeType="${GRAPH_MIME_TYPE}"` +
-    `      or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")` +
+    ` and mimeType="${GRAPH_MIME_TYPE}"` +
     ` and trashed=false`;
 
   const response = await fetch(api.makeQueryRequest(query));
