@@ -278,20 +278,20 @@ class SigninAdapter {
     return !result.canAccess;
   }
 
-  async missingScopes(): Promise<string[]> {
+  async validateScopes(): Promise<{ ok: true } | { ok: false; error: string }> {
     if (this.state !== "signedin") {
-      return [];
+      return { ok: false, error: "User was signed out" };
     }
     const connection = await this.#getConnection();
     if (!connection) {
-      return [];
+      return { ok: false, error: "No connection" };
     }
 
     const settingsValueStr = (
       await this.#settingsHelper.get(SETTINGS_TYPE.CONNECTIONS, connection.id)
     )?.value as string | undefined;
     if (!settingsValueStr) {
-      return [];
+      return { ok: false, error: "No local connection storage" };
     }
     const settingsValue = JSON.parse(settingsValueStr) as TokenGrant;
 
@@ -301,42 +301,78 @@ class SigninAdapter {
         canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
       }
     } else {
-      try {
-        // See https://cloud.google.com/docs/authentication/token-types#access
-        const infoUrl = new URL("https://oauth2.googleapis.com/tokeninfo");
-        infoUrl.searchParams.set("access_token", settingsValue.access_token);
-        const result = (await (await fetch(infoUrl)).json()) as {
-          scope: string;
-        };
-        const userScopesArr = result.scope.split(" ");
-        // Persist the scopes so that we don't hit the tokeninfo endpoint again.
-        await this.#settingsHelper.set(
-          SETTINGS_TYPE.CONNECTIONS,
-          connection.id,
-          {
-            name: connection.id,
-            value: JSON.stringify({
-              ...settingsValue,
-              scopes: userScopesArr,
-            } satisfies TokenGrant),
-          }
+      // This is an older signin which doesn't have scopes stored locally. We
+      // can fetch them from an API and upgrade the storage for next time.
+      const tokenInfoScopes = await this.#fetchScopesFromTokenInfoApi();
+      if (!tokenInfoScopes.ok) {
+        console.error(
+          `[signin] Unable to fetch scopes from token info API:` +
+            ` ${tokenInfoScopes.error}`
         );
-        for (const scope of userScopesArr) {
-          canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
-        }
-      } catch (err) {
-        console.warn("[Signin Adapter]", err);
-        return ["unable-to-check-scopes"];
+        return tokenInfoScopes;
       }
+      for (const scope of tokenInfoScopes.value) {
+        canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
+      }
+      console.log(`[signin] Upgrading signin storage to include scopes`);
+      await this.#settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connection.id, {
+        name: connection.id,
+        value: JSON.stringify({
+          ...settingsValue,
+          scopes: tokenInfoScopes.value,
+        } satisfies TokenGrant),
+      });
     }
 
-    const requiredScopes = connection.scopes
-      .filter(({ optional }) => !optional)
-      .map(({ scope }) => scope);
-
-    return requiredScopes.filter(
-      (scope) => !canonicalizedUserScopes.has(canonicalizeOAuthScope(scope))
+    const canonicalizedRequiredScopes = new Set(
+      connection.scopes
+        .filter(({ optional }) => !optional)
+        .map(({ scope }) => canonicalizeOAuthScope(scope))
     );
+    const missingScopes = [...canonicalizedRequiredScopes].filter(
+      (scope) => !canonicalizedUserScopes.has(scope)
+    );
+    if (missingScopes.length > 0) {
+      return {
+        ok: false,
+        error: `Missing scopes: ${missingScopes.join(", ")}`,
+      };
+    } else {
+      return { ok: true };
+    }
+  }
+
+  /** See https://cloud.google.com/docs/authentication/token-types#access */
+  async #fetchScopesFromTokenInfoApi(): Promise<
+    { ok: true; value: string[] } | { ok: false; error: string }
+  > {
+    const url = new URL("https://oauth2.googleapis.com/tokeninfo");
+    // Make sure we have a fresh token, this API will return HTTP 400 for an
+    // expired token.
+    const token = await this.token();
+    if (token.state === "signedout") {
+      return { ok: false, error: "User was signed out" };
+    }
+    url.searchParams.set("access_token", token.grant.access_token);
+
+    let response;
+    try {
+      response = await fetch(url);
+    } catch (e) {
+      return { ok: false, error: `Network error: ${e}` };
+    }
+    if (!response.ok) {
+      return { ok: false, error: `HTTP ${response.status} error` };
+    }
+
+    let result: { scope: string };
+    try {
+      result = await response.json();
+    } catch (e) {
+      return { ok: false, error: `JSON parse error: ${e}` };
+    }
+
+    return { ok: true, value: result.scope.split(" ") };
   }
 }
 
