@@ -6,12 +6,11 @@ import { GeminiPrompt } from "./gemini-prompt";
 import {
   type ContentMap,
   type ExecuteStepRequest,
-  executeStep,
+  executeStep2,
 } from "./step-executor";
 import {
   addUserTurn,
   encodeBase64,
-  err,
   isStoredData,
   llm,
   ok,
@@ -90,31 +89,14 @@ async function callGeminiImage(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  // TODO(askerryryan): Remove once functional.
-  console.log("request body");
-  console.log(body);
-  const response = await executeStep(body);
-  // TODO(askerryryan): Remove once functional.
-  console.log("response");
-  console.log(response);
-  if (!ok(response)) {
-    return err(
-      "Image generation failed. " +
-        response.$error +
-        " Check your prompt to ensure it is a valid and compliant image prompt."
-    );
-  }
+  const response = await executeStep2(body);
+  if (!ok(response)) return response;
 
-  const outContent =
-    response.executionOutputs && response.executionOutputs[OUTPUT_NAME];
-  if (!outContent) {
-    return err("Error: No image returned from backend");
-  }
-  return outContent.chunks.map((c) => {
-    if (c.mimetype.endsWith("/storedData")) {
-      return toLLMContentStored(c.mimetype.replace("/storedData", ""), c.data);
+  return response.chunks.map((c) => {
+    if (c.mimeType.endsWith("/storedData")) {
+      return toLLMContentStored(c.mimeType.replace("/storedData", ""), c.data);
     }
-    return toLLMContentInline(c.mimetype, c.data);
+    return toLLMContentInline(c.mimeType, c.data);
   });
 }
 
@@ -150,22 +132,14 @@ async function callImageGen(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  const response = await executeStep(body);
-  console.log(response);
-  if (!ok(response)) {
-    return err("Image generation failed. " + response.$error);
-  }
+  const response = await executeStep2(body);
+  if (!ok(response)) return response;
 
-  const outContent =
-    response.executionOutputs && response.executionOutputs[OUTPUT_NAME];
-  if (!outContent) {
-    return err("Error: No image returned from backend");
-  }
-  return outContent.chunks.map((c) => {
-    if (c.mimetype.endsWith("/storedData")) {
-      return toLLMContentStored(c.mimetype.replace("/storedData", ""), c.data);
+  return response.chunks.map((c) => {
+    if (c.mimeType.endsWith("/storedData")) {
+      return toLLMContentStored(c.mimeType.replace("/storedData", ""), c.data);
     }
-    return toLLMContentInline(c.mimetype, c.data);
+    return toLLMContentInline(c.mimeType, c.data);
   });
 }
 
