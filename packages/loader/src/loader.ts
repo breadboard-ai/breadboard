@@ -136,7 +136,12 @@ export class Loader implements GraphLoader {
         const graph: GraphDescriptor =
           typeof response == "string" ? JSON.parse(response) : response;
         if (graph !== null) {
-          graph.url = url.href;
+          // TODO(aomarks) This is a bit weird. We stick the resourcekey onto
+          // the URL for the purposes of loading, because there isn't another
+          // way to pass it through the loading process currently. But, most of
+          // our code doesn't expect to see a resource key in the URL, so we
+          // need to remove it from the graph JSON.
+          graph.url = url.href.replace(/\?resourcekey=[^/?&#]*/, "");
           return { success: true, graph };
         }
       }
