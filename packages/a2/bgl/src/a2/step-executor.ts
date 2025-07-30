@@ -71,8 +71,7 @@ export type ExecuteStepResponse = {
 };
 
 type ExecutionOutput = {
-  data: string;
-  mimeType: string;
+  chunks: { mimeType: string; data: string }[];
   requestedModel?: string;
   executedModel?: string;
 };
@@ -86,28 +85,29 @@ function maybeExtractError(e: string): string {
   }
 }
 
-function parseExecutionOutput(chunks?: Chunk[]): Outcome<ExecutionOutput> {
-  let data: string | undefined = undefined;
+function parseExecutionOutput(input?: Chunk[]): Outcome<ExecutionOutput> {
   let requestedModel: string | undefined = undefined;
   let executedModel: string | undefined = undefined;
-  let mimeType: string | undefined = undefined;
-  chunks?.forEach((chunk) => {
+  const chunks: { data: string; mimeType: string }[] = [];
+  input?.forEach((chunk) => {
     if (chunk.substream_name === "requested-model") {
       requestedModel = chunk.data;
     } else if (chunk.substream_name === "executed-model") {
       executedModel = chunk.data;
     } else {
-      data = chunk.data;
-      mimeType = chunk.mimetype;
+      chunks.push({
+        data: chunk.data,
+        mimeType: chunk.mimetype,
+      });
     }
   });
-  if (!data || !mimeType) {
+  if (chunks.length === 0) {
     return err(`Unable to find data in the output`, {
       origin: "server",
       kind: "bug",
     });
   }
-  return { data, requestedModel, executedModel, mimeType };
+  return { chunks, requestedModel, executedModel };
 }
 
 async function executeTool<
@@ -141,15 +141,18 @@ async function executeTool<
   });
   if (!ok(response)) return response;
 
-  const data = parseExecutionOutput(response?.executionOutputs["data"].chunks);
-  if (!ok(data)) {
+  const output = parseExecutionOutput(
+    response?.executionOutputs["data"].chunks
+  );
+  if (!ok(output)) {
     return err(`Invalid response from "${api}" backend`, {
       origin: "server",
       kind: "bug",
     });
   }
 
-  const jsonString = decodeBase64(data.data);
+  const data = output.chunks.at(0)?.data;
+  const jsonString = decodeBase64(data!);
   try {
     return JSON.parse(jsonString) as T;
   } catch {

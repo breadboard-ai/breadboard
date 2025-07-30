@@ -137,14 +137,13 @@ async function callVideoGen(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  // TODO(askerryryan): Remove when stable.
-  console.log("REQUEST:");
-  console.log(body);
   const response = await executeStep2(body);
   if (!ok(response)) return response;
 
-  const { mimeType, data } = response;
-  if (!mimeType.startsWith("video")) {
+  // Only take the first video output. The model can't produce
+  // more than one.
+  const { mimeType, data } = response.chunks.at(0) || {};
+  if (!data || !mimeType?.startsWith("video")) {
     return err(`Invalid response mime type: ${mimeType}`, {
       kind: "bug",
       origin: "server",

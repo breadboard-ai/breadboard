@@ -105,7 +105,7 @@ async function callGenWebpage(
     return err("Webpage generation failed: " + errorMessage);
   }
 
-  const { mimeType, data: base64Data } = response;
+  const { mimeType, data: base64Data } = response.chunks.at(0)!;
   const data = decodeBase64(base64Data);
   if (mimeType == "text/html") {
     return toLLMContentInline(mimeType, data);
