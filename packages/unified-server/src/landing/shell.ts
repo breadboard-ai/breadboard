@@ -28,6 +28,70 @@ export function setPageTitle(
   window.document.title = suffix;
 }
 
+export function obtainElements() {
+  // Capture the main sign-in button.
+  const signInButton = document.querySelector<HTMLAnchorElement>("#sign-in");
+  if (!signInButton) {
+    throw new Error("Unable to locate sign-in button");
+  }
+
+  // Scopes Error Dialog.
+  const scopesErrorDialog = document.querySelector<HTMLDialogElement>(
+    "#scopes-error-dialog"
+  );
+  if (!scopesErrorDialog) {
+    throw new Error("Unable to locate scopes error dialog");
+  }
+  const scopesErrorSignInButton =
+    scopesErrorDialog.querySelector<HTMLAnchorElement>(".sign-in");
+  if (!scopesErrorSignInButton) {
+    throw new Error("Unable to locate scopes error sign-in button");
+  }
+
+  // Generic Error Dialog.
+  const genericErrorDialog = document.querySelector<HTMLDialogElement>(
+    "#generic-error-dialog"
+  );
+  if (!genericErrorDialog) {
+    throw new Error("Unable to find generic error dialog");
+  }
+  const genericErrorDialogTitle =
+    genericErrorDialog.querySelector<HTMLHeadingElement>(".title");
+  if (!genericErrorDialogTitle) {
+    throw new Error("Unable to find generic error dialog title");
+  }
+
+  // Shared Flow Dialog.
+  const sharedFlowDialog = document.querySelector<HTMLDialogElement>(
+    "#shared-flow-dialog"
+  );
+  if (!sharedFlowDialog) {
+    throw new Error("Unable to locate shared flow dialog");
+  }
+  const sharedFlowDialogSignInButton =
+    sharedFlowDialog.querySelector<HTMLAnchorElement>(".sign-in");
+
+  if (!sharedFlowDialogSignInButton) {
+    throw new Error("Unable to locate scopes error sign-in button");
+  }
+  const sharedFlowDialogTitle =
+    sharedFlowDialog.querySelector<HTMLHeadingElement>(".title");
+  if (!sharedFlowDialogTitle) {
+    throw new Error("Unable to find generic error dialog title");
+  }
+
+  return {
+    signInButton,
+    scopesErrorDialog,
+    scopesErrorSignInButton,
+    genericErrorDialog,
+    genericErrorDialogTitle,
+    sharedFlowDialog,
+    sharedFlowDialogSignInButton,
+    sharedFlowDialogTitle,
+  };
+}
+
 export function setPageInfo() {
   const icon = document.createElement("link");
   icon.rel = "icon";
