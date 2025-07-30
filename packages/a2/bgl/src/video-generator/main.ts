@@ -27,6 +27,7 @@ import {
 
 import {
   executeStep,
+  parseExecutionOutput,
   type ContentMap,
   type ExecuteStepRequest,
 } from "../a2/step-executor";
@@ -150,15 +151,17 @@ async function callVideoGen(
 
   let returnVal;
   for (const value of Object.values(response.executionOutputs)) {
-    const mimetype = value.chunks[0].mimetype;
+    const output = parseExecutionOutput(value.chunks);
+    if (!ok(output)) continue;
+    const mimetype = output.mimeType;
     if (mimetype.startsWith("video")) {
       if (mimetype.endsWith("/storedData")) {
         returnVal = toLLMContentStored(
           mimetype.replace("/storedData", ""),
-          value.chunks[0].data
+          output.data
         );
       } else {
-        returnVal = toLLMContentInline(mimetype, value.chunks[0].data);
+        returnVal = toLLMContentInline(mimetype, output.data);
       }
     }
   }

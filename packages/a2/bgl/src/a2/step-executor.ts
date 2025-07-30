@@ -2,7 +2,7 @@
  * @fileoverview Utilities to execute tools on the AppCatalyst backend server.
  */
 
-export { executeStep, executeTool };
+export { executeStep, executeTool, parseExecutionOutput };
 
 import fetch from "@fetch";
 import secrets from "@secrets";
@@ -23,6 +23,7 @@ type FetchErrorResponse = {
 type Chunk = {
   mimetype: string;
   data: string;
+  substream_name?: string;
 };
 
 export type Content = {
@@ -66,6 +67,13 @@ export type ExecuteStepResponse = {
   errorMessage?: string;
 };
 
+type ExecutionOutput = {
+  data: string;
+  mimeType: string;
+  requestedModel?: string;
+  executedModel?: string;
+};
+
 function maybeExtractError(e: string): string {
   try {
     const parsed = JSON.parse(e);
@@ -73,6 +81,30 @@ function maybeExtractError(e: string): string {
   } catch {
     return e;
   }
+}
+
+function parseExecutionOutput(chunks: Chunk[]): Outcome<ExecutionOutput> {
+  let data: string | undefined = undefined;
+  let requestedModel: string | undefined = undefined;
+  let executedModel: string | undefined = undefined;
+  let mimeType: string | undefined = undefined;
+  chunks.forEach((chunk) => {
+    if (chunk.substream_name === "requested-model") {
+      requestedModel = chunk.data;
+    } else if (chunk.substream_name === "executed-model") {
+      executedModel = chunk.data;
+    } else {
+      data = chunk.data;
+      mimeType = chunk.mimetype;
+    }
+  });
+  if (!data || !mimeType) {
+    return err(`Unable to find data in the output`, {
+      origin: "server",
+      kind: "bug",
+    });
+  }
+  return { data, requestedModel, executedModel, mimeType };
 }
 
 async function executeTool<
@@ -106,11 +138,15 @@ async function executeTool<
   });
   if (!ok(response)) return response;
 
-  const data = response?.executionOutputs["data"].chunks.at(0)?.data;
-  if (!data) {
-    return err(`Invalid response from "${api}" backend`);
+  const data = parseExecutionOutput(response?.executionOutputs["data"].chunks);
+  if (!ok(data)) {
+    return err(`Invalid response from "${api}" backend`, {
+      origin: "server",
+      kind: "bug",
+    });
   }
-  const jsonString = decodeBase64(data);
+
+  const jsonString = decodeBase64(data.data);
   try {
     return JSON.parse(jsonString) as T;
   } catch {
