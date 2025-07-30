@@ -182,6 +182,8 @@ async function init() {
       showGeoRestrictionDialog();
     } else if (url.searchParams.has("missing-scopes")) {
       scopesErrorDialog.showModal();
+      url.searchParams.delete("missing-scopes");
+      window.history.replaceState(null, "", url);
     }
 
     if (url.searchParams.has("flow")) {
