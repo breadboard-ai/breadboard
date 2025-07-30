@@ -76,6 +76,9 @@ export default {
     LABEL_DISCLAIMER: {
       str: "Opal can make mistakes, so double-check it",
     },
+    LABEL_SHARE: {
+      str: "An Opal mini-app has been shared with you",
+    },
   },
   ProjectListing: {
     ...DefaultLangPack.ProjectListing,
