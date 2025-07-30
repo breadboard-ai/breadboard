@@ -116,93 +116,85 @@ async function init() {
     Strings.from("APP_NAME"),
     Strings.from("SUB_APP_NAME")
   );
+  try {
+    const {
+      signInButton,
+      scopesErrorDialog,
+      scopesErrorSignInButton,
+      genericErrorDialog,
+      genericErrorDialogTitle,
+      sharedFlowDialog,
+      sharedFlowDialogSignInButton,
+      sharedFlowDialogTitle,
+    } = Shell.obtainElements();
 
-  const signInButton = document.querySelector<HTMLAnchorElement>("#sign-in");
-  if (!signInButton) {
-    console.warn("Unable to locate sign-in button");
-    return;
-  }
-  const scopesErrorDialog = document.querySelector<HTMLDialogElement>(
-    "#scopes-error-dialog"
-  );
-  if (!scopesErrorDialog) {
-    console.warn("Unable to locate scopes error dialog");
-    return;
-  }
-  const scopesErrorSignInButton =
-    scopesErrorDialog.querySelector<HTMLAnchorElement>(".sign-in");
-  if (!scopesErrorSignInButton) {
-    console.warn("Unable to locate scopes error sign-in button");
-    return;
-  }
+    const setSignInUrls = async () => {
+      // Note we need a new sign-in URL for each attempt, because it has a unique
+      // nonce.
+      const signInUrl = await signinAdapter.getSigninUrl();
+      signInButton.href = signInUrl;
+      scopesErrorSignInButton.href = signInUrl;
+      sharedFlowDialogSignInButton.href = signInUrl;
+    };
 
-  const genericErrorDialog = document.querySelector<HTMLDialogElement>(
-    "#generic-error-dialog"
-  );
-  if (!genericErrorDialog) {
-    console.warn("Unable to find generic error dialog");
-    return;
-  }
-  const genericErrorDialogTitle =
-    genericErrorDialog.querySelector<HTMLHeadingElement>(".title");
-  if (!genericErrorDialogTitle) {
-    console.warn("Unable to find generic error dialog title");
-    return;
-  }
+    const showGeoRestrictionDialog = () => {
+      genericErrorDialogTitle.textContent = `${Strings.from("APP_NAME")} is not available in your country yet`;
+      genericErrorDialog.showModal();
+    };
 
-  const setSignInUrls = async () => {
-    // Note we need a new sign-in URL for each attempt, because it has a unique
-    // nonce.
-    const signInUrl = await signinAdapter.getSigninUrl();
-    signInButton.href = signInUrl;
-    scopesErrorSignInButton.href = signInUrl;
-  };
-
-  const showGeoRestrictionDialog = () => {
-    genericErrorDialogTitle.textContent = `${Strings.from("APP_NAME")} is not available in your country yet`;
-    genericErrorDialog.showModal();
-  };
-
-  const onClickSignIn = async () => {
-    if (!signinAdapter) {
-      return;
-    }
-
-    const result = await signinAdapter.signIn();
-    if (!result.ok) {
-      const { error } = result;
-      console.warn(error);
-      await setSignInUrls();
-      if (error.code === "missing-scopes") {
-        scopesErrorDialog.showModal();
-      } else if (error.code === "geo-restriction") {
-        showGeoRestrictionDialog();
-      } else {
-        error.code satisfies "other";
-        genericErrorDialogTitle.textContent = `An unexpected signin error occured`;
-        genericErrorDialog.showModal();
+    const onClickSignIn = async () => {
+      if (!signinAdapter) {
+        return;
       }
-      return;
+
+      const result = await signinAdapter.signIn();
+      if (!result.ok) {
+        const { error } = result;
+        console.warn(error);
+        await setSignInUrls();
+        if (error.code === "missing-scopes") {
+          scopesErrorDialog.showModal();
+        } else if (error.code === "geo-restriction") {
+          showGeoRestrictionDialog();
+        } else {
+          error.code satisfies "other";
+          genericErrorDialogTitle.textContent = `An unexpected signin error occured`;
+          genericErrorDialog.showModal();
+        }
+        return;
+      }
+
+      ActionTracker.signInSuccess();
+      redirect();
+    };
+
+    await setSignInUrls();
+    signInButton.addEventListener("click", onClickSignIn);
+    scopesErrorSignInButton.addEventListener("click", () => {
+      onClickSignIn();
+      scopesErrorDialog.close();
+    });
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("geo-restriction")) {
+      url.searchParams.delete("geo-restriction");
+      window.history.replaceState(null, "", url);
+      showGeoRestrictionDialog();
+    } else if (url.searchParams.has("missing-scopes")) {
+      scopesErrorDialog.showModal();
     }
 
-    ActionTracker.signInSuccess();
-    redirect();
-  };
-
-  await setSignInUrls();
-  signInButton.addEventListener("click", onClickSignIn);
-  scopesErrorSignInButton.addEventListener("click", () => {
-    onClickSignIn();
-    scopesErrorDialog.close();
-  });
-
-  const url = new URL(window.location.href);
-  if (url.searchParams.has("geo-restriction")) {
-    url.searchParams.delete("geo-restriction");
-    window.history.replaceState(null, "", url);
-    showGeoRestrictionDialog();
-  } else if (url.searchParams.has("missing-scopes")) {
-    scopesErrorDialog.showModal();
+    if (url.searchParams.has("flow")) {
+      sharedFlowDialogTitle.textContent = Strings.from("LABEL_SHARE");
+      sharedFlowDialog.showModal();
+      sharedFlowDialogSignInButton.addEventListener("click", () => {
+        onClickSignIn();
+        sharedFlowDialog.close();
+      });
+    }
+  } catch (err) {
+    console.warn(err);
+    return;
   }
 }
 

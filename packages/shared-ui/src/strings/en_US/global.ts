@@ -137,6 +137,9 @@ export default {
   LABEL_STATUS_UPDATE: {
     str: "Status Update",
   },
+  LABEL_SHARE: {
+    str: "A Breadboard mini-app has been shared with you",
+  },
 
   // Statuses.
   STATUS_REMIXING_PROJECT: {

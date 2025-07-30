@@ -437,6 +437,7 @@ main {
     }
   }
 
+  &#shared-flow-dialog,
   &#scopes-error-dialog {
     min-height: 200px;
 
@@ -448,6 +449,7 @@ main {
       border-radius: 8px;
       margin: 12px 0 24px 0;
     }
+
     .sign-in {
       display: inline-flex;
       align-items: center;
@@ -455,8 +457,16 @@ main {
       border-radius: var(--bb-grid-size-16);
       background: var(--n-0);
       color: var(--n-100);
-      padding: 0 var(--bb-grid-size-4);
+      padding: 0 var(--bb-grid-size-10);
       text-decoration: none;
+    }
+  }
+
+  &#shared-flow-dialog {
+    max-width: 360px;
+
+    & p {
+      margin: var(--bb-grid-size-6) 0;
     }
   }
 }
