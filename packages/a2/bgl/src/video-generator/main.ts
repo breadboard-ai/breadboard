@@ -140,7 +140,7 @@ async function callVideoGen(
   // TODO(askerryryan): Remove when stable.
   console.log("REQUEST:");
   console.log(body);
-  const response = await executeStep2(body, "generated_video");
+  const response = await executeStep2(body);
   if (!ok(response)) return response;
 
   const { mimeType, data } = response;

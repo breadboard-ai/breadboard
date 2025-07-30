@@ -86,12 +86,12 @@ function maybeExtractError(e: string): string {
   }
 }
 
-function parseExecutionOutput(chunks: Chunk[]): Outcome<ExecutionOutput> {
+function parseExecutionOutput(chunks?: Chunk[]): Outcome<ExecutionOutput> {
   let data: string | undefined = undefined;
   let requestedModel: string | undefined = undefined;
   let executedModel: string | undefined = undefined;
   let mimeType: string | undefined = undefined;
-  chunks.forEach((chunk) => {
+  chunks?.forEach((chunk) => {
     if (chunk.substream_name === "requested-model") {
       requestedModel = chunk.data;
     } else if (chunk.substream_name === "executed-model") {
@@ -214,8 +214,7 @@ async function executeStep(
 }
 
 async function executeStep2(
-  body: ExecuteStepRequest,
-  key: string
+  body: ExecuteStepRequest
 ): Promise<Outcome<ExecutionOutput>> {
   const model = body.planStep.options?.modelName || body.planStep.stepName;
   const reporter = new StreamableReporter({
@@ -272,7 +271,8 @@ async function executeStep2(
       elideEncodedData(response),
       "download"
     );
-    return parseExecutionOutput(response.executionOutputs[key]?.chunks);
+    const output_key = body.planStep.output || "";
+    return parseExecutionOutput(response.executionOutputs[output_key]?.chunks);
   } finally {
     await reporter.close();
   }
