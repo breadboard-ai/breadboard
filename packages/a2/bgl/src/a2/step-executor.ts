@@ -8,6 +8,9 @@ import fetch from "@fetch";
 import secrets from "@secrets";
 import read from "@read";
 import { ok, err, decodeBase64, encodeBase64 } from "./utils";
+import { StreamableReporter } from "./output";
+
+export { executeStep2 };
 
 const DEFAULT_BACKEND_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
@@ -171,6 +174,9 @@ async function getBackendUrl() {
   return DEFAULT_BACKEND_ENDPOINT;
 }
 
+/**
+ * @deprecated Replace with executeStep2 and remove
+ */
 async function executeStep(
   body: ExecuteStepRequest
 ): Promise<Outcome<ExecuteStepResponse>> {
@@ -205,4 +211,109 @@ async function executeStep(
     return { $error };
   }
   return response;
+}
+
+async function executeStep2(
+  body: ExecuteStepRequest,
+  key: string
+): Promise<Outcome<ExecutionOutput>> {
+  const model = body.planStep.options?.modelName || body.planStep.stepName;
+  const reporter = new StreamableReporter({
+    title: `Calling ${model}`,
+    icon: "spark",
+  });
+  try {
+    await reporter.start();
+    await reporter.sendUpdate("Step Input", elideEncodedData(body), "upload");
+    // Get an authentication token.
+    const secretKey = "connection:$sign-in";
+    const token = (await secrets({ keys: [secretKey] }))[secretKey];
+    // Call the API.
+    const url = await getBackendUrl();
+    const fetchResult = await fetch({
+      url: url,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: body,
+    });
+    if (!ok(fetchResult)) {
+      const { status, $error: errObject } = fetchResult as FetchErrorResponse;
+      console.warn("Error response", fetchResult);
+      if (!status) {
+        if (errObject) {
+          return reporter.sendError(
+            err(maybeExtractError(errObject), {
+              origin: "server",
+              model,
+            })
+          );
+        }
+        return reporter.sendError(
+          err("Unknown error", { origin: "server", model })
+        );
+      }
+      return err(maybeExtractError(errObject), {
+        origin: "server",
+        model,
+      });
+    }
+    const response = fetchResult.response as ExecuteStepResponse;
+    if (response.errorMessage) {
+      return err(response.errorMessage, {
+        origin: "server",
+        model,
+      });
+    }
+    await reporter.sendUpdate(
+      "Step Output",
+      elideEncodedData(response),
+      "download"
+    );
+    return parseExecutionOutput(response.executionOutputs[key]?.chunks);
+  } finally {
+    await reporter.close();
+  }
+}
+
+export function elideEncodedData<T>(obj: T): T {
+  if (obj === null || typeof obj !== "object") return obj;
+
+  if (Array.isArray(obj)) return obj.map((item) => elideEncodedData(item)) as T;
+
+  // Handle Objects
+  const o: Record<string, unknown> = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const value = obj[key];
+      if (key === "chunks" && Array.isArray(value)) {
+        const areChunksValid = (value as unknown[]).every(
+          (item: unknown) =>
+            typeof item === "object" &&
+            item !== null &&
+            "mimetype" in item &&
+            typeof (item as Chunk).mimetype === "string" &&
+            "data" in item &&
+            typeof (item as Chunk).data === "string"
+        );
+
+        if (areChunksValid) {
+          o[key] = (value as Chunk[]).map((chunk) => ({
+            ...chunk, // Copy other properties of the chunk
+            data: "<base64 encoded data>", // Elide the 'data' field
+          }));
+        } else {
+          // Not a valid 'Content' structure, deep copy as usual
+          o[key] = elideEncodedData(value);
+        }
+      } else {
+        // Recursively process nested objects and arrays
+        o[key] = elideEncodedData(value);
+      }
+    }
+  }
+
+  return o as T;
 }

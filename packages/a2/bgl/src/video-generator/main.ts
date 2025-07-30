@@ -26,8 +26,7 @@ import {
 } from "../a2/utils";
 
 import {
-  executeStep,
-  parseExecutionOutput,
+  executeStep2,
   type ContentMap,
   type ExecuteStepRequest,
 } from "../a2/step-executor";
@@ -141,34 +140,22 @@ async function callVideoGen(
   // TODO(askerryryan): Remove when stable.
   console.log("REQUEST:");
   console.log(body);
-  const response = await executeStep(body);
-  if (!ok(response)) {
-    return err("Video generation failed: " + response.$error);
-  }
-  if (!response.executionOutputs) {
-    return err("Video generation failed: no outputs");
-  }
+  const response = await executeStep2(body, "generated_video");
+  if (!ok(response)) return response;
 
-  let returnVal;
-  for (const value of Object.values(response.executionOutputs)) {
-    const output = parseExecutionOutput(value.chunks);
-    if (!ok(output)) continue;
-    const mimetype = output.mimeType;
-    if (mimetype.startsWith("video")) {
-      if (mimetype.endsWith("/storedData")) {
-        returnVal = toLLMContentStored(
-          mimetype.replace("/storedData", ""),
-          output.data
-        );
-      } else {
-        returnVal = toLLMContentInline(mimetype, output.data);
-      }
-    }
+  const { mimeType, data } = response;
+  if (!mimeType.startsWith("video")) {
+    return err(`Invalid response mime type: ${mimeType}`, {
+      kind: "bug",
+      origin: "server",
+      model: modelName,
+    });
   }
-  if (!returnVal) {
-    return err("Error: No video returned from backend");
+  if (mimeType.endsWith("/storedData")) {
+    return toLLMContentStored(mimeType.replace("/storedData", ""), data);
+  } else {
+    return toLLMContentInline(mimeType, data);
   }
-  return returnVal;
 }
 
 async function invoke({
