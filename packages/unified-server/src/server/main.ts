@@ -11,7 +11,7 @@ import * as connectionServer from "@breadboard-ai/connection-server";
 import * as boardServer from "@breadboard-ai/board-server";
 import { InputValues, NodeDescriptor } from "@breadboard-ai/types";
 
-import { makeDriveProxyMiddleware } from "./drive-proxy.js";
+// import { makeDriveProxyMiddleware } from "./drive-proxy.js";
 import { allowListChecker } from "./allow-list-checker.js";
 import { getConfigFromSecretManager } from "./provide-config.js";
 import { makeCspHandler } from "./csp.js";
@@ -62,15 +62,15 @@ server.use(
 
 server.use("/app/@:user/:name", boardServer.middlewares.loadBoard());
 
-server.use(
-  "/files",
-  makeDriveProxyMiddleware({
-    publicApiKey: serverConfig.GOOGLE_DRIVE_PUBLIC_API_KEY,
-    serverUrl: serverConfig.SERVER_URL,
-    featuredGalleryFolderId:
-      serverConfig.GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID,
-  })
-);
+// server.use(
+//   "/files",
+//   makeDriveProxyMiddleware({
+//     publicApiKey: serverConfig.GOOGLE_DRIVE_PUBLIC_API_KEY,
+//     serverUrl: serverConfig.SERVER_URL,
+//     featuredGalleryFolderId:
+//       serverConfig.GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID,
+//   })
+// );
 
 server.use("/updates", createUpdatesHandler());
 
