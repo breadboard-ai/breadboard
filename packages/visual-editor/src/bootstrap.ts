@@ -90,9 +90,10 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   const StringsHelper = await import("@breadboard-ai/shared-ui/strings");
   await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
 
+  const missingScopes = await signinAdapter.missingScopes();
   if (
     signinAdapter.state === "anonymous" ||
-    signinAdapter.state === "signedin"
+    (signinAdapter.state === "signedin" && missingScopes.length === 0)
   ) {
     const icon = document.createElement("link");
     icon.rel = "icon";
@@ -188,6 +189,14 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
         "oauth_redirect",
         currentUrl.searchParams.get("oauth_redirect")!
       );
+    }
+    if (missingScopes.length > 0) {
+      console.log(
+        "[signin] OAuth scopes were missing, forcing signin",
+        missingScopes
+      );
+      await signinAdapter.signOut();
+      landingRedirectUrl.searchParams.set("missing-scopes", "true");
     }
     window.location.href = decodeURIComponent(landingRedirectUrl.href);
     return;

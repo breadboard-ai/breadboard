@@ -123,24 +123,26 @@ class SigninAdapter {
     return token;
   }
 
+  #cachedConnection: Promise<Connection | undefined> | undefined;
+
   async #getConnection(): Promise<Connection | undefined> {
-    const httpRes = await fetch(
-      new URL("list", this.#globalConfig.connectionServerUrl),
-      {
-        credentials: "include",
+    return (this.#cachedConnection ??= (async () => {
+      const httpRes = await fetch(
+        new URL("list", this.#globalConfig.connectionServerUrl),
+        { credentials: "include" }
+      );
+      if (!httpRes.ok) {
+        return;
       }
-    );
-    if (!httpRes.ok) {
-      return;
-    }
-    const list = (await httpRes.json()) as ListConnectionsResponse;
-    const connection = list.connections.find(
-      (connection) => connection.id == SIGN_IN_CONNECTION_ID
-    );
-    if (!connection) {
-      return;
-    }
-    return connection;
+      const list = (await httpRes.json()) as ListConnectionsResponse;
+      const connection = list.connections.find(
+        (connection) => connection.id == SIGN_IN_CONNECTION_ID
+      );
+      if (!connection) {
+        return;
+      }
+      return connection;
+    })());
   }
 
   async getSigninUrl(): Promise<string> {
@@ -236,6 +238,7 @@ class SigninAdapter {
       picture: grantResponse.picture,
       id: grantResponse.id,
       domain: grantResponse.domain,
+      scopes: grantResponse.scopes?.map(canonicalizeOAuthScope),
     };
     await this.#settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connection.id, {
       name: connection.id,
@@ -274,4 +277,69 @@ class SigninAdapter {
     const result = (await response.json()) as { canAccess?: boolean };
     return !result.canAccess;
   }
+
+  async missingScopes(): Promise<string[]> {
+    if (this.state !== "signedin") {
+      return [];
+    }
+    const connection = await this.#getConnection();
+    if (!connection) {
+      return [];
+    }
+
+    const settingsValueStr = (
+      await this.#settingsHelper.get(SETTINGS_TYPE.CONNECTIONS, connection.id)
+    )?.value as string | undefined;
+    if (!settingsValueStr) {
+      return [];
+    }
+    const settingsValue = JSON.parse(settingsValueStr) as TokenGrant;
+
+    const canonicalizedUserScopes = new Set<string>();
+    if (settingsValue.scopes) {
+      for (const scope of settingsValue.scopes) {
+        canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
+      }
+    } else {
+      // See https://cloud.google.com/docs/authentication/token-types#access
+      const infoUrl = new URL("https://oauth2.googleapis.com/tokeninfo");
+      infoUrl.searchParams.set("access_token", settingsValue.access_token);
+      const result = (await (await fetch(infoUrl)).json()) as { scope: string };
+      const canonicalizedUserScopesArr = result.scope
+        .split(" ")
+        .map(canonicalizeOAuthScope);
+      // Persist the scopes so that we don't hit the tokeninfo endpoint again.
+      await this.#settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connection.id, {
+        name: connection.id,
+        value: JSON.stringify({
+          ...settingsValue,
+          scopes: canonicalizedUserScopesArr,
+        } satisfies TokenGrant),
+      });
+      for (const scope of canonicalizedUserScopesArr) {
+        canonicalizedUserScopes.add(scope);
+      }
+    }
+
+    const canonicalizedRequiredScopes = connection.scopes
+      .filter(({ optional }) => !optional)
+      .map(({ scope }) => canonicalizeOAuthScope(scope));
+
+    return canonicalizedRequiredScopes.filter(
+      (scope) => !canonicalizedUserScopes.has(scope)
+    );
+  }
+}
+
+/**
+ * Some scopes go by multiple names.
+ */
+function canonicalizeOAuthScope(scope: string): string {
+  if (scope === "https://www.googleapis.com/auth/userinfo.profile") {
+    return "profile";
+  }
+  if (scope === "https://www.googleapis.com/auth/userinfo.email") {
+    return "email";
+  }
+  return scope;
 }
