@@ -19,8 +19,6 @@ import {
   toInlineData,
   toInlineReference,
   toLLMContent,
-  toLLMContentInline,
-  toLLMContentStored,
   toText,
   toTextConcat,
 } from "../a2/utils";
@@ -137,35 +135,12 @@ async function callVideoGen(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  // TODO(askerryryan): Remove when stable.
-  console.log("REQUEST:");
-  console.log(body);
   const response = await executeStep(body);
-  if (!ok(response)) {
-    return err("Video generation failed: " + response.$error);
-  }
-  if (!response.executionOutputs) {
-    return err("Video generation failed: no outputs");
-  }
+  if (!ok(response)) return response;
 
-  let returnVal;
-  for (const value of Object.values(response.executionOutputs)) {
-    const mimetype = value.chunks[0].mimetype;
-    if (mimetype.startsWith("video")) {
-      if (mimetype.endsWith("/storedData")) {
-        returnVal = toLLMContentStored(
-          mimetype.replace("/storedData", ""),
-          value.chunks[0].data
-        );
-      } else {
-        returnVal = toLLMContentInline(mimetype, value.chunks[0].data);
-      }
-    }
-  }
-  if (!returnVal) {
-    return err("Error: No video returned from backend");
-  }
-  return returnVal;
+  // Only take the first video output. The model can't produce
+  // more than one.
+  return response.chunks.at(0)!;
 }
 
 async function invoke({

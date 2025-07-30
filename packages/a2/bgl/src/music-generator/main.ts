@@ -18,8 +18,6 @@ import {
   joinContent,
   ok,
   toLLMContent,
-  toLLMContentInline,
-  toLLMContentStored,
   toText,
   toTextConcat,
 } from "../a2/utils";
@@ -35,7 +33,7 @@ type AudioGeneratorOutputs = {
 
 export { invoke as default, describe };
 
-async function callMusicGen(prompt: string): Promise<LLMContent> {
+async function callMusicGen(prompt: string): Promise<Outcome<LLMContent>> {
   const executionInputs: ContentMap = {};
   executionInputs["prompt"] = {
     chunks: [
@@ -57,32 +55,9 @@ async function callMusicGen(prompt: string): Promise<LLMContent> {
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
   const response = await executeStep(body);
-  if (!ok(response)) {
-    return toLLMContent("Music generation failed: " + response.$error);
-  }
-  if (!response.executionOutputs) {
-    return toLLMContent("Music returned no audio");
-  }
+  if (!ok(response)) return response;
 
-  let returnVal;
-  for (const value of Object.values(response.executionOutputs)) {
-    const mimetype = value.chunks[0].mimetype;
-    if (mimetype.startsWith("audio")) {
-      if (mimetype.endsWith("/storedData")) {
-        returnVal = toLLMContentStored(
-          mimetype.replace("/storedData", ""),
-          value.chunks[0].data
-        );
-      } else {
-        returnVal = toLLMContentInline(mimetype, value.chunks[0].data);
-      }
-    }
-  }
-  if (!returnVal) {
-    return toLLMContent("Error: No music returned from backend");
-  }
-  console.log(returnVal);
-  return returnVal;
+  return response.chunks.at(0)!;
 }
 
 async function invoke({

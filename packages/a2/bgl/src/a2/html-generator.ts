@@ -4,14 +4,7 @@
 
 import type { ContentMap, ExecuteStepRequest } from "./step-executor";
 import { executeStep } from "./step-executor";
-import {
-  decodeBase64,
-  encodeBase64,
-  err,
-  ok,
-  toLLMContent,
-  toLLMContentInline,
-} from "./utils";
+import { encodeBase64, err, mergeContent, ok } from "./utils";
 
 export { callGenWebpage };
 
@@ -94,9 +87,6 @@ async function callGenWebpage(
   console.log("request body");
   console.log(body);
   const response = await executeStep(body);
-  // TODO(askerryryan): Remove once functional.
-  console.log("response");
-  console.log(response);
   if (!ok(response)) {
     let errorMessage;
     if (response.$error.includes("The service is currently unavailable")) {
@@ -108,21 +98,5 @@ async function callGenWebpage(
     return err("Webpage generation failed: " + errorMessage);
   }
 
-  let returnVal;
-  const outputChunk = response.executionOutputs[OUTPUT_KEY];
-  if (!outputChunk) {
-    return err("Error: Malformed response. No page generated.");
-  }
-  const mimetype = outputChunk.chunks[0].mimetype;
-  const base64Data = outputChunk.chunks[0].data;
-  const data = decodeBase64(base64Data);
-  if (mimetype == "text/html") {
-    returnVal = toLLMContentInline(mimetype, data);
-  } else {
-    returnVal = toLLMContent(data);
-  }
-  if (!returnVal) {
-    return err("Error: No webpage returned from backend");
-  }
-  return returnVal;
+  return mergeContent(response.chunks, "model");
 }

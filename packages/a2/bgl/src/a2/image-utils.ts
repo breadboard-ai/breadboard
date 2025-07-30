@@ -11,15 +11,12 @@ import {
 import {
   addUserTurn,
   encodeBase64,
-  err,
   isStoredData,
   llm,
   ok,
   toInlineData,
   toInlineReference,
   toLLMContent,
-  toLLMContentInline,
-  toLLMContentStored,
 } from "./utils";
 
 export { callGeminiImage, callImageGen, promptExpander };
@@ -90,32 +87,10 @@ async function callGeminiImage(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  // TODO(askerryryan): Remove once functional.
-  console.log("request body");
-  console.log(body);
   const response = await executeStep(body);
-  // TODO(askerryryan): Remove once functional.
-  console.log("response");
-  console.log(response);
-  if (!ok(response)) {
-    return err(
-      "Image generation failed. " +
-        response.$error +
-        " Check your prompt to ensure it is a valid and compliant image prompt."
-    );
-  }
+  if (!ok(response)) return response;
 
-  const outContent =
-    response.executionOutputs && response.executionOutputs[OUTPUT_NAME];
-  if (!outContent) {
-    return err("Error: No image returned from backend");
-  }
-  return outContent.chunks.map((c) => {
-    if (c.mimetype.endsWith("/storedData")) {
-      return toLLMContentStored(c.mimetype.replace("/storedData", ""), c.data);
-    }
-    return toLLMContentInline(c.mimetype, c.data);
-  });
+  return response.chunks;
 }
 
 async function callImageGen(
@@ -151,22 +126,9 @@ async function callImageGen(
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
   const response = await executeStep(body);
-  console.log(response);
-  if (!ok(response)) {
-    return err("Image generation failed. " + response.$error);
-  }
+  if (!ok(response)) return response;
 
-  const outContent =
-    response.executionOutputs && response.executionOutputs[OUTPUT_NAME];
-  if (!outContent) {
-    return err("Error: No image returned from backend");
-  }
-  return outContent.chunks.map((c) => {
-    if (c.mimetype.endsWith("/storedData")) {
-      return toLLMContentStored(c.mimetype.replace("/storedData", ""), c.data);
-    }
-    return toLLMContentInline(c.mimetype, c.data);
-  });
+  return response.chunks;
 }
 
 function promptExpander(
