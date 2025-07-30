@@ -164,7 +164,8 @@ class DriveOperations {
       "user",
       BASE_USER_QUERY,
       this.#googleDriveClient,
-      "user"
+      "user",
+      true
     );
 
     if (featuredGalleryFolderId) {
@@ -172,7 +173,8 @@ class DriveOperations {
         "featured",
         `${BASE_FEATURED_QUERY} and "${featuredGalleryFolderId}" in parents`,
         this.#googleDriveClient,
-        "public"
+        "public",
+        false
       );
     }
 

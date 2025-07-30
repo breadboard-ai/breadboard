@@ -14,7 +14,12 @@ import type { DriveChange, GraphInfo } from "./operations.js";
 import { getSetsIntersection, getSetsUnion, readProperties } from "./utils.js";
 
 export type CachedGoogleDriveFile = NarrowedDriveFile<
-  "id" | "name" | "modifiedTime" | "properties" | "appProperties"
+  | "id"
+  | "name"
+  | "modifiedTime"
+  | "properties"
+  | "appProperties"
+  | "isAppAuthorized"
 >;
 
 /** Caches list of GraphInfo objects. */
@@ -22,12 +27,14 @@ export class DriveListCache {
   #forceRefreshOnce: boolean;
   readonly #googleDriveClient: GoogleDriveClient;
   readonly #scope: ListFilesOptions["scope"];
+  readonly #filterForAppAuthorized: boolean;
 
   constructor(
     private readonly cacheKey: string,
     private readonly query: string,
     googleDriveClient: GoogleDriveClient,
-    scope: ListFilesOptions["scope"]
+    scope: ListFilesOptions["scope"],
+    filterForAppAuthorized: boolean
   ) {
     // This is a hack to work around the problem where we don't track removals
     // of items from gallery.
@@ -36,6 +43,7 @@ export class DriveListCache {
     );
     this.#googleDriveClient = googleDriveClient;
     this.#scope = scope;
+    this.#filterForAppAuthorized = filterForAppAuthorized;
   }
 
   async #getCacheAndValue(skipValue: boolean = false) {
@@ -104,7 +112,14 @@ export class DriveListCache {
 
       const response = await this.#googleDriveClient.listFiles(query, {
         scope: this.#scope,
-        fields: ["id", "name", "modifiedTime", "properties", "appProperties"],
+        fields: [
+          "id",
+          "name",
+          "modifiedTime",
+          "properties",
+          "appProperties",
+          "isAppAuthorized",
+        ],
         orderBy: [
           {
             field: "modifiedTime",
@@ -112,6 +127,13 @@ export class DriveListCache {
           },
         ],
       });
+      if (this.#filterForAppAuthorized) {
+        // Filter down to graphs created by whatever the current OAuth app is.
+        // Otherwise, graphs from different OAuth apps will appear in this list
+        // too, and if they are selected, we won't be able to edit them. Note
+        // there is no way to do this in the query itself.
+        response.files = response.files.filter((file) => file.isAppAuthorized);
+      }
 
       const updatedIds = new Set<string>(response.files.map((f) => f.id));
       const cachedList: CachedGoogleDriveFile[] =
