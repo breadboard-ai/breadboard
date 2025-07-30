@@ -1,8 +1,8 @@
 [
   {
-    "date": "2025-07-28",
+    "date": "2025-07-29",
     "type": "warning",
-    "text": "The Lyria 2 model is almost at capacity and may return \"quota exceeded\" errors. We're on it."
+    "text": "The Lyria 2 model calls appear to be failing with longer prompts. For now, try to keep your Lyria prompts short."
   },
   {
     "date": "2025-07-25",
