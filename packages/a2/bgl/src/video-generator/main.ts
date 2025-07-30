@@ -19,8 +19,6 @@ import {
   toInlineData,
   toInlineReference,
   toLLMContent,
-  toLLMContentInline,
-  toLLMContentStored,
   toText,
   toTextConcat,
 } from "../a2/utils";
@@ -142,19 +140,7 @@ async function callVideoGen(
 
   // Only take the first video output. The model can't produce
   // more than one.
-  const { mimeType, data } = response.chunks.at(0) || {};
-  if (!data || !mimeType?.startsWith("video")) {
-    return err(`Invalid response mime type: ${mimeType}`, {
-      kind: "bug",
-      origin: "server",
-      model: modelName,
-    });
-  }
-  if (mimeType.endsWith("/storedData")) {
-    return toLLMContentStored(mimeType.replace("/storedData", ""), data);
-  } else {
-    return toLLMContentInline(mimeType, data);
-  }
+  return response.chunks.at(0)!;
 }
 
 async function invoke({

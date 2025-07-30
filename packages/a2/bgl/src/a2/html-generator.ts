@@ -4,14 +4,7 @@
 
 import type { ContentMap, ExecuteStepRequest } from "./step-executor";
 import { executeStep } from "./step-executor";
-import {
-  decodeBase64,
-  encodeBase64,
-  err,
-  ok,
-  toLLMContent,
-  toLLMContentInline,
-} from "./utils";
+import { encodeBase64, err, mergeContent, ok } from "./utils";
 
 export { callGenWebpage };
 
@@ -105,11 +98,5 @@ async function callGenWebpage(
     return err("Webpage generation failed: " + errorMessage);
   }
 
-  const { mimeType, data: base64Data } = response.chunks.at(0)!;
-  const data = decodeBase64(base64Data);
-  if (mimeType == "text/html") {
-    return toLLMContentInline(mimeType, data);
-  } else {
-    return toLLMContent(data);
-  }
+  return mergeContent(response.chunks, "model");
 }

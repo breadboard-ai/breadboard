@@ -7,7 +7,14 @@ export { executeStep, executeTool, parseExecutionOutput };
 import fetch from "@fetch";
 import secrets from "@secrets";
 import read from "@read";
-import { ok, err, decodeBase64, encodeBase64 } from "./utils";
+import {
+  ok,
+  err,
+  decodeBase64,
+  encodeBase64,
+  toLLMContentStored,
+  toLLMContentInline,
+} from "./utils";
 import { StreamableReporter } from "./output";
 
 const DEFAULT_BACKEND_ENDPOINT =
@@ -24,7 +31,7 @@ type FetchErrorResponse = {
 type Chunk = {
   mimetype: string;
   data: string;
-  substream_name?: string;
+  substreamName?: string;
 };
 
 export type Content = {
@@ -69,7 +76,7 @@ export type ExecuteStepResponse = {
 };
 
 type ExecutionOutput = {
-  chunks: { mimeType: string; data: string }[];
+  chunks: LLMContent[];
   requestedModel?: string;
   executedModel?: string;
 };
@@ -86,17 +93,14 @@ function maybeExtractError(e: string): string {
 function parseExecutionOutput(input?: Chunk[]): Outcome<ExecutionOutput> {
   let requestedModel: string | undefined = undefined;
   let executedModel: string | undefined = undefined;
-  const chunks: { data: string; mimeType: string }[] = [];
+  const chunks: LLMContent[] = [];
   input?.forEach((chunk) => {
-    if (chunk.substream_name === "requested-model") {
+    if (chunk.substreamName === "requested-model") {
       requestedModel = chunk.data;
-    } else if (chunk.substream_name === "executed-model") {
+    } else if (chunk.substreamName === "executed-model") {
       executedModel = chunk.data;
     } else {
-      chunks.push({
-        data: chunk.data,
-        mimeType: chunk.mimetype,
-      });
+      chunks.push(toLLMContent(chunk));
     }
   });
   if (chunks.length === 0) {
@@ -106,6 +110,15 @@ function parseExecutionOutput(input?: Chunk[]): Outcome<ExecutionOutput> {
     });
   }
   return { chunks, requestedModel, executedModel };
+
+  function toLLMContent({ mimetype, data }: Chunk): LLMContent {
+    if (mimetype === "text/html") {
+      toLLMContentInline(mimetype, decodeBase64(data));
+    } else if (mimetype.endsWith("/storedData")) {
+      return toLLMContentStored(mimetype.replace("/storedData", ""), data);
+    }
+    return toLLMContentInline(mimetype, data);
+  }
 }
 
 async function executeTool<
@@ -139,7 +152,9 @@ async function executeTool<
   });
   if (!ok(response)) return response;
 
-  const { data } = response.chunks.at(0)!;
+  const {
+    inlineData: { data },
+  } = response.chunks.at(0)!.parts.at(0) as InlineDataCapabilityPart;
   const jsonString = decodeBase64(data!);
   try {
     return JSON.parse(jsonString) as T;

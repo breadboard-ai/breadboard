@@ -18,8 +18,6 @@ import {
   joinContent,
   ok,
   toLLMContent,
-  toLLMContentInline,
-  toLLMContentStored,
   toText,
   toTextConcat,
 } from "../a2/utils";
@@ -85,12 +83,7 @@ async function callAudioGen(
   const response = await executeStep(body);
   if (!ok(response)) return response;
 
-  const { mimeType, data } = response.chunks.at(0)!;
-  if (mimeType.endsWith("/storedData")) {
-    return toLLMContentStored(mimeType.replace("/storedData", ""), data);
-  } else {
-    return toLLMContentInline(mimeType, data);
-  }
+  return response.chunks.at(0)!;
 }
 
 async function invoke({

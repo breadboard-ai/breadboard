@@ -17,8 +17,6 @@ import {
   toInlineData,
   toInlineReference,
   toLLMContent,
-  toLLMContentInline,
-  toLLMContentStored,
 } from "./utils";
 
 export { callGeminiImage, callImageGen, promptExpander };
@@ -92,12 +90,7 @@ async function callGeminiImage(
   const response = await executeStep(body);
   if (!ok(response)) return response;
 
-  return response.chunks.map((c) => {
-    if (c.mimeType.endsWith("/storedData")) {
-      return toLLMContentStored(c.mimeType.replace("/storedData", ""), c.data);
-    }
-    return toLLMContentInline(c.mimeType, c.data);
-  });
+  return response.chunks;
 }
 
 async function callImageGen(
@@ -135,12 +128,7 @@ async function callImageGen(
   const response = await executeStep(body);
   if (!ok(response)) return response;
 
-  return response.chunks.map((c) => {
-    if (c.mimeType.endsWith("/storedData")) {
-      return toLLMContentStored(c.mimeType.replace("/storedData", ""), c.data);
-    }
-    return toLLMContentInline(c.mimeType, c.data);
-  });
+  return response.chunks;
 }
 
 function promptExpander(
