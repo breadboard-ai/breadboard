@@ -22,10 +22,7 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { ok } from "@google-labs/breadboard";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { getTopLevelOrigin } from "../../utils/embed-helpers.js";
-import {
-  DEPRECATED_GRAPH_MIME_TYPE,
-  GRAPH_MIME_TYPE,
-} from "@breadboard-ai/google-drive-kit/board-server/operations.js";
+import { GRAPH_MIME_TYPE } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
 
 const Strings = BreadboardUI.Strings.forSection("Global");
 
@@ -472,8 +469,7 @@ export class GoogleDriveDebugPanel extends LitElement {
 
   async readSharedGraphList(): Promise<string[]> {
     const query =
-      ` (mimeType="${GRAPH_MIME_TYPE}"` +
-      `  or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")` +
+      ` mimeType="${GRAPH_MIME_TYPE}"` +
       ` and sharedWithMe=true` +
       ` and trashed=false`;
     const response = await this.googleDriveClient!.listFiles(query, {

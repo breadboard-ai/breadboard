@@ -37,7 +37,6 @@ const PROTOCOL = "drive:";
 
 const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
 export const GRAPH_MIME_TYPE = "application/vnd.breadboard.graph+json";
-export const DEPRECATED_GRAPH_MIME_TYPE = "application/json";
 const RUN_RESULTS_MIME_TYPE = "application/vnd.breadboard.run-results+json";
 const RUN_RESULTS_GRAPH_URL_APP_PROPERTY = "graphUrl";
 
@@ -47,9 +46,9 @@ export const LATEST_SHARED_VERSION_PROPERTY = "latestSharedVersion";
 export const MAIN_TO_SHAREABLE_COPY_PROPERTY = "mainToShareableCopy";
 export const SHAREABLE_COPY_TO_MAIN_PROPERTY = "shareableCopyToMain";
 
-const MIME_TYPE_QUERY = `(mimeType="${GRAPH_MIME_TYPE}" or mimeType="${DEPRECATED_GRAPH_MIME_TYPE}")`;
-const BASE_QUERY = `
-  ${MIME_TYPE_QUERY}
+const BASE_USER_QUERY = `
+  mimeType="${GRAPH_MIME_TYPE}"
+  and 'me' in owners
   and trashed=false
   and not properties has {
     key = ${quote(IS_SHAREABLE_COPY_PROPERTY)}
@@ -62,7 +61,7 @@ const BASE_QUERY = `
 // TODO: Once all gallery items all have shareable copy metadata, switch to
 // only show items that are shareable copies.
 const BASE_FEATURED_QUERY = `
-  ${MIME_TYPE_QUERY}
+  mimeType="${GRAPH_MIME_TYPE}"
   and trashed=false
 `;
 
@@ -163,7 +162,7 @@ class DriveOperations {
 
     this.#userGraphsList = new DriveListCache(
       "user",
-      BASE_QUERY,
+      BASE_USER_QUERY,
       this.#googleDriveClient,
       "user"
     );
@@ -171,7 +170,7 @@ class DriveOperations {
     if (featuredGalleryFolderId) {
       this.#featuredGraphsList = new DriveListCache(
         "featured",
-        `"${featuredGalleryFolderId}" in parents and ${BASE_FEATURED_QUERY}`,
+        `${BASE_FEATURED_QUERY} and "${featuredGalleryFolderId}" in parents`,
         this.#googleDriveClient,
         "public"
       );
