@@ -94,7 +94,7 @@ export class GraphEdge extends Box {
     Box.styles,
     css`
       :host {
-        z-index: 1;
+        z-index: 3;
       }
 
       :host([showbounds]) #bounds {
@@ -102,15 +102,15 @@ export class GraphEdge extends Box {
       }
 
       :host([status="stored"]) {
-        z-index: 2;
+        z-index: 4;
       }
 
       :host([selected]) {
-        z-index: 3;
+        z-index: 5;
       }
 
       :host([selected][showedgepointselectors]) {
-        z-index: 4;
+        z-index: 6;
       }
 
       svg {
@@ -477,6 +477,9 @@ export class GraphEdge extends Box {
     // We were working with squared distances so adjust the final distance.
     candidates.distance = Math.sqrt(candidates.distance);
 
+    // Here we need to leave clearance around the connection point.
+    if (candidates.from === "Right") candidates.n1.x += 7;
+
     return candidates;
   }
 
@@ -842,10 +845,10 @@ export class GraphEdge extends Box {
                   stroke=${this.selected ? EDGE_SELECTED : edgeColor} stroke-width="2" stroke-linecap="round" />
 
                 <line x1=${connectionPoints.n2.x} y1=${connectionPoints.n2.y}
-                x2=${connectionPoints.n2.x - arrowSize}
-                y2=${connectionPoints.n2.y + arrowSize}
-                transform=${`rotate(${rotation}, ${connectionPoints.n2.x}, ${connectionPoints.n2.y})`}
-                stroke=${this.selected ? EDGE_SELECTED : edgeColor} stroke-width="2" stroke-linecap="round" />
+                  x2=${connectionPoints.n2.x - arrowSize}
+                  y2=${connectionPoints.n2.y + arrowSize}
+                  transform=${`rotate(${rotation}, ${connectionPoints.n2.x}, ${connectionPoints.n2.y})`}
+                  stroke=${this.selected ? EDGE_SELECTED : edgeColor} stroke-width="2" stroke-linecap="round" />
 
                 ${
                   this.status === "stored"
