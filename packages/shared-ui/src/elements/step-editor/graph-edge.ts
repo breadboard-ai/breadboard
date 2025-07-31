@@ -94,7 +94,7 @@ export class GraphEdge extends Box {
     Box.styles,
     css`
       :host {
-        z-index: 3;
+        z-index: 1;
       }
 
       :host([showbounds]) #bounds {
@@ -102,15 +102,15 @@ export class GraphEdge extends Box {
       }
 
       :host([status="stored"]) {
-        z-index: 4;
+        z-index: 2;
       }
 
       :host([selected]) {
-        z-index: 5;
+        z-index: 3;
       }
 
       :host([selected][showedgepointselectors]) {
-        z-index: 6;
+        z-index: 4;
       }
 
       svg {
