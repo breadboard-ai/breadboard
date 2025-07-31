@@ -257,29 +257,30 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
         & #fe-1 {
           position: absolute;
-          top: calc(-1 * var(--bb-grid-size-6));
-          left: calc(-1 * var(--bb-grid-size-6));
+          top: calc(var(--bb-grid-size-6) + 2px);
+          left: calc(-1 * var(--bb-grid-size-3) + 1px);
           z-index: 0;
+          height: calc(100% - var(--bb-grid-size-6) - var(--bb-grid-size-6));
         }
 
         & #fe-2 {
           position: absolute;
-          top: calc(-1 * var(--bb-grid-size-3));
-          left: calc(-1 * var(--bb-grid-size-3));
-          z-index: 1;
+          top: calc(var(--bb-grid-size-12) + 2px);
+          left: calc(-1 * var(--bb-grid-size-6) + 2px);
+          z-index: 0;
+          height: calc(100% - var(--bb-grid-size-12) - var(--bb-grid-size-12));
         }
 
         & .for-each-adornment {
           pointer-events: none;
-          width: 100%;
-          height: 100%;
-          border-radius: calc(var(--bb-grid-size-3) + 1px);
+          width: 7px;
+          border-radius: calc(var(--bb-grid-size-3) + 1px) 0 0
+            calc(var(--bb-grid-size-3) + 1px);
           outline: 2px solid transparent;
           color: var(--bb-neutral-900);
           position: absolute;
           cursor: pointer;
-          border: 1px solid var(--n-90);
-          background: #f6f6f6;
+          background: var(--n-90);
 
           & header {
             background: color-mix(in lab, var(--background), white 50%);
@@ -832,12 +833,8 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
     let forEachAdornment: HTMLTemplateResult | symbol = nothing;
     if (this.hasForEachAdornment) {
-      forEachAdornment = html`<div id="fe-1" class="for-each-adornment">
-          <header></header>
-        </div>
-        <div id="fe-2" class="for-each-adornment">
-          <header></header>
-        </div>`;
+      forEachAdornment = html`<div id="fe-1" class="for-each-adornment"></div>
+        <div id="fe-2" class="for-each-adornment"></div>`;
     }
 
     const renderableIcon = this.icon;
