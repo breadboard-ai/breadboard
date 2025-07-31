@@ -83,6 +83,9 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   @property({ reflect: true, type: Boolean })
   accessor hasChatAdornment = false;
 
+  @property({ reflect: true, type: Boolean })
+  accessor hasForEachAdornment = false;
+
   @property({ reflect: true, type: String })
   accessor highlightType: "user" | "model" = "model";
 
@@ -209,17 +212,21 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         display: none;
       }
 
-      :host([selected]) #container,
+      :host([selected]) #container #outline,
       :host([selected]) #container #chat-adornment {
         transition: outline 0.15s cubic-bezier(0, 0, 0.3, 1);
         outline: 3px solid var(--n-0);
       }
 
-      :host(:not([updating])[highlighted][highlighttype="model"]) #container {
+      :host(:not([updating])[highlighted][highlighttype="model"])
+        #container
+        #outline {
         outline: 7px solid oklch(from var(--bb-generative-700) l c h / 0.6);
       }
 
-      :host(:not([updating])[highlighted][highlighttype="user"]) #container {
+      :host(:not([updating])[highlighted][highlighttype="user"])
+        #container
+        #outline {
         outline: 7px solid oklch(from var(--bb-ui-600) l c h / 0.6);
       }
 
@@ -230,7 +237,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       #container {
         width: 300px;
         border-radius: calc(var(--bb-grid-size-3) + 1px);
-        outline: 2px solid transparent;
         color: var(--bb-neutral-900);
         position: relative;
         cursor: pointer;
@@ -247,6 +253,53 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           top: calc(-1 * var(--bb-grid-size-4));
           left: calc(-1 * var(--bb-grid-size-4));
           pointer-events: none;
+        }
+
+        & #fe-1 {
+          position: absolute;
+          top: calc(-1 * var(--bb-grid-size-6));
+          left: calc(-1 * var(--bb-grid-size-6));
+          z-index: 0;
+        }
+
+        & #fe-2 {
+          position: absolute;
+          top: calc(-1 * var(--bb-grid-size-3));
+          left: calc(-1 * var(--bb-grid-size-3));
+          z-index: 1;
+        }
+
+        & .for-each-adornment {
+          pointer-events: none;
+          width: 100%;
+          height: 100%;
+          border-radius: calc(var(--bb-grid-size-3) + 1px);
+          outline: 2px solid transparent;
+          color: var(--bb-neutral-900);
+          position: absolute;
+          cursor: pointer;
+          border: 1px solid var(--n-90);
+          background: #f6f6f6;
+
+          & header {
+            background: color-mix(in lab, var(--background), white 50%);
+            height: var(--bb-grid-size-12);
+            width: 100%;
+            padding: 0 var(--bb-grid-size-4);
+            border-radius: var(--bb-grid-size-3) var(--bb-grid-size-3) 0 0;
+          }
+        }
+
+        & #outline {
+          position: absolute;
+          top: 0;
+          left: 0;
+          pointer-events: none;
+          width: 100%;
+          height: 100%;
+          border-radius: var(--bb-grid-size-3);
+          outline: 2px solid transparent;
+          z-index: 2;
         }
 
         & #chat-adornment {
@@ -275,39 +328,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           }
         }
 
-        #right-arrow {
-          position: absolute;
-          top: 0px;
-          left: 100%;
-          width: 46px;
-          height: 36px;
-        }
-
-        #default-add {
-          position: absolute;
-          top: 24px;
-          left: 100%;
-          transform: translateX(48px) translateY(-50%);
-          z-index: 4;
-          border: 1px solid var(--bb-neutral-300);
-          color: var(--bb-neutral-600);
-          font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
-            var(--bb-font-family);
-          border-radius: var(--bb-grid-size-16);
-          background: var(--bb-neutral-50) var(--bb-icon-library-add) 8px
-            center / 20px 20px no-repeat;
-          padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
-          transition: border 0.2s cubic-bezier(0, 0, 0.3, 1);
-          height: var(--bb-grid-size-7);
-          cursor: pointer;
-          white-space: nowrap;
-          pointer-events: auto;
-
-          &:hover {
-            border: 1px solid var(--bb-neutral-500);
-          }
-        }
-
         & header {
           display: flex;
           align-items: center;
@@ -320,6 +340,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           font-size: 16px;
           line-height: 24px;
           position: relative;
+          z-index: 3;
 
           & span {
             text-overflow: ellipsis;
@@ -394,6 +415,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           line-height: var(--bb-grid-size-6);
           border-radius: 0 0 var(--bb-grid-size-3) var(--bb-grid-size-3);
           pointer-events: none;
+          z-index: 3;
 
           p {
             margin: 0 0 var(--bb-grid-size-2) 0;
@@ -808,9 +830,19 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       ];
     }
 
+    let forEachAdornment: HTMLTemplateResult | symbol = nothing;
+    if (this.hasForEachAdornment) {
+      forEachAdornment = html`<div id="fe-1" class="for-each-adornment">
+          <header></header>
+        </div>
+        <div id="fe-2" class="for-each-adornment">
+          <header></header>
+        </div>`;
+    }
+
     const renderableIcon = this.icon;
 
-    return html`<section
+    return html` <section
         id="container"
         class=${classMap({ bounds: this.showBounds })}
         style=${styleMap(styles)}
@@ -819,6 +851,8 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           this.dispatchEvent(new AutoFocusEditorRequest());
         }}
       >
+        ${forEachAdornment}
+        <div id="outline"></div>
         <header
           class="sans-flex w-500 round"
           @click=${(evt: Event) => {
