@@ -152,6 +152,10 @@ export class Graph extends Box {
         const ports = node.currentPorts();
         const metadata = node.type().currentMetadata();
 
+        graphNode.hasForEachAdornment =
+          nodeDescription.inputSchema.behavior?.includes(
+            "hint-for-each-mode"
+          ) ?? false;
         graphNode.hasChatAdornment =
           nodeDescription.inputSchema.behavior?.includes("hint-chat-mode") ??
           false;
