@@ -20,7 +20,11 @@ import {
 } from "@breadboard-ai/data-store";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import type { BoardServer, RunSecretEvent } from "@breadboard-ai/types";
+import type {
+  BoardServer,
+  ConformsToNodeValue,
+  RunSecretEvent,
+} from "@breadboard-ai/types";
 import {
   addSandboxedRunModule,
   composeFileSystemBackends,
@@ -111,6 +115,7 @@ type RenderValues = {
 
 const LOADING_TIMEOUT = 1250;
 const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
+const UPDATE_HASH_KEY = "bb-main-update-hash";
 
 @customElement("bb-main")
 export class Main extends SignalWatcher(LitElement) {
@@ -188,28 +193,35 @@ export class Main extends SignalWatcher(LitElement) {
   accessor #ready = false;
 
   @state()
-  set #statusUpdates(values: BreadboardUI.Types.VisualEditorStatusUpdate[]) {
+  set #statusUpdates(
+    values: ConformsToNodeValue<BreadboardUI.Types.VisualEditorStatusUpdate>[]
+  ) {
     values.sort((a, b) => {
       const aDate = new Date(a.date);
       const bDate = new Date(b.date);
       return bDate.getTime() - aDate.getTime();
     });
 
+    const lastUpdateHash =
+      globalThis.localStorage.getItem(UPDATE_HASH_KEY) ?? "0";
+    const updateHash = hash(values).toString();
+    if (lastUpdateHash === updateHash) {
+      return;
+    }
+
+    globalThis.localStorage.setItem(UPDATE_HASH_KEY, updateHash);
     this.#statusUpdatesValues = values;
-    const newestStatusDate = values.at(0)?.date ?? "";
+
     if (
       values[0]?.type !== "info" &&
-      (this.#uiState.showStatusUpdateChip === null ||
-        this.#lastStatusUpdateDateTime !== newestStatusDate)
+      this.#uiState.showStatusUpdateChip === null
     ) {
-      this.#lastStatusUpdateDateTime = newestStatusDate;
       this.#uiState.showStatusUpdateChip = true;
     }
   }
   get #statusUpdates() {
     return this.#statusUpdatesValues;
   }
-  #lastStatusUpdateDateTime: string = "";
   #statusUpdatesValues: BreadboardUI.Types.VisualEditorStatusUpdate[] = [];
 
   // References.
