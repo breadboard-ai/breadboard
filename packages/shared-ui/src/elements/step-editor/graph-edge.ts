@@ -929,10 +929,7 @@ export class GraphEdge extends Box {
                             <rect x="0" y="0" width=${this.bounds.width} height=${this.bounds.height} fill="url(#c1-gradient)"></rect>
                             <rect x="0" y="0" width=${this.bounds.width} height=${this.bounds.height} fill="url(#c2-gradient)"></rect>
                           </g>`
-                    : svg`<g id="lines" mask="url(#line-gradient-mask)">
-                            <rect x="0" y="0" width=${this.bounds.width} height=${this.bounds.height} fill="url(#c1-gradient)"></rect>
-                            <rect x="0" y="0" width=${this.bounds.width} height=${this.bounds.height} fill="url(#c2-gradient)"></rect>
-                          </g>`
+                    : nothing
                 }
 
 
