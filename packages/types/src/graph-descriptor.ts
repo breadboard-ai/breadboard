@@ -27,6 +27,19 @@ export type NodeValue =
   | { [key: string]: NodeValue };
 
 /**
+ * A utility type to wrap around other values that ensure each entry in it is
+ * a valid Node Value. It does it via the following strategy:
+ *
+ * 1. Check if the property's type (T[P]) is assignable to NodeValue.
+ * 2. If it is, the property keeps its original type.
+ * 3. If not, its type is set to `never`, which makes it impossible to
+ *    construct an object of this type with an incompatible property.
+ */
+export type ConformsToNodeValue<T> = {
+  [P in keyof T]: T[P] extends NodeValue ? T[P] : never;
+};
+
+/**
  * Unique identifier of a node in a graph.
  */
 export type NodeIdentifier = string;
