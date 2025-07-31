@@ -1,5 +1,10 @@
 [
   {
+    "date": "2025-07-30",
+    "type": "info",
+    "text": "All systems are green and if you see any problems with quota, please use the \"Send feedback\" link in the gear menu."
+  },
+  {
     "date": "2025-07-29",
     "type": "warning",
     "text": "The Lyria 2 model calls appear to be failing with longer prompts. For now, try to keep your Lyria prompts short."
