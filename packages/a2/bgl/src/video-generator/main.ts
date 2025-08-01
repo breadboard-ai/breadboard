@@ -11,6 +11,8 @@ import {
   defaultLLMContent,
   encodeBase64,
   err,
+  ErrorReason,
+  ErrorWithMetadata,
   extractMediaData,
   extractTextData,
   isStoredData,
@@ -195,14 +197,21 @@ async function invoke({
       imageContext = imageContext.concat(refImages);
       if (imageContext.length > 1) {
         return err(
-          `Video generation expects either a single text description, or text plus a single image. Got ${imageContext.length} images.`
+          `Video generation expects either a single text description, or text plus a single image. Got ${imageContext.length} images.`,
+          {
+            kind: "config",
+            origin: "client",
+          }
         );
       }
       const combinedInstruction = toTextConcat(
         joinContent(toTextConcat(refText), textContext, false)
       );
       if (!combinedInstruction) {
-        return err("A video instruction must be provided.");
+        return err("Please provide the instruction to generate video.", {
+          kind: "config",
+          origin: "client",
+        });
       }
 
       console.log(`PROMPT(${modelName}): ${combinedInstruction}`);
@@ -218,7 +227,7 @@ async function invoke({
       return content;
     }
   );
-  if (!ok(results)) return results;
+  if (!ok(results)) return expandVeoError(results, modelName);
   return { context: results };
 }
 
@@ -227,6 +236,74 @@ type DescribeInputs = {
     instruction?: LLMContent;
   };
 };
+
+const SUPPORT_CODES = new Map<number, ErrorReason>([
+  [58061214, "child"],
+  [17301594, "child"],
+
+  [29310472, "celebrity"],
+  [15236754, "celebrity"],
+
+  [64151117, "unsafe"],
+  [42237218, "unsafe"],
+
+  [62263041, "dangerous"],
+
+  [57734940, "hate"],
+  [22137204, "hate"],
+
+  [74803281, "other"],
+  [29578790, "other"],
+  [42876398, "other"],
+
+  [39322892, "face"],
+
+  [92201652, "pii"],
+
+  [89371032, "prohibited"],
+  [49114662, "prohibited"],
+  [72817394, "prohibited"],
+
+  [90789179, "sexual"],
+  [63429089, "sexual"],
+  [43188360, "sexual"],
+
+  [78610348, "toxic"],
+
+  [61493863, "violence"],
+  [56562880, "violence"],
+
+  [32635315, "vulgar"],
+]);
+
+function expandVeoError(
+  e: ErrorWithMetadata,
+  model: string
+): ErrorWithMetadata {
+  const match = e.$error.match(/Support codes: (\d+(?:, \d+)*)/);
+  const reasons = new Set<ErrorReason>();
+
+  if (match && match[1]) {
+    const codes = match[1].split(", ").map((code) => parseInt(code.trim(), 10));
+    codes.forEach((code) => {
+      reasons.add(SUPPORT_CODES.get(code) || "other");
+    });
+  }
+
+  if (reasons.size > 0) {
+    return {
+      ...e,
+      metadata: {
+        origin: "server",
+        kind: "safety",
+        reasons: Array.from(reasons.values()),
+        model,
+      },
+    };
+  }
+
+  return e;
+}
 
 async function describe({ inputs: { instruction } }: DescribeInputs) {
   const template = new Template(instruction);

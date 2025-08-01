@@ -38,6 +38,7 @@ import {
   AppScreenOutput,
   ConsoleEntry,
   EphemeralParticleTree,
+  ErrorMetadata,
   ProjectRun,
   RunError,
   UserInput,
@@ -373,10 +374,15 @@ class ReactiveProjectRun implements ProjectRun {
   }
 
   #error(event: RunErrorEvent) {
-    const message = formatError(event.data.error);
+    const { error } = event.data;
+    const message = formatError(error);
+    const metadata =
+      !(typeof error === "string") && "metadata" in error
+        ? { metadata: error.metadata as ErrorMetadata }
+        : {};
     const path = this.#errorPath || [];
     this.input = null;
-    this.errors.set(idFromPath(path), { message });
+    this.errors.set(idFromPath(path), { message, ...metadata });
   }
 
   /**
