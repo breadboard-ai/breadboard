@@ -22,6 +22,8 @@ import {
 import { classMap } from "lit/directives/class-map.js";
 import { UILoadState } from "../../state/types.js";
 
+const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
+
 @customElement("bb-ve-header")
 export class VEHeader extends LitElement {
   @property()
@@ -60,6 +62,9 @@ export class VEHeader extends LitElement {
   @state()
   accessor #showAccountSwitcher = false;
 
+  @state()
+  accessor #showRemixInfo = false;
+
   static styles = [
     icons,
     colorsLight,
@@ -71,7 +76,7 @@ export class VEHeader extends LitElement {
 
       :host {
         display: block;
-        overflow: hidden;
+        scrollbar-width: none;
         height: 100%;
         width: 100%;
         container-type: inline-size;
@@ -85,7 +90,7 @@ export class VEHeader extends LitElement {
         justify-content: space-between;
         border-bottom: 1px solid var(--n-90);
         padding: 0 var(--bb-grid-size-5);
-        overflow: hidden;
+        scrollbar-width: none;
         position: relative;
 
         & #left {
@@ -238,6 +243,50 @@ export class VEHeader extends LitElement {
               }
             }
           }
+
+          & #remix {
+            position: relative;
+
+            & #remix-notification {
+              cursor: auto;
+              position: absolute;
+              right: 0;
+              top: calc(100% + var(--bb-grid-size-8));
+              background: var(--n-0);
+              color: var(--n-100);
+              border-radius: var(--bb-grid-size-5);
+              padding: var(--bb-grid-size-5);
+              width: 100svw;
+              max-width: 280px;
+              display: flex;
+              flex-direction: column;
+              align-items: start;
+              animation: fadeIn 1s cubic-bezier(0, 0, 0.3, 1) 1s 1 backwards;
+
+              & h1,
+              & p {
+                text-align: left;
+                color: var(--n-100);
+                margin: 0 0 var(--bb-grid-size-3) 0;
+              }
+
+              & span {
+                cursor: pointer;
+              }
+
+              &::after {
+                content: "";
+                position: absolute;
+                width: 20px;
+                height: 20px;
+                border-radius: 4px;
+                transform: scaleX(0.8) scaleY(1.4) rotate(45deg);
+                right: 32px;
+                top: -6px;
+                background: var(--n-0);
+              }
+            }
+          }
         }
       }
 
@@ -350,8 +399,25 @@ export class VEHeader extends LitElement {
           display: flex;
         }
       }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
     `,
   ];
+
+  constructor() {
+    super();
+
+    const showRemixInfo = globalThis.localStorage.getItem(REMIX_INFO_KEY);
+    this.#showRemixInfo = showRemixInfo === null;
+  }
 
   #handleTitleUpdate(evt: Event) {
     const target = evt.target;
@@ -624,7 +690,7 @@ export class VEHeader extends LitElement {
 
     return html`<button
       id="remix"
-      class="sans-flex round w-500"
+      class="sans-flex"
       @click=${(evt: Event) => {
         if (!(evt.target instanceof HTMLButtonElement)) {
           return;
@@ -648,8 +714,33 @@ export class VEHeader extends LitElement {
         );
       }}
     >
-      <span class="g-icon">gesture</span>Remix
-    </button>`;
+      <span class="g-icon">gesture</span>
+      <span class="round w-500">Remix</span>
+
+      ${this.#showRemixInfo
+        ? html`<div
+            id="remix-notification"
+            class="sans md-body-medium"
+            @click=${(evt: Event) => {
+              evt.preventDefault();
+              evt.stopImmediatePropagation();
+            }}
+          >
+            <h1 class="md-label-large">Remix to Edit</h1>
+            <p>
+              You can only run this app. To edit, click "Remix" to make a copy.
+            </p>
+            <span
+              aria-role="button"
+              @click=${() => {
+                globalThis.localStorage.setItem(REMIX_INFO_KEY, "false");
+                this.#showRemixInfo = false;
+              }}
+              >Got it</span
+            >
+          </div>`
+        : nothing}
+    </button> `;
   }
 
   #renderSharePublishButton() {
