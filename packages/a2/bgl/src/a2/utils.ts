@@ -30,6 +30,21 @@ export {
   decodeBase64,
 };
 
+export type ErrorReason =
+  | "child"
+  | "celebrity"
+  | "unsafe"
+  | "dangerous"
+  | "hate"
+  | "other"
+  | "face"
+  | "pii"
+  | "prohibited"
+  | "sexual"
+  | "toxic"
+  | "violence"
+  | "vulgar";
+
 export type ErrorMetadata = {
   /**
    * Origin of the error:
@@ -42,7 +57,7 @@ export type ErrorMetadata = {
   /**
    * Kind of the error
    * - capacity -- triggered by capacity issues (eg. quota exceeded)
-   * - safety -- triggere by a safety checker
+   * - safety -- triggered by a safety checker
    * - recitation -- triggered by recitation checker.
    * - config -- triggered by invalid configuration (can be fixed by user)
    * - bug -- triggered by a bug in code somewhere.
@@ -53,7 +68,32 @@ export type ErrorMetadata = {
    * If relevant, the name of the model, that produced the error
    */
   model?: string;
+  /**
+   * When kind is "safety", the reasons for triggering. There may be more than
+   * one.
+   * - "child" -- detects child content where it isn't allowed due to the API
+   * request settings or allowlisting.
+   * - "celebrity" -- detects a photorealistic representation of a celebrity in
+   *       the request.
+   * - "unsafe" -- detects video content that's a safety violation.
+   * - "dangerous" -- detects content that's potentially dangerous in nature.
+   * - "hate" -- detects hate-related topics or content.
+   * - "other" -- detects other miscellaneous safety issues with the request
+   * - "face" -- detects a person or face when it isn't allowed due to the
+   *      request safety settings.
+   * - "pii" -- detects Personally Identifiable Information (PII) in the text,
+   *      such as the mentioning a credit card number, home addresses, or other
+   *      such information.
+   * - "prohibited" -- detects the request of prohibited content in the request.
+   * - "sexual" -- detects content that's sexual in nature.
+   * - "toxic" -- detects toxic topics or content in the text.
+   * - "volence" -- detects violence-related content from the image or text.
+   * - "vulgar" -- detects vulgar topics or content from the text.
+   */
+  reasons?: ErrorReason[];
 };
+
+export type ErrorWithMetadata = { $error: string; metadata?: ErrorMetadata };
 
 export type NonPromise<T> = T extends Promise<unknown> ? never : T;
 
