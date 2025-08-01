@@ -46,7 +46,7 @@ const CSP_CONFIG = {
     "https://www.google.com",
     "https://www.youtube.com",
   ],
-  ["media-src"]: ["'self'", "blob:"],
+  ["media-src"]: ["'self'", "blob:", "data:"],
   ["base-uri"]: ["'none'"],
 };
 
