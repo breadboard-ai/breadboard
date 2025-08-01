@@ -731,23 +731,6 @@ export class Main extends SignalWatcher(LitElement) {
             this.#runtime.shell.setPageTitle(this.#tab.graph.title);
           }
 
-          if (this.#tab.readOnly && this.#uiState.mode === "canvas") {
-            this.snackbar(
-              Strings.from("LABEL_READONLY_PROJECT"),
-              BreadboardUI.Types.SnackType.INFORMATION,
-              [
-                {
-                  title: "Remix",
-                  action: "remix",
-                  value: this.#tab.graph.url,
-                },
-              ],
-              true,
-              globalThis.crypto.randomUUID(),
-              true
-            );
-          }
-
           this.#uiState.loadState = "Loaded";
           this.#runtime.select.refresh(
             this.#tab.id,
