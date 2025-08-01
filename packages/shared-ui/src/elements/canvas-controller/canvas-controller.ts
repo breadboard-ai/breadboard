@@ -374,6 +374,7 @@ export class CanvasController extends LitElement {
     const graphEditor = guard(
       [
         graph,
+        this.graphIsMine,
         this.boardServerKits,
         this.topGraphResult,
         this.history,
@@ -398,6 +399,7 @@ export class CanvasController extends LitElement {
           .boardServerKits=${this.boardServerKits}
           .projectState=${this.projectState}
           .graph=${graph}
+          .graphIsMine=${this.graphIsMine}
           .graphTopologyUpdateId=${this.graphTopologyUpdateId}
           .graphStore=${this.graphStore}
           .state=${this.projectState?.renderer}
