@@ -140,7 +140,7 @@ export const theme: ParticlesUI.Types.UITheme = {
     h6: [],
     ul: [...Object.keys(unorderedListLight), "layout-mb-2"],
     ol: [...Object.keys(orderedListLight), "layout-mb-2"],
-    li: [...Object.keys(listItemLight), "layout-mb"],
+    li: [...Object.keys(listItemLight), "layout-mb-2"],
     a: [...Object.keys(aLight)],
     strong: [],
     em: [],
