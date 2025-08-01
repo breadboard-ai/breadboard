@@ -52,6 +52,7 @@ import type * as Node from "./node/node.js";
 import type * as Asset from "./asset/asset.js";
 import type * as Theme from "./theme/theme.js";
 import { BaseEventDetail } from "./base.js";
+import { HTMLTemplateResult } from "lit";
 
 type EnforceEventTypeMatch<T extends Record<string, BaseEventDetail<string>>> =
   {
@@ -1157,7 +1158,7 @@ export class SnackbarActionEvent extends Event {
 
   constructor(
     public readonly action: string,
-    public readonly value?: string,
+    public readonly value?: HTMLTemplateResult | string,
     public readonly callback?: () => void
   ) {
     super(SnackbarActionEvent.eventName, { ...eventInit });

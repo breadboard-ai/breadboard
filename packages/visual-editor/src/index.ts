@@ -1502,6 +1502,9 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.show.has("BoardEditModal")
           ? this.#renderBoardEditModal()
           : nothing,
+        this.#uiState.show.has("SnackbarDetailsModal")
+          ? this.#renderSnackbarDetailsModal()
+          : nothing,
         this.#uiState.show.has("VideoModal")
           ? this.#renderVideoModal()
           : nothing,
@@ -1686,6 +1689,16 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.show.delete("BoardEditModal");
       }}
     ></bb-edit-board-modal>`;
+  }
+
+  #renderSnackbarDetailsModal() {
+    return html`<bb-snackbar-details-modal
+      .details=${this.#uiState.lastSnackbarDetailsInfo}
+      @bbmodaldismissed=${() => {
+        this.#uiState.lastSnackbarDetailsInfo = null;
+        this.#uiState.show.delete("SnackbarDetailsModal");
+      }}
+    ></bb-snackbar-details-modal>`;
   }
 
   #renderVideoModal() {
@@ -1956,11 +1969,18 @@ export class Main extends SignalWatcher(LitElement) {
         evt.callback?.();
         switch (evt.action) {
           case "remix": {
-            if (!evt.value) {
+            if (!evt.value || typeof evt.value !== "string") {
               return;
             }
 
             this.#invokeRemixEventRouteWith(evt.value);
+            break;
+          }
+
+          case "details": {
+            this.#uiState.lastSnackbarDetailsInfo = evt.value ?? null;
+            this.#uiState.show.add("SnackbarDetailsModal");
+            break;
           }
         }
       }}
