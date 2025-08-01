@@ -28,6 +28,7 @@ import { ConnectorInstance, ConnectorType } from "../connectors/types";
 import { ToastType } from "../events/events";
 import { SideBoardRuntime } from "../sideboards/types";
 import { VisualEditorMode } from "../types/types";
+import { HTMLTemplateResult } from "lit";
 
 /**
  * Represents the Model+Controller for the individual run of the graph.
@@ -419,6 +420,7 @@ export type ConnectorState = {
 export type UIOverlays =
   | "BoardEditModal"
   | "BoardServerAddOverlay"
+  | "SnackbarDetailsModal"
   | "MissingShare"
   | "RuntimeFlags"
   | "TOS"
@@ -453,6 +455,7 @@ export type UI = {
     }
   >;
   blockingAction: boolean;
+  lastSnackbarDetailsInfo: HTMLTemplateResult | string | null;
 };
 
 /**

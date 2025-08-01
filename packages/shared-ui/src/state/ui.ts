@@ -55,6 +55,9 @@ class ReactiveUIState implements UI {
   @signal
   accessor showStatusUpdateChip = null;
 
+  @signal
+  accessor lastSnackbarDetailsInfo = null;
+
   accessor show = new SignalSet<UIOverlays>();
 
   accessor toasts = new SignalMap<

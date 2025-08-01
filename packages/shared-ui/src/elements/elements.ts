@@ -10,7 +10,8 @@ export { VEHeader } from "./shell/header.js";
 export { VEModal } from "./shell/modal.js";
 export { VERuntimeFlagsModal } from "./shell/runtime-flags.js";
 export { VEVideoModal } from "./shell/video-modal.js";
-export { VEStatusUpdateModal as VEWhatsNewModal } from "./shell/status-update-modal.js";
+export { VESnackbarDetailsModal } from "./shell/snackbar-details-modal.js";
+export { VEStatusUpdateModal } from "./shell/status-update-modal.js";
 
 // Inputs.
 export { AddAssetButton } from "./input/add-asset/add-asset-button.js";
