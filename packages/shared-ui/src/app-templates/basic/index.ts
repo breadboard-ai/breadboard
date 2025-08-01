@@ -123,7 +123,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   accessor isEmpty = false;
 
   @property()
-  accessor showDisclaimer = false;
+  accessor disclaimerContent = "";
 
   @property()
   accessor state: SigninAdapterState["status"] = "anonymous";
@@ -136,23 +136,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   @property()
   accessor readOnly = true;
-
-  @property()
-  set showContentWarning(value: null | boolean) {
-    // Once the content warning has been set to false, we ignore further
-    // updates. When the user goes to get a different board this component will
-    // be remounted and the original value of null will be set.
-    if (this.#showContentWarning === false) {
-      return;
-    }
-
-    this.#showContentWarning = value;
-  }
-  get showContentWarning() {
-    return this.#showContentWarning;
-  }
-
-  #showContentWarning: boolean | null = null;
 
   @consume({ context: boardServerContext, subscribe: true })
   accessor boardServer: BoardServer | undefined;
@@ -581,8 +564,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     const PADDING = 24;
     return html`<bb-floating-input
       .schema=${input.schema}
-      .showDisclaimer=${this.showDisclaimer}
       .focusWhenIn=${this.focusWhenIn}
+      .disclaimerContent=${this.disclaimerContent}
       @bbresize=${(evt: ResizeEvent) => {
         this.style.setProperty(
           "--input-clearance",
@@ -769,34 +752,11 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         this.#renderActivity(),
         this.#renderSaveResultsButton(),
         this.#renderInput(),
-        this.showDisclaimer
-          ? html`<p id="disclaimer">${Strings.from("LABEL_DISCLAIMER")}</p>`
-          : nothing,
       ];
     }
 
     return html`<section class=${classMap(classes)} style=${styleMap(styles)}>
       <div id="content">${content}</div>
-      ${this.showContentWarning
-        ? html`<div id="content-warning">
-            <div class="message">
-              This content was created by another person. It may be inaccurate
-              or unsafe.
-              <a href="https://support.google.com/legal/answer/3110420?hl=en"
-                >Report unsafe content</a
-              >
-              &middot; <a href="/policy">Privacy & Terms</a>
-            </div>
-            <button
-              class="dismiss"
-              @click=${() => {
-                this.showContentWarning = false;
-              }}
-            >
-              Dismiss
-            </button>
-          </div>`
-        : nothing}
     </section>`;
   }
 }

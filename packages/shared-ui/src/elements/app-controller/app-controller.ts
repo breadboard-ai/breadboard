@@ -7,6 +7,7 @@
 import { GraphDescriptor } from "@breadboard-ai/types";
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AppPreview");
+const GlobalStrings = StringsHelper.forSection("Global");
 
 import { LitElement, PropertyValues, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
@@ -345,7 +346,15 @@ export class AppController extends SignalWatcher(LitElement) {
       this.#appTemplate.showGDrive = this.showGDrive;
       this.#appTemplate.readOnly = this.readOnly;
       this.#appTemplate.showShareButton = false;
-      this.#appTemplate.showContentWarning = !this.isMine;
+      this.#appTemplate.disclaimerContent = this.isMine
+        ? GlobalStrings.from("LABEL_DISCLAIMER")
+        : html`This content was created by another person. It may be inaccurate
+            or unsafe.
+            <a
+              target="_blank"
+              href="https://support.google.com/legal/answer/3110420?hl=en"
+              >Report legal issue</a
+            >`;
       this.#appTemplate.isEmpty = this.graphIsEmpty;
       this.#appTemplate.focusWhenIn = this.focusWhenIn;
     }

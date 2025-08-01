@@ -86,6 +86,9 @@ export class Renderer extends LitElement {
   @property()
   accessor debug = false;
 
+  @property()
+  accessor graphIsMine = false;
+
   @property({ reflect: true, type: Boolean })
   accessor readOnly = false;
 
@@ -1618,6 +1621,7 @@ export class Renderer extends LitElement {
         ${ref(this.#editorControls)}
         .boardServerKits=${this.boardServerKits}
         .graph=${this.graph}
+        .graphIsMine=${this.graphIsMine}
         .graphStore=${this.graphStore}
         .graphStoreUpdateId=${this.graphStoreUpdateId}
         .mainGraphId=${this.mainGraphId}
@@ -1657,7 +1661,7 @@ export class Renderer extends LitElement {
       ></div>`,
       selectionRectangle,
       this.dragConnector,
-      this.showDisclaimer
+      this.showDisclaimer && this.graphIsMine
         ? html`<p id="disclaimer">${Strings.from("LABEL_DISCLAIMER")}</p>`
         : nothing,
     ];

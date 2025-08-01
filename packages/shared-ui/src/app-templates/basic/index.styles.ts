@@ -81,16 +81,18 @@ export const styles: CSSResultGroup = [
 
       & #disclaimer {
         position: absolute;
-        left: 0;
+        left: 50%;
         bottom: 0px;
         width: 100%;
         margin: 0;
-        font: 500 10px / 1 var(--bb-font-family);
+        font: 500 14px / 1.3 var(--bb-font-family);
         color: var(--n-50, var(--bb-neutral-800));
         text-align: center;
         padding: var(--bb-grid-size) var(--bb-grid-size) var(--bb-grid-size-2)
           var(--bb-grid-size);
         background: var(--s-90, var(--neutral-50, transparent));
+        max-width: 80%;
+        translate: -50% 0;
       }
 
       & #content-warning {

@@ -57,6 +57,9 @@ export class FloatingInput extends LitElement {
   @property()
   accessor focusWhenIn: FloatingInputFocusState = ["app"];
 
+  @property()
+  accessor disclaimerContent: HTMLTemplateResult | string | null = null;
+
   @query("#asset-shelf")
   accessor assetShelf: AssetShelf | null = null;
 
@@ -86,6 +89,22 @@ export class FloatingInput extends LitElement {
         width: 100%;
         opacity: 0;
         animation: fadeIn 0.8s cubic-bezier(0, 0, 0.3, 1) forwards;
+      }
+
+      #disclaimer {
+        margin: 0 auto;
+        font: 400 14px / 1.3 var(--bb-font-family);
+        color: var(--n-50, var(--bb-neutral-800));
+        text-align: center;
+        padding: var(--bb-grid-size-2) 0 0 0;
+        background: var(--s-90, var(--neutral-50, transparent));
+        max-width: 80%;
+
+        & a {
+          text-decoration: none;
+          font-weight: 500;
+          color: var(--s-30);
+        }
       }
 
       #container {
@@ -516,6 +535,9 @@ export class FloatingInput extends LitElement {
         <section id="input-container">${inputContents}</section>
       </section>`,
       addAssetModal,
+      this.disclaimerContent
+        ? html`<p id="disclaimer">${this.disclaimerContent}</p>`
+        : nothing,
     ];
   }
 }
