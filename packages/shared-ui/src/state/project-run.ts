@@ -28,7 +28,6 @@ import {
 } from "@google-labs/breadboard";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
-import { formatError } from "../utils/format-error";
 import { getStepIcon } from "../utils/get-step-icon";
 import { ReactiveApp } from "./app";
 import { ReactiveAppScreen } from "./app-screen";
@@ -38,11 +37,11 @@ import {
   AppScreenOutput,
   ConsoleEntry,
   EphemeralParticleTree,
-  ErrorMetadata,
   ProjectRun,
   RunError,
   UserInput,
 } from "./types";
+import { decodeError } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
 
 export {
@@ -374,15 +373,10 @@ class ReactiveProjectRun implements ProjectRun {
   }
 
   #error(event: RunErrorEvent) {
-    const { error } = event.data;
-    const message = formatError(error);
-    const metadata =
-      !(typeof error === "string") && "metadata" in error
-        ? { metadata: error.metadata as ErrorMetadata }
-        : {};
+    const error = decodeError(event);
     const path = this.#errorPath || [];
     this.input = null;
-    this.errors.set(idFromPath(path), { message, ...metadata });
+    this.errors.set(idFromPath(path), error);
   }
 
   /**

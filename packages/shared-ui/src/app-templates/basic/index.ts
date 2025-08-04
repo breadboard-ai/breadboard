@@ -69,6 +69,7 @@ import {
 } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
 import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 import { ref, createRef } from "lit/directives/ref.js";
+import { markdown } from "../../directives/markdown.js";
 
 function isHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -218,13 +219,23 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           continue;
         }
 
+        const details = [];
+
+        if (error.details) {
+          details.push({
+            action: "details",
+            title: "View details",
+            value: html`${markdown(error.details)}`,
+          });
+        }
+
         this.#notifiedErrors.add(errorId);
         this.dispatchEvent(
           new SnackbarEvent(
             errorId as SnackbarUUID,
             error.message,
             SnackType.ERROR,
-            [],
+            details,
             true,
             true
           )
