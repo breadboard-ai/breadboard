@@ -5,17 +5,18 @@
 export { executeStep, executeTool, parseExecutionOutput };
 
 import fetch from "@fetch";
-import secrets from "@secrets";
 import read from "@read";
+import secrets from "@secrets";
+import { StreamableReporter } from "./output";
 import {
-  ok,
-  err,
   decodeBase64,
   encodeBase64,
-  toLLMContentStored,
+  err,
+  ErrorWithMetadata,
+  ok,
   toLLMContentInline,
+  toLLMContentStored,
 } from "./utils";
-import { StreamableReporter } from "./output";
 
 const DEFAULT_BACKEND_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
@@ -228,10 +229,10 @@ async function executeStep(
     }
     const response = fetchResult.response as ExecuteStepResponse;
     if (response.errorMessage) {
-      return err(response.errorMessage, {
-        origin: "server",
-        model,
-      });
+      const richError = maybeExtractRichError(response.errorMessage, model);
+      return await reporter.sendError(
+        err(richError.$error, richError.metadata)
+      );
     }
     await reporter.sendUpdate(
       "Step Output",
@@ -283,4 +284,32 @@ export function elideEncodedData<T>(obj: T): T {
   }
 
   return o as T;
+}
+
+type RichError = {
+  code: string;
+  message: string;
+  details: string;
+};
+
+function maybeExtractRichError(e: string, model: string): ErrorWithMetadata {
+  try {
+    const richError = JSON.parse(e) as RichError;
+    const origin = "server";
+    const $error = richError.message;
+    const all = e.toLocaleLowerCase();
+    if (all.includes("safety")) {
+      return { $error, metadata: { kind: "safety", origin, model } };
+    }
+    if (all.includes("quota")) {
+      return { $error, metadata: { kind: "capacity", origin, model } };
+    }
+    if (all.includes("recitation")) {
+      return { $error, metadata: { kind: "recitation", origin, model } };
+    }
+    return { $error, metadata: { origin, model } };
+  } catch {
+    // swallow the error, just return the input argument
+    return { $error: e, metadata: { origin: "server", model } };
+  }
 }

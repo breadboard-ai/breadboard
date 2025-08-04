@@ -115,7 +115,7 @@ function decodeError(event: RunErrorEvent): RunError {
         }) || [];
       if (reasonDescriptions.length === 0) {
         return {
-          message: `${preamble}. ${NEW_PROMPT_POSTAMBLE}`,
+          message: `${preamble}. ${policy("unsafe")} ${NEW_PROMPT_POSTAMBLE}`,
         };
       } else if (reasonDescriptions.length === 1) {
         // The most common case, just stuff it into the snack bar.
@@ -133,8 +133,11 @@ function decodeError(event: RunErrorEvent): RunError {
 }
 
 function mediumFromModel(model?: string): Readonly<Medium> {
-  if (model?.includes("veo")) return VIDEO_MEDIUM;
-  if (model?.includes("image")) return IMAGE_MEDIUM;
-  if (model?.includes("audio")) return AUDIO_MEDIUM;
+  const lc = model?.toLocaleLowerCase();
+  if (lc) {
+    if (lc.includes("veo")) return VIDEO_MEDIUM;
+    if (lc.includes("image")) return IMAGE_MEDIUM;
+    if (lc.includes("audio")) return AUDIO_MEDIUM;
+  }
   return TEXT_MEDIUM;
 }
