@@ -5,17 +5,18 @@
 export { executeStep, executeTool, parseExecutionOutput };
 
 import fetch from "@fetch";
-import secrets from "@secrets";
 import read from "@read";
+import secrets from "@secrets";
+import { StreamableReporter } from "./output";
 import {
-  ok,
-  err,
   decodeBase64,
   encodeBase64,
-  toLLMContentStored,
+  err,
+  ErrorWithMetadata,
+  ok,
   toLLMContentInline,
+  toLLMContentStored,
 } from "./utils";
-import { StreamableReporter } from "./output";
 
 const DEFAULT_BACKEND_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
@@ -228,10 +229,10 @@ async function executeStep(
     }
     const response = fetchResult.response as ExecuteStepResponse;
     if (response.errorMessage) {
-      return err(response.errorMessage, {
-        origin: "server",
-        model,
-      });
+      const errorMessage = decodeMetadata(response.errorMessage, model);
+      return await reporter.sendError(
+        err(errorMessage.$error, errorMessage.metadata)
+      );
     }
     await reporter.sendUpdate(
       "Step Output",
@@ -283,4 +284,19 @@ export function elideEncodedData<T>(obj: T): T {
   }
 
   return o as T;
+}
+
+function decodeMetadata($error: string, model: string): ErrorWithMetadata {
+  const origin = "server";
+  const lc = $error.toLocaleLowerCase();
+  if (lc.includes("safety")) {
+    return { $error, metadata: { kind: "safety", origin, model } };
+  }
+  if (lc.includes("quota")) {
+    return { $error, metadata: { kind: "capacity", origin, model } };
+  }
+  if (lc.includes("recitation")) {
+    return { $error, metadata: { kind: "recitation", origin, model } };
+  }
+  return { $error, metadata: { origin, model } };
 }

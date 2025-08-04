@@ -296,7 +296,10 @@ export type ErrorMetadata = {
  */
 export type RunError = {
   message: string;
-  metadata?: ErrorMetadata;
+  /**
+   * Details of the error (if any) in markdown.
+   */
+  details?: string;
 };
 
 /**
