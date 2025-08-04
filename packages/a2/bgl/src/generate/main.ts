@@ -325,7 +325,9 @@ async function describe({
           "When checked, this step will try to detect a list of items as its input and run for each item in the list",
       },
     };
-    generateForEachBehavior.push("hint-for-each-mode");
+    if (rest["p-for-each"]) {
+      generateForEachBehavior.push("hint-for-each-mode");
+    }
   }
 
   const { url, type } = getMode(mode);
