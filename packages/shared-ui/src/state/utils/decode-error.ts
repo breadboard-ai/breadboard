@@ -53,6 +53,20 @@ function policy(type: string) {
   return `${POLICY_PREAMBLE} ${type} content.`;
 }
 
+type RichError = {
+  code?: string;
+  message: string;
+  details?: string;
+};
+
+function maybeExtractRichError(s: string): RichError {
+  try {
+    return JSON.parse(s);
+  } catch {
+    return { message: s };
+  }
+}
+
 function decodeError(event: RunErrorEvent): RunError {
   const { error } = event.data;
 
@@ -61,10 +75,10 @@ function decodeError(event: RunErrorEvent): RunError {
     "metadata" in error &&
     (error.metadata as ErrorMetadata);
 
+  const richError = maybeExtractRichError(formatError(error));
   if (!metadata) {
-    const message = formatError(error);
     // Return simple message if there's no metadata.
-    return { message };
+    return { message: richError.message };
   }
 
   // Otherwise, create a rich message with details.
@@ -75,12 +89,12 @@ function decodeError(event: RunErrorEvent): RunError {
     case "bug": {
       return {
         message: `Something went wrong. ${TRY_AGAIN_POSTAMBLE}`,
-        details: formatError(error),
+        details: `${richError.message}\n\n${richError.details || ""}`,
       };
     }
     case "config": {
       return {
-        message: formatError(error),
+        message: richError.message,
       };
     }
     case "recitation": {
