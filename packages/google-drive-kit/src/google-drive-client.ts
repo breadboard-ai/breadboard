@@ -17,7 +17,8 @@ export interface GoogleDriveClientOptions {
   getUserAccessToken: () => Promise<string>;
   publicReadStrategy:
     | { kind: "direct"; apiKey: string; referer?: string }
-    | { kind: "proxy"; url: string };
+    | { kind: "proxy"; url: string }
+    | { kind: "none" };
   domainProxyUrl?: string;
 }
 
@@ -261,28 +262,31 @@ export class GoogleDriveClient {
     }
 
     if (userResponse.status === 404) {
-      // 2. Try as a public file.
-      console.log(
-        `Received 404 response for Google Drive file metadata "${fileId.id}"` +
-          ` using user credentials. Now trying public fallback.`
-      );
-      let publicResponse;
-      if (this.#publicReadStrategy.kind === "direct") {
-        publicResponse = await this.#getFileMetadataWithRestApi(
-          fileId,
-          options,
-          this.#apiBaseUrl,
-          { kind: "key", key: this.#publicReadStrategy.apiKey }
+      if (this.#publicReadStrategy.kind !== "none") {
+        // 2. Try as a public file.
+        console.log(
+          `Received 404 response for Google Drive file metadata "${fileId.id}"` +
+            ` using user credentials. Now trying public fallback.`
         );
-      } else {
-        publicResponse = await this.#getFileMetadataWithRestApi(
-          fileId,
-          options,
-          this.#publicReadStrategy.url
-        );
-      }
-      if (publicResponse.ok) {
-        return publicResponse.json();
+        let publicResponse;
+        if (this.#publicReadStrategy.kind === "direct") {
+          publicResponse = await this.#getFileMetadataWithRestApi(
+            fileId,
+            options,
+            this.#apiBaseUrl,
+            { kind: "key", key: this.#publicReadStrategy.apiKey }
+          );
+        } else {
+          this.#publicReadStrategy.kind satisfies "proxy";
+          publicResponse = await this.#getFileMetadataWithRestApi(
+            fileId,
+            options,
+            this.#publicReadStrategy.url
+          );
+        }
+        if (publicResponse.ok) {
+          return publicResponse.json();
+        }
       }
 
       if (this.#domainProxyUrl) {
@@ -381,28 +385,31 @@ export class GoogleDriveClient {
     }
 
     if (userResponse.status === 404) {
-      // 2. Try as a public file.
-      console.log(
-        `Received 404 response for Google Drive file media "${fileId.id}"` +
-          ` using user credentials. Now trying public fallback.`
-      );
-      let publicResponse;
-      if (this.#publicReadStrategy.kind === "direct") {
-        publicResponse = await this.#getFileMediaWithRestApi(
-          fileId,
-          options,
-          this.#apiBaseUrl,
-          { kind: "key", key: this.#publicReadStrategy.apiKey }
+      if (this.#publicReadStrategy.kind !== "none") {
+        // 2. Try as a public file.
+        console.log(
+          `Received 404 response for Google Drive file media "${fileId.id}"` +
+            ` using user credentials. Now trying public fallback.`
         );
-      } else {
-        publicResponse = await this.#getFileMediaWithRestApi(
-          fileId,
-          options,
-          this.#publicReadStrategy.url
-        );
-      }
-      if (publicResponse.ok) {
-        return publicResponse;
+        let publicResponse;
+        if (this.#publicReadStrategy.kind === "direct") {
+          publicResponse = await this.#getFileMediaWithRestApi(
+            fileId,
+            options,
+            this.#apiBaseUrl,
+            { kind: "key", key: this.#publicReadStrategy.apiKey }
+          );
+        } else {
+          this.#publicReadStrategy.kind satisfies "proxy";
+          publicResponse = await this.#getFileMediaWithRestApi(
+            fileId,
+            options,
+            this.#publicReadStrategy.url
+          );
+        }
+        if (publicResponse.ok) {
+          return publicResponse;
+        }
       }
 
       if (this.#domainProxyUrl) {
@@ -497,29 +504,32 @@ export class GoogleDriveClient {
     }
 
     if (directResponse.status === 404) {
-      // 2. Try as a public file.
-      console.log(
-        `Received 404 response for Google Drive file export "${fileId.id}"` +
-          ` using user credentials. Now trying public fallback.`
-      );
+      if (this.#publicReadStrategy.kind !== "none") {
+        // 2. Try as a public file.
+        console.log(
+          `Received 404 response for Google Drive file export "${fileId.id}"` +
+            ` using user credentials. Now trying public fallback.`
+        );
 
-      let publicResponse;
-      if (this.#publicReadStrategy.kind === "direct") {
-        publicResponse = await this.#exportFileWithRestApi(
-          fileId,
-          options,
-          this.#apiBaseUrl,
-          { kind: "key", key: this.#publicReadStrategy.apiKey }
-        );
-      } else {
-        publicResponse = await this.#exportFileWithRestApi(
-          fileId,
-          options,
-          this.#publicReadStrategy.url
-        );
-      }
-      if (publicResponse.ok) {
-        return publicResponse;
+        let publicResponse;
+        if (this.#publicReadStrategy.kind === "direct") {
+          publicResponse = await this.#exportFileWithRestApi(
+            fileId,
+            options,
+            this.#apiBaseUrl,
+            { kind: "key", key: this.#publicReadStrategy.apiKey }
+          );
+        } else {
+          this.#publicReadStrategy.kind satisfies "proxy";
+          publicResponse = await this.#exportFileWithRestApi(
+            fileId,
+            options,
+            this.#publicReadStrategy.url
+          );
+        }
+        if (publicResponse.ok) {
+          return publicResponse;
+        }
       }
 
       if (this.#domainProxyUrl) {
@@ -847,12 +857,17 @@ export class GoogleDriveClient {
           undefined,
           { kind: "key", key: this.#publicReadStrategy.apiKey }
         );
-      } else {
-        this.#publicReadStrategy.kind satisfies "proxy";
+      } else if (this.#publicReadStrategy.kind === "proxy") {
         response = await this.#fetch(
           url,
           { signal: options?.signal },
           undefined
+        );
+      } else {
+        this.#publicReadStrategy.kind satisfies "none";
+        throw new Error(
+          'Requested "public" scoped listFiles,' +
+            ' but this GoogleDriveClient has public read strategy "none".'
         );
       }
     }
