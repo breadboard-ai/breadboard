@@ -20,6 +20,7 @@ export interface GoogleDriveClientOptions {
     | { kind: "proxy"; url: string }
     | { kind: "none" };
   domainProxyUrl?: string;
+  extraHeaders?: Record<string, string>;
 }
 
 export interface BaseRequestOptions {
@@ -179,12 +180,14 @@ export class GoogleDriveClient {
   readonly #domainProxyUrl?: string;
   readonly #getUserAccessToken: () => Promise<string>;
   readonly #publicReadStrategy: GoogleDriveClientOptions["publicReadStrategy"];
+  readonly #extraHeaders?: Record<string, string>;
 
   constructor(options: GoogleDriveClientOptions) {
     this.#apiBaseUrl = options.apiBaseUrl || "https://www.googleapis.com";
     this.#domainProxyUrl = options.domainProxyUrl;
     this.#getUserAccessToken = options.getUserAccessToken;
     this.#publicReadStrategy = options.publicReadStrategy;
+    this.#extraHeaders = options.extraHeaders;
   }
 
   async accessToken(): Promise<string> {
@@ -209,6 +212,11 @@ export class GoogleDriveClient {
     const headers = this.#makeFetchHeaders(authorization, resourceKeys);
     if (init?.headers) {
       for (const [key, val] of Object.entries(init.headers)) {
+        headers.set(key, val);
+      }
+    }
+    if (this.#extraHeaders) {
+      for (const [key, val] of Object.entries(this.#extraHeaders)) {
         headers.set(key, val);
       }
     }
