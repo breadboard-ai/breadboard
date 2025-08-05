@@ -29,9 +29,10 @@ async function rpc({
 }: RpcArgs): Promise<Outcome<FileSystemReadResult>> {
   const readingHandshake = await read({ path });
   if (!ok(readingHandshake)) return readingHandshake;
-  const handshake = json<HandshakeResponse>(data);
+  console.log("READING HANDSHAKE", readingHandshake);
+  const handshake = json<HandshakeResponse>(readingHandshake.data);
   if (!handshake) {
-    return err(`Unable to establish handshake a "${path}"`);
+    return err(`Unable to establish handshake at "${path}"`);
   }
   if (!handshake.request || !handshake.response) {
     return err(`Invalid handshake response at "${path}"`);

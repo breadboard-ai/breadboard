@@ -34,6 +34,7 @@ import {
   GraphDescriptor,
   hash,
   MutableGraphStore,
+  PersistentBackend,
   SerializedRun,
 } from "@google-labs/breadboard";
 import { provide } from "@lit/context";
@@ -101,6 +102,7 @@ import { MainArguments } from "./types/types";
 import { envFromSettings } from "./utils/env-from-settings";
 import { envFromFlags } from "./utils/env-from-flags";
 import { FileSystemPersistentBackend } from "@breadboard-ai/filesystem-board-server";
+import { McpFileSystemBackend } from "@breadboard-ai/mcp";
 
 type RenderValues = {
   canSave: boolean;
@@ -423,7 +425,7 @@ export class Main extends SignalWatcher(LitElement) {
       ],
       local: createFileSystemBackend(createEphemeralBlobStore()),
       mnt: composeFileSystemBackends(
-        new Map([
+        new Map<string, PersistentBackend>([
           [
             "fs",
             new FileSystemPersistentBackend(async (callback) => {
@@ -440,6 +442,7 @@ export class Main extends SignalWatcher(LitElement) {
               });
             }),
           ],
+          ["mcp", new McpFileSystemBackend()],
         ])
       ),
     });

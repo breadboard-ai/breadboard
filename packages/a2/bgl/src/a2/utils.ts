@@ -436,6 +436,6 @@ function decodeBase64(s: string): string {
   }
 }
 
-function json<T>(data: LLMContent[]): T | undefined {
+function json<T>(data: LLMContent[] | undefined): T | undefined {
   return (data?.at(0)?.parts?.at(0) as JSONPart)?.json as T;
 }
