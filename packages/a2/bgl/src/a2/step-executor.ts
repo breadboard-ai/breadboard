@@ -114,7 +114,7 @@ function parseExecutionOutput(input?: Chunk[]): Outcome<ExecutionOutput> {
 
   function toLLMContent({ mimetype, data }: Chunk): LLMContent {
     if (mimetype === "text/html") {
-      toLLMContentInline(mimetype, decodeBase64(data));
+      return toLLMContentInline(mimetype, decodeBase64(data));
     } else if (mimetype.endsWith("/storedData")) {
       return toLLMContentStored(mimetype.replace("/storedData", ""), data);
     }
