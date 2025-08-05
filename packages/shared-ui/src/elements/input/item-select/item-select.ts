@@ -53,7 +53,15 @@ export class ItemSelect extends LitElement {
     this.#value = value;
     this.#selected = this.#values.findIndex((v) => v.id === value);
     if (this.#selected === -1) {
-      this.#selected = 0;
+      // If none selected, find first non-hidden value.
+      this.#selected = this.#values.findIndex((v) => !v.hidden);
+      if (this.#selected === -1) {
+        console.warn(
+          `Couldn't find any non-hidden values in item selector`,
+          this.#values
+        );
+        this.#selected = 0;
+      }
     }
     this.#highlighted = this.#selected;
   }
