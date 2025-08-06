@@ -99,7 +99,6 @@ class McpFileSystemBackend implements PersistentBackend {
         request: `${COMMON_PREFIX}/req/${id}` as FileSystemReadWritePath,
       });
     } else if (type === RESPONSE_TYPE) {
-      // TODO: Implement this properly
       const info = this.#calls.get(name);
       if (!info) {
         return err(`MCP Backend: unknown response id in path "${path}"`);
