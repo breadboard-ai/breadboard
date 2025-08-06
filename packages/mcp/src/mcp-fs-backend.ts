@@ -18,6 +18,7 @@ import {
 import { err, ok } from "@breadboard-ai/utils";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { CallToolRequest } from "@modelcontextprotocol/sdk/types.js";
 
 export { McpFileSystemBackend };
 
@@ -43,7 +44,7 @@ type PathInfo = {
 type CallInfo = {
   id: string;
   name: McpMethod;
-  response?: Promise<LLMContent[]>;
+  response?: Promise<Outcome<LLMContent[]>>;
 };
 
 type RequestWrite = {
@@ -51,6 +52,10 @@ type RequestWrite = {
    * URL of the MCP server to connect to
    */
   url: string;
+  /**
+   * Name of the MCP Client
+   */
+  clientName?: string;
 };
 
 /**
@@ -85,15 +90,14 @@ class McpFileSystemBackend implements PersistentBackend {
       const id = crypto.randomUUID();
 
       if (!SUPPORTED_METHODS.includes(name as McpMethod)) {
-        return err(`Unsupported MCP method "${name}`);
+        return err(`MCP Backend: Unsupported MCP method "${name}"`);
       }
 
       this.#calls.set(id, { id, name: name as McpMethod });
-      const json: HandshakeResponse = {
+      return fromJson<HandshakeResponse>({
         response: `${COMMON_PREFIX}/res/${id}` as FileSystemPath,
         request: `${COMMON_PREFIX}/req/${id}` as FileSystemReadWritePath,
-      };
-      return [{ parts: [{ json }] }];
+      });
     } else if (type === RESPONSE_TYPE) {
       // TODO: Implement this properly
       const info = this.#calls.get(name);
@@ -130,32 +134,39 @@ class McpFileSystemBackend implements PersistentBackend {
     if (!info) {
       return err(`MCP Backend: unknown request id in path "${path}"`);
     }
-    const request = toJson(data) as RequestWrite;
-    if (!request.url) {
+    const { clientName, url, ...params } = toJson(data) as RequestWrite;
+    if (!url) {
       return err(`MCP Backend: missing server URL`);
     }
 
     const client = new Client({
-      // TODO: Make Client string customizable
-      name: "Breadboard MCP Client",
+      name: clientName || "Breadboard MCP Client",
       version: MCP_CLIENT_VERSION,
     });
-    const transport = new StreamableHTTPClientTransport(new URL(request.url));
+    const transport = new StreamableHTTPClientTransport(new URL(url));
 
     await client.connect(transport);
 
     switch (info.name) {
       case "listTools": {
-        info.response = new Promise((resolve) => {
-          client.listTools().then((result) => resolve(fromJson(result.tools)));
-        });
+        info.response = client
+          .listTools()
+          .then((result) => fromJson(result.tools))
+          .catch((e) => err((e as Error).message));
         break;
       }
       case "callTool": {
+        if (!params) {
+          return err(`MCP Backend: Missing "${info.name}" params`);
+        }
+        info.response = client
+          .callTool(params as CallToolRequest["params"])
+          .then((result) => fromJson(result.content))
+          .catch((e) => err((e as Error).message));
         break;
       }
       default: {
-        return err(`Unsupported MCP mehod "${info.name}`);
+        return err(`MCP Backend: Unsupported MCP mehod "${info.name}`);
       }
     }
 
