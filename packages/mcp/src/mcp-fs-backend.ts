@@ -10,11 +10,14 @@ import {
   FileSystemReadWritePath,
   FileSystemWriteResult,
   JSONPart,
+  JsonSerializable,
   LLMContent,
   Outcome,
   PersistentBackend,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
 export { McpFileSystemBackend };
 
@@ -22,11 +25,15 @@ const COMMON_PREFIX: FileSystemPath = `/mnt/mcp`;
 const HADNSHAKE_TYPE = "call";
 const RESPONSE_TYPE = "res";
 const REQUEST_TYPE = "req";
+const MCP_CLIENT_VERSION = "0.0.1";
+const SUPPORTED_METHODS = ["listTools", "callTool"] as const;
 
 export type HandshakeResponse = {
   response: FileSystemPath;
   request: FileSystemReadWritePath;
 };
+
+type McpMethod = (typeof SUPPORTED_METHODS)[number];
 
 type PathInfo = {
   type: string;
@@ -35,7 +42,7 @@ type PathInfo = {
 
 type CallInfo = {
   id: string;
-  name: string;
+  name: McpMethod;
   response?: Promise<LLMContent[]>;
 };
 
@@ -77,7 +84,11 @@ class McpFileSystemBackend implements PersistentBackend {
     if (type === HADNSHAKE_TYPE) {
       const id = crypto.randomUUID();
 
-      this.#calls.set(id, { id, name });
+      if (!SUPPORTED_METHODS.includes(name as McpMethod)) {
+        return err(`Unsupported MCP method "${name}`);
+      }
+
+      this.#calls.set(id, { id, name: name as McpMethod });
       const json: HandshakeResponse = {
         response: `${COMMON_PREFIX}/res/${id}` as FileSystemPath,
         request: `${COMMON_PREFIX}/req/${id}` as FileSystemReadWritePath,
@@ -119,22 +130,34 @@ class McpFileSystemBackend implements PersistentBackend {
     if (!info) {
       return err(`MCP Backend: unknown request id in path "${path}"`);
     }
-    const request = json(data) as RequestWrite;
+    const request = toJson(data) as RequestWrite;
     if (!request.url) {
       return err(`MCP Backend: missing server URL`);
     }
-    // Simulate a response.
-    info.response = Promise.resolve([
-      {
-        parts: [
-          {
-            json: {
-              message: `STUFF IS HAPPENING ${request.url}.${info.name}, ${JSON.stringify(request)}`,
-            },
-          },
-        ],
-      },
-    ]);
+
+    const client = new Client({
+      // TODO: Make Client string customizable
+      name: "Breadboard MCP Client",
+      version: MCP_CLIENT_VERSION,
+    });
+    const transport = new StreamableHTTPClientTransport(new URL(request.url));
+
+    await client.connect(transport);
+
+    switch (info.name) {
+      case "listTools": {
+        info.response = new Promise((resolve) => {
+          client.listTools().then((result) => resolve(fromJson(result.tools)));
+        });
+        break;
+      }
+      case "callTool": {
+        break;
+      }
+      default: {
+        return err(`Unsupported MCP mehod "${info.name}`);
+      }
+    }
 
     return;
   }
@@ -190,6 +213,10 @@ function parsePath(path: FileSystemPath): Outcome<PathInfo> {
   return { type, name };
 }
 
-function json<T>(data: LLMContent[] | undefined): T | undefined {
+function toJson<T>(data: LLMContent[] | undefined): T | undefined {
   return (data?.at(0)?.parts?.at(0) as JSONPart)?.json as T;
+}
+
+function fromJson<T>(json: T): LLMContent[] {
+  return [{ parts: [{ json: json as JsonSerializable }] }];
 }
