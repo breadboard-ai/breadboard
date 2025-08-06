@@ -15,7 +15,11 @@ import {
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 
-export { ProxiedPersistentBackend };
+export { proxyFileSystemBackend };
+
+function proxyFileSystemBackend(baseURL: URL, tokenGetter: TokenGetter) {
+  return new ProxiedPersistentBackend(baseURL, tokenGetter);
+}
 
 type TokenGetter = () => Promise<Outcome<string>>;
 

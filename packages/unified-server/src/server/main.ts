@@ -16,6 +16,7 @@ import { allowListChecker } from "./allow-list-checker.js";
 import { getConfigFromSecretManager } from "./provide-config.js";
 import { makeCspHandler } from "./csp.js";
 import { createUpdatesHandler } from "./upates.js";
+import { createMountedFileSystemHandler } from "./mounted-file-system.js";
 
 const server = express();
 
@@ -80,6 +81,8 @@ server.use("/app", (req, res) => {
   const graphId = req.path.replace(/^\//, "");
   res.redirect(301, `/?flow=${encodeURIComponent(graphId)}&mode=app`);
 });
+
+server.use("/mnt", createMountedFileSystemHandler());
 
 ViteExpress.config({
   transformer: (html: string, req: Request) => {
