@@ -15,7 +15,7 @@ export type RpcArgs = {
    * The path to the RPC handshake endpoint
    */
   path: FileSystemPath;
-  data: LLMContent[];
+  data: JsonSerializable;
 };
 
 export type HandshakeResponse = {
@@ -26,10 +26,9 @@ export type HandshakeResponse = {
 async function rpc({
   path,
   data,
-}: RpcArgs): Promise<Outcome<FileSystemReadResult>> {
+}: RpcArgs): Promise<Outcome<JsonSerializable>> {
   const readingHandshake = await read({ path });
   if (!ok(readingHandshake)) return readingHandshake;
-  console.log("READING HANDSHAKE", readingHandshake);
   const handshake = json<HandshakeResponse>(readingHandshake.data);
   if (!handshake) {
     return err(`Unable to establish handshake at "${path}"`);
@@ -38,8 +37,20 @@ async function rpc({
     return err(`Invalid handshake response at "${path}"`);
   }
 
-  const writingRequest = await write({ path: handshake.request, data });
+  const llmContentData: LLMContent[] = [{ parts: [{ json: data }] }];
+
+  const writingRequest = await write({
+    path: handshake.request,
+    data: llmContentData,
+  });
   if (!ok(writingRequest)) return writingRequest;
 
-  return read({ path: handshake.response });
+  const readingResponse = await read({ path: handshake.response });
+  if (!ok(readingResponse)) return readingResponse;
+
+  const response = json(readingResponse.data);
+  if (!response) {
+    return err(`Empty response returned at path "${path}"`);
+  }
+  return response;
 }

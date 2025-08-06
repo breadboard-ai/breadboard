@@ -29,16 +29,21 @@ export type HandshakeResponse = {
 };
 
 type PathInfo = {
-  serverId: string;
   type: string;
   name: string;
 };
 
 type CallInfo = {
   id: string;
-  serverId: string;
   name: string;
   response?: Promise<LLMContent[]>;
+};
+
+type RequestWrite = {
+  /**
+   * URL of the MCP server to connect to
+   */
+  url: string;
 };
 
 /**
@@ -59,24 +64,23 @@ class McpFileSystemBackend implements PersistentBackend {
     _graphUrl: string,
     path: FileSystemPath
   ): Promise<Outcome<LLMContent[]>> {
-    const decodingPath = decodePath(path);
-    if (!ok(decodingPath)) return decodingPath;
+    const parsingPath = parsePath(path);
+    if (!ok(parsingPath)) return parsingPath;
 
-    const { serverId, type, name } = decodingPath;
+    const { type, name } = parsingPath;
 
     // There can be two kinds of reads:
     // - handshake read, which will always be of the form
-    //   `/mnt/mcp/<server id>/call/<method name>`
+    //   `/mnt/mcp/call/<method name>`
     // - response read, which will always be of the form
-    //   `/mnt/mcp/<server id>/res/<handshake id>`
+    //   `/mnt/mcp/res/<handshake id>`
     if (type === HADNSHAKE_TYPE) {
-      // TODO: Store guids in a map.
       const id = crypto.randomUUID();
-      this.#calls.set(id, { id, name, serverId });
+
+      this.#calls.set(id, { id, name });
       const json: HandshakeResponse = {
-        response: `${COMMON_PREFIX}/${serverId}/res/${id}` as FileSystemPath,
-        request:
-          `${COMMON_PREFIX}/${serverId}/req/${id}` as FileSystemReadWritePath,
+        response: `${COMMON_PREFIX}/res/${id}` as FileSystemPath,
+        request: `${COMMON_PREFIX}/req/${id}` as FileSystemReadWritePath,
       };
       return [{ parts: [{ json }] }];
     } else if (type === RESPONSE_TYPE) {
@@ -101,13 +105,13 @@ class McpFileSystemBackend implements PersistentBackend {
     path: FileSystemPath,
     data: LLMContent[]
   ): Promise<FileSystemWriteResult> {
-    const decodingPath = decodePath(path);
-    if (!ok(decodingPath)) return decodingPath;
+    const parsingPath = parsePath(path);
+    if (!ok(parsingPath)) return parsingPath;
 
-    const { serverId, type, name } = decodingPath;
+    const { type, name } = parsingPath;
     // There can be only one kind of write:
     // - request write, which will always be of the form
-    //  `/mnt/mcp/<server id>/req/<handshake id>
+    //  `/mnt/mcp/req/<handshake id>
     if (type !== REQUEST_TYPE) {
       return err(`MCP Backend does not support writing to path "${path}"`);
     }
@@ -115,13 +119,18 @@ class McpFileSystemBackend implements PersistentBackend {
     if (!info) {
       return err(`MCP Backend: unknown request id in path "${path}"`);
     }
-    const request = json(data);
+    const request = json(data) as RequestWrite;
+    if (!request.url) {
+      return err(`MCP Backend: missing server URL`);
+    }
     // Simulate a response.
     info.response = Promise.resolve([
       {
         parts: [
           {
-            text: `STUFF IS HAPPENING ${serverId}.${info.name}, ${JSON.stringify(request)}`,
+            json: {
+              message: `STUFF IS HAPPENING ${request.url}.${info.name}, ${JSON.stringify(request)}`,
+            },
           },
         ],
       },
@@ -163,17 +172,14 @@ class McpFileSystemBackend implements PersistentBackend {
   }
 }
 
-function decodePath(path: FileSystemPath): Outcome<PathInfo> {
+function parsePath(path: FileSystemPath): Outcome<PathInfo> {
   if (!path.startsWith(COMMON_PREFIX)) {
     return err(`MCP Backend does not support path "${path}`);
   }
 
-  const [, , , serverId, type, name, ...rest] = path.split("/");
+  const [, , , type, name, ...rest] = path.split("/");
   if (rest.length > 0) {
     return err(`MCP Backend: too many segments in path "${path}"`);
-  }
-  if (!serverId) {
-    return err(`MCP Backend: can't find server in path "${path}"`);
   }
   if (!type) {
     return err(`MCP Backend: can't determine type from path "${path}"`);
@@ -181,7 +187,7 @@ function decodePath(path: FileSystemPath): Outcome<PathInfo> {
   if (!name) {
     return err(`MCP Backend: can't determine method name from path "${path}"`);
   }
-  return { serverId, type, name };
+  return { type, name };
 }
 
 function json<T>(data: LLMContent[] | undefined): T | undefined {
