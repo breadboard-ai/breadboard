@@ -264,7 +264,7 @@ body {
   padding: 0;
   margin: 0;
   min-width: 360px;
-  overflow: initial;
+  overflow: auto;
 }
 
 nav {
@@ -304,32 +304,38 @@ nav {
         display: block;
       }
     }
-
-    & #sign-in {
-      display: flex;
-      align-items: center;
-      height: var(--bb-grid-size-10);
-      border-radius: var(--bb-grid-size-16);
-      background: var(--n-0);
-      color: var(--n-100);
-      padding: 0 var(--bb-grid-size-4);
-      text-decoration: none;
-    }
   }
 }
 
 main {
   & header {
-    & h1 {
-      padding: var(--bb-grid-size-8) 0;
-      text-align: center;
-      font-size: 36px;
-      margin: 0 auto;
-      width: 85svw;
-      max-width: 1280px;
-      position: relative;
-      z-index: 1;
-      animation: fadeIn 2s cubic-bezier(0.4, 0, 0.3, 1) 0.4s 1 backwards;
+    & #headline {
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+
+      & h1 {
+        padding: var(--bb-grid-size-8) 0;
+        text-align: center;
+        font-size: 36px;
+        margin: 0 auto;
+        width: 85svw;
+        max-width: 1280px;
+        position: relative;
+        z-index: 1;
+        animation: fadeIn 2s cubic-bezier(0.4, 0, 0.3, 1) 0.4s 1 backwards;
+      }
+
+      & #sign-in {
+        line-height: var(--bb-grid-size-10);
+        border-radius: var(--bb-grid-size-16);
+        background: var(--n-0);
+        color: var(--n-100);
+        padding: 0 var(--bb-grid-size-4);
+        text-decoration: none;
+        margin-bottom: var(--bb-grid-size-6);
+        animation: fadeIn 2s cubic-bezier(0.4, 0, 0.3, 1) 0.8s 1 backwards;
+      }
     }
 
     & #img {
@@ -520,7 +526,7 @@ footer {
 }
 
 @media (min-width: 575px) {
-  main header h1 {
+  main header #headline h1 {
     padding: var(--bb-grid-size-10) 0;
     font-size: 48px;
   }
@@ -577,17 +583,21 @@ footer {
     & header {
       display: grid;
       gap: 32px;
-      grid-template-columns: 1.4fr 2fr;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 2fr);
       width: calc(100svw - var(--bb-grid-size-16));
       max-width: 1280px;
       margin: 0 auto;
       padding-top: var(--bb-grid-size-10);
 
-      & h1 {
-        text-align: left;
-        padding: var(--bb-grid-size-10) 0;
-        font-size: 36px;
-        width: 100%;
+      & #headline {
+        align-items: start;
+
+        & h1 {
+          text-align: left;
+          padding: var(--bb-grid-size-10) 0;
+          font-size: 36px;
+          width: 100%;
+        }
       }
 
       & #img {
@@ -622,7 +632,7 @@ footer {
 }
 
 @media (min-width: 920px) {
-  main header h1 {
+  main header #headline h1 {
     font-size: 44px;
   }
 }
@@ -631,7 +641,8 @@ footer {
   main {
     & header {
       padding-top: var(--bb-grid-size-12);
-      & h1 {
+
+      & #headline h1 {
         font-size: 56px;
       }
     }
@@ -668,7 +679,7 @@ footer {
   main {
     & header {
       padding-top: var(--bb-grid-size-14);
-      & h1 {
+      & #headline h1 {
         font-size: 68px;
       }
     }
