@@ -169,6 +169,7 @@ async function init() {
     };
 
     await setSignInUrls();
+    signInButton.innerText = `Sign in to ${Strings.from("APP_NAME")}`;
     signInButton.addEventListener("click", onClickSignIn);
     scopesErrorSignInButton.addEventListener("click", () => {
       onClickSignIn();
