@@ -6,6 +6,7 @@
 
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("UIController");
+const GlobalStrings = StringsHelper.forSection("Global");
 
 import {
   BoardServer,
@@ -579,6 +580,15 @@ export class CanvasController extends LitElement {
           })}
           .run=${this.projectState?.run}
           .themeStyles=${themeStyles}
+          .disclaimerContent=${this.graphIsMine
+            ? GlobalStrings.from("LABEL_DISCLAIMER")
+            : html`This content was created by another person. It may be
+                inaccurate or unsafe.
+                <a
+                  target="_blank"
+                  href="https://support.google.com/legal/answer/3110420?hl=en"
+                  >Report legal issue</a
+                >`}
         ></bb-console-view>
       `,
       html`<bb-edit-history-panel
