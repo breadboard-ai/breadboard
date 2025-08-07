@@ -2,7 +2,13 @@ import { Locator, Page, test as base } from "playwright/test";
 
 export const test = base.extend<{ harness: BreadboardTestHarness }>({
   harness: async ({ page }, use) => {
-    await page.goto("/");
+    // This enables a special admin object for testing mocking - window.o
+    await page.goto("/#owner-tools=true");
+    await page.evaluate(() => {
+      // Pretend the user is logged in. The PRCs will still simply fail and have to be mocked.
+      // See `mockChatGenerateApp` below.
+      window["o"]?.testing?.setupLoginBypass();
+    });
     await use(new BreadboardTestHarness(page));
   },
 });
@@ -95,6 +101,32 @@ export class BreadboardTestHarness implements NodeHarness {
   async run() {
     await this.page.getByRole("button", { name: "Start" }).click();
     await this.waitForOutput();
+  }
+
+  /** Mocks RPC request to chatGenerateApp and instead replies with the given `data`. */
+  async mockChatGenerateApp(data: string) {
+    await this.page.route("/v1beta1/chatGenerateApp", (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          messages: [
+            {}, // simulating "our own message",
+            {
+              mimetype: "text/breadboard",
+              data: btoa(data),
+            },
+          ],
+        }),
+      });
+    });
+  }
+
+  /** Types in the given `text` into NL chat prompt and sends it. */
+  async sendNL(text: string) {
+    const flowGen = this.page.locator("bb-flowgen-editor-input");
+    await flowGen.getByRole("textbox").fill(text);
+    await flowGen.getByText("send").click();
   }
 
   async getLastOutput(): Promise<Locator> {

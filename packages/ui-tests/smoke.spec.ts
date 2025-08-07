@@ -18,6 +18,10 @@ test("smoke test", async ({ harness }) => {
   expect(await harness.getOutputs()).toEqual(["What's your name?"]);
   await harness.writeResponse("Volodya");
   expect(await harness.getOutputs()).toEqual(["Hello, Volodya"]);
+
+  // Simulate NL chat prompt.
+  await harness.mockChatGenerateApp("{}");
+  await harness.sendNL("an example app");
 });
 
 /** Checking the main page headings are present.  */
