@@ -1516,6 +1516,9 @@ export class Renderer extends LitElement {
         this.#selectionOverflowMenu = null;
         switch (select.value) {
           case "delete": {
+            // There is already a keyboard shortcut for handling deletions so
+            // rather than duplicating it we redirect this action to the same
+            // endpoint in the Visual Editor root.
             this.dispatchEvent(
               new KeyboardEvent("keydown", {
                 key: "Delete",
