@@ -40,9 +40,12 @@ import { RefreshEvent, SaveEvent } from "./events.js";
 import {
   type DriveFileId,
   type GoogleDriveClient,
+  type ListFilesResponse,
+  type NarrowedDriveFile,
 } from "../google-drive-client.js";
 import { GoogleDriveDataPartTransformer } from "./data-part-transformer.js";
 import { visitGraphNodes } from "@breadboard-ai/data";
+import { driveFileToGraphInfo } from "./utils.js";
 
 export { GoogleDriveBoardServer };
 
@@ -65,8 +68,7 @@ class GoogleDriveBoardServer
     vendor: TokenVendor,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
-    userFolderName: string,
-    featuredGalleryFolderId?: string
+    userFolderName: string
   ) {
     const configuration = {
       url: new URL(`${PROTOCOL}/`),
@@ -92,8 +94,7 @@ class GoogleDriveBoardServer
       user,
       googleDriveClient,
       publishPermissions,
-      userFolderName,
-      featuredGalleryFolderId
+      userFolderName
     );
   }
 
@@ -114,8 +115,7 @@ class GoogleDriveBoardServer
     public readonly user: User,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
-    userFolderName: string,
-    featuredGalleryFolderId?: string
+    userFolderName: string
   ) {
     super();
     this.ops = new DriveOperations(
@@ -125,8 +125,7 @@ class GoogleDriveBoardServer
       },
       userFolderName,
       googleDriveClient,
-      publishPermissions,
-      featuredGalleryFolderId
+      publishPermissions
     );
 
     this.kits = configuration.kits;
@@ -148,15 +147,12 @@ class GoogleDriveBoardServer
   }
 
   async listProjects(): Promise<BoardServerProject[]> {
-    // Run two lists operations in parallel.
-    const userGraphsPromise = this.ops.readGraphList();
-    let featuredGraphs = await this.ops.readFeaturedGalleryGraphList();
-    const userGraphs = await userGraphsPromise;
+    const [userGraphs, featuredGraphs] = await Promise.all([
+      this.ops.readGraphList(),
+      this.#listGalleryGraphs(),
+    ]);
     if (!ok(userGraphs)) return [];
-    if (!ok(featuredGraphs)) {
-      console.warn(featuredGraphs.$error);
-      featuredGraphs = [];
-    }
+
     const ownerAccess = new Map([
       [
         this.user.username,
@@ -184,11 +180,51 @@ class GoogleDriveBoardServer
       this.#graphInfoToProject(graphInfo, OWNER_USERNAME, ownerAccess)
     );
 
-    const galleryProjects = featuredGraphs.map((graphInfo) =>
-      this.#graphInfoToProject(graphInfo, GALLERY_OWNER_USERNAME, galleryAccess)
-    );
+    const galleryProjects = featuredGraphs.map((file) => {
+      const project = this.#graphInfoToProject(
+        driveFileToGraphInfo(file),
+        GALLERY_OWNER_USERNAME,
+        galleryAccess
+      );
+      project.metadata.tags.push("featured");
+      return project;
+    });
 
     return [...userProjects, ...galleryProjects];
+  }
+
+  async #listGalleryGraphs(): Promise<
+    Array<NarrowedDriveFile<"id" | "name" | "properties">>
+  > {
+    const url = new URL("/api/gallery/list", window.location.href);
+    let response;
+    try {
+      response = await fetch(url);
+    } catch (e) {
+      console.error(
+        `[drive board server] network error fetching featured gallery list`,
+        e
+      );
+      return [];
+    }
+    if (!response.ok) {
+      console.error(
+        `[drive board server] HTTP ${response.status} error` +
+          ` fetching featured gallery list`
+      );
+      return [];
+    }
+    let result: Array<NarrowedDriveFile<"id" | "name" | "properties">>;
+    try {
+      result = await response.json();
+    } catch (e) {
+      console.error(
+        `[drive board server] JSON parse error fetching featured gallery list`,
+        e
+      );
+      return [];
+    }
+    return result;
   }
 
   #graphInfoToProject(

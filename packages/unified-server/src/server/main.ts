@@ -17,6 +17,9 @@ import { getConfigFromSecretManager } from "./provide-config.js";
 import { makeCspHandler } from "./csp.js";
 import { createUpdatesHandler } from "./upates.js";
 import { createMountedFileSystemHandler } from "./mounted-file-system.js";
+import { makeGalleryMiddleware } from "./gallery.js";
+import { GoogleAuth } from "google-auth-library";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 const server = express();
 
@@ -81,6 +84,27 @@ server.use("/app", (req, res) => {
   const graphId = req.path.replace(/^\//, "");
   res.redirect(301, `/?flow=${encodeURIComponent(graphId)}&mode=app`);
 });
+
+const googleAuth = new GoogleAuth({
+  scopes: ["https://www.googleapis.com/auth/drive.readonly"],
+});
+const authClient = await googleAuth.getClient();
+const driveClient = new GoogleDriveClient({
+  getUserAccessToken: async () =>
+    (await authClient.getAccessToken()).token ?? "",
+  // No public or domain fallback.
+  publicReadStrategy: { kind: "none" },
+  domainProxyUrl: undefined,
+});
+
+server.use(
+  "/api/gallery",
+  await makeGalleryMiddleware({
+    folderId: serverConfig.GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID ?? "",
+    driveClient,
+    cacheRefreshSeconds: 10 * 60,
+  })
+);
 
 server.use("/mnt", createMountedFileSystemHandler());
 
