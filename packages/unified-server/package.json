@@ -166,7 +166,7 @@
     "@types/express": "^5.0.1",
     "@types/gtag.js": "^0.0.20",
     "@types/node": "^22.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.35.0",
+    "@typescript-eslint/eslint-plugin": "^8.39.0",
     "@typescript-eslint/parser": "^8.34.1",
     "dotenv": "^16.4.7",
     "typescript": "^5.8.3",
