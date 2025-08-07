@@ -32,6 +32,7 @@ import {
   envFromGraphDescriptor,
   ErrorObject,
   composeFileSystemBackends,
+  proxyFileSystemBackend,
 } from "@google-labs/breadboard";
 import {
   createFileSystemBackend,
@@ -48,6 +49,7 @@ import type {
 } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
 import { formatError } from "@breadboard-ai/shared-ui/utils/format-error.js";
+import { SIGN_IN_CONNECTION_ID } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 
 export { createSideboardRuntimeProvider };
 
@@ -105,8 +107,25 @@ class SideboardRuntimeImpl
     this.#fileSystem = createFileSystem({
       env: fileSystem?.env() || [],
       local: createFileSystemBackend(createEphemeralBlobStore()),
-      // TODO: Supply mounted backends
-      mnt: composeFileSystemBackends(new Map()),
+      mnt: composeFileSystemBackends(
+        new Map([
+          [
+            "mcp",
+            proxyFileSystemBackend(
+              new URL(globalThis.location.origin),
+              async () => {
+                const token = tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
+                if (token.state === "valid") {
+                  return token.grant.access_token;
+                }
+                // This will fail, and that's okay. We'll get the "Unauthorized"
+                // error and handle fallback.
+                return "";
+              }
+            ),
+          ],
+        ])
+      ),
     });
     this.#graphStore = createGraphStore({
       ...args,

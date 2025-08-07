@@ -27,7 +27,7 @@ const HADNSHAKE_TYPE = "call";
 const RESPONSE_TYPE = "res";
 const REQUEST_TYPE = "req";
 const MCP_CLIENT_VERSION = "0.0.1";
-const SUPPORTED_METHODS = ["listTools", "callTool"] as const;
+const SUPPORTED_METHODS = ["info", "listTools", "callTool"] as const;
 
 export type HandshakeResponse = {
   response: FileSystemPath;
@@ -162,6 +162,10 @@ class McpFileSystemBackend implements PersistentBackend {
           .callTool(params as CallToolRequest["params"])
           .then((result) => fromJson(result.content))
           .catch((e) => err((e as Error).message));
+        break;
+      }
+      case "info": {
+        info.response = Promise.resolve(fromJson(client.getServerVersion()));
         break;
       }
       default: {
