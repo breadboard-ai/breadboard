@@ -728,7 +728,8 @@ export class VEHeader extends LitElement {
           >
             <h1 class="md-label-large">Remix to Edit</h1>
             <p>
-              You can only run this app. To edit, click "Remix" to make a copy.
+              You can only run this ${Strings.from("APP_NAME")} app. To edit,
+              click the &quot;Remix&quot; button to make a copy.
             </p>
             <span
               aria-role="button"
