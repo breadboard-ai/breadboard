@@ -29,7 +29,7 @@ export const styles = [
     }
 
     bb-ve-header {
-      z-index: 1;
+      z-index: 150;
       display: none;
     }
 
