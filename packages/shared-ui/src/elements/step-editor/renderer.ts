@@ -80,6 +80,7 @@ import { AssetMetadata } from "@breadboard-ai/types";
 import { isCtrlCommand } from "../../utils/is-ctrl-command";
 import { Project, RendererState } from "../../state";
 import { colorsLight } from "../../styles/host/colors-light.js";
+import { ItemSelect } from "../elements.js";
 
 @customElement("bb-renderer")
 export class Renderer extends LitElement {
@@ -173,6 +174,9 @@ export class Renderer extends LitElement {
   @state()
   accessor showDisclaimer = false;
 
+  @state()
+  accessor #selectionOverflowMenu: { x: number; y: number } | null = null;
+
   static styles = [
     colorsLight,
     css`
@@ -249,6 +253,11 @@ export class Renderer extends LitElement {
         width: 100%;
         height: 100%;
         z-index: 3;
+      }
+
+      bb-item-select {
+        position: fixed;
+        --menu-width: 180px;
       }
 
       @keyframes fadeIn {
@@ -768,6 +777,29 @@ export class Renderer extends LitElement {
       this.#refocusSelf = false;
       this.focus();
     });
+
+    // Right mouse button - show delete option.
+    const isOnControls = evt
+      .composedPath()
+      .some((el) => el === this.#editorControls.value);
+
+    let hasSelections = false;
+    if (this.selectionState) {
+      for (const graph of this.selectionState.selectionState.graphs.values()) {
+        hasSelections =
+          graph.nodes.size > 0 ||
+          graph.assets.size > 0 ||
+          graph.edges.size > 0 ||
+          graph.assetEdges.size > 0;
+      }
+    }
+
+    if (evt.button !== 2 || isOnControls || !hasSelections) {
+      return;
+    }
+
+    // Trigger the overflow menu.
+    this.#selectionOverflowMenu = { x: evt.clientX, y: evt.clientY };
   }
 
   #updateDragRect(evt: PointerEvent) {
@@ -1448,6 +1480,65 @@ export class Renderer extends LitElement {
     );
   }
 
+  #maybeRenderOverflowMenu() {
+    if (!this.#selectionOverflowMenu) {
+      return nothing;
+    }
+
+    return html`<bb-item-select
+      style=${styleMap({
+        [`--left`]: `${this.#selectionOverflowMenu.x.toFixed(0)}px`,
+        [`--top`]: `${this.#selectionOverflowMenu.y.toFixed(0)}px`,
+      })}
+      .autoActivate=${true}
+      .values=${[
+        {
+          id: "placeholder",
+          title: "Placeholder",
+          icon: "delete",
+          hidden: true,
+        },
+        {
+          id: "delete",
+          title: "Delete selection",
+          icon: "delete",
+        },
+      ]}
+      @close=${() => {
+        this.#selectionOverflowMenu = null;
+      }}
+      @change=${(evt: Event) => {
+        const [select] = evt.composedPath();
+        if (!(select instanceof ItemSelect)) {
+          return;
+        }
+
+        this.#selectionOverflowMenu = null;
+        switch (select.value) {
+          case "delete": {
+            // There is already a keyboard shortcut for handling deletions so
+            // rather than duplicating it we redirect this action to the same
+            // endpoint in the Visual Editor root.
+            this.dispatchEvent(
+              new KeyboardEvent("keydown", {
+                key: "Delete",
+                bubbles: true,
+                cancelable: true,
+                composed: true,
+              })
+            );
+            break;
+          }
+
+          default: {
+            console.log("Init", select.value);
+            break;
+          }
+        }
+      }}
+    ></bb-item-select>`;
+  }
+
   render() {
     if (!this.#graphs || !this.camera) {
       return nothing;
@@ -1664,6 +1755,7 @@ export class Renderer extends LitElement {
       this.showDisclaimer && this.graphIsMine
         ? html`<p id="disclaimer">${Strings.from("LABEL_DISCLAIMER")}</p>`
         : nothing,
+      this.#maybeRenderOverflowMenu(),
     ];
   }
 }
