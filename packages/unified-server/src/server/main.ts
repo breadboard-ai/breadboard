@@ -17,8 +17,6 @@ import { getConfigFromSecretManager } from "./provide-config.js";
 import { makeCspHandler } from "./csp.js";
 import { createUpdatesHandler } from "./upates.js";
 import { createMountedFileSystemHandler } from "./mounted-file-system.js";
-import { GoogleAuth } from "google-auth-library";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 const server = express();
 
@@ -102,56 +100,7 @@ ViteExpress.static({
 
 ViteExpress.listen(server, boardServerConfig.port, () => {
   console.log(`Unified server at: http://localhost:${boardServerConfig.port}`);
-  void testDriveAccess();
 });
-
-/**
- * This is a temporary function that runs asyncronously when unified server
- * starts up to test Google Drive access with service account credentials.
- */
-async function testDriveAccess() {
-  try {
-    console.log(`[testDriveAccess] Starting test`);
-    const googleAuth = new GoogleAuth({
-      scopes: ["https://www.googleapis.com/auth/drive.readonly"],
-    });
-    const authClient = await googleAuth.getClient();
-    const driveClient = new GoogleDriveClient({
-      getUserAccessToken: async () =>
-        (await authClient.getAccessToken()).token ?? "",
-      // No public or domain fallback.
-      publicReadStrategy: { kind: "none" },
-      domainProxyUrl: undefined,
-      extraHeaders: {
-        // During local development we are using user credentials, which means
-        // we must explicitly set the billing GCP project. Not required in
-        // production, but doesn't hurt. See
-        // https://cloud.google.com/docs/authentication/rest#set-billing-project
-        ["x-goog-user-project"]: await googleAuth.getProjectId(),
-      },
-    });
-    const galleryFiles = (
-      await driveClient.listFiles(`
-        mimeType="application/vnd.breadboard.graph+json"
-        and "${serverConfig.GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID ?? ""}" in parents
-        and trashed=false
-      `)
-    ).files;
-    console.log(
-      `[testDriveAccess] Listed ${galleryFiles.length} gallery files.`
-    );
-    const first = galleryFiles[0];
-    if (first) {
-      const metadata = await driveClient.getFileMetadata(first.id);
-      console.log(`[testDriveAccess] Got metadata for ${first.id}`, metadata);
-      const media = await driveClient.getFileMedia(first.id);
-      console.log(`[testDriveAccess] Got media for ${first.id}`, media);
-    }
-    console.log(`[testDriveAccess] Done`);
-  } catch (e) {
-    console.log(`[testDriveAccess] Exception`, e);
-  }
-}
 
 function escape(s: string) {
   return s
