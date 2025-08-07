@@ -20,7 +20,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { CallToolRequest } from "@modelcontextprotocol/sdk/types.js";
 
-export { McpFileSystemBackend };
+export { McpFileSystemBackend, parsePath };
 
 const COMMON_PREFIX: FileSystemPath = `/mnt/mcp`;
 const HADNSHAKE_TYPE = "call";

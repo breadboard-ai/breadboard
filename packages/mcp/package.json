@@ -39,13 +39,12 @@
       "clean": "if-file-deleted"
     },
     "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/node/*.js",
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
       "dependencies": [
         "build:tsc"
       ],
       "files": [
-        "tests/node/**/*.ts",
-        "tests/bgl/*.bgl.json"
+        "tests/**/*.ts"
       ],
       "output": []
     },
