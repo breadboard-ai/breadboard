@@ -861,6 +861,14 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             }
 
             evt.target.setPointerCapture(evt.pointerId);
+
+            // Right click should not trigger a drag move. Rather it should
+            // trigger the overflow menu. Since that is handled in the Renderer
+            // we simply stop handling the action here.
+            if (evt.button === 2) {
+              return;
+            }
+
             this.#dragStart = new DOMPoint();
             this.#dragStart.x = evt.clientX;
             this.#dragStart.y = evt.clientY;
