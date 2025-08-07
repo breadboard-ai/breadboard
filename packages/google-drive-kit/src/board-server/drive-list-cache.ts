@@ -11,7 +11,11 @@ import type {
   NarrowedDriveFile,
 } from "../google-drive-client.js";
 import type { DriveChange, GraphInfo } from "./operations.js";
-import { getSetsIntersection, getSetsUnion, readProperties } from "./utils.js";
+import {
+  driveFileToGraphInfo,
+  getSetsIntersection,
+  getSetsUnion,
+} from "./utils.js";
 
 export type CachedGoogleDriveFile = NarrowedDriveFile<
   | "id"
@@ -249,14 +253,7 @@ function toGraphInfos(files: CachedGoogleDriveFile[]): {
     if (file.modifiedTime && file.modifiedTime > (lastModified ?? "")) {
       lastModified = file.modifiedTime;
     }
-    const appProperties = readProperties(file);
-    return {
-      id: file.id,
-      title: appProperties.title || file.name.replace(/(\.bgl)?\.json$/, ""),
-      tags: appProperties.tags,
-      thumbnail: appProperties.thumbnailUrl,
-      description: appProperties.description,
-    } satisfies GraphInfo;
+    return driveFileToGraphInfo(file);
   });
   return { result, lastModified };
 }

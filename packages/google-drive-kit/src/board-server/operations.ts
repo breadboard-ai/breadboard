@@ -15,7 +15,6 @@ import type {
 } from "@breadboard-ai/types";
 import {
   err,
-  ok,
   purgeStoredDataInMemoryValues,
   type GraphDescriptor,
   type Outcome,
@@ -46,24 +45,28 @@ export const LATEST_SHARED_VERSION_PROPERTY = "latestSharedVersion";
 export const MAIN_TO_SHAREABLE_COPY_PROPERTY = "mainToShareableCopy";
 export const SHAREABLE_COPY_TO_MAIN_PROPERTY = "shareableCopyToMain";
 
-const BASE_USER_QUERY = `
-  mimeType="${GRAPH_MIME_TYPE}"
-  and 'me' in owners
-  and trashed=false
-  and not properties has {
-    key = ${quote(IS_SHAREABLE_COPY_PROPERTY)}
-    and value = "true"
-  }
-`;
-// For featured gallery, we don't need to check whether it's shareable copy
-// just show everything there is, since we likely will actually need to do the
-// opposite: only show items that are shareable copies.
-// TODO: Once all gallery items all have shareable copy metadata, switch to
-// only show items that are shareable copies.
-const BASE_FEATURED_QUERY = `
-  mimeType="${GRAPH_MIME_TYPE}"
-  and trashed=false
-`;
+export interface MakeGraphListQueryInit {
+  kind: "editable" | "shareable";
+  owner: "me" | undefined;
+  parent: string | undefined;
+}
+
+export function makeGraphListQuery({
+  kind,
+  owner,
+  parent,
+}: MakeGraphListQueryInit) {
+  return `
+    mimeType = ${quote(GRAPH_MIME_TYPE)}
+    and trashed = false
+    and ${kind === "editable" ? "not" : ""} properties has {
+      key = ${quote(IS_SHAREABLE_COPY_PROPERTY)}
+      and value = "true"
+    }
+    ${owner ? `and ${quote(owner)} in owners` : ""}
+    ${parent ? `and ${quote(parent)} in parents` : ""}
+  `;
+}
 
 const CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY =
   "GoogleDriveService/Changes/StartPageToken";
@@ -132,9 +135,7 @@ function formatDelay(delay: number): string {
 
 class DriveOperations {
   readonly #userFolderName: string;
-  readonly #featuredGalleryFolderId?: string;
   readonly #userGraphsList: DriveListCache;
-  readonly #featuredGraphsList?: DriveListCache;
   readonly #imageCache = new DriveLookupCache(
     DRIVE_IMAGE_CACHE_NAME,
     DRIVE_IMAGE_CACHE_KEY_PREFIX
@@ -149,34 +150,26 @@ class DriveOperations {
     private readonly refreshProjectListCallback: () => Promise<void>,
     userFolderName: string,
     googleDriveClient: GoogleDriveClient,
-    publishPermissions: gapi.client.drive.Permission[],
-    featuredGalleryFolderId?: string
+    publishPermissions: gapi.client.drive.Permission[]
   ) {
     if (!userFolderName) {
       throw new Error(`userFolderName was empty`);
     }
     this.#userFolderName = userFolderName;
-    this.#featuredGalleryFolderId = featuredGalleryFolderId;
     this.#googleDriveClient = googleDriveClient;
     this.#publishPermissions = publishPermissions;
 
     this.#userGraphsList = new DriveListCache(
       "user",
-      BASE_USER_QUERY,
+      makeGraphListQuery({
+        kind: "editable",
+        owner: "me",
+        parent: undefined,
+      }),
       this.#googleDriveClient,
       "user",
       true
     );
-
-    if (featuredGalleryFolderId) {
-      this.#featuredGraphsList = new DriveListCache(
-        "featured",
-        `${BASE_FEATURED_QUERY} and "${featuredGalleryFolderId}" in parents`,
-        this.#googleDriveClient,
-        "public",
-        false
-      );
-    }
 
     this.#setupBackgroundRefresh();
   }
@@ -209,9 +202,6 @@ class DriveOperations {
       this.#userGraphsList.forceRefresh(),
       this.#imageCache.invalidateAllItems(),
     ];
-    if (this.#featuredGraphsList) {
-      promises.push(this.#featuredGraphsList!.forceRefresh());
-    }
     return Promise.all(promises);
   }
 
@@ -244,9 +234,6 @@ class DriveOperations {
             setDriveCacheState({ startPageToken: pageToken });
             // Our token is allocated for the next time, now we purge the caches.
             await this.#userGraphsList.forceRefresh();
-            if (this.#featuredGraphsList) {
-              await this.#featuredGraphsList!.forceRefresh();
-            }
             // Forcefully refreshed the caches - give the heads up to the UI layer.
             await this.refreshProjectListCallback();
             // #imageCache relies solely on the drive.changes, no invalidation here needed.
@@ -278,11 +265,6 @@ class DriveOperations {
           this.#userGraphsList.processChanges(changes),
           this.#imageCache.processChanges(changes),
         ];
-        if (this.#featuredGraphsList) {
-          affectedIdsPromises.push(
-            this.#featuredGraphsList.processChanges(changes)
-          );
-        }
         const affectedFileIDLists = await Promise.all(affectedIdsPromises);
         const affectedFileIds = affectedFileIDLists.reduce(
           (accumulator, value) => accumulator.concat(value),
@@ -353,32 +335,6 @@ class DriveOperations {
 
   async readGraphList(): Promise<Outcome<GraphInfo[]>> {
     return await this.#userGraphsList.list();
-  }
-
-  async readFeaturedGalleryGraphList(): Promise<Outcome<GraphInfo[]>> {
-    if (!this.#featuredGalleryFolderId) {
-      return err(
-        "Could not read featured gallery from Google Drive:" +
-          " No folder id configured."
-      );
-    }
-    console.assert(
-      this.#featuredGraphsList,
-      "featuredGalleryFolderId is missing"
-    );
-    const graphInfos = await this.#featuredGraphsList!.list();
-    if (!ok(graphInfos)) {
-      return graphInfos;
-    }
-    const results = graphInfos.map((graphInfo) => {
-      if (!graphInfo.tags.includes("featured")) {
-        // The fact that a graph is in the featured folder alone determines
-        // whether it is featured.
-        graphInfo.tags.push("featured");
-      }
-      return graphInfo;
-    });
-    return results;
   }
 
   async getThumbnailFileId(boardFileId: string): Promise<string | undefined> {
