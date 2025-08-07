@@ -43,7 +43,7 @@ class ComposedPersistentBackend implements PersistentBackend {
     }
     const backend = this.backends.get(volume);
     if (!backend) {
-      return err(`Invalid path "${path}": Volume "${volume} is not mounted`);
+      return err(`Invalid path "${path}": Volume "${volume}" is not mounted`);
     }
     return backend;
   }

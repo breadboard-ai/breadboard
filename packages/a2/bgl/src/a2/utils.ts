@@ -28,6 +28,7 @@ export {
   extractMediaData,
   encodeBase64,
   decodeBase64,
+  json,
 };
 
 export type ErrorReason =
@@ -433,4 +434,10 @@ function decodeBase64(s: string): string {
     console.error("Error decoding Base64 UTF-8 string:", error);
     return latin1;
   }
+}
+
+function json<T = JsonSerializable>(
+  data: LLMContent[] | undefined
+): T | undefined {
+  return (data?.at(0)?.parts?.at(0) as JSONPart)?.json as T;
 }

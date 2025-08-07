@@ -34,6 +34,8 @@ import {
   GraphDescriptor,
   hash,
   MutableGraphStore,
+  PersistentBackend,
+  proxyFileSystemBackend,
   SerializedRun,
 } from "@google-labs/breadboard";
 import { provide } from "@lit/context";
@@ -423,7 +425,7 @@ export class Main extends SignalWatcher(LitElement) {
       ],
       local: createFileSystemBackend(createEphemeralBlobStore()),
       mnt: composeFileSystemBackends(
-        new Map([
+        new Map<string, PersistentBackend>([
           [
             "fs",
             new FileSystemPersistentBackend(async (callback) => {
@@ -439,6 +441,21 @@ export class Main extends SignalWatcher(LitElement) {
                 });
               });
             }),
+          ],
+          [
+            "mcp",
+            proxyFileSystemBackend(
+              new URL(globalThis.location.origin),
+              async () => {
+                const token = await this.signinAdapter.token();
+                if (token.state === "valid") {
+                  return token.grant.access_token;
+                }
+                // This will fail, and that's okay. We'll get the "Unauthorized"
+                // error.
+                return "";
+              }
+            ),
           ],
         ])
       ),
