@@ -447,7 +447,13 @@ export class Main extends SignalWatcher(LitElement) {
             proxyFileSystemBackend(
               new URL(globalThis.location.origin),
               async () => {
-                return "test";
+                const token = await this.signinAdapter.token();
+                if (token.state === "valid") {
+                  return token.grant.access_token;
+                }
+                // This will fail, and that's okay. We'll get the "Unauthorized"
+                // error.
+                return "";
               }
             ),
           ],

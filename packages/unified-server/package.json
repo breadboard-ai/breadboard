@@ -87,6 +87,7 @@
       "dependencies": [
         "../board-server#build:tsc",
         "../connection-server#build:tsc",
+        "../mcp#build:tsc",
         "../types#build:tsc"
       ]
     },

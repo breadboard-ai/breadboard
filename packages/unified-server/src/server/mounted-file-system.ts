@@ -14,6 +14,7 @@ import { Request, Response, Router } from "express";
 import { McpFileSystemBackend } from "@breadboard-ai/mcp";
 import cors from "cors";
 import { LLMContent } from "@breadboard-ai/types";
+import { getUserCredentials, requireAuth } from "@breadboard-ai/board-server";
 
 export { createMountedFileSystemHandler };
 
@@ -29,8 +30,9 @@ function createMountedFileSystemHandler() {
       maxAge: 24 * 60 * 60,
     })
   );
+  router.use(getUserCredentials());
   // TODO: Check for auth token and make sure it's valid.
-  router.all("*", async (req: Request, res: Response) => {
+  router.all("*", requireAuth(), async (req: Request, res: Response) => {
     const path = `/mnt${req.path}` as FileSystemPath;
     switch (req.method) {
       case "GET": {

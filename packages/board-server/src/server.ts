@@ -23,6 +23,7 @@ import type { AllowFilterFunction } from "@breadboard-ai/types";
 
 export type { ServerConfig, StorageProvider };
 export { SecretsProvider } from "./server/proxy/secrets.js";
+export { getUserCredentials, requireAuth } from "./server/auth.js";
 
 const DEFAULT_PORT = 3000;
 const DEFAULT_HOST = "localhost";
