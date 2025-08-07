@@ -66,13 +66,10 @@ export class ItemSelect extends LitElement {
         this.#selected = 0;
       }
     }
-    console.log("Reset from value");
     this.#highlighted = this.#selected;
   }
   get value() {
-    const selectableValues = this.#values;
-    console.log(selectableValues);
-    return selectableValues[this.#selected]?.id ?? "";
+    return this.#values[this.#selected]?.id ?? "";
   }
 
   static styles = [
