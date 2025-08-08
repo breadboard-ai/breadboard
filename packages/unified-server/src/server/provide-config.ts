@@ -21,7 +21,7 @@ export type DeploymentConfiguration = {
   /**
    * Stringified value of `ClientDeploymentConfiguration`.
    */
-  client: string;
+  client: ClientDeploymentConfiguration;
   /**
    * This is the server configuration.
    */
@@ -29,7 +29,7 @@ export type DeploymentConfiguration = {
 };
 
 const DEFAULT_VALUE: DeploymentConfiguration = {
-  client: "",
+  client: {} as ClientDeploymentConfiguration,
   server: {},
 } as const;
 
@@ -45,11 +45,7 @@ async function getConfigFromSecretManager(): Promise<DeploymentConfiguration> {
 
     const config = JSON.parse(secretValue) as SecretValueFormat;
 
-    const client = JSON.stringify(config.client).replaceAll(
-      "</script>",
-      "\x3C/script>"
-    );
-    return { client, server: config.server };
+    return { client: config.client, server: config.server };
   } catch (e) {
     console.warn("Error parsing configuration", (e as Error).message);
     return DEFAULT_VALUE;
