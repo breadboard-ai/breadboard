@@ -331,13 +331,21 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
       return html`MCP Server configuration unavailable`;
     }
 
-    if (this.project.mcp.servers.size === 0) {
+    const servers = this.project.mcp.servers;
+    if (!servers.value) {
+      if (servers.status === "error") {
+        return html`<p>Error loading MCP server list</p>`;
+      }
+      return html`<p>Loading ...</p>`;
+    }
+
+    if (servers.value.size === 0) {
       return html`<p>There are no MCP Servers available</p>`;
     }
 
     return html`<ul>
         ${repeat(
-          this.project.mcp.servers,
+          servers.value,
           ([id]) => id,
           ([id, server]) => {
             return html`<li>
@@ -375,7 +383,7 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
               <input
                 type="checkbox"
                 id=${id}
-                .checked=${server.registered}
+                .checked=${!!server.instanceId}
                 @change=${(evt: Event) => {
                   if (
                     !(evt.target instanceof HTMLInputElement) ||

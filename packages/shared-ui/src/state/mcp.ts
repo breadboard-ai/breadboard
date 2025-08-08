@@ -5,11 +5,18 @@
  */
 
 import { Outcome } from "@breadboard-ai/types";
-import { Mcp, McpServer, McpServerIdentifier, ProjectInternal } from "./types";
-import { signal } from "signal-utils";
+import {
+  AsyncComputedResult,
+  Mcp,
+  McpServer,
+  McpServerIdentifier,
+  McpServerInstanceIdentifier,
+  ProjectInternal,
+} from "./types";
 import { err, fromJson, ok } from "@breadboard-ai/utils";
 import { SignalMap } from "signal-utils/map";
 import { McpServerStore } from "./utils/mcp-server-store";
+import { AsyncComputed } from "signal-utils/async-computed";
 
 export { McpImpl };
 
@@ -27,43 +34,72 @@ class McpImpl implements Mcp {
 
   constructor(private readonly project: ProjectInternal) {}
 
-  @signal
-  get servers(): Map<McpServerIdentifier, McpServer> {
+  get servers(): AsyncComputedResult<Map<McpServerIdentifier, McpServer>> {
+    return this.#servers;
+  }
+
+  #servers = new AsyncComputed(async (signal) => {
+    signal.throwIfAborted();
+
     const result = new SignalMap<McpServerIdentifier, McpServer>();
-    result.set("built-in-example", {
+    result.set(this.#createId("builtin://url/goes/here"), {
       title: "Local Memory",
       details: {
         name: "local memory",
         version: "0.0.1",
         url: "builtin://url/goes/here",
       },
-      registered: false,
       removable: false,
     });
 
-    this.project.graphAssets.forEach((asset, key) => {
+    const inBgl = new Map<McpServerIdentifier, McpServer>();
+
+    this.project.graphAssets.forEach((asset, value) => {
       const { connector, metadata } = asset;
       if (!connector) return;
       const url = (connector.configuration as McpConnectorConfiguration)
         .configuration.endpoint;
       if (connector.type.url !== MCP_CONNECTOR_URL) return;
-      // TODO: Fill out all the details
-      result.set(key, {
+      // We currently override items in the list with what's in the BGL.
+      // This is probably fine, but we might want to consider a more nuanced
+      // reconciliation of what's stored in server list and what's in BGL.
+      const id = this.#createId(url);
+      inBgl.set(id, {
         title: metadata?.title || connector.id,
         details: {
           name: "name goes here",
           version: "0.0.1",
           url,
         },
-        registered: true,
+        instanceId: value as McpServerInstanceIdentifier,
         removable: true,
       });
     });
-    return result;
-  }
 
-  async #addAsset(id: string, url: string, title: string) {
-    return this.project.organizer.addGraphAsset({
+    const stored = await this.#serverList.list();
+    if (!ok(stored)) {
+      console.warn("Unable to load stored MCP servers", stored.$error);
+    } else {
+      for (const info of stored) {
+        result.set(this.#createId(info.url), {
+          title: info.title,
+          details: { name: info.title, version: "0.0.1", url: info.url },
+          removable: true,
+        });
+      }
+    }
+
+    inBgl.forEach((value, key) => result.set(key, value));
+
+    return result;
+  });
+
+  async #addAsset(
+    url: string,
+    title: string
+  ): Promise<Outcome<McpServerInstanceIdentifier>> {
+    const id: McpServerInstanceIdentifier = this.#createInstanceId();
+    const adding = await this.project.organizer.addGraphAsset({
       path: id,
       data: fromJson({
         url: "embed://a2/mcp.bgl.json",
@@ -76,62 +112,86 @@ class McpImpl implements Mcp {
         title,
       },
     });
+    if (!ok(adding)) return adding;
+    return id;
   }
 
   async register(id: McpServerIdentifier): Promise<Outcome<void>> {
-    const server = this.servers.get(id);
+    const servers = this.servers.value;
+    if (!servers) {
+      return err(
+        `Server list is not available, status: "${this.servers.status}"`
+      );
+    }
+    const server = servers.get(id);
     if (!server) {
       return err(`MCP Server "${id}" does not exist`);
     }
-    if (server.registered) {
+    if (server.instanceId) {
       return err(`MCP Server "${id}" is already registered`);
     }
 
-    const adding = await this.#addAsset(id, server.details.url, server.title);
+    const adding = await this.#addAsset(server.details.url, server.title);
     if (!ok(adding)) return adding;
-
-    server.registered = true;
-    // TODO: Maybe use signals on props instead?
-    this.servers.set(id, server);
   }
 
   async unregister(id: McpServerIdentifier): Promise<Outcome<void>> {
-    const server = this.servers.get(id);
+    const servers = this.servers.value;
+    if (!servers) {
+      return err(
+        `Server list is not available, status: "${this.servers.status}"`
+      );
+    }
+    const server = servers.get(id);
     if (!server) {
       return err(`MCP Server "${id}" does not exist`);
     }
-    if (!server.registered) {
+    if (!server.instanceId) {
       return err(`MCP Server "${id}" is already unregistered`);
     }
 
-    const removing = await this.project.organizer.removeGraphAsset(id);
+    const removing = await this.project.organizer.removeGraphAsset(
+      server.instanceId
+    );
     if (!ok(removing)) return removing;
-
-    server.registered = false;
-    this.servers.set(id, server);
   }
 
   async add(url: string, title: string = url): Promise<Outcome<void>> {
-    const id = `connectors/${globalThis.crypto.randomUUID()}`;
     // Add as new asset
-    const adding = await this.#addAsset(id, url, title);
+    const adding = await this.#addAsset(url, title);
     if (!ok(adding)) return adding;
     // Add to the server list
     await this.#serverList.add({ url, title });
   }
 
+  #createId(url: string) {
+    return `connectors/${url
+      .replace(/[^a-zA-Z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")}`;
+  }
+
+  #createInstanceId(): McpServerInstanceIdentifier {
+    return `connectors/${globalThis.crypto.randomUUID()}`;
+  }
+
   async remove(id: McpServerIdentifier): Promise<Outcome<void>> {
-    const server = this.servers.get(id);
+    const servers = this.servers.value;
+    if (!servers) {
+      return err(
+        `Server list is not available, status: "${this.servers.status}"`
+      );
+    }
+    const server = servers.get(id);
     if (!server) {
       return err(`MCP Server "${id}" does not exist`);
     }
     // Unregister
-    if (server.registered) {
-      const removing = await this.project.organizer.removeGraphAsset(id);
+    if (server.instanceId) {
+      const removing = await this.project.organizer.removeGraphAsset(
+        server.instanceId
+      );
       if (!ok(removing)) return removing;
     }
-    // Remove from the server list
-    this.servers.delete(id);
     return this.#serverList.remove(server.details.url);
   }
 

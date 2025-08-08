@@ -6,6 +6,7 @@
 
 import { Outcome } from "@breadboard-ai/types";
 import { DBSchema, IDBPDatabase, openDB } from "idb";
+import { Signal } from "signal-polyfill";
 
 const MCP_SERVERS_DB = "mcp-servers";
 
@@ -31,6 +32,9 @@ interface McpServerList extends DBSchema {
 class McpServerStore {
   #db: Promise<IDBPDatabase<McpServerList>>;
 
+  // Makes it work with signals.
+  readonly #changed = new Signal.State({});
+
   constructor() {
     this.#db = this.#initialize();
   }
@@ -44,6 +48,7 @@ class McpServerStore {
   }
 
   async add(info: ServerInfo): Promise<Outcome<void>> {
+    this.#changed.set({});
     const db = await this.#db;
     const tx = db.transaction("servers", "readwrite");
     const servers = tx.objectStore("servers");
@@ -53,6 +58,7 @@ class McpServerStore {
   }
 
   async remove(url: string): Promise<Outcome<void>> {
+    this.#changed.set({});
     const db = await this.#db;
     const tx = db.transaction("servers", "readwrite");
     const servers = tx.objectStore("servers");
@@ -61,6 +67,7 @@ class McpServerStore {
   }
 
   async list(): Promise<Outcome<ServerInfo[]>> {
+    this.#changed.get();
     const db = await this.#db;
     const tx = db.transaction("servers", "readonly");
     const servers = tx.objectStore("servers");
