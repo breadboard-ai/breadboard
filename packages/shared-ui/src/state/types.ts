@@ -496,7 +496,7 @@ export type McpServer = {
   /**
    * Whether or not the server is currently registered in this project.
    */
-  readonly registered: boolean;
+  registered: boolean;
   /**
    * Whether or not the server is removable. We will have some servers that are
    * built-in, so they aren't removable.

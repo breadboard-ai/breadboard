@@ -137,43 +137,44 @@ class McpFileSystemBackend implements PersistentBackend {
     if (!url) {
       return err(`MCP Backend: missing server URL`);
     }
+    try {
+      const client = new Client({
+        name: clientName || "Breadboard MCP Client",
+        version: MCP_CLIENT_VERSION,
+      });
+      const transport = new StreamableHTTPClientTransport(new URL(url));
 
-    const client = new Client({
-      name: clientName || "Breadboard MCP Client",
-      version: MCP_CLIENT_VERSION,
-    });
-    const transport = new StreamableHTTPClientTransport(new URL(url));
+      await client.connect(transport);
 
-    await client.connect(transport);
-
-    switch (info.name) {
-      case "listTools": {
-        info.response = client
-          .listTools()
-          .then((result) => fromJson(result.tools))
-          .catch((e) => err((e as Error).message));
-        break;
-      }
-      case "callTool": {
-        if (!params) {
-          return err(`MCP Backend: Missing "${info.name}" params`);
+      switch (info.name) {
+        case "listTools": {
+          info.response = client
+            .listTools()
+            .then((result) => fromJson(result.tools))
+            .catch((e) => err((e as Error).message));
+          break;
         }
-        info.response = client
-          .callTool(params as CallToolRequest["params"])
-          .then((result) => fromJson(result.content))
-          .catch((e) => err((e as Error).message));
-        break;
+        case "callTool": {
+          if (!params) {
+            return err(`MCP Backend: Missing "${info.name}" params`);
+          }
+          info.response = client
+            .callTool(params as CallToolRequest["params"])
+            .then((result) => fromJson(result.content))
+            .catch((e) => err((e as Error).message));
+          break;
+        }
+        case "info": {
+          info.response = Promise.resolve(fromJson(client.getServerVersion()));
+          break;
+        }
+        default: {
+          return err(`MCP Backend: Unsupported MCP mehod "${info.name}`);
+        }
       }
-      case "info": {
-        info.response = Promise.resolve(fromJson(client.getServerVersion()));
-        break;
-      }
-      default: {
-        return err(`MCP Backend: Unsupported MCP mehod "${info.name}`);
-      }
+    } catch (e) {
+      return err(`MCP Backend: ${(e as Error).message}`);
     }
-
-    return;
   }
 
   async append(
