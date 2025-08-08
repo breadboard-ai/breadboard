@@ -112,13 +112,18 @@ class McpImpl implements Mcp {
     this.servers.set(id, server);
   }
 
-  add(_url: string, _title: string | undefined): Promise<Outcome<McpServer>> {
-    throw new Error("Method not implemented.");
+  async add(
+    _url: string,
+    _title: string | undefined
+  ): Promise<Outcome<McpServer>> {
+    return err("Method not implemented.");
   }
-  remove(_id: McpServerIdentifier): Promise<Outcome<void>> {
-    throw new Error("Method not implemented.");
+
+  async remove(_id: McpServerIdentifier): Promise<Outcome<void>> {
+    return err("Method not implemented.");
   }
-  rename(_id: string, _title: string): Promise<Outcome<void>> {
-    throw new Error("Method not implemented.");
+
+  async rename(_id: string, _title: string): Promise<Outcome<void>> {
+    return err("Method not implemented.");
   }
 }
