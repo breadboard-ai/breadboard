@@ -1514,6 +1514,9 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.show.has("RuntimeFlags")
           ? this.#renderRuntimeFlagsModal()
           : nothing,
+        this.#uiState.show.has("MCPServersModal")
+          ? this.#renderMCPServersModal(renderValues)
+          : nothing,
         this.#renderTooltip(),
         this.#renderToasts(),
         this.#renderSnackbar(),
@@ -1767,6 +1770,15 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.showStatusUpdateChip = false;
       }}
     ></bb-status-update-modal>`;
+  }
+
+  #renderMCPServersModal(renderValues: RenderValues) {
+    return html`<bb-mcp-servers-modal
+      .project=${renderValues.projectState}
+      @bbmodaldismissed=${() => {
+        this.#uiState.show.delete("MCPServersModal");
+      }}
+    ></bb-mcp-servers-modal>`;
   }
 
   #renderRuntimeFlagsModal() {
@@ -2112,6 +2124,11 @@ export class Main extends SignalWatcher(LitElement) {
           case "status-update": {
             this.#uiState.show.add("StatusUpdateModal");
             this.#uiState.showStatusUpdateChip = false;
+            break;
+          }
+
+          case "show-mcp-servers": {
+            this.#uiState.show.add("MCPServersModal");
             break;
           }
 

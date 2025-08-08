@@ -561,6 +561,12 @@ export class VEHeader extends LitElement {
 
     if (this.showExperimentalComponents) {
       options.push({
+        id: "show-mcp-servers",
+        title: Strings.from("COMMAND_MANAGE_MCP_SERVERS"),
+        icon: "robot_server",
+      });
+
+      options.push({
         id: "copy-board-contents",
         title: Strings.from("COMMAND_COPY_PROJECT_CONTENTS"),
         icon: "content_copy",

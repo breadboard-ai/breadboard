@@ -90,6 +90,9 @@ export default {
   COMMAND_SHOW_VERSION_HISTORY: {
     str: "Show version history",
   },
+  COMMAND_MANAGE_MCP_SERVERS: {
+    str: "Manage MCP Servers",
+  },
 
   // Labels.
   LABEL_RUN: {

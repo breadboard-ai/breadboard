@@ -425,6 +425,7 @@ export type UIOverlays =
   | "BoardServerAddOverlay"
   | "SnackbarDetailsModal"
   | "MissingShare"
+  | "MCPServersModal"
   | "RuntimeFlags"
   | "TOS"
   | "VideoModal"

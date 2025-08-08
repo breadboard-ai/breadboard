@@ -231,7 +231,9 @@ export class VEModal extends LitElement {
             ? html`
                 <h1 class="sans-flex w-500 round md-title-medium">
                   ${this.icon
-                    ? html`<span class="g-icon">${this.icon}</span>`
+                    ? html`<span class="g-icon round filled"
+                        >${this.icon}</span
+                      >`
                     : nothing}
                   ${this.modalTitle}
                 </h1>
