@@ -293,8 +293,9 @@ nav {
     & #sign-in-header {
       line-height: var(--bb-grid-size-10);
       border-radius: var(--bb-grid-size-16);
-      background: var(--n-0);
-      color: var(--n-100);
+      background: var(--n-100);
+      border: 1px solid var(--n-70);
+      color: var(--n-0);
       padding: 0 var(--bb-grid-size-4);
       text-decoration: none;
     }

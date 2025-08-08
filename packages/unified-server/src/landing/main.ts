@@ -171,9 +171,8 @@ async function init() {
     };
 
     await setSignInUrls();
-    const signInMessage = `Sign in`;
-    signInHeaderButton.innerText = signInMessage;
-    signInButton.innerText = signInMessage + ` to ${Strings.from("APP_NAME")}`;
+    signInHeaderButton.innerText = "Sign in";
+    signInButton.innerText = `Try ${Strings.from("APP_NAME")}`;
     signInHeaderButton.addEventListener("click", onClickSignIn);
     signInButton.addEventListener("click", onClickSignIn);
     scopesErrorSignInButton.addEventListener("click", () => {
