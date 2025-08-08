@@ -290,6 +290,15 @@ nav {
       }
     }
 
+    & #sign-in-header {
+      line-height: var(--bb-grid-size-10);
+      border-radius: var(--bb-grid-size-16);
+      background: var(--n-0);
+      color: var(--n-100);
+      padding: 0 var(--bb-grid-size-4);
+      text-decoration: none;
+    }
+
     #experiment {
       display: none;
       margin-left: var(--bb-grid-size-2);
