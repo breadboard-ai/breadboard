@@ -15,7 +15,8 @@ import { GraphAsset, ProjectInternal } from "./types";
 import { signal } from "signal-utils";
 import { AsyncComputed } from "signal-utils/async-computed";
 import { Signal } from "signal-polyfill";
-import { err, ok, Outcome } from "@google-labs/breadboard";
+import { err, ok } from "@breadboard-ai/utils";
+import type { Outcome } from "@breadboard-ai/types";
 import { Configurator } from "../connectors/configurator";
 import { EditConnector } from "../transforms/edit-connector";
 
@@ -38,7 +39,7 @@ class ConnectorInstanceImpl implements ConnectorInstance {
     this.#asset = asset;
   }
 
-  #configuration = new Signal.Computed(() => {
+  #configuration = new Signal.Computed((): Outcome<ConnectorConfiguration> => {
     if (this.#asset.metadata?.type !== "connector") {
       return err(`The asset "${this.id}" is not of "connector" type`);
     }
