@@ -991,7 +991,11 @@ export class Renderer extends LitElement {
       mainGraph.readOnly = this.readOnly;
       mainGraph.projectState = this.projectState;
       if (this.showAssetsInGraph) {
-        mainGraph.assets = this.graph.assets();
+        mainGraph.assets = new Map(
+          Array.from(this.graph.assets().entries()).filter(
+            ([, asset]) => asset.type !== "connector"
+          )
+        );
         mainGraph.assetEdges = this.graph.assetEdges();
       }
 
