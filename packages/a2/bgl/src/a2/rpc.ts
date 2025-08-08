@@ -23,10 +23,10 @@ export type HandshakeResponse = {
   request: FileSystemReadWritePath;
 };
 
-async function rpc({
+async function rpc<Out = JsonSerializable>({
   path,
   data,
-}: RpcArgs): Promise<Outcome<JsonSerializable>> {
+}: RpcArgs): Promise<Outcome<Out>> {
   const readingHandshake = await read({ path });
   if (!ok(readingHandshake)) return readingHandshake;
   const handshake = json<HandshakeResponse>(readingHandshake.data);
@@ -52,5 +52,5 @@ async function rpc({
   if (!response) {
     return err(`Empty response returned at path "${path}"`);
   }
-  return response;
+  return response as Out;
 }
