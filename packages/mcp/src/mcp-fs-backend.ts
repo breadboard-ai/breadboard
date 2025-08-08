@@ -9,13 +9,11 @@ import {
   FileSystemQueryResult,
   FileSystemReadWritePath,
   FileSystemWriteResult,
-  JSONPart,
-  JsonSerializable,
   LLMContent,
   Outcome,
   PersistentBackend,
 } from "@breadboard-ai/types";
-import { err, ok } from "@breadboard-ai/utils";
+import { err, fromJson, ok, toJson } from "@breadboard-ai/utils";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { CallToolRequest } from "@modelcontextprotocol/sdk/types.js";
@@ -226,12 +224,4 @@ function parsePath(path: FileSystemPath): Outcome<PathInfo> {
     return err(`MCP Backend: can't determine method name from path "${path}"`);
   }
   return { type, name };
-}
-
-function toJson<T>(data: LLMContent[] | undefined): T | undefined {
-  return (data?.at(0)?.parts?.at(0) as JSONPart)?.json as T;
-}
-
-function fromJson<T>(json: T): LLMContent[] {
-  return [{ parts: [{ json: json as JsonSerializable }] }];
 }
