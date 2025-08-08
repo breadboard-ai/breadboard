@@ -257,7 +257,7 @@ export class Renderer extends LitElement {
 
       bb-item-select {
         position: fixed;
-        --menu-width: 180px;
+        --menu-width: 200px;
       }
 
       @keyframes fadeIn {
@@ -1506,7 +1506,7 @@ export class Renderer extends LitElement {
         {
           id: "duplicate",
           title: "Duplicate selection",
-          icon: "file_copy",
+          icon: "content_copy",
         },
       ]}
       @close=${() => {
