@@ -345,6 +345,7 @@ main {
         text-decoration: none;
         margin-bottom: var(--bb-grid-size-6);
         animation: fadeIn 2s cubic-bezier(0.4, 0, 0.3, 1) 0.8s 1 backwards;
+        z-index: 3;
       }
     }
 
