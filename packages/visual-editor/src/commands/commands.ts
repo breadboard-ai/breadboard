@@ -555,6 +555,94 @@ const PasteCommand: KeyboardCommand = {
   },
 };
 
+const DuplicateCommand: KeyboardCommand = {
+  keys: ["Cmd+d", "Ctrl+d"],
+
+  willHandle(tab: Tab | null, evt: Event) {
+    return tab !== null && isFocusedOnGraphRenderer(evt);
+  },
+
+  async do({
+    runtime,
+    tab,
+    selectionState,
+    pointerLocation,
+    originalEvent,
+  }: KeyboardCommandDeps): Promise<void> {
+    if (!isFocusedOnGraphRenderer(originalEvent)) {
+      return;
+    }
+
+    const editor = runtime.edit.getEditor(tab);
+    if (!editor) {
+      throw new Error("Unable to edit graph");
+    }
+
+    if (
+      !tab ||
+      !selectionState ||
+      selectionState.selectionState.graphs.size === 0
+    ) {
+      throw new Error("Nothing to duplicate");
+    }
+
+    if (tab?.readOnly) {
+      return;
+    }
+
+    const graph = editor.inspect("");
+    const boardContents = runtime.util.generateBoardFrom(
+      selectionState.selectionState,
+      graph
+    );
+
+    let spec: EditSpec[] = [];
+    if (boardContents) {
+      const destGraphIds = [];
+      if (selectionState) {
+        for (const id of selectionState.selectionState.graphs.keys()) {
+          const state = selectionState.selectionState.graphs.get(id);
+          if (
+            !state ||
+            (state.edges.size === 0 &&
+              state.nodes.size === 0 &&
+              state.comments.size === 0)
+          ) {
+            continue;
+          }
+
+          if (id === MAIN_BOARD_ID) {
+            destGraphIds.push("");
+            continue;
+          }
+
+          destGraphIds.push(id);
+        }
+      }
+
+      if (destGraphIds.length === 0) {
+        destGraphIds.push("");
+      }
+
+      spec = runtime.util.generateAddEditSpecFromDescriptor(
+        boardContents,
+        graph,
+        pointerLocation,
+        destGraphIds
+      );
+    }
+
+    await editor.edit(spec, runtime.util.createEditChangeId());
+    const workspaceSelection = runtime.util.generateSelectionFrom(spec);
+
+    runtime.select.processSelections(
+      tab.id,
+      runtime.util.createWorkspaceSelectionChangeId(),
+      workspaceSelection
+    );
+  },
+};
+
 export const keyboardCommands = new Map<string[], KeyboardCommand>([
   [SaveCommand.keys, SaveCommand],
   [DeleteCommand.keys, DeleteCommand],
@@ -570,4 +658,5 @@ export const keyboardCommands = new Map<string[], KeyboardCommand>([
   ],
   [UndoCommand.keys, UndoCommand],
   [RedoCommand.keys, RedoCommand],
+  [DuplicateCommand.keys, DuplicateCommand],
 ]);

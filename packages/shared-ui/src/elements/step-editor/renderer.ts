@@ -77,7 +77,7 @@ import { EditorControls } from "./editor-controls";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants";
 import { AssetMetadata } from "@breadboard-ai/types";
-import { isCtrlCommand } from "../../utils/is-ctrl-command";
+import { isCtrlCommand, isMacPlatform } from "../../utils/is-ctrl-command";
 import { Project, RendererState } from "../../state";
 import { colorsLight } from "../../styles/host/colors-light.js";
 import { ItemSelect } from "../elements.js";
@@ -1503,6 +1503,11 @@ export class Renderer extends LitElement {
           title: "Delete selection",
           icon: "delete",
         },
+        {
+          id: "duplicate",
+          title: "Duplicate selection",
+          icon: "file_copy",
+        },
       ]}
       @close=${() => {
         this.#selectionOverflowMenu = null;
@@ -1517,11 +1522,28 @@ export class Renderer extends LitElement {
         switch (select.value) {
           case "delete": {
             // There is already a keyboard shortcut for handling deletions so
-            // rather than duplicating it we redirect this action to the same
-            // endpoint in the Visual Editor root.
+            // we redirect this action to the same endpoint in the Visual Editor
+            // root.
             this.dispatchEvent(
               new KeyboardEvent("keydown", {
                 key: "Delete",
+                bubbles: true,
+                cancelable: true,
+                composed: true,
+              })
+            );
+            break;
+          }
+
+          case "duplicate": {
+            // There is already a keyboard shortcut for handling duplications so
+            // we redirect this action to the same endpoint in the Visual Editor
+            // root.
+            this.dispatchEvent(
+              new KeyboardEvent("keydown", {
+                key: "d",
+                ctrlKey: !isMacPlatform(),
+                metaKey: isMacPlatform(),
                 bubbles: true,
                 cancelable: true,
                 composed: true,

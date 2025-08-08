@@ -5,6 +5,10 @@
  */
 
 export function isCtrlCommand(evt: PointerEvent | KeyboardEvent | WheelEvent) {
-  const isMac = navigator.platform.indexOf("Mac") === 0;
+  const isMac = isMacPlatform();
   return isMac ? evt.metaKey : evt.ctrlKey;
+}
+
+export function isMacPlatform() {
+  return navigator.platform.indexOf("Mac") === 0;
 }
