@@ -112,9 +112,21 @@ ViteExpress.config({
   transformer: (html: string, req: Request) => {
     const board = req.res?.locals.loadedBoard;
     const displayName = board?.displayName || "Loading ...";
+    const serverUrl = new URL(
+      serverConfig.SERVER_URL ?? `http://localhost:${boardServerConfig.port}`
+    );
+    const clientConfigStr = JSON.stringify(clientConfig).replaceAll(
+      "</script>",
+      "\x3C/script>"
+    );
+    const bucket =
+      clientConfig.GOOGLE_FEEDBACK_BUCKET === "prod" ? "prod" : "dev";
+
     return html
       .replace("{{displayName}}", escape(displayName))
-      .replace("{{config}}", clientConfig);
+      .replace("{{config}}", clientConfigStr)
+      .replace(/{{origin}}/gim, serverUrl.origin)
+      .replace(/{{bucket}}/gim, bucket);
   },
 });
 
