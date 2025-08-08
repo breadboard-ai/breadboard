@@ -7,8 +7,9 @@
 import { Outcome } from "@breadboard-ai/types";
 import { Mcp, McpServer, McpServerIdentifier, ProjectInternal } from "./types";
 import { signal } from "signal-utils";
-import { err, ok } from "@breadboard-ai/utils";
+import { err, fromJson, ok } from "@breadboard-ai/utils";
 import { SignalMap } from "signal-utils/map";
+import { McpServerStore } from "./utils/mcp-server-store";
 
 export { McpImpl };
 
@@ -22,6 +23,8 @@ type McpConnectorConfiguration = {
 const MCP_CONNECTOR_URL = "embed://a2/mcp.bgl.json";
 
 class McpImpl implements Mcp {
+  #serverList = new McpServerStore();
+
   constructor(private readonly project: ProjectInternal) {}
 
   @signal
@@ -59,6 +62,22 @@ class McpImpl implements Mcp {
     return result;
   }
 
+  async #addAsset(id: string, url: string, title: string) {
+    return this.project.organizer.addGraphAsset({
+      path: id,
+      data: fromJson({
+        url: "embed://a2/mcp.bgl.json",
+        configuration: {
+          endpoint: url,
+        },
+      }),
+      metadata: {
+        type: "connector",
+        title,
+      },
+    });
+  }
+
   async register(id: McpServerIdentifier): Promise<Outcome<void>> {
     const server = this.servers.get(id);
     if (!server) {
@@ -68,27 +87,7 @@ class McpImpl implements Mcp {
       return err(`MCP Server "${id}" is already registered`);
     }
 
-    const adding = await this.project.organizer.addGraphAsset({
-      path: id,
-      data: [
-        {
-          parts: [
-            {
-              json: {
-                url: "embed://a2/mcp.bgl.json",
-                configuration: {
-                  endpoint: server.details.url,
-                },
-              },
-            },
-          ],
-        },
-      ],
-      metadata: {
-        type: "connector",
-        title: server.title,
-      },
-    });
+    const adding = await this.#addAsset(id, server.details.url, server.title);
     if (!ok(adding)) return adding;
 
     server.registered = true;
@@ -112,15 +111,28 @@ class McpImpl implements Mcp {
     this.servers.set(id, server);
   }
 
-  async add(
-    _url: string,
-    _title: string | undefined
-  ): Promise<Outcome<McpServer>> {
-    return err("Method not implemented.");
+  async add(url: string, title: string = url): Promise<Outcome<void>> {
+    const id = `connectors/${globalThis.crypto.randomUUID()}`;
+    // Add as new asset
+    const adding = await this.#addAsset(id, url, title);
+    if (!ok(adding)) return adding;
+    // Add to the server list
+    await this.#serverList.add({ url, title });
   }
 
-  async remove(_id: McpServerIdentifier): Promise<Outcome<void>> {
-    return err("Method not implemented.");
+  async remove(id: McpServerIdentifier): Promise<Outcome<void>> {
+    const server = this.servers.get(id);
+    if (!server) {
+      return err(`MCP Server "${id}" does not exist`);
+    }
+    // Unregister
+    if (server.registered) {
+      const removing = await this.project.organizer.removeGraphAsset(id);
+      if (!ok(removing)) return removing;
+    }
+    // Remove from the server list
+    this.servers.delete(id);
+    return this.#serverList.remove(server.details.url);
   }
 
   async rename(_id: string, _title: string): Promise<Outcome<void>> {

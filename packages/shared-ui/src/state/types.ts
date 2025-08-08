@@ -532,7 +532,7 @@ export type Mcp = {
    * @param url - URL of the server
    * @param title - title of the server, optional
    */
-  add(url: string, title: string | undefined): Promise<Outcome<McpServer>>;
+  add(url: string, title: string | undefined): Promise<Outcome<void>>;
 
   /**
    * Remove the MCP server specified by id. This removes it both from the assets

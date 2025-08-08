@@ -12,9 +12,10 @@ import { repeat } from "lit/directives/repeat.js";
 import { icons } from "../../styles/icons";
 import { markdown } from "../../directives/markdown";
 import { ok } from "@google-labs/breadboard";
+import { SignalWatcher } from "@lit-labs/signals";
 
 @customElement("bb-mcp-servers-modal")
-export class VEMCPServersModal extends LitElement {
+export class VEMCPServersModal extends SignalWatcher(LitElement) {
   @property()
   accessor project: Project | null = null;
 
@@ -190,6 +191,7 @@ export class VEMCPServersModal extends LitElement {
         }
 
         & .delete,
+        & .add,
         & .save {
           display: flex;
           align-items: center;
@@ -346,7 +348,27 @@ export class VEMCPServersModal extends LitElement {
                 <div class="sans md-body-small">
                   ${markdown(server.description ?? "No description")}
                 </div>
-                <button class="delete" ?disabled=${!server.removable}>
+                <button
+                  class="delete"
+                  ?disabled=${!server.removable}
+                  @click=${async () => {
+                    if (
+                      !confirm(
+                        "Are you sure you want to delete this server from this list?"
+                      )
+                    ) {
+                      return;
+                    }
+                    const removing = await this.project?.mcp.remove(id);
+                    if (!ok(removing)) {
+                      // TODO: Expose this in UI somehow.
+                      console.error(
+                        "Error deleting MCP server",
+                        removing.$error
+                      );
+                    }
+                  }}
+                >
                   <span class="g-icon filled round">delete</span>
                 </button>
               </label>
@@ -404,7 +426,7 @@ export class VEMCPServersModal extends LitElement {
         </button>
 
         <button
-          class="delete md-label-large sans-flex"
+          class="add md-label-large sans-flex"
           @click=${() => {
             this.#status = null;
             this.mode = "add";
