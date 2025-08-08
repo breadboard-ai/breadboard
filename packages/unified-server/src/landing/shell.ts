@@ -29,10 +29,12 @@ export function setPageTitle(
 }
 
 export function obtainElements() {
-  // Capture the main sign-in button.
+  // Capture the main sign-in buttons.
   const signInButton = document.querySelector<HTMLAnchorElement>("#sign-in");
-  if (!signInButton) {
-    throw new Error("Unable to locate sign-in button");
+  const signInHeaderButton =
+    document.querySelector<HTMLAnchorElement>("#sign-in-header");
+  if (!signInButton || !signInHeaderButton) {
+    throw new Error("Unable to locate sign-in buttons");
   }
 
   // Scopes Error Dialog.
@@ -82,6 +84,7 @@ export function obtainElements() {
 
   return {
     signInButton,
+    signInHeaderButton,
     scopesErrorDialog,
     scopesErrorSignInButton,
     genericErrorDialog,
