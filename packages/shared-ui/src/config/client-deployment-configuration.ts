@@ -18,6 +18,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   usePlanRunner: false,
   saveAsCode: false,
   generateForEach: false,
+  mcp: false,
 };
 
 export function populateFlags(
