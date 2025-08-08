@@ -10,11 +10,13 @@ import { SignalSet } from "signal-utils/set";
 import { SignalMap } from "signal-utils/map";
 import { ToastType } from "../events/events";
 import { UI, UIOverlays, UILoadState } from "./types";
+import { RuntimeFlagManager, RuntimeFlags } from "@breadboard-ai/types";
+import { AsyncComputed } from "signal-utils/async-computed";
 
 export { createUIState };
 
-function createUIState(): UI {
-  return new ReactiveUIState();
+function createUIState(flags: RuntimeFlagManager): UI {
+  return new ReactiveUIState(flags);
 }
 
 class ReactiveUIState implements UI {
@@ -68,4 +70,20 @@ class ReactiveUIState implements UI {
       persistent: boolean;
     }
   >();
+
+  @signal
+  get flags(): RuntimeFlags | null {
+    return this.#flags.value || null;
+  }
+
+  #flagManager: RuntimeFlagManager;
+  #flags = new AsyncComputed<RuntimeFlags>(async (signal) => {
+    signal.throwIfAborted();
+
+    return this.#flagManager.flags();
+  });
+
+  constructor(flagManager: RuntimeFlagManager) {
+    this.#flagManager = flagManager;
+  }
 }

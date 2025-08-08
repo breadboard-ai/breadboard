@@ -14,6 +14,7 @@ import {
   NodeIdentifier,
   OutputValues,
   ParameterMetadata,
+  RuntimeFlags,
   UUID,
 } from "@breadboard-ai/types";
 import {
@@ -470,6 +471,7 @@ export type UI = {
   >;
   blockingAction: boolean;
   lastSnackbarDetailsInfo: HTMLTemplateResult | string | null;
+  flags: RuntimeFlags | null;
 };
 
 export type McpServerDetails = {

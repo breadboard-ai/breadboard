@@ -223,9 +223,9 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
   ).createSideboardRuntime();
 
   const recentBoards = await config.recentBoardStore.restore();
-  const state = new StateManager(graphStore, sideboards, servers);
-  const shell = new Shell(config.appName, config.appSubName);
   const flags = config.flags;
+  const state = new StateManager(graphStore, sideboards, servers, flags);
+  const shell = new Shell(config.appName, config.appSubName);
 
   return new Runtime({
     router: new Router(),
