@@ -461,6 +461,93 @@ export type UI = {
   lastSnackbarDetailsInfo: HTMLTemplateResult | string | null;
 };
 
+export type McpServerDetails = {
+  /**
+   * Name of the server. Part of the technical details, though when title is
+   * not be specified, can be used instead of title
+   */
+  name: string;
+  /**
+   * Version of the server.
+   */
+  version: string;
+  /**
+   * URL of the server.
+   */
+  url: string;
+};
+
+export type McpServerIdentifier = string;
+
+export type McpServer = {
+  /**
+   * Title of the MCP server. Assigned by the author or extracted from the
+   * MCP server info.
+   */
+  readonly title: string;
+  /**
+   * Description of the server.
+   */
+  readonly description?: string;
+  /**
+   * Server details.
+   */
+  readonly details: McpServerDetails;
+  /**
+   * Whether or not the server is currently registered in this project.
+   */
+  registered: boolean;
+  /**
+   * Whether or not the server is removable. We will have some servers that are
+   * built-in, so they aren't removable.
+   */
+  readonly removable: boolean;
+};
+
+/**
+ * Represents the Model+Controller for of the project's MCP
+ * configuration.
+ */
+export type Mcp = {
+  /**
+   * List of currently all known MCP servers.
+   */
+  servers: ReadonlyMap<McpServerIdentifier, McpServer>;
+
+  /**
+   * Register the server specified by id. This adds it to the assets in the BGL.
+   */
+  register(id: McpServerIdentifier): Promise<Outcome<void>>;
+
+  /**
+   * Unregister the server specified by id. This removes it from the assets
+   * in the BGL.
+   */
+  unregister(id: McpServerIdentifier): Promise<Outcome<void>>;
+
+  /**
+   * Add as a new MCP server by URL.
+   *
+   * @param url - URL of the server
+   * @param title - title of the server, optional
+   */
+  add(url: string, title: string | undefined): Promise<Outcome<McpServer>>;
+
+  /**
+   * Remove the MCP server specified by id. This removes it both from the assets
+   * in the BGL and removes it entirely from. Will fail if the server is not
+   * removable.
+   */
+  remove(id: McpServerIdentifier): Promise<Outcome<void>>;
+
+  /**
+   *
+   * @param id - id of the server
+   * @param title - new title of the server
+   */
+  rename(id: string, title: string): Promise<Outcome<void>>;
+};
+
 /**
  * Represents the Model+Controller for the entire Project.
  * Contains all the state for the project.
@@ -470,6 +557,7 @@ export type Project = {
   graphAssets: Map<AssetPath, GraphAsset>;
   parameters: Map<string, ParameterMetadata>;
   connectors: ConnectorState;
+  mcp: Mcp;
   organizer: Organizer;
   fastAccess: FastAccess;
   renderer: RendererState;
