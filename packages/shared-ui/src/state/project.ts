@@ -350,7 +350,7 @@ class ReactiveProject implements ProjectInternal {
       if (!connector || !connector.type.tools) continue;
 
       tools.push([
-        connector.type.url,
+        `${connector.type.url}#${path}`,
         {
           url: connector.type.url,
           title: `${title} Tools`,
