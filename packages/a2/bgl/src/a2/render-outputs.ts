@@ -51,7 +51,7 @@ const MODELS: Model[] = [
     id: "gemini-flash-lite",
     title: "Gemini 2.5 Flash Lite",
     description: "Best for simple speedy displays",
-    modelName: "gemini-2.5-flash-lite-preview-06-17",
+    modelName: "gemini-2.5-flash-lite",
   },
   {
     id: "gemini-pro",
@@ -327,7 +327,7 @@ async function invoke({
   if (renderMode == FLASH_MODE) {
     modelName = "gemini-2.5-flash";
   } else if (renderMode == PRO_MODE) {
-    modelName = "gemini-2.5-pro-preview-05-06";
+    modelName = "gemini-2.5-pro";
   }
   console.log("Rendering with mode: ", renderType);
   console.log("Rendering with model: ", modelName);
