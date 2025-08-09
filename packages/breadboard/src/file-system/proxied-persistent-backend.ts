@@ -30,7 +30,7 @@ class ProxiedPersistentBackend implements PersistentBackend {
   ) {}
 
   async #fetch(
-    method: "POST" | "GET",
+    method: "POST" | "GET" | "DELETE",
     path: string,
     body?: JsonSerializable
   ): Promise<Outcome<JsonSerializable>> {
@@ -84,6 +84,7 @@ class ProxiedPersistentBackend implements PersistentBackend {
     // TODO: Verify returned data structure matches presumed shape.
     return fetching as FileSystemWriteResult;
   }
+
   async append(
     _graphUrl: string,
     _path: FileSystemPath,
@@ -91,13 +92,18 @@ class ProxiedPersistentBackend implements PersistentBackend {
   ): Promise<FileSystemWriteResult> {
     return err(`Proxied backend does not support "append" method.`);
   }
+
   async delete(
     _graphUrl: string,
-    _path: FileSystemPath,
+    path: FileSystemPath,
     _all: boolean
   ): Promise<FileSystemWriteResult> {
-    return err(`Proxied backend does not support "delete" method.`);
+    const fetching = await this.#fetch("DELETE", path);
+    if (!ok(fetching)) return fetching;
+    // TODO: Verify returned data structure matches presumed shape.
+    return fetching as FileSystemWriteResult;
   }
+
   async copy(
     _graphUrl: string,
     _source: FileSystemPath,
@@ -105,6 +111,7 @@ class ProxiedPersistentBackend implements PersistentBackend {
   ): Promise<FileSystemWriteResult> {
     return err(`Proxied backend does not support "copy" method.`);
   }
+
   async move(
     _graphUrl: string,
     _source: FileSystemPath,

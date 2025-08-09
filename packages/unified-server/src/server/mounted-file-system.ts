@@ -58,6 +58,15 @@ function createMountedFileSystemHandler() {
         res.status(200).contentType("application/json").send({});
         break;
       }
+      case "DELETE": {
+        const deleting = await backend.delete("", path, false);
+        if (!ok(deleting)) {
+          res.status(400).send(deleting.$error);
+          return;
+        }
+        res.status(200).contentType("application/json").send({});
+        break;
+      }
       default: {
         res.status(405).send("Invalid method");
         break;
