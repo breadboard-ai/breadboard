@@ -113,7 +113,7 @@
     "./packages/*"
   ],
   "optionalDependencies": {
-    "@rollup/rollup-darwin-arm64": "^4.44.1",
+    "@rollup/rollup-darwin-arm64": "^4.46.2",
     "@rollup/rollup-linux-x64-gnu": "^4.40.2"
   },
   "repository": {
