@@ -323,6 +323,8 @@ main {
       display: flex;
       align-items: center;
       flex-direction: column;
+      z-index: 1;
+      position: relative;
 
       & h1 {
         padding: var(--bb-grid-size-8) 0;
