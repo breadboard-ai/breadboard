@@ -6,6 +6,7 @@
 
 import { RuntimeFlagManager, RuntimeFlags } from "@breadboard-ai/types";
 import { DBSchema, IDBPDatabase, openDB } from "idb";
+import { Signal } from "signal-polyfill";
 
 export { IdbFlagManager };
 
@@ -22,12 +23,15 @@ class IdbFlagManager implements RuntimeFlagManager {
   #db: Promise<IDBPDatabase<FlagOverrides>>;
   #env: RuntimeFlags;
 
+  readonly #changed = new Signal.State({});
+
   constructor(env: RuntimeFlags) {
     this.#env = env;
     this.#db = this.#initialize();
   }
 
   async flags(): Promise<Readonly<RuntimeFlags>> {
+    this.#changed.get();
     const overrides = await this.overrides();
     return { ...this.env(), ...overrides };
   }
@@ -45,6 +49,7 @@ class IdbFlagManager implements RuntimeFlagManager {
   }
 
   async overrides(): Promise<Partial<Readonly<RuntimeFlags>>> {
+    this.#changed.get();
     const db = await this.#db;
     const tx = db.transaction(["overrides"], "readonly");
     const flags = tx.objectStore("overrides");
@@ -61,6 +66,7 @@ class IdbFlagManager implements RuntimeFlagManager {
   }
 
   async override(flag: keyof RuntimeFlags, value: boolean): Promise<void> {
+    this.#changed.set({});
     const db = await this.#db;
     const tx = db.transaction(["overrides"], "readwrite");
     const flags = tx.objectStore("overrides");
@@ -69,6 +75,7 @@ class IdbFlagManager implements RuntimeFlagManager {
   }
 
   async clearOverride(flag: keyof RuntimeFlags): Promise<void> {
+    this.#changed.set({});
     const db = await this.#db;
     const tx = db.transaction(["overrides"], "readwrite");
     const flags = tx.objectStore("overrides");

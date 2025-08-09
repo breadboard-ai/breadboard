@@ -14,6 +14,8 @@ import {
   NodeIdentifier,
   OutputValues,
   ParameterMetadata,
+  RuntimeFlags,
+  UUID,
 } from "@breadboard-ai/types";
 import {
   EditSpec,
@@ -29,6 +31,15 @@ import { ToastType } from "../events/events";
 import { SideBoardRuntime } from "../sideboards/types";
 import { VisualEditorMode } from "../types/types";
 import { HTMLTemplateResult } from "lit";
+import type { AsyncComputedStatus } from "signal-utils/async-computed";
+
+/**
+ * Represents the result of AsyncComputed signals helper.
+ */
+export type AsyncComputedResult<T> = {
+  value: T | undefined;
+  status: AsyncComputedStatus;
+};
 
 /**
  * Represents the Model+Controller for the individual run of the graph.
@@ -460,6 +471,7 @@ export type UI = {
   >;
   blockingAction: boolean;
   lastSnackbarDetailsInfo: HTMLTemplateResult | string | null;
+  flags: RuntimeFlags | null;
 };
 
 export type McpServerDetails = {
@@ -480,6 +492,8 @@ export type McpServerDetails = {
 
 export type McpServerIdentifier = string;
 
+export type McpServerInstanceIdentifier = `connectors/${UUID}`;
+
 export type McpServer = {
   /**
    * Title of the MCP server. Assigned by the author or extracted from the
@@ -497,7 +511,7 @@ export type McpServer = {
   /**
    * Whether or not the server is currently registered in this project.
    */
-  registered: boolean;
+  instanceId?: McpServerInstanceIdentifier;
   /**
    * Whether or not the server is removable. We will have some servers that are
    * built-in, so they aren't removable.
@@ -513,7 +527,7 @@ export type Mcp = {
   /**
    * List of currently all known MCP servers.
    */
-  servers: ReadonlyMap<McpServerIdentifier, McpServer>;
+  servers: AsyncComputedResult<ReadonlyMap<McpServerIdentifier, McpServer>>;
 
   /**
    * Register the server specified by id. This adds it to the assets in the BGL.
@@ -532,7 +546,7 @@ export type Mcp = {
    * @param url - URL of the server
    * @param title - title of the server, optional
    */
-  add(url: string, title: string | undefined): Promise<Outcome<McpServer>>;
+  add(url: string, title: string | undefined): Promise<Outcome<void>>;
 
   /**
    * Remove the MCP server specified by id. This removes it both from the assets

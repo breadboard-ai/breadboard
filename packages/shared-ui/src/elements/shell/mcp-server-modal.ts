@@ -12,9 +12,10 @@ import { repeat } from "lit/directives/repeat.js";
 import { icons } from "../../styles/icons";
 import { markdown } from "../../directives/markdown";
 import { ok } from "@google-labs/breadboard";
+import { SignalWatcher } from "@lit-labs/signals";
 
 @customElement("bb-mcp-servers-modal")
-export class VEMCPServersModal extends LitElement {
+export class VEMCPServersModal extends SignalWatcher(LitElement) {
   @property()
   accessor project: Project | null = null;
 
@@ -190,6 +191,7 @@ export class VEMCPServersModal extends LitElement {
         }
 
         & .delete,
+        & .add,
         & .save {
           display: flex;
           align-items: center;
@@ -329,50 +331,76 @@ export class VEMCPServersModal extends LitElement {
       return html`MCP Server configuration unavailable`;
     }
 
-    if (this.project.mcp.servers.size === 0) {
-      return html`<p>There are no MCP Servers available</p>`;
+    const servers = this.project.mcp.servers;
+    if (!servers.value) {
+      if (servers.status === "error") {
+        return html`<p>Error loading MCP server list</p>`;
+      }
+      return html`<p>Loading ...</p>`;
     }
 
-    return html`<ul>
-        ${repeat(
-          this.project.mcp.servers,
-          ([id]) => id,
-          ([id, server]) => {
-            return html`<li>
-              <label for=${id}>
-                <h1 class="sans-flex w-500 round md-title-medium">
-                  ${server.title}
-                </h1>
-                <div class="sans md-body-small">
-                  ${markdown(server.description ?? "No description")}
-                </div>
-                <button class="delete" ?disabled=${!server.removable}>
-                  <span class="g-icon filled round">delete</span>
-                </button>
-              </label>
-              <input
-                type="checkbox"
-                id=${id}
-                .checked=${server.registered}
-                @change=${(evt: Event) => {
-                  if (
-                    !(evt.target instanceof HTMLInputElement) ||
-                    !this.project
-                  ) {
-                    return;
-                  }
+    return html` ${servers.value.size === 0
+        ? html`<p>There are no MCP servers available</p>`
+        : html`<ul>
+            ${repeat(
+              servers.value,
+              ([id]) => id,
+              ([id, server]) => {
+                return html`<li>
+                  <label for=${id}>
+                    <h1 class="sans-flex w-500 round md-title-medium">
+                      ${server.title}
+                    </h1>
+                    <div class="sans md-body-small">
+                      ${markdown(server.description ?? "No description")}
+                    </div>
+                    <button
+                      class="delete"
+                      ?disabled=${!server.removable}
+                      @click=${async () => {
+                        if (
+                          !confirm(
+                            "Are you sure you want to delete this server from this list?"
+                          )
+                        ) {
+                          return;
+                        }
+                        const removing = await this.project?.mcp.remove(id);
+                        if (!ok(removing)) {
+                          // TODO: Expose this in UI somehow.
+                          console.error(
+                            "Error deleting MCP server",
+                            removing.$error
+                          );
+                        }
+                      }}
+                    >
+                      <span class="g-icon filled round">delete</span>
+                    </button>
+                  </label>
+                  <input
+                    type="checkbox"
+                    id=${id}
+                    .checked=${!!server.instanceId}
+                    @change=${(evt: Event) => {
+                      if (
+                        !(evt.target instanceof HTMLInputElement) ||
+                        !this.project
+                      ) {
+                        return;
+                      }
 
-                  if (evt.target.checked) {
-                    this.project.mcp.register(id);
-                  } else {
-                    this.project.mcp.unregister(id);
-                  }
-                }}
-              />
-            </li>`;
-          }
-        )}
-      </ul>
+                      if (evt.target.checked) {
+                        this.project.mcp.register(id);
+                      } else {
+                        this.project.mcp.unregister(id);
+                      }
+                    }}
+                  />
+                </li>`;
+              }
+            )}
+          </ul>`}
       <div id="controls">
         <button
           class="delete md-label-large sans-flex"
@@ -404,7 +432,7 @@ export class VEMCPServersModal extends LitElement {
         </button>
 
         <button
-          class="delete md-label-large sans-flex"
+          class="add md-label-large sans-flex"
           @click=${() => {
             this.#status = null;
             this.mode = "add";

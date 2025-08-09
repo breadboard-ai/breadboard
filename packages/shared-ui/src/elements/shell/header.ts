@@ -20,12 +20,15 @@ import {
   StateEvent,
 } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
-import { UILoadState } from "../../state/types.js";
+import { UI, UILoadState } from "../../state/types.js";
+import { consume } from "@lit/context";
+import { uiStateContext } from "../../contexts/ui-state.js";
+import { SignalWatcher } from "@lit-labs/signals";
 
 const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
 
 @customElement("bb-ve-header")
-export class VEHeader extends LitElement {
+export class VEHeader extends SignalWatcher(LitElement) {
   @property()
   accessor signinAdapter: SigninAdapter | null = null;
 
@@ -64,6 +67,9 @@ export class VEHeader extends LitElement {
 
   @state()
   accessor #showRemixInfo = false;
+
+  @consume({ context: uiStateContext })
+  accessor #uiState!: UI;
 
   static styles = [
     icons,
@@ -559,13 +565,15 @@ export class VEHeader extends LitElement {
       },
     ];
 
-    if (this.showExperimentalComponents) {
+    if (this.#uiState.flags?.mcp) {
       options.push({
         id: "show-mcp-servers",
         title: Strings.from("COMMAND_MANAGE_MCP_SERVERS"),
         icon: "robot_server",
       });
+    }
 
+    if (this.showExperimentalComponents) {
       options.push({
         id: "copy-board-contents",
         title: Strings.from("COMMAND_COPY_PROJECT_CONTENTS"),

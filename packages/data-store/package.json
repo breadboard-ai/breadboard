@@ -154,6 +154,7 @@
   "dependencies": {
     "@breadboard-ai/types": "0.8.0",
     "@google-labs/breadboard": "^0.35.0",
-    "idb": "^8.0.2"
+    "idb": "^8.0.2",
+    "signal-polyfill": "^0.2.2"
   }
 }
