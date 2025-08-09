@@ -42,16 +42,6 @@ class McpImpl implements Mcp {
     signal.throwIfAborted();
 
     const result = new SignalMap<McpServerIdentifier, McpServer>();
-    result.set(this.#createId("builtin://url/goes/here"), {
-      title: "Local Memory",
-      details: {
-        name: "local memory",
-        version: "0.0.1",
-        url: "builtin://url/goes/here",
-      },
-      removable: false,
-    });
-
     const inBgl = new Map<McpServerIdentifier, McpServer>();
 
     this.project.graphAssets.forEach((asset, value) => {

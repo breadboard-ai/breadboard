@@ -339,70 +339,68 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
       return html`<p>Loading ...</p>`;
     }
 
-    if (servers.value.size === 0) {
-      return html`<p>There are no MCP Servers available</p>`;
-    }
+    return html` ${servers.value.size === 0
+        ? html`<p>There are no MCP servers available</p>`
+        : html`<ul>
+            ${repeat(
+              servers.value,
+              ([id]) => id,
+              ([id, server]) => {
+                return html`<li>
+                  <label for=${id}>
+                    <h1 class="sans-flex w-500 round md-title-medium">
+                      ${server.title}
+                    </h1>
+                    <div class="sans md-body-small">
+                      ${markdown(server.description ?? "No description")}
+                    </div>
+                    <button
+                      class="delete"
+                      ?disabled=${!server.removable}
+                      @click=${async () => {
+                        if (
+                          !confirm(
+                            "Are you sure you want to delete this server from this list?"
+                          )
+                        ) {
+                          return;
+                        }
+                        const removing = await this.project?.mcp.remove(id);
+                        if (!ok(removing)) {
+                          // TODO: Expose this in UI somehow.
+                          console.error(
+                            "Error deleting MCP server",
+                            removing.$error
+                          );
+                        }
+                      }}
+                    >
+                      <span class="g-icon filled round">delete</span>
+                    </button>
+                  </label>
+                  <input
+                    type="checkbox"
+                    id=${id}
+                    .checked=${!!server.instanceId}
+                    @change=${(evt: Event) => {
+                      if (
+                        !(evt.target instanceof HTMLInputElement) ||
+                        !this.project
+                      ) {
+                        return;
+                      }
 
-    return html`<ul>
-        ${repeat(
-          servers.value,
-          ([id]) => id,
-          ([id, server]) => {
-            return html`<li>
-              <label for=${id}>
-                <h1 class="sans-flex w-500 round md-title-medium">
-                  ${server.title}
-                </h1>
-                <div class="sans md-body-small">
-                  ${markdown(server.description ?? "No description")}
-                </div>
-                <button
-                  class="delete"
-                  ?disabled=${!server.removable}
-                  @click=${async () => {
-                    if (
-                      !confirm(
-                        "Are you sure you want to delete this server from this list?"
-                      )
-                    ) {
-                      return;
-                    }
-                    const removing = await this.project?.mcp.remove(id);
-                    if (!ok(removing)) {
-                      // TODO: Expose this in UI somehow.
-                      console.error(
-                        "Error deleting MCP server",
-                        removing.$error
-                      );
-                    }
-                  }}
-                >
-                  <span class="g-icon filled round">delete</span>
-                </button>
-              </label>
-              <input
-                type="checkbox"
-                id=${id}
-                .checked=${!!server.instanceId}
-                @change=${(evt: Event) => {
-                  if (
-                    !(evt.target instanceof HTMLInputElement) ||
-                    !this.project
-                  ) {
-                    return;
-                  }
-
-                  if (evt.target.checked) {
-                    this.project.mcp.register(id);
-                  } else {
-                    this.project.mcp.unregister(id);
-                  }
-                }}
-              />
-            </li>`;
-          }
-        )}
-      </ul>
+                      if (evt.target.checked) {
+                        this.project.mcp.register(id);
+                      } else {
+                        this.project.mcp.unregister(id);
+                      }
+                    }}
+                  />
+                </li>`;
+              }
+            )}
+          </ul>`}
       <div id="controls">
         <button
           class="delete md-label-large sans-flex"
