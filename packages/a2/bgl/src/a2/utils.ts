@@ -28,7 +28,8 @@ export {
   extractMediaData,
   encodeBase64,
   decodeBase64,
-  json,
+  toJson,
+  fromJson,
 };
 
 export type ErrorReason =
@@ -436,8 +437,12 @@ function decodeBase64(s: string): string {
   }
 }
 
-function json<T = JsonSerializable>(
+function toJson<T = JsonSerializable>(
   data: LLMContent[] | undefined
 ): T | undefined {
   return (data?.at(0)?.parts?.at(0) as JSONPart)?.json as T;
+}
+
+function fromJson<T>(json: T): LLMContent[] {
+  return [{ parts: [{ json: json as JsonSerializable }] }];
 }

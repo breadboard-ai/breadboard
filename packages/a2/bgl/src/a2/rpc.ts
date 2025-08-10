@@ -5,7 +5,7 @@
  */
 
 import read from "@read";
-import { err, json, ok } from "./utils";
+import { err, toJson, fromJson, ok } from "./utils";
 import write from "@write";
 
 export { rpc, RpcSession };
@@ -29,7 +29,7 @@ async function rpc<Out = JsonSerializable>({
 }: RpcArgs): Promise<Outcome<Out>> {
   const readingHandshake = await read({ path });
   if (!ok(readingHandshake)) return readingHandshake;
-  const handshake = json<HandshakeResponse>(readingHandshake.data);
+  const handshake = toJson<HandshakeResponse>(readingHandshake.data);
   if (!handshake) {
     return err(`Unable to establish handshake at "${path}"`);
   }
@@ -48,11 +48,11 @@ async function rpc<Out = JsonSerializable>({
   const readingResponse = await read({ path: handshake.response });
   if (!ok(readingResponse)) return readingResponse;
 
-  const response = json(readingResponse.data);
+  const response = toJson<Out>(readingResponse.data);
   if (!response) {
     return err(`Empty response returned at path "${path}"`);
   }
-  return response as Out;
+  return response;
 }
 
 export type SessionHandshakeResponse<Info> = {
@@ -60,10 +60,6 @@ export type SessionHandshakeResponse<Info> = {
   session: FileSystemReadWritePath;
   info: Info;
 };
-
-function fromJson<T>(json: T): LLMContent[] {
-  return [{ parts: [{ json: json as JsonSerializable }] }];
-}
 
 class RpcSession<Args extends JsonSerializable, Info extends JsonSerializable> {
   #session: Promise<Outcome<SessionHandshakeResponse<Info>>> | undefined;
@@ -94,7 +90,7 @@ class RpcSession<Args extends JsonSerializable, Info extends JsonSerializable> {
     if (!ok(writingInit)) return writingInit;
     const readingInit = await read({ path });
     if (!ok(readingInit)) return readingInit;
-    const handshake = json<SessionHandshakeResponse<Info>>(readingInit.data);
+    const handshake = toJson<SessionHandshakeResponse<Info>>(readingInit.data);
     if (!handshake) {
       return err(`Unable to establish RPC handshake at "${path}"`);
     }
@@ -121,7 +117,7 @@ class RpcSession<Args extends JsonSerializable, Info extends JsonSerializable> {
     const readingResponse = await read({ path: session.session });
     if (!ok(readingResponse)) return readingResponse;
 
-    const response = json<Out>(readingResponse.data);
+    const response = toJson<Out>(readingResponse.data);
     if (!response) {
       return err(`Empty RPC response returned for session "${session}"`);
     }
