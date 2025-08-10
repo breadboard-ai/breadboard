@@ -17,6 +17,17 @@ export type InitializeResponse = {
   };
 };
 
+export type InitArguments = {
+  /**
+   * URL of the MCP server to connect to
+   */
+  url: string;
+  /**
+   * MCP Client Information
+   */
+  info: Implementation;
+};
+
 export type Implementation = {
   name: string;
   title: string;

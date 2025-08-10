@@ -55,35 +55,53 @@ async function rpc<Out = JsonSerializable>({
   return response as Out;
 }
 
-export type SessionHandshakeResponse = {
+export type SessionHandshakeResponse<Info> = {
   // File path unique for this session, used to both read and write.
   session: FileSystemReadWritePath;
+  info: Info;
 };
 
-class RpcSession {
-  #session: Promise<Outcome<FileSystemReadWritePath>> | undefined;
+function fromJson<T>(json: T): LLMContent[] {
+  return [{ parts: [{ json: json as JsonSerializable }] }];
+}
 
-  constructor(public readonly path: FileSystemReadWritePath) {}
+class RpcSession<Args extends JsonSerializable, Info extends JsonSerializable> {
+  #session: Promise<Outcome<SessionHandshakeResponse<Info>>> | undefined;
 
-  async session(): Promise<Outcome<FileSystemReadWritePath>> {
+  constructor(
+    public readonly path: FileSystemReadWritePath,
+    public readonly args: Args
+  ) {}
+
+  async session(): Promise<Outcome<SessionHandshakeResponse<Info>>> {
     if (!this.#session) {
-      this.#session = this.#openSession();
+      this.#session = this.#openSession(this.args);
     }
     return this.#session;
   }
 
-  async #openSession(): Promise<Outcome<FileSystemReadWritePath>> {
+  async info(): Promise<Outcome<Info>> {
+    const session = await this.session();
+    if (!ok(session)) return session;
+    return session.info;
+  }
+
+  async #openSession(
+    args: Args
+  ): Promise<Outcome<SessionHandshakeResponse<Info>>> {
     const { path } = this;
-    const readingHandshake = await read({ path });
-    if (!ok(readingHandshake)) return readingHandshake;
-    const handshake = json<SessionHandshakeResponse>(readingHandshake.data);
+    const writingInit = await write({ path, data: fromJson<Args>(args) });
+    if (!ok(writingInit)) return writingInit;
+    const readingInit = await read({ path });
+    if (!ok(readingInit)) return readingInit;
+    const handshake = json<SessionHandshakeResponse<Info>>(readingInit.data);
     if (!handshake) {
       return err(`Unable to establish RPC handshake at "${path}"`);
     }
     if (!handshake.session || typeof handshake.session !== "string") {
       return err(`Invalid RPC handshake response at "${path}"`);
     }
-    return handshake.session;
+    return handshake;
   }
 
   async call<In extends JsonSerializable, Out extends JsonSerializable>(
@@ -95,12 +113,12 @@ class RpcSession {
     const llmContentData: LLMContent[] = [{ parts: [{ json: data }] }];
 
     const writingRequest = await write({
-      path: session,
+      path: session.session,
       data: llmContentData,
     });
     if (!ok(writingRequest)) return writingRequest;
 
-    const readingResponse = await read({ path: session });
+    const readingResponse = await read({ path: session.session });
     if (!ok(readingResponse)) return readingResponse;
 
     const response = json<Out>(readingResponse.data);
@@ -119,6 +137,6 @@ class RpcSession {
     const session = await this.session();
     if (!ok(session)) return session;
 
-    return write({ path: session, delete: true });
+    return write({ path: session.session, delete: true });
   }
 }

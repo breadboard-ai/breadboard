@@ -16,52 +16,58 @@ import {
 import { err, fromJson, ok, toJson } from "@breadboard-ai/utils";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { CallToolRequest } from "@modelcontextprotocol/sdk/types.js";
+import {
+  CallToolRequest,
+  Implementation,
+} from "@modelcontextprotocol/sdk/types.js";
 
 export { McpFileSystemBackend, parsePath };
 
-const COMMON_PREFIX: FileSystemPath = `/mnt/mcp`;
-const HADNSHAKE_TYPE = "call";
-const RESPONSE_TYPE = "res";
-const REQUEST_TYPE = "req";
-const MCP_CLIENT_VERSION = "0.0.1";
+const COMMON_PREFIX: FileSystemPath = `/mnt/mcp/session`;
 const SUPPORTED_METHODS = ["info", "listTools", "callTool"] as const;
 
 export type HandshakeResponse = {
-  response: FileSystemPath;
-  request: FileSystemReadWritePath;
+  session: FileSystemReadWritePath;
+  info: Implementation | undefined;
 };
 
 type McpMethod = (typeof SUPPORTED_METHODS)[number];
 
-type PathInfo = {
-  type: string;
-  name: string;
-};
+type PathInfo =
+  | {
+      type: "handshake";
+    }
+  | {
+      type: "session";
+      id: string;
+      method: McpMethod;
+    };
 
-type CallInfo = {
+type SessionInfo = {
   id: string;
-  name: McpMethod;
-  response?: Promise<Outcome<LLMContent[]>>;
+  client: Client | null;
+  response: Promise<Outcome<LLMContent[]>> | null;
 };
 
-type RequestWrite = {
+type InitializeSessionWrite = {
   /**
    * URL of the MCP server to connect to
    */
   url: string;
   /**
-   * Name of the MCP Client
+   * MCP Client Information
    */
-  clientName?: string;
+  info: Implementation;
 };
+
+type CallToolRequestWrite = CallToolRequest["params"];
 
 /**
  * Provides the ability to use MCP via the FileSystem.
  * The expected path is /mnt/mcp
  */
 class McpFileSystemBackend implements PersistentBackend {
-  #calls: Map<string, CallInfo> = new Map();
+  #sessions: Map<string, SessionInfo> = new Map();
 
   async query(
     _graphUrl: string,
@@ -77,39 +83,113 @@ class McpFileSystemBackend implements PersistentBackend {
     const parsingPath = parsePath(path);
     if (!ok(parsingPath)) return parsingPath;
 
-    const { type, name } = parsingPath;
-
-    // There can be two kinds of reads:
-    // - handshake read, which will always be of the form
-    //   `/mnt/mcp/call/<method name>`
+    // There can be one kind of reads:
     // - response read, which will always be of the form
-    //   `/mnt/mcp/res/<handshake id>`
-    if (type === HADNSHAKE_TYPE) {
-      const id = crypto.randomUUID();
-
-      if (!SUPPORTED_METHODS.includes(name as McpMethod)) {
-        return err(`MCP Backend: Unsupported MCP method "${name}"`);
-      }
-
-      this.#calls.set(id, { id, name: name as McpMethod });
-      return fromJson<HandshakeResponse>({
-        response: `${COMMON_PREFIX}/res/${id}` as FileSystemPath,
-        request: `${COMMON_PREFIX}/req/${id}` as FileSystemReadWritePath,
-      });
-    } else if (type === RESPONSE_TYPE) {
-      const info = this.#calls.get(name);
-      if (!info) {
-        return err(`MCP Backend: unknown response id in path "${path}"`);
-      }
-      if (!info.response) {
-        return err(
-          `MCP Backend: invalid call sequence for path "${path}. Please write request first`
-        );
-      }
-      this.#calls.delete(name);
-      return info.response;
+    //   `/mnt/mcp/session/<session id>`
+    if (parsingPath.type !== "session") {
+      return err(`MCP Backend: Uknown type in path "${path}`);
     }
-    return err(`MCP Backend: Uknown type in path "${path}`);
+    const info = this.#sessions.get(parsingPath.id);
+    if (!info) {
+      return err(`MCP Backend: unknown session id in path "${path}"`);
+    }
+    if (!info.response) {
+      return err(
+        `MCP Backend: invalid call sequence for path "${path}". Please write request first`
+      );
+    }
+    const response = info.response;
+    info.response = null;
+    return response;
+  }
+
+  async #initializeSession(data: LLMContent[]): Promise<FileSystemWriteResult> {
+    const initialization = toJson<InitializeSessionWrite>(data);
+    if (!initialization) {
+      return err(`MCP Backend: invalid session initialization payload`);
+    }
+
+    try {
+      const client = new Client(initialization.info);
+      const transport = new StreamableHTTPClientTransport(
+        new URL(initialization.url)
+      );
+
+      // TODO: Implement error handling and retry.
+      await client.connect(transport);
+      const id = crypto.randomUUID();
+      const response = Promise.resolve(
+        fromJson<HandshakeResponse>({
+          session: `${COMMON_PREFIX}/${id}` as FileSystemReadWritePath,
+          info: client.getServerVersion(),
+        })
+      );
+      this.#sessions.set(id, { id, response, client });
+    } catch (e) {
+      return err((e as Error).message);
+    }
+  }
+
+  async #closeSession(id: string): Promise<FileSystemWriteResult> {
+    const session = this.#sessions.get(id);
+    if (!session) {
+      return err(`MCP Backend: unknown session id "${id}"`);
+    }
+    if (!session.client) {
+      return err(
+        `MCP Backend: unable to close session "${id}", because client doesn't exist.`
+      );
+    }
+    try {
+      await session.client.close();
+      this.#sessions.delete(id);
+    } catch (e) {
+      return err((e as Error).message);
+    }
+  }
+
+  async #invokeMethod(
+    id: string,
+    method: McpMethod,
+    data: LLMContent[]
+  ): Promise<FileSystemWriteResult> {
+    const session = this.#sessions.get(id);
+    if (!session) {
+      return err(`MCP Backend: unknown session id "${id}"`);
+    }
+    if (!session.client) {
+      return err(
+        `MCP Backend: unable to invoke method "${method}", because session "${id}" hasn't been initialized yet.`
+      );
+    }
+    if (session.response) {
+      return err(
+        `MCP Backend: invalid call sequence for session "${id}". Read the response first.`
+      );
+    }
+    switch (method) {
+      case "callTool": {
+        const params = toJson<CallToolRequestWrite>(data);
+        if (!params) {
+          return err(`MCP Backend: Missing parameters for "callTool" method`);
+        }
+        session.response = session.client
+          .callTool(params)
+          .then((result) => fromJson(result.content))
+          .catch((e) => err((e as Error).message));
+        break;
+      }
+      case "listTools": {
+        session.response = session.client
+          .listTools()
+          .then((result) => fromJson(result.tools))
+          .catch((e) => err((e as Error).message));
+        break;
+      }
+      default: {
+        return err(`MCP Backend: unkonwn method "${method}"`);
+      }
+    }
   }
 
   async write(
@@ -120,58 +200,22 @@ class McpFileSystemBackend implements PersistentBackend {
     const parsingPath = parsePath(path);
     if (!ok(parsingPath)) return parsingPath;
 
-    const { type, name } = parsingPath;
-    // There can be only one kind of write:
-    // - request write, which will always be of the form
-    //  `/mnt/mcp/req/<handshake id>
-    if (type !== REQUEST_TYPE) {
-      return err(`MCP Backend does not support writing to path "${path}"`);
-    }
-    const info = this.#calls.get(name);
-    if (!info) {
-      return err(`MCP Backend: unknown request id in path "${path}"`);
-    }
-    const { clientName, url, ...params } = toJson(data) as RequestWrite;
-    if (!url) {
-      return err(`MCP Backend: missing server URL`);
-    }
-    try {
-      const client = new Client({
-        name: clientName || "Breadboard MCP Client",
-        version: MCP_CLIENT_VERSION,
-      });
-      const transport = new StreamableHTTPClientTransport(new URL(url));
-
-      await client.connect(transport);
-
-      switch (info.name) {
-        case "listTools": {
-          info.response = client
-            .listTools()
-            .then((result) => fromJson(result.tools))
-            .catch((e) => err((e as Error).message));
-          break;
-        }
-        case "callTool": {
-          if (!params) {
-            return err(`MCP Backend: Missing "${info.name}" params`);
-          }
-          info.response = client
-            .callTool(params as CallToolRequest["params"])
-            .then((result) => fromJson(result.content))
-            .catch((e) => err((e as Error).message));
-          break;
-        }
-        case "info": {
-          info.response = Promise.resolve(fromJson(client.getServerVersion()));
-          break;
-        }
-        default: {
-          return err(`MCP Backend: Unsupported MCP mehod "${info.name}`);
-        }
+    // There can be two types of write:
+    // - session initialization write of the form
+    //   `/mnt/mcp/session`
+    // - session write, which will always be of the form
+    //  `/mnt/mcp/session/<session id>
+    const { type } = parsingPath;
+    switch (type) {
+      case "handshake": {
+        return this.#initializeSession(data);
       }
-    } catch (e) {
-      return err(`MCP Backend: ${(e as Error).message}`);
+      case "session": {
+        return this.#invokeMethod(parsingPath.id, parsingPath.method, data);
+      }
+      default: {
+        return err(`MCP Backend does not support writing to path "${path}"`);
+      }
     }
   }
 
@@ -185,10 +229,18 @@ class McpFileSystemBackend implements PersistentBackend {
 
   async delete(
     _graphUrl: string,
-    _path: FileSystemPath,
+    path: FileSystemPath,
     _all: boolean
   ): Promise<FileSystemWriteResult> {
-    return err(`MCP Backend does not support "delete" method`);
+    const parsingPath = parsePath(path);
+    if (!ok(parsingPath)) return parsingPath;
+
+    if (parsingPath.type !== "session") {
+      return err(
+        `MCP Backend: invalid session close requeset at path "${path}"`
+      );
+    }
+    return this.#closeSession(parsingPath.id);
   }
 
   async copy(
@@ -213,15 +265,16 @@ function parsePath(path: FileSystemPath): Outcome<PathInfo> {
     return err(`MCP Backend does not support path "${path}`);
   }
 
-  const [, , , type, name, ...rest] = path.split("/");
+  const [, , , , id, methodString, ...rest] = path.split("/");
   if (rest.length > 0) {
     return err(`MCP Backend: too many segments in path "${path}"`);
   }
-  if (!type) {
-    return err(`MCP Backend: can't determine type from path "${path}"`);
+  if (!id) {
+    return { type: "handshake" };
   }
-  if (!name) {
-    return err(`MCP Backend: can't determine method name from path "${path}"`);
+  const method = methodString as McpMethod;
+  if (!SUPPORTED_METHODS.includes(method)) {
+    return err(`MCP Backend: invalid method "${method}" in path "${path}"`);
   }
-  return { type, name };
+  return { type: "session", id, method };
 }

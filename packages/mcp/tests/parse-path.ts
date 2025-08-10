@@ -9,9 +9,17 @@ import test, { describe } from "node:test";
 import { parsePath } from "../src/mcp-fs-backend.js";
 
 describe("parsePath", () => {
-  test("good path", () => {
-    const parsing = parsePath("/mnt/mcp/type/name");
-    deepStrictEqual(parsing, { type: "type", name: "name" });
+  test("handshake path", () => {
+    const parsing = parsePath("/mnt/mcp/session");
+    deepStrictEqual(parsing, { type: "handshake" });
+  });
+  test("session path", () => {
+    const parsing = parsePath("/mnt/mcp/session/foo/callTool");
+    deepStrictEqual(parsing, {
+      type: "session",
+      id: "foo",
+      method: "callTool",
+    });
   });
   test("invalid path", () => {
     {
@@ -27,7 +35,11 @@ describe("parsePath", () => {
       ok("$error" in parsing);
     }
     {
-      const parsing = parsePath("/mnt/mcp/type/name/too/much");
+      const parsing = parsePath("/mnt/mcp/session/id/callTool/much");
+      ok("$error" in parsing);
+    }
+    {
+      const parsing = parsePath("/mnt/mcp/session/foo/bar");
       ok("$error" in parsing);
     }
   });
