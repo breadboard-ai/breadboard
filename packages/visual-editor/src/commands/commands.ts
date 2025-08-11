@@ -465,6 +465,7 @@ const PasteCommand: KeyboardCommand = {
     tab,
     selectionState,
     pointerLocation,
+    graphStore,
   }: KeyboardCommandDeps): Promise<void> {
     if (tab?.readOnly) {
       return;
@@ -477,12 +478,14 @@ const PasteCommand: KeyboardCommand = {
 
     let boardContents: GraphDescriptor | undefined;
     let boardUrl: string | undefined;
+    let plainText: string | undefined;
     if ("graphUrl" in result) {
       boardUrl = result.graphUrl;
     } else if ("graphDescriptor" in result) {
       boardContents = result.graphDescriptor;
+    } else if ("text" in result) {
+      plainText = result.text;
     }
-    // .. and more
 
     // Option 1. User pastes a board when there is no tab - create a new tab
     if (tab) {
@@ -534,8 +537,46 @@ const PasteCommand: KeyboardCommand = {
           graph,
           pointerLocation
         );
+      } else if (plainText) {
+        // Here we go looking for the Generate so that we can add it to the
+        // graph with the pasted text.
+        // TODO: Find a better way to locate Generate and populate it.
+        const maybeGenerate = graphStore
+          .graphs()
+          .find((graph) => graph.title === "Generate");
+        if (!maybeGenerate || !maybeGenerate.url) {
+          return;
+        }
+
+        spec = runtime.util.generateAddEditSpecFromDescriptor(
+          {
+            edges: [],
+            nodes: [
+              {
+                type: maybeGenerate.url,
+                id: globalThis.crypto.randomUUID(),
+                metadata: {
+                  title: "Pasted content",
+                },
+                configuration: {
+                  config$prompt: {
+                    role: "user",
+                    parts: [
+                      {
+                        text: plainText,
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+          },
+          graph,
+          pointerLocation,
+          [""]
+        );
       } else {
-        throw new Error("Unable to paste; neither URL nor GraphDescriptor");
+        return;
       }
 
       await editor.edit(spec, runtime.util.createEditChangeId());
