@@ -2040,7 +2040,7 @@ export class Main extends SignalWatcher(LitElement) {
         this.#embedHandler?.sendToEmbedder({
           type: "back_clicked",
         });
-        this.#runtime.router.go(null, this.#uiState.mode);
+        this.#runtime.router.go({ page: "home", mode: this.#uiState.mode });
       }}
       @bbsharerequested=${() => {
         if (!this.#canvasControllerRef.value) {
