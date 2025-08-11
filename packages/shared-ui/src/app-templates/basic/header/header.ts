@@ -228,7 +228,9 @@ export class Header extends LitElement {
 
         <ul slot="bottom">
           <li>
-            <a href="/policy" class="w-400 round md-title-medium"
+            <a
+              href="https://policies.google.com/"
+              class="w-400 round md-title-medium"
               ><span class="g-icon filled round w-500">shield_person</span
               >Privacy & Terms<span
                 class="g-icon filled round w-500 open-in-new"

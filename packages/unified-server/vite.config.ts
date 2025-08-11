@@ -32,10 +32,6 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
     landing: "./landing/index.html",
   };
 
-  if (define.ENABLE_POLICY) {
-    entry["policy"] = "./policy/index.html";
-  }
-
   return {
     esbuild: {
       tsconfigRaw,
@@ -60,10 +56,6 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
         threshold: 1024,
         deleteOriginalAssets: false,
       }),
-      policyContent(
-        "/policy/",
-        define.POLICY_HTML ? JSON.parse(define.POLICY_HTML) : undefined
-      ),
     ],
     server: {
       watch: {
