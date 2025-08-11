@@ -58,6 +58,7 @@ export interface Tab {
   subGraphId: string | null;
   moduleId: ModuleIdentifier | null;
   version: number;
+  lastLoadedVersion: number;
   readOnly: boolean;
   type: TabType;
   /**

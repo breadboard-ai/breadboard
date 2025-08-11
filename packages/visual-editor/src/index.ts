@@ -728,6 +728,20 @@ export class Main extends SignalWatcher(LitElement) {
     );
 
     this.#runtime.board.addEventListener(
+      Runtime.Events.RuntimeNewerSharedVersionEvent.eventName,
+      () => {
+        this.snackbar(
+          Strings.from("STATUS_NEWER_VERSION"),
+          BreadboardUI.Types.SnackType.INFORMATION,
+          [],
+          true,
+          globalThis.crypto.randomUUID(),
+          true
+        );
+      }
+    );
+
+    this.#runtime.board.addEventListener(
       Runtime.Events.RuntimeTabChangeEvent.eventName,
       async (evt: Runtime.Events.RuntimeTabChangeEvent) => {
         this.#tab = this.#runtime.board.currentTab;

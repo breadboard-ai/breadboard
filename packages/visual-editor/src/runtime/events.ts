@@ -165,6 +165,14 @@ export class RuntimeBoardServerChangeEvent extends Event {
   }
 }
 
+export class RuntimeNewerSharedVersionEvent extends Event {
+  static eventName = "runtimenewersharedversion" as const;
+
+  constructor() {
+    super(RuntimeNewerSharedVersionEvent.eventName, { ...eventInit });
+  }
+}
+
 export class RuntimeTabChangeEvent extends Event {
   static eventName = "runtimetabchange" as const;
 

@@ -359,6 +359,7 @@ export interface BoardServer
     TypedEventTargetType<BoardServerEventMap> {
   user: User;
   getAccess(url: URL, user: User): Promise<Permission>;
+  getLatestSharedVersion?(url: URL): number;
 }
 
 export interface EntityMetadata {
@@ -369,6 +370,7 @@ export interface EntityMetadata {
   icon?: string;
   thumbnail?: string;
   tags?: GraphTag[];
+  latestSharedVersion?: string;
 }
 
 export interface Entity {
