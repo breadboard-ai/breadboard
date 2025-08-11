@@ -22,6 +22,7 @@ describe("create/readProperties", () => {
       description: "test desc",
       tags: `["a","b"]`,
       thumbnailUrl: "abc",
+      latestSharedVersion: "1",
     };
 
     file = {
@@ -42,6 +43,7 @@ describe("create/readProperties", () => {
       thumbnailUrl: "abc",
       title: "test title",
       tags: ["a", "b"],
+      latestSharedVersion: "1",
     });
     const savedProps = createProperties(props);
     deepEqual(savedProps, properties);
@@ -55,6 +57,7 @@ describe("create/readProperties", () => {
       thumbnailUrl: "abc",
       title: "overridden",
       tags: ["a", "b"],
+      latestSharedVersion: "1",
     });
     const savedProps = createProperties(props);
     deepEqual(savedProps, { ...properties, title: "overridden" });
@@ -69,6 +72,7 @@ describe("create/readProperties", () => {
       description: "from props",
       tags: [],
       thumbnailUrl: undefined,
+      latestSharedVersion: undefined,
     });
     const savedProps = createProperties(props);
     deepEqual(savedProps, {
@@ -76,6 +80,7 @@ describe("create/readProperties", () => {
       description: "from props",
       tags: "[]",
       thumbnailUrl: undefined,
+      latestSharedVersion: undefined,
     });
   });
 
@@ -88,6 +93,7 @@ describe("create/readProperties", () => {
       description: "",
       tags: [],
       thumbnailUrl: undefined,
+      latestSharedVersion: undefined,
     });
   });
 });

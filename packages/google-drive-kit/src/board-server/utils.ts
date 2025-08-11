@@ -139,6 +139,9 @@ export function readProperties(
     tags: file.properties?.tags || file.appProperties?.tags,
     thumbnailUrl:
       file.properties?.thumbnailUrl || file.appProperties?.thumbnailUrl,
+    latestSharedVersion:
+      file.properties?.latestSharedVersion ||
+      file.appProperties?.latestSharedVersion,
   };
 
   let tags: Array<GraphTag> = [];
@@ -155,6 +158,7 @@ export function readProperties(
     description: storedProperties.description ?? "",
     tags,
     thumbnailUrl: storedProperties.thumbnailUrl,
+    latestSharedVersion: storedProperties.latestSharedVersion,
   };
 }
 
@@ -164,6 +168,7 @@ export type AppProperties = {
   description: string;
   tags: GraphTag[];
   thumbnailUrl?: string;
+  latestSharedVersion?: string;
 };
 
 export type GoogleDriveAsset = {
@@ -298,5 +303,6 @@ export function driveFileToGraphInfo(
     tags: properties.tags,
     thumbnail: properties.thumbnailUrl,
     description: properties.description,
+    latestSharedVersion: properties.latestSharedVersion,
   };
 }

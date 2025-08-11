@@ -37,6 +37,7 @@ import {
   RuntimeSnackbarEvent,
   RuntimeUnsnackbarEvent,
   RuntimeShareMissingEvent,
+  RuntimeNewerSharedVersionEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
@@ -66,6 +67,15 @@ const documentStyles = getComputedStyle(document.documentElement);
 type ValidColorStrings = `#${string}` | `--${string}`;
 
 const USER_REGEX = /\/@[^/]+\//;
+
+const SHARED_VERSION_HISTORY_KEY = "shared-version-history";
+const SHARED_VERSION_HISTORY_VERSION = 1;
+interface SharedVersionHistoryDBSchema extends idb.DBSchema {
+  versions: {
+    key: string;
+    value: number;
+  };
+}
 
 const LOCAL_EDIT_HISTORY_KEY = "revision-history";
 const LOCAL_EDIT_HISTORY_VERSION = 1;
@@ -437,6 +447,7 @@ export class Board extends EventTarget {
       boardServer: null,
       moduleId,
       version: 1,
+      lastLoadedVersion: 1,
       type: TabType.DESCRIPTOR,
       readOnly,
     });
@@ -486,6 +497,7 @@ export class Board extends EventTarget {
       boardServer: null,
       moduleId,
       version: 1,
+      lastLoadedVersion: 1,
       type: TabType.DESCRIPTOR,
       readOnly: false,
     });
@@ -781,6 +793,22 @@ export class Board extends EventTarget {
 
       const id = globalThis.crypto.randomUUID();
       const graphIsMine = this.isMine(graph.url);
+      const shouldCheckVersion = !graphIsMine;
+
+      let version = -1;
+      let lastLoadedVersion = -1;
+
+      if (
+        shouldCheckVersion &&
+        graph.url &&
+        boardServer &&
+        boardServer.getLatestSharedVersion
+      ) {
+        lastLoadedVersion = await this.#loadSharedVersionHistory(graph.url);
+        version = boardServer.getLatestSharedVersion(new URL(graph.url));
+        await this.#saveSharedVersionHistory(graph.url, version);
+      }
+
       this.#tabs.set(id, {
         id,
         boardServerKits: kits,
@@ -792,7 +820,8 @@ export class Board extends EventTarget {
         moduleId,
         boardServer,
         type: TabType.URL,
-        version: 1,
+        version,
+        lastLoadedVersion,
         readOnly: !graphIsMine,
         creator: creator ?? undefined,
         history: await this.#loadLocalHistory(url),
@@ -815,6 +844,13 @@ export class Board extends EventTarget {
       }
 
       await this.#trackRecentBoard(graph.url);
+      const isNewerVersionOfSharedGraph =
+        !graphIsMine && lastLoadedVersion !== -1 && lastLoadedVersion < version;
+
+      if (isNewerVersionOfSharedGraph) {
+        this.dispatchEvent(new RuntimeNewerSharedVersionEvent());
+      }
+
       this.dispatchEvent(new RuntimeTabChangeEvent());
     } catch (err) {
       console.warn(err);
@@ -1394,6 +1430,34 @@ export class Board extends EventTarget {
         upgrade(db) {
           if (!db.objectStoreNames.contains("revisions")) {
             db.createObjectStore("revisions");
+          }
+        },
+      }
+    );
+  }
+
+  async #loadSharedVersionHistory(url: string): Promise<number> {
+    const db = await this.#openSharedVersionDB();
+    const version = (await db.get("versions", url)) ?? -1;
+    db.close();
+
+    return version;
+  }
+
+  async #saveSharedVersionHistory(url: string, version: number): Promise<void> {
+    const db = await this.#openSharedVersionDB();
+    await db.put("versions", version, url);
+    db.close();
+  }
+
+  async #openSharedVersionDB() {
+    return await idb.openDB<SharedVersionHistoryDBSchema>(
+      SHARED_VERSION_HISTORY_KEY,
+      SHARED_VERSION_HISTORY_VERSION,
+      {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains("versions")) {
+            db.createObjectStore("versions");
           }
         },
       }
