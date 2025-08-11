@@ -4,93 +4,37 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EditHistoryCreator } from "@google-labs/breadboard";
-import { RuntimeURLChangeEvent } from "./events";
-import { TabId, VisualEditorMode } from "./types";
+import {
+  makeUrl,
+  type MakeUrlInit,
+  parseUrl,
+} from "@breadboard-ai/shared-ui/utils/urls.js";
+import { type EditHistoryCreator } from "@google-labs/breadboard";
+import { RuntimeURLChangeEvent } from "./events.js";
+import { type TabId } from "./types.js";
 
 export class Router extends EventTarget {
   constructor() {
     super();
-
-    let replaceParams = false;
-    const urlWithParams = new URL(window.location.href);
-    for (const [param, value] of urlWithParams.searchParams) {
-      if (param === "tab0") {
-        urlWithParams.searchParams.set("flow", value);
-        urlWithParams.searchParams.delete("tab0");
-        replaceParams = true;
-        continue;
-      }
-
-      if (param.startsWith("tab")) {
-        urlWithParams.searchParams.delete(param);
-        replaceParams = true;
-      }
-
-      if (param === "redirect-from-landing") {
-        urlWithParams.searchParams.delete(param);
-        replaceParams = true;
-      }
+    const parsed = parseUrl(window.location.href);
+    if ("redirectFromLanding" in parsed) {
+      parsed.redirectFromLanding = false;
     }
-
-    if (!urlWithParams.searchParams.has("mode")) {
-      // Default mode is canvas.
-      urlWithParams.searchParams.set("mode", "canvas");
-      replaceParams = true;
+    const canonicalized = makeUrl(parsed);
+    if (window.location.href !== canonicalized) {
+      window.history.replaceState(null, "", canonicalized);
     }
-
-    if (replaceParams) {
-      const url = decodeURIComponent(urlWithParams.href);
-      window.history.replaceState(null, "", url);
-    }
-
     window.addEventListener("popstate", () => {
       this.#emit();
     });
   }
 
-  go(
-    url: string | null,
-    mode: VisualEditorMode,
-    id?: TabId,
-    creator?: EditHistoryCreator,
-    shared?: boolean
-  ) {
-    // Any invalid or null URLs should redirect to the origin.
-    if (!url || !URL.canParse(url)) {
-      url = window.location.origin;
+  go(init: MakeUrlInit, tabId?: TabId, creator?: EditHistoryCreator) {
+    const url = makeUrl(init);
+    if (url !== window.location.href) {
+      window.history.pushState(null, "", url);
+      this.#emit(tabId, creator);
     }
-
-    // If the URL passed doesn't match the Visual Editor origin we assume that
-    // it is a thing to be loaded so we stack it on as a URL parameter.
-    let urlWithMode = new URL(url);
-    if (urlWithMode.origin !== window.location.origin) {
-      const newURL = new URL(window.location.origin);
-      newURL.searchParams.set("flow", url);
-      if (shared) {
-        newURL.searchParams.set("shared", "true");
-      }
-      url = newURL.href;
-      urlWithMode = new URL(url);
-    }
-
-    // If, however, the constructed URL & mode match the current then we can
-    // assume a noop here and early exit.
-    if (
-      url === window.location.href &&
-      urlWithMode.searchParams.get("mode") === mode
-    ) {
-      return;
-    }
-
-    // Next ensure that the provided mode is represented in the URL.
-    urlWithMode.searchParams.set("mode", mode);
-    url = urlWithMode.href;
-
-    // And finally ensure that the URL doesn't contain escaped characters.
-    url = decodeURIComponent(url);
-    window.history.pushState(null, "", url);
-    this.#emit(id, creator);
   }
 
   init() {
@@ -111,23 +55,14 @@ export class Router extends EventTarget {
   }
 
   #emit(id?: TabId, creator?: EditHistoryCreator) {
-    let mode: VisualEditorMode = "canvas";
-    const urlWithParams = new URL(window.location.href);
-    const urlMode = urlWithParams.searchParams.get("mode");
-    if (urlMode && (urlMode === "app" || urlMode === "canvas")) {
-      mode = urlMode;
-    }
+    const currentUrl = new URL(window.location.href);
+    const currentParsed = parseUrl(currentUrl);
+    const mode = currentParsed.page === "graph" ? currentParsed.mode : "canvas";
     const resultsFileId =
-      urlWithParams.searchParams.get("results") ?? undefined;
+      currentParsed.page === "graph" ? currentParsed.results : undefined;
 
     this.dispatchEvent(
-      new RuntimeURLChangeEvent(
-        new URL(window.location.href),
-        mode,
-        id,
-        creator,
-        resultsFileId
-      )
+      new RuntimeURLChangeEvent(currentUrl, mode, id, creator, resultsFileId)
     );
   }
 }
