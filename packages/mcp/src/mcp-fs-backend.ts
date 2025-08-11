@@ -24,11 +24,10 @@ import {
 export { McpFileSystemBackend, parsePath };
 
 const COMMON_PREFIX: FileSystemPath = `/mnt/mcp/session`;
-const SUPPORTED_METHODS = ["info", "listTools", "callTool"] as const;
+const SUPPORTED_METHODS = ["connect", "listTools", "callTool"] as const;
 
 export type HandshakeResponse = {
   session: FileSystemReadWritePath;
-  info: Implementation | undefined;
 };
 
 type McpMethod = (typeof SUPPORTED_METHODS)[number];
@@ -84,27 +83,45 @@ class McpFileSystemBackend implements PersistentBackend {
     const parsingPath = parsePath(path);
     if (!ok(parsingPath)) return parsingPath;
 
-    // There can be one kind of reads:
+    // There can be two kinds of reads:
+    // - handshake read:
+    //   `/mnt/mcp/session
     // - response read, which will always be of the form
     //   `/mnt/mcp/session/<session id>/<method>`
-    if (parsingPath.type !== "session") {
-      return err(`MCP Backend: Unknown type in path "${path}"`);
+    const { type } = parsingPath;
+    switch (type) {
+      case "handshake": {
+        // Create a blank new session and return it
+        const id = crypto.randomUUID();
+        this.#sessions.set(id, { id, response: null, client: null });
+        return fromJson<HandshakeResponse>({
+          session: `${COMMON_PREFIX}/${id}` as FileSystemReadWritePath,
+        });
+      }
+      case "session": {
+        const info = this.#sessions.get(parsingPath.id);
+        if (!info) {
+          return err(`MCP Backend: unknown session id in path "${path}"`);
+        }
+        if (!info.response) {
+          return err(
+            `MCP Backend: invalid call sequence for path "${path}". Please write request first`
+          );
+        }
+        const response = info.response;
+        info.response = null;
+        return response;
+      }
+      default: {
+        return err(`MCP Backend: Unknown type in path "${path}"`);
+      }
     }
-    const info = this.#sessions.get(parsingPath.id);
-    if (!info) {
-      return err(`MCP Backend: unknown session id in path "${path}"`);
-    }
-    if (!info.response) {
-      return err(
-        `MCP Backend: invalid call sequence for path "${path}". Please write request first`
-      );
-    }
-    const response = info.response;
-    info.response = null;
-    return response;
   }
 
-  async #initializeSession(data: LLMContent[]): Promise<FileSystemWriteResult> {
+  async #initializeClient(
+    id: string,
+    data: LLMContent[]
+  ): Promise<Outcome<Client>> {
     const initialization = toJson<InitializeSessionWrite>(data);
     if (!initialization) {
       return err(`MCP Backend: invalid session initialization payload`);
@@ -118,14 +135,7 @@ class McpFileSystemBackend implements PersistentBackend {
 
       // TODO: Implement error handling and retry.
       await client.connect(transport);
-      const id = crypto.randomUUID();
-      const response = Promise.resolve(
-        fromJson<HandshakeResponse>({
-          session: `${COMMON_PREFIX}/${id}` as FileSystemReadWritePath,
-          info: client.getServerVersion(),
-        })
-      );
-      this.#sessions.set(id, { id, response, client });
+      return client;
     } catch (e) {
       return err((e as Error).message);
     }
@@ -158,7 +168,7 @@ class McpFileSystemBackend implements PersistentBackend {
     if (!session) {
       return err(`MCP Backend: unknown session id "${id}"`);
     }
-    if (!session.client) {
+    if (!session.client && method !== "connect") {
       return err(
         `MCP Backend: unable to invoke method "${method}", because session "${id}" hasn't been initialized yet.`
       );
@@ -169,20 +179,31 @@ class McpFileSystemBackend implements PersistentBackend {
       );
     }
     switch (method) {
+      case "connect": {
+        const client = await this.#initializeClient(id, data);
+        if (!ok(client)) return client;
+
+        const response = Promise.resolve(
+          fromJson<Implementation | undefined>(client.getServerVersion())
+        );
+        this.#sessions.set(id, { id, response, client });
+
+        break;
+      }
       case "callTool": {
         const params = toJson<CallToolRequestWrite>(data);
         if (!params) {
           return err(`MCP Backend: Missing parameters for "callTool" method`);
         }
-        session.response = session.client
-          .callTool(params)
+        session.response = session
+          .client!.callTool(params)
           .then((result) => fromJson(result.content))
           .catch((e) => err((e as Error).message));
         break;
       }
       case "listTools": {
-        session.response = session.client
-          .listTools()
+        session.response = session
+          .client!.listTools()
           .then((result) => fromJson(result.tools))
           .catch((e) => err((e as Error).message));
         break;
@@ -201,16 +222,11 @@ class McpFileSystemBackend implements PersistentBackend {
     const parsingPath = parsePath(path);
     if (!ok(parsingPath)) return parsingPath;
 
-    // There can be two types of write:
-    // - session initialization write of the form
-    //   `/mnt/mcp/session`
+    // There can be one type of write:
     // - session write, which will always be of the form
     //  `/mnt/mcp/session/<session id>/<method>
     const { type } = parsingPath;
     switch (type) {
-      case "handshake": {
-        return this.#initializeSession(data);
-      }
       case "session": {
         return this.#invokeMethod(parsingPath.id, parsingPath.method, data);
       }

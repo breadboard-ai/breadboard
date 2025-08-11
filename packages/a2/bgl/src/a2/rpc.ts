@@ -8,7 +8,7 @@ import read from "@read";
 import { err, toJson, fromJson, ok } from "./utils";
 import write from "@write";
 
-export { rpc, RpcSession };
+export { RpcSession };
 
 export type RpcArgs = {
   /**
@@ -19,41 +19,8 @@ export type RpcArgs = {
 };
 
 export type HandshakeResponse = {
-  response: FileSystemPath;
-  request: FileSystemReadWritePath;
+  session: FileSystemReadWritePath;
 };
-
-async function rpc<Out = JsonSerializable>({
-  path,
-  data,
-}: RpcArgs): Promise<Outcome<Out>> {
-  const readingHandshake = await read({ path });
-  if (!ok(readingHandshake)) return readingHandshake;
-  const handshake = toJson<HandshakeResponse>(readingHandshake.data);
-  if (!handshake) {
-    return err(`Unable to establish handshake at "${path}"`);
-  }
-  if (!handshake.request || !handshake.response) {
-    return err(`Invalid handshake response at "${path}"`);
-  }
-
-  const llmContentData: LLMContent[] = [{ parts: [{ json: data }] }];
-
-  const writingRequest = await write({
-    path: handshake.request,
-    data: llmContentData,
-  });
-  if (!ok(writingRequest)) return writingRequest;
-
-  const readingResponse = await read({ path: handshake.response });
-  if (!ok(readingResponse)) return readingResponse;
-
-  const response = toJson<Out>(readingResponse.data);
-  if (!response) {
-    return err(`Empty response returned at path "${path}"`);
-  }
-  return response;
-}
 
 export type SessionHandshakeResponse<Info> = {
   // File path unique for this session, used to both read and write.
@@ -121,17 +88,26 @@ abstract class RpcSession<
     args: Args
   ): Promise<Outcome<SessionHandshakeResponse<Info>>> {
     const { path } = this;
-    const handshake = await this.#rpc<Args, SessionHandshakeResponse<Info>>(
-      path,
-      args
-    );
-    if (!ok(handshake)) {
+    const readingHandshake = await read({ path });
+    if (!ok(readingHandshake)) return readingHandshake;
+
+    // Step 1: Handshake. Gives us the unique path for the session.
+    const handshake = toJson<HandshakeResponse>(readingHandshake.data);
+    if (!handshake) {
       return err(`Unable to establish RPC handshake at "${path}"`);
     }
     if (!handshake.session || typeof handshake.session !== "string") {
       return err(`Invalid RPC handshake response at "${path}"`);
     }
-    return handshake;
+
+    // Step 2: Call "connect" method to initialize RPC, passing args
+    const { session } = handshake;
+    const connecting = await this.#rpc(
+      `${session}/connect` as FileSystemReadWritePath,
+      args
+    );
+    if (!ok(connecting)) return connecting;
+    return { session, info: connecting as Info };
   }
 
   async #rpc<In extends JsonSerializable, Out extends JsonSerializable>(
