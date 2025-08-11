@@ -5,9 +5,8 @@
 import type { ListToolResult } from "../a2/connector-manager";
 import { createTools } from "../a2/connector-manager";
 import { StreamableReporter } from "../a2/output";
-import { rpc } from "../a2/rpc";
 import { ok } from "../a2/utils";
-import type { CallToolContent, ListToolsTool } from "./types";
+import { McpClient } from "./mcp-client";
 
 export { invoke as default, describe };
 
@@ -30,13 +29,16 @@ const { invoke, describe } = createTools<Configuration>({
         "upload"
       );
 
-      const listingTools = await rpc<ListToolsTool[]>({
-        path: "/mnt/mcp/call/listTools",
-        data: {
-          url: info.configuration.endpoint,
-          clientName: "Breadboard",
+      const client = new McpClient({
+        url: info.configuration.endpoint,
+        info: {
+          name: "Breadboard",
+          title: "Breadboard",
+          version: "0.0.1",
         },
       });
+
+      const listingTools = await client.listTools();
       if (!ok(listingTools)) {
         return reporter.sendError(listingTools);
       }
@@ -70,14 +72,19 @@ const { invoke, describe } = createTools<Configuration>({
         { callTool: { name, arguments: args } },
         "upload"
       );
-      const callingTool = await rpc<CallToolContent[]>({
-        path: "/mnt/mcp/call/callTool",
-        data: {
-          url: info.configuration.endpoint,
-          clientName: "Breadboard",
-          name,
-          arguments: args,
+
+      const client = new McpClient({
+        url: info.configuration.endpoint,
+        info: {
+          name: "Breadboard",
+          title: "Breadboard",
+          version: "0.0.1",
         },
+      });
+
+      const callingTool = await client.callTool({
+        name,
+        arguments: args,
       });
       if (!ok(callingTool)) {
         return reporter.sendError(callingTool);

@@ -46,6 +46,7 @@ type PathInfo =
 type SessionInfo = {
   id: string;
   client: Client | null;
+  // TODO: Implement support for per-method response.
   response: Promise<Outcome<LLMContent[]>> | null;
 };
 
@@ -85,9 +86,9 @@ class McpFileSystemBackend implements PersistentBackend {
 
     // There can be one kind of reads:
     // - response read, which will always be of the form
-    //   `/mnt/mcp/session/<session id>`
+    //   `/mnt/mcp/session/<session id>/<method>`
     if (parsingPath.type !== "session") {
-      return err(`MCP Backend: Uknown type in path "${path}`);
+      return err(`MCP Backend: Unknown type in path "${path}"`);
     }
     const info = this.#sessions.get(parsingPath.id);
     if (!info) {
@@ -187,7 +188,7 @@ class McpFileSystemBackend implements PersistentBackend {
         break;
       }
       default: {
-        return err(`MCP Backend: unkonwn method "${method}"`);
+        return err(`MCP Backend: unknown method "${method}"`);
       }
     }
   }
@@ -204,7 +205,7 @@ class McpFileSystemBackend implements PersistentBackend {
     // - session initialization write of the form
     //   `/mnt/mcp/session`
     // - session write, which will always be of the form
-    //  `/mnt/mcp/session/<session id>
+    //  `/mnt/mcp/session/<session id>/<method>
     const { type } = parsingPath;
     switch (type) {
       case "handshake": {

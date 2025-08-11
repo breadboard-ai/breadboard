@@ -45,6 +45,11 @@ export type ListToolsResponse = {
   tools: ListToolsTool[];
 };
 
+export type CallToolRequest = {
+  name: string;
+  arguments: JsonSerializable;
+};
+
 export type CallToolContentText = {
   type: "text";
   text: string;
