@@ -1099,6 +1099,7 @@ export class Main extends SignalWatcher(LitElement) {
       originalEvent: evt,
       pointerLocation: this.#lastPointerPosition,
       settings: this.#settings,
+      graphStore: this.#graphStore,
       strings: Strings,
     } as const;
 
@@ -1126,7 +1127,7 @@ export class Main extends SignalWatcher(LitElement) {
         } else {
           notifyUserOnTimeout = setTimeout(
             notifyUser,
-            command.messageTimeout ?? 100
+            command.messageTimeout ?? 500
           );
         }
 
@@ -1158,9 +1159,11 @@ export class Main extends SignalWatcher(LitElement) {
           if (notifyUserOnTimeout) {
             clearTimeout(notifyUserOnTimeout);
           }
+          this.#uiState.blockingAction = false;
         }
 
         this.#handlingShortcut = false;
+        break;
       }
     }
   }

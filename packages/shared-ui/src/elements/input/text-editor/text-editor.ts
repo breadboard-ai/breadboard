@@ -159,11 +159,15 @@ export class TextEditor extends LitElement {
   #startTrackingSelectionsBound = this.#startTrackingSelections.bind(this);
   #stopTrackingSelectionsBound = this.#stopTrackingSelections.bind(this);
   #checkSelectionsBound = this.#checkChicletSelections.bind(this);
+  #onContextMenuBound = this.#onContextMenu.bind(this);
   #shouldCheckSelections = false;
 
   connectedCallback(): void {
     super.connectedCallback();
 
+    window.addEventListener("contextmenu", this.#onContextMenuBound, {
+      capture: true,
+    });
     window.addEventListener("selectionchange", this.#checkSelectionsBound, {
       capture: true,
     });
@@ -186,6 +190,9 @@ export class TextEditor extends LitElement {
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
+    window.removeEventListener("contextmenu", this.#onContextMenuBound, {
+      capture: true,
+    });
     window.removeEventListener("selectionchange", this.#checkSelectionsBound, {
       capture: true,
     });
@@ -201,6 +208,15 @@ export class TextEditor extends LitElement {
     window.removeEventListener("pointerup", this.#stopTrackingSelectionsBound, {
       capture: true,
     });
+  }
+
+  #onContextMenu(evt: Event) {
+    const isOnSelf = evt.composedPath().find((el) => el === this);
+    if (!isOnSelf) {
+      return;
+    }
+
+    evt.stopImmediatePropagation();
   }
 
   #onGlobalPointerDown() {
