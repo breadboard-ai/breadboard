@@ -846,8 +846,8 @@ export class GraphEdge extends Box {
                       gradientUnits="userSpaceOnUse">
                     <stop offset="0%" stop-color="#000000" />
                     <stop offset="100%" stop-color="#00000000" />
-                    <animate attributeName="cx" dur="1.5s" repeatCount="indefinite" values=${animationAlt.steps.x.join(";")} />
-                    <animate attributeName="cy" dur="1.5s" repeatCount="indefinite" values=${animationAlt.steps.y.join(";")} />
+                    <animate attributeName="cx" dur="3s" repeatCount="indefinite" values=${animationAlt.steps.x.join(";")} />
+                    <animate attributeName="cy" dur="3s" repeatCount="indefinite" values=${animationAlt.steps.y.join(";")} />
                   </radialGradient>
 
                   <radialGradient id="c2-gradient" cx=${animationAlt.location.x}
@@ -855,8 +855,8 @@ export class GraphEdge extends Box {
                       gradientUnits="userSpaceOnUse">
                     <stop offset="0%" stop-color="#000000" />
                     <stop offset="100%" stop-color="#00000000" />
-                    <animate attributeName="cx" dur="1.5s" repeatCount="indefinite" values=${animationAlt.steps.x.join(";")} begin="0.75s" />
-                    <animate attributeName="cy" dur="1.5s" repeatCount="indefinite" values=${animationAlt.steps.y.join(";")} begin="0.75s" />
+                    <animate attributeName="cx" dur="3s" repeatCount="indefinite" values=${animationAlt.steps.x.join(";")} begin="1.5s" />
+                    <animate attributeName="cy" dur="3s" repeatCount="indefinite" values=${animationAlt.steps.y.join(";")} begin="1.5s" />
                   </radialGradient>
 
                   <mask id="line-gradient-mask">
