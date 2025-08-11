@@ -61,6 +61,7 @@ import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-
 import { loadImage } from "@breadboard-ai/shared-ui/utils/image";
 import { RecentBoardStore } from "../data/recent-boards";
 import { type RunResults } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
+import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -684,8 +685,8 @@ export class Board extends EventTarget {
 
       if (!graph) {
         // Confirm that the user is using a shared URL.
-        const currentLocationHref = new URL(window.location.href);
-        if (!currentLocationHref.searchParams.has("shared")) {
+        const currentUrlParsed = parseUrl(window.location.href);
+        if (currentUrlParsed.page === "graph" && !currentUrlParsed.shared) {
           this.dispatchEvent(new RuntimeShareMissingEvent());
           return;
         }
