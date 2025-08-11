@@ -49,6 +49,7 @@ import {
   type SigninAdapter,
 } from "../../utils/signin-adapter.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
+import { makeUrl } from "../../utils/urls.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
@@ -922,17 +923,13 @@ export class SharePanel extends LitElement {
         state.status === "readonly") &&
       state.shareableFile
     ) {
-      const url = new URL(window.location.href);
-      url.searchParams.set("flow", `drive:/${state.shareableFile.id}`);
-      if (state.shareableFile.resourceKey) {
-        url.searchParams.set("resourcekey", state.shareableFile.resourceKey);
-      }
-      url.searchParams.set("mode", "app");
-      url.searchParams.set("shared", "true");
-      // Undo some of the automatic URL parameter escaping so that our URLs
-      // aren't quite so ugly since browsers will parse this case OK. But,
-      // really our URL file handles should not have ":" and "/" in them at all.
-      return url.href.replace("flow=drive%3A%2F", "flow=drive:/");
+      return makeUrl({
+        page: "graph",
+        mode: "app",
+        flow: `drive:/${state.shareableFile.id}`,
+        resourceKey: state.shareableFile.resourceKey,
+        shared: true,
+      });
     }
     return undefined;
   }
