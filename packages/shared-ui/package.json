@@ -66,7 +66,8 @@
     "prepack": "npm run build",
     "build": "wireit",
     "build:tsc": "wireit",
-    "update-sideboards": "wireit"
+    "update-sideboards": "wireit",
+    "test": "wireit"
   },
   "wireit": {
     "build": {
@@ -103,6 +104,14 @@
     },
     "update-sideboards": {
       "command": "cp -f src/sideboards/sideboards-bgl/*.bgl.json dist/sideboards/sideboards-bgl"
+    },
+    "test": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/",
+      "files": [],
+      "output": [],
+      "dependencies": [
+        "build:tsc"
+      ]
     }
   },
   "repository": {
