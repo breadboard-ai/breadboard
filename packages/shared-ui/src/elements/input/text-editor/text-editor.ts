@@ -605,6 +605,18 @@ export class TextEditor extends LitElement {
             String.fromCharCode(65279) + nextSibling.textContent;
         }
       }
+
+      // Edge case: here we've discovered <chip>&xFEFF;<chip>, and we now need
+      // to expand that to being <chip>&xFEFF;&xFEFF;<chip> so that each chip
+      // has its own pair of ZWNBSP characters.
+      if (
+        previousSibling &&
+        previousSibling.nodeType === Node.TEXT_NODE &&
+        previousSibling.textContent === String.fromCharCode(65279) &&
+        this.#nodeIsChiclet(previousSibling.previousSibling)
+      ) {
+        previousSibling.textContent += String.fromCharCode(65279);
+      }
     }
 
     // Now check that ZWNBSP characters only exist around chiclets.
