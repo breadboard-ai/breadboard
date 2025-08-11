@@ -103,6 +103,7 @@ import { MainArguments } from "./types/types";
 import { envFromSettings } from "./utils/env-from-settings";
 import { envFromFlags } from "./utils/env-from-flags";
 import { FileSystemPersistentBackend } from "@breadboard-ai/filesystem-board-server";
+import { makeUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 
 type RenderValues = {
   canSave: boolean;
@@ -315,7 +316,15 @@ export class Main extends SignalWatcher(LitElement) {
         ))
       ) {
         await this.signinAdapter.signOut();
-        window.history.pushState(undefined, "", "/landing/?geo-restriction");
+        window.history.pushState(
+          undefined,
+          "",
+          makeUrl({
+            page: "landing",
+            geoRestriction: true,
+            redirect: { page: "home" },
+          })
+        );
         window.location.reload();
       }
     });
