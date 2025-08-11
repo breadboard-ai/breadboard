@@ -72,13 +72,13 @@ export const LoadRoute: EventRoute<"board.load"> = {
   event: "board.load",
 
   async do({ runtime, originalEvent, uiState }) {
-    runtime.router.go(
-      originalEvent.detail.url,
-      uiState.mode,
-      undefined,
-      undefined,
-      originalEvent.detail.shared
-    );
+    runtime.router.go({
+      page: "graph",
+      mode: uiState.mode,
+      flow: originalEvent.detail.url,
+      resourceKey: undefined,
+      shared: originalEvent.detail.shared,
+    });
     return false;
   },
 };
@@ -197,8 +197,9 @@ export const CreateRoute: EventRoute<"board.create"> = {
 
     runtime.router.go(
       {
-      // Ensure we always go back to the canvas when a board is created.
-        page: "canvas",
+        page: "graph",
+        // Ensure we always go back to the canvas when a board is created.
+        mode: "canvas",
         flow: result.url.href,
         // Resource key not required because we know the current user created it.
         resourceKey: undefined,
