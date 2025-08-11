@@ -79,15 +79,6 @@ export async function createGoogleDriveBoardServer(
         " We will not be able to read public files from Google Drive."
     );
   }
-  const googleDriveFeaturedGalleryFolderId: string = import.meta.env
-    .VITE_GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID;
-  if (!googleDrivePublicApiKey) {
-    console.warn(
-      "No value for VITE_GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID" +
-        " was configured. We will not be able to read the featured" +
-        " gallery from Google Drive."
-    );
-  }
   const googleDrivePublishPermissions: gapi.client.drive.Permission[] =
     JSON.parse(import.meta.env.VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS || "[]");
   if (!googleDrivePublishPermissions) {
@@ -104,8 +95,7 @@ export async function createGoogleDriveBoardServer(
     tokenVendor,
     googleDriveClient,
     googleDrivePublishPermissions,
-    userFolderName,
-    googleDriveFeaturedGalleryFolderId
+    userFolderName
   );
 }
 

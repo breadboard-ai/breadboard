@@ -31,6 +31,9 @@ export class ItemSelect extends LitElement {
   accessor showDownArrow = true;
 
   @property()
+  accessor autoActivate = false;
+
+  @property()
   set values(values: EnumValue[]) {
     this.#values = values;
     if (this.#value) {
@@ -53,7 +56,15 @@ export class ItemSelect extends LitElement {
     this.#value = value;
     this.#selected = this.#values.findIndex((v) => v.id === value);
     if (this.#selected === -1) {
-      this.#selected = 0;
+      // If none selected, find first non-hidden value.
+      this.#selected = this.#values.findIndex((v) => !v.hidden);
+      if (this.#selected === -1) {
+        console.warn(
+          `Couldn't find any non-hidden values in item selector`,
+          this.#values
+        );
+        this.#selected = 0;
+      }
     }
     this.#highlighted = this.#selected;
   }
@@ -270,6 +281,20 @@ export class ItemSelect extends LitElement {
     this.requestUpdate();
   }
 
+  protected firstUpdated(): void {
+    if (!this.autoActivate) {
+      return;
+    }
+
+    this.updateComplete.then(() => {
+      if (!this.#selectorRef.value) {
+        return;
+      }
+
+      this.#selectorRef.value.showModal();
+    });
+  }
+
   render() {
     const idx = this.freezeValue !== -1 ? this.freezeValue : this.#selected;
     const renderedValue = this.#values[idx] ?? {
@@ -284,27 +309,29 @@ export class ItemSelect extends LitElement {
       "sans-flex": true,
     };
 
-    return html`<button
-        class=${classMap(classes)}
-        @click=${() => {
-          if (!this.#selectorRef.value) {
-            return;
-          }
+    return html`${this.autoActivate
+        ? nothing
+        : html`<button
+            class=${classMap(classes)}
+            @click=${() => {
+              if (!this.#selectorRef.value) {
+                return;
+              }
 
-          this.#selectorRef.value.showModal();
-        }}
-        ${ref(this.#toggleRef)}
-      >
-        ${renderedValue.icon
-          ? html`<span class="g-icon filled">${renderedValue.icon}</span>`
-          : nothing}
-        ${renderedValue.title
-          ? html`<span class="title">${renderedValue.title}</span>`
-          : nothing}
-        ${this.showDownArrow
-          ? html`<span class="g-icon filled">arrow_drop_down</span>`
-          : nothing}
-      </button>
+              this.#selectorRef.value.showModal();
+            }}
+            ${ref(this.#toggleRef)}
+          >
+            ${renderedValue.icon
+              ? html`<span class="g-icon filled">${renderedValue.icon}</span>`
+              : nothing}
+            ${renderedValue.title
+              ? html`<span class="title">${renderedValue.title}</span>`
+              : nothing}
+            ${this.showDownArrow
+              ? html`<span class="g-icon filled">arrow_drop_down</span>`
+              : nothing}
+          </button>`}
 
       <dialog
         id="item-selector"
@@ -338,6 +365,13 @@ export class ItemSelect extends LitElement {
           }
 
           this.#selectorRef.value.close();
+          this.dispatchEvent(
+            new Event("close", {
+              cancelable: true,
+              bubbles: true,
+              composed: true,
+            })
+          );
         }}
         @beforetoggle=${(evt: ToggleEvent) => {
           this.#highlighted = this.#selected;
@@ -405,7 +439,7 @@ export class ItemSelect extends LitElement {
                     this.#highlighted = idx;
                     this.requestUpdate();
                   }}
-                  @click=${() => {
+                  @pointerdown=${() => {
                     this.#handleChange();
                   }}
                   class=${classMap(classes)}

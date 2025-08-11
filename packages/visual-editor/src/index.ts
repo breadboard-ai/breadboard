@@ -34,6 +34,8 @@ import {
   GraphDescriptor,
   hash,
   MutableGraphStore,
+  PersistentBackend,
+  proxyFileSystemBackend,
   SerializedRun,
 } from "@google-labs/breadboard";
 import { provide } from "@lit/context";
@@ -423,7 +425,7 @@ export class Main extends SignalWatcher(LitElement) {
       ],
       local: createFileSystemBackend(createEphemeralBlobStore()),
       mnt: composeFileSystemBackends(
-        new Map([
+        new Map<string, PersistentBackend>([
           [
             "fs",
             new FileSystemPersistentBackend(async (callback) => {
@@ -439,6 +441,21 @@ export class Main extends SignalWatcher(LitElement) {
                 });
               });
             }),
+          ],
+          [
+            "mcp",
+            proxyFileSystemBackend(
+              new URL(globalThis.location.origin),
+              async () => {
+                const token = await this.signinAdapter.token();
+                if (token.state === "valid") {
+                  return token.grant.access_token;
+                }
+                // This will fail, and that's okay. We'll get the "Unauthorized"
+                // error.
+                return "";
+              }
+            ),
           ],
         ])
       ),
@@ -1082,6 +1099,7 @@ export class Main extends SignalWatcher(LitElement) {
       originalEvent: evt,
       pointerLocation: this.#lastPointerPosition,
       settings: this.#settings,
+      graphStore: this.#graphStore,
       strings: Strings,
     } as const;
 
@@ -1109,7 +1127,7 @@ export class Main extends SignalWatcher(LitElement) {
         } else {
           notifyUserOnTimeout = setTimeout(
             notifyUser,
-            command.messageTimeout ?? 100
+            command.messageTimeout ?? 500
           );
         }
 
@@ -1141,9 +1159,11 @@ export class Main extends SignalWatcher(LitElement) {
           if (notifyUserOnTimeout) {
             clearTimeout(notifyUserOnTimeout);
           }
+          this.#uiState.blockingAction = false;
         }
 
         this.#handlingShortcut = false;
+        break;
       }
     }
   }
@@ -1497,6 +1517,9 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.show.has("RuntimeFlags")
           ? this.#renderRuntimeFlagsModal()
           : nothing,
+        this.#uiState.show.has("MCPServersModal")
+          ? this.#renderMCPServersModal(renderValues)
+          : nothing,
         this.#renderTooltip(),
         this.#renderToasts(),
         this.#renderSnackbar(),
@@ -1750,6 +1773,15 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.showStatusUpdateChip = false;
       }}
     ></bb-status-update-modal>`;
+  }
+
+  #renderMCPServersModal(renderValues: RenderValues) {
+    return html`<bb-mcp-servers-modal
+      .project=${renderValues.projectState}
+      @bbmodaldismissed=${() => {
+        this.#uiState.show.delete("MCPServersModal");
+      }}
+    ></bb-mcp-servers-modal>`;
   }
 
   #renderRuntimeFlagsModal() {
@@ -2095,6 +2127,11 @@ export class Main extends SignalWatcher(LitElement) {
           case "status-update": {
             this.#uiState.show.add("StatusUpdateModal");
             this.#uiState.showStatusUpdateChip = false;
+            break;
+          }
+
+          case "show-mcp-servers": {
+            this.#uiState.show.add("MCPServersModal");
             break;
           }
 

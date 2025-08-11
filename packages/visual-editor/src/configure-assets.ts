@@ -6,25 +6,8 @@
 
 import path from "path";
 import fs from "fs/promises";
-import { type Plugin } from "vite";
 
-export { configureAssets, policyContent };
-
-function policyContent(
-  policyPath = "./policy.html",
-  policyContent: string = "Not set"
-): Plugin {
-  return {
-    name: "policy-content",
-    transformIndexHtml(html, opts) {
-      if (opts.originalUrl !== policyPath) {
-        return html;
-      }
-
-      return policyContent;
-    },
-  };
-}
+export { configureAssets };
 
 export type ConfigureAssetsInputs = {
   VITE_LANGUAGE_PACK?: string;

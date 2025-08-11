@@ -4,6 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#000000" />
+
+    <meta
+      property="og:image"
+      content="{{origin}}/images/share-card-{{bucket}}.png"
+    />
+    <meta property="og:image:width" content="1440" />
+    <meta property="og:image:height" content="810" />
+    <meta
+      name="twitter:image"
+      content="{{origin}}/images/share-card-{{bucket}}.png"
+    />
+
     <title>Welcome</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -21,17 +33,24 @@
           class="sans w-500 md-label-large"
           href="#"
           target="_blank"
-          id="sign-in"
-          >Sign in</a
-        >
+          id="sign-in-header"
+        ></a>
       </header>
     </nav>
 
     <main>
       <header>
-        <h1 class="sans-flex round w-400">
-          Build, edit and share mini-AI apps using natural language
-        </h1>
+        <div id="headline">
+          <h1 class="sans-flex round w-400">
+            Build, edit and share mini-AI apps using natural language
+          </h1>
+          <a
+            class="sans w-500 md-label-large"
+            href="#"
+            target="_blank"
+            id="sign-in"
+          ></a>
+        </div>
         <div id="img">
           <div id="img-contents">
             <svg

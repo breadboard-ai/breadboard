@@ -69,7 +69,7 @@ const MODES: Mode[] = [
     title: "Gemini 2.5 Flash",
     description: "For everyday tasks, plus more",
     icon: "text_analysis",
-    modelName: "gemini-2.5-flash-preview-05-20",
+    modelName: "gemini-2.5-flash",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
   },
@@ -80,7 +80,7 @@ const MODES: Mode[] = [
     title: "Gemini 2.5 Pro",
     description: "Best for complex tasks",
     icon: "text_analysis",
-    modelName: "gemini-2.5-pro-preview-06-05",
+    modelName: "gemini-2.5-pro",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
   },

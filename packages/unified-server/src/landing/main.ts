@@ -119,6 +119,7 @@ async function init() {
   try {
     const {
       signInButton,
+      signInHeaderButton,
       scopesErrorDialog,
       scopesErrorSignInButton,
       genericErrorDialog,
@@ -133,6 +134,7 @@ async function init() {
       // nonce.
       const signInUrl = await signinAdapter.getSigninUrl();
       signInButton.href = signInUrl;
+      signInHeaderButton.href = signInUrl;
       scopesErrorSignInButton.href = signInUrl;
       sharedFlowDialogSignInButton.href = signInUrl;
     };
@@ -169,6 +171,9 @@ async function init() {
     };
 
     await setSignInUrls();
+    signInHeaderButton.innerText = "Sign in";
+    signInButton.innerText = `Try ${Strings.from("APP_NAME")}`;
+    signInHeaderButton.addEventListener("click", onClickSignIn);
     signInButton.addEventListener("click", onClickSignIn);
     scopesErrorSignInButton.addEventListener("click", () => {
       onClickSignIn();

@@ -29,6 +29,9 @@ export class ConsoleView extends SignalWatcher(LitElement) {
   @property()
   accessor themeStyles: Record<string, string> | null = null;
 
+  @property()
+  accessor disclaimerContent = "";
+
   static styles = [
     icons,
     sharedStyles,
@@ -47,6 +50,12 @@ export class ConsoleView extends SignalWatcher(LitElement) {
 
       bb-header {
         border-top: 1px solid var(--s-90, var(--bb-neutral-100));
+      }
+
+      #container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
       }
 
       #no-console {
@@ -101,6 +110,8 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         flex: 1;
         overflow: auto;
         padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
+        height: 100%;
+        scrollbar-width: none;
 
         &::after {
           content: "";
@@ -240,9 +251,12 @@ export class ConsoleView extends SignalWatcher(LitElement) {
       bb-floating-input {
         position: absolute;
         left: 50%;
-        bottom: var(--bb-grid-size-6);
+        bottom: 0;
+        padding-bottom: var(--bb-grid-size-6);
         translate: -50% 0;
+        --s-90: var(--n-100);
         --container-margin: 0 var(--bb-grid-size-6);
+        background: var(--n-100);
       }
 
       @keyframes rotate {
@@ -292,6 +306,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
     return html`<bb-floating-input
       .schema=${input.schema}
       .focusWhenIn=${["canvas", "console"]}
+      .disclaimerContent=${this.disclaimerContent}
       @bbresize=${(evt: ResizeEvent) => {
         this.style.setProperty(
           "--input-clearance",
@@ -512,7 +527,10 @@ export class ConsoleView extends SignalWatcher(LitElement) {
   }
 
   render() {
-    return html`<section style=${styleMap(this.themeStyles ?? {})}>
+    return html`<section
+      id="container"
+      style=${styleMap(this.themeStyles ?? {})}
+    >
       ${[
         html`<bb-app-header
           .neutral=${true}

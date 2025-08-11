@@ -212,7 +212,9 @@ export class AccountSwitcher extends LitElement {
         >
           Sign out
         </button>
-        <a href="/policy">Privacy & Terms</a>
+        <a href="https://policies.google.com/" target="_blank"
+          >Privacy & Terms</a
+        >
       </section>
     </dialog>`;
   }

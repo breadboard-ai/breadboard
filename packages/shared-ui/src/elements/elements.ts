@@ -8,6 +8,7 @@
 export { VEEditBoardModal } from "./shell/edit-board.js";
 export { VEHeader } from "./shell/header.js";
 export { VEModal } from "./shell/modal.js";
+export { VEMCPServersModal } from "./shell/mcp-server-modal.js";
 export { VERuntimeFlagsModal } from "./shell/runtime-flags.js";
 export { VEVideoModal } from "./shell/video-modal.js";
 export { VESnackbarDetailsModal } from "./shell/snackbar-details-modal.js";

@@ -15,6 +15,7 @@ import { RuntimeFlagManager } from "@breadboard-ai/types";
 import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 import { ValidTokenResult } from "@breadboard-ai/connection-client";
+import { Project } from "@breadboard-ai/shared-ui/state/types.js";
 
 /**
  * An interface for owners functionality - a command center console for executing operations which
@@ -49,6 +50,12 @@ export class Admin {
       gdrive: this.gdrive.help(),
       cache: this.cache.help(),
     };
+  }
+
+  get project(): Project | null {
+    const tab = this.runtime.board.tabs.values().next().value;
+    if (!tab) return null;
+    return this.runtime.state.getOrCreateProjectState(tab.mainGraphId);
   }
 
   #gdriveBoardServer(): GoogleDriveBoardServer {

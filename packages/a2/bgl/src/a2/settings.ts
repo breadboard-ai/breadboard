@@ -25,6 +25,10 @@ export type RuntimeFlags = {
    * Add "For each" capability to the "Generate" step.
    */
   generateForEach: boolean;
+  /**
+   * Enable MCP support
+   */
+  mcp: boolean;
 };
 
 async function readSettings(): Promise<Outcome<Record<string, boolean>>> {
@@ -48,6 +52,7 @@ async function readFlags(): Promise<Outcome<RuntimeFlags>> {
       usePlanRunner: false,
       saveAsCode: false,
       generateForEach: false,
+      mcp: false,
     };
   }
 

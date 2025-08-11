@@ -84,6 +84,7 @@ export { writablePathFromString } from "./file-system/path.js";
 
 export { createFileSystem } from "./file-system/index.js";
 export { composeFileSystemBackends } from "./file-system/composed-peristent-backend.js";
+export { proxyFileSystemBackend } from "./file-system/proxied-persistent-backend.js";
 export { transformBlobs } from "./file-system/blob-transform.js";
 
 export { StubFileSystem } from "./file-system/stub-file-system.js";

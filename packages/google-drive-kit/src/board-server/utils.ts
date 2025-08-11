@@ -11,7 +11,7 @@ import type {
   LLMContent,
 } from "@breadboard-ai/types";
 import type { DriveFileId, NarrowedDriveFile } from "../google-drive-client.js";
-import type { StoredProperties } from "./operations.js";
+import type { GraphInfo, StoredProperties } from "./operations.js";
 
 /** Delay between GDrive API retries. */
 const RETRY_MS = 200;
@@ -286,4 +286,17 @@ export function permissionMatchesAnyOf(
     }
   }
   return false;
+}
+
+export function driveFileToGraphInfo(
+  file: NarrowedDriveFile<"id" | "name" | "properties">
+): GraphInfo {
+  const properties = readProperties(file);
+  return {
+    id: file.id,
+    title: properties.title || file.name.replace(/(\.bgl)?\.json$/, ""),
+    tags: properties.tags,
+    thumbnail: properties.thumbnailUrl,
+    description: properties.description,
+  };
 }

@@ -3,8 +3,9 @@
  */
 
 import { createConfigurator } from "../a2/connector-manager";
+import { rpc } from "../a2/rpc";
 import { llm, ok } from "../a2/utils";
-import { McpClient } from "./mcp-client";
+import type { Implementation } from "./types";
 
 export { invoke as default, describe };
 
@@ -19,16 +20,21 @@ const { invoke, describe } = createConfigurator<McpConfiguration>({
   initialize: async () => {
     return { title: CONNECTOR_TITLE, configuration: {} };
   },
-  preview: async ({ id, configuration }) => {
+  preview: async ({ configuration }) => {
     const endpoint = configuration.endpoint;
     if (!endpoint) return [llm``.asContent()];
-    const client = new McpClient(id, endpoint);
-    const info = await client.connect();
-    if (!ok(info)) {
+    const gettingInfo = await rpc<Implementation>({
+      path: "/mnt/mcp/call/info",
+      data: {
+        url: endpoint,
+        clientName: "Breadboard",
+      },
+    });
+    if (!ok(gettingInfo)) {
       return [llm`${endpoint}`.asContent()];
     }
     return [
-      llm`**${info.serverInfo.name}**\nMCP server at ${endpoint}`.asContent(),
+      llm`**${gettingInfo.title || gettingInfo.name}**\nMCP server at ${endpoint}`.asContent(),
     ];
   },
   read: async ({ configuration }) => {

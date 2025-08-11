@@ -6,7 +6,7 @@
 
 import { State } from "@breadboard-ai/shared-ui";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
-import { BoardServer } from "@breadboard-ai/types";
+import { BoardServer, RuntimeFlagManager } from "@breadboard-ai/types";
 import {
   EditableGraph,
   MainGraphIdentifier,
@@ -24,15 +24,18 @@ class StateManager {
   #store: MutableGraphStore;
   #runtime: SideBoardRuntime;
   #servers: BoardServer[];
+  #flagManager: RuntimeFlagManager;
 
   constructor(
     store: MutableGraphStore,
     runtime: SideBoardRuntime,
-    boardServers: BoardServer[]
+    boardServers: BoardServer[],
+    flagManager: RuntimeFlagManager
   ) {
     this.#store = store;
     this.#runtime = runtime;
     this.#servers = boardServers;
+    this.#flagManager = flagManager;
   }
 
   #findServer(url: URL): BoardServer | null {
@@ -57,7 +60,7 @@ class StateManager {
 
   getOrCreateUIState() {
     if (!this.#ui) {
-      this.#ui = State.createUIState();
+      this.#ui = State.createUIState(this.#flagManager);
     }
 
     return this.#ui;
