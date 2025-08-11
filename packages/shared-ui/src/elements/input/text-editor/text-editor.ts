@@ -282,6 +282,7 @@ export class TextEditor extends LitElement {
 
     const completeAddAction = () => {
       this.#ensureAllChicletsHaveSpace();
+      this.#ensureSafeRangePosition();
       this.#captureEditorValue();
       this.#togglePlaceholder();
 
@@ -435,7 +436,11 @@ export class TextEditor extends LitElement {
     selection.addRange(range);
   }
 
-  #ensureSafeRangePosition(evt: KeyboardEvent) {
+  #nodeIsChiclet(node: Node | null): node is HTMLElement {
+    return node instanceof HTMLElement && node.classList.contains("chiclet");
+  }
+
+  #ensureSafeRangePosition(evt?: KeyboardEvent) {
     const selection = this.#getCurrentSelection();
     const range = this.#getCurrentRange();
 
@@ -464,25 +469,40 @@ export class TextEditor extends LitElement {
       offset: number,
       preventDefault = false
     ) => {
-      range.setStart(node, offset);
-      range.setEnd(node, offset);
-      selection.removeAllRanges();
-      selection.addRange(range);
+      try {
+        range.setStart(node, offset);
+        range.setEnd(node, offset);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      } catch (err) {
+        console.warn("[Text editor] Unable to set range", err);
+      }
 
-      if (preventDefault) {
+      if (evt && preventDefault) {
         evt.preventDefault();
       }
     };
 
-    const nextSiblingIsChiclet =
-      focusedNode.nextSibling &&
-      focusedNode.nextSibling?.nodeType !== Node.TEXT_NODE;
-
-    const previousSiblingIsChiclet =
-      focusedNode.previousSibling &&
-      focusedNode.previousSibling?.nodeType !== Node.TEXT_NODE;
+    const nextSiblingIsChiclet = this.#nodeIsChiclet(focusedNode.nextSibling);
+    const previousSiblingIsChiclet = this.#nodeIsChiclet(
+      focusedNode.previousSibling
+    );
 
     const textContent = focusedNode.textContent!;
+    const ensureNotBetweenZWNBPAndChiclet = () => {
+      if (textContent.length === focusedOffset && nextSiblingIsChiclet) {
+        updateRange(focusedNode, focusedOffset - 1);
+      } else if (focusedOffset === 0 && previousSiblingIsChiclet) {
+        updateRange(focusedNode, focusedOffset + 1);
+      }
+    };
+
+    // In the general case (with no keyboard event) we will want to ensure that
+    // we are not between a ZWNBSP and a chiclet.
+    if (!evt) {
+      ensureNotBetweenZWNBPAndChiclet();
+      return;
+    }
 
     switch (evt.key) {
       // Skip to the other side of the ZWNBSP character;
@@ -511,7 +531,7 @@ export class TextEditor extends LitElement {
             focusedNode.nextSibling.nextSibling &&
             focusedNode.nextSibling.nextSibling.nodeType === Node.TEXT_NODE
           ) {
-            updateRange(focusedNode.nextSibling.nextSibling, 0, true);
+            updateRange(focusedNode.nextSibling.nextSibling, 1, true);
           }
         }
         break;
@@ -522,6 +542,7 @@ export class TextEditor extends LitElement {
         if (focusedOffset <= 1 && previousSiblingIsChiclet) {
           range.selectNode(focusedNode.previousSibling);
           range.deleteContents();
+          updateRange(focusedNode, 0);
         }
         break;
       }
@@ -537,11 +558,7 @@ export class TextEditor extends LitElement {
       }
 
       default: {
-        if (textContent.length === focusedOffset && nextSiblingIsChiclet) {
-          updateRange(focusedNode, focusedOffset - 1);
-        } else if (focusedOffset === 0 && previousSiblingIsChiclet) {
-          updateRange(focusedNode, focusedOffset + 1);
-        }
+        ensureNotBetweenZWNBPAndChiclet();
         break;
       }
     }
@@ -586,6 +603,88 @@ export class TextEditor extends LitElement {
         } else {
           nextSibling.textContent =
             String.fromCharCode(65279) + nextSibling.textContent;
+        }
+      }
+
+      // Edge case: here we've discovered <chip>&xFEFF;<chip>, and we now need
+      // to expand that to being <chip>&xFEFF;&xFEFF;<chip> so that each chip
+      // has its own pair of ZWNBSP characters.
+      if (
+        previousSibling &&
+        previousSibling.nodeType === Node.TEXT_NODE &&
+        previousSibling.textContent === String.fromCharCode(65279) &&
+        this.#nodeIsChiclet(previousSibling.previousSibling)
+      ) {
+        previousSibling.textContent += String.fromCharCode(65279);
+      }
+    }
+
+    // Now check that ZWNBSP characters only exist around chiclets.
+    const walker = document.createTreeWalker(
+      this.#editorRef.value,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: (node) => {
+          // Only process text nodes containing the zero-width space
+          if (node.nodeValue !== null && node.nodeValue.includes("\uFEFF")) {
+            return NodeFilter.FILTER_ACCEPT;
+          }
+
+          return NodeFilter.FILTER_REJECT;
+        },
+      }
+    );
+
+    let node;
+    while ((node = walker.nextNode())) {
+      const textContent = node.nodeValue;
+      if (!textContent) {
+        continue;
+      }
+
+      // Skip nodes that don't contain the ZWNBSP char.
+      if (!textContent.includes("\uFEFF")) {
+        continue;
+      }
+
+      // Case 1: There is a non-breaking space in the middle of the string. In
+      // these cases we remove the space entirely.
+      if (
+        textContent.length > 1 &&
+        textContent.indexOf("\uFEFF") > 0 &&
+        textContent.indexOf("\uFEFF") < textContent.length - 1
+      ) {
+        node.nodeValue = textContent.replace(/\uFEFF/g, "");
+      }
+
+      // Case 2: The string in question is just the non-breaking space. Here we
+      // will check either side to see if there is a chiclet and remove the
+      // non-breaking space if neither side contains a chiclet.
+      if (textContent === "\uFEFF") {
+        const { previousSibling, nextSibling } = node;
+        const hasPrevChiclet =
+          previousSibling && this.#nodeIsChiclet(previousSibling);
+        const hasNextChiclet = nextSibling && this.#nodeIsChiclet(nextSibling);
+        if (!hasPrevChiclet && !hasNextChiclet) {
+          node.nodeValue = "";
+        }
+      } else {
+        // Case 3: There is a non-breaking space at the start of the string.
+        // Here will ensure that the previous sibling is a chiclet.
+        if (textContent.startsWith("\uFEFF")) {
+          const prevSibling = node.previousSibling;
+          if (!prevSibling || !this.#nodeIsChiclet(prevSibling)) {
+            node.nodeValue = textContent.substring(1);
+          }
+        }
+
+        // Case 4: At the end of the string. Now check that the subsequent node
+        // is a chiclet.
+        if (textContent.endsWith("\uFEFF")) {
+          const nextSibling = node.nextSibling;
+          if (!nextSibling || !this.#nodeIsChiclet(nextSibling)) {
+            node.nodeValue = textContent.slice(0, -1);
+          }
         }
       }
     }
