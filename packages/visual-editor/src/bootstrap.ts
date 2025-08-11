@@ -15,6 +15,12 @@ import type { GoogleDrivePermission } from "@breadboard-ai/shared-ui/contexts/gl
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { createTokenVendor } from "@breadboard-ai/connection-client";
+import {
+  type LandingUrlInit,
+  makeUrl,
+  OAUTH_REDIRECT,
+  parseUrl,
+} from "@breadboard-ai/shared-ui/utils/urls.js";
 
 export { bootstrap };
 
@@ -164,41 +170,22 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     }
 
     // Redirect to the landing page.
-    const landingRedirectUrl = new URL("/landing/", window.location.href);
-    const currentUrl = new URL(window.location.href);
-    if (currentUrl.searchParams.has("flow")) {
-      landingRedirectUrl.searchParams.set(
-        "flow",
-        currentUrl.searchParams.get("flow")!
-      );
-    }
-    if (currentUrl.searchParams.has("mode")) {
-      landingRedirectUrl.searchParams.set(
-        "mode",
-        currentUrl.searchParams.get("mode")!
-      );
-    }
-    if (currentUrl.searchParams.has("shared")) {
-      landingRedirectUrl.searchParams.set(
-        "shared",
-        currentUrl.searchParams.get("shared")!
-      );
-    }
-    if (currentUrl.searchParams.has("oauth_redirect")) {
-      landingRedirectUrl.searchParams.set(
-        "oauth_redirect",
-        currentUrl.searchParams.get("oauth_redirect")!
-      );
-    }
+    const landing: LandingUrlInit = {
+      page: "landing",
+      redirect: parseUrl(window.location.href),
+      oauthRedirect:
+        new URL(window.location.href).searchParams.get(OAUTH_REDIRECT) ??
+        undefined,
+    };
     if (signinAdapter.state === "signedin" && !scopeValidation.ok) {
       console.log(
         "[signin] oauth scopes were missing or unavailable, forcing signin.",
         scopeValidation.error
       );
       await signinAdapter.signOut();
-      landingRedirectUrl.searchParams.set("missing-scopes", "true");
+      landing.missingScopes = true;
     }
-    window.location.href = decodeURIComponent(landingRedirectUrl.href);
+    window.location.href = makeUrl(landing);
     return;
   }
 }

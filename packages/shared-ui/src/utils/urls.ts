@@ -43,7 +43,7 @@ const SHARED = "shared";
 const GEO_RESTRICTION = "geo-restriction";
 const MISSING_SCOPES = "missing-scopes";
 const RESOURCE_KEY = "resourcekey";
-const OAUTH_REDIRECT = "oauth_redirect";
+export const OAUTH_REDIRECT = "oauth_redirect";
 
 /**
  * Generate a URL for a page on the Breadboard Visual Editor.
