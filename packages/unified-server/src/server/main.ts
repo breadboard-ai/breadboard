@@ -16,10 +16,10 @@ import { allowListChecker } from "./allow-list-checker.js";
 import { getConfigFromSecretManager } from "./provide-config.js";
 import { makeCspHandler } from "./csp.js";
 import { createUpdatesHandler } from "./upates.js";
-import { createMountedFileSystemHandler } from "./mounted-file-system.js";
 import { makeGalleryMiddleware } from "./gallery.js";
 import { GoogleAuth } from "google-auth-library";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { createMcpProxyHandler } from "./mcp-proxy.js";
 
 const server = express();
 
@@ -106,7 +106,7 @@ server.use(
   })
 );
 
-server.use("/mnt", createMountedFileSystemHandler());
+server.use("/api/mcp-proxy", createMcpProxyHandler());
 
 ViteExpress.config({
   transformer: (html: string, req: Request) => {

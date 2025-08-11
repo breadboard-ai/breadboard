@@ -16,10 +16,12 @@ import {
 import { err, fromJson, ok, toJson } from "@breadboard-ai/utils";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { FetchLike } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
   CallToolRequest,
   Implementation,
 } from "@modelcontextprotocol/sdk/types.js";
+import { JsonSerializableRequestInit, McpProxyRequest } from "./types.js";
 
 export { McpFileSystemBackend, parsePath };
 
@@ -62,12 +64,16 @@ type InitializeSessionWrite = {
 
 type CallToolRequestWrite = CallToolRequest["params"];
 
+type TokenGetter = () => Promise<Outcome<string>>;
+
 /**
  * Provides the ability to use MCP via the FileSystem.
  * The expected path is /mnt/mcp
  */
 class McpFileSystemBackend implements PersistentBackend {
   #sessions: Map<string, SessionInfo> = new Map();
+
+  constructor(private readonly tokenGetter: TokenGetter) {}
 
   async query(
     _graphUrl: string,
@@ -118,6 +124,49 @@ class McpFileSystemBackend implements PersistentBackend {
     }
   }
 
+  #fetch(): FetchLike {
+    const proxyURL = new URL("/api/mcp-proxy", window.location.href);
+    return async (url: string | URL, init?: RequestInit) => {
+      const accessToken = await this.tokenGetter();
+      if (!ok(accessToken)) {
+        throw new Error(accessToken.$error);
+      }
+
+      const { signal, headers, ...noSignalInit } = init || {};
+      let headersObj: Record<string, string> = {};
+      if (headers) {
+        if (headers instanceof Headers) {
+          headers.forEach((value, key) => {
+            headersObj[key] = value;
+          });
+        } else if (Array.isArray(headers)) {
+          headers.forEach(([value, key]) => {
+            headersObj[key] = value;
+          });
+        } else {
+          headersObj = headers;
+        }
+      }
+      // TODO: Check request for being serializable
+      const request: McpProxyRequest = {
+        url: typeof url === "string" ? url : url.href,
+        init: {
+          ...noSignalInit,
+          headers: headersObj,
+        } as JsonSerializableRequestInit,
+      };
+      return fetch(proxyURL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        signal,
+        body: JSON.stringify(request),
+      });
+    };
+  }
+
   async #initializeClient(
     id: string,
     data: LLMContent[]
@@ -130,7 +179,10 @@ class McpFileSystemBackend implements PersistentBackend {
     try {
       const client = new Client(initialization.info);
       const transport = new StreamableHTTPClientTransport(
-        new URL(initialization.url)
+        new URL(initialization.url),
+        {
+          fetch: this.#fetch(),
+        }
       );
 
       // TODO: Implement error handling and retry.
