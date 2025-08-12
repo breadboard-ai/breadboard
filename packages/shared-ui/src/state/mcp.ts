@@ -4,19 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Outcome } from "@breadboard-ai/types";
 import {
-  AsyncComputedResult,
-  Mcp,
-  McpServer,
+  McpServerDescriptor,
   McpServerIdentifier,
   McpServerInstanceIdentifier,
-  ProjectInternal,
-} from "./types";
+  Outcome,
+} from "@breadboard-ai/types";
+import { AsyncComputedResult, Mcp, ProjectInternal } from "./types";
 import { err, fromJson, ok } from "@breadboard-ai/utils";
 import { SignalMap } from "signal-utils/map";
 import { McpServerStore } from "./utils/mcp-server-store";
 import { AsyncComputed } from "signal-utils/async-computed";
+import { listBuiltInMcpServers } from "@breadboard-ai/mcp";
 
 export { McpImpl };
 
@@ -34,15 +33,26 @@ class McpImpl implements Mcp {
 
   constructor(private readonly project: ProjectInternal) {}
 
-  get servers(): AsyncComputedResult<Map<McpServerIdentifier, McpServer>> {
+  get servers(): AsyncComputedResult<
+    Map<McpServerIdentifier, McpServerDescriptor>
+  > {
     return this.#servers;
   }
 
   #servers = new AsyncComputed(async (signal) => {
     signal.throwIfAborted();
 
-    const result = new SignalMap<McpServerIdentifier, McpServer>();
-    const inBgl = new Map<McpServerIdentifier, McpServer>();
+    const builtIns: [McpServerIdentifier, McpServerDescriptor][] =
+      listBuiltInMcpServers().map((descriptor) => [
+        this.#createId(descriptor.details.url),
+        descriptor,
+      ]);
+
+    const result = new SignalMap<McpServerIdentifier, McpServerDescriptor>(
+      builtIns
+    );
+
+    const inBgl = new Map<McpServerIdentifier, McpServerDescriptor>();
 
     this.project.graphAssets.forEach((asset, value) => {
       const { connector, metadata } = asset;
@@ -62,7 +72,7 @@ class McpImpl implements Mcp {
           url,
         },
         instanceId: value as McpServerInstanceIdentifier,
-        removable: true,
+        removable: isRemovable(id),
       });
     });
 
@@ -71,10 +81,11 @@ class McpImpl implements Mcp {
       console.warn("Unable to load stored MCP servers", stored.$error);
     } else {
       for (const info of stored) {
-        result.set(this.#createId(info.url), {
+        const id = this.#createId(info.url);
+        result.set(id, {
           title: info.title,
           details: { name: info.title, version: "0.0.1", url: info.url },
-          removable: true,
+          removable: isRemovable(id),
         });
       }
     }
@@ -82,6 +93,12 @@ class McpImpl implements Mcp {
     inBgl.forEach((value, key) => result.set(key, value));
 
     return result;
+
+    function isRemovable(id: string) {
+      const existing = result.get(id);
+      if (existing?.removable === false) return false;
+      return true;
+    }
   });
 
   async #addAsset(
