@@ -128,7 +128,7 @@ export class Main extends SignalWatcher(LitElement) {
   @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
   accessor settingsHelper: SettingsHelperImpl;
 
-  @provide({ context: BreadboardUI.Elements.tokFrmendorContext })
+  @provide({ context: BreadboardUI.Elements.tokenVendorContext })
   accessor tokenVendor: TokenVendor;
 
   @provide({ context: signinAdapterContext })
