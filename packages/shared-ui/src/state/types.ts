@@ -11,11 +11,12 @@ import {
   GraphIdentifier,
   HarnessRunner,
   LLMContent,
+  McpServerDescriptor,
+  McpServerIdentifier,
   NodeIdentifier,
   OutputValues,
   ParameterMetadata,
   RuntimeFlags,
-  UUID,
 } from "@breadboard-ai/types";
 import {
   EditSpec,
@@ -474,51 +475,6 @@ export type UI = {
   flags: RuntimeFlags | null;
 };
 
-export type McpServerDetails = {
-  /**
-   * Name of the server. Part of the technical details, though when title is
-   * not be specified, can be used instead of title
-   */
-  name: string;
-  /**
-   * Version of the server.
-   */
-  version: string;
-  /**
-   * URL of the server.
-   */
-  url: string;
-};
-
-export type McpServerIdentifier = string;
-
-export type McpServerInstanceIdentifier = `connectors/${UUID}`;
-
-export type McpServer = {
-  /**
-   * Title of the MCP server. Assigned by the author or extracted from the
-   * MCP server info.
-   */
-  readonly title: string;
-  /**
-   * Description of the server.
-   */
-  readonly description?: string;
-  /**
-   * Server details.
-   */
-  readonly details: McpServerDetails;
-  /**
-   * Whether or not the server is currently registered in this project.
-   */
-  instanceId?: McpServerInstanceIdentifier;
-  /**
-   * Whether or not the server is removable. We will have some servers that are
-   * built-in, so they aren't removable.
-   */
-  readonly removable: boolean;
-};
-
 /**
  * Represents the Model+Controller for of the project's MCP
  * configuration.
@@ -527,7 +483,9 @@ export type Mcp = {
   /**
    * List of currently all known MCP servers.
    */
-  servers: AsyncComputedResult<ReadonlyMap<McpServerIdentifier, McpServer>>;
+  servers: AsyncComputedResult<
+    ReadonlyMap<McpServerIdentifier, McpServerDescriptor>
+  >;
 
   /**
    * Register the server specified by id. This adds it to the assets in the BGL.
