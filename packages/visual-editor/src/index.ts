@@ -2096,6 +2096,7 @@ export class Main extends SignalWatcher(LitElement) {
               return;
             }
 
+            ActionTracker.remixApp(this.#tab.graph.url, "editor");
             this.#invokeRemixEventRouteWith(this.#tab.graph.url, {
               start: Strings.from("STATUS_GENERIC_WORKING"),
               end: Strings.from("STATUS_PROJECT_CREATED"),
