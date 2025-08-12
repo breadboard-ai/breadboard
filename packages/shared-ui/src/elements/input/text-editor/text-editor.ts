@@ -39,15 +39,18 @@ function chicletHtml(
 
   if (metadataTags) {
     for (const tag of metadataTags) {
+      // Ensure we don't have any non-word chars in the tags.
       label.classList.add(tag.replace(/W/gim, ""));
     }
   }
 
   if (type) {
+    // Ensure we don't have any non-word chars in the type.
     label.classList.add(type.replace(/W/gim, ""));
   }
 
   if (assetType) {
+    // Ensure we don't have any non-word chars in the assetType.
     label.classList.add(assetType.replace(/W/gim, ""));
   }
 

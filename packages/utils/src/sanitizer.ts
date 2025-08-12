@@ -4,20 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { html, render } from "lit";
+
 export function escape(str: string | null | undefined) {
-  if (!str) {
-    return "";
-  }
+  const frag = document.createElement("div");
+  render(html`${str}`, frag);
 
-  const htmlEntities: Record<string, string> = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-  };
-
-  return str.replace(/[&<>"']/gim, (char) => htmlEntities[char]);
+  return frag.innerHTML;
 }
 
 export function unescape(str: string | null | undefined) {
@@ -25,10 +18,7 @@ export function unescape(str: string | null | undefined) {
     return "";
   }
 
-  return str
-    .replace(/&#39;/gim, "'")
-    .replace(/&quot;/gim, '"')
-    .replace(/&gt;/gim, ">")
-    .replace(/&lt;/gim, "<")
-    .replace(/&amp;/gim, "&");
+  const frag = document.createElement("div");
+  frag.innerHTML = str;
+  return frag.textContent;
 }

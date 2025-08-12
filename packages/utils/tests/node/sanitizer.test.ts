@@ -8,8 +8,14 @@ import assert from "node:assert";
 import { suite, test } from "node:test";
 import * as Sanitizer from "../../src/sanitizer.js";
 import { Template } from "../../src/template.js";
+import { JSDOM } from "jsdom";
 
 suite("escape", () => {
+  beforeEach(() => {
+    const dom = new JSDOM("<!doctype html><html><body></body></html>");
+    global.document = dom.window.document;
+  });
+
   test("handles empty values", () => {
     assert.equal(Sanitizer.escape(null), "");
     assert.equal(Sanitizer.escape(undefined), "");
@@ -111,6 +117,11 @@ suite("escape", () => {
 });
 
 suite("unescape", () => {
+  beforeEach(() => {
+    const dom = new JSDOM("<!doctype html><html><body></body></html>");
+    global.document = dom.window.document;
+  });
+
   test("handles empty values", () => {
     assert.equal(Sanitizer.unescape(null), "");
     assert.equal(Sanitizer.unescape(undefined), "");

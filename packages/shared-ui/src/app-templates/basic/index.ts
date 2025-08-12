@@ -688,7 +688,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 })
               );
             }}
-            .innerHTML=${Sanitizer.escape(this.options.title)}
+            .innerText=${this.options.title}
           ></h1>
           <p
             ?contenteditable=${!this.readOnly}
@@ -722,7 +722,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 })
               );
             }}
-            .innerHTML=${Sanitizer.escape(this.options.description) ?? ""}
+            .innerText=${this.options.description ?? ""}
           ></p>
           <div id="input" class="stopped">
             <div>
