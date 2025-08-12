@@ -16,15 +16,21 @@ import {
 import { err, fromJson, ok, toJson } from "@breadboard-ai/utils";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { FetchLike } from "@modelcontextprotocol/sdk/shared/transport.js";
+import {
+  FetchLike,
+  Transport,
+} from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
   CallToolRequest,
   Implementation,
 } from "@modelcontextprotocol/sdk/types.js";
 import { JsonSerializableRequestInit, McpProxyRequest } from "./types.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { McpBuiltInServerStore } from "./server-store.js";
 
 export { McpFileSystemBackend, parsePath };
 
+const BUILTIN_SERVER_PREFIX = "builtin:";
 const COMMON_PREFIX: FileSystemPath = `/mnt/mcp/session`;
 const SUPPORTED_METHODS = ["connect", "listTools", "callTool"] as const;
 
@@ -167,10 +173,7 @@ class McpFileSystemBackend implements PersistentBackend {
     };
   }
 
-  async #initializeClient(
-    id: string,
-    data: LLMContent[]
-  ): Promise<Outcome<Client>> {
+  async #initializeClient(data: LLMContent[]): Promise<Outcome<Client>> {
     const initialization = toJson<InitializeSessionWrite>(data);
     if (!initialization) {
       return err(`MCP Backend: invalid session initialization payload`);
@@ -178,12 +181,26 @@ class McpFileSystemBackend implements PersistentBackend {
 
     try {
       const client = new Client(initialization.info);
-      const transport = new StreamableHTTPClientTransport(
-        new URL(initialization.url),
-        {
-          fetch: this.#fetch(),
-        }
-      );
+
+      let transport: Transport;
+      if (initialization.url.startsWith(BUILTIN_SERVER_PREFIX)) {
+        const builtInServerName = initialization.url.slice(
+          BUILTIN_SERVER_PREFIX.length
+        );
+        const server = McpBuiltInServerStore.instance.get(builtInServerName);
+        if (!ok(server)) return server;
+        const [clientTransport, serverTransport] =
+          InMemoryTransport.createLinkedPair();
+        await server.connect(serverTransport);
+        transport = clientTransport;
+      } else {
+        transport = new StreamableHTTPClientTransport(
+          new URL(initialization.url),
+          {
+            fetch: this.#fetch(),
+          }
+        );
+      }
 
       // TODO: Implement error handling and retry.
       await client.connect(transport);
@@ -232,7 +249,7 @@ class McpFileSystemBackend implements PersistentBackend {
     }
     switch (method) {
       case "connect": {
-        const client = await this.#initializeClient(id, data);
+        const client = await this.#initializeClient(data);
         if (!ok(client)) return client;
 
         const response = Promise.resolve(
