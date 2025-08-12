@@ -158,13 +158,18 @@ class ToolManager {
       const connector = new ConnectorManager({ path: instance });
       const tools = await connector.listTools();
       if (!ok(tools)) return tools;
+      const names: string[] = [];
       for (const tool of tools) {
         const { url, description } = tool;
+        const { title } = description;
+        if (title) {
+          names.push(title);
+        }
         this.#addOneTool(url, description, false, connector);
       }
       // Return empty string, which will inform the
       // substitution machinery to just reuse title.
-      return "";
+      return names.join(", ");
     }
 
     let description = (await describeGraph({
