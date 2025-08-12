@@ -13,6 +13,8 @@ import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { Runtime } from "./runtime/runtime.js";
 import { RuntimeFlagManager } from "@breadboard-ai/types";
 import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
+import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
+import { ValidTokenResult } from "@breadboard-ai/connection-client";
 import { Project } from "@breadboard-ai/shared-ui/state/types.js";
 
 /**
@@ -20,6 +22,8 @@ import { Project } from "@breadboard-ai/shared-ui/state/types.js";
  * are not intended for users - e.g. Drive debug info, publishing boards to the featured library and etc.
  */
 export class Admin {
+  readonly testing: TestingHarness;
+
   constructor(
     public readonly args: MainArguments,
     public readonly globalConfig: GlobalConfig,
@@ -28,6 +32,7 @@ export class Admin {
     if (window.location.hash?.includes("owner-tools")) {
       (window as unknown as Record<string, unknown>)["o"] = this;
     }
+    this.testing = new TestingHarness();
   }
 
   settingsHelper?: Types.SettingsHelper;
@@ -96,5 +101,40 @@ export class Admin {
         await this.#gdriveBoardServer().ops.updateCachesOneTime();
       },
     };
+  }
+}
+
+/** Facilitates mocks/fakes for UI tests. */
+export class TestingHarness {
+  #originalToken?: Function;
+
+  setupLoginBypass() {
+    if (
+      this.#originalToken &&
+      SigninAdapter.prototype.token === TestingHarness.#fakeToken
+    ) {
+      return "Login bypass was already installed";
+    }
+    if (!this.#originalToken) {
+      // Save the original token function to restore it later.
+      this.#originalToken = SigninAdapter.prototype.token;
+    }
+
+    SigninAdapter.prototype.token = TestingHarness.#fakeToken;
+    return "Login bypassed has been established";
+  }
+
+  static #fakeToken(): Promise<ValidTokenResult> {
+    return Promise.resolve({
+      state: "valid",
+      grant: {
+        client_id: "ui-tests",
+        access_token: "ui-test-only",
+        expires_in: 3600,
+        issue_time: Date.now(),
+        domain: undefined,
+        scopes: undefined,
+      },
+    });
   }
 }

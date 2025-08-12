@@ -8,10 +8,12 @@ import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { Runtime } from "../runtime/runtime";
 import { Tab, WorkspaceSelectionStateWithChangeId } from "../runtime/types";
 import type * as BreadboardUI from "@breadboard-ai/shared-ui";
+import { MutableGraphStore } from "@breadboard-ai/types";
 
 export interface KeyboardCommandDeps {
   runtime: Runtime;
   selectionState: WorkspaceSelectionStateWithChangeId | null;
+  graphStore: MutableGraphStore;
   tab: Tab | null;
   originalEvent: KeyboardEvent;
   pointerLocation: { x: number; y: number };

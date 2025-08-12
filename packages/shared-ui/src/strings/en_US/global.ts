@@ -202,6 +202,9 @@ export default {
   STATUS_LOGGED_OUT: {
     str: "Successfully signed out",
   },
+  STATUS_NEWER_VERSION: {
+    str: "This app has been updated by the owner with new published changes",
+  },
 
   // Errors.
   ERROR_UNABLE_TO_CREATE_PROJECT: {

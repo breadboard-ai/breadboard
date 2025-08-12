@@ -18,29 +18,21 @@ import {
 } from "@breadboard-ai/shared-ui/utils/action-tracker.js";
 import { discoverClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import * as Shell from "./shell.js";
+import {
+  parseUrl,
+  makeUrl,
+  LandingUrlInit,
+} from "@breadboard-ai/shared-ui/utils/urls.js";
+
+const parsedUrl = parseUrl(window.location.href) as LandingUrlInit;
+if (parsedUrl.page !== "landing") {
+  console.warn("unexpected parse of landing page url", parsedUrl);
+}
 
 const deploymentConfiguration = discoverClientDeploymentConfiguration();
 
 function redirect() {
-  // Redirect to the main page.
-  const redirectUrl = new URL("/", window.location.href);
-  redirectUrl.searchParams.set("redirect-from-landing", "true");
-
-  const currentUrl = new URL(window.location.href);
-  if (currentUrl.searchParams.has("flow")) {
-    redirectUrl.searchParams.set("flow", currentUrl.searchParams.get("flow")!);
-  }
-  if (currentUrl.searchParams.has("mode")) {
-    redirectUrl.searchParams.set("mode", currentUrl.searchParams.get("mode")!);
-  }
-  if (currentUrl.searchParams.has("shared")) {
-    redirectUrl.searchParams.set(
-      "shared",
-      currentUrl.searchParams.get("shared")!
-    );
-  }
-
-  window.location.href = redirectUrl.href;
+  window.location.href = makeUrl(parsedUrl.redirect);
 }
 
 if (deploymentConfiguration?.MEASUREMENT_ID) {
@@ -180,16 +172,21 @@ async function init() {
       scopesErrorDialog.close();
     });
 
-    const url = new URL(window.location.href);
-    if (url.searchParams.has("geo-restriction")) {
-      url.searchParams.delete("geo-restriction");
-      window.history.replaceState(null, "", url);
+    if (parsedUrl.geoRestriction) {
+      window.history.replaceState(
+        null,
+        "",
+        makeUrl({ ...parsedUrl, geoRestriction: false })
+      );
       showGeoRestrictionDialog();
-    } else if (url.searchParams.has("missing-scopes")) {
+    } else if (parsedUrl.missingScopes) {
       scopesErrorDialog.showModal();
-      url.searchParams.delete("missing-scopes");
-      window.history.replaceState(null, "", url);
-    } else if (url.searchParams.has("flow")) {
+      window.history.replaceState(
+        null,
+        "",
+        makeUrl({ ...parsedUrl, missingScopes: false })
+      );
+    } else if (parsedUrl.redirect.page === "graph") {
       sharedFlowDialogTitle.textContent = Strings.from("LABEL_SHARE");
       sharedFlowDialog.showModal();
       sharedFlowDialogSignInButton.addEventListener("click", () => {

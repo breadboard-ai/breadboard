@@ -70,6 +70,7 @@ import {
 import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 import { ref, createRef } from "lit/directives/ref.js";
 import { markdown } from "../../directives/markdown.js";
+import { makeUrl } from "../../utils/urls.js";
 
 function isHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -433,6 +434,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       }
     }
     const shareableGraphUrl = `drive:/${shareableGraphFileId}`;
+    const shareableGraphResourceKeyPromise = this.googleDriveClient
+      .getFileMetadata(shareableGraphFileId, { fields: ["resourceKey"] })
+      .then(({ resourceKey }) => resourceKey);
 
     // Clone because we are going to inline content below.
     const finalOutputValues = structuredClone(this.run.finalOutput);
@@ -552,13 +556,14 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return;
     }
 
-    const shareUrl = new URL(`/`, document.location.origin);
-    shareUrl.searchParams.set("flow", shareableGraphUrl);
-    shareUrl.searchParams.set("mode", "app");
-    shareUrl.searchParams.set("results", resultsFileId);
-    shareUrl.searchParams.set("shared", "true");
-
-    this.resultsUrl = shareUrl.href;
+    this.resultsUrl = makeUrl({
+      page: "graph",
+      mode: "app",
+      flow: shareableGraphUrl,
+      resourceKey: await shareableGraphResourceKeyPromise,
+      results: resultsFileId,
+      shared: true,
+    });
     unlockButton();
 
     this.dispatchEvent(new UnsnackbarEvent());

@@ -85,6 +85,7 @@ export type GraphInfo = {
   tags: GraphTag[];
   thumbnail: string | undefined;
   description: string;
+  latestSharedVersion?: string;
 };
 
 /** Defines api.ts:AppProperties as stored in the drive file */
@@ -93,6 +94,7 @@ export type StoredProperties = {
   description?: string;
   tags?: string;
   thumbnailUrl?: string;
+  latestSharedVersion?: string;
 };
 
 export type DriveChange = {
@@ -753,6 +755,7 @@ export function createProperties(properties: AppProperties): StoredProperties {
     description: properties.description,
     tags: JSON.stringify(properties.tags),
     thumbnailUrl: properties.thumbnailUrl, // undefined here means "do not update".
+    latestSharedVersion: properties.latestSharedVersion,
   };
 
   // Drive has limit of how long key+value can be in bytes in UTF8 wo we are truncating the values.

@@ -4,13 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { EventRoute } from "../types";
 
 export const ModeRoute: EventRoute<"host.modetoggle"> = {
   event: "host.modetoggle",
 
   async do({ runtime, originalEvent }) {
-    runtime.router.go(window.location.href, originalEvent.detail.mode);
+    const current = parseUrl(window.location.href);
+    if (current.page === "graph") {
+      const newMode = originalEvent.detail.mode;
+      if (newMode !== current.mode) {
+        runtime.router.go({ ...current, mode: newMode });
+      }
+    }
     return false;
   },
 };

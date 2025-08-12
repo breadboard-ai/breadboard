@@ -103,6 +103,7 @@ import { sandbox } from "./sandbox";
 import { MainArguments } from "./types/types";
 import { envFromFlags } from "./utils/env-from-flags";
 import { envFromSettings } from "./utils/env-from-settings";
+import { makeUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 
 type RenderValues = {
   canSave: boolean;
@@ -127,7 +128,7 @@ export class Main extends SignalWatcher(LitElement) {
   @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
   accessor settingsHelper: SettingsHelperImpl;
 
-  @provide({ context: BreadboardUI.Elements.tokenVendorContext })
+  @provide({ context: BreadboardUI.Elements.tokFrmendorContext })
   accessor tokenVendor: TokenVendor;
 
   @provide({ context: signinAdapterContext })
@@ -315,7 +316,15 @@ export class Main extends SignalWatcher(LitElement) {
         ))
       ) {
         await this.signinAdapter.signOut();
-        window.history.pushState(undefined, "", "/landing/?geo-restriction");
+        window.history.pushState(
+          undefined,
+          "",
+          makeUrl({
+            page: "landing",
+            geoRestriction: true,
+            redirect: { page: "home" },
+          })
+        );
         window.location.reload();
       }
     });
@@ -725,6 +734,20 @@ export class Main extends SignalWatcher(LitElement) {
     );
 
     this.#runtime.board.addEventListener(
+      Runtime.Events.RuntimeNewerSharedVersionEvent.eventName,
+      () => {
+        this.snackbar(
+          Strings.from("STATUS_NEWER_VERSION"),
+          BreadboardUI.Types.SnackType.INFORMATION,
+          [],
+          true,
+          globalThis.crypto.randomUUID(),
+          true
+        );
+      }
+    );
+
+    this.#runtime.board.addEventListener(
       Runtime.Events.RuntimeTabChangeEvent.eventName,
       async (evt: Runtime.Events.RuntimeTabChangeEvent) => {
         this.#tab = this.#runtime.board.currentTab;
@@ -1096,6 +1119,7 @@ export class Main extends SignalWatcher(LitElement) {
       originalEvent: evt,
       pointerLocation: this.#lastPointerPosition,
       settings: this.#settings,
+      graphStore: this.#graphStore,
       strings: Strings,
     } as const;
 
@@ -1123,7 +1147,7 @@ export class Main extends SignalWatcher(LitElement) {
         } else {
           notifyUserOnTimeout = setTimeout(
             notifyUser,
-            command.messageTimeout ?? 100
+            command.messageTimeout ?? 500
           );
         }
 
@@ -1155,9 +1179,11 @@ export class Main extends SignalWatcher(LitElement) {
           if (notifyUserOnTimeout) {
             clearTimeout(notifyUserOnTimeout);
           }
+          this.#uiState.blockingAction = false;
         }
 
         this.#handlingShortcut = false;
+        break;
       }
     }
   }
@@ -2020,7 +2046,7 @@ export class Main extends SignalWatcher(LitElement) {
         this.#embedHandler?.sendToEmbedder({
           type: "back_clicked",
         });
-        this.#runtime.router.go(null, this.#uiState.mode);
+        this.#runtime.router.go({ page: "home", mode: this.#uiState.mode });
       }}
       @bbsharerequested=${() => {
         if (!this.#canvasControllerRef.value) {

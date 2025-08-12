@@ -40,7 +40,6 @@ import { RefreshEvent, SaveEvent } from "./events.js";
 import {
   type DriveFileId,
   type GoogleDriveClient,
-  type ListFilesResponse,
   type NarrowedDriveFile,
 } from "../google-drive-client.js";
 import { GoogleDriveDataPartTransformer } from "./data-part-transformer.js";
@@ -243,6 +242,7 @@ class GoogleDriveBoardServer
         access,
         thumbnail: graphInfo.thumbnail,
         description: graphInfo.description,
+        latestSharedVersion: graphInfo.latestSharedVersion,
       } satisfies EntityMetadata,
     };
   }
@@ -301,6 +301,29 @@ class GoogleDriveBoardServer
       watch: false,
       preview: false,
     };
+  }
+
+  getLatestSharedVersion(url: URL): number {
+    const maybeProject = this.#projects.find(
+      (project) => project.url.href === url.href
+    );
+    if (!maybeProject) {
+      return -1;
+    }
+
+    if (!maybeProject.metadata.latestSharedVersion) {
+      return -1;
+    }
+
+    const currentVersion = Number.parseInt(
+      maybeProject.metadata.latestSharedVersion,
+      10
+    );
+    if (Number.isNaN(currentVersion)) {
+      return -1;
+    }
+
+    return currentVersion;
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {
