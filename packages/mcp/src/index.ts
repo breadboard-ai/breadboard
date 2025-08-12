@@ -5,3 +5,4 @@
  */
 
 export { McpFileSystemBackend } from "./mcp-fs-backend.js";
+export type * from "./types.js";

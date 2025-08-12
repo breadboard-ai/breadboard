@@ -35,7 +35,6 @@ import {
   hash,
   MutableGraphStore,
   PersistentBackend,
-  proxyFileSystemBackend,
   SerializedRun,
 } from "@google-labs/breadboard";
 import { provide } from "@lit/context";
@@ -63,15 +62,17 @@ import {
   IterateOnPromptMessage,
   ToggleIterateOnPromptMessage,
 } from "@breadboard-ai/embed";
+import { FileSystemPersistentBackend } from "@breadboard-ai/filesystem-board-server";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { McpFileSystemBackend } from "@breadboard-ai/mcp";
 import {
   GlobalConfig,
   globalConfigContext,
 } from "@breadboard-ai/shared-ui/contexts";
 import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
-import { uiStateContext } from "@breadboard-ai/shared-ui/contexts/ui-state.js";
 import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
 import { sideBoardRuntime } from "@breadboard-ai/shared-ui/contexts/side-board-runtime.js";
+import { uiStateContext } from "@breadboard-ai/shared-ui/contexts/ui-state.js";
 import { IterateOnPromptEvent } from "@breadboard-ai/shared-ui/events/events.js";
 import {
   AppCatalystApiClient,
@@ -100,9 +101,8 @@ import { eventRoutes } from "./event-routing/event-routing";
 import { RuntimeBoardServerChangeEvent } from "./runtime/events.js";
 import { sandbox } from "./sandbox";
 import { MainArguments } from "./types/types";
-import { envFromSettings } from "./utils/env-from-settings";
 import { envFromFlags } from "./utils/env-from-flags";
-import { FileSystemPersistentBackend } from "@breadboard-ai/filesystem-board-server";
+import { envFromSettings } from "./utils/env-from-settings";
 import { makeUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 
 type RenderValues = {
@@ -453,18 +453,15 @@ export class Main extends SignalWatcher(LitElement) {
           ],
           [
             "mcp",
-            proxyFileSystemBackend(
-              new URL(globalThis.location.origin),
-              async () => {
-                const token = await this.signinAdapter.token();
-                if (token.state === "valid") {
-                  return token.grant.access_token;
-                }
-                // This will fail, and that's okay. We'll get the "Unauthorized"
-                // error.
-                return "";
+            new McpFileSystemBackend(async () => {
+              const token = await this.signinAdapter.token();
+              if (token.state === "valid") {
+                return token.grant.access_token;
               }
-            ),
+              // This will fail, and that's okay. We'll get the "Unauthorized"
+              // error.
+              return "";
+            }),
           ],
         ])
       ),
