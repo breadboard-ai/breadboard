@@ -145,4 +145,24 @@ class ActionTracker {
     resetAnalyticsUserId();
     globalThis.gtag?.("event", "sign_in_success");
   }
+
+  static errorUnknown() {
+    globalThis.gtag?.("event", "error_unknown");
+  }
+
+  static errorConfig() {
+    globalThis.gtag?.("event", "error_config");
+  }
+
+  static errorRecitation() {
+    globalThis.gtag?.("event", "error_recitation");
+  }
+
+  static errorCapacity(medium: string) {
+    globalThis.gtag?.("event", "error_capacity", { medium });
+  }
+
+  static errorSafety() {
+    globalThis.gtag?.("event", "error_safety");
+  }
 }
