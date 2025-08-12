@@ -24,6 +24,7 @@ import { UI, UILoadState } from "../../state/types.js";
 import { consume } from "@lit/context";
 import { uiStateContext } from "../../contexts/ui-state.js";
 import { SignalWatcher } from "@lit-labs/signals";
+import { ActionTracker } from "../../utils/action-tracker.js";
 
 const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
 
@@ -715,6 +716,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
         }
 
         evt.target.disabled = true;
+        ActionTracker.remixApp(this.url, "editor");
         this.dispatchEvent(
           new StateEvent({
             eventType: "board.remix",

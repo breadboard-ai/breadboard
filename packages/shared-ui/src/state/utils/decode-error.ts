@@ -7,6 +7,7 @@
 import { RunErrorEvent } from "@breadboard-ai/types";
 import { ErrorMetadata, RunError } from "../types";
 import { formatError } from "../../utils/format-error";
+import { ActionTracker } from "../../utils/action-tracker";
 
 export { decodeError };
 
@@ -87,27 +88,32 @@ function decodeError(event: RunErrorEvent): RunError {
   switch (kind) {
     case "unknown":
     case "bug": {
+      ActionTracker.errorUnknown();
       return {
         message: `Something went wrong. ${TRY_AGAIN_POSTAMBLE}`,
         details: `${richError.message}\n\n${richError.details || ""}`,
       };
     }
     case "config": {
+      ActionTracker.errorConfig();
       return {
         message: richError.message,
       };
     }
     case "recitation": {
+      ActionTracker.errorRecitation();
       return {
         message: `The generated ${medium.singular} was too similar to existing content. ${NEW_PROMPT_POSTAMBLE}`,
       };
     }
     case "capacity": {
+      ActionTracker.errorCapacity(medium.singular);
       return {
         message: `No ${medium.plural} generated. Opal has limited quota and it was exceeded. ${TRY_LATER_POSTAMBLE}`,
       };
     }
     case "safety": {
+      ActionTracker.errorSafety();
       const preamble = `No ${medium.plural} generated`;
       const reasonDescriptions =
         reasons?.map((reason) => {
