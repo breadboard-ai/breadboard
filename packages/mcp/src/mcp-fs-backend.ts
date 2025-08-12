@@ -194,12 +194,10 @@ class McpFileSystemBackend implements PersistentBackend {
         await server.connect(serverTransport);
         transport = clientTransport;
       } else {
-        transport = new StreamableHTTPClientTransport(
-          new URL(initialization.url),
-          {
-            fetch: this.#fetch(),
-          }
-        );
+        const url = new URL(initialization.url);
+        transport = new StreamableHTTPClientTransport(url, {
+          fetch: this.#fetch(),
+        });
       }
 
       // TODO: Implement error handling and retry.
