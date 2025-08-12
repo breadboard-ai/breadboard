@@ -27,26 +27,37 @@ export interface BaseRequestOptions {
   signal?: AbortSignal;
 }
 
-export interface GetFileMetadataOptions extends BaseRequestOptions {
+export interface BaseWithFileFields extends BaseRequestOptions {
   fields?: Array<keyof File>;
+}
+
+export interface GetFileMetadataOptions extends BaseWithFileFields {
+  /**
+   * See
+   * https://developers.google.com/workspace/drive/api/guides/enable-shareddrives
+   *
+   * Note this is "true" by default for this client, despite being "false" by
+   * default in the Google Drive API.
+   */
+  supportsAllDrives?: boolean;
 }
 
 export interface ExportFileOptions extends BaseRequestOptions {
   mimeType: string;
 }
 
-export type CreateFileMetadataOptions = GetFileMetadataOptions;
+export type CreateFileMetadataOptions = BaseWithFileFields;
 
-export type CreateFileOptions = GetFileMetadataOptions;
+export type CreateFileOptions = BaseWithFileFields;
 
-export interface UpdateFileOptions extends GetFileMetadataOptions {
+export interface UpdateFileOptions extends BaseWithFileFields {
   addParents?: string[];
   removeParents?: string[];
 }
 
 export type UpdateFileMetadataOptions = UpdateFileOptions;
 
-export interface ListFilesOptions extends GetFileMetadataOptions {
+export interface ListFilesOptions extends BaseWithFileFields {
   scope?: "user" | "public";
   orderBy?: Array<{
     field: keyof File;
@@ -70,7 +81,9 @@ export interface ListChangesOptions extends BaseRequestOptions {
   includeCorpusRemovals?: boolean;
 }
 
-export type CopyFileOptions = GetFileMetadataOptions;
+export type CopyFileOptions = BaseWithFileFields;
+
+export type UploadFileMultipartOptions = BaseWithFileFields;
 
 export interface CreatePermissionOptions extends BaseRequestOptions {
   sendNotificationEmail: boolean;
@@ -340,6 +353,9 @@ export class GoogleDriveClient {
       `drive/v3/files/${encodeURIComponent(fileId.id)}`,
       apiUrl
     );
+    if (options?.supportsAllDrives ?? true) {
+      url.searchParams.set("supportsAllDrives", "true");
+    }
     if (options?.fields) {
       url.searchParams.set("fields", options.fields.join(","));
     }
@@ -709,7 +725,7 @@ export class GoogleDriveClient {
     return result;
   }
 
-  async #uploadFileMultipart<const T extends GetFileMetadataOptions>(
+  async #uploadFileMultipart<const T extends UploadFileMultipartOptions>(
     fileId: string | undefined,
     data: Blob | string,
     metadata: File | undefined,
