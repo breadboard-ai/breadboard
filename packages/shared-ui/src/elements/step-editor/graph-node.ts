@@ -709,9 +709,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                       if (this.nodeDescription) {
                         value = html`<p>${this.nodeDescription}</p>`;
                       } else {
-                        value = html`${unsafeHTML(
-                          `<p>${createTruncatedValue(port)}</p>`
-                        )}`;
+                        value = html`<p>${createTruncatedValue(port)}</p>`;
                       }
 
                       chiclets.push(

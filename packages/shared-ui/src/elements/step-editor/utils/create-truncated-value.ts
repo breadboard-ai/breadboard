@@ -14,7 +14,6 @@ import {
   Template,
 } from "@google-labs/breadboard";
 import {
-  escapeHTMLEntities,
   isConfigurableBehavior,
   isLLMContentArrayBehavior,
   isLLMContentBehavior,
@@ -112,11 +111,8 @@ export function createTruncatedValue(port: InspectablePort | null) {
     valStr = "";
   }
 
-  valStr = escapeHTMLEntities(valStr);
   const template = new Template(valStr);
-  template.substitute((part) => {
-    return part.title;
-  });
+  template.substitute((part) => part.title);
 
   valStr = template.renderable;
   if (valStr.length >= 35) {

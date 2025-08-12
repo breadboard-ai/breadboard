@@ -106,7 +106,7 @@
       "command": "cp -f src/sideboards/sideboards-bgl/*.bgl.json dist/sideboards/sideboards-bgl"
     },
     "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/",
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/**/*.test.js",
       "files": [],
       "output": [],
       "dependencies": [

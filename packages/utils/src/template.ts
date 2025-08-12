@@ -45,6 +45,7 @@ export type TemplatePartTransformCallback = (
 ) => TemplatePart;
 
 export type TemplatePartCallback = (part: TemplatePart) => string;
+export type TemplateStringPartCallback = (part: string) => string;
 
 export type ParsedTemplate = (string | TemplatePart)[];
 
@@ -153,15 +154,20 @@ class Template {
     return this.recombined;
   }
 
-  substitute(callback: TemplatePartCallback) {
+  substitute(
+    partCallback: TemplatePartCallback,
+    stringPartCallback?: TemplateStringPartCallback
+  ) {
     this.#renderableValue = "";
 
     let last;
     for (const part of this.#parsed) {
       if (typeof part === "string") {
-        this.#renderableValue += part;
+        this.#renderableValue += stringPartCallback
+          ? stringPartCallback(part)
+          : part;
       } else {
-        this.#renderableValue += callback(part);
+        this.#renderableValue += partCallback(part);
       }
       last = part;
     }
