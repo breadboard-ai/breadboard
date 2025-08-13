@@ -644,6 +644,10 @@ class FileSystemImpl implements FileSystem {
     }
   }
 
+  async onEndRun(): Promise<void> {
+    return this.#mnt.onEndRun?.();
+  }
+
   env(): FileSystemEntry[] {
     return [...this.#env.entries()].map(([path, file]) => {
       return {

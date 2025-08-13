@@ -6,20 +6,14 @@
 
 import {
   createRunObserver,
-  InputValues,
   InspectableRunObserver,
   InspectableRunSequenceEntry,
-  invokeGraph,
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
-  NodeConfiguration,
-  OutputValues,
-  RunArguments,
   RunStore,
 } from "@google-labs/breadboard";
 import {
-  GraphLoader,
   HarnessRunner,
   RunConfig,
   RunEndEvent,
@@ -36,7 +30,7 @@ import {
   RunSkipEvent,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
-import { Result, Tab, TabId } from "./types";
+import { Tab, TabId } from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { createPlanRunner, createRunner } from "@breadboard-ai/runtime";
 import { RuntimeBoardRunEvent } from "./events";
@@ -256,6 +250,7 @@ export class Run extends EventTarget {
     });
 
     harnessRunner.addEventListener("end", (evt: RunEndEvent) => {
+      config.fileSystem?.onEndRun?.();
       this.dispatchEvent(
         new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
@@ -315,47 +310,4 @@ export class Run extends EventTarget {
       kits: config.kits,
     };
   }
-
-  async invokeSideboard(
-    kits: Kit[],
-    url: string,
-    loader: GraphLoader,
-    inputs: InputValues,
-    settings: BreadboardUI.Types.SettingsStore | null
-  ): Promise<Result<OutputValues>> {
-    const loadResult = await loader.load(url, {
-      base: new URL(window.location.href),
-    });
-    if (!loadResult.success) {
-      return loadResult;
-    }
-    const args: RunArguments = {
-      kits: [sideboardSecretsKit(settings), ...kits],
-      loader: loader,
-      store: this.dataStore,
-    };
-    const result = await invokeGraph(loadResult, inputs, args);
-    return { success: true, result: result.config as NodeConfiguration };
-  }
-}
-
-function sideboardSecretsKit(
-  settings: BreadboardUI.Types.SettingsStore | null
-): Kit {
-  // TODO: Make this not a total hack like this.
-  const GEMINI_KEY = settings
-    ?.getSection(BreadboardUI.Types.SETTINGS_TYPE.SECRETS)
-    .items.get("GEMINI_KEY")?.value;
-  return {
-    url: import.meta.url,
-    handlers: {
-      secrets: async (inputs) => {
-        const keys = (inputs.keys || []) as string[];
-        if (keys.length === 1 && keys[0] === "GEMINI_KEY") {
-          return { GEMINI_KEY };
-        }
-        throw new Error(`Unknown keys: ${keys.join(", ")}`);
-      },
-    },
-  };
 }
