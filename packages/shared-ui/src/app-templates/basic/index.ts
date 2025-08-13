@@ -399,20 +399,27 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     }
 
     let shareableGraphFileId;
-    const metadata = await this.googleDriveClient.getFileMetadata(
+    const currentGraphMetadata = await this.googleDriveClient.getFileMetadata(
       currentGraphFileId,
-      { fields: ["properties"] }
+      { fields: ["properties", "capabilities"] }
     );
-    const isPublishedCopy =
-      metadata.properties?.[SHAREABLE_COPY_TO_MAIN_PROPERTY];
-    if (isPublishedCopy) {
+    const isShareableCopy =
+      !!currentGraphMetadata.properties?.[SHAREABLE_COPY_TO_MAIN_PROPERTY];
+    if (isShareableCopy) {
+      // The user is already consuming the shareable copy, so just use that for
+      // the results link.
       shareableGraphFileId = currentGraphFileId;
     } else {
-      const publishedCopyFileId =
-        metadata.properties?.[MAIN_TO_SHAREABLE_COPY_PROPERTY];
-      if (publishedCopyFileId) {
-        shareableGraphFileId = publishedCopyFileId;
-      } else {
+      const linkedShareableCopyFileId =
+        currentGraphMetadata.properties?.[MAIN_TO_SHAREABLE_COPY_PROPERTY];
+      if (linkedShareableCopyFileId) {
+        // The user is consuming the editable version, but it is shared, and we
+        // know the file id of the shareable version. Automatically substitute
+        // it in.
+        shareableGraphFileId = linkedShareableCopyFileId;
+      } else if (currentGraphMetadata.capabilities.canShare) {
+        // This graph isn't shared at all, but the current user could share it
+        // if they wanted to. Tell them to.
         this.dispatchEvent(
           new SnackbarEvent(
             crypto.randomUUID(),
@@ -431,9 +438,25 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         );
         unlockButton();
         return;
+      } else {
+        // An unusual case, but can happen when looking at older graphs.
+        //
+        // This is an unshared graph because it has neither of the Drive file
+        // metadata properties we expect all shared graphs to have. Normally
+        // this would happen when the owner of a graph is editing it and simply
+        // hasn't shared yet. However, since we also don't have the canShare
+        // capability, we know the current user isn't an owner or editor.
+        //
+        // The only way this could happen is if we're consuming a graph that
+        // last was shared with the older pre-launch sharing model that only
+        // used a single Drive file (before June 2025).
+        //
+        // Happily, can simply use the current file ID here, because if the
+        // current user can consume this older-style graph, then whoever they
+        // want to share their results with probably can too!
+        shareableGraphFileId = currentGraphFileId;
       }
     }
-    const shareableGraphUrl = `drive:/${shareableGraphFileId}`;
     const shareableGraphResourceKeyPromise = this.googleDriveClient
       .getFileMetadata(shareableGraphFileId, { fields: ["resourceKey"] })
       .then(({ resourceKey }) => resourceKey);
@@ -457,6 +480,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     }
 
     // Inline all content.
+    const shareableGraphUrl = `drive:/${shareableGraphFileId}`;
     await Promise.all(
       Object.entries(finalOutputValues).map(async ([key, value]) => {
         if (!isLLMContentArray(value)) {
