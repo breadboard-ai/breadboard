@@ -408,6 +408,7 @@ async function callAPI(
     await reporter.sendUpdate("Model Input", conformedBody, "upload");
 
     let $error: string = "Unknown error";
+    const maxRetries = retries;
     while (retries) {
       const result = await fetch({
         $metadata,
@@ -466,7 +467,11 @@ async function callAPI(
             })
           );
         }
-        if ("content" in candidate && candidate.content) {
+        if (
+          "content" in candidate &&
+          candidate.content &&
+          candidate.content.parts
+        ) {
           if (body.generationConfig?.responseMimeType === "application/json") {
             candidate.content = textToJson(candidate.content);
           }
@@ -478,11 +483,16 @@ async function callAPI(
           return outputs;
         }
         await reporter.sendUpdate("Model response", outputs, "warning");
-        if (candidate.finishReason) {
+        if (candidate.finishReason && candidate.finishReason !== "STOP") {
           return reporter.sendError(
             errFromFinishReason(candidate.finishReason, model)
           );
         }
+        await reporter.sendError(
+          err(
+            `Did not get a useful response, retrying (${maxRetries - retries + 1}/${maxRetries})`
+          )
+        );
       }
       retries--;
     }
