@@ -130,4 +130,10 @@ class ComposedPersistentBackend implements PersistentBackend {
     }
     return sourceBackend.move(graphUrl, source, destination);
   }
+
+  async onEndRun(): Promise<void> {
+    for (const backend of this.backends.values()) {
+      await backend.onEndRun?.();
+    }
+  }
 }

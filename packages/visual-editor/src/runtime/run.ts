@@ -250,6 +250,7 @@ export class Run extends EventTarget {
     });
 
     harnessRunner.addEventListener("end", (evt: RunEndEvent) => {
+      config.fileSystem?.onEndRun?.();
       this.dispatchEvent(
         new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );

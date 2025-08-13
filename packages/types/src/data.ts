@@ -386,6 +386,7 @@ export type PersistentBackend = {
     source: FileSystemPath,
     destination: FileSystemPath
   ): Promise<FileSystemWriteResult>;
+  onEndRun?(): Promise<void>;
 };
 
 export type PersistentBlobHandle = `files:${UUID}`;
@@ -516,4 +517,9 @@ export type FileSystem = {
    * Provides a quick way to access env entries.
    */
   env(): FileSystemEntry[];
+
+  /**
+   * Signals to the FileSystem that a run has ended.
+   */
+  onEndRun?(): Promise<void>;
 };
