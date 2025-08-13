@@ -21,7 +21,11 @@ class MarkdownDirective extends Directive {
     highlight: (str, lang) => {
       switch (lang) {
         case "html": {
-          return `<iframe class="html-view" srcdoc="${Sanitizer.escape(str)}" sandbox></iframe>`;
+          const iframe = document.createElement("iframe");
+          iframe.classList.add("html-view");
+          iframe.srcdoc = str;
+          iframe.sandbox = "";
+          return iframe.innerHTML;
         }
 
         default:
