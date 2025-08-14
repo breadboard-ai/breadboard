@@ -10,7 +10,7 @@ import { Template } from "../../src/template.js";
 import { JSDOM } from "jsdom";
 import { type Sanitizer as typeSanitizer } from "../../src/index.js";
 
-suite("escape", () => {
+suite("escapeNodeText", () => {
   let Sanitizer: typeof typeSanitizer;
   beforeEach(async () => {
     const dom = new JSDOM("<!doctype html><html><body></body></html>");
@@ -21,70 +21,73 @@ suite("escape", () => {
   });
 
   test("handles empty values", () => {
-    assert.equal(Sanitizer.escape(null), "");
-    assert.equal(Sanitizer.escape(undefined), "");
-    assert.equal(Sanitizer.escape(""), "");
+    assert.equal(Sanitizer.escapeNodeText(null), "");
+    assert.equal(Sanitizer.escapeNodeText(undefined), "");
+    assert.equal(Sanitizer.escapeNodeText(""), "");
   });
 
   test("escapes content", () => {
     assert.equal(
-      Sanitizer.escape("<script></script>"),
+      Sanitizer.escapeNodeText("<script></script>"),
       "&lt;script&gt;&lt;/script&gt;"
     );
 
     assert.equal(
-      Sanitizer.escape("\x3Cscript\x3E</script>"),
+      Sanitizer.escapeNodeText("\x3Cscript\x3E</script>"),
       "&lt;script&gt;&lt;/script&gt;"
     );
 
     assert.equal(
-      Sanitizer.escape('<img src="foo" onerror=prompt(domain)>'),
+      Sanitizer.escapeNodeText('<img src="foo" onerror=prompt(domain)>'),
       `&lt;img src="foo" onerror=prompt(domain)&gt;`
     );
   });
 
   test("handles standalone & chars", () => {
-    assert.equal(Sanitizer.escape("Morecambe & Wise"), "Morecambe &amp; Wise");
+    assert.equal(
+      Sanitizer.escapeNodeText("Morecambe & Wise"),
+      "Morecambe &amp; Wise"
+    );
   });
 
   test.only("double-encodes already-encoded chars", () => {
     assert.equal(
-      Sanitizer.escape("Morecambe &amp; Wise"),
+      Sanitizer.escapeNodeText("Morecambe &amp; Wise"),
       "Morecambe &amp;amp; Wise"
     );
 
-    assert.equal(Sanitizer.escape("10 &gt; 8"), "10 &amp;gt; 8");
-    assert.equal(Sanitizer.escape("8 &lt; 18"), "8 &amp;lt; 18");
+    assert.equal(Sanitizer.escapeNodeText("10 &gt; 8"), "10 &amp;gt; 8");
+    assert.equal(Sanitizer.escapeNodeText("8 &lt; 18"), "8 &amp;lt; 18");
     assert.equal(
-      Sanitizer.escape("They said &quot;Hello&quot;"),
+      Sanitizer.escapeNodeText("They said &quot;Hello&quot;"),
       "They said &amp;quot;Hello&amp;quot;"
     );
     assert.equal(
-      Sanitizer.escape("They said &#39;Hello&#39;"),
+      Sanitizer.escapeNodeText("They said &#39;Hello&#39;"),
       "They said &amp;#39;Hello&amp;#39;"
     );
     assert.equal(
-      Sanitizer.escape("&amp;&lt;&gt;&#39;&quot;"),
+      Sanitizer.escapeNodeText("&amp;&lt;&gt;&#39;&quot;"),
       "&amp;amp;&amp;lt;&amp;gt;&amp;#39;&amp;quot;"
     );
 
     assert.equal(
-      Sanitizer.escape("Morecambe &amp; Wise"),
+      Sanitizer.escapeNodeText("Morecambe &amp; Wise"),
       "Morecambe &amp;amp; Wise"
     );
 
-    assert.equal(Sanitizer.escape("10 &gt; 8"), "10 &amp;gt; 8");
-    assert.equal(Sanitizer.escape("8 &lt; 18"), "8 &amp;lt; 18");
+    assert.equal(Sanitizer.escapeNodeText("10 &gt; 8"), "10 &amp;gt; 8");
+    assert.equal(Sanitizer.escapeNodeText("8 &lt; 18"), "8 &amp;lt; 18");
     assert.equal(
-      Sanitizer.escape("They said &quot;Hello&quot;"),
+      Sanitizer.escapeNodeText("They said &quot;Hello&quot;"),
       "They said &amp;quot;Hello&amp;quot;"
     );
     assert.equal(
-      Sanitizer.escape("They said &#39;Hello&#39;"),
+      Sanitizer.escapeNodeText("They said &#39;Hello&#39;"),
       "They said &amp;#39;Hello&amp;#39;"
     );
     assert.equal(
-      Sanitizer.escape("&amp;&lt;&gt;&#39;&quot;"),
+      Sanitizer.escapeNodeText("&amp;&lt;&gt;&#39;&quot;"),
       "&amp;amp;&amp;lt;&amp;gt;&amp;#39;&amp;quot;"
     );
   });
@@ -105,7 +108,7 @@ suite("escape", () => {
 
     tmpl.substitute(
       (part) => part.title,
-      (part) => Sanitizer.escape(part)
+      (part) => Sanitizer.escapeNodeText(part)
     );
     assert.strictEqual(
       tmpl.renderable,
@@ -125,7 +128,7 @@ suite("escape", () => {
   });
 });
 
-suite("unescape", () => {
+suite("unescapeNodeText", () => {
   let Sanitizer: typeof typeSanitizer;
   beforeEach(async () => {
     const dom = new JSDOM("<!doctype html><html><body></body></html>");
@@ -136,45 +139,50 @@ suite("unescape", () => {
   });
 
   test("handles empty values", () => {
-    assert.equal(Sanitizer.unescape(null), "");
-    assert.equal(Sanitizer.unescape(undefined), "");
-    assert.equal(Sanitizer.unescape(""), "");
+    assert.equal(Sanitizer.unescapeNodeText(null), "");
+    assert.equal(Sanitizer.unescapeNodeText(undefined), "");
+    assert.equal(Sanitizer.unescapeNodeText(""), "");
   });
 
   test("unescapes content", () => {
     assert.equal(
-      Sanitizer.unescape("&lt;script&gt;&lt;/script&gt;"),
+      Sanitizer.unescapeNodeText("&lt;script&gt;&lt;/script&gt;"),
       "<script></script>"
     );
   });
 
   test("unescapes double-escaped content", () => {
     assert.equal(
-      Sanitizer.unescape("&amp;amp; &amp;lt; &amp;gt; &amp;quot; &amp;#39;"),
+      Sanitizer.unescapeNodeText(
+        "&amp;amp; &amp;lt; &amp;gt; &amp;quot; &amp;#39;"
+      ),
       "&amp; &lt; &gt; &quot; &#39;"
     );
   });
 
   test("unescape does not strip HTML", () => {
-    assert.equal(Sanitizer.unescape("<p>hello</p>"), "<p>hello</p>");
+    assert.equal(Sanitizer.unescapeNodeText("<p>hello</p>"), "<p>hello</p>");
   });
 
   test("unescapes more complicated values", () => {
     assert.equal(
-      Sanitizer.unescape("Morecambe &amp; Wise"),
+      Sanitizer.unescapeNodeText("Morecambe &amp; Wise"),
       "Morecambe & Wise"
     );
 
-    assert.equal(Sanitizer.unescape("10 &gt; 8"), "10 > 8");
-    assert.equal(Sanitizer.unescape("8 &lt; 18"), "8 < 18");
+    assert.equal(Sanitizer.unescapeNodeText("10 &gt; 8"), "10 > 8");
+    assert.equal(Sanitizer.unescapeNodeText("8 &lt; 18"), "8 < 18");
     assert.equal(
-      Sanitizer.unescape("They said &quot;Hello&quot;"),
+      Sanitizer.unescapeNodeText("They said &quot;Hello&quot;"),
       'They said "Hello"'
     );
     assert.equal(
-      Sanitizer.unescape("They said &#39;Hello&#39;"),
+      Sanitizer.unescapeNodeText("They said &#39;Hello&#39;"),
       "They said 'Hello'"
     );
-    assert.equal(Sanitizer.unescape("&amp;&lt;&gt;&#39;&quot;"), "&<>'\"");
+    assert.equal(
+      Sanitizer.unescapeNodeText("&amp;&lt;&gt;&#39;&quot;"),
+      "&<>'\""
+    );
   });
 });

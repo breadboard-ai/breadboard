@@ -70,7 +70,6 @@ import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-
 import { ref, createRef } from "lit/directives/ref.js";
 import { markdown } from "../../directives/markdown.js";
 import { makeUrl } from "../../utils/urls.js";
-import { Sanitizer } from "@breadboard-ai/utils";
 
 function isHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -243,15 +242,14 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         );
       }
 
-      activityContents = html`
-        ${Array.from(errors.values()).map(() => {
-          return html`<section class="error">
-            <h1 class="w-700 sans-flex round md-headline-large">
-              Oops, something went wrong
-            </h1>
-          </section>`;
-        })}
-      `;
+      activityContents = html`§
+      ${Array.from(errors.values()).map(() => {
+        return html`<section class="error">
+          <h1 class="w-700 sans-flex round md-headline-large">
+            Oops, something went wrong
+          </h1>
+        </section>`;
+      })} `;
     } else {
       const current = this.run.app.current;
       if (!current) return nothing;

@@ -29,7 +29,7 @@ class MarkdownDirective extends Directive {
         }
 
         default:
-          return Sanitizer.escape(str);
+          return Sanitizer.escapeNodeText(str);
       }
     },
   });

@@ -12,14 +12,14 @@ import { html, render } from "lit";
  * value is surrounded by double-quotes, and is unsafe otherwise (because the
  * value could break out of the attribute value and e.g. add another attribute).
  */
-export function escape(str: string | null | undefined) {
+export function escapeNodeText(str: string | null | undefined) {
   const frag = document.createElement("div");
   render(html`${str}`, frag);
 
   return frag.innerHTML.replaceAll(/<!--([^-]*)-->/gim, "");
 }
 
-export function unescape(str: string | null | undefined) {
+export function unescapeNodeText(str: string | null | undefined) {
   if (!str) {
     return "";
   }
