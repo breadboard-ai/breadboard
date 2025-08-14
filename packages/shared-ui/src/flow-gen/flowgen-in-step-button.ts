@@ -26,6 +26,7 @@ import {
   type FlowGenerator,
 } from "./flow-generator.js";
 import { colorsLight } from "../styles/host/colors-light.js";
+import { type } from "../styles/host/type.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -43,6 +44,7 @@ export class FlowgenInStepButton extends LitElement {
     multiLineInputStyles,
     icons,
     colorsLight,
+    type,
     css`
       :host {
         position: relative;
@@ -82,7 +84,7 @@ export class FlowgenInStepButton extends LitElement {
         right: 0;
         width: calc(100cqw - var(--bb-grid-size-16));
         max-width: 320px;
-        border-radius: var(--bb-grid-size-8);
+        border-radius: var(--bb-grid-size-9);
         padding: var(--bb-grid-size-3);
         background: var(--ui-flowgen-step);
       }
@@ -101,9 +103,10 @@ export class FlowgenInStepButton extends LitElement {
       #panel-top {
         display: flex;
         align-items: center;
-        border-radius: var(--bb-grid-size-5);
+        border-radius: var(--bb-grid-size-7);
         border: 1px solid transparent;
         background: var(--bb-neutral-0);
+        padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
 
         bb-speech-to-text {
           --button-size: var(--bb-grid-size-8);
@@ -115,21 +118,19 @@ export class FlowgenInStepButton extends LitElement {
             rgba(210, 212, 237, 0.4) 69%,
             rgba(230, 217, 231, 0) 99%
           );
-          margin-left: 2px;
-          margin-right: var(--bb-grid-size);
+          margin-right: var(--bb-grid-size-2);
         }
 
         & textarea {
-          min-height: var(--bb-grid-size-9);
+          max-height: 4lh;
+          scrollbar-width: none;
           background: transparent;
           border: none;
           outline: none;
           field-sizing: content;
           box-sizing: border-box;
-          padding: var(--bb-grid-size-2) var(--bb-grid-size-2)
-            var(--bb-grid-size-2) 0;
-          font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-            var(--bb-font-family);
+          padding: 0;
+          margin: var(--bb-grid-size-2);
         }
 
         &:focus-within {
@@ -139,21 +140,26 @@ export class FlowgenInStepButton extends LitElement {
         & #submit-button {
           display: flex;
           align-items: center;
-
           box-shadow: none;
           border: none;
-          margin: 0 8px;
+          margin: 0;
           padding: 0;
           background-color: transparent;
-          color: var(--bb-ui-500);
+          color: var(--n-70);
 
-          & .g-icon::before {
-            content: "send_spark";
+          & .g-icon {
+            font-size: 30px;
+            width: 30px;
+            height: 30px;
+
+            &::before {
+              content: "send";
+            }
           }
         }
 
         &:has(textarea:invalid) #submit-button .g-icon::before {
-          content: "pen_spark";
+          color: var(--n-90);
         }
       }
 
@@ -188,8 +194,8 @@ export class FlowgenInStepButton extends LitElement {
       }
 
       #error {
-        color: var(--bb-error-color);
-        margin-top: 12px;
+        color: var(--e-40);
+        margin: var(--bb-grid-size-2);
         overflow: auto;
       }
     `,
@@ -251,6 +257,17 @@ export class FlowgenInStepButton extends LitElement {
     return html`
       <div id="panel" class="${this.#state.status}">
         <div id="panel-top">
+          <textarea
+            id="description-input"
+            class="bb-multi-line-input sans-flex md-body-medium round"
+            type="text"
+            .placeholder=${this.label}
+            required
+            @keydown=${this.#onInputKeydown}
+            ${ref(this.#descriptionInput)}
+            ?disabled=${this.#state.status === "generating"}
+          ></textarea>
+
           <bb-speech-to-text
             @bbutterance=${(evt: UtteranceEvent) => {
               if (!this.#descriptionInput.value) {
@@ -262,19 +279,9 @@ export class FlowgenInStepButton extends LitElement {
                 .join("");
             }}
           ></bb-speech-to-text>
-          <textarea
-            id="description-input"
-            class="bb-multi-line-input"
-            type="text"
-            .placeholder=${this.label}
-            required
-            @keydown=${this.#onInputKeydown}
-            ${ref(this.#descriptionInput)}
-            ?disabled=${this.#state.status === "generating"}
-          ></textarea>
 
           <button id="submit-button" @click=${this.#onClickSubmit}>
-            <span class="g-icon"></span>
+            <span class="g-icon filled round"></span>
           </button>
         </div>
 
@@ -302,7 +309,9 @@ export class FlowgenInStepButton extends LitElement {
     } else {
       message = String(error);
     }
-    return html`<div id="error">${message}</div>`;
+    return html`<div id="error" class="sans-flex round md-body-small">
+      ${message}
+    </div>`;
   }
 
   #onClickEditButton() {
