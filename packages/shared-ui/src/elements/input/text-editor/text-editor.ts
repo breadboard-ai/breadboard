@@ -94,7 +94,7 @@ export class TextEditor extends LitElement {
       (part) => {
         return chicletHtml(part, this.projectState, this.subGraphId);
       },
-      (part) => Sanitizer.escape(part)
+      (part) => Sanitizer.escapeNodeText(part)
     );
     this.#value = template.raw;
     this.#renderableValue = template.renderable;
@@ -379,7 +379,7 @@ export class TextEditor extends LitElement {
       const template = new Template(`{${escapedValue}}`);
       template.substitute(
         (part) => chicletHtml(part, this.projectState, this.subGraphId),
-        (part) => Sanitizer.escape(part)
+        (part) => Sanitizer.escapeNodeText(part)
       );
 
       const fragment = document.createDocumentFragment();
@@ -787,7 +787,7 @@ export class TextEditor extends LitElement {
     const template = new Template(escapedValue);
     template.substitute(
       (part) => chicletHtml(part, this.projectState, this.subGraphId),
-      (part) => Sanitizer.escape(part)
+      (part) => Sanitizer.escapeNodeText(part)
     );
 
     const fragment = document.createDocumentFragment();
