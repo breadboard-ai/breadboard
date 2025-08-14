@@ -8,10 +8,12 @@ import { McpProxyRequest } from "@breadboard-ai/mcp";
 import cors from "cors";
 import { Request, Response, Router } from "express";
 import { Readable } from "node:stream";
+import picomatch from "picomatch";
 
 export { createMcpProxyHandler };
 
-function createMcpProxyHandler() {
+function createMcpProxyHandler(allowList: string[] = []) {
+  const isAllowed = picomatch(allowList);
   const router = Router();
   router.use(
     cors({
@@ -23,6 +25,15 @@ function createMcpProxyHandler() {
   router.use(getUserCredentials());
   router.post("/", requireAuth(), async (req: Request, res: Response) => {
     const request = req.body as McpProxyRequest;
+    if (!isAllowed(request.url)) {
+      res
+        .status(500)
+        .send(
+          `MCP Server "${request.url}" is not allowed.\nMCP_SERVER_NOT_ALLOWED`
+        );
+      return;
+    }
+
     // TODO: Validate the request.
     try {
       const response = await fetch(request.url, request.init);

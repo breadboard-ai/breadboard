@@ -106,7 +106,10 @@ server.use(
   })
 );
 
-server.use("/api/mcp-proxy", createMcpProxyHandler());
+server.use(
+  "/api/mcp-proxy",
+  createMcpProxyHandler(serverConfig.MCP_SERVER_ALLOW_LIST)
+);
 
 ViteExpress.config({
   transformer: (html: string, req: Request) => {
