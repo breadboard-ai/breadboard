@@ -6,8 +6,7 @@
 
 /// <reference types="@types/gapi.client.drive-v3" />
 
-// import { retryableFetch } from "./board-server/utils.js";
-const retryableFetch = fetch;
+import { retryableFetch } from "./board-server/utils.js";
 
 type File = gapi.client.drive.File;
 type Permission = gapi.client.drive.Permission;
