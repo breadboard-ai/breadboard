@@ -231,7 +231,7 @@ async function executeStep(
     if (!response) {
       return await reporter.sendError(
         err(
-          `Unexpected response from the backend: ${JSON.stringify(response)}`,
+          `Unexpected response from the backend: ${JSON.stringify(fetchResult)}`,
           { origin: "server", kind: "bug" }
         )
       );
