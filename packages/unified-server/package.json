@@ -166,6 +166,7 @@
     "@types/express": "^5.0.1",
     "@types/gtag.js": "^0.0.20",
     "@types/node": "^22.0.0",
+    "@types/picomatch": "^4.0.2",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.34.1",
     "dotenv": "^16.4.7",
@@ -186,6 +187,7 @@
     "@google-labs/breadboard": "0.35.0",
     "express": "^4.21.2",
     "google-auth-library": "^10.1.0",
+    "picomatch": "^4.0.3",
     "vite": "^7.0.5",
     "vite-express": "^0.21.1"
   },

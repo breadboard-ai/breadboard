@@ -54,4 +54,9 @@ export type ServerDeploymentConfiguration = {
    * The Drive Id of a folder containing featured gallery items
    */
   GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID?: string;
+  /**
+   * The list of all MCP Servers allowed by the mcp proxy. Glob patterns
+   * accepted.
+   */
+  MCP_SERVER_ALLOW_LIST?: string[];
 };

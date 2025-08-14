@@ -5,14 +5,20 @@
 import type { ListToolResult } from "../a2/connector-manager";
 import { createTools } from "../a2/connector-manager";
 import { StreamableReporter } from "../a2/output";
-import { ok } from "../a2/utils";
+import { err, ErrorWithMetadata, ok } from "../a2/utils";
 import { McpClient } from "./mcp-client";
 
 export { invoke as default, describe };
 
+const NOT_ALLOWED_MARKER = "\nMCP_SERVER_NOT_ALLOWED";
+
 type Configuration = {
   endpoint: string;
 };
+
+function isNotAllowed(error: ErrorWithMetadata) {
+  return error.$error.includes(NOT_ALLOWED_MARKER);
+}
 
 const { invoke, describe } = createTools<Configuration>({
   title: "MCP Server",
@@ -40,6 +46,11 @@ const { invoke, describe } = createTools<Configuration>({
 
       const listingTools = await client.listTools();
       if (!ok(listingTools)) {
+        if (isNotAllowed(listingTools)) {
+          return reporter.sendError(
+            err(`"${info.configuration.endpoint} is not an allowed MCP Server`)
+          );
+        }
         return reporter.sendError(listingTools);
       }
       await reporter.sendUpdate(
@@ -87,6 +98,12 @@ const { invoke, describe } = createTools<Configuration>({
         arguments: args,
       });
       if (!ok(callingTool)) {
+        if (isNotAllowed(callingTool)) {
+          return reporter.sendError(
+            err(`"${info.configuration.endpoint} is not an allowed MCP Server`)
+          );
+        }
+
         return reporter.sendError(callingTool);
       }
       await reporter.sendUpdate("MCP Server Response", callingTool, "download");
