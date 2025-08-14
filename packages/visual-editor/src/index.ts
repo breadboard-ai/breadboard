@@ -2024,6 +2024,7 @@ export class Main extends SignalWatcher(LitElement) {
 
   #renderHeader(renderValues: RenderValues) {
     return html`<bb-ve-header
+      ?inert=${renderValues.showingOverlay || this.#uiState.blockingAction}
       .signinAdapter=${this.signinAdapter}
       .hasActiveTab=${this.#tab !== null}
       .tabTitle=${this.#tab?.graph?.title ?? null}
