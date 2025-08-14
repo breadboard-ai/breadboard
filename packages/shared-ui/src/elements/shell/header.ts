@@ -706,16 +706,11 @@ export class VEHeader extends SignalWatcher(LitElement) {
     return html`<button
       id="remix"
       class="sans-flex"
-      @click=${(evt: Event) => {
-        if (!(evt.target instanceof HTMLButtonElement)) {
-          return;
-        }
-
+      @click=${() => {
         if (!this.url) {
           return;
         }
 
-        evt.target.disabled = true;
         ActionTracker.remixApp(this.url, "editor");
         this.dispatchEvent(
           new StateEvent({

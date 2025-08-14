@@ -13,7 +13,7 @@ import {
   InputValues,
 } from "@google-labs/breadboard";
 import { addNodeProxyServerConfig } from "../../data/node-proxy-servers";
-import { RuntimeUnsnackbarEvent } from "../../runtime/events";
+import { RuntimeSnackbarEvent } from "../../runtime/events";
 
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
@@ -216,16 +216,30 @@ export const RemixRoute: EventRoute<"board.remix"> = {
   event: "board.remix",
 
   async do(deps) {
-    const { runtime, originalEvent } = deps;
+    const { runtime, originalEvent, uiState } = deps;
+    uiState.blockingAction = true;
+
+    // Immediately acknowledge the user's action with a snackbar. This will be
+    // superseded by another snackbar in the "board.create" route, but if it
+    // takes any amount of time to get the latest version of the graph from the
+    // store the user will at least have this acknowledgment.
+    runtime.dispatchEvent(
+      new RuntimeSnackbarEvent(
+        globalThis.crypto.randomUUID(),
+        originalEvent.detail.messages.start,
+        BreadboardUI.Types.SnackType.PENDING,
+        [],
+        true,
+        true // Replace existing snackbars.
+      )
+    );
+
     const graphStore = runtime.board.getGraphStore();
     const addResult = graphStore.addByURL(originalEvent.detail.url, [], {});
     const graph = structuredClone(
       (await graphStore.getLatest(addResult.mutable)).graph
     );
     graph.title = `${graph.title ?? "Untitled"} Remix`;
-
-    // Remove any snackbars.
-    runtime.dispatchEvent(new RuntimeUnsnackbarEvent());
 
     await CreateRoute.do({
       ...deps,
@@ -236,6 +250,8 @@ export const RemixRoute: EventRoute<"board.remix"> = {
         messages: originalEvent.detail.messages,
       }),
     });
+
+    uiState.blockingAction = false;
 
     return false;
   },
