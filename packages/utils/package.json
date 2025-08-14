@@ -116,7 +116,7 @@
     "@google-labs/tsconfig": "^0.0.2",
     "@types/node": "^22.0.0",
     "@types/jsdom": "^21.1.7",
-    "@typescript-eslint/eslint-plugin": "^8.35.0",
+    "@typescript-eslint/eslint-plugin": "^8.39.1",
     "@typescript-eslint/parser": "^8.34.1",
     "ava": "6.4.0",
     "jsdom": "^26.1.0",
