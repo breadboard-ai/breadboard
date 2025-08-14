@@ -6,7 +6,6 @@
 
 import type {
   GraphDescriptor,
-  LLMContent,
   NodeConfiguration,
   NodeDescriptor,
 } from "@breadboard-ai/types";
@@ -77,7 +76,9 @@ export class FlowGenerator {
         format: "FORMAT_GEMINI_FLOWS",
       },
     };
-    if (context?.flow) {
+    // Check to see if there's an existing flow with nodes and if so,
+    // add it to the input. Otherwise, presume that this is a brand new flow.
+    if (context?.flow && context.flow.nodes.length > 0) {
       const stringifiedFlow = JSON.stringify(context.flow);
       request.messages.push({
         mimetype: "text/breadboard",
