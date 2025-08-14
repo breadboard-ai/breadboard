@@ -13,7 +13,6 @@ import {
   isTextCapabilityPart,
   Template,
 } from "@google-labs/breadboard";
-import { escapeHTMLEntities } from "../../../utils";
 import { getAssetType } from "../../../utils/mime-type";
 import { html, HTMLTemplateResult, nothing } from "lit";
 import { expandChiclet } from "../../../utils/expand-chiclet";
@@ -67,7 +66,6 @@ export function createChiclets(
     valStr = "";
   }
 
-  valStr = escapeHTMLEntities(valStr);
   const chiclets: HTMLTemplateResult[] = [];
   const template = new Template(valStr);
   template.placeholders.forEach((part) => {
@@ -93,7 +91,7 @@ export function createChiclets(
             ></span>`
           : nothing}
         <span>${Template.preamble(part)}</span
-        ><span class="visible">${title}</span
+        ><span class="visible-after" data-label=${title}>${title}</span
         ><span>${Template.postamble()}</span></label
       >`
     );

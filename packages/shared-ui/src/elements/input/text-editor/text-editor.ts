@@ -14,11 +14,12 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { FastAccessSelectEvent } from "../../../events/events";
 import { Project } from "../../../state";
 import { FastAccessMenu } from "../../elements";
-import { escapeHTMLEntities } from "../../../utils";
+import { Sanitizer } from "@breadboard-ai/utils";
 import { styles as ChicletStyles } from "../../../styles/chiclet.js";
 import { getAssetType } from "../../../utils/mime-type";
 import { icons } from "../../../styles/icons";
 import { expandChiclet } from "../../../utils/expand-chiclet";
+import { jsonStringify } from "../../../utils/json-stringify";
 
 function chicletHtml(
   part: TemplatePart,
@@ -33,18 +34,68 @@ function chicletHtml(
     subGraphId
   );
 
-  return `<label class="chiclet ${metadataTags ? metadataTags.join(" ") : ""} ${type} ${assetType} ${invalid ? "invalid" : ""}" contenteditable="false">${metadataIcon ? `<span class="g-icon filled round" data-icon="${metadataIcon}"></span>` : ""}<span>${Template.preamble(part)}</span><span class="visible">${title}</span><span>${Template.postamble()}</span></label>`;
+  const label = document.createElement("label");
+  label.classList.add("chiclet");
+
+  if (metadataTags) {
+    for (const tag of metadataTags) {
+      // Ensure we don't have any non-word chars in the tags.
+      label.classList.add(tag.replace(/\W/gim, ""));
+    }
+  }
+
+  if (type) {
+    // Ensure we don't have any non-word chars in the type.
+    label.classList.add(type.replace(/\W/gim, ""));
+  }
+
+  if (assetType) {
+    // Ensure we don't have any non-word chars in the assetType.
+    label.classList.add(assetType.replace(/\W/gim, ""));
+  }
+
+  if (invalid) {
+    label.classList.add("invalid");
+  }
+
+  label.setAttribute("contenteditable", "false");
+
+  if (metadataIcon) {
+    const icon = document.createElement("span");
+    icon.classList.add("g-icon", "filled", "round");
+    icon.dataset.icon = metadataIcon;
+
+    label.appendChild(icon);
+  }
+
+  const preambleEl = document.createElement("span");
+  const titleEl = document.createElement("span");
+  const postambleEl = document.createElement("span");
+
+  preambleEl.textContent = Template.preamble(part);
+  titleEl.textContent = jsonStringify(title);
+  titleEl.classList.add("visible-after");
+  titleEl.dataset.label = title;
+  postambleEl.textContent = Template.postamble();
+
+  label.appendChild(preambleEl);
+  label.appendChild(titleEl);
+  label.appendChild(postambleEl);
+
+  return label.outerHTML;
 }
 
 @customElement("bb-text-editor")
 export class TextEditor extends LitElement {
   @property()
   set value(value: string) {
-    const escapedValue = escapeHTMLEntities(value);
-    const template = new Template(escapedValue);
-    template.substitute((part) => {
-      return chicletHtml(part, this.projectState, this.subGraphId);
-    });
+    const template = new Template(value);
+    template.substitute(
+      (part) => {
+        return chicletHtml(part, this.projectState, this.subGraphId);
+      },
+      (part) => Sanitizer.escape(part)
+    );
     this.#value = template.raw;
     this.#renderableValue = template.renderable;
     this.#updateEditorValue();
@@ -316,68 +367,45 @@ export class TextEditor extends LitElement {
         return;
       }
 
-      const label = document.createElement("label");
-      const preambleText = document.createElement("span");
-      const titleText = document.createElement("span");
-      const postamableText = document.createElement("span");
-      label.classList.add("chiclet");
-      label.classList.add(templatePartType);
-      const assetType = getAssetType(mimeType);
-      if (assetType) {
-        label.classList.add(assetType);
-      }
-      label.dataset.path = path;
+      const part: TemplatePart = {
+        path,
+        title,
+        type: templatePartType,
+        instance,
+        mimeType,
+      };
 
-      const { icon: metadataIcon, tags: metadataTags } = expandChiclet(
-        { type: templatePartType, title: title.trim(), path, mimeType },
-        this.projectState,
-        this.subGraphId
+      const escapedValue = JSON.stringify(part);
+      const template = new Template(`{${escapedValue}}`);
+      template.substitute(
+        (part) => chicletHtml(part, this.projectState, this.subGraphId),
+        (part) => Sanitizer.escape(part)
       );
 
-      if (metadataIcon) {
-        const iconSpan = document.createElement("span");
-        iconSpan.classList.add("g-icon", "filled", "round");
-        iconSpan.dataset["icon"] = metadataIcon;
-        label.appendChild(iconSpan);
+      const fragment = document.createDocumentFragment();
+      const tempEl = document.createElement("div");
+      tempEl.innerHTML = template.renderable;
+      while (tempEl.firstChild) {
+        fragment.append(tempEl.firstChild);
       }
-
-      if (metadataTags) {
-        metadataTags.forEach((tag) => label.classList.add(tag));
-      }
-
-      preambleText.textContent = Template.preamble({
-        title: title.trim(),
-        path,
-        type: templatePartType,
-        mimeType,
-        instance,
-      });
-      postamableText.textContent = Template.postamble();
-      titleText.textContent = title.trim();
-      titleText.classList.add("visible");
-
-      label.appendChild(preambleText);
-      label.appendChild(titleText);
-      label.appendChild(postamableText);
-      label.contentEditable = "false";
 
       const range = this.#getCurrentRange();
       if (!range) {
-        this.#editorRef.value.appendChild(label);
+        this.#editorRef.value.appendChild(fragment);
         completeAddAction();
       } else {
         if (
           range.commonAncestorContainer !== this.#editorRef.value &&
           range.commonAncestorContainer.parentNode !== this.#editorRef.value
         ) {
-          this.#editorRef.value.appendChild(label);
-          return label;
+          this.#editorRef.value.appendChild(fragment);
+          return fragment;
         }
 
         range.deleteContents();
 
         // The range doesn't move, so insert the nodes in reverse order.
-        range.insertNode(label);
+        range.insertNode(fragment);
         range.collapse(false);
 
         requestAnimationFrame(() => {
@@ -755,11 +783,12 @@ export class TextEditor extends LitElement {
       return;
     }
 
-    const escapedValue = escapeHTMLEntities(evt.clipboardData.getData("text"));
+    const escapedValue = evt.clipboardData.getData("text");
     const template = new Template(escapedValue);
-    template.substitute((part) => {
-      return chicletHtml(part, this.projectState, this.subGraphId);
-    });
+    template.substitute(
+      (part) => chicletHtml(part, this.projectState, this.subGraphId),
+      (part) => Sanitizer.escape(part)
+    );
 
     const fragment = document.createDocumentFragment();
     const tempEl = document.createElement("div");

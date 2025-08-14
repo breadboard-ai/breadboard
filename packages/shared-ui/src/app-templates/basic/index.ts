@@ -60,7 +60,6 @@ import { styles as appStyles } from "./index.styles.js";
 import "./header/header.js";
 
 import * as ParticlesUI from "@breadboard-ai/particles-ui";
-import { escapeStr } from "../../utils/escape-str.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import {
@@ -71,6 +70,7 @@ import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-
 import { ref, createRef } from "lit/directives/ref.js";
 import { markdown } from "../../directives/markdown.js";
 import { makeUrl } from "../../utils/urls.js";
+import { Sanitizer } from "@breadboard-ai/utils";
 
 function isHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -712,7 +712,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 })
               );
             }}
-            .innerHTML=${escapeStr(this.options.title)}
+            .innerText=${this.options.title}
           ></h1>
           <p
             ?contenteditable=${!this.readOnly}
@@ -746,7 +746,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 })
               );
             }}
-            .innerHTML=${escapeStr(this.options.description) ?? ""}
+            .innerText=${this.options.description ?? ""}
           ></p>
           <div id="input" class="stopped">
             <div>

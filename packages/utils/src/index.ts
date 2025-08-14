@@ -16,6 +16,7 @@ export * from "./outcome.js";
 export * from "./promise-queue.js";
 export * from "./relative-path.js";
 export * from "./run-imperative-graph.js";
+export * as Sanitizer from "./sanitizer.js";
 export * from "./schema-differ.js";
 export * from "./schema.js";
 export * from "./semver.js";

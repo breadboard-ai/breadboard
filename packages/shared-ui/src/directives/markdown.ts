@@ -14,34 +14,27 @@ import {
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import MarkdownIt from "markdown-it";
 import { RenderRule } from "markdown-it/lib/renderer.mjs";
+import { Sanitizer } from "@breadboard-ai/utils";
 
 class MarkdownDirective extends Directive {
   #markdownIt = MarkdownIt({
     highlight: (str, lang) => {
       switch (lang) {
         case "html": {
-          return `<iframe class="html-view" srcdoc="${this.#escapeSrcdoc(str)}" sandbox></iframe>`;
+          const iframe = document.createElement("iframe");
+          iframe.classList.add("html-view");
+          iframe.srcdoc = str;
+          iframe.sandbox = "";
+          return iframe.innerHTML;
         }
 
         default:
-          return this.#escapeSrcdoc(str);
+          return Sanitizer.escape(str);
       }
     },
   });
   #lastValue: string | null = null;
   #lastTagClassMap: string | null = null;
-
-  #escapeSrcdoc = (str: string) => {
-    const htmlEntities: Record<string, string> = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;",
-    };
-
-    return str.replace(/[&<>"']/g, (char) => htmlEntities[char]);
-  };
 
   update(_part: Part, [value, tagClassMap]: DirectiveParameters<this>) {
     if (

@@ -53,12 +53,26 @@ export const styles = [
           }
         }
 
-        &.visible {
-          display: inline;
+        &.visible-after {
+          font-size: 0;
+          display: inline-flex;
+          justify-content: center;
+          vertical-align: middle;
+          user-select: none;
           pointer-events: none;
-          max-width: 100%;
-          overflow: hidden;
-          text-overflow: ellipsis;
+          width: calc(100% - var(--bb-grid-size-5));
+
+          &::after {
+            font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
+              var(--bb-font-family-mono);
+            line-height: var(--bb-grid-size-5);
+            content: attr(data-label);
+            display: inline;
+            pointer-events: none;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
         }
       }
 

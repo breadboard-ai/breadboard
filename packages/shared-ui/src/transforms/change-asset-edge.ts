@@ -20,6 +20,7 @@ import {
   TextCapabilityPart,
 } from "@breadboard-ai/types";
 import { getMimeType } from "../utils/mime-type";
+import { jsonStringify } from "../utils/json-stringify";
 
 export { ChangeAssetEdge as ChangeAssetEdge };
 
@@ -95,7 +96,7 @@ class ChangeAssetEdge implements EditTransform {
           path: this.edge.assetPath,
           type: "asset",
           mimeType: getMimeType(asset.data),
-        })}${asset.title.trim()}${Template.postamble()}`;
+        })}${jsonStringify(asset.title)}${Template.postamble()}`;
 
         targetPart.text += ` ${item} `;
         break;
