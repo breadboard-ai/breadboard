@@ -145,7 +145,7 @@ function decodeError(event: RunErrorEvent): RunError {
       } else {
         return {
           message: `${preamble}.`,
-          details: `${preamble} for the following reasons:\n\n ${reasonDescriptions.map((reason) => `- ${reason}\n`)}`,
+          details: `${preamble} for the following reasons:\n\n ${reasonDescriptions.map((reason) => `- ${reason}`).join("\n")}`,
         };
       }
     }

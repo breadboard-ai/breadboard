@@ -66,7 +66,7 @@ export class FlowgenEditorInput extends LitElement {
       }
 
       p {
-        word-break: break-all;
+        word-break: auto-phrase;
       }
 
       #feedback {
@@ -78,7 +78,7 @@ export class FlowgenEditorInput extends LitElement {
         border-radius: var(--bb-grid-size-2);
         padding-left: var(--bb-grid-size-5);
         padding-right: var(--bb-grid-size-5);
-        word-break: break-all;
+        word-break: auto-phrase;
         display: flex;
         align-items: center;
         justify-content: space-between;
