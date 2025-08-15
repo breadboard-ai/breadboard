@@ -76,7 +76,7 @@ import { collectAssetIds, collectNodeIds } from "./utils/collect-ids";
 import { EditorControls } from "./editor-controls";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants";
-import { AssetMetadata } from "@breadboard-ai/types";
+import { AssetMetadata, RuntimeFlags } from "@breadboard-ai/types";
 import { isCtrlCommand, isMacPlatform } from "../../utils/is-ctrl-command";
 import { Project, RendererState } from "../../state";
 import { colorsLight } from "../../styles/host/colors-light.js";
@@ -84,6 +84,15 @@ import { ItemSelect } from "../elements.js";
 
 @customElement("bb-renderer")
 export class Renderer extends LitElement {
+  /**
+   * We don't render the component in a traditional Lit-centric way, which means
+   * we can't consume signals directly. As such we allow the outer element (the
+   * canvas controller to observe the signals on the runtime flags and to pass
+   * them through here).
+   */
+  @property()
+  accessor runtimeFlags: RuntimeFlags | null = null;
+
   @property()
   accessor debug = false;
 
@@ -961,7 +970,8 @@ export class Renderer extends LitElement {
       (changedProperties.has("graph") ||
         changedProperties.has("graphTopologyUpdateId") ||
         changedProperties.has("allowEdgeAttachmentMove") ||
-        changedProperties.has("readOnly")) &&
+        changedProperties.has("readOnly") ||
+        changedProperties.has("runtimeFlags")) &&
       this.graph &&
       this.camera
     ) {
@@ -981,6 +991,10 @@ export class Renderer extends LitElement {
         this.graph.nodes().length + this.graph.assets().size;
       if (entitiesBefore === 0 && entitiesAfter > 0) {
         this.#fitToViewPost = true;
+      }
+
+      if (this.runtimeFlags) {
+        mainGraph.force2D = this.runtimeFlags.force2DGraph;
       }
 
       mainGraph.url = graphUrl;

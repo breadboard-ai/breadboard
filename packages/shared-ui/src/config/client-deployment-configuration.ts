@@ -19,6 +19,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   saveAsCode: false,
   generateForEach: false,
   mcp: false,
+  force2DGraph: false,
 };
 
 export function populateFlags(

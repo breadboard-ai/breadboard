@@ -115,7 +115,12 @@ export class GraphEdge extends Box {
 
       svg {
         pointer-events: none;
-        will-change: transform;
+      }
+
+      :host(:not([force2d])) {
+        svg {
+          will-change: transform;
+        }
       }
 
       svg > * {
@@ -697,7 +702,7 @@ export class GraphEdge extends Box {
 
   protected renderSelf() {
     const styles: Record<string, string> = {
-      transform: toCSSMatrix(this.worldTransform),
+      transform: toCSSMatrix(this.worldTransform, this.force2D),
     };
 
     const nodeBoundPoints = this.#getNodeBoundPoints();
