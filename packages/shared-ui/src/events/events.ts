@@ -80,6 +80,7 @@ export type StateEventDetailMap = EnforceEventTypeMatch<{
   "host.unlock": Host.Unlock;
   "host.flagchange": Host.FlagChange;
 
+  "node.action": Node.Action;
   "node.addwithedge": Node.AddWithEdge;
   "node.change": Node.Change;
   "node.multichange": Node.MultiChange;

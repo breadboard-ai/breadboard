@@ -41,7 +41,7 @@ import { createTruncatedValue } from "./utils/create-truncated-value";
 import { styles as ChicletStyles } from "../../styles/chiclet.js";
 import { toGridSize } from "./utils/to-grid-size";
 import { DragConnectorReceiver } from "../../types/types";
-import { DragConnectorStartEvent } from "../../events/events";
+import { DragConnectorStartEvent, StateEvent } from "../../events/events";
 import { createChiclets } from "./utils/create-chiclets.js";
 import { icons } from "../../styles/icons.js";
 import {
@@ -51,6 +51,7 @@ import {
 } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { NodeRunState } from "@breadboard-ai/types";
 
 const EDGE_STANDARD = palette.neutral.n80;
 const EDGE_SELECTED = custom.c100;
@@ -66,6 +67,9 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
   @property()
   accessor nodeDescription = "";
+
+  @property()
+  accessor runStatus: NodeRunState | null = null;
 
   @property()
   accessor isStart = false;
@@ -93,6 +97,9 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
   @property({ reflect: true, type: String })
   accessor active: "pre" | "current" | "post" | "error" = "pre";
+
+  @property({ reflect: true, type: String })
+  accessor controlAnimation: "none" | "rotate" = "none";
 
   @property()
   accessor behavior: BehaviorSchema[] = [];
@@ -233,6 +240,11 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         cursor: grabbing;
       }
 
+      :host([selected][active="error"]) #container #outline,
+      :host([selected][active="error"]) #container #chat-adornment {
+        outline: 3px solid var(--e-40);
+      }
+
       #container {
         width: 300px;
         border-radius: calc(var(--bb-grid-size-3) + 1px);
@@ -342,13 +354,31 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           position: relative;
           z-index: 3;
 
-          & span {
+          & .node-title {
+            flex: 1 0 auto;
             text-overflow: ellipsis;
             overflow: hidden;
             white-space: nowrap;
           }
 
-          & .g-icon {
+          & .node-controls {
+            padding: 0;
+            margin: 0;
+            width: 20px;
+            height: 20px;
+            background: none;
+            border: none;
+            pointer-events: auto;
+            opacity: 0.8;
+            transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+            &:not([disabled]) {
+              cursor: pointer;
+              opacity: 1;
+            }
+          }
+
+          & > .g-icon {
             flex: 0 0 auto;
             width: 20px;
             height: 20px;
@@ -574,6 +604,34 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             max-width: 100%;
           }
         }
+
+        & #error {
+          margin: var(--bb-grid-size-3) 0 0 0;
+          color: var(--e-40);
+          text-align: right;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          white-space: nowrap;
+        }
+      }
+
+      :host([showrunstatus][active="error"]) #container {
+        border: 1px solid var(--e-40);
+        outline: 1px solid var(--e-40);
+      }
+
+      :host([controlanimation="rotate"]) #container .node-controls {
+        animation: rotate 1s linear infinite;
+      }
+
+      @keyframes rotate {
+        from {
+          rotate: 0deg;
+        }
+
+        to {
+          rotate: 360deg;
+        }
       }
     `,
   ];
@@ -624,6 +682,18 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           this.#adornmentRef.value.offsetHeight +
           40
       );
+    }
+  }
+
+  protected willUpdate(changedProperties: PropertyValues): void {
+    if (changedProperties.has("runStatus")) {
+      if (this.runStatus?.status === "error") {
+        this.active = "error";
+      }
+
+      if (this.runStatus?.status === "active") {
+        this.controlAnimation = "rotate";
+      }
     }
   }
 
@@ -776,7 +846,22 @@ export class GraphNode extends Box implements DragConnectorReceiver {
               </div>`
           : html`<div class=${classMap({ port: true })}>Tap to configure</div>`}
       </div>
-      <div id="chiclets">${chiclets}</div>`;
+      <div id="chiclets">${chiclets}</div>
+      ${this.#maybeRenderRunStatus()}`;
+  }
+
+  #maybeRenderRunStatus() {
+    if (!this.showRunStatus || !this.runStatus) {
+      return nothing;
+    }
+
+    if (this.runStatus.status !== "error") {
+      return nothing;
+    }
+
+    return html`<div id="error" class="sans italic w-500">
+      ${this.runStatus.errorMessage}
+    </div>`;
   }
 
   protected renderSelf() {
@@ -962,7 +1047,8 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           ${renderableIcon
             ? html`<span class="g-icon filled round">${renderableIcon}</span>`
             : nothing}
-          <span>${this.nodeTitle}</span>
+          <span class="node-title">${this.nodeTitle}</span>
+          ${this.#maybeRenderRunControl()}
           ${this.hasMainPort
             ? html` <button
                 id="connection-trigger"
@@ -1009,6 +1095,75 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             `}`}
       </section>
       ${this.renderBounds()}`;
+  }
+
+  #maybeRenderRunControl() {
+    if (!this.showRunStatus || !this.runStatus) {
+      return;
+    }
+
+    let disabled = false;
+    let icon = "";
+    switch (this.runStatus.status) {
+      case "paused":
+      case "available": {
+        icon = "play_arrow";
+        break;
+      }
+
+      case "running": {
+        icon = "pause";
+        break;
+      }
+
+      case "active": {
+        icon = "progress_activity";
+        break;
+      }
+
+      case "error": {
+        icon = "autorenew";
+        break;
+      }
+
+      default: {
+        disabled = true;
+        break;
+      }
+    }
+
+    // We need to add these handlers to intercept the ones on the header. If we
+    // don't do that here then clicking on any of these buttons will trigger the
+    // translate/selection actions.
+    return html`<button
+      @click=${(evt: Event) => {
+        evt.stopImmediatePropagation();
+      }}
+      @pointerdown=${(evt: Event) => {
+        evt.stopImmediatePropagation();
+      }}
+      @pointerup=${(evt: Event) => {
+        evt.stopImmediatePropagation();
+        if (!this.nodeId) {
+          return;
+        }
+
+        this.dispatchEvent(
+          new StateEvent({
+            eventType: "node.action",
+            nodeId: this.nodeId,
+            subGraphId:
+              this.ownerGraph === MAIN_BOARD_ID ? "" : this.ownerGraph,
+            // TODO: Replace this with the desired action.
+            action: "TODO",
+          })
+        );
+      }}
+      class="node-controls"
+      ?disabled=${disabled}
+    >
+      <span class="g-icon filled round">${icon}</span>
+    </button>`;
   }
 
   render() {

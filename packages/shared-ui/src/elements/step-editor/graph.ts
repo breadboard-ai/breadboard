@@ -40,7 +40,7 @@ import { OverflowMenuActionEvent } from "../../events/events";
 import { toGridSize } from "./utils/to-grid-size";
 import { GRID_SIZE, MOVE_GRAPH_ID } from "./constants";
 import { GraphAsset } from "./graph-asset";
-import { AssetPath } from "@breadboard-ai/types";
+import { AssetPath, NodeRunState } from "@breadboard-ai/types";
 import { RendererState } from "../../state";
 import { getStepIcon } from "../../utils/get-step-icon";
 
@@ -771,6 +771,14 @@ export class Graph extends Box {
               ) !== -1
             ? "post"
             : "pre";
+
+      // TODO: Switch activity status based on run information.
+      // Note for Dimitri: this.projectState already exists on Entity (from
+      // which this and every other graph item inherits).
+      const runStatus: NodeRunState = {
+        status: "pending",
+      };
+      graphNode.runStatus = runStatus;
     }
 
     for (const edge of this.#edges) {

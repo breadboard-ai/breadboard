@@ -36,6 +36,7 @@ export const eventRoutes = new Map<
   [Board.ReplaceRoute.event, Board.ReplaceRoute],
 
   /** Node */
+  [Node.ActionRoute.event, Node.ActionRoute],
   [Node.AddWithEdgeRoute.event, Node.AddWithEdgeRoute],
   [Node.ChangeRoute.event, Node.ChangeRoute],
   [Node.MultiChangeRoute.event, Node.MultiChangeRoute],

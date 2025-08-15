@@ -126,3 +126,16 @@ export const ChangeEdgeAttachmentPointRoute: EventRoute<"node.changeedgeattachme
       return false;
     },
   };
+
+export const ActionRoute: EventRoute<"node.action"> = {
+  event: "node.action",
+
+  async do({ uiState, originalEvent }) {
+    uiState.blockingAction = true;
+    // TODO: Handle this action.
+    console.log(originalEvent);
+    uiState.blockingAction = false;
+
+    return false;
+  },
+};

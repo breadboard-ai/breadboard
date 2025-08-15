@@ -116,6 +116,12 @@ export class VERuntimeFlagsModal extends LitElement {
           return html`Unable to load flags`;
         }
 
+        const flags = Object.entries(runtimeFlags).sort(([aName], [bName]) => {
+          if (aName > bName) return 1;
+          if (aName < bName) return -1;
+          return 0;
+        });
+
         return html`<bb-modal
           .modalTitle=${"Warning: experimental features!"}
           .showCloseButton=${true}
@@ -126,44 +132,50 @@ export class VERuntimeFlagsModal extends LitElement {
             work in ${Strings.from("APP_NAME")}. Please proceed with caution.
           </p>
           <form @submit=${(evt: SubmitEvent) => evt.preventDefault()}>
-            ${repeat(Object.entries(runtimeFlags), ([name, value]) => {
-              return html` <div class="entry">
-                <label class="sans-flex round w-400" for=${name}>${name}</label>
-                <select
-                  id=${name}
-                  name=${name}
-                  type="checkbox"
-                  class="sans-flex round w-400"
-                  .checked=${value}
-                  @change=${(evt: InputEvent) => {
-                    if (!(evt.target instanceof HTMLSelectElement)) {
-                      return;
-                    }
+            ${repeat(
+              flags,
+              ([flag]) => flag,
+              ([name, value]) => {
+                return html` <div class="entry">
+                  <label class="sans-flex round w-400" for=${name}
+                    >${name}</label
+                  >
+                  <select
+                    id=${name}
+                    name=${name}
+                    type="checkbox"
+                    class="sans-flex round w-400"
+                    .checked=${value}
+                    @change=${(evt: InputEvent) => {
+                      if (!(evt.target instanceof HTMLSelectElement)) {
+                        return;
+                      }
 
-                    let value: boolean | undefined;
-                    if (evt.target.value !== "default") {
-                      value = evt.target.value === "enabled";
-                    }
+                      let value: boolean | undefined;
+                      if (evt.target.value !== "default") {
+                        value = evt.target.value === "enabled";
+                      }
 
-                    this.dispatchEvent(
-                      new StateEvent({
-                        eventType: "host.flagchange",
-                        flag: name as keyof RuntimeFlags,
-                        value,
-                      })
-                    );
-                  }}
-                >
-                  <option value="default">Default</option>
-                  <option ?selected=${value === true} value="enabled">
-                    Enabled
-                  </option>
-                  <option ?selected=${value === false} value="disabled">
-                    Disabled
-                  </option>
-                </select>
-              </div>`;
-            })}
+                      this.dispatchEvent(
+                        new StateEvent({
+                          eventType: "host.flagchange",
+                          flag: name as keyof RuntimeFlags,
+                          value,
+                        })
+                      );
+                    }}
+                  >
+                    <option value="default">Default</option>
+                    <option ?selected=${value === true} value="enabled">
+                      Enabled
+                    </option>
+                    <option ?selected=${value === false} value="disabled">
+                      Disabled
+                    </option>
+                  </select>
+                </div>`;
+              }
+            )}
           </form>
         </bb-modal>`;
       },

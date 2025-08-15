@@ -55,6 +55,18 @@ export class Entity extends LitElement {
   }
   #force2D = false;
 
+  @property({ reflect: true, type: Boolean })
+  set showRunStatus(showRunStatus: boolean) {
+    this.#showRunStatus = showRunStatus;
+    for (const entity of this.entities.values()) {
+      entity.showRunStatus = showRunStatus;
+    }
+  }
+  get showRunStatus() {
+    return this.#showRunStatus;
+  }
+  #showRunStatus = false;
+
   @property()
   set readOnly(readOnly: boolean) {
     this.#readOnly = readOnly;
