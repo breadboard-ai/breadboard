@@ -17,6 +17,12 @@ import { BaseEventDetail } from "../base";
 
 type Namespace = "node";
 
+export interface Action extends BaseEventDetail<`${Namespace}.action`> {
+  readonly nodeId: string;
+  readonly subGraphId: string | null;
+  readonly action: string;
+}
+
 export interface AddWithEdge
   extends BaseEventDetail<`${Namespace}.addwithedge`> {
   readonly node: NodeDescriptor;

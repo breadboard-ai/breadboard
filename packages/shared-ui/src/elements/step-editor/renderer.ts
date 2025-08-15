@@ -995,6 +995,7 @@ export class Renderer extends LitElement {
 
       if (this.runtimeFlags) {
         mainGraph.force2D = this.runtimeFlags.force2DGraph;
+        mainGraph.showRunStatus = this.runtimeFlags.usePlanRunner;
       }
 
       mainGraph.url = graphUrl;

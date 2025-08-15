@@ -46,6 +46,10 @@ export const type = css`
     font-style: normal;
   }
 
+  .italic {
+    font-style: italic;
+  }
+
   /** Material Design **/
 
   .md-display-large {
