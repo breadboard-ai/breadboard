@@ -351,7 +351,7 @@ async function invoke({
         modelName
       );
       if (!ok(webPage)) {
-        console.error("Failed to generated html output");
+        console.error("Failed to generate html output", webPage.$error);
         return webPage;
       } else {
         out = await webPage;

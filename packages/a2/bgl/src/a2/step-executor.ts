@@ -230,10 +230,10 @@ async function executeStep(
     const response = fetchResult.response as ExecuteStepResponse;
     if (!response) {
       return await reporter.sendError(
-        err(
-          `Unexpected response from the backend: ${JSON.stringify(fetchResult)}`,
-          { origin: "server", kind: "bug" }
-        )
+        err(`Request to "${model}" failed, please try again`, {
+          origin: "server",
+          kind: "bug",
+        })
       );
     }
     if (response.errorMessage) {
