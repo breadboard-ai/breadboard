@@ -82,9 +82,10 @@ import "./empty-state.js";
 import { findGoogleDriveAssetsInGraph } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 import { isEmpty } from "../../utils/utils.js";
 import { uiStateContext } from "../../contexts/ui-state.js";
+import { SignalWatcher } from "@lit-labs/signals";
 
 @customElement("bb-canvas-controller")
-export class CanvasController extends LitElement {
+export class CanvasController extends SignalWatcher(LitElement) {
   @consume({ context: uiStateContext })
   accessor #uiState!: UI;
 
@@ -384,6 +385,7 @@ export class CanvasController extends LitElement {
         this.highlightState,
         this.visualChangeId,
         this.graphTopologyUpdateId,
+        this.#uiState.flags,
         collapseNodesByDefault,
         hideSubboardSelectorWhenEmpty,
         showNodeShortcuts,
@@ -399,6 +401,7 @@ export class CanvasController extends LitElement {
         return html`<bb-renderer
           .boardServerKits=${this.boardServerKits}
           .projectState=${this.projectState}
+          .runtimeFlags=${this.#uiState.flags}
           .graph=${graph}
           .graphIsMine=${this.graphIsMine}
           .graphTopologyUpdateId=${this.graphTopologyUpdateId}

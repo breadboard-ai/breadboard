@@ -376,7 +376,7 @@ export class GraphAsset
 
   protected renderSelf() {
     const styles: Record<string, string> = {
-      transform: toCSSMatrix(this.worldTransform),
+      transform: toCSSMatrix(this.worldTransform, this.force2D),
     };
 
     let defaultAdd: HTMLTemplateResult | symbol = nothing;

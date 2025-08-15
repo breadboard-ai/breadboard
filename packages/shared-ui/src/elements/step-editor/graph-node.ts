@@ -38,7 +38,6 @@ import {
   isPreviewBehavior,
 } from "../../utils/behaviors";
 import { createTruncatedValue } from "./utils/create-truncated-value";
-import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { styles as ChicletStyles } from "../../styles/chiclet.js";
 import { toGridSize } from "./utils/to-grid-size";
 import { DragConnectorReceiver } from "../../types/types";
@@ -782,7 +781,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
   protected renderSelf() {
     const styles: Record<string, string> = {
-      transform: toCSSMatrix(this.worldTransform),
+      transform: toCSSMatrix(this.worldTransform, this.force2D),
     };
 
     let chatAdornment: HTMLTemplateResult[] | symbol = nothing;

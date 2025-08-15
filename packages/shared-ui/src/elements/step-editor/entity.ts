@@ -43,6 +43,18 @@ export class Entity extends LitElement {
   @property()
   accessor cullable = false;
 
+  @property({ reflect: true, type: Boolean })
+  set force2D(force2D: boolean) {
+    this.#force2D = force2D;
+    for (const entity of this.entities.values()) {
+      entity.force2D = force2D;
+    }
+  }
+  get force2D() {
+    return this.#force2D;
+  }
+  #force2D = false;
+
   @property()
   set readOnly(readOnly: boolean) {
     this.#readOnly = readOnly;
@@ -126,7 +138,7 @@ export class Entity extends LitElement {
     }
 
     const styles: Record<string, string> = {
-      transform: `${toCSSMatrix(this.worldTransform)}`,
+      transform: `${toCSSMatrix(this.worldTransform, this.force2D)}`,
       width: `${this.bounds.width}px`,
       height: `${this.bounds.height}px`,
     };

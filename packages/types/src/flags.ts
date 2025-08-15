@@ -37,6 +37,10 @@ export type RuntimeFlags = {
    * Enable MCP support
    */
   mcp: boolean;
+  /**
+   * Use 2D matrices for graph rendering.
+   */
+  force2DGraph: boolean;
 };
 
 /**

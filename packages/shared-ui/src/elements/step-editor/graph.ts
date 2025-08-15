@@ -639,7 +639,7 @@ export class Graph extends Box {
     if (renderBoundary) {
       const boundaryTransform = this.worldTransform.translate(-20, -20);
       const styles: Record<string, string> = {
-        transform: `${toCSSMatrix(boundaryTransform)}`,
+        transform: `${toCSSMatrix(boundaryTransform, this.force2D)}`,
         width: `${this.bounds.width + 40}px`,
         height: `${this.bounds.height + 40}px`,
       };
