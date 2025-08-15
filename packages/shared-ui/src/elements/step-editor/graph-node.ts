@@ -355,7 +355,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           z-index: 3;
 
           & .node-title {
-            flex: 1 0 auto;
+            flex: 1 auto;
             text-overflow: ellipsis;
             overflow: hidden;
             white-space: nowrap;
