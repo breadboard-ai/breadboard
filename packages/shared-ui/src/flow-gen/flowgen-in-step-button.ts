@@ -417,6 +417,9 @@ export class FlowgenInStepButton extends LitElement {
     if (this.#state.status !== "generating") {
       return;
     }
+    // This event is necessary to clear the editing state in the
+    // enclosing component (entity-editor).
+    this.dispatchEvent(new CustomEvent("bbgraphreplace"));
     this.dispatchEvent(
       new StateEvent({
         eventType: "board.replace",
