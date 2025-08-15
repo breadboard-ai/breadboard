@@ -17,6 +17,7 @@ const CSP_CONFIG = {
     "https://cdn.tailwindcss.com",
     "https://unpkg.com",
     "https://cdn.jsdelivr.net",
+    "https://cdnjs.cloudflare.com",
     "https://support.google.com",
     "https://www.google-analytics.com",
     "https://www.googletagmanager.com",
