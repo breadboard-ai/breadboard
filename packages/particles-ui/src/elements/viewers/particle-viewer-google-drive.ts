@@ -11,12 +11,10 @@ import {
   Orientation,
   ParticleData,
 } from "@breadboard-ai/particles";
-import { classMap } from "lit/directives/class-map.js";
 import { consume } from "@lit/context";
 import { themeContext } from "../../context/theme.js";
 import * as Styles from "../../styles/index.js";
 import { ParticleViewer, UITheme } from "../../types/types.js";
-import { merge } from "../../utils/utils.js";
 
 @customElement("particle-viewer-google-drive")
 export class ParticleViewerGoogleDrive
@@ -58,20 +56,9 @@ export class ParticleViewerGoogleDrive
       return nothing;
     }
 
-    return html`<a
-      class=${classMap(
-        merge(
-          this.theme.elements.a,
-          this.field.modifiers?.includes("hero")
-            ? this.theme.modifiers.hero
-            : {}
-        )
-      )}
-      href=${`https://drive.google.com/open?id=${this.value}`}
-      target="_blank"
-      >Open Google Drive File<span class="g-icon filled round layout-ml-2"
-        >open_in_new</span
-      ></a
-    >`;
+    const fileId = this.value.substring("drive:/".length);
+    return html`<bb-google-drive-file-viewer
+      .fileId=${fileId}
+    ></bb-google-drive-file-viewer>`;
   }
 }

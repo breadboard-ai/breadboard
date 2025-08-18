@@ -2,6 +2,7 @@
  * @fileoverview Slides bits.
  */
 
+import { generateId } from "../a2/utils";
 import type {
   SlidesCreateSlideRequest,
   SlidesLayoutPlaceholderIdMapping,
@@ -344,11 +345,10 @@ function slidesToRequests(
 
 class SimpleSlideBuilder {
   #slides: Slide[] = [];
-  #images: ImageToken[] = [];
+  #id = generateId();
 
   readonly #startIndex: number;
   readonly #objectToDelete: string | undefined;
-  #depthAdjustment: number = 0;
 
   constructor(last: number = 0, objectId?: string) {
     this.#startIndex = last + 1;
@@ -357,7 +357,7 @@ class SimpleSlideBuilder {
 
   addSlide(s: SimpleSlide) {
     const slide: Slide = {
-      objectId: `Slide-${this.#startIndex + this.#slides.length}`,
+      objectId: `Slide-${this.#id}-${this.#startIndex + this.#slides.length}`,
       layout: "BLANK",
       body: [],
     };

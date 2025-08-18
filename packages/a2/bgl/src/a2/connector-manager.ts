@@ -5,7 +5,7 @@
 import { err, ok, isLLMContentArray } from "./utils";
 import read from "@read";
 import describeConnector, { type DescribeOutputs } from "@describe";
-import invokeConnector from "@invoke";
+import invokeConnector, { InvokeOutputs } from "@invoke";
 import type { ExportDescriberResult, CallToolCallback } from "./common";
 
 export { ConnectorManager, createConfigurator, createTools };
@@ -443,17 +443,16 @@ class ConnectorManager {
   async save(
     context: LLMContent[],
     options: Record<string, unknown>
-  ): Promise<Outcome<void>> {
+  ): Promise<InvokeOutputs> {
     const args = await this.#getInvocationArgs("connector-save");
     if (!ok(args)) return args;
 
-    const invoking = await invokeConnector({
+    return invokeConnector({
       ...args,
       context,
       ...options,
       method: "save",
     });
-    if (!ok(invoking)) return invoking;
   }
 
   static isConnector(part: ConnectorConfig) {
