@@ -25,6 +25,11 @@ import { GeminiPrompt, type GeminiPromptOutput } from "../a2/gemini-prompt";
 
 export { invoke as default, describe };
 
+/**
+ * Maximum amount of function-calling turns that we take before bailing.
+ */
+const MAX_TURN_COUNT = 10;
+
 type Inputs = {
   context: SharedContext;
 };
@@ -191,10 +196,7 @@ class GenerateText {
         let afterTools: GeminiPromptOutput | undefined = undefined;
         let turnCount = 0;
         while (keepCallingGemini) {
-          if (
-            !this.sharedContext.useSequentialFunctionCalling ||
-            turnCount > 5
-          ) {
+          if (turnCount > MAX_TURN_COUNT) {
             inputs.body.toolConfig = {
               functionCallingConfig: {
                 mode: "NONE",
