@@ -378,7 +378,7 @@ class Template {
         options || {}
       );
       if (!ok(saving)) {
-        errors.push(saving.$error);
+        errors.push((saving as { $error: string }).$error);
       }
     }
     if (errors.length > 0) {

@@ -41,6 +41,9 @@ function as(mimeType: string, isStored = false): Field["as"] {
       }
       return isStored ? "particle-viewer-file" : "particle-viewer-text";
     default:
+      if (mimeType.includes("/vnd.google-apps")) {
+        return "particle-viewer-google-drive";
+      }
       return "particle-viewer-file";
   }
 }

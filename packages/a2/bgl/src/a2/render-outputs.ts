@@ -134,6 +134,10 @@ type InvokeOutputs = {
   context: LLMContent[];
 };
 
+type SaveOutput = {
+  context: { parts: { json: { id: string } }[] }[];
+};
+
 type DescribeInputs = {
   inputs: {
     text?: LLMContent;
@@ -277,13 +281,12 @@ async function saveToGoogleDrive(
   content: LLMContent,
   mimeType: string,
   title: string | undefined
-): Promise<Outcome<void>> {
+): Promise<Outcome<SaveOutput>> {
   const manager = new ConnectorManager({
     url: "embed://a2/google-drive.bgl.json",
     configuration: { file: { mimeType } },
   });
-  const saving = await manager.save([content], { title });
-  if (!ok(saving)) return saving;
+  return manager.save([content], { title }) as Promise<Outcome<SaveOutput>>;
 }
 
 async function saveAsCode(content: LLMContent): Promise<Outcome<void>> {
@@ -361,31 +364,25 @@ async function invoke({
       return { context: [out] };
     }
     case "GoogleDoc": {
-      const saving = await saveToGoogleDrive(
+      return saveToGoogleDrive(
         out,
         "application/vnd.google-apps.document",
         googleDocTitle
       );
-      if (!ok(saving)) return saving;
-      return { context: [out] };
     }
     case "GoogleSlides": {
-      const saving = await saveToGoogleDrive(
+      return saveToGoogleDrive(
         out,
         "application/vnd.google-apps.presentation",
         googleDocTitle
       );
-      if (!ok(saving)) return saving;
-      return { context: [out] };
     }
     case "GoogleSheets": {
-      const saving = await saveToGoogleDrive(
+      return saveToGoogleDrive(
         out,
         "application/vnd.google-apps.spreadsheet",
         googleDocTitle
       );
-      if (!ok(saving)) return saving;
-      return { context: [out] };
     }
     case "Code": {
       const generating = await callGenWebpage(

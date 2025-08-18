@@ -37,6 +37,10 @@ type Outputs =
       canSave: boolean;
     };
 
+function contextFromId(id: string, mimeType: string): LLMContent[] {
+  return [{ parts: [{ storedData: { handle: `drive:/${id}`, mimeType } }] }];
+}
+
 async function invoke({
   method,
   id: connectorId,
@@ -73,7 +77,7 @@ async function invoke({
           { title: "Append to Google Doc" }
         );
         if (!ok(updating)) return updating;
-        return { context: context || [] };
+        return { context: contextFromId(id, DOC_MIME_TYPE) };
       }
       case SLIDES_MIME_TYPE: {
         const [gettingCollector, result] = await Promise.all([
@@ -102,7 +106,7 @@ async function invoke({
           { title: "Append to Google Presentation" }
         );
         if (!ok(updating)) return updating;
-        return { context: context || [] };
+        return { context: contextFromId(id, SLIDES_MIME_TYPE) };
       }
       case SHEETS_MIME_TYPE: {
         const [gettingCollector, result] = await Promise.all([
@@ -129,7 +133,7 @@ async function invoke({
           }
         );
         if (!ok(appending)) return appending;
-        return { context: context || [] };
+        return { context: contextFromId(id, SHEETS_MIME_TYPE) };
       }
     }
   } else if (method == "canSave") {
