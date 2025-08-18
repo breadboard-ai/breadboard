@@ -89,7 +89,8 @@ export const inflateData = async (
     } else if (isStoredData(value)) {
       if (
         (value.storedData.handle.startsWith("https://") ||
-          value.storedData.handle.startsWith("http://")) &&
+          value.storedData.handle.startsWith("http://") ||
+          value.storedData.handle.startsWith("drive:/")) &&
         !inflateToFileData
       ) {
         return value;

@@ -242,8 +242,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         );
       }
 
-      activityContents = html`§
-      ${Array.from(errors.values()).map(() => {
+      activityContents = html`${Array.from(errors.values()).map(() => {
         return html`<section class="error">
           <h1 class="w-700 sans-flex round md-headline-large">
             Oops, something went wrong
