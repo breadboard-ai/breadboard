@@ -59,6 +59,11 @@ function resetAnalyticsUserId() {
  */
 
 class ActionTracker {
+  static load(type: "app" | "canvas" | "landing", shared: boolean) {
+    const sharedSuffix = shared ? "_shared" : "";
+    globalThis.gtag?.("event", `app_load_${type}${sharedSuffix}`);
+  }
+
   static openApp(url: string, source: "gallery" | "user") {
     globalThis.gtag?.("event", "app_open", { url, source });
     globalThis.gtag?.("event", "app_engage", { url });
@@ -134,6 +139,7 @@ class ActionTracker {
 
   static signInPageView() {
     globalThis.gtag?.("event", "sign_in_page_view");
+    this.load("landing", false);
   }
 
   static signOutSuccess() {
