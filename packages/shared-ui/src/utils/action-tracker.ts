@@ -165,4 +165,8 @@ class ActionTracker {
   static errorSafety() {
     globalThis.gtag?.("event", "error_safety");
   }
+
+  static addNewStep(type?: string) {
+    globalThis.gtag?.("event", `add_step_${type || "unknown"}`);
+  }
 }
