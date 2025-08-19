@@ -339,8 +339,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           @click=${this.#onClickExportOutput}
           class="sans-flex w-500 round md-body-medium"
         >
-          <span class="g-icon filled round">save</span>
-          Export output
+          <span class="g-icon filled round">file_save</span>
+          Download file
         </button>
       </div>
     `;
