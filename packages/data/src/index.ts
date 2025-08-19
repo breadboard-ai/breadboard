@@ -25,3 +25,9 @@ export {
 } from "./inflate-deflate.js";
 
 export * from "./common.js";
+
+export { inlineAllContent } from "./inline-all-content.js";
+export {
+  saveOutputsAsFile,
+  extensionFromMimeType,
+} from "./save-outputs-as-file.js";

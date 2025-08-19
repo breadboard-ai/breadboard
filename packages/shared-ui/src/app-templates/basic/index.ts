@@ -8,13 +8,13 @@ import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("Global");
 
 import {
-  LitElement,
   html,
-  nothing,
   HTMLTemplateResult,
+  LitElement,
+  nothing,
   PropertyValues,
 } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property, query, state } from "lit/decorators.js";
 import {
   AppTemplate,
   AppTemplateOptions,
@@ -23,17 +23,21 @@ import {
   SnackType,
 } from "../../types/types";
 
-import { classMap } from "lit/directives/class-map.js";
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
+import { createThemeStyles } from "@breadboard-ai/theme";
 import {
-  asBase64,
   BoardServer,
   GraphDescriptor,
   isInlineData,
   isLLMContentArray,
   ok,
-  transformDataParts,
 } from "@google-labs/breadboard";
+import { SignalWatcher } from "@lit-labs/signals";
+import { consume, provide } from "@lit/context";
+import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
+import { boardServerContext } from "../../contexts/board-server.js";
+import { projectRunContext } from "../../contexts/project-run.js";
 import {
   ResizeEvent,
   ShareRequestedEvent,
@@ -42,32 +46,30 @@ import {
   StateEvent,
   UnsnackbarEvent,
 } from "../../events/events";
-import { SigninAdapterState } from "../../utils/signin-adapter";
-import { createThemeStyles } from "@breadboard-ai/theme";
-import { ActionTracker } from "../../utils/action-tracker.js";
-import { consume, provide } from "@lit/context";
-import { boardServerContext } from "../../contexts/board-server.js";
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
-import { NodeValue } from "@breadboard-ai/types";
-import { projectRunContext } from "../../contexts/project-run.js";
 import { AppScreenOutput, ProjectRun } from "../../state/types.js";
-import { SignalWatcher } from "@lit-labs/signals";
-import { theme as uiTheme } from "./theme/light.js";
-import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js";
 import { emptyStyles } from "../../styles/host/colors-empty.js";
+import { ActionTracker } from "../../utils/action-tracker.js";
+import { SigninAdapterState } from "../../utils/signin-adapter";
+import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js";
 import { styles as appStyles } from "./index.styles.js";
+import { theme as uiTheme } from "./theme/light.js";
 
 import "./header/header.js";
 
-import * as ParticlesUI from "@breadboard-ai/particles-ui";
-import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
+import {
+  extensionFromMimeType,
+  inlineAllContent,
+  saveOutputsAsFile,
+} from "@breadboard-ai/data";
 import {
   MAIN_TO_SHAREABLE_COPY_PROPERTY,
   SHAREABLE_COPY_TO_MAIN_PROPERTY,
 } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
 import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
-import { ref, createRef } from "lit/directives/ref.js";
+import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import * as ParticlesUI from "@breadboard-ai/particles-ui";
+import { createRef, ref } from "lit/directives/ref.js";
+import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { markdown } from "../../directives/markdown.js";
 import { makeUrl } from "../../utils/urls.js";
 
@@ -149,6 +151,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   @consume({ context: googleDriveClientContext })
   accessor googleDriveClient!: GoogleDriveClient | undefined;
+
+  @query("#export-output-button")
+  accessor exportOutputsButton: HTMLButtonElement | null = null;
 
   readonly #shareResultsButton = createRef<HTMLButtonElement>();
 
@@ -304,7 +309,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     </div>`;
   }
 
-  #renderSaveResultsButton() {
+  #renderSaveResultsButtons() {
     if (!this.run?.finalOutput) {
       return nothing;
     }
@@ -329,6 +334,14 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               <span class="g-icon filled round">share</span>
               Share output
             </button>`}
+        <button
+          id="export-output-button"
+          @click=${this.#onClickExportOutput}
+          class="sans-flex w-500 round md-body-medium"
+        >
+          <span class="g-icon filled round">file_save</span>
+          Download file
+        </button>
       </div>
     `;
   }
@@ -350,6 +363,85 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         true
       )
     );
+  }
+
+  async #onClickExportOutput() {
+    const btn = this.exportOutputsButton;
+    if (!btn) {
+      console.error("No export output button");
+      return;
+    }
+
+    lockButton();
+
+    if (!this.run) {
+      console.error(`No project run`);
+      unlockButton();
+      return;
+    }
+
+    const currentGraphUrl = this.graph?.url;
+    if (!currentGraphUrl) {
+      console.error(`No graph url`);
+      unlockButton();
+      return;
+    }
+
+    if (!this.run.finalOutput) {
+      unlockButton();
+      return;
+    }
+
+    const boardServer = this.boardServer;
+    if (!boardServer) {
+      console.error(`No board server`);
+      unlockButton();
+      return;
+    }
+
+    if (!(boardServer instanceof GoogleDriveBoardServer)) {
+      console.error(`Board server was not Google Drive`);
+      unlockButton();
+      return;
+    }
+
+    const outputs = await inlineAllContent(
+      boardServer,
+      this.run.finalOutput,
+      currentGraphUrl
+    );
+    if (!ok(outputs)) {
+      console.error(`Unable to inline content`, outputs);
+      unlockButton();
+      return;
+    }
+
+    const saving = await saveOutputsAsFile(outputs);
+    if (!ok(saving)) {
+      console.error(`Unable to save`, saving.$error);
+      unlockButton();
+      return;
+    }
+
+    const url = URL.createObjectURL(saving);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${this.graph?.title || "outputs"}-saved.${extensionFromMimeType(saving.type)}`;
+    document.body.appendChild(a);
+    a.click();
+
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    unlockButton();
+
+    function lockButton() {
+      btn!.disabled = true;
+    }
+
+    function unlockButton() {
+      btn!.disabled = false;
+    }
   }
 
   async #onClickSaveResults() {
@@ -458,9 +550,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       .getFileMetadata(shareableGraphFileId, { fields: ["resourceKey"] })
       .then(({ resourceKey }) => resourceKey);
 
-    // Clone because we are going to inline content below.
-    const finalOutputValues = structuredClone(this.run.finalOutput);
-    if (!finalOutputValues) {
+    if (!this.run.finalOutput) {
       unlockButton();
       return;
     }
@@ -476,44 +566,26 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return;
     }
 
-    // Inline all content.
     const shareableGraphUrl = `drive:/${shareableGraphFileId}`;
-    await Promise.all(
-      Object.entries(finalOutputValues).map(async ([key, value]) => {
-        if (!isLLMContentArray(value)) {
-          return;
-        }
-
-        // Transform any inline data parts.
-        const inlined = await transformDataParts(
-          new URL(shareableGraphUrl),
-          value,
-          "inline",
-          boardServer.dataPartTransformer(new URL(shareableGraphUrl))
-        );
-        if (!ok(inlined)) {
-          console.error(`Error inlining results content for ${key}`, inlined);
-          unlockButton();
-          return;
-        }
-
-        // Also check for blobs inside of HTML, and inline those too.
-        for (const content of inlined) {
-          for (const part of content.parts) {
-            if (
-              "inlineData" in part &&
-              part.inlineData.mimeType === "text/html" &&
-              part.inlineData.data
-            ) {
-              const html = part.inlineData.data;
-              part.inlineData.data = await inlineHtmlBlobUrls(html);
-            }
-          }
-        }
-
-        finalOutputValues[key] = inlined as NodeValue;
-      })
+    const finalOutputValues = await inlineAllContent(
+      boardServer,
+      this.run.finalOutput,
+      shareableGraphUrl
     );
+    if (!ok(finalOutputValues)) {
+      unlockButton();
+      this.dispatchEvent(
+        new SnackbarEvent(
+          globalThis.crypto.randomUUID(),
+          `Error packaging results prior to saving`,
+          SnackType.ERROR,
+          [],
+          true,
+          true
+        )
+      );
+      return;
+    }
 
     const snackbarId = globalThis.crypto.randomUUID();
     this.dispatchEvent(
@@ -787,7 +859,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       content = [
         this.#renderControls(),
         this.#renderActivity(),
-        this.#renderSaveResultsButton(),
+        this.#renderSaveResultsButtons(),
         this.#renderInput(),
       ];
     }
@@ -796,61 +868,4 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       <div id="content">${content}</div>
     </section>`;
   }
-}
-
-async function inlineHtmlBlobUrls(html: string): Promise<string> {
-  const blobUrls = findBlobUrlsInHtml(html);
-  if (blobUrls.length === 0) {
-    return html;
-  }
-
-  const replacements = (
-    await Promise.all(
-      blobUrls.map(async ({ start, end, blobId }) => {
-        // Let's not trust the raw URL. We instead extract the blob ID from the
-        // URL if it looks like a blob URL, and then construct a new safe blob
-        // URL from scratch. This way there is no way for generated HTML to
-        // trigger an unsafe fetch.
-        const safeUrl = new URL(
-          `/board/blobs/${encodeURIComponent(blobId)}`,
-          document.location.origin
-        );
-        const response = await fetch(safeUrl);
-        if (!response.ok) {
-          console.error(
-            `${response.status} error fetching blob`,
-            safeUrl,
-            await response.text()
-          );
-          return null;
-        }
-        const blob = await response.blob();
-        const base64 = await asBase64(blob);
-        const dataUrl = `data:${blob.type};base64,${base64}`;
-        return { start, end, replacement: dataUrl };
-      })
-    )
-  ).filter((replacement) => replacement != null);
-
-  // Apply replacements reverse so that indices remain correct.
-  replacements.sort((a, b) => b.start - a.start);
-  for (const { start, end, replacement } of replacements) {
-    html = html.slice(0, start) + replacement + html.slice(end);
-  }
-  return html;
-}
-
-function findBlobUrlsInHtml(
-  str: string
-): Array<{ start: number; end: number; blobId: string }> {
-  const results = [];
-  const matches = str.matchAll(/https?:\/\/[^/]+\/board\/blobs\/([a-z0-9-]+)/g);
-  for (const match of matches) {
-    results.push({
-      start: match.index,
-      end: match.index + match[0].length,
-      blobId: match[1],
-    });
-  }
-  return results;
 }
