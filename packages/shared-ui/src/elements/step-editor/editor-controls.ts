@@ -43,6 +43,7 @@ import { InputChangeEvent } from "../../plugins/input-plugin.js";
 import { icons } from "../../styles/icons.js";
 import { iconSubstitute } from "../../utils/icon-substitute.js";
 import type { PickedValue } from "../google-drive/google-drive-file-id.js";
+import { ActionTracker } from "../../utils/action-tracker.js";
 
 const QUICK_ADD_ADJUSTMENT = -20;
 
@@ -807,9 +808,11 @@ export class EditorControls extends LitElement {
           draggable="true"
           class=${classMap(classes)}
           @click=${() => {
+            ActionTracker.addNewStep(item.metadata.title);
             this.#handleChosenKitItem(item.id);
           }}
           @dragstart=${(evt: DragEvent) => {
+            ActionTracker.addNewStep(item.metadata.title);
             if (!evt.dataTransfer) {
               return;
             }

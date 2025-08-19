@@ -81,6 +81,7 @@ import { getBoardUrlFromCurrentWindow } from "../../utils/board-id.js";
 import { colorsLight } from "../../styles/host/colors-light";
 import { type } from "../../styles/host/type";
 import { iconSubstitute } from "../../utils/icon-substitute";
+import { ActionTracker } from "../../utils/action-tracker";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -931,6 +932,8 @@ export class EntityEditor extends SignalWatcher(LitElement) {
     const { values, ins } = this.#takePortValues(formValues, ports);
     const configuration = { ...node.configuration(), ...values };
 
+    ActionTracker.editStep("manual");
+
     this.dispatchEvent(
       new StateEvent({
         eventType: "node.change",
@@ -1347,6 +1350,7 @@ export class EntityEditor extends SignalWatcher(LitElement) {
                     stepId: nodeId,
                   } satisfies FlowGenConstraint}
                   @bbgraphreplace=${() => {
+                    ActionTracker.editStep("flowgen");
                     // Ignore all edits to this point so that we don't issue
                     // a submit and stomp the new values.
                     this.#edited = false;

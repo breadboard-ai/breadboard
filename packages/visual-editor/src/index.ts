@@ -103,7 +103,7 @@ import { sandbox } from "./sandbox";
 import { MainArguments } from "./types/types";
 import { envFromFlags } from "./utils/env-from-flags";
 import { envFromSettings } from "./utils/env-from-settings";
-import { makeUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
+import { makeUrl, parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 
 type RenderValues = {
   canSave: boolean;
@@ -493,6 +493,13 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.#boardServers = this.#runtime.board.getBoardServers() || [];
     this.#uiState = this.#runtime.state.getOrCreateUIState();
+    const parsedUrl = parseUrl(window.location.href);
+    if (parsedUrl.page === "graph") {
+      const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
+      ActionTracker.load(this.#uiState.mode, shared);
+    } else if (parsedUrl.page === "home") {
+      ActionTracker.load("home", false);
+    }
     this.#graphStore = this.#runtime.board.getGraphStore();
 
     const hasMountedBoardServer = this.#findSelectedBoardServer(args);

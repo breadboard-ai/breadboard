@@ -59,6 +59,11 @@ function resetAnalyticsUserId() {
  */
 
 class ActionTracker {
+  static load(type: "app" | "canvas" | "landing" | "home", shared: boolean) {
+    const sharedSuffix = shared ? "_shared" : "";
+    globalThis.gtag?.("event", `app_load_${type}${sharedSuffix}`);
+  }
+
   static openApp(url: string, source: "gallery" | "user") {
     globalThis.gtag?.("event", "app_open", { url, source });
     globalThis.gtag?.("event", "app_engage", { url });
@@ -134,6 +139,7 @@ class ActionTracker {
 
   static signInPageView() {
     globalThis.gtag?.("event", "sign_in_page_view");
+    this.load("landing", false);
   }
 
   static signOutSuccess() {
@@ -164,5 +170,20 @@ class ActionTracker {
 
   static errorSafety() {
     globalThis.gtag?.("event", "error_safety");
+  }
+
+  static addNewStep(type?: string) {
+    globalThis.gtag?.(
+      "event",
+      `add_step_${type?.toLocaleLowerCase().replace(/[^a-zA-Z0-9]/g, "_") || "unknown"}`
+    );
+  }
+
+  static editStep(type: "manual" | "flowgen") {
+    globalThis.gtag?.("event", `edit_step_${type}`);
+  }
+
+  static shareResults(type: "download" | "save_to_drive" | "copy_share_link") {
+    globalThis.gtag?.("event", `share_results_${type}`);
   }
 }
