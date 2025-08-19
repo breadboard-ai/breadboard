@@ -353,6 +353,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     await navigator.clipboard.writeText(decodeURIComponent(this.resultsUrl));
 
+    ActionTracker.shareResults("copy_share_link");
+
     this.dispatchEvent(
       new SnackbarEvent(
         globalThis.crypto.randomUUID(),
@@ -434,6 +436,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     URL.revokeObjectURL(url);
 
     unlockButton();
+
+    ActionTracker.shareResults("download");
 
     function lockButton() {
       btn!.disabled = true;
@@ -657,6 +661,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       results: resultsFileId,
       shared: true,
     });
+
+    ActionTracker.shareResults("save_to_drive");
+
     unlockButton();
 
     this.dispatchEvent(new UnsnackbarEvent());

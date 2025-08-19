@@ -176,4 +176,8 @@ class ActionTracker {
   static editStep(type: "manual" | "flowgen") {
     globalThis.gtag?.("event", `edit_step_${type}`);
   }
+
+  static shareResults(type: "download" | "save_to_drive" | "copy_share_link") {
+    globalThis.gtag?.("event", `share_results_${type}`);
+  }
 }
