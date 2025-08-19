@@ -681,15 +681,18 @@ export class SharePanel extends LitElement {
   #renderAdvisory() {
     return html`
       <p id="advisory">
-        Publishing an ${APP_NAME} app will reveal all prompts used to create the
-        ${APP_NAME} app. Public links can be reshared with anyone. Share
+        Granting any access to this app reveals all its content and prompts to
+        anyone with access. <strong>Share</strong> to grant access only to
+        specific people you choose. <strong>Publish</strong> to create a public
+        link for anyone that can also be reshared by anyone. Manage your app's
+        visibility at any time from the <strong>'Share app'</strong> menu within
+        the ${APP_NAME} app - simply toggle publishing off to unpublish. All
+        your ${APP_NAME} apps are saved to your Drive. Remember to share
         <a
           href="https://policies.google.com/terms/generative-ai/use-policy"
           target="_blank"
           >responsibly</a
-        >, unpublish anytime by clicking the 'Share app' button within this
-        ${APP_NAME} app and change the publish toggle. All created and remixed
-        ${APP_NAME} apps will be saved in your Drive.
+        >.
       </p>
     `;
   }
