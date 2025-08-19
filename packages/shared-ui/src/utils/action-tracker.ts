@@ -167,6 +167,13 @@ class ActionTracker {
   }
 
   static addNewStep(type?: string) {
-    globalThis.gtag?.("event", `add_step_${type || "unknown"}`);
+    globalThis.gtag?.(
+      "event",
+      `add_step_${type?.toLocaleLowerCase().replace(/[^a-zA-Z0-9]/g, "_") || "unknown"}`
+    );
+  }
+
+  static editStep(type: "manual" | "flowgen") {
+    globalThis.gtag?.("event", `edit_step_${type}`);
   }
 }
