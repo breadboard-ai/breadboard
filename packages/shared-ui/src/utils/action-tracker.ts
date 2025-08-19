@@ -59,7 +59,7 @@ function resetAnalyticsUserId() {
  */
 
 class ActionTracker {
-  static load(type: "app" | "canvas" | "landing", shared: boolean) {
+  static load(type: "app" | "canvas" | "landing" | "home", shared: boolean) {
     const sharedSuffix = shared ? "_shared" : "";
     globalThis.gtag?.("event", `app_load_${type}${sharedSuffix}`);
   }

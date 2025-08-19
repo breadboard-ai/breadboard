@@ -494,8 +494,12 @@ export class Main extends SignalWatcher(LitElement) {
     this.#boardServers = this.#runtime.board.getBoardServers() || [];
     this.#uiState = this.#runtime.state.getOrCreateUIState();
     const parsedUrl = parseUrl(window.location.href);
-    const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
-    ActionTracker.load(this.#uiState.mode, shared);
+    if (parsedUrl.page === "graph") {
+      const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
+      ActionTracker.load(this.#uiState.mode, shared);
+    } else if (parsedUrl.page === "home") {
+      ActionTracker.load("home", false);
+    }
     this.#graphStore = this.#runtime.board.getGraphStore();
 
     const hasMountedBoardServer = this.#findSelectedBoardServer(args);
