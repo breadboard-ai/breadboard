@@ -302,7 +302,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     </div>`;
   }
 
-  #renderSaveResultsButton() {
+  #renderSaveResultsButtons() {
     if (!this.run?.finalOutput) {
       return nothing;
     }
@@ -327,6 +327,13 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               <span class="g-icon filled round">share</span>
               Share output
             </button>`}
+        <button
+          id="export-results-button"
+          class="sans-flex w-500 round md-body-medium"
+        >
+          <span class="g-icon filled round">save</span>
+          Export output
+        </button>
       </div>
     `;
   }
@@ -766,7 +773,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       content = [
         this.#renderControls(),
         this.#renderActivity(),
-        this.#renderSaveResultsButton(),
+        this.#renderSaveResultsButtons(),
         this.#renderInput(),
       ];
     }

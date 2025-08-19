@@ -794,12 +794,15 @@ export const styles: CSSResultGroup = [
 
     #save-results-button-container {
       padding: var(--bb-grid-size-4);
+      display: flex;
 
-      & #save-results-button {
+      & #save-results-button,
+      #export-results-button {
         display: flex;
         align-items: center;
         background: none;
         border: none;
+        padding: 0 var(--bb-grid-size-4) 0 0;
         border-color: var(--bb-neutral-400);
         transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
         opacity: 0.7;
