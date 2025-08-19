@@ -14,7 +14,7 @@ import {
   nothing,
   PropertyValues,
 } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property, query, state } from "lit/decorators.js";
 import {
   AppTemplate,
   AppTemplateOptions,
@@ -56,7 +56,11 @@ import { theme as uiTheme } from "./theme/light.js";
 
 import "./header/header.js";
 
-import { inlineAllContent } from "@breadboard-ai/data";
+import {
+  extensionFromMimeType,
+  inlineAllContent,
+  saveOutputsAsFile,
+} from "@breadboard-ai/data";
 import {
   MAIN_TO_SHAREABLE_COPY_PROPERTY,
   SHAREABLE_COPY_TO_MAIN_PROPERTY,
@@ -147,6 +151,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   @consume({ context: googleDriveClientContext })
   accessor googleDriveClient!: GoogleDriveClient | undefined;
+
+  @query("#export-output-button")
+  accessor exportOutputsButton: HTMLButtonElement | null = null;
 
   readonly #shareResultsButton = createRef<HTMLButtonElement>();
 
@@ -328,7 +335,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               Share output
             </button>`}
         <button
-          id="export-results-button"
+          id="export-output-button"
+          @click=${this.#onClickExportOutput}
           class="sans-flex w-500 round md-body-medium"
         >
           <span class="g-icon filled round">save</span>
@@ -355,6 +363,85 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         true
       )
     );
+  }
+
+  async #onClickExportOutput() {
+    const btn = this.exportOutputsButton;
+    if (!btn) {
+      console.error("No export output button");
+      return;
+    }
+
+    lockButton();
+
+    if (!this.run) {
+      console.error(`No project run`);
+      unlockButton();
+      return;
+    }
+
+    const currentGraphUrl = this.graph?.url;
+    if (!currentGraphUrl) {
+      console.error(`No graph url`);
+      unlockButton();
+      return;
+    }
+
+    if (!this.run.finalOutput) {
+      unlockButton();
+      return;
+    }
+
+    const boardServer = this.boardServer;
+    if (!boardServer) {
+      console.error(`No board server`);
+      unlockButton();
+      return;
+    }
+
+    if (!(boardServer instanceof GoogleDriveBoardServer)) {
+      console.error(`Board server was not Google Drive`);
+      unlockButton();
+      return;
+    }
+
+    const outputs = await inlineAllContent(
+      boardServer,
+      this.run.finalOutput,
+      currentGraphUrl
+    );
+    if (!ok(outputs)) {
+      console.error(`Unable to inline content`, outputs);
+      unlockButton();
+      return;
+    }
+
+    const saving = await saveOutputsAsFile(outputs);
+    if (!ok(saving)) {
+      console.error(`Unable to save`, saving.$error);
+      unlockButton();
+      return;
+    }
+
+    const url = URL.createObjectURL(saving);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${this.graph?.title || "outputs"}-saved.${extensionFromMimeType(saving.type)}`;
+    document.body.appendChild(a);
+    a.click();
+
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    unlockButton();
+
+    function lockButton() {
+      btn!.disabled = true;
+    }
+
+    function unlockButton() {
+      btn!.disabled = false;
+    }
   }
 
   async #onClickSaveResults() {
@@ -463,7 +550,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       .getFileMetadata(shareableGraphFileId, { fields: ["resourceKey"] })
       .then(({ resourceKey }) => resourceKey);
 
-    // Clone because we are going to inline content below.
     if (!this.run.finalOutput) {
       unlockButton();
       return;

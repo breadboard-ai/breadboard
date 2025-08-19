@@ -797,7 +797,7 @@ export const styles: CSSResultGroup = [
       display: flex;
 
       & #save-results-button,
-      #export-results-button {
+      #export-output-button {
         display: flex;
         align-items: center;
         background: none;

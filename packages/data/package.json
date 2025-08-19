@@ -135,6 +135,7 @@
   },
   "dependencies": {
     "@breadboard-ai/types": "0.8.0",
-    "@breadboard-ai/utils": "0.0.2"
+    "@breadboard-ai/utils": "0.0.2",
+    "littlezipper": "^0.1.5"
   }
 }
