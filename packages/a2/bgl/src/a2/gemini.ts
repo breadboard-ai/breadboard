@@ -8,6 +8,7 @@ import { StreamableReporter } from "./output";
 
 import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils";
 import { flattenContext } from "./lists";
+import write from "@write";
 
 const defaultSafetySettings = (): SafetySetting[] => [
   {
@@ -410,6 +411,11 @@ async function callAPI(
     let $error: string = "Unknown error";
     const maxRetries = retries;
     while (retries) {
+      // Record model call with action tracker.
+      write({
+        path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
+        data: [],
+      });
       const result = await fetch({
         $metadata,
         url: endpointURL(model),
