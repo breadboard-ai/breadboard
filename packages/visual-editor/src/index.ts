@@ -537,7 +537,13 @@ export class Main extends SignalWatcher(LitElement) {
     }
 
     // Admin.
-    const admin = new Admin(args, this.globalConfig, this.googleDriveClient);
+    const admin = new Admin(
+      args,
+      this.globalConfig,
+      this.googleDriveClient,
+      this.signinAdapter,
+      this.tokenVendor
+    );
     admin.runtime = this.#runtime;
     admin.settingsHelper = this.settingsHelper;
 

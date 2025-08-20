@@ -14,7 +14,10 @@ import { Runtime } from "./runtime/runtime.js";
 import { RuntimeFlagManager } from "@breadboard-ai/types";
 import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
-import { ValidTokenResult } from "@breadboard-ai/connection-client";
+import {
+  TokenVendor,
+  ValidTokenResult,
+} from "@breadboard-ai/connection-client";
 import { Project } from "@breadboard-ai/shared-ui/state/types.js";
 
 /**
@@ -27,7 +30,9 @@ export class Admin {
   constructor(
     public readonly args: MainArguments,
     public readonly globalConfig: GlobalConfig,
-    public readonly gDriveClient: GoogleDriveClient
+    public readonly gDriveClient: GoogleDriveClient,
+    public readonly signinAdapter: SigninAdapter,
+    public readonly tokenVendor: TokenVendor
   ) {
     if (window.location.hash?.includes("owner-tools")) {
       (window as unknown as Record<string, unknown>)["o"] = this;
