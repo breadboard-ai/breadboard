@@ -20,7 +20,6 @@ export type GlobalConfig = {
   requiresSignin?: boolean;
   googleDrive: {
     publishPermissions: GoogleDrivePermission[];
-    publicApiKey: string;
   };
   buildInfo: BuildInfo;
 } & ClientDeploymentConfiguration;

@@ -30,14 +30,12 @@ export type CachedGoogleDriveFile = NarrowedDriveFile<
 export class DriveListCache {
   #forceRefreshOnce: boolean;
   readonly #googleDriveClient: GoogleDriveClient;
-  readonly #scope: ListFilesOptions["scope"];
   readonly #filterForAppAuthorized: boolean;
 
   constructor(
     private readonly cacheKey: string,
     private readonly query: string,
     googleDriveClient: GoogleDriveClient,
-    scope: ListFilesOptions["scope"],
     filterForAppAuthorized: boolean
   ) {
     // This is a hack to work around the problem where we don't track removals
@@ -46,7 +44,6 @@ export class DriveListCache {
       "force-refresh"
     );
     this.#googleDriveClient = googleDriveClient;
-    this.#scope = scope;
     this.#filterForAppAuthorized = filterForAppAuthorized;
   }
 
@@ -115,7 +112,6 @@ export class DriveListCache {
       }
 
       const response = await this.#googleDriveClient.listFiles(query, {
-        scope: this.#scope,
         fields: [
           "id",
           "name",

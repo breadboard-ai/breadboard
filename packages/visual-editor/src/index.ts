@@ -351,20 +351,6 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl: "https://www.googleapis.com",
-      domainProxyUrl: this.globalConfig.ENABLE_GOOGLE_DRIVE_PROXY
-        ? new URL("v1beta1/getOpalFile", backendApiEndpoint).href
-        : undefined,
-      publicReadStrategy: new URL(window.location.href).searchParams.has(
-        "proxy-public-drive-files"
-      )
-        ? {
-            kind: "proxy",
-            url: new URL("/files/", window.location.href).href,
-          }
-        : {
-            kind: "direct",
-            apiKey: this.globalConfig.googleDrive.publicApiKey,
-          },
       getUserAccessToken: async () => {
         const token = await this.signinAdapter.token();
         if (token.state === "valid") {
@@ -984,7 +970,6 @@ export class Main extends SignalWatcher(LitElement) {
             this.#uiState.loadState = "Loading";
             await this.#runtime.board.createTabFromURL(
               boardUrl,
-              undefined,
               undefined,
               undefined,
               undefined,

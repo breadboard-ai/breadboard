@@ -82,11 +82,7 @@ function extractDriveError(s: string): DriveError | null {
   }
 }
 
-export function makeHandleAssetsDriveRequest({
-  domainProxyUrl,
-}: {
-  domainProxyUrl: string | undefined;
-}) {
+export function makeHandleAssetsDriveRequest() {
   return async function handleAssetsDriveRequest(
     req: Request,
     res: Response
@@ -98,12 +94,6 @@ export function makeHandleAssetsDriveRequest({
     };
     let mimeType = (req.query["mimeType"] as string) ?? "";
     const googleDriveClient = new GoogleDriveClient({
-      domainProxyUrl,
-      publicReadStrategy: {
-        kind: "direct",
-        apiKey: process.env["VITE_GOOGLE_DRIVE_PUBLIC_API_KEY"] ?? "",
-        referer: req.headers.referer,
-      },
       getUserAccessToken: async () => accessToken,
     });
 

@@ -62,9 +62,7 @@ export function serveBoardsAPI(serverConfig: ServerConfig): Router {
   );
   router.post("/@:user/:name/describe", loadBoard(), describeBoard);
 
-  const handleAssetsDriveRequest = makeHandleAssetsDriveRequest({
-    domainProxyUrl: serverConfig.googleDriveProxyUrl,
-  });
+  const handleAssetsDriveRequest = makeHandleAssetsDriveRequest();
 
   router.post(
     "/@:_user/:_name/assets/drive/:driveId",

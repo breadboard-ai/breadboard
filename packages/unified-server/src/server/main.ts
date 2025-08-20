@@ -28,25 +28,9 @@ const { client: clientConfig, server: serverConfig } =
 
 server.use(makeCspHandler(serverConfig));
 
-let googleDriveProxyUrl: string | undefined;
-if (serverConfig.ENABLE_GOOGLE_DRIVE_PROXY) {
-  if (serverConfig.BACKEND_API_ENDPOINT) {
-    googleDriveProxyUrl = new URL(
-      "v1beta1/getOpalFile",
-      serverConfig.BACKEND_API_ENDPOINT
-    ).href;
-  } else {
-    console.warn(
-      `ENABLE_GOOGLE_DRIVE_PROXY was true but BACKEND_API_ENDPOINT was missing.` +
-        ` Google Drive proxying will not be available.`
-    );
-  }
-}
-
 const boardServerConfig = boardServer.createServerConfig({
   storageProvider: "firestore",
   proxyServerAllowFilter,
-  googleDriveProxyUrl,
 });
 const connectionServerConfig = {
   ...(await connectionServer.createServerConfig()),
@@ -69,7 +53,6 @@ server.use("/app/@:user/:name", boardServer.middlewares.loadBoard());
 // server.use(
 //   "/files",
 //   makeDriveProxyMiddleware({
-//     publicApiKey: serverConfig.GOOGLE_DRIVE_PUBLIC_API_KEY,
 //     serverUrl: serverConfig.SERVER_URL,
 //     featuredGalleryFolderId:
 //       serverConfig.GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID,
@@ -92,9 +75,6 @@ const authClient = await googleAuth.getClient();
 const driveClient = new GoogleDriveClient({
   getUserAccessToken: async () =>
     (await authClient.getAccessToken()).token ?? "",
-  // No public or domain fallback.
-  publicReadStrategy: { kind: "none" },
-  domainProxyUrl: undefined,
 });
 
 server.use(

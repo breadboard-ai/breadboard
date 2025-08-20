@@ -37,13 +37,11 @@ const PRODUCTION_DRIVE_BASE_URL = "https://www.googleapis.com";
 // };
 
 export type DriveProxyConfig = {
-  publicApiKey?: string;
   serverUrl?: string;
   featuredGalleryFolderId?: string;
 };
 
 export function makeDriveProxyMiddleware({
-  publicApiKey,
   serverUrl,
   featuredGalleryFolderId,
 }: DriveProxyConfig): Router {
@@ -55,13 +53,6 @@ export function makeDriveProxyMiddleware({
       maxAge: 24 * 60 * 60,
     })
   );
-  if (!publicApiKey) {
-    router.all(
-      "*",
-      createErrorHandler("GOOGLE_DRIVE_PUBLIC_API_KEY was not supplied")
-    );
-    return router;
-  }
   if (!serverUrl) {
     router.all("*", createErrorHandler("SERVER_URL was not supplied"));
     return router;
@@ -76,7 +67,6 @@ export function makeDriveProxyMiddleware({
     return router;
   }
   // const config = {
-  //   publicApiKey,
   //   serverUrl,
   //   featuredGalleryFolderId,
   // };

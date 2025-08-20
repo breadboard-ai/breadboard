@@ -57,7 +57,6 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       publishPermissions: JSON.parse(
         import.meta.env.VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS || `[]`
       ) as GoogleDrivePermission[],
-      publicApiKey: import.meta.env.VITE_GOOGLE_DRIVE_PUBLIC_API_KEY ?? "",
     },
     buildInfo: {
       packageJsonVersion: pkg.version,
