@@ -4,7 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { ActionTracker, initializeAnalytics };
+import { PartialPersistentBackend } from "@google-labs/breadboard";
+
+export { ActionTracker, initializeAnalytics, createActionTrackerBackend };
 
 declare global {
   interface Window {
@@ -186,4 +188,13 @@ class ActionTracker {
   static shareResults(type: "download" | "save_to_drive" | "copy_share_link") {
     globalThis.gtag?.("event", `share_results_${type}`);
   }
+}
+
+function createActionTrackerBackend() {
+  return new PartialPersistentBackend({
+    async write(_graphUrl, path, _data) {
+      const eventName = path.split("/").at(-1);
+      globalThis.gtag?.("event", `step_run_${eventName}`);
+    },
+  });
 }
