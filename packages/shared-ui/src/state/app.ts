@@ -5,9 +5,9 @@
  */
 
 import { signal } from "signal-utils";
-import { App, AppScreen } from "./types";
 import { SignalMap } from "signal-utils/map";
 import { ReactiveAppScreen } from "./app-screen";
+import { App } from "./types";
 
 export { ReactiveApp };
 
@@ -17,8 +17,10 @@ class ReactiveApp implements App {
     return this.screens.size > 0 ? "screen" : "splash";
   }
 
-  screens: Map<string, AppScreen> = new SignalMap();
+  screens: Map<string, ReactiveAppScreen> = new SignalMap();
 
   @signal
-  accessor current: ReactiveAppScreen | null = null;
+  get current(): ReactiveAppScreen | null {
+    return Array.from(this.screens.values()).at(-1) || null;
+  }
 }

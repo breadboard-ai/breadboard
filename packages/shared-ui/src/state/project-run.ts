@@ -77,8 +77,6 @@ function createProjectRunStateFromFinalOutput(
   const current = new ReactiveAppScreen("", [], undefined);
   current.outputs.set("final", last);
   run.app.screens.set("final", current);
-  run.app.current = current;
-
   return run;
 }
 
@@ -286,7 +284,6 @@ class ReactiveProjectRun implements ProjectRun {
     // might go out of sync.
     // See https://github.com/breadboard-ai/breadboard/wiki/Screens
     const screen = new ReactiveAppScreen(title || "", path, outputSchema);
-    this.app.current = screen;
     this.app.screens.set(screen.id, screen);
   }
 
@@ -315,12 +312,28 @@ class ReactiveProjectRun implements ProjectRun {
     const { path } = event.data;
     console.debug("Project Run: Input", event);
     if (!this.current) {
-      console.warn(`No current node for input event`, event);
+      console.warn(`No current console entry found for input event`, event);
       return;
     }
-    this.current.get(topLevel(path))?.addInput(event.data, {
+    const currentId = topLevel(path);
+    const currentConsoleEntry = this.current.get(currentId);
+    if (!currentConsoleEntry) {
+      console.warn(`No current console entry found at path "${path}"`);
+      return;
+    }
+    const currentScreen = this.app.screens.get(currentId);
+    if (!currentScreen) {
+      console.warn(`No current screen found at path "${path}"`);
+    } else {
+      // Bump it to the bottom of the list (last item = really current);
+      this.app.screens?.delete(currentId);
+      this.app.screens?.set(currentId, currentScreen);
+    }
+    this.current.delete(currentId);
+    this.current.set(currentId, currentConsoleEntry);
+    currentConsoleEntry.addInput(event.data, {
       itemCreated: (item) => {
-        this.app.current?.markAsInput();
+        currentScreen?.markAsInput();
         if (!item.schema) {
           console.warn(`Schema unavailable for input, skipping`, event.data);
           return;
@@ -369,7 +382,7 @@ class ReactiveProjectRun implements ProjectRun {
       console.warn(`No current screen for output event`, event);
       return;
     }
-    this.app.current.addOutput(event.data, particleTree);
+    this.app.screens.get(topLevel(path))?.addOutput(event.data, particleTree);
   }
 
   #error(event: RunErrorEvent) {
