@@ -9,7 +9,6 @@ import { type RuntimeFlags } from "./flags.js";
 export type ClientDeploymentConfiguration = {
   MEASUREMENT_ID?: string;
   BACKEND_API_ENDPOINT?: string;
-  ENABLE_GOOGLE_DRIVE_PROXY?: boolean;
   FEEDBACK_LINK?: string;
   ENABLE_GOOGLE_FEEDBACK?: boolean;
   GOOGLE_FEEDBACK_PRODUCT_ID?: string;
@@ -40,7 +39,6 @@ export interface DomainConfiguration {
 
 export type ServerDeploymentConfiguration = {
   BACKEND_API_ENDPOINT?: string;
-  ENABLE_GOOGLE_DRIVE_PROXY?: boolean;
   /**
    * The public API key (no extra privileges) that is used to access
    * Drive files.

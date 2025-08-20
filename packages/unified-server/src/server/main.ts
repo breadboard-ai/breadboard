@@ -28,25 +28,9 @@ const { client: clientConfig, server: serverConfig } =
 
 server.use(makeCspHandler(serverConfig));
 
-let googleDriveProxyUrl: string | undefined;
-if (serverConfig.ENABLE_GOOGLE_DRIVE_PROXY) {
-  if (serverConfig.BACKEND_API_ENDPOINT) {
-    googleDriveProxyUrl = new URL(
-      "v1beta1/getOpalFile",
-      serverConfig.BACKEND_API_ENDPOINT
-    ).href;
-  } else {
-    console.warn(
-      `ENABLE_GOOGLE_DRIVE_PROXY was true but BACKEND_API_ENDPOINT was missing.` +
-        ` Google Drive proxying will not be available.`
-    );
-  }
-}
-
 const boardServerConfig = boardServer.createServerConfig({
   storageProvider: "firestore",
   proxyServerAllowFilter,
-  googleDriveProxyUrl,
 });
 const connectionServerConfig = {
   ...(await connectionServer.createServerConfig()),
@@ -94,7 +78,6 @@ const driveClient = new GoogleDriveClient({
     (await authClient.getAccessToken()).token ?? "",
   // No public or domain fallback.
   publicReadStrategy: { kind: "none" },
-  domainProxyUrl: undefined,
 });
 
 server.use(

@@ -17,7 +17,6 @@ suite("Board Server integration test", () => {
     server = createServer(
       createServerConfig({
         storageProvider: "in-memory",
-        googleDriveProxyUrl: undefined,
       })
     );
     store = server.locals.store;

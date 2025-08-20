@@ -18,7 +18,6 @@ export interface GoogleDriveClientOptions {
     | { kind: "direct"; apiKey: string; referer?: string }
     | { kind: "proxy"; url: string }
     | { kind: "none" };
-  domainProxyUrl?: string;
   extraHeaders?: Record<string, string>;
 }
 
@@ -189,14 +188,12 @@ type GoogleApiAuthorization =
 
 export class GoogleDriveClient {
   readonly #apiBaseUrl: string;
-  readonly #domainProxyUrl?: string;
   readonly #getUserAccessToken: () => Promise<string>;
   readonly #publicReadStrategy: GoogleDriveClientOptions["publicReadStrategy"];
   readonly #extraHeaders?: Record<string, string>;
 
   constructor(options: GoogleDriveClientOptions) {
     this.#apiBaseUrl = options.apiBaseUrl || "https://www.googleapis.com";
-    this.#domainProxyUrl = options.domainProxyUrl;
     this.#getUserAccessToken = options.getUserAccessToken;
     this.#publicReadStrategy = options.publicReadStrategy;
     this.#extraHeaders = options.extraHeaders;
@@ -308,31 +305,6 @@ export class GoogleDriveClient {
           return publicResponse.json();
         }
       }
-
-      if (this.#domainProxyUrl) {
-        // 3. Try as a custom domain shared file.
-        console.log(
-          `Received 404 response for Google Drive file metadata "${fileId.id}"` +
-            ` using public fallback. Now trying custom domain fallback.`
-        );
-        const domainResponse = await this.#getFileMetadataWithGrpcApi(
-          fileId,
-          this.#domainProxyUrl,
-          options
-        );
-        if (domainResponse.ok) {
-          // The proxy response format is different to the direct API. Metadata is
-          // nested within a "metadata" property.
-          const result = (await domainResponse.json()) as GrpcGetFileResponse;
-          return JSON.parse(result.metadata);
-        } else {
-          const { status } = domainResponse;
-          console.log(
-            `Received ${status} response for Google Drive file metadata "${fileId.id}"` +
-              ` using custom domain fallback. The file is really not accessible!`
-          );
-        }
-      }
     }
 
     throw new Error(
@@ -364,30 +336,6 @@ export class GoogleDriveClient {
       [fileId],
       authorization
     );
-  }
-
-  async #getFileMetadataWithGrpcApi(
-    fileId: DriveFileId,
-    domainProxyUrl: string,
-    options: GetFileMetadataOptions | undefined
-  ): Promise<Response> {
-    return retryableFetch(domainProxyUrl, {
-      method: "POST",
-      body: JSON.stringify({
-        fileId: fileId.id,
-        // Note the proxy doesn't support resource keys. But that doesn't
-        // matter, because the proxy is only used when a file is shared directly
-        // with the proxy user, which means it won't require a resource key
-        // (because direct account sharing never does).
-        getMode: "GET_MODE_METADATA",
-        metadata_fields: (options?.fields ?? DEFAULT_FILE_FIELDS).join(","),
-      } satisfies GrpcGetFileRequest),
-      headers: {
-        authorization: `Bearer ${await this.#getUserAccessToken()}`,
-        ["content-type"]: "application/json",
-      },
-      signal: options?.signal,
-    });
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/get#:~:text=media */
@@ -434,36 +382,6 @@ export class GoogleDriveClient {
           return publicResponse;
         }
       }
-
-      if (this.#domainProxyUrl) {
-        // 3. Try as a custom domain shared file.
-        console.log(
-          `Received 404 response for Google Drive file media "${fileId.id}"` +
-            ` using public fallback, trying custom domain fallback.`
-        );
-        const domainResponse = await this.#getFileMediaWithGrpcApi(
-          fileId,
-          this.#domainProxyUrl,
-          options
-        );
-        if (domainResponse.ok) {
-          // The proxy response format is different to the direct API. The file
-          // bytes and mimeType are represented as JSON, with the bytes being
-          // base64 encoded.
-          const result = (await domainResponse.json()) as GrpcGetFileResponse;
-          const metadata = JSON.parse(result.metadata) as File;
-          return responseFromBase64(
-            result.content,
-            metadata.mimeType || "application/octet-stream"
-          );
-        } else {
-          const { status } = domainResponse;
-          console.log(
-            `Received ${status} response for Google Drive file media "${fileId.id}"` +
-              ` using custom domain fallback. The file is really not accessible!`
-          );
-        }
-      }
     }
 
     // The 404 or other error response.
@@ -487,26 +405,6 @@ export class GoogleDriveClient {
       [fileId],
       authorization
     );
-  }
-
-  async #getFileMediaWithGrpcApi(
-    fileId: DriveFileId,
-    domainProxyUrl: string,
-    options: BaseRequestOptions | undefined
-  ): Promise<Response> {
-    return retryableFetch(domainProxyUrl, {
-      method: "POST",
-      body: JSON.stringify({
-        fileId: fileId.id,
-        // Resource key not needed for proxy (see other note above for details).
-        getMode: "GET_MODE_GET_MEDIA",
-      } satisfies GrpcGetFileRequest),
-      headers: {
-        authorization: `Bearer ${await this.#getUserAccessToken()}`,
-        ["content-type"]: "application/json",
-      },
-      signal: options?.signal,
-    });
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/export */
@@ -554,32 +452,6 @@ export class GoogleDriveClient {
           return publicResponse;
         }
       }
-
-      if (this.#domainProxyUrl) {
-        // 3. Try as a custom domain shared file.
-        console.log(
-          `Received 404 response for Google Drive file export "${fileId.id}"` +
-            ` using public fallback. Now trying custom domain fallback.`
-        );
-        const domainResponse = await this.#exportFileWithGrpcApi(
-          fileId,
-          this.#domainProxyUrl,
-          options
-        );
-        if (domainResponse.ok) {
-          // The proxy response format is different to the direct API. The file
-          // bytes and mimeType are represented as JSON, with the bytes being
-          // base64 encoded.
-          const result = (await domainResponse.json()) as GrpcGetFileResponse;
-          return responseFromBase64(result.content, options.mimeType);
-        } else {
-          const { status } = domainResponse;
-          console.log(
-            `Received ${status} response for Google Drive file export "${fileId.id}"` +
-              ` using custom domain fallback. The file is really not accessible!`
-          );
-        }
-      }
     }
 
     // The 404 or other error response.
@@ -603,27 +475,6 @@ export class GoogleDriveClient {
       [fileId],
       authorization
     );
-  }
-
-  async #exportFileWithGrpcApi(
-    fileId: DriveFileId,
-    proxyUrl: string,
-    options: ExportFileOptions
-  ): Promise<Response> {
-    return retryableFetch(proxyUrl, {
-      method: "POST",
-      body: JSON.stringify({
-        fileId: fileId.id,
-        // Resource key not needed for proxy (see other note above for details).
-        getMode: "GET_MODE_EXPORT",
-        mimeType: options.mimeType,
-      } satisfies GrpcGetFileRequest),
-      headers: {
-        authorization: `Bearer ${await this.#getUserAccessToken()}`,
-        ["content-type"]: "application/json",
-      },
-      signal: options?.signal,
-    });
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/create#:~:text=metadata%2Donly */
@@ -1039,39 +890,6 @@ export class GoogleDriveClient {
     }
     return response.json();
   }
-}
-
-type GrpcGetFileRequest =
-  | {
-      // 3. Try as a custom domain shared file.
-      fileId: string;
-      metadata_fields?: string;
-      getMode: "GET_MODE_METADATA";
-    }
-  | {
-      fileId: string;
-      metadata_fields?: string;
-      getMode: "GET_MODE_GET_MEDIA";
-    }
-  | {
-      fileId: string;
-      metadata_fields?: string;
-      getMode: "GET_MODE_EXPORT";
-      mimeType: string;
-    };
-
-interface GrpcGetFileResponse {
-  /** JSON */
-  metadata: string;
-  /** base64 bytes */
-  content: string;
-}
-
-function responseFromBase64(base64String: string, mimeType: string): Response {
-  return new Response(
-    Uint8Array.from(atob(base64String), (char) => char.charCodeAt(0)),
-    { status: 200, headers: { "content-type": mimeType } }
-  );
 }
 
 /**

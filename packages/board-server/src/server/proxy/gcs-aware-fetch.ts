@@ -43,12 +43,7 @@ class GcsAwareFetch {
     serverUrl: string,
     inputs: InputValues
   ) {
-    return prepareGcsData(
-      inputs,
-      bucketName,
-      serverUrl,
-      this.serverConfig.googleDriveProxyUrl
-    );
+    return prepareGcsData(inputs, bucketName, serverUrl);
   }
 
   #procesFetchOutputs(serverUrl: string, outputs: OutputValues | void) {
@@ -119,8 +114,7 @@ class GcsAwareFetch {
 async function prepareGcsData(
   data: InputValues,
   bucketName: string,
-  serverUrl: string,
-  googleDriveProxyUrl: string | undefined
+  serverUrl: string
 ): Promise<InputValues> {
   let accessToken = "";
   if (data !== null && typeof data === "object" && "headers" in data) {
@@ -153,13 +147,7 @@ async function prepareGcsData(
     bucket_name: bucketName,
   };
   body["output_gcs_config"] = gcsOutputConfig;
-  await convertToGcsReferences(
-    body,
-    blobStore,
-    bucketName,
-    accessToken,
-    googleDriveProxyUrl
-  );
+  await convertToGcsReferences(body, blobStore, bucketName, accessToken);
   return data;
 }
 
@@ -230,8 +218,7 @@ async function convertToGcsReferences(
   body: object,
   blobStore: GoogleStorageBlobStore,
   bucketName: string,
-  accessToken: string,
-  googleDriveProxyUrl: string | undefined
+  accessToken: string
 ) {
   const executionInputs = maybeGetExecutionInputs(body);
   if (!executionInputs) {
@@ -251,8 +238,7 @@ async function convertToGcsReferences(
           console.log("Fetching Drive ID: ", driveId);
           const arrayBuffer = await fetchDriveAssetAsBuffer(
             driveId,
-            accessToken,
-            googleDriveProxyUrl
+            accessToken
           );
           // Store temporarily in GCS as file transfer mechanism.
           blobId = await blobStore.saveBuffer(arrayBuffer, mimetype);
@@ -272,13 +258,8 @@ async function convertToGcsReferences(
 }
 
 // Fetch media asset from long term  storage in Drive.
-async function fetchDriveAssetAsBuffer(
-  driveId: string,
-  accessToken: string,
-  domainProxyUrl: string | undefined
-) {
+async function fetchDriveAssetAsBuffer(driveId: string, accessToken: string) {
   const driveClient = new GoogleDriveClient({
-    domainProxyUrl,
     publicReadStrategy: {
       kind: "direct",
       apiKey: process.env["VITE_GOOGLE_DRIVE_PUBLIC_API_KEY"] ?? "",
