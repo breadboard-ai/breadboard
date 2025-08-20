@@ -17,6 +17,7 @@ import {
   toLLMContentInline,
   toLLMContentStored,
 } from "./utils";
+import write from "@write";
 
 const DEFAULT_BACKEND_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
@@ -197,6 +198,11 @@ async function executeStep(
     const token = (await secrets({ keys: [secretKey] }))[secretKey];
     // Call the API.
     const url = await getBackendUrl();
+    // Record model call with action tracker.
+    write({
+      path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
+      data: [],
+    });
     const fetchResult = await fetch({
       url: url,
       method: "POST",

@@ -85,7 +85,10 @@ import {
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { ReactiveAppScreen } from "@breadboard-ai/shared-ui/state/app-screen.js";
 import { type AppScreenOutput } from "@breadboard-ai/shared-ui/state/types.js";
-import { ActionTracker } from "@breadboard-ai/shared-ui/utils/action-tracker";
+import {
+  ActionTracker,
+  createActionTrackerBackend,
+} from "@breadboard-ai/shared-ui/utils/action-tracker";
 import {
   SIGN_IN_CONNECTION_ID,
   SigninAdapter,
@@ -451,6 +454,7 @@ export class Main extends SignalWatcher(LitElement) {
               });
             }),
           ],
+          ["track", createActionTrackerBackend()],
           [
             "mcp",
             new McpFileSystemBackend(async () => {
