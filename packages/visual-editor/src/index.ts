@@ -975,7 +975,6 @@ export class Main extends SignalWatcher(LitElement) {
               undefined,
               undefined,
               undefined,
-              undefined,
               evt.creator,
               evt.resultsFileId
             );

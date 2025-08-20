@@ -61,7 +61,7 @@ import {
   createWorkspaceSelectionChangeId,
 } from "../../utils/workspace.js";
 import { icons } from "../../styles/icons.js";
-import { type GoogleDrivePicker, EntityEditor } from "../elements.js";
+import { EntityEditor } from "../elements.js";
 import { consume } from "@lit/context";
 import { SharePanel } from "../share-panel/share-panel.js";
 import {
@@ -211,7 +211,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
     | "app-view" = "editor";
   #entityEditorRef: Ref<EntityEditor> = createRef();
   #sharePanelRef: Ref<SharePanel> = createRef();
-  #googleDriveAssetAccessPickerRef: Ref<GoogleDrivePicker> = createRef();
   #lastKnownNlEditValue = "";
 
   static styles = [icons, effects, canvasControllerStyles];
@@ -232,10 +231,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
   editorRender = 0;
   protected willUpdate(changedProperties: PropertyValues<this>): void {
-    if (changedProperties.has("graph")) {
-      this.updateComplete.then(() => this.#checkGoogleDriveAssetsAreReadable());
-    }
-
     if (changedProperties.has("selectionState")) {
       // If this is an imperative board with no selection state then set the
       // selection to be the main.
@@ -705,11 +700,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
       html`
         <bb-share-panel .graph=${this.graph} ${ref(this.#sharePanelRef)}>
         </bb-share-panel>
-        <bb-google-drive-picker
-          ${ref(this.#googleDriveAssetAccessPickerRef)},
-          mode="pick-shared-assets"
-        >
-        </bb-google-drive-picker>
       `,
     ];
   }
@@ -738,51 +728,5 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
   openSharePanel() {
     this.#sharePanelRef?.value?.open();
-  }
-
-  async #checkGoogleDriveAssetsAreReadable() {
-    if (!this.graph) {
-      return;
-    }
-    const driveAssetFileIds = findGoogleDriveAssetsInGraph(this.graph);
-    if (driveAssetFileIds.length === 0) {
-      return;
-    }
-    const { googleDriveClient } = this;
-    if (!googleDriveClient) {
-      console.error(`No googleDriveClient was provided`);
-      return;
-    }
-    const needsPicking: Array<DriveFileId> = [];
-    await Promise.all(
-      driveAssetFileIds.map(async ({ fileId }) => {
-        const readable = await googleDriveClient.isReadable(fileId);
-        if (!readable) {
-          needsPicking.push(fileId);
-        }
-      })
-    );
-    if (needsPicking.length > 0) {
-      const picker = this.#googleDriveAssetAccessPickerRef.value;
-      if (picker) {
-        picker.files = needsPicking;
-        picker.open();
-        picker.addEventListener(
-          "bbgoogledrivepickerclose",
-          ({ result }) => {
-            picker.files = [];
-            if (result.action === "picked") {
-              // Reload so that any assets that might have failed to load while
-              // the dialog was open will try again. It would be much better if
-              // we tracked this and could signal those affected components to
-              // re-render, but our infrastructure doesn't make that very easy
-              // currently.
-              window.location.reload();
-            }
-          },
-          { once: true }
-        );
-      }
-    }
   }
 }
