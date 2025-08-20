@@ -367,6 +367,10 @@ export class FloatingInput extends LitElement {
       return;
     }
 
+    if (this.textInput) {
+      this.textInput.value = "";
+    }
+
     this.dispatchEvent(
       new StateEvent({
         eventType: "board.input",
