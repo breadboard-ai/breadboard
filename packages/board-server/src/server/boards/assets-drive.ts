@@ -94,11 +94,6 @@ export function makeHandleAssetsDriveRequest() {
     };
     let mimeType = (req.query["mimeType"] as string) ?? "";
     const googleDriveClient = new GoogleDriveClient({
-      publicReadStrategy: {
-        kind: "direct",
-        apiKey: process.env["VITE_GOOGLE_DRIVE_PUBLIC_API_KEY"] ?? "",
-        referer: req.headers.referer,
-      },
       getUserAccessToken: async () => accessToken,
     });
 

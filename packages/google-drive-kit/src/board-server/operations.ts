@@ -169,7 +169,6 @@ class DriveOperations {
         parent: undefined,
       }),
       this.#googleDriveClient,
-      "user",
       true
     );
 

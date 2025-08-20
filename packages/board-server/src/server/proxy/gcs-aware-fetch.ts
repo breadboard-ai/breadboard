@@ -260,10 +260,6 @@ async function convertToGcsReferences(
 // Fetch media asset from long term  storage in Drive.
 async function fetchDriveAssetAsBuffer(driveId: string, accessToken: string) {
   const driveClient = new GoogleDriveClient({
-    publicReadStrategy: {
-      kind: "direct",
-      apiKey: process.env["VITE_GOOGLE_DRIVE_PUBLIC_API_KEY"] ?? "",
-    },
     getUserAccessToken: async () => accessToken,
   });
   const gettingMedia = await driveClient.getFileMedia(driveId);

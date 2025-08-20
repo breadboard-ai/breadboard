@@ -71,14 +71,6 @@ export async function createGoogleDriveBoardServer(
     );
     return null;
   }
-  const googleDrivePublicApiKey: string = import.meta.env
-    .VITE_GOOGLE_DRIVE_PUBLIC_API_KEY;
-  if (!googleDrivePublicApiKey) {
-    console.warn(
-      "No value for VITE_GOOGLE_DRIVE_PUBLIC_API_KEY was configured." +
-        " We will not be able to read public files from Google Drive."
-    );
-  }
   const googleDrivePublishPermissions: gapi.client.drive.Permission[] =
     JSON.parse(import.meta.env.VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS || "[]");
   if (!googleDrivePublishPermissions) {

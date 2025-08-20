@@ -40,11 +40,6 @@ export interface DomainConfiguration {
 export type ServerDeploymentConfiguration = {
   BACKEND_API_ENDPOINT?: string;
   /**
-   * The public API key (no extra privileges) that is used to access
-   * Drive files.
-   */
-  GOOGLE_DRIVE_PUBLIC_API_KEY?: string;
-  /**
    * The URL of the deployed server.
    */
   SERVER_URL?: string;

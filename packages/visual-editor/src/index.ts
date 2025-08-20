@@ -351,17 +351,6 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl: "https://www.googleapis.com",
-      publicReadStrategy: new URL(window.location.href).searchParams.has(
-        "proxy-public-drive-files"
-      )
-        ? {
-            kind: "proxy",
-            url: new URL("/files/", window.location.href).href,
-          }
-        : {
-            kind: "direct",
-            apiKey: this.globalConfig.googleDrive.publicApiKey,
-          },
       getUserAccessToken: async () => {
         const token = await this.signinAdapter.token();
         if (token.state === "valid") {

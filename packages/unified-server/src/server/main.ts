@@ -53,7 +53,6 @@ server.use("/app/@:user/:name", boardServer.middlewares.loadBoard());
 // server.use(
 //   "/files",
 //   makeDriveProxyMiddleware({
-//     publicApiKey: serverConfig.GOOGLE_DRIVE_PUBLIC_API_KEY,
 //     serverUrl: serverConfig.SERVER_URL,
 //     featuredGalleryFolderId:
 //       serverConfig.GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID,
@@ -76,8 +75,6 @@ const authClient = await googleAuth.getClient();
 const driveClient = new GoogleDriveClient({
   getUserAccessToken: async () =>
     (await authClient.getAccessToken()).token ?? "",
-  // No public or domain fallback.
-  publicReadStrategy: { kind: "none" },
 });
 
 server.use(
