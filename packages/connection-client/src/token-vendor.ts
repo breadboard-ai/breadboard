@@ -93,11 +93,13 @@ export class TokenVendorImpl {
       credentials: "include",
     });
     if (!httpRes.ok) {
-      throw new Error(String(httpRes.status));
+      throw new Error(
+        `Failed to refresh token, status: ${httpRes.status} ${httpRes.statusText}`
+      );
     }
     const jsonRes = (await httpRes.json()) as RefreshResponse;
     if (jsonRes.error !== undefined) {
-      throw new Error(jsonRes.error);
+      throw new Error(`Failed to refresh token, error: ${jsonRes.error}`);
     }
 
     const updatedGrant: TokenGrant = {
