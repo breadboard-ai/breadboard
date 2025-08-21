@@ -8,13 +8,23 @@ import { type VisualEditorMode } from "../types/types.js";
 
 export type MakeUrlInit = HomeUrlInit | GraphInit | LandingUrlInit;
 
-export interface HomeUrlInit {
+export interface BaseUrlInit {
+  /**
+   * Any `dev-` prefixed search-param will be stored here (e.g.
+   * `?dev-foo-bar=baz` becomes`{dev: {"foo-bar": "baz"}}` and vice-versa).
+   * Prefer kebab-case names for consistency.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  dev?: {};
+}
+
+export interface HomeUrlInit extends BaseUrlInit {
   page: "home";
   mode?: VisualEditorMode;
   redirectFromLanding?: boolean;
 }
 
-export interface GraphInit {
+export interface GraphInit extends BaseUrlInit {
   page: "graph";
   mode: VisualEditorMode;
   flow: string;
@@ -24,7 +34,7 @@ export interface GraphInit {
   redirectFromLanding?: boolean;
 }
 
-export interface LandingUrlInit {
+export interface LandingUrlInit extends BaseUrlInit {
   page: "landing";
   redirect: MakeUrlInit;
   oauthRedirect?: string;
@@ -37,13 +47,13 @@ const TAB0 = "tab0";
 const MODE = "mode";
 const MODE_APP = "app" as const;
 const MODE_CANVAS = "canvas" as const;
-type MODE_VALUES = typeof MODE_APP | typeof MODE_CANVAS;
 const RESULTS = "results";
 const SHARED = "shared";
 const GEO_RESTRICTION = "geo-restriction";
 const MISSING_SCOPES = "missing-scopes";
 const RESOURCE_KEY = "resourcekey";
 export const OAUTH_REDIRECT = "oauth_redirect";
+const DEV_PREFIX = "dev-";
 
 /**
  * Generate a URL for a page on the Breadboard Visual Editor.
@@ -98,6 +108,13 @@ export function makeUrl(
       `unhandled page ${JSON.stringify(page)} from ${JSON.stringify(init)}`
     );
   }
+  if (init.dev) {
+    for (const [key, val] of Object.entries(
+      init.dev as Record<string, string>
+    )) {
+      url.searchParams.set(DEV_PREFIX + key, val);
+    }
+  }
   return (
     url.href
       // A little extra cleanup. The URL class escapes search params very
@@ -113,6 +130,17 @@ export function makeUrl(
 export function parseUrl(url: string | URL): MakeUrlInit {
   if (typeof url === "string") {
     url = new URL(url);
+  }
+  let dev: BaseUrlInit["dev"];
+  for (const [key, val] of url.searchParams) {
+    if (key.startsWith(DEV_PREFIX)) {
+      dev ??= {};
+      const keySansPrefix = key.slice(DEV_PREFIX.length);
+      // Note while dev has strong types to make sure we're accessing the right
+      // properties, we actually don't care about them when parsing; anything
+      // with a "dev-" prefix will get preserved.
+      (dev as Record<string, string>)[keySansPrefix] = val;
+    }
   }
   if (url.pathname === "/landing/") {
     // See note in `makeUrl` above about redirect URLs.
@@ -136,15 +164,22 @@ export function parseUrl(url: string | URL): MakeUrlInit {
     if (oauthRedirect) {
       landing.oauthRedirect = oauthRedirect;
     }
+    if (dev) {
+      landing.dev = dev;
+    }
     return landing;
   } else {
     const flow = url.searchParams.get(FLOW) || url.searchParams.get(TAB0);
     if (!flow) {
-      return {
+      const home: HomeUrlInit = {
         page: "home",
         mode:
           url.searchParams.get("mode") === MODE_APP ? MODE_APP : MODE_CANVAS,
       };
+      if (dev) {
+        home.dev = dev;
+      }
+      return home;
     }
     const graph: GraphInit = {
       page: "graph",
@@ -158,6 +193,9 @@ export function parseUrl(url: string | URL): MakeUrlInit {
     }
     if (url.searchParams.has(SHARED)) {
       graph.shared = true;
+    }
+    if (dev) {
+      graph.dev = dev;
     }
     return graph;
   }
