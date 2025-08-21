@@ -15,7 +15,9 @@ export interface BaseUrlInit {
    * Prefer kebab-case names for consistency.
    */
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  dev?: {};
+  dev?: {
+    "force-drive-proxy": "";
+  };
 }
 
 export interface HomeUrlInit extends BaseUrlInit {
