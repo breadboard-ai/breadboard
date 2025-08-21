@@ -123,6 +123,8 @@ const LOADING_TIMEOUT = 1250;
 const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
 const UPDATE_HASH_KEY = "bb-main-update-hash";
 
+const parsedUrl = parseUrl(window.location.href);
+
 @customElement("bb-main")
 export class Main extends SignalWatcher(LitElement) {
   @provide({ context: globalConfigContext })
@@ -350,7 +352,10 @@ export class Main extends SignalWatcher(LitElement) {
     this.flowGenerator = new FlowGenerator(this.#apiClient);
 
     this.googleDriveClient = new GoogleDriveClient({
-      apiBaseUrl: "https://www.googleapis.com",
+      apiBaseUrl:
+        parsedUrl?.dev?.["force-drive-proxy"] !== undefined
+          ? new URL("/api/drive-proxy/", window.location.href).href
+          : "https://www.googleapis.com",
       getUserAccessToken: async () => {
         const token = await this.signinAdapter.token();
         if (token.state === "valid") {
@@ -483,7 +488,6 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.#boardServers = this.#runtime.board.getBoardServers() || [];
     this.#uiState = this.#runtime.state.getOrCreateUIState();
-    const parsedUrl = parseUrl(window.location.href);
     if (parsedUrl.page === "graph") {
       const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
       ActionTracker.load(this.#uiState.mode, shared);

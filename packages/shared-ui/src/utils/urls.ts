@@ -12,10 +12,13 @@ export interface BaseUrlInit {
   /**
    * Any `dev-` prefixed search-param will be stored here (e.g.
    * `?dev-foo-bar=baz` becomes`{dev: {"foo-bar": "baz"}}` and vice-versa).
-   * Prefer kebab-case names for consistency.
+   * Prefer kebab-case names for consistency, and be sure to make all properties
+   * ?optional.
    */
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  dev?: {};
+  dev?: {
+    "force-drive-proxy"?: "";
+  };
 }
 
 export interface HomeUrlInit extends BaseUrlInit {
