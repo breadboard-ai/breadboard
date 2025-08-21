@@ -6,6 +6,7 @@
 
 import { type ParticleTree, ParticleTreeImpl } from "@breadboard-ai/particles";
 import {
+  ErrorResponse,
   HarnessRunner,
   RunConfig,
   RunErrorEvent,
@@ -41,7 +42,7 @@ import {
   RunError,
   UserInput,
 } from "./types";
-import { decodeError } from "./utils/decode-error";
+import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
 
 export {
@@ -121,7 +122,24 @@ function topLevel(path: number[]) {
 class ReactiveProjectRun implements ProjectRun {
   app: ReactiveApp = new ReactiveApp();
   console: Map<string, ConsoleEntry> = new SignalMap();
-  errors: Map<string, RunError> = new SignalMap();
+
+  @signal
+  get errors(): Map<string, RunError> {
+    const errors = new Map<string, RunError>();
+    this.runner?.state?.forEach((entry) => {
+      if (entry.state === "failed") {
+        errors.set(
+          entry.node.id,
+          decodeErrorData(
+            (entry.outputs?.$error || "Unknown error") as ErrorResponse
+          )
+        );
+      }
+    });
+    return new Map([...this.#fatalErrors, ...errors]);
+  }
+
+  #fatalErrors: Map<string, RunError> = new SignalMap();
 
   @signal
   accessor status: "running" | "paused" | "stopped" = "stopped";
@@ -178,7 +196,7 @@ class ReactiveProjectRun implements ProjectRun {
     private readonly mainGraphId: MainGraphIdentifier,
     private readonly graphStore?: MutableGraphStore,
     private readonly fileSystem?: FileSystem,
-    runner?: HarnessRunner,
+    private readonly runner?: HarnessRunner,
     signal?: AbortSignal
   ) {
     if (!runner) return;
@@ -238,7 +256,7 @@ class ReactiveProjectRun implements ProjectRun {
 
     console.debug("Project Run: Graph Start");
     this.console.clear();
-    this.errors.clear();
+    this.#fatalErrors.clear();
     this.current = null;
     this.input = null; // can't be too cautious.
   }
@@ -389,7 +407,7 @@ class ReactiveProjectRun implements ProjectRun {
     const error = decodeError(event);
     const path = this.#errorPath || [];
     this.input = null;
-    this.errors.set(idFromPath(path), error);
+    this.#fatalErrors.set(idFromPath(path), error);
   }
 
   /**

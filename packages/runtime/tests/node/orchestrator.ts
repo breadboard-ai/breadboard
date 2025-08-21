@@ -4,17 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor, NodeIdentifier, Outcome } from "@breadboard-ai/types";
+import {
+  GraphDescriptor,
+  NodeIdentifier,
+  Outcome,
+  NodeLifecycleState,
+  OrchestrationNodeInfo,
+  Task,
+} from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import assert, { deepStrictEqual } from "node:assert";
 import { describe, it } from "node:test";
 import { createPlan } from "../../src/static/create-plan.js";
 import { Orchestrator } from "../../src/static/orchestrator.js";
-import {
-  NodeLifecycleState,
-  OrchestrationNodeInfo,
-  Task,
-} from "../../src/static/types.js";
 
 const diamond: GraphDescriptor = {
   nodes: [
@@ -78,7 +80,7 @@ function assertState(
 ) {
   const nodeMap = new Map(graph.nodes.map((node) => [node.id, node]));
   deepStrictEqual(
-    state,
+    new Map(state),
     new Map(
       expected.map(([id, state]) => [id, { node: nodeMap.get(id), state }])
     )

@@ -5,6 +5,7 @@
  */
 
 import { DataStore, FileSystem } from "./data.js";
+import { DeepReadonly } from "./deep-read-only.js";
 import { RuntimeFlagManager } from "./flags.js";
 import {
   GraphDescriptor,
@@ -15,6 +16,7 @@ import {
 import { MutableGraphStore } from "./inspect.js";
 import { GraphLoader } from "./loader.js";
 import { ErrorResponse, Kit } from "./node-handler.js";
+import { OrchestrationPlan, OrchestratorState } from "./orchestration.js";
 import {
   GraphEndProbeData,
   GraphStartProbeData,
@@ -373,4 +375,14 @@ export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
    *             for input.
    */
   run(inputs?: InputValues): Promise<boolean>;
+
+  /**
+   * For new runtime only: the current plan for the run.
+   */
+  plan?: DeepReadonly<OrchestrationPlan>;
+
+  /**
+   * For new runtime only: the current state of the orchestrator.
+   */
+  state?: DeepReadonly<OrchestratorState>;
 };
