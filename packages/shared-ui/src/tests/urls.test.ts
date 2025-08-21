@@ -6,7 +6,12 @@
 
 import assert from "node:assert";
 import { suite, test } from "node:test";
-import { makeUrl, type MakeUrlInit, parseUrl } from "../utils/urls.js";
+import {
+  BaseUrlInit,
+  makeUrl,
+  type MakeUrlInit,
+  parseUrl,
+} from "../utils/urls.js";
 
 const BASE_URL = "https://example.com";
 
@@ -32,6 +37,22 @@ suite("home", () => {
     assert.deepEqual(parseUrl(`${BASE_URL}/`), {
       page: "home",
       mode: "canvas",
+    });
+  });
+
+  test("preserves dev params", () => {
+    testSymmetrical(`${BASE_URL}/?mode=canvas&dev-foo=hello&dev-bar=`, {
+      page: "home",
+      mode: "canvas",
+      dev: {
+        foo: "hello",
+        bar: "",
+        // Note we're casting here and below because while we do type the dev
+        // object, the implementation doesn't actually care about the properties
+        // as long as they start with "dev-". And since we'll be changing the
+        // dev properties a lot, we don't want to have to update this test, so
+        // that's good.
+      } as object as BaseUrlInit["dev"],
     });
   });
 });
@@ -83,6 +104,22 @@ suite("app", () => {
       resourceKey: undefined,
     } satisfies MakeUrlInit);
   });
+
+  test("preserves dev params", () => {
+    testSymmetrical(
+      `${BASE_URL}/?flow=drive:/abc123&mode=app&dev-foo=hello&dev-bar=`,
+      {
+        page: "graph",
+        mode: "app",
+        flow: "drive:/abc123",
+        resourceKey: undefined,
+        dev: {
+          foo: "hello",
+          bar: "",
+        } as object as BaseUrlInit["dev"],
+      }
+    );
+  });
 });
 
 suite("canvas", () => {
@@ -91,6 +128,22 @@ suite("canvas", () => {
     mode: "canvas",
     flow: "drive:/abc123",
     resourceKey: undefined,
+  });
+
+  test("preserves dev params", () => {
+    testSymmetrical(
+      `${BASE_URL}/?flow=drive:/abc123&mode=canvas&dev-foo=hello&dev-bar=`,
+      {
+        page: "graph",
+        mode: "canvas",
+        flow: "drive:/abc123",
+        resourceKey: undefined,
+        dev: {
+          foo: "hello",
+          bar: "",
+        } as object as BaseUrlInit["dev"],
+      }
+    );
   });
 });
 
@@ -151,6 +204,25 @@ suite("landing", () => {
       oauthRedirect: "foo",
     }
   );
+
+  test("preserves dev params", () => {
+    testSymmetrical(`${BASE_URL}/landing/?dev-foo=hello&dev-bar=`, {
+      page: "landing",
+      redirect: {
+        page: "home",
+        mode: "canvas",
+        redirectFromLanding: true,
+        dev: {
+          foo: "hello",
+          bar: "",
+        } as object as BaseUrlInit["dev"],
+      },
+      dev: {
+        foo: "hello",
+        bar: "",
+      } as object as BaseUrlInit["dev"],
+    });
+  });
 });
 
 suite("parse errors", () => {
