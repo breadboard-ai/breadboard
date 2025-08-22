@@ -81,7 +81,15 @@ server.use(
   await makeGalleryMiddleware({ gallery: cachingGallery })
 );
 
-server.use("/api/drive-proxy", makeDriveProxyMiddleware());
+server.use(
+  "/api/drive-proxy",
+  makeDriveProxyMiddleware({
+    shouldCacheMedia: (fileId) =>
+      cachingGallery.isFeaturedGalleryGraph(fileId) ||
+      cachingGallery.isFeaturedGalleryAsset(fileId),
+    mediaCacheMaxAgeSeconds: FEATURED_GALLERY_CACHE_REFRESH_SECONDS,
+  })
+);
 
 server.use(
   "/api/mcp-proxy",
