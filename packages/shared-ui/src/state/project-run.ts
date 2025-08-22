@@ -128,12 +128,11 @@ class ReactiveProjectRun implements ProjectRun {
     const errors = new Map<string, RunError>();
     this.runner?.state?.forEach((entry) => {
       if (entry.state === "failed") {
-        errors.set(
-          entry.node.id,
-          decodeErrorData(
-            (entry.outputs?.$error || "Unknown error") as ErrorResponse
-          )
-        );
+        const errorResponse = entry.outputs?.$error as
+          | ErrorResponse
+          | undefined;
+        if (!errorResponse) return;
+        errors.set(entry.node.id, decodeErrorData(errorResponse));
       }
     });
     return new Map([...this.#fatalErrors, ...errors]);
