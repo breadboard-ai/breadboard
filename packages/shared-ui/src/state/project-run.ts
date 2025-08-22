@@ -41,11 +41,13 @@ import {
   ConsoleEntry,
   EphemeralParticleTree,
   ProjectRun,
+  RendererRunState,
   RunError,
   UserInput,
 } from "./types";
 import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
+import { ReactiveRendererRunState } from "./renderer-run-state";
 
 export {
   createProjectRunState,
@@ -170,6 +172,9 @@ class ReactiveProjectRun implements ProjectRun {
   accessor current: Map<string, ReactiveConsoleEntry> | null = null;
 
   @signal
+  accessor renderer: RendererRunState = new ReactiveRendererRunState();
+
+  @signal
   get estimatedEntryCount() {
     return Math.max(this.#inspectable?.nodes().length || 0, this.console.size);
   }
@@ -264,6 +269,7 @@ class ReactiveProjectRun implements ProjectRun {
     if (pathLength > 0) return;
 
     console.debug("Project Run: Graph Start");
+    this.renderer.nodes.clear();
     this.console.clear();
     this.#idCache.clear();
     this.#fatalError = null;
@@ -351,7 +357,14 @@ class ReactiveProjectRun implements ProjectRun {
             | ErrorResponse
             | undefined;
           if (!errorResponse) return;
-          entry.error = decodeErrorData(errorResponse);
+          const error = decodeErrorData(errorResponse);
+          entry.error = error;
+          this.renderer.nodes.set(id, {
+            status: "error",
+            errorMessage: error.message,
+          });
+        } else {
+          this.renderer.nodes.set(id, { status: "available" });
         }
       }
       entry.finalize(event.data);
@@ -386,6 +399,7 @@ class ReactiveProjectRun implements ProjectRun {
     }
     this.current.delete(id);
     this.current.set(id, currentConsoleEntry);
+    this.renderer.nodes.set(id, { status: "active" });
     currentConsoleEntry.addInput(event.data, {
       itemCreated: (item) => {
         currentScreen?.markAsInput();

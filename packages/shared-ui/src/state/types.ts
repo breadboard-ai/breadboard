@@ -14,6 +14,7 @@ import {
   McpServerDescriptor,
   McpServerIdentifier,
   NodeIdentifier,
+  NodeRunState,
   OutputValues,
   ParameterMetadata,
   RuntimeFlags,
@@ -48,6 +49,10 @@ export type AsyncComputedResult<T> = {
  * `@google-labs/breadboard`.
  */
 export type ProjectRun = {
+  /**
+   * Represents the renderer (the graph) state during the run.
+   */
+  renderer: RendererRunState;
   /**
    * Represents the App state during the run.
    */
@@ -84,10 +89,6 @@ export type ProjectRun = {
    * combining multiple errors, if necessary.
    */
   error: RunError | null;
-  /**
-   * All errors that might have occurred during a run.
-   */
-  errors: Map<string, RunError>;
   /**
    * The status of the run
    */
@@ -584,4 +585,8 @@ export type ProjectInternal = Project & {
 export type EphemeralParticleTree = {
   tree: ParticleTree;
   done: boolean;
+};
+
+export type RendererRunState = {
+  nodes: Map<NodeIdentifier, NodeRunState>;
 };

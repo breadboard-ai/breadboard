@@ -64,10 +64,7 @@ import { icons } from "../../styles/icons.js";
 import { EntityEditor } from "../elements.js";
 import { consume } from "@lit/context";
 import { SharePanel } from "../share-panel/share-panel.js";
-import {
-  DriveFileId,
-  type GoogleDriveClient,
-} from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { effects } from "../../styles/host/effects.js";
 import { GraphTheme } from "@breadboard-ai/types";
@@ -79,7 +76,6 @@ const focusAppControllerWhenIn = ["canvas", "preview"];
 const SIDE_ITEM_KEY = "bb-canvas-controller-side-nav-item";
 
 import "./empty-state.js";
-import { findGoogleDriveAssetsInGraph } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 import { isEmpty } from "../../utils/utils.js";
 import { uiStateContext } from "../../contexts/ui-state.js";
 import { SignalWatcher } from "@lit-labs/signals";
@@ -396,6 +392,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
         return html`<bb-renderer
           .boardServerKits=${this.boardServerKits}
           .projectState=${this.projectState}
+          .runState=${this.projectState?.run.renderer?.nodes}
           .runtimeFlags=${this.#uiState.flags}
           .graph=${graph}
           .graphIsMine=${this.graphIsMine}

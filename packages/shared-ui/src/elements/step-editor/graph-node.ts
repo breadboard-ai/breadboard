@@ -693,6 +693,8 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
       if (this.runStatus?.status === "active") {
         this.controlAnimation = "rotate";
+      } else {
+        this.controlAnimation = "none";
       }
     }
   }
