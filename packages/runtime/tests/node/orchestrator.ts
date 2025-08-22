@@ -426,6 +426,41 @@ describe("Orchestrator", () => {
     });
   });
 
+  describe("failure handling", () => {
+    it("should correctly report multiple failures", () => {
+      const orchestrator = new Orchestrator(diamondPlan);
+      orchestrator.provideOutputs("input", {
+        left: "left-audio",
+        right: "right-audio",
+      });
+      deepStrictEqual(orchestrator.progress, "advanced");
+
+      orchestrator.provideOutputs("left-channel", {
+        $error: "Failed left channel",
+      });
+      deepStrictEqual(orchestrator.progress, "finished");
+      assertState(diamond, orchestrator.state(), [
+        ["input", "succeeded"],
+        ["left-channel", "failed"],
+        ["right-channel", "skipped"],
+        ["mixer", "skipped"],
+      ]);
+      // Often, the outputs from the same phase arrive regardless of
+      // whether or not orchestrator already finished.
+      // So, the orchestrator should correctly record those outputs.
+      orchestrator.provideOutputs("right-channel", {
+        $error: "Failed right channel",
+      });
+      deepStrictEqual(orchestrator.progress, "finished");
+      assertState(diamond, orchestrator.state(), [
+        ["input", "succeeded"],
+        ["left-channel", "failed"],
+        ["right-channel", "failed"],
+        ["mixer", "skipped"],
+      ]);
+    });
+  });
+
   describe("progress status", () => {
     it("should correctly report progress", () => {
       const orchestrator = new Orchestrator(diamondPlan);

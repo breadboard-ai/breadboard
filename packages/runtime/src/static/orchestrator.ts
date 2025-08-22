@@ -431,21 +431,29 @@ class Orchestrator {
         `While providing outputs, couldn't get state for node "${id}"`
       );
     }
-    if (state.stage !== this.#currentStage) {
-      return err(`Can't provide outputs outside of the current stage`);
+    let earlierStage = false;
+    if (state.stage < this.#currentStage) {
+      earlierStage = true;
+    } else if (state.stage > this.#currentStage) {
+      return err(`Can't provide outputs to later stages`);
     }
     if (state.state === "waiting") {
-      return err(`Can't pfovide outputs while the node is waiting for input`);
+      return err(`Can't provide outputs while the node is waiting for input`);
     }
     // Update state of the node.
     state.outputs = outputs;
     if ("$error" in outputs) {
       state.state = "failed";
+      if (earlierStage) return this.#progress;
+
       const propagating = this.#propagateSkip(state);
       if (!ok(propagating)) return propagating;
     } else {
+      if (earlierStage) return this.#progress;
+
       state.state = "succeeded";
     }
+
     let progress;
     for (;;) {
       progress = this.#tryAdvancingStage();
