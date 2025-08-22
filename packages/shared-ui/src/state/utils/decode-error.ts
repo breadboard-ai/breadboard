@@ -68,7 +68,7 @@ function maybeExtractRichError(s: string): RichError {
   }
 }
 
-function decodeErrorData(error: ErrorResponse) {
+function decodeErrorData(error: ErrorResponse["error"]) {
   const metadata =
     !(typeof error === "string") &&
     "metadata" in error &&
@@ -151,7 +151,7 @@ function decodeErrorData(error: ErrorResponse) {
 }
 
 function decodeError(event: RunErrorEvent): RunError {
-  return decodeErrorData(event.data);
+  return decodeErrorData(event.data.error);
 }
 
 function mediumFromModel(model?: string): Readonly<Medium> {

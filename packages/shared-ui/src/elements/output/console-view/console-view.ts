@@ -517,7 +517,6 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             item.error
               ? html`<div class="step-error" data-label="Error:">
                   <p>${item.error.message}</p>
-                  <p></p>
                 </div>`
               : nothing
           }

@@ -319,6 +319,8 @@ class ReactiveProjectRun implements ProjectRun {
     this.current.set(id, entry);
     this.console.set(id, entry);
 
+    this.renderer.nodes.set(id, { status: "active" });
+
     // This looks like duplication with the console logic above,
     // but it's a hedge toward the future where screens and console entries
     // might go out of sync.
