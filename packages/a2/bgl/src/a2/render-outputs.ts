@@ -17,6 +17,8 @@ const MANUAL_MODE = "Manual layout";
 const FLASH_MODE = "Webpage with auto-layout by 2.5 Flash";
 const PRO_MODE = "Webpage with auto-layout by 2.5 Pro";
 
+const THROW_ERROR_MARKER = "throw_error ";
+
 type RenderType =
   | "Manual"
   | "HTML"
@@ -336,8 +338,13 @@ async function invoke({
   console.log("Rendering with model: ", modelName);
   let out = context;
   switch (renderType) {
-    case "Manual":
+    case "Manual": {
+      const firstTextPart = (out.parts.at(0) as TextCapabilityPart)?.text;
+      if (firstTextPart?.startsWith(THROW_ERROR_MARKER)) {
+        return err(firstTextPart.slice(THROW_ERROR_MARKER.length));
+      }
       return { context: [out] };
+    }
     case "HTML": {
       const palette = await getPaletteColors();
       if (palette?.primary) {
