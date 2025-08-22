@@ -80,7 +80,12 @@ export type ProjectRun = {
    */
   consoleState: "start" | "entries";
   /**
-   * Any errors that might have occurred during a run.
+   * Overall error message that is conveyed to the user (appears in snackbar),
+   * combining multiple errors, if necessary.
+   */
+  error: RunError | null;
+  /**
+   * All errors that might have occurred during a run.
    */
   errors: Map<string, RunError>;
   /**

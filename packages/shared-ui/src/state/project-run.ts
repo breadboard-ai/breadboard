@@ -124,6 +124,30 @@ class ReactiveProjectRun implements ProjectRun {
   console: Map<string, ConsoleEntry> = new SignalMap();
 
   @signal
+  accessor #fatalError: RunError | null = null;
+
+  @signal
+  get error(): RunError | null {
+    if (this.#fatalError) {
+      return this.#fatalError;
+    }
+    const errorCount = this.errors.size;
+    if (errorCount > 1) {
+      return {
+        message: "Multiple errors have occurred",
+        details: [...this.errors.values()]
+          .map((value) => {
+            return value.message;
+          })
+          .join("\n\n"),
+      };
+    } else if (errorCount == 1) {
+      return this.errors.values().next().value!;
+    }
+    return null;
+  }
+
+  @signal
   get errors(): Map<string, RunError> {
     const errors = new Map<string, RunError>();
     this.runner?.state?.forEach((entry) => {
@@ -135,18 +159,11 @@ class ReactiveProjectRun implements ProjectRun {
         errors.set(entry.node.id, decodeErrorData(errorResponse));
       }
     });
-    return new Map([...this.#fatalErrors, ...errors]);
+    return errors;
   }
-
-  #fatalErrors: Map<string, RunError> = new SignalMap();
 
   @signal
   accessor status: "running" | "paused" | "stopped" = "stopped";
-
-  /**
-   * Stores the path of the node that errored.
-   */
-  #errorPath: number[] | null = null;
 
   /**
    * Currently active (unfinished) entries in console.
@@ -235,13 +252,6 @@ class ReactiveProjectRun implements ProjectRun {
     });
   }
 
-  #storeErrorPath(path: number[]) {
-    if (this.#errorPath && this.#errorPath.length > path.length) {
-      return;
-    }
-    this.#errorPath = path;
-  }
-
   #abort() {
     this.status = "stopped";
     this.current = null;
@@ -255,7 +265,7 @@ class ReactiveProjectRun implements ProjectRun {
 
     console.debug("Project Run: Graph Start");
     this.console.clear();
-    this.#fatalErrors.clear();
+    this.#fatalError = null;
     this.current = null;
     this.input = null; // can't be too cautious.
   }
@@ -315,9 +325,6 @@ class ReactiveProjectRun implements ProjectRun {
           this.input = null;
         },
       });
-      if (event.data.outputs?.["$error"]) {
-        this.#storeErrorPath(event.data.path);
-      }
       return;
     }
 
@@ -404,9 +411,8 @@ class ReactiveProjectRun implements ProjectRun {
 
   #error(event: RunErrorEvent) {
     const error = decodeError(event);
-    const path = this.#errorPath || [];
     this.input = null;
-    this.#fatalErrors.set(idFromPath(path), error);
+    this.#fatalError = error;
   }
 
   /**

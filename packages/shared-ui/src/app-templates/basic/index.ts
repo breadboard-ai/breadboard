@@ -19,7 +19,6 @@ import {
   AppTemplate,
   AppTemplateOptions,
   FloatingInputFocusState,
-  SnackbarUUID,
   SnackType,
 } from "../../types/types";
 
@@ -178,15 +177,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   static styles = appStyles;
 
-  #notifiedErrors = new Set<string>();
-  #clearNotifiedErrors() {
-    for (const errorId of this.#notifiedErrors) {
-      this.dispatchEvent(new UnsnackbarEvent(errorId as SnackbarUUID));
-    }
-
-    this.#notifiedErrors.clear();
-  }
-
   #renderControls() {
     return html`<bb-app-header
       .isEmpty=${this.isEmpty}
@@ -198,8 +188,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         if (evt.detail.eventType !== "board.stop") {
           return;
         }
-
-        this.#clearNotifiedErrors();
       }}
     ></bb-app-header>`;
   }
@@ -213,47 +201,35 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       | symbol = nothing;
     let status: HTMLTemplateResult | symbol = nothing;
 
-    const errors = this.run.errors;
-    if (this.#notifiedErrors.size > errors.size) {
-      this.#clearNotifiedErrors();
-    }
+    const error = this.run.error;
+    if (error) {
+      const errorId = crypto.randomUUID();
+      const details = [];
 
-    if (errors.size > 0) {
-      for (const [errorId, error] of errors) {
-        if (this.#notifiedErrors.has(errorId)) {
-          continue;
-        }
-
-        const details = [];
-
-        if (error.details) {
-          details.push({
-            action: "details",
-            title: "View details",
-            value: html`${markdown(error.details)}`,
-          });
-        }
-
-        this.#notifiedErrors.add(errorId);
-        this.dispatchEvent(
-          new SnackbarEvent(
-            errorId as SnackbarUUID,
-            error.message,
-            SnackType.ERROR,
-            details,
-            true,
-            true
-          )
-        );
+      if (error.details) {
+        details.push({
+          action: "details",
+          title: "View details",
+          value: html`${markdown(error.details)}`,
+        });
       }
 
-      activityContents = html`${Array.from(errors.values()).map(() => {
-        return html`<section class="error">
-          <h1 class="w-700 sans-flex round md-headline-large">
-            Oops, something went wrong
-          </h1>
-        </section>`;
-      })} `;
+      this.dispatchEvent(
+        new SnackbarEvent(
+          errorId,
+          error.message,
+          SnackType.ERROR,
+          details,
+          true,
+          true
+        )
+      );
+
+      activityContents = html`<section class="error">
+        <h1 class="w-700 sans-flex round md-headline-large">
+          Oops, something went wrong
+        </h1>
+      </section>`;
     } else {
       const current = this.run.app.current;
       if (!current) return nothing;
