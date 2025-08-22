@@ -19,7 +19,12 @@ import {
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { idFromPath, toLLMContentArray } from "./common";
-import { ConsoleEntry, EphemeralParticleTree, WorkItem } from "./types";
+import {
+  ConsoleEntry,
+  EphemeralParticleTree,
+  RunError,
+  WorkItem,
+} from "./types";
 import { ReactiveWorkItem } from "./work-item";
 
 export { ReactiveConsoleEntry };
@@ -46,6 +51,9 @@ class ReactiveConsoleEntry implements ConsoleEntry {
   get current() {
     return Array.from(this.work.values()).at(-1) || null;
   }
+
+  @signal
+  accessor error: RunError | null = null;
 
   #pendingTimestamp: number | null = null;
   #outputSchema: Schema | undefined;

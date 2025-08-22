@@ -194,6 +194,11 @@ export type ConsoleEntry = {
   output: Map<string, LLMContent /* Particle */>;
 
   /**
+   * The error message that might have occurred in this step
+   */
+  error: RunError | null;
+
+  /**
    * Starts out as `false` and is set to `true` when the entry is finalized.
    */
   completed: boolean;

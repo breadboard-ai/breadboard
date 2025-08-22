@@ -10,7 +10,8 @@ import { colorsLight } from "../../../styles/host/colors-light";
 export const sharedStyles = [
   colorsLight,
   css`
-    .output {
+    .output,
+    .step-error {
       position: relative;
       margin-top: var(--bb-grid-size-9);
       border-radius: var(--bb-grid-size-2);
@@ -53,6 +54,10 @@ export const sharedStyles = [
       & p {
         margin: 0;
       }
+    }
+
+    .step-error {
+      border-color: var(--bb-notify-300);
     }
   `,
 ] as CSSResultGroup;

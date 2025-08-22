@@ -265,6 +265,7 @@ class ReactiveProjectRun implements ProjectRun {
 
     console.debug("Project Run: Graph Start");
     this.console.clear();
+    this.#idCache.clear();
     this.#fatalError = null;
     this.current = null;
     this.input = null; // can't be too cautious.
@@ -339,7 +340,22 @@ class ReactiveProjectRun implements ProjectRun {
       return;
     }
 
-    this.current?.get(id)?.finalize(event.data);
+    const entry = this.current?.get(id);
+    if (!entry) {
+      console.warn(`Node with id "${id}" not found`);
+    } else {
+      const nodeState = this.runner?.state?.get(id);
+      if (nodeState) {
+        if (nodeState.state === "failed") {
+          const errorResponse = nodeState.outputs?.$error as
+            | ErrorResponse
+            | undefined;
+          if (!errorResponse) return;
+          entry.error = decodeErrorData(errorResponse);
+        }
+      }
+      entry.finalize(event.data);
+    }
     this.app.current?.finalize(event.data);
   }
 
