@@ -940,7 +940,7 @@ export class Main extends SignalWatcher(LitElement) {
         urlWithoutMode.searchParams.delete("mode");
 
         // Close tab, go to the home page.
-        if (urlWithoutMode.search === "") {
+        if (parseUrl(urlWithoutMode).page === "home") {
           if (this.#tab) {
             this.#runtime.board.closeTab(this.#tab.id);
             return;
@@ -2053,7 +2053,11 @@ export class Main extends SignalWatcher(LitElement) {
         this.#embedHandler?.sendToEmbedder({
           type: "back_clicked",
         });
-        this.#runtime.router.go({ page: "home", mode: this.#uiState.mode });
+        this.#runtime.router.go({
+          page: "home",
+          mode: this.#uiState.mode,
+          dev: parsedUrl.dev,
+        });
       }}
       @bbsharerequested=${() => {
         if (!this.#canvasControllerRef.value) {

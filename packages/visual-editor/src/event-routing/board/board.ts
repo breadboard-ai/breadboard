@@ -14,6 +14,7 @@ import {
 } from "@google-labs/breadboard";
 import { addNodeProxyServerConfig } from "../../data/node-proxy-servers";
 import { RuntimeSnackbarEvent } from "../../runtime/events";
+import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
@@ -78,6 +79,7 @@ export const LoadRoute: EventRoute<"board.load"> = {
       flow: originalEvent.detail.url,
       resourceKey: undefined,
       shared: originalEvent.detail.shared,
+      dev: parseUrl(window.location.href).dev,
     });
     return false;
   },
@@ -203,6 +205,7 @@ export const CreateRoute: EventRoute<"board.create"> = {
         flow: result.url.href,
         // Resource key not required because we know the current user created it.
         resourceKey: undefined,
+        dev: parseUrl(window.location.href).dev,
       },
       tab?.id,
       originalEvent.detail.editHistoryCreator

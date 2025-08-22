@@ -16,10 +16,12 @@ import { allowListChecker } from "./allow-list-checker.js";
 import { getConfigFromSecretManager } from "./provide-config.js";
 import { makeCspHandler } from "./csp.js";
 import { createUpdatesHandler } from "./upates.js";
-import { makeGalleryMiddleware } from "./gallery.js";
+import { CachingFeaturedGallery, makeGalleryMiddleware } from "./gallery.js";
 import { GoogleAuth } from "google-auth-library";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { createMcpProxyHandler } from "./mcp-proxy.js";
+
+const FEATURED_GALLERY_CACHE_REFRESH_SECONDS = 10 * 60;
 
 const server = express();
 
@@ -68,16 +70,26 @@ const driveClient = new GoogleDriveClient({
     (await authClient.getAccessToken()).token ?? "",
 });
 
+const cachingGallery = await CachingFeaturedGallery.makeReady({
+  folderId: serverConfig.GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID ?? "",
+  driveClient,
+  cacheRefreshSeconds: FEATURED_GALLERY_CACHE_REFRESH_SECONDS,
+});
+
 server.use(
   "/api/gallery",
-  await makeGalleryMiddleware({
-    folderId: serverConfig.GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID ?? "",
-    driveClient,
-    cacheRefreshSeconds: 10 * 60,
-  })
+  await makeGalleryMiddleware({ gallery: cachingGallery })
 );
 
-server.use("/api/drive-proxy", makeDriveProxyMiddleware());
+server.use(
+  "/api/drive-proxy",
+  makeDriveProxyMiddleware({
+    shouldCacheMedia: (fileId) =>
+      cachingGallery.isFeaturedGalleryGraph(fileId) ||
+      cachingGallery.isFeaturedGalleryAsset(fileId),
+    mediaCacheMaxAgeSeconds: FEATURED_GALLERY_CACHE_REFRESH_SECONDS,
+  })
+);
 
 server.use(
   "/api/mcp-proxy",

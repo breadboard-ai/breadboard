@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import compression from "compression";
 import cors from "cors";
 import {
   Router,
@@ -11,11 +12,22 @@ import {
   type Response as ExpressResponse,
 } from "express";
 import { GoogleAuth } from "google-auth-library";
+import { Buffer } from "node:buffer";
+import { type IncomingHttpHeaders, type OutgoingHttpHeaders } from "node:http";
 import https from "node:https";
+import * as zlib from "node:zlib";
 
 const PRODUCTION_DRIVE_BASE_URL = "https://www.googleapis.com";
 
-export function makeDriveProxyMiddleware(): Router {
+export interface MakeDriveProxyMiddlewareInit {
+  shouldCacheMedia: (fileId: string) => boolean;
+  mediaCacheMaxAgeSeconds: number;
+}
+
+export function makeDriveProxyMiddleware({
+  shouldCacheMedia,
+  mediaCacheMaxAgeSeconds,
+}: MakeDriveProxyMiddlewareInit): Router {
   const router = Router();
   router.use(
     cors({
@@ -31,12 +43,12 @@ export function makeDriveProxyMiddleware(): Router {
     scopes: ["https://www.googleapis.com/auth/drive.readonly"],
   });
 
-  async function proxyFetch(
+  async function makeProxyRequestOptions(
     clientReq: ExpressRequest,
-    clientRes: ExpressResponse
-  ): Promise<void> {
+    headers?: Record<string, string | string[] | number>
+  ): Promise<https.RequestOptions> {
     const url = new URL(clientReq.url, PRODUCTION_DRIVE_BASE_URL);
-    const headers = structuredClone(clientReq.headers);
+    headers = headers ? structuredClone(headers) : {};
 
     // The incoming request "host" header will be the hostname of this proxy
     // server, but it needs to be the hostname of the destination server.
@@ -52,21 +64,103 @@ export function makeDriveProxyMiddleware(): Router {
     // https://cloud.google.com/docs/authentication/rest#set-billing-project
     headers["x-goog-user-project"] = await auth.getProjectId();
 
-    const options: https.RequestOptions = {
+    return {
       hostname: url.hostname,
       port: url.port,
       path: url.pathname + url.search,
       method: clientReq.method,
       headers,
     };
+  }
 
-    // Stream the request in and the response out.
+  async function proxyDirectly(
+    clientReq: ExpressRequest,
+    clientRes: ExpressResponse
+  ): Promise<void> {
+    const options = await makeProxyRequestOptions(
+      clientReq,
+      allowlistHeaders(clientReq.headers, ["accept", "accept-encoding"])
+    );
     const proxyReq = https.request(options, (proxyRes) => {
+      // TODO(aomarks) Should we filter out some headers here?
       clientRes.writeHead(proxyRes.statusCode!, proxyRes.headers);
       proxyRes.pipe(clientRes, { end: true });
     });
     clientReq.pipe(proxyReq, { end: true });
   }
+
+  type CacheEntry = {
+    timestampMillis: number;
+    responsePromise: Promise<{
+      status: number;
+      headers: IncomingHttpHeaders;
+      body: Buffer;
+    }>;
+  };
+  const cache = new Map<string, CacheEntry>();
+
+  async function proxyWithCaching(
+    clientReq: ExpressRequest,
+    clientRes: ExpressResponse,
+    cacheKey: string
+  ): Promise<void> {
+    let entry = cache.get(cacheKey);
+    if (
+      !entry ||
+      Date.now() - entry.timestampMillis > mediaCacheMaxAgeSeconds * 1000
+    ) {
+      entry = {
+        timestampMillis: Date.now(),
+        responsePromise: sendProxyWithCachingRequest(clientReq),
+      };
+      cache.set(cacheKey, entry);
+    }
+    const { status, headers, body } = await entry.responsePromise;
+    // TODO(aomarks) Should we filter out some headers here?
+    clientRes.writeHead(status, headers);
+    clientRes.end(body);
+  }
+
+  async function sendProxyWithCachingRequest(
+    clientReq: ExpressRequest
+  ): CacheEntry["responsePromise"] {
+    const options = await makeProxyRequestOptions(clientReq, {
+      // It doesn't matter what the initiating client request's accept-encoding
+      // header was, because we want to store the response uncompressed, so that
+      // we can re-compress it for future client requests, which each might have
+      // a different accept-encoding header.
+      "accept-encoding": "gzip",
+    });
+    return await new Promise((resolve) => {
+      const proxyReq = https.request(options, (rawProxyRes) => {
+        const uncompressedProxyRes =
+          rawProxyRes.headers["content-encoding"] === "gzip"
+            ? rawProxyRes.pipe(zlib.createGunzip())
+            : // It's either gzip or uncompressed, because of the above
+              // accept-encoding header. Note that Drive might send uncompressed
+              // for data that is intrinsically compressed, like image/png.
+              rawProxyRes;
+        const chunks: Buffer[] = [];
+        uncompressedProxyRes.on("data", (chunk) =>
+          chunks.push(chunk as Buffer)
+        );
+        uncompressedProxyRes.on("end", () => {
+          const headers = rawProxyRes.headers;
+          delete headers["content-encoding"];
+          resolve({
+            status: rawProxyRes.statusCode!,
+            headers,
+            body: Buffer.concat(chunks),
+          });
+        });
+      });
+      clientReq.pipe(proxyReq, { end: true });
+    });
+  }
+
+  // Use https://expressjs.com/en/resources/middleware/compression.html so that
+  // cached responses get compressed.
+  router.use(compression());
 
   // We only support a subset of the Drive APIs in this proxy. That's because
   // it's only designed to be used for these use cases:
@@ -82,7 +176,12 @@ export function makeDriveProxyMiddleware(): Router {
   router.get(
     "/drive/v3/files/:id",
     async (req: ExpressRequest, res: ExpressResponse) => {
-      proxyFetch(req, res);
+      const fileId = req.params["id"];
+      if (isMediaRequest(req) && shouldCacheMedia(fileId)) {
+        proxyWithCaching(req, res, `media:${fileId}`);
+      } else {
+        proxyDirectly(req, res);
+      }
     }
   );
 
@@ -90,7 +189,7 @@ export function makeDriveProxyMiddleware(): Router {
   router.get(
     "/drive/v3/files",
     async (req: ExpressRequest, res: ExpressResponse) => {
-      proxyFetch(req, res);
+      proxyDirectly(req, res);
     }
   );
 
@@ -98,8 +197,8 @@ export function makeDriveProxyMiddleware(): Router {
   router.all("*", async (req: ExpressRequest, res: ExpressResponse) => {
     const code = 403;
     const message =
-      `This kind of request is not supported by the signed-out drive proxy.` +
-      ` The user should probably be signed-in for this operation.`;
+      `This kind of request is not supported by the drive proxy.` +
+      ` The user may need to be signed-in for this operation.`;
     res.writeHead(code, { "content-type": "application/json" });
     res.end(
       JSON.stringify(
@@ -114,3 +213,20 @@ export function makeDriveProxyMiddleware(): Router {
 
   return router;
 }
+
+const isMediaRequest = (req: ExpressRequest) =>
+  new URL(req.url, "http://example.com").searchParams.get("alt") === "media";
+
+const allowlistHeaders = (
+  source: IncomingHttpHeaders | OutgoingHttpHeaders,
+  include: string[]
+): Record<string, string | string[] | number> => {
+  const headers: Record<string, string | string[] | number> = {};
+  for (const name of include) {
+    const value = source[name];
+    if (value) {
+      headers[name] = value;
+    }
+  }
+  return headers;
+};
