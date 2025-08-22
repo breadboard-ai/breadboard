@@ -14,8 +14,6 @@ import { AppScreen, AppScreenOutput, EphemeralParticleTree } from "./types";
 export { ReactiveAppScreen };
 
 class ReactiveAppScreen implements AppScreen {
-  id: string;
-
   @signal
   accessor status: "interactive" | "complete" = "interactive";
 
@@ -33,11 +31,9 @@ class ReactiveAppScreen implements AppScreen {
 
   constructor(
     public readonly title: string,
-    path: number[],
     outputSchema: Schema | undefined
   ) {
     this.#outputSchema = outputSchema;
-    this.id = idFromPath(path);
   }
 
   /**

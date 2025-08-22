@@ -38,7 +38,6 @@ class ReactiveConsoleEntry implements ConsoleEntry {
   tags?: string[];
   work: Map<string, WorkItem> = new SignalMap();
   output: Map<string, LLMContent> = new SignalMap();
-  id: string;
 
   @signal
   accessor completed = false;
@@ -54,7 +53,6 @@ class ReactiveConsoleEntry implements ConsoleEntry {
   constructor(
     private readonly fileSystem: FileSystem | undefined,
     { title, icon, tags }: NodeMetadata,
-    path: number[],
     outputSchema: Schema | undefined
   ) {
     if (!title) {
@@ -64,7 +62,6 @@ class ReactiveConsoleEntry implements ConsoleEntry {
     }
     this.title = title || "Untitled step";
     this.icon = icon;
-    this.id = idFromPath(path);
     this.tags = tags;
     this.#outputSchema = outputSchema;
   }

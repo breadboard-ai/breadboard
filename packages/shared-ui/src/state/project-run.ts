@@ -8,6 +8,7 @@ import { type ParticleTree, ParticleTreeImpl } from "@breadboard-ai/particles";
 import {
   ErrorResponse,
   HarnessRunner,
+  NodeIdentifier,
   RunConfig,
   RunErrorEvent,
   RunGraphEndEvent,
@@ -24,6 +25,7 @@ import {
   InspectableGraph,
   MainGraphIdentifier,
   MutableGraphStore,
+  ok,
   Outcome,
   OutputValues,
 } from "@google-labs/breadboard";
@@ -75,7 +77,7 @@ function createProjectRunStateFromFinalOutput(
     output,
     schema: {},
   };
-  const current = new ReactiveAppScreen("", [], undefined);
+  const current = new ReactiveAppScreen("", undefined);
   current.outputs.set("final", last);
   run.app.screens.set("final", current);
   return run;
@@ -113,10 +115,6 @@ function error(msg: string) {
   const full = `Unable to create project run state: ${msg}`;
   console.error(full);
   return err(full);
-}
-
-function topLevel(path: number[]) {
-  return idFromPath(path.toSpliced(1));
 }
 
 class ReactiveProjectRun implements ProjectRun {
@@ -208,6 +206,8 @@ class ReactiveProjectRun implements ProjectRun {
     return this.app.current?.last?.output || null;
   }
 
+  #idCache = new IdCache();
+
   private constructor(
     private readonly mainGraphId: MainGraphIdentifier,
     private readonly graphStore?: MutableGraphStore,
@@ -286,10 +286,16 @@ class ReactiveProjectRun implements ProjectRun {
     const { path } = event.data;
 
     if (path.length > 1) {
-      this.current?.get(topLevel(path))?.onNodeStart(event.data);
+      const id = this.#idCache.get(path);
+      if (!ok(id)) {
+        console.warn(id.$error);
+        return;
+      }
+      this.current?.get(id)?.onNodeStart(event.data);
       return;
     }
 
+    const id = event.data.node.id;
     const node = this.#inspectable?.nodeById(event.data.node.id);
     const metadata = node?.currentDescribe()?.metadata || {};
     const { icon: defaultIcon, tags } = metadata;
@@ -299,28 +305,33 @@ class ReactiveProjectRun implements ProjectRun {
     const entry = new ReactiveConsoleEntry(
       this.fileSystem,
       { title, icon, tags },
-      path,
       outputSchema
     );
+    this.#idCache.set(path, id);
     this.current ??= new SignalMap();
-    this.current.set(topLevel(path), entry);
-    this.console.set(entry.id, entry);
+    this.current.set(id, entry);
+    this.console.set(id, entry);
 
     // This looks like duplication with the console logic above,
     // but it's a hedge toward the future where screens and console entries
     // might go out of sync.
     // See https://github.com/breadboard-ai/breadboard/wiki/Screens
-    const screen = new ReactiveAppScreen(title || "", path, outputSchema);
-    this.app.screens.set(screen.id, screen);
+    const screen = new ReactiveAppScreen(title || "", outputSchema);
+    this.app.screens.set(id, screen);
   }
 
   #nodeEnd(event: RunNodeEndEvent) {
     console.debug("Project Run: Node End", event);
     const { path } = event.data;
     const pathLength = path.length;
+    const id = this.#idCache.get(path);
+    if (!ok(id)) {
+      console.warn(id.$error);
+      return;
+    }
 
     if (pathLength > 1) {
-      this.current?.get(topLevel(path))?.onNodeEnd(event.data, {
+      this.current?.get(id)?.onNodeEnd(event.data, {
         completeInput: () => {
           this.input = null;
         },
@@ -328,7 +339,7 @@ class ReactiveProjectRun implements ProjectRun {
       return;
     }
 
-    this.current?.get(topLevel(path))?.finalize(event.data);
+    this.current?.get(id)?.finalize(event.data);
     this.app.current?.finalize(event.data);
   }
 
@@ -339,22 +350,26 @@ class ReactiveProjectRun implements ProjectRun {
       console.warn(`No current console entry found for input event`, event);
       return;
     }
-    const currentId = topLevel(path);
-    const currentConsoleEntry = this.current.get(currentId);
+    const id = this.#idCache.get(path);
+    if (!ok(id)) {
+      console.warn(id.$error);
+      return;
+    }
+    const currentConsoleEntry = this.current.get(id);
     if (!currentConsoleEntry) {
       console.warn(`No current console entry found at path "${path}"`);
       return;
     }
-    const currentScreen = this.app.screens.get(currentId);
+    const currentScreen = this.app.screens.get(id);
     if (!currentScreen) {
       console.warn(`No current screen found at path "${path}"`);
     } else {
       // Bump it to the bottom of the list (last item = really current);
-      this.app.screens?.delete(currentId);
-      this.app.screens?.set(currentId, currentScreen);
+      this.app.screens?.delete(id);
+      this.app.screens?.set(id, currentScreen);
     }
-    this.current.delete(currentId);
-    this.current.set(currentId, currentConsoleEntry);
+    this.current.delete(id);
+    this.current.set(id, currentConsoleEntry);
     currentConsoleEntry.addInput(event.data, {
       itemCreated: (item) => {
         currentScreen?.markAsInput();
@@ -381,6 +396,12 @@ class ReactiveProjectRun implements ProjectRun {
     // new-style (A2-based) graphs.
     if (!bubbled) return;
 
+    const id = this.#idCache.get(path);
+    if (!ok(id)) {
+      console.warn(id.$error);
+      return;
+    }
+
     const { configuration = {} } = node;
     const { schema: s = {} } = configuration;
 
@@ -401,12 +422,12 @@ class ReactiveProjectRun implements ProjectRun {
       }
     }
 
-    this.current.get(topLevel(path))?.addOutput(event.data, particleTree);
+    this.current.get(id)?.addOutput(event.data, particleTree);
     if (!this.app.current) {
       console.warn(`No current screen for output event`, event);
       return;
     }
-    this.app.screens.get(topLevel(path))?.addOutput(event.data, particleTree);
+    this.app.screens.get(id)?.addOutput(event.data, particleTree);
   }
 
   #error(event: RunErrorEvent) {
@@ -461,5 +482,30 @@ class EphemeralParticleTreeImpl implements EphemeralParticleTree {
       this.tree.apply(operation);
     }
     this.done = true;
+  }
+}
+
+class IdCache {
+  #pathToId = new Map<string, NodeIdentifier>();
+
+  clear() {
+    this.#pathToId.clear();
+  }
+
+  #topLevel(path: number[]) {
+    return idFromPath(path.toSpliced(1));
+  }
+
+  get(path: number[]): Outcome<string> {
+    const topLevelPath = this.#topLevel(path);
+    const id = this.#pathToId.get(topLevelPath);
+    if (!id) {
+      return err(`Could not find node id for path "${topLevelPath}"`);
+    }
+    return id;
+  }
+
+  set(path: number[], id: NodeIdentifier) {
+    this.#pathToId.set(this.#topLevel(path), id);
   }
 }
