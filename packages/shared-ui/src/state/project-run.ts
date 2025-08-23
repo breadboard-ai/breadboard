@@ -48,6 +48,7 @@ import {
 import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
 import { ReactiveRendererRunState } from "./renderer-run-state";
+import { StateEvent } from "../events/events";
 
 export {
   createProjectRunState,
@@ -466,6 +467,12 @@ class ReactiveProjectRun implements ProjectRun {
     const error = decodeError(event);
     this.input = null;
     this.#fatalError = error;
+  }
+
+  async handleUserAction(
+    payload: StateEvent<"node.action">["payload"]
+  ): Promise<Outcome<void>> {
+    console.log("USER ACTION", payload);
   }
 
   /**
