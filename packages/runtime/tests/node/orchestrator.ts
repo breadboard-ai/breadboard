@@ -4,17 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor, NodeIdentifier, Outcome } from "@breadboard-ai/types";
+import {
+  GraphDescriptor,
+  NodeIdentifier,
+  Outcome,
+  NodeLifecycleState,
+  OrchestrationNodeInfo,
+  Task,
+} from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import assert, { deepStrictEqual } from "node:assert";
 import { describe, it } from "node:test";
 import { createPlan } from "../../src/static/create-plan.js";
 import { Orchestrator } from "../../src/static/orchestrator.js";
-import {
-  NodeLifecycleState,
-  OrchestrationNodeInfo,
-  Task,
-} from "../../src/static/types.js";
 
 const diamond: GraphDescriptor = {
   nodes: [
@@ -78,7 +80,7 @@ function assertState(
 ) {
   const nodeMap = new Map(graph.nodes.map((node) => [node.id, node]));
   deepStrictEqual(
-    state,
+    new Map(state),
     new Map(
       expected.map(([id, state]) => [id, { node: nodeMap.get(id), state }])
     )
@@ -421,6 +423,41 @@ describe("Orchestrator", () => {
           ["dragon", "skipped"],
         ]);
       }
+    });
+  });
+
+  describe("failure handling", () => {
+    it("should correctly report multiple failures", () => {
+      const orchestrator = new Orchestrator(diamondPlan);
+      orchestrator.provideOutputs("input", {
+        left: "left-audio",
+        right: "right-audio",
+      });
+      deepStrictEqual(orchestrator.progress, "advanced");
+
+      orchestrator.provideOutputs("left-channel", {
+        $error: "Failed left channel",
+      });
+      deepStrictEqual(orchestrator.progress, "finished");
+      assertState(diamond, orchestrator.state(), [
+        ["input", "succeeded"],
+        ["left-channel", "failed"],
+        ["right-channel", "skipped"],
+        ["mixer", "skipped"],
+      ]);
+      // Often, the outputs from the same phase arrive regardless of
+      // whether or not orchestrator already finished.
+      // So, the orchestrator should correctly record those outputs.
+      orchestrator.provideOutputs("right-channel", {
+        $error: "Failed right channel",
+      });
+      deepStrictEqual(orchestrator.progress, "finished");
+      assertState(diamond, orchestrator.state(), [
+        ["input", "succeeded"],
+        ["left-channel", "failed"],
+        ["right-channel", "failed"],
+        ["mixer", "skipped"],
+      ]);
     });
   });
 

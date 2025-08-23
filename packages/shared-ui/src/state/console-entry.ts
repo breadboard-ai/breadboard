@@ -19,7 +19,12 @@ import {
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { idFromPath, toLLMContentArray } from "./common";
-import { ConsoleEntry, EphemeralParticleTree, WorkItem } from "./types";
+import {
+  ConsoleEntry,
+  EphemeralParticleTree,
+  RunError,
+  WorkItem,
+} from "./types";
 import { ReactiveWorkItem } from "./work-item";
 
 export { ReactiveConsoleEntry };
@@ -38,7 +43,6 @@ class ReactiveConsoleEntry implements ConsoleEntry {
   tags?: string[];
   work: Map<string, WorkItem> = new SignalMap();
   output: Map<string, LLMContent> = new SignalMap();
-  id: string;
 
   @signal
   accessor completed = false;
@@ -48,13 +52,15 @@ class ReactiveConsoleEntry implements ConsoleEntry {
     return Array.from(this.work.values()).at(-1) || null;
   }
 
+  @signal
+  accessor error: RunError | null = null;
+
   #pendingTimestamp: number | null = null;
   #outputSchema: Schema | undefined;
 
   constructor(
     private readonly fileSystem: FileSystem | undefined,
     { title, icon, tags }: NodeMetadata,
-    path: number[],
     outputSchema: Schema | undefined
   ) {
     if (!title) {
@@ -64,7 +70,6 @@ class ReactiveConsoleEntry implements ConsoleEntry {
     }
     this.title = title || "Untitled step";
     this.icon = icon;
-    this.id = idFromPath(path);
     this.tags = tags;
     this.#outputSchema = outputSchema;
   }

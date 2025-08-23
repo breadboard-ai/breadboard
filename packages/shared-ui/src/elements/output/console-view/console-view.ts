@@ -336,14 +336,16 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         this.run.console.entries(),
         ([key]) => key,
         ([itemId, item], idx) => {
+          const empty =
+            ((!item.completed && item.work.size === 0) ||
+              (item.completed && item.output.size === 0)) &&
+            !item.error;
           const classes: Record<string, boolean> = {
             "sans-flex": true,
             "w-500": true,
             round: true,
             "md-title-medium": true,
-            empty:
-              (!item.completed && item.work.size === 0) ||
-              (item.completed && item.output.size === 0),
+            empty,
             active: !item.completed,
           };
           if (item.icon) {
@@ -361,8 +363,12 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           }
 
           const isLastItem = idx + 1 === this.run?.estimatedEntryCount;
+          const isOpen =
+            !(item.completed && !item.error) ||
+            this.#openItems.has(itemId) ||
+            isLastItem;
 
-          return html`<details ?open=${!item.completed || this.#openItems.has(itemId) || isLastItem}>
+          return html`<details ?open=${isOpen}>
           <summary @click=${(evt: Event) => {
             if (
               !(
@@ -487,7 +493,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           }
 
           ${
-            item.completed
+            item.completed && !item.error
               ? item.output.size > 0
                 ? repeat(
                     item.output.entries(),
@@ -507,20 +513,21 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                   </div>`
               : nothing
           }
+          ${
+            item.error
+              ? html`<div class="step-error" data-label="Error:">
+                  <p>${item.error.message}</p>
+                </div>`
+              : nothing
+          }
         </details>
       </details>`;
         }
       )}
-      ${this.run.errors.size > 0
+      ${this.run.error
         ? html`<details class="error">
-            <summary>Errors</summary>
-            ${repeat(
-              this.run.errors,
-              (id) => id,
-              ([, runError]) => {
-                return html`${runError.message}`;
-              }
-            )}
+            <summary>Error</summary>
+            ${this.run.error.message}
           </details>`
         : nothing}
     </section>`;

@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { RunErrorEvent } from "@breadboard-ai/types";
+import { ErrorResponse, RunErrorEvent } from "@breadboard-ai/types";
 import { ErrorMetadata, RunError } from "../types";
 import { formatError } from "../../utils/format-error";
 import { ActionTracker } from "../../utils/action-tracker";
 
-export { decodeError };
+export { decodeError, decodeErrorData };
 
 type Medium = {
   title: string;
@@ -68,9 +68,7 @@ function maybeExtractRichError(s: string): RichError {
   }
 }
 
-function decodeError(event: RunErrorEvent): RunError {
-  const { error } = event.data;
-
+function decodeErrorData(error: ErrorResponse["error"]) {
   const metadata =
     !(typeof error === "string") &&
     "metadata" in error &&
@@ -150,6 +148,10 @@ function decodeError(event: RunErrorEvent): RunError {
       }
     }
   }
+}
+
+function decodeError(event: RunErrorEvent): RunError {
+  return decodeErrorData(event.data.error);
 }
 
 function mediumFromModel(model?: string): Readonly<Medium> {

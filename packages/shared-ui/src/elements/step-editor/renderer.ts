@@ -78,7 +78,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants";
 import { AssetMetadata, RuntimeFlags } from "@breadboard-ai/types";
 import { isCtrlCommand, isMacPlatform } from "../../utils/is-ctrl-command";
-import { Project, RendererState } from "../../state";
+import { Project, RendererRunState, RendererState } from "../../state";
 import { colorsLight } from "../../styles/host/colors-light.js";
 import { ItemSelect } from "../elements.js";
 
@@ -134,6 +134,9 @@ export class Renderer extends LitElement {
 
   @property()
   accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
+
+  @property()
+  accessor runState: RendererRunState["nodes"] | null = null;
 
   @property()
   accessor highlightState: HighlightStateWithChangeId | null = null;
@@ -959,10 +962,13 @@ export class Renderer extends LitElement {
       }
     }
 
-    if (changedProperties.has("topGraphResult")) {
+    if (
+      changedProperties.has("topGraphResult") ||
+      changedProperties.has("runState")
+    ) {
       const mainGraph = this.#graphs.get(MAIN_BOARD_ID);
       if (mainGraph) {
-        mainGraph.highlightActivity(this.topGraphResult);
+        mainGraph.highlightActivity(this.topGraphResult, this.runState);
       }
     }
 

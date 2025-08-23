@@ -4,8 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Edge, GraphDescriptor } from "@breadboard-ai/types";
-import { OrchestrationPlan, PlanNodeInfo } from "./types.js";
+import {
+  Edge,
+  GraphDescriptor,
+  OrchestrationPlan,
+  PlanNodeInfo,
+} from "@breadboard-ai/types";
 
 export { createPlan };
 

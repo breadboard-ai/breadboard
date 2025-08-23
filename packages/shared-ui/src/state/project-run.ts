@@ -6,7 +6,9 @@
 
 import { type ParticleTree, ParticleTreeImpl } from "@breadboard-ai/particles";
 import {
+  ErrorResponse,
   HarnessRunner,
+  NodeIdentifier,
   RunConfig,
   RunErrorEvent,
   RunGraphEndEvent,
@@ -23,6 +25,7 @@ import {
   InspectableGraph,
   MainGraphIdentifier,
   MutableGraphStore,
+  ok,
   Outcome,
   OutputValues,
 } from "@google-labs/breadboard";
@@ -38,11 +41,13 @@ import {
   ConsoleEntry,
   EphemeralParticleTree,
   ProjectRun,
+  RendererRunState,
   RunError,
   UserInput,
 } from "./types";
-import { decodeError } from "./utils/decode-error";
+import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
+import { ReactiveRendererRunState } from "./renderer-run-state";
 
 export {
   createProjectRunState,
@@ -74,7 +79,7 @@ function createProjectRunStateFromFinalOutput(
     output,
     schema: {},
   };
-  const current = new ReactiveAppScreen("", [], undefined);
+  const current = new ReactiveAppScreen("", undefined);
   current.outputs.set("final", last);
   run.app.screens.set("final", current);
   return run;
@@ -114,28 +119,60 @@ function error(msg: string) {
   return err(full);
 }
 
-function topLevel(path: number[]) {
-  return idFromPath(path.toSpliced(1));
-}
-
 class ReactiveProjectRun implements ProjectRun {
   app: ReactiveApp = new ReactiveApp();
   console: Map<string, ConsoleEntry> = new SignalMap();
-  errors: Map<string, RunError> = new SignalMap();
+
+  @signal
+  accessor #fatalError: RunError | null = null;
+
+  @signal
+  get error(): RunError | null {
+    if (this.#fatalError) {
+      return this.#fatalError;
+    }
+    const errorCount = this.errors.size;
+    if (errorCount > 1) {
+      return {
+        message: "Multiple errors have occurred",
+        details: [...this.errors.values()]
+          .map((value) => {
+            return value.message;
+          })
+          .join("\n\n"),
+      };
+    } else if (errorCount == 1) {
+      return this.errors.values().next().value!;
+    }
+    return null;
+  }
+
+  @signal
+  get errors(): Map<string, RunError> {
+    const errors = new Map<string, RunError>();
+    this.runner?.state?.forEach((entry) => {
+      if (entry.state === "failed") {
+        const errorResponse = entry.outputs?.$error as
+          | ErrorResponse
+          | undefined;
+        if (!errorResponse) return;
+        errors.set(entry.node.id, decodeErrorData(errorResponse));
+      }
+    });
+    return errors;
+  }
 
   @signal
   accessor status: "running" | "paused" | "stopped" = "stopped";
-
-  /**
-   * Stores the path of the node that errored.
-   */
-  #errorPath: number[] | null = null;
 
   /**
    * Currently active (unfinished) entries in console.
    */
   @signal
   accessor current: Map<string, ReactiveConsoleEntry> | null = null;
+
+  @signal
+  accessor renderer: RendererRunState = new ReactiveRendererRunState();
 
   @signal
   get estimatedEntryCount() {
@@ -174,11 +211,13 @@ class ReactiveProjectRun implements ProjectRun {
     return this.app.current?.last?.output || null;
   }
 
+  #idCache = new IdCache();
+
   private constructor(
     private readonly mainGraphId: MainGraphIdentifier,
     private readonly graphStore?: MutableGraphStore,
     private readonly fileSystem?: FileSystem,
-    runner?: HarnessRunner,
+    private readonly runner?: HarnessRunner,
     signal?: AbortSignal
   ) {
     if (!runner) return;
@@ -218,13 +257,6 @@ class ReactiveProjectRun implements ProjectRun {
     });
   }
 
-  #storeErrorPath(path: number[]) {
-    if (this.#errorPath && this.#errorPath.length > path.length) {
-      return;
-    }
-    this.#errorPath = path;
-  }
-
   #abort() {
     this.status = "stopped";
     this.current = null;
@@ -237,8 +269,10 @@ class ReactiveProjectRun implements ProjectRun {
     if (pathLength > 0) return;
 
     console.debug("Project Run: Graph Start");
+    this.renderer.nodes.clear();
     this.console.clear();
-    this.errors.clear();
+    this.#idCache.clear();
+    this.#fatalError = null;
     this.current = null;
     this.input = null; // can't be too cautious.
   }
@@ -259,10 +293,16 @@ class ReactiveProjectRun implements ProjectRun {
     const { path } = event.data;
 
     if (path.length > 1) {
-      this.current?.get(topLevel(path))?.onNodeStart(event.data);
+      const id = this.#idCache.get(path);
+      if (!ok(id)) {
+        console.warn(id.$error);
+        return;
+      }
+      this.current?.get(id)?.onNodeStart(event.data);
       return;
     }
 
+    const id = event.data.node.id;
     const node = this.#inspectable?.nodeById(event.data.node.id);
     const metadata = node?.currentDescribe()?.metadata || {};
     const { icon: defaultIcon, tags } = metadata;
@@ -272,39 +312,65 @@ class ReactiveProjectRun implements ProjectRun {
     const entry = new ReactiveConsoleEntry(
       this.fileSystem,
       { title, icon, tags },
-      path,
       outputSchema
     );
+    this.#idCache.set(path, id);
     this.current ??= new SignalMap();
-    this.current.set(topLevel(path), entry);
-    this.console.set(entry.id, entry);
+    this.current.set(id, entry);
+    this.console.set(id, entry);
+
+    this.renderer.nodes.set(id, { status: "active" });
 
     // This looks like duplication with the console logic above,
     // but it's a hedge toward the future where screens and console entries
     // might go out of sync.
     // See https://github.com/breadboard-ai/breadboard/wiki/Screens
-    const screen = new ReactiveAppScreen(title || "", path, outputSchema);
-    this.app.screens.set(screen.id, screen);
+    const screen = new ReactiveAppScreen(title || "", outputSchema);
+    this.app.screens.set(id, screen);
   }
 
   #nodeEnd(event: RunNodeEndEvent) {
     console.debug("Project Run: Node End", event);
     const { path } = event.data;
     const pathLength = path.length;
+    const id = this.#idCache.get(path);
+    if (!ok(id)) {
+      console.warn(id.$error);
+      return;
+    }
 
     if (pathLength > 1) {
-      this.current?.get(topLevel(path))?.onNodeEnd(event.data, {
+      this.current?.get(id)?.onNodeEnd(event.data, {
         completeInput: () => {
           this.input = null;
         },
       });
-      if (event.data.outputs?.["$error"]) {
-        this.#storeErrorPath(event.data.path);
-      }
       return;
     }
 
-    this.current?.get(topLevel(path))?.finalize(event.data);
+    const entry = this.current?.get(id);
+    if (!entry) {
+      console.warn(`Node with id "${id}" not found`);
+    } else {
+      const nodeState = this.runner?.state?.get(id);
+      if (nodeState) {
+        if (nodeState.state === "failed") {
+          const errorResponse = nodeState.outputs?.$error as
+            | ErrorResponse
+            | undefined;
+          if (!errorResponse) return;
+          const error = decodeErrorData(errorResponse);
+          entry.error = error;
+          this.renderer.nodes.set(id, {
+            status: "error",
+            errorMessage: error.message,
+          });
+        } else {
+          this.renderer.nodes.set(id, { status: "available" });
+        }
+      }
+      entry.finalize(event.data);
+    }
     this.app.current?.finalize(event.data);
   }
 
@@ -315,22 +381,27 @@ class ReactiveProjectRun implements ProjectRun {
       console.warn(`No current console entry found for input event`, event);
       return;
     }
-    const currentId = topLevel(path);
-    const currentConsoleEntry = this.current.get(currentId);
+    const id = this.#idCache.get(path);
+    if (!ok(id)) {
+      console.warn(id.$error);
+      return;
+    }
+    const currentConsoleEntry = this.current.get(id);
     if (!currentConsoleEntry) {
       console.warn(`No current console entry found at path "${path}"`);
       return;
     }
-    const currentScreen = this.app.screens.get(currentId);
+    const currentScreen = this.app.screens.get(id);
     if (!currentScreen) {
       console.warn(`No current screen found at path "${path}"`);
     } else {
       // Bump it to the bottom of the list (last item = really current);
-      this.app.screens?.delete(currentId);
-      this.app.screens?.set(currentId, currentScreen);
+      this.app.screens?.delete(id);
+      this.app.screens?.set(id, currentScreen);
     }
-    this.current.delete(currentId);
-    this.current.set(currentId, currentConsoleEntry);
+    this.current.delete(id);
+    this.current.set(id, currentConsoleEntry);
+    this.renderer.nodes.set(id, { status: "active" });
     currentConsoleEntry.addInput(event.data, {
       itemCreated: (item) => {
         currentScreen?.markAsInput();
@@ -357,6 +428,12 @@ class ReactiveProjectRun implements ProjectRun {
     // new-style (A2-based) graphs.
     if (!bubbled) return;
 
+    const id = this.#idCache.get(path);
+    if (!ok(id)) {
+      console.warn(id.$error);
+      return;
+    }
+
     const { configuration = {} } = node;
     const { schema: s = {} } = configuration;
 
@@ -377,19 +454,18 @@ class ReactiveProjectRun implements ProjectRun {
       }
     }
 
-    this.current.get(topLevel(path))?.addOutput(event.data, particleTree);
+    this.current.get(id)?.addOutput(event.data, particleTree);
     if (!this.app.current) {
       console.warn(`No current screen for output event`, event);
       return;
     }
-    this.app.screens.get(topLevel(path))?.addOutput(event.data, particleTree);
+    this.app.screens.get(id)?.addOutput(event.data, particleTree);
   }
 
   #error(event: RunErrorEvent) {
     const error = decodeError(event);
-    const path = this.#errorPath || [];
     this.input = null;
-    this.errors.set(idFromPath(path), error);
+    this.#fatalError = error;
   }
 
   /**
@@ -438,5 +514,30 @@ class EphemeralParticleTreeImpl implements EphemeralParticleTree {
       this.tree.apply(operation);
     }
     this.done = true;
+  }
+}
+
+class IdCache {
+  #pathToId = new Map<string, NodeIdentifier>();
+
+  clear() {
+    this.#pathToId.clear();
+  }
+
+  #topLevel(path: number[]) {
+    return idFromPath(path.toSpliced(1));
+  }
+
+  get(path: number[]): Outcome<string> {
+    const topLevelPath = this.#topLevel(path);
+    const id = this.#pathToId.get(topLevelPath);
+    if (!id) {
+      return err(`Could not find node id for path "${topLevelPath}"`);
+    }
+    return id;
+  }
+
+  set(path: number[], id: NodeIdentifier) {
+    this.#pathToId.set(this.#topLevel(path), id);
   }
 }

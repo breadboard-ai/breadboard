@@ -14,6 +14,7 @@ import {
   McpServerDescriptor,
   McpServerIdentifier,
   NodeIdentifier,
+  NodeRunState,
   OutputValues,
   ParameterMetadata,
   RuntimeFlags,
@@ -49,6 +50,10 @@ export type AsyncComputedResult<T> = {
  */
 export type ProjectRun = {
   /**
+   * Represents the renderer (the graph) state during the run.
+   */
+  renderer: RendererRunState;
+  /**
    * Represents the App state during the run.
    */
   app: App;
@@ -80,9 +85,10 @@ export type ProjectRun = {
    */
   consoleState: "start" | "entries";
   /**
-   * Any errors that might have occurred during a run.
+   * Overall error message that is conveyed to the user (appears in snackbar),
+   * combining multiple errors, if necessary.
    */
-  errors: Map<string, RunError>;
+  error: RunError | null;
   /**
    * The status of the run
    */
@@ -187,6 +193,11 @@ export type ConsoleEntry = {
    * The final output of the step.
    */
   output: Map<string, LLMContent /* Particle */>;
+
+  /**
+   * The error message that might have occurred in this step
+   */
+  error: RunError | null;
 
   /**
    * Starts out as `false` and is set to `true` when the entry is finalized.
@@ -574,4 +585,8 @@ export type ProjectInternal = Project & {
 export type EphemeralParticleTree = {
   tree: ParticleTree;
   done: boolean;
+};
+
+export type RendererRunState = {
+  nodes: Map<NodeIdentifier, NodeRunState>;
 };

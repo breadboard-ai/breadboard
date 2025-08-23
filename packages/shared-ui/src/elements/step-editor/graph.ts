@@ -40,8 +40,8 @@ import { OverflowMenuActionEvent } from "../../events/events";
 import { toGridSize } from "./utils/to-grid-size";
 import { GRID_SIZE, MOVE_GRAPH_ID } from "./constants";
 import { GraphAsset } from "./graph-asset";
-import { AssetPath, NodeRunState } from "@breadboard-ai/types";
-import { RendererState } from "../../state";
+import { AssetPath } from "@breadboard-ai/types";
+import { RendererRunState, RendererState } from "../../state";
 import { getStepIcon } from "../../utils/get-step-icon";
 
 @customElement("bb-graph")
@@ -755,30 +755,35 @@ export class Graph extends Box {
     return new DOMRect(0, 0, bounds.width, bounds.height);
   }
 
-  highlightActivity(topGraphResult: TopGraphRunResult | null) {
+  highlightActivity(
+    topGraphResult: TopGraphRunResult | null,
+    runState: RendererRunState["nodes"] | null
+  ) {
     for (const node of this.#nodes) {
-      const graphNode = this.entities.get(node.descriptor.id) as GraphNode;
+      const id = node.descriptor.id;
+      const graphNode = this.entities.get(id) as GraphNode;
       if (!graphNode) {
         continue;
       }
 
-      graphNode.active =
-        topGraphResult?.currentNode?.descriptor.id === node.descriptor.id
-          ? "current"
-          : topGraphResult?.log.findIndex(
-                (l) =>
-                  l.type === "node" && l.descriptor.id === node.descriptor.id
-              ) !== -1
-            ? "post"
-            : "pre";
-
-      // TODO: Switch activity status based on run information.
-      // Note for Dimitri: this.projectState already exists on Entity (from
-      // which this and every other graph item inherits).
-      const runStatus: NodeRunState = {
+      const runStatus = runState?.get(id) || {
         status: "pending",
       };
       graphNode.runStatus = runStatus;
+
+      if (runStatus.status === "error") {
+        graphNode.active = "error";
+      } else if (topGraphResult?.currentNode?.descriptor.id === id) {
+        graphNode.active = "current";
+      } else if (
+        topGraphResult?.log.findIndex(
+          (l) => l.type === "node" && l.descriptor.id === id
+        ) !== -1
+      ) {
+        graphNode.active = "post";
+      } else {
+        graphNode.active = "pre";
+      }
     }
 
     for (const edge of this.#edges) {

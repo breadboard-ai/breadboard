@@ -9,16 +9,16 @@ import {
   NodeIdentifier,
   Outcome,
   OutputValues,
-} from "@breadboard-ai/types";
-import { err, ok } from "@breadboard-ai/utils";
-import {
   OrchestrationPlan,
   NodeLifecycleState,
   OrchestratorProgress,
   PlanNodeInfo,
   Task,
   OrchestrationNodeInfo,
-} from "./types.js";
+  OrchestratorState,
+} from "@breadboard-ai/types";
+import { err, ok } from "@breadboard-ai/utils";
+import { Signal } from "signal-polyfill";
 
 export { Orchestrator };
 
@@ -30,7 +30,7 @@ type NodeInternalState = {
   outputs: OutputValues | null;
 };
 
-type OrchestratorState = Map<NodeIdentifier, NodeInternalState>;
+type InternalOrchestratorState = Map<NodeIdentifier, NodeInternalState>;
 
 const TERMINAL_STATES: ReadonlySet<NodeLifecycleState> = new Set([
   "succeeded",
@@ -64,9 +64,15 @@ const PROCESSING_STATES: ReadonlySet<NodeLifecycleState> = new Set([
  * - actual node invocation
  */
 class Orchestrator {
-  readonly #state: OrchestratorState = new Map();
+  readonly #state: InternalOrchestratorState = new Map();
   #currentStage: number = 0;
   #progress: OrchestratorProgress = "initial";
+
+  /**
+   * A signal to manage changes to the orchestrator state, so that this
+   * class can be used with signals.
+   */
+  readonly #changed = new Signal.State({});
 
   constructor(public readonly plan: OrchestrationPlan) {
     this.reset();
@@ -76,6 +82,7 @@ class Orchestrator {
    * Returns current progress of the orchestration.
    */
   get progress() {
+    this.#changed.get();
     return this.#progress;
   }
 
@@ -83,11 +90,13 @@ class Orchestrator {
    * Bring the orchestrator to the initial state.
    */
   reset(): Outcome<void> {
+    this.#changed.set({});
     this.#state.clear();
     this.#resetAtStage(0);
   }
 
   #resetAtStage(starting: number) {
+    this.#changed.set({});
     const state = this.#state;
     const stagesToReset = this.plan.stages.slice(starting);
     try {
@@ -124,6 +133,7 @@ class Orchestrator {
   }
 
   restartAtNode(id: NodeIdentifier): Outcome<void> {
+    this.#changed.set({});
     const state = this.#state.get(id);
     if (!state) {
       return err(`Unable to restart at node "${id}": node not found`);
@@ -161,6 +171,7 @@ class Orchestrator {
   }
 
   setWorking(id: NodeIdentifier): Outcome<void> {
+    this.#changed.set({});
     const state = this.#state.get(id);
     if (!state) {
       return err(`Unable to set node "${id}" to working: node not found`);
@@ -174,6 +185,7 @@ class Orchestrator {
   }
 
   setWaiting(id: NodeIdentifier): Outcome<void> {
+    this.#changed.set({});
     const state = this.#state.get(id);
     if (!state) {
       return err(`Unable to set node "${id}" to waiting: node not found`);
@@ -185,6 +197,7 @@ class Orchestrator {
   }
 
   setInterrupted(id: NodeIdentifier): Outcome<void> {
+    this.#changed.set({});
     const state = this.#state.get(id);
     if (!state) {
       return err(`Unable to set node "${id}" to interrupted: node not found`);
@@ -198,12 +211,31 @@ class Orchestrator {
     this.#propagateSkip(state);
   }
 
+  fullState(): OrchestratorState {
+    this.#changed.get();
+    return new Map(
+      Array.from(this.#state.entries()).map(([id, internal]) => {
+        return [
+          id,
+          {
+            node: internal.plan.node,
+            state: internal.state,
+            stage: internal.stage,
+            inputs: internal.inputs,
+            outputs: internal.outputs,
+          },
+        ];
+      })
+    );
+  }
+
   /**
    * Provides a way to inspect the current state of nodes as they are being
    * orchestrated.
    * @returns a map representing current state of all nodes
    */
   state(): ReadonlyMap<NodeIdentifier, OrchestrationNodeInfo> {
+    this.#changed.get();
     return new Map(
       Array.from(this.#state.entries()).map(([id, internal]) => {
         return [id, { node: internal.plan.node, state: internal.state }];
@@ -216,6 +248,7 @@ class Orchestrator {
    * with their inputs, according to the current state of the orchestrator.
    */
   currentTasks(): Outcome<Task[]> {
+    this.#changed.get();
     const tasks: Task[] = [];
     const stage = this.plan.stages[this.#currentStage];
     if (!stage) {
@@ -240,6 +273,7 @@ class Orchestrator {
   }
 
   #propagateSkip(state: NodeInternalState): Outcome<void> {
+    this.#changed.set({});
     try {
       // First, propagate the "skipped" state downstream to all descendants.
       const queue: NodeInternalState[] = [state];
@@ -292,6 +326,7 @@ class Orchestrator {
   }
 
   #tryAdvancingStage(): Outcome<OrchestratorProgress> {
+    this.#changed.set({});
     // Check to see if all other nodes at this stage have been invoked
     // (the state will be set to something other than "ready")
     const currentStage = this.plan.stages[this.#currentStage];
@@ -389,27 +424,36 @@ class Orchestrator {
     id: NodeIdentifier,
     outputs: OutputValues
   ): Outcome<OrchestratorProgress> {
+    this.#changed.set({});
     const state = this.#state.get(id);
     if (!state) {
       return err(
         `While providing outputs, couldn't get state for node "${id}"`
       );
     }
-    if (state.stage !== this.#currentStage) {
-      return err(`Can't provide outputs outside of the current stage`);
+    let earlierStage = false;
+    if (state.stage < this.#currentStage) {
+      earlierStage = true;
+    } else if (state.stage > this.#currentStage) {
+      return err(`Can't provide outputs to later stages`);
     }
     if (state.state === "waiting") {
-      return err(`Can't pfovide outputs while the node is waiting for input`);
+      return err(`Can't provide outputs while the node is waiting for input`);
     }
     // Update state of the node.
     state.outputs = outputs;
     if ("$error" in outputs) {
       state.state = "failed";
+      if (earlierStage) return this.#progress;
+
       const propagating = this.#propagateSkip(state);
       if (!ok(propagating)) return propagating;
     } else {
+      if (earlierStage) return this.#progress;
+
       state.state = "succeeded";
     }
+
     let progress;
     for (;;) {
       progress = this.#tryAdvancingStage();
