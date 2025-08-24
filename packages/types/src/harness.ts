@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DataStore, FileSystem } from "./data.js";
+import { DataStore, FileSystem, Outcome } from "./data.js";
 import { DeepReadonly } from "./deep-read-only.js";
 import { RuntimeFlagManager } from "./flags.js";
 import {
@@ -385,4 +385,32 @@ export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
    * For new runtime only: the current state of the orchestrator.
    */
   state?: DeepReadonly<OrchestratorState>;
+
+  /**
+   * For new runtime only: current breakpoints
+   */
+  breakpoints?: Map<NodeIdentifier, BreakpointSpec>;
+
+  /**
+   * For new runtime only: run a single node and stop.
+   */
+  runNode?(id: NodeIdentifier): Promise<Outcome<void>>;
+
+  /**
+   * For new runtime only: stop the run
+   */
+  stop?(): Promise<Outcome<void>>;
+};
+
+/**
+ * Specifies a breakpoint
+ */
+export type BreakpointSpec = {
+  /**
+   * If true, the breakpoint will be removed as soon as it is reached, thus
+   * only causing the runtime to stop once.
+   * Otherwise, the breakpoint is persistent and will remain until explicitly
+   * removed.
+   */
+  once?: boolean;
 };

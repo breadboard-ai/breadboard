@@ -486,45 +486,101 @@ class ReactiveProjectRun implements ProjectRun {
     }
     switch (nodeState.state) {
       case "inactive": {
-        const hasBreakpoint = false;
-        if (hasBreakpoint) {
-          console.log("Remove one-time breakpoint");
-        } else {
-          console.log("Insert one-time breakpoint, re-start run");
-        }
+        toggleBreakpoint(this.runner);
         break;
       }
       case "ready": {
-        console.log("Run this node");
+        console.log(`Run node "${nodeId}"`);
+        runNode(nodeId, this.runner);
         break;
       }
       case "working": {
         console.log("Abort work");
+        stop(this.runner);
         break;
       }
       case "waiting": {
         console.log("Abort work");
+        stop(this.runner);
         break;
       }
       case "succeeded": {
         console.log("Run this node (again)");
+        runNode(nodeId, this.runner);
         break;
       }
       case "failed": {
         console.log("Run this node (again)");
+        runNode(nodeId, this.runner);
         break;
       }
       case "skipped": {
-        console.log("Insert one-time breakpoint, re-start run");
+        toggleBreakpoint(this.runner);
         break;
       }
       case "interrupted": {
         console.log("Run this node (again)");
+        runNode(nodeId, this.runner);
         break;
       }
       default: {
         console.warn("Unknown state", nodeState.state);
       }
+    }
+
+    function toggleBreakpoint(runner: HarnessRunner | undefined) {
+      const breakpoints = runner?.breakpoints;
+      if (!breakpoints) {
+        console.warn(`Primary action: runner does not support breakpoints`);
+        return;
+      }
+      const breakpoint = breakpoints.get(nodeId);
+      if (breakpoint) {
+        console.log("Remove one-time breakpoint");
+        breakpoints.delete(nodeId);
+      } else {
+        console.log("Insert one-time breakpoint");
+        breakpoints.set(nodeId, { once: true });
+      }
+    }
+
+    function stop(runner: HarnessRunner | undefined) {
+      const stopping = runner?.stop?.();
+      if (!stopping) {
+        console.log(`Primary action: runner does not support stopping`);
+        return;
+      }
+      stopping
+        .then((outcome) => {
+          if (!ok(outcome)) {
+            console.warn(`Unable to stop`, outcome.$error);
+          }
+        })
+        .catch((reason) => {
+          console.warn("Exception thrown while stopping", reason);
+        });
+    }
+
+    function runNode(
+      nodeId: NodeIdentifier,
+      runner: HarnessRunner | undefined
+    ) {
+      const running = runner?.runNode?.(nodeId);
+      if (!running) {
+        console.log(
+          `Primary action: runner does not support running individual nodes`
+        );
+        return;
+      }
+      running
+        .then((outcome) => {
+          if (!ok(outcome)) {
+            console.warn(`Unable to run node`, outcome.$error);
+          }
+        })
+        .catch((reason) => {
+          console.warn(`Exception thrown while running node`, reason);
+        });
     }
   }
 
