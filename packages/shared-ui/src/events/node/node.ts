@@ -20,7 +20,11 @@ type Namespace = "node";
 export interface Action extends BaseEventDetail<`${Namespace}.action`> {
   readonly nodeId: string;
   readonly subGraphId: string | null;
-  readonly action: string;
+  /**
+   * The type of action.
+   * - `primary` -- the action triggered by tapping the primary action button.
+   */
+  readonly action: "primary";
 }
 
 export interface AddWithEdge

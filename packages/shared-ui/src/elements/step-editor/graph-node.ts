@@ -1156,8 +1156,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             nodeId: this.nodeId,
             subGraphId:
               this.ownerGraph === MAIN_BOARD_ID ? "" : this.ownerGraph,
-            // TODO: Replace this with the desired action.
-            action: "TODO",
+            action: "primary",
           })
         );
       }}

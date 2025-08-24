@@ -472,7 +472,60 @@ class ReactiveProjectRun implements ProjectRun {
   async handleUserAction(
     payload: StateEvent<"node.action">["payload"]
   ): Promise<Outcome<void>> {
-    console.log("USER ACTION", payload);
+    const { action, nodeId } = payload;
+    if (action !== "primary") {
+      console.warn(`Unknown action type: "${action}`);
+      return;
+    }
+    const nodeState = this.runner?.state?.get(nodeId);
+    if (!nodeState) {
+      console.warn(
+        `Primary action: orchestrator state for node "${nodeId}" not found`
+      );
+      return;
+    }
+    switch (nodeState.state) {
+      case "inactive": {
+        const hasBreakpoint = false;
+        if (hasBreakpoint) {
+          console.log("Remove one-time breakpoint");
+        } else {
+          console.log("Insert one-time breakpoint, re-start run");
+        }
+        break;
+      }
+      case "ready": {
+        console.log("Run this node");
+        break;
+      }
+      case "working": {
+        console.log("Abort work");
+        break;
+      }
+      case "waiting": {
+        console.log("Abort work");
+        break;
+      }
+      case "succeeded": {
+        console.log("Run this node (again)");
+        break;
+      }
+      case "failed": {
+        console.log("Run this node (again)");
+        break;
+      }
+      case "skipped": {
+        console.log("Insert one-time breakpoint, re-start run");
+        break;
+      }
+      case "interrupted": {
+        console.log("Run this node (again)");
+        break;
+      }
+      default: {
+        console.warn("Unknown state", nodeState.state);
+      }
+    }
   }
 
   /**
