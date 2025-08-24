@@ -449,9 +449,8 @@ class Orchestrator {
       const propagating = this.#propagateSkip(state);
       if (!ok(propagating)) return propagating;
     } else {
-      if (earlierStage) return this.#progress;
-
       state.state = "succeeded";
+      if (earlierStage) return this.#progress;
     }
 
     let progress;
