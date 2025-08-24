@@ -6,6 +6,7 @@
 
 import { resolveGraph, resolveGraphUrls } from "@breadboard-ai/loader";
 import {
+  BreakpointSpec,
   GraphDescriptor,
   HarnessRunResult,
   NodeHandlerContext,
@@ -33,6 +34,7 @@ import { Orchestrator } from "../static/orchestrator.js";
 import { AbstractRunner } from "./abstract-runner.js";
 import { fromProbe, fromRunnerResult, graphToRunFromConfig } from "./local.js";
 import { configureKits } from "./run.js";
+import { SignalMap } from "signal-utils/map";
 
 export { PlanRunner };
 
@@ -64,6 +66,8 @@ class PlanRunner extends AbstractRunner {
   @signal
   accessor #runState: InternalRunState | undefined = undefined;
 
+  accessor breakpoints = new SignalMap<NodeIdentifier, BreakpointSpec>();
+
   constructor(
     config: RunConfig,
     public readonly interactiveMode: boolean
@@ -77,6 +81,10 @@ class PlanRunner extends AbstractRunner {
 
   async continue(): Promise<void> {
     return this.#controller?.run();
+  }
+
+  async runNode(_id: NodeIdentifier): Promise<Outcome<void>> {
+    return err(`Sorry, I can't run node yet. Teach me.`);
   }
 
   async rerun(id: NodeIdentifier | null = null): Promise<void> {
