@@ -106,6 +106,14 @@ export async function grant(
         });
       }
     }
+    const sameSite =
+      process.env["VITE_AUTH_REFRESH_TOKEN_COOKIE_SAME_SITE"] || "Strict";
+    if (!["Lax", "Strict", "None"].includes(sameSite)) {
+      return internalServerError(
+        res,
+        `Invalid AUTH_REFRESH_TOKEN_COOKIE_SAME_SITE value: ${sameSite}`
+      );
+    }
     res.setHeader(
       "Set-Cookie",
       [
@@ -113,7 +121,7 @@ export async function grant(
         `HttpOnly`,
         `Max-Age=${365 * 24 * 60 * 60}`,
         `Path=/connection/refresh`,
-        `SameSite=Strict`,
+        `SameSite=${sameSite}`,
         `Secure`,
       ].join("; ")
     );
