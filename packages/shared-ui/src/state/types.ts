@@ -113,6 +113,11 @@ export type ProjectRun = {
   handleUserAction(
     payload: StateEvent<"node.action">["payload"]
   ): Promise<Outcome<void>>;
+
+  /**
+   * Call when the user chooses to dismiss errors shown (if any)
+   */
+  dismissError(): void;
 };
 
 /**

@@ -124,7 +124,15 @@ class PlanRunner extends AbstractRunner {
       );
       this.#runState = await this.#controller.state;
       if (!this.interactiveMode) {
+        // Start the first run.
         await this.#controller.run();
+        // Return a promise that never resolves, since plan runner can run
+        // nodes even after the first run completes.
+        return new Promise((resolve) => {
+          this.config.signal?.addEventListener("abort", () => {
+            resolve();
+          });
+        });
       } else {
         await this.#controller.runInteractively();
       }

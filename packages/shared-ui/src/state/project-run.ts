@@ -49,6 +49,7 @@ import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
 import { ReactiveRendererRunState } from "./renderer-run-state";
 import { StateEvent } from "../events/events";
+import { SignalSet } from "signal-utils/set";
 
 export {
   createProjectRunState,
@@ -124,6 +125,9 @@ class ReactiveProjectRun implements ProjectRun {
   app: ReactiveApp = new ReactiveApp();
   console: Map<string, ConsoleEntry> = new SignalMap();
 
+  #dismissedErrors = new SignalSet<NodeIdentifier>();
+  #seenErrors = new Set<NodeIdentifier>();
+
   @signal
   accessor #fatalError: RunError | null = null;
 
@@ -132,7 +136,13 @@ class ReactiveProjectRun implements ProjectRun {
     if (this.#fatalError) {
       return this.#fatalError;
     }
-    const errorCount = this.errors.size;
+    const newErrors = new Map<string, RunError>();
+    this.errors.forEach((error, nodeId) => {
+      if (this.#dismissedErrors.has(nodeId)) return;
+      newErrors.set(nodeId, error);
+      this.#seenErrors.add(nodeId);
+    });
+    const errorCount = newErrors.size;
     if (errorCount > 1) {
       return {
         message: "Multiple errors have occurred",
@@ -143,7 +153,7 @@ class ReactiveProjectRun implements ProjectRun {
           .join("\n\n"),
       };
     } else if (errorCount == 1) {
-      return this.errors.values().next().value!;
+      return newErrors.values().next().value!;
     }
     return null;
   }
@@ -491,6 +501,7 @@ class ReactiveProjectRun implements ProjectRun {
       }
       case "ready": {
         console.log(`Run node "${nodeId}"`);
+        this.#dismissedErrors.delete(nodeId);
         runNode(nodeId, this.runner);
         break;
       }
@@ -506,11 +517,13 @@ class ReactiveProjectRun implements ProjectRun {
       }
       case "succeeded": {
         console.log("Run this node (again)");
+        this.#dismissedErrors.delete(nodeId);
         runNode(nodeId, this.runner);
         break;
       }
       case "failed": {
         console.log("Run this node (again)");
+        this.#dismissedErrors.delete(nodeId);
         runNode(nodeId, this.runner);
         break;
       }
@@ -520,6 +533,7 @@ class ReactiveProjectRun implements ProjectRun {
       }
       case "interrupted": {
         console.log("Run this node (again)");
+        this.#dismissedErrors.delete(nodeId);
         runNode(nodeId, this.runner);
         break;
       }
@@ -582,6 +596,13 @@ class ReactiveProjectRun implements ProjectRun {
           console.warn(`Exception thrown while running node`, reason);
         });
     }
+  }
+
+  dismissError(): void {
+    this.#seenErrors.forEach((id) => {
+      this.#dismissedErrors.add(id);
+    });
+    this.#seenErrors.clear();
   }
 
   /**
