@@ -48,6 +48,8 @@ import {
 import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
 import { ReactiveRendererRunState } from "./renderer-run-state";
+import { StateEvent } from "../events/events";
+import { SignalSet } from "signal-utils/set";
 
 export {
   createProjectRunState,
@@ -123,6 +125,9 @@ class ReactiveProjectRun implements ProjectRun {
   app: ReactiveApp = new ReactiveApp();
   console: Map<string, ConsoleEntry> = new SignalMap();
 
+  #dismissedErrors = new SignalSet<NodeIdentifier>();
+  #seenErrors = new Set<NodeIdentifier>();
+
   @signal
   accessor #fatalError: RunError | null = null;
 
@@ -131,7 +136,13 @@ class ReactiveProjectRun implements ProjectRun {
     if (this.#fatalError) {
       return this.#fatalError;
     }
-    const errorCount = this.errors.size;
+    const newErrors = new Map<string, RunError>();
+    this.errors.forEach((error, nodeId) => {
+      if (this.#dismissedErrors.has(nodeId)) return;
+      newErrors.set(nodeId, error);
+      this.#seenErrors.add(nodeId);
+    });
+    const errorCount = newErrors.size;
     if (errorCount > 1) {
       return {
         message: "Multiple errors have occurred",
@@ -142,7 +153,7 @@ class ReactiveProjectRun implements ProjectRun {
           .join("\n\n"),
       };
     } else if (errorCount == 1) {
-      return this.errors.values().next().value!;
+      return newErrors.values().next().value!;
     }
     return null;
   }
@@ -466,6 +477,132 @@ class ReactiveProjectRun implements ProjectRun {
     const error = decodeError(event);
     this.input = null;
     this.#fatalError = error;
+  }
+
+  async handleUserAction(
+    payload: StateEvent<"node.action">["payload"]
+  ): Promise<Outcome<void>> {
+    const { action, nodeId } = payload;
+    if (action !== "primary") {
+      console.warn(`Unknown action type: "${action}`);
+      return;
+    }
+    const nodeState = this.runner?.state?.get(nodeId);
+    if (!nodeState) {
+      console.warn(
+        `Primary action: orchestrator state for node "${nodeId}" not found`
+      );
+      return;
+    }
+    switch (nodeState.state) {
+      case "inactive": {
+        toggleBreakpoint(this.runner);
+        break;
+      }
+      case "ready": {
+        console.log(`Run node "${nodeId}"`);
+        this.#dismissedErrors.delete(nodeId);
+        runNode(nodeId, this.runner);
+        break;
+      }
+      case "working": {
+        console.log("Abort work");
+        stop(this.runner);
+        break;
+      }
+      case "waiting": {
+        console.log("Abort work");
+        stop(this.runner);
+        break;
+      }
+      case "succeeded": {
+        console.log("Run this node (again)");
+        this.#dismissedErrors.delete(nodeId);
+        runNode(nodeId, this.runner);
+        break;
+      }
+      case "failed": {
+        console.log("Run this node (again)");
+        this.#dismissedErrors.delete(nodeId);
+        runNode(nodeId, this.runner);
+        break;
+      }
+      case "skipped": {
+        toggleBreakpoint(this.runner);
+        break;
+      }
+      case "interrupted": {
+        console.log("Run this node (again)");
+        this.#dismissedErrors.delete(nodeId);
+        runNode(nodeId, this.runner);
+        break;
+      }
+      default: {
+        console.warn("Unknown state", nodeState.state);
+      }
+    }
+
+    function toggleBreakpoint(runner: HarnessRunner | undefined) {
+      const breakpoints = runner?.breakpoints;
+      if (!breakpoints) {
+        console.warn(`Primary action: runner does not support breakpoints`);
+        return;
+      }
+      const breakpoint = breakpoints.get(nodeId);
+      if (breakpoint) {
+        console.log("Remove one-time breakpoint");
+        breakpoints.delete(nodeId);
+      } else {
+        console.log("Insert one-time breakpoint");
+        breakpoints.set(nodeId, { once: true });
+      }
+    }
+
+    function stop(runner: HarnessRunner | undefined) {
+      const stopping = runner?.stop?.();
+      if (!stopping) {
+        console.log(`Primary action: runner does not support stopping`);
+        return;
+      }
+      stopping
+        .then((outcome) => {
+          if (!ok(outcome)) {
+            console.warn(`Unable to stop`, outcome.$error);
+          }
+        })
+        .catch((reason) => {
+          console.warn("Exception thrown while stopping", reason);
+        });
+    }
+
+    function runNode(
+      nodeId: NodeIdentifier,
+      runner: HarnessRunner | undefined
+    ) {
+      const running = runner?.runNode?.(nodeId);
+      if (!running) {
+        console.log(
+          `Primary action: runner does not support running individual nodes`
+        );
+        return;
+      }
+      running
+        .then((outcome) => {
+          if (!ok(outcome)) {
+            console.warn(`Unable to run node`, outcome.$error);
+          }
+        })
+        .catch((reason) => {
+          console.warn(`Exception thrown while running node`, reason);
+        });
+    }
+  }
+
+  dismissError(): void {
+    this.#seenErrors.forEach((id) => {
+      this.#dismissedErrors.add(id);
+    });
+    this.#seenErrors.clear();
   }
 
   /**

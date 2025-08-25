@@ -2023,6 +2023,13 @@ export class Main extends SignalWatcher(LitElement) {
             this.#uiState.show.add("SnackbarDetailsModal");
             break;
           }
+
+          case "dismiss": {
+            this.#runtime.state
+              .getOrCreateProjectState(this.#tab?.mainGraphId)
+              ?.run?.dismissError();
+            break;
+          }
         }
       }}
     ></bb-snackbar>`;

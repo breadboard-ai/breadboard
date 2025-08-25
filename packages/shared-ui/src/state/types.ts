@@ -29,7 +29,7 @@ import {
   Schema,
 } from "@google-labs/breadboard";
 import { ConnectorInstance, ConnectorType } from "../connectors/types";
-import { ToastType } from "../events/events";
+import { StateEvent, ToastType } from "../events/events";
 import { SideBoardRuntime } from "../sideboards/types";
 import { VisualEditorMode } from "../types/types";
 import { HTMLTemplateResult } from "lit";
@@ -106,6 +106,18 @@ export type ProjectRun = {
    * Final output values. When the run is still ongoing, will be `null`.
    */
   finalOutput: OutputValues | null;
+  /**
+   * Handles user action. This is a receiver for user's events, such as
+   * clicking on the "Run step" buttons, etc.
+   */
+  handleUserAction(
+    payload: StateEvent<"node.action">["payload"]
+  ): Promise<Outcome<void>>;
+
+  /**
+   * Call when the user chooses to dismiss errors shown (if any)
+   */
+  dismissError(): void;
 };
 
 /**

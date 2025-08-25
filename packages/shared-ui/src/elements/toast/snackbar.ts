@@ -280,6 +280,7 @@ export class Snackbar extends LitElement {
         id="close"
         @click=${() => {
           this.hide();
+          this.dispatchEvent(new SnackbarActionEvent("dismiss"));
         }}
       >
         <span class="g-icon">close</span>

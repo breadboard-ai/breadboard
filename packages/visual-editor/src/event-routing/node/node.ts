@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ok } from "@breadboard-ai/utils";
 import { EventRoute } from "../types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 
@@ -130,12 +131,22 @@ export const ChangeEdgeAttachmentPointRoute: EventRoute<"node.changeedgeattachme
 export const ActionRoute: EventRoute<"node.action"> = {
   event: "node.action",
 
-  async do({ uiState, originalEvent }) {
+  async do({ runtime, tab, uiState, originalEvent }) {
     uiState.blockingAction = true;
-    // TODO: Handle this action.
-    console.log(originalEvent);
-    uiState.blockingAction = false;
-
-    return false;
+    try {
+      const project = runtime.state.getOrCreateProjectState(tab?.mainGraphId);
+      if (!project) {
+        console.warn(`No project for "node.action"`);
+        return false;
+      }
+      const acting = await project.run.handleUserAction(originalEvent.payload);
+      if (!ok(acting)) {
+        console.warn(acting.$error);
+        return false;
+      }
+      return false;
+    } finally {
+      uiState.blockingAction = false;
+    }
   },
 };
