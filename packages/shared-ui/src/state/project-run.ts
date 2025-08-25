@@ -500,29 +500,29 @@ class ReactiveProjectRun implements ProjectRun {
         break;
       }
       case "ready": {
-        console.log(`Run node "${nodeId}"`);
+        console.log(`Run node "${nodeId}"`, nodeState.state);
         this.#dismissedErrors.delete(nodeId);
         runNode(nodeId, this.runner);
         break;
       }
       case "working": {
-        console.log("Abort work");
-        stop(this.runner);
+        console.log("Abort work", nodeState.state);
+        stop(nodeId, this.runner);
         break;
       }
       case "waiting": {
-        console.log("Abort work");
-        stop(this.runner);
+        console.log("Abort work", nodeState.state);
+        stop(nodeId, this.runner);
         break;
       }
       case "succeeded": {
-        console.log("Run this node (again)");
+        console.log("Run this node (again)", nodeState.state);
         this.#dismissedErrors.delete(nodeId);
         runNode(nodeId, this.runner);
         break;
       }
       case "failed": {
-        console.log("Run this node (again)");
+        console.log("Run this node (again)", nodeState.state);
         this.#dismissedErrors.delete(nodeId);
         runNode(nodeId, this.runner);
         break;
@@ -532,7 +532,7 @@ class ReactiveProjectRun implements ProjectRun {
         break;
       }
       case "interrupted": {
-        console.log("Run this node (again)");
+        console.log("Run this node (again)", nodeState.state);
         this.#dismissedErrors.delete(nodeId);
         runNode(nodeId, this.runner);
         break;
@@ -558,8 +558,8 @@ class ReactiveProjectRun implements ProjectRun {
       }
     }
 
-    function stop(runner: HarnessRunner | undefined) {
-      const stopping = runner?.stop?.();
+    function stop(nodeId: NodeIdentifier, runner: HarnessRunner | undefined) {
+      const stopping = runner?.stop?.(nodeId);
       if (!stopping) {
         console.log(`Primary action: runner does not support stopping`);
         return;

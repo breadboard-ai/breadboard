@@ -46,6 +46,16 @@ const PROCESSING_STATES: ReadonlySet<NodeLifecycleState> = new Set([
 ]);
 
 /**
+ * States from which a node can become "working" again.
+ */
+const WORKABLE_STATES: ReadonlySet<NodeLifecycleState> = new Set([
+  "succeeded",
+  "failed",
+  "interrupted",
+  ...PROCESSING_STATES,
+]);
+
+/**
  * The Orchestrator acts as the state machine for running a graph.
  * Its primary responsibilities are:
  *
@@ -176,7 +186,7 @@ class Orchestrator {
     if (!state) {
       return err(`Unable to set node "${id}" to working: node not found`);
     }
-    if (!PROCESSING_STATES.has(state.state)) {
+    if (!WORKABLE_STATES.has(state.state)) {
       return err(
         `Unable to set node "${id}" to working: not ready nor waiting`
       );
@@ -248,6 +258,7 @@ class Orchestrator {
    * @param id -- node id
    */
   taskFromId(id: NodeIdentifier): Outcome<Task> {
+    this.#changed.get();
     const state = this.#state.get(id);
     if (!state) {
       return err(`Unknown node id "${id}"`);
