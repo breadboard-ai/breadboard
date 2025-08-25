@@ -73,6 +73,38 @@ const zigZag: GraphDescriptor = {
 
 const zigZagPlan = createPlan(zigZag);
 
+const converge: GraphDescriptor = {
+  nodes: [
+    { id: "start-a", type: "start" },
+    { id: "start-b", type: "start" },
+    { id: "start-c", type: "start" },
+    { id: "end", type: "converge" },
+  ],
+  edges: [
+    { from: "start-a", out: "context", to: "end", in: "in-1" },
+    { from: "start-b", out: "context", to: "end", in: "in-2" },
+    { from: "start-c", out: "context", to: "end", in: "in-3" },
+  ],
+};
+
+const convergePlan = createPlan(converge);
+
+const simpleSequence: GraphDescriptor = {
+  nodes: [
+    { id: "a", type: "work" },
+    { id: "b", type: "work" },
+    { id: "c", type: "work" },
+    { id: "d", type: "work" },
+  ],
+  edges: [
+    { from: "a", out: "context", to: "b", in: "context" },
+    { from: "b", out: "context", to: "c", in: "context" },
+    { from: "c", out: "context", to: "d", in: "context" },
+  ],
+};
+
+const simpleSequencePlan = createPlan(simpleSequence);
+
 function assertState(
   graph: GraphDescriptor,
   state: ReadonlyMap<NodeIdentifier, OrchestrationNodeInfo>,
@@ -648,5 +680,91 @@ describe("Orchestrator", () => {
         ]);
       }
     });
+  });
+
+  describe("re-run nodes at will", () => {
+    describe("errors and successes use case", () => {
+      /**
+       * In this use case, a and b error out, but c succeeds.
+       * The use should be able to rerun a, b, and c, individually.
+       */
+      const o = new Orchestrator(convergePlan);
+      {
+        // Set up the use case
+        o.provideOutputs("start-a", { $error: "a fail" });
+        o.provideOutputs("start-b", { $error: "b fail" });
+        o.provideOutputs("start-c", { context: "c success" });
+        assertTasks(o.currentTasks(), []);
+        assertState(converge, o.state(), [
+          ["start-a", "failed"],
+          ["start-b", "failed"],
+          ["start-c", "succeeded"],
+          ["end", "skipped"],
+        ]);
+      }
+      {
+        // Now, let's re-run "start-c"
+        o.provideOutputs("start-c", { context: "c another success" });
+        assertState(converge, o.state(), [
+          ["start-a", "failed"],
+          ["start-b", "failed"],
+          ["start-c", "succeeded"],
+          ["end", "skipped"],
+        ]);
+        deepStrictEqual(o.progress, "finished");
+      }
+      {
+        // Now, let's re-run "start-b"
+        o.provideOutputs("start-b", { context: "b success" });
+        assertState(converge, o.state(), [
+          ["start-a", "failed"],
+          ["start-b", "succeeded"],
+          ["start-c", "succeeded"],
+          ["end", "skipped"],
+        ]);
+        deepStrictEqual(o.progress, "finished");
+      }
+      {
+        // Finally, let's re-run "start a"
+        o.provideOutputs("start-a", { context: "a success" });
+        assertState(converge, o.state(), [
+          ["start-a", "succeeded"],
+          ["start-b", "succeeded"],
+          ["start-c", "succeeded"],
+          ["end", "ready"],
+        ]);
+        deepStrictEqual(o.progress, "advanced");
+      }
+    });
+  });
+
+  describe("with sequential plan", () => {
+    const o = new Orchestrator(simpleSequencePlan);
+    {
+      // First, run it all.
+      o.provideOutputs("a", { context: "a" });
+      o.provideOutputs("b", { context: "b" });
+      o.provideOutputs("c", { context: "c" });
+      o.provideOutputs("d", { context: "d" });
+      deepStrictEqual(o.progress, "finished");
+    }
+    {
+      o.restartAtNode("c");
+      assertState(simpleSequence, o.state(), [
+        ["a", "succeeded"],
+        ["b", "succeeded"],
+        ["c", "ready"],
+        ["d", "inactive"],
+      ]);
+    }
+    {
+      o.restartAtNode("b");
+      assertState(simpleSequence, o.state(), [
+        ["a", "succeeded"],
+        ["b", "ready"],
+        ["c", "inactive"],
+        ["d", "inactive"],
+      ]);
+    }
   });
 });

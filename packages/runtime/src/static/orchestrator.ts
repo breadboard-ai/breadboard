@@ -244,6 +244,24 @@ class Orchestrator {
   }
 
   /**
+   * Creates a new task to invoke a node, given a node id
+   * @param id -- node id
+   */
+  taskFromId(id: NodeIdentifier): Outcome<Task> {
+    const state = this.#state.get(id);
+    if (!state) {
+      return err(`Unknown node id "${id}"`);
+    }
+    if (!state.inputs) {
+      return err(`Node has no inputs`);
+    }
+    return {
+      node: state.plan.node,
+      inputs: state.inputs,
+    };
+  }
+
+  /**
    * Creates a list of current tasks: nodes to be invoked next, along
    * with their inputs, according to the current state of the orchestrator.
    */
@@ -450,7 +468,11 @@ class Orchestrator {
       if (!ok(propagating)) return propagating;
     } else {
       state.state = "succeeded";
-      if (earlierStage) return this.#progress;
+      if (earlierStage) {
+        // Jump back to the node's stage, so that we propagate
+        // from it.
+        this.#currentStage = state.stage;
+      }
     }
 
     let progress;

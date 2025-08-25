@@ -48,11 +48,17 @@ function emptyOrchestratorState(): OrchestratorState {
 
 class PlanRunner extends AbstractRunner {
   #controller: InternalRunStateController | null = null;
+  #orchestrator: Orchestrator | null = null;
 
   @signal
   get state(): OrchestratorState {
     const runState = this.#runState;
-    if (!runState) return emptyOrchestratorState();
+    if (!runState) {
+      if (this.#orchestrator) {
+        return this.#orchestrator.fullState();
+      }
+      return emptyOrchestratorState();
+    }
 
     return runState.orchestrator.fullState();
   }
@@ -60,7 +66,13 @@ class PlanRunner extends AbstractRunner {
   @signal
   get plan() {
     const runState = this.#runState;
-    return runState?.plan || emptyPlan();
+    if (!runState) {
+      if (this.#orchestrator) {
+        return this.#orchestrator.plan;
+      }
+      return emptyPlan();
+    }
+    return runState.orchestrator.plan;
   }
 
   @signal
@@ -73,6 +85,12 @@ class PlanRunner extends AbstractRunner {
     public readonly interactiveMode: boolean
   ) {
     super(config);
+    if (config.runner) {
+      // We have a GraphDescriptor, we can create plan/orchestrator
+      // synchronously.
+      const plan = createPlan(config.runner);
+      this.#orchestrator = new Orchestrator(plan);
+    }
   }
 
   async next(): Promise<void> {
@@ -83,8 +101,8 @@ class PlanRunner extends AbstractRunner {
     return this.#controller?.run();
   }
 
-  async runNode(_id: NodeIdentifier): Promise<Outcome<void>> {
-    return err(`Sorry, I can't run node yet. Teach me.`);
+  async runNode(id: NodeIdentifier): Promise<Outcome<void>> {
+    return this.#controller?.runNode(id);
   }
 
   async rerun(id: NodeIdentifier | null = null): Promise<void> {
@@ -96,15 +114,19 @@ class PlanRunner extends AbstractRunner {
     void,
     unknown
   > {
+    this.#controller = null;
+
     yield* asyncGen<HarnessRunResult>(async (next) => {
-      this.#controller = new InternalRunStateController(this.config, next);
+      this.#controller = new InternalRunStateController(
+        this.config,
+        this.#orchestrator,
+        next
+      );
       this.#runState = await this.#controller.state;
       if (!this.interactiveMode) {
         await this.#controller.run();
-        this.#controller = null;
       } else {
         await this.#controller.runInteractively();
-        this.#controller = null;
       }
     });
   }
@@ -112,7 +134,6 @@ class PlanRunner extends AbstractRunner {
 
 type InternalRunState = {
   graph: GraphDescriptor;
-  plan: OrchestrationPlan;
   orchestrator: Orchestrator;
   context: NodeHandlerContext;
   last: NodeIdentifier | null;
@@ -125,6 +146,7 @@ class InternalRunStateController {
 
   constructor(
     public readonly config: RunConfig,
+    public orchestrator: Orchestrator | null,
     public readonly callback: (data: HarnessRunResult) => Promise<void>
   ) {
     this.state = this.initialize(callback);
@@ -280,6 +302,13 @@ class InternalRunStateController {
     await this.postamble();
   }
 
+  async runNode(id: NodeIdentifier): Promise<Outcome<void>> {
+    const state = await this.state;
+    const task = state.orchestrator.taskFromId(id);
+    if (!ok(task)) return task;
+    return this.runTask(task);
+  }
+
   async rerun(id: NodeIdentifier | null = null): Promise<Outcome<void>> {
     const state = await this.state;
     const nodeId = id || state.last;
@@ -306,18 +335,11 @@ class InternalRunStateController {
     await this.postamble();
   }
 
-  async initialize(
+  async initializeNodeHandlerContext(
     next: (data: HarnessRunResult) => Promise<void>
-  ): Promise<InternalRunState> {
+  ): Promise<NodeHandlerContext> {
     const kits = await configureKits(this.config, next);
-    const graphToRun = resolveGraphUrls(
-      await graphToRunFromConfig(this.config)
-    );
-    let graph = resolveGraph(graphToRun);
 
-    if (isImperativeGraph(graph)) {
-      graph = toDeclarativeGraph(graph);
-    }
     const { loader, store, fileSystem, base, signal, state, graphStore } =
       this.config;
 
@@ -327,7 +349,7 @@ class InternalRunStateController {
       },
     };
 
-    const context: NodeHandlerContext = {
+    return {
       probe,
       kits,
       loader,
@@ -338,9 +360,32 @@ class InternalRunStateController {
       state,
       graphStore,
     };
-    const plan = createPlan(graph);
-    const orchestrator = new Orchestrator(plan);
+  }
 
-    return { graph, context, plan, orchestrator, last: null };
+  async initialize(
+    next: (data: HarnessRunResult) => Promise<void>
+  ): Promise<InternalRunState> {
+    let orchestrator;
+    let graph;
+    if (this.orchestrator) {
+      graph = this.config.runner!;
+      orchestrator = this.orchestrator;
+    } else {
+      const graphToRun = resolveGraphUrls(
+        await graphToRunFromConfig(this.config)
+      );
+      graph = resolveGraph(graphToRun);
+
+      if (isImperativeGraph(graph)) {
+        graph = toDeclarativeGraph(graph);
+      }
+
+      const plan = createPlan(graph);
+      orchestrator = new Orchestrator(plan);
+    }
+
+    const context = await this.initializeNodeHandlerContext(next);
+
+    return { graph, context, orchestrator, last: null };
   }
 }
