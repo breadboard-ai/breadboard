@@ -20,6 +20,7 @@ import { CachingFeaturedGallery, makeGalleryMiddleware } from "./gallery.js";
 import { GoogleAuth } from "google-auth-library";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { createMcpProxyHandler } from "./mcp-proxy.js";
+import { SameSite } from "../../../connection-server/dist/config.js";
 
 const FEATURED_GALLERY_CACHE_REFRESH_SECONDS = 10 * 60;
 
@@ -36,11 +37,24 @@ const boardServerConfig = boardServer.createServerConfig({
 });
 const connectionServerConfig = {
   ...(await connectionServer.createServerConfig()),
+  refreshTokenCookieSameSite: (serverConfig.REFRESH_TOKEN_COOKIE_SAME_SITE ||
+    "Strict") as SameSite,
   validateResponse: allowListChecker(
     serverConfig.BACKEND_API_ENDPOINT &&
       new URL(serverConfig.BACKEND_API_ENDPOINT)
   ),
 };
+
+if (
+  !["Lax", "Strict", "None"].includes(
+    connectionServerConfig.refreshTokenCookieSameSite
+  )
+) {
+  throw Error(
+    `Invalid REFRESH_TOKEN_COOKIE_SAME_SITE value: ${connectionServerConfig.refreshTokenCookieSameSite}`
+  );
+}
+
 
 boardServer.addMiddleware(server, boardServerConfig);
 server.use("/board", boardServer.createRouter(boardServerConfig));

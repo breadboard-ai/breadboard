@@ -13,6 +13,7 @@ import { list } from "./api/list.js";
 import { refresh } from "./api/refresh.js";
 import { loadConnections, type SameSite, type ServerConfig } from "./config.js";
 import cookieParser from "cookie-parser";
+import type { ServerDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 
 export type { ServerConfig };
 
@@ -34,15 +35,7 @@ export async function createServerConfig(): Promise<ServerConfig> {
     .split(/\s+/)
     .filter((origin) => origin !== "");
 
-  const refreshTokenCookieSameSite = (process.env[
-    "REFRESH_TOKEN_COOKIE_SAME_SITE"
-  ] || "Strict") as SameSite;
-  if (!["Lax", "Strict", "None"].includes(refreshTokenCookieSameSite)) {
-    throw Error(
-      `Invalid REFRESH_TOKEN_COOKIE_SAME_SITE value: ${refreshTokenCookieSameSite}`
-    );
-  }
-  return { allowedOrigins, connections, refreshTokenCookieSameSite };
+  return { allowedOrigins, connections };
 }
 
 export function createServer(config: ServerConfig): Express {

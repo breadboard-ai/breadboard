@@ -105,7 +105,7 @@ export async function grant(
           error: checkedGrantResponse.error,
         });
       }
-    }
+    }    
     res.setHeader(
       "Set-Cookie",
       [

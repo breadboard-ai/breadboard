@@ -12,7 +12,7 @@ export type SameSite = "Lax" | "None" | "Strict";
 export interface ServerConfig {
   connections: Map<string, ConnectionConfig>;
   allowedOrigins: string[];
-  refreshTokenCookieSameSite: SameSite;
+  refreshTokenCookieSameSite?: SameSite;
   validateResponse?: (
     response: GrantResponse
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
