@@ -189,6 +189,10 @@ class GoogleDriveBoardServer
       return project;
     });
 
+    for (const graph of featuredGraphs) {
+      this.#googleDriveClient.markFileForReadingWithPublicProxy(graph.id);
+    }
+
     return [...userProjects, ...galleryProjects];
   }
 
