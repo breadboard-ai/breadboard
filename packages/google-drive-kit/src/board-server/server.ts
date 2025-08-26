@@ -44,7 +44,7 @@ import {
 } from "../google-drive-client.js";
 import { GoogleDriveDataPartTransformer } from "./data-part-transformer.js";
 import { visitGraphNodes } from "@breadboard-ai/data";
-import { driveFileToGraphInfo } from "./utils.js";
+import { driveFileToGraphInfo, findGoogleDriveAssetsInGraph } from "./utils.js";
 
 export { GoogleDriveBoardServer };
 
@@ -133,7 +133,7 @@ class GoogleDriveBoardServer
     this.extensions = configuration.extensions;
     this.capabilities = configuration.capabilities;
     this.#googleDriveClient = googleDriveClient;
-    this.projects = this.listProjects();
+    this.projects = this.#listProjects();
   }
 
   #saving = new Map<string, SaveDebouncer>();
@@ -145,10 +145,10 @@ class GoogleDriveBoardServer
     this.#projects = await this.projects;
   }
 
-  async listProjects(): Promise<BoardServerProject[]> {
+  async #listProjects(): Promise<BoardServerProject[]> {
     const [userGraphs, featuredGraphs] = await Promise.all([
       this.ops.readGraphList(),
-      this.#listGalleryGraphs(),
+      this.#listGalleryGraphsOnce(),
     ]);
     if (!ok(userGraphs)) return [];
 
@@ -192,38 +192,63 @@ class GoogleDriveBoardServer
     return [...userProjects, ...galleryProjects];
   }
 
-  async #listGalleryGraphs(): Promise<
+  #galleryGraphs?: Promise<
+    Array<NarrowedDriveFile<"id" | "name" | "properties">>
+  >;
+  async #listGalleryGraphsOnce(): Promise<
     Array<NarrowedDriveFile<"id" | "name" | "properties">>
   > {
-    const url = new URL("/api/gallery/list", window.location.href);
-    let response;
-    try {
-      response = await fetch(url);
-    } catch (e) {
-      console.error(
-        `[drive board server] network error fetching featured gallery list`,
-        e
-      );
-      return [];
-    }
-    if (!response.ok) {
-      console.error(
-        `[drive board server] HTTP ${response.status} error` +
-          ` fetching featured gallery list`
-      );
-      return [];
-    }
-    let result: Array<NarrowedDriveFile<"id" | "name" | "properties">>;
-    try {
-      result = await response.json();
-    } catch (e) {
-      console.error(
-        `[drive board server] JSON parse error fetching featured gallery list`,
-        e
-      );
-      return [];
-    }
-    return result;
+    return (this.#galleryGraphs ??= (async () => {
+      const url = new URL("/api/gallery/list", window.location.href);
+      let response;
+      try {
+        response = await fetch(url);
+      } catch (e) {
+        console.error(
+          `[drive board server] network error fetching featured gallery list`,
+          e
+        );
+        return [];
+      }
+      if (!response.ok) {
+        console.error(
+          `[drive board server] HTTP ${response.status} error` +
+            ` fetching featured gallery list`
+        );
+        return [];
+      }
+      let result: Array<NarrowedDriveFile<"id" | "name" | "properties">>;
+      try {
+        result = await response.json();
+      } catch (e) {
+        console.error(
+          `[drive board server] JSON parse error fetching featured gallery list`,
+          e
+        );
+        return [];
+      }
+      for (const file of result) {
+        this.#googleDriveClient.markFileForReadingWithPublicProxy(file.id);
+      }
+      return result;
+    })());
+  }
+
+  async #seedGoogleDriveClientWithFeaturedGraphIdsOnce(): Promise<void> {
+    // We do this as a side-effect of the listing. So just wait for that.
+    void (await this.#listGalleryGraphsOnce());
+  }
+
+  #galleryGraphFileIds?: Promise<Set<string>>;
+  async #loadGalleryGraphFileIdsOnce() {
+    return (this.#galleryGraphFileIds ??= (async () =>
+      new Set<string>(
+        (await this.#listGalleryGraphsOnce()).map((file) => file.id)
+      ))());
+  }
+
+  async #isGalleryGraphFile(fileId: string): Promise<boolean> {
+    return (await this.#loadGalleryGraphFileIdsOnce()).has(fileId);
   }
 
   #graphInfoToProject(
@@ -252,7 +277,7 @@ class GoogleDriveBoardServer
    * The work is done asynchronously unless you await to its result.
    */
   refreshProjectList(): Promise<BoardServerProject[]> {
-    this.projects = this.listProjects();
+    this.projects = this.#listProjects();
     return this.projects;
   }
 
@@ -331,10 +356,21 @@ class GoogleDriveBoardServer
       id: getFileId(url.href),
       resourceKey: url.searchParams.get("resourcekey") ?? undefined,
     };
-    const response = await this.#googleDriveClient.getFileMedia(fileId);
+    await this.#seedGoogleDriveClientWithFeaturedGraphIdsOnce();
+    const [response, isGalleryGraph] = await Promise.all([
+      this.#googleDriveClient.getFileMedia(fileId),
+      this.#isGalleryGraphFile(fileId.id),
+    ]);
     if (response.status === 200) {
       const descriptor = await response.json();
       console.debug(`[Google Drive Board Server] Loaded graph`, descriptor);
+      if (isGalleryGraph) {
+        for (const asset of findGoogleDriveAssetsInGraph(descriptor)) {
+          this.#googleDriveClient.markFileForReadingWithPublicProxy(
+            asset.fileId.id
+          );
+        }
+      }
       return descriptor;
     } else if (response.status === 404) {
       return null;
