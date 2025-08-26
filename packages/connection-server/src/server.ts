@@ -11,7 +11,7 @@ import type { Request, Response } from "express";
 import { grant } from "./api/grant.js";
 import { list } from "./api/list.js";
 import { refresh } from "./api/refresh.js";
-import { loadConnections, type ServerConfig } from "./config.js";
+import { loadConnections, type SameSite, type ServerConfig } from "./config.js";
 import cookieParser from "cookie-parser";
 
 export type { ServerConfig };
@@ -34,7 +34,15 @@ export async function createServerConfig(): Promise<ServerConfig> {
     .split(/\s+/)
     .filter((origin) => origin !== "");
 
-  return { allowedOrigins, connections };
+  const refreshTokenCookieSameSite = (process.env[
+    "REFRESH_TOKEN_COOKIE_SAME_SITE"
+  ] || "Strict") as SameSite;
+  if (!["Lax", "Strict", "None"].includes(refreshTokenCookieSameSite)) {
+    throw Error(
+      `Invalid REFRESH_TOKEN_COOKIE_SAME_SITE value: ${refreshTokenCookieSameSite}`
+    );
+  }
+  return { allowedOrigins, connections, refreshTokenCookieSameSite };
 }
 
 export function createServer(config: ServerConfig): Express {

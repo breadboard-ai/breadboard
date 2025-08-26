@@ -52,4 +52,7 @@ export type ServerDeploymentConfiguration = {
    * accepted.
    */
   MCP_SERVER_ALLOW_LIST?: string[];
+
+  /** The SameSite attribute for the refresh token cookie. */
+  REFRESH_TOKEN_COOKIE_SAME_SITE?: "Lax" | "None" | "Strict";
 };
