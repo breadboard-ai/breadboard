@@ -121,7 +121,7 @@ const MODES: Mode[] = [
     id: "image",
     type: "image",
     url: "embed://a2/a2.bgl.json#module:image-editor",
-    title: "Gemini 2.0 Flash: Image Generation",
+    title: "Gemini 2.5 Flash Image",
     description: "Generates images from text and images",
     icon: "photo_spark",
     promptPlaceholderText:
