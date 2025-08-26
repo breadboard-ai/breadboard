@@ -1370,7 +1370,6 @@ export class Main extends SignalWatcher(LitElement) {
         schema: {},
       };
       current.outputs.set("final", last);
-      projectState.run.app.current = current;
       projectState.run.app.screens.set("final", current);
     }
 
