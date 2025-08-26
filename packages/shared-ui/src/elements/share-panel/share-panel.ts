@@ -650,6 +650,7 @@ export class SharePanel extends LitElement {
         <input
           id="app-link-text"
           type="text"
+          readonly
           value=${appUrl}
           @click=${this.#onClickLinkText}
         />
