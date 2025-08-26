@@ -9,6 +9,7 @@ import {
   BreakpointSpec,
   GraphDescriptor,
   HarnessRunResult,
+  NodeConfiguration,
   NodeHandlerContext,
   NodeIdentifier,
   OrchestrationPlan,
@@ -21,6 +22,7 @@ import {
 } from "@breadboard-ai/types";
 import {
   asyncGen,
+  err,
   isImperativeGraph,
   ok,
   timestamp,
@@ -170,11 +172,11 @@ class InternalRunStateController {
     return error;
   }
 
-  fromTask(task: Task): TraversalResult {
+  fromTask(task: Task, config: NodeConfiguration): TraversalResult {
     // This is probably wrong, dig in later.
     return {
       descriptor: task.node,
-      inputs: { ...task.node.configuration, ...task.inputs },
+      inputs: { ...config, ...task.inputs },
       missingInputs: [],
       current: { from: "", to: "" },
       opportunities: [],
@@ -229,23 +231,33 @@ class InternalRunStateController {
         return this.callback(harnessResult);
       }
     );
-    const outputs = await invoker.invokeNode(this.fromTask(task), path);
-    if (signal.aborted) {
-      const interrupting = state.orchestrator.setInterrupted(task.node.id);
-      if (!ok(interrupting)) {
-        console.warn(interrupting.$error);
-      }
+    const nodeConfiguration = getLatestConfig(task.node.id, state);
+    let outputs;
+    if (!ok(nodeConfiguration)) {
+      outputs = nodeConfiguration as { $error: string };
+      console.warn(`Can't get latest config`, outputs.$error);
     } else {
-      const working = state.orchestrator.setWorking(task.node.id);
-      if (!ok(working)) {
-        console.warn(working.$error);
-      }
-      const providing = state.orchestrator.provideOutputs(
-        task.node.id,
-        outputs
+      outputs = await invoker.invokeNode(
+        this.fromTask(task, nodeConfiguration),
+        path
       );
-      if (!ok(providing)) {
-        console.warn(providing.$error);
+      if (signal.aborted) {
+        const interrupting = state.orchestrator.setInterrupted(task.node.id);
+        if (!ok(interrupting)) {
+          console.warn(interrupting.$error);
+        }
+      } else {
+        const working = state.orchestrator.setWorking(task.node.id);
+        if (!ok(working)) {
+          console.warn(working.$error);
+        }
+        const providing = state.orchestrator.provideOutputs(
+          task.node.id,
+          outputs
+        );
+        if (!ok(providing)) {
+          console.warn(providing.$error);
+        }
       }
     }
     this.callback({
@@ -419,4 +431,28 @@ class InternalRunStateController {
 
     return { graph, context, orchestrator, last: null };
   }
+}
+
+function getLatestConfig(
+  id: NodeIdentifier,
+  state: InternalRunState
+): Outcome<NodeConfiguration> {
+  const gettingMainGraph = state.context.graphStore?.getByDescriptor(
+    state.graph
+  );
+  if (!gettingMainGraph?.success) {
+    return err(`Can't to find graph "${state.graph.url}" in graph store`);
+  }
+  const inspector = state.context.graphStore?.inspect(
+    gettingMainGraph.result,
+    ""
+  );
+  if (!inspector) {
+    return err(`Can't get inspector for graph "${state.graph.url}"`);
+  }
+  const inspectableNode = inspector.nodeById(id);
+  if (!inspectableNode) {
+    return err(`Unable to find node "${id}`);
+  }
+  return inspectableNode?.configuration();
 }
