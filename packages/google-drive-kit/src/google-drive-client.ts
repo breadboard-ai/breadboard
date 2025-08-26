@@ -179,6 +179,8 @@ export class GoogleDriveClient {
     this.#getUserAccessToken = options.getUserAccessToken;
   }
 
+  // TODO(aomarks) Remove. Anything that needs an access token should get it
+  // itself.
   async accessToken(): Promise<string> {
     return this.#getUserAccessToken();
   }
