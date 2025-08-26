@@ -507,11 +507,13 @@ class ReactiveProjectRun implements ProjectRun {
       }
       case "working": {
         console.log("Abort work", nodeState.state);
+        this.renderer.nodes.set(nodeId, { status: "paused" });
         stop(nodeId, this.runner);
         break;
       }
       case "waiting": {
         console.log("Abort work", nodeState.state);
+        this.renderer.nodes.set(nodeId, { status: "paused" });
         stop(nodeId, this.runner);
         break;
       }

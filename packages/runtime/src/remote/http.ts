@@ -161,7 +161,9 @@ export class HTTPClientTransport<Request, Response>
     this.#fetch = this.#options.fetch ?? globalThis.fetch.bind(globalThis);
   }
 
-  createClientStream(): ClientBidirectionalStream<Request, Response> {
+  createClientStream(
+    init?: RequestInit
+  ): ClientBidirectionalStream<Request, Response> {
     let responseResolve:
       | undefined
       | ((response: PatchedReadableStream<Response>) => void);
@@ -202,6 +204,7 @@ export class HTTPClientTransport<Request, Response>
           }
           const response = await that.#fetch(that.#url, {
             ...that.#options,
+            ...(init || {}),
             body: JSON.stringify(chunk),
           });
           if (!response.ok) {

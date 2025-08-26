@@ -181,8 +181,9 @@ class Orchestrator {
   }
 
   setWorking(id: NodeIdentifier): Outcome<void> {
-    this.#changed.set({});
     const state = this.#state.get(id);
+    if (state?.state === "working") return;
+
     if (!state) {
       return err(`Unable to set node "${id}" to working: node not found`);
     }
@@ -191,24 +192,28 @@ class Orchestrator {
         `Unable to set node "${id}" to working: not ready nor waiting`
       );
     }
+    this.#changed.set({});
     state.state = "working";
   }
 
   setWaiting(id: NodeIdentifier): Outcome<void> {
-    this.#changed.set({});
     const state = this.#state.get(id);
+    if (state?.state === "waiting") return;
+
     if (!state) {
       return err(`Unable to set node "${id}" to waiting: node not found`);
     }
     if (state.state !== "working") {
       return err(`Unable to set node "${id}" to waiting: not working`);
     }
+    this.#changed.set({});
     state.state = "waiting";
   }
 
   setInterrupted(id: NodeIdentifier): Outcome<void> {
-    this.#changed.set({});
     const state = this.#state.get(id);
+    if (state?.state === "interrupted") return;
+
     if (!state) {
       return err(`Unable to set node "${id}" to interrupted: node not found`);
     }
@@ -217,6 +222,7 @@ class Orchestrator {
         `Unable to set node "${id}" to interrupted: not working or waiting`
       );
     }
+    this.#changed.set({});
     state.state = "interrupted";
     this.#propagateSkip(state);
   }

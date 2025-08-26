@@ -40,7 +40,9 @@ async function configureProxy(config: RunConfig): Promise<Kit[]> {
             throw new Error("No node proxy server URL provided.");
           }
           const proxyClient = new ProxyClient(
-            new HTTPClientTransport(proxyConfig.url)
+            new HTTPClientTransport(proxyConfig.url, {
+              signal: config.signal,
+            })
           );
           kits.push(proxyClient.createProxyKit(proxyConfig.nodes, config.kits));
           break;

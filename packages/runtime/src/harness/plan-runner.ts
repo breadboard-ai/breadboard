@@ -208,7 +208,7 @@ class InternalRunStateController {
     });
     const working = state.orchestrator.setWorking(task.node.id);
     if (!ok(working)) {
-      console.warn(`Unable to set node state to "working"`, working.$error);
+      console.warn(working.$error);
     }
     const signal = this.#getOrCreateStopController(task.node.id).signal;
     const invoker = new NodeInvoker(
@@ -233,22 +233,19 @@ class InternalRunStateController {
     if (signal.aborted) {
       const interrupting = state.orchestrator.setInterrupted(task.node.id);
       if (!ok(interrupting)) {
-        console.warn(
-          `Unable to set node state to ""interrupted"`,
-          interrupting.$error
-        );
+        console.warn(interrupting.$error);
       }
     } else {
       const working = state.orchestrator.setWorking(task.node.id);
       if (!ok(working)) {
-        console.warn(`Unable to set node state to "working"`, working.$error);
+        console.warn(working.$error);
       }
       const providing = state.orchestrator.provideOutputs(
         task.node.id,
         outputs
       );
       if (!ok(providing)) {
-        console.warn(`Unable to set provide outputs`, providing.$error);
+        console.warn(providing.$error);
       }
     }
     this.callback({
@@ -353,7 +350,11 @@ class InternalRunStateController {
       console.warn(`Unable to find stop controller for node "${id}"`);
       return;
     }
-    stopController.abort();
+    try {
+      stopController.abort(`Interrupt node "${id}"`);
+    } catch (e) {
+      console.log(e);
+    }
     this.#stopControllers?.delete(id);
     const state = await this.state;
     state.orchestrator.setInterrupted(id);
