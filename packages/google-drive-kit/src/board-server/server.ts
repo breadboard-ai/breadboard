@@ -133,7 +133,7 @@ class GoogleDriveBoardServer
     this.extensions = configuration.extensions;
     this.capabilities = configuration.capabilities;
     this.#googleDriveClient = googleDriveClient;
-    this.projects = this.listProjects();
+    this.projects = this.#listProjects();
   }
 
   #saving = new Map<string, SaveDebouncer>();
@@ -145,7 +145,7 @@ class GoogleDriveBoardServer
     this.#projects = await this.projects;
   }
 
-  async listProjects(): Promise<BoardServerProject[]> {
+  async #listProjects(): Promise<BoardServerProject[]> {
     const [userGraphs, featuredGraphs] = await Promise.all([
       this.ops.readGraphList(),
       this.#listGalleryGraphs(),
@@ -256,7 +256,7 @@ class GoogleDriveBoardServer
    * The work is done asynchronously unless you await to its result.
    */
   refreshProjectList(): Promise<BoardServerProject[]> {
-    this.projects = this.listProjects();
+    this.projects = this.#listProjects();
     return this.projects;
   }
 
