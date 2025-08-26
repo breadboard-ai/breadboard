@@ -14,7 +14,6 @@ type Permission = gapi.client.drive.Permission;
 export interface GoogleDriveClientOptions {
   apiBaseUrl?: string;
   getUserAccessToken: () => Promise<string>;
-  extraHeaders?: Record<string, string>;
 }
 
 export interface BaseRequestOptions {
@@ -174,12 +173,10 @@ type GoogleApiAuthorization = { kind: "bearer"; token: string };
 export class GoogleDriveClient {
   readonly #apiBaseUrl: string;
   readonly #getUserAccessToken: () => Promise<string>;
-  readonly #extraHeaders?: Record<string, string>;
 
   constructor(options: GoogleDriveClientOptions) {
     this.#apiBaseUrl = options.apiBaseUrl || "https://www.googleapis.com";
     this.#getUserAccessToken = options.getUserAccessToken;
-    this.#extraHeaders = options.extraHeaders;
   }
 
   async accessToken(): Promise<string> {
@@ -204,11 +201,6 @@ export class GoogleDriveClient {
     const headers = this.#makeFetchHeaders(authorization, resourceKeys);
     if (init?.headers) {
       for (const [key, val] of Object.entries(init.headers)) {
-        headers.set(key, val);
-      }
-    }
-    if (this.#extraHeaders) {
-      for (const [key, val] of Object.entries(this.#extraHeaders)) {
         headers.set(key, val);
       }
     }
