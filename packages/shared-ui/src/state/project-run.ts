@@ -330,7 +330,7 @@ class ReactiveProjectRun implements ProjectRun {
     this.current.set(id, entry);
     this.console.set(id, entry);
 
-    this.renderer.nodes.set(id, { status: "active" });
+    this.renderer.nodes.set(id, { status: "working" });
 
     // This looks like duplication with the console logic above,
     // but it's a hedge toward the future where screens and console entries
@@ -373,11 +373,11 @@ class ReactiveProjectRun implements ProjectRun {
           const error = decodeErrorData(errorResponse);
           entry.error = error;
           this.renderer.nodes.set(id, {
-            status: "error",
+            status: "failed",
             errorMessage: error.message,
           });
-        } else {
-          this.renderer.nodes.set(id, { status: "available" });
+        } else if (nodeState.state !== "interrupted") {
+          this.renderer.nodes.set(id, { status: "succeeded" });
         }
       }
       entry.finalize(event.data);
@@ -412,7 +412,7 @@ class ReactiveProjectRun implements ProjectRun {
     }
     this.current.delete(id);
     this.current.set(id, currentConsoleEntry);
-    this.renderer.nodes.set(id, { status: "active" });
+    this.renderer.nodes.set(id, { status: "working" });
     currentConsoleEntry.addInput(event.data, {
       itemCreated: (item) => {
         currentScreen?.markAsInput();
@@ -507,13 +507,19 @@ class ReactiveProjectRun implements ProjectRun {
       }
       case "working": {
         console.log("Abort work", nodeState.state);
-        this.renderer.nodes.set(nodeId, { status: "paused" });
+        this.renderer.nodes.set(nodeId, {
+          status: "interrupted",
+          errorMessage: "Stopped by user",
+        });
         stop(nodeId, this.runner);
         break;
       }
       case "waiting": {
         console.log("Abort work", nodeState.state);
-        this.renderer.nodes.set(nodeId, { status: "paused" });
+        this.renderer.nodes.set(nodeId, {
+          status: "interrupted",
+          errorMessage: "Stopped by user",
+        });
         stop(nodeId, this.runner);
         break;
       }

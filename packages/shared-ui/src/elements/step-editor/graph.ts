@@ -40,7 +40,7 @@ import { OverflowMenuActionEvent } from "../../events/events";
 import { toGridSize } from "./utils/to-grid-size";
 import { GRID_SIZE, MOVE_GRAPH_ID } from "./constants";
 import { GraphAsset } from "./graph-asset";
-import { AssetPath } from "@breadboard-ai/types";
+import { AssetPath, NodeRunState } from "@breadboard-ai/types";
 import { RendererRunState, RendererState } from "../../state";
 import { getStepIcon } from "../../utils/get-step-icon";
 
@@ -766,12 +766,12 @@ export class Graph extends Box {
         continue;
       }
 
-      const runStatus = runState?.get(id) || {
-        status: "pending",
+      const runStatus: NodeRunState = runState?.get(id) || {
+        status: "inactive",
       };
       graphNode.runStatus = runStatus;
 
-      if (runStatus.status === "error") {
+      if (runStatus.status === "failed" || runStatus.status === "interrupted") {
         graphNode.active = "error";
       } else if (topGraphResult?.currentNode?.descriptor.id === id) {
         graphNode.active = "current";
