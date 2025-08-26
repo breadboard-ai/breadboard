@@ -351,11 +351,15 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.flowGenerator = new FlowGenerator(this.#apiClient);
 
+    const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
+      .href;
+    const forceProxyForDebugging =
+      parsedUrl?.dev?.["force-drive-proxy"] !== undefined;
     this.googleDriveClient = new GoogleDriveClient({
-      apiBaseUrl:
-        parsedUrl?.dev?.["force-drive-proxy"] !== undefined
-          ? new URL("/api/drive-proxy/", window.location.href).href
-          : "https://www.googleapis.com",
+      apiBaseUrl: forceProxyForDebugging
+        ? proxyApiBaseUrl
+        : "https://www.googleapis.com",
+      proxyApiBaseUrl,
       getUserAccessToken: async () => {
         const token = await this.signinAdapter.token();
         if (token.state === "valid") {
