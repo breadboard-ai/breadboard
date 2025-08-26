@@ -113,7 +113,7 @@ export async function grant(
         `HttpOnly`,
         `Max-Age=${365 * 24 * 60 * 60}`,
         `Path=/connection/refresh`,
-        `SameSite=Strict`,
+        `SameSite=${config.refreshTokenCookieSameSite}`,
         `Secure`,
       ].join("; ")
     );
