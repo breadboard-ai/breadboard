@@ -22,7 +22,9 @@ export interface ServerTransport<Request, Response> {
 }
 
 export interface ClientTransport<Request, Response> {
-  createClientStream(): ClientBidirectionalStream<Request, Response>;
+  createClientStream(
+    init?: RequestInit
+  ): ClientBidirectionalStream<Request, Response>;
 }
 
 export type RunClientTransport = ClientTransport<

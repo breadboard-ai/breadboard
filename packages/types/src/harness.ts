@@ -399,7 +399,7 @@ export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
   /**
    * For new runtime only: stop the run
    */
-  stop?(): Promise<Outcome<void>>;
+  stop?(id: NodeIdentifier): Promise<Outcome<void>>;
 };
 
 /**

@@ -17,7 +17,7 @@ import type {
   NodeIdentifier,
   OutputValues,
 } from "@breadboard-ai/types";
-import { timestamp } from "@breadboard-ai/utils";
+import { err, timestamp } from "@breadboard-ai/utils";
 import { callHandler, handlersFromKits } from "../handler.js";
 import { streamsToAsyncIterable } from "../stream.js";
 import { NodeProxyConfig, NodeProxySpec, ProxyServerConfig } from "./config.js";
@@ -168,25 +168,31 @@ export class ProxyClient {
     inputs: InputValues,
     context: NodeHandlerContext
   ): Promise<OutputValues> {
-    const stream = this.#transport.createClientStream();
+    const stream = this.#transport.createClientStream({
+      signal: context.signal,
+    });
     const writer = stream.writableRequests.getWriter();
     const reader = stream.readableResponses.getReader();
 
     const inflateToFileData = isGeminiApiFetch(node, inputs);
+    let result;
+    try {
+      const store = context.store;
+      inputs = store
+        ? ((await inflateData(
+            store,
+            inputs,
+            context.base,
+            inflateToFileData
+          )) as InputValues)
+        : inputs;
+      await writer.write(["proxy", { node, inputs }]);
+      await writer.close();
 
-    const store = context.store;
-    inputs = store
-      ? ((await inflateData(
-          store,
-          inputs,
-          context.base,
-          inflateToFileData
-        )) as InputValues)
-      : inputs;
-    writer.write(["proxy", { node, inputs }]);
-    writer.close();
-
-    const result = await reader.read();
+      result = await reader.read();
+    } catch (e) {
+      return err((e as Error).message);
+    }
     if (result.done) {
       throw new Error("Unexpected proxy failure: empty response.");
     }
