@@ -74,5 +74,7 @@ async function getSigninToken(
     token = await token.refresh();
   }
 
-  return token.grant.access_token;
+  if (token.state === "valid") {
+    return token.grant.access_token;
+  }
 }
