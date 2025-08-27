@@ -37,7 +37,7 @@ import { Orchestrator } from "../static/orchestrator.js";
 import { AbstractRunner } from "./abstract-runner.js";
 import { fromProbe, fromRunnerResult, graphToRunFromConfig } from "./local.js";
 import { configureKits } from "./run.js";
-import { NodeStateChangeEvent } from "./events.js";
+import { NodeStateChangeEvent, PauseEvent, ResumeEvent } from "./events.js";
 
 export { PlanRunner };
 
@@ -105,11 +105,16 @@ class PlanRunner extends AbstractRunner {
   }
 
   async runNode(id: NodeIdentifier): Promise<Outcome<void>> {
-    return this.#controller?.runNode(id);
+    this.dispatchEvent(new ResumeEvent({ timestamp: timestamp() }));
+    const outcome = await this.#controller?.runNode(id);
+    this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
+    return outcome;
   }
 
   async stop(id: NodeIdentifier): Promise<Outcome<void>> {
-    this.#controller?.stop(id);
+    const outcome = this.#controller?.stop(id);
+    this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
+    return outcome;
   }
 
   protected async *getGenerator(): AsyncGenerator<
