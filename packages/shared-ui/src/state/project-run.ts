@@ -41,6 +41,7 @@ import {
   ConsoleEntry,
   EphemeralParticleTree,
   ProjectRun,
+  ProjectRunStatus,
   RendererRunState,
   RunError,
   UserInput,
@@ -174,7 +175,7 @@ class ReactiveProjectRun implements ProjectRun {
   }
 
   @signal
-  accessor status: "running" | "paused" | "stopped" = "stopped";
+  accessor status: ProjectRunStatus = "stopped";
 
   /**
    * Currently active (unfinished) entries in console.
