@@ -18,6 +18,6 @@ async function getAccessToken(vendor: TokenVendor): Promise<string | null> {
   } else if (token.state == "signedout") {
     return null;
   } else {
-    throw new Error(`Unexpected token state: ${(token as any).state}`);
+    throw new Error(`Unexpected token state: ${token.state}`);
   }
 }

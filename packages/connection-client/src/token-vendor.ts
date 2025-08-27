@@ -12,7 +12,6 @@ import {
   RefreshResponse,
   TokenGrant,
   TokenResult,
-  ValidTokenResult,
 } from "./types.js";
 
 /**

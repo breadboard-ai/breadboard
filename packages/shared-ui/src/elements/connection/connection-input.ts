@@ -49,7 +49,7 @@ export class ConnectionInput extends LitElement {
   #refreshTask = new Task(this, {
     autoRun: false,
     task: async (
-      // TOOD(aomarks) The way we receive parameters here is a bit odd. It would
+      // TODO(aomarks) The way we receive parameters here is a bit odd. It would
       // be cool if I could have some parameters defined in `args`, and others
       // passed to `run`, but right now Task only allows one or the other.
       [expired]: [ExpiredTokenResult],
