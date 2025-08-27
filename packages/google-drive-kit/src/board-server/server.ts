@@ -145,11 +145,15 @@ class GoogleDriveBoardServer
   }
 
   async #listProjects(): Promise<BoardServerProject[]> {
-    const [userGraphs, featuredGraphs] = await Promise.all([
+    // eslint-disable-next-line prefer-const
+    let [userGraphs, featuredGraphs] = await Promise.all([
       this.ops.readGraphList(),
       this.#listGalleryGraphsOnce(),
     ]);
-    if (!ok(userGraphs)) return [];
+    if (!ok(userGraphs)) {
+      console.error(`Could not fetch user graphs`, userGraphs);
+      userGraphs = [];
+    }
 
     const ownerAccess = new Map([
       [
