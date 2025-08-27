@@ -43,7 +43,6 @@ import {
   type NarrowedDriveFile,
 } from "../google-drive-client.js";
 import { GoogleDriveDataPartTransformer } from "./data-part-transformer.js";
-import { visitGraphNodes } from "@breadboard-ai/data";
 import { driveFileToGraphInfo, findGoogleDriveAssetsInGraph } from "./utils.js";
 
 export { GoogleDriveBoardServer };
@@ -430,16 +429,29 @@ class GoogleDriveBoardServer
   }
 
   async deepCopy(_url: URL, graph: GraphDescriptor): Promise<GraphDescriptor> {
-    return (await visitGraphNodes(graph, async (data) => {
-      if (isStoredData(data)) {
-        const copied = await this.ops.copyDriveFile(data);
-        if (!ok(copied)) {
-          throw new Error(copied.$error);
+    const graphCopy = structuredClone(graph);
+    const assets = findGoogleDriveAssetsInGraph(graphCopy);
+    await Promise.all(
+      assets.map(async (asset) => {
+        // Only copy managed assets, such as themes and directly uploaded files,
+        // which are intrinsic to the graph. Unmanaged assets are references to
+        // existing files that were picked from Drive. We don't want to copy
+        // those by default, because:
+        //
+        // 1. The file might have restrictive sharing, and we don't want to make
+        //    it too easy to expand access by copying and publishing.
+        //
+        // 2. The file might be a common source-of-truth, like a shared prompt
+        //    guidelines doc, and we don't want to duplicate that.
+        if (isStoredData(asset.part) && asset.managed) {
+          const assetPartCopy = await this.ops.copyDriveFile(asset.part);
+          if (ok(assetPartCopy)) {
+            Object.assign(asset.part, assetPartCopy);
+          }
         }
-        return copied;
-      }
-      return data;
-    })) as GraphDescriptor;
+      })
+    );
+    return graphCopy;
   }
 
   async delete(url: URL): Promise<{ result: boolean; error?: string }> {

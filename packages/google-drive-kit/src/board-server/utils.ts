@@ -179,6 +179,7 @@ export type GoogleDriveAsset = {
    * we will ask the user before modifying sharing ACLs.
    */
   managed: boolean;
+  part: DataPart;
 };
 
 export function findGoogleDriveAssetsInGraph(
@@ -197,6 +198,7 @@ export function findGoogleDriveAssetsInGraph(
           files.set(fileId.id, {
             fileId,
             managed: asset.metadata?.managed ?? false,
+            part: firstPart,
           });
         }
       }
@@ -210,7 +212,11 @@ export function findGoogleDriveAssetsInGraph(
       if (splashScreen) {
         const fileId = partToDriveFileId(splashScreen);
         if (fileId) {
-          files.set(fileId.id, { fileId, managed: true });
+          files.set(fileId.id, {
+            fileId,
+            managed: true,
+            part: splashScreen,
+          });
         }
       }
     }
