@@ -59,10 +59,12 @@ export class ConnectionInput extends LitElement {
         throw new Error("Uninitialized");
       }
       const refreshed = await expired.refresh({ signal });
-      this.#broadcastSecret(
-        refreshed.grant.access_token,
-        refreshed.grant.client_id
-      );
+      if (refreshed.state === "valid") {
+        this.#broadcastSecret(
+          refreshed.grant.access_token,
+          refreshed.grant.client_id
+        );
+      }
     },
   });
 

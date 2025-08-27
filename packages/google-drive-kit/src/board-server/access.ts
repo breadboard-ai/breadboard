@@ -9,12 +9,15 @@ import type { TokenVendor } from "@breadboard-ai/connection-client";
 export { getAccessToken };
 
 async function getAccessToken(vendor: TokenVendor): Promise<string | null> {
-  const token = vendor.getToken("$sign-in");
+  let token = vendor.getToken("$sign-in");
   if (token.state === "expired") {
-    const refreshed = await token.refresh();
-    return refreshed.grant.access_token;
+    token = await token.refresh();
+  }
+  if (token.state == "valid") {
+    return token.grant.access_token;
   } else if (token.state == "signedout") {
     return null;
+  } else {
+    throw new Error(`Unexpected token state: ${(token as any).state}`);
   }
-  return token.grant.access_token;
 }
