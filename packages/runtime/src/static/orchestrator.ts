@@ -338,6 +338,7 @@ class Orchestrator {
         changed = false;
         this.#state.forEach((state) => {
           if (TERMINAL_STATES.has(state.state)) return;
+          if (PROCESSING_STATES.has(state.state)) return;
           if (state.plan.downstream.length === 0) return;
 
           const allTerminal = state.plan.downstream.every((dep) => {
