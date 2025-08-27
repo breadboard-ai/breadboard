@@ -240,6 +240,10 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       &.sunny {
         background-image: var(--bb-icon-sunny);
       }
+
+      &.code {
+        background-image: var(--bb-icon-code);
+      }
     }
 
     #outputs menu button {
