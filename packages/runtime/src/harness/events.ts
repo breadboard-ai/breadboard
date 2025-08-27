@@ -13,6 +13,8 @@ import {
   InputResponse,
   InputValues,
   NodeEndResponse,
+  NodeIdentifier,
+  NodeLifecycleState,
   NodeStartResponse,
   OutputResponse,
   RunEndEvent,
@@ -24,6 +26,7 @@ import {
   RunNextEvent,
   RunNodeEndEvent,
   RunNodeStartEvent,
+  RunNodeStateChangeEvent,
   RunOutputEvent,
   RunSecretEvent,
   RunSkipEvent,
@@ -188,5 +191,17 @@ export class NextEvent extends Event implements RunNextEvent {
 
   constructor(public data: HarnessRunResult | void) {
     super(NextEvent.eventName, { ...opts });
+  }
+}
+
+export class NodeStateChangeEvent
+  extends Event
+  implements RunNodeStateChangeEvent
+{
+  static readonly eventName = "nodestatechange";
+  readonly running = true;
+
+  constructor(public data: { id: NodeIdentifier; state: NodeLifecycleState }) {
+    super(NodeStateChangeEvent.eventName, { ...opts });
   }
 }

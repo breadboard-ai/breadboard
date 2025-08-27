@@ -12,6 +12,7 @@ import {
   NodeConfiguration,
   NodeHandlerContext,
   NodeIdentifier,
+  NodeLifecycleState,
   OrchestrationPlan,
   OrchestratorState,
   Outcome,
@@ -36,6 +37,7 @@ import { Orchestrator } from "../static/orchestrator.js";
 import { AbstractRunner } from "./abstract-runner.js";
 import { fromProbe, fromRunnerResult, graphToRunFromConfig } from "./local.js";
 import { configureKits } from "./run.js";
+import { NodeStateChangeEvent } from "./events.js";
 
 export { PlanRunner };
 
@@ -90,8 +92,16 @@ class PlanRunner extends AbstractRunner {
       // We have a GraphDescriptor, we can create plan/orchestrator
       // synchronously.
       const plan = createPlan(config.runner);
-      this.#orchestrator = new Orchestrator(plan);
+      this.#orchestrator = new Orchestrator(plan, {
+        stateChangedbyOrchestrator: (id, newState) => {
+          this.#dispatchNodeStateChangeEvent(id, newState);
+        },
+      });
     }
+  }
+
+  #dispatchNodeStateChangeEvent(id: NodeIdentifier, state: NodeLifecycleState) {
+    this.dispatchEvent(new NodeStateChangeEvent({ id, state }));
   }
 
   async runNode(id: NodeIdentifier): Promise<Outcome<void>> {
@@ -424,7 +434,13 @@ class InternalRunStateController {
       }
 
       const plan = createPlan(graph);
-      orchestrator = new Orchestrator(plan);
+      orchestrator = new Orchestrator(plan, {
+        stateChangedbyOrchestrator() {
+          console.warn(
+            'Unexpected invocation of "stateChangedbyOrchestrator" callback. Likely a bug somewhere.'
+          );
+        },
+      });
     }
 
     const context = await this.initializeNodeHandlerContext(next);

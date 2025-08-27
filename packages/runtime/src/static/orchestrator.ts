@@ -16,6 +16,7 @@ import {
   Task,
   OrchestrationNodeInfo,
   OrchestratorState,
+  OrchestratorCallbacks,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { Signal } from "signal-polyfill";
@@ -84,7 +85,10 @@ class Orchestrator {
    */
   readonly #changed = new Signal.State({});
 
-  constructor(public readonly plan: OrchestrationPlan) {
+  constructor(
+    public readonly plan: OrchestrationPlan,
+    public readonly callbacks: OrchestratorCallbacks
+  ) {
     this.reset();
   }
 
@@ -193,7 +197,7 @@ class Orchestrator {
       );
     }
     this.#changed.set({});
-    state.state = "working";
+    this.#updateNodeState(state, "working", true);
   }
 
   setWaiting(id: NodeIdentifier): Outcome<void> {
@@ -207,7 +211,7 @@ class Orchestrator {
       return err(`Unable to set node "${id}" to waiting: not working`);
     }
     this.#changed.set({});
-    state.state = "waiting";
+    this.#updateNodeState(state, "waiting", true);
   }
 
   setInterrupted(id: NodeIdentifier): Outcome<void> {
@@ -223,7 +227,7 @@ class Orchestrator {
       );
     }
     this.#changed.set({});
-    state.state = "interrupted";
+    this.#updateNodeState(state, "interrupted", true);
     this.#propagateSkip(state);
   }
 
@@ -326,7 +330,7 @@ class Orchestrator {
           }
           if (!TERMINAL_STATES.has(target.state)) {
             queue.push(target);
-            target.state = "skipped";
+            this.#updateNodeState(target, "skipped", false);
           }
           visited.add(id);
         });
@@ -351,7 +355,7 @@ class Orchestrator {
             return TERMINAL_STATES.has(target.state);
           });
           if (allTerminal) {
-            state.state = "skipped";
+            this.#updateNodeState(state, "skipped", false);
             changed = true;
           }
         });
@@ -435,11 +439,11 @@ class Orchestrator {
         ) {
           // Either we were already skipped upstream or Some inputs were
           // missing, so we're going to mark this node as Skipped.
-          state.state = "skipped";
+          this.#updateNodeState(state, "skipped", false);
           const propagating = this.#propagateSkip(state);
           if (!ok(propagating)) return propagating;
         } else {
-          state.state = "ready";
+          this.#updateNodeState(state, "ready", false);
           state.inputs = inputs;
         }
       });
@@ -450,6 +454,17 @@ class Orchestrator {
       return this.#progress;
     } catch (e) {
       return err((e as Error).message);
+    }
+  }
+
+  #updateNodeState(
+    node: NodeInternalState,
+    state: NodeLifecycleState,
+    changedByConsumer: boolean
+  ) {
+    node.state = state;
+    if (!changedByConsumer) {
+      this.callbacks.stateChangedbyOrchestrator?.(node.plan.node.id, state);
     }
   }
 
@@ -479,13 +494,13 @@ class Orchestrator {
     // Update state of the node.
     state.outputs = outputs;
     if ("$error" in outputs) {
-      state.state = "failed";
+      this.#updateNodeState(state, "failed", false);
       if (earlierStage) return this.#progress;
 
       const propagating = this.#propagateSkip(state);
       if (!ok(propagating)) return propagating;
     } else {
-      state.state = "succeeded";
+      this.#updateNodeState(state, "succeeded", false);
       if (earlierStage) {
         // Jump back to the node's stage, so that we propagate
         // from it.

@@ -132,7 +132,7 @@ function assertTasks(tasks: Outcome<Task[]>, names: string[]) {
 describe("Orchestrator", () => {
   describe("advancing stages", () => {
     it("should advance through the diamond graph", () => {
-      const orchestrator = new Orchestrator(diamondPlan);
+      const orchestrator = new Orchestrator(diamondPlan, {});
       assertTasks(orchestrator.currentTasks(), ["input"]);
       deepStrictEqual(orchestrator.progress, "initial");
       {
@@ -194,7 +194,7 @@ describe("Orchestrator", () => {
     });
 
     it("should handle missing inputs in the diamong graph", () => {
-      const orchestrator = new Orchestrator(diamondPlan);
+      const orchestrator = new Orchestrator(diamondPlan, {});
       assertTasks(orchestrator.currentTasks(), ["input"]);
       {
         const progress = orchestrator.provideOutputs("input", {
@@ -212,7 +212,7 @@ describe("Orchestrator", () => {
     });
 
     it("should handle errors at the diverge part of the diamong graph", () => {
-      const orchestrator = new Orchestrator(diamondPlan);
+      const orchestrator = new Orchestrator(diamondPlan, {});
       assertTasks(orchestrator.currentTasks(), ["input"]);
       {
         const progress = orchestrator.provideOutputs("input", {
@@ -230,7 +230,7 @@ describe("Orchestrator", () => {
     });
 
     it("should handle errors at the converge part of the diamong graph", () => {
-      const orchestrator = new Orchestrator(diamondPlan);
+      const orchestrator = new Orchestrator(diamondPlan, {});
       assertTasks(orchestrator.currentTasks(), ["input"]);
       {
         const progress = orchestrator.provideOutputs("input", {
@@ -267,7 +267,7 @@ describe("Orchestrator", () => {
 
   describe("skip/failure propagation", () => {
     it("should advance through the router graph", () => {
-      const orchestrator = new Orchestrator(routerPlan);
+      const orchestrator = new Orchestrator(routerPlan, {});
       assertTasks(orchestrator.currentTasks(), ["choose-path"]);
       {
         const progress = orchestrator.provideOutputs("choose-path", {
@@ -314,7 +314,7 @@ describe("Orchestrator", () => {
     });
 
     it("should propagate skipped state through zig-zag graph", () => {
-      const orchestrator = new Orchestrator(zigZagPlan);
+      const orchestrator = new Orchestrator(zigZagPlan, {});
       assertTasks(orchestrator.currentTasks(), ["a", "d"]);
       {
         const progress = orchestrator.provideOutputs("a", {
@@ -381,7 +381,7 @@ describe("Orchestrator", () => {
 
   describe("setting working/waiting/interrupted states", () => {
     it("should error out on non-existing nodes", () => {
-      const orchestrator = new Orchestrator(routerPlan);
+      const orchestrator = new Orchestrator(routerPlan, {});
       {
         const outcome = orchestrator.setWorking("non-existing");
         assert(!ok(outcome));
@@ -396,7 +396,7 @@ describe("Orchestrator", () => {
       }
     });
     it("should reject setting states outside of lifecycle", () => {
-      const orchestrator = new Orchestrator(routerPlan);
+      const orchestrator = new Orchestrator(routerPlan, {});
       {
         const outcome = orchestrator.setWorking("left-path");
         assert(!ok(outcome));
@@ -411,7 +411,7 @@ describe("Orchestrator", () => {
       }
     });
     it("should correctly follow the lifecycle", () => {
-      const orchestrator = new Orchestrator(routerPlan);
+      const orchestrator = new Orchestrator(routerPlan, {});
       assertTasks(orchestrator.currentTasks(), ["choose-path"]);
       {
         const outcome = orchestrator.setWorking("choose-path");
@@ -460,7 +460,7 @@ describe("Orchestrator", () => {
 
   describe("failure handling", () => {
     it("should correctly report multiple failures", () => {
-      const orchestrator = new Orchestrator(diamondPlan);
+      const orchestrator = new Orchestrator(diamondPlan, {});
       orchestrator.provideOutputs("input", {
         left: "left-audio",
         right: "right-audio",
@@ -493,7 +493,7 @@ describe("Orchestrator", () => {
     });
 
     it("should correctly report success after failures", () => {
-      const orchestrator = new Orchestrator(diamondPlan);
+      const orchestrator = new Orchestrator(diamondPlan, {});
       orchestrator.provideOutputs("input", {
         left: "left-audio",
         right: "right-audio",
@@ -528,7 +528,7 @@ describe("Orchestrator", () => {
 
   describe("progress status", () => {
     it("should correctly report progress", () => {
-      const orchestrator = new Orchestrator(diamondPlan);
+      const orchestrator = new Orchestrator(diamondPlan, {});
       assertTasks(orchestrator.currentTasks(), ["input"]);
       {
         orchestrator.provideOutputs("input", {
@@ -560,7 +560,7 @@ describe("Orchestrator", () => {
 
   describe("restartAtNode", () => {
     it("should correctly restart at a node", () => {
-      const orchestrator = new Orchestrator(diamondPlan);
+      const orchestrator = new Orchestrator(diamondPlan, {});
       assertTasks(orchestrator.currentTasks(), ["input"]);
       {
         const progress = orchestrator.provideOutputs("input", {
@@ -688,7 +688,7 @@ describe("Orchestrator", () => {
        * In this use case, a and b error out, but c succeeds.
        * The use should be able to rerun a, b, and c, individually.
        */
-      const o = new Orchestrator(convergePlan);
+      const o = new Orchestrator(convergePlan, {});
       {
         // Set up the use case
         o.provideOutputs("start-a", { $error: "a fail" });
@@ -739,7 +739,7 @@ describe("Orchestrator", () => {
   });
 
   describe("with sequential plan", () => {
-    const o = new Orchestrator(simpleSequencePlan);
+    const o = new Orchestrator(simpleSequencePlan, {});
     {
       // First, run it all.
       o.provideOutputs("a", { context: "a" });

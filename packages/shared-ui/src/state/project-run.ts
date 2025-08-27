@@ -256,6 +256,14 @@ class ReactiveProjectRun implements ProjectRun {
     runner.addEventListener("resume", () => {
       this.status = "running";
     });
+    runner.addEventListener("nodestatechange", (e) => {
+      const { id, state } = e.data;
+      if (state === "failed" || state === "interrupted") {
+        console.warn(`Unexpected failed/interrupted state change`, id, state);
+        return;
+      }
+      this.renderer.nodes.set(id, { status: state });
+    });
 
     if (!graphStore) return;
 

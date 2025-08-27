@@ -16,7 +16,11 @@ import {
 import { MutableGraphStore } from "./inspect.js";
 import { GraphLoader } from "./loader.js";
 import { ErrorResponse, Kit } from "./node-handler.js";
-import { OrchestrationPlan, OrchestratorState } from "./orchestration.js";
+import {
+  NodeLifecycleState,
+  OrchestrationPlan,
+  OrchestratorState,
+} from "./orchestration.js";
 import {
   GraphEndProbeData,
   GraphStartProbeData,
@@ -261,6 +265,7 @@ export type RunEventMap = {
   nodestart: RunNodeStartEvent;
   nodeend: RunNodeEndEvent;
   end: RunEndEvent;
+  nodestatechange: RunNodeStateChangeEvent;
 };
 
 export type RunLifecycleEvent = Event & {
@@ -320,6 +325,11 @@ export type RunNodeStartEvent = Event & {
 
 export type RunNodeEndEvent = Event & {
   data: NodeEndResponse;
+  running: true;
+};
+
+export type RunNodeStateChangeEvent = Event & {
+  data: { id: NodeIdentifier; state: NodeLifecycleState };
   running: true;
 };
 
