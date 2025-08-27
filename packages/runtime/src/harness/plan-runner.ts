@@ -129,6 +129,9 @@ class PlanRunner extends AbstractRunner {
         this.config,
         this.#orchestrator,
         this.breakpoints,
+        () => {
+          this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
+        },
         next
       );
       this.#runState = await this.#controller.state;
@@ -170,6 +173,7 @@ class InternalRunStateController {
     public readonly config: RunConfig,
     public orchestrator: Orchestrator | null,
     public readonly breakpoints: Map<NodeIdentifier, BreakpointSpec>,
+    public readonly pause: () => void,
     public readonly callback: (data: HarnessRunResult) => Promise<void>
   ) {
     this.state = this.initialize(callback);
@@ -379,7 +383,10 @@ class InternalRunStateController {
           }
         })
       );
-      if (breakpoint) break;
+      if (breakpoint) {
+        this.pause();
+        break;
+      }
     }
     await this.postamble();
   }
