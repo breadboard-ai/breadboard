@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { inflateData } from "@breadboard-ai/data";
+import { deflateData, inflateData } from "@breadboard-ai/data";
 import type {
   AnyProxyRequestMessage,
   AnyProxyResponseMessage,
@@ -127,12 +127,19 @@ export class ProxyServer {
           ]);
           continue;
         }
-        const outputs = store
-          ? ((await inflateData(
-              store,
-              makeSerializable(result)
-            )) as OutputValues)
-          : result;
+        let outputs = result;
+        if (store) {
+          outputs = (await inflateData(
+            store,
+            makeSerializable(result)
+          )) as OutputValues;
+          // This is currently the only use of deflateData and we probably
+          // should rethink what inflateData/deflateData even mean in the
+          // current setup.
+          // All it does is takes the inlineData and turns it into storedData
+          // that is backed by GoogleBlobStore
+          outputs = (await deflateData(store, outputs)) as OutputValues;
+        }
         request.reply(["proxy", { outputs }]);
       } catch (e) {
         request.reply([

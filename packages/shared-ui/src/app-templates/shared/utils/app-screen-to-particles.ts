@@ -24,6 +24,10 @@ import {
 } from "@breadboard-ai/particles";
 import { SignalMap } from "signal-utils/map";
 import { partToDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
+import {
+  isCodeExecutionResultPart,
+  isExecutableCodePart,
+} from "@breadboard-ai/data";
 
 function as(mimeType: string, isStored = false): Field["as"] {
   const mimePrefix = mimeType.split("/").at(0);
@@ -210,6 +214,9 @@ function appendToItems(
         continue;
       }
       particle = { text: part.text };
+    } else if (isExecutableCodePart(part) || isCodeExecutionResultPart(part)) {
+      // For now, hide these from output.
+      continue;
     }
 
     if (!particle) {

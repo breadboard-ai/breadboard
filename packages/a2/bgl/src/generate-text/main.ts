@@ -134,7 +134,9 @@ class GenerateText {
     };
     if (shouldAddTools) {
       inputs.body.tools = [...tools];
-      inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
+      if (this.toolManager.hasToolDeclarations()) {
+        inputs.body.toolConfig = { functionCallingConfig: { mode: "ANY" } };
+      }
     } else {
       // When we have tools, the first call will not try to make a list,
       // because JSON mode and tool-calling are incompatible.
@@ -196,7 +198,7 @@ class GenerateText {
         let afterTools: GeminiPromptOutput | undefined = undefined;
         let turnCount = 0;
         while (keepCallingGemini) {
-          if (turnCount > MAX_TURN_COUNT) {
+          if (turnCount > MAX_TURN_COUNT && toolManager.hasToolDeclarations()) {
             inputs.body.toolConfig = {
               functionCallingConfig: {
                 mode: "NONE",

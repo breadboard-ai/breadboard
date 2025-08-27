@@ -5,7 +5,9 @@
  */
 
 import type {
+  CodeExecutionResultPart,
   DataPart,
+  ExecutableCodePart,
   FileDataPart,
   FunctionCallCapabilityPart,
   FunctionResponseCapabilityPart,
@@ -26,6 +28,8 @@ import {
   Outcome,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
+
+export { isCodeExecutionResultPart, isExecutableCodePart };
 
 // Helpers for handling DataCapability objects.
 
@@ -164,6 +168,22 @@ export const isInlineData = (
   if (typeof data.inlineData.data !== "string") return false;
   return true;
 };
+
+function isCodeExecutionResultPart(
+  value: unknown
+): value is CodeExecutionResultPart {
+  if (typeof value !== "object" || value === null) return false;
+  const result = value as CodeExecutionResultPart;
+  if (!("codeExecutionResult" in result)) return false;
+  return true;
+}
+
+function isExecutableCodePart(value: unknown): value is ExecutableCodePart {
+  if (typeof value !== "object" || value === null) return false;
+  const code = value as ExecutableCodePart;
+  if (!("executableCode" in code)) return false;
+  return true;
+}
 
 export const isSerializedData = (
   value: unknown
