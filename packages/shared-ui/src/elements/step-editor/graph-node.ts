@@ -687,11 +687,12 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("runStatus")) {
-      if (this.runStatus?.status === "error") {
+      const status = this.runStatus?.status;
+      if (status === "failed" || status === "interrupted") {
         this.active = "error";
       }
 
-      if (this.runStatus?.status === "active") {
+      if (status === "working" || status === "waiting") {
         this.controlAnimation = "rotate";
       } else {
         this.controlAnimation = "none";
@@ -853,16 +854,17 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   }
 
   #maybeRenderRunStatus() {
-    if (!this.showRunStatus || !this.runStatus) {
+    const status = this.runStatus;
+    if (!this.showRunStatus || !status) {
       return nothing;
     }
 
-    if (this.runStatus.status !== "error") {
+    if (status.status !== "failed" && status.status !== "interrupted") {
       return nothing;
     }
 
     return html`<div id="error" class="sans italic w-500">
-      ${this.runStatus.errorMessage}
+      ${status.errorMessage}
     </div>`;
   }
 
@@ -1107,24 +1109,26 @@ export class GraphNode extends Box implements DragConnectorReceiver {
     let disabled = false;
     let icon = "";
     switch (this.runStatus.status) {
-      case "paused":
-      case "available": {
+      case "ready": {
         icon = "play_arrow";
         break;
       }
 
-      case "running": {
-        icon = "pause";
-        break;
-      }
-
-      case "active": {
+      case "working":
+      case "waiting": {
         icon = "progress_activity";
         break;
       }
 
-      case "error": {
+      case "failed":
+      case "interrupted":
+      case "succeeded": {
         icon = "autorenew";
+        break;
+      }
+
+      case "breakpoint": {
+        icon = "autostop";
         break;
       }
 

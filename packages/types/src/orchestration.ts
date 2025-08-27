@@ -37,6 +37,19 @@ export type OrchestrationPlan = {
   stages: PlanNodeInfo[][];
 };
 
+export type OrchestratorCallbacks = {
+  /**
+   * Called when the state of the node is changed by the orchestrator.
+   *
+   * @param id -- id of the node whose state has changed
+   * @param newState -- new state value
+   */
+  stateChangedbyOrchestrator?: (
+    id: NodeIdentifier,
+    newState: NodeLifecycleState
+  ) => void;
+};
+
 /**
  * Represents detailed information that was computed during creating of a
  * stage.

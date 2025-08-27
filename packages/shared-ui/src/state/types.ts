@@ -43,6 +43,8 @@ export type AsyncComputedResult<T> = {
   status: AsyncComputedStatus;
 };
 
+export type ProjectRunStatus = "running" | "paused" | "stopped";
+
 /**
  * Represents the Model+Controller for the individual run of the graph.
  * The name is so weird because there's already a `RunState` type in
@@ -92,7 +94,7 @@ export type ProjectRun = {
   /**
    * The status of the run
    */
-  status: "running" | "paused" | "stopped";
+  status: ProjectRunStatus;
   /**
    * The current (unifinished) entries in the console
    */
