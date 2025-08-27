@@ -123,6 +123,7 @@ class PlanRunner extends AbstractRunner {
       this.#controller = new InternalRunStateController(
         this.config,
         this.#orchestrator,
+        this.breakpoints,
         next
       );
       this.#runState = await this.#controller.state;
@@ -150,6 +151,8 @@ type InternalRunState = {
   last: NodeIdentifier | null;
 };
 
+type TaskStatus = "breakpoint" | "success";
+
 class InternalRunStateController {
   #stopControllers: Map<NodeIdentifier, AbortController> = new Map();
 
@@ -161,6 +164,7 @@ class InternalRunStateController {
   constructor(
     public readonly config: RunConfig,
     public orchestrator: Orchestrator | null,
+    public readonly breakpoints: Map<NodeIdentifier, BreakpointSpec>,
     public readonly callback: (data: HarnessRunResult) => Promise<void>
   ) {
     this.state = this.initialize(callback);
@@ -203,10 +207,20 @@ class InternalRunStateController {
     };
   }
 
-  async runTask(task: Task) {
+  async runTask(task: Task): Promise<TaskStatus> {
     const state = await this.state;
 
-    state.last = task.node.id;
+    const id = task.node.id;
+
+    const breakpoint = this.breakpoints.get(id);
+    if (breakpoint) {
+      if (breakpoint.once) {
+        this.breakpoints.delete(id);
+      }
+      return "breakpoint";
+    }
+
+    state.last = id;
     const path = this.path();
     this.callback({
       type: "nodestart",
@@ -282,6 +296,7 @@ class InternalRunStateController {
       },
       reply: async () => {},
     });
+    return "success";
   }
 
   async preamble(): Promise<InternalRunState> {
@@ -350,11 +365,16 @@ class InternalRunStateController {
       }
       if (tasks.length === 0) return;
 
+      let breakpoint = false;
       await Promise.all(
-        tasks.map((task) => {
-          return this.runTask(task);
+        tasks.map(async (task) => {
+          const status = await this.runTask(task);
+          if (status === "breakpoint") {
+            breakpoint = true;
+          }
         })
       );
+      if (breakpoint) break;
     }
     await this.postamble();
   }
@@ -363,7 +383,7 @@ class InternalRunStateController {
     const state = await this.state;
     const task = state.orchestrator.taskFromId(id);
     if (!ok(task)) return task;
-    return this.runTask(task);
+    await this.runTask(task);
   }
 
   async stop(id: NodeIdentifier) {
