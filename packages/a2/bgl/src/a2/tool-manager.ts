@@ -17,6 +17,8 @@ import {
 } from "./gemini";
 import { ok } from "./utils";
 
+const CODE_EXECUTION_SUFFIX = "#module:code-execution";
+
 export type ToolHandle = {
   title?: string;
   tool: FunctionDeclaration;
@@ -43,6 +45,7 @@ export { ToolManager };
 
 class ToolManager {
   #hasSearch = false;
+  #hasCodeExection = false;
   tools: Map<string, ToolHandle> = new Map();
   connectors: Map<string, ConnectorHandle> = new Map();
   errors: string[] = [];
@@ -153,6 +156,10 @@ class ToolManager {
   }
 
   async addTool(url: string, instance?: string): Promise<Outcome<string>> {
+    if (url?.endsWith(CODE_EXECUTION_SUFFIX)) {
+      this.#hasCodeExection = true;
+      return "Code Execution";
+    }
     if (instance) {
       // This is a connector.
       const connector = new ConnectorManager({ path: instance });
@@ -288,8 +295,19 @@ class ToolManager {
     }
   }
 
-  hasTools(): boolean {
+  hasToolDeclarations(): boolean {
     return this.tools.size !== 0;
+  }
+
+  hasTools(): boolean {
+    let size = this.tools.size;
+    if (this.#hasCodeExection) {
+      size++;
+    }
+    if (this.#hasSearch) {
+      size++;
+    }
+    return size !== 0;
   }
 
   list(): Tool[] {
@@ -300,6 +318,9 @@ class ToolManager {
     }
     if (this.#hasSearch) {
       declaration.googleSearch = {};
+    }
+    if (this.#hasCodeExection) {
+      declaration.codeExecution = {};
     }
     if (Object.keys(declaration).length === 0) return [];
     return [declaration];

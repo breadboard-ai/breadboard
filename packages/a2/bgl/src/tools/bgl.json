@@ -47,11 +47,7 @@
         "theme": "f90eb9c1-e12c-4864-ba74-a15a3b8d77f3"
       }
     },
-    "tags": [
-      "published",
-      "tool",
-      "component"
-    ]
+    "tags": ["published", "tool", "component"]
   },
   "modules": {},
   "exports": [
@@ -59,6 +55,7 @@
     "#module:search-web",
     "#module:get-webpage",
     "#module:search-maps",
-    "#module:search-internal"
+    "#module:search-internal",
+    "#module:code-execution"
   ]
 }

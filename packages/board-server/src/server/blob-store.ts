@@ -181,7 +181,7 @@ class BlobDataStore implements DataStore {
       throw new Error(getBlobResult.$error);
     }
     const { data, mimeType: type } = getBlobResult;
-    return new Blob([data], { type });
+    return new Blob([data as BlobPart], { type });
   }
 
   serializeGroup(
@@ -250,7 +250,9 @@ function isUUID(blob: string) {
 }
 
 function makeBlobUrl(handle: string, serverUrl: string): string {
-  return `${serverUrl}/blobs/${handle}`;
+  // TODO: Remove hard-coded `/board/` here and use serverUrl, rather than
+  // serverOrigin
+  return `${serverUrl}/board/blobs/${handle}`;
 }
 
 function toStoredData(

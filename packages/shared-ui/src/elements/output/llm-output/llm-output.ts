@@ -45,6 +45,10 @@ import { icons } from "../../../styles/icons.js";
 import { OverflowAction } from "../../../types/types.js";
 import { OverflowMenuActionEvent } from "../../../events/events.js";
 import { partToDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
+import {
+  isCodeExecutionResultPart,
+  isExecutableCodePart,
+} from "@breadboard-ai/data";
 
 const SANDBOX_RESTRICTIONS = "allow-scripts allow-forms";
 
@@ -730,7 +734,9 @@ export class LLMOutput extends LitElement {
             value = html`${until(tmpl)}`;
           } else if (
             isFunctionCallCapabilityPart(part) ||
-            isFunctionResponseCapabilityPart(part)
+            isFunctionResponseCapabilityPart(part) ||
+            isExecutableCodePart(part) ||
+            isCodeExecutionResultPart(part)
           ) {
             this.#outputLoaded();
             value = html` <bb-json-tree .json=${part}></bb-json-tree>`;
