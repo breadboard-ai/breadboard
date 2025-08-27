@@ -69,7 +69,7 @@ export class TokenVendorImpl {
     connectionId: string,
     expiredGrant: TokenGrant,
     signal?: AbortSignal
-  ): Promise<ValidTokenResult> {
+  ): Promise<TokenResult> {
     if (expiredGrant.client_id === undefined) {
       // We used to not store the client_id locally, but later discovered it's
       // helpful to store because it's needed for some APIs.
@@ -93,6 +93,13 @@ export class TokenVendorImpl {
       credentials: "include",
     });
     if (!httpRes.ok) {
+      if (httpRes.status === 401) {
+        const errorJson = (await httpRes.json()) as RefreshResponse;
+        if (errorJson.error?.includes("missing cookie: ")) {
+          this.#store.set(connectionId, undefined);
+          return { state: "signedout" };
+        }
+      }
       throw new Error(
         `Failed to refresh token, status: ${httpRes.status} ${httpRes.statusText}`
       );

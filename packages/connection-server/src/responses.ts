@@ -24,7 +24,15 @@ export const okJson = (res: ServerResponse, data: unknown): void => {
   res.end(JSON.stringify(data, null, 2));
 };
 
-export const badRequestJson = (res: ServerResponse, data: unknown): void => {
-  res.writeHead(400, { "Content-Type": "application/json" });
+export const badRequestJson = (
+  res: ServerResponse,
+  data: unknown,
+  options: {
+    httpStatusCode?: number;
+  } = {}
+): void => {
+  res.writeHead(options.httpStatusCode ?? 400, {
+    "Content-Type": "application/json",
+  });
   res.end(JSON.stringify(data, null, 2));
 };

@@ -18,7 +18,7 @@ export type ConnectionEnvironment = {
  */
 export type GrantStore = {
   get(connectionId: string): string | undefined;
-  set(connectionId: string, grant: string): Promise<void>;
+  set(connectionId: string, grant: string | undefined): Promise<void>;
 };
 
 export type TokenResult =
@@ -41,7 +41,7 @@ export interface ValidTokenResult {
 export interface ExpiredTokenResult {
   state: "expired";
   grant: TokenGrant;
-  refresh: (opts?: { signal?: AbortSignal }) => Promise<ValidTokenResult>;
+  refresh: (opts?: { signal?: AbortSignal }) => Promise<TokenResult>;
 }
 
 /**
