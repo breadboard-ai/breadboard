@@ -296,12 +296,10 @@ class SideboardRuntimeImpl
       for (const key of event.data.keys) {
         if (key.startsWith("connection:")) {
           const connectionId = key.slice("connection:".length);
-          const result = this.tokenVendor.getToken(connectionId);
-          if (result.state === "valid") {
-            secrets[key] = result.grant.access_token;
-          } else if (result.state === "expired") {
+          let result = this.tokenVendor.getToken(connectionId);
+          if (result.state === "expired") {
             try {
-              secrets[key] = (await result.refresh()).grant.access_token;
+              result = await result.refresh();
             } catch (error) {
               runner.dispatchEvent(
                 new RunnerErrorEvent({
@@ -312,8 +310,10 @@ class SideboardRuntimeImpl
                 })
               );
             }
+          }
+          if (result.state === "valid") {
+            secrets[key] = result.grant.access_token;
           } else {
-            result.state satisfies "signedout";
             runner.dispatchEvent(
               new RunnerErrorEvent({
                 error: `User is signed out of ${connectionId}.`,
