@@ -309,7 +309,12 @@ export class Main extends SignalWatcher(LitElement) {
     this.signinAdapter = new SigninAdapter(
       this.tokenVendor,
       this.globalConfig,
-      this.settingsHelper
+      this.settingsHelper,
+      async (signInUrl: string) => {
+        // TODO(aomarks) Show a modal here.
+        console.log(`Sign in:`, signInUrl);
+        return true;
+      }
     );
 
     // Asyncronously check if the user has a geo-restriction and sign out if so.
