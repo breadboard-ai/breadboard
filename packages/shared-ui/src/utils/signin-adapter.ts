@@ -125,10 +125,15 @@ class SigninAdapter {
         }
       }
     }
-    if (token.state === "valid" || token.state === "signedout") {
-      return token;
+    switch (token.state) {
+      case "valid":
+      case "signedout":
+        return token;
+
+      default:
+        token.state satisfies "expired";
+        throw new Error("Invalid token state after refresh: " + token.state);
     }
-    throw new Error("Invalid token state after refresh: " + token.state);
   }
 
   #cachedConnection: Promise<Connection | undefined> | undefined;
