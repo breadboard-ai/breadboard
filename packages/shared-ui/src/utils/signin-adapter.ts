@@ -47,6 +47,9 @@ export type SignInError =
   | { code: "geo-restriction" }
   | { code: "other"; detail: string };
 
+/** @return Whether the user opened `signInUrl`. */
+export type SignInRequestHandler = (signInUrl: string) => boolean;
+
 /**
  * A specialized adapter to handle sign in using the connection server
  * machinery.
@@ -58,17 +61,20 @@ class SigninAdapter {
   readonly #tokenVendor: TokenVendor;
   readonly #globalConfig: GlobalConfig;
   readonly #settingsHelper: SettingsHelper;
+  readonly #handleSignInRequest?: (url: string) => Promise<boolean>;
   #nonce = crypto.randomUUID();
   #state: SigninAdapterState;
 
   constructor(
     tokenVendor: TokenVendor,
     globalConfig: GlobalConfig,
-    settingsHelper: SettingsHelper
+    settingsHelper: SettingsHelper,
+    handleSignInRequest?: (url: string) => Promise<boolean>
   ) {
     this.#tokenVendor = tokenVendor;
     this.#globalConfig = globalConfig;
     this.#settingsHelper = settingsHelper;
+    this.#handleSignInRequest = handleSignInRequest;
 
     if (!globalConfig.requiresSignin) {
       this.#state = { status: "anonymous" };
@@ -116,6 +122,22 @@ class SigninAdapter {
    * signed out.
    */
   async token(): Promise<ValidTokenResult | SignedOutTokenResult> {
+    if (this.#state.status === "anonymous") {
+      const userIntendsToSignIn = await this.#handleSignInRequest?.(
+        await this.getSigninUrl()
+      );
+      if (userIntendsToSignIn) {
+        const signInResult = await this.signIn();
+        if (
+          !signInResult.ok ||
+          // Cast needed because TypeScript doesn't realize that the await above
+          // could change the #state type.
+          (this.#state as SigninAdapterState).status !== "signedin"
+        ) {
+          return { state: "signedout" };
+        }
+      }
+    }
     let token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
     if (token.state === "expired") {
       token = await token.refresh();
@@ -161,7 +183,7 @@ class SigninAdapter {
   }
 
   async getSigninUrl(): Promise<string> {
-    if (this.#state.status !== "signedout") return "";
+    if (this.#state.status === "signedin") return "";
 
     const connection = await this.#getConnection();
     if (!connection) return "";
