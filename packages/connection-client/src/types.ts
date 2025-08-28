@@ -6,6 +6,7 @@
 
 export type TokenVendor = {
   getToken(connectionId: string): TokenResult;
+  isSignedIn(connectionId: string): boolean;
 };
 
 export type ConnectionEnvironment = {

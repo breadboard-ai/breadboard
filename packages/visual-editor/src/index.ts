@@ -309,30 +309,37 @@ export class Main extends SignalWatcher(LitElement) {
     this.signinAdapter = new SigninAdapter(
       this.tokenVendor,
       this.globalConfig,
-      this.settingsHelper
+      this.settingsHelper,
+      async (signInUrl: string) => {
+        // TODO(aomarks) Show a modal here.
+        console.log(`Sign in:`, signInUrl);
+        return true;
+      }
     );
 
     // Asyncronously check if the user has a geo-restriction and sign out if so.
-    this.signinAdapter.token().then(async (result) => {
-      if (
-        result.state === "valid" &&
-        (await this.signinAdapter.userHasGeoRestriction(
-          result.grant.access_token
-        ))
-      ) {
-        await this.signinAdapter.signOut();
-        window.history.pushState(
-          undefined,
-          "",
-          makeUrl({
-            page: "landing",
-            geoRestriction: true,
-            redirect: { page: "home" },
-          })
-        );
-        window.location.reload();
-      }
-    });
+    if (this.signinAdapter.state !== "anonymous") {
+      this.signinAdapter.token().then(async (result) => {
+        if (
+          result.state === "valid" &&
+          (await this.signinAdapter.userHasGeoRestriction(
+            result.grant.access_token
+          ))
+        ) {
+          await this.signinAdapter.signOut();
+          window.history.pushState(
+            undefined,
+            "",
+            makeUrl({
+              page: "landing",
+              geoRestriction: true,
+              redirect: { page: "home" },
+            })
+          );
+          window.location.reload();
+        }
+      });
+    }
 
     // API Clients
     let backendApiEndpoint = this.globalConfig.BACKEND_API_ENDPOINT;

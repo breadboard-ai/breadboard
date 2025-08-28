@@ -12,6 +12,7 @@ import {
   RefreshResponse,
   TokenGrant,
   TokenResult,
+  TokenVendor,
 } from "./types.js";
 
 /**
@@ -29,7 +30,7 @@ const EXPIRY_THRESHOLD_MS = /* 1 minute */ 60_000;
  * elements should discover it using the {@link tokenVendorContext} Lit
  * context, which should be provided by the top-level Visual Editor element.
  */
-export class TokenVendorImpl {
+export class TokenVendorImpl implements TokenVendor {
   #store: GrantStore;
   #environment: ConnectionEnvironment;
 
@@ -62,6 +63,10 @@ export class TokenVendorImpl {
       };
     }
     return { state: "valid", grant };
+  }
+
+  isSignedIn(connectionId: string): boolean {
+    return this.#store.get(connectionId) !== undefined;
   }
 
   async #refresh(

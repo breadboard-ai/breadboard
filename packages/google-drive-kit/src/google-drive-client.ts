@@ -170,7 +170,9 @@ export type DriveFileId = { id: string; resourceKey?: string };
 
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
-type GoogleApiAuthorization = { kind: "bearer"; token: string };
+type GoogleApiAuthorization =
+  | { kind: "bearer"; token: string }
+  | { kind: "anonymous" };
 
 export class GoogleDriveClient {
   readonly apiUrl: string;
@@ -229,7 +231,9 @@ export class GoogleDriveClient {
     resourceKeys: DriveFileId[] | undefined
   ): Headers {
     const headers = new Headers();
-    headers.set("authorization", `Bearer ${authorization.token}`);
+    if (authorization.kind === "bearer") {
+      headers.set("authorization", `Bearer ${authorization.token}`);
+    }
     if (resourceKeys) {
       const resourceKeyHeader = makeResourceKeysHeaderValue(resourceKeys);
       if (resourceKeyHeader) {
@@ -257,10 +261,18 @@ export class GoogleDriveClient {
     }
   }
 
-  #maybeProxyApiUrl(fileId: string): string {
-    return this.#publicProxy?.marked.has(fileId)
-      ? this.#publicProxy.apiUrl
-      : this.apiUrl;
+  async #maybeProxyApiUrl(fileId: string): Promise<{
+    apiUrl: string;
+    authorization: GoogleApiAuthorization;
+  }> {
+    const fileIsMarkedAsPublic =
+      this.#publicProxy && this.#publicProxy.marked.has(fileId);
+    return {
+      apiUrl: fileIsMarkedAsPublic ? this.#publicProxy.apiUrl : this.apiUrl,
+      authorization: fileIsMarkedAsPublic
+        ? { kind: "anonymous" }
+        : { kind: "bearer", token: await this.#getUserAccessToken() },
+    };
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/get#:~:text=metadata */
@@ -269,6 +281,7 @@ export class GoogleDriveClient {
     options?: T
   ): Promise<NarrowedDriveFileFromOptions<T>> {
     fileId = normalizeFileId(fileId);
+    const { apiUrl, authorization } = await this.#maybeProxyApiUrl(fileId.id);
     const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId.id)}`,
       // TODO(aomarks) We don't actually implement any caching for metadata yet.
@@ -276,7 +289,7 @@ export class GoogleDriveClient {
       // field mask, because we'd likely want to always fetch "*" in the proxy,
       // regardless of which fields the triggering request had, so that we get
       // more cache hits. But, might as well route it in now.
-      this.#maybeProxyApiUrl(fileId.id)
+      apiUrl
     );
     if (options?.supportsAllDrives ?? true) {
       url.searchParams.set("supportsAllDrives", "true");
@@ -284,9 +297,12 @@ export class GoogleDriveClient {
     if (options?.fields) {
       url.searchParams.set("fields", options.fields.join(","));
     }
-    const response = await this.#fetch(url, { signal: options?.signal }, [
-      fileId,
-    ]);
+    const response = await this.#fetch(
+      url,
+      { signal: options?.signal },
+      [fileId],
+      authorization
+    );
     if (response.ok) {
       return response.json();
     }
@@ -303,12 +319,18 @@ export class GoogleDriveClient {
     options?: BaseRequestOptions
   ): Promise<Response> {
     fileId = normalizeFileId(fileId);
+    const { apiUrl, authorization } = await this.#maybeProxyApiUrl(fileId.id);
     const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId.id)}`,
-      this.#maybeProxyApiUrl(fileId.id)
+      apiUrl
     );
     url.searchParams.set("alt", "media");
-    return await this.#fetch(url, { signal: options?.signal }, [fileId]);
+    return await this.#fetch(
+      url,
+      { signal: options?.signal },
+      [fileId],
+      authorization
+    );
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/export */
@@ -317,14 +339,20 @@ export class GoogleDriveClient {
     options: ExportFileOptions
   ): Promise<Response> {
     fileId = normalizeFileId(fileId);
+    const { apiUrl, authorization } = await this.#maybeProxyApiUrl(fileId.id);
     const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId.id)}/export`,
       // TODO(aomarks) Use getBaseUrlForPossiblyProxiedFileRead, but need to
       // implement the server side first.
-      this.#maybeProxyApiUrl(fileId.id)
+      apiUrl
     );
     url.searchParams.set("mimeType", options.mimeType);
-    return this.#fetch(url, { signal: options?.signal }, [fileId]);
+    return this.#fetch(
+      url,
+      { signal: options?.signal },
+      [fileId],
+      authorization
+    );
   }
 
   /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/create#:~:text=metadata%2Donly */

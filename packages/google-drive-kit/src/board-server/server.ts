@@ -63,7 +63,7 @@ class GoogleDriveBoardServer
   static async from(
     title: string,
     user: User,
-    vendor: TokenVendor,
+    tokenVendor: TokenVendor,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
     userFolderName: string
@@ -90,6 +90,7 @@ class GoogleDriveBoardServer
       title,
       configuration,
       user,
+      tokenVendor,
       googleDriveClient,
       publishPermissions,
       userFolderName
@@ -102,6 +103,7 @@ class GoogleDriveBoardServer
   public readonly extensions: BoardServerExtension[] = [];
   public readonly capabilities: BoardServerCapabilities;
   public readonly ops: DriveOperations;
+  readonly #tokenVendor: TokenVendor;
   readonly #googleDriveClient: GoogleDriveClient;
 
   projects: Promise<BoardServerProject[]>;
@@ -111,6 +113,7 @@ class GoogleDriveBoardServer
     public readonly name: string,
     public readonly configuration: BoardServerConfiguration,
     public readonly user: User,
+    tokenVendor: TokenVendor,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
     userFolderName: string
@@ -131,6 +134,7 @@ class GoogleDriveBoardServer
     this.secrets = configuration.secrets;
     this.extensions = configuration.extensions;
     this.capabilities = configuration.capabilities;
+    this.#tokenVendor = tokenVendor;
     this.#googleDriveClient = googleDriveClient;
     this.projects = this.#listProjects();
   }
@@ -147,7 +151,7 @@ class GoogleDriveBoardServer
   async #listProjects(): Promise<BoardServerProject[]> {
     // eslint-disable-next-line prefer-const
     let [userGraphs, featuredGraphs] = await Promise.all([
-      this.ops.readGraphList(),
+      this.#tokenVendor.isSignedIn("$sign-in") ? this.ops.readGraphList() : [],
       this.#listGalleryGraphsOnce(),
     ]);
     if (!ok(userGraphs)) {
