@@ -26,6 +26,7 @@ type Inputs = {
   info?: { configuration?: ConnectorConfiguration };
   method: "canSave" | "save";
   title?: string;
+  graphId?: string;
   context?: LLMContent[];
 };
 
@@ -46,8 +47,10 @@ async function invoke({
   id: connectorId,
   context,
   title,
+  graphId,
   info,
 }: Inputs): Promise<Outcome<Outputs>> {
+  graphId ??= "";
   const mimeType = info?.configuration?.file?.mimeType || DOC_MIME_TYPE;
   const canSave =
     mimeType === DOC_MIME_TYPE ||
@@ -63,6 +66,7 @@ async function invoke({
         const gettingCollector = await getCollector(
           token,
           connectorId,
+          graphId,
           title ?? "Untitled Document",
           DOC_MIME_TYPE,
           info?.configuration?.file?.id
@@ -84,6 +88,7 @@ async function invoke({
           getCollector(
             token,
             connectorId,
+            graphId,
             title ?? "Untitled Presentation",
             SLIDES_MIME_TYPE,
             info?.configuration?.file?.id
@@ -113,6 +118,7 @@ async function invoke({
           getCollector(
             token,
             connectorId,
+            graphId,
             title ?? "Untitled Spreadsheet",
             SHEETS_MIME_TYPE,
             info?.configuration?.file?.id
@@ -155,13 +161,14 @@ type CollectorData = {
 async function getCollector(
   token: string,
   connectorId: string,
+  graphId: string,
   title: string,
   mimeType: string,
   fileId?: string
 ): Promise<Outcome<CollectorData>> {
   let id;
   if (!fileId) {
-    const fileKey = `${getTypeKey(mimeType)}${connectorId}`;
+    const fileKey = `${getTypeKey(mimeType)}${connectorId}${graphId}`;
     const findFile = await query(
       token,
       `appProperties has { key = 'google-drive-connector' and value = '${fileKey}' } and trashed = false`,
