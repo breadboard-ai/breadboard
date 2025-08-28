@@ -2,7 +2,7 @@
   {
     "date": "2025-08-27",
     "type": "warning",
-    "text": "We are currently experiencing capacity issues with Gemini 2.5 Pro model. If you see \"Quota Exhausted\" error, change your steps to use 2.5 Flah model."
+    "text": "We are currently experiencing capacity issues with Gemini 2.5 Pro model. If you see \"Quota Exhausted\" error, change your steps to use Gemini 2.5 Flash."
   },
   {
     "date": "2025-07-30",
