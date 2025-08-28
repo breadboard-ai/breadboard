@@ -7,7 +7,15 @@ import { callGenWebpage } from "./html-generator";
 import { flattenContext } from "./lists";
 import { readFlags } from "./settings";
 import { Template } from "./template";
-import { err, llm, mergeContent, ok, toLLMContent, toText } from "./utils";
+import {
+  err,
+  llm,
+  mergeContent,
+  ok,
+  toJson,
+  toLLMContent,
+  toText,
+} from "./utils";
 
 import read from "@read";
 
@@ -284,11 +292,25 @@ async function saveToGoogleDrive(
   mimeType: string,
   title: string | undefined
 ): Promise<Outcome<SaveOutput>> {
+  let graphId = "";
+  // Let's get the title from the graph
+  const readingMetadata = await read({ path: "/env/metadata" });
+  if (ok(readingMetadata)) {
+    const metadata = toJson<GraphMetadata>(readingMetadata.data);
+    if (metadata) {
+      if (!title) {
+        title = `${metadata.title} (Opal App)`;
+      }
+      graphId = metadata.url?.replace("drive:/", "") || "";
+    }
+  }
   const manager = new ConnectorManager({
     url: "embed://a2/google-drive.bgl.json",
     configuration: { file: { mimeType } },
   });
-  return manager.save([content], { title }) as Promise<Outcome<SaveOutput>>;
+  return manager.save([content], { title, graphId }) as Promise<
+    Outcome<SaveOutput>
+  >;
 }
 
 async function saveAsCode(content: LLMContent): Promise<Outcome<void>> {
