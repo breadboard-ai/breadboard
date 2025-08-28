@@ -116,11 +116,24 @@ class SigninAdapter {
    * signed out.
    */
   async token(): Promise<ValidTokenResult | SignedOutTokenResult> {
-    const token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
+    let token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
     if (token.state === "expired") {
-      return token.refresh();
+      token = await token.refresh();
+      if (token.state === "signedout") {
+        if ((await this.signIn()).ok) {
+          token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
+        }
+      }
     }
-    return token;
+    switch (token.state) {
+      case "valid":
+      case "signedout":
+        return token;
+
+      default:
+        token.state satisfies "expired";
+        throw new Error("Invalid token state after refresh: " + token.state);
+    }
   }
 
   #cachedConnection: Promise<Connection | undefined> | undefined;

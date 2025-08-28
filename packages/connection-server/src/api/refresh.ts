@@ -41,9 +41,13 @@ export async function refresh(
   }
   const refreshToken = req.cookies[oAuthRefreshTokenCookieId];
   if (!refreshToken) {
-    return badRequestJson(res, {
-      error: `missing ${oAuthRefreshTokenCookieId} cookie`,
-    });
+    return badRequestJson(
+      res,
+      {
+        error: `missing cookie: ${oAuthRefreshTokenCookieId}`,
+      },
+      { httpStatusCode: 401 }
+    );
   }
 
   const connectionConfig = config.connections.get(params.connection_id);
