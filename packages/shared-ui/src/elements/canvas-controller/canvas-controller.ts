@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { signal } from "signal-utils";
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("UIController");
 const GlobalStrings = StringsHelper.forSection("Global");
@@ -279,6 +280,14 @@ export class CanvasController extends SignalWatcher(LitElement) {
     }
   }
 
+  @signal
+  get runState() {
+    if (!this.projectState) {
+      return new Map();
+    }
+    return new Map(this.projectState.run.renderer.nodes.entries());
+  }
+
   async #deriveAppURL() {
     if (!this.graph?.url) {
       return;
@@ -364,10 +373,15 @@ export class CanvasController extends SignalWatcher(LitElement) {
     const graph = this.editor?.inspect("") || null;
     const graphIsEmpty = isEmpty(graph?.raw() ?? null);
 
+    // This dance is necessary, because we need to reach for a computed value,
+    // but only do it when it can be computed.
+    const runState = this.projectState ? this.runState : new Map();
+
     const graphEditor = guard(
       [
         graph,
         this.graphIsMine,
+        runState,
         this.boardServerKits,
         this.topGraphResult,
         this.history,
@@ -392,7 +406,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
         return html`<bb-renderer
           .boardServerKits=${this.boardServerKits}
           .projectState=${this.projectState}
-          .runState=${this.projectState?.run.renderer?.nodes}
+          .runState=${runState}
           .runtimeFlags=${this.#uiState.flags}
           .graph=${graph}
           .graphIsMine=${this.graphIsMine}

@@ -505,7 +505,11 @@ class ReactiveProjectRun implements ProjectRun {
     }
     switch (nodeState.state) {
       case "inactive": {
-        toggleBreakpoint(this.runner);
+        if (toggleBreakpoint(this.runner)) {
+          this.renderer.nodes.set(nodeId, { status: "breakpoint" });
+        } else {
+          this.renderer.nodes.set(nodeId, { status: "inactive" });
+        }
         break;
       }
       case "ready": {
@@ -545,7 +549,11 @@ class ReactiveProjectRun implements ProjectRun {
         break;
       }
       case "skipped": {
-        toggleBreakpoint(this.runner);
+        if (toggleBreakpoint(this.runner)) {
+          this.renderer.nodes.set(nodeId, { status: "breakpoint" });
+        } else {
+          this.renderer.nodes.set(nodeId, { status: "skipped" });
+        }
         break;
       }
       case "interrupted": {
@@ -559,19 +567,21 @@ class ReactiveProjectRun implements ProjectRun {
       }
     }
 
-    function toggleBreakpoint(runner: HarnessRunner | undefined) {
+    function toggleBreakpoint(runner: HarnessRunner | undefined): boolean {
       const breakpoints = runner?.breakpoints;
       if (!breakpoints) {
         console.warn(`Primary action: runner does not support breakpoints`);
-        return;
+        return false;
       }
       const breakpoint = breakpoints.get(nodeId);
       if (breakpoint) {
         console.log("Remove one-time breakpoint");
         breakpoints.delete(nodeId);
+        return false;
       } else {
         console.log("Insert one-time breakpoint");
         breakpoints.set(nodeId, { once: true });
+        return true;
       }
     }
 
