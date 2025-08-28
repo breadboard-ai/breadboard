@@ -313,26 +313,28 @@ export class Main extends SignalWatcher(LitElement) {
     );
 
     // Asyncronously check if the user has a geo-restriction and sign out if so.
-    this.signinAdapter.token().then(async (result) => {
-      if (
-        result.state === "valid" &&
-        (await this.signinAdapter.userHasGeoRestriction(
-          result.grant.access_token
-        ))
-      ) {
-        await this.signinAdapter.signOut();
-        window.history.pushState(
-          undefined,
-          "",
-          makeUrl({
-            page: "landing",
-            geoRestriction: true,
-            redirect: { page: "home" },
-          })
-        );
-        window.location.reload();
-      }
-    });
+    if (this.signinAdapter.state !== "anonymous") {
+      this.signinAdapter.token().then(async (result) => {
+        if (
+          result.state === "valid" &&
+          (await this.signinAdapter.userHasGeoRestriction(
+            result.grant.access_token
+          ))
+        ) {
+          await this.signinAdapter.signOut();
+          window.history.pushState(
+            undefined,
+            "",
+            makeUrl({
+              page: "landing",
+              geoRestriction: true,
+              redirect: { page: "home" },
+            })
+          );
+          window.location.reload();
+        }
+      });
+    }
 
     // API Clients
     let backendApiEndpoint = this.globalConfig.BACKEND_API_ENDPOINT;
