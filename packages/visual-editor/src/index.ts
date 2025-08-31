@@ -34,6 +34,7 @@ import {
   GraphDescriptor,
   hash,
   MutableGraphStore,
+  ok,
   PersistentBackend,
   SerializedRun,
 } from "@google-labs/breadboard";
@@ -779,6 +780,7 @@ export class Main extends SignalWatcher(LitElement) {
         if (this.#tab) {
           // If there is a TGO in the tab change event, honor it and populate a
           // run with it before switching to the tab proper.
+          // TODO: Remove. This no longer happens.
           if (evt.topGraphObserver) {
             this.#runtime.run.create(
               this.#tab,
@@ -789,6 +791,14 @@ export class Main extends SignalWatcher(LitElement) {
 
           if (this.#tab.graph.title) {
             this.#runtime.shell.setPageTitle(this.#tab.graph.title);
+          }
+
+          const preparingNextRun = await this.#runtime.prepareRun(
+            this.#tab,
+            this.#settings
+          );
+          if (!ok(preparingNextRun)) {
+            console.warn(preparingNextRun.$error);
           }
 
           this.#uiState.loadState = "Loaded";

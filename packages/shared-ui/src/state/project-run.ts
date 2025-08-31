@@ -9,6 +9,9 @@ import {
   ErrorResponse,
   HarnessRunner,
   NodeIdentifier,
+  NodeLifecycleState,
+  NodeMetadata,
+  NodeRunState,
   RunConfig,
   RunErrorEvent,
   RunGraphEndEvent,
@@ -31,11 +34,14 @@ import {
 } from "@google-labs/breadboard";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
+import { SignalSet } from "signal-utils/set";
+import { StateEvent } from "../events/events";
 import { getStepIcon } from "../utils/get-step-icon";
 import { ReactiveApp } from "./app";
 import { ReactiveAppScreen } from "./app-screen";
 import { getParticleStreamHandle, idFromPath } from "./common";
 import { ReactiveConsoleEntry } from "./console-entry";
+import { ReactiveRendererRunState } from "./renderer-run-state";
 import {
   AppScreenOutput,
   ConsoleEntry,
@@ -48,15 +54,8 @@ import {
 } from "./types";
 import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
-import { ReactiveRendererRunState } from "./renderer-run-state";
-import { StateEvent } from "../events/events";
-import { SignalSet } from "signal-utils/set";
 
-export {
-  createProjectRunState,
-  createProjectRunStateFromFinalOutput,
-  ReactiveProjectRun,
-};
+export { createProjectRunStateFromFinalOutput, ReactiveProjectRun };
 
 function createProjectRunStateFromFinalOutput(
   runConfig: RunConfig,
@@ -86,34 +85,6 @@ function createProjectRunStateFromFinalOutput(
   current.outputs.set("final", last);
   run.app.screens.set("final", current);
   return run;
-}
-
-function createProjectRunState(
-  runConfig: RunConfig,
-  harnessRunner: HarnessRunner
-): Outcome<ProjectRun> {
-  const { fileSystem, graphStore, runner: graph, signal } = runConfig;
-  if (!fileSystem) {
-    return error(`File system wasn't initialized`);
-  }
-  if (!graph) {
-    return error(`Graph wasn't specified`);
-  }
-  if (!graphStore) {
-    return error(`Graph store wasn't supplied`);
-  }
-
-  const gettingMainGraph = graphStore.getByDescriptor(graph);
-  if (!gettingMainGraph?.success) {
-    return error(`Can't to find graph in graph store`);
-  }
-  return ReactiveProjectRun.create(
-    gettingMainGraph.result,
-    graphStore,
-    fileSystem,
-    harnessRunner,
-    signal
-  );
 }
 
 function error(msg: string) {
@@ -232,40 +203,6 @@ class ReactiveProjectRun implements ProjectRun {
     private readonly runner?: HarnessRunner,
     signal?: AbortSignal
   ) {
-    if (!runner) return;
-    if (signal) {
-      signal.addEventListener("abort", this.#abort.bind(this));
-    }
-    runner.addEventListener("start", () => {
-      this.status = "running";
-    });
-    runner.addEventListener("pause", () => {
-      this.status = "paused";
-    });
-    runner.addEventListener("end", () => {
-      this.status = "stopped";
-      this.current = null;
-      this.input = null;
-    });
-    runner.addEventListener("nodestart", this.#nodeStart.bind(this));
-    runner.addEventListener("nodeend", this.#nodeEnd.bind(this));
-    runner.addEventListener("graphstart", this.#graphStart.bind(this));
-    runner.addEventListener("graphend", this.#graphEnd.bind(this));
-    runner.addEventListener("input", this.#input.bind(this));
-    runner.addEventListener("output", this.#output.bind(this));
-    runner.addEventListener("error", this.#error.bind(this));
-    runner.addEventListener("resume", () => {
-      this.status = "running";
-    });
-    runner.addEventListener("nodestatechange", (e) => {
-      const { id, state } = e.data;
-      if (state === "failed" || state === "interrupted") {
-        console.warn(`Unexpected failed/interrupted state change`, id, state);
-        return;
-      }
-      this.renderer.nodes.set(id, { status: state });
-    });
-
     if (!graphStore) return;
 
     this.#inspectable = this.graphStore?.inspect(this.mainGraphId, "");
@@ -275,6 +212,75 @@ class ReactiveProjectRun implements ProjectRun {
         this.#inspectable = this.graphStore?.inspect(this.mainGraphId, "");
       }
     });
+
+    if (signal) {
+      signal.addEventListener("abort", this.#abort.bind(this));
+    }
+    if (runner) {
+      runner.addEventListener("start", () => {
+        this.status = "running";
+      });
+      runner.addEventListener("pause", () => {
+        this.status = "paused";
+      });
+      runner.addEventListener("end", () => {
+        this.status = "stopped";
+        this.current = null;
+        this.input = null;
+      });
+      runner.addEventListener("nodestart", this.#nodeStart.bind(this));
+      runner.addEventListener("nodeend", this.#nodeEnd.bind(this));
+      runner.addEventListener("graphstart", this.#graphStart.bind(this));
+      runner.addEventListener("graphend", this.#graphEnd.bind(this));
+      runner.addEventListener("input", this.#input.bind(this));
+      runner.addEventListener("output", this.#output.bind(this));
+      runner.addEventListener("error", this.#error.bind(this));
+      runner.addEventListener("resume", () => {
+        this.status = "running";
+      });
+      runner.addEventListener("nodestatechange", (e) => {
+        const { id, state } = e.data;
+        if (state === "failed" || state === "interrupted") {
+          console.warn(`Unexpected failed/interrupted state change`, id, state);
+          return;
+        }
+        this.renderer.nodes.set(id, { status: state });
+      });
+
+      runner.state?.forEach(({ state, outputs }, id) => {
+        const inspectableNode = this.#inspectable?.nodeById(id);
+        if (!inspectableNode) {
+          console.warn(`Unable to retrieve node information for node "${id}"`);
+        } else {
+          const { title = id, tags, icon } = this.#nodeMetadata(id);
+          this.console.set(id, {
+            title,
+            tags,
+            icon,
+            work: new Map(),
+            output: new Map(),
+            completed: true,
+            error: null,
+            current: null,
+          });
+        }
+        const status = toNodeRunState(state, outputs as OutputValues);
+        if (!ok(status)) {
+          console.warn(status.$error);
+        } else {
+          this.renderer.nodes.set(id, status);
+        }
+      });
+    }
+  }
+
+  #nodeMetadata(id: NodeIdentifier): NodeMetadata {
+    const node = this.#inspectable?.nodeById(id);
+    const metadata = node?.currentDescribe()?.metadata || {};
+    const { icon: defaultIcon, tags } = metadata;
+    const icon = getStepIcon(defaultIcon, node?.currentPorts()) || undefined;
+    const title = node?.title();
+    return { tags, icon, title };
   }
 
   #abort() {
@@ -289,8 +295,6 @@ class ReactiveProjectRun implements ProjectRun {
     if (pathLength > 0) return;
 
     console.debug("Project Run: Graph Start");
-    this.renderer.nodes.clear();
-    this.console.clear();
     this.#idCache.clear();
     this.#fatalError = null;
     this.current = null;
@@ -323,15 +327,12 @@ class ReactiveProjectRun implements ProjectRun {
     }
 
     const id = event.data.node.id;
-    const node = this.#inspectable?.nodeById(event.data.node.id);
-    const metadata = node?.currentDescribe()?.metadata || {};
-    const { icon: defaultIcon, tags } = metadata;
-    const icon = getStepIcon(defaultIcon, node?.currentPorts()) || undefined;
-    const title = node?.title();
+    const node = this.#inspectable?.nodeById(id);
+    const metadata = this.#nodeMetadata(id);
     const outputSchema = node?.currentDescribe()?.outputSchema;
     const entry = new ReactiveConsoleEntry(
       this.fileSystem,
-      { title, icon, tags },
+      metadata,
       outputSchema
     );
     this.#idCache.set(path, id);
@@ -345,7 +346,7 @@ class ReactiveProjectRun implements ProjectRun {
     // but it's a hedge toward the future where screens and console entries
     // might go out of sync.
     // See https://github.com/breadboard-ai/breadboard/wiki/Screens
-    const screen = new ReactiveAppScreen(title || "", outputSchema);
+    const screen = new ReactiveAppScreen(metadata.title || "", outputSchema);
     this.app.screens.set(id, screen);
   }
 
@@ -641,7 +642,13 @@ class ReactiveProjectRun implements ProjectRun {
     mainGraphId: MainGraphIdentifier,
     graphStore: MutableGraphStore
   ) {
-    return new ReactiveProjectRun(mainGraphId, graphStore);
+    return new ReactiveProjectRun(
+      mainGraphId,
+      graphStore,
+      undefined,
+      undefined,
+      undefined
+    );
   }
 
   static create(
@@ -704,4 +711,30 @@ class IdCache {
   set(path: number[], id: NodeIdentifier) {
     this.#pathToId.set(this.#topLevel(path), id);
   }
+}
+
+function toNodeRunState(
+  state: NodeLifecycleState,
+  outputs: OutputValues | null
+): Outcome<NodeRunState> {
+  if (state === "failed") {
+    if ("$error" in (outputs || {})) {
+      const errorResponse = outputs?.$error as ErrorResponse | undefined;
+      if (errorResponse) {
+        const error = decodeErrorData(errorResponse);
+
+        return {
+          status: state,
+          errorMessage: error.message,
+        };
+      }
+    }
+    return err(`Node in "failed" state, but outputs contain no error`);
+  } else if (state === "interrupted") {
+    return {
+      status: state,
+      errorMessage: "Stopped by user",
+    };
+  }
+  return { status: state };
 }

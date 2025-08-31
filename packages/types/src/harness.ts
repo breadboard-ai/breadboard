@@ -381,10 +381,12 @@ export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
    * for input or secret, it will return false.
    *
    * @param inputs -- input values to provide to the runner.
+   * @param interactiveMode -- whether or not this call stops right after
+   *    initialization, allowing to run in interactive mode.
    * @returns -- true if the runner is done, or false if it is waiting
    *             for input.
    */
-  run(inputs?: InputValues): Promise<boolean>;
+  run(inputs?: InputValues, interactiveMode?: boolean): Promise<boolean>;
 
   /**
    * For new runtime only: the current plan for the run.

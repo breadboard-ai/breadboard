@@ -79,7 +79,7 @@ const SIDE_ITEM_KEY = "bb-canvas-controller-side-nav-item";
 import "./empty-state.js";
 import { isEmpty } from "../../utils/utils.js";
 import { uiStateContext } from "../../contexts/ui-state.js";
-import { SignalWatcher } from "@lit-labs/signals";
+import { Signal, SignalWatcher } from "@lit-labs/signals";
 
 @customElement("bb-canvas-controller")
 export class CanvasController extends SignalWatcher(LitElement) {
@@ -228,6 +228,9 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
   editorRender = 0;
   protected willUpdate(changedProperties: PropertyValues<this>): void {
+    if (changedProperties.has("projectState")) {
+      this.#projectStateUpdated.set({});
+    }
     if (changedProperties.has("selectionState")) {
       // If this is an imperative board with no selection state then set the
       // selection to be the main.
@@ -280,8 +283,11 @@ export class CanvasController extends SignalWatcher(LitElement) {
     }
   }
 
+  #projectStateUpdated = new Signal.State({});
+
   @signal
   get runState() {
+    this.#projectStateUpdated.get();
     if (!this.projectState) {
       return new Map();
     }
@@ -373,14 +379,13 @@ export class CanvasController extends SignalWatcher(LitElement) {
     const graph = this.editor?.inspect("") || null;
     const graphIsEmpty = isEmpty(graph?.raw() ?? null);
 
-    // This dance is necessary, because we need to reach for a computed value,
-    // but only do it when it can be computed.
-    const runState = this.projectState ? this.runState : new Map();
+    const runState = this.runState;
 
     const graphEditor = guard(
       [
         graph,
         this.graphIsMine,
+        this.projectState,
         runState,
         this.boardServerKits,
         this.topGraphResult,

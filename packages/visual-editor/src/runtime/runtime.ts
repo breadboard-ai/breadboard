@@ -4,13 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import type * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { createGraphStore, createLoader, Kit } from "@google-labs/breadboard";
+import {
+  assetsFromGraphDescriptor,
+  createGraphStore,
+  createLoader,
+  envFromGraphDescriptor,
+  err,
+  Kit,
+} from "@google-labs/breadboard";
 import { Router } from "./router.js";
 import { Board } from "./board.js";
 import { Run } from "./run.js";
 import { Edit } from "./edit.js";
 import { Util } from "./util.js";
-import { RuntimeConfig, RuntimeConfigBoardServers } from "./types.js";
+import { RuntimeConfig, RuntimeConfigBoardServers, Tab } from "./types.js";
 
 import {
   createDefaultLocalBoardServer,
@@ -31,13 +38,16 @@ import { getDataStore } from "@breadboard-ai/data-store";
 import { createSideboardRuntimeProvider } from "./sideboard-runtime.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { Shell } from "./shell.js";
-import { RuntimeFlagManager } from "@breadboard-ai/types";
+import { Outcome, RuntimeFlagManager } from "@breadboard-ai/types";
 import {
   RuntimeHostStatusUpdateEvent,
   RuntimeSnackbarEvent,
   RuntimeToastEvent,
   RuntimeUnsnackbarEvent,
 } from "./events.js";
+import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
+import { addNodeProxyServerConfig } from "../data/node-proxy-servers.js";
+import { inputsFromSettings } from "@breadboard-ai/shared-ui/data/inputs.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -80,6 +90,53 @@ export class Runtime extends EventTarget {
     this.util = config.util;
 
     this.#setupPassthruHandlers();
+  }
+
+  async prepareRun(tab: Tab, settings: SettingsStore): Promise<Outcome<void>> {
+    const url = tab.graph?.url;
+    if (!url) {
+      return err(`Unable to prepare run: graph does not have a URL`);
+    }
+
+    const graph = tab?.graph;
+    const proxyableUrl = new URL(url, window.location.href);
+    let proxyUrl: string | null = null;
+    for (const boardServer of this.board.boardServers.servers) {
+      const boardServerProxyUrl = await boardServer.canProxy?.(proxyableUrl);
+      if (!boardServerProxyUrl) {
+        continue;
+      }
+
+      proxyUrl = boardServerProxyUrl;
+      break;
+    }
+
+    const runConfig = addNodeProxyServerConfig(
+      [] /* no longer used */,
+      {
+        url,
+        runner: graph,
+        diagnostics: true,
+        kits: [], // The kits are added by the runtime.
+        loader: this.board.getLoader(),
+        graphStore: this.edit.graphStore,
+        fileSystem: this.edit.graphStore.fileSystem.createRunFileSystem({
+          graphUrl: url,
+          env: envFromGraphDescriptor(
+            this.edit.graphStore.fileSystem.env(),
+            graph
+          ),
+          assets: assetsFromGraphDescriptor(graph),
+        }),
+        inputs: inputsFromSettings(settings),
+        interactiveSecrets: true,
+      },
+      settings,
+      undefined /* no longer used */,
+      proxyUrl
+    );
+
+    return this.run.prepareRun(tab, runConfig);
   }
 
   snackbar(

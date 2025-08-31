@@ -9,7 +9,7 @@ import { NodeLifecycleState } from "./orchestration.js";
 /**
  * inactive:  This node is not ready to run, but a breakpoint can be set on it
  *            - icon: [none]
- *            - hover: autostop
+ *            - hover: pause
  * ready:     This node is ready to run
  *            - icon: play_arrow
  *            - hover: play_arrow
@@ -21,19 +21,19 @@ import { NodeLifecycleState } from "./orchestration.js";
  *            - hover: stop
  * succeeded: The node succeeded running
  *            - icon: autorenew
- *            - hover: autostop
+ *            - hover: pause
  * failed:    The node failed
  *            - icon: autorenew
  *            - hover: autorenew
  * skipped:   The node was skipped, because previous nodes failed or were
  *            interrupted
  *            - icon: [none]
- *            - hover: autostop
+ *            - hover: pause
  * interrupted: The node was interrupted
  *            - icon: autorenew
  *            - hover: autorenew
  * breakpoint: The node has a set breakpoint associated with it
- *            - icon: autostop
+ *            - icon: pause
  *            - hover: close
  */
 export type NodeRunStatus =

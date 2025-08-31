@@ -39,8 +39,6 @@ import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-managemen
 import { StateManager } from "./state";
 
 export class Run extends EventTarget {
-  interactiveMode = false;
-
   #runs = new Map<
     TabId,
     {
@@ -145,7 +143,7 @@ export class Run extends EventTarget {
     return { topGraphObserver, runObserver };
   }
 
-  async runBoard(
+  async prepareRun(
     tab: Tab,
     config: RunConfig,
     history?: InspectableRunSequenceEntry[]
@@ -273,7 +271,27 @@ export class Run extends EventTarget {
       await runObserver.append(history);
       topGraphObserver.startWith(history);
     }
-    harnessRunner.run();
+  }
+
+  hasRun(tab: Tab): boolean {
+    return !!this.#runs.get(tab.id)?.harnessRunner;
+  }
+
+  async runBoard(tab: Tab) {
+    const runInfo = this.#runs.get(tab.id);
+    if (!runInfo) {
+      console.warn(
+        `Unable to run board: run info not found for tab "${tab.id}"`
+      );
+      return;
+    }
+    const runner = runInfo.harnessRunner;
+    if (!runner) {
+      console.warn(`Unable to run board: runner not found for tab "${tab.id}"`);
+      return;
+    }
+
+    runner.run();
   }
 
   #createBoardRunner(
@@ -283,7 +301,7 @@ export class Run extends EventTarget {
     abortController: AbortController
   ) {
     const harnessRunner = usePlanRunner
-      ? createPlanRunner(config, this.interactiveMode)
+      ? createPlanRunner(config)
       : createRunner(config);
     const runObserver = createRunObserver(this.graphStore, {
       logLevel: "debug",
