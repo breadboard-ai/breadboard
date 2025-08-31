@@ -10,6 +10,7 @@ import {
   HarnessRunner,
   NodeIdentifier,
   NodeLifecycleState,
+  NodeMetadata,
   NodeRunState,
   RunConfig,
   RunErrorEvent,
@@ -19,7 +20,6 @@ import {
   RunNodeEndEvent,
   RunNodeStartEvent,
   RunOutputEvent,
-  RuntimeFlagManager,
   Schema,
 } from "@breadboard-ai/types";
 import {
@@ -54,7 +54,6 @@ import {
 } from "./types";
 import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
-import { iconSubstitute } from "../utils/icon-substitute";
 
 export { createProjectRunStateFromFinalOutput, ReactiveProjectRun };
 
@@ -202,8 +201,7 @@ class ReactiveProjectRun implements ProjectRun {
     private readonly graphStore?: MutableGraphStore,
     private readonly fileSystem?: FileSystem,
     private readonly runner?: HarnessRunner,
-    signal?: AbortSignal,
-    private readonly flags?: RuntimeFlagManager
+    signal?: AbortSignal
   ) {
     if (!graphStore) return;
 
@@ -254,12 +252,11 @@ class ReactiveProjectRun implements ProjectRun {
         if (!inspectableNode) {
           console.warn(`Unable to retrieve node information for node "${id}"`);
         } else {
+          const { title = id, tags, icon } = this.#nodeMetadata(id);
           this.console.set(id, {
-            title: inspectableNode.title(),
-            tags: inspectableNode.type().currentMetadata().tags,
-            icon:
-              iconSubstitute(inspectableNode.type().currentMetadata().icon) ||
-              undefined,
+            title,
+            tags,
+            icon,
             work: new Map(),
             output: new Map(),
             completed: true,
@@ -275,6 +272,15 @@ class ReactiveProjectRun implements ProjectRun {
         }
       });
     }
+  }
+
+  #nodeMetadata(id: NodeIdentifier): NodeMetadata {
+    const node = this.#inspectable?.nodeById(id);
+    const metadata = node?.currentDescribe()?.metadata || {};
+    const { icon: defaultIcon, tags } = metadata;
+    const icon = getStepIcon(defaultIcon, node?.currentPorts()) || undefined;
+    const title = node?.title();
+    return { tags, icon, title };
   }
 
   #abort() {
@@ -321,15 +327,12 @@ class ReactiveProjectRun implements ProjectRun {
     }
 
     const id = event.data.node.id;
-    const node = this.#inspectable?.nodeById(event.data.node.id);
-    const metadata = node?.currentDescribe()?.metadata || {};
-    const { icon: defaultIcon, tags } = metadata;
-    const icon = getStepIcon(defaultIcon, node?.currentPorts()) || undefined;
-    const title = node?.title();
+    const node = this.#inspectable?.nodeById(id);
+    const metadata = this.#nodeMetadata(id);
     const outputSchema = node?.currentDescribe()?.outputSchema;
     const entry = new ReactiveConsoleEntry(
       this.fileSystem,
-      { title, icon, tags },
+      metadata,
       outputSchema
     );
     this.#idCache.set(path, id);
@@ -343,7 +346,7 @@ class ReactiveProjectRun implements ProjectRun {
     // but it's a hedge toward the future where screens and console entries
     // might go out of sync.
     // See https://github.com/breadboard-ai/breadboard/wiki/Screens
-    const screen = new ReactiveAppScreen(title || "", outputSchema);
+    const screen = new ReactiveAppScreen(metadata.title || "", outputSchema);
     this.app.screens.set(id, screen);
   }
 
