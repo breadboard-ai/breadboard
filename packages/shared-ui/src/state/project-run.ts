@@ -289,7 +289,6 @@ class ReactiveProjectRun implements ProjectRun {
     if (pathLength > 0) return;
 
     console.debug("Project Run: Graph Start");
-    this.console.clear();
     this.#idCache.clear();
     this.#fatalError = null;
     this.current = null;
