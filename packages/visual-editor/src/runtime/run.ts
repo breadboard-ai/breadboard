@@ -145,7 +145,7 @@ export class Run extends EventTarget {
     return { topGraphObserver, runObserver };
   }
 
-  async runBoard(
+  async prepareRun(
     tab: Tab,
     config: RunConfig,
     history?: InspectableRunSequenceEntry[]
@@ -273,7 +273,23 @@ export class Run extends EventTarget {
       await runObserver.append(history);
       topGraphObserver.startWith(history);
     }
-    harnessRunner.run();
+  }
+
+  async runBoard(tab: Tab) {
+    const runInfo = this.#runs.get(tab.id);
+    if (!runInfo) {
+      console.warn(
+        `Unable to run board: run info not found for tab "${tab.id}"`
+      );
+      return;
+    }
+    const runner = runInfo.harnessRunner;
+    if (!runner) {
+      console.warn(`Unable to run board: runner not found for tab "${tab.id}"`);
+      return;
+    }
+
+    runner.run();
   }
 
   #createBoardRunner(

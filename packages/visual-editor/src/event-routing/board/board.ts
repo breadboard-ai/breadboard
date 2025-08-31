@@ -7,12 +7,7 @@
 import { EventRoute } from "../types";
 
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import {
-  assetsFromGraphDescriptor,
-  envFromGraphDescriptor,
-  InputValues,
-} from "@google-labs/breadboard";
-import { addNodeProxyServerConfig } from "../../data/node-proxy-servers";
+import { InputValues, ok } from "@google-labs/breadboard";
 import { RuntimeSnackbarEvent } from "../../runtime/events";
 import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 
@@ -20,51 +15,21 @@ export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
 
   async do({ tab, runtime, settings }) {
-    const url = tab?.graph?.url;
-    if (!url || !tab || !settings) {
+    if (!tab) {
+      console.warn(`Unable to prepare run: no Tab provided`);
       return false;
     }
-    runtime.edit.sideboards.discardTasks();
-
-    const graph = tab?.graph;
-    const proxyableUrl = new URL(url, window.location.href);
-    let proxyUrl: string | null = null;
-    for (const boardServer of runtime.board.boardServers.servers) {
-      const boardServerProxyUrl = await boardServer.canProxy?.(proxyableUrl);
-      if (!boardServerProxyUrl) {
-        continue;
-      }
-
-      proxyUrl = boardServerProxyUrl;
-      break;
+    if (!settings) {
+      console.warn(`Unable to prepare run: no settings store provided`);
+      return false;
+    }
+    const preparingRun = await runtime.prepareRun(tab, settings);
+    if (!ok(preparingRun)) {
+      console.warn(preparingRun.$error);
+      return false;
     }
 
-    const runConfig = addNodeProxyServerConfig(
-      [] /* no longer used */,
-      {
-        url,
-        runner: graph,
-        diagnostics: true,
-        kits: [], // The kits are added by the runtime.
-        loader: runtime.board.getLoader(),
-        graphStore: runtime.edit.graphStore,
-        fileSystem: runtime.edit.graphStore.fileSystem.createRunFileSystem({
-          graphUrl: url,
-          env: envFromGraphDescriptor(
-            runtime.edit.graphStore.fileSystem.env(),
-            graph
-          ),
-          assets: assetsFromGraphDescriptor(graph),
-        }),
-        inputs: BreadboardUI.Data.inputsFromSettings(settings),
-        interactiveSecrets: true,
-      },
-      settings,
-      undefined /* no longer used */,
-      proxyUrl
-    );
-
-    runtime.run.runBoard(tab, runConfig);
+    runtime.run.runBoard(tab);
     return false;
   },
 };
