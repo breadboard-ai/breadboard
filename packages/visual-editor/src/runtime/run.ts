@@ -275,6 +275,10 @@ export class Run extends EventTarget {
     }
   }
 
+  hasRun(tab: Tab): boolean {
+    return !!this.#runs.get(tab.id)?.harnessRunner;
+  }
+
   async runBoard(tab: Tab) {
     const runInfo = this.#runs.get(tab.id);
     if (!runInfo) {

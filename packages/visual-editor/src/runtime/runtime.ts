@@ -98,8 +98,6 @@ export class Runtime extends EventTarget {
       return err(`Unable to prepare run: graph does not have a URL`);
     }
 
-    this.edit.sideboards.discardTasks();
-
     const graph = tab?.graph;
     const proxyableUrl = new URL(url, window.location.href);
     let proxyUrl: string | null = null;

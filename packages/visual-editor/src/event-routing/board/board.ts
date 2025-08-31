@@ -23,10 +23,16 @@ export const RunRoute: EventRoute<"board.run"> = {
       console.warn(`Unable to prepare run: no settings store provided`);
       return false;
     }
-    const preparingRun = await runtime.prepareRun(tab, settings);
-    if (!ok(preparingRun)) {
-      console.warn(preparingRun.$error);
-      return false;
+
+    runtime.edit.sideboards.discardTasks();
+
+    if (!runtime.run.hasRun(tab)) {
+      console.warn(`Unexpected missing run, preparing a run ...`);
+      const preparingRun = await runtime.prepareRun(tab, settings);
+      if (!ok(preparingRun)) {
+        console.warn(preparingRun.$error);
+        return false;
+      }
     }
 
     runtime.run.runBoard(tab);
@@ -53,7 +59,7 @@ export const LoadRoute: EventRoute<"board.load"> = {
 export const StopRoute: EventRoute<"board.stop"> = {
   event: "board.stop",
 
-  async do({ tab, runtime, originalEvent }) {
+  async do({ tab, runtime, originalEvent, settings }) {
     if (!tab) {
       return false;
     }
@@ -87,6 +93,14 @@ export const StopRoute: EventRoute<"board.stop"> = {
 
     if (originalEvent.detail.clearLastRun) {
       await runtime.run.clearLastRun(tabId, tab?.graph.url);
+      if (!settings) {
+        console.warn(`No settings, unable to prepare next run.`);
+      } else {
+        const preparingNextRun = await runtime.prepareRun(tab, settings);
+        if (!ok(preparingNextRun)) {
+          console.warn(preparingNextRun.$error);
+        }
+      }
     }
 
     return true;
