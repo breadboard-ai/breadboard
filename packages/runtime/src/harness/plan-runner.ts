@@ -83,10 +83,7 @@ class PlanRunner extends AbstractRunner {
 
   accessor breakpoints = new SignalMap<NodeIdentifier, BreakpointSpec>();
 
-  constructor(
-    config: RunConfig,
-    public readonly interactiveMode: boolean
-  ) {
+  constructor(config: RunConfig) {
     super(config);
     if (config.runner) {
       // We have a GraphDescriptor, we can create plan/orchestrator
@@ -105,6 +102,10 @@ class PlanRunner extends AbstractRunner {
   }
 
   async runNode(id: NodeIdentifier): Promise<Outcome<void>> {
+    if (!this.#controller) {
+      // First, activate the run
+      this.run(undefined, true);
+    }
     this.dispatchEvent(new ResumeEvent({ timestamp: timestamp() }));
     const outcome = await this.#controller?.runNode(id);
     this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
@@ -117,11 +118,9 @@ class PlanRunner extends AbstractRunner {
     return outcome;
   }
 
-  protected async *getGenerator(): AsyncGenerator<
-    HarnessRunResult,
-    void,
-    unknown
-  > {
+  protected async *getGenerator(
+    interactiveMode = false
+  ): AsyncGenerator<HarnessRunResult, void, unknown> {
     this.#controller = null;
 
     yield* asyncGen<HarnessRunResult>(async (next) => {
@@ -135,19 +134,17 @@ class PlanRunner extends AbstractRunner {
         next
       );
       this.#runState = await this.#controller.state;
-      if (!this.interactiveMode) {
+      if (!interactiveMode) {
         // Start the first run.
         await this.#controller.run();
-        // Return a promise that never resolves, since plan runner can run
-        // nodes even after the first run completes.
-        return new Promise((resolve) => {
-          this.config.signal?.addEventListener("abort", () => {
-            resolve();
-          });
-        });
-      } else {
-        await this.#controller.runInteractively();
       }
+      // Return a promise that never resolves, since plan runner can run
+      // nodes even after the first run completes.
+      return new Promise((resolve) => {
+        this.config.signal?.addEventListener("abort", () => {
+          resolve();
+        });
+      });
     });
   }
 }

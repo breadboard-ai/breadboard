@@ -85,13 +85,11 @@ export abstract class AbstractRunner
     return !!this.#run && !this.#pendingResult;
   }
 
-  protected abstract getGenerator(): AsyncGenerator<
-    HarnessRunResult,
-    void,
-    unknown
-  >;
+  protected abstract getGenerator(
+    interactiveMode?: boolean
+  ): AsyncGenerator<HarnessRunResult, void, unknown>;
 
-  async run(inputs?: InputValues): Promise<boolean> {
+  async run(inputs?: InputValues, interactiveMode = false): Promise<boolean> {
     if (this.#inRun) {
       this.#resumeWith = inputs;
       return false;
@@ -105,7 +103,7 @@ export abstract class AbstractRunner
       const starting = !this.#run;
 
       if (!this.#run) {
-        this.#run = this.getGenerator();
+        this.#run = this.getGenerator(interactiveMode);
       } else if (this.#pendingResult) {
         this.#pendingResult.reply({ inputs: inputs ?? {} });
         inputs = undefined;

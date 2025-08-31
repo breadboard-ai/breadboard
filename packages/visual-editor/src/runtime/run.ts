@@ -39,8 +39,6 @@ import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-managemen
 import { StateManager } from "./state";
 
 export class Run extends EventTarget {
-  interactiveMode = false;
-
   #runs = new Map<
     TabId,
     {
@@ -303,7 +301,7 @@ export class Run extends EventTarget {
     abortController: AbortController
   ) {
     const harnessRunner = usePlanRunner
-      ? createPlanRunner(config, this.interactiveMode)
+      ? createPlanRunner(config)
       : createRunner(config);
     const runObserver = createRunObserver(this.graphStore, {
       logLevel: "debug",

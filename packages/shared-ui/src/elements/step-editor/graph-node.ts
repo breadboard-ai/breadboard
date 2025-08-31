@@ -1128,7 +1128,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       }
 
       case "breakpoint": {
-        icon = "autostop";
+        icon = "pause";
         break;
       }
 

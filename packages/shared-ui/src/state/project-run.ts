@@ -9,6 +9,8 @@ import {
   ErrorResponse,
   HarnessRunner,
   NodeIdentifier,
+  NodeLifecycleState,
+  NodeRunState,
   RunConfig,
   RunErrorEvent,
   RunGraphEndEvent,
@@ -17,6 +19,7 @@ import {
   RunNodeEndEvent,
   RunNodeStartEvent,
   RunOutputEvent,
+  RuntimeFlagManager,
   Schema,
 } from "@breadboard-ai/types";
 import {
@@ -31,11 +34,14 @@ import {
 } from "@google-labs/breadboard";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
+import { SignalSet } from "signal-utils/set";
+import { StateEvent } from "../events/events";
 import { getStepIcon } from "../utils/get-step-icon";
 import { ReactiveApp } from "./app";
 import { ReactiveAppScreen } from "./app-screen";
 import { getParticleStreamHandle, idFromPath } from "./common";
 import { ReactiveConsoleEntry } from "./console-entry";
+import { ReactiveRendererRunState } from "./renderer-run-state";
 import {
   AppScreenOutput,
   ConsoleEntry,
@@ -48,9 +54,6 @@ import {
 } from "./types";
 import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
-import { ReactiveRendererRunState } from "./renderer-run-state";
-import { StateEvent } from "../events/events";
-import { SignalSet } from "signal-utils/set";
 
 export {
   createProjectRunState,
@@ -230,42 +233,9 @@ class ReactiveProjectRun implements ProjectRun {
     private readonly graphStore?: MutableGraphStore,
     private readonly fileSystem?: FileSystem,
     private readonly runner?: HarnessRunner,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    private readonly flags?: RuntimeFlagManager
   ) {
-    if (!runner) return;
-    if (signal) {
-      signal.addEventListener("abort", this.#abort.bind(this));
-    }
-    runner.addEventListener("start", () => {
-      this.status = "running";
-    });
-    runner.addEventListener("pause", () => {
-      this.status = "paused";
-    });
-    runner.addEventListener("end", () => {
-      this.status = "stopped";
-      this.current = null;
-      this.input = null;
-    });
-    runner.addEventListener("nodestart", this.#nodeStart.bind(this));
-    runner.addEventListener("nodeend", this.#nodeEnd.bind(this));
-    runner.addEventListener("graphstart", this.#graphStart.bind(this));
-    runner.addEventListener("graphend", this.#graphEnd.bind(this));
-    runner.addEventListener("input", this.#input.bind(this));
-    runner.addEventListener("output", this.#output.bind(this));
-    runner.addEventListener("error", this.#error.bind(this));
-    runner.addEventListener("resume", () => {
-      this.status = "running";
-    });
-    runner.addEventListener("nodestatechange", (e) => {
-      const { id, state } = e.data;
-      if (state === "failed" || state === "interrupted") {
-        console.warn(`Unexpected failed/interrupted state change`, id, state);
-        return;
-      }
-      this.renderer.nodes.set(id, { status: state });
-    });
-
     if (!graphStore) return;
 
     this.#inspectable = this.graphStore?.inspect(this.mainGraphId, "");
@@ -275,6 +245,50 @@ class ReactiveProjectRun implements ProjectRun {
         this.#inspectable = this.graphStore?.inspect(this.mainGraphId, "");
       }
     });
+
+    if (signal) {
+      signal.addEventListener("abort", this.#abort.bind(this));
+    }
+    if (runner) {
+      runner.addEventListener("start", () => {
+        this.status = "running";
+      });
+      runner.addEventListener("pause", () => {
+        this.status = "paused";
+      });
+      runner.addEventListener("end", () => {
+        this.status = "stopped";
+        this.current = null;
+        this.input = null;
+      });
+      runner.addEventListener("nodestart", this.#nodeStart.bind(this));
+      runner.addEventListener("nodeend", this.#nodeEnd.bind(this));
+      runner.addEventListener("graphstart", this.#graphStart.bind(this));
+      runner.addEventListener("graphend", this.#graphEnd.bind(this));
+      runner.addEventListener("input", this.#input.bind(this));
+      runner.addEventListener("output", this.#output.bind(this));
+      runner.addEventListener("error", this.#error.bind(this));
+      runner.addEventListener("resume", () => {
+        this.status = "running";
+      });
+      runner.addEventListener("nodestatechange", (e) => {
+        const { id, state } = e.data;
+        if (state === "failed" || state === "interrupted") {
+          console.warn(`Unexpected failed/interrupted state change`, id, state);
+          return;
+        }
+        this.renderer.nodes.set(id, { status: state });
+      });
+
+      runner.state?.forEach(({ state, outputs }, id) => {
+        const status = toNodeRunState(state, outputs as OutputValues);
+        if (!ok(status)) {
+          console.warn(status.$error);
+          return;
+        }
+        this.renderer.nodes.set(id, status);
+      });
+    }
   }
 
   #abort() {
@@ -289,7 +303,6 @@ class ReactiveProjectRun implements ProjectRun {
     if (pathLength > 0) return;
 
     console.debug("Project Run: Graph Start");
-    this.renderer.nodes.clear();
     this.console.clear();
     this.#idCache.clear();
     this.#fatalError = null;
@@ -641,7 +654,13 @@ class ReactiveProjectRun implements ProjectRun {
     mainGraphId: MainGraphIdentifier,
     graphStore: MutableGraphStore
   ) {
-    return new ReactiveProjectRun(mainGraphId, graphStore);
+    return new ReactiveProjectRun(
+      mainGraphId,
+      graphStore,
+      undefined,
+      undefined,
+      undefined
+    );
   }
 
   static create(
@@ -704,4 +723,30 @@ class IdCache {
   set(path: number[], id: NodeIdentifier) {
     this.#pathToId.set(this.#topLevel(path), id);
   }
+}
+
+function toNodeRunState(
+  state: NodeLifecycleState,
+  outputs: OutputValues | null
+): Outcome<NodeRunState> {
+  if (state === "failed") {
+    if ("$error" in (outputs || {})) {
+      const errorResponse = outputs?.$error as ErrorResponse | undefined;
+      if (errorResponse) {
+        const error = decodeErrorData(errorResponse);
+
+        return {
+          status: state,
+          errorMessage: error.message,
+        };
+      }
+    }
+    return err(`Node in "failed" state, but outputs contain no error`);
+  } else if (state === "interrupted") {
+    return {
+      status: state,
+      errorMessage: "Stopped by user",
+    };
+  }
+  return { status: state };
 }
