@@ -55,11 +55,7 @@ import {
 import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
 
-export {
-  createProjectRunState,
-  createProjectRunStateFromFinalOutput,
-  ReactiveProjectRun,
-};
+export { createProjectRunStateFromFinalOutput, ReactiveProjectRun };
 
 function createProjectRunStateFromFinalOutput(
   runConfig: RunConfig,
@@ -89,34 +85,6 @@ function createProjectRunStateFromFinalOutput(
   current.outputs.set("final", last);
   run.app.screens.set("final", current);
   return run;
-}
-
-function createProjectRunState(
-  runConfig: RunConfig,
-  harnessRunner: HarnessRunner
-): Outcome<ProjectRun> {
-  const { fileSystem, graphStore, runner: graph, signal } = runConfig;
-  if (!fileSystem) {
-    return error(`File system wasn't initialized`);
-  }
-  if (!graph) {
-    return error(`Graph wasn't specified`);
-  }
-  if (!graphStore) {
-    return error(`Graph store wasn't supplied`);
-  }
-
-  const gettingMainGraph = graphStore.getByDescriptor(graph);
-  if (!gettingMainGraph?.success) {
-    return error(`Can't to find graph in graph store`);
-  }
-  return ReactiveProjectRun.create(
-    gettingMainGraph.result,
-    graphStore,
-    fileSystem,
-    harnessRunner,
-    signal
-  );
 }
 
 function error(msg: string) {
