@@ -54,6 +54,7 @@ import {
 } from "./types";
 import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
+import { iconSubstitute } from "../utils/icon-substitute";
 
 export { createProjectRunStateFromFinalOutput, ReactiveProjectRun };
 
@@ -249,12 +250,29 @@ class ReactiveProjectRun implements ProjectRun {
       });
 
       runner.state?.forEach(({ state, outputs }, id) => {
+        const inspectableNode = this.#inspectable?.nodeById(id);
+        if (!inspectableNode) {
+          console.warn(`Unable to retrieve node information for node "${id}"`);
+        } else {
+          this.console.set(id, {
+            title: inspectableNode.title(),
+            tags: inspectableNode.type().currentMetadata().tags,
+            icon:
+              iconSubstitute(inspectableNode.type().currentMetadata().icon) ||
+              undefined,
+            work: new Map(),
+            output: new Map(),
+            completed: true,
+            error: null,
+            current: null,
+          });
+        }
         const status = toNodeRunState(state, outputs as OutputValues);
         if (!ok(status)) {
           console.warn(status.$error);
-          return;
+        } else {
+          this.renderer.nodes.set(id, status);
         }
-        this.renderer.nodes.set(id, status);
       });
     }
   }
