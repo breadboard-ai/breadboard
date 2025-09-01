@@ -5,6 +5,7 @@
  */
 
 // Shell.
+export { VEBetterOnDesktopModal } from "./shell/better-on-desktop-modal.js";
 export { VEEditBoardModal } from "./shell/edit-board.js";
 export { VEHeader } from "./shell/header.js";
 export { VEModal } from "./shell/modal.js";

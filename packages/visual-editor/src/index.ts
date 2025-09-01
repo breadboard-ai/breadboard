@@ -590,6 +590,7 @@ export class Main extends SignalWatcher(LitElement) {
     });
 
     this.#maybeNotifyAboutPreferredUrlForDomain();
+    this.#maybeNotifyAboutDesktopModality();
 
     this.#runtime.shell.startTrackUpdates();
     await this.#runtime.router.init();
@@ -607,6 +608,26 @@ export class Main extends SignalWatcher(LitElement) {
       }
     }
     return hasMountedBoardServer;
+  }
+
+  #maybeNotifyAboutDesktopModality() {
+    if (
+      parsedUrl.page !== "graph" ||
+      !parsedUrl.shared ||
+      parsedUrl.mode !== "canvas"
+    ) {
+      return;
+    }
+
+    // There's little point in attempting to differentiate between "mobile" and
+    // "desktop" here for any number of reasons, but as a reasonable proxy we
+    // will check that there's some screen estate available to show both the
+    // editor and the app preview before we show the modal.
+    if (window.innerWidth > 1280) {
+      return;
+    }
+
+    this.#uiState.show.add("BetterOnDesktopModal");
   }
 
   async #maybeNotifyAboutPreferredUrlForDomain() {
@@ -1066,9 +1087,10 @@ export class Main extends SignalWatcher(LitElement) {
   #hideAllOverlays() {
     this.#uiState.show.delete("BoardEditModal");
     this.#uiState.show.delete("BoardServerAddOverlay");
+    this.#uiState.show.delete("BetterOnDesktopModal");
     this.#uiState.show.delete("MissingShare");
-    this.#uiState.show.delete("VideoModal");
     this.#uiState.show.delete("StatusUpdateModal");
+    this.#uiState.show.delete("VideoModal");
   }
 
   #onShowTooltip(evt: Event) {
@@ -1559,6 +1581,9 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.show.has("SnackbarDetailsModal")
           ? this.#renderSnackbarDetailsModal()
           : nothing,
+        this.#uiState.show.has("BetterOnDesktopModal")
+          ? this.#renderBetterOnDesktopModal()
+          : nothing,
         this.#uiState.show.has("VideoModal")
           ? this.#renderVideoModal()
           : nothing,
@@ -1746,6 +1771,14 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.show.delete("BoardEditModal");
       }}
     ></bb-edit-board-modal>`;
+  }
+
+  #renderBetterOnDesktopModal() {
+    return html`<bb-better-on-desktop-modal
+      @bbmodaldismissed=${() => {
+        this.#uiState.show.delete("BetterOnDesktopModal");
+      }}
+    ></bb-better-on-desktop-modal>`;
   }
 
   #renderSnackbarDetailsModal() {
