@@ -211,6 +211,9 @@ class ReactiveProjectRun implements ProjectRun {
       if (e.mainGraphId === this.mainGraphId) {
         this.#inspectable = this.graphStore?.inspect(this.mainGraphId, "");
       }
+      if (e.topologyChange) {
+        this.#updateRunner();
+      }
     });
 
     if (signal) {
@@ -247,31 +250,43 @@ class ReactiveProjectRun implements ProjectRun {
         this.renderer.nodes.set(id, { status: state });
       });
 
-      runner.state?.forEach(({ state, outputs }, id) => {
-        const inspectableNode = this.#inspectable?.nodeById(id);
-        if (!inspectableNode) {
-          console.warn(`Unable to retrieve node information for node "${id}"`);
-        } else {
-          const { title = id, tags, icon } = this.#nodeMetadata(id);
-          this.console.set(id, {
-            title,
-            tags,
-            icon,
-            work: new Map(),
-            output: new Map(),
-            completed: true,
-            error: null,
-            current: null,
-          });
-        }
-        const status = toNodeRunState(state, outputs as OutputValues);
-        if (!ok(status)) {
-          console.warn(status.$error);
-        } else {
-          this.renderer.nodes.set(id, status);
-        }
-      });
+      this.#updateRunner();
     }
+  }
+
+  #updateRunner() {
+    const { runner } = this;
+    if (!runner) return;
+
+    runner.updateGraph?.(this.#inspectable!.mainGraphDescriptor());
+
+    this.console.clear();
+    this.renderer.nodes.clear();
+
+    runner.state?.forEach(({ state, outputs }, id) => {
+      const inspectableNode = this.#inspectable?.nodeById(id);
+      if (!inspectableNode) {
+        console.warn(`Unable to retrieve node information for node "${id}"`);
+      } else {
+        const { title = id, tags, icon } = this.#nodeMetadata(id);
+        this.console.set(id, {
+          title,
+          tags,
+          icon,
+          work: new Map(),
+          output: new Map(),
+          completed: true,
+          error: null,
+          current: null,
+        });
+      }
+      const status = toNodeRunState(state, outputs as OutputValues);
+      if (!ok(status)) {
+        console.warn(status.$error);
+      } else {
+        this.renderer.nodes.set(id, status);
+      }
+    });
   }
 
   #nodeMetadata(id: NodeIdentifier): NodeMetadata {

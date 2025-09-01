@@ -51,7 +51,9 @@ function emptyOrchestratorState(): OrchestratorState {
 
 class PlanRunner extends AbstractRunner {
   #controller: InternalRunStateController | null = null;
-  #orchestrator: Orchestrator | null = null;
+
+  @signal
+  accessor #orchestrator: Orchestrator | null = null;
 
   @signal
   get state(): OrchestratorState {
@@ -88,13 +90,17 @@ class PlanRunner extends AbstractRunner {
     if (config.runner) {
       // We have a GraphDescriptor, we can create plan/orchestrator
       // synchronously.
-      const plan = createPlan(config.runner);
-      this.#orchestrator = new Orchestrator(plan, {
-        stateChangedbyOrchestrator: (id, newState) => {
-          this.#dispatchNodeStateChangeEvent(id, newState);
-        },
-      });
+      this.#orchestrator = this.#createOrchestrator(config.runner);
     }
+  }
+
+  #createOrchestrator(graph: GraphDescriptor) {
+    const plan = createPlan(graph);
+    return new Orchestrator(plan, {
+      stateChangedbyOrchestrator: (id, newState) => {
+        this.#dispatchNodeStateChangeEvent(id, newState);
+      },
+    });
   }
 
   #dispatchNodeStateChangeEvent(id: NodeIdentifier, state: NodeLifecycleState) {
@@ -146,6 +152,10 @@ class PlanRunner extends AbstractRunner {
         });
       });
     });
+  }
+
+  updateGraph(graph: GraphDescriptor) {
+    this.#orchestrator = this.#createOrchestrator(graph);
   }
 }
 

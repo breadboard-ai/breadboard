@@ -38,6 +38,7 @@ export class RemoveEdge implements EditOperation {
       ],
       affectedModules: [],
       affectedGraphs: [],
+      topologyChange: true,
     };
   }
 
@@ -81,6 +82,7 @@ export class RemoveEdge implements EditOperation {
       ],
       affectedModules: [],
       affectedGraphs: [graphId],
+      topologyChange: true,
     };
   }
 }

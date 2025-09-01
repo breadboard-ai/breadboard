@@ -811,6 +811,7 @@ export type GraphStoreUpdateEvent = Event & {
   affectedGraphs: MainGraphIdentifier[];
   graphId: GraphIdentifier;
   nodeId: NodeIdentifier;
+  topologyChange: boolean;
 };
 
 type GraphsStoreEventMap = {
@@ -959,7 +960,8 @@ export type MutableGraph = {
     graph: GraphDescriptor,
     visualOnly: boolean,
     affectedNodes: AffectedNode[],
-    affectedModules: ModuleIdentifier[]
+    affectedModules: ModuleIdentifier[],
+    topologyChange: boolean
   ): void;
 
   addSubgraph(subgraph: GraphDescriptor, graphId: GraphIdentifier): void;

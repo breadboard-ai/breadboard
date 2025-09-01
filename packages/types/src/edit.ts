@@ -364,6 +364,12 @@ export type SingleEditResult =
       affectedModules: ModuleIdentifier[];
       affectedGraphs: GraphIdentifier[];
       /**
+       * Indicates that the change resulted in topology change:
+       * - node added or removed
+       * - edge added or removed
+       */
+      topologyChange?: boolean;
+      /**
        * Indicates that the edit was successful, and
        * resulted in no change.
        */

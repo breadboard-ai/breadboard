@@ -93,6 +93,7 @@ export class AddEdge implements EditOperation {
       ],
       affectedModules: [],
       affectedGraphs: [graphId],
+      topologyChange: true,
     };
   }
 
@@ -134,6 +135,7 @@ export class AddEdge implements EditOperation {
       ],
       affectedModules: [],
       affectedGraphs: [graphId],
+      topologyChange: true,
     };
   }
 }

@@ -65,7 +65,8 @@ class MutableGraphImpl implements MutableGraph {
     graph: GraphDescriptor,
     visualOnly: boolean,
     affectedNodes: AffectedNode[],
-    affectedModules: ModuleIdentifier[]
+    affectedModules: ModuleIdentifier[],
+    topologyChange: boolean
   ): void {
     // TODO: Handle this a better way?
     for (const id of affectedModules) {
@@ -96,7 +97,9 @@ class MutableGraphImpl implements MutableGraph {
     // TODO: Handle removals, etc.
     if (!visualOnly) {
       this.describe.update(affectedNodes);
-      this.store.dispatchEvent(new UpdateEvent(this.id, "", "", []));
+      this.store.dispatchEvent(
+        new UpdateEvent(this.id, "", "", [], topologyChange)
+      );
     }
     this.representation = new GraphRepresentationImpl(graph);
     this.graph = graph;
