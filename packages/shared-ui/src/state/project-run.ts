@@ -6,8 +6,11 @@
 
 import { type ParticleTree, ParticleTreeImpl } from "@breadboard-ai/particles";
 import {
+  EditableGraph,
   ErrorResponse,
+  GraphDescriptor,
   HarnessRunner,
+  InspectableNode,
   NodeIdentifier,
   NodeLifecycleState,
   NodeMetadata,
@@ -201,15 +204,17 @@ class ReactiveProjectRun implements ProjectRun {
     private readonly graphStore?: MutableGraphStore,
     private readonly fileSystem?: FileSystem,
     private readonly runner?: HarnessRunner,
+    editable?: EditableGraph,
     signal?: AbortSignal
   ) {
     if (!graphStore) return;
 
     this.#inspectable = this.graphStore?.inspect(this.mainGraphId, "");
 
-    graphStore.addEventListener("update", (e) => {
-      if (e.mainGraphId === this.mainGraphId) {
-        this.#inspectable = this.graphStore?.inspect(this.mainGraphId, "");
+    editable?.addEventListener("graphchange", (e) => {
+      this.#inspectable = editable.inspect("");
+      if (e.topologyChange) {
+        this.#updateRunner(e.graph);
       }
     });
 
@@ -247,30 +252,71 @@ class ReactiveProjectRun implements ProjectRun {
         this.renderer.nodes.set(id, { status: state });
       });
 
-      runner.state?.forEach(({ state, outputs }, id) => {
-        const inspectableNode = this.#inspectable?.nodeById(id);
-        if (!inspectableNode) {
-          console.warn(`Unable to retrieve node information for node "${id}"`);
-        } else {
-          const { title = id, tags, icon } = this.#nodeMetadata(id);
-          this.console.set(id, {
-            title,
-            tags,
-            icon,
-            work: new Map(),
-            output: new Map(),
-            completed: true,
-            error: null,
-            current: null,
-          });
-        }
-        const status = toNodeRunState(state, outputs as OutputValues);
-        if (!ok(status)) {
-          console.warn(status.$error);
-        } else {
-          this.renderer.nodes.set(id, status);
-        }
+      this.#updateRunner(this.#inspectable!.mainGraphDescriptor());
+    }
+  }
+
+  async #updateRunner(graph: GraphDescriptor) {
+    const { runner } = this;
+    if (!runner) return;
+
+    await runner.updateGraph?.(graph);
+
+    this.console.clear();
+    this.renderer.nodes.clear();
+
+    runner.state?.forEach(({ state, outputs }, id) => {
+      const inspectableNode = this.#inspectable?.nodeById(id);
+      if (!inspectableNode) {
+        console.warn(`Unable to retrieve node information for node "${id}"`);
+      } else {
+        this.#setConsoleEntry(id);
+      }
+      const status = toNodeRunState(state, outputs as OutputValues);
+      if (!ok(status)) {
+        console.warn(status.$error);
+      } else {
+        this.renderer.nodes.set(id, status);
+      }
+    });
+  }
+
+  #setConsoleEntry(id: NodeIdentifier) {
+    const node = this.#inspectable?.nodeById(id);
+    if (!node) return;
+
+    const title = node.title();
+
+    const metadata = node.currentDescribe()?.metadata || {};
+    const { icon, tags } = metadata;
+    // Go ahead and set the entry
+    this.console.set(id, newEntry(node, title, tags, icon));
+    if (!tags) {
+      // .. but if there aren't tags, try using `describe()`.
+      // This is done due tue a race condition describer. Sad!
+      node.describe().then((result) => {
+        const { icon, tags } = result.metadata || {};
+        this.console.set(id, newEntry(node, title, tags, icon));
       });
+    }
+
+    function newEntry(
+      node: InspectableNode,
+      title: string,
+      tags?: string[],
+      defaultIcon?: string
+    ): ConsoleEntry {
+      const icon = getStepIcon(defaultIcon, node?.currentPorts()) || undefined;
+      return {
+        title,
+        tags,
+        icon,
+        work: new Map(),
+        output: new Map(),
+        completed: true,
+        error: null,
+        current: null,
+      };
     }
   }
 
@@ -656,6 +702,7 @@ class ReactiveProjectRun implements ProjectRun {
     graphStore: MutableGraphStore,
     fileSystem: FileSystem,
     runner: HarnessRunner,
+    editable: EditableGraph | undefined,
     signal?: AbortSignal
   ) {
     return new ReactiveProjectRun(
@@ -663,6 +710,7 @@ class ReactiveProjectRun implements ProjectRun {
       graphStore,
       fileSystem,
       runner,
+      editable,
       signal
     );
   }

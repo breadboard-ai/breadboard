@@ -412,6 +412,13 @@ export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
    * For new runtime only: stop the run
    */
   stop?(id: NodeIdentifier): Promise<Outcome<void>>;
+
+  /**
+   * For new runtime onlye: A way to dynamically update
+   * the graph descriptor for a runner.
+   *
+   */
+  updateGraph?(graph: GraphDescriptor): Promise<void>;
 };
 
 /**

@@ -39,7 +39,9 @@ class NodeTypeDescriberManager implements DescribeResultTypeCacheArgs {
   }
 
   updated(): void {
-    this.store.dispatchEvent(new UpdateEvent(PLACEHOLDER_ID, "", "", []));
+    this.store.dispatchEvent(
+      new UpdateEvent(PLACEHOLDER_ID, "", "", [], false)
+    );
   }
 
   latest(type: NodeTypeIdentifier): Promise<NodeDescriberResult> {

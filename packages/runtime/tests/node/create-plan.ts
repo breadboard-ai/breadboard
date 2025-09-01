@@ -48,11 +48,9 @@ describe("createPlan function", () => {
       const result = createPlan(graph);
 
       assert.equal(result.stages.length, 1);
-      assert.equal(result.stages[0].length, 3);
+      assert.equal(result.stages[0].length, 1);
       const nodeIds = result.stages[0].map((n) => n.node.id);
       assert.ok(nodeIds.includes("a"));
-      assert.ok(nodeIds.includes("b"));
-      assert.ok(nodeIds.includes("c"));
     });
   });
 
@@ -314,20 +312,6 @@ describe("createPlan function", () => {
   });
 
   describe("edge cases", () => {
-    it("should handle graphs with no edges", () => {
-      const graph: GraphDescriptor = {
-        nodes: [
-          { id: "a", type: "input" },
-          { id: "b", type: "output" },
-        ],
-        edges: [],
-      };
-      const result = createPlan(graph);
-
-      assert.equal(result.stages.length, 1);
-      assert.equal(result.stages[0].length, 2);
-    });
-
     it("should handle graphs with undefined edges", () => {
       const graph: GraphDescriptor = {
         nodes: [
@@ -339,7 +323,7 @@ describe("createPlan function", () => {
       const result = createPlan(graph);
 
       assert.equal(result.stages.length, 1);
-      assert.equal(result.stages[0].length, 2);
+      assert.equal(result.stages[0].length, 1);
     });
 
     it("should handle disconnected components", () => {

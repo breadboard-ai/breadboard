@@ -76,6 +76,7 @@ export class ChangeEdge implements EditOperation {
         affectedNodes: [],
         affectedModules: [],
         affectedGraphs: [],
+        topologyChange: true,
       };
     }
     const handle = GraphDescriptorHandle.create(context.graph, graphId);
@@ -103,6 +104,7 @@ export class ChangeEdge implements EditOperation {
       ],
       affectedModules: [],
       affectedGraphs: [graphId],
+      topologyChange: true,
     };
   }
 }

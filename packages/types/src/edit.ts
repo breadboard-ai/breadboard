@@ -34,6 +34,7 @@ export type GraphChangeEvent = Event & {
   changeType: ChangeEventType;
   affectedNodes: AffectedNode[];
   affectedGraphs: GraphIdentifier[];
+  topologyChange: boolean;
   label: string | null;
 };
 
@@ -363,6 +364,12 @@ export type SingleEditResult =
       affectedNodes: AffectedNode[];
       affectedModules: ModuleIdentifier[];
       affectedGraphs: GraphIdentifier[];
+      /**
+       * Indicates that the change resulted in topology change:
+       * - node added or removed
+       * - edge added or removed
+       */
+      topologyChange?: boolean;
       /**
        * Indicates that the edit was successful, and
        * resulted in no change.

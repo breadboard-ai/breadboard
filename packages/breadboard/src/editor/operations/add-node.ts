@@ -41,6 +41,7 @@ export class AddNode implements EditOperation {
       affectedNodes: [],
       affectedModules: [],
       affectedGraphs: [],
+      topologyChange: true,
     };
   }
 
@@ -78,6 +79,7 @@ export class AddNode implements EditOperation {
       affectedNodes: [{ id: node.id, graphId }],
       affectedModules: [],
       affectedGraphs: [graphId],
+      topologyChange: true,
     };
   }
 }

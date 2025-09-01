@@ -523,9 +523,13 @@ class GraphStore
       },
       updated: () => {
         this.dispatchEvent(
-          new UpdateEvent(mutable.id, graphId, "", [
-            ...(this.#dependencies.get(mutable.id) || []),
-          ])
+          new UpdateEvent(
+            mutable.id,
+            graphId,
+            "",
+            [...(this.#dependencies.get(mutable.id) || [])],
+            true
+          )
         );
       },
     });

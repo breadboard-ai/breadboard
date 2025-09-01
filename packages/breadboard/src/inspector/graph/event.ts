@@ -26,7 +26,8 @@ class UpdateEvent extends Event implements GraphStoreUpdateEvent {
     public readonly mainGraphId: MainGraphIdentifier,
     public readonly graphId: GraphIdentifier,
     public readonly nodeId: NodeIdentifier,
-    public readonly affectedGraphs: MainGraphIdentifier[]
+    public readonly affectedGraphs: MainGraphIdentifier[],
+    public readonly topologyChange: boolean
   ) {
     super(UpdateEvent.eventName, { ...eventInit });
   }

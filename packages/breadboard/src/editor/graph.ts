@@ -110,7 +110,7 @@ export class Graph implements EditableGraph {
         this.#graph = graph;
         this.#mutable.rebuild(graph);
         this.#eventTarget.dispatchEvent(
-          new ChangeEvent(this.raw(), false, "history", [], [], [], null)
+          new ChangeEvent(this.raw(), false, "history", [], [], [], true, null)
         );
       },
       onHistoryChanged: options.onHistoryChanged,
@@ -139,13 +139,15 @@ export class Graph implements EditableGraph {
     affectedNodes: AffectedNode[],
     affectedModules: ModuleIdentifier[],
     affectedGraphs: GraphIdentifier[],
+    topologyChange: boolean,
     label: string
   ) {
     this.#mutable.update(
       this.#graph,
       visualOnly,
       affectedNodes,
-      affectedModules
+      affectedModules,
+      topologyChange
     );
     this.#eventTarget.dispatchEvent(
       new ChangeEvent(
@@ -155,6 +157,7 @@ export class Graph implements EditableGraph {
         affectedNodes,
         affectedModules,
         affectedGraphs,
+        topologyChange,
         label
       )
     );
@@ -267,6 +270,8 @@ export class Graph implements EditableGraph {
     const affectedModules: NodeIdentifier[][] = [];
     // Collect affected graphs
     const affectedGraphs: GraphIdentifier[][] = [];
+    // Presume that all edits will result in no topology change.
+    let topologyChange = false;
     let context: EditOperationContext;
     const apply: EditOperationConductor = async (
       edits: EditSpec[],
@@ -292,6 +297,9 @@ export class Graph implements EditableGraph {
         }
         if (!result.visualOnly) {
           visualOnly = false;
+        }
+        if (result.topologyChange) {
+          topologyChange = true;
         }
         if ("creator" in edit) {
           creator = edit.creator;
@@ -329,6 +337,7 @@ export class Graph implements EditableGraph {
         unique(affectedNodes.flat()),
         [...new Set(affectedModules.flat())],
         [...new Set(affectedGraphs.flat())],
+        topologyChange,
         label
       );
     return { success: true, log };
