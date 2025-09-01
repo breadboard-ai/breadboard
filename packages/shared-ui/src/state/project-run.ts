@@ -252,7 +252,7 @@ class ReactiveProjectRun implements ProjectRun {
         this.renderer.nodes.set(id, { status: state });
       });
 
-      this.#updateRunner(this.#inspectable?.mainGraphDescriptor()!);
+      this.#updateRunner(this.#inspectable!.mainGraphDescriptor());
     }
   }
 

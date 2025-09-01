@@ -62,7 +62,8 @@ function createPlan(graph: GraphDescriptor): OrchestrationPlan {
   const connected: NodeDescriptor[] = [];
   let onlyStandalone = true;
   entries.forEach((node) => {
-    if (outEdges.has(node.id)) {
+    const nodeTails = outEdges.get(node.id) || [];
+    if (nodeTails.length == 0) {
       standalone.push(node);
     } else {
       onlyStandalone = false;
@@ -74,13 +75,12 @@ function createPlan(graph: GraphDescriptor): OrchestrationPlan {
   // If there are no standalone nodes, return all entries as usual.
   if (standalone.length === 0) {
     queue = entries;
-  }
-  if (onlyStandalone) {
+  } else if (onlyStandalone) {
     // This is the situation when we have a bunch of random nodes in graph
     // and they are not connected, and there's no designated start node.
 
     // Just return the first standalone node.
-    queue = [standalone.at(0)!];
+    queue = [standalone[0]];
   } else {
     // If there are both standalone and connected nodes, we just ignore
     // all standalone nodes.

@@ -140,7 +140,7 @@ class PlanRunner extends AbstractRunner {
   async updateGraph(graph: GraphDescriptor) {
     this.#orchestrator = this.#createOrchestrator(graph);
     if (this.#controller) {
-      await this.#controller.update(this.#orchestrator, graph);
+      await this.#controller.update(this.#orchestrator);
     }
   }
 }
@@ -433,7 +433,7 @@ class InternalRunStateController {
     };
   }
 
-  async update(orchestrator: Orchestrator, graph: GraphDescriptor) {
+  async update(orchestrator: Orchestrator) {
     const oldOrchestartor = this.orchestrator;
     orchestrator.update(oldOrchestartor);
     this.orchestrator = orchestrator;
