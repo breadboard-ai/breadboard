@@ -391,7 +391,9 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             }
           }} class=${classMap(classes)}>${
             item.icon
-              ? html`<span class="g-icon step-icon">${item.icon}</span>`
+              ? html`<span class="g-icon step-icon round filled"
+                  >${item.icon}</span
+                >`
               : nothing
           }
             <span class="title">${item.title}</span>
@@ -440,7 +442,9 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                         class=${classMap(workItemClasses)}
                       >
                         ${icon
-                          ? html`<span class="g-icon step-icon">${icon}</span>`
+                          ? html`<span class="g-icon step-icon round filled"
+                              >${icon}</span
+                            >`
                           : nothing}<span class="title"
                           >${workItem.title}<span class="duration"
                             >${this.#formatToSeconds(workItem.elapsed)}</span
