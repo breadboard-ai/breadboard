@@ -6,8 +6,6 @@
 
 import {
   createRunObserver,
-  InspectableRunObserver,
-  InspectableRunSequenceEntry,
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
@@ -45,7 +43,6 @@ export class Run extends EventTarget {
       mainGraphId: MainGraphIdentifier;
       harnessRunner?: HarnessRunner;
       topGraphObserver?: BreadboardUI.Utils.TopGraphObserver;
-      runObserver?: InspectableRunObserver;
       abortController?: AbortController;
       kits: Kit[];
     }
@@ -61,15 +58,10 @@ export class Run extends EventTarget {
     super();
   }
 
-  create(
-    tab: Tab,
-    topGraphObserver: BreadboardUI.Utils.TopGraphObserver,
-    runObserver?: InspectableRunObserver
-  ) {
+  create(tab: Tab, topGraphObserver: BreadboardUI.Utils.TopGraphObserver) {
     this.#runs.set(tab.id, {
       mainGraphId: tab.mainGraphId,
       topGraphObserver,
-      runObserver,
       kits: [...this.graphStore.kits, ...tab.boardServerKits],
     });
   }
@@ -139,15 +131,11 @@ export class Run extends EventTarget {
       return null;
     }
 
-    const { topGraphObserver, runObserver } = run;
-    return { topGraphObserver, runObserver };
+    const { topGraphObserver } = run;
+    return { topGraphObserver };
   }
 
-  async prepareRun(
-    tab: Tab,
-    config: RunConfig,
-    history?: InspectableRunSequenceEntry[]
-  ) {
+  async prepareRun(tab: Tab, config: RunConfig) {
     const abortController = new AbortController();
     const tabId = tab.id;
     config = {
@@ -168,7 +156,7 @@ export class Run extends EventTarget {
     );
     this.#runs.set(tabId, runner);
 
-    const { harnessRunner, runObserver, topGraphObserver } = runner;
+    const { harnessRunner } = runner;
     harnessRunner.addEventListener("start", (evt: RunLifecycleEvent) => {
       this.dispatchEvent(
         new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
@@ -266,11 +254,6 @@ export class Run extends EventTarget {
         abortController.signal
       );
     }
-
-    if (history) {
-      await runObserver.append(history);
-      topGraphObserver.startWith(history);
-    }
   }
 
   hasRun(tab: Tab): boolean {
@@ -323,7 +306,6 @@ export class Run extends EventTarget {
       mainGraphId,
       harnessRunner,
       topGraphObserver,
-      runObserver,
       abortController,
       kits: config.kits,
     };

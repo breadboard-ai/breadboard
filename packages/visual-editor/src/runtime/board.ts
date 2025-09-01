@@ -9,7 +9,6 @@ import {
   EditHistoryCreator,
   EditHistoryEntry,
   GraphDescriptor,
-  InspectableRunObserver,
   isLLMContentArray,
   isStoredData,
   Kit,
@@ -401,54 +400,6 @@ export class Board extends EventTarget {
     return [...new Uint8Array(digest)]
       .map((v) => v.toString(16).padStart(2, "0"))
       .join("");
-  }
-
-  async createTabFromRun(
-    descriptor: GraphDescriptor,
-    topGraphObserver?: BreadboardUI.Utils.TopGraphObserver,
-    runObserver?: InspectableRunObserver,
-    readOnly = true
-  ) {
-    const descriptorUrl = await this.#toDigest(descriptor);
-    descriptor.url = `run://${descriptorUrl}`;
-
-    for (const [id, tab] of this.#tabs) {
-      if (tab.graph.url !== descriptor.url) {
-        continue;
-      }
-
-      this.#currentTabId = id;
-      this.dispatchEvent(new RuntimeTabChangeEvent());
-      return;
-    }
-
-    const moduleId = descriptor.main || null;
-
-    const id = globalThis.crypto.randomUUID();
-    const mainGraphId = this.getGraphStore().addByDescriptor(descriptor);
-    if (!mainGraphId.success) {
-      throw new Error(`Unable to add graph: ${mainGraphId.error}`);
-    }
-    this.#tabs.set(id, {
-      id,
-      boardServerKits: this.boardServerKits,
-      name: descriptor.title ?? "Untitled board",
-      mainGraphId: mainGraphId.result,
-      graph: descriptor,
-      graphIsMine: true,
-      subGraphId: null,
-      boardServer: null,
-      moduleId,
-      version: 1,
-      lastLoadedVersion: 1,
-      type: TabType.DESCRIPTOR,
-      readOnly,
-    });
-
-    this.#currentTabId = id;
-    this.dispatchEvent(
-      new RuntimeTabChangeEvent(topGraphObserver, runObserver)
-    );
   }
 
   async createTabFromDescriptor(

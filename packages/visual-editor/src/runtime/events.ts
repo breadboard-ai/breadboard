@@ -17,7 +17,6 @@ import {
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
   EditHistoryCreator,
-  InspectableRunObserver,
   NodeConfiguration,
   NodeIdentifier,
 } from "@google-labs/breadboard";
@@ -177,8 +176,7 @@ export class RuntimeTabChangeEvent extends Event {
   static eventName = "runtimetabchange" as const;
 
   constructor(
-    public readonly topGraphObserver?: BreadboardUI.Utils.TopGraphObserver,
-    public readonly runObserver?: InspectableRunObserver
+    public readonly topGraphObserver?: BreadboardUI.Utils.TopGraphObserver
   ) {
     super(RuntimeTabChangeEvent.eventName, { ...eventInit });
   }
