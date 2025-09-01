@@ -418,7 +418,7 @@ export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
    * the graph descriptor for a runner.
    *
    */
-  updateGraph?(graph: GraphDescriptor): void;
+  updateGraph?(graph: GraphDescriptor): Promise<void>;
 };
 
 /**

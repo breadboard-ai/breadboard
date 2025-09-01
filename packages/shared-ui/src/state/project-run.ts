@@ -8,6 +8,7 @@ import { type ParticleTree, ParticleTreeImpl } from "@breadboard-ai/particles";
 import {
   EditableGraph,
   ErrorResponse,
+  GraphDescriptor,
   HarnessRunner,
   InspectableNode,
   NodeIdentifier,
@@ -213,7 +214,7 @@ class ReactiveProjectRun implements ProjectRun {
     editable?.addEventListener("graphchange", (e) => {
       this.#inspectable = editable.inspect("");
       if (e.topologyChange) {
-        this.#updateRunner();
+        this.#updateRunner(e.graph);
       }
     });
 
@@ -251,15 +252,15 @@ class ReactiveProjectRun implements ProjectRun {
         this.renderer.nodes.set(id, { status: state });
       });
 
-      this.#updateRunner();
+      this.#updateRunner(this.#inspectable?.mainGraphDescriptor()!);
     }
   }
 
-  #updateRunner() {
+  async #updateRunner(graph: GraphDescriptor) {
     const { runner } = this;
     if (!runner) return;
 
-    runner.updateGraph?.(this.#inspectable!.mainGraphDescriptor());
+    await runner.updateGraph?.(graph);
 
     this.console.clear();
     this.renderer.nodes.clear();

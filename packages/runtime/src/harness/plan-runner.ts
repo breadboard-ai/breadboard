@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { resolveGraph, resolveGraphUrls } from "@breadboard-ai/loader";
 import {
   BreakpointSpec,
   GraphDescriptor,
@@ -21,23 +20,16 @@ import {
   Task,
   TraversalResult,
 } from "@breadboard-ai/types";
-import {
-  asyncGen,
-  err,
-  isImperativeGraph,
-  ok,
-  timestamp,
-  toDeclarativeGraph,
-} from "@breadboard-ai/utils";
+import { asyncGen, err, ok, timestamp } from "@breadboard-ai/utils";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { NodeInvoker } from "../run/node-invoker.js";
 import { createPlan } from "../static/create-plan.js";
 import { Orchestrator } from "../static/orchestrator.js";
 import { AbstractRunner } from "./abstract-runner.js";
-import { fromProbe, fromRunnerResult, graphToRunFromConfig } from "./local.js";
-import { configureKits } from "./run.js";
 import { NodeStateChangeEvent, PauseEvent, ResumeEvent } from "./events.js";
+import { fromProbe, fromRunnerResult } from "./local.js";
+import { configureKits } from "./run.js";
 
 export { PlanRunner };
 
@@ -53,45 +45,36 @@ class PlanRunner extends AbstractRunner {
   #controller: InternalRunStateController | null = null;
 
   @signal
-  accessor #orchestrator: Orchestrator | null = null;
+  accessor #orchestrator: Orchestrator;
 
   @signal
   get state(): OrchestratorState {
-    const runState = this.#runState;
-    if (!runState) {
-      if (this.#orchestrator) {
-        return this.#orchestrator.fullState();
-      }
-      return emptyOrchestratorState();
+    const orchestrator = this.#orchestrator;
+    if (orchestrator) {
+      return orchestrator.fullState();
     }
-
-    return runState.orchestrator.fullState();
+    return emptyOrchestratorState();
   }
 
   @signal
   get plan() {
-    const runState = this.#runState;
-    if (!runState) {
-      if (this.#orchestrator) {
-        return this.#orchestrator.plan;
-      }
-      return emptyPlan();
+    const orchestrator = this.#orchestrator;
+    if (orchestrator) {
+      return orchestrator.plan;
     }
-    return runState.orchestrator.plan;
+    return emptyPlan();
   }
-
-  @signal
-  accessor #runState: InternalRunState | undefined = undefined;
 
   accessor breakpoints = new SignalMap<NodeIdentifier, BreakpointSpec>();
 
   constructor(config: RunConfig) {
     super(config);
-    if (config.runner) {
-      // We have a GraphDescriptor, we can create plan/orchestrator
-      // synchronously.
-      this.#orchestrator = this.#createOrchestrator(config.runner);
+    if (!config.runner) {
+      throw new Error(
+        `Unable to initialize PlanRunner: RunConfig.runner is empty`
+      );
     }
+    this.#orchestrator = this.#createOrchestrator(config.runner);
   }
 
   #createOrchestrator(graph: GraphDescriptor) {
@@ -132,6 +115,7 @@ class PlanRunner extends AbstractRunner {
     yield* asyncGen<HarnessRunResult>(async (next) => {
       this.#controller = new InternalRunStateController(
         this.config,
+        this.config.runner!,
         this.#orchestrator,
         this.breakpoints,
         () => {
@@ -139,7 +123,6 @@ class PlanRunner extends AbstractRunner {
         },
         next
       );
-      this.#runState = await this.#controller.state;
       if (!interactiveMode) {
         // Start the first run.
         await this.#controller.run();
@@ -154,36 +137,33 @@ class PlanRunner extends AbstractRunner {
     });
   }
 
-  updateGraph(graph: GraphDescriptor) {
+  async updateGraph(graph: GraphDescriptor) {
     this.#orchestrator = this.#createOrchestrator(graph);
+    if (this.#controller) {
+      await this.#controller.update(this.#orchestrator, graph);
+    }
   }
 }
-
-type InternalRunState = {
-  graph: GraphDescriptor;
-  orchestrator: Orchestrator;
-  context: NodeHandlerContext;
-  last: NodeIdentifier | null;
-};
 
 type TaskStatus = "breakpoint" | "success";
 
 class InternalRunStateController {
   #stopControllers: Map<NodeIdentifier, AbortController> = new Map();
 
-  state: Promise<InternalRunState>;
+  context: Promise<NodeHandlerContext>;
 
   index: number = 0;
   #finished: null | (() => void) = null;
 
   constructor(
     public readonly config: RunConfig,
-    public orchestrator: Orchestrator | null,
+    private graph: GraphDescriptor,
+    private orchestrator: Orchestrator,
     public readonly breakpoints: Map<NodeIdentifier, BreakpointSpec>,
     public readonly pause: () => void,
     public readonly callback: (data: HarnessRunResult) => Promise<void>
   ) {
-    this.state = this.initialize(callback);
+    this.context = this.initializeNodeHandlerContext(callback);
   }
 
   path(): number[] {
@@ -224,7 +204,7 @@ class InternalRunStateController {
   }
 
   async runTask(task: Task): Promise<TaskStatus> {
-    const state = await this.state;
+    const context = await this.context;
 
     const id = task.node.id;
 
@@ -236,7 +216,6 @@ class InternalRunStateController {
       return "breakpoint";
     }
 
-    state.last = id;
     const path = this.path();
     this.callback({
       type: "nodestart",
@@ -248,22 +227,22 @@ class InternalRunStateController {
       },
       reply: async () => {},
     });
-    const working = state.orchestrator.setWorking(task.node.id);
+    const working = this.orchestrator.setWorking(task.node.id);
     if (!ok(working)) {
       console.warn(working.$error);
     }
     const signal = this.#getOrCreateStopController(task.node.id).signal;
     const invoker = new NodeInvoker(
-      { ...state.context, signal },
-      { graph: state.graph },
+      { ...context, signal },
+      { graph: this.graph },
       async (result) => {
         const harnessResult = fromRunnerResult(result);
         if (harnessResult.type === "input" && harnessResult.data.bubbled) {
-          state.orchestrator.setWaiting(task.node.id);
+          this.orchestrator.setWaiting(task.node.id);
           return this.callback({
             ...harnessResult,
             reply: async (inputs) => {
-              state.orchestrator.setWorking(task.node.id);
+              this.orchestrator.setWorking(task.node.id);
               return harnessResult.reply(inputs);
             },
           });
@@ -271,7 +250,11 @@ class InternalRunStateController {
         return this.callback(harnessResult);
       }
     );
-    const nodeConfiguration = getLatestConfig(task.node.id, state);
+    const nodeConfiguration = getLatestConfig(
+      task.node.id,
+      this.graph,
+      context
+    );
     let outputs;
     if (!ok(nodeConfiguration)) {
       outputs = nodeConfiguration as { $error: string };
@@ -282,16 +265,16 @@ class InternalRunStateController {
         path
       );
       if (signal.aborted) {
-        const interrupting = state.orchestrator.setInterrupted(task.node.id);
+        const interrupting = this.orchestrator.setInterrupted(task.node.id);
         if (!ok(interrupting)) {
           console.warn(interrupting.$error);
         }
       } else {
-        const working = state.orchestrator.setWorking(task.node.id);
+        const working = this.orchestrator.setWorking(task.node.id);
         if (!ok(working)) {
           console.warn(working.$error);
         }
-        const providing = state.orchestrator.provideOutputs(
+        const providing = this.orchestrator.provideOutputs(
           task.node.id,
           outputs
         );
@@ -315,25 +298,24 @@ class InternalRunStateController {
     return "success";
   }
 
-  async preamble(): Promise<InternalRunState> {
-    const state = await this.state;
-    if (state.orchestrator.progress !== "initial") return state;
+  async preamble(): Promise<NodeHandlerContext> {
+    const context = await this.context;
+    if (this.orchestrator.progress !== "initial") return context;
     await this.callback({
       type: "graphstart",
       data: {
-        graph: state.graph,
+        graph: this.graph,
         graphId: "",
         path: [],
         timestamp: timestamp(),
       },
       reply: async () => {},
     });
-    return state;
+    return context;
   }
 
   async postamble() {
-    const state = await this.state;
-    if (state.orchestrator.progress !== "finished") return;
+    if (this.orchestrator.progress !== "finished") return;
     await this.callback({
       type: "graphend",
       data: {
@@ -370,11 +352,10 @@ class InternalRunStateController {
   }
 
   async run() {
-    const state = await this.preamble();
     for (;;) {
-      if (state.orchestrator.progress === "finished") break;
+      if (this.orchestrator.progress === "finished") break;
 
-      const tasks = state.orchestrator.currentTasks();
+      const tasks = this.orchestrator.currentTasks();
       if (!ok(tasks)) {
         await this.error(tasks);
         return;
@@ -399,13 +380,12 @@ class InternalRunStateController {
   }
 
   async runNode(id: NodeIdentifier): Promise<Outcome<void>> {
-    const state = await this.state;
-    const task = state.orchestrator.taskFromId(id);
+    const task = this.orchestrator.taskFromId(id);
     if (!ok(task)) return task;
     await this.runTask(task);
   }
 
-  async stop(id: NodeIdentifier) {
+  stop(id: NodeIdentifier) {
     const stopController = this.#stopControllers?.get(id);
     if (!stopController) {
       console.warn(`Unable to find stop controller for node "${id}"`);
@@ -417,8 +397,7 @@ class InternalRunStateController {
       console.log(e);
     }
     this.#stopControllers?.delete(id);
-    const state = await this.state;
-    state.orchestrator.setInterrupted(id);
+    this.orchestrator.setInterrupted(id);
   }
 
   async initializeNodeHandlerContext(
@@ -454,56 +433,25 @@ class InternalRunStateController {
     };
   }
 
-  async initialize(
-    next: (data: HarnessRunResult) => Promise<void>
-  ): Promise<InternalRunState> {
-    let orchestrator;
-    let graph;
-    if (this.orchestrator) {
-      graph = this.config.runner!;
-      orchestrator = this.orchestrator;
-    } else {
-      const graphToRun = resolveGraphUrls(
-        await graphToRunFromConfig(this.config)
-      );
-      graph = resolveGraph(graphToRun);
-
-      if (isImperativeGraph(graph)) {
-        graph = toDeclarativeGraph(graph);
-      }
-
-      const plan = createPlan(graph);
-      orchestrator = new Orchestrator(plan, {
-        stateChangedbyOrchestrator() {
-          console.warn(
-            'Unexpected invocation of "stateChangedbyOrchestrator" callback. Likely a bug somewhere.'
-          );
-        },
-      });
-    }
-
-    const context = await this.initializeNodeHandlerContext(next);
-
-    return { graph, context, orchestrator, last: null };
+  async update(orchestrator: Orchestrator, graph: GraphDescriptor) {
+    const oldOrchestartor = this.orchestrator;
+    orchestrator.update(oldOrchestartor);
+    this.orchestrator = orchestrator;
   }
 }
 
 function getLatestConfig(
   id: NodeIdentifier,
-  state: InternalRunState
+  graph: GraphDescriptor,
+  context: NodeHandlerContext
 ): Outcome<NodeConfiguration> {
-  const gettingMainGraph = state.context.graphStore?.getByDescriptor(
-    state.graph
-  );
+  const gettingMainGraph = context.graphStore?.getByDescriptor(graph);
   if (!gettingMainGraph?.success) {
-    return err(`Can't to find graph "${state.graph.url}" in graph store`);
+    return err(`Can't to find graph "${graph.url}" in graph store`);
   }
-  const inspector = state.context.graphStore?.inspect(
-    gettingMainGraph.result,
-    ""
-  );
+  const inspector = context.graphStore?.inspect(gettingMainGraph.result, "");
   if (!inspector) {
-    return err(`Can't get inspector for graph "${state.graph.url}"`);
+    return err(`Can't get inspector for graph "${graph.url}"`);
   }
   const inspectableNode = inspector.nodeById(id);
   if (!inspectableNode) {
