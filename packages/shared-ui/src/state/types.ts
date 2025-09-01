@@ -460,6 +460,7 @@ export type ConnectorState = {
 export type UIOverlays =
   | "BoardEditModal"
   | "BoardServerAddOverlay"
+  | "BetterOnDesktopModal"
   | "SnackbarDetailsModal"
   | "MissingShare"
   | "MCPServersModal"

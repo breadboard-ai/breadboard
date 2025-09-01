@@ -27,6 +27,9 @@ export class VEModal extends LitElement {
   @property({ reflect: true, type: Boolean })
   accessor showSaveCancel = false;
 
+  @property({ reflect: true, type: Boolean })
+  accessor blurBackground = false;
+
   @query("dialog")
   accessor #dialog: HTMLDialogElement | null = null;
 
@@ -147,6 +150,10 @@ export class VEModal extends LitElement {
           animation: fadeIn 0.3s cubic-bezier(0, 0, 0.3, 1) forwards;
           background: var(--ui-scrim);
         }
+      }
+
+      :host([blurbackground]) dialog::backdrop {
+        backdrop-filter: blur(16px);
       }
 
       @keyframes fadeIn {
