@@ -475,7 +475,7 @@ class Orchestrator {
     }
     let index = 0;
     for (const [id] of this.#state) {
-      const [oldId, oldNodeState] = oldEntries[index];
+      const [oldId, oldNodeState] = oldEntries[index] || [];
       if (id === oldId) {
         if (oldNodeState.outputs) {
           this.provideOutputs(id, oldNodeState.outputs);

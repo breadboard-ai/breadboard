@@ -7,6 +7,7 @@
 import {
   Edge,
   GraphDescriptor,
+  NodeDescriptor,
   OrchestrationPlan,
   PlanNodeInfo,
 } from "@breadboard-ai/types";
@@ -53,7 +54,39 @@ function createPlan(graph: GraphDescriptor): OrchestrationPlan {
   }
 
   const stages: PlanNodeInfo[][] = [];
-  const queue = nodes.filter((node) => inDegree.get(node.id) === 0);
+  const entries = nodes.filter((node) => inDegree.get(node.id) === 0);
+
+  // Now, let's separate out all standalone steps and see if maybe we only
+  // have standalone nodes.
+  const standalone: NodeDescriptor[] = [];
+  const connected: NodeDescriptor[] = [];
+  let onlyStandalone = true;
+  entries.forEach((node) => {
+    if (outEdges.has(node.id)) {
+      standalone.push(node);
+    } else {
+      onlyStandalone = false;
+      connected.push(node);
+    }
+  });
+  let queue: NodeDescriptor[];
+
+  // If there are no standalone nodes, return all entries as usual.
+  if (standalone.length === 0) {
+    queue = entries;
+  }
+  if (onlyStandalone) {
+    // This is the situation when we have a bunch of random nodes in graph
+    // and they are not connected, and there's no designated start node.
+
+    // Just return the first standalone node.
+    queue = [standalone.at(0)!];
+  } else {
+    // If there are both standalone and connected nodes, we just ignore
+    // all standalone nodes.
+    queue = connected;
+  }
+
   const processed = new Set<string>();
 
   while (queue.length > 0) {
