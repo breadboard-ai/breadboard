@@ -41,8 +41,6 @@ export { createRunStateManager } from "./run/index.js";
 // Move runtime tests to `runtime` package.
 export { LocalRunner } from "./harness/local-runner.js";
 // Move runtime tests to `runtime` package.
-export { RemoteRunner } from "./harness/remote-runner.js";
-// Move runtime tests to `runtime` package.
 export { loadRunnerState } from "./serialization.js";
 // Used by `board-server` as part of remote run API.
 export { handleRunGraphRequest } from "./remote/run-graph-server.js";

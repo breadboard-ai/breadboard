@@ -14,8 +14,6 @@ import {
   EditHistory,
   EditableGraph,
   GraphDescriptor,
-  InspectableRun,
-  InspectableRunEvent,
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
@@ -135,9 +133,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
   accessor themeHash = 0;
 
   @property()
-  accessor runs: InspectableRun[] | null = null;
-
-  @property()
   accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
 
   @property()
@@ -186,9 +181,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
   @state()
   accessor highlightState: HighlightStateWithChangeId | null = null;
-
-  @state()
-  accessor debugEvent: InspectableRunEvent | null = null;
 
   @state()
   accessor showAssetOrganizer = false;

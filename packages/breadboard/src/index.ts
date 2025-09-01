@@ -29,11 +29,7 @@ export { getGraphDescriptor } from "@breadboard-ai/loader";
  */
 export { PortStatus } from "@breadboard-ai/types";
 export * from "@breadboard-ai/types/inspect.js";
-export {
-  createGraphStore,
-  createRunObserver,
-  inspect,
-} from "./inspector/index.js";
+export { createGraphStore, inspect } from "./inspector/index.js";
 
 /**
  * The Editor API.
@@ -109,11 +105,6 @@ export {
   runGraph,
 } from "@breadboard-ai/runtime/legacy.js";
 export type * from "@breadboard-ai/types/run.js";
-
-/**
- * Conversion helpers
- */
-export { sequenceEntryToHarnessRunResult } from "./inspector/run/conversions.js";
 
 export { blankImperative, defaultModuleContent } from "@breadboard-ai/utils";
 export { addSandboxedRunModule } from "./sandboxed-run-module.js";

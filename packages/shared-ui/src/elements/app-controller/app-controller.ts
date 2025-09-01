@@ -11,7 +11,7 @@ const GlobalStrings = StringsHelper.forSection("Global");
 
 import { LitElement, PropertyValues, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { InspectableRunEvent, isStoredData } from "@google-labs/breadboard";
+import { isStoredData } from "@google-labs/breadboard";
 
 import { styles as appPreviewStyles } from "./app-controller.styles.js";
 import {
@@ -113,9 +113,6 @@ export class AppController extends SignalWatcher(LitElement) {
 
   @property()
   accessor theme: AppTheme = this.#createDefaultTheme();
-
-  @state()
-  accessor debugEvent: InspectableRunEvent | null = null;
 
   @state()
   accessor _originalTheme: AppTheme | null = null;
