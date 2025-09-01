@@ -940,7 +940,7 @@ export class LLMOutput extends LitElement {
                       this.showPartOverflowMenu = true;
                     }}
                   >
-                    <span class="g-icon">more_vert</span>
+                    <span class="g-icon filled round">more_vert</span>
                   </button>`
                 : nothing}
             </span>

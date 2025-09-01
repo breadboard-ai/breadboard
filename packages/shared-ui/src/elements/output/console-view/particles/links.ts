@@ -66,7 +66,10 @@ export class ParticleLinks extends SignalWatcher(LitElement) {
     return html`<ul>
       ${value.map((link) => {
         return html`<li>
-          <a href=${link.uri} class="sans-flex w-500 round md-body-small"
+          <a
+            target="_blank"
+            href=${link.uri}
+            class="sans-flex w-500 round md-body-small"
             ><img
               src="https://www.google.com/s2/favicons?domain=${link.title}&sz=48"
             /><span>${link.title}</span
