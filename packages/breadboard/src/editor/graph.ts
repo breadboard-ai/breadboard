@@ -110,7 +110,7 @@ export class Graph implements EditableGraph {
         this.#graph = graph;
         this.#mutable.rebuild(graph);
         this.#eventTarget.dispatchEvent(
-          new ChangeEvent(this.raw(), false, "history", [], [], [], null)
+          new ChangeEvent(this.raw(), false, "history", [], [], [], true, null)
         );
       },
       onHistoryChanged: options.onHistoryChanged,
@@ -157,6 +157,7 @@ export class Graph implements EditableGraph {
         affectedNodes,
         affectedModules,
         affectedGraphs,
+        topologyChange,
         label
       )
     );

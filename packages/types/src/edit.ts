@@ -34,6 +34,7 @@ export type GraphChangeEvent = Event & {
   changeType: ChangeEventType;
   affectedNodes: AffectedNode[];
   affectedGraphs: GraphIdentifier[];
+  topologyChange: boolean;
   label: string | null;
 };
 

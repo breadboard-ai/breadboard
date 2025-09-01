@@ -183,6 +183,7 @@ class ReactiveProject implements ProjectInternal {
       this.#store,
       fileSystem,
       runner,
+      this.#editable,
       signal
     );
   }
