@@ -30,13 +30,11 @@ import {
   composeFileSystemBackends,
   createEphemeralBlobStore,
   createFileSystem,
-  createRunObserver,
   GraphDescriptor,
   hash,
   MutableGraphStore,
   ok,
   PersistentBackend,
-  SerializedRun,
 } from "@google-labs/breadboard";
 import { provide } from "@lit/context";
 import { html, HTMLTemplateResult, LitElement, nothing } from "lit";
@@ -803,11 +801,7 @@ export class Main extends SignalWatcher(LitElement) {
           // run with it before switching to the tab proper.
           // TODO: Remove. This no longer happens.
           if (evt.topGraphObserver) {
-            this.#runtime.run.create(
-              this.#tab,
-              evt.topGraphObserver,
-              evt.runObserver
-            );
+            this.#runtime.run.create(this.#tab, evt.topGraphObserver);
           }
 
           if (this.#tab.graph.title) {
@@ -1317,55 +1311,11 @@ export class Main extends SignalWatcher(LitElement) {
       return;
     }
 
-    const isSerializedRun = (
-      data: SerializedRun | GraphDescriptor
-    ): data is SerializedRun => {
-      return "timeline" in data;
-    };
-
     const fileDropped = evt.dataTransfer.files[0];
     fileDropped.text().then((data) => {
       try {
-        const runData = JSON.parse(data) as SerializedRun | GraphDescriptor;
-        if (isSerializedRun(runData)) {
-          const runObserver = createRunObserver(this.#graphStore, {
-            logLevel: "debug",
-            dataStore: this.#runtime.run.dataStore,
-            sandbox,
-          });
-
-          evt.preventDefault();
-
-          runObserver.load(runData).then(async (result) => {
-            if (result.success) {
-              // TODO: Append the run to the runObserver so that it can be obtained later.
-              const topGraphObserver =
-                await BreadboardUI.Utils.TopGraphObserver.fromRun(result.run);
-              const descriptor = topGraphObserver?.current()?.graph ?? null;
-
-              if (descriptor) {
-                this.#runtime.board.createTabFromRun(
-                  descriptor,
-                  topGraphObserver,
-                  runObserver,
-                  true
-                );
-              } else {
-                this.toast(
-                  Strings.from("ERROR_RUN_LOAD_DATA_FAILED"),
-                  BreadboardUI.Events.ToastType.ERROR
-                );
-              }
-            } else {
-              this.toast(
-                Strings.from("ERROR_RUN_LOAD_DATA_FAILED"),
-                BreadboardUI.Events.ToastType.ERROR
-              );
-            }
-          });
-        } else {
-          this.#runtime.board.createTabFromDescriptor(runData);
-        }
+        const runData = JSON.parse(data) as GraphDescriptor;
+        this.#runtime.board.createTabFromDescriptor(runData);
       } catch (err) {
         console.warn(err);
         this.toast(

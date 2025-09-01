@@ -10,7 +10,6 @@ import {
   NodeIdentifier,
   OutputValues,
 } from "./graph-descriptor.js";
-import { InspectableRunSequenceEntry } from "./inspect.js";
 import { TraversalResult } from "./traversal.js";
 
 /**
@@ -101,11 +100,6 @@ export type ReanimationStateVisits = [NodeIdentifier, number[]][];
 export type ReanimationState = {
   states?: ReanimationStateCache;
   visits?: ReanimationStateVisits;
-  /**
-   * A run that consists of the events that preceded the point at which
-   * the reanimation state was captured.
-   */
-  history?: InspectableRunSequenceEntry[];
   /**
    * Node configuration that overrides what's in the current state
    */

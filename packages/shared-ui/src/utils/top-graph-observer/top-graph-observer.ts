@@ -7,10 +7,6 @@
 import type {
   GraphDescriptor,
   HarnessRunner,
-  HarnessRunResult,
-  InspectableRun,
-  InspectableRunObserver,
-  InspectableRunSequenceEntry,
   NodeIdentifier,
   OutputValues,
   RunErrorEvent,
@@ -22,7 +18,6 @@ import type {
   RunOutputEvent,
   Schema,
 } from "@breadboard-ai/types";
-import { sequenceEntryToHarnessRunResult } from "@google-labs/breadboard";
 import type {
   ComponentActivityItem,
   EdgeLogEntry,
@@ -41,7 +36,6 @@ import {
 import { EdgeValueStore } from "./edge-value-store";
 import { EndNodeEntry, NodeEntry, UserNodeEntry } from "./node-entry";
 import { NodeInformation } from "./node-information";
-import { RunDetails } from "./run-details";
 
 /**
  * A lightweight rewrite of the `InspectableRunObserver` that
@@ -71,45 +65,6 @@ export class TopGraphObserver {
    * Stores the path of the node that errored.
    */
   #errorPath: number[] | null = null;
-  #runDetails: RunDetails | null;
-
-  static async fromRun(run: InspectableRun): Promise<TopGraphObserver> {
-    const observer = new TopGraphObserver(new EventTarget() as HarnessRunner);
-    observer.#replay = true;
-    for await (const result of run.replay()) {
-      switch (result.type) {
-        case "graphstart": {
-          observer.#graphStart(toEvent(result));
-          break;
-        }
-        case "graphend":
-          observer.#graphEnd(toEvent(result));
-          break;
-        case "nodestart":
-          observer.#nodeStart(toEvent(result));
-          break;
-        case "nodeend":
-          observer.#nodeEnd(toEvent(result));
-          break;
-        case "input":
-          observer.#input(toEvent(result));
-          break;
-        case "output":
-          observer.#output(toEvent(result));
-          break;
-        case "error":
-          observer.#error(toEvent(result));
-          break;
-      }
-    }
-    return observer;
-
-    function toEvent<E extends Event>(result: HarnessRunResult): E {
-      return {
-        data: result.data,
-      } as unknown as E;
-    }
-  }
 
   static entryResult(graph: GraphDescriptor | undefined): TopGraphRunResult {
     // const entryId = computeEntryId(graph);
@@ -146,12 +101,7 @@ export class TopGraphObserver {
     // }
   }
 
-  constructor(
-    runner: HarnessRunner,
-    signal?: AbortSignal,
-    observer?: InspectableRunObserver
-  ) {
-    this.#runDetails = observer ? new RunDetails(observer) : null;
+  constructor(runner: HarnessRunner, signal?: AbortSignal) {
     if (signal) {
       signal.addEventListener("abort", this.#abort.bind(this));
     }
@@ -254,7 +204,6 @@ export class TopGraphObserver {
     if (this.#replay) {
       this.#graph = event.data.graph;
     }
-    this.#runDetails?.initialize();
     this.#log = [];
     this.#currentResult = null;
   }
@@ -364,10 +313,7 @@ export class TopGraphObserver {
 
     if (!event.data.bubbled) {
       this.#currentNode = new UserNodeEntry(event);
-      this.#currentInput = new InputEdge(
-        event,
-        this.#runDetails?.lastRunInput(event.data.node.id)
-      );
+      this.#currentInput = new InputEdge(event);
       const edge = this.#currentInput;
       this.#log = placeInputInLog([...this.#log, this.#currentNode!], edge);
       this.#currentResult = null;
@@ -423,51 +369,6 @@ export class TopGraphObserver {
       { type: "error", error: event.data.error, path: this.#errorPath || [] },
     ];
     this.#currentResult = null;
-  }
-
-  startWith(entries: InspectableRunSequenceEntry[]) {
-    // This code is roughly equivalent to `fromRun`.
-    // TODO: Reconcile and unify.
-    for (const entry of entries) {
-      const [type] = entry;
-      switch (type) {
-        case "graphstart": {
-          this.#graphStart(toEvent(entry));
-          break;
-        }
-        case "graphend":
-          this.#graphEnd(toEvent(entry));
-          break;
-        case "nodestart": {
-          this.#nodeStart(toEvent(entry));
-          break;
-        }
-        case "nodeend":
-          this.#nodeEnd(toEvent(entry));
-          break;
-        case "input":
-          this.#input(toEvent(entry));
-          break;
-        case "output":
-          this.#output(toEvent(entry));
-          break;
-        case "error":
-          this.#error(toEvent(entry));
-          break;
-      }
-    }
-
-    function toEvent<E extends Event>(entry: InspectableRunSequenceEntry): E {
-      const result = sequenceEntryToHarnessRunResult(entry);
-      if (!result) {
-        throw new Error(
-          `Unable to create harness run result from "${entry[0]}"`
-        );
-      }
-      return {
-        data: result.data,
-      } as unknown as E;
-    }
   }
 
   updateAffected(affectedNodes: NodeIdentifier[]) {
