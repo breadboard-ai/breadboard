@@ -281,6 +281,16 @@ export class CanvasController extends SignalWatcher(LitElement) {
     ) {
       this.sideNavItem = "editor";
     }
+
+    // If the user opens an unowned graph then we default them back to the app
+    // view irrespective of whatever sidenav item they had selected prior.
+    if (
+      changedProperties.has("mainGraphId") &&
+      this.mainGraphId &&
+      !this.graphIsMine
+    ) {
+      this.sideNavItem = "app-view";
+    }
   }
 
   #projectStateUpdated = new Signal.State({});
