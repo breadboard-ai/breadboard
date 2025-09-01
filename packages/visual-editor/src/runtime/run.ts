@@ -5,7 +5,6 @@
  */
 
 import {
-  createRunObserver,
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
@@ -32,7 +31,6 @@ import { Tab, TabId } from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { createPlanRunner, createRunner } from "@breadboard-ai/runtime";
 import { RuntimeBoardRunEvent } from "./events";
-import { sandbox } from "../sandbox";
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
 import { StateManager } from "./state";
 
@@ -286,21 +284,10 @@ export class Run extends EventTarget {
     const harnessRunner = usePlanRunner
       ? createPlanRunner(config)
       : createRunner(config);
-    const runObserver = createRunObserver(this.graphStore, {
-      logLevel: "debug",
-      dataStore: this.dataStore,
-      runStore: this.runStore,
-      kits: config.kits,
-      sandbox: sandbox,
-    });
-
     const topGraphObserver = new BreadboardUI.Utils.TopGraphObserver(
       harnessRunner,
-      config.signal,
-      runObserver
+      config.signal
     );
-
-    harnessRunner.addObserver(runObserver);
 
     return {
       mainGraphId,
