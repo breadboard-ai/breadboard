@@ -725,6 +725,8 @@ export class Renderer extends LitElement {
       }
 
       this.interactionMode = "move";
+    } else {
+      this.setPointerCapture(evt.pointerId);
     }
   }
 
