@@ -31,6 +31,11 @@ import {
   GlobalConfig,
   globalConfigContext,
 } from "../../contexts/global-config";
+import { getStepIcon } from "../../utils/get-step-icon";
+import { icons } from "../../styles/icons";
+import { colorsLight } from "../../styles/host/colors-light";
+import { type } from "../../styles/host/type";
+import { iconSubstitute } from "../../utils/icon-substitute";
 
 @customElement("bb-fast-access-menu")
 export class FastAccessMenu extends SignalWatcher(LitElement) {
@@ -64,192 +69,205 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   @consume({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig | undefined;
 
-  static styles = css`
-    * {
-      box-sizing: border-box;
-    }
+  static styles = [
+    icons,
+    colorsLight,
+    type,
+    css`
+      * {
+        box-sizing: border-box;
+      }
 
-    :host {
-      display: block;
-      width: 240px;
-      background: var(--bb-neutral-0);
-      height: 300px;
-      overflow: scroll;
-      scrollbar-width: none;
-      border: 1px solid var(--bb-neutral-300);
-      border-radius: var(--bb-grid-size-2);
-      box-shadow: var(--bb-elevation-5);
-      padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
-      white-space: normal;
-      scroll-padding-top: var(--bb-grid-size-11);
-      scroll-padding-bottom: var(--bb-grid-size-11);
-    }
+      :host {
+        display: block;
+        width: 240px;
+        background: var(--bb-neutral-0);
+        height: 300px;
+        overflow: scroll;
+        scrollbar-width: none;
+        border-radius: var(--bb-grid-size-2);
+        box-shadow: var(--bb-elevation-0);
+        padding: var(--bb-grid-size-3) var(--bb-grid-size-3);
+        white-space: normal;
+        scroll-padding-top: var(--bb-grid-size-11);
+        scroll-padding-bottom: var(--bb-grid-size-11);
+      }
 
-    .no-items {
-      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family);
-      margin-bottom: var(--bb-grid-size-2);
-    }
-
-    header {
-      margin-bottom: var(--bb-grid-size-2);
-      position: sticky;
-      top: 0;
-      background: red;
-      box-shadow: 0 0 0 8px var(--bb-neutral-0);
-
-      & input {
-        width: 100%;
-        height: var(--bb-grid-size-7);
-        line-height: var(--bb-grid-size-7);
+      .no-items {
         font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
           var(--bb-font-family);
-        border-radius: var(--bb-grid-size);
-        padding: 0 var(--bb-grid-size);
-        border: 1px solid var(--bb-ui-700);
-        outline: 1px solid var(--bb-ui-700);
-      }
-    }
-
-    #assets,
-    #tools,
-    #outputs,
-    #parameters {
-      & h3 {
-        font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
-          var(--bb-font-family);
-        text-transform: uppercase;
-        color: var(--bb-neutral-500);
-        margin: 0 0 var(--bb-grid-size-2) 0;
+        margin-bottom: var(--bb-grid-size-2);
       }
 
-      & menu {
-        display: block;
-        width: 100%;
-        padding: 0;
-        margin: 0 0 var(--bb-grid-size-2) 0;
-        list-style: none;
+      header {
+        margin-bottom: var(--bb-grid-size-2);
+        position: sticky;
+        top: 0;
+        background: var(--n-100);
+        box-shadow: 0 0 0 12px var(--n-100);
 
-        & button {
-          display: block;
-          background-color: var(--bb-neutral-0);
-          border: none;
-          border-radius: var(--bb-grid-size);
-          color: var(--bb-neutral-900);
-          margin: var(--bb-grid-size-2) 0;
-          height: var(--bb-grid-size-6);
-          padding: 0 0 0 var(--bb-grid-size-7);
+        & input {
           width: 100%;
+          height: var(--bb-grid-size-7);
+          line-height: var(--bb-grid-size-7);
           font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
             var(--bb-font-family);
-          transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
-          text-align: left;
+          border-radius: var(--bb-grid-size-16);
+          padding: 0 var(--bb-grid-size-2);
+          border: 1px solid var(--n-60);
+          outline: 1px solid var(--n-60);
+          background: var(--n-95);
+        }
+      }
+
+      #assets,
+      #tools,
+      #outputs,
+      #parameters {
+        & h3 {
+          font-size: 12px;
+          color: var(--n-40);
+          margin: 0 0 var(--bb-grid-size-3) 0;
+        }
+
+        & menu {
+          display: block;
+          width: 100%;
+          padding: 0;
+          margin: 0 0 var(--bb-grid-size-2) 0;
+          list-style: none;
+
+          & button {
+            display: inline-flex;
+            align-items: center;
+            background-color: var(--background);
+            border: none;
+            border-radius: var(--bb-grid-size-2);
+            color: var(--bb-neutral-900);
+            margin: 0 0 var(--bb-grid-size-3) 0;
+            height: var(--bb-grid-size-6);
+            padding: 0 var(--bb-grid-size-2);
+            max-width: 100%;
+            font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+              var(--bb-font-family-mono);
+            transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+            text-align: left;
+
+            & .title {
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              min-width: 0;
+            }
+
+            & .g-icon {
+              margin-right: var(--bb-grid-size-2);
+              flex: 0 0 auto;
+              user-select: none;
+              display: inline;
+            }
+
+            > * {
+              pointer-events: none;
+            }
+
+            &:not([disabled]) {
+              cursor: pointer;
+
+              &.active,
+              &:hover {
+                outline: 1px solid var(--n-0);
+              }
+            }
+          }
+
+          & li:last-of-type button {
+            margin-bottom: 0;
+          }
+        }
+
+        &:last-of-type menu {
+          margin-bottom: 0;
+        }
+      }
+
+      #assets menu button {
+        --background: var(--ui-asset);
+      }
+
+      #tools menu button {
+        --background: var(--n-90);
+      }
+
+      #outputs menu button {
+        &.generative,
+        &[icon="spark"],
+        &[icon="photo_spark"],
+        &[icon="audio_magic_eraser"],
+        &[icon="text_analysis"],
+        &[icon="generative-image-edit"],
+        &[icon="generative-code"],
+        &[icon="videocam_auto"],
+        &[icon="generative-search"],
+        &[icon="generative"],
+        &[icon="laps"] {
+          --background: var(--ui-generate);
+        }
+
+        &.module {
+          --background: var(--ui-generate);
+        }
+
+        &.input,
+        &.output,
+        &.core,
+        &[icon="input"],
+        &[icon="ask-user"],
+        &[icon="chat_mirror"] {
+          --background: var(--ui-get-input);
+        }
+
+        &[icon="output"],
+        &[icon="docs"],
+        &[icon="drive_presentation"],
+        &[icon="sheets"],
+        &[icon="code"],
+        &[icon="web"],
+        &[icon="responsive_layout"] {
+          --background: var(--ui-display);
+        }
+      }
+
+      #parameters {
+        & #create-new-param {
+          display: block;
           white-space: nowrap;
+          max-width: 100%;
           overflow: hidden;
           text-overflow: ellipsis;
+          border-radius: var(--bb-grid-size-16);
+          height: var(--bb-grid-size-7);
+          border: none;
+          background: var(--bb-icon-add) var(--bb-neutral-100) 4px center / 20px
+            20px no-repeat;
+          padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
+          font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
+            var(--bb-font-family);
+          transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+          margin-top: var(--bb-grid-size-2);
 
           &:not([disabled]) {
             cursor: pointer;
 
-            &.active,
-            &:hover {
-              background-color: var(--bb-neutral-100);
+            &:hover,
+            &:focus {
+              background-color: var(--bb-neutral-200);
             }
           }
         }
       }
-    }
-
-    #assets menu button {
-      background: var(--bb-icon-text) 4px center / 20px 20px no-repeat;
-    }
-
-    #assets menu button.audio {
-      background-image: var(--bb-icon-sound);
-    }
-
-    #assets menu button.image {
-      background-image: var(--bb-icon-add-image);
-    }
-
-    #assets menu button.text {
-      background-image: var(--bb-icon-text);
-    }
-
-    #assets menu button.video {
-      background-image: var(--bb-icon-add-video);
-    }
-
-    #parameters {
-      & #create-new-param {
-        display: block;
-        white-space: nowrap;
-        max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        border-radius: var(--bb-grid-size-16);
-        height: var(--bb-grid-size-7);
-        border: none;
-        background: var(--bb-icon-add) var(--bb-neutral-100) 4px center / 20px
-          20px no-repeat;
-        padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
-        font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
-          var(--bb-font-family);
-        transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
-        margin-top: var(--bb-grid-size-2);
-
-        &:not([disabled]) {
-          cursor: pointer;
-
-          &:hover,
-          &:focus {
-            background-color: var(--bb-neutral-200);
-          }
-        }
-      }
-
-      & menu button {
-        background: var(--bb-icon-contact-support) 4px center / 20px 20px
-          no-repeat;
-      }
-    }
-
-    #tools menu button {
-      background: var(--bb-icon-tool) 4px center / 20px 20px no-repeat;
-
-      &.search {
-        background-image: var(--bb-icon-search);
-      }
-
-      &.public {
-        background-image: var(--bb-icon-public);
-      }
-
-      &.globe-book {
-        background-image: var(--bb-icon-globe-book);
-      }
-
-      &.language {
-        background-image: var(--bb-icon-language);
-      }
-
-      &.map-search {
-        background-image: var(--bb-icon-map-search);
-      }
-
-      &.sunny {
-        background-image: var(--bb-icon-sunny);
-      }
-
-      &.code {
-        background-image: var(--bb-icon-code);
-      }
-    }
-
-    #outputs menu button {
-      background: var(--bb-icon-output) 4px center / 20px 20px no-repeat;
-    }
-  `;
+    `,
+  ];
 
   #itemContainerRef: Ref<HTMLDivElement> = createRef();
   #filterInputRef: Ref<HTMLInputElement> = createRef();
@@ -585,7 +603,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         />
       </header>
       <section id="assets">
-        ${this.showAssets ? html`<h3>Assets</h3>` : nothing}
+        ${this.showAssets
+          ? html`<h3 class="sans-flex w-400 round">Assets</h3>`
+          : nothing}
         ${this.#items.assets.length
           ? html` <menu>
               ${this.#items.assets.map((asset) => {
@@ -594,9 +614,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                 };
 
                 const assetType = getAssetType(getMimeType(asset.data));
-                if (assetType) {
-                  classesDict[assetType] = true;
-                }
                 const globalIndex = idx;
                 idx++;
                 return html`<li>
@@ -609,7 +626,10 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                       this.#emitCurrentItem();
                     }}
                   >
-                    ${asset.metadata?.title}
+                    <span class="g-icon filled round">${assetType}</span>
+                    <span class="title"
+                      >${asset.metadata?.title ?? "Untitled asset"}</span
+                    >
                   </button>
                 </li>`;
               })}
@@ -620,7 +640,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       </section>
 
       <section id="parameters">
-        ${this.showParameters ? html`<h3>Parameters</h3>` : nothing}
+        ${this.showParameters
+          ? html`<h3 class="sans-flex w-400 round">Parameters</h3>`
+          : nothing}
         ${this.#items.parameters.length
           ? html` <menu>
               ${this.#items.parameters.map((parameter) => {
@@ -637,7 +659,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                       this.#emitCurrentItem();
                     }}
                   >
-                    ${parameter.title}
+                    <span class="title">${parameter.title}</span>
                   </button>
                 </li>`;
               })}
@@ -660,17 +682,20 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       </section>
 
       <section id="tools">
-        ${this.showTools ? html`<h3>Tools</h3>` : nothing}
+        ${this.showTools
+          ? html`<h3 class="sans-flex w-400 round">Tools</h3>`
+          : nothing}
         ${this.#items.tools.length
           ? html` <menu>
               ${this.#items.tools.map((tool) => {
                 const active = idx === this.selectedIndex;
-                const icon = tool.icon ? { [tool.icon]: true } : {};
                 const globalIndex = idx;
+                const icon = iconSubstitute(tool.icon);
                 idx++;
                 return html`<li>
                   <button
-                    class=${classMap({ active, ...icon })}
+                    class=${classMap({ active })}
+                    icon=${icon}
                     @pointerover=${() => {
                       this.selectedIndex = globalIndex;
                     }}
@@ -678,7 +703,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                       this.#emitCurrentItem();
                     }}
                   >
-                    ${tool.title}
+                    <span class="g-icon round filled">${icon}</span
+                    ><span class="title">${tool.title}</span>
                   </button>
                 </li>`;
               })}
@@ -689,15 +715,22 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       </section>
 
       <section id="outputs">
-        ${this.showComponents ? html`<h3>Flow output from</h3>` : nothing}
+        ${this.showComponents
+          ? html`<h3 class="sans-flex w-400 round">Steps</h3>`
+          : nothing}
         ${this.#items.components.length
           ? html` <menu>
               ${this.#items.components.map((component) => {
+                const icon = getStepIcon(
+                  component.metadata?.icon,
+                  component.ports
+                );
                 const active = idx === this.selectedIndex;
                 const globalIndex = idx;
                 idx++;
                 return html`<li>
                   <button
+                    icon=${icon}
                     class=${classMap({ active })}
                     @pointerover=${() => {
                       this.selectedIndex = globalIndex;
@@ -706,7 +739,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                       this.#emitCurrentItem();
                     }}
                   >
-                    ${component.title}
+                    <span class="g-icon filled round">${icon}</span>
+                    <span class="title">${component.title}</span>
                   </button>
                 </li>`;
               })}
