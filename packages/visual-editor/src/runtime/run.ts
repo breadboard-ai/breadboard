@@ -8,7 +8,6 @@ import {
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
-  RunStore,
 } from "@google-labs/breadboard";
 import {
   HarnessRunner,
@@ -49,7 +48,6 @@ export class Run extends EventTarget {
   constructor(
     public readonly graphStore: MutableGraphStore,
     public readonly dataStore: BoardServerAwareDataStore,
-    public readonly runStore: RunStore,
     public readonly state: StateManager,
     public readonly flags: RuntimeFlagManager
   ) {
@@ -82,8 +80,6 @@ export class Run extends EventTarget {
     }
 
     this.#runs.delete(tabId);
-
-    return this.runStore.truncate(urlToClear, 1);
   }
 
   /**

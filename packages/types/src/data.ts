@@ -22,23 +22,6 @@ export type SerializedStoredData = {
 
 export type SerializedDataStoreGroup = SerializedStoredData[];
 
-export type RunURL = string;
-export type RunTimestamp = number;
-
-export type RunStore = {
-  start(url: RunURL): Promise<RunTimestamp>;
-  write(
-    url: RunURL,
-    timestamp: RunTimestamp,
-    result: HarnessRunResult
-  ): Promise<void>;
-  stop(url: RunURL, timestamp: RunTimestamp): Promise<void>;
-  abort(url: RunURL, timestamp: RunTimestamp): Promise<void>;
-  drop(url?: RunURL): Promise<void>;
-  truncate(url: RunURL, limit: number): Promise<void>;
-  getStoredRuns(url: RunURL): Promise<Map<RunTimestamp, HarnessRunResult[]>>;
-};
-
 export type DataInflator = {
   retrieveAsBlob(part: StoredDataCapabilityPart, graphUrl?: URL): Promise<Blob>;
   transformer?(graphUrl: URL): DataPartTransformer | undefined;
