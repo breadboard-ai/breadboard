@@ -203,7 +203,8 @@ export class TopGraphObserver {
     }
 
     if (!this.#log) {
-      throw new Error("Node started without a graph");
+      console.log("This is porbably a new runtime: node started with a graph");
+      return;
     }
 
     this.#canRunState.set(event.data.node.id, true);
@@ -247,7 +248,8 @@ export class TopGraphObserver {
       return;
     }
     if (!this.#log) {
-      throw new Error("Node end without a graph");
+      console.log("This is probably a new runtime: node end without a graph");
+      return;
     }
 
     this.#edgeValues = this.#edgeValues.setConsumed(event.data.node.id);
@@ -269,7 +271,10 @@ export class TopGraphObserver {
 
   #input(event: RunInputEvent) {
     if (!this.#log) {
-      throw new Error("Node started without a graph");
+      console.log(
+        "This is probably a new runtime: Node started without a graph"
+      );
+      return;
     }
 
     if (!event.data.bubbled) {
@@ -287,7 +292,10 @@ export class TopGraphObserver {
 
   #output(event: RunOutputEvent) {
     if (!this.#log) {
-      throw new Error("Node started without a graph");
+      console.log(
+        "This is probably a new runtime: Node started without a graph"
+      );
+      return;
     }
 
     if (!event.data.bubbled) {
