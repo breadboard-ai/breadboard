@@ -305,7 +305,7 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
       sideboards,
       config.settings
     ),
-    run: new Run(graphStore, dataStore, config.runStore, state, flags),
+    run: new Run(graphStore, dataStore, state, flags),
     state,
     sideboards,
     select: new Select(),

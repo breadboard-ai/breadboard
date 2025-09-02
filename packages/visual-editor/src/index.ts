@@ -16,7 +16,6 @@ import {
 import {
   createFileSystemBackend,
   createFlagManager,
-  getRunStore,
 } from "@breadboard-ai/data-store";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
@@ -257,7 +256,6 @@ export class Main extends SignalWatcher(LitElement) {
   // Various bits of state.
   readonly #boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
   readonly #recentBoardStore = RecentBoardStore.instance();
-  readonly #runStore = getRunStore();
   readonly #lastPointerPosition = { x: 0, y: 0 };
   readonly #embedHandler?: EmbedHandler;
   readonly #apiClient: AppCatalystApiClient;
@@ -480,7 +478,6 @@ export class Main extends SignalWatcher(LitElement) {
     this.#runtime = await Runtime.create({
       recentBoardStore: this.#recentBoardStore,
       graphStore: this.#graphStore,
-      runStore: this.#runStore,
       experiments: {},
       globalConfig: this.globalConfig,
       tokenVendor: this.tokenVendor,

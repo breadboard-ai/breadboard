@@ -21,7 +21,6 @@ import {
   MutableGraphStore,
   NodeConfiguration,
   PortIdentifier,
-  RunStore,
 } from "@google-labs/breadboard";
 
 import { TokenVendor } from "@breadboard-ai/connection-client";
@@ -75,7 +74,6 @@ export interface Tab {
 
 export interface RuntimeConfig {
   graphStore: MutableGraphStore;
-  runStore: RunStore;
   sandbox: Sandbox;
   experiments: Record<string, boolean>;
   globalConfig?: GlobalConfig;
