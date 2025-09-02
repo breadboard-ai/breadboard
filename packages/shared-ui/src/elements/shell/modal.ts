@@ -18,7 +18,7 @@ export class VEModal extends LitElement {
   @property()
   accessor icon: string | null = null;
 
-  @property({ reflect: true, type: Boolean })
+  @property({ reflect: true, type: String })
   accessor modalTitle: string | null = null;
 
   @property({ reflect: true, type: Boolean })
