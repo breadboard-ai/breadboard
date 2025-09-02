@@ -105,6 +105,7 @@ import { MainArguments } from "./types/types";
 import { envFromFlags } from "./utils/env-from-flags";
 import { envFromSettings } from "./utils/env-from-settings";
 import { makeUrl, parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
+import { VESignInModal } from "@breadboard-ai/shared-ui/elements/elements.js";
 
 type RenderValues = {
   canSave: boolean;
@@ -307,11 +308,7 @@ export class Main extends SignalWatcher(LitElement) {
       this.tokenVendor,
       this.globalConfig,
       this.settingsHelper,
-      async (signInUrl: string) => {
-        // TODO(aomarks) Show a modal here.
-        console.log(`Sign in:`, signInUrl);
-        return true;
-      }
+      () => this.#askUserToSignIn()
     );
 
     // Asyncronously check if the user has a geo-restriction and sign out if so.
@@ -1543,6 +1540,9 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.show.has("MCPServersModal")
           ? this.#renderMCPServersModal(renderValues)
           : nothing,
+        this.#uiState.show.has("SignInModal")
+          ? this.#renderSignInModal()
+          : nothing,
         this.#renderTooltip(),
         this.#renderToasts(),
         this.#renderSnackbar(),
@@ -2202,6 +2202,24 @@ export class Main extends SignalWatcher(LitElement) {
       }}
     >
     </bb-ve-header>`;
+  }
+
+  async #askUserToSignIn(): Promise<boolean> {
+    this.#uiState.show.add("SignInModal");
+    await this.updateComplete;
+    const signInModal = this.#signInModalRef.value;
+    if (!signInModal) {
+      console.warn(`Could not find sign-in modal.`);
+      return false;
+    }
+    return signInModal.openAndWaitForSignIn();
+  }
+
+  readonly #signInModalRef = createRef<VESignInModal>();
+  #renderSignInModal() {
+    return html`
+      <bb-sign-in-modal ${ref(this.#signInModalRef)}></bb-sign-in-modal>
+    `;
   }
 }
 

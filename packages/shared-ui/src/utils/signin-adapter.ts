@@ -61,7 +61,7 @@ class SigninAdapter {
   readonly #tokenVendor: TokenVendor;
   readonly #globalConfig: GlobalConfig;
   readonly #settingsHelper: SettingsHelper;
-  readonly #handleSignInRequest?: (url: string) => Promise<boolean>;
+  readonly #handleSignInRequest?: () => Promise<boolean>;
   #nonce = crypto.randomUUID();
   #state: SigninAdapterState;
 
@@ -69,7 +69,7 @@ class SigninAdapter {
     tokenVendor: TokenVendor,
     globalConfig: GlobalConfig,
     settingsHelper: SettingsHelper,
-    handleSignInRequest?: (url: string) => Promise<boolean>
+    handleSignInRequest?: () => Promise<boolean>
   ) {
     this.#tokenVendor = tokenVendor;
     this.#globalConfig = globalConfig;
@@ -123,19 +123,13 @@ class SigninAdapter {
    */
   async token(): Promise<ValidTokenResult | SignedOutTokenResult> {
     if (this.#state.status === "anonymous") {
-      const userIntendsToSignIn = await this.#handleSignInRequest?.(
-        await this.getSigninUrl()
-      );
-      if (userIntendsToSignIn) {
-        const signInResult = await this.signIn();
-        if (
-          !signInResult.ok ||
-          // Cast needed because TypeScript doesn't realize that the await above
-          // could change the #state type.
-          (this.#state as SigninAdapterState).status !== "signedin"
-        ) {
-          return { state: "signedout" };
-        }
+      await this.#handleSignInRequest?.();
+      if (
+        // Cast needed because TypeScript doesn't realize that the await above
+        // could change the #state type.
+        (this.#state as SigninAdapterState).status !== "signedin"
+      ) {
+        return { state: "signedout" };
       }
     }
     let token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);

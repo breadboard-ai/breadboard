@@ -471,7 +471,8 @@ export type UIOverlays =
   | "RuntimeFlags"
   | "TOS"
   | "VideoModal"
-  | "StatusUpdateModal";
+  | "StatusUpdateModal"
+  | "SignInModal";
 
 export type UILoadState = "Home" | "Loading" | "Loaded" | "Error";
 
