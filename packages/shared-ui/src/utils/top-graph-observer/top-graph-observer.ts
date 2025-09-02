@@ -5,7 +5,6 @@
  */
 
 import type {
-  GraphDescriptor,
   HarnessRunner,
   NodeIdentifier,
   OutputValues,
@@ -23,7 +22,6 @@ import type {
   EdgeLogEntry,
   LogEntry,
   NodeLogEntry,
-  TopGraphObserverRunStatus,
   TopGraphRunResult,
 } from "../../types/types";
 import { formatError } from "../format-error";
@@ -35,7 +33,6 @@ import {
 } from "./edge-entry";
 import { EdgeValueStore } from "./edge-value-store";
 import { EndNodeEntry, NodeEntry, UserNodeEntry } from "./node-entry";
-import { NodeInformation } from "./node-information";
 
 /**
  * A lightweight rewrite of the `InspectableRunObserver` that
@@ -47,8 +44,6 @@ export class TopGraphObserver {
    * Only set to `true` from the static `fromRun` method.
    */
   #replay = false;
-  #graph: GraphDescriptor | null = null;
-  #status: TopGraphObserverRunStatus = "stopped";
   #log: LogEntry[] | null = null;
   #currentResult: TopGraphRunResult | null = null;
   #currentNode: NodeLogEntry | null = null;
@@ -66,7 +61,7 @@ export class TopGraphObserver {
    */
   #errorPath: number[] | null = null;
 
-  static entryResult(graph: GraphDescriptor | undefined): TopGraphRunResult {
+  static entryResult(): TopGraphRunResult {
     // const entryId = computeEntryId(graph);
     return {
       log: [],
@@ -77,28 +72,7 @@ export class TopGraphObserver {
         },
         current: null,
       },
-      nodeInformation: {
-        getActivity() {
-          return undefined;
-        },
-        canRunNode(_id: NodeIdentifier) {
-          return false;
-          // TODO: Bring this back once we have stable runs
-          // return id === entryId;
-        },
-      },
-      graph: graph || null,
-      status: "stopped",
     };
-
-    // Ideally, this function should live somewhere in packages/breadboard,
-    // but for now, this is good enough.
-    // function computeEntryId(graph?: GraphDescriptor) {
-    //   if (!graph || !graph.edges) return;
-    //   const incoming = new Set(graph.edges.map((edge) => edge.to));
-    //   const entries = graph.nodes.filter((node) => !incoming.has(node.id));
-    //   return entries.at(0)?.id;
-    // }
   }
 
   constructor(runner: HarnessRunner, signal?: AbortSignal) {
@@ -106,15 +80,12 @@ export class TopGraphObserver {
       signal.addEventListener("abort", this.#abort.bind(this));
     }
     runner.addEventListener("start", () => {
-      this.#status = "running";
       this.#currentResult = null;
     });
     runner.addEventListener("pause", () => {
-      this.#status = "paused";
       this.#currentResult = null;
     });
     runner.addEventListener("end", () => {
-      this.#status = "stopped";
       this.#currentResult = null;
     });
     runner.addEventListener("nodestart", this.#nodeStart.bind(this));
@@ -125,7 +96,6 @@ export class TopGraphObserver {
     runner.addEventListener("output", this.#output.bind(this));
     runner.addEventListener("error", this.#error.bind(this));
     runner.addEventListener("resume", (event) => {
-      this.#status = "running";
       this.#currentResult = null;
       this.#cleanUpPendingInput(event.data.inputs || {});
     });
@@ -153,12 +123,6 @@ export class TopGraphObserver {
         log: this.#log,
         currentNode: this.#currentNode,
         edgeValues: this.#edgeValues,
-        nodeInformation: new NodeInformation(
-          this.#nodeActivity,
-          this.#canRunState
-        ),
-        graph: this.#graph,
-        status: this.#status,
       };
     }
     return this.#currentResult;
@@ -200,9 +164,6 @@ export class TopGraphObserver {
     }
     if (this.#log) {
       throw new Error("Graph already started");
-    }
-    if (this.#replay) {
-      this.#graph = event.data.graph;
     }
     this.#log = [];
     this.#currentResult = null;
@@ -348,7 +309,6 @@ export class TopGraphObserver {
   }
 
   #error(event: RunErrorEvent) {
-    this.#status = "stopped";
     if (!this.#log) {
       return;
     }

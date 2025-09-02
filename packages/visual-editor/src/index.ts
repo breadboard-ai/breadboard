@@ -1327,7 +1327,7 @@ export class Main extends SignalWatcher(LitElement) {
     const observers = this.#runtime?.run.getObservers(this.#tab?.id ?? null);
     const topGraphResult =
       observers?.topGraphObserver?.current() ??
-      BreadboardUI.Utils.TopGraphObserver.entryResult(this.#tab?.graph);
+      BreadboardUI.Utils.TopGraphObserver.entryResult();
 
     let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
     if (this.#tab) {
