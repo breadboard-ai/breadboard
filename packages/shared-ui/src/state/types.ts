@@ -580,6 +580,11 @@ export type Project = {
     graphId: GraphIdentifier
   ): Outcome<NodeHandlerMetadata>;
 
+  getPortsForNode(
+    nodeId: NodeIdentifier,
+    graphId: GraphIdentifier
+  ): Outcome<InspectableNodePorts>;
+
   persistDataParts(contents: LLMContent[]): Promise<LLMContent[]>;
   connectHarnessRunner(
     runner: HarnessRunner,

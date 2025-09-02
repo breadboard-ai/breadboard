@@ -7,6 +7,7 @@
 import { ok, TemplatePart } from "@google-labs/breadboard";
 import { Project } from "../state";
 import { iconSubstitute } from "./icon-substitute";
+import { getStepIcon } from "./get-step-icon";
 
 export function expandChiclet(
   part: TemplatePart,
@@ -24,14 +25,19 @@ export function expandChiclet(
 
   switch (type) {
     case "in": {
-      const outcome = projectState.getMetadataForNode(
+      const metadata = projectState.getMetadataForNode(
         path,
         subGraphId ? subGraphId : ""
       );
 
-      if (ok(outcome)) {
-        icon = iconSubstitute(outcome.icon);
-        tags = outcome.tags ?? [];
+      const ports = projectState.getPortsForNode(
+        path,
+        subGraphId ? subGraphId : ""
+      );
+
+      if (ok(metadata) && ok(ports)) {
+        icon = getStepIcon(metadata.icon, ports);
+        tags = metadata.tags ?? [];
       }
       break;
     }

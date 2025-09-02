@@ -9,6 +9,7 @@ import {
   AssetPath,
   GraphIdentifier,
   HarnessRunner,
+  InspectableNodePorts,
   LLMContent,
   NodeIdentifier,
   ParameterMetadata,
@@ -275,6 +276,21 @@ class ReactiveProject implements ProjectInternal {
       return err(`Unable to find metadata for node with id "${nodeId}"`);
     }
     return metadata;
+  }
+
+  getPortsForNode(
+    nodeId: NodeIdentifier,
+    graphId: GraphIdentifier
+  ): Outcome<InspectableNodePorts> {
+    const inspectable = this.#store.inspect(this.#mainGraphId, graphId);
+    if (!inspectable) {
+      return err(`Unable to inspect graph with "${this.#mainGraphId}"`);
+    }
+    const node = inspectable.nodeById(nodeId);
+    if (!node) {
+      return err(`Unable to find node with id "${nodeId}`);
+    }
+    return node.currentPorts();
   }
 
   findOutputPortId(
