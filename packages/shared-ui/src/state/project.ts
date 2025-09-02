@@ -394,17 +394,53 @@ class ReactiveProject implements ProjectInternal {
       } else {
         toDelete.delete(key);
       }
-      updateMap(
-        currentValue,
-        value.nodes().map((node) => [
-          node.descriptor.id,
-          {
-            id: node.descriptor.id,
-            title: node.title(),
-            description: node.description(),
-          },
-        ])
-      );
+
+      const nodeValues: Promise<[string, Component]>[] = [];
+      for (const node of value.nodes()) {
+        const ports = node.currentPorts();
+        const metadata = node.currentDescribe()?.metadata ?? {};
+        const { tags } = metadata;
+
+        // If we already know the tags and ports, just use them.
+        if (tags && !ports.updating) {
+          nodeValues.push(
+            Promise.resolve([
+              node.descriptor.id,
+              {
+                id: node.descriptor.id,
+                title: node.title(),
+                description: node.description(),
+                ports,
+                metadata,
+              },
+            ])
+          );
+          continue;
+        }
+
+        // ... but if there aren't tags or the ports are updating, try using
+        // the full `describe()` instead.
+        nodeValues.push(
+          Promise.all([node.ports(), node.describe()]).then(
+            ([ports, description]) => {
+              return [
+                node.descriptor.id,
+                {
+                  id: node.descriptor.id,
+                  title: node.title(),
+                  description: node.description(),
+                  ports,
+                  metadata: description.metadata ?? {},
+                },
+              ];
+            }
+          )
+        );
+      }
+
+      Promise.all(nodeValues).then((nodes) => {
+        updateMap(currentValue, nodes);
+      });
     });
 
     [...toDelete.values()].forEach((key) => {

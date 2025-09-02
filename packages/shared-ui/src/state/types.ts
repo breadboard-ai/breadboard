@@ -10,10 +10,12 @@ import {
   AssetPath,
   GraphIdentifier,
   HarnessRunner,
+  InspectableNodePorts,
   LLMContent,
   McpServerDescriptor,
   McpServerIdentifier,
   NodeIdentifier,
+  NodeMetadata,
   NodeRunState,
   OutputValues,
   ParameterMetadata,
@@ -414,6 +416,8 @@ export type Component = {
   id: NodeIdentifier;
   title: string;
   description?: string;
+  ports?: InspectableNodePorts;
+  metadata?: NodeMetadata;
 };
 
 export type Components = Map<NodeIdentifier, Component>;
