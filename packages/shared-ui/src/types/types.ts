@@ -296,23 +296,6 @@ export type TopGraphRunResult = {
    * the array.
    */
   edgeValues: TopGraphEdgeValues;
-  /**
-   * Returns all current node info within a graph.
-   */
-  nodeInformation: TopGraphNodeInfo;
-  /**
-   * Returns the GraphDescriptor of the current graph.
-   * Or null if the TopGraphObserver doesn't know what it is yet.
-   * The latter can happen when the graph hasn't run yet.
-   */
-  graph: GraphDescriptor | null;
-  /**
-   * Returns the status of the run, which can be one of:
-   * - "running": The run is currently running.
-   * - "paused": The run is paused.
-   * - "stopped": The run is stopped.
-   */
-  status: TopGraphObserverRunStatus;
 };
 
 export type ComparableEdge = {
@@ -347,7 +330,6 @@ export type TopGraphNodeInfo = {
 
 export type ComponentWithActivity = {
   descriptor: NodeDescriptor;
-  activity: ComponentActivityItem[];
 };
 
 /**
