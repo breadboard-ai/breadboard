@@ -466,7 +466,7 @@ export class Main extends SignalWatcher(LitElement) {
               // This will fail, and that's okay. We'll get the "Unauthorized"
               // error.
               return "";
-            }),
+            }, this.globalConfig.BACKEND_API_ENDPOINT),
           ],
         ])
       ),
