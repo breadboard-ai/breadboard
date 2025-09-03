@@ -20,7 +20,7 @@ import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deploym
 export type BootstrapArguments = {
   deploymentConfiguration: ClientDeploymentConfiguration;
   connectionServerUrl?: URL;
-  requiresSignin?: boolean;
+  signinMode: "disabled" | "required" | "incremental";
   defaultBoardService?: string;
   kits?: Kit[];
   /**

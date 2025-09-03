@@ -35,7 +35,10 @@ const url = parseUrl(window.location.href);
 bootstrap({
   deploymentConfiguration,
   connectionServerUrl: new URL("/connection/", window.location.href),
-  requiresSignin: url.dev?.["allow-anonymous"] === undefined,
+  signinMode:
+    url.dev?.["enable-new-signed-out-experience"] !== undefined
+      ? "incremental"
+      : "required",
   kits: [asRuntimeKit(Core)],
   defaultBoardService: "/board/",
   moduleInvocationFilter: (context) => {
