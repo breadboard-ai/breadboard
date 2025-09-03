@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { UUID } from "./uuid.js";
-
 export type McpServerDetails = {
   /**
    * Name of the server. Part of the technical details, though when title is
@@ -24,7 +22,7 @@ export type McpServerDetails = {
 
 export type McpServerIdentifier = string;
 
-export type McpServerInstanceIdentifier = `connectors/${UUID}`;
+export type McpServerInstanceIdentifier = string;
 
 export type McpServerDescriptor = {
   /**
@@ -43,7 +41,7 @@ export type McpServerDescriptor = {
   /**
    * Whether or not the server is currently registered in this project.
    */
-  instanceId?: McpServerInstanceIdentifier;
+  readonly registered: boolean;
   /**
    * Whether or not the server is removable. We will have some servers that are
    * built-in, so they aren't removable.

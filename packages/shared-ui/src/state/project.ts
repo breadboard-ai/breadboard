@@ -140,7 +140,13 @@ class ReactiveProject implements ProjectInternal {
       this.#updateConnectors();
       this.#updateTools();
     });
-    const graphUrlString = this.#store.get(mainGraphId)?.graph.url;
+    const graph = this.#store.get(mainGraphId)?.graph;
+    if (!graph) {
+      console.warn(
+        `No graph when initializing Project state: most things will likely not work`
+      );
+    }
+    const graphUrlString = graph?.url;
     this.graphUrl = graphUrlString ? new URL(graphUrlString) : null;
     this.graphAssets = new SignalMap();
     this.tools = new SignalMap();
@@ -166,7 +172,7 @@ class ReactiveProject implements ProjectInternal {
     this.#updateMyTools();
     this.#updateParameters();
     this.run = ReactiveProjectRun.createInert(this.#mainGraphId, this.#store);
-    this.mcp = new McpImpl(this);
+    this.mcp = new McpImpl(this, editable);
   }
 
   resetRun(): void {

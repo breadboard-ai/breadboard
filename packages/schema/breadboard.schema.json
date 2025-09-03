@@ -138,6 +138,16 @@
 					},
 					"description": "An optional collection of imports, or known GraphDescriptors that this GraphDescriptor uses. Imports are spiritually similar to `dependencies` in npm or import maps in Web Platform. In addition to specifying the depenency, they provide a short identifier that can be used to refer to the import."
 				},
+				"integrations": {
+					"type": "object",
+					"additionalProperties": {
+						"$ref": "#/definitions/Integration"
+					},
+					"propertyNames": {
+						"description": "Unique identifier of the integration. Usually, the URL of the server"
+					},
+					"description": "An optional collection of integrations: MCP servers that are used by this graph. If the integration is not in this list then it can not be used by the graph."
+				},
 				"main": {
 					"$ref": "#/definitions/ModuleIdentifier",
 					"description": "The id of the Module that is used as an entry point for this graph. If this value is set, the graph is a \"module graph\": it is backed by code rather than by nodes and edges."
@@ -967,6 +977,25 @@
 			],
 			"additionalProperties": false,
 			"description": "A declaration of an import."
+		},
+		"Integration": {
+			"type": "object",
+			"properties": {
+				"title": {
+					"type": "string",
+					"description": "Friendly title of the Integration."
+				},
+				"url": {
+					"type": "string",
+					"description": "URL of the MCP Server."
+				}
+			},
+			"required": [
+				"title",
+				"url"
+			],
+			"additionalProperties": false,
+			"description": "Details of the integration"
 		},
 		"Edge": {
 			"type": "object",

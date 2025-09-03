@@ -381,7 +381,7 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
                   <input
                     type="checkbox"
                     id=${id}
-                    .checked=${!!server.instanceId}
+                    .checked=${!!server.registered}
                     @change=${(evt: Event) => {
                       if (
                         !(evt.target instanceof HTMLInputElement) ||

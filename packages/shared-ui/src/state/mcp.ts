@@ -5,33 +5,53 @@
  */
 
 import {
+  EditableGraph,
+  GraphDescriptor,
+  Integration,
   McpServerDescriptor,
   McpServerIdentifier,
   McpServerInstanceIdentifier,
   Outcome,
+  UUID,
 } from "@breadboard-ai/types";
 import { AsyncComputedResult, Mcp, ProjectInternal } from "./types";
-import { err, fromJson, ok } from "@breadboard-ai/utils";
+import { err, ok } from "@breadboard-ai/utils";
 import { SignalMap } from "signal-utils/map";
 import { McpServerStore } from "./utils/mcp-server-store";
 import { AsyncComputed } from "signal-utils/async-computed";
 import { listBuiltInMcpServers } from "@breadboard-ai/mcp";
+import { signal } from "signal-utils";
 
 export { McpImpl };
 
-type McpConnectorConfiguration = {
-  url: string;
-  configuration: {
-    endpoint: string;
-  };
-};
-
-const MCP_CONNECTOR_URL = "embed://a2/mcp.bgl.json";
-
 class McpImpl implements Mcp {
+  @signal
+  accessor #integrations: Map<string, Integration> = new Map();
+
   #serverList = new McpServerStore();
 
-  constructor(private readonly project: ProjectInternal) {}
+  constructor(
+    private readonly project: ProjectInternal,
+    private readonly editable?: EditableGraph
+  ) {
+    if (!editable) {
+      console.warn(
+        `Integration Initialization will fail: No editable supplied`
+      );
+      return;
+    }
+    this.#reload(editable.raw());
+
+    editable?.addEventListener("graphchange", (evt) => {
+      if (!evt.integrationsChange) return;
+      this.#reload(evt.graph);
+    });
+  }
+
+  #reload(graph: GraphDescriptor) {
+    const { integrations = {} } = graph;
+    this.#integrations = new SignalMap(Object.entries(integrations));
+  }
 
   get servers(): AsyncComputedResult<
     Map<McpServerIdentifier, McpServerDescriptor>
@@ -44,7 +64,7 @@ class McpImpl implements Mcp {
 
     const builtIns: [McpServerIdentifier, McpServerDescriptor][] =
       listBuiltInMcpServers().map((descriptor) => [
-        this.#createId(descriptor.details.url),
+        descriptor.details.url,
         descriptor,
       ]);
 
@@ -54,25 +74,16 @@ class McpImpl implements Mcp {
 
     const inBgl = new Map<McpServerIdentifier, McpServerDescriptor>();
 
-    this.project.graphAssets.forEach((asset, value) => {
-      const { connector, metadata } = asset;
-      if (!connector) return;
-      const url = (connector.configuration as McpConnectorConfiguration)
-        .configuration.endpoint;
-      if (connector.type.url !== MCP_CONNECTOR_URL) return;
-      // We currently override items in the list with what's in the BGL.
-      // This is probably fine, but we might want to consider a more nuanced
-      // reconciliation of what's stored in server list and what's in BGL.
-      const id = this.#createId(url);
+    this.#integrations.forEach((integration, id) => {
       inBgl.set(id, {
-        title: metadata?.title || connector.id,
+        title: integration.title,
         details: {
           name: "name goes here",
           version: "0.0.1",
-          url,
+          url: integration.url,
         },
-        instanceId: value as McpServerInstanceIdentifier,
-        removable: isRemovable(id),
+        registered: true,
+        removable: true,
       });
     });
 
@@ -81,10 +92,12 @@ class McpImpl implements Mcp {
       console.warn("Unable to load stored MCP servers", stored.$error);
     } else {
       for (const info of stored) {
-        const id = this.#createId(info.url);
+        const id = info.url;
+        const registered = inBgl.has(id);
         result.set(id, {
           title: info.title,
           details: { name: info.title, version: "0.0.1", url: info.url },
+          registered,
           removable: isRemovable(id),
         });
       }
@@ -101,25 +114,24 @@ class McpImpl implements Mcp {
     }
   });
 
-  async #addAsset(
+  async #upsertIntegration(
     url: string,
     title: string
   ): Promise<Outcome<McpServerInstanceIdentifier>> {
-    const id: McpServerInstanceIdentifier = this.#createInstanceId();
-    const adding = await this.project.organizer.addGraphAsset({
-      path: id,
-      data: fromJson({
-        url: "embed://a2/mcp.bgl.json",
-        configuration: {
-          endpoint: url,
+    const id = url;
+    const upserting = await this.editable!.edit(
+      [
+        {
+          type: "upsertintegration",
+          id,
+          integration: { title, url },
         },
-      }),
-      metadata: {
-        type: "connector",
-        title,
-      },
-    });
-    if (!ok(adding)) return adding;
+      ],
+      `Upserting integration "${url}"`
+    );
+    if (!upserting.success) {
+      return err(`Failed to upsert integration "${url}`);
+    }
     return id;
   }
 
@@ -134,11 +146,14 @@ class McpImpl implements Mcp {
     if (!server) {
       return err(`MCP Server "${id}" does not exist`);
     }
-    if (server.instanceId) {
+    if (server.registered) {
       return err(`MCP Server "${id}" is already registered`);
     }
 
-    const adding = await this.#addAsset(server.details.url, server.title);
+    const adding = await this.#upsertIntegration(
+      server.details.url,
+      server.title
+    );
     if (!ok(adding)) return adding;
   }
 
@@ -153,19 +168,30 @@ class McpImpl implements Mcp {
     if (!server) {
       return err(`MCP Server "${id}" does not exist`);
     }
-    if (!server.instanceId) {
+    if (!server.registered) {
       return err(`MCP Server "${id}" is already unregistered`);
     }
-
-    const removing = await this.project.organizer.removeGraphAsset(
-      server.instanceId
+    const removing = await this.editable!.edit(
+      [
+        {
+          type: "removeintegration",
+          id: id as UUID,
+        },
+      ],
+      `Removing integration "${id}"`
     );
-    if (!ok(removing)) return removing;
+    if (!removing.success) {
+      return err(`Failed to remove integration "${id}"`);
+    }
+
+    if (!removing.success) {
+      return err(`Unable to unregister integration "${id}"`);
+    }
   }
 
   async add(url: string, title: string = url): Promise<Outcome<void>> {
     // Add as new asset
-    const adding = await this.#addAsset(url, title);
+    const adding = await this.#upsertIntegration(url, title);
     if (!ok(adding)) return adding;
     // Add to the server list
     await this.#serverList.add({ url, title });
@@ -175,10 +201,6 @@ class McpImpl implements Mcp {
     return `connectors/${url
       .replace(/[^a-zA-Z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")}`;
-  }
-
-  #createInstanceId(): McpServerInstanceIdentifier {
-    return `connectors/${globalThis.crypto.randomUUID()}`;
   }
 
   async remove(id: McpServerIdentifier): Promise<Outcome<void>> {
@@ -193,11 +215,19 @@ class McpImpl implements Mcp {
       return err(`MCP Server "${id}" does not exist`);
     }
     // Unregister
-    if (server.instanceId) {
-      const removing = await this.project.organizer.removeGraphAsset(
-        server.instanceId
+    if (server.removable) {
+      const removing = await this.editable!.edit(
+        [
+          {
+            type: "removeintegration",
+            id: id as UUID,
+          },
+        ],
+        `Removing integration "${id}"`
       );
-      if (!ok(removing)) return removing;
+      if (!removing.success) {
+        return err(`Failed to remove integration "${id}"`);
+      }
     }
     return this.#serverList.remove(server.details.url);
   }

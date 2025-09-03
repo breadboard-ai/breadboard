@@ -729,6 +729,32 @@ export type GraphCommonProperties = GraphInlineMetadata & {
    * used to refer to the import.
    */
   imports?: Record<ImportIdentifier, Import>;
+
+  /**
+   * An optional collection of integrations: MCP servers that are used by this
+   * graph. If the integration is not in this list then it can not be used by
+   * the graph.
+   */
+  integrations?: Record<IntegrationIdentifier, Integration>;
+};
+
+/**
+ * Unique identifier of the integration. Usually, the URL of the server
+ */
+export type IntegrationIdentifier = string;
+
+/**
+ * Details of the integration
+ */
+export type Integration = {
+  /**
+   * Friendly title of the Integration.
+   */
+  title: string;
+  /**
+   * URL of the MCP Server.
+   */
+  url: string;
 };
 
 /**
