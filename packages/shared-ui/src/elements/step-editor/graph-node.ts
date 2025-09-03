@@ -41,7 +41,12 @@ import { createTruncatedValue } from "./utils/create-truncated-value";
 import { styles as ChicletStyles } from "../../styles/chiclet.js";
 import { toGridSize } from "./utils/to-grid-size";
 import { DragConnectorReceiver } from "../../types/types";
-import { DragConnectorStartEvent, StateEvent } from "../../events/events";
+import {
+  DragConnectorStartEvent,
+  HideTooltipEvent,
+  ShowTooltipEvent,
+  StateEvent,
+} from "../../events/events";
 import { createChiclets } from "./utils/create-chiclets.js";
 import { icons } from "../../styles/icons.js";
 import {
@@ -1108,26 +1113,52 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
     let disabled = false;
     let icon = "";
+    let tooltip = "";
     switch (this.runStatus.status) {
+      case "inactive": {
+        tooltip = "Stop at this step";
+        break;
+      }
+
       case "ready": {
+        tooltip = "Run this step only";
         icon = "play_arrow";
         break;
       }
 
       case "working":
       case "waiting": {
+        tooltip = "Stop";
         icon = "progress_activity";
         break;
       }
 
-      case "failed":
-      case "interrupted":
       case "succeeded": {
+        tooltip = "Run this step only";
+        icon = "autorenew";
+        break;
+      }
+
+      case "failed": {
+        tooltip = "Re-run this step";
+        icon = "autorenew";
+        break;
+      }
+
+      case "skipped": {
+        tooltip = "Stop at this step";
+        icon = "pause";
+        break;
+      }
+
+      case "interrupted": {
+        tooltip = "Re-run this step";
         icon = "autorenew";
         break;
       }
 
       case "breakpoint": {
+        tooltip = "Don't stop at this step";
         icon = "pause";
         break;
       }
@@ -1144,6 +1175,18 @@ export class GraphNode extends Box implements DragConnectorReceiver {
     return html`<button
       @click=${(evt: Event) => {
         evt.stopImmediatePropagation();
+      }}
+      @pointerover=${(evt: PointerEvent) => {
+        if (!tooltip) {
+          return;
+        }
+
+        this.dispatchEvent(
+          new ShowTooltipEvent(tooltip, evt.clientX, evt.clientY)
+        );
+      }}
+      @pointerout=${() => {
+        this.dispatchEvent(new HideTooltipEvent());
       }}
       @pointerdown=${(evt: Event) => {
         evt.stopImmediatePropagation();

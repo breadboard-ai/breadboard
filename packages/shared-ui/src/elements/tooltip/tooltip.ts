@@ -5,6 +5,8 @@
  */
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { colorsLight } from "../../styles/host/colors-light";
+import { type } from "../../styles/host/type";
 
 @customElement("bb-tooltip")
 export class Tooltip extends LitElement {
@@ -37,52 +39,58 @@ export class Tooltip extends LitElement {
   #x = 100;
   #y = 100;
 
-  static styles = css`
-    * {
-      box-sizing: border-box;
-    }
+  static styles = [
+    colorsLight,
+    type,
+    css`
+      * {
+        box-sizing: border-box;
+      }
 
-    :host {
-      display: none;
-      position: fixed;
-      background: var(--bb-neutral-700);
-      color: var(--bb-neutral-100);
-      padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
-      border-radius: var(--bb-grid-size);
-      z-index: 2000;
-      font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-        var(--bb-font-family);
-      user-select: none;
-      animation: none;
-      pointer-events: none;
-      white-space: nowrap;
-    }
+      :host {
+        display: none;
+        position: fixed;
+        background: var(--n-10);
+        color: var(--n-100);
+        padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+        border-radius: var(--bb-grid-size);
+        z-index: 2000;
+        font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+          var(--bb-font-family);
+        user-select: none;
+        animation: none;
+        pointer-events: none;
+        white-space: nowrap;
+      }
 
-    :host([visible="true"]) {
-      display: block;
-      left: var(--x);
-      top: var(--y);
-      opacity: 0;
-      transform: translateX(-50%) translateY(-100%) translateY(-20px);
-      animation: show 0.3s cubic-bezier(0, 0, 0.3, 1) 0.3s forwards;
-    }
-
-    @keyframes show {
-      from {
+      :host([visible="true"]) {
+        display: block;
+        left: var(--x);
+        top: var(--y);
         opacity: 0;
+        transform: translateX(-50%) translateY(-100%) translateY(-20px);
+        animation: show 0.3s cubic-bezier(0, 0, 0.3, 1) 0.3s forwards;
       }
 
-      to {
-        opacity: 1;
+      @keyframes show {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
       }
-    }
-  `;
+    `,
+  ];
 
   render() {
     if (!this.message) {
       return nothing;
     }
 
-    return html`<div aria-live="polite">${this.message}</div>`;
+    return html`<div class="sans w-500" aria-live="polite">
+      ${this.message}
+    </div>`;
   }
 }
