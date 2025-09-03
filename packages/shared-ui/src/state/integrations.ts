@@ -50,7 +50,7 @@ class IntegrationsImpl implements Integrations {
 
   #reload(graph: GraphDescriptor) {
     const { integrations = {} } = graph;
-    this.#integrations = new SignalMap(Object.entries(integrations));
+    this.#integrations = new Map(Object.entries(integrations));
   }
 
   get servers(): AsyncComputedResult<
