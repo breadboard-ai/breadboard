@@ -14,7 +14,7 @@ import {
   Outcome,
   UUID,
 } from "@breadboard-ai/types";
-import { AsyncComputedResult, Integrations, ProjectInternal } from "./types";
+import { AsyncComputedResult, Integrations } from "./types";
 import { err, ok } from "@breadboard-ai/utils";
 import { SignalMap } from "signal-utils/map";
 import { McpServerStore } from "./utils/mcp-server-store";
@@ -30,10 +30,7 @@ class IntegrationsImpl implements Integrations {
 
   #serverList = new McpServerStore();
 
-  constructor(
-    private readonly project: ProjectInternal,
-    private readonly editable?: EditableGraph
-  ) {
+  constructor(private readonly editable?: EditableGraph) {
     if (!editable) {
       console.warn(
         `Integration Initialization will fail: No editable supplied`

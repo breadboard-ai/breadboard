@@ -172,7 +172,7 @@ class ReactiveProject implements ProjectInternal {
     this.#updateMyTools();
     this.#updateParameters();
     this.run = ReactiveProjectRun.createInert(this.#mainGraphId, this.#store);
-    this.integrations = new IntegrationsImpl(this, editable);
+    this.integrations = new IntegrationsImpl(editable);
   }
 
   resetRun(): void {
