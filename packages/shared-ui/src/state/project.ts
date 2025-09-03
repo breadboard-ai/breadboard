@@ -45,7 +45,7 @@ import {
   ConnectorState,
   FastAccess,
   GraphAsset,
-  Mcp,
+  Integrations,
   Organizer,
   Project,
   ProjectInternal,
@@ -53,7 +53,7 @@ import {
   RendererState,
   Tool,
 } from "./types";
-import { McpImpl } from "./mcp";
+import { IntegrationsImpl } from "./integrations";
 
 export { createProjectState, ReactiveProject };
 
@@ -116,7 +116,7 @@ class ReactiveProject implements ProjectInternal {
   readonly parameters: SignalMap<string, ParameterMetadata>;
   readonly connectors: ConnectorState;
   readonly renderer: RendererState;
-  readonly mcp: Mcp;
+  readonly integrations: Integrations;
 
   constructor(
     mainGraphId: MainGraphIdentifier,
@@ -172,7 +172,7 @@ class ReactiveProject implements ProjectInternal {
     this.#updateMyTools();
     this.#updateParameters();
     this.run = ReactiveProjectRun.createInert(this.#mainGraphId, this.#store);
-    this.mcp = new McpImpl(this, editable);
+    this.integrations = new IntegrationsImpl(this, editable);
   }
 
   resetRun(): void {

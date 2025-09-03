@@ -14,7 +14,7 @@ import {
   Outcome,
   UUID,
 } from "@breadboard-ai/types";
-import { AsyncComputedResult, Mcp, ProjectInternal } from "./types";
+import { AsyncComputedResult, Integrations, ProjectInternal } from "./types";
 import { err, ok } from "@breadboard-ai/utils";
 import { SignalMap } from "signal-utils/map";
 import { McpServerStore } from "./utils/mcp-server-store";
@@ -22,9 +22,9 @@ import { AsyncComputed } from "signal-utils/async-computed";
 import { listBuiltInMcpServers } from "@breadboard-ai/mcp";
 import { signal } from "signal-utils";
 
-export { McpImpl };
+export { IntegrationsImpl };
 
-class McpImpl implements Mcp {
+class IntegrationsImpl implements Integrations {
   @signal
   accessor #integrations: Map<string, Integration> = new Map();
 

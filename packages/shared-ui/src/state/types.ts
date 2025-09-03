@@ -507,10 +507,10 @@ export type UI = {
 };
 
 /**
- * Represents the Model+Controller for of the project's MCP
+ * Represents the Model+Controller for of the project's Integrations
  * configuration.
  */
-export type Mcp = {
+export type Integrations = {
   /**
    * List of currently all known MCP servers.
    */
@@ -561,7 +561,7 @@ export type Project = {
   graphAssets: Map<AssetPath, GraphAsset>;
   parameters: Map<string, ParameterMetadata>;
   connectors: ConnectorState;
-  mcp: Mcp;
+  integrations: Integrations;
   organizer: Organizer;
   fastAccess: FastAccess;
   renderer: RendererState;
