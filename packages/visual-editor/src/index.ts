@@ -352,11 +352,13 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.flowGenerator = new FlowGenerator(this.#apiClient);
 
-    const allowAnonymous = parsedUrl?.dev?.["allow-anonymous"] !== undefined;
+    const newSignedOutExperienceIsEnabled =
+      parsedUrl?.dev?.["enable-new-signed-out-experience"] !== undefined;
     const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
       .href;
     const apiBaseUrl =
-      this.signinAdapter.state === "anonymous" && allowAnonymous
+      this.signinAdapter.state === "anonymous" &&
+      newSignedOutExperienceIsEnabled
         ? proxyApiBaseUrl
         : "https://www.googleapis.com";
     this.googleDriveClient = new GoogleDriveClient({
@@ -367,7 +369,7 @@ export class Main extends SignalWatcher(LitElement) {
         if (token.state === "valid") {
           return token.grant.access_token;
         }
-        if (token.state === "signedout" && allowAnonymous) {
+        if (token.state === "signedout" && newSignedOutExperienceIsEnabled) {
           return "";
         }
         throw new Error(`User is signed out`);

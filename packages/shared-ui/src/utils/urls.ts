@@ -17,7 +17,7 @@ export interface BaseUrlInit {
    */
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   dev?: {
-    "allow-anonymous"?: "";
+    "enable-new-signed-out-experience"?: "";
   };
 }
 
