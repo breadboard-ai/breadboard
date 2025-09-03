@@ -17,7 +17,6 @@ export interface BaseUrlInit {
    */
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   dev?: {
-    "force-drive-proxy"?: "";
     "allow-anonymous"?: "";
   };
 }
