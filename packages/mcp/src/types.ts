@@ -4,6 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+import type {
+  CallToolRequest,
+  CallToolResult,
+  Implementation,
+  ListToolsResult,
+} from "@modelcontextprotocol/sdk/types.js";
+
 export type JsonSerializableHeadersInit =
   | [string, string][]
   | Record<string, string>;
@@ -37,4 +45,19 @@ export type JsonSerializableRequestInit = {
 export type McpProxyRequest = {
   url: string;
   init: JsonSerializableRequestInit;
+};
+
+export type McpCallToolResult = { content: CallToolResult["content"] };
+export type McpListToolResult = { tools: ListToolsResult["tools"] };
+
+/**
+ * An abstract type around MCP's Client, so that we could switch out the
+ * actual client and use our own.
+ */
+export type McpClient = {
+  connect(transport: Transport): Promise<void>;
+  getServerVersion(): Implementation;
+  close(): Promise<void>;
+  callTool(params: CallToolRequest["params"]): Promise<McpCallToolResult>;
+  listTools(): Promise<McpListToolResult>;
 };

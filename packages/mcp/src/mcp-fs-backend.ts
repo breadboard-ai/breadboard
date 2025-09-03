@@ -16,17 +16,19 @@ import {
 import { err, fromJson, ok, toJson } from "@breadboard-ai/utils";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import {
-  FetchLike,
-  Transport,
-} from "@modelcontextprotocol/sdk/shared/transport.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import type { FetchLike } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
   CallToolRequest,
   Implementation,
 } from "@modelcontextprotocol/sdk/types.js";
-import { JsonSerializableRequestInit, McpProxyRequest } from "./types.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { ProxyBackedClient } from "./proxy-backed-client.js";
 import { McpBuiltInServerStore } from "./server-store.js";
+import type {
+  JsonSerializableRequestInit,
+  McpClient,
+  McpProxyRequest,
+} from "./types.js";
 
 export { McpFileSystemBackend, parsePath };
 
@@ -52,7 +54,7 @@ type PathInfo =
 
 type SessionInfo = {
   id: string;
-  client: Client | null;
+  client: McpClient | null;
   // TODO: Implement support for per-method response.
   response: Promise<Outcome<LLMContent[]>> | null;
 };
@@ -79,7 +81,10 @@ type TokenGetter = () => Promise<Outcome<string>>;
 class McpFileSystemBackend implements PersistentBackend {
   #sessions: Map<string, SessionInfo> = new Map();
 
-  constructor(private readonly tokenGetter: TokenGetter) {}
+  constructor(
+    private readonly tokenGetter: TokenGetter,
+    private readonly proxyUrl?: string
+  ) {}
 
   async query(
     _graphUrl: string,
@@ -173,17 +178,17 @@ class McpFileSystemBackend implements PersistentBackend {
     };
   }
 
-  async #initializeClient(data: LLMContent[]): Promise<Outcome<Client>> {
+  async #initializeClient(data: LLMContent[]): Promise<Outcome<McpClient>> {
     const initialization = toJson<InitializeSessionWrite>(data);
     if (!initialization) {
       return err(`MCP Backend: invalid session initialization payload`);
     }
 
-    try {
-      const client = new Client(initialization.info);
+    const isBuiltIn = initialization.url.startsWith(BUILTIN_SERVER_PREFIX);
 
-      let transport: Transport;
-      if (initialization.url.startsWith(BUILTIN_SERVER_PREFIX)) {
+    try {
+      if (isBuiltIn) {
+        const client = new Client(initialization.info) as McpClient;
         const builtInServerName = initialization.url.slice(
           BUILTIN_SERVER_PREFIX.length
         );
@@ -192,17 +197,32 @@ class McpFileSystemBackend implements PersistentBackend {
         const [clientTransport, serverTransport] =
           InMemoryTransport.createLinkedPair();
         await server.connect(serverTransport);
-        transport = clientTransport;
+        const transport = clientTransport;
+
+        await client.connect(transport);
+        return client;
+      } else if (this.proxyUrl) {
+        const accessToken = await this.tokenGetter();
+        if (!ok(accessToken)) return accessToken;
+
+        return new ProxyBackedClient({
+          name: "MCP Proxy Backend",
+          url: initialization.url,
+          proxyToken: accessToken,
+          proxyUrl: this.proxyUrl,
+        });
       } else {
+        const client = new Client(initialization.info) as McpClient;
+
         const url = new URL(initialization.url);
-        transport = new StreamableHTTPClientTransport(url, {
+        const transport = new StreamableHTTPClientTransport(url, {
           fetch: this.#fetch(),
         });
-      }
 
-      // TODO: Implement error handling and retry.
-      await client.connect(transport);
-      return client;
+        // TODO: Implement error handling and retry.
+        await client.connect(transport);
+        return client;
+      }
     } catch (e) {
       return err((e as Error).message);
     }

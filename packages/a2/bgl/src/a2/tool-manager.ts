@@ -58,7 +58,8 @@ class ToolManager {
     return toGeminiSchema(schema);
 
     function toGeminiSchema(schema: Schema): GeminiSchema {
-      switch (schema.type) {
+      const type = typeof schema?.type === "string" ? schema.type : "string";
+      switch (type.toLocaleLowerCase()) {
         case "object": {
           if (schema.behavior?.includes("llm-content")) {
             return {
