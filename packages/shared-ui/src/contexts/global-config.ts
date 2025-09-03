@@ -17,7 +17,7 @@ export type GlobalConfig = {
   environmentName: string | undefined;
   connectionServerUrl: string | undefined;
   connectionRedirectUrl: string;
-  requiresSignin?: boolean;
+  signinMode: "disabled" | "required" | "incremental";
   googleDrive: {
     publishPermissions: GoogleDrivePermission[];
   };

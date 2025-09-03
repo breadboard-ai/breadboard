@@ -11,7 +11,10 @@ import {
   type LanguagePack,
   SETTINGS_TYPE,
 } from "@breadboard-ai/shared-ui/types/types.js";
-import type { GoogleDrivePermission } from "@breadboard-ai/shared-ui/contexts/global-config.js";
+import type {
+  GlobalConfig,
+  GoogleDrivePermission,
+} from "@breadboard-ai/shared-ui/contexts/global-config.js";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { createTokenVendor } from "@breadboard-ai/connection-client";
@@ -46,13 +49,13 @@ async function getUrlFromBoardServiceFlag(
 }
 
 async function bootstrap(bootstrapArgs: BootstrapArguments) {
-  const globalConfig = {
+  const globalConfig: GlobalConfig = {
     connectionServerUrl:
       bootstrapArgs.connectionServerUrl?.href ||
       import.meta.env.VITE_CONNECTION_SERVER_URL,
     connectionRedirectUrl: "/oauth/",
     environmentName: ENVIRONMENT_NAME,
-    requiresSignin: bootstrapArgs.requiresSignin,
+    signinMode: bootstrapArgs.signinMode,
     googleDrive: {
       publishPermissions: JSON.parse(
         import.meta.env.VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS || `[]`

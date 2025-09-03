@@ -45,7 +45,7 @@ async function init() {
   const globalConfig = {
     connectionServerUrl: new URL("/connection/", window.location.href).href,
     connectionRedirectUrl: "/oauth/",
-    requiresSignin: true,
+    signinMode: "required",
     ...deploymentConfiguration,
   } as GlobalConfig;
 

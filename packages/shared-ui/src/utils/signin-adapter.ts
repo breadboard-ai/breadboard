@@ -76,13 +76,18 @@ class SigninAdapter {
     this.#settingsHelper = settingsHelper;
     this.#handleSignInRequest = handleSignInRequest;
 
-    if (!globalConfig.requiresSignin) {
+    if (globalConfig.signinMode === "disabled") {
       this.#state = { status: "anonymous" };
       return;
     }
 
     const token = tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
     if (token.state === "signedout") {
+      if (globalConfig.signinMode === "incremental") {
+        // TODO(aomarks) Temporary weirdness.
+        this.#state = { status: "anonymous" };
+        return;
+      }
       this.#state = { status: "signedout" };
       return;
     }
