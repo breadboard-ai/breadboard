@@ -309,7 +309,7 @@ export class Main extends SignalWatcher(LitElement) {
       this.tokenVendor,
       this.globalConfig,
       this.settingsHelper,
-      () => this.#askUserToSignIn()
+      (scopes?: OAuthScope[]) => this.#askUserToSignIn(scopes)
     );
 
     // Asyncronously check if the user has a geo-restriction and sign out if so.
@@ -2206,7 +2206,7 @@ export class Main extends SignalWatcher(LitElement) {
     </bb-ve-header>`;
   }
 
-  async #askUserToSignIn(): Promise<boolean> {
+  async #askUserToSignIn(scopes?: OAuthScope[]): Promise<boolean> {
     this.#uiState.show.add("SignInModal");
     await this.updateComplete;
     const signInModal = this.#signInModalRef.value;
@@ -2214,7 +2214,7 @@ export class Main extends SignalWatcher(LitElement) {
       console.warn(`Could not find sign-in modal.`);
       return false;
     }
-    return signInModal.openAndWaitForSignIn();
+    return signInModal.openAndWaitForSignIn(scopes);
   }
 
   readonly #signInModalRef = createRef<VESignInModal>();

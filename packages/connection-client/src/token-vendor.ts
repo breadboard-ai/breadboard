@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { OAuthScope } from "./oauth-scopes.js";
 import type {
   ConnectionEnvironment,
   GrantStore,
@@ -40,10 +39,7 @@ export class TokenVendorImpl implements TokenVendor {
     this.#environment = environment;
   }
 
-  getToken(connectionId: string, scopes?: OAuthScope[]): TokenResult {
-    if (scopes?.length) {
-      console.debug("token requested with scopes", scopes);
-    }
+  getToken(connectionId: string): TokenResult {
     const grantJsonString = this.#store.get(connectionId);
     if (grantJsonString === undefined) {
       return { state: "signedout" };
