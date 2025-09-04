@@ -4,8 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { OAuthScopeShortName } from "./oauth-scopes.js";
+
 export type TokenVendor = {
-  getToken(connectionId: string): TokenResult;
+  getToken(connectionId: string, scopes?: OAuthScopeShortName[]): TokenResult;
   isSignedIn(connectionId: string): boolean;
 };
 

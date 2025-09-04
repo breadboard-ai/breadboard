@@ -6,6 +6,7 @@
 
 /// <reference types="@types/gapi.client.drive-v3" />
 
+import type { OAuthScopeShortName } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { retryableFetch } from "./board-server/utils.js";
 
 type File = gapi.client.drive.File;
@@ -183,7 +184,9 @@ export class GoogleDriveClient {
         marked: Set<string>;
       }
     | undefined;
-  readonly #getUserAccessToken: () => Promise<string>;
+  readonly #getUserAccessToken: (
+    scopes?: OAuthScopeShortName[]
+  ) => Promise<string>;
 
   constructor(options: GoogleDriveClientOptions) {
     this.apiUrl = options.apiBaseUrl || "https://www.googleapis.com";
@@ -198,8 +201,8 @@ export class GoogleDriveClient {
 
   // TODO(aomarks) Remove. Anything that needs an access token should get it
   // itself.
-  async accessToken(): Promise<string> {
-    return this.#getUserAccessToken();
+  async accessToken(scopes?: OAuthScopeShortName[]): Promise<string> {
+    return this.#getUserAccessToken(scopes);
   }
 
   async #fetch(
@@ -488,11 +491,19 @@ export class GoogleDriveClient {
     );
     body.append("file", data);
 
-    const response = await this.#fetch(url, {
-      method: isExistingFile ? "PATCH" : "POST",
-      body,
-      signal: options?.signal,
-    });
+    const response = await this.#fetch(
+      url,
+      {
+        method: isExistingFile ? "PATCH" : "POST",
+        body,
+        signal: options?.signal,
+      },
+      undefined,
+      {
+        kind: "bearer",
+        token: await this.#getUserAccessToken(["drive.file"]),
+      }
+    );
     if (!response.ok) {
       throw new Error(
         `Google Drive uploadFileMultipart ${response.status} error: ` +

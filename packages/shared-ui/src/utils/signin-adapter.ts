@@ -21,6 +21,7 @@ import {
 import { SETTINGS_TYPE, SettingsHelper } from "../types/types";
 import { createContext } from "@lit/context";
 import { getEmbedderRedirectUri } from "./embed-helpers";
+import { type OAuthScopeShortName } from "@breadboard-ai/connection-client/oauth-scopes.js";
 
 export { SigninAdapter };
 
@@ -126,7 +127,9 @@ class SigninAdapter {
    * Gets you a token, refreshing automatically if needed, unless the user is
    * signed out.
    */
-  async token(): Promise<ValidTokenResult | SignedOutTokenResult> {
+  async token(
+    scopes?: OAuthScopeShortName[]
+  ): Promise<ValidTokenResult | SignedOutTokenResult> {
     if (this.#state.status === "anonymous") {
       await this.#handleSignInRequest?.();
       if (
@@ -137,12 +140,12 @@ class SigninAdapter {
         return { state: "signedout" };
       }
     }
-    let token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
+    let token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID, scopes);
     if (token.state === "expired") {
       token = await token.refresh();
       if (token.state === "signedout") {
         if ((await this.signIn()).ok) {
-          token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
+          token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID, scopes);
         }
       }
     }
