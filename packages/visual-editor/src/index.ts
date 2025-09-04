@@ -106,6 +106,7 @@ import { envFromFlags } from "./utils/env-from-flags";
 import { envFromSettings } from "./utils/env-from-settings";
 import { makeUrl, parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { VESignInModal } from "@breadboard-ai/shared-ui/elements/elements.js";
+import { type OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 
 type RenderValues = {
   canSave: boolean;
@@ -308,7 +309,7 @@ export class Main extends SignalWatcher(LitElement) {
       this.tokenVendor,
       this.globalConfig,
       this.settingsHelper,
-      () => this.#askUserToSignIn()
+      (scopes?: OAuthScope[]) => this.#askUserToSignIn(scopes)
     );
 
     // Asyncronously check if the user has a geo-restriction and sign out if so.
@@ -364,8 +365,8 @@ export class Main extends SignalWatcher(LitElement) {
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,
       proxyApiBaseUrl,
-      getUserAccessToken: async () => {
-        const token = await this.signinAdapter.token();
+      getUserAccessToken: async (scopes?: OAuthScope[]) => {
+        const token = await this.signinAdapter.token(scopes);
         if (token.state === "valid") {
           return token.grant.access_token;
         }
@@ -2205,7 +2206,7 @@ export class Main extends SignalWatcher(LitElement) {
     </bb-ve-header>`;
   }
 
-  async #askUserToSignIn(): Promise<boolean> {
+  async #askUserToSignIn(scopes?: OAuthScope[]): Promise<boolean> {
     this.#uiState.show.add("SignInModal");
     await this.updateComplete;
     const signInModal = this.#signInModalRef.value;
@@ -2213,7 +2214,7 @@ export class Main extends SignalWatcher(LitElement) {
       console.warn(`Could not find sign-in modal.`);
       return false;
     }
-    return signInModal.openAndWaitForSignIn();
+    return signInModal.openAndWaitForSignIn(scopes);
   }
 
   readonly #signInModalRef = createRef<VESignInModal>();

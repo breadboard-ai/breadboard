@@ -21,6 +21,10 @@ import {
 import { SETTINGS_TYPE, SettingsHelper } from "../types/types";
 import { createContext } from "@lit/context";
 import { getEmbedderRedirectUri } from "./embed-helpers";
+import {
+  ALWAYS_REQUIRED_OAUTH_SCOPES,
+  type OAuthScope,
+} from "@breadboard-ai/connection-client/oauth-scopes.js";
 
 export { SigninAdapter };
 
@@ -61,7 +65,7 @@ class SigninAdapter {
   readonly #tokenVendor: TokenVendor;
   readonly #globalConfig: GlobalConfig;
   readonly #settingsHelper: SettingsHelper;
-  readonly #handleSignInRequest?: () => Promise<boolean>;
+  readonly #handleSignInRequest?: (scopes?: OAuthScope[]) => Promise<boolean>;
   #nonce = crypto.randomUUID();
   #state: SigninAdapterState;
 
@@ -126,9 +130,11 @@ class SigninAdapter {
    * Gets you a token, refreshing automatically if needed, unless the user is
    * signed out.
    */
-  async token(): Promise<ValidTokenResult | SignedOutTokenResult> {
+  async token(
+    scopes?: OAuthScope[]
+  ): Promise<ValidTokenResult | SignedOutTokenResult> {
     if (this.#state.status === "anonymous") {
-      await this.#handleSignInRequest?.();
+      await this.#handleSignInRequest?.(scopes);
       if (
         // Cast needed because TypeScript doesn't realize that the await above
         // could change the #state type.
@@ -147,13 +153,36 @@ class SigninAdapter {
       }
     }
     switch (token.state) {
-      case "valid":
-      case "signedout":
+      case "valid": {
+        if (scopes?.length) {
+          const actualScopes = new Set(
+            (token.grant.scopes ?? []).map((scope) =>
+              canonicalizeOAuthScope(scope)
+            )
+          );
+          const missingScopes = scopes.filter(
+            (scope) => !actualScopes.has(scope)
+          );
+          if (missingScopes.length) {
+            if (!this.#handleSignInRequest) {
+              // TODO(aomarks) Add a new "insufficient-scopes" state.
+              return { state: "signedout" };
+            } else {
+              await this.#handleSignInRequest(missingScopes);
+              return this.token(scopes);
+            }
+          }
+        }
         return token;
+      }
+      case "signedout": {
+        return token;
+      }
 
-      default:
+      default: {
         token.state satisfies "expired";
         throw new Error("Invalid token state after refresh: " + token.state);
+      }
     }
   }
 
@@ -181,9 +210,7 @@ class SigninAdapter {
     })());
   }
 
-  async getSigninUrl(): Promise<string> {
-    if (this.#state.status === "signedin") return "";
-
+  async getSigninUrl(scopes?: OAuthScope[]): Promise<string> {
     const connection = await this.#getConnection();
     if (!connection) return "";
 
@@ -205,10 +232,20 @@ class SigninAdapter {
         nonce: this.#nonce,
       } satisfies OAuthStateParameter)
     );
+    if (scopes?.length) {
+      authUrl.searchParams.set(
+        "scope",
+        [...new Set([...ALWAYS_REQUIRED_OAUTH_SCOPES, ...scopes])].join(" ")
+      );
+    }
+    // Don't lose access to scopes we've previously asked for.
+    authUrl.searchParams.set("include_granted_scopes", "true");
     return authUrl.href;
   }
 
-  async signIn(): Promise<{ ok: true } | { ok: false; error: SignInError }> {
+  async signIn(
+    scopes?: OAuthScope[]
+  ): Promise<{ ok: true } | { ok: false; error: SignInError }> {
     const now = Date.now();
     // The OAuth broker page will know to broadcast the token on this unique
     // channel because it also knows the nonce (since we pack that in the OAuth
@@ -227,11 +264,13 @@ class SigninAdapter {
     if (grantResponse.error !== undefined) {
       console.error(grantResponse.error);
       if (grantResponse.error.includes("region")) {
+        console.debug(`[signin] geo restriction 1`);
         return {
           ok: false,
           error: { code: "geo-restriction" },
         };
       }
+      console.debug(`[signin] other error`, grantResponse.error);
       return {
         ok: false,
         error: { code: "other", detail: grantResponse.error },
@@ -239,11 +278,13 @@ class SigninAdapter {
     }
 
     if (await this.userHasGeoRestriction(grantResponse.access_token)) {
+      console.debug(`[signin] geo restriction 2`);
       return { ok: false, error: { code: "geo-restriction" } };
     }
 
     const connection = await this.#getConnection();
     if (!connection) {
+      console.debug(`[signin] no connection`);
       return {
         ok: false,
         error: { code: "other", detail: "Connection not found" },
@@ -251,14 +292,17 @@ class SigninAdapter {
     }
 
     // Check for any missing required scopes.
-    const requiredScopes = connection.scopes
-      .filter(({ optional }) => !optional)
-      .map(({ scope }) => scope);
+    const requiredScopes =
+      scopes ??
+      connection.scopes
+        .filter(({ optional }) => !optional)
+        .map(({ scope }) => scope);
     const actualScopes = new Set(grantResponse.scopes ?? []);
     const missingScopes = requiredScopes.filter(
       (scope) => !actualScopes.has(scope)
     );
     if (missingScopes.length > 0) {
+      console.debug(`[signin] missing scopes`, missingScopes);
       return {
         ok: false,
         error: { code: "missing-scopes", missingScopes },
@@ -276,6 +320,7 @@ class SigninAdapter {
       domain: grantResponse.domain,
       scopes: grantResponse.scopes,
     };
+    console.debug("[signin] updating signin storage");
     await this.#settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connection.id, {
       name: connection.id,
       value: JSON.stringify(settingsValue),

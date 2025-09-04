@@ -3,6 +3,7 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+import type { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { consume } from "@lit/context";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
@@ -25,6 +26,8 @@ export class VESignInModal extends LitElement {
     | { status: "closed" }
     | {
         status: "open";
+        reason: "sign-in" | "add-scope";
+        scopes: OAuthScope[] | undefined;
         outcomePromise: Promise<boolean>;
         outcomeResolve: (outcome: boolean) => void;
       } = { status: "closed" };
@@ -42,6 +45,10 @@ export class VESignInModal extends LitElement {
         width: 100%;
         height: 100%;
         z-index: 1;
+      }
+
+      section {
+        max-width: 500px;
       }
 
       p,
@@ -76,18 +83,27 @@ export class VESignInModal extends LitElement {
     if (this.#state.status !== "open") {
       return nothing;
     }
+    const { reason } = this.#state;
     return html`
       <bb-modal
         icon="login"
-        modalTitle="Sign In"
+        .modalTitle=${reason === "sign-in"
+          ? "Sign In"
+          : "Requesting additional permissions"}
         showCloseButton
         @bbmodaldismissed=${this.#onDismiss}
       >
         <section>
-          <p>To continue, you'll need to sign in with your Google account.</p>
+          <p>
+            ${reason === "sign-in"
+              ? html`To continue, you'll need to sign in with your Google
+                account.`
+              : html`This action requires additional permissions. Please click
+                  <em>Continue</em> to view permissions and allow access.`}
+          </p>
           <aside>
             <button id="sign-in" class="sans" @click=${this.#onClickSignIn}>
-              Sign In
+              ${reason === "sign-in" ? "Sign In" : "Continue"}
             </button>
           </aside>
         </section>
@@ -95,13 +111,16 @@ export class VESignInModal extends LitElement {
     `;
   }
 
-  async openAndWaitForSignIn(): Promise<boolean> {
+  async openAndWaitForSignIn(scopes?: OAuthScope[]): Promise<boolean> {
     if (this.#state.status === "closed") {
       let resolve: (outcome: boolean) => void;
       this.#state = {
         status: "open",
+        reason:
+          this.signinAdapter?.state === "signedin" ? "add-scope" : "sign-in",
         outcomePromise: new Promise<boolean>((r) => (resolve = r)),
         outcomeResolve: resolve!,
+        scopes,
       };
     }
     return this.#state.outcomePromise;
@@ -116,8 +135,8 @@ export class VESignInModal extends LitElement {
       this.#close(false);
       return;
     }
-    const url = await this.signinAdapter.getSigninUrl();
-    const signInPromise = this.signinAdapter.signIn();
+    const url = await this.signinAdapter.getSigninUrl(this.#state.scopes);
+    const signInPromise = this.signinAdapter.signIn(this.#state.scopes);
     const popupWidth = 900;
     const popupHeight = 850;
     window.open(

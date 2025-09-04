@@ -63,6 +63,7 @@ function makeAuthorizationEndpointUrl(config: ConnectionConfig): string {
   const url = new URL(config.oauth.auth_uri);
   const params = url.searchParams;
   params.set("client_id", config.oauth.client_id);
+  // TODO(aomarks) Remove this once scopes are fully handled by the client.
   params.set("scope", config.oauth.scopes.join(" "));
   params.set("response_type", "code");
   params.set("access_type", "offline");

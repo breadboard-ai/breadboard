@@ -3,7 +3,16 @@
   "version": "0.3.0",
   "description": "Breadboard Connection Client",
   "main": "./dist/src/index.js",
-  "exports": "./dist/src/index.js",
+  "exports": {
+    ".": {
+      "default": "./dist/src/index.js",
+      "types": "./dist/src/index.d.ts"
+    },
+    "./*.js": {
+      "types": "./dist/src/*.d.ts",
+      "default": "./dist/src/*.js"
+    }
+  },
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
