@@ -47,6 +47,10 @@ export class VESignInModal extends LitElement {
         z-index: 1;
       }
 
+      section {
+        max-width: 500px;
+      }
+
       p,
       li {
         margin: 0 0 var(--bb-grid-size-2) 0;
