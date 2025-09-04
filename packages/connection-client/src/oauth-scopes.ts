@@ -8,6 +8,8 @@ export const OAUTH_SCOPES = {
   // https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
   openid: {
     category: "Google Account",
+    // Always required according to the OpenID Connect Core spec.
+    required: true,
   },
 
   // https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
@@ -20,6 +22,8 @@ export const OAUTH_SCOPES = {
   email: {
     aliases: ["https://www.googleapis.com/auth/userinfo.email"],
     category: "Google Account",
+    // Required for checking geo-location.
+    required: true,
   },
 
   // https://developers.google.com/workspace/drive/api/guides/api-specific-auth#drive-scopes
@@ -39,6 +43,12 @@ export const OAUTH_SCOPES = {
 } as const satisfies Record<string, OAuthScopeInfo>;
 
 type OAuthScopeInfo = {
+  /**
+   * If true, this scope will always be requested, regardless of which specific
+   * scopes are being requested at the time.
+   */
+  required?: boolean;
+
   /**
    * Some scopes have multiple valid values that mean the same exact thing.
    */
