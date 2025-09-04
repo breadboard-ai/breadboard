@@ -26,6 +26,7 @@ export class VESignInModal extends LitElement {
     | { status: "closed" }
     | {
         status: "open";
+        reason: "sign-in" | "add-scope";
         scopes: OAuthScope[] | undefined;
         outcomePromise: Promise<boolean>;
         outcomeResolve: (outcome: boolean) => void;
@@ -78,19 +79,27 @@ export class VESignInModal extends LitElement {
     if (this.#state.status !== "open") {
       return nothing;
     }
-    // TODO(aomarks) Differentiate between fresh sign-in vs adding scopes.
+    const { reason } = this.#state;
     return html`
       <bb-modal
         icon="login"
-        modalTitle="Sign In"
+        .modalTitle=${reason === "sign-in"
+          ? "Sign In"
+          : "Requesting additional permissions"}
         showCloseButton
         @bbmodaldismissed=${this.#onDismiss}
       >
         <section>
-          <p>To continue, you'll need to sign in with your Google account.</p>
+          <p>
+            ${reason === "sign-in"
+              ? html`To continue, you'll need to sign in with your Google
+                account.`
+              : html`This action requires additional permissions. Please click
+                  <em>Continue</em> to view permissions and allow access.`}
+          </p>
           <aside>
             <button id="sign-in" class="sans" @click=${this.#onClickSignIn}>
-              Sign In
+              ${reason === "sign-in" ? "Sign In" : "Continue"}
             </button>
           </aside>
         </section>
@@ -103,6 +112,8 @@ export class VESignInModal extends LitElement {
       let resolve: (outcome: boolean) => void;
       this.#state = {
         status: "open",
+        reason:
+          this.signinAdapter?.state === "signedin" ? "add-scope" : "sign-in",
         outcomePromise: new Promise<boolean>((r) => (resolve = r)),
         outcomeResolve: resolve!,
         scopes,
