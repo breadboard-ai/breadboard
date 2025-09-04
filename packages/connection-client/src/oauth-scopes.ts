@@ -68,13 +68,15 @@ type OAuthScopeInfo = {
 
 export type OAuthScope = keyof typeof OAUTH_SCOPES;
 
+export const REQUIRED_OAUTH_SCOPES = Object.entries(OAUTH_SCOPES)
+  .filter(([, info]) => "required" in info && info.required)
+  .map(([scope]) => scope);
+
 const OAUTH_SCOPE_ALIAS_TO_CANONICAL = new Map<string, string>();
-for (const { value, aliases } of Object.values(
-  OAUTH_SCOPE_ALIAS_TO_CANONICAL
-)) {
-  if (aliases) {
-    for (const alias of aliases) {
-      OAUTH_SCOPE_ALIAS_TO_CANONICAL.set(alias, value);
+for (const [canonical, info] of Object.entries(OAUTH_SCOPES)) {
+  if ("aliases" in info) {
+    for (const alias of info.aliases) {
+      OAUTH_SCOPE_ALIAS_TO_CANONICAL.set(alias, canonical);
     }
   }
 }
