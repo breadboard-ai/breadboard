@@ -210,7 +210,7 @@ class SigninAdapter {
     })());
   }
 
-  async getSigninUrl(scopesForThisRequest?: OAuthScope[]): Promise<string> {
+  async getSigninUrl(scopes?: OAuthScope[]): Promise<string> {
     const connection = await this.#getConnection();
     if (!connection) return "";
 
@@ -232,31 +232,14 @@ class SigninAdapter {
         nonce: this.#nonce,
       } satisfies OAuthStateParameter)
     );
-    if (scopesForThisRequest?.length) {
-      const scopesFromPreviousSignIn: string[] = [];
-      const token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
-      if (
-        (token.state === "valid" || token.state === "expired") &&
-        token.grant.scopes
-      ) {
-        scopesFromPreviousSignIn.push(...token.grant.scopes);
-      }
+    if (scopes?.length) {
       authUrl.searchParams.set(
         "scope",
-        [
-          ...new Set([
-            ...ALWAYS_REQUIRED_OAUTH_SCOPES,
-            // Keep any scopes we already have. We could also use
-            // `include_granted_scopes=true` to achieve this, but that has the
-            // downside that, if we stop using a scope, any user who ever
-            // granted it to us will continue to return it, even when it's no
-            // longer needed.
-            ...scopesFromPreviousSignIn,
-            ...scopesForThisRequest,
-          ]),
-        ].join(" ")
+        [...new Set([...ALWAYS_REQUIRED_OAUTH_SCOPES, ...scopes])].join(" ")
       );
     }
+    // Don't lose access to scopes we've previously asked for.
+    authUrl.searchParams.set("include_granted_scopes", "true");
     return authUrl.href;
   }
 
