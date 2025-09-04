@@ -499,9 +499,9 @@ export class GoogleDriveClient {
       undefined,
       {
         kind: "bearer",
-        token: await this.#getUserAccessToken([
-          "https://www.googleapis.com/auth/drive.file",
-        ]),
+        // TODO(aomarks) Set the drive.file scope here, and either that or
+        // drive.readonly for every other method.
+        token: await this.#getUserAccessToken(),
       }
     );
     if (!response.ok) {
