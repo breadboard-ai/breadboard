@@ -381,6 +381,18 @@ export class GraphNode extends Box implements DragConnectorReceiver {
               cursor: pointer;
               opacity: 1;
             }
+
+            & .g-icon {
+              &::before {
+                content: attr(data-icon);
+              }
+
+              &.g-icon:hover {
+                &::before {
+                  content: attr(data-hover-icon);
+                }
+              }
+            }
           }
 
           & > .g-icon {
@@ -627,6 +639,10 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
       :host([controlanimation="rotate"]) #container .node-controls {
         animation: rotate 1s linear infinite;
+
+        &:hover {
+          animation: none;
+        }
       }
 
       @keyframes rotate {
@@ -1113,53 +1129,62 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
     let disabled = false;
     let icon = "";
+    let hoverIcon = "";
     let tooltip = "";
     switch (this.runStatus.status) {
       case "inactive": {
         tooltip = "Stop at this step";
+        hoverIcon = "pause";
         break;
       }
 
       case "ready": {
         tooltip = "Run this step only";
         icon = "play_arrow";
+        hoverIcon = "play_arrow";
         break;
       }
 
       case "working":
       case "waiting": {
         tooltip = "Stop";
+        hoverIcon = "stop";
         icon = "progress_activity";
         break;
       }
 
       case "succeeded": {
         tooltip = "Run this step only";
+        hoverIcon = "autorenew";
         icon = "autorenew";
         break;
       }
 
       case "failed": {
         tooltip = "Re-run this step";
+        hoverIcon = "autorenew";
         icon = "autorenew";
         break;
       }
 
       case "skipped": {
         tooltip = "Stop at this step";
-        icon = "pause";
+        icon = "";
+        hoverIcon = "pause";
         break;
       }
 
       case "interrupted": {
         tooltip = "Re-run this step";
         icon = "autorenew";
+        hoverIcon = "autorenew";
         break;
       }
 
       case "breakpoint": {
         tooltip = "Don't stop at this step";
         icon = "pause";
+        hoverIcon = "close";
         break;
       }
 
@@ -1210,7 +1235,11 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       class="node-controls"
       ?disabled=${disabled}
     >
-      <span class="g-icon filled round">${icon}</span>
+      <span
+        class="g-icon filled round"
+        data-icon=${icon}
+        data-hover-icon=${hoverIcon}
+      ></span>
     </button>`;
   }
 
