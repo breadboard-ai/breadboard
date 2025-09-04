@@ -68,7 +68,7 @@ type OAuthScopeInfo = {
 
 export type OAuthScope = keyof typeof OAUTH_SCOPES;
 
-export const REQUIRED_OAUTH_SCOPES = Object.entries(OAUTH_SCOPES)
+export const ALWAYS_REQUIRED_OAUTH_SCOPES = Object.entries(OAUTH_SCOPES)
   .filter(([, info]) => "required" in info && info.required)
   .map(([scope]) => scope);
 

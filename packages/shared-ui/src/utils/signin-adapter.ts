@@ -22,7 +22,7 @@ import { SETTINGS_TYPE, SettingsHelper } from "../types/types";
 import { createContext } from "@lit/context";
 import { getEmbedderRedirectUri } from "./embed-helpers";
 import {
-  REQUIRED_OAUTH_SCOPES,
+  ALWAYS_REQUIRED_OAUTH_SCOPES,
   type OAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
 
@@ -143,12 +143,12 @@ class SigninAdapter {
         return { state: "signedout" };
       }
     }
-    let token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID, scopes);
+    let token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
     if (token.state === "expired") {
       token = await token.refresh();
       if (token.state === "signedout") {
         if ((await this.signIn()).ok) {
-          token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID, scopes);
+          token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
         }
       }
     }
@@ -210,7 +210,7 @@ class SigninAdapter {
     })());
   }
 
-  async getSigninUrl(scopes?: OAuthScope[]): Promise<string> {
+  async getSigninUrl(scopesForThisRequest?: OAuthScope[]): Promise<string> {
     const connection = await this.#getConnection();
     if (!connection) return "";
 
@@ -232,12 +232,29 @@ class SigninAdapter {
         nonce: this.#nonce,
       } satisfies OAuthStateParameter)
     );
-    if (scopes?.length) {
+    if (scopesForThisRequest?.length) {
+      const scopesFromPreviousSignIn: string[] = [];
+      const token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
+      if (
+        (token.state === "valid" || token.state === "expired") &&
+        token.grant.scopes
+      ) {
+        scopesFromPreviousSignIn.push(...token.grant.scopes);
+      }
       authUrl.searchParams.set(
         "scope",
-        // TODO(aomarks) Also include any scopes we already have. Otherwise we
-        // will lose them!
-        [...REQUIRED_OAUTH_SCOPES, ...scopes].join(" ")
+        [
+          ...new Set([
+            ...ALWAYS_REQUIRED_OAUTH_SCOPES,
+            // Keep any scopes we already have. We could also use
+            // `include_granted_scopes=true` to achieve this, but that has the
+            // downside that, if we stop using a scope, any user who ever
+            // granted it to us will continue to return it, even when it's no
+            // longer needed.
+            ...scopesFromPreviousSignIn,
+            ...scopesForThisRequest,
+          ]),
+        ].join(" ")
       );
     }
     return authUrl.href;
