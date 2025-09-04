@@ -21,7 +21,7 @@ import {
 import { SETTINGS_TYPE, SettingsHelper } from "../types/types";
 import { createContext } from "@lit/context";
 import { getEmbedderRedirectUri } from "./embed-helpers";
-import { type OAuthScopeShortName } from "@breadboard-ai/connection-client/oauth-scopes.js";
+import { type OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 
 export { SigninAdapter };
 
@@ -128,7 +128,7 @@ class SigninAdapter {
    * signed out.
    */
   async token(
-    scopes?: OAuthScopeShortName[]
+    scopes?: OAuthScope[]
   ): Promise<ValidTokenResult | SignedOutTokenResult> {
     if (this.#state.status === "anonymous") {
       await this.#handleSignInRequest?.();

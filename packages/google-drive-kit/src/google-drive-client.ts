@@ -6,7 +6,7 @@
 
 /// <reference types="@types/gapi.client.drive-v3" />
 
-import type { OAuthScopeShortName } from "@breadboard-ai/connection-client/oauth-scopes.js";
+import type { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { retryableFetch } from "./board-server/utils.js";
 
 type File = gapi.client.drive.File;
@@ -184,9 +184,7 @@ export class GoogleDriveClient {
         marked: Set<string>;
       }
     | undefined;
-  readonly #getUserAccessToken: (
-    scopes?: OAuthScopeShortName[]
-  ) => Promise<string>;
+  readonly #getUserAccessToken: (scopes?: OAuthScope[]) => Promise<string>;
 
   constructor(options: GoogleDriveClientOptions) {
     this.apiUrl = options.apiBaseUrl || "https://www.googleapis.com";
@@ -201,7 +199,7 @@ export class GoogleDriveClient {
 
   // TODO(aomarks) Remove. Anything that needs an access token should get it
   // itself.
-  async accessToken(scopes?: OAuthScopeShortName[]): Promise<string> {
+  async accessToken(scopes?: OAuthScope[]): Promise<string> {
     return this.#getUserAccessToken(scopes);
   }
 
@@ -501,7 +499,9 @@ export class GoogleDriveClient {
       undefined,
       {
         kind: "bearer",
-        token: await this.#getUserAccessToken(["drive.file"]),
+        token: await this.#getUserAccessToken([
+          "https://www.googleapis.com/auth/drive.file",
+        ]),
       }
     );
     if (!response.ok) {
