@@ -13,6 +13,7 @@ import {
   LLMContent,
   NodeIdentifier,
   ParameterMetadata,
+  TokenGetter,
 } from "@breadboard-ai/types";
 import {
   BoardServer,
@@ -54,6 +55,7 @@ import {
   Tool,
 } from "./types";
 import { IntegrationsImpl } from "./integrations";
+import { updateMap } from "./utils/update-map";
 
 export { createProjectState, ReactiveProject };
 
@@ -78,6 +80,8 @@ function createProjectState(
   store: MutableGraphStore,
   runtime: SideBoardRuntime,
   boardServerFinder: (url: URL) => BoardServer | null,
+  tokenGetter: TokenGetter,
+  mcpProxyUrl?: string,
   editable?: EditableGraph
 ): Project {
   return new ReactiveProject(
@@ -85,6 +89,8 @@ function createProjectState(
     store,
     runtime,
     boardServerFinder,
+    tokenGetter,
+    mcpProxyUrl,
     editable
   );
 }
@@ -123,6 +129,8 @@ class ReactiveProject implements ProjectInternal {
     store: MutableGraphStore,
     runtime: SideBoardRuntime,
     boardServerFinder: BoardServerFinder,
+    tokenGetter: TokenGetter,
+    mcpProxyUrl?: string,
     editable?: EditableGraph
   ) {
     this.#mainGraphId = mainGraphId;
@@ -172,7 +180,11 @@ class ReactiveProject implements ProjectInternal {
     this.#updateMyTools();
     this.#updateParameters();
     this.run = ReactiveProjectRun.createInert(this.#mainGraphId, this.#store);
-    this.integrations = new IntegrationsImpl(editable);
+    this.integrations = new IntegrationsImpl(
+      tokenGetter,
+      mcpProxyUrl,
+      editable
+    );
   }
 
   resetRun(): void {
@@ -528,7 +540,7 @@ class ReactiveProject implements ProjectInternal {
             save,
             tools,
             experimental,
-          } satisfies ConnectorType,
+          } satisfies ConnectorType as ConnectorType,
         ];
       })
     );
@@ -541,24 +553,4 @@ class ReactiveProject implements ProjectInternal {
   addConnectorInstance(url: string): void {
     this.#connectorInstances.add(url);
   }
-}
-
-/**
- * Incrementally updates a map, given updated values.
- * Updates the values in `updated`, deletes the ones that aren't in it.
- */
-function updateMap<T extends SignalMap>(
-  map: T,
-  updated: [string, unknown][]
-): void {
-  const toDelete = new Set(map.keys());
-
-  updated.forEach(([key, value]) => {
-    map.set(key, value);
-    toDelete.delete(key);
-  });
-
-  [...toDelete.values()].forEach((key) => {
-    map.delete(key);
-  });
 }

@@ -506,11 +506,18 @@ export type UI = {
   flags: RuntimeFlags | null;
 };
 
+export type IntegrationsToolList = {
+  status: "loading" | "complete" | "error";
+
+  tools: Map<string, Tool>;
+};
+
 /**
  * Represents the Model+Controller for of the project's Integrations
  * configuration.
  */
 export type Integrations = {
+  all: Map<McpServerIdentifier, IntegrationsToolList>;
   /**
    * List of currently all known MCP servers.
    */

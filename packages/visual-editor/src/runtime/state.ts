@@ -6,7 +6,11 @@
 
 import { State } from "@breadboard-ai/shared-ui";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
-import { BoardServer, RuntimeFlagManager } from "@breadboard-ai/types";
+import {
+  BoardServer,
+  RuntimeFlagManager,
+  TokenGetter,
+} from "@breadboard-ai/types";
 import {
   EditableGraph,
   MainGraphIdentifier,
@@ -25,17 +29,23 @@ class StateManager {
   #runtime: SideBoardRuntime;
   #servers: BoardServer[];
   #flagManager: RuntimeFlagManager;
+  #tokenGetter: TokenGetter;
+  #mcpProxyUrl?: string;
 
   constructor(
     store: MutableGraphStore,
     runtime: SideBoardRuntime,
     boardServers: BoardServer[],
-    flagManager: RuntimeFlagManager
+    flagManager: RuntimeFlagManager,
+    tokenGetter: TokenGetter,
+    mcpProxyUrl?: string
   ) {
     this.#store = store;
     this.#runtime = runtime;
     this.#servers = boardServers;
     this.#flagManager = flagManager;
+    this.#tokenGetter = tokenGetter;
+    this.#mcpProxyUrl = mcpProxyUrl;
   }
 
   #findServer(url: URL): BoardServer | null {
@@ -83,6 +93,8 @@ class StateManager {
       this.#store,
       this.#runtime,
       this.#findServer.bind(this),
+      this.#tokenGetter,
+      this.#mcpProxyUrl,
       editable || undefined
     );
     this.#map.set(mainGraphId, state);

@@ -12,25 +12,135 @@ import {
   McpServerIdentifier,
   McpServerInstanceIdentifier,
   Outcome,
+  TokenGetter,
   UUID,
 } from "@breadboard-ai/types";
-import { AsyncComputedResult, Integrations } from "./types";
+import {
+  AsyncComputedResult,
+  Integrations,
+  IntegrationsToolList,
+  Tool,
+} from "./types";
 import { err, ok } from "@breadboard-ai/utils";
 import { SignalMap } from "signal-utils/map";
 import { McpServerStore } from "./utils/mcp-server-store";
 import { AsyncComputed } from "signal-utils/async-computed";
-import { listBuiltInMcpServers } from "@breadboard-ai/mcp";
+import {
+  listBuiltInMcpServers,
+  McpClient,
+  McpClientFactory,
+  McpListToolResult,
+} from "@breadboard-ai/mcp";
 import { signal } from "signal-utils";
+import { updateMapDynamic } from "./utils/update-map";
 
 export { IntegrationsImpl };
 
-class IntegrationsImpl implements Integrations {
+function fromMcpTool(url: string, tool: McpListToolResult["tools"][0]): Tool {
+  return {
+    url,
+    title: tool.title,
+    description: tool.description,
+    icon: "tool",
+    connectorInstance: tool.name,
+    order: Number.MAX_SAFE_INTEGER,
+    tags: [],
+  };
+}
+
+class IntegrationManager implements IntegrationsToolList {
+  #client: Promise<Outcome<McpClient>>;
+
   @signal
-  accessor #integrations: Map<string, Integration> = new Map();
+  accessor integration: Integration;
+
+  @signal
+  accessor status: "complete" | "error" | "loading" = "loading";
+
+  @signal
+  accessor message: string | null = null;
+
+  tools: Map<string, Tool> = new SignalMap();
+
+  constructor(
+    integration: Integration,
+    public clientFactory: McpClientFactory
+  ) {
+    this.integration = integration;
+    const { url, title } = integration;
+    this.#client = this.clientFactory.createClient(url, {
+      title,
+      name: title,
+      version: "0.0.1",
+    });
+    this.#reload();
+  }
+
+  async #reload(): Promise<void> {
+    const client = await this.#client;
+    if (!ok(client)) {
+      this.status = "error";
+      this.message = "Unable to load MCP client";
+      return;
+    }
+
+    try {
+      const listing = await client.listTools();
+      listing.tools.forEach((mcpTool) => {
+        const tool = fromMcpTool(this.integration.url, mcpTool);
+        this.tools.set(tool.connectorInstance!, tool);
+      });
+      this.status = "complete";
+    } catch (e) {
+      this.status = "error";
+      this.message = `Unable to load tools: ${(e as Error).message}`;
+    }
+  }
+  update(integration: Integration) {
+    this.integration = integration;
+  }
+
+  descriptor(): McpServerDescriptor {
+    return {
+      title: this.integration.title,
+      details: {
+        name: "name goes here",
+        version: "0.0.1",
+        url: this.integration.url,
+      },
+      registered: true,
+      removable: true,
+    };
+  }
+}
+
+class IntegrationsImpl implements Integrations {
+  #integrations: Map<McpServerIdentifier, IntegrationManager> = new SignalMap();
+  #clientFactory: McpClientFactory;
+
+  /**
+   * A grouped list of all tools available.
+   */
+  @signal
+  get all(): Map<McpServerIdentifier, IntegrationsToolList> {
+    // TODO: Expand this to include built-ins.
+    return this.#integrations;
+  }
+
+  #builtIns: [McpServerIdentifier, McpServerDescriptor][] =
+    listBuiltInMcpServers().map((descriptor) => [
+      descriptor.details.url,
+      descriptor,
+    ]);
 
   #serverList = new McpServerStore();
 
-  constructor(private readonly editable?: EditableGraph) {
+  constructor(
+    tokenGetter: TokenGetter,
+    proxyUrl?: string,
+    private readonly editable?: EditableGraph
+  ) {
+    this.#clientFactory = new McpClientFactory(tokenGetter, proxyUrl);
     if (!editable) {
       console.warn(
         `Integration Initialization will fail: No editable supplied`
@@ -47,7 +157,15 @@ class IntegrationsImpl implements Integrations {
 
   #reload(graph: GraphDescriptor) {
     const { integrations = {} } = graph;
-    this.#integrations = new Map(Object.entries(integrations));
+    updateMapDynamic(this.#integrations, Object.entries(integrations), {
+      create: (from) => {
+        return new IntegrationManager(from, this.#clientFactory);
+      },
+      update: (from, existing) => {
+        existing.update(from);
+        return existing;
+      },
+    });
   }
 
   get servers(): AsyncComputedResult<
@@ -59,29 +177,14 @@ class IntegrationsImpl implements Integrations {
   #servers = new AsyncComputed(async (signal) => {
     signal.throwIfAborted();
 
-    const builtIns: [McpServerIdentifier, McpServerDescriptor][] =
-      listBuiltInMcpServers().map((descriptor) => [
-        descriptor.details.url,
-        descriptor,
-      ]);
-
     const result = new SignalMap<McpServerIdentifier, McpServerDescriptor>(
-      builtIns
+      this.#builtIns
     );
 
     const inBgl = new Map<McpServerIdentifier, McpServerDescriptor>();
 
-    this.#integrations.forEach((integration, id) => {
-      inBgl.set(id, {
-        title: integration.title,
-        details: {
-          name: "name goes here",
-          version: "0.0.1",
-          url: integration.url,
-        },
-        registered: true,
-        removable: true,
-      });
+    this.#integrations.forEach((mgr, id) => {
+      inBgl.set(id, mgr.descriptor());
     });
 
     const stored = await this.#serverList.list();
