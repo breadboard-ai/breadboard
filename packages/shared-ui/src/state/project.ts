@@ -56,6 +56,7 @@ import {
 } from "./types";
 import { IntegrationsImpl } from "./integrations";
 import { updateMap } from "./utils/update-map";
+import { FilteredIntegrationsImpl } from "./filtered-integrations";
 
 export { createProjectState, ReactiveProject };
 
@@ -177,7 +178,7 @@ class ReactiveProject implements ProjectInternal {
       this.myTools,
       this.components,
       this.parameters,
-      this.integrations.all
+      new FilteredIntegrationsImpl(this.integrations.all)
     );
     this.#updateGraphAssets();
     this.renderer = new RendererStateImpl(this.graphAssets);

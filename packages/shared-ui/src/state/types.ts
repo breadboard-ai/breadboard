@@ -431,7 +431,7 @@ export type FastAccess = {
   myTools: Map<string, Tool>;
   components: Map<GraphIdentifier, Components>;
   parameters: Map<string, ParameterMetadata>;
-  integrations: Map<string, IntegrationState>;
+  integrations: FilteredIntegrations;
 };
 
 /**
@@ -516,6 +516,12 @@ export type IntegrationState = {
   tools: Map<string, Tool>;
 
   message: string | null;
+};
+
+export type FilteredIntegrations = {
+  filter: string;
+
+  results: Map<McpServerIdentifier, IntegrationState>;
 };
 
 /**

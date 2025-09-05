@@ -601,6 +601,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
             }
 
             this.filter = evt.target.value;
+            if (this.state) {
+              this.state.integrations.filter = this.filter;
+            }
           }}
         />
       </header>
@@ -754,7 +757,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
       ${this.state
         ? repeat(
-            this.state.integrations,
+            this.state.integrations.results,
             ([url]) => url,
             ([_url, integration]) => {
               return html`<section class="integration">
