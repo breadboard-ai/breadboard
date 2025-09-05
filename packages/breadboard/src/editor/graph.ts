@@ -54,6 +54,8 @@ import { RemoveModule } from "./operations/remove-module.js";
 import { RemoveNode } from "./operations/remove-node.js";
 import { ReplaceGraph } from "./operations/replace-graph.js";
 import { ToggleExport } from "./operations/toggle-export.js";
+import { UpsertInteration } from "./operations/upsert-integration.js";
+import { RemoveIntegration } from "./operations/remove-integration.js";
 
 const validImperativeEdits: EditSpec["type"][] = [
   "addmodule",
@@ -83,6 +85,8 @@ const operations = new Map<EditSpec["type"], EditOperation>([
   ["removeasset", new RemoveAsset()],
   ["changeassetmetadata", new ChangeAssetMetadata()],
   ["replacegraph", new ReplaceGraph()],
+  ["upsertintegration", new UpsertInteration()],
+  ["removeintegration", new RemoveIntegration()],
 ]);
 
 export class Graph implements EditableGraph {
@@ -110,7 +114,17 @@ export class Graph implements EditableGraph {
         this.#graph = graph;
         this.#mutable.rebuild(graph);
         this.#eventTarget.dispatchEvent(
-          new ChangeEvent(this.raw(), false, "history", [], [], [], true, null)
+          new ChangeEvent(
+            this.raw(),
+            false,
+            "history",
+            [],
+            [],
+            [],
+            true,
+            true,
+            null
+          )
         );
       },
       onHistoryChanged: options.onHistoryChanged,
@@ -140,6 +154,7 @@ export class Graph implements EditableGraph {
     affectedModules: ModuleIdentifier[],
     affectedGraphs: GraphIdentifier[],
     topologyChange: boolean,
+    integrationsChange: boolean,
     label: string
   ) {
     this.#mutable.update(
@@ -158,6 +173,7 @@ export class Graph implements EditableGraph {
         affectedModules,
         affectedGraphs,
         topologyChange,
+        integrationsChange,
         label
       )
     );
@@ -270,6 +286,8 @@ export class Graph implements EditableGraph {
     const affectedModules: NodeIdentifier[][] = [];
     // Collect affected graphs
     const affectedGraphs: GraphIdentifier[][] = [];
+    // Presume that there were no integration changes.
+    let integrationsChange = false;
     // Presume that all edits will result in no topology change.
     let topologyChange = false;
     let context: EditOperationContext;
@@ -300,6 +318,9 @@ export class Graph implements EditableGraph {
         }
         if (result.topologyChange) {
           topologyChange = true;
+        }
+        if (result.integrationsChange) {
+          integrationsChange = true;
         }
         if ("creator" in edit) {
           creator = edit.creator;
@@ -338,6 +359,7 @@ export class Graph implements EditableGraph {
         [...new Set(affectedModules.flat())],
         [...new Set(affectedGraphs.flat())],
         topologyChange,
+        integrationsChange,
         label
       );
     return { success: true, log };

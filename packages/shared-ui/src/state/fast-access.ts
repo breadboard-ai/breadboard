@@ -12,6 +12,7 @@ import {
 import {
   Components,
   FastAccess,
+  FilteredIntegrations,
   GraphAsset,
   ProjectInternal,
   Tool,
@@ -28,7 +29,8 @@ class ReactiveFastAccess implements FastAccess {
     public readonly tools: Map<string, Tool>,
     public readonly myTools: Map<string, Tool>,
     public readonly components: Map<GraphIdentifier, Components>,
-    public readonly parameters: Map<string, ParameterMetadata>
+    public readonly parameters: Map<string, ParameterMetadata>,
+    public readonly integrations: FilteredIntegrations
   ) {
     this.#project = project;
   }

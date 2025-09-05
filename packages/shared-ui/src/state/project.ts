@@ -13,6 +13,7 @@ import {
   LLMContent,
   NodeIdentifier,
   ParameterMetadata,
+  TokenGetter,
 } from "@breadboard-ai/types";
 import {
   BoardServer,
@@ -45,7 +46,7 @@ import {
   ConnectorState,
   FastAccess,
   GraphAsset,
-  Mcp,
+  Integrations,
   Organizer,
   Project,
   ProjectInternal,
@@ -53,7 +54,9 @@ import {
   RendererState,
   Tool,
 } from "./types";
-import { McpImpl } from "./mcp";
+import { IntegrationsImpl } from "./integrations";
+import { updateMap } from "./utils/update-map";
+import { FilteredIntegrationsImpl } from "./filtered-integrations";
 
 export { createProjectState, ReactiveProject };
 
@@ -78,6 +81,8 @@ function createProjectState(
   store: MutableGraphStore,
   runtime: SideBoardRuntime,
   boardServerFinder: (url: URL) => BoardServer | null,
+  tokenGetter: TokenGetter,
+  mcpProxyUrl?: string,
   editable?: EditableGraph
 ): Project {
   return new ReactiveProject(
@@ -85,6 +90,8 @@ function createProjectState(
     store,
     runtime,
     boardServerFinder,
+    tokenGetter,
+    mcpProxyUrl,
     editable
   );
 }
@@ -116,13 +123,15 @@ class ReactiveProject implements ProjectInternal {
   readonly parameters: SignalMap<string, ParameterMetadata>;
   readonly connectors: ConnectorState;
   readonly renderer: RendererState;
-  readonly mcp: Mcp;
+  readonly integrations: Integrations;
 
   constructor(
     mainGraphId: MainGraphIdentifier,
     store: MutableGraphStore,
     runtime: SideBoardRuntime,
     boardServerFinder: BoardServerFinder,
+    tokenGetter: TokenGetter,
+    mcpProxyUrl?: string,
     editable?: EditableGraph
   ) {
     this.#mainGraphId = mainGraphId;
@@ -140,7 +149,13 @@ class ReactiveProject implements ProjectInternal {
       this.#updateConnectors();
       this.#updateTools();
     });
-    const graphUrlString = this.#store.get(mainGraphId)?.graph.url;
+    const graph = this.#store.get(mainGraphId)?.graph;
+    if (!graph) {
+      console.warn(
+        `No graph when initializing Project state: most things will likely not work`
+      );
+    }
+    const graphUrlString = graph?.url;
     this.graphUrl = graphUrlString ? new URL(graphUrlString) : null;
     this.graphAssets = new SignalMap();
     this.tools = new SignalMap();
@@ -151,13 +166,19 @@ class ReactiveProject implements ProjectInternal {
     this.#updateConnectors();
     this.connectors = new ConnectorStateImpl(this, this.#connectorMap);
     this.organizer = new ReactiveOrganizer(this);
+    this.integrations = new IntegrationsImpl(
+      tokenGetter,
+      mcpProxyUrl,
+      editable
+    );
     this.fastAccess = new ReactiveFastAccess(
       this,
       this.graphAssets,
       this.tools,
       this.myTools,
       this.components,
-      this.parameters
+      this.parameters,
+      new FilteredIntegrationsImpl(this.integrations.all)
     );
     this.#updateGraphAssets();
     this.renderer = new RendererStateImpl(this.graphAssets);
@@ -166,7 +187,6 @@ class ReactiveProject implements ProjectInternal {
     this.#updateMyTools();
     this.#updateParameters();
     this.run = ReactiveProjectRun.createInert(this.#mainGraphId, this.#store);
-    this.mcp = new McpImpl(this);
   }
 
   resetRun(): void {
@@ -522,7 +542,7 @@ class ReactiveProject implements ProjectInternal {
             save,
             tools,
             experimental,
-          } satisfies ConnectorType,
+          } satisfies ConnectorType as ConnectorType,
         ];
       })
     );
@@ -535,24 +555,4 @@ class ReactiveProject implements ProjectInternal {
   addConnectorInstance(url: string): void {
     this.#connectorInstances.add(url);
   }
-}
-
-/**
- * Incrementally updates a map, given updated values.
- * Updates the values in `updated`, deletes the ones that aren't in it.
- */
-function updateMap<T extends SignalMap>(
-  map: T,
-  updated: [string, unknown][]
-): void {
-  const toDelete = new Set(map.keys());
-
-  updated.forEach(([key, value]) => {
-    map.set(key, value);
-    toDelete.delete(key);
-  });
-
-  [...toDelete.values()].forEach((key) => {
-    map.delete(key);
-  });
 }

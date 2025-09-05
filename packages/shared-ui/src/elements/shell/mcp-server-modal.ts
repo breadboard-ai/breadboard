@@ -261,7 +261,7 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
     try {
       this.#loading = true;
 
-      const outcome = await this.project.mcp.add(url, title);
+      const outcome = await this.project.integrations.add(url, title);
       if (!ok(outcome)) {
         this.#status = html`<span class="error">${outcome.$error}</span>`;
       } else {
@@ -331,7 +331,7 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
       return html`MCP Server configuration unavailable`;
     }
 
-    const servers = this.project.mcp.servers;
+    const servers = this.project.integrations.servers;
     if (!servers.value) {
       if (servers.status === "error") {
         return html`<p>Error loading MCP server list</p>`;
@@ -365,7 +365,8 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
                         ) {
                           return;
                         }
-                        const removing = await this.project?.mcp.remove(id);
+                        const removing =
+                          await this.project?.integrations.remove(id);
                         if (!ok(removing)) {
                           // TODO: Expose this in UI somehow.
                           console.error(
@@ -381,7 +382,7 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
                   <input
                     type="checkbox"
                     id=${id}
-                    .checked=${!!server.instanceId}
+                    .checked=${!!server.registered}
                     @change=${(evt: Event) => {
                       if (
                         !(evt.target instanceof HTMLInputElement) ||
@@ -391,9 +392,9 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
                       }
 
                       if (evt.target.checked) {
-                        this.project.mcp.register(id);
+                        this.project.integrations.register(id);
                       } else {
-                        this.project.mcp.unregister(id);
+                        this.project.integrations.unregister(id);
                       }
                     }}
                   />

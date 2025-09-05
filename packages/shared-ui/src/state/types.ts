@@ -431,6 +431,7 @@ export type FastAccess = {
   myTools: Map<string, Tool>;
   components: Map<GraphIdentifier, Components>;
   parameters: Map<string, ParameterMetadata>;
+  integrations: FilteredIntegrations;
 };
 
 /**
@@ -506,11 +507,29 @@ export type UI = {
   flags: RuntimeFlags | null;
 };
 
+export type IntegrationState = {
+  title: string;
+  url: string;
+
+  status: "loading" | "complete" | "error";
+
+  tools: Map<string, Tool>;
+
+  message: string | null;
+};
+
+export type FilteredIntegrations = {
+  filter: string;
+
+  results: Map<McpServerIdentifier, IntegrationState>;
+};
+
 /**
- * Represents the Model+Controller for of the project's MCP
+ * Represents the Model+Controller for of the project's Integrations
  * configuration.
  */
-export type Mcp = {
+export type Integrations = {
+  all: Map<McpServerIdentifier, IntegrationState>;
   /**
    * List of currently all known MCP servers.
    */
@@ -561,7 +580,7 @@ export type Project = {
   graphAssets: Map<AssetPath, GraphAsset>;
   parameters: Map<string, ParameterMetadata>;
   connectors: ConnectorState;
-  mcp: Mcp;
+  integrations: Integrations;
   organizer: Organizer;
   fastAccess: FastAccess;
   renderer: RendererState;

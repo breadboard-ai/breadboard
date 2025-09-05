@@ -32,6 +32,7 @@ const BUILTIN_SERVERS: Map<string, McpStoreEntry> = new Map([
           url: `builtin:memory`,
         },
         removable: false,
+        registered: false,
       },
       factory: createSimpleMemoryMcpServer,
     },

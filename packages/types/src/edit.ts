@@ -12,6 +12,7 @@ import {
   GraphDescriptor,
   GraphIdentifier,
   GraphMetadata,
+  Integration,
   Module,
   ModuleIdentifier,
   NodeConfiguration,
@@ -35,6 +36,7 @@ export type GraphChangeEvent = Event & {
   affectedNodes: AffectedNode[];
   affectedGraphs: GraphIdentifier[];
   topologyChange: boolean;
+  integrationsChange: boolean;
   label: string | null;
 };
 
@@ -201,6 +203,17 @@ export type ReplaceGraphSpec = {
   creator: EditHistoryCreator;
 };
 
+export type UpsertIntegrationSpec = {
+  type: "upsertintegration";
+  id: string;
+  integration: Integration;
+};
+
+export type RemoveIntegrationSpec = {
+  type: "removeintegration";
+  id: string;
+};
+
 export type EditOperationConductor = (
   edits: EditSpec[],
   editLabel: string
@@ -235,7 +248,9 @@ export type EditSpec =
   | AddAssetSpec
   | RemoveAssetSpec
   | ChangeAssetMetadataSpec
-  | ReplaceGraphSpec;
+  | ReplaceGraphSpec
+  | UpsertIntegrationSpec
+  | RemoveIntegrationSpec;
 
 export type EditableGraph = {
   addEventListener<Key extends keyof EditableGraphEventMap>(
@@ -364,6 +379,10 @@ export type SingleEditResult =
       affectedNodes: AffectedNode[];
       affectedModules: ModuleIdentifier[];
       affectedGraphs: GraphIdentifier[];
+      /**
+       * Indicates that the change updated integrations.
+       */
+      integrationsChange?: boolean;
       /**
        * Indicates that the change resulted in topology change:
        * - node added or removed
