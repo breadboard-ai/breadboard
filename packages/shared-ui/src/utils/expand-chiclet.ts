@@ -14,7 +14,7 @@ export function expandChiclet(
   projectState: Project | null,
   subGraphId: string | null
 ): { tags?: string[]; icon?: string | null } {
-  const { type, path } = part;
+  const { type, path, instance } = part;
 
   let icon: string | null | undefined;
   let tags: string[] | undefined;
@@ -43,8 +43,14 @@ export function expandChiclet(
     }
 
     case "tool": {
-      const toolInfo = projectState?.fastAccess.tools.get(path);
-      icon = iconSubstitute(toolInfo?.icon);
+      if (instance) {
+        icon =
+          projectState.integrations.all.get(path)?.tools.get(instance)?.icon ||
+          "robot_server";
+      } else {
+        const toolInfo = projectState?.fastAccess.tools.get(path);
+        icon = iconSubstitute(toolInfo?.icon);
+      }
       break;
     }
 

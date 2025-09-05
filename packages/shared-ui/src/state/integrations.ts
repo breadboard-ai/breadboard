@@ -41,7 +41,7 @@ function fromMcpTool(url: string, tool: McpListToolResult["tools"][0]): Tool {
     url,
     title: tool.title || tool.name,
     description: tool.description,
-    icon: "tool",
+    icon: "robot_server",
     connectorInstance: tool.name,
     order: Number.MAX_SAFE_INTEGER,
     tags: [],

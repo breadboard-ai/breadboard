@@ -759,13 +759,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         ? repeat(
             this.state.integrations.results,
             ([url]) => url,
-            ([_url, integration]) => {
-              return html`<section class="integration">
-                <h3 class="sans-flex w-400 round">${integration.title}</h3>
-                <menu>${menu()}</menu>
-              </section>`;
-
-              function menu() {
+            ([url, integration]) => {
+              const menu = () => {
                 switch (integration.status) {
                   case "loading":
                     return html`<li>Loading...</li>`;
@@ -776,7 +771,24 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                         ([id]) => id,
                         ([_id, tool]) => {
                           return html`<li>
-                            <button>${tool.title}</button>
+                            <button
+                              @click=${() => {
+                                this.dispatchEvent(
+                                  new FastAccessSelectEvent(
+                                    url,
+                                    tool.title!,
+                                    "tool",
+                                    undefined,
+                                    tool.connectorInstance
+                                  )
+                                );
+                              }}
+                            >
+                              <span class="g-icon filled round"
+                                >${tool.icon}</span
+                              >
+                              <span class="title">${tool.title}</span>
+                            </button>
                           </li>`;
                         }
                       )}
@@ -784,7 +796,11 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                   case "error":
                     return html`<li>${integration.message}</li>`;
                 }
-              }
+              };
+              return html`<section class="integration">
+                <h3 class="sans-flex w-400 round">${integration.title}</h3>
+                <menu>${menu()}</menu>
+              </section>`;
             }
           )
         : nothing}
