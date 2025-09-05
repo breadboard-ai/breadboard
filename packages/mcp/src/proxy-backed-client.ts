@@ -39,8 +39,12 @@ type ProxyBackedClientArgs = {
   readonly proxyToken: string;
 };
 
-type McpProxyListToolsResponse = {
-  functionDeclarations: ListToolsResult["tools"];
+type ProxyListToolResponse = {
+  functionDeclarations: {
+    name: string;
+    description: string;
+    parameters: ListToolsResult["tools"][0]["inputSchema"];
+  }[];
 };
 
 class ProxyBackedClient implements McpClient {
@@ -113,7 +117,7 @@ class ProxyBackedClient implements McpClient {
   }
 
   async listTools(): Promise<McpListToolResult> {
-    const calling = await this.#call<McpProxyListToolsResponse>(
+    const calling = await this.#call<ProxyListToolResponse>(
       "/v1beta1/listMcpTools"
     );
     if (!ok(calling)) {
@@ -122,6 +126,11 @@ class ProxyBackedClient implements McpClient {
     if (!calling.functionDeclarations) {
       throw new Error(`Invalid response: ${JSON.stringify(calling)}`);
     }
-    return { tools: calling.functionDeclarations };
+    return {
+      tools: calling.functionDeclarations.map((declaration) => ({
+        ...declaration,
+        inputSchema: declaration.parameters,
+      })),
+    };
   }
 }

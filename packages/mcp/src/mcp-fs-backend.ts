@@ -132,6 +132,10 @@ class McpFileSystemBackend implements PersistentBackend {
     }
     const { url, info } = initialization;
 
+    if (!url) {
+      return err(`MCP Backend: no server URL supplied`);
+    }
+
     return this.#clientFactory.createClient(url, info);
   }
 
