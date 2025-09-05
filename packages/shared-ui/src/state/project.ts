@@ -165,13 +165,19 @@ class ReactiveProject implements ProjectInternal {
     this.#updateConnectors();
     this.connectors = new ConnectorStateImpl(this, this.#connectorMap);
     this.organizer = new ReactiveOrganizer(this);
+    this.integrations = new IntegrationsImpl(
+      tokenGetter,
+      mcpProxyUrl,
+      editable
+    );
     this.fastAccess = new ReactiveFastAccess(
       this,
       this.graphAssets,
       this.tools,
       this.myTools,
       this.components,
-      this.parameters
+      this.parameters,
+      this.integrations.all
     );
     this.#updateGraphAssets();
     this.renderer = new RendererStateImpl(this.graphAssets);
@@ -180,11 +186,6 @@ class ReactiveProject implements ProjectInternal {
     this.#updateMyTools();
     this.#updateParameters();
     this.run = ReactiveProjectRun.createInert(this.#mainGraphId, this.#store);
-    this.integrations = new IntegrationsImpl(
-      tokenGetter,
-      mcpProxyUrl,
-      editable
-    );
   }
 
   resetRun(): void {

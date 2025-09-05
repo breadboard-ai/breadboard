@@ -431,6 +431,7 @@ export type FastAccess = {
   myTools: Map<string, Tool>;
   components: Map<GraphIdentifier, Components>;
   parameters: Map<string, ParameterMetadata>;
+  integrations: Map<string, IntegrationState>;
 };
 
 /**
@@ -506,10 +507,15 @@ export type UI = {
   flags: RuntimeFlags | null;
 };
 
-export type IntegrationsToolList = {
+export type IntegrationState = {
+  title: string;
+  url: string;
+
   status: "loading" | "complete" | "error";
 
   tools: Map<string, Tool>;
+
+  message: string | null;
 };
 
 /**
@@ -517,7 +523,7 @@ export type IntegrationsToolList = {
  * configuration.
  */
 export type Integrations = {
-  all: Map<McpServerIdentifier, IntegrationsToolList>;
+  all: Map<McpServerIdentifier, IntegrationState>;
   /**
    * List of currently all known MCP servers.
    */

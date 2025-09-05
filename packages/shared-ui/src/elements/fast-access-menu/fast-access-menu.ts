@@ -36,6 +36,7 @@ import { icons } from "../../styles/icons";
 import { colorsLight } from "../../styles/host/colors-light";
 import { type } from "../../styles/host/type";
 import { iconSubstitute } from "../../utils/icon-substitute";
+import { repeat } from "lit/directives/repeat.js";
 
 @customElement("bb-fast-access-menu")
 export class FastAccessMenu extends SignalWatcher(LitElement) {
@@ -123,7 +124,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       #assets,
       #tools,
       #outputs,
-      #parameters {
+      #parameters,
+      section.integration {
         & h3 {
           font-size: 12px;
           color: var(--n-40);
@@ -749,6 +751,40 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
             ? html`<div class="no-items">No components</div>`
             : nothing}
       </section>
+
+      ${this.state
+        ? repeat(
+            this.state.integrations,
+            ([url]) => url,
+            ([_url, integration]) => {
+              return html`<section class="integration">
+                <h3 class="sans-flex w-400 round">${integration.title}</h3>
+                <menu>${menu()}</menu>
+              </section>`;
+
+              function menu() {
+                switch (integration.status) {
+                  case "loading":
+                    return html`<li>Loading...</li>`;
+                  case "complete":
+                    return html`
+                      ${repeat(
+                        integration.tools,
+                        ([id]) => id,
+                        ([_id, tool]) => {
+                          return html`<li>
+                            <button>${tool.title}</button>
+                          </li>`;
+                        }
+                      )}
+                    `;
+                  case "error":
+                    return html`<li>${integration.message}</li>`;
+                }
+              }
+            }
+          )
+        : nothing}
     </div>`;
   }
 }

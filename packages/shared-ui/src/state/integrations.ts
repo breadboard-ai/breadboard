@@ -18,7 +18,7 @@ import {
 import {
   AsyncComputedResult,
   Integrations,
-  IntegrationsToolList,
+  IntegrationState,
   Tool,
 } from "./types";
 import { err, ok } from "@breadboard-ai/utils";
@@ -39,7 +39,7 @@ export { IntegrationsImpl };
 function fromMcpTool(url: string, tool: McpListToolResult["tools"][0]): Tool {
   return {
     url,
-    title: tool.title,
+    title: tool.title || tool.name,
     description: tool.description,
     icon: "tool",
     connectorInstance: tool.name,
@@ -48,8 +48,18 @@ function fromMcpTool(url: string, tool: McpListToolResult["tools"][0]): Tool {
   };
 }
 
-class IntegrationManager implements IntegrationsToolList {
+class IntegrationManager implements IntegrationState {
   #client: Promise<Outcome<McpClient>>;
+
+  @signal
+  get title() {
+    return this.integration.title;
+  }
+
+  @signal
+  get url() {
+    return this.integration.url;
+  }
 
   @signal
   accessor integration: Integration;
@@ -122,7 +132,7 @@ class IntegrationsImpl implements Integrations {
    * A grouped list of all tools available.
    */
   @signal
-  get all(): Map<McpServerIdentifier, IntegrationsToolList> {
+  get all(): Map<McpServerIdentifier, IntegrationState> {
     // TODO: Expand this to include built-ins.
     return this.#integrations;
   }
