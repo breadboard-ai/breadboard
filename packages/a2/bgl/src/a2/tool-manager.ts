@@ -94,7 +94,7 @@ class ToolManager {
           };
         }
         default: {
-          const geminiSchema = { ...schema };
+          const geminiSchema = { ...schema, type: type.toLocaleLowerCase() };
           delete geminiSchema.format;
           delete geminiSchema.behavior;
           delete geminiSchema.examples;
@@ -162,17 +162,22 @@ class ToolManager {
       return "Code Execution";
     }
     if (instance) {
-      // This is a connector.
-      const connector = new ConnectorManager({ path: instance });
+      // This is an integration. Use MCP connector.
+      const connector = new ConnectorManager({
+        url: "embed://a2/mcp.bgl.json",
+        configuration: { endpoint: url },
+      });
       const tools = await connector.listTools();
       if (!ok(tools)) return tools;
       const names: string[] = [];
       for (const tool of tools) {
         const { url, description } = tool;
         const { title } = description;
+        if (title !== instance) continue;
         if (title) {
           names.push(title);
         }
+        console.log("DESCRIPTION", description);
         this.#addOneTool(url, description, false, connector);
       }
       // Return empty string, which will inform the

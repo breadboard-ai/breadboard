@@ -62,7 +62,7 @@ class Capabilities {
       );
     } catch (e) {
       outputs = {
-        $error: `Unable to invoke capability: ${(e as Error).message}`,
+        $error: `Unable to invoke capability "${name}": ${(e as Error).message}`,
       };
     }
     await installed.telemetry?.endCapability(
