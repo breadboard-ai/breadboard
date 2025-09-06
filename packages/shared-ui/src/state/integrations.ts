@@ -206,7 +206,12 @@ class IntegrationsImpl implements Integrations {
         const registered = inBgl.has(id);
         result.set(id, {
           title: info.title,
-          details: { name: info.title, version: "0.0.1", url: info.url },
+          details: {
+            name: info.title,
+            version: "0.0.1",
+            url: info.url,
+            authToken: info.authToken,
+          },
           registered,
           removable: isRemovable(id),
         });
@@ -299,12 +304,16 @@ class IntegrationsImpl implements Integrations {
     }
   }
 
-  async add(url: string, title: string = url): Promise<Outcome<void>> {
+  async add(
+    url: string,
+    title: string = url,
+    authToken: string | undefined
+  ): Promise<Outcome<void>> {
     // Add as new asset
     const adding = await this.#upsertIntegration(url, title);
     if (!ok(adding)) return adding;
     // Add to the server list
-    await this.#serverList.add({ url, title });
+    await this.#serverList.add({ url, title, authToken });
   }
 
   #createId(url: string) {

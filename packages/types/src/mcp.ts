@@ -20,6 +20,10 @@ export type McpServerDetails = {
    * URL of the server.
    */
   url: string;
+  /**
+   * Optional auth token
+   */
+  authToken?: string;
 };
 
 export type McpServerIdentifier = string;

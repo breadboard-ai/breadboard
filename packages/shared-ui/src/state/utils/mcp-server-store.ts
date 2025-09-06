@@ -15,6 +15,7 @@ export { McpServerStore };
 export type ServerInfo = {
   url: string;
   title: string;
+  authToken?: string;
   description?: string;
   icon?: string;
 };

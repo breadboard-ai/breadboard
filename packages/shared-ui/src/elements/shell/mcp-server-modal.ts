@@ -254,6 +254,12 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
       title = titleValue;
     }
 
+    const authTokenValue = data.get("auth_token");
+    let authToken: string | undefined = undefined;
+    if (typeof authTokenValue === "string") {
+      authToken = authTokenValue;
+    }
+
     this.#status = html`<span class="g-icon filled round rotate"
         >progress_activity</span
       >
@@ -261,7 +267,11 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
     try {
       this.#loading = true;
 
-      const outcome = await this.project.integrations.add(url, title);
+      const outcome = await this.project.integrations.add(
+        url,
+        title,
+        authToken
+      );
       if (!ok(outcome)) {
         this.#status = html`<span class="error">${outcome.$error}</span>`;
       } else {
@@ -297,6 +307,14 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
           placeholder="Enter a title (optional)"
           id="title"
           name="title"
+          type="text"
+          autocomplete="off"
+        />
+        <input
+          class="sans-flex md-body-large round "
+          placeholder="Enter auth token (optional)"
+          id="auth_token"
+          name="auth_token"
           type="text"
           autocomplete="off"
         />
