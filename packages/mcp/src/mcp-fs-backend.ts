@@ -276,15 +276,6 @@ class McpFileSystemBackend implements PersistentBackend {
   ): Promise<FileSystemWriteResult> {
     return err(`MCP Backend does not support moving`);
   }
-
-  async onEndRun(): Promise<void> {
-    for (const id of this.#sessions.keys()) {
-      const closing = await this.#closeSession(id);
-      if (!ok(closing)) {
-        console.warn("MCP Backend: error closing session", closing.$error);
-      }
-    }
-  }
 }
 
 function parsePath(path: FileSystemPath): Outcome<PathInfo> {
