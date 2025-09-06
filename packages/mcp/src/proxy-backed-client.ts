@@ -69,10 +69,11 @@ class ProxyBackedClient implements McpClient {
     try {
       const url = new URL(path, this.args.proxyUrl);
       let headers = {};
-      if (this.args.token) {
+      const token = this.args.token;
+      if (token) {
         headers = {
           headers: {
-            Authorization: `Bearer ${this.args.token}`,
+            Authorization: `Bearer ${token}`,
           },
         };
       }

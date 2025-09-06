@@ -10,8 +10,9 @@ import {
   JsonSerializableRequestInit,
   McpClient,
   McpProxyRequest,
+  McpServerStore,
 } from "./types.js";
-import { McpBuiltInServerStore } from "./server-store.js";
+import { McpBuiltInServerStore } from "./builtin-server-store.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { Outcome, TokenGetter } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
@@ -78,7 +79,8 @@ class McpClientFactory {
 
   async createClient(
     url: string,
-    info: Implementation
+    info: Implementation,
+    serverStore: McpServerStore
   ): Promise<Outcome<McpClient>> {
     const isBuiltIn = url.startsWith(BUILTIN_SERVER_PREFIX);
 
@@ -97,13 +99,15 @@ class McpClientFactory {
         return client;
       } else if (this.proxyUrl) {
         const accessToken = await this.tokenGetter();
+        const serverInfo = await serverStore.get(url);
         if (!ok(accessToken)) return accessToken;
 
         return new ProxyBackedClient({
-          name: "MCP Proxy Backend",
-          url: url,
+          name: serverInfo?.title || info.name,
+          url,
           proxyToken: accessToken,
           proxyUrl: this.proxyUrl,
+          token: serverInfo?.authToken,
         });
       } else {
         const client = new Client(info) as McpClient;

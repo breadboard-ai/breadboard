@@ -173,7 +173,7 @@
     "@valtown/codemirror-ts": "^2.3.1",
     "ajv": "^8.17.1",
     "codemirror": "^6.0.2",
-    "idb": "^8.0.2",
+    "idb": "^8.0.3",
     "jszip": "^3.10.1",
     "lit": "^3.3.1",
     "markdown-it": "^14.1.0",

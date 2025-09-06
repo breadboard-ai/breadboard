@@ -23,13 +23,14 @@ import {
 } from "./types";
 import { err, ok } from "@breadboard-ai/utils";
 import { SignalMap } from "signal-utils/map";
-import { McpServerStore } from "./utils/mcp-server-store";
 import { AsyncComputed } from "signal-utils/async-computed";
 import {
+  createMcpServerStore,
   listBuiltInMcpServers,
   McpClient,
   McpClientFactory,
   McpListToolResult,
+  McpServerStore,
 } from "@breadboard-ai/mcp";
 import { signal } from "signal-utils";
 import { updateMapDynamic } from "./utils/update-map";
@@ -74,15 +75,20 @@ class IntegrationManager implements IntegrationState {
 
   constructor(
     integration: Integration,
-    public clientFactory: McpClientFactory
+    public clientFactory: McpClientFactory,
+    private serverStore: McpServerStore
   ) {
     this.integration = integration;
     const { url, title } = integration;
-    this.#client = this.clientFactory.createClient(url, {
-      title,
-      name: title,
-      version: "0.0.1",
-    });
+    this.#client = this.clientFactory.createClient(
+      url,
+      {
+        title,
+        name: title,
+        version: "0.0.1",
+      },
+      serverStore
+    );
     this.#reload();
   }
 
@@ -143,7 +149,7 @@ class IntegrationsImpl implements Integrations {
       descriptor,
     ]);
 
-  #serverList = new McpServerStore();
+  #serverList = createMcpServerStore();
 
   constructor(
     tokenGetter: TokenGetter,
@@ -169,7 +175,11 @@ class IntegrationsImpl implements Integrations {
     const { integrations = {} } = graph;
     updateMapDynamic(this.#integrations, Object.entries(integrations), {
       create: (from) => {
-        return new IntegrationManager(from, this.#clientFactory);
+        return new IntegrationManager(
+          from,
+          this.#clientFactory,
+          this.#serverList
+        );
       },
       update: (from, existing) => {
         existing.update(from);
@@ -206,7 +216,12 @@ class IntegrationsImpl implements Integrations {
         const registered = inBgl.has(id);
         result.set(id, {
           title: info.title,
-          details: { name: info.title, version: "0.0.1", url: info.url },
+          details: {
+            name: info.title,
+            version: "0.0.1",
+            url: info.url,
+            authToken: info.authToken,
+          },
           registered,
           removable: isRemovable(id),
         });
@@ -299,12 +314,16 @@ class IntegrationsImpl implements Integrations {
     }
   }
 
-  async add(url: string, title: string = url): Promise<Outcome<void>> {
+  async add(
+    url: string,
+    title: string = url,
+    authToken: string | undefined
+  ): Promise<Outcome<void>> {
     // Add as new asset
     const adding = await this.#upsertIntegration(url, title);
     if (!ok(adding)) return adding;
     // Add to the server list
-    await this.#serverList.add({ url, title });
+    await this.#serverList.add({ url, title, authToken });
   }
 
   #createId(url: string) {

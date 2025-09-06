@@ -4,53 +4,94 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { createSimpleMemoryMcpServer } from "./simple-memory.js";
-import { err } from "@breadboard-ai/utils";
-import { McpServerDescriptor, Outcome } from "@breadboard-ai/types";
+import { Outcome } from "@breadboard-ai/types";
+import { DBSchema, IDBPDatabase, openDB } from "idb";
+import { Signal } from "signal-polyfill";
+import { McpServerInfo, McpServerStore } from "./types.js";
 
-export { McpBuiltInServerStore, listBuiltInMcpServers };
+const MCP_SERVERS_DB = "mcp-servers";
 
-type McpServerFactory = () => McpServer;
+export { createMcpServerStore };
 
-type McpStoreEntry = {
-  descriptor: McpServerDescriptor;
-  factory: McpServerFactory;
-};
-
-const BUILTIN_SERVERS: Map<string, McpStoreEntry> = new Map([
-  [
-    "memory",
-    {
-      descriptor: {
-        title: "Simple Memory",
-        description:
-          "A simple key-value store that can be used as a memory for LLM",
-        details: {
-          name: "Simple Memory",
-          version: "0.0.1",
-          url: `builtin:memory`,
-        },
-        removable: false,
-        registered: false,
-      },
-      factory: createSimpleMemoryMcpServer,
-    },
-  ],
-]);
-
-function listBuiltInMcpServers(): ReadonlyArray<McpServerDescriptor> {
-  return [...BUILTIN_SERVERS.values()].map((value) => value.descriptor);
+function createMcpServerStore(): McpServerStore {
+  return new McpServerStoreImpl();
 }
 
-class McpBuiltInServerStore {
-  get(name: string): Outcome<McpServer> {
-    const entry = BUILTIN_SERVERS.get(name);
-    if (entry) {
-      return entry.factory();
-    }
-    return err(`Unknown built-in server "${name}"`);
+interface McpServerList extends DBSchema {
+  servers: {
+    /**
+     * Key is the URL of the server
+     */
+    key: string;
+    value: Omit<McpServerInfo, "url">;
+  };
+}
+
+class McpServerStoreImpl implements McpServerStore {
+  #db: Promise<IDBPDatabase<McpServerList>>;
+
+  // Makes it work with signals.
+  readonly #changed = new Signal.State({});
+
+  constructor() {
+    this.#db = this.#initialize();
   }
 
-  static instance = new McpBuiltInServerStore();
+  async #initialize(): Promise<IDBPDatabase<McpServerList>> {
+    return openDB<McpServerList>(MCP_SERVERS_DB, 1, {
+      upgrade(db) {
+        db.createObjectStore("servers");
+      },
+    });
+  }
+
+  async add(info: McpServerInfo): Promise<Outcome<void>> {
+    this.#changed.set({});
+    const db = await this.#db;
+    const tx = db.transaction("servers", "readwrite");
+    const servers = tx.objectStore("servers");
+    const { url, ...value } = info;
+    servers.put(value, url);
+    return tx.done;
+  }
+
+  async remove(url: string): Promise<Outcome<void>> {
+    this.#changed.set({});
+    const db = await this.#db;
+    const tx = db.transaction("servers", "readwrite");
+    const servers = tx.objectStore("servers");
+    servers.delete(url);
+    return tx.done;
+  }
+
+  async get(url: string): Promise<McpServerInfo | undefined> {
+    this.#changed.get();
+    const db = await this.#db;
+    const tx = db.transaction("servers", "readonly");
+    const servers = tx.objectStore("servers");
+    const result = await servers.get(url);
+    await tx.done;
+    if (!result) return;
+
+    return {
+      url,
+      ...result,
+    };
+  }
+
+  async list(): Promise<Outcome<McpServerInfo[]>> {
+    this.#changed.get();
+    const db = await this.#db;
+    const tx = db.transaction("servers", "readonly");
+    const servers = tx.objectStore("servers");
+    const [keys, values] = await Promise.all([
+      servers.getAllKeys(),
+      servers.getAll(),
+    ]);
+    await tx.done;
+    return values.map((value, index) => ({
+      ...value,
+      url: keys[index],
+    }));
+  }
 }

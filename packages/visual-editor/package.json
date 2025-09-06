@@ -225,7 +225,7 @@
     "@types/gapi.client.drive-v3": "^0.0.5",
     "@types/google.picker": "^0.0.51",
     "codemirror": "^6.0.2",
-    "idb": "^8.0.2",
+    "idb": "^8.0.3",
     "lit": "^3.3.1"
   }
 }
