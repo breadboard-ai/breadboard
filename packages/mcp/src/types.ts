@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Outcome } from "@breadboard-ai/types";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type {
   CallToolRequest,
@@ -50,6 +51,14 @@ export type McpProxyRequest = {
 export type McpCallToolResult = { content: CallToolResult["content"] };
 export type McpListToolResult = { tools: ListToolsResult["tools"] };
 
+export type McpServerInfo = {
+  url: string;
+  title: string;
+  authToken?: string;
+  description?: string;
+  icon?: string;
+};
+
 /**
  * An abstract type around MCP's Client, so that we could switch out the
  * actual client and use our own.
@@ -60,4 +69,14 @@ export type McpClient = {
   close(): Promise<void>;
   callTool(params: CallToolRequest["params"]): Promise<McpCallToolResult>;
   listTools(): Promise<McpListToolResult>;
+};
+
+export type McpServerStore = {
+  add(info: McpServerInfo): Promise<Outcome<void>>;
+
+  remove(url: string): Promise<Outcome<void>>;
+
+  get(url: string): Promise<McpServerInfo | undefined>;
+
+  list(): Promise<Outcome<McpServerInfo[]>>;
 };

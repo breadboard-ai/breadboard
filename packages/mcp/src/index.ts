@@ -5,6 +5,7 @@
  */
 
 export { McpFileSystemBackend } from "./mcp-fs-backend.js";
-export { listBuiltInMcpServers } from "./server-store.js";
+export { listBuiltInMcpServers } from "./builtin-server-store.js";
 export { McpClientFactory } from "./client-factory.js";
+export { createMcpServerStore } from "./server-store.js";
 export type * from "./types.js";

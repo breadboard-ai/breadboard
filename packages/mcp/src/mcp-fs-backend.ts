@@ -20,6 +20,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import type { McpClient } from "./types.js";
 import { McpClientFactory } from "./client-factory.js";
+import { createMcpServerStore } from "./server-store.js";
 
 export { McpFileSystemBackend, parsePath };
 
@@ -126,6 +127,8 @@ class McpFileSystemBackend implements PersistentBackend {
   }
 
   async #initializeClient(data: LLMContent[]): Promise<Outcome<McpClient>> {
+    const serverStore = createMcpServerStore();
+
     const initialization = toJson<InitializeSessionWrite>(data);
     if (!initialization) {
       return err(`MCP Backend: invalid session initialization payload`);
@@ -136,7 +139,7 @@ class McpFileSystemBackend implements PersistentBackend {
       return err(`MCP Backend: no server URL supplied`);
     }
 
-    return this.#clientFactory.createClient(url, info);
+    return this.#clientFactory.createClient(url, info, serverStore);
   }
 
   async #closeSession(id: string): Promise<FileSystemWriteResult> {
