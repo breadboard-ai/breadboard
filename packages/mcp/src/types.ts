@@ -52,11 +52,36 @@ export type McpCallToolResult = { content: CallToolResult["content"] };
 export type McpListToolResult = { tools: ListToolsResult["tools"] };
 
 export type McpServerInfo = {
+  /**
+   * URL of the server.
+   */
   url: string;
+  /**
+   * Friendly title of the server.
+   */
   title: string;
+  /**
+   * If applicable, authentication token of the server.
+   * This token will be inserted as `Authorization: Bearer ${token}` header
+   * when making requests to the server.
+   */
   authToken?: string;
+  /**
+   * Description of the server.
+   */
   description?: string;
+  /**
+   * Icon of the server, if applicable.
+   */
   icon?: string;
+  /**
+   * Cached list of tools that the server provides.
+   */
+  tools?: McpListToolResult["tools"];
+  /**
+   * Timestamp of when the tool list was last retrieved.
+   */
+  toolsRetrievedOn?: Date;
 };
 
 /**
@@ -73,6 +98,11 @@ export type McpClient = {
 
 export type McpServerStore = {
   add(info: McpServerInfo): Promise<Outcome<void>>;
+
+  updateTools(
+    url: string,
+    tools: McpListToolResult["tools"]
+  ): Promise<Outcome<void>>;
 
   remove(url: string): Promise<Outcome<void>>;
 

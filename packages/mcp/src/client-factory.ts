@@ -19,6 +19,7 @@ import { err, ok } from "@breadboard-ai/utils";
 import { ProxyBackedClient } from "./proxy-backed-client.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { FetchLike } from "@modelcontextprotocol/sdk/shared/transport.js";
+import { CachingMcpClient } from "./caching-mcp-client.js";
 
 export { McpClientFactory };
 
@@ -96,19 +97,23 @@ class McpClientFactory {
         const transport = clientTransport;
 
         await client.connect(transport);
-        return client;
+        return new CachingMcpClient(url, client, serverStore);
       } else if (this.proxyUrl) {
         const accessToken = await this.tokenGetter();
         const serverInfo = await serverStore.get(url);
         if (!ok(accessToken)) return accessToken;
 
-        return new ProxyBackedClient({
-          name: serverInfo?.title || info.name,
+        return new CachingMcpClient(
           url,
-          proxyToken: accessToken,
-          proxyUrl: this.proxyUrl,
-          token: serverInfo?.authToken,
-        });
+          new ProxyBackedClient({
+            name: serverInfo?.title || info.name,
+            url,
+            proxyToken: accessToken,
+            proxyUrl: this.proxyUrl,
+            token: serverInfo?.authToken,
+          }),
+          serverStore
+        );
       } else {
         const client = new Client(info) as McpClient;
 
@@ -118,7 +123,7 @@ class McpClientFactory {
 
         // TODO: Implement error handling and retry.
         await client.connect(transport);
-        return client;
+        return new CachingMcpClient(url, client, serverStore);
       }
     } catch (e) {
       return err((e as Error).message);

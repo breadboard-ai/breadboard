@@ -7,7 +7,8 @@
 import { Outcome } from "@breadboard-ai/types";
 import { DBSchema, IDBPDatabase, openDB } from "idb";
 import { Signal } from "signal-polyfill";
-import { McpServerInfo, McpServerStore } from "./types.js";
+import { McpListToolResult, McpServerInfo, McpServerStore } from "./types.js";
+import { err } from "@breadboard-ai/utils";
 
 const MCP_SERVERS_DB = "mcp-servers";
 
@@ -53,6 +54,27 @@ class McpServerStoreImpl implements McpServerStore {
     const { url, ...value } = info;
     servers.put(value, url);
     return tx.done;
+  }
+
+  async updateTools(
+    url: string,
+    tools: McpListToolResult["tools"]
+  ): Promise<Outcome<void>> {
+    this.#changed.set({});
+    const db = await this.#db;
+    const tx = db.transaction("servers", "readwrite");
+    const servers = tx.objectStore("servers");
+    const result = await servers.get(url);
+    if (!result) {
+      await tx.done;
+      return err(`Server "${url}" was not found in the server store`);
+    }
+    const updated = {
+      ...result,
+      tools,
+      toolsRetrievedOn: new Date(),
+    };
+    servers.put(updated, url);
   }
 
   async remove(url: string): Promise<Outcome<void>> {
