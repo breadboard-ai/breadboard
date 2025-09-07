@@ -23,10 +23,13 @@ const CACHING_DURATION_MS = 24 * 60 * 60 * 1000; // 1 day
 
 class CachingMcpClient implements McpClient {
   constructor(
+    private readonly clientCache: Map<string, CachingMcpClient>,
     private readonly url: string,
     private readonly client: McpClient,
     private readonly serverStore: McpServerStore
-  ) {}
+  ) {
+    clientCache.set(url, this);
+  }
 
   connect(transport: Transport): Promise<void> {
     return this.client.connect(transport);
@@ -35,6 +38,7 @@ class CachingMcpClient implements McpClient {
     return this.client.getServerVersion();
   }
   close(): Promise<void> {
+    this.clientCache.delete(this.url);
     return this.client.close();
   }
   callTool(params: CallToolRequest["params"]): Promise<McpCallToolResult> {

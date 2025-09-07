@@ -12,7 +12,6 @@ import {
   McpServerIdentifier,
   McpServerInstanceIdentifier,
   Outcome,
-  TokenGetter,
   UUID,
 } from "@breadboard-ai/types";
 import {
@@ -28,7 +27,7 @@ import {
   createMcpServerStore,
   listBuiltInMcpServers,
   McpClient,
-  McpClientFactory,
+  McpClientManager,
   McpListToolResult,
   McpServerStore,
 } from "@breadboard-ai/mcp";
@@ -75,8 +74,8 @@ class IntegrationManager implements IntegrationState {
 
   constructor(
     integration: Integration,
-    public clientFactory: McpClientFactory,
-    private serverStore: McpServerStore
+    private clientFactory: McpClientManager,
+    serverStore: McpServerStore
   ) {
     this.integration = integration;
     const { url, title } = integration;
@@ -132,7 +131,6 @@ class IntegrationManager implements IntegrationState {
 
 class IntegrationsImpl implements Integrations {
   #integrations: Map<McpServerIdentifier, IntegrationManager> = new SignalMap();
-  #clientFactory: McpClientFactory;
 
   /**
    * A grouped list of all tools available.
@@ -152,11 +150,9 @@ class IntegrationsImpl implements Integrations {
   #serverList = createMcpServerStore();
 
   constructor(
-    tokenGetter: TokenGetter,
-    proxyUrl?: string,
+    private readonly clientFactory: McpClientManager,
     private readonly editable?: EditableGraph
   ) {
-    this.#clientFactory = new McpClientFactory(tokenGetter, proxyUrl);
     if (!editable) {
       console.warn(
         `Integration Initialization will fail: No editable supplied`
@@ -177,7 +173,7 @@ class IntegrationsImpl implements Integrations {
       create: (from) => {
         return new IntegrationManager(
           from,
-          this.#clientFactory,
+          this.clientFactory,
           this.#serverList
         );
       },

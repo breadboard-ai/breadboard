@@ -4,13 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { McpClientManager } from "@breadboard-ai/mcp";
 import { State } from "@breadboard-ai/shared-ui";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
-import {
-  BoardServer,
-  RuntimeFlagManager,
-  TokenGetter,
-} from "@breadboard-ai/types";
+import { BoardServer, RuntimeFlagManager } from "@breadboard-ai/types";
 import {
   EditableGraph,
   MainGraphIdentifier,
@@ -29,23 +26,20 @@ class StateManager {
   #runtime: SideBoardRuntime;
   #servers: BoardServer[];
   #flagManager: RuntimeFlagManager;
-  #tokenGetter: TokenGetter;
-  #mcpProxyUrl?: string;
+  #mcpClientManager: McpClientManager;
 
   constructor(
     store: MutableGraphStore,
     runtime: SideBoardRuntime,
     boardServers: BoardServer[],
     flagManager: RuntimeFlagManager,
-    tokenGetter: TokenGetter,
-    mcpProxyUrl?: string
+    mcpClientManager: McpClientManager
   ) {
     this.#store = store;
     this.#runtime = runtime;
     this.#servers = boardServers;
     this.#flagManager = flagManager;
-    this.#tokenGetter = tokenGetter;
-    this.#mcpProxyUrl = mcpProxyUrl;
+    this.#mcpClientManager = mcpClientManager;
   }
 
   #findServer(url: URL): BoardServer | null {
@@ -93,8 +87,7 @@ class StateManager {
       this.#store,
       this.#runtime,
       this.#findServer.bind(this),
-      this.#tokenGetter,
-      this.#mcpProxyUrl,
+      this.#mcpClientManager,
       editable || undefined
     );
     this.#map.set(mainGraphId, state);

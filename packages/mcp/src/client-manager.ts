@@ -21,7 +21,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { FetchLike } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { CachingMcpClient } from "./caching-mcp-client.js";
 
-export { McpClientFactory };
+export { McpClientManager };
 
 const BUILTIN_SERVER_PREFIX = "builtin:";
 
@@ -29,7 +29,9 @@ export type CreateClientOptions = {
   proxyUrl: string;
 };
 
-class McpClientFactory {
+class McpClientManager {
+  #cache: Map<string, CachingMcpClient> = new Map();
+
   constructor(
     private readonly tokenGetter: TokenGetter,
     private readonly proxyUrl?: string
@@ -83,6 +85,11 @@ class McpClientFactory {
     info: Implementation,
     serverStore: McpServerStore
   ): Promise<Outcome<McpClient>> {
+    const client = this.#cache.get(url);
+    if (client) {
+      return client;
+    }
+
     const isBuiltIn = url.startsWith(BUILTIN_SERVER_PREFIX);
 
     try {
@@ -97,13 +104,14 @@ class McpClientFactory {
         const transport = clientTransport;
 
         await client.connect(transport);
-        return new CachingMcpClient(url, client, serverStore);
+        return new CachingMcpClient(this.#cache, url, client, serverStore);
       } else if (this.proxyUrl) {
         const accessToken = await this.tokenGetter();
         const serverInfo = await serverStore.get(url);
         if (!ok(accessToken)) return accessToken;
 
         return new CachingMcpClient(
+          this.#cache,
           url,
           new ProxyBackedClient({
             name: serverInfo?.title || info.name,
@@ -123,7 +131,7 @@ class McpClientFactory {
 
         // TODO: Implement error handling and retry.
         await client.connect(transport);
-        return new CachingMcpClient(url, client, serverStore);
+        return new CachingMcpClient(this.#cache, url, client, serverStore);
       }
     } catch (e) {
       return err((e as Error).message);

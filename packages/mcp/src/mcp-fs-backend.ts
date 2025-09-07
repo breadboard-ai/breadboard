@@ -19,7 +19,7 @@ import {
   Implementation,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { McpClient } from "./types.js";
-import { McpClientFactory } from "./client-factory.js";
+import { McpClientManager } from "./client-manager.js";
 import { createMcpServerStore } from "./server-store.js";
 
 export { McpFileSystemBackend, parsePath };
@@ -71,10 +71,10 @@ type TokenGetter = () => Promise<Outcome<string>>;
  */
 class McpFileSystemBackend implements PersistentBackend {
   #sessions: Map<string, SessionInfo> = new Map();
-  #clientFactory: McpClientFactory;
+  #clientFactory: McpClientManager;
 
   constructor(tokenGetter: TokenGetter, proxyUrl?: string) {
-    this.#clientFactory = new McpClientFactory(tokenGetter, proxyUrl);
+    this.#clientFactory = new McpClientManager(tokenGetter, proxyUrl);
   }
 
   async query(
