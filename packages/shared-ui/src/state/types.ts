@@ -521,7 +521,7 @@ export type IntegrationState = {
 export type FilteredIntegrations = {
   filter: string;
 
-  results: Map<McpServerIdentifier, IntegrationState>;
+  results: ReadonlyMap<McpServerIdentifier, IntegrationState>;
 };
 
 /**
@@ -533,7 +533,7 @@ export type Integrations = {
    * List of registered integrations. This list is controlled by
    * `register`/`unregister` methods.
    */
-  registered: Map<McpServerIdentifier, IntegrationState>;
+  registered: ReadonlyMap<McpServerIdentifier, IntegrationState>;
   /**
    * List of all known MCP servers. This list is controlled by `add`/`remove`
    * methods.
