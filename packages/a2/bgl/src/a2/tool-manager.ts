@@ -9,7 +9,7 @@ import type {
   DescriberResultTransformer,
   ExportDescriberResult,
 } from "./common";
-import { ConnectorManager } from "./connector-manager";
+import { ConnectorManager, ListToolResult } from "./connector-manager";
 import {
   type FunctionDeclaration,
   type GeminiSchema,
@@ -47,7 +47,7 @@ class ToolManager {
   #hasSearch = false;
   #hasCodeExection = false;
   tools: Map<string, ToolHandle> = new Map();
-  connectors: Map<string, ConnectorHandle> = new Map();
+  toolLists: Map<string, ListToolResult[]> = new Map();
   errors: string[] = [];
 
   constructor(
@@ -161,16 +161,21 @@ class ToolManager {
       this.#hasCodeExection = true;
       return "Code Execution";
     }
+    const connector = new ConnectorManager({
+      url: "embed://a2/mcp.bgl.json",
+      configuration: { endpoint: url },
+    });
     if (instance) {
       // This is an integration. Use MCP connector.
-      const connector = new ConnectorManager({
-        url: "embed://a2/mcp.bgl.json",
-        configuration: { endpoint: url },
-      });
-      const tools = await connector.listTools();
-      if (!ok(tools)) return tools;
+      let toolList = this.toolLists.get(url);
+      if (!toolList) {
+        const tools = await connector.listTools();
+        if (!ok(tools)) return tools;
+        toolList = tools;
+        this.toolLists.set(url, toolList);
+      }
       const names: string[] = [];
-      for (const tool of tools) {
+      for (const tool of toolList) {
         const { url, description } = tool;
         const { title } = description;
         if (title !== instance) continue;
