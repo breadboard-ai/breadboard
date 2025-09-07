@@ -171,7 +171,7 @@ class ReactiveProject implements ProjectInternal {
       this.myTools,
       this.components,
       this.parameters,
-      new FilteredIntegrationsImpl(this.integrations.all)
+      new FilteredIntegrationsImpl(this.integrations.registered)
     );
     this.#updateGraphAssets();
     this.renderer = new RendererStateImpl(this.graphAssets);

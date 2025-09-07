@@ -529,11 +529,16 @@ export type FilteredIntegrations = {
  * configuration.
  */
 export type Integrations = {
-  all: Map<McpServerIdentifier, IntegrationState>;
   /**
-   * List of currently all known MCP servers.
+   * List of registered integrations. This list is controlled by
+   * `register`/`unregister` methods.
    */
-  servers: AsyncComputedResult<
+  registered: Map<McpServerIdentifier, IntegrationState>;
+  /**
+   * List of all known MCP servers. This list is controlled by `add`/`remove`
+   * methods.
+   */
+  known: AsyncComputedResult<
     ReadonlyMap<McpServerIdentifier, McpServerDescriptor>
   >;
 
@@ -549,7 +554,8 @@ export type Integrations = {
   unregister(id: McpServerIdentifier): Promise<Outcome<void>>;
 
   /**
-   * Add as a new MCP server by URL.
+   * Add as a new MCP server by URL. This both adds it to the list of known
+   * servers and registers it.
    *
    * @param url - URL of the server
    * @param title - title of the server, optional
@@ -562,8 +568,8 @@ export type Integrations = {
 
   /**
    * Remove the MCP server specified by id. This removes it both from the assets
-   * in the BGL and removes it entirely from. Will fail if the server is not
-   * removable.
+   * in the BGL and removes it entirely from the list of known servers.
+   * Will fail if the server is not removable.
    */
   remove(id: McpServerIdentifier): Promise<Outcome<void>>;
 

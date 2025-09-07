@@ -136,7 +136,7 @@ class IntegrationsImpl implements Integrations {
    * A grouped list of all tools available.
    */
   @signal
-  get all(): Map<McpServerIdentifier, IntegrationState> {
+  get registered(): Map<McpServerIdentifier, IntegrationState> {
     // TODO: Expand this to include built-ins.
     return this.#integrations;
   }
@@ -184,7 +184,7 @@ class IntegrationsImpl implements Integrations {
     });
   }
 
-  get servers(): AsyncComputedResult<
+  get known(): AsyncComputedResult<
     Map<McpServerIdentifier, McpServerDescriptor>
   > {
     return this.#servers;
@@ -257,10 +257,10 @@ class IntegrationsImpl implements Integrations {
   }
 
   async register(id: McpServerIdentifier): Promise<Outcome<void>> {
-    const servers = this.servers.value;
+    const servers = this.known.value;
     if (!servers) {
       return err(
-        `Server list is not available, status: "${this.servers.status}"`
+        `Server list is not available, status: "${this.known.status}"`
       );
     }
     const server = servers.get(id);
@@ -279,10 +279,10 @@ class IntegrationsImpl implements Integrations {
   }
 
   async unregister(id: McpServerIdentifier): Promise<Outcome<void>> {
-    const servers = this.servers.value;
+    const servers = this.known.value;
     if (!servers) {
       return err(
-        `Server list is not available, status: "${this.servers.status}"`
+        `Server list is not available, status: "${this.known.status}"`
       );
     }
     const server = servers.get(id);
@@ -329,10 +329,10 @@ class IntegrationsImpl implements Integrations {
   }
 
   async remove(id: McpServerIdentifier): Promise<Outcome<void>> {
-    const servers = this.servers.value;
+    const servers = this.known.value;
     if (!servers) {
       return err(
-        `Server list is not available, status: "${this.servers.status}"`
+        `Server list is not available, status: "${this.known.status}"`
       );
     }
     const server = servers.get(id);
