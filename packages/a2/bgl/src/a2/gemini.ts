@@ -489,7 +489,11 @@ async function callAPI(
           return outputs;
         }
         await reporter.sendUpdate("Model response", outputs, "warning");
-        if (candidate.finishReason && candidate.finishReason !== "STOP") {
+        if (
+          candidate.finishReason &&
+          candidate.finishReason !== "STOP" &&
+          candidate.finishReason !== "MALFORMED_FUNCTION_CALL"
+        ) {
           return reporter.sendError(
             errFromFinishReason(candidate.finishReason, model)
           );
