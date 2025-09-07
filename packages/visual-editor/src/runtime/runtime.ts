@@ -48,8 +48,6 @@ import {
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { addNodeProxyServerConfig } from "../data/node-proxy-servers.js";
 import { inputsFromSettings } from "@breadboard-ai/shared-ui/data/inputs.js";
-import { SIGN_IN_CONNECTION_ID } from "@breadboard-ai/shared-ui/utils/signin-adapter";
-import { McpClientManager } from "@breadboard-ai/mcp";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -289,15 +287,7 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
     sideboards,
     servers,
     flags,
-    new McpClientManager(async () => {
-      const token = config.tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
-      if (token.state === "valid") {
-        return token.grant.access_token;
-      }
-      // This will fail, and that's okay. We'll get the "Unauthorized"
-      // error.
-      return "";
-    }, config.globalConfig?.BACKEND_API_ENDPOINT)
+    config.mcpClientManager
   );
   const shell = new Shell(config.appName, config.appSubName);
 

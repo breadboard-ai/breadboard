@@ -63,19 +63,14 @@ type InitializeSessionWrite = {
 
 type CallToolRequestWrite = CallToolRequest["params"];
 
-type TokenGetter = () => Promise<Outcome<string>>;
-
 /**
  * Provides the ability to use MCP via the FileSystem.
  * The expected path is /mnt/mcp
  */
 class McpFileSystemBackend implements PersistentBackend {
   #sessions: Map<string, SessionInfo> = new Map();
-  #clientFactory: McpClientManager;
 
-  constructor(tokenGetter: TokenGetter, proxyUrl?: string) {
-    this.#clientFactory = new McpClientManager(tokenGetter, proxyUrl);
-  }
+  constructor(private readonly clientManager: McpClientManager) {}
 
   async query(
     _graphUrl: string,
@@ -139,7 +134,7 @@ class McpFileSystemBackend implements PersistentBackend {
       return err(`MCP Backend: no server URL supplied`);
     }
 
-    return this.#clientFactory.createClient(url, info, serverStore);
+    return this.clientManager.createClient(url, info, serverStore);
   }
 
   async #closeSession(id: string): Promise<FileSystemWriteResult> {

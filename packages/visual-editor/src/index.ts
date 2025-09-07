@@ -62,7 +62,7 @@ import {
 } from "@breadboard-ai/embed";
 import { FileSystemPersistentBackend } from "@breadboard-ai/filesystem-board-server";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { McpFileSystemBackend } from "@breadboard-ai/mcp";
+import { McpManager } from "@breadboard-ai/mcp";
 import {
   GlobalConfig,
   globalConfigContext,
@@ -437,6 +437,16 @@ export class Main extends SignalWatcher(LitElement) {
     const flagManager = createFlagManager(this.globalConfig.flags);
     const flags = await flagManager.flags();
 
+    const mcp = new McpManager(async () => {
+      const token = await this.signinAdapter.token();
+      if (token.state === "valid") {
+        return token.grant.access_token;
+      }
+      // This will fail, and that's okay. We'll get the "Unauthorized"
+      // error.
+      return "";
+    }, this.globalConfig.BACKEND_API_ENDPOINT);
+
     const fileSystem = createFileSystem({
       env: [
         ...envFromSettings(this.#settings),
@@ -463,18 +473,7 @@ export class Main extends SignalWatcher(LitElement) {
             }),
           ],
           ["track", createActionTrackerBackend()],
-          [
-            "mcp",
-            new McpFileSystemBackend(async () => {
-              const token = await this.signinAdapter.token();
-              if (token.state === "valid") {
-                return token.grant.access_token;
-              }
-              // This will fail, and that's okay. We'll get the "Unauthorized"
-              // error.
-              return "";
-            }, this.globalConfig.BACKEND_API_ENDPOINT),
-          ],
+          ["mcp", mcp.fileSystemBackend],
         ])
       ),
     });
@@ -499,6 +498,7 @@ export class Main extends SignalWatcher(LitElement) {
       appName: Strings.from("APP_NAME"),
       appSubName: Strings.from("SUB_APP_NAME"),
       flags: flagManager,
+      mcpClientManager: mcp.clientManager,
     });
     this.#addRuntimeEventHandlers();
 
