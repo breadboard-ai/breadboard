@@ -107,6 +107,7 @@ import { envFromSettings } from "./utils/env-from-settings";
 import {
   devUrlParams,
   makeUrl,
+  type MakeUrlInit,
   parseUrl,
 } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { VESignInModal } from "@breadboard-ai/shared-ui/elements/elements.js";
@@ -2071,11 +2072,24 @@ export class Main extends SignalWatcher(LitElement) {
         this.#embedHandler?.sendToEmbedder({
           type: "back_clicked",
         });
-        this.#runtime.router.go({
+        const homepage: MakeUrlInit = {
           page: "home",
           mode: this.#uiState.mode,
           dev: parsedUrl.dev,
-        });
+        };
+        if (this.signinAdapter.state === "signedin") {
+          this.#runtime.router.go(homepage);
+        } else {
+          // Note that router.go() can't navigate to the landing page, because
+          // it's a totally different entrypoint.
+          window.location.assign(
+            makeUrl({
+              page: "landing",
+              dev: parsedUrl.dev,
+              redirect: homepage,
+            })
+          );
+        }
       }}
       @bbsharerequested=${() => {
         if (!this.#canvasControllerRef.value) {
