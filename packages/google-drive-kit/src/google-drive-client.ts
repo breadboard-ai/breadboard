@@ -176,7 +176,7 @@ type GoogleApiAuthorization =
   | { kind: "anonymous" };
 
 export class GoogleDriveClient {
-  readonly apiUrl: string;
+  readonly #apiUrl: string;
   readonly #publicProxy:
     | {
         apiUrl: string;
@@ -187,7 +187,7 @@ export class GoogleDriveClient {
   readonly #getUserAccessToken: (scopes?: OAuthScope[]) => Promise<string>;
 
   constructor(options: GoogleDriveClientOptions) {
-    this.apiUrl = options.apiBaseUrl || "https://www.googleapis.com";
+    this.#apiUrl = options.apiBaseUrl || "https://www.googleapis.com";
     this.#getUserAccessToken = options.getUserAccessToken;
     this.#publicProxy = options.proxyApiBaseUrl
       ? {
@@ -268,11 +268,14 @@ export class GoogleDriveClient {
   }> {
     const fileIsMarkedAsPublic =
       this.#publicProxy && this.#publicProxy.marked.has(fileId);
+    const isAlwaysProxying =
+      this.#publicProxy?.apiUrl && this.#apiUrl === this.#publicProxy.apiUrl;
     return {
-      apiUrl: fileIsMarkedAsPublic ? this.#publicProxy.apiUrl : this.apiUrl,
-      authorization: fileIsMarkedAsPublic
-        ? { kind: "anonymous" }
-        : { kind: "bearer", token: await this.#getUserAccessToken() },
+      apiUrl: fileIsMarkedAsPublic ? this.#publicProxy.apiUrl : this.#apiUrl,
+      authorization:
+        fileIsMarkedAsPublic || isAlwaysProxying
+          ? { kind: "anonymous" }
+          : { kind: "bearer", token: await this.#getUserAccessToken() },
     };
   }
 
@@ -361,7 +364,7 @@ export class GoogleDriveClient {
     file: File & { name: string; mimeType: string },
     options?: T
   ): Promise<NarrowedDriveFileFromOptions<T>> {
-    const url = new URL(`drive/v3/files`, this.apiUrl);
+    const url = new URL(`drive/v3/files`, this.#apiUrl);
     if (options?.fields) {
       url.searchParams.set("fields", options.fields.join(","));
     }
@@ -473,7 +476,7 @@ export class GoogleDriveClient {
       isExistingFile
         ? `upload/drive/v3/files/${encodeURIComponent(fileId)}`
         : `upload/drive/v3/files`,
-      this.apiUrl
+      this.#apiUrl
     );
     url.searchParams.set("uploadType", "multipart");
     if (options?.fields) {
@@ -521,7 +524,7 @@ export class GoogleDriveClient {
   ): Promise<NarrowedDriveFileFromOptions<T>> {
     const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId)}`,
-      this.apiUrl
+      this.#apiUrl
     );
     if (options?.addParents) {
       url.searchParams.set("addParents", options.addParents.join(","));
@@ -552,7 +555,7 @@ export class GoogleDriveClient {
     options?: BaseRequestOptions
   ): Promise<void> {
     const response = await this.#fetch(
-      new URL(`drive/v3/files/${encodeURIComponent(fileId)}`, this.apiUrl),
+      new URL(`drive/v3/files/${encodeURIComponent(fileId)}`, this.#apiUrl),
       { method: "DELETE", signal: options?.signal }
     );
     if (!response.ok) {
@@ -586,7 +589,7 @@ export class GoogleDriveClient {
     options?: T
   ): Promise<ListFilesResponse<NarrowedDriveFileFromOptions<T>>> {
     // TODO(aomarks) Make this an async iterator.
-    const url = new URL(`drive/v3/files`, this.apiUrl);
+    const url = new URL(`drive/v3/files`, this.#apiUrl);
     url.searchParams.set("q", query);
     if (options?.pageSize) {
       url.searchParams.set("pageSize", String(options.pageSize));
@@ -621,7 +624,7 @@ export class GoogleDriveClient {
   ): Promise<Permission> {
     const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId)}/permissions`,
-      this.apiUrl
+      this.#apiUrl
     );
     url.searchParams.set(
       "sendNotificationEmail",
@@ -655,7 +658,7 @@ export class GoogleDriveClient {
       new URL(
         `drive/v3/files/${encodeURIComponent(fileId)}` +
           `/permissions/${encodeURIComponent(permissionId)}`,
-        this.apiUrl
+        this.#apiUrl
       ),
       {
         method: "DELETE",
@@ -686,7 +689,7 @@ export class GoogleDriveClient {
     fileId = normalizeFileId(fileId);
     const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId.id)}/copy`,
-      this.apiUrl
+      this.#apiUrl
     );
     if (options?.fields) {
       url.searchParams.set("fields", options.fields.join(","));
@@ -706,7 +709,7 @@ export class GoogleDriveClient {
     options?: BaseRequestOptions
   ): Promise<string> {
     const response = await this.#fetch(
-      new URL(`drive/v3/changes/startPageToken`, this.apiUrl),
+      new URL(`drive/v3/changes/startPageToken`, this.#apiUrl),
       { signal: options?.signal }
     );
     if (!response.ok) {
@@ -723,7 +726,7 @@ export class GoogleDriveClient {
   async listChanges(
     options: ListChangesOptions
   ): Promise<gapi.client.drive.ChangeList> {
-    const url = new URL(`drive/v3/changes`, this.apiUrl);
+    const url = new URL(`drive/v3/changes`, this.#apiUrl);
     url.searchParams.set("pageToken", options.pageToken);
     if (options.pageSize) {
       url.searchParams.set("pageSize", String(options.pageSize));
