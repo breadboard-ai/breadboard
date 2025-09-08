@@ -110,3 +110,8 @@ export type McpServerStore = {
 
   list(): Promise<Outcome<McpServerInfo[]>>;
 };
+
+export type McpBuiltInServerEntry = {
+  info: McpServerInfo;
+  client: McpClient;
+};

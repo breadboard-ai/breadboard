@@ -142,9 +142,19 @@ class IntegrationsImpl implements Integrations {
   }
 
   #builtIns: [McpServerIdentifier, McpServerDescriptor][] =
-    listBuiltInMcpServers().map((descriptor) => [
-      descriptor.details.url,
-      descriptor,
+    listBuiltInMcpServers().map((info) => [
+      info.url,
+      {
+        title: info.title,
+        description: info.description,
+        details: {
+          name: info.title,
+          version: "0.0.1",
+          url: info.url,
+        },
+        registered: false,
+        removable: false,
+      },
     ]);
 
   #serverList = createMcpServerStore();
@@ -197,19 +207,13 @@ class IntegrationsImpl implements Integrations {
       this.#builtIns
     );
 
-    const inBgl = new Map<McpServerIdentifier, McpServerDescriptor>();
-
-    this.#integrations.forEach((mgr, id) => {
-      inBgl.set(id, mgr.descriptor());
-    });
-
     const stored = await this.#serverList.list();
     if (!ok(stored)) {
       console.warn("Unable to load stored MCP servers", stored.$error);
     } else {
       for (const info of stored) {
         const id = info.url;
-        const registered = inBgl.has(id);
+        const registered = this.#integrations.has(id);
         result.set(id, {
           title: info.title,
           details: {
@@ -224,7 +228,9 @@ class IntegrationsImpl implements Integrations {
       }
     }
 
-    inBgl.forEach((value, key) => result.set(key, value));
+    this.#integrations.forEach((value, key) =>
+      result.set(key, value.descriptor())
+    );
 
     return result;
 

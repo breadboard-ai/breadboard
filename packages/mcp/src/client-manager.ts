@@ -13,7 +13,6 @@ import {
   McpServerStore,
 } from "./types.js";
 import { McpBuiltInServerStore } from "./builtin-server-store.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { Outcome, TokenGetter } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { ProxyBackedClient } from "./proxy-backed-client.js";
@@ -94,16 +93,9 @@ class McpClientManager {
 
     try {
       if (isBuiltIn) {
-        const client = new Client(info) as McpClient;
         const builtInServerName = url.slice(BUILTIN_SERVER_PREFIX.length);
-        const server = McpBuiltInServerStore.instance.get(builtInServerName);
-        if (!ok(server)) return server;
-        const [clientTransport, serverTransport] =
-          InMemoryTransport.createLinkedPair();
-        await server.connect(serverTransport);
-        const transport = clientTransport;
-
-        await client.connect(transport);
+        const client = McpBuiltInServerStore.instance.get(builtInServerName);
+        if (!ok(client)) return client;
         return new CachingMcpClient(this.#cache, url, client, serverStore);
       } else if (this.proxyUrl) {
         const accessToken = await this.tokenGetter();
