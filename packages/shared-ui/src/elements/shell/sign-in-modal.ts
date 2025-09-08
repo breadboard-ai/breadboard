@@ -11,10 +11,30 @@ import { colorsLight } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
 import {
-  type SigninAdapter,
   signinAdapterContext,
+  type SignInError,
+  type SigninAdapter,
 } from "../../utils/signin-adapter.js";
 import { devUrlParams } from "../../utils/urls.js";
+
+type Request = {
+  reason: "sign-in" | "add-scope";
+  scopes: OAuthScope[] | undefined;
+  outcomePromise: Promise<boolean>;
+  outcomeResolve: (outcome: boolean) => void;
+};
+
+type State =
+  | { status: "closed" }
+  | {
+      status: "open";
+      request: Request;
+    }
+  | {
+      status: "error";
+      request: Request;
+      error: SignInError;
+    };
 
 @customElement("bb-sign-in-modal")
 export class VESignInModal extends LitElement {
@@ -23,15 +43,7 @@ export class VESignInModal extends LitElement {
   accessor signinAdapter: SigninAdapter | undefined = undefined;
 
   @state()
-  accessor #state:
-    | { status: "closed" }
-    | {
-        status: "open";
-        reason: "sign-in" | "add-scope";
-        scopes: OAuthScope[] | undefined;
-        outcomePromise: Promise<boolean>;
-        outcomeResolve: (outcome: boolean) => void;
-      } = { status: "closed" };
+  accessor #state: State = { status: "closed" };
 
   static styles = [
     type,
@@ -89,10 +101,10 @@ export class VESignInModal extends LitElement {
   }
 
   render() {
-    if (this.#state.status !== "open") {
+    if (this.#state.status === "closed") {
       return nothing;
     }
-    const { reason } = this.#state;
+    const { reason } = this.#state.request;
     return html`
       <bb-modal
         icon="login"
@@ -103,13 +115,7 @@ export class VESignInModal extends LitElement {
         @bbmodaldismissed=${this.#onDismiss}
       >
         <section>
-          <p>
-            ${reason === "sign-in"
-              ? html`To continue, you'll need to sign in with your Google
-                account.`
-              : html`This action requires additional permissions. Please click
-                  <em>Continue</em> to view permissions and allow access.`}
-          </p>
+          <p>${this.#renderMessage()}</p>
           <aside>
             <button id="sign-in" class="sans" @click=${this.#onClickSignIn}>
               ${reason === "sign-in" ? "Sign In" : "Continue"}
@@ -120,6 +126,43 @@ export class VESignInModal extends LitElement {
     `;
   }
 
+  #renderMessage() {
+    const state = this.#state;
+
+    if (state.status === "closed") {
+      return nothing;
+    }
+
+    if (state.status === "open") {
+      const { reason } = state.request;
+      return reason === "sign-in"
+        ? html`To continue, you'll need to sign in with your Google account.`
+        : html`This action requires additional permissions. Please click
+            <em>Continue</em> to view permissions and allow access.`;
+    }
+
+    if (state.status === "error") {
+      const { code } = state.error;
+      if (code === "geo-restriction") {
+        // TODO(aomarks) Polish this UX
+        return html`Geo restrict`;
+      }
+      if (code === "missing-scopes") {
+        // TODO(aomarks) Polish this UX
+        return html`Missing scope`;
+      }
+      if (code === "other") {
+        // TODO(aomarks) Polish this UX
+        return html`Unknown error`;
+      }
+      code satisfies never;
+      return nothing;
+    }
+
+    state satisfies never;
+    return nothing;
+  }
+
   async openAndWaitForSignIn(
     scopes?: OAuthScope[],
     reason?: "sign-in" | "add-scope"
@@ -128,15 +171,19 @@ export class VESignInModal extends LitElement {
       let resolve: (outcome: boolean) => void;
       this.#state = {
         status: "open",
-        reason:
-          reason ??
-          (this.signinAdapter?.state === "signedin" ? "add-scope" : "sign-in"),
-        outcomePromise: new Promise<boolean>((r) => (resolve = r)),
-        outcomeResolve: resolve!,
-        scopes,
+        request: {
+          reason:
+            reason ??
+            (this.signinAdapter?.state === "signedin"
+              ? "add-scope"
+              : "sign-in"),
+          outcomePromise: new Promise<boolean>((r) => (resolve = r)),
+          outcomeResolve: resolve!,
+          scopes,
+        },
       };
     }
-    return this.#state.outcomePromise;
+    return this.#state.request.outcomePromise;
   }
 
   async #onClickSignIn() {
@@ -148,8 +195,10 @@ export class VESignInModal extends LitElement {
       this.#close(false);
       return;
     }
-    const url = await this.signinAdapter.getSigninUrl(this.#state.scopes);
-    const signInPromise = this.signinAdapter.signIn(this.#state.scopes);
+    const url = await this.signinAdapter.getSigninUrl(
+      this.#state.request.scopes
+    );
+    const signInPromise = this.signinAdapter.signIn(this.#state.request.scopes);
     const popupWidth = 900;
     const popupHeight = 850;
     window.open(
@@ -163,7 +212,16 @@ export class VESignInModal extends LitElement {
       `
     );
     const outcome = await signInPromise;
-    if (outcome.ok && this.#state.reason === "sign-in") {
+    const request = this.#state.request;
+    if (!outcome.ok) {
+      this.#state = {
+        status: "error",
+        error: outcome.error,
+        request,
+      };
+      return;
+    }
+    if (request.reason === "sign-in") {
       // TODO(aomarks) Remove the reload after the app is fully reactive to a
       // sign-in. Known issues: Google Drive client auth strategy, top-right
       // user icon.
@@ -183,7 +241,7 @@ export class VESignInModal extends LitElement {
     if (this.#state.status !== "open") {
       return;
     }
-    this.#state.outcomeResolve(outcome);
+    this.#state.request.outcomeResolve(outcome);
     this.#state = { status: "closed" };
   }
 }
