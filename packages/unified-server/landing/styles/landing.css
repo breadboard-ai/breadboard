@@ -337,11 +337,12 @@ main {
       }
 
       & #sign-in {
-        line-height: var(--bb-grid-size-10);
+        line-height: var(--bb-grid-size-14);
         border-radius: var(--bb-grid-size-16);
-        background: var(--n-0);
+        background: url(/styles/landing/images/g-logo.png) var(--n-0) 24px
+          center / 20px 20px no-repeat;
         color: var(--n-100);
-        padding: 0 var(--bb-grid-size-4);
+        padding: 0 var(--bb-grid-size-6) 0 calc(var(--bb-grid-size-6) + 28px);
         text-decoration: none;
         margin-bottom: var(--bb-grid-size-6);
         animation: fadeIn 2s cubic-bezier(0.4, 0, 0.3, 1) 0.8s 1 backwards;
