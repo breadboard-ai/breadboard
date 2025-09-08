@@ -349,7 +349,7 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
       return html`MCP Server configuration unavailable`;
     }
 
-    const servers = this.project.integrations.servers;
+    const servers = this.project.integrations.known;
     if (!servers.value) {
       if (servers.status === "error") {
         return html`<p>Error loading MCP server list</p>`;

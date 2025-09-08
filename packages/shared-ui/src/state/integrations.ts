@@ -12,7 +12,6 @@ import {
   McpServerIdentifier,
   McpServerInstanceIdentifier,
   Outcome,
-  TokenGetter,
   UUID,
 } from "@breadboard-ai/types";
 import {
@@ -26,9 +25,8 @@ import { SignalMap } from "signal-utils/map";
 import { AsyncComputed } from "signal-utils/async-computed";
 import {
   createMcpServerStore,
-  listBuiltInMcpServers,
   McpClient,
-  McpClientFactory,
+  McpClientManager,
   McpListToolResult,
   McpServerStore,
 } from "@breadboard-ai/mcp";
@@ -75,8 +73,8 @@ class IntegrationManager implements IntegrationState {
 
   constructor(
     integration: Integration,
-    public clientFactory: McpClientFactory,
-    private serverStore: McpServerStore
+    private clientFactory: McpClientManager,
+    serverStore: McpServerStore
   ) {
     this.integration = integration;
     const { url, title } = integration;
@@ -132,31 +130,39 @@ class IntegrationManager implements IntegrationState {
 
 class IntegrationsImpl implements Integrations {
   #integrations: Map<McpServerIdentifier, IntegrationManager> = new SignalMap();
-  #clientFactory: McpClientFactory;
 
   /**
    * A grouped list of all tools available.
    */
   @signal
-  get all(): Map<McpServerIdentifier, IntegrationState> {
+  get registered(): Map<McpServerIdentifier, IntegrationState> {
     // TODO: Expand this to include built-ins.
     return this.#integrations;
   }
 
-  #builtIns: [McpServerIdentifier, McpServerDescriptor][] =
-    listBuiltInMcpServers().map((descriptor) => [
-      descriptor.details.url,
-      descriptor,
+  #builtIns: [McpServerIdentifier, McpServerDescriptor][] = this.clientManager
+    .builtInServers()
+    .map((info) => [
+      info.url,
+      {
+        title: info.title,
+        description: info.description,
+        details: {
+          name: info.title,
+          version: "0.0.1",
+          url: info.url,
+        },
+        registered: false,
+        removable: false,
+      },
     ]);
 
   #serverList = createMcpServerStore();
 
   constructor(
-    tokenGetter: TokenGetter,
-    proxyUrl?: string,
+    private readonly clientManager: McpClientManager,
     private readonly editable?: EditableGraph
   ) {
-    this.#clientFactory = new McpClientFactory(tokenGetter, proxyUrl);
     if (!editable) {
       console.warn(
         `Integration Initialization will fail: No editable supplied`
@@ -177,7 +183,7 @@ class IntegrationsImpl implements Integrations {
       create: (from) => {
         return new IntegrationManager(
           from,
-          this.#clientFactory,
+          this.clientManager,
           this.#serverList
         );
       },
@@ -188,7 +194,7 @@ class IntegrationsImpl implements Integrations {
     });
   }
 
-  get servers(): AsyncComputedResult<
+  get known(): AsyncComputedResult<
     Map<McpServerIdentifier, McpServerDescriptor>
   > {
     return this.#servers;
@@ -201,19 +207,13 @@ class IntegrationsImpl implements Integrations {
       this.#builtIns
     );
 
-    const inBgl = new Map<McpServerIdentifier, McpServerDescriptor>();
-
-    this.#integrations.forEach((mgr, id) => {
-      inBgl.set(id, mgr.descriptor());
-    });
-
     const stored = await this.#serverList.list();
     if (!ok(stored)) {
       console.warn("Unable to load stored MCP servers", stored.$error);
     } else {
       for (const info of stored) {
         const id = info.url;
-        const registered = inBgl.has(id);
+        const registered = this.#integrations.has(id);
         result.set(id, {
           title: info.title,
           details: {
@@ -228,7 +228,9 @@ class IntegrationsImpl implements Integrations {
       }
     }
 
-    inBgl.forEach((value, key) => result.set(key, value));
+    this.#integrations.forEach((value, key) =>
+      result.set(key, value.descriptor())
+    );
 
     return result;
 
@@ -261,10 +263,10 @@ class IntegrationsImpl implements Integrations {
   }
 
   async register(id: McpServerIdentifier): Promise<Outcome<void>> {
-    const servers = this.servers.value;
+    const servers = this.known.value;
     if (!servers) {
       return err(
-        `Server list is not available, status: "${this.servers.status}"`
+        `Server list is not available, status: "${this.known.status}"`
       );
     }
     const server = servers.get(id);
@@ -283,10 +285,10 @@ class IntegrationsImpl implements Integrations {
   }
 
   async unregister(id: McpServerIdentifier): Promise<Outcome<void>> {
-    const servers = this.servers.value;
+    const servers = this.known.value;
     if (!servers) {
       return err(
-        `Server list is not available, status: "${this.servers.status}"`
+        `Server list is not available, status: "${this.known.status}"`
       );
     }
     const server = servers.get(id);
@@ -333,10 +335,10 @@ class IntegrationsImpl implements Integrations {
   }
 
   async remove(id: McpServerIdentifier): Promise<Outcome<void>> {
-    const servers = this.servers.value;
+    const servers = this.known.value;
     if (!servers) {
       return err(
-        `Server list is not available, status: "${this.servers.status}"`
+        `Server list is not available, status: "${this.known.status}"`
       );
     }
     const server = servers.get(id);

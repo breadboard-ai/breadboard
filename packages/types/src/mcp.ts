@@ -55,4 +55,4 @@ export type McpServerDescriptor = {
   readonly removable: boolean;
 };
 
-export type TokenGetter = () => Promise<Outcome<string>>;
+export type TokenGetter = (scopes?: string[]) => Promise<Outcome<string>>;

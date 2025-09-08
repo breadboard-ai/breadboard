@@ -4,14 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Outcome } from "@breadboard-ai/types";
+import { Outcome, TokenGetter } from "@breadboard-ai/types";
+import { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type {
   CallToolRequest,
   CallToolResult,
   Implementation,
   ListToolsResult,
+  Tool,
+  ToolAnnotations,
 } from "@modelcontextprotocol/sdk/types.js";
+import type z from "zod";
 
 export type JsonSerializableHeadersInit =
   | [string, string][]
@@ -110,3 +114,23 @@ export type McpServerStore = {
 
   list(): Promise<Outcome<McpServerInfo[]>>;
 };
+
+export interface McpBuiltInClient extends McpClient {
+  info: McpServerInfo;
+  tools: Tool[];
+  addTool<InputArgs extends z.ZodRawShape, OutputArgs extends z.ZodRawShape>(
+    name: string,
+    config: {
+      title?: string;
+      description?: string;
+      inputSchema?: InputArgs;
+      outputSchema?: OutputArgs;
+      annotations?: ToolAnnotations;
+    },
+    callback: ToolCallback<InputArgs>
+  ): void;
+}
+
+export type McpBuiltInClientFactory = (
+  tokenGetter: TokenGetter
+) => McpBuiltInClient;

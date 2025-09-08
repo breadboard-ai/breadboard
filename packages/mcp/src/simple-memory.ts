@@ -4,21 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { McpBuiltInClient } from "./types.js";
+import { BuiltInClient } from "./built-in-client.js";
 
-export { createSimpleMemoryMcpServer };
+export { createSimpleMemoryClient };
 
 const memory = new Map<string, string>();
 
-function createSimpleMemoryMcpServer() {
-  const server = new McpServer({
-    title: "Simple Memory",
+function createSimpleMemoryClient(): McpBuiltInClient {
+  const client = new BuiltInClient({
     name: "Simple Memory",
-    version: "0.0.1",
+    url: "builtin:memory",
   });
-
-  server.registerTool(
+  client.addTool(
     "store",
     {
       title: "Store value with a key",
@@ -37,7 +36,7 @@ function createSimpleMemoryMcpServer() {
     }
   );
 
-  server.registerTool(
+  client.addTool(
     "storeEntries",
     {
       title: "Store multiple key-value pairs",
@@ -63,7 +62,7 @@ function createSimpleMemoryMcpServer() {
     }
   );
 
-  server.registerTool(
+  client.addTool(
     "retrieve",
     {
       title: "Retrieve value by key",
@@ -82,7 +81,7 @@ function createSimpleMemoryMcpServer() {
     }
   );
 
-  server.registerTool(
+  client.addTool(
     "listAll",
     {
       title: "Lists all values",
@@ -97,6 +96,5 @@ function createSimpleMemoryMcpServer() {
       };
     }
   );
-
-  return server;
+  return client;
 }
