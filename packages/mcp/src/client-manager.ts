@@ -10,10 +10,10 @@ import {
   JsonSerializableRequestInit,
   McpClient,
   McpProxyRequest,
+  McpServerInfo,
   McpServerStore,
 } from "./types.js";
 import { McpBuiltInServerStore } from "./builtin-server-store.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { Outcome, TokenGetter } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { ProxyBackedClient } from "./proxy-backed-client.js";
@@ -21,19 +21,26 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { FetchLike } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { CachingMcpClient } from "./caching-mcp-client.js";
 
-export { McpClientFactory };
-
-const BUILTIN_SERVER_PREFIX = "builtin:";
+export { McpClientManager };
 
 export type CreateClientOptions = {
   proxyUrl: string;
 };
 
-class McpClientFactory {
+class McpClientManager {
+  #cache: Map<string, CachingMcpClient> = new Map();
+  #builtIn: McpBuiltInServerStore;
+
   constructor(
     private readonly tokenGetter: TokenGetter,
     private readonly proxyUrl?: string
-  ) {}
+  ) {
+    this.#builtIn = new McpBuiltInServerStore(tokenGetter);
+  }
+
+  builtInServers(): ReadonlyArray<McpServerInfo> {
+    return this.#builtIn.builtInServers();
+  }
 
   #fetch(): FetchLike {
     const proxyURL = new URL("/api/mcp-proxy", window.location.href);
@@ -83,27 +90,25 @@ class McpClientFactory {
     info: Implementation,
     serverStore: McpServerStore
   ): Promise<Outcome<McpClient>> {
-    const isBuiltIn = url.startsWith(BUILTIN_SERVER_PREFIX);
+    const client = this.#cache.get(url);
+    if (client) {
+      return client;
+    }
+
+    const isBuiltIn = this.#builtIn.isBuiltIn(url);
 
     try {
       if (isBuiltIn) {
-        const client = new Client(info) as McpClient;
-        const builtInServerName = url.slice(BUILTIN_SERVER_PREFIX.length);
-        const server = McpBuiltInServerStore.instance.get(builtInServerName);
-        if (!ok(server)) return server;
-        const [clientTransport, serverTransport] =
-          InMemoryTransport.createLinkedPair();
-        await server.connect(serverTransport);
-        const transport = clientTransport;
-
-        await client.connect(transport);
-        return new CachingMcpClient(url, client, serverStore);
+        const client = this.#builtIn.get(url);
+        if (!ok(client)) return client;
+        return new CachingMcpClient(this.#cache, url, client, serverStore);
       } else if (this.proxyUrl) {
         const accessToken = await this.tokenGetter();
         const serverInfo = await serverStore.get(url);
         if (!ok(accessToken)) return accessToken;
 
         return new CachingMcpClient(
+          this.#cache,
           url,
           new ProxyBackedClient({
             name: serverInfo?.title || info.name,
@@ -123,7 +128,7 @@ class McpClientFactory {
 
         // TODO: Implement error handling and retry.
         await client.connect(transport);
-        return new CachingMcpClient(url, client, serverStore);
+        return new CachingMcpClient(this.#cache, url, client, serverStore);
       }
     } catch (e) {
       return err((e as Error).message);

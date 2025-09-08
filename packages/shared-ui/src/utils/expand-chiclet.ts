@@ -45,8 +45,8 @@ export function expandChiclet(
     case "tool": {
       if (instance) {
         icon =
-          projectState.integrations.all.get(path)?.tools.get(instance)?.icon ||
-          "robot_server";
+          projectState.integrations.registered.get(path)?.tools.get(instance)
+            ?.icon || "robot_server";
       } else {
         const toolInfo = projectState?.fastAccess.tools.get(path);
         icon = iconSubstitute(toolInfo?.icon);

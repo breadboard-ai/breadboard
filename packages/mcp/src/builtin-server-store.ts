@@ -4,53 +4,56 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { createSimpleMemoryMcpServer } from "./simple-memory.js";
 import { err } from "@breadboard-ai/utils";
-import { McpServerDescriptor, Outcome } from "@breadboard-ai/types";
+import { Outcome, TokenGetter } from "@breadboard-ai/types";
+import {
+  McpBuiltInClient,
+  McpBuiltInClientFactory,
+  McpClient,
+  McpServerInfo,
+} from "./types.js";
+import { createSimpleMemoryClient } from "./simple-memory.js";
 
-export { McpBuiltInServerStore, listBuiltInMcpServers };
+export { McpBuiltInServerStore };
 
-type McpServerFactory = () => McpServer;
+const BUILTIN_SERVER_PREFIX = "builtin:";
 
-type McpStoreEntry = {
-  descriptor: McpServerDescriptor;
-  factory: McpServerFactory;
-};
-
-const BUILTIN_SERVERS: Map<string, McpStoreEntry> = new Map([
-  [
-    "memory",
-    {
-      descriptor: {
-        title: "Simple Memory",
-        description:
-          "A simple key-value store that can be used as a memory for LLM",
-        details: {
-          name: "Simple Memory",
-          version: "0.0.1",
-          url: `builtin:memory`,
-        },
-        removable: false,
-        registered: false,
-      },
-      factory: createSimpleMemoryMcpServer,
-    },
-  ],
+const BUILTIN_SERVERS: Map<string, McpBuiltInClientFactory> = new Map([
+  ["memory", createSimpleMemoryClient],
 ]);
 
-function listBuiltInMcpServers(): ReadonlyArray<McpServerDescriptor> {
-  return [...BUILTIN_SERVERS.values()].map((value) => value.descriptor);
-}
-
 class McpBuiltInServerStore {
-  get(name: string): Outcome<McpServer> {
-    const entry = BUILTIN_SERVERS.get(name);
-    if (entry) {
-      return entry.factory();
-    }
-    return err(`Unknown built-in server "${name}"`);
+  #clients: Map<string, McpBuiltInClient> = new Map();
+
+  constructor(private readonly tokenGetter: TokenGetter) {}
+
+  isBuiltIn(url?: string) {
+    return url?.startsWith(BUILTIN_SERVER_PREFIX);
   }
 
-  static instance = new McpBuiltInServerStore();
+  builtInServers(): ReadonlyArray<McpServerInfo> {
+    const servers: McpServerInfo[] = [];
+    BUILTIN_SERVERS.forEach((_factory, name) => {
+      const info = this.#clients.get(name)?.info;
+      if (info) {
+        servers.push(info);
+      }
+    });
+    return servers;
+  }
+
+  get(url: string): Outcome<McpClient> {
+    const name = url.slice(BUILTIN_SERVER_PREFIX.length);
+
+    let client = this.#clients.get(name);
+    if (!client) {
+      const factory = BUILTIN_SERVERS.get(name);
+      if (!factory) {
+        return err(`Unknown built-in server "${name}"`);
+      }
+      client = factory(this.tokenGetter);
+      this.#clients.set(name, client);
+    }
+    return client;
+  }
 }

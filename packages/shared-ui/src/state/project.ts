@@ -13,7 +13,6 @@ import {
   LLMContent,
   NodeIdentifier,
   ParameterMetadata,
-  TokenGetter,
 } from "@breadboard-ai/types";
 import {
   BoardServer,
@@ -57,6 +56,7 @@ import {
 import { IntegrationsImpl } from "./integrations";
 import { updateMap } from "./utils/update-map";
 import { FilteredIntegrationsImpl } from "./filtered-integrations";
+import { McpClientManager } from "@breadboard-ai/mcp";
 
 export { createProjectState, ReactiveProject };
 
@@ -81,8 +81,7 @@ function createProjectState(
   store: MutableGraphStore,
   runtime: SideBoardRuntime,
   boardServerFinder: (url: URL) => BoardServer | null,
-  tokenGetter: TokenGetter,
-  mcpProxyUrl?: string,
+  mcpClientManager: McpClientManager,
   editable?: EditableGraph
 ): Project {
   return new ReactiveProject(
@@ -90,8 +89,7 @@ function createProjectState(
     store,
     runtime,
     boardServerFinder,
-    tokenGetter,
-    mcpProxyUrl,
+    mcpClientManager,
     editable
   );
 }
@@ -130,8 +128,7 @@ class ReactiveProject implements ProjectInternal {
     store: MutableGraphStore,
     runtime: SideBoardRuntime,
     boardServerFinder: BoardServerFinder,
-    tokenGetter: TokenGetter,
-    mcpProxyUrl?: string,
+    clientManager: McpClientManager,
     editable?: EditableGraph
   ) {
     this.#mainGraphId = mainGraphId;
@@ -166,11 +163,7 @@ class ReactiveProject implements ProjectInternal {
     this.#updateConnectors();
     this.connectors = new ConnectorStateImpl(this, this.#connectorMap);
     this.organizer = new ReactiveOrganizer(this);
-    this.integrations = new IntegrationsImpl(
-      tokenGetter,
-      mcpProxyUrl,
-      editable
-    );
+    this.integrations = new IntegrationsImpl(clientManager, editable);
     this.fastAccess = new ReactiveFastAccess(
       this,
       this.graphAssets,
@@ -178,7 +171,7 @@ class ReactiveProject implements ProjectInternal {
       this.myTools,
       this.components,
       this.parameters,
-      new FilteredIntegrationsImpl(this.integrations.all)
+      new FilteredIntegrationsImpl(this.integrations.registered)
     );
     this.#updateGraphAssets();
     this.renderer = new RendererStateImpl(this.graphAssets);

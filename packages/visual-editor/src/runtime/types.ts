@@ -37,6 +37,7 @@ import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { RecentBoardStore } from "../data/recent-boards";
 import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
+import { McpClientManager } from "@breadboard-ai/mcp";
 
 export enum TabType {
   URL,
@@ -90,6 +91,7 @@ export interface RuntimeConfig {
   appSubName: string;
   recentBoardStore: RecentBoardStore;
   flags: RuntimeFlagManager;
+  mcpClientManager: McpClientManager;
 }
 
 export interface RuntimeConfigBoardServers {

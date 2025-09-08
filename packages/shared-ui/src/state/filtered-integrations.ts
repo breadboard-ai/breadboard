@@ -14,7 +14,7 @@ class FilteredIntegrationsImpl implements FilteredIntegrations {
   accessor filter: string = "";
 
   @signal
-  get results(): Map<string, IntegrationState> {
+  get results(): ReadonlyMap<string, IntegrationState> {
     if (!this.filter) return this.integrations;
     const filter = new RegExp(this.filter, "gim");
     const filtered = new Map<string, IntegrationState>();
@@ -39,5 +39,7 @@ class FilteredIntegrationsImpl implements FilteredIntegrations {
     return filtered;
   }
 
-  constructor(private readonly integrations: Map<string, IntegrationState>) {}
+  constructor(
+    private readonly integrations: ReadonlyMap<string, IntegrationState>
+  ) {}
 }
