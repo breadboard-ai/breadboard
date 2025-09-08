@@ -14,6 +14,7 @@ import {
   type SigninAdapter,
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
+import { devUrlParams } from "../../utils/urls.js";
 
 @customElement("bb-sign-in-modal")
 export class VESignInModal extends LitElement {
@@ -79,6 +80,14 @@ export class VESignInModal extends LitElement {
     `,
   ];
 
+  connectedCallback() {
+    super.connectedCallback();
+    const { forceSignInState } = devUrlParams();
+    if (forceSignInState) {
+      setTimeout(() => this.openAndWaitForSignIn([], forceSignInState), 100);
+    }
+  }
+
   render() {
     if (this.#state.status !== "open") {
       return nothing;
@@ -111,13 +120,17 @@ export class VESignInModal extends LitElement {
     `;
   }
 
-  async openAndWaitForSignIn(scopes?: OAuthScope[]): Promise<boolean> {
+  async openAndWaitForSignIn(
+    scopes?: OAuthScope[],
+    reason?: "sign-in" | "add-scope"
+  ): Promise<boolean> {
     if (this.#state.status === "closed") {
       let resolve: (outcome: boolean) => void;
       this.#state = {
         status: "open",
         reason:
-          this.signinAdapter?.state === "signedin" ? "add-scope" : "sign-in",
+          reason ??
+          (this.signinAdapter?.state === "signedin" ? "add-scope" : "sign-in"),
         outcomePromise: new Promise<boolean>((r) => (resolve = r)),
         outcomeResolve: resolve!,
         scopes,

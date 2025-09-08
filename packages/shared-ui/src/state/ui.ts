@@ -12,6 +12,7 @@ import { ToastType } from "../events/events";
 import { UI, UIOverlays, UILoadState } from "./types";
 import { RuntimeFlagManager, RuntimeFlags } from "@breadboard-ai/types";
 import { AsyncComputed } from "signal-utils/async-computed";
+import { devUrlParams, parseUrl } from "../utils/urls.js";
 
 export { createUIState };
 
@@ -85,5 +86,8 @@ class ReactiveUIState implements UI {
 
   constructor(flagManager: RuntimeFlagManager) {
     this.#flagManager = flagManager;
+    if (devUrlParams().forceSignInState) {
+      this.show.add("SignInModal");
+    }
   }
 }

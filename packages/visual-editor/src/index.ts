@@ -104,7 +104,11 @@ import { sandbox } from "./sandbox";
 import { MainArguments } from "./types/types";
 import { envFromFlags } from "./utils/env-from-flags";
 import { envFromSettings } from "./utils/env-from-settings";
-import { makeUrl, parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
+import {
+  devUrlParams,
+  makeUrl,
+  parseUrl,
+} from "@breadboard-ai/shared-ui/utils/urls.js";
 import { VESignInModal } from "@breadboard-ai/shared-ui/elements/elements.js";
 import { type OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 
@@ -354,7 +358,7 @@ export class Main extends SignalWatcher(LitElement) {
     this.flowGenerator = new FlowGenerator(this.#apiClient);
 
     const newSignedOutExperienceIsEnabled =
-      parsedUrl?.dev?.["enable-new-signed-out-experience"] !== undefined;
+      devUrlParams().enableNewSignedOutExperience !== undefined;
     const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
       .href;
     const apiBaseUrl =
