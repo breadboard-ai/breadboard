@@ -11,14 +11,19 @@ export type MakeUrlInit = HomeUrlInit | GraphInit | LandingUrlInit;
 export interface BaseUrlInit {
   /**
    * Any `dev-` prefixed search-param will be stored here (e.g.
-   * `?dev-foo-bar=baz` becomes`{dev: {"foo-bar": "baz"}}` and vice-versa).
-   * Prefer kebab-case names for consistency, and be sure to make all properties
+   * `?dev-fooBar=baz` becomes`{dev: {fooBar: "baz"}}` and vice-versa).
+   * Prefer camelCase names for consistency, and be sure to make all properties
    * ?optional.
    */
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   dev?: {
-    "enable-new-signed-out-experience"?: "";
+    enableNewSignedOutExperience?: "";
+    forceSignInState?: "sign-in" | "add-scope";
   };
+}
+
+export function devUrlParams(): Required<BaseUrlInit>["dev"] {
+  return parseUrl(window.location.href).dev ?? {};
 }
 
 export interface HomeUrlInit extends BaseUrlInit {
