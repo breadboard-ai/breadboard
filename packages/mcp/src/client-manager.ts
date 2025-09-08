@@ -10,6 +10,7 @@ import {
   JsonSerializableRequestInit,
   McpClient,
   McpProxyRequest,
+  McpServerInfo,
   McpServerStore,
 } from "./types.js";
 import { McpBuiltInServerStore } from "./builtin-server-store.js";
@@ -22,19 +23,24 @@ import { CachingMcpClient } from "./caching-mcp-client.js";
 
 export { McpClientManager };
 
-const BUILTIN_SERVER_PREFIX = "builtin:";
-
 export type CreateClientOptions = {
   proxyUrl: string;
 };
 
 class McpClientManager {
   #cache: Map<string, CachingMcpClient> = new Map();
+  #builtIn: McpBuiltInServerStore;
 
   constructor(
     private readonly tokenGetter: TokenGetter,
     private readonly proxyUrl?: string
-  ) {}
+  ) {
+    this.#builtIn = new McpBuiltInServerStore(tokenGetter);
+  }
+
+  builtInServers(): ReadonlyArray<McpServerInfo> {
+    return this.#builtIn.builtInServers();
+  }
 
   #fetch(): FetchLike {
     const proxyURL = new URL("/api/mcp-proxy", window.location.href);
@@ -89,12 +95,11 @@ class McpClientManager {
       return client;
     }
 
-    const isBuiltIn = url.startsWith(BUILTIN_SERVER_PREFIX);
+    const isBuiltIn = this.#builtIn.isBuiltIn(url);
 
     try {
       if (isBuiltIn) {
-        const builtInServerName = url.slice(BUILTIN_SERVER_PREFIX.length);
-        const client = McpBuiltInServerStore.instance.get(builtInServerName);
+        const client = this.#builtIn.get(url);
         if (!ok(client)) return client;
         return new CachingMcpClient(this.#cache, url, client, serverStore);
       } else if (this.proxyUrl) {

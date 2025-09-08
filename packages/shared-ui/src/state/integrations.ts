@@ -25,7 +25,6 @@ import { SignalMap } from "signal-utils/map";
 import { AsyncComputed } from "signal-utils/async-computed";
 import {
   createMcpServerStore,
-  listBuiltInMcpServers,
   McpClient,
   McpClientManager,
   McpListToolResult,
@@ -141,8 +140,9 @@ class IntegrationsImpl implements Integrations {
     return this.#integrations;
   }
 
-  #builtIns: [McpServerIdentifier, McpServerDescriptor][] =
-    listBuiltInMcpServers().map((info) => [
+  #builtIns: [McpServerIdentifier, McpServerDescriptor][] = this.clientManager
+    .builtInServers()
+    .map((info) => [
       info.url,
       {
         title: info.title,
@@ -160,7 +160,7 @@ class IntegrationsImpl implements Integrations {
   #serverList = createMcpServerStore();
 
   constructor(
-    private readonly clientFactory: McpClientManager,
+    private readonly clientManager: McpClientManager,
     private readonly editable?: EditableGraph
   ) {
     if (!editable) {
@@ -183,7 +183,7 @@ class IntegrationsImpl implements Integrations {
       create: (from) => {
         return new IntegrationManager(
           from,
-          this.clientFactory,
+          this.clientManager,
           this.#serverList
         );
       },

@@ -5,6 +5,7 @@
  */
 
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type {
   CallToolRequest,
   Implementation,
@@ -16,12 +17,11 @@ import type {
 import z, { AnyZodObject, ZodRawShape } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import {
+  McpBuiltInClient,
   McpCallToolResult,
-  McpClient,
   McpListToolResult,
   McpServerInfo,
 } from "./types.js";
-import { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
 
 export { BuiltInClient };
 
@@ -49,7 +49,7 @@ const DUMMY_EXTRA = {} as unknown as RequestHandlerExtra<
   ServerNotification
 >;
 
-class BuiltInClient implements McpClient {
+class BuiltInClient implements McpBuiltInClient {
   toolDeclarations: Map<string, ToolDeclaration> = new Map();
 
   constructor(public readonly args: BuiltInClientArgs) {}
