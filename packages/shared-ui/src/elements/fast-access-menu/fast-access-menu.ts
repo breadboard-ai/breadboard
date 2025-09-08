@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { SignalWatcher } from "@lit-labs/signals";
-import { css, html, LitElement, nothing, PropertyValues } from "lit";
+import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Component, FastAccess, GraphAsset, Tool } from "../../state";
 import {
@@ -240,6 +240,10 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         }
       }
 
+      .integration menu button {
+        --background: var(--n-90);
+      }
+
       #parameters {
         & #create-new-param {
           display: block;
@@ -382,7 +386,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     this.selectedIndex = this.#clamp(this.selectedIndex, 0, totalSize - 1);
   }
 
-  protected firstUpdated(_changedProperties: PropertyValues): void {
+  protected firstUpdated(): void {
     if (!this.#filterInputRef.value) {
       return;
     }
@@ -618,7 +622,27 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                   active: idx === this.selectedIndex,
                 };
 
-                const assetType = getAssetType(getMimeType(asset.data));
+                let icon = getAssetType(getMimeType(asset.data));
+                if (!icon) {
+                  icon = "text_fields";
+                  if (asset.metadata?.type === "file") {
+                    icon = "upload";
+                  }
+
+                  if (asset.metadata?.subType) {
+                    switch (asset.metadata?.subType) {
+                      case "youtube":
+                        icon = "video_youtube";
+                        break;
+                      case "drawable":
+                        icon = "draw";
+                        break;
+                      case "gdrive":
+                        icon = "drive";
+                        break;
+                    }
+                  }
+                }
                 const globalIndex = idx;
                 idx++;
                 return html`<li>
@@ -631,7 +655,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                       this.#emitCurrentItem();
                     }}
                   >
-                    <span class="g-icon filled round">${assetType}</span>
+                    <span class="g-icon filled round">${icon}</span>
                     <span class="title"
                       >${asset.metadata?.title ?? "Untitled asset"}</span
                     >
@@ -783,6 +807,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                                   )
                                 );
                               }}
+                              icon=${tool.icon}
                             >
                               <span class="g-icon filled round"
                                 >${tool.icon}</span
@@ -794,7 +819,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                       )}
                     `;
                   case "error":
-                    return html`<li>${integration.message}</li>`;
+                    return html`<li>No integrations are available</li>`;
                 }
               };
               return html`<section class="integration">
