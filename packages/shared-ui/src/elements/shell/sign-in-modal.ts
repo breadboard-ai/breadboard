@@ -163,6 +163,12 @@ export class VESignInModal extends LitElement {
       `
     );
     const outcome = await signInPromise;
+    if (outcome.ok && this.#state.reason === "sign-in") {
+      // TODO(aomarks) Remove the reload after the app is fully reactive to a
+      // sign-in. Known issues: Google Drive client auth strategy, top-right
+      // user icon.
+      window.location.reload();
+    }
     this.#close(outcome.ok);
   }
 

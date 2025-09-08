@@ -99,9 +99,10 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
 
   const scopeValidation = await signinAdapter.validateScopes();
+  const page = parseUrl(window.location.href).page;
   if (
-    signinAdapter.state === "anonymous" ||
-    (signinAdapter.state === "signedin" && scopeValidation.ok)
+    (signinAdapter.state === "signedin" && scopeValidation.ok) ||
+    (signinAdapter.state === "anonymous" && page === "graph")
   ) {
     const icon = document.createElement("link");
     icon.rel = "icon";
