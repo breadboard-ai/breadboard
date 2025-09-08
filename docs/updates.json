@@ -1,5 +1,10 @@
 [
   {
+    "date": "2025-09-08",
+    "type": "info",
+    "text": "All systems green. If you see any problems with quota, please use the \"Send feedback\" link in the gear menu."
+  },
+  {
     "date": "2025-09-07",
     "type": "warning",
     "text": "Using the \"Imagen 4\" model will fail for a little bit. If you see errors generating images, switch to \"Gemini 2.5 Flash Image\" instead."
