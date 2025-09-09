@@ -92,6 +92,9 @@ export class VESignInModal extends LitElement {
         img {
           margin-right: 8px;
         }
+        &:hover {
+          background: var(--n-25);
+        }
       }
     `,
   ];
@@ -221,7 +224,7 @@ export class VESignInModal extends LitElement {
       width=${popupWidth}
       height=${popupHeight}
       left=${window.screenX + window.innerWidth / 2 - popupWidth / 2}
-      top=${window.screenY + window.innerHeight / 2 - popupHeight / 2}
+      top=${window.screenY + window.innerHeight / 2 - popupHeight / 2 + /* A little extra to account for the tabs, url bar etc.*/ 60}
       `
     );
     const outcome = await signInPromise;

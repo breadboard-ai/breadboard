@@ -246,7 +246,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
               cursor: pointer;
 
               &:hover {
-                background: var(--n-10);
+                background: var(--n-25);
               }
             }
           }
