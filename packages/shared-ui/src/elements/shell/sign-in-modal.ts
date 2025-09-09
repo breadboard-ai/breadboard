@@ -92,6 +92,9 @@ export class VESignInModal extends LitElement {
         img {
           margin-right: 8px;
         }
+        &:hover {
+          background: var(--n-25);
+        }
       }
     `,
   ];
