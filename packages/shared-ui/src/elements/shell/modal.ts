@@ -72,10 +72,14 @@ export class VEModal extends LitElement {
           border-radius: var(--bb-grid-size-5) !important;
         }
         header {
-          margin-bottom: var(--bb-grid-size-6) !important;
+          margin-bottom: 0 !important;
+        }
+        ::slotted(*) {
+          margin-top: var(--bb-grid-size-6) !important;
         }
         #title {
           justify-content: center;
+          text-align: center;
         }
       }
 
@@ -251,6 +255,7 @@ export class VEModal extends LitElement {
     >
       <section
         id="container"
+        part="container"
         class="sans md-body-medium"
         @keydown=${(evt: KeyboardEvent) => {
           if (evt.key !== "Enter" || !isCtrlCommand(evt)) {
