@@ -12,6 +12,7 @@ import { type } from "../../styles/host/type";
 import { icons } from "../../styles/icons";
 import { behavior } from "../../styles/host/behavior";
 import { isCtrlCommand } from "../../utils/is-ctrl-command";
+import { classMap } from "lit/directives/class-map.js";
 
 @customElement("bb-modal")
 export class VEModal extends LitElement {
@@ -20,6 +21,12 @@ export class VEModal extends LitElement {
 
   @property({ reflect: true, type: String })
   accessor modalTitle: string | null = null;
+
+  /**
+   * "basic" has a larger & centered title, more padding, and rounder corners.
+   */
+  @property({ reflect: true, type: String })
+  accessor appearance: "basic" | "complex" = "complex";
 
   @property({ reflect: true, type: Boolean })
   accessor showCloseButton = false;
@@ -57,6 +64,26 @@ export class VEModal extends LitElement {
 
       :host([modalTitle]) dialog #container header {
         margin: 0 0 var(--bb-grid-size-4) 0;
+      }
+
+      :host([appearance="basic"]) {
+        #container {
+          padding: var(--bb-grid-size-9) !important;
+          border-radius: var(--bb-grid-size-5) !important;
+        }
+        header {
+          margin-bottom: var(--bb-grid-size-6) !important;
+        }
+        #title {
+          justify-content: center;
+        }
+      }
+
+      :host([appearance="basic"][showCloseButton]) {
+        #title {
+          /* Fix centering */
+          margin-right: calc(-1 * var(--bb-grid-size-4));
+        }
       }
 
       dialog {
@@ -236,7 +263,16 @@ export class VEModal extends LitElement {
         <header>
           ${this.modalTitle
             ? html`
-                <h1 class="sans-flex w-500 round md-title-medium">
+                <h1
+                  id="title"
+                  class=${classMap({
+                    "sans-flex": true,
+                    "w-500": true,
+                    round: true,
+                    "md-title-medium": this.appearance === "complex",
+                    "md-headline-small": this.appearance === "basic",
+                  })}
+                >
                   ${this.icon
                     ? html`<span class="g-icon round filled"
                         >${this.icon}</span
