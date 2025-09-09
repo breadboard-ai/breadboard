@@ -61,33 +61,37 @@ export class VESignInModal extends LitElement {
       }
 
       section {
-        max-width: 500px;
+        max-width: 317px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        text-align: center;
       }
 
-      p,
-      li {
+      p {
+        font-size: 16px;
         margin: 0 0 var(--bb-grid-size-2) 0;
       }
 
       aside {
         display: flex;
-        padding: var(--bb-grid-size-3) 0 var(--bb-grid-size-2) 0;
+        margin-top: var(--bb-grid-size-4);
         justify-content: end;
       }
 
       #sign-in {
-        display: flex;
-        align-items: center;
         background: var(--n-0);
         border: none;
         border-radius: var(--bb-grid-size-16);
-        margin: 0 var(--bb-grid-size) 0 var(--bb-grid-size-6);
         color: var(--n-100);
-        height: var(--bb-grid-size-8);
-        padding: 0 var(--bb-grid-size-4);
-        font-size: 14px;
-        transition: background 0.2s cubic-bezier(0, 0, 0.2, 1);
+        padding: 16px 24px;
+        font-size: 16px;
         cursor: pointer;
+        display: flex;
+        img {
+          margin-right: 8px;
+        }
       }
     `,
   ];
@@ -107,18 +111,27 @@ export class VESignInModal extends LitElement {
     const { reason } = this.#state.request;
     return html`
       <bb-modal
-        icon="login"
+        appearance="basic"
+        blurBackground
         .modalTitle=${reason === "sign-in"
-          ? "Sign In"
+          ? "Sign in to use Opal"
           : "Requesting additional permissions"}
-        showCloseButton
         @bbmodaldismissed=${this.#onDismiss}
       >
         <section>
           <p>${this.#renderMessage()}</p>
           <aside>
             <button id="sign-in" class="sans" @click=${this.#onClickSignIn}>
-              ${reason === "sign-in" ? "Sign In" : "Continue"}
+              ${reason === "sign-in"
+                ? html`
+                    <img
+                      src="/styles/landing/images/g-logo.png"
+                      width="20"
+                      height="20"
+                    />
+                    Sign in with Google
+                  `
+                : "Continue"}
             </button>
           </aside>
         </section>
