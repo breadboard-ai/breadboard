@@ -39,6 +39,10 @@ export class ParticleViewerGoogleDrive
   static styles = [
     Styles.all,
     css`
+      * {
+        box-sizing: border-box;
+      }
+
       :host {
         display: block;
         overflow: hidden;

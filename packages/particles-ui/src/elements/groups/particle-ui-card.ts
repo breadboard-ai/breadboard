@@ -3,10 +3,9 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, PropertyValues, nothing } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
-import { classMap } from "lit/directives/class-map.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import * as Styles from "../../styles/index.js";
@@ -24,23 +23,23 @@ export class ParticleUICard extends SignalWatcher(LitElement) {
       }
 
       :host {
-        display: block;
+        display: flex;
         overflow: hidden;
       }
 
       section {
-        display: grid;
-        overflow: hidden;
+        display: flex;
+        height: 100%;
       }
 
-      :host([orientation="horizontal"]) section {
-        grid-template-columns: var(--template, 1fr);
-        grid-template-rows: min-content;
+      :host([orientation="horizontal"]) {
+        flex-direction: row;
+        align-items: center;
       }
 
-      :host([orientation="vertical"]) section {
-        grid-template-rows: var(--template, 1fr);
-        grid-template-rows: min-content;
+      :host([orientation="vertical"]) {
+        flex-direction: column;
+        align-items: center;
       }
     `,
   ];
@@ -64,34 +63,13 @@ export class ParticleUICard extends SignalWatcher(LitElement) {
   @consume({ context: themeContext })
   accessor theme: UITheme | undefined;
 
-  #setTemplate() {
-    this.style.setProperty(
-      "--template",
-      this.segments
-        .map(
-          (r) => `${typeof r.weight === "number" ? `${r.weight}fr` : r.weight}`
-        )
-        .join(" ")
-    );
-  }
-
-  protected willUpdate(changedProperties: PropertyValues): void {
-    if (changedProperties.has("segments")) {
-      this.#setTemplate();
-    }
-  }
-
   render() {
     if (!this.theme) {
       return nothing;
     }
 
-    return html`<section
-      class=${classMap(this.disabled ? this.theme.modifiers.disabled : {})}
-    >
-      ${repeat(this.segments, (_, idx) => {
-        return html` <slot name=${`slot-${idx}`}></slot> `;
-      })}
-    </section>`;
+    return repeat(this.segments, (_, idx) => {
+      return html` <slot name=${`slot-${idx}`}></slot> `;
+    });
   }
 }

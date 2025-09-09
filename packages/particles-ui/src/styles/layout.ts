@@ -74,6 +74,10 @@ export const layout = css`
     position: relative;
   }
 
+  .layout-dsp-none {
+    display: none;
+  }
+
   .layout-dsp-block {
     display: block;
   }
@@ -155,7 +159,7 @@ export const layout = css`
       .fill(0)
       .map((_, idx) => {
         const weight = (idx + 1) * 10;
-        return `.layout-w-${weight} { width: ${weight}%; }`;
+        return `.layout-w-${weight} { width: ${weight}%; max-width: ${weight}%; }`;
       })
       .join("\n")
   )}
