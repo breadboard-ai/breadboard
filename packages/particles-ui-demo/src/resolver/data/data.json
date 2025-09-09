@@ -1,0 +1,63 @@
+{
+  "group": [
+    [
+      "cat-image",
+      {
+        "data": "/images/catto.jpg",
+        "mimeType": "image/jpg",
+        "presentation": "hero-image"
+      }
+    ],
+    [
+      "content-pane",
+      {
+        "group": [
+          [
+            "outfit-description",
+            {
+              "text": "## The Midnight Sapphire Statement\nA perfectly tailored, deep sapphire blue suit crafted from a lightweight wool blend forms the sophisticated core of this ensemble, offering an eye-catching hue for the red carpet while ensuring comfort through London's fluctuating temperatures. Beneath, a sleek black dress shirt provides a sharp, modern contrast, complemented by a slim black silk tie that adds a touch of refined formality. Polished black leather Chelsea boots ground the look with an edgy, contemporary flair, making a bold style statement. Accessorize with a minimalist watch and a subtle black silk pocket square for a final touch of understated elegance, ensuring you're both cool and comfortably chic from arrival to after-party.",
+              "presentation": "body-copy"
+            }
+          ],
+          [
+            "location-weather",
+            {
+              "text": "## Weather\nThis outfit is good for today's London weather: It'll be mostly cloudy with a high of 71 and a low of 53 and a 10% chance of rain.",
+              "presentation": "body-copy"
+            }
+          ]
+        ]
+      }
+    ],
+    [
+      "extraneous-info",
+      {
+        "group": [
+          [
+            "dog-image",
+            {
+              "data": "/images/doggo.jpg",
+              "mimeType": "image/jpg",
+              "presentation": "hero-image"
+            }
+          ],
+          [
+            "some-audio",
+            {
+              "data": "/audio/hello-world.wav",
+              "mimeType": "audio/wav",
+              "presentation": "audio-player"
+            }
+          ],
+          [
+            "additional-description",
+            {
+              "text": "Subtitle.",
+              "presentation": "subtitle"
+            }
+          ]
+        ]
+      }
+    ]
+  ]
+}

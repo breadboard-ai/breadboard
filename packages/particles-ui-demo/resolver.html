@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Particle UI Demo</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Google+Symbols:opsz,wght,FILL,GRAD,ROND@20..48,100..700,0..1,-50..200,0..100&display=block"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Google+Sans+Code&family=Google+Sans+Flex:opsz,wght,ROND@6..144,1..1000,100&family=Google+Sans:opsz,wght@17..18,400..700&display=block&family=IBM+Plex+Serif:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap"
+    />
+
+    <style>
+      :root {
+        --p-100: #ffffff;
+        --p-99: #f6feff;
+        --p-98: #edfcff;
+        --p-95: #d0f8ff;
+        --p-90: #97f0ff;
+        --p-80: #4fd8eb;
+        --p-70: #22bccf;
+        --p-60: #00a0b0;
+        --p-50: #008391;
+        --p-40: #006874;
+        --p-35: #005b66;
+        --p-30: #004f58;
+        --p-25: #00424a;
+        --p-20: #00363d;
+        --p-15: #002b30;
+        --p-10: #001f24;
+        --p-5: #001417;
+        --p-0: #000000;
+
+        --s-100: #ffffff;
+        --s-99: #f6feff;
+        --s-98: #edfcff;
+        --s-95: #dbf6fa;
+        --s-90: #cde7ec;
+        --s-80: #b1cbd0;
+        --s-70: #96b0b4;
+        --s-60: #7c959a;
+        --s-50: #637b80;
+        --s-40: #4a6267;
+        --s-35: #3e565b;
+        --s-30: #334b4f;
+        --s-25: #273f43;
+        --s-20: #1c3438;
+        --s-15: #10292d;
+        --s-10: #051f23;
+        --s-5: #001417;
+        --s-0: #000000;
+
+        --t-100: #ffffff;
+        --t-99: #fefbff;
+        --t-98: #faf8ff;
+        --t-95: #eef0ff;
+        --t-90: #dae2ff;
+        --t-80: #bac6ea;
+        --t-70: #9faace;
+        --t-60: #8490b2;
+        --t-50: #6b7697;
+        --t-40: #525e7d;
+        --t-35: #465271;
+        --t-30: #3b4664;
+        --t-25: #2f3b58;
+        --t-20: #24304d;
+        --t-15: #192541;
+        --t-10: #0e1b37;
+        --t-5: #030f2c;
+        --t-0: #000000;
+
+        --n-100: #ffffff;
+        --n-99: #fafdfd;
+        --n-98: #f8fafa;
+        --n-95: #eff1f1;
+        --n-90: #e1e3e3;
+        --n-80: #c4c7c7;
+        --n-70: #a9acac;
+        --n-60: #8e9192;
+        --n-50: #747878;
+        --n-40: #5c5f5f;
+        --n-35: #505354;
+        --n-30: #444748;
+        --n-25: #393c3d;
+        --n-20: #2e3132;
+        --n-15: #232627;
+        --n-10: #191c1d;
+        --n-5: #0e1212;
+        --n-0: #000000;
+
+        --nv-100: #ffffff;
+        --nv-99: #f6feff;
+        --nv-98: #f2fbfd;
+        --nv-95: #e9f2f4;
+        --nv-90: #dbe4e6;
+        --nv-80: #bfc8ca;
+        --nv-70: #a3adaf;
+        --nv-60: #899294;
+        --nv-50: #6f797a;
+        --nv-40: #576062;
+        --nv-35: #4b5456;
+        --nv-30: #3f484a;
+        --nv-25: #343d3f;
+        --nv-20: #293234;
+        --nv-15: #1e2729;
+        --nv-10: #141d1f;
+        --nv-5: #091214;
+        --nv-0: #000000;
+
+        --e-100: #ffffff;
+        --e-99: #fffbff;
+        --e-98: #fff8f7;
+        --e-95: #ffedea;
+        --e-90: #ffdad6;
+        --e-80: #ffb4ab;
+        --e-70: #ff897d;
+        --e-60: #ff5449;
+        --e-50: #de3730;
+        --e-40: #ba1a1a;
+        --e-35: #a80710;
+        --e-30: #93000a;
+        --e-25: #7e0007;
+        --e-20: #690005;
+        --e-15: #540003;
+        --e-10: #410002;
+        --e-5: #2d0001;
+        --e-0: #000000;
+      }
+
+      html,
+      body {
+        --font-family:
+          "Google Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        --font-family-flex:
+          "Google Sans Flex", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        --font-family-mono:
+          "Google Sans Code", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+        box-sizing: border-box;
+        font: var(--font-family);
+        padding: 32px;
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        background: #f6f6f6;
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module" src="./src/resolver/demo.ts"></script>
+  </body>
+</html>

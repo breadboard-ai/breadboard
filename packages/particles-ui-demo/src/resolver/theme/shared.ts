@@ -15,9 +15,7 @@ export const a = {
   "layout-al-c": true,
 };
 
-export const audio = {
-  "layout-w-100": true,
-};
+export const audio = {};
 
 export const body = {
   "typography-f-s": true,
@@ -185,14 +183,16 @@ export const download = {
 
 export const vertical = {
   "layout-dsp-flexvert": true,
-  "layout-w-100": true,
   "layout-g-2": true,
+  "layout-w-100": true,
+  "layout-h-100": true,
 };
 
 export const horizontal = {
   "layout-dsp-flexhor": true,
   "layout-fw-w": true,
   "layout-g-2": true,
+  "layout-w-100": true,
 };
 
 /** Modififers */
@@ -201,20 +201,11 @@ export const hero = {
   "typography-f-sf": true,
   "typography-w-500": true,
   "typography-sz-hs": true,
-  "typography-ta-c": true,
   "typography-v-r": true,
 };
 
 export const headline = {
-  "typography-f-sf": true,
-  "typography-fs-n": true,
-  "typography-w-400": true,
-  "typography-sz-dl": true,
-  "layout-l-3": true,
-  "layout-b-3": true,
-  "color-c-n100": true,
-  "layout-mb-0": true,
-  "layout-pos-a": true,
+  "layout-dsp-none": true,
 };
 
 export const disabled = {
@@ -233,21 +224,21 @@ export const borderTop = {
 };
 
 export const media = {
-  "layout-w-70": true,
   "layout-js-c": true,
-  "layout-p-3": true,
 };
 
 /** Groups */
 
 export const card = {
-  "layout-w-100": true,
+  "color-bgc-n100": true,
+  "border-br-5": true,
+  "layout-g-2": true,
 };
 
 export const list = {
-  "layout-p-4": true,
   "layout-g-2": true,
-  "layout-sp-c": true,
+  "border-br-5": true,
+  "color-bgc-n100": true,
 };
 
 export const listItems = {};
@@ -258,7 +249,9 @@ export const segmentVertical = {
 
 export const segmentVerticalPadded = {
   ...segmentVertical,
-  ...{ "layout-p-3": true },
+  ...{
+    "layout-p-3": true,
+  },
 };
 
 export const segmentHorizontal = {
@@ -267,7 +260,9 @@ export const segmentHorizontal = {
 
 export const segmentHorizontalPadded = {
   ...segmentHorizontal,
-  ...{ "layout-p-3": true },
+  ...{
+    "layout-p-3": true,
+  },
 };
 
 /** Viewers */
@@ -279,6 +274,7 @@ export const ParticleUIImage = {
 
 export const ParticleUIAudio = {
   "layout-w-100": true,
+  "layout-p-3": true,
 };
 
 export const ParticleUIVideo = {
@@ -286,9 +282,7 @@ export const ParticleUIVideo = {
   "layout-el-cv": true,
 };
 
-export const ParticleUIText = {
-  "layout-w-100": true,
-};
+export const ParticleUIText = {};
 
 export const ParticleUIGoogleDrive = {};
 export const ParticleUIFile = {};

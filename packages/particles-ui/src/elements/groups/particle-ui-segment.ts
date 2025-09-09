@@ -39,8 +39,14 @@ export class ParticleUISegment extends SignalWatcher(LitElement) {
   static styles = [
     Styles.all,
     css`
+      * {
+        box-sizing: border-box;
+        flex: 1;
+      }
+
       :host {
-        display: block;
+        display: flex;
+        flex: var(--weight, 1) 0;
       }
     `,
   ];
