@@ -7,6 +7,7 @@ import type { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.j
 import { consume } from "@lit/context";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import * as StringsHelper from "../../strings/helper.js";
 import { colorsLight } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
@@ -16,6 +17,12 @@ import {
   type SigninAdapter,
 } from "../../utils/signin-adapter.js";
 import { devUrlParams } from "../../utils/urls.js";
+
+function appName() {
+  const Strings = StringsHelper.forSection("Global");
+  const APP_NAME = Strings.from("APP_NAME");
+  return APP_NAME;
+}
 
 type Request = {
   reason: "sign-in" | "add-scope";
@@ -60,8 +67,13 @@ export class VESignInModal extends LitElement {
         z-index: 1;
       }
 
+      bb-modal {
+        &::part(container) {
+          max-width: 318px;
+        }
+      }
+
       section {
-        max-width: 317px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -96,6 +108,10 @@ export class VESignInModal extends LitElement {
           background: var(--n-25);
         }
       }
+
+      #missing-scopes-animation {
+        margin: var(--bb-grid-size-2) 0;
+      }
     `,
   ];
 
@@ -103,80 +119,164 @@ export class VESignInModal extends LitElement {
     super.connectedCallback();
     const { forceSignInState } = devUrlParams();
     if (forceSignInState) {
-      setTimeout(() => this.openAndWaitForSignIn([], forceSignInState), 100);
+      if (forceSignInState === "sign-in" || forceSignInState === "add-scope") {
+        this.openAndWaitForSignIn([], forceSignInState);
+      } else {
+        this.openAndWaitForSignIn([], "sign-in");
+        if (this.#state.status === "open") {
+          if (forceSignInState === "geo-restriction") {
+            this.#state = {
+              status: "error",
+              request: this.#state.request,
+              error: { code: forceSignInState },
+            };
+          } else if (forceSignInState === "missing-scopes") {
+            this.#state = {
+              status: "error",
+              request: this.#state.request,
+              error: { code: forceSignInState, missingScopes: [] },
+            };
+          }
+        }
+      }
     }
   }
 
   render() {
-    if (this.#state.status === "closed") {
+    const { status } = this.#state;
+    if (status === "closed") {
       return nothing;
     }
-    const { reason } = this.#state.request;
+    if (status === "open") {
+      const { reason } = this.#state.request;
+      if (reason === "sign-in") {
+        return this.#renderSignInRequest();
+      }
+      if (reason === "add-scope") {
+        return this.#renderAddScopeRequest();
+      }
+      reason satisfies never;
+      return nothing;
+    }
+    if (status === "error") {
+      const { code } = this.#state.error;
+      if (code === "geo-restriction") {
+        return this.#renderGeoRestriction();
+      }
+      if (code === "missing-scopes") {
+        return this.#renderMissingScopes();
+      }
+      code satisfies "other";
+      return this.#renderOtherError();
+    }
+    status satisfies never;
+    return nothing;
+  }
+
+  #renderSignInRequest() {
     return html`
       <bb-modal
         appearance="basic"
         blurBackground
-        .modalTitle=${reason === "sign-in"
-          ? "Sign in to use Opal"
-          : "Requesting additional permissions"}
+        modalTitle="Sign in to use ${appName()}"
         @bbmodaldismissed=${this.#onDismiss}
       >
         <section>
-          <p>${this.#renderMessage()}</p>
-          <aside>
-            <button id="sign-in" class="sans" @click=${this.#onClickSignIn}>
-              ${reason === "sign-in"
-                ? html`
-                    <img
-                      src="/styles/landing/images/g-logo.png"
-                      width="20"
-                      height="20"
-                    />
-                    Sign in with Google
-                  `
-                : "Continue"}
-            </button>
-          </aside>
+          <p>To continue, you'll need to sign in with your Google account.</p>
+          <aside>${this.#renderSignInButton()}</aside>
         </section>
       </bb-modal>
     `;
   }
 
-  #renderMessage() {
-    const state = this.#state;
+  #renderAddScopeRequest() {
+    // TODO(aomarks) Customize this based on the scope being requested.
+    return html`
+      <bb-modal
+        appearance="basic"
+        blurBackground
+        modalTitle="Additional access needed"
+        @bbmodaldismissed=${this.#onDismiss}
+      >
+        <section>
+          <p>
+            To continue, you'll need to grant additional access to your Google
+            account.
+          </p>
+          <aside>${this.#renderAddScopeButton()}</aside>
+        </section>
+      </bb-modal>
+    `;
+  }
 
-    if (state.status === "closed") {
-      return nothing;
-    }
+  #renderGeoRestriction() {
+    return html`
+      <bb-modal
+        appearance="basic"
+        blurBackground
+        modalTitle="${appName()} is not available in your country yet"
+        @bbmodaldismissed=${this.#onDismiss}
+      >
+      </bb-modal>
+    `;
+  }
 
-    if (state.status === "open") {
-      const { reason } = state.request;
-      return reason === "sign-in"
-        ? html`To continue, you'll need to sign in with your Google account.`
-        : html`This action requires additional permissions. Please click
-            <em>Continue</em> to view permissions and allow access.`;
-    }
+  #renderMissingScopes() {
+    return html`
+      <bb-modal
+        appearance="basic"
+        blurBackground
+        modalTitle="Additional access required"
+        @bbmodaldismissed=${this.#onDismiss}
+      >
+        <section>
+          <p>
+            Please click <em>Sign in</em> again, and choose
+            <em>Select all</em> when you are asked about access.
+          </p>
+          <img
+            id="missing-scopes-animation"
+            src="/styles/landing/images/sign-in-scopes-screenshot.gif"
+            width="320"
+            height="285"
+          />
+          <aside>${this.#renderSignInButton()}</aside>
+        </section>
+      </bb-modal>
+    `;
+  }
 
-    if (state.status === "error") {
-      const { code } = state.error;
-      if (code === "geo-restriction") {
-        // TODO(aomarks) Polish this UX
-        return html`Geo restrict`;
-      }
-      if (code === "missing-scopes") {
-        // TODO(aomarks) Polish this UX
-        return html`Missing scope`;
-      }
-      if (code === "other") {
-        // TODO(aomarks) Polish this UX
-        return html`Unknown error`;
-      }
-      code satisfies never;
-      return nothing;
-    }
+  #renderOtherError() {
+    return html`
+      <bb-modal
+        appearance="basic"
+        blurBackground
+        .modalTitle=${"Unexpected error"}
+        @bbmodaldismissed=${this.#onDismiss}
+      >
+        <section>
+          <p>An unexpected error occured.</p>
+        </section>
+      </bb-modal>
+    `;
+  }
 
-    state satisfies never;
-    return nothing;
+  #renderSignInButton() {
+    return html`
+      <button id="sign-in" class="sans" @click=${this.#onClickSignIn}>
+        <img src="/styles/landing/images/g-logo.png" width="20" height="20" />
+        Sign in with Google
+      </button>
+    `;
+  }
+
+  #renderAddScopeButton() {
+    return html`
+      <button id="sign-in" class="sans" @click=${this.#onClickSignIn}>
+        <img src="/styles/landing/images/g-logo.png" width="20" height="20" />
+        Grant access
+      </button>
+    `;
   }
 
   async openAndWaitForSignIn(
