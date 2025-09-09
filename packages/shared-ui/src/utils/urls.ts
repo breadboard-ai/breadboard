@@ -18,11 +18,16 @@ export interface BaseUrlInit {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   dev?: {
     enableNewSignedOutExperience?: "";
-    forceSignInState?: "sign-in" | "add-scope";
+    forceSignInState?:
+      | "sign-in"
+      | "add-scope"
+      | "geo-restriction"
+      | "missing-scopes";
   };
 }
 
 export function devUrlParams(): Required<BaseUrlInit>["dev"] {
+  // TODO(aomarks) Add a flag so that we only allow these in dev.
   return parseUrl(window.location.href).dev ?? {};
 }
 
