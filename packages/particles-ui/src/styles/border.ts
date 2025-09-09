@@ -20,7 +20,7 @@ export const border = css`
         .border-brw-${idx} { border-right-width: ${idx}px; }
 
         .border-ow-${idx} { outline-width: ${idx}px; }
-        .border-br-${idx} { border-radius: ${idx * grid}px; }`;
+        .border-br-${idx} { border-radius: ${idx * grid}px; overflow: hidden;}`;
       })
       .join("\n")
   )}

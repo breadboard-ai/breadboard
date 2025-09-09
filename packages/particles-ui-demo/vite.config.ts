@@ -12,6 +12,7 @@ export default async () => {
 
   const entry: Record<string, string> = {
     demo: "./demo.html",
+    alt: "./resolver.html",
   };
   return {
     build: {

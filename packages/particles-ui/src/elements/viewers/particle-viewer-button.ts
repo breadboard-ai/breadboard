@@ -41,6 +41,10 @@ export class ParticleViewerButton extends LitElement implements ParticleViewer {
   static styles = [
     Styles.all,
     css`
+      * {
+        box-sizing: border-box;
+      }
+
       :host {
         overflow: hidden;
         display: flex;

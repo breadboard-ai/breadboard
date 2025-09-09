@@ -38,13 +38,20 @@ export class ParticleViewerImage extends LitElement implements ParticleViewer {
   static styles = [
     Styles.all,
     css`
+      * {
+        box-sizing: border-box;
+      }
+
       :host {
         display: block;
-        overflow: hidden;
+      }
+
+      img {
+        display: block;
       }
 
       section {
-        display: grid;
+        display: block;
         height: 100%;
         position: relative;
       }

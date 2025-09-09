@@ -239,6 +239,11 @@ export interface Field {
    * If the field is a behavior try to suggest an appropriate icon.
    */
   icon?: "delete" | "add" | "check";
+  /**
+   * If there are multiple fields that match the fieldname, define how many
+   * should be taken. If missing, assume all.
+   */
+  take?: number;
 }
 
 /**

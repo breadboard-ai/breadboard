@@ -38,9 +38,22 @@ export class ParticleViewerAudio extends LitElement implements ParticleViewer {
   static styles = [
     Styles.all,
     css`
+      * {
+        box-sizing: border-box;
+      }
+
       :host {
-        display: block;
+        display: flex;
         overflow: hidden;
+        flex: 1 1 fit-content;
+      }
+
+      :host > * {
+        flex: 1;
+      }
+
+      audio {
+        display: block;
       }
     `,
   ];
@@ -72,12 +85,10 @@ export class ParticleViewerAudio extends LitElement implements ParticleViewer {
         return blobUrl;
       });
 
-    return html`<section class="layout-pos-rel">
-      <audio
-        class=${classMap(this.theme.elements.audio)}
-        src=${until(audioUrl)}
-        controls
-      ></audio>
-    </section>`;
+    return html` <audio
+      class=${classMap(this.theme.elements.audio)}
+      src=${until(audioUrl)}
+      controls
+    ></audio>`;
   }
 }
