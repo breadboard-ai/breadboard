@@ -9,7 +9,12 @@ import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AppPreview");
 const GlobalStrings = StringsHelper.forSection("Global");
 
-import { LitElement, PropertyValues, html } from "lit";
+import {
+  type HTMLTemplateResult,
+  LitElement,
+  type PropertyValues,
+  html,
+} from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { isStoredData } from "@google-labs/breadboard";
 
@@ -122,9 +127,12 @@ export class AppController extends SignalWatcher(LitElement) {
 
   static styles = appPreviewStyles;
 
-  #loadingTemplate = false;
   #appTemplate: AppTemplate | null = null;
-  #template = html`<div class="loading">
+
+  @state()
+  accessor #template: AppTemplate | HTMLTemplateResult = html`<div
+    class="loading"
+  >
     <p class="loading-message">Loading...</p>
   </div>`;
 
@@ -246,33 +254,27 @@ export class AppController extends SignalWatcher(LitElement) {
     }
   }
 
-  protected willUpdate(changedProperties: PropertyValues): void {
-    if (changedProperties.has("template")) {
-      if (changedProperties.get("template") !== this.template) {
-        if (this.#loadingTemplate) {
+  protected willUpdate(changedProperties: PropertyValues<this>): void {
+    if (
+      (changedProperties.has("template") ||
+        changedProperties.has("themeHash")) &&
+      this.template &&
+      this.themeHash
+    ) {
+      const templateToLoad = this.template;
+      const themeHashToLoad = this.themeHash;
+      this.#loadAppTemplate(templateToLoad).then(({ Template }) => {
+        if (
+          templateToLoad !== this.template ||
+          themeHashToLoad !== this.themeHash
+        ) {
+          // A newer template has arrived - bail.
           return;
         }
-
-        this.#loadingTemplate = true;
-
-        const themeHash = this.themeHash;
-        this.#loadAppTemplate(this.template).then(({ Template }) => {
-          // A newer theme has arrived - bail.
-          if (themeHash !== this.themeHash) {
-            return;
-          }
-
-          this.#appTemplate = new Template();
-          this.#template = html`${this.#appTemplate}`;
-
-          this.#applyThemeToTemplate();
-          this.#loadingTemplate = false;
-
-          requestAnimationFrame(() => {
-            this.requestUpdate();
-          });
-        });
-      }
+        this.#appTemplate = new Template();
+        this.#applyThemeToTemplate();
+        this.#template = this.#appTemplate;
+      });
     }
 
     if (this.graph) {
@@ -330,8 +332,7 @@ export class AppController extends SignalWatcher(LitElement) {
       changedProperties.has("theme") ||
       changedProperties.has("appTitle") ||
       changedProperties.has("appDescription") ||
-      changedProperties.has("template") ||
-      changedProperties.has("templateAdditionalOptionsChosen")
+      changedProperties.has("template")
     ) {
       this.#applyThemeToTemplate();
     }
