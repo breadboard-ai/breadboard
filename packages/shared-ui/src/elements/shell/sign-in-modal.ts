@@ -280,6 +280,10 @@ export class VESignInModal extends LitElement {
       const { code } = outcome.error;
       if (code === "missing-scopes" || code === "geo-restriction") {
         this.#state = { status: code, request };
+      } else if (code === "user-cancelled") {
+        // The user denied sign-in e.g. by clicking "Cancel" during the OAuth
+        // flow. Here we actually just do nothing. They can click "Sign-in"
+        // again if they want, or they can close the modal with Escape etc.
       } else {
         this.#state = { status: "other-error", request };
       }
