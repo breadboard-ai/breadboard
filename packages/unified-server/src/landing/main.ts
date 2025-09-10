@@ -150,6 +150,8 @@ async function init() {
           scopesErrorDialog.showModal();
         } else if (error.code === "geo-restriction") {
           showGeoRestrictionDialog();
+        } else if (error.code === "user-cancelled") {
+          // Do nothing. The user can click sign-in again if they want.
         } else {
           error.code satisfies "other";
           genericErrorDialogTitle.textContent = `An unexpected signin error occured`;
