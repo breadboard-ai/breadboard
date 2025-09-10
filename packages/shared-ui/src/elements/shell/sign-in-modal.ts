@@ -57,26 +57,25 @@ export class VESignInModal extends LitElement {
         display: contents;
       }
 
-      bb-modal {
-        &::part(container) {
-          max-width: 318px;
-        }
+      bb-modal::part(container) {
+        max-width: 318px;
       }
 
-      section {
+      #container {
         display: flex;
         align-items: center;
-        justify-content: center;
         flex-direction: column;
-        text-align: center;
       }
 
       p {
         font-size: 16px;
         margin: 0 0 var(--bb-grid-size-2) 0;
+        text-align: center;
       }
 
-      #sign-in-button {
+      #sign-in-button,
+      #add-scope-button {
+        /* TODO(aomarks) Use the common button styles class */
         margin-top: var(--bb-grid-size-4);
         background: var(--n-0);
         border: none;
@@ -205,7 +204,7 @@ export class VESignInModal extends LitElement {
         .modalTitle=${title}
         @bbmodaldismissed=${this.#onDismiss}
       >
-        <section>${content}</section>
+        <section id="container">${content}</section>
       </bb-modal>
     `;
   }
@@ -221,7 +220,7 @@ export class VESignInModal extends LitElement {
 
   #renderAddScopeButton() {
     return html`
-      <button id="sign-in-button" class="sans" @click=${this.#onClickSignIn}>
+      <button id="add-scope-button" class="sans" @click=${this.#onClickSignIn}>
         <img src="/styles/landing/images/g-logo.png" width="20" height="20" />
         Grant access
       </button>
