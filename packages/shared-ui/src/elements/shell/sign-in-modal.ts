@@ -117,27 +117,17 @@ export class VESignInModal extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
+
     const { forceSignInState } = devUrlParams();
     if (forceSignInState) {
-      if (forceSignInState === "sign-in" || forceSignInState === "add-scope") {
-        this.openAndWaitForSignIn([], forceSignInState);
-      } else {
-        this.openAndWaitForSignIn([], "sign-in");
-        if (this.#state.status !== "sign-in") {
-          throw new Error(`Expected status to be "sign-in"`);
-        }
-        if (forceSignInState === "geo-restriction") {
-          this.#state = {
-            status: "geo-restriction",
-            request: this.#state.request,
-          };
-        } else if (forceSignInState === "missing-scopes") {
-          this.#state = {
-            status: "missing-scopes",
-            request: this.#state.request,
-          };
-        }
+      this.openAndWaitForSignIn([], "sign-in");
+      if (this.#state.status !== "sign-in") {
+        throw new Error(`Expected status to be "sign-in"`);
       }
+      this.#state = {
+        status: forceSignInState,
+        request: this.#state.request,
+      };
     }
   }
 
