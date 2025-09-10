@@ -8,7 +8,9 @@ import {
   createSimpleMemoryClient,
   McpBuiltInClientFactory,
 } from "@breadboard-ai/mcp";
+import { createGoogleCalendarClient } from "@breadboard-ai/mcp-gcal";
 
 export const builtInMcpClients: [string, McpBuiltInClientFactory][] = [
   ["memory", createSimpleMemoryClient],
+  ["gcal", createGoogleCalendarClient],
 ];

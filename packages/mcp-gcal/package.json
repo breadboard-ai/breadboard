@@ -87,6 +87,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@breadboard-ai/mcp": "^0.0.1"
+    "@breadboard-ai/mcp": "^0.0.1",
+    "@breadboard-ai/types": "^0.8.0"
   }
 }

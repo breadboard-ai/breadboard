@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { err } from "@breadboard-ai/utils";
+import { err, ok } from "@breadboard-ai/utils";
 import { Outcome, TokenGetter } from "@breadboard-ai/types";
 import {
   McpBuiltInClient,
@@ -35,17 +35,15 @@ class McpBuiltInServerStore {
   builtInServers(): ReadonlyArray<McpServerInfo> {
     const servers: McpServerInfo[] = [];
     this.#clientFactories.forEach((_factory, name) => {
-      const info = this.#clients.get(name)?.info;
-      if (info) {
-        servers.push(info);
-      }
+      const client = this.#getOrCreateClient(name);
+      if (!ok(client)) return;
+
+      servers.push(client.info);
     });
     return servers;
   }
 
-  get(url: string): Outcome<McpClient> {
-    const name = url.slice(BUILTIN_SERVER_PREFIX.length);
-
+  #getOrCreateClient(name: string): Outcome<McpBuiltInClient> {
     let client = this.#clients.get(name);
     if (!client) {
       const factory = this.#clientFactories.get(name);
@@ -56,5 +54,10 @@ class McpBuiltInServerStore {
       this.#clients.set(name, client);
     }
     return client;
+  }
+
+  get(url: string): Outcome<McpClient> {
+    const name = url.slice(BUILTIN_SERVER_PREFIX.length);
+    return this.#getOrCreateClient(name);
   }
 }
