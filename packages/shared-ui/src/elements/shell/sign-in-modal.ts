@@ -29,27 +29,14 @@ type SignInRequest = {
 };
 
 type State =
+  | { status: "closed" }
   | {
-      status: "closed";
-    }
-  | {
-      status: "sign-in";
-      request: SignInRequest;
-    }
-  | {
-      status: "add-scope";
-      request: SignInRequest;
-    }
-  | {
-      status: "geo-restriction";
-      request: SignInRequest;
-    }
-  | {
-      status: "missing-scopes";
-      request: SignInRequest;
-    }
-  | {
-      status: "other-error";
+      status:
+        | "sign-in"
+        | "add-scope"
+        | "geo-restriction"
+        | "missing-scopes"
+        | "other-error";
       request: SignInRequest;
     };
 
