@@ -10,7 +10,6 @@ import { customElement, property, state } from "lit/decorators.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { colorsLight } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
-import { icons } from "../../styles/icons.js";
 import {
   signinAdapterContext,
   type SigninAdapter,
@@ -66,7 +65,6 @@ export class VESignInModal extends LitElement {
   static styles = [
     type,
     colorsLight,
-    icons,
     css`
       :host {
         display: contents;
