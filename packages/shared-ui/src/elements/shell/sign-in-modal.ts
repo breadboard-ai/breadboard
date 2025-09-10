@@ -202,7 +202,7 @@ export class VESignInModal extends LitElement {
         appearance="basic"
         blurBackground
         .modalTitle=${title}
-        @bbmodaldismissed=${this.#onDismiss}
+        @bbmodaldismissed=${this.#close}
       >
         <section id="container">${content}</section>
       </bb-modal>
@@ -292,13 +292,6 @@ export class VESignInModal extends LitElement {
       window.location.reload();
     }
     this.#close(outcome.ok);
-  }
-
-  #onDismiss() {
-    if (this.#state.status === "closed") {
-      return;
-    }
-    this.#close(false);
   }
 
   #close(outcome: boolean) {
