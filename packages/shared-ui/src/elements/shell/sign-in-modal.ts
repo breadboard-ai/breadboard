@@ -5,7 +5,7 @@
  */
 import type { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { consume } from "@lit/context";
-import { LitElement, css, html, nothing } from "lit";
+import { HTMLTemplateResult, LitElement, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { colorsLight } from "../../styles/host/colors-light.js";
@@ -168,89 +168,71 @@ export class VESignInModal extends LitElement {
   }
 
   #renderSignInRequest() {
-    return html`
-      <bb-modal
-        appearance="basic"
-        blurBackground
-        modalTitle="Sign in to use ${appName()}"
-        @bbmodaldismissed=${this.#onDismiss}
-      >
-        <section>
-          <p>To continue, you'll need to sign in with your Google account.</p>
-          <aside>${this.#renderSignInButton()}</aside>
-        </section>
-      </bb-modal>
-    `;
+    return this.#renderModal(
+      `Sign in to use ${appName()}`,
+      html`
+        <p>To continue, you'll need to sign in with your Google account.</p>
+        <aside>${this.#renderSignInButton()}</aside>
+      `
+    );
   }
 
   #renderAddScopeRequest() {
     // TODO(aomarks) Customize this based on the scope being requested.
-    return html`
-      <bb-modal
-        appearance="basic"
-        blurBackground
-        modalTitle="Additional access needed"
-        @bbmodaldismissed=${this.#onDismiss}
-      >
-        <section>
-          <p>
-            To continue, you'll need to grant additional access to your Google
-            account.
-          </p>
-          <aside>${this.#renderAddScopeButton()}</aside>
-        </section>
-      </bb-modal>
-    `;
+    return this.#renderModal(
+      "Additional access needed",
+      html`
+        <p>
+          To continue, you'll need to grant additional access to your Google
+          account.
+        </p>
+        <aside>${this.#renderAddScopeButton()}</aside>
+      `
+    );
   }
 
   #renderGeoRestriction() {
-    return html`
-      <bb-modal
-        appearance="basic"
-        blurBackground
-        modalTitle="${appName()} is not available in your country yet"
-        @bbmodaldismissed=${this.#onDismiss}
-      >
-      </bb-modal>
-    `;
+    return this.#renderModal(
+      `${appName()} is not available in your country yet`,
+      nothing
+    );
   }
 
   #renderMissingScopes() {
-    return html`
-      <bb-modal
-        appearance="basic"
-        blurBackground
-        modalTitle="Additional access required"
-        @bbmodaldismissed=${this.#onDismiss}
-      >
-        <section>
-          <p>
-            Please click <em>Sign in</em> again, and choose
-            <em>Select all</em> when you are asked about access.
-          </p>
-          <img
-            id="missing-scopes-animation"
-            src="/styles/landing/images/sign-in-scopes-screenshot.gif"
-            width="320"
-            height="285"
-          />
-          <aside>${this.#renderSignInButton()}</aside>
-        </section>
-      </bb-modal>
-    `;
+    return this.#renderModal(
+      "Additional access required",
+      html`
+        <p>
+          Please click <em>Sign in</em> again, and choose
+          <em>Select all</em> when you are asked about access.
+        </p>
+        <img
+          id="missing-scopes-animation"
+          src="/styles/landing/images/sign-in-scopes-screenshot.gif"
+          width="320"
+          height="285"
+        />
+        <aside>${this.#renderSignInButton()}</aside>
+      `
+    );
   }
 
   #renderOtherError() {
+    return this.#renderModal(
+      "Unexpected error",
+      html`<p>An unexpected error occured.</p>`
+    );
+  }
+
+  #renderModal(title: string, content: HTMLTemplateResult | typeof nothing) {
     return html`
       <bb-modal
         appearance="basic"
         blurBackground
-        .modalTitle=${"Unexpected error"}
+        .modalTitle=${title}
         @bbmodaldismissed=${this.#onDismiss}
       >
-        <section>
-          <p>An unexpected error occured.</p>
-        </section>
+        <section>${content}</section>
       </bb-modal>
     `;
   }
