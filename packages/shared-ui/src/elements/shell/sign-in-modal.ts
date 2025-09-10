@@ -13,7 +13,6 @@ import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
 import {
   signinAdapterContext,
-  type SignInError,
   type SigninAdapter,
 } from "../../utils/signin-adapter.js";
 import { devUrlParams } from "../../utils/urls.js";
@@ -24,23 +23,35 @@ function appName() {
   return APP_NAME;
 }
 
-type Request = {
-  reason: "sign-in" | "add-scope";
+type SignInRequest = {
   scopes: OAuthScope[] | undefined;
   outcomePromise: Promise<boolean>;
   outcomeResolve: (outcome: boolean) => void;
 };
 
 type State =
-  | { status: "closed" }
   | {
-      status: "open";
-      request: Request;
+      status: "closed";
     }
   | {
-      status: "error";
-      request: Request;
-      error: SignInError;
+      status: "sign-in";
+      request: SignInRequest;
+    }
+  | {
+      status: "add-scope";
+      request: SignInRequest;
+    }
+  | {
+      status: "geo-restriction";
+      request: SignInRequest;
+    }
+  | {
+      status: "missing-scopes";
+      request: SignInRequest;
+    }
+  | {
+      status: "other-error";
+      request: SignInRequest;
     };
 
 @customElement("bb-sign-in-modal")
@@ -112,20 +123,19 @@ export class VESignInModal extends LitElement {
         this.openAndWaitForSignIn([], forceSignInState);
       } else {
         this.openAndWaitForSignIn([], "sign-in");
-        if (this.#state.status === "open") {
-          if (forceSignInState === "geo-restriction") {
-            this.#state = {
-              status: "error",
-              request: this.#state.request,
-              error: { code: forceSignInState },
-            };
-          } else if (forceSignInState === "missing-scopes") {
-            this.#state = {
-              status: "error",
-              request: this.#state.request,
-              error: { code: forceSignInState, missingScopes: [] },
-            };
-          }
+        if (this.#state.status !== "sign-in") {
+          throw new Error(`Expected status to be "sign-in"`);
+        }
+        if (forceSignInState === "geo-restriction") {
+          this.#state = {
+            status: "geo-restriction",
+            request: this.#state.request,
+          };
+        } else if (forceSignInState === "missing-scopes") {
+          this.#state = {
+            status: "missing-scopes",
+            request: this.#state.request,
+          };
         }
       }
     }
@@ -136,26 +146,19 @@ export class VESignInModal extends LitElement {
     if (status === "closed") {
       return nothing;
     }
-    if (status === "open") {
-      const { reason } = this.#state.request;
-      if (reason === "sign-in") {
-        return this.#renderSignInRequest();
-      }
-      if (reason === "add-scope") {
-        return this.#renderAddScopeRequest();
-      }
-      reason satisfies never;
-      return nothing;
+    if (status === "sign-in") {
+      return this.#renderSignInRequest();
     }
-    if (status === "error") {
-      const { code } = this.#state.error;
-      if (code === "geo-restriction") {
-        return this.#renderGeoRestriction();
-      }
-      if (code === "missing-scopes") {
-        return this.#renderMissingScopes();
-      }
-      code satisfies "other";
+    if (status === "add-scope") {
+      return this.#renderAddScopeRequest();
+    }
+    if (status === "geo-restriction") {
+      return this.#renderGeoRestriction();
+    }
+    if (status === "missing-scopes") {
+      return this.#renderMissingScopes();
+    }
+    if (status === "other-error") {
       return this.#renderOtherError();
     }
     status satisfies never;
@@ -252,29 +255,28 @@ export class VESignInModal extends LitElement {
 
   async openAndWaitForSignIn(
     scopes?: OAuthScope[],
-    reason?: "sign-in" | "add-scope"
+    status?: "sign-in" | "add-scope"
   ): Promise<boolean> {
-    if (this.#state.status === "closed") {
-      let resolve: (outcome: boolean) => void;
-      this.#state = {
-        status: "open",
-        request: {
-          reason:
-            reason ??
-            (this.signinAdapter?.state === "signedin"
-              ? "add-scope"
-              : "sign-in"),
-          outcomePromise: new Promise<boolean>((r) => (resolve = r)),
-          outcomeResolve: resolve!,
-          scopes,
-        },
-      };
+    if (this.#state.status !== "closed") {
+      return this.#state.request.outcomePromise;
     }
-    return this.#state.request.outcomePromise;
+    let resolve: (outcome: boolean) => void;
+    const outcomePromise = new Promise<boolean>((r) => (resolve = r));
+    this.#state = {
+      status:
+        status ??
+        (this.signinAdapter?.state === "signedin" ? "add-scope" : "sign-in"),
+      request: {
+        outcomePromise,
+        outcomeResolve: resolve!,
+        scopes,
+      },
+    };
+    return outcomePromise;
   }
 
   async #onClickSignIn() {
-    if (this.#state.status !== "open") {
+    if (this.#state.status === "closed") {
       return;
     }
     if (!this.signinAdapter) {
@@ -299,16 +301,17 @@ export class VESignInModal extends LitElement {
       `
     );
     const outcome = await signInPromise;
-    const request = this.#state.request;
+    const { status, request } = this.#state;
     if (!outcome.ok) {
-      this.#state = {
-        status: "error",
-        error: outcome.error,
-        request,
-      };
+      const { code } = outcome.error;
+      if (code === "missing-scopes" || code === "geo-restriction") {
+        this.#state = { status: code, request };
+      } else {
+        this.#state = { status: "other-error", request };
+      }
       return;
     }
-    if (request.reason === "sign-in") {
+    if (status === "sign-in") {
       // TODO(aomarks) Remove the reload after the app is fully reactive to a
       // sign-in. Known issues: Google Drive client auth strategy, top-right
       // user icon.
@@ -318,14 +321,14 @@ export class VESignInModal extends LitElement {
   }
 
   #onDismiss() {
-    if (this.#state.status !== "open") {
+    if (this.#state.status === "closed") {
       return;
     }
     this.#close(false);
   }
 
   #close(outcome: boolean) {
-    if (this.#state.status !== "open") {
+    if (this.#state.status === "closed") {
       return;
     }
     this.#state.request.outcomeResolve(outcome);
