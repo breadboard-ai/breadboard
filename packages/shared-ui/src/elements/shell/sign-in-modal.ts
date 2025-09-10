@@ -234,12 +234,12 @@ export class VESignInModal extends LitElement {
     if (this.#state.status !== "closed") {
       return this.#state.request.outcomePromise;
     }
+    status ??=
+      this.signinAdapter?.state === "signedin" ? "add-scope" : "sign-in";
     let resolve: (outcome: boolean) => void;
     const outcomePromise = new Promise<boolean>((r) => (resolve = r));
     this.#state = {
-      status:
-        status ??
-        (this.signinAdapter?.state === "signedin" ? "add-scope" : "sign-in"),
+      status,
       request: {
         outcomePromise,
         outcomeResolve: resolve!,
