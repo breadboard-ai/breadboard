@@ -112,6 +112,7 @@ import {
 } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { VESignInModal } from "@breadboard-ai/shared-ui/elements/elements.js";
 import { type OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
+import { builtInMcpClients } from "./mcp-clients";
 
 type RenderValues = {
   canSave: boolean;
@@ -437,15 +438,19 @@ export class Main extends SignalWatcher(LitElement) {
     const flagManager = createFlagManager(this.globalConfig.flags);
     const flags = await flagManager.flags();
 
-    const mcp = new McpManager(async () => {
-      const token = await this.signinAdapter.token();
-      if (token.state === "valid") {
-        return token.grant.access_token;
-      }
-      // This will fail, and that's okay. We'll get the "Unauthorized"
-      // error.
-      return "";
-    }, this.globalConfig.BACKEND_API_ENDPOINT);
+    const mcp = new McpManager(
+      builtInMcpClients,
+      async () => {
+        const token = await this.signinAdapter.token();
+        if (token.state === "valid") {
+          return token.grant.access_token;
+        }
+        // This will fail, and that's okay. We'll get the "Unauthorized"
+        // error.
+        return "";
+      },
+      this.globalConfig.BACKEND_API_ENDPOINT
+    );
 
     const fileSystem = createFileSystem({
       env: [

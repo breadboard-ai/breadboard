@@ -12,20 +12,21 @@ import {
   McpClient,
   McpServerInfo,
 } from "./types.js";
-import { createSimpleMemoryClient } from "./simple-memory.js";
 
 export { McpBuiltInServerStore };
 
 const BUILTIN_SERVER_PREFIX = "builtin:";
 
-const BUILTIN_SERVERS: Map<string, McpBuiltInClientFactory> = new Map([
-  ["memory", createSimpleMemoryClient],
-]);
-
 class McpBuiltInServerStore {
   #clients: Map<string, McpBuiltInClient> = new Map();
+  #clientFactories: Map<string, McpBuiltInClientFactory>;
 
-  constructor(private readonly tokenGetter: TokenGetter) {}
+  constructor(
+    private readonly tokenGetter: TokenGetter,
+    clientFactories: [string, McpBuiltInClientFactory][]
+  ) {
+    this.#clientFactories = new Map(clientFactories);
+  }
 
   isBuiltIn(url?: string) {
     return url?.startsWith(BUILTIN_SERVER_PREFIX);
@@ -33,7 +34,7 @@ class McpBuiltInServerStore {
 
   builtInServers(): ReadonlyArray<McpServerInfo> {
     const servers: McpServerInfo[] = [];
-    BUILTIN_SERVERS.forEach((_factory, name) => {
+    this.#clientFactories.forEach((_factory, name) => {
       const info = this.#clients.get(name)?.info;
       if (info) {
         servers.push(info);
@@ -47,7 +48,7 @@ class McpBuiltInServerStore {
 
     let client = this.#clients.get(name);
     if (!client) {
-      const factory = BUILTIN_SERVERS.get(name);
+      const factory = this.#clientFactories.get(name);
       if (!factory) {
         return err(`Unknown built-in server "${name}"`);
       }

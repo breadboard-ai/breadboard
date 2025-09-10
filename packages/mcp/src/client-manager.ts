@@ -8,6 +8,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { Implementation } from "@modelcontextprotocol/sdk/types.js";
 import {
   JsonSerializableRequestInit,
+  McpBuiltInClientFactory,
   McpClient,
   McpProxyRequest,
   McpServerInfo,
@@ -23,19 +24,16 @@ import { CachingMcpClient } from "./caching-mcp-client.js";
 
 export { McpClientManager };
 
-export type CreateClientOptions = {
-  proxyUrl: string;
-};
-
 class McpClientManager {
   #cache: Map<string, CachingMcpClient> = new Map();
   #builtIn: McpBuiltInServerStore;
 
   constructor(
+    builtInClients: [string, McpBuiltInClientFactory][],
     private readonly tokenGetter: TokenGetter,
     private readonly proxyUrl?: string
   ) {
-    this.#builtIn = new McpBuiltInServerStore(tokenGetter);
+    this.#builtIn = new McpBuiltInServerStore(tokenGetter, builtInClients);
   }
 
   builtInServers(): ReadonlyArray<McpServerInfo> {

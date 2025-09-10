@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2023 Google LLC
+ * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -9,3 +9,4 @@ export { McpClientManager } from "./client-manager.js";
 export { createMcpServerStore } from "./server-store.js";
 export { McpManager } from "./manager.js";
 export type * from "./types.js";
+export { createSimpleMemoryClient } from "./simple-memory.js";
