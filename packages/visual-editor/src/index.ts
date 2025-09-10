@@ -375,9 +375,6 @@ export class Main extends SignalWatcher(LitElement) {
         if (token.state === "valid") {
           return token.grant.access_token;
         }
-        if (token.state === "signedout" && newSignedOutExperienceIsEnabled) {
-          return "";
-        }
         throw new Error(`User is signed out`);
       },
     });
