@@ -241,3 +241,59 @@ export const wildcardLayout: ParticleTemplate = {
     orientation: "vertical",
   },
 };
+
+export const twoColumnImageRightWildcardBelow: ParticleTemplate = {
+  group: [
+    [
+      "main",
+      {
+        presentation: {
+          type: "card",
+          behaviors: [],
+          orientation: "horizontal",
+          segments: [
+            {
+              fields: {
+                "body-copy": {
+                  as: "particle-viewer-text",
+                  title: "Hero Image",
+                },
+              },
+              orientation: "vertical",
+              weight: 1,
+              type: "block",
+            },
+
+            {
+              fields: {
+                "hero-image": {
+                  as: "particle-viewer-image",
+                  title: "Hero Image",
+                  take: 1,
+                },
+              },
+              orientation: "vertical",
+              weight: 1,
+              type: "media",
+            },
+          ],
+        },
+      },
+    ],
+    [
+      "*",
+      {
+        presentation: {
+          behaviors: [],
+          orientation: "vertical",
+          type: "list",
+        },
+      },
+    ],
+  ],
+  presentation: {
+    type: "list",
+    behaviors: [],
+    orientation: "vertical",
+  },
+};
