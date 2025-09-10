@@ -37,6 +37,7 @@ import {
   RuntimeUnsnackbarEvent,
   RuntimeShareMissingEvent,
   RuntimeNewerSharedVersionEvent,
+  RuntimeRequestSignInEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
@@ -626,14 +627,22 @@ export class Board extends EventTarget {
       }
 
       if (!graph) {
-        // Confirm that the user is using a shared URL.
         const currentUrlParsed = parseUrl(window.location.href);
-        if (currentUrlParsed.page === "graph" && !currentUrlParsed.shared) {
+        if (
+          currentUrlParsed.dev?.enableNewSignedOutExperience !== undefined &&
+          this.tokenVendor &&
+          !this.tokenVendor.isSignedIn("$sign-in")
+        ) {
+          this.dispatchEvent(new RuntimeRequestSignInEvent());
+        } else if (
+          // Confirm that the user is using a shared URL.
+          currentUrlParsed.page === "graph" &&
+          !currentUrlParsed.shared
+        ) {
           this.dispatchEvent(new RuntimeShareMissingEvent());
-          return;
+        } else {
+          this.dispatchEvent(new RuntimeErrorEvent("Unable to load board"));
         }
-
-        this.dispatchEvent(new RuntimeErrorEvent("Unable to load board"));
         return;
       }
 

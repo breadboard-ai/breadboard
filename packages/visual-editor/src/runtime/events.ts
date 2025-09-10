@@ -113,6 +113,14 @@ export class RuntimeShareMissingEvent extends Event {
   }
 }
 
+export class RuntimeRequestSignInEvent extends Event {
+  static eventName = "runtimerequestsignin" as const;
+
+  constructor() {
+    super(RuntimeRequestSignInEvent.eventName, { ...eventInit });
+  }
+}
+
 export class RuntimeErrorEvent extends Event {
   static eventName = "runtimeerror" as const;
 
