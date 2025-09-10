@@ -121,10 +121,10 @@ export class VESignInModal extends LitElement {
       return nothing;
     }
     if (status === "sign-in") {
-      return this.#renderSignInRequest();
+      return this.#renderSignIn();
     }
     if (status === "add-scope") {
-      return this.#renderAddScopeRequest();
+      return this.#renderAddScope();
     }
     if (status === "geo-restriction") {
       return this.#renderGeoRestriction();
@@ -139,7 +139,7 @@ export class VESignInModal extends LitElement {
     return nothing;
   }
 
-  #renderSignInRequest() {
+  #renderSignIn() {
     return this.#renderModal(
       `Sign in to use ${appName()}`,
       html`
@@ -149,7 +149,7 @@ export class VESignInModal extends LitElement {
     );
   }
 
-  #renderAddScopeRequest() {
+  #renderAddScope() {
     // TODO(aomarks) Customize this based on the scope being requested.
     return this.#renderModal(
       "Additional access needed",
