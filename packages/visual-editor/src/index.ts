@@ -2238,7 +2238,12 @@ export class Main extends SignalWatcher(LitElement) {
   readonly #signInModalRef = createRef<VESignInModal>();
   #renderSignInModal() {
     return html`
-      <bb-sign-in-modal ${ref(this.#signInModalRef)}></bb-sign-in-modal>
+      <bb-sign-in-modal
+        ${ref(this.#signInModalRef)}
+        @bbmodaldismissed=${() => {
+          this.#uiState.show.delete("SignInModal");
+        }}
+      ></bb-sign-in-modal>
     `;
   }
 }
