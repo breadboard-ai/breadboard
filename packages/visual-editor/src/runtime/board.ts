@@ -35,7 +35,6 @@ import {
   RuntimeBoardSaveStatusChangeEvent,
   RuntimeSnackbarEvent,
   RuntimeUnsnackbarEvent,
-  RuntimeShareMissingEvent,
   RuntimeNewerSharedVersionEvent,
   RuntimeRequestSignInEvent,
 } from "./events";
@@ -61,7 +60,6 @@ import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-
 import { loadImage } from "@breadboard-ai/shared-ui/utils/image";
 import { RecentBoardStore } from "../data/recent-boards";
 import { type RunResults } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
-import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -627,19 +625,8 @@ export class Board extends EventTarget {
       }
 
       if (!graph) {
-        const currentUrlParsed = parseUrl(window.location.href);
-        if (
-          currentUrlParsed.dev?.enableNewSignedOutExperience !== undefined &&
-          this.tokenVendor &&
-          !this.tokenVendor.isSignedIn("$sign-in")
-        ) {
+        if (this.tokenVendor && !this.tokenVendor.isSignedIn("$sign-in")) {
           this.dispatchEvent(new RuntimeRequestSignInEvent());
-        } else if (
-          // Confirm that the user is using a shared URL.
-          currentUrlParsed.page === "graph" &&
-          !currentUrlParsed.shared
-        ) {
-          this.dispatchEvent(new RuntimeShareMissingEvent());
         } else {
           this.dispatchEvent(new RuntimeErrorEvent("Unable to load board"));
         }
