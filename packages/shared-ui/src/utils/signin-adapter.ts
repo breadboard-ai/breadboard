@@ -49,6 +49,7 @@ export const signinAdapterContext = createContext<SigninAdapter | undefined>(
 export type SignInError =
   | { code: "missing-scopes"; missingScopes: string[] }
   | { code: "geo-restriction" }
+  | { code: "user-cancelled" }
   | { code: "other"; detail: string };
 
 /** @return Whether the user opened `signInUrl`. */
@@ -262,8 +263,10 @@ class SigninAdapter {
     });
     channel.close();
     if (grantResponse.error !== undefined) {
-      console.error(grantResponse.error);
-      if (grantResponse.error.includes("region")) {
+      if (grantResponse.error === "access_denied") {
+        console.debug(`[signin] user cancelled the sign-in flow`);
+        return { ok: false, error: { code: "user-cancelled" } };
+      } else if (grantResponse.error.includes("region")) {
         console.debug(`[signin] geo restriction 1`);
         return {
           ok: false,

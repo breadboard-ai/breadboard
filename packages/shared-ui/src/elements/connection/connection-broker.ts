@@ -57,6 +57,16 @@ export class ConnectionBroker extends HTMLElement {
     const channelName = oauthTokenBroadcastChannelName(nonce);
     const channel = new BroadcastChannel(channelName);
 
+    // Check for errors, most notably "access_denied" which will be set if the
+    // user clicks "Cancel" during the OAuth flow.
+    const error = thisUrl.searchParams.get("error");
+    if (error) {
+      channel.postMessage({ error });
+      channel.close();
+      window.close();
+      return;
+    }
+
     // Unpack the data needed to call the token grant API.
     const connectionId = state.connectionId;
     if (!connectionId) {
