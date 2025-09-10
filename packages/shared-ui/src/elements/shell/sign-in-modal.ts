@@ -80,13 +80,8 @@ export class VESignInModal extends LitElement {
         margin: 0 0 var(--bb-grid-size-2) 0;
       }
 
-      aside {
-        display: flex;
+      #sign-in-button {
         margin-top: var(--bb-grid-size-4);
-        justify-content: end;
-      }
-
-      #sign-in {
         background: var(--n-0);
         border: none;
         border-radius: var(--bb-grid-size-16);
@@ -172,7 +167,7 @@ export class VESignInModal extends LitElement {
       `Sign in to use ${appName()}`,
       html`
         <p>To continue, you'll need to sign in with your Google account.</p>
-        <aside>${this.#renderSignInButton()}</aside>
+        ${this.#renderSignInButton()}
       `
     );
   }
@@ -186,7 +181,7 @@ export class VESignInModal extends LitElement {
           To continue, you'll need to grant additional access to your Google
           account.
         </p>
-        <aside>${this.#renderAddScopeButton()}</aside>
+        ${this.#renderAddScopeButton()}
       `
     );
   }
@@ -212,7 +207,7 @@ export class VESignInModal extends LitElement {
           width="320"
           height="285"
         />
-        <aside>${this.#renderSignInButton()}</aside>
+        ${this.#renderSignInButton()}
       `
     );
   }
@@ -239,7 +234,7 @@ export class VESignInModal extends LitElement {
 
   #renderSignInButton() {
     return html`
-      <button id="sign-in" class="sans" @click=${this.#onClickSignIn}>
+      <button id="sign-in-button" class="sans" @click=${this.#onClickSignIn}>
         <img src="/styles/landing/images/g-logo.png" width="20" height="20" />
         Sign in with Google
       </button>
@@ -248,7 +243,7 @@ export class VESignInModal extends LitElement {
 
   #renderAddScopeButton() {
     return html`
-      <button id="sign-in" class="sans" @click=${this.#onClickSignIn}>
+      <button id="sign-in-button" class="sans" @click=${this.#onClickSignIn}>
         <img src="/styles/landing/images/g-logo.png" width="20" height="20" />
         Grant access
       </button>
