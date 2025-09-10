@@ -3,9 +3,9 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import type { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
+import { type OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { consume } from "@lit/context";
-import { HTMLTemplateResult, LitElement, css, html, nothing } from "lit";
+import { LitElement, css, html, nothing, type HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { colorsLight } from "../../styles/host/colors-light.js";
