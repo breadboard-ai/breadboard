@@ -672,6 +672,11 @@ export class Main extends SignalWatcher(LitElement) {
       }
     );
 
+    this.#runtime.board.addEventListener(
+      Runtime.Events.RuntimeRequestSignInEvent.eventName,
+      () => this.#askUserToSignIn()
+    );
+
     this.#runtime.addEventListener(
       Runtime.Events.RuntimeToastEvent.eventName,
       (evt: Runtime.Events.RuntimeToastEvent) => {
