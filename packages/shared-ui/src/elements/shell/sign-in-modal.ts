@@ -16,18 +16,6 @@ import {
 } from "../../utils/signin-adapter.js";
 import { devUrlParams } from "../../utils/urls.js";
 
-function appName() {
-  const Strings = StringsHelper.forSection("Global");
-  const APP_NAME = Strings.from("APP_NAME");
-  return APP_NAME;
-}
-
-type SignInRequest = {
-  scopes: OAuthScope[] | undefined;
-  outcomePromise: Promise<boolean>;
-  outcomeResolve: (outcome: boolean) => void;
-};
-
 type State =
   | { status: "closed" }
   | {
@@ -39,6 +27,18 @@ type State =
         | "other-error";
       request: SignInRequest;
     };
+
+type SignInRequest = {
+  scopes: OAuthScope[] | undefined;
+  outcomePromise: Promise<boolean>;
+  outcomeResolve: (outcome: boolean) => void;
+};
+
+function appName() {
+  const Strings = StringsHelper.forSection("Global");
+  const APP_NAME = Strings.from("APP_NAME");
+  return APP_NAME;
+}
 
 @customElement("bb-sign-in-modal")
 export class VESignInModal extends LitElement {
