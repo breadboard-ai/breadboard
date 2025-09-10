@@ -1131,39 +1131,45 @@ export class Board extends EventTarget {
       return fail;
     }
 
-    const urlString = await boardServer.createURL(location, fileName);
-    if (!urlString) {
-      this.#isSavingAs = false;
-      if (snackbarId) {
-        this.dispatchEvent(
-          new RuntimeSnackbarEvent(
-            snackbarId,
-            ackUserMessage.error,
-            BreadboardUI.Types.SnackType.ERROR,
-            [],
-            true,
-            true
-          )
-        );
+    let response: { result: boolean; error?: string; url?: string };
+    let url: URL;
+    try {
+      const urlString = await boardServer.createURL(location, fileName);
+      if (!urlString) {
+        this.#isSavingAs = false;
+        if (snackbarId) {
+          this.dispatchEvent(
+            new RuntimeSnackbarEvent(
+              snackbarId,
+              ackUserMessage.error,
+              BreadboardUI.Types.SnackType.ERROR,
+              [],
+              true,
+              true
+            )
+          );
+        }
+        return fail;
       }
+
+      url = new URL(urlString);
+
+      // Replace pointers with inline data so that copies get created when saving.
+      graph = await this.#deepCopyGraph(boardServer, graph, url);
+
+      response = await boardServer.create(url, graph);
+      if (response.url) {
+        url = new URL(response.url);
+      }
+    } catch (e) {
       return fail;
+    } finally {
+      if (snackbarId) {
+        this.dispatchEvent(new RuntimeUnsnackbarEvent());
+      }
+      this.#isSavingAs = false;
     }
 
-    let url = new URL(urlString);
-
-    // Replace pointers with inline data so that copies get created when saving.
-    graph = await this.#deepCopyGraph(boardServer, graph, url);
-
-    const response = await boardServer.create(url, graph);
-    if (response.url) {
-      url = new URL(response.url);
-    }
-
-    if (snackbarId) {
-      this.dispatchEvent(new RuntimeUnsnackbarEvent());
-    }
-
-    this.#isSavingAs = false;
     return { ...response, url };
   }
 
