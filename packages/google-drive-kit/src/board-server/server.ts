@@ -126,7 +126,8 @@ class GoogleDriveBoardServer
       },
       userFolderName,
       googleDriveClient,
-      publishPermissions
+      publishPermissions,
+      tokenVendor
     );
 
     this.kits = configuration.kits;
