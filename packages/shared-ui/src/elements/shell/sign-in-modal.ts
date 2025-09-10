@@ -3,45 +3,42 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import type { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
+import { type OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { consume } from "@lit/context";
-import { LitElement, css, html, nothing } from "lit";
+import { LitElement, css, html, nothing, type HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { colorsLight } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
-import { icons } from "../../styles/icons.js";
 import {
   signinAdapterContext,
-  type SignInError,
   type SigninAdapter,
 } from "../../utils/signin-adapter.js";
 import { devUrlParams } from "../../utils/urls.js";
+
+type State =
+  | { status: "closed" }
+  | {
+      status:
+        | "sign-in"
+        | "add-scope"
+        | "geo-restriction"
+        | "missing-scopes"
+        | "other-error";
+      request: SignInRequest;
+    };
+
+type SignInRequest = {
+  scopes: OAuthScope[] | undefined;
+  outcomePromise: Promise<boolean>;
+  outcomeResolve: (outcome: boolean) => void;
+};
 
 function appName() {
   const Strings = StringsHelper.forSection("Global");
   const APP_NAME = Strings.from("APP_NAME");
   return APP_NAME;
 }
-
-type Request = {
-  reason: "sign-in" | "add-scope";
-  scopes: OAuthScope[] | undefined;
-  outcomePromise: Promise<boolean>;
-  outcomeResolve: (outcome: boolean) => void;
-};
-
-type State =
-  | { status: "closed" }
-  | {
-      status: "open";
-      request: Request;
-    }
-  | {
-      status: "error";
-      request: Request;
-      error: SignInError;
-    };
 
 @customElement("bb-sign-in-modal")
 export class VESignInModal extends LitElement {
@@ -55,44 +52,31 @@ export class VESignInModal extends LitElement {
   static styles = [
     type,
     colorsLight,
-    icons,
     css`
       :host {
-        display: block;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 1;
+        display: contents;
       }
 
-      bb-modal {
-        &::part(container) {
-          max-width: 318px;
-        }
+      bb-modal::part(container) {
+        max-width: 318px;
       }
 
-      section {
+      #container {
         display: flex;
         align-items: center;
-        justify-content: center;
         flex-direction: column;
-        text-align: center;
       }
 
       p {
         font-size: 16px;
         margin: 0 0 var(--bb-grid-size-2) 0;
+        text-align: center;
       }
 
-      aside {
-        display: flex;
+      #sign-in-button,
+      #add-scope-button {
+        /* TODO(aomarks) Use the common button styles class */
         margin-top: var(--bb-grid-size-4);
-        justify-content: end;
-      }
-
-      #sign-in {
         background: var(--n-0);
         border: none;
         border-radius: var(--bb-grid-size-16);
@@ -117,28 +101,17 @@ export class VESignInModal extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
+
     const { forceSignInState } = devUrlParams();
     if (forceSignInState) {
-      if (forceSignInState === "sign-in" || forceSignInState === "add-scope") {
-        this.openAndWaitForSignIn([], forceSignInState);
-      } else {
-        this.openAndWaitForSignIn([], "sign-in");
-        if (this.#state.status === "open") {
-          if (forceSignInState === "geo-restriction") {
-            this.#state = {
-              status: "error",
-              request: this.#state.request,
-              error: { code: forceSignInState },
-            };
-          } else if (forceSignInState === "missing-scopes") {
-            this.#state = {
-              status: "error",
-              request: this.#state.request,
-              error: { code: forceSignInState, missingScopes: [] },
-            };
-          }
-        }
+      this.openAndWaitForSignIn([], "sign-in");
+      if (this.#state.status !== "sign-in") {
+        throw new Error(`Expected status to be "sign-in"`);
       }
+      this.#state = {
+        status: forceSignInState,
+        request: this.#state.request,
+      };
     }
   }
 
@@ -147,123 +120,98 @@ export class VESignInModal extends LitElement {
     if (status === "closed") {
       return nothing;
     }
-    if (status === "open") {
-      const { reason } = this.#state.request;
-      if (reason === "sign-in") {
-        return this.#renderSignInRequest();
-      }
-      if (reason === "add-scope") {
-        return this.#renderAddScopeRequest();
-      }
-      reason satisfies never;
-      return nothing;
+    if (status === "sign-in") {
+      return this.#renderSignIn();
     }
-    if (status === "error") {
-      const { code } = this.#state.error;
-      if (code === "geo-restriction") {
-        return this.#renderGeoRestriction();
-      }
-      if (code === "missing-scopes") {
-        return this.#renderMissingScopes();
-      }
-      code satisfies "other";
+    if (status === "add-scope") {
+      return this.#renderAddScope();
+    }
+    if (status === "geo-restriction") {
+      return this.#renderGeoRestriction();
+    }
+    if (status === "missing-scopes") {
+      return this.#renderMissingScopes();
+    }
+    if (status === "other-error") {
       return this.#renderOtherError();
     }
     status satisfies never;
     return nothing;
   }
 
-  #renderSignInRequest() {
-    return html`
-      <bb-modal
-        appearance="basic"
-        blurBackground
-        modalTitle="Sign in to use ${appName()}"
-        @bbmodaldismissed=${this.#onDismiss}
-      >
-        <section>
-          <p>To continue, you'll need to sign in with your Google account.</p>
-          <aside>${this.#renderSignInButton()}</aside>
-        </section>
-      </bb-modal>
-    `;
+  #renderSignIn() {
+    return this.#renderModal(
+      `Sign in to use ${appName()}`,
+      html`
+        <p>To continue, you'll need to sign in with your Google account.</p>
+        ${this.#renderSignInButton()}
+      `
+    );
   }
 
-  #renderAddScopeRequest() {
+  #renderAddScope() {
     // TODO(aomarks) Customize this based on the scope being requested.
-    return html`
-      <bb-modal
-        appearance="basic"
-        blurBackground
-        modalTitle="Additional access needed"
-        @bbmodaldismissed=${this.#onDismiss}
-      >
-        <section>
-          <p>
-            To continue, you'll need to grant additional access to your Google
-            account.
-          </p>
-          <aside>${this.#renderAddScopeButton()}</aside>
-        </section>
-      </bb-modal>
-    `;
+    return this.#renderModal(
+      "Additional access needed",
+      html`
+        <p>
+          To continue, you'll need to grant additional access to your Google
+          account.
+        </p>
+        ${this.#renderAddScopeButton()}
+      `
+    );
   }
 
   #renderGeoRestriction() {
-    return html`
-      <bb-modal
-        appearance="basic"
-        blurBackground
-        modalTitle="${appName()} is not available in your country yet"
-        @bbmodaldismissed=${this.#onDismiss}
-      >
-      </bb-modal>
-    `;
+    return this.#renderModal(
+      `${appName()} is not available in your country yet`,
+      nothing
+    );
   }
 
   #renderMissingScopes() {
-    return html`
-      <bb-modal
-        appearance="basic"
-        blurBackground
-        modalTitle="Additional access required"
-        @bbmodaldismissed=${this.#onDismiss}
-      >
-        <section>
-          <p>
-            Please click <em>Sign in</em> again, and choose
-            <em>Select all</em> when you are asked about access.
-          </p>
-          <img
-            id="missing-scopes-animation"
-            src="/styles/landing/images/sign-in-scopes-screenshot.gif"
-            width="320"
-            height="285"
-          />
-          <aside>${this.#renderSignInButton()}</aside>
-        </section>
-      </bb-modal>
-    `;
+    return this.#renderModal(
+      "Additional access required",
+      html`
+        <p>
+          Please click <em>Sign in</em> again, and choose
+          <em>Select all</em> when you are asked about access.
+        </p>
+        <img
+          id="missing-scopes-animation"
+          src="/styles/landing/images/sign-in-scopes-screenshot.gif"
+          width="320"
+          height="285"
+        />
+        ${this.#renderSignInButton()}
+      `
+    );
   }
 
   #renderOtherError() {
+    return this.#renderModal(
+      "Unexpected error",
+      html`<p>An unexpected error occured.</p>`
+    );
+  }
+
+  #renderModal(title: string, content: HTMLTemplateResult | typeof nothing) {
     return html`
       <bb-modal
         appearance="basic"
         blurBackground
-        .modalTitle=${"Unexpected error"}
-        @bbmodaldismissed=${this.#onDismiss}
+        .modalTitle=${title}
+        @bbmodaldismissed=${this.#close}
       >
-        <section>
-          <p>An unexpected error occured.</p>
-        </section>
+        <section id="container">${content}</section>
       </bb-modal>
     `;
   }
 
   #renderSignInButton() {
     return html`
-      <button id="sign-in" class="sans" @click=${this.#onClickSignIn}>
+      <button id="sign-in-button" class="sans" @click=${this.#onClickSignIn}>
         <img src="/styles/landing/images/g-logo.png" width="20" height="20" />
         Sign in with Google
       </button>
@@ -272,7 +220,7 @@ export class VESignInModal extends LitElement {
 
   #renderAddScopeButton() {
     return html`
-      <button id="sign-in" class="sans" @click=${this.#onClickSignIn}>
+      <button id="add-scope-button" class="sans" @click=${this.#onClickSignIn}>
         <img src="/styles/landing/images/g-logo.png" width="20" height="20" />
         Grant access
       </button>
@@ -281,29 +229,28 @@ export class VESignInModal extends LitElement {
 
   async openAndWaitForSignIn(
     scopes?: OAuthScope[],
-    reason?: "sign-in" | "add-scope"
+    status?: "sign-in" | "add-scope"
   ): Promise<boolean> {
-    if (this.#state.status === "closed") {
-      let resolve: (outcome: boolean) => void;
-      this.#state = {
-        status: "open",
-        request: {
-          reason:
-            reason ??
-            (this.signinAdapter?.state === "signedin"
-              ? "add-scope"
-              : "sign-in"),
-          outcomePromise: new Promise<boolean>((r) => (resolve = r)),
-          outcomeResolve: resolve!,
-          scopes,
-        },
-      };
+    if (this.#state.status !== "closed") {
+      return this.#state.request.outcomePromise;
     }
-    return this.#state.request.outcomePromise;
+    status ??=
+      this.signinAdapter?.state === "signedin" ? "add-scope" : "sign-in";
+    let resolve: (outcome: boolean) => void;
+    const outcomePromise = new Promise<boolean>((r) => (resolve = r));
+    this.#state = {
+      status,
+      request: {
+        outcomePromise,
+        outcomeResolve: resolve!,
+        scopes,
+      },
+    };
+    return outcomePromise;
   }
 
   async #onClickSignIn() {
-    if (this.#state.status !== "open") {
+    if (this.#state.status === "closed") {
       return;
     }
     if (!this.signinAdapter) {
@@ -328,16 +275,17 @@ export class VESignInModal extends LitElement {
       `
     );
     const outcome = await signInPromise;
-    const request = this.#state.request;
+    const { status, request } = this.#state;
     if (!outcome.ok) {
-      this.#state = {
-        status: "error",
-        error: outcome.error,
-        request,
-      };
+      const { code } = outcome.error;
+      if (code === "missing-scopes" || code === "geo-restriction") {
+        this.#state = { status: code, request };
+      } else {
+        this.#state = { status: "other-error", request };
+      }
       return;
     }
-    if (request.reason === "sign-in") {
+    if (status === "sign-in") {
       // TODO(aomarks) Remove the reload after the app is fully reactive to a
       // sign-in. Known issues: Google Drive client auth strategy, top-right
       // user icon.
@@ -346,15 +294,8 @@ export class VESignInModal extends LitElement {
     this.#close(outcome.ok);
   }
 
-  #onDismiss() {
-    if (this.#state.status !== "open") {
-      return;
-    }
-    this.#close(false);
-  }
-
   #close(outcome: boolean) {
-    if (this.#state.status !== "open") {
+    if (this.#state.status === "closed") {
       return;
     }
     this.#state.request.outcomeResolve(outcome);
