@@ -1042,7 +1042,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           <span class="node-title">${this.nodeTitle}</span>
           ${this.showRunStatus
             ? html`<bb-node-run-control
-                .actionContext="graph"
+                .actionContext=${"graph"}
                 .nodeId=${this.nodeId}
                 .runState=${this.runState}
               ></bb-node-run-control>`

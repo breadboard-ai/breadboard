@@ -143,76 +143,48 @@ export class NodeRunControl extends LitElement {
     let hoverIcon = "";
     let tooltip = "";
 
-    switch (this.runState.status) {
-      case "inactive": {
-        tooltip = "";
-        icon = "play_arrow";
-        hoverIcon = "play_arrow";
-        disabled = true;
-        break;
-      }
+    if (!this.actionContext) {
+      disabled = true;
+    } else {
+      const play_icon =
+        this.actionContext === "graph" ? "play_arrow" : "play_circle";
+      const restart_tooltip =
+        this.actionContext === "graph"
+          ? "Start run here"
+          : "Run this step only";
 
-      case "ready": {
-        tooltip = "Run this step only";
-        icon = "play_arrow";
-        hoverIcon = "play_arrow";
-        break;
-      }
+      switch (this.runState.status) {
+        case "skipped":
+        case "inactive": {
+          tooltip = "";
+          icon = play_icon;
+          hoverIcon = play_icon;
+          disabled = true;
+          break;
+        }
 
-      // TODO: Enable this state.
-      // case "run": {
-      //   tooltip = "Run from here";
-      //   icon = "play_circle";
-      //   hoverIcon = "play_circle";
-      //   break;
-      // }
+        case "failed":
+        case "succeeded":
+        case "interrupted":
+        case "ready": {
+          tooltip = restart_tooltip;
+          icon = play_icon;
+          hoverIcon = play_icon;
+          break;
+        }
 
-      case "working":
-      case "waiting": {
-        tooltip = "Stop";
-        hoverIcon = "stop";
-        icon = "progress_activity";
-        break;
-      }
+        case "working":
+        case "waiting": {
+          tooltip = "Stop";
+          hoverIcon = "stop";
+          icon = "progress_activity";
+          break;
+        }
 
-      case "succeeded": {
-        tooltip = "Run this step only";
-        hoverIcon = "play_arrow";
-        icon = "play_arrow";
-        break;
-      }
-
-      case "failed": {
-        tooltip = "Re-run this step";
-        hoverIcon = "play_arrow";
-        icon = "play_arrow";
-        break;
-      }
-
-      case "skipped": {
-        tooltip = "Stop at this step";
-        icon = "";
-        hoverIcon = "pause";
-        break;
-      }
-
-      case "interrupted": {
-        tooltip = "Re-run this step";
-        icon = "play_arrow";
-        hoverIcon = "play_arrow";
-        break;
-      }
-
-      case "breakpoint": {
-        tooltip = "Don't stop at this step";
-        icon = "pause";
-        hoverIcon = "close";
-        break;
-      }
-
-      default: {
-        disabled = true;
-        break;
+        default: {
+          disabled = true;
+          break;
+        }
       }
     }
 
