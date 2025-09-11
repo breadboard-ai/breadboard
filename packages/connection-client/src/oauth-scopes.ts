@@ -40,6 +40,11 @@ export const OAUTH_SCOPES = {
   "https://www.googleapis.com/auth/generative-language.retriever": {
     category: "Gemini",
   },
+
+  // https://developers.google.com/workspace/calendar/api/auth
+  "https://www.googleapis.com/auth/calendar.readonly": {
+    category: "Google Calendar",
+  },
 } as const satisfies Record<string, OAuthScopeInfo>;
 
 type OAuthScopeInfo = {

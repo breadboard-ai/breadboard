@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Outcome } from "./data.js";
-
 export type McpServerDetails = {
   /**
    * Name of the server. Part of the technical details, though when title is
@@ -54,5 +52,3 @@ export type McpServerDescriptor = {
    */
   readonly removable: boolean;
 };
-
-export type TokenGetter = (scopes?: string[]) => Promise<Outcome<string>>;

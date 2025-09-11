@@ -8,13 +8,15 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { Implementation } from "@modelcontextprotocol/sdk/types.js";
 import {
   JsonSerializableRequestInit,
+  McpBuiltInClientFactory,
   McpClient,
   McpProxyRequest,
   McpServerInfo,
   McpServerStore,
+  TokenGetter,
 } from "./types.js";
 import { McpBuiltInServerStore } from "./builtin-server-store.js";
-import { Outcome, TokenGetter } from "@breadboard-ai/types";
+import { Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { ProxyBackedClient } from "./proxy-backed-client.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -23,19 +25,16 @@ import { CachingMcpClient } from "./caching-mcp-client.js";
 
 export { McpClientManager };
 
-export type CreateClientOptions = {
-  proxyUrl: string;
-};
-
 class McpClientManager {
   #cache: Map<string, CachingMcpClient> = new Map();
   #builtIn: McpBuiltInServerStore;
 
   constructor(
+    builtInClients: [string, McpBuiltInClientFactory][],
     private readonly tokenGetter: TokenGetter,
     private readonly proxyUrl?: string
   ) {
-    this.#builtIn = new McpBuiltInServerStore(tokenGetter);
+    this.#builtIn = new McpBuiltInServerStore(tokenGetter, builtInClients);
   }
 
   builtInServers(): ReadonlyArray<McpServerInfo> {
@@ -99,9 +98,7 @@ class McpClientManager {
 
     try {
       if (isBuiltIn) {
-        const client = this.#builtIn.get(url);
-        if (!ok(client)) return client;
-        return new CachingMcpClient(this.#cache, url, client, serverStore);
+        return this.#builtIn.get(url);
       } else if (this.proxyUrl) {
         const accessToken = await this.tokenGetter();
         const serverInfo = await serverStore.get(url);

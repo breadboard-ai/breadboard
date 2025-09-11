@@ -1,16 +1,16 @@
 {
-  "name": "@breadboard-ai/mcp",
+  "name": "@breadboard-ai/mcp-gcal",
   "version": "0.0.1",
-  "description": "MCP Support for Breadboard",
+  "description": "Built-in Breadboard MCP Client/Server for Google Calendar",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
-    "test": "wireit",
     "build": "wireit",
-    "lint": "wireit"
+    "lint": "wireit",
+    "test": "wireit"
   },
   "wireit": {
     "build": {
@@ -64,7 +64,7 @@
     }
   },
   "repository": {
-    "directory": "packages/mcp",
+    "directory": "packages/mcp-gcal",
     "type": "git",
     "url": "https://github.com/breadboard-ai/breadboard.git"
   },
@@ -84,16 +84,14 @@
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.34.1",
-    "ava": "6.4.0",
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@breadboard-ai/connection-client": "^0.3.0",
+    "@breadboard-ai/mcp": "^0.0.1",
     "@breadboard-ai/types": "^0.8.0",
     "@breadboard-ai/utils": "^0.0.2",
-    "@modelcontextprotocol/sdk": "^1.17.1",
-    "idb": "^8.0.3",
-    "zod": "^3.23.8",
-    "zod-to-json-schema": "^3.24.6"
+    "@types/gapi": "^0.0.47",
+    "@types/gapi.calendar": "^3.0.11",
+    "zod": "^3.23.8"
   }
 }
