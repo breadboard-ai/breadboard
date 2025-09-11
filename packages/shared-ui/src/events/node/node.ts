@@ -25,6 +25,12 @@ export interface Action extends BaseEventDetail<`${Namespace}.action`> {
    * - `primary` -- the action triggered by tapping the primary action button.
    */
   readonly action: "primary";
+  /**
+   * The context of the action. Where was the action button tapped?
+   *  - `console` -- the button was tapped in the console
+   *  - `graph` -- the button was tapped in the graph
+   */
+  readonly actionContext: "console" | "graph" | null;
 }
 
 export interface AddWithEdge

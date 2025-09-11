@@ -22,6 +22,9 @@ export class NodeRunControl extends LitElement {
   accessor runState: NodeRunState | null = null;
 
   @property()
+  accessor actionContext: "console" | "graph" | null = null;
+
+  @property()
   accessor nodeId: NodeIdentifier | null = null;
 
   @property({ reflect: true, type: String })
@@ -249,6 +252,7 @@ export class NodeRunControl extends LitElement {
             // TODO: Bring back subgraphs.
             subGraphId: "",
             action: "primary",
+            actionContext: this.actionContext,
           })
         );
       }}
