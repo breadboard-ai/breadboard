@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Outcome, TokenGetter } from "@breadboard-ai/types";
+import { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
+import { Outcome } from "@breadboard-ai/types";
 import { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type {
@@ -16,6 +17,8 @@ import type {
   ToolAnnotations,
 } from "@modelcontextprotocol/sdk/types.js";
 import type z from "zod";
+
+export type TokenGetter = (scopes?: OAuthScope[]) => Promise<Outcome<string>>;
 
 export type JsonSerializableHeadersInit =
   | [string, string][]

@@ -4,28 +4,30 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { err } from "@breadboard-ai/utils";
-import { Outcome, TokenGetter } from "@breadboard-ai/types";
+import { err, ok } from "@breadboard-ai/utils";
+import { Outcome } from "@breadboard-ai/types";
 import {
   McpBuiltInClient,
   McpBuiltInClientFactory,
   McpClient,
   McpServerInfo,
+  TokenGetter,
 } from "./types.js";
-import { createSimpleMemoryClient } from "./simple-memory.js";
 
 export { McpBuiltInServerStore };
 
 const BUILTIN_SERVER_PREFIX = "builtin:";
 
-const BUILTIN_SERVERS: Map<string, McpBuiltInClientFactory> = new Map([
-  ["memory", createSimpleMemoryClient],
-]);
-
 class McpBuiltInServerStore {
   #clients: Map<string, McpBuiltInClient> = new Map();
+  #clientFactories: Map<string, McpBuiltInClientFactory>;
 
-  constructor(private readonly tokenGetter: TokenGetter) {}
+  constructor(
+    private readonly tokenGetter: TokenGetter,
+    clientFactories: [string, McpBuiltInClientFactory][]
+  ) {
+    this.#clientFactories = new Map(clientFactories);
+  }
 
   isBuiltIn(url?: string) {
     return url?.startsWith(BUILTIN_SERVER_PREFIX);
@@ -33,21 +35,19 @@ class McpBuiltInServerStore {
 
   builtInServers(): ReadonlyArray<McpServerInfo> {
     const servers: McpServerInfo[] = [];
-    BUILTIN_SERVERS.forEach((_factory, name) => {
-      const info = this.#clients.get(name)?.info;
-      if (info) {
-        servers.push(info);
-      }
+    this.#clientFactories.forEach((_factory, name) => {
+      const client = this.#getOrCreateClient(name);
+      if (!ok(client)) return;
+
+      servers.push(client.info);
     });
     return servers;
   }
 
-  get(url: string): Outcome<McpClient> {
-    const name = url.slice(BUILTIN_SERVER_PREFIX.length);
-
+  #getOrCreateClient(name: string): Outcome<McpBuiltInClient> {
     let client = this.#clients.get(name);
     if (!client) {
-      const factory = BUILTIN_SERVERS.get(name);
+      const factory = this.#clientFactories.get(name);
       if (!factory) {
         return err(`Unknown built-in server "${name}"`);
       }
@@ -55,5 +55,10 @@ class McpBuiltInServerStore {
       this.#clients.set(name, client);
     }
     return client;
+  }
+
+  get(url: string): Outcome<McpClient> {
+    const name = url.slice(BUILTIN_SERVER_PREFIX.length);
+    return this.#getOrCreateClient(name);
   }
 }
