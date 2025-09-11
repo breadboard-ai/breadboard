@@ -13,9 +13,10 @@ import {
   McpProxyRequest,
   McpServerInfo,
   McpServerStore,
+  TokenGetter,
 } from "./types.js";
 import { McpBuiltInServerStore } from "./builtin-server-store.js";
-import { Outcome, TokenGetter } from "@breadboard-ai/types";
+import { Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { ProxyBackedClient } from "./proxy-backed-client.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";

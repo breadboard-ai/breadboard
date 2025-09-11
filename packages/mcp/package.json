@@ -88,6 +88,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@breadboard-ai/connection-client": "^0.3.0",
     "@breadboard-ai/types": "^0.8.0",
     "@breadboard-ai/utils": "^0.0.2",
     "@modelcontextprotocol/sdk": "^1.17.1",

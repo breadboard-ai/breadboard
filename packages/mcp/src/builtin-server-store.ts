@@ -5,12 +5,13 @@
  */
 
 import { err, ok } from "@breadboard-ai/utils";
-import { Outcome, TokenGetter } from "@breadboard-ai/types";
+import { Outcome } from "@breadboard-ai/types";
 import {
   McpBuiltInClient,
   McpBuiltInClientFactory,
   McpClient,
   McpServerInfo,
+  TokenGetter,
 } from "./types.js";
 
 export { McpBuiltInServerStore };

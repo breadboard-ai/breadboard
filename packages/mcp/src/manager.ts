@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TokenGetter } from "@breadboard-ai/types";
 import { McpClientManager } from "./client-manager.js";
 import { McpFileSystemBackend } from "./mcp-fs-backend.js";
-import { McpBuiltInClientFactory } from "./types.js";
+import { McpBuiltInClientFactory, TokenGetter } from "./types.js";
 
 export { McpManager };
 

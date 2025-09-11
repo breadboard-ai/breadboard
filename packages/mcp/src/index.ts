@@ -11,3 +11,4 @@ export { McpManager } from "./manager.js";
 export type * from "./types.js";
 export { createSimpleMemoryClient } from "./simple-memory.js";
 export { BuiltInClient } from "./built-in-client.js";
+export { mcpErr, mcpText } from "./utils.js";

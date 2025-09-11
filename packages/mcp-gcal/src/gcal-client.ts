@@ -7,8 +7,13 @@
 /// <reference types="@types/gapi" />
 /// <reference types="@types/gapi.calendar" />
 
-import { BuiltInClient, McpBuiltInClient } from "@breadboard-ai/mcp";
-import { TokenGetter } from "@breadboard-ai/types";
+import {
+  BuiltInClient,
+  McpBuiltInClient,
+  mcpErr,
+  mcpText,
+  TokenGetter,
+} from "@breadboard-ai/mcp";
 import { ok } from "@breadboard-ai/utils";
 
 export { createGoogleCalendarClient };
@@ -29,23 +34,14 @@ function createGoogleCalendarClient(
     },
     async () => {
       if (!globalThis.gapi) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: "GAPI is not loaded, unable to query Google Calendar",
-            },
-          ],
-          isError: true,
-        };
+        return mcpErr("GAPI is not loaded, unable to query Google Calendar");
       }
       await new Promise((resolve) => gapi.load("client", resolve));
-      const access_token = await tokenGetter();
+      const access_token = await tokenGetter([
+        "https://www.googleapis.com/auth/calendar.readonly",
+      ]);
       if (!ok(access_token)) {
-        return {
-          content: [{ type: "text", text: access_token.$error }],
-          isError: true,
-        };
+        return mcpErr(access_token.$error);
       }
       gapi.client.setToken({ access_token });
       await gapi.client.load(
@@ -54,12 +50,14 @@ function createGoogleCalendarClient(
 
       const response = await gapi.client.calendar.events.list({
         calendarId: "primary",
+        timeMin: new Date().toISOString(),
       });
-      console.log("RESULT", response.result);
+      const events = response?.result?.items;
+      if (!events) {
+        return mcpErr("Invalid response from the calendar");
+      }
 
-      return {
-        content: [{ type: "text", text: `No upcoming events` }],
-      };
+      return mcpText(JSON.stringify(events));
     }
   );
 

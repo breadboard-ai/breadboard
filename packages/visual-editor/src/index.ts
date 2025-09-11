@@ -440,8 +440,8 @@ export class Main extends SignalWatcher(LitElement) {
 
     const mcp = new McpManager(
       builtInMcpClients,
-      async () => {
-        const token = await this.signinAdapter.token();
+      async (scopes) => {
+        const token = await this.signinAdapter.token(scopes);
         if (token.state === "valid") {
           return token.grant.access_token;
         }
