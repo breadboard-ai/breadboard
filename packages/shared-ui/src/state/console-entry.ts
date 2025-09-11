@@ -45,6 +45,14 @@ class ReactiveConsoleEntry implements ConsoleEntry {
   accessor completed = false;
 
   @signal
+  accessor rerun = false;
+
+  @signal
+  get open() {
+    return this.rerun || !(this.completed && !this.error);
+  }
+
+  @signal
   get status() {
     return this.rendererRunState.nodes.get(this.id) ?? { status: "inactive" };
   }

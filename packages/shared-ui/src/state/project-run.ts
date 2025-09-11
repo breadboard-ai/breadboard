@@ -373,6 +373,7 @@ class ReactiveProjectRun implements ProjectRun {
     const node = this.#inspectable?.nodeById(id);
     const metadata = this.#nodeMetadata(id);
     const outputSchema = node?.currentDescribe()?.outputSchema;
+    const rerun = this.console.has(id);
     const entry = new ReactiveConsoleEntry(
       id,
       this.renderer,
@@ -383,6 +384,7 @@ class ReactiveProjectRun implements ProjectRun {
     this.current ??= new SignalMap();
     this.current.set(id, entry);
     this.console.set(id, entry);
+    entry.rerun = rerun;
 
     this.renderer.nodes.set(id, { status: "working" });
 
