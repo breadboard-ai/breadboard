@@ -8,7 +8,7 @@ const Strings = StringsHelper.forSection("ActivityLog");
 
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { ProjectRun } from "../../../state";
+import { ProjectRun, RendererRunState, UI } from "../../../state";
 import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
 import { ResizeEvent, StateEvent } from "../../../events/events";
@@ -20,11 +20,20 @@ import { colorsLight } from "../../../styles/host/colors-light.js";
 import { type } from "../../../styles/host/type.js";
 import { iconSubstitute } from "../../../utils/icon-substitute.js";
 import { styleMap } from "lit/directives/style-map.js";
+import { NodeRunState } from "@breadboard-ai/types";
+import { uiStateContext } from "../../../contexts/ui-state.js";
+import { consume } from "@lit/context";
 
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {
+  @consume({ context: uiStateContext })
+  accessor #uiState!: UI;
+
   @property()
   accessor run: ProjectRun | null = null;
+
+  @property()
+  accessor runState: RendererRunState["nodes"] | null = null;
 
   @property()
   accessor themeStyles: Record<string, string> | null = null;
@@ -139,11 +148,12 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           summary {
             display: flex;
             align-items: center;
+            justify-content: center;
             height: var(--bb-grid-size-9);
             border-radius: var(--bb-grid-size-3);
             list-style: none;
             padding: 0 var(--bb-grid-size-3);
-            background: var(--n-90, var(--bb-neutral-50));
+            background: var(--n-98, var(--bb-neutral-50));
             font-size: 12px;
             color: var(--n-0, var(--bb-neutral-900));
             cursor: pointer;
@@ -157,6 +167,13 @@ export class ConsoleView extends SignalWatcher(LitElement) {
               display: none;
             }
 
+            & .step-detail {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              flex: 1;
+            }
+
             & .title {
               display: flex;
               align-items: center;
@@ -168,10 +185,16 @@ export class ConsoleView extends SignalWatcher(LitElement) {
               }
 
               & .duration {
-                color: var(--bb-neutral-700);
+                color: var(--n-70);
                 margin-left: var(--bb-grid-size);
-                font: 400 var(--bb-label-medium) /
-                  var(--bb-label-line-height-medium) var(--bb-font-family);
+              }
+            }
+
+            & .chevron {
+              margin-right: var(--bb-grid-size-4);
+
+              &::before {
+                content: "keyboard_arrow_up";
               }
             }
 
@@ -183,14 +206,8 @@ export class ConsoleView extends SignalWatcher(LitElement) {
               }
             }
 
-            &:not(.empty):not(.active) .g-icon {
-              &.details-status::before {
-                content: "keyboard_arrow_up";
-              }
-            }
-
-            &.active .g-icon {
-              &.details-status {
+            &.active {
+              &.g-icon.details-status {
                 animation: rotate 1s linear forwards infinite;
 
                 &::before {
@@ -203,7 +220,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           &[open] > summary {
             margin-bottom: var(--bb-grid-size-3);
 
-            &:not(.empty):not(.active) .g-icon.details-status::before {
+            & .chevron::before {
               content: "keyboard_arrow_down";
             }
           }
@@ -218,7 +235,11 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         & > details {
           & > summary {
             height: var(--bb-grid-size-12);
-            background: var(--n-90, var(--bb-neutral-200));
+            background: var(--n-98, var(--bb-neutral-200));
+
+            & .title {
+              flex: 0 1 auto;
+            }
 
             &.chat_mirror {
               background: var(--ui-get-input);
@@ -340,6 +361,9 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             ((!item.completed && item.work.size === 0) ||
               (item.completed && item.output.size === 0)) &&
             !item.error;
+          const nodeRunState: NodeRunState = this.runState?.get(itemId) ?? {
+            status: "inactive",
+          };
           const classes: Record<string, boolean> = {
             "sans-flex": true,
             "w-500": true,
@@ -389,15 +413,25 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             } else {
               this.#openItems.add(itemId);
             }
-          }} class=${classMap(classes)}>${
-            item.icon
-              ? html`<span class="g-icon step-icon round filled"
-                  >${item.icon}</span
-                >`
-              : nothing
-          }
-            <span class="title">${item.title}</span>
-            <span class="g-icon details-status"></span>
+          }} class=${classMap(classes)}>
+          <span class="chevron g-icon round filled"></span>
+            <div class="step-detail">${
+              item.icon
+                ? html`<span class="g-icon step-icon round filled"
+                    >${item.icon}</span
+                  >`
+                : nothing
+            }
+              <span class="title">${item.title}</span>
+            </div>
+            ${
+              this.#uiState?.flags?.usePlanRunner
+                ? html`<bb-node-run-control
+                    .nodeId=${itemId}
+                    .runState=${nodeRunState}
+                  ></bb-node-run-control>`
+                : nothing
+            }
           </summary>
           ${
             item.work.size > 0
@@ -407,7 +441,11 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                   ([workItemId, workItem]) => {
                     const icon = iconSubstitute(workItem.icon);
 
-                    const workItemClasses: Record<string, boolean> = {};
+                    const workItemClasses: Record<string, boolean> = {
+                      "w-400": true,
+                      "sans-flex": true,
+                      round: true,
+                    };
                     if (icon) {
                       workItemClasses[icon] = true;
                     }
@@ -441,17 +479,24 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                         }}
                         class=${classMap(workItemClasses)}
                       >
-                        ${icon
-                          ? html`<span class="g-icon step-icon round filled"
-                              >${icon}</span
-                            >`
-                          : nothing}<span class="title"
-                          >${workItem.title}<span class="duration"
-                            >${this.#formatToSeconds(workItem.elapsed)}</span
-                          ></span
-                        >
-
-                        <span class="g-icon details-status"></span>
+                        <span class="chevron g-icon round filled"></span>
+                        <div class="step-detail">
+                          ${icon
+                            ? html`<span class="g-icon step-icon round filled"
+                                >${icon}</span
+                              >`
+                            : nothing}<span class="title"
+                            >${workItem.title}<span class="duration"
+                              >${this.#formatToSeconds(workItem.elapsed)}</span
+                            ></span
+                          >
+                        </div>
+                        ${this.#uiState?.flags?.usePlanRunner
+                          ? html`<bb-node-run-control
+                              .nodeId=${itemId}
+                              .runState=${nodeRunState}
+                            ></bb-node-run-control>`
+                          : nothing}
                       </summary>
 
                       ${workItem.awaitingUserInput
@@ -546,6 +591,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         html`<bb-app-header
           .neutral=${true}
           .replayActive=${this.run?.consoleState === "entries"}
+          .replayAutoStart=${true}
           .progress=${this.run?.progress}
         ></bb-app-header>`,
         this.run?.consoleState === "entries"

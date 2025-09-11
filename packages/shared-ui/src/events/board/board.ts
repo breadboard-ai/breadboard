@@ -52,6 +52,11 @@ export interface Stop extends BaseEventDetail<`${Namespace}.stop`> {
   readonly clearLastRun: boolean;
 }
 
+export interface Restart extends BaseEventDetail<`${Namespace}.restart`> {
+  /* Duped to avoid @typescript-eslint/no-empty-object-type */
+  readonly eventType: `${Namespace}.restart`;
+}
+
 export interface Input extends BaseEventDetail<`${Namespace}.input`> {
   readonly id: string;
   readonly data: Record<string, unknown>;

@@ -72,6 +72,7 @@ export type StateEventDetailMap = EnforceEventTypeMatch<{
   "board.rename": Board.Rename;
   "board.run": Board.Run;
   "board.stop": Board.Stop;
+  "board.restart": Board.Restart;
   "board.replace": Board.Replace;
 
   "host.modetoggle": Host.ModeToggle;
