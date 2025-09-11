@@ -1,0 +1,170 @@
+{
+  "group": [
+    [
+      "cat-image",
+      {
+        "data": "/images/catto.jpg",
+        "mimeType": "image/jpg",
+        "presentation": {
+          "type": "card",
+          "orientation": "vertical",
+          "behaviors": [],
+          "segments": [
+            {
+              "fields": {
+                "cat-image": {
+                  "as": "particle-viewer-image",
+                  "title": "Cat Image",
+                  "modifiers": ["hero"]
+                }
+              },
+              "orientation": "vertical",
+              "weight": 1,
+              "type": "media"
+            }
+          ]
+        }
+      }
+    ],
+    [
+      "content-and-audio-columns",
+      {
+        "group": [
+          [
+            "outfit-description",
+            {
+              "text": "## The Midnight Sapphire Statement\nA perfectly tailored, deep sapphire blue suit crafted from a lightweight wool blend forms the sophisticated core of this ensemble, offering an eye-catching hue for the red carpet while ensuring comfort through London's fluctuating temperatures. Beneath, a sleek black dress shirt provides a sharp, modern contrast, complemented by a slim black silk tie that adds a touch of refined formality. Polished black leather Chelsea boots ground the look with an edgy, contemporary flair, making a bold style statement. Accessorize with a minimalist watch and a subtle black silk pocket square for a final touch of understated elegance, ensuring you're both cool and comfortably chic from arrival to after-party.",
+              "presentation": {
+                "type": "card",
+                "orientation": "vertical",
+                "behaviors": [],
+                "segments": [
+                  {
+                    "fields": {
+                      "outfit-description": {
+                        "as": "particle-viewer-long-text",
+                        "title": "Outfit Description"
+                      }
+                    },
+                    "orientation": "vertical",
+                    "weight": 1,
+                    "type": "block"
+                  }
+                ]
+              }
+            }
+          ],
+          [
+            "location-weather",
+            {
+              "text": "## Weather\nThis outfit is good for today's London weather: It'll be mostly cloudy with a high of 71 and a low of 53 and a 10% chance of rain.",
+              "presentation": {
+                "type": "card",
+                "orientation": "vertical",
+                "behaviors": [],
+                "segments": [
+                  {
+                    "fields": {
+                      "location-weather": {
+                        "as": "particle-viewer-long-text",
+                        "title": "Location Weather"
+                      }
+                    },
+                    "orientation": "vertical",
+                    "weight": 1,
+                    "type": "block"
+                  }
+                ]
+              }
+            }
+          ],
+          [
+            "some-audio",
+            {
+              "data": "/audio/hello-world.wav",
+              "mimeType": "audio/wav",
+              "presentation": {
+                "type": "card",
+                "orientation": "vertical",
+                "behaviors": [],
+                "segments": [
+                  {
+                    "fields": {
+                      "some-audio": {
+                        "as": "particle-viewer-audio",
+                        "title": "Some Audio"
+                      }
+                    },
+                    "orientation": "vertical",
+                    "weight": 1,
+                    "type": "media"
+                  }
+                ]
+              }
+            }
+          ]
+        ],
+        "presentation": {
+          "type": "list",
+          "orientation": "horizontal",
+          "behaviors": []
+        }
+      }
+    ],
+    [
+      "additional-description",
+      {
+        "text": "Subtitle.",
+        "presentation": {
+          "type": "card",
+          "orientation": "vertical",
+          "behaviors": [],
+          "segments": [
+            {
+              "fields": {
+                "additional-description": {
+                  "as": "particle-viewer-text",
+                  "title": "Subtitle"
+                }
+              },
+              "orientation": "vertical",
+              "weight": 1,
+              "type": "block"
+            }
+          ]
+        }
+      }
+    ],
+    [
+      "dog-image",
+      {
+        "data": "/images/doggo.jpg",
+        "mimeType": "image/jpg",
+        "presentation": {
+          "type": "card",
+          "orientation": "vertical",
+          "behaviors": [],
+          "segments": [
+            {
+              "fields": {
+                "dog-image": {
+                  "as": "particle-viewer-image",
+                  "title": "Dog Image",
+                  "modifiers": ["hero"]
+                }
+              },
+              "orientation": "vertical",
+              "weight": 1,
+              "type": "media"
+            }
+          ]
+        }
+      }
+    ]
+  ],
+  "presentation": {
+    "type": "list",
+    "orientation": "vertical",
+    "behaviors": []
+  }
+}

@@ -18,10 +18,14 @@ import {
 import { provide } from "@lit/context";
 import { resolve } from "./resolver";
 
-import Data from "./data/data.json" assert { type: "json" };
-import { twoColumnMediaLeft as template } from "./data/template";
+import UnadornedData from "./data/data.json" assert { type: "json" };
+import { imageLeftRightTextBelow as template } from "./data/template";
+import { ParticleTemplate } from "./types/types.js";
 
-function inflateParticles(data: SerializedGroupParticle): GroupParticle | null {
+function inflateParticles(
+  data: SerializedGroupParticle,
+  template: ParticleTemplate
+): GroupParticle | null {
   const group = toParticle(data);
   if (!isGroupParticle(group)) {
     return null;
@@ -63,7 +67,10 @@ export class AlternativeDemo extends LitElement {
   constructor() {
     super();
 
-    this.root = inflateParticles(Data as unknown as SerializedGroupParticle);
+    this.root = inflateParticles(
+      UnadornedData as unknown as SerializedGroupParticle,
+      template
+    );
   }
 
   render() {

@@ -17,6 +17,7 @@ import {
 export {
   isParticle,
   toParticle,
+  toSerializedParticle,
   isTextParticle,
   isDataParticle,
   isGroupParticle,
@@ -44,6 +45,27 @@ function toParticle(serialized: SerializedParticle): Particle {
     }
     console.warn("Unrecognized serialized particle", serialized);
     return { text: "Unrecognized serialized particle" };
+  }
+}
+
+function toSerializedParticle(particle: Particle): SerializedParticle {
+  return convert(particle);
+
+  function convert(particle: Particle): SerializedParticle {
+    if ("text" in particle || "data" in particle) {
+      return particle;
+    }
+
+    if ("group" in particle && particle.group instanceof Map) {
+      const serializedGroup: [string, SerializedParticle][] = [];
+      for (const [key, value] of particle.group.entries()) {
+        serializedGroup.push([key, toSerializedParticle(value)]);
+      }
+      return { ...particle, group: serializedGroup };
+    }
+
+    console.warn("Unrecognized particle format", particle);
+    return { text: "Unrecognized particle format" };
   }
 }
 

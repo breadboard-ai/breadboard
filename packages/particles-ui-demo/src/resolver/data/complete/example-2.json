@@ -1,0 +1,223 @@
+{
+  "group": [
+    [
+      "root",
+      {
+        "group": [
+          [
+            "main",
+            {
+              "group": [
+                [
+                  "left",
+                  {
+                    "group": [
+                      [
+                        "p2",
+                        {
+                          "data": "http://localhost:3000/board/blobs/a084b570-55f7-4564-80c7-7e036140f962",
+                          "mimeType": "image/png",
+                          "presentation": {
+                            "type": "card",
+                            "behaviors": [],
+                            "orientation": "vertical",
+                            "segments": [
+                              {
+                                "fields": {
+                                  "p2": {
+                                    "as": "particle-viewer-image",
+                                    "title": "Hero Image",
+                                    "modifiers": ["hero"]
+                                  }
+                                },
+                                "weight": 1,
+                                "orientation": "vertical",
+                                "type": "media"
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      [
+                        "p4",
+                        {
+                          "data": "http://localhost:3000/board/blobs/c3379f5a-821d-49bd-8a05-3c3ac60b8485",
+                          "mimeType": "audio/wav",
+                          "presentation": {
+                            "type": "card",
+                            "behaviors": [],
+                            "orientation": "vertical",
+                            "segments": [
+                              {
+                                "fields": {
+                                  "p4": {
+                                    "as": "particle-viewer-audio",
+                                    "title": "Audio Player",
+                                    "behaviors": ["audio-playback"]
+                                  }
+                                },
+                                "weight": 1,
+                                "orientation": "vertical",
+                                "type": "media"
+                              }
+                            ]
+                          },
+                          "type": "slider",
+                          "behaviors": ["audio-playback"]
+                        }
+                      ]
+                    ],
+                    "presentation": {
+                      "type": "card",
+                      "behaviors": [],
+                      "orientation": "vertical",
+                      "segments": [
+                        {
+                          "fields": {
+                            "p2": {
+                              "as": "particle-viewer-image",
+                              "title": "Hero Image",
+                              "modifiers": ["hero"]
+                            }
+                          },
+                          "orientation": "vertical",
+                          "weight": 1,
+                          "type": "media"
+                        },
+                        {
+                          "fields": {
+                            "p4": {
+                              "as": "particle-viewer-audio",
+                              "title": "Audio Player",
+                              "behaviors": ["audio-playback"]
+                            }
+                          },
+                          "orientation": "vertical",
+                          "weight": 1,
+                          "type": "media"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                [
+                  "right",
+                  {
+                    "group": [
+                      [
+                        "list",
+                        {
+                          "group": [
+                            [
+                              "title-particle",
+                              {
+                                "text": "Inside the Mind of Doggo",
+                                "presentation": {
+                                  "type": "card",
+                                  "behaviors": [],
+                                  "orientation": "vertical",
+                                  "segments": [
+                                    {
+                                      "fields": {
+                                        "title-particle": {
+                                          "as": "particle-viewer-text",
+                                          "title": "Title",
+                                          "modifiers": ["hero"]
+                                        }
+                                      },
+                                      "weight": 1,
+                                      "orientation": "vertical",
+                                      "type": "block"
+                                    }
+                                  ]
+                                }
+                              }
+                            ],
+                            [
+                              "p5",
+                              {
+                                "text": "My human is doing that odd, silent, upright standing still while holding the shiny black rectangle-device again. Another one for the endless collection of \"dog looking vaguely attentive, possibly slightly bored.\" I'm maintaining this perfectly stationary, highly photogenic stance, as requested by the tall, bipedal treat-distributor. Though, the slight warm golden window light is rather flattering to my dark-and-tan furry covering, I must admit. They probably think my slightly peeking pink muscle is charming. It’s entirely accidental, of course, a subtle protest against the prolonged expectation of stillness. When will the strange clicky thing be put down and the delicious crunchy mouth-delights appear? These are the real mysteries of this peculiar co-existence. ",
+                                "presentation": {
+                                  "type": "card",
+                                  "behaviors": [],
+                                  "orientation": "vertical",
+                                  "segments": [
+                                    {
+                                      "fields": {
+                                        "p5": {
+                                          "as": "particle-viewer-long-text",
+                                          "title": "Body Copy"
+                                        }
+                                      },
+                                      "weight": 1,
+                                      "orientation": "vertical",
+                                      "type": "block"
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          ],
+                          "presentation": {
+                            "type": "card",
+                            "behaviors": [],
+                            "orientation": "vertical",
+                            "segments": [
+                              {
+                                "fields": {
+                                  "title-particle": {
+                                    "as": "particle-viewer-text",
+                                    "title": "Title",
+                                    "modifiers": ["hero"]
+                                  }
+                                },
+                                "orientation": "vertical",
+                                "weight": 1,
+                                "type": "block"
+                              },
+                              {
+                                "fields": {
+                                  "p5": {
+                                    "as": "particle-viewer-long-text",
+                                    "title": "Body Copy"
+                                  }
+                                },
+                                "orientation": "vertical",
+                                "weight": 1,
+                                "type": "block"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    ],
+                    "presentation": {
+                      "type": "list",
+                      "behaviors": [],
+                      "orientation": "vertical"
+                    }
+                  }
+                ]
+              ],
+              "presentation": {
+                "behaviors": [],
+                "orientation": "horizontal",
+                "type": "list"
+              }
+            }
+          ]
+        ],
+        "presentation": {
+          "behaviors": [],
+          "orientation": "vertical",
+          "type": "list"
+        }
+      }
+    ]
+  ],
+  "presentation": {
+    "behaviors": [],
+    "orientation": "vertical",
+    "type": "list"
+  }
+}

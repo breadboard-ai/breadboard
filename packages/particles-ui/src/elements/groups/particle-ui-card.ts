@@ -22,24 +22,16 @@ export class ParticleUICard extends SignalWatcher(LitElement) {
         box-sizing: border-box;
       }
 
-      :host {
+      :host([orientation="horizontal"]) {
         display: flex;
         overflow: hidden;
-      }
-
-      section {
-        display: flex;
-        height: 100%;
-      }
-
-      :host([orientation="horizontal"]) {
         flex-direction: row;
         align-items: center;
       }
 
       :host([orientation="vertical"]) {
-        flex-direction: column;
-        align-items: center;
+        display: grid;
+        grid-auto-rows: min-content;
       }
     `,
   ];

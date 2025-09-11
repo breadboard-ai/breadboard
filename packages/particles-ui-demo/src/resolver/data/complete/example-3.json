@@ -1,0 +1,168 @@
+{
+  "group": [
+    [
+      "some-audio-a5c3e1b7",
+      {
+        "data": "/audio/hello-world.wav",
+        "mimeType": "audio/wav",
+        "presentation": {
+          "type": "card",
+          "behaviors": [],
+          "orientation": "vertical",
+          "segments": [
+            {
+              "fields": {
+                "some-audio-a5c3e1b7": {
+                  "as": "particle-viewer-audio",
+                  "title": "Audio Player"
+                }
+              },
+              "orientation": "vertical",
+              "weight": 1,
+              "type": "media"
+            }
+          ]
+        }
+      }
+    ],
+    [
+      "cat-image-c2f8a1d5",
+      {
+        "data": "/images/catto.jpg",
+        "mimeType": "image/jpg",
+        "presentation": {
+          "type": "card",
+          "behaviors": [],
+          "orientation": "vertical",
+          "segments": [
+            {
+              "fields": {
+                "cat-image-c2f8a1d5": {
+                  "as": "particle-viewer-image",
+                  "title": "Hero Image",
+                  "modifiers": ["hero"]
+                }
+              },
+              "orientation": "vertical",
+              "weight": 1,
+              "type": "media"
+            }
+          ]
+        }
+      }
+    ],
+    [
+      "text-layout-g1",
+      {
+        "group": [
+          [
+            "text-col1-g2",
+            {
+              "group": [
+                [
+                  "outfit-desc-o7e2c9a1",
+                  {
+                    "text": "## The Midnight Sapphire Statement\nA perfectly tailored, deep sapphire blue suit crafted from a lightweight wool blend forms the sophisticated core of this ensemble, offering an eye-catching hue for the red carpet while ensuring comfort through London's fluctuating temperatures. Beneath, a sleek black dress shirt provides a sharp, modern contrast, complemented by a slim black silk tie that adds a touch of refined formality. Polished black leather Chelsea boots ground the look with an edgy, contemporary flair, making a bold style statement. Accessorize with a minimalist watch and a subtle black silk pocket square for a final touch of understated elegance, ensuring you're both cool and comfortably chic from arrival to after-party.",
+                    "presentation": {
+                      "type": "card",
+                      "behaviors": [],
+                      "orientation": "vertical",
+                      "segments": [
+                        {
+                          "fields": {
+                            "outfit-desc-o7e2c9a1": {
+                              "as": "particle-viewer-long-text",
+                              "title": "Body Copy"
+                            }
+                          },
+                          "orientation": "vertical",
+                          "weight": 1,
+                          "type": "block"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                [
+                  "loc-weather-l0b6d3f8",
+                  {
+                    "text": "## Weather\nThis outfit is good for today's London weather: It'll be mostly cloudy with a high of 71 and a low of 53 and a 10% chance of rain.",
+                    "presentation": {
+                      "type": "card",
+                      "behaviors": [],
+                      "orientation": "vertical",
+                      "segments": [
+                        {
+                          "fields": {
+                            "loc-weather-l0b6d3f8": {
+                              "as": "particle-viewer-long-text",
+                              "title": "Body Copy"
+                            }
+                          },
+                          "orientation": "vertical",
+                          "weight": 1,
+                          "type": "block"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              ],
+              "presentation": {
+                "type": "list",
+                "behaviors": [],
+                "orientation": "vertical"
+              }
+            }
+          ],
+          [
+            "text-col2-g3",
+            {
+              "group": [
+                [
+                  "add-desc-a8f5e2c1",
+                  {
+                    "text": "Subtitle.",
+                    "presentation": {
+                      "type": "card",
+                      "behaviors": [],
+                      "orientation": "vertical",
+                      "segments": [
+                        {
+                          "fields": {
+                            "add-desc-a8f5e2c1": {
+                              "as": "particle-viewer-text",
+                              "title": "Subtitle"
+                            }
+                          },
+                          "orientation": "vertical",
+                          "weight": 1,
+                          "type": "block"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              ],
+              "presentation": {
+                "type": "list",
+                "behaviors": [],
+                "orientation": "vertical"
+              }
+            }
+          ]
+        ],
+        "presentation": {
+          "type": "list",
+          "behaviors": [],
+          "orientation": "horizontal"
+        }
+      }
+    ]
+  ],
+  "presentation": {
+    "type": "list",
+    "behaviors": [],
+    "orientation": "vertical"
+  }
+}
