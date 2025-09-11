@@ -290,33 +290,30 @@ class ReactiveProjectRun implements ProjectRun {
     const metadata = node.currentDescribe()?.metadata || {};
     const { icon, tags } = metadata;
     // Go ahead and set the entry
-    this.console.set(id, newEntry(node, title, tags, icon));
+    this.console.set(id, newEntry(this.renderer, node, title, tags, icon));
     if (!tags) {
       // .. but if there aren't tags, try using `describe()`.
       // This is done due tue a race condition describer. Sad!
       node.describe().then((result) => {
         const { icon, tags } = result.metadata || {};
-        this.console.set(id, newEntry(node, title, tags, icon));
+        this.console.set(id, newEntry(this.renderer, node, title, tags, icon));
       });
     }
 
     function newEntry(
+      runState: RendererRunState,
       node: InspectableNode,
       title: string,
       tags?: string[],
       defaultIcon?: string
     ): ConsoleEntry {
       const icon = getStepIcon(defaultIcon, node?.currentPorts()) || undefined;
-      return {
-        title,
-        tags,
-        icon,
-        work: new Map(),
-        output: new Map(),
-        completed: true,
-        error: null,
-        current: null,
-      };
+      return new ReactiveConsoleEntry(
+        id,
+        runState,
+        { title, icon, tags },
+        undefined
+      );
     }
   }
 
@@ -377,7 +374,8 @@ class ReactiveProjectRun implements ProjectRun {
     const metadata = this.#nodeMetadata(id);
     const outputSchema = node?.currentDescribe()?.outputSchema;
     const entry = new ReactiveConsoleEntry(
-      this.fileSystem,
+      id,
+      this.renderer,
       metadata,
       outputSchema
     );
