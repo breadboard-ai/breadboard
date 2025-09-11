@@ -543,6 +543,7 @@ class ReactiveProjectRun implements ProjectRun {
       console.warn(`Unknown action context`);
       return;
     }
+    const runFromNode = actionContext === "graph";
     const nodeState = this.runner?.state?.get(nodeId);
     if (!nodeState) {
       console.warn(
@@ -552,17 +553,12 @@ class ReactiveProjectRun implements ProjectRun {
     }
     switch (nodeState.state) {
       case "inactive": {
-        if (toggleBreakpoint(this.runner)) {
-          this.renderer.nodes.set(nodeId, { status: "breakpoint" });
-        } else {
-          this.renderer.nodes.set(nodeId, { status: "inactive" });
-        }
         break;
       }
       case "ready": {
         console.log(`Run node "${nodeId}"`, nodeState.state);
         this.#dismissedErrors.delete(nodeId);
-        runNode(nodeId, this.runner);
+        run(runFromNode, nodeId, this.runner, this.renderer.nodes);
         break;
       }
       case "working": {
@@ -580,27 +576,23 @@ class ReactiveProjectRun implements ProjectRun {
       case "succeeded": {
         console.log("Run this node (again)", nodeState.state);
         this.#dismissedErrors.delete(nodeId);
-        runNode(nodeId, this.runner);
+        run(runFromNode, nodeId, this.runner, this.renderer.nodes);
         break;
       }
       case "failed": {
         console.log("Run this node (again)", nodeState.state);
         this.#dismissedErrors.delete(nodeId);
-        runNode(nodeId, this.runner);
+        run(runFromNode, nodeId, this.runner, this.renderer.nodes);
         break;
       }
       case "skipped": {
-        if (toggleBreakpoint(this.runner)) {
-          this.renderer.nodes.set(nodeId, { status: "breakpoint" });
-        } else {
-          this.renderer.nodes.set(nodeId, { status: "skipped" });
-        }
+        console.warn(`Action event is invalid for "inactive" state`);
         break;
       }
       case "interrupted": {
         console.log("Run this node (again)", nodeState.state);
         this.#dismissedErrors.delete(nodeId);
-        runNode(nodeId, this.runner);
+        run(runFromNode, nodeId, this.runner, this.renderer.nodes);
         break;
       }
       default: {
@@ -608,31 +600,13 @@ class ReactiveProjectRun implements ProjectRun {
       }
     }
 
-    function toggleBreakpoint(runner: HarnessRunner | undefined): boolean {
-      const breakpoints = runner?.breakpoints;
-      if (!breakpoints) {
-        console.warn(`Primary action: runner does not support breakpoints`);
-        return false;
-      }
-      const breakpoint = breakpoints.get(nodeId);
-      if (breakpoint) {
-        console.log("Remove one-time breakpoint");
-        breakpoints.delete(nodeId);
-        return false;
-      } else {
-        console.log("Insert one-time breakpoint");
-        breakpoints.set(nodeId, { once: true });
-        return true;
-      }
-    }
-
     function stop(nodeId: NodeIdentifier, runner: HarnessRunner | undefined) {
       const stopping = runner?.stop?.(nodeId);
       if (!stopping) {
-        console.log(`Primary action: runner does not support stopping`);
+        console.log(`Runner does not support stopping`);
         return;
       }
-      stopping
+      return stopping
         .then((outcome) => {
           if (!ok(outcome)) {
             console.warn(`Unable to stop`, outcome.$error);
@@ -643,15 +617,55 @@ class ReactiveProjectRun implements ProjectRun {
         });
     }
 
+    function run(
+      runFromNode: boolean,
+      nodeId: NodeIdentifier,
+      runner: HarnessRunner | undefined,
+      nodes: Map<string, NodeRunState>
+    ) {
+      if (runFromNode) {
+        runFrom(nodeId, runner, nodes);
+      } else {
+        runNode(nodeId, runner);
+      }
+    }
+
+    function runFrom(
+      nodeId: NodeIdentifier,
+      runner: HarnessRunner | undefined,
+      nodes: Map<string, NodeRunState>
+    ) {
+      const running = runner?.runFrom?.(nodeId, {
+        stop: (id) => {
+          nodes.set(id, { status: "interrupted" });
+        },
+      });
+      if (!running) {
+        console.log(`Runner does not support running from a node`);
+        return;
+      }
+      running
+        .then((outcome) => {
+          if (!ok(outcome)) {
+            console.warn(`Unable to run from node "${nodeId}"`, outcome.$error);
+            return;
+          }
+        })
+        .catch((reason) => {
+          console.warn(
+            `Exception thrown while running from node "${nodeId}"`,
+            reason
+          );
+        });
+    }
+
     function runNode(
       nodeId: NodeIdentifier,
       runner: HarnessRunner | undefined
     ) {
       const running = runner?.runNode?.(nodeId);
       if (!running) {
-        console.log(
-          `Primary action: runner does not support running individual nodes`
-        );
+        console.log(`Runner does not support running individual nodes`);
         return;
       }
       running
