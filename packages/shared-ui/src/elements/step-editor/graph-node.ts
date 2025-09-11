@@ -847,7 +847,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       return nothing;
     }
 
-    if (status.status !== "failed" && status.status !== "interrupted") {
+    if (status.status !== "failed") {
       return nothing;
     }
 
@@ -1042,6 +1042,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           <span class="node-title">${this.nodeTitle}</span>
           ${this.showRunStatus
             ? html`<bb-node-run-control
+                .actionContext=${"graph"}
                 .nodeId=${this.nodeId}
                 .runState=${this.runState}
               ></bb-node-run-control>`

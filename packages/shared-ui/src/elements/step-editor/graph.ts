@@ -771,7 +771,7 @@ export class Graph extends Box {
       };
       graphNode.runState = runStatus;
 
-      if (runStatus.status === "failed" || runStatus.status === "interrupted") {
+      if (runStatus.status === "failed") {
         graphNode.active = "error";
       } else if (topGraphResult?.currentNode?.descriptor.id === id) {
         graphNode.active = "current";

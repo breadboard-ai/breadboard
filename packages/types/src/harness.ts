@@ -407,6 +407,14 @@ export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
    * For new runtime only: run a single node and stop.
    */
   runNode?(id: NodeIdentifier): Promise<Outcome<void>>;
+  /**
+   * For new runtime only: run (restart if necessary) from node until
+   * completion
+   */
+  runFrom?(
+    id: NodeIdentifier,
+    callbacks: RunFromCallbacks
+  ): Promise<Outcome<void>>;
 
   /**
    * For new runtime only: stop the run
@@ -419,6 +427,10 @@ export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
    *
    */
   updateGraph?(graph: GraphDescriptor): Promise<void>;
+};
+
+export type RunFromCallbacks = {
+  stop: (id: NodeIdentifier) => void;
 };
 
 /**
