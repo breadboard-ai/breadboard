@@ -1104,12 +1104,8 @@ export class Main extends SignalWatcher(LitElement) {
       return;
     }
 
-    // Add a little clearance onto the value.
-    this.#tooltipRef.value.x = Math.min(
-      Math.max(tooltipEvent.x, 120),
-      window.innerWidth - 120
-    );
-    this.#tooltipRef.value.y = Math.max(tooltipEvent.y, 90);
+    this.#tooltipRef.value.x = tooltipEvent.x;
+    this.#tooltipRef.value.y = tooltipEvent.y;
     this.#tooltipRef.value.message = tooltipEvent.message;
     this.#tooltipRef.value.visible = true;
   }

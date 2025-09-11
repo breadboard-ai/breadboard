@@ -39,7 +39,7 @@ const EDGE_SELECTED = palette.neutral.n0;
 
 // Value is no longer on the wire, because it was consumed by the receiving
 // component. Constant wires never reach this state.
-const EDGE_CONSUMED = palette.neutral.n50;
+const EDGE_CONSUMED = palette.neutral.n80;
 
 // Value is on the wire, but hasn't been consumed by receiving component yet.
 const EDGE_STORED = palette.neutral.n80;
@@ -154,9 +154,6 @@ export class GraphEdge extends Box {
 
   @property()
   accessor to: EdgeAttachmentPoint = "Auto";
-
-  @property()
-  accessor carriesList = false;
 
   constructor(
     public readonly node1: Entity,
@@ -710,12 +707,6 @@ export class GraphEdge extends Box {
 
     const connectionPointRadius = CONNECTION_POINT_RADIUS - 2;
     const connectionPoints = this.#calculateConnectionPoints(nodeBoundPoints);
-    const midX =
-      connectionPoints.n1.x +
-      (connectionPoints.n2.x - connectionPoints.n1.x) * 0.5;
-    const midY =
-      connectionPoints.n1.y +
-      (connectionPoints.n2.y - connectionPoints.n1.y) * 0.5;
 
     if (this.#distanceSq(connectionPoints.n1, connectionPoints.n2) < 400) {
       return nothing;
@@ -832,8 +823,8 @@ export class GraphEdge extends Box {
     }
 
     let dashArray = ``;
-    if (this.edgeType === "asset") {
-      dashArray = `4 4`;
+    if (this.status === null) {
+      dashArray = `8 8`;
     }
 
     return html`<section
@@ -934,16 +925,6 @@ export class GraphEdge extends Box {
                             <rect x="0" y="0" width=${this.bounds.width} height=${this.bounds.height} fill="url(#c1-gradient)"></rect>
                             <rect x="0" y="0" width=${this.bounds.width} height=${this.bounds.height} fill="url(#c2-gradient)"></rect>
                           </g>`
-                    : nothing
-                }
-
-
-                ${
-                  this.carriesList
-                    ? svg`<circle cx=${midX} cy=${midY} r="7" fill=${this.selected ? EDGE_SELECTED : edgeColor} />
-                  <foreignObject x=${midX - 6} y=${midY - 9} width="14" height="14">
-                    <span xmlns="http://www.w3.org/1999/xhtml" class="g-icon">data_array</span>
-                  </foreignObject>`
                     : nothing
                 }
           </svg>

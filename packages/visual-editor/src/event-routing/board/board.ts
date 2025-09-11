@@ -10,6 +10,7 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { InputValues, ok } from "@google-labs/breadboard";
 import { RuntimeSnackbarEvent } from "../../runtime/events";
 import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
+import { StateEvent } from "@breadboard-ai/shared-ui/events/events.js";
 
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
@@ -104,6 +105,44 @@ export const StopRoute: EventRoute<"board.stop"> = {
     }
 
     return true;
+  },
+};
+
+export const RestartRoute: EventRoute<"board.restart"> = {
+  event: "board.restart",
+
+  async do({
+    tab,
+    runtime,
+    settings,
+    secretsHelper,
+    googleDriveClient,
+    uiState,
+  }) {
+    await StopRoute.do({
+      tab,
+      runtime,
+      originalEvent: new StateEvent({
+        eventType: "board.stop",
+        clearLastRun: true,
+      }),
+      settings,
+      secretsHelper,
+      googleDriveClient,
+      uiState,
+    });
+    await RunRoute.do({
+      tab,
+      runtime,
+      originalEvent: new StateEvent({
+        eventType: "board.run",
+      }),
+      settings,
+      secretsHelper,
+      googleDriveClient,
+      uiState,
+    });
+    return false;
   },
 };
 

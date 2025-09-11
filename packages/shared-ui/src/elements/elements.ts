@@ -61,6 +61,7 @@ export { FastAccessMenu } from "./fast-access-menu/fast-access-menu.js";
 export { FeedbackPanel } from "./feedback/feedback-panel.js";
 export { HomepageSearchButton } from "./welcome-panel/homepage-search-button.js";
 export { JSONTree } from "./json-tree/json-tree.js";
+export { NodeRunControl } from "./shared/node-controls.js";
 export { OverflowMenu } from "./overflow-menu/overflow-menu.js";
 export { Overlay } from "./overlay/overlay.js";
 export { ProjectListing } from "./welcome-panel/project-listing.js";
