@@ -149,9 +149,7 @@ export class NodeRunControl extends LitElement {
       const play_icon =
         this.actionContext === "graph" ? "play_arrow" : "play_circle";
       const restart_tooltip =
-        this.actionContext === "graph"
-          ? "Start run here"
-          : "Run this step only";
+        this.actionContext === "graph" ? "Run from here" : "Run this step only";
 
       switch (this.runState.status) {
         case "skipped":
