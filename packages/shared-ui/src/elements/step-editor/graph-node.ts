@@ -41,12 +41,7 @@ import { createTruncatedValue } from "./utils/create-truncated-value";
 import { styles as ChicletStyles } from "../../styles/chiclet.js";
 import { toGridSize } from "./utils/to-grid-size";
 import { DragConnectorReceiver } from "../../types/types";
-import {
-  DragConnectorStartEvent,
-  HideTooltipEvent,
-  ShowTooltipEvent,
-  StateEvent,
-} from "../../events/events";
+import { DragConnectorStartEvent } from "../../events/events";
 import { createChiclets } from "./utils/create-chiclets.js";
 import { icons } from "../../styles/icons.js";
 import {
@@ -62,6 +57,19 @@ const EDGE_STANDARD = palette.neutral.n80;
 const EDGE_SELECTED = custom.c100;
 const arrowSize = 4;
 
+// In theory we should be able to just declare @property in the CSS but that
+// doesn't seem to be panning out. So instead we declare the property globally,
+// which is fine because we're mostly telling the browser how the property
+// behaves and individual elements will carry their own --highlight-angle value.
+if ("CSS" in window && "registerProperty" in window.CSS) {
+  window.CSS.registerProperty({
+    name: "--highlight-angle",
+    syntax: "<angle>",
+    inherits: false,
+    initialValue: "0deg",
+  });
+}
+
 @customElement("bb-graph-node")
 export class GraphNode extends Box implements DragConnectorReceiver {
   @property()
@@ -74,7 +82,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   accessor nodeDescription = "";
 
   @property()
-  accessor runStatus: NodeRunState | null = null;
+  accessor runState: NodeRunState | null = null;
 
   @property()
   accessor isStart = false;
@@ -102,9 +110,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
   @property({ reflect: true, type: String })
   accessor active: "pre" | "current" | "post" | "error" = "pre";
-
-  @property({ reflect: true, type: String })
-  accessor controlAnimation: "none" | "rotate" = "none";
 
   @property()
   accessor behavior: BehaviorSchema[] = [];
@@ -159,10 +164,20 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         position: absolute;
         width: 100%;
         height: 100%;
-        outline: var(--bb-grid-size-2) solid
-          oklch(from var(--p-30) l c h / calc(alpha * 0.25));
-        border-radius: var(--bb-grid-size-3);
+        border: var(--bb-grid-size-2) solid transparent;
+        border-radius: var(--bb-grid-size-5);
         z-index: 0;
+        left: calc(var(--bb-grid-size-2) * -1);
+        top: calc(var(--bb-grid-size-2) * -1);
+        background: conic-gradient(
+            from var(--highlight-angle) at 50% 50%,
+            oklch(from var(--p-30) l c h / calc(alpha * 0.48)),
+            oklch(from var(--p-30) l c h / calc(alpha * 0.12)),
+            oklch(from var(--p-30) l c h / calc(alpha * 0.12)),
+            oklch(from var(--p-30) l c h / calc(alpha * 0.48))
+          )
+          border-box;
+        animation: spin-highlight 2s linear infinite;
       }
 
       :host([active="current"]) #container header::after {
@@ -232,13 +247,13 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       :host(:not([updating])[highlighted][highlighttype="model"])
         #container
         #outline {
-        outline: 7px solid oklch(from var(--bb-generative-700) l c h / 0.6);
+        outline: 32px solid oklch(from var(--bb-generative-700) l c h / 0.6);
       }
 
       :host(:not([updating])[highlighted][highlighttype="user"])
         #container
         #outline {
-        outline: 7px solid oklch(from var(--bb-ui-600) l c h / 0.6);
+        outline: 17px solid oklch(from var(--bb-ui-600) l c h / 0.6);
       }
 
       :host([moving]) #container header {
@@ -366,33 +381,8 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             white-space: nowrap;
           }
 
-          & .node-controls {
-            padding: 0;
-            margin: 0;
-            width: 20px;
-            height: 20px;
-            background: none;
-            border: none;
-            pointer-events: auto;
-            opacity: 0.8;
-            transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
-
-            &:not([disabled]) {
-              cursor: pointer;
-              opacity: 1;
-            }
-
-            & .g-icon {
-              &::before {
-                content: attr(data-icon);
-              }
-
-              &.g-icon:hover {
-                &::before {
-                  content: attr(data-hover-icon);
-                }
-              }
-            }
+          & bb-node-run-control {
+            margin: 0 var(--bb-grid-size-2);
           }
 
           & > .g-icon {
@@ -637,21 +627,13 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         outline: 1px solid var(--e-40);
       }
 
-      :host([controlanimation="rotate"]) #container .node-controls {
-        animation: rotate 1s linear infinite;
-
-        &:hover {
-          animation: none;
-        }
-      }
-
-      @keyframes rotate {
+      @keyframes spin-highlight {
         from {
-          rotate: 0deg;
+          --highlight-angle: 0deg;
         }
 
         to {
-          rotate: 360deg;
+          --highlight-angle: 360deg;
         }
       }
     `,
@@ -706,23 +688,8 @@ export class GraphNode extends Box implements DragConnectorReceiver {
     }
   }
 
-  protected willUpdate(changedProperties: PropertyValues): void {
-    if (changedProperties.has("runStatus")) {
-      const status = this.runStatus?.status;
-      if (status === "failed" || status === "interrupted") {
-        this.active = "error";
-      }
-
-      if (status === "working" || status === "waiting") {
-        this.controlAnimation = "rotate";
-      } else {
-        this.controlAnimation = "none";
-      }
-    }
-  }
-
   #watchingResize = false;
-  protected updated(changedProperties: PropertyValues): void {
+  protected updated(changedProperties: PropertyValues<this>): void {
     if (
       changedProperties.has("nodeTitle") ||
       changedProperties.has("updating")
@@ -875,7 +842,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
   }
 
   #maybeRenderRunStatus() {
-    const status = this.runStatus;
+    const status = this.runState;
     if (!this.showRunStatus || !status) {
       return nothing;
     }
@@ -1073,7 +1040,12 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             ? html`<span class="g-icon filled round">${renderableIcon}</span>`
             : nothing}
           <span class="node-title">${this.nodeTitle}</span>
-          ${this.#maybeRenderRunControl()}
+          ${this.showRunStatus
+            ? html`<bb-node-run-control
+                .nodeId=${this.nodeId}
+                .runState=${this.runState}
+              ></bb-node-run-control>`
+            : nothing}
           ${this.hasMainPort
             ? html` <button
                 id="connection-trigger"
@@ -1120,127 +1092,6 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             `}`}
       </section>
       ${this.renderBounds()}`;
-  }
-
-  #maybeRenderRunControl() {
-    if (!this.showRunStatus || !this.runStatus) {
-      return;
-    }
-
-    let disabled = false;
-    let icon = "";
-    let hoverIcon = "";
-    let tooltip = "";
-    switch (this.runStatus.status) {
-      case "inactive": {
-        tooltip = "Stop at this step";
-        hoverIcon = "pause";
-        break;
-      }
-
-      case "ready": {
-        tooltip = "Run this step only";
-        icon = "play_arrow";
-        hoverIcon = "play_arrow";
-        break;
-      }
-
-      case "working":
-      case "waiting": {
-        tooltip = "Stop";
-        hoverIcon = "stop";
-        icon = "progress_activity";
-        break;
-      }
-
-      case "succeeded": {
-        tooltip = "Run this step only";
-        hoverIcon = "autorenew";
-        icon = "autorenew";
-        break;
-      }
-
-      case "failed": {
-        tooltip = "Re-run this step";
-        hoverIcon = "autorenew";
-        icon = "autorenew";
-        break;
-      }
-
-      case "skipped": {
-        tooltip = "Stop at this step";
-        icon = "";
-        hoverIcon = "pause";
-        break;
-      }
-
-      case "interrupted": {
-        tooltip = "Re-run this step";
-        icon = "autorenew";
-        hoverIcon = "autorenew";
-        break;
-      }
-
-      case "breakpoint": {
-        tooltip = "Don't stop at this step";
-        icon = "pause";
-        hoverIcon = "close";
-        break;
-      }
-
-      default: {
-        disabled = true;
-        break;
-      }
-    }
-
-    // We need to add these handlers to intercept the ones on the header. If we
-    // don't do that here then clicking on any of these buttons will trigger the
-    // translate/selection actions.
-    return html`<button
-      @click=${(evt: Event) => {
-        evt.stopImmediatePropagation();
-      }}
-      @pointerover=${(evt: PointerEvent) => {
-        if (!tooltip) {
-          return;
-        }
-
-        this.dispatchEvent(
-          new ShowTooltipEvent(tooltip, evt.clientX, evt.clientY)
-        );
-      }}
-      @pointerout=${() => {
-        this.dispatchEvent(new HideTooltipEvent());
-      }}
-      @pointerdown=${(evt: Event) => {
-        evt.stopImmediatePropagation();
-      }}
-      @pointerup=${(evt: Event) => {
-        evt.stopImmediatePropagation();
-        if (!this.nodeId) {
-          return;
-        }
-
-        this.dispatchEvent(
-          new StateEvent({
-            eventType: "node.action",
-            nodeId: this.nodeId,
-            subGraphId:
-              this.ownerGraph === MAIN_BOARD_ID ? "" : this.ownerGraph,
-            action: "primary",
-          })
-        );
-      }}
-      class="node-controls"
-      ?disabled=${disabled}
-    >
-      <span
-        class="g-icon filled round"
-        data-icon=${icon}
-        data-hover-icon=${hoverIcon}
-      ></span>
-    </button>`;
   }
 
   render() {

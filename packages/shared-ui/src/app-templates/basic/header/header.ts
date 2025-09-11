@@ -15,7 +15,11 @@ import { SideNav } from "./side-nav";
 import { type } from "../../../styles/host/type";
 
 import "./side-nav.js";
-import { StateEvent } from "../../../events/events.js";
+import {
+  HideTooltipEvent,
+  ShowTooltipEvent,
+  StateEvent,
+} from "../../../events/events.js";
 
 @customElement("bb-app-header")
 export class Header extends LitElement {
@@ -30,6 +34,9 @@ export class Header extends LitElement {
 
   @property()
   accessor replayActive = false;
+
+  @property()
+  accessor replayAutoStart = false;
 
   @property()
   accessor appTitle: string | null = null;
@@ -71,7 +78,7 @@ export class Header extends LitElement {
         height: 30px;
         background: transparent;
         border: none;
-        opacity: 0.6;
+        opacity: 0;
         transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
         padding: 0;
         color: var(--n-0);
@@ -83,6 +90,41 @@ export class Header extends LitElement {
 
         &:not([disabled]) {
           cursor: pointer;
+          opacity: 0.6;
+
+          &:focus,
+          &:hover {
+            opacity: 1;
+          }
+        }
+      }
+
+      #replay-autostart {
+        display: flex;
+        align-items: center;
+        height: 32px;
+        padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-2);
+        border: 1px solid var(--n-80);
+        border-radius: var(--bb-grid-size-16);
+        background: var(--n-100);
+        gap: var(--bb-grid-size-2);
+        color: var(--n-35);
+        opacity: 0;
+        transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+
+        > * {
+          pointer-events: none;
+        }
+
+        & .g-icon {
+          width: 18px;
+          height: 18px;
+          font-size: 18px;
+        }
+
+        &:not([disabled]) {
+          cursor: pointer;
+          opacity: 0.6;
 
           &:focus,
           &:hover {
@@ -197,20 +239,45 @@ export class Header extends LitElement {
         ></div>
       </div>
 
-      <button
-        id="replay"
-        ?disabled=${!this.replayActive}
-        @click=${() => {
-          this.dispatchEvent(
-            new StateEvent({
-              eventType: "board.stop",
-              clearLastRun: true,
-            })
-          );
-        }}
-      >
-        <span class="g-icon">replay</span>
-      </button>
+      ${this.replayAutoStart
+        ? html`<button
+            id="replay-autostart"
+            class="w-500 round sans-flex md-body-small"
+            ?disabled=${!this.replayActive}
+            @pointerover=${(evt: PointerEvent) => {
+              this.dispatchEvent(
+                new ShowTooltipEvent("Run all steps", evt.clientX, evt.clientY)
+              );
+            }}
+            @pointerout=${() => {
+              this.dispatchEvent(new HideTooltipEvent());
+            }}
+            @click=${() => {
+              this.dispatchEvent(new HideTooltipEvent());
+              this.dispatchEvent(
+                new StateEvent({
+                  eventType: "board.restart",
+                })
+              );
+            }}
+          >
+            <span class="g-icon">spark</span> Start
+          </button>`
+        : html`<button
+            id="replay"
+            ?disabled=${!this.replayActive}
+            @click=${() => {
+              this.dispatchEvent(
+                new StateEvent({
+                  eventType: "board.stop",
+                  clearLastRun: true,
+                })
+              );
+            }}
+          >
+            <span class="g-icon">replay</span>
+          </button>`}
+
       <bb-sidenav
         id="side-nav"
         @bboverlaydismissed=${() => {

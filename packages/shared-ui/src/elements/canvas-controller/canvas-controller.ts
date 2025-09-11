@@ -595,6 +595,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
             active: this.sideNavItem === "activity",
           })}
           .run=${this.projectState?.run}
+          .runState=${this.runState}
           .themeStyles=${themeStyles}
           .disclaimerContent=${this.graphIsMine
             ? GlobalStrings.from("LABEL_DISCLAIMER")
