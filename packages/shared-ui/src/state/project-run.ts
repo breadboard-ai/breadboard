@@ -538,11 +538,12 @@ class ReactiveProjectRun implements ProjectRun {
   async handleUserAction(
     payload: StateEvent<"node.action">["payload"]
   ): Promise<Outcome<void>> {
-    const { action, nodeId } = payload;
-    if (action !== "primary") {
-      console.warn(`Unknown action type: "${action}`);
+    const { nodeId, actionContext } = payload;
+    if (!actionContext) {
+      console.warn(`Unknown action context`);
       return;
     }
+    const runFromNode = actionContext === "graph";
     const nodeState = this.runner?.state?.get(nodeId);
     if (!nodeState) {
       console.warn(
@@ -552,61 +553,46 @@ class ReactiveProjectRun implements ProjectRun {
     }
     switch (nodeState.state) {
       case "inactive": {
-        if (toggleBreakpoint(this.runner)) {
-          this.renderer.nodes.set(nodeId, { status: "breakpoint" });
-        } else {
-          this.renderer.nodes.set(nodeId, { status: "inactive" });
-        }
         break;
       }
       case "ready": {
         console.log(`Run node "${nodeId}"`, nodeState.state);
         this.#dismissedErrors.delete(nodeId);
-        runNode(nodeId, this.runner);
+        run(runFromNode, nodeId, this.runner, this.renderer.nodes);
         break;
       }
       case "working": {
         console.log("Abort work", nodeState.state);
-        this.renderer.nodes.set(nodeId, {
-          status: "interrupted",
-          errorMessage: "Stopped by user",
-        });
+        this.renderer.nodes.set(nodeId, { status: "interrupted" });
         stop(nodeId, this.runner);
         break;
       }
       case "waiting": {
         console.log("Abort work", nodeState.state);
-        this.renderer.nodes.set(nodeId, {
-          status: "interrupted",
-          errorMessage: "Stopped by user",
-        });
+        this.renderer.nodes.set(nodeId, { status: "interrupted" });
         stop(nodeId, this.runner);
         break;
       }
       case "succeeded": {
         console.log("Run this node (again)", nodeState.state);
         this.#dismissedErrors.delete(nodeId);
-        runNode(nodeId, this.runner);
+        run(runFromNode, nodeId, this.runner, this.renderer.nodes);
         break;
       }
       case "failed": {
         console.log("Run this node (again)", nodeState.state);
         this.#dismissedErrors.delete(nodeId);
-        runNode(nodeId, this.runner);
+        run(runFromNode, nodeId, this.runner, this.renderer.nodes);
         break;
       }
       case "skipped": {
-        if (toggleBreakpoint(this.runner)) {
-          this.renderer.nodes.set(nodeId, { status: "breakpoint" });
-        } else {
-          this.renderer.nodes.set(nodeId, { status: "skipped" });
-        }
+        console.warn(`Action event is invalid for "inactive" state`);
         break;
       }
       case "interrupted": {
         console.log("Run this node (again)", nodeState.state);
         this.#dismissedErrors.delete(nodeId);
-        runNode(nodeId, this.runner);
+        run(runFromNode, nodeId, this.runner, this.renderer.nodes);
         break;
       }
       default: {
@@ -614,31 +600,13 @@ class ReactiveProjectRun implements ProjectRun {
       }
     }
 
-    function toggleBreakpoint(runner: HarnessRunner | undefined): boolean {
-      const breakpoints = runner?.breakpoints;
-      if (!breakpoints) {
-        console.warn(`Primary action: runner does not support breakpoints`);
-        return false;
-      }
-      const breakpoint = breakpoints.get(nodeId);
-      if (breakpoint) {
-        console.log("Remove one-time breakpoint");
-        breakpoints.delete(nodeId);
-        return false;
-      } else {
-        console.log("Insert one-time breakpoint");
-        breakpoints.set(nodeId, { once: true });
-        return true;
-      }
-    }
-
     function stop(nodeId: NodeIdentifier, runner: HarnessRunner | undefined) {
       const stopping = runner?.stop?.(nodeId);
       if (!stopping) {
-        console.log(`Primary action: runner does not support stopping`);
+        console.log(`Runner does not support stopping`);
         return;
       }
-      stopping
+      return stopping
         .then((outcome) => {
           if (!ok(outcome)) {
             console.warn(`Unable to stop`, outcome.$error);
@@ -649,15 +617,55 @@ class ReactiveProjectRun implements ProjectRun {
         });
     }
 
+    function run(
+      runFromNode: boolean,
+      nodeId: NodeIdentifier,
+      runner: HarnessRunner | undefined,
+      nodes: Map<string, NodeRunState>
+    ) {
+      if (runFromNode) {
+        runFrom(nodeId, runner, nodes);
+      } else {
+        runNode(nodeId, runner);
+      }
+    }
+
+    function runFrom(
+      nodeId: NodeIdentifier,
+      runner: HarnessRunner | undefined,
+      nodes: Map<string, NodeRunState>
+    ) {
+      const running = runner?.runFrom?.(nodeId, {
+        stop: (id) => {
+          nodes.set(id, { status: "interrupted" });
+        },
+      });
+      if (!running) {
+        console.log(`Runner does not support running from a node`);
+        return;
+      }
+      running
+        .then((outcome) => {
+          if (!ok(outcome)) {
+            console.warn(`Unable to run from node "${nodeId}"`, outcome.$error);
+            return;
+          }
+        })
+        .catch((reason) => {
+          console.warn(
+            `Exception thrown while running from node "${nodeId}"`,
+            reason
+          );
+        });
+    }
+
     function runNode(
       nodeId: NodeIdentifier,
       runner: HarnessRunner | undefined
     ) {
       const running = runner?.runNode?.(nodeId);
       if (!running) {
-        console.log(
-          `Primary action: runner does not support running individual nodes`
-        );
+        console.log(`Runner does not support running individual nodes`);
         return;
       }
       running
@@ -779,10 +787,7 @@ function toNodeRunState(
     }
     return err(`Node in "failed" state, but outputs contain no error`);
   } else if (state === "interrupted") {
-    return {
-      status: state,
-      errorMessage: "Stopped by user",
-    };
+    return { status: state };
   }
   return { status: state };
 }
