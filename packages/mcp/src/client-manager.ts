@@ -97,9 +97,7 @@ class McpClientManager {
 
     try {
       if (isBuiltIn) {
-        const client = this.#builtIn.get(url);
-        if (!ok(client)) return client;
-        return new CachingMcpClient(this.#cache, url, client, serverStore);
+        return this.#builtIn.get(url);
       } else if (this.proxyUrl) {
         const accessToken = await this.tokenGetter();
         const serverInfo = await serverStore.get(url);

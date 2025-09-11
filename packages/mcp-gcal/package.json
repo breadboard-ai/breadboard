@@ -88,6 +88,10 @@
   },
   "dependencies": {
     "@breadboard-ai/mcp": "^0.0.1",
-    "@breadboard-ai/types": "^0.8.0"
+    "@breadboard-ai/types": "^0.8.0",
+    "@breadboard-ai/utils": "^0.0.2",
+    "@types/gapi": "^0.0.47",
+    "@types/gapi.calendar": "^3.0.11",
+    "zod": "^4.1.5"
   }
 }

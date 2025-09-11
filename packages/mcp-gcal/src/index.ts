@@ -4,4 +4,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { createGoogleCalendarClient } from "./client.js";
+export { createGoogleCalendarClient } from "./gcal-client.js";
