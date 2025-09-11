@@ -538,9 +538,9 @@ class ReactiveProjectRun implements ProjectRun {
   async handleUserAction(
     payload: StateEvent<"node.action">["payload"]
   ): Promise<Outcome<void>> {
-    const { action, nodeId } = payload;
-    if (action !== "primary") {
-      console.warn(`Unknown action type: "${action}`);
+    const { nodeId, actionContext } = payload;
+    if (!actionContext) {
+      console.warn(`Unknown action context`);
       return;
     }
     const nodeState = this.runner?.state?.get(nodeId);

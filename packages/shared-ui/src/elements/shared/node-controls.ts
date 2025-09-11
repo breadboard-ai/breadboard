@@ -223,7 +223,6 @@ export class NodeRunControl extends LitElement {
             nodeId: this.nodeId,
             // TODO: Bring back subgraphs.
             subGraphId: "",
-            action: "primary",
             actionContext: this.actionContext,
           })
         );
