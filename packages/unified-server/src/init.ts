@@ -15,7 +15,6 @@ import { JsonSerializable, LLMContent } from "@breadboard-ai/types";
 import { Handler } from "@breadboard-ai/embed";
 import { discoverClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import { initializeAnalytics } from "@breadboard-ai/shared-ui/utils/action-tracker";
-import { devUrlParams } from "@breadboard-ai/shared-ui/utils/urls.js";
 
 const deploymentConfiguration = discoverClientDeploymentConfiguration();
 
@@ -34,10 +33,7 @@ if (deploymentConfiguration?.MEASUREMENT_ID) {
 bootstrap({
   deploymentConfiguration,
   connectionServerUrl: new URL("/connection/", window.location.href),
-  signinMode:
-    devUrlParams().enableNewSignedOutExperience !== undefined
-      ? "incremental"
-      : "required",
+  signinMode: "incremental",
   kits: [asRuntimeKit(Core)],
   defaultBoardService: "/board/",
   moduleInvocationFilter: (context) => {

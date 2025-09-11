@@ -105,7 +105,6 @@ import { MainArguments } from "./types/types";
 import { envFromFlags } from "./utils/env-from-flags";
 import { envFromSettings } from "./utils/env-from-settings";
 import {
-  devUrlParams,
   makeUrl,
   type MakeUrlInit,
   parseUrl,
@@ -359,13 +358,10 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.flowGenerator = new FlowGenerator(this.#apiClient);
 
-    const newSignedOutExperienceIsEnabled =
-      devUrlParams().enableNewSignedOutExperience !== undefined;
     const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
       .href;
     const apiBaseUrl =
-      this.signinAdapter.state === "anonymous" &&
-      newSignedOutExperienceIsEnabled
+      this.signinAdapter.state === "anonymous"
         ? proxyApiBaseUrl
         : "https://www.googleapis.com";
     this.googleDriveClient = new GoogleDriveClient({
