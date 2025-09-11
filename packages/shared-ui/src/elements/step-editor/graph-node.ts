@@ -847,7 +847,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       return nothing;
     }
 
-    if (status.status !== "failed" && status.status !== "interrupted") {
+    if (status.status !== "failed") {
       return nothing;
     }
 
