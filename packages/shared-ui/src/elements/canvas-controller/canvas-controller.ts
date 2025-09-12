@@ -257,7 +257,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
       changedProperties.get("sideNavItem") === "editor" &&
       this.#entityEditorRef.value
     ) {
-      this.#entityEditorRef.value.triggerSubmit();
+      this.#entityEditorRef.value.save();
     }
 
     // Here we decide how to handle the changing sidenav items & selections.

@@ -42,6 +42,7 @@ import {
   LLMContent,
   NodeIdentifier,
   NodeValue,
+  Outcome,
   TextCapabilityPart,
 } from "@breadboard-ai/types";
 import { classMap } from "lit/directives/class-map.js";
@@ -56,7 +57,7 @@ import {
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { isCtrlCommand } from "../../utils/is-ctrl-command";
 import { MAIN_BOARD_ID } from "../../constants/constants";
-import { Project } from "../../state";
+import { Project, StepEditorSurface } from "../../state";
 import {
   FastAccessSelectEvent,
   IterateOnPromptEvent,
@@ -100,7 +101,10 @@ const INVALID_ITEM = html`<div id="invalid-item">
 </div>`;
 
 @customElement("bb-entity-editor")
-export class EntityEditor extends SignalWatcher(LitElement) {
+export class EntityEditor
+  extends SignalWatcher(LitElement)
+  implements StepEditorSurface
+{
   @property()
   accessor graph: InspectableGraph | null = null;
 
@@ -757,11 +761,17 @@ export class EntityEditor extends SignalWatcher(LitElement) {
   connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener("pointerdown", this.#onPointerDownBound);
+    if (this.projectState) {
+      this.projectState.stepEditor.surface = this;
+    }
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     window.removeEventListener("pointerdown", this.#onPointerDownBound);
+    if (this.projectState) {
+      this.projectState.stepEditor.surface = null;
+    }
   }
 
   #onPointerDown() {
@@ -1624,21 +1634,27 @@ export class EntityEditor extends SignalWatcher(LitElement) {
         changedProperties.has("values")) &&
       this.#edited
     ) {
-      this.triggerSubmit();
+      this.save();
     }
   }
 
-  triggerSubmit() {
+  /**
+   * Implements the StepEditorSurface interface, so that this class could
+   * be used in Project state machinery.
+   */
+  async save(): Promise<Outcome<void>> {
     if (!this.#edited) {
       return;
     }
 
     // Autosave.
     this.#edited = false;
-    this.#submit(this.values);
+    const submitting = this.#submit(this.values);
 
     // Reset the node value so that we don't receive incorrect port data.
     this.values = undefined;
+
+    return submitting;
   }
 
   focus() {
