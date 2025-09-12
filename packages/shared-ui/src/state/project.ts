@@ -51,12 +51,14 @@ import {
   ProjectInternal,
   ProjectRun,
   RendererState,
+  StepEditor,
   Tool,
 } from "./types";
 import { IntegrationsImpl } from "./integrations";
 import { updateMap } from "./utils/update-map";
 import { FilteredIntegrationsImpl } from "./filtered-integrations";
 import { McpClientManager } from "@breadboard-ai/mcp";
+import { StepEditorImpl } from "./step-editor";
 
 export { createProjectState, ReactiveProject };
 
@@ -122,6 +124,7 @@ class ReactiveProject implements ProjectInternal {
   readonly connectors: ConnectorState;
   readonly renderer: RendererState;
   readonly integrations: Integrations;
+  readonly stepEditor: StepEditor;
 
   constructor(
     mainGraphId: MainGraphIdentifier,
@@ -154,6 +157,7 @@ class ReactiveProject implements ProjectInternal {
     }
     const graphUrlString = graph?.url;
     this.graphUrl = graphUrlString ? new URL(graphUrlString) : null;
+    this.stepEditor = new StepEditorImpl();
     this.graphAssets = new SignalMap();
     this.tools = new SignalMap();
     this.components = new SignalMap();
@@ -193,6 +197,7 @@ class ReactiveProject implements ProjectInternal {
   ): Outcome<void> {
     // Intentionally reset this property with a new instance.
     this.run = ReactiveProjectRun.create(
+      this.stepEditor,
       this.#mainGraphId,
       this.#store,
       fileSystem,

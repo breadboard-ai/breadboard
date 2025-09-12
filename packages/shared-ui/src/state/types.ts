@@ -602,6 +602,7 @@ export type Project = {
   organizer: Organizer;
   fastAccess: FastAccess;
   renderer: RendererState;
+  stepEditor: StepEditor;
 
   /**
    * Resets the current run.
@@ -656,4 +657,23 @@ export type EdgeRunState = {
 export type RendererRunState = {
   nodes: Map<NodeIdentifier, NodeRunState>;
   edges: Map<string, EdgeRunState>;
+};
+
+/**
+ * Represents the Model + Controler for the Step Editor.
+ */
+export type StepEditor = {
+  surface: StepEditorSurface | null;
+};
+
+/**
+ * Represents the step editor surface, Usually, its the actual
+ * `bb-entity-editor`, but can be anything, really.
+ */
+export type StepEditorSurface = {
+  /**
+   * Saves current state of the surface, if necessary.
+   * Returns when save is completed.
+   */
+  save(): Promise<Outcome<void>>;
 };

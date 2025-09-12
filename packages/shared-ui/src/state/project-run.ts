@@ -53,6 +53,7 @@ import {
   ProjectRunStatus,
   RendererRunState,
   RunError,
+  StepEditor,
   UserInput,
 } from "./types";
 import { decodeError, decodeErrorData } from "./utils/decode-error";
@@ -201,6 +202,7 @@ class ReactiveProjectRun implements ProjectRun {
   #idCache = new IdCache();
 
   private constructor(
+    private readonly stepEditor: StepEditor | undefined,
     private readonly mainGraphId: MainGraphIdentifier,
     private readonly graphStore?: MutableGraphStore,
     private readonly fileSystem?: FileSystem,
@@ -546,6 +548,9 @@ class ReactiveProjectRun implements ProjectRun {
   async handleUserAction(
     payload: StateEvent<"node.action">["payload"]
   ): Promise<Outcome<void>> {
+    const saving = await this.stepEditor?.surface?.save();
+    if (!ok(saving)) return saving;
+
     const { nodeId, actionContext } = payload;
     if (!actionContext) {
       console.warn(`Unknown action context`);
@@ -705,6 +710,7 @@ class ReactiveProjectRun implements ProjectRun {
     graphStore: MutableGraphStore
   ) {
     return new ReactiveProjectRun(
+      undefined,
       mainGraphId,
       graphStore,
       undefined,
@@ -714,6 +720,7 @@ class ReactiveProjectRun implements ProjectRun {
   }
 
   static create(
+    stepEditor: StepEditor,
     mainGraphId: MainGraphIdentifier,
     graphStore: MutableGraphStore,
     fileSystem: FileSystem,
@@ -722,6 +729,7 @@ class ReactiveProjectRun implements ProjectRun {
     signal?: AbortSignal
   ) {
     return new ReactiveProjectRun(
+      stepEditor,
       mainGraphId,
       graphStore,
       fileSystem,
