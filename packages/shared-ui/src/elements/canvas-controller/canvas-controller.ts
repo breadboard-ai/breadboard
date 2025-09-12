@@ -51,7 +51,7 @@ import {
   MAIN_BOARD_ID,
 } from "../../constants/constants.js";
 import { classMap } from "lit/directives/class-map.js";
-import { Project, UI } from "../../state/types.js";
+import { Project, RendererRunState, UI } from "../../state/types.js";
 import "../../edit-history/edit-history-panel.js";
 import "../../edit-history/edit-history-overlay.js";
 import {
@@ -288,12 +288,15 @@ export class CanvasController extends SignalWatcher(LitElement) {
   #projectStateUpdated = new Signal.State({});
 
   @signal
-  get runState() {
+  get runState(): RendererRunState {
     this.#projectStateUpdated.get();
     if (!this.projectState) {
-      return new Map();
+      return {
+        nodes: new Map(),
+        edges: new Map(),
+      };
     }
-    return new Map(this.projectState.run.renderer.nodes.entries());
+    return this.projectState.run.renderer;
   }
 
   async #deriveAppURL() {
@@ -595,7 +598,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
             active: this.sideNavItem === "activity",
           })}
           .run=${this.projectState?.run}
-          .runState=${this.runState}
           .themeStyles=${themeStyles}
           .disclaimerContent=${this.graphIsMine
             ? GlobalStrings.from("LABEL_DISCLAIMER")

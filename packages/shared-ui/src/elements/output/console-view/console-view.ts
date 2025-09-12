@@ -8,7 +8,7 @@ const Strings = StringsHelper.forSection("ActivityLog");
 
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { ProjectRun, RendererRunState, UI } from "../../../state";
+import { ProjectRun, UI } from "../../../state";
 import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
 import { ResizeEvent, StateEvent } from "../../../events/events";
@@ -20,7 +20,6 @@ import { colorsLight } from "../../../styles/host/colors-light.js";
 import { type } from "../../../styles/host/type.js";
 import { iconSubstitute } from "../../../utils/icon-substitute.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { NodeRunState } from "@breadboard-ai/types";
 import { uiStateContext } from "../../../contexts/ui-state.js";
 import { consume } from "@lit/context";
 
@@ -31,9 +30,6 @@ export class ConsoleView extends SignalWatcher(LitElement) {
 
   @property()
   accessor run: ProjectRun | null = null;
-
-  @property()
-  accessor runState: RendererRunState["nodes"] | null = null;
 
   @property()
   accessor themeStyles: Record<string, string> | null = null;
@@ -361,9 +357,6 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             ((!item.completed && item.work.size === 0) ||
               (item.completed && item.output.size === 0)) &&
             !item.error;
-          const nodeRunState: NodeRunState = this.runState?.get(itemId) ?? {
-            status: "inactive",
-          };
           const classes: Record<string, boolean> = {
             "sans-flex": true,
             "w-500": true,
@@ -387,10 +380,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           }
 
           const isLastItem = idx + 1 === this.run?.estimatedEntryCount;
-          const isOpen =
-            !(item.completed && !item.error) ||
-            this.#openItems.has(itemId) ||
-            isLastItem;
+          const isOpen = item.open || this.#openItems.has(itemId) || isLastItem;
 
           return html`<details ?open=${isOpen}>
           <summary @click=${(evt: Event) => {
@@ -429,7 +419,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                 ? html`<bb-node-run-control
                     .actionContext=${"console"}
                     .nodeId=${itemId}
-                    .runState=${nodeRunState}
+                    .runState=${item.status}
                   ></bb-node-run-control>`
                 : nothing
             }
@@ -492,12 +482,6 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                             ></span
                           >
                         </div>
-                        ${this.#uiState?.flags?.usePlanRunner
-                          ? html`<bb-node-run-control
-                              .nodeId=${itemId}
-                              .runState=${nodeRunState}
-                            ></bb-node-run-control>`
-                          : nothing}
                       </summary>
 
                       ${workItem.awaitingUserInput

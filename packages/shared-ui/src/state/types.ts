@@ -201,6 +201,14 @@ export type ConsoleEntry = {
   title: string;
   icon?: string;
   tags?: string[];
+  status?: NodeRunState;
+  open: boolean;
+  /**
+   * Indicates that this entry replaced an existing entry (or is a "re-run"),
+   * and likely has new outputs that are worth showing the user.
+   */
+  rerun: boolean;
+
   /**
    * A list of work items: things that a step is doing.
    */
@@ -641,6 +649,11 @@ export type EphemeralParticleTree = {
   done: boolean;
 };
 
+export type EdgeRunState = {
+  status: "initial" | "consumed" | "stored";
+};
+
 export type RendererRunState = {
   nodes: Map<NodeIdentifier, NodeRunState>;
+  edges: Map<string, EdgeRunState>;
 };

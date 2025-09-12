@@ -15,6 +15,7 @@ import {
   OrchestrationPlan,
   OrchestratorState,
   Outcome,
+  PlanNodeInfo,
   Probe,
   RunConfig,
   RunFromCallbacks,
@@ -28,7 +29,12 @@ import { NodeInvoker } from "../run/node-invoker.js";
 import { createPlan } from "../static/create-plan.js";
 import { Orchestrator } from "../static/orchestrator.js";
 import { AbstractRunner } from "./abstract-runner.js";
-import { NodeStateChangeEvent, PauseEvent, ResumeEvent } from "./events.js";
+import {
+  EdgeStateChangeEvent,
+  NodeStateChangeEvent,
+  PauseEvent,
+  ResumeEvent,
+} from "./events.js";
 import { fromProbe, fromRunnerResult } from "./local.js";
 import { configureKits } from "./run.js";
 
@@ -84,7 +90,36 @@ class PlanRunner extends AbstractRunner {
       stateChangedbyOrchestrator: (id, newState) => {
         this.#dispatchNodeStateChangeEvent(id, newState);
       },
+      stateChanged: (newState, info) => {
+        this.#updateEdgeState(newState, info);
+      },
     });
+  }
+
+  #updateEdgeState(state: NodeLifecycleState, info: PlanNodeInfo) {
+    switch (state) {
+      case "inactive":
+      case "skipped":
+        this.dispatchEvent(
+          new EdgeStateChangeEvent({ edges: info.downstream, state: "initial" })
+        );
+        break;
+      case "working":
+      case "waiting":
+        this.dispatchEvent(
+          new EdgeStateChangeEvent({ edges: info.upstream, state: "consumed" })
+        );
+        break;
+      case "failed":
+      case "interrupted":
+      case "ready":
+        break;
+      case "succeeded":
+        this.dispatchEvent(
+          new EdgeStateChangeEvent({ edges: info.downstream, state: "stored" })
+        );
+        break;
+    }
   }
 
   #dispatchNodeStateChangeEvent(id: NodeIdentifier, state: NodeLifecycleState) {
