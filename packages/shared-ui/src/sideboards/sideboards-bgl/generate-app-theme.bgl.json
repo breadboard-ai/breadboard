@@ -1,194 +1,60 @@
 {
-  "title": "Web App Theme",
-  "description": "Generates a theme for a web app",
+  "title": "Theme Generator",
+  "description": "",
   "version": "0.0.1",
   "nodes": [
     {
-      "id": "a2-632a79e8",
-      "type": "embed://a2/a2.bgl.json#module:image-generator",
-      "metadata": {
-        "title": "Icon",
-        "visual": {
-          "x": 1380,
-          "y": 0,
-          "collapsed": "expanded",
-          "outputHeight": 248
-        },
-        "logLevel": "info",
-        "userModified": false
-      },
-      "configuration": {
-        "instruction": {
-          "role": "user",
-          "parts": [
-            {
-              "text": "## Context\nYou are creating an app splash screen for a mobile web app. You should use the context to understand what the web is called as well as any other requirements for the splash screen.\n\n## Style\nYou should create something unique and interesting, avoiding cliches and obvious motifs. You should use relatively few colors. The background must be a solid color without any adornments. You should also use the context to understand if there are additional instructions for what the style and contents should be. Under no circumstances should you ever deviate from the colors provided or use text in the splash screen (do NOT include the HEX color code in the background)\n\n## Format\nThe image absolutely must be a portrait image in a 9/16 ratio, suitable for use on a mobile device's application launch screen. The contents of the image should be centered, leaving plenty of room around it for any background color. The image may be shown truncated to only the middle third of its height (with the top and bottom cut-off) so do your best to vertically center, and design the image to look good under a variety of responsive views. The image must be very high resolution and clear."
-            }
-          ]
-        },
-        "p-aspect-ratio": "9:16",
-        "p-disable-prompt-rewrite": false
-      }
-    },
-    {
-      "id": "a2-fce4f8de",
-      "type": "embed://a2/a2.bgl.json#module:combine-outputs",
-      "metadata": {
-        "title": "Combine Outputs",
-        "visual": {
-          "x": 2080,
-          "y": 2.2737367544323206e-13,
-          "collapsed": "expanded",
-          "outputHeight": 388
-        },
-        "logLevel": "info"
-      },
-      "configuration": {
-        "text": {
-          "parts": [
-            {
-              "text": "{{\"type\":\"in\",\"path\":\"a2-632a79e8\",\"title\":\"Icon\"}} \n {{\"type\":\"in\",\"path\":\"a2-5f1e8d70\",\"title\":\"CSS Colors\"}}"
-            }
-          ],
-          "role": "user"
-        }
-      }
-    },
-    {
-      "id": "a2-5f1e8d70",
+      "id": "0443a5e1-661c-4a61-9549-fb6ec84fdf73",
       "type": "embed://a2/generate.bgl.json#module:main",
       "metadata": {
-        "title": "CSS Colors",
+        "title": "Generate Splash Screen",
         "visual": {
-          "x": 1719.9999999999995,
-          "y": 60,
-          "collapsed": "expanded",
-          "outputHeight": 184
+          "x": 1040,
+          "y": 220
         },
-        "logLevel": "info",
-        "userModified": false
+        "userModified": true
       },
       "configuration": {
-        "config$prompt": {
+        "b-system-instruction": {
           "role": "user",
           "parts": [
             {
-              "text": "You are an expert visual designer well-versed in color theory. Your job is to take an image and create a CSS color scheme to pair with it. Aesthetics are crucial and must be suitable for a designer-quality website. You must create a coherent website theme composed of 5 colors:\n\n1. backgroundColor: used for the background color of the app. This must be the same color as the background of the image you received.\n2. primaryColor: used for headings and calls to action. It should be high contrast relative to the background.\n3. secondaryColor: used for any incidental details. It should be clearly distinct from the primary color, but still high contrast relative to the background. Prefer a color that is a variation of the primary color (monochromatic color scheme), or an adjacent color (analogous color scheme). Avoid a color opposite on the color wheel from primaryColor.\n4. textColor: used for any body text. This must be high contrast compared to backgroundColor.\n5. primaryTextColor: used for any text sitting in a call to action. This must be complementary and high contrast compared to the primaryColor.\n\nPlease do your best to follow Material 3 color design principles. Avoid brown or beige hues unless explicitly requested.\n\nStart by selecting the backgroundColor, aiming for a perfect match with the provided image. Now that you have the backgroundColor, select the textColor and the primaryColor, both of which must display well on top of the backgroundColor. Finally, select the primaryTextColor for use on the primary-colored CTAs, the textColor for display on the backgroundColor, and the secondaryColor for accents also displayed on the backgroundColor.\n\nCarefully review your selections to ensure all pairings are visually pleasing and all contrasts are accessible and readable. If you observe any problem, begin again from the backgroundColor.\n\nRespond in JSON in the following format:\n\n```json\n{\n  primaryColor: string,\n  secondaryColor: string,\n  backgroundColor: string,\n  textColor: string,\n  primaryTextColor: string\n}\n```"
+              "text": "You are working as part of an AI system, so no chit-chat and no explaining what you're doing and why.\nDO NOT start with \"Okay\", or \"Alright\" or any preambles. Just the output, please."
             }
           ]
         },
         "config$ask-user": false,
-        "config$list": false,
-        "generation-mode": "text"
+        "config$prompt": {
+          "role": "user",
+          "parts": [
+            {
+              "text": "## Context\nYou are creating an app splash screen for a mobile web app. You should use the context to understand what the web is called as well as any other requirements for the splash screen.\n\n## Style\nYou should create something unique and interesting, avoiding cliches and obvious motifs. You should use relatively few colors. The background must be a solid color without any adornments. You should also use the context to understand if there are additional instructions for what the style and contents should be. Under no circumstances should you ever deviate from the colors provided or use text in the splash screen (do NOT include the HEX color code in the background)\n\n## Format\nThe image absolutely must be a portrait image in a 9:16 ratio, suitable for use on a mobile device's application launch screen. The contents of the image should be centered, leaving plenty of room around it for any background color. The image may be shown truncated to only the middle third of its height (with the top and bottom cut-off) so do your best to vertically center, and design the image to look good under a variety of responsive views. The image must be very high resolution and clear.\n\nHere is the context: {{\"type\":\"in\",\"path\":\"a1bac2f8-2ca8-4d69-a454-470257e269ac\",\"title\":\"User Input\"}}"
+            }
+          ]
+        },
+        "generation-mode": "image-gen",
+        "p-aspect-ratio": "1:1",
+        "p-disable-prompt-rewrite": false
       }
     },
     {
-      "id": "input-361e03be",
+      "id": "a1bac2f8-2ca8-4d69-a454-470257e269ac",
       "type": "input",
       "metadata": {
+        "title": "User Input",
         "visual": {
-          "x": 1040,
-          "y": 0,
-          "collapsed": "expanded",
-          "outputHeight": 88
-        },
-        "title": "Input"
-      },
-      "configuration": {
-        "schema": {
-          "properties": {
-            "context": {
-              "type": "array",
-              "title": "App Description",
-              "items": {
-                "type": "object",
-                "examples": [],
-                "behavior": ["llm-content"]
-              },
-              "default": "[{\"role\":\"user\",\"parts\":[{\"text\":\"\"}]}]",
-              "description": ""
-            }
-          },
-          "type": "object",
-          "required": []
+          "x": 600,
+          "y": 220
         }
       }
     }
   ],
   "edges": [
     {
-      "from": "a2-632a79e8",
-      "to": "a2-5f1e8d70",
+      "from": "a1bac2f8-2ca8-4d69-a454-470257e269ac",
+      "to": "0443a5e1-661c-4a61-9549-fb6ec84fdf73",
       "out": "context",
-      "in": "context"
-    },
-    {
-      "from": "a2-632a79e8",
-      "to": "a2-fce4f8de",
-      "out": "context",
-      "in": "p-z-a2-632a79e8"
-    },
-    {
-      "from": "a2-5f1e8d70",
-      "to": "a2-fce4f8de",
-      "out": "context",
-      "in": "p-z-a2-5f1e8d70"
-    },
-    {
-      "from": "input-361e03be",
-      "to": "a2-632a79e8",
-      "out": "context",
-      "in": "context"
+      "in": "p-z-a1bac2f8-2ca8-4d69-a454-470257e269ac"
     }
-  ],
-  "modules": {
-    "My-Item": {
-      "code": "/**\n * @fileoverview Add a description for your module here.\n */\nexport { invoke as default, describe };\nasync function invoke({ context }) {\n    return { context };\n}\nasync function describe() {\n    return {\n        inputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context in\",\n                },\n            },\n        },\n        outputSchema: {\n            type: \"object\",\n            properties: {\n                context: {\n                    type: \"array\",\n                    items: { type: \"object\", behavior: [\"llm-content\"] },\n                    title: \"Context out\",\n                },\n            },\n        },\n    };\n}\n",
-      "metadata": {
-        "title": "My Item",
-        "source": {
-          "code": "/**\n * @fileoverview Add a description for your module here.\n */\n\nexport { invoke as default, describe };\n\nasync function invoke({ context }: { context: LLMContent[] }) {\n  return { context };\n}\n\nasync function describe() {\n  return {\n    inputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context in\",\n        },\n      },\n    } satisfies Schema,\n    outputSchema: {\n      type: \"object\",\n      properties: {\n        context: {\n          type: \"array\",\n          items: { type: \"object\", behavior: [\"llm-content\"] },\n          title: \"Context out\",\n        },\n      },\n    } satisfies Schema,\n  };\n}\n",
-          "language": "typescript"
-        },
-        "description": "Add a description for your module here.",
-        "runnable": false
-      }
-    }
-  },
-  "metadata": {
-    "visual": {
-      "presentation": {
-        "themes": {
-          "6f49df22-b8c8-404e-be92-55b08946bf11": {
-            "themeColors": {
-              "primaryColor": "#246db5",
-              "secondaryColor": "#5cadff",
-              "backgroundColor": "#ffffff",
-              "textColor": "#1a1a1a",
-              "primaryTextColor": "#ffffff"
-            },
-            "template": "basic",
-            "splashScreen": {
-              "storedData": {
-                "handle": "/images/app/generic-flow.jpg",
-                "mimeType": "image/jpeg"
-              }
-            }
-          }
-        },
-        "theme": "6f49df22-b8c8-404e-be92-55b08946bf11"
-      }
-    },
-    "tags": [],
-    "parameters": {}
-  },
-  "assets": {
-    "@@thumbnail": {
-      "metadata": {
-        "title": "Thumbnail",
-        "type": "file"
-      },
-      "data": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI1MCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cmVjdCB4PSI3MC4xNSIKICAgICAgICAgICAgICAgICAgICB5PSI1Ni44MyIKICAgICAgICAgICAgICAgICAgICB3aWR0aD0iNDYuMDAiCiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0PSI2MS41NyIKICAgICAgICAgICAgICAgICAgICByeD0iMy41IgogICAgICAgICAgICAgICAgICAgIGZpbGw9IndoaXRlIgogICAgICAgICAgICAgICAgICAgIHN0cm9rZT0iIzc3NTdkOSIgLz4KPHJlY3QgeD0iMTk0LjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjU2LjgzIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI0Ni4wMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9Ijg2LjM0IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgo8cmVjdCB4PSIxMzAuMzEiCiAgICAgICAgICAgICAgICAgICAgeT0iNjcuNDUiCiAgICAgICAgICAgICAgICAgICAgd2lkdGg9IjQ2LjAwIgogICAgICAgICAgICAgICAgICAgIGhlaWdodD0iNTAuMjUiCiAgICAgICAgICAgICAgICAgICAgcng9IjMuNSIKICAgICAgICAgICAgICAgICAgICBmaWxsPSJ3aGl0ZSIKICAgICAgICAgICAgICAgICAgICBzdHJva2U9IiMyZThiZTgiIC8+CjxyZWN0IHg9IjEwLjAwIgogICAgICAgICAgICAgICAgICAgIHk9IjU2LjgzIgogICAgICAgICAgICAgICAgICAgIHdpZHRoPSI0Ni4wMCIKICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9IjMzLjI2IgogICAgICAgICAgICAgICAgICAgIHJ4PSIzLjUiCiAgICAgICAgICAgICAgICAgICAgZmlsbD0id2hpdGUiCiAgICAgICAgICAgICAgICAgICAgc3Ryb2tlPSIjMjBhMjAyIiAvPgogICAgICAKICAgIDwvc3ZnPg=="
-    }
-  }
+  ]
 }
