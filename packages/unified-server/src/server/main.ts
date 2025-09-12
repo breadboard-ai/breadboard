@@ -13,7 +13,7 @@ import { InputValues, NodeDescriptor } from "@breadboard-ai/types";
 
 import { makeDriveProxyMiddleware } from "./drive-proxy.js";
 import { allowListChecker } from "./allow-list-checker.js";
-import { getConfigFromSecretManager } from "./provide-config.js";
+import { getConfig } from "./provide-config.js";
 import { makeCspHandler } from "./csp.js";
 import { createUpdatesHandler } from "./upates.js";
 import { CachingFeaturedGallery, makeGalleryMiddleware } from "./gallery.js";
@@ -25,8 +25,7 @@ const FEATURED_GALLERY_CACHE_REFRESH_SECONDS = 10 * 60;
 
 const server = express();
 
-const { client: clientConfig, server: serverConfig } =
-  await getConfigFromSecretManager();
+const { client: clientConfig, server: serverConfig } = await getConfig();
 
 server.use(makeCspHandler(serverConfig));
 

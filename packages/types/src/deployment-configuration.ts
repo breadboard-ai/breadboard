@@ -17,7 +17,7 @@ export type ClientDeploymentConfiguration = {
    * Allow running 3P modules (modules that are other than A2). Default
    * value is "false"
    */
-  ALLOW_3P_MODULES?: string;
+  ALLOW_3P_MODULES?: boolean;
   domains?: Record<string, DomainConfiguration>;
   flags: RuntimeFlags;
 };
