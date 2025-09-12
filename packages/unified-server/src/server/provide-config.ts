@@ -4,10 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { readFile } from "node:fs/promises";
+
 import { SecretsProvider } from "@breadboard-ai/board-server";
 import {
   type ClientDeploymentConfiguration,
   type ServerDeploymentConfiguration,
+  type DomainConfiguration,
 } from "@breadboard-ai/types/deployment-configuration.js";
 
 export type SecretValueFormat = {
@@ -32,6 +35,8 @@ export async function getConfig(): Promise<DeploymentConfiguration> {
 
   console.log("Loading config from environment");
 
+  const domainConfig = await loadDomainConfig();
+
   const clientConfig: ClientDeploymentConfiguration = {
     MEASUREMENT_ID: getString("MEASUREMENT_ID"),
     BACKEND_API_ENDPOINT: getString("BACKEND_API_ENDPOINT"),
@@ -40,10 +45,9 @@ export async function getConfig(): Promise<DeploymentConfiguration> {
     GOOGLE_FEEDBACK_PRODUCT_ID: getString("GOOGLE_FEEDBACK_PRODUCT_ID"),
     GOOGLE_FEEDBACK_BUCKET: getString("GOOGLE_FEEDBACK_BUCKET"),
     ALLOW_3P_MODULES: getBoolean("ALLOW_3P_MODULES"),
-    // TODO domain config from bucket
-    domains: {},
+    domains: domainConfig,
     flags: {
-      usePlanRunner: getBoolean("USE_PLAN_RUNNER"),
+      usePlanRunner: getBoolean("ENABLE_PLAN_RUNNER"),
       saveAsCode: getBoolean("ENABLE_SAVE_AS_CODE"),
       generateForEach: getBoolean("ENABLE_GENERATE_FOR_EACH"),
       mcp: getBoolean("ENABLE_MCP"),
@@ -61,6 +65,18 @@ export async function getConfig(): Promise<DeploymentConfiguration> {
   };
 
   return { client: clientConfig, server: serverConfig };
+}
+
+async function loadDomainConfig(): Promise<
+  Record<string, DomainConfiguration>
+> {
+  const path = getString("DOMAIN_CONFIG_FILE");
+  if (!path) {
+    return {};
+  }
+
+  const contents = await readFile(path, "utf8");
+  return JSON.parse(contents) as Record<string, DomainConfiguration>;
 }
 
 async function getConfigFromSecretManager(): Promise<DeploymentConfiguration> {
