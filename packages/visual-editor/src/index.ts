@@ -1108,7 +1108,6 @@ export class Main extends SignalWatcher(LitElement) {
     this.#tooltipRef.value.x = tooltipEvent.x;
     this.#tooltipRef.value.y = tooltipEvent.y;
     this.#tooltipRef.value.message = tooltipEvent.message;
-    console.log(1111111, tooltipEvent.extendedOptions.status);
     this.#tooltipRef.value.status = tooltipEvent.extendedOptions.status;
     this.#tooltipRef.value.visible = true;
   }

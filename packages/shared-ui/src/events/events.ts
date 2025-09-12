@@ -196,7 +196,6 @@ export class ShowTooltipEvent extends Event {
     }
   ) {
     super(ShowTooltipEvent.eventName, { ...eventInit });
-    console.log(extendedOptions);
   }
 }
 
