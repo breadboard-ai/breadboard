@@ -41,7 +41,11 @@ import { createTruncatedValue } from "./utils/create-truncated-value";
 import { styles as ChicletStyles } from "../../styles/chiclet.js";
 import { toGridSize } from "./utils/to-grid-size";
 import { DragConnectorReceiver } from "../../types/types";
-import { DragConnectorStartEvent } from "../../events/events";
+import {
+  DragConnectorStartEvent,
+  HideTooltipEvent,
+  ShowTooltipEvent,
+} from "../../events/events";
 import { createChiclets } from "./utils/create-chiclets.js";
 import { icons } from "../../styles/icons.js";
 import {
@@ -611,15 +615,13 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             max-width: 100%;
           }
         }
+      }
 
-        & #error {
-          margin: var(--bb-grid-size-3) 0 0 0;
-          color: var(--e-40);
-          text-align: right;
-          text-overflow: ellipsis;
-          overflow: hidden;
-          white-space: nowrap;
-        }
+      #error {
+        position: absolute;
+        top: calc((20px + var(--bb-grid-size-2)) * -1);
+        right: var(--bb-grid-size-4);
+        color: var(--e-20);
       }
 
       :host([showrunstatus][active="error"]) #container {
@@ -837,8 +839,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
               </div>`
           : html`<div class=${classMap({ port: true })}>Tap to configure</div>`}
       </div>
-      <div id="chiclets">${chiclets}</div>
-      ${this.#maybeRenderRunStatus()}`;
+      <div id="chiclets">${chiclets}</div>`;
   }
 
   #maybeRenderRunStatus() {
@@ -851,8 +852,28 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       return nothing;
     }
 
-    return html`<div id="error" class="sans italic w-500">
-      ${status.errorMessage}
+    return html`<div id="error">
+      <span
+        class="g-icon filled round"
+        @pointerover=${(evt: PointerEvent) => {
+          this.dispatchEvent(
+            new ShowTooltipEvent(
+              status.errorMessage,
+              evt.clientX,
+              evt.clientY,
+              {
+                status: {
+                  title: "Step failed",
+                },
+              }
+            )
+          );
+        }}
+        @pointerout=${() => {
+          this.dispatchEvent(new HideTooltipEvent());
+        }}
+        >warning</span
+      >
     </div>`;
   }
 
@@ -1079,7 +1100,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             ? html`<p class="loading">Loading step details...</p>`
             : this.#renderPorts()}
         </div>
-        ${chatAdornment}
+        ${this.#maybeRenderRunStatus()} ${chatAdornment}
         ${this.updating || !this.hasChatAdornment
           ? nothing
           : html`${svg`
