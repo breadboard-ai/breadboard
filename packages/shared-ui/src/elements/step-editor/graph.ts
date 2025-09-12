@@ -757,7 +757,7 @@ export class Graph extends Box {
 
   highlightActivity(
     topGraphResult: TopGraphRunResult | null,
-    runState: RendererRunState["nodes"] | null
+    runState: RendererRunState | null
   ) {
     for (const node of this.#nodes) {
       const id = node.descriptor.id;
@@ -766,7 +766,7 @@ export class Graph extends Box {
         continue;
       }
 
-      const runStatus: NodeRunState = runState?.get(id) || {
+      const runStatus: NodeRunState = runState?.nodes.get(id) || {
         status: "inactive",
       };
       graphNode.runState = runStatus;

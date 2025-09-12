@@ -136,7 +136,7 @@ export class Renderer extends LitElement {
   accessor selectionState: WorkspaceSelectionStateWithChangeId | null = null;
 
   @property()
-  accessor runState: RendererRunState["nodes"] | null = null;
+  accessor runState: RendererRunState | null = null;
 
   @property()
   accessor highlightState: HighlightStateWithChangeId | null = null;
