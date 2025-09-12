@@ -100,12 +100,12 @@ async function getConfigFromSecretManager(): Promise<DeploymentConfiguration> {
   }
 }
 
-/** Gets the value of the given flag as a string, or empty string if absent. */
+/** Get the value of the given flag as a string, or empty string if absent. */
 function getString(flagName: string): string {
   return process.env[flagName] ?? "";
 }
 
-/** Gets the value of the given flag as a comma-delimited list of strings. */
+/** Get the value of the given flag as a comma-delimited list of strings. */
 function getStringList(flagName: string): string[] {
   return (
     getString(flagName)
@@ -116,7 +116,7 @@ function getStringList(flagName: string): string[] {
 }
 
 /**
- * Gets the value of the given flag as a boolean.
+ * Get the value of the given flag as a boolean.
  *
  * Anything other than the literal string "true" (case-insensitive) will be
  * interpreted as false
