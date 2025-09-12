@@ -5,6 +5,8 @@
  */
 
 import {
+  Edge,
+  EdgeLifecycleState,
   End,
   ErrorResponse,
   GraphEndProbeData,
@@ -17,6 +19,7 @@ import {
   NodeLifecycleState,
   NodeStartResponse,
   OutputResponse,
+  RunEdgeStateChangeEvent,
   RunEndEvent,
   RunErrorEvent,
   RunGraphEndEvent,
@@ -203,5 +206,17 @@ export class NodeStateChangeEvent
 
   constructor(public data: { id: NodeIdentifier; state: NodeLifecycleState }) {
     super(NodeStateChangeEvent.eventName, { ...opts });
+  }
+}
+
+export class EdgeStateChangeEvent
+  extends Event
+  implements RunEdgeStateChangeEvent
+{
+  static readonly eventName = "edgestatechange";
+  readonly running = true;
+
+  constructor(public data: { edges: Edge[]; state: EdgeLifecycleState }) {
+    super(EdgeStateChangeEvent.eventName, { ...opts });
   }
 }

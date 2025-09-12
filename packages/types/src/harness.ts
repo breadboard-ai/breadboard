@@ -8,6 +8,7 @@ import { DataStore, FileSystem, Outcome } from "./data.js";
 import { DeepReadonly } from "./deep-read-only.js";
 import { RuntimeFlagManager } from "./flags.js";
 import {
+  Edge,
   GraphDescriptor,
   InputValues,
   NodeIdentifier,
@@ -17,6 +18,7 @@ import { MutableGraphStore } from "./inspect.js";
 import { GraphLoader } from "./loader.js";
 import { ErrorResponse, Kit } from "./node-handler.js";
 import {
+  EdgeLifecycleState,
   NodeLifecycleState,
   OrchestrationPlan,
   OrchestratorState,
@@ -266,6 +268,7 @@ export type RunEventMap = {
   nodeend: RunNodeEndEvent;
   end: RunEndEvent;
   nodestatechange: RunNodeStateChangeEvent;
+  edgestatechange: RunEdgeStateChangeEvent;
 };
 
 export type RunLifecycleEvent = Event & {
@@ -333,6 +336,10 @@ export type RunNodeStateChangeEvent = Event & {
   running: true;
 };
 
+export type RunEdgeStateChangeEvent = Event & {
+  data: { edges: Edge[]; state: EdgeLifecycleState };
+  running: true;
+};
 export type RunEventTarget = TypedEventTarget<RunEventMap>;
 
 export type HarnessObserver = {

@@ -463,8 +463,10 @@ class Orchestrator {
     changedByConsumer: boolean
   ) {
     node.state = state;
+    this.callbacks.stateChanged?.(state, node.plan);
     if (!changedByConsumer) {
-      this.callbacks.stateChangedbyOrchestrator?.(node.plan.node.id, state);
+      const id = node.plan.node.id;
+      this.callbacks.stateChangedbyOrchestrator?.(id, state);
     }
   }
 

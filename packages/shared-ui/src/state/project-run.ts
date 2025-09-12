@@ -57,6 +57,7 @@ import {
 } from "./types";
 import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
+import { edgeToString } from "../utils/workspace";
 
 export { createProjectRunStateFromFinalOutput, ReactiveProjectRun };
 
@@ -251,6 +252,13 @@ class ReactiveProjectRun implements ProjectRun {
         }
         this.renderer.nodes.set(id, { status: state });
       });
+      runner.addEventListener("edgestatechange", (e) => {
+        const { edges, state } = e.data;
+        edges?.forEach((edge) => {
+          const edgeId = edgeToString(edge);
+          this.renderer.edges.set(edgeId, { status: state });
+        });
+      });
 
       this.#updateRunner(this.#inspectable!.mainGraphDescriptor());
     }
@@ -290,33 +298,30 @@ class ReactiveProjectRun implements ProjectRun {
     const metadata = node.currentDescribe()?.metadata || {};
     const { icon, tags } = metadata;
     // Go ahead and set the entry
-    this.console.set(id, newEntry(node, title, tags, icon));
+    this.console.set(id, newEntry(this.renderer, node, title, tags, icon));
     if (!tags) {
       // .. but if there aren't tags, try using `describe()`.
       // This is done due tue a race condition describer. Sad!
       node.describe().then((result) => {
         const { icon, tags } = result.metadata || {};
-        this.console.set(id, newEntry(node, title, tags, icon));
+        this.console.set(id, newEntry(this.renderer, node, title, tags, icon));
       });
     }
 
     function newEntry(
+      runState: RendererRunState,
       node: InspectableNode,
       title: string,
       tags?: string[],
       defaultIcon?: string
     ): ConsoleEntry {
       const icon = getStepIcon(defaultIcon, node?.currentPorts()) || undefined;
-      return {
-        title,
-        tags,
-        icon,
-        work: new Map(),
-        output: new Map(),
-        completed: true,
-        error: null,
-        current: null,
-      };
+      return new ReactiveConsoleEntry(
+        id,
+        runState,
+        { title, icon, tags },
+        undefined
+      );
     }
   }
 
@@ -376,8 +381,10 @@ class ReactiveProjectRun implements ProjectRun {
     const node = this.#inspectable?.nodeById(id);
     const metadata = this.#nodeMetadata(id);
     const outputSchema = node?.currentDescribe()?.outputSchema;
+    const rerun = this.console.has(id);
     const entry = new ReactiveConsoleEntry(
-      this.fileSystem,
+      id,
+      this.renderer,
       metadata,
       outputSchema
     );
@@ -385,6 +392,7 @@ class ReactiveProjectRun implements ProjectRun {
     this.current ??= new SignalMap();
     this.current.set(id, entry);
     this.console.set(id, entry);
+    entry.rerun = rerun;
 
     this.renderer.nodes.set(id, { status: "working" });
 

@@ -7,21 +7,18 @@
 import {
   LLMContent,
   NodeEndResponse,
+  NodeIdentifier,
   NodeMetadata,
   NodeStartResponse,
 } from "@breadboard-ai/types";
-import {
-  FileSystem,
-  InputResponse,
-  OutputResponse,
-  Schema,
-} from "@google-labs/breadboard";
+import { InputResponse, OutputResponse, Schema } from "@google-labs/breadboard";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { idFromPath, toLLMContentArray } from "./common";
 import {
   ConsoleEntry,
   EphemeralParticleTree,
+  RendererRunState,
   RunError,
   WorkItem,
 } from "./types";
@@ -48,6 +45,19 @@ class ReactiveConsoleEntry implements ConsoleEntry {
   accessor completed = false;
 
   @signal
+  accessor rerun = false;
+
+  @signal
+  get open() {
+    return this.rerun || !(this.completed && !this.error);
+  }
+
+  @signal
+  get status() {
+    return this.rendererRunState.nodes.get(this.id) ?? { status: "inactive" };
+  }
+
+  @signal
   get current() {
     return Array.from(this.work.values()).at(-1) || null;
   }
@@ -59,7 +69,8 @@ class ReactiveConsoleEntry implements ConsoleEntry {
   #outputSchema: Schema | undefined;
 
   constructor(
-    private readonly fileSystem: FileSystem | undefined,
+    private readonly id: NodeIdentifier,
+    private readonly rendererRunState: RendererRunState,
     { title, icon, tags }: NodeMetadata,
     outputSchema: Schema | undefined
   ) {

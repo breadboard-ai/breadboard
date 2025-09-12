@@ -757,7 +757,7 @@ export class Graph extends Box {
 
   highlightActivity(
     topGraphResult: TopGraphRunResult | null,
-    runState: RendererRunState["nodes"] | null
+    runState: RendererRunState | null
   ) {
     for (const node of this.#nodes) {
       const id = node.descriptor.id;
@@ -766,36 +766,54 @@ export class Graph extends Box {
         continue;
       }
 
-      const runStatus: NodeRunState = runState?.get(id) || {
-        status: "inactive",
-      };
-      graphNode.runState = runStatus;
+      if (runState) {
+        const runStatus: NodeRunState = runState.nodes.get(id) || {
+          status: "inactive",
+        };
+        graphNode.runState = runStatus;
 
-      if (runStatus.status === "failed") {
-        graphNode.active = "error";
-      } else if (topGraphResult?.currentNode?.descriptor.id === id) {
-        graphNode.active = "current";
-      } else if (
-        topGraphResult?.log.findIndex(
-          (l) => l.type === "node" && l.descriptor.id === id
-        ) !== -1
-      ) {
-        graphNode.active = "post";
+        switch (runStatus.status) {
+          case "failed":
+            graphNode.active = "error";
+            break;
+          case "waiting":
+          case "working":
+            graphNode.active = "current";
+            break;
+          case "inactive":
+            graphNode.active = "post";
+            break;
+          default:
+            graphNode.active = "pre";
+        }
       } else {
-        graphNode.active = "pre";
+        if (topGraphResult?.currentNode?.descriptor.id === id) {
+          graphNode.active = "current";
+        } else if (
+          topGraphResult?.log.findIndex(
+            (l) => l.type === "node" && l.descriptor.id === id
+          ) !== -1
+        ) {
+          graphNode.active = "post";
+        } else {
+          graphNode.active = "pre";
+        }
       }
     }
 
     for (const edge of this.#edges) {
-      const graphEdge = this.entities.get(
-        inspectableEdgeToString(edge)
-      ) as GraphEdge;
+      const edgeId = inspectableEdgeToString(edge);
+      const graphEdge = this.entities.get(edgeId) as GraphEdge;
       if (!graphEdge) {
         continue;
       }
 
-      const edgeStatus = topGraphResult?.edgeValues.get(edge);
-      graphEdge.status = edgeStatus?.at(-1)?.status ?? null;
+      if (runState) {
+        graphEdge.status = runState.edges?.get(edgeId)?.status ?? null;
+      } else {
+        const edgeStatus = topGraphResult?.edgeValues.get(edge);
+        graphEdge.status = edgeStatus?.at(-1)?.status ?? null;
+      }
     }
   }
 }
