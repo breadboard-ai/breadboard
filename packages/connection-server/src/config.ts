@@ -67,6 +67,7 @@ async function loadSecrets(
 ): Promise<void> {
   for (const connection of connections.values()) {
     const secretLocation = connection.oauth.client_secret_location;
+    console.log(`Loading client secret from ${secretLocation}`);
     if (secretLocation) {
       connection.oauth.client_secret = await readFile(secretLocation, "utf8");
     }
