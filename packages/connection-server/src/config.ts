@@ -29,7 +29,8 @@ export interface ConnectionConfig {
   icon?: string;
   oauth: {
     client_id: string;
-    client_secret: string;
+    client_secret?: string;
+    client_secret_location?: string;
     auth_uri: string;
     token_uri: string;
     scopes: Array<string | { scope: string; optional: boolean }>;
@@ -52,5 +53,22 @@ export async function loadConnections(
       connections.set(connection.id, connection);
     }
   }
+  loadSecrets(connections);
   return connections;
+}
+
+/**
+ * Load secret from file for every secret that has client_secret_location set.
+ *
+ * Fails with an error if any secret is not found or can't be read.
+ */
+async function loadSecrets(
+  connections: Map<string, ConnectionConfig>
+): Promise<void> {
+  for (var connection of connections.values()) {
+    const secretLocation = connection.oauth.client_secret_location;
+    if (secretLocation) {
+      connection.oauth.client_secret = await readFile(secretLocation, "utf8");
+    }
+  }
 }

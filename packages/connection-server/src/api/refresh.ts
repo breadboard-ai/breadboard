@@ -63,7 +63,7 @@ export async function refresh(
   tokenUrl.searchParams.set("client_id", connectionConfig.oauth.client_id);
   tokenUrl.searchParams.set(
     "client_secret",
-    connectionConfig.oauth.client_secret
+    connectionConfig.oauth.client_secret ?? ""
   );
 
   const httpRes = await fetch(tokenUrl, {
