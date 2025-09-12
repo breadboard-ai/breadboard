@@ -10,21 +10,13 @@ import {
   type ServerDeploymentConfiguration,
 } from "@breadboard-ai/types/deployment-configuration.js";
 
-export { getConfigFromSecretManager };
-
 export type SecretValueFormat = {
   client: ClientDeploymentConfiguration;
   server: ServerDeploymentConfiguration;
 };
 
 export type DeploymentConfiguration = {
-  /**
-   * Stringified value of `ClientDeploymentConfiguration`.
-   */
   client: ClientDeploymentConfiguration;
-  /**
-   * This is the server configuration.
-   */
   server: ServerDeploymentConfiguration;
 };
 
@@ -33,7 +25,46 @@ const DEFAULT_VALUE: DeploymentConfiguration = {
   server: {},
 } as const;
 
+export async function getConfig(): Promise<DeploymentConfiguration> {
+  if (!getBoolean("ENABLE_ENVIRONMENT_CONFIG")) {
+    return getConfigFromSecretManager();
+  }
+
+  console.log("Loading config from environment");
+
+  const clientConfig: ClientDeploymentConfiguration = {
+    MEASUREMENT_ID: getString("MEASUREMENT_ID"),
+    BACKEND_API_ENDPOINT: getString("BACKEND_API_ENDPOINT"),
+    FEEDBACK_LINK: getString("FEEDBACK_LINK"),
+    ENABLE_GOOGLE_FEEDBACK: getBoolean("ENABLE_GOOGLE_FEEDBACK"),
+    GOOGLE_FEEDBACK_PRODUCT_ID: getString("GOOGLE_FEEDBACK_PRODUCT_ID"),
+    GOOGLE_FEEDBACK_BUCKET: getString("GOOGLE_FEEDBACK_BUCKET"),
+    ALLOW_3P_MODULES: getBoolean("ALLOW_3P_MODULES"),
+    // TODO domain config from bucket
+    domains: {},
+    flags: {
+      usePlanRunner: getBoolean("USE_PLAN_RUNNER"),
+      saveAsCode: getBoolean("ENABLE_SAVE_AS_CODE"),
+      generateForEach: getBoolean("ENABLE_GENERATE_FOR_EACH"),
+      mcp: getBoolean("ENABLE_MCP"),
+      force2DGraph: getBoolean("ENABLE_FORCE_2D_GRAPH"),
+    },
+  };
+
+  const serverConfig: ServerDeploymentConfiguration = {
+    BACKEND_API_ENDPOINT: getString("BACKEND_API_ENDPOINT"),
+    SERVER_URL: getString("SERVER_URL"),
+    GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID: getString(
+      "GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID"
+    ),
+    MCP_SERVER_ALLOW_LIST: getStringList("MCP_SERVER_ALLOW_LIST"),
+  };
+
+  return { client: clientConfig, server: serverConfig };
+}
+
 async function getConfigFromSecretManager(): Promise<DeploymentConfiguration> {
+  console.log("Loading config from secret manager");
   try {
     const secretValue = (
       await SecretsProvider.instance().getKey("CONFIG")
@@ -50,4 +81,29 @@ async function getConfigFromSecretManager(): Promise<DeploymentConfiguration> {
     console.warn("Error parsing configuration", (e as Error).message);
     return DEFAULT_VALUE;
   }
+}
+
+/** Gets the value of the given flag as a string, or empty string if absent. */
+function getString(flagName: string): string {
+  return process.env[flagName] ?? "";
+}
+
+/** Gets the value of the given flag as a comma-delimited list of strings. */
+function getStringList(flagName: string): string[] {
+  return (
+    getString(flagName)
+      .split(",")
+      // Filter out empty strings (e.g. if the env value is empty)
+      .filter((x) => x)
+  );
+}
+
+/**
+ * Gets the value of the given flag as a boolean.
+ *
+ * Anything other than the literal string "true" (case-insensitive) will be
+ * interpreted as false
+ */
+function getBoolean(flagName: string): boolean {
+  return getString(flagName).toLowerCase() === "true";
 }
