@@ -190,9 +190,13 @@ export class ShowTooltipEvent extends Event {
   constructor(
     public readonly message: string,
     public readonly x: number,
-    public readonly y: number
+    public readonly y: number,
+    public readonly extendedOptions: { status: { title: string } | false } = {
+      status: false,
+    }
   ) {
     super(ShowTooltipEvent.eventName, { ...eventInit });
+    console.log(extendedOptions);
   }
 }
 
