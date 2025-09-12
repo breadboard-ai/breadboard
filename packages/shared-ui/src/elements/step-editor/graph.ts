@@ -767,12 +767,13 @@ export class Graph extends Box {
       }
 
       if (runState) {
-        const runStatus: NodeRunState = runState.nodes.get(id) || {
+        const nodeRunState: NodeRunState = runState.nodes.get(id) || {
           status: "inactive",
         };
-        graphNode.runState = runStatus;
 
-        switch (runStatus.status) {
+        graphNode.runState = nodeRunState;
+
+        switch (nodeRunState.status) {
           case "failed":
             graphNode.active = "error";
             break;

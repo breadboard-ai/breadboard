@@ -7,6 +7,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { colorsLight } from "../../styles/host/colors-light";
 import { type } from "../../styles/host/type";
+import { classMap } from "lit/directives/class-map.js";
 
 const PADDING = 20;
 
@@ -62,6 +63,9 @@ export class Tooltip extends LitElement {
   get y() {
     return this.#y;
   }
+
+  @property({ reflect: true })
+  accessor status: { title: string } | false = false;
 
   #visible = false;
   #x = 100;
@@ -119,6 +123,11 @@ export class Tooltip extends LitElement {
         white-space: nowrap;
       }
 
+      :host(:not([status="false"])) {
+        padding: var(--bb-grid-size-6);
+        border-radius: var(--bb-grid-size-6);
+      }
+
       :host([visible="true"]) {
         display: block;
         left: var(--x);
@@ -126,6 +135,15 @@ export class Tooltip extends LitElement {
         opacity: 0;
         transform: translateX(-50%) translateY(-100%) translateY(-20px);
         animation: show 0.3s cubic-bezier(0, 0, 0.3, 1) 0.3s forwards;
+      }
+
+      h1,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        margin-bottom: var(--bb-grid-size-3);
       }
 
       @keyframes show {
@@ -145,8 +163,22 @@ export class Tooltip extends LitElement {
       return nothing;
     }
 
-    return html`<div class="sans w-400 md-body-small" aria-live="polite">
-      ${this.message}
+    const classes: Record<string, boolean> = {
+      sans: true,
+      "w-400": true,
+    };
+
+    if (this.status !== false) {
+      classes["md-body-medium"] = true;
+    } else {
+      classes["md-body-small"] = true;
+    }
+
+    return html`<div class=${classMap(classes)} aria-live="polite">
+      ${this.status !== false
+        ? html`<h1 class="w-500 sans md-body-medium">${this.status.title}</h1>`
+        : nothing}
+      <p>${this.message}</p>
     </div>`;
   }
 }
