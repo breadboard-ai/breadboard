@@ -649,6 +649,11 @@ export type EphemeralParticleTree = {
   done: boolean;
 };
 
+export type EdgeRunState = {
+  status: "initial" | "consumed" | "stored";
+};
+
 export type RendererRunState = {
   nodes: Map<NodeIdentifier, NodeRunState>;
+  edges: Map<string, EdgeRunState>;
 };

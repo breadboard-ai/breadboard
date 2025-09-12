@@ -57,6 +57,7 @@ import {
 } from "./types";
 import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
+import { edgeToString } from "../utils/workspace";
 
 export { createProjectRunStateFromFinalOutput, ReactiveProjectRun };
 
@@ -250,6 +251,13 @@ class ReactiveProjectRun implements ProjectRun {
           return;
         }
         this.renderer.nodes.set(id, { status: state });
+      });
+      runner.addEventListener("edgestatechange", (e) => {
+        const { edges, state } = e.data;
+        edges?.forEach((edge) => {
+          const edgeId = edgeToString(edge);
+          this.renderer.edges.set(edgeId, { status: state });
+        });
       });
 
       this.#updateRunner(this.#inspectable!.mainGraphDescriptor());

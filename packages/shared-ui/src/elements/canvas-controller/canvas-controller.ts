@@ -293,6 +293,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
     if (!this.projectState) {
       return {
         nodes: new Map(),
+        edges: new Map(),
       };
     }
     return this.projectState.run.renderer;

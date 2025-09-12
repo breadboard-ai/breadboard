@@ -802,15 +802,18 @@ export class Graph extends Box {
     }
 
     for (const edge of this.#edges) {
-      const graphEdge = this.entities.get(
-        inspectableEdgeToString(edge)
-      ) as GraphEdge;
+      const edgeId = inspectableEdgeToString(edge);
+      const graphEdge = this.entities.get(edgeId) as GraphEdge;
       if (!graphEdge) {
         continue;
       }
 
-      const edgeStatus = topGraphResult?.edgeValues.get(edge);
-      graphEdge.status = edgeStatus?.at(-1)?.status ?? null;
+      if (runState) {
+        graphEdge.status = runState.edges?.get(edgeId)?.status ?? null;
+      } else {
+        const edgeStatus = topGraphResult?.edgeValues.get(edge);
+        graphEdge.status = edgeStatus?.at(-1)?.status ?? null;
+      }
     }
   }
 }
