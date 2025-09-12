@@ -146,17 +146,17 @@ export class NodeRunControl extends LitElement {
     if (!this.actionContext) {
       disabled = true;
     } else {
-      const play_icon =
+      const playIcon =
         this.actionContext === "graph" ? "play_arrow" : "play_circle";
-      const restart_tooltip =
+      const restartTooltip =
         this.actionContext === "graph" ? "Run from here" : "Run this step only";
 
       switch (this.runState.status) {
         case "skipped":
         case "inactive": {
           tooltip = "";
-          icon = play_icon;
-          hoverIcon = play_icon;
+          icon = playIcon;
+          hoverIcon = playIcon;
           disabled = true;
           break;
         }
@@ -165,9 +165,9 @@ export class NodeRunControl extends LitElement {
         case "succeeded":
         case "interrupted":
         case "ready": {
-          tooltip = restart_tooltip;
-          icon = play_icon;
-          hoverIcon = play_icon;
+          tooltip = restartTooltip;
+          icon = playIcon;
+          hoverIcon = playIcon;
           break;
         }
 
