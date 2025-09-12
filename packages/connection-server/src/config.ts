@@ -65,7 +65,7 @@ export async function loadConnections(
 async function loadSecrets(
   connections: Map<string, ConnectionConfig>
 ): Promise<void> {
-  for (var connection of connections.values()) {
+  for (const connection of connections.values()) {
     const secretLocation = connection.oauth.client_secret_location;
     if (secretLocation) {
       connection.oauth.client_secret = await readFile(secretLocation, "utf8");
