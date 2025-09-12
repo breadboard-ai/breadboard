@@ -969,8 +969,9 @@ export class Renderer extends LitElement {
       changedProperties.has("runState")
     ) {
       const mainGraph = this.#graphs.get(MAIN_BOARD_ID);
+      const runState = this.runtimeFlags?.usePlanRunner ? this.runState : null;
       if (mainGraph) {
-        mainGraph.highlightActivity(this.topGraphResult, this.runState);
+        mainGraph.highlightActivity(this.topGraphResult, runState);
       }
     }
 

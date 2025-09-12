@@ -766,23 +766,38 @@ export class Graph extends Box {
         continue;
       }
 
-      const runStatus: NodeRunState = runState?.nodes.get(id) || {
-        status: "inactive",
-      };
-      graphNode.runState = runStatus;
+      if (runState) {
+        const runStatus: NodeRunState = runState.nodes.get(id) || {
+          status: "inactive",
+        };
+        graphNode.runState = runStatus;
 
-      if (runStatus.status === "failed") {
-        graphNode.active = "error";
-      } else if (topGraphResult?.currentNode?.descriptor.id === id) {
-        graphNode.active = "current";
-      } else if (
-        topGraphResult?.log.findIndex(
-          (l) => l.type === "node" && l.descriptor.id === id
-        ) !== -1
-      ) {
-        graphNode.active = "post";
+        switch (runStatus.status) {
+          case "failed":
+            graphNode.active = "error";
+            break;
+          case "waiting":
+          case "working":
+            graphNode.active = "current";
+            break;
+          case "inactive":
+            graphNode.active = "post";
+            break;
+          default:
+            graphNode.active = "pre";
+        }
       } else {
-        graphNode.active = "pre";
+        if (topGraphResult?.currentNode?.descriptor.id === id) {
+          graphNode.active = "current";
+        } else if (
+          topGraphResult?.log.findIndex(
+            (l) => l.type === "node" && l.descriptor.id === id
+          ) !== -1
+        ) {
+          graphNode.active = "post";
+        } else {
+          graphNode.active = "pre";
+        }
       }
     }
 
