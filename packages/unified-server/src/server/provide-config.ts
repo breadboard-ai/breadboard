@@ -75,6 +75,7 @@ async function loadDomainConfig(): Promise<
     return {};
   }
 
+  console.log(`Loading domain config from ${path}`);
   const contents = await readFile(path, "utf8");
   return JSON.parse(contents) as Record<string, DomainConfiguration>;
 }
