@@ -126,6 +126,8 @@ export class Tooltip extends LitElement {
       :host(:not([status="false"])) {
         padding: var(--bb-grid-size-6);
         border-radius: var(--bb-grid-size-6);
+        max-width: 360px;
+        white-space: wrap;
       }
 
       :host([visible="true"]) {
