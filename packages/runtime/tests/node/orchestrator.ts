@@ -608,7 +608,7 @@ describe("Orchestrator", () => {
       {
         const rollback = orchestrator.restartAtNode("left-channel");
         assert(ok(rollback));
-        deepStrictEqual(orchestrator.progress, "working");
+        deepStrictEqual(orchestrator.progress, "advanced");
         assertTasks(orchestrator.currentTasks(), ["left-channel"]);
         assertState(diamond, orchestrator.state(), [
           ["input", "succeeded"],
@@ -702,7 +702,7 @@ describe("Orchestrator", () => {
       }
       {
         o.restartAtNode("start-c");
-        assertTasks(o.currentTasks(), []);
+        assertTasks(o.currentTasks(), ["start-c"]);
       }
       assertState(converge, o.state(), [
         ["start-a", "failed"],
