@@ -608,7 +608,7 @@ describe("Orchestrator", () => {
       {
         const rollback = orchestrator.restartAtNode("left-channel");
         assert(ok(rollback));
-        deepStrictEqual(orchestrator.progress, "working");
+        deepStrictEqual(orchestrator.progress, "advanced");
         assertTasks(orchestrator.currentTasks(), ["left-channel"]);
         assertState(diamond, orchestrator.state(), [
           ["input", "succeeded"],
@@ -679,6 +679,37 @@ describe("Orchestrator", () => {
           ["mixer", "inactive"],
         ]);
       }
+    });
+
+    it("should re-run converge graph with errors", () => {
+      /**
+       * In this use case, a and b error out, but c succeeds.
+       * We should be able to restart from c.
+       */
+      const o = new Orchestrator(convergePlan, {});
+      {
+        // Set up the use case
+        o.provideOutputs("start-a", { $error: "a fail" });
+        o.provideOutputs("start-b", { $error: "b fail" });
+        o.provideOutputs("start-c", { context: "c success" });
+        assertTasks(o.currentTasks(), []);
+        assertState(converge, o.state(), [
+          ["start-a", "failed"],
+          ["start-b", "failed"],
+          ["start-c", "succeeded"],
+          ["end", "skipped"],
+        ]);
+      }
+      {
+        o.restartAtNode("start-c");
+        assertTasks(o.currentTasks(), ["start-c"]);
+      }
+      assertState(converge, o.state(), [
+        ["start-a", "failed"],
+        ["start-b", "failed"],
+        ["start-c", "ready"],
+        ["end", "skipped"],
+      ]);
     });
   });
 

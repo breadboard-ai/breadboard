@@ -7,6 +7,7 @@
 import { type ParticleTree, ParticleTreeImpl } from "@breadboard-ai/particles";
 import {
   EditableGraph,
+  ErrorObject,
   ErrorResponse,
   GraphDescriptor,
   HarnessRunner,
@@ -247,9 +248,14 @@ class ReactiveProjectRun implements ProjectRun {
         this.status = "running";
       });
       runner.addEventListener("nodestatechange", (e) => {
-        const { id, state } = e.data;
-        if (state === "failed" || state === "interrupted") {
-          console.warn(`Unexpected failed/interrupted state change`, id, state);
+        const { id, state, message } = e.data;
+        if (state === "failed") {
+          const errorMessage =
+            decodeErrorData(message as ErrorObject) ?? "Unknown error";
+          this.renderer.nodes.set(id, {
+            status: state,
+            errorMessage: errorMessage.message,
+          });
           return;
         }
         this.renderer.nodes.set(id, { status: state });

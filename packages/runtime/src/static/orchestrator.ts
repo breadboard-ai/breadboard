@@ -57,6 +57,16 @@ const WORKABLE_STATES: ReadonlySet<NodeLifecycleState> = new Set([
 ]);
 
 /**
+ * States from which a node can be restarted.
+ */
+const RESTARTABLE_STATES: ReadonlySet<NodeLifecycleState> = new Set([
+  "ready",
+  "succeeded",
+  "failed",
+  "interrupted",
+]);
+
+/**
  * The Orchestrator acts as the state machine for running a graph.
  * Its primary responsibilities are:
  *
@@ -152,6 +162,11 @@ class Orchestrator {
     if (!state) {
       return err(`Unable to restart at node "${id}": node not found`);
     }
+    if (!RESTARTABLE_STATES.has(state.state)) {
+      return err(
+        `Unable to restart at a node "${id}": node state is "${state.state}"`
+      );
+    }
     const stage = state.stage;
 
     // 1. Save outputs at the stage.
@@ -182,6 +197,21 @@ class Orchestrator {
     } catch (e) {
       return err((e as Error).message);
     }
+
+    // Now, let's mark the node we're restarting from as "ready". This is
+    // important, because providing outputs will change the node states
+    // and mark our starting node as "skipped".
+    const newState = this.#state.get(id);
+    if (!newState) {
+      return err(`Unable to restart at node "${id}": node not found`);
+    }
+    this.#updateNodeState(newState, "ready", false);
+
+    // Finally, let's bring the stage back to the one where the starting node
+    // is. Providing outputs will advance the stages and we may actually end up
+    // in some future state. Let's roll that back and get back to ours.
+    this.#currentStage = stage;
+    this.#progress = stage == 0 ? "initial" : "advanced";
   }
 
   setWorking(id: NodeIdentifier): Outcome<void> {
@@ -466,7 +496,11 @@ class Orchestrator {
     this.callbacks.stateChanged?.(state, node.plan);
     if (!changedByConsumer) {
       const id = node.plan.node.id;
-      this.callbacks.stateChangedbyOrchestrator?.(id, state);
+      this.callbacks.stateChangedbyOrchestrator?.(
+        id,
+        state,
+        node.outputs?.["$error"]
+      );
     }
   }
 

@@ -823,7 +823,7 @@ export class GraphEdge extends Box {
     }
 
     let dashArray = ``;
-    if (this.status === null) {
+    if (this.status === null || this.status === "initial") {
       dashArray = `8 8`;
     }
 

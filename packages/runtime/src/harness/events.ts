@@ -18,6 +18,7 @@ import {
   NodeIdentifier,
   NodeLifecycleState,
   NodeStartResponse,
+  NodeValue,
   OutputResponse,
   RunEdgeStateChangeEvent,
   RunEndEvent,
@@ -204,7 +205,13 @@ export class NodeStateChangeEvent
   static readonly eventName = "nodestatechange";
   readonly running = true;
 
-  constructor(public data: { id: NodeIdentifier; state: NodeLifecycleState }) {
+  constructor(
+    public data: {
+      id: NodeIdentifier;
+      state: NodeLifecycleState;
+      message: NodeValue;
+    }
+  ) {
     super(NodeStateChangeEvent.eventName, { ...opts });
   }
 }

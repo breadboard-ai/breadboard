@@ -9,6 +9,7 @@ import {
   InputValues,
   NodeDescriptor,
   NodeIdentifier,
+  NodeValue,
   OutputValues,
 } from "./graph-descriptor.js";
 
@@ -46,7 +47,8 @@ export type OrchestratorCallbacks = {
    */
   stateChangedbyOrchestrator?: (
     id: NodeIdentifier,
-    newState: NodeLifecycleState
+    newState: NodeLifecycleState,
+    errorMessage?: NodeValue
   ) => void;
 
   stateChanged?: (newState: NodeLifecycleState, info: PlanNodeInfo) => void;

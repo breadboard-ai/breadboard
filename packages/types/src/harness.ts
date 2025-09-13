@@ -12,6 +12,7 @@ import {
   GraphDescriptor,
   InputValues,
   NodeIdentifier,
+  NodeValue,
   OutputValues,
 } from "./graph-descriptor.js";
 import { MutableGraphStore } from "./inspect.js";
@@ -332,7 +333,11 @@ export type RunNodeEndEvent = Event & {
 };
 
 export type RunNodeStateChangeEvent = Event & {
-  data: { id: NodeIdentifier; state: NodeLifecycleState };
+  data: {
+    id: NodeIdentifier;
+    state: NodeLifecycleState;
+    message: NodeValue;
+  };
   running: true;
 };
 
