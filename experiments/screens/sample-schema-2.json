@@ -1,0 +1,50 @@
+[
+  {
+    "name": "generate_image",
+    "title": "Generate Image from Prompt",
+    "description": "Generates a new image based on a detailed text prompt. Returns a `resource_link` content block with the `uri` pointing to the generated image.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "description": "The text prompt describing the image to be generated."
+        }
+      },
+      "required": ["prompt"]
+    }
+  },
+  {
+    "name": "select_image_from_options",
+    "title": "Select Image from Options",
+    "description": "Presents a list of images to the user and prompts them to select one. Returns a `text` content block containing the `id` of the image selected by the user.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "options": {
+          "type": "array",
+          "description": "An array of objects, each representing an image option for the user to choose from.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "A unique identifier for this image option. This ID will be returned if the image is selected."
+              },
+              "image_uri": {
+                "type": "string",
+                "description": "The VFS URI of the image to be displayed as an option. The `mimeType` of the image will be inferred."
+              }
+            },
+            "required": ["id", "image_uri"]
+          }
+        },
+        "question": {
+          "type": "string",
+          "description": "The question or prompt to display to the user along with the image options."
+        }
+      },
+      "required": ["options", "question"]
+    }
+  }
+]
