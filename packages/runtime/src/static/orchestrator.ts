@@ -152,6 +152,11 @@ class Orchestrator {
     if (!state) {
       return err(`Unable to restart at node "${id}": node not found`);
     }
+    if (state.state !== "ready" && state.state !== "succeeded") {
+      return err(
+        `Unable to restart at a node "${id}": node state is "${state.state}"`
+      );
+    }
     const stage = state.stage;
 
     // 1. Save outputs at the stage.
@@ -182,6 +187,12 @@ class Orchestrator {
     } catch (e) {
       return err((e as Error).message);
     }
+
+    const newState = this.#state.get(id);
+    if (!newState) {
+      return err(`Unable to restart at node "${id}": node not found`);
+    }
+    this.#updateNodeState(newState, "ready", false);
   }
 
   setWorking(id: NodeIdentifier): Outcome<void> {
@@ -466,7 +477,11 @@ class Orchestrator {
     this.callbacks.stateChanged?.(state, node.plan);
     if (!changedByConsumer) {
       const id = node.plan.node.id;
-      this.callbacks.stateChangedbyOrchestrator?.(id, state);
+      this.callbacks.stateChangedbyOrchestrator?.(
+        id,
+        state,
+        node.outputs?.["$error"]
+      );
     }
   }
 

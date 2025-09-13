@@ -12,6 +12,7 @@ import {
   NodeHandlerContext,
   NodeIdentifier,
   NodeLifecycleState,
+  NodeValue,
   OrchestrationPlan,
   OrchestratorState,
   Outcome,
@@ -87,8 +88,8 @@ class PlanRunner extends AbstractRunner {
   #createOrchestrator(graph: GraphDescriptor) {
     const plan = createPlan(graph);
     return new Orchestrator(plan, {
-      stateChangedbyOrchestrator: (id, newState) => {
-        this.#dispatchNodeStateChangeEvent(id, newState);
+      stateChangedbyOrchestrator: (id, newState, message) => {
+        this.#dispatchNodeStateChangeEvent(id, newState, message);
       },
       stateChanged: (newState, info) => {
         this.#updateEdgeState(newState, info);
@@ -112,6 +113,10 @@ class PlanRunner extends AbstractRunner {
         break;
       case "failed":
       case "interrupted":
+        this.dispatchEvent(
+          new EdgeStateChangeEvent({ edges: info.downstream, state: "initial" })
+        );
+        break;
       case "ready":
         break;
       case "succeeded":
@@ -122,8 +127,12 @@ class PlanRunner extends AbstractRunner {
     }
   }
 
-  #dispatchNodeStateChangeEvent(id: NodeIdentifier, state: NodeLifecycleState) {
-    this.dispatchEvent(new NodeStateChangeEvent({ id, state }));
+  #dispatchNodeStateChangeEvent(
+    id: NodeIdentifier,
+    state: NodeLifecycleState,
+    message?: NodeValue
+  ) {
+    this.dispatchEvent(new NodeStateChangeEvent({ id, state, message }));
   }
 
   async runNode(id: NodeIdentifier): Promise<Outcome<void>> {
