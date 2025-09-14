@@ -1,4 +1,29 @@
-import { Screen } from "./types";
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { Screen } from "../types";
+
+export const spec = `
+Make a turn-based adventure game.
+
+First
+- user enters inspiration for the game
+- the initial plot line of the game is generated, inventing the character and the story and the objective (the boon, in hero's journey terms) of the story.
+- the user is presented with bio and picture of their character. To create a picture, a detailed text prompt of the character suitable for an image generation is generated as well.
+- the user can decide to accept the character or re-generate a new one
+- once the user accepts, the game begins
+
+For each turn:
+-  present the user with a generated picture of the scene that follows the plot of the game, along with:
+   - brief text description of what is happening in the scene
+   - four choices for the user on what they could do next
+- the user makes a choice
+- based on the choice the user made, update the plot of the game ensuring that there's a path to the boon for the user.
+
+Once the user secures the boon, show a celebratory screen that includes a generated picture of the final scene and a text that describes that scene.`;
 
 export const screens: Screen[] = [
   {
