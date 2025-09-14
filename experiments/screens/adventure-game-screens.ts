@@ -24,6 +24,21 @@ export const screens: Screen[] = [
     ],
   },
   {
+    screenId: "game_recap",
+    description: "Displays recap of the game so far",
+    inputSchema: {
+      type: "object",
+      properties: {
+        recap: {
+          type: "string",
+          description: "Recap of the game so far, in markdown",
+        },
+      },
+      required: ["recap"],
+    },
+    events: [],
+  },
+  {
     screenId: "start_game",
     description:
       "Shows at the start of the game, allowing the user to specify the inspiration for the game or ask to generate the inspration.",

@@ -1,7 +1,7 @@
-To accomplish this task, write a Javascript module with a single async function
-as a default export. The module runs in an isolated environment that has the
-latest ECMAScript features, but no additional bindings. The function you will
-write is defined as `Invoke` type below:
+To accomplish this task, write a Javascript module with a single anonymous async
+function as a default export. The module runs in an isolated environment that
+has the latest ECMAScript features, but no additional bindings. The function you
+will write is defined as `Invoke` type below:
 
 ```typescript
 type Schema = {
@@ -37,37 +37,8 @@ type CallToolRequest = {
   arguments: Record<string, SchemaValidated>;
 };
 
-type TextContent = {
-  type: "text";
-  text: string;
-};
-
-type ImageContent = {
-  type: "image";
-  data: string;
-  mimeType: string;
-};
-
-type AudioContent = {
-  type: "audio";
-  data: string;
-  mimeType: string;
-};
-
-type ResourceLinkContent = {
-  type: "resource_link";
-  uri: string;
-  mimeType: string;
-};
-
-type ContentBlock =
-  | TextContent
-  | ImageContent
-  | AudioContent
-  | ResourceLinkContent;
-
 type CallToolResponse = {
-  content: ContentBlock[];
+  content: LLMContent;
   isError: boolean;
 };
 
@@ -95,7 +66,7 @@ type Capabilities = {
   screens: ScreenServer;
 };
 
-export type Invoke = (capabilities: Capabilities) => Promise<ContentBlock[]>;
+export type Invoke = (capabilities: Capabilities) => Promise<LLMContent>;
 
 export type Screen = {
   screenId: string;
@@ -126,8 +97,8 @@ type EventDescriptor = {
  */
 type ScreenServer = {
   /**
-   * Gets the list of user events. May block on user input, depending on what
-   * is being rendered on screen.
+   * Gets the list of user events. Will block until it receives at least one
+   * user event. Accumulates and drains the queue of user events when called.
    */
   getUserEvents(): Promise<GetUserEventsResponse>;
   /**
@@ -227,8 +198,10 @@ export type DataStoreHandle = string;
 export type FileDataPart = {
   fileData: {
     /**
-     * Can be either a URL pointing to a YT video or a URL pointing at a
-     * resource saved with File API.
+     * Can be one of these three:
+     * - a URL pointing to a YT video
+     * - a URL pointing at a resource saved with File API.
+     * - a VFS path in the format of "/vfs/out/[guid]"
      */
     fileUri: string;
     mimeType: string;
@@ -275,7 +248,8 @@ export type LLMContent = {
 };
 
 /**
- * Represents inline data, encoded as a base64 string.
+ * Represents inline data, encoded as a base64 string. Use only for inputs.
+ * Outputs are always provided as FileData with VFS path.
  */
 export type InlineDataPart = {
   inlineData: {
@@ -295,7 +269,6 @@ export type GeminiBody = {
 };
 
 export type GeminiInputs = {
-  // The wireable/configurable properties.
   model?: string;
   context?: LLMContent[];
   systemInstruction?: LLMContent;
@@ -386,6 +359,15 @@ export type GroundingMetadata = {
 };
 
 export type Candidate = {
+  /**
+   * The LLM output.
+   * IMPORTANT: Unlike the standard Gemini API, any media will be provided as
+   * the `FileDataPart` with the `fileUri` populated with the VFS file path.
+   * The VFS is the virtual file system that allows efficiently passing large
+   * media files within the application. The VFS paths are opaque identifiers
+   * for media files and can be provided as both inputs and outputs. The VFS
+   * files always start with "/vfs/".
+   */
   content?: LLMContent;
   finishReason?: FinishReason;
   safetyRatings?: SafetySetting[];
@@ -398,12 +380,11 @@ export type GeminiOutputs = {
 };
 ```
 
-Any files in this prompt will be provided to the program as
-"/vfs/in/file\_[x].[ext]" files, where x is the index of the file provided and
-the ext is the extension of the file, based on its MIME type.
+Any files in this prompt will be provided to the program as "/vfs/in/file\_[x]"
+files, where x is the index of the file provided.
 
-When providing files as outputs, output them as `resource_link` structures in
-the `ContentBlock`, converting paths to URIs like this: `file://${path}`.
+When providing files as outputs, output them as `FilePart` structures within the
+`LLMContent`, passing the VFS paths as-is.
 
 Make sure to write Javascript, not Typescript. Output it in markdown code
 fences.

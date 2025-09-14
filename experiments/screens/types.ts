@@ -31,37 +31,8 @@ type CallToolRequest = {
   arguments: Record<string, SchemaValidated>;
 };
 
-type TextContent = {
-  type: "text";
-  text: string;
-};
-
-type ImageContent = {
-  type: "image";
-  data: string;
-  mimeType: string;
-};
-
-type AudioContent = {
-  type: "audio";
-  data: string;
-  mimeType: string;
-};
-
-type ResourceLinkContent = {
-  type: "resource_link";
-  uri: string;
-  mimeType: string;
-};
-
-type ContentBlock =
-  | TextContent
-  | ImageContent
-  | AudioContent
-  | ResourceLinkContent;
-
 type CallToolResponse = {
-  content: ContentBlock[];
+  content: LLMContent;
   isError: boolean;
 };
 
@@ -89,7 +60,7 @@ type Capabilities = {
   screens: ScreenServer;
 };
 
-export type Invoke = (capabilities: Capabilities) => Promise<ContentBlock[]>;
+export type Invoke = (capabilities: Capabilities) => Promise<LLMContent>;
 
 export type Screen = {
   screenId: string;
@@ -221,8 +192,10 @@ export type DataStoreHandle = string;
 export type FileDataPart = {
   fileData: {
     /**
-     * Can be either a URL pointing to a YT video or a URL pointing at a
-     * resource saved with File API.
+     * Can be one of these three:
+     * - a URL pointing to a YT video
+     * - a URL pointing at a resource saved with File API.
+     * - a VFS path in the format of "/vfs/out/[guid]"
      */
     fileUri: string;
     mimeType: string;
@@ -269,7 +242,8 @@ export type LLMContent = {
 };
 
 /**
- * Represents inline data, encoded as a base64 string.
+ * Represents inline data, encoded as a base64 string. Use only for inputs.
+ * Outputs are always provided as FileData with VFS path.
  */
 export type InlineDataPart = {
   inlineData: {
@@ -379,6 +353,15 @@ export type GroundingMetadata = {
 };
 
 export type Candidate = {
+  /**
+   * The LLM output.
+   * IMPORTANT: Unlike the standard Gemini API, any media will be provided as
+   * the `FileDataPart` with the `fileUri` populated with the VFS file path.
+   * The VFS is the virtual file system that allows efficiently passing large
+   * media files within the application. The VFS paths are opaque identifiers
+   * for media files and can be provided as both inputs and outputs. The VFS
+   * files always start with "/vfs/".
+   */
   content?: LLMContent;
   finishReason?: FinishReason;
   safetyRatings?: SafetySetting[];
