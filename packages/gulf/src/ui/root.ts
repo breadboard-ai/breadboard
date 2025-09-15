@@ -186,7 +186,7 @@ export class Root extends SignalWatcher(LitElement) {
     `;
   }
 
-  render() {
+  render(): TemplateResult | typeof nothing {
     return html`<slot></slot>`;
   }
 }
