@@ -1,0 +1,163 @@
+{
+  "root": "root-list",
+  "dataModel": {
+    "carousel": [
+      {
+        "name": "Golden Retriever",
+        "imageUrl": "https://placehold.co/600x400/F7B32B/FFFFFF?text=Golden+Retriever"
+      },
+      {
+        "name": "French Bulldog",
+        "imageUrl": "https://placehold.co/600x400/2D3A3A/FFFFFF?text=French+Bulldog"
+      },
+      {
+        "name": "Siberian Husky",
+        "imageUrl": "https://placehold.co/600x400/A2A2A2/FFFFFF?text=Siberian+Husky"
+      },
+      {
+        "name": "German Shepherd",
+        "imageUrl": "https://placehold.co/600x400/8C5E58/FFFFFF?text=German+Shepherd"
+      }
+    ],
+    "formInput": {
+      "breedName": "",
+      "legCount": 4,
+      "skills": []
+    },
+    "generatedContent": {
+      "description": "Your generated dog will appear here."
+    }
+  },
+  "components": [
+    {
+      "id": "root-list",
+      "type": "List",
+      "direction": "vertical",
+      "children": ["breed-info-card", "dog-generator-card"]
+    },
+    {
+      "id": "breed-info-card",
+      "type": "Card",
+      "child": "breed-info-content"
+    },
+    {
+      "id": "breed-info-content",
+      "type": "List",
+      "direction": "vertical",
+      "children": ["breed-title", "header-image", "breed-carousel"]
+    },
+    {
+      "id": "breed-title",
+      "type": "Text",
+      "text": "## Famous Dog Breeds"
+    },
+    {
+      "id": "header-image",
+      "type": "Image",
+      "url": "https://placehold.co/1200x400/5E8C6A/FFFFFF?text=Dog+Breeds"
+    },
+    {
+      "id": "breed-carousel",
+      "type": "Carousel",
+      "children": {
+        "template": "carousel-item-card",
+        "dataBinding": "/carousel"
+      }
+    },
+    {
+      "id": "carousel-item-card",
+      "type": "Card",
+      "child": "carousel-item-content"
+    },
+    {
+      "id": "carousel-item-content",
+      "type": "List",
+      "direction": "vertical",
+      "children": ["carousel-item-image", "carousel-item-name"]
+    },
+    {
+      "id": "carousel-item-image",
+      "type": "Image",
+      "url": { "dataBinding": "imageUrl" }
+    },
+    {
+      "id": "carousel-item-name",
+      "type": "Text",
+      "text": { "dataBinding": "name" }
+    },
+    {
+      "id": "dog-generator-card",
+      "type": "Card",
+      "child": "generator-form"
+    },
+    {
+      "id": "generator-form",
+      "type": "List",
+      "direction": "vertical",
+      "children": [
+        "generator-title",
+        "generator-desc",
+        "breed-name-input",
+        "leg-count-input",
+        "skills-checkboxes",
+        "generate-button",
+        "divider",
+        "generated-content-section"
+      ]
+    },
+    {
+      "id": "generator-title",
+      "type": "Text",
+      "text": "### Fictional Dog Breed Generator"
+    },
+    {
+      "id": "generator-desc",
+      "type": "Text",
+      "text": "Use the form below to create a new, imaginary dog breed."
+    },
+    {
+      "id": "breed-name-input",
+      "type": "TextField",
+      "description": "Dog breed name",
+      "inputType": "shortText",
+      "valueBinding": "/formInput/breedName"
+    },
+    {
+      "id": "leg-count-input",
+      "type": "TextField",
+      "description": "Number of legs",
+      "inputType": "number",
+      "valueBinding": "/formInput/legCount"
+    },
+    {
+      "id": "skills-checkboxes",
+      "type": "MultipleChoice",
+      "options": ["Flying", "Laser Eyes", "Invisibility", "Quantum Barking"],
+      "valueBinding": "/formInput/skills"
+    },
+    {
+      "id": "generate-button",
+      "type": "Button",
+      "label": "Generate",
+      "action": {
+        "action": "generateDog",
+        "dynamicContext": {
+          "name": "/formInput/breedName",
+          "legs": "/formInput/legCount",
+          "abilities": "/formInput/skills"
+        }
+      }
+    },
+    {
+      "id": "divider",
+      "type": "Divider"
+    },
+    {
+      "id": "generated-content-section",
+      "type": "Text",
+      "text": {
+        "dataBinding": "/generatedContent/description"
+      }
+    }
+  ]
+}
