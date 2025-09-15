@@ -65,8 +65,7 @@ export class Root extends SignalWatcher(LitElement) {
         // 2. Generate the template for the children.
         const lightDomTemplate = this.renderGulfChildren(childrenMap);
 
-        // 3. Imperatively render that template into the component itself ('this').
-        //    This IS the Light DOM. Lit will efficiently diff and update these nodes.
+        // 3. Imperatively render that template into the component itself.
         render(lightDomTemplate, this, { host: this });
       });
     }
@@ -84,8 +83,7 @@ export class Root extends SignalWatcher(LitElement) {
   }
 
   /**
-   * This helper function turns the SignalMap into a renderable TemplateResult.
-   * This is what rendered into the Light DOM.
+   * Turns the SignalMap into a renderable TemplateResult for Lit.
    */
   private renderGulfChildren(
     map: ExpandedGULFValue["children"] | null
@@ -188,7 +186,7 @@ export class Root extends SignalWatcher(LitElement) {
     `;
   }
 
-  render(): TemplateResult | typeof nothing {
+  render() {
     return html`<slot></slot>`;
   }
 }
