@@ -197,7 +197,7 @@ class ReactiveProjectRun implements ProjectRun {
   get finalOutput(): OutputValues | null {
     if (this.status !== "stopped") return null;
 
-    return this.app.current?.last?.output || null;
+    return this.app.last?.last?.output || null;
   }
 
   #idCache = new IdCache();
@@ -454,7 +454,7 @@ class ReactiveProjectRun implements ProjectRun {
       }
       entry.finalize(event.data);
     }
-    this.app.current?.finalize(event.data);
+    this.app.last?.finalize(event.data);
   }
 
   #input(event: RunInputEvent) {
@@ -538,7 +538,7 @@ class ReactiveProjectRun implements ProjectRun {
     }
 
     this.current.get(id)?.addOutput(event.data, particleTree);
-    if (!this.app.current) {
+    if (!this.app.last) {
       console.warn(`No current screen for output event`, event);
       return;
     }

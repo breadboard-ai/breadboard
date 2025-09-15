@@ -231,13 +231,13 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         </h1>
       </section>`;
     } else {
-      const current = this.run.app.current;
+      const current = this.run.app.last;
       if (!current) return nothing;
 
       if (this.run.status === "running") {
         status = html`<div id="status">
           <span class="g-icon"></span>
-          ${this.run.app.current?.title}
+          ${this.run.app.last?.title}
         </div>`;
       }
 

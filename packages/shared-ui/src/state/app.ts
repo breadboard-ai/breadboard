@@ -20,7 +20,7 @@ class ReactiveApp implements App {
   screens: Map<string, ReactiveAppScreen> = new SignalMap();
 
   @signal
-  get current(): ReactiveAppScreen | null {
+  get last(): ReactiveAppScreen | null {
     return Array.from(this.screens.values()).at(-1) || null;
   }
 }
