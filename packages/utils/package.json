@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/utils",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Various utils shareable across the Breadboard code base",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -124,6 +124,6 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@breadboard-ai/types": "0.8.0"
+    "@breadboard-ai/types": "0.9.0"
   }
 }

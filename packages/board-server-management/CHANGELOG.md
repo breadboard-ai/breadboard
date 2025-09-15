@@ -1,5 +1,34 @@
 # @breadboard-ai/board-server-management
 
+## 1.21.2
+
+### Patch Changes
+
+- Updated dependencies [f7a7772]
+- Updated dependencies [9034629]
+- Updated dependencies [342dbb8]
+- Updated dependencies [354d92e]
+- Updated dependencies [4166203]
+- Updated dependencies [eb0004c]
+- Updated dependencies [4d8a6fa]
+- Updated dependencies [67927c7]
+- Updated dependencies [ba78f67]
+- Updated dependencies [0cad090]
+- Updated dependencies [1d6cb7b]
+- Updated dependencies [2b801c3]
+- Updated dependencies [3ecdf7b]
+- Updated dependencies [e2ca247]
+- Updated dependencies [071b34d]
+- Updated dependencies [0bc8d11]
+- Updated dependencies [32d90b3]
+- Updated dependencies [f053be1]
+  - @breadboard-ai/connection-client@0.4.0
+  - @google-labs/breadboard@0.36.0
+  - @breadboard-ai/filesystem-board-server@1.23.0
+  - @breadboard-ai/google-drive-kit@0.8.0
+  - @breadboard-ai/remote-board-server@1.23.1
+  - @breadboard-ai/idb-board-server@1.19.6
+
 ## 1.21.1
 
 ### Patch Changes

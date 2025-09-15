@@ -1,5 +1,23 @@
 # @breadboard-ai/particles-ui-demo
 
+## 0.1.1
+
+### Patch Changes
+
+- 5824839: Continue with Particle exploration
+- 10f09b9: Add a wildcard layout
+- caf6e70: Add resolver demo
+- Updated dependencies [f0f424d]
+- Updated dependencies [5824839]
+- Updated dependencies [c099a20]
+- Updated dependencies [77976cd]
+- Updated dependencies [b2ddd67]
+- Updated dependencies [927b00a]
+- Updated dependencies [53dd3e1]
+- Updated dependencies [caf6e70]
+  - @breadboard-ai/particles-ui@0.2.0
+  - @breadboard-ai/particles@0.2.0
+
 ## 0.1.0
 
 ### Minor Changes

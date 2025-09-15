@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/idb-board-server",
-  "version": "1.19.5",
+  "version": "1.19.6",
   "description": "IDB Board Server for Breadboard",
   "main": "./dist/index.js",
   "exports": {
@@ -70,8 +70,8 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.35.0",
-    "@google-labs/breadboard-schema": "^1.15.0",
+    "@google-labs/breadboard": "^0.36.0",
+    "@google-labs/breadboard-schema": "^1.16.0",
     "idb": "^8.0.3"
   }
 }

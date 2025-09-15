@@ -1,9 +1,26 @@
-# @breadboard-ai/loader
+# @breadboard-ai/mcp
 
-## 0.0.3
+## 0.1.0
+
+### Minor Changes
+
+- f7a7772: Introduce built-in Google Calendar MCP client.
+- 9034629: Implement MCP client session support.
+- 342dbb8: Refactor MCP machinery to be tool-centric.
+- cc976c3: Refactor MCP infrastructure to be ready for built-in clients.
+- 5f6c9c9: Add Mcp UI state.
+- 426ffce: Implement MCP support behind flag.
+- 0cad090: Introduce MCP client infrastructure.
+- a74c8cf: Add support for built-in MCP Servers.
 
 ### Patch Changes
 
+- 62aaf89: Cache MCP Server tool lists.
+- 4d8a6fa: Close MCP clients at the end of each run.
+- d70f2ed: Plumb getting information about MCP server.
+- 15ea466: Make integrations work end-to-end.
+- 41206cb: Add support for proxy-backed MCP client.
+- 5e95de6: Add support for optional auth tokens for MCP servers.
 - Updated dependencies [f7a7772]
 - Updated dependencies [f609a62]
 - Updated dependencies [342dbb8]
@@ -32,40 +49,13 @@
 - Updated dependencies [01cee42]
 - Updated dependencies [f14f927]
 - Updated dependencies [483ee70]
-- Updated dependencies [3d6740f]
 - Updated dependencies [e94bb52]
 - Updated dependencies [a74c8cf]
 - Updated dependencies [071b34d]
 - Updated dependencies [5e95de6]
-- Updated dependencies [54f46d8]
 - Updated dependencies [0bc8d11]
 - Updated dependencies [82ba7de]
 - Updated dependencies [32d90b3]
-- Updated dependencies [f09982c]
-- Updated dependencies [bac03d4]
+  - @breadboard-ai/connection-client@0.4.0
   - @breadboard-ai/types@0.9.0
-  - @breadboard-ai/data@0.1.0
   - @breadboard-ai/utils@0.1.0
-
-## 0.0.2
-
-### Patch Changes
-
-- fdc7b73: Introduce `@breadboard-ai/data` package and move data transformation
-  bits to it.
-- a2483c3: Move Schema utilities to `utils` package.
-- 22b02b8: Factor runtime bits out of `breadboard` package.
-- 6201f69: A bit more clean-up of the runtime legacy API endpoints.
-- Updated dependencies [fdc7b73]
-- Updated dependencies [f488e2b]
-- Updated dependencies [8cdb091]
-- Updated dependencies [a2483c3]
-- Updated dependencies [66814df]
-- Updated dependencies [22b02b8]
-- Updated dependencies [bb833fa]
-- Updated dependencies [6201f69]
-- Updated dependencies [a7c691e]
-- Updated dependencies [9923fe0]
-  - @breadboard-ai/utils@0.0.2
-  - @breadboard-ai/data@0.0.2
-  - @breadboard-ai/types@0.8.0

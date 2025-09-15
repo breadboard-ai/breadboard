@@ -1,5 +1,46 @@
 # @breadboard-ai/types
 
+## 0.9.0
+
+### Minor Changes
+
+- f7a7772: Introduce built-in Google Calendar MCP client.
+- 342dbb8: Refactor MCP machinery to be tool-centric.
+- d0458a0: Teach runtime about stop actions.
+- fbeaf8f: Introduce "Run from here" capability.
+- cc976c3: Refactor MCP infrastructure to be ready for built-in clients.
+- 492e542: Add `info` value to Schema enums and use it to convey quota limits.
+- 073a296: Plumb error handling to renderer and console for new runtime.
+- 426ffce: Implement MCP support behind flag.
+- 42d301f: Implement MCP Allow list.
+- 2b801c3: Introduce `/mnt` root directory for mounting custom volumes to File
+  System.
+- c52549b: Initial support for action buttons in Visual Editor
+- db11ca8: Introduce "Generate for each input" capability.
+- 01cee42: Add step-by-step running mode in new runtime.
+- e94bb52: Properly display status and react to actions.
+- a74c8cf: Add support for built-in MCP Servers.
+- 071b34d: Introduce "Save as code" capability behind flag.
+- 0bc8d11: Teach new runtime to respond to graph topology changes.
+- 82ba7de: Add `ALLOW_3P_MODULES` configuration setting (off by default).
+
+### Patch Changes
+
+- f609a62: Allow configuration from environment variables
+- 48eb9b0: Introduce `/files` endpoint for storing/caching gallery results.
+- 4166203: Remove the `RunStore` bits.
+- b305c1b: Track updates via hashing
+- 5143dad: Polish wiring states in the new runtime.
+- ff1ce19: Show activity for edges and nodes.
+- 5ba1719: Enable experimental 2D matrix rendering of graph
+- 4d8a6fa: Close MCP clients at the end of each run.
+- 1d6cb7b: Track opened versions for shared apps
+- c0d18de: Incremental progress toward gallery cache
+- 6d9a147: Add support for node-level actions
+- f14f927: Remove Flash 2.0 from the model drop-down.
+- 5e95de6: Add support for optional auth tokens for MCP servers.
+- 32d90b3: Remove RunObsever machinery.
+
 ## 0.8.0
 
 ### Minor Changes

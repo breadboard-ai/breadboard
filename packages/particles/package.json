@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/particles",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "AI-first UI Toolkit",
   "main": "./dist/src/index.js",
   "exports": {

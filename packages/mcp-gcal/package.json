@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/mcp-gcal",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Built-in Breadboard MCP Client/Server for Google Calendar",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -87,9 +87,9 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@breadboard-ai/mcp": "^0.0.1",
-    "@breadboard-ai/types": "^0.8.0",
-    "@breadboard-ai/utils": "^0.0.2",
+    "@breadboard-ai/mcp": "^0.1.0",
+    "@breadboard-ai/types": "^0.9.0",
+    "@breadboard-ai/utils": "^0.1.0",
     "@types/gapi": "^0.0.47",
     "@types/gapi.calendar": "^3.0.11",
     "zod": "^3.23.8"

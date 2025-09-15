@@ -1,5 +1,11 @@
 # @google-labs/breadboard-schema
 
+## 1.16.0
+
+### Minor Changes
+
+- 342dbb8: Refactor MCP machinery to be tool-centric.
+
 ## 1.15.0
 
 ### Minor Changes

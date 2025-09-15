@@ -1,5 +1,11 @@
 # @breadboard-ai/connection-client
 
+## 0.4.0
+
+### Minor Changes
+
+- f7a7772: Introduce built-in Google Calendar MCP client.
+
 ## 0.3.0
 
 ### Minor Changes

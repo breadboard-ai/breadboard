@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/theme",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Theme creation for Breadboard",
   "main": "./dist/src/index.js",
   "exports": {
@@ -101,8 +101,8 @@
     "node": ">=20.14.0"
   },
   "dependencies": {
-    "@breadboard-ai/types": "0.8.0",
-    "@google-labs/breadboard": "^0.35.0",
+    "@breadboard-ai/types": "0.9.0",
+    "@google-labs/breadboard": "^0.36.0",
     "@material/material-color-utilities": "^0.3.0"
   }
 }
