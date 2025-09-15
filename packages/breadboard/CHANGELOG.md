@@ -1,5 +1,72 @@
 # Changelog
 
+## 0.36.0
+
+### Minor Changes
+
+- 9034629: Implement MCP client session support.
+- 342dbb8: Refactor MCP machinery to be tool-centric.
+- 67927c7: Implement tracking for model calls.
+- 0cad090: Introduce MCP client infrastructure.
+- 2b801c3: Introduce `/mnt` root directory for mounting custom volumes to File
+  System.
+- 0bc8d11: Teach new runtime to respond to graph topology changes.
+
+### Patch Changes
+
+- 4166203: Remove the `RunStore` bits.
+- 4d8a6fa: Close MCP clients at the end of each run.
+- 32d90b3: Remove RunObsever machinery.
+- Updated dependencies [f7a7772]
+- Updated dependencies [f609a62]
+- Updated dependencies [342dbb8]
+- Updated dependencies [d0458a0]
+- Updated dependencies [48eb9b0]
+- Updated dependencies [4166203]
+- Updated dependencies [fbeaf8f]
+- Updated dependencies [b305c1b]
+- Updated dependencies [5143dad]
+- Updated dependencies [cc976c3]
+- Updated dependencies [492e542]
+- Updated dependencies [073a296]
+- Updated dependencies [f9a1143]
+- Updated dependencies [e99ede7]
+- Updated dependencies [ff1ce19]
+- Updated dependencies [5ba1719]
+- Updated dependencies [b06b895]
+- Updated dependencies [4d8a6fa]
+- Updated dependencies [426ffce]
+- Updated dependencies [1d6cb7b]
+- Updated dependencies [42d301f]
+- Updated dependencies [2b801c3]
+- Updated dependencies [c52549b]
+- Updated dependencies [15ea466]
+- Updated dependencies [db11ca8]
+- Updated dependencies [c0d18de]
+- Updated dependencies [f9ad955]
+- Updated dependencies [6d9a147]
+- Updated dependencies [01cee42]
+- Updated dependencies [f14f927]
+- Updated dependencies [483ee70]
+- Updated dependencies [3d6740f]
+- Updated dependencies [e94bb52]
+- Updated dependencies [a74c8cf]
+- Updated dependencies [071b34d]
+- Updated dependencies [5e95de6]
+- Updated dependencies [54f46d8]
+- Updated dependencies [0bc8d11]
+- Updated dependencies [82ba7de]
+- Updated dependencies [32d90b3]
+- Updated dependencies [f09982c]
+- Updated dependencies [bac03d4]
+  - @breadboard-ai/types@0.9.0
+  - @google-labs/breadboard-schema@1.16.0
+  - @breadboard-ai/runtime@0.2.0
+  - @breadboard-ai/data@0.1.0
+  - @breadboard-ai/utils@0.1.0
+  - @breadboard-ai/jsandbox@0.8.0
+  - @breadboard-ai/loader@0.0.3
+
 ## 0.35.0
 
 ### Minor Changes

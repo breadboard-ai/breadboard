@@ -1,5 +1,242 @@
 # @breadboard-ai/unified-server
 
+## 0.4.0
+
+### Minor Changes
+
+- f7a7772: Introduce built-in Google Calendar MCP client.
+- 9034629: Implement MCP client session support.
+- 0cad090: Introduce MCP client infrastructure.
+- 42d301f: Implement MCP Allow list.
+- c01f5ba: Send randomly generated user id to Google Analytics for signed-in
+  users.
+- 3ecdf7b: Introduce `GalleryCache`, which caches the gallery files.
+- 2fad4a7: Introduce `/updates` endpoint.
+- 82ba7de: Add `ALLOW_3P_MODULES` configuration setting (off by default).
+- d98f3c3: Update landing page
+
+### Patch Changes
+
+- f609a62: Allow configuration from environment variables
+- a91d510: Update the bucket name.
+- e2b458d: Add support for 'shared' param
+- 48eb9b0: Introduce `/files` endpoint for storing/caching gallery results.
+- ee770a3: Landing page tweaks
+- 4f164ba: Add landing page
+- bb342d6: Add share card image
+- 24844c0: Add flow modal to landing
+- e44781f: Update Discord links
+- 9bbbeed: Update Discord links
+- 6cbd8ad: Update landing sign-in
+- c774b79: Move embedder logic to shell
+- 05f1b5a: Add sign-in button to header
+- c8e11dd: Retain flow & mode params for redirects
+- 2627dbd: Add Cloudflare CDNJS to CSP script allow list
+- 4f49560: Create landing endpoint
+- c4fcdd3: Track sign in page view on the landing page.
+- 43310ea: Make Sign in button clickable on narrow screens.
+- c0d18de: Incremental progress toward gallery cache
+- 1311635: Re-allow sideboards (whoops)
+- da3cbd8: Move sign-in button
+- 055eb6f: Update links to policies
+- 2c73043: Update CSP to include a few well-known CDNs and image sources.
+- caf6e70: Add resolver demo
+- Updated dependencies [f0e1331]
+- Updated dependencies [f7a7772]
+- Updated dependencies [f609a62]
+- Updated dependencies [50550f6]
+- Updated dependencies [ad1f75d]
+- Updated dependencies [a073644]
+- Updated dependencies [928b495]
+- Updated dependencies [6f69049]
+- Updated dependencies [9034629]
+- Updated dependencies [f0f424d]
+- Updated dependencies [dac7516]
+- Updated dependencies [342dbb8]
+- Updated dependencies [e2b458d]
+- Updated dependencies [354d92e]
+- Updated dependencies [9880602]
+- Updated dependencies [0c7d0dc]
+- Updated dependencies [42efde5]
+- Updated dependencies [d060a0e]
+- Updated dependencies [94a4e4e]
+- Updated dependencies [d0458a0]
+- Updated dependencies [48eb9b0]
+- Updated dependencies [7eaa758]
+- Updated dependencies [35a47c6]
+- Updated dependencies [9bff460]
+- Updated dependencies [c023923]
+- Updated dependencies [f8af5b6]
+- Updated dependencies [8b07b63]
+- Updated dependencies [f1263e0]
+- Updated dependencies [77976cd]
+- Updated dependencies [4166203]
+- Updated dependencies [eb0004c]
+- Updated dependencies [fbeaf8f]
+- Updated dependencies [c26b7f0]
+- Updated dependencies [bb342d6]
+- Updated dependencies [4c745e1]
+- Updated dependencies [e300a2b]
+- Updated dependencies [bee84dd]
+- Updated dependencies [51d6ec7]
+- Updated dependencies [b305c1b]
+- Updated dependencies [fb861ba]
+- Updated dependencies [5143dad]
+- Updated dependencies [cc976c3]
+- Updated dependencies [492e542]
+- Updated dependencies [00fe5f9]
+- Updated dependencies [24844c0]
+- Updated dependencies [a8b0dc4]
+- Updated dependencies [389798a]
+- Updated dependencies [073a296]
+- Updated dependencies [f9a1143]
+- Updated dependencies [e99ede7]
+- Updated dependencies [62aaf89]
+- Updated dependencies [8f013d3]
+- Updated dependencies [e3e0d41]
+- Updated dependencies [e44781f]
+- Updated dependencies [9bbbeed]
+- Updated dependencies [b8a44f4]
+- Updated dependencies [ff1ce19]
+- Updated dependencies [6676fd8]
+- Updated dependencies [ec22abd]
+- Updated dependencies [c3865ec]
+- Updated dependencies [4316494]
+- Updated dependencies [2da3894]
+- Updated dependencies [5ba1719]
+- Updated dependencies [80a5242]
+- Updated dependencies [d1bc202]
+- Updated dependencies [d254e6c]
+- Updated dependencies [04f70a4]
+- Updated dependencies [d2ec5ca]
+- Updated dependencies [fc99837]
+- Updated dependencies [175ae28]
+- Updated dependencies [d090009]
+- Updated dependencies [b2ddd67]
+- Updated dependencies [4d8a6fa]
+- Updated dependencies [e1381dc]
+- Updated dependencies [67927c7]
+- Updated dependencies [b4c088c]
+- Updated dependencies [5d2f154]
+- Updated dependencies [5f6c9c9]
+- Updated dependencies [100f918]
+- Updated dependencies [c3a9415]
+- Updated dependencies [10735fb]
+- Updated dependencies [6bee319]
+- Updated dependencies [53f009e]
+- Updated dependencies [927b00a]
+- Updated dependencies [3e8fd59]
+- Updated dependencies [426ffce]
+- Updated dependencies [9120128]
+- Updated dependencies [c8e11dd]
+- Updated dependencies [ba78f67]
+- Updated dependencies [df817c5]
+- Updated dependencies [0cad090]
+- Updated dependencies [cda23dd]
+- Updated dependencies [68ecd47]
+- Updated dependencies [309686a]
+- Updated dependencies [1d6cb7b]
+- Updated dependencies [bd37b77]
+- Updated dependencies [480787b]
+- Updated dependencies [0cca10e]
+- Updated dependencies [9ec0b29]
+- Updated dependencies [8e2d9b9]
+- Updated dependencies [cefabdb]
+- Updated dependencies [c49ccb2]
+- Updated dependencies [6b00423]
+- Updated dependencies [4f49560]
+- Updated dependencies [42d301f]
+- Updated dependencies [ee18604]
+- Updated dependencies [d001761]
+- Updated dependencies [2b801c3]
+- Updated dependencies [e806bf7]
+- Updated dependencies [7ce87ec]
+- Updated dependencies [1493ac5]
+- Updated dependencies [952a049]
+- Updated dependencies [c52549b]
+- Updated dependencies [d7ae3ab]
+- Updated dependencies [7c31d67]
+- Updated dependencies [67f39fa]
+- Updated dependencies [0392e8a]
+- Updated dependencies [256f576]
+- Updated dependencies [c01f5ba]
+- Updated dependencies [d70f2ed]
+- Updated dependencies [cb0ecc0]
+- Updated dependencies [15ea466]
+- Updated dependencies [f7835a2]
+- Updated dependencies [db11ca8]
+- Updated dependencies [e6a5ab0]
+- Updated dependencies [c0d18de]
+- Updated dependencies [b1a765c]
+- Updated dependencies [f9ad955]
+- Updated dependencies [95cd2f6]
+- Updated dependencies [6d9a147]
+- Updated dependencies [7372f90]
+- Updated dependencies [53dd3e1]
+- Updated dependencies [5c21b5e]
+- Updated dependencies [defb952]
+- Updated dependencies [a459ad3]
+- Updated dependencies [01cee42]
+- Updated dependencies [a7a5264]
+- Updated dependencies [f14f927]
+- Updated dependencies [8d4cae2]
+- Updated dependencies [483ee70]
+- Updated dependencies [79bdcf5]
+- Updated dependencies [c1a147f]
+- Updated dependencies [8e38dff]
+- Updated dependencies [e94bb52]
+- Updated dependencies [90cde04]
+- Updated dependencies [23e186d]
+- Updated dependencies [e0fceec]
+- Updated dependencies [a74c8cf]
+- Updated dependencies [ae46ad6]
+- Updated dependencies [4a644f6]
+- Updated dependencies [41206cb]
+- Updated dependencies [7c80b61]
+- Updated dependencies [071b34d]
+- Updated dependencies [5e95de6]
+- Updated dependencies [54f46d8]
+- Updated dependencies [0bc8d11]
+- Updated dependencies [df658f3]
+- Updated dependencies [82ba7de]
+- Updated dependencies [fa8d67f]
+- Updated dependencies [5fc701e]
+- Updated dependencies [a7c804c]
+- Updated dependencies [41896be]
+- Updated dependencies [9e57681]
+- Updated dependencies [055eb6f]
+- Updated dependencies [aeeae21]
+- Updated dependencies [6777b08]
+- Updated dependencies [0173f11]
+- Updated dependencies [32d90b3]
+- Updated dependencies [fa47326]
+- Updated dependencies [31c4b92]
+- Updated dependencies [b434d53]
+- Updated dependencies [f09982c]
+- Updated dependencies [a47f685]
+- Updated dependencies [f3c5f22]
+- Updated dependencies [bb8cb6f]
+- Updated dependencies [f3a3d1b]
+- Updated dependencies [2c73043]
+- Updated dependencies [bac03d4]
+- Updated dependencies [7e5fa3b]
+- Updated dependencies [028307e]
+- Updated dependencies [1b19d2f]
+- Updated dependencies [0dae72b]
+- Updated dependencies [68ca7be]
+- Updated dependencies [caf6e70]
+- Updated dependencies [55438bd]
+  - @breadboard-ai/board-server@0.16.0
+  - @breadboard-ai/a2@0.6.0
+  - @breadboard-ai/visual-editor@1.30.0
+  - @breadboard-ai/types@0.9.0
+  - @breadboard-ai/mcp@0.1.0
+  - @breadboard-ai/shared-ui@1.27.0
+  - @google-labs/breadboard@0.36.0
+  - @breadboard-ai/utils@0.1.0
+  - @breadboard-ai/connection-server@0.7.0
+  - @breadboard-ai/embed@0.0.3
+
 ## 0.3.0
 
 ### Minor Changes

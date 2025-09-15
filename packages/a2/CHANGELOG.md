@@ -1,5 +1,102 @@
 # @breadboard-ai/a2
 
+## 0.6.0
+
+### Minor Changes
+
+- 9034629: Implement MCP client session support.
+- cc976c3: Refactor MCP infrastructure to be ready for built-in clients.
+- 492e542: Add `info` value to Schema enums and use it to convey quota limits.
+- 073a296: Plumb error handling to renderer and console for new runtime.
+- f9a1143: Introduce error metadata to increase precision of error message.
+- 67927c7: Implement tracking for model calls.
+- 426ffce: Implement MCP support behind flag.
+- 0cad090: Introduce MCP client infrastructure.
+- 42d301f: Implement MCP Allow list.
+- 2b801c3: Introduce `/mnt` root directory for mounting custom volumes to File
+  System.
+- e806bf7: Enable sequential function-calling by default.
+- db11ca8: Introduce "Generate for each input" capability.
+- f9ad955: Switch A2 to be code-first, rather than BGL-first.
+- a74c8cf: Add support for built-in MCP Servers.
+- 071b34d: Introduce "Save as code" capability behind flag.
+- 54f46d8: Introduce "Code Execution" tool.
+- 31c4b92: Expand error metadata to include reason for safety errors.
+
+### Patch Changes
+
+- f0e1331: Respond with an error when fetching a blob fails.
+- 42efde5: Account for empty tool responses.
+- 77976cd: Fix the error when saving to slides and show thumbnails of Drive
+  files when Saving to Doc/Sheet/Presentation.
+- fb861ba: Add support for reactive info messages
+- a8b0dc4: Name the saved doc/sheet/presentation same as graph title.
+- 62aaf89: Cache MCP Server tool lists.
+- 8f013d3: Switch to use Gemini 2.5 flash as default model.
+- b8a44f4: Bring back tool descriptions, too.
+- d1bc202: Overhaul `executeStep` to support fallback substreams and console
+  logging.
+- d254e6c: Stop calling preview models.
+- ba78f67: Start saving package.json along with index.html in "Save as code".
+- df817c5: Tighten A2 TS library declarations.
+- d001761: Fix an off-by-one error when appending to slides.
+- 7ce87ec: Guard against an unexpected empty response.
+- 1493ac5: Make gen media steps output actual errors.
+- 952a049: Only show "for each" when step has "for each" enabled.
+- d7ae3ab: Return decoded HTML.
+- 67f39fa: Update model name to reflect new model release.
+- d70f2ed: Plumb getting information about MCP server.
+- 15ea466: Make integrations work end-to-end.
+- b1a765c: Start properly encoding UTF-8 text in A2
+- 7372f90: Update build order
+- f14f927: Remove Flash 2.0 from the model drop-down.
+- 90cde04: Retry Gemini invocation when encountering STOP but not output.
+- 41206cb: Add support for proxy-backed MCP client.
+- fa8d67f: Bring tool titles back.
+- a7c804c: Put title/description of tools in the right place.
+- 6777b08: Display rich/friendly errors in the UI.
+- fa47326: Set safety settings to default values.
+- 2c73043: Update CSP to include a few well-known CDNs and image sources.
+- 1b19d2f: Fix lint errors and organize imports
+- Updated dependencies [f7a7772]
+- Updated dependencies [f609a62]
+- Updated dependencies [9034629]
+- Updated dependencies [342dbb8]
+- Updated dependencies [d0458a0]
+- Updated dependencies [48eb9b0]
+- Updated dependencies [4166203]
+- Updated dependencies [fbeaf8f]
+- Updated dependencies [b305c1b]
+- Updated dependencies [5143dad]
+- Updated dependencies [cc976c3]
+- Updated dependencies [492e542]
+- Updated dependencies [073a296]
+- Updated dependencies [ff1ce19]
+- Updated dependencies [5ba1719]
+- Updated dependencies [4d8a6fa]
+- Updated dependencies [67927c7]
+- Updated dependencies [426ffce]
+- Updated dependencies [0cad090]
+- Updated dependencies [1d6cb7b]
+- Updated dependencies [42d301f]
+- Updated dependencies [2b801c3]
+- Updated dependencies [c52549b]
+- Updated dependencies [db11ca8]
+- Updated dependencies [c0d18de]
+- Updated dependencies [6d9a147]
+- Updated dependencies [01cee42]
+- Updated dependencies [f14f927]
+- Updated dependencies [e94bb52]
+- Updated dependencies [a74c8cf]
+- Updated dependencies [071b34d]
+- Updated dependencies [5e95de6]
+- Updated dependencies [0bc8d11]
+- Updated dependencies [82ba7de]
+- Updated dependencies [32d90b3]
+  - @breadboard-ai/types@0.9.0
+  - @google-labs/breadboard@0.36.0
+  - @breadboard-ai/embedded-board-server@0.2.1
+
 ## 0.5.0
 
 ### Minor Changes

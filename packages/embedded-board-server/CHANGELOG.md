@@ -1,5 +1,20 @@
 # @breadboard-ai/embedded-board-server
 
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [9034629]
+- Updated dependencies [342dbb8]
+- Updated dependencies [4166203]
+- Updated dependencies [4d8a6fa]
+- Updated dependencies [67927c7]
+- Updated dependencies [0cad090]
+- Updated dependencies [2b801c3]
+- Updated dependencies [0bc8d11]
+- Updated dependencies [32d90b3]
+  - @google-labs/breadboard@0.36.0
+
 ## 0.2.0
 
 ### Minor Changes

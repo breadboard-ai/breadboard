@@ -1,5 +1,17 @@
 # @breadboard-ai/particles
 
+## 0.2.0
+
+### Minor Changes
+
+- b2ddd67: Update particles-ui to use Particle over ItemData
+- 927b00a: Start using Particle Tree in shared-ui.
+
+### Patch Changes
+
+- 5824839: Continue with Particle exploration
+- caf6e70: Add resolver demo
+
 ## 0.1.0
 
 ### Minor Changes

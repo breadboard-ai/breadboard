@@ -1,6 +1,6 @@
 {
   "name": "@breadboard-ai/data",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Handles data transformation for Breadboard",
   "main": "./dist/src/index.js",
   "exports": {
@@ -134,8 +134,8 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@breadboard-ai/types": "0.8.0",
-    "@breadboard-ai/utils": "0.0.2",
+    "@breadboard-ai/types": "0.9.0",
+    "@breadboard-ai/utils": "0.1.0",
     "littlezipper": "^0.1.5"
   }
 }

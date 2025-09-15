@@ -1,5 +1,242 @@
 # @breadboard-ai/shared-ui
 
+## 1.27.0
+
+### Minor Changes
+
+- ad1f75d: Remove deprecated & unused elements
+- 342dbb8: Refactor MCP machinery to be tool-centric.
+- d0458a0: Teach runtime about stop actions.
+- fbeaf8f: Introduce "Run from here" capability.
+- 51d6ec7: Start tracking more user events.
+- cc976c3: Refactor MCP infrastructure to be ready for built-in clients.
+- 492e542: Add `info` value to Schema enums and use it to convey quota limits.
+- 073a296: Plumb error handling to renderer and console for new runtime.
+- b2ddd67: Update particles-ui to use Particle over ItemData
+- 67927c7: Implement tracking for model calls.
+- 5f6c9c9: Add Mcp UI state.
+- 927b00a: Start using Particle Tree in shared-ui.
+- 426ffce: Implement MCP support behind flag.
+- c52549b: Initial support for action buttons in Visual Editor
+- c01f5ba: Send randomly generated user id to Google Analytics for signed-in
+  users.
+- db11ca8: Introduce "Generate for each input" capability.
+- 01cee42: Add step-by-step running mode in new runtime.
+- e94bb52: Properly display status and react to actions.
+- a74c8cf: Add support for built-in MCP Servers.
+- 071b34d: Introduce "Save as code" capability behind flag.
+- 54f46d8: Introduce "Code Execution" tool.
+- 0bc8d11: Teach new runtime to respond to graph topology changes.
+- 31c4b92: Expand error metadata to include reason for safety errors.
+- f09982c: Implement "Download file" option
+
+### Patch Changes
+
+- 50550f6: Split header menus
+- a073644: Tweak styles & icon for duplicate
+- 928b495: Hide Zero/Empty State when NL field is non-empty
+- 6f69049: Escape HTML chars
+- f0f424d: Improve rendering
+- dac7516: Fix PDF viewer
+- e2b458d: Add support for 'shared' param
+- 9880602: Switch header to use global item select
+- 0c7d0dc: Update flowgen in step styles
+- d060a0e: Allow snackbars to show more detailed messages
+- 94a4e4e: Set sidenav to "Preview" for unowned graphs
+- 7eaa758: Tweak words
+- 35a47c6: Reset results sharing URL when new run begins
+- 9bff460: Add desktop modal for shared boards
+- c023923: Check for `checkIntersection` function
+- f8af5b6: Update zero state & header menu to include demo video
+- 8b07b63: Tweak the line animation speed
+- f1263e0: Introduce "app_engage" event in ActionTracker
+- 77976cd: Fix the error when saving to slides and show thumbnails of Drive
+  files when Saving to Doc/Sheet/Presentation.
+- c26b7f0: Update header message
+- 4c745e1: Prioritize visible floating inputs
+- e300a2b: Capture pointer when renderer clicked
+- bee84dd: Update toast colors
+- fb861ba: Add support for reactive info messages
+- 5143dad: Polish wiring states in the new runtime.
+- 00fe5f9: Couple of small UI tweaks
+- 24844c0: Add flow modal to landing
+- e99ede7: Rename functions
+- e3e0d41: Adjust missing scopes check
+- ff1ce19: Show activity for edges and nodes.
+- 6676fd8: Rename some vars
+- ec22abd: Tidy the fast access a little for integrations
+- c3865ec: Fix floating-input in review case
+- 2da3894: Stop the button running away
+- 5ba1719: Enable experimental 2D matrix rendering of graph
+- 80a5242: Show warnings when there are errors
+- d1bc202: Overhaul `executeStep` to support fallback substreams and console
+  logging.
+- 04f70a4: Surface status update info
+- d2ec5ca: Add support for JSON copy under Experimental Components
+- fc99837: Update foreach adornment
+- 175ae28: Improve behavior of Remix button
+- d090009: Update disclaimer content
+- e1381dc: Various quality-of-life improvements to the text editor
+- b4c088c: Improve graph line animation
+- 5d2f154: Refine icons in text editor
+- 100f918: Fix content warning behavior
+- c3a9415: Thin out TopGraphObserver/Result a bit.
+- 10735fb: Neutralize the default color scheme
+- 6bee319: Push graph edge z-indexes back
+- 3e8fd59: Fix board input edit overflow
+- 9120128: Further adjust escaping
+- cda23dd: Clean up the App Controller a little
+- 68ecd47: Fix the bug where the in-step flowgen edits aren't reflected.
+- 1d6cb7b: Track opened versions for shared apps
+- 480787b: Update board & title in app & canvas controllers
+- 0cca10e: Update chiclet selection state
+- 9ec0b29: Add correct margins to list items in app output
+- 8e2d9b9: Set icons to filled in console view
+- cefabdb: Count first run of app_flow_edit as app_flow_create.
+- c49ccb2: Improvements & changes to console view
+- 6b00423: Update the z-index on edges to account for forEach adornments
+- 4f49560: Create landing endpoint
+- ee18604: Teach app view about parallel inputs.
+- 7c31d67: UI tweaks
+- 0392e8a: Add shortcuts for duplicating content
+- cb0ecc0: Add forEach adornment
+- 15ea466: Make integrations work end-to-end.
+- f7835a2: Add tooltips for graph node actions
+- e6a5ab0: Constrain the width of a tooltip with status.
+- 95cd2f6: Center align textarea in floating input
+- 6d9a147: Add support for node-level actions
+- 53dd3e1: Handle non-LLMContent conversions
+- 5c21b5e: Update the Fast Access Menu styles
+- defb952: Support breakpoints in the UI
+- a459ad3: Save prompt in step editor before handling user action.
+- f14f927: Remove Flash 2.0 from the model drop-down.
+- 8d4cae2: Tweak label on floating input
+- 483ee70: Update string handling
+- 79bdcf5: Update app theme flow
+- c1a147f: A couple of minor requested tweaks
+- 8e38dff: Fix title overflow bug
+- 23e186d: Add support for right-click delete
+- e0fceec: Update status updates to infobar
+- ae46ad6: Track remix events more precisely and start tracking error events.
+- 7c80b61: Add experimental MCP Server modal
+- 5e95de6: Add support for optional auth tokens for MCP servers.
+- df658f3: Tweak theme behaviors
+- 5fc701e: Fix console view scrolling
+- 41896be: Update icon for text content
+- 9e57681: Fix header
+- 055eb6f: Update links to policies
+- aeeae21: Restyle toasts
+- 6777b08: Display rich/friendly errors in the UI.
+- 0173f11: Add runtime flags modal
+- 32d90b3: Remove RunObsever machinery.
+- b434d53: Fix "Untitled Flow" bug in flowgen.
+- a47f685: Move status label
+- f3c5f22: Replace remix snackbar with bubble
+- bb8cb6f: Add more flags stuff
+- bac03d4: Do not inflate Drive-based storedData.
+- 7e5fa3b: Adjust HTML escaping in text-editor
+- 028307e: Update error messaging
+- 0dae72b: Allow pasting in text editor
+- 68ca7be: Select first non-hidden value as bb-item-select default
+- caf6e70: Add resolver demo
+- Updated dependencies [f0e1331]
+- Updated dependencies [f7a7772]
+- Updated dependencies [f609a62]
+- Updated dependencies [9034629]
+- Updated dependencies [f0f424d]
+- Updated dependencies [342dbb8]
+- Updated dependencies [5824839]
+- Updated dependencies [42efde5]
+- Updated dependencies [d0458a0]
+- Updated dependencies [48eb9b0]
+- Updated dependencies [c099a20]
+- Updated dependencies [77976cd]
+- Updated dependencies [4166203]
+- Updated dependencies [fbeaf8f]
+- Updated dependencies [b305c1b]
+- Updated dependencies [fb861ba]
+- Updated dependencies [5143dad]
+- Updated dependencies [cc976c3]
+- Updated dependencies [492e542]
+- Updated dependencies [a8b0dc4]
+- Updated dependencies [073a296]
+- Updated dependencies [f9a1143]
+- Updated dependencies [e99ede7]
+- Updated dependencies [62aaf89]
+- Updated dependencies [8f013d3]
+- Updated dependencies [b8a44f4]
+- Updated dependencies [ff1ce19]
+- Updated dependencies [5ba1719]
+- Updated dependencies [d1bc202]
+- Updated dependencies [d254e6c]
+- Updated dependencies [b06b895]
+- Updated dependencies [b2ddd67]
+- Updated dependencies [4d8a6fa]
+- Updated dependencies [67927c7]
+- Updated dependencies [5f6c9c9]
+- Updated dependencies [927b00a]
+- Updated dependencies [426ffce]
+- Updated dependencies [ba78f67]
+- Updated dependencies [df817c5]
+- Updated dependencies [0cad090]
+- Updated dependencies [1d6cb7b]
+- Updated dependencies [42d301f]
+- Updated dependencies [d001761]
+- Updated dependencies [2b801c3]
+- Updated dependencies [e806bf7]
+- Updated dependencies [7ce87ec]
+- Updated dependencies [1493ac5]
+- Updated dependencies [952a049]
+- Updated dependencies [c52549b]
+- Updated dependencies [d7ae3ab]
+- Updated dependencies [67f39fa]
+- Updated dependencies [d70f2ed]
+- Updated dependencies [15ea466]
+- Updated dependencies [db11ca8]
+- Updated dependencies [c0d18de]
+- Updated dependencies [b1a765c]
+- Updated dependencies [f9ad955]
+- Updated dependencies [6d9a147]
+- Updated dependencies [7372f90]
+- Updated dependencies [53dd3e1]
+- Updated dependencies [01cee42]
+- Updated dependencies [f14f927]
+- Updated dependencies [483ee70]
+- Updated dependencies [e94bb52]
+- Updated dependencies [90cde04]
+- Updated dependencies [3ecdf7b]
+- Updated dependencies [e2ca247]
+- Updated dependencies [a74c8cf]
+- Updated dependencies [41206cb]
+- Updated dependencies [071b34d]
+- Updated dependencies [5e95de6]
+- Updated dependencies [54f46d8]
+- Updated dependencies [0bc8d11]
+- Updated dependencies [82ba7de]
+- Updated dependencies [fa8d67f]
+- Updated dependencies [a7c804c]
+- Updated dependencies [6777b08]
+- Updated dependencies [32d90b3]
+- Updated dependencies [fa47326]
+- Updated dependencies [31c4b92]
+- Updated dependencies [2c73043]
+- Updated dependencies [f053be1]
+- Updated dependencies [1b19d2f]
+- Updated dependencies [caf6e70]
+  - @breadboard-ai/a2@0.6.0
+  - @breadboard-ai/connection-client@0.4.0
+  - @breadboard-ai/types@0.9.0
+  - @breadboard-ai/mcp@0.1.0
+  - @google-labs/breadboard@0.36.0
+  - @breadboard-ai/particles-ui@0.2.0
+  - @google-labs/breadboard-schema@1.16.0
+  - @breadboard-ai/particles@0.2.0
+  - @breadboard-ai/runtime@0.2.0
+  - @breadboard-ai/utils@0.1.0
+  - @breadboard-ai/google-drive-kit@0.8.0
+  - @breadboard-ai/jsandbox@0.8.0
+  - @breadboard-ai/theme@0.0.3
+
 ## 1.26.0
 
 ### Minor Changes

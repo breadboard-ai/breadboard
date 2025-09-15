@@ -1,5 +1,273 @@
 # @google-labs/breadboard-web
 
+## 1.30.0
+
+### Minor Changes
+
+- f7a7772: Introduce built-in Google Calendar MCP client.
+- ad1f75d: Remove deprecated & unused elements
+- 9034629: Implement MCP client session support.
+- 342dbb8: Refactor MCP machinery to be tool-centric.
+- 51d6ec7: Start tracking more user events.
+- cc976c3: Refactor MCP infrastructure to be ready for built-in clients.
+- 67927c7: Implement tracking for model calls.
+- 5f6c9c9: Add Mcp UI state.
+- 426ffce: Implement MCP support behind flag.
+- 0cad090: Introduce MCP client infrastructure.
+- 2b801c3: Introduce `/mnt` root directory for mounting custom volumes to File
+  System.
+- c52549b: Initial support for action buttons in Visual Editor
+- c01f5ba: Send randomly generated user id to Google Analytics for signed-in
+  users.
+- 01cee42: Add step-by-step running mode in new runtime.
+- 071b34d: Introduce "Save as code" capability behind flag.
+
+### Patch Changes
+
+- 50550f6: Split header menus
+- e2b458d: Add support for 'shared' param
+- 354d92e: Teach file system to ask permission
+- d060a0e: Allow snackbars to show more detailed messages
+- 9bff460: Add desktop modal for shared boards
+- f8af5b6: Update zero state & header menu to include demo video
+- 4166203: Remove the `RunStore` bits.
+- eb0004c: Introduce FileSystemPersistentBackend
+- bb342d6: Add share card image
+- b305c1b: Track updates via hashing
+- 389798a: Fix remix snackbar
+- e44781f: Update Discord links
+- 9bbbeed: Update Discord links
+- 4316494: Adjust init order
+- 80a5242: Show warnings when there are errors
+- 04f70a4: Surface status update info
+- d2ec5ca: Add support for JSON copy under Experimental Components
+- 175ae28: Improve behavior of Remix button
+- 4d8a6fa: Close MCP clients at the end of each run.
+- c3a9415: Thin out TopGraphObserver/Result a bit.
+- 53f009e: Revert to canvas for new boards
+- c8e11dd: Retain flow & mode params for redirects
+- cda23dd: Clean up the App Controller a little
+- 309686a: Append late-bound server to State
+- 1d6cb7b: Track opened versions for shared apps
+- bd37b77: Adjust z-index of header
+- 480787b: Update board & title in app & canvas controllers
+- c49ccb2: Improvements & changes to console view
+- 4f49560: Create landing endpoint
+- 7c31d67: UI tweaks
+- 0392e8a: Add shortcuts for duplicating content
+- 256f576: Improve info bar behavior
+- d70f2ed: Plumb getting information about MCP server.
+- 6d9a147: Add support for node-level actions
+- 5c21b5e: Update the Fast Access Menu styles
+- defb952: Support breakpoints in the UI
+- a7a5264: Only show app view when loaded
+- c1a147f: A couple of minor requested tweaks
+- e0fceec: Update status updates to infobar
+- ae46ad6: Track remix events more precisely and start tracking error events.
+- 4a644f6: Allow pasting of plain text content
+- 41206cb: Add support for proxy-backed MCP client.
+- 7c80b61: Add experimental MCP Server modal
+- df658f3: Tweak theme behaviors
+- 055eb6f: Update links to policies
+- 0173f11: Add runtime flags modal
+- 32d90b3: Remove RunObsever machinery.
+- f3c5f22: Replace remix snackbar with bubble
+- 028307e: Update error messaging
+- 0dae72b: Allow pasting in text editor
+- 55438bd: Remove toast on runtime error
+- Updated dependencies [f0e1331]
+- Updated dependencies [f7a7772]
+- Updated dependencies [f609a62]
+- Updated dependencies [50550f6]
+- Updated dependencies [ad1f75d]
+- Updated dependencies [a073644]
+- Updated dependencies [928b495]
+- Updated dependencies [6f69049]
+- Updated dependencies [9034629]
+- Updated dependencies [f0f424d]
+- Updated dependencies [dac7516]
+- Updated dependencies [342dbb8]
+- Updated dependencies [e2b458d]
+- Updated dependencies [354d92e]
+- Updated dependencies [9880602]
+- Updated dependencies [0c7d0dc]
+- Updated dependencies [42efde5]
+- Updated dependencies [d060a0e]
+- Updated dependencies [94a4e4e]
+- Updated dependencies [d0458a0]
+- Updated dependencies [48eb9b0]
+- Updated dependencies [7eaa758]
+- Updated dependencies [35a47c6]
+- Updated dependencies [9bff460]
+- Updated dependencies [c023923]
+- Updated dependencies [f8af5b6]
+- Updated dependencies [8b07b63]
+- Updated dependencies [f1263e0]
+- Updated dependencies [77976cd]
+- Updated dependencies [4166203]
+- Updated dependencies [eb0004c]
+- Updated dependencies [fbeaf8f]
+- Updated dependencies [c26b7f0]
+- Updated dependencies [4c745e1]
+- Updated dependencies [e300a2b]
+- Updated dependencies [bee84dd]
+- Updated dependencies [51d6ec7]
+- Updated dependencies [b305c1b]
+- Updated dependencies [fb861ba]
+- Updated dependencies [5143dad]
+- Updated dependencies [cc976c3]
+- Updated dependencies [492e542]
+- Updated dependencies [00fe5f9]
+- Updated dependencies [24844c0]
+- Updated dependencies [a8b0dc4]
+- Updated dependencies [073a296]
+- Updated dependencies [f9a1143]
+- Updated dependencies [e99ede7]
+- Updated dependencies [62aaf89]
+- Updated dependencies [8f013d3]
+- Updated dependencies [e3e0d41]
+- Updated dependencies [b8a44f4]
+- Updated dependencies [ff1ce19]
+- Updated dependencies [6676fd8]
+- Updated dependencies [ec22abd]
+- Updated dependencies [c3865ec]
+- Updated dependencies [2da3894]
+- Updated dependencies [5ba1719]
+- Updated dependencies [80a5242]
+- Updated dependencies [d1bc202]
+- Updated dependencies [d254e6c]
+- Updated dependencies [04f70a4]
+- Updated dependencies [b06b895]
+- Updated dependencies [d2ec5ca]
+- Updated dependencies [fc99837]
+- Updated dependencies [175ae28]
+- Updated dependencies [d090009]
+- Updated dependencies [b2ddd67]
+- Updated dependencies [4d8a6fa]
+- Updated dependencies [e1381dc]
+- Updated dependencies [67927c7]
+- Updated dependencies [b4c088c]
+- Updated dependencies [5d2f154]
+- Updated dependencies [5f6c9c9]
+- Updated dependencies [100f918]
+- Updated dependencies [c3a9415]
+- Updated dependencies [10735fb]
+- Updated dependencies [6bee319]
+- Updated dependencies [927b00a]
+- Updated dependencies [3e8fd59]
+- Updated dependencies [426ffce]
+- Updated dependencies [9120128]
+- Updated dependencies [ba78f67]
+- Updated dependencies [df817c5]
+- Updated dependencies [0cad090]
+- Updated dependencies [cda23dd]
+- Updated dependencies [68ecd47]
+- Updated dependencies [1d6cb7b]
+- Updated dependencies [480787b]
+- Updated dependencies [0cca10e]
+- Updated dependencies [9ec0b29]
+- Updated dependencies [8e2d9b9]
+- Updated dependencies [cefabdb]
+- Updated dependencies [c49ccb2]
+- Updated dependencies [6b00423]
+- Updated dependencies [4f49560]
+- Updated dependencies [42d301f]
+- Updated dependencies [ee18604]
+- Updated dependencies [d001761]
+- Updated dependencies [2b801c3]
+- Updated dependencies [e806bf7]
+- Updated dependencies [7ce87ec]
+- Updated dependencies [1493ac5]
+- Updated dependencies [952a049]
+- Updated dependencies [c52549b]
+- Updated dependencies [d7ae3ab]
+- Updated dependencies [7c31d67]
+- Updated dependencies [67f39fa]
+- Updated dependencies [0392e8a]
+- Updated dependencies [c01f5ba]
+- Updated dependencies [d70f2ed]
+- Updated dependencies [cb0ecc0]
+- Updated dependencies [15ea466]
+- Updated dependencies [f7835a2]
+- Updated dependencies [db11ca8]
+- Updated dependencies [e6a5ab0]
+- Updated dependencies [c0d18de]
+- Updated dependencies [b1a765c]
+- Updated dependencies [f9ad955]
+- Updated dependencies [95cd2f6]
+- Updated dependencies [6d9a147]
+- Updated dependencies [7372f90]
+- Updated dependencies [53dd3e1]
+- Updated dependencies [5c21b5e]
+- Updated dependencies [defb952]
+- Updated dependencies [a459ad3]
+- Updated dependencies [01cee42]
+- Updated dependencies [f14f927]
+- Updated dependencies [8d4cae2]
+- Updated dependencies [483ee70]
+- Updated dependencies [79bdcf5]
+- Updated dependencies [c1a147f]
+- Updated dependencies [8e38dff]
+- Updated dependencies [e94bb52]
+- Updated dependencies [90cde04]
+- Updated dependencies [3ecdf7b]
+- Updated dependencies [23e186d]
+- Updated dependencies [e2ca247]
+- Updated dependencies [e0fceec]
+- Updated dependencies [a74c8cf]
+- Updated dependencies [ae46ad6]
+- Updated dependencies [41206cb]
+- Updated dependencies [7c80b61]
+- Updated dependencies [071b34d]
+- Updated dependencies [5e95de6]
+- Updated dependencies [54f46d8]
+- Updated dependencies [0bc8d11]
+- Updated dependencies [df658f3]
+- Updated dependencies [82ba7de]
+- Updated dependencies [fa8d67f]
+- Updated dependencies [5fc701e]
+- Updated dependencies [a7c804c]
+- Updated dependencies [41896be]
+- Updated dependencies [9e57681]
+- Updated dependencies [055eb6f]
+- Updated dependencies [aeeae21]
+- Updated dependencies [6777b08]
+- Updated dependencies [0173f11]
+- Updated dependencies [32d90b3]
+- Updated dependencies [fa47326]
+- Updated dependencies [31c4b92]
+- Updated dependencies [b434d53]
+- Updated dependencies [f09982c]
+- Updated dependencies [a47f685]
+- Updated dependencies [f3c5f22]
+- Updated dependencies [bb8cb6f]
+- Updated dependencies [2c73043]
+- Updated dependencies [bac03d4]
+- Updated dependencies [7e5fa3b]
+- Updated dependencies [f053be1]
+- Updated dependencies [028307e]
+- Updated dependencies [1b19d2f]
+- Updated dependencies [0dae72b]
+- Updated dependencies [68ca7be]
+- Updated dependencies [caf6e70]
+  - @breadboard-ai/a2@0.6.0
+  - @breadboard-ai/mcp-gcal@0.1.0
+  - @breadboard-ai/types@0.9.0
+  - @breadboard-ai/mcp@0.1.0
+  - @breadboard-ai/shared-ui@1.27.0
+  - @google-labs/breadboard@0.36.0
+  - @breadboard-ai/filesystem-board-server@1.23.0
+  - @breadboard-ai/runtime@0.2.0
+  - @breadboard-ai/data-store@0.5.0
+  - @breadboard-ai/google-drive-kit@0.8.0
+  - @breadboard-ai/jsandbox@0.8.0
+  - @breadboard-ai/board-server-management@1.21.2
+  - @google-labs/core-kit@0.19.2
+  - @breadboard-ai/embed@0.0.3
+  - @breadboard-ai/theme@0.0.3
+  - @breadboard-ai/board-server-utils@0.1.12
+  - @breadboard-ai/idb-board-server@1.19.6
+
 ## 1.29.0
 
 ### Minor Changes
