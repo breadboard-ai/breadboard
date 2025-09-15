@@ -31,7 +31,9 @@
       "env": {
         "FORCE_COLOR": "1"
       },
-      "dependencies": [],
+      "dependencies": [
+        "<dependencies>#build"
+      ],
       "files": [
         "src/**/*.ts",
         "tests/**/*.ts",
