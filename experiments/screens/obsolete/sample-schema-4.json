@@ -1,0 +1,81 @@
+[
+  {
+    "name": "process_image",
+    "title": "Image Processor",
+    "description": "Automatically crops and enhances provided image. The output is a `resource_link` with with the `uri` pointing at the processed image",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "image_uri": {
+          "type": "string",
+          "description": "VFS path to the image"
+        }
+      },
+      "required": ["image_uri"]
+    }
+  },
+  {
+    "name": "generate_image",
+    "title": "Generates an image based on the topic",
+    "description": "Generates an image based on the provided topic. This tool will expand the topic into a full prompt before generating. The output is a `resource_link` with with the `uri` pointing at the processed image",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "topic": {
+          "type": "string",
+          "description": "The topic to base the image on"
+        }
+      },
+      "required": ["topic"]
+    }
+  },
+  {
+    "name": "review_with_user",
+    "title": "Review with User",
+    "description": "Asks user to review the picture. Returns ContentBlock `text` type containing `accepted` when the user accepts the picture or `rejected` when the user does not.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "image_uri": {
+          "type": "string",
+          "description": "VFS uri of the image"
+        }
+      },
+      "required": ["image_uri"]
+    }
+  },
+  {
+    "name": "let_user_pick",
+    "title": "Let User Pick the Best Picture",
+    "description": "Asks user to review two pictures and choose one. Returns ContentBlock `resource_link` type with the `uri` pointing at the image the user picked.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "image_a_uri": {
+          "type": "string",
+          "description": "VFS uri of image A"
+        },
+        "image_b_uri": {
+          "type": "string",
+          "description": "VFS uri of image B"
+        }
+      },
+      "required": ["image_a_uri", "image_b_uri"]
+    }
+  },
+  {
+    "name": "convert_pdf_to_jpg",
+    "title": "Convert PDF to JPEG",
+    "description": "Converts PDF file to JPEG. Returns ContentBlock `resource_link` type with the `uri` pointing at the converted image",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "pdf_uri": {
+          "type": "string",
+          "description": "VFS path to the PDF file"
+        }
+      },
+      "required": ["pdf_uri"]
+    }
+  }
+]

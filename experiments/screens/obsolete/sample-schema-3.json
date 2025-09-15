@@ -1,0 +1,199 @@
+[
+  {
+    "name": "generate_initial_game_setup",
+    "title": "Generate Initial Game Setup",
+    "description": "Creates the foundational elements of a new adventure game, including the protagonist's details, the overarching plot, and the primary objective (boon) based on user inspiration.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "inspiration": {
+          "type": "string",
+          "description": "A brief text provided by the user to inspire the game's theme, setting, or core idea."
+        }
+      },
+      "required": ["inspiration"]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "character_name": {
+          "type": "string",
+          "description": "The name of the generated protagonist."
+        },
+        "character_bio": {
+          "type": "string",
+          "description": "A detailed biography of the generated character."
+        },
+        "character_image_prompt": {
+          "type": "string",
+          "description": "A detailed text prompt suitable for an image generation model, describing the character's appearance."
+        },
+        "initial_plot_state": {
+          "type": "object",
+          "description": "The initial comprehensive state of the game's plot, including location, objective, character status, and items."
+        },
+        "boon_description": {
+          "type": "string",
+          "description": "A description of the ultimate objective or 'boon' the character must achieve."
+        }
+      },
+      "required": [
+        "character_name",
+        "character_bio",
+        "character_image_prompt",
+        "initial_plot_state",
+        "boon_description"
+      ]
+    }
+  },
+  {
+    "name": "generate_image_from_prompt",
+    "title": "Generate Image",
+    "description": "Creates a visual image based on a descriptive text prompt.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "description": "A detailed text description for the image to be generated."
+        }
+      },
+      "required": ["prompt"]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["resource_link"] },
+        "uri": {
+          "type": "string",
+          "description": "VFS URI of the generated image."
+        },
+        "mimeType": {
+          "type": "string",
+          "description": "MIME type of the image, e.g., 'image/jpeg' or 'image/png'."
+        }
+      },
+      "required": ["type", "uri", "mimeType"]
+    }
+  },
+  {
+    "name": "review_character_with_user",
+    "title": "Review Character",
+    "description": "Presents the generated character's biography and image to the user, allowing them to accept the character or request a regeneration.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "character_bio": {
+          "type": "string",
+          "description": "The text biography of the generated character."
+        },
+        "character_image_uri": {
+          "type": "string",
+          "description": "The VFS URI of the generated character's image."
+        }
+      },
+      "required": ["character_bio", "character_image_uri"]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["text"] },
+        "text": {
+          "type": "string",
+          "description": "User's decision: 'accepted' if the character is approved, or 'regenerate' if a new character is desired."
+        }
+      },
+      "required": ["type", "text"]
+    }
+  },
+  {
+    "name": "generate_next_turn_content",
+    "title": "Generate Next Turn Content",
+    "description": "Advances the game's plot, generating a new scene description, an image prompt for the scene, and four choices for the user, based on the current plot state and the user's previous action. It also returns the updated plot state and indicates if the boon was secured.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "current_plot_state": {
+          "type": "object",
+          "description": "The current comprehensive state of the game's plot, including character status, location, inventory, and progress towards the objective."
+        },
+        "previous_user_choice_index": {
+          "type": "number",
+          "description": "The index (0-3) of the choice the user made in the previous turn. Null if it's the first scene after character acceptance.",
+          "nullable": true
+        },
+        "previous_scene_choices": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "The list of choices presented in the previous turn. Null if it's the first scene after character acceptance.",
+          "nullable": true
+        }
+      },
+      "required": ["current_plot_state"]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "scene_description": {
+          "type": "string",
+          "description": "A brief text description of what is happening in the current scene."
+        },
+        "scene_image_prompt": {
+          "type": "string",
+          "description": "A detailed text prompt suitable for an image generation model, describing the current scene."
+        },
+        "choices": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 4,
+          "maxItems": 4,
+          "description": "Four distinct choices the user can make, influencing the next turn."
+        },
+        "new_plot_state": {
+          "type": "object",
+          "description": "The updated comprehensive state of the game's plot after this turn, reflecting changes due to the user's choice and narrative progression."
+        },
+        "boon_secured_this_turn": {
+          "type": "boolean",
+          "description": "True if the game's ultimate objective (boon) was secured in this turn, otherwise false."
+        }
+      },
+      "required": [
+        "scene_description",
+        "scene_image_prompt",
+        "choices",
+        "new_plot_state",
+        "boon_secured_this_turn"
+      ]
+    }
+  },
+  {
+    "name": "generate_final_scene_content",
+    "title": "Generate Final Scene Content",
+    "description": "Creates the celebratory text and image prompt for the final scene once the game's boon has been successfully secured.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "final_plot_state": {
+          "type": "object",
+          "description": "The final comprehensive state of the game's plot, indicating the successful acquisition of the boon."
+        }
+      },
+      "required": ["final_plot_state"]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "final_scene_description": {
+          "type": "string",
+          "description": "A celebratory text description of the final scene, detailing the outcome of securing the boon."
+        },
+        "final_scene_image_prompt": {
+          "type": "string",
+          "description": "A detailed text prompt suitable for an image generation model, describing the triumphant final scene."
+        }
+      },
+      "required": ["final_scene_description", "final_scene_image_prompt"]
+    }
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "name": "screens",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "generate": "tsx src/generate.ts",
+    "dev": "vite dev",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "description": "",
+  "devDependencies": {
+    "tsx": "^4.20.5"
+  },
+  "dependencies": {
+    "@google/genai": "^1.19.0",
+    "dotenv": "^17.2.2",
+    "vite": "^6.3.6"
+  }
+}
