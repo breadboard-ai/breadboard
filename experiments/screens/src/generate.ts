@@ -76,7 +76,7 @@ ${JSON.stringify(screens, null, 2)}
   }
 }
 
-const GEMINI_KEY = process.env.GEMINI_KEY;
+const GEMINI_KEY = process.env.VITE_GEMINI_KEY;
 if (!GEMINI_KEY) {
   console.error(
     `  🔑 Please set GEMINI_KEY environment variable to run this app`

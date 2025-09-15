@@ -1,4 +1,4 @@
-type Schema = {
+export type Schema = {
   type: "string" | "number" | "integer" | "boolean" | "object" | "array";
   format?: string;
   description?: string;
@@ -16,7 +16,7 @@ type Schema = {
  * Represents data that was validated to conform to a JSON schema that is
  * appropriate for the context.
  */
-type SchemaValidated =
+export type SchemaValidated =
   | string
   | number
   | boolean
@@ -26,21 +26,21 @@ type SchemaValidated =
       [K: string]: SchemaValidated;
     };
 
-type CallToolRequest = {
+export type CallToolRequest = {
   name: string;
   arguments: Record<string, SchemaValidated>;
 };
 
-type CallToolResponse = {
+export type CallToolResponse = {
   content: LLMContent;
   isError: boolean;
 };
 
-type McpClient = {
+export type McpClient = {
   callTool(params: CallToolRequest): Promise<CallToolResponse>;
 };
 
-type Console = {
+export type Console = {
   /**
    * Call this method to report errors.
    * @param params -- useful information about the error, usually strings
@@ -53,7 +53,7 @@ type Console = {
   log(...params: unknown[]): void;
 };
 
-type Capabilities = {
+export type Capabilities = {
   generate: Gemini;
   mcp: McpClient;
   console: Console;
@@ -69,7 +69,7 @@ export type Screen = {
   events: EventDescriptor[];
 };
 
-type EventDescriptor = {
+export type EventDescriptor = {
   eventId: string;
   description: string;
   /**
@@ -89,7 +89,7 @@ type EventDescriptor = {
  * together, `getUserEvents` and `renderScreen` form the rendering loop for the
  * application UI.
  */
-type ScreenServer = {
+export type ScreenServer = {
   /**
    * Gets the list of user events. Will block until it receives at least one
    * user event. Accumulates and drains the queue of user events when called.
@@ -106,29 +106,30 @@ type ScreenServer = {
   updateScreens(screenInputs: ScreenInput[]): Promise<RenderScreenResponse>;
 };
 
-type ScreenInput = {
+export type ScreenInput = {
   screenId: string;
-  inputs: Record<string, SchemaValidated>;
+  inputs: SchemaValidated;
 };
 
-type GetUserEventsResponse = {
+export type GetUserEventsResponse = {
   events: UserEvent[];
   isError: boolean;
 };
 
-type RenderScreenResponse = {
+export type RenderScreenResponse = {
   isError: boolean;
 };
 
-type UserEvent = {
+export type UserEvent = {
   screenId: string;
-  data: Record<string, SchemaValidated>;
+  eventId: string;
+  output?: SchemaValidated;
 };
 
 /**
  * Access to Gemini API
  */
-type Gemini = {
+export type Gemini = {
   generateContent(args: GeminiInputs): Promise<GeminiOutputs>;
 };
 
@@ -253,21 +254,14 @@ export type InlineDataPart = {
   };
 };
 
-export type GeminiBody = {
+export type GeminiInputs = {
+  model?: string;
   contents: LLMContent[];
   tools?: Tool[];
   toolConfig?: ToolConfig;
   systemInstruction?: LLMContent;
   safetySettings?: SafetySetting[];
   generationConfig?: GenerationConfig;
-};
-
-export type GeminiInputs = {
-  model?: string;
-  context?: LLMContent[];
-  systemInstruction?: LLMContent;
-  prompt?: LLMContent;
-  body: GeminiBody;
 };
 
 export type Tool = {
@@ -365,8 +359,8 @@ export type Candidate = {
   content?: LLMContent;
   finishReason?: FinishReason;
   safetyRatings?: SafetySetting[];
-  tokenOutput: number;
-  groundingMetadata: GroundingMetadata;
+  tokenOutput?: number;
+  groundingMetadata?: GroundingMetadata;
 };
 
 export type GeminiOutputs = {
