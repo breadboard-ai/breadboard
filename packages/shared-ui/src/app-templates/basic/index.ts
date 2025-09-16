@@ -232,17 +232,19 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       </section>`;
     } else {
       const current = this.run.app.current;
-      if (!current) return nothing;
-
       if (this.run.status === "running") {
         status = html`<div id="status">
           <span class="g-icon"></span>
-          ${this.run.app.current?.title}
+          ${new Intl.ListFormat("en-US", {
+            style: "long",
+            type: "conjunction",
+          }).format(Array.from(current.values()).map((v) => v.title))}
         </div>`;
       }
 
-      if (current.last) {
-        const htmlOutput = isHTMLOutput(current.last);
+      const last = this.run.app.last?.last;
+      if (last && this.run.status === "stopped") {
+        const htmlOutput = isHTMLOutput(last);
         if (htmlOutput !== null) {
           activityContents = html`<iframe
             srcdoc=${htmlOutput}
@@ -256,7 +258,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           // presentation because by default a Particle doesn't have one but we
           // still need it at this point.
           // TODO: Remove this conversion when ProjectRun.app emits particles
-          const group = appScreenToParticles(current.last);
+          const group = appScreenToParticles(last);
           if (typeof group?.presentation === "string") {
             group.presentation = {
               behaviors: [],

@@ -136,13 +136,17 @@ export type App = {
    */
   state: "splash" | "screen";
   /**
-   * A sequences of screens that is produced during the run.
+   * A sequence of screens that is produced during the run.
    */
   screens: Map<string, AppScreen>;
   /**
-   * The current screen.
+   * Currently interactive screens
    */
-  current: AppScreen | null;
+  current: ReadonlyMap<string, AppScreen>;
+  /**
+   * The last screen.
+   */
+  last: AppScreen | null;
 };
 
 /**

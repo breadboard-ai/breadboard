@@ -197,7 +197,7 @@ class ReactiveProjectRun implements ProjectRun {
   get finalOutput(): OutputValues | null {
     if (this.status !== "stopped") return null;
 
-    return this.app.current?.last?.output || null;
+    return this.app.last?.last?.output || null;
   }
 
   #idCache = new IdCache();
@@ -454,7 +454,7 @@ class ReactiveProjectRun implements ProjectRun {
       }
       entry.finalize(event.data);
     }
-    this.app.current?.finalize(event.data);
+    this.app.screens.get(id)?.finalize(event.data);
   }
 
   #input(event: RunInputEvent) {
@@ -538,10 +538,6 @@ class ReactiveProjectRun implements ProjectRun {
     }
 
     this.current.get(id)?.addOutput(event.data, particleTree);
-    if (!this.app.current) {
-      console.warn(`No current screen for output event`, event);
-      return;
-    }
     this.app.screens.get(id)?.addOutput(event.data, particleTree);
   }
 
@@ -577,7 +573,7 @@ class ReactiveProjectRun implements ProjectRun {
       case "ready": {
         console.log(`Run node "${nodeId}"`, nodeState.state);
         this.#dismissedErrors.delete(nodeId);
-        run(runFromNode, nodeId, this.runner, this.renderer.nodes);
+        run(runFromNode, nodeId, this.runner);
         break;
       }
       case "working": {
@@ -595,13 +591,13 @@ class ReactiveProjectRun implements ProjectRun {
       case "succeeded": {
         console.log("Run this node (again)", nodeState.state);
         this.#dismissedErrors.delete(nodeId);
-        run(runFromNode, nodeId, this.runner, this.renderer.nodes);
+        run(runFromNode, nodeId, this.runner);
         break;
       }
       case "failed": {
         console.log("Run this node (again)", nodeState.state);
         this.#dismissedErrors.delete(nodeId);
-        run(runFromNode, nodeId, this.runner, this.renderer.nodes);
+        run(runFromNode, nodeId, this.runner);
         break;
       }
       case "skipped": {
@@ -611,7 +607,7 @@ class ReactiveProjectRun implements ProjectRun {
       case "interrupted": {
         console.log("Run this node (again)", nodeState.state);
         this.#dismissedErrors.delete(nodeId);
-        run(runFromNode, nodeId, this.runner, this.renderer.nodes);
+        run(runFromNode, nodeId, this.runner);
         break;
       }
       default: {
@@ -639,11 +635,10 @@ class ReactiveProjectRun implements ProjectRun {
     function run(
       runFromNode: boolean,
       nodeId: NodeIdentifier,
-      runner: HarnessRunner | undefined,
-      nodes: Map<string, NodeRunState>
+      runner: HarnessRunner | undefined
     ) {
       if (runFromNode) {
-        runFrom(nodeId, runner, nodes);
+        runFrom(nodeId, runner);
       } else {
         runNode(nodeId, runner);
       }
@@ -651,14 +646,9 @@ class ReactiveProjectRun implements ProjectRun {
 
     function runFrom(
       nodeId: NodeIdentifier,
-      runner: HarnessRunner | undefined,
-      nodes: Map<string, NodeRunState>
+      runner: HarnessRunner | undefined
     ) {
-      const running = runner?.runFrom?.(nodeId, {
-        stop: (id) => {
-          nodes.set(id, { status: "interrupted" });
-        },
-      });
+      const running = runner?.runFrom?.(nodeId);
       if (!running) {
         console.log(`Runner does not support running from a node`);
         return;

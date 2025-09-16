@@ -19,7 +19,6 @@ import {
   PlanNodeInfo,
   Probe,
   RunConfig,
-  RunFromCallbacks,
   Task,
   TraversalResult,
 } from "@breadboard-ai/types";
@@ -140,30 +139,31 @@ class PlanRunner extends AbstractRunner {
       // First, activate the run
       this.run(undefined, true);
     }
-    this.dispatchEvent(new ResumeEvent({ timestamp: timestamp() }));
+    if (!this.#orchestrator.working) {
+      this.dispatchEvent(new ResumeEvent({ timestamp: timestamp() }));
+    }
     const outcome = await this.#controller?.runNode(id);
-    this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
+    if (!this.#orchestrator.working) {
+      this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
+    }
     return outcome;
   }
 
-  async runFrom(
-    id: NodeIdentifier,
-    callbacks: RunFromCallbacks
-  ): Promise<Outcome<void>> {
+  async runFrom(id: NodeIdentifier): Promise<Outcome<void>> {
     if (!this.#controller) {
       // If not already running, start a run in interactive mode
       this.run(undefined, true);
-    } else {
-      // Stop any existing running nodes
-      this.#controller.stopAll(callbacks.stop);
-      this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
+    } else if (!this.#orchestrator.working) {
+      this.dispatchEvent(new ResumeEvent({ timestamp: timestamp() }));
     }
     return this.#controller?.runFrom(id);
   }
 
   async stop(id: NodeIdentifier): Promise<Outcome<void>> {
     const outcome = this.#controller?.stop(id);
-    this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
+    if (!this.#orchestrator.working) {
+      this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
+    }
     return outcome;
   }
 
@@ -179,7 +179,11 @@ class PlanRunner extends AbstractRunner {
         this.#orchestrator,
         this.breakpoints,
         () => {
-          this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
+          if (!this.#orchestrator.working) {
+            this.dispatchEvent(
+              new PauseEvent(false, { timestamp: timestamp() })
+            );
+          }
         },
         next
       );
@@ -213,7 +217,6 @@ class InternalRunStateController {
   context: Promise<NodeHandlerContext>;
 
   index: number = 0;
-  #finished: null | (() => void) = null;
 
   constructor(
     public readonly config: RunConfig,
@@ -376,6 +379,11 @@ class InternalRunStateController {
 
   async postamble() {
     if (this.orchestrator.progress !== "finished") return;
+    if (this.orchestrator.failed) {
+      this.pause();
+      return;
+    }
+
     await this.callback({
       type: "graphend",
       data: {
@@ -391,14 +399,6 @@ class InternalRunStateController {
         timestamp: timestamp(),
       },
       reply: async () => {},
-    });
-    this.#finished?.();
-    this.#finished = null;
-  }
-
-  async runInteractively(): Promise<void> {
-    return new Promise((resolve) => {
-      this.#finished = resolve;
     });
   }
 
@@ -433,7 +433,7 @@ class InternalRunStateController {
       );
       if (breakpoint) {
         this.pause();
-        break;
+        return;
       }
     }
     await this.postamble();

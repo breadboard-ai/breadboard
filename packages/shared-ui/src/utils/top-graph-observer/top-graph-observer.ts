@@ -203,7 +203,7 @@ export class TopGraphObserver {
     }
 
     if (!this.#log) {
-      console.log("This is porbably a new runtime: node started with a graph");
+      console.log("This is probably a new runtime: node started with a graph");
       return;
     }
 

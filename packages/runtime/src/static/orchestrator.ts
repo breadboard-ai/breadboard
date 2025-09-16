@@ -40,10 +40,17 @@ const TERMINAL_STATES: ReadonlySet<NodeLifecycleState> = new Set([
   "interrupted",
 ]);
 
-const PROCESSING_STATES: ReadonlySet<NodeLifecycleState> = new Set([
-  "ready",
+/**
+ * States where a node is currently doing something.
+ */
+const IN_PROGRESS_STATES: ReadonlySet<NodeLifecycleState> = new Set([
   "working",
   "waiting",
+]);
+
+const PROCESSING_STATES: ReadonlySet<NodeLifecycleState> = new Set([
+  "ready",
+  ...IN_PROGRESS_STATES,
 ]);
 
 /**
@@ -65,6 +72,8 @@ const RESTARTABLE_STATES: ReadonlySet<NodeLifecycleState> = new Set([
   "failed",
   "interrupted",
 ]);
+
+type StageAdvancementResult = "done" | "more";
 
 /**
  * The Orchestrator acts as the state machine for running a graph.
@@ -110,6 +119,20 @@ class Orchestrator {
     return this.#progress;
   }
 
+  get working() {
+    this.#changed.get();
+    return Array.from(this.#state.values()).some((nodeState) => {
+      return IN_PROGRESS_STATES.has(nodeState.state);
+    });
+  }
+
+  get failed() {
+    this.#changed.get();
+    return Array.from(this.#state.values()).some((nodeState) => {
+      return nodeState.state === "failed" || nodeState.state === "interrupted";
+    });
+  }
+
   /**
    * Bring the orchestrator to the initial state.
    */
@@ -121,22 +144,29 @@ class Orchestrator {
 
   #resetAtStage(starting: number) {
     this.#changed.set({});
-    const state = this.#state;
+    const orchestratorState = this.#state;
     const stagesToReset = this.plan.stages.slice(starting);
     try {
       stagesToReset.forEach((stage, index) => {
         const firstStage = index === 0;
         stage.forEach((plan: PlanNodeInfo) => {
-          const inputs = firstStage
-            ? state.get(plan.node.id)?.inputs || {}
-            : null;
-          state.set(plan.node.id, {
+          const nodeState = orchestratorState.get(plan.node.id);
+          const inputs = firstStage ? nodeState?.inputs || {} : null;
+          const existingState = nodeState?.state || "inactive";
+          let state: NodeLifecycleState;
+          if (IN_PROGRESS_STATES.has(existingState)) {
+            state = existingState;
+          } else {
+            state = firstStage ? "ready" : "inactive";
+          }
+          orchestratorState.set(plan.node.id, {
             stage: starting + index,
-            state: firstStage ? "ready" : "inactive",
+            state,
             plan,
             inputs,
             outputs: null,
           });
+          this.callbacks.stateChanged?.(state, plan);
         });
       });
     } catch (e) {
@@ -251,7 +281,7 @@ class Orchestrator {
     if (!state) {
       return err(`Unable to set node "${id}" to interrupted: node not found`);
     }
-    if (state.state !== "working" && state.state !== "waiting") {
+    if (!IN_PROGRESS_STATES.has(state.state)) {
       return err(
         `Unable to set node "${id}" to interrupted: not working or waiting`
       );
@@ -331,7 +361,7 @@ class Orchestrator {
             `While getting current tasks, node "${plan.node.id}" was not found`
           );
         }
-        if (PROCESSING_STATES.has(state.state)) {
+        if (state.state === "ready") {
           tasks.push({ node: plan.node, inputs: state.inputs! });
         }
       });
@@ -395,7 +425,7 @@ class Orchestrator {
     }
   }
 
-  #tryAdvancingStage(): Outcome<OrchestratorProgress> {
+  #tryAdvancingStage(): Outcome<StageAdvancementResult> {
     this.#changed.set({});
     // Check to see if all other nodes at this stage have been invoked
     // (the state will be set to something other than "ready")
@@ -406,23 +436,29 @@ class Orchestrator {
       );
     }
 
-    const complete = currentStage.every(
-      (plan) =>
-        !PROCESSING_STATES.has(
-          this.#state.get(plan.node.id)?.state || "skipped"
-        )
-    );
+    let hasWaiting;
+
+    const complete = currentStage.every((plan) => {
+      const state = this.#state.get(plan.node.id)?.state;
+      if (!state) return false;
+
+      if (IN_PROGRESS_STATES.has(state)) {
+        hasWaiting = true;
+        return false;
+      }
+      return state !== "ready";
+    });
     // Nope, still work to do.
     if (!complete) {
       this.#progress = "working";
-      return this.#progress;
+      return hasWaiting ? "done" : "more";
     }
 
     try {
       const nextStageIndex = this.#currentStage + 1;
       if (nextStageIndex > this.plan.stages.length - 1) {
         this.#progress = "finished";
-        return this.#progress;
+        return "done";
       }
 
       const stage = this.plan.stages[nextStageIndex];
@@ -481,7 +517,7 @@ class Orchestrator {
 
       // Propagate outputs from the current stage as inputs for the next stage.
       this.#progress = "advanced";
-      return this.#progress;
+      return "more";
     } catch (e) {
       return err((e as Error).message);
     }
@@ -567,13 +603,13 @@ class Orchestrator {
     for (;;) {
       progress = this.#tryAdvancingStage();
       if (!ok(progress)) return progress;
-      if (progress === "finished") return progress;
+      if (progress === "done") break;
 
       const hasWork = this.currentTasks();
       if (!ok(hasWork)) return hasWork;
 
       if (hasWork.length > 0) break;
     }
-    return progress;
+    return this.#progress;
   }
 }
