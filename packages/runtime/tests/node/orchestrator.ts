@@ -711,6 +711,41 @@ describe("Orchestrator", () => {
         ["end", "skipped"],
       ]);
     });
+
+    it("should correctly handle working/interrupted states", () => {
+      const o = new Orchestrator(diamondPlan, {});
+      o.provideOutputs("input", {
+        left: "left-audio",
+        right: "right-audio",
+      });
+      assertTasks(o.currentTasks(), ["left-channel", "right-channel"]);
+
+      o.setWorking("left-channel");
+      assertTasks(o.currentTasks(), ["right-channel"]);
+      o.provideOutputs("right-channel", {
+        $error: "Right Audio Failed",
+      });
+      assertTasks(o.currentTasks(), []);
+      deepStrictEqual(o.progress, "working");
+      o.restartAtNode("right-channel");
+      assertTasks(o.currentTasks(), ["right-channel"]);
+      assertState(diamond, o.state(), [
+        ["input", "succeeded"],
+        ["left-channel", "working"],
+        ["right-channel", "ready"],
+        ["mixer", "inactive"],
+      ]);
+      o.provideOutputs("left-channel", {
+        processed: "Left Audio",
+      });
+      // deepStrictEqual(o.progress, "finished");
+      // assertState(diamond, o.state(), [
+      //   ["input", "succeeded"],
+      //   ["left-channel", "succeeded"],
+      //   ["right-channel", "failed"],
+      //   ["mixer", "skipped"],
+      // ]);
+    });
   });
 
   describe("re-run nodes at will", () => {

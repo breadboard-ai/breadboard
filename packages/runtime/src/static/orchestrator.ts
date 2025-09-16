@@ -73,6 +73,8 @@ const RESTARTABLE_STATES: ReadonlySet<NodeLifecycleState> = new Set([
   "interrupted",
 ]);
 
+type StageAdvancementResult = "done" | "more";
+
 /**
  * The Orchestrator acts as the state machine for running a graph.
  * Its primary responsibilities are:
@@ -409,7 +411,7 @@ class Orchestrator {
     }
   }
 
-  #tryAdvancingStage(): Outcome<OrchestratorProgress> {
+  #tryAdvancingStage(): Outcome<StageAdvancementResult> {
     this.#changed.set({});
     // Check to see if all other nodes at this stage have been invoked
     // (the state will be set to something other than "ready")
@@ -420,23 +422,26 @@ class Orchestrator {
       );
     }
 
-    const complete = currentStage.every(
-      (plan) =>
-        !PROCESSING_STATES.has(
-          this.#state.get(plan.node.id)?.state || "skipped"
-        )
-    );
+    let hasWaiting;
+
+    const complete = currentStage.every((plan) => {
+      const state = this.#state.get(plan.node.id)?.state;
+      if (state === "waiting" || state === "working") {
+        hasWaiting = true;
+      }
+      return !PROCESSING_STATES.has(state || "skipped");
+    });
     // Nope, still work to do.
     if (!complete) {
       this.#progress = "working";
-      return this.#progress;
+      return hasWaiting ? "done" : "more";
     }
 
     try {
       const nextStageIndex = this.#currentStage + 1;
       if (nextStageIndex > this.plan.stages.length - 1) {
         this.#progress = "finished";
-        return this.#progress;
+        return "done";
       }
 
       const stage = this.plan.stages[nextStageIndex];
@@ -495,7 +500,7 @@ class Orchestrator {
 
       // Propagate outputs from the current stage as inputs for the next stage.
       this.#progress = "advanced";
-      return this.#progress;
+      return "more";
     } catch (e) {
       return err((e as Error).message);
     }
@@ -581,13 +586,13 @@ class Orchestrator {
     for (;;) {
       progress = this.#tryAdvancingStage();
       if (!ok(progress)) return progress;
-      if (progress === "finished") return progress;
+      if (progress === "done") break;
 
       const hasWork = this.currentTasks();
       if (!ok(hasWork)) return hasWork;
 
       if (hasWork.length > 0) break;
     }
-    return progress;
+    return this.#progress;
   }
 }
