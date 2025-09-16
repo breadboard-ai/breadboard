@@ -426,10 +426,13 @@ class Orchestrator {
 
     const complete = currentStage.every((plan) => {
       const state = this.#state.get(plan.node.id)?.state;
-      if (state === "waiting" || state === "working") {
+      if (!state) return false;
+
+      if (IN_PROGRESS_STATES.has(state)) {
         hasWaiting = true;
+        return false;
       }
-      return !PROCESSING_STATES.has(state || "skipped");
+      return state !== "ready";
     });
     // Nope, still work to do.
     if (!complete) {
