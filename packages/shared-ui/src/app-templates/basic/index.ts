@@ -232,8 +232,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       </section>`;
     } else {
       const current = this.run.app.current;
-      if (current.size === 0) return nothing;
-
       if (this.run.status === "running") {
         status = html`<div id="status">
           <span class="g-icon"></span>
@@ -245,7 +243,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       }
 
       const last = this.run.app.last?.last;
-      if (last) {
+      if (last && this.run.status === "stopped") {
         const htmlOutput = isHTMLOutput(last);
         if (htmlOutput !== null) {
           activityContents = html`<iframe

@@ -139,9 +139,13 @@ class PlanRunner extends AbstractRunner {
       // First, activate the run
       this.run(undefined, true);
     }
-    this.dispatchEvent(new ResumeEvent({ timestamp: timestamp() }));
+    if (!this.#orchestrator.working) {
+      this.dispatchEvent(new ResumeEvent({ timestamp: timestamp() }));
+    }
     const outcome = await this.#controller?.runNode(id);
-    this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
+    if (!this.#orchestrator.working) {
+      this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
+    }
     return outcome;
   }
 
@@ -149,13 +153,17 @@ class PlanRunner extends AbstractRunner {
     if (!this.#controller) {
       // If not already running, start a run in interactive mode
       this.run(undefined, true);
+    } else if (!this.#orchestrator.working) {
+      this.dispatchEvent(new ResumeEvent({ timestamp: timestamp() }));
     }
     return this.#controller?.runFrom(id);
   }
 
   async stop(id: NodeIdentifier): Promise<Outcome<void>> {
     const outcome = this.#controller?.stop(id);
-    this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
+    if (!this.#orchestrator.working) {
+      this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
+    }
     return outcome;
   }
 
@@ -171,7 +179,11 @@ class PlanRunner extends AbstractRunner {
         this.#orchestrator,
         this.breakpoints,
         () => {
-          this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
+          if (!this.#orchestrator.working) {
+            this.dispatchEvent(
+              new PauseEvent(false, { timestamp: timestamp() })
+            );
+          }
         },
         next
       );

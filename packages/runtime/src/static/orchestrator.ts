@@ -119,10 +119,17 @@ class Orchestrator {
     return this.#progress;
   }
 
+  get working() {
+    this.#changed.get();
+    return Array.from(this.#state.values()).some((nodeState) => {
+      return IN_PROGRESS_STATES.has(nodeState.state);
+    });
+  }
+
   get failed() {
     this.#changed.get();
     return Array.from(this.#state.values()).some((nodeState) => {
-      return nodeState.state === "failed";
+      return nodeState.state === "failed" || nodeState.state === "interrupted";
     });
   }
 
