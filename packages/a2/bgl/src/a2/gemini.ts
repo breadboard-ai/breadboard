@@ -26,11 +26,6 @@ const defaultSafetySettings = (): SafetySetting[] => [
 ];
 
 function endpointURL(model: string) {
-  // const $metadata = {
-  //   title: "Get GEMINI_KEY",
-  //   description: "Getting GEMINI_KEY from secrets",
-  // };
-  // const key = await secrets({ $metadata, keys: ["GEMINI_KEY"] });
   return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 }
 
