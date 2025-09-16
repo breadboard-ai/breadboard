@@ -119,6 +119,13 @@ class Orchestrator {
     return this.#progress;
   }
 
+  get failed() {
+    this.#changed.get();
+    return Array.from(this.#state.values()).some((nodeState) => {
+      return nodeState.state === "failed";
+    });
+  }
+
   /**
    * Bring the orchestrator to the initial state.
    */

@@ -367,6 +367,11 @@ class InternalRunStateController {
 
   async postamble() {
     if (this.orchestrator.progress !== "finished") return;
+    if (this.orchestrator.failed) {
+      this.pause();
+      return;
+    }
+
     await this.callback({
       type: "graphend",
       data: {
