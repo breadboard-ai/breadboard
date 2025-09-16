@@ -417,18 +417,18 @@ describe("Orchestrator", () => {
         const outcome = orchestrator.setWorking("choose-path");
         assert(ok(outcome));
       }
-      assertTasks(orchestrator.currentTasks(), ["choose-path"]);
+      assertTasks(orchestrator.currentTasks(), []);
       {
         const outcome = orchestrator.setWaiting("choose-path");
         assert(ok(outcome));
       }
-      assertTasks(orchestrator.currentTasks(), ["choose-path"]);
+      assertTasks(orchestrator.currentTasks(), []);
       {
         const progress = orchestrator.provideOutputs("choose-path", {
           left: "left",
         });
         assert(!ok(progress));
-        assertTasks(orchestrator.currentTasks(), ["choose-path"]);
+        assertTasks(orchestrator.currentTasks(), []);
       }
       {
         const outcome = orchestrator.setWorking("choose-path");

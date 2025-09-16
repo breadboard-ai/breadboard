@@ -140,6 +140,10 @@ export type App = {
    */
   screens: Map<string, AppScreen>;
   /**
+   * Currently interactive screens
+   */
+  current: ReadonlyMap<string, AppScreen>;
+  /**
    * The last screen.
    */
   last: AppScreen | null;

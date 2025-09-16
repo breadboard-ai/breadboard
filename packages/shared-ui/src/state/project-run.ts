@@ -454,7 +454,7 @@ class ReactiveProjectRun implements ProjectRun {
       }
       entry.finalize(event.data);
     }
-    this.app.last?.finalize(event.data);
+    this.app.screens.get(id)?.finalize(event.data);
   }
 
   #input(event: RunInputEvent) {
@@ -538,10 +538,6 @@ class ReactiveProjectRun implements ProjectRun {
     }
 
     this.current.get(id)?.addOutput(event.data, particleTree);
-    if (!this.app.last) {
-      console.warn(`No current screen for output event`, event);
-      return;
-    }
     this.app.screens.get(id)?.addOutput(event.data, particleTree);
   }
 
