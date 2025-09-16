@@ -19,7 +19,6 @@ import {
   PlanNodeInfo,
   Probe,
   RunConfig,
-  RunFromCallbacks,
   Task,
   TraversalResult,
 } from "@breadboard-ai/types";
@@ -146,17 +145,10 @@ class PlanRunner extends AbstractRunner {
     return outcome;
   }
 
-  async runFrom(
-    id: NodeIdentifier,
-    callbacks: RunFromCallbacks
-  ): Promise<Outcome<void>> {
+  async runFrom(id: NodeIdentifier): Promise<Outcome<void>> {
     if (!this.#controller) {
       // If not already running, start a run in interactive mode
       this.run(undefined, true);
-    } else {
-      // Stop any existing running nodes
-      this.#controller.stopAll(callbacks.stop);
-      this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
     }
     return this.#controller?.runFrom(id);
   }
@@ -213,7 +205,6 @@ class InternalRunStateController {
   context: Promise<NodeHandlerContext>;
 
   index: number = 0;
-  #finished: null | (() => void) = null;
 
   constructor(
     public readonly config: RunConfig,
@@ -392,14 +383,6 @@ class InternalRunStateController {
       },
       reply: async () => {},
     });
-    this.#finished?.();
-    this.#finished = null;
-  }
-
-  async runInteractively(): Promise<void> {
-    return new Promise((resolve) => {
-      this.#finished = resolve;
-    });
   }
 
   #getOrCreateStopController(id: NodeIdentifier) {
@@ -433,7 +416,7 @@ class InternalRunStateController {
       );
       if (breakpoint) {
         this.pause();
-        break;
+        return;
       }
     }
     await this.postamble();

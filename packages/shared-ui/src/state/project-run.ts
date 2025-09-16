@@ -573,7 +573,7 @@ class ReactiveProjectRun implements ProjectRun {
       case "ready": {
         console.log(`Run node "${nodeId}"`, nodeState.state);
         this.#dismissedErrors.delete(nodeId);
-        run(runFromNode, nodeId, this.runner, this.renderer.nodes);
+        run(runFromNode, nodeId, this.runner);
         break;
       }
       case "working": {
@@ -591,13 +591,13 @@ class ReactiveProjectRun implements ProjectRun {
       case "succeeded": {
         console.log("Run this node (again)", nodeState.state);
         this.#dismissedErrors.delete(nodeId);
-        run(runFromNode, nodeId, this.runner, this.renderer.nodes);
+        run(runFromNode, nodeId, this.runner);
         break;
       }
       case "failed": {
         console.log("Run this node (again)", nodeState.state);
         this.#dismissedErrors.delete(nodeId);
-        run(runFromNode, nodeId, this.runner, this.renderer.nodes);
+        run(runFromNode, nodeId, this.runner);
         break;
       }
       case "skipped": {
@@ -607,7 +607,7 @@ class ReactiveProjectRun implements ProjectRun {
       case "interrupted": {
         console.log("Run this node (again)", nodeState.state);
         this.#dismissedErrors.delete(nodeId);
-        run(runFromNode, nodeId, this.runner, this.renderer.nodes);
+        run(runFromNode, nodeId, this.runner);
         break;
       }
       default: {
@@ -635,11 +635,10 @@ class ReactiveProjectRun implements ProjectRun {
     function run(
       runFromNode: boolean,
       nodeId: NodeIdentifier,
-      runner: HarnessRunner | undefined,
-      nodes: Map<string, NodeRunState>
+      runner: HarnessRunner | undefined
     ) {
       if (runFromNode) {
-        runFrom(nodeId, runner, nodes);
+        runFrom(nodeId, runner);
       } else {
         runNode(nodeId, runner);
       }
@@ -647,14 +646,9 @@ class ReactiveProjectRun implements ProjectRun {
 
     function runFrom(
       nodeId: NodeIdentifier,
-      runner: HarnessRunner | undefined,
-      nodes: Map<string, NodeRunState>
+      runner: HarnessRunner | undefined
     ) {
-      const running = runner?.runFrom?.(nodeId, {
-        stop: (id) => {
-          nodes.set(id, { status: "interrupted" });
-        },
-      });
+      const running = runner?.runFrom?.(nodeId);
       if (!running) {
         console.log(`Runner does not support running from a node`);
         return;
