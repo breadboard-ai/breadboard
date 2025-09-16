@@ -67,13 +67,10 @@ const WAITING_TIME_MS = 5 * 1024;
 const API_URL = "https://generativelanguage.googleapis.com";
 
 class GeminiFileApi {
-  #apiKey: Promise<SecretsGetKeyResult | null>;
+  #apiKey: Promise<string>;
 
   constructor() {
-    this.#apiKey = SecretsProvider.instance().getKey(GEMINI_KEY);
-    this.#apiKey.catch(() => {
-      // Eat the errors.
-    });
+    this.#apiKey = getApiKey();
   }
 
   #createInitialRequest(
@@ -157,7 +154,7 @@ class GeminiFileApi {
     displayName: string,
     body: Readable
   ): Promise<Outcome<FileAPIMetadata>> {
-    const apiKey = (await this.#apiKey)?.[1];
+    const apiKey = await this.#apiKey;
     if (!apiKey) {
       return err(`Unable to obtain the Gemini API key`);
     }
@@ -229,4 +226,21 @@ async function* readInChunks(stream: Readable) {
 
 async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Get the API key from an environment variable. Fall back to loading
+ * directly from secrets manager if not found.
+ */
+async function getApiKey(): Promise<string> {
+  if (process.env.GEMINI_KEY) {
+    return process.env.GEMINI_KEY;
+  }
+
+  try {
+    const apiKey = await SecretsProvider.instance().getKey(GEMINI_KEY);
+    return apiKey?.[1] ?? "";
+  } catch (_) {
+    return "";
+  }
 }
