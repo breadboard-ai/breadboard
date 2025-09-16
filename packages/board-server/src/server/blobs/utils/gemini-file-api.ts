@@ -5,10 +5,7 @@
  */
 
 import { err, type Outcome } from "@google-labs/breadboard";
-import {
-  SecretsProvider,
-  type SecretsGetKeyResult,
-} from "../../proxy/secrets.js";
+import { SecretsProvider } from "../../proxy/secrets.js";
 import type { FileAPIMetadata } from "../../blob-store.js";
 import type { Readable } from "stream";
 
@@ -240,7 +237,7 @@ async function getApiKey(): Promise<string> {
   try {
     const apiKey = await SecretsProvider.instance().getKey(GEMINI_KEY);
     return apiKey?.[1] ?? "";
-  } catch (_) {
+  } catch {
     return "";
   }
 }
