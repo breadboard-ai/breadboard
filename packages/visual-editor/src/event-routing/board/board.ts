@@ -15,13 +15,16 @@ import { StateEvent } from "@breadboard-ai/shared-ui/events/events.js";
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
 
-  async do({ tab, runtime, settings }) {
+  async do({ tab, runtime, settings, askUserToSignInIfNeeded }) {
     if (!tab) {
       console.warn(`Unable to prepare run: no Tab provided`);
       return false;
     }
     if (!settings) {
       console.warn(`Unable to prepare run: no settings store provided`);
+      return false;
+    }
+    if (!(await askUserToSignInIfNeeded())) {
       return false;
     }
 
@@ -118,6 +121,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
     secretsHelper,
     googleDriveClient,
     uiState,
+    askUserToSignInIfNeeded,
   }) {
     await StopRoute.do({
       tab,
@@ -130,6 +134,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       secretsHelper,
       googleDriveClient,
       uiState,
+      askUserToSignInIfNeeded,
     });
     await RunRoute.do({
       tab,
@@ -141,6 +146,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       secretsHelper,
       googleDriveClient,
       uiState,
+      askUserToSignInIfNeeded,
     });
     return false;
   },
