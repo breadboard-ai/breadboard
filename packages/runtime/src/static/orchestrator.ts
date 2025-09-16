@@ -145,7 +145,6 @@ class Orchestrator {
           } else {
             state = firstStage ? "ready" : "inactive";
           }
-          this.callbacks.stateChanged?.(state, plan);
           orchestratorState.set(plan.node.id, {
             stage: starting + index,
             state,
@@ -153,6 +152,7 @@ class Orchestrator {
             inputs,
             outputs: null,
           });
+          this.callbacks.stateChanged?.(state, plan);
         });
       });
     } catch (e) {

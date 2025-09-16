@@ -720,89 +720,92 @@ describe("Orchestrator", () => {
       });
       assertTasks(o.currentTasks(), ["left-channel", "right-channel"]);
 
-      // Scenario 1:
-      // - while left-channel is working, right-channel failed
-      // - user decides to re-run the right-channel by restarting from it
-      // - while the right-channel is re-running, left-channel finishes
-      //   successfully.
-      const o1 = new Orchestrator(diamondPlan, {});
-      o1.update(o);
+      {
+        // Scenario 1:
+        // - while left-channel is working, right-channel failed
+        // - user decides to re-run the right-channel by restarting from it
+        // - while the right-channel is re-running, left-channel finishes
+        //   successfully.
+        const o1 = new Orchestrator(diamondPlan, {});
+        o1.update(o);
 
-      o1.setWorking("left-channel");
-      assertTasks(o1.currentTasks(), ["right-channel"]);
-      o1.provideOutputs("right-channel", {
-        $error: "Right Audio Failed",
-      });
-      assertTasks(o1.currentTasks(), []);
-      deepStrictEqual(o1.progress, "working");
-      o1.restartAtNode("right-channel");
-      assertTasks(o1.currentTasks(), ["right-channel"]);
-      assertState(diamond, o1.state(), [
-        ["input", "succeeded"],
-        ["left-channel", "working"],
-        ["right-channel", "ready"],
-        ["mixer", "inactive"],
-      ]);
-      o1.setWorking("right-channel");
-      o1.provideOutputs("left-channel", { processed: "Left Audio" });
-      deepStrictEqual(o1.progress, "working");
-      assertState(diamond, o1.state(), [
-        ["input", "succeeded"],
-        ["left-channel", "succeeded"],
-        ["right-channel", "working"],
-        ["mixer", "inactive"],
-      ]);
-      o1.provideOutputs("right-channel", { processed: "Right Audio" });
-      assertTasks(o1.currentTasks(), ["mixer"]);
+        o1.setWorking("left-channel");
+        assertTasks(o1.currentTasks(), ["right-channel"]);
+        o1.provideOutputs("right-channel", {
+          $error: "Right Audio Failed",
+        });
+        assertTasks(o1.currentTasks(), []);
+        deepStrictEqual(o1.progress, "working");
+        o1.restartAtNode("right-channel");
+        assertTasks(o1.currentTasks(), ["right-channel"]);
+        assertState(diamond, o1.state(), [
+          ["input", "succeeded"],
+          ["left-channel", "working"],
+          ["right-channel", "ready"],
+          ["mixer", "inactive"],
+        ]);
+        o1.setWorking("right-channel");
+        o1.provideOutputs("left-channel", { processed: "Left Audio" });
+        deepStrictEqual(o1.progress, "working");
+        assertState(diamond, o1.state(), [
+          ["input", "succeeded"],
+          ["left-channel", "succeeded"],
+          ["right-channel", "working"],
+          ["mixer", "inactive"],
+        ]);
+        o1.provideOutputs("right-channel", { processed: "Right Audio" });
+        assertTasks(o1.currentTasks(), ["mixer"]);
+      }
 
-      // Scenario 2:
-      // - while left-channel is working, right-channel failed
-      // - user decides to re-run the right-channel by restarting from it
-      // - left-channel finishes successfully.
-      // - then, right-channel finishes successfully.
-      const o2 = new Orchestrator(diamondPlan, {});
-      o2.update(o);
+      {
+        // Scenario 2:
+        // - while left-channel is working, right-channel failed
+        // - user decides to re-run the right-channel by restarting from it
+        // - left-channel finishes successfully.
+        // - then, right-channel finishes successfully.
+        const o2 = new Orchestrator(diamondPlan, {});
+        o2.update(o);
 
-      o2.setWorking("left-channel");
-      assertTasks(o2.currentTasks(), ["right-channel"]);
-      o2.provideOutputs("right-channel", {
-        $error: "Right Audio Failed",
-      });
-      assertTasks(o2.currentTasks(), []);
-      deepStrictEqual(o2.progress, "working");
-      o2.restartAtNode("right-channel");
-      assertTasks(o2.currentTasks(), ["right-channel"]);
-      assertState(diamond, o2.state(), [
-        ["input", "succeeded"],
-        ["left-channel", "working"],
-        ["right-channel", "ready"],
-        ["mixer", "inactive"],
-      ]);
-      o2.setWorking("right-channel");
-      assertState(diamond, o2.state(), [
-        ["input", "succeeded"],
-        ["left-channel", "working"],
-        ["right-channel", "working"],
-        ["mixer", "inactive"],
-      ]);
-      assertState(diamond, o2.state(), [
-        ["input", "succeeded"],
-        ["left-channel", "working"],
-        ["right-channel", "working"],
-        ["mixer", "inactive"],
-      ]);
-      o2.provideOutputs("right-channel", { processed: "Right Audio" });
-      assertTasks(o2.currentTasks(), []);
+        o2.setWorking("left-channel");
+        assertTasks(o2.currentTasks(), ["right-channel"]);
+        o2.provideOutputs("right-channel", {
+          $error: "Right Audio Failed",
+        });
+        assertTasks(o2.currentTasks(), []);
+        deepStrictEqual(o2.progress, "working");
+        o2.restartAtNode("right-channel");
+        assertTasks(o2.currentTasks(), ["right-channel"]);
+        assertState(diamond, o2.state(), [
+          ["input", "succeeded"],
+          ["left-channel", "working"],
+          ["right-channel", "ready"],
+          ["mixer", "inactive"],
+        ]);
+        o2.setWorking("right-channel");
+        assertState(diamond, o2.state(), [
+          ["input", "succeeded"],
+          ["left-channel", "working"],
+          ["right-channel", "working"],
+          ["mixer", "inactive"],
+        ]);
+        assertState(diamond, o2.state(), [
+          ["input", "succeeded"],
+          ["left-channel", "working"],
+          ["right-channel", "working"],
+          ["mixer", "inactive"],
+        ]);
+        o2.provideOutputs("right-channel", { processed: "Right Audio" });
+        assertTasks(o2.currentTasks(), []);
 
-      o2.provideOutputs("left-channel", { processed: "Left Audio" });
-      assertState(diamond, o2.state(), [
-        ["input", "succeeded"],
-        ["left-channel", "succeeded"],
-        ["right-channel", "succeeded"],
-        ["mixer", "ready"],
-      ]);
-
-      assertTasks(o2.currentTasks(), ["mixer"]);
+        o2.provideOutputs("left-channel", { processed: "Left Audio" });
+        assertState(diamond, o2.state(), [
+          ["input", "succeeded"],
+          ["left-channel", "succeeded"],
+          ["right-channel", "succeeded"],
+          ["mixer", "ready"],
+        ]);
+        assertTasks(o2.currentTasks(), ["mixer"]);
+      }
     });
   });
 
