@@ -10,6 +10,7 @@ import { Tab } from "../runtime/types";
 import type * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { SecretsHelper } from "../utils/secrets-helper";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { type OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 
 type StateCustomEvent<K extends keyof BreadboardUI.Events.StateEventDetailMap> =
   BreadboardUI.Events.StateEvent<K>;
@@ -24,6 +25,7 @@ export interface EventRouteDeps<
   tab: Tab | null;
   uiState: BreadboardUI.State.UI;
   googleDriveClient: GoogleDriveClient | null;
+  askUserToSignInIfNeeded(scopes?: OAuthScope[]): Promise<boolean>;
 }
 
 export interface EventRoute<

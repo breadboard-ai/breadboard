@@ -40,6 +40,7 @@ export type SigninAdapterState =
       domain: string | undefined;
       name: string | undefined;
       picture: string | undefined;
+      scopes: Set<string>;
     };
 
 export const signinAdapterContext = createContext<SigninAdapter | undefined>(
@@ -97,13 +98,19 @@ class SigninAdapter {
       return;
     }
 
-    const { grant } = token;
-    this.#state = {
+    this.#state = this.#makeSignedInState(token.grant);
+  }
+
+  #makeSignedInState(grant: TokenGrant): SigninAdapterState {
+    return {
       status: "signedin",
       id: grant.id,
       name: grant.name,
       picture: grant.picture,
       domain: grant.domain,
+      scopes: new Set(
+        (grant.scopes ?? []).map((scope) => canonicalizeOAuthScope(scope))
+      ),
     };
   }
 
@@ -125,6 +132,10 @@ class SigninAdapter {
 
   get domain() {
     return this.#state.status === "signedin" ? this.#state.domain : undefined;
+  }
+
+  get scopes(): Set<string> | undefined {
+    return this.#state.status === "signedin" ? this.#state.scopes : undefined;
   }
 
   /**
@@ -328,13 +339,7 @@ class SigninAdapter {
       name: connection.id,
       value: JSON.stringify(settingsValue),
     });
-    this.#state = {
-      status: "signedin",
-      id: grantResponse.id,
-      name: grantResponse.name,
-      picture: grantResponse.picture,
-      domain: grantResponse.domain,
-    };
+    this.#state = this.#makeSignedInState(settingsValue);
     return { ok: true };
   }
 

@@ -202,7 +202,7 @@ export class VESignInModal extends LitElement {
         appearance="basic"
         blurBackground
         .modalTitle=${title}
-        @bbmodaldismissed=${this.#close}
+        @bbmodaldismissed=${() => this.#close(false)}
       >
         <section id="container">${content}</section>
       </bb-modal>

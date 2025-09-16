@@ -110,7 +110,10 @@ import {
   parseUrl,
 } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { VESignInModal } from "@breadboard-ai/shared-ui/elements/elements.js";
-import { type OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
+import {
+  canonicalizeOAuthScope,
+  type OAuthScope,
+} from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { builtInMcpClients } from "./mcp-clients";
 
 type RenderValues = {
@@ -314,7 +317,7 @@ export class Main extends SignalWatcher(LitElement) {
       this.tokenVendor,
       this.globalConfig,
       this.settingsHelper,
-      (scopes?: OAuthScope[]) => this.#askUserToSignIn(scopes)
+      (scopes?: OAuthScope[]) => this.#askUserToSignInIfNeeded(scopes)
     );
 
     // Asyncronously check if the user has a geo-restriction and sign out if so.
@@ -672,7 +675,7 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.#runtime.board.addEventListener(
       Runtime.Events.RuntimeRequestSignInEvent.eventName,
-      () => this.#askUserToSignIn()
+      () => this.#askUserToSignInIfNeeded()
     );
 
     this.#runtime.addEventListener(
@@ -1406,6 +1409,8 @@ export class Main extends SignalWatcher(LitElement) {
       tab: this.#tab,
       uiState: this.#uiState,
       googleDriveClient: this.googleDriveClient,
+      askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>
+        this.#askUserToSignInIfNeeded(scopes),
     };
   }
 
@@ -2224,7 +2229,21 @@ export class Main extends SignalWatcher(LitElement) {
     </bb-ve-header>`;
   }
 
-  async #askUserToSignIn(scopes?: OAuthScope[]): Promise<boolean> {
+  async #askUserToSignInIfNeeded(scopes?: OAuthScope[]): Promise<boolean> {
+    if (this.signinAdapter.state === "signedin") {
+      if (!scopes?.length) {
+        return true;
+      }
+      const currentScopes = this.signinAdapter.scopes;
+      if (
+        currentScopes &&
+        scopes.every((scope) =>
+          currentScopes.has(canonicalizeOAuthScope(scope))
+        )
+      ) {
+        return true;
+      }
+    }
     this.#uiState.show.add("SignInModal");
     await this.updateComplete;
     const signInModal = this.#signInModalRef.value;
