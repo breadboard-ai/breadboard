@@ -6,6 +6,7 @@
 
 import express, { type Request } from "express";
 import ViteExpress from "vite-express";
+import { config as loadEnv } from "dotenv";
 
 import * as connectionServer from "@breadboard-ai/connection-server";
 import * as boardServer from "@breadboard-ai/board-server";
@@ -22,6 +23,8 @@ import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-
 import { createMcpProxyHandler } from "./mcp-proxy.js";
 
 const FEATURED_GALLERY_CACHE_REFRESH_SECONDS = 10 * 60;
+
+loadEnv();
 
 const server = express();
 
