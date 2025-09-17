@@ -132,9 +132,12 @@ export type App = {
   /**
    * Current state of the app. Can be one of the following:
    * - "splash" -- the app is showing a splash screen
-   * - "screen" -- the app is showing a screen
+   * - "output" -- the app is showing the final output
+   * - "progress" -- the app is showing progress
+   * - "input" - the app is asking the user for inputs
+   * - "error" - the app is showing an error
    */
-  state: "splash" | "screen";
+  state: "splash" | "output" | "progress" | "input" | "error";
   /**
    * A sequence of screens that is produced during the run.
    */

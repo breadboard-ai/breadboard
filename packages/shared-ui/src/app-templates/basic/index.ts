@@ -192,91 +192,102 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     ></bb-app-header>`;
   }
 
-  #renderActivity() {
+  #renderOutputs() {
     if (!this.run) return nothing;
 
     let activityContents:
       | HTMLTemplateResult
       | Array<HTMLTemplateResult | symbol>
       | symbol = nothing;
-    let status: HTMLTemplateResult | symbol = nothing;
-
-    const error = this.run.error;
-    if (error) {
-      const errorId = crypto.randomUUID();
-      const details = [];
-
-      if (error.details) {
-        details.push({
-          action: "details",
-          title: "View details",
-          value: html`${markdown(error.details)}`,
-        });
-      }
-
-      this.dispatchEvent(
-        new SnackbarEvent(
-          errorId,
-          error.message,
-          SnackType.ERROR,
-          details,
-          true,
-          true
-        )
-      );
-
-      activityContents = html`<section class="error">
-        <h1 class="w-700 sans-flex round md-headline-large">
-          Oops, something went wrong
-        </h1>
-      </section>`;
-    } else {
-      const current = this.run.app.current;
-      if (this.run.status === "running") {
-        status = html`<div id="status">
-          <span class="g-icon"></span>
-          ${new Intl.ListFormat("en-US", {
-            style: "long",
-            type: "conjunction",
-          }).format(Array.from(current.values()).map((v) => v.title))}
-        </div>`;
-      }
-
-      const last = this.run.app.last?.last;
-      if (last) {
-        const htmlOutput = isHTMLOutput(last);
-        if (htmlOutput !== null) {
-          activityContents = html`<iframe
-            srcdoc=${htmlOutput}
-            frameborder="0"
-            class="html-view"
-            sandbox="allow-scripts allow-forms"
-          ></iframe>`;
-        } else {
-          // Convert app screen to particles. There's a belt-and-braces check
-          // afterwards to ensure that the top-level list has a valid
-          // presentation because by default a Particle doesn't have one but we
-          // still need it at this point.
-          // TODO: Remove this conversion when ProjectRun.app emits particles
-          const group = appScreenToParticles(last);
-          if (typeof group?.presentation === "string") {
-            group.presentation = {
-              behaviors: [],
-              orientation: "vertical",
-              type: "list",
-            };
-          }
-
-          activityContents = html` <particle-ui-list
-            class=${classMap(this.theme.groups.list)}
-            .group=${group}
-            .orientation=${group?.presentation?.orientation}
-          ></particle-ui-list>`;
+    const last = this.run.app.last?.last;
+    if (last) {
+      const htmlOutput = isHTMLOutput(last);
+      if (htmlOutput !== null) {
+        activityContents = html`<iframe
+          srcdoc=${htmlOutput}
+          frameborder="0"
+          class="html-view"
+          sandbox="allow-scripts allow-forms"
+        ></iframe>`;
+      } else {
+        // Convert app screen to particles. There's a belt-and-braces check
+        // afterwards to ensure that the top-level list has a valid
+        // presentation because by default a Particle doesn't have one but we
+        // still need it at this point.
+        // TODO: Remove this conversion when ProjectRun.app emits particles
+        const group = appScreenToParticles(last);
+        if (typeof group?.presentation === "string") {
+          group.presentation = {
+            behaviors: [],
+            orientation: "vertical",
+            type: "list",
+          };
         }
+
+        activityContents = html` <particle-ui-list
+          class=${classMap(this.theme.groups.list)}
+          .group=${group}
+          .orientation=${group?.presentation?.orientation}
+        ></particle-ui-list>`;
       }
     }
 
-    return html`<div id="activity">${[activityContents, status]}</div>`;
+    return html`<div id="activity">${[activityContents]}</div>`;
+  }
+
+  #renderProgress() {
+    if (!this.run) return nothing;
+
+    const titles = Array.from(this.run.app.current.values()).map(
+      (v) => v.title
+    );
+
+    const status = html`<div id="status">
+      <span class="g-icon"></span>
+      ${new Intl.ListFormat("en-US", {
+        style: "long",
+        type: "conjunction",
+      }).format(titles)}
+    </div>`;
+    return html`<div id="activity">${[status]}</div>`;
+  }
+
+  #renderError() {
+    if (!this.run) return nothing;
+    const error = this.run.error;
+    if (!error) {
+      console.warn("Asked to render error, but no error was found");
+      return nothing;
+    }
+    const errorId = crypto.randomUUID();
+    const details = [];
+
+    if (error.details) {
+      details.push({
+        action: "details",
+        title: "View details",
+        value: html`${markdown(error.details)}`,
+      });
+    }
+
+    this.dispatchEvent(
+      new SnackbarEvent(
+        errorId,
+        error.message,
+        SnackType.ERROR,
+        details,
+        true,
+        true
+      )
+    );
+
+    const activityContents = html`<section class="error">
+      <h1 class="w-700 sans-flex round md-headline-large">
+        Oops, something went wrong
+      </h1>
+    </section>`;
+
+    return html`<div id="activity">${[activityContents]}</div>`;
   }
 
   #renderEmptyState() {
@@ -837,20 +848,37 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       | Array<HTMLTemplateResult | symbol>
       | symbol = nothing;
     if (this.isEmpty) {
-      content = [this.#renderControls(), this.#renderEmptyState()];
-    } else if (this.run.app.state === "splash") {
-      content = [this.#renderControls(), splashScreen];
+      content = [this.#renderEmptyState()];
     } else {
-      content = [
-        this.#renderControls(),
-        this.#renderActivity(),
-        this.#renderSaveResultsButtons(),
-        this.#renderInput(),
-      ];
+      switch (this.run.app.state) {
+        case "splash":
+          content = [splashScreen];
+          break;
+        case "progress":
+          content = [this.#renderProgress()];
+          break;
+        case "input":
+          content = [this.#renderOutputs(), this.#renderInput()];
+          break;
+        case "output":
+          content = [this.#renderOutputs(), this.#renderSaveResultsButtons()];
+          break;
+        case "error":
+          content = [this.#renderError()];
+          break;
+        default: {
+          console.warn(
+            "Unknown state",
+            this.run.app.state,
+            "rendering splash screen"
+          );
+          content = [splashScreen];
+        }
+      }
     }
 
     return html`<section class=${classMap(classes)} style=${styleMap(styles)}>
-      <div id="content">${content}</div>
+      <div id="content">${this.#renderControls()}${content}</div>
     </section>`;
   }
 }

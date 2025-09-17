@@ -100,7 +100,7 @@ function error(msg: string) {
 }
 
 class ReactiveProjectRun implements ProjectRun {
-  app: ReactiveApp = new ReactiveApp();
+  app: ReactiveApp = new ReactiveApp(this);
   console: Map<string, ConsoleEntry> = new SignalMap();
 
   #dismissedErrors = new SignalSet<NodeIdentifier>();
