@@ -361,6 +361,10 @@ export type RunError = {
  */
 export type UserInput = {
   /**
+   * Node id of the current input request.
+   */
+  id: NodeIdentifier;
+  /**
    * The schema of the current input request.
    */
   schema: Schema;
