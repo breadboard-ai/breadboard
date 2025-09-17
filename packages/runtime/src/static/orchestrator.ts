@@ -563,6 +563,13 @@ class Orchestrator {
           newNodeState.state = oldNodeState.state;
         }
       } else {
+        if (index === 0) {
+          // Account for the situation when the topology changes so that
+          // there are no similarities in plan. In this case, we make the
+          // first node as "interrupted", so that it doesn't trigger
+          // continuation of a run if we're in the middle of one.
+          newNodeState.state = "interrupted";
+        }
         break;
       }
       index++;
