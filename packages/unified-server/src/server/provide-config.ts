@@ -6,33 +6,18 @@
 
 import { readFile } from "node:fs/promises";
 
-import { SecretsProvider } from "@breadboard-ai/board-server";
 import {
   type ClientDeploymentConfiguration,
   type ServerDeploymentConfiguration,
   type DomainConfiguration,
 } from "@breadboard-ai/types/deployment-configuration.js";
 
-export type SecretValueFormat = {
-  client: ClientDeploymentConfiguration;
-  server: ServerDeploymentConfiguration;
-};
-
 export type DeploymentConfiguration = {
   client: ClientDeploymentConfiguration;
   server: ServerDeploymentConfiguration;
 };
 
-const DEFAULT_VALUE: DeploymentConfiguration = {
-  client: {} as ClientDeploymentConfiguration,
-  server: {},
-} as const;
-
 export async function getConfig(): Promise<DeploymentConfiguration> {
-  if (!getBoolean("ENABLE_ENVIRONMENT_CONFIG")) {
-    return getConfigFromSecretManager();
-  }
-
   console.log("Loading config from environment");
 
   const domainConfig = await loadDomainConfig();
@@ -78,26 +63,6 @@ async function loadDomainConfig(): Promise<
   console.log(`Loading domain config from ${path}`);
   const contents = await readFile(path, "utf8");
   return JSON.parse(contents) as Record<string, DomainConfiguration>;
-}
-
-async function getConfigFromSecretManager(): Promise<DeploymentConfiguration> {
-  console.log("Loading config from secret manager");
-  try {
-    const secretValue = (
-      await SecretsProvider.instance().getKey("CONFIG")
-    )?.[1];
-    if (!secretValue) {
-      console.warn("Unable to read configuration from secret");
-      return DEFAULT_VALUE;
-    }
-
-    const config = JSON.parse(secretValue) as SecretValueFormat;
-
-    return { client: config.client, server: config.server };
-  } catch (e) {
-    console.warn("Error parsing configuration", (e as Error).message);
-    return DEFAULT_VALUE;
-  }
 }
 
 /** Get the value of the given flag as a string, or empty string if absent. */
