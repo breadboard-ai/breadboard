@@ -5,7 +5,6 @@
  */
 
 import { err, type Outcome } from "@google-labs/breadboard";
-import { SecretsProvider } from "../../proxy/secrets.js";
 import type { FileAPIMetadata } from "../../blob-store.js";
 import type { Readable } from "stream";
 
@@ -55,8 +54,6 @@ export type FileApiResponse = {
 
 export { GeminiFileApi };
 
-const GEMINI_KEY = "GEMINI_KEY";
-
 const CHUNK_GRANULARITY = 8 * 1024 * 1024;
 
 const WAITING_TIME_MS = 5 * 1024;
@@ -64,10 +61,10 @@ const WAITING_TIME_MS = 5 * 1024;
 const API_URL = "https://generativelanguage.googleapis.com";
 
 class GeminiFileApi {
-  #apiKey: Promise<string>;
+  #apiKey: string;
 
   constructor() {
-    this.#apiKey = getApiKey();
+    this.#apiKey = process.env.GEMINI_KEY ?? "";
   }
 
   #createInitialRequest(
@@ -151,13 +148,12 @@ class GeminiFileApi {
     displayName: string,
     body: Readable
   ): Promise<Outcome<FileAPIMetadata>> {
-    const apiKey = await this.#apiKey;
-    if (!apiKey) {
-      return err(`Unable to obtain the Gemini API key`);
+    if (!this.#apiKey) {
+      return err("GEMINI_KEY environment variable is not defined");
     }
     try {
       const initializing = await fetch(
-        this.#createInitialRequest(apiKey, length, mimeType, displayName)
+        this.#createInitialRequest(this.#apiKey, length, mimeType, displayName)
       );
       if (!initializing.ok) {
         return err(await initializing.text());
@@ -187,7 +183,7 @@ class GeminiFileApi {
             return err(file.error?.message || "File API upload failed");
           }
           if (file.state === "PROCESSING") {
-            return this.#waitTillProcessed(apiKey, result);
+            return this.#waitTillProcessed(this.#apiKey, result);
           }
           return {
             fileUri: file.uri,
@@ -223,21 +219,4 @@ async function* readInChunks(stream: Readable) {
 
 async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Get the API key from an environment variable. Fall back to loading
- * directly from secrets manager if not found.
- */
-async function getApiKey(): Promise<string> {
-  if (process.env.GEMINI_KEY) {
-    return process.env.GEMINI_KEY;
-  }
-
-  try {
-    const apiKey = await SecretsProvider.instance().getKey(GEMINI_KEY);
-    return apiKey?.[1] ?? "";
-  } catch {
-    return "";
-  }
 }
