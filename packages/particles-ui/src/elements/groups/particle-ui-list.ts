@@ -53,6 +53,7 @@ export class ParticleUIList extends SignalWatcher(LitElement) {
         #list {
           display: grid;
           grid-auto-rows: auto;
+          width: 100%;
 
           flex-direction: column;
         }
