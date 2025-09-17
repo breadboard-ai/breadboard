@@ -33,6 +33,11 @@ type NodeInternalState = {
 
 type InternalOrchestratorState = Map<NodeIdentifier, NodeInternalState>;
 
+const STATES_WITH_OUTPUTS: ReadonlySet<NodeLifecycleState> = new Set([
+  "succeeded",
+  "failed",
+]);
+
 const TERMINAL_STATES: ReadonlySet<NodeLifecycleState> = new Set([
   "succeeded",
   "failed",
@@ -546,13 +551,25 @@ class Orchestrator {
       return;
     }
     let index = 0;
-    for (const [id] of this.#state) {
+    for (const [id, newNodeState] of this.#state) {
       const [oldId, oldNodeState] = oldEntries[index] || [];
       if (id === oldId) {
-        if (oldNodeState.outputs) {
+        if (
+          oldNodeState.outputs &&
+          STATES_WITH_OUTPUTS.has(oldNodeState.state)
+        ) {
           this.provideOutputs(id, oldNodeState.outputs);
+        } else {
+          newNodeState.state = oldNodeState.state;
         }
       } else {
+        if (index === 0) {
+          // Account for the situation when the topology changes so that
+          // there are no similarities in plan. In this case, we make the
+          // first node as "interrupted", so that it doesn't trigger
+          // continuation of a run if we're in the middle of one.
+          newNodeState.state = "interrupted";
+        }
         break;
       }
       index++;
