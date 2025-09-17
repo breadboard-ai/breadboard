@@ -183,9 +183,28 @@ pub async fn run_module(
             .catch(&ctx)
             .map_err(|e| Error::ParsingInputValues(e.to_string()))?;
 
+        // Create capabilities object
+        let capabilities_code = format!(r#"
+            const capabilityNames = ["fetch", "secrets", "invoke", "input", "output", "describe", "query", "read", "write", "blob"];
+            const capabilities = {{}};
+
+            Promise.all(capabilityNames.map(async name => {{
+                const module = await import("@" + name);
+                capabilities[name] = module.default;
+            }})).then(() => capabilities);
+        "#);
+
+        let capabilities_promise = ctx.eval::<rquickjs::Value, _>(capabilities_code)
+            .catch(&ctx)
+            .map_err(|e| Error::CallingModuleFunction(format!("Error creating capabilities promise: {}", e.to_string())))?;
+
+        let capabilities = maybe_promise(capabilities_promise).await
+            .catch(&ctx)
+            .map_err(|e| Error::CallingModuleFunction(format!("Error resolving capabilities object: {}", e.to_string())))?;
+
         // Call it and return value.
         let result_obj: rquickjs::Value = maybe_promise(
-            func.call((inputs,)).catch(&ctx)
+            func.call((inputs, capabilities)).catch(&ctx)
             .map_err(|e| Error::CallingModuleFunction(e.to_string()))?
         ).await.catch(&ctx)
         .map_err(|e| Error::CallingModuleFunction(e.to_string()))?;
