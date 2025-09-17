@@ -243,7 +243,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       }
 
       const last = this.run.app.last?.last;
-      if (last && this.run.status === "stopped") {
+      if (last) {
         const htmlOutput = isHTMLOutput(last);
         if (htmlOutput !== null) {
           activityContents = html`<iframe
