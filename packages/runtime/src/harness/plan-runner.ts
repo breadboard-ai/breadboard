@@ -202,9 +202,13 @@ class PlanRunner extends AbstractRunner {
   }
 
   async updateGraph(graph: GraphDescriptor) {
+    if (this.#orchestrator.working) {
+      this.#controller?.stopAll();
+      this.dispatchEvent(new PauseEvent(false, { timestamp: timestamp() }));
+    }
     this.#orchestrator = this.#createOrchestrator(graph);
     if (this.#controller) {
-      await this.#controller.update(this.#orchestrator);
+      this.#controller.update(this.#orchestrator);
     }
   }
 }
@@ -450,9 +454,8 @@ class InternalRunStateController {
     return this.run();
   }
 
-  stopAll(stopCallback: (id: NodeIdentifier) => void) {
+  stopAll() {
     [...this.#stopControllers.keys()].forEach((id) => {
-      stopCallback(id);
       this.stop(id);
     });
   }
@@ -505,7 +508,7 @@ class InternalRunStateController {
     };
   }
 
-  async update(orchestrator: Orchestrator) {
+  update(orchestrator: Orchestrator) {
     const oldOrchestartor = this.orchestrator;
     orchestrator.update(oldOrchestartor);
     this.orchestrator = orchestrator;
