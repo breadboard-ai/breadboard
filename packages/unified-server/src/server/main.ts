@@ -24,6 +24,9 @@ import { createMcpProxyHandler } from "./mcp-proxy.js";
 
 const FEATURED_GALLERY_CACHE_REFRESH_SECONDS = 10 * 60;
 
+console.log("[unified-server startup] Starting unified server");
+
+console.log("[unified-server startup] Loading env file");
 loadEnv();
 
 const server = express();
@@ -44,18 +47,18 @@ const connectionServerConfig = {
   ),
 };
 
+console.log("[unified-server startup] Mounting board server");
 boardServer.addMiddleware(server, boardServerConfig);
 server.use("/board", boardServer.createRouter(boardServerConfig));
 
+console.log("[unified-server startup] Mounting connection server");
 server.use(
   "/connection",
   connectionServer.createServer(connectionServerConfig)
 );
 
+console.log("[unified-server startup] Mounting app view");
 server.use("/app/@:user/:name", boardServer.middlewares.loadBoard());
-
-server.use("/updates", createUpdatesHandler());
-
 server.use("/app", (req, res) => {
   // Redirect the old standalone app view to the new unified view with the app
   // tab opened.
@@ -63,6 +66,10 @@ server.use("/app", (req, res) => {
   res.redirect(301, `/?flow=${encodeURIComponent(graphId)}&mode=app`);
 });
 
+console.log("[unified-server startup] Mounting updates handler");
+server.use("/updates", createUpdatesHandler());
+
+console.log("[unified-server startup] Creating Google Drive client");
 const googleAuth = new GoogleAuth({
   scopes: ["https://www.googleapis.com/auth/drive.readonly"],
 });
@@ -72,6 +79,7 @@ const driveClient = new GoogleDriveClient({
     (await authClient.getAccessToken()).token ?? "",
 });
 
+console.log("[unified-server startup] Mounting gallery");
 const cachingGallery = await CachingFeaturedGallery.makeReady({
   folderId: serverConfig.GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID ?? "",
   driveClient,
@@ -83,6 +91,7 @@ server.use(
   await makeGalleryMiddleware({ gallery: cachingGallery })
 );
 
+console.log("[unified-server startup] Mounting Drive proxy");
 server.use(
   "/api/drive-proxy",
   makeDriveProxyMiddleware({
@@ -93,11 +102,13 @@ server.use(
   })
 );
 
+console.log("[unified-server startup] Mounting MCP proxy");
 server.use(
   "/api/mcp-proxy",
   createMcpProxyHandler(serverConfig.MCP_SERVER_ALLOW_LIST)
 );
 
+console.log("[unified-server startup] Mounting static content");
 ViteExpress.config({
   transformer: (html: string, req: Request) => {
     const board = req.res?.locals.loadedBoard;
@@ -125,7 +136,9 @@ ViteExpress.static({
 });
 
 ViteExpress.listen(server, boardServerConfig.port, () => {
-  console.log(`Unified server at: http://localhost:${boardServerConfig.port}`);
+  console.log(
+    `[unified-server startup] Listening for requests on port ${boardServerConfig.port}`
+  );
 });
 
 function escape(s: string) {
