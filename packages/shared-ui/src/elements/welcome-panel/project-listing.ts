@@ -4,11 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as StringsHelper from "../../strings/helper.js";
-const Strings = StringsHelper.forSection("ProjectListing");
-
-import { LitElement, html, css, nothing, PropertyValueMap } from "lit";
+import {
+  type BoardServer,
+  type GraphProviderStore,
+  type GraphProviderItem,
+} from "@google-labs/breadboard";
+import { consume } from "@lit/context";
+import { Task, TaskStatus } from "@lit/task";
+import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { map } from "lit/directives/map.js";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { styleMap } from "lit/directives/style-map.js";
+import { until } from "lit/directives/until.js";
+import {
+  globalConfigContext,
+  type GlobalConfig,
+} from "../../contexts/global-config.js";
 import {
   GraphBoardServerAddEvent,
   GraphBoardServerDisconnectEvent,
@@ -17,35 +29,22 @@ import {
   GraphBoardServerSelectionChangeEvent,
   StateEvent,
 } from "../../events/events";
-import { map } from "lit/directives/map.js";
-import { until } from "lit/directives/until.js";
-import {
-  BoardServer,
-  type GraphProviderItem,
-  GraphProviderStore,
-} from "@google-labs/breadboard";
-import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { styleMap } from "lit/directives/style-map.js";
 import "../../flow-gen/flowgen-homepage-panel.js";
-import "./homepage-search-button.js";
-import { icons } from "../../styles/icons.js";
-import "./gallery.js";
-import {
-  Connection,
-  fetchAvailableConnections,
-} from "../connection/connection-server.js";
-import { consume } from "@lit/context";
-
-import {
-  globalConfigContext,
-  type GlobalConfig,
-} from "../../contexts/global-config.js";
-import { Task, TaskStatus } from "@lit/task";
-import { RecentBoard } from "../../types/types.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
 import { colorsLight } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
+import { icons } from "../../styles/icons.js";
+import type { RecentBoard } from "../../types/types.js";
+import { ActionTracker } from "../../utils/action-tracker.js";
 import { blankBoard } from "../../utils/blank-board.js";
+import {
+  type Connection,
+  fetchAvailableConnections,
+} from "../connection/connection-server.js";
+import "./gallery.js";
+import "./homepage-search-button.js";
+
+import * as StringsHelper from "../../strings/helper.js";
+const Strings = StringsHelper.forSection("ProjectListing");
 
 const MODE_KEY = "bb-project-listing-mode";
 const OVERFLOW_MENU_CLEARANCE = 4;
@@ -59,7 +58,7 @@ if (SHOW_GOOGLE_DRIVE_DEBUG_PANEL) {
 
 @customElement("bb-project-listing")
 export class ProjectListing extends LitElement {
-  @property()
+  @property({ attribute: false })
   accessor boardServers: BoardServer[] = [];
 
   @property()
@@ -77,7 +76,7 @@ export class ProjectListing extends LitElement {
   @property()
   accessor selectedLocation = "Browser Storage";
 
-  @property()
+  @property({ attribute: false })
   accessor recentBoards: RecentBoard[] = [];
 
   @property()
@@ -85,7 +84,7 @@ export class ProjectListing extends LitElement {
 
   @state()
   accessor showBoardServerOverflowMenu = false;
-  #overflowMenu = {
+  readonly #overflowMenu = {
     x: 0,
     y: 0,
   };
@@ -504,14 +503,14 @@ export class ProjectListing extends LitElement {
     `,
   ];
 
-  #wrapperRef: Ref<HTMLDivElement> = createRef();
-  #searchRef: Ref<HTMLInputElement> = createRef();
-  #hideBoardServerOverflowMenuBound =
+  readonly #wrapperRef: Ref<HTMLDivElement> = createRef();
+  readonly #searchRef: Ref<HTMLInputElement> = createRef();
+  readonly #hideBoardServerOverflowMenuBound =
     this.#hideBoardServerOverflowMenu.bind(this);
   #attemptFocus = false;
   #attemptScrollUpdate = false;
 
-  connectedCallback(): void {
+  override connectedCallback() {
     super.connectedCallback();
 
     this.addEventListener("click", this.#hideBoardServerOverflowMenuBound);
@@ -539,24 +538,13 @@ export class ProjectListing extends LitElement {
         : "detailed";
   }
 
-  disconnectedCallback(): void {
+  override disconnectedCallback(): void {
     super.disconnectedCallback();
 
     this.removeEventListener("click", this.#hideBoardServerOverflowMenuBound);
   }
 
-  protected willUpdate(
-    changedProperties:
-      | PropertyValueMap<{
-          boardServerNavState: string | null;
-          boardServers: BoardServer[];
-          selectedBoardServer: string;
-          selectedLocation: string;
-          mode: boolean;
-          filter: string | null;
-        }>
-      | Map<PropertyKey, unknown>
-  ): void {
+  protected willUpdate(changedProperties: PropertyValues<this>): void {
     if (
       changedProperties.has("boardServerNavState") ||
       changedProperties.has("boardServers") ||
@@ -723,7 +711,7 @@ export class ProjectListing extends LitElement {
     return url.split("::");
   }
 
-  render() {
+  override render() {
     const boardServer =
       this.boardServers.find(
         (boardServer) => boardServer.name === this.selectedBoardServer
@@ -1129,10 +1117,11 @@ export class ProjectListing extends LitElement {
   }
 
   #renderAppVersion() {
+    const buildInfo = this.globalConfig?.buildInfo;
     return html`
       <div id="app-version">
-        ${this.globalConfig
-          ? `${this.globalConfig.buildInfo.packageJsonVersion} (${this.globalConfig.buildInfo.gitCommitHash})`
+        ${buildInfo
+          ? `${buildInfo.packageJsonVersion} (${buildInfo.gitCommitHash})`
           : `Unknown version`}
       </div>
     `;
