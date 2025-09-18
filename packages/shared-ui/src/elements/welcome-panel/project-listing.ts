@@ -19,7 +19,11 @@ import {
 } from "../../events/events";
 import { map } from "lit/directives/map.js";
 import { until } from "lit/directives/until.js";
-import { BoardServer, GraphProviderStore } from "@google-labs/breadboard";
+import {
+  BoardServer,
+  type GraphProviderItem,
+  GraphProviderStore,
+} from "@google-labs/breadboard";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import "../../flow-gen/flowgen-homepage-panel.js";
@@ -719,10 +723,6 @@ export class ProjectListing extends LitElement {
     return url.split("::");
   }
 
-  #getCurrentStoreName(_url: string) {
-    return Strings.from("LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS");
-  }
-
   render() {
     const boardServer =
       this.boardServers.find(
@@ -736,362 +736,405 @@ export class ProjectListing extends LitElement {
       </nav>`;
     }
 
-    const extendedCapabilities = boardServer.extendedCapabilities();
+    return html`
+      <div id="wrapper" ${ref(this.#wrapperRef)}>
+        ${[this.#renderHero(), this.#renderBoardListing()]}
+      </div>
 
+      ${this.showBoardServerOverflowMenu
+        ? this.#renderBoardServerOverflowMenu(boardServer)
+        : nothing}
+      ${this.#renderAppVersion()}
+      ${SHOW_GOOGLE_DRIVE_DEBUG_PANEL
+        ? html`<bb-google-drive-debug-panel></bb-google-drive-debug-panel>`
+        : nothing}
+    `;
+  }
+
+  #renderHero() {
+    return html`
+      <section id="hero">
+        <h1 class="sans-flex w-500 round md-headline-large">
+          ${Strings.from("LABEL_WELCOME_MESSAGE_B")}
+        </h1>
+      </section>
+    `;
+  }
+
+  #renderBoardListing() {
+    return html`
+      <div id="board-listing">
+        <div id="content">
+          ${until(
+            this.#boardServerContents.then(
+              (store) => this.#renderBoardListingSuccess(store),
+              (error) => this.#renderBoardListingError(error)
+            ),
+            html`
+              <div id="loading-message">${Strings.from("STATUS_LOADING")}</div>
+            `
+          )}
+        </div>
+      </div>
+    `;
+  }
+
+  #renderBoardListingSuccess(store: GraphProviderStore | null) {
+    if (!store) {
+      return nothing;
+    }
+    if (store.permission !== "granted") {
+      return this.#renderRenewAccess();
+    }
+
+    const { myItems, sampleItems } = this.#separateGraphsByOwner(store);
+
+    const userHasAnyGraphs = myItems.length > 0 && !FORCE_NO_BOARDS;
+
+    return [
+      html`
+        <div id="locations">
+          <div id="location-selector-container">
+            ${this.showAdditionalSources
+              ? this.#renderLocationSelectorWithAdditionalSources()
+              : this.#renderLocationSelectorWithoutAdditionalSources()}
+            <div id="buttons">
+              ${userHasAnyGraphs
+                ? this.#renderInlineCreateNewButton()
+                : nothing}
+            </div>
+          </div>
+        </div>
+      `,
+
+      userHasAnyGraphs
+        ? this.#renderUserGraphs(myItems)
+        : this.#renderNoUserGraphsPanel(),
+
+      this.#renderFeaturedGraphs(sampleItems),
+    ];
+  }
+
+  #renderRenewAccess() {
+    return html`
+      <div id="renew-access">
+        <span>${Strings.from("LABEL_ACCESS_EXPIRED_PROJECT_SERVER")}</span>
+        <button
+          id="request-renewed-access"
+          @click=${() => {
+            this.dispatchEvent(
+              new GraphBoardServerRenewAccessRequestEvent(
+                this.selectedBoardServer,
+                this.selectedLocation
+              )
+            );
+          }}
+        >
+          ${Strings.from("COMMAND_RENEW_ACCESS")}
+        </button>
+      </div>
+    `;
+  }
+
+  #separateGraphsByOwner(store: GraphProviderStore) {
+    const filter = this.filter ? new RegExp(this.filter, "gim") : undefined;
+    const allItems = [...store.items]
+      .filter(
+        ([name, item]) =>
+          !filter ||
+          (item.title && filter.test(item.title)) ||
+          (name && filter.test(name))
+      )
+      .sort(([, dataA], [, dataB]) => {
+        // Sort by recency.
+        const indexA = this.recentBoards.findIndex(
+          (board) => board.url === dataA.url
+        );
+        const indexB = this.recentBoards.findIndex(
+          (board) => board.url === dataB.url
+        );
+
+        if (indexA !== -1 && indexB === -1) {
+          return -1;
+        }
+        if (indexA === -1 && indexB !== -1) {
+          return 1;
+        }
+
+        if (indexA !== -1 && indexB !== -1) {
+          return indexA - indexB;
+        }
+
+        // If both are unknown for recency, choose those that are
+        // mine.
+        if (dataA.mine && !dataB.mine) {
+          return -1;
+        }
+
+        if (!dataA.mine && dataB.mine) {
+          return 1;
+        }
+
+        return 0;
+      });
+
+    const myItems = allItems.filter(([, item]) => item.mine);
+    const sampleItems = allItems
+      .filter(([, item]) => (item.tags ?? []).includes("featured"))
+      .sort(([, dataA], [, dataB]) => {
+        if (dataA.title && !dataB.title) return -1;
+        if (!dataA.title && dataB.title) return 1;
+        if (dataA.title && dataB.title) {
+          if (dataA.title < dataB.title) return -1;
+          if (dataA.title > dataB.title) return 1;
+          return 0;
+        }
+        return 0;
+      });
+    return { myItems, sampleItems };
+  }
+
+  #renderBoardListingError(error: Error) {
+    if (error.message.includes("No folder ID or access token")) {
+      if (!this.#availableConnections) {
+        this.#availableConnections = fetchAvailableConnections(
+          this,
+          () => this.globalConfig,
+          true
+        );
+      }
+      if (this.#availableConnections!.status === TaskStatus.INITIAL) {
+        this.#availableConnections!.run();
+      }
+
+      const gdriveConnectionID = "google-drive-limited";
+      return this.#availableConnections!.render({
+        pending: () => html`<p>Loading connections ...</p>`,
+        error: () => html`<p>Error loading connections</p>`,
+        complete: (result: Connection[]) => {
+          const gdrive = (result as Array<{ id: string }>).find(
+            (connection: { id: string }) => connection.id === gdriveConnectionID
+          );
+          if (gdrive) {
+            return html`<div>
+              <p class="loading-message">
+                You haven't yet granted us Google Drive Permissions, please sign
+                in into Google Drive in order to be able to create and save your
+                Flows.
+              </p>
+              <bb-connection-signin
+                .connection=${gdrive}
+                @bbtokengranted=${({
+                  token,
+                  expiresIn,
+                }: HTMLElementEventMap["bbtokengranted"]) => {
+                  this.dispatchEvent(
+                    new StateEvent({
+                      eventType: "board.input",
+                      id: this.id,
+                      data: {
+                        clientId: gdriveConnectionID,
+                        secret: token,
+                        expiresIn,
+                      },
+                      allowSavingIfSecret: false,
+                    })
+                  );
+                }}
+              ></bb-connection-signin>
+            </div>`;
+          }
+        },
+      });
+    }
+  }
+
+  #renderLocationSelectorWithAdditionalSources() {
     const selected = this.#createUrl(
       this.selectedBoardServer,
       this.selectedLocation
     );
-
-    const location = this.showAdditionalSources
-      ? html`<div id="location-selector-outer">
-          <select
-            id="location-selector"
-            class="gallery-title md-headline-small sans-flex w-400 round"
-            @input=${(evt: Event) => {
-              if (!(evt.target instanceof HTMLSelectElement)) {
-                return;
-              }
-
-              const [boardServer, location] = this.#parseUrl(evt.target.value);
-              this.selectedBoardServer = boardServer;
-              this.selectedLocation = location;
-
-              this.dispatchEvent(
-                new GraphBoardServerSelectionChangeEvent(boardServer, location)
-              );
-            }}
-          >
-            ${map(this.boardServers, (boardServer) => {
-              return html`${map(boardServer.items(), ([location, store]) => {
-                const value = `${boardServer.name}::${store.url ?? location}`;
-                const isSelectedOption = value === selected;
-                return html`<option
-                  .selected=${isSelectedOption}
-                  .value=${value}
-                >
-                  ${store.title}
-                </option>`;
-              })}`;
-            })}
-          </select>
-
-          <button
-            id="board-server-settings"
-            @click=${(evt: PointerEvent) => {
-              if (!(evt.target instanceof HTMLButtonElement)) {
-                return;
-              }
-
-              const bounds = evt.target.getBoundingClientRect();
-              this.#overflowMenu.x = bounds.left;
-              this.#overflowMenu.y =
-                window.innerHeight - (bounds.top - OVERFLOW_MENU_CLEARANCE);
-
-              this.showBoardServerOverflowMenu = true;
-            }}
-          >
-            ${Strings.from("LABEL_PROJECT_SERVER_SETTINGS")}
-          </button>
-        </div>`
-      : html`<h2
+    return html`
+      <div id="location-selector-outer">
+        <select
           id="location-selector"
           class="gallery-title md-headline-small sans-flex w-400 round"
+          @input=${(evt: Event) => {
+            if (!(evt.target instanceof HTMLSelectElement)) {
+              return;
+            }
+
+            const [boardServer, location] = this.#parseUrl(evt.target.value);
+            this.selectedBoardServer = boardServer;
+            this.selectedLocation = location;
+
+            this.dispatchEvent(
+              new GraphBoardServerSelectionChangeEvent(boardServer, location)
+            );
+          }}
         >
-          ${this.#getCurrentStoreName(selected)}
-        </h2>`;
+          ${map(this.boardServers, (boardServer) => {
+            return html`${map(boardServer.items(), ([location, store]) => {
+              const value = `${boardServer.name}::${store.url ?? location}`;
+              const isSelectedOption = value === selected;
+              return html`<option .selected=${isSelectedOption} .value=${value}>
+                ${store.title}
+              </option>`;
+            })}`;
+          })}
+        </select>
 
-    return html`
-      <div id="wrapper" ${ref(this.#wrapperRef)}>
-        <section id="hero">
-          <h1 class="sans-flex w-500 round md-headline-large">
-            ${Strings.from("LABEL_WELCOME_MESSAGE_B")}
-          </h1>
-        </section>
+        <button
+          id="board-server-settings"
+          @click=${(evt: PointerEvent) => {
+            if (!(evt.target instanceof HTMLButtonElement)) {
+              return;
+            }
 
-        <div id="board-listing">
-          <div id="content">
-            ${until(
-              this.#boardServerContents.then(
-                (store) => {
-                  if (!store) {
-                    return nothing;
-                  }
+            const bounds = evt.target.getBoundingClientRect();
+            this.#overflowMenu.x = bounds.left;
+            this.#overflowMenu.y =
+              window.innerHeight - (bounds.top - OVERFLOW_MENU_CLEARANCE);
 
-                  const { permission } = store;
-                  const filter = this.filter
-                    ? new RegExp(this.filter, "gim")
-                    : undefined;
-                  const allItems = [...store.items]
-                    .filter(
-                      ([name, item]) =>
-                        !filter ||
-                        (item.title && filter.test(item.title)) ||
-                        (name && filter.test(name))
-                    )
-                    .sort(([, dataA], [, dataB]) => {
-                      // Sort by recency.
-                      const indexA = this.recentBoards.findIndex(
-                        (board) => board.url === dataA.url
-                      );
-                      const indexB = this.recentBoards.findIndex(
-                        (board) => board.url === dataB.url
-                      );
-
-                      if (indexA !== -1 && indexB === -1) {
-                        return -1;
-                      }
-                      if (indexA === -1 && indexB !== -1) {
-                        return 1;
-                      }
-
-                      if (indexA !== -1 && indexB !== -1) {
-                        return indexA - indexB;
-                      }
-
-                      // If both are unknown for recency, choose those that are
-                      // mine.
-                      if (dataA.mine && !dataB.mine) {
-                        return -1;
-                      }
-
-                      if (!dataA.mine && dataB.mine) {
-                        return 1;
-                      }
-
-                      return 0;
-                    });
-
-                  const myItems = allItems.filter(([, item]) => item.mine);
-                  const sampleItems = allItems
-                    .filter(([, item]) =>
-                      (item.tags ?? []).includes("featured")
-                    )
-                    .sort(([, dataA], [, dataB]) => {
-                      if (dataA.title && !dataB.title) return -1;
-                      if (!dataA.title && dataB.title) return 1;
-                      if (dataA.title && dataB.title) {
-                        if (dataA.title < dataB.title) return -1;
-                        if (dataA.title > dataB.title) return 1;
-                        return 0;
-                      }
-                      return 0;
-                    });
-                  const boardListings = [
-                    myItems.length && !FORCE_NO_BOARDS
-                      ? html`
-                          <div class="gallery-wrapper">
-                            <bb-gallery
-                              .items=${myItems}
-                              .pageSize=${8}
-                            ></bb-gallery>
-                          </div>
-                        `
-                      : html`
-                          <div id="no-projects-panel">
-                            <button
-                              id="create-new-button"
-                              class="md-title-small sans-flex w-400 round"
-                              @click=${this.#clickNewProjectButton}
-                            >
-                              <span class="g-icon"></span>
-                              ${Strings.from("COMMAND_NEW_PROJECT")}
-                            </button>
-                          </div>
-                        `,
-                    html`
-                      <div class="gallery-wrapper">
-                        <h2
-                          class="gallery-title md-headline-small sans-flex w-400 round"
-                        >
-                          ${Strings.from("LABEL_SAMPLE_GALLERY_TITLE")}
-                        </h2>
-                        <bb-gallery
-                          .items=${sampleItems}
-                          .pageSize=${/* Unlimited */ -1}
-                          forceCreatorToBeTeam
-                        ></bb-gallery>
-                      </div>
-                    `,
-                  ];
-
-                  const buttons = html`
-                    <div id="buttons">
-                      ${myItems.length && !FORCE_NO_BOARDS
-                        ? html`<div id="create-new-button-container">
-                            <button
-                              id="create-new-button-inline"
-                              class="md-title-small sans-flex w-400 round"
-                              @click=${this.#clickNewProjectButton}
-                            >
-                              <span class="g-icon"></span>
-                              ${Strings.from("COMMAND_NEW_PROJECT")}
-                            </button>
-                          </div>`
-                        : nothing}
-                    </div>
-                  `;
-
-                  return permission === "granted"
-                    ? [
-                        html`<div id="locations">
-                          <div id="location-selector-container">
-                            ${location} ${buttons}
-                          </div>
-                        </div>`,
-                        boardListings,
-                      ]
-                    : html`<div id="renew-access">
-                        <span
-                          >${Strings.from(
-                            "LABEL_ACCESS_EXPIRED_PROJECT_SERVER"
-                          )}</span
-                        >
-                        <button
-                          id="request-renewed-access"
-                          @click=${() => {
-                            this.dispatchEvent(
-                              new GraphBoardServerRenewAccessRequestEvent(
-                                this.selectedBoardServer,
-                                this.selectedLocation
-                              )
-                            );
-                          }}
-                        >
-                          ${Strings.from("COMMAND_RENEW_ACCESS")}
-                        </button>
-                      </div>`;
-                },
-                async (error) => {
-                  if (error.message.includes("No folder ID or access token")) {
-                    if (!this.#availableConnections) {
-                      this.#availableConnections = fetchAvailableConnections(
-                        this,
-                        () => this.globalConfig,
-                        true
-                      );
-                    }
-                    if (
-                      this.#availableConnections!.status === TaskStatus.INITIAL
-                    ) {
-                      this.#availableConnections!.run();
-                    }
-
-                    const gdriveConnectionID = "google-drive-limited";
-                    return this.#availableConnections!.render({
-                      pending: () => html`<p>Loading connections ...</p>`,
-                      error: () => html`<p>Error loading connections</p>`,
-                      complete: (result: Connection[]) => {
-                        const gdrive = (result as Array<{ id: string }>).find(
-                          (connection: { id: string }) =>
-                            connection.id === gdriveConnectionID
-                        );
-                        if (gdrive) {
-                          return html`<div>
-                            <p class="loading-message">
-                              You haven't yet granted us Google Drive
-                              Permissions, please sign in into Google Drive in
-                              order to be able to create and save your Flows.
-                            </p>
-                            <bb-connection-signin
-                              .connection=${gdrive}
-                              @bbtokengranted=${({
-                                token,
-                                expiresIn,
-                              }: HTMLElementEventMap["bbtokengranted"]) => {
-                                this.dispatchEvent(
-                                  new StateEvent({
-                                    eventType: "board.input",
-                                    id: this.id,
-                                    data: {
-                                      clientId: gdriveConnectionID,
-                                      secret: token,
-                                      expiresIn,
-                                    },
-                                    allowSavingIfSecret: false,
-                                  })
-                                );
-                              }}
-                            ></bb-connection-signin>
-                          </div>`;
-                        }
-                      },
-                    });
-                  }
-                }
-              ),
-              html`<div id="loading-message">
-                ${Strings.from("STATUS_LOADING")}
-              </div>`
-            )}
-          </div>
-        </div>
+            this.showBoardServerOverflowMenu = true;
+          }}
+        >
+          ${Strings.from("LABEL_PROJECT_SERVER_SETTINGS")}
+        </button>
       </div>
+    `;
+  }
 
-      ${this.showBoardServerOverflowMenu
-        ? html` <div
-            id="overflow-menu"
-            style=${styleMap({
-              left: `${this.#overflowMenu.x}px`,
-              bottom: `${this.#overflowMenu.y}px`,
-            })}
-          >
-            <button
+  #renderLocationSelectorWithoutAdditionalSources() {
+    return html`
+      <h2
+        id="location-selector"
+        class="gallery-title md-headline-small sans-flex w-400 round"
+      >
+        ${Strings.from("LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS")}
+      </h2>
+    `;
+  }
+
+  #renderInlineCreateNewButton() {
+    return html`
+      <div id="create-new-button-container">
+        <button
+          id="create-new-button-inline"
+          class="md-title-small sans-flex w-400 round"
+          @click=${this.#clickNewProjectButton}
+        >
+          <span class="g-icon"></span>
+          ${Strings.from("COMMAND_NEW_PROJECT")}
+        </button>
+      </div>
+    `;
+  }
+
+  #renderUserGraphs(myItems: [string, GraphProviderItem][]) {
+    return html`
+      <div class="gallery-wrapper">
+        <bb-gallery .items=${myItems} .pageSize=${8}></bb-gallery>
+      </div>
+    `;
+  }
+
+  #renderNoUserGraphsPanel() {
+    return html`
+      <div id="no-projects-panel">
+        <button
+          id="create-new-button"
+          class="md-title-small sans-flex w-400 round"
+          @click=${this.#clickNewProjectButton}
+        >
+          <span class="g-icon"></span>
+          ${Strings.from("COMMAND_NEW_PROJECT")}
+        </button>
+      </div>
+    `;
+  }
+
+  #renderFeaturedGraphs(sampleItems: [string, GraphProviderItem][]) {
+    return html`
+      <div class="gallery-wrapper">
+        <h2 class="gallery-title md-headline-small sans-flex w-400 round">
+          ${Strings.from("LABEL_SAMPLE_GALLERY_TITLE")}
+        </h2>
+        <bb-gallery
+          .items=${sampleItems}
+          .pageSize=${/* Unlimited */ -1}
+          forceCreatorToBeTeam
+        ></bb-gallery>
+      </div>
+    `;
+  }
+
+  #renderBoardServerOverflowMenu(boardServer: BoardServer) {
+    const extendedCapabilities = boardServer.extendedCapabilities();
+    return html`
+      <div
+        id="overflow-menu"
+        style=${styleMap({
+          left: `${this.#overflowMenu.x}px`,
+          bottom: `${this.#overflowMenu.y}px`,
+        })}
+      >
+        <button
+          @click=${() => {
+            this.dispatchEvent(new GraphBoardServerAddEvent());
+            this.showBoardServerOverflowMenu = false;
+          }}
+          id="add-new-board-server"
+        >
+          ${Strings.from("COMMAND_ADD_NEW_PROJECT_SERVER")}
+        </button>
+        ${extendedCapabilities.refresh
+          ? html`<button
               @click=${() => {
-                this.dispatchEvent(new GraphBoardServerAddEvent());
                 this.showBoardServerOverflowMenu = false;
+                this.dispatchEvent(
+                  new GraphBoardServerRefreshEvent(
+                    this.selectedBoardServer,
+                    this.selectedLocation
+                  )
+                );
               }}
-              id="add-new-board-server"
+              id="refresh-board-server"
             >
-              ${Strings.from("COMMAND_ADD_NEW_PROJECT_SERVER")}
-            </button>
-            ${extendedCapabilities.refresh
-              ? html`<button
-                  @click=${() => {
-                    this.showBoardServerOverflowMenu = false;
-                    this.dispatchEvent(
-                      new GraphBoardServerRefreshEvent(
-                        this.selectedBoardServer,
-                        this.selectedLocation
-                      )
-                    );
-                  }}
-                  id="refresh-board-server"
-                >
-                  ${Strings.from("COMMAND_REFRESH_PROJECT_SERVER")}
-                </button>`
-              : nothing}
-            ${extendedCapabilities.disconnect
-              ? html`<button
-                  @click=${() => {
-                    if (!confirm(Strings.from("QUERY_CONFIRM_REMOVE_SERVER"))) {
-                      return;
-                    }
-                    this.dispatchEvent(
-                      new GraphBoardServerDisconnectEvent(
-                        this.selectedBoardServer,
-                        this.selectedLocation
-                      )
-                    );
-                    this.showBoardServerOverflowMenu = false;
-                    this.#returnToDefaultStore();
-                  }}
-                  id="remove-board-server"
-                >
-                  ${Strings.from("COMMAND_REMOVE_PROJECT_SERVER")}
-                </button>`
-              : nothing}
-          </div>`
-        : nothing}
+              ${Strings.from("COMMAND_REFRESH_PROJECT_SERVER")}
+            </button>`
+          : nothing}
+        ${extendedCapabilities.disconnect
+          ? html`<button
+              @click=${() => {
+                if (!confirm(Strings.from("QUERY_CONFIRM_REMOVE_SERVER"))) {
+                  return;
+                }
+                this.dispatchEvent(
+                  new GraphBoardServerDisconnectEvent(
+                    this.selectedBoardServer,
+                    this.selectedLocation
+                  )
+                );
+                this.showBoardServerOverflowMenu = false;
+                this.#returnToDefaultStore();
+              }}
+              id="remove-board-server"
+            >
+              ${Strings.from("COMMAND_REMOVE_PROJECT_SERVER")}
+            </button>`
+          : nothing}
+      </div>
+    `;
+  }
 
+  #renderAppVersion() {
+    return html`
       <div id="app-version">
         ${this.globalConfig
           ? `${this.globalConfig.buildInfo.packageJsonVersion} (${this.globalConfig.buildInfo.gitCommitHash})`
           : `Unknown version`}
       </div>
-      ${SHOW_GOOGLE_DRIVE_DEBUG_PANEL
-        ? html`<bb-google-drive-debug-panel></bb-google-drive-debug-panel>`
-        : nothing}
     `;
   }
 
