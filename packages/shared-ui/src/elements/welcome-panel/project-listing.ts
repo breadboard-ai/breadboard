@@ -41,6 +41,9 @@ if (SHOW_GOOGLE_DRIVE_DEBUG_PANEL) {
 
 @customElement("bb-project-listing")
 export class ProjectListing extends LitElement {
+  @consume({ context: globalConfigContext })
+  accessor globalConfig: GlobalConfig | undefined;
+
   @consume({ context: boardServerContext, subscribe: true })
   accessor boardServer: BoardServer | undefined;
 
@@ -49,9 +52,6 @@ export class ProjectListing extends LitElement {
 
   @property()
   accessor filter: string | null = null;
-
-  @consume({ context: globalConfigContext })
-  accessor globalConfig: GlobalConfig | undefined;
 
   static styles = [
     icons,
