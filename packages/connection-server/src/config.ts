@@ -40,6 +40,10 @@ export interface ConnectionConfig {
 export async function loadConnections(
   configFilePath: string
 ): Promise<Map<string, ConnectionConfig>> {
+  console.log(
+    `[connection-server startup] Loading connections file from ${configFilePath}`
+  );
+
   const config = JSON.parse(
     await readFile(configFilePath, "utf8")
   ) as ConnectionsConfigFile;
