@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { RefreshEvent } from "@breadboard-ai/google-drive-kit/board-server/events.js";
 import {
   type BoardServer,
   type GraphProviderItem,
@@ -11,7 +12,7 @@ import {
 } from "@google-labs/breadboard";
 import { consume } from "@lit/context";
 import { Task } from "@lit/task";
-import { css, html, LitElement, nothing } from "lit";
+import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { boardServerContext } from "../../contexts/board-server.js";
 import {
@@ -64,6 +65,23 @@ export class ProjectListing extends LitElement {
       return server.items().get(server.url.href);
     },
   });
+
+  override willUpdate(changes: PropertyValues<this>) {
+    if (changes.has("boardServer")) {
+      const oldServer = changes.get("boardServer");
+      oldServer?.removeEventListener(
+        RefreshEvent.eventName,
+        this.#onBoardServerRefresh
+      );
+      const newServer = this.boardServer;
+      newServer?.addEventListener(
+        RefreshEvent.eventName,
+        this.#onBoardServerRefresh
+      );
+    }
+  }
+
+  readonly #onBoardServerRefresh = () => this.#graphProviderStore.run();
 
   static styles = [
     icons,
