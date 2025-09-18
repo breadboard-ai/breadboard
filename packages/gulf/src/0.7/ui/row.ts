@@ -7,21 +7,22 @@ import { html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 import { Root } from "./root";
 
-@customElement("gulf-divider")
-export class Divider extends Root {
+@customElement("gulf-row")
+export class Row extends Root {
   static styles = css`
     :host {
-      display: block;
+      display: flex;
+      gap: 16px;
+      flex: var(--weight);
     }
 
-    hr {
-      height: 1px;
-      background: #ccc;
-      border: none;
+    ::slotted(*) {
+      flex: var(--weight);
+      align-items: flex-start;
     }
   `;
 
   render() {
-    return html`<hr />`;
+    return html`<slot></slot>`;
   }
 }

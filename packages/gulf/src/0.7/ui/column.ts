@@ -7,12 +7,20 @@ import { html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 import { Root } from "./root";
 
-@customElement("gulf-list")
-export class List extends Root {
+@customElement("gulf-column")
+export class Column extends Root {
   static styles = css`
     :host {
       display: grid;
       gap: 8px;
+      flex: var(--weight);
+    }
+
+    ::slotted(*) {
+      > ::slotted(*) {
+        flex: var(--weight);
+      }
+      align-items: flex-start;
     }
   `;
 

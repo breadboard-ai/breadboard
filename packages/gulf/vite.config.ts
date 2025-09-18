@@ -11,7 +11,7 @@ export default async () => {
   config();
 
   const entry: Record<string, string> = {
-    demo: "./index.html",
+    index: "./index.html",
   };
   return {
     build: {

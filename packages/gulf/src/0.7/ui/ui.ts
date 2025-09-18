@@ -12,41 +12,55 @@ export type CustomElementConstructorOf<T extends HTMLElement> = {
   new (): T;
 } & typeof HTMLElement;
 
+import { Audio } from "./audio.js";
 import { Button } from "./button.js";
 import { Card } from "./card.js";
-import { Carousel } from "./carousel.js";
+import { Column } from "./column.js";
 import { Divider } from "./divider.js";
+import { Heading } from "./heading.js";
 import { Image } from "./image.js";
 import { List } from "./list.js";
 import { MultipleChoice } from "./multiple-choice.js";
 import { Root } from "./root.js";
+import { Row } from "./row.js";
 import { TextField } from "./text-field.js";
 import { Text } from "./text.js";
+import { Video } from "./video.js";
 
 export {
+  Audio,
   Button,
   Card,
-  Carousel,
+  Column,
   Divider,
+  Heading,
   Image,
   List,
   MultipleChoice,
   Root,
+  Row,
   Text,
   TextField,
+  Video,
 };
 
+// TODO: Checkbox, DateTimeInput, Modal, Slider, Tabs
+
 interface GulfTagNameMap {
-  "gulf-root": Root;
-  "gulf-card": Card;
-  "gulf-list": List;
+  "gulf-audioplayer": Audio;
   "gulf-button": Button;
-  "gulf-carousel": Carousel;
+  "gulf-card": Card;
+  "gulf-column": Column;
   "gulf-divider": Divider;
+  "gulf-heading": Heading;
   "gulf-image": Image;
+  "gulf-list": List;
   "gulf-multiplechoice": MultipleChoice;
+  "gulf-root": Root;
+  "gulf-row": Row;
   "gulf-text": Text;
   "gulf-textfield": TextField;
+  "gulf-video": Video;
 }
 
 declare global {

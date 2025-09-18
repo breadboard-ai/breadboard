@@ -7,8 +7,8 @@ import { html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 import { Root } from "./root";
 
-@customElement("gulf-carousel")
-export class Carousel extends Root {
+@customElement("gulf-card")
+export class Card extends Root {
   static styles = css`
     * {
       box-sizing: border-box;
@@ -16,22 +16,21 @@ export class Carousel extends Root {
 
     :host {
       display: block;
+      background: #fff;
+      border: 1px solid #f3f3f3;
+      border-radius: 24px;
+      padding: 20px;
+      flex: var(--weight);
     }
 
     section {
-      display: flex;
-      gap: 8px;
-      max-width: 100%;
-      overflow-x: scroll;
-      overflow-y: hidden;
-
-      > ::slotted(*) {
-        flex: 1 0 fit-content;
-      }
+      display: block;
     }
   `;
 
   render() {
-    return html`<section><slot></slot></section>`;
+    return html` <section>
+      <slot></slot>
+    </section>`;
   }
 }

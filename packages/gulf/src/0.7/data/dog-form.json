@@ -1,0 +1,352 @@
+[
+  {
+    "version": "0.7"
+  },
+  {
+    "root": "rootList"
+  },
+  {
+    "components": [
+      {
+        "id": "rootList",
+        "componentProperties": {
+          "List": {
+            "direction": "vertical",
+            "children": {
+              "explicitList": ["breedCard", "generatorCard"]
+            }
+          }
+        }
+      },
+      {
+        "id": "breedCard",
+        "componentProperties": {
+          "Card": {
+            "child": "breedCardContent"
+          }
+        }
+      },
+      {
+        "id": "breedCardContent",
+        "componentProperties": {
+          "Column": {
+            "children": {
+              "explicitList": ["breedTitle", "headerImage", "breedCarousel"]
+            }
+          }
+        }
+      },
+      {
+        "id": "breedTitle",
+        "componentProperties": {
+          "Heading": {
+            "level": "2",
+            "text": {
+              "literalString": "Famous Dog breeds"
+            }
+          }
+        }
+      },
+      {
+        "id": "headerImage",
+        "componentProperties": {
+          "Image": {
+            "url": {
+              "literalString": "/images/doggo.jpg"
+            }
+          }
+        }
+      },
+      {
+        "id": "breedCarousel",
+        "componentProperties": {
+          "List": {
+            "direction": "horizontal",
+            "children": {
+              "template": {
+                "componentId": "carouselItemTemplate",
+                "dataBinding": "/carousel"
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "carouselItemTemplate",
+        "componentProperties": {
+          "Column": {
+            "alignment": "center",
+            "children": {
+              "explicitList": ["carouselImage", "carouselText"]
+            }
+          }
+        }
+      },
+      {
+        "id": "carouselImage",
+        "componentProperties": {
+          "Image": {
+            "url": {
+              "path": "imageUrl"
+            }
+          }
+        }
+      },
+      {
+        "id": "carouselText",
+        "componentProperties": {
+          "Text": {
+            "text": {
+              "path": "breedName"
+            }
+          }
+        }
+      },
+      {
+        "id": "generatorCard",
+        "componentProperties": {
+          "Card": {
+            "child": "generatorForm"
+          }
+        }
+      },
+      {
+        "id": "generatorForm",
+        "componentProperties": {
+          "Column": {
+            "children": {
+              "explicitList": [
+                "generatorTitle",
+                "generatorDescription",
+                "breedNameInput",
+                "legCountInput",
+                "skillsLabel",
+                "skillsCheckboxes",
+                "generateButton",
+                "resultDivider",
+                "generatedContentSection"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "generatorTitle",
+        "componentProperties": {
+          "Heading": {
+            "level": "2",
+            "text": {
+              "literalString": "Fictional Dog Generator"
+            }
+          }
+        }
+      },
+      {
+        "id": "generatorDescription",
+        "componentProperties": {
+          "Text": {
+            "text": {
+              "literalString": "Use the form below to generate a new, fantastic dog breed."
+            }
+          }
+        }
+      },
+      {
+        "id": "breedNameInput",
+        "componentProperties": {
+          "TextField": {
+            "label": {
+              "literalString": "Dog breed name"
+            },
+            "text": {
+              "path": "/form/breedName"
+            },
+            "type": "shortText"
+          }
+        }
+      },
+      {
+        "id": "legCountInput",
+        "componentProperties": {
+          "TextField": {
+            "label": {
+              "literalString": "Number of legs"
+            },
+            "text": {
+              "path": "/form/legCount"
+            },
+            "type": "number"
+          }
+        }
+      },
+      {
+        "id": "skillsLabel",
+        "componentProperties": {
+          "Text": {
+            "text": {
+              "literalString": "Skills"
+            }
+          }
+        }
+      },
+      {
+        "id": "skillsCheckboxes",
+        "componentProperties": {
+          "Column": {
+            "children": {
+              "explicitList": ["flyingSkill", "talkingSkill", "laserEyesSkill"]
+            }
+          }
+        }
+      },
+      {
+        "id": "flyingSkill",
+        "componentProperties": {
+          "CheckBox": {
+            "label": {
+              "literalString": "Can fly"
+            },
+            "value": {
+              "path": "/form/skills/canFly"
+            }
+          }
+        }
+      },
+      {
+        "id": "talkingSkill",
+        "componentProperties": {
+          "CheckBox": {
+            "label": {
+              "literalString": "Can talk"
+            },
+            "value": {
+              "path": "/form/skills/canTalk"
+            }
+          }
+        }
+      },
+      {
+        "id": "laserEyesSkill",
+        "componentProperties": {
+          "CheckBox": {
+            "label": {
+              "literalString": "Has laser eyes"
+            },
+            "value": {
+              "path": "/form/skills/hasLaserEyes"
+            }
+          }
+        }
+      },
+      {
+        "id": "generateButton",
+        "componentProperties": {
+          "Button": {
+            "label": {
+              "literalString": "Generate"
+            },
+            "action": {
+              "action": "generateDogDescription",
+              "context": [
+                {
+                  "key": "breedName",
+                  "value": {
+                    "path": "/form/breedName"
+                  }
+                },
+                {
+                  "key": "legCount",
+                  "value": {
+                    "path": "/form/legCount"
+                  }
+                },
+                {
+                  "key": "skills",
+                  "value": {
+                    "path": "/form/skills"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "resultDivider",
+        "componentProperties": {
+          "Divider": {}
+        }
+      },
+      {
+        "id": "generatedContentSection",
+        "componentProperties": {
+          "Column": {
+            "children": {
+              "explicitList": ["generatedContentTitle", "generatedContent"]
+            }
+          }
+        }
+      },
+      {
+        "id": "generatedContentTitle",
+        "componentProperties": {
+          "Heading": {
+            "level": "3",
+            "text": {
+              "literalString": "Generated Content"
+            }
+          }
+        }
+      },
+      {
+        "id": "generatedContent",
+        "componentProperties": {
+          "Text": {
+            "text": {
+              "path": "/generated/description"
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "path": "/carousel",
+    "contents": [
+      {
+        "breedName": "Golden Retriever",
+        "imageUrl": "/images/doggo.jpg"
+      },
+      {
+        "breedName": "French Bulldog",
+        "imageUrl": "/images/doggo.jpg"
+      },
+      {
+        "breedName": "Siberian Husky",
+        "imageUrl": "/images/doggo.jpg"
+      },
+      {
+        "breedName": "Poodle",
+        "imageUrl": "/images/doggo.jpg"
+      }
+    ]
+  },
+  {
+    "path": "/form",
+    "contents": {
+      "breedName": "Galactic Floof",
+      "legCount": 4,
+      "skills": {
+        "canFly": false,
+        "canTalk": true,
+        "hasLaserEyes": false
+      }
+    }
+  },
+  {
+    "path": "/generated",
+    "contents": {
+      "description": "Your generated dog description will appear here."
+    }
+  }
+]
