@@ -635,7 +635,7 @@ export class Main extends SignalWatcher(LitElement) {
     if (!domain) {
       return;
     }
-    const url = this.globalConfig.domains?.[domain].preferredUrl;
+    const url = this.globalConfig.domains?.[domain]?.preferredUrl;
     if (!url) {
       return;
     }
