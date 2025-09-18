@@ -263,6 +263,22 @@ export class ProjectListing extends LitElement {
           justify-content: center;
         }
 
+        & #location-selector-container {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+
+          & #location-selector-outer {
+            display: flex;
+            align-items: center;
+
+            & #location-selector {
+              padding: 0;
+              border: none;
+            }
+          }
+        }
+
         & #content {
           display: flex;
           flex-direction: column;
