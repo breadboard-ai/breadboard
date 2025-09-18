@@ -256,100 +256,11 @@ export class ProjectListing extends LitElement {
               }
             }
           }
-
-          & #mode-container {
-            display: flex;
-            height: var(--bb-grid-size-10);
-            padding-top: var(--bb-grid-size);
-
-            & input {
-              display: none;
-            }
-
-            & label {
-              display: flex;
-              align-items: center;
-              font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-                var(--bb-font-family);
-              cursor: pointer;
-
-              & .detailed {
-                display: block;
-                width: 52px;
-                height: var(--bb-grid-size-9);
-                border: 1px solid var(--bb-neutral-300);
-                border-radius: var(--bb-grid-size-16) 0 0 var(--bb-grid-size-16);
-                background: var(--bb-ui-50) var(--bb-icon-grid-view) 16px
-                  center / 20px 20px no-repeat;
-              }
-
-              & .condensed {
-                display: block;
-                width: 52px;
-                height: var(--bb-grid-size-9);
-                border: 1px solid var(--bb-neutral-300);
-                border-left: none;
-                border-radius: 0 var(--bb-grid-size-16) var(--bb-grid-size-16) 0;
-                margin-right: var(--bb-grid-size-4);
-                background: var(--bb-neutral-0) var(--bb-icon-dehaze) 14px
-                  center / 20px 20px no-repeat;
-              }
-
-              & .sort-by-icon {
-                width: 20px;
-                height: 20px;
-                background: var(--bb-icon-sort-by) center center / 20px 20px
-                  no-repeat;
-                margin-right: var(--bb-grid-size);
-              }
-            }
-
-            /* Checked means condensed */
-            & input:checked + label {
-              & .detailed {
-                background-color: var(--bb-neutral-0);
-              }
-
-              & .condensed {
-                background-color: var(--bb-ui-50);
-              }
-            }
-
-            & bb-homepage-search-button {
-              margin-left: 8px;
-            }
-          }
         }
 
         & #new-project-container {
           display: flex;
           justify-content: center;
-        }
-
-        & #location-selector-container {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-
-          & #location-selector-outer {
-            display: flex;
-            align-items: center;
-
-            & #location-selector {
-              padding: 0;
-              border: none;
-            }
-          }
-        }
-
-        & #list-other-peoples-boards-container {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          height: 60px;
-          font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-            var(--bb-font-family);
-          margin-left: var(--bb-grid-size-8);
         }
 
         & #content {
@@ -363,80 +274,6 @@ export class ProjectListing extends LitElement {
             & .gallery-title {
               margin: 0 0 var(--bb-grid-size-6) 0;
             }
-          }
-        }
-      }
-
-      #board-server-settings {
-        width: 32px;
-        height: 32px;
-        background: var(--bb-neutral-100) var(--bb-icon-folder-managed) center
-          center / 20px 20px no-repeat;
-        border-radius: var(--bb-grid-size);
-        border: none;
-        font-size: 0;
-        flex: 0 0 auto;
-        margin-left: var(--bb-grid-size);
-      }
-
-      #overflow-menu {
-        z-index: 1000;
-        display: grid;
-        grid-template-rows: var(--bb-grid-size-11);
-        position: fixed;
-        box-shadow:
-          0px 4px 8px 3px rgba(0, 0, 0, 0.05),
-          0px 1px 3px rgba(0, 0, 0, 0.1);
-        background: var(--bb-neutral-0);
-        border: 1px solid var(--bb-neutral-300);
-        border-radius: var(--bb-grid-size-2);
-        overflow: auto;
-        pointer-events: auto;
-
-        & button {
-          display: flex;
-          align-items: center;
-          background: none;
-          margin: 0;
-          padding: var(--bb-grid-size-3) var(--bb-grid-size-6)
-            var(--bb-grid-size-3) var(--bb-grid-size-3);
-          border: none;
-          border-bottom: 1px solid var(--bb-neutral-300);
-          text-align: left;
-          cursor: pointer;
-
-          &:hover,
-          &:focus {
-            background: var(--bb-neutral-50);
-          }
-
-          &:last-of-type {
-            border: none;
-          }
-
-          &::before {
-            content: "";
-            width: 20px;
-            height: 20px;
-            margin-right: var(--bb-grid-size-3);
-          }
-
-          &#add-new-board-server::before {
-            background: var(--bb-icon-add) center center / 20px 20px no-repeat;
-          }
-
-          &#rename-board-server::before {
-            background: var(--bb-icon-edit) center center / 20px 20px no-repeat;
-          }
-
-          &#refresh-board-server::before {
-            background: var(--bb-icon-refresh) center center / 20px 20px
-              no-repeat;
-          }
-
-          &#remove-board-server::before {
-            background: var(--bb-icon-delete) center center / 20px 20px
-              no-repeat;
           }
         }
       }
