@@ -11,7 +11,7 @@ import {
 } from "@google-labs/breadboard";
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import {
@@ -61,8 +61,6 @@ export class ProjectListing extends LitElement {
 
   @consume({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig | undefined;
-
-  #selectedIndex = 0;
 
   static styles = [
     icons,
@@ -466,9 +464,6 @@ export class ProjectListing extends LitElement {
   ];
 
   readonly #wrapperRef: Ref<HTMLDivElement> = createRef();
-  readonly #searchRef: Ref<HTMLInputElement> = createRef();
-  #attemptFocus = false;
-  #attemptScrollUpdate = false;
 
   override connectedCallback() {
     super.connectedCallback();
@@ -486,8 +481,6 @@ export class ProjectListing extends LitElement {
         }
       });
     }
-
-    this.#attemptFocus = true;
   }
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
@@ -498,48 +491,8 @@ export class ProjectListing extends LitElement {
       changedProperties.has("selectedBoardServer") ||
       changedProperties.has("filter")
     ) {
-      this.#selectedIndex = 0;
       this.#boardServerContents = this.#loadBoardServerContents();
     }
-  }
-
-  protected updated(): void {
-    // Wait a frame because the overlay animation seems to negate the ability to
-    // focus the search control and scroll the contents.
-    requestAnimationFrame(() => {
-      this.#highlightSelectedBoard();
-
-      if (this.#attemptFocus) {
-        this.#attemptFocus = false;
-        this.#focusSearchField();
-      }
-    });
-  }
-
-  #highlightSelectedBoard() {
-    if (!this.#wrapperRef.value) {
-      return;
-    }
-
-    const selected =
-      this.#wrapperRef.value.querySelector<HTMLButtonElement>(
-        "button.selected"
-      );
-    selected?.classList.remove("selected");
-
-    const boardList =
-      this.#wrapperRef.value.querySelectorAll<HTMLButtonElement>(
-        `button.board`
-      );
-
-    const newlySelected = boardList[this.#selectedIndex];
-    newlySelected?.classList.add("selected");
-
-    if (!this.#attemptScrollUpdate) {
-      return;
-    }
-    this.#attemptScrollUpdate = false;
-    this.#scrollToSelectedBoard();
   }
 
   #boardServerContents: Promise<GraphProviderStore | null> =
@@ -568,34 +521,6 @@ export class ProjectListing extends LitElement {
     }
 
     return store;
-  }
-
-  #scrollToSelectedBoard() {
-    if (!this.#wrapperRef.value) {
-      return;
-    }
-
-    const selected =
-      this.#wrapperRef.value.querySelector<HTMLButtonElement>(
-        "button.selected"
-      );
-    if (!selected) {
-      return;
-    }
-
-    selected.scrollIntoView({
-      behavior: "instant",
-      block: "nearest",
-      inline: "nearest",
-    });
-  }
-
-  #focusSearchField() {
-    if (!this.#searchRef.value) {
-      return;
-    }
-
-    this.#searchRef.value.select();
   }
 
   override render() {
