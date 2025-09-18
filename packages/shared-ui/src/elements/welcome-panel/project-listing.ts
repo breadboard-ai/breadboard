@@ -64,12 +64,6 @@ export class ProjectListing extends LitElement {
   @property()
   accessor boardServerNavState: string | null = null;
 
-  @property({ reflect: true })
-  accessor visible = false;
-
-  @property()
-  accessor url: string | null = null;
-
   @property()
   accessor selectedBoardServer = "Browser Storage";
 
