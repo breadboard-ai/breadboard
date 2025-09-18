@@ -12,7 +12,6 @@ import {
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
 import {
   globalConfigContext,
@@ -316,8 +315,6 @@ export class ProjectListing extends LitElement {
     `,
   ];
 
-  readonly #wrapperRef: Ref<HTMLDivElement> = createRef();
-
   override connectedCallback() {
     super.connectedCallback();
     for (const boardServer of this.boardServers) {
@@ -389,7 +386,7 @@ export class ProjectListing extends LitElement {
     }
 
     return html`
-      <div id="wrapper" ${ref(this.#wrapperRef)}>
+      <div id="wrapper">
         ${[this.#renderHero(), this.#renderBoardListing()]}
       </div>
 
