@@ -25,7 +25,6 @@ import {
   GraphBoardServerAddEvent,
   GraphBoardServerDisconnectEvent,
   GraphBoardServerRefreshEvent,
-  GraphBoardServerRenewAccessRequestEvent,
   GraphBoardServerSelectionChangeEvent,
   StateEvent,
 } from "../../events/events";
@@ -755,10 +754,6 @@ export class ProjectListing extends LitElement {
     if (!store) {
       return nothing;
     }
-    if (store.permission !== "granted") {
-      return this.#renderRenewAccess();
-    }
-
     const { myItems, sampleItems } = this.#separateGraphsByOwner(store);
 
     const userHasAnyGraphs = myItems.length > 0 && !FORCE_NO_BOARDS;
@@ -785,27 +780,6 @@ export class ProjectListing extends LitElement {
 
       this.#renderFeaturedGraphs(sampleItems),
     ];
-  }
-
-  #renderRenewAccess() {
-    return html`
-      <div id="renew-access">
-        <span>${Strings.from("LABEL_ACCESS_EXPIRED_PROJECT_SERVER")}</span>
-        <button
-          id="request-renewed-access"
-          @click=${() => {
-            this.dispatchEvent(
-              new GraphBoardServerRenewAccessRequestEvent(
-                this.selectedBoardServer,
-                this.selectedLocation
-              )
-            );
-          }}
-        >
-          ${Strings.from("COMMAND_RENEW_ACCESS")}
-        </button>
-      </div>
-    `;
   }
 
   #separateGraphsByOwner(store: GraphProviderStore) {
