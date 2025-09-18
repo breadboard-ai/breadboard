@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ServerDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
+import type { ServerDeploymentConfiguration } from "./provide-config.js";
 import type { Handler, NextFunction, Request, Response } from "express";
 
 const CSP_CONFIG = {
