@@ -13,12 +13,14 @@ import { consume } from "@lit/context";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { until } from "lit/directives/until.js";
+import { boardServerContext } from "../../contexts/board-server.js";
 import {
   globalConfigContext,
   type GlobalConfig,
 } from "../../contexts/global-config.js";
 import { StateEvent } from "../../events/events";
 import "../../flow-gen/flowgen-homepage-panel.js";
+import * as StringsHelper from "../../strings/helper.js";
 import { colorsLight } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
@@ -28,7 +30,6 @@ import { blankBoard } from "../../utils/blank-board.js";
 import "./gallery.js";
 import "./homepage-search-button.js";
 
-import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("ProjectListing");
 
 const URL_PARAMS = new URL(document.URL).searchParams;
@@ -40,14 +41,8 @@ if (SHOW_GOOGLE_DRIVE_DEBUG_PANEL) {
 
 @customElement("bb-project-listing")
 export class ProjectListing extends LitElement {
-  @property({ attribute: false })
-  accessor boardServers: BoardServer[] = [];
-
-  @property()
-  accessor selectedBoardServer = "Browser Storage";
-
-  @property()
-  accessor selectedLocation = "Browser Storage";
+  @consume({ context: boardServerContext, subscribe: true })
+  accessor boardServer: BoardServer | undefined;
 
   @property({ attribute: false })
   accessor recentBoards: RecentBoard[] = [];
@@ -314,9 +309,7 @@ export class ProjectListing extends LitElement {
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     if (
-      changedProperties.has("boardServers") ||
-      changedProperties.has("selectedLocation") ||
-      changedProperties.has("selectedBoardServer") ||
+      changedProperties.has("boardServer") ||
       changedProperties.has("filter")
     ) {
       this.#boardServerContents = this.#loadBoardServerContents();
@@ -326,37 +319,16 @@ export class ProjectListing extends LitElement {
   #boardServerContents: Promise<GraphProviderStore | null> =
     Promise.resolve(null);
   async #loadBoardServerContents() {
-    const boardServer =
-      this.boardServers.find(
-        (boardServer) => boardServer.name === this.selectedBoardServer
-      ) || this.boardServers[0];
-
+    const { boardServer } = this;
     if (!boardServer) {
       return null;
     }
-
     await boardServer.ready();
-
-    let store = boardServer.items().get(this.selectedLocation);
-    if (!store) {
-      store = [...boardServer.items().values()].find(
-        (boardServer) =>
-          boardServer.url && boardServer.url === this.selectedLocation
-      );
-    }
-    if (!store) {
-      return null;
-    }
-
-    return store;
+    return boardServer.items().get(boardServer.url.href) ?? null;
   }
 
   override render() {
-    const boardServer =
-      this.boardServers.find(
-        (boardServer) => boardServer.name === this.selectedBoardServer
-      ) || this.boardServers[0];
-
+    const { boardServer } = this;
     if (!boardServer) {
       return html`<nav id="menu">
         ${Strings.from("ERROR_LOADING_PROJECTS")}

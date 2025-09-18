@@ -1570,9 +1570,6 @@ export class Main extends SignalWatcher(LitElement) {
 
     return html`<bb-project-listing
       .recentBoards=${this.#runtime.board.getRecentBoards()}
-      .selectedBoardServer=${this.#uiState.boardServer}
-      .selectedLocation=${this.#uiState.boardLocation}
-      .boardServers=${this.#boardServers}
       .filter=${this.#uiState.projectFilter}
     ></bb-project-listing>`;
   }
