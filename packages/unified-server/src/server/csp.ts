@@ -58,12 +58,10 @@ const CSP_CONFIG = {
 const CSP_HEADER_NAME = "Content-Security-Policy";
 
 /** https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP */
-export function makeCspHandler(
-  serverConfig: ServerDeploymentConfiguration
-): Handler {
+export function makeCspHandler(backendApiEndpoint: string): Handler {
   const cspConfig = structuredClone(CSP_CONFIG);
-  if (serverConfig.BACKEND_API_ENDPOINT) {
-    cspConfig["connect-src"].push(serverConfig.BACKEND_API_ENDPOINT);
+  if (backendApiEndpoint) {
+    cspConfig["connect-src"].push(backendApiEndpoint);
   }
   const cspHeaderValue = Object.entries(cspConfig)
     .map(([key, vals]) => `${key} ${vals.join(" ")}`)
