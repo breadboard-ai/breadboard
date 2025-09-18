@@ -8,6 +8,7 @@ import {
   BreakpointSpec,
   GraphDescriptor,
   HarnessRunResult,
+  InputValues,
   NodeConfiguration,
   NodeHandlerContext,
   NodeIdentifier,
@@ -185,6 +186,9 @@ class PlanRunner extends AbstractRunner {
             );
           }
         },
+        (inputs) => {
+          this.run(inputs);
+        },
         next
       );
       if (!interactiveMode) {
@@ -228,6 +232,7 @@ class InternalRunStateController {
     private orchestrator: Orchestrator,
     public readonly breakpoints: Map<NodeIdentifier, BreakpointSpec>,
     public readonly pause: () => void,
+    public readonly resume: (inputs: InputValues) => void,
     public readonly callback: (data: HarnessRunResult) => Promise<void>
   ) {
     this.context = this.initializeNodeHandlerContext(callback);
@@ -305,11 +310,19 @@ class InternalRunStateController {
       async (result) => {
         const harnessResult = fromRunnerResult(result);
         if (harnessResult.type === "input" && harnessResult.data.bubbled) {
+          signal.addEventListener("abort", () => {
+            // We're doing something fairly hacky here: resuming from inside
+            // of the runner. This is okay, since resuming will immediately
+            // result in stopping (node marked as interrupted).
+            this.resume({});
+          });
           this.orchestrator.setWaiting(task.node.id);
           return this.callback({
             ...harnessResult,
             reply: async (inputs) => {
-              this.orchestrator.setWorking(task.node.id);
+              if (!signal.aborted) {
+                this.orchestrator.setWorking(task.node.id);
+              }
               return harnessResult.reply(inputs);
             },
           });

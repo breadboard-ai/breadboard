@@ -100,7 +100,7 @@ function error(msg: string) {
 }
 
 class ReactiveProjectRun implements ProjectRun {
-  app: ReactiveApp = new ReactiveApp();
+  app: ReactiveApp = new ReactiveApp(this);
   console: Map<string, ConsoleEntry> = new SignalMap();
 
   #dismissedErrors = new SignalSet<NodeIdentifier>();
@@ -448,7 +448,9 @@ class ReactiveProjectRun implements ProjectRun {
             status: "failed",
             errorMessage: error.message,
           });
-        } else if (nodeState.state !== "interrupted") {
+        } else if (nodeState.state === "interrupted") {
+          entry.handleInterruption();
+        } else {
           this.renderer.nodes.set(id, { status: "succeeded" });
         }
       }
@@ -493,6 +495,7 @@ class ReactiveProjectRun implements ProjectRun {
           return;
         }
         this.input = {
+          id,
           schema: item.schema,
         };
       },
@@ -584,6 +587,9 @@ class ReactiveProjectRun implements ProjectRun {
       }
       case "waiting": {
         console.log("Abort work", nodeState.state);
+        if (this.input?.id === nodeId) {
+          this.input = null;
+        }
         this.renderer.nodes.set(nodeId, { status: "interrupted" });
         stop(nodeId, this.runner);
         break;
