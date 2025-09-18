@@ -46,7 +46,6 @@ import "./homepage-search-button.js";
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("ProjectListing");
 
-const MODE_KEY = "bb-project-listing-mode";
 const OVERFLOW_MENU_CLEARANCE = 4;
 
 const URL_PARAMS = new URL(document.URL).searchParams;
@@ -85,9 +84,6 @@ export class ProjectListing extends LitElement {
 
   @state()
   accessor showAdditionalSources = true;
-
-  @state()
-  accessor mode: "detailed" | "condensed" = "detailed";
 
   @consume({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig | undefined;
@@ -525,11 +521,6 @@ export class ProjectListing extends LitElement {
     }
 
     this.#attemptFocus = true;
-
-    this.mode =
-      globalThis.localStorage.getItem(MODE_KEY) === "condensed"
-        ? "condensed"
-        : "detailed";
   }
 
   override disconnectedCallback(): void {
@@ -544,8 +535,7 @@ export class ProjectListing extends LitElement {
       changedProperties.has("boardServers") ||
       changedProperties.has("selectedLocation") ||
       changedProperties.has("selectedBoardServer") ||
-      changedProperties.has("filter") ||
-      changedProperties.has("mode")
+      changedProperties.has("filter")
     ) {
       this.#selectedIndex = 0;
       this.#boardServerContents = this.#loadBoardServerContents();
