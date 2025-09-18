@@ -1,0 +1,157 @@
+[
+  {
+    "version": "0.7"
+  },
+  {
+    "root": "dog_carousel"
+  },
+  {
+    "components": [
+      {
+        "id": "dog_carousel",
+        "componentProperties": {
+          "List": {
+            "direction": "horizontal",
+            "children": {
+              "template": {
+                "componentId": "dog_card_template",
+                "dataBinding": "/dogs"
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "dog_card_template",
+        "componentProperties": {
+          "Card": {
+            "child": "card_content_column"
+          }
+        }
+      },
+      {
+        "id": "card_content_column",
+        "componentProperties": {
+          "Column": {
+            "distribution": "spaceBetween",
+            "children": {
+              "explicitList": [
+                "dog_name_heading",
+                "dog_info_row",
+                "walk_button"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "dog_name_heading",
+        "componentProperties": {
+          "Heading": {
+            "level": "3",
+            "text": {
+              "path": "item.name"
+            }
+          }
+        }
+      },
+      {
+        "id": "dog_info_row",
+        "componentProperties": {
+          "Row": {
+            "alignment": "center",
+            "children": {
+              "explicitList": ["dog_image", "dog_description"]
+            }
+          }
+        }
+      },
+      {
+        "id": "dog_image",
+        "weight": 1,
+        "componentProperties": {
+          "Image": {
+            "url": {
+              "path": "item.imageUrl"
+            }
+          }
+        }
+      },
+      {
+        "id": "dog_description",
+        "weight": 2,
+        "componentProperties": {
+          "Text": {
+            "text": {
+              "path": "item.description"
+            }
+          }
+        }
+      },
+      {
+        "id": "walk_button",
+        "componentProperties": {
+          "Button": {
+            "label": {
+              "literalString": "Take for a walk"
+            },
+            "action": {
+              "action": "takeDogForWalk",
+              "context": [
+                {
+                  "key": "dogId",
+                  "value": {
+                    "path": "item.id"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "path": "/",
+    "contents": {
+      "dogs": [
+        {
+          "id": "dog001",
+          "name": "Buddy",
+          "imageUrl": "/images/doggo.jpg",
+          "description": "A friendly Golden Retriever who loves fetch and long naps in the sun."
+        },
+        {
+          "id": "dog002",
+          "name": "Lucy",
+          "imageUrl": "/images/doggo.jpg",
+          "description": "A clever Beagle with a nose for adventure and a heart full of love."
+        },
+        {
+          "id": "dog003",
+          "name": "Max",
+          "imageUrl": "/images/doggo.jpg",
+          "description": "A loyal German Shepherd, always alert and ready for a new challenge."
+        },
+        {
+          "id": "dog004",
+          "name": "Daisy",
+          "imageUrl": "/images/doggo.jpg",
+          "description": "A playful Poodle with a curly coat and an even bouncier personality."
+        },
+        {
+          "id": "dog005",
+          "name": "Rocky",
+          "imageUrl": "/images/doggo.jpg",
+          "description": "A sturdy Bulldog with a gentle soul and a comical, charming snore."
+        },
+        {
+          "id": "dog006",
+          "name": "Sadie",
+          "imageUrl": "/images/doggo.jpg",
+          "description": "A sweet Labrador who believes every stranger is just a friend she hasn't met yet."
+        }
+      ]
+    }
+  }
+]
