@@ -33,7 +33,7 @@ const server = express();
 
 const { client: clientConfig, server: serverConfig } = await getConfig();
 
-server.use(makeCspHandler(serverConfig));
+server.use(makeCspHandler(serverConfig.BACKEND_API_ENDPOINT));
 
 const boardServerConfig = boardServer.createServerConfig({
   storageProvider: "firestore",
