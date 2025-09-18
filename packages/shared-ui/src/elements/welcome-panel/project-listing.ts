@@ -4,51 +4,33 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as StringsHelper from "../../strings/helper.js";
-const Strings = StringsHelper.forSection("ProjectListing");
-
-import { LitElement, html, css, nothing, PropertyValueMap } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
 import {
-  GraphBoardServerAddEvent,
-  GraphBoardServerDisconnectEvent,
-  GraphBoardServerRefreshEvent,
-  GraphBoardServerRenewAccessRequestEvent,
-  GraphBoardServerSelectionChangeEvent,
-  StateEvent,
-} from "../../events/events";
-import { map } from "lit/directives/map.js";
-import { until } from "lit/directives/until.js";
-import {
-  BoardServer,
+  type BoardServer,
   type GraphProviderItem,
-  GraphProviderStore,
+  type GraphProviderStore,
 } from "@google-labs/breadboard";
-import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { styleMap } from "lit/directives/style-map.js";
-import "../../flow-gen/flowgen-homepage-panel.js";
-import "./homepage-search-button.js";
-import { icons } from "../../styles/icons.js";
-import "./gallery.js";
-import {
-  Connection,
-  fetchAvailableConnections,
-} from "../connection/connection-server.js";
 import { consume } from "@lit/context";
-
+import { css, html, LitElement, nothing, type PropertyValues } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { until } from "lit/directives/until.js";
 import {
   globalConfigContext,
   type GlobalConfig,
 } from "../../contexts/global-config.js";
-import { Task, TaskStatus } from "@lit/task";
-import { RecentBoard } from "../../types/types.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
+import { GraphBoardServerRefreshEvent, StateEvent } from "../../events/events";
+import "../../flow-gen/flowgen-homepage-panel.js";
 import { colorsLight } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
+import { icons } from "../../styles/icons.js";
+import type { RecentBoard } from "../../types/types.js";
+import { ActionTracker } from "../../utils/action-tracker.js";
 import { blankBoard } from "../../utils/blank-board.js";
+import "./gallery.js";
+import "./homepage-search-button.js";
 
-const MODE_KEY = "bb-project-listing-mode";
-const OVERFLOW_MENU_CLEARANCE = 4;
+import * as StringsHelper from "../../strings/helper.js";
+const Strings = StringsHelper.forSection("ProjectListing");
 
 const URL_PARAMS = new URL(document.URL).searchParams;
 const FORCE_NO_BOARDS = URL_PARAMS.has("forceNoBoards");
@@ -59,17 +41,11 @@ if (SHOW_GOOGLE_DRIVE_DEBUG_PANEL) {
 
 @customElement("bb-project-listing")
 export class ProjectListing extends LitElement {
-  @property()
+  @property({ attribute: false })
   accessor boardServers: BoardServer[] = [];
 
   @property()
   accessor boardServerNavState: string | null = null;
-
-  @property({ reflect: true })
-  accessor visible = false;
-
-  @property()
-  accessor url: string | null = null;
 
   @property()
   accessor selectedBoardServer = "Browser Storage";
@@ -77,31 +53,14 @@ export class ProjectListing extends LitElement {
   @property()
   accessor selectedLocation = "Browser Storage";
 
-  @property()
+  @property({ attribute: false })
   accessor recentBoards: RecentBoard[] = [];
 
   @property()
   accessor filter: string | null = null;
 
-  @state()
-  accessor showBoardServerOverflowMenu = false;
-  #overflowMenu = {
-    x: 0,
-    y: 0,
-  };
-
-  @state()
-  accessor showAdditionalSources = true;
-
-  @state()
-  accessor mode: "detailed" | "condensed" = "detailed";
-
   @consume({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig | undefined;
-
-  #selectedIndex = 0;
-
-  #availableConnections?: Task<readonly unknown[], Connection[]>;
 
   static styles = [
     icons,
@@ -297,100 +256,11 @@ export class ProjectListing extends LitElement {
               }
             }
           }
-
-          & #mode-container {
-            display: flex;
-            height: var(--bb-grid-size-10);
-            padding-top: var(--bb-grid-size);
-
-            & input {
-              display: none;
-            }
-
-            & label {
-              display: flex;
-              align-items: center;
-              font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-                var(--bb-font-family);
-              cursor: pointer;
-
-              & .detailed {
-                display: block;
-                width: 52px;
-                height: var(--bb-grid-size-9);
-                border: 1px solid var(--bb-neutral-300);
-                border-radius: var(--bb-grid-size-16) 0 0 var(--bb-grid-size-16);
-                background: var(--bb-ui-50) var(--bb-icon-grid-view) 16px
-                  center / 20px 20px no-repeat;
-              }
-
-              & .condensed {
-                display: block;
-                width: 52px;
-                height: var(--bb-grid-size-9);
-                border: 1px solid var(--bb-neutral-300);
-                border-left: none;
-                border-radius: 0 var(--bb-grid-size-16) var(--bb-grid-size-16) 0;
-                margin-right: var(--bb-grid-size-4);
-                background: var(--bb-neutral-0) var(--bb-icon-dehaze) 14px
-                  center / 20px 20px no-repeat;
-              }
-
-              & .sort-by-icon {
-                width: 20px;
-                height: 20px;
-                background: var(--bb-icon-sort-by) center center / 20px 20px
-                  no-repeat;
-                margin-right: var(--bb-grid-size);
-              }
-            }
-
-            /* Checked means condensed */
-            & input:checked + label {
-              & .detailed {
-                background-color: var(--bb-neutral-0);
-              }
-
-              & .condensed {
-                background-color: var(--bb-ui-50);
-              }
-            }
-
-            & bb-homepage-search-button {
-              margin-left: 8px;
-            }
-          }
         }
 
         & #new-project-container {
           display: flex;
           justify-content: center;
-        }
-
-        & #location-selector-container {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-
-          & #location-selector-outer {
-            display: flex;
-            align-items: center;
-
-            & #location-selector {
-              padding: 0;
-              border: none;
-            }
-          }
-        }
-
-        & #list-other-peoples-boards-container {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          height: 60px;
-          font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-            var(--bb-font-family);
-          margin-left: var(--bb-grid-size-8);
         }
 
         & #content {
@@ -404,80 +274,6 @@ export class ProjectListing extends LitElement {
             & .gallery-title {
               margin: 0 0 var(--bb-grid-size-6) 0;
             }
-          }
-        }
-      }
-
-      #board-server-settings {
-        width: 32px;
-        height: 32px;
-        background: var(--bb-neutral-100) var(--bb-icon-folder-managed) center
-          center / 20px 20px no-repeat;
-        border-radius: var(--bb-grid-size);
-        border: none;
-        font-size: 0;
-        flex: 0 0 auto;
-        margin-left: var(--bb-grid-size);
-      }
-
-      #overflow-menu {
-        z-index: 1000;
-        display: grid;
-        grid-template-rows: var(--bb-grid-size-11);
-        position: fixed;
-        box-shadow:
-          0px 4px 8px 3px rgba(0, 0, 0, 0.05),
-          0px 1px 3px rgba(0, 0, 0, 0.1);
-        background: var(--bb-neutral-0);
-        border: 1px solid var(--bb-neutral-300);
-        border-radius: var(--bb-grid-size-2);
-        overflow: auto;
-        pointer-events: auto;
-
-        & button {
-          display: flex;
-          align-items: center;
-          background: none;
-          margin: 0;
-          padding: var(--bb-grid-size-3) var(--bb-grid-size-6)
-            var(--bb-grid-size-3) var(--bb-grid-size-3);
-          border: none;
-          border-bottom: 1px solid var(--bb-neutral-300);
-          text-align: left;
-          cursor: pointer;
-
-          &:hover,
-          &:focus {
-            background: var(--bb-neutral-50);
-          }
-
-          &:last-of-type {
-            border: none;
-          }
-
-          &::before {
-            content: "";
-            width: 20px;
-            height: 20px;
-            margin-right: var(--bb-grid-size-3);
-          }
-
-          &#add-new-board-server::before {
-            background: var(--bb-icon-add) center center / 20px 20px no-repeat;
-          }
-
-          &#rename-board-server::before {
-            background: var(--bb-icon-edit) center center / 20px 20px no-repeat;
-          }
-
-          &#refresh-board-server::before {
-            background: var(--bb-icon-refresh) center center / 20px 20px
-              no-repeat;
-          }
-
-          &#remove-board-server::before {
-            background: var(--bb-icon-delete) center center / 20px 20px
-              no-repeat;
           }
         }
       }
@@ -504,18 +300,10 @@ export class ProjectListing extends LitElement {
     `,
   ];
 
-  #wrapperRef: Ref<HTMLDivElement> = createRef();
-  #searchRef: Ref<HTMLInputElement> = createRef();
-  #hideBoardServerOverflowMenuBound =
-    this.#hideBoardServerOverflowMenu.bind(this);
-  #attemptFocus = false;
-  #attemptScrollUpdate = false;
+  readonly #wrapperRef: Ref<HTMLDivElement> = createRef();
 
-  connectedCallback(): void {
+  override connectedCallback() {
     super.connectedCallback();
-
-    this.addEventListener("click", this.#hideBoardServerOverflowMenuBound);
-
     for (const boardServer of this.boardServers) {
       const closuredName = boardServer.name;
       boardServer.addEventListener("boardlistrefreshed", () => {
@@ -530,130 +318,17 @@ export class ProjectListing extends LitElement {
         }
       });
     }
-
-    this.#attemptFocus = true;
-
-    this.mode =
-      globalThis.localStorage.getItem(MODE_KEY) === "condensed"
-        ? "condensed"
-        : "detailed";
   }
 
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    this.removeEventListener("click", this.#hideBoardServerOverflowMenuBound);
-  }
-
-  protected willUpdate(
-    changedProperties:
-      | PropertyValueMap<{
-          boardServerNavState: string | null;
-          boardServers: BoardServer[];
-          selectedBoardServer: string;
-          selectedLocation: string;
-          mode: boolean;
-          filter: string | null;
-        }>
-      | Map<PropertyKey, unknown>
-  ): void {
+  protected willUpdate(changedProperties: PropertyValues<this>): void {
     if (
       changedProperties.has("boardServerNavState") ||
       changedProperties.has("boardServers") ||
       changedProperties.has("selectedLocation") ||
       changedProperties.has("selectedBoardServer") ||
-      changedProperties.has("filter") ||
-      changedProperties.has("mode")
+      changedProperties.has("filter")
     ) {
-      this.#selectedIndex = 0;
       this.#boardServerContents = this.#loadBoardServerContents();
-    }
-  }
-
-  protected updated(): void {
-    // Wait a frame because the overlay animation seems to negate the ability to
-    // focus the search control and scroll the contents.
-    requestAnimationFrame(() => {
-      this.#highlightSelectedBoard();
-
-      if (this.#attemptFocus) {
-        this.#attemptFocus = false;
-        this.#focusSearchField();
-      }
-    });
-  }
-
-  #hideBoardServerOverflowMenu(evt: Event) {
-    if (evt instanceof KeyboardEvent && evt.key !== "Escape") {
-      return;
-    }
-
-    evt.stopImmediatePropagation();
-    const [top] = evt.composedPath();
-    if (
-      top &&
-      top instanceof HTMLButtonElement &&
-      top.id === "board-server-settings"
-    ) {
-      return;
-    }
-
-    this.showBoardServerOverflowMenu = false;
-  }
-
-  #highlightSelectedBoard() {
-    if (!this.#wrapperRef.value) {
-      return;
-    }
-
-    const selected =
-      this.#wrapperRef.value.querySelector<HTMLButtonElement>(
-        "button.selected"
-      );
-    selected?.classList.remove("selected");
-
-    const boardList =
-      this.#wrapperRef.value.querySelectorAll<HTMLButtonElement>(
-        `button.board`
-      );
-
-    const newlySelected = boardList[this.#selectedIndex];
-    newlySelected?.classList.add("selected");
-
-    if (!this.#attemptScrollUpdate) {
-      return;
-    }
-    this.#attemptScrollUpdate = false;
-    this.#scrollToSelectedBoard();
-  }
-
-  #returnToDefaultStore() {
-    if (!this.boardServers.length) {
-      return;
-    }
-
-    const mainBoardServer = this.boardServers[0];
-    const selectedBoardServer = mainBoardServer.name;
-    if (mainBoardServer.items().size === 0) {
-      return;
-    }
-
-    const boardServerNames = [...mainBoardServer.items().keys()];
-    const selectedLocation = boardServerNames[0];
-
-    if (
-      selectedBoardServer !== this.selectedBoardServer &&
-      selectedLocation !== this.selectedLocation
-    ) {
-      this.selectedBoardServer = selectedBoardServer;
-      this.selectedLocation = selectedLocation;
-
-      this.dispatchEvent(
-        new GraphBoardServerSelectionChangeEvent(
-          this.selectedBoardServer,
-          this.selectedLocation
-        )
-      );
     }
   }
 
@@ -666,7 +341,6 @@ export class ProjectListing extends LitElement {
       ) || this.boardServers[0];
 
     if (!boardServer) {
-      this.#returnToDefaultStore();
       return null;
     }
 
@@ -680,57 +354,19 @@ export class ProjectListing extends LitElement {
       );
     }
     if (!store) {
-      this.#returnToDefaultStore();
       return null;
     }
 
     return store;
   }
 
-  #scrollToSelectedBoard() {
-    if (!this.#wrapperRef.value) {
-      return;
-    }
-
-    const selected =
-      this.#wrapperRef.value.querySelector<HTMLButtonElement>(
-        "button.selected"
-      );
-    if (!selected) {
-      return;
-    }
-
-    selected.scrollIntoView({
-      behavior: "instant",
-      block: "nearest",
-      inline: "nearest",
-    });
-  }
-
-  #focusSearchField() {
-    if (!this.#searchRef.value) {
-      return;
-    }
-
-    this.#searchRef.value.select();
-  }
-
-  #createUrl(boardServer: string, location: string) {
-    return `${boardServer}::${location}`;
-  }
-
-  #parseUrl(url: string) {
-    return url.split("::");
-  }
-
-  render() {
+  override render() {
     const boardServer =
       this.boardServers.find(
         (boardServer) => boardServer.name === this.selectedBoardServer
       ) || this.boardServers[0];
 
     if (!boardServer) {
-      this.#returnToDefaultStore();
       return html`<nav id="menu">
         ${Strings.from("ERROR_LOADING_PROJECTS")}
       </nav>`;
@@ -741,9 +377,6 @@ export class ProjectListing extends LitElement {
         ${[this.#renderHero(), this.#renderBoardListing()]}
       </div>
 
-      ${this.showBoardServerOverflowMenu
-        ? this.#renderBoardServerOverflowMenu(boardServer)
-        : nothing}
       ${this.#renderAppVersion()}
       ${SHOW_GOOGLE_DRIVE_DEBUG_PANEL
         ? html`<bb-google-drive-debug-panel></bb-google-drive-debug-panel>`
@@ -766,9 +399,8 @@ export class ProjectListing extends LitElement {
       <div id="board-listing">
         <div id="content">
           ${until(
-            this.#boardServerContents.then(
-              (store) => this.#renderBoardListingSuccess(store),
-              (error) => this.#renderBoardListingError(error)
+            this.#boardServerContents.then((store) =>
+              this.#renderBoardListingSuccess(store)
             ),
             html`
               <div id="loading-message">${Strings.from("STATUS_LOADING")}</div>
@@ -783,10 +415,6 @@ export class ProjectListing extends LitElement {
     if (!store) {
       return nothing;
     }
-    if (store.permission !== "granted") {
-      return this.#renderRenewAccess();
-    }
-
     const { myItems, sampleItems } = this.#separateGraphsByOwner(store);
 
     const userHasAnyGraphs = myItems.length > 0 && !FORCE_NO_BOARDS;
@@ -795,9 +423,13 @@ export class ProjectListing extends LitElement {
       html`
         <div id="locations">
           <div id="location-selector-container">
-            ${this.showAdditionalSources
-              ? this.#renderLocationSelectorWithAdditionalSources()
-              : this.#renderLocationSelectorWithoutAdditionalSources()}
+            <h2
+              id="location-selector"
+              class="gallery-title md-headline-small sans-flex w-400 round"
+            >
+              ${Strings.from("LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS")}
+            </h2>
+
             <div id="buttons">
               ${userHasAnyGraphs
                 ? this.#renderInlineCreateNewButton()
@@ -813,27 +445,6 @@ export class ProjectListing extends LitElement {
 
       this.#renderFeaturedGraphs(sampleItems),
     ];
-  }
-
-  #renderRenewAccess() {
-    return html`
-      <div id="renew-access">
-        <span>${Strings.from("LABEL_ACCESS_EXPIRED_PROJECT_SERVER")}</span>
-        <button
-          id="request-renewed-access"
-          @click=${() => {
-            this.dispatchEvent(
-              new GraphBoardServerRenewAccessRequestEvent(
-                this.selectedBoardServer,
-                this.selectedLocation
-              )
-            );
-          }}
-        >
-          ${Strings.from("COMMAND_RENEW_ACCESS")}
-        </button>
-      </div>
-    `;
   }
 
   #separateGraphsByOwner(store: GraphProviderStore) {
@@ -894,128 +505,6 @@ export class ProjectListing extends LitElement {
     return { myItems, sampleItems };
   }
 
-  #renderBoardListingError(error: Error) {
-    if (error.message.includes("No folder ID or access token")) {
-      if (!this.#availableConnections) {
-        this.#availableConnections = fetchAvailableConnections(
-          this,
-          () => this.globalConfig,
-          true
-        );
-      }
-      if (this.#availableConnections!.status === TaskStatus.INITIAL) {
-        this.#availableConnections!.run();
-      }
-
-      const gdriveConnectionID = "google-drive-limited";
-      return this.#availableConnections!.render({
-        pending: () => html`<p>Loading connections ...</p>`,
-        error: () => html`<p>Error loading connections</p>`,
-        complete: (result: Connection[]) => {
-          const gdrive = (result as Array<{ id: string }>).find(
-            (connection: { id: string }) => connection.id === gdriveConnectionID
-          );
-          if (gdrive) {
-            return html`<div>
-              <p class="loading-message">
-                You haven't yet granted us Google Drive Permissions, please sign
-                in into Google Drive in order to be able to create and save your
-                Flows.
-              </p>
-              <bb-connection-signin
-                .connection=${gdrive}
-                @bbtokengranted=${({
-                  token,
-                  expiresIn,
-                }: HTMLElementEventMap["bbtokengranted"]) => {
-                  this.dispatchEvent(
-                    new StateEvent({
-                      eventType: "board.input",
-                      id: this.id,
-                      data: {
-                        clientId: gdriveConnectionID,
-                        secret: token,
-                        expiresIn,
-                      },
-                      allowSavingIfSecret: false,
-                    })
-                  );
-                }}
-              ></bb-connection-signin>
-            </div>`;
-          }
-        },
-      });
-    }
-  }
-
-  #renderLocationSelectorWithAdditionalSources() {
-    const selected = this.#createUrl(
-      this.selectedBoardServer,
-      this.selectedLocation
-    );
-    return html`
-      <div id="location-selector-outer">
-        <select
-          id="location-selector"
-          class="gallery-title md-headline-small sans-flex w-400 round"
-          @input=${(evt: Event) => {
-            if (!(evt.target instanceof HTMLSelectElement)) {
-              return;
-            }
-
-            const [boardServer, location] = this.#parseUrl(evt.target.value);
-            this.selectedBoardServer = boardServer;
-            this.selectedLocation = location;
-
-            this.dispatchEvent(
-              new GraphBoardServerSelectionChangeEvent(boardServer, location)
-            );
-          }}
-        >
-          ${map(this.boardServers, (boardServer) => {
-            return html`${map(boardServer.items(), ([location, store]) => {
-              const value = `${boardServer.name}::${store.url ?? location}`;
-              const isSelectedOption = value === selected;
-              return html`<option .selected=${isSelectedOption} .value=${value}>
-                ${store.title}
-              </option>`;
-            })}`;
-          })}
-        </select>
-
-        <button
-          id="board-server-settings"
-          @click=${(evt: PointerEvent) => {
-            if (!(evt.target instanceof HTMLButtonElement)) {
-              return;
-            }
-
-            const bounds = evt.target.getBoundingClientRect();
-            this.#overflowMenu.x = bounds.left;
-            this.#overflowMenu.y =
-              window.innerHeight - (bounds.top - OVERFLOW_MENU_CLEARANCE);
-
-            this.showBoardServerOverflowMenu = true;
-          }}
-        >
-          ${Strings.from("LABEL_PROJECT_SERVER_SETTINGS")}
-        </button>
-      </div>
-    `;
-  }
-
-  #renderLocationSelectorWithoutAdditionalSources() {
-    return html`
-      <h2
-        id="location-selector"
-        class="gallery-title md-headline-small sans-flex w-400 round"
-      >
-        ${Strings.from("LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS")}
-      </h2>
-    `;
-  }
-
   #renderInlineCreateNewButton() {
     return html`
       <div id="create-new-button-container">
@@ -1069,70 +558,12 @@ export class ProjectListing extends LitElement {
     `;
   }
 
-  #renderBoardServerOverflowMenu(boardServer: BoardServer) {
-    const extendedCapabilities = boardServer.extendedCapabilities();
-    return html`
-      <div
-        id="overflow-menu"
-        style=${styleMap({
-          left: `${this.#overflowMenu.x}px`,
-          bottom: `${this.#overflowMenu.y}px`,
-        })}
-      >
-        <button
-          @click=${() => {
-            this.dispatchEvent(new GraphBoardServerAddEvent());
-            this.showBoardServerOverflowMenu = false;
-          }}
-          id="add-new-board-server"
-        >
-          ${Strings.from("COMMAND_ADD_NEW_PROJECT_SERVER")}
-        </button>
-        ${extendedCapabilities.refresh
-          ? html`<button
-              @click=${() => {
-                this.showBoardServerOverflowMenu = false;
-                this.dispatchEvent(
-                  new GraphBoardServerRefreshEvent(
-                    this.selectedBoardServer,
-                    this.selectedLocation
-                  )
-                );
-              }}
-              id="refresh-board-server"
-            >
-              ${Strings.from("COMMAND_REFRESH_PROJECT_SERVER")}
-            </button>`
-          : nothing}
-        ${extendedCapabilities.disconnect
-          ? html`<button
-              @click=${() => {
-                if (!confirm(Strings.from("QUERY_CONFIRM_REMOVE_SERVER"))) {
-                  return;
-                }
-                this.dispatchEvent(
-                  new GraphBoardServerDisconnectEvent(
-                    this.selectedBoardServer,
-                    this.selectedLocation
-                  )
-                );
-                this.showBoardServerOverflowMenu = false;
-                this.#returnToDefaultStore();
-              }}
-              id="remove-board-server"
-            >
-              ${Strings.from("COMMAND_REMOVE_PROJECT_SERVER")}
-            </button>`
-          : nothing}
-      </div>
-    `;
-  }
-
   #renderAppVersion() {
+    const buildInfo = this.globalConfig?.buildInfo;
     return html`
       <div id="app-version">
-        ${this.globalConfig
-          ? `${this.globalConfig.buildInfo.packageJsonVersion} (${this.globalConfig.buildInfo.gitCommitHash})`
+        ${buildInfo
+          ? `${buildInfo.packageJsonVersion} (${buildInfo.gitCommitHash})`
           : `Unknown version`}
       </div>
     `;

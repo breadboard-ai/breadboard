@@ -1450,7 +1450,7 @@ export class Main extends SignalWatcher(LitElement) {
         : [
             this.#renderCanvasController(renderValues),
             this.#renderAppController(renderValues),
-            this.#renderWelcomePanel(renderValues),
+            this.#renderWelcomePanel(),
             this.#uiState.showStatusUpdateChip
               ? this.#renderStatusUpdateBar()
               : nothing,
@@ -1563,7 +1563,7 @@ export class Main extends SignalWatcher(LitElement) {
     </div>`;
   }
 
-  #renderWelcomePanel(renderValues: RenderValues) {
+  #renderWelcomePanel() {
     if (this.#uiState.loadState !== "Home") {
       return nothing;
     }
@@ -1573,7 +1573,6 @@ export class Main extends SignalWatcher(LitElement) {
       .selectedBoardServer=${this.#uiState.boardServer}
       .selectedLocation=${this.#uiState.boardLocation}
       .boardServers=${this.#boardServers}
-      .showAdditionalSources=${renderValues.showExperimentalComponents}
       .filter=${this.#uiState.projectFilter}
       @bbgraphboardserveradd=${() => {
         this.#uiState.show.add("BoardServerAddOverlay");
