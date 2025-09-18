@@ -10,9 +10,9 @@ import {
   type GraphProviderStore,
 } from "@google-labs/breadboard";
 import { consume } from "@lit/context";
-import { css, html, LitElement, nothing, type PropertyValues } from "lit";
-import { customElement, property } from "lit/decorators.js";
-import { until } from "lit/directives/until.js";
+import { Task } from "@lit/task";
+import { css, html, LitElement, nothing } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 import { boardServerContext } from "../../contexts/board-server.js";
 import {
   globalConfigContext,
@@ -45,6 +45,7 @@ export class ProjectListing extends LitElement {
   accessor globalConfig: GlobalConfig | undefined;
 
   @consume({ context: boardServerContext, subscribe: true })
+  @state()
   accessor boardServer: BoardServer | undefined;
 
   @property({ attribute: false })
@@ -52,6 +53,17 @@ export class ProjectListing extends LitElement {
 
   @property()
   accessor filter: string | null = null;
+
+  readonly #graphProviderStore = new Task(this, {
+    args: () => [this.boardServer],
+    task: async ([server]): Promise<GraphProviderStore | undefined> => {
+      if (!server) {
+        return undefined;
+      }
+      await server.ready();
+      return server.items().get(server.url.href);
+    },
+  });
 
   static styles = [
     icons,
@@ -307,26 +319,6 @@ export class ProjectListing extends LitElement {
     `,
   ];
 
-  protected willUpdate(changedProperties: PropertyValues<this>): void {
-    if (
-      changedProperties.has("boardServer") ||
-      changedProperties.has("filter")
-    ) {
-      this.#boardServerContents = this.#loadBoardServerContents();
-    }
-  }
-
-  #boardServerContents: Promise<GraphProviderStore | null> =
-    Promise.resolve(null);
-  async #loadBoardServerContents() {
-    const { boardServer } = this;
-    if (!boardServer) {
-      return null;
-    }
-    await boardServer.ready();
-    return boardServer.items().get(boardServer.url.href) ?? null;
-  }
-
   override render() {
     const { boardServer } = this;
     if (!boardServer) {
@@ -361,20 +353,18 @@ export class ProjectListing extends LitElement {
     return html`
       <div id="board-listing">
         <div id="content">
-          ${until(
-            this.#boardServerContents.then((store) =>
-              this.#renderBoardListingSuccess(store)
-            ),
-            html`
+          ${this.#graphProviderStore.render({
+            pending: () => html`
               <div id="loading-message">${Strings.from("STATUS_LOADING")}</div>
-            `
-          )}
+            `,
+            complete: (store) => this.#renderBoardListingSuccess(store),
+          })}
         </div>
       </div>
     `;
   }
 
-  #renderBoardListingSuccess(store: GraphProviderStore | null) {
+  #renderBoardListingSuccess(store: GraphProviderStore | undefined) {
     if (!store) {
       return nothing;
     }
