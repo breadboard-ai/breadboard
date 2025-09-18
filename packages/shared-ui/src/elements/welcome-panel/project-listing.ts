@@ -17,7 +17,7 @@ import {
   globalConfigContext,
   type GlobalConfig,
 } from "../../contexts/global-config.js";
-import { GraphBoardServerRefreshEvent, StateEvent } from "../../events/events";
+import { StateEvent } from "../../events/events";
 import "../../flow-gen/flowgen-homepage-panel.js";
 import { colorsLight } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
@@ -42,7 +42,6 @@ if (SHOW_GOOGLE_DRIVE_DEBUG_PANEL) {
 export class ProjectListing extends LitElement {
   @property({ attribute: false })
   accessor boardServers: BoardServer[] = [];
-
 
   @property()
   accessor selectedBoardServer = "Browser Storage";
@@ -312,24 +311,6 @@ export class ProjectListing extends LitElement {
       }
     `,
   ];
-
-  override connectedCallback() {
-    super.connectedCallback();
-    for (const boardServer of this.boardServers) {
-      const closuredName = boardServer.name;
-      boardServer.addEventListener("boardlistrefreshed", () => {
-        // Listen to all, react only to the current.
-        if (closuredName == this.selectedBoardServer) {
-          this.dispatchEvent(
-            new GraphBoardServerRefreshEvent(
-              this.selectedBoardServer,
-              this.selectedLocation
-            )
-          );
-        }
-      });
-    }
-  }
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     if (

@@ -1574,47 +1574,6 @@ export class Main extends SignalWatcher(LitElement) {
       .selectedLocation=${this.#uiState.boardLocation}
       .boardServers=${this.#boardServers}
       .filter=${this.#uiState.projectFilter}
-      @bbgraphboardserveradd=${() => {
-        this.#uiState.show.add("BoardServerAddOverlay");
-      }}
-      @bbgraphboardserverrefresh=${async (
-        evt: BreadboardUI.Events.GraphBoardServerRefreshEvent
-      ) => {
-        const boardServer = this.#runtime.board.getBoardServerByName(
-          evt.boardServerName
-        );
-        if (!boardServer) {
-          return;
-        }
-
-        const refreshed = await boardServer.refresh(evt.location);
-        if (!refreshed) {
-          this.toast(
-            Strings.from("ERROR_UNABLE_TO_REFRESH_PROJECTS"),
-            BreadboardUI.Events.ToastType.WARNING
-          );
-        }
-      }}
-      @bbgraphboardserverdisconnect=${async (
-        evt: BreadboardUI.Events.GraphBoardServerDisconnectEvent
-      ) => {
-        await this.#runtime.board.disconnect(evt.location);
-      }}
-      @bbgraphboardserverrenewaccesssrequest=${async (
-        evt: BreadboardUI.Events.GraphBoardServerRenewAccessRequestEvent
-      ) => {
-        const boardServer = this.#runtime.board.getBoardServerByName(
-          evt.boardServerName
-        );
-
-        if (!boardServer) {
-          return;
-        }
-
-        if (boardServer.renewAccess) {
-          await boardServer.renewAccess();
-        }
-      }}
     ></bb-project-listing>`;
   }
 
