@@ -4,22 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { RefreshEvent } from "@breadboard-ai/google-drive-kit/board-server/events.js";
 import {
   type BoardServer,
   type GraphProviderItem,
   type GraphProviderStore,
 } from "@google-labs/breadboard";
 import { consume } from "@lit/context";
+import { Task } from "@lit/task";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
-import { customElement, property } from "lit/decorators.js";
-import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { until } from "lit/directives/until.js";
+import { customElement, property, state } from "lit/decorators.js";
+import { boardServerContext } from "../../contexts/board-server.js";
 import {
   globalConfigContext,
   type GlobalConfig,
 } from "../../contexts/global-config.js";
-import { GraphBoardServerRefreshEvent, StateEvent } from "../../events/events";
+import { StateEvent } from "../../events/events";
 import "../../flow-gen/flowgen-homepage-panel.js";
+import * as StringsHelper from "../../strings/helper.js";
 import { colorsLight } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
@@ -29,7 +31,6 @@ import { blankBoard } from "../../utils/blank-board.js";
 import "./gallery.js";
 import "./homepage-search-button.js";
 
-import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("ProjectListing");
 
 const URL_PARAMS = new URL(document.URL).searchParams;
@@ -41,17 +42,12 @@ if (SHOW_GOOGLE_DRIVE_DEBUG_PANEL) {
 
 @customElement("bb-project-listing")
 export class ProjectListing extends LitElement {
-  @property({ attribute: false })
-  accessor boardServers: BoardServer[] = [];
+  @consume({ context: globalConfigContext })
+  accessor globalConfig: GlobalConfig | undefined;
 
-  @property()
-  accessor boardServerNavState: string | null = null;
-
-  @property()
-  accessor selectedBoardServer = "Browser Storage";
-
-  @property()
-  accessor selectedLocation = "Browser Storage";
+  @consume({ context: boardServerContext, subscribe: true })
+  @state()
+  accessor boardServer: BoardServer | undefined;
 
   @property({ attribute: false })
   accessor recentBoards: RecentBoard[] = [];
@@ -59,8 +55,33 @@ export class ProjectListing extends LitElement {
   @property()
   accessor filter: string | null = null;
 
-  @consume({ context: globalConfigContext })
-  accessor globalConfig: GlobalConfig | undefined;
+  readonly #graphProviderStore = new Task(this, {
+    args: () => [this.boardServer],
+    task: async ([server]): Promise<GraphProviderStore | undefined> => {
+      if (!server) {
+        return undefined;
+      }
+      await server.ready();
+      return server.items().get(server.url.href);
+    },
+  });
+
+  override willUpdate(changes: PropertyValues<this>) {
+    if (changes.has("boardServer")) {
+      const oldServer = changes.get("boardServer");
+      oldServer?.removeEventListener(
+        RefreshEvent.eventName,
+        this.#onBoardServerRefresh
+      );
+      const newServer = this.boardServer;
+      newServer?.addEventListener(
+        RefreshEvent.eventName,
+        this.#onBoardServerRefresh
+      );
+    }
+  }
+
+  readonly #onBoardServerRefresh = () => this.#graphProviderStore.run();
 
   static styles = [
     icons,
@@ -316,72 +337,8 @@ export class ProjectListing extends LitElement {
     `,
   ];
 
-  readonly #wrapperRef: Ref<HTMLDivElement> = createRef();
-
-  override connectedCallback() {
-    super.connectedCallback();
-    for (const boardServer of this.boardServers) {
-      const closuredName = boardServer.name;
-      boardServer.addEventListener("boardlistrefreshed", () => {
-        // Listen to all, react only to the current.
-        if (closuredName == this.selectedBoardServer) {
-          this.dispatchEvent(
-            new GraphBoardServerRefreshEvent(
-              this.selectedBoardServer,
-              this.selectedLocation
-            )
-          );
-        }
-      });
-    }
-  }
-
-  protected willUpdate(changedProperties: PropertyValues<this>): void {
-    if (
-      changedProperties.has("boardServerNavState") ||
-      changedProperties.has("boardServers") ||
-      changedProperties.has("selectedLocation") ||
-      changedProperties.has("selectedBoardServer") ||
-      changedProperties.has("filter")
-    ) {
-      this.#boardServerContents = this.#loadBoardServerContents();
-    }
-  }
-
-  #boardServerContents: Promise<GraphProviderStore | null> =
-    Promise.resolve(null);
-  async #loadBoardServerContents() {
-    const boardServer =
-      this.boardServers.find(
-        (boardServer) => boardServer.name === this.selectedBoardServer
-      ) || this.boardServers[0];
-
-    if (!boardServer) {
-      return null;
-    }
-
-    await boardServer.ready();
-
-    let store = boardServer.items().get(this.selectedLocation);
-    if (!store) {
-      store = [...boardServer.items().values()].find(
-        (boardServer) =>
-          boardServer.url && boardServer.url === this.selectedLocation
-      );
-    }
-    if (!store) {
-      return null;
-    }
-
-    return store;
-  }
-
   override render() {
-    const boardServer =
-      this.boardServers.find(
-        (boardServer) => boardServer.name === this.selectedBoardServer
-      ) || this.boardServers[0];
-
+    const { boardServer } = this;
     if (!boardServer) {
       return html`<nav id="menu">
         ${Strings.from("ERROR_LOADING_PROJECTS")}
@@ -389,7 +346,7 @@ export class ProjectListing extends LitElement {
     }
 
     return html`
-      <div id="wrapper" ${ref(this.#wrapperRef)}>
+      <div id="wrapper">
         ${[this.#renderHero(), this.#renderBoardListing()]}
       </div>
 
@@ -414,20 +371,18 @@ export class ProjectListing extends LitElement {
     return html`
       <div id="board-listing">
         <div id="content">
-          ${until(
-            this.#boardServerContents.then((store) =>
-              this.#renderBoardListingSuccess(store)
-            ),
-            html`
+          ${this.#graphProviderStore.render({
+            pending: () => html`
               <div id="loading-message">${Strings.from("STATUS_LOADING")}</div>
-            `
-          )}
+            `,
+            complete: (store) => this.#renderBoardListingSuccess(store),
+          })}
         </div>
       </div>
     `;
   }
 
-  #renderBoardListingSuccess(store: GraphProviderStore | null) {
+  #renderBoardListingSuccess(store: GraphProviderStore | undefined) {
     if (!store) {
       return nothing;
     }
