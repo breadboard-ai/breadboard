@@ -43,8 +43,6 @@ export class ProjectListing extends LitElement {
   @property({ attribute: false })
   accessor boardServers: BoardServer[] = [];
 
-  @property()
-  accessor boardServerNavState: string | null = null;
 
   @property()
   accessor selectedBoardServer = "Browser Storage";
@@ -335,7 +333,6 @@ export class ProjectListing extends LitElement {
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     if (
-      changedProperties.has("boardServerNavState") ||
       changedProperties.has("boardServers") ||
       changedProperties.has("selectedLocation") ||
       changedProperties.has("selectedBoardServer") ||
