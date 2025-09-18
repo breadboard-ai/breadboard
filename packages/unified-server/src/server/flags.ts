@@ -17,7 +17,6 @@ export type DeploymentConfiguration = {
 };
 
 export type ServerDeploymentConfiguration = {
-  BACKEND_API_ENDPOINT: string;
   /**
    * The URL of the deployed server.
    */
@@ -33,6 +32,8 @@ export type ServerDeploymentConfiguration = {
   MCP_SERVER_ALLOW_LIST: string[];
 };
 
+export const BACKEND_API_ENDPOINT: string = getString("BACKEND_API_ENDPOINT");
+
 export async function getConfig(): Promise<DeploymentConfiguration> {
   console.log("Loading config from environment");
 
@@ -40,7 +41,7 @@ export async function getConfig(): Promise<DeploymentConfiguration> {
 
   const clientConfig: ClientDeploymentConfiguration = {
     MEASUREMENT_ID: getString("MEASUREMENT_ID"),
-    BACKEND_API_ENDPOINT: getString("BACKEND_API_ENDPOINT"),
+    BACKEND_API_ENDPOINT: BACKEND_API_ENDPOINT,
     FEEDBACK_LINK: getString("FEEDBACK_LINK"),
     ENABLE_GOOGLE_FEEDBACK: getBoolean("ENABLE_GOOGLE_FEEDBACK"),
     GOOGLE_FEEDBACK_PRODUCT_ID: getString("GOOGLE_FEEDBACK_PRODUCT_ID"),
@@ -57,7 +58,6 @@ export async function getConfig(): Promise<DeploymentConfiguration> {
   };
 
   const serverConfig: ServerDeploymentConfiguration = {
-    BACKEND_API_ENDPOINT: getString("BACKEND_API_ENDPOINT"),
     SERVER_URL: getString("SERVER_URL"),
     GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID: getString(
       "GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID"
