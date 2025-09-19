@@ -5,12 +5,8 @@
  */
 
 import { FileSystem, Outcome } from "./data.js";
-import {
-  AffectedNode,
-  EditableGraph,
-  EditableGraphOptions,
-  Result,
-} from "./edit.js";
+import { AffectedNode, EditableGraph, EditableGraphOptions } from "./edit.js";
+import type { Result } from "./result.js";
 import {
   AssetPath,
   AssetType,
