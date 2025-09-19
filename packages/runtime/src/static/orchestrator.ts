@@ -131,6 +131,12 @@ class Orchestrator {
     });
   }
 
+  get allWaiting() {
+    return Array.from(this.fullState().entries()).filter(([, nodeState]) => {
+      return nodeState.state === "waiting";
+    });
+  }
+
   get failed() {
     this.#changed.get();
     return Array.from(this.#state.values()).some((nodeState) => {

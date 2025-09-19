@@ -190,6 +190,24 @@ class ReactiveProjectRun implements ProjectRun {
   @signal
   accessor input: UserInput | null = null;
 
+  accessor inputSchemas = new SignalMap<string, Schema>();
+
+  @signal
+  get inputs(): UserInput[] | null {
+    const waiting = this.runner?.waiting;
+    if (!waiting) {
+      if (this.input) return [this.input];
+      return null;
+    }
+    return Array.from(waiting)
+      .map(([id]) => {
+        const schema = this.inputSchemas.get(id);
+        if (!schema) return null;
+        return { id, schema };
+      })
+      .filter(Boolean) as UserInput[];
+  }
+
   @signal
   accessor #inspectable: InspectableGraph | undefined;
 
@@ -471,6 +489,14 @@ class ReactiveProjectRun implements ProjectRun {
       console.warn(id.$error);
       return;
     }
+    const nodeState = this.runner?.state?.get(id)?.state;
+    if (nodeState === "interrupted") {
+      // When the input is in the "interrupted" state, we just resume running
+      // and let the input-bubbling machinery handle the abort signals.
+      this.runner?.run({});
+      return;
+    }
+
     const currentConsoleEntry = this.current.get(id);
     if (!currentConsoleEntry) {
       console.warn(`No current console entry found at path "${path}"`);
@@ -484,9 +510,6 @@ class ReactiveProjectRun implements ProjectRun {
       this.app.screens?.delete(id);
       this.app.screens?.set(id, currentScreen);
     }
-    this.current.delete(id);
-    this.current.set(id, currentConsoleEntry);
-    this.renderer.nodes.set(id, { status: "working" });
     currentConsoleEntry.addInput(event.data, {
       itemCreated: (item) => {
         currentScreen?.markAsInput();
@@ -498,6 +521,7 @@ class ReactiveProjectRun implements ProjectRun {
           id,
           schema: item.schema,
         };
+        this.inputSchemas.set(id, item.schema);
       },
     });
   }
