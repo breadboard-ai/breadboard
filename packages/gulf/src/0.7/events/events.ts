@@ -29,7 +29,7 @@ export type StateEventDetailMap = EnforceEventTypeMatch<{
 export class StateEvent<
   T extends keyof StateEventDetailMap,
 > extends CustomEvent<StateEventDetailMap[T]> {
-  static eventName = "gulfevent";
+  static eventName = "gulfaction";
 
   constructor(readonly payload: StateEventDetailMap[T]) {
     super(StateEvent.eventName, { detail: payload, ...eventInit });
@@ -38,6 +38,6 @@ export class StateEvent<
 
 declare global {
   interface HTMLElementEventMap {
-    gulfevent: StateEvent<"gulf.action">;
+    gulfaction: StateEvent<"gulf.action">;
   }
 }

@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// import { Action } from "../types/types.js";
+import { Action } from "../types/component-update.js";
 import { BaseEventDetail } from "./base.js";
 
 type Namespace = "gulf";
 
 export interface GulfAction extends BaseEventDetail<`${Namespace}.action`> {
-  readonly action: unknown;
+  readonly action: Action;
 }

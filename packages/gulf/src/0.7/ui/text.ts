@@ -7,7 +7,6 @@ import { html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { markdown } from "../directives/directives";
 import { Root } from "./root";
-// import { getData } from "../data/builder";
 import { until } from "lit/directives/until.js";
 import { StringValue } from "../types/component-update";
 
