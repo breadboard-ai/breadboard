@@ -60,6 +60,7 @@ async function invoke(
     switch (mimeType) {
       case DOC_MIME_TYPE: {
         const gettingCollector = await getCollector(
+          caps,
           token,
           connectorId,
           graphId,
@@ -71,6 +72,7 @@ async function invoke(
         const { id, end } = gettingCollector;
         const requests = await contextToRequests(context, end!);
         const updating = await updateDoc(
+          caps,
           token,
           id,
           { requests },
@@ -82,6 +84,7 @@ async function invoke(
       case SLIDES_MIME_TYPE: {
         const [gettingCollector, result] = await Promise.all([
           getCollector(
+            caps,
             token,
             connectorId,
             graphId,
@@ -101,6 +104,7 @@ async function invoke(
         const requests = slideBuilder.build([]);
         console.log("REQUESTS", requests);
         const updating = await updatePresentation(
+          caps,
           token,
           id,
           { requests },
@@ -112,6 +116,7 @@ async function invoke(
       case SHEETS_MIME_TYPE: {
         const [gettingCollector, result] = await Promise.all([
           getCollector(
+            caps,
             token,
             connectorId,
             graphId,
@@ -126,6 +131,7 @@ async function invoke(
         const { id } = gettingCollector;
         console.log("VALUES", result);
         const appending = await appendSpreadsheetValues(
+          caps,
           token,
           id,
           "Sheet1",
@@ -155,6 +161,7 @@ type CollectorData = {
  * doc to which context is appended.
  */
 async function getCollector(
+  caps: Capabilities,
   token: string,
   connectorId: string,
   graphId: string,
@@ -166,6 +173,7 @@ async function getCollector(
   if (!fileId) {
     const fileKey = `${getTypeKey(mimeType)}${connectorId}${graphId}`;
     const findFile = await query(
+      caps,
       token,
       `appProperties has { key = 'google-drive-connector' and value = '${fileKey}' } and trashed = false`,
       { title: "Find the doc to append to" }
@@ -174,6 +182,7 @@ async function getCollector(
     const file = findFile.files.at(0);
     if (!file) {
       const createdFile = await create(
+        caps,
         token,
         {
           name: title,
@@ -192,6 +201,7 @@ async function getCollector(
         };
       } else if (mimeType === SLIDES_MIME_TYPE) {
         const gettingPresenation = await getPresentation(
+          caps,
           token,
           createdFile.id,
           {
@@ -215,7 +225,7 @@ async function getCollector(
     id = fileId;
   }
   if (mimeType === DOC_MIME_TYPE) {
-    const gettingDoc = await getDoc(token, id, {
+    const gettingDoc = await getDoc(caps, token, id, {
       title: "Get current doc contents",
     });
     if (!ok(gettingDoc)) return gettingDoc;
@@ -228,7 +238,7 @@ async function getCollector(
       ) - 1;
     return { id, end };
   } else if (mimeType === SLIDES_MIME_TYPE) {
-    const gettingPresentation = await getPresentation(token, id, {
+    const gettingPresentation = await getPresentation(caps, token, id, {
       title: "Get current doc contents",
     });
     if (!ok(gettingPresentation)) return gettingPresentation;
