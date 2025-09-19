@@ -32,8 +32,6 @@ loadEnv();
 
 const server = express();
 
-const clientConfig = await flags.getConfig();
-
 server.use(makeCspHandler());
 
 const boardServerConfig = boardServer.createServerConfig({
@@ -103,6 +101,7 @@ console.log("[unified-server startup] Mounting MCP proxy");
 server.use("/api/mcp-proxy", createMcpProxyHandler());
 
 console.log("[unified-server startup] Mounting static content");
+const clientConfig = await flags.getClientConfig();
 ViteExpress.config({
   transformer: (html: string, req: Request) => {
     const board = req.res?.locals.loadedBoard;
