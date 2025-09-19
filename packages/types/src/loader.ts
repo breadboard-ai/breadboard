@@ -5,7 +5,6 @@
  */
 
 import { DataPartTransformer } from "./data.js";
-import { Result } from "./result.js";
 import {
   GraphDescriptor,
   GraphTag,
@@ -217,8 +216,17 @@ export type GraphProvider = {
   /**
    * Provides a map of locations and their respective stores (lists of files)
    * that can be used to enumerate all items that the provider can provide.
+   * @deprecated Use {@link userGraphs} and {@link galleryGraphs} instead.
    */
-  items: () => Map<string, GraphProviderStore>;
+  items?: () => Map<string, GraphProviderStore>;
+  /**
+   * A signal-backed collection of graphs owned by the signed-in user.
+   */
+  userGraphs?: MutableGraphCollection;
+  /**
+   * A signal-backed collection of featured gallery graphs.
+   */
+  galleryGraphs?: ImmutableGraphCollection;
   /**
    * Provides a starting URL for this store.
    * Useful when we want to pick something to start a session with.
@@ -255,6 +263,24 @@ export type GraphProvider = {
    */
   dataPartTransformer?: (graphUrl: URL) => DataPartTransformer;
 };
+
+/**
+ * Note that all properties and methods on this interface are expected to be
+ * signal-backed.
+ */
+export interface ImmutableGraphCollection {
+  readonly loading: boolean;
+  readonly loaded: Promise<void>;
+  readonly error: Error | undefined;
+  readonly size: number;
+  entries(): IterableIterator<[string, GraphProviderItem]>;
+  has(url: string): boolean;
+}
+
+export interface MutableGraphCollection extends ImmutableGraphCollection {
+  put(graph: GraphProviderItem): void;
+  delete(url: string): boolean;
+}
 
 /**
  * Describes the context in which a graph is being loaded.
@@ -335,7 +361,11 @@ export interface BoardServerCapabilities {
 
 export interface BoardServerConfiguration {
   url: URL;
-  projects: Promise<BoardServerProject[]>;
+  /**
+   * @deprecated Use {@link userGraphs} and {@link galleryGraphs} on
+   * {@link BoardServer} instead.
+   */
+  projects?: Promise<BoardServerProject[]>;
   kits: Kit[];
   users: User[];
   secrets: Secrets;

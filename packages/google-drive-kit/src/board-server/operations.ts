@@ -816,7 +816,7 @@ export function getFileId(driveUrl: string): string {
  * Returns thumbnail data from the descriptor - either theme thumbnail or `@@thumbnail`.
  * In case of the latter also returns the holding `asset` so that it can be updated with the new url.
  */
-function getThumbnail(descriptor?: GraphDescriptor): {
+export function getThumbnail(descriptor?: GraphDescriptor): {
   data?: string;
   contentType?: string;
   asset?: Asset;

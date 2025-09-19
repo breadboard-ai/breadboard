@@ -4,15 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { RefreshEvent } from "@breadboard-ai/google-drive-kit/board-server/events.js";
 import {
   type BoardServer,
   type GraphProviderItem,
-  type GraphProviderStore,
 } from "@google-labs/breadboard";
+import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
-import { Task } from "@lit/task";
-import { css, html, LitElement, nothing, type PropertyValues } from "lit";
+import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { boardServerContext } from "../../contexts/board-server.js";
 import {
@@ -41,7 +39,7 @@ if (SHOW_GOOGLE_DRIVE_DEBUG_PANEL) {
 }
 
 @customElement("bb-project-listing")
-export class ProjectListing extends LitElement {
+export class ProjectListing extends SignalWatcher(LitElement) {
   @consume({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig | undefined;
 
@@ -54,34 +52,6 @@ export class ProjectListing extends LitElement {
 
   @property()
   accessor filter: string | null = null;
-
-  readonly #graphProviderStore = new Task(this, {
-    args: () => [this.boardServer],
-    task: async ([server]): Promise<GraphProviderStore | undefined> => {
-      if (!server) {
-        return undefined;
-      }
-      await server.ready();
-      return server.items().get(server.url.href);
-    },
-  });
-
-  override willUpdate(changes: PropertyValues<this>) {
-    if (changes.has("boardServer")) {
-      const oldServer = changes.get("boardServer");
-      oldServer?.removeEventListener(
-        RefreshEvent.eventName,
-        this.#onBoardServerRefresh
-      );
-      const newServer = this.boardServer;
-      newServer?.addEventListener(
-        RefreshEvent.eventName,
-        this.#onBoardServerRefresh
-      );
-    }
-  }
-
-  readonly #onBoardServerRefresh = () => this.#graphProviderStore.run();
 
   static styles = [
     icons,
@@ -347,7 +317,11 @@ export class ProjectListing extends LitElement {
 
     return html`
       <div id="wrapper">
-        ${[this.#renderHero(), this.#renderBoardListing()]}
+        ${this.#renderHero()}
+
+        <div id="board-listing">
+          <div id="content">${this.#renderBoardListing()}</div>
+        </div>
       </div>
 
       ${this.#renderAppVersion()}
@@ -368,27 +342,25 @@ export class ProjectListing extends LitElement {
   }
 
   #renderBoardListing() {
-    return html`
-      <div id="board-listing">
-        <div id="content">
-          ${this.#graphProviderStore.render({
-            pending: () => html`
-              <div id="loading-message">${Strings.from("STATUS_LOADING")}</div>
-            `,
-            complete: (store) => this.#renderBoardListingSuccess(store),
-          })}
-        </div>
-      </div>
-    `;
-  }
-
-  #renderBoardListingSuccess(store: GraphProviderStore | undefined) {
-    if (!store) {
+    const server = this.boardServer;
+    if (!server) {
+      console.error(`[homepage] No board server provided`);
       return nothing;
     }
-    const { myItems, sampleItems } = this.#separateGraphsByOwner(store);
+    const { userGraphs, galleryGraphs } = server;
+    if (!userGraphs || !galleryGraphs) {
+      console.error(
+        `[homepage] Board server was missing userGraphs and/or galleryGraphs`
+      );
+      return nothing;
+    }
+    if (userGraphs.loading || galleryGraphs.loading) {
+      return html`
+        <div id="loading-message">${Strings.from("STATUS_LOADING")}</div>
+      `;
+    }
 
-    const userHasAnyGraphs = myItems.length > 0 && !FORCE_NO_BOARDS;
+    const userHasAnyGraphs = userGraphs.size > 0 && !FORCE_NO_BOARDS;
 
     return [
       html`
@@ -411,69 +383,84 @@ export class ProjectListing extends LitElement {
       `,
 
       userHasAnyGraphs
-        ? this.#renderUserGraphs(myItems)
+        ? this.#renderUserGraphs(
+            this.#sortUserGraphs(this.#filterGraphs([...userGraphs.entries()]))
+          )
         : this.#renderNoUserGraphsPanel(),
 
-      this.#renderFeaturedGraphs(sampleItems),
+      this.#renderFeaturedGraphs(
+        this.#sortFeaturedGraphs(
+          this.#filterGraphs([...galleryGraphs.entries()])
+        )
+      ),
     ];
   }
 
-  #separateGraphsByOwner(store: GraphProviderStore) {
+  #filterGraphs(
+    items: [string, GraphProviderItem][]
+  ): [string, GraphProviderItem][] {
+    if (!this.filter) {
+      return items;
+    }
     const filter = this.filter ? new RegExp(this.filter, "gim") : undefined;
-    const allItems = [...store.items]
-      .filter(
-        ([name, item]) =>
-          !filter ||
-          (item.title && filter.test(item.title)) ||
-          (name && filter.test(name))
-      )
-      .sort(([, dataA], [, dataB]) => {
-        // Sort by recency.
-        const indexA = this.recentBoards.findIndex(
-          (board) => board.url === dataA.url
-        );
-        const indexB = this.recentBoards.findIndex(
-          (board) => board.url === dataB.url
-        );
+    return items.filter(
+      ([name, item]) =>
+        !filter ||
+        (item.title && filter.test(item.title)) ||
+        (name && filter.test(name))
+    );
+  }
 
-        if (indexA !== -1 && indexB === -1) {
-          return -1;
-        }
-        if (indexA === -1 && indexB !== -1) {
-          return 1;
-        }
+  #sortUserGraphs(
+    items: [string, GraphProviderItem][]
+  ): [string, GraphProviderItem][] {
+    return items.sort(([, dataA], [, dataB]) => {
+      // Sort by recency.
+      const indexA = this.recentBoards.findIndex(
+        (board) => board.url === dataA.url
+      );
+      const indexB = this.recentBoards.findIndex(
+        (board) => board.url === dataB.url
+      );
 
-        if (indexA !== -1 && indexB !== -1) {
-          return indexA - indexB;
-        }
+      if (indexA !== -1 && indexB === -1) {
+        return -1;
+      }
+      if (indexA === -1 && indexB !== -1) {
+        return 1;
+      }
 
-        // If both are unknown for recency, choose those that are
-        // mine.
-        if (dataA.mine && !dataB.mine) {
-          return -1;
-        }
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB;
+      }
 
-        if (!dataA.mine && dataB.mine) {
-          return 1;
-        }
+      // If both are unknown for recency, choose those that are
+      // mine.
+      if (dataA.mine && !dataB.mine) {
+        return -1;
+      }
 
+      if (!dataA.mine && dataB.mine) {
+        return 1;
+      }
+
+      return 0;
+    });
+  }
+
+  #sortFeaturedGraphs(
+    items: [string, GraphProviderItem][]
+  ): [string, GraphProviderItem][] {
+    return items.sort(([, dataA], [, dataB]) => {
+      if (dataA.title && !dataB.title) return -1;
+      if (!dataA.title && dataB.title) return 1;
+      if (dataA.title && dataB.title) {
+        if (dataA.title < dataB.title) return -1;
+        if (dataA.title > dataB.title) return 1;
         return 0;
-      });
-
-    const myItems = allItems.filter(([, item]) => item.mine);
-    const sampleItems = allItems
-      .filter(([, item]) => (item.tags ?? []).includes("featured"))
-      .sort(([, dataA], [, dataB]) => {
-        if (dataA.title && !dataB.title) return -1;
-        if (!dataA.title && dataB.title) return 1;
-        if (dataA.title && dataB.title) {
-          if (dataA.title < dataB.title) return -1;
-          if (dataA.title > dataB.title) return 1;
-          return 0;
-        }
-        return 0;
-      });
-    return { myItems, sampleItems };
+      }
+      return 0;
+    });
   }
 
   #renderInlineCreateNewButton() {
