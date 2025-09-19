@@ -16,6 +16,7 @@ import { Audio } from "./audio.js";
 import { Button } from "./button.js";
 import { Card } from "./card.js";
 import { Column } from "./column.js";
+import { DateTimeInput } from "./datetime-input.js";
 import { Divider } from "./divider.js";
 import { Heading } from "./heading.js";
 import { Image } from "./image.js";
@@ -23,6 +24,7 @@ import { List } from "./list.js";
 import { MultipleChoice } from "./multiple-choice.js";
 import { Root } from "./root.js";
 import { Row } from "./row.js";
+import { Slider } from "./slider.js";
 import { TextField } from "./text-field.js";
 import { Text } from "./text.js";
 import { Video } from "./video.js";
@@ -32,6 +34,7 @@ export {
   Button,
   Card,
   Column,
+  DateTimeInput,
   Divider,
   Heading,
   Image,
@@ -39,6 +42,7 @@ export {
   MultipleChoice,
   Root,
   Row,
+  Slider,
   Text,
   TextField,
   Video,
@@ -51,6 +55,7 @@ interface GulfTagNameMap {
   "gulf-button": Button;
   "gulf-card": Card;
   "gulf-column": Column;
+  "gulf-datetimeinput": DateTimeInput;
   "gulf-divider": Divider;
   "gulf-heading": Heading;
   "gulf-image": Image;
@@ -58,6 +63,7 @@ interface GulfTagNameMap {
   "gulf-multiplechoice": MultipleChoice;
   "gulf-root": Root;
   "gulf-row": Row;
+  "gulf-slider": Slider;
   "gulf-text": Text;
   "gulf-textfield": TextField;
   "gulf-video": Video;

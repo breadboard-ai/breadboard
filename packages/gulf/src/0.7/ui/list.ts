@@ -37,6 +37,7 @@ export class List extends Root {
       max-width: 100%;
       overflow-x: scroll;
       overflow-y: hidden;
+      scrollbar-width: none;
 
       > ::slotted(*) {
         flex: 1 0 fit-content;

@@ -63,7 +63,7 @@ class DataModel {
   #components: Component[] = [];
 
   constructor(data: UnifiedUpdate) {
-    let streamHeader;
+    let streamHeader: StreamHeaderMessage | undefined = undefined;
     let beginRendering;
     for (const msg of data) {
       if (isStreamHeader(msg)) {
@@ -75,7 +75,13 @@ class DataModel {
       }
     }
 
-    if (!beginRendering || !streamHeader) {
+    if (!streamHeader) {
+      streamHeader = {
+        version: "0.7",
+      };
+    }
+
+    if (!beginRendering) {
       console.warn("WARN: Unable to load; messages were not received");
       this.#data = {} as GulfData;
       return;
@@ -225,17 +231,32 @@ class DataModel {
     }
   }
 
-  async getDataProperty(
-    key: string,
-    dataPrefix = ""
-  ): Promise<DataValue | null> {
+  #fixDataPropertyKey(key: string, dataPrefix: string) {
     if (dataPrefix) {
       if (key.startsWith("item.")) {
         key = key.replace(/^item\./, "");
       }
 
-      key = `${dataPrefix}${key.startsWith("/") ? "" : "/"}${key}`;
+      let joiner = "";
+      if (dataPrefix !== "/" && !key.startsWith("/")) {
+        joiner = "/";
+      }
+
+      key = `${dataPrefix}${joiner}${key}`;
+    } else {
+      if (!key.startsWith("/")) {
+        key = `/${key}`;
+      }
     }
+
+    return key;
+  }
+
+  async getDataProperty(
+    key: string,
+    dataPrefix = ""
+  ): Promise<DataValue | null> {
+    key = this.#fixDataPropertyKey(key, dataPrefix);
 
     let target = this.#data.data;
     const parts = key.split("/");
@@ -277,15 +298,7 @@ class DataModel {
   }
 
   async setDataProperty(key: string, dataPrefix = "", value: DataValue) {
-    if (dataPrefix) {
-      if (key.startsWith("item.")) {
-        key = key.replace(/^item\./, "");
-      }
-
-      key = `${dataPrefix}${key.startsWith("/") ? "" : "/"}${key}`;
-    }
-
-    console.log(key, value);
+    key = this.#fixDataPropertyKey(key, dataPrefix);
 
     let target = this.#data.data;
     const parts = key.split("/");

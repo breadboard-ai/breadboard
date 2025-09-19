@@ -7,7 +7,7 @@ import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root";
 import { StateEvent } from "../events/events";
-import { StringValue } from "../types/component-update";
+import { Action, StringValue } from "../types/component-update";
 import { until } from "lit/directives/until.js";
 
 @customElement("gulf-button")
@@ -16,7 +16,7 @@ export class Button extends Root {
   accessor label: StringValue | null = null;
 
   @property()
-  accessor action: unknown | null = null;
+  accessor action: Action | null = null;
 
   static styles = css`
     :host {
@@ -44,7 +44,6 @@ export class Button extends Root {
           eventType: "gulf.action",
           action: this.action,
         });
-        console.log(evt);
         this.dispatchEvent(evt);
       }}
     >

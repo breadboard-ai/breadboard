@@ -16,18 +16,20 @@ import {
 import { customElement, property } from "lit/decorators.js";
 import {
   AudioPlayer,
+  Button,
   Card,
   Column,
   Component,
   ComponentType,
+  DateTimeInput,
+  Divider,
   Heading,
-  List,
   Image,
+  List,
   Row,
+  Slider,
   Text,
   TextField,
-  Button,
-  Divider,
   Video,
 } from "../types/component-update";
 import { TagName } from "./ui";
@@ -40,12 +42,14 @@ const elementMap: Map<ComponentType, TagName> = new Map([
   ["Button", "gulf-button"],
   ["Card", "gulf-card"],
   ["Column", "gulf-column"],
+  ["DateTimeInput", "gulf-datetimeinput"],
   ["Divider", "gulf-divider"],
   ["Heading", "gulf-heading"],
   ["Image", "gulf-image"],
   ["List", "gulf-list"],
   ["MultipleChoice", "gulf-multiplechoice"],
   ["Row", "gulf-row"],
+  ["Slider", "gulf-slider"],
   ["Text", "gulf-text"],
   ["TextField", "gulf-textfield"],
   ["Video", "gulf-video"],
@@ -59,9 +63,6 @@ export class Root extends SignalWatcher(LitElement) {
 
   @property({ attribute: false })
   accessor model: DataModel | null = null;
-
-  @property({ attribute: false })
-  accessor value: { literalString: string } | { path: string } | null = null;
 
   @property()
   accessor dataPrefix: string = "";
@@ -253,6 +254,7 @@ export class Root extends SignalWatcher(LitElement) {
                   .model=${this.model}
                   .dataPrefix=${childData.dataPrefix}
                   .label=${renderableComponent.label}
+                  .action=${renderableComponent.action}
                 ></gulf-button>`;
               }
 
@@ -283,7 +285,6 @@ export class Root extends SignalWatcher(LitElement) {
 
               case "gulf-textfield": {
                 // TODO: type and validationRegexp.
-                console.log(component);
                 const renderableComponent = component as TextField;
                 return html`<gulf-textfield
                   id=${childData.id}
@@ -297,7 +298,36 @@ export class Root extends SignalWatcher(LitElement) {
                 ></gulf-textfield>`;
               }
 
+              case "gulf-datetimeinput": {
+                // TODO: enableDate, enableTime and outputFormat.
+                const renderableComponent = component as DateTimeInput;
+                return html`<gulf-datetimeinput
+                  id=${childData.id}
+                  .weight=${childData.weight ?? 1}
+                  .model=${this.model}
+                  .dataPrefix=${childData.dataPrefix}
+                  .enableDate=${renderableComponent.enableDate}
+                  .enableTime=${renderableComponent.enableTime}
+                  .outputFormat=${renderableComponent.outputFormat}
+                  .value=${renderableComponent.value}
+                ></gulf-datetimeinput>`;
+              }
+
+              case "gulf-slider": {
+                const renderableComponent = component as Slider;
+                return html`<gulf-slider
+                  id=${childData.id}
+                  .weight=${childData.weight ?? 1}
+                  .model=${this.model}
+                  .dataPrefix=${childData.dataPrefix}
+                  .value=${renderableComponent.value}
+                  .minValue=${renderableComponent.minValue}
+                  .maxValue=${renderableComponent.maxValue}
+                ></gulf-slider>`;
+              }
+
               default:
+                console.log(childData);
                 break;
             }
           }
