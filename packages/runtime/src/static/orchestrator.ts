@@ -264,7 +264,7 @@ class Orchestrator {
     }
     if (!WORKABLE_STATES.has(state.state)) {
       return err(
-        `Unable to set node "${id}" to working: not ready nor waiting`
+        `Unable to set node "${id}" to working: not in workable state`
       );
     }
     this.#changed.set({});
@@ -278,8 +278,10 @@ class Orchestrator {
     if (!state) {
       return err(`Unable to set node "${id}" to waiting: node not found`);
     }
-    if (state.state !== "working") {
-      return err(`Unable to set node "${id}" to waiting: not working`);
+    if (!WORKABLE_STATES.has(state.state)) {
+      return err(
+        `Unable to set node "${id}" to waiting: not in workable state`
+      );
     }
     this.#changed.set({});
     this.#updateNodeState(state, "waiting", true);
