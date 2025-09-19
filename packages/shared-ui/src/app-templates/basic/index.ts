@@ -303,6 +303,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return nothing;
     }
 
+    this.style.setProperty("--input-clearance", `0px`);
+
     return html`
       <div id="save-results-button-container">
         ${this.resultsUrl
