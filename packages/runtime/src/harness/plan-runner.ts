@@ -158,6 +158,10 @@ class PlanRunner extends AbstractRunner {
   }
 
   async runFrom(id: NodeIdentifier): Promise<Outcome<void>> {
+    this.#orchestrator.allWaiting.forEach(([id]) => {
+      this.stop(id);
+    });
+
     if (!this.#controller || !this.running()) {
       // If not already running, start a run in interactive mode
       this.run(undefined, true);
