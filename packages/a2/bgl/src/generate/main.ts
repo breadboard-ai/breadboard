@@ -3,7 +3,6 @@
  */
 
 import describeGraph from "@describe";
-import invokeGraph from "@invoke";
 
 import { ok } from "../a2/utils";
 import { readFlags } from "../a2/settings";
@@ -279,10 +278,10 @@ async function invoke(
     return forEach(caps, rest, async (prompt) => {
       const ports = { ...rest };
       ports[PROMPT_PORT] = prompt;
-      return invokeGraph({ $board, ...forwardPorts(type, ports) });
+      return caps.invoke({ $board, ...forwardPorts(type, ports) });
     });
   } else {
-    return invokeGraph({ $board, ...forwardPorts(type, rest) });
+    return caps.invoke({ $board, ...forwardPorts(type, rest) });
   }
 }
 

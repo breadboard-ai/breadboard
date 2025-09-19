@@ -2,8 +2,6 @@
  * @fileoverview Generates code using supplied context.
  */
 
-import invokeBoard from "@invoke";
-
 import { type Params } from "./common";
 import gemini, { defaultSafetySettings, type GeminiInputs } from "./gemini";
 import { ArgumentNameGenerator } from "./introducer";
@@ -162,7 +160,7 @@ class GeminiPrompt {
     const results: string[] = [];
     const errors: string[] = [];
     await this.toolManager?.processResponse(content, async ($board, args) => {
-      const callingTool = await invokeBoard({ $board, ...args });
+      const callingTool = await this.caps.invoke({ $board, ...args });
       if ("$error" in callingTool) {
         errors.push(JSON.stringify(callingTool.$error));
       } else {

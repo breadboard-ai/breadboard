@@ -1,7 +1,6 @@
 /**
  * @fileoverview Recursively search the web for in-depth answers to your query.
  */
-import invokeGraph from "@invoke";
 import { type Params } from "../a2/common";
 import invokeGemini, {
   type GeminiInputs,
@@ -182,7 +181,7 @@ async function invoke(
     const toolResponses: string[] = [];
     await toolManager.processResponse(response, async ($board, args) => {
       toolResponses.push(
-        JSON.stringify(await invokeGraph({ $board, ...args }))
+        JSON.stringify(await caps.invoke({ $board, ...args }))
       );
     });
     if (toolResponses.length === 0) {

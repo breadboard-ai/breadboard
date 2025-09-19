@@ -1,7 +1,6 @@
 /**
  * @fileoverview Searching the Internet according to your plan.
  */
-import invokeGraph from "@invoke";
 import { type Params } from "./common";
 import invokeGemini, {
   defaultSafetySettings,
@@ -185,7 +184,7 @@ async function invoke(
     const toolResponses: string[] = [];
     await toolManager.processResponse(response, async ($board, args) => {
       toolResponses.push(
-        JSON.stringify(await invokeGraph({ $board, ...args }))
+        JSON.stringify(await caps.invoke({ $board, ...args }))
       );
     });
     if (toolResponses.length === 0) {
