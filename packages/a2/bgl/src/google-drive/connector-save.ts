@@ -70,7 +70,7 @@ async function invoke(
         );
         if (!ok(gettingCollector)) return gettingCollector;
         const { id, end } = gettingCollector;
-        const requests = await contextToRequests(context, end!);
+        const requests = await contextToRequests(caps, context, end!);
         const updating = await updateDoc(
           caps,
           token,

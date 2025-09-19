@@ -756,5 +756,6 @@ declare type Capabilities = {
   query(inputs: FileSystemQueryArguments): Promise<FileSystemQueryResult>;
   read(inputs: FileSystemReadArguments): Promise<FileSystemReadResult>;
   write(inputs: FileSystemWriteArguments): Promise<FileSystemWriteResult>;
+  blob(inputs: BlobInputs): Promise<BlobOutputs>;
 };
 `
