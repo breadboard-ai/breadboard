@@ -5,6 +5,9 @@
  */
 import { getUserCredentials, requireAuth } from "@breadboard-ai/board-server";
 import { McpProxyRequest } from "@breadboard-ai/mcp";
+
+import * as flags from "./flags.js";
+
 import cors from "cors";
 import { Request, Response, Router } from "express";
 import { Readable } from "node:stream";
@@ -12,8 +15,8 @@ import picomatch from "picomatch";
 
 export { createMcpProxyHandler };
 
-function createMcpProxyHandler(allowList: string[] = []) {
-  const isAllowed = picomatch(allowList);
+function createMcpProxyHandler() {
+  const isAllowed = picomatch(flags.MCP_SERVER_ALLOW_LIST);
   const router = Router();
   router.use(
     cors({
