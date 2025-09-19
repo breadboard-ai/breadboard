@@ -2,8 +2,6 @@
  * @fileoverview Mega step for generation capabilities.
  */
 
-import describeGraph from "@describe";
-
 import { ok } from "../a2/utils";
 import { readFlags } from "../a2/settings";
 import { forEach } from "../a2/for-each";
@@ -285,10 +283,10 @@ async function invoke(
   }
 }
 
-async function describe({
-  inputs: { "generation-mode": mode, ...rest },
-  asType,
-}: DescribeInputs) {
+async function describe(
+  { inputs: { "generation-mode": mode, ...rest }, asType }: DescribeInputs,
+  caps: Capabilities
+) {
   const metadata = {
     title: "Generate",
     description: "Uses Gemini to generate content and call tools",
@@ -329,7 +327,7 @@ async function describe({
   }
 
   const { url, type } = getMode(mode);
-  const describing = await describeGraph({ url, inputs: rest });
+  const describing = await caps.describe({ url, inputs: rest });
   const behavior: BehaviorSchema[] = [...generateForEachBehavior];
   let modeSchema: Record<string, Schema> = {};
   if (ok(describing)) {

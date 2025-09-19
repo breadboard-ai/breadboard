@@ -2,7 +2,6 @@
  * @fileoverview Manages tools.
  */
 
-import describeGraph from "@describe";
 import type {
   CallToolCallback,
   DescriberResult,
@@ -191,7 +190,7 @@ class ToolManager {
       return names.join(", ");
     }
 
-    let description = (await describeGraph({
+    let description = (await this.caps.describe({
       url,
     })) as Outcome<DescriberResult>;
     let passContext = false;
@@ -255,7 +254,7 @@ class ToolManager {
     let hasInvalidTools = false;
     for (const tool of tools) {
       const url = typeof tool === "string" ? tool : tool.url;
-      const description = (await describeGraph({
+      const description = (await this.caps.describe({
         url,
       })) as Outcome<DescriberResult>;
       if (!ok(description)) {

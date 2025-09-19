@@ -4,7 +4,7 @@
 
 import { err, ok, isLLMContentArray } from "./utils";
 import read from "@read";
-import describeConnector, { type DescribeOutputs } from "@describe";
+import { type DescribeOutputs } from "@describe";
 import type { ExportDescriberResult, CallToolCallback } from "./common";
 
 export { ConnectorManager, createConfigurator, createTools };
@@ -352,7 +352,7 @@ class ConnectorManager {
     const info = await this.#getConnectorInfo();
     if (!ok(info)) return info;
 
-    const describing = await describeConnector({ url: info.url });
+    const describing = await this.caps.describe({ url: info.url });
     if (!ok(describing)) return describing;
     this.#state = { info, describeOutputs: describing };
     return this.#state;
@@ -425,7 +425,7 @@ class ConnectorManager {
 
     if (!ok(args)) return {};
 
-    const describing = await describeConnector({ url: args.$board });
+    const describing = await this.caps.describe({ url: args.$board });
     if (!ok(describing)) return {};
 
     const props = describing.inputSchema.properties;
