@@ -1,8 +1,6 @@
 /**
  * @fileoverview The actual tool that gets the weather.
  */
-import fetch from "@fetch";
-
 export { invoke as default, describe };
 
 import { executeTool } from "../a2/step-executor";
@@ -244,7 +242,7 @@ async function invoke(
     if (!ok(executing)) return executing;
     return toLLMContent(executing);
   }
-  const geocodingResponse = await fetch({ url: geocodingUrl(location) });
+  const geocodingResponse = await caps.fetch({ url: geocodingUrl(location) });
   if ("$error" in geocodingResponse) {
     return { $error: geocodingResponse.$error as string };
   }
@@ -256,7 +254,9 @@ async function invoke(
   if (!latitude || !longitude) {
     return { $error: `No latitude/longitude for location: "${location}"` };
   }
-  const weatherResponse = await fetch({ url: weatherUrl(latitude, longitude) });
+  const weatherResponse = await caps.fetch({
+    url: weatherUrl(latitude, longitude),
+  });
   if ("$error" in weatherResponse) {
     return { $error: weatherResponse.$error as string };
   }
