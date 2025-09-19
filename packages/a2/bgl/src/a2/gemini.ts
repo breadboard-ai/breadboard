@@ -6,7 +6,6 @@ import { StreamableReporter } from "./output";
 
 import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils";
 import { flattenContext } from "./lists";
-import write from "@write";
 
 const defaultSafetySettings = (): SafetySetting[] => [
   {
@@ -406,7 +405,7 @@ async function callAPI(
     const maxRetries = retries;
     while (retries) {
       // Record model call with action tracker.
-      write({
+      caps.write({
         path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
         data: [],
       });

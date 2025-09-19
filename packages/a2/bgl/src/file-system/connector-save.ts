@@ -2,7 +2,6 @@
  * @fileoverview Connector Save Export.
  */
 import { type DescribeOutputs } from "@describe";
-import write from "@write";
 import { ok } from "../a2/utils";
 
 export { invoke as default, describe };
@@ -48,23 +47,28 @@ function createPackageJson(): LLMContent[] {
 }
 
 async function writeFile(
+  caps: Capabilities,
   dir: string,
   name: string,
   data: LLMContent[]
 ): Promise<Outcome<void>> {
   const path: FileSystemPath = `/mnt/fs/${dir}/${name}`;
-  return write({ path, data });
+  return caps.write({ path, data });
 }
 
-async function invoke({ id, context }: Inputs): Promise<Outcome<Outputs>> {
+async function invoke(
+  { id, context }: Inputs,
+  caps: Capabilities
+): Promise<Outcome<Outputs>> {
   if (!context) {
     console.warn("No data to save");
     return { context: [] };
   }
-  const writingIndex = await writeFile(id, "index.html", context);
+  const writingIndex = await writeFile(caps, id, "index.html", context);
   if (!ok(writingIndex)) return writingIndex;
 
   const writingPackage = await writeFile(
+    caps,
     id,
     "package.json",
     createPackageJson()

@@ -2,8 +2,6 @@
  * @fileoverview Provides an output helper.
  */
 
-import write from "@write";
-
 import { ErrorMetadata, generateId, ok } from "./utils";
 
 type ReportInputs = {
@@ -205,7 +203,7 @@ class StreamableReporter {
       return;
     }
     const data = [llmContent];
-    return write({ path: this.path, stream: true, data });
+    return this.caps.write({ path: this.path, stream: true, data });
   }
 
   report(json: JsonSerializable) {
@@ -294,7 +292,7 @@ class StreamableReporter {
 
   close() {
     if (!this.#started) return;
-    return write({ path: this.path, stream: true, done: true });
+    return this.caps.write({ path: this.path, stream: true, done: true });
     this.#started = false;
   }
 }
