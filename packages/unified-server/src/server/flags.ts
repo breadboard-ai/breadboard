@@ -11,34 +11,25 @@ import {
   type DomainConfiguration,
 } from "@breadboard-ai/types/deployment-configuration.js";
 
-export type DeploymentConfiguration = {
-  client: ClientDeploymentConfiguration;
-  server: ServerDeploymentConfiguration;
-};
-
-export type ServerDeploymentConfiguration = {
-  /**
-   * The Drive Id of a folder containing featured gallery items
-   */
-  GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID: string;
-  /**
-   * The list of all MCP Servers allowed by the mcp proxy. Glob patterns
-   * accepted.
-   */
-  MCP_SERVER_ALLOW_LIST: string[];
-};
-
 export const BACKEND_API_ENDPOINT: string = getString("BACKEND_API_ENDPOINT");
 
 /** URL of the deployed server */
 export const SERVER_URL: string = getString("SERVER_URL");
 
-export async function getConfig(): Promise<DeploymentConfiguration> {
+export const GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID: string = getString(
+  "GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID"
+);
+
+export const MCP_SERVER_ALLOW_LIST: string[] = getStringList(
+  "MCP_SERVER_ALLOW_LIST"
+);
+
+export async function getConfig(): Promise<ClientDeploymentConfiguration> {
   console.log("Loading config from environment");
 
   const domainConfig = await loadDomainConfig();
 
-  const clientConfig: ClientDeploymentConfiguration = {
+  return {
     MEASUREMENT_ID: getString("MEASUREMENT_ID"),
     BACKEND_API_ENDPOINT: BACKEND_API_ENDPOINT,
     FEEDBACK_LINK: getString("FEEDBACK_LINK"),
@@ -55,15 +46,6 @@ export async function getConfig(): Promise<DeploymentConfiguration> {
       force2DGraph: getBoolean("ENABLE_FORCE_2D_GRAPH"),
     },
   };
-
-  const serverConfig: ServerDeploymentConfiguration = {
-    GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID: getString(
-      "GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID"
-    ),
-    MCP_SERVER_ALLOW_LIST: getStringList("MCP_SERVER_ALLOW_LIST"),
-  };
-
-  return { client: clientConfig, server: serverConfig };
 }
 
 async function loadDomainConfig(): Promise<

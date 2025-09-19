@@ -32,7 +32,7 @@ loadEnv();
 
 const server = express();
 
-const { client: clientConfig, server: serverConfig } = await flags.getConfig();
+const clientConfig = await flags.getConfig();
 
 server.use(makeCspHandler());
 
@@ -79,7 +79,6 @@ const driveClient = new GoogleDriveClient({
 
 console.log("[unified-server startup] Mounting gallery");
 const cachingGallery = await CachingFeaturedGallery.makeReady({
-  folderId: serverConfig.GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID ?? "",
   driveClient,
   cacheRefreshSeconds: FEATURED_GALLERY_CACHE_REFRESH_SECONDS,
 });
@@ -101,10 +100,7 @@ server.use(
 );
 
 console.log("[unified-server startup] Mounting MCP proxy");
-server.use(
-  "/api/mcp-proxy",
-  createMcpProxyHandler(serverConfig.MCP_SERVER_ALLOW_LIST)
-);
+server.use("/api/mcp-proxy", createMcpProxyHandler());
 
 console.log("[unified-server startup] Mounting static content");
 ViteExpress.config({
