@@ -30,6 +30,7 @@ export type ServerDeploymentConfiguration = {
 
 export const BACKEND_API_ENDPOINT: string = getString("BACKEND_API_ENDPOINT");
 
+/** URL of the deployed server */
 export const SERVER_URL: string = getString("SERVER_URL");
 
 export async function getConfig(): Promise<DeploymentConfiguration> {
