@@ -35,7 +35,10 @@ type Outputs =
     }
   | WikipediaOutputs;
 
-async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
+async function invoke(
+  inputs: Inputs,
+  caps: Capabilities
+): Promise<Outcome<Outputs>> {
   let query: string;
   let mode: "step" | "tool";
   if ("context" in inputs) {
@@ -59,7 +62,7 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
   }
 
   console.log("Query: " + query);
-  const result = await searchWikipedia({ query });
+  const result = await searchWikipedia({ query }, caps);
   if (!ok(result)) {
     return result;
   }

@@ -2,8 +2,6 @@
  * @fileoverview Raw Search Wikipedia tool.
  */
 
-import fetch from "@fetch";
-
 export { invoke as default, describe };
 
 export type WikipediaInputs = {
@@ -34,14 +32,15 @@ function pageQueryURL(page: string) {
   return `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=revisions%7Cextracts&titles=${page}&redirects=1&formatversion=2&rvlimit=1&explaintext=1&origin=*`;
 }
 
-async function invoke({
-  query,
-}: WikipediaInputs): Promise<Outcome<WikipediaOutputs>> {
+async function invoke(
+  { query }: WikipediaInputs,
+  caps: Capabilities
+): Promise<Outcome<WikipediaOutputs>> {
   if (!query) {
     return { $error: "No search query provided." };
   }
 
-  const gettingTitles = await fetch({
+  const gettingTitles = await caps.fetch({
     url: searchURL(query),
     method: "GET",
   });
@@ -56,7 +55,7 @@ async function invoke({
   }
   const extracts = await Promise.all(
     titles.map(async (title) => {
-      const gettingPage = (await fetch({
+      const gettingPage = (await caps.fetch({
         url: pageQueryURL(title),
         method: "GET",
       })) as Outcome<WikipediaPageResponse>;
