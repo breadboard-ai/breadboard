@@ -5,10 +5,11 @@
 import { err, ok, isLLMContentArray } from "./utils";
 import read from "@read";
 import describeConnector, { type DescribeOutputs } from "@describe";
-import invokeConnector, { InvokeOutputs } from "@invoke";
 import type { ExportDescriberResult, CallToolCallback } from "./common";
 
 export { ConnectorManager, createConfigurator, createTools };
+
+type InvokeOutputs = Parameters<Capabilities["invoke"]>[0];
 
 type ToolsListInput<C extends Record<string, JsonSerializable>> = {
   method: "list";
@@ -301,7 +302,10 @@ type NodeDescriptor = {
 };
 
 class ConnectorManager {
-  constructor(public readonly part: ConnectorConfig | ConnectorInfo) {}
+  constructor(
+    private readonly caps: Capabilities,
+    public readonly part: ConnectorConfig | ConnectorInfo
+  ) {}
 
   #state: ConnectorManagerState | null = null;
 
@@ -365,7 +369,7 @@ class ConnectorManager {
     const args = await this.#getInvocationArgs("connector-tools");
     if (!ok(args)) return args;
 
-    const invoking = await invokeConnector({ method: "list", ...args });
+    const invoking = await this.caps.invoke({ method: "list", ...args });
     if (!ok(invoking)) return invoking;
 
     const output = invoking as ListMethodOutput;
@@ -400,7 +404,7 @@ class ConnectorManager {
     const args = await this.#getInvocationArgs("connector-load");
     if (!ok(args)) return args;
 
-    const invoking = await invokeConnector(args);
+    const invoking = await this.caps.invoke(args);
     if (!ok(invoking)) return invoking;
 
     const output = invoking as LoadOutput;
@@ -432,7 +436,7 @@ class ConnectorManager {
     const args = await this.#getInvocationArgs("connector-save");
     if (!ok(args)) return false;
 
-    const invoking = await invokeConnector({
+    const invoking = await this.caps.invoke({
       ...args,
       method: "canSave",
     });
@@ -447,7 +451,7 @@ class ConnectorManager {
     const args = await this.#getInvocationArgs("connector-save");
     if (!ok(args)) return args;
 
-    return invokeConnector({
+    return this.caps.invoke({
       ...args,
       context,
       ...options,

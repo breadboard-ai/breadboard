@@ -23,12 +23,11 @@ type DescribeInputs = {
   };
 };
 
-async function invoke({
-  text,
-  "z-flatten-list": flatten,
-  ...params
-}: InvokeInputs): Promise<Outcome<Outputs>> {
-  const template = new Template(text);
+async function invoke(
+  { text, "z-flatten-list": flatten, ...params }: InvokeInputs,
+  caps: Capabilities
+): Promise<Outcome<Outputs>> {
+  const template = new Template(caps, text);
   const substituting = await template.substitute(params, async () => "");
   if (!ok(substituting)) {
     return substituting;
@@ -45,8 +44,11 @@ async function invoke({
   return { context };
 }
 
-async function describe({ inputs: { text } }: DescribeInputs) {
-  const template = new Template(text);
+async function describe(
+  { inputs: { text } }: DescribeInputs,
+  caps: Capabilities
+) {
+  const template = new Template(caps, text);
   return {
     inputSchema: {
       type: "object",

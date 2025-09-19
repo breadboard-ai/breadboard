@@ -13,8 +13,11 @@ import { defaultLLMContent, err, ok, toLLMContent, toText } from "../a2/utils";
 
 export { invoke as default, describe };
 
-async function resolveInput(inputContent: LLMContent): Promise<string> {
-  const template = new Template(inputContent);
+async function resolveInput(
+  caps: Capabilities,
+  inputContent: LLMContent
+): Promise<string> {
+  const template = new Template(caps, inputContent);
   const substituting = await template.substitute({}, async () => "");
   if (!ok(substituting)) {
     return substituting.$error;
@@ -50,7 +53,7 @@ async function invoke(
       return err("Please provide a query");
     }
   } else if ("p-query" in inputs) {
-    query = await resolveInput(inputs["p-query"]);
+    query = await resolveInput(caps, inputs["p-query"]);
     mode = "step";
   } else {
     query = inputs.query;

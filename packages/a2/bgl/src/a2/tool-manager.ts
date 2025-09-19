@@ -51,6 +51,7 @@ class ToolManager {
   errors: string[] = [];
 
   constructor(
+    private readonly caps: Capabilities,
     private readonly describerResultTransformer?: DescriberResultTransformer
   ) {}
 
@@ -161,7 +162,7 @@ class ToolManager {
       this.#hasCodeExection = true;
       return "Code Execution";
     }
-    const connector = new ConnectorManager({
+    const connector = new ConnectorManager(this.caps, {
       url: "embed://a2/mcp.bgl.json",
       configuration: { endpoint: url },
     });

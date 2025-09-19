@@ -42,8 +42,8 @@ async function invoke(
   { context, plan: objective, strategy, "z-list": makeList, ...params }: Inputs,
   caps: Capabilities
 ): Promise<Outcome<Outputs>> {
-  const toolManager = new ToolManager(new ArgumentNameGenerator(caps));
-  const template = new Template(objective);
+  const toolManager = new ToolManager(caps, new ArgumentNameGenerator(caps));
+  const template = new Template(caps, objective);
   const substituting = await template.substitute(
     params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)
@@ -107,8 +107,11 @@ type DescribeInputs = {
   };
 };
 
-async function describe({ inputs: { plan } }: DescribeInputs) {
-  const template = new Template(plan);
+async function describe(
+  { inputs: { plan } }: DescribeInputs,
+  caps: Capabilities
+) {
+  const template = new Template(caps, plan);
   const settings = await readSettings();
   const experimental =
     ok(settings) && !!settings["Show Experimental Components"];

@@ -96,8 +96,8 @@ async function invoke(
   if (text) {
     instructionText = toText(text).trim();
   }
-  const template = new Template(toLLMContent(instructionText));
-  const toolManager = new ToolManager(new ArgumentNameGenerator(caps));
+  const template = new Template(caps, toLLMContent(instructionText));
+  const toolManager = new ToolManager(caps, new ArgumentNameGenerator(caps));
   const substituting = await template.substitute(
     params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)
@@ -136,8 +136,11 @@ type DescribeInputs = {
   };
 };
 
-async function describe({ inputs: { text } }: DescribeInputs) {
-  const template = new Template(text);
+async function describe(
+  { inputs: { text } }: DescribeInputs,
+  caps: Capabilities
+) {
+  const template = new Template(caps, text);
   return {
     inputSchema: {
       type: "object",

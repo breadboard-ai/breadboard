@@ -52,8 +52,11 @@ class GenerateText {
 
   async initialize(): Promise<Outcome<void>> {
     const { sharedContext } = this;
-    const template = new Template(sharedContext.description);
-    const toolManager = new ToolManager(new ArgumentNameGenerator(this.caps));
+    const template = new Template(this.caps, sharedContext.description);
+    const toolManager = new ToolManager(
+      this.caps,
+      new ArgumentNameGenerator(this.caps)
+    );
     const doneTool = createDoneTool();
     const keepChattingTool = createKeepChattingTool();
     const substituting = await template.substitute(

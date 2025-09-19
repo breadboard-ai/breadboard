@@ -92,8 +92,8 @@ async function invoke(
   let imageContext = extractMediaData(incomingContext);
   const textContext = extractTextData(incomingContext);
   // Substitute params in instruction.
-  const toolManager = new ToolManager(new ArgumentNameGenerator(caps));
-  const substituting = await new Template(instruction).substitute(
+  const toolManager = new ToolManager(caps, new ArgumentNameGenerator(caps));
+  const substituting = await new Template(caps, instruction).substitute(
     params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)
   );
@@ -181,8 +181,11 @@ type DescribeInputs = {
   };
 };
 
-async function describe({ inputs: { instruction } }: DescribeInputs) {
-  const template = new Template(instruction);
+async function describe(
+  { inputs: { instruction } }: DescribeInputs,
+  caps: Capabilities
+) {
+  const template = new Template(caps, instruction);
   return {
     inputSchema: {
       type: "object",

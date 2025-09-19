@@ -170,8 +170,8 @@ async function invoke(
   // 2) Substitute variables and magic image reference.
   // Note: it is important that images are not subsituted in here as they will
   // not be handled properly. At this point, only text variables should be left.
-  const template = new Template(toLLMContent(instructionText));
-  const toolManager = new ToolManager(new ArgumentNameGenerator(caps));
+  const template = new Template(caps, toLLMContent(instructionText));
+  const toolManager = new ToolManager(caps, new ArgumentNameGenerator(caps));
   const substituting = await template.substitute(
     params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)
@@ -310,8 +310,11 @@ function expandVeoError(
   return e;
 }
 
-async function describe({ inputs: { instruction } }: DescribeInputs) {
-  const template = new Template(instruction);
+async function describe(
+  { inputs: { instruction } }: DescribeInputs,
+  caps: Capabilities
+) {
+  const template = new Template(caps, instruction);
   return {
     inputSchema: {
       type: "object",

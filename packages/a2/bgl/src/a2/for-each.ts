@@ -129,7 +129,7 @@ async function forEach(
   const params = Object.fromEntries(
     Object.entries(inputs).filter(([key]) => key.startsWith("p-z-"))
   );
-  const template = new Template(inputs.config$prompt);
+  const template = new Template(caps, inputs.config$prompt);
   const collectedParts: DataPart[] = [];
   const mappedParts = await template.mapParams(
     params,

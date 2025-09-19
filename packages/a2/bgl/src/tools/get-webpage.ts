@@ -26,8 +26,11 @@ export type GetWebPageOutputs = {
   results: string;
 };
 
-async function resolveInput(inputContent: LLMContent): Promise<LLMContent> {
-  const template = new Template(inputContent);
+async function resolveInput(
+  caps: Capabilities,
+  inputContent: LLMContent
+): Promise<LLMContent> {
+  const template = new Template(caps, inputContent);
   const substituting = await template.substitute({}, async () => "");
   if (!ok(substituting)) {
     return toLLMContent(substituting.$error);
@@ -75,7 +78,7 @@ async function invoke(
       return err("Please provide a URL");
     }
   } else if ("p-url" in inputs) {
-    const urlContent = await resolveInput(inputs["p-url"]);
+    const urlContent = await resolveInput(caps, inputs["p-url"]);
     if (!ok(urlContent)) {
       return urlContent;
     }

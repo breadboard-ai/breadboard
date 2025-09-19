@@ -41,7 +41,7 @@ async function generateSummary(
   query: string,
   reporter: StreamableReporter
 ): Promise<Outcome<string>> {
-  const toolManager = new ToolManager();
+  const toolManager = new ToolManager(caps);
   toolManager.addSearch();
   const result = await new GeminiPrompt(
     caps,

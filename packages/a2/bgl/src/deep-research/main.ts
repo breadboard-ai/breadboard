@@ -139,10 +139,10 @@ async function invoke(
   caps: Capabilities
 ) {
   const tools = RESEARCH_TOOLS.map((descriptor) => descriptor.url);
-  const toolManager = new ToolManager(new ArgumentNameGenerator(caps));
+  const toolManager = new ToolManager(caps, new ArgumentNameGenerator(caps));
   let content = context || [toLLMContent("Start the research")];
 
-  const template = new Template(query);
+  const template = new Template(caps, query);
   const substituting = await template.substitute(
     params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)
@@ -251,8 +251,11 @@ function researchExample(): string[] {
   ];
 }
 
-async function describe({ inputs: { query } }: DescribeInputs) {
-  const template = new Template(query);
+async function describe(
+  { inputs: { query } }: DescribeInputs,
+  caps: Capabilities
+) {
+  const template = new Template(caps, query);
   return {
     inputSchema: {
       type: "object",

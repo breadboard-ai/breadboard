@@ -19,8 +19,11 @@ export { invoke as default, describe };
  */
 export type ToolMode = "tool" | "step" | "invoke";
 
-async function resolveInput(inputContent: LLMContent): Promise<string> {
-  const template = new Template(inputContent);
+async function resolveInput(
+  caps: Capabilities,
+  inputContent: LLMContent
+): Promise<string> {
+  const template = new Template(caps, inputContent);
   const substituting = await template.substitute({}, async () => "");
   if (!ok(substituting)) {
     return substituting.$error;
@@ -52,7 +55,7 @@ async function invoke(
       return err("Please provide a location");
     }
   } else if ("p-location" in inputs) {
-    location = await resolveInput(inputs["p-location"]);
+    location = await resolveInput(caps, inputs["p-location"]);
   } else {
     location = inputs.location;
   }

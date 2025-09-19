@@ -34,8 +34,11 @@ type Outputs =
     }
   | SearchWebOutputs;
 
-async function resolveInput(inputContent: LLMContent): Promise<LLMContent> {
-  const template = new Template(inputContent);
+async function resolveInput(
+  caps: Capabilities,
+  inputContent: LLMContent
+): Promise<LLMContent> {
+  const template = new Template(caps, inputContent);
   const substituting = await template.substitute({}, async () => "");
   if (!ok(substituting)) {
     return toLLMContent(substituting.$error);
@@ -64,7 +67,7 @@ async function invoke(
       return err("Please provide a URL");
     }
   } else if ("p-query" in inputs) {
-    const queryContent = await resolveInput(inputs["p-query"]);
+    const queryContent = await resolveInput(caps, inputs["p-query"]);
     if (!ok(queryContent)) {
       return queryContent;
     }

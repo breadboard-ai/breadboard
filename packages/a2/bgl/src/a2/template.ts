@@ -80,7 +80,10 @@ class Template {
   #parts: TemplatePart[];
   #role: LLMContent["role"];
 
-  constructor(public readonly template: LLMContent | undefined) {
+  constructor(
+    private readonly caps: Capabilities,
+    public readonly template: LLMContent | undefined
+  ) {
     if (!template) {
       this.#role = "user";
       this.#parts = [];
@@ -188,7 +191,7 @@ class Template {
       return name;
     } else if (isAsset(param)) {
       if (ConnectorManager.isConnector(param)) {
-        return new ConnectorManager(param).materialize();
+        return new ConnectorManager(this.caps, param).materialize();
       }
       const path: FileSystemPath = `/assets/${param.path}`;
       const reading = await readFile({ path });
@@ -356,7 +359,10 @@ class Template {
       if (!("type" in part)) continue;
       if (!isAsset(part)) continue;
       if (!ConnectorManager.isConnector(part)) continue;
-      const props = await new ConnectorManager(part).schemaProperties();
+      const props = await new ConnectorManager(
+        this.caps,
+        part
+      ).schemaProperties();
       result = { ...result, ...props };
     }
     return result;
@@ -373,7 +379,7 @@ class Template {
       if (!("type" in part)) continue;
       if (!isAsset(part)) continue;
       if (!ConnectorManager.isConnector(part)) continue;
-      const saving = await new ConnectorManager(part).save(
+      const saving = await new ConnectorManager(this.caps, part).save(
         context,
         options || {}
       );
@@ -410,10 +416,11 @@ type TestOutputs = {
 /**
  * Only used for testing.
  */
-async function invoke({
-  inputs: { content, params },
-}: TestInputs): Promise<Outcome<TestOutputs>> {
-  const template = new Template(content);
+async function invoke(
+  { inputs: { content, params } }: TestInputs,
+  caps: Capabilities
+): Promise<Outcome<TestOutputs>> {
+  const template = new Template(caps, content);
   const result = await template.substitute(
     fromTestParams(params),
     async (params) => {

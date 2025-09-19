@@ -85,12 +85,11 @@ function combineModalities(modalities: readonly string[]): SchemaEnumValue[] {
   return schemaEnum;
 }
 
-async function invoke({
-  description,
-  "p-modality": modality,
-  ...params
-}: TextInputs): Promise<Outcome<TextOutputs>> {
-  const template = new Template(description);
+async function invoke(
+  { description, "p-modality": modality, ...params }: TextInputs,
+  caps: Capabilities
+): Promise<Outcome<TextOutputs>> {
+  const template = new Template(caps, description);
   let details = llm`Please provide input`.asContent();
   if (description) {
     const substituting = await template.substitute(params, async () => "");
@@ -115,11 +114,12 @@ type DescribeInputs = {
   inputs: TextInputs;
 };
 
-async function describe({
-  inputs: { description, ["p-modality"]: modality },
-}: DescribeInputs) {
+async function describe(
+  { inputs: { description, ["p-modality"]: modality } }: DescribeInputs,
+  caps: Capabilities
+) {
   const icon = computeIcon(modality);
-  const template = new Template(description);
+  const template = new Template(caps, description);
   return {
     inputSchema: {
       type: "object",
