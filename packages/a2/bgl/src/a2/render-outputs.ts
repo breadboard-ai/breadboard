@@ -17,8 +17,6 @@ import {
   toText,
 } from "./utils";
 
-import read from "@read";
-
 export { invoke as default, describe };
 
 const MANUAL_MODE = "Manual layout";
@@ -231,7 +229,9 @@ function defaultThemeColors(): ThemeColors {
   };
 }
 
-async function getThemeColors(): Promise<ThemeColors> {
+async function getThemeColors(
+  read: Capabilities["read"]
+): Promise<ThemeColors> {
   const readingMetadata = await read({ path: "/env/metadata" });
   if (!ok(readingMetadata)) return defaultThemeColors();
   const metadata = (readingMetadata.data?.at(0)?.parts?.at(0) as JSONPart)
@@ -245,7 +245,9 @@ async function getThemeColors(): Promise<ThemeColors> {
   return { ...defaultThemeColors(), ...themeColors };
 }
 
-async function getPaletteColors(): Promise<PaletteColors | undefined> {
+async function getPaletteColors(
+  read: Capabilities["read"]
+): Promise<PaletteColors | undefined> {
   const readingMetadata = await read({ path: "/env/metadata" });
   if (!ok(readingMetadata)) return;
   const metadata = (readingMetadata.data?.at(0)?.parts?.at(0) as JSONPart)
@@ -288,6 +290,7 @@ function getPalettePrompt(colors: PaletteColors): string {
 }
 
 async function saveToGoogleDrive(
+  read: Capabilities["read"],
   content: LLMContent,
   mimeType: string,
   title: string | undefined
@@ -322,14 +325,17 @@ async function saveAsCode(content: LLMContent): Promise<Outcome<void>> {
   if (!ok(saving)) return saving;
 }
 
-async function invoke({
-  text,
-  "p-render-mode": renderMode,
-  "b-system-instruction": systemInstruction,
-  "b-render-model-name": modelType,
-  "b-google-doc-title": googleDocTitle,
-  ...params
-}: InvokeInputs): Promise<Outcome<InvokeOutputs>> {
+async function invoke(
+  {
+    text,
+    "p-render-mode": renderMode,
+    "b-system-instruction": systemInstruction,
+    "b-render-model-name": modelType,
+    "b-google-doc-title": googleDocTitle,
+    ...params
+  }: InvokeInputs,
+  capabilities: Capabilities
+): Promise<Outcome<InvokeOutputs>> {
   let { modelName } = getModel(modelType);
   const { renderType } = getMode(renderMode);
 
@@ -368,11 +374,11 @@ async function invoke({
       return { context: [out] };
     }
     case "HTML": {
-      const palette = await getPaletteColors();
+      const palette = await getPaletteColors(capabilities.read);
       if (palette?.primary) {
         systemText += getPalettePrompt(palette);
       } else {
-        const themeColors = await getThemeColors();
+        const themeColors = await getThemeColors(capabilities.read);
         systemText += themeColorsPrompt(themeColors);
       }
       console.log("SI :", systemText);
@@ -394,6 +400,7 @@ async function invoke({
     }
     case "GoogleDoc": {
       return saveToGoogleDrive(
+        capabilities.read,
         out,
         "application/vnd.google-apps.document",
         googleDocTitle
@@ -401,6 +408,7 @@ async function invoke({
     }
     case "GoogleSlides": {
       return saveToGoogleDrive(
+        capabilities.read,
         out,
         "application/vnd.google-apps.presentation",
         googleDocTitle
@@ -408,6 +416,7 @@ async function invoke({
     }
     case "GoogleSheets": {
       return saveToGoogleDrive(
+        capabilities.read,
         out,
         "application/vnd.google-apps.spreadsheet",
         googleDocTitle
