@@ -299,6 +299,20 @@ export class CanvasController extends SignalWatcher(LitElement) {
     return this.projectState.run.renderer;
   }
 
+  /**
+   * This is an important gubbin. It's here to provide transition between
+   * signal and non-signal world. In this property, we access signal-based
+   * properties that matter and then increment the count. Then, this counter
+   * is used for change-detection in bb-renderer.
+   */
+  #runStateEffectCount = 0;
+  @signal
+  get #runStateEffect(): number {
+    this.runState.edges.values();
+    this.runState.nodes.values();
+    return ++this.#runStateEffectCount;
+  }
+
   async #deriveAppURL() {
     if (!this.graph?.url) {
       return;
@@ -392,6 +406,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
         this.graphIsMine,
         this.projectState,
         runState,
+        this.#runStateEffect,
         this.boardServerKits,
         this.topGraphResult,
         this.history,
@@ -417,6 +432,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
           .boardServerKits=${this.boardServerKits}
           .projectState=${this.projectState}
           .runState=${runState}
+          .runStateEffect=${this.#runStateEffect}
           .runtimeFlags=${this.#uiState.flags}
           .graph=${graph}
           .graphIsMine=${this.graphIsMine}
