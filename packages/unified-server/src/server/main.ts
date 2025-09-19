@@ -8,18 +8,19 @@ import express, { type Request } from "express";
 import ViteExpress from "vite-express";
 import { config as loadEnv } from "dotenv";
 
-import * as connectionServer from "@breadboard-ai/connection-server";
 import * as boardServer from "@breadboard-ai/board-server";
+import * as connectionServer from "@breadboard-ai/connection-server";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { InputValues, NodeDescriptor } from "@breadboard-ai/types";
 
 import { makeDriveProxyMiddleware } from "./drive-proxy.js";
 import { allowListChecker } from "./allow-list-checker.js";
-import { getConfig } from "./provide-config.js";
 import { makeCspHandler } from "./csp.js";
-import { createUpdatesHandler } from "./upates.js";
+import * as flags from "./flags.js";
 import { CachingFeaturedGallery, makeGalleryMiddleware } from "./gallery.js";
+import { createUpdatesHandler } from "./upates.js";
+
 import { GoogleAuth } from "google-auth-library";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { createMcpProxyHandler } from "./mcp-proxy.js";
 
 const FEATURED_GALLERY_CACHE_REFRESH_SECONDS = 10 * 60;
@@ -31,9 +32,9 @@ loadEnv();
 
 const server = express();
 
-const { client: clientConfig, server: serverConfig } = await getConfig();
+const { client: clientConfig, server: serverConfig } = await flags.getConfig();
 
-server.use(makeCspHandler(serverConfig.BACKEND_API_ENDPOINT));
+server.use(makeCspHandler());
 
 const boardServerConfig = boardServer.createServerConfig({
   storageProvider: "firestore",
@@ -41,10 +42,7 @@ const boardServerConfig = boardServer.createServerConfig({
 });
 const connectionServerConfig = {
   ...(await connectionServer.createServerConfig()),
-  validateResponse: allowListChecker(
-    serverConfig.BACKEND_API_ENDPOINT &&
-      new URL(serverConfig.BACKEND_API_ENDPOINT)
-  ),
+  validateResponse: allowListChecker(),
 };
 
 console.log("[unified-server startup] Mounting board server");
