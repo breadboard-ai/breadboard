@@ -2,8 +2,6 @@
  * @fileoverview Add a description for your module here.
  */
 
-import output from "@output";
-
 import {
   createDoneTool,
   createKeepChattingResult,
@@ -276,6 +274,7 @@ function done(result: LLMContent[], makeList: boolean = false) {
 }
 
 async function keepChatting(
+  caps: Capabilities,
   sharedContext: SharedContext,
   result: LLMContent[],
   isList: boolean
@@ -287,7 +286,7 @@ async function keepChatting(
     if (!ok(list)) return list;
     product = list;
   }
-  await output({
+  await caps.output({
     schema: {
       type: "object",
       properties: {
@@ -331,7 +330,7 @@ async function keepChatting(
 async function invoke({ context }: Inputs, caps: Capabilities) {
   if (!context.description) {
     const msg = "Please provide a prompt for the step";
-    await report({
+    await report(caps, {
       actor: "Text Generator",
       name: msg,
       category: "Runtime error",
@@ -379,7 +378,7 @@ async function invoke({ context }: Inputs, caps: Capabilities) {
   // Use the gen.chat here, because it will correctly prevent
   // chat mode when we're in list mode.
   if (gen.chat && !userEndedChat) {
-    return keepChatting(gen.sharedContext, result, context.makeList);
+    return keepChatting(caps, gen.sharedContext, result, context.makeList);
   }
 
   // Fall through to default response.

@@ -65,7 +65,7 @@ Now think real hard: do you need to organize or summarize results?
         organizeResults = true;
       }
       if (!task) break;
-      await report({
+      await report(caps, {
         actor: "Planner",
         category: "Progress update",
         name: "Thinking",
@@ -104,7 +104,7 @@ and adjusting the plan if necessary.`,
       planDescription = "Here are the remaining steps in the plan";
     }
     if (organizeResults) {
-      await report({
+      await report(caps, {
         actor: "Planner",
         category: "Organizing work into a report",
         name: "Organizing work report",

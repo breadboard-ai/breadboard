@@ -98,7 +98,7 @@ async function invoke(
     }
     details = substituting;
   }
-  await report({
+  await report(caps, {
     actor: "User Input",
     category: "Requesting Input",
     name: "",

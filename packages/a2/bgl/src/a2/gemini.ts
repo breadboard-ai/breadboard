@@ -392,7 +392,7 @@ async function callAPI(
   $metadata?: Metadata
 ): Promise<Outcome<GeminiAPIOutputs>> {
   const accessToken = await getAccessToken(caps);
-  const reporter = new StreamableReporter({
+  const reporter = new StreamableReporter(caps, {
     title: `Calling ${model}`,
     icon: "spark",
   });

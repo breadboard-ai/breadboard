@@ -116,12 +116,16 @@ function reportWriterPrompt(
   };
 }
 
-async function thought(response: LLMContent, iteration: number) {
+async function thought(
+  caps: Capabilities,
+  response: LLMContent,
+  iteration: number
+) {
   const first = response.parts?.at(0);
   if (!first || !("text" in first)) {
     return;
   }
-  await report({
+  await report(caps, {
     actor: "Researcher",
     category: `Progress report, iteration ${iteration + 1}`,
     name: "Thought",
@@ -176,7 +180,7 @@ async function invoke(
     if (!response) {
       return err("No actionable response");
     }
-    await thought(response, i);
+    await thought(caps, response, i);
 
     const toolResponses: string[] = [];
     await toolManager.processResponse(response, async ($board, args) => {
@@ -191,7 +195,7 @@ async function invoke(
     content = [...content, response, toLLMContent(toolResponses.join("\n\n"))];
   }
   if (research.length === 0) {
-    await report({
+    await report(caps, {
       actor: "Researcher",
       category: "Error",
       name: "Error",

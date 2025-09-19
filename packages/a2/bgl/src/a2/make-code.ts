@@ -180,10 +180,13 @@ class GeminiPrompt {
   }
 }
 
-function gracefulExit(notOk: {
-  $error: string;
-}): Outcome<CodeGeneratorOutputs> {
-  report({
+function gracefulExit(
+  caps: Capabilities,
+  notOk: {
+    $error: string;
+  }
+): Outcome<CodeGeneratorOutputs> {
+  report(caps, {
     actor: "Make Code",
     category: "Warning",
     name: "Graceful exit",
@@ -257,6 +260,7 @@ async function invoke(
     return { context: generatingCode.all };
   }
   return gracefulExit(
+    caps,
     err(`Failed to generate ${language} after ${MAX_RETRIES} tries.`)
   );
 }

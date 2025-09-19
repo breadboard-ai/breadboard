@@ -185,11 +185,11 @@ async function getBackendUrl() {
 }
 
 async function executeStep(
-  { fetch, secrets }: Capabilities,
+  caps: Capabilities,
   body: ExecuteStepRequest
 ): Promise<Outcome<ExecutionOutput>> {
   const model = body.planStep.options?.modelName || body.planStep.stepName;
-  const reporter = new StreamableReporter({
+  const reporter = new StreamableReporter(caps, {
     title: `Calling ${model}`,
     icon: "spark",
   });
@@ -198,7 +198,7 @@ async function executeStep(
     await reporter.sendUpdate("Step Input", elideEncodedData(body), "upload");
     // Get an authentication token.
     const secretKey = "connection:$sign-in";
-    const token = (await secrets({ keys: [secretKey] }))[secretKey];
+    const token = (await caps.secrets({ keys: [secretKey] }))[secretKey];
     // Call the API.
     const url = await getBackendUrl();
     // Record model call with action tracker.
@@ -206,7 +206,7 @@ async function executeStep(
       path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
       data: [],
     });
-    const fetchResult = await fetch({
+    const fetchResult = await caps.fetch({
       url: url,
       method: "POST",
       headers: {

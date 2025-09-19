@@ -119,8 +119,13 @@ export type ToolHandler<
   A extends Record<string, JsonSerializable> = Record<string, JsonSerializable>,
 > = {
   title: string;
-  list(id: string, info: ConnectorInfo<C>): Promise<Outcome<ListMethodOutput>>;
+  list(
+    caps: Capabilities,
+    id: string,
+    info: ConnectorInfo<C>
+  ): Promise<Outcome<ListMethodOutput>>;
   invoke(
+    caps: Capabilities,
     id: string,
     info: ConnectorInfo<C>,
     name: string,
@@ -134,14 +139,15 @@ function createTools<
 >(handler: ToolHandler<C, A>) {
   return {
     invoke: async function (
-      inputs: ToolsInput<C, A>
+      inputs: ToolsInput<C, A>,
+      caps: Capabilities
     ): Promise<Outcome<ToolsOutput>> {
       const { method, id, info } = inputs;
       if (method === "list") {
-        return handler.list(id, info);
+        return handler.list(caps, id, info);
       } else if (method === "invoke") {
         const { name, args } = inputs;
-        return handler.invoke(id, info, name, args);
+        return handler.invoke(caps, id, info, name, args);
       }
       return err(`Unknown method: "${method}""`);
     },

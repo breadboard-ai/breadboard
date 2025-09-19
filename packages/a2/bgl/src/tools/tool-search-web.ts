@@ -117,7 +117,7 @@ async function invoke(
   { query }: SearchWebInputs,
   caps: Capabilities
 ): Promise<Outcome<SearchWebOutputs>> {
-  const reporter = new StreamableReporter({
+  const reporter = new StreamableReporter(caps, {
     title: "Searching Web",
     icon: "search",
   });
