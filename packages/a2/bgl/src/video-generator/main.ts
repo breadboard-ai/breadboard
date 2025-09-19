@@ -76,6 +76,7 @@ type VideoGeneratorOutputs = {
 export { invoke as default, describe };
 
 async function callVideoGen(
+  caps: Capabilities,
   prompt: string,
   imageContent: LLMContent | undefined,
   disablePromptRewrite: boolean,
@@ -137,7 +138,7 @@ async function callVideoGen(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  const response = await executeStep(body);
+  const response = await executeStep(caps, body);
   if (!ok(response)) return response;
 
   // Only take the first video output. The model can't produce
@@ -221,6 +222,7 @@ async function invoke(
 
       // 2) Call backend to generate video.
       const content = await callVideoGen(
+        caps,
         combinedInstruction,
         imageContext.at(0),
         disablePromptRewrite,

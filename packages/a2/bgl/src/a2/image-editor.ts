@@ -141,6 +141,7 @@ async function invoke(
             combinedInstruction + "\nAspect ratio: " + aspectRatio;
           console.log("PROMPT: " + finalInstruction);
           const generatedImage = await callGeminiImage(
+            caps,
             finalInstruction,
             imageContext,
             disablePromptRewrite,
@@ -156,6 +157,7 @@ async function invoke(
           const iPrompt = toText(imagePrompt).trim();
           console.log("PROMPT", iPrompt);
           const generatedImage = await callGeminiImage(
+            caps,
             iPrompt,
             [],
             disablePromptRewrite,

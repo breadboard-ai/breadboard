@@ -39,7 +39,10 @@ export type Outputs = {
   context: LLMContent[];
 };
 
-async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
+async function invoke(
+  inputs: Inputs,
+  caps: Capabilities
+): Promise<Outcome<Outputs>> {
   let location;
   if ("context" in inputs) {
     const last = inputs.context?.at(-1);
@@ -58,7 +61,7 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
     return err("Please provide a location");
   }
   console.log("Location: " + location);
-  const weatherResult = await getWeather({ location });
+  const weatherResult = await getWeather({ location }, caps);
   if (!ok(weatherResult)) {
     return weatherResult;
   }

@@ -334,7 +334,7 @@ async function invoke(
     "b-google-doc-title": googleDocTitle,
     ...params
   }: InvokeInputs,
-  capabilities: Capabilities
+  caps: Capabilities
 ): Promise<Outcome<InvokeOutputs>> {
   let { modelName } = getModel(modelType);
   const { renderType } = getMode(renderMode);
@@ -374,15 +374,16 @@ async function invoke(
       return { context: [out] };
     }
     case "HTML": {
-      const palette = await getPaletteColors(capabilities.read);
+      const palette = await getPaletteColors(caps.read);
       if (palette?.primary) {
         systemText += getPalettePrompt(palette);
       } else {
-        const themeColors = await getThemeColors(capabilities.read);
+        const themeColors = await getThemeColors(caps.read);
         systemText += themeColorsPrompt(themeColors);
       }
       console.log("SI :", systemText);
       const webPage = await callGenWebpage(
+        caps,
         systemText,
         [context],
         renderType,
@@ -400,7 +401,7 @@ async function invoke(
     }
     case "GoogleDoc": {
       return saveToGoogleDrive(
-        capabilities.read,
+        caps.read,
         out,
         "application/vnd.google-apps.document",
         googleDocTitle
@@ -408,7 +409,7 @@ async function invoke(
     }
     case "GoogleSlides": {
       return saveToGoogleDrive(
-        capabilities.read,
+        caps.read,
         out,
         "application/vnd.google-apps.presentation",
         googleDocTitle
@@ -416,7 +417,7 @@ async function invoke(
     }
     case "GoogleSheets": {
       return saveToGoogleDrive(
-        capabilities.read,
+        caps.read,
         out,
         "application/vnd.google-apps.spreadsheet",
         googleDocTitle
@@ -424,6 +425,7 @@ async function invoke(
     }
     case "Code": {
       const generating = await callGenWebpage(
+        caps,
         systemText,
         [context],
         "HTML",

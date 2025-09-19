@@ -26,6 +26,7 @@ const OUTPUT_NAME = "generated_image";
 const API_NAME = "ai_image_tool";
 
 async function callGeminiImage(
+  caps: Capabilities,
   instruction: string,
   imageContent: LLMContent[],
   disablePromptRewrite: boolean,
@@ -87,13 +88,14 @@ async function callGeminiImage(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  const response = await executeStep(body);
+  const response = await executeStep(caps, body);
   if (!ok(response)) return response;
 
   return response.chunks;
 }
 
 async function callImageGen(
+  caps: Capabilities,
   imageInstruction: string,
   aspectRatio: string = "1:1"
 ): Promise<Outcome<LLMContent[]>> {
@@ -125,7 +127,7 @@ async function callImageGen(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  const response = await executeStep(body);
+  const response = await executeStep(caps, body);
   if (!ok(response)) return response;
 
   return response.chunks;

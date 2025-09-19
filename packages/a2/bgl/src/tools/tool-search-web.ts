@@ -96,12 +96,17 @@ ${result.webpage_text_content}
 }
 
 async function getSearchLinks(
+  caps: Capabilities,
   query: string,
   reporter: StreamableReporter
 ): Promise<Outcome<string>> {
-  const results = await executeTool<SearchBackendOutput[]>("google_search", {
-    query,
-  });
+  const results = await executeTool<SearchBackendOutput[]>(
+    caps,
+    "google_search",
+    {
+      query,
+    }
+  );
   if (!ok(results)) return results;
   const formattedResults = formatBackendSearchResults(results);
   await reporter.sendUpdate("Search Links", formattedResults, "link");
@@ -121,7 +126,7 @@ async function invoke(
     await reporter.sendUpdate("Search term", query, "search");
     const [summary, links] = await Promise.all([
       generateSummary(caps, query, reporter),
-      getSearchLinks(query, reporter),
+      getSearchLinks(caps, query, reporter),
     ]);
     if (!ok(summary)) {
       return summary;

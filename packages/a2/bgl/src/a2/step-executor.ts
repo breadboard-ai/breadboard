@@ -4,7 +4,6 @@
 
 export { executeStep, executeTool, parseExecutionOutput };
 
-import fetch from "@fetch";
 import read from "@read";
 import secrets from "@secrets";
 import { StreamableReporter } from "./output";
@@ -125,7 +124,11 @@ function parseExecutionOutput(input?: Chunk[]): Outcome<ExecutionOutput> {
 
 async function executeTool<
   T extends JsonSerializable = Record<string, JsonSerializable>,
->(api: string, params: Record<string, string>): Promise<Outcome<T | string>> {
+>(
+  caps: Capabilities,
+  api: string,
+  params: Record<string, string>
+): Promise<Outcome<T | string>> {
   const inputParameters = Object.keys(params);
   const execution_inputs = Object.fromEntries(
     Object.entries(params).map(([name, value]) => {
@@ -142,7 +145,7 @@ async function executeTool<
       ];
     })
   );
-  const response = await executeStep({
+  const response = await executeStep(caps, {
     planStep: {
       stepName: api,
       modelApi: api,
@@ -183,6 +186,7 @@ async function getBackendUrl() {
 }
 
 async function executeStep(
+  { fetch }: Capabilities,
   body: ExecuteStepRequest
 ): Promise<Outcome<ExecutionOutput>> {
   const model = body.planStep.options?.modelName || body.planStep.stepName;

@@ -33,7 +33,10 @@ type AudioGeneratorOutputs = {
 
 export { invoke as default, describe };
 
-async function callMusicGen(prompt: string): Promise<Outcome<LLMContent>> {
+async function callMusicGen(
+  caps: Capabilities,
+  prompt: string
+): Promise<Outcome<LLMContent>> {
   const executionInputs: ContentMap = {};
   executionInputs["prompt"] = {
     chunks: [
@@ -54,7 +57,7 @@ async function callMusicGen(prompt: string): Promise<Outcome<LLMContent>> {
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  const response = await executeStep(body);
+  const response = await executeStep(caps, body);
   if (!ok(response)) return response;
 
   return response.chunks.at(0)!;
@@ -94,7 +97,7 @@ async function invoke(
         return toLLMContent("Please provide the music prompt.");
       }
       console.log("PROMPT: ", combinedInstruction);
-      return callMusicGen(combinedInstruction);
+      return callMusicGen(caps, combinedInstruction);
     }
   );
   if (!ok(results)) return results;

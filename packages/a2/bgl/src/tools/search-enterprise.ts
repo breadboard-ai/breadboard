@@ -36,7 +36,10 @@ async function resolveInput(inputContent: LLMContent): Promise<string> {
   return toText(substituting);
 }
 
-async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
+async function invoke(
+  inputs: Inputs,
+  caps: Capabilities
+): Promise<Outcome<Outputs>> {
   console.log("ENTERPRISE SEARCH INPUTS", inputs);
   let query: string;
   let search_engine_resource_name: string | undefined;
@@ -65,10 +68,13 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
     search_engine_resource_name = "";
   }
   console.log("Query: " + query);
-  const searchResults = await toolSearchEnterprise({
-    query,
-    search_engine_resource_name,
-  });
+  const searchResults = await toolSearchEnterprise(
+    {
+      query,
+      search_engine_resource_name,
+    },
+    caps
+  );
   if (!ok(searchResults)) {
     return searchResults;
   }

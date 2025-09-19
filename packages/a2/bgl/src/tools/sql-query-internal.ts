@@ -35,7 +35,10 @@ async function resolveInput(inputContent: LLMContent): Promise<string> {
   return toText(substituting);
 }
 
-async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
+async function invoke(
+  inputs: Inputs,
+  caps: Capabilities
+): Promise<Outcome<Outputs>> {
   console.log("SQL QUERY", inputs);
   let query: string;
   let mode: "step" | "tool";
@@ -59,9 +62,12 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
     return err("Please provide a query");
   }
   console.log("Query: " + query);
-  const queryResults = await toolQueryInternal({
-    query,
-  });
+  const queryResults = await toolQueryInternal(
+    {
+      query,
+    },
+    caps
+  );
   if (!ok(queryResults)) {
     return queryResults;
   }

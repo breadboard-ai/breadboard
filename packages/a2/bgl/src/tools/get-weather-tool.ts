@@ -233,11 +233,12 @@ function getConditions(weather_code: number): Conditions {
   return conditions;
 }
 
-async function invoke({
-  location,
-}: WeatherInputs): Promise<Outcome<LLMContent>> {
+async function invoke(
+  { location }: WeatherInputs,
+  caps: Capabilities
+): Promise<Outcome<LLMContent>> {
   if (!USE_METEO) {
-    const executing = await executeTool<string>("get_weather", {
+    const executing = await executeTool<string>(caps, "get_weather", {
       location,
     });
     if (!ok(executing)) return executing;

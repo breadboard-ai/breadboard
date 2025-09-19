@@ -61,7 +61,10 @@ function extractURL(maybeMarkdownLink: string): string {
   return maybeMarkdownLink;
 }
 
-async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
+async function invoke(
+  inputs: Inputs,
+  caps: Capabilities
+): Promise<Outcome<Outputs>> {
   let urlContext: LLMContent[] = [];
   let mode: "step" | "tool";
   if ("context" in inputs) {
@@ -96,7 +99,7 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
       return err("Please provide a URL");
     }
     console.log("URL: ", urlString);
-    const getting = await toolGetWebpage({ url: urlString });
+    const getting = await toolGetWebpage({ url: urlString }, caps);
     if (!ok(getting)) {
       return toLLMContent(getting.$error);
     }
