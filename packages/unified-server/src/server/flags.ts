@@ -11,39 +11,62 @@ import {
   type DomainConfiguration,
 } from "@breadboard-ai/types/deployment-configuration.js";
 
+export const ALLOW_3P_MODULES = getBoolean("ALLOW_3P_MODULES");
+
 export const BACKEND_API_ENDPOINT: string = getString("BACKEND_API_ENDPOINT");
 
-/** URL of the deployed server */
-export const SERVER_URL: string = getString("SERVER_URL");
+export const ENABLE_FORCE_2D_GRAPH = getBoolean("ENABLE_FORCE_2D_GRAPH");
+
+export const ENABLE_GENERATE_FOR_EACH = getBoolean("ENABLE_GENERATE_FOR_EACH");
+
+export const ENABLE_GOOGLE_FEEDBACK = getBoolean("ENABLE_GOOGLE_FEEDBACK");
+
+export const ENABLE_MCP = getBoolean("ENABLE_MCP");
+
+export const ENABLE_PLAN_RUNNER = getBoolean("ENABLE_PLAN_RUNNER");
+
+export const ENABLE_SAVE_AS_CODE = getBoolean("ENABLE_SAVE_AS_CODE");
+
+export const FEEDBACK_LINK = getString("FEEDBACK_LINK");
 
 export const GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID: string = getString(
   "GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID"
+);
+
+export const GOOGLE_FEEDBACK_BUCKET = getString("GOOGLE_FEEDBACK_BUCKET");
+
+export const GOOGLE_FEEDBACK_PRODUCT_ID = getString(
+  "GOOGLE_FEEDBACK_PRODUCT_ID"
 );
 
 export const MCP_SERVER_ALLOW_LIST: string[] = getStringList(
   "MCP_SERVER_ALLOW_LIST"
 );
 
-export async function getConfig(): Promise<ClientDeploymentConfiguration> {
+export const MEASUREMENT_ID = getString("MEASUREMENT_ID");
+
+export const SERVER_URL: string = getString("SERVER_URL");
+
+export async function getClientConfig(): Promise<ClientDeploymentConfiguration> {
   console.log("Loading config from environment");
 
   const domainConfig = await loadDomainConfig();
 
   return {
-    MEASUREMENT_ID: getString("MEASUREMENT_ID"),
+    MEASUREMENT_ID: MEASUREMENT_ID,
     BACKEND_API_ENDPOINT: BACKEND_API_ENDPOINT,
-    FEEDBACK_LINK: getString("FEEDBACK_LINK"),
-    ENABLE_GOOGLE_FEEDBACK: getBoolean("ENABLE_GOOGLE_FEEDBACK"),
-    GOOGLE_FEEDBACK_PRODUCT_ID: getString("GOOGLE_FEEDBACK_PRODUCT_ID"),
-    GOOGLE_FEEDBACK_BUCKET: getString("GOOGLE_FEEDBACK_BUCKET"),
-    ALLOW_3P_MODULES: getBoolean("ALLOW_3P_MODULES"),
+    FEEDBACK_LINK: FEEDBACK_LINK,
+    ENABLE_GOOGLE_FEEDBACK: ENABLE_GOOGLE_FEEDBACK,
+    GOOGLE_FEEDBACK_PRODUCT_ID: GOOGLE_FEEDBACK_PRODUCT_ID,
+    GOOGLE_FEEDBACK_BUCKET: GOOGLE_FEEDBACK_BUCKET,
+    ALLOW_3P_MODULES: ALLOW_3P_MODULES,
     domains: domainConfig,
     flags: {
-      usePlanRunner: getBoolean("ENABLE_PLAN_RUNNER"),
-      saveAsCode: getBoolean("ENABLE_SAVE_AS_CODE"),
-      generateForEach: getBoolean("ENABLE_GENERATE_FOR_EACH"),
-      mcp: getBoolean("ENABLE_MCP"),
-      force2DGraph: getBoolean("ENABLE_FORCE_2D_GRAPH"),
+      usePlanRunner: ENABLE_PLAN_RUNNER,
+      saveAsCode: ENABLE_SAVE_AS_CODE,
+      generateForEach: ENABLE_GENERATE_FOR_EACH,
+      mcp: ENABLE_MCP,
+      force2DGraph: ENABLE_FORCE_2D_GRAPH,
     },
   };
 }
