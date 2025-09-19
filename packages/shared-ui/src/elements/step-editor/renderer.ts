@@ -180,6 +180,14 @@ export class Renderer extends LitElement {
   @property()
   accessor allowEdgeAttachmentMove = true;
 
+  /**
+   * This property acts as a bridge between signal and non-signal world. It is
+   * incremented every time interesting signals change on the outside and is
+   * used to track the change here inside.
+   */
+  @property()
+  accessor runStateEffect = 0;
+
   @state()
   accessor _boundsDirty = new Set<string>();
 
@@ -966,7 +974,8 @@ export class Renderer extends LitElement {
 
     if (
       changedProperties.has("topGraphResult") ||
-      changedProperties.has("runState")
+      changedProperties.has("runState") ||
+      changedProperties.has("runStateEffect")
     ) {
       const mainGraph = this.#graphs.get(MAIN_BOARD_ID);
       const runState = this.runtimeFlags?.usePlanRunner ? this.runState : null;
