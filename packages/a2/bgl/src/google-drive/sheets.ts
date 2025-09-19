@@ -29,6 +29,7 @@ function sheetSchema(): GeminiSchema {
 }
 
 async function inferSheetValues(
+  caps: Capabilities,
   contents?: LLMContent[]
 ): Promise<Outcome<unknown[][]>> {
   if (!contents) {
@@ -36,7 +37,7 @@ async function inferSheetValues(
       `Unable to infer spreadsheet values. No information was provided.`
     );
   }
-  const prompt = new GeminiPrompt({
+  const prompt = new GeminiPrompt(caps, {
     body: {
       contents,
       systemInstruction:

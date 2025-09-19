@@ -43,14 +43,17 @@ class GenerateText {
   public listMode = false;
   #hasTools = false;
 
-  constructor(public readonly sharedContext: SharedContext) {
+  constructor(
+    private readonly caps: Capabilities,
+    public readonly sharedContext: SharedContext
+  ) {
     this.invoke = this.invoke.bind(this);
   }
 
   async initialize(): Promise<Outcome<void>> {
     const { sharedContext } = this;
     const template = new Template(sharedContext.description);
-    const toolManager = new ToolManager(new ArgumentNameGenerator());
+    const toolManager = new ToolManager(new ArgumentNameGenerator(this.caps));
     const doneTool = createDoneTool();
     const keepChattingTool = createKeepChattingTool();
     const substituting = await template.substitute(
@@ -148,7 +151,7 @@ class GenerateText {
       }
     }
     inputs.body.systemInstruction = systemInstruction;
-    const prompt = new GeminiPrompt(inputs, { toolManager });
+    const prompt = new GeminiPrompt(this.caps, inputs, { toolManager });
     const result = await prompt.invoke();
     if (!ok(result)) return result;
     const calledTools =
@@ -205,7 +208,7 @@ class GenerateText {
               },
             };
           }
-          const nextTurn = new GeminiPrompt(inputs, { toolManager });
+          const nextTurn = new GeminiPrompt(this.caps, inputs, { toolManager });
           const nextTurnResult = await nextTurn.invoke();
           if (!ok(nextTurnResult)) return nextTurnResult;
           if (!nextTurn.calledTools && !nextTurn.calledCustomTools) {
@@ -322,7 +325,7 @@ async function keepChatting(
   };
 }
 
-async function invoke({ context }: Inputs) {
+async function invoke({ context }: Inputs, caps: Capabilities) {
   if (!context.description) {
     const msg = "Please provide a prompt for the step";
     await report({
@@ -346,7 +349,7 @@ async function invoke({ context }: Inputs) {
     return done([...context.context, last], context.makeList);
   }
 
-  const gen = new GenerateText(context);
+  const gen = new GenerateText(caps, context);
   const initializing = await gen.initialize();
   if (!ok(initializing)) return initializing;
 

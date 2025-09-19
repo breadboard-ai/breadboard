@@ -134,14 +134,12 @@ async function thought(response: LLMContent, iteration: number) {
   });
 }
 
-async function invoke({
-  context,
-  query,
-  summarize,
-  ...params
-}: ResearcherInputs) {
+async function invoke(
+  { context, query, summarize, ...params }: ResearcherInputs,
+  caps: Capabilities
+) {
   const tools = RESEARCH_TOOLS.map((descriptor) => descriptor.url);
-  const toolManager = new ToolManager(new ArgumentNameGenerator());
+  const toolManager = new ToolManager(new ArgumentNameGenerator(caps));
   let content = context || [toLLMContent("Start the research")];
 
   const template = new Template(query);
@@ -165,7 +163,8 @@ async function invoke({
   const research: string[] = [];
   for (let i = 0; i <= MAX_ITERATIONS; i++) {
     const askingGemini = await invokeGemini(
-      researcherPrompt(content, query, toolManager.list(), i === 0)
+      researcherPrompt(content, query, toolManager.list(), i === 0),
+      caps
     );
 
     if (!ok(askingGemini)) {
@@ -203,7 +202,8 @@ async function invoke({
   }
   if (summarize) {
     const producingReport = await invokeGemini(
-      reportWriterPrompt(query, research)
+      reportWriterPrompt(query, research),
+      caps
     );
     if (!ok(producingReport)) {
       return producingReport;

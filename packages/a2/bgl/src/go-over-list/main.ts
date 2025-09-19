@@ -38,14 +38,11 @@ function findStrategist(name?: string): Strategist | undefined {
   return STRATEGISTS.find((strategist) => strategist.name === name);
 }
 
-async function invoke({
-  context,
-  plan: objective,
-  strategy,
-  "z-list": makeList,
-  ...params
-}: Inputs): Promise<Outcome<Outputs>> {
-  const toolManager = new ToolManager(new ArgumentNameGenerator());
+async function invoke(
+  { context, plan: objective, strategy, "z-list": makeList, ...params }: Inputs,
+  caps: Capabilities
+): Promise<Outcome<Outputs>> {
+  const toolManager = new ToolManager(new ArgumentNameGenerator(caps));
   const template = new Template(objective);
   const substituting = await template.substitute(
     params,
@@ -63,7 +60,12 @@ async function invoke({
     context,
     async (objective, context, isList) => {
       const disallowNestedLists = makeList && !isList;
-      const executor = new Runtime(context, toolManager, disallowNestedLists);
+      const executor = new Runtime(
+        caps,
+        context,
+        toolManager,
+        disallowNestedLists
+      );
       const executingOne = await executor.executeStrategy(
         objective,
         strategist

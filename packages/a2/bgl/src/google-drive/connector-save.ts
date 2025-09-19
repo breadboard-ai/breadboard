@@ -42,14 +42,10 @@ function contextFromId(id: string, mimeType: string): LLMContent[] {
   return [{ parts: [{ storedData: { handle: `drive:/${id}`, mimeType } }] }];
 }
 
-async function invoke({
-  method,
-  id: connectorId,
-  context,
-  title,
-  graphId,
-  info,
-}: Inputs): Promise<Outcome<Outputs>> {
+async function invoke(
+  { method, id: connectorId, context, title, graphId, info }: Inputs,
+  caps: Capabilities
+): Promise<Outcome<Outputs>> {
   graphId ??= "";
   const mimeType = info?.configuration?.file?.mimeType || DOC_MIME_TYPE;
   const canSave =
@@ -93,7 +89,7 @@ async function invoke({
             SLIDES_MIME_TYPE,
             info?.configuration?.file?.id
           ),
-          inferSlideStructure(context),
+          inferSlideStructure(caps, context),
         ]);
         if (!ok(gettingCollector)) return gettingCollector;
         if (!ok(result)) return result;
@@ -123,7 +119,7 @@ async function invoke({
             SHEETS_MIME_TYPE,
             info?.configuration?.file?.id
           ),
-          inferSheetValues(context),
+          inferSheetValues(caps, context),
         ]);
         if (!ok(gettingCollector)) return gettingCollector;
         if (!ok(result)) return result;

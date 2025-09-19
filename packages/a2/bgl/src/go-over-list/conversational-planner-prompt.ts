@@ -80,6 +80,7 @@ function getPlan(content: LLMContent): Outcome<Plan> {
 }
 
 function thinkingPlannerPrompt(
+  caps: Capabilities,
   context: LLMContent[],
   objective: LLMContent,
   plan: Plan,
@@ -163,7 +164,7 @@ ${extraPlannerPrompt}
 `.asContent();
 
   const contents = [instruction];
-  const prompt = new GeminiPrompt({
+  const prompt = new GeminiPrompt(caps, {
     body: {
       contents,
       safetySettings: defaultSafetySettings(),
@@ -179,6 +180,7 @@ ${extraPlannerPrompt}
 }
 
 function plannerPrompt(
+  caps: Capabilities,
   context: LLMContent[] | undefined,
   objective: LLMContent,
   extraPlannerPrompt: string,
@@ -191,7 +193,7 @@ Extra instructions:
 ${extraPlannerPrompt}
 `.asContent();
   const contents = [...context, instruction, epilogue];
-  const prompt = new GeminiPrompt({
+  const prompt = new GeminiPrompt(caps, {
     body: {
       contents,
       safetySettings: defaultSafetySettings(),

@@ -36,12 +36,14 @@ Now think real hard: do you need to organize or summarize results?
 `;
 
   async execute(
+    caps: Capabilities,
     execute: ExecuteStepFunction,
     mutableContext: LLMContent[],
     objective: LLMContent,
     makeList: boolean
   ): Promise<Outcome<LLMContent[]>> {
     const planning = await plannerPrompt(
+      caps,
       mutableContext,
       objective,
       this.extraPlannerPrompt,
@@ -88,6 +90,7 @@ and adjusting the plan if necessary.`,
       }
       this.tasks.push(task.task);
       const thinking = await thinkingPlannerPrompt(
+        caps,
         mutableContext,
         objective,
         plan,
@@ -110,6 +113,7 @@ and adjusting the plan if necessary.`,
       });
 
       const organizing = await organizerPrompt(
+        caps,
         results,
         objective,
         makeList

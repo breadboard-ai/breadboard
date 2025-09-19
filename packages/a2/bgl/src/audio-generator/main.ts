@@ -86,19 +86,17 @@ async function callAudioGen(
   return response.chunks.at(0)!;
 }
 
-async function invoke({
-  context,
-  text,
-  voice,
-  ...params
-}: AudioGeneratorInputs): Promise<Outcome<AudioGeneratorOutputs>> {
+async function invoke(
+  { context, text, voice, ...params }: AudioGeneratorInputs,
+  caps: Capabilities
+): Promise<Outcome<AudioGeneratorOutputs>> {
   context ??= [];
   let instructionText = "";
   if (text) {
     instructionText = toText(text).trim();
   }
   const template = new Template(toLLMContent(instructionText));
-  const toolManager = new ToolManager(new ArgumentNameGenerator());
+  const toolManager = new ToolManager(new ArgumentNameGenerator(caps));
   const substituting = await template.substitute(
     params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)

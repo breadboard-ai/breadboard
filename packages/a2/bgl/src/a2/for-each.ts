@@ -122,6 +122,7 @@ export type AsyncForEachCallback = (
 ) => Promise<Outcome<InvokeOutputs>>;
 
 async function forEach(
+  caps: Capabilities,
   inputs: ForEachInputs,
   callback: AsyncForEachCallback
 ): Promise<InvokeOutputs> {
@@ -150,7 +151,7 @@ async function forEach(
     async () => ""
   );
   if (!ok(mappedParts)) return mappedParts;
-  const splitPrompt = new GeminiPrompt({
+  const splitPrompt = new GeminiPrompt(caps, {
     body: {
       safetySettings: defaultSafetySettings(),
       systemInstruction: systemInstruction(),

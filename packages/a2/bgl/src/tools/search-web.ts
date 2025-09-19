@@ -50,7 +50,10 @@ function extractQuery(maybeMarkdownListItem: string): string {
   return maybeMarkdownListItem;
 }
 
-async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
+async function invoke(
+  inputs: Inputs,
+  caps: Capabilities
+): Promise<Outcome<Outputs>> {
   let query: LLMContent[];
   let mode: "step" | "tool";
   if ("context" in inputs) {
@@ -82,7 +85,7 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
       return err("Please provide a query");
     }
     console.log("Query: ", queryString);
-    const getting = await toolSearchWeb({ query: queryString });
+    const getting = await toolSearchWeb({ query: queryString }, caps);
     if (!ok(getting)) {
       return toLLMContent(getting.$error);
     }

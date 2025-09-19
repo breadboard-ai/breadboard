@@ -37,12 +37,14 @@ export type CustomSearchEngineResponse = {
 };
 
 async function generateSummary(
+  caps: Capabilities,
   query: string,
   reporter: StreamableReporter
 ): Promise<Outcome<string>> {
   const toolManager = new ToolManager();
   toolManager.addSearch();
   const result = await new GeminiPrompt(
+    caps,
     {
       body: {
         contents: [{ parts: [{ text: query }] }],
@@ -106,9 +108,10 @@ async function getSearchLinks(
   return formattedResults;
 }
 
-async function invoke({
-  query,
-}: SearchWebInputs): Promise<Outcome<SearchWebOutputs>> {
+async function invoke(
+  { query }: SearchWebInputs,
+  caps: Capabilities
+): Promise<Outcome<SearchWebOutputs>> {
   const reporter = new StreamableReporter({
     title: "Searching Web",
     icon: "search",
@@ -117,7 +120,7 @@ async function invoke({
     await reporter.start();
     await reporter.sendUpdate("Search term", query, "search");
     const [summary, links] = await Promise.all([
-      generateSummary(query, reporter),
+      generateSummary(caps, query, reporter),
       getSearchLinks(query, reporter),
     ]);
     if (!ok(summary)) {

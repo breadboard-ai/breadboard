@@ -132,6 +132,7 @@ async function callImageGen(
 }
 
 function promptExpander(
+  caps: Capabilities,
   contents: LLMContent[] | undefined,
   instruction: LLMContent
 ): GeminiPrompt {
@@ -160,7 +161,7 @@ Create the following image:
 You output will be fed directly into the text-to-image model, so it must be a prompt only, no additional chit-chat
 """
 `;
-  return new GeminiPrompt({
+  return new GeminiPrompt(caps, {
     body: {
       contents: addUserTurn(promptText.asContent(), contents),
       systemInstruction: toLLMContent(`

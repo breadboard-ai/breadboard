@@ -22,6 +22,7 @@ export type ExecuteStepFunction = (
 export type Strategist = {
   name: string;
   execute(
+    caps: Capabilities,
     singleStepExecutor: ExecuteStepFunction,
     mutableContext: LLMContent[],
     objective: LLMContent,

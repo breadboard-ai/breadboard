@@ -55,6 +55,7 @@ class GeminiPrompt {
   calledCustomTools: boolean = false;
 
   constructor(
+    private readonly caps: Capabilities,
     public readonly inputs: GeminiInputs,
     options?: ToolManager | GeminiPromptOptions
   ) {
@@ -100,7 +101,7 @@ class GeminiPrompt {
     this.calledTools = false;
     this.calledCustomTools = false;
     const { allowToolErrors, validator } = this.options;
-    const invoking = await gemini(this.inputs);
+    const invoking = await gemini(this.inputs, this.caps);
     if (!ok(invoking)) return invoking;
     if ("context" in invoking) {
       return err("Invalid output from Gemini -- must be candidates", {

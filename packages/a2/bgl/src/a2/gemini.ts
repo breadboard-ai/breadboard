@@ -2,7 +2,6 @@
  * @fileoverview Gemini Model Family.
  */
 
-import fetch from "@fetch";
 import secrets from "@secrets";
 import { StreamableReporter } from "./output";
 
@@ -387,6 +386,7 @@ async function getAccessToken() {
 }
 
 async function callAPI(
+  fetch: Capabilities["fetch"],
   retries: number,
   model: string,
   body: GeminiBody,
@@ -615,7 +615,10 @@ function kindFromStatus(status: number): ErrorMetadata["kind"] {
   return "unknown";
 }
 
-async function invoke(inputs: GeminiInputs): Promise<Outcome<GeminiOutputs>> {
+async function invoke(
+  inputs: GeminiInputs,
+  { fetch }: Capabilities
+): Promise<Outcome<GeminiOutputs>> {
   const validatingInputs = validateInputs(inputs);
   if (!ok(validatingInputs)) {
     return validatingInputs;
@@ -632,6 +635,7 @@ async function invoke(inputs: GeminiInputs): Promise<Outcome<GeminiOutputs>> {
     // Public API is being used.
     // Behave as if we're wired in.
     const result = await callAPI(
+      fetch,
       retries,
       model,
       constructBody(context, systemInstruction, prompt, modality)
@@ -652,6 +656,7 @@ async function invoke(inputs: GeminiInputs): Promise<Outcome<GeminiOutputs>> {
     // Private API is being used.
     // Behave as if we're being invoked.
     return callAPI(
+      fetch,
       retries,
       model,
       augmentBody(body, systemInstruction, prompt, modality),

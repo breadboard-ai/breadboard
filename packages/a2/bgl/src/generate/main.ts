@@ -259,11 +259,10 @@ function getMode(modeId: ModeId | undefined): GenerationModes {
   return modeMap.get(modeId || DEFAULT_MODE.id) || DEFAULT_MODE;
 }
 
-async function invoke({
-  "generation-mode": mode,
-  "p-for-each": useForEach,
-  ...rest
-}: Inputs) {
+async function invoke(
+  { "generation-mode": mode, "p-for-each": useForEach, ...rest }: Inputs,
+  caps: Capabilities
+) {
   const { url: $board, type, modelName } = getMode(mode);
   const flags = await readFlags();
   let generateForEach = false;
@@ -277,7 +276,7 @@ async function invoke({
     rest["p-model-name"] = modelName;
   }
   if (generateForEach) {
-    return forEach(rest, async (prompt) => {
+    return forEach(caps, rest, async (prompt) => {
       const ports = { ...rest };
       ports[PROMPT_PORT] = prompt;
       return invokeGraph({ $board, ...forwardPorts(type, ports) });

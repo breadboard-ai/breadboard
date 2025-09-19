@@ -145,14 +145,17 @@ async function callVideoGen(
   return response.chunks.at(0)!;
 }
 
-async function invoke({
-  context,
-  instruction,
-  "p-disable-prompt-rewrite": disablePromptRewrite,
-  "p-video-aspect-ratio": aspectRatio,
-  "b-model-name": modelId,
-  ...params
-}: VideoGeneratorInputs): Promise<Outcome<VideoGeneratorOutputs>> {
+async function invoke(
+  {
+    context,
+    instruction,
+    "p-disable-prompt-rewrite": disablePromptRewrite,
+    "p-video-aspect-ratio": aspectRatio,
+    "b-model-name": modelId,
+    ...params
+  }: VideoGeneratorInputs,
+  caps: Capabilities
+): Promise<Outcome<VideoGeneratorOutputs>> {
   const { modelName } = getModel(modelId);
   context ??= [];
   let instructionText = "";
@@ -167,7 +170,7 @@ async function invoke({
   // Note: it is important that images are not subsituted in here as they will
   // not be handled properly. At this point, only text variables should be left.
   const template = new Template(toLLMContent(instructionText));
-  const toolManager = new ToolManager(new ArgumentNameGenerator());
+  const toolManager = new ToolManager(new ArgumentNameGenerator(caps));
   const substituting = await template.substitute(
     params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)

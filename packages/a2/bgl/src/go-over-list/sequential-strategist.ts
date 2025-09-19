@@ -15,11 +15,13 @@ class SequentialStrategist implements Strategist {
 All tasks in the plan will be executed in sequence, building on each other.`;
 
   async execute(
+    caps: Capabilities,
     execute: ExecuteStepFunction,
     mutableContext: LLMContent[],
     objective: LLMContent
   ): Promise<Outcome<LLMContent[]>> {
     const planning = await plannerPrompt(
+      caps,
       mutableContext,
       objective,
       this.extraPlannerPrompt,

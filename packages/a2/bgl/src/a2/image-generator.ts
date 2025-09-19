@@ -40,6 +40,7 @@ type ImageGeneratorOutputs = {
 export { invoke as default, describe };
 
 function gatheringRequest(
+  caps: Capabilities,
   contents: LLMContent[] | undefined,
   instruction: LLMContent,
   toolManager: ToolManager
@@ -53,6 +54,7 @@ ${instruction}
 
 Call the tools to gather the necessary information that could be used to create an accurate prompt.`;
   return new GeminiPrompt(
+    caps,
     {
       body: {
         contents: addUserTurn(promptText.asContent(), contents),
@@ -69,13 +71,16 @@ to be used to create an accurate prompt for a text-to-image model.
 
 const MAX_RETRIES = 5;
 
-async function invoke({
-  context: incomingContext,
-  instruction,
-  "p-disable-prompt-rewrite": disablePromptRewrite,
-  "p-aspect-ratio": aspectRatio,
-  ...params
-}: ImageGeneratorInputs): Promise<Outcome<ImageGeneratorOutputs>> {
+async function invoke(
+  {
+    context: incomingContext,
+    instruction,
+    "p-disable-prompt-rewrite": disablePromptRewrite,
+    "p-aspect-ratio": aspectRatio,
+    ...params
+  }: ImageGeneratorInputs,
+  caps: Capabilities
+): Promise<Outcome<ImageGeneratorOutputs>> {
   incomingContext ??= [];
   if (!instruction) {
     instruction = toLLMContent("");
@@ -85,7 +90,7 @@ async function invoke({
   }
   let imageContext = extractMediaData(incomingContext);
   // Substitute params in instruction.
-  const toolManager = new ToolManager(new ArgumentNameGenerator());
+  const toolManager = new ToolManager(new ArgumentNameGenerator(caps));
   const substituting = await new Template(instruction).substitute(
     params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)
@@ -100,6 +105,7 @@ async function invoke({
       // information via tools.
       if (toolManager.hasTools()) {
         const gatheringInformation = await gatheringRequest(
+          caps,
           context,
           instruction,
           toolManager
@@ -128,6 +134,7 @@ async function invoke({
             imagePrompt = toLLMContent(toText(addUserTurn(refText, context)));
           } else {
             const generatingPrompt = await promptExpander(
+              caps,
               context,
               refText
             ).invoke();
