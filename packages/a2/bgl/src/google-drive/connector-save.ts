@@ -56,7 +56,7 @@ async function invoke(
     if (!canSave) {
       return err(`Unable to save files of type "${mimeType}"`);
     }
-    const token = await connect({ title: "Get Auth Token" });
+    const token = await connect(caps, { title: "Get Auth Token" });
     switch (mimeType) {
       case DOC_MIME_TYPE: {
         const gettingCollector = await getCollector(

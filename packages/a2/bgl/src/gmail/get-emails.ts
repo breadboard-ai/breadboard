@@ -3,7 +3,6 @@
  */
 
 import { type DescribeOutputs } from "@describe";
-import secrets from "@secrets";
 import { decodeBase64, err } from "../a2/utils";
 
 type FetchErrorResponse = {
@@ -46,7 +45,7 @@ export interface ExecuteStepResponse {
 
 async function invoke(
   _inputs: Record<string, unknown>,
-  { fetch }: Capabilities
+  { fetch, secrets }: Capabilities
 ) {
   // Get an authentication token.
   const key = "connection:$sign-in";

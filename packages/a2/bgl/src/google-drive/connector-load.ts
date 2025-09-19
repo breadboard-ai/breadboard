@@ -24,7 +24,7 @@ async function invoke(
   { id, info: { configuration } }: Inputs,
   caps: Capabilities
 ): Promise<Outcome<Outputs>> {
-  const token = await connect({ title: "Getting auth token" });
+  const token = await connect(caps, { title: "Getting auth token" });
   if (!ok(token)) return token;
   const gettingDoc = await getCollector(caps, token, id, configuration?.file);
   if (!ok(gettingDoc)) return gettingDoc;

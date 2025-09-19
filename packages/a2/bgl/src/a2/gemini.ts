@@ -2,7 +2,6 @@
  * @fileoverview Gemini Model Family.
  */
 
-import secrets from "@secrets";
 import { StreamableReporter } from "./output";
 
 import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils";
@@ -379,20 +378,20 @@ function conformBody(body: GeminiBody): GeminiBody {
   };
 }
 
-async function getAccessToken() {
+async function getAccessToken({ secrets }: Capabilities) {
   const signInSecretName = "connection:$sign-in";
   const result = await secrets({ keys: [signInSecretName] });
   return result[signInSecretName];
 }
 
 async function callAPI(
-  fetch: Capabilities["fetch"],
+  caps: Capabilities,
   retries: number,
   model: string,
   body: GeminiBody,
   $metadata?: Metadata
 ): Promise<Outcome<GeminiAPIOutputs>> {
-  const accessToken = await getAccessToken();
+  const accessToken = await getAccessToken(caps);
   const reporter = new StreamableReporter({
     title: `Calling ${model}`,
     icon: "spark",
@@ -411,7 +410,7 @@ async function callAPI(
         path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
         data: [],
       });
-      const result = await fetch({
+      const result = await caps.fetch({
         $metadata,
         url: endpointURL(model),
         method: "POST",
@@ -617,7 +616,7 @@ function kindFromStatus(status: number): ErrorMetadata["kind"] {
 
 async function invoke(
   inputs: GeminiInputs,
-  { fetch }: Capabilities
+  caps: Capabilities
 ): Promise<Outcome<GeminiOutputs>> {
   const validatingInputs = validateInputs(inputs);
   if (!ok(validatingInputs)) {
@@ -635,7 +634,7 @@ async function invoke(
     // Public API is being used.
     // Behave as if we're wired in.
     const result = await callAPI(
-      fetch,
+      caps,
       retries,
       model,
       constructBody(context, systemInstruction, prompt, modality)
@@ -656,7 +655,7 @@ async function invoke(
     // Private API is being used.
     // Behave as if we're being invoked.
     return callAPI(
-      fetch,
+      caps,
       retries,
       model,
       augmentBody(body, systemInstruction, prompt, modality),

@@ -5,7 +5,6 @@
 export { executeStep, executeTool, parseExecutionOutput };
 
 import read from "@read";
-import secrets from "@secrets";
 import { StreamableReporter } from "./output";
 import {
   decodeBase64,
@@ -186,7 +185,7 @@ async function getBackendUrl() {
 }
 
 async function executeStep(
-  { fetch }: Capabilities,
+  { fetch, secrets }: Capabilities,
   body: ExecuteStepRequest
 ): Promise<Outcome<ExecutionOutput>> {
   const model = body.planStep.options?.modelName || body.planStep.stepName;

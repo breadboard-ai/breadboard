@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import secrets from "@secrets";
-
 import { err } from "../a2/utils";
 
 export {
@@ -927,7 +925,7 @@ async function appendSpreadsheetValues(
   );
 }
 
-async function connect(metadata: Metadata) {
+async function connect({ secrets }: Capabilities, metadata: Metadata) {
   const { [connectionId]: token } = await secrets({
     ...meta(metadata),
     keys: [connectionId],
