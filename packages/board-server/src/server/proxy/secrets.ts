@@ -16,23 +16,21 @@ import { readFile } from "fs/promises";
 const MODULE_PATH = dirname(fileURLToPath(import.meta.url));
 const ROOT_PATH = resolve(MODULE_PATH, "../../../..");
 
-export { SecretsProvider };
-
-export type SecretsGetKeyResult =
+type SecretsGetKeyResult =
   | [name: string, value: string, origin?: string | null]
   | null;
 
-export type SecretsStore = {
+type SecretsStore = {
   getList: () => Promise<SecretListEntry[]>;
   getKey(key: string): Promise<SecretsGetKeyResult>;
 };
 
-export type SecretMapEntry = {
+type SecretMapEntry = {
   secret: string;
   origin: string | null;
 };
 
-export type SecretListEntry = {
+type SecretListEntry = {
   name: string;
   origin: string | null;
 };
