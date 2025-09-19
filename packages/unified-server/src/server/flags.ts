@@ -18,10 +18,6 @@ export type DeploymentConfiguration = {
 
 export type ServerDeploymentConfiguration = {
   /**
-   * The URL of the deployed server.
-   */
-  SERVER_URL: string;
-  /**
    * The Drive Id of a folder containing featured gallery items
    */
   GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID: string;
@@ -33,6 +29,8 @@ export type ServerDeploymentConfiguration = {
 };
 
 export const BACKEND_API_ENDPOINT: string = getString("BACKEND_API_ENDPOINT");
+
+export const SERVER_URL: string = getString("SERVER_URL");
 
 export async function getConfig(): Promise<DeploymentConfiguration> {
   console.log("Loading config from environment");
@@ -58,7 +56,6 @@ export async function getConfig(): Promise<DeploymentConfiguration> {
   };
 
   const serverConfig: ServerDeploymentConfiguration = {
-    SERVER_URL: getString("SERVER_URL"),
     GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID: getString(
       "GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID"
     ),
