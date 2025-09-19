@@ -24,7 +24,8 @@ import {
   type StoreDataResult,
 } from "@google-labs/breadboard";
 import { Readable } from "node:stream";
-import type { BlobStore, BlobStoreGetResult, Result } from "./types.js";
+import type { BlobStore, BlobStoreGetResult } from "./types.js";
+import type { Result } from "@breadboard-ai/types/result.js";
 
 export { BlobDataStore, GoogleStorageBlobStore, isUUID };
 

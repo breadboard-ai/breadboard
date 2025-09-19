@@ -26,6 +26,7 @@ import {
   InspectableGraphOptions,
   MutableGraph,
 } from "./inspect.js";
+import type { Result } from "./result.js";
 
 export type ChangeEventType = "edit" | "history";
 
@@ -447,13 +448,3 @@ export type EditableGraphSelection = {
   edges: Edge[];
   dangling: Edge[];
 };
-
-export type Result<R> =
-  | {
-      success: false;
-      error: string;
-    }
-  | {
-      success: true;
-      result: R;
-    };
