@@ -6,7 +6,6 @@
 
 import express, { type Request } from "express";
 import ViteExpress from "vite-express";
-import { config as loadEnv } from "dotenv";
 
 import * as boardServer from "@breadboard-ai/board-server";
 import * as connectionServer from "@breadboard-ai/connection-server";
@@ -28,7 +27,6 @@ const FEATURED_GALLERY_CACHE_REFRESH_SECONDS = 10 * 60;
 console.log("[unified-server startup] Starting unified server");
 
 console.log("[unified-server startup] Loading env file");
-loadEnv();
 
 const server = express();
 

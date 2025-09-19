@@ -5,7 +5,7 @@
  */
 
 import { readFile } from "node:fs/promises";
-
+import "dotenv/config";
 import {
   type ClientDeploymentConfiguration,
   type DomainConfiguration,
