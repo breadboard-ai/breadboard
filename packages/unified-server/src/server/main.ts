@@ -112,7 +112,7 @@ ViteExpress.config({
     const board = req.res?.locals.loadedBoard;
     const displayName = board?.displayName || "Loading ...";
     const serverUrl = new URL(
-      serverConfig.SERVER_URL ?? `http://localhost:${boardServerConfig.port}`
+      flags.SERVER_URL || `http://localhost:${boardServerConfig.port}`
     );
     const clientConfigStr = JSON.stringify(clientConfig).replaceAll(
       "</script>",
