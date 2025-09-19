@@ -7,18 +7,18 @@
 import { type RuntimeFlags } from "./flags.js";
 
 export type ClientDeploymentConfiguration = {
-  MEASUREMENT_ID: string;
-  BACKEND_API_ENDPOINT: string;
-  FEEDBACK_LINK: string;
-  ENABLE_GOOGLE_FEEDBACK: boolean;
-  GOOGLE_FEEDBACK_PRODUCT_ID: string;
-  GOOGLE_FEEDBACK_BUCKET: string;
+  MEASUREMENT_ID?: string;
+  BACKEND_API_ENDPOINT?: string;
+  FEEDBACK_LINK?: string;
+  ENABLE_GOOGLE_FEEDBACK?: boolean;
+  GOOGLE_FEEDBACK_PRODUCT_ID?: string;
+  GOOGLE_FEEDBACK_BUCKET?: string;
   /**
    * Allow running 3P modules (modules that are other than A2). Default
    * value is "false"
    */
-  ALLOW_3P_MODULES: boolean;
-  domains: Record<string, DomainConfiguration>;
+  ALLOW_3P_MODULES?: boolean;
+  domains?: Record<string, DomainConfiguration>;
   flags: RuntimeFlags;
 };
 
