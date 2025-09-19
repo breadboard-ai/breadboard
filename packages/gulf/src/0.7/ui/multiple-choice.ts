@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { html, css, PropertyValues } from "lit";
-import { customElement, property, query } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root";
+import { StringValue } from "../types/component-update";
 
 @customElement("gulf-multiplechoice")
 export class MultipleChoice extends Root {
@@ -15,8 +16,8 @@ export class MultipleChoice extends Root {
   @property()
   accessor options: { label: string; value: string }[] = [];
 
-  @query("select")
-  accessor #select: HTMLSelectElement | null = null;
+  @property()
+  accessor value: StringValue | null = null;
 
   static styles = css`
     * {
@@ -42,21 +43,23 @@ export class MultipleChoice extends Root {
     }
   `;
 
-  #setBoundValue(_value: string[]) {
-    // if (!this.value || !this.data) {
-    //   return;
-    // }
-    // if (!("path" in this.value)) {
-    //   return;
-    // }
-    // setData(this.data, this.value.path, value);
+  #setBoundValue(value: string[]) {
+    if (!this.value || !this.model) {
+      return;
+    }
+    if (!("path" in this.value)) {
+      return;
+    }
+    if (!this.value.path) {
+      return;
+    }
+
+    this.model.setDataProperty(this.value.path, this.dataPrefix, value);
   }
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     const shouldUpdate =
-      changedProperties.has("value") ||
-      changedProperties.has("options") ||
-      changedProperties.has("model");
+      changedProperties.has("options") || changedProperties.has("model");
     if (shouldUpdate) {
       this.#setBoundValue([this.options[0].value]);
     }
