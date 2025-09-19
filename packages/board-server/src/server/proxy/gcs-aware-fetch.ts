@@ -11,7 +11,6 @@ import {
   type NodeHandlerContext,
   type OutputValues,
 } from "@google-labs/breadboard";
-import type { BoardServerStore, ServerInfo } from "../store.js";
 import { GoogleStorageBlobStore } from "../blob-store.js";
 import type { ServerConfig } from "../config.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
@@ -29,14 +28,7 @@ type StepContent = {
 class GcsAwareFetch {
   static #instance: GcsAwareFetch | undefined;
 
-  private readonly serverInfo: Promise<ServerInfo | null>;
-
-  constructor(
-    store: BoardServerStore,
-    public readonly serverConfig: ServerConfig
-  ) {
-    this.serverInfo = store.getServerInfo();
-  }
+  constructor(public readonly serverConfig: ServerConfig) {}
 
   #processFetchInputs(
     bucketName: string,
@@ -66,8 +58,7 @@ class GcsAwareFetch {
           inputs: InputValues,
           context: NodeHandlerContext
         ): Promise<OutputValues | void> => {
-          const serverInfo = await this.serverInfo;
-          const serverUrl = this.serverConfig.serverUrl || serverInfo?.url;
+          const serverUrl = this.serverConfig.serverUrl;
           const storageBucket = this.serverConfig.storageBucket;
           if (!serverUrl || !storageBucket) {
             console.log(
@@ -100,12 +91,9 @@ class GcsAwareFetch {
     };
   }
 
-  static instance(
-    store: BoardServerStore,
-    config: ServerConfig
-  ): GcsAwareFetch {
+  static instance(config: ServerConfig): GcsAwareFetch {
     if (!GcsAwareFetch.#instance) {
-      GcsAwareFetch.#instance = new GcsAwareFetch(store, config);
+      GcsAwareFetch.#instance = new GcsAwareFetch(config);
     }
     return GcsAwareFetch.#instance;
   }

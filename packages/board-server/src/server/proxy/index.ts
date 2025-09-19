@@ -62,10 +62,9 @@ async function post(
   req: Request,
   res: Response
 ): Promise<void> {
-  const gcsAwareFetchKit = GcsAwareFetch.instance(
-    req.app.locals.store,
-    serverConfig
-  ).createKit(asRuntimeKit(Core));
+  const gcsAwareFetchKit = GcsAwareFetch.instance(serverConfig).createKit(
+    asRuntimeKit(Core)
+  );
 
   const server = new ProxyServer(
     new HTTPServerTransport({ body: req.body }, new ResponseAdapter(res))
