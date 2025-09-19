@@ -742,4 +742,19 @@ declare module "@write" {
     inputs: FileSystemWriteArguments
   ): Promise<FileSystemWriteResult>;
 }
+
+declare type Capabilities = {
+  fetch(url: FetchInputs): Promise<FetchOutputs>;
+  secrets<S extends string>(inputs: {
+    $metadata?: NodeMetadata;
+    keys: S[];
+  }): Promise<{ [K in S]: string }>;
+  invoke(inputs: InvokeInputs): Promise<InvokeOutputs>;
+  input(inputs: InputInputs): Promise<InputOutputs>;
+  output(inputs: OutputInputs): Promise<OutputOutputs>;
+  describe(inputs: DescribeInputs): Promise<Outcome<DescribeOutputs>>;
+  query(inputs: FileSystemQueryArguments): Promise<FileSystemQueryResult>;
+  read(inputs: FileSystemReadArguments): Promise<FileSystemReadResult>;
+  write(inputs: FileSystemWriteArguments): Promise<FileSystemWriteResult>;
+};
 `
