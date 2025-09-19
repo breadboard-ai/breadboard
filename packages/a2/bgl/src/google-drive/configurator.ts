@@ -17,7 +17,7 @@ const { invoke, describe } = createConfigurator<
   initialize: async () => {
     return { title: "Untitled Drive File", configuration: {} };
   },
-  read: async ({ id: _id, configuration }) => {
+  read: async (_caps, { id: _id, configuration }) => {
     return {
       schema: {
         type: "object",
@@ -33,7 +33,7 @@ const { invoke, describe } = createConfigurator<
       values: configuration,
     };
   },
-  preview: async ({ configuration }) => {
+  preview: async (_caps, { configuration }) => {
     const { id, mimeType } = configuration.file || {};
     if (!id || !mimeType)
       return [
@@ -43,7 +43,7 @@ const { invoke, describe } = createConfigurator<
       ];
     return [{ parts: [{ fileData: { fileUri: id, mimeType } }] }];
   },
-  write: async ({ id, values }) => {
+  write: async (_caps, { id, values }) => {
     console.log("WRITE", id, values);
     return values;
   },

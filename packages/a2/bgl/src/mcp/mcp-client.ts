@@ -16,8 +16,11 @@ import {
 export { McpClient };
 
 class McpClient extends RpcSession<InitArguments, Implementation> {
-  constructor(public readonly args: InitArguments) {
-    super("/mnt/mcp/session");
+  constructor(
+    caps: Capabilities,
+    public readonly args: InitArguments
+  ) {
+    super(caps, "/mnt/mcp/session");
   }
 
   protected createSessionKey(): string {

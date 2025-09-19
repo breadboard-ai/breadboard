@@ -112,7 +112,7 @@ async function describe(
   caps: Capabilities
 ) {
   const template = new Template(caps, plan);
-  const settings = await readSettings();
+  const settings = await readSettings(caps);
   const experimental =
     ok(settings) && !!settings["Show Experimental Components"];
   let extra: Record<string, Schema> = {};

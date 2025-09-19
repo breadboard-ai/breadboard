@@ -7,7 +7,6 @@ export { invoke as default, describe, Template };
 import { type Params } from "./common";
 import { ok, err, isLLMContent, isLLMContentArray } from "./utils";
 import { ConnectorManager } from "./connector-manager";
-import readFile from "@read";
 
 type LLMContentWithMetadata = LLMContent & {
   $metadata: unknown;
@@ -194,7 +193,7 @@ class Template {
         return new ConnectorManager(this.caps, param).materialize();
       }
       const path: FileSystemPath = `/assets/${param.path}`;
-      const reading = await readFile({ path });
+      const reading = await this.caps.read({ path });
       if (!ok(reading)) {
         return err(`Unable to find asset "${param.title}"`);
       }
@@ -205,7 +204,7 @@ class Template {
       return substituted || param.title;
     } else if (isParameter(param)) {
       const path: FileSystemPath = `/env/parameters/${param.path}`;
-      const reading = await readFile({ path });
+      const reading = await this.caps.read({ path });
       if (!ok(reading)) {
         console.error(`Unknown parameter "${param.title}"`);
         return null;

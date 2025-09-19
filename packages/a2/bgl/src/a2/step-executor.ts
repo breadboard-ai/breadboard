@@ -4,7 +4,6 @@
 
 export { executeStep, executeTool, parseExecutionOutput };
 
-import read from "@read";
 import { StreamableReporter } from "./output";
 import {
   decodeBase64,
@@ -170,8 +169,8 @@ async function executeTool<
 type BackendSettings = {
   endpoint_url: string;
 };
-async function getBackendUrl() {
-  const reading = await read({ path: "/env/settings/backend" });
+async function getBackendUrl(caps: Capabilities) {
+  const reading = await caps.read({ path: "/env/settings/backend" });
   if (ok(reading)) {
     const part = reading.data?.at(0)?.parts?.at(0);
     if (part && "json" in part) {
@@ -200,7 +199,7 @@ async function executeStep(
     const secretKey = "connection:$sign-in";
     const token = (await caps.secrets({ keys: [secretKey] }))[secretKey];
     // Call the API.
-    const url = await getBackendUrl();
+    const url = await getBackendUrl(caps);
     // Record model call with action tracker.
     write({
       path: `/mnt/track/call_${model}` as FileSystemReadWritePath,

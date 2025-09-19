@@ -261,7 +261,7 @@ async function invoke(
   caps: Capabilities
 ) {
   const { url: $board, type, modelName } = getMode(mode);
-  const flags = await readFlags();
+  const flags = await readFlags(caps);
   let generateForEach = false;
   if (ok(flags)) {
     generateForEach = flags.generateForEach && !!useForEach;
@@ -307,7 +307,7 @@ async function describe(
     };
   }
 
-  const flags = await readFlags();
+  const flags = await readFlags(caps);
   let generateForEachSchema: Schema["properties"] = {};
   const generateForEachBehavior: BehaviorSchema[] = [];
   if (ok(flags) && flags.generateForEach) {

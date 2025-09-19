@@ -57,7 +57,7 @@ async function describe(
   { inputs: { description } }: DescribeInputs,
   caps: Capabilities
 ) {
-  const settings = await readSettings();
+  const settings = await readSettings(caps);
   const experimental =
     ok(settings) && !!settings["Show Experimental Components"];
   const template = new Template(caps, description);

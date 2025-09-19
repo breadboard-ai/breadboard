@@ -3,7 +3,6 @@
  */
 
 import { err, ok, isLLMContentArray } from "./utils";
-import read from "@read";
 import { type DescribeOutputs } from "@describe";
 import type { ExportDescriberResult, CallToolCallback } from "./common";
 
@@ -108,10 +107,22 @@ export type Configurator<
   V extends Record<string, unknown>,
 > = {
   title: string;
-  initialize: (input: InitializeInput) => Promise<Outcome<InitializeOutput<C>>>;
-  read?: (input: ReadInput<C>) => Promise<Outcome<ReadOutput<V>>>;
-  write?: (input: WriteInput<V>) => Promise<Outcome<WriteOutput>>;
-  preview?: (input: PreviewInput<C>) => Promise<Outcome<PreviewOutput>>;
+  initialize: (
+    caps: Capabilities,
+    input: InitializeInput
+  ) => Promise<Outcome<InitializeOutput<C>>>;
+  read?: (
+    caps: Capabilities,
+    input: ReadInput<C>
+  ) => Promise<Outcome<ReadOutput<V>>>;
+  write?: (
+    caps: Capabilities,
+    input: WriteInput<V>
+  ) => Promise<Outcome<WriteOutput>>;
+  preview?: (
+    caps: Capabilities,
+    input: PreviewInput<C>
+  ) => Promise<Outcome<PreviewOutput>>;
 };
 
 export type ToolHandler<
@@ -212,9 +223,10 @@ function createConfiguratorInvoke<
   C extends Record<string, unknown> = Record<string, unknown>,
   V extends Record<string, unknown> = Record<string, unknown>,
 >(configurator: Configurator<C, V>) {
-  return async function ({
-    context,
-  }: Inputs<C, V>): Promise<Outcome<Outputs<C, V>>> {
+  return async function (
+    { context }: Inputs<C, V>,
+    caps: Capabilities
+  ): Promise<Outcome<Outputs<C, V>>> {
     const inputs = context?.at(-1)?.parts?.at(0)?.json;
     if (!inputs || !("stage" in inputs)) {
       return err(
@@ -223,11 +235,11 @@ function createConfiguratorInvoke<
     }
 
     if (inputs.stage === "initialize") {
-      const initializing = await configurator.initialize(inputs);
+      const initializing = await configurator.initialize(caps, inputs);
       if (!ok(initializing)) return initializing;
       return cx(initializing);
     } else if (inputs.stage === "read") {
-      const reading = await configurator.read?.(inputs);
+      const reading = await configurator.read?.(caps, inputs);
       if (!reading) {
         return cx({
           schema: {},
@@ -237,13 +249,13 @@ function createConfiguratorInvoke<
       if (!ok(reading)) return reading;
       return cx(reading);
     } else if (inputs.stage === "preview") {
-      const previewing = await configurator.preview?.(inputs);
+      const previewing = await configurator.preview?.(caps, inputs);
       if (!previewing || !ok(previewing)) {
         return { context: [{ parts: [{ text: "" }] }] };
       }
       return { context: previewing };
     } else if (inputs.stage === "write") {
-      const writing = await configurator.write?.(inputs);
+      const writing = await configurator.write?.(caps, inputs);
       if (!writing) return cx({});
       if (!ok(writing)) return writing;
       return cx(writing);
@@ -328,7 +340,7 @@ class ConnectorManager {
     }
     const path: FileSystemPath = `/assets/${this.part.path}`;
 
-    const reading = await read({ path });
+    const reading = await this.caps.read({ path });
     if (!ok(reading)) return reading;
 
     return getConnectorInfo(reading.data);
@@ -336,7 +348,7 @@ class ConnectorManager {
 
   async #getConnectorId(): Promise<Outcome<string>> {
     if ("url" in this.part) {
-      const reading = await read({ path: "/env/descriptor" });
+      const reading = await this.caps.read({ path: "/env/descriptor" });
       if (!ok(reading)) return reading;
 
       const descriptor = getNodeDescriptor(reading.data);

@@ -66,7 +66,7 @@ async function describe(
   { inputs: { description, "config$ask-user": chat } }: DescribeInputs,
   caps: Capabilities
 ) {
-  const settings = await readSettings();
+  const settings = await readSettings(caps);
   const chatSchema: BehaviorSchema[] = chat ? ["hint-chat-mode"] : [];
   const experimental =
     ok(settings) && !!settings["Show Experimental Components"];

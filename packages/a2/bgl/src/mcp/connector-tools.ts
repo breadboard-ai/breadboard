@@ -35,7 +35,7 @@ const { invoke, describe } = createTools<Configuration>({
         "upload"
       );
 
-      const client = new McpClient({
+      const client = new McpClient(caps, {
         url: info.configuration.endpoint,
         info: {
           name: "Breadboard",
@@ -84,7 +84,7 @@ const { invoke, describe } = createTools<Configuration>({
         "upload"
       );
 
-      const client = new McpClient({
+      const client = new McpClient(caps, {
         url: info.configuration.endpoint,
         info: {
           name: "Breadboard",

@@ -519,7 +519,7 @@ async function describe(
   caps: Capabilities
 ) {
   let showSaveAsCode = false;
-  const flags = await readFlags();
+  const flags = await readFlags(caps);
   if (ok(flags)) {
     showSaveAsCode = flags["saveAsCode"];
   }
