@@ -424,7 +424,7 @@ function __wbg_adapter_85(arg0, arg1, arg2, arg3) {
 wasm.closure158_externref_shim(arg0, arg1, arg2, arg3);
 }
 
- function __wbg_write_b6e5c4220ac10a32(arg0, arg1, arg2, arg3) {
+ function __wbg_output_ced2de1f6ad7885f(arg0, arg1, arg2, arg3) {
 let deferred0_0;
 let deferred0_1;
 let deferred1_0;
@@ -434,7 +434,7 @@ deferred0_0 = arg0;
 deferred0_1 = arg1;
 deferred1_0 = arg2;
 deferred1_1 = arg3;
-const ret = write(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
+const ret = output(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
 return ret;
 } finally {
 wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
@@ -454,6 +454,24 @@ getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
  function __wbindgen_string_new(arg0, arg1) {
 const ret = getStringFromWasm0(arg0, arg1);
 return ret;
+};
+
+ function __wbg_input_b6b05201322db7bc(arg0, arg1, arg2, arg3) {
+let deferred0_0;
+let deferred0_1;
+let deferred1_0;
+let deferred1_1;
+try {
+deferred0_0 = arg0;
+deferred0_1 = arg1;
+deferred1_0 = arg2;
+deferred1_1 = arg3;
+const ret = input(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
+return ret;
+} finally {
+wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
+wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+}
 };
 
  function __wbg_invoke_b869e83afb3faed8(arg0, arg1, arg2, arg3) {
@@ -492,7 +510,7 @@ wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
 }
 };
 
- function __wbg_output_ced2de1f6ad7885f(arg0, arg1, arg2, arg3) {
+ function __wbg_describe_47b99ea8f240afa3(arg0, arg1, arg2, arg3) {
 let deferred0_0;
 let deferred0_1;
 let deferred1_0;
@@ -502,7 +520,43 @@ deferred0_0 = arg0;
 deferred0_1 = arg1;
 deferred1_0 = arg2;
 deferred1_1 = arg3;
-const ret = output(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
+const ret = describe(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
+return ret;
+} finally {
+wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
+wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+}
+};
+
+ function __wbg_read_755ee9c8622f9470(arg0, arg1, arg2, arg3) {
+let deferred0_0;
+let deferred0_1;
+let deferred1_0;
+let deferred1_1;
+try {
+deferred0_0 = arg0;
+deferred0_1 = arg1;
+deferred1_0 = arg2;
+deferred1_1 = arg3;
+const ret = read(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
+return ret;
+} finally {
+wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
+wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+}
+};
+
+ function __wbg_write_b6e5c4220ac10a32(arg0, arg1, arg2, arg3) {
+let deferred0_0;
+let deferred0_1;
+let deferred1_0;
+let deferred1_1;
+try {
+deferred0_0 = arg0;
+deferred0_1 = arg1;
+deferred1_0 = arg2;
+deferred1_1 = arg3;
+const ret = write(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
 return ret;
 } finally {
 wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
@@ -528,24 +582,6 @@ wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
 }
 };
 
- function __wbg_describe_47b99ea8f240afa3(arg0, arg1, arg2, arg3) {
-let deferred0_0;
-let deferred0_1;
-let deferred1_0;
-let deferred1_1;
-try {
-deferred0_0 = arg0;
-deferred0_1 = arg1;
-deferred1_0 = arg2;
-deferred1_1 = arg3;
-const ret = describe(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
-return ret;
-} finally {
-wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
-wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
-}
-};
-
  function __wbg_query_613fc9b5583de0f7(arg0, arg1, arg2, arg3) {
 let deferred0_0;
 let deferred0_1;
@@ -557,42 +593,6 @@ deferred0_1 = arg1;
 deferred1_0 = arg2;
 deferred1_1 = arg3;
 const ret = query(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
-return ret;
-} finally {
-wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
-wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
-}
-};
-
- function __wbg_input_b6b05201322db7bc(arg0, arg1, arg2, arg3) {
-let deferred0_0;
-let deferred0_1;
-let deferred1_0;
-let deferred1_1;
-try {
-deferred0_0 = arg0;
-deferred0_1 = arg1;
-deferred1_0 = arg2;
-deferred1_1 = arg3;
-const ret = input(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
-return ret;
-} finally {
-wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
-wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
-}
-};
-
- function __wbg_read_755ee9c8622f9470(arg0, arg1, arg2, arg3) {
-let deferred0_0;
-let deferred0_1;
-let deferred1_0;
-let deferred1_1;
-try {
-deferred0_0 = arg0;
-deferred0_1 = arg1;
-deferred1_0 = arg2;
-deferred1_1 = arg3;
-const ret = read(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
 return ret;
 } finally {
 wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
@@ -650,16 +650,16 @@ wasm.__wbindgen_free(arg0, arg1 * 4, 4);
 console.log(...v0);
 };
 
- function __wbg_error_c900e646cf91e4e4(arg0, arg1) {
-var v0 = getArrayJsValueFromWasm0(arg0, arg1).slice();
-wasm.__wbindgen_free(arg0, arg1 * 4, 4);
-console.error(...v0);
-};
-
  function __wbg_warn_5fb7db206870e610(arg0, arg1) {
 var v0 = getArrayJsValueFromWasm0(arg0, arg1).slice();
 wasm.__wbindgen_free(arg0, arg1 * 4, 4);
 console.warn(...v0);
+};
+
+ function __wbg_error_c900e646cf91e4e4(arg0, arg1) {
+var v0 = getArrayJsValueFromWasm0(arg0, arg1).slice();
+wasm.__wbindgen_free(arg0, arg1 * 4, 4);
+console.error(...v0);
 };
 
  function __wbindgen_error_new(arg0, arg1) {
@@ -833,27 +833,27 @@ eval_code
 ,
 run_module
 ,
-__wbg_write_b6e5c4220ac10a32
+__wbg_output_ced2de1f6ad7885f
 ,
 __wbindgen_string_get
 ,
 __wbindgen_string_new
 ,
+__wbg_input_b6b05201322db7bc
+,
 __wbg_invoke_b869e83afb3faed8
 ,
 __wbg_secrets_52d52956bc8d3d7b
 ,
-__wbg_output_ced2de1f6ad7885f
+__wbg_describe_47b99ea8f240afa3
+,
+__wbg_read_755ee9c8622f9470
+,
+__wbg_write_b6e5c4220ac10a32
 ,
 __wbg_fetch_f1f32fc92128b512
 ,
-__wbg_describe_47b99ea8f240afa3
-,
 __wbg_query_613fc9b5583de0f7
-,
-__wbg_input_b6b05201322db7bc
-,
-__wbg_read_755ee9c8622f9470
 ,
 __wbg_blob_e4ac3c7b616aecc1
 ,
@@ -865,9 +865,9 @@ __wbg_btoa_b9487fc80bf7c940
 ,
 __wbg_log_4d5ee32fbc09e881
 ,
-__wbg_error_c900e646cf91e4e4
-,
 __wbg_warn_5fb7db206870e610
+,
+__wbg_error_c900e646cf91e4e4
 ,
 __wbindgen_error_new
 ,

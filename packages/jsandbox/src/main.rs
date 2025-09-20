@@ -37,55 +37,27 @@ where
     result.as_string().unwrap_or_default()
 }
 
-#[wasm_bindgen]
-pub async fn fetch_capability(invocation_id: String, inputs: String) -> String {
-    call_capability(invocation_id, inputs, fetch).await
+macro_rules! define_capability {
+    ($name:ident) => {
+        paste::paste! {
+            #[wasm_bindgen]
+            pub async fn [<$name _capability>](invocation_id: String, inputs: String) -> String {
+                call_capability(invocation_id, inputs, $name).await
+            }
+        }
+    };
 }
 
-#[wasm_bindgen]
-pub async fn secrets_capability(invocation_id: String, inputs: String) -> String {
-    call_capability(invocation_id, inputs, secrets).await
-}
-
-#[wasm_bindgen]
-pub async fn invoke_capability(invocation_id: String, inputs: String) -> String {
-    call_capability(invocation_id, inputs, invoke).await
-}
-
-#[wasm_bindgen]
-pub async fn input_capability(invocation_id: String, inputs: String) -> String {
-    call_capability(invocation_id, inputs, input).await
-}
-
-#[wasm_bindgen]
-pub async fn output_capability(invocation_id: String, inputs: String) -> String {
-    call_capability(invocation_id, inputs, output).await
-}
-
-#[wasm_bindgen]
-pub async fn describe_capability(invocation_id: String, inputs: String) -> String {
-    call_capability(invocation_id, inputs, describe).await
-}
-
-#[wasm_bindgen]
-pub async fn query_capability(invocation_id: String, inputs: String) -> String {
-    call_capability(invocation_id, inputs, query).await
-}
-
-#[wasm_bindgen]
-pub async fn read_capability(invocation_id: String, inputs: String) -> String {
-    call_capability(invocation_id, inputs, read).await
-}
-
-#[wasm_bindgen]
-pub async fn write_capability(invocation_id: String, inputs: String) -> String {
-    call_capability(invocation_id, inputs, write).await
-}
-
-#[wasm_bindgen]
-pub async fn blob_capability(invocation_id: String, inputs: String) -> String {
-    call_capability(invocation_id, inputs, blob).await
-}
+define_capability!(fetch);
+define_capability!(secrets);
+define_capability!(invoke);
+define_capability!(input);
+define_capability!(output);
+define_capability!(describe);
+define_capability!(query);
+define_capability!(read);
+define_capability!(write);
+define_capability!(blob);
 
 async fn create_capabilities_object<'js>(
     ctx: &rquickjs::Ctx<'js>,
