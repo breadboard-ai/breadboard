@@ -5,16 +5,127 @@
  */
 use rquickjs::{
     async_with,
-    loader::{BuiltinLoader, BuiltinResolver, ModuleLoader},
-    CatchResultExt,
+    loader::{BuiltinLoader, BuiltinResolver},
+    prelude::Async,
+    CatchResultExt, Function,
 };
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
 
-mod capabilities;
 mod plugins;
 
-use capabilities::CapabilitiesModule;
+#[wasm_bindgen(raw_module = "./capabilities.js")]
+extern "C" {
+    async fn fetch(invocation_id: String, inputs: String) -> JsValue;
+    async fn secrets(invocation_id: String, inputs: String) -> JsValue;
+    async fn invoke(invocation_id: String, inputs: String) -> JsValue;
+    async fn input(invocation_id: String, inputs: String) -> JsValue;
+    async fn output(invocation_id: String, inputs: String) -> JsValue;
+    async fn describe(invocation_id: String, inputs: String) -> JsValue;
+    async fn query(invocation_id: String, inputs: String) -> JsValue;
+    async fn read(invocation_id: String, inputs: String) -> JsValue;
+    async fn write(invocation_id: String, inputs: String) -> JsValue;
+    async fn blob(invocation_id: String, inputs: String) -> JsValue;
+}
+
+async fn call_capability<F, Fut>(invocation_id: String, inputs: String, capability: F) -> String
+where
+    F: FnOnce(String, String) -> Fut,
+    Fut: std::future::Future<Output = JsValue>,
+{
+    let result = capability(invocation_id, inputs).await;
+    result.as_string().unwrap_or_default()
+}
+
+#[wasm_bindgen]
+pub async fn fetch_capability(invocation_id: String, inputs: String) -> String {
+    call_capability(invocation_id, inputs, fetch).await
+}
+
+#[wasm_bindgen]
+pub async fn secrets_capability(invocation_id: String, inputs: String) -> String {
+    call_capability(invocation_id, inputs, secrets).await
+}
+
+#[wasm_bindgen]
+pub async fn invoke_capability(invocation_id: String, inputs: String) -> String {
+    call_capability(invocation_id, inputs, invoke).await
+}
+
+#[wasm_bindgen]
+pub async fn input_capability(invocation_id: String, inputs: String) -> String {
+    call_capability(invocation_id, inputs, input).await
+}
+
+#[wasm_bindgen]
+pub async fn output_capability(invocation_id: String, inputs: String) -> String {
+    call_capability(invocation_id, inputs, output).await
+}
+
+#[wasm_bindgen]
+pub async fn describe_capability(invocation_id: String, inputs: String) -> String {
+    call_capability(invocation_id, inputs, describe).await
+}
+
+#[wasm_bindgen]
+pub async fn query_capability(invocation_id: String, inputs: String) -> String {
+    call_capability(invocation_id, inputs, query).await
+}
+
+#[wasm_bindgen]
+pub async fn read_capability(invocation_id: String, inputs: String) -> String {
+    call_capability(invocation_id, inputs, read).await
+}
+
+#[wasm_bindgen]
+pub async fn write_capability(invocation_id: String, inputs: String) -> String {
+    call_capability(invocation_id, inputs, write).await
+}
+
+#[wasm_bindgen]
+pub async fn blob_capability(invocation_id: String, inputs: String) -> String {
+    call_capability(invocation_id, inputs, blob).await
+}
+
+async fn create_capabilities_object<'js>(
+    ctx: &rquickjs::Ctx<'js>,
+    invocation_id: &str,
+) -> rquickjs::Result<rquickjs::Value<'js>> {
+    let obj = rquickjs::Object::new(ctx.clone())?;
+
+    // Helper macro to create capability functions
+    macro_rules! add_capability {
+        ($name:literal, $func:ident) => {{
+            let invocation_id = invocation_id.to_string();
+            let capability_func = Function::new(
+                ctx.clone(),
+                Async(move |inputs: rquickjs::Value<'js>| {
+                    let invocation_id = invocation_id.clone();
+                    let ctx = inputs.ctx().clone();
+                    async move {
+                        let input_str = ctx.json_stringify(inputs)?.unwrap().to_string()?;
+                        let result_str = $func(invocation_id, input_str).await;
+                        ctx.json_parse(result_str)
+                    }
+                }),
+            )?;
+            obj.set($name, capability_func)?;
+        }};
+    }
+
+    add_capability!("fetch", fetch_capability);
+    add_capability!("secrets", secrets_capability);
+    add_capability!("invoke", invoke_capability);
+    add_capability!("input", input_capability);
+    add_capability!("output", output_capability);
+    add_capability!("describe", describe_capability);
+    add_capability!("query", query_capability);
+    add_capability!("read", read_capability);
+    add_capability!("write", write_capability);
+    add_capability!("blob", blob_capability);
+
+    Ok(obj.into())
+}
 
 #[derive(Debug, Error)]
 enum Error {
@@ -74,24 +185,6 @@ async fn maybe_promise<'js>(
     Ok(resolved_obj)
 }
 
-macro_rules! add_capability_modules {
-    ($resolver:expr, $loader:expr, $module_name:expr, $invocation_id:expr, $($capability:expr),+ $(,)?) => {
-        $(
-            $loader.add_module(
-                concat!("@", $capability),
-                format!(
-                    "import {{ {} }} from \"{}\";\nexport default function(inputs) {{ return {}(\"{}\", inputs); }}\n",
-                    $capability,
-                    $module_name,
-                    $capability,
-                    $invocation_id
-                )
-            );
-            $resolver.add_module(concat!("@", $capability));
-        )+
-    };
-}
-
 #[wasm_bindgen]
 pub async fn run_module(
     invocation_id: String,
@@ -102,26 +195,6 @@ pub async fn run_module(
     json: String,
 ) -> std::result::Result<String, JsError> {
     let mut resolver = BuiltinResolver::default();
-
-    let capability_module_name = format!("bb-{}", invocation_id);
-
-    let mut capabilities_loader = BuiltinLoader::default();
-    add_capability_modules!(
-        resolver,
-        capabilities_loader,
-        capability_module_name,
-        invocation_id,
-        "fetch",
-        "invoke",
-        "secrets",
-        "input",
-        "output",
-        "describe",
-        "query",
-        "read",
-        "write",
-        "blob",
-    );
 
     let mut peer_loader = BuiltinLoader::default();
     let object = js_sys::Object::from(modules);
@@ -138,13 +211,7 @@ pub async fn run_module(
             resolver.add_module(&peer_js);
         }
     }
-    resolver.add_module(capability_module_name.clone());
-
-    let loader = (
-        capabilities_loader,
-        peer_loader,
-        ModuleLoader::default().with_module(capability_module_name.clone(), CapabilitiesModule),
-    );
+    let loader = (peer_loader,);
 
     let rt = rquickjs::AsyncRuntime::new()?;
     let ctx = rquickjs::AsyncContext::full(&rt).await?;
@@ -184,23 +251,10 @@ pub async fn run_module(
             .map_err(|e| Error::ParsingInputValues(e.to_string()))?;
 
         // Create capabilities object
-        let capabilities_code = format!(r#"
-            const capabilityNames = ["fetch", "secrets", "invoke", "input", "output", "describe", "query", "read", "write", "blob"];
-            const capabilities = {{}};
-
-            Promise.all(capabilityNames.map(async name => {{
-                const module = await import("@" + name);
-                capabilities[name] = module.default;
-            }})).then(() => capabilities);
-        "#);
-
-        let capabilities_promise = ctx.eval::<rquickjs::Value, _>(capabilities_code)
+        let capabilities = create_capabilities_object(&ctx, &invocation_id)
+            .await
             .catch(&ctx)
-            .map_err(|e| Error::CallingModuleFunction(format!("Error creating capabilities promise: {}", e.to_string())))?;
-
-        let capabilities = maybe_promise(capabilities_promise).await
-            .catch(&ctx)
-            .map_err(|e| Error::CallingModuleFunction(format!("Error resolving capabilities object: {}", e.to_string())))?;
+            .map_err(|e| Error::CallingModuleFunction(format!("Error creating capabilities object: {}", e.to_string())))?;
 
         // Call it and return value.
         let result_obj: rquickjs::Value = maybe_promise(
