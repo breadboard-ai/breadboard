@@ -1,7 +1,7 @@
 /**
  * @fileoverview Connector Load Export
  */
-import { type DescribeOutputs } from "@describe";
+
 import { llm } from "../a2/utils";
 
 export { invoke as default, describe };

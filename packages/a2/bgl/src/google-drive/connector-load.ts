@@ -1,7 +1,6 @@
 /**
  * @fileoverview Connector Load Export
  */
-import { type DescribeOutputs } from "@describe";
 import { err, ok } from "../a2/utils";
 import { connect, exp, query } from "./api";
 import { DOC_MIME_TYPE, markdownToContext } from "./docs";

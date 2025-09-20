@@ -3,7 +3,6 @@
  */
 
 import { err, ok, isLLMContentArray } from "./utils";
-import { type DescribeOutputs } from "@describe";
 import type { ExportDescriberResult, CallToolCallback } from "./common";
 
 export { ConnectorManager, createConfigurator, createTools };

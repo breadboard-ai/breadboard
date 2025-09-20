@@ -1,8 +1,6 @@
 /**
  * @fileoverview Gets a list of emails
  */
-
-import { type DescribeOutputs } from "@describe";
 import { decodeBase64, err } from "../a2/utils";
 
 type FetchErrorResponse = {

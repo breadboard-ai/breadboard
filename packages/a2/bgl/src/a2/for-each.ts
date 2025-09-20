@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InvokeOutputs } from "@invoke";
 import { err, llm, ok } from "./utils";
 import { defaultSafetySettings, GeminiSchema } from "./gemini";
 import { GeminiPrompt } from "./gemini-prompt";

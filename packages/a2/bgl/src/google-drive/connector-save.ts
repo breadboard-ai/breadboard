@@ -1,7 +1,6 @@
 /**
  * @fileoverview Connector Save Export.
  */
-import { type DescribeOutputs } from "@describe";
 import { err, ok } from "../a2/utils";
 import {
   appendSpreadsheetValues,

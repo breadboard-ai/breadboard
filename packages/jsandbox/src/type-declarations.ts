@@ -43,185 +43,143 @@ declare type NodeMetadata = {
   icon?: string;
 };
 
-declare module "@fetch" {
-  export type FetchInputs = {
-    $metadata?: NodeMetadata;
-    /**
-     * The URL to fetch
-     */
-    url: string;
-    /**
-     * The HTTP method to use. "GET is default.
-     */
-    method?: "GET" | "POST" | "PUT" | "DELETE";
-    /**
-     * Headers to send with request
-     */
-    headers?: Record<string, string>;
-    /**
-     * The body of the request
-     */
-    body?: unknown;
-    /**
-     * Determines the browser's behavior in case the server replies
-     * with a redirect status.
-     */
-    redirect?: "follow" | "error" | "manual";
-    /**
-     * The FileSystem path to save the response to
-     */
-    file?: FileSystemPath;
-    /**
-     * If provided, saves the response as a stream file.
-     * Only valid when "file" is supplied as well.
-     */
-    stream?: "sse" | "text" | "json";
-  };
-
-  export type FetchOutputs = {
-    /**
-     * The error object.
-     */
-    $error?: unknown;
-    /**
-     * The response from the fetch request
-     */
-    response: unknown;
-    /**
-     * The HTTP status code of the response
-     */
-    status: number;
-    /**
-     * The status text of the response
-     */
-    statusText: string;
-    /**
-     * The content type of the response
-     */
-    contentType: string;
-    /**
-     * The headers of the response
-     */
-    responseHeaders: Record<string, string>;
-  };
-
+declare type FetchInputs = {
+  $metadata?: NodeMetadata;
   /**
-   * A built-in capability of Breadboard to fetch data.
+   * The URL to fetch
    */
-  export default function fetch(url: FetchInputs): Promise<FetchOutputs>;
-}
-
-declare module "@secrets" {
+  url: string;
   /**
-   * A built-in capability of Breadboard to obtain secrets.
+   * The HTTP method to use. "GET is default.
    */
-  export default function secrets<S extends string>(inputs: {
-    $metadata?: NodeMetadata;
-    keys: S[];
-  }): Promise<{ [K in S]: string }>;
-}
-
-declare module "@invoke" {
-  export type InvokeInputs = {
-    $metadata?: NodeMetadata;
-    $board?: string;
-    $start?: string;
-    $stopAfter?: string;
-  } & Record<string, unknown>;
-
-  export type InvokeOutputs = Outcome<Record<string, unknown>>;
-
+  method?: "GET" | "POST" | "PUT" | "DELETE";
   /**
-   * A built-in capability of Breadboard to invoke boards.
+   * Headers to send with request
    */
-  export default function invoke(inputs: InvokeInputs): Promise<InvokeOutputs>;
-}
-
-declare module "@input" {
-  export type InputInputs = {
-    $metadata?: NodeMetadata;
-    schema?: Schema;
-  } & Record<string, unknown>;
-
-  export type InputOutputs = Record<string, unknown>;
-
-  export default function input(inputs: InputInputs): Promise<InputOutputs>;
-}
-
-declare module "@output" {
-  export type OutputInputs = {
-    $metadata?: NodeMetadata;
-    schema?: Schema;
-  } & Record<string, unknown>;
-
-  export type OutputOutputs = {
-    delivered: boolean;
-  };
-
-  export default function output(inputs: OutputInputs): Promise<OutputOutputs>;
-}
-
-declare module "@blob" {
-  export type BlobInputs = {
-    contents: LLMContent[];
-    transform: "persistent-temporary";
-  };
-  export type BlobOutputs = {
-    contents: LLMContent[];
-  };
-
-  export default function blob(inputs: BlobInputs): Promise<BlobOutputs>;
-}
-
-declare module "@describe" {
-  export type InputValues = Record<string, unknown>;
-
-  export type DescribeInputs = {
-    url: string;
-    inputs?: InputValues;
-    inputSchema?: Schema;
-    outputSchema?: Schema;
-  };
-
-  export type GraphMetadata = {
-    icon?: string;
-    tags?: string[];
-    help?: {
-      description?: string;
-      url: string;
-    };
-    order?: number;
-  };
-
+  headers?: Record<string, string>;
   /**
-   * The individual export that is being exposed in NodeDescriberResult.
+   * The body of the request
    */
-  export type NodeDescriberExport = {
-    title?: string;
-    description: string;
-    metadata?: GraphMetadata;
-    inputSchema: Schema;
-  };
+  body?: unknown;
+  /**
+   * Determines the browser's behavior in case the server replies
+   * with a redirect status.
+   */
+  redirect?: "follow" | "error" | "manual";
+  /**
+   * The FileSystem path to save the response to
+   */
+  file?: FileSystemPath;
+  /**
+   * If provided, saves the response as a stream file.
+   * Only valid when "file" is supplied as well.
+   */
+  stream?: "sse" | "text" | "json";
+};
 
-  export type DescribeOutputs = {
-    title?: string;
+declare type FetchOutputs = {
+  /**
+   * The error object.
+   */
+  $error?: unknown;
+  /**
+   * The response from the fetch request
+   */
+  response: unknown;
+  /**
+   * The HTTP status code of the response
+   */
+  status: number;
+  /**
+   * The status text of the response
+   */
+  statusText: string;
+  /**
+   * The content type of the response
+   */
+  contentType: string;
+  /**
+   * The headers of the response
+   */
+  responseHeaders: Record<string, string>;
+};
+
+declare type InvokeInputs = {
+  $metadata?: NodeMetadata;
+  $board?: string;
+  $start?: string;
+  $stopAfter?: string;
+} & Record<string, unknown>;
+
+declare type InvokeOutputs = Outcome<Record<string, unknown>>;
+
+declare type InputInputs = {
+  $metadata?: NodeMetadata;
+  schema?: Schema;
+} & Record<string, unknown>;
+
+declare type InputOutputs = Record<string, unknown>;
+
+declare type OutputInputs = {
+  $metadata?: NodeMetadata;
+  schema?: Schema;
+} & Record<string, unknown>;
+
+declare type OutputOutputs = {
+  delivered: boolean;
+};
+
+declare type BlobInputs = {
+  contents: LLMContent[];
+  transform: "persistent-temporary";
+};
+declare type BlobOutputs = {
+  contents: LLMContent[];
+};
+
+declare type InputValues = Record<string, unknown>;
+
+declare type DescribeInputs = {
+  url: string;
+  inputs?: InputValues;
+  inputSchema?: Schema;
+  outputSchema?: Schema;
+};
+
+declare type GraphMetadata = {
+  icon?: string;
+  tags?: string[];
+  help?: {
     description?: string;
-    metadata?: GraphMetadata;
-    inputSchema: Schema;
-    outputSchema: Schema;
-    /**
-     * A way for a describer to specify multiple entry points.
-     * A common use case is a connector that offers multiple tools.
-     * For a graph that contains exports, these will match the describer
-     * results of the exports.
-     */
-    exports?: Record<string, NodeDescriberExport>;
+    url: string;
   };
+  order?: number;
+};
 
-  export default function describe(
-    inputs: DescribeInputs
-  ): Promise<Outcome<DescribeOutputs>>;
-}
+/**
+ * The individual export that is being exposed in NodeDescriberResult.
+ */
+declare type NodeDescriberExport = {
+  title?: string;
+  description: string;
+  metadata?: GraphMetadata;
+  inputSchema: Schema;
+};
+
+declare type DescribeOutputs = {
+  title?: string;
+  description?: string;
+  metadata?: GraphMetadata;
+  inputSchema: Schema;
+  outputSchema: Schema;
+  /**
+   * A way for a describer to specify multiple entry points.
+   * A common use case is a connector that offers multiple tools.
+   * For a graph that contains exports, these will match the describer
+   * results of the exports.
+   */
+  exports?: Record<string, NodeDescriberExport>;
+};
 
 declare type FunctionCallCapabilityPart = {
   functionCall: {
@@ -724,24 +682,6 @@ declare type FileSystemWriteArguments =
     };
 
 declare type FileSystemWriteResult = Outcome<void>;
-
-declare module "@query" {
-  export default function query(
-    inputs: FileSystemQueryArguments
-  ): Promise<FileSystemQueryResult>;
-}
-
-declare module "@read" {
-  export default function read(
-    inputs: FileSystemReadArguments
-  ): Promise<FileSystemReadResult>;
-}
-
-declare module "@write" {
-  export default function write(
-    inputs: FileSystemWriteArguments
-  ): Promise<FileSystemWriteResult>;
-}
 
 declare type Capabilities = {
   fetch(url: FetchInputs): Promise<FetchOutputs>;

@@ -1,7 +1,6 @@
 /**
  * @fileoverview Connector Save Export.
  */
-import { type DescribeOutputs } from "@describe";
 import { ok } from "../a2/utils";
 
 export { invoke as default, describe };
