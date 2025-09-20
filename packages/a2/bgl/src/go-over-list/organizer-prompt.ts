@@ -14,6 +14,7 @@ export { organizerPrompt };
 type InvokeReturnType = ReturnType<GeminiPrompt["invoke"]>;
 
 function organizerPrompt(
+  caps: Capabilities,
   results: LLMContent[],
   objective: LLMContent,
   makeList: boolean
@@ -59,7 +60,7 @@ ${research}
 `.asContent();
 
   if (makeList) {
-    const geminiPrompt = new GeminiPrompt({
+    const geminiPrompt = new GeminiPrompt(caps, {
       body: {
         contents: [listPrompt(prompt)],
         safetySettings: defaultSafetySettings(),
@@ -79,7 +80,7 @@ ${research}
       },
     };
   } else {
-    const geminiPrompt = new GeminiPrompt({
+    const geminiPrompt = new GeminiPrompt(caps, {
       body: {
         systemInstruction: defaultSystemInstruction(),
         contents: [prompt],

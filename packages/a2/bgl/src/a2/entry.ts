@@ -53,11 +53,14 @@ async function invoke({
   };
 }
 
-async function describe({ inputs: { description } }: DescribeInputs) {
-  const settings = await readSettings();
+async function describe(
+  { inputs: { description } }: DescribeInputs,
+  caps: Capabilities
+) {
+  const settings = await readSettings(caps);
   const experimental =
     ok(settings) && !!settings["Show Experimental Components"];
-  const template = new Template(description);
+  const template = new Template(caps, description);
   let extra: Record<string, Schema> = {};
   if (experimental) {
     extra = {

@@ -290,14 +290,14 @@ function getPalettePrompt(colors: PaletteColors): string {
 }
 
 async function saveToGoogleDrive(
-  read: Capabilities["read"],
+  caps: Capabilities,
   content: LLMContent,
   mimeType: string,
   title: string | undefined
 ): Promise<Outcome<SaveOutput>> {
   let graphId = "";
   // Let's get the title from the graph
-  const readingMetadata = await read({ path: "/env/metadata" });
+  const readingMetadata = await caps.read({ path: "/env/metadata" });
   if (ok(readingMetadata)) {
     const metadata = toJson<GraphMetadata>(readingMetadata.data);
     if (metadata) {
@@ -307,7 +307,7 @@ async function saveToGoogleDrive(
       graphId = metadata.url?.replace("drive:/", "") || "";
     }
   }
-  const manager = new ConnectorManager({
+  const manager = new ConnectorManager(caps, {
     url: "embed://a2/google-drive.bgl.json",
     configuration: { file: { mimeType } },
   });
@@ -316,8 +316,11 @@ async function saveToGoogleDrive(
   >;
 }
 
-async function saveAsCode(content: LLMContent): Promise<Outcome<void>> {
-  const manager = new ConnectorManager({
+async function saveAsCode(
+  caps: Capabilities,
+  content: LLMContent
+): Promise<Outcome<void>> {
+  const manager = new ConnectorManager(caps, {
     url: "embed://a2/file-system.bgl.json",
     configuration: {},
   });
@@ -334,7 +337,7 @@ async function invoke(
     "b-google-doc-title": googleDocTitle,
     ...params
   }: InvokeInputs,
-  capabilities: Capabilities
+  caps: Capabilities
 ): Promise<Outcome<InvokeOutputs>> {
   let { modelName } = getModel(modelType);
   const { renderType } = getMode(renderMode);
@@ -346,7 +349,7 @@ async function invoke(
     systemInstruction = defaultSystemInstruction();
   }
   let systemText = toText(systemInstruction);
-  const template = new Template(text);
+  const template = new Template(caps, text);
   const substituting = await template.substitute(params, async () => "");
   if (!ok(substituting)) {
     return substituting;
@@ -374,15 +377,16 @@ async function invoke(
       return { context: [out] };
     }
     case "HTML": {
-      const palette = await getPaletteColors(capabilities.read);
+      const palette = await getPaletteColors(caps.read);
       if (palette?.primary) {
         systemText += getPalettePrompt(palette);
       } else {
-        const themeColors = await getThemeColors(capabilities.read);
+        const themeColors = await getThemeColors(caps.read);
         systemText += themeColorsPrompt(themeColors);
       }
       console.log("SI :", systemText);
       const webPage = await callGenWebpage(
+        caps,
         systemText,
         [context],
         renderType,
@@ -400,7 +404,7 @@ async function invoke(
     }
     case "GoogleDoc": {
       return saveToGoogleDrive(
-        capabilities.read,
+        caps,
         out,
         "application/vnd.google-apps.document",
         googleDocTitle
@@ -408,7 +412,7 @@ async function invoke(
     }
     case "GoogleSlides": {
       return saveToGoogleDrive(
-        capabilities.read,
+        caps,
         out,
         "application/vnd.google-apps.presentation",
         googleDocTitle
@@ -416,7 +420,7 @@ async function invoke(
     }
     case "GoogleSheets": {
       return saveToGoogleDrive(
-        capabilities.read,
+        caps,
         out,
         "application/vnd.google-apps.spreadsheet",
         googleDocTitle
@@ -424,13 +428,14 @@ async function invoke(
     }
     case "Code": {
       const generating = await callGenWebpage(
+        caps,
         systemText,
         [context],
         "HTML",
         modelName
       );
       if (!ok(generating)) return generating;
-      const saving = await saveAsCode(generating);
+      const saving = await saveAsCode(caps, generating);
       if (!ok(saving)) return saving;
       return { context: [out] };
     }
@@ -509,11 +514,12 @@ function advancedSettings(renderType: RenderType): Record<string, Schema> {
   return {};
 }
 
-async function describe({
-  inputs: { text, "p-render-mode": renderMode },
-}: DescribeInputs) {
+async function describe(
+  { inputs: { text, "p-render-mode": renderMode } }: DescribeInputs,
+  caps: Capabilities
+) {
   let showSaveAsCode = false;
-  const flags = await readFlags();
+  const flags = await readFlags(caps);
   if (ok(flags)) {
     showSaveAsCode = flags["saveAsCode"];
   }
@@ -521,7 +527,7 @@ async function describe({
   if (!showSaveAsCode) {
     modes = MODES.filter(({ id }) => id !== "code");
   }
-  const template = new Template(text);
+  const template = new Template(caps, text);
   const { renderType } = getMode(renderMode);
   return {
     inputSchema: {

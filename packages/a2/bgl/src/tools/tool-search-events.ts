@@ -15,10 +15,12 @@ export type SearchOutputs = {
   results: string;
 };
 
-async function invoke({
-  query,
-}: SearchInputs): Promise<Outcome<SearchOutputs>> {
+async function invoke(
+  { query }: SearchInputs,
+  caps: Capabilities
+): Promise<Outcome<SearchOutputs>> {
   const executing = await executeTool<string>(
+    caps,
     "google_search_activities.find_events",
     {
       query,

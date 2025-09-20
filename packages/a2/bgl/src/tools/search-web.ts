@@ -34,8 +34,11 @@ type Outputs =
     }
   | SearchWebOutputs;
 
-async function resolveInput(inputContent: LLMContent): Promise<LLMContent> {
-  const template = new Template(inputContent);
+async function resolveInput(
+  caps: Capabilities,
+  inputContent: LLMContent
+): Promise<LLMContent> {
+  const template = new Template(caps, inputContent);
   const substituting = await template.substitute({}, async () => "");
   if (!ok(substituting)) {
     return toLLMContent(substituting.$error);
@@ -50,7 +53,10 @@ function extractQuery(maybeMarkdownListItem: string): string {
   return maybeMarkdownListItem;
 }
 
-async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
+async function invoke(
+  inputs: Inputs,
+  caps: Capabilities
+): Promise<Outcome<Outputs>> {
   let query: LLMContent[];
   let mode: "step" | "tool";
   if ("context" in inputs) {
@@ -61,7 +67,7 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
       return err("Please provide a URL");
     }
   } else if ("p-query" in inputs) {
-    const queryContent = await resolveInput(inputs["p-query"]);
+    const queryContent = await resolveInput(caps, inputs["p-query"]);
     if (!ok(queryContent)) {
       return queryContent;
     }
@@ -82,7 +88,7 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
       return err("Please provide a query");
     }
     console.log("Query: ", queryString);
-    const getting = await toolSearchWeb({ query: queryString });
+    const getting = await toolSearchWeb({ query: queryString }, caps);
     if (!ok(getting)) {
       return toLLMContent(getting.$error);
     }

@@ -17,11 +17,13 @@ Think carefully: for every task in the list, does any task depend on another tas
 until all tasks are indepedent`;
 
   async execute(
+    caps: Capabilities,
     execute: ExecuteStepFunction,
     mutableContext: LLMContent[],
     objective: LLMContent
   ): Promise<Outcome<LLMContent[]>> {
     const planning = await plannerPrompt(
+      caps,
       mutableContext,
       objective,
       this.extraPlannerPrompt,
@@ -31,7 +33,7 @@ until all tasks are indepedent`;
     const plan = getPlan(planning.last);
     if (!ok(plan)) return plan;
 
-    await report({
+    await report(caps, {
       actor: "Planner",
       category: `Creating a plan`,
       name: "Here's my list",

@@ -61,10 +61,11 @@ ${results.places
 `;
 }
 
-async function invoke({
-  query,
-}: SearchMapsInputs): Promise<Outcome<SearchMapsOutputs>> {
-  const executing = await executeTool<SearchMapResults>("map_search", {
+async function invoke(
+  { query }: SearchMapsInputs,
+  caps: Capabilities
+): Promise<Outcome<SearchMapsOutputs>> {
+  const executing = await executeTool<SearchMapResults>(caps, "map_search", {
     query,
   });
   if (!ok(executing)) return executing;

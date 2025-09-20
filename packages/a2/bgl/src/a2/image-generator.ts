@@ -40,6 +40,7 @@ type ImageGeneratorOutputs = {
 export { invoke as default, describe };
 
 function gatheringRequest(
+  caps: Capabilities,
   contents: LLMContent[] | undefined,
   instruction: LLMContent,
   toolManager: ToolManager
@@ -53,6 +54,7 @@ ${instruction}
 
 Call the tools to gather the necessary information that could be used to create an accurate prompt.`;
   return new GeminiPrompt(
+    caps,
     {
       body: {
         contents: addUserTurn(promptText.asContent(), contents),
@@ -69,13 +71,16 @@ to be used to create an accurate prompt for a text-to-image model.
 
 const MAX_RETRIES = 5;
 
-async function invoke({
-  context: incomingContext,
-  instruction,
-  "p-disable-prompt-rewrite": disablePromptRewrite,
-  "p-aspect-ratio": aspectRatio,
-  ...params
-}: ImageGeneratorInputs): Promise<Outcome<ImageGeneratorOutputs>> {
+async function invoke(
+  {
+    context: incomingContext,
+    instruction,
+    "p-disable-prompt-rewrite": disablePromptRewrite,
+    "p-aspect-ratio": aspectRatio,
+    ...params
+  }: ImageGeneratorInputs,
+  caps: Capabilities
+): Promise<Outcome<ImageGeneratorOutputs>> {
   incomingContext ??= [];
   if (!instruction) {
     instruction = toLLMContent("");
@@ -85,8 +90,8 @@ async function invoke({
   }
   let imageContext = extractMediaData(incomingContext);
   // Substitute params in instruction.
-  const toolManager = new ToolManager(new ArgumentNameGenerator());
-  const substituting = await new Template(instruction).substitute(
+  const toolManager = new ToolManager(caps, new ArgumentNameGenerator(caps));
+  const substituting = await new Template(caps, instruction).substitute(
     params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)
   );
@@ -100,6 +105,7 @@ async function invoke({
       // information via tools.
       if (toolManager.hasTools()) {
         const gatheringInformation = await gatheringRequest(
+          caps,
           context,
           instruction,
           toolManager
@@ -128,6 +134,7 @@ async function invoke({
             imagePrompt = toLLMContent(toText(addUserTurn(refText, context)));
           } else {
             const generatingPrompt = await promptExpander(
+              caps,
               context,
               refText
             ).invoke();
@@ -136,7 +143,7 @@ async function invoke({
           }
           const iPrompt = toText(imagePrompt).trim();
           console.log("PROMPT", iPrompt);
-          const generatedImage = await callImageGen(iPrompt, aspectRatio);
+          const generatedImage = await callImageGen(caps, iPrompt, aspectRatio);
           if (!ok(generatedImage)) return generatedImage;
           return mergeContent(generatedImage, "model");
         }
@@ -155,8 +162,11 @@ type DescribeInputs = {
   };
 };
 
-async function describe({ inputs: { instruction } }: DescribeInputs) {
-  const template = new Template(instruction);
+async function describe(
+  { inputs: { instruction } }: DescribeInputs,
+  caps: Capabilities
+) {
+  const template = new Template(caps, instruction);
   return {
     inputSchema: {
       type: "object",

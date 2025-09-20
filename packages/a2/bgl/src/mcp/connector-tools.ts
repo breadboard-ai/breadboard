@@ -22,8 +22,8 @@ function isNotAllowed(error: ErrorWithMetadata) {
 
 const { invoke, describe } = createTools<Configuration>({
   title: "MCP Server",
-  list: async (_id, info) => {
-    const reporter = new StreamableReporter({
+  list: async (caps, _id, info) => {
+    const reporter = new StreamableReporter(caps, {
       title: `Calling MCP Server`,
       icon: "robot_server",
     });
@@ -35,7 +35,7 @@ const { invoke, describe } = createTools<Configuration>({
         "upload"
       );
 
-      const client = new McpClient({
+      const client = new McpClient(caps, {
         url: info.configuration.endpoint,
         info: {
           name: "Breadboard",
@@ -71,8 +71,8 @@ const { invoke, describe } = createTools<Configuration>({
       await reporter.close();
     }
   },
-  invoke: async (_id, info, name, args) => {
-    const reporter = new StreamableReporter({
+  invoke: async (caps, _id, info, name, args) => {
+    const reporter = new StreamableReporter(caps, {
       title: `Calling MCP Server`,
       icon: "robot_server",
     });
@@ -84,7 +84,7 @@ const { invoke, describe } = createTools<Configuration>({
         "upload"
       );
 
-      const client = new McpClient({
+      const client = new McpClient(caps, {
         url: info.configuration.endpoint,
         info: {
           name: "Breadboard",

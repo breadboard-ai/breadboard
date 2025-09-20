@@ -1,10 +1,6 @@
 /**
  * @fileoverview Gets a list of emails
  */
-
-import { type DescribeOutputs } from "@describe";
-import fetch from "@fetch";
-import secrets from "@secrets";
 import { decodeBase64, err } from "../a2/utils";
 
 type FetchErrorResponse = {
@@ -45,7 +41,10 @@ export interface ExecuteStepResponse {
   executionOutputs: ContentMap;
 }
 
-async function invoke() {
+async function invoke(
+  _inputs: Record<string, unknown>,
+  { fetch, secrets }: Capabilities
+) {
   // Get an authentication token.
   const key = "connection:$sign-in";
   const token = (await secrets({ keys: [key] }))[key];

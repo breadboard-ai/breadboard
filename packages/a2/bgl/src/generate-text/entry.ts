@@ -62,14 +62,15 @@ async function invoke({
   };
 }
 
-async function describe({
-  inputs: { description, "config$ask-user": chat },
-}: DescribeInputs) {
-  const settings = await readSettings();
+async function describe(
+  { inputs: { description, "config$ask-user": chat } }: DescribeInputs,
+  caps: Capabilities
+) {
+  const settings = await readSettings(caps);
   const chatSchema: BehaviorSchema[] = chat ? ["hint-chat-mode"] : [];
   const experimental =
     ok(settings) && !!settings["Show Experimental Components"];
-  const template = new Template(description);
+  const template = new Template(caps, description);
   let extra: Record<string, Schema> = {};
   if (experimental) {
     extra = {

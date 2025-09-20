@@ -2,9 +2,6 @@
  * @fileoverview Mega step for generation capabilities.
  */
 
-import describeGraph from "@describe";
-import invokeGraph from "@invoke";
-
 import { ok } from "../a2/utils";
 import { readFlags } from "../a2/settings";
 import { forEach } from "../a2/for-each";
@@ -259,13 +256,12 @@ function getMode(modeId: ModeId | undefined): GenerationModes {
   return modeMap.get(modeId || DEFAULT_MODE.id) || DEFAULT_MODE;
 }
 
-async function invoke({
-  "generation-mode": mode,
-  "p-for-each": useForEach,
-  ...rest
-}: Inputs) {
+async function invoke(
+  { "generation-mode": mode, "p-for-each": useForEach, ...rest }: Inputs,
+  caps: Capabilities
+) {
   const { url: $board, type, modelName } = getMode(mode);
-  const flags = await readFlags();
+  const flags = await readFlags(caps);
   let generateForEach = false;
   if (ok(flags)) {
     generateForEach = flags.generateForEach && !!useForEach;
@@ -277,20 +273,20 @@ async function invoke({
     rest["p-model-name"] = modelName;
   }
   if (generateForEach) {
-    return forEach(rest, async (prompt) => {
+    return forEach(caps, rest, async (prompt) => {
       const ports = { ...rest };
       ports[PROMPT_PORT] = prompt;
-      return invokeGraph({ $board, ...forwardPorts(type, ports) });
+      return caps.invoke({ $board, ...forwardPorts(type, ports) });
     });
   } else {
-    return invokeGraph({ $board, ...forwardPorts(type, rest) });
+    return caps.invoke({ $board, ...forwardPorts(type, rest) });
   }
 }
 
-async function describe({
-  inputs: { "generation-mode": mode, ...rest },
-  asType,
-}: DescribeInputs) {
+async function describe(
+  { inputs: { "generation-mode": mode, ...rest }, asType }: DescribeInputs,
+  caps: Capabilities
+) {
   const metadata = {
     title: "Generate",
     description: "Uses Gemini to generate content and call tools",
@@ -311,7 +307,7 @@ async function describe({
     };
   }
 
-  const flags = await readFlags();
+  const flags = await readFlags(caps);
   let generateForEachSchema: Schema["properties"] = {};
   const generateForEachBehavior: BehaviorSchema[] = [];
   if (ok(flags) && flags.generateForEach) {
@@ -331,7 +327,7 @@ async function describe({
   }
 
   const { url, type } = getMode(mode);
-  const describing = await describeGraph({ url, inputs: rest });
+  const describing = await caps.describe({ url, inputs: rest });
   const behavior: BehaviorSchema[] = [...generateForEachBehavior];
   let modeSchema: Record<string, Schema> = {};
   if (ok(describing)) {

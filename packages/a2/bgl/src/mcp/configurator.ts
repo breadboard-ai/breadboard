@@ -18,14 +18,14 @@ const { invoke, describe } = createConfigurator<McpConfiguration>({
   initialize: async () => {
     return { title: CONNECTOR_TITLE, configuration: {} };
   },
-  preview: async ({ configuration }) => {
+  preview: async (_caps, { configuration }) => {
     const endpoint = configuration.endpoint;
     if (!endpoint) {
       return [llm``.asContent()];
     }
     return [llm`${endpoint}`.asContent()];
   },
-  read: async ({ configuration }) => {
+  read: async (_caps, { configuration }) => {
     return {
       schema: {
         type: "object",

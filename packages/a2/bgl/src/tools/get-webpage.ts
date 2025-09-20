@@ -26,8 +26,11 @@ export type GetWebPageOutputs = {
   results: string;
 };
 
-async function resolveInput(inputContent: LLMContent): Promise<LLMContent> {
-  const template = new Template(inputContent);
+async function resolveInput(
+  caps: Capabilities,
+  inputContent: LLMContent
+): Promise<LLMContent> {
+  const template = new Template(caps, inputContent);
   const substituting = await template.substitute({}, async () => "");
   if (!ok(substituting)) {
     return toLLMContent(substituting.$error);
@@ -61,7 +64,10 @@ function extractURL(maybeMarkdownLink: string): string {
   return maybeMarkdownLink;
 }
 
-async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
+async function invoke(
+  inputs: Inputs,
+  caps: Capabilities
+): Promise<Outcome<Outputs>> {
   let urlContext: LLMContent[] = [];
   let mode: "step" | "tool";
   if ("context" in inputs) {
@@ -72,7 +78,7 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
       return err("Please provide a URL");
     }
   } else if ("p-url" in inputs) {
-    const urlContent = await resolveInput(inputs["p-url"]);
+    const urlContent = await resolveInput(caps, inputs["p-url"]);
     if (!ok(urlContent)) {
       return urlContent;
     }
@@ -96,7 +102,7 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
       return err("Please provide a URL");
     }
     console.log("URL: ", urlString);
-    const getting = await toolGetWebpage({ url: urlString });
+    const getting = await toolGetWebpage({ url: urlString }, caps);
     if (!ok(getting)) {
       return toLLMContent(getting.$error);
     }

@@ -45,6 +45,7 @@ const VOICES: VoiceOption[] = Object.keys(VoiceMap) as VoiceOption[];
 export { invoke as default, describe };
 
 async function callAudioGen(
+  caps: Capabilities,
   prompt: string,
   voice: string
 ): Promise<Outcome<LLMContent>> {
@@ -80,25 +81,23 @@ async function callAudioGen(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  const response = await executeStep(body);
+  const response = await executeStep(caps, body);
   if (!ok(response)) return response;
 
   return response.chunks.at(0)!;
 }
 
-async function invoke({
-  context,
-  text,
-  voice,
-  ...params
-}: AudioGeneratorInputs): Promise<Outcome<AudioGeneratorOutputs>> {
+async function invoke(
+  { context, text, voice, ...params }: AudioGeneratorInputs,
+  caps: Capabilities
+): Promise<Outcome<AudioGeneratorOutputs>> {
   context ??= [];
   let instructionText = "";
   if (text) {
     instructionText = toText(text).trim();
   }
-  const template = new Template(toLLMContent(instructionText));
-  const toolManager = new ToolManager(new ArgumentNameGenerator());
+  const template = new Template(caps, toLLMContent(instructionText));
+  const toolManager = new ToolManager(caps, new ArgumentNameGenerator(caps));
   const substituting = await template.substitute(
     params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)
@@ -124,7 +123,7 @@ async function invoke({
         );
       }
       console.log("PROMPT: ", combinedInstruction);
-      return callAudioGen(combinedInstruction, voice);
+      return callAudioGen(caps, combinedInstruction, voice);
     }
   );
   if (!ok(results)) return results;
@@ -137,8 +136,11 @@ type DescribeInputs = {
   };
 };
 
-async function describe({ inputs: { text } }: DescribeInputs) {
-  const template = new Template(text);
+async function describe(
+  { inputs: { text } }: DescribeInputs,
+  caps: Capabilities
+) {
+  const template = new Template(caps, text);
   return {
     inputSchema: {
       type: "object",

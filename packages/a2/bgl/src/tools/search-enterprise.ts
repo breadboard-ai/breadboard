@@ -27,8 +27,11 @@ type Outputs =
       results: string;
     };
 
-async function resolveInput(inputContent: LLMContent): Promise<string> {
-  const template = new Template(inputContent);
+async function resolveInput(
+  caps: Capabilities,
+  inputContent: LLMContent
+): Promise<string> {
+  const template = new Template(caps, inputContent);
   const substituting = await template.substitute({}, async () => "");
   if (!ok(substituting)) {
     return substituting.$error;
@@ -36,7 +39,10 @@ async function resolveInput(inputContent: LLMContent): Promise<string> {
   return toText(substituting);
 }
 
-async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
+async function invoke(
+  inputs: Inputs,
+  caps: Capabilities
+): Promise<Outcome<Outputs>> {
   console.log("ENTERPRISE SEARCH INPUTS", inputs);
   let query: string;
   let search_engine_resource_name: string | undefined;
@@ -50,7 +56,7 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
       return err("Please provide a query");
     }
   } else if ("p-query" in inputs) {
-    query = await resolveInput(inputs["p-query"]);
+    query = await resolveInput(caps, inputs["p-query"]);
     mode = "step";
   } else {
     query = inputs.query;
@@ -65,10 +71,13 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
     search_engine_resource_name = "";
   }
   console.log("Query: " + query);
-  const searchResults = await toolSearchEnterprise({
-    query,
-    search_engine_resource_name,
-  });
+  const searchResults = await toolSearchEnterprise(
+    {
+      query,
+      search_engine_resource_name,
+    },
+    caps
+  );
   if (!ok(searchResults)) {
     return searchResults;
   }

@@ -1,4 +1,3 @@
-import transformBlob from "@blob";
 import { mergeTextParts, toText } from "../a2/utils";
 import { marked } from "./marked";
 import type {
@@ -83,6 +82,7 @@ function markdownToContext(markdown: string): LLMContent[] {
 }
 
 async function contextToRequests(
+  caps: Capabilities,
   context: LLMContent[] | undefined,
   startIndex: number
 ): Promise<unknown[]> {
@@ -98,7 +98,7 @@ async function contextToRequests(
       result.push(...requests);
       index = lastIndex;
     } else if ("inlineData" in part) {
-      const contents = await transformBlob({
+      const contents = await caps.blob({
         contents: [{ parts: [part] }],
         transform: "persistent-temporary",
       });

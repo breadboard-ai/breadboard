@@ -26,8 +26,11 @@ type Outputs =
       results: string;
     };
 
-async function resolveInput(inputContent: LLMContent): Promise<string> {
-  const template = new Template(inputContent);
+async function resolveInput(
+  caps: Capabilities,
+  inputContent: LLMContent
+): Promise<string> {
+  const template = new Template(caps, inputContent);
   const substituting = await template.substitute({}, async () => "");
   if (!ok(substituting)) {
     return substituting.$error;
@@ -35,7 +38,10 @@ async function resolveInput(inputContent: LLMContent): Promise<string> {
   return toText(substituting);
 }
 
-async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
+async function invoke(
+  inputs: Inputs,
+  caps: Capabilities
+): Promise<Outcome<Outputs>> {
   console.log("MOMA SEARCH INPUTS", inputs);
   let query: string;
   let mode: "step" | "tool";
@@ -48,7 +54,7 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
       return err("Please provide a query");
     }
   } else if ("p-query" in inputs) {
-    query = await resolveInput(inputs["p-query"]);
+    query = await resolveInput(caps, inputs["p-query"]);
     mode = "step";
   } else {
     query = inputs.query;
@@ -59,9 +65,12 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
     return err("Please provide a query");
   }
   console.log("Query: " + query);
-  const searchResults = await toolSearchMoma({
-    query,
-  });
+  const searchResults = await toolSearchMoma(
+    {
+      query,
+    },
+    caps
+  );
   if (!ok(searchResults)) {
     return searchResults;
   }

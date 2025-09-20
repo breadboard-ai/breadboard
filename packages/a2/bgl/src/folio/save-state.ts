@@ -6,9 +6,6 @@ export { invoke as default, describe };
 
 import { ok, err, mergeTextParts } from "../a2/utils";
 
-import write from "@write";
-import read from "@read";
-
 type Inputs = {
   id: string;
   context?: LLMContent[];
@@ -32,13 +29,11 @@ function getParts(context?: LLMContent[]): DataPart[] {
   return last ? last.parts : [];
 }
 
-async function invoke({
-  id,
-  method,
-  context,
-  info: _info,
-  "folio-mode": mode,
-}: Inputs): Promise<Outcome<Outputs>> {
+async function invoke(
+  { id, method, context, info: _info, "folio-mode": mode }: Inputs,
+  caps: Capabilities
+): Promise<Outcome<Outputs>> {
+  const { read, write } = caps;
   if (!context || context.length === 0) {
     return { context: [] };
   }

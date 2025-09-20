@@ -17,7 +17,7 @@ const { invoke, describe } = createConfigurator<
   initialize: async () => {
     return { title: "File System", configuration: {} };
   },
-  read: async ({ id: _id, configuration }) => {
+  read: async (_caps, { id: _id, configuration }) => {
     return {
       schema: {
         type: "object",
@@ -33,7 +33,7 @@ const { invoke, describe } = createConfigurator<
       },
     ];
   },
-  write: async ({ values }) => {
+  write: async (_caps, { values }) => {
     return values;
   },
 });

@@ -15,10 +15,11 @@ export type SearchOutputs = {
   results: string;
 };
 
-async function invoke({
-  query,
-}: SearchInputs): Promise<Outcome<SearchOutputs>> {
-  const executing = await executeTool<string>("enterprise_search", {
+async function invoke(
+  { query }: SearchInputs,
+  caps: Capabilities
+): Promise<Outcome<SearchOutputs>> {
+  const executing = await executeTool<string>(caps, "enterprise_search", {
     query,
   });
   if (!ok(executing)) return executing;

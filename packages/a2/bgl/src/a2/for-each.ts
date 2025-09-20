@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InvokeOutputs } from "@invoke";
 import { err, llm, ok } from "./utils";
 import { defaultSafetySettings, GeminiSchema } from "./gemini";
 import { GeminiPrompt } from "./gemini-prompt";
@@ -122,13 +121,14 @@ export type AsyncForEachCallback = (
 ) => Promise<Outcome<InvokeOutputs>>;
 
 async function forEach(
+  caps: Capabilities,
   inputs: ForEachInputs,
   callback: AsyncForEachCallback
 ): Promise<InvokeOutputs> {
   const params = Object.fromEntries(
     Object.entries(inputs).filter(([key]) => key.startsWith("p-z-"))
   );
-  const template = new Template(inputs.config$prompt);
+  const template = new Template(caps, inputs.config$prompt);
   const collectedParts: DataPart[] = [];
   const mappedParts = await template.mapParams(
     params,
@@ -150,7 +150,7 @@ async function forEach(
     async () => ""
   );
   if (!ok(mappedParts)) return mappedParts;
-  const splitPrompt = new GeminiPrompt({
+  const splitPrompt = new GeminiPrompt(caps, {
     body: {
       safetySettings: defaultSafetySettings(),
       systemInstruction: systemInstruction(),

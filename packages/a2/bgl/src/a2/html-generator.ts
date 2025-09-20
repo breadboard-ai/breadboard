@@ -11,6 +11,7 @@ export { callGenWebpage };
 const OUTPUT_KEY = "rendered_outputs";
 
 async function callGenWebpage(
+  caps: Capabilities,
   instruction: string,
   content: LLMContent[],
   renderMode: string,
@@ -86,7 +87,7 @@ async function callGenWebpage(
   // TODO(askerryryan): Remove once functional.
   console.log("request body");
   console.log(body);
-  const response = await executeStep(body);
+  const response = await executeStep(caps, body);
   if (!ok(response)) {
     let errorMessage;
     if (response.$error.includes("The service is currently unavailable")) {

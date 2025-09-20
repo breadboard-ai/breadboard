@@ -76,6 +76,7 @@ type VideoGeneratorOutputs = {
 export { invoke as default, describe };
 
 async function callVideoGen(
+  caps: Capabilities,
   prompt: string,
   imageContent: LLMContent | undefined,
   disablePromptRewrite: boolean,
@@ -137,7 +138,7 @@ async function callVideoGen(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  const response = await executeStep(body);
+  const response = await executeStep(caps, body);
   if (!ok(response)) return response;
 
   // Only take the first video output. The model can't produce
@@ -145,14 +146,17 @@ async function callVideoGen(
   return response.chunks.at(0)!;
 }
 
-async function invoke({
-  context,
-  instruction,
-  "p-disable-prompt-rewrite": disablePromptRewrite,
-  "p-video-aspect-ratio": aspectRatio,
-  "b-model-name": modelId,
-  ...params
-}: VideoGeneratorInputs): Promise<Outcome<VideoGeneratorOutputs>> {
+async function invoke(
+  {
+    context,
+    instruction,
+    "p-disable-prompt-rewrite": disablePromptRewrite,
+    "p-video-aspect-ratio": aspectRatio,
+    "b-model-name": modelId,
+    ...params
+  }: VideoGeneratorInputs,
+  caps: Capabilities
+): Promise<Outcome<VideoGeneratorOutputs>> {
   const { modelName } = getModel(modelId);
   context ??= [];
   let instructionText = "";
@@ -166,8 +170,8 @@ async function invoke({
   // 2) Substitute variables and magic image reference.
   // Note: it is important that images are not subsituted in here as they will
   // not be handled properly. At this point, only text variables should be left.
-  const template = new Template(toLLMContent(instructionText));
-  const toolManager = new ToolManager(new ArgumentNameGenerator());
+  const template = new Template(caps, toLLMContent(instructionText));
+  const toolManager = new ToolManager(caps, new ArgumentNameGenerator(caps));
   const substituting = await template.substitute(
     params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)
@@ -218,6 +222,7 @@ async function invoke({
 
       // 2) Call backend to generate video.
       const content = await callVideoGen(
+        caps,
         combinedInstruction,
         imageContext.at(0),
         disablePromptRewrite,
@@ -305,8 +310,11 @@ function expandVeoError(
   return e;
 }
 
-async function describe({ inputs: { instruction } }: DescribeInputs) {
-  const template = new Template(instruction);
+async function describe(
+  { inputs: { instruction } }: DescribeInputs,
+  caps: Capabilities
+) {
+  const template = new Template(caps, instruction);
   return {
     inputSchema: {
       type: "object",
