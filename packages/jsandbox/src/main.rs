@@ -126,22 +126,6 @@ enum Error {
     CallingModuleFunction(String),
 }
 
-type Result<T> = std::result::Result<T, Error>;
-
-#[wasm_bindgen]
-pub fn eval_code(code: String) -> std::result::Result<String, JsError> {
-    let rt = rquickjs::Runtime::new()?;
-    let ctx = rquickjs::Context::full(&rt)?;
-    let result: Result<String> = ctx.with(|ctx| {
-        let result_obj: rquickjs::Value = ctx.eval(code.as_str())?;
-        let Some(result_str) = ctx.json_stringify(result_obj)? else {
-            return Err(Error::NotStringifiable);
-        };
-        Ok(result_str.to_string()?)
-    });
-    Ok(result?)
-}
-
 async fn maybe_promise<'js>(
     result_obj: rquickjs::Value<'js>,
 ) -> rquickjs::Result<rquickjs::Value<'js>> {
