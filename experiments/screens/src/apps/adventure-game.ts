@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Screen } from "../types";
+import { Screen, Prompt } from "../types";
 
 export const spec = `
 Make a turn-based adventure game.
@@ -208,5 +208,235 @@ export const screens: Screen[] = [
         description: "Indicates that the user has decide to restart the game",
       },
     ],
+  },
+];
+
+export const prompts: Prompt[] = [
+  {
+    id: "generate-inspiration",
+    description:
+      "Generate a one-sentence inspiration for a fantasy adventure game.",
+    format: "text",
+    value: "Generate a one-sentence inspiration for a fantasy adventure game.",
+  },
+  {
+    id: "generate-plot-and-character",
+    description: "Generate the initial plot and character for the game.",
+    format: "json",
+    inputSchema: {
+      type: "object",
+      properties: {
+        inspiration: {
+          type: "string",
+          description: "The user's inspiration for the game.",
+        },
+      },
+      required: ["inspiration"],
+    },
+    schema: {
+      type: "object",
+      properties: {
+        plot: {
+          type: "string",
+          description: "The initial plot, world, and objective.",
+        },
+        characterBio: {
+          type: "string",
+          description: "The character's biography.",
+        },
+        characterImagePrompt: {
+          type: "string",
+          description: "A detailed prompt for image generation.",
+        },
+      },
+      required: ["plot", "characterBio", "characterImagePrompt"],
+    },
+    value: `You are a master storyteller creating a new turn-based adventure game. The user's inspiration is: "{{inspiration}}". Generate the initial setup: a compelling character, a rich world, and a clear objective (the 'boon'). Respond with a JSON object matching the provided schema.`,
+  },
+  {
+    id: "regenerate-character",
+    description: "Regenerate the character for the game.",
+    format: "json",
+    inputSchema: {
+      type: "object",
+      properties: {
+        plot: {
+          type: "string",
+          description: "The current plot of the game.",
+        },
+      },
+      required: ["plot"],
+    },
+    schema: {
+      type: "object",
+      properties: {
+        characterBio: {
+          type: "string",
+          description: "A new, different character's biography.",
+        },
+        characterImagePrompt: {
+          type: "string",
+          description: "A detailed prompt for the new character's image.",
+        },
+      },
+      required: ["characterBio", "characterImagePrompt"],
+    },
+    value: `You are a master storyteller creating a character for an adventure game. The plot is set: "{{plot}}". Generate a NEW, different character bio and image prompt for this story. Respond with a JSON object matching the provided schema.`,
+  },
+  {
+    id: "generate-next-turn",
+    description: "Generate the next turn of the game.",
+    format: "json",
+    inputSchema: {
+      type: "object",
+      properties: {
+        plot: {
+          type: "string",
+          description: "The current plot of the game.",
+        },
+        character: {
+          type: "object",
+          properties: {
+            bio: {
+              type: "string",
+              description: "The character's biography.",
+            },
+          },
+          required: ["bio"],
+        },
+        history: {
+          type: "string",
+          description: "The history of the player's actions.",
+        },
+      },
+      required: ["plot", "character", "history"],
+    },
+    schema: {
+      type: "object",
+      properties: {
+        sceneText: {
+          type: "string",
+          description: "A brief description of the current scene.",
+        },
+        sceneImagePrompt: {
+          type: "string",
+          description: "A detailed prompt for the scene's image.",
+        },
+        choices: {
+          type: "array",
+          items: {
+            type: "string",
+          },
+          minItems: 4,
+          maxItems: 4,
+          description: "Four possible actions for the player.",
+        },
+      },
+      required: ["sceneText", "sceneImagePrompt", "choices"],
+    },
+    value: `You are the Dungeon Master for a turn-based adventure game.
+      **The Story So Far:**
+      {{plot}}
+      **Character:**
+      {{character.bio}}
+      **Player History:**
+      {{history}}
+      Generate the next scene. It must logically follow the story and present the player with four meaningful, distinct choices. Respond with a JSON object matching the provided schema.`,
+  },
+  {
+    id: "update-plot-based-on-choice",
+    description: "Update the plot based on the user's choice.",
+    format: "json",
+    inputSchema: {
+      type: "object",
+      properties: {
+        plot: {
+          type: "string",
+          description: "The current plot of the game.",
+        },
+        currentScene: {
+          type: "object",
+          properties: {
+            text: {
+              type: "string",
+              description: "The text of the current scene.",
+            },
+          },
+          required: ["text"],
+        },
+        choice: {
+          type: "string",
+          description: "The player's choice.",
+        },
+      },
+      required: ["plot", "currentScene", "choice"],
+    },
+    schema: {
+      type: "object",
+      properties: {
+        updatedPlot: {
+          type: "string",
+          description: "The new plot incorporating the choice's outcome.",
+        },
+        boonSecured: {
+          type: "boolean",
+          description: "True if the main objective is now complete.",
+        },
+      },
+      required: ["updatedPlot", "boonSecured"],
+    },
+    value: `You are the Dungeon Master, updating the story based on the player's actions.
+      **The Story So Far:**
+      {{plot}}
+      **Current Scene:**
+      {{currentScene.text}}
+      **Player's Choice:**
+      {{choice}}
+      Now, write the next part of the story. Describe the outcome and advance the plot toward the objective. Determine if this action results in securing the boon. Respond with a JSON object matching the provided schema.`,
+  },
+  {
+    id: "generate-finale",
+    description: "Generate the finale of the game.",
+    format: "json",
+    inputSchema: {
+      type: "object",
+      properties: {
+        plot: {
+          type: "string",
+          description: "The final plot of the game.",
+        },
+        character: {
+          type: "object",
+          properties: {
+            bio: {
+              type: "string",
+              description: "The character's biography.",
+            },
+          },
+          required: ["bio"],
+        },
+      },
+      required: ["plot", "character"],
+    },
+    schema: {
+      type: "object",
+      properties: {
+        finaleText: {
+          type: "string",
+          description: "Celebratory text for the final scene.",
+        },
+        finaleImagePrompt: {
+          type: "string",
+          description: "A detailed prompt for the final image.",
+        },
+      },
+      required: ["finaleText", "finaleImagePrompt"],
+    },
+    value: `You are the Dungeon Master. The player has won!
+      **Final Story State:**
+      {{plot}}
+      **The Hero:**
+      {{character.bio}}
+      Write the final, celebratory scene. Describe the hero's triumph. This is the epilogue. Respond with a JSON object matching the provided schema.`,
   },
 ];

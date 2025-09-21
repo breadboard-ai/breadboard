@@ -49,3 +49,7 @@ This project uses vite for the web frontend.
 # Testing
 
 To write tests, use node's built-in test framework.
+
+# Generation
+
+Never run `npm run generate`. This should only be done by the user.

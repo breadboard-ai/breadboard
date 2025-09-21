@@ -10,6 +10,7 @@ import { Screen } from "./types";
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { logicPrompt } from "./logic-prompt";
 import { GoogleGenAI } from "@google/genai";
+import { prompts } from "./apps/adventure-game";
 
 type Prompt = {
   text: string;
@@ -64,10 +65,17 @@ async function loadAppPrompt(appName: string): Promise<Prompt | Oops> {
       text: `
 ${spec}
 
-The following screens are defined for this program
+The following screens are defined for this program:
 
 \`\`\`json
 ${JSON.stringify(screens, null, 2)}
+\`\`\`
+
+
+The following prompts are defined for this program:
+
+\`\`\`json
+${JSON.stringify(prompts, null, 2)}
 \`\`\`
 `,
     };

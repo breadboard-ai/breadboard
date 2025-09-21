@@ -4,8 +4,8 @@ export type Schema = {
   description?: string;
   nullable?: boolean;
   enum?: string[];
-  maxItems?: string;
-  minItems?: string;
+  maxItems?: string | number;
+  minItems?: string | number;
   properties?: Record<string, Schema>;
   anyOf?: Schema[];
   required?: string[];
@@ -58,6 +58,21 @@ export type Capabilities = {
   mcp: McpClient;
   console: Console;
   screens: ScreenServer;
+  /**
+   * The prompt capabilities.
+   */
+  prompts: {
+    /**
+     * Gets a prompt by id.
+     * @param id The id of the prompt.
+     * @param values A property bag for substituting placeholders in the prompt.
+     * @returns The prompt with the placeholders substituted.
+     */
+    get: (
+      id: string,
+      values?: Record<string, SchemaValidated>
+    ) => Promise<Prompt>;
+  };
 };
 
 export type Invoke = (capabilities: Capabilities) => Promise<LLMContent>;
@@ -77,6 +92,15 @@ export type EventDescriptor = {
    * present, there's no additional data supplied for this event.
    */
   outputSchema?: Schema;
+};
+
+export type Prompt = {
+  id: string;
+  description: string;
+  format: "text" | "json";
+  inputSchema?: Schema;
+  schema?: Schema;
+  value: string;
 };
 
 /**

@@ -9,13 +9,22 @@ import {
   LLMContent,
   UserEvent,
   McpClient,
+  Prompt,
 } from "../src/types.js";
+import { prompts } from "../src/apps/adventure-game.js";
+
+const promptMap = new Map<string, Prompt>(
+  prompts.map((prompt) => [prompt.id, prompt])
+);
 
 export class MockCapabilities implements Capabilities {
   screens: ScreenServer;
   generate: Gemini;
   console: Console;
   mcp: McpClient;
+  prompts: {
+    get: (id: string) => Promise<Prompt>;
+  };
 
   private screenHistory: ScreenInput[][] = [];
   private eventQueue: UserEvent[][] = [];
@@ -62,6 +71,26 @@ export class MockCapabilities implements Capabilities {
         throw new Error(`No canned response for request: ${key}`);
       },
     };
+
+  prompts: {
+    get: async (id, values) => {
+      const prompt = promptMap.get(id);
+      if (!prompt) {
+        throw new Error(`Prompt with id "${id}" not found`);
+      }
+
+      if (!values) {
+        return prompt;
+      }
+
+      let value = prompt.value;
+      for (const [key, val] of Object.entries(values)) {
+        value = value.replaceAll(`{{${key}}}`, String(val));
+      }
+
+      return { ...prompt, value };
+    },
+  };
 
     this.console = console;
     this.mcp = {

@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Content, GoogleGenAI } from "@google/genai";
+import {
+  Content,
+  ContentUnion,
+  GoogleGenAI,
+  Tool,
+  ToolConfig,
+} from "@google/genai";
 import {
   Candidate,
   GetUserEventsResponse,
@@ -13,15 +19,16 @@ import {
   GeminiInputs,
   CallToolRequest,
   ScreenInput,
-  Screen,
+  Prompt,
+  SchemaValidated,
 } from "./types";
-import { screens } from "./apps/adventure-game";
+import { screens, prompts } from "./apps/adventure-game";
 import { TestHarness } from "./ui/test-harness";
 
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_KEY;
 
-const screenMap = new Map<string, Screen>(
-  screens.map((screen) => [screen.screenId, screen])
+const promptMap = new Map<string, Prompt>(
+  prompts.map((prompt) => [prompt.id, prompt])
 );
 
 class EventQueue {
@@ -83,6 +90,14 @@ export class CapabilitiesImpl implements Capabilities {
       const result = await gemini.models.generateContent({
         model: args.model ?? "gemini-2.5-flash",
         contents: args.contents as Content,
+        config: {
+          tools: args.tools as Tool[],
+          toolConfig: args.toolConfig as ToolConfig,
+          responseSchema: args.generationConfig?.responseSchema,
+          responseMimeType: args.generationConfig?.responseMimeType,
+          systemInstruction: args.systemInstruction as ContentUnion,
+          responseModalities: args.generationConfig?.responseModalities,
+        },
       });
       this.#logToConsole("generateContent returned:", result);
       return { candidates: result.candidates as Candidate[] };
@@ -100,6 +115,38 @@ export class CapabilitiesImpl implements Capabilities {
     },
     error: (...params: unknown[]) => {
       this.#logToConsole("ERROR:", ...params);
+    },
+  };
+  prompts = {
+    get: async (id: string, values?: Record<string, SchemaValidated>) => {
+      const prompt = promptMap.get(id);
+      if (!prompt) {
+        throw new Error(`Prompt with id "${id}" not found`);
+      }
+
+      if (!values) {
+        return prompt;
+      }
+
+      const replacer = (
+        value: string,
+        substitutions: Record<string, unknown>
+      ) => {
+        return value.replace(/{{(.*?)}}/g, (match, key) => {
+          const parts = key.trim().split(".");
+          let sub: unknown = substitutions;
+          for (const part of parts) {
+            if (typeof sub !== "object" || sub === null) {
+              return match;
+            }
+            sub = (sub as Record<string, unknown>)[part];
+          }
+          return sub !== undefined ? String(sub) : match;
+        });
+      };
+
+      const value = replacer(prompt.value, values);
+      return { ...prompt, value };
     },
   };
   get screens() {
