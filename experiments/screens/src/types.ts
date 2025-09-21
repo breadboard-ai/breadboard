@@ -94,31 +94,44 @@ export type EventDescriptor = {
   outputSchema?: Schema;
 };
 
+export type PromptArgument = {
+  /**
+   * The name of the argument.
+   */
+  name: string;
+  /**
+   * Descriptiong of the argument: how will it be used in the prompt.
+   */
+  description: string;
+  /**
+   * Whether or not the argument is required
+   */
+  required: boolean;
+};
+
 export type Prompt = {
-  id: string;
+  name: string;
   description: string;
   /**
    * Whether prompt's generated output will be text, JSON, or image.
    */
   format: "text" | "json" | "image";
   /**
-   * The input schema of the object that will populate prompt placeholders.
-   * For example, if the prompt has an {{origin}} placeholder in it, the schema
-   * might be
+   * The arguments for the prompt that will populate prompt placeholders.
+   * For example, if the prompt has an {{origin}} placeholder in it,
+   * the expected value of arguments will be:
    *
    * ```json
-   * {
-   *   "type": "object",
-   *   "properties": {
-   *     "origin": {
-   *       "type": "string",
-   *       "description": "The origin point in the map"
-   *     }
+   * [
+   *   {
+   *     "name": "origin",
+   *     "description": "The origin point in the map",
+   *     "required": true
    *   }
-   * }
+   * ]
    * ```
    */
-  inputSchema?: Schema;
+  arguments?: PromptArgument[];
   /**
    * The JSON schema that accompanies the prompt. Is only provided when
    * the format = "json". Supply it as the `responseSchema` to the Gemini API.

@@ -213,26 +213,23 @@ export const screens: Screen[] = [
 
 export const prompts: Prompt[] = [
   {
-    id: "generate-inspiration",
+    name: "generate-inspiration",
     description:
       "Generate a one-sentence inspiration for a fantasy adventure game.",
     format: "text",
     value: "Generate a one-sentence inspiration for a fantasy adventure game.",
   },
   {
-    id: "generate-plot-and-character",
+    name: "generate-plot-and-character",
     description: "Generate the initial plot and character for the game.",
     format: "json",
-    inputSchema: {
-      type: "object",
-      properties: {
-        inspiration: {
-          type: "string",
-          description: "The user's inspiration for the game.",
-        },
+    arguments: [
+      {
+        name: "inspiration",
+        description: "The user's inspiration for the game.",
+        required: true,
       },
-      required: ["inspiration"],
-    },
+    ],
     responseSchema: {
       type: "object",
       properties: {
@@ -254,19 +251,16 @@ export const prompts: Prompt[] = [
     value: `You are a master storyteller creating a new turn-based adventure game. The user's inspiration is: "{{inspiration}}". Generate the initial setup: a compelling character, a rich world, and a clear objective (the 'boon'). Respond with a JSON object matching the provided schema.`,
   },
   {
-    id: "regenerate-character",
+    name: "regenerate-character",
     description: "Regenerate the character for the game.",
     format: "json",
-    inputSchema: {
-      type: "object",
-      properties: {
-        plot: {
-          type: "string",
-          description: "The current plot of the game.",
-        },
+    arguments: [
+      {
+        name: "plot",
+        description: "The current plot of the game.",
+        required: true,
       },
-      required: ["plot"],
-    },
+    ],
     responseSchema: {
       type: "object",
       properties: {
@@ -284,22 +278,22 @@ export const prompts: Prompt[] = [
     value: `You are a master storyteller creating a character for an adventure game. The plot is set: "{{plot}}". Generate a NEW, different character bio and image prompt for this story. Respond with a JSON object matching the provided schema.`,
   },
   {
-    id: "generate-scene-image",
+    name: "generate-scene-image",
     description: "Generates the scene image",
     format: "image",
-    inputSchema: {
-      type: "object",
-      properties: {
-        characterDescription: {
-          type: "string",
-          description: "Detailed description of the main character",
-        },
-        sceneDescription: {
-          type: "string",
-          description: "Detailed description of the scene",
-        },
+    arguments: [
+      {
+        name: "characterDescription",
+        description:
+          "Detailed description of the main character's visual features",
+        required: true,
       },
-    },
+      {
+        name: "sceneDescription",
+        description: "Detailed description of the scene",
+        required: true,
+      },
+    ],
     value: `Generate stylized art for a video game, depicting a scene with a character in it.
     ## Scene Description
     {{sceneDescription}}
@@ -308,51 +302,43 @@ export const prompts: Prompt[] = [
     {{characterDescription}}`,
   },
   {
-    id: "generate-character-portrait",
+    name: "generate-character-portrait",
     description: "Generates the character portrait",
     format: "image",
-    inputSchema: {
-      type: "object",
-      properties: {
-        characterDescription: {
-          type: "string",
-          description: "Detailed description of the main character",
-        },
+    arguments: [
+      {
+        name: "characterDescription",
+        description:
+          "Detailed description of the main character's visual features",
+        required: true,
       },
-    },
-    value: `Generate stylized art for a video game, depicting the main character of the game
+    ],
+    value: `Generate stylized art for a video game, depicting the main character of the game as a full-body portrait.
     
     ## Character Description
     {{characterDescription}}`,
   },
   {
-    id: "generate-next-turn",
+    name: "generate-next-turn",
     description: "Generate the next turn of the game.",
     format: "json",
-    inputSchema: {
-      type: "object",
-      properties: {
-        plot: {
-          type: "string",
-          description: "The current plot of the game.",
-        },
-        character: {
-          type: "object",
-          properties: {
-            bio: {
-              type: "string",
-              description: "The character's biography.",
-            },
-          },
-          required: ["bio"],
-        },
-        history: {
-          type: "string",
-          description: "The history of the player's actions.",
-        },
+    arguments: [
+      {
+        name: "plot",
+        description: "The current plot of the game.",
+        required: true,
       },
-      required: ["plot", "character", "history"],
-    },
+      {
+        name: "bio",
+        description: "The character's biography.",
+        required: true,
+      },
+      {
+        name: "history",
+        description: "The history of the player's actions.",
+        required: true,
+      },
+    ],
     responseSchema: {
       type: "object",
       properties: {
@@ -380,39 +366,32 @@ export const prompts: Prompt[] = [
       **The Story So Far:**
       {{plot}}
       **Character:**
-      {{character.bio}}
+      {{bio}}
       **Player History:**
       {{history}}
       Generate the next scene. It must logically follow the story and present the player with four meaningful, distinct choices. Respond with a JSON object matching the provided schema.`,
   },
   {
-    id: "update-plot-based-on-choice",
+    name: "update-plot-based-on-choice",
     description: "Update the plot based on the user's choice.",
     format: "json",
-    inputSchema: {
-      type: "object",
-      properties: {
-        plot: {
-          type: "string",
-          description: "The current plot of the game.",
-        },
-        currentScene: {
-          type: "object",
-          properties: {
-            text: {
-              type: "string",
-              description: "The text of the current scene.",
-            },
-          },
-          required: ["text"],
-        },
-        choice: {
-          type: "string",
-          description: "The player's choice.",
-        },
+    arguments: [
+      {
+        name: "plot",
+        description: "The current plot of the game.",
+        required: true,
       },
-      required: ["plot", "currentScene", "choice"],
-    },
+      {
+        name: "currentScene",
+        description: "The text of the current scene.",
+        required: true,
+      },
+      {
+        name: "choice",
+        description: "The player's choice.",
+        required: true,
+      },
+    ],
     responseSchema: {
       type: "object",
       properties: {
@@ -431,35 +410,27 @@ export const prompts: Prompt[] = [
       **The Story So Far:**
       {{plot}}
       **Current Scene:**
-      {{currentScene.text}}
+      {{currentScene}}
       **Player's Choice:**
       {{choice}}
       Now, write the next part of the story. Describe the outcome and advance the plot toward the objective. Determine if this action results in securing the boon. Respond with a JSON object matching the provided schema.`,
   },
   {
-    id: "generate-finale",
+    name: "generate-finale",
     description: "Generate the finale of the game.",
     format: "json",
-    inputSchema: {
-      type: "object",
-      properties: {
-        plot: {
-          type: "string",
-          description: "The final plot of the game.",
-        },
-        character: {
-          type: "object",
-          properties: {
-            bio: {
-              type: "string",
-              description: "The character's biography.",
-            },
-          },
-          required: ["bio"],
-        },
+    arguments: [
+      {
+        name: "plot",
+        description: "The final plot of the game.",
+        required: true,
       },
-      required: ["plot", "character"],
-    },
+      {
+        name: "bio",
+        description: "The character's biography.",
+        required: true,
+      },
+    ],
     responseSchema: {
       type: "object",
       properties: {
@@ -478,7 +449,7 @@ export const prompts: Prompt[] = [
       **Final Story State:**
       {{plot}}
       **The Hero:**
-      {{character.bio}}
+      {{bio}}
       Write the final, celebratory scene. Describe the hero's triumph. This is the epilogue. Respond with a JSON object matching the provided schema.`,
   },
 ];

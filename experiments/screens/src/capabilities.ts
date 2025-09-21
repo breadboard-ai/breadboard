@@ -28,7 +28,7 @@ import { TestHarness } from "./ui/test-harness";
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_KEY;
 
 const promptMap = new Map<string, Prompt>(
-  prompts.map((prompt) => [prompt.id, prompt])
+  prompts.map((prompt) => [prompt.name, prompt])
 );
 
 class EventQueue {
