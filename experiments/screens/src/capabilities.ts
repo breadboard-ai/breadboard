@@ -67,6 +67,7 @@ export class CapabilitiesImpl implements Capabilities {
   readonly eventQueue = new EventQueue();
   #testHarness: TestHarness | null = null;
   #log: unknown[][] = [];
+  #vfs = new Map<string, string>();
 
   constructor() {
     document.body.addEventListener("user-event", (e) => {
@@ -81,6 +82,40 @@ export class CapabilitiesImpl implements Capabilities {
     if (this.#testHarness) {
       this.#testHarness.log = this.#log;
     }
+  }
+
+  #processInlineData(candidates: Candidate[]): Candidate[] {
+    return candidates.map((candidate) => {
+      if (!candidate.content || !candidate.content.parts) {
+        return candidate;
+      }
+
+      const parts = candidate.content.parts.map((part) => {
+        if (!("inlineData" in part)) {
+          return part;
+        }
+
+        const { mimeType, data } = part.inlineData;
+        const byteCharacters = atob(data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mimeType });
+        const blobUrl = URL.createObjectURL(blob);
+        const vfsPath = `/vfs/out/${crypto.randomUUID()}`;
+        this.#vfs.set(vfsPath, blobUrl);
+        return {
+          fileData: {
+            fileUri: vfsPath,
+            mimeType,
+          },
+        };
+      });
+
+      return { ...candidate, content: { ...candidate.content, parts } };
+    });
   }
 
   generate = {
@@ -100,7 +135,9 @@ export class CapabilitiesImpl implements Capabilities {
         },
       });
       this.#logToConsole("generateContent returned:", result);
-      return { candidates: result.candidates as Candidate[] };
+      return {
+        candidates: this.#processInlineData(result.candidates as Candidate[]),
+      };
     },
   };
   mcp = {
@@ -117,15 +154,15 @@ export class CapabilitiesImpl implements Capabilities {
       this.#logToConsole("ERROR:", ...params);
     },
   };
-  prompts = {
-    get: async (id: string, values?: Record<string, SchemaValidated>) => {
+  prompts: Capabilities["prompts"] = {
+    get: (id: string, values?: Record<string, SchemaValidated>) => {
       const prompt = promptMap.get(id);
       if (!prompt) {
         throw new Error(`Prompt with id "${id}" not found`);
       }
 
       if (!values) {
-        return prompt;
+        return Promise.resolve(prompt);
       }
 
       const replacer = (
@@ -146,7 +183,7 @@ export class CapabilitiesImpl implements Capabilities {
       };
 
       const value = replacer(prompt.value, values);
-      return { ...prompt, value };
+      return Promise.resolve({ ...prompt, value });
     },
   };
   get screens() {

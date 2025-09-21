@@ -2,7 +2,35 @@ import { test } from "node:test";
 import assert from "node:assert";
 import { TestHarness, findLastScreen } from "./test-harness.js";
 import adventureGame from "../out/adventure-game.js";
-import { Invoke } from "../src/types.js";
+import { Invoke, Prompt, SchemaValidated } from "../src/types.js";
+import { prompts } from "../src/apps/adventure-game.js";
+
+const promptMap = new Map<string, Prompt>(
+  prompts.map((prompt) => [prompt.id, prompt])
+);
+
+export const replacer = (
+  value: string,
+  substitutions: Record<string, SchemaValidated>
+): string => {
+  return value.replace(/{{(.*?)}}/g, (match, key) => {
+    const parts = key.trim().split(".");
+    let current: SchemaValidated | undefined = substitutions;
+    for (const part of parts) {
+      if (
+        current &&
+        typeof current === "object" &&
+        !Array.isArray(current) &&
+        part in current
+      ) {
+        current = current[part];
+      } else {
+        return match;
+      }
+    }
+    return String(current);
+  });
+};
 
 test("adventure-game", async (t) => {
   const harness = new TestHarness(adventureGame as unknown as Invoke);
@@ -14,7 +42,7 @@ test("adventure-game", async (t) => {
           role: "user",
           parts: [
             {
-              text: "Generate a one-sentence inspiration for a fantasy adventure game.",
+              text: promptMap.get("generate-inspiration")?.value,
             },
           ],
         },
@@ -39,7 +67,12 @@ test("adventure-game", async (t) => {
           role: "user",
           parts: [
             {
-              text: "You are a master storyteller creating a new turn-based adventure game. The user's inspiration is: \"A quest to find a lost city of gold.\". Generate the initial setup: a compelling character, a rich world, and a clear objective (the 'boon'). Respond with a JSON object matching the provided schema.",
+              text: replacer(
+                promptMap.get("generate-plot-and-character")?.value || "",
+                {
+                  inspiration: "A quest to find a lost city of gold.",
+                }
+              ),
             },
           ],
         },
@@ -94,7 +127,13 @@ test("adventure-game", async (t) => {
           role: "user",
           parts: [
             {
-              text: "You are the Dungeon Master for a turn-based adventure game.\n      **The Story So Far:**\n      The lost city of El Dorado is real...\n      **Character:**\n      A daring explorer.\n      **Player History:**\n      The adventure is just beginning.\n      Generate the next scene. It must logically follow the story and present the player with four meaningful, distinct choices. Respond with a JSON object matching the provided schema.",
+              text: replacer(promptMap.get("generate-next-turn")?.value || "", {
+                plot: "The lost city of El Dorado is real...",
+                character: {
+                  bio: "A daring explorer.",
+                },
+                history: "The adventure is just beginning.",
+              }),
             },
           ],
         },
@@ -149,7 +188,16 @@ test("adventure-game", async (t) => {
           role: "user",
           parts: [
             {
-              text: "You are the Dungeon Master, updating the story based on the player's actions.\n      **The Story So Far:**\n      The lost city of El Dorado is real...\n      **Current Scene:**\n      You stand at the edge of a dense jungle.\n      **Player's Choice:**\n      Go right\n      Now, write the next part of the story. Describe the outcome and advance the plot toward the objective. Determine if this action results in securing the boon. Respond with a JSON object matching the provided schema.",
+              text: replacer(
+                promptMap.get("update-plot-based-on-choice")?.value || "",
+                {
+                  plot: "The lost city of El Dorado is real...",
+                  currentScene: {
+                    text: "You stand at the edge of a dense jungle.",
+                  },
+                  choice: "Go right",
+                }
+              ),
             },
           ],
         },
@@ -178,7 +226,12 @@ test("adventure-game", async (t) => {
           role: "user",
           parts: [
             {
-              text: "You are the Dungeon Master. The player has won!\n      **Final Story State:**\n      You follow a hidden path to the right and discover the city!\n      **The Hero:**\n      A daring explorer.\n      Write the final, celebratory scene. Describe the hero's triumph. This is the epilogue. Respond with a JSON object matching the provided schema.",
+              text: replacer(promptMap.get("generate-finale")?.value || "", {
+                plot: "You follow a hidden path to the right and discover the city!",
+                character: {
+                  bio: "A daring explorer.",
+                },
+              }),
             },
           ],
         },

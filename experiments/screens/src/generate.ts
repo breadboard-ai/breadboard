@@ -179,6 +179,11 @@ if (code.endsWith("```")) {
   code = code.slice(0, -3);
 }
 
+// Mechanically fix a common problem with
+// Gemini adding extra spaces in optional
+// property accessors.
+code = code.replaceAll(/\?\s*\.\s*\[/g, "?.[");
+
 try {
   await mkdir(OUT_DIR, { recursive: true });
   await writeFile(destinationFileName, code, "utf-8");

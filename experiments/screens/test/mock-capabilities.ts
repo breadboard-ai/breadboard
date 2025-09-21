@@ -10,8 +10,10 @@ import {
   UserEvent,
   McpClient,
   Prompt,
+  SchemaValidated,
 } from "../src/types.js";
 import { prompts } from "../src/apps/adventure-game.js";
+import { replacer } from "./adventure-game.test.js";
 
 const promptMap = new Map<string, Prompt>(
   prompts.map((prompt) => [prompt.id, prompt])
@@ -22,9 +24,7 @@ export class MockCapabilities implements Capabilities {
   generate: Gemini;
   console: Console;
   mcp: McpClient;
-  prompts: {
-    get: (id: string) => Promise<Prompt>;
-  };
+  prompts: Capabilities["prompts"];
 
   private screenHistory: ScreenInput[][] = [];
   private eventQueue: UserEvent[][] = [];
@@ -66,31 +66,51 @@ export class MockCapabilities implements Capabilities {
       ): Promise<GeminiOutputs> => {
         const key = JSON.stringify(request.contents);
         if (this.cannedResponses[key]) {
-          return this.cannedResponses[key];
+          const response = this.cannedResponses[key];
+          // Simulate the VFS processing of inlineData.
+          if (response.candidates) {
+            response.candidates = response.candidates.map((candidate) => {
+              if (candidate.content && candidate.content.parts) {
+                candidate.content.parts = candidate.content.parts.map(
+                  (part) => {
+                    if ("inlineData" in part) {
+                      return {
+                        fileData: {
+                          mimeType: part.inlineData.mimeType,
+                          fileUri: `/vfs/out/mock-${Math.random()
+                            .toString(36)
+                            .substring(2)}`,
+                        },
+                      };
+                    }
+                    return part;
+                  }
+                );
+              }
+              return candidate;
+            });
+          }
+          return response;
         }
         throw new Error(`No canned response for request: ${key}`);
       },
     };
 
-  prompts: {
-    get: async (id, values) => {
-      const prompt = promptMap.get(id);
-      if (!prompt) {
-        throw new Error(`Prompt with id "${id}" not found`);
-      }
+    this.prompts = {
+      get: async (id, values) => {
+        const prompt = promptMap.get(id);
+        if (!prompt) {
+          throw new Error(`Prompt with id "${id}" not found`);
+        }
 
-      if (!values) {
-        return prompt;
-      }
+        if (!values) {
+          return prompt;
+        }
 
-      let value = prompt.value;
-      for (const [key, val] of Object.entries(values)) {
-        value = value.replaceAll(`{{${key}}}`, String(val));
-      }
-
-      return { ...prompt, value };
-    },
-  };
+        const value = replacer(prompt.value, values);
+        return { ...prompt, value };
+      },
+    };
 
     this.console = console;
     this.mcp = {
