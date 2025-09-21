@@ -126,7 +126,7 @@ export const screens: Screen[] = [
       },
       {
         eventId: "choose",
-        description: "Indicates taht the user chose the provided character",
+        description: "Indicates that the user chose the provided character",
       },
     ],
   },
@@ -282,6 +282,48 @@ export const prompts: Prompt[] = [
       required: ["characterBio", "characterImagePrompt"],
     },
     value: `You are a master storyteller creating a character for an adventure game. The plot is set: "{{plot}}". Generate a NEW, different character bio and image prompt for this story. Respond with a JSON object matching the provided schema.`,
+  },
+  {
+    id: "generate-scene-image",
+    description: "Generates the scene image",
+    format: "image",
+    inputSchema: {
+      type: "object",
+      properties: {
+        characterDescription: {
+          type: "string",
+          description: "Detailed description of the main character",
+        },
+        sceneDescription: {
+          type: "string",
+          description: "Detailed description of the scene",
+        },
+      },
+    },
+    value: `Generate stylized art for a video game, depicting a scene with a character in it.
+    ## Scene Description
+    {{sceneDescription}}
+    
+    ## Character Description
+    {{characterDescription}}`,
+  },
+  {
+    id: "generate-character-portrait",
+    description: "Generates the character portrait",
+    format: "image",
+    inputSchema: {
+      type: "object",
+      properties: {
+        characterDescription: {
+          type: "string",
+          description: "Detailed description of the main character",
+        },
+      },
+    },
+    value: `Generate stylized art for a video game, depicting the main character of the game
+    
+    ## Character Description
+    {{characterDescription}}`,
   },
   {
     id: "generate-next-turn",

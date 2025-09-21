@@ -98,9 +98,9 @@ export type Prompt = {
   id: string;
   description: string;
   /**
-   * Whether prompt's output is text or JSON.
+   * Whether prompt's generated output will be text, JSON, or image.
    */
-  format: "text" | "json";
+  format: "text" | "json" | "image";
   /**
    * The input schema of the object that will populate prompt placeholders.
    * For example, if the prompt has an {{origin}} placeholder in it, the schema
@@ -208,6 +208,14 @@ export type HarmCategory =
 
 export type Modality = "TEXT" | "IMAGE" | "AUDIO";
 
+/**
+ * Allows choosing between various modes of the generated output.
+ * - To choose JSON mode (JSON output), set `responseMimeType` to
+ * `application/json` and provide `responseSchema`.
+ * - To choose text output mode, do not provide GenerationConfig at all
+ * - TO choese image output mode, set `responseModalities` to `["IMAGE"]` and
+ * do NOT set `responseMimeType`.
+ */
 export type GenerationConfig = {
   responseMimeType?: "text/plain" | "application/json" | "text/x.enum";
   responseSchema?: Schema;
@@ -404,6 +412,9 @@ export type Candidate = {
    * media files within the application. The VFS paths are opaque identifiers
    * for media files and can be provided as both inputs and outputs. The VFS
    * files always start with "/vfs/".
+   * Note, that the `FileDataPart` might be mixed with `TextPart`s. When
+   * looking for it, first filter out the text parts and then get the first
+   * `FileDataPart`.
    */
   content?: LLMContent;
   finishReason?: FinishReason;
