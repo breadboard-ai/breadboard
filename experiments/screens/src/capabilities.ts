@@ -194,6 +194,7 @@ export class CapabilitiesImpl implements Capabilities {
           this.#testHarness = document.querySelector("test-harness");
           if (this.#testHarness) {
             this.#testHarness.screens = screens;
+            this.#testHarness.vfs = this.#vfs;
           }
         }
 

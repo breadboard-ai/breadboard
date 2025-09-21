@@ -21,6 +21,9 @@ export class TestHarness extends LitElement {
   @property({ type: Array })
   log: unknown[][] = [];
 
+  @property({ type: Object })
+  vfs = new Map<string, string>();
+
   @state()
   activeScreen: string | null = null;
 
@@ -112,6 +115,7 @@ export class TestHarness extends LitElement {
                 (s) => s.screenId === this.activeScreen
               )}
               .inputs=${activeScreenState.inputs}
+              .vfs=${this.vfs}
             ></screen-renderer>`
           : html`<p>No active screen</p>`}
       </div>

@@ -16,6 +16,9 @@ export class ScreenRenderer extends LitElement {
   @property({ type: Object })
   inputs: SchemaValidated = {};
 
+  @property({ type: Object })
+  vfs = new Map<string, string>();
+
   static styles = css`
     .screen {
       padding: 20px;
@@ -30,6 +33,9 @@ export class ScreenRenderer extends LitElement {
     }
     textarea {
       width: 100%;
+    }
+    img {
+      max-width: 100%;
     }
   `;
 
@@ -61,10 +67,15 @@ export class ScreenRenderer extends LitElement {
               const value = (this.inputs as Record<string, SchemaValidated>)[
                 key
               ];
+              const isVfsPath =
+                typeof value === "string" && value.startsWith("/vfs/out/");
+              const vfsUrl = isVfsPath ? this.vfs.get(value) : null;
               return html`
                 <div>
                   <label>${key}: (${schema.description})</label>
-                  <p>${String(value)}</p>
+                  ${vfsUrl
+                    ? html`<img src="${vfsUrl}" />`
+                    : html`<p>${String(value)}</p>`}
                 </div>
               `;
             }
