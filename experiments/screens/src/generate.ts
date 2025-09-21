@@ -10,7 +10,7 @@ import { Screen } from "./types";
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { logicPrompt } from "./logic-prompt";
 import { GoogleGenAI } from "@google/genai";
-import { prompts } from "./apps/adventure-game";
+import { tools } from "./screen-server-tools";
 
 type Prompt = {
   text: string;
@@ -23,6 +23,7 @@ type Oops = {
 type AppImport = {
   spec: string;
   screens: Screen[];
+  prompts: Prompt[];
 };
 
 config({ quiet: true });
@@ -46,9 +47,17 @@ async function loadMainPrompt(): Promise<Prompt | Oops> {
       text: `
 ${logicPrompt}
 
+Here are all the type defintions:
+
 \`\`\`typescript
 ${types}
 \`\`\
+
+The following tools are available from the McpClient:
+
+\`\`\`json
+${JSON.stringify(tools, null, 2)}
+\`\`\`
 
 `,
     };
@@ -60,7 +69,7 @@ ${types}
 async function loadAppPrompt(appName: string): Promise<Prompt | Oops> {
   const path = join(APP_DIR, `${appName}.ts`);
   try {
-    const { spec, screens } = (await import(path)) as AppImport;
+    const { spec, screens, prompts } = (await import(path)) as AppImport;
     return {
       text: `
 ${spec}

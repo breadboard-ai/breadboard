@@ -6,7 +6,6 @@
 
 /// <reference types="vite/client" />
 
-// import { screens } from "./apps/adventure-game";
 import adventureGame from "../out/adventure-game";
 import { Invoke } from "./types";
 import { CapabilitiesImpl } from "./capabilities";

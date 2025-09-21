@@ -32,7 +32,7 @@ export type CallToolRequest = {
 };
 
 export type CallToolResponse = {
-  content: LLMContent;
+  response?: SchemaValidated;
   isError: boolean;
 };
 
@@ -57,7 +57,6 @@ export type Capabilities = {
   generate: Gemini;
   mcp: McpClient;
   console: Console;
-  screens: ScreenServer;
   /**
    * The prompt capabilities.
    */
@@ -140,37 +139,9 @@ export type Prompt = {
   value: string;
 };
 
-/**
- * The Screen Server. Manages a set of pre-defined application screens and
- * allows the application to render them and to obtain user inputs from those
- * screens.
- *
- * For best results, call `getUserEvents` prior to `renderScreen` to capture any
- * user events and then act on them to render the right screen. Combined
- * together, `getUserEvents` and `renderScreen` form the rendering loop for the
- * application UI.
- */
-export type ScreenServer = {
-  /**
-   * Gets the list of user events. Will block until it receives at least one
-   * user event. Accumulates and drains the queue of user events when called.
-   */
-  getUserEvents(): Promise<GetUserEventsResponse>;
-  /**
-   * Updates screens with specified ids. This call does not block on user
-   * input. To collect user input from the screen, call `getUserEvents`.
-   * To make updates more efficiens, multiple screens can be updated in a
-   * single call.
-   *
-   * @param screenInputs -- the list of the screen inputs to update.
-   */
-  updateScreens(screenInputs: ScreenInput[]): Promise<RenderScreenResponse>;
-};
-
 export type ScreenInput = {
   screenId: string;
   inputs: SchemaValidated;
-  updated: boolean;
 };
 
 export type GetUserEventsResponse = {
@@ -354,6 +325,7 @@ export type FunctionDeclaration = {
   name: string;
   description: string;
   parameters?: Schema;
+  response?: Schema;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -438,4 +410,10 @@ export type Candidate = {
 
 export type GeminiOutputs = {
   candidates: Candidate[];
+};
+
+export type AppImport = {
+  spec: string;
+  screens: Screen[];
+  prompts: Prompt[];
 };

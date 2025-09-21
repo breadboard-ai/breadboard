@@ -21,5 +21,4 @@ The following Gemini models are available:
 - \`gemini-2.5-flash-image-preview\` - Precise, conversational image generation
   and editing. Importantly, the JSON mode is not enabled for this model.
 
-Here are all the type defintions:
 `;
