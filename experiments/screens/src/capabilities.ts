@@ -208,10 +208,14 @@ export class CapabilitiesImpl implements Capabilities {
         );
 
         const newStates = new Map(this.#testHarness.screenStates);
+        const updatedScreens = new Set(this.#testHarness.updatedScreens);
         for (const screenInput of screenInputs) {
-          newStates.set(screenInput.screenId, screenInput);
+          const { screenId } = screenInput;
+          newStates.set(screenId, screenInput);
+          updatedScreens.add(screenId);
         }
         this.#testHarness.screenStates = newStates;
+        this.#testHarness.updatedScreens = updatedScreens;
 
         return {
           isError: false,

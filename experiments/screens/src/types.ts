@@ -157,6 +157,7 @@ export type ScreenServer = {
 export type ScreenInput = {
   screenId: string;
   inputs: SchemaValidated;
+  updated: boolean;
 };
 
 export type GetUserEventsResponse = {

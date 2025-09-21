@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
 @customElement("console-view")
@@ -16,7 +16,7 @@ export class ConsoleView extends LitElement {
     :host {
       border-top: 1px solid #ccc;
       padding-top: 10px;
-      overflow-y: auto;
+      overflow-y: scroll;
       height: 200px;
     }
     h1 {
@@ -29,6 +29,13 @@ export class ConsoleView extends LitElement {
       border-bottom: 1px solid #eee;
     }
   `;
+
+  updated(changedProperties: PropertyValues) {
+    super.updated(changedProperties);
+    if (changedProperties.has("log")) {
+      this.scrollTop = this.scrollHeight;
+    }
+  }
 
   render() {
     return html`

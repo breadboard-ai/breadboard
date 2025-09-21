@@ -27,6 +27,9 @@ export class TestHarness extends LitElement {
   @state()
   activeScreen: string | null = null;
 
+  @state()
+  updatedScreens = new Set<string>();
+
   static styles = css`
     :host {
       display: flex;
@@ -35,9 +38,15 @@ export class TestHarness extends LitElement {
       font-family: sans-serif;
     }
 
+    .header {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #ccc;
+    }
+
     .tabs {
       display: flex;
-      border-bottom: 1px solid #ccc;
+      border-bottom: none;
     }
 
     .tab {
@@ -64,9 +73,35 @@ export class TestHarness extends LitElement {
       border-radius: 50%;
     }
 
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #eee;
+      border-top-color: #333;
+      border-radius: 50%;
+      margin-left: 10px;
+      display: none;
+      animation: spin 1s linear infinite;
+    }
+
+    .spinner.active {
+      display: block;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
     .content {
       flex: 1;
       overflow-y: auto;
+      height: 60%;
+    }
+
+    console-view {
+      height: 40%;
     }
   `;
 
@@ -81,8 +116,11 @@ export class TestHarness extends LitElement {
     const screenId = target.dataset.screenId;
     if (screenId) {
       this.activeScreen = screenId;
-      target.classList.remove("updated");
     }
+  }
+
+  #onUserEvent() {
+    this.updatedScreens = new Set();
   }
 
   render() {
@@ -91,24 +129,29 @@ export class TestHarness extends LitElement {
       : undefined;
 
     return html`
-      <div class="tabs">
-        ${this.screens.map(
-          (screen) => html`
-            <button
-              class="tab ${this.activeScreen === screen.screenId
-                ? "active"
-                : ""} ${this.screenStates.has(screen.screenId)
-                ? "updated"
-                : ""}"
-              data-screen-id=${screen.screenId}
-              @click=${this.#onTabClick}
-            >
-              ${screen.screenId}
-            </button>
-          `
-        )}
+      <div class="header">
+        <div class="tabs">
+          ${this.screens.map(
+            (screen) => html`
+              <button
+                class="tab ${this.activeScreen === screen.screenId
+                  ? "active"
+                  : ""} ${this.updatedScreens.has(screen.screenId)
+                  ? "updated"
+                  : ""}"
+                data-screen-id=${screen.screenId}
+                @click=${this.#onTabClick}
+              >
+                ${screen.screenId}
+              </button>
+            `
+          )}
+        </div>
+        <div
+          class="spinner ${this.updatedScreens.size === 0 ? "active" : ""}"
+        ></div>
       </div>
-      <div class="content">
+      <div class="content" @user-event=${this.#onUserEvent}>
         ${activeScreenState
           ? html`<screen-renderer
               .screen=${this.screens.find(
