@@ -233,7 +233,7 @@ export const prompts: Prompt[] = [
       },
       required: ["inspiration"],
     },
-    schema: {
+    responseSchema: {
       type: "object",
       properties: {
         plot: {
@@ -267,7 +267,7 @@ export const prompts: Prompt[] = [
       },
       required: ["plot"],
     },
-    schema: {
+    responseSchema: {
       type: "object",
       properties: {
         characterBio: {
@@ -311,7 +311,7 @@ export const prompts: Prompt[] = [
       },
       required: ["plot", "character", "history"],
     },
-    schema: {
+    responseSchema: {
       type: "object",
       properties: {
         sceneText: {
@@ -371,7 +371,7 @@ export const prompts: Prompt[] = [
       },
       required: ["plot", "currentScene", "choice"],
     },
-    schema: {
+    responseSchema: {
       type: "object",
       properties: {
         updatedPlot: {
@@ -418,7 +418,7 @@ export const prompts: Prompt[] = [
       },
       required: ["plot", "character"],
     },
-    schema: {
+    responseSchema: {
       type: "object",
       properties: {
         finaleText: {

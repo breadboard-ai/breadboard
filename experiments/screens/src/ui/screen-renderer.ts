@@ -90,13 +90,12 @@ export class ScreenRenderer extends LitElement {
                 <fieldset>
                   <legend>${event.description}</legend>
                   ${Object.entries(event.outputSchema?.properties ?? {}).map(
-                    ([key, schema]) =>
-                      html`
-                        <label>
-                          ${key}
-                          <textarea name=${key}></textarea>
-                        </label>
-                      `
+                    ([key]) => html`
+                      <label>
+                        ${key}
+                        <textarea name=${key}></textarea>
+                      </label>
+                    `
                   )}
                   <button
                     type=${event.outputSchema ? "submit" : "button"}

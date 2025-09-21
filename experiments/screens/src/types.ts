@@ -97,9 +97,33 @@ export type EventDescriptor = {
 export type Prompt = {
   id: string;
   description: string;
+  /**
+   * Whether prompt's output is text or JSON.
+   */
   format: "text" | "json";
+  /**
+   * The input schema of the object that will populate prompt placeholders.
+   * For example, if the prompt has an {{origin}} placeholder in it, the schema
+   * might be
+   *
+   * ```json
+   * {
+   *   "type": "object",
+   *   "properties": {
+   *     "origin": {
+   *       "type": "string",
+   *       "description": "The origin point in the map"
+   *     }
+   *   }
+   * }
+   * ```
+   */
   inputSchema?: Schema;
-  schema?: Schema;
+  /**
+   * The JSON schema that accompanies the prompt. Is only provided when
+   * the format = "json". Supply it as the `responseSchema` to the Gemini API.
+   */
+  responseSchema?: Schema;
   value: string;
 };
 
