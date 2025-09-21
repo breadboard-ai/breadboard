@@ -10,14 +10,11 @@
 import adventureGame from "../out/adventure-game";
 import { Invoke } from "./types";
 import { CapabilitiesImpl } from "./capabilities";
+import "./ui/test-harness";
 
 async function run(app: Invoke) {
   const appCapabilities = new CapabilitiesImpl();
   app(appCapabilities);
-  appCapabilities.eventQueue.add({
-    screenId: "start_game",
-    eventId: "generate_inspiration",
-  });
 }
 
 run(adventureGame as unknown as Invoke);

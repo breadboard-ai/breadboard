@@ -12,7 +12,9 @@
     "checkJs": false,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "lib": ["ESNext", "DOM"]
+    "lib": ["ESNext", "DOM"],
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false
   },
   "include": ["src/**/*.ts"]
 }
