@@ -12,8 +12,8 @@ import { createPrompt } from "./screenify-prompt";
 
 config({ quiet: true });
 
-const intent = `Make an "AI slop or not" game, where the user picks from two generated images based on the same topic, and the losing image is replaced with a new image, for 10 rounds. After 10 rounds, the image that lasted the longest is returned along with the "Winner" text.`;
-const APP_NAME = "ai-slop-or-not";
+const intent = `Make a blog post writer. It takes a topic, then does some research on it, then writes an outline, then generates an snazzy header graphic based on this outline, and in parallel, writes the blog post based on the outline. Then shows the header graphic and the blog post as a final result.`;
+const APP_NAME = "blog-post-writer";
 
 const SCROLLING_WINDOW_SIZE = 6;
 const TERMINAL_WIDTH = process.stdout.columns;

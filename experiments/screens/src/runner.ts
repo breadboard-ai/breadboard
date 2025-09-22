@@ -7,7 +7,7 @@
 /// <reference types="vite/client" />
 
 // import adventureGame from "../out/adventure-game";
-import app from "../out/ai-slop-or-not";
+import app from "../out/blog-post-writer";
 import { Invoke } from "./types";
 import { CapabilitiesImpl } from "./capabilities";
 import "./ui/test-harness";
