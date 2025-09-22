@@ -25,7 +25,7 @@ import type {
   RunSecretEvent,
 } from "@breadboard-ai/types";
 import {
-  addSandboxedRunModule,
+  addRunModule,
   composeFileSystemBackends,
   createEphemeralBlobStore,
   createFileSystem,
@@ -493,8 +493,8 @@ export class Main extends SignalWatcher(LitElement) {
       proxy: [],
       fileSystem,
       builtInBoardServers: [createA2Server()],
-      kits: addSandboxedRunModule(
-        sandbox,
+      kits: addRunModule(
+        moduleFactory,
         args.kits || [],
         args.moduleInvocationFilter
       ),

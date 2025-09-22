@@ -106,7 +106,7 @@ export {
 export type * from "@breadboard-ai/types/run.js";
 
 export { blankImperative, defaultModuleContent } from "@breadboard-ai/utils";
-export { addSandboxedRunModule } from "./sandboxed-run-module.js";
+export { addRunModule } from "./add-run-module.js";
 
 export { ConfigureSidewireTransform } from "./editor/transforms/configure-sidewire.js";
 export { IsolateSelectionTransform } from "./editor/transforms/isolate-selection.js";
