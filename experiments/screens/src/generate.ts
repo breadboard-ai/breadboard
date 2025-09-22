@@ -39,7 +39,7 @@ const SRC_DIR = join(import.meta.dirname, "../src");
 const APP_DIR = join(SRC_DIR, "apps");
 const OUT_DIR = join(import.meta.dirname, "../out");
 
-async function loadMainPrompt(): Promise<Prompt | Oops> {
+async function loadMainPrompt(helpers: string): Promise<Prompt | Oops> {
   const typesPath = join(SRC_DIR, `types.ts`);
   try {
     const types = await readFile(typesPath, "utf-8");
@@ -59,8 +59,25 @@ The following tools are available from the McpClient:
 ${JSON.stringify(tools, null, 2)}
 \`\`\`
 
+Additionally, these helper functions are injected into the module. You can
+use them directly:
+
+\`\`\`js
+${helpers}
+\`\`\`
+
 `,
     };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+async function loadHelperFunctions(): Promise<Prompt | Oops> {
+  const helpersPath = join(SRC_DIR, `helper-functions.js`);
+  try {
+    const text = await readFile(helpersPath, "utf-8");
+    return { text };
   } catch (e) {
     return { error: (e as Error).message };
   }
@@ -111,7 +128,15 @@ if (!APP_NAME) {
   console.log(`  📱 App: ${APP_NAME}`);
 }
 
-const mainPrompt = await loadMainPrompt();
+const helpers = await loadHelperFunctions();
+if ("error" in helpers) {
+  console.error(`  🔩 Unable to Load Helper Functions: ${helpers.error}`);
+  process.exit(1);
+} else {
+  console.log(`  🔩 Helper Functions Loaded`);
+}
+
+const mainPrompt = await loadMainPrompt(helpers.text);
 if ("error" in mainPrompt) {
   console.error(`  💾 Unable to Load Main Prompt: ${mainPrompt.error}`);
   process.exit(1);
@@ -195,7 +220,7 @@ code = code.replaceAll(/\?\s*\.\s*\[/g, "?.[");
 
 try {
   await mkdir(OUT_DIR, { recursive: true });
-  await writeFile(destinationFileName, code, "utf-8");
+  await writeFile(destinationFileName, `${helpers.text}\n\n${code}`, "utf-8");
 } catch {
   console.error(`  ❌ failed to save to "${destinationFileName}"`);
   process.exit(1);
