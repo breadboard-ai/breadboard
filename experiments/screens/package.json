@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "generate": "tsx src/generate.ts",
+    "screenify": "tsx src/screenify.ts",
     "dev": "vite dev",
     "test": "tsx test/adventure-game.test.ts"
   },
