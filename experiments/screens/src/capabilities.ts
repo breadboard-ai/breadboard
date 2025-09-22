@@ -28,7 +28,7 @@ import { TestHarness } from "./ui/test-harness";
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_KEY;
 
 const promptMap = new Map<string, Prompt>(
-  prompts.map((prompt) => [prompt.id, prompt])
+  prompts.map((prompt) => [prompt.name, prompt])
 );
 
 class EventQueue {
@@ -143,7 +143,51 @@ export class CapabilitiesImpl implements Capabilities {
   mcp = {
     callTool: async (params: CallToolRequest) => {
       this.#logToConsole("Calling tool:", params);
-      throw new Error("Not implemented");
+      const { name, arguments: args } = params;
+      switch (name) {
+        case "screens_update_screens": {
+          const screenInputs = args.screenInputs as ScreenInput[];
+          if (!this.#testHarness) {
+            this.#testHarness = document.querySelector("test-harness");
+            if (this.#testHarness) {
+              this.#testHarness.screens = screens;
+              this.#testHarness.vfs = this.#vfs;
+            }
+          }
+
+          if (!this.#testHarness) {
+            return { isError: true };
+          }
+
+          this.#logToConsole(
+            "Updating screens:",
+            screenInputs.map((s) => s.screenId).join(", ")
+          );
+
+          const newStates = new Map(this.#testHarness.screenStates);
+          const updatedScreens = new Set(this.#testHarness.updatedScreens);
+          for (const screenInput of screenInputs) {
+            const { screenId } = screenInput;
+            newStates.set(screenId, screenInput);
+            updatedScreens.add(screenId);
+          }
+          this.#testHarness.screenStates = newStates;
+          this.#testHarness.updatedScreens = updatedScreens;
+
+          return {
+            isError: false,
+          };
+        }
+        case "screens_get_user_events": {
+          const eventsResponse = await this.eventQueue.get();
+          const { events, isError } = eventsResponse;
+          return { isError, response: { events } };
+        }
+        default: {
+          this.#logToConsole("Unknown tool", name);
+          throw new Error(`Unknown tool "${name}"`);
+        }
+      }
     },
   };
   console = {
@@ -186,41 +230,4 @@ export class CapabilitiesImpl implements Capabilities {
       return Promise.resolve({ ...prompt, value });
     },
   };
-  get screens() {
-    return {
-      getUserEvents: () => this.eventQueue.get(),
-      updateScreens: async (screenInputs: ScreenInput[]) => {
-        if (!this.#testHarness) {
-          this.#testHarness = document.querySelector("test-harness");
-          if (this.#testHarness) {
-            this.#testHarness.screens = screens;
-            this.#testHarness.vfs = this.#vfs;
-          }
-        }
-
-        if (!this.#testHarness) {
-          return { isError: true };
-        }
-
-        this.#logToConsole(
-          "Updating screens:",
-          screenInputs.map((s) => s.screenId).join(", ")
-        );
-
-        const newStates = new Map(this.#testHarness.screenStates);
-        const updatedScreens = new Set(this.#testHarness.updatedScreens);
-        for (const screenInput of screenInputs) {
-          const { screenId } = screenInput;
-          newStates.set(screenId, screenInput);
-          updatedScreens.add(screenId);
-        }
-        this.#testHarness.screenStates = newStates;
-        this.#testHarness.updatedScreens = updatedScreens;
-
-        return {
-          isError: false,
-        };
-      },
-    };
-  }
 }
