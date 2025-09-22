@@ -22,7 +22,7 @@ import {
   Prompt,
   SchemaValidated,
 } from "./types";
-import { screens, prompts } from "./apps/adventure-game";
+import { screens, prompts } from "./apps/blog-post-writer";
 import { TestHarness } from "./ui/test-harness";
 
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_KEY;

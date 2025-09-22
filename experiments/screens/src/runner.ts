@@ -6,7 +6,8 @@
 
 /// <reference types="vite/client" />
 
-import adventureGame from "../out/adventure-game";
+// import adventureGame from "../out/adventure-game";
+import app from "../out/blog-post-writer";
 import { Invoke } from "./types";
 import { CapabilitiesImpl } from "./capabilities";
 import "./ui/test-harness";
@@ -16,4 +17,4 @@ async function run(app: Invoke) {
   app(appCapabilities);
 }
 
-run(adventureGame as unknown as Invoke);
+run(app as unknown as Invoke);

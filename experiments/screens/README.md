@@ -9,7 +9,7 @@ sandbox.
 
 ```js
 export default async function (capabilities) {
-  const { screens, generate, console } = capabilities;
+  const { mcp, generate, console } = capabilities;
 
   // generated code here
 }
@@ -20,11 +20,10 @@ In this experiment, there are three capabilities:
 - `generate` -- provides access to LLM generation
 - `mcp` -- the MCP client
 - `console` -- the typical console stuff
-- `screens` -- the screen server, which provides ability to show UI.
 
-In this experiment, the screen server is the most interesting one. It manages a
-set of predefined screens and allows the app generated code to update them and
-receive user events.
+The MCP client offers access to the "Screen Server", which is the most
+interesting one. It manages a set of predefined screens and allows the app
+generated code to update them and receive user events.
 
 It has two methods:
 
@@ -38,14 +37,57 @@ It has two methods:
 Combined together, `getUserEvents` and `renderScreen` form the rendering loop
 for the application UI.
 
-To generate code:
+## Experimenting
+
+To generate screens. Edit the `src/screenify.ts` and change the `intent` and
+`APP_NAME` to your liking. See sample values below.
+
+Then run
 
 ```sh
-npm run generate adventure-game
+npm run screenify
 ```
 
-To run code (does not yet work):
+This will generate a set of screens and prompts in the `src/app/{APP_NAME}.ts`
+file.
+
+To generate code from the screens:
+
+```sh
+npm run generate {APP_NAME}
+```
+
+This will place the generated code in the `out/{APP_NAME}.js` file.
+
+To run code:
+
+- edit `runner.ts` to point to the right `out/{APP_NAME}.js` file.
+- edit `capabilities.ts` to point to the right `src/app/{APP_NAME}.js` file.
+- run
 
 ```sh
 npm run dev
+```
+
+## Example screenify prompts
+
+AI Slop or Not Game
+
+```ts
+const intent = `Make an "AI slop or not" game, where the user picks from two 
+generated images based on the same topic, and the losing image is replaced 
+with a new image, for 10 rounds. After 10 rounds, the image that lasted the 
+longest is returned along with the "Winner" text.`;
+const APP_NAME = "ai-slop-or-not";
+```
+
+Blog Post Writer
+
+```ts
+const intent = `Make a blog post writer. It takes a topic, then does some
+research on it, then writes an outline, then generates an snazzy header
+graphic based on this outline, and in parallel, writes the blog post based on
+the outline. Then shows the header graphic and the blog post as a final
+result.`;
+const APP_NAME = "blog-post-writer";
 ```
