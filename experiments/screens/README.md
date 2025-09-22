@@ -40,7 +40,7 @@ for the application UI.
 ## Experimenting
 
 To generate screens. Edit the `src/screenify.ts` and change the `intent` and
-`APP_NAME` to values that reflect what you're like.
+`APP_NAME` to your liking. See sample values below.
 
 Then run
 
