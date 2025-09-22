@@ -11,30 +11,18 @@ import {
   ModuleIdentifier,
   MutableGraph,
   NodeDescriberResult,
+  Outcome,
 } from "@breadboard-ai/types";
 import { Schema } from "jsonschema";
-import { filterEmptyValues } from "@breadboard-ai/utils";
-import { CapabilitiesManager } from "./types.js";
+import { err, filterEmptyValues, ok } from "@breadboard-ai/utils";
+import {
+  CapabilitiesManager,
+  RunnableModule,
+  RunnableModuleFactory,
+  Sandbox,
+} from "@breadboard-ai/types/sandbox.js";
 
 export { invokeDescriber, invokeMainDescriber };
-
-async function addImportedModules(
-  modules: Record<string, string>,
-  mutable: MutableGraph
-): Promise<void> {
-  const inspectable = mutable.graphs.get("");
-  if (!inspectable) return;
-
-  const imports = await inspectable.imports();
-  imports.forEach((imported, importName) => {
-    if ("$error" in imported) return;
-
-    for (const [moduleName, spec] of Object.entries(imported.modules())) {
-      const modulePath = `${importName}/${moduleName}`;
-      modules[modulePath] = spec.code();
-    }
-  });
-}
 
 async function invokeDescriber(
   moduleId: ModuleIdentifier,
@@ -50,15 +38,13 @@ async function invokeDescriber(
   if (!declarations) {
     return;
   }
-  const modules = Object.fromEntries(
-    Object.entries(declarations).map(([name, spec]) => [name, spec.code])
+  const module = await mutable.store.sandbox.createRunnableModule(
+    mutable,
+    graph,
+    capabilities
   );
-  await addImportedModules(modules, mutable);
-  const module = new SandboxedModule(
-    mutable.store.sandbox,
-    capabilities?.createSpec() || {},
-    modules
-  );
+  if (!ok(module)) return;
+
   try {
     const result = (await module.describe(moduleId, {
       inputs,
@@ -104,15 +90,13 @@ async function invokeMainDescriber(
   if (!declarations || !main) {
     return false;
   }
-  const modules = Object.fromEntries(
-    Object.entries(declarations).map(([name, spec]) => [name, spec.code])
+  const module = await mutable.store.sandbox.createRunnableModule(
+    mutable,
+    graph,
+    capabilities
   );
-  await addImportedModules(modules, mutable);
-  const module = new SandboxedModule(
-    mutable.store.sandbox,
-    capabilities?.createSpec() || {},
-    modules
-  );
+  if (!ok(module)) return;
+
   try {
     const result = (await module.describe(main, {
       inputs,

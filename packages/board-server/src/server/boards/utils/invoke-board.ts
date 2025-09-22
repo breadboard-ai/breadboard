@@ -42,7 +42,11 @@ export const invokeBoard = async ({
   const graphStore = createGraphStore({
     loader: invokeLoader,
     kits: invokeKits,
-    sandbox: new NodeSandbox(),
+    sandbox: {
+      createRunnableModule() {
+        throw new Error("Not implemented");
+      },
+    },
     fileSystem: new StubFileSystem(),
   });
   registerLegacyKits(graphStore);

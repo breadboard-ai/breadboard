@@ -31,7 +31,6 @@ import {
   ModuleIdentifier,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import { Sandbox } from "@breadboard-ai/jsandbox";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
@@ -39,6 +38,7 @@ import { RecentBoardStore } from "../data/recent-boards";
 import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
 import { McpClientManager } from "@breadboard-ai/mcp";
 import type { Result } from "@breadboard-ai/types/result.js";
+import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
 
 export enum TabType {
   URL,
@@ -76,7 +76,7 @@ export interface Tab {
 
 export interface RuntimeConfig {
   graphStore: MutableGraphStore;
-  sandbox: Sandbox;
+  sandbox: RunnableModuleFactory;
   experiments: Record<string, boolean>;
   globalConfig?: GlobalConfig;
   tokenVendor: TokenVendor;

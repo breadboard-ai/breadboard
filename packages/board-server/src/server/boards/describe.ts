@@ -48,7 +48,11 @@ async function describe(_req: Request, res: Response): Promise<void> {
   const graphStore = createGraphStore({
     kits: [],
     loader,
-    sandbox: new NodeSandbox(),
+    sandbox: {
+      async createRunnableModule() {
+        throw new Error("Not implemented");
+      },
+    },
     fileSystem: new StubFileSystem(),
   });
 

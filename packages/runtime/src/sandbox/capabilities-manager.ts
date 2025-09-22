@@ -23,7 +23,7 @@ import { err, ok } from "@breadboard-ai/utils";
 import { bubbleUpInputsIfNeeded, bubbleUpOutputsIfNeeded } from "../bubble.js";
 import { FileSystemHandlerFactory } from "./file-system-handler-factory.js";
 import { invokeDescriber } from "./invoke-describer.js";
-import { CapabilitiesManager } from "./types.js";
+import { CapabilitiesManager } from "@breadboard-ai/types/sandbox.js";
 
 export { CapabilitiesManagerImpl };
 

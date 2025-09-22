@@ -16,10 +16,11 @@ import {
   ModuleSpec,
   Sandbox,
 } from "./types.js";
+import { RunnableModule } from "@breadboard-ai/types/sandbox.js";
 
 export { SandboxedModule };
 
-class SandboxedModule {
+class SandboxedModule implements RunnableModule {
   #timers: Map<UUID, number> = new Map();
 
   constructor(

@@ -46,6 +46,7 @@ import { UpdateEvent } from "./graph/event.js";
 import { createBuiltInKit } from "./graph/kits.js";
 import { MutableGraphImpl } from "./graph/mutable-graph.js";
 import { NodeTypeDescriberManager } from "./graph/node-type-describer-manager.js";
+import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
 
 export {
   contextFromMutableGraph,
@@ -83,7 +84,7 @@ function makeTerribleOptions(
   return {
     kits: options.kits || [],
     sandbox: options.sandbox || {
-      runModule() {
+      createRunnableModule() {
         throw new Error("Non-existent sandbox: Terrible Options were used.");
       },
     },
@@ -122,7 +123,7 @@ class GraphStore
   implements MutableGraphStore
 {
   readonly kits: readonly Kit[];
-  readonly sandbox: Sandbox;
+  readonly sandbox: RunnableModuleFactory;
   readonly loader: GraphLoader;
   readonly fileSystem: FileSystem;
 

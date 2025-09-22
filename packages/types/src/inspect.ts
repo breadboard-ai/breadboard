@@ -38,7 +38,7 @@ import {
   NodeHandlerContext,
   NodeHandlerMetadata,
 } from "./node-handler.js";
-import { Sandbox } from "./sandbox.js";
+import { RunnableModule, RunnableModuleFactory, Sandbox } from "./sandbox.js";
 import { BehaviorSchema, Schema } from "./schema.js";
 import {
   TypedEventTarget,
@@ -425,7 +425,7 @@ export type InspectableGraphOptions = {
   /**
    * The Javascript Sandbox that will be used to run custom describers.
    */
-  readonly sandbox?: Sandbox;
+  readonly sandbox?: RunnableModuleFactory;
   readonly fileSystem?: FileSystem;
 };
 
@@ -817,7 +817,7 @@ export type AddResult = {
 export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
   GraphLoader & {
     readonly kits: readonly Kit[];
-    readonly sandbox: Sandbox;
+    readonly sandbox: RunnableModuleFactory;
     readonly loader: GraphLoader;
     readonly fileSystem: FileSystem;
     readonly types: InspectableDescriberResultTypeCache;

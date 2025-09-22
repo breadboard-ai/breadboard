@@ -46,7 +46,6 @@ import {
   NodeMetadata,
   NodeValue,
 } from "@breadboard-ai/types";
-import { Sandbox } from "@breadboard-ai/jsandbox";
 import { createGraphId, MAIN_BOARD_ID } from "./util";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
@@ -57,6 +56,7 @@ import {
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { Autoname } from "@breadboard-ai/shared-ui/sideboards/autoname.js";
 import { StateManager } from "./state";
+import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
 
 export class Edit extends EventTarget {
   #editors = new Map<TabId, EditableGraph>();
@@ -67,7 +67,7 @@ export class Edit extends EventTarget {
     public readonly state: StateManager,
     public readonly loader: GraphLoader,
     public readonly kits: Kit[],
-    public readonly sandbox: Sandbox,
+    public readonly sandbox: RunnableModuleFactory,
     public readonly graphStore: MutableGraphStore,
     public readonly sideboards: SideBoardRuntime,
     public readonly settings: BreadboardUI.Types.SettingsStore | null

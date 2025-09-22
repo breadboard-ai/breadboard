@@ -15,7 +15,7 @@ function makeTestGraphStore(options: InspectableGraphOptions = {}) {
     kits: options.kits || [],
     fileSystem: makeFs(),
     sandbox: options.sandbox || {
-      runModule() {
+      createRunnableModule() {
         throw new Error("Do not use sandbox with test graph store");
       },
     },

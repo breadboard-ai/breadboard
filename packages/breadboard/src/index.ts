@@ -116,3 +116,5 @@ export { MoveToNewGraphTransform } from "./editor/transforms/move-to-new-graph.j
 export { SidewireToNewGraphTransform } from "./editor/transforms/sidewire-to-new-graph.js";
 
 export type * from "@breadboard-ai/types/loader.js";
+
+export { SandboxedRunnableModuleFactory } from "./runnable-module-factory.js";
