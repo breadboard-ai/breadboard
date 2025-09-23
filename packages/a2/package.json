@@ -28,33 +28,10 @@
     },
     "build:bgls": {
       "command": "tsx scripts/build-bgls.ts",
-      "dependencies": [
-        "build:modules"
-      ],
       "files": [
         "bgl/src/**/bgl.json",
         "scripts/build-bgls.ts"
       ]
-    },
-    "build:modules": {
-      "command": "tsc -p tsconfig-modules.json --pretty",
-      "env": {
-        "FORCE_COLOR": "1"
-      },
-      "dependencies": [
-        "copy-environment"
-      ],
-      "files": [
-        "bgl/src/**/*.ts",
-        "bgl/src/**/*.js",
-        "tsconfig-modules.json",
-        "../../core/tsconfig/base.json"
-      ],
-      "output": [
-        "out/bgl/src",
-        "!out/bgl/src/**/*.min.js{,.map}"
-      ],
-      "clean": "if-file-deleted"
     },
     "build:tsc": {
       "command": "tsc -p tsconfig-assemble.json --pretty",
