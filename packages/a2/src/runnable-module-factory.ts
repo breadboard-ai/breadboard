@@ -25,7 +25,7 @@ import {
   RunnableModuleTelemetry,
   Values,
 } from "@breadboard-ai/types/sandbox.js";
-import { err, ok } from "@breadboard-ai/utils";
+import { err, filterUndefined, ok } from "@breadboard-ai/utils";
 
 import { a2 } from "./a2";
 import { urlComponentsFromString } from "@breadboard-ai/loader";
@@ -184,7 +184,6 @@ class A2Module implements RunnableModule {
         `Function "${URL_PREFIX}${this.dir}${URL_SUFFIX}#${name}/invoke" not found.`
       );
     }
-    console.log("INVOKE", this.dir, name, telemetry);
     await telemetry?.startModule();
     const result = await (func as InvokeFunction)(
       inputs,
@@ -206,7 +205,9 @@ class A2Module implements RunnableModule {
         outputSchema: {},
       };
     }
-    console.log("DESCRIBE", this.dir, name, func);
-    return (func as DescribeFunction)(inputs, this.capabilities?.createSpec());
+    return (func as DescribeFunction)(
+      filterUndefined(inputs),
+      this.capabilities?.createSpec()
+    );
   }
 }

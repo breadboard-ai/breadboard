@@ -234,8 +234,8 @@ function createDescribeHandler(context: NodeHandlerContext) {
           mutable,
           mutable.graph,
           inputs.inputs || {},
-          inputs.inputSchema || { properties: {} },
-          inputs.outputSchema || { properties: {} },
+          inputs.inputSchema,
+          inputs.outputSchema,
           new CapabilitiesManagerImpl(context),
           false
         );
