@@ -173,6 +173,9 @@ export function parseUrl(url: string | URL): MakeUrlInit {
     if (url.searchParams.has(MISSING_SCOPES)) {
       landing.missingScopes = true;
     }
+    if (oauthRedirect) {
+      landing.oauthRedirect = oauthRedirect;
+    }
     if (dev) {
       landing.dev = dev;
     }
