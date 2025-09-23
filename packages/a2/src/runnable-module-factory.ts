@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/// <reference path="../bgl/src/environment.d.ts" />
+/// <reference path="./environment.d.ts" />
 
 import {
   MutableGraph,

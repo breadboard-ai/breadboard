@@ -38,7 +38,7 @@ const ROOT_DIR = join(import.meta.dirname, "..");
 await Promise.all(
   BGLS.map(async (bgl) => {
     const destination = join(ROOT_DIR, "bgl", `${bgl}.bgl.json`);
-    const bglDir = join(ROOT_DIR, "bgl", "src", bgl);
+    const bglDir = join(ROOT_DIR, "src", bgl);
     const modules = await readdir(join(bglDir));
     const sources: [string, Module][] = [];
     for (const module of modules) {

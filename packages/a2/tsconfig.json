@@ -27,7 +27,7 @@
     "bgl/src/**/*.ts",
     "bgl/src/**/*.js",
     "bgl/**/*.bgl.json",
-    "bgl/src/environment.d.ts"
+    "src/environment.d.ts"
   ],
   "extends": "@google-labs/tsconfig/base.json"
 }
