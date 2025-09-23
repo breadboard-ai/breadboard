@@ -22,7 +22,6 @@
       ],
       "files": [
         "src/**/*.ts",
-        "tsconfig-assemble.json",
         "../../core/tsconfig/base.json"
       ]
     },
@@ -47,16 +46,6 @@
         "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
-    },
-    "copy-environment": {
-      "command": "tsx scripts/copy-environment.ts",
-      "files": [],
-      "dependencies": [
-        "../jsandbox#build:tsc"
-      ],
-      "output": [
-        "bgl/src/environment.d.ts"
-      ]
     }
   },
   "repository": {
