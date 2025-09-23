@@ -9,8 +9,6 @@ import * as googleDriveConfigurator from "./configurator";
 import * as googleDriveConnectorLoad from "./connector-load";
 import * as googleDriveConnectorSave from "./connector-save";
 import * as googleDriveDocs from "./docs";
-import * as googleDriveMarked from "./marked";
-import * as googleDriveMarkedTypes from "./marked-types";
 import * as googleDriveSheets from "./sheets";
 import * as googleDriveSlides from "./slides";
 import * as googleDriveSlidesSchema from "./slides-schema";
@@ -26,8 +24,6 @@ export const exports = {
   "connector-load": googleDriveConnectorLoad,
   "connector-save": googleDriveConnectorSave,
   docs: googleDriveDocs,
-  "marked-types": googleDriveMarkedTypes,
-  marked: googleDriveMarked,
   sheets: googleDriveSheets,
   "slides-schema": googleDriveSlidesSchema,
   slides: googleDriveSlides,

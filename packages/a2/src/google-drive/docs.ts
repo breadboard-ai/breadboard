@@ -1,12 +1,5 @@
 import { mergeTextParts, toText } from "../a2/utils";
-import { marked } from "./marked";
-import type {
-  FormattingToken,
-  ListToken,
-  RichToken,
-  SpaceToken,
-  Token,
-} from "./types";
+import { marked, Token, Tokens } from "marked";
 import { unescape } from "./unescape";
 
 export { contextToRequests, DOC_MIME_TYPE, markdownToContext };
@@ -67,7 +60,7 @@ function markdownToContext(markdown: string): LLMContent[] {
   const parts: DataPart[] = mergeTextParts(
     tokens.flatMap((token) => {
       if (token.type === "paragraph") {
-        return token.tokens.map((token) => {
+        return token.tokens!.map((token) => {
           if (token.type === "image") {
             const inlineData = parseBase64DataUrl(token.href);
             if (inlineData) return inlineData;
@@ -153,7 +146,7 @@ function tokensToRequests(
   function insertFormattedText(token: Token, namedStyleType: string) {
     const { requests, text: withoutBreak } = new TextStyles(
       current,
-      token as FormattingToken
+      token
     ).parse();
     const text = `${withoutBreak}\n`;
     if (namedStyleType) {
@@ -170,7 +163,7 @@ function tokensToRequests(
     return requests;
   }
 
-  function insertSpace(token: SpaceToken) {
+  function insertSpace(token: Token) {
     const text = token.raw.startsWith("\n") ? token.raw.slice(1) : token.raw;
     const result = [
       {
@@ -211,27 +204,30 @@ function tokensToRequests(
         const indent = "\t".repeat(depth);
         depthToRemove += depth;
         const result = [];
-        const maybeRichToken: RichToken | undefined =
+        const maybeRichToken: Token | undefined =
           "tokens" in item ? item : undefined;
-        const subList = maybeRichToken?.tokens.find(
+        const subList = maybeRichToken?.tokens!.find(
           (token) => token?.type === "list"
         );
         if (subList) {
           // assume that the first token is actually the text token.
-          result.push(insertItemText(indent, maybeRichToken?.tokens.at(0)));
-          result.push(...descendIntoList(subList.items, ordered, depth + 1));
+          result.push(insertItemText(indent, maybeRichToken?.tokens!.at(0)));
+          result.push(
+            ...descendIntoList(
+              (subList as Tokens.List).items,
+              ordered,
+              depth + 1
+            )
+          );
         } else {
-          result.push(insertItemText(indent, maybeRichToken?.tokens.at(0)));
+          result.push(insertItemText(indent, maybeRichToken?.tokens!.at(0)));
         }
         return result;
       });
       return list;
     }
 
-    function insertItemText(
-      indent: string,
-      token: ListToken | FormattingToken | undefined
-    ) {
+    function insertItemText(indent: string, token: Token | undefined) {
       const offset = current + indent.length;
       const { requests, text: withoutIndent } = new TextStyles(
         offset,
@@ -259,13 +255,13 @@ function tokensToRequests(
 
 class TextStyles {
   #offset;
-  #tokens: FormattingToken[] = [];
+  #tokens: Token[] = [];
   #styles: unknown[] = [];
 
-  constructor(offset: number, token: FormattingToken | ListToken | undefined) {
+  constructor(offset: number, token: Token | undefined) {
     this.#offset = offset;
     if (token && "tokens" in token) {
-      this.#tokens = token.tokens;
+      this.#tokens = token.tokens!;
     }
   }
 

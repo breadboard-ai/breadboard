@@ -10,17 +10,10 @@ import type {
   SlidesRequest,
   SlidesTextStyle,
 } from "./api";
-import { marked } from "./marked";
-import type {
-  FormattingToken,
-  HeadingToken,
-  ImageToken,
-  ListItemToken,
-  ListToken,
-  SimpleSlide,
-  Token,
-} from "./types";
+import { SimpleSlide } from "./types";
 import { unescape } from "./unescape";
+
+import { Token, Tokens, marked } from "marked";
 
 export { SimpleSlideBuilder, SlideBuilder, SLIDES_MIME_TYPE, slidesToRequests };
 
@@ -67,7 +60,7 @@ export type SlideBody = {
 
 class SlideBuilder {
   #slides: Slide[] = [];
-  #images: ImageToken[] = [];
+  #images: Tokens.Image[] = [];
 
   readonly #startIndex: number;
   readonly #objectToDelete: string | undefined;
@@ -100,7 +93,7 @@ class SlideBuilder {
       this.#addImage({
         type: "image",
         href: `data:${data.mimeType};base64,${data.data}`,
-      } as ImageToken)
+      } as Tokens.Image)
     );
   }
 
@@ -111,10 +104,10 @@ class SlideBuilder {
         this.#newSlide();
         break;
       case "paragraph":
-        this.#newParagraph(token.tokens);
+        this.#newParagraph(token.tokens!);
         break;
       case "heading":
-        this.#newHeading(token);
+        this.#newHeading(token as Tokens.Heading);
         break;
       case "list":
         this.#addListToBody(token);
@@ -144,7 +137,7 @@ class SlideBuilder {
     return this.#slides.at(-1)!;
   }
 
-  #newHeading(token: HeadingToken) {
+  #newHeading(token: Tokens.Heading) {
     if (token.depth === 1) {
       this.#slide.title = this.#parseText(token.tokens);
     } else {
@@ -152,7 +145,7 @@ class SlideBuilder {
     }
   }
 
-  #newParagraph(tokens: FormattingToken[]) {
+  #newParagraph(tokens: Token[]) {
     const bodyText = this.#getBodyText();
     const offset = bodyText.text.length - this.#depthAdjustment;
     const {
@@ -182,23 +175,26 @@ class SlideBuilder {
     return body.text;
   }
 
-  #addListToBody(token: ListToken) {
-    const { items } = token;
+  #addListToBody(token: Token) {
+    const { items } = token as Tokens.List;
     const bodyText = this.#getBodyText();
     const listOffset = bodyText.text.length;
     let length = 0;
     let localOffset = listOffset;
-    const addListItems = (depth: number, items: ListItemToken[]) => {
+    const addListItems = (depth: number, items: Tokens.ListItem[]) => {
       items.forEach((item) => {
         const [textToken, listToken] = item.tokens;
-        const { text, styles } = this.#parseText(textToken.tokens, localOffset);
+        const { text, styles } = this.#parseText(
+          (textToken as Tokens.Paragraph).tokens,
+          localOffset
+        );
         bodyText.text += `${"\t".repeat(depth)}${text}`;
         this.#depthAdjustment += depth;
         localOffset += text.length;
         length += text.length;
         bodyText.styles.push(...styles);
         if (listToken) {
-          addListItems(depth + 1, listToken.items);
+          addListItems(depth + 1, (listToken as Tokens.List).items);
         }
       });
     };
@@ -206,7 +202,7 @@ class SlideBuilder {
     bodyText.lists.push({ start: listOffset, end: listOffset + length });
   }
 
-  #parseText(tokens: FormattingToken[], current = 0): SlideText {
+  #parseText(tokens: Token[], current = 0): SlideText {
     let text = "";
     const styles: SlideStyle[] = [];
     const images: number[] = [];
@@ -260,9 +256,9 @@ class SlideBuilder {
     });
   }
 
-  #addImage(token: ImageToken) {
+  #addImage(token: Token) {
     const id = this.#images.length;
-    this.#images.push(token);
+    this.#images.push(token as Tokens.Image);
     return id;
   }
 }
