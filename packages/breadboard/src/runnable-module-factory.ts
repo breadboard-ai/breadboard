@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { SandboxedModule } from "@breadboard-ai/jsandbox";
 import { GraphDescriptor, MutableGraph, Outcome } from "@breadboard-ai/types";
 import {
