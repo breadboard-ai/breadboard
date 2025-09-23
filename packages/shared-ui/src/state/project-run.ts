@@ -60,6 +60,7 @@ import {
 import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
 import { edgeToString } from "../utils/workspace";
+import { Signal } from "signal-polyfill";
 
 export { createProjectRunStateFromFinalOutput, ReactiveProjectRun };
 
@@ -184,6 +185,7 @@ class ReactiveProjectRun implements ProjectRun {
 
   @signal
   get runnable() {
+    this.#topologyChanged.get();
     return this.#inspectable?.nodes().length !== 0;
   }
 
@@ -211,6 +213,8 @@ class ReactiveProjectRun implements ProjectRun {
   @signal
   accessor #inspectable: InspectableGraph | undefined;
 
+  #topologyChanged = new Signal.State({});
+
   @signal
   get finalOutput(): OutputValues | null {
     if (this.status !== "stopped") return null;
@@ -236,6 +240,7 @@ class ReactiveProjectRun implements ProjectRun {
     editable?.addEventListener("graphchange", (e) => {
       this.#inspectable = editable.inspect("");
       if (e.topologyChange) {
+        this.#topologyChanged.set({});
         this.#updateRunner(e.graph);
       }
     });
