@@ -6,7 +6,7 @@
 
 import { NodeSandbox } from "@breadboard-ai/jsandbox/node";
 import {
-  addSandboxedRunModule,
+  addRunModule,
   asRuntimeKit,
   type Kit,
   type MutableGraphStore,
@@ -20,5 +20,12 @@ function registerLegacyKits(_graphStore: MutableGraphStore) {}
 
 export const createKits = (overrides: Kit[] = []) => {
   const kits = [asRuntimeKit(Core)];
-  return addSandboxedRunModule(new NodeSandbox(), [...overrides, ...kits]);
+  return addRunModule(
+    {
+      createRunnableModule() {
+        throw new Error("Not implemented");
+      },
+    },
+    [...overrides, ...kits]
+  );
 };

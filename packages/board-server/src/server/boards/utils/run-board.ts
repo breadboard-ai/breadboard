@@ -51,7 +51,11 @@ export const runBoard = async ({
   const graphStore = createGraphStore({
     loader: runLoader,
     kits: runKits,
-    sandbox: new NodeSandbox(),
+    sandbox: {
+      createRunnableModule() {
+        throw new Error("Not implemented");
+      },
+    },
     fileSystem: new StubFileSystem(),
   });
 

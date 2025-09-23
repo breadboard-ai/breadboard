@@ -106,7 +106,7 @@ export {
 export type * from "@breadboard-ai/types/run.js";
 
 export { blankImperative, defaultModuleContent } from "@breadboard-ai/utils";
-export { addSandboxedRunModule } from "./sandboxed-run-module.js";
+export { addRunModule } from "./add-run-module.js";
 
 export { ConfigureSidewireTransform } from "./editor/transforms/configure-sidewire.js";
 export { IsolateSelectionTransform } from "./editor/transforms/isolate-selection.js";
@@ -116,3 +116,5 @@ export { MoveToNewGraphTransform } from "./editor/transforms/move-to-new-graph.j
 export { SidewireToNewGraphTransform } from "./editor/transforms/sidewire-to-new-graph.js";
 
 export type * from "@breadboard-ai/types/loader.js";
+
+export { SandboxedRunnableModuleFactory } from "./runnable-module-factory.js";

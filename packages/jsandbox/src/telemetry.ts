@@ -11,6 +11,7 @@ import type {
   OutputValues,
   Probe,
 } from "@breadboard-ai/types";
+import { RunnableModuleTelemetry } from "@breadboard-ai/types/sandbox.js";
 
 export { Telemetry };
 
@@ -19,7 +20,7 @@ type Context = {
   invocationPath?: number[];
 };
 
-class Telemetry {
+class Telemetry implements RunnableModuleTelemetry {
   index = 0;
 
   static create(context: Context) {

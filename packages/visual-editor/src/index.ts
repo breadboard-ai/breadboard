@@ -25,7 +25,7 @@ import type {
   RunSecretEvent,
 } from "@breadboard-ai/types";
 import {
-  addSandboxedRunModule,
+  addRunModule,
   composeFileSystemBackends,
   createEphemeralBlobStore,
   createFileSystem,
@@ -34,6 +34,7 @@ import {
   MutableGraphStore,
   ok,
   PersistentBackend,
+  SandboxedRunnableModuleFactory,
 } from "@google-labs/breadboard";
 import { provide } from "@lit/context";
 import { html, HTMLTemplateResult, LitElement, nothing } from "lit";
@@ -479,19 +480,21 @@ export class Main extends SignalWatcher(LitElement) {
       ),
     });
 
+    const moduleFactory = new SandboxedRunnableModuleFactory(sandbox);
+
     this.#runtime = await Runtime.create({
       recentBoardStore: this.#recentBoardStore,
       graphStore: this.#graphStore,
       experiments: {},
       globalConfig: this.globalConfig,
       tokenVendor: this.tokenVendor,
-      sandbox,
+      sandbox: moduleFactory,
       settings: this.#settings,
       proxy: [],
       fileSystem,
       builtInBoardServers: [createA2Server()],
-      kits: addSandboxedRunModule(
-        sandbox,
+      kits: addRunModule(
+        moduleFactory,
         args.kits || [],
         args.moduleInvocationFilter
       ),

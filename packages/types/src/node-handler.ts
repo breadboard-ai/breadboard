@@ -29,7 +29,7 @@ import {
 import { GraphLoader } from "./loader.js";
 import { Probe } from "./probe.js";
 import { ManagedRunState, RunState } from "./run.js";
-import { Sandbox } from "./sandbox.js";
+import { RunnableModule, RunnableModuleFactory, Sandbox } from "./sandbox.js";
 import { Schema } from "./schema.js";
 import { TraversalResult } from "./traversal.js";
 
@@ -124,7 +124,7 @@ export type NodeDescriberContext = {
   /**
    * JS Sandbox that will be used to run the module describers.
    */
-  sandbox?: Sandbox;
+  sandbox?: RunnableModuleFactory;
   /**
    * Graph Store: tracks all the graphs, changes to them, and their
    * dependencies.
@@ -375,7 +375,7 @@ export interface NodeHandlerContext {
   /**
    * JS Sandbox that will be used to run the imperative graphs.
    */
-  sandbox?: Sandbox;
+  sandbox?: RunnableModuleFactory;
   /**
    * Graph Store: tracks all the graphs, changes to them, and their
    * dependencies.

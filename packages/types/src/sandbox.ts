@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Outcome } from "./data.js";
+import { GraphDescriptor } from "./graph-descriptor.js";
+import { MutableGraph } from "./inspect.js";
 import { UUID } from "./uuid.js";
 
 export type Values = Record<string, unknown>;
@@ -36,6 +39,32 @@ export type CapabilitySpec = {
   read?: Capability;
   write?: Capability;
   blob?: Capability;
+};
+
+export type RunnableModuleTelemetry = {
+  startModule(): Promise<void>;
+};
+
+export type RunnableModule = {
+  invoke(
+    name: string,
+    inputs: InvokeInputs,
+    telemetry?: RunnableModuleTelemetry
+  ): Promise<InvokeOutputs>;
+
+  describe(name: string, inputs: DescriberInputs): Promise<DescriberOutputs>;
+};
+
+export type CapabilitiesManager = {
+  createSpec(): CapabilitySpec;
+};
+
+export type RunnableModuleFactory = {
+  createRunnableModule(
+    mutable: MutableGraph,
+    graph: GraphDescriptor,
+    capabilities?: CapabilitiesManager
+  ): Promise<Outcome<RunnableModule>>;
 };
 
 export type Sandbox = {
