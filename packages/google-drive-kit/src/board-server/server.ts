@@ -43,7 +43,12 @@ import {
   type NarrowedDriveFile,
 } from "../google-drive-client.js";
 import { GoogleDriveDataPartTransformer } from "./data-part-transformer.js";
-import { driveFileToGraphInfo, findGoogleDriveAssetsInGraph } from "./utils.js";
+import {
+  driveFileToGraphInfo,
+  findGoogleDriveAssetsInGraph,
+  readProperties,
+  type AppProperties,
+} from "./utils.js";
 
 export { GoogleDriveBoardServer };
 
@@ -105,6 +110,10 @@ class GoogleDriveBoardServer
   public readonly ops: DriveOperations;
   readonly #tokenVendor: TokenVendor;
   readonly #googleDriveClient: GoogleDriveClient;
+  readonly #loadedGraphMetadata = new Map<
+    string,
+    { isMine: boolean; latestSharedVersion: number }
+  >();
 
   projects: Promise<BoardServerProject[]>;
   kits: Kit[];
@@ -297,6 +306,10 @@ class GoogleDriveBoardServer
     return true;
   }
 
+  isMine(url: URL): boolean | undefined {
+    return this.#loadedGraphMetadata.get(url.href)?.isMine;
+  }
+
   canProvide(url: URL): false | GraphProviderCapabilities {
     if (!url.href.startsWith(PROTOCOL)) {
       return false;
@@ -337,26 +350,7 @@ class GoogleDriveBoardServer
   }
 
   getLatestSharedVersion(url: URL): number {
-    const maybeProject = this.#projects.find(
-      (project) => project.url.href === url.href
-    );
-    if (!maybeProject) {
-      return -1;
-    }
-
-    if (!maybeProject.metadata.latestSharedVersion) {
-      return -1;
-    }
-
-    const currentVersion = Number.parseInt(
-      maybeProject.metadata.latestSharedVersion,
-      10
-    );
-    if (Number.isNaN(currentVersion)) {
-      return -1;
-    }
-
-    return currentVersion;
+    return this.#loadedGraphMetadata.get(url.href)?.latestSharedVersion ?? -1;
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {
@@ -365,12 +359,17 @@ class GoogleDriveBoardServer
       resourceKey: url.searchParams.get("resourcekey") ?? undefined,
     };
     await this.#seedGoogleDriveClientWithFeaturedGraphIdsOnce();
-    const [response, isGalleryGraph] = await Promise.all([
+    const [metadata, media, isGalleryGraph] = await Promise.all([
+      this.#googleDriveClient
+        .getFileMetadata(fileId, { fields: ["ownedByMe", "properties"] })
+        // TODO(aomarks) GoogleDriveClient.getFileMetadata should itself return
+        // undefined on 404, instead of always throwing.
+        .catch(() => undefined),
       this.#googleDriveClient.getFileMedia(fileId),
       this.#isGalleryGraphFile(fileId.id),
     ]);
-    if (response.status === 200) {
-      const descriptor = await response.json();
+    if (metadata && media.status === 200) {
+      const descriptor = await media.json();
       console.debug(`[Google Drive Board Server] Loaded graph`, descriptor);
       if (isGalleryGraph) {
         for (const asset of findGoogleDriveAssetsInGraph(descriptor)) {
@@ -379,13 +378,19 @@ class GoogleDriveBoardServer
           );
         }
       }
+      this.#loadedGraphMetadata.set(url.href, {
+        isMine: metadata.ownedByMe,
+        latestSharedVersion: getLatestSharedVersionFromDriveProperties(
+          readProperties(metadata)
+        ),
+      });
       return descriptor;
-    } else if (response.status === 404) {
+    } else if (media.status === 404) {
       return null;
     } else {
       throw new Error(
-        `Received ${response.status} error loading graph from Google Drive` +
-          ` with file id ${JSON.stringify(fileId)}: ${await response.text()}`
+        `Received ${media.status} error loading graph from Google Drive` +
+          ` with file id ${JSON.stringify(fileId)}: ${await media.text()}`
       );
     }
   }
@@ -555,4 +560,16 @@ class GoogleDriveBoardServer
   async preview(_url: URL): Promise<URL> {
     throw new Error("Method not implemented.");
   }
+}
+
+function getLatestSharedVersionFromDriveProperties(
+  properties: AppProperties
+): number {
+  if (properties.latestSharedVersion) {
+    const version = Number.parseInt(properties.latestSharedVersion, 10);
+    if (!Number.isNaN(version)) {
+      return version;
+    }
+  }
+  return -1;
 }
