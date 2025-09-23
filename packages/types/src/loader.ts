@@ -120,6 +120,15 @@ export type GraphProvider = {
    */
   canProvide(url: URL): false | GraphProviderCapabilities;
   /**
+   * IMPORTANT: This method **assumes that the given graph has been successfully
+   * loaded at some point in the lifetime of this instance**, and will always
+   * return `undefined` otherwise.
+   *
+   * @returns Whether the currently signed-in user owns the given graph, or
+   * `undefined` if we don't know because the graph hasn't been loaded yet.
+   */
+  isMine?: (url: URL) => boolean | undefined;
+  /**
    * Expresses the `GraphProviderExtendedCapabilities` of the provider.
    */
   extendedCapabilities(): GraphProviderExtendedCapabilities;

@@ -600,11 +600,6 @@ export class Board extends EventTarget {
       let graph: GraphDescriptor | null = null;
       if (this.#canParse(url, base.href)) {
         boardServer = this.getBoardServerForURL(new URL(url, base));
-        if (boardServer) {
-          // Ensure the the provider has actually loaded fully before
-          // requesting the graph file from it.
-          await boardServer.ready();
-        }
         if (boardServer && this.boardServers) {
           kits = (boardServer as BoardServer).kits ?? this.boardServerKits;
           const resourceKey = urlAtTimeOfCall
@@ -870,6 +865,10 @@ export class Board extends EventTarget {
     const boardServer = this.getBoardServerForURL(boardUrl);
     if (!boardServer) {
       return false;
+    }
+    const isMineAccordingToBoardServer = boardServer.isMine?.(boardUrl);
+    if (isMineAccordingToBoardServer !== undefined) {
+      return isMineAccordingToBoardServer;
     }
 
     const capabilities = boardServer.canProvide(boardUrl);
