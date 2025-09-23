@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/// <reference path="./environment.d.ts" />
-
 import {
   MutableGraph,
   GraphDescriptor,
@@ -189,7 +187,6 @@ class A2Module implements RunnableModule {
       inputs,
       createCallableCapabilities(this.capabilities?.createSpec(), telemetry)
     );
-    console.log("INVOKE RESULT", result);
     await telemetry?.endModule();
     return result;
   }
