@@ -315,15 +315,12 @@ class GoogleDriveBoardServer
       return false;
     }
 
-    const fileId = getFileId(url.href);
-    const project = this.#projects.find((project) => {
-      return fileId === getFileId(project.url.href);
-    });
+    const metadata = this.#loadedGraphMetadata.get(url.href);
 
     // We recognize it as something that can be loaded from this Board Server,
     // but we can't assess the access for it, so assume loading alone is
     // acceptable.
-    if (!project) {
+    if (!metadata) {
       return {
         load: true,
         save: false,
@@ -333,8 +330,8 @@ class GoogleDriveBoardServer
 
     return {
       load: true,
-      save: true,
-      delete: true,
+      save: metadata.isMine,
+      delete: metadata.isMine,
     };
   }
 
