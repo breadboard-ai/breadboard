@@ -4,9 +4,6 @@
 
 export { executeStep, executeTool, parseExecutionOutput };
 
-import fetch from "@fetch";
-import read from "@read";
-import secrets from "@secrets";
 import { StreamableReporter } from "./output";
 import {
   decodeBase64,
@@ -17,7 +14,6 @@ import {
   toLLMContentInline,
   toLLMContentStored,
 } from "./utils";
-import write from "@write";
 
 const DEFAULT_BACKEND_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
@@ -125,7 +121,11 @@ function parseExecutionOutput(input?: Chunk[]): Outcome<ExecutionOutput> {
 
 async function executeTool<
   T extends JsonSerializable = Record<string, JsonSerializable>,
->(api: string, params: Record<string, string>): Promise<Outcome<T | string>> {
+>(
+  caps: Capabilities,
+  api: string,
+  params: Record<string, string>
+): Promise<Outcome<T | string>> {
   const inputParameters = Object.keys(params);
   const execution_inputs = Object.fromEntries(
     Object.entries(params).map(([name, value]) => {
@@ -142,7 +142,7 @@ async function executeTool<
       ];
     })
   );
-  const response = await executeStep({
+  const response = await executeStep(caps, {
     planStep: {
       stepName: api,
       modelApi: api,
@@ -168,8 +168,8 @@ async function executeTool<
 type BackendSettings = {
   endpoint_url: string;
 };
-async function getBackendUrl() {
-  const reading = await read({ path: "/env/settings/backend" });
+async function getBackendUrl(caps: Capabilities) {
+  const reading = await caps.read({ path: "/env/settings/backend" });
   if (ok(reading)) {
     const part = reading.data?.at(0)?.parts?.at(0);
     if (part && "json" in part) {
@@ -183,10 +183,11 @@ async function getBackendUrl() {
 }
 
 async function executeStep(
+  caps: Capabilities,
   body: ExecuteStepRequest
 ): Promise<Outcome<ExecutionOutput>> {
   const model = body.planStep.options?.modelName || body.planStep.stepName;
-  const reporter = new StreamableReporter({
+  const reporter = new StreamableReporter(caps, {
     title: `Calling ${model}`,
     icon: "spark",
   });
@@ -195,15 +196,15 @@ async function executeStep(
     await reporter.sendUpdate("Step Input", elideEncodedData(body), "upload");
     // Get an authentication token.
     const secretKey = "connection:$sign-in";
-    const token = (await secrets({ keys: [secretKey] }))[secretKey];
+    const token = (await caps.secrets({ keys: [secretKey] }))[secretKey];
     // Call the API.
-    const url = await getBackendUrl();
+    const url = await getBackendUrl(caps);
     // Record model call with action tracker.
-    write({
+    caps.write({
       path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
       data: [],
     });
-    const fetchResult = await fetch({
+    const fetchResult = await caps.fetch({
       url: url,
       method: "POST",
       headers: {

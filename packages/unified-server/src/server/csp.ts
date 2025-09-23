@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ServerDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
+import * as flags from "./flags.js";
+
 import type { Handler, NextFunction, Request, Response } from "express";
 
 const CSP_CONFIG = {
@@ -58,12 +59,10 @@ const CSP_CONFIG = {
 const CSP_HEADER_NAME = "Content-Security-Policy";
 
 /** https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP */
-export function makeCspHandler(
-  serverConfig: ServerDeploymentConfiguration
-): Handler {
+export function makeCspHandler(): Handler {
   const cspConfig = structuredClone(CSP_CONFIG);
-  if (serverConfig.BACKEND_API_ENDPOINT) {
-    cspConfig["connect-src"].push(serverConfig.BACKEND_API_ENDPOINT);
+  if (flags.BACKEND_API_ENDPOINT) {
+    cspConfig["connect-src"].push(flags.BACKEND_API_ENDPOINT);
   }
   const cspHeaderValue = Object.entries(cspConfig)
     .map(([key, vals]) => `${key} ${vals.join(" ")}`)

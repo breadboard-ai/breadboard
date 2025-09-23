@@ -6,21 +6,27 @@
 
 import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
 
+import * as flags from "./flags.js";
+
 export { allowListChecker };
 
 type AllowListCheckResponse = {
   canAccess: boolean;
 };
 
-function allowListChecker(endpointUrl: URL | "" | undefined) {
+function allowListChecker() {
   return async (
     grant: GrantResponse
   ): Promise<{ ok: true } | { ok: false; error: string }> => {
-    // When endpointUrl isn't supplied, allow everyone.
-    if (!endpointUrl) return { ok: true };
+    // When BACKEND_API_ENDPOINT isn't supplied, allow everyone.
+    if (!flags.BACKEND_API_ENDPOINT) {
+      return { ok: true };
+    }
+    if ("error" in grant) {
+      return { ok: true };
+    }
 
-    if ("error" in grant) return { ok: true };
-
+    const endpointUrl = new URL(flags.BACKEND_API_ENDPOINT);
     try {
       const result = (await (
         await fetch(new URL(`/v1beta1/checkAppAccess`, endpointUrl), {

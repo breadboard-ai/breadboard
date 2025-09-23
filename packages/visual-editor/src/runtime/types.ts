@@ -38,6 +38,7 @@ import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-d
 import { RecentBoardStore } from "../data/recent-boards";
 import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
 import { McpClientManager } from "@breadboard-ai/mcp";
+import type { Result } from "@breadboard-ai/types/result.js";
 
 export enum TabType {
   URL,
@@ -103,16 +104,6 @@ export interface RuntimeConfigBoardServers {
 
   builtInBoardServers: BoardServer[];
 }
-
-export type Result<T> =
-  | {
-      success: false;
-      error: string;
-    }
-  | {
-      success: true;
-      result: T;
-    };
 
 export type EnhanceSideboard = {
   enhance(config: NodeConfiguration): Promise<Result<NodeConfiguration>>;

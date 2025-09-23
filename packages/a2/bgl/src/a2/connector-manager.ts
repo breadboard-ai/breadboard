@@ -3,12 +3,11 @@
  */
 
 import { err, ok, isLLMContentArray } from "./utils";
-import read from "@read";
-import describeConnector, { type DescribeOutputs } from "@describe";
-import invokeConnector, { InvokeOutputs } from "@invoke";
 import type { ExportDescriberResult, CallToolCallback } from "./common";
 
 export { ConnectorManager, createConfigurator, createTools };
+
+type InvokeOutputs = Parameters<Capabilities["invoke"]>[0];
 
 type ToolsListInput<C extends Record<string, JsonSerializable>> = {
   method: "list";
@@ -107,10 +106,22 @@ export type Configurator<
   V extends Record<string, unknown>,
 > = {
   title: string;
-  initialize: (input: InitializeInput) => Promise<Outcome<InitializeOutput<C>>>;
-  read?: (input: ReadInput<C>) => Promise<Outcome<ReadOutput<V>>>;
-  write?: (input: WriteInput<V>) => Promise<Outcome<WriteOutput>>;
-  preview?: (input: PreviewInput<C>) => Promise<Outcome<PreviewOutput>>;
+  initialize: (
+    caps: Capabilities,
+    input: InitializeInput
+  ) => Promise<Outcome<InitializeOutput<C>>>;
+  read?: (
+    caps: Capabilities,
+    input: ReadInput<C>
+  ) => Promise<Outcome<ReadOutput<V>>>;
+  write?: (
+    caps: Capabilities,
+    input: WriteInput<V>
+  ) => Promise<Outcome<WriteOutput>>;
+  preview?: (
+    caps: Capabilities,
+    input: PreviewInput<C>
+  ) => Promise<Outcome<PreviewOutput>>;
 };
 
 export type ToolHandler<
@@ -118,8 +129,13 @@ export type ToolHandler<
   A extends Record<string, JsonSerializable> = Record<string, JsonSerializable>,
 > = {
   title: string;
-  list(id: string, info: ConnectorInfo<C>): Promise<Outcome<ListMethodOutput>>;
+  list(
+    caps: Capabilities,
+    id: string,
+    info: ConnectorInfo<C>
+  ): Promise<Outcome<ListMethodOutput>>;
   invoke(
+    caps: Capabilities,
     id: string,
     info: ConnectorInfo<C>,
     name: string,
@@ -133,14 +149,15 @@ function createTools<
 >(handler: ToolHandler<C, A>) {
   return {
     invoke: async function (
-      inputs: ToolsInput<C, A>
+      inputs: ToolsInput<C, A>,
+      caps: Capabilities
     ): Promise<Outcome<ToolsOutput>> {
       const { method, id, info } = inputs;
       if (method === "list") {
-        return handler.list(id, info);
+        return handler.list(caps, id, info);
       } else if (method === "invoke") {
         const { name, args } = inputs;
-        return handler.invoke(id, info, name, args);
+        return handler.invoke(caps, id, info, name, args);
       }
       return err(`Unknown method: "${method}""`);
     },
@@ -205,9 +222,10 @@ function createConfiguratorInvoke<
   C extends Record<string, unknown> = Record<string, unknown>,
   V extends Record<string, unknown> = Record<string, unknown>,
 >(configurator: Configurator<C, V>) {
-  return async function ({
-    context,
-  }: Inputs<C, V>): Promise<Outcome<Outputs<C, V>>> {
+  return async function (
+    { context }: Inputs<C, V>,
+    caps: Capabilities
+  ): Promise<Outcome<Outputs<C, V>>> {
     const inputs = context?.at(-1)?.parts?.at(0)?.json;
     if (!inputs || !("stage" in inputs)) {
       return err(
@@ -216,11 +234,11 @@ function createConfiguratorInvoke<
     }
 
     if (inputs.stage === "initialize") {
-      const initializing = await configurator.initialize(inputs);
+      const initializing = await configurator.initialize(caps, inputs);
       if (!ok(initializing)) return initializing;
       return cx(initializing);
     } else if (inputs.stage === "read") {
-      const reading = await configurator.read?.(inputs);
+      const reading = await configurator.read?.(caps, inputs);
       if (!reading) {
         return cx({
           schema: {},
@@ -230,13 +248,13 @@ function createConfiguratorInvoke<
       if (!ok(reading)) return reading;
       return cx(reading);
     } else if (inputs.stage === "preview") {
-      const previewing = await configurator.preview?.(inputs);
+      const previewing = await configurator.preview?.(caps, inputs);
       if (!previewing || !ok(previewing)) {
         return { context: [{ parts: [{ text: "" }] }] };
       }
       return { context: previewing };
     } else if (inputs.stage === "write") {
-      const writing = await configurator.write?.(inputs);
+      const writing = await configurator.write?.(caps, inputs);
       if (!writing) return cx({});
       if (!ok(writing)) return writing;
       return cx(writing);
@@ -301,7 +319,10 @@ type NodeDescriptor = {
 };
 
 class ConnectorManager {
-  constructor(public readonly part: ConnectorConfig | ConnectorInfo) {}
+  constructor(
+    private readonly caps: Capabilities,
+    public readonly part: ConnectorConfig | ConnectorInfo
+  ) {}
 
   #state: ConnectorManagerState | null = null;
 
@@ -318,7 +339,7 @@ class ConnectorManager {
     }
     const path: FileSystemPath = `/assets/${this.part.path}`;
 
-    const reading = await read({ path });
+    const reading = await this.caps.read({ path });
     if (!ok(reading)) return reading;
 
     return getConnectorInfo(reading.data);
@@ -326,7 +347,7 @@ class ConnectorManager {
 
   async #getConnectorId(): Promise<Outcome<string>> {
     if ("url" in this.part) {
-      const reading = await read({ path: "/env/descriptor" });
+      const reading = await this.caps.read({ path: "/env/descriptor" });
       if (!ok(reading)) return reading;
 
       const descriptor = getNodeDescriptor(reading.data);
@@ -342,7 +363,7 @@ class ConnectorManager {
     const info = await this.#getConnectorInfo();
     if (!ok(info)) return info;
 
-    const describing = await describeConnector({ url: info.url });
+    const describing = await this.caps.describe({ url: info.url });
     if (!ok(describing)) return describing;
     this.#state = { info, describeOutputs: describing };
     return this.#state;
@@ -365,7 +386,7 @@ class ConnectorManager {
     const args = await this.#getInvocationArgs("connector-tools");
     if (!ok(args)) return args;
 
-    const invoking = await invokeConnector({ method: "list", ...args });
+    const invoking = await this.caps.invoke({ method: "list", ...args });
     if (!ok(invoking)) return invoking;
 
     const output = invoking as ListMethodOutput;
@@ -400,7 +421,7 @@ class ConnectorManager {
     const args = await this.#getInvocationArgs("connector-load");
     if (!ok(args)) return args;
 
-    const invoking = await invokeConnector(args);
+    const invoking = await this.caps.invoke(args);
     if (!ok(invoking)) return invoking;
 
     const output = invoking as LoadOutput;
@@ -415,7 +436,7 @@ class ConnectorManager {
 
     if (!ok(args)) return {};
 
-    const describing = await describeConnector({ url: args.$board });
+    const describing = await this.caps.describe({ url: args.$board });
     if (!ok(describing)) return {};
 
     const props = describing.inputSchema.properties;
@@ -432,7 +453,7 @@ class ConnectorManager {
     const args = await this.#getInvocationArgs("connector-save");
     if (!ok(args)) return false;
 
-    const invoking = await invokeConnector({
+    const invoking = await this.caps.invoke({
       ...args,
       method: "canSave",
     });
@@ -447,7 +468,7 @@ class ConnectorManager {
     const args = await this.#getInvocationArgs("connector-save");
     if (!ok(args)) return args;
 
-    return invokeConnector({
+    return this.caps.invoke({
       ...args,
       context,
       ...options,

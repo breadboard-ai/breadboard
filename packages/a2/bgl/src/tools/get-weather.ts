@@ -19,8 +19,11 @@ export { invoke as default, describe };
  */
 export type ToolMode = "tool" | "step" | "invoke";
 
-async function resolveInput(inputContent: LLMContent): Promise<string> {
-  const template = new Template(inputContent);
+async function resolveInput(
+  caps: Capabilities,
+  inputContent: LLMContent
+): Promise<string> {
+  const template = new Template(caps, inputContent);
   const substituting = await template.substitute({}, async () => "");
   if (!ok(substituting)) {
     return substituting.$error;
@@ -39,7 +42,10 @@ export type Outputs = {
   context: LLMContent[];
 };
 
-async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
+async function invoke(
+  inputs: Inputs,
+  caps: Capabilities
+): Promise<Outcome<Outputs>> {
   let location;
   if ("context" in inputs) {
     const last = inputs.context?.at(-1);
@@ -49,7 +55,7 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
       return err("Please provide a location");
     }
   } else if ("p-location" in inputs) {
-    location = await resolveInput(inputs["p-location"]);
+    location = await resolveInput(caps, inputs["p-location"]);
   } else {
     location = inputs.location;
   }
@@ -58,7 +64,7 @@ async function invoke(inputs: Inputs): Promise<Outcome<Outputs>> {
     return err("Please provide a location");
   }
   console.log("Location: " + location);
-  const weatherResult = await getWeather({ location });
+  const weatherResult = await getWeather({ location }, caps);
   if (!ok(weatherResult)) {
     return weatherResult;
   }

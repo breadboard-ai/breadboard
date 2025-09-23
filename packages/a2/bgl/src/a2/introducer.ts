@@ -26,6 +26,8 @@ type NamingResult = {
  * and parameters
  */
 class ArgumentNameGenerator implements DescriberResultTransformer {
+  constructor(private readonly caps: Capabilities) {}
+
   #containsContext(describerResult: DescriberResult): boolean {
     if (!describerResult.inputSchema?.properties) return true;
     const context = describerResult.inputSchema.properties["context"];
@@ -83,7 +85,7 @@ class ArgumentNameGenerator implements DescriberResultTransformer {
 
     // When no parameters found, try to discern the parameter name
     // from description and title.
-    const naming = await new GeminiPrompt({
+    const naming = await new GeminiPrompt(this.caps, {
       body: {
         contents: [this.prompt(describerResult)],
         safetySettings: defaultSafetySettings(),

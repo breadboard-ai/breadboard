@@ -20,6 +20,7 @@ class Runtime {
   readonly execute: ExecuteStepFunction;
 
   constructor(
+    private readonly caps: Capabilities,
     context: LLMContent[] | undefined,
     public readonly toolManager: ToolManager,
     public readonly makeList: boolean
@@ -33,6 +34,7 @@ class Runtime {
     strategist: Strategist
   ): Promise<Outcome<LLMContent[]>> {
     return strategist.execute(
+      this.caps,
       this.execute,
       this.context,
       objective,
@@ -58,6 +60,7 @@ class Runtime {
       contents = [...context, toLLMContent(item.task)];
     }
     const geminiPrompt = new GeminiPrompt(
+      this.caps,
       {
         body: {
           contents,

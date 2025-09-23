@@ -37,12 +37,14 @@ export type CustomSearchEngineResponse = {
 };
 
 async function generateSummary(
+  caps: Capabilities,
   query: string,
   reporter: StreamableReporter
 ): Promise<Outcome<string>> {
-  const toolManager = new ToolManager();
+  const toolManager = new ToolManager(caps);
   toolManager.addSearch();
   const result = await new GeminiPrompt(
+    caps,
     {
       body: {
         contents: [{ parts: [{ text: query }] }],
@@ -94,22 +96,28 @@ ${result.webpage_text_content}
 }
 
 async function getSearchLinks(
+  caps: Capabilities,
   query: string,
   reporter: StreamableReporter
 ): Promise<Outcome<string>> {
-  const results = await executeTool<SearchBackendOutput[]>("google_search", {
-    query,
-  });
+  const results = await executeTool<SearchBackendOutput[]>(
+    caps,
+    "google_search",
+    {
+      query,
+    }
+  );
   if (!ok(results)) return results;
   const formattedResults = formatBackendSearchResults(results);
   await reporter.sendUpdate("Search Links", formattedResults, "link");
   return formattedResults;
 }
 
-async function invoke({
-  query,
-}: SearchWebInputs): Promise<Outcome<SearchWebOutputs>> {
-  const reporter = new StreamableReporter({
+async function invoke(
+  { query }: SearchWebInputs,
+  caps: Capabilities
+): Promise<Outcome<SearchWebOutputs>> {
+  const reporter = new StreamableReporter(caps, {
     title: "Searching Web",
     icon: "search",
   });
@@ -117,8 +125,8 @@ async function invoke({
     await reporter.start();
     await reporter.sendUpdate("Search term", query, "search");
     const [summary, links] = await Promise.all([
-      generateSummary(query, reporter),
-      getSearchLinks(query, reporter),
+      generateSummary(caps, query, reporter),
+      getSearchLinks(caps, query, reporter),
     ]);
     if (!ok(summary)) {
       return summary;

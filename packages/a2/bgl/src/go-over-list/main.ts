@@ -38,15 +38,12 @@ function findStrategist(name?: string): Strategist | undefined {
   return STRATEGISTS.find((strategist) => strategist.name === name);
 }
 
-async function invoke({
-  context,
-  plan: objective,
-  strategy,
-  "z-list": makeList,
-  ...params
-}: Inputs): Promise<Outcome<Outputs>> {
-  const toolManager = new ToolManager(new ArgumentNameGenerator());
-  const template = new Template(objective);
+async function invoke(
+  { context, plan: objective, strategy, "z-list": makeList, ...params }: Inputs,
+  caps: Capabilities
+): Promise<Outcome<Outputs>> {
+  const toolManager = new ToolManager(caps, new ArgumentNameGenerator(caps));
+  const template = new Template(caps, objective);
   const substituting = await template.substitute(
     params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)
@@ -63,7 +60,12 @@ async function invoke({
     context,
     async (objective, context, isList) => {
       const disallowNestedLists = makeList && !isList;
-      const executor = new Runtime(context, toolManager, disallowNestedLists);
+      const executor = new Runtime(
+        caps,
+        context,
+        toolManager,
+        disallowNestedLists
+      );
       const executingOne = await executor.executeStrategy(
         objective,
         strategist
@@ -105,9 +107,12 @@ type DescribeInputs = {
   };
 };
 
-async function describe({ inputs: { plan } }: DescribeInputs) {
-  const template = new Template(plan);
-  const settings = await readSettings();
+async function describe(
+  { inputs: { plan } }: DescribeInputs,
+  caps: Capabilities
+) {
+  const template = new Template(caps, plan);
+  const settings = await readSettings(caps);
   const experimental =
     ok(settings) && !!settings["Show Experimental Components"];
   let extra: Record<string, Schema> = {};

@@ -18,7 +18,7 @@ import Core from "@google-labs/core-kit";
 import { getDataStore } from "@breadboard-ai/data-store";
 
 import { badRequest } from "../errors.js";
-import { buildSecretsTunnel, secretsKit } from "./secrets.js";
+import { secretsKit } from "./secrets.js";
 import type { ServerConfig } from "../config.js";
 import { BlobDataStore, GoogleStorageBlobStore } from "../blob-store.js";
 import { GcsAwareFetch } from "./gcs-aware-fetch.js";
@@ -62,10 +62,9 @@ async function post(
   req: Request,
   res: Response
 ): Promise<void> {
-  const gcsAwareFetchKit = GcsAwareFetch.instance(
-    req.app.locals.store,
-    serverConfig
-  ).createKit(asRuntimeKit(Core));
+  const gcsAwareFetchKit = GcsAwareFetch.instance(serverConfig).createKit(
+    asRuntimeKit(Core)
+  );
 
   const server = new ProxyServer(
     new HTTPServerTransport({ body: req.body }, new ResponseAdapter(res))
@@ -73,11 +72,10 @@ async function post(
   const store = createDataStore(serverConfig);
   store.createGroup("run-board");
 
-  const tunnel = await buildSecretsTunnel();
   const config: ProxyServerConfig = {
     kits: [secretsKit, gcsAwareFetchKit],
     store,
-    proxy: ["fetch", { node: "secrets", tunnel }],
+    proxy: ["fetch", { node: "secrets" }],
     allowed: serverConfig.proxyServerAllowFilter,
   };
 

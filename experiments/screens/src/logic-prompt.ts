@@ -19,7 +19,6 @@ The following Gemini models are available:
 - \`gemini-2.5-pro\` - Enhanced thinking and reasoning, multimodal understanding, advanced coding, and more
 - \`gemini-2.5-flash\` - Adaptive thinking, cost efficiency
 - \`gemini-2.5-flash-image-preview\` - Precise, conversational image generation
-  and editing
+  and editing. Importantly, the JSON mode is not enabled for this model.
 
-Here are all the type defintions:
 `;

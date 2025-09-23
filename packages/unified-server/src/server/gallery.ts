@@ -11,6 +11,9 @@ import type {
   NarrowedDriveFile,
 } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { GraphDescriptor } from "@breadboard-ai/types";
+
+import * as flags from "./flags.js";
+
 import cors from "cors";
 import {
   Router,
@@ -38,7 +41,6 @@ export async function makeGalleryMiddleware({
 }
 
 export interface CachingFeaturedGalleryInit {
-  folderId: string;
   driveClient: GoogleDriveClient;
   cacheRefreshSeconds: number;
 }
@@ -64,12 +66,12 @@ export class CachingFeaturedGallery {
   };
 
   private constructor({
-    folderId,
     driveClient,
     cacheRefreshSeconds,
   }: CachingFeaturedGalleryInit) {
+    const folderId = flags.GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID;
     if (!folderId) {
-      throw new Error("No folder id provided");
+      throw new Error("GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID not set");
     }
     if (cacheRefreshSeconds <= 0) {
       throw new Error("Cache refresh seconds must be > 0");

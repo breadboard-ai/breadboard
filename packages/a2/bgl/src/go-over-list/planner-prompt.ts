@@ -94,6 +94,7 @@ function prependInstruction(text: string, plan: LLMContent): LLMContent {
 }
 
 function thinkingPlannerPrompt(
+  caps: Capabilities,
   context: LLMContent[],
   objective: LLMContent,
   plan: Plan,
@@ -131,7 +132,7 @@ If no more steps are needed, return no steps.
 `.asContent();
 
   const contents = [...context, instruction];
-  return new GeminiPrompt({
+  return new GeminiPrompt(caps, {
     body: {
       contents,
       safetySettings: defaultSafetySettings(),
@@ -144,6 +145,7 @@ If no more steps are needed, return no steps.
 }
 
 function plannerPrompt(
+  caps: Capabilities,
   context: LLMContent[] | undefined,
   objective: LLMContent,
   extraPlannerPrompt: string,
@@ -153,7 +155,7 @@ function plannerPrompt(
   const instruction = `${preamble(extraPlannerPrompt)}`;
 
   const contents = [...context, prependInstruction(instruction, objective)];
-  return new GeminiPrompt({
+  return new GeminiPrompt(caps, {
     body: {
       contents,
       safetySettings: defaultSafetySettings(),

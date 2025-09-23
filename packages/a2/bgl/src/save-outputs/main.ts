@@ -22,12 +22,11 @@ type Outputs = {
   context?: LLMContent[];
 };
 
-async function invoke({
-  context,
-  connectors,
-  ...options
-}: Inputs): Promise<Outcome<Outputs>> {
-  const template = new Template(connectors);
+async function invoke(
+  { context, connectors, ...options }: Inputs,
+  caps: Capabilities
+): Promise<Outcome<Outputs>> {
+  const template = new Template(caps, connectors);
   const saving = await template.save(context, options);
   if (!ok(saving)) return saving;
   return { context };
@@ -37,8 +36,8 @@ type DescribeInputs = {
   inputs: Inputs;
 };
 
-async function describe({ inputs }: DescribeInputs) {
-  const template = new Template(inputs.connectors);
+async function describe({ inputs }: DescribeInputs, caps: Capabilities) {
+  const template = new Template(caps, inputs.connectors);
   return {
     title: "Save Outputs",
     description: "Saves outputs using a provided connector",

@@ -12,7 +12,6 @@ import type {
   NodeValue,
 } from "@breadboard-ai/types";
 import type {
-  GraphDescriptor,
   InspectablePort,
   PortIdentifier,
   Schema,
@@ -469,14 +468,6 @@ export class WorkspaceItemVisualUpdateEvent extends Event {
  * Board Servers
  */
 
-export class GraphBoardOpenRequestEvent extends Event {
-  static eventName = "bbgraphboardopenrequest";
-
-  constructor() {
-    super(GraphBoardOpenRequestEvent.eventName, { ...eventInit });
-  }
-}
-
 export class GraphBoardServerConnectRequestEvent extends Event {
   static eventName = "bbgraphboardserverconnectrequest";
 
@@ -486,79 +477,6 @@ export class GraphBoardServerConnectRequestEvent extends Event {
     public readonly apiKey?: string
   ) {
     super(GraphBoardServerConnectRequestEvent.eventName, { ...eventInit });
-  }
-}
-
-export class GraphBoardServerRenewAccessRequestEvent extends Event {
-  static eventName = "bbgraphboardserverrenewaccesssrequest";
-
-  constructor(
-    public readonly boardServerName: string,
-    public readonly location: string
-  ) {
-    super(GraphBoardServerRenewAccessRequestEvent.eventName, { ...eventInit });
-  }
-}
-
-export class GraphBoardServerDisconnectEvent extends Event {
-  static eventName = "bbgraphboardserverdisconnect";
-
-  constructor(
-    public readonly boardServerName: string,
-    public readonly location: string
-  ) {
-    super(GraphBoardServerDisconnectEvent.eventName, { ...eventInit });
-  }
-}
-
-export class GraphBoardServerBlankBoardEvent extends Event {
-  static eventName = "bbgraphboardserverblankboard";
-
-  constructor() {
-    super(GraphBoardServerBlankBoardEvent.eventName, { ...eventInit });
-  }
-}
-
-export class GraphBoardServerSaveBoardEvent extends Event {
-  static eventName = "bbgraphboardserversaveboard";
-
-  constructor(
-    public readonly boardServerName: string,
-    public readonly location: string,
-    public readonly fileName: string,
-    public readonly graph: GraphDescriptor
-  ) {
-    super(GraphBoardServerSaveBoardEvent.eventName, { ...eventInit });
-  }
-}
-
-export class GraphBoardServerRefreshEvent extends Event {
-  static eventName = "bbgraphboardserverrefresh";
-
-  constructor(
-    public readonly boardServerName: string,
-    public readonly location: string
-  ) {
-    super(GraphBoardServerRefreshEvent.eventName, { ...eventInit });
-  }
-}
-
-export class GraphBoardServerAddEvent extends Event {
-  static eventName = "bbgraphboardserveradd";
-
-  constructor() {
-    super(GraphBoardServerAddEvent.eventName, { ...eventInit });
-  }
-}
-
-export class GraphBoardServerSelectionChangeEvent extends Event {
-  static eventName = "bbgraphboardserverselectionchange";
-
-  constructor(
-    public readonly selectedBoardServer: string,
-    public readonly selectedLocation: string
-  ) {
-    super(GraphBoardServerSelectionChangeEvent.eventName, { ...eventInit });
   }
 }
 

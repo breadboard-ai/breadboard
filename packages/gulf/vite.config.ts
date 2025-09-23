@@ -6,14 +6,16 @@
 
 import { config } from "dotenv";
 import { UserConfig } from "vite";
+import { customA2aHandlerPlugin } from "./middleware/a2a";
 
 export default async () => {
   config();
 
   const entry: Record<string, string> = {
-    demo: "./index.html",
+    index: "./index.html",
   };
   return {
+    plugins: [customA2aHandlerPlugin()],
     build: {
       lib: {
         entry,

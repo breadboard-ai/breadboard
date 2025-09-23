@@ -15,10 +15,11 @@ export type SearchOutputs = {
   results: string;
 };
 
-async function invoke({
-  query,
-}: SearchInputs): Promise<Outcome<SearchOutputs>> {
-  const executing = await executeTool<string>("google_hotels.search", {
+async function invoke(
+  { query }: SearchInputs,
+  caps: Capabilities
+): Promise<Outcome<SearchOutputs>> {
+  const executing = await executeTool<string>(caps, "google_hotels.search", {
     query,
   });
   if (!ok(executing)) return executing;

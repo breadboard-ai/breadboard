@@ -40,12 +40,13 @@ function simpleSlidesSchema(): GeminiSchema {
 }
 
 async function inferSlideStructure(
+  caps: Capabilities,
   contents?: LLMContent[]
 ): Promise<Outcome<SimplePresentation>> {
   if (!contents) {
     return err(`Unable to infer slide structure. No information was provided.`);
   }
-  const prompt = new GeminiPrompt({
+  const prompt = new GeminiPrompt(caps, {
     body: {
       contents,
       systemInstruction:

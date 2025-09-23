@@ -2,9 +2,6 @@
  * @fileoverview Provides an output helper.
  */
 
-import output from "@output";
-import write from "@write";
-
 import { ErrorMetadata, generateId, ok } from "./utils";
 
 type ReportInputs = {
@@ -173,7 +170,10 @@ class StreamableReporter {
   #started = false;
   #id = 0;
 
-  constructor(public readonly options: NodeMetadata) {}
+  constructor(
+    private readonly caps: Capabilities,
+    public readonly options: NodeMetadata
+  ) {}
 
   async start() {
     if (this.#started) return;
@@ -194,7 +194,7 @@ class StreamableReporter {
     };
     const starting = await this.report("start");
     if (!ok(starting)) return starting;
-    return output({ schema, $metadata, reportStream });
+    return this.caps.output({ schema, $metadata, reportStream });
   }
 
   async reportLLMContent(llmContent: LLMContent) {
@@ -203,7 +203,7 @@ class StreamableReporter {
       return;
     }
     const data = [llmContent];
-    return write({ path: this.path, stream: true, data });
+    return this.caps.write({ path: this.path, stream: true, data });
   }
 
   report(json: JsonSerializable) {
@@ -292,12 +292,15 @@ class StreamableReporter {
 
   close() {
     if (!this.#started) return;
-    return write({ path: this.path, stream: true, done: true });
+    return this.caps.write({ path: this.path, stream: true, done: true });
     this.#started = false;
   }
 }
 
-async function report(inputs: ReportInputs): Promise<boolean> {
+async function report(
+  { output }: Capabilities,
+  inputs: ReportInputs
+): Promise<boolean> {
   const {
     actor: title,
     category: description,

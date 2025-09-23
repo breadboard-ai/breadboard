@@ -806,6 +806,30 @@ describe("Orchestrator", () => {
         ]);
         assertTasks(o2.currentTasks(), ["mixer"]);
       }
+
+      {
+        // Scenario 3:
+        // right-channel succeeded.
+        // while left-channel is waiting, user decides to restart right-channel
+        const o3 = new Orchestrator(diamondPlan, {});
+        o3.update(o);
+
+        o3.provideOutputs("right-channel", { processed: "Right Audio" });
+        o3.setWaiting("left-channel");
+        assertState(diamond, o3.state(), [
+          ["input", "succeeded"],
+          ["left-channel", "waiting"],
+          ["right-channel", "succeeded"],
+          ["mixer", "inactive"],
+        ]);
+        o3.restartAtNode("right-channel");
+        assertState(diamond, o3.state(), [
+          ["input", "succeeded"],
+          ["left-channel", "waiting"],
+          ["right-channel", "ready"],
+          ["mixer", "inactive"],
+        ]);
+      }
     });
   });
 

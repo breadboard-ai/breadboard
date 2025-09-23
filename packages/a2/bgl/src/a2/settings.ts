@@ -4,8 +4,6 @@
 
 import { ok } from "./utils";
 
-import read from "@read";
-
 export { readSettings, readFlags };
 
 /**
@@ -31,8 +29,10 @@ export type RuntimeFlags = {
   mcp: boolean;
 };
 
-async function readSettings(): Promise<Outcome<Record<string, boolean>>> {
-  const reading = await read({ path: "/env/settings/general" });
+async function readSettings(
+  caps: Capabilities
+): Promise<Outcome<Record<string, boolean>>> {
+  const reading = await caps.read({ path: "/env/settings/general" });
   if (!ok(reading)) return reading;
 
   const json = (reading.data?.at(0)?.parts?.at(0) as JSONPart).json;
@@ -41,8 +41,8 @@ async function readSettings(): Promise<Outcome<Record<string, boolean>>> {
   return json as Record<string, boolean>;
 }
 
-async function readFlags(): Promise<Outcome<RuntimeFlags>> {
-  const reading = await read({ path: "/env/flags" });
+async function readFlags(caps: Capabilities): Promise<Outcome<RuntimeFlags>> {
+  const reading = await caps.read({ path: "/env/flags" });
   if (!ok(reading)) return reading;
 
   const json = (reading.data?.at(0)?.parts?.at(0) as JSONPart).json;

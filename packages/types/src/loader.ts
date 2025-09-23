@@ -5,6 +5,7 @@
  */
 
 import { DataPartTransformer } from "./data.js";
+import { Result } from "./result.js";
 import {
   GraphDescriptor,
   GraphTag,

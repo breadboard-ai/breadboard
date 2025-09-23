@@ -2,7 +2,6 @@
  * @fileoverview Manages tools.
  */
 
-import describeGraph from "@describe";
 import type {
   CallToolCallback,
   DescriberResult,
@@ -51,6 +50,7 @@ class ToolManager {
   errors: string[] = [];
 
   constructor(
+    private readonly caps: Capabilities,
     private readonly describerResultTransformer?: DescriberResultTransformer
   ) {}
 
@@ -161,7 +161,7 @@ class ToolManager {
       this.#hasCodeExection = true;
       return "Code Execution";
     }
-    const connector = new ConnectorManager({
+    const connector = new ConnectorManager(this.caps, {
       url: "embed://a2/mcp.bgl.json",
       configuration: { endpoint: url },
     });
@@ -190,7 +190,7 @@ class ToolManager {
       return names.join(", ");
     }
 
-    let description = (await describeGraph({
+    let description = (await this.caps.describe({
       url,
     })) as Outcome<DescriberResult>;
     let passContext = false;
@@ -254,7 +254,7 @@ class ToolManager {
     let hasInvalidTools = false;
     for (const tool of tools) {
       const url = typeof tool === "string" ? tool : tool.url;
-      const description = (await describeGraph({
+      const description = (await this.caps.describe({
         url,
       })) as Outcome<DescriberResult>;
       if (!ok(description)) {

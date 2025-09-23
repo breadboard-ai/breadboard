@@ -8,6 +8,7 @@ import {
   BreakpointSpec,
   GraphDescriptor,
   HarnessRunResult,
+  InputValues,
   NodeConfiguration,
   NodeHandlerContext,
   NodeIdentifier,
@@ -70,6 +71,13 @@ class PlanRunner extends AbstractRunner {
       return orchestrator.plan;
     }
     return emptyPlan();
+  }
+
+  @signal
+  get waiting() {
+    const orchestrator = this.#orchestrator;
+    if (!orchestrator) return new Map();
+    return new Map(orchestrator.allWaiting);
   }
 
   accessor breakpoints = new SignalMap<NodeIdentifier, BreakpointSpec>();
@@ -150,7 +158,11 @@ class PlanRunner extends AbstractRunner {
   }
 
   async runFrom(id: NodeIdentifier): Promise<Outcome<void>> {
-    if (!this.#controller) {
+    this.#orchestrator.allWaiting.forEach(([id]) => {
+      this.stop(id);
+    });
+
+    if (!this.#controller || !this.running()) {
       // If not already running, start a run in interactive mode
       this.run(undefined, true);
     } else if (!this.#orchestrator.working) {
@@ -184,6 +196,14 @@ class PlanRunner extends AbstractRunner {
               new PauseEvent(false, { timestamp: timestamp() })
             );
           }
+        },
+        (inputs) => {
+          // Do not restart the run when it's already running. Because this
+          // runner may run tasks in parallel, we may have situations where
+          // the `resume` is issued multiple times. In this case, we'll run
+          // into the case when the runner has already been restarted.
+          if (this.running()) return;
+          this.run(inputs);
         },
         next
       );
@@ -228,6 +248,7 @@ class InternalRunStateController {
     private orchestrator: Orchestrator,
     public readonly breakpoints: Map<NodeIdentifier, BreakpointSpec>,
     public readonly pause: () => void,
+    public readonly resume: (inputs?: InputValues) => void,
     public readonly callback: (data: HarnessRunResult) => Promise<void>
   ) {
     this.context = this.initializeNodeHandlerContext(callback);
@@ -309,7 +330,9 @@ class InternalRunStateController {
           return this.callback({
             ...harnessResult,
             reply: async (inputs) => {
-              this.orchestrator.setWorking(task.node.id);
+              if (!signal.aborted) {
+                this.orchestrator.setWorking(task.node.id);
+              }
               return harnessResult.reply(inputs);
             },
           });
@@ -411,6 +434,16 @@ class InternalRunStateController {
     if (stopController) return stopController;
 
     stopController = new AbortController();
+    stopController.signal.addEventListener("abort", () => {
+      // Find first waiting step. Because of the way asyncGen queues, this will
+      // always be the first step that is actually waiting on input.
+      const [waitingId] =
+        this.orchestrator.allWaiting.find(
+          ([, nodeState]) => nodeState.state === "waiting"
+        ) || [];
+      if (waitingId !== id) return;
+      this.resume({});
+    });
     this.#stopControllers.set(id, stopController);
     return stopController;
   }

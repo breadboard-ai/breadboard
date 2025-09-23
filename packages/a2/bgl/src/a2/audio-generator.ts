@@ -16,9 +16,10 @@ type AudioGeneratorOutputs = {
 
 export { invoke as default, describe };
 
-async function invoke({
-  context,
-}: AudioGeneratorInputs): Promise<Outcome<AudioGeneratorOutputs>> {
+async function invoke(
+  { context }: AudioGeneratorInputs,
+  caps: Capabilities
+): Promise<Outcome<AudioGeneratorOutputs>> {
   // 1) Get last LLMContent from input.
   const prompt =
     context && Array.isArray(context) && context.length > 0
@@ -30,15 +31,18 @@ async function invoke({
   prompt.role = "user";
 
   // 2) Call Gemini to generate audio.
-  const result = await gemini({
-    body: {
-      contents: [prompt],
-      generationConfig: {
-        responseModalities: ["AUDIO"],
+  const result = await gemini(
+    {
+      body: {
+        contents: [prompt],
+        generationConfig: {
+          responseModalities: ["AUDIO"],
+        },
+        safetySettings: defaultSafetySettings(),
       },
-      safetySettings: defaultSafetySettings(),
     },
-  });
+    caps
+  );
   if (!ok(result)) {
     return result;
   }

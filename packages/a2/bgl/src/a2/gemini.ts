@@ -2,13 +2,10 @@
  * @fileoverview Gemini Model Family.
  */
 
-import fetch from "@fetch";
-import secrets from "@secrets";
 import { StreamableReporter } from "./output";
 
 import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils";
 import { flattenContext } from "./lists";
-import write from "@write";
 
 const defaultSafetySettings = (): SafetySetting[] => [
   {
@@ -380,20 +377,21 @@ function conformBody(body: GeminiBody): GeminiBody {
   };
 }
 
-async function getAccessToken() {
+async function getAccessToken({ secrets }: Capabilities) {
   const signInSecretName = "connection:$sign-in";
   const result = await secrets({ keys: [signInSecretName] });
   return result[signInSecretName];
 }
 
 async function callAPI(
+  caps: Capabilities,
   retries: number,
   model: string,
   body: GeminiBody,
   $metadata?: Metadata
 ): Promise<Outcome<GeminiAPIOutputs>> {
-  const accessToken = await getAccessToken();
-  const reporter = new StreamableReporter({
+  const accessToken = await getAccessToken(caps);
+  const reporter = new StreamableReporter(caps, {
     title: `Calling ${model}`,
     icon: "spark",
   });
@@ -407,11 +405,11 @@ async function callAPI(
     const maxRetries = retries;
     while (retries) {
       // Record model call with action tracker.
-      write({
+      caps.write({
         path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
         data: [],
       });
-      const result = await fetch({
+      const result = await caps.fetch({
         $metadata,
         url: endpointURL(model),
         method: "POST",
@@ -615,7 +613,10 @@ function kindFromStatus(status: number): ErrorMetadata["kind"] {
   return "unknown";
 }
 
-async function invoke(inputs: GeminiInputs): Promise<Outcome<GeminiOutputs>> {
+async function invoke(
+  inputs: GeminiInputs,
+  caps: Capabilities
+): Promise<Outcome<GeminiOutputs>> {
   const validatingInputs = validateInputs(inputs);
   if (!ok(validatingInputs)) {
     return validatingInputs;
@@ -632,6 +633,7 @@ async function invoke(inputs: GeminiInputs): Promise<Outcome<GeminiOutputs>> {
     // Public API is being used.
     // Behave as if we're wired in.
     const result = await callAPI(
+      caps,
       retries,
       model,
       constructBody(context, systemInstruction, prompt, modality)
@@ -652,6 +654,7 @@ async function invoke(inputs: GeminiInputs): Promise<Outcome<GeminiOutputs>> {
     // Private API is being used.
     // Behave as if we're being invoked.
     return callAPI(
+      caps,
       retries,
       model,
       augmentBody(body, systemInstruction, prompt, modality),

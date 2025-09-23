@@ -22,8 +22,12 @@ export type GetContentFromUrlResponse = {
   markdown?: string;
 };
 
-async function getContentFromUrl(url: string): Promise<Outcome<string>> {
+async function getContentFromUrl(
+  caps: Capabilities,
+  url: string
+): Promise<Outcome<string>> {
   const executing = await executeTool<GetContentFromUrlResponse>(
+    caps,
     "get_content_from_url",
     { url }
   );
@@ -40,10 +44,11 @@ async function getContentFromUrl(url: string): Promise<Outcome<string>> {
   }
 }
 
-async function invoke({
-  url,
-}: GetWebPageInputs): Promise<Outcome<GetWebPageOutputs>> {
-  const results = await getContentFromUrl(url);
+async function invoke(
+  { url }: GetWebPageInputs,
+  caps: Capabilities
+): Promise<Outcome<GetWebPageOutputs>> {
+  const results = await getContentFromUrl(caps, url);
   if (!ok(results)) return results;
   return { results };
 }

@@ -26,6 +26,7 @@ const OUTPUT_NAME = "generated_image";
 const API_NAME = "ai_image_tool";
 
 async function callGeminiImage(
+  caps: Capabilities,
   instruction: string,
   imageContent: LLMContent[],
   disablePromptRewrite: boolean,
@@ -87,13 +88,14 @@ async function callGeminiImage(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  const response = await executeStep(body);
+  const response = await executeStep(caps, body);
   if (!ok(response)) return response;
 
   return response.chunks;
 }
 
 async function callImageGen(
+  caps: Capabilities,
   imageInstruction: string,
   aspectRatio: string = "1:1"
 ): Promise<Outcome<LLMContent[]>> {
@@ -125,13 +127,14 @@ async function callImageGen(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  const response = await executeStep(body);
+  const response = await executeStep(caps, body);
   if (!ok(response)) return response;
 
   return response.chunks;
 }
 
 function promptExpander(
+  caps: Capabilities,
   contents: LLMContent[] | undefined,
   instruction: LLMContent
 ): GeminiPrompt {
@@ -160,7 +163,7 @@ Create the following image:
 You output will be fed directly into the text-to-image model, so it must be a prompt only, no additional chit-chat
 """
 `;
-  return new GeminiPrompt({
+  return new GeminiPrompt(caps, {
     body: {
       contents: addUserTurn(promptText.asContent(), contents),
       systemInstruction: toLLMContent(`

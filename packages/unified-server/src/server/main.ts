@@ -6,31 +6,31 @@
 
 import express, { type Request } from "express";
 import ViteExpress from "vite-express";
-import { config as loadEnv } from "dotenv";
 
-import * as connectionServer from "@breadboard-ai/connection-server";
 import * as boardServer from "@breadboard-ai/board-server";
+import * as connectionServer from "@breadboard-ai/connection-server";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { InputValues, NodeDescriptor } from "@breadboard-ai/types";
 
 import { makeDriveProxyMiddleware } from "./drive-proxy.js";
 import { allowListChecker } from "./allow-list-checker.js";
-import { getConfig } from "./provide-config.js";
 import { makeCspHandler } from "./csp.js";
-import { createUpdatesHandler } from "./upates.js";
+import * as flags from "./flags.js";
 import { CachingFeaturedGallery, makeGalleryMiddleware } from "./gallery.js";
+import { createUpdatesHandler } from "./upates.js";
+
 import { GoogleAuth } from "google-auth-library";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { createMcpProxyHandler } from "./mcp-proxy.js";
 
 const FEATURED_GALLERY_CACHE_REFRESH_SECONDS = 10 * 60;
 
-loadEnv();
+console.log("[unified-server startup] Starting unified server");
+
+console.log("[unified-server startup] Loading env file");
 
 const server = express();
 
-const { client: clientConfig, server: serverConfig } = await getConfig();
-
-server.use(makeCspHandler(serverConfig));
+server.use(makeCspHandler());
 
 const boardServerConfig = boardServer.createServerConfig({
   storageProvider: "firestore",
@@ -38,24 +38,21 @@ const boardServerConfig = boardServer.createServerConfig({
 });
 const connectionServerConfig = {
   ...(await connectionServer.createServerConfig()),
-  validateResponse: allowListChecker(
-    serverConfig.BACKEND_API_ENDPOINT &&
-      new URL(serverConfig.BACKEND_API_ENDPOINT)
-  ),
+  validateResponse: allowListChecker(),
 };
 
+console.log("[unified-server startup] Mounting board server");
 boardServer.addMiddleware(server, boardServerConfig);
 server.use("/board", boardServer.createRouter(boardServerConfig));
 
+console.log("[unified-server startup] Mounting connection server");
 server.use(
   "/connection",
   connectionServer.createServer(connectionServerConfig)
 );
 
+console.log("[unified-server startup] Mounting app view");
 server.use("/app/@:user/:name", boardServer.middlewares.loadBoard());
-
-server.use("/updates", createUpdatesHandler());
-
 server.use("/app", (req, res) => {
   // Redirect the old standalone app view to the new unified view with the app
   // tab opened.
@@ -63,6 +60,10 @@ server.use("/app", (req, res) => {
   res.redirect(301, `/?flow=${encodeURIComponent(graphId)}&mode=app`);
 });
 
+console.log("[unified-server startup] Mounting updates handler");
+server.use("/updates", createUpdatesHandler());
+
+console.log("[unified-server startup] Creating Google Drive client");
 const googleAuth = new GoogleAuth({
   scopes: ["https://www.googleapis.com/auth/drive.readonly"],
 });
@@ -72,8 +73,8 @@ const driveClient = new GoogleDriveClient({
     (await authClient.getAccessToken()).token ?? "",
 });
 
+console.log("[unified-server startup] Mounting gallery");
 const cachingGallery = await CachingFeaturedGallery.makeReady({
-  folderId: serverConfig.GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID ?? "",
   driveClient,
   cacheRefreshSeconds: FEATURED_GALLERY_CACHE_REFRESH_SECONDS,
 });
@@ -83,6 +84,7 @@ server.use(
   await makeGalleryMiddleware({ gallery: cachingGallery })
 );
 
+console.log("[unified-server startup] Mounting Drive proxy");
 server.use(
   "/api/drive-proxy",
   makeDriveProxyMiddleware({
@@ -93,17 +95,17 @@ server.use(
   })
 );
 
-server.use(
-  "/api/mcp-proxy",
-  createMcpProxyHandler(serverConfig.MCP_SERVER_ALLOW_LIST)
-);
+console.log("[unified-server startup] Mounting MCP proxy");
+server.use("/api/mcp-proxy", createMcpProxyHandler());
 
+console.log("[unified-server startup] Mounting static content");
+const clientConfig = await flags.getClientConfig();
 ViteExpress.config({
   transformer: (html: string, req: Request) => {
     const board = req.res?.locals.loadedBoard;
     const displayName = board?.displayName || "Loading ...";
     const serverUrl = new URL(
-      serverConfig.SERVER_URL ?? `http://localhost:${boardServerConfig.port}`
+      flags.SERVER_URL || `http://localhost:${boardServerConfig.port}`
     );
     const clientConfigStr = JSON.stringify(clientConfig).replaceAll(
       "</script>",
@@ -125,7 +127,9 @@ ViteExpress.static({
 });
 
 ViteExpress.listen(server, boardServerConfig.port, () => {
-  console.log(`Unified server at: http://localhost:${boardServerConfig.port}`);
+  console.log(
+    `[unified-server startup] Listening for requests on port ${boardServerConfig.port}`
+  );
 });
 
 function escape(s: string) {

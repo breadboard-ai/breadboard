@@ -348,7 +348,17 @@ class SigninAdapter {
     if (!connection) {
       return;
     }
-    await this.#settingsHelper.delete(SETTINGS_TYPE.CONNECTIONS, connection.id);
+    await Promise.all([
+      this.#settingsHelper.delete(SETTINGS_TYPE.CONNECTIONS, connection.id),
+      // Clear caches on signout because they contain user-specific data, like
+      // the user's graphs, which we must not share across different signins.
+      (async () =>
+        Promise.all(
+          (await globalThis.caches.keys()).map((key) =>
+            globalThis.caches.delete(key)
+          )
+        ))(),
+    ]);
     this.#state = { status: "signedout" };
   }
 

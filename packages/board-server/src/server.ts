@@ -48,8 +48,14 @@ export function addMiddleware(server: Express, config: ServerConfig) {
 function createStore(storageProvider: StorageProvider): BoardServerStore {
   switch (storageProvider) {
     case "in-memory":
+      console.log(
+        "[board-server startup] Initializing in-memory storage provider"
+      );
       return new InMemoryStorageProvider();
     case "firestore":
+      console.log(
+        "[board-server startup] Initializing Firestore storage provider"
+      );
       return new FirestoreStorageProvider();
   }
 }
@@ -83,6 +89,7 @@ export function createServerConfig(opts: {
   storageProvider: StorageProvider;
   proxyServerAllowFilter?: AllowFilterFunction;
 }): ServerConfig {
+  console.log("[board-server startup] Creating board server config");
   const {
     PORT = DEFAULT_PORT,
     HOST = DEFAULT_HOST,

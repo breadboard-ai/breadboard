@@ -15,8 +15,11 @@ export type QueryOutputs = {
   results: string;
 };
 
-async function invoke({ query }: QueryInputs): Promise<Outcome<QueryOutputs>> {
-  const executing = await executeTool<string>("sql_query", {
+async function invoke(
+  { query }: QueryInputs,
+  caps: Capabilities
+): Promise<Outcome<QueryOutputs>> {
+  const executing = await executeTool<string>(caps, "sql_query", {
     query,
   });
   if (!ok(executing)) return executing;

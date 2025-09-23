@@ -1,7 +1,6 @@
 /**
  * @fileoverview Searching the Internet according to your plan.
  */
-import invokeGraph from "@invoke";
 import { type Params } from "./common";
 import invokeGemini, {
   defaultSafetySettings,
@@ -120,12 +119,16 @@ function reportWriterPrompt(
   };
 }
 
-async function thought(response: LLMContent, iteration: number) {
+async function thought(
+  caps: Capabilities,
+  response: LLMContent,
+  iteration: number
+) {
   const first = response.parts?.at(0);
   if (!first || !("text" in first)) {
     return;
   }
-  await report({
+  await report(caps, {
     actor: "Researcher",
     category: `Progress report, iteration ${iteration + 1}`,
     name: "Thought",
@@ -137,17 +140,15 @@ async function thought(response: LLMContent, iteration: number) {
   });
 }
 
-async function invoke({
-  context,
-  plan,
-  summarize,
-  ...params
-}: ResearcherInputs) {
+async function invoke(
+  { context, plan, summarize, ...params }: ResearcherInputs,
+  caps: Capabilities
+) {
   const tools = RESEARCH_TOOLS.map((descriptor) => descriptor.url);
-  const toolManager = new ToolManager(new ArgumentNameGenerator());
+  const toolManager = new ToolManager(caps, new ArgumentNameGenerator(caps));
   let content = context || [toLLMContent("Start the research")];
 
-  const template = new Template(plan);
+  const template = new Template(caps, plan);
   const substituting = await template.substitute(
     params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)
@@ -168,7 +169,8 @@ async function invoke({
   const research: string[] = [];
   for (let i = 0; i <= MAX_ITERATIONS; i++) {
     const askingGemini = await invokeGemini(
-      researcherPrompt(content, plan, toolManager.list(), i === 0)
+      researcherPrompt(content, plan, toolManager.list(), i === 0),
+      caps
     );
 
     if (!ok(askingGemini)) {
@@ -181,12 +183,12 @@ async function invoke({
     if (!response) {
       return err("No actionable response");
     }
-    await thought(response, i);
+    await thought(caps, response, i);
 
     const toolResponses: string[] = [];
     await toolManager.processResponse(response, async ($board, args) => {
       toolResponses.push(
-        JSON.stringify(await invokeGraph({ $board, ...args }))
+        JSON.stringify(await caps.invoke({ $board, ...args }))
       );
     });
     if (toolResponses.length === 0) {
@@ -196,7 +198,7 @@ async function invoke({
     content = [...content, response, toLLMContent(toolResponses.join("\n\n"))];
   }
   if (research.length === 0) {
-    await report({
+    await report(caps, {
       actor: "Researcher",
       category: "Error",
       name: "Error",
@@ -206,7 +208,8 @@ async function invoke({
   }
   if (summarize) {
     const producingReport = await invokeGemini(
-      reportWriterPrompt(plan, research)
+      reportWriterPrompt(plan, research),
+      caps
     );
     if (!ok(producingReport)) {
       return producingReport;
@@ -251,8 +254,11 @@ function researchExample(): string[] {
   ];
 }
 
-async function describe({ inputs: { plan } }: DescribeInputs) {
-  const template = new Template(plan);
+async function describe(
+  { inputs: { plan } }: DescribeInputs,
+  caps: Capabilities
+) {
+  const template = new Template(caps, plan);
   return {
     inputSchema: {
       type: "object",

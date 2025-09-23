@@ -22,6 +22,7 @@ import {
   EdgeLifecycleState,
   NodeLifecycleState,
   OrchestrationPlan,
+  OrchestratorNodeState,
   OrchestratorState,
 } from "./orchestration.js";
 import {
@@ -431,11 +432,17 @@ export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
   stop?(id: NodeIdentifier): Promise<Outcome<void>>;
 
   /**
-   * For new runtime onlye: A way to dynamically update
+   * For new runtime only: A way to dynamically update
    * the graph descriptor for a runner.
    *
    */
   updateGraph?(graph: GraphDescriptor): Promise<void>;
+
+  /**
+   * For new runtime only: A map of all steps that are currently waiting for
+   * input.
+   */
+  waiting?: Map<string, OrchestratorNodeState>;
 };
 
 /**

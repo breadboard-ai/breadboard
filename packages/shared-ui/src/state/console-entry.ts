@@ -23,6 +23,7 @@ import {
   WorkItem,
 } from "./types";
 import { ReactiveWorkItem } from "./work-item";
+import { timestamp } from "@breadboard-ai/utils";
 
 export { ReactiveConsoleEntry };
 
@@ -108,11 +109,22 @@ class ReactiveConsoleEntry implements ConsoleEntry {
     }
   }
 
+  handleInterruption() {
+    this.work.forEach((item) => {
+      if (!("type" in item)) return;
+      const workItem = item as ReactiveWorkItem;
+      if (workItem.end || workItem.type !== "input") return;
+      workItem.end = timestamp();
+    });
+  }
+
   finalize(data: NodeEndResponse) {
     const { outputs } = data;
-    const { products } = toLLMContentArray(this.#outputSchema || {}, outputs);
-    for (const [name, product] of Object.entries(products)) {
-      this.output.set(name, product);
+    if (!("$error" in outputs)) {
+      const { products } = toLLMContentArray(this.#outputSchema || {}, outputs);
+      for (const [name, product] of Object.entries(products)) {
+        this.output.set(name, product);
+      }
     }
     this.completed = true;
   }

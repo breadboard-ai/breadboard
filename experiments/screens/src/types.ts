@@ -4,8 +4,8 @@ export type Schema = {
   description?: string;
   nullable?: boolean;
   enum?: string[];
-  maxItems?: string;
-  minItems?: string;
+  maxItems?: string | number;
+  minItems?: string | number;
   properties?: Record<string, Schema>;
   anyOf?: Schema[];
   required?: string[];
@@ -32,7 +32,7 @@ export type CallToolRequest = {
 };
 
 export type CallToolResponse = {
-  content: LLMContent;
+  response?: SchemaValidated;
   isError: boolean;
 };
 
@@ -57,7 +57,21 @@ export type Capabilities = {
   generate: Gemini;
   mcp: McpClient;
   console: Console;
-  screens: ScreenServer;
+  /**
+   * The prompt capabilities.
+   */
+  prompts: {
+    /**
+     * Gets a prompt by id.
+     * @param id The id of the prompt.
+     * @param values A property bag for substituting placeholders in the prompt.
+     * @returns The prompt with the placeholders substituted.
+     */
+    get: (
+      id: string,
+      values?: Record<string, SchemaValidated>
+    ) => Promise<Prompt>;
+  };
 };
 
 export type Invoke = (capabilities: Capabilities) => Promise<LLMContent>;
@@ -79,31 +93,50 @@ export type EventDescriptor = {
   outputSchema?: Schema;
 };
 
-/**
- * The Screen Server. Manages a set of pre-defined application screens and
- * allows the application to render them and to obtain user inputs from those
- * screens.
- *
- * For best results, call `getUserEvents` prior to `renderScreen` to capture any
- * user events and then act on them to render the right screen. Combined
- * together, `getUserEvents` and `renderScreen` form the rendering loop for the
- * application UI.
- */
-export type ScreenServer = {
+export type PromptArgument = {
   /**
-   * Gets the list of user events. Will block until it receives at least one
-   * user event. Accumulates and drains the queue of user events when called.
+   * The name of the argument.
    */
-  getUserEvents(): Promise<GetUserEventsResponse>;
+  name: string;
   /**
-   * Updates screens with specified ids. This call does not block on user
-   * input. To collect user input from the screen, call `getUserEvents`.
-   * To make updates more efficiens, multiple screens can be updated in a
-   * single call.
+   * Descriptiong of the argument: how will it be used in the prompt.
+   */
+  description: string;
+  /**
+   * Whether or not the argument is required
+   */
+  required: boolean;
+};
+
+export type Prompt = {
+  name: string;
+  description: string;
+  /**
+   * Whether prompt's generated output will be text, JSON, or image.
+   */
+  format: "text" | "json" | "image";
+  /**
+   * The arguments for the prompt that will populate prompt placeholders.
+   * For example, if the prompt has an {{origin}} placeholder in it,
+   * the expected value of arguments will be:
    *
-   * @param screenInputs -- the list of the screen inputs to update.
+   * ```json
+   * [
+   *   {
+   *     "name": "origin",
+   *     "description": "The origin point in the map",
+   *     "required": true
+   *   }
+   * ]
+   * ```
    */
-  updateScreens(screenInputs: ScreenInput[]): Promise<RenderScreenResponse>;
+  arguments?: PromptArgument[];
+  /**
+   * The JSON schema that accompanies the prompt. Is only provided when
+   * the format = "json". Supply it as the `responseSchema` to the Gemini API.
+   */
+  responseSchema?: Schema;
+  value: string;
 };
 
 export type ScreenInput = {
@@ -159,6 +192,14 @@ export type HarmCategory =
 
 export type Modality = "TEXT" | "IMAGE" | "AUDIO";
 
+/**
+ * Allows choosing between various modes of the generated output.
+ * - To choose JSON mode (JSON output), set `responseMimeType` to
+ * `application/json` and provide `responseSchema`.
+ * - To choose text output mode, do not provide GenerationConfig at all
+ * - TO choese image output mode, set `responseModalities` to `["IMAGE"]` and
+ * do NOT set `responseMimeType`.
+ */
 export type GenerationConfig = {
   responseMimeType?: "text/plain" | "application/json" | "text/x.enum";
   responseSchema?: Schema;
@@ -284,6 +325,7 @@ export type FunctionDeclaration = {
   name: string;
   description: string;
   parameters?: Schema;
+  response?: Schema;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -355,6 +397,9 @@ export type Candidate = {
    * media files within the application. The VFS paths are opaque identifiers
    * for media files and can be provided as both inputs and outputs. The VFS
    * files always start with "/vfs/".
+   * Note, that the `FileDataPart` might be mixed with `TextPart`s. When
+   * looking for it, first filter out the text parts and then get the first
+   * `FileDataPart`.
    */
   content?: LLMContent;
   finishReason?: FinishReason;
@@ -365,4 +410,10 @@ export type Candidate = {
 
 export type GeminiOutputs = {
   candidates: Candidate[];
+};
+
+export type AppImport = {
+  spec: string;
+  screens: Screen[];
+  prompts: Prompt[];
 };

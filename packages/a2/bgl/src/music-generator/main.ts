@@ -33,7 +33,10 @@ type AudioGeneratorOutputs = {
 
 export { invoke as default, describe };
 
-async function callMusicGen(prompt: string): Promise<Outcome<LLMContent>> {
+async function callMusicGen(
+  caps: Capabilities,
+  prompt: string
+): Promise<Outcome<LLMContent>> {
   const executionInputs: ContentMap = {};
   executionInputs["prompt"] = {
     chunks: [
@@ -54,24 +57,23 @@ async function callMusicGen(prompt: string): Promise<Outcome<LLMContent>> {
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  const response = await executeStep(body);
+  const response = await executeStep(caps, body);
   if (!ok(response)) return response;
 
   return response.chunks.at(0)!;
 }
 
-async function invoke({
-  context,
-  text,
-  ...params
-}: AudioGeneratorInputs): Promise<Outcome<AudioGeneratorOutputs>> {
+async function invoke(
+  { context, text, ...params }: AudioGeneratorInputs,
+  caps: Capabilities
+): Promise<Outcome<AudioGeneratorOutputs>> {
   context ??= [];
   let instructionText = "";
   if (text) {
     instructionText = toText(text).trim();
   }
-  const template = new Template(toLLMContent(instructionText));
-  const toolManager = new ToolManager(new ArgumentNameGenerator());
+  const template = new Template(caps, toLLMContent(instructionText));
+  const toolManager = new ToolManager(caps, new ArgumentNameGenerator(caps));
   const substituting = await template.substitute(
     params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)
@@ -95,7 +97,7 @@ async function invoke({
         return toLLMContent("Please provide the music prompt.");
       }
       console.log("PROMPT: ", combinedInstruction);
-      return callMusicGen(combinedInstruction);
+      return callMusicGen(caps, combinedInstruction);
     }
   );
   if (!ok(results)) return results;
@@ -108,8 +110,11 @@ type DescribeInputs = {
   };
 };
 
-async function describe({ inputs: { text } }: DescribeInputs) {
-  const template = new Template(text);
+async function describe(
+  { inputs: { text } }: DescribeInputs,
+  caps: Capabilities
+) {
+  const template = new Template(caps, text);
   return {
     inputSchema: {
       type: "object",

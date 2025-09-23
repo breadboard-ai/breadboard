@@ -7,14 +7,20 @@
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { ReactiveAppScreen } from "./app-screen";
-import { App, AppScreen } from "./types";
+import { App, AppScreen, ProjectRun } from "./types";
 
 export { ReactiveApp };
 
 class ReactiveApp implements App {
+  constructor(private readonly run: ProjectRun) {}
+
   @signal
   get state() {
-    return this.screens.size > 0 ? "screen" : "splash";
+    if (this.screens.size === 0) return "splash";
+    if (this.run.error) return "error";
+    if (this.run.input) return "input";
+    if (this.current.size === 0) return "output";
+    return "progress";
   }
 
   @signal

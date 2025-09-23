@@ -2,8 +2,6 @@
  * @fileoverview Manages Gemini prompt.
  */
 
-import invokeBoard from "@invoke";
-
 import gemini, { type Candidate, type GeminiInputs } from "./gemini";
 import { ToolManager } from "./tool-manager";
 import { addUserTurn, err, ok } from "./utils";
@@ -55,6 +53,7 @@ class GeminiPrompt {
   calledCustomTools: boolean = false;
 
   constructor(
+    private readonly caps: Capabilities,
     public readonly inputs: GeminiInputs,
     options?: ToolManager | GeminiPromptOptions
   ) {
@@ -100,7 +99,7 @@ class GeminiPrompt {
     this.calledTools = false;
     this.calledCustomTools = false;
     const { allowToolErrors, validator } = this.options;
-    const invoking = await gemini(this.inputs);
+    const invoking = await gemini(this.inputs, this.caps);
     if (!ok(invoking)) return invoking;
     if ("context" in invoking) {
       return err("Invalid output from Gemini -- must be candidates", {
@@ -135,7 +134,7 @@ class GeminiPrompt {
           // Passing context means we called a subgraph/'custom tool'.
           this.calledCustomTools = true;
         }
-        const callingTool = await invokeBoard({
+        const callingTool = await this.caps.invoke({
           $board,
           ...this.#normalizeArgs(args, passContext),
         });

@@ -196,48 +196,147 @@ CLOSURE_DTORS.register(real, state, state);
 return real;
 }
 function __wbg_adapter_24(arg0, arg1, arg2) {
-wasm.closure101_externref_shim(arg0, arg1, arg2);
+wasm.closure133_externref_shim(arg0, arg1, arg2);
 }
 
-function getArrayJsValueFromWasm0(ptr, len) {
-ptr = ptr >>> 0;
-const mem = getDataViewMemory0();
-const result = [];
-for (let i = ptr; i < ptr + 4 * len; i += 4) {
-result.push(wasm.__wbindgen_export_2.get(mem.getUint32(i, true)));
-}
-wasm.__externref_drop_slice(ptr, len);
-return result;
-}
-
-function takeFromExternrefTable0(idx) {
-const value = wasm.__wbindgen_export_2.get(idx);
-wasm.__externref_table_dealloc(idx);
-return value;
-}
 /**
-* @param {string} code
-* @returns {string}
+* @param {string} invocation_id
+* @param {string} inputs
+* @returns {Promise<string>}
 */
- function eval_code(code) {
-let deferred3_0;
-let deferred3_1;
-try {
-const ptr0 = passStringToWasm0(code, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+ function fetch_capability(invocation_id, inputs) {
+const ptr0 = passStringToWasm0(invocation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
 const len0 = WASM_VECTOR_LEN;
-const ret = wasm.eval_code(ptr0, len0);
-var ptr2 = ret[0];
-var len2 = ret[1];
-if (ret[3]) {
-ptr2 = 0; len2 = 0;
-throw takeFromExternrefTable0(ret[2]);
+const ptr1 = passStringToWasm0(inputs, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len1 = WASM_VECTOR_LEN;
+const ret = wasm.fetch_capability(ptr0, len0, ptr1, len1);
+return ret;
 }
-deferred3_0 = ptr2;
-deferred3_1 = len2;
-return getStringFromWasm0(ptr2, len2);
-} finally {
-wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+
+/**
+* @param {string} invocation_id
+* @param {string} inputs
+* @returns {Promise<string>}
+*/
+ function secrets_capability(invocation_id, inputs) {
+const ptr0 = passStringToWasm0(invocation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len0 = WASM_VECTOR_LEN;
+const ptr1 = passStringToWasm0(inputs, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len1 = WASM_VECTOR_LEN;
+const ret = wasm.secrets_capability(ptr0, len0, ptr1, len1);
+return ret;
 }
+
+/**
+* @param {string} invocation_id
+* @param {string} inputs
+* @returns {Promise<string>}
+*/
+ function invoke_capability(invocation_id, inputs) {
+const ptr0 = passStringToWasm0(invocation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len0 = WASM_VECTOR_LEN;
+const ptr1 = passStringToWasm0(inputs, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len1 = WASM_VECTOR_LEN;
+const ret = wasm.invoke_capability(ptr0, len0, ptr1, len1);
+return ret;
+}
+
+/**
+* @param {string} invocation_id
+* @param {string} inputs
+* @returns {Promise<string>}
+*/
+ function input_capability(invocation_id, inputs) {
+const ptr0 = passStringToWasm0(invocation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len0 = WASM_VECTOR_LEN;
+const ptr1 = passStringToWasm0(inputs, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len1 = WASM_VECTOR_LEN;
+const ret = wasm.input_capability(ptr0, len0, ptr1, len1);
+return ret;
+}
+
+/**
+* @param {string} invocation_id
+* @param {string} inputs
+* @returns {Promise<string>}
+*/
+ function output_capability(invocation_id, inputs) {
+const ptr0 = passStringToWasm0(invocation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len0 = WASM_VECTOR_LEN;
+const ptr1 = passStringToWasm0(inputs, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len1 = WASM_VECTOR_LEN;
+const ret = wasm.output_capability(ptr0, len0, ptr1, len1);
+return ret;
+}
+
+/**
+* @param {string} invocation_id
+* @param {string} inputs
+* @returns {Promise<string>}
+*/
+ function describe_capability(invocation_id, inputs) {
+const ptr0 = passStringToWasm0(invocation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len0 = WASM_VECTOR_LEN;
+const ptr1 = passStringToWasm0(inputs, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len1 = WASM_VECTOR_LEN;
+const ret = wasm.describe_capability(ptr0, len0, ptr1, len1);
+return ret;
+}
+
+/**
+* @param {string} invocation_id
+* @param {string} inputs
+* @returns {Promise<string>}
+*/
+ function query_capability(invocation_id, inputs) {
+const ptr0 = passStringToWasm0(invocation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len0 = WASM_VECTOR_LEN;
+const ptr1 = passStringToWasm0(inputs, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len1 = WASM_VECTOR_LEN;
+const ret = wasm.query_capability(ptr0, len0, ptr1, len1);
+return ret;
+}
+
+/**
+* @param {string} invocation_id
+* @param {string} inputs
+* @returns {Promise<string>}
+*/
+ function read_capability(invocation_id, inputs) {
+const ptr0 = passStringToWasm0(invocation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len0 = WASM_VECTOR_LEN;
+const ptr1 = passStringToWasm0(inputs, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len1 = WASM_VECTOR_LEN;
+const ret = wasm.read_capability(ptr0, len0, ptr1, len1);
+return ret;
+}
+
+/**
+* @param {string} invocation_id
+* @param {string} inputs
+* @returns {Promise<string>}
+*/
+ function write_capability(invocation_id, inputs) {
+const ptr0 = passStringToWasm0(invocation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len0 = WASM_VECTOR_LEN;
+const ptr1 = passStringToWasm0(inputs, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len1 = WASM_VECTOR_LEN;
+const ret = wasm.write_capability(ptr0, len0, ptr1, len1);
+return ret;
+}
+
+/**
+* @param {string} invocation_id
+* @param {string} inputs
+* @returns {Promise<string>}
+*/
+ function blob_capability(invocation_id, inputs) {
+const ptr0 = passStringToWasm0(invocation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len0 = WASM_VECTOR_LEN;
+const ptr1 = passStringToWasm0(inputs, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+const len1 = WASM_VECTOR_LEN;
+const ret = wasm.blob_capability(ptr0, len0, ptr1, len1);
+return ret;
 }
 
 /**
@@ -264,6 +363,17 @@ const ret = wasm.run_module(ptr0, len0, ptr1, len1, ptr2, len2, modules, ptr3, l
 return ret;
 }
 
+function getArrayJsValueFromWasm0(ptr, len) {
+ptr = ptr >>> 0;
+const mem = getDataViewMemory0();
+const result = [];
+for (let i = ptr; i < ptr + 4 * len; i += 4) {
+result.push(wasm.__wbindgen_export_2.get(mem.getUint32(i, true)));
+}
+wasm.__externref_drop_slice(ptr, len);
+return result;
+}
+
 function notDefined(what) { return () => { throw new Error(`${what} is not defined`); }; }
 
 function addToExternrefTable0(obj) {
@@ -280,11 +390,11 @@ const idx = addToExternrefTable0(e);
 wasm.__wbindgen_exn_store(idx);
 }
 }
-function __wbg_adapter_75(arg0, arg1, arg2, arg3) {
-wasm.closure122_externref_shim(arg0, arg1, arg2, arg3);
+function __wbg_adapter_84(arg0, arg1, arg2, arg3) {
+wasm.closure154_externref_shim(arg0, arg1, arg2, arg3);
 }
 
- function __wbg_query_613fc9b5583de0f7(arg0, arg1, arg2, arg3) {
+ function __wbg_output_ced2de1f6ad7885f(arg0, arg1, arg2, arg3) {
 let deferred0_0;
 let deferred0_1;
 let deferred1_0;
@@ -294,7 +404,7 @@ deferred0_0 = arg0;
 deferred0_1 = arg1;
 deferred1_0 = arg2;
 deferred1_1 = arg3;
-const ret = query(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
+const ret = output(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
 return ret;
 } finally {
 wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
@@ -309,6 +419,29 @@ var ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, 
 var len1 = WASM_VECTOR_LEN;
 getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
 getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
+};
+
+ function __wbindgen_string_new(arg0, arg1) {
+const ret = getStringFromWasm0(arg0, arg1);
+return ret;
+};
+
+ function __wbg_input_b6b05201322db7bc(arg0, arg1, arg2, arg3) {
+let deferred0_0;
+let deferred0_1;
+let deferred1_0;
+let deferred1_1;
+try {
+deferred0_0 = arg0;
+deferred0_1 = arg1;
+deferred1_0 = arg2;
+deferred1_1 = arg3;
+const ret = input(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
+return ret;
+} finally {
+wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
+wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+}
 };
 
  function __wbg_invoke_b869e83afb3faed8(arg0, arg1, arg2, arg3) {
@@ -340,6 +473,24 @@ deferred0_1 = arg1;
 deferred1_0 = arg2;
 deferred1_1 = arg3;
 const ret = secrets(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
+return ret;
+} finally {
+wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
+wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+}
+};
+
+ function __wbg_describe_47b99ea8f240afa3(arg0, arg1, arg2, arg3) {
+let deferred0_0;
+let deferred0_1;
+let deferred1_0;
+let deferred1_1;
+try {
+deferred0_0 = arg0;
+deferred0_1 = arg1;
+deferred1_0 = arg2;
+deferred1_1 = arg3;
+const ret = describe(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
 return ret;
 } finally {
 wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
@@ -383,7 +534,7 @@ wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
 }
 };
 
- function __wbg_describe_47b99ea8f240afa3(arg0, arg1, arg2, arg3) {
+ function __wbg_fetch_f1f32fc92128b512(arg0, arg1, arg2, arg3) {
 let deferred0_0;
 let deferred0_1;
 let deferred1_0;
@@ -393,7 +544,25 @@ deferred0_0 = arg0;
 deferred0_1 = arg1;
 deferred1_0 = arg2;
 deferred1_1 = arg3;
-const ret = describe(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
+const ret = fetch(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
+return ret;
+} finally {
+wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
+wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+}
+};
+
+ function __wbg_query_613fc9b5583de0f7(arg0, arg1, arg2, arg3) {
+let deferred0_0;
+let deferred0_1;
+let deferred1_0;
+let deferred1_1;
+try {
+deferred0_0 = arg0;
+deferred0_1 = arg1;
+deferred1_0 = arg2;
+deferred1_1 = arg3;
+const ret = query(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
 return ret;
 } finally {
 wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
@@ -419,77 +588,6 @@ wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
 }
 };
 
- function __wbg_fetch_f1f32fc92128b512(arg0, arg1, arg2, arg3) {
-let deferred0_0;
-let deferred0_1;
-let deferred1_0;
-let deferred1_1;
-try {
-deferred0_0 = arg0;
-deferred0_1 = arg1;
-deferred1_0 = arg2;
-deferred1_1 = arg3;
-const ret = fetch(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
-return ret;
-} finally {
-wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
-wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
-}
-};
-
- function __wbg_output_ced2de1f6ad7885f(arg0, arg1, arg2, arg3) {
-let deferred0_0;
-let deferred0_1;
-let deferred1_0;
-let deferred1_1;
-try {
-deferred0_0 = arg0;
-deferred0_1 = arg1;
-deferred1_0 = arg2;
-deferred1_1 = arg3;
-const ret = output(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
-return ret;
-} finally {
-wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
-wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
-}
-};
-
- function __wbg_input_b6b05201322db7bc(arg0, arg1, arg2, arg3) {
-let deferred0_0;
-let deferred0_1;
-let deferred1_0;
-let deferred1_1;
-try {
-deferred0_0 = arg0;
-deferred0_1 = arg1;
-deferred1_0 = arg2;
-deferred1_1 = arg3;
-const ret = input(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
-return ret;
-} finally {
-wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
-wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
-}
-};
-
- function __wbindgen_string_new(arg0, arg1) {
-const ret = getStringFromWasm0(arg0, arg1);
-return ret;
-};
-
- function __wbg_log_4d5ee32fbc09e881(arg0, arg1) {
-var v0 = getArrayJsValueFromWasm0(arg0, arg1).slice();
-wasm.__wbindgen_free(arg0, arg1 * 4, 4);
-console.log(...v0);
-};
-
- function __wbg_error_c900e646cf91e4e4(arg0, arg1) {
-var v0 = getArrayJsValueFromWasm0(arg0, arg1).slice();
-wasm.__wbindgen_free(arg0, arg1 * 4, 4);
-console.error(...v0);
-};
-
  function __wbg_atob_697c80e41ce22211(arg0, arg1, arg2) {
 const ret = atob(getStringFromWasm0(arg1, arg2));
 const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -498,18 +596,30 @@ getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
 getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
 };
 
- function __wbg_warn_5fb7db206870e610(arg0, arg1) {
-var v0 = getArrayJsValueFromWasm0(arg0, arg1).slice();
-wasm.__wbindgen_free(arg0, arg1 * 4, 4);
-console.warn(...v0);
-};
-
  function __wbg_btoa_b9487fc80bf7c940(arg0, arg1, arg2) {
 const ret = btoa(getStringFromWasm0(arg1, arg2));
 const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
 const len1 = WASM_VECTOR_LEN;
 getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
 getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
+};
+
+ function __wbg_log_4d5ee32fbc09e881(arg0, arg1) {
+var v0 = getArrayJsValueFromWasm0(arg0, arg1).slice();
+wasm.__wbindgen_free(arg0, arg1 * 4, 4);
+console.log(...v0);
+};
+
+ function __wbg_warn_5fb7db206870e610(arg0, arg1) {
+var v0 = getArrayJsValueFromWasm0(arg0, arg1).slice();
+wasm.__wbindgen_free(arg0, arg1 * 4, 4);
+console.warn(...v0);
+};
+
+ function __wbg_error_c900e646cf91e4e4(arg0, arg1) {
+var v0 = getArrayJsValueFromWasm0(arg0, arg1).slice();
+wasm.__wbindgen_free(arg0, arg1 * 4, 4);
+console.error(...v0);
 };
 
  function __wbindgen_error_new(arg0, arg1) {
@@ -606,7 +716,7 @@ var cb0 = (arg0, arg1) => {
 const a = state0.a;
 state0.a = 0;
 try {
-return __wbg_adapter_75(a, state0.b, arg0, arg1);
+return __wbg_adapter_84(a, state0.b, arg0, arg1);
 } finally {
 state0.a = a;
 }
@@ -650,8 +760,8 @@ getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
 throw new Error(getStringFromWasm0(arg0, arg1));
 };
 
- function __wbindgen_closure_wrapper299(arg0, arg1, arg2) {
-const ret = makeMutClosure(arg0, arg1, 102, __wbg_adapter_24);
+ function __wbindgen_closure_wrapper348(arg0, arg1, arg2) {
+const ret = makeMutClosure(arg0, arg1, 134, __wbg_adapter_24);
 return ret;
 };
 
@@ -669,43 +779,61 @@ table.set(offset + 3, false);
 return { [RAW_WASM]: wasm, 
 __wbg_set_wasm
 ,
-eval_code
+fetch_capability
+,
+secrets_capability
+,
+invoke_capability
+,
+input_capability
+,
+output_capability
+,
+describe_capability
+,
+query_capability
+,
+read_capability
+,
+write_capability
+,
+blob_capability
 ,
 run_module
 ,
-__wbg_query_613fc9b5583de0f7
+__wbg_output_ced2de1f6ad7885f
 ,
 __wbindgen_string_get
+,
+__wbindgen_string_new
+,
+__wbg_input_b6b05201322db7bc
 ,
 __wbg_invoke_b869e83afb3faed8
 ,
 __wbg_secrets_52d52956bc8d3d7b
 ,
+__wbg_describe_47b99ea8f240afa3
+,
 __wbg_read_755ee9c8622f9470
 ,
 __wbg_write_b6e5c4220ac10a32
 ,
-__wbg_describe_47b99ea8f240afa3
+__wbg_fetch_f1f32fc92128b512
+,
+__wbg_query_613fc9b5583de0f7
 ,
 __wbg_blob_e4ac3c7b616aecc1
 ,
-__wbg_fetch_f1f32fc92128b512
+__wbg_atob_697c80e41ce22211
 ,
-__wbg_output_ced2de1f6ad7885f
-,
-__wbg_input_b6b05201322db7bc
-,
-__wbindgen_string_new
+__wbg_btoa_b9487fc80bf7c940
 ,
 __wbg_log_4d5ee32fbc09e881
 ,
-__wbg_error_c900e646cf91e4e4
-,
-__wbg_atob_697c80e41ce22211
-,
 __wbg_warn_5fb7db206870e610
 ,
-__wbg_btoa_b9487fc80bf7c940
+__wbg_error_c900e646cf91e4e4
 ,
 __wbindgen_error_new
 ,
@@ -755,7 +883,7 @@ __wbindgen_debug_string
 ,
 __wbindgen_throw
 ,
-__wbindgen_closure_wrapper299
+__wbindgen_closure_wrapper348
 ,
 __wbindgen_init_externref_table
 ,

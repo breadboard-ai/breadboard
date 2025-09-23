@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import read from "@read";
 import { err, toJson, fromJson, ok } from "./utils";
-import write from "@write";
 
 export { RpcSession };
 
@@ -36,7 +34,10 @@ abstract class RpcSession<
 > {
   #session: Outcome<SessionHandshakeResponse<Info>> | undefined;
 
-  constructor(public readonly path: FileSystemReadWritePath) {}
+  constructor(
+    private readonly caps: Capabilities,
+    public readonly path: FileSystemReadWritePath
+  ) {}
 
   /**
    * Creates a session key for caching. Must be unique to the session.
@@ -57,7 +58,7 @@ abstract class RpcSession<
       // Otherwise, fall through to create a new session.
       // Falling through will write over the existing invalid cached session
       // data, if any. That is okay.
-      const sessionInfo = await read({ path });
+      const sessionInfo = await this.caps.read({ path });
       if (ok(sessionInfo)) {
         const existingSession = toJson<Outcome<SessionHandshakeResponse<Info>>>(
           sessionInfo.data
@@ -71,7 +72,7 @@ abstract class RpcSession<
     const newSession = await this.#openSession(this.getInitArgs());
     if (!ok(newSession)) return newSession;
 
-    const caching = await write({ path, data: fromJson(newSession) });
+    const caching = await this.caps.write({ path, data: fromJson(newSession) });
     if (!ok(caching)) return caching;
 
     this.#session = newSession;
@@ -88,7 +89,7 @@ abstract class RpcSession<
     args: Args
   ): Promise<Outcome<SessionHandshakeResponse<Info>>> {
     const { path } = this;
-    const readingHandshake = await read({ path });
+    const readingHandshake = await this.caps.read({ path });
     if (!ok(readingHandshake)) return readingHandshake;
 
     // Step 1: Handshake. Gives us the unique path for the session.
@@ -114,9 +115,9 @@ abstract class RpcSession<
     path: FileSystemReadWritePath,
     inputs: In
   ): Promise<Outcome<Out>> {
-    const writing = await write({ path, data: fromJson<In>(inputs) });
+    const writing = await this.caps.write({ path, data: fromJson<In>(inputs) });
     if (!ok(writing)) return writing;
-    const reading = await read({ path });
+    const reading = await this.caps.read({ path });
     if (!ok(reading)) return reading;
     const result = toJson<Out>(reading.data);
     if (!result) {
@@ -145,6 +146,6 @@ abstract class RpcSession<
     const session = await this.session();
     if (!ok(session)) return session;
 
-    return write({ path: session.session, delete: true });
+    return this.caps.write({ path: session.session, delete: true });
   }
 }
