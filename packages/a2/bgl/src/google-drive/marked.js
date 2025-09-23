@@ -2731,4 +2731,3 @@ export {
   use,
   walkTokens,
 };
-//# sourceMappingURL=marked.esm.js.map
