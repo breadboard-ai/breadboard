@@ -17,19 +17,11 @@
     },
     "typescript-files-and-deps": {
       "dependencies": [
-        "<dependencies>#build:tsc",
-        "build:bgls"
+        "<dependencies>#build:tsc"
       ],
       "files": [
         "src/**/*.ts",
         "../../core/tsconfig/base.json"
-      ]
-    },
-    "build:bgls": {
-      "command": "tsx scripts/build-bgls.ts",
-      "files": [
-        "bgl/src/**/bgl.json",
-        "scripts/build-bgls.ts"
       ]
     },
     "build:tsc": {

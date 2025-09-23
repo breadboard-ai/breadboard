@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import * as folioConfigurator from "./folio/configurator";
 import * as folioLoadAll from "./folio/load-all";
 import * as folioSaveState from "./folio/save-state";
@@ -98,6 +104,7 @@ import * as toolsToolSqlQueryInternal from "./tools/tool-sql-query-internal";
 import * as videoGeneratorMain from "./video-generator/main";
 import * as musicGeneratorMain from "./music-generator/main";
 import * as deepResearchMain from "./deep-research/main";
+
 export const a2 = {
   a2: {
     "audio-generator": a2AudioGenerator,
