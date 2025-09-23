@@ -34,7 +34,7 @@
       ]
     },
     "build:tsc": {
-      "command": "tsc -p tsconfig-assemble.json --pretty",
+      "command": "tsc -b --pretty",
       "env": {
         "FORCE_COLOR": "1"
       },
