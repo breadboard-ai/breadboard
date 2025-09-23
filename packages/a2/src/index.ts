@@ -28,6 +28,7 @@ import musicGenerator from "../bgl/music-generator.bgl.json" with { type: "json"
 import deepResearch from "../bgl/deep-research.bgl.json" with { type: "json" };
 
 export { createA2Server, isA2 };
+export { createA2ModuleFactory } from "./runnable-module-factory";
 
 const SERVER_NAME = "a2";
 

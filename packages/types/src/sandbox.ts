@@ -5,7 +5,12 @@
  */
 
 import { Outcome } from "./data.js";
-import { GraphDescriptor } from "./graph-descriptor.js";
+import {
+  GraphDescriptor,
+  InputValues,
+  NodeMetadata,
+  OutputValues,
+} from "./graph-descriptor.js";
 import { MutableGraph } from "./inspect.js";
 import { UUID } from "./uuid.js";
 
@@ -43,6 +48,19 @@ export type CapabilitySpec = {
 
 export type RunnableModuleTelemetry = {
   startModule(): Promise<void>;
+  endModule(): Promise<void>;
+  invocationPath(path: number): number[];
+  startCapability(
+    type: string,
+    inputs: InputValues,
+    metadata?: NodeMetadata
+  ): Promise<number>;
+  endCapability(
+    type: string,
+    path: number,
+    inputs: InputValues,
+    outputs: OutputValues
+  ): Promise<void>;
 };
 
 export type RunnableModule = {

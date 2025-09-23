@@ -8,6 +8,9 @@
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
+    "allowJs": true,
+    "declaration": true,
+    "declarationMap": true,
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -21,5 +24,10 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["vite/client"]
   },
-  "include": ["src/**/*.ts", "bgl/**/*.bgl.json"]
+  "include": [
+    "src/**/*.ts",
+    "bgl/**/*.bgl.json",
+    "bgl/src/**/*.ts",
+    "bgl/src/**/*.js"
+  ]
 }

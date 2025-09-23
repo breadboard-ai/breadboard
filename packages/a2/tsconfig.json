@@ -8,6 +8,7 @@
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
+    "allowJs": true,
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -24,6 +25,7 @@
   "include": [
     "src/**/*.ts",
     "bgl/src/**/*.ts",
+    "bgl/src/**/*.js",
     "bgl/**/*.bgl.json",
     "bgl/src/environment.d.ts"
   ],
