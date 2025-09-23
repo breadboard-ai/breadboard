@@ -8,25 +8,25 @@ import {
   EmbeddedBoardServer,
   isFromEmbeddedServer,
 } from "@breadboard-ai/embedded-board-server";
-import { BoardServer, GraphDescriptor } from "@google-labs/breadboard";
+import { BoardServer } from "@google-labs/breadboard";
 
-// Add new exports here.
-import a2 from "../bgl/a2.bgl.json" with { type: "json" };
-import audioGenerator from "../bgl/audio-generator.bgl.json" with { type: "json" };
-import folio from "../bgl/folio.bgl.json" with { type: "json" };
-import fileSystem from "../bgl/file-system.bgl.json" with { type: "json " };
-import generate from "../bgl/generate.bgl.json" with { type: "json" };
-import generateText from "../bgl/generate-text.bgl.json" with { type: "json" };
-import gmail from "../bgl/gmail.bgl.json" with { type: "json" };
-import goOverList from "../bgl/go-over-list.bgl.json" with { type: "json" };
-import googleDrive from "../bgl/google-drive.bgl.json" with { type: "json" };
-import mcp from "../bgl/mcp.bgl.json" with { type: "json" };
-import saveOutputs from "../bgl/save-outputs.bgl.json" with { type: "json" };
-import tools from "../bgl/tools.bgl.json" with { type: "json" };
-import videoGenerator from "../bgl/video-generator.bgl.json" with { type: "json" };
-import musicGenerator from "../bgl/music-generator.bgl.json" with { type: "json" };
-import deepResearch from "../bgl/deep-research.bgl.json" with { type: "json" };
+import { bgl as a2Bgl } from "./a2/index";
+import { bgl as audioGeneratorBgl } from "./audio-generator/index";
+import { bgl as deepResearchBgl } from "./deep-research/index";
+import { bgl as fileSystemBgl } from "./file-system/index";
+import { bgl as folioBgl } from "./folio/index";
+import { bgl as generateTextBgl } from "./generate-text/index";
+import { bgl as generateBgl } from "./generate/index";
+import { bgl as gmailBgl } from "./gmail/index";
+import { bgl as goOverListBgl } from "./go-over-list/index";
+import { bgl as googleDriveBgl } from "./google-drive/index";
+import { bgl as mcpBgl } from "./mcp/index";
+import { bgl as musicGeneratorBgl } from "./music-generator/index";
+import { bgl as saveOutputsBgl } from "./save-outputs/index";
+import { bgl as toolsBgl } from "./tools/index";
+import { bgl as videoGeneratorBgl } from "./video-generator/index";
 
+export { createA2ModuleFactory } from "./runnable-module-factory";
 export { createA2Server, isA2 };
 
 const SERVER_NAME = "a2";
@@ -40,21 +40,21 @@ function createA2Server(): BoardServer {
     "A2",
     SERVER_NAME,
     new Map([
-      ["a2", a2 as GraphDescriptor],
-      ["audio-generator", audioGenerator as GraphDescriptor],
-      ["file-system", fileSystem as GraphDescriptor],
-      ["folio", folio as GraphDescriptor],
-      ["generate", generate as GraphDescriptor],
-      ["generate-text", generateText as GraphDescriptor],
-      ["gmail", gmail as GraphDescriptor],
-      ["go-over-list", goOverList as GraphDescriptor],
-      ["google-drive", googleDrive as GraphDescriptor],
-      ["mcp", mcp as GraphDescriptor],
-      ["save-outputs", saveOutputs as GraphDescriptor],
-      ["tools", tools as GraphDescriptor],
-      ["video-generator", videoGenerator as GraphDescriptor],
-      ["music-generator", musicGenerator as GraphDescriptor],
-      ["deep-research", deepResearch as GraphDescriptor],
+      ["a2", a2Bgl],
+      ["audio-generator", audioGeneratorBgl],
+      ["file-system", fileSystemBgl],
+      ["folio", folioBgl],
+      ["generate", generateBgl],
+      ["generate-text", generateTextBgl],
+      ["gmail", gmailBgl],
+      ["go-over-list", goOverListBgl],
+      ["google-drive", googleDriveBgl],
+      ["mcp", mcpBgl],
+      ["save-outputs", saveOutputsBgl],
+      ["tools", toolsBgl],
+      ["video-generator", videoGeneratorBgl],
+      ["music-generator", musicGeneratorBgl],
+      ["deep-research", deepResearchBgl],
     ])
   );
 }

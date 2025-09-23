@@ -34,7 +34,6 @@ import {
   MutableGraphStore,
   ok,
   PersistentBackend,
-  SandboxedRunnableModuleFactory,
 } from "@google-labs/breadboard";
 import { provide } from "@lit/context";
 import { html, HTMLTemplateResult, LitElement, nothing } from "lit";
@@ -51,7 +50,7 @@ import {
 } from "./runtime/types";
 import { SecretsHelper } from "./utils/secrets-helper";
 
-import { createA2Server } from "@breadboard-ai/a2";
+import { createA2ModuleFactory, createA2Server } from "@breadboard-ai/a2";
 import { getGoogleDriveBoardService } from "@breadboard-ai/board-server-management";
 import {
   CreateNewBoardMessage,
@@ -101,7 +100,6 @@ import { keyboardCommands } from "./commands/commands";
 import { KeyboardCommandDeps } from "./commands/types";
 import { eventRoutes } from "./event-routing/event-routing";
 import { RuntimeBoardServerChangeEvent } from "./runtime/events.js";
-import { sandbox } from "./sandbox";
 import { MainArguments } from "./types/types";
 import { envFromFlags } from "./utils/env-from-flags";
 import { envFromSettings } from "./utils/env-from-settings";
@@ -480,7 +478,7 @@ export class Main extends SignalWatcher(LitElement) {
       ),
     });
 
-    const moduleFactory = new SandboxedRunnableModuleFactory(sandbox);
+    const moduleFactory = createA2ModuleFactory();
 
     this.#runtime = await Runtime.create({
       recentBoardStore: this.#recentBoardStore,

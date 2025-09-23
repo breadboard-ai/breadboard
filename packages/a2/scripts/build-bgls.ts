@@ -34,35 +34,20 @@ const BGLS = [
 ];
 
 const ROOT_DIR = join(import.meta.dirname, "..");
-const OUT_DIR = join(ROOT_DIR, "out", "bgl", "src");
 
 await Promise.all(
   BGLS.map(async (bgl) => {
     const destination = join(ROOT_DIR, "bgl", `${bgl}.bgl.json`);
-    const bglDir = join(ROOT_DIR, "bgl", "src", bgl);
+    const bglDir = join(ROOT_DIR, "src", bgl);
     const modules = await readdir(join(bglDir));
     const sources: [string, Module][] = [];
     for (const module of modules) {
       const isTypescript = module.endsWith(".ts");
       const isJavascript = module.endsWith(".js");
       const isTypescriptDecl = module.endsWith(".d.ts");
-      if (isTypescriptDecl) continue;
+      if (isTypescriptDecl || !(isJavascript || isTypescript)) continue;
       const moduleName = module.slice(0, -3);
-      let source: string;
-      if (isTypescript) {
-        // grab a source from `out`
-        source = join(OUT_DIR, bgl, `${moduleName}.js`);
-      } else if (isJavascript) {
-        source = join(bglDir, module);
-      } else {
-        continue;
-      }
-      // Do hacky a2 replacement
-      const code = (await readFile(source, { encoding: "utf8" })).replace(
-        /(from\s+["'])\.\.\/(a2\/[^"']+)/g,
-        "$1./$2"
-      );
-
+      const code = `throw new Error("Unreachable code")`;
       sources.push([moduleName, { code }]);
     }
     const graph = JSON.parse(
