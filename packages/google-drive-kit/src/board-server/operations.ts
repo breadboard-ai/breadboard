@@ -30,7 +30,6 @@ import {
 } from "./utils.js";
 import type { GoogleDriveClient } from "../google-drive-client.js";
 import { DriveLookupCache } from "./drive-lookup-cache.js";
-import { DriveListCache } from "./drive-list-cache.js";
 import type { TokenVendor } from "@breadboard-ai/connection-client";
 
 const PROTOCOL = "drive:";
@@ -69,14 +68,9 @@ export function makeGraphListQuery({
   `;
 }
 
-const CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY =
-  "GoogleDriveService/Changes/StartPageToken";
-
 // These must be in sync with image.ts:*
 const DRIVE_IMAGE_CACHE_NAME = "GoogleDriveImages";
 const DRIVE_IMAGE_CACHE_KEY_PREFIX = "http://drive-image/";
-
-const DRIVE_FETCH_CHANGES_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes.
 
 const MAX_APP_PROPERTY_LENGTH = 124;
 
@@ -103,42 +97,13 @@ export type DriveChange = {
   removed?: boolean;
 };
 
-type DriveChangesCacheState = {
-  startPageToken: string;
-  /** Date. */
-  lastFetched: string;
-};
-
 export type RunResults = {
   graphUrl: string;
   finalOutputValues: OutputValues;
 };
 
-function getNextFetchChangesDelay() {
-  // -[0..15%] variability reduces the chance separate refreshes would step on each other.
-  const variability = 0.15 * DRIVE_FETCH_CHANGES_INTERVAL_MS;
-  return Math.round(
-    Math.min(
-      DRIVE_FETCH_CHANGES_INTERVAL_MS, // Ensure not higher than the interval
-      Math.max(0, DRIVE_FETCH_CHANGES_INTERVAL_MS - variability) + // Protect against negative.
-        Math.random() * variability
-    )
-  );
-}
-
-function getElapsedMsSinceLastCacheRefresh(
-  cacheState: DriveChangesCacheState
-): number {
-  return Date.now() - Date.parse(cacheState.lastFetched);
-}
-
-function formatDelay(delay: number): string {
-  return `${Math.round(delay / 1000)}s`;
-}
-
 class DriveOperations {
   readonly #userFolderName: string;
-  readonly #userGraphsList: DriveListCache;
   readonly #imageCache = new DriveLookupCache(
     DRIVE_IMAGE_CACHE_NAME,
     DRIVE_IMAGE_CACHE_KEY_PREFIX
@@ -164,185 +129,11 @@ class DriveOperations {
     this.#googleDriveClient = googleDriveClient;
     this.#publishPermissions = publishPermissions;
     this.#tokenVendor = tokenVendor;
-
-    this.#userGraphsList = new DriveListCache(
-      "user",
-      makeGraphListQuery({
-        kind: "editable",
-        owner: "me",
-        parent: undefined,
-      }),
-      this.#googleDriveClient,
-      true
-    );
-
-    this.#setupBackgroundRefresh();
-  }
-
-  async #setupBackgroundRefresh() {
-    // Initial delay is offset by how much time has already passed since the last refresh.
-    let initialDelay = getNextFetchChangesDelay();
-    const cacheState = getDriveCacheState();
-    if (cacheState) {
-      // Protect against negative.
-      initialDelay = Math.max(
-        1,
-        initialDelay - getElapsedMsSinceLastCacheRefresh(cacheState)
-      );
-    }
-    console.info(
-      `[Drive Cache] Scheduling update in ${formatDelay(initialDelay)}`
-    );
-    await this.#scheduleBackgroundRefresh(initialDelay);
-  }
-
-  /** Reads list of changes from Google Drive and updates caches. */
-  async updateCachesOneTime() {
-    return this.#doBackgroundRefresh({ oneOffMode: true });
   }
 
   /** Invalidates all the caches. */
   async forceRefreshCaches() {
-    const promises = [
-      this.#userGraphsList.forceRefresh(),
-      this.#imageCache.invalidateAllItems(),
-    ];
-    return Promise.all(promises);
-  }
-
-  async #scheduleBackgroundRefresh(delay: number) {
-    setTimeout(async () => {
-      await this.#doBackgroundRefresh();
-    }, delay);
-  }
-
-  async #doBackgroundRefresh(options?: { oneOffMode?: boolean }) {
-    if (!this.#tokenVendor.isSignedIn("$sign-in")) {
-      return;
-    }
-    const nextRefreshDelay = getNextFetchChangesDelay();
-    const nextRefreshMsg = options?.oneOffMode
-      ? ""
-      : `Next try in ${formatDelay(nextRefreshDelay)}`;
-    // The callback maintains internal consistency even if multiple callbacks come at once,
-    // but does its best at avoiding that so that unnecessary requests not get issued to Drive.
-    try {
-      {
-        const driveCacheState = getDriveCacheState();
-        if (!driveCacheState) {
-          // No changes token yet - we capture one and invalidate all the caches.
-          const pageToken =
-            await this.#googleDriveClient.getChangesStartPageToken();
-          if (!pageToken) {
-            // Will be retried next time.
-            console.error("Response containing not startPageToken");
-            throw new Error(`Response containing not startPageToken`);
-          }
-          if (stillHoldsState(driveCacheState)) {
-            setDriveCacheState({ startPageToken: pageToken });
-            // Our token is allocated for the next time, now we purge the caches.
-            await this.#userGraphsList.forceRefresh();
-            // Forcefully refreshed the caches - give the heads up to the UI layer.
-            await this.refreshProjectListCallback();
-            // #imageCache relies solely on the drive.changes, no invalidation here needed.
-          }
-          return; // All refreshed.
-        }
-      }
-
-      // If a start page token set - we continue reading from that point otherwise all changes.
-      const driveCacheState = getDriveCacheState();
-      if (!driveCacheState) {
-        // Normally this should not happen, but the user might have removed the localStorage's key.
-        return; // In finally we should initialize the token again.
-      }
-      if (
-        !options?.oneOffMode &&
-        getElapsedMsSinceLastCacheRefresh(driveCacheState) <
-          DRIVE_FETCH_CHANGES_INTERVAL_MS
-      ) {
-        return; // Too early, or might have been updated concurrently.
-      }
-      const [changes, newStartPageToken] = await this.#fetchAllChanges(
-        driveCacheState.startPageToken
-      );
-
-      if (changes?.length > 0) {
-        // Run processChanges() in parallel.
-        const affectedIdsPromises: Array<Promise<Array<string>>> = [
-          this.#userGraphsList.processChanges(changes),
-          this.#imageCache.processChanges(changes),
-        ];
-        const affectedFileIDLists = await Promise.all(affectedIdsPromises);
-        const affectedFileIds = affectedFileIDLists.reduce(
-          (accumulator, value) => accumulator.concat(value),
-          []
-        );
-        if (affectedFileIds.length > 0) {
-          await this.refreshProjectListCallback();
-        }
-        console.info(
-          `[Drive Cache] Received ${changes.length} changes affecting ${affectedFileIds.length} files. ` +
-            `${nextRefreshMsg}. Affected files:`,
-          affectedFileIDLists
-        );
-      } else {
-        console.info(`Drive Cache: No changes. ${nextRefreshMsg}`);
-      }
-      if (newStartPageToken) {
-        // At last we update the new start page token so that the next time we continue from here.
-        if (stillHoldsState(driveCacheState)) {
-          setDriveCacheState({ startPageToken: newStartPageToken });
-        }
-      }
-    } catch (e) {
-      console.warn(
-        `[Drive Cache] Exception during refresh. ${nextRefreshMsg}`,
-        e
-      );
-    } finally {
-      if (!options?.oneOffMode) {
-        await this.#scheduleBackgroundRefresh(nextRefreshDelay);
-      }
-    }
-  }
-
-  async #fetchAllChanges(
-    pageToken: string
-  ): Promise<[Array<DriveChange>, string | undefined]> {
-    const changes: Array<gapi.client.drive.Change> = [];
-    let newStartPageToken: string | undefined;
-    do {
-      let data;
-      try {
-        data = await this.#googleDriveClient.listChanges({
-          pageToken,
-          pageSize: 1000,
-          includeRemoved: true,
-          includeCorpusRemovals: true,
-        });
-      } catch (e) {
-        console.error("Response not OK", e);
-        // This may be due to an invalid token, so let's just trash it and retry.
-        setDriveCacheState(null);
-        throw new Error("Failed to fetch drive changes");
-      }
-
-      pageToken = data.nextPageToken!;
-      if (data.changes) {
-        changes.push(...data.changes);
-      }
-      if (data.newStartPageToken) {
-        // Should be always present, but just in case it's safer not to override the last successful value.
-        newStartPageToken = data.newStartPageToken;
-      }
-    } while (pageToken);
-    // TODO(aomarks) Standardize DriveChange type.
-    return [changes as DriveChange[], newStartPageToken];
-  }
-
-  async readGraphList(): Promise<Outcome<GraphInfo[]>> {
-    return await this.#userGraphsList.list();
+    await this.#imageCache.invalidateAllItems();
   }
 
   async getThumbnailFileId(boardFileId: string): Promise<string | undefined> {
@@ -401,9 +192,6 @@ class DriveOperations {
     } catch (err) {
       console.warn(err);
       return { result: false, error: "Unable to save" };
-    } finally {
-      // The above update is a non-atomic operation so refresh after both success or fail.
-      await this.refreshUserList();
     }
   }
 
@@ -444,9 +232,6 @@ class DriveOperations {
     } catch (err) {
       console.warn(err);
       return { result: false, error: "Unable to create" };
-    } finally {
-      // The above update is a non-atomic operation so refresh after both success or fail.
-      await this.refreshUserList();
     }
   }
 
@@ -608,12 +393,6 @@ class DriveOperations {
     return result;
   }
 
-  async refreshUserList(forceInvalidate = false) {
-    // In that order, awating.
-    await this.#userGraphsList.refresh(forceInvalidate);
-    await this.refreshProjectListCallback();
-  }
-
   /** Also patches the asset with the url if a file got created.  */
   private async upsertThumbnailFile(
     boardFileId: string,
@@ -736,16 +515,12 @@ class DriveOperations {
   async deleteGraph(url: URL): Promise<Outcome<void>> {
     // The value being deleted might not have been yet added to the cached list. So in order to
     // avoid inconsistencies we first make sure the list is up to date, before removing it.
-    await this.#userGraphsList.refresh();
     const fileId = this.fileIdFromUrl(url);
     try {
       await this.#googleDriveClient.deleteFile(fileId);
-      await this.#userGraphsList.invalidateDeleted(fileId);
     } catch (e) {
       console.warn(e);
       return err("Unable to delete");
-    } finally {
-      await this.refreshUserList();
     }
   }
 
@@ -856,50 +631,6 @@ function parseAssetData(asset: string): { data: string; contentType: string } {
   const contentType = asset.slice(colonIndex + 1, lastComma);
   const data = asset.slice(lastComma + 1);
   return { data, contentType };
-}
-
-function getDriveCacheState(): DriveChangesCacheState | null {
-  const state = localStorage.getItem(CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY);
-  if (!state) {
-    return null;
-  }
-  try {
-    const result = JSON.parse(state) as DriveChangesCacheState;
-    if (!result.startPageToken || !result.lastFetched) {
-      return null;
-    }
-    return result;
-  } catch {
-    return null;
-  }
-}
-
-function setDriveCacheState(
-  state: Partial<DriveChangesCacheState> | null
-): void {
-  if (state) {
-    if (!state.startPageToken) {
-      throw new Error("DriveChangesCacheState must have a startPageToken set");
-    }
-    if (state.lastFetched === undefined) {
-      state.lastFetched = new Date().toISOString();
-    }
-    localStorage.setItem(
-      CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY,
-      JSON.stringify(state)
-    );
-  } else {
-    localStorage.removeItem(CHANGE_LIST_START_PAGE_TOKEN_STORAGE_KEY);
-  }
-}
-
-function stillHoldsState(state: DriveChangesCacheState | null): boolean {
-  const current = getDriveCacheState();
-  if (!state && !current) {
-    return true;
-  }
-
-  return state?.lastFetched === current?.lastFetched;
 }
 
 function isUrl(s: string | null | undefined) {
