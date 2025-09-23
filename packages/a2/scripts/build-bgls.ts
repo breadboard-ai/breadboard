@@ -45,6 +45,8 @@ await Promise.all(
     for (const module of modules) {
       const isTypescript = module.endsWith(".ts");
       const isJavascript = module.endsWith(".js");
+      const isTypescriptDecl = module.endsWith(".d.ts");
+      if (isTypescriptDecl) continue;
       const moduleName = module.slice(0, -3);
       let source: string;
       if (isTypescript) {
