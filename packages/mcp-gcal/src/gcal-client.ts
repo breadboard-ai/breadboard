@@ -33,6 +33,11 @@ function createGoogleCalendarClient(
       title: "List events",
       description:
         "Get a list of Google Calendar events in the user's primary calendar based on specified parameters",
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
       inputSchema: {
         eventTypes: z
           .string()
@@ -221,6 +226,12 @@ These search terms also match predefined keywords against all display title tran
       title: "Create event",
       description:
         "Creates a Google Calendar event in the user's primary calendar.",
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
       inputSchema: eventSchema,
     },
     async ({
@@ -290,6 +301,12 @@ These search terms also match predefined keywords against all display title tran
       title: "Update event",
       description:
         "Makes an update to a Google Calendar event on user's primary calendar",
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
       inputSchema: {
         eventId: z.string().describe("Event identifier"),
         ...eventSchema,
@@ -366,6 +383,12 @@ These search terms also match predefined keywords against all display title tran
       title: "Delete event",
       description:
         "Deletes specified Google Calendar event from the user's primary calendar",
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
       inputSchema: {
         eventId: z.string().describe("Event identifier"),
       },
