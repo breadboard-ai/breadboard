@@ -8,7 +8,7 @@ import type { ServerResponse } from "node:http";
 import type { ServerConfig } from "../config.js";
 import { badRequestJson, internalServerError, okJson } from "../responses.js";
 import type { Request } from "express";
-import { oAuthRefreshTokenCookieId } from "./cookies.js";
+import * as cookies from "./cookies.js";
 
 // IMPORTANT: Keep in sync with
 // breadboard/packages/visual-editor/src/elements/connection/connection-input.ts
@@ -39,12 +39,12 @@ export async function refresh(
   if (!params.connection_id) {
     return badRequestJson(res, { error: "missing connection_id" });
   }
-  const refreshToken = req.cookies[oAuthRefreshTokenCookieId];
+  const refreshToken = req.cookies[cookies.REFRESH_TOKEN];
   if (!refreshToken) {
     return badRequestJson(
       res,
       {
-        error: `missing cookie: ${oAuthRefreshTokenCookieId}`,
+        error: `missing cookie: ${cookies.REFRESH_TOKEN}`,
       },
       { httpStatusCode: 401 }
     );

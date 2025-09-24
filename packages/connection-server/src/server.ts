@@ -8,10 +8,11 @@ import cors from "cors";
 import express, { type Express } from "express";
 import type { Request, Response } from "express";
 
+import * as flags from "./flags.js";
 import { grant } from "./api/grant.js";
 import { list } from "./api/list.js";
 import { refresh } from "./api/refresh.js";
-import { loadConnections, type SameSite, type ServerConfig } from "./config.js";
+import { loadConnections, type ServerConfig } from "./config.js";
 import cookieParser from "cookie-parser";
 
 export type { ServerConfig };
@@ -26,25 +27,11 @@ export type { ServerConfig };
  */
 export async function createServerConfig(): Promise<ServerConfig> {
   console.log("[connection-server startup] Creating connection server config");
-
-  const connectionsFile = process.env.CONNECTIONS_FILE;
-  const connections = connectionsFile
-    ? await loadConnections(connectionsFile)
-    : new Map();
-
-  const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "")
-    .split(/\s+/)
-    .filter((origin) => origin !== "");
-
-  const refreshTokenCookieSameSite = (process.env[
-    "REFRESH_TOKEN_COOKIE_SAME_SITE"
-  ] || "Strict") as SameSite;
-  if (!["Lax", "Strict", "None"].includes(refreshTokenCookieSameSite)) {
-    throw Error(
-      `Invalid REFRESH_TOKEN_COOKIE_SAME_SITE value: ${refreshTokenCookieSameSite}`
-    );
-  }
-  return { allowedOrigins, connections, refreshTokenCookieSameSite };
+  return {
+    allowedOrigins: flags.ALLOWED_ORIGINS,
+    connections: await loadConnections(),
+    refreshTokenCookieSameSite: flags.REFRESH_TOKEN_COOKIE_SAME_SITE,
+  };
 }
 
 export function createServer(config: ServerConfig): Express {

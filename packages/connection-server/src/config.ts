@@ -5,14 +5,15 @@
  */
 
 import { readFile } from "node:fs/promises";
-import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
 
-export type SameSite = "Lax" | "None" | "Strict";
+import * as flags from "./flags.js";
+
+import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
 
 export interface ServerConfig {
   connections: Map<string, ConnectionConfig>;
   allowedOrigins: string[];
-  refreshTokenCookieSameSite: SameSite;
+  refreshTokenCookieSameSite: flags.SameSite;
   validateResponse?: (
     response: GrantResponse
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
@@ -37,15 +38,21 @@ export interface ConnectionConfig {
   };
 }
 
-export async function loadConnections(
-  configFilePath: string
-): Promise<Map<string, ConnectionConfig>> {
+export async function getConnections() {}
+
+export async function loadConnections(): Promise<
+  Map<string, ConnectionConfig>
+> {
+  if (!flags.CONNECTIONS_FILE) {
+    return new Map();
+  }
+
   console.log(
-    `[connection-server startup] Loading connections file from ${configFilePath}`
+    `[connection-server startup] Loading connections file from ${flags.CONNECTIONS_FILE}`
   );
 
   const config = JSON.parse(
-    await readFile(configFilePath, "utf8")
+    await readFile(flags.CONNECTIONS_FILE, "utf8")
   ) as ConnectionsConfigFile;
   const connections = new Map();
   for (const connection of config.connections) {
