@@ -4,6 +4,16 @@
 
 import { err, ok, isLLMContentArray } from "./utils";
 import type { ExportDescriberResult, CallToolCallback } from "./common";
+import {
+  Capabilities,
+  DescribeOutputs,
+  FileSystemPath,
+  GraphTag,
+  JsonSerializable,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 
 export { ConnectorManager, createConfigurator, createTools };
 
@@ -491,7 +501,7 @@ function getExportUrl(tag: string, result: DescribeOutputs): Outcome<string> {
   const exports = result.exports;
   if (!exports) return err(`Invalid connector structure: must have exports`);
   const assetExport = Object.entries(exports).find(([_url, e]) =>
-    e.metadata?.tags?.includes(tag)
+    e.metadata?.tags?.includes(tag as GraphTag)
   );
   if (!assetExport)
     return err(

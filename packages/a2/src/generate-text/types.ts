@@ -2,6 +2,7 @@
  * @fileoverview Common type definitions
  */
 
+import { LLMContent } from "@breadboard-ai/types";
 import type { Params } from "../a2/common";
 
 export type GenerateTextInputs = {

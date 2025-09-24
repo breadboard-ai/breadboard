@@ -20,6 +20,12 @@ import { defaultLLMContent, err, ok } from "../a2/utils";
 
 import { defaultSafetySettings, type GeminiInputs } from "../a2/gemini";
 import { GeminiPrompt, type GeminiPromptOutput } from "../a2/gemini-prompt";
+import {
+  Capabilities,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 
 export { invoke as default, describe };
 

@@ -2,6 +2,7 @@
  * @fileoverview Executes a parallel strategy.
  */
 
+import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 import { report } from "../a2/output";
 import { ok } from "../a2/utils";
 import { getPlan, plannerPrompt } from "./planner-prompt";

@@ -1,6 +1,14 @@
 /**
  * @fileoverview Connector Save Export.
  */
+import {
+  Capabilities,
+  DescribeOutputs,
+  FileSystemPath,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 import { ok } from "../a2/utils";
 
 export { invoke as default, describe };

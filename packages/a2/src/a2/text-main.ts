@@ -2,6 +2,7 @@
  * @fileoverview Calls Gemini agent loop.
  */
 
+import { LLMContent, Outcome, Schema } from "@breadboard-ai/types";
 import { err } from "./utils";
 
 export { invoke as default, describe };

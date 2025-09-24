@@ -4,6 +4,14 @@
 
 export { invoke as default, describe };
 
+import {
+  Capabilities,
+  DataPart,
+  FileSystemPath,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 import { ok, err, mergeTextParts } from "../a2/utils";
 
 type Inputs = {

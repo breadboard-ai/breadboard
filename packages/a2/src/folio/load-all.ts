@@ -1,6 +1,12 @@
 /**
  * @fileoverview Loads all of the folio into current context.
  */
+import {
+  Capabilities,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 import { ok } from "../a2/utils";
 
 export { invoke as default, describe };

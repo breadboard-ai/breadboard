@@ -2,6 +2,12 @@
  * @fileoverview Manages Gemini prompt.
  */
 
+import {
+  Capabilities,
+  DataPart,
+  LLMContent,
+  Outcome,
+} from "@breadboard-ai/types";
 import gemini, { type Candidate, type GeminiInputs } from "./gemini";
 import { ToolManager } from "./tool-manager";
 import { addUserTurn, err, ok } from "./utils";

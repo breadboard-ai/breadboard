@@ -2,6 +2,12 @@
  * @fileoverview Manages the entry point: describer, passing the inputs, etc.
  */
 
+import {
+  BehaviorSchema,
+  Capabilities,
+  LLMContent,
+  Schema,
+} from "@breadboard-ai/types";
 import { type Params } from "../a2/common";
 import { readSettings } from "../a2/settings";
 import { Template } from "../a2/template";

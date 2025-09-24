@@ -2,6 +2,7 @@
  * @fileoverview Helps create a system instruction.
  */
 
+import { LLMContent } from "@breadboard-ai/types";
 import { listPrompt } from "../a2/lists";
 import { llm } from "../a2/utils";
 

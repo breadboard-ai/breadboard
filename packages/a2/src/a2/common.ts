@@ -2,6 +2,8 @@
  * @fileoverview Common types and code
  */
 
+import { LLMContent, Outcome, Schema } from "@breadboard-ai/types";
+
 export type UserInput = LLMContent;
 
 export type Params = {

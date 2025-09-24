@@ -2,6 +2,7 @@
  * @fileoverview The internal-only implementation of the Search Web tool.
  */
 
+import { Capabilities, Outcome, Schema } from "@breadboard-ai/types";
 import { GeminiPrompt } from "../a2/gemini-prompt";
 import { StreamableReporter } from "../a2/output";
 import { executeTool } from "../a2/step-executor";

@@ -2,6 +2,12 @@
  * @fileoverview Defines the schema for simple slides JSON output
  */
 
+import {
+  Capabilities,
+  JSONPart,
+  LLMContent,
+  Outcome,
+} from "@breadboard-ai/types";
 import { type GeminiSchema } from "../a2/gemini";
 import { GeminiPrompt } from "../a2/gemini-prompt";
 import { err, llm, ok } from "../a2/utils";

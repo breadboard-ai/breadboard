@@ -1,6 +1,14 @@
 /**
  * @fileoverview Connector Load Export
  */
+import {
+  Capabilities,
+  DescribeOutputs,
+  LLMContent,
+  Outcome,
+  Schema,
+  StoredDataCapabilityPart,
+} from "@breadboard-ai/types";
 import { err, ok } from "../a2/utils";
 import { connect, exp, query } from "./api";
 import { DOC_MIME_TYPE, markdownToContext } from "./docs";

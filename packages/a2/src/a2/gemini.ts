@@ -6,6 +6,13 @@ import { StreamableReporter } from "./output";
 
 import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils";
 import { flattenContext } from "./lists";
+import {
+  Capabilities,
+  FileSystemReadWritePath,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 
 const defaultSafetySettings = (): SafetySetting[] => [
   {

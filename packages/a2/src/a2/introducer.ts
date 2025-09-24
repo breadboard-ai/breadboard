@@ -3,6 +3,13 @@
  */
 
 import {
+  Capabilities,
+  JSONPart,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
+import {
   type DescriberResult,
   type DescriberResultTransformer,
 } from "./common";

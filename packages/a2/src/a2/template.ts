@@ -7,6 +7,14 @@ export { invoke as default, describe, Template };
 import { type Params } from "./common";
 import { ok, err, isLLMContent, isLLMContentArray } from "./utils";
 import { ConnectorManager } from "./connector-manager";
+import {
+  Capabilities,
+  DataPart,
+  FileSystemPath,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 
 type LLMContentWithMetadata = LLMContent & {
   $metadata: unknown;

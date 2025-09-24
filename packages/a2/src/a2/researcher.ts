@@ -1,6 +1,7 @@
 /**
  * @fileoverview Searching the Internet according to your plan.
  */
+import { Capabilities, LLMContent, Schema } from "@breadboard-ai/types";
 import { type Params } from "./common";
 import invokeGemini, {
   defaultSafetySettings,

@@ -5,6 +5,12 @@
 import { Template } from "./template";
 import { ok } from "./utils";
 import { fanOutContext, flattenContext } from "./lists";
+import {
+  Capabilities,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 
 export { invoke as default, describe };
 

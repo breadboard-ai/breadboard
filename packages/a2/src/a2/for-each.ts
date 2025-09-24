@@ -11,6 +11,16 @@ import { Params } from "./common";
 import { Template } from "./template";
 import { flattenContext } from "./lists";
 
+import {
+  Capabilities,
+  DataPart,
+  JSONPart,
+  LLMContent,
+  NodeValue,
+  Outcome,
+  OutputValues,
+} from "@breadboard-ai/types";
+
 export { forEach };
 
 type PromptList = {
@@ -118,13 +128,13 @@ END PROMPT TO ANALYZE${assetReference}`.asContent();
 
 export type AsyncForEachCallback = (
   prompt: LLMContent
-) => Promise<Outcome<InvokeOutputs>>;
+) => Promise<Outcome<OutputValues>>;
 
 async function forEach(
   caps: Capabilities,
   inputs: ForEachInputs,
   callback: AsyncForEachCallback
-): Promise<InvokeOutputs> {
+): Promise<OutputValues> {
   const params = Object.fromEntries(
     Object.entries(inputs).filter(([key]) => key.startsWith("p-z-"))
   );
@@ -198,6 +208,6 @@ async function forEach(
       ] satisfies LLMContent[],
       false,
       "\n\n"
-    ),
+    ) as NodeValue,
   };
 }

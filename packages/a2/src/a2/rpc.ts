@@ -4,6 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import {
+  Capabilities,
+  FileSystemPath,
+  FileSystemReadWritePath,
+  JsonSerializable,
+  Outcome,
+} from "@breadboard-ai/types";
 import { err, toJson, fromJson, ok } from "./utils";
 
 export { RpcSession };

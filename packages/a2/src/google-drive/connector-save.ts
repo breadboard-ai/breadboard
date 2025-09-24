@@ -1,6 +1,13 @@
 /**
  * @fileoverview Connector Save Export.
  */
+import {
+  Capabilities,
+  DescribeOutputs,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 import { err, ok } from "../a2/utils";
 import {
   appendSpreadsheetValues,

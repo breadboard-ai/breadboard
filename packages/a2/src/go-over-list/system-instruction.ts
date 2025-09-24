@@ -2,6 +2,7 @@
  * @fileoverview Default system instruction for the various prompts.
  */
 
+import { LLMContent } from "@breadboard-ai/types";
 import { llm } from "../a2/utils";
 
 export { defaultSystemInstruction };

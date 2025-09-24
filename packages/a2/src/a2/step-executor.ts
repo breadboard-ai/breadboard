@@ -4,6 +4,14 @@
 
 export { executeStep, executeTool, parseExecutionOutput };
 
+import {
+  Capabilities,
+  FileSystemReadWritePath,
+  InlineDataCapabilityPart,
+  JsonSerializable,
+  LLMContent,
+  Outcome,
+} from "@breadboard-ai/types";
 import { StreamableReporter } from "./output";
 import {
   decodeBase64,

@@ -30,6 +30,12 @@ import {
   type ContentMap,
   type ExecuteStepRequest,
 } from "../a2/step-executor";
+import {
+  Capabilities,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 
 type Model = {
   id: string;

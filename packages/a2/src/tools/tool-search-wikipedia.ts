@@ -2,6 +2,8 @@
  * @fileoverview Raw Search Wikipedia tool.
  */
 
+import { Capabilities, Outcome, Schema } from "@breadboard-ai/types";
+
 export { invoke as default, describe };
 
 export type WikipediaInputs = {

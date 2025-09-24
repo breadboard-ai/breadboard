@@ -2,6 +2,7 @@
  * @fileoverview Manages the entry point: describer, passing the inputs, etc.
  */
 
+import { Capabilities, LLMContent, Schema } from "@breadboard-ai/types";
 import { type AgentContext, type DescribeInputs } from "./common";
 import { readSettings } from "./settings";
 import { Template } from "./template";

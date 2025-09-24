@@ -2,6 +2,12 @@
  * @fileoverview Generates code using supplied context.
  */
 
+import {
+  Capabilities,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 import { type Params } from "./common";
 import gemini, { defaultSafetySettings, type GeminiInputs } from "./gemini";
 import { ArgumentNameGenerator } from "./introducer";

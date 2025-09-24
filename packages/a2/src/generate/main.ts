@@ -5,6 +5,16 @@
 import { ok } from "../a2/utils";
 import { readFlags } from "../a2/settings";
 import { forEach } from "../a2/for-each";
+import {
+  BehaviorSchema,
+  Capabilities,
+  InputValues,
+  LLMContent,
+  Outcome,
+  OutputValues,
+  Schema,
+  SchemaEnumValue,
+} from "@breadboard-ai/types";
 
 export { invoke as default, describe };
 
@@ -276,7 +286,9 @@ async function invoke(
     return forEach(caps, rest, async (prompt) => {
       const ports = { ...rest };
       ports[PROMPT_PORT] = prompt;
-      return caps.invoke({ $board, ...forwardPorts(type, ports) });
+      return caps.invoke({ $board, ...forwardPorts(type, ports) }) as Promise<
+        Outcome<OutputValues>
+      >;
     });
   } else {
     return caps.invoke({ $board, ...forwardPorts(type, rest) });
@@ -327,7 +339,7 @@ async function describe(
   }
 
   const { url, type } = getMode(mode);
-  const describing = await caps.describe({ url, inputs: rest });
+  const describing = await caps.describe({ url, inputs: rest as InputValues });
   const behavior: BehaviorSchema[] = [...generateForEachBehavior];
   let modeSchema: Record<string, Schema> = {};
   if (ok(describing)) {

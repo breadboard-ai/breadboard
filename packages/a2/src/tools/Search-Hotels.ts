@@ -2,6 +2,12 @@
  * @fileoverview Search available hotels.
  */
 
+import {
+  Capabilities,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 import { Template } from "../a2/template";
 import { defaultLLMContent, err, ok, toLLMContent, toText } from "../a2/utils";
 import toolSearchHotels, {

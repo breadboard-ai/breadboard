@@ -2,6 +2,12 @@
  * @fileoverview Generates an image using supplied context (generation and editing).
  */
 
+import {
+  Capabilities,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 import { type DescriberResult, type Params } from "./common";
 import { GeminiPrompt } from "./gemini-prompt";
 import { callGeminiImage } from "./image-utils";

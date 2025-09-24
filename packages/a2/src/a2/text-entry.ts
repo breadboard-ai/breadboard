@@ -1,6 +1,14 @@
 /**
  * @fileoverview Allows asking user for input that could be then used in next steps.
  */
+import {
+  BehaviorSchema,
+  Capabilities,
+  LLMContent,
+  Outcome,
+  Schema,
+  SchemaEnumValue,
+} from "@breadboard-ai/types";
 import { type Params } from "./common";
 import { report } from "./output";
 import { Template } from "./template";
