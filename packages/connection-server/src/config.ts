@@ -67,9 +67,9 @@ export async function createConnectionConfig(): Promise<
   );
   const connections = new Map<string, ConnectionConfig>();
   connections.set(
-    "$signIn",
+    "$sign-in",
     googleOauth.createConnection(
-      "$signIn",
+      "$sign-in",
       flags.OAUTH_CLIENT,
       flags.OAUTH_SECRET,
       flags.OAUTH_SCOPES
