@@ -7,6 +7,7 @@
 import { readFile } from "node:fs/promises";
 
 import * as flags from "./flags.js";
+import * as googleOauth from "./oauth/google.js";
 
 import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
 
@@ -38,35 +39,46 @@ export interface ConnectionConfig {
   };
 }
 
-export async function getConnections(): Promise<Map<string, ConnectionConfig>> {
+/**
+ * Create the connection config, either from file or environment.
+ *
+ * If the CONNECTIONS_FILE flag is set, the connections config will be loaded
+ * from a JSON file at that location. An error will be raised if the file
+ * cannot be read.
+ *
+ * Otherwise, if the OAUTH_CLIENT flag is set, a single connection called
+ * "$sign-in" will be created for a Google OAuth client based on the
+ * OAUTH_CLIENT, OAUTH_SECRET, and OAUTH_SCOPES flags.
+ *
+ * If neither flag is set, an empty config is returned.
+ */
+export async function createConnectionConfig(): Promise<
+  Map<string, ConnectionConfig>
+> {
   if (flags.CONNECTIONS_FILE) {
     return loadConnections();
   }
-  if (!flags.CLIENT_ID) {
+  if (!flags.OAUTH_CLIENT) {
     return new Map();
   }
 
   console.log(
-    `[connection-server startup] Creating connection config for [${flags.CLIENT_ID}]`
+    `[connection-server startup] Creating connection config for [${flags.OAUTH_CLIENT}]`
   );
   const connections = new Map<string, ConnectionConfig>();
-  connections.set("$signIn", {
-    id: "$signIn",
-    oauth: {
-      client_id: flags.CLIENT_ID,
-      client_secret: flags.CLIENT_SECRET,
-      auth_uri: "",
-      token_uri: "",
-      scopes: [],
-    },
-  });
-
+  connections.set(
+    "$signIn",
+    googleOauth.createConnection(
+      "$signIn",
+      flags.OAUTH_CLIENT,
+      flags.OAUTH_SECRET,
+      flags.OAUTH_SCOPES
+    )
+  );
   return connections;
 }
 
-export async function loadConnections(): Promise<
-  Map<string, ConnectionConfig>
-> {
+async function loadConnections(): Promise<Map<string, ConnectionConfig>> {
   console.log(
     `[connection-server startup] Loading connections file from ${flags.CONNECTIONS_FILE}`
   );

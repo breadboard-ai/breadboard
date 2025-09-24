@@ -12,7 +12,7 @@ import * as flags from "./flags.js";
 import { grant } from "./api/grant.js";
 import { list } from "./api/list.js";
 import { refresh } from "./api/refresh.js";
-import { loadConnections, type ServerConfig } from "./config.js";
+import { createConnectionConfig, type ServerConfig } from "./config.js";
 import cookieParser from "cookie-parser";
 
 export type { ServerConfig };
@@ -29,7 +29,7 @@ export async function createServerConfig(): Promise<ServerConfig> {
   console.log("[connection-server startup] Creating connection server config");
   return {
     allowedOrigins: flags.ALLOWED_ORIGINS,
-    connections: await loadConnections(),
+    connections: await createConnectionConfig(),
     refreshTokenCookieSameSite: flags.REFRESH_TOKEN_COOKIE_SAME_SITE,
   };
 }

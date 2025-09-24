@@ -4,11 +4,13 @@ export const ALLOWED_ORIGINS: string[] = getStringList("ALLOWED_ORIGINS", {
   delimiter: /\s+/,
 });
 
-export const CLIENT_ID: string = getString("CLIENT_ID");
-
-export const CLIENT_SECRET: string = getString("CLIENT_SECRET");
-
 export const CONNECTIONS_FILE: string = getString("CONNECTIONS_FILE");
+
+export const OAUTH_CLIENT: string = getString("OAUTH_CLIENT");
+
+export const OAUTH_SCOPES: string[] = getStringList("OAUTH_SCOPES");
+
+export const OAUTH_SECRET: string = getString("OAUTH_SECRET");
 
 export const REFRESH_TOKEN_COOKIE_SAME_SITE: SameSite = getSameSite(
   "REFRESH_TOKEN_COOKIE_SAME_SITE",
