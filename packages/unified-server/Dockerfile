@@ -10,8 +10,6 @@ COPY --from=breadboard / .
 
 RUN npm clean-install
 
-ARG STORAGE_BUCKET
-ARG SERVER_URL
 ARG VITE_BOARD_SERVICE
 ARG VITE_GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID
 ARG VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS
@@ -26,11 +24,8 @@ WORKDIR packages/unified-server
 RUN npm run build
 
 # Run-time vars
-ENV CONNECTIONS_FILE="/breadboard/packages/unified-server/secrets/secrets.json"
 ENV NODE_ENV="production"
 ENV FIRESTORE_DB_NAME="unified-server"
-ENV STORAGE_BUCKET=${STORAGE_BUCKET}
-ENV SERVER_URL=${SERVER_URL}
 
 EXPOSE 3000
 
