@@ -387,6 +387,7 @@ export const styles: CSSResultGroup = [
             flex: 0 0 auto;
           }
 
+          & gulf-root,
           & particle-ui-list,
           & bb-multi-output {
             --output-value-padding-x: var(--bb-grid-size-4);

@@ -20,6 +20,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   generateForEach: false,
   mcp: false,
   force2DGraph: false,
+  gulfRenderer: false,
 };
 
 export function populateFlags(

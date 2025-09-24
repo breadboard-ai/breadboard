@@ -1588,6 +1588,7 @@ export class Main extends SignalWatcher(LitElement) {
       .isMine=${this.#tab?.graphIsMine ?? false}
       .projectRun=${renderValues.projectState?.run}
       .readOnly=${true}
+      .runtimeFlags=${this.#uiState.flags}
       .settings=${this.#settings}
       .showGDrive=${this.signinAdapter.state === "signedin"}
       .status=${renderValues.tabStatus}

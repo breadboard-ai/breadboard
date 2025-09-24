@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@breadboard-ai/types";
+import { GraphDescriptor, RuntimeFlags } from "@breadboard-ai/types";
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AppPreview");
 const GlobalStrings = StringsHelper.forSection("Global");
@@ -70,6 +70,9 @@ function getThemeModeFromBackground(hexColor: string): "light" | "dark" {
 
 @customElement("bb-app-controller")
 export class AppController extends SignalWatcher(LitElement) {
+  @property()
+  accessor runtimeFlags: RuntimeFlags | null = null;
+
   @property({ reflect: false })
   accessor graph: GraphDescriptor | null = null;
 
@@ -355,6 +358,7 @@ export class AppController extends SignalWatcher(LitElement) {
             >`;
       this.#appTemplate.isEmpty = this.graphIsEmpty;
       this.#appTemplate.focusWhenIn = this.focusWhenIn;
+      this.#appTemplate.runtimeFlags = this.runtimeFlags;
     }
 
     return html`

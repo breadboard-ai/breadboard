@@ -15,13 +15,41 @@ const wait = <T>(t: number, v: T) =>
 describe("DataModel", () => {
   it("throws for empty data sets", () => {
     assert.throws(() => {
-      new DataModel([]);
+      const model = new DataModel();
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      model.current;
     });
+  });
+
+  it("handles incremental data sets", async () => {
+    const model = new DataModel();
+    await model.append([{ version: "0.7" }]);
+    await model.append([{ root: "root" }]);
+    await model.append([
+      {
+        components: [
+          {
+            id: "root",
+            componentProperties: {
+              Text: {
+                text: {
+                  path: "/value",
+                },
+              },
+            },
+          },
+        ],
+      },
+    ]);
+    await model.append([{ path: "/", contents: { value: "incremental" } }]);
+
+    assert.equal(await model.getDataProperty("/value"), "incremental");
   });
 
   describe("which is not finalized", () => {
     it("handles data (not prefixed)", async () => {
-      const model = new DataModel([{ version: "0.7" }, { root: "root" }]);
+      const model = new DataModel();
+      await model.append([{ version: "0.7" }, { root: "root" }]);
 
       // Since the model is not finalized this call will create a Promise which
       // should be resolved when the value arrives.
@@ -33,7 +61,8 @@ describe("DataModel", () => {
     });
 
     it("handles data (prefixed)", async () => {
-      const model = new DataModel([{ version: "0.7" }, { root: "root" }]);
+      const model = new DataModel();
+      await model.append([{ version: "0.7" }, { root: "root" }]);
 
       // Since the model is not finalized this call will create a Promise which
       // should be resolved when the value arrives.
@@ -45,7 +74,8 @@ describe("DataModel", () => {
     });
 
     it("times out on data (prefixed)", async () => {
-      const model = new DataModel([{ version: "0.7" }, { root: "root" }]);
+      const model = new DataModel();
+      await model.append([{ version: "0.7" }, { root: "root" }]);
 
       // Since the model is not finalized this call will create a Promise which
       // should be resolved when the value arrives. Howeever, this value is not
@@ -60,7 +90,9 @@ describe("DataModel", () => {
 
   describe("which is finalized", () => {
     it("handles basic data", async () => {
-      const model = new DataModel([
+      const model = new DataModel();
+
+      await model.append([
         { version: "0.7" },
         { root: "root" },
         {
@@ -72,7 +104,6 @@ describe("DataModel", () => {
           },
         },
       ]);
-
       model.finalize();
 
       // Check for known values.
@@ -85,7 +116,8 @@ describe("DataModel", () => {
     });
 
     it("returns null for non-existent data", async () => {
-      const model = new DataModel([{ version: "0.7" }, { root: "root" }]);
+      const model = new DataModel();
+      await model.append([{ version: "0.7" }, { root: "root" }]);
       model.finalize();
 
       const value = await model.getDataProperty("/data/value");

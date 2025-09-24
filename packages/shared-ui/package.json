@@ -143,6 +143,7 @@
     "@breadboard-ai/a2": "0.6.0",
     "@breadboard-ai/connection-client": "0.4.0",
     "@breadboard-ai/google-drive-kit": "0.8.0",
+    "@breadboard-ai/gulf": "0.1.0",
     "@breadboard-ai/jsandbox": "0.8.0",
     "@breadboard-ai/mcp": "^0.1.0",
     "@breadboard-ai/particles": "0.2.0",

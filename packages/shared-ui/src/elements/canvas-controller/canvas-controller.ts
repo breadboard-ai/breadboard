@@ -567,6 +567,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
           this.boardServers,
           this.sideNavItem,
           this.graphTopologyUpdateId,
+          this.#uiState.flags,
         ],
         () => {
           return html`<bb-app-controller
@@ -580,6 +581,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
             .isMine=${this.graphIsMine}
             .projectRun=${this.projectState?.run}
             .readOnly=${!this.graphIsMine}
+            .runtimeFlags=${this.#uiState.flags}
             .settings=${this.settings}
             .showGDrive=${this.signedIn}
             .status=${this.status}

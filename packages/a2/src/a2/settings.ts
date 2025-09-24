@@ -28,6 +28,10 @@ export type RuntimeFlags = {
    * Enable MCP support
    */
   mcp: boolean;
+  /**
+   * Use GULF Renderer.
+   */
+  gulfRenderer: boolean;
 };
 
 async function readSettings(
@@ -54,6 +58,7 @@ async function readFlags(caps: Capabilities): Promise<Outcome<RuntimeFlags>> {
       saveAsCode: false,
       generateForEach: false,
       mcp: false,
+      gulfRenderer: false,
     };
   }
 

@@ -72,6 +72,10 @@ import { googleDriveClientContext } from "../../contexts/google-drive-client-con
 import { markdown } from "../../directives/markdown.js";
 import { makeUrl } from "../../utils/urls.js";
 
+import * as GULF from "@breadboard-ai/gulf";
+import "@breadboard-ai/gulf/ui";
+import { LLMContent, RuntimeFlags } from "@breadboard-ai/types";
+
 function isHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
   const singleOutput = outputs.length === 1;
@@ -117,6 +121,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   @property()
   accessor graph: GraphDescriptor | null = null;
+
+  @property()
+  accessor runtimeFlags: RuntimeFlags | null = null;
 
   @property()
   accessor showGDrive = false;
@@ -860,10 +867,18 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           content = [this.#renderProgress()];
           break;
         case "input":
-          content = [this.#renderOutputs(), this.#renderInput()];
+          if (this.runtimeFlags?.gulfRenderer) {
+            content = [this.#renderGULF()];
+          } else {
+            content = [this.#renderOutputs(), this.#renderInput()];
+          }
           break;
         case "output":
-          content = [this.#renderOutputs(), this.#renderSaveResultsButtons()];
+          if (this.runtimeFlags?.gulfRenderer) {
+            content = [this.#renderGULF(), this.#renderSaveResultsButtons()];
+          } else {
+            content = [this.#renderOutputs(), this.#renderSaveResultsButtons()];
+          }
           break;
         case "error":
           content = [this.#renderError()];
@@ -882,5 +897,66 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     return html`<section class=${classMap(classes)} style=${styleMap(styles)}>
       <div id="content">${this.#renderControls()}${content}</div>
     </section>`;
+  }
+
+  #renderGULF() {
+    if (!this.run) {
+      return nothing;
+    }
+
+    const model = this.run.__experimental_gulf;
+    model.finalize();
+
+    if (!model.current) {
+      return nothing;
+    }
+
+    function wrap(value: unknown): LLMContent {
+      return {
+        role: "user",
+        parts: [{ text: value?.toString() ?? "" }],
+      };
+    }
+
+    return html`<div id="activity">
+      <gulf-root
+        id=${model.current.rootName}
+        .model=${model}
+        .components=${[model.current.root]}
+        @gulfaction=${async (evt: GULF.Events.StateEvent<"gulf.action">) => {
+          if (!model) {
+            return;
+          }
+
+          if (!evt.detail.action.context) {
+            return;
+          }
+
+          const payload: Record<string, unknown> = {};
+          for (const item of evt.detail.action.context) {
+            if (item.value.path) {
+              payload[item.key] = wrap(
+                await model.getDataProperty(item.value.path)
+              );
+            } else if (item.value.literalBoolean) {
+              payload[item.key] = wrap(item.value.literalBoolean);
+            } else if (item.value.literalNumber) {
+              payload[item.key] = wrap(item.value.literalNumber);
+            } else if (item.value.literalString) {
+              payload[item.key] = wrap(item.value.literalString);
+            }
+          }
+
+          this.dispatchEvent(
+            new StateEvent({
+              eventType: "board.input",
+              id: "unknown",
+              data: payload,
+              allowSavingIfSecret: true,
+            })
+          );
+        }}
+      ></gulf-root>
+    </div>`;
   }
 }

@@ -4,7 +4,16 @@
   "version": "0.1.0",
   "description": "AI-first UI Toolkit Demo",
   "main": "./dist/index.js",
-  "exports": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./ui": {
+      "types": "./dist/0.7/ui/ui.d.ts",
+      "default": "./dist/0.7/ui/ui.js"
+    }
+  },
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {

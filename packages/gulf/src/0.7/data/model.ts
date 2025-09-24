@@ -58,65 +58,74 @@ function isDataModelUpdate(msg: unknown): msg is DataModelUpdateMessage {
 }
 
 class DataModel {
-  #data: GulfData;
+  #rootChanged = false;
+  #model: GulfData = new SignalObject({
+    data: new SignalMap() as DataObject,
+  }) as GulfData;
   #watchers = new Map<string, Array<(data: DataValue) => void>>();
   #components: Component[] = [];
   #finalized = false;
 
-  constructor(data: UnifiedUpdate) {
-    let streamHeader: StreamHeaderMessage | undefined = undefined;
-    let beginRendering;
-    for (const msg of data) {
-      if (isStreamHeader(msg)) {
-        streamHeader = msg;
-      } else if (isBeginRendering(msg)) {
-        beginRendering = msg;
-      } else if (isComponentUpdate(msg)) {
-        this.#components.push(...msg.components);
-      }
+  constructor(updates?: UnifiedUpdate) {
+    if (!updates) {
+      return;
     }
 
-    if (!streamHeader) {
-      streamHeader = {
-        version: "0.7",
-      };
-    }
-
-    if (!beginRendering) {
-      throw new Error("WARN: Unable to load; messages were not received");
-    }
-
-    const root = this.#getComponentCopy(beginRendering.root);
-    if (root) {
-      console.log(`INFO: GULF v${streamHeader.version}`);
-      console.log(`INFO: New Render on ${beginRendering.root}`);
-
-      this.#data = new SignalObject({
-        version: streamHeader.version,
-        root,
-        data: new SignalMap() as DataObject,
-      });
-
-      this.#buildComponentTree(root);
-    }
-
-    // TODO: Resolve building with Data first here.
-    this.#data = {
-      version: streamHeader.version,
-      data: new SignalMap() as DataObject,
-    } as GulfData;
-
-    for (const msg of data) {
-      if (!isDataModelUpdate(msg)) {
-        continue;
-      }
-
-      this.#buildDataTree(msg);
-    }
+    this.append(updates);
   }
 
-  get data(): GulfData {
-    return this.#data;
+  get current(): Required<GulfData> | null {
+    if (!this.#model) {
+      return null;
+    }
+
+    if (!this.#model.rootName) {
+      throw new Error("Unable to get current; no root name");
+    }
+
+    if (!this.#model.root) {
+      throw new Error("Unable to get current; no root");
+    }
+
+    if (!this.#model.data) {
+      throw new Error("Unable to get current; no data");
+    }
+
+    if (!this.#model.version) {
+      throw new Error("Unable to get current; no version");
+    }
+
+    return this.#model as Required<GulfData>;
+  }
+
+  async append(data: UnifiedUpdate) {
+    for (const msg of data) {
+      if (isStreamHeader(msg)) {
+        this.#model.version = this.#model.version ?? msg.version;
+      } else if (isBeginRendering(msg)) {
+        this.#model.rootName = msg.root;
+        this.#rootChanged = true;
+      } else if (isComponentUpdate(msg)) {
+        this.#components.push(...msg.components);
+
+        if (this.#rootChanged) {
+          this.#rootChanged = false;
+
+          if (!this.#model.rootName) {
+            throw new Error("Unable to retrieve current model; no root name");
+          }
+
+          const root = this.#getComponentCopy(this.#model.rootName);
+          if (!root) {
+            throw new Error("Unable to retrieve current model; no root");
+          }
+          this.#model.root = root;
+          this.#buildComponentTree(root);
+        }
+      } else if (isDataModelUpdate(msg)) {
+        await this.#buildDataTree(msg);
+      }
+    }
   }
 
   finalize() {
@@ -132,7 +141,7 @@ class DataModel {
     return null;
   }
 
-  #buildComponentTree(target: Component, dataPrefix = "") {
+  async #buildComponentTree(target: Component, dataPrefix = "") {
     target.dataPrefix = dataPrefix;
 
     const handleExplicitList = (
@@ -149,7 +158,7 @@ class DataModel {
       }
     };
 
-    const handleTemplate = (
+    const handleTemplate = async (
       target: Row | Column | List | Card,
       template: ComponentRef["template"]
     ) => {
@@ -157,34 +166,33 @@ class DataModel {
         return;
       }
       target.children = [];
-      this.getDataProperty(template.dataBinding, dataPrefix).then(
-        (value: DataValue | null) => {
-          target.children = [];
-
-          if (!value || !Array.isArray(value)) {
-            return;
-          }
-
-          for (let i = 0; i < value.length; i++) {
-            const component = this.#getComponentCopy(template.componentId);
-
-            if (component) {
-              component.id = globalThis.crypto.randomUUID();
-              target.children.push(component);
-              this.#buildComponentTree(
-                component,
-                `${template.dataBinding}/${i}`
-              );
-            }
-          }
-        }
+      const value: DataValue | null = await this.getDataProperty(
+        template.dataBinding,
+        dataPrefix
       );
+      target.children = [];
+
+      if (!value || !Array.isArray(value)) {
+        return;
+      }
+
+      for (let i = 0; i < value.length; i++) {
+        const component = this.#getComponentCopy(template.componentId);
+
+        if (component) {
+          component.id = globalThis.crypto.randomUUID();
+          target.children.push(component);
+          this.#buildComponentTree(component, `${template.dataBinding}/${i}`);
+        }
+      }
     };
 
     /**
      * Processes components that have a 'children' property (Row, Column, List)
      */
-    function processMultiChild(component: Row | Column | List | undefined) {
+    async function processMultiChild(
+      component: Row | Column | List | undefined
+    ) {
       if (!component) {
         return;
       }
@@ -193,7 +201,7 @@ class DataModel {
       if ("explicitList" in children && children.explicitList) {
         handleExplicitList(component, children.explicitList);
       } else if ("template" in children && children.template) {
-        handleTemplate(component, children.template);
+        await handleTemplate(component, children.template);
       }
     }
 
@@ -216,7 +224,7 @@ class DataModel {
       if (isComponentWithChildren(key)) {
         // 'key' is now correctly typed as 'Row' | 'Column' | 'List'
         // We pass the component to its specific handler
-        processMultiChild(target.componentProperties[key]);
+        await processMultiChild(target.componentProperties[key]);
       } else if (isComponentWithChild(key)) {
         // 'key' is now correctly typed as 'Card'
         processSingleChild(target.componentProperties[key]);
@@ -224,14 +232,14 @@ class DataModel {
     }
   }
 
-  #buildDataTree(update: DataModelUpdateMessage) {
+  async #buildDataTree(update: DataModelUpdateMessage) {
     if (Array.isArray(update.contents)) {
       const path = update.path ?? "/";
       this.setDataProperty(path, "", update.contents as unknown as DataObject);
     } else {
       const path = update.path ?? "/";
       for (const [id, obj] of Object.entries(update.contents)) {
-        this.setDataProperty(id, path, obj as DataObject);
+        await this.setDataProperty(id, path, obj as DataObject);
       }
     }
   }
@@ -263,7 +271,7 @@ class DataModel {
   ): Promise<DataValue | null> {
     key = this.#fixDataPropertyKey(key, dataPrefix);
 
-    let target = this.#data.data;
+    let target = this.#model.data;
     const parts = key.split("/");
     const finalPart = parts.at(-1);
     if (!finalPart) {
@@ -274,7 +282,7 @@ class DataModel {
     for (let p = 0; p < parts.length - 1; p++) {
       const part = parts[p];
       if (part === "") {
-        target = this.#data.data;
+        target = this.#model.data;
         continue;
       }
 
@@ -300,15 +308,17 @@ class DataModel {
 
     if (target instanceof Map) {
       return target.get(finalPart) ?? null;
-    } else {
+    } else if (target) {
       return target[finalPart];
+    } else {
+      return null;
     }
   }
 
   async setDataProperty(key: string, dataPrefix = "", value: DataValue) {
     key = this.#fixDataPropertyKey(key, dataPrefix);
 
-    let target = this.#data.data;
+    let target = this.#model.data;
     const parts = key.split("/");
     const finalPart = parts.at(-1);
     if (!finalPart) {
@@ -319,16 +329,18 @@ class DataModel {
     for (let p = 0; p < parts.length - 1; p++) {
       const part = parts[p];
       if (part === "") {
-        target = this.#data.data;
+        target = this.#model.data;
         continue;
       }
 
       if (target instanceof Map && target.has(part)) {
         target = target.get(part) as DataObject;
-      } else {
+      } else if (target) {
         const newTarget: DataObject = new SignalMap();
         target.set(part, newTarget);
         target = newTarget;
+      } else {
+        return;
       }
     }
 
@@ -346,7 +358,12 @@ class DataModel {
       storedValue = deep(value);
     }
 
-    target.set(finalPart, storedValue);
+    if (target) {
+      target.set(finalPart, storedValue);
+    } else {
+      console.warn("Unable to set on model; no receiver");
+      return;
+    }
 
     const watcherCallbacks = this.#watchers.get(key);
     if (watcherCallbacks) {

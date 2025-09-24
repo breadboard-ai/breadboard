@@ -41,6 +41,10 @@ export type RuntimeFlags = {
    * Use 2D matrices for graph rendering.
    */
   force2DGraph: boolean;
+  /**
+   * Use GULF for rendering.
+   */
+  gulfRenderer: boolean;
 };
 
 /**

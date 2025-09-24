@@ -32,6 +32,7 @@ import {
   LLMContent,
   ModuleIdentifier,
   NodeMetadata,
+  RuntimeFlags,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
@@ -560,6 +561,7 @@ export interface AppTemplate extends LitElement {
   disclaimerContent: HTMLTemplateResult | string | null;
   isEmpty: boolean;
   focusWhenIn: ["canvas", "preview" | "console"] | ["app"];
+  runtimeFlags: RuntimeFlags | null;
 }
 
 export interface Utterance {
