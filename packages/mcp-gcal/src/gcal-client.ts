@@ -252,18 +252,7 @@ These search terms also match predefined keywords against all display title tran
         return mcpErr(calendar.$error);
       }
 
-      const conferenceData = googleMeet
-        ? ({
-            conferenceData: {
-              createRequest: {
-                requestId: crypto.randomUUID(),
-                conferenceSolutionKey: {
-                  type: "hangoutsMeet",
-                },
-              },
-            },
-          } satisfies Event)
-        : {};
+      const conferenceData = getConferenceData(googleMeet);
 
       const inserting = await calendar.events.insert(
         { calendarId: "primary", conferenceDataVersion: 1 },
@@ -283,6 +272,7 @@ These search terms also match predefined keywords against all display title tran
           description,
           guestsCanModify,
           ...conferenceData,
+          ...addOpalMark(),
         }
       );
       if (inserting.status !== 200) {
@@ -330,18 +320,8 @@ These search terms also match predefined keywords against all display title tran
       if (!ok(calendar)) {
         return mcpErr(calendar.$error);
       }
-      const conferenceData = googleMeet
-        ? ({
-            conferenceData: {
-              createRequest: {
-                requestId: crypto.randomUUID(),
-                conferenceSolutionKey: {
-                  type: "hangoutsMeet",
-                },
-              },
-            },
-          } satisfies Event)
-        : {};
+      const conferenceData = getConferenceData(googleMeet);
+
       const updating = await calendar.events.update(
         {
           eventId,
@@ -364,6 +344,7 @@ These search terms also match predefined keywords against all display title tran
           description,
           guestsCanModify,
           ...conferenceData,
+          ...addOpalMark(),
         })
       );
 
@@ -439,4 +420,29 @@ async function loadCalendarApi(
     );
   }
   return gapi.client.calendar;
+}
+
+function getConferenceData(add: boolean | undefined) {
+  return add
+    ? ({
+        conferenceData: {
+          createRequest: {
+            requestId: crypto.randomUUID(),
+            conferenceSolutionKey: {
+              type: "hangoutsMeet",
+            },
+          },
+        },
+      } satisfies gapi.client.calendar.Event)
+    : {};
+}
+
+function addOpalMark() {
+  return {
+    extendedProperties: {
+      shared: {
+        modifiedBy: "opal",
+      },
+    },
+  } satisfies gapi.client.calendar.Event;
 }
