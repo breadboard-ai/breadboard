@@ -180,7 +180,7 @@ These search terms also match predefined keywords against all display title tran
 - "confidential" - The event is private. This value is provided for compatibility reasons.`
       )
       .optional(),
-    guestsCanModifiy: z
+    guestsCanModify: z
       .boolean()
       .describe(
         `Whether attendees other than the organizer can invite others to the event. Optional. The default is True.`
@@ -232,6 +232,7 @@ These search terms also match predefined keywords against all display title tran
       attendees,
       googleMeet,
       description,
+      guestsCanModify,
     }) => {
       type Event = gapi.client.calendar.Event;
 
@@ -269,6 +270,7 @@ These search terms also match predefined keywords against all display title tran
           status: status as Event["status"],
           attendees: attendees as Event["attendees"],
           description,
+          guestsCanModify,
           ...conferenceData,
         }
       );
@@ -303,6 +305,7 @@ These search terms also match predefined keywords against all display title tran
       attendees,
       googleMeet,
       description,
+      guestsCanModify,
     }) => {
       type Event = gapi.client.calendar.Event;
 
@@ -342,6 +345,7 @@ These search terms also match predefined keywords against all display title tran
           status: status as Event["status"],
           attendees: attendees as Event["attendees"],
           description,
+          guestsCanModify,
           ...conferenceData,
         })
       );
@@ -376,7 +380,7 @@ These search terms also match predefined keywords against all display title tran
         calendarId: "primary",
         eventId,
       });
-      if (deleting.status !== 200) {
+      if (deleting.status !== 204) {
         return mcpErr(
           deleting.statusText || "Unable to delete Google Calendar event"
         );
@@ -395,7 +399,9 @@ async function loadCalendarApi(
   if (!globalThis.gapi) {
     return err("GAPI is not loaded, unable to query Google Calendar");
   }
-  await new Promise((resolve) => gapi.load("client", resolve));
+  if (!gapi.client) {
+    await new Promise((resolve) => gapi.load("client", resolve));
+  }
   const access_token = await tokenGetter([
     "https://www.googleapis.com/auth/calendar.readonly",
     "https://www.googleapis.com/auth/calendar.events.owned",
@@ -404,8 +410,10 @@ async function loadCalendarApi(
     return err(access_token.$error);
   }
   gapi.client.setToken({ access_token });
-  await gapi.client.load(
-    "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"
-  );
+  if (!gapi.client.calendar) {
+    await gapi.client.load(
+      "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"
+    );
+  }
   return gapi.client.calendar;
 }
