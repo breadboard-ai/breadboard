@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 export type SameSite = "Lax" | "None" | "Strict";
 
 export const ALLOWED_ORIGINS: string[] = getStringList("ALLOWED_ORIGINS", {
@@ -5,6 +7,12 @@ export const ALLOWED_ORIGINS: string[] = getStringList("ALLOWED_ORIGINS", {
 });
 
 export const CONNECTIONS_FILE: string = getString("CONNECTIONS_FILE");
+
+export const OAUTH_CLIENT: string = getString("OAUTH_CLIENT");
+
+export const OAUTH_SCOPES: string[] = getStringList("OAUTH_SCOPES");
+
+export const OAUTH_SECRET: string = getString("OAUTH_SECRET");
 
 export const REFRESH_TOKEN_COOKIE_SAME_SITE: SameSite = getSameSite(
   "REFRESH_TOKEN_COOKIE_SAME_SITE",
