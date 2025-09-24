@@ -2,6 +2,14 @@
  * @fileoverview Provides an output helper.
  */
 
+import {
+  Capabilities,
+  FileSystemReadWritePath,
+  JsonSerializable,
+  LLMContent,
+  NodeMetadata,
+  Schema,
+} from "@breadboard-ai/types";
 import { ErrorMetadata, generateId, ok } from "./utils";
 
 type ReportInputs = {

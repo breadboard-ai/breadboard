@@ -3,6 +3,12 @@
  */
 export { invoke as default, describe };
 
+import {
+  Capabilities,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 import { executeTool } from "../a2/step-executor";
 import { ok, toLLMContent } from "../a2/utils";
 

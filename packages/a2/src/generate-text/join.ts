@@ -2,6 +2,7 @@
  * @fileoverview Joins user input and Agent Context
  */
 
+import { LLMContent, Schema } from "@breadboard-ai/types";
 import { type AgentContext } from "../a2/common";
 import { addContent } from "../a2/lists";
 import { isEmpty } from "../a2/utils";

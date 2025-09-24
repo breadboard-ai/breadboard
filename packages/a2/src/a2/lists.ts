@@ -11,6 +11,7 @@ import {
   ErrorMetadata,
 } from "./utils";
 import { type GeminiSchema } from "./gemini";
+import { DataPart, ListPart, LLMContent, Outcome } from "@breadboard-ai/types";
 
 export {
   fanOutContext,

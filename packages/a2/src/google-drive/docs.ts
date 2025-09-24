@@ -1,6 +1,13 @@
 import { mergeTextParts, toText } from "../a2/utils";
 import { marked, Token, Tokens } from "marked";
 import { unescape } from "./unescape";
+import {
+  Capabilities,
+  DataPart,
+  InlineDataCapabilityPart,
+  LLMContent,
+  StoredDataCapabilityPart,
+} from "@breadboard-ai/types";
 
 export { contextToRequests, DOC_MIME_TYPE, markdownToContext };
 

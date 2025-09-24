@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Capabilities, JsonSerializable } from "@breadboard-ai/types";
 import { RpcSession } from "../a2/rpc";
 import {
   CallToolRequest,

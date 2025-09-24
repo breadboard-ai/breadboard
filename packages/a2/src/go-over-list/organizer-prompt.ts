@@ -8,6 +8,7 @@ import { GeminiPrompt } from "../a2/gemini-prompt";
 import { type Invokable } from "./types";
 import { listPrompt, listSchema, toList } from "../a2/lists";
 import { defaultSystemInstruction } from "./system-instruction";
+import { Capabilities, LLMContent } from "@breadboard-ai/types";
 
 export { organizerPrompt };
 

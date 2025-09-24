@@ -2,6 +2,7 @@
  * @fileoverview Executes sequential strategy.
  */
 
+import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 import { report } from "../a2/output";
 import { ok, toLLMContent } from "../a2/utils";
 import { getPlan, plannerPrompt } from "./planner-prompt";

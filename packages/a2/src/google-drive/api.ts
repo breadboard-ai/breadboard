@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Capabilities, Outcome } from "@breadboard-ai/types";
 import { err } from "../a2/utils";
 
 export {

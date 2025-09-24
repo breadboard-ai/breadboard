@@ -2,6 +2,12 @@
  * @fileoverview Given a URL of a webpage, returns its content as Markdown with a list of links and other metadata.
  */
 
+import {
+  Capabilities,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 import { ListExpander } from "../a2/lists";
 import { Template } from "../a2/template";
 import {

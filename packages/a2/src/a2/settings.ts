@@ -2,6 +2,7 @@
  * @fileoverview A helper to retrieve current settings
  */
 
+import { Capabilities, JSONPart, Outcome } from "@breadboard-ai/types";
 import { ok } from "./utils";
 
 export { readSettings, readFlags };

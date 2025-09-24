@@ -2,6 +2,7 @@
  * @fileoverview Utility for calling generate_webpage tool.
  */
 
+import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 import type { ContentMap, ExecuteStepRequest } from "./step-executor";
 import { executeStep } from "./step-executor";
 import { encodeBase64, err, mergeContent, ok } from "./utils";

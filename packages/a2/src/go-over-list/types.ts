@@ -2,6 +2,8 @@
  * @fileoverview Common types.
  */
 
+import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
+
 export type Task = {
   label: string;
   task: string;

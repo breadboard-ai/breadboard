@@ -2,6 +2,7 @@
  * @fileoverview Utilities for generating images.
  */
 
+import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 import { GeminiPrompt } from "./gemini-prompt";
 import {
   type ContentMap,

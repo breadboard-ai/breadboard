@@ -2,6 +2,15 @@
  * @fileoverview Renders multiple outputs into single display.
  */
 
+import {
+  Capabilities,
+  JSONPart,
+  LLMContent,
+  Outcome,
+  Schema,
+  StoredDataCapabilityPart,
+  TextCapabilityPart,
+} from "@breadboard-ai/types";
 import { ConnectorManager } from "./connector-manager";
 import { callGenWebpage } from "./html-generator";
 import { flattenContext } from "./lists";

@@ -2,6 +2,12 @@
  * @fileoverview Manages tools.
  */
 
+import {
+  Capabilities,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 import type {
   CallToolCallback,
   DescriberResult,

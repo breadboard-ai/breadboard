@@ -1,6 +1,7 @@
 /**
  * @fileoverview Gets a list of emails
  */
+import { Capabilities, DescribeOutputs, Schema } from "@breadboard-ai/types";
 import { decodeBase64, err } from "../a2/utils";
 
 type FetchErrorResponse = {

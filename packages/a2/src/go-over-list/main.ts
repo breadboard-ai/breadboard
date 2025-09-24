@@ -1,6 +1,12 @@
 /**
  * @fileoverview Break an objective into tasks and then execute them.
  */
+import {
+  Capabilities,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 import { type Params } from "../a2/common";
 import { ArgumentNameGenerator } from "../a2/introducer";
 import { fanOutContext } from "../a2/lists";

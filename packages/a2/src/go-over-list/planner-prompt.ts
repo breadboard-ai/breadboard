@@ -2,6 +2,7 @@
  * @fileoverview Contains the planner prompt.
  */
 
+import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 import { type GeminiSchema, defaultSafetySettings } from "../a2/gemini";
 import { GeminiPrompt } from "../a2/gemini-prompt";
 import { err, llm } from "../a2/utils";

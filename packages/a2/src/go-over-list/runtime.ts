@@ -2,6 +2,13 @@
  * @fileoverview The runtime that powers going over the list.
  */
 
+import {
+  Capabilities,
+  DataPart,
+  LLMContent,
+  Outcome,
+  TextCapabilityPart,
+} from "@breadboard-ai/types";
 import { GeminiPrompt } from "../a2/gemini-prompt";
 import { ToolManager } from "../a2/tool-manager";
 import { ok, toLLMContent } from "../a2/utils";

@@ -1,6 +1,7 @@
 /**
  * @fileoverview Recursively search the web for in-depth answers to your query.
  */
+import { Capabilities, LLMContent, Schema } from "@breadboard-ai/types";
 import { type Params } from "../a2/common";
 import invokeGemini, {
   type GeminiInputs,

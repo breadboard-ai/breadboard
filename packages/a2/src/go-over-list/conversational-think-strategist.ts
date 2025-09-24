@@ -12,6 +12,7 @@ import {
   plannerPrompt,
   thinkingPlannerPrompt,
 } from "./conversational-planner-prompt";
+import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 
 export { ConversationalThinkStrategist };
 

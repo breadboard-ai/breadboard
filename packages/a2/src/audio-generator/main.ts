@@ -2,6 +2,12 @@
  * @fileoverview Generates audio (tts) output using supplied context.
  */
 
+import {
+  Capabilities,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 import { type DescriberResult } from "../a2/common";
 import { ArgumentNameGenerator } from "../a2/introducer";
 import { ListExpander } from "../a2/lists";

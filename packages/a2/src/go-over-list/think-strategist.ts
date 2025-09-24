@@ -12,6 +12,7 @@ import {
   plannerPrompt,
   thinkingPlannerPrompt,
 } from "./planner-prompt";
+import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 
 export { ThinkStrategist };
 

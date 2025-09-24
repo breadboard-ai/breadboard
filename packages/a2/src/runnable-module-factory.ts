@@ -10,6 +10,7 @@ import {
   Outcome,
   InputValues,
   OutputValues,
+  NodeMetadata,
 } from "@breadboard-ai/types";
 import {
   CapabilitiesManager,

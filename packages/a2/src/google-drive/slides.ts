@@ -2,6 +2,7 @@
  * @fileoverview Slides bits.
  */
 
+import { InlineDataCapabilityPart } from "@breadboard-ai/types";
 import { generateId } from "../a2/utils";
 import type {
   SlidesCreateSlideRequest,

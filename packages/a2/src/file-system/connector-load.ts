@@ -2,6 +2,12 @@
  * @fileoverview Connector Load Export
  */
 
+import {
+  DescribeOutputs,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 import { llm } from "../a2/utils";
 
 export { invoke as default, describe };

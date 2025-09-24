@@ -2,6 +2,12 @@
  * @fileoverview Given a query, searches the Web with Google Search.
  */
 
+import {
+  Capabilities,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 import { ListExpander } from "../a2/lists";
 import { Template } from "../a2/template";
 import {

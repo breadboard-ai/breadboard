@@ -1,3 +1,11 @@
+import {
+  DataPart,
+  JSONPart,
+  JsonSerializable,
+  LLMContent,
+  Outcome,
+} from "@breadboard-ai/types";
+
 /**
  * @fileoverview Common utils for manipulating LLM Content and other relevant types.
  */

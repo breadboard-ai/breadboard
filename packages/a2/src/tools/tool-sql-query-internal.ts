@@ -2,6 +2,7 @@
  * @fileoverview The guts of the internal SQL query tool.
  */
 
+import { Capabilities, Outcome, Schema } from "@breadboard-ai/types";
 import { executeTool } from "../a2/step-executor";
 import { ok } from "../a2/utils";
 

@@ -10,6 +10,12 @@ import searchWikipedia, {
 } from "./tool-search-wikipedia";
 
 import { defaultLLMContent, err, ok, toLLMContent, toText } from "../a2/utils";
+import {
+  Capabilities,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
 
 export { invoke as default, describe };
 
