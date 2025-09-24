@@ -38,15 +38,35 @@ export interface ConnectionConfig {
   };
 }
 
-export async function getConnections() {}
+export async function getConnections(): Promise<Map<string, ConnectionConfig>> {
+  if (flags.CONNECTIONS_FILE) {
+    return loadConnections();
+  }
+  if (!flags.CLIENT_ID) {
+    return new Map();
+  }
+
+  console.log(
+    `[connection-server startup] Creating connection config for [${flags.CLIENT_ID}]`
+  );
+  const connections = new Map<string, ConnectionConfig>();
+  connections.set("$signIn", {
+    id: "$signIn",
+    oauth: {
+      client_id: flags.CLIENT_ID,
+      client_secret: flags.CLIENT_SECRET,
+      auth_uri: "",
+      token_uri: "",
+      scopes: [],
+    },
+  });
+
+  return connections;
+}
 
 export async function loadConnections(): Promise<
   Map<string, ConnectionConfig>
 > {
-  if (!flags.CONNECTIONS_FILE) {
-    return new Map();
-  }
-
   console.log(
     `[connection-server startup] Loading connections file from ${flags.CONNECTIONS_FILE}`
   );
