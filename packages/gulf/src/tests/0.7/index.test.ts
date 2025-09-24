@@ -51,13 +51,13 @@ describe("DataModel", () => {
       const model = new DataModel();
       await model.append([{ version: "0.7" }, { root: "root" }]);
 
-      // // Since the model is not finalized this call will create a Promise which
-      // // should be resolved when the value arrives.
-      // const checker = model.getDataProperty("/data/value");
+      // Since the model is not finalized this call will create a Promise which
+      // should be resolved when the value arrives.
+      const checker = model.getDataProperty("/data/value");
 
-      // await model.setDataProperty("/data/value", "", "tree");
-      // const newValue = await checker;
-      // assert.equal(newValue, "tree");
+      await model.setDataProperty("/data/value", "", "tree");
+      const newValue = await checker;
+      assert.equal(newValue, "tree");
     });
 
     it("handles data (prefixed)", async () => {
