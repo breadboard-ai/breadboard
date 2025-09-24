@@ -321,11 +321,11 @@ class IntegrationsImpl implements Integrations {
     title: string = url,
     authToken: string | undefined
   ): Promise<Outcome<void>> {
+    // Add to the server list
+    await this.#serverList.add({ url, title, authToken });
     // Add as new asset
     const adding = await this.#upsertIntegration(url, title);
     if (!ok(adding)) return adding;
-    // Add to the server list
-    await this.#serverList.add({ url, title, authToken });
   }
 
   #createId(url: string) {
