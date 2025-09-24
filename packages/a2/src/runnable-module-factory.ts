@@ -166,8 +166,9 @@ class A2Module implements RunnableModule {
     private readonly capabilities?: CapabilitiesManager
   ) {}
 
-  getModule(name: string, method: "invoke" | "describe"): any | undefined {
+  getModule(name: string, method: "invoke" | "describe"): unknown | undefined {
     const exp = method === "invoke" ? "default" : "describe";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const module = (a2 as any)[this.dir]?.[name]?.[exp];
     return module;
   }

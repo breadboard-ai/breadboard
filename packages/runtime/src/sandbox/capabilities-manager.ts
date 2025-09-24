@@ -5,7 +5,6 @@
  */
 
 import { transformContents } from "@breadboard-ai/data";
-import { Capability, CapabilitySpec } from "@breadboard-ai/jsandbox";
 import { baseURLFromContext } from "@breadboard-ai/loader";
 import {
   GraphInlineMetadata,
@@ -23,7 +22,11 @@ import { err, ok } from "@breadboard-ai/utils";
 import { bubbleUpInputsIfNeeded, bubbleUpOutputsIfNeeded } from "../bubble.js";
 import { FileSystemHandlerFactory } from "./file-system-handler-factory.js";
 import { invokeDescriber } from "./invoke-describer.js";
-import { CapabilitiesManager } from "@breadboard-ai/types/sandbox.js";
+import {
+  CapabilitiesManager,
+  CapabilitySpec,
+  Capability,
+} from "@breadboard-ai/types/sandbox.js";
 
 export { CapabilitiesManagerImpl };
 

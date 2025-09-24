@@ -75,8 +75,7 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "typescript-files-and-deps",
-        "update-sandbox-runtime"
+        "typescript-files-and-deps"
       ],
       "files": [
         "vite.config.ts",
@@ -91,9 +90,6 @@
       ]
     },
     "prepare-assets": {
-      "dependencies": [
-        "prepare-assets:internal"
-      ],
       "files": [
         "public/",
         "index.html",
@@ -101,20 +97,11 @@
         "oauth"
       ]
     },
-    "prepare-assets:internal": {
-      "dependencies": [
-        {
-          "script": "update-sandbox-runtime",
-          "cascade": false
-        }
-      ]
-    },
     "preview": {
       "command": "vite preview",
       "service": true,
       "dependencies": [
         "build",
-        "prepare-assets:internal",
         {
           "script": "typescript-files-and-deps",
           "cascade": false
@@ -134,7 +121,6 @@
       "command": "vite",
       "service": true,
       "dependencies": [
-        "prepare-assets:internal",
         {
           "script": "typescript-files-and-deps",
           "cascade": false
@@ -147,18 +133,6 @@
       "files": [
         "vite.config.ts",
         ".env"
-      ]
-    },
-    "update-sandbox-runtime": {
-      "command": "tsx src/update-sandbox-runtime.ts",
-      "dependencies": [
-        "../jsandbox#build"
-      ],
-      "files": [
-        "src/update-sandbox-runtime.ts"
-      ],
-      "output": [
-        "public/sandbox.wasm"
       ]
     }
   },
@@ -212,7 +186,6 @@
     "@breadboard-ai/filesystem-board-server": "1.23.0",
     "@breadboard-ai/google-drive-kit": "0.8.0",
     "@breadboard-ai/idb-board-server": "1.19.6",
-    "@breadboard-ai/jsandbox": "0.8.0",
     "@breadboard-ai/mcp": "^0.1.0",
     "@breadboard-ai/mcp-gcal": "^0.1.0",
     "@breadboard-ai/runtime": "0.2.0",

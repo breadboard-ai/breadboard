@@ -4,23 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SandboxedModule } from "@breadboard-ai/jsandbox";
 import {
   GraphDescriptor,
   InputValues,
   ModuleIdentifier,
   MutableGraph,
   NodeDescriberResult,
-  Outcome,
 } from "@breadboard-ai/types";
 import { Schema } from "jsonschema";
-import { err, filterEmptyValues, ok } from "@breadboard-ai/utils";
-import {
-  CapabilitiesManager,
-  RunnableModule,
-  RunnableModuleFactory,
-  Sandbox,
-} from "@breadboard-ai/types/sandbox.js";
+import { filterEmptyValues, ok } from "@breadboard-ai/utils";
+import { CapabilitiesManager } from "@breadboard-ai/types/sandbox.js";
 
 export { invokeDescriber, invokeMainDescriber };
 

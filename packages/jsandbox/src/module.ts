@@ -6,7 +6,6 @@
 
 import { UUID } from "@breadboard-ai/types";
 import { Capabilities } from "./capabilities.js";
-import { Telemetry } from "./telemetry.js";
 import {
   CapabilitySpec,
   DescriberInputs,
@@ -16,7 +15,10 @@ import {
   ModuleSpec,
   Sandbox,
 } from "./types.js";
-import { RunnableModule } from "@breadboard-ai/types/sandbox.js";
+import {
+  RunnableModule,
+  RunnableModuleTelemetry,
+} from "@breadboard-ai/types/sandbox.js";
 
 export { SandboxedModule };
 
@@ -33,7 +35,7 @@ class SandboxedModule implements RunnableModule {
     method: "describe" | "default",
     name: string,
     inputs: DescriberInputs | InvokeInputs,
-    telemetry?: Telemetry
+    telemetry?: RunnableModuleTelemetry
   ) {
     const invocationId = crypto.randomUUID();
     const label = `${method === "describe" ? "Describe" : "Invoke"} module "${name}": uuid="${invocationId}"`;
@@ -63,7 +65,7 @@ class SandboxedModule implements RunnableModule {
   async invoke(
     name: string,
     inputs: InvokeInputs,
-    telemetry?: Telemetry
+    telemetry?: RunnableModuleTelemetry
   ): Promise<InvokeOutputs> {
     return this.#run("default", name, inputs, telemetry);
   }
