@@ -7,7 +7,6 @@
 /// <reference types="@types/gapi.client.drive-v3" />
 
 import type { TokenVendor } from "@breadboard-ai/connection-client";
-import { ok } from "@breadboard-ai/utils";
 import { isStoredData } from "@breadboard-ai/data";
 import {
   type BoardServer,
@@ -15,45 +14,39 @@ import {
   type BoardServerConfiguration,
   type BoardServerEventTarget,
   type BoardServerExtension,
-  type BoardServerProject,
   type ChangeNotificationCallback,
   type DataPartTransformer,
-  type EntityMetadata,
   type GraphDescriptor,
   type GraphProviderCapabilities,
   type GraphProviderExtendedCapabilities,
-  type GraphProviderItem,
-  type GraphProviderStore,
   type Kit,
   type Permission,
   type User,
-  type Username,
 } from "@breadboard-ai/types";
-import {
-  DriveOperations,
-  getFileId,
-  PROTOCOL,
-  type GraphInfo,
-} from "./operations.js";
-import { SaveDebouncer } from "./save-debouncer.js";
-import { RefreshEvent, SaveEvent } from "./events.js";
+import { ok } from "@breadboard-ai/utils";
 import {
   type DriveFileId,
   type GoogleDriveClient,
-  type NarrowedDriveFile,
 } from "../google-drive-client.js";
 import { GoogleDriveDataPartTransformer } from "./data-part-transformer.js";
 import {
-  driveFileToGraphInfo,
+  extractGoogleDriveFileId,
   findGoogleDriveAssetsInGraph,
   readProperties,
   type AppProperties,
 } from "./utils.js";
+import { RefreshEvent, SaveEvent } from "./events.js";
+import {
+  DriveOperations,
+  getFileId,
+  getThumbnail,
+  PROTOCOL,
+} from "./operations.js";
+import { SaveDebouncer } from "./save-debouncer.js";
+import { DriveGalleryGraphCollection } from "./gallery-graph-collection.js";
+import { DriveUserGraphCollection } from "./user-graph-collection.js";
 
 export { GoogleDriveBoardServer };
-
-const OWNER_USERNAME = "board-builder";
-const GALLERY_OWNER_USERNAME = "gallery-owner";
 
 // This whole package should probably be called
 // "@breadboard-ai/google-drive-board-server".
@@ -114,8 +107,9 @@ class GoogleDriveBoardServer
     string,
     { isMine: boolean; latestSharedVersion: number }
   >();
+  readonly galleryGraphs = new DriveGalleryGraphCollection();
+  readonly userGraphs: DriveUserGraphCollection;
 
-  projects: Promise<BoardServerProject[]>;
   kits: Kit[];
 
   constructor(
@@ -130,7 +124,6 @@ class GoogleDriveBoardServer
     super();
     this.ops = new DriveOperations(
       async () => {
-        await this.refreshProjectList();
         this.dispatchEvent(new RefreshEvent());
       },
       userFolderName,
@@ -146,156 +139,29 @@ class GoogleDriveBoardServer
     this.capabilities = configuration.capabilities;
     this.#tokenVendor = tokenVendor;
     this.#googleDriveClient = googleDriveClient;
-    this.projects = this.#listProjects();
+    this.userGraphs = new DriveUserGraphCollection(this.#googleDriveClient);
   }
 
   #saving = new Map<string, SaveDebouncer>();
 
-  // This is a workaround for items() being sync. Since we expect ready() to be
-  // awaited we know #projects will be populated by the time items() is called.
-  #projects: BoardServerProject[] = [];
-  async ready(): Promise<void> {
-    this.#projects = await this.projects;
-  }
+  async ready(): Promise<void> {}
 
-  async #listProjects(): Promise<BoardServerProject[]> {
-    // eslint-disable-next-line prefer-const
-    let [userGraphs, featuredGraphs] = await Promise.all([
-      this.#tokenVendor.isSignedIn("$sign-in") ? this.ops.readGraphList() : [],
-      this.#listGalleryGraphsOnce(),
-    ]);
-    if (!ok(userGraphs)) {
-      console.error(`Could not fetch user graphs`, userGraphs);
-      userGraphs = [];
-    }
-
-    const ownerAccess = new Map([
-      [
-        this.user.username,
-        {
-          create: true,
-          retrieve: true,
-          update: true,
-          delete: true,
-        } satisfies Permission,
-      ],
-    ]);
-    const galleryAccess = new Map([
-      [
-        GALLERY_OWNER_USERNAME,
-        {
-          create: false,
-          retrieve: true,
-          update: false,
-          delete: false,
-        } satisfies Permission,
-      ],
-    ]);
-
-    const userProjects = userGraphs.map((graphInfo) =>
-      this.#graphInfoToProject(graphInfo, OWNER_USERNAME, ownerAccess)
-    );
-
-    const galleryProjects = featuredGraphs.map((file) => {
-      const project = this.#graphInfoToProject(
-        driveFileToGraphInfo(file),
-        GALLERY_OWNER_USERNAME,
-        galleryAccess
-      );
-      project.metadata.tags.push("featured");
-      return project;
-    });
-
-    return [...userProjects, ...galleryProjects];
-  }
-
-  #galleryGraphs?: Promise<
-    Array<NarrowedDriveFile<"id" | "name" | "properties">>
-  >;
-  async #listGalleryGraphsOnce(): Promise<
-    Array<NarrowedDriveFile<"id" | "name" | "properties">>
-  > {
-    return (this.#galleryGraphs ??= (async () => {
-      const url = new URL("/api/gallery/list", window.location.href);
-      let response;
-      try {
-        response = await fetch(url);
-      } catch (e) {
-        console.error(
-          `[drive board server] network error fetching featured gallery list`,
-          e
-        );
-        return [];
+  #googleDriveClientSeeded?: Promise<void>;
+  async #seedGoogleDriveClientWithFeaturedGraphIdsOnce() {
+    return (this.#googleDriveClientSeeded ??= (async () => {
+      await this.galleryGraphs.loaded;
+      for (const [, graph] of this.galleryGraphs.entries()) {
+        const driveId = extractGoogleDriveFileId(graph.url);
+        if (driveId) {
+          this.#googleDriveClient.markFileForReadingWithPublicProxy(driveId);
+        }
       }
-      if (!response.ok) {
-        console.error(
-          `[drive board server] HTTP ${response.status} error` +
-            ` fetching featured gallery list`
-        );
-        return [];
-      }
-      let result: Array<NarrowedDriveFile<"id" | "name" | "properties">>;
-      try {
-        result = await response.json();
-      } catch (e) {
-        console.error(
-          `[drive board server] JSON parse error fetching featured gallery list`,
-          e
-        );
-        return [];
-      }
-      for (const file of result) {
-        this.#googleDriveClient.markFileForReadingWithPublicProxy(file.id);
-      }
-      return result;
     })());
   }
 
-  async #seedGoogleDriveClientWithFeaturedGraphIdsOnce(): Promise<void> {
-    // We do this as a side-effect of the listing. So just wait for that.
-    void (await this.#listGalleryGraphsOnce());
-  }
-
-  #galleryGraphFileIds?: Promise<Set<string>>;
-  async #loadGalleryGraphFileIdsOnce() {
-    return (this.#galleryGraphFileIds ??= (async () =>
-      new Set<string>(
-        (await this.#listGalleryGraphsOnce()).map((file) => file.id)
-      ))());
-  }
-
   async #isGalleryGraphFile(fileId: string): Promise<boolean> {
-    return (await this.#loadGalleryGraphFileIdsOnce()).has(fileId);
-  }
-
-  #graphInfoToProject(
-    graphInfo: GraphInfo,
-    owner: string,
-    access: Map<Username, Permission>
-  ) {
-    return {
-      // TODO: This should just be new URL(id, this.url), but sadly, it will
-      // break existing instances of the Google Drive board server.
-      url: new URL(`${this.url}${this.url.pathname ? "" : "/"}${graphInfo.id}`),
-      metadata: {
-        owner,
-        tags: graphInfo.tags,
-        title: graphInfo.title,
-        access,
-        thumbnail: graphInfo.thumbnail,
-        description: graphInfo.description,
-        latestSharedVersion: graphInfo.latestSharedVersion,
-      } satisfies EntityMetadata,
-    };
-  }
-
-  /**
-   * Issues a query for the project list and resets the `projects` promise.
-   * The work is done asynchronously unless you await to its result.
-   */
-  refreshProjectList(): Promise<BoardServerProject[]> {
-    this.projects = this.#listProjects();
-    return this.projects;
+    await this.galleryGraphs.loaded;
+    return this.galleryGraphs.has(fileId);
   }
 
   getAccess(_url: URL, _user: User): Promise<Permission> {
@@ -415,6 +281,16 @@ class GoogleDriveBoardServer
       this.#saving = this.#saving.set(url.href, saving);
     }
     saving.save(url, descriptor, userInitiated);
+    // TODO(aomarks) We should probably wait for the save debouncer.
+    this.userGraphs.put({
+      url: url.href,
+      title: descriptor.title,
+      description: descriptor.description,
+      thumbnail: getThumbnail(descriptor).data,
+      mine: true,
+      readonly: false,
+      handle: null,
+    });
     return { result: true };
   }
 
@@ -436,6 +312,17 @@ class GoogleDriveBoardServer
       parent,
       descriptor
     );
+    if (!writing.error && writing.url) {
+      this.userGraphs.put({
+        url: writing.url,
+        title: descriptor.title,
+        description: descriptor.description,
+        thumbnail: getThumbnail(descriptor).data,
+        mine: true,
+        readonly: false,
+        handle: null,
+      });
+    }
     return writing;
   }
 
@@ -471,6 +358,7 @@ class GoogleDriveBoardServer
     if (!ok(deleting)) {
       return { result: false, error: deleting.$error };
     }
+    this.userGraphs.delete(url.href);
     return { result: true };
   }
 
@@ -483,7 +371,6 @@ class GoogleDriveBoardServer
   }
 
   async refresh(_location: string): Promise<boolean> {
-    await this.projects;
     return true;
   }
 
@@ -495,44 +382,7 @@ class GoogleDriveBoardServer
     throw new Error("Method not implemented.");
   }
 
-  async restore(): Promise<void> {
-    await this.projects;
-  }
-
-  items(): Map<string, GraphProviderStore> {
-    const items = new Map<string, GraphProviderStore>();
-    const projects: [string, GraphProviderItem][] = [];
-
-    const projectNames = new Set<string>();
-    for (const project of this.#projects) {
-      const title = project.metadata.title ?? "Untitled";
-
-      projectNames.add(title);
-      projects.push([
-        project.url.href,
-        {
-          title,
-          url: project.url.href,
-          mine: project.metadata.owner === this.user.username,
-          readonly: false,
-          handle: null,
-          tags: project.metadata?.tags,
-          username: project.metadata.owner,
-          thumbnail: project.metadata.thumbnail,
-          description: project.metadata.description,
-        },
-      ]);
-    }
-
-    items.set(this.url.href, {
-      items: new Map(projects),
-      permission: "granted",
-      title: this.name,
-      url: this.url.href,
-    });
-
-    return items;
-  }
+  async restore(): Promise<void> {}
 
   dataPartTransformer(_graphUrl: URL): DataPartTransformer {
     return new GoogleDriveDataPartTransformer(

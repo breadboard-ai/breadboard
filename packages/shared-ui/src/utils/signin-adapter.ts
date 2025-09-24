@@ -25,6 +25,7 @@ import {
   ALWAYS_REQUIRED_OAUTH_SCOPES,
   type OAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
+import { clearIdbGraphCache } from "@breadboard-ai/google-drive-kit/board-server/user-graph-collection.js";
 
 export { SigninAdapter };
 
@@ -352,6 +353,7 @@ class SigninAdapter {
       this.#settingsHelper.delete(SETTINGS_TYPE.CONNECTIONS, connection.id),
       // Clear caches on signout because they contain user-specific data, like
       // the user's graphs, which we must not share across different signins.
+      clearIdbGraphCache(),
       (async () =>
         Promise.all(
           (await globalThis.caches.keys()).map((key) =>

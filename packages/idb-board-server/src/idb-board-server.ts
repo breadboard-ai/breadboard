@@ -193,7 +193,7 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
     const idbConfiguration = await deflateConfiguration(configuration);
     await db.put("configuration", idbConfiguration);
 
-    const projects = await configuration.projects;
+    const projects = (await configuration.projects) ?? [];
     for (const project of projects) {
       const idbProject = await deflateProject(project);
       await db.put("projects", idbProject);

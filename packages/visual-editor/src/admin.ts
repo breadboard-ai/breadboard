@@ -100,11 +100,6 @@ export class Admin {
         await this.#gdriveBoardServer().ops.forceRefreshCaches();
         return "Caches reloaded";
       },
-
-      /** Gentle update changes */
-      update: async () => {
-        await this.#gdriveBoardServer().ops.updateCachesOneTime();
-      },
     };
   }
 }

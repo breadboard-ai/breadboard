@@ -69,13 +69,6 @@ export interface ListFilesResponse<T extends File> {
   nextPageToken?: string;
 }
 
-export interface ListChangesOptions extends BaseRequestOptions {
-  pageToken: string;
-  pageSize?: number;
-  includeRemoved?: boolean;
-  includeCorpusRemovals?: boolean;
-}
-
 export type CopyFileOptions = BaseWithFileFields;
 
 export type UploadFileMultipartOptions = BaseWithFileFields;
@@ -702,55 +695,6 @@ export class GoogleDriveClient {
     return response.ok
       ? { ok: true, value: await response.json() }
       : { ok: false, error: { status: response.status } };
-  }
-
-  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/changes/getStartPageToken */
-  async getChangesStartPageToken(
-    options?: BaseRequestOptions
-  ): Promise<string> {
-    const response = await this.#fetch(
-      new URL(`drive/v3/changes/startPageToken`, this.#apiUrl),
-      { signal: options?.signal }
-    );
-    if (!response.ok) {
-      throw new Error(
-        `Google Drive getChangesStartPageToken ${response.status} error: ` +
-          (await response.text())
-      );
-    }
-    const result = (await response.json()) as { startPageToken: string };
-    return result.startPageToken;
-  }
-
-  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/changes/list */
-  async listChanges(
-    options: ListChangesOptions
-  ): Promise<gapi.client.drive.ChangeList> {
-    const url = new URL(`drive/v3/changes`, this.#apiUrl);
-    url.searchParams.set("pageToken", options.pageToken);
-    if (options.pageSize) {
-      url.searchParams.set("pageSize", String(options.pageSize));
-    }
-    if (options.includeRemoved) {
-      url.searchParams.set(
-        "includeRemoved",
-        options.includeRemoved ? "true" : "false"
-      );
-    }
-    if (options.includeCorpusRemovals) {
-      url.searchParams.set(
-        "includeCorpusRemovals",
-        options.includeCorpusRemovals ? "true" : "false"
-      );
-    }
-    const response = await this.#fetch(url, { signal: options.signal });
-    if (!response.ok) {
-      throw new Error(
-        `Google Drive listChanges ${response.status} error: ` +
-          (await response.text())
-      );
-    }
-    return response.json();
   }
 }
 

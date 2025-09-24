@@ -836,24 +836,7 @@ export class Board extends EventTarget {
     }
 
     const capabilities = boardServer.canProvide(boardUrl);
-    if (!capabilities || !capabilities.save) {
-      return false;
-    }
-
-    for (const store of boardServer.items().values()) {
-      for (const item of store.items.values()) {
-        if (
-          item.url !== tab.graph.url &&
-          item.url.replace(USER_REGEX, "/") !== tab.graph.url
-        ) {
-          continue;
-        }
-
-        return item.mine && !item.readonly;
-      }
-    }
-
-    return false;
+    return capabilities && capabilities.save;
   }
 
   isMine(url: string | undefined): boolean {
@@ -876,7 +859,7 @@ export class Board extends EventTarget {
       return false;
     }
 
-    for (const store of boardServer.items().values()) {
+    for (const store of boardServer.items?.().values() ?? []) {
       for (const item of store.items.values()) {
         if (item.url !== url && item.url.replace(USER_REGEX, "/") !== url) {
           continue;

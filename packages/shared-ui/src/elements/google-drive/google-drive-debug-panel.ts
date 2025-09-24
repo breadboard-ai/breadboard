@@ -146,11 +146,6 @@ export class GoogleDriveDebugPanel extends LitElement {
 
       <button @click=${this.#getFile}>Get file</button>
 
-      <p>My projects</p>
-      <ul>
-        ${until(this.#renderUserBoards(), "Loading...")}
-      </ul>
-
       <p>Projects shared with me</p>
       <ul>
         ${until(this.#renderSharedBoards(), "Loading...")}
@@ -177,18 +172,6 @@ export class GoogleDriveDebugPanel extends LitElement {
         ${folderId}
       </a>
     `;
-  }
-
-  async #renderUserBoards() {
-    const server = await this.#googleDriveBoardServer;
-    if (!server) {
-      return nothing;
-    }
-    const projects = await server.projects;
-    return projects.map((project) => {
-      const fileId = project.url.href.replace(/^drive:\//, "");
-      return html` <li>${this.#renderFileLink(fileId)}</li> `;
-    });
   }
 
   async #renderSharedBoards() {
