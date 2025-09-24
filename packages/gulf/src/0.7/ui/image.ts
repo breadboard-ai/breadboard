@@ -39,6 +39,11 @@ export class Image extends Root {
 
     if (this.url && typeof this.url === "object") {
       if ("literalString" in this.url) {
+        let imageUrl = this.url.literalString ?? "";
+        console.log(22222, imageUrl, this.vfs);
+        if (imageUrl.startsWith("/vfs/out")) {
+          imageUrl = this.vfs?.get(imageUrl) ?? "";
+        }
         return html`<img src=${this.url.literalString} />`;
       } else if (this.url && "path" in this.url && this.url.path) {
         if (!this.model) {
@@ -50,6 +55,11 @@ export class Image extends Root {
           .then((data) => {
             if (typeof data !== "string") {
               return html`(invalid)`;
+            }
+            let imageUrl = data ?? "";
+            console.log(22222, imageUrl, this.vfs);
+            if (imageUrl.startsWith("/vfs/out")) {
+              imageUrl = this.vfs?.get(imageUrl) ?? "";
             }
             return html`<img src=${data} />`;
           });

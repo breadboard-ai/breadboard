@@ -10,6 +10,7 @@
     { "path": "packages/data-store" },
     { "path": "packages/embed" },
     { "path": "packages/filesystem-board-server" },
+    { "path": "packages/gulf" },
     { "path": "packages/google-drive-kit" },
     { "path": "packages/idb-board-server" },
     { "path": "packages/schema" },

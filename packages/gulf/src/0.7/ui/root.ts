@@ -36,6 +36,7 @@ import { TagName } from "./ui";
 import { effect } from "signal-utils/subtle/microtask-effect";
 import { map } from "lit/directives/map.js";
 import { DataModel } from "../data/model";
+import { SignalMap } from "signal-utils/map";
 
 const elementMap: Map<ComponentType, TagName> = new Map([
   ["AudioPlayer", "gulf-audioplayer"],
@@ -66,6 +67,9 @@ export class Root extends SignalWatcher(LitElement) {
 
   @property()
   accessor dataPrefix: string = "";
+
+  @property()
+  accessor vfs: SignalMap<string, string> | null = null;
 
   @property()
   set weight(weight: number) {
@@ -221,6 +225,7 @@ export class Root extends SignalWatcher(LitElement) {
                   .model=${this.model}
                   .dataPrefix=${childData.dataPrefix}
                   .url=${renderableComponent.url}
+                  .vfs=${this.vfs}
                 ></gulf-image>`;
               }
 
@@ -232,6 +237,7 @@ export class Root extends SignalWatcher(LitElement) {
                   .model=${this.model}
                   .dataPrefix=${childData.dataPrefix}
                   .url=${renderableComponent.url}
+                  .vfs=${this.vfs}
                 ></gulf-audio>`;
               }
 
@@ -280,6 +286,7 @@ export class Root extends SignalWatcher(LitElement) {
                   .model=${this.model}
                   .dataPrefix=${childData.dataPrefix}
                   .url=${renderableComponent.url}
+                  .vfs=${this.vfs}
                 ></gulf-video>`;
               }
 
