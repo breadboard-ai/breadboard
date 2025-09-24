@@ -200,7 +200,8 @@ class DriveOperations {
     parent: string,
     descriptor: GraphDescriptor
   ) {
-    const fileName = this.fileIdFromUrl(url);
+    const fileId = getFileId(url.href);
+    const fileName = crypto.randomUUID();
     const name = getFileTitle(descriptor);
 
     try {
@@ -210,9 +211,10 @@ class DriveOperations {
         descriptor
       );
 
-      const file = await this.#googleDriveClient.createFile(
+      await this.#googleDriveClient.createFile(
         new Blob([JSON.stringify(descriptor)], { type: GRAPH_MIME_TYPE }),
         {
+          id: fileId,
           name,
           mimeType: GRAPH_MIME_TYPE,
           parents: [parent],
@@ -225,10 +227,9 @@ class DriveOperations {
         },
         { fields: ["id"] }
       );
-      const updatedUrl = `${PROTOCOL}/${file.id}`;
 
-      console.log("[Google Drive] Created new board", updatedUrl);
-      return { result: true, url: updatedUrl };
+      console.log("[Google Drive] Created new board", url.href);
+      return { result: true, url: url.href };
     } catch (err) {
       console.warn(err);
       return { result: false, error: "Unable to create" };
