@@ -8,6 +8,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { DataModel } from "../../0.7/data/model.js";
+import { data as example } from "./test-data.js";
 
 const wait = <T>(t: number, v: T) =>
   new Promise<T>((r) => setTimeout(() => r(v), t));
@@ -122,6 +123,92 @@ describe("DataModel", () => {
 
       const value = await model.getDataProperty("/data/value");
       assert.equal(value, null);
+    });
+
+    it("handles arrays", async () => {
+      const items = [
+        {
+          name: "One",
+        },
+        {
+          name: "Two",
+        },
+        {
+          name: "Three",
+        },
+      ];
+      const model = new DataModel();
+      await model.append([
+        { version: "0.7" },
+        { root: "root" },
+        {
+          path: "/",
+          contents: {
+            items,
+          },
+        },
+      ]);
+      model.finalize();
+
+      const values = await model.getDataProperty("/items");
+      assert.notStrictEqual(values, null);
+      if (!Array.isArray(values)) {
+        assert.fail("Expected Array");
+      }
+
+      const personValues = values as unknown as typeof items;
+      assert.equal(personValues[0].name, "One");
+      assert.equal(personValues[1].name, "Two");
+      assert.equal(personValues[2].name, "Three");
+    });
+  });
+
+  describe("Components", () => {
+    it("expands templates", async () => {
+      const model = new DataModel();
+      await model.append(example);
+      model.finalize();
+
+      if (!model.current) {
+        assert.fail("No valid model");
+      }
+
+      if (!model.current.root.componentProperties.Column) {
+        assert.fail("Expected Column");
+      }
+
+      const mainColumn = model.current.root.componentProperties.Column;
+      assert.equal(Object.keys(mainColumn.children).length, 2);
+
+      const mainColumnChildren = mainColumn.children;
+      if (!Array.isArray(mainColumnChildren)) {
+        assert.fail("Expected child array");
+      }
+
+      // Check Heading.
+      const heading = mainColumnChildren[0];
+      assert.ok(
+        "Heading" in heading.componentProperties &&
+          heading.componentProperties.Heading
+      );
+      assert.ok(
+        "literalString" in heading.componentProperties.Heading.text &&
+          heading.componentProperties.Heading.text.literalString
+      );
+      assert.strictEqual(
+        heading.componentProperties.Heading.text.literalString,
+        "Restaurants in Mountain View"
+      );
+
+      // Check expanded template.
+      const list = mainColumnChildren[1];
+      assert.ok(
+        "List" in list.componentProperties && list.componentProperties.List
+      );
+      assert.ok(
+        Array.isArray(list.componentProperties.List.children) &&
+          list.componentProperties.List.children.length === 3
+      );
     });
   });
 });

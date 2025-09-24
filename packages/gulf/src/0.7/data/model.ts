@@ -66,14 +66,6 @@ class DataModel {
   #components: Component[] = [];
   #finalized = false;
 
-  constructor(updates?: UnifiedUpdate) {
-    if (!updates) {
-      return;
-    }
-
-    this.append(updates);
-  }
-
   get current(): Required<GulfData> | null {
     if (!this.#model) {
       return null;
@@ -128,6 +120,12 @@ class DataModel {
     }
   }
 
+  /**
+   * When set this will prevent getDataProperty calls from returning a Promise
+   * when an as-yet-unset value is requested. In this way we can distinguish
+   * between values that are simply not there *yet* versus those that are not
+   * there whatsoever.
+   */
   finalize() {
     this.#finalized = true;
   }
@@ -144,7 +142,7 @@ class DataModel {
   async #buildComponentTree(target: Component, dataPrefix = "") {
     target.dataPrefix = dataPrefix;
 
-    const handleExplicitList = (
+    const handleExplicitList = async (
       target: Row | Column | List | Card,
       children: string[]
     ) => {
@@ -153,7 +151,7 @@ class DataModel {
         const component = this.#getComponentCopy(child);
         if (component) {
           target.children.push(component);
-          this.#buildComponentTree(component, dataPrefix);
+          await this.#buildComponentTree(component, dataPrefix);
         }
       }
     };
@@ -199,7 +197,7 @@ class DataModel {
 
       const children = component.children;
       if ("explicitList" in children && children.explicitList) {
-        handleExplicitList(component, children.explicitList);
+        await handleExplicitList(component, children.explicitList);
       } else if ("template" in children && children.template) {
         await handleTemplate(component, children.template);
       }
@@ -208,7 +206,7 @@ class DataModel {
     /**
      * Processes components that have a single 'child' property (Card)
      */
-    function processSingleChild(component: Card | undefined) {
+    async function processSingleChild(component: Card | undefined) {
       if (!component) {
         return;
       }
@@ -216,7 +214,7 @@ class DataModel {
       const child = component.child;
       if (typeof child === "string") {
         // Treat the single string child as an explicit list of one
-        handleExplicitList(component, [child]);
+        await handleExplicitList(component, [child]);
       }
     }
 
@@ -227,7 +225,7 @@ class DataModel {
         await processMultiChild(target.componentProperties[key]);
       } else if (isComponentWithChild(key)) {
         // 'key' is now correctly typed as 'Card'
-        processSingleChild(target.componentProperties[key]);
+        await processSingleChild(target.componentProperties[key]);
       }
     }
   }
@@ -335,11 +333,12 @@ class DataModel {
 
       if (target instanceof Map && target.has(part)) {
         target = target.get(part) as DataObject;
-      } else if (target) {
+      } else if (target instanceof Map) {
         const newTarget: DataObject = new SignalMap();
         target.set(part, newTarget);
         target = newTarget;
       } else {
+        console.warn("Unable to set on model; no target");
         return;
       }
     }

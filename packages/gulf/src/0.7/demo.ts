@@ -208,9 +208,17 @@ export class GulfMain extends LitElement {
                     this.#data = this.#data ?? {};
                     if (item.data.gulfMessages) {
                       if (Array.isArray(item.data.gulfMessages)) {
-                        this.#data.model = new DataModel(
-                          item.data.gulfMessages
+                        const streamHeader = item.data.gulfMessages.find(
+                          (msg: { version?: string }) => {
+                            return "version" in msg && msg.version;
+                          }
                         );
+                        if (!streamHeader) {
+                          item.data.gulfMessages.unshift({ version: "0.7" });
+                        }
+                        this.#data.model = new DataModel();
+                        await this.#data.model.append(item.data.gulfMessages);
+                        this.#data.model.finalize();
 
                         (window as unknown as { __model: DataModel }).__model =
                           this.#data.model;
@@ -229,7 +237,7 @@ export class GulfMain extends LitElement {
           >
             <input
               required
-              value="Show me a list of image cards with information about Italian restaurants in downtown New York."
+              value="Chinese restaurants in Mountain View."
               autocomplete="off"
               id="body"
               name="body"
