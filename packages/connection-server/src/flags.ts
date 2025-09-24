@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 export type SameSite = "Lax" | "None" | "Strict";
 
 export const ALLOWED_ORIGINS: string[] = getStringList("ALLOWED_ORIGINS", {
