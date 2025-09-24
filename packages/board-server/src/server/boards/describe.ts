@@ -12,7 +12,6 @@ import {
   StubFileSystem,
   type NodeDescriberResult,
 } from "@google-labs/breadboard";
-import { NodeSandbox } from "@breadboard-ai/jsandbox/node";
 import type { StorageBoard } from "../store.js";
 
 export const addKeyInput = (describeResult: NodeDescriberResult) => {
