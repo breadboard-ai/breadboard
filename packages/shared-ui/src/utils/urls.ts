@@ -23,6 +23,7 @@ export interface BaseUrlInit {
       | "geo-restriction"
       | "missing-scopes";
   };
+  oauthRedirect?: string;
 }
 
 export function devUrlParams(): Required<BaseUrlInit>["dev"] {
@@ -49,7 +50,6 @@ export interface GraphInit extends BaseUrlInit {
 export interface LandingUrlInit extends BaseUrlInit {
   page: "landing";
   redirect: MakeUrlInit;
-  oauthRedirect?: string;
   missingScopes?: boolean;
   geoRestriction?: boolean;
 }
@@ -78,6 +78,9 @@ export function makeUrl(
     typeof base === "string" ? new URL(base).origin : base.origin;
   const url = new URL(baseOrigin);
   const { page } = init;
+  if (init?.oauthRedirect) {
+    url.searchParams.set(OAUTH_REDIRECT, init.oauthRedirect);
+  }
   if (page === "home") {
     url.pathname = "/";
     url.searchParams.set(MODE, init.mode ?? MODE_CANVAS);
@@ -111,9 +114,6 @@ export function makeUrl(
         url.searchParams.set(redirectParam, redirectValue);
       }
     }
-    if (init.oauthRedirect) {
-      url.searchParams.set(OAUTH_REDIRECT, init.oauthRedirect);
-    }
   } else {
     page satisfies never;
     throw new Error(
@@ -144,6 +144,7 @@ export function parseUrl(url: string | URL): MakeUrlInit {
     url = new URL(url);
   }
   let dev: BaseUrlInit["dev"];
+  const oauthRedirect = url.searchParams.get(OAUTH_REDIRECT);
   for (const [key, val] of url.searchParams) {
     if (key.startsWith(DEV_PREFIX)) {
       dev ??= {};
@@ -172,7 +173,6 @@ export function parseUrl(url: string | URL): MakeUrlInit {
     if (url.searchParams.has(MISSING_SCOPES)) {
       landing.missingScopes = true;
     }
-    const oauthRedirect = url.searchParams.get(OAUTH_REDIRECT);
     if (oauthRedirect) {
       landing.oauthRedirect = oauthRedirect;
     }
@@ -191,6 +191,9 @@ export function parseUrl(url: string | URL): MakeUrlInit {
       if (dev) {
         home.dev = dev;
       }
+      if (oauthRedirect) {
+        home.oauthRedirect = oauthRedirect;
+      }
       return home;
     }
     const graph: GraphInit = {
@@ -208,6 +211,9 @@ export function parseUrl(url: string | URL): MakeUrlInit {
     }
     if (dev) {
       graph.dev = dev;
+    }
+    if (oauthRedirect) {
+      graph.oauthRedirect = oauthRedirect;
     }
     return graph;
   }

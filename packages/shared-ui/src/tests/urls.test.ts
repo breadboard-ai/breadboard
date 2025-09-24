@@ -191,17 +191,18 @@ suite("landing", () => {
   );
 
   testSymmetrical(
-    `${BASE_URL}/landing/?flow=drive:/abc123&mode=app&oauth_redirect=foo`,
+    `${BASE_URL}/landing/?oauth_redirect=foo&flow=drive:/abc123&mode=app`,
     {
+      oauthRedirect: "foo",
       page: "landing",
       redirect: {
         page: "graph",
         mode: "app",
+        oauthRedirect: "foo",
         redirectFromLanding: true,
         flow: "drive:/abc123",
         resourceKey: undefined,
       },
-      oauthRedirect: "foo",
     }
   );
 
