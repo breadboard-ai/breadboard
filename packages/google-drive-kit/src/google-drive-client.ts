@@ -696,6 +696,24 @@ export class GoogleDriveClient {
       ? { ok: true, value: await response.json() }
       : { ok: false, error: { status: response.status } };
   }
+
+  /** https://developers.google.com/workspace/drive/api/reference/rest/v3/files/generateIds */
+  async generateIds(
+    count: number,
+    options?: BaseRequestOptions
+  ): Promise<[string, ...string[]]> {
+    const url = new URL(`drive/v3/files/generateIds`, this.#apiUrl);
+    url.searchParams.set("count", String(count));
+    const response = await this.#fetch(url, { signal: options?.signal });
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive generateIds ${response.status} error: ` +
+          (await response.text())
+      );
+    }
+    const result = (await response.json()) as gapi.client.drive.GeneratedIds;
+    return result.ids as [string, ...string[]];
+  }
 }
 
 /**
