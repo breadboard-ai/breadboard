@@ -10,10 +10,18 @@ import type { DataModelUpdateMessage, DataObject } from "./data-update";
 import { StreamHeaderMessage } from "./stream-header";
 
 export interface GulfData {
-  version: string;
-  root: Component;
-  data: DataObject;
+  version?: string;
+  rootName?: string;
+  root?: Component;
+  data?: DataObject;
 }
+
+export type {
+  StreamHeaderMessage,
+  BeginRenderingMessage,
+  ComponentUpdateMessage,
+  DataModelUpdateMessage,
+};
 
 export type UnifiedUpdate = Array<
   | StreamHeaderMessage

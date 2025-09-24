@@ -17,6 +17,8 @@ export const BACKEND_API_ENDPOINT: string = getString("BACKEND_API_ENDPOINT");
 
 export const ENABLE_FORCE_2D_GRAPH = getBoolean("ENABLE_FORCE_2D_GRAPH");
 
+export const ENABLE_GULF_RENDERER = getBoolean("ENABLE_GULF_RENDERER");
+
 export const ENABLE_GENERATE_FOR_EACH = getBoolean("ENABLE_GENERATE_FOR_EACH");
 
 export const ENABLE_GOOGLE_FEEDBACK = getBoolean("ENABLE_GOOGLE_FEEDBACK");
@@ -67,6 +69,7 @@ export async function getClientConfig(): Promise<ClientDeploymentConfiguration> 
       generateForEach: ENABLE_GENERATE_FOR_EACH,
       mcp: ENABLE_MCP,
       force2DGraph: ENABLE_FORCE_2D_GRAPH,
+      gulfRenderer: ENABLE_GULF_RENDERER,
     },
   };
 }

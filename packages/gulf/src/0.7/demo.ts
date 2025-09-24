@@ -120,12 +120,20 @@ export class GulfMain extends LitElement {
       return nothing;
     }
 
+    if (
+      !this.#data.model ||
+      !this.#data.model.current ||
+      !this.#data.model.current.root
+    ) {
+      return nothing;
+    }
+
     return [
       this.#data.model
         ? html`<gulf-root
-              id=${this.#data.model.data.root.id}
+              id=${this.#data.model.current.root.id}
               .model=${this.#data.model}
-              .components=${[this.#data.model.data.root]}
+              .components=${[this.#data.model.current.root]}
               @gulfaction=${async (evt: StateEvent<"gulf.action">) => {
                 if (!this.#data?.model) {
                   return;

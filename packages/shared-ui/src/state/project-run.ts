@@ -61,6 +61,8 @@ import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
 import { edgeToString } from "../utils/workspace";
 import { Signal } from "signal-polyfill";
+import * as GULF from "@breadboard-ai/gulf";
+import * as GULFUtils from "./gulf/utils.js";
 
 export { createProjectRunStateFromFinalOutput, ReactiveProjectRun };
 
@@ -103,6 +105,7 @@ function error(msg: string) {
 class ReactiveProjectRun implements ProjectRun {
   app: ReactiveApp = new ReactiveApp(this);
   console: Map<string, ConsoleEntry> = new SignalMap();
+  __experimental_gulf: GULF.Data.DataModel = new GULF.Data.DataModel();
 
   #dismissedErrors = new SignalSet<NodeIdentifier>();
   #seenErrors = new Set<NodeIdentifier>();
@@ -251,6 +254,7 @@ class ReactiveProjectRun implements ProjectRun {
     if (runner) {
       runner.addEventListener("start", () => {
         this.status = "running";
+        this.__experimental_gulf.append([GULFUtils.toGulfStream()]);
       });
       runner.addEventListener("pause", () => {
         this.status = "paused";
@@ -480,9 +484,12 @@ class ReactiveProjectRun implements ProjectRun {
       entry.finalize(event.data);
     }
     this.app.screens.get(id)?.finalize(event.data);
+    this.__experimental_gulf.append(GULFUtils.toGulfOutput(event));
   }
 
   #input(event: RunInputEvent) {
+    this.__experimental_gulf.append(GULFUtils.toGulfInput(event));
+
     const { path } = event.data;
     console.debug("Project Run: Input", event);
     if (!this.current) {
