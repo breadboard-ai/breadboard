@@ -28,7 +28,7 @@ function createGoogleCalendarClient(
     url: "builtin:gcal",
   });
   client.addTool(
-    "calendar_list_events",
+    "gcal_list_events",
     {
       title: "List events",
       description:
@@ -153,73 +153,75 @@ These search terms also match predefined keywords against all display title tran
     }
   );
 
-  client.addTool(
-    "calendar_create_event",
-    {
-      title: "Create event",
-      description:
-        "Creates a Google Calendar event in the user's primary calendar.",
-      inputSchema: {
-        summary: z.string().describe(`The title of the event`),
-        end: z
-          .string()
-          .describe(
-            `The (exclusive) end time of the event. For a recurring event, this is the end time of the first instance. Value must be a combined date-time value (formatted according to RFC3339).`
-          ),
-        start: z
-          .string()
-          .describe(
-            `The (inclusive) start time of the event. For a recurring event, this is the start time of the first instance.Value must be a combined date-time value (formatted according to RFC3339).`
-          ),
-        status: z.string()
-          .describe(`Status of the event. Optional. Possible values are:
+  const eventSchema = {
+    summary: z.string().describe(`The title of the event`),
+    end: z
+      .string()
+      .describe(
+        `The (exclusive) end time of the event. For a recurring event, this is the end time of the first instance. Value must be a combined date-time value (formatted according to RFC3339).`
+      ),
+    start: z
+      .string()
+      .describe(
+        `The (inclusive) start time of the event. For a recurring event, this is the start time of the first instance.Value must be a combined date-time value (formatted according to RFC3339).`
+      ),
+    status: z.string()
+      .describe(`Status of the event. Optional. Possible values are:
 - "confirmed" - The event is confirmed. This is the default status.
 - "tentative" - The event is tentatively confirmed.
 - "cancelled" - The event is cancelled (deleted).`),
-        visibility: z
-          .string()
-          .describe(
-            `Visibility of the event. Optional. Possible values are:
+    visibility: z
+      .string()
+      .describe(
+        `Visibility of the event. Optional. Possible values are:
 - "default" - Uses the default visibility for events on the calendar. This is the default value.
 - "public" - The event is public and event details are visible to all readers of the calendar.
 - "private" - The event is private and only event attendees may view event details.
 - "confidential" - The event is private. This value is provided for compatibility reasons.`
-          )
-          .optional(),
-        guestsCanModifiy: z
-          .boolean()
-          .describe(
-            `Whether attendees other than the organizer can invite others to the event. Optional. The default is True.`
-          )
-          .optional(),
-        attendees: z
-          .array(
-            z.object({
-              email: z
-                .string()
-                .describe(
-                  `The attendee's email address, if available. This field must be present when adding an attendee. It must be a valid email address as per RFC5322.`
-                ),
-              optional: z
-                .string()
-                .describe(
-                  `Whether this is an optional attendee. Optional. The default is False.`
-                )
-                .optional(),
-            })
-          )
-          .describe(`The attendees of the event.`),
-        googleMeet: z
-          .boolean()
-          .describe(
-            `Whether or not to add a Google Meet link to the event. Optional, the default is False`
-          )
-          .optional(),
-        description: z
-          .string()
-          .describe(`Description of the event. Can contain HTML. Optional.`)
-          .optional(),
-      },
+      )
+      .optional(),
+    guestsCanModifiy: z
+      .boolean()
+      .describe(
+        `Whether attendees other than the organizer can invite others to the event. Optional. The default is True.`
+      )
+      .optional(),
+    attendees: z
+      .array(
+        z.object({
+          email: z
+            .string()
+            .describe(
+              `The attendee's email address, if available. This field must be present when adding an attendee. It must be a valid email address as per RFC5322.`
+            ),
+          optional: z
+            .string()
+            .describe(
+              `Whether this is an optional attendee. Optional. The default is False.`
+            )
+            .optional(),
+        })
+      )
+      .describe(`The attendees of the event.`),
+    googleMeet: z
+      .boolean()
+      .describe(
+        `Whether or not to add a Google Meet link to the event. Optional, the default is False`
+      )
+      .optional(),
+    description: z
+      .string()
+      .describe(`Description of the event. Can contain HTML. Optional.`)
+      .optional(),
+  };
+
+  client.addTool(
+    "gcal_create_event",
+    {
+      title: "Create event",
+      description:
+        "Creates a Google Calendar event in the user's primary calendar.",
+      inputSchema: eventSchema,
     },
     async ({
       summary,
@@ -231,7 +233,7 @@ These search terms also match predefined keywords against all display title tran
       googleMeet,
       description,
     }) => {
-      type Resource = Parameters<typeof gapi.client.calendar.events.insert>[1];
+      type Event = gapi.client.calendar.Event;
 
       const calendar = await loadCalendarApi(tokenGetter);
       if (!ok(calendar)) {
@@ -248,7 +250,7 @@ These search terms also match predefined keywords against all display title tran
                 },
               },
             },
-          } satisfies Resource)
+          } satisfies Event)
         : {};
 
       const inserting = await calendar.events.insert(
@@ -263,9 +265,9 @@ These search terms also match predefined keywords against all display title tran
             dateTime: start,
             timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           },
-          visibility: visibility as Resource["visibility"],
-          status: status as Resource["status"],
-          attendees: attendees as Resource["attendees"],
+          visibility: visibility as Event["visibility"],
+          status: status as Event["status"],
+          attendees: attendees as Event["attendees"],
           description,
           ...conferenceData,
         }
@@ -273,6 +275,110 @@ These search terms also match predefined keywords against all display title tran
       if (inserting.status !== 200) {
         return mcpErr(
           inserting.statusText || "Failed to add Google Calendar event"
+        );
+      }
+
+      return mcpText("Success");
+    }
+  );
+
+  client.addTool(
+    "gcal_update_event",
+    {
+      title: "Update event",
+      description:
+        "Makes an update to a Google Calendar event on user's primary calendar",
+      inputSchema: {
+        eventId: z.string().describe("Event identifier"),
+        ...eventSchema,
+      },
+    },
+    async ({
+      eventId,
+      summary,
+      start,
+      end,
+      status,
+      visibility,
+      attendees,
+      googleMeet,
+      description,
+    }) => {
+      type Event = gapi.client.calendar.Event;
+
+      const calendar = await loadCalendarApi(tokenGetter);
+      if (!ok(calendar)) {
+        return mcpErr(calendar.$error);
+      }
+      const conferenceData = googleMeet
+        ? ({
+            conferenceData: {
+              createRequest: {
+                requestId: crypto.randomUUID(),
+                conferenceSolutionKey: {
+                  type: "hangoutsMeet",
+                },
+              },
+            },
+          } satisfies Event)
+        : {};
+      const updating = await calendar.events.update(
+        {
+          eventId,
+          calendarId: "primary",
+          conferenceDataVersion: 1,
+        },
+        filterUndefined({
+          summary,
+          end: {
+            dateTime: end,
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          },
+          start: {
+            dateTime: start,
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          },
+          visibility: visibility as Event["visibility"],
+          status: status as Event["status"],
+          attendees: attendees as Event["attendees"],
+          description,
+          ...conferenceData,
+        })
+      );
+
+      if (updating.status !== 200) {
+        return mcpErr(
+          updating.statusText || "Failed to update Google Calendar event"
+        );
+      }
+
+      return mcpText("Success");
+    }
+  );
+
+  client.addTool(
+    "gcal_delete_event",
+    {
+      title: "Delete event",
+      description:
+        "Deletes specified Google Calendar event from the user's primary calendar",
+      inputSchema: {
+        eventId: z.string().describe("Event identifier"),
+      },
+    },
+    async ({ eventId }) => {
+      const calendar = await loadCalendarApi(tokenGetter);
+      if (!ok(calendar)) {
+        return mcpErr(calendar.$error);
+      }
+
+      const deleting = await calendar.events.delete({
+        calendarId: "primary",
+        eventId,
+      });
+      if (deleting.status !== 200) {
+        return mcpErr(
+          deleting.statusText || "Unable to delete Google Calendar event"
         );
       }
 
