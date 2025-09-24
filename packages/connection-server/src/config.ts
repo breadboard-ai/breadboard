@@ -56,7 +56,7 @@ export async function createConnectionConfig(): Promise<
   Map<string, ConnectionConfig>
 > {
   if (flags.CONNECTIONS_FILE) {
-    return loadConnections();
+    return loadConnectionsFile();
   }
   if (!flags.OAUTH_CLIENT) {
     return new Map();
@@ -78,7 +78,7 @@ export async function createConnectionConfig(): Promise<
   return connections;
 }
 
-async function loadConnections(): Promise<Map<string, ConnectionConfig>> {
+async function loadConnectionsFile(): Promise<Map<string, ConnectionConfig>> {
   console.log(
     `[connection-server startup] Loading connections file from ${flags.CONNECTIONS_FILE}`
   );
