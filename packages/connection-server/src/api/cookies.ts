@@ -4,4 +4,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export const oAuthRefreshTokenCookieId = "OAuthRefreshToken";
+export const REFRESH_TOKEN = "OAuthRefreshToken";

@@ -9,7 +9,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { ServerConfig } from "../config.js";
 import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
 import { badRequestJson, internalServerError, okJson } from "../responses.js";
-import { oAuthRefreshTokenCookieId } from "./cookies.js";
+import * as cookies from "./cookies.js";
 
 export type TokenEndpointGrantResponse =
   | { error: string }
@@ -109,7 +109,7 @@ export async function grant(
     res.setHeader(
       "Set-Cookie",
       [
-        `${oAuthRefreshTokenCookieId}=${tokenResponse.refresh_token}`,
+        `${cookies.REFRESH_TOKEN}=${tokenResponse.refresh_token}`,
         `HttpOnly`,
         `Max-Age=${365 * 24 * 60 * 60}`,
         `Path=/connection/refresh`,
