@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capability } from "@breadboard-ai/jsandbox";
+import { Capability } from "@breadboard-ai/types/sandbox.js";
 import {
   FileSystem,
   FileSystemQueryArguments,

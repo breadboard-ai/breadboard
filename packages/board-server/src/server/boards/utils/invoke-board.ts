@@ -17,7 +17,6 @@ import {
 import { BoardServerProvider } from "./board-server-provider.js";
 import { formatRunError } from "./format-run-error.js";
 import type { InvokeBoardArguments } from "../../types.js";
-import { NodeSandbox } from "@breadboard-ai/jsandbox/node";
 
 export const invokeBoard = async ({
   url,

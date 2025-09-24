@@ -5,8 +5,8 @@
  */
 
 import { OutputValues, UUID } from "@breadboard-ai/types";
-import { Telemetry } from "./telemetry.js";
 import { Capability, CapabilitySpec } from "./types.js";
+import { RunnableModuleTelemetry } from "@breadboard-ai/types/sandbox.js";
 
 export {
   fetch,
@@ -24,7 +24,7 @@ export {
 
 type Installed = {
   capabilities: Map<string, Capability>;
-  telemetry?: Telemetry;
+  telemetry?: RunnableModuleTelemetry;
 };
 
 class Capabilities {
@@ -77,7 +77,7 @@ class Capabilities {
   install(
     invocationId: UUID,
     capabilities: CapabilitySpec,
-    telemetry?: Telemetry
+    telemetry?: RunnableModuleTelemetry
   ) {
     if (this.#capabilities.has(invocationId)) {
       throw new Error(

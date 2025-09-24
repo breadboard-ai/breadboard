@@ -5,7 +5,6 @@
  */
 
 import { inflateData } from "@breadboard-ai/data";
-import { Telemetry } from "@breadboard-ai/jsandbox";
 import { CapabilitiesManagerImpl } from "@breadboard-ai/runtime/legacy.js";
 import type {
   InputValues,
@@ -20,6 +19,7 @@ import type {
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
+import { Telemetry } from "./telemetry.js";
 
 export { addRunModule };
 
@@ -121,12 +121,6 @@ function addRunModule(
               const graph = context.outerGraph;
               const moduleDeclaration = graph?.modules;
               if ($module && moduleDeclaration) {
-                const modules = Object.fromEntries(
-                  Object.entries(moduleDeclaration).map(([name, spec]) => [
-                    name,
-                    spec.code,
-                  ])
-                );
                 const mutable = await getMutableGraph(context);
                 if (mutable) {
                   const module = await factory.createRunnableModule(

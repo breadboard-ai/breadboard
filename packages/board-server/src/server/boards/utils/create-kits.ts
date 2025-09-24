@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeSandbox } from "@breadboard-ai/jsandbox/node";
 import {
   addRunModule,
   asRuntimeKit,
