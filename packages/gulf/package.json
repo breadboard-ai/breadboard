@@ -3,20 +3,27 @@
   "private": true,
   "version": "0.1.0",
   "description": "AI-first UI Toolkit Demo",
-  "main": "./dist/src/index.js",
-  "exports": "./dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "main": "./dist/index.js",
+  "exports": "./dist/index.js",
+  "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
     "build": "wireit",
     "build:tsc": "wireit",
     "lint": "wireit",
-    "dev": "wireit"
+    "dev": "wireit",
+    "test": "wireit"
   },
   "wireit": {
     "dev": {
       "command": "vite dev",
+      "dependencies": [
+        "build"
+      ]
+    },
+    "test": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/**/*.test.js",
       "dependencies": [
         "build"
       ]

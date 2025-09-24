@@ -39,7 +39,8 @@ export class Image extends Root {
 
     if (this.url && typeof this.url === "object") {
       if ("literalString" in this.url) {
-        return html`<img src=${this.url.literalString} />`;
+        const imageUrl = this.url.literalString ?? "";
+        return html`<img src=${imageUrl} />`;
       } else if (this.url && "path" in this.url && this.url.path) {
         if (!this.model) {
           return html`(no model)`;
@@ -51,7 +52,8 @@ export class Image extends Root {
             if (typeof data !== "string") {
               return html`(invalid)`;
             }
-            return html`<img src=${data} />`;
+            const imageUrl = data ?? "";
+            return html`<img src=${imageUrl} />`;
           });
         return html`${until(imageUrl)}`;
       }

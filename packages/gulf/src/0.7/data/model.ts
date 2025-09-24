@@ -61,6 +61,7 @@ class DataModel {
   #data: GulfData;
   #watchers = new Map<string, Array<(data: DataValue) => void>>();
   #components: Component[] = [];
+  #finalized = false;
 
   constructor(data: UnifiedUpdate) {
     let streamHeader: StreamHeaderMessage | undefined = undefined;
@@ -82,28 +83,28 @@ class DataModel {
     }
 
     if (!beginRendering) {
-      console.warn("WARN: Unable to load; messages were not received");
-      this.#data = {} as GulfData;
-      return;
+      throw new Error("WARN: Unable to load; messages were not received");
     }
 
     const root = this.#getComponentCopy(beginRendering.root);
-    if (!root) {
-      console.warn("WARN: Unable to load; no root provided");
-      this.#data = {} as GulfData;
-      return;
+    if (root) {
+      console.log(`INFO: GULF v${streamHeader.version}`);
+      console.log(`INFO: New Render on ${beginRendering.root}`);
+
+      this.#data = new SignalObject({
+        version: streamHeader.version,
+        root,
+        data: new SignalMap() as DataObject,
+      });
+
+      this.#buildComponentTree(root);
     }
 
-    console.log(`INFO: GULF v${streamHeader.version}`);
-    console.log(`INFO: New Render on ${beginRendering.root}`);
-
-    this.#data = new SignalObject({
+    // TODO: Resolve building with Data first here.
+    this.#data = {
       version: streamHeader.version,
-      root,
       data: new SignalMap() as DataObject,
-    });
-
-    this.#buildComponentTree(root);
+    } as GulfData;
 
     for (const msg of data) {
       if (!isDataModelUpdate(msg)) {
@@ -116,6 +117,10 @@ class DataModel {
 
   get data(): GulfData {
     return this.#data;
+  }
+
+  finalize() {
+    this.#finalized = true;
   }
 
   #getComponentCopy(id: string) {
@@ -243,10 +248,10 @@ class DataModel {
       }
 
       key = `${dataPrefix}${joiner}${key}`;
-    } else {
-      if (!key.startsWith("/")) {
-        key = `/${key}`;
-      }
+    }
+
+    if (!key.startsWith("/")) {
+      key = `/${key}`;
     }
 
     return key;
@@ -270,6 +275,7 @@ class DataModel {
       const part = parts[p];
       if (part === "") {
         target = this.#data.data;
+        continue;
       }
 
       if (target instanceof Map && target.has(part)) {
@@ -279,6 +285,8 @@ class DataModel {
         !Number.isNaN(Number.parseInt(part))
       ) {
         target = target[Number.parseInt(part)];
+      } else if (this.#finalized) {
+        return null;
       } else {
         return new Promise((resolve) => {
           const callbacks = this.#watchers.get(key) ?? [];
@@ -312,6 +320,7 @@ class DataModel {
       const part = parts[p];
       if (part === "") {
         target = this.#data.data;
+        continue;
       }
 
       if (target instanceof Map && target.has(part)) {
