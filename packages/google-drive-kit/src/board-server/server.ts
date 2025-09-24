@@ -107,6 +107,29 @@ class GoogleDriveBoardServer
     string,
     { isMine: boolean; latestSharedVersion: number }
   >();
+
+  /**
+   * Graphs that are actively being created in the background right now.
+   *
+   * The create method doesn't actually block on the entire create operation
+   * completing (which can take ~5s); instead it only blocks on allocating a
+   * file ID (which takes ~100ms), and stores the initial descriptor and a
+   * promise of create completion in this map.
+   *
+   * The load method then returns the initial descriptor directly from this map,
+   * until the next mutation invalidates it. The mutating methods (create and
+   * delete) block on these pending creates, and then clear the entry.
+   *
+   * This lets the user start editing a newly created graph almost immediately.
+   */
+  readonly #pendingCreates = new Map<
+    string,
+    {
+      descriptor: GraphDescriptor;
+      createDone: Promise<void>;
+    }
+  >();
+
   readonly galleryGraphs = new DriveGalleryGraphCollection();
   readonly userGraphs: DriveUserGraphCollection;
 
@@ -157,6 +180,17 @@ class GoogleDriveBoardServer
         }
       }
     })());
+  }
+
+  /**
+   * See {@link GoogleDriveBoardServer.#pendingCreates} for explanation.
+   */
+  async #waitForPendingCreateAndInvalidateItIfNeeded(url: URL): Promise<void> {
+    const pendingCreate = this.#pendingCreates.get(url.href);
+    if (pendingCreate) {
+      await pendingCreate.createDone;
+      this.#pendingCreates.delete(url.href);
+    }
   }
 
   async #isGalleryGraphFile(fileId: string): Promise<boolean> {
@@ -217,6 +251,12 @@ class GoogleDriveBoardServer
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {
+    // Fast path for just-created graphs. See #pendingCreates for more details.
+    const pendingCreate = this.#pendingCreates.get(url.href);
+    if (pendingCreate) {
+      return pendingCreate.descriptor;
+    }
+
     const fileId: DriveFileId = {
       id: getFileId(url.href),
       resourceKey: url.searchParams.get("resourcekey") ?? undefined,
@@ -271,6 +311,8 @@ class GoogleDriveBoardServer
     descriptor: GraphDescriptor,
     userInitiated: boolean
   ): Promise<{ result: boolean; error?: string }> {
+    await this.#waitForPendingCreateAndInvalidateItIfNeeded(url);
+
     let saving = this.#saving.get(url.href);
     if (!saving) {
       saving = new SaveDebouncer(this.ops, {
@@ -299,22 +341,34 @@ class GoogleDriveBoardServer
   }
 
   async create(
-    url: URL,
+    _url: URL,
     descriptor: GraphDescriptor
   ): Promise<{ result: boolean; error?: string; url?: string }> {
-    const parent = await this.ops.findOrCreateFolder();
-    if (!ok(parent)) {
-      return { result: false, error: parent.$error };
-    }
+    const url = await this.createURL();
 
-    const writing = await this.ops.writeNewGraphToDrive(
-      url,
-      parent,
-      descriptor
-    );
-    if (!writing.error && writing.url) {
+    const createDone = (async (): Promise<void> => {
+      const parent = await this.ops.findOrCreateFolder();
+      if (!ok(parent)) {
+        console.error(
+          `[drive board server] Error creating parent`,
+          parent.$error
+        );
+        return;
+      }
+      const writing = await this.ops.writeNewGraphToDrive(
+        new URL(url),
+        parent,
+        descriptor
+      );
+      if (writing.error) {
+        console.error(
+          `[drive board server] Error writing graph`,
+          writing.error
+        );
+        return;
+      }
       this.userGraphs.put({
-        url: writing.url,
+        url,
         title: descriptor.title,
         description: descriptor.description,
         thumbnail: getThumbnail(descriptor).data,
@@ -322,8 +376,14 @@ class GoogleDriveBoardServer
         readonly: false,
         handle: null,
       });
-    }
-    return writing;
+    })();
+
+    this.#pendingCreates.set(url, { descriptor, createDone });
+    this.#loadedGraphMetadata.set(url, {
+      isMine: true,
+      latestSharedVersion: -1,
+    });
+    return { result: true, url };
   }
 
   async deepCopy(_url: URL, graph: GraphDescriptor): Promise<GraphDescriptor> {
@@ -353,6 +413,8 @@ class GoogleDriveBoardServer
   }
 
   async delete(url: URL): Promise<{ result: boolean; error?: string }> {
+    await this.#waitForPendingCreateAndInvalidateItIfNeeded(url);
+
     this.#saving.get(url.href)?.cancelPendingSave();
     const deleting = await this.ops.deleteGraph(url);
     if (!ok(deleting)) {
@@ -374,8 +436,9 @@ class GoogleDriveBoardServer
     return true;
   }
 
-  async createURL(location: string, fileName: string): Promise<string | null> {
-    return `${location}/${fileName}`;
+  async createURL(): Promise<string> {
+    const fileId = (await this.#googleDriveClient.generateIds(1))[0];
+    return `drive:/${fileId}`;
   }
 
   parseURL(_url: URL): { location: string; fileName: string } {

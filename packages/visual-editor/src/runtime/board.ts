@@ -1052,10 +1052,11 @@ export class Board extends EventTarget {
   }
 
   #isSavingAs = false;
+
   async saveAs(
     boardServerName: string,
-    location: string,
-    fileName: string,
+    _location: string,
+    _fileName: string,
     graph: GraphDescriptor,
     ackUser = true,
     ackUserMessage: { start: string; end: string; error: string }
@@ -1100,10 +1101,21 @@ export class Board extends EventTarget {
       return fail;
     }
 
-    let response: { result: boolean; error?: string; url?: string };
-    let url: URL;
     try {
-      const urlString = await boardServer.createURL(location, fileName);
+      // A couple of our methods take a graph URL even though it's not used.
+      const ignoredPlaceholderUrl = new URL("http://invalid");
+
+      // Replace pointers with inline data so that copies get created when saving.
+      graph = await this.#deepCopyGraph(
+        boardServer,
+        graph,
+        ignoredPlaceholderUrl
+      );
+
+      const { url: urlString } = await boardServer.create(
+        ignoredPlaceholderUrl,
+        graph
+      );
       if (!urlString) {
         this.#isSavingAs = false;
         if (snackbarId) {
@@ -1121,15 +1133,7 @@ export class Board extends EventTarget {
         return fail;
       }
 
-      url = new URL(urlString);
-
-      // Replace pointers with inline data so that copies get created when saving.
-      graph = await this.#deepCopyGraph(boardServer, graph, url);
-
-      response = await boardServer.create(url, graph);
-      if (response.url) {
-        url = new URL(response.url);
-      }
+      return { result: true, url: new URL(urlString) };
     } catch (e) {
       return fail;
     } finally {
@@ -1138,8 +1142,6 @@ export class Board extends EventTarget {
       }
       this.#isSavingAs = false;
     }
-
-    return { ...response, url };
   }
 
   async delete(
