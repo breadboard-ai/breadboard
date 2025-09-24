@@ -199,7 +199,6 @@ export function parseUrl(url: string | URL): MakeUrlInit {
     const graph: GraphInit = {
       page: "graph",
       mode: url.searchParams.get(MODE) === "app" ? "app" : "canvas",
-      oauthRedirect: oauthRedirect ?? undefined,
       flow: flow,
       resourceKey: url.searchParams.get(RESOURCE_KEY) ?? undefined,
     };
@@ -212,6 +211,9 @@ export function parseUrl(url: string | URL): MakeUrlInit {
     }
     if (dev) {
       graph.dev = dev;
+    }
+    if (oauthRedirect) {
+      graph.oauthRedirect = oauthRedirect;
     }
     return graph;
   }

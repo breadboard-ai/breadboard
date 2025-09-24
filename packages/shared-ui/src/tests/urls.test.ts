@@ -191,7 +191,7 @@ suite("landing", () => {
   );
 
   testSymmetrical(
-    `${BASE_URL}/landing/?flow=drive:/abc123&mode=app&oauth_redirect=foo`,
+    `${BASE_URL}/landing/?flow=drive:/abc123&oauth_redirect=foo&mode=app`,
     {
       page: "landing",
       redirect: {
