@@ -16,7 +16,7 @@ import {
   ActionTracker,
   initializeAnalytics,
 } from "@breadboard-ai/shared-ui/utils/action-tracker.js";
-import { discoverClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import * as Shell from "./shell.js";
 import {
   parseUrl,
@@ -29,7 +29,7 @@ if (parsedUrl.page !== "landing") {
   console.warn("unexpected parse of landing page url", parsedUrl);
 }
 
-const deploymentConfiguration = discoverClientDeploymentConfiguration();
+const deploymentConfiguration = CLIENT_DEPLOYMENT_CONFIG;
 
 function redirect() {
   window.location.href = makeUrl(parsedUrl.redirect);

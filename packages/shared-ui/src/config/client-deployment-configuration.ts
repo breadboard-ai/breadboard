@@ -23,7 +23,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   gulfRenderer: false,
 };
 
-export function populateFlags(
+function populateFlags(
   config: Partial<ClientDeploymentConfiguration>
 ): ClientDeploymentConfiguration {
   return {
@@ -32,7 +32,7 @@ export function populateFlags(
   };
 }
 
-export function discoverClientDeploymentConfiguration(): ClientDeploymentConfiguration {
+function discoverClientDeploymentConfiguration(): ClientDeploymentConfiguration {
   // Fish out the configuration from DOM, which the server is responsible for
   // including in the main HTML file.
   const text =
@@ -50,3 +50,5 @@ export function discoverClientDeploymentConfiguration(): ClientDeploymentConfigu
     return populateFlags({});
   }
 }
+
+export const CLIENT_DEPLOYMENT_CONFIG = discoverClientDeploymentConfiguration();
