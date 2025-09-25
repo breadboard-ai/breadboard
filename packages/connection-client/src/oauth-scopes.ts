@@ -50,6 +50,11 @@ export const OAUTH_SCOPES = {
   "https://www.googleapis.com/auth/calendar.events.owned": {
     category: "Google Calendar",
   },
+
+  // https://developers.google.com/workspace/gmail/api/auth/scopes
+  "https://www.googleapis.com/auth/gmail.readonly": {
+    category: "Gmail",
+  },
 } as const satisfies Record<string, OAuthScopeInfo>;
 
 type OAuthScopeInfo = {
