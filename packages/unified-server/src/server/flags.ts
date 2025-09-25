@@ -6,6 +6,8 @@
 
 import "dotenv/config";
 
+import type { GoogleDrivePermission } from "@breadboard-ai/types/deployment-configuration.js";
+
 export const ALLOW_3P_MODULES: boolean = getBoolean("ALLOW_3P_MODULES");
 
 export const ALLOWED_REDIRECT_ORIGINS: string[] = getStringList(
@@ -44,9 +46,8 @@ export const GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID: string = getString(
   "GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID"
 );
 
-export const GOOGLE_DRIVE_PUBLISH_PERMISSIONS_CONFIG_FILE: string = getString(
-  "GOOGLE_DRIVE_PUBLISH_PERMISSIONS_CONFIG_FILE"
-);
+export const GOOGLE_DRIVE_PUBLISH_PERMISSIONS: GoogleDrivePermission[] =
+  getDrivePermissions("GOOGLE_DRIVE_PUBLISH_PERMISSIONS");
 
 export const GOOGLE_DRIVE_USER_FOLDER_NAME: string = getString(
   "GOOGLE_DRIVE_USER_FOLDER_NAME"
@@ -91,4 +92,16 @@ function getStringList(flagName: string): string[] {
  */
 function getBoolean(flagName: string): boolean {
   return getString(flagName).toLowerCase() === "true";
+}
+
+function getDrivePermissions(flagName: string): GoogleDrivePermission[] {
+  const permissions = getString(flagName);
+  if (!permissions) {
+    return [];
+  }
+
+  console.log(
+    `[unified-server startup] Parsing Drive permissions from ${flagName}`
+  );
+  return JSON.parse(permissions) as GoogleDrivePermission[];
 }
