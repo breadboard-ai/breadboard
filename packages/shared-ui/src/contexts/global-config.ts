@@ -7,6 +7,7 @@
 import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 import { createContext } from "@lit/context";
 
+// TODO Replace this with the version in the types package
 export type GoogleDrivePermission =
   | { id: string; type: "user"; emailAddress: string }
   | { id: string; type: "group"; emailAddress: string }
