@@ -8,29 +8,34 @@ import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root";
 import { until } from "lit/directives/until.js";
 import { StringValue } from "../types/component-update";
+import * as Styles from "./styles";
+import { classMap } from "lit/directives/class-map.js";
 
 @customElement("gulf-audio")
 export class Audio extends Root {
   @property()
   accessor url: StringValue | null = null;
 
-  static styles = css`
-    * {
-      box-sizing: border-box;
-    }
+  static styles = [
+    Styles.all,
+    css`
+      * {
+        box-sizing: border-box;
+      }
 
-    :host {
-      display: block;
-      flex: var(--weight);
-    }
+      :host {
+        display: block;
+        flex: var(--weight);
+      }
 
-    audio {
-      display: block;
-      width: 100%;
-    }
-  `;
+      audio {
+        display: block;
+        width: 100%;
+      }
+    `,
+  ];
 
-  render() {
+  #renderAudio() {
     if (!this.url) {
       return nothing;
     }
@@ -56,5 +61,11 @@ export class Audio extends Root {
     }
 
     return html`(empty)`;
+  }
+
+  render() {
+    return html`<section class=${classMap(this.theme.components.AudioPlayer)}>
+      ${this.#renderAudio()}
+    </section>`;
   }
 }

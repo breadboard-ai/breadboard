@@ -8,7 +8,8 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { DataModel } from "../../0.7/data/model.js";
-import { data as example } from "./test-data.js";
+import { data as restaurantData } from "./test-data-restaurant.js";
+import { data as londonData } from "./test-data-london.js";
 
 const wait = <T>(t: number, v: T) =>
   new Promise<T>((r) => setTimeout(() => r(v), t));
@@ -164,9 +165,9 @@ describe("DataModel", () => {
   });
 
   describe("Components", () => {
-    it("expands templates", async () => {
+    it("expands templates (restaurant)", async () => {
       const model = new DataModel();
-      await model.append(example);
+      await model.append(restaurantData);
       model.finalize();
 
       if (!model.current) {
@@ -209,6 +210,28 @@ describe("DataModel", () => {
         Array.isArray(list.componentProperties.List.children) &&
           list.componentProperties.List.children.length === 3
       );
+    });
+
+    it("expands templates (London)", async () => {
+      const model = new DataModel();
+      await model.append(londonData);
+      model.finalize();
+
+      if (!model.current) {
+        assert.fail("No valid model");
+      }
+
+      if (!model.current.root.componentProperties.List) {
+        assert.fail("Expected List");
+      }
+
+      const mainList = model.current.root.componentProperties.List;
+      assert.equal(Object.keys(mainList.children).length, 3);
+
+      const mainColumnChildren = mainList.children;
+      if (!Array.isArray(mainColumnChildren)) {
+        assert.fail("Expected child array");
+      }
     });
   });
 });

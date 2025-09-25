@@ -6,30 +6,31 @@
 import { html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 import { Root } from "./root";
+import * as Styles from "./styles";
+import { classMap } from "lit/directives/class-map.js";
 
 @customElement("gulf-card")
 export class Card extends Root {
-  static styles = css`
-    * {
-      box-sizing: border-box;
-    }
+  static styles = [
+    Styles.all,
+    css`
+      * {
+        box-sizing: border-box;
+      }
 
-    :host {
-      display: block;
-      background: #fff;
-      border: 1px solid #f3f3f3;
-      border-radius: 24px;
-      padding: 20px;
-      flex: var(--weight);
-    }
+      :host {
+        display: block;
+        flex: var(--weight);
+      }
 
-    section {
-      display: block;
-    }
-  `;
+      section {
+        display: block;
+      }
+    `,
+  ];
 
   render() {
-    return html` <section>
+    return html` <section class=${classMap(this.theme.components.Card)}>
       <slot></slot>
     </section>`;
   }

@@ -9,10 +9,13 @@ import { Plugin, ViteDevServer } from "vite";
 import { A2AClient } from "@a2a-js/sdk/client";
 import {
   MessageSendParams,
+  Part,
   SendMessageSuccessResponse,
   Task,
 } from "@a2a-js/sdk";
 import { v4 as uuidv4 } from "uuid";
+
+const GULFUI_MIME_TYPE = "application/json+gulfui";
 
 const fetchWithCustomHeader: typeof fetch = async (url, init) => {
   const headers = new Headers(init?.headers);
@@ -47,19 +50,47 @@ export const customA2aHandlerPlugin = (): Plugin => {
             });
 
             req.on("end", async () => {
-              const sendParams: MessageSendParams = {
-                message: {
-                  messageId: uuidv4(),
-                  role: "user",
-                  parts: [
-                    {
-                      kind: "text",
-                      text: originalBody,
-                    },
-                  ],
-                  kind: "message",
-                },
-              };
+              const contentType = req.headers["content-type"];
+              let sendParams: MessageSendParams;
+
+              if (contentType === "application/json") {
+                console.log(
+                  "[a2a-middleware] Received JSON UI event:",
+                  originalBody
+                );
+                sendParams = {
+                  message: {
+                    messageId: uuidv4(),
+                    role: "user",
+                    parts: [
+                      {
+                        kind: "data",
+                        data: JSON.parse(originalBody),
+                        mimeType: GULFUI_MIME_TYPE, // Send as a Gulf UI event
+                      } as Part,
+                    ],
+                    kind: "message",
+                  },
+                };
+              } else {
+                console.log(
+                  "[a2a-middleware] Received text query:",
+                  originalBody
+                );
+                sendParams = {
+                  message: {
+                    messageId: uuidv4(),
+                    role: "user",
+                    parts: [
+                      {
+                        kind: "text",
+                        text: originalBody,
+                      },
+                    ],
+                    kind: "message",
+                  },
+                };
+              }
 
               const response = await client.sendMessage(sendParams);
               if ("error" in response) {

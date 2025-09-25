@@ -79,7 +79,7 @@
       },
       {
         "id": "dog_description",
-        "weight": 2,
+        "weight": 1,
         "componentProperties": {
           "Text": {
             "text": {

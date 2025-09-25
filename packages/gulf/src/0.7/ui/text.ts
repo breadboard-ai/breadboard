@@ -9,28 +9,26 @@ import { markdown } from "../directives/directives";
 import { Root } from "./root";
 import { until } from "lit/directives/until.js";
 import { StringValue } from "../types/component-update";
+import * as Styles from "./styles";
+import { appendToAll } from "./utils/utils";
+import { classMap } from "lit/directives/class-map.js";
 
 @customElement("gulf-text")
 export class Text extends Root {
   @property()
   accessor text: StringValue | null = null;
 
-  static styles = css`
-    :host {
-      display: block;
-      flex: var(--weight);
-    }
+  static styles = [
+    Styles.all,
+    css`
+      :host {
+        display: block;
+        flex: var(--weight);
+      }
+    `,
+  ];
 
-    h1,
-    h2,
-    h3,
-    p {
-      margin: 0;
-      padding: 0;
-    }
-  `;
-
-  render() {
+  #renderText() {
     if (this.text && typeof this.text === "object") {
       if ("literalString" in this.text && this.text.literalString) {
         return html`${markdown(this.text.literalString)}`;
@@ -45,12 +43,21 @@ export class Text extends Root {
             if (typeof data !== "string") {
               return html`(invalid)`;
             }
-            return html`${markdown(data)}`;
+            return html`${markdown(
+              data,
+              appendToAll(this.theme.markdown, ["ol", "ul", "li"], {})
+            )}`;
           });
         return html`${until(textValue)}`;
       }
     }
 
     return html`(empty)`;
+  }
+
+  render() {
+    return html`<section class=${classMap(this.theme.components.Text)}>
+      ${this.#renderText()}
+    </section>`;
   }
 }

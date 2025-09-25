@@ -9,6 +9,8 @@ import { Root } from "./root";
 import { StateEvent } from "../events/events";
 import { Action, StringValue } from "../types/component-update";
 import { until } from "lit/directives/until.js";
+import * as Styles from "./styles";
+import { classMap } from "lit/directives/class-map.js";
 
 @customElement("gulf-button")
 export class Button extends Root {
@@ -18,43 +20,39 @@ export class Button extends Root {
   @property()
   accessor action: Action | null = null;
 
-  static styles = css`
-    :host {
-      display: block;
-      flex: var(--weight);
-    }
+  static styles = [
+    Styles.all,
+    css`
+      :host {
+        display: block;
+        flex: var(--weight);
+      }
+    `,
+  ];
 
-    button {
-      border-radius: 32px;
-      background: #333;
-      color: #fff;
-      border: none;
-      padding: 8px 16px;
-      cursor: pointer;
-    }
-  `;
+  #renderButton() {
+    const innerRender = (label: string) => {
+      return html`<button
+        class=${classMap(this.theme.components.Button)}
+        @click=${() => {
+          if (!this.action) {
+            return;
+          }
+          const evt = new StateEvent<"gulf.action">({
+            eventType: "gulf.action",
+            action: this.action,
+            dataPrefix: this.dataPrefix,
+          });
+          this.dispatchEvent(evt);
+        }}
+      >
+        ${label}
+      </button>`;
+    };
 
-  #renderButton(label: string) {
-    return html`<button
-      @click=${() => {
-        if (!this.action) {
-          return;
-        }
-        const evt = new StateEvent<"gulf.action">({
-          eventType: "gulf.action",
-          action: this.action,
-        });
-        this.dispatchEvent(evt);
-      }}
-    >
-      ${label}
-    </button>`;
-  }
-
-  render() {
     if (this.label && typeof this.label === "object") {
       if ("literalString" in this.label && this.label.literalString) {
-        return this.#renderButton(this.label.literalString);
+        return innerRender(this.label.literalString);
       } else if (this.label && "path" in this.label && this.label.path) {
         if (!this.model) {
           return html`(no model)`;
@@ -66,12 +64,16 @@ export class Button extends Root {
             if (typeof data !== "string") {
               return html`(invalid)`;
             }
-            return this.#renderButton(data);
+            return innerRender(data);
           });
         return html`${until(labelValue)}`;
       }
     }
 
     return nothing;
+  }
+
+  render() {
+    return this.#renderButton();
   }
 }
