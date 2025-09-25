@@ -43,7 +43,18 @@ function createGmailClient(tokenGetter: TokenGetter): McpBuiltInClient {
       if (listing.status !== 200) {
         return mcpErr(listing.statusText || "Unable to list GMail messages.");
       }
-      return mcpText(JSON.stringify(listing.result));
+
+      // Get messages
+      const getting = await Promise.all(
+        listing.result.messages!.map(async (message) => {
+          const details = await gmail.users.messages.get({
+            id: message.id!,
+            userId: "me",
+          });
+          return details;
+        })
+      );
+      return mcpText(JSON.stringify(getting));
     }
   );
 
