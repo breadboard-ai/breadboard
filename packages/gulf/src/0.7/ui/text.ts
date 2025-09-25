@@ -29,9 +29,13 @@ export class Text extends Root {
   ];
 
   #renderText() {
+    console.log(this.theme.markdown);
     if (this.text && typeof this.text === "object") {
       if ("literalString" in this.text && this.text.literalString) {
-        return html`${markdown(this.text.literalString)}`;
+        return html`${markdown(
+          this.text.literalString,
+          appendToAll(this.theme.markdown, ["ol", "ul", "li"], {})
+        )}`;
       } else if (this.text && "path" in this.text && this.text.path) {
         if (!this.model) {
           return html`(no model)`;

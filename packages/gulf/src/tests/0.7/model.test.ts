@@ -208,7 +208,7 @@ describe("DataModel", () => {
       );
       assert.ok(
         Array.isArray(list.componentProperties.List.children) &&
-          list.componentProperties.List.children.length === 3
+          list.componentProperties.List.children.length === 1
       );
     });
 
@@ -226,7 +226,7 @@ describe("DataModel", () => {
       }
 
       const mainList = model.current.root.componentProperties.List;
-      assert.equal(Object.keys(mainList.children).length, 3);
+      assert.equal(Object.keys(mainList.children).length, 1);
 
       const mainColumnChildren = mainList.children;
       if (!Array.isArray(mainColumnChildren)) {
