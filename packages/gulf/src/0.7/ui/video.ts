@@ -8,28 +8,30 @@ import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root";
 import { until } from "lit/directives/until.js";
 import { StringValue } from "../types/component-update";
+import * as Styles from "./styles";
 
 @customElement("gulf-video")
 export class Video extends Root {
   @property()
   accessor url: StringValue | null = null;
 
-  static styles = css`
-    * {
-      box-sizing: border-box;
-    }
+  static styles = [
+    Styles.all,
+    css`
+      * {
+        box-sizing: border-box;
+      }
 
-    :host {
-      display: block;
-      flex: var(--weight);
-    }
+      :host {
+        display: block;
+        flex: var(--weight);
+      }
 
-    video {
-      display: block;
-      width: 100%;
-      border-radius: 8px;
-    }
-  `;
+      video {
+        display: block;
+      }
+    `,
+  ];
 
   render() {
     if (!this.url) {

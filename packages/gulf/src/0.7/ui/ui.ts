@@ -15,6 +15,7 @@ export type CustomElementConstructorOf<T extends HTMLElement> = {
 import { Audio } from "./audio.js";
 import { Button } from "./button.js";
 import { Card } from "./card.js";
+import { Checkbox } from "./checkbox.js";
 import { Column } from "./column.js";
 import { DateTimeInput } from "./datetime-input.js";
 import { Divider } from "./divider.js";
@@ -29,11 +30,14 @@ import { TextField } from "./text-field.js";
 import { Text } from "./text.js";
 import { Video } from "./video.js";
 
+export * as Utils from "./utils/utils.js";
+
 export {
   Audio,
   Button,
   Card,
   Column,
+  Checkbox,
   DateTimeInput,
   Divider,
   Heading,
@@ -48,12 +52,13 @@ export {
   Video,
 };
 
-// TODO: Checkbox, DateTimeInput, Modal, Slider, Tabs
+// TODO: Checkbox, Modal, Slider, Tabs
 
 interface GulfTagNameMap {
   "gulf-audioplayer": Audio;
   "gulf-button": Button;
   "gulf-card": Card;
+  "gulf-checkbox": Checkbox;
   "gulf-column": Column;
   "gulf-datetimeinput": DateTimeInput;
   "gulf-divider": Divider;

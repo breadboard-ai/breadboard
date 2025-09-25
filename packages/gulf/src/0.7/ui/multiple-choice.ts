@@ -7,6 +7,7 @@ import { html, css, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root";
 import { StringValue } from "../types/component-update";
+import * as Styles from "./styles";
 
 @customElement("gulf-multiplechoice")
 export class MultipleChoice extends Root {
@@ -19,29 +20,26 @@ export class MultipleChoice extends Root {
   @property()
   accessor value: StringValue | null = null;
 
-  static styles = css`
-    * {
-      box-sizing: border-box;
-    }
+  static styles = [
+    Styles.all,
+    css`
+      * {
+        box-sizing: border-box;
+      }
 
-    :host {
-      display: block;
-      flex: var(--weight);
-      font: var(--font-family);
-    }
+      :host {
+        display: block;
+        flex: var(--weight);
+      }
 
-    select {
-      border-radius: 8px;
-      padding: 8px;
-      border: 1px solid #ccc;
-      width: 100%;
-    }
+      select {
+        width: 100%;
+      }
 
-    .description {
-      font-size: 14px;
-      margin-bottom: 4px;
-    }
-  `;
+      .description {
+      }
+    `,
+  ];
 
   #setBoundValue(value: string[]) {
     if (!this.value || !this.model) {

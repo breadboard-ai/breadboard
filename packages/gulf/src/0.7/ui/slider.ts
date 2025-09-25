@@ -12,6 +12,7 @@ import {
   TextField as TextFieldDefinition,
 } from "../types/component-update";
 import { until } from "lit/directives/until.js";
+import * as Styles from "./styles";
 
 @customElement("gulf-slider")
 export class Slider extends Root {
@@ -30,26 +31,27 @@ export class Slider extends Root {
   @property()
   accessor inputType: TextFieldDefinition["type"] | null = null;
 
-  static styles = css`
-    * {
-      box-sizing: border-box;
-    }
+  static styles = [
+    Styles.all,
+    css`
+      * {
+        box-sizing: border-box;
+      }
 
-    :host {
-      display: block;
-      flex: var(--weight);
-    }
+      :host {
+        display: block;
+        flex: var(--weight);
+      }
 
-    input {
-      display: block;
-      width: 100%;
-    }
+      input {
+        display: block;
+        width: 100%;
+      }
 
-    .description {
-      font-size: 14px;
-      margin-bottom: 4px;
-    }
-  `;
+      .description {
+      }
+    `,
+  ];
 
   #setBoundValue(value: string) {
     if (!this.value || !this.model) {

@@ -8,6 +8,8 @@ import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root";
 import { until } from "lit/directives/until.js";
 import { StringValue } from "../types/component-update";
+import * as Styles from "./styles";
+import { classMap } from "lit/directives/class-map.js";
 
 @customElement("gulf-datetimeinput")
 export class DateTimeInput extends Root {
@@ -17,29 +19,27 @@ export class DateTimeInput extends Root {
   @property()
   accessor label: StringValue | null = null;
 
-  static styles = css`
-    * {
-      box-sizing: border-box;
-    }
+  static styles = [
+    Styles.all,
+    css`
+      * {
+        box-sizing: border-box;
+      }
 
-    :host {
-      display: block;
-      flex: var(--weight);
-    }
+      :host {
+        display: block;
+        flex: var(--weight);
+      }
 
-    input {
-      display: block;
-      border-radius: 8px;
-      padding: 8px;
-      border: 1px solid #ccc;
-      width: 100%;
-    }
-
-    .description {
-      font-size: 14px;
-      margin-bottom: 4px;
-    }
-  `;
+      input {
+        display: block;
+        border-radius: 8px;
+        padding: 8px;
+        border: 1px solid #ccc;
+        width: 100%;
+      }
+    `,
+  ];
 
   #setBoundValue(value: string) {
     if (!this.value || !this.model) {
@@ -58,24 +58,23 @@ export class DateTimeInput extends Root {
   }
 
   #renderField(value: string | number) {
-    return html`<div class="description">
-        ${this.label?.literalString ?? "Date & Time"}
-      </div>
-      <div>
-        <input
-          autocomplete="off"
-          @input=${(evt: Event) => {
-            if (!(evt.target instanceof HTMLInputElement)) {
-              return;
-            }
+    return html`<div>
+      <input
+        autocomplete="off"
+        class=${classMap(this.theme.components.DateTimeInput)}
+        @input=${(evt: Event) => {
+          if (!(evt.target instanceof HTMLInputElement)) {
+            return;
+          }
 
-            this.#setBoundValue(evt.target.value);
-          }}
-          id="data"
-          .value=${value}
-          type="datetime-local"
-        />
-      </div>`;
+          this.#setBoundValue(evt.target.value);
+        }}
+        id="data"
+        .value=${value}
+        placeholder="Date & Time"
+        type="datetime-local"
+      />
+    </div>`;
   }
 
   render() {

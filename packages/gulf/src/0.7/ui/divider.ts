@@ -6,21 +6,25 @@
 import { html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 import { Root } from "./root";
+import * as Styles from "./styles";
 
 @customElement("gulf-divider")
 export class Divider extends Root {
-  static styles = css`
-    :host {
-      display: block;
-      flex: var(--weight);
-    }
+  static styles = [
+    Styles.all,
+    css`
+      :host {
+        display: block;
+        flex: var(--weight);
+      }
 
-    hr {
-      height: 1px;
-      background: #ccc;
-      border: none;
-    }
-  `;
+      hr {
+        height: 1px;
+        background: #ccc;
+        border: none;
+      }
+    `,
+  ];
 
   render() {
     return html`<hr />`;

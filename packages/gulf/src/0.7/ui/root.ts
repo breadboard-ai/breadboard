@@ -18,6 +18,7 @@ import {
   AudioPlayer,
   Button,
   Card,
+  Checkbox,
   Column,
   Component,
   ComponentType,
@@ -26,6 +27,7 @@ import {
   Heading,
   Image,
   List,
+  MultipleChoice,
   Row,
   Slider,
   Text,
@@ -36,11 +38,16 @@ import { TagName } from "./ui";
 import { effect } from "signal-utils/subtle/microtask-effect";
 import { map } from "lit/directives/map.js";
 import { DataModel } from "../data/model";
+import { consume } from "@lit/context";
+import { themeContext } from "./context/theme";
+import { Theme } from "../types/types";
+import * as Styles from "./styles";
 
 const elementMap: Map<ComponentType, TagName> = new Map([
   ["AudioPlayer", "gulf-audioplayer"],
   ["Button", "gulf-button"],
   ["Card", "gulf-card"],
+  ["CheckBox", "gulf-checkbox"],
   ["Column", "gulf-column"],
   ["DateTimeInput", "gulf-datetimeinput"],
   ["Divider", "gulf-divider"],
@@ -58,6 +65,9 @@ const elementMap: Map<ComponentType, TagName> = new Map([
 // This is the new base class all your components will inherit
 @customElement("gulf-root")
 export class Root extends SignalWatcher(LitElement) {
+  @consume({ context: themeContext })
+  accessor theme!: Theme;
+
   @property({ attribute: false })
   accessor components: Component[] | null = null;
 
@@ -79,18 +89,21 @@ export class Root extends SignalWatcher(LitElement) {
 
   #weight = 0;
 
-  static styles = css`
-    :host {
-      display: flex;
-      gap: 8px;
-    }
+  static styles = [
+    Styles.all,
+    css`
+      :host {
+        display: flex;
+        gap: 8px;
+      }
 
-    ::slotted(*) {
-      flex: 1;
-      margin-bottom: 8px;
-      align-items: flex-start;
-    }
-  `;
+      ::slotted(*) {
+        flex: 1;
+        margin-bottom: 8px;
+        align-items: flex-start;
+      }
+    `,
+  ];
 
   /**
    * Holds the cleanup function for our effect.
@@ -189,7 +202,6 @@ export class Root extends SignalWatcher(LitElement) {
 
               case "gulf-column": {
                 const renderableComponent = component as Column;
-                // TODO: alignment & distribution.
                 return html`<gulf-column
                   id=${childData.id}
                   .weight=${childData.weight ?? 1}
@@ -202,7 +214,6 @@ export class Root extends SignalWatcher(LitElement) {
 
               case "gulf-row": {
                 const renderableComponent = component as Row;
-                // TODO: alignment & distribution.
                 return html`<gulf-row
                   id=${childData.id}
                   .weight=${childData.weight ?? 1}
@@ -324,6 +335,33 @@ export class Root extends SignalWatcher(LitElement) {
                   .minValue=${renderableComponent.minValue}
                   .maxValue=${renderableComponent.maxValue}
                 ></gulf-slider>`;
+              }
+
+              case "gulf-multiplechoice": {
+                // TODO: maxAllowedSelections and selections.
+                const renderableComponent = component as MultipleChoice;
+                return html`<gulf-text
+                  id=${childData.id}
+                  .weight=${childData.weight ?? 1}
+                  .model=${this.model}
+                  .dataPrefix=${childData.dataPrefix}
+                  .options=${renderableComponent.options}
+                  .maxAllowedSelections=${renderableComponent.maxAllowedSelections}
+                  .selections=${renderableComponent.selections}
+                ></gulf-text>`;
+              }
+
+              case "gulf-checkbox": {
+                // TODO: maxAllowedSelections and selections.
+                const renderableComponent = component as Checkbox;
+                return html`<gulf-text
+                  id=${childData.id}
+                  .weight=${childData.weight ?? 1}
+                  .model=${this.model}
+                  .dataPrefix=${childData.dataPrefix}
+                  .value=${renderableComponent.value}
+                  .label=${renderableComponent.label}
+                ></gulf-text>`;
               }
 
               default:

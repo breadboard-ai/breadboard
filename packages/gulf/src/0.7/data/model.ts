@@ -91,6 +91,10 @@ class DataModel {
   }
 
   async append(data: UnifiedUpdate) {
+    if (this.#finalized) {
+      throw new Error("Data appended while model is finalized");
+    }
+
     for (const msg of data) {
       if (isStreamHeader(msg)) {
         this.#model.version = this.#model.version ?? msg.version;
@@ -168,7 +172,6 @@ class DataModel {
         template.dataBinding,
         dataPrefix
       );
-      target.children = [];
 
       if (!value || !Array.isArray(value)) {
         return;
@@ -180,7 +183,10 @@ class DataModel {
         if (component) {
           component.id = globalThis.crypto.randomUUID();
           target.children.push(component);
-          this.#buildComponentTree(component, `${template.dataBinding}/${i}`);
+          await this.#buildComponentTree(
+            component,
+            `${template.dataBinding}/${i}`
+          );
         }
       }
     };
@@ -233,7 +239,11 @@ class DataModel {
   async #buildDataTree(update: DataModelUpdateMessage) {
     if (Array.isArray(update.contents)) {
       const path = update.path ?? "/";
-      this.setDataProperty(path, "", update.contents as unknown as DataObject);
+      await this.setDataProperty(
+        path,
+        "",
+        update.contents as unknown as DataObject
+      );
     } else {
       const path = update.path ?? "/";
       for (const [id, obj] of Object.entries(update.contents)) {
@@ -263,6 +273,16 @@ class DataModel {
     return key;
   }
 
+  #waitForProperty(key: string): Promise<DataValue | null> {
+    return new Promise((resolve) => {
+      const callbacks = this.#watchers.get(key) ?? [];
+      callbacks.push((data) => {
+        resolve(data);
+      });
+      this.#watchers.set(key, callbacks);
+    });
+  }
+
   async getDataProperty(
     key: string,
     dataPrefix = ""
@@ -272,6 +292,7 @@ class DataModel {
     let target = this.#model.data;
     const parts = key.split("/");
     const finalPart = parts.at(-1);
+
     if (!finalPart) {
       console.warn("Unable to set value");
       return null;
@@ -284,33 +305,38 @@ class DataModel {
         continue;
       }
 
+      let nextTarget: DataValue | undefined;
       if (target instanceof Map && target.has(part)) {
-        target = target.get(part) as DataObject;
+        nextTarget = target.get(part);
       } else if (
         Array.isArray(target) &&
         !Number.isNaN(Number.parseInt(part))
       ) {
-        target = target[Number.parseInt(part)];
+        nextTarget = target[Number.parseInt(part)];
+      }
+
+      if (nextTarget !== undefined) {
+        target = nextTarget as DataObject;
       } else if (this.#finalized) {
         return null;
       } else {
-        return new Promise((resolve) => {
-          const callbacks = this.#watchers.get(key) ?? [];
-          callbacks.push((data) => {
-            resolve(data);
-          });
-          this.#watchers.set(key, callbacks);
-        });
+        return this.#waitForProperty(key);
       }
     }
 
-    if (target instanceof Map) {
-      return target.get(finalPart) ?? null;
-    } else if (target) {
-      return target[finalPart];
-    } else {
+    const value =
+      target instanceof Map ? target.get(finalPart) : target?.[finalPart];
+
+    if (value !== undefined) {
+      return value;
+    }
+
+    if (this.#finalized) {
       return null;
     }
+
+    // The final value doesn't exist yet, so wait for it.
+    return this.#waitForProperty(key);
   }
 
   async setDataProperty(key: string, dataPrefix = "", value: DataValue) {
