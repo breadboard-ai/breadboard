@@ -8,6 +8,10 @@ import "dotenv/config";
 
 export const ALLOW_3P_MODULES: boolean = getBoolean("ALLOW_3P_MODULES");
 
+export const ALLOWED_REDIRECT_ORIGINS: string[] = getStringList(
+  "ALLOWED_REDIRECT_ORIGINS"
+);
+
 export const BACKEND_API_ENDPOINT: string = getString("BACKEND_API_ENDPOINT");
 
 export const DOMAIN_CONFIG_FILE: string = getString("DOMAIN_CONFIG_FILE");
@@ -32,10 +36,20 @@ export const ENABLE_PLAN_RUNNER: boolean = getBoolean("ENABLE_PLAN_RUNNER");
 
 export const ENABLE_SAVE_AS_CODE: boolean = getBoolean("ENABLE_SAVE_AS_CODE");
 
+export const ENVIRONMENT_NAME: string = getString("ENVIRONMENT_NAME");
+
 export const FEEDBACK_LINK: string = getString("FEEDBACK_LINK");
 
 export const GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID: string = getString(
   "GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID"
+);
+
+export const GOOGLE_DRIVE_PUBLISH_PERMISSIONS_CONFIG_FILE: string = getString(
+  "GOOGLE_DRIVE_PUBLISH_PERMISSIONS_CONFIG_FILE"
+);
+
+export const GOOGLE_DRIVE_USER_FOLDER_NAME: string = getString(
+  "GOOGLE_DRIVE_USER_FOLDER_NAME"
 );
 
 export const GOOGLE_FEEDBACK_BUCKET: string = getString(

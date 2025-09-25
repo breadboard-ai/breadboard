@@ -7,10 +7,14 @@
 import { type RuntimeFlags } from "./flags.js";
 
 export type ClientDeploymentConfiguration = {
+  ALLOWED_REDIRECT_ORIGINS?: string[];
   MEASUREMENT_ID?: string;
   BACKEND_API_ENDPOINT?: string;
   FEEDBACK_LINK?: string;
   ENABLE_GOOGLE_FEEDBACK?: boolean;
+  ENVIRONMENT_NAME?: string;
+  GOOGLE_DRIVE_PUBLISH_PERMISSIONS?: GoogleDrivePermission[];
+  GOOGLE_DRIVE_USER_FOLDER_NAME?: string;
   GOOGLE_FEEDBACK_PRODUCT_ID?: string;
   GOOGLE_FEEDBACK_BUCKET?: string;
   /**
@@ -36,3 +40,9 @@ export interface DomainConfiguration {
    */
   disallowPublicPublishing?: boolean;
 }
+
+export type GoogleDrivePermission =
+  | { id: string; type: "user"; emailAddress: string }
+  | { id: string; type: "group"; emailAddress: string }
+  | { id: string; type: "domain"; domain: string }
+  | { id: string; type: "anyone" };
