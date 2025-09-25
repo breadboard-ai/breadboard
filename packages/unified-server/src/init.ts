@@ -13,10 +13,10 @@ import { isA2 } from "@breadboard-ai/a2";
 import { JsonSerializable, LLMContent } from "@breadboard-ai/types";
 
 import { Handler } from "@breadboard-ai/embed";
-import { discoverClientDeploymentConfiguration } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import { initializeAnalytics } from "@breadboard-ai/shared-ui/utils/action-tracker";
 
-const deploymentConfiguration = discoverClientDeploymentConfiguration();
+const deploymentConfiguration = CLIENT_DEPLOYMENT_CONFIG;
 
 if (!deploymentConfiguration.BACKEND_API_ENDPOINT) {
   throw new Error(`No BACKEND_API_ENDPOINT was configured`);
