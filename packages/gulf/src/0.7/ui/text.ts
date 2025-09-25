@@ -29,7 +29,6 @@ export class Text extends Root {
   ];
 
   #renderText() {
-    console.log(this.theme.markdown);
     if (this.text && typeof this.text === "object") {
       if ("literalString" in this.text && this.text.literalString) {
         return html`${markdown(
