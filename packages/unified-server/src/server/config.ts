@@ -28,6 +28,10 @@ export async function createClientConfig(): Promise<ClientDeploymentConfiguratio
     GOOGLE_FEEDBACK_PRODUCT_ID: flags.GOOGLE_FEEDBACK_PRODUCT_ID,
     GOOGLE_FEEDBACK_BUCKET: flags.GOOGLE_FEEDBACK_BUCKET,
     ALLOW_3P_MODULES: flags.ALLOW_3P_MODULES,
+    SURVEY_MODE: flags.SURVEY_MODE,
+    SURVEY_API_KEY: flags.SURVEY_API_KEY,
+    SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID:
+      flags.SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID,
     domains: await loadDomainConfig(),
     flags: {
       usePlanRunner: flags.ENABLE_PLAN_RUNNER,

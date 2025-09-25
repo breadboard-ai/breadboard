@@ -34,7 +34,13 @@ const CSP_CONFIG = {
     "https://*.gstatic.com",
     "https://*.ytimg.com",
   ],
-  ["style-src"]: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+  ["style-src"]: [
+    "'self'",
+    "'unsafe-inline'",
+    "https://fonts.googleapis.com",
+    "https://gstatic.com",
+    "https://www.gstatic.com",
+  ],
   ["font-src"]: ["https://fonts.gstatic.com"],
   ["connect-src"]: [
     "'self'",
@@ -51,6 +57,7 @@ const CSP_CONFIG = {
     "https://drive.google.com",
     "https://www.google.com",
     "https://www.youtube.com",
+    "https://feedback-pa.clients6.google.com",
   ],
   ["media-src"]: ["'self'", "blob:", "data:"],
   ["base-uri"]: ["'none'"],

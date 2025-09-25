@@ -75,6 +75,7 @@ import { makeUrl } from "../../utils/urls.js";
 import * as GULF from "@breadboard-ai/gulf";
 import "@breadboard-ai/gulf/ui";
 import { LLMContent, RuntimeFlags } from "@breadboard-ai/types";
+import { maybeTriggerNlToOpalSatisfactionSurvey } from "../../survey/nl-to-opal-satisfaction-survey.js";
 
 function isHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -874,6 +875,13 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           }
           break;
         case "output":
+          if (this.graph && this.boardServer) {
+            void maybeTriggerNlToOpalSatisfactionSurvey(
+              this.run,
+              this.graph,
+              this.boardServer
+            );
+          }
           if (this.runtimeFlags?.gulfRenderer) {
             content = [this.#renderGULF(), this.#renderSaveResultsButtons()];
           } else {
