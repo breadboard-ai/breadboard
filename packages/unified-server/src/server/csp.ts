@@ -47,7 +47,7 @@ const CSP_CONFIG = {
   ],
   ["frame-src"]: [
     "https://docs.google.com",
-    "https://content.googleapis.com",
+    "https://*.googleapis.com",
     "https://drive.google.com",
     "https://www.google.com",
     "https://www.youtube.com",
