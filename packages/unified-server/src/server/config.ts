@@ -40,9 +40,16 @@ export async function createClientConfig(): Promise<ClientDeploymentConfiguratio
   };
 }
 
+// TODO Delete this once we're no longer using the DOMAIN_CONFIG_FILE flag
 async function loadDomainConfig(): Promise<
   Record<string, DomainConfiguration>
 > {
+  // Prefer the literal variable if it is set
+  if (process.env.DOMAIN_CONFIG) {
+    return flags.DOMAIN_CONFIG;
+  }
+
+  // Otherwise load from file
   const path = flags.DOMAIN_CONFIG_FILE;
   if (!path) {
     return {};
@@ -50,5 +57,5 @@ async function loadDomainConfig(): Promise<
 
   console.log(`[unified-server startup] Loading domain config from ${path}`);
   const contents = await readFile(path, "utf8");
-  return JSON.parse(contents) as Record<string, DomainConfiguration>;
+  return flags.parseDomainConfig(contents);
 }
