@@ -40,6 +40,7 @@ export async function createClientConfig(): Promise<ClientDeploymentConfiguratio
   };
 }
 
+// TODO Delete this once we're loading domain config from environment vars
 async function loadDomainConfig(): Promise<
   Record<string, DomainConfiguration>
 > {
@@ -50,5 +51,5 @@ async function loadDomainConfig(): Promise<
 
   console.log(`[unified-server startup] Loading domain config from ${path}`);
   const contents = await readFile(path, "utf8");
-  return JSON.parse(contents) as Record<string, DomainConfiguration>;
+  return flags.parseDomainConfig(contents);
 }
