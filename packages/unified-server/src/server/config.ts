@@ -40,10 +40,16 @@ export async function createClientConfig(): Promise<ClientDeploymentConfiguratio
   };
 }
 
-// TODO Delete this once we're loading domain config from environment vars
+// TODO Delete this once we're no longer using the DOMAIN_CONFIG_FILE flag
 async function loadDomainConfig(): Promise<
   Record<string, DomainConfiguration>
 > {
+  // Prefer the literal variable if it is set
+  if (process.env.DOMAIN_CONFIG) {
+    return flags.DOMAIN_CONFIG;
+  }
+
+  // Otherwise load from file
   const path = flags.DOMAIN_CONFIG_FILE;
   if (!path) {
     return {};
