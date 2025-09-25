@@ -14,6 +14,7 @@ import { InputValues, NodeDescriptor } from "@breadboard-ai/types";
 
 import { makeDriveProxyMiddleware } from "./drive-proxy.js";
 import { allowListChecker } from "./allow-list-checker.js";
+import { createClientConfig } from "./config.js";
 import { makeCspHandler } from "./csp.js";
 import * as flags from "./flags.js";
 import { CachingFeaturedGallery, makeGalleryMiddleware } from "./gallery.js";
@@ -99,7 +100,7 @@ console.log("[unified-server startup] Mounting MCP proxy");
 server.use("/api/mcp-proxy", createMcpProxyHandler());
 
 console.log("[unified-server startup] Mounting static content");
-const clientConfig = await flags.getClientConfig();
+const clientConfig = await createClientConfig();
 ViteExpress.config({
   transformer: (html: string, req: Request) => {
     const board = req.res?.locals.loadedBoard;
