@@ -22,6 +22,7 @@ import { ok } from "@google-labs/breadboard";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { getTopLevelOrigin } from "../../utils/embed-helpers.js";
 import { GRAPH_MIME_TYPE } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../config/client-deployment-configuration.js";
 
 const ASSET_MIME_TYPES = [
   "image/png",
@@ -82,7 +83,7 @@ export class GoogleDriveDebugPanel extends LitElement {
           this.tokenVendor,
           this.googleDriveClient,
           [],
-          import.meta.env.VITE_GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard"
+          CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard"
         );
       } else {
         this.#googleDriveBoardServer = null;

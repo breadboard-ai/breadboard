@@ -22,6 +22,7 @@ import {
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { TokenVendor } from "@breadboard-ai/connection-client";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 
 const BOARD_SERVER_LISTING_DB = "board-server";
 const BOARD_SERVER_LISTING_VERSION = 1;
@@ -79,8 +80,8 @@ export async function createGoogleDriveBoardServer(
         " was configured. We will not be able to publish files to Google Drive"
     );
   }
-  const userFolderName: string =
-    import.meta.env.VITE_GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
+  const userFolderName =
+    CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
   return GoogleDriveBoardServer.from(
     title,
     user,
