@@ -155,6 +155,11 @@ function createGmailClient(tokenGetter: TokenGetter): McpBuiltInClient {
       title: "List emails",
       description: "Lists the messages in the user's GMail",
       inputSchema: LIST_INPUT_SCHEMA,
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
     },
     async ({ q, labelIds, includeSpamTrash, maxResults }) => {
       const gmail = await loadGmailApi(tokenGetter);
@@ -211,6 +216,11 @@ function createGmailClient(tokenGetter: TokenGetter): McpBuiltInClient {
       title: "List threads",
       description: "Lists the threads in the user's GMail",
       inputSchema: LIST_INPUT_SCHEMA,
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
     },
     async ({ q, labelIds, includeSpamTrash, maxResults }) => {
       const gmail = await loadGmailApi(tokenGetter);
@@ -264,6 +274,12 @@ function createGmailClient(tokenGetter: TokenGetter): McpBuiltInClient {
       title: "Send email",
       description: "Sends an email message on user's behalf using their GMail",
       inputSchema: SEND_INPUT_SCHEMA,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
     },
     async (args) => {
       const gmail = await loadGmailApi(tokenGetter);
@@ -292,6 +308,12 @@ function createGmailClient(tokenGetter: TokenGetter): McpBuiltInClient {
       title: "Create draft",
       description: "Creates a draft of an email message in the user's GMail",
       inputSchema: SEND_INPUT_SCHEMA,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+      },
     },
     async (args) => {
       const gmail = await loadGmailApi(tokenGetter);
