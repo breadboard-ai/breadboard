@@ -22,6 +22,7 @@ export interface BaseUrlInit {
       | "add-scope"
       | "geo-restriction"
       | "missing-scopes";
+    forceSurveySelection?: "true";
   };
   oauthRedirect?: string;
 }

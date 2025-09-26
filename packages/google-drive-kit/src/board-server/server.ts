@@ -340,11 +340,18 @@ class GoogleDriveBoardServer
     throw new Error("Method not implemented.");
   }
 
+  readonly #createdDuringThisSession = new Set<string>();
+
+  createdDuringThisSession(url: URL): boolean {
+    return this.#createdDuringThisSession.has(url.href);
+  }
+
   async create(
     _url: URL,
     descriptor: GraphDescriptor
   ): Promise<{ result: boolean; error?: string; url?: string }> {
     const url = await this.createURL();
+    this.#createdDuringThisSession.add(url);
 
     const createDone = (async (): Promise<void> => {
       const parent = await this.ops.findOrCreateFolder();

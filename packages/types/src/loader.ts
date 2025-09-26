@@ -168,6 +168,11 @@ export type GraphProvider = {
     graph: GraphDescriptor
   ): Promise<{ result: boolean; error?: string; url?: string }>;
   /**
+   * Returns whether the given URL was created by this specific instance of the
+   * board server.
+   */
+  createdDuringThisSession?(url: URL): boolean;
+  /**
    * Given a URL, deletes a `GraphDescriptor` instance at that URL.
    * @param url -- the URL to delete
    * @returns -- the result of deleting, with an error if saving failed.

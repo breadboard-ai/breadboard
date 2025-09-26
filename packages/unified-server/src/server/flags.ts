@@ -76,6 +76,14 @@ export const MEASUREMENT_ID: string = getString("MEASUREMENT_ID");
 
 export const SERVER_URL: string = getString("SERVER_URL");
 
+export const SURVEY_MODE = getSurveyMode("SURVEY_MODE");
+
+export const SURVEY_API_KEY = getString("SURVEY_API_KEY");
+
+export const SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID = getString(
+  "SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID"
+);
+
 /** Get the value of the given flag as a string, or empty string if absent. */
 function getString(flagName: string): string {
   return process.env[flagName] ?? "";
@@ -129,4 +137,15 @@ function getDomainConfig(
 
 export function parseDomainConfig(domainConfig: string) {
   return JSON.parse(domainConfig) as Record<string, DomainConfiguration>;
+}
+
+function getSurveyMode(flagName: string): "on" | "off" | "test" {
+  const value = getString(flagName).toLowerCase();
+  if (value === "on" || value === "off" || value === "test") {
+    return value;
+  }
+  if (!value) {
+    return "off";
+  }
+  throw new Error(`Invalid survey mode ${value}`);
 }
