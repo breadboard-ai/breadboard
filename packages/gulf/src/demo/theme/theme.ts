@@ -173,6 +173,12 @@ const listItemLight = Utils.merge(listItem, {
 });
 
 export const theme: Theme = {
+  additionalStyles: {
+    Card: {
+      boxShadow: `0px 2px 3px oklch(from var(--p-30) l c h / calc(alpha * 0.1)),
+          0px 8px 14px oklch(from var(--p-30) l c h / calc(alpha * 0.03))`,
+    },
+  },
   components: {
     AudioPlayer: {},
     Button: {
@@ -181,13 +187,39 @@ export const theme: Theme = {
       "layout-pl-3": true,
       "layout-pr-3": true,
       "border-br-12": true,
+      "border-bw-0": true,
+      "border-bs-s": true,
       "color-bgc-p30": true,
       "color-c-n100": true,
-      "border-bw-0": true,
       "behavior-ho-70": true,
     },
     Card: { "border-br-9": true, "color-bgc-p100": true, "layout-p-4": true },
-    CheckBox: {},
+    CheckBox: {
+      element: {
+        "layout-m-0": true,
+        "layout-mr-2": true,
+        "layout-p-2": true,
+        "border-br-12": true,
+        "border-bw-1": true,
+        "border-bs-s": true,
+        "color-bgc-p100": true,
+        "color-bc-p60": true,
+        "color-c-n30": true,
+        "color-c-p30": true,
+      },
+      label: {
+        "color-c-p30": true,
+        "typography-f-sf": true,
+        "typography-v-r": true,
+        "typography-w-400": true,
+        "layout-flx-1": true,
+        "typography-sz-ll": true,
+      },
+      container: {
+        "layout-dsp-iflex": true,
+        "layout-al-c": true,
+      },
+    },
     Column: {
       "layout-g-2": true,
     },
@@ -197,10 +229,11 @@ export const theme: Theme = {
       "layout-pl-3": true,
       "layout-pr-3": true,
       "border-br-12": true,
+      "border-bw-1": true,
+      "border-bs-s": true,
       "color-bgc-p100": true,
       "color-bc-p60": true,
       "color-c-n30": true,
-      "border-bw-1": true,
       "color-c-p30": true,
     },
     Divider: {},
@@ -214,9 +247,11 @@ export const theme: Theme = {
       "border-br-5": true,
       "layout-el-cv": true,
       "layout-w-100": true,
+      "layout-h-100": true,
     },
     List: {
       "layout-g-4": true,
+      "layout-p-2": true,
     },
     Modal: {},
     MultipleChoice: {},
@@ -236,10 +271,11 @@ export const theme: Theme = {
       "layout-pl-3": true,
       "layout-pr-3": true,
       "border-br-12": true,
+      "border-bw-1": true,
+      "border-bs-s": true,
       "color-bgc-p100": true,
       "color-bc-p60": true,
       "color-c-n30": true,
-      "border-bw-1": true,
       "color-c-p30": true,
     },
     Video: {

@@ -106,7 +106,7 @@ describe("DataModel", () => {
           },
         },
       ]);
-      model.finalize();
+      await model.finalize();
 
       // Check for known values.
       assert.equal(await model.getDataProperty("/data/value"), "tree");
@@ -120,7 +120,7 @@ describe("DataModel", () => {
     it("returns null for non-existent data", async () => {
       const model = new DataModel();
       await model.append([{ version: "0.7" }, { root: "root" }]);
-      model.finalize();
+      await model.finalize();
 
       const value = await model.getDataProperty("/data/value");
       assert.equal(value, null);
@@ -149,7 +149,7 @@ describe("DataModel", () => {
           },
         },
       ]);
-      model.finalize();
+      await model.finalize();
 
       const values = await model.getDataProperty("/items");
       assert.notStrictEqual(values, null);
@@ -168,7 +168,7 @@ describe("DataModel", () => {
     it("expands templates (restaurant)", async () => {
       const model = new DataModel();
       await model.append(restaurantData);
-      model.finalize();
+      await model.finalize();
 
       if (!model.current) {
         assert.fail("No valid model");
@@ -208,14 +208,14 @@ describe("DataModel", () => {
       );
       assert.ok(
         Array.isArray(list.componentProperties.List.children) &&
-          list.componentProperties.List.children.length === 1
+          list.componentProperties.List.children.length === 3
       );
     });
 
     it("expands templates (London)", async () => {
       const model = new DataModel();
       await model.append(londonData);
-      model.finalize();
+      await model.finalize();
 
       if (!model.current) {
         assert.fail("No valid model");
@@ -226,7 +226,7 @@ describe("DataModel", () => {
       }
 
       const mainList = model.current.root.componentProperties.List;
-      assert.equal(Object.keys(mainList.children).length, 1);
+      assert.equal(Object.keys(mainList.children).length, 3);
 
       const mainColumnChildren = mainList.children;
       if (!Array.isArray(mainColumnChildren)) {

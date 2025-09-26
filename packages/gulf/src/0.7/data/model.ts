@@ -90,6 +90,11 @@ class DataModel {
     return this.#model as Required<GulfData>;
   }
 
+  /**
+   * Used to track work initiated in the append call. This way if finalized is
+   * called we wait until all the active work has finished running.
+   */
+  #pendingWork: Promise<void>[] = [];
   async append(data: UnifiedUpdate) {
     if (this.#finalized) {
       throw new Error("Data appended while model is finalized");
@@ -116,10 +121,10 @@ class DataModel {
             throw new Error("Unable to retrieve current model; no root");
           }
           this.#model.root = root;
-          this.#buildComponentTree(root);
+          this.#pendingWork.push(this.#buildComponentTree(root));
         }
       } else if (isDataModelUpdate(msg)) {
-        await this.#buildDataTree(msg);
+        this.#pendingWork.push(this.#buildDataTree(msg));
       }
     }
   }
@@ -130,7 +135,9 @@ class DataModel {
    * between values that are simply not there *yet* versus those that are not
    * there whatsoever.
    */
-  finalize() {
+  async finalize() {
+    await Promise.all(this.#pendingWork);
+    this.#pendingWork.length = 0;
     this.#finalized = true;
   }
 

@@ -36,7 +36,11 @@ export type Theme = {
     Button: Record<string, boolean | string>;
     Card: Record<string, boolean | string>;
     Column: Record<string, boolean | string>;
-    CheckBox: Record<string, boolean | string>;
+    CheckBox: {
+      container: Record<string, boolean | string>;
+      element: Record<string, boolean | string>;
+      label: Record<string, boolean | string>;
+    };
     DateTimeInput: Record<string, boolean | string>;
     Divider: Record<string, boolean | string>;
     Heading: Record<string, boolean | string>;
