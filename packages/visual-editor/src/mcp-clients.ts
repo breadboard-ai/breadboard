@@ -5,6 +5,7 @@
  */
 
 import {
+  createGdriveClient,
   createSimpleMemoryClient,
   McpBuiltInClientFactory,
 } from "@breadboard-ai/mcp";
@@ -15,4 +16,5 @@ export const builtInMcpClients: [string, McpBuiltInClientFactory][] = [
   ["memory", createSimpleMemoryClient],
   ["gcal", createGoogleCalendarClient],
   ["gmail", createGmailClient],
+  ["gdrive", createGdriveClient],
 ];
