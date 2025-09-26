@@ -8,10 +8,10 @@ const Strings = StringsHelper.forSection("ActivityLog");
 
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { ProjectRun, UI } from "../../../state";
+import { ConsoleEntry, ProjectRun, UI } from "../../../state";
 import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
-import { ResizeEvent, StateEvent } from "../../../events/events";
+import { ResizeEvent } from "../../../events/events";
 import { icons } from "../../../styles/icons";
 import { SignalWatcher } from "@lit-labs/signals";
 import { isParticle } from "@breadboard-ai/particles";
@@ -290,26 +290,13 @@ export class ConsoleView extends SignalWatcher(LitElement) {
 
   #openItems = new Set<string>();
   #openWorkItems = new Set<string>();
+  #currentEntries: [string, ConsoleEntry][] = [];
 
   protected willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has("run")) {
       this.#openItems.clear();
       this.#openWorkItems.clear();
     }
-  }
-
-  #renderRunButton() {
-    return html`<section id="no-console">
-      <p id="waiting-message">${Strings.from("LABEL_WAITING_MESSAGE")}</p>
-      <button
-        id="run"
-        @click=${() => {
-          this.dispatchEvent(new StateEvent({ eventType: "board.run" }));
-        }}
-      >
-        <span class="g-icon">spark</span>${Strings.from("COMMAND_START")}
-      </button>
-    </section>`;
   }
 
   #renderInput() {
@@ -348,9 +335,17 @@ export class ConsoleView extends SignalWatcher(LitElement) {
       return nothing;
     }
 
+    // 1. If the signal provides a non-empty array, we update our cache. This
+    //    way we avoid flashes of content when the console entries are reset.
+    if (this.run.console.size > 0) {
+      this.#currentEntries = [...this.run.console.entries()];
+    }
+
+    // 2. We then always use the cached version for rendering. If the signal
+    //    was empty, this will be the previous, non-empty set of entries.
     return html`<section id="console">
       ${repeat(
-        this.run.console.entries(),
+        this.#currentEntries,
         ([key]) => key,
         ([itemId, item], idx) => {
           const empty =
@@ -579,9 +574,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           .replayAutoStart=${true}
           .progress=${this.run?.progress}
         ></bb-app-header>`,
-        this.run?.consoleState === "entries"
-          ? this.#renderRun()
-          : this.#renderRunButton(),
+        this.#renderRun(),
         this.#renderInput(),
       ]}
     </section>`;
