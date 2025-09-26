@@ -226,9 +226,7 @@ function createGmailClient(tokenGetter: TokenGetter): McpBuiltInClient {
       }
       const messages = Object.values(getting.result).map((res) => {
         const result = res.result as gapi.client.gmail.Thread;
-        result.messages?.forEach((message) => {
-          trimMessage(message);
-        });
+        result.messages?.forEach((message) => trimMessage(message));
         return result;
       });
 
@@ -257,7 +255,7 @@ async function loadGmailApi(
     await new Promise((resolve) => gapi.load("client", resolve));
   }
   const access_token = await tokenGetter([
-    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/gmail.modify",
   ]);
   if (!ok(access_token)) {
     return err(access_token.$error);
