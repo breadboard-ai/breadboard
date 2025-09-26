@@ -92,7 +92,11 @@
     "@breadboard-ai/types": "^0.9.0",
     "@breadboard-ai/utils": "^0.1.0",
     "@modelcontextprotocol/sdk": "^1.17.1",
+    "@types/gapi": "^0.0.47",
+    "@types/gapi.client.calendar-v3": "^0.0.4",
+    "@types/gapi.client.gmail-v1": "^0.0.4",
     "idb": "^8.0.3",
+    "mimetext": "^3.0.27",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.24.6"
   }
