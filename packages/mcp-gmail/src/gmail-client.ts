@@ -17,6 +17,7 @@ import {
 import { Outcome } from "@breadboard-ai/types";
 import { err, filterUndefined, ok } from "@breadboard-ai/utils";
 import { z } from "zod";
+import { createMimeMessage } from "mimetext/browser";
 
 export { createGmailClient };
 
@@ -118,6 +119,33 @@ const LIST_INPUT_SCHEMA = {
     .describe(`Include messages from SPAM and TRASH in the results.`)
     .optional(),
 };
+
+const SEND_INPUT_SCHEMA = {
+  to: z
+    .array(z.string())
+    .describe(`The list of emails addresses of the message recipients`),
+  cc: z
+    .array(z.string())
+    .describe(
+      `The list of email addresses of the message carbon copy (cc) receipients`
+    ),
+  bcc: z
+    .array(z.string())
+    .describe(
+      `The list of email addresses of the message blind caron copy (bcc) recipients`
+    ),
+  subject: z.string().describe(`The subject of the email message`),
+  content: z
+    .string()
+    .describe(
+      `The content of the message. Must be in plain text, HTML messages are not supported`
+    ),
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const SEND_ZOD_OBJECT = z.object(SEND_INPUT_SCHEMA);
+
+type MessageComponents = z.infer<typeof SEND_ZOD_OBJECT>;
 
 function createGmailClient(tokenGetter: TokenGetter): McpBuiltInClient {
   const client = new BuiltInClient({
@@ -234,7 +262,78 @@ function createGmailClient(tokenGetter: TokenGetter): McpBuiltInClient {
     }
   );
 
+  client.addTool(
+    "gmail_send_message",
+    {
+      title: "Send email",
+      description: "Sends an email message on user's behalf using their GMail",
+      inputSchema: SEND_INPUT_SCHEMA,
+    },
+    async (args) => {
+      const gmail = await loadGmailApi(tokenGetter);
+      if (!ok(gmail)) {
+        return mcpErr(gmail.$error);
+      }
+
+      const raw = createMessage(args);
+
+      const sending = await gmail.users.messages.send(
+        {
+          userId: "me",
+        },
+        { raw }
+      );
+      if (sending.status !== 200) {
+        return mcpErr(sending.statusText || "Unable to send GMail message");
+      }
+      return mcpText("Message Sent successfully");
+    }
+  );
+
+  client.addTool(
+    "gmail_create_draft",
+    {
+      title: "Create draft",
+      description: "Creates a draft of an email message in the user's GMail",
+      inputSchema: SEND_INPUT_SCHEMA,
+    },
+    async (args) => {
+      const gmail = await loadGmailApi(tokenGetter);
+      if (!ok(gmail)) {
+        return mcpErr(gmail.$error);
+      }
+
+      const raw = createMessage(args);
+
+      const sending = await gmail.users.drafts.create(
+        {
+          userId: "me",
+        },
+        { message: { raw } }
+      );
+      if (sending.status !== 200) {
+        return mcpErr(sending.statusText || "Unable to create Gmail draft");
+      }
+      return mcpText("Draft created successfully");
+    }
+  );
+
   return client;
+}
+
+function createMessage({ to, cc, bcc, subject, content }: MessageComponents) {
+  const message = createMimeMessage();
+  message.setSender("me");
+  message.setSubject(subject);
+  message.setTo(to);
+  message.setCc(cc);
+  message.setBcc(bcc);
+  message.addMessage({
+    contentType: "text/plain",
+    data: content,
+  });
+
+  return message.asEncoded();
 }
 
 function trimMessage(message: gapi.client.gmail.Message) {
