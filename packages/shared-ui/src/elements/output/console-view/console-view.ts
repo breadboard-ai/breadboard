@@ -141,6 +141,12 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         & details {
           margin: 0 0 var(--bb-grid-size-4) 0;
 
+          /* Deactivate the details when there are no non-summary elements */
+          &:not(:has(> :not(summary))) {
+            pointer-events: none;
+            cursor: default;
+          }
+
           summary {
             display: flex;
             align-items: center;
@@ -377,7 +383,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           const isLastItem = idx + 1 === this.run?.estimatedEntryCount;
           const isOpen = item.open || this.#openItems.has(itemId) || isLastItem;
 
-          return html`<details ?open=${isOpen}>
+          return html`<details ?open=${isOpen} disabled>
           <summary @click=${(evt: Event) => {
             if (
               !(
