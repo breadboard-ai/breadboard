@@ -7,17 +7,13 @@
 /// <reference types="@types/gapi" />
 /// <reference types="@maxim_mazurok/gapi.client.gmail-v1" />
 
-import {
-  BuiltInClient,
-  McpBuiltInClient,
-  mcpErr,
-  mcpText,
-  TokenGetter,
-} from "@breadboard-ai/mcp";
 import { Outcome } from "@breadboard-ai/types";
 import { err, filterUndefined, ok } from "@breadboard-ai/utils";
-import { z } from "zod";
 import { createMimeMessage } from "mimetext/browser";
+import { z } from "zod";
+import { BuiltInClient } from "../built-in-client.js";
+import { McpBuiltInClient, TokenGetter } from "../types.js";
+import { mcpErr, mcpText } from "../utils.js";
 
 export { createGmailClient };
 
