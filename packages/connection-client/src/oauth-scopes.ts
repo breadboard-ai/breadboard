@@ -52,7 +52,7 @@ export const OAUTH_SCOPES = {
   },
 
   // https://developers.google.com/workspace/gmail/api/auth/scopes
-  "https://www.googleapis.com/auth/gmail.readonly": {
+  "https://www.googleapis.com/auth/gmail.modify": {
     category: "Gmail",
   },
 } as const satisfies Record<string, OAuthScopeInfo>;
