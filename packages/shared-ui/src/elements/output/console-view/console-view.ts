@@ -3,15 +3,12 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import * as StringsHelper from "../../../strings/helper.js";
-const Strings = StringsHelper.forSection("ActivityLog");
 
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { ConsoleEntry, ProjectRun, UI } from "../../../state";
 import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
-import { ResizeEvent } from "../../../events/events";
 import { icons } from "../../../styles/icons";
 import { SignalWatcher } from "@lit-labs/signals";
 import { isParticle } from "@breadboard-ai/particles";
@@ -272,13 +269,10 @@ export class ConsoleView extends SignalWatcher(LitElement) {
       }
 
       bb-floating-input {
-        position: absolute;
-        left: 50%;
-        bottom: 0;
-        padding-bottom: var(--bb-grid-size-6);
-        translate: -50% 0;
         --s-90: var(--n-100);
-        --container-margin: 0 var(--bb-grid-size-6);
+        --container-margin: 0;
+        width: 100%;
+        padding-bottom: var(--bb-grid-size-6);
         background: var(--n-100);
       }
 
@@ -312,17 +306,10 @@ export class ConsoleView extends SignalWatcher(LitElement) {
       return nothing;
     }
 
-    const PADDING = 24;
     return html`<bb-floating-input
       .schema=${input.schema}
       .focusWhenIn=${["canvas", "console"]}
       .disclaimerContent=${this.disclaimerContent}
-      @bbresize=${(evt: ResizeEvent) => {
-        this.style.setProperty(
-          "--input-clearance",
-          `${evt.contentRect.height + PADDING}px`
-        );
-      }}
     ></bb-floating-input>`;
   }
 
@@ -486,10 +473,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                       </summary>
 
                       ${workItem.awaitingUserInput
-                        ? html`<div class="awaiting-user">
-                            <span class="g-icon">progress_activity</span>
-                            ${Strings.from("STATUS_AWAITING_USER")}
-                          </div>`
+                        ? this.#renderInput()
                         : workItem.product.size > 0
                           ? html`<ul class="products">
                               ${repeat(
@@ -581,7 +565,6 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           .progress=${this.run?.progress}
         ></bb-app-header>`,
         this.#renderRun(),
-        this.#renderInput(),
       ]}
     </section>`;
   }
