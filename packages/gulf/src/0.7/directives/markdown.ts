@@ -75,7 +75,7 @@ class MarkdownDirective extends Directive {
           tokenName = "list_item";
           break;
         case "a":
-          tokenName = "link_item";
+          tokenName = "link";
           break;
         case "strong":
           tokenName = "strong";

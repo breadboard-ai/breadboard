@@ -238,7 +238,7 @@ export class GulfMain extends LitElement {
                 }
                 this.#data.model = new DataModel();
                 await this.#data.model.append(item.data.gulfMessages);
-                this.#data.model.finalize();
+                await this.#data.model.finalize();
 
                 (window as unknown as { __model: DataModel }).__model =
                   this.#data.model;

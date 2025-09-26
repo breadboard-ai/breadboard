@@ -354,14 +354,14 @@ export class Root extends SignalWatcher(LitElement) {
               case "gulf-checkbox": {
                 // TODO: maxAllowedSelections and selections.
                 const renderableComponent = component as Checkbox;
-                return html`<gulf-text
+                return html`<gulf-checkbox
                   id=${childData.id}
                   .weight=${childData.weight ?? 1}
                   .model=${this.model}
                   .dataPrefix=${childData.dataPrefix}
                   .value=${renderableComponent.value}
                   .label=${renderableComponent.label}
-                ></gulf-text>`;
+                ></gulf-checkbox>`;
               }
 
               default:

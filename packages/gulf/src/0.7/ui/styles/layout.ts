@@ -197,10 +197,13 @@ export const layout = css`
   )}
 
   .layout-el-cv {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    margin: 0;
+    & img,
+    & video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      margin: 0;
+    }
   }
 
   .layout-ar-sq {

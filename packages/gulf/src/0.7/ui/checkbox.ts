@@ -60,10 +60,11 @@ export class Checkbox extends Root {
   }
 
   #renderField(value: boolean | number) {
-    return html` <section>
-      <label for="data">${this.label?.literalString}</label>
+    return html` <section
+      class=${classMap(this.theme.components.CheckBox.container)}
+    >
       <input
-        class=${classMap(this.theme.components.TextField)}
+        class=${classMap(this.theme.components.CheckBox.element)}
         autocomplete="off"
         @input=${(evt: Event) => {
           if (!(evt.target instanceof HTMLInputElement)) {
@@ -76,6 +77,9 @@ export class Checkbox extends Root {
         type="checkbox"
         .value=${value}
       />
+      <label class=${classMap(this.theme.components.CheckBox.label)} for="data"
+        >${this.label?.literalString}</label
+      >
     </section>`;
   }
 
