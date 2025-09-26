@@ -7,17 +7,13 @@
 /// <reference types="@types/gapi" />
 /// <reference types="@maxim_mazurok/gapi.client.gmail-v1" />
 
-import {
-  BuiltInClient,
-  McpBuiltInClient,
-  mcpErr,
-  mcpText,
-  TokenGetter,
-} from "@breadboard-ai/mcp";
 import { Outcome } from "@breadboard-ai/types";
 import { err, filterUndefined, ok } from "@breadboard-ai/utils";
-import { z } from "zod";
 import { createMimeMessage } from "mimetext/browser";
+import { z } from "zod";
+import { BuiltInClient } from "../built-in-client.js";
+import { McpBuiltInClient, TokenGetter } from "../types.js";
+import { mcpErr, mcpText } from "../utils.js";
 
 export { createGmailClient };
 
@@ -159,6 +155,11 @@ function createGmailClient(tokenGetter: TokenGetter): McpBuiltInClient {
       title: "List emails",
       description: "Lists the messages in the user's GMail",
       inputSchema: LIST_INPUT_SCHEMA,
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
     },
     async ({ q, labelIds, includeSpamTrash, maxResults }) => {
       const gmail = await loadGmailApi(tokenGetter);
@@ -215,6 +216,11 @@ function createGmailClient(tokenGetter: TokenGetter): McpBuiltInClient {
       title: "List threads",
       description: "Lists the threads in the user's GMail",
       inputSchema: LIST_INPUT_SCHEMA,
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
     },
     async ({ q, labelIds, includeSpamTrash, maxResults }) => {
       const gmail = await loadGmailApi(tokenGetter);
@@ -268,6 +274,12 @@ function createGmailClient(tokenGetter: TokenGetter): McpBuiltInClient {
       title: "Send email",
       description: "Sends an email message on user's behalf using their GMail",
       inputSchema: SEND_INPUT_SCHEMA,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
     },
     async (args) => {
       const gmail = await loadGmailApi(tokenGetter);
@@ -296,6 +308,12 @@ function createGmailClient(tokenGetter: TokenGetter): McpBuiltInClient {
       title: "Create draft",
       description: "Creates a draft of an email message in the user's GMail",
       inputSchema: SEND_INPUT_SCHEMA,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+      },
     },
     async (args) => {
       const gmail = await loadGmailApi(tokenGetter);
