@@ -83,6 +83,7 @@ export class Header extends LitElement {
         padding: 0;
         color: var(--n-0);
         border-radius: 50%;
+        width: 82px;
 
         & .g-icon {
           font-size: 30px;
@@ -111,6 +112,7 @@ export class Header extends LitElement {
         color: var(--n-35);
         opacity: 0;
         transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+        width: 82px;
 
         > * {
           pointer-events: none;
@@ -143,7 +145,7 @@ export class Header extends LitElement {
 
         > #progress {
           width: 100%;
-          max-width: 320px;
+          max-width: 260px;
           height: 4px;
           background: var(--n-100, var(--bb-neutral-200));
           outline: 1px solid var(--n-100);
