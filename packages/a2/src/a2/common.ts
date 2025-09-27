@@ -126,3 +126,9 @@ export type DescribeInputs = {
     description: LLMContent | undefined;
   };
 };
+
+export type ToolOutput =
+  | {
+      structured_result: LLMContent;
+    }
+  | { result: string };

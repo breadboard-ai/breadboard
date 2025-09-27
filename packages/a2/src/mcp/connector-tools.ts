@@ -2,11 +2,13 @@
  * @fileoverview The tools export for the connector.
  */
 
+import { LLMContent } from "@breadboard-ai/types";
 import type { ListToolResult } from "../a2/connector-manager";
 import { createTools } from "../a2/connector-manager";
 import { StreamableReporter } from "../a2/output";
 import { err, ErrorWithMetadata, ok } from "../a2/utils";
 import { McpClient } from "./mcp-client";
+import { CallToolResponse } from "./types";
 
 export { invoke as default, describe };
 
@@ -107,9 +109,38 @@ const { invoke, describe } = createTools<Configuration>({
         return reporter.sendError(callingTool);
       }
       await reporter.sendUpdate("MCP Server Response", callingTool, "download");
-      return { result: JSON.stringify(callingTool) };
+      return { structured_result: mcpToLLmContent(name, callingTool) };
     } finally {
       await reporter.close();
     }
   },
 });
+
+function mcpToLLmContent(
+  name: string,
+  response: CallToolResponse["content"]
+): LLMContent {
+  const content: LLMContent = { parts: [] };
+  const { parts } = content;
+  parts.push({
+    functionResponse: {
+      name,
+      response: { content: JSON.stringify(response) },
+    },
+  });
+  response.forEach((data) => {
+    switch (data.type) {
+      case "image":
+        parts.push({
+          inlineData: { data: data.data, mimeType: data.mimeType },
+        });
+        break;
+      case "resource_link":
+        parts.push({
+          fileData: { fileUri: data.uri, mimeType: data.mimeType },
+        });
+        break;
+    }
+  });
+  return content;
+}

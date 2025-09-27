@@ -36,6 +36,9 @@ class McpClient extends RpcSession<InitArguments, Implementation> {
   }
 
   async callTool(args: CallToolRequest) {
-    return this.call<CallToolRequest, CallToolResponse>("callTool", args);
+    return this.call<CallToolRequest, CallToolResponse["content"]>(
+      "callTool",
+      args
+    );
   }
 }

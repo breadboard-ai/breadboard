@@ -15,6 +15,25 @@ export type FunctionResponseCapabilityPart = {
   functionResponse: {
     name: string;
     response: object;
+    parts?: FunctionResponsePart[];
+  };
+};
+
+export type FunctionResponsePart =
+  | FunctionResponseFileData
+  | FunctionResponseBlob;
+
+export type FunctionResponseFileData = {
+  fileData: {
+    fileUri?: string;
+    mimeType?: string;
+  };
+};
+
+export type FunctionResponseBlob = {
+  inlineData: {
+    data?: string;
+    mimeType?: string;
   };
 };
 

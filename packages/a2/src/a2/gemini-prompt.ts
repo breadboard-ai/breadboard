@@ -11,6 +11,7 @@ import {
 import gemini, { type Candidate, type GeminiInputs } from "./gemini";
 import { ToolManager } from "./tool-manager";
 import { addUserTurn, err, ok } from "./utils";
+import { ToolOutput } from "./common";
 
 export { GeminiPrompt };
 
@@ -149,43 +150,52 @@ class GeminiPrompt {
         } else if (functionName === undefined) {
           errors.push(`No function name for ${JSON.stringify(callingTool)}`);
         } else {
-          if (passContext) {
-            if (!("context" in callingTool)) {
-              errors.push(`No "context" port in outputs of "${$board}"`);
+          const toolResult = callingTool as ToolOutput;
+          if ("structured_result" in toolResult) {
+            // The MCP output
+            results.push([toolResult.structured_result]);
+          } else {
+            // The traditional path, where a string is returned.
+            if (passContext) {
+              if (!("context" in callingTool)) {
+                errors.push(`No "context" port in outputs of "${$board}"`);
+              } else {
+                const response = {
+                  ["value"]: JSON.stringify(
+                    callingTool.context as LLMContent[]
+                  ),
+                };
+                const responsePart: FunctionResponsePart = {
+                  functionResponse: {
+                    name: functionName,
+                    response: response,
+                  },
+                };
+                const toolResponseContent: LLMContent = {
+                  role: "user",
+                  parts: [responsePart],
+                };
+                results.push([toolResponseContent]);
+                console.log(
+                  "gemini-prompt + passContext, processResponse: ",
+                  results
+                );
+              }
             } else {
-              const response = {
-                ["value"]: JSON.stringify(callingTool.context as LLMContent[]),
-              };
               const responsePart: FunctionResponsePart = {
                 functionResponse: {
                   name: functionName,
-                  response: response,
+                  response: callingTool,
                 },
               };
               const toolResponseContent: LLMContent = {
                 role: "user",
                 parts: [responsePart],
               };
+              console.log("toolResponseContent: ", toolResponseContent);
               results.push([toolResponseContent]);
-              console.log(
-                "gemini-prompt + passContext, processResponse: ",
-                results
-              );
+              console.log("gemini-prompt processResponse: ", results);
             }
-          } else {
-            const responsePart: FunctionResponsePart = {
-              functionResponse: {
-                name: functionName,
-                response: callingTool,
-              },
-            };
-            const toolResponseContent: LLMContent = {
-              role: "user",
-              parts: [responsePart],
-            };
-            console.log("toolResponseContent: ", toolResponseContent);
-            results.push([toolResponseContent]);
-            console.log("gemini-prompt processResponse: ", results);
           }
         }
       }
