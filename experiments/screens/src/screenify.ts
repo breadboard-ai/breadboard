@@ -52,11 +52,11 @@ async function loadExample(): Promise<string> {
 const GEMINI_KEY = process.env.VITE_GEMINI_KEY;
 if (!GEMINI_KEY) {
   console.error(
-    `  🔑 Please set GEMINI_KEY environment variable to run this app`
+    `  🔑 Please set VITE_GEMINI_KEY environment variable to run this app`
   );
   process.exit(1);
 } else {
-  console.log(`  🔑 GEMINI_KEY Acquired`);
+  console.log(`  🔑 VITE_GEMINI_KEY Acquired`);
 }
 
 const types = await loadTypes();
