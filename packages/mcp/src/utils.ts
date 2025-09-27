@@ -6,7 +6,7 @@
 
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
-export { mcpErr, mcpText };
+export { mcpErr, mcpText, mcpResourceLink };
 
 function mcpErr(text: string): CallToolResult {
   return { content: [{ type: "text", text }], isError: true };
@@ -15,5 +15,11 @@ function mcpErr(text: string): CallToolResult {
 function mcpText(text: string): CallToolResult {
   return {
     content: [{ type: "text", text }],
+  };
+}
+
+function mcpResourceLink(name: string, uri: string): CallToolResult {
+  return {
+    content: [{ type: "resource_link", name, uri }],
   };
 }

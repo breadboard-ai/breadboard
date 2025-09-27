@@ -10,7 +10,7 @@
 import { z } from "zod";
 import { BuiltInClient } from "../built-in-client.js";
 import { McpBuiltInClient, TokenGetter } from "../types.js";
-import { mcpErr, mcpText } from "../utils.js";
+import { mcpErr, mcpResourceLink, mcpText } from "../utils.js";
 import { Outcome } from "@breadboard-ai/types";
 import { err, filterUndefined, ok } from "@breadboard-ai/utils";
 
@@ -177,6 +177,75 @@ You can also use partial matches like \`mimeType contains 'image/'\` to find all
         return mcpText(JSON.stringify(listing.result));
       } catch {
         return mcpErr(`Unable to list Google Drive files`);
+      }
+    }
+  );
+
+  client.addTool(
+    "gdrive_get_file",
+    {
+      title: "Get Drive file",
+      description: "Loads the file from Google Drive",
+      inputSchema: {
+        fileId: z.string().describe(`The Drive ID of the file`),
+      },
+    },
+    async ({ fileId }) => {
+      try {
+        const drive = await loadDriveApi(tokenGetter);
+        if (!ok(drive)) {
+          return mcpErr(drive.$error);
+        }
+
+        // Get file type
+        const gettingMetadata = await drive.files.get({
+          fileId,
+          fields: "mimeType,name",
+        });
+        if (gettingMetadata.status !== 200) {
+          return mcpErr(
+            gettingMetadata.statusText ||
+              "Unable to load file metadata from Google Drive"
+          );
+        }
+        const { mimeType, name } = gettingMetadata.result;
+        if (!mimeType || !name) {
+          return mcpErr(
+            gettingMetadata.statusText ||
+              "Unable to load file metadata from Google Drive"
+          );
+        }
+
+        if (mimeType!.startsWith("application/vnd.google-apps.")) {
+          const exporting = await drive.files.export({
+            fileId,
+            mimeType: "text/plain",
+          });
+          if (exporting.status !== 200) {
+            return mcpErr(
+              exporting.statusText || "Unable to export file from Google Drive"
+            );
+          }
+          const blob = new Blob([exporting.body], { type: "text/plain" });
+          const url = window.URL.createObjectURL(blob);
+          return mcpResourceLink(name!, url);
+        } else {
+          const downloading = await drive.files.get({
+            fileId,
+            alt: "media",
+          });
+          if (downloading.status !== 200) {
+            return mcpErr(
+              downloading.statusText ||
+                "Unable to download file from Google Drive"
+            );
+          }
+          const blob = new Blob([downloading.body], { type: mimeType });
+          const url = window.URL.createObjectURL(blob);
+          return mcpResourceLink(name!, url);
+        }
+      } catch {
+        return mcpErr(`Unable to load file from Google Drive`);
       }
     }
   );
