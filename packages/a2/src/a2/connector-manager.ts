@@ -3,7 +3,11 @@
  */
 
 import { err, ok, isLLMContentArray } from "./utils";
-import type { ExportDescriberResult, CallToolCallback } from "./common";
+import type {
+  ExportDescriberResult,
+  CallToolCallback,
+  ToolOutput,
+} from "./common";
 import {
   Capabilities,
   DescribeOutputs,
@@ -311,9 +315,7 @@ export type ListToolResult = {
   passContext: boolean;
 };
 
-export type InvokeMethodOutput = {
-  result: string;
-};
+export type InvokeMethodOutput = ToolOutput;
 
 export type CanSaveMethodOutput = {
   canSave: boolean;

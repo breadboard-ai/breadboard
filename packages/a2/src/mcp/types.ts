@@ -63,7 +63,17 @@ export type CallToolContentImage = {
   mimeType: string;
 };
 
-export type CallToolContent = CallToolContentText | CallToolContentImage;
+export type CallToolContentResourceLink = {
+  type: "resource_link";
+  uri: string;
+  mimeType: string;
+  name: string;
+};
+
+export type CallToolContent =
+  | CallToolContentText
+  | CallToolContentImage
+  | CallToolContentResourceLink;
 
 export type CallToolResponse = {
   content: CallToolContent[];

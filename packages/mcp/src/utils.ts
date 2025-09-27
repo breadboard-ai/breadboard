@@ -18,8 +18,12 @@ function mcpText(text: string): CallToolResult {
   };
 }
 
-function mcpResourceLink(name: string, uri: string): CallToolResult {
+function mcpResourceLink(
+  name: string,
+  uri: string,
+  mimeType: string
+): CallToolResult {
   return {
-    content: [{ type: "resource_link", name, uri }],
+    content: [{ type: "resource_link", name, uri, mimeType }],
   };
 }

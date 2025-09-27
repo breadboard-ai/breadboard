@@ -74,6 +74,12 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
     // 2) StoredDataCapabilityPart. These need to be uploaded using
     //    Gemini File API to create the right FileDataPart.
     if (isFileDataCapabilityPart(part)) {
+      if (
+        part.fileData.fileUri.startsWith(
+          "https://generativelanguage.googleapis.com/v1beta/files/"
+        )
+      )
+        return part;
       mimeType = part.fileData.mimeType;
       if (isGoogleDriveDocument(part)) {
         try {
