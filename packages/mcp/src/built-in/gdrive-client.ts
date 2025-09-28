@@ -9,14 +9,21 @@
 
 import { z } from "zod";
 import { BuiltInClient } from "../built-in-client.js";
-import { McpBuiltInClient, TokenGetter } from "../types.js";
+import {
+  McpBuiltInClient,
+  McpBuiltInClientFactoryContext,
+  TokenGetter,
+} from "../types.js";
 import { mcpErr, mcpResourceLink, mcpText } from "../utils.js";
 import { FileDataPart, Outcome } from "@breadboard-ai/types";
 import { err, filterUndefined, ok } from "@breadboard-ai/utils";
+import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
 export { createGdriveClient };
 
-function createGdriveClient(tokenGetter: TokenGetter): McpBuiltInClient {
+function createGdriveClient({
+  tokenGetter,
+}: McpBuiltInClientFactoryContext): McpBuiltInClient {
   const client = new BuiltInClient({
     name: "Google Drive",
     url: "builtin:gdrive",
@@ -56,6 +63,9 @@ Prefer "user" or "drive" to "allDrives" for efficiency. By default, corpora is s
 `
           )
           .optional(),
+        pageSize: z
+          .number()
+          .describe(`The maximum number of files to return per page.`),
         orderBy: z
           .string()
           .describe(
@@ -151,9 +161,36 @@ You can also use partial matches like \`mimeType contains 'image/'\` to find all
 | Find files inside a folder with ID \`123abcXYZ\`                     | \`'123abcXYZ' in parents\`                                                                                  |
 | Find PDF or DOC files shared with me                               | \`sharedWithMe = true and (mimeType = 'application/pdf' or mimeType = 'application/vnd.google-apps.document')\` |
             `),
+        retrievalMode: z
+          .enum(["save", "include", "none"])
+          .describe(
+            `Optional. Controls how to handle the retrieving contents of the files.
+  
+  Use this parameter in conjunction with the "q" parameter. Three modes are available:
+  - "save" -- retrieves and saves the contents of the files for later examination. Use this mode when the prompt instructs to only retrieve or load contents. This is the most common case.
+  - "include" -- retrieves and includes the contents as part of the response. Use this mode when the prompt includes instructions to do additional work with the contents of the files.
+  - "none" -- default, does not retrieve or include contents of the files. Use this when the prompts only instructs to list the contents.
+
+  Examples of prompts and modes inferred from prompts:
+
+   - "Get the contents of documents owned by ..." -> retrievalMode = "save", because the prompt only asks to retrieve the contents.
+   - "Load all documents ... and summarize their contents" -> retrievalMode = "include", because the prompts contains instructions for additional work ("summarize their contents")
+   - "List all presentations that start with ... " -> retrievalMode = "none", because the prompt does not instruct to get the contents of the presentations.
+   - "Get all documents ... and answer this question ... " -> retrievalMode = "include", because the prompt contains instructions for additional work ("answer this question ...")
+ `
+          )
+          .optional(),
       },
     },
-    async ({ corpora, driveId, includeItemsFromAllDrives, orderBy, q }) => {
+    async ({
+      corpora,
+      driveId,
+      pageSize,
+      includeItemsFromAllDrives,
+      orderBy,
+      q,
+      retrievalMode,
+    }) => {
       try {
         const drive = await loadDriveApi(tokenGetter);
         if (!ok(drive)) {
@@ -164,15 +201,52 @@ You can also use partial matches like \`mimeType contains 'image/'\` to find all
           filterUndefined({
             corpora,
             driveId,
-            q,
+            pageSize,
             includeItemsFromAllDrives,
             orderBy,
+            q,
           })
         );
         if (listing.status !== 200) {
           return mcpErr(
             listing.statusText || "Unable to list Google Drive files"
           );
+        }
+        if (
+          retrievalMode !== "none" &&
+          listing.result.files &&
+          listing.result.files.length > 0
+        ) {
+          let isError = false;
+          const content = (
+            await Promise.all(
+              listing.result.files.map(async (file) => {
+                const getting = await callAssetsDriveApi(
+                  tokenGetter,
+                  file.id!,
+                  file.mimeType!
+                );
+                if (!ok(getting)) {
+                  isError = true;
+                  return;
+                }
+                // TODO: Implement actual saving.
+                if (retrievalMode === "save") {
+                  return;
+                }
+                return {
+                  type: "resource_link",
+                  name: file.name!,
+                  uri: getting.fileData.fileUri,
+                  mimeType: getting.fileData.mimeType,
+                };
+              })
+            )
+          ).filter(Boolean) as CallToolResult["content"];
+          if (content.length === 0) {
+            return mcpText(JSON.stringify(listing.result));
+          }
+          return { content, isError };
         }
         return mcpText(JSON.stringify(listing.result));
       } catch {

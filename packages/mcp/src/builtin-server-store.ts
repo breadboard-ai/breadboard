@@ -9,9 +9,9 @@ import { Outcome } from "@breadboard-ai/types";
 import {
   McpBuiltInClient,
   McpBuiltInClientFactory,
+  McpBuiltInClientFactoryContext,
   McpClient,
   McpServerInfo,
-  TokenGetter,
 } from "./types.js";
 
 export { McpBuiltInServerStore };
@@ -23,7 +23,7 @@ class McpBuiltInServerStore {
   #clientFactories: Map<string, McpBuiltInClientFactory>;
 
   constructor(
-    private readonly tokenGetter: TokenGetter,
+    private readonly context: McpBuiltInClientFactoryContext,
     clientFactories: [string, McpBuiltInClientFactory][]
   ) {
     this.#clientFactories = new Map(clientFactories);
@@ -51,7 +51,7 @@ class McpBuiltInServerStore {
       if (!factory) {
         return err(`Unknown built-in server "${name}"`);
       }
-      client = factory(this.tokenGetter);
+      client = factory(this.context);
       this.#clients.set(name, client);
     }
     return client;

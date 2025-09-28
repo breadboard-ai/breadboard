@@ -9,11 +9,11 @@ import { Implementation } from "@modelcontextprotocol/sdk/types.js";
 import {
   JsonSerializableRequestInit,
   McpBuiltInClientFactory,
+  McpBuiltInClientFactoryContext,
   McpClient,
   McpProxyRequest,
   McpServerInfo,
   McpServerStore,
-  TokenGetter,
 } from "./types.js";
 import { McpBuiltInServerStore } from "./builtin-server-store.js";
 import { Outcome } from "@breadboard-ai/types";
@@ -31,10 +31,10 @@ class McpClientManager {
 
   constructor(
     builtInClients: [string, McpBuiltInClientFactory][],
-    private readonly tokenGetter: TokenGetter,
+    private readonly context: McpBuiltInClientFactoryContext,
     private readonly proxyUrl?: string
   ) {
-    this.#builtIn = new McpBuiltInServerStore(tokenGetter, builtInClients);
+    this.#builtIn = new McpBuiltInServerStore(context, builtInClients);
   }
 
   builtInServers(): ReadonlyArray<McpServerInfo> {
@@ -44,7 +44,7 @@ class McpClientManager {
   #fetch(): FetchLike {
     const proxyURL = new URL("/api/mcp-proxy", window.location.href);
     return async (url: string | URL, init?: RequestInit) => {
-      const accessToken = await this.tokenGetter();
+      const accessToken = await this.context.tokenGetter();
       if (!ok(accessToken)) {
         throw new Error(accessToken.$error);
       }
@@ -100,7 +100,7 @@ class McpClientManager {
       if (isBuiltIn) {
         return this.#builtIn.get(url);
       } else if (this.proxyUrl) {
-        const accessToken = await this.tokenGetter();
+        const accessToken = await this.context.tokenGetter();
         const serverInfo = await serverStore.get(url);
         if (!ok(accessToken)) return accessToken;
 

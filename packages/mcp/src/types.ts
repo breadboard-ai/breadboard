@@ -134,6 +134,10 @@ export interface McpBuiltInClient extends McpClient {
   ): void;
 }
 
+export type McpBuiltInClientFactoryContext = {
+  tokenGetter: TokenGetter;
+};
+
 export type McpBuiltInClientFactory = (
-  tokenGetter: TokenGetter
+  context: McpBuiltInClientFactoryContext
 ) => McpBuiltInClient;

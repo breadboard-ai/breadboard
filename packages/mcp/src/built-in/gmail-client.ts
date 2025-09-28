@@ -12,7 +12,11 @@ import { err, filterUndefined, ok } from "@breadboard-ai/utils";
 import { createMimeMessage } from "mimetext/browser";
 import { z } from "zod";
 import { BuiltInClient } from "../built-in-client.js";
-import { McpBuiltInClient, TokenGetter } from "../types.js";
+import {
+  McpBuiltInClient,
+  McpBuiltInClientFactoryContext,
+  TokenGetter,
+} from "../types.js";
 import { mcpErr, mcpText } from "../utils.js";
 
 export { createGmailClient };
@@ -143,7 +147,9 @@ const SEND_ZOD_OBJECT = z.object(SEND_INPUT_SCHEMA);
 
 type MessageComponents = z.infer<typeof SEND_ZOD_OBJECT>;
 
-function createGmailClient(tokenGetter: TokenGetter): McpBuiltInClient {
+function createGmailClient({
+  tokenGetter,
+}: McpBuiltInClientFactoryContext): McpBuiltInClient {
   const client = new BuiltInClient({
     name: "GMail",
     url: "builtin:gmail",

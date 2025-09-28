@@ -435,14 +435,16 @@ export class Main extends SignalWatcher(LitElement) {
 
     const mcp = new McpManager(
       builtInMcpClients,
-      async (scopes) => {
-        const token = await this.signinAdapter.token(scopes);
-        if (token.state === "valid") {
-          return token.grant.access_token;
-        }
-        // This will fail, and that's okay. We'll get the "Unauthorized"
-        // error.
-        return "";
+      {
+        tokenGetter: async (scopes) => {
+          const token = await this.signinAdapter.token(scopes);
+          if (token.state === "valid") {
+            return token.grant.access_token;
+          }
+          // This will fail, and that's okay. We'll get the "Unauthorized"
+          // error.
+          return "";
+        },
       },
       this.globalConfig.BACKEND_API_ENDPOINT
     );
