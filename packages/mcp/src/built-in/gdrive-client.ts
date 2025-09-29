@@ -30,7 +30,7 @@ function createGdriveClient({
   });
 
   client.addTool(
-    "gdrive_list_files",
+    "gdrive_find_in_drive",
     {
       title: "Find in Drive",
       description: `Lists or retrieves the user's files in Google Drive. This method accepts the q parameter, which is a search query combining one or more search terms.
