@@ -10,13 +10,12 @@ COPY --from=breadboard / .
 
 RUN npm clean-install
 
-ARG VITE_BOARD_SERVICE
+ARG VITE_BOARD_SERVICE="drive:"
+
+# TODO Turn these into runtime vars
 ARG VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS
 ARG VITE_VALID_REDIRECT_URI_ORIGINS
 ARG VITE_ENVIRONMENT_NAME
-
-# Built-time vars
-ENV VITE_BOARD_SERVICE=${VITE_BOARD_SERVICE:-/board/}
 
 WORKDIR packages/unified-server
 RUN npm run build
