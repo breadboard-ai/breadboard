@@ -5,7 +5,7 @@
  */
 
 import { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
-import { Outcome } from "@breadboard-ai/types";
+import { FileSystem, Outcome } from "@breadboard-ai/types";
 import { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type {
@@ -55,7 +55,11 @@ export type McpProxyRequest = {
   init: JsonSerializableRequestInit;
 };
 
-export type McpCallToolResult = { content: CallToolResult["content"] };
+export type McpCallToolResult = {
+  content: CallToolResult["content"];
+  isError?: boolean;
+  saveOutputs?: boolean;
+};
 export type McpListToolResult = { tools: ListToolsResult["tools"] };
 
 export type McpServerInfo = {
@@ -136,6 +140,7 @@ export interface McpBuiltInClient extends McpClient {
 
 export type McpBuiltInClientFactoryContext = {
   tokenGetter: TokenGetter;
+  fileSystem: FileSystem;
 };
 
 export type McpBuiltInClientFactory = (

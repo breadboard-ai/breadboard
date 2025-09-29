@@ -54,6 +54,11 @@ export type GeminiPromptOptions = {
 class GeminiPrompt {
   readonly options: GeminiPromptOptions;
 
+  /**
+   * A flag that is set by tools when they indicate that the output of these
+   * tools will replace whatever Gemini produces.
+   */
+  saveOutputs: boolean = false;
   calledTools: boolean = false;
   // Useful for detecting if subgraphs were invoked, based on whether a tool was invoked with
   // 'passContext' set to true.
@@ -154,6 +159,9 @@ class GeminiPrompt {
           if ("structured_result" in toolResult) {
             // The MCP output
             results.push([toolResult.structured_result]);
+            if (toolResult.saveOutputs) {
+              this.saveOutputs = true;
+            }
           } else {
             // The traditional path, where a string is returned.
             if (passContext) {

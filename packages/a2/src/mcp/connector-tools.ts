@@ -9,6 +9,7 @@ import { StreamableReporter } from "../a2/output";
 import { err, ErrorWithMetadata, ok } from "../a2/utils";
 import { McpClient } from "./mcp-client";
 import { CallToolResponse } from "./types";
+import { filterUndefined } from "@breadboard-ai/utils";
 
 export { invoke as default, describe };
 
@@ -109,7 +110,11 @@ const { invoke, describe } = createTools<Configuration>({
         return reporter.sendError(callingTool);
       }
       await reporter.sendUpdate("MCP Server Response", callingTool, "download");
-      return { structured_result: mcpToLLmContent(name, callingTool) };
+      return filterUndefined({
+        structured_result: mcpToLLmContent(name, callingTool.content),
+        isError: callingTool.isError,
+        saveOutputs: callingTool.saveOutputs,
+      });
     } finally {
       await reporter.close();
     }
@@ -136,9 +141,15 @@ function mcpToLLmContent(
         });
         break;
       case "resource_link":
-        parts.push({
-          fileData: { fileUri: data.uri, mimeType: data.mimeType },
-        });
+        if (data.meta?.storedData) {
+          parts.push({
+            storedData: { handle: data.uri, mimeType: data.mimeType },
+          });
+        } else {
+          parts.push({
+            fileData: { fileUri: data.uri, mimeType: data.mimeType },
+          });
+        }
         break;
     }
   });

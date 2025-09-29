@@ -67,6 +67,9 @@ export type CallToolContentResourceLink = {
   type: "resource_link";
   uri: string;
   mimeType: string;
+  meta?: {
+    storedData: boolean;
+  };
   name: string;
 };
 
@@ -77,6 +80,8 @@ export type CallToolContent =
 
 export type CallToolResponse = {
   content: CallToolContent[];
+  isError?: boolean;
+  saveOutputs?: boolean;
 };
 
 export type MCPResponse =

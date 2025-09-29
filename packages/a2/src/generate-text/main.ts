@@ -26,6 +26,7 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
+import { filterUndefined } from "@breadboard-ai/utils";
 
 export { invoke as default, describe };
 
@@ -163,6 +164,9 @@ class GenerateText {
     if (!ok(result)) return result;
     const calledTools =
       prompt.calledTools || doneTool.invoked || keepChattingTool.invoked;
+    if (prompt.saveOutputs) {
+      return scrubFunctionResponses(result.last);
+    }
     if (calledTools) {
       if (doneTool.invoked) {
         return result.last;
@@ -218,6 +222,9 @@ class GenerateText {
           const nextTurn = new GeminiPrompt(this.caps, inputs, { toolManager });
           const nextTurnResult = await nextTurn.invoke();
           if (!ok(nextTurnResult)) return nextTurnResult;
+          if (nextTurn.saveOutputs) {
+            return scrubFunctionResponses(nextTurnResult.last);
+          }
           if (!nextTurn.calledTools && !nextTurn.calledCustomTools) {
             afterTools = nextTurnResult;
             break;
@@ -277,6 +284,13 @@ function done(result: LLMContent[], makeList: boolean = false) {
     result = [list];
   }
   return { done: result };
+}
+
+function scrubFunctionResponses(c: LLMContent): LLMContent {
+  return filterUndefined({
+    parts: c.parts.filter((part) => !("functionResponse" in part)),
+    role: c.role,
+  });
 }
 
 async function keepChatting(

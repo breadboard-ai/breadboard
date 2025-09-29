@@ -32,8 +32,8 @@ function createGdriveClient({
   client.addTool(
     "gdrive_list_files",
     {
-      title: "List Drive files",
-      description: `Lists the user's files in Google Drive. This method accepts the q parameter, which is a search query combining one or more search terms.
+      title: "Find in Drive",
+      description: `Lists or retrieves the user's files in Google Drive. This method accepts the q parameter, which is a search query combining one or more search terms.
 
 This method returns all files by default, including trashed files. If you don't want trashed files to appear in the list, use the trashed=false to remove trashed files from the results.`,
       inputSchema: {
@@ -168,7 +168,7 @@ You can also use partial matches like \`mimeType contains 'image/'\` to find all
   
   Use this parameter in conjunction with the "q" parameter. Three modes are available:
   - "save" -- retrieves and saves the contents of the files for later examination. Use this mode when the prompt instructs to only retrieve or load contents. This is the most common case.
-  - "include" -- retrieves and includes the contents as part of the response. Use this mode when the prompt includes instructions to do additional work with the contents of the files.
+  - "include" -- retrieves and includes the contents of the files alongside the response. Use this mode when the prompt includes instructions to do additional work with the contents of the files.
   - "none" -- default, does not retrieve or include contents of the files. Use this when the prompts only instructs to list the contents.
 
   Examples of prompts and modes inferred from prompts:
@@ -177,6 +177,11 @@ You can also use partial matches like \`mimeType contains 'image/'\` to find all
    - "Load all documents ... and summarize their contents" -> retrievalMode = "include", because the prompts contains instructions for additional work ("summarize their contents")
    - "List all presentations that start with ... " -> retrievalMode = "none", because the prompt does not instruct to get the contents of the presentations.
    - "Get all documents ... and answer this question ... " -> retrievalMode = "include", because the prompt contains instructions for additional work ("answer this question ...")
+
+
+  When retrievalMode = "save", inform the user that the contents of the files were saved.
+  When retrievalMode = "include", continue on to perform the additional work.
+  When retrievalMode = "none", show the user the list of the files.
  `
           )
           .optional(),
@@ -189,7 +194,7 @@ You can also use partial matches like \`mimeType contains 'image/'\` to find all
       includeItemsFromAllDrives,
       orderBy,
       q,
-      retrievalMode,
+      retrievalMode = "none",
     }) => {
       try {
         const drive = await loadDriveApi(tokenGetter);
@@ -218,35 +223,45 @@ You can also use partial matches like \`mimeType contains 'image/'\` to find all
           listing.result.files.length > 0
         ) {
           let isError = false;
+          const saveOutputs = retrievalMode === "save";
           const content = (
             await Promise.all(
               listing.result.files.map(async (file) => {
-                const getting = await callAssetsDriveApi(
-                  tokenGetter,
-                  file.id!,
-                  file.mimeType!
-                );
-                if (!ok(getting)) {
-                  isError = true;
-                  return;
+                if (saveOutputs) {
+                  return {
+                    type: "resource_link",
+                    name: file.name!,
+                    meta: {
+                      storedData: true,
+                    },
+                    uri: `drive:/${file.id!}`,
+                    mimeType: file.mimeType!,
+                  };
+                } else {
+                  const getting = await callAssetsDriveApi(
+                    tokenGetter,
+                    file.id!,
+                    file.mimeType!
+                  );
+                  if (!ok(getting)) {
+                    isError = true;
+                    return;
+                  }
+                  if (!("fileData" in getting)) return;
+                  return {
+                    type: "resource_link",
+                    name: file.name!,
+                    uri: getting.fileData.fileUri,
+                    mimeType: getting.fileData.mimeType,
+                  };
                 }
-                // TODO: Implement actual saving.
-                if (retrievalMode === "save") {
-                  return;
-                }
-                return {
-                  type: "resource_link",
-                  name: file.name!,
-                  uri: getting.fileData.fileUri,
-                  mimeType: getting.fileData.mimeType,
-                };
               })
             )
           ).filter(Boolean) as CallToolResult["content"];
           if (content.length === 0) {
             return mcpText(JSON.stringify(listing.result));
           }
-          return { content, isError };
+          return { content, isError, saveOutputs };
         }
         return mcpText(JSON.stringify(listing.result));
       } catch {
@@ -340,6 +355,7 @@ async function callAssetsDriveApi(
   tokenGetter: TokenGetter,
   fileId: string,
   mimeType?: string,
+  returnStoredData?: boolean,
   resourceKey?: string
 ): Promise<Outcome<FileDataPart>> {
   const url = new URL(
@@ -351,6 +367,9 @@ async function callAssetsDriveApi(
   }
   if (mimeType) {
     url.searchParams.set("mimeType", mimeType);
+  }
+  if (returnStoredData) {
+    url.searchParams.set("returnStoredData", "true");
   }
   const access_token = await tokenGetter([
     "https://www.googleapis.com/auth/drive.readonly",
