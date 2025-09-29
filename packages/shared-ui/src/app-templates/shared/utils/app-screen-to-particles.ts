@@ -110,6 +110,27 @@ function llmContentPartPresentation(
       orientation: "vertical",
     } satisfies Presentation;
   } else if (isStoredData(part)) {
+    const possibleGDriveFileId = partToDriveFileId(part);
+    if (possibleGDriveFileId) {
+      return {
+        behaviors: [],
+        type: "card",
+        segments: [
+          {
+            weight: 1,
+            type: "block",
+            fields: {
+              src: {
+                title: "Google Drive File",
+                as: "particle-viewer-google-drive",
+              },
+            },
+            orientation: "vertical",
+          },
+        ],
+        orientation: "vertical",
+      } satisfies Presentation;
+    }
     const asType = as(part.storedData.mimeType, true);
     return {
       behaviors: [],
@@ -132,7 +153,27 @@ function llmContentPartPresentation(
       orientation: "vertical",
     } satisfies Presentation;
   } else if (isFileDataCapabilityPart(part)) {
-    if (part.fileData.mimeType.startsWith("video")) {
+    const possibleGDriveFileId = partToDriveFileId(part);
+    if (possibleGDriveFileId) {
+      return {
+        behaviors: [],
+        type: "card",
+        segments: [
+          {
+            weight: 1,
+            type: "block",
+            fields: {
+              src: {
+                title: "Google Drive File",
+                as: "particle-viewer-google-drive",
+              },
+            },
+            orientation: "vertical",
+          },
+        ],
+        orientation: "vertical",
+      } satisfies Presentation;
+    } else if (part.fileData.mimeType.startsWith("video")) {
       return {
         behaviors: [],
         type: "card",
@@ -151,31 +192,6 @@ function llmContentPartPresentation(
         ],
         orientation: "vertical",
       } satisfies Presentation;
-    } else {
-      const possibleGDriveFileId = partToDriveFileId(part);
-      if (
-        part.fileData.mimeType.startsWith("application/vnd.google-apps") ||
-        possibleGDriveFileId
-      ) {
-        return {
-          behaviors: [],
-          type: "card",
-          segments: [
-            {
-              weight: 1,
-              type: "block",
-              fields: {
-                src: {
-                  title: "Google Drive File",
-                  as: "particle-viewer-google-drive",
-                },
-              },
-              orientation: "vertical",
-            },
-          ],
-          orientation: "vertical",
-        } satisfies Presentation;
-      }
     }
   }
 
