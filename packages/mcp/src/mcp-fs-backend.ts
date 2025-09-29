@@ -193,7 +193,7 @@ class McpFileSystemBackend implements PersistentBackend {
         }
         session.response = session
           .client!.callTool(params)
-          .then((result) => fromJson(result.content))
+          .then((result) => fromJson(result))
           .catch((e) => err((e as Error).message));
         break;
       }

@@ -22,6 +22,7 @@ import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import type {
   BoardServer,
   ConformsToNodeValue,
+  FileSystem,
   RunSecretEvent,
 } from "@breadboard-ai/types";
 import {
@@ -433,21 +434,29 @@ export class Main extends SignalWatcher(LitElement) {
     const flagManager = createFlagManager(this.globalConfig.flags);
     const flags = await flagManager.flags();
 
+    // eslint-disable-next-line prefer-const
+    let fileSystem: FileSystem;
+
     const mcp = new McpManager(
       builtInMcpClients,
-      async (scopes) => {
-        const token = await this.signinAdapter.token(scopes);
-        if (token.state === "valid") {
-          return token.grant.access_token;
-        }
-        // This will fail, and that's okay. We'll get the "Unauthorized"
-        // error.
-        return "";
+      {
+        tokenGetter: async (scopes) => {
+          const token = await this.signinAdapter.token(scopes);
+          if (token.state === "valid") {
+            return token.grant.access_token;
+          }
+          // This will fail, and that's okay. We'll get the "Unauthorized"
+          // error.
+          return "";
+        },
+        get fileSystem() {
+          return fileSystem!;
+        },
       },
       this.globalConfig.BACKEND_API_ENDPOINT
     );
 
-    const fileSystem = createFileSystem({
+    fileSystem = createFileSystem({
       env: [
         ...envFromSettings(this.#settings),
         ...(args.env || []),

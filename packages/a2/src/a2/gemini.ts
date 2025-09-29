@@ -457,6 +457,11 @@ async function callAPI(
             },
           });
         }
+        await reporter.sendError(
+          err(
+            `Got an error ${status} response, retrying (${maxRetries - retries + 1}/${maxRetries})`
+          )
+        );
       } else {
         const outputs = result.response as GeminiAPIOutputs;
         const candidate = outputs?.candidates?.at(0);

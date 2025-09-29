@@ -11,14 +11,18 @@ import { Outcome } from "@breadboard-ai/types";
 import { err, filterUndefined, ok } from "@breadboard-ai/utils";
 import { z } from "zod";
 import { BuiltInClient } from "../built-in-client.js";
-import { McpBuiltInClient, TokenGetter } from "../types.js";
+import {
+  McpBuiltInClient,
+  McpBuiltInClientFactoryContext,
+  TokenGetter,
+} from "../types.js";
 import { mcpErr, mcpText } from "../utils.js";
 
 export { createGoogleCalendarClient };
 
-function createGoogleCalendarClient(
-  tokenGetter: TokenGetter
-): McpBuiltInClient {
+function createGoogleCalendarClient({
+  tokenGetter,
+}: McpBuiltInClientFactoryContext): McpBuiltInClient {
   const client = new BuiltInClient({
     name: "Google Calendar",
     url: "builtin:gcal",

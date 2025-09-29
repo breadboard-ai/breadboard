@@ -6,7 +6,10 @@
 
 import { McpClientManager } from "./client-manager.js";
 import { McpFileSystemBackend } from "./mcp-fs-backend.js";
-import { McpBuiltInClientFactory, TokenGetter } from "./types.js";
+import {
+  McpBuiltInClientFactory,
+  McpBuiltInClientFactoryContext,
+} from "./types.js";
 
 export { McpManager };
 
@@ -16,12 +19,12 @@ class McpManager {
 
   constructor(
     builtInClients: [string, McpBuiltInClientFactory][],
-    tokenGetter: TokenGetter,
+    context: McpBuiltInClientFactoryContext,
     proxyUrl?: string
   ) {
     this.clientManager = new McpClientManager(
       builtInClients,
-      tokenGetter,
+      context,
       proxyUrl
     );
     this.fileSystemBackend = new McpFileSystemBackend(this.clientManager);

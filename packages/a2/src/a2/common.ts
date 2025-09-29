@@ -130,5 +130,7 @@ export type DescribeInputs = {
 export type ToolOutput =
   | {
       structured_result: LLMContent;
+      isError?: boolean;
+      saveOutputs?: boolean;
     }
   | { result: string };
