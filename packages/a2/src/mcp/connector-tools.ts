@@ -135,6 +135,10 @@ function mcpToLLmContent(
   });
   response.forEach((data) => {
     switch (data.type) {
+      case "text": {
+        parts.push({ text: data.text });
+        break;
+      }
       case "image":
         parts.push({
           inlineData: { data: data.data, mimeType: data.mimeType },
