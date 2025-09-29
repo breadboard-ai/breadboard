@@ -1373,6 +1373,7 @@ export class Main extends SignalWatcher(LitElement) {
 
     if (projectState && this.#tab?.finalOutputValues) {
       const current = new ReactiveAppScreen("", undefined);
+      current.status = "complete";
       const last: AppScreenOutput = {
         output: this.#tab.finalOutputValues,
         schema: {},
