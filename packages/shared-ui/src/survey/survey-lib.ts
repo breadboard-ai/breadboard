@@ -15,7 +15,10 @@ export type SurveyLib = {
     triggerId: string;
     enableTestingMode?: boolean;
     thirdPartyDomainSupportEnabled?: boolean;
-    callback: (result: { surveyData: unknown }) => unknown;
+    callback: (result: {
+      surveyData?: unknown;
+      surveyError?: unknown;
+    }) => unknown;
   }): void;
 
   presentSurvey(config: {
@@ -59,7 +62,7 @@ export async function loadExternalSurveyLibOnce(): Promise<SurveyLib> {
     const { help } = globalThis as GlobalThisWithSurveyLib;
     return help.service.Lazy.create(
       /* product id is unnecessary for surveys */ 0,
-      { apiKey: SURVEY_API_KEY, locale: "en-US" }
+      { apiKey: SURVEY_API_KEY, locale: "en" }
     );
   })());
 }
