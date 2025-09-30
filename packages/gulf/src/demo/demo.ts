@@ -13,7 +13,7 @@ import { StateEvent } from "../0.7/events/events.js";
 
 import { theme as uiTheme } from "./theme/theme.js";
 import { themeContext } from "../0.7/ui/context/theme.js";
-import { Theme } from "../0.7/types/types.js";
+import { Theme, UnifiedUpdate } from "../0.7/types/types.js";
 import { provide } from "@lit/context";
 import * as Styles from "../0.7/ui/styles/index.js";
 
@@ -33,7 +33,7 @@ export class GulfMain extends LitElement {
       :host {
         display: flex;
         width: 100%;
-        max-width: 480px;
+        max-width: 640px;
         margin: 0 auto;
         min-height: 100%;
         font-family: var(--font-family);
@@ -153,109 +153,109 @@ export class GulfMain extends LitElement {
   accessor #error: string | null = null;
 
   #renderData() {
-    if (!this.#data) {
+    if (!this.#data?.model?.current?.root) {
       return nothing;
     }
 
-    if (
-      !this.#data.model ||
-      !this.#data.model.current ||
-      !this.#data.model.current.root
-    ) {
-      return nothing;
-    }
+    return html`<gulf-root
+      id=${this.#data.model.current.root.id}
+      .model=${this.#data.model}
+      .components=${[this.#data.model.current.root]}
+      @gulfaction=${async (evt: StateEvent<"gulf.action">) => {
+        if (!this.#data?.model || !evt.detail.action.context) {
+          return;
+        }
 
-    return [
-      this.#data.model
-        ? html`<gulf-root
-            id=${this.#data.model.current.root.id}
-            .model=${this.#data.model}
-            .components=${[this.#data.model.current.root]}
-            @gulfaction=${async (evt: StateEvent<"gulf.action">) => {
-              if (!this.#data?.model) {
-                return;
-              }
+        const resolvedContext: Record<string, unknown> = {};
+        for (const item of evt.detail.action.context) {
+          if (item.value.path) {
+            resolvedContext[item.key] = await this.#data.model.getDataProperty(
+              item.value.path,
+              evt.detail.dataPrefix
+            );
+          } else if (item.value.literalBoolean !== undefined) {
+            resolvedContext[item.key] = item.value.literalBoolean;
+          } else if (item.value.literalNumber !== undefined) {
+            resolvedContext[item.key] = item.value.literalNumber;
+          } else if (item.value.literalString !== undefined) {
+            resolvedContext[item.key] = item.value.literalString;
+          }
+        }
 
-              if (!evt.detail.action.context) {
-                return;
-              }
+        const message = {
+          actionName: evt.detail.action.action,
+          sourceComponentId: evt.detail.sourceComponentId,
+          timestamp: new Date().toISOString(),
+          resolvedContext: resolvedContext,
+        };
 
-              const details: Record<string, unknown> = {};
-              for (const item of evt.detail.action.context) {
-                if (item.value.path) {
-                  details[item.key] = await this.#data.model.getDataProperty(
-                    item.value.path,
-                    evt.detail.dataPrefix
-                  );
-                } else if (item.value.literalBoolean) {
-                  details[item.key] = item.value.literalBoolean;
-                } else if (item.value.literalNumber) {
-                  details[item.key] = item.value.literalNumber;
-                } else if (item.value.literalString) {
-                  details[item.key] = item.value.literalString;
-                }
-              }
-
-              const { action } = evt.detail.action;
-              const message = { action, payload: details };
-
-              this.#sendToRemote(JSON.stringify(message), {
-                "Content-Type": "application/json",
-              });
-            }}
-          ></gulf-root>`
-        : nothing,
-    ];
+        this.#sendToRemote(JSON.stringify(message), {
+          headers: { "Content-Type": "application/json" },
+          isNewQuery: false,
+        });
+      }}
+    ></gulf-root>`;
   }
 
-  async #sendToRemote(body: BodyInit, headers: HeadersInit = {}) {
+  async #sendToRemote(
+    body: BodyInit,
+    options: { headers?: HeadersInit; isNewQuery?: boolean } = {}
+  ) {
+    const { headers = {}, isNewQuery = true } = options;
+
     this.#fetching = true;
-    const response = await fetch("/a2a", {
-      method: "POST",
-      body,
-      headers,
-    });
-    this.#fetching = false;
+    this.#error = null;
+
+    if (isNewQuery) {
+      this.#data = null;
+    }
 
     try {
+      const response = await fetch("/a2a", {
+        method: "POST",
+        body,
+        headers,
+      });
+
       const items = await response.json();
+      if (!response.ok) {
+        throw new Error(items.error || "An unknown error occurred");
+      }
+
       if (Array.isArray(items)) {
+        const gulfMessages: UnifiedUpdate = [];
+
         for (const item of items) {
           if (item.kind === "text") {
             this.#data = this.#data ?? {};
-            this.#data.rawText = item.text;
+            this.#data.rawText = (this.#data.rawText || "") + item.text;
           } else if (item.kind === "data" && item.data) {
-            this.#data = this.#data ?? {};
-            if (item.data.gulfMessages) {
-              if (Array.isArray(item.data.gulfMessages)) {
-                const streamHeader = item.data.gulfMessages.find(
-                  (msg: { version?: string }) => {
-                    return "version" in msg && msg.version;
-                  }
-                );
-                if (!streamHeader) {
-                  item.data.gulfMessages.unshift({ version: "0.7" });
-                }
-                this.#data.model = new DataModel();
-                await this.#data.model.append(item.data.gulfMessages);
-                await this.#data.model.finalize();
-
-                (window as unknown as { __model: DataModel }).__model =
-                  this.#data.model;
-              } else {
-                this.#error = "Unable to retrieve.";
-              }
-            } else if (item.data.error) {
-              this.#error = item.data.error;
-            }
+            gulfMessages.push(...item.data.gulfMessages);
           }
         }
+
+        if (gulfMessages.length > 0) {
+          let model = this.#data?.model;
+          if (isNewQuery || !model) {
+            model = new DataModel();
+            // Preserve rawText on model creation if it's not a new query.
+            const existingRawText = isNewQuery
+              ? undefined
+              : this.#data?.rawText;
+            this.#data = { model, rawText: existingRawText };
+          }
+
+          await model.append(gulfMessages);
+        }
       } else {
-        this.#error = "Unable to retrieve.";
+        this.#error = "Unable to retrieve: Response is not an array.";
       }
     } catch (err) {
-      console.warn(err);
-      this.#error = "Unable to handle response.";
+      console.error(err);
+      this.#error =
+        err instanceof Error ? err.message : "Unable to handle response.";
+    } finally {
+      this.#fetching = false;
     }
   }
 

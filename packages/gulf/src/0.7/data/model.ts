@@ -83,8 +83,9 @@ class DataModel {
       throw new Error("Unable to get current; no data");
     }
 
+    // Revert to 0.7 if no version was provided.
     if (!this.#model.version) {
-      throw new Error("Unable to get current; no version");
+      this.#model.version = "0.7";
     }
 
     return this.#model as Required<GulfData>;

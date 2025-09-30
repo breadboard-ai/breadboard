@@ -12,4 +12,5 @@ type Namespace = "gulf";
 export interface GulfAction extends BaseEventDetail<`${Namespace}.action`> {
   readonly action: Action;
   readonly dataPrefix: string;
+  readonly sourceComponentId: string;
 }
