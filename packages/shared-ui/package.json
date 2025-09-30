@@ -83,6 +83,7 @@
       ],
       "files": [
         "src/**/*.ts",
+        "src/sideboards/sideboards-bgl/*.bgl.json",
         "tsconfig.json",
         "../../core/tsconfig/base.json"
       ]
