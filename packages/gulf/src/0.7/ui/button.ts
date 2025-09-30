@@ -42,6 +42,7 @@ export class Button extends Root {
             eventType: "gulf.action",
             action: this.action,
             dataPrefix: this.dataPrefix,
+            sourceComponentId: this.id,
           });
           this.dispatchEvent(evt);
         }}
