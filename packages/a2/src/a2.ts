@@ -19,10 +19,12 @@ import { exports as musicGeneratorExports } from "./music-generator/index";
 import { exports as saveOutputsExports } from "./save-outputs/index";
 import { exports as toolsExports } from "./tools/index";
 import { exports as videoGeneratorExports } from "./video-generator/index";
+import { exports as autonameExports } from "./autoname/index";
 
 export const a2 = {
   a2: a2Exports,
   "audio-generator": audioGeneratorExports,
+  autoname: autonameExports,
   "file-system": fileSystemExports,
   folio: folioExports,
   generate: generateExports,

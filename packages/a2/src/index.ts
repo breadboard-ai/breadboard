@@ -25,6 +25,7 @@ import { bgl as musicGeneratorBgl } from "./music-generator/index";
 import { bgl as saveOutputsBgl } from "./save-outputs/index";
 import { bgl as toolsBgl } from "./tools/index";
 import { bgl as videoGeneratorBgl } from "./video-generator/index";
+import { bgl as autonameBgl } from "./autoname/index";
 
 export { createA2ModuleFactory } from "./runnable-module-factory";
 export { createA2Server, isA2 };
@@ -42,6 +43,7 @@ function createA2Server(): BoardServer {
     new Map([
       ["a2", a2Bgl],
       ["audio-generator", audioGeneratorBgl],
+      ["autoname", autonameBgl],
       ["file-system", fileSystemBgl],
       ["folio", folioBgl],
       ["generate", generateBgl],

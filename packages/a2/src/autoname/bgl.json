@@ -1,0 +1,8 @@
+{
+  "title": "Autoname Modules",
+  "description": "",
+  "version": "0.0.1",
+  "nodes": [],
+  "edges": [],
+  "exports": ["#module:main"]
+}
