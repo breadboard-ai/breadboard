@@ -131,8 +131,15 @@ async function triggerSurvey({ name, triggerId }: SurveyConfig) {
     surveyLib.requestSurvey({
       triggerId,
       enableTestingMode: SURVEY_MODE === "test",
-      callback: ({ surveyData }: { surveyData?: unknown }) =>
-        resolve(surveyData),
+      thirdPartyDomainSupportEnabled: true,
+      callback: ({ surveyData, surveyError }) => {
+        {
+          if (surveyError) {
+            console.error(`[survey] Survey API error`, surveyError);
+          }
+          resolve(surveyData);
+        }
+      },
     })
   );
   if (surveyData) {
