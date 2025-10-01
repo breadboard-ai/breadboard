@@ -24,7 +24,7 @@ export function toGulfStream(): GULF.Types.StreamHeaderMessage {
 
 export function toGulfOutput(
   output: RunNodeEndEvent
-): GULF.Types.UnifiedUpdate {
+): GULF.Types.UnifiedMesssages {
   const root = globalThis.crypto.randomUUID();
   const components: GULF.Types.ComponentUpdateMessage["components"] = [];
   const outputValues = output.data.outputs;
@@ -118,7 +118,7 @@ export function toGulfOutput(
   ];
 }
 
-export function toGulfInput(input: RunInputEvent): GULF.Types.UnifiedUpdate {
+export function toGulfInput(input: RunInputEvent): GULF.Types.UnifiedMesssages {
   const root = globalThis.crypto.randomUUID();
   const components: GULF.Types.ComponentUpdateMessage["components"] = [];
 
