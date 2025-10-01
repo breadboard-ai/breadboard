@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { UnifiedUpdate } from "../../0.7/types/types";
+import { UnifiedMesssages } from "../../0.7/types/types";
 
-export const data: UnifiedUpdate = [
+export const data: UnifiedMesssages = [
   {
     version: "0.7",
   },
