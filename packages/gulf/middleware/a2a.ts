@@ -34,6 +34,18 @@ const client = await A2AClient.fromCardUrl(
   { fetchImpl: fetchWithCustomHeader }
 );
 
+const isJson = (str: string) => {
+  try {
+    const parsed = JSON.parse(str);
+    return (
+      typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
+    );
+  } catch (err) {
+    console.warn(err);
+    return false;
+  }
+};
+
 export const customA2aHandlerPlugin = (): Plugin => {
   return {
     name: "custom-a2a-handler",
@@ -41,7 +53,6 @@ export const customA2aHandlerPlugin = (): Plugin => {
       server.middlewares.use(
         "/a2a",
         async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
-          // We only want to process POST requests on this path.
           if (req.method === "POST") {
             let originalBody = "";
 
@@ -50,14 +61,15 @@ export const customA2aHandlerPlugin = (): Plugin => {
             });
 
             req.on("end", async () => {
-              const contentType = req.headers["content-type"];
               let sendParams: MessageSendParams;
 
-              if (contentType === "application/json") {
+              if (isJson(originalBody)) {
                 console.log(
                   "[a2a-middleware] Received JSON UI event:",
                   originalBody
                 );
+
+                const clientEvent = JSON.parse(originalBody);
                 sendParams = {
                   message: {
                     messageId: uuidv4(),
@@ -65,8 +77,8 @@ export const customA2aHandlerPlugin = (): Plugin => {
                     parts: [
                       {
                         kind: "data",
-                        data: JSON.parse(originalBody),
-                        mimeType: GULFUI_MIME_TYPE, // Send as a Gulf UI event
+                        data: clientEvent,
+                        mimeType: GULFUI_MIME_TYPE,
                       } as Part,
                     ],
                     kind: "message",

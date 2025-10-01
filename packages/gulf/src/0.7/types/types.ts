@@ -23,12 +23,13 @@ export type {
   DataModelUpdateMessage,
 };
 
-export type UnifiedUpdate = Array<
+export type UnifiedMessage =
   | StreamHeaderMessage
   | BeginRenderingMessage
   | ComponentUpdateMessage
-  | DataModelUpdateMessage
->;
+  | DataModelUpdateMessage;
+
+export type UnifiedMesssages = Array<UnifiedMessage>;
 
 export type Theme = {
   components: {

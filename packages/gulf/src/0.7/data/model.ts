@@ -4,13 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { UnifiedUpdate, type GulfData } from "../types/types.js";
+import { UnifiedMesssages, type GulfData } from "../types/types.js";
 import {
   Card,
   Column,
   Component,
   ComponentRef,
-  ComponentUpdateMessage,
   List,
   Row,
 } from "../types/component-update.js";
@@ -22,8 +21,12 @@ import {
 import { deep } from "signal-utils/deep";
 import { SignalObject } from "signal-utils/object";
 import { SignalMap } from "signal-utils/map";
-import { StreamHeaderMessage } from "../types/stream-header.js";
-import { BeginRenderingMessage } from "../types/begin-rendering.js";
+import {
+  isBeginRendering,
+  isComponentUpdate,
+  isDataModelUpdate,
+  isStreamHeader,
+} from "./guards.js";
 
 export { DataModel };
 
@@ -39,22 +42,6 @@ function isComponentWithChildren(key: string): key is ComponentsWithChildren {
 
 function isComponentWithChild(key: string): key is ComponentsWithChild {
   return (componentsWithChild as readonly string[]).includes(key);
-}
-
-function isStreamHeader(msg: unknown): msg is StreamHeaderMessage {
-  return "version" in (msg as StreamHeaderMessage);
-}
-
-function isBeginRendering(msg: unknown): msg is BeginRenderingMessage {
-  return "root" in (msg as BeginRenderingMessage);
-}
-
-function isComponentUpdate(msg: unknown): msg is ComponentUpdateMessage {
-  return "components" in (msg as ComponentUpdateMessage);
-}
-
-function isDataModelUpdate(msg: unknown): msg is DataModelUpdateMessage {
-  return "contents" in (msg as DataModelUpdateMessage);
 }
 
 class DataModel {
@@ -96,7 +83,7 @@ class DataModel {
    * called we wait until all the active work has finished running.
    */
   #pendingWork: Promise<void>[] = [];
-  async append(data: UnifiedUpdate) {
+  async append(data: UnifiedMesssages) {
     if (this.#finalized) {
       throw new Error("Data appended while model is finalized");
     }

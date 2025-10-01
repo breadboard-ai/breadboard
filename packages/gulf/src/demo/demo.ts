@@ -13,9 +13,51 @@ import { StateEvent } from "../0.7/events/events.js";
 
 import { theme as uiTheme } from "./theme/theme.js";
 import { themeContext } from "../0.7/ui/context/theme.js";
-import { Theme, UnifiedUpdate } from "../0.7/types/types.js";
+import {
+  BeginRenderingMessage,
+  ComponentUpdateMessage,
+  DataModelUpdateMessage,
+  StreamHeaderMessage,
+  Theme,
+  UnifiedMessage,
+} from "../0.7/types/types.js";
 import { provide } from "@lit/context";
 import * as Styles from "../0.7/ui/styles/index.js";
+import { UnifiedMesssages } from "../0.7/types/types.js";
+import {
+  isBeginRendering,
+  isComponentUpdate,
+  isDataModelUpdate,
+  isStreamHeader,
+} from "../0.7/data/guards.js";
+
+type A2AGULFMessages =
+  | StreamHeaderMessage
+  | {
+      streamHeader: StreamHeaderMessage;
+    }
+  | DataModelUpdateMessage
+  | { dataModelUpdate: DataModelUpdateMessage }
+  | ComponentUpdateMessage
+  | {
+      componentUpdate: ComponentUpdateMessage;
+    }
+  | BeginRenderingMessage
+  | { beginRendering: BeginRenderingMessage };
+
+type A2TextPayload = {
+  kind: "text";
+  text: string;
+};
+
+type A2DataPayload = {
+  kind: "data";
+  data: A2AGULFMessages;
+};
+
+type A2AServerPayload =
+  | Array<A2DataPayload | A2TextPayload>
+  | { error: string };
 
 @customElement("gulf-main")
 export class GulfMain extends LitElement {
@@ -118,6 +160,14 @@ export class GulfMain extends LitElement {
         }
       }
 
+      .error {
+        color: var(--e-40);
+        background-color: var(--e-95);
+        border: 1px solid var(--e-80);
+        padding: 16px;
+        border-radius: 8px;
+      }
+
       @keyframes fadeIn {
         from {
           opacity: 0;
@@ -197,6 +247,29 @@ export class GulfMain extends LitElement {
     ></gulf-root>`;
   }
 
+  #unwrapDataIfNeeded(payload: A2DataPayload): UnifiedMessage {
+    console.log(payload);
+    if (
+      isStreamHeader(payload.data) ||
+      isComponentUpdate(payload.data) ||
+      isDataModelUpdate(payload.data) ||
+      isBeginRendering(payload.data)
+    ) {
+      console.log("Return data as-is");
+      return payload.data;
+    } else if ("streamHeader" in payload.data) {
+      return payload.data.streamHeader as StreamHeaderMessage;
+    } else if ("componentUpdate" in payload.data) {
+      return payload.data.componentUpdate as ComponentUpdateMessage;
+    } else if ("dataModelUpdate" in payload.data) {
+      return payload.data.dataModelUpdate as DataModelUpdateMessage;
+    } else if ("beginRendering" in payload.data) {
+      return payload.data.beginRendering as BeginRenderingMessage;
+    }
+
+    throw new Error("Unexpected data payload");
+  }
+
   async #sendToRemote(
     body: BodyInit,
     options: { headers?: HeadersInit; isNewQuery?: boolean } = {}
@@ -217,20 +290,22 @@ export class GulfMain extends LitElement {
         headers,
       });
 
-      const items = await response.json();
-      if (!response.ok) {
+      const items = (await response.json()) as A2AServerPayload;
+      if (!response.ok && "error" in items) {
         throw new Error(items.error || "An unknown error occurred");
       }
 
+      console.log(items);
+
       if (Array.isArray(items)) {
-        const gulfMessages: UnifiedUpdate = [];
+        const gulfMessages: UnifiedMesssages = [];
 
         for (const item of items) {
           if (item.kind === "text") {
             this.#data = this.#data ?? {};
             this.#data.rawText = (this.#data.rawText || "") + item.text;
           } else if (item.kind === "data" && item.data) {
-            gulfMessages.push(...item.data.gulfMessages);
+            gulfMessages.push(this.#unwrapDataIfNeeded(item));
           }
         }
 
@@ -276,7 +351,7 @@ export class GulfMain extends LitElement {
                 return;
               }
 
-              this.#sendToRemote(body);
+              this.#sendToRemote(body, { isNewQuery: true });
             }}
           >
             <h1
@@ -287,7 +362,7 @@ export class GulfMain extends LitElement {
             <div>
               <input
                 required
-                value="Chinese restaurants in Mountain View."
+                value="Top 5 Chinese restaurants in New York."
                 autocomplete="off"
                 id="body"
                 name="body"
@@ -307,7 +382,7 @@ export class GulfMain extends LitElement {
         : this.#data
           ? this.#renderData()
           : nothing,
-      this.#error ? html`${this.#error}` : nothing,
+      this.#error ? html`<div class="error">${this.#error}</div>` : nothing,
     ];
   }
 }
