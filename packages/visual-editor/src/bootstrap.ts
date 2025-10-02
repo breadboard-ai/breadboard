@@ -24,6 +24,7 @@ import {
   OAUTH_REDIRECT,
   parseUrl,
 } from "@breadboard-ai/shared-ui/utils/urls.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 
 export { bootstrap };
 
@@ -57,9 +58,8 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     environmentName: ENVIRONMENT_NAME,
     signinMode: bootstrapArgs.signinMode,
     googleDrive: {
-      publishPermissions: JSON.parse(
-        import.meta.env.VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS || `[]`
-      ) as GoogleDrivePermission[],
+      publishPermissions:
+        CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [],
     },
     buildInfo: {
       packageJsonVersion: pkg.version,
