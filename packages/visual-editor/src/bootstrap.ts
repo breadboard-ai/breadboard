@@ -52,7 +52,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       bootstrapArgs.connectionServerUrl?.href ||
       import.meta.env.VITE_CONNECTION_SERVER_URL,
     connectionRedirectUrl: "/oauth/",
-    environmentName: ENVIRONMENT_NAME,
+    environmentName: CLIENT_DEPLOYMENT_CONFIG.ENVIRONMENT_NAME,
     signinMode: bootstrapArgs.signinMode,
     googleDrive: {
       publishPermissions:

@@ -12,9 +12,6 @@ RUN npm clean-install
 
 ARG VITE_BOARD_SERVICE="drive:"
 
-# TODO Turn these into runtime vars
-ARG VITE_ENVIRONMENT_NAME
-
 WORKDIR packages/unified-server
 RUN npm run build
 
