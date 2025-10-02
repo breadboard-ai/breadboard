@@ -22,7 +22,6 @@ export type ConfigureAssetsInputs = {
   VITE_TOS_HTML_PATH?: string;
   VITE_ENABLE_POLICY?: boolean;
   VITE_POLICY_HTML_PATH?: string;
-  VITE_ENVIRONMENT_NAME?: string;
 };
 
 export type ConfigureAssetOutputs = {
@@ -37,7 +36,6 @@ export type ConfigureAssetOutputs = {
   TOS_HTML: string;
   ENABLE_POLICY: boolean;
   POLICY_HTML: string;
-  ENVIRONMENT_NAME: string;
 };
 
 async function configureAssets(
@@ -56,7 +54,6 @@ async function configureAssets(
     VITE_TOS_HTML_PATH: TOS_HTML_PATH,
     VITE_ENABLE_POLICY: ENABLE_POLICY,
     VITE_POLICY_HTML_PATH: POLICY_HTML_PATH,
-    VITE_ENVIRONMENT_NAME: ENVIRONMENT_NAME,
   } = config;
 
   if (!LANGUAGE_PACK) {
@@ -108,7 +105,6 @@ async function configureAssets(
     TOS_HTML: JSON.stringify(tosHtml),
     ENABLE_POLICY: ENABLE_POLICY ?? false,
     POLICY_HTML: JSON.stringify(policyHtml),
-    ENVIRONMENT_NAME: JSON.stringify(ENVIRONMENT_NAME),
   };
 }
 
