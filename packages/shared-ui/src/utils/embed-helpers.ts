@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
+
 export const REDIRECT_PARAM = "oauth_redirect";
 
 /**
@@ -40,9 +42,8 @@ function getEmbedderRedirectUrl(): URL | null {
     return null;
   }
   const embeddedRedirectUri = new URL(params.get(REDIRECT_PARAM)!);
-  const validRedirectOrigins = JSON.parse(
-    import.meta.env.VITE_VALID_REDIRECT_URI_ORIGINS || `[]`
-  );
+  const validRedirectOrigins =
+    CLIENT_DEPLOYMENT_CONFIG.ALLOWED_REDIRECT_ORIGINS ?? [];
   return validRedirectOrigins.includes(embeddedRedirectUri.origin)
     ? embeddedRedirectUri
     : null;
