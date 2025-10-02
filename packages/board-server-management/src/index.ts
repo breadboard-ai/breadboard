@@ -72,14 +72,8 @@ export async function createGoogleDriveBoardServer(
     );
     return null;
   }
-  const googleDrivePublishPermissions: gapi.client.drive.Permission[] =
-    JSON.parse(import.meta.env.VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS || "[]");
-  if (!googleDrivePublishPermissions) {
-    console.warn(
-      "No value for VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS" +
-        " was configured. We will not be able to publish files to Google Drive"
-    );
-  }
+  const googleDrivePublishPermissions =
+    CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [];
   const userFolderName =
     CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
   return GoogleDriveBoardServer.from(

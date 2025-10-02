@@ -11,10 +11,7 @@ import {
   type LanguagePack,
   SETTINGS_TYPE,
 } from "@breadboard-ai/shared-ui/types/types.js";
-import type {
-  GlobalConfig,
-  GoogleDrivePermission,
-} from "@breadboard-ai/shared-ui/contexts/global-config.js";
+import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { createTokenVendor } from "@breadboard-ai/connection-client";
@@ -24,6 +21,7 @@ import {
   OAUTH_REDIRECT,
   parseUrl,
 } from "@breadboard-ai/shared-ui/utils/urls.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 
 export { bootstrap };
 
@@ -57,9 +55,8 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     environmentName: ENVIRONMENT_NAME,
     signinMode: bootstrapArgs.signinMode,
     googleDrive: {
-      publishPermissions: JSON.parse(
-        import.meta.env.VITE_GOOGLE_DRIVE_PUBLISH_PERMISSIONS || `[]`
-      ) as GoogleDrivePermission[],
+      publishPermissions:
+        CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [],
     },
     buildInfo: {
       packageJsonVersion: pkg.version,
