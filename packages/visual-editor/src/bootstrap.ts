@@ -11,10 +11,7 @@ import {
   type LanguagePack,
   SETTINGS_TYPE,
 } from "@breadboard-ai/shared-ui/types/types.js";
-import type {
-  GlobalConfig,
-  GoogleDrivePermission,
-} from "@breadboard-ai/shared-ui/contexts/global-config.js";
+import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { createTokenVendor } from "@breadboard-ai/connection-client";
