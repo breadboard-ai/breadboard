@@ -299,6 +299,10 @@ class GoogleDriveBoardServer
   }
 
   async flushSaveQueue(url: string): Promise<void> {
+    const create = this.#pendingCreates.get(url);
+    if (create) {
+      await create.createDone;
+    }
     const debouncer = this.#saving.get(url);
     if (!debouncer) {
       return;
