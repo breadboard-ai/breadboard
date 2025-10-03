@@ -17,6 +17,7 @@ import {
   OrchestrationNodeInfo,
   OrchestratorState,
   OrchestratorCallbacks,
+  OrchestratorNodeState,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { Signal } from "signal-polyfill";
@@ -131,6 +132,12 @@ class Orchestrator {
     });
   }
 
+  get allWorking() {
+    return Array.from(this.fullState().entries()).filter(([, nodeState]) => {
+      return nodeState.state === "working";
+    });
+  }
+
   get allWaiting() {
     return Array.from(this.fullState().entries()).filter(([, nodeState]) => {
       return nodeState.state === "waiting";
@@ -142,6 +149,13 @@ class Orchestrator {
     return Array.from(this.#state.values()).some((nodeState) => {
       return nodeState.state === "failed" || nodeState.state === "interrupted";
     });
+  }
+
+  getNodeState(id: NodeIdentifier): OrchestratorNodeState | null {
+    const nodeState = this.#state.get(id);
+    if (!nodeState) return null;
+
+    return this.#createOrchestratorNodeState(nodeState);
   }
 
   /**
@@ -304,21 +318,25 @@ class Orchestrator {
     this.#propagateSkip(state);
   }
 
+  #createOrchestratorNodeState(
+    internal: NodeInternalState
+  ): OrchestratorNodeState {
+    return {
+      node: internal.plan.node,
+      state: internal.state,
+      stage: internal.stage,
+      inputs: internal.inputs,
+      outputs: internal.outputs,
+    };
+  }
+
   fullState(): OrchestratorState {
     this.#changed.get();
     return new Map(
-      Array.from(this.#state.entries()).map(([id, internal]) => {
-        return [
-          id,
-          {
-            node: internal.plan.node,
-            state: internal.state,
-            stage: internal.stage,
-            inputs: internal.inputs,
-            outputs: internal.outputs,
-          },
-        ];
-      })
+      Array.from(this.#state.entries()).map(([id, internal]) => [
+        id,
+        this.#createOrchestratorNodeState(internal),
+      ])
     );
   }
 
