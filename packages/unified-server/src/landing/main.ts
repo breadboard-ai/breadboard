@@ -22,7 +22,11 @@ import {
   parseUrl,
   makeUrl,
   LandingUrlInit,
+  MakeUrlInit,
+  GraphInit,
 } from "@breadboard-ai/shared-ui/utils/urls.js";
+
+import "./carousel.js";
 
 const parsedUrl = parseUrl(window.location.href) as LandingUrlInit;
 if (parsedUrl.page !== "landing") {
@@ -31,7 +35,12 @@ if (parsedUrl.page !== "landing") {
 
 const deploymentConfiguration = CLIENT_DEPLOYMENT_CONFIG;
 
-function redirect() {
+function redirect(target?: MakeUrlInit) {
+  if (target) {
+    window.location.href = makeUrl(target);
+    return;
+  }
+
   window.location.href = makeUrl(parsedUrl.redirect);
 }
 
@@ -39,9 +48,56 @@ if (deploymentConfiguration?.MEASUREMENT_ID) {
   initializeAnalytics(deploymentConfiguration.MEASUREMENT_ID, false);
 }
 
-async function init() {
-  Shell.showLandingImages();
+let lastVideo = 0;
+function embedIntroVideo(target: HTMLDivElement) {
+  let newVideo = 0;
+  do {
+    newVideo = 1 + Math.floor(Math.random() * 3);
+  } while (newVideo === lastVideo);
+  lastVideo = newVideo;
 
+  const formFactor = window.innerWidth < 800 ? "mobile" : "desktop";
+  const video = document.createElement("video");
+  video.setAttribute(
+    "src",
+    `/styles/landing/videos/${formFactor}-${lastVideo}.mp4`
+  );
+  video.setAttribute(
+    "poster",
+    `/styles/landing/videos/${formFactor}-poster.png`
+  );
+  video.muted = true;
+
+  // Wait for the video to load, then add it in (at zero opacity thanks to the
+  // CSS). After the fade in animation has finished we remove any other videos
+  // and start playing the new one.
+  video.addEventListener(
+    "canplaythrough",
+    () => {
+      target.appendChild(video);
+
+      video.addEventListener(
+        "animationend",
+        () => {
+          // Remove old videos.
+          for (const el of target.querySelectorAll("*")) {
+            if (el === video) {
+              continue;
+            }
+
+            el.remove();
+          }
+
+          video.play();
+        },
+        { once: true }
+      );
+    },
+    { once: true }
+  );
+}
+
+async function init() {
   const globalConfig = {
     connectionServerUrl: new URL("/connection/", window.location.href).href,
     connectionRedirectUrl: "/oauth/",
@@ -119,8 +175,14 @@ async function init() {
       sharedFlowDialog,
       sharedFlowDialogSignInButton,
       sharedFlowDialogTitle,
+      introVideo,
+      landingCarousel,
     } = Shell.obtainElements();
 
+    Shell.setAllAppNameHolders(Strings.from("APP_NAME"));
+    landingCarousel.appName = Strings.from("APP_NAME");
+
+    let autoSignInUrl = "";
     const setSignInUrls = async () => {
       // Note we need a new sign-in URL for each attempt, because it has a unique
       // nonce.
@@ -129,6 +191,11 @@ async function init() {
       signInHeaderButton.href = signInUrl;
       scopesErrorSignInButton.href = signInUrl;
       sharedFlowDialogSignInButton.href = signInUrl;
+
+      // Track the last known sign in URL so that if we receieve the notice that
+      // the user wants to see a gallery item we can trigger the sign-in flow
+      // without any further interaction.
+      autoSignInUrl = signInUrl;
     };
 
     const showGeoRestrictionDialog = () => {
@@ -136,7 +203,7 @@ async function init() {
       genericErrorDialog.showModal();
     };
 
-    const onClickSignIn = async () => {
+    const onClickSignIn = async (target?: MakeUrlInit) => {
       if (!signinAdapter) {
         return;
       }
@@ -161,14 +228,24 @@ async function init() {
       }
 
       ActionTracker.signInSuccess();
-      redirect();
+      redirect(target);
     };
 
+    embedIntroVideo(introVideo);
+
     await setSignInUrls();
-    signInHeaderButton.innerText = "Sign in";
-    signInButton.innerText = `Sign in with Google`;
-    signInHeaderButton.addEventListener("click", onClickSignIn);
-    signInButton.addEventListener("click", onClickSignIn);
+    const signInHeaderLabel = signInHeaderButton.querySelector("span");
+    if (signInHeaderLabel) {
+      signInHeaderLabel.textContent = "Sign in";
+    }
+    signInButton.innerText = `Try ${Strings.from("APP_NAME")}`;
+    signInHeaderButton.addEventListener("click", () => onClickSignIn());
+    signInButton.addEventListener("click", () => onClickSignIn());
+    document.addEventListener("loadgalleryflow", (evt: Event) => {
+      const urlEvent = evt as CustomEvent<GraphInit>;
+      onClickSignIn(urlEvent.detail);
+      window.open(autoSignInUrl, "_blank");
+    });
     scopesErrorSignInButton.addEventListener("click", () => {
       onClickSignIn();
       scopesErrorDialog.close();

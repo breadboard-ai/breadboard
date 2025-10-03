@@ -128,6 +128,52 @@
 
 /** Utilities */
 
+.g-icon {
+  font-family: "Google Symbols";
+  font-weight: normal;
+  font-style: normal;
+  font-display: optional;
+  font-size: 20px;
+  width: 1em;
+  height: 1em;
+  user-select: none;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 300,
+    "GRAD" 0,
+    "opsz" 48,
+    "ROND" 100;
+
+  &.filled {
+    font-variation-settings:
+      "FILL" 1,
+      "wght" 300,
+      "GRAD" 0,
+      "opsz" 48,
+      "ROND" 100;
+  }
+
+  &.filled-heavy {
+    font-variation-settings:
+      "FILL" 1,
+      "wght" 700,
+      "GRAD" 0,
+      "opsz" 48,
+      "ROND" 100;
+  }
+}
+
 .sans {
   font-family: var(--bb-font-family, var(--default-font-family));
   font-optical-sizing: auto;
@@ -265,24 +311,42 @@ body {
   margin: 0;
   min-width: 360px;
   overflow: auto;
+  background: #f1f1f1;
+}
+
+body {
+  align-items: center;
+}
+
+nav,
+main,
+footer {
+  width: calc(100% - var(--bb-grid-size-2));
+  max-width: 1440px;
 }
 
 nav {
   position: relative;
   z-index: 2;
-  background: var(--n-100);
+  margin: var(--bb-grid-size-2) 0 0 0;
 
   & header {
     height: 60px;
-    border-bottom: 1px solid var(--n-90);
+    border-radius: 24px;
+    background: var(--n-100);
+    border: 1px solid var(--n-90);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 var(--bb-grid-size-4);
+    padding: 0 var(--bb-grid-size-3);
+    position: relative;
 
-    & div {
+    & #app-header {
       display: flex;
-      align-items: center;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      translate: -50% -50%;
 
       & h1 {
         margin: 0;
@@ -290,14 +354,84 @@ nav {
       }
     }
 
-    & #sign-in-header {
-      line-height: var(--bb-grid-size-10);
-      border-radius: var(--bb-grid-size-16);
+    & #labs-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
       background: var(--n-100);
-      border: 1px solid var(--n-70);
+      border: 1px solid var(--n-90);
       color: var(--n-0);
-      padding: 0 var(--bb-grid-size-4);
       text-decoration: none;
+      padding: 0 var(--bb-grid-size-4);
+      width: 40px;
+      height: 35px;
+      cursor: pointer;
+      transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
+
+      &:not([disabled]) {
+        &:hover {
+          background: var(--n-98);
+        }
+      }
+
+      & span {
+        display: none;
+      }
+    }
+
+    & #app-btns {
+      display: flex;
+      align-items: center;
+      height: 100%;
+
+      & #app-header-discord {
+        display: none;
+        margin-right: var(--bb-grid-size-3);
+
+        &::before {
+          display: block;
+          content: "";
+          width: 24px;
+          height: 20px;
+          background: url(/styles/landing/images/third_party/discord-logo.svg) 0
+            0 / contain no-repeat;
+        }
+
+        font-size: 0;
+      }
+
+      & #sign-in-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--bb-grid-size-16);
+        background: var(--n-100);
+        border: 1px solid var(--n-90);
+        color: var(--n-0);
+        padding: 0 var(--bb-grid-size-4);
+        text-decoration: none;
+        height: calc(100% - var(--bb-grid-size-4));
+        transition: background-color 0.3s cubic-bezier(0, 0, 0.3, 1);
+
+        & span {
+          display: none;
+        }
+
+        &::before {
+          content: "";
+          width: 20px;
+          height: 20px;
+          background: url(/styles/landing/images/g-logo.png) 100% 100% / cover
+            no-repeat;
+        }
+
+        &:not([disabled]) {
+          &:hover {
+            background: var(--n-98);
+          }
+        }
+      }
     }
 
     #experiment {
@@ -311,7 +445,8 @@ nav {
       text-transform: uppercase;
 
       &.visible {
-        display: block;
+        display: flex;
+        align-items: center;
       }
     }
   }
@@ -319,95 +454,234 @@ nav {
 
 main {
   & header {
-    & #headline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: var(--bb-grid-size-12);
+
+    & .intro-video {
       display: flex;
       align-items: center;
-      flex-direction: column;
+      width: calc(100% - var(--bb-grid-size-10));
+      margin-bottom: var(--bb-grid-size-3);
+      max-width: 1028px;
+      position: relative;
+      aspect-ratio: 1.775/1;
 
-      & h1 {
-        padding: var(--bb-grid-size-8) 0;
-        text-align: center;
-        font-size: 36px;
-        margin: 0 auto;
-        width: 85svw;
-        max-width: 1280px;
-        position: relative;
-        z-index: 1;
-        animation: fadeIn 2s cubic-bezier(0.4, 0, 0.3, 1) 0.4s 1 backwards;
+      & > * {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
-      & #sign-in {
-        line-height: var(--bb-grid-size-14);
-        border-radius: var(--bb-grid-size-16);
-        background: url(/styles/landing/images/g-logo.png) var(--n-0) 24px
-          center / 20px 20px no-repeat;
-        color: var(--n-100);
-        padding: 0 var(--bb-grid-size-6) 0 calc(var(--bb-grid-size-6) + 28px);
-        text-decoration: none;
-        margin-bottom: var(--bb-grid-size-6);
-        animation: fadeIn 2s cubic-bezier(0.4, 0, 0.3, 1) 0.8s 1 backwards;
-        z-index: 3;
+      & picture img {
+        height: 100%;
+      }
+
+      & video {
+        opacity: 0;
+        animation: fadeIn 1s cubic-bezier(0, 0, 0.3, 1) 1 forwards;
+        display: block;
+        box-shadow: 0 0 48px 12px #f2f2f2;
+
+        &.active {
+          opacity: 1;
+        }
       }
     }
 
-    & #img {
-      width: calc(100svw - var(--bb-grid-size-16));
+    & h1 {
+      text-align: center;
+      width: calc(100% - 60px);
+      max-width: 500px;
+      margin: 0 auto var(--bb-grid-size-8) auto;
+      font-size: 22px;
+      line-height: 28px;
+    }
+
+    & #sign-in {
+      background: var(--n-0);
+      color: var(--n-100);
+      border-radius: var(--bb-grid-size-16);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       margin: 0 auto;
-      aspect-ratio: 7/5;
-      position: relative;
+      padding: var(--bb-grid-size-4) var(--bb-grid-size-6);
+    }
+  }
 
-      &::after {
-        content: "";
+  & section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: calc(100% - var(--bb-grid-size-2));
+    margin: 0 auto var(--bb-grid-size-6) auto;
+    border-radius: 60px;
+    background: var(--n-100);
+    border: 1px solid var(--n-90);
+    max-width: 1440px;
+
+    & > h1 {
+      margin: 72px 0;
+      font-size: 16px;
+      line-height: 24px;
+      text-align: center;
+      width: calc(100% - 60px);
+      max-width: 600px;
+    }
+  }
+
+  & #gallery {
+    overflow: hidden;
+  }
+
+  & #features {
+    padding: 0 32px 32px 32px;
+
+    & h1 {
+      max-width: 300px;
+    }
+
+    & ul {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      width: 100%;
+
+      & li {
+        border: 1px solid #665ef6;
+        border-radius: 40px;
+        padding: 16px 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         width: 100%;
-        height: 100%;
-        position: absolute;
-        top: 0;
-        left: 0;
-        border: 1px solid #d4daff;
-        border-radius: 32px;
-        animation: fadeIn 1.3s cubic-bezier(0.4, 0, 0.3, 1) 0.7s 1 backwards;
+        min-height: 300px;
+
+        & .feature-icon {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background: #efeefe;
+          border-radius: 50%;
+          width: 60px;
+          height: 60px;
+
+          & .g-icon {
+            font-size: 40px;
+          }
+        }
+
+        & h2 {
+          text-align: center;
+          font-size: 18px;
+          margin: 20px 0;
+        }
+
+        & p {
+          text-align: center;
+          max-width: 240px;
+          font-size: 14px;
+          margin: 0;
+        }
+
+        &:last-of-type {
+          margin-bottom: 0;
+        }
       }
+    }
+  }
 
-      & #img-contents {
-        width: 151%;
-        height: 110%;
-        position: absolute;
-        right: 0;
-        bottom: 18px;
-        border-radius: 32px;
+  & #social {
+    & h1 {
+      max-width: 435px;
+    }
 
-        & #landing-img {
-          background-size: contain;
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
+    & #discord-container {
+      background: #f7f8ff;
+      border-radius: 40px;
+      width: calc(100% - var(--bb-grid-size-16));
+      aspect-ratio: 1.25/1;
+      margin: 0 var(--bb-grid-size-8) var(--bb-grid-size-8)
+        var(--bb-grid-size-8);
+      box-sizing: border-box;
+      padding: 0 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      & a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        width: 90%;
+        max-width: 480px;
+        border-radius: 60px;
+        background: var(--n-100);
+        border: 1px solid #665ef6;
+        text-decoration: none;
+        height: 50px;
+        color: var(--n-0);
+        transition: outline 0.3s cubic-bezier(0, 0, 0.3, 1);
+        outline: 1px solid transparent;
+
+        &:hover {
+          outline: 3px solid #665ef6;
+        }
+
+        &::before {
+          display: block;
+          content: "";
+          background: url(/styles/landing/images/third_party/discord-logo.svg) 0
+            0 / cover no-repeat;
+          aspect-ratio: 126/94;
+          width: 8%;
+          margin: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size-4);
+        }
+
+        &::after {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          content: "Join";
+          font-size: 14px;
+          background: var(--n-0);
+          color: var(--n-100);
+          border-radius: 60px;
+          width: 8%;
+          padding: 0 14px;
+          height: 30px;
+          margin: 0 var(--bb-grid-size-2) 0 0;
+        }
+
+        & span {
+          flex: 1;
         }
       }
     }
   }
 
   & #build {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 60px auto;
-    width: calc(100svw - var(--bb-grid-size-16));
-    max-width: 1080px;
-
-    & h1 {
-      margin: 0 0 60px 0;
-      font-size: 24px;
-    }
+    padding: 0 32px 32px 32px;
 
     & #video-container {
+      overflow: hidden;
       width: 100%;
-      display: flex;
+      display: block;
       align-items: center;
       justify-content: center;
-      outline: 12px solid var(--n-98);
-      border-radius: 16px;
+      border-radius: 40px;
       background: var(--n-0);
       color: var(--n-100);
       aspect-ratio: 16/9;
@@ -505,15 +779,34 @@ main {
 }
 
 footer {
-  background: #f7f8ff;
-  padding: 0 var(--bb-grid-size-6) var(--bb-grid-size-8) var(--bb-grid-size-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: calc(100% - var(--bb-grid-size-2));
+  margin: 0 auto var(--bb-grid-size-6) auto;
+  border-radius: 60px;
+  background: var(--n-100);
+  border: 1px solid var(--n-90);
+  padding: var(--bb-grid-size-16) var(--bb-grid-size-6) var(--bb-grid-size-16)
+    var(--bb-grid-size-6);
 
   & section {
-    padding: var(--bb-grid-size-8) 0;
-    border-bottom: 1px solid var(--n-0);
+    width: 100%;
+
+    &#connected {
+      display: flex;
+      flex-direction: column;
+      gap: var(--bb-grid-size-6);
+      padding: 0 0 var(--bb-grid-size-8) 0;
+      border-bottom: 1px solid var(--n-0);
+    }
+
+    &#links {
+      padding: var(--bb-grid-size-8) 0 0 0;
+    }
 
     h1 {
-      margin: var(--bb-grid-size-2) 0 var(--bb-grid-size-7) 0;
+      margin: 0 0 var(--bb-grid-size-6) 0;
     }
 
     & a {
@@ -525,7 +818,7 @@ footer {
       border-bottom: none;
     }
 
-    menu {
+    ul {
       list-style: none;
       padding: 0;
       margin: 0;
@@ -537,52 +830,163 @@ footer {
   }
 }
 
-@media (min-width: 575px) {
-  main header #headline h1 {
-    padding: var(--bb-grid-size-10) 0;
-    font-size: 48px;
+@media (min-width: 560px) {
+  nav header {
+    padding: 0 var(--bb-grid-size-2);
+    border-radius: 60px;
+
+    & #labs-link {
+      width: auto;
+      height: calc(100% - var(--bb-grid-size-4));
+      padding: 0 var(--bb-grid-size-4);
+      border-radius: 60px;
+
+      & img {
+        margin-right: var(--bb-grid-size-2);
+      }
+
+      & span {
+        display: block;
+      }
+    }
+
+    & #app-btns #app-header-discord {
+      display: block;
+    }
+  }
+
+  main header h1 {
+    font-size: 32px;
+    line-height: 40px;
   }
 }
 
 @media (min-width: 800px) {
+  nav,
+  main,
   footer {
-    padding: 0 var(--bb-grid-size-8) var(--bb-grid-size-12)
-      var(--bb-grid-size-8);
+    width: calc(100% - var(--bb-grid-size-8));
+    max-width: 1440px;
+  }
+
+  nav header #app-btns #sign-in-header {
+    &::before {
+      margin-right: var(--bb-grid-size-2);
+    }
+
+    & span {
+      display: block;
+    }
+  }
+
+  main section {
+    width: calc(100% - var(--bb-grid-size-8));
+    min-height: 80px;
+    margin: 0 auto var(--bb-grid-size-10) auto;
+    border-radius: 120px;
+
+    & h1 {
+      margin: 120px 0;
+      font-size: 32px;
+      line-height: 40px;
+    }
+
+    &#social #discord-container {
+      aspect-ratio: 2.65/1;
+      border-radius: 70px;
+      width: calc(100% - 120px);
+      margin: 0 60px 60px 60px;
+
+      & a {
+        font-size: 24px;
+        height: 106px;
+        max-width: 710px;
+        width: 80%;
+
+        &::before {
+          width: 58px;
+          margin: 0 var(--bb-grid-size-6) 0 var(--bb-grid-size-8);
+        }
+
+        &::after {
+          font-size: 16px;
+          height: 64px;
+          padding: 0 24px;
+          margin: 0 var(--bb-grid-size-7) 0 0;
+        }
+      }
+    }
+
+    &#features {
+      padding: 60px;
+
+      ul {
+        flex-direction: row;
+        gap: 38px;
+
+        & li {
+          border-radius: 70px;
+        }
+      }
+    }
+
+    &#build {
+      padding: 60px;
+
+      & #video-container {
+        border-radius: 70px;
+      }
+    }
+  }
+
+  footer {
+    width: calc(100% - var(--bb-grid-size-8));
+    margin: 0 auto var(--bb-grid-size-10) auto;
+    border-radius: 80px;
+    padding: 94px;
 
     & section {
       padding: var(--bb-grid-size-10) 0;
-    }
 
-    & #links {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-
-      & h1 {
-        margin: 0;
-        padding: 0 var(--bb-grid-size-6) 0 0;
+      &#connected {
+        flex-direction: row;
+        gap: var(--bb-grid-size-4);
       }
 
-      & menu {
+      &#links {
         display: flex;
         flex-direction: row;
         align-items: center;
-        flex: 1;
 
-        & li {
+        & h1 {
           margin: 0;
-          padding: 0 var(--bb-grid-size-6);
+          padding: 0 var(--bb-grid-size-6) 0 0;
         }
 
-        & li:last-of-type {
-          flex: 1;
+        & ul {
           display: flex;
           flex-direction: row;
-          padding: 0;
+          align-items: center;
+          justify-content: space-between;
+          flex: 1;
 
-          &::before {
-            content: "";
+          & li {
+            margin: 0;
+            padding-right: var(--bb-grid-size-4);
+          }
+
+          & li:last-of-type {
+            display: flex;
+            flex-direction: row;
+            padding: 0;
             flex: 1;
+            text-align: right;
+
+            & a {
+              text-align: right;
+              display: block;
+              width: 100%;
+            }
           }
         }
       }
@@ -591,92 +995,9 @@ footer {
 }
 
 @media (min-width: 860px) {
-  main {
-    & header {
-      display: grid;
-      gap: 32px;
-      grid-template-columns: minmax(0, 1.4fr) minmax(0, 2fr);
-      width: calc(100svw - var(--bb-grid-size-16));
-      max-width: 1280px;
-      margin: 0 auto;
-      padding-top: var(--bb-grid-size-10);
-
-      & #headline {
-        align-items: start;
-
-        & h1 {
-          text-align: left;
-          padding: var(--bb-grid-size-10) 0;
-          font-size: 36px;
-          width: 100%;
-        }
-      }
-
-      & #img {
-        width: 100%;
-        margin: auto;
-      }
-    }
-
-    & #build {
-      margin: 90px auto;
-      width: calc(100svw - var(--bb-grid-size-16) - var(--bb-grid-size-16));
-
-      & h1 {
-        margin: 0 0 90px 0;
-        font-size: 28px;
-      }
-
-      & #video-container {
-        width: 100%;
-        outline: 24px solid var(--n-98);
-        border-radius: 24px;
-        background: var(--n-0);
-        aspect-ratio: 16/9;
-
-        & iframe {
-          width: 100%;
-          height: 100%;
-        }
-      }
-    }
-  }
-}
-
-@media (min-width: 920px) {
-  main header #headline h1 {
-    font-size: 44px;
-  }
 }
 
 @media (min-width: 1080px) {
-  main {
-    & header {
-      padding-top: var(--bb-grid-size-12);
-
-      & #headline h1 {
-        font-size: 56px;
-      }
-    }
-
-    & #build {
-      margin: 100px auto;
-
-      & h1 {
-        margin: 0 0 100px 0;
-        font-size: 32px;
-      }
-
-      & #video-container {
-        width: 100%;
-        outline: 32px solid var(--n-98);
-        border-radius: 16px;
-        background: var(--n-0);
-        aspect-ratio: 16/9;
-      }
-    }
-  }
-
   footer {
     padding: var(--bb-grid-size-16) var(--bb-grid-size-16)
       var(--bb-grid-size-16) var(--bb-grid-size-12);
@@ -688,32 +1009,6 @@ footer {
 }
 
 @media (min-width: 1280px) {
-  main {
-    & header {
-      padding-top: var(--bb-grid-size-14);
-      & #headline h1 {
-        font-size: 68px;
-      }
-    }
-
-    & #build {
-      margin: 110px auto;
-
-      & h1 {
-        margin: 0 0 110px 0;
-        font-size: 36px;
-      }
-
-      & #video-container {
-        width: 100%;
-        outline: 45px solid var(--n-98);
-        border-radius: 16px;
-        background: var(--n-0);
-        aspect-ratio: 16/9;
-      }
-    }
-  }
-
   footer {
     padding: 72px 72px 72px 60px;
 
