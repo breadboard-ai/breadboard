@@ -1421,6 +1421,14 @@ export class SharePanel extends LitElement {
       },
       { fields: ["version"] }
     );
+
+    // Ensure the creation of the copy has fully completed.
+    //
+    // TODO(aomarks) Move more sharing logic into board server so that this
+    // create/update coordination doesn't need to be a concern of this
+    // component.
+    await this.boardServer.flushSaveQueue(`drive:/${shareableCopyFileId}`);
+
     const shareableCopyMetadata =
       await this.googleDriveClient.updateFileMetadata(
         shareableCopyFileId,
