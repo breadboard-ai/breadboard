@@ -557,6 +557,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         html`<bb-app-header
           .neutral=${true}
           .replayActive=${this.run?.consoleState === "entries"}
+          .running=${this.run?.status === "running"}
           .replayAutoStart=${true}
           .progress=${this.run?.progress}
         ></bb-app-header>`,

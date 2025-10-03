@@ -36,6 +36,9 @@ export class Header extends LitElement {
   accessor replayActive = false;
 
   @property()
+  accessor running = false;
+
+  @property()
   accessor replayAutoStart = false;
 
   @property()
@@ -256,14 +259,23 @@ export class Header extends LitElement {
             }}
             @click=${() => {
               this.dispatchEvent(new HideTooltipEvent());
-              this.dispatchEvent(
-                new StateEvent({
-                  eventType: "board.restart",
-                })
-              );
+              if (this.running) {
+                this.dispatchEvent(
+                  new StateEvent({
+                    eventType: "board.stop",
+                    clearLastRun: true,
+                  })
+                );
+              } else {
+                this.dispatchEvent(
+                  new StateEvent({
+                    eventType: "board.restart",
+                  })
+                );
+              }
             }}
           >
-            <span class="g-icon">spark</span> Start
+            <span class="g-icon">spark</span> ${this.running ? "Stop" : "Start"}
           </button>`
         : html`<button
             id="replay"
