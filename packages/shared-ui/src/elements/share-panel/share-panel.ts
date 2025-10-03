@@ -1036,6 +1036,12 @@ export class SharePanel extends LitElement {
     const shareableCopyFileMetadata =
       await this.googleDriveClient.getFileMetadata(shareableCopyFileId, {
         fields: ["resourceKey", "properties", "permissions"],
+        // If we're working on one of the featured gallery graphs, and it's
+        // already been published, then the shared copy file ID will have been
+        // marked as one we should use the proxy for! But, the proxy won't
+        // return all the metadata we need right here, because it won't be
+        // fetched with our credentials (e.g. permissions will be missing).
+        bypassProxy: true,
       });
     const allGraphPermissions = shareableCopyFileMetadata.permissions ?? [];
     const diff = diffAssetReadPermissions({
