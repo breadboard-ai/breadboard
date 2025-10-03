@@ -978,7 +978,7 @@ export class Renderer extends LitElement {
       changedProperties.has("runStateEffect")
     ) {
       const mainGraph = this.#graphs.get(MAIN_BOARD_ID);
-      const runState = this.runtimeFlags?.usePlanRunner ? this.runState : null;
+      const runState = this.runState;
       if (mainGraph) {
         mainGraph.highlightActivity(this.topGraphResult, runState);
       }
@@ -1013,9 +1013,9 @@ export class Renderer extends LitElement {
 
       if (this.runtimeFlags) {
         mainGraph.force2D = this.runtimeFlags.force2DGraph;
-        mainGraph.showRunStatus = this.runtimeFlags.usePlanRunner;
       }
 
+      mainGraph.showRunStatus = true;
       mainGraph.url = graphUrl;
       mainGraph.boundsLabel = this.graph.raw().title ?? "Untitled";
       mainGraph.nodes = this.graph.nodes();

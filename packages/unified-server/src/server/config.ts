@@ -34,7 +34,6 @@ export async function createClientConfig(): Promise<ClientDeploymentConfiguratio
       flags.SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID,
     domains: await loadDomainConfig(),
     flags: {
-      usePlanRunner: flags.ENABLE_PLAN_RUNNER,
       saveAsCode: flags.ENABLE_SAVE_AS_CODE,
       generateForEach: flags.ENABLE_GENERATE_FOR_EACH,
       mcp: flags.ENABLE_MCP,
