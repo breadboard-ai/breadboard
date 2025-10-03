@@ -12,11 +12,6 @@ export { readSettings, readFlags };
  */
 export type RuntimeFlags = {
   /**
-   * Use the next-gen, planner-based runtime (PlanRunner),
-   * instead of the current, VM-based runtime (LocalRunner).
-   */
-  usePlanRunner: boolean;
-  /**
    * Add "Save As Code" option to the "Output" step.
    */
   saveAsCode: boolean;
@@ -54,7 +49,6 @@ async function readFlags(caps: Capabilities): Promise<Outcome<RuntimeFlags>> {
   if (!json) {
     // Return default values.
     return {
-      usePlanRunner: false,
       saveAsCode: false,
       generateForEach: false,
       mcp: false,

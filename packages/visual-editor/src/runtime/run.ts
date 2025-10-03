@@ -28,7 +28,7 @@ import {
 } from "@breadboard-ai/types";
 import { Tab, TabId } from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { createPlanRunner, createRunner } from "@breadboard-ai/runtime";
+import { createPlanRunner } from "@breadboard-ai/runtime";
 import { RuntimeBoardRunEvent } from "./events";
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
 import { StateManager } from "./state";
@@ -140,11 +140,8 @@ export class Run extends EventTarget {
       graphStore: this.graphStore,
     };
 
-    const usePlanRunner = (await this.flags.flags()).usePlanRunner;
-
     const runner = this.#createBoardRunner(
       tab.mainGraphId,
-      usePlanRunner,
       config,
       abortController
     );
@@ -273,13 +270,10 @@ export class Run extends EventTarget {
 
   #createBoardRunner(
     mainGraphId: MainGraphIdentifier,
-    usePlanRunner: boolean,
     config: RunConfig,
     abortController: AbortController
   ) {
-    const harnessRunner = usePlanRunner
-      ? createPlanRunner(config)
-      : createRunner(config);
+    const harnessRunner = createPlanRunner(config);
     const topGraphObserver = new BreadboardUI.Utils.TopGraphObserver(
       harnessRunner,
       config.signal

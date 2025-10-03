@@ -402,15 +402,11 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             }
               <span class="title">${item.title}</span>
             </div>
-            ${
-              this.#uiState?.flags?.usePlanRunner
-                ? html`<bb-node-run-control
+            <bb-node-run-control
                     .actionContext=${"console"}
                     .nodeId=${itemId}
                     .runState=${item.status}
-                  ></bb-node-run-control>`
-                : nothing
-            }
+                  ></bb-node-run-control>
           </summary>
           ${
             item.work.size > 0
