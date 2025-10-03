@@ -162,6 +162,16 @@ class PlanRunner extends AbstractRunner {
       this.stop(id);
     });
 
+    // Stop all nodes from later stages that are currently working
+    const nodeStage = this.#orchestrator.getNodeState(id)?.stage;
+    if (nodeStage !== undefined) {
+      this.#orchestrator.allWorking.forEach(([id, workingNodeState]) => {
+        if (workingNodeState.stage > nodeStage) {
+          this.stop(id);
+        }
+      });
+    }
+
     if (!this.#controller || !this.running()) {
       // If not already running, start a run in interactive mode
       this.run(undefined, true);
