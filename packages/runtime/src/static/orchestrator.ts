@@ -191,6 +191,7 @@ class Orchestrator {
             inputs,
             outputs: null,
           });
+          this.callbacks.stateChangedbyOrchestrator?.(plan.node.id, state);
           this.callbacks.stateChanged?.(state, plan);
         });
       });
