@@ -115,6 +115,7 @@ import {
   type OAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { builtInMcpClients } from "./mcp-clients";
+import { createApiProxy } from "./shell/api-proxy";
 
 type RenderValues = {
   canSave: boolean;
@@ -452,6 +453,15 @@ export class Main extends SignalWatcher(LitElement) {
         get fileSystem() {
           return fileSystem!;
         },
+        apiProxy: createApiProxy(async (scopes) => {
+          const token = await this.signinAdapter.token(scopes);
+          if (token.state === "valid") {
+            return token.grant.access_token;
+          }
+          // This will fail, and that's okay. We'll get the "Unauthorized"
+          // error.
+          return "";
+        }),
       },
       this.globalConfig.BACKEND_API_ENDPOINT
     );

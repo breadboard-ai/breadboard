@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/// <reference types="@maxim_mazurok/gapi.client.calendar-v3" />
+import "gapi.client.calendar-v3";
 
 import { Outcome } from "./data.js";
 
