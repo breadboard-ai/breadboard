@@ -36,6 +36,8 @@ export interface GetFileMetadataOptions extends BaseWithFileFields {
    * default in the Google Drive API.
    */
   supportsAllDrives?: boolean;
+
+  bypassProxy?: boolean;
 }
 
 export interface ExportFileOptions extends BaseRequestOptions {
@@ -255,7 +257,10 @@ export class GoogleDriveClient {
     }
   }
 
-  async #maybeProxyApiUrl(fileId: string): Promise<{
+  async #maybeProxyApiUrl(
+    fileId: string,
+    bypassProxy = false
+  ): Promise<{
     apiUrl: string;
     authorization: GoogleApiAuthorization;
   }> {
@@ -264,9 +269,12 @@ export class GoogleDriveClient {
     const isAlwaysProxying =
       this.#publicProxy?.apiUrl && this.#apiUrl === this.#publicProxy.apiUrl;
     return {
-      apiUrl: fileIsMarkedAsPublic ? this.#publicProxy.apiUrl : this.#apiUrl,
+      apiUrl:
+        !bypassProxy && fileIsMarkedAsPublic
+          ? this.#publicProxy.apiUrl
+          : this.#apiUrl,
       authorization:
-        fileIsMarkedAsPublic || isAlwaysProxying
+        (!bypassProxy && fileIsMarkedAsPublic) || isAlwaysProxying
           ? { kind: "anonymous" }
           : { kind: "bearer", token: await this.#getUserAccessToken() },
     };
@@ -278,7 +286,10 @@ export class GoogleDriveClient {
     options?: T
   ): Promise<NarrowedDriveFileFromOptions<T>> {
     fileId = normalizeFileId(fileId);
-    const { apiUrl, authorization } = await this.#maybeProxyApiUrl(fileId.id);
+    const { apiUrl, authorization } = await this.#maybeProxyApiUrl(
+      fileId.id,
+      options?.bypassProxy
+    );
     const url = new URL(
       `drive/v3/files/${encodeURIComponent(fileId.id)}`,
       // TODO(aomarks) We don't actually implement any caching for metadata yet.
