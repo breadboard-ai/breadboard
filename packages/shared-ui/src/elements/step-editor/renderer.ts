@@ -1015,7 +1015,6 @@ export class Renderer extends LitElement {
         mainGraph.force2D = this.runtimeFlags.force2DGraph;
       }
 
-      mainGraph.showRunStatus = true;
       mainGraph.url = graphUrl;
       mainGraph.boundsLabel = this.graph.raw().title ?? "Untitled";
       mainGraph.nodes = this.graph.nodes();

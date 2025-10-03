@@ -624,7 +624,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         color: var(--e-20);
       }
 
-      :host([showrunstatus][active="error"]) #container {
+      :host([active="error"]) #container {
         border: 1px solid var(--e-40);
         outline: 1px solid var(--e-40);
       }
@@ -844,7 +844,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
   #maybeRenderRunStatus() {
     const status = this.runState;
-    if (!this.showRunStatus || !status) {
+    if (!status) {
       return nothing;
     }
 
@@ -1061,13 +1061,11 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             ? html`<span class="g-icon filled round">${renderableIcon}</span>`
             : nothing}
           <span class="node-title">${this.nodeTitle}</span>
-          ${this.showRunStatus
-            ? html`<bb-node-run-control
-                .actionContext=${"graph"}
-                .nodeId=${this.nodeId}
-                .runState=${this.runState}
-              ></bb-node-run-control>`
-            : nothing}
+          <bb-node-run-control
+            .actionContext=${"graph"}
+            .nodeId=${this.nodeId}
+            .runState=${this.runState}
+          ></bb-node-run-control>
           ${this.hasMainPort
             ? html` <button
                 id="connection-trigger"
