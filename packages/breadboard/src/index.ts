@@ -70,11 +70,6 @@ export {
   transformDataParts,
 } from "@breadboard-ai/data";
 
-export {
-  assetsFromGraphDescriptor,
-  envFromGraphDescriptor,
-} from "./file-system/assets.js";
-
 export { createEphemeralBlobStore } from "./file-system/ephemeral-blob-store.js";
 export { writablePathFromString } from "./file-system/path.js";
 

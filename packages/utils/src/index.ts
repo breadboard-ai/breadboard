@@ -5,6 +5,7 @@
  */
 
 export * from "./async-gen.js";
+export * from "./base64.js";
 export * from "./chunk-repair.js";
 export * from "./cycle-detection.js";
 export * from "./filter-empty-values.js";

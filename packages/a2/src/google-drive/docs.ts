@@ -4,10 +4,10 @@ import { unescape } from "./unescape";
 import {
   Capabilities,
   DataPart,
-  InlineDataCapabilityPart,
   LLMContent,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
+import { parseBase64DataUrl } from "@breadboard-ai/utils";
 
 export { contextToRequests, DOC_MIME_TYPE, markdownToContext };
 
@@ -49,17 +49,6 @@ function sanitizeBackticks(s: string): string {
       return line;
     })
     .join("\n");
-}
-
-const BASE64_DATA_URL_REGEX = /^data:(.+?);base64,(.+)$/;
-
-function parseBase64DataUrl(url: string): InlineDataCapabilityPart | null {
-  const matchResult = url.match(BASE64_DATA_URL_REGEX);
-  if (!matchResult || matchResult.length !== 3) {
-    return null;
-  }
-  const [, mimeType, data] = matchResult;
-  return { inlineData: { mimeType, data } };
 }
 
 function markdownToContext(markdown: string): LLMContent[] {

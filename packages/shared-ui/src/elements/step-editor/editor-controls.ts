@@ -44,6 +44,7 @@ import { icons } from "../../styles/icons.js";
 import { iconSubstitute } from "../../utils/icon-substitute.js";
 import type { PickedValue } from "../google-drive/google-drive-file-id.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
+import { parseBase64DataUrl } from "@breadboard-ai/utils";
 
 const QUICK_ADD_ADJUSTMENT = -20;
 
@@ -895,14 +896,25 @@ export class EditorControls extends LitElement {
                         }>((resolve, reject) => {
                           const reader = new FileReader();
                           reader.onloadend = () => {
-                            const preamble = `data:${file.type};base64,`;
-                            const data = (reader.result as string).substring(
-                              preamble.length
+                            // In some cases, file.type is an empty string,
+                            // like when the OS doesn't recognize the file
+                            // extension.
+                            const part = parseBase64DataUrl(
+                              reader.result as string
                             );
+                            if (!part) {
+                              reject(`Unable to read the files`);
+                              return;
+                            }
+                            // One of those types is Markdown, so we just look
+                            // at the extension here and flip the MIME type.
+                            if (file.name.endsWith(".md")) {
+                              part.inlineData.mimeType = "text/plain";
+                            }
                             resolve({
                               name: file.name,
-                              mimeType: file.type,
-                              data,
+                              mimeType: part.inlineData.mimeType,
+                              data: part.inlineData.data,
                             });
                           };
                           reader.onerror = () => reject("File read error");

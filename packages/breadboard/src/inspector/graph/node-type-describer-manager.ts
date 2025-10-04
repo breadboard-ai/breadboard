@@ -16,14 +16,14 @@ import type {
   NodeHandler,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
-import {
-  assetsFromGraphDescriptor,
-  envFromGraphDescriptor,
-} from "../../file-system/assets.js";
 import { contextFromMutableGraphStore } from "../graph-store.js";
 import { UpdateEvent } from "./event.js";
 import { emptyResult, NodeDescriberManager } from "./node-describer-manager.js";
 import { describeInput, describeOutput } from "./schemas.js";
+import {
+  assetsFromGraphDescriptor,
+  envFromGraphDescriptor,
+} from "@breadboard-ai/data";
 
 export { NodeTypeDescriberManager };
 
