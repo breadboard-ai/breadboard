@@ -906,6 +906,11 @@ export class EditorControls extends LitElement {
                               reject(`Unable to read the files`);
                               return;
                             }
+                            // One of those types is Markdown, so we just look
+                            // at the extension here and flip the MIME type.
+                            if (file.name.endsWith(".md")) {
+                              part.inlineData.mimeType = "text/plain";
+                            }
                             resolve({
                               name: file.name,
                               mimeType: part.inlineData.mimeType,
