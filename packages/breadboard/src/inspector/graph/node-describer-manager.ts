@@ -23,10 +23,6 @@ import type {
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
 import { SchemaDiffer } from "@breadboard-ai/utils";
-import {
-  assetsFromGraphDescriptor,
-  envFromGraphDescriptor,
-} from "../../file-system/assets.js";
 import { contextFromMutableGraph } from "../graph-store.js";
 import { UpdateEvent } from "./event.js";
 import { GraphDescriptorHandle } from "./graph-descriptor-handle.js";
@@ -36,6 +32,10 @@ import {
   edgesToSchema,
   EdgeType,
 } from "./schemas.js";
+import {
+  assetsFromGraphDescriptor,
+  envFromGraphDescriptor,
+} from "@breadboard-ai/data";
 
 export { emptyResult, NodeDescriberManager };
 

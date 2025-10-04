@@ -4,8 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { isLLMContentArray } from "@breadboard-ai/data";
 import {
   BreakpointSpec,
+  FileSystemEntry,
   GraphDescriptor,
   HarnessRunResult,
   InputValues,
@@ -330,8 +332,13 @@ class InternalRunStateController {
       console.warn(working.$error);
     }
     const signal = this.#getOrCreateStopController(task.node.id).signal;
+    const fileSystem = context.fileSystem?.createRunFileSystem({
+      graphUrl: this.graph.url!,
+      assets: assetsFromGraphDescriptor(this.graph),
+      env: context.fileSystem.env(),
+    });
     const invoker = new NodeInvoker(
-      { ...context, signal },
+      { ...context, fileSystem, signal },
       { graph: this.graph },
       async (result) => {
         const harnessResult = fromRunnerResult(result);
@@ -576,4 +583,18 @@ function getLatestConfig(
     return err(`Unable to find node "${id}`);
   }
   return inspectableNode?.configuration();
+}
+
+function assetsFromGraphDescriptor(
+  descriptor?: GraphDescriptor
+): FileSystemEntry[] {
+  const { assets } = descriptor || {};
+  if (!assets) return [];
+
+  return Object.entries(assets)
+    .filter(([, asset]) => isLLMContentArray(asset.data))
+    .map(([path, asset]) => {
+      const data = asset.data;
+      return { path: `/assets/${path}`, data } as FileSystemEntry;
+    });
 }

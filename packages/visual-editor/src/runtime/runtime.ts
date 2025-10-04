@@ -5,10 +5,8 @@
  */
 import type * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
-  assetsFromGraphDescriptor,
   createGraphStore,
   createLoader,
-  envFromGraphDescriptor,
   err,
   Kit,
 } from "@google-labs/breadboard";
@@ -48,6 +46,10 @@ import {
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { addNodeProxyServerConfig } from "../data/node-proxy-servers.js";
 import { inputsFromSettings } from "@breadboard-ai/shared-ui/data/inputs.js";
+import {
+  assetsFromGraphDescriptor,
+  envFromGraphDescriptor,
+} from "@breadboard-ai/data";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;

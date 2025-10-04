@@ -26,3 +26,4 @@ export {
   saveOutputsAsFile,
   extensionFromMimeType,
 } from "./save-outputs-as-file.js";
+export * from "./file-system.js";

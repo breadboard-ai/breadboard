@@ -19,7 +19,6 @@ import type {
 import { createRunner, RunnerErrorEvent } from "@breadboard-ai/runtime";
 import { RuntimeConfig, SideboardRuntimeProvider } from "./types";
 import {
-  assetsFromGraphDescriptor,
   createEphemeralBlobStore,
   createFileSystem,
   createGraphStore,
@@ -29,7 +28,6 @@ import {
   Outcome,
   err,
   NodeDescriberResult,
-  envFromGraphDescriptor,
   ErrorObject,
   composeFileSystemBackends,
   proxyFileSystemBackend,
@@ -50,6 +48,10 @@ import type {
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
 import { formatError } from "@breadboard-ai/shared-ui/utils/format-error.js";
 import { SIGN_IN_CONNECTION_ID } from "@breadboard-ai/shared-ui/utils/signin-adapter";
+import {
+  assetsFromGraphDescriptor,
+  envFromGraphDescriptor,
+} from "@breadboard-ai/data";
 
 export { createSideboardRuntimeProvider };
 
