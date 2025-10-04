@@ -487,7 +487,9 @@ export class Main extends SignalWatcher(LitElement) {
       ),
     });
 
-    const moduleFactory = createA2ModuleFactory();
+    const moduleFactory = createA2ModuleFactory({
+      mcpClientManager: mcp.clientManager,
+    });
 
     this.#runtime = await Runtime.create({
       recentBoardStore: this.#recentBoardStore,
