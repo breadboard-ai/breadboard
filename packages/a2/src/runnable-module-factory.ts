@@ -28,17 +28,26 @@ import { err, filterUndefined, ok } from "@breadboard-ai/utils";
 
 import { a2 } from "./a2";
 import { urlComponentsFromString } from "@breadboard-ai/loader";
+import { McpClientManager } from "@breadboard-ai/mcp";
 
 export { createA2ModuleFactory };
 
 const URL_PREFIX = "embed://a2/";
 const URL_SUFFIX = ".bgl.json";
 
-function createA2ModuleFactory(): RunnableModuleFactory {
-  return new A2ModuleFactory();
+export type A2ModuleFactoryArgs = {
+  mcpClientManager: McpClientManager;
+};
+
+function createA2ModuleFactory(
+  args: A2ModuleFactoryArgs
+): RunnableModuleFactory {
+  return new A2ModuleFactory(args);
 }
 
 class A2ModuleFactory implements RunnableModuleFactory {
+  constructor(private readonly args: A2ModuleFactoryArgs) {}
+
   getDir(url?: string): Outcome<string> {
     if (!url) {
       return err(`Unable to get module info: no URL`);
@@ -63,7 +72,7 @@ class A2ModuleFactory implements RunnableModuleFactory {
   ): Promise<Outcome<RunnableModule>> {
     const dir = this.getDir(graph.url);
     if (!ok(dir)) return dir;
-    return new A2Module(dir, capabilities);
+    return new A2Module(dir, this.args, capabilities);
   }
 }
 
@@ -152,7 +161,8 @@ function createCallableCapabilities(
 
 type InvokeFunction = (
   inputs: InvokeInputs,
-  capabilities?: CapabilitySpec
+  capabilities?: CapabilitySpec,
+  args?: A2ModuleFactoryArgs
 ) => Promise<OutputValues>;
 
 type DescribeFunction = (
@@ -163,6 +173,7 @@ type DescribeFunction = (
 class A2Module implements RunnableModule {
   constructor(
     private readonly dir: string,
+    private readonly args: A2ModuleFactoryArgs,
     private readonly capabilities?: CapabilitiesManager
   ) {}
 
@@ -187,7 +198,8 @@ class A2Module implements RunnableModule {
     await telemetry?.startModule();
     const result = await (func as InvokeFunction)(
       inputs,
-      createCallableCapabilities(this.capabilities?.createSpec(), telemetry)
+      createCallableCapabilities(this.capabilities?.createSpec(), telemetry),
+      this.args
     );
     await telemetry?.endModule();
     return result;

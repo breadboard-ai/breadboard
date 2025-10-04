@@ -18,6 +18,7 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { ConnectorManager, createConfigurator, createTools };
 
@@ -145,11 +146,13 @@ export type ToolHandler<
   title: string;
   list(
     caps: Capabilities,
+    moduleArgs: A2ModuleFactoryArgs,
     id: string,
     info: ConnectorInfo<C>
   ): Promise<Outcome<ListMethodOutput>>;
   invoke(
     caps: Capabilities,
+    moduleArgs: A2ModuleFactoryArgs,
     id: string,
     info: ConnectorInfo<C>,
     name: string,
@@ -164,14 +167,15 @@ function createTools<
   return {
     invoke: async function (
       inputs: ToolsInput<C, A>,
-      caps: Capabilities
+      caps: Capabilities,
+      moduleArgs: A2ModuleFactoryArgs
     ): Promise<Outcome<ToolsOutput>> {
       const { method, id, info } = inputs;
       if (method === "list") {
-        return handler.list(caps, id, info);
+        return handler.list(caps, moduleArgs, id, info);
       } else if (method === "invoke") {
         const { name, args } = inputs;
-        return handler.invoke(caps, id, info, name, args);
+        return handler.invoke(caps, moduleArgs, id, info, name, args);
       }
       return err(`Unknown method: "${method}""`);
     },
