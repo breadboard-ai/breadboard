@@ -183,17 +183,17 @@ async function invoke(
     }
     await thought(caps, response, i);
 
-    const toolResponses: string[] = [];
-    await toolManager.processResponse(response, async ($board, args) => {
-      toolResponses.push(
-        JSON.stringify(await caps.invoke({ $board, ...args }))
-      );
-    });
+    const callingTools = await toolManager.callTools(response, true, []);
+    if (!ok(callingTools)) return callingTools;
+
+    const toolResponses = callingTools.results || [];
     if (toolResponses.length === 0) {
       break;
     }
-    research.push(...toolResponses);
-    content = [...content, response, toLLMContent(toolResponses.join("\n\n"))];
+    research.push(
+      ...toolResponses.map((response) => functionResponseToText(response))
+    );
+    content = [...content, response, ...toolResponses.flat()];
   }
   if (research.length === 0) {
     await report(caps, {
@@ -312,4 +312,20 @@ async function describe(
       order: 101,
     },
   };
+}
+
+function functionResponseToText(content: LLMContent[]) {
+  const last = content.at(-1);
+  if (!last) return "";
+  return last.parts
+    .filter((part) => "functionResponse" in part)
+    .map((part) => {
+      const response = part.functionResponse.response;
+      if (typeof response === "string") {
+        return response;
+      } else {
+        return JSON.stringify(response);
+      }
+    })
+    .join("\n\n");
 }
