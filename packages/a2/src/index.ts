@@ -19,7 +19,6 @@ import { bgl as goOverListBgl } from "./go-over-list/index";
 import { bgl as googleDriveBgl } from "./google-drive/index";
 import { bgl as mcpBgl } from "./mcp/index";
 import { bgl as musicGeneratorBgl } from "./music-generator/index";
-import { bgl as saveOutputsBgl } from "./save-outputs/index";
 import { bgl as toolsBgl } from "./tools/index";
 import { bgl as videoGeneratorBgl } from "./video-generator/index";
 import { bgl as autonameBgl } from "./autoname/index";
@@ -46,7 +45,6 @@ function createA2Server(): BoardServer {
       ["go-over-list", goOverListBgl],
       ["google-drive", googleDriveBgl],
       ["mcp", mcpBgl],
-      ["save-outputs", saveOutputsBgl],
       ["tools", toolsBgl],
       ["video-generator", videoGeneratorBgl],
       ["music-generator", musicGeneratorBgl],
