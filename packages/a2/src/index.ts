@@ -16,7 +16,6 @@ import { bgl as deepResearchBgl } from "./deep-research/index";
 import { bgl as fileSystemBgl } from "./file-system/index";
 import { bgl as generateTextBgl } from "./generate-text/index";
 import { bgl as generateBgl } from "./generate/index";
-import { bgl as gmailBgl } from "./gmail/index";
 import { bgl as goOverListBgl } from "./go-over-list/index";
 import { bgl as googleDriveBgl } from "./google-drive/index";
 import { bgl as mcpBgl } from "./mcp/index";
@@ -46,7 +45,6 @@ function createA2Server(): BoardServer {
       ["file-system", fileSystemBgl],
       ["generate", generateBgl],
       ["generate-text", generateTextBgl],
-      ["gmail", gmailBgl],
       ["go-over-list", goOverListBgl],
       ["google-drive", googleDriveBgl],
       ["mcp", mcpBgl],

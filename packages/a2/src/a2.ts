@@ -10,7 +10,6 @@ import { exports as deepResearchExports } from "./deep-research/index";
 import { exports as fileSystemExports } from "./file-system/index";
 import { exports as generateExports } from "./generate/index";
 import { exports as generateTextExports } from "./generate-text/index";
-import { exports as gmailExports } from "./gmail/index";
 import { exports as goOverListExports } from "./go-over-list/index";
 import { exports as googleDriveExports } from "./google-drive/index";
 import { exports as mcpExports } from "./mcp/index";
@@ -27,7 +26,6 @@ export const a2 = {
   "file-system": fileSystemExports,
   generate: generateExports,
   "generate-text": generateTextExports,
-  gmail: gmailExports,
   "go-over-list": goOverListExports,
   "google-drive": googleDriveExports,
   mcp: mcpExports,
