@@ -12,7 +12,7 @@ import { ArgumentNameGenerator } from "./introducer";
 import { report } from "./output";
 import { Template } from "./template";
 import { ToolManager } from "./tool-manager";
-import { addUserTurn, err, llm, ok, toLLMContent } from "./utils";
+import { addUserTurn, err, llm, ok, toLLMContent, toText } from "./utils";
 
 export { invoke as default, describe };
 
@@ -186,16 +186,14 @@ async function invoke(
     }
     await thought(caps, response, i);
 
-    const toolResponses: string[] = [];
-    await toolManager.processResponse(response, async ($board, args) => {
-      toolResponses.push(
-        JSON.stringify(await caps.invoke({ $board, ...args }))
-      );
-    });
+    const callingTools = await toolManager.callTools(response, true, []);
+    if (!ok(callingTools)) return callingTools;
+
+    const toolResponses = callingTools.results || [];
     if (toolResponses.length === 0) {
       break;
     }
-    research.push(...toolResponses);
+    research.push(...toolResponses.map((response) => toText(response)));
     content = [...content, response, toLLMContent(toolResponses.join("\n\n"))];
   }
   if (research.length === 0) {
