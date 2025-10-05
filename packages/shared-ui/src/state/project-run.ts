@@ -284,6 +284,12 @@ class ReactiveProjectRun implements ProjectRun {
             errorMessage: errorMessage.message,
           });
           return;
+        } else if (state === "succeeded") {
+          // Mark all pending work items as completed.
+          const entry = this.current?.get(id);
+          if (entry) {
+            entry.finalizeWorkItemInputs();
+          }
         }
         this.renderer.nodes.set(id, { status: state });
       });
@@ -476,7 +482,7 @@ class ReactiveProjectRun implements ProjectRun {
             errorMessage: error.message,
           });
         } else if (nodeState.state === "interrupted") {
-          entry.handleInterruption();
+          entry.finalizeWorkItemInputs();
         } else {
           this.renderer.nodes.set(id, { status: "succeeded" });
         }
