@@ -14,16 +14,9 @@
  * 1) packages/shared-ui/src/config/client-deployment-configuration.ts,
  * where default values are set.
  *
- * 2) packages/a2/bgl/src/a2/settings.ts where this type is defined in
- * A2.
- *
  * Add a comment to explain what the flag does.
  */
 export type RuntimeFlags = {
-  /**
-   * Add "Save As Code" option to the "Output" step.
-   */
-  saveAsCode: boolean;
   /**
    * Add "For each" capability to the "Generate" step.
    */

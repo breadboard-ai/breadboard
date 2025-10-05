@@ -41,10 +41,6 @@ export const ENABLE_GULF_RENDERER: boolean = getBoolean("ENABLE_GULF_RENDERER");
 
 export const ENABLE_MCP: boolean = getBoolean("ENABLE_MCP");
 
-export const ENABLE_PLAN_RUNNER: boolean = getBoolean("ENABLE_PLAN_RUNNER");
-
-export const ENABLE_SAVE_AS_CODE: boolean = getBoolean("ENABLE_SAVE_AS_CODE");
-
 export const ENVIRONMENT_NAME: string = getString("ENVIRONMENT_NAME");
 
 export const FEEDBACK_LINK: string = getString("FEEDBACK_LINK");
