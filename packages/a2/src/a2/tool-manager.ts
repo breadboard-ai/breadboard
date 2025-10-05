@@ -305,93 +305,81 @@ class ToolManager {
     let calledTools = false;
     let calledCustomTools = false;
     let saveOutputs = false;
-    await this.processResponse(
-      response,
-      async ($board, args, passContext, functionName) => {
-        console.log("CALLING TOOL", $board, args, passContext);
-        calledTools = true;
-        if (passContext) {
-          // Passing context means we called a subgraph/'custom tool'.
-          calledCustomTools = true;
-        }
-        const callingTool = await this.caps.invoke({
-          $board,
-          ...normalizeArgs(args, context, passContext),
-        });
-        if ("$error" in callingTool) {
-          errors.push(JSON.stringify(callingTool.$error));
-        } else if (functionName === undefined) {
-          errors.push(`No function name for ${JSON.stringify(callingTool)}`);
+    if (!response.parts) {
+      return { results, calledTools, calledCustomTools, saveOutputs };
+    }
+
+    const callTool: CallToolCallback = async (
+      $board,
+      args,
+      passContext,
+      functionName
+    ) => {
+      console.log("CALLING TOOL", $board, args, passContext);
+      calledTools = true;
+      if (passContext) {
+        // Passing context means we called a subgraph/'custom tool'.
+        calledCustomTools = true;
+      }
+      const callingTool = await this.caps.invoke({
+        $board,
+        ...normalizeArgs(args, context, passContext),
+      });
+      if ("$error" in callingTool) {
+        errors.push(JSON.stringify(callingTool.$error));
+      } else if (functionName === undefined) {
+        errors.push(`No function name for ${JSON.stringify(callingTool)}`);
+      } else {
+        const toolResult = callingTool as ToolOutput;
+        if ("structured_result" in toolResult) {
+          // The MCP output
+          results.push([toolResult.structured_result]);
+          if (toolResult.saveOutputs) {
+            saveOutputs = true;
+          }
         } else {
-          const toolResult = callingTool as ToolOutput;
-          if ("structured_result" in toolResult) {
-            // The MCP output
-            results.push([toolResult.structured_result]);
-            if (toolResult.saveOutputs) {
-              saveOutputs = true;
-            }
-          } else {
-            // The traditional path, where a string is returned.
-            if (passContext) {
-              if (!("context" in callingTool)) {
-                errors.push(`No "context" port in outputs of "${$board}"`);
-              } else {
-                const response = {
-                  ["value"]: JSON.stringify(
-                    callingTool.context as LLMContent[]
-                  ),
-                };
-                const responsePart: FunctionResponseCapabilityPart = {
-                  functionResponse: {
-                    name: functionName,
-                    response: response,
-                  },
-                };
-                const toolResponseContent: LLMContent = {
-                  role: "user",
-                  parts: [responsePart],
-                };
-                results.push([toolResponseContent]);
-                console.log(
-                  "gemini-prompt + passContext, processResponse: ",
-                  results
-                );
-              }
+          // The traditional path, where a string is returned.
+          if (passContext) {
+            if (!("context" in callingTool)) {
+              errors.push(`No "context" port in outputs of "${$board}"`);
             } else {
+              const response = {
+                ["value"]: JSON.stringify(callingTool.context as LLMContent[]),
+              };
               const responsePart: FunctionResponseCapabilityPart = {
                 functionResponse: {
                   name: functionName,
-                  response: callingTool,
+                  response: response,
                 },
               };
               const toolResponseContent: LLMContent = {
                 role: "user",
                 parts: [responsePart],
               };
-              console.log("toolResponseContent: ", toolResponseContent);
               results.push([toolResponseContent]);
-              console.log("gemini-prompt processResponse: ", results);
+              console.log(
+                "gemini-prompt + passContext, processResponse: ",
+                results
+              );
             }
+          } else {
+            const responsePart: FunctionResponseCapabilityPart = {
+              functionResponse: {
+                name: functionName,
+                response: callingTool,
+              },
+            };
+            const toolResponseContent: LLMContent = {
+              role: "user",
+              parts: [responsePart],
+            };
+            console.log("toolResponseContent: ", toolResponseContent);
+            results.push([toolResponseContent]);
+            console.log("gemini-prompt processResponse: ", results);
           }
         }
       }
-    );
-    console.log("ERRORS", errors);
-    if (errors.length && !allowToolErrors) {
-      return err(
-        `Calling tools generated the following errors: ${errors.join(",")}`
-      );
-    }
-    return {
-      results,
-      saveOutputs,
-      calledCustomTools,
-      calledTools,
     };
-  }
-
-  async processResponse(response: LLMContent, callTool: CallToolCallback) {
-    if (!response.parts) return;
 
     for (const part of response.parts) {
       if ("functionCall" in part) {
@@ -415,6 +403,19 @@ class ToolManager {
         }
       }
     }
+
+    console.log("ERRORS", errors);
+    if (errors.length && !allowToolErrors) {
+      return err(
+        `Calling tools generated the following errors: ${errors.join(",")}`
+      );
+    }
+    return {
+      results,
+      saveOutputs,
+      calledCustomTools,
+      calledTools,
+    };
   }
 
   hasToolDeclarations(): boolean {
