@@ -28,7 +28,6 @@ import {
   McpClient,
   McpClientManager,
   McpListToolResult,
-  McpServerStore,
 } from "@breadboard-ai/mcp";
 import { signal } from "signal-utils";
 import { updateMapDynamic } from "./utils/update-map";
@@ -73,20 +72,15 @@ class IntegrationManager implements IntegrationState {
 
   constructor(
     integration: Integration,
-    private clientFactory: McpClientManager,
-    serverStore: McpServerStore
+    private clientFactory: McpClientManager
   ) {
     this.integration = integration;
     const { url, title } = integration;
-    this.#client = this.clientFactory.createClient(
-      url,
-      {
-        title,
-        name: title,
-        version: "0.0.1",
-      },
-      serverStore
-    );
+    this.#client = this.clientFactory.createClient(url, {
+      title,
+      name: title,
+      version: "0.0.1",
+    });
     this.#reload();
   }
 
@@ -181,11 +175,7 @@ class IntegrationsImpl implements Integrations {
     const { integrations = {} } = graph;
     updateMapDynamic(this.#integrations, Object.entries(integrations), {
       create: (from) => {
-        return new IntegrationManager(
-          from,
-          this.clientManager,
-          this.#serverList
-        );
+        return new IntegrationManager(from, this.clientManager);
       },
       update: (from, existing) => {
         existing.update(from);

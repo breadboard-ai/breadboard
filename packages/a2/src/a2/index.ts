@@ -22,7 +22,6 @@ import * as a2MakeCode from "./make-code";
 import * as a2Output from "./output";
 import * as a2RenderOutputs from "./render-outputs";
 import * as a2Researcher from "./researcher";
-import * as a2Rpc from "./rpc";
 import * as a2Settings from "./settings";
 import * as a2StepExecutor from "./step-executor";
 import * as a2Template from "./template";
@@ -53,7 +52,6 @@ export const exports = {
   output: a2Output,
   "render-outputs": a2RenderOutputs,
   researcher: a2Researcher,
-  rpc: a2Rpc,
   settings: a2Settings,
   "step-executor": a2StepExecutor,
   template: a2Template,

@@ -3,13 +3,12 @@
  */
 
 import { LLMContent } from "@breadboard-ai/types";
-import type { ListToolResult } from "../a2/connector-manager";
 import { createTools } from "../a2/connector-manager";
 import { StreamableReporter } from "../a2/output";
 import { err, ErrorWithMetadata, ok } from "../a2/utils";
-import { McpClient } from "./mcp-client";
 import { CallToolResponse } from "./types";
 import { filterUndefined } from "@breadboard-ai/utils";
+import { DescriberResult } from "../a2/common";
 
 export { invoke as default, describe };
 
@@ -25,7 +24,7 @@ function isNotAllowed(error: ErrorWithMetadata) {
 
 const { invoke, describe } = createTools<Configuration>({
   title: "MCP Server",
-  list: async (caps, _id, info) => {
+  list: async (caps, args, _id, info) => {
     const reporter = new StreamableReporter(caps, {
       title: `Calling MCP Server`,
       icon: "robot_server",
@@ -38,14 +37,17 @@ const { invoke, describe } = createTools<Configuration>({
         "upload"
       );
 
-      const client = new McpClient(caps, {
-        url: info.configuration.endpoint,
-        info: {
+      const client = await args.mcpClientManager.createClient(
+        info.configuration.endpoint,
+        {
           name: "Breadboard",
           title: "Breadboard",
           version: "0.0.1",
-        },
-      });
+        }
+      );
+      if (!ok(client)) {
+        return reporter.sendError(client);
+      }
 
       const listingTools = await client.listTools();
       if (!ok(listingTools)) {
@@ -62,10 +64,10 @@ const { invoke, describe } = createTools<Configuration>({
         "download"
       );
       // Transform to the ToolManager format.
-      const list = listingTools.map<ListToolResult>((item) => {
+      const list = listingTools.tools.map((item) => {
         return {
           url: info.url,
-          description: { ...item, title: item.name },
+          description: { ...item, title: item.name } as DescriberResult,
           passContext: false,
         };
       });
@@ -74,7 +76,7 @@ const { invoke, describe } = createTools<Configuration>({
       await reporter.close();
     }
   },
-  invoke: async (caps, _id, info, name, args) => {
+  invoke: async (caps, moduleArgs, _id, info, name, args) => {
     const reporter = new StreamableReporter(caps, {
       title: `Calling MCP Server`,
       icon: "robot_server",
@@ -87,14 +89,17 @@ const { invoke, describe } = createTools<Configuration>({
         "upload"
       );
 
-      const client = new McpClient(caps, {
-        url: info.configuration.endpoint,
-        info: {
+      const client = await moduleArgs.mcpClientManager.createClient(
+        info.configuration.endpoint,
+        {
           name: "Breadboard",
           title: "Breadboard",
           version: "0.0.1",
-        },
-      });
+        }
+      );
+      if (!ok(client)) {
+        return reporter.sendError(client);
+      }
 
       const callingTool = await client.callTool({
         name,
@@ -111,7 +116,10 @@ const { invoke, describe } = createTools<Configuration>({
       }
       await reporter.sendUpdate("MCP Server Response", callingTool, "download");
       return filterUndefined({
-        structured_result: mcpToLLmContent(name, callingTool.content),
+        structured_result: mcpToLLmContent(
+          name,
+          callingTool.content as CallToolResponse["content"]
+        ),
         isError: callingTool.isError,
         saveOutputs: callingTool.saveOutputs,
       });
