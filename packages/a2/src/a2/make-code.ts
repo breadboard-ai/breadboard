@@ -163,21 +163,11 @@ class GeminiPrompt {
     if (!content) {
       return err("No content from Gemini");
     }
-    const results: string[] = [];
-    const errors: string[] = [];
-    await this.toolManager?.processResponse(content, async ($board, args) => {
-      const callingTool = await this.caps.invoke({ $board, ...args });
-      if ("$error" in callingTool) {
-        errors.push(JSON.stringify(callingTool.$error));
-      } else {
-        results.push(JSON.stringify(callingTool));
-      }
-    });
-    if (errors.length) {
-      return err(
-        `Calling tools generated the following errors: ${errors.join(",")}`
-      );
-    }
+    const callingTools = await this.toolManager?.callTools(content, false, []);
+    if (!ok(callingTools)) return callingTools;
+
+    const { results = [] } = callingTools || {};
+
     const result = [content];
     if (results.length) {
       result.push(toLLMContent(results.join("\n\n")));
