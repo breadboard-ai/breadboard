@@ -63,7 +63,7 @@ import {
 } from "@breadboard-ai/embed";
 import { FileSystemPersistentBackend } from "@breadboard-ai/filesystem-board-server";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { McpManager } from "@breadboard-ai/mcp";
+import { McpClientManager } from "@breadboard-ai/mcp";
 import {
   GlobalConfig,
   globalConfigContext,
@@ -437,7 +437,7 @@ export class Main extends SignalWatcher(LitElement) {
     // eslint-disable-next-line prefer-const
     let fileSystem: FileSystem;
 
-    const mcp = new McpManager(
+    const mcpClientManager = new McpClientManager(
       builtInMcpClients,
       {
         tokenGetter: async (scopes) => {
@@ -482,13 +482,12 @@ export class Main extends SignalWatcher(LitElement) {
             }),
           ],
           ["track", createActionTrackerBackend()],
-          ["mcp", mcp.fileSystemBackend],
         ])
       ),
     });
 
     const moduleFactory = createA2ModuleFactory({
-      mcpClientManager: mcp.clientManager,
+      mcpClientManager,
     });
 
     this.#runtime = await Runtime.create({
@@ -511,7 +510,7 @@ export class Main extends SignalWatcher(LitElement) {
       appName: Strings.from("APP_NAME"),
       appSubName: Strings.from("SUB_APP_NAME"),
       flags: flagManager,
-      mcpClientManager: mcp.clientManager,
+      mcpClientManager,
     });
     this.#addRuntimeEventHandlers();
 
