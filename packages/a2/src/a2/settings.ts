@@ -2,32 +2,15 @@
  * @fileoverview A helper to retrieve current settings
  */
 
-import { Capabilities, JSONPart, Outcome } from "@breadboard-ai/types";
+import {
+  Capabilities,
+  JSONPart,
+  Outcome,
+  RuntimeFlags,
+} from "@breadboard-ai/types";
 import { ok } from "./utils";
 
 export { readSettings, readFlags };
-
-/**
- * Keep in sync with packages/types/src/flags.ts
- */
-export type RuntimeFlags = {
-  /**
-   * Add "Save As Code" option to the "Output" step.
-   */
-  saveAsCode: boolean;
-  /**
-   * Add "For each" capability to the "Generate" step.
-   */
-  generateForEach: boolean;
-  /**
-   * Enable MCP support
-   */
-  mcp: boolean;
-  /**
-   * Use GULF Renderer.
-   */
-  gulfRenderer: boolean;
-};
 
 async function readSettings(
   caps: Capabilities
@@ -49,10 +32,10 @@ async function readFlags(caps: Capabilities): Promise<Outcome<RuntimeFlags>> {
   if (!json) {
     // Return default values.
     return {
-      saveAsCode: false,
       generateForEach: false,
       mcp: false,
       gulfRenderer: false,
+      force2DGraph: false,
     };
   }
 

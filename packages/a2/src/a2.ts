@@ -7,7 +7,6 @@
 import { exports as a2Exports } from "./a2/index";
 import { exports as audioGeneratorExports } from "./audio-generator/index";
 import { exports as deepResearchExports } from "./deep-research/index";
-import { exports as fileSystemExports } from "./file-system/index";
 import { exports as generateExports } from "./generate/index";
 import { exports as generateTextExports } from "./generate-text/index";
 import { exports as goOverListExports } from "./go-over-list/index";
@@ -23,7 +22,6 @@ export const a2 = {
   a2: a2Exports,
   "audio-generator": audioGeneratorExports,
   autoname: autonameExports,
-  "file-system": fileSystemExports,
   generate: generateExports,
   "generate-text": generateTextExports,
   "go-over-list": goOverListExports,
