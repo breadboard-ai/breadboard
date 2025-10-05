@@ -14,7 +14,6 @@ import { bgl as a2Bgl } from "./a2/index";
 import { bgl as audioGeneratorBgl } from "./audio-generator/index";
 import { bgl as deepResearchBgl } from "./deep-research/index";
 import { bgl as fileSystemBgl } from "./file-system/index";
-import { bgl as folioBgl } from "./folio/index";
 import { bgl as generateTextBgl } from "./generate-text/index";
 import { bgl as generateBgl } from "./generate/index";
 import { bgl as gmailBgl } from "./gmail/index";
@@ -45,7 +44,6 @@ function createA2Server(): BoardServer {
       ["audio-generator", audioGeneratorBgl],
       ["autoname", autonameBgl],
       ["file-system", fileSystemBgl],
-      ["folio", folioBgl],
       ["generate", generateBgl],
       ["generate-text", generateTextBgl],
       ["gmail", gmailBgl],

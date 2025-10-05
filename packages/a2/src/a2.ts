@@ -8,7 +8,6 @@ import { exports as a2Exports } from "./a2/index";
 import { exports as audioGeneratorExports } from "./audio-generator/index";
 import { exports as deepResearchExports } from "./deep-research/index";
 import { exports as fileSystemExports } from "./file-system/index";
-import { exports as folioExports } from "./folio/index";
 import { exports as generateExports } from "./generate/index";
 import { exports as generateTextExports } from "./generate-text/index";
 import { exports as gmailExports } from "./gmail/index";
@@ -26,7 +25,6 @@ export const a2 = {
   "audio-generator": audioGeneratorExports,
   autoname: autonameExports,
   "file-system": fileSystemExports,
-  folio: folioExports,
   generate: generateExports,
   "generate-text": generateTextExports,
   gmail: gmailExports,
