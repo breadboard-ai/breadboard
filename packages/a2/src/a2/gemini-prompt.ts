@@ -11,16 +11,8 @@ import {
 import gemini, { type Candidate, type GeminiInputs } from "./gemini";
 import { ToolManager } from "./tool-manager";
 import { addUserTurn, err, ok } from "./utils";
-import { ToolOutput } from "./common";
 
 export { GeminiPrompt };
-
-type FunctionResponsePart = {
-  functionResponse: {
-    name: string;
-    response: object;
-  };
-};
 
 function mergeLastParts(contexts: LLMContent[][]): LLMContent {
   const parts: DataPart[] = [];
@@ -131,89 +123,28 @@ class GeminiPrompt {
         `Gemini failed to generate result due to ${candidate.finishReason}`
       );
     }
-    const results: LLMContent[][] = [];
-    const errors: string[] = [];
     if (validator) {
       const validating = validator(content);
       if (!ok(validating)) return validating;
     }
-    await this.options.toolManager?.processResponse(
+    const callingTools = await this.options.toolManager?.callTools(
       content,
-      async ($board, args, passContext, functionName) => {
-        console.log("CALLING TOOL", $board, args, passContext);
-        this.calledTools = true;
-        if (passContext) {
-          // Passing context means we called a subgraph/'custom tool'.
-          this.calledCustomTools = true;
-        }
-        const callingTool = await this.caps.invoke({
-          $board,
-          ...this.#normalizeArgs(args, passContext),
-        });
-        if ("$error" in callingTool) {
-          errors.push(JSON.stringify(callingTool.$error));
-        } else if (functionName === undefined) {
-          errors.push(`No function name for ${JSON.stringify(callingTool)}`);
-        } else {
-          const toolResult = callingTool as ToolOutput;
-          if ("structured_result" in toolResult) {
-            // The MCP output
-            results.push([toolResult.structured_result]);
-            if (toolResult.saveOutputs) {
-              this.saveOutputs = true;
-            }
-          } else {
-            // The traditional path, where a string is returned.
-            if (passContext) {
-              if (!("context" in callingTool)) {
-                errors.push(`No "context" port in outputs of "${$board}"`);
-              } else {
-                const response = {
-                  ["value"]: JSON.stringify(
-                    callingTool.context as LLMContent[]
-                  ),
-                };
-                const responsePart: FunctionResponsePart = {
-                  functionResponse: {
-                    name: functionName,
-                    response: response,
-                  },
-                };
-                const toolResponseContent: LLMContent = {
-                  role: "user",
-                  parts: [responsePart],
-                };
-                results.push([toolResponseContent]);
-                console.log(
-                  "gemini-prompt + passContext, processResponse: ",
-                  results
-                );
-              }
-            } else {
-              const responsePart: FunctionResponsePart = {
-                functionResponse: {
-                  name: functionName,
-                  response: callingTool,
-                },
-              };
-              const toolResponseContent: LLMContent = {
-                role: "user",
-                parts: [responsePart],
-              };
-              console.log("toolResponseContent: ", toolResponseContent);
-              results.push([toolResponseContent]);
-              console.log("gemini-prompt processResponse: ", results);
-            }
-          }
-        }
-      }
+      !!allowToolErrors,
+      this.inputs.body.contents
     );
-    console.log("ERRORS", errors);
-    if (errors.length && !allowToolErrors) {
-      return err(
-        `Calling tools generated the following errors: ${errors.join(",")}`
-      );
-    }
+    if (!ok(callingTools)) return callingTools;
+
+    const {
+      results = [],
+      calledTools,
+      calledCustomTools,
+      saveOutputs,
+    } = callingTools || {};
+
+    if (calledTools) this.calledTools = true;
+    if (calledCustomTools) this.calledCustomTools = true;
+    if (saveOutputs) this.saveOutputs = true;
+
     const result = [content];
     if (results.length) {
       result.push(mergeLastParts(results));

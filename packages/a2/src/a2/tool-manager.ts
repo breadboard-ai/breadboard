@@ -4,6 +4,7 @@
 
 import {
   Capabilities,
+  FunctionResponseCapabilityPart,
   LLMContent,
   Outcome,
   Schema,
@@ -13,6 +14,7 @@ import type {
   DescriberResult,
   DescriberResultTransformer,
   ExportDescriberResult,
+  ToolOutput,
 } from "./common";
 import { ConnectorManager, ListToolResult } from "./connector-manager";
 import {
@@ -20,7 +22,8 @@ import {
   type GeminiSchema,
   type Tool,
 } from "./gemini";
-import { ok } from "./utils";
+import { addUserTurn, ok } from "./utils";
+import { err } from "@breadboard-ai/utils";
 
 const CODE_EXECUTION_SUFFIX = "#module:code-execution";
 
@@ -31,6 +34,13 @@ export type ToolHandle = {
   passContext: boolean;
   connector?: ConnectorManager;
   invoke?: (args: Record<string, unknown>) => Promise<Outcome<void>>;
+};
+
+export type CallToolsResult = {
+  results: LLMContent[][];
+  calledTools: boolean;
+  calledCustomTools: boolean;
+  saveOutputs: boolean;
 };
 
 export type ConnectorHandle = {
@@ -285,6 +295,101 @@ class ToolManager {
     return !hasInvalidTools;
   }
 
+  async callTools(
+    response: LLMContent,
+    allowToolErrors: boolean,
+    context: LLMContent[]
+  ): Promise<Outcome<CallToolsResult>> {
+    const results: LLMContent[][] = [];
+    const errors: string[] = [];
+    let calledTools = false;
+    let calledCustomTools = false;
+    let saveOutputs = false;
+    await this.processResponse(
+      response,
+      async ($board, args, passContext, functionName) => {
+        console.log("CALLING TOOL", $board, args, passContext);
+        calledTools = true;
+        if (passContext) {
+          // Passing context means we called a subgraph/'custom tool'.
+          calledCustomTools = true;
+        }
+        const callingTool = await this.caps.invoke({
+          $board,
+          ...normalizeArgs(args, context, passContext),
+        });
+        if ("$error" in callingTool) {
+          errors.push(JSON.stringify(callingTool.$error));
+        } else if (functionName === undefined) {
+          errors.push(`No function name for ${JSON.stringify(callingTool)}`);
+        } else {
+          const toolResult = callingTool as ToolOutput;
+          if ("structured_result" in toolResult) {
+            // The MCP output
+            results.push([toolResult.structured_result]);
+            if (toolResult.saveOutputs) {
+              saveOutputs = true;
+            }
+          } else {
+            // The traditional path, where a string is returned.
+            if (passContext) {
+              if (!("context" in callingTool)) {
+                errors.push(`No "context" port in outputs of "${$board}"`);
+              } else {
+                const response = {
+                  ["value"]: JSON.stringify(
+                    callingTool.context as LLMContent[]
+                  ),
+                };
+                const responsePart: FunctionResponseCapabilityPart = {
+                  functionResponse: {
+                    name: functionName,
+                    response: response,
+                  },
+                };
+                const toolResponseContent: LLMContent = {
+                  role: "user",
+                  parts: [responsePart],
+                };
+                results.push([toolResponseContent]);
+                console.log(
+                  "gemini-prompt + passContext, processResponse: ",
+                  results
+                );
+              }
+            } else {
+              const responsePart: FunctionResponseCapabilityPart = {
+                functionResponse: {
+                  name: functionName,
+                  response: callingTool,
+                },
+              };
+              const toolResponseContent: LLMContent = {
+                role: "user",
+                parts: [responsePart],
+              };
+              console.log("toolResponseContent: ", toolResponseContent);
+              results.push([toolResponseContent]);
+              console.log("gemini-prompt processResponse: ", results);
+            }
+          }
+        }
+      }
+    );
+    console.log("ERRORS", errors);
+    if (errors.length && !allowToolErrors) {
+      return err(
+        `Calling tools generated the following errors: ${errors.join(",")}`
+      );
+    }
+    return {
+      results,
+      saveOutputs,
+      calledCustomTools,
+      calledTools,
+    };
+  }
+
   async processResponse(response: LLMContent, callTool: CallToolCallback) {
     if (!response.parts) return;
 
@@ -342,4 +447,31 @@ class ToolManager {
     if (Object.keys(declaration).length === 0) return [];
     return [declaration];
   }
+}
+
+function normalizeArgs(
+  a: object,
+  context: LLMContent[],
+  passContext?: boolean
+) {
+  if (!passContext) return a;
+  const args = a as Record<string, unknown>;
+  context = [...context];
+  const hasContext = "context" in args;
+  const contextArg = hasContext
+    ? {}
+    : {
+        context,
+      };
+  return {
+    ...contextArg,
+    ...Object.fromEntries(
+      Object.entries(args).map(([name, value]) => {
+        if (hasContext) {
+          value = addUserTurn(value as string, [...context]);
+        }
+        return [name, value];
+      })
+    ),
+  };
 }
