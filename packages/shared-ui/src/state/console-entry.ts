@@ -109,7 +109,7 @@ class ReactiveConsoleEntry implements ConsoleEntry {
     }
   }
 
-  handleInterruption() {
+  finalizeWorkItemInputs() {
     this.work.forEach((item) => {
       if (!("type" in item)) return;
       const workItem = item as ReactiveWorkItem;
