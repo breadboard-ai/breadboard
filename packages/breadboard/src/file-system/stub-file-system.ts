@@ -31,6 +31,9 @@ class StubFileSystem implements FileSystem {
   close(): Promise<void> {
     throw new Error("Attempting to use stubbed-out file system.");
   }
+  updateRunFileSystem(): FileSystem {
+    throw new Error("Attempting to use stubbed-out file system.");
+  }
   createRunFileSystem(): FileSystem {
     throw new Error("Attempting to use stubbed-out file system.");
   }

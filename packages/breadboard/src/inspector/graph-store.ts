@@ -32,7 +32,6 @@ import type {
   NodeHandlerContext,
   NodeHandlerMetadata,
   Result,
-  Sandbox,
 } from "@breadboard-ai/types";
 import {
   filterEmptyValues,
@@ -103,6 +102,9 @@ function makeTerribleOptions(
         throw new Error("Non-existent filesystem: Terrible Options were used.");
       },
       close: function (): Promise<void> {
+        throw new Error("Non-existent filesystem: Terrible Options were used.");
+      },
+      updateRunFileSystem: function (): FileSystem {
         throw new Error("Non-existent filesystem: Terrible Options were used.");
       },
       createRunFileSystem: function (): FileSystem {

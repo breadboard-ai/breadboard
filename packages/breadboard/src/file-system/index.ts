@@ -671,6 +671,20 @@ class FileSystemImpl implements FileSystem {
     });
   }
 
+  updateRunFileSystem(args: CreateRunFileSystemArgs): FileSystem {
+    const { graphUrl, env, assets } = args;
+    return new FileSystemImpl({
+      graphUrl,
+      local: this.#local,
+      mnt: this.#mnt,
+      env: env || mapToEntries(this.#env),
+      assets: assets || mapToEntries(this.#assets),
+      blobs: this.#blobs,
+      session: this.#session,
+      run: this.#run,
+    });
+  }
+
   createRunFileSystem(args: CreateRunFileSystemArgs): FileSystem {
     const { graphUrl, env, assets } = args;
     return new FileSystemImpl({

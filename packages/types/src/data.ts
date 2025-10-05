@@ -489,12 +489,18 @@ export type FileSystem = {
    */
   createRunFileSystem(args: CreateRunFileSystemArgs): FileSystem;
   /**
+   * Creates a new instance of a FileSystem that inherits all but
+   * and `/tmp/` store from this instance.
+   *
+   * Use it to update FileSystem instance with in the middle of a run.
+   */
+  updateRunFileSystem(args: CreateRunFileSystemArgs): FileSystem /**
    * Creates a new instance of a FileSystem that inherits all but `/tmp/`
    * from this instance.
    *
    * Use it to get the right FileSystem instance whenever a module is
    * invoked.
-   */
+   */;
   createModuleFileSystem(args: CreateModuleFileSystemArgs): FileSystem;
   /**
    * Provides a quick way to access env entries.

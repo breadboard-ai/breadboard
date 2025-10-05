@@ -332,7 +332,7 @@ class InternalRunStateController {
       console.warn(working.$error);
     }
     const signal = this.#getOrCreateStopController(task.node.id).signal;
-    const fileSystem = context.fileSystem?.createRunFileSystem({
+    const fileSystem = context.fileSystem?.updateRunFileSystem({
       graphUrl: this.graph.url!,
       assets: assetsFromGraphDescriptor(this.graph),
       env: context.fileSystem.env(),
