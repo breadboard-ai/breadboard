@@ -15,6 +15,7 @@ import { report } from "./output";
 import { Template } from "./template";
 import { ToolManager } from "./tool-manager";
 import { addUserTurn, err, ok, toLLMContent, toText } from "./utils";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 const MAKE_CODE_ICON = "generative-code";
 
@@ -200,12 +201,17 @@ const MAX_RETRIES = 5;
 
 async function invoke(
   { context, instruction, language, ...params }: CodeGeneratorInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ): Promise<Outcome<CodeGeneratorOutputs>> {
   context ??= [];
 
   // 1) Substitute params in instruction.
-  const toolManager = new ToolManager(caps, new ArgumentNameGenerator(caps));
+  const toolManager = new ToolManager(
+    caps,
+    moduleArgs,
+    new ArgumentNameGenerator(caps)
+  );
   const substituting = await new Template(caps, instruction).substitute(
     params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)

@@ -27,6 +27,7 @@ import {
   toText,
   toTextConcat,
 } from "../a2/utils";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 type AudioGeneratorInputs = {
   context: LLMContent[];
@@ -71,7 +72,8 @@ async function callMusicGen(
 
 async function invoke(
   { context, text, ...params }: AudioGeneratorInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ): Promise<Outcome<AudioGeneratorOutputs>> {
   context ??= [];
   let instructionText = "";
@@ -79,7 +81,11 @@ async function invoke(
     instructionText = toText(text).trim();
   }
   const template = new Template(caps, toLLMContent(instructionText));
-  const toolManager = new ToolManager(caps, new ArgumentNameGenerator(caps));
+  const toolManager = new ToolManager(
+    caps,
+    moduleArgs,
+    new ArgumentNameGenerator(caps)
+  );
   const substituting = await template.substitute(
     params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)

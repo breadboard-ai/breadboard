@@ -13,6 +13,7 @@ import { report } from "../a2/output";
 import { Template } from "../a2/template";
 import { ToolManager } from "../a2/tool-manager";
 import { addUserTurn, err, llm, ok, toLLMContent } from "../a2/utils";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -140,10 +141,15 @@ async function thought(
 
 async function invoke(
   { context, query, summarize, ...params }: ResearcherInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ) {
   const tools = RESEARCH_TOOLS.map((descriptor) => descriptor.url);
-  const toolManager = new ToolManager(caps, new ArgumentNameGenerator(caps));
+  const toolManager = new ToolManager(
+    caps,
+    moduleArgs,
+    new ArgumentNameGenerator(caps)
+  );
   let content = context || [toLLMContent("Start the research")];
 
   const template = new Template(caps, query);

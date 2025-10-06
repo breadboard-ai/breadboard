@@ -36,6 +36,7 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 type Model = {
   id: string;
@@ -161,7 +162,8 @@ async function invoke(
     "b-model-name": modelId,
     ...params
   }: VideoGeneratorInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ): Promise<Outcome<VideoGeneratorOutputs>> {
   const { modelName } = getModel(modelId);
   context ??= [];
@@ -177,7 +179,11 @@ async function invoke(
   // Note: it is important that images are not subsituted in here as they will
   // not be handled properly. At this point, only text variables should be left.
   const template = new Template(caps, toLLMContent(instructionText));
-  const toolManager = new ToolManager(caps, new ArgumentNameGenerator(caps));
+  const toolManager = new ToolManager(
+    caps,
+    moduleArgs,
+    new ArgumentNameGenerator(caps)
+  );
   const substituting = await template.substitute(
     params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)

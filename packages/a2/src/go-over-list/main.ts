@@ -19,6 +19,7 @@ import { Runtime } from "./runtime";
 import { SequentialStrategist } from "./sequential-strategist";
 import { ThinkStrategist } from "./think-strategist";
 import { type Strategist } from "./types";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -46,9 +47,14 @@ function findStrategist(name?: string): Strategist | undefined {
 
 async function invoke(
   { context, plan: objective, strategy, "z-list": makeList, ...params }: Inputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ): Promise<Outcome<Outputs>> {
-  const toolManager = new ToolManager(caps, new ArgumentNameGenerator(caps));
+  const toolManager = new ToolManager(
+    caps,
+    moduleArgs,
+    new ArgumentNameGenerator(caps)
+  );
   const template = new Template(caps, objective);
   const substituting = await template.substitute(
     params,
