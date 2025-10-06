@@ -466,7 +466,7 @@ main {
       margin-bottom: var(--bb-grid-size-3);
       max-width: 1028px;
       position: relative;
-      aspect-ratio: 1.775/1;
+      aspect-ratio: 1/1;
 
       & > * {
         position: absolute;
@@ -893,6 +893,10 @@ footer {
     & span {
       display: block;
     }
+  }
+
+  main header .intro-video {
+    aspect-ratio: 1.775/1;
   }
 
   main section {
