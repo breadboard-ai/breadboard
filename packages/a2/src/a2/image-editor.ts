@@ -37,7 +37,6 @@ const ASPECT_RATIOS = ["1:1", "9:16", "16:9", "4:3", "3:4"];
 type ImageGeneratorInputs = {
   context: LLMContent[];
   instruction: LLMContent;
-  "p-disable-prompt-rewrite": boolean;
   "p-aspect-ratio": string;
 } & Params;
 
@@ -83,7 +82,6 @@ async function invoke(
   {
     context: incomingContext,
     instruction,
-    "p-disable-prompt-rewrite": disablePromptRewrite,
     "p-aspect-ratio": aspectRatio,
     ...params
   }: ImageGeneratorInputs,
@@ -156,7 +154,7 @@ async function invoke(
             caps,
             finalInstruction,
             imageContext,
-            disablePromptRewrite,
+            true,
             aspectRatio
           );
           if (!ok(generatedImage)) return generatedImage;
@@ -172,7 +170,7 @@ async function invoke(
             caps,
             iPrompt,
             [],
-            disablePromptRewrite,
+            true,
             aspectRatio
           );
           if (!ok(generatedImage)) return generatedImage;
@@ -215,13 +213,6 @@ async function describe(
           description:
             "Describe how to generate the image (content, style, etc). Use @ to reference params or outputs from other steps.",
           default: defaultLLMContent(),
-        },
-        "p-disable-prompt-rewrite": {
-          type: "boolean",
-          title: "Disable prompt expansion",
-          behavior: ["config", "hint-advanced"],
-          description:
-            "By default, inputs and instructions will be automatically expanded into a high quality image prompt. Check to disable this re-writing behavior.",
         },
         "p-aspect-ratio": {
           type: "string",
