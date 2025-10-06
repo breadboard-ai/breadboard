@@ -10,13 +10,12 @@ import {
   Schema,
 } from "@breadboard-ai/types";
 import type {
-  CallToolCallback,
   DescriberResult,
   DescriberResultTransformer,
   ExportDescriberResult,
   ToolOutput,
 } from "./common";
-import { ConnectorManager, ListToolResult } from "./connector-manager";
+import { ListToolResult } from "./connector-manager";
 import {
   type FunctionDeclaration,
   type GeminiSchema,
@@ -25,6 +24,7 @@ import {
 import { addUserTurn, ok } from "./utils";
 import { err } from "@breadboard-ai/utils";
 import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { McpToolAdapter } from "./mcp-tool-adapter";
 
 const CODE_EXECUTION_SUFFIX = "#module:code-execution";
 
@@ -33,7 +33,7 @@ export type ToolHandle = {
   tool: FunctionDeclaration;
   url: string;
   passContext: boolean;
-  connector?: ConnectorManager;
+  client?: McpToolAdapter;
   invoke?: (args: Record<string, unknown>) => Promise<Outcome<void>>;
 };
 
@@ -140,7 +140,7 @@ class ToolManager {
     url: string,
     description: ExportDescriberResult,
     passContext: boolean,
-    connector?: ConnectorManager
+    client?: McpToolAdapter
   ): [string, ToolHandle] {
     const name = this.#toName(description.title);
     const functionDeclaration: FunctionDeclaration = {
@@ -151,20 +151,20 @@ class ToolManager {
     if (parameters.properties) {
       functionDeclaration.parameters = parameters;
     }
-    return [name, { tool: functionDeclaration, url, passContext, connector }];
+    return [name, { tool: functionDeclaration, url, passContext, client }];
   }
 
   #addOneTool(
     url: string,
     description: ExportDescriberResult,
     passContext: boolean,
-    connector?: ConnectorManager
+    client?: McpToolAdapter
   ): Outcome<string> {
     const [name, handle] = this.#createToolHandle(
       url,
       description,
       passContext,
-      connector
+      client
     );
     this.tools.set(name, handle);
     return description.title || name;
@@ -179,15 +179,12 @@ class ToolManager {
       this.#hasCodeExection = true;
       return "Code Execution";
     }
-    const connector = new ConnectorManager(this.caps, {
-      url: "embed://a2/mcp.bgl.json",
-      configuration: { endpoint: url },
-    });
+    const client = new McpToolAdapter(this.caps, this.moduleArgs, url);
     if (instance) {
       // This is an integration. Use MCP connector.
       let toolList = this.toolLists.get(url);
       if (!toolList) {
-        const tools = await connector.listTools();
+        const tools = await client.listTools();
         if (!ok(tools)) return tools;
         toolList = tools;
         this.toolLists.set(url, toolList);
@@ -201,7 +198,7 @@ class ToolManager {
           names.push(title);
         }
         console.log("DESCRIPTION", description);
-        this.#addOneTool(url, description, false, connector);
+        this.#addOneTool(url, description, false, client);
       }
       // Return empty string, which will inform the
       // substitution machinery to just reuse title.
@@ -311,95 +308,85 @@ class ToolManager {
       return { results, calledTools, calledCustomTools, saveOutputs };
     }
 
-    const callTool: CallToolCallback = async (
-      $board,
-      args,
-      passContext,
-      functionName
-    ) => {
-      console.log("CALLING TOOL", $board, args, passContext);
-      calledTools = true;
-      if (passContext) {
-        // Passing context means we called a subgraph/'custom tool'.
-        calledCustomTools = true;
-      }
-      const callingTool = await this.caps.invoke({
-        $board,
-        ...normalizeArgs(args, context, passContext),
-      });
-      if ("$error" in callingTool) {
-        errors.push(JSON.stringify(callingTool.$error));
-      } else if (functionName === undefined) {
-        errors.push(`No function name for ${JSON.stringify(callingTool)}`);
+    for (const part of response.parts) {
+      if (!("functionCall" in part)) continue;
+      const { args, name } = part.functionCall;
+      const handle = this.tools.get(name);
+      if (!handle) continue;
+      if (handle.invoke) {
+        await handle.invoke(args as Record<string, unknown>);
       } else {
-        const toolResult = callingTool as ToolOutput;
-        if ("structured_result" in toolResult) {
-          // The MCP output
-          results.push([toolResult.structured_result]);
-          if (toolResult.saveOutputs) {
-            saveOutputs = true;
-          }
+        const { url, passContext, client } = handle;
+        console.log("CALLING TOOL", url, args, passContext);
+        calledTools = true;
+        if (passContext) {
+          // Passing context means we called a subgraph/'custom tool'.
+          calledCustomTools = true;
+        }
+        let callingTool;
+        if (client) {
+          callingTool = await client.callTool(
+            name,
+            args as Record<string, unknown>
+          );
+        } else
+          callingTool = await this.caps.invoke({
+            $board: url,
+            ...normalizeArgs(args, context, passContext),
+          });
+        if ("$error" in callingTool) {
+          errors.push(JSON.stringify(callingTool.$error));
+        } else if (name === undefined) {
+          errors.push(`No function name for ${JSON.stringify(callingTool)}`);
         } else {
-          // The traditional path, where a string is returned.
-          if (passContext) {
-            if (!("context" in callingTool)) {
-              errors.push(`No "context" port in outputs of "${$board}"`);
+          const toolResult = callingTool as ToolOutput;
+          if ("structured_result" in toolResult) {
+            // The MCP output
+            results.push([toolResult.structured_result]);
+            if (toolResult.saveOutputs) {
+              saveOutputs = true;
+            }
+          } else {
+            // The traditional path, where a string is returned.
+            if (passContext) {
+              if (!("context" in callingTool)) {
+                errors.push(`No "context" port in outputs of "${url}"`);
+              } else {
+                const response = {
+                  ["value"]: JSON.stringify(
+                    callingTool.context as LLMContent[]
+                  ),
+                };
+                const responsePart: FunctionResponseCapabilityPart = {
+                  functionResponse: {
+                    name,
+                    response: response,
+                  },
+                };
+                const toolResponseContent: LLMContent = {
+                  role: "user",
+                  parts: [responsePart],
+                };
+                results.push([toolResponseContent]);
+                console.log(
+                  "gemini-prompt + passContext, processResponse: ",
+                  results
+                );
+              }
             } else {
-              const response = {
-                ["value"]: JSON.stringify(callingTool.context as LLMContent[]),
-              };
               const responsePart: FunctionResponseCapabilityPart = {
                 functionResponse: {
-                  name: functionName,
-                  response: response,
+                  name,
+                  response: callingTool,
                 },
               };
               const toolResponseContent: LLMContent = {
                 role: "user",
                 parts: [responsePart],
               };
+              console.log("toolResponseContent: ", toolResponseContent);
               results.push([toolResponseContent]);
-              console.log(
-                "gemini-prompt + passContext, processResponse: ",
-                results
-              );
-            }
-          } else {
-            const responsePart: FunctionResponseCapabilityPart = {
-              functionResponse: {
-                name: functionName,
-                response: callingTool,
-              },
-            };
-            const toolResponseContent: LLMContent = {
-              role: "user",
-              parts: [responsePart],
-            };
-            console.log("toolResponseContent: ", toolResponseContent);
-            results.push([toolResponseContent]);
-            console.log("gemini-prompt processResponse: ", results);
-          }
-        }
-      }
-    };
-
-    for (const part of response.parts) {
-      if ("functionCall" in part) {
-        const { args, name } = part.functionCall;
-        const handle = this.tools.get(name);
-        if (handle) {
-          if (handle.invoke) {
-            await handle.invoke(args as Record<string, unknown>);
-          } else {
-            const { url, passContext, connector } = handle;
-            if (connector) {
-              await connector.invokeTool(
-                name,
-                args as Record<string, unknown>,
-                callTool
-              );
-            } else {
-              await callTool(url, part.functionCall.args, passContext, name);
+              console.log("gemini-prompt processResponse: ", results);
             }
           }
         }
