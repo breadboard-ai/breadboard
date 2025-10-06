@@ -10,7 +10,12 @@ const GlobalStrings = Strings.forSection("Global");
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { consume } from "@lit/context";
-import { GraphDescriptor, GraphTheme, LLMContent } from "@breadboard-ai/types";
+import {
+  GraphDescriptor,
+  GraphTheme,
+  InlineDataCapabilityPart,
+  LLMContent,
+} from "@breadboard-ai/types";
 import GenerateAppTheme from "../../sideboards/sideboards-bgl/generate-app-theme.bgl.json" with { type: "json" };
 import {
   AppTemplateAdditionalOptionsAvailable,
@@ -40,6 +45,9 @@ import { guard } from "lit/directives/guard.js";
 import { colorsLight } from "../../styles/host/colors-light";
 import { type } from "../../styles/host/type";
 import { icons } from "../../styles/icons";
+import { convertImageToInlineData } from "./image-convert.js";
+
+const MAX_UPLOAD_SIZE = 5_242_880; // 5MB.
 
 @customElement("bb-app-theme-creator")
 export class AppThemeCreator extends LitElement {
@@ -312,39 +320,45 @@ export class AppThemeCreator extends LitElement {
               }
             }
 
-            & #random-theme {
-              padding: 0;
-              margin: var(--bb-grid-size-2) 0;
-              border: none;
-              height: var(--bb-grid-size-12);
-              background: var(--ui-custom-o-25);
+            & #actions {
               display: flex;
-              align-items: center;
-              justify-content: center;
-              border-radius: var(--bb-grid-size-3);
-              transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
-              width: 100%;
-              color: var(--n-0);
+              gap: var(--bb-grid-size-3);
 
-              & .g-icon {
-                pointer-events: none;
-                margin-right: var(--bb-grid-size-2);
+              & #upload-theme,
+              & #random-theme {
+                padding: 0;
+                margin: var(--bb-grid-size-2) 0;
+                border: none;
+                height: var(--bb-grid-size-12);
+                background: var(--ui-custom-o-25);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: var(--bb-grid-size-3);
+                transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+                flex: 1;
+                color: var(--n-0);
 
-                &.rotate {
-                  animation: rotate 1s linear infinite forwards;
+                & .g-icon {
+                  pointer-events: none;
+                  margin-right: var(--bb-grid-size-2);
+
+                  &.rotate {
+                    animation: rotate 1s linear infinite forwards;
+                  }
                 }
-              }
 
-              &[disabled] {
-                opacity: 1;
-              }
+                &[disabled] {
+                  opacity: 1;
+                }
 
-              &:not([disabled]) {
-                cursor: pointer;
+                &:not([disabled]) {
+                  cursor: pointer;
 
-                &:hover,
-                &:focus {
-                  background: var(--ui-custom-o-20);
+                  &:hover,
+                  &:focus {
+                    background: var(--ui-custom-o-20);
+                  }
                 }
               }
             }
@@ -426,8 +440,6 @@ export class AppThemeCreator extends LitElement {
     }
 
     const [response] = result;
-
-    // The splash image.
     const [splashScreen] = response.parts;
 
     if (!(isInlineData(splashScreen) || isStoredData(splashScreen))) {
@@ -461,6 +473,117 @@ export class AppThemeCreator extends LitElement {
     } catch (err) {
       console.warn(err);
       throw new Error("Invalid color scheme generated");
+    }
+  }
+
+  async #convertImageToTheme(
+    splashScreen: InlineDataCapabilityPart
+  ): Promise<AppTheme> {
+    try {
+      let theme = generatePaletteFromColor("#330072");
+      const img = new Image();
+      img.src = `data:${splashScreen.inlineData.mimeType};base64,${splashScreen.inlineData.data}`;
+
+      const generatedTheme = await generatePaletteFromImage(img);
+      if (generatedTheme) {
+        theme = generatedTheme;
+      }
+
+      return {
+        ...theme,
+        primaryColor: "",
+        secondaryColor: "",
+        textColor: "",
+        tertiary: "",
+        primaryTextColor: "",
+        backgroundColor: "",
+        splashScreen,
+      };
+    } catch (err) {
+      console.warn(err);
+      throw new Error("Invalid color scheme generated");
+    }
+  }
+
+  async #getImageFile(): Promise<FileList | null> {
+    return new Promise((resolve) => {
+      const fileSelect = document.createElement("input");
+      fileSelect.type = "file";
+      fileSelect.accept = "image/*";
+      fileSelect.addEventListener("input", () => {
+        resolve(fileSelect.files);
+      });
+      fileSelect.addEventListener("cancel", () => {
+        resolve(null);
+      });
+      fileSelect.click();
+    });
+  }
+
+  async #handleUploadedThemeImage() {
+    try {
+      if (this.#generating) {
+        return;
+      }
+
+      this.#generating = true;
+      const images = await this.#getImageFile();
+      if (!images) {
+        return;
+      }
+
+      if (images[0].size > MAX_UPLOAD_SIZE) {
+        this.dispatchEvent(
+          new SnackbarEvent(
+            globalThis.crypto.randomUUID(),
+            "This image is too large. Please upload files that are smaller than 5MB",
+            SnackType.ERROR,
+            [],
+            true,
+            true
+          )
+        );
+        return;
+      }
+
+      try {
+        const splashScreen = await convertImageToInlineData(images[0]);
+        const appTheme = await this.#convertImageToTheme(splashScreen);
+        this.dispatchEvent(
+          new StateEvent({ eventType: "theme.create", theme: appTheme })
+        );
+      } catch (err) {
+        this.dispatchEvent(
+          new SnackbarEvent(
+            globalThis.crypto.randomUUID(),
+            String(err),
+            SnackType.ERROR,
+            [],
+            true,
+            true
+          )
+        );
+      }
+    } catch (err) {
+      console.warn(err);
+      let errMessage = "Error";
+      if (typeof err === "string") {
+        errMessage = err;
+      } else if (typeof err === "object") {
+        errMessage = (err as Error).message ?? "Unknown error";
+      }
+      this.dispatchEvent(
+        new SnackbarEvent(
+          globalThis.crypto.randomUUID(),
+          errMessage,
+          SnackType.ERROR,
+          [],
+          true,
+          true
+        )
+      );
+    } finally {
+      this.#generating = false;
     }
   }
 
@@ -651,24 +774,38 @@ export class AppThemeCreator extends LitElement {
                 </li>`
               : nothing}
           </menu>
-          <button
-            id="random-theme"
-            ?disabled=${this.#changed || this.#generating}
-            class="sans-flex round w-500 md-body-small"
-            @click=${async (evt: Event) => {
-              evt.preventDefault();
+          <div id="actions">
+            <button
+              id="random-theme"
+              ?disabled=${this.#changed || this.#generating}
+              class="sans-flex round w-500 md-body-small"
+              @click=${async (evt: Event) => {
+                evt.preventDefault();
 
-              await this.#debounceGenerateTheme(true);
-            }}
-          >
-            ${this.#generatingRandom
-              ? html`<span class="g-icon filled round rotate"
-                    >progress_activity</span
-                  >
-                  Generating theme...`
-              : html`<span class="g-icon round w-500">casino</span> Generate a
-                  random theme`}
-          </button>
+                await this.#debounceGenerateTheme(true);
+              }}
+            >
+              ${this.#generatingRandom
+                ? html`<span class="g-icon filled round rotate"
+                      >progress_activity</span
+                    >
+                    Generating theme...`
+                : html`<span class="g-icon round w-500">casino</span>
+                    Randomize`}
+            </button>
+            <button
+              id="upload-theme"
+              ?disabled=${this.#changed || this.#generating}
+              class="sans-flex round w-500 md-body-small"
+              @click=${async (evt: Event) => {
+                evt.preventDefault();
+
+                await this.#handleUploadedThemeImage();
+              }}
+            >
+              <span class="g-icon round w-500">upload</span> Upload
+            </button>
+          </div>
         </section>
       </section>
     </section>`;
