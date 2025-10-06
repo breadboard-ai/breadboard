@@ -81,8 +81,8 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
         title: file.name,
         description: properties.description,
         thumbnail: properties.thumbnailUrl,
-        mine: true,
-        readonly: false,
+        mine: false,
+        readonly: true,
         handle: null,
       });
     }
