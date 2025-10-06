@@ -789,7 +789,7 @@ export class AppThemeCreator extends LitElement {
                 ? html`<span class="g-icon filled round rotate"
                       >progress_activity</span
                     >
-                    Generating theme...`
+                    Working...`
                 : html`<span class="g-icon round w-500">casino</span>
                     Randomize`}
             </button>
