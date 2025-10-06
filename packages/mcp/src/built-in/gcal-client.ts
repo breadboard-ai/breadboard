@@ -22,6 +22,7 @@ export { createGoogleCalendarClient };
 
 function createGoogleCalendarClient({
   tokenGetter,
+  apiProxy,
 }: McpBuiltInClientFactoryContext): McpBuiltInClient {
   const client = new BuiltInClient({
     name: "Google Calendar",
@@ -126,11 +127,7 @@ These search terms also match predefined keywords against all display title tran
       timeMax,
       updatedMin,
     }) => {
-      const calendar = await loadCalendarApi(tokenGetter);
-      if (!ok(calendar)) {
-        return mcpErr(calendar.$error);
-      }
-      const listing = await calendar.events.list(
+      const listing = await apiProxy.calendarEventsList(
         filterUndefined({
           calendarId: "primary",
           timeMin,
@@ -143,6 +140,9 @@ These search terms also match predefined keywords against all display title tran
           updatedMin,
         })
       );
+      if (!ok(listing)) {
+        return mcpErr(listing.$error);
+      }
       if (listing.status !== 200) {
         return mcpErr(
           `Failed to list Google Calendar events: ${listing.statusText!}`

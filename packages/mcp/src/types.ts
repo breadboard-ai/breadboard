@@ -5,7 +5,7 @@
  */
 
 import { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
-import { FileSystem, Outcome } from "@breadboard-ai/types";
+import { ApiProxy, FileSystem, Outcome } from "@breadboard-ai/types";
 import { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type {
@@ -141,6 +141,7 @@ export interface McpBuiltInClient extends McpClient {
 export type McpBuiltInClientFactoryContext = {
   tokenGetter: TokenGetter;
   fileSystem: FileSystem;
+  apiProxy: ApiProxy;
 };
 
 export type McpBuiltInClientFactory = (
