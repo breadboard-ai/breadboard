@@ -27,6 +27,7 @@ import {
   Schema,
 } from "@breadboard-ai/types";
 import { filterUndefined } from "@breadboard-ai/utils";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -50,6 +51,7 @@ class GenerateText {
 
   constructor(
     private readonly caps: Capabilities,
+    private readonly moduleArgs: A2ModuleFactoryArgs,
     public readonly sharedContext: SharedContext
   ) {
     this.invoke = this.invoke.bind(this);
@@ -60,6 +62,7 @@ class GenerateText {
     const template = new Template(this.caps, sharedContext.description);
     const toolManager = new ToolManager(
       this.caps,
+      this.moduleArgs,
       new ArgumentNameGenerator(this.caps)
     );
     const doneTool = createDoneTool();
@@ -347,7 +350,11 @@ async function keepChatting(
   };
 }
 
-async function invoke({ context }: Inputs, caps: Capabilities) {
+async function invoke(
+  { context }: Inputs,
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
+) {
   if (!context.description) {
     const msg = "Please provide a prompt for the step";
     await report(caps, {
@@ -371,7 +378,7 @@ async function invoke({ context }: Inputs, caps: Capabilities) {
     return done([...context.context, last], context.makeList);
   }
 
-  const gen = new GenerateText(caps, context);
+  const gen = new GenerateText(caps, moduleArgs, context);
   const initializing = await gen.initialize();
   if (!ok(initializing)) return initializing;
 

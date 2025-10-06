@@ -8,6 +8,7 @@ import { StreamableReporter } from "../a2/output";
 import { executeTool } from "../a2/step-executor";
 import { ToolManager } from "../a2/tool-manager";
 import { ok, toText } from "../a2/utils";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -39,10 +40,11 @@ export type CustomSearchEngineResponse = {
 
 async function generateSummary(
   caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   query: string,
   reporter: StreamableReporter
 ): Promise<Outcome<string>> {
-  const toolManager = new ToolManager(caps);
+  const toolManager = new ToolManager(caps, moduleArgs);
   toolManager.addSearch();
   const result = await new GeminiPrompt(
     caps,
@@ -116,7 +118,8 @@ async function getSearchLinks(
 
 async function invoke(
   { query }: SearchWebInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ): Promise<Outcome<SearchWebOutputs>> {
   const reporter = new StreamableReporter(caps, {
     title: "Searching Web",
@@ -126,7 +129,7 @@ async function invoke(
     await reporter.start();
     await reporter.sendUpdate("Search term", query, "search");
     const [summary, links] = await Promise.all([
-      generateSummary(caps, query, reporter),
+      generateSummary(caps, moduleArgs, query, reporter),
       getSearchLinks(caps, query, reporter),
     ]);
     if (!ok(summary)) {

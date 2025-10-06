@@ -22,6 +22,7 @@ import toolSearchWeb, {
   type SearchWebOutputs,
   describe as toolSearchWebDescribe,
 } from "./tool-search-web";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -61,7 +62,8 @@ function extractQuery(maybeMarkdownListItem: string): string {
 
 async function invoke(
   inputs: Inputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ): Promise<Outcome<Outputs>> {
   let query: LLMContent[];
   let mode: "step" | "tool";
@@ -94,7 +96,11 @@ async function invoke(
       return err("Please provide a query");
     }
     console.log("Query: ", queryString);
-    const getting = await toolSearchWeb({ query: queryString }, caps);
+    const getting = await toolSearchWeb(
+      { query: queryString },
+      caps,
+      moduleArgs
+    );
     if (!ok(getting)) {
       return toLLMContent(getting.$error);
     }

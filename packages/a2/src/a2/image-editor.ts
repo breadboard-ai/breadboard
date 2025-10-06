@@ -29,6 +29,7 @@ import {
   toText,
   toTextConcat,
 } from "./utils";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 const MAKE_IMAGE_ICON = "generative-image";
 const ASPECT_RATIOS = ["1:1", "9:16", "16:9", "4:3", "3:4"];
@@ -86,7 +87,8 @@ async function invoke(
     "p-aspect-ratio": aspectRatio,
     ...params
   }: ImageGeneratorInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ): Promise<Outcome<ImageGeneratorOutputs>> {
   incomingContext ??= [];
   if (!instruction) {
@@ -98,7 +100,11 @@ async function invoke(
   let imageContext = extractMediaData(incomingContext);
   const textContext = extractTextData(incomingContext);
   // Substitute params in instruction.
-  const toolManager = new ToolManager(caps, new ArgumentNameGenerator(caps));
+  const toolManager = new ToolManager(
+    caps,
+    moduleArgs,
+    new ArgumentNameGenerator(caps)
+  );
   const substituting = await new Template(caps, instruction).substitute(
     params,
     async ({ path: url, instance }) => toolManager.addTool(url, instance)

@@ -231,7 +231,7 @@ You can also use partial matches like \`mimeType contains 'image/'\` to find all
                   return {
                     type: "resource_link",
                     name: file.name!,
-                    meta: {
+                    _meta: {
                       storedData: true,
                     },
                     uri: `drive:/${file.id!}`,

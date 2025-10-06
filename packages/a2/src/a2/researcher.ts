@@ -12,7 +12,8 @@ import { ArgumentNameGenerator } from "./introducer";
 import { report } from "./output";
 import { Template } from "./template";
 import { ToolManager } from "./tool-manager";
-import { addUserTurn, err, llm, ok, toLLMContent } from "./utils";
+import { addUserTurn, err, llm, ok, toLLMContent, toText } from "./utils";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -143,10 +144,15 @@ async function thought(
 
 async function invoke(
   { context, plan, summarize, ...params }: ResearcherInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ) {
   const tools = RESEARCH_TOOLS.map((descriptor) => descriptor.url);
-  const toolManager = new ToolManager(caps, new ArgumentNameGenerator(caps));
+  const toolManager = new ToolManager(
+    caps,
+    moduleArgs,
+    new ArgumentNameGenerator(caps)
+  );
   let content = context || [toLLMContent("Start the research")];
 
   const template = new Template(caps, plan);
@@ -186,16 +192,14 @@ async function invoke(
     }
     await thought(caps, response, i);
 
-    const toolResponses: string[] = [];
-    await toolManager.processResponse(response, async ($board, args) => {
-      toolResponses.push(
-        JSON.stringify(await caps.invoke({ $board, ...args }))
-      );
-    });
+    const callingTools = await toolManager.callTools(response, true, []);
+    if (!ok(callingTools)) return callingTools;
+
+    const toolResponses = callingTools.results || [];
     if (toolResponses.length === 0) {
       break;
     }
-    research.push(...toolResponses);
+    research.push(...toolResponses.map((response) => toText(response)));
     content = [...content, response, toLLMContent(toolResponses.join("\n\n"))];
   }
   if (research.length === 0) {

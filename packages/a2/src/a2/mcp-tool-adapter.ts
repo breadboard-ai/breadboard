@@ -1,32 +1,43 @@
 /**
- * @fileoverview The tools export for the connector.
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LLMContent } from "@breadboard-ai/types";
-import { createTools } from "../a2/connector-manager";
-import { StreamableReporter } from "../a2/output";
-import { err, ErrorWithMetadata, ok } from "../a2/utils";
-import { CallToolResponse } from "./types";
-import { filterUndefined } from "@breadboard-ai/utils";
-import { DescriberResult } from "../a2/common";
+import { McpCallToolResult, McpClient } from "@breadboard-ai/mcp";
+import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
+import { StreamableReporter } from "./output";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { filterUndefined, ok } from "@breadboard-ai/utils";
+import { err, ErrorWithMetadata } from "./utils";
+import { DescriberResult } from "./common";
+import { ListToolResult } from "./connector-manager";
 
-export { invoke as default, describe };
+export { McpToolAdapter };
 
 const NOT_ALLOWED_MARKER = "\nMCP_SERVER_NOT_ALLOWED";
-
-type Configuration = {
-  endpoint: string;
-};
 
 function isNotAllowed(error: ErrorWithMetadata) {
   return error.$error.includes(NOT_ALLOWED_MARKER);
 }
+class McpToolAdapter {
+  #client: Promise<Outcome<McpClient>>;
 
-const { invoke, describe } = createTools<Configuration>({
-  title: "MCP Server",
-  list: async (caps, args, _id, info) => {
-    const reporter = new StreamableReporter(caps, {
-      title: `Calling MCP Server`,
+  constructor(
+    private readonly caps: Capabilities,
+    moduleArgs: A2ModuleFactoryArgs,
+    private readonly url: string
+  ) {
+    this.#client = moduleArgs.mcpClientManager.createClient(url, {
+      name: "Breadboard",
+      title: "Breadboard",
+      version: "0.0.1",
+    });
+  }
+
+  async listTools(): Promise<Outcome<ListToolResult[]>> {
+    const reporter = new StreamableReporter(this.caps, {
+      title: `Asking MCP server to list tools`,
       icon: "robot_server",
     });
     try {
@@ -37,14 +48,7 @@ const { invoke, describe } = createTools<Configuration>({
         "upload"
       );
 
-      const client = await args.mcpClientManager.createClient(
-        info.configuration.endpoint,
-        {
-          name: "Breadboard",
-          title: "Breadboard",
-          version: "0.0.1",
-        }
-      );
+      const client = await this.#client;
       if (!ok(client)) {
         return reporter.sendError(client);
       }
@@ -53,7 +57,7 @@ const { invoke, describe } = createTools<Configuration>({
       if (!ok(listingTools)) {
         if (isNotAllowed(listingTools)) {
           return reporter.sendError(
-            err(`"${info.configuration.endpoint} is not an allowed MCP Server`)
+            err(`"${this.url} is not an allowed MCP Server`)
           );
         }
         return reporter.sendError(listingTools);
@@ -66,19 +70,20 @@ const { invoke, describe } = createTools<Configuration>({
       // Transform to the ToolManager format.
       const list = listingTools.tools.map((item) => {
         return {
-          url: info.url,
+          url: this.url,
           description: { ...item, title: item.name } as DescriberResult,
           passContext: false,
         };
       });
-      return { list };
+      return list;
     } finally {
       await reporter.close();
     }
-  },
-  invoke: async (caps, moduleArgs, _id, info, name, args) => {
-    const reporter = new StreamableReporter(caps, {
-      title: `Calling MCP Server`,
+  }
+
+  async callTool(name: string, args: Record<string, unknown>) {
+    const reporter = new StreamableReporter(this.caps, {
+      title: `Asking MCP server to call a tool`,
       icon: "robot_server",
     });
     try {
@@ -89,14 +94,7 @@ const { invoke, describe } = createTools<Configuration>({
         "upload"
       );
 
-      const client = await moduleArgs.mcpClientManager.createClient(
-        info.configuration.endpoint,
-        {
-          name: "Breadboard",
-          title: "Breadboard",
-          version: "0.0.1",
-        }
-      );
+      const client = await this.#client;
       if (!ok(client)) {
         return reporter.sendError(client);
       }
@@ -108,7 +106,7 @@ const { invoke, describe } = createTools<Configuration>({
       if (!ok(callingTool)) {
         if (isNotAllowed(callingTool)) {
           return reporter.sendError(
-            err(`"${info.configuration.endpoint} is not an allowed MCP Server`)
+            err(`"${this.url} is not an allowed MCP Server`)
           );
         }
 
@@ -116,22 +114,19 @@ const { invoke, describe } = createTools<Configuration>({
       }
       await reporter.sendUpdate("MCP Server Response", callingTool, "download");
       return filterUndefined({
-        structured_result: mcpToLLmContent(
-          name,
-          callingTool.content as CallToolResponse["content"]
-        ),
+        structured_result: mcpToLLmContent(name, callingTool.content),
         isError: callingTool.isError,
         saveOutputs: callingTool.saveOutputs,
       });
     } finally {
       await reporter.close();
     }
-  },
-});
+  }
+}
 
 function mcpToLLmContent(
   name: string,
-  response: CallToolResponse["content"]
+  response: McpCallToolResult["content"]
 ): LLMContent {
   const content: LLMContent = { parts: [] };
   const { parts } = content;
@@ -153,13 +148,13 @@ function mcpToLLmContent(
         });
         break;
       case "resource_link":
-        if (data.meta?.storedData) {
+        if (data._meta?.storedData) {
           parts.push({
-            storedData: { handle: data.uri, mimeType: data.mimeType },
+            storedData: { handle: data.uri, mimeType: data.mimeType! },
           });
         } else {
           parts.push({
-            fileData: { fileUri: data.uri, mimeType: data.mimeType },
+            fileData: { fileUri: data.uri, mimeType: data.mimeType! },
           });
         }
         break;
