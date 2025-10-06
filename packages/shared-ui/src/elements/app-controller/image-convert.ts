@@ -46,12 +46,33 @@ export async function convertImageToInlineData(
           }
 
           const ratio = img.naturalWidth / img.naturalHeight;
-          const width = Math.min(img.naturalWidth, MAX_IMAGE_SIZE);
-          const height = width * ratio;
+          let width;
+          let height;
+
+          if (img.naturalWidth > img.naturalHeight) {
+            // Landscape or Square: Set width to MAX_IMAGE_SIZE and calculate height
+            width = Math.min(img.naturalWidth, MAX_IMAGE_SIZE);
+            height = width / ratio; // height = width / (width/height)
+          } else {
+            // Portrait: Set height to MAX_IMAGE_SIZE and calculate width
+            height = Math.min(img.naturalHeight, MAX_IMAGE_SIZE);
+            width = height * ratio; // width = height * (width/height)
+          }
+
           canvas.width = width;
           canvas.height = height;
+          ctx.drawImage(
+            img,
+            0,
+            0,
+            img.naturalWidth,
+            img.naturalHeight,
+            0,
+            0,
+            width,
+            height
+          );
 
-          ctx.drawImage(img, 0, 0, width, height);
           const data = canvas
             .toDataURL("image/jpeg", 85)
             .substring(PREAMBLE.length);
