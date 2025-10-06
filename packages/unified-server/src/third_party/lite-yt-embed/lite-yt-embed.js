@@ -177,7 +177,9 @@ class LiteYTEmbed extends HTMLElement {
         return params;
     }
 
-    async activate(){
+    async activate(event){
+        event.preventDefault();
+
         if (this.classList.contains('lyt-activated')) return;
         this.classList.add('lyt-activated');
 
