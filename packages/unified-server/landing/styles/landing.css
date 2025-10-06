@@ -674,6 +674,7 @@ main {
 
   & #build {
     padding: 0 32px 32px 32px;
+    position: relative;
 
     & #video-container {
       overflow: hidden;
@@ -682,9 +683,24 @@ main {
       align-items: center;
       justify-content: center;
       border-radius: 40px;
-      background: var(--n-0);
+      background: var(--n-100);
       color: var(--n-100);
       aspect-ratio: 16/9;
+      position: relative;
+    }
+
+    &::after {
+      box-sizing: border-box;
+      position: absolute;
+      content: "";
+      bottom: 32px;
+      left: 32px;
+      width: calc(100% - 64px);
+      aspect-ratio: 16/9;
+      border: 1px solid var(--n-100);
+      pointer-events: none;
+      border-radius: 39px;
+      box-shadow: 0 0 0 2px var(--n-100);
     }
   }
 }
@@ -935,6 +951,13 @@ footer {
 
       & #video-container {
         border-radius: 70px;
+      }
+
+      &::after {
+        bottom: 60px;
+        left: 60px;
+        width: calc(100% - 120px);
+        border-radius: 69px;
       }
     }
   }
