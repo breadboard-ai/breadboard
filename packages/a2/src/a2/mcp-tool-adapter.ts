@@ -4,14 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { McpClient } from "@breadboard-ai/mcp";
+import { McpCallToolResult, McpClient } from "@breadboard-ai/mcp";
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 import { StreamableReporter } from "./output";
 import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 import { filterUndefined, ok } from "@breadboard-ai/utils";
 import { err, ErrorWithMetadata } from "./utils";
 import { DescriberResult } from "./common";
-import { CallToolResponse } from "../mcp/types";
 import { ListToolResult } from "./connector-manager";
 
 export { McpToolAdapter };
@@ -38,7 +37,7 @@ class McpToolAdapter {
 
   async listTools(): Promise<Outcome<ListToolResult[]>> {
     const reporter = new StreamableReporter(this.caps, {
-      title: `Calling MCP Server`,
+      title: `Asking MCP server to list tools`,
       icon: "robot_server",
     });
     try {
@@ -84,7 +83,7 @@ class McpToolAdapter {
 
   async callTool(name: string, args: Record<string, unknown>) {
     const reporter = new StreamableReporter(this.caps, {
-      title: `Calling MCP Server`,
+      title: `Asking MCP server to call a tool`,
       icon: "robot_server",
     });
     try {
@@ -115,10 +114,7 @@ class McpToolAdapter {
       }
       await reporter.sendUpdate("MCP Server Response", callingTool, "download");
       return filterUndefined({
-        structured_result: mcpToLLmContent(
-          name,
-          callingTool.content as CallToolResponse["content"]
-        ),
+        structured_result: mcpToLLmContent(name, callingTool.content),
         isError: callingTool.isError,
         saveOutputs: callingTool.saveOutputs,
       });
@@ -130,7 +126,7 @@ class McpToolAdapter {
 
 function mcpToLLmContent(
   name: string,
-  response: CallToolResponse["content"]
+  response: McpCallToolResult["content"]
 ): LLMContent {
   const content: LLMContent = { parts: [] };
   const { parts } = content;
@@ -152,13 +148,13 @@ function mcpToLLmContent(
         });
         break;
       case "resource_link":
-        if (data.meta?.storedData) {
+        if (data._meta?.storedData) {
           parts.push({
-            storedData: { handle: data.uri, mimeType: data.mimeType },
+            storedData: { handle: data.uri, mimeType: data.mimeType! },
           });
         } else {
           parts.push({
-            fileData: { fileUri: data.uri, mimeType: data.mimeType },
+            fileData: { fileUri: data.uri, mimeType: data.mimeType! },
           });
         }
         break;

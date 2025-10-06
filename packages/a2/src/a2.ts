@@ -11,7 +11,6 @@ import { exports as generateExports } from "./generate/index";
 import { exports as generateTextExports } from "./generate-text/index";
 import { exports as goOverListExports } from "./go-over-list/index";
 import { exports as googleDriveExports } from "./google-drive/index";
-import { exports as mcpExports } from "./mcp/index";
 import { exports as musicGeneratorExports } from "./music-generator/index";
 import { exports as toolsExports } from "./tools/index";
 import { exports as videoGeneratorExports } from "./video-generator/index";
@@ -25,7 +24,6 @@ export const a2 = {
   "generate-text": generateTextExports,
   "go-over-list": goOverListExports,
   "google-drive": googleDriveExports,
-  mcp: mcpExports,
   tools: toolsExports,
   "video-generator": videoGeneratorExports,
   "music-generator": musicGeneratorExports,

@@ -3,11 +3,7 @@
  */
 
 import { err, ok, isLLMContentArray } from "./utils";
-import type {
-  ExportDescriberResult,
-  CallToolCallback,
-  ToolOutput,
-} from "./common";
+import type { ExportDescriberResult, ToolOutput } from "./common";
 import {
   Capabilities,
   DescribeOutputs,
@@ -20,33 +16,9 @@ import {
 } from "@breadboard-ai/types";
 import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
-export { ConnectorManager, createConfigurator, createTools };
+export { ConnectorManager, createConfigurator };
 
 type InvokeOutputs = Parameters<Capabilities["invoke"]>[0];
-
-type ToolsListInput<C extends Record<string, JsonSerializable>> = {
-  method: "list";
-  id: string;
-  info: ConnectorInfo<C>;
-};
-
-type ToolsInvokeInput<
-  C extends Record<string, JsonSerializable>,
-  A extends Record<string, JsonSerializable> = Record<string, JsonSerializable>,
-> = {
-  method: "invoke";
-  id: string;
-  info: ConnectorInfo<C>;
-  name: string;
-  args: A;
-};
-
-type ToolsInput<
-  C extends Record<string, JsonSerializable>,
-  A extends Record<string, JsonSerializable>,
-> = ToolsListInput<C> | ToolsInvokeInput<C, A>;
-
-type ToolsOutput = ListMethodOutput | InvokeMethodOutput;
 
 type InitializeInput = {
   stage: "initialize";
@@ -159,43 +131,6 @@ export type ToolHandler<
     args: A
   ): Promise<Outcome<InvokeMethodOutput>>;
 };
-
-function createTools<
-  C extends Record<string, JsonSerializable>,
-  A extends Record<string, JsonSerializable> = Record<string, JsonSerializable>,
->(handler: ToolHandler<C, A>) {
-  return {
-    invoke: async function (
-      inputs: ToolsInput<C, A>,
-      caps: Capabilities,
-      moduleArgs: A2ModuleFactoryArgs
-    ): Promise<Outcome<ToolsOutput>> {
-      const { method, id, info } = inputs;
-      if (method === "list") {
-        return handler.list(caps, moduleArgs, id, info);
-      } else if (method === "invoke") {
-        const { name, args } = inputs;
-        return handler.invoke(caps, moduleArgs, id, info, name, args);
-      }
-      return err(`Unknown method: "${method}""`);
-    },
-    describe: async function () {
-      const { title } = handler;
-      return {
-        title,
-        metadata: {
-          tags: ["connector-tools"],
-        },
-        inputSchema: {
-          type: "object",
-        } satisfies Schema,
-        outputSchema: {
-          type: "object",
-        } satisfies Schema,
-      };
-    },
-  };
-}
 
 function createConfigurator<
   C extends Record<string, unknown> = Record<string, unknown>,
@@ -398,41 +333,6 @@ class ConnectorManager {
     return { $board: url, id, info: state.info };
   }
 
-  async listTools(): Promise<Outcome<ListToolResult[]>> {
-    const args = await this.#getInvocationArgs("connector-tools");
-    if (!ok(args)) return args;
-
-    const invoking = await this.caps.invoke({ method: "list", ...args });
-    if (!ok(invoking)) return invoking;
-
-    const output = invoking as ListMethodOutput;
-    console.log("LIST TOOLS OUTPUT", output);
-    return output.list;
-  }
-
-  async invokeTool(
-    name: string,
-    args: Record<string, unknown>,
-    callTool: CallToolCallback
-  ): Promise<Outcome<unknown>> {
-    const invocationArgs = await this.#getInvocationArgs("connector-tools");
-    if (!ok(invocationArgs)) return invocationArgs;
-
-    const { id, info } = invocationArgs;
-    await callTool(
-      invocationArgs.$board,
-      {
-        method: "invoke",
-        id,
-        info,
-        name,
-        args,
-      },
-      false,
-      name
-    );
-  }
-
   async materialize(): Promise<Outcome<unknown>> {
     const args = await this.#getInvocationArgs("connector-load");
     if (!ok(args)) return args;
@@ -463,18 +363,6 @@ class ConnectorManager {
     delete props.info;
 
     return props;
-  }
-
-  async canSave(): Promise<Outcome<boolean>> {
-    const args = await this.#getInvocationArgs("connector-save");
-    if (!ok(args)) return false;
-
-    const invoking = await this.caps.invoke({
-      ...args,
-      method: "canSave",
-    });
-    if (!ok(invoking)) return false;
-    return !!(invoking as CanSaveMethodOutput).canSave;
   }
 
   async save(
