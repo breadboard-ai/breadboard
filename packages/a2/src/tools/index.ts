@@ -26,7 +26,6 @@ import * as toolsToolSearchInternal from "./tool-search-internal";
 import * as toolsToolSearchJobs from "./tool-search-jobs";
 import * as toolsToolSearchMaps from "./tool-search-maps";
 import * as toolsToolSearchMoma from "./tool-search-moma";
-import * as toolsToolSearchWeb from "./tool-search-web";
 import * as toolsToolSearchWikipedia from "./tool-search-wikipedia";
 import * as toolsToolSqlQueryInternal from "./tool-sql-query-internal";
 
@@ -56,7 +55,6 @@ export const exports = {
   "tool-search-jobs": toolsToolSearchJobs,
   "tool-search-maps": toolsToolSearchMaps,
   "tool-search-moma": toolsToolSearchMoma,
-  "tool-search-web": toolsToolSearchWeb,
   "tool-search-wikipedia": toolsToolSearchWikipedia,
   "tool-sql-query-internal": toolsToolSqlQueryInternal,
 };

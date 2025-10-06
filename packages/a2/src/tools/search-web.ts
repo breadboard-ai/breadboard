@@ -2,166 +2,159 @@
  * @fileoverview Given a query, searches the Web with Google Search.
  */
 
-import {
-  Capabilities,
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
-import { ListExpander } from "../a2/lists";
-import { Template } from "../a2/template";
-import {
-  defaultLLMContent,
-  err,
-  ok,
-  toLLMContent,
-  toText,
-  toTextConcat,
-} from "../a2/utils";
-import toolSearchWeb, {
-  type SearchWebOutputs,
-  describe as toolSearchWebDescribe,
-} from "./tool-search-web";
+import { Capabilities, Outcome, Schema } from "@breadboard-ai/types";
+import { ok, toText } from "../a2/utils";
 import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { StreamableReporter } from "../a2/output";
+import { ToolManager } from "../a2/tool-manager";
+import { GeminiPrompt } from "../a2/gemini-prompt";
+import { executeTool } from "../a2/step-executor";
 
 export { invoke as default, describe };
+export type SearchWebInputs = {
+  query: string;
+};
 
-type Inputs =
-  | {
-      context?: LLMContent[];
-      "p-query": LLMContent;
-    }
-  | {
-      query: string;
-    };
+export type SearchWebOutputs = {
+  results: string;
+};
 
-type Outputs =
-  | {
-      context: LLMContent[];
-    }
-  | SearchWebOutputs;
+export type SearchBackendOutput = {
+  url: string;
+  webpage_text_content: string;
+};
 
-async function resolveInput(
+export type CustomSearchEngineResponse = {
+  queries: {
+    request: {
+      title: string;
+    }[];
+  };
+  items: {
+    title: string;
+    snippet: string;
+    link: string;
+  }[];
+};
+
+async function generateSummary(
   caps: Capabilities,
-  inputContent: LLMContent
-): Promise<LLMContent> {
-  const template = new Template(caps, inputContent);
-  const substituting = await template.substitute({}, async () => "");
-  if (!ok(substituting)) {
-    return toLLMContent(substituting.$error);
+  moduleArgs: A2ModuleFactoryArgs,
+  query: string,
+  reporter: StreamableReporter
+): Promise<Outcome<string>> {
+  const toolManager = new ToolManager(caps, moduleArgs);
+  toolManager.addSearch();
+  const result = await new GeminiPrompt(
+    caps,
+    {
+      body: {
+        contents: [{ parts: [{ text: query }] }],
+        tools: toolManager.list(),
+      },
+    },
+    toolManager
+  ).invoke();
+  if (!ok(result)) {
+    return result;
   }
-  return substituting;
+  let results = toText(result.last);
+  await reporter.sendUpdate("Search Summary", results, "text_analysis");
+  const links = result.candidate?.groundingMetadata?.groundingChunks?.map(
+    (chunk) => chunk.web
+  );
+  if (links) {
+    await reporter.sendLinks("References", links, "link");
+  }
+  const chunks =
+    result.candidate?.groundingMetadata?.groundingChunks?.map((chunk) => {
+      const { title, uri } = chunk.web;
+      return `- [${title}](${uri})`;
+    }) || [];
+  if (chunks.length) {
+    results += `\n## References:\n${chunks.join("\n")}\n`;
+  }
+  return `\n## Summary\n${results}`;
 }
 
-function extractQuery(maybeMarkdownListItem: string): string {
-  if (maybeMarkdownListItem.startsWith("* ")) {
-    return maybeMarkdownListItem.replace("* ", "");
+function formatBackendSearchResults(
+  results: SearchBackendOutput[] | string
+): string {
+  if (typeof results === "string") {
+    return results;
   }
-  return maybeMarkdownListItem;
+  return `## Search Results
+
+    ${results
+      .map((result) => {
+        return `## Source: ${result.url}
+Source content:
+
+${result.webpage_text_content}
+`;
+      })
+      .join("\n\n")}
+`;
+}
+
+async function getSearchLinks(
+  caps: Capabilities,
+  query: string,
+  reporter: StreamableReporter
+): Promise<Outcome<string>> {
+  const results = await executeTool<SearchBackendOutput[]>(
+    caps,
+    "google_search",
+    {
+      query,
+    }
+  );
+  if (!ok(results)) return results;
+  const formattedResults = formatBackendSearchResults(results);
+  await reporter.sendUpdate("Search Links", formattedResults, "link");
+  return formattedResults;
 }
 
 async function invoke(
-  inputs: Inputs,
+  { query }: SearchWebInputs,
   caps: Capabilities,
   moduleArgs: A2ModuleFactoryArgs
-): Promise<Outcome<Outputs>> {
-  let query: LLMContent[];
-  let mode: "step" | "tool";
-  if ("context" in inputs) {
-    mode = "step";
-    if (inputs.context) {
-      query = inputs.context;
-    } else {
-      return err("Please provide a URL");
-    }
-  } else if ("p-query" in inputs) {
-    const queryContent = await resolveInput(caps, inputs["p-query"]);
-    if (!ok(queryContent)) {
-      return queryContent;
-    }
-    query = [queryContent];
-    mode = "step";
-  } else {
-    query = [toLLMContent(inputs.query)];
-    mode = "tool";
-  }
-
-  const searchResults = await new ListExpander(
-    toLLMContent(defaultLLMContent()),
-    query
-  ).map(async (_, itemContext) => {
-    let queryString = extractQuery(toText(itemContext));
-    queryString = (queryString || "").trim();
-    if (!queryString) {
-      return err("Please provide a query");
-    }
-    console.log("Query: ", queryString);
-    const getting = await toolSearchWeb(
-      { query: queryString },
-      caps,
-      moduleArgs
-    );
-    if (!ok(getting)) {
-      return toLLMContent(getting.$error);
-    }
-    return toLLMContent(getting.results);
+): Promise<Outcome<SearchWebOutputs>> {
+  const reporter = new StreamableReporter(caps, {
+    title: "Searching Web",
+    icon: "search",
   });
-  if (!ok(searchResults)) {
-    return searchResults;
+  try {
+    await reporter.start();
+    await reporter.sendUpdate("Search term", query, "search");
+    const [summary, links] = await Promise.all([
+      generateSummary(caps, moduleArgs, query, reporter),
+      getSearchLinks(caps, query, reporter),
+    ]);
+    if (!ok(summary)) {
+      return summary;
+    }
+    if (!ok(links)) {
+      return links;
+    }
+    return { results: `Query: ${query}\n${summary}\n${links}` };
+  } finally {
+    reporter.close();
   }
-  if (mode === "step") {
-    return {
-      context: searchResults,
-    };
-  }
-  return { results: toTextConcat(searchResults) };
 }
 
-export type DescribeInputs = {
-  inputs: Inputs;
-  inputSchema: Schema;
-  asType?: boolean;
-};
-
-async function describe({ asType: _, ...inputs }: DescribeInputs) {
-  const isTool = inputs && Object.keys(inputs).length === 1;
-  if (isTool) {
-    return toolSearchWebDescribe();
-  }
-  const hasWires = "context" in (inputs.inputSchema.properties || {});
-  const query: Schema["properties"] = hasWires
-    ? {}
-    : {
-        "p-query": {
-          type: "object",
-          title: "Search query",
-          description: "Please provide a search query",
-          behavior: [
-            "llm-content",
-            "config",
-            "hint-preview",
-            "hint-single-line",
-          ],
-          default: defaultLLMContent(),
-        },
-      };
-
+async function describe() {
   return {
     title: "Search Web",
     description: "Given a query, searches the Web with Google Search.",
     inputSchema: {
       type: "object",
       properties: {
-        context: {
-          type: "array",
-          items: {
-            type: "object",
-            behavior: ["llm-content"],
-          },
-          title: "Context in",
-          behavior: ["main-port"],
+        query: {
+          type: "string",
+          title: "Query",
+          description: "The query to use with which to search the Web",
         },
-        ...query,
       },
     } satisfies Schema,
     outputSchema: {
@@ -171,7 +164,6 @@ async function describe({ asType: _, ...inputs }: DescribeInputs) {
           type: "array",
           items: { type: "object", behavior: ["llm-content"] },
           title: "Context out",
-          behavior: ["main-port"],
         },
       },
     } satisfies Schema,
