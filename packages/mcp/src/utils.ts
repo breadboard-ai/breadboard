@@ -5,7 +5,6 @@
  */
 
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { McpCallToolResult } from "./types.js";
 import { filterUndefined } from "@breadboard-ai/utils";
 
 export { mcpErr, mcpText, mcpResourceLink };
@@ -14,7 +13,7 @@ function mcpErr(text: string): CallToolResult {
   return { content: [{ type: "text", text }], isError: true };
 }
 
-function mcpText(text: string, saveOutputs?: boolean): McpCallToolResult {
+function mcpText(text: string, saveOutputs?: boolean): CallToolResult {
   return filterUndefined({
     content: [{ type: "text", text }],
     saveOutputs,

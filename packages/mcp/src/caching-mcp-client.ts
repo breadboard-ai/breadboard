@@ -16,6 +16,7 @@ import {
   McpServerStore,
 } from "./types.js";
 import { ok } from "@breadboard-ai/utils";
+import { Outcome } from "@breadboard-ai/types";
 
 export { CachingMcpClient };
 
@@ -41,7 +42,9 @@ class CachingMcpClient implements McpClient {
     this.clientCache.delete(this.url);
     return this.client.close();
   }
-  callTool(params: CallToolRequest["params"]): Promise<McpCallToolResult> {
+  callTool(
+    params: CallToolRequest["params"]
+  ): Promise<Outcome<McpCallToolResult>> {
     return this.client.callTool(params);
   }
 
