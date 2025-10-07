@@ -11,7 +11,7 @@ import type {
 } from "@modelcontextprotocol/sdk/types.js";
 import { McpCallToolResult, McpClient, McpListToolResult } from "./types.js";
 import { err, ok } from "@breadboard-ai/utils";
-import { Outcome } from "@breadboard-ai/types";
+import { FunctionResponseCapabilityPart, Outcome } from "@breadboard-ai/types";
 
 export { ProxyBackedClient };
 
@@ -101,7 +101,7 @@ class ProxyBackedClient implements McpClient {
   async callTool(
     params: CallToolRequest["params"]
   ): Promise<McpCallToolResult> {
-    const calling = await this.#call<McpCallToolResult["content"]>(
+    const calling = await this.#call<FunctionResponseCapabilityPart>(
       "/v1beta1/callMcpTool",
       {
         functionCall: {
@@ -114,7 +114,7 @@ class ProxyBackedClient implements McpClient {
     if (!ok(calling)) {
       throw new Error((calling as { $error: string }).$error);
     }
-    return { content: calling };
+    return calling;
   }
 
   async listTools(): Promise<McpListToolResult> {

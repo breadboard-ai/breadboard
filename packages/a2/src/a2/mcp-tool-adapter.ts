@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { McpCallToolResult, McpClient } from "@breadboard-ai/mcp";
+import { CallToolResultContent, McpClient } from "@breadboard-ai/mcp";
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 import { StreamableReporter } from "./output";
 import { A2ModuleFactoryArgs } from "../runnable-module-factory";
@@ -16,6 +16,12 @@ import { ListToolResult } from "./connector-manager";
 export { McpToolAdapter };
 
 const NOT_ALLOWED_MARKER = "\nMCP_SERVER_NOT_ALLOWED";
+
+type CallToolAdapterResponse = {
+  structured_result: LLMContent;
+  isError?: boolean;
+  saveOutputs?: boolean;
+};
 
 function isNotAllowed(error: ErrorWithMetadata) {
   return error.$error.includes(NOT_ALLOWED_MARKER);
@@ -81,7 +87,10 @@ class McpToolAdapter {
     }
   }
 
-  async callTool(name: string, args: Record<string, unknown>) {
+  async callTool(
+    name: string,
+    args: Record<string, unknown>
+  ): Promise<Outcome<CallToolAdapterResponse>> {
     const reporter = new StreamableReporter(this.caps, {
       title: `Asking MCP server to call a tool`,
       icon: "robot_server",
@@ -113,11 +122,18 @@ class McpToolAdapter {
         return reporter.sendError(callingTool);
       }
       await reporter.sendUpdate("MCP Server Response", callingTool, "download");
-      return filterUndefined({
-        structured_result: mcpToLLmContent(name, callingTool.content),
-        isError: callingTool.isError,
-        saveOutputs: callingTool.saveOutputs,
-      });
+      if ("functionResponse" in callingTool) {
+        return {
+          structured_result: {
+            parts: [
+              { functionResponse: { ...callingTool.functionResponse, name } },
+            ],
+          },
+        };
+      }
+      const { isError, saveOutputs, content } = callingTool;
+      const structured_result = mcpToLLmContent(name, content);
+      return filterUndefined({ structured_result, isError, saveOutputs });
     } finally {
       await reporter.close();
     }
@@ -126,7 +142,7 @@ class McpToolAdapter {
 
 function mcpToLLmContent(
   name: string,
-  response: McpCallToolResult["content"]
+  response: CallToolResultContent
 ): LLMContent {
   const content: LLMContent = { parts: [] };
   const { parts } = content;

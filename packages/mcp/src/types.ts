@@ -5,7 +5,11 @@
  */
 
 import { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
-import { FileSystem, Outcome } from "@breadboard-ai/types";
+import {
+  FileSystem,
+  FunctionResponseCapabilityPart,
+  Outcome,
+} from "@breadboard-ai/types";
 import { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type {
@@ -19,6 +23,8 @@ import type {
 import type z from "zod";
 
 export type TokenGetter = (scopes?: OAuthScope[]) => Promise<Outcome<string>>;
+
+export type CallToolResultContent = CallToolResult["content"];
 
 export type JsonSerializableHeadersInit =
   | [string, string][]
@@ -55,11 +61,13 @@ export type McpProxyRequest = {
   init: JsonSerializableRequestInit;
 };
 
-export type McpCallToolResult = {
-  content: CallToolResult["content"];
-  isError?: boolean;
-  saveOutputs?: boolean;
-};
+export type McpCallToolResult =
+  | {
+      content: CallToolResult["content"];
+      isError?: boolean;
+      saveOutputs?: boolean;
+    }
+  | FunctionResponseCapabilityPart;
 export type McpListToolResult = { tools: ListToolsResult["tools"] };
 
 export type McpServerInfo = {
@@ -103,7 +111,9 @@ export type McpClient = {
   connect(transport: Transport): Promise<void>;
   getServerVersion(): Implementation;
   close(): Promise<void>;
-  callTool(params: CallToolRequest["params"]): Promise<McpCallToolResult>;
+  callTool(
+    params: CallToolRequest["params"]
+  ): Promise<Outcome<McpCallToolResult>>;
   listTools(): Promise<McpListToolResult>;
 };
 
