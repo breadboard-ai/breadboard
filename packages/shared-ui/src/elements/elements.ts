@@ -66,6 +66,7 @@ export { OverflowMenu } from "./overflow-menu/overflow-menu.js";
 export { Overlay } from "./overlay/overlay.js";
 export { ProjectListing } from "./welcome-panel/project-listing.js";
 export { Renderer } from "./step-editor/renderer.js";
+export { ShapeMorph } from "./shape/shape-morph.js";
 export { SharePanel } from "./share-panel/share-panel.js";
 export { Snackbar } from "./toast/snackbar.js";
 export { Splitter } from "./splitter/splitter.js";
