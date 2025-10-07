@@ -389,9 +389,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
         : this.#renderNoUserGraphsPanel(),
 
       this.#renderFeaturedGraphs(
-        this.#sortFeaturedGraphs(
-          this.#filterGraphs([...galleryGraphs.entries()])
-        )
+        this.#filterGraphs([...galleryGraphs.entries()])
       ),
     ];
   }
@@ -444,21 +442,6 @@ export class ProjectListing extends SignalWatcher(LitElement) {
         return 1;
       }
 
-      return 0;
-    });
-  }
-
-  #sortFeaturedGraphs(
-    items: [string, GraphProviderItem][]
-  ): [string, GraphProviderItem][] {
-    return items.sort(([, dataA], [, dataB]) => {
-      if (dataA.title && !dataB.title) return -1;
-      if (!dataA.title && dataB.title) return 1;
-      if (dataA.title && dataB.title) {
-        if (dataA.title < dataB.title) return -1;
-        if (dataA.title > dataB.title) return 1;
-        return 0;
-      }
       return 0;
     });
   }
