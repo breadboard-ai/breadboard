@@ -67,6 +67,8 @@ function embedIntroVideo(target: HTMLDivElement) {
     `/styles/landing/videos/${formFactor}-poster.png`
   );
   video.muted = true;
+  video.playsInline = true;
+  video.load();
 
   // Wait for the video to load, then add it in (at zero opacity thanks to the
   // CSS). After the fade in animation has finished we remove any other videos

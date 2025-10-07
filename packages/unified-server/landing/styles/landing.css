@@ -467,6 +467,7 @@ main {
       max-width: 1028px;
       position: relative;
       aspect-ratio: 1/1;
+      clip-path: inset(0.01px);
 
       & > * {
         position: absolute;
