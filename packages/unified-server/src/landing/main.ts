@@ -56,7 +56,6 @@ function embedIntroVideo(target: HTMLDivElement) {
   } while (newVideo === lastVideo);
   lastVideo = newVideo;
 
-  console.log("Hello, world");
   const formFactor = window.innerWidth < 800 ? "mobile" : "desktop";
   const video = document.createElement("video");
   video.setAttribute(
