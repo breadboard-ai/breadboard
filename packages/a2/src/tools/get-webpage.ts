@@ -2,158 +2,61 @@
  * @fileoverview Given a URL of a webpage, returns its content as Markdown with a list of links and other metadata.
  */
 
-import {
-  Capabilities,
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
-import { ListExpander } from "../a2/lists";
-import { Template } from "../a2/template";
-import {
-  defaultLLMContent,
-  err,
-  ok,
-  toLLMContent,
-  toText,
-  toTextConcat,
-} from "../a2/utils";
-import toolGetWebpage, {
-  describe as toolGetWebpageDescribe,
-} from "./tool-get-webpage";
+import { Capabilities, Outcome, Schema } from "@breadboard-ai/types";
+import { err, ok } from "../a2/utils";
+import { executeTool } from "../a2/step-executor";
 
 export { invoke as default, describe };
 
-export type GetWebPageInputs = {
-  url: string;
+type Inputs = {
+  url?: string;
 };
 
-export type GetWebPageOutputs = {
+type Outputs = {
   results: string;
 };
 
-async function resolveInput(
+export type GetContentFromUrlResponse = {
+  html_body: string;
+  markdown?: string;
+};
+
+async function getContentFromUrl(
   caps: Capabilities,
-  inputContent: LLMContent
-): Promise<LLMContent> {
-  const template = new Template(caps, inputContent);
-  const substituting = await template.substitute({}, async () => "");
-  if (!ok(substituting)) {
-    return toLLMContent(substituting.$error);
+  url: string
+): Promise<Outcome<string>> {
+  const executing = await executeTool<GetContentFromUrlResponse>(
+    caps,
+    "get_content_from_url",
+    { url }
+  );
+  if (!ok(executing)) return executing;
+  console.log("GET CONTENT", executing);
+  if (typeof executing === "string") {
+    return err(`Unexpected string response from tool`);
   }
-  return substituting;
-}
-
-type Inputs =
-  | {
-      context?: LLMContent[];
-      "p-url": LLMContent;
-    }
-  | GetWebPageInputs;
-
-type Outputs =
-  | {
-      context: LLMContent[];
-    }
-  | GetWebPageOutputs;
-
-function extractURL(maybeMarkdownLink: string): string {
-  // Sometimes Listification returns URLS in markdown format.
-  const singleRegex: RegExp = /\[.*?\]\(([^)]+)\)/;
-  const match: RegExpMatchArray | null = maybeMarkdownLink.match(singleRegex);
-
-  if (match && match[1]) {
-    // match[1] is the content of the first capturing group (the URL)
-    const url: string = match[1];
-    return url;
+  const { html_body, markdown } = executing;
+  if (markdown) {
+    return markdown;
+  } else {
+    return `\`\`\`html\n\n${html_body}\n\n\`\`\``;
   }
-  return maybeMarkdownLink;
 }
 
 async function invoke(
   inputs: Inputs,
   caps: Capabilities
 ): Promise<Outcome<Outputs>> {
-  let urlContext: LLMContent[] = [];
-  let mode: "step" | "tool";
-  if ("context" in inputs) {
-    mode = "step";
-    if (inputs.context) {
-      urlContext = inputs.context;
-    } else {
-      return err("Please provide a URL");
-    }
-  } else if ("p-url" in inputs) {
-    const urlContent = await resolveInput(caps, inputs["p-url"]);
-    if (!ok(urlContent)) {
-      return urlContent;
-    }
-    urlContext = [urlContent];
-    mode = "step";
-  } else {
-    urlContext = [toLLMContent(inputs.url)];
-    mode = "tool";
+  const { url } = inputs;
+  if (!url) {
+    return err(`URL is a required input to Get Webpage tool`);
   }
-  console.log("urlContext");
-  console.log(urlContext);
-  const results = await new ListExpander(
-    toLLMContent(defaultLLMContent()),
-    urlContext
-  ).map(async (_, itemContext) => {
-    console.log("itemContext");
-    console.log(itemContext);
-    let urlString = extractURL(toText(itemContext));
-    urlString = (urlString || "").trim();
-    if (!urlString) {
-      return err("Please provide a URL");
-    }
-    console.log("URL: ", urlString);
-    const getting = await toolGetWebpage({ url: urlString }, caps);
-    if (!ok(getting)) {
-      return toLLMContent(getting.$error);
-    }
-    return toLLMContent(getting.results);
-  });
-
-  if (!ok(results)) {
-    return results;
-  }
-  if (mode == "step") {
-    return {
-      context: results,
-    };
-  }
-  return { results: toTextConcat(results) };
+  const results = await getContentFromUrl(caps, url);
+  if (!ok(results)) return results;
+  return { results };
 }
 
-export type DescribeInputs = {
-  inputs: Inputs;
-  inputSchema: Schema;
-  asType?: boolean;
-};
-async function describe({ asType: _, ...inputs }: DescribeInputs) {
-  const isTool = inputs && Object.keys(inputs).length === 1;
-  if (isTool) {
-    return toolGetWebpageDescribe();
-  }
-  const hasWires = "context" in (inputs.inputSchema.properties || {});
-  const query: Schema["properties"] = hasWires
-    ? {}
-    : {
-        "p-url": {
-          type: "object",
-          title: "URL",
-          description: "Please provide URL of the webpage",
-          behavior: [
-            "llm-content",
-            "config",
-            "hint-preview",
-            "hint-single-line",
-          ],
-          default: defaultLLMContent(),
-        },
-      };
-
+async function describe() {
   return {
     title: "Get Webpage",
     description:
@@ -161,27 +64,22 @@ async function describe({ asType: _, ...inputs }: DescribeInputs) {
     inputSchema: {
       type: "object",
       properties: {
-        context: {
-          type: "array",
-          items: { type: "object", behavior: ["llm-content"] },
-          title: "Context in",
-          behavior: ["main-port"],
+        url: {
+          type: "string",
+          title: "URL",
+          description: "The URL of the webpage whose content will retrieved",
         },
-        ...query,
       },
     } satisfies Schema,
     outputSchema: {
       type: "object",
       properties: {
-        context: {
-          type: "array",
-          items: { type: "object", behavior: ["llm-content"] },
-          title: "Context out",
-          behavior: ["main-port"],
+        results: {
+          type: "string",
+          title: "Contents of the webpage",
         },
       },
     } satisfies Schema,
-
     metadata: {
       icon: "language",
       tags: ["quick-access", "tool", "component"],
