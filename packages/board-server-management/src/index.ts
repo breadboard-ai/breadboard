@@ -82,7 +82,8 @@ export async function createGoogleDriveBoardServer(
     tokenVendor,
     googleDriveClient,
     googleDrivePublishPermissions,
-    userFolderName
+    userFolderName,
+    CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT ?? ""
   );
 }
 

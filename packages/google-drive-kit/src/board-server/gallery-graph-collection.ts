@@ -17,6 +17,7 @@ import { readProperties } from "./utils.js";
 export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
   readonly #tokenVendor: TokenVendor;
   readonly #graphs = new SignalMap<string, GraphProviderItem>();
+  readonly #backendApiUrl: string;
 
   has(url: string): boolean {
     return this.#graphs.has(url);
@@ -45,27 +46,21 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
     return this.#error;
   }
 
-  constructor(tokenVendor: TokenVendor) {
+  constructor(tokenVendor: TokenVendor, backendApiUrl: string) {
     this.#tokenVendor = tokenVendor;
+    this.#backendApiUrl = backendApiUrl;
     void this.#initialize();
   }
 
   async #initialize() {
     const url = new URL("/api/gallery/list", window.location.href);
+    const location = await this.#getUserLocation();
+    if (location) {
+      url.searchParams.set("location", location);
+    }
     let response;
     try {
-      let tokenResult = this.#tokenVendor.getToken("$sign-in");
-      if (tokenResult.state === "expired") {
-        tokenResult = await tokenResult.refresh();
-      }
-      const token =
-        tokenResult.state === "valid"
-          ? tokenResult.grant.access_token
-          : undefined;
-      response = await fetch(
-        url,
-        token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
-      );
+      response = await fetch(url);
     } catch (e) {
       this.#setError(
         new AggregateError([e], `network error while listing gallery graphs`)
@@ -102,6 +97,36 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
     }
     this.#loading = false;
     this.#loaded.resolve();
+  }
+
+  async #getUserLocation(): Promise<string | undefined> {
+    const endpoint = this.#backendApiUrl;
+    if (!endpoint) {
+      return undefined;
+    }
+    let tokenResult = this.#tokenVendor.getToken("$sign-in");
+    if (tokenResult.state === "expired") {
+      tokenResult = await tokenResult.refresh();
+    }
+    if (tokenResult.state !== "valid") {
+      return undefined;
+    }
+    const token = tokenResult.grant.access_token;
+
+    const locationResponse = await fetch(
+      new URL(`/v1beta1/getLocation`, endpoint),
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!locationResponse.ok) {
+      console.error(
+        `HTTP ${locationResponse.status} error getting user location`
+      );
+      return undefined;
+    }
+    const locationResult = (await locationResponse.json()) as {
+      countryCode: string;
+    };
+    return locationResult.countryCode;
   }
 
   #setError(e: Error) {
