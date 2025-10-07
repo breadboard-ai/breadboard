@@ -5,6 +5,7 @@
  */
 
 import type { TokenVendor } from "@breadboard-ai/connection-client";
+import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import type {
   GraphProviderItem,
   ImmutableGraphCollection,
@@ -52,20 +53,13 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
 
   async #initialize() {
     const url = new URL("/api/gallery/list", window.location.href);
+    const location = await this.#getUserLocation();
+    if (location) {
+      url.searchParams.set("location", location);
+    }
     let response;
     try {
-      let tokenResult = this.#tokenVendor.getToken("$sign-in");
-      if (tokenResult.state === "expired") {
-        tokenResult = await tokenResult.refresh();
-      }
-      const token =
-        tokenResult.state === "valid"
-          ? tokenResult.grant.access_token
-          : undefined;
-      response = await fetch(
-        url,
-        token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
-      );
+      response = await fetch(url);
     } catch (e) {
       this.#setError(
         new AggregateError([e], `network error while listing gallery graphs`)
@@ -102,6 +96,36 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
     }
     this.#loading = false;
     this.#loaded.resolve();
+  }
+
+  async #getUserLocation(): Promise<string | undefined> {
+    const endpoint = CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT;
+    if (!endpoint) {
+      return undefined;
+    }
+    let tokenResult = this.#tokenVendor.getToken("$sign-in");
+    if (tokenResult.state === "expired") {
+      tokenResult = await tokenResult.refresh();
+    }
+    if (tokenResult.state !== "valid") {
+      return undefined;
+    }
+    const token = tokenResult.grant.access_token;
+
+    const locationResponse = await fetch(
+      new URL(`/v1beta1/getLocation`, endpoint),
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!locationResponse.ok) {
+      console.error(
+        `HTTP ${locationResponse.status} error getting user location`
+      );
+      return undefined;
+    }
+    const locationResult = (await locationResponse.json()) as {
+      countryCode: string;
+    };
+    return locationResult.countryCode;
   }
 
   #setError(e: Error) {

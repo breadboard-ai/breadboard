@@ -41,29 +41,15 @@ export async function makeGalleryMiddleware({
   const router = Router();
   router.use(cors({ origin: true, credentials: true, maxAge: 24 * 60 * 60 }));
 
-  router.get("/list", async (_: ExpressRequest, res: ExpressResponse) => {
+  router.get("/list", async (req: ExpressRequest, res: ExpressResponse) => {
     res.writeHead(200, { "content-type": "application/json" });
-    const token = res.locals.accessToken;
-    const location = token
-      ? await getUserLocation(res.locals.accessToken)
-      : undefined;
+    const location =
+      new URL(req.url, `http://example.invalid`).searchParams.get("location") ??
+      undefined;
     res.end(JSON.stringify(gallery.latestGraphFiles(location)));
   });
 
   return router;
-}
-
-async function getUserLocation(token: string): Promise<string> {
-  const response = await fetch(
-    new URL(`/v1beta1/getLocation`, flags.BACKEND_API_ENDPOINT),
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  if (!response.ok) {
-    console.error(`HTTP ${response.status} error getting user location`);
-    return "";
-  }
-  const result = (await response.json()) as { countryCode: string };
-  return result.countryCode;
 }
 
 export interface CachingFeaturedGalleryInit {
