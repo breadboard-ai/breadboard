@@ -2,86 +2,75 @@
  * @fileoverview Search for location information.
  */
 
-import {
-  Capabilities,
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
-import { Template } from "../a2/template";
-import { defaultLLMContent, err, ok, toLLMContent, toText } from "../a2/utils";
-import toolSearchMaps, {
-  describe as toolSearchMapsDescribe,
-} from "./tool-search-maps";
+import { Capabilities, Outcome, Schema } from "@breadboard-ai/types";
+import { ok } from "../a2/utils";
+import { executeTool } from "../a2/step-executor";
 export { invoke as default, describe };
 
-type Inputs =
-  | {
-      context?: LLMContent[];
-      "p-query": LLMContent;
-    }
-  | {
-      query: string;
-    };
+type Inputs = {
+  query: string;
+};
 
-type Outputs =
-  | {
-      context: LLMContent[];
-    }
-  | {
-      results: string;
-    };
+type Outputs = {
+  results: string;
+};
 
-async function resolveInput(
-  caps: Capabilities,
-  inputContent: LLMContent
-): Promise<string> {
-  const template = new Template(caps, inputContent);
-  const substituting = await template.substitute({}, async () => "");
-  if (!ok(substituting)) {
-    return substituting.$error;
+export type SearchMapResults = {
+  places: {
+    id: string;
+    formattedAddress: string;
+    websiteUri: string;
+    rating: number;
+    userRatingCount: number;
+    displayName: {
+      text: string;
+      languageCode: string;
+    };
+    editorialSummary: {
+      text: string;
+      languageCode: string;
+    };
+  }[];
+};
+
+function formatResults(query: string, results: string | SearchMapResults) {
+  // If the result is already in string format, not SearchMap results, return as is.
+  if (typeof results == "string") {
+    return `Search Query: ${query}
+## Google Places Search Results
+${results}
+    `;
   }
-  return toText(substituting);
+  return `Search Query: ${query}
+
+
+## Google Places Search Results
+
+${results.places
+  .map((place) => {
+    const title = place.websiteUri
+      ? `[${place.displayName.text}](${place.websiteUri})`
+      : place.displayName.text;
+    return `- ${title}\n
+  ${place.editorialSummary?.text || ""} 
+  Address: ${place.formattedAddress}
+  User Rating: ${place.rating} (${place.userRatingCount} reviews)
+  `;
+  })
+  .join("\n\n")}
+`;
 }
 
 async function invoke(
-  inputs: Inputs,
+  { query }: Inputs,
   caps: Capabilities
 ): Promise<Outcome<Outputs>> {
-  console.log("MAPS INPUTS", inputs);
-  let query: string;
-  let mode: "step" | "tool";
-  if ("context" in inputs) {
-    mode = "step";
-    const last = inputs.context?.at(-1);
-    if (last) {
-      query = toText(last);
-    } else {
-      return err("Please provide a query");
-    }
-  } else if ("p-query" in inputs) {
-    query = await resolveInput(caps, inputs["p-query"]);
-    mode = "step";
-  } else {
-    query = inputs.query;
-    mode = "tool";
-  }
-  query = (query || "").trim();
-  if (!query) {
-    return err("Please provide a query");
-  }
+  const executing = await executeTool<SearchMapResults>(caps, "map_search", {
+    query,
+  });
+  if (!ok(executing)) return executing;
 
-  console.log("Query: " + query);
-  const searchMapsResults = await toolSearchMaps({ query }, caps);
-  if (!ok(searchMapsResults)) {
-    return searchMapsResults;
-  }
-  const results = searchMapsResults.results;
-  if (mode === "step") {
-    return {
-      context: [toLLMContent(results)],
-    };
-  }
+  const results = formatResults(query, executing);
   return { results };
 }
 
@@ -91,52 +80,27 @@ export type DescribeInputs = {
   asType?: boolean;
 };
 
-async function describe({ asType: _, ...inputs }: DescribeInputs) {
-  const isTool = inputs && Object.keys(inputs).length === 1;
-  if (isTool) {
-    return toolSearchMapsDescribe();
-  }
-  const hasWires = "context" in (inputs.inputSchema.properties || {});
-  const query: Schema["properties"] = hasWires
-    ? {}
-    : {
-        "p-query": {
-          type: "object",
-          title: "Search query",
-          description: "Please provide a search query",
-          behavior: [
-            "llm-content",
-            "config",
-            "hint-preview",
-            "hint-single-line",
-          ],
-          default: defaultLLMContent(),
-        },
-      };
-
+async function describe() {
   return {
     title: "Search Maps",
     description: "Search for location information.",
     inputSchema: {
       type: "object",
       properties: {
-        context: {
-          type: "array",
-          items: { type: "object", behavior: ["llm-content"] },
-          title: "Context in",
-          behavior: ["main-port"],
+        query: {
+          type: "string",
+          title: "Query",
+          description:
+            "Google Places API search query, typically formulated as [type of place] near [location]",
         },
-        ...query,
       },
     } satisfies Schema,
     outputSchema: {
       type: "object",
       properties: {
-        context: {
-          type: "array",
-          items: { type: "object", behavior: ["llm-content"] },
-          title: "Context out",
-          behavior: ["main-port"],
+        results: {
+          type: "string",
+          title: "Search Results",
         },
       },
     } satisfies Schema,
