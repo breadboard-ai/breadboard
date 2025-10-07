@@ -246,48 +246,24 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   #renderProgress(active: boolean) {
     if (!this.run) return nothing;
 
-    const newestThought = this.#extractNewestThought(this.run);
+    const titles = Array.from(this.run.app.current.values()).map(
+      (v) => v.title
+    );
+
+    const titleList = new Intl.ListFormat("en-US", {
+      style: "long",
+      type: "conjunction",
+    }).format(titles);
+
     return html`<div id="progress" class=${classMap({ active })}>
       <div class="thoughts">
         <bb-shape-morph></bb-shape-morph>
         <h1 class="w-700 round sans-flex md-title-large">Thinking...</h1>
         <div class="thought-content sans md-body-large">
-          ${markdown(newestThought ?? "")}
+          ${markdown(titleList ?? "")}
         </div>
       </div>
     </div>`;
-  }
-
-  #extractNewestThought(run: ProjectRun) {
-    const thoughts = Array.from(run.app.current.values()).map((v) => {
-      const outputs = [...v.outputs.values()];
-      const thoughts: NodeValue[] = [];
-
-      for (const screenOutput of outputs) {
-        if ("details" in screenOutput.output && screenOutput.output.details) {
-          thoughts.push(screenOutput.output.details);
-        }
-      }
-
-      return thoughts;
-    });
-
-    let newestThought: string | null = null;
-    if (thoughts.length) {
-      const possibleNewestThought: string | NodeValue = thoughts.at(-1);
-      if (typeof possibleNewestThought === "string") {
-        newestThought = possibleNewestThought;
-      } else {
-        if (
-          Array.isArray(possibleNewestThought) &&
-          possibleNewestThought.every((thought) => typeof thought === "string")
-        ) {
-          newestThought = possibleNewestThought.join("\n");
-        }
-      }
-    }
-
-    return newestThought;
   }
 
   #renderError() {
