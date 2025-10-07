@@ -5,7 +5,6 @@
  */
 
 import type { TokenVendor } from "@breadboard-ai/connection-client";
-import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import type {
   GraphProviderItem,
   ImmutableGraphCollection,
@@ -18,6 +17,7 @@ import { readProperties } from "./utils.js";
 export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
   readonly #tokenVendor: TokenVendor;
   readonly #graphs = new SignalMap<string, GraphProviderItem>();
+  readonly #backendApiUrl: string;
 
   has(url: string): boolean {
     return this.#graphs.has(url);
@@ -46,8 +46,9 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
     return this.#error;
   }
 
-  constructor(tokenVendor: TokenVendor) {
+  constructor(tokenVendor: TokenVendor, backendApiUrl: string) {
     this.#tokenVendor = tokenVendor;
+    this.#backendApiUrl = backendApiUrl;
     void this.#initialize();
   }
 
@@ -99,7 +100,7 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
   }
 
   async #getUserLocation(): Promise<string | undefined> {
-    const endpoint = CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT;
+    const endpoint = this.#backendApiUrl;
     if (!endpoint) {
       return undefined;
     }

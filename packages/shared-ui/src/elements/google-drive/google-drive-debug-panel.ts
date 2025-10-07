@@ -83,7 +83,9 @@ export class GoogleDriveDebugPanel extends LitElement {
           this.tokenVendor,
           this.googleDriveClient,
           [],
-          CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard"
+          CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_USER_FOLDER_NAME ||
+            "Breadboard",
+          CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT ?? ""
         );
       } else {
         this.#googleDriveBoardServer = null;

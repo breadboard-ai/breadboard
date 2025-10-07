@@ -64,7 +64,8 @@ class GoogleDriveBoardServer
     tokenVendor: TokenVendor,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
-    userFolderName: string
+    userFolderName: string,
+    backendApiUrl: string
   ) {
     const configuration = {
       url: new URL(`${PROTOCOL}/`),
@@ -91,7 +92,8 @@ class GoogleDriveBoardServer
       tokenVendor,
       googleDriveClient,
       publishPermissions,
-      userFolderName
+      userFolderName,
+      backendApiUrl
     );
   }
 
@@ -142,7 +144,8 @@ class GoogleDriveBoardServer
     tokenVendor: TokenVendor,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
-    userFolderName: string
+    userFolderName: string,
+    backendApiUrl: string
   ) {
     super();
     this.ops = new DriveOperations(
@@ -162,7 +165,10 @@ class GoogleDriveBoardServer
     this.capabilities = configuration.capabilities;
     this.#tokenVendor = tokenVendor;
     this.#googleDriveClient = googleDriveClient;
-    this.galleryGraphs = new DriveGalleryGraphCollection(this.#tokenVendor);
+    this.galleryGraphs = new DriveGalleryGraphCollection(
+      this.#tokenVendor,
+      backendApiUrl
+    );
     this.userGraphs = new DriveUserGraphCollection(this.#googleDriveClient);
   }
 
