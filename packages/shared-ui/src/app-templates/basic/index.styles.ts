@@ -364,19 +364,25 @@ export const styles: CSSResultGroup = [
           }
         }
 
+        & #progress,
         & #activity {
           flex: 1;
           overflow: auto;
           container-type: size;
-
-          display: flex;
           flex-direction: column;
           padding: var(--bb-grid-size-3);
-          color: var(--text-color);
+          display: flex;
 
-          &::before {
-            flex: 1;
-            content: "";
+          &:has(.thoughts) {
+            align-items: center;
+            justify-content: center;
+          }
+
+          &:not(:has(.thoughts)) {
+            &::before {
+              flex: 1;
+              content: "";
+            }
           }
 
           &::after {
@@ -406,6 +412,60 @@ export const styles: CSSResultGroup = [
             width: 100%;
             max-width: 840px;
             animation: fadeIn 0.6s cubic-bezier(0, 0, 0.3, 1) forwards;
+          }
+
+          & .thoughts {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            & > * {
+              margin-left: 0;
+              margin-right: 0;
+            }
+
+            bb-shape-morph {
+              width: 50cqw;
+              height: 50cqw;
+              max-width: 240px;
+              max-height: 240px;
+              aspect-ratio: 1;
+              margin-bottom: var(--bb-grid-size-10);
+            }
+
+            & h1 {
+              margin: 0 0 var(--bb-grid-size-4) 0;
+            }
+
+            & .thought-content {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              min-height: 10svh;
+
+              & ul {
+                list-style: none;
+                padding: 0;
+                max-width: 80%;
+                text-align: center;
+
+                & li {
+                  display: inline;
+
+                  &::after {
+                    content: ", ";
+                  }
+
+                  &:last-of-type::after {
+                    content: "";
+                  }
+                }
+              }
+
+              & p {
+                margin: 0 0 var(--bb-grid-size-2) 0;
+              }
+            }
           }
 
           & .html-view {
@@ -516,6 +576,14 @@ export const styles: CSSResultGroup = [
               margin-left: var(--bb-grid-size-3);
               color: oklch(from var(--p-15) l c h / calc(alpha - 0.4));
             }
+          }
+        }
+
+        & #progress {
+          display: none;
+
+          &.active {
+            display: flex;
           }
         }
 

@@ -29,6 +29,7 @@ import {
   GraphDescriptor,
   isInlineData,
   isLLMContentArray,
+  NodeValue,
   ok,
 } from "@google-labs/breadboard";
 import { SignalWatcher } from "@lit-labs/signals";
@@ -242,22 +243,51 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     return html`<div id="activity">${[activityContents]}</div>`;
   }
-
-  #renderProgress() {
+  #renderProgress(active: boolean) {
     if (!this.run) return nothing;
 
-    const titles = Array.from(this.run.app.current.values()).map(
-      (v) => v.title
-    );
-
-    const status = html`<div id="status">
-      <span class="g-icon"></span>
-      ${new Intl.ListFormat("en-US", {
-        style: "long",
-        type: "conjunction",
-      }).format(titles)}
+    const newestThought = this.#extractNewestThought(this.run);
+    return html`<div id="progress" class=${classMap({ active })}>
+      <div class="thoughts">
+        <bb-shape-morph></bb-shape-morph>
+        <h1 class="w-700 round sans-flex md-title-large">Thinking...</h1>
+        <div class="thought-content sans md-body-large">
+          ${markdown(newestThought ?? "")}
+        </div>
+      </div>
     </div>`;
-    return html`<div id="activity">${[status]}</div>`;
+  }
+
+  #extractNewestThought(run: ProjectRun) {
+    const thoughts = Array.from(run.app.current.values()).map((v) => {
+      const outputs = [...v.outputs.values()];
+      const thoughts: NodeValue[] = [];
+
+      for (const screenOutput of outputs) {
+        if ("details" in screenOutput.output && screenOutput.output.details) {
+          thoughts.push(screenOutput.output.details);
+        }
+      }
+
+      return thoughts;
+    });
+
+    let newestThought: string | null = null;
+    if (thoughts.length) {
+      const possibleNewestThought: string | NodeValue = thoughts.at(-1);
+      if (typeof possibleNewestThought === "string") {
+        newestThought = possibleNewestThought;
+      } else {
+        if (
+          Array.isArray(possibleNewestThought) &&
+          possibleNewestThought.every((thought) => typeof thought === "string")
+        ) {
+          newestThought = possibleNewestThought.join("\n");
+        }
+      }
+    }
+
+    return newestThought;
   }
 
   #renderError() {
@@ -853,10 +883,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       </div>
     `;
 
-    let content:
-      | HTMLTemplateResult
-      | Array<HTMLTemplateResult | symbol>
-      | symbol = nothing;
+    let content: Array<HTMLTemplateResult | symbol> = [];
     if (this.isEmpty) {
       content = [this.#renderEmptyState()];
     } else {
@@ -864,9 +891,12 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         case "splash":
           content = [splashScreen];
           break;
+
         case "progress":
-          content = [this.#renderProgress()];
+          // Progress is always rendered but hidden (so as to avoid re-renders),
+          // so this becomes a no-op here to ensure we cover all states.
           break;
+
         case "input":
           if (this.runtimeFlags?.gulfRenderer) {
             content = [this.#renderGULF()];
@@ -874,6 +904,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
             content = [this.#renderOutputs(), this.#renderInput()];
           }
           break;
+
         case "output":
           if (this.graph && this.boardServer) {
             void maybeTriggerNlToOpalSatisfactionSurvey(
@@ -888,9 +919,11 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
             content = [this.#renderOutputs(), this.#renderSaveResultsButtons()];
           }
           break;
+
         case "error":
           content = [this.#renderError()];
           break;
+
         default: {
           console.warn(
             "Unknown state",
@@ -903,7 +936,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     }
 
     return html`<section class=${classMap(classes)} style=${styleMap(styles)}>
-      <div id="content">${this.#renderControls()}${content}</div>
+      <div id="content">
+        ${this.#renderControls()}
+        ${this.#renderProgress(this.run.app.state === "progress")} ${content}
+      </div>
     </section>`;
   }
 
