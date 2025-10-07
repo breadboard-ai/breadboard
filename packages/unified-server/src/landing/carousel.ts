@@ -3,7 +3,6 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { GraphInit } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -136,21 +135,13 @@ export class LandingCarousel extends LitElement {
         padding: 0 var(--bb-grid-size-6);
         white-space: nowrap;
         cursor: pointer;
+        text-decoration: none;
 
         &.sticky {
           position: absolute;
           bottom: 10%;
           left: 50%;
           translate: -50% 0;
-        }
-
-        &::before {
-          content: "";
-          background: url(/styles/landing/images/g-logo.png) 0 0 / cover
-            no-repeat;
-          width: 20px;
-          height: 20px;
-          margin-right: var(--bb-grid-size-2);
         }
       }
 
@@ -282,32 +273,12 @@ export class LandingCarousel extends LitElement {
         </div>`;
       })}
 
-      <button
+      <a
         class="try-app sticky"
-        @click=${() => {
-          const url = galleryItems[this.currentItem].url;
-          if (!url) {
-            return;
-          }
-
-          const evt = new CustomEvent<GraphInit>("loadgalleryflow", {
-            bubbles: true,
-            cancelable: true,
-            composed: true,
-            detail: {
-              flow: url,
-              mode: "app",
-              page: "graph",
-              redirectFromLanding: true,
-              resourceKey: undefined,
-            },
-          });
-
-          this.dispatchEvent(evt);
-        }}
+        href="/?flow=${galleryItems[this.currentItem].url}&mode=app"
       >
-        Sign in to try app
-      </button>
+        Try now
+      </a>
     </div>`;
   }
 

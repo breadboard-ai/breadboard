@@ -7,7 +7,6 @@ import { LitElement, html, css, PropertyValues } from "lit";
 import { customElement, property, query } from "lit/decorators.js";
 import { ref } from "lit/directives/ref.js";
 import { galleryItems } from "./gallery-items";
-import { GraphInit } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { fonts } from "./fonts.js";
 import { shortestPath } from "./utils.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -175,6 +174,7 @@ export class LandingCarouselModal extends LitElement {
               order: 3;
               grid-column: 1/3;
               justify-self: center;
+              text-decoration: none;
             }
 
             & .try-app {
@@ -195,15 +195,6 @@ export class LandingCarouselModal extends LitElement {
                 bottom: 10%;
                 left: 50%;
                 translate: -50% 0;
-              }
-
-              &::before {
-                content: "";
-                background: url(/styles/landing/images/g-logo.png) 0 0 / cover
-                  no-repeat;
-                width: 20px;
-                height: 20px;
-                margin-right: var(--bb-grid-size-2);
               }
             }
           }
@@ -395,33 +386,12 @@ export class LandingCarouselModal extends LitElement {
           >
             <span class="g-icon filled round">chevron_left</span>
           </button>
-
-          <button
+          <a
             class="try-app"
-            @click=${() => {
-              const url = galleryItems[this.currentItem].url;
-              if (!url) {
-                return;
-              }
-
-              const evt = new CustomEvent<GraphInit>("loadgalleryflow", {
-                bubbles: true,
-                cancelable: true,
-                composed: true,
-                detail: {
-                  flow: url,
-                  mode: "app",
-                  page: "graph",
-                  redirectFromLanding: true,
-                  resourceKey: undefined,
-                },
-              });
-
-              this.dispatchEvent(evt);
-            }}
+            href="/?flow=${galleryItems[this.currentItem].url}&mode=app"
           >
-            Sign in to try app
-          </button>
+            Try now
+          </a>
 
           <button
             class="navigation"
