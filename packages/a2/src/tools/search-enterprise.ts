@@ -2,156 +2,64 @@
  * @fileoverview Search an enterprise search engine.
  */
 
-import {
-  Capabilities,
-  LLMContent,
-  Outcome,
-  Schema,
-} from "@breadboard-ai/types";
-import { Template } from "../a2/template";
-import { defaultLLMContent, err, ok, toLLMContent, toText } from "../a2/utils";
-import toolSearchEnterprise, {
-  describe as toolSearchEnterpriseDescribe,
-} from "./tool-search-enterprise";
+import { Capabilities, Outcome, Schema } from "@breadboard-ai/types";
+import { err, ok } from "../a2/utils";
+import { executeTool } from "../a2/step-executor";
 export { invoke as default, describe };
 
-type Inputs =
-  | {
-      context?: LLMContent[];
-      "p-query": LLMContent;
-    }
-  | {
-      query: string;
-      search_engine_resource_name?: string;
-    };
+type Inputs = {
+  query: string;
+  search_engine_resource_name?: string;
+};
 
-type Outputs =
-  | {
-      context: LLMContent[];
-    }
-  | {
-      results: string;
-    };
-
-async function resolveInput(
-  caps: Capabilities,
-  inputContent: LLMContent
-): Promise<string> {
-  const template = new Template(caps, inputContent);
-  const substituting = await template.substitute({}, async () => "");
-  if (!ok(substituting)) {
-    return substituting.$error;
-  }
-  return toText(substituting);
-}
+type Outputs = {
+  results: string;
+};
 
 async function invoke(
   inputs: Inputs,
   caps: Capabilities
 ): Promise<Outcome<Outputs>> {
-  console.log("ENTERPRISE SEARCH INPUTS", inputs);
-  let query: string;
-  let search_engine_resource_name: string | undefined;
-  let mode: "step" | "tool";
-  if ("context" in inputs) {
-    mode = "step";
-    const last = inputs.context?.at(-1);
-    if (last) {
-      query = toText(last);
-    } else {
-      return err("Please provide a query");
-    }
-  } else if ("p-query" in inputs) {
-    query = await resolveInput(caps, inputs["p-query"]);
-    mode = "step";
-  } else {
-    query = inputs.query;
-    search_engine_resource_name = inputs.search_engine_resource_name;
-    mode = "tool";
+  const { query, search_engine_resource_name } = inputs;
+  if (!search_engine_resource_name) {
+    return err(`Search engine resource name is required`);
   }
-  query = (query || "").trim();
-  if (!query) {
-    return err("Please provide a query");
-  }
-  if (search_engine_resource_name === undefined) {
-    search_engine_resource_name = "";
-  }
-  console.log("Query: " + query);
-  const searchResults = await toolSearchEnterprise(
-    {
-      query,
-      search_engine_resource_name,
-    },
-    caps
-  );
-  if (!ok(searchResults)) {
-    return searchResults;
-  }
-  const results = searchResults.results;
-  if (mode === "step") {
-    return {
-      context: [toLLMContent(results)],
-    };
-  }
-  return { results };
+  const executing = await executeTool<string>(caps, "enterprise_search", {
+    query,
+    search_engine_resource_name,
+  });
+  if (!ok(executing)) return executing;
+
+  return { results: executing };
 }
 
-export type DescribeInputs = {
-  inputs: Inputs;
-  inputSchema: Schema;
-  asType?: boolean;
-};
-
-async function describe({ asType: _, ...inputs }: DescribeInputs) {
-  const isTool = inputs && Object.keys(inputs).length === 1;
-  if (isTool) {
-    return toolSearchEnterpriseDescribe();
-  }
-  const hasWires = "context" in (inputs.inputSchema.properties || {});
-  const query: Schema["properties"] = hasWires
-    ? {}
-    : {
-        "p-query": {
-          type: "object",
-          title: "Search query",
-          description: "Please provide a search query",
-          behavior: [
-            "llm-content",
-            "config",
-            "hint-preview",
-            "hint-single-line",
-          ],
-          default: defaultLLMContent(),
-        },
-      };
-
+async function describe() {
   return {
-    title: "Search Enterprise",
-    description: "Search an enterprise search engine.",
     inputSchema: {
       type: "object",
       properties: {
-        context: {
-          type: "array",
-          items: { type: "object", behavior: ["llm-content"] },
-          title: "Context in",
-          behavior: ["main-port"],
+        query: {
+          type: "string",
+          title: "Query",
+          description: "The search query",
         },
-        ...query,
+        search_engine_resource_name: {
+          type: "string",
+          title: "Search Engine Resource Name [Optional]",
+          description:
+            "An optional resource name for the search backend to use",
+        },
       },
     } satisfies Schema,
     outputSchema: {
       type: "object",
       properties: {
-        context: {
-          type: "array",
-          items: { type: "object", behavior: ["llm-content"] },
-          title: "Context out",
-          behavior: ["main-port"],
+        results: {
+          type: "string",
+          title: "Search Results",
         },
       },
     } satisfies Schema,
-
     metadata: {
       icon: "web-search",
       tags: ["quick-access", "tool", "component", "environment-agentspace"],
