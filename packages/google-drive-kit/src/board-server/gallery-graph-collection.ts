@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { TokenVendor } from "@breadboard-ai/connection-client";
 import type {
   GraphProviderItem,
   ImmutableGraphCollection,
@@ -14,6 +15,7 @@ import type { NarrowedDriveFile } from "../google-drive-client.js";
 import { readProperties } from "./utils.js";
 
 export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
+  readonly #tokenVendor: TokenVendor;
   readonly #graphs = new SignalMap<string, GraphProviderItem>();
 
   has(url: string): boolean {
@@ -43,7 +45,8 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
     return this.#error;
   }
 
-  constructor() {
+  constructor(tokenVendor: TokenVendor) {
+    this.#tokenVendor = tokenVendor;
     void this.#initialize();
   }
 
@@ -51,7 +54,18 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
     const url = new URL("/api/gallery/list", window.location.href);
     let response;
     try {
-      response = await fetch(url);
+      let tokenResult = this.#tokenVendor.getToken("$sign-in");
+      if (tokenResult.state === "expired") {
+        tokenResult = await tokenResult.refresh();
+      }
+      const token =
+        tokenResult.state === "valid"
+          ? tokenResult.grant.access_token
+          : undefined;
+      response = await fetch(
+        url,
+        token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
+      );
     } catch (e) {
       this.#setError(
         new AggregateError([e], `network error while listing gallery graphs`)

@@ -34,7 +34,8 @@ import type { TokenVendor } from "@breadboard-ai/connection-client";
 
 const PROTOCOL = "drive:";
 
-const GOOGLE_DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
+export const GOOGLE_DRIVE_FOLDER_MIME_TYPE =
+  "application/vnd.google-apps.folder";
 export const GRAPH_MIME_TYPE = "application/vnd.breadboard.graph+json";
 const RUN_RESULTS_MIME_TYPE = "application/vnd.breadboard.run-results+json";
 const RUN_RESULTS_GRAPH_URL_APP_PROPERTY = "graphUrl";
@@ -561,7 +562,7 @@ function getFileTitle(descriptor: GraphDescriptor) {
  * Safely quote a string for use in a Drive query. Note this includes the
  * surrounding quotation marks.
  */
-function quote(value: string) {
+export function quote(value: string) {
   return `'${value.replace(/'/g, "\\'")}'`;
 }
 

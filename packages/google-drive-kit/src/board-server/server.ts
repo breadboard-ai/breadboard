@@ -130,7 +130,7 @@ class GoogleDriveBoardServer
     }
   >();
 
-  readonly galleryGraphs = new DriveGalleryGraphCollection();
+  readonly galleryGraphs: DriveGalleryGraphCollection;
   readonly userGraphs: DriveUserGraphCollection;
 
   kits: Kit[];
@@ -162,6 +162,7 @@ class GoogleDriveBoardServer
     this.capabilities = configuration.capabilities;
     this.#tokenVendor = tokenVendor;
     this.#googleDriveClient = googleDriveClient;
+    this.galleryGraphs = new DriveGalleryGraphCollection(this.#tokenVendor);
     this.userGraphs = new DriveUserGraphCollection(this.#googleDriveClient);
   }
 
