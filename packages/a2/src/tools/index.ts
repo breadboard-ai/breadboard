@@ -7,7 +7,6 @@
 import * as toolsSearchMoma from "./Search-Moma";
 import * as toolsCodeExecution from "./code-execution";
 import * as toolsGetWeather from "./get-weather";
-import * as toolsGetWeatherTool from "./get-weather-tool";
 import * as toolsGetWebpage from "./get-webpage";
 import * as toolsSearchEnterprise from "./search-enterprise";
 import * as toolsSearchInternal from "./search-internal";
@@ -20,7 +19,6 @@ import { createBgl } from "../create-bgl";
 export const exports = {
   "Search-Moma": toolsSearchMoma,
   "code-execution": toolsCodeExecution,
-  "get-weather-tool": toolsGetWeatherTool,
   "get-weather": toolsGetWeather,
   "get-webpage": toolsGetWebpage,
   "search-enterprise": toolsSearchEnterprise,
