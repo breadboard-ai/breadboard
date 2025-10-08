@@ -8,7 +8,7 @@ import { z } from "zod";
 import { BuiltInClient } from "../built-in-client.js";
 import { McpBuiltInClient, McpBuiltInClientFactoryContext } from "../types.js";
 import { mcpErr, mcpResourceLink, mcpText } from "../utils.js";
-import { filterUndefined, ok } from "@breadboard-ai/utils";
+import { ok } from "@breadboard-ai/utils";
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { GoogleApis } from "../apis/google.js";
 import { OpalApi } from "../apis/opal.js";
@@ -193,16 +193,14 @@ You can also use partial matches like \`mimeType contains 'image/'\` to find all
       retrievalMode = "none",
     }) => {
       try {
-        const listing = await google.driveListFiles(
-          filterUndefined({
-            corpora,
-            driveId,
-            pageSize,
-            includeItemsFromAllDrives,
-            orderBy,
-            q,
-          })
-        );
+        const listing = await google.driveListFiles({
+          corpora,
+          driveId,
+          pageSize,
+          includeItemsFromAllDrives,
+          orderBy,
+          q,
+        });
         if (!ok(listing)) {
           return mcpErr(listing.$error);
         }

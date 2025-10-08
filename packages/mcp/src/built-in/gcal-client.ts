@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { filterUndefined, ok } from "@breadboard-ai/utils";
+import { ok } from "@breadboard-ai/utils";
 import { z } from "zod";
 import { BuiltInClient } from "../built-in-client.js";
 import { McpBuiltInClient, McpBuiltInClientFactoryContext } from "../types.js";
@@ -78,13 +78,13 @@ These search terms also match predefined keywords against all display title tran
             `Whether to include deleted events (with status equals "cancelled") in the result. Cancelled instances of recurring events (but not the underlying recurring event) will still be included if showDeleted and singleEvents are both False. If showDeleted and singleEvents are both True, only single instances of deleted events (but not the underlying recurring events) are returned. Optional. The default is False.`
           )
           .optional(),
-        showHidden: z
+        showHiddenInvitations: z
           .boolean()
           .describe(
             `Whether to include hidden invitations in the result. Optional. The default is False.`
           )
           .optional(),
-        single: z
+        singleEvents: z
           .boolean()
           .describe(
             `Whether to expand recurring events into instances and only return single one-off events and instances of recurring events, but not the underlying recurring events themselves. Optional. The default is False.`
@@ -114,25 +114,23 @@ These search terms also match predefined keywords against all display title tran
       maxResults,
       q,
       showDeleted,
-      showHidden,
-      single,
+      showHiddenInvitations,
+      singleEvents,
       timeMin,
       timeMax,
       updatedMin,
     }) => {
-      const listing = await apis.calendarListEvents(
-        filterUndefined({
-          calendarId: "primary",
-          timeMin,
-          maxResults,
-          q,
-          showDeleted,
-          showHidden,
-          single,
-          timeMax,
-          updatedMin,
-        })
-      );
+      const listing = await apis.calendarListEvents({
+        calendarId: "primary",
+        timeMin,
+        maxResults,
+        q,
+        showDeleted,
+        showHiddenInvitations,
+        singleEvents,
+        timeMax,
+        updatedMin,
+      });
       if (!ok(listing)) {
         return mcpErr(listing.$error);
       }
@@ -314,7 +312,7 @@ These search terms also match predefined keywords against all display title tran
           calendarId: "primary",
           conferenceDataVersion: 1,
         },
-        filterUndefined({
+        {
           summary,
           end: {
             dateTime: end,
@@ -331,7 +329,7 @@ These search terms also match predefined keywords against all display title tran
           guestsCanModify,
           ...conferenceData,
           ...addOpalMark(),
-        })
+        }
       );
       if (!ok(updating)) {
         return mcpErr(updating.$error);

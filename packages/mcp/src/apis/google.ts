@@ -9,7 +9,7 @@ import "gapi.client.drive-v3";
 import "gapi.client.gmail-v1";
 
 import { Outcome } from "@breadboard-ai/types";
-import { err, ok } from "@breadboard-ai/utils";
+import { err, ok, filterUndefined } from "@breadboard-ai/utils";
 import { McpBuiltInClientFactoryContext, TokenGetter } from "../types.js";
 
 export { GoogleApis };
@@ -18,64 +18,74 @@ class GoogleApis {
   constructor(private readonly context: McpBuiltInClientFactoryContext) {}
 
   async calendarListEvents(
-    ...args: Parameters<typeof gapi.client.calendar.events.list>
+    request: NonNullable<Parameters<typeof gapi.client.calendar.events.list>[0]>
   ): Promise<Outcome<gapi.client.Response<gapi.client.calendar.Events>>> {
     const calendar = await loadCalendarApi(this.context.tokenGetter);
     if (!ok(calendar)) return calendar;
 
-    return calendar.events.list(...args);
+    return calendar.events.list(filterUndefined(request));
   }
 
   async calendarInsertEvent(
-    ...args: Parameters<typeof gapi.client.calendar.events.insert>
+    request: NonNullable<
+      Parameters<typeof gapi.client.calendar.events.insert>[0]
+    >,
+    body: gapi.client.calendar.Event
   ): Promise<Outcome<gapi.client.Response<gapi.client.calendar.Event>>> {
     const calendar = await loadCalendarApi(this.context.tokenGetter);
     if (!ok(calendar)) return calendar;
-    return calendar.events.insert(...args);
+    return calendar.events.insert(request, body);
   }
 
   async calendarUpdateEvent(
-    ...args: Parameters<typeof gapi.client.calendar.events.update>
+    request: NonNullable<
+      Parameters<typeof gapi.client.calendar.events.update>[0]
+    >,
+    body: gapi.client.calendar.Event
   ): Promise<Outcome<gapi.client.Response<gapi.client.calendar.Event>>> {
     const calendar = await loadCalendarApi(this.context.tokenGetter);
     if (!ok(calendar)) return calendar;
-    return calendar.events.update(...args);
+    return calendar.events.update(filterUndefined(request), body);
   }
 
   async calendarDeleteEvent(
-    ...args: Parameters<typeof gapi.client.calendar.events.delete>
+    request: NonNullable<
+      Parameters<typeof gapi.client.calendar.events.delete>[0]
+    >
   ): Promise<Outcome<gapi.client.Response<void>>> {
     const calendar = await loadCalendarApi(this.context.tokenGetter);
     if (!ok(calendar)) return calendar;
 
-    return calendar.events.delete(...args);
+    return calendar.events.delete(request);
   }
 
   async driveListFiles(
-    ...args: Parameters<typeof gapi.client.drive.files.list>
+    request: NonNullable<Parameters<typeof gapi.client.drive.files.list>[0]>
   ): Promise<Outcome<gapi.client.Response<gapi.client.drive.FileList>>> {
     const drive = await loadDriveApi(this.context.tokenGetter);
     if (!ok(drive)) return drive;
 
-    return drive.files.list(...args);
+    return drive.files.list(filterUndefined(request));
   }
 
   async driveGetFile(
-    ...args: Parameters<typeof gapi.client.drive.files.get>
+    request: Parameters<typeof gapi.client.drive.files.get>[0]
   ): Promise<Outcome<gapi.client.Response<gapi.client.drive.File>>> {
     const drive = await loadDriveApi(this.context.tokenGetter);
     if (!ok(drive)) return drive;
 
-    return drive.files.get(...args);
+    return drive.files.get(request);
   }
 
   async gmailGetMessages(
-    ...args: Parameters<typeof gapi.client.gmail.users.messages.list>
+    request: NonNullable<
+      Parameters<typeof gapi.client.gmail.users.messages.list>[0]
+    >
   ): Promise<Outcome<gapi.client.gmail.Message[]>> {
     const gmail = await loadGmailApi(this.context.tokenGetter);
     if (!ok(gmail)) return gmail;
 
-    const listing = await gmail.users.messages.list(...args);
+    const listing = await gmail.users.messages.list(request);
     if (listing.status !== 200) {
       return err(listing.statusText || "Unable to list GMail messages.");
     }
@@ -104,12 +114,14 @@ class GoogleApis {
   }
 
   async gmailGetThreads(
-    ...args: Parameters<typeof gapi.client.gmail.users.threads.list>
+    request: NonNullable<
+      Parameters<typeof gapi.client.gmail.users.threads.list>[0]
+    >
   ): Promise<Outcome<gapi.client.gmail.Thread[]>> {
     const gmail = await loadGmailApi(this.context.tokenGetter);
     if (!ok(gmail)) return gmail;
 
-    const listing = await gmail.users.threads.list(...args);
+    const listing = await gmail.users.threads.list(request);
     if (listing.status !== 200) {
       return err(listing.statusText || "Unable to list GMail messages.");
     }
@@ -140,21 +152,25 @@ class GoogleApis {
   }
 
   async gmailSendMessage(
-    ...args: Parameters<typeof gapi.client.gmail.users.messages.send>
+    request: NonNullable<
+      Parameters<typeof gapi.client.gmail.users.messages.send>
+    >[0],
+    body: gapi.client.gmail.Message
   ): Promise<Outcome<gapi.client.Response<gapi.client.gmail.Message>>> {
     const gmail = await loadGmailApi(this.context.tokenGetter);
     if (!ok(gmail)) return gmail;
 
-    return gmail.users.messages.send(...args);
+    return gmail.users.messages.send(request, body);
   }
 
   async gmailCreateDraft(
-    ...args: Parameters<typeof gapi.client.gmail.users.drafts.create>
+    request: Parameters<typeof gapi.client.gmail.users.drafts.create>[0],
+    body: gapi.client.gmail.Draft
   ): Promise<Outcome<gapi.client.Response<gapi.client.gmail.Draft>>> {
     const gmail = await loadGmailApi(this.context.tokenGetter);
     if (!ok(gmail)) return gmail;
 
-    return gmail.users.drafts.create(...args);
+    return gmail.users.drafts.create(request, body);
   }
 }
 

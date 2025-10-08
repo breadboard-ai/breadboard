@@ -162,15 +162,13 @@ function createGmailClient(
       },
     },
     async ({ q, labelIds, includeSpamTrash, maxResults }) => {
-      const getting = await google.gmailGetMessages(
-        filterUndefined({
-          q,
-          userId: "me",
-          labelIds,
-          includeSpamTrash,
-          maxResults,
-        })
-      );
+      const getting = await google.gmailGetMessages({
+        q,
+        userId: "me",
+        labelIds,
+        includeSpamTrash,
+        maxResults,
+      });
       if (!ok(getting)) {
         return mcpErr(getting.$error);
       }
