@@ -4,25 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/// <reference types="@types/gapi" />
-/// <reference types="@maxim_mazurok/gapi.client.calendar-v3" />
-
-import { Outcome } from "@breadboard-ai/types";
-import { err, filterUndefined, ok } from "@breadboard-ai/utils";
+import { ok } from "@breadboard-ai/utils";
 import { z } from "zod";
 import { BuiltInClient } from "../built-in-client.js";
-import {
-  McpBuiltInClient,
-  McpBuiltInClientFactoryContext,
-  TokenGetter,
-} from "../types.js";
+import { McpBuiltInClient, McpBuiltInClientFactoryContext } from "../types.js";
 import { mcpErr, mcpText } from "../utils.js";
+import { GoogleApis } from "../apis/google.js";
 
 export { createGoogleCalendarClient };
 
-function createGoogleCalendarClient({
-  tokenGetter,
-}: McpBuiltInClientFactoryContext): McpBuiltInClient {
+function createGoogleCalendarClient(
+  context: McpBuiltInClientFactoryContext
+): McpBuiltInClient {
+  const apis = new GoogleApis(context);
   const client = new BuiltInClient({
     name: "Google Calendar",
     url: "builtin:gcal",
@@ -84,13 +78,13 @@ These search terms also match predefined keywords against all display title tran
             `Whether to include deleted events (with status equals "cancelled") in the result. Cancelled instances of recurring events (but not the underlying recurring event) will still be included if showDeleted and singleEvents are both False. If showDeleted and singleEvents are both True, only single instances of deleted events (but not the underlying recurring events) are returned. Optional. The default is False.`
           )
           .optional(),
-        showHidden: z
+        showHiddenInvitations: z
           .boolean()
           .describe(
             `Whether to include hidden invitations in the result. Optional. The default is False.`
           )
           .optional(),
-        single: z
+        singleEvents: z
           .boolean()
           .describe(
             `Whether to expand recurring events into instances and only return single one-off events and instances of recurring events, but not the underlying recurring events themselves. Optional. The default is False.`
@@ -120,29 +114,26 @@ These search terms also match predefined keywords against all display title tran
       maxResults,
       q,
       showDeleted,
-      showHidden,
-      single,
+      showHiddenInvitations,
+      singleEvents,
       timeMin,
       timeMax,
       updatedMin,
     }) => {
-      const calendar = await loadCalendarApi(tokenGetter);
-      if (!ok(calendar)) {
-        return mcpErr(calendar.$error);
+      const listing = await apis.calendarListEvents({
+        calendarId: "primary",
+        timeMin,
+        maxResults,
+        q,
+        showDeleted,
+        showHiddenInvitations,
+        singleEvents,
+        timeMax,
+        updatedMin,
+      });
+      if (!ok(listing)) {
+        return mcpErr(listing.$error);
       }
-      const listing = await calendar.events.list(
-        filterUndefined({
-          calendarId: "primary",
-          timeMin,
-          maxResults,
-          q,
-          showDeleted,
-          showHidden,
-          single,
-          timeMax,
-          updatedMin,
-        })
-      );
       if (listing.status !== 200) {
         return mcpErr(
           `Failed to list Google Calendar events: ${listing.statusText!}`
@@ -247,14 +238,9 @@ These search terms also match predefined keywords against all display title tran
     }) => {
       type Event = gapi.client.calendar.Event;
 
-      const calendar = await loadCalendarApi(tokenGetter);
-      if (!ok(calendar)) {
-        return mcpErr(calendar.$error);
-      }
-
       const conferenceData = getConferenceData(googleMeet);
 
-      const inserting = await calendar.events.insert(
+      const inserting = await apis.calendarInsertEvent(
         { calendarId: "primary", conferenceDataVersion: 1 },
         {
           summary,
@@ -275,6 +261,9 @@ These search terms also match predefined keywords against all display title tran
           ...addOpalMark(),
         }
       );
+      if (!ok(inserting)) {
+        return mcpErr(inserting.$error);
+      }
       if (inserting.status !== 200) {
         return mcpErr(
           inserting.statusText || "Failed to add Google Calendar event"
@@ -315,20 +304,15 @@ These search terms also match predefined keywords against all display title tran
       guestsCanModify,
     }) => {
       type Event = gapi.client.calendar.Event;
-
-      const calendar = await loadCalendarApi(tokenGetter);
-      if (!ok(calendar)) {
-        return mcpErr(calendar.$error);
-      }
       const conferenceData = getConferenceData(googleMeet);
 
-      const updating = await calendar.events.update(
+      const updating = await apis.calendarUpdateEvent(
         {
           eventId,
           calendarId: "primary",
           conferenceDataVersion: 1,
         },
-        filterUndefined({
+        {
           summary,
           end: {
             dateTime: end,
@@ -345,8 +329,11 @@ These search terms also match predefined keywords against all display title tran
           guestsCanModify,
           ...conferenceData,
           ...addOpalMark(),
-        })
+        }
       );
+      if (!ok(updating)) {
+        return mcpErr(updating.$error);
+      }
 
       if (updating.status !== 200) {
         return mcpErr(
@@ -375,15 +362,13 @@ These search terms also match predefined keywords against all display title tran
       },
     },
     async ({ eventId }) => {
-      const calendar = await loadCalendarApi(tokenGetter);
-      if (!ok(calendar)) {
-        return mcpErr(calendar.$error);
-      }
-
-      const deleting = await calendar.events.delete({
+      const deleting = await apis.calendarDeleteEvent({
         calendarId: "primary",
         eventId,
       });
+      if (!ok(deleting)) {
+        return mcpErr(deleting.$error);
+      }
       if (deleting.status !== 204) {
         return mcpErr(
           deleting.statusText || "Unable to delete Google Calendar event"
@@ -395,31 +380,6 @@ These search terms also match predefined keywords against all display title tran
   );
 
   return client;
-}
-
-async function loadCalendarApi(
-  tokenGetter: TokenGetter
-): Promise<Outcome<typeof gapi.client.calendar>> {
-  if (!globalThis.gapi) {
-    return err("GAPI is not loaded, unable to query Google Calendar");
-  }
-  if (!gapi.client) {
-    await new Promise((resolve) => gapi.load("client", resolve));
-  }
-  const access_token = await tokenGetter([
-    "https://www.googleapis.com/auth/calendar.readonly",
-    "https://www.googleapis.com/auth/calendar.events.owned",
-  ]);
-  if (!ok(access_token)) {
-    return err(access_token.$error);
-  }
-  gapi.client.setToken({ access_token });
-  if (!gapi.client.calendar) {
-    await gapi.client.load(
-      "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"
-    );
-  }
-  return gapi.client.calendar;
 }
 
 function getConferenceData(add: boolean | undefined) {

@@ -151,6 +151,7 @@ export interface McpBuiltInClient extends McpClient {
 export type McpBuiltInClientFactoryContext = {
   tokenGetter: TokenGetter;
   fileSystem: FileSystem;
+  fetch: typeof fetch;
 };
 
 export type McpBuiltInClientFactory = (
