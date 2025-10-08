@@ -4,14 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/// <reference types="@types/gapi" />
 /// <reference types="@maxim_mazurok/gapi.client.calendar-v3" />
 /// <reference types="@types/gapi.client.drive-v3" />
 /// <reference types="@maxim_mazurok/gapi.client.gmail-v1" />
 
 import { Outcome } from "@breadboard-ai/types";
 import { err, ok, filterUndefined } from "@breadboard-ai/utils";
-import { McpBuiltInClientFactoryContext, TokenGetter } from "../types.js";
+import { McpBuiltInClientFactoryContext } from "../types.js";
 import { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 
 export { GoogleApis };
@@ -329,45 +328,28 @@ class GoogleApis {
     >[0],
     body: gapi.client.gmail.Message
   ): Promise<Outcome<gapi.client.Response<gapi.client.gmail.Message>>> {
-    const gmail = await loadGmailApi(this.context.tokenGetter);
-    if (!ok(gmail)) return gmail;
-
-    return gmail.users.messages.send(request, body);
+    const { userId } = request;
+    return this.#call(
+      `https://gmail.googleapis.com/gmail/v1/users/${userId}/messages/send`,
+      "POST",
+      GMAIL_SCOPES,
+      body
+    );
   }
 
   async gmailCreateDraft(
     request: Parameters<typeof gapi.client.gmail.users.drafts.create>[0],
     body: gapi.client.gmail.Draft
   ): Promise<Outcome<gapi.client.Response<gapi.client.gmail.Draft>>> {
-    const gmail = await loadGmailApi(this.context.tokenGetter);
-    if (!ok(gmail)) return gmail;
+    const { userId } = request;
 
-    return gmail.users.drafts.create(request, body);
-  }
-}
-
-async function loadGmailApi(
-  tokenGetter: TokenGetter
-): Promise<Outcome<typeof gapi.client.gmail>> {
-  if (!globalThis.gapi) {
-    return err("GAPI is not loaded, unable to query Google Mail");
-  }
-  if (!gapi.client) {
-    await new Promise((resolve) => gapi.load("client", resolve));
-  }
-  const access_token = await tokenGetter([
-    "https://www.googleapis.com/auth/gmail.modify",
-  ]);
-  if (!ok(access_token)) {
-    return err(access_token.$error);
-  }
-  gapi.client.setToken({ access_token });
-  if (!gapi.client.gmail) {
-    await gapi.client.load(
-      "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"
+    return this.#call(
+      `https://gmail.googleapis.com/gmail/v1/users/${userId}/drafts`,
+      "POST",
+      GMAIL_SCOPES,
+      body
     );
   }
-  return gapi.client.gmail;
 }
 
 function trimMessage(message: gapi.client.gmail.Message) {
