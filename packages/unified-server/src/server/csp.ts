@@ -47,7 +47,7 @@ const CSP_CONFIG = {
     "data:",
     "https://*.google-analytics.com",
     "https://*.google.com",
-    "https://www.googleapis.com/",
+    "https://*.googleapis.com/",
     "https://oauth2.googleapis.com/tokeninfo",
   ],
   ["frame-src"]: [
