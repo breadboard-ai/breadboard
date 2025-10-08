@@ -86,6 +86,9 @@ suite("Board Server integration test", () => {
       );
 
       assert.equal(response.status, 200);
+      assert.ok(response.body);
+      assert.ok(response.body.metadata);
+      assert.equal(response.body.metadata.username, user.username);
     });
 
     test("GET /:name", async () => {
@@ -268,9 +271,9 @@ suite("Board Server integration test", () => {
     // TODO Figure out how to test these. They make request against blobstore.
     test("GET /blobs/:blobId");
     test.todo("POST /blobs");
-    test.todo("POST /blobs/:blobId/file", async () => {});
+    test.todo("POST /blobs/:blobId/file", async () => { });
   });
 
   // TODO Figure out how to test this endpoint
-  suite.todo("Proxy API", () => {});
+  suite.todo("Proxy API", () => { });
 });
