@@ -11,6 +11,8 @@
     "build": "wireit",
     "lint": "wireit",
     "dev": "npm run dev -w packages/unified-server --watch",
+    "dev:next": "npm run dev:next:nowatch --watch",
+    "dev:next:nowatch": "wireit",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
     "ci:local": "wireit",
     "syncpack:check": "wireit",
@@ -50,6 +52,12 @@
         "check:format",
         "lint",
         "test"
+      ]
+    },
+    "dev:next:nowatch": {
+      "dependencies": [
+        "./packages/unified-server:serve",
+        "./packages/opal-shell:serve"
       ]
     },
     "syncpack:files": {

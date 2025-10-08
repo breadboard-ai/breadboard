@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.base.json",
+  "include": ["src/client/**/*"],
+  "compilerOptions": {
+    "rootDir": "src/client",
+    "outDir": "dist/client",
+    "tsBuildInfoFile": "tsconfig.client.tsbuildinfo",
+    "lib": ["esnext", "dom"]
+  }
+}

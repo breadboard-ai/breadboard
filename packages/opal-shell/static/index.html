@@ -1,0 +1,36 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width" />
+
+  <meta
+    property="og:image"
+    content="{{origin}}/images/share-card-{{bucket}}.png"
+  />
+  <meta property="og:image:width" content="1440" />
+  <meta property="og:image:height" content="810" />
+
+  <meta
+    name="twitter:image"
+    content="{{origin}}/images/share-card-{{bucket}}.png"
+  />
+
+  <title>Opal [Experiment]</title>
+  <style>
+    iframe {
+      width: 100vw;
+      height: 100vh;
+      border: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+  </style>
+</head>
+<body>
+  <iframe
+    src="http://localhost:3000"
+    sandbox="allow-scripts allow-same-origin"
+  ></iframe>
+  <script src="./opal-shell-client.js" type="module"></script>
+</body>
