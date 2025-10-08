@@ -4,20 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/// <reference types="@types/gapi" />
-/// <reference types="@maxim_mazurok/gapi.client.gmail-v1" />
-
-import { Outcome } from "@breadboard-ai/types";
-import { err, filterUndefined, ok } from "@breadboard-ai/utils";
+import { filterUndefined, ok } from "@breadboard-ai/utils";
 import { createMimeMessage } from "mimetext/browser";
 import { z } from "zod";
 import { BuiltInClient } from "../built-in-client.js";
-import {
-  McpBuiltInClient,
-  McpBuiltInClientFactoryContext,
-  TokenGetter,
-} from "../types.js";
+import { McpBuiltInClient, McpBuiltInClientFactoryContext } from "../types.js";
 import { mcpErr, mcpText } from "../utils.js";
+import { GoogleApis } from "../apis/google.js";
 
 export { createGmailClient };
 
@@ -147,9 +140,10 @@ const SEND_ZOD_OBJECT = z.object(SEND_INPUT_SCHEMA);
 
 type MessageComponents = z.infer<typeof SEND_ZOD_OBJECT>;
 
-function createGmailClient({
-  tokenGetter,
-}: McpBuiltInClientFactoryContext): McpBuiltInClient {
+function createGmailClient(
+  context: McpBuiltInClientFactoryContext
+): McpBuiltInClient {
+  const google = new GoogleApis(context);
   const client = new BuiltInClient({
     name: "GMail",
     url: "builtin:gmail",
@@ -168,11 +162,7 @@ function createGmailClient({
       },
     },
     async ({ q, labelIds, includeSpamTrash, maxResults }) => {
-      const gmail = await loadGmailApi(tokenGetter);
-      if (!ok(gmail)) {
-        return mcpErr(gmail.$error);
-      }
-      const listing = await gmail.users.messages.list(
+      const getting = await google.gmailGetMessages(
         filterUndefined({
           q,
           userId: "me",
@@ -181,38 +171,11 @@ function createGmailClient({
           maxResults,
         })
       );
-      if (listing.status !== 200) {
-        return mcpErr(listing.statusText || "Unable to list GMail messages.");
+      if (!ok(getting)) {
+        return mcpErr(getting.$error);
       }
 
-      const batch = gapi.client.newBatch();
-      const items = listing.result.messages;
-      if (!items) {
-        return mcpText("No messages");
-      }
-      for (const message of items) {
-        batch.add(
-          gmail.users.messages.get({
-            id: message.id!,
-            userId: "me",
-          })
-        );
-      }
-
-      const getting = await batch;
-      if (getting.status !== 200) {
-        return mcpErr(getting.statusText || "Unable to get GMail messages");
-      }
-      const messages = Object.values(getting.result).map((res) => {
-        const result = res.result as gapi.client.gmail.Message;
-        delete result.historyId;
-        delete result.payload;
-        delete result.sizeEstimate;
-        delete result.raw;
-        return result;
-      });
-
-      return mcpText(JSON.stringify(messages));
+      return mcpText(JSON.stringify(getting));
     }
   );
 
@@ -229,11 +192,7 @@ function createGmailClient({
       },
     },
     async ({ q, labelIds, includeSpamTrash, maxResults }) => {
-      const gmail = await loadGmailApi(tokenGetter);
-      if (!ok(gmail)) {
-        return mcpErr(gmail.$error);
-      }
-      const listing = await gmail.users.threads.list(
+      const getting = await google.gmailGetThreads(
         filterUndefined({
           q,
           userId: "me",
@@ -242,35 +201,11 @@ function createGmailClient({
           maxResults,
         })
       );
-      if (listing.status !== 200) {
-        return mcpErr(listing.statusText || "Unable to list GMail messages.");
+      if (!ok(getting)) {
+        return mcpErr(getting.$error);
       }
 
-      const batch = gapi.client.newBatch();
-      const items = listing.result.threads;
-      if (!items) {
-        return mcpText("No threads");
-      }
-      for (const thread of items) {
-        batch.add(
-          gmail.users.threads.get({
-            id: thread.id!,
-            userId: "me",
-          })
-        );
-      }
-
-      const getting = await batch;
-      if (getting.status !== 200) {
-        return mcpErr(getting.statusText || "Unable to get GMail messages");
-      }
-      const messages = Object.values(getting.result).map((res) => {
-        const result = res.result as gapi.client.gmail.Thread;
-        result.messages?.forEach((message) => trimMessage(message));
-        return result;
-      });
-
-      return mcpText(JSON.stringify(messages));
+      return mcpText(JSON.stringify(getting));
     }
   );
 
@@ -288,19 +223,17 @@ function createGmailClient({
       },
     },
     async (args) => {
-      const gmail = await loadGmailApi(tokenGetter);
-      if (!ok(gmail)) {
-        return mcpErr(gmail.$error);
-      }
-
       const raw = createMessage(args);
 
-      const sending = await gmail.users.messages.send(
+      const sending = await google.gmailSendMessage(
         {
           userId: "me",
         },
         { raw }
       );
+      if (!ok(sending)) {
+        return mcpErr(sending.$error);
+      }
       if (sending.status !== 200) {
         return mcpErr(sending.statusText || "Unable to send GMail message");
       }
@@ -322,19 +255,17 @@ function createGmailClient({
       },
     },
     async (args) => {
-      const gmail = await loadGmailApi(tokenGetter);
-      if (!ok(gmail)) {
-        return mcpErr(gmail.$error);
-      }
-
       const raw = createMessage(args);
 
-      const sending = await gmail.users.drafts.create(
+      const sending = await google.gmailCreateDraft(
         {
           userId: "me",
         },
         { message: { raw } }
       );
+      if (!ok(sending)) {
+        return mcpErr(sending.$error);
+      }
       if (sending.status !== 200) {
         return mcpErr(sending.statusText || "Unable to create Gmail draft");
       }
@@ -358,36 +289,4 @@ function createMessage({ to, cc, bcc, subject, content }: MessageComponents) {
   });
 
   return message.asEncoded();
-}
-
-function trimMessage(message: gapi.client.gmail.Message) {
-  delete message.historyId;
-  delete message.payload;
-  delete message.sizeEstimate;
-  delete message.raw;
-  return message;
-}
-
-async function loadGmailApi(
-  tokenGetter: TokenGetter
-): Promise<Outcome<typeof gapi.client.gmail>> {
-  if (!globalThis.gapi) {
-    return err("GAPI is not loaded, unable to query Google Mail");
-  }
-  if (!gapi.client) {
-    await new Promise((resolve) => gapi.load("client", resolve));
-  }
-  const access_token = await tokenGetter([
-    "https://www.googleapis.com/auth/gmail.modify",
-  ]);
-  if (!ok(access_token)) {
-    return err(access_token.$error);
-  }
-  gapi.client.setToken({ access_token });
-  if (!gapi.client.gmail) {
-    await gapi.client.load(
-      "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"
-    );
-  }
-  return gapi.client.gmail;
 }

@@ -4,9 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/// <reference types="@types/gapi" />
-/// <reference types="@types/gapi.client.drive-v3" />
-
 import { z } from "zod";
 import { BuiltInClient } from "../built-in-client.js";
 import { McpBuiltInClient, McpBuiltInClientFactoryContext } from "../types.js";

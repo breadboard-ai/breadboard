@@ -43,7 +43,7 @@ class OpalApi {
       return err(access_token.$error);
     }
     try {
-      const calling = await fetch(url, {
+      const calling = await this.context.fetch(url, {
         method: "POST",
         credentials: "include",
         headers: {

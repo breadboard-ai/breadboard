@@ -4,9 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/// <reference types="@types/gapi" />
-/// <reference types="@maxim_mazurok/gapi.client.calendar-v3" />
-
 import { filterUndefined, ok } from "@breadboard-ai/utils";
 import { z } from "zod";
 import { BuiltInClient } from "../built-in-client.js";

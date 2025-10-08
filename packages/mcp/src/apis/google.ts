@@ -6,6 +6,7 @@
 
 import "gapi.client.calendar-v3";
 import "gapi.client.drive-v3";
+import "gapi.client.gmail-v1";
 
 import { Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
@@ -67,6 +68,94 @@ class GoogleApis {
 
     return drive.files.get(...args);
   }
+
+  async gmailGetMessages(
+    ...args: Parameters<typeof gapi.client.gmail.users.messages.list>
+  ): Promise<Outcome<gapi.client.gmail.Message[]>> {
+    const gmail = await loadGmailApi(this.context.tokenGetter);
+    if (!ok(gmail)) return gmail;
+
+    const listing = await gmail.users.messages.list(...args);
+    if (listing.status !== 200) {
+      return err(listing.statusText || "Unable to list GMail messages.");
+    }
+
+    const batch = gapi.client.newBatch();
+    const items = listing.result.messages;
+    if (!items) {
+      return [];
+    }
+    for (const message of items) {
+      batch.add(
+        gmail.users.messages.get({
+          id: message.id!,
+          userId: "me",
+        })
+      );
+    }
+
+    const getting = await batch;
+    if (getting.status !== 200) {
+      return err(getting.statusText || "Unable to get GMail messages");
+    }
+    return Object.values(getting.result).map((res) =>
+      trimMessage(res.result as gapi.client.gmail.Message)
+    );
+  }
+
+  async gmailGetThreads(
+    ...args: Parameters<typeof gapi.client.gmail.users.threads.list>
+  ): Promise<Outcome<gapi.client.gmail.Thread[]>> {
+    const gmail = await loadGmailApi(this.context.tokenGetter);
+    if (!ok(gmail)) return gmail;
+
+    const listing = await gmail.users.threads.list(...args);
+    if (listing.status !== 200) {
+      return err(listing.statusText || "Unable to list GMail messages.");
+    }
+
+    const batch = gapi.client.newBatch();
+    const items = listing.result.threads;
+    if (!items) {
+      return [];
+    }
+    for (const thread of items) {
+      batch.add(
+        gmail.users.threads.get({
+          id: thread.id!,
+          userId: "me",
+        })
+      );
+    }
+
+    const getting = await batch;
+    if (getting.status !== 200) {
+      return err(getting.statusText || "Unable to get GMail messages");
+    }
+    return Object.values(getting.result).map((res) => {
+      const result = res.result as gapi.client.gmail.Thread;
+      result.messages?.forEach((message) => trimMessage(message));
+      return result;
+    });
+  }
+
+  async gmailSendMessage(
+    ...args: Parameters<typeof gapi.client.gmail.users.messages.send>
+  ): Promise<Outcome<gapi.client.Response<gapi.client.gmail.Message>>> {
+    const gmail = await loadGmailApi(this.context.tokenGetter);
+    if (!ok(gmail)) return gmail;
+
+    return gmail.users.messages.send(...args);
+  }
+
+  async gmailCreateDraft(
+    ...args: Parameters<typeof gapi.client.gmail.users.drafts.create>
+  ): Promise<Outcome<gapi.client.Response<gapi.client.gmail.Draft>>> {
+    const gmail = await loadGmailApi(this.context.tokenGetter);
+    if (!ok(gmail)) return gmail;
+
+    return gmail.users.drafts.create(...args);
+  }
 }
 
 async function loadCalendarApi(
@@ -116,4 +205,36 @@ async function loadDriveApi(
     );
   }
   return gapi.client.drive;
+}
+
+async function loadGmailApi(
+  tokenGetter: TokenGetter
+): Promise<Outcome<typeof gapi.client.gmail>> {
+  if (!globalThis.gapi) {
+    return err("GAPI is not loaded, unable to query Google Mail");
+  }
+  if (!gapi.client) {
+    await new Promise((resolve) => gapi.load("client", resolve));
+  }
+  const access_token = await tokenGetter([
+    "https://www.googleapis.com/auth/gmail.modify",
+  ]);
+  if (!ok(access_token)) {
+    return err(access_token.$error);
+  }
+  gapi.client.setToken({ access_token });
+  if (!gapi.client.gmail) {
+    await gapi.client.load(
+      "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"
+    );
+  }
+  return gapi.client.gmail;
+}
+
+function trimMessage(message: gapi.client.gmail.Message) {
+  delete message.historyId;
+  delete message.payload;
+  delete message.sizeEstimate;
+  delete message.raw;
+  return message;
 }
