@@ -4,27 +4,140 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/// <reference types="@types/gapi" />
 /// <reference types="@maxim_mazurok/gapi.client.calendar-v3" />
 /// <reference types="@types/gapi.client.drive-v3" />
 /// <reference types="@maxim_mazurok/gapi.client.gmail-v1" />
 
 import { Outcome } from "@breadboard-ai/types";
 import { err, ok, filterUndefined } from "@breadboard-ai/utils";
-import { McpBuiltInClientFactoryContext, TokenGetter } from "../types.js";
+import { McpBuiltInClientFactoryContext } from "../types.js";
+import { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 
 export { GoogleApis };
+
+const CALENDAR_SCOPES: OAuthScope[] = [
+  "https://www.googleapis.com/auth/calendar.readonly",
+  "https://www.googleapis.com/auth/calendar.events.owned",
+];
+
+const DRIVE_SCOPES: OAuthScope[] = [
+  "https://www.googleapis.com/auth/drive.readonly",
+];
+
+const GMAIL_SCOPES: OAuthScope[] = [
+  "https://www.googleapis.com/auth/gmail.modify",
+];
 
 class GoogleApis {
   constructor(private readonly context: McpBuiltInClientFactoryContext) {}
 
+  async #call<Res>(
+    url: string,
+    method: string,
+    scopes: OAuthScope[],
+    body: unknown | undefined
+  ): Promise<Outcome<gapi.client.Response<Res>>> {
+    const token = await this.context.tokenGetter(scopes);
+
+    const maybeBody =
+      method !== "GET" && body
+        ? { body: typeof body === "string" ? body : JSON.stringify(body) }
+        : {};
+
+    try {
+      const response = await this.context.fetchWithCreds(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        ...maybeBody,
+      });
+
+      if (!response.ok) {
+        return err(response.statusText);
+      }
+
+      const result = await response.json();
+      return {
+        result,
+        body: "", // will always be empty, since we don't use it.
+        headers: Object.fromEntries(response.headers.entries()),
+        status: response.status,
+        statusText: response.statusText,
+      };
+    } catch (e) {
+      return err((e as Error).message);
+    }
+  }
+
+  async #callMultipart<Res>(
+    url: string,
+    method: string,
+    scopes: OAuthScope[],
+    builder: MultiPartBuilder
+  ): Promise<Outcome<gapi.client.Response<Res[]>>> {
+    const token = await this.context.tokenGetter(scopes);
+
+    try {
+      const response = await this.context.fetchWithCreds(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ["Content-Type"]: `multipart/mixed; boundary=${builder.boundary}`,
+        },
+        body: builder.createBody(),
+      });
+
+      if (!response.ok) {
+        return err(response.statusText);
+      }
+
+      const body = await response.text();
+
+      const responseBoundary = response.headers
+        .get("Content-Type")
+        ?.match(/boundary=(.*)/)?.[1];
+      if (!responseBoundary) {
+        return err(`No boundary specified in "Content-Type" response header`);
+      }
+      const result = body
+        .split(`--${responseBoundary}`)
+        .filter((part) => part.trim() !== "" && !part.trim().startsWith("--"))
+        .map((part) => {
+          const partBody = part.split(/\r?\n\r?\n/).at(2);
+          if (!partBody) {
+            throw new Error(`Unable to find body in multipart part`);
+          }
+          return JSON.parse(partBody) as Res;
+        });
+
+      return {
+        result,
+        body: "", // will always be empty, since we don't use it.
+        headers: Object.fromEntries(response.headers.entries()),
+        status: response.status,
+        statusText: response.statusText,
+      };
+    } catch (e) {
+      return err((e as Error).message);
+    }
+  }
+
   async calendarListEvents(
     request: NonNullable<Parameters<typeof gapi.client.calendar.events.list>[0]>
   ): Promise<Outcome<gapi.client.Response<gapi.client.calendar.Events>>> {
-    const calendar = await loadCalendarApi(this.context.tokenGetter);
-    if (!ok(calendar)) return calendar;
+    const { calendarId, ...params } = request;
 
-    return calendar.events.list(filterUndefined(request));
+    const query = new URLSearchParams(
+      filterUndefined(params) as Record<string, string>
+    ).toString();
+
+    return this.#call(
+      `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?${query}`,
+      "GET",
+      CALENDAR_SCOPES,
+      undefined
+    );
   }
 
   async calendarInsertEvent(
@@ -33,9 +146,18 @@ class GoogleApis {
     >,
     body: gapi.client.calendar.Event
   ): Promise<Outcome<gapi.client.Response<gapi.client.calendar.Event>>> {
-    const calendar = await loadCalendarApi(this.context.tokenGetter);
-    if (!ok(calendar)) return calendar;
-    return calendar.events.insert(request, body);
+    const { calendarId, ...params } = request;
+
+    const query = new URLSearchParams(
+      filterUndefined(params) as Record<string, string>
+    ).toString();
+
+    return this.#call(
+      `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?${query}`,
+      "POST",
+      CALENDAR_SCOPES,
+      body
+    );
   }
 
   async calendarUpdateEvent(
@@ -44,9 +166,18 @@ class GoogleApis {
     >,
     body: gapi.client.calendar.Event
   ): Promise<Outcome<gapi.client.Response<gapi.client.calendar.Event>>> {
-    const calendar = await loadCalendarApi(this.context.tokenGetter);
-    if (!ok(calendar)) return calendar;
-    return calendar.events.update(filterUndefined(request), body);
+    const { calendarId, eventId, ...params } = request;
+
+    const query = new URLSearchParams(
+      filterUndefined(params as unknown as Record<string, string>)
+    ).toString();
+
+    return this.#call(
+      `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${eventId}?${query}`,
+      "PUT",
+      CALENDAR_SCOPES,
+      body
+    );
   }
 
   async calendarDeleteEvent(
@@ -54,28 +185,50 @@ class GoogleApis {
       Parameters<typeof gapi.client.calendar.events.delete>[0]
     >
   ): Promise<Outcome<gapi.client.Response<void>>> {
-    const calendar = await loadCalendarApi(this.context.tokenGetter);
-    if (!ok(calendar)) return calendar;
+    const { calendarId, eventId, ...params } = request;
 
-    return calendar.events.delete(request);
+    const query = new URLSearchParams(
+      filterUndefined(params as unknown as Record<string, string>)
+    ).toString();
+
+    return this.#call(
+      `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${eventId}?${query}`,
+      "DELETE",
+      CALENDAR_SCOPES,
+      undefined
+    );
   }
 
   async driveListFiles(
     request: NonNullable<Parameters<typeof gapi.client.drive.files.list>[0]>
   ): Promise<Outcome<gapi.client.Response<gapi.client.drive.FileList>>> {
-    const drive = await loadDriveApi(this.context.tokenGetter);
-    if (!ok(drive)) return drive;
+    const query = new URLSearchParams(
+      filterUndefined(request as Record<string, string>)
+    ).toString();
 
-    return drive.files.list(filterUndefined(request));
+    return this.#call(
+      `https://www.googleapis.com/drive/v3/files?${query}`,
+      "GET",
+      DRIVE_SCOPES,
+      undefined
+    );
   }
 
   async driveGetFile(
-    request: Parameters<typeof gapi.client.drive.files.get>[0]
+    request: NonNullable<Parameters<typeof gapi.client.drive.files.get>[0]>
   ): Promise<Outcome<gapi.client.Response<gapi.client.drive.File>>> {
-    const drive = await loadDriveApi(this.context.tokenGetter);
-    if (!ok(drive)) return drive;
+    const { fileId, ...params } = request;
 
-    return drive.files.get(request);
+    const query = new URLSearchParams(
+      filterUndefined(params as Record<string, string>)
+    ).toString();
+
+    return this.#call(
+      `https://www.googleapis.com/drive/v3/files/${fileId}?${query}`,
+      "GET",
+      DRIVE_SCOPES,
+      undefined
+    );
   }
 
   async gmailGetMessages(
@@ -83,35 +236,42 @@ class GoogleApis {
       Parameters<typeof gapi.client.gmail.users.messages.list>[0]
     >
   ): Promise<Outcome<gapi.client.gmail.Message[]>> {
-    const gmail = await loadGmailApi(this.context.tokenGetter);
-    if (!ok(gmail)) return gmail;
+    const { userId, ...params } = request;
 
-    const listing = await gmail.users.messages.list(request);
-    if (listing.status !== 200) {
-      return err(listing.statusText || "Unable to list GMail messages.");
-    }
+    const query = new URLSearchParams(
+      filterUndefined(params as Record<string, string>)
+    ).toString();
 
-    const batch = gapi.client.newBatch();
-    const items = listing.result.messages;
+    const list = await this.#call<gapi.client.gmail.ListMessagesResponse>(
+      `https://gmail.googleapis.com/gmail/v1/users/${userId}/messages?${query}`,
+      "GET",
+      GMAIL_SCOPES,
+      undefined
+    );
+
+    if (!ok(list)) return list;
+
+    const items = list.result.messages;
     if (!items) {
       return [];
     }
-    for (const message of items) {
-      batch.add(
-        gmail.users.messages.get({
-          id: message.id!,
-          userId: "me",
-        })
-      );
-    }
+    const token = await this.context.tokenGetter(GMAIL_SCOPES);
+    if (!ok(token)) return token;
 
-    const getting = await batch;
-    if (getting.status !== 200) {
-      return err(getting.statusText || "Unable to get GMail messages");
+    const builder = new MultiPartBuilder(token);
+    for (const message of items) {
+      builder.add(`/gmail/v1/users/${userId}/messages/${message.id!}`, "GET");
     }
-    return Object.values(getting.result).map((res) =>
-      trimMessage(res.result as gapi.client.gmail.Message)
+    const messages = await this.#callMultipart<gapi.client.gmail.Message>(
+      `https://gmail.googleapis.com/batch`,
+      "POST",
+      GMAIL_SCOPES,
+      builder
     );
+
+    if (!ok(messages)) return messages;
+
+    return Object.values(messages.result).map(trimMessage);
   }
 
   async gmailGetThreads(
@@ -119,36 +279,46 @@ class GoogleApis {
       Parameters<typeof gapi.client.gmail.users.threads.list>[0]
     >
   ): Promise<Outcome<gapi.client.gmail.Thread[]>> {
-    const gmail = await loadGmailApi(this.context.tokenGetter);
-    if (!ok(gmail)) return gmail;
+    const { userId, ...params } = request;
 
-    const listing = await gmail.users.threads.list(request);
-    if (listing.status !== 200) {
-      return err(listing.statusText || "Unable to list GMail messages.");
-    }
+    const query = new URLSearchParams(
+      filterUndefined(params as Record<string, string>)
+    ).toString();
 
-    const batch = gapi.client.newBatch();
-    const items = listing.result.threads;
+    const list = await this.#call<gapi.client.gmail.ListThreadsResponse>(
+      `https://gmail.googleapis.com/gmail/v1/users/${userId}/threads?${query}`,
+      "GET",
+      GMAIL_SCOPES,
+      undefined
+    );
+
+    if (!ok(list)) return list;
+
+    const items = list.result.threads;
     if (!items) {
       return [];
     }
+
+    const token = await this.context.tokenGetter(GMAIL_SCOPES);
+    if (!ok(token)) return token;
+
+    const builder = new MultiPartBuilder(token);
     for (const thread of items) {
-      batch.add(
-        gmail.users.threads.get({
-          id: thread.id!,
-          userId: "me",
-        })
-      );
+      builder.add(`/gmail/v1/users/${userId}/threads/${thread.id!}`, "GET");
     }
 
-    const getting = await batch;
-    if (getting.status !== 200) {
-      return err(getting.statusText || "Unable to get GMail messages");
-    }
-    return Object.values(getting.result).map((res) => {
-      const result = res.result as gapi.client.gmail.Thread;
-      result.messages?.forEach((message) => trimMessage(message));
-      return result;
+    const threads = await this.#callMultipart<gapi.client.gmail.Thread>(
+      `https://gmail.googleapis.com/batch`,
+      "POST",
+      GMAIL_SCOPES,
+      builder
+    );
+
+    if (!ok(threads)) return threads;
+
+    return threads.result.map((res) => {
+      const messages = res.messages?.map(trimMessage);
+      return { ...res, messages };
     });
   }
 
@@ -158,94 +328,28 @@ class GoogleApis {
     >[0],
     body: gapi.client.gmail.Message
   ): Promise<Outcome<gapi.client.Response<gapi.client.gmail.Message>>> {
-    const gmail = await loadGmailApi(this.context.tokenGetter);
-    if (!ok(gmail)) return gmail;
-
-    return gmail.users.messages.send(request, body);
+    const { userId } = request;
+    return this.#call(
+      `https://gmail.googleapis.com/gmail/v1/users/${userId}/messages/send`,
+      "POST",
+      GMAIL_SCOPES,
+      body
+    );
   }
 
   async gmailCreateDraft(
     request: Parameters<typeof gapi.client.gmail.users.drafts.create>[0],
     body: gapi.client.gmail.Draft
   ): Promise<Outcome<gapi.client.Response<gapi.client.gmail.Draft>>> {
-    const gmail = await loadGmailApi(this.context.tokenGetter);
-    if (!ok(gmail)) return gmail;
+    const { userId } = request;
 
-    return gmail.users.drafts.create(request, body);
-  }
-}
-
-async function loadCalendarApi(
-  tokenGetter: TokenGetter
-): Promise<Outcome<typeof gapi.client.calendar>> {
-  if (!globalThis.gapi) {
-    return err("GAPI is not loaded, unable to query Google Calendar");
-  }
-  if (!gapi.client) {
-    await new Promise((resolve) => gapi.load("client", resolve));
-  }
-  const access_token = await tokenGetter([
-    "https://www.googleapis.com/auth/calendar.readonly",
-    "https://www.googleapis.com/auth/calendar.events.owned",
-  ]);
-  if (!ok(access_token)) {
-    return err(access_token.$error);
-  }
-  gapi.client.setToken({ access_token });
-  if (!gapi.client.calendar) {
-    await gapi.client.load(
-      "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"
+    return this.#call(
+      `https://gmail.googleapis.com/gmail/v1/users/${userId}/drafts`,
+      "POST",
+      GMAIL_SCOPES,
+      body
     );
   }
-  return gapi.client.calendar;
-}
-
-async function loadDriveApi(
-  tokenGetter: TokenGetter
-): Promise<Outcome<typeof gapi.client.drive>> {
-  if (!globalThis.gapi) {
-    return err("GAPI is not loaded, unable to load Drive API");
-  }
-  if (!gapi.client) {
-    await new Promise((resolve) => gapi.load("client", resolve));
-  }
-  const access_token = await tokenGetter([
-    "https://www.googleapis.com/auth/drive.readonly",
-  ]);
-  if (!ok(access_token)) {
-    return err(access_token.$error);
-  }
-  gapi.client.setToken({ access_token });
-  if (!gapi.client.drive) {
-    await gapi.client.load(
-      "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"
-    );
-  }
-  return gapi.client.drive;
-}
-
-async function loadGmailApi(
-  tokenGetter: TokenGetter
-): Promise<Outcome<typeof gapi.client.gmail>> {
-  if (!globalThis.gapi) {
-    return err("GAPI is not loaded, unable to query Google Mail");
-  }
-  if (!gapi.client) {
-    await new Promise((resolve) => gapi.load("client", resolve));
-  }
-  const access_token = await tokenGetter([
-    "https://www.googleapis.com/auth/gmail.modify",
-  ]);
-  if (!ok(access_token)) {
-    return err(access_token.$error);
-  }
-  gapi.client.setToken({ access_token });
-  if (!gapi.client.gmail) {
-    await gapi.client.load(
-      "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"
-    );
-  }
-  return gapi.client.gmail;
 }
 
 function trimMessage(message: gapi.client.gmail.Message) {
@@ -254,4 +358,35 @@ function trimMessage(message: gapi.client.gmail.Message) {
   delete message.sizeEstimate;
   delete message.raw;
   return message;
+}
+
+class MultiPartBuilder {
+  #parts: string[] = [];
+  readonly boundary = `batch${Date.now()}`;
+
+  #requestHeaders: string = [
+    `X-JavaScript-User-Agent: google-api-javascript-client/1.1.0`,
+    `X-Requested-With: XMLHttpRequest`,
+    `X-Goog-Encode-Response-If-Executable: base64`,
+  ].join("\r\n");
+
+  constructor(private readonly token: string) {}
+
+  #createPart(url: string, method: string) {
+    return `--${this.boundary}
+Content-Type: application/http
+
+${method} ${url}
+Authorization: Bearer ${this.token}
+
+`;
+  }
+
+  add(url: string, method: string) {
+    this.#parts.push(this.#createPart(url, method));
+  }
+
+  createBody(): string {
+    return `${this.#parts.join("")}--${this.boundary}`;
+  }
 }
