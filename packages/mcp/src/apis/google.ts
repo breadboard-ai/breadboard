@@ -21,6 +21,10 @@ const CALENDAR_SCOPES: OAuthScope[] = [
   "https://www.googleapis.com/auth/calendar.events.owned",
 ];
 
+const DRIVE_SCOPES: OAuthScope[] = [
+  "https://www.googleapis.com/auth/drive.readonly",
+];
+
 class GoogleApis {
   constructor(private readonly context: McpBuiltInClientFactoryContext) {}
 
@@ -138,19 +142,31 @@ class GoogleApis {
   async driveListFiles(
     request: NonNullable<Parameters<typeof gapi.client.drive.files.list>[0]>
   ): Promise<Outcome<gapi.client.Response<gapi.client.drive.FileList>>> {
-    const drive = await loadDriveApi(this.context.tokenGetter);
-    if (!ok(drive)) return drive;
+    const query = new URLSearchParams(
+      filterUndefined(request as Record<string, string>)
+    ).toString();
 
-    return drive.files.list(filterUndefined(request));
+    return this.#call(
+      `https://www.googleapis.com/drive/v3/files?${query}`,
+      "GET",
+      DRIVE_SCOPES
+    );
   }
 
   async driveGetFile(
-    request: Parameters<typeof gapi.client.drive.files.get>[0]
+    request: NonNullable<Parameters<typeof gapi.client.drive.files.get>[0]>
   ): Promise<Outcome<gapi.client.Response<gapi.client.drive.File>>> {
-    const drive = await loadDriveApi(this.context.tokenGetter);
-    if (!ok(drive)) return drive;
+    const { fileId, ...params } = request;
 
-    return drive.files.get(request);
+    const query = new URLSearchParams(
+      filterUndefined(params as Record<string, string>)
+    ).toString();
+
+    return this.#call(
+      `https://www.googleapis.com/drive/v3/files/${fileId}?${query}`,
+      "GET",
+      DRIVE_SCOPES
+    );
   }
 
   async gmailGetMessages(
@@ -248,30 +264,6 @@ class GoogleApis {
 
     return gmail.users.drafts.create(request, body);
   }
-}
-
-async function loadDriveApi(
-  tokenGetter: TokenGetter
-): Promise<Outcome<typeof gapi.client.drive>> {
-  if (!globalThis.gapi) {
-    return err("GAPI is not loaded, unable to load Drive API");
-  }
-  if (!gapi.client) {
-    await new Promise((resolve) => gapi.load("client", resolve));
-  }
-  const access_token = await tokenGetter([
-    "https://www.googleapis.com/auth/drive.readonly",
-  ]);
-  if (!ok(access_token)) {
-    return err(access_token.$error);
-  }
-  gapi.client.setToken({ access_token });
-  if (!gapi.client.drive) {
-    await gapi.client.load(
-      "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"
-    );
-  }
-  return gapi.client.drive;
 }
 
 async function loadGmailApi(
