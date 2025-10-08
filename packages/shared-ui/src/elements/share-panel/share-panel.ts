@@ -981,7 +981,16 @@ export class SharePanel extends LitElement {
 
     const thisFileMetadata = await this.googleDriveClient.getFileMetadata(
       thisFileId,
-      { fields: ["resourceKey", "properties", "ownedByMe", "version"] }
+      {
+        fields: ["resourceKey", "properties", "ownedByMe", "version"],
+        // Sometimes we are working on the featured gallery items themselves. In
+        // that case, and for all such calls in this file, we should never use
+        // the gallery proxy, because otherwise we will get responses that are
+        // (1) potentially stale because of caching, (2) missing data because
+        // we're not using the owning user's credentials (e.g. permissions get
+        // masked out and appear empty).
+        bypassProxy: true,
+      }
     );
 
     const thisFileIsAShareableCopy =
@@ -1010,7 +1019,10 @@ export class SharePanel extends LitElement {
               resourceKey: (
                 await this.googleDriveClient.getFileMetadata(
                   shareableCopyFileId,
-                  { fields: ["resourceKey"] }
+                  {
+                    fields: ["resourceKey"],
+                    bypassProxy: true,
+                  }
                 )
               ).resourceKey,
             }
@@ -1036,11 +1048,6 @@ export class SharePanel extends LitElement {
     const shareableCopyFileMetadata =
       await this.googleDriveClient.getFileMetadata(shareableCopyFileId, {
         fields: ["resourceKey", "properties", "permissions"],
-        // If we're working on one of the featured gallery graphs, and it's
-        // already been published, then the shared copy file ID will have been
-        // marked as one we should use the proxy for! But, the proxy won't
-        // return all the metadata we need right here, because it won't be
-        // fetched with our credentials (e.g. permissions will be missing).
         bypassProxy: true,
       });
     const allGraphPermissions = shareableCopyFileMetadata.permissions ?? [];
@@ -1176,6 +1183,7 @@ export class SharePanel extends LitElement {
       (
         await googleDriveClient.getFileMetadata(graphFileId, {
           fields: ["permissions"],
+          bypassProxy: true,
         })
       ).permissions ?? [];
     await Promise.all([
@@ -1203,11 +1211,12 @@ export class SharePanel extends LitElement {
         const { capabilities, permissions: assetPermissions } =
           await googleDriveClient.getFileMetadata(asset.fileId, {
             fields: ["capabilities", "permissions"],
+            bypassProxy: true,
           });
         if (!capabilities.canShare || !assetPermissions) {
           console.error(
             `[Sharing] Could not add permission to asset ` +
-              `"${asset.fileId}" because the current user does not have` +
+              `"${asset.fileId.id}" because the current user does not have` +
               ` sharing capability on it. Users who don't already have` +
               ` access to this asset may not be able to run this graph.`
           );
@@ -1221,9 +1230,15 @@ export class SharePanel extends LitElement {
           return;
         }
         console.log(
-          `[Sharing Panel] Managed asset ${asset.fileId}` +
+          `[Sharing Panel] Managed asset ${asset.fileId.id}` +
             ` has ${missing.length} missing permission(s)` +
-            ` and ${excess.length} excess permission(s). Synchronizing.`
+            ` and ${excess.length} excess permission(s). Synchronizing.`,
+          {
+            actual: assetPermissions,
+            needed: graphPermissions,
+            missing,
+            excess,
+          }
         );
         await Promise.all([
           ...missing.map((permission) =>
@@ -1266,6 +1281,7 @@ export class SharePanel extends LitElement {
               "capabilities",
               "permissions",
             ],
+            bypassProxy: true,
           }
         );
         if (
