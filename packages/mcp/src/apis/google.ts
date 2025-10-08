@@ -12,19 +12,69 @@
 import { Outcome } from "@breadboard-ai/types";
 import { err, ok, filterUndefined } from "@breadboard-ai/utils";
 import { McpBuiltInClientFactoryContext, TokenGetter } from "../types.js";
+import { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 
 export { GoogleApis };
+
+const CALENDAR_SCOPES: OAuthScope[] = [
+  "https://www.googleapis.com/auth/calendar.readonly",
+  "https://www.googleapis.com/auth/calendar.events.owned",
+];
 
 class GoogleApis {
   constructor(private readonly context: McpBuiltInClientFactoryContext) {}
 
+  async #call<Res>(
+    url: string,
+    method: string,
+    scopes: OAuthScope[],
+    body?: unknown
+  ): Promise<Outcome<gapi.client.Response<Res>>> {
+    const token = await this.context.tokenGetter(scopes);
+
+    const maybeBody =
+      method !== "GET" && body ? { body: JSON.stringify(body) } : {};
+
+    try {
+      const response = await this.context.fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        ...maybeBody,
+      });
+
+      if (!response.ok) {
+        return err(response.statusText);
+      }
+
+      const result = await response.json();
+      return {
+        result,
+        body: "", // will always be empty, since we don't use it.
+        headers: Object.fromEntries(response.headers.entries()),
+        status: response.status,
+        statusText: response.statusText,
+      };
+    } catch (e) {
+      return err((e as Error).message);
+    }
+  }
+
   async calendarListEvents(
     request: NonNullable<Parameters<typeof gapi.client.calendar.events.list>[0]>
   ): Promise<Outcome<gapi.client.Response<gapi.client.calendar.Events>>> {
-    const calendar = await loadCalendarApi(this.context.tokenGetter);
-    if (!ok(calendar)) return calendar;
+    const { calendarId, ...params } = request;
 
-    return calendar.events.list(filterUndefined(request));
+    const query = new URLSearchParams(
+      filterUndefined(params) as Record<string, string>
+    ).toString();
+
+    return this.#call(
+      `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?${query}`,
+      "GET",
+      CALENDAR_SCOPES
+    );
   }
 
   async calendarInsertEvent(
@@ -33,9 +83,18 @@ class GoogleApis {
     >,
     body: gapi.client.calendar.Event
   ): Promise<Outcome<gapi.client.Response<gapi.client.calendar.Event>>> {
-    const calendar = await loadCalendarApi(this.context.tokenGetter);
-    if (!ok(calendar)) return calendar;
-    return calendar.events.insert(request, body);
+    const { calendarId, ...params } = request;
+
+    const query = new URLSearchParams(
+      filterUndefined(params) as Record<string, string>
+    ).toString();
+
+    return this.#call(
+      `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?${query}`,
+      "POST",
+      CALENDAR_SCOPES,
+      body
+    );
   }
 
   async calendarUpdateEvent(
@@ -44,9 +103,18 @@ class GoogleApis {
     >,
     body: gapi.client.calendar.Event
   ): Promise<Outcome<gapi.client.Response<gapi.client.calendar.Event>>> {
-    const calendar = await loadCalendarApi(this.context.tokenGetter);
-    if (!ok(calendar)) return calendar;
-    return calendar.events.update(filterUndefined(request), body);
+    const { calendarId, eventId, ...params } = request;
+
+    const query = new URLSearchParams(
+      filterUndefined(params as unknown as Record<string, string>)
+    ).toString();
+
+    return this.#call(
+      `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${eventId}?${query}`,
+      "PUT",
+      CALENDAR_SCOPES,
+      body
+    );
   }
 
   async calendarDeleteEvent(
@@ -54,10 +122,17 @@ class GoogleApis {
       Parameters<typeof gapi.client.calendar.events.delete>[0]
     >
   ): Promise<Outcome<gapi.client.Response<void>>> {
-    const calendar = await loadCalendarApi(this.context.tokenGetter);
-    if (!ok(calendar)) return calendar;
+    const { calendarId, eventId, ...params } = request;
 
-    return calendar.events.delete(request);
+    const query = new URLSearchParams(
+      filterUndefined(params as unknown as Record<string, string>)
+    ).toString();
+
+    return this.#call(
+      `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${eventId}?${query}`,
+      "DELETE",
+      CALENDAR_SCOPES
+    );
   }
 
   async driveListFiles(
@@ -173,31 +248,6 @@ class GoogleApis {
 
     return gmail.users.drafts.create(request, body);
   }
-}
-
-async function loadCalendarApi(
-  tokenGetter: TokenGetter
-): Promise<Outcome<typeof gapi.client.calendar>> {
-  if (!globalThis.gapi) {
-    return err("GAPI is not loaded, unable to query Google Calendar");
-  }
-  if (!gapi.client) {
-    await new Promise((resolve) => gapi.load("client", resolve));
-  }
-  const access_token = await tokenGetter([
-    "https://www.googleapis.com/auth/calendar.readonly",
-    "https://www.googleapis.com/auth/calendar.events.owned",
-  ]);
-  if (!ok(access_token)) {
-    return err(access_token.$error);
-  }
-  gapi.client.setToken({ access_token });
-  if (!gapi.client.calendar) {
-    await gapi.client.load(
-      "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"
-    );
-  }
-  return gapi.client.calendar;
 }
 
 async function loadDriveApi(

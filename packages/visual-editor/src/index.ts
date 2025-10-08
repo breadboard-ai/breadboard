@@ -452,7 +452,9 @@ export class Main extends SignalWatcher(LitElement) {
         get fileSystem() {
           return fileSystem!;
         },
-        fetch,
+        fetch: (...args) => {
+          return fetch(...args);
+        },
       },
       this.globalConfig.BACKEND_API_ENDPOINT
     );
