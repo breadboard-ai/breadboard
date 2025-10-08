@@ -36,19 +36,10 @@ class OpalApi {
     if (returnStoredData) {
       url.searchParams.set("returnStoredData", "true");
     }
-    const access_token = await this.context.tokenGetter([
-      "https://www.googleapis.com/auth/drive.readonly",
-    ]);
-    if (!ok(access_token)) {
-      return err(access_token.$error);
-    }
     try {
       const calling = await this.context.fetchWithCreds(url, {
         method: "POST",
         credentials: "include",
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-        },
       });
       if (!calling.ok) {
         return err(`Failed to load the Drive file`);

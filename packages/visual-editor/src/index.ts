@@ -115,6 +115,7 @@ import {
   type OAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { builtInMcpClients } from "./mcp-clients";
+import { createFetchWithCreds } from "./fetch-with-creds";
 
 type RenderValues = {
   canSave: boolean;
@@ -452,9 +453,7 @@ export class Main extends SignalWatcher(LitElement) {
         get fileSystem() {
           return fileSystem!;
         },
-        fetchWithCreds: (...args) => {
-          return fetch(...args);
-        },
+        fetchWithCreds: createFetchWithCreds(this.signinAdapter),
       },
       this.globalConfig.BACKEND_API_ENDPOINT
     );

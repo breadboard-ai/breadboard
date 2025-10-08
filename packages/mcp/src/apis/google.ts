@@ -11,22 +11,8 @@
 import { Outcome } from "@breadboard-ai/types";
 import { err, ok, filterUndefined } from "@breadboard-ai/utils";
 import { McpBuiltInClientFactoryContext } from "../types.js";
-import { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 
 export { GoogleApis };
-
-const CALENDAR_SCOPES: OAuthScope[] = [
-  "https://www.googleapis.com/auth/calendar.readonly",
-  "https://www.googleapis.com/auth/calendar.events.owned",
-];
-
-const DRIVE_SCOPES: OAuthScope[] = [
-  "https://www.googleapis.com/auth/drive.readonly",
-];
-
-const GMAIL_SCOPES: OAuthScope[] = [
-  "https://www.googleapis.com/auth/gmail.modify",
-];
 
 class GoogleApis {
   constructor(private readonly context: McpBuiltInClientFactoryContext) {}
@@ -34,11 +20,8 @@ class GoogleApis {
   async #call<Res>(
     url: string,
     method: string,
-    scopes: OAuthScope[],
     body: unknown | undefined
   ): Promise<Outcome<gapi.client.Response<Res>>> {
-    const token = await this.context.tokenGetter(scopes);
-
     const maybeBody =
       method !== "GET" && body
         ? { body: typeof body === "string" ? body : JSON.stringify(body) }
@@ -47,9 +30,6 @@ class GoogleApis {
     try {
       const response = await this.context.fetchWithCreds(url, {
         method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
         ...maybeBody,
       });
 
@@ -73,16 +53,12 @@ class GoogleApis {
   async #callMultipart<Res>(
     url: string,
     method: string,
-    scopes: OAuthScope[],
     builder: MultiPartBuilder
   ): Promise<Outcome<gapi.client.Response<Res[]>>> {
-    const token = await this.context.tokenGetter(scopes);
-
     try {
       const response = await this.context.fetchWithCreds(url, {
         method,
         headers: {
-          Authorization: `Bearer ${token}`,
           ["Content-Type"]: `multipart/mixed; boundary=${builder.boundary}`,
         },
         body: builder.createBody(),
@@ -135,7 +111,6 @@ class GoogleApis {
     return this.#call(
       `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?${query}`,
       "GET",
-      CALENDAR_SCOPES,
       undefined
     );
   }
@@ -155,7 +130,6 @@ class GoogleApis {
     return this.#call(
       `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?${query}`,
       "POST",
-      CALENDAR_SCOPES,
       body
     );
   }
@@ -175,7 +149,6 @@ class GoogleApis {
     return this.#call(
       `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${eventId}?${query}`,
       "PUT",
-      CALENDAR_SCOPES,
       body
     );
   }
@@ -194,7 +167,6 @@ class GoogleApis {
     return this.#call(
       `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${eventId}?${query}`,
       "DELETE",
-      CALENDAR_SCOPES,
       undefined
     );
   }
@@ -209,7 +181,6 @@ class GoogleApis {
     return this.#call(
       `https://www.googleapis.com/drive/v3/files?${query}`,
       "GET",
-      DRIVE_SCOPES,
       undefined
     );
   }
@@ -226,7 +197,6 @@ class GoogleApis {
     return this.#call(
       `https://www.googleapis.com/drive/v3/files/${fileId}?${query}`,
       "GET",
-      DRIVE_SCOPES,
       undefined
     );
   }
@@ -245,7 +215,6 @@ class GoogleApis {
     const list = await this.#call<gapi.client.gmail.ListMessagesResponse>(
       `https://gmail.googleapis.com/gmail/v1/users/${userId}/messages?${query}`,
       "GET",
-      GMAIL_SCOPES,
       undefined
     );
 
@@ -255,17 +224,13 @@ class GoogleApis {
     if (!items) {
       return [];
     }
-    const token = await this.context.tokenGetter(GMAIL_SCOPES);
-    if (!ok(token)) return token;
-
-    const builder = new MultiPartBuilder(token);
+    const builder = new MultiPartBuilder();
     for (const message of items) {
       builder.add(`/gmail/v1/users/${userId}/messages/${message.id!}`, "GET");
     }
     const messages = await this.#callMultipart<gapi.client.gmail.Message>(
       `https://gmail.googleapis.com/batch`,
       "POST",
-      GMAIL_SCOPES,
       builder
     );
 
@@ -288,7 +253,6 @@ class GoogleApis {
     const list = await this.#call<gapi.client.gmail.ListThreadsResponse>(
       `https://gmail.googleapis.com/gmail/v1/users/${userId}/threads?${query}`,
       "GET",
-      GMAIL_SCOPES,
       undefined
     );
 
@@ -299,10 +263,7 @@ class GoogleApis {
       return [];
     }
 
-    const token = await this.context.tokenGetter(GMAIL_SCOPES);
-    if (!ok(token)) return token;
-
-    const builder = new MultiPartBuilder(token);
+    const builder = new MultiPartBuilder();
     for (const thread of items) {
       builder.add(`/gmail/v1/users/${userId}/threads/${thread.id!}`, "GET");
     }
@@ -310,7 +271,6 @@ class GoogleApis {
     const threads = await this.#callMultipart<gapi.client.gmail.Thread>(
       `https://gmail.googleapis.com/batch`,
       "POST",
-      GMAIL_SCOPES,
       builder
     );
 
@@ -332,7 +292,6 @@ class GoogleApis {
     return this.#call(
       `https://gmail.googleapis.com/gmail/v1/users/${userId}/messages/send`,
       "POST",
-      GMAIL_SCOPES,
       body
     );
   }
@@ -346,7 +305,6 @@ class GoogleApis {
     return this.#call(
       `https://gmail.googleapis.com/gmail/v1/users/${userId}/drafts`,
       "POST",
-      GMAIL_SCOPES,
       body
     );
   }
@@ -362,22 +320,19 @@ function trimMessage(message: gapi.client.gmail.Message) {
 
 class MultiPartBuilder {
   #parts: string[] = [];
-  readonly boundary = `batch${Date.now()}`;
+  readonly boundary = `batch-${crypto.randomUUID()}`;
 
-  #requestHeaders: string = [
-    `X-JavaScript-User-Agent: google-api-javascript-client/1.1.0`,
-    `X-Requested-With: XMLHttpRequest`,
-    `X-Goog-Encode-Response-If-Executable: base64`,
-  ].join("\r\n");
-
-  constructor(private readonly token: string) {}
-
+  /**
+   * Creates a part in a multi-part message, putting a placeholder in place
+   * of the auth token. This placeholder will be replaced with the actual
+   * auth token by fetchWithCreds implementation.
+   */
   #createPart(url: string, method: string) {
     return `--${this.boundary}
 Content-Type: application/http
 
 ${method} ${url}
-Authorization: Bearer ${this.token}
+Authorization: Bearer [${this.boundary}]
 
 `;
   }
