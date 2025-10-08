@@ -452,7 +452,7 @@ export class Main extends SignalWatcher(LitElement) {
         get fileSystem() {
           return fileSystem!;
         },
-        fetch: (...args) => {
+        fetchWithCreds: (...args) => {
           return fetch(...args);
         },
       },

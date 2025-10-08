@@ -45,7 +45,7 @@ class GoogleApis {
         : {};
 
     try {
-      const response = await this.context.fetch(url, {
+      const response = await this.context.fetchWithCreds(url, {
         method,
         headers: {
           Authorization: `Bearer ${token}`,
@@ -79,7 +79,7 @@ class GoogleApis {
     const token = await this.context.tokenGetter(scopes);
 
     try {
-      const response = await this.context.fetch(url, {
+      const response = await this.context.fetchWithCreds(url, {
         method,
         headers: {
           Authorization: `Bearer ${token}`,
