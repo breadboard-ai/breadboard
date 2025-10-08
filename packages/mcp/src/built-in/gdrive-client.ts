@@ -9,21 +9,20 @@
 
 import { z } from "zod";
 import { BuiltInClient } from "../built-in-client.js";
-import {
-  McpBuiltInClient,
-  McpBuiltInClientFactoryContext,
-  TokenGetter,
-} from "../types.js";
+import { McpBuiltInClient, McpBuiltInClientFactoryContext } from "../types.js";
 import { mcpErr, mcpResourceLink, mcpText } from "../utils.js";
-import { FileDataPart, Outcome } from "@breadboard-ai/types";
-import { err, filterUndefined, ok } from "@breadboard-ai/utils";
+import { filterUndefined, ok } from "@breadboard-ai/utils";
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { GoogleApis } from "../apis/google.js";
+import { OpalApi } from "../apis/opal.js";
 
 export { createGdriveClient };
 
-function createGdriveClient({
-  tokenGetter,
-}: McpBuiltInClientFactoryContext): McpBuiltInClient {
+function createGdriveClient(
+  context: McpBuiltInClientFactoryContext
+): McpBuiltInClient {
+  const google = new GoogleApis(context);
+  const opal = new OpalApi(context);
   const client = new BuiltInClient({
     name: "Google Drive",
     url: "builtin:gdrive",
@@ -197,12 +196,7 @@ You can also use partial matches like \`mimeType contains 'image/'\` to find all
       retrievalMode = "none",
     }) => {
       try {
-        const drive = await loadDriveApi(tokenGetter);
-        if (!ok(drive)) {
-          return mcpErr(drive.$error);
-        }
-
-        const listing = await drive.files.list(
+        const listing = await google.driveListFiles(
           filterUndefined({
             corpora,
             driveId,
@@ -212,6 +206,9 @@ You can also use partial matches like \`mimeType contains 'image/'\` to find all
             q,
           })
         );
+        if (!ok(listing)) {
+          return mcpErr(listing.$error);
+        }
         if (listing.status !== 200) {
           return mcpErr(
             listing.statusText || "Unable to list Google Drive files"
@@ -238,8 +235,7 @@ You can also use partial matches like \`mimeType contains 'image/'\` to find all
                     mimeType: file.mimeType!,
                   };
                 } else {
-                  const getting = await callAssetsDriveApi(
-                    tokenGetter,
+                  const getting = await opal.driveIdToFilePart(
                     file.id!,
                     file.mimeType!
                   );
@@ -281,16 +277,14 @@ You can also use partial matches like \`mimeType contains 'image/'\` to find all
     },
     async ({ fileId }) => {
       try {
-        const drive = await loadDriveApi(tokenGetter);
-        if (!ok(drive)) {
-          return mcpErr(drive.$error);
-        }
-
         // Get file type
-        const gettingMetadata = await drive.files.get({
+        const gettingMetadata = await google.driveGetFile({
           fileId,
           fields: "mimeType,name",
         });
+        if (!ok(gettingMetadata)) {
+          return mcpErr(gettingMetadata.$error);
+        }
         if (gettingMetadata.status !== 200) {
           return mcpErr(
             gettingMetadata.statusText ||
@@ -305,7 +299,7 @@ You can also use partial matches like \`mimeType contains 'image/'\` to find all
           );
         }
 
-        const getting = await callAssetsDriveApi(tokenGetter, fileId, mimeType);
+        const getting = await opal.driveIdToFilePart(fileId, mimeType);
         if (!ok(getting)) {
           return mcpErr(getting.$error);
         }
@@ -321,80 +315,4 @@ You can also use partial matches like \`mimeType contains 'image/'\` to find all
   );
 
   return client;
-}
-
-async function loadDriveApi(
-  tokenGetter: TokenGetter
-): Promise<Outcome<typeof gapi.client.drive>> {
-  if (!globalThis.gapi) {
-    return err("GAPI is not loaded, unable to load Drive API");
-  }
-  if (!gapi.client) {
-    await new Promise((resolve) => gapi.load("client", resolve));
-  }
-  const access_token = await tokenGetter([
-    "https://www.googleapis.com/auth/drive.readonly",
-  ]);
-  if (!ok(access_token)) {
-    return err(access_token.$error);
-  }
-  gapi.client.setToken({ access_token });
-  if (!gapi.client.drive) {
-    await gapi.client.load(
-      "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"
-    );
-  }
-  return gapi.client.drive;
-}
-
-export type GoogleDriveToGeminiResponse = {
-  part: FileDataPart;
-};
-
-async function callAssetsDriveApi(
-  tokenGetter: TokenGetter,
-  fileId: string,
-  mimeType?: string,
-  returnStoredData?: boolean,
-  resourceKey?: string
-): Promise<Outcome<FileDataPart>> {
-  const url = new URL(
-    `/board/boards/@foo/bar/assets/drive/${fileId}`,
-    window.location.href
-  );
-  if (resourceKey) {
-    url.searchParams.set("resourceKey", resourceKey);
-  }
-  if (mimeType) {
-    url.searchParams.set("mimeType", mimeType);
-  }
-  if (returnStoredData) {
-    url.searchParams.set("returnStoredData", "true");
-  }
-  const access_token = await tokenGetter([
-    "https://www.googleapis.com/auth/drive.readonly",
-  ]);
-  if (!ok(access_token)) {
-    return err(access_token.$error);
-  }
-  try {
-    const calling = await fetch(url, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-    });
-    if (!calling.ok) {
-      return err(`Failed to load the Drive file`);
-    }
-    const result =
-      (await calling.json()) as Outcome<GoogleDriveToGeminiResponse>;
-    if (!ok(result)) {
-      return result;
-    }
-    return result.part;
-  } catch (e) {
-    return err((e as Error).message);
-  }
 }

@@ -5,6 +5,7 @@
  */
 
 import "gapi.client.calendar-v3";
+import "gapi.client.drive-v3";
 
 import { Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
@@ -48,6 +49,24 @@ class GoogleApis {
 
     return calendar.events.delete(...args);
   }
+
+  async driveListFiles(
+    ...args: Parameters<typeof gapi.client.drive.files.list>
+  ): Promise<Outcome<gapi.client.Response<gapi.client.drive.FileList>>> {
+    const drive = await loadDriveApi(this.context.tokenGetter);
+    if (!ok(drive)) return drive;
+
+    return drive.files.list(...args);
+  }
+
+  async driveGetFile(
+    ...args: Parameters<typeof gapi.client.drive.files.get>
+  ): Promise<Outcome<gapi.client.Response<gapi.client.drive.File>>> {
+    const drive = await loadDriveApi(this.context.tokenGetter);
+    if (!ok(drive)) return drive;
+
+    return drive.files.get(...args);
+  }
 }
 
 async function loadCalendarApi(
@@ -73,4 +92,28 @@ async function loadCalendarApi(
     );
   }
   return gapi.client.calendar;
+}
+
+async function loadDriveApi(
+  tokenGetter: TokenGetter
+): Promise<Outcome<typeof gapi.client.drive>> {
+  if (!globalThis.gapi) {
+    return err("GAPI is not loaded, unable to load Drive API");
+  }
+  if (!gapi.client) {
+    await new Promise((resolve) => gapi.load("client", resolve));
+  }
+  const access_token = await tokenGetter([
+    "https://www.googleapis.com/auth/drive.readonly",
+  ]);
+  if (!ok(access_token)) {
+    return err(access_token.$error);
+  }
+  gapi.client.setToken({ access_token });
+  if (!gapi.client.drive) {
+    await gapi.client.load(
+      "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"
+    );
+  }
+  return gapi.client.drive;
 }

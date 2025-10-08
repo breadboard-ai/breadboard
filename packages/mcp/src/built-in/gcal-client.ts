@@ -12,7 +12,7 @@ import { z } from "zod";
 import { BuiltInClient } from "../built-in-client.js";
 import { McpBuiltInClient, McpBuiltInClientFactoryContext } from "../types.js";
 import { mcpErr, mcpText } from "../utils.js";
-import { GoogleApis } from "../googleapis/index.js";
+import { GoogleApis } from "../apis/google.js";
 
 export { createGoogleCalendarClient };
 
