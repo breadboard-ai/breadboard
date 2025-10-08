@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import "gapi.client.calendar-v3";
-import "gapi.client.drive-v3";
-import "gapi.client.gmail-v1";
+/// <reference types="@types/gapi" />
+/// <reference types="@maxim_mazurok/gapi.client.calendar-v3" />
+/// <reference types="@types/gapi.client.drive-v3" />
+/// <reference types="@maxim_mazurok/gapi.client.gmail-v1" />
 
 import { Outcome } from "@breadboard-ai/types";
 import { err, ok, filterUndefined } from "@breadboard-ai/utils";
