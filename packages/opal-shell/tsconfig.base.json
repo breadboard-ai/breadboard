@@ -1,0 +1,48 @@
+{
+  "compilerOptions": {
+    // TODO(aomarks) There is an error with the tough-cookie types.
+    "skipLibCheck": true,
+
+    // JavaScript
+    "target": "esnext",
+    "lib": ["esnext"],
+    "erasableSyntaxOnly": true,
+    "importHelpers": true,
+
+    // Modules
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "allowArbitraryExtensions": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUncheckedSideEffectImports": true,
+
+    // Type declarations & source maps
+    "declaration": true,
+    "declarationMap": true,
+    "isolatedDeclarations": true,
+    "sourceMap": true,
+
+    // Compiler behavior
+    "composite": true,
+    "incremental": true,
+    "pretty": true,
+    "libReplacement": false,
+
+    // Type checking & linting
+    "strict": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "exactOptionalPropertyTypes": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "useUnknownInCatchVariables": true
+  }
+}

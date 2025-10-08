@@ -1,0 +1,96 @@
+{
+  "name": "@breadboard-ai/opal-shell",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/breadboard-ai/breadboard.git",
+    "directory": "packages/opal-shell"
+  },
+  "license": "Apache-2.0",
+  "author": "Google Labs Team",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./*.js": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
+    }
+  },
+  "scripts": {
+    "build": "wireit",
+    "build:client": "wireit",
+    "build:protocol": "wireit",
+    "build:server": "wireit",
+    "start": "npm run serve --watch",
+    "serve": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "build:client",
+        "build:protocol",
+        "build:server"
+      ]
+    },
+    "build:client": {
+      "command": "tsc --project tsconfig.client.json",
+      "files": [
+        "src/client",
+        "tsconfig.base.json",
+        "tsconfig.client.json"
+      ],
+      "output": [
+        "dist/client",
+        "tsconfig.client.tsbuildinfo"
+      ],
+      "dependencies": [
+        "build:protocol"
+      ]
+    },
+    "build:protocol": {
+      "command": "tsc --project tsconfig.protocol.json",
+      "files": [
+        "src/protocol",
+        "tsconfig.base.json",
+        "tsconfig.protocol.json"
+      ],
+      "output": [
+        "dist/protocol",
+        "tsconfig.protocol.tsbuildinfo"
+      ],
+      "dependencies": []
+    },
+    "build:server": {
+      "command": "tsc --project tsconfig.server.json",
+      "files": [
+        "src/server",
+        "tsconfig.base.json",
+        "tsconfig.server.json"
+      ],
+      "output": [
+        "dist/server",
+        "tsconfig.server.tsbuildinfo"
+      ],
+      "dependencies": []
+    },
+    "serve": {
+      "command": "node dist/server/opal-shell-server.js",
+      "service": true,
+      "files": [
+        "package.json"
+      ],
+      "dependencies": [
+        "build:server",
+        {
+          "script": "build:client",
+          "cascade": false
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.7.0",
+    "express": "^5.1.0"
+  }
+}
