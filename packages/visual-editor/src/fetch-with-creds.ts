@@ -25,11 +25,16 @@ const GMAIL_SCOPES: OAuthScope[] = [
   "https://www.googleapis.com/auth/gmail.modify",
 ];
 
+const GENAI_SCOPES: OAuthScope[] = [
+  "https://www.googleapis.com/auth/generative-language.retriever",
+];
+
 const URL_SCOPE_MAP: ReadonlyMap<string, OAuthScope[]> = new Map([
   [ASSET_DRIVE_API_ENDPOINT, DRIVE_SCOPES],
   ["https://www.googleapis.com/calendar/", CALENDAR_SCOPES],
   ["https://www.googleapis.com/drive/", DRIVE_SCOPES],
   ["https://gmail.googleapis.com", GMAIL_SCOPES],
+  ["https://generativelanguage.googleapis.com/v1beta/models/", GENAI_SCOPES],
 ]);
 
 export function createFetchWithCreds(adapter: SigninAdapter): typeof fetch {
