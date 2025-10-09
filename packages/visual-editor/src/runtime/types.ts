@@ -93,6 +93,7 @@ export interface RuntimeConfig {
   recentBoardStore: RecentBoardStore;
   flags: RuntimeFlagManager;
   mcpClientManager: McpClientManager;
+  fetchWithCreds: typeof globalThis.fetch;
 }
 
 export interface RuntimeConfigBoardServers {
