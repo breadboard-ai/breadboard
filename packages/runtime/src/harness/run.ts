@@ -42,6 +42,7 @@ async function configureProxy(config: RunConfig): Promise<Kit[]> {
           const proxyClient = new ProxyClient(
             new HTTPClientTransport(proxyConfig.url, {
               signal: config.signal,
+              fetch: config.fetchWithCreds,
             })
           );
           kits.push(proxyClient.createProxyKit(proxyConfig.nodes, config.kits));

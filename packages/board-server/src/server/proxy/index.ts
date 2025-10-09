@@ -22,6 +22,7 @@ import { secretsKit } from "./secrets.js";
 import type { ServerConfig } from "../config.js";
 import { BlobDataStore, GoogleStorageBlobStore } from "../blob-store.js";
 import { GcsAwareFetch } from "./gcs-aware-fetch.js";
+import { requireAuth } from "../auth.js";
 
 class ResponseAdapter implements ProxyServerResponse {
   #response: Response;
@@ -48,11 +49,7 @@ class ResponseAdapter implements ProxyServerResponse {
 export function serveProxyAPI(serverConfig: ServerConfig): Router {
   const router = Router();
 
-  // TODO: Re-enable once we teach the client side to send auth requests
-  // https://github.com/breadboard-ai/breadboard/issues/4721
-  // router.use(requireAuth());
-
-  router.post("/", (req, res) => post(serverConfig, req, res));
+  router.post("/", requireAuth(), (req, res) => post(serverConfig, req, res));
 
   return router;
 }

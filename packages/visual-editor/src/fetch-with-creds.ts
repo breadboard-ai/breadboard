@@ -12,6 +12,8 @@ const ASSET_DRIVE_API_ENDPOINT = new URL(
   window.location.href
 ).href;
 
+const PROXY_API_ENDPOINT = new URL(`/board/proxy`, window.location.href).href;
+
 const CALENDAR_SCOPES: OAuthScope[] = [
   "https://www.googleapis.com/auth/calendar.readonly",
   "https://www.googleapis.com/auth/calendar.events.owned",
@@ -30,6 +32,7 @@ const GENAI_SCOPES: OAuthScope[] = [
 ];
 
 const URL_SCOPE_MAP: ReadonlyMap<string, OAuthScope[]> = new Map([
+  [PROXY_API_ENDPOINT, GENAI_SCOPES],
   [ASSET_DRIVE_API_ENDPOINT, DRIVE_SCOPES],
   ["https://www.googleapis.com/calendar/", CALENDAR_SCOPES],
   ["https://www.googleapis.com/drive/", DRIVE_SCOPES],
