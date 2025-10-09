@@ -21,7 +21,7 @@ import { badRequest } from "../errors.js";
 import { secretsKit } from "./secrets.js";
 import type { ServerConfig } from "../config.js";
 import { BlobDataStore, GoogleStorageBlobStore } from "../blob-store.js";
-import { GcsAwareFetch } from "./gcs-aware-fetch.js";
+import { GcsAndCredsAwareFetch } from "./gcs-aware-fetch.js";
 import { requireAuth } from "../auth.js";
 
 class ResponseAdapter implements ProxyServerResponse {
@@ -59,7 +59,8 @@ async function post(
   req: Request,
   res: Response
 ): Promise<void> {
-  const gcsAwareFetchKit = GcsAwareFetch.instance(serverConfig).createKit(
+  const augmentedKit = GcsAndCredsAwareFetch.instance(serverConfig).createKit(
+    req,
     asRuntimeKit(Core)
   );
 
@@ -70,7 +71,7 @@ async function post(
   store.createGroup("run-board");
 
   const config: ProxyServerConfig = {
-    kits: [secretsKit, gcsAwareFetchKit],
+    kits: [secretsKit, augmentedKit],
     store,
     proxy: ["fetch", { node: "secrets" }],
     allowed: serverConfig.proxyServerAllowFilter,
