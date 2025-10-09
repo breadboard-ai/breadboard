@@ -57,7 +57,8 @@
     "dev:next:nowatch": {
       "dependencies": [
         "./packages/unified-server:serve",
-        "./packages/opal-shell:serve"
+        "./packages/opal-shell:serve",
+        "./packages/opal-shell:check:types"
       ]
     },
     "syncpack:files": {

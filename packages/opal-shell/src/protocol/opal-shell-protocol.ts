@@ -5,8 +5,6 @@
  */
 
 export interface OpalShellProtocol {
-  // TODO(aomarks) Extend this interface and implement. We probably don't need
-  // all of the fetch API surface, but it should at least be a compatible subset
-  // of it.
+  ping(): Promise<"pong">;
   fetchWithCreds(url: string): Promise<unknown>;
 }
