@@ -10,7 +10,7 @@ import {
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 import { err, ok } from "../a2/utils";
-import { connect, exp, query } from "./api";
+import { exp, query } from "./api";
 import { DOC_MIME_TYPE, markdownToContext } from "./docs";
 import type { ConnectorConfiguration } from "./types";
 
@@ -31,9 +31,7 @@ async function invoke(
   { id, info: { configuration } }: Inputs,
   caps: Capabilities
 ): Promise<Outcome<Outputs>> {
-  const token = await connect(caps, { title: "Getting auth token" });
-  if (!ok(token)) return token;
-  const gettingDoc = await getCollector(caps, token, id, configuration?.file);
+  const gettingDoc = await getCollector(caps, id, configuration?.file);
   if (!ok(gettingDoc)) return gettingDoc;
   return { context: gettingDoc };
 }
@@ -44,7 +42,6 @@ async function invoke(
  */
 async function getCollector(
   caps: Capabilities,
-  token: string,
   connectorId: string,
   file: ConnectorConfiguration["file"] | undefined
 ): Promise<Outcome<LLMContent[]>> {
@@ -53,7 +50,6 @@ async function getCollector(
   if (!fileId) {
     const findFile = await query(
       caps,
-      token,
       `appProperties has { key = 'google-drive-connector' and value = '${connectorId}' } and trashed = false`,
       { title: "Find the doc to append to" }
     );
@@ -66,14 +62,13 @@ async function getCollector(
   } else {
     id = fileId;
   }
-  const exporter = new Exporter(caps, token, id, mimeType);
+  const exporter = new Exporter(caps, id, mimeType);
   return exporter.export();
 }
 
 class Exporter {
   constructor(
     private readonly caps: Capabilities,
-    public readonly token: string,
     public readonly id: string,
     public readonly mimeType: string | undefined
   ) {}
@@ -83,9 +78,9 @@ class Exporter {
   }
 
   async export(): Promise<Outcome<LLMContent[]>> {
-    const { token, id } = this;
+    const { id } = this;
     if (this.isDoc()) {
-      const gettingDoc = await exp(this.caps, token, id, "text/makdown", {
+      const gettingDoc = await exp(this.caps, id, "text/makdown", {
         title: "Get current doc contents",
       });
       if (!ok(gettingDoc)) return gettingDoc;
@@ -94,7 +89,7 @@ class Exporter {
       }
       return markdownToContext(gettingDoc);
     } else {
-      const exportingPdf = await exp(this.caps, token, id, "application/pdf", {
+      const exportingPdf = await exp(this.caps, id, "application/pdf", {
         title: "Get PDF export of the file",
       });
       if (!ok(exportingPdf)) return exportingPdf;

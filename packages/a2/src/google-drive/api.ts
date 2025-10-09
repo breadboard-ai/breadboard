@@ -9,7 +9,6 @@ import { err } from "../a2/utils";
 
 export {
   appendSpreadsheetValues,
-  connect,
   create,
   createMultipart,
   createPermission,
@@ -644,8 +643,6 @@ export type SpreadsheetValuesUpdate = {
 
 export type SpreadsheetValuesAppend = SpreadsheetValueRange;
 
-const connectionId = "connection:$sign-in";
-
 export type Metadata = {
   title?: string;
   description?: string;
@@ -653,22 +650,13 @@ export type Metadata = {
 
 export type Method = "GET" | "POST" | "PUT" | "DELETE";
 
-async function get(
-  caps: Capabilities,
-  token: string,
-  id: string,
-  metadata: Metadata
-) {
-  if (!token) {
-    return err("Authentication token is required.");
-  }
+async function get(caps: Capabilities, id: string, metadata: Metadata) {
   if (!id) {
     return err("Please supply file id.");
   }
   return api(
     caps,
     metadata,
-    token,
     `https://www.googleapis.com/drive/v3/files/${id}`,
     "GET"
   );
@@ -676,13 +664,9 @@ async function get(
 
 async function create(
   caps: Capabilities,
-  token: string,
   body: unknown,
   metadata: Metadata
 ): Promise<Outcome<CreateFileResponse>> {
-  if (!token) {
-    return err("Authentication token is required.");
-  }
   if (!body) {
     return err("Please supply the body of the file to create.");
   }
@@ -690,7 +674,6 @@ async function create(
   return api(
     caps,
     metadata,
-    token,
     "https://www.googleapis.com/drive/v3/files",
     "POST",
     body
@@ -699,13 +682,9 @@ async function create(
 
 async function query(
   caps: Capabilities,
-  token: string,
   query: string,
   metadata: Metadata
 ): Promise<Outcome<FileQueryResponse>> {
-  if (!token) {
-    return err("Authentication token is required.");
-  }
   if (!query) {
     return err("Please supply the query.");
   }
@@ -713,21 +692,12 @@ async function query(
   return api(
     caps,
     metadata,
-    token,
     `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}`,
     "GET"
   );
 }
 
-async function del(
-  caps: Capabilities,
-  token: string,
-  id: string,
-  metadata: Metadata
-) {
-  if (!token) {
-    return err("Authentication token is required.");
-  }
+async function del(caps: Capabilities, id: string, metadata: Metadata) {
   if (!id) {
     return err("Please supply the id of the file to delete");
   }
@@ -735,7 +705,6 @@ async function del(
   return api(
     caps,
     metadata,
-    token,
     `https://www.googleapis.com/drive/v3/files/${id}`,
     "DELETE"
   );
@@ -743,42 +712,28 @@ async function del(
 
 async function exp(
   caps: Capabilities,
-  token: string,
   fileId: string,
   mimeType: string,
   metadata: Metadata
 ) {
-  if (!token) {
-    return err("Authentication token is required.");
-  }
   if (!fileId) {
     return err("Please supply the file id to export.");
   }
   return api(
     caps,
     metadata,
-    token,
     `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${mimeType}`,
     "GET"
   );
 }
 
-async function getDoc(
-  caps: Capabilities,
-  token: string,
-  id: string,
-  metadata: Metadata
-) {
-  if (!token) {
-    return err("Authentication token is required.");
-  }
+async function getDoc(caps: Capabilities, id: string, metadata: Metadata) {
   if (!id) {
     return err("Please supply the doc id to get.");
   }
   return api(
     caps,
     metadata,
-    token,
     `https://docs.googleapis.com/v1/documents/${id}`,
     "GET"
   );
@@ -786,14 +741,10 @@ async function getDoc(
 
 async function updateDoc(
   caps: Capabilities,
-  token: string,
   id: string,
   body: unknown,
   metadata: Metadata
 ) {
-  if (!token) {
-    return err("Authentication token is required.");
-  }
   if (!id) {
     return err("Please supply the id of the doc to update.");
   }
@@ -803,7 +754,6 @@ async function updateDoc(
   return api(
     caps,
     metadata,
-    token,
     `https://docs.googleapis.com/v1/documents/${id}:batchUpdate`,
     "POST",
     body
@@ -812,17 +762,12 @@ async function updateDoc(
 
 async function getPresentation(
   caps: Capabilities,
-  token: string,
   id: string,
   metadata: Metadata
 ): Promise<Outcome<SlidesPresentation>> {
-  if (!token) {
-    return err("Authentication token is required.");
-  }
   return api(
     caps,
     metadata,
-    token,
     `https://slides.googleapis.com/v1/presentations/${id}`,
     "GET"
   );
@@ -830,17 +775,12 @@ async function getPresentation(
 
 async function createPresentation(
   caps: Capabilities,
-  token: string,
   title: string,
   metadata: Metadata
 ): Promise<Outcome<SlidesPresentation>> {
-  if (!token) {
-    return err("Authentication token is required.");
-  }
   return api(
     caps,
     metadata,
-    token,
     "https://slides.googleapis.com/v1/presentations",
     "POST",
     { title }
@@ -849,14 +789,10 @@ async function createPresentation(
 
 async function updatePresentation(
   caps: Capabilities,
-  token: string,
   id: string,
   body: { requests: SlidesRequest[] },
   metadata: Metadata
 ) {
-  if (!token) {
-    return err("Authentication token is required.");
-  }
   if (!id) {
     return err("Please supply the id of the presentation to update.");
   }
@@ -866,7 +802,6 @@ async function updatePresentation(
   return api(
     caps,
     metadata,
-    token,
     `https://slides.googleapis.com/v1/presentations/${id}:batchUpdate`,
     "POST",
     body
@@ -875,14 +810,10 @@ async function updatePresentation(
 
 async function updateSpreadsheetValues(
   caps: Capabilities,
-  token: string,
   id: string,
   body: SpreadsheetValuesUpdate,
   metadata: Metadata
 ) {
-  if (!token) {
-    return err("Authentication token is required.");
-  }
   if (!id) {
     return err("Please supply the id of the spreadsheet to update.");
   }
@@ -892,7 +823,6 @@ async function updateSpreadsheetValues(
   return api(
     caps,
     metadata,
-    token,
     `https://sheets.googleapis.com/v4/spreadsheets/${id}/values:batchUpdate`,
     "POST",
     body
@@ -901,15 +831,11 @@ async function updateSpreadsheetValues(
 
 async function appendSpreadsheetValues(
   caps: Capabilities,
-  token: string,
   id: string,
   range: string,
   body: SpreadsheetValuesAppend,
   metadata: Metadata
 ) {
-  if (!token) {
-    return err("Authentication token is required.");
-  }
   if (!id) {
     return err("Please supply the id of the spreadsheet to update.");
   }
@@ -919,24 +845,14 @@ async function appendSpreadsheetValues(
   return api(
     caps,
     metadata,
-    token,
     `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${range}:append?valueInputOption=USER_ENTERED`,
     "POST",
     body
   );
 }
 
-async function connect({ secrets }: Capabilities, metadata: Metadata) {
-  const { [connectionId]: token } = await secrets({
-    ...meta(metadata),
-    keys: [connectionId],
-  });
-  return token;
-}
-
 async function createMultipart(
   { fetch }: Capabilities,
-  token: string,
   metadata: unknown,
   body: unknown,
   mimeType: string,
@@ -949,7 +865,6 @@ async function createMultipart(
     url,
     method: "POST",
     headers: {
-      Authorization: `Bearer ${token}`,
       ["Content-Type"]: `multipart/related; boundary=${boundary}`,
     },
     body: `--${boundary}
@@ -1004,7 +919,6 @@ export type Permission = {
 
 async function createPermission(
   caps: Capabilities,
-  token: string,
   fileId: string,
   permission: Permission,
   metadata: Metadata
@@ -1012,7 +926,6 @@ async function createPermission(
   return api(
     caps,
     metadata,
-    token,
     `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,
     "POST",
     permission
@@ -1022,7 +935,6 @@ async function createPermission(
 async function api<T>(
   { fetch }: Capabilities,
   metadata: Metadata,
-  token: string,
   url: string,
   method: Method,
   body: unknown | null = null
@@ -1031,9 +943,6 @@ async function api<T>(
     ...meta(metadata),
     url,
     method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
   };
   if (body) {
     request.body = body;

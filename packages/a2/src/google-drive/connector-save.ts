@@ -11,7 +11,6 @@ import {
 import { err, ok } from "../a2/utils";
 import {
   appendSpreadsheetValues,
-  connect,
   create,
   getDoc,
   getPresentation,
@@ -62,12 +61,10 @@ async function invoke(
     if (!canSave) {
       return err(`Unable to save files of type "${mimeType}"`);
     }
-    const token = await connect(caps, { title: "Get Auth Token" });
     switch (mimeType) {
       case DOC_MIME_TYPE: {
         const gettingCollector = await getCollector(
           caps,
-          token,
           connectorId,
           graphId,
           title ?? "Untitled Document",
@@ -79,7 +76,6 @@ async function invoke(
         const requests = await contextToRequests(caps, context, end!);
         const updating = await updateDoc(
           caps,
-          token,
           id,
           { requests },
           { title: "Append to Google Doc" }
@@ -91,7 +87,6 @@ async function invoke(
         const [gettingCollector, result] = await Promise.all([
           getCollector(
             caps,
-            token,
             connectorId,
             graphId,
             title ?? "Untitled Presentation",
@@ -111,7 +106,6 @@ async function invoke(
         console.log("REQUESTS", requests);
         const updating = await updatePresentation(
           caps,
-          token,
           id,
           { requests },
           { title: "Append to Google Presentation" }
@@ -123,7 +117,6 @@ async function invoke(
         const [gettingCollector, result] = await Promise.all([
           getCollector(
             caps,
-            token,
             connectorId,
             graphId,
             title ?? "Untitled Spreadsheet",
@@ -138,7 +131,6 @@ async function invoke(
         console.log("VALUES", result);
         const appending = await appendSpreadsheetValues(
           caps,
-          token,
           id,
           "Sheet1",
           { values: result },
@@ -168,7 +160,6 @@ type CollectorData = {
  */
 async function getCollector(
   caps: Capabilities,
-  token: string,
   connectorId: string,
   graphId: string,
   title: string,
@@ -180,7 +171,6 @@ async function getCollector(
     const fileKey = `${getTypeKey(mimeType)}${connectorId}${graphId}`;
     const findFile = await query(
       caps,
-      token,
       `appProperties has { key = 'google-drive-connector' and value = '${fileKey}' } and trashed = false`,
       { title: "Find the doc to append to" }
     );
@@ -189,7 +179,6 @@ async function getCollector(
     if (!file) {
       const createdFile = await create(
         caps,
-        token,
         {
           name: title,
           mimeType,
@@ -206,14 +195,9 @@ async function getCollector(
           end: 1,
         };
       } else if (mimeType === SLIDES_MIME_TYPE) {
-        const gettingPresenation = await getPresentation(
-          caps,
-          token,
-          createdFile.id,
-          {
-            title: "Reading presentation",
-          }
-        );
+        const gettingPresenation = await getPresentation(caps, createdFile.id, {
+          title: "Reading presentation",
+        });
         if (!ok(gettingPresenation)) return gettingPresenation;
         return {
           id: gettingPresenation.presentationId!,
@@ -231,7 +215,7 @@ async function getCollector(
     id = fileId;
   }
   if (mimeType === DOC_MIME_TYPE) {
-    const gettingDoc = await getDoc(caps, token, id, {
+    const gettingDoc = await getDoc(caps, id, {
       title: "Get current doc contents",
     });
     if (!ok(gettingDoc)) return gettingDoc;
@@ -244,7 +228,7 @@ async function getCollector(
       ) - 1;
     return { id, end };
   } else if (mimeType === SLIDES_MIME_TYPE) {
-    const gettingPresentation = await getPresentation(caps, token, id, {
+    const gettingPresentation = await getPresentation(caps, id, {
       title: "Get current doc contents",
     });
     if (!ok(gettingPresentation)) return gettingPresentation;

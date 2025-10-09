@@ -36,6 +36,10 @@ const URL_SCOPE_MAP: ReadonlyMap<string, OAuthScope[]> = new Map([
   [ASSET_DRIVE_API_ENDPOINT, DRIVE_SCOPES],
   ["https://www.googleapis.com/calendar/", CALENDAR_SCOPES],
   ["https://www.googleapis.com/drive/", DRIVE_SCOPES],
+  ["https://docs.googleapis.com/v1/documents/", DRIVE_SCOPES],
+  ["https://slides.googleapis.com/v1/presentations/", DRIVE_SCOPES],
+  ["https://sheets.googleapis.com/v4/spreadsheets/", DRIVE_SCOPES],
+  ["https://www.googleapis.com/upload/drive/v3/", DRIVE_SCOPES],
   ["https://gmail.googleapis.com", GMAIL_SCOPES],
   ["https://generativelanguage.googleapis.com/v1beta/models/", GENAI_SCOPES],
 ]);
