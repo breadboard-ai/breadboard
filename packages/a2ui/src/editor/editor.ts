@@ -33,6 +33,7 @@ import {
   SnackType,
 } from "./types/types.js";
 import { DrawableCanvas } from "./ui/ui.js";
+import { fix3 } from "./samples/canned-responses";
 
 type Mode = "upload" | "sketch";
 
@@ -419,9 +420,10 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
     return html`<section id="surfaces">
       ${repeat(
         this.#processor.getSurfaces(),
-        ([id]) => id,
-        ([, surface]) => {
+        ([surfaceId]) => surfaceId,
+        ([surfaceId, surface]) => {
           return html`<a2ui-surface
+            .surfaceId=${surfaceId}
             .surface=${surface}
             .processor=${this.#processor}
           ></a2-uisurface>`;

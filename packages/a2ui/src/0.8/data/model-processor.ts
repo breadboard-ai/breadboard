@@ -98,10 +98,10 @@ export class A2UIModelProcessor {
     }
   }
 
-  getDataByPath(
-    path: string,
-    surfaceId = A2UIModelProcessor.DEFAULT_SURFACE_ID
-  ) {
+  getDataByPath(path: string, surfaceId: SurfaceID | null = null) {
+    if (!surfaceId) {
+      surfaceId = A2UIModelProcessor.DEFAULT_SURFACE_ID;
+    }
     const surface = this.#surfaces.get(surfaceId);
     if (!surface) {
       return null;

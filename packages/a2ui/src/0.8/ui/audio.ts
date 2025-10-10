@@ -50,7 +50,8 @@ export class Audio extends Root {
         }
 
         const audioUrl = this.processor.getDataByPath(
-          `${this.dataContextPath}${this.url.path}`
+          `${this.dataContextPath}${this.url.path}`,
+          this.surfaceId
         );
         if (!audioUrl) {
           return html`Invalid audio URL`;

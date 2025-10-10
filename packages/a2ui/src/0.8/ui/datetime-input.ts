@@ -91,7 +91,8 @@ export class DateTimeInput extends Root {
         }
 
         const textValue = this.processor.getDataByPath(
-          `${this.dataContextPath}${this.value.path}`
+          `${this.dataContextPath}${this.value.path}`,
+          this.surfaceId
         );
         if (typeof textValue !== "string") {
           return html`(invalid)`;

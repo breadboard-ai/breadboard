@@ -74,7 +74,8 @@ export class Heading extends Root {
         }
 
         const textValue = this.processor.getDataByPath(
-          `${this.dataContextPath}${this.text.path}`
+          `${this.dataContextPath}${this.text.path}`,
+          this.surfaceId
         );
         if (typeof textValue !== "string") {
           return html`(invalid)`;
