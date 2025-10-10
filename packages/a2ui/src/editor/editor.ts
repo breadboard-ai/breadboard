@@ -33,7 +33,6 @@ import {
   SnackType,
 } from "./types/types.js";
 import { DrawableCanvas } from "./ui/ui.js";
-import { fix3 } from "./samples/canned-responses";
 
 type Mode = "upload" | "sketch";
 
