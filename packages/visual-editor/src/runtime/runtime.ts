@@ -63,6 +63,7 @@ export class Runtime extends EventTarget {
   public readonly state: StateManager;
   public readonly flags: RuntimeFlagManager;
   public readonly util: typeof Util;
+  public readonly fetchWithCreds: typeof globalThis.fetch;
 
   constructor(config: {
     shell: Shell;
@@ -76,6 +77,7 @@ export class Runtime extends EventTarget {
     state: StateManager;
     flags: RuntimeFlagManager;
     util: typeof Util;
+    fetchWithCreds: typeof globalThis.fetch;
   }) {
     super();
 
@@ -90,6 +92,7 @@ export class Runtime extends EventTarget {
     this.state = config.state;
     this.flags = config.flags;
     this.util = config.util;
+    this.fetchWithCreds = config.fetchWithCreds;
 
     this.#setupPassthruHandlers();
   }
@@ -132,6 +135,7 @@ export class Runtime extends EventTarget {
         }),
         inputs: inputsFromSettings(settings),
         interactiveSecrets: true,
+        fetchWithCreds: this.fetchWithCreds,
       },
       settings,
       undefined /* no longer used */,
@@ -322,5 +326,6 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
     kits,
     shell,
     flags,
+    fetchWithCreds: config.fetchWithCreds,
   });
 }

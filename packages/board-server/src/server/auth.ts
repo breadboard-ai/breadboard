@@ -58,7 +58,7 @@ export function getUserCredentials(): RequestHandler {
   };
 }
 
-function getAccessToken(req: Request): string {
+export function getAccessToken(req: Request): string {
   const authorization = req.headers.authorization;
   if (!authorization) {
     return "";

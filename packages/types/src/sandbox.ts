@@ -36,7 +36,6 @@ export type Capability = (
 export type CapabilitySpec = {
   fetch?: Capability;
   invoke?: Capability;
-  secrets?: Capability;
   input?: Capability;
   output?: Capability;
   describe?: Capability;

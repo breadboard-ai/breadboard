@@ -14,8 +14,11 @@ import {
 import { GoogleStorageBlobStore } from "../blob-store.js";
 import type { ServerConfig } from "../config.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import type { FetchInputs } from "@breadboard-ai/types";
+import type { Request } from "express";
+import { getAccessToken } from "../auth.js";
 
-export { GcsAwareFetch };
+export { GcsAndCredsAwareFetch };
 
 type Chunk = {
   mimetype: string;
@@ -25,8 +28,8 @@ type StepContent = {
   chunks: Chunk[];
 };
 
-class GcsAwareFetch {
-  static #instance: GcsAwareFetch | undefined;
+class GcsAndCredsAwareFetch {
+  static #instance: GcsAndCredsAwareFetch | undefined;
 
   constructor(public readonly serverConfig: ServerConfig) {}
 
@@ -38,6 +41,15 @@ class GcsAwareFetch {
     return prepareGcsData(inputs, bucketName, serverUrl);
   }
 
+  #addAuthToken(request: Request, inputs: InputValues): InputValues {
+    const fetchInputs = { ...inputs } as FetchInputs;
+    fetchInputs.headers = {
+      ...fetchInputs.headers,
+      Authorization: `Bearer ${getAccessToken(request)}`,
+    };
+    return fetchInputs as InputValues;
+  }
+
   #procesFetchOutputs(serverUrl: string, outputs: OutputValues | void) {
     if (!serverUrl || !outputs) {
       return outputs;
@@ -45,7 +57,7 @@ class GcsAwareFetch {
     return blobifyStepOutputs(serverUrl, outputs);
   }
 
-  createKit(nestedKit: Kit): Kit {
+  createKit(request: Request, nestedKit: Kit): Kit {
     const nestedFetch = nestedKit.handlers.fetch;
     if (!nestedFetch) {
       throw new Error(`Invalid argument: unable to find "fetch" handler`);
@@ -75,10 +87,12 @@ class GcsAwareFetch {
             inputs
           );
 
+          const inputsWithAuth = this.#addAuthToken(request, updatedInputs);
+
           // ... call the nested fetch ...
           const outputs = await callHandler(
             nestedFetch,
-            updatedInputs,
+            inputsWithAuth,
             context
           );
 
@@ -91,11 +105,11 @@ class GcsAwareFetch {
     };
   }
 
-  static instance(config: ServerConfig): GcsAwareFetch {
-    if (!GcsAwareFetch.#instance) {
-      GcsAwareFetch.#instance = new GcsAwareFetch(config);
+  static instance(config: ServerConfig): GcsAndCredsAwareFetch {
+    if (!GcsAndCredsAwareFetch.#instance) {
+      GcsAndCredsAwareFetch.#instance = new GcsAndCredsAwareFetch(config);
     }
-    return GcsAwareFetch.#instance;
+    return GcsAndCredsAwareFetch.#instance;
   }
 }
 

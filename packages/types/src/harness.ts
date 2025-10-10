@@ -252,6 +252,10 @@ export type RunConfig = {
    * If not specified, runs the whole board.
    */
   stopAfter?: NodeIdentifier;
+  /**
+   * A fetch implementation that automatically handles auth credentials.
+   */
+  fetchWithCreds?: typeof globalThis.fetch;
 };
 
 export type RunEventMap = {

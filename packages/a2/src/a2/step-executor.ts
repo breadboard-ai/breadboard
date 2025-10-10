@@ -202,9 +202,6 @@ async function executeStep(
   try {
     await reporter.start();
     await reporter.sendUpdate("Step Input", elideEncodedData(body), "upload");
-    // Get an authentication token.
-    const secretKey = "connection:$sign-in";
-    const token = (await caps.secrets({ keys: [secretKey] }))[secretKey];
     // Call the API.
     const url = await getBackendUrl(caps);
     // Record model call with action tracker.
@@ -217,7 +214,6 @@ async function executeStep(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
       body: body,
     });

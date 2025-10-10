@@ -384,12 +384,6 @@ function conformBody(body: GeminiBody): GeminiBody {
   };
 }
 
-async function getAccessToken({ secrets }: Capabilities) {
-  const signInSecretName = "connection:$sign-in";
-  const result = await secrets({ keys: [signInSecretName] });
-  return result[signInSecretName];
-}
-
 async function callAPI(
   caps: Capabilities,
   retries: number,
@@ -397,7 +391,6 @@ async function callAPI(
   body: GeminiBody,
   $metadata?: Metadata
 ): Promise<Outcome<GeminiAPIOutputs>> {
-  const accessToken = await getAccessToken(caps);
   const reporter = new StreamableReporter(caps, {
     title: `Calling ${model}`,
     icon: "spark",
@@ -420,9 +413,6 @@ async function callAPI(
         $metadata,
         url: endpointURL(model),
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
         body: conformedBody,
       });
       if (!ok(result)) {

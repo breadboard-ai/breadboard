@@ -29,7 +29,7 @@ import {
 import { GraphLoader } from "./loader.js";
 import { Probe } from "./probe.js";
 import { ManagedRunState, RunState } from "./run.js";
-import { RunnableModule, RunnableModuleFactory, Sandbox } from "./sandbox.js";
+import { RunnableModuleFactory } from "./sandbox.js";
 import { Schema } from "./schema.js";
 import { TraversalResult } from "./traversal.js";
 
@@ -389,6 +389,10 @@ export interface NodeHandlerContext {
    * A way to see and manage runtime flags.
    */
   flags?: RuntimeFlagManager;
+  /**
+   * A fetch implementation that automatically handles auth credentials.
+   */
+  fetchWithCreds?: typeof globalThis.fetch;
 }
 
 export type RunArguments = NodeHandlerContext & {

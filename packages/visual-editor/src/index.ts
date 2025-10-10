@@ -438,6 +438,8 @@ export class Main extends SignalWatcher(LitElement) {
     // eslint-disable-next-line prefer-const
     let fileSystem: FileSystem;
 
+    const fetchWithCreds = createFetchWithCreds(this.signinAdapter);
+
     const mcpClientManager = new McpClientManager(
       builtInMcpClients,
       {
@@ -453,7 +455,7 @@ export class Main extends SignalWatcher(LitElement) {
         get fileSystem() {
           return fileSystem!;
         },
-        fetchWithCreds: createFetchWithCreds(this.signinAdapter),
+        fetchWithCreds,
       },
       this.globalConfig.BACKEND_API_ENDPOINT
     );
@@ -513,6 +515,7 @@ export class Main extends SignalWatcher(LitElement) {
       appSubName: Strings.from("SUB_APP_NAME"),
       flags: flagManager,
       mcpClientManager,
+      fetchWithCreds,
     });
     this.#addRuntimeEventHandlers();
 

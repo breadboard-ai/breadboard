@@ -530,8 +530,16 @@ class InternalRunStateController {
   ): Promise<NodeHandlerContext> {
     const kits = await configureKits(this.config, next);
 
-    const { loader, store, fileSystem, base, signal, state, graphStore } =
-      this.config;
+    const {
+      loader,
+      store,
+      fileSystem,
+      base,
+      signal,
+      state,
+      graphStore,
+      fetchWithCreds,
+    } = this.config;
 
     const probe: Probe = {
       async report(message) {
@@ -555,6 +563,7 @@ class InternalRunStateController {
       signal,
       state,
       graphStore,
+      fetchWithCreds,
     };
   }
 
