@@ -17,7 +17,7 @@ import {
 } from "./types.js";
 import { McpBuiltInServerStore } from "./builtin-server-store.js";
 import { Outcome } from "@breadboard-ai/types";
-import { err, ok } from "@breadboard-ai/utils";
+import { err } from "@breadboard-ai/utils";
 import { ProxyBackedClient } from "./proxy-backed-client.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { FetchLike } from "@modelcontextprotocol/sdk/shared/transport.js";
@@ -34,7 +34,7 @@ class McpClientManager {
   constructor(
     builtInClients: [string, McpBuiltInClientFactory][],
     private readonly context: McpBuiltInClientFactoryContext,
-    private readonly proxyUrl?: string
+    private readonly proxyUrl: string
   ) {
     this.#builtIn = new McpBuiltInServerStore(context, builtInClients);
     this.#serverStore = createMcpServerStore();
@@ -47,11 +47,6 @@ class McpClientManager {
   #fetch(): FetchLike {
     const proxyURL = new URL("/api/mcp-proxy", window.location.href);
     return async (url: string | URL, init?: RequestInit) => {
-      const accessToken = await this.context.tokenGetter();
-      if (!ok(accessToken)) {
-        throw new Error(accessToken.$error);
-      }
-
       const { signal, headers, ...noSignalInit } = init || {};
       let headersObj: Record<string, string> = {};
       if (headers) {
@@ -75,10 +70,9 @@ class McpClientManager {
           headers: headersObj,
         } as JsonSerializableRequestInit,
       };
-      return fetch(proxyURL, {
+      return this.context.fetchWithCreds(proxyURL, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
         signal,
@@ -102,9 +96,7 @@ class McpClientManager {
       if (isBuiltIn) {
         return this.#builtIn.get(url);
       } else if (this.proxyUrl) {
-        const accessToken = await this.context.tokenGetter();
         const serverInfo = await this.#serverStore.get(url);
-        if (!ok(accessToken)) return accessToken;
 
         return new CachingMcpClient(
           this.#cache,
@@ -112,7 +104,7 @@ class McpClientManager {
           new ProxyBackedClient({
             name: serverInfo?.title || info.name,
             url,
-            proxyToken: accessToken,
+            fetchWithCreds: this.context.fetchWithCreds,
             proxyUrl: this.proxyUrl,
             token: serverInfo?.authToken,
           }),

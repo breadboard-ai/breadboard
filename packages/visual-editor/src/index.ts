@@ -128,6 +128,11 @@ type RenderValues = {
   topGraphResult: BreadboardUI.Types.TopGraphRunResult;
 };
 
+type InitArgs = {
+  fetchWithCreds: typeof globalThis.fetch;
+  backendApiEndpoint: string;
+};
+
 const LOADING_TIMEOUT = 1250;
 const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
 const UPDATE_HASH_KEY = "bb-main-update-hash";
@@ -382,7 +387,12 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.#embedHandler = args.embedHandler;
 
-    this.#init(args).then(() => {
+    const fetchWithCreds = createFetchWithCreds({
+      adapter: this.signinAdapter,
+      backendApiEndpoint,
+    });
+
+    this.#init(args, { fetchWithCreds, backendApiEndpoint }).then(() => {
       console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
       this.#ready = true;
     });
@@ -431,33 +441,24 @@ export class Main extends SignalWatcher(LitElement) {
     window.removeEventListener("keydown", this.#onKeyboardShortCut);
   }
 
-  async #init(args: MainArguments) {
+  async #init(args: MainArguments, initArgs: InitArgs) {
     const flagManager = createFlagManager(this.globalConfig.flags);
     const flags = await flagManager.flags();
+
+    const { fetchWithCreds, backendApiEndpoint } = initArgs;
 
     // eslint-disable-next-line prefer-const
     let fileSystem: FileSystem;
 
-    const fetchWithCreds = createFetchWithCreds(this.signinAdapter);
-
     const mcpClientManager = new McpClientManager(
       builtInMcpClients,
       {
-        tokenGetter: async (scopes) => {
-          const token = await this.signinAdapter.token(scopes);
-          if (token.state === "valid") {
-            return token.grant.access_token;
-          }
-          // This will fail, and that's okay. We'll get the "Unauthorized"
-          // error.
-          return "";
-        },
         get fileSystem() {
           return fileSystem!;
         },
         fetchWithCreds,
       },
-      this.globalConfig.BACKEND_API_ENDPOINT
+      backendApiEndpoint
     );
 
     fileSystem = createFileSystem({
