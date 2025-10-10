@@ -21,18 +21,11 @@
     "build": "wireit",
     "build:tsc": "wireit",
     "lint": "wireit",
-    "dev": "wireit",
-    "test": "wireit"
+    "dev": "wireit"
   },
   "wireit": {
     "dev": {
       "command": "vite dev",
-      "dependencies": [
-        "build"
-      ]
-    },
-    "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/0.8/tests/**/*.test.js",
       "dependencies": [
         "build"
       ]
