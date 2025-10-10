@@ -142,8 +142,6 @@ export const plugin = (): Plugin => {
                       request.instructions
                     );
 
-                    console.log(prompt);
-
                     const modelResponse = await ai.models.generateContent({
                       model: "gemini-2.5-flash",
                       contents: prompt,
