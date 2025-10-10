@@ -80,19 +80,19 @@ class GcsAndCredsAwareFetch {
             return callHandler(nestedFetch, inputs, context);
           }
 
+          const inputsWithAuth = this.#addAuthToken(request, inputs);
+
           // Otherwise, process inputs ...
           const updatedInputs = await this.#processFetchInputs(
             storageBucket,
             serverUrl,
-            inputs
+            inputsWithAuth
           );
-
-          const inputsWithAuth = this.#addAuthToken(request, updatedInputs);
 
           // ... call the nested fetch ...
           const outputs = await callHandler(
             nestedFetch,
-            inputsWithAuth,
+            updatedInputs,
             context
           );
 
