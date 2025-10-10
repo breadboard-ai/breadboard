@@ -254,7 +254,6 @@ export class DrawableCanvas extends LitElement {
           break;
         }
 
-        // Add a new line segment to the current path
         this.#currentShape.value += ` L ${x} ${y}`;
         break;
       }
@@ -339,9 +338,6 @@ export class DrawableCanvas extends LitElement {
   }
 
   render() {
-    // By setting the viewBox to the element's current client dimensions, we create
-    // a 1:1 mapping between pixel coordinates and SVG user units. This makes the
-    // drawing responsive: if the element is resized, the SVG content scales correctly.
     return html`${svg`
       <svg
         viewBox="${this.#adjustment.x} ${this.#adjustment.y} ${this.#bounds.width} ${this.#bounds.height}"
@@ -377,17 +373,11 @@ export class DrawableCanvas extends LitElement {
       </div> `;
   }
 
-  /**
-   * Clears all drawings from the canvas.
-   */
   public clear() {
     this.#shapes.length = 0;
     this.#currentShape = null;
   }
 
-  /**
-   * Exports the drawing as an Image element.
-   */
   public async getValue(): Promise<HTMLImageElement> {
     const svgEl = this.#svg;
     if (!svgEl) {
@@ -437,7 +427,6 @@ export class DrawableCanvas extends LitElement {
         reject(new Error(`Failed to load SVG into image: ${err}`));
       };
 
-      // Convert the SVG string to a Blob and create a URL to use as the image source
       const svgBlob = new Blob([svgString], {
         type: "image/svg+xml;charset=utf-8",
       });
