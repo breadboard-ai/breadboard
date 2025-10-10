@@ -35,9 +35,6 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
     return new Request(path, {
       method: "POST",
       credentials: "include",
-      headers: {
-        Authorization: `Bearer ${await this.client.accessToken()}`,
-      },
       body: JSON.stringify(body),
     });
   }
@@ -90,7 +87,7 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
             (part.fileData.resourceKey
               ? `?resourceKey=${part.fileData.resourceKey}`
               : "");
-          const converting = await fetch(
+          const converting = await this.client.fetchWithCreds(
             await this.#createRequest(path, { part })
           );
           if (!converting.ok) return err(await converting.text());
@@ -120,7 +117,7 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
             (part.storedData.resourceKey
               ? `&resourceKey=${part.storedData.resourceKey}`
               : "");
-          const converting = await fetch(
+          const converting = await this.client.fetchWithCreds(
             await this.#createRequest(path, { part })
           );
           if (!converting.ok) return err(await converting.text());

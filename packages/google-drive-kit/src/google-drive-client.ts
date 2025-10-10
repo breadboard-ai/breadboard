@@ -6,7 +6,6 @@
 
 /// <reference types="@types/gapi.client.drive-v3" />
 
-import type { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { retryableFetch } from "./board-server/utils.js";
 
 type File = gapi.client.drive.File;
@@ -16,7 +15,7 @@ export interface GoogleDriveClientOptions {
   apiBaseUrl?: string;
   /** @see {@link GoogleDriveClient.markFileForReadingWithPublicProxy} */
   proxyApiBaseUrl?: string;
-  getUserAccessToken: () => Promise<string>;
+  fetchWithCreds: typeof globalThis.fetch;
 }
 
 export interface BaseRequestOptions {
@@ -166,9 +165,7 @@ export type DriveFileId = { id: string; resourceKey?: string };
 
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
-type GoogleApiAuthorization =
-  | { kind: "bearer"; token: string }
-  | { kind: "anonymous" };
+type GoogleApiAuthorization = "fetchWithCreds" | "anonymous";
 
 export class GoogleDriveClient {
   readonly #apiUrl: string;
@@ -179,23 +176,17 @@ export class GoogleDriveClient {
         marked: Set<string>;
       }
     | undefined;
-  readonly #getUserAccessToken: (scopes?: OAuthScope[]) => Promise<string>;
+  readonly fetchWithCreds: typeof globalThis.fetch;
 
   constructor(options: GoogleDriveClientOptions) {
     this.#apiUrl = options.apiBaseUrl || "https://www.googleapis.com";
-    this.#getUserAccessToken = options.getUserAccessToken;
     this.#publicProxy = options.proxyApiBaseUrl
       ? {
           apiUrl: options.proxyApiBaseUrl,
           marked: new Set(),
         }
       : undefined;
-  }
-
-  // TODO(aomarks) Remove. Anything that needs an access token should get it
-  // itself.
-  async accessToken(scopes?: OAuthScope[]): Promise<string> {
-    return this.#getUserAccessToken(scopes);
+    this.fetchWithCreds = options.fetchWithCreds;
   }
 
   async #fetch(
@@ -209,27 +200,21 @@ export class GoogleDriveClient {
     resourceKeys?: DriveFileId[],
     authorization?: GoogleApiAuthorization
   ): Promise<Response> {
-    authorization ??= {
-      kind: "bearer",
-      token: await this.#getUserAccessToken(),
-    };
-    const headers = this.#makeFetchHeaders(authorization, resourceKeys);
+    const headers = this.#makeFetchHeaders(resourceKeys);
     if (init?.headers) {
       for (const [key, val] of Object.entries(init.headers)) {
         headers.set(key, val);
       }
     }
-    return retryableFetch(url, { ...init, headers });
+
+    const fetchToUse =
+      authorization === "anonymous" ? globalThis.fetch : this.fetchWithCreds;
+
+    return retryableFetch(fetchToUse, url, { ...init, headers });
   }
 
-  #makeFetchHeaders(
-    authorization: GoogleApiAuthorization,
-    resourceKeys: DriveFileId[] | undefined
-  ): Headers {
+  #makeFetchHeaders(resourceKeys: DriveFileId[] | undefined): Headers {
     const headers = new Headers();
-    if (authorization.kind === "bearer") {
-      headers.set("authorization", `Bearer ${authorization.token}`);
-    }
     if (resourceKeys) {
       const resourceKeyHeader = makeResourceKeysHeaderValue(resourceKeys);
       if (resourceKeyHeader) {
@@ -275,8 +260,8 @@ export class GoogleDriveClient {
           : this.#apiUrl,
       authorization:
         (!bypassProxy && fileIsMarkedAsPublic) || isAlwaysProxying
-          ? { kind: "anonymous" }
-          : { kind: "bearer", token: await this.#getUserAccessToken() },
+          ? "anonymous"
+          : "fetchWithCreds",
     };
   }
 
@@ -504,12 +489,7 @@ export class GoogleDriveClient {
         signal: options?.signal,
       },
       undefined,
-      {
-        kind: "bearer",
-        // TODO(aomarks) Set the drive.file scope here, and either that or
-        // drive.readonly for every other method.
-        token: await this.#getUserAccessToken(),
-      }
+      "fetchWithCreds"
     );
     if (!response.ok) {
       throw new Error(

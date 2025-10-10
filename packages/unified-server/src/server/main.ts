@@ -22,6 +22,7 @@ import { createUpdatesHandler } from "./upates.js";
 
 import { GoogleAuth } from "google-auth-library";
 import { createMcpProxyHandler } from "./mcp-proxy.js";
+import { createServerFetchWithCreds } from "./server-fetch-with-creds.js";
 
 const FEATURED_GALLERY_CACHE_REFRESH_SECONDS = 10 * 60;
 
@@ -70,8 +71,7 @@ const googleAuth = new GoogleAuth({
 });
 const authClient = await googleAuth.getClient();
 const driveClient = new GoogleDriveClient({
-  getUserAccessToken: async () =>
-    (await authClient.getAccessToken()).token ?? "",
+  fetchWithCreds: createServerFetchWithCreds(authClient),
 });
 
 console.log("[unified-server startup] Mounting gallery");

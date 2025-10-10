@@ -16,6 +16,7 @@ import {
   GoogleDriveClient,
   type DriveFileId,
 } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { createServerFetchWithCreds } from "../proxy/server-fetch-with-creds.js";
 
 type DriveError = {
   error: {
@@ -94,7 +95,7 @@ export function makeHandleAssetsDriveRequest() {
     };
     let mimeType = (req.query["mimeType"] as string) ?? "";
     const googleDriveClient = new GoogleDriveClient({
-      getUserAccessToken: async () => accessToken,
+      fetchWithCreds: createServerFetchWithCreds(accessToken),
     });
 
     const part = CavemanCache.instance().get(driveId.id);

@@ -17,6 +17,7 @@ import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-
 import type { FetchInputs } from "@breadboard-ai/types";
 import type { Request } from "express";
 import { getAccessToken } from "../auth.js";
+import { createServerFetchWithCreds } from "./server-fetch-with-creds.js";
 
 export { GcsAndCredsAwareFetch };
 
@@ -262,7 +263,7 @@ async function convertToGcsReferences(
 // Fetch media asset from long term  storage in Drive.
 async function fetchDriveAssetAsBuffer(driveId: string, accessToken: string) {
   const driveClient = new GoogleDriveClient({
-    getUserAccessToken: async () => accessToken,
+    fetchWithCreds: createServerFetchWithCreds(accessToken),
   });
   const gettingMedia = await driveClient.getFileMedia(driveId);
   const arrayBuffer = await gettingMedia.arrayBuffer();
