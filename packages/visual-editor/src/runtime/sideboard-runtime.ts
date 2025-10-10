@@ -74,7 +74,8 @@ function createSideboardRuntimeProvider(
         config.tokenVendor!,
         config.settings,
         config.proxy,
-        config.fileSystem
+        config.fileSystem,
+        config.fetchWithCreds
       );
     },
   };
@@ -97,7 +98,8 @@ class SideboardRuntimeImpl
     public readonly tokenVendor: TokenVendor,
     public readonly settings: SettingsStore,
     private readonly proxy: HarnessProxyConfig[] | undefined,
-    fileSystem: FileSystem | undefined
+    fileSystem: FileSystem | undefined,
+    private readonly fetchWithCreds: typeof globalThis.fetch
   ) {
     super();
     this.#dataStore = new BoardServerAwareDataStore(
@@ -237,6 +239,7 @@ class SideboardRuntimeImpl
       }),
       interactiveSecrets: true,
       signal,
+      fetchWithCreds: this.fetchWithCreds,
     };
 
     if (!loadGraph) {
