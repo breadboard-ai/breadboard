@@ -574,3 +574,115 @@ export const fix2 = [
     },
   },
 ];
+
+export const fix3 = [
+  {
+    surfaceId: "default",
+    surfaceUpdate: {
+      components: [
+        {
+          id: "imageTemplate",
+          componentProperties: {
+            Image: {
+              url: {
+                path: "/imageUrl",
+              },
+            },
+          },
+        },
+        {
+          id: "headingTemplate",
+          componentProperties: {
+            Heading: {
+              text: {
+                path: "/cardHeading",
+              },
+              level: "3",
+            },
+          },
+        },
+        {
+          id: "textTemplate",
+          componentProperties: {
+            Text: {
+              text: {
+                path: "/cardDescription",
+              },
+            },
+          },
+        },
+        {
+          id: "cardContentColumn",
+          componentProperties: {
+            Column: {
+              children: {
+                explicitList: [
+                  "imageTemplate",
+                  "headingTemplate",
+                  "textTemplate",
+                ],
+              },
+              distribution: "start",
+              alignment: "stretch",
+            },
+          },
+        },
+        {
+          id: "cardItemTemplate",
+          componentProperties: {
+            Card: {
+              child: "cardContentColumn",
+            },
+          },
+        },
+        {
+          id: "mainCarousel",
+          componentProperties: {
+            List: {
+              children: {
+                template: {
+                  componentId: "cardItemTemplate",
+                  dataBinding: "/carouselItems",
+                },
+              },
+              direction: "horizontal",
+              alignment: "start",
+            },
+          },
+        },
+      ],
+    },
+  },
+  {
+    surfaceId: "default",
+    dataModelUpdate: {
+      path: "/carouselItems",
+      contents: [
+        {
+          imageUrl: "/images/carousel_item_1.jpg",
+          cardHeading: "Explore New Horizons",
+          cardDescription:
+            "Discover breathtaking landscapes and hidden gems. Our tours offer unique experiences for every adventurer.",
+        },
+        {
+          imageUrl: "/images/carousel_item_2.jpg",
+          cardHeading: "Culinary Delights",
+          cardDescription:
+            "Indulge in exquisite flavors from around the world. Each dish is a journey for your taste buds.",
+        },
+        {
+          imageUrl: "/images/carousel_item_3.jpg",
+          cardHeading: "Artistic Expressions",
+          cardDescription:
+            "Immerse yourself in vibrant art and culture. Exhibitions showcasing local and international talents.",
+        },
+      ],
+    },
+  },
+  {
+    surfaceId: "default",
+    beginRendering: {
+      root: "mainCarousel",
+    },
+  },
+];

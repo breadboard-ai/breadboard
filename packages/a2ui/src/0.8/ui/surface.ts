@@ -5,11 +5,14 @@
  */
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Surface as SurfaceState } from "../types/types";
+import { SurfaceID, Surface as SurfaceState } from "../types/types";
 import { A2UIModelProcessor } from "../data/model-processor";
 
 @customElement("a2ui-surface")
 export class Surface extends LitElement {
+  @property()
+  accessor surfaceId: SurfaceID | null = null;
+
   @property()
   accessor surface: SurfaceState | null = null;
 
@@ -31,6 +34,7 @@ export class Surface extends LitElement {
     }
 
     return html`<a2ui-root
+      .surfaceId=${this.surfaceId}
       .processor=${this.processor}
       .childComponents=${[this.surface.componentTree]}
     ></a2ui-root>`;

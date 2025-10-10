@@ -14,7 +14,7 @@ import {
   TemplateResult,
 } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { AnyComponentNode } from "../types/types";
+import { AnyComponentNode, SurfaceID } from "../types/types";
 import { effect } from "signal-utils/subtle/microtask-effect";
 import { map } from "lit/directives/map.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
@@ -26,6 +26,9 @@ import * as Styles from "./styles";
 // This is the base class all the components will inherit
 @customElement("a2ui-root")
 export class Root extends SignalWatcher(LitElement) {
+  @property()
+  accessor surfaceId: SurfaceID | null = null;
+
   @consume({ context: themeContext })
   accessor theme!: Theme;
 
@@ -123,6 +126,7 @@ export class Root extends SignalWatcher(LitElement) {
             .weight=${1}
             .direction=${component.properties.direction ?? "vertical"}
             .processor=${this.processor}
+            .surfaceId=${this.surfaceId}
             .childComponents=${childComponents}
           ></a2ui-list>`;
         }
@@ -138,6 +142,7 @@ export class Root extends SignalWatcher(LitElement) {
             id=${component.id}
             .weight=${1}
             .processor=${this.processor}
+            .surfaceId=${this.surfaceId}
             .childComponents=${childComponents}
             .dataContextPath=${component.dataContextPath ?? ""}
           ></a2ui-card>`;
@@ -148,6 +153,7 @@ export class Root extends SignalWatcher(LitElement) {
             id=${component.id}
             .weight=${1}
             .processor=${this.processor}
+            .surfaceId=${this.surfaceId}
             .childComponents=${component.properties.children ?? null}
             .dataContextPath=${component.dataContextPath ?? ""}
             .alignment="${component.properties.alignment ?? "stretch"};"
@@ -160,6 +166,7 @@ export class Root extends SignalWatcher(LitElement) {
             id=${component.id}
             .weight=${1}
             .processor=${this.processor}
+            .surfaceId=${this.surfaceId}
             .childComponents=${component.properties.children ?? null}
             .dataContextPath=${component.dataContextPath ?? ""}
             .alignment="${component.properties.alignment ?? "stretch"};"
@@ -172,6 +179,7 @@ export class Root extends SignalWatcher(LitElement) {
             id=${component.id}
             .weight=${1}
             .processor=${this.processor}
+            .surfaceId=${this.surfaceId}
             .url=${component.properties.url ?? null}
             .dataContextPath=${component.dataContextPath ?? ""}
           ></a2ui-image>`;
@@ -182,6 +190,7 @@ export class Root extends SignalWatcher(LitElement) {
             id=${component.id}
             .weight=${1}
             .processor=${this.processor}
+            .surfaceId=${this.surfaceId}
             .url=${component.properties.url ?? null}
             .dataContextPath=${component.dataContextPath ?? ""}
           ></a2ui-audioplayer>`;
@@ -192,6 +201,7 @@ export class Root extends SignalWatcher(LitElement) {
             id=${component.id}
             .weight=${1}
             .processor=${this.processor}
+            .surfaceId=${this.surfaceId}
             .dataContextPath=${component.dataContextPath ?? ""}
             .label=${component.properties.label}
             .action=${component.properties.action}
@@ -203,6 +213,7 @@ export class Root extends SignalWatcher(LitElement) {
             id=${component.id}
             .weight=${1}
             .model=${this.processor}
+            .surfaceId=${this.surfaceId}
             .processor=${this.processor}
             .dataContextPath=${component.dataContextPath}
             .text=${component.properties.text}
@@ -214,6 +225,7 @@ export class Root extends SignalWatcher(LitElement) {
             id=${component.id}
             .weight=${1}
             .processor=${this.processor}
+            .surfaceId=${this.surfaceId}
             .dataContextPath=${component.dataContextPath}
             .text=${component.properties.text}
             .level=${component.properties.level}
@@ -225,6 +237,7 @@ export class Root extends SignalWatcher(LitElement) {
             id=${component.id}
             .weight=${1}
             .processor=${this.processor}
+            .surfaceId=${this.surfaceId}
             .dataContextPath=${component.dataContextPath ?? ""}
             .label=${component.properties.label}
             .value=${component.properties.value}
@@ -237,6 +250,7 @@ export class Root extends SignalWatcher(LitElement) {
             id=${component.id}
             .weight=${1}
             .processor=${this.processor}
+            .surfaceId=${this.surfaceId}
             .dataContextPath=${component.dataContextPath ?? ""}
             .enableDate=${component.properties.enableDate}
             .enableTime=${component.properties.enableTime}
@@ -251,6 +265,7 @@ export class Root extends SignalWatcher(LitElement) {
             id=${component.id}
             .weight=${1}
             .processor=${this.processor}
+            .surfaceId=${this.surfaceId}
             .dataContextPath=${component.dataContextPath}
             .thickness=${component.properties.thickness}
             .axis=${component.properties.axis}
@@ -264,6 +279,7 @@ export class Root extends SignalWatcher(LitElement) {
             id=${component.id}
             .weight=${1}
             .processor=${this.processor}
+            .surfaceId=${this.surfaceId}
             .dataContextPath=${component.dataContextPath}
             .options=${component.properties.options}
             .maxAllowedSelections=${component.properties.maxAllowedSelections}
@@ -276,6 +292,7 @@ export class Root extends SignalWatcher(LitElement) {
             id=${component.id}
             .weight=${1}
             .processor=${this.processor}
+            .surfaceId=${this.surfaceId}
             .dataContextPath=${component.dataContextPath}
             .value=${component.properties.value}
             .minValue=${component.properties.minValue}
@@ -289,6 +306,7 @@ export class Root extends SignalWatcher(LitElement) {
             id=${component.id}
             .weight=${1}
             .processor=${this.processor}
+            .surfaceId=${this.surfaceId}
             .dataContextPath=${component.dataContextPath}
             .label=${component.properties.label}
             .text=${component.properties.text}
@@ -302,6 +320,7 @@ export class Root extends SignalWatcher(LitElement) {
             id=${component.id}
             .weight=${1}
             .processor=${this.processor}
+            .surfaceId=${this.surfaceId}
             .dataContextPath=${component.dataContextPath}
             .url=${component.properties.url}
           ></a2ui-video>`;

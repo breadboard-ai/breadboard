@@ -46,7 +46,8 @@ export class Video extends Root {
         }
 
         const videoUrl = this.processor.getDataByPath(
-          `${this.dataContextPath}${this.url.path}`
+          `${this.dataContextPath}${this.url.path}`,
+          this.surfaceId
         );
         if (!videoUrl) {
           return html`Invalid video URL`;

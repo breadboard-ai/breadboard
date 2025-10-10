@@ -52,7 +52,8 @@ export class Image extends Root {
         }
 
         const imageUrl = this.processor.getDataByPath(
-          `${this.dataContextPath}${this.url.path}`
+          `${this.dataContextPath}${this.url.path}`,
+          this.surfaceId
         );
         if (!imageUrl) {
           return html`Invalid image URL`;

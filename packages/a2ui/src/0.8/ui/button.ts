@@ -62,7 +62,8 @@ export class Button extends Root {
         }
 
         const labelValue = this.processor.getDataByPath(
-          `${this.dataContextPath}${this.label.path}`
+          `${this.dataContextPath}${this.label.path}`,
+          this.surfaceId
         );
 
         if (!labelValue) {

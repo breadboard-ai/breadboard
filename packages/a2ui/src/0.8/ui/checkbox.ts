@@ -97,7 +97,8 @@ export class Checkbox extends Root {
         }
 
         const textValue = this.processor.getDataByPath(
-          `${this.dataContextPath}${this.value.path}`
+          `${this.dataContextPath}${this.value.path}`,
+          this.surfaceId
         );
 
         if (!textValue) {
