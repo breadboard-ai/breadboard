@@ -45,6 +45,7 @@ export class ReplaceGraph implements EditOperation {
       affectedModules: [],
       affectedNodes: [],
       affectedGraphs: [],
+      topologyChange: true,
     };
   }
 }
