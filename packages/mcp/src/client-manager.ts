@@ -47,11 +47,6 @@ class McpClientManager {
   #fetch(): FetchLike {
     const proxyURL = new URL("/api/mcp-proxy", window.location.href);
     return async (url: string | URL, init?: RequestInit) => {
-      const accessToken = await this.context.tokenGetter();
-      if (!ok(accessToken)) {
-        throw new Error(accessToken.$error);
-      }
-
       const { signal, headers, ...noSignalInit } = init || {};
       let headersObj: Record<string, string> = {};
       if (headers) {
@@ -75,10 +70,9 @@ class McpClientManager {
           headers: headersObj,
         } as JsonSerializableRequestInit,
       };
-      return fetch(proxyURL, {
+      return this.context.fetchWithCreds(proxyURL, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
         signal,
