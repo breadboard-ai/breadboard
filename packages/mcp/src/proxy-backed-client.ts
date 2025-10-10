@@ -33,10 +33,7 @@ type ProxyBackedClientArgs = {
    * Proxy base URL
    */
   readonly proxyUrl: string;
-  /**
-   * Authorization token for the proxy.
-   */
-  readonly proxyToken: string;
+  readonly fetchWithCreds: typeof globalThis.fetch;
 };
 
 type ProxyListToolResponse = {
@@ -77,11 +74,8 @@ class ProxyBackedClient implements McpClient {
           },
         };
       }
-      const response = await fetch(url, {
+      const response = await this.args.fetchWithCreds(url, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.args.proxyToken}`,
-        },
         body: JSON.stringify({
           mcpServerConfig: {
             streamableHttp: {

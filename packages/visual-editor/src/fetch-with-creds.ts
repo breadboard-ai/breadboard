@@ -44,9 +44,16 @@ const URL_SCOPE_MAP: ReadonlyMap<string, OAuthScope[]> = new Map([
   ["https://generativelanguage.googleapis.com/v1beta/models/", GENAI_SCOPES],
 ]);
 
-export function createFetchWithCreds(adapter: SigninAdapter): typeof fetch {
+export type FetchWithCredsConfig = {
+  adapter: SigninAdapter;
+  backendApiEndpoint: string;
+};
+
+export function createFetchWithCreds(
+  config: FetchWithCredsConfig
+): typeof fetch {
   return async (request: URL | Request | string, init?: RequestInit) => {
-    const manager = new FetchRequestManager(adapter, request, init);
+    const manager = new FetchRequestManager(config, request, init);
     const requestWithCreds = await manager.createRequest();
     return fetch(requestWithCreds);
   };
@@ -56,7 +63,7 @@ class FetchRequestManager {
   readonly request: Request;
 
   constructor(
-    public readonly adapter: SigninAdapter,
+    public readonly config: FetchWithCredsConfig,
     request: URL | Request | string,
     init: RequestInit | undefined
   ) {
@@ -72,12 +79,15 @@ class FetchRequestManager {
         break;
       }
     }
+    if (!scopes && url.startsWith(this.config.backendApiEndpoint)) {
+      scopes = GENAI_SCOPES;
+    }
     if (!scopes) {
       throw new Error(`Unknown URL: ${url}. Unable to fetch.`);
     }
 
     let token: string | undefined;
-    const tokenResult = await this.adapter.token(scopes);
+    const tokenResult = await this.config.adapter.token(scopes);
     if (tokenResult.state === "valid") {
       token = tokenResult.grant.access_token;
     }

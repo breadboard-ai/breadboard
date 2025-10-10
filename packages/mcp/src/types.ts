@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import {
   FileSystem,
   FunctionResponseCapabilityPart,
@@ -21,8 +20,6 @@ import type {
   ToolAnnotations,
 } from "@modelcontextprotocol/sdk/types.js";
 import type z from "zod";
-
-export type TokenGetter = (scopes?: OAuthScope[]) => Promise<Outcome<string>>;
 
 export type CallToolResultContent = CallToolResult["content"];
 
@@ -149,7 +146,6 @@ export interface McpBuiltInClient extends McpClient {
 }
 
 export type McpBuiltInClientFactoryContext = {
-  tokenGetter: TokenGetter;
   fileSystem: FileSystem;
   fetchWithCreds: typeof fetch;
 };
