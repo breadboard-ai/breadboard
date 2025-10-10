@@ -26,6 +26,7 @@ import {
   GraphInit,
 } from "@breadboard-ai/shared-ui/utils/urls.js";
 
+import "./embed.js";
 import "./carousel.js";
 
 const parsedUrl = parseUrl(window.location.href) as LandingUrlInit;
