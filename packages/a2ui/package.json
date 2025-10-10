@@ -32,7 +32,7 @@
       ]
     },
     "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/**/*.test.js",
+      "command": "node --test --enable-source-maps --test-reporter spec dist/0.8/tests/**/*.test.js",
       "dependencies": [
         "build"
       ]
