@@ -2,19 +2,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width" />
-
-  <meta
-    property="og:image"
-    content="{{origin}}/images/share-card-{{bucket}}.png"
-  />
-  <meta property="og:image:width" content="1440" />
-  <meta property="og:image:height" content="810" />
-
-  <meta
-    name="twitter:image"
-    content="{{origin}}/images/share-card-{{bucket}}.png"
-  />
-
+  <!-- TODO(aomarks) Share card -->
   <title>Opal [Experiment]</title>
   <style>
     iframe {
@@ -29,8 +17,10 @@
 </head>
 <body>
   <iframe
+    id="opal-app"
     src="http://localhost:3000"
     sandbox="allow-scripts allow-same-origin"
   ></iframe>
-  <script src="./opal-shell-client.js" type="module"></script>
+  <script src="./opal-shell-host.js" type="module"></script>
+  <!-- inject live reload -->
 </body>

@@ -63,6 +63,10 @@ import {
 } from "@breadboard-ai/embed";
 import { FileSystemPersistentBackend } from "@breadboard-ai/filesystem-board-server";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import {
+  connectToOpalShellIframeHost,
+  opalShellContext,
+} from "@breadboard-ai/opal-shell/guest/opal-shell-guest.js";
 import { McpClientManager } from "@breadboard-ai/mcp";
 import {
   GlobalConfig,
@@ -171,6 +175,9 @@ export class Main extends SignalWatcher(LitElement) {
   @provide({ context: uiStateContext })
   @state()
   accessor #uiState!: BreadboardUI.State.UI;
+
+  @provide({ context: opalShellContext })
+  accessor opalShell = connectToOpalShellIframeHost();
 
   @state()
   accessor #tab: Runtime.Types.Tab | null = null;
@@ -386,6 +393,12 @@ export class Main extends SignalWatcher(LitElement) {
     });
 
     this.#embedHandler = args.embedHandler;
+
+    this.opalShell.ping().then((pong) => {
+      if (pong) {
+        console.debug("opal shell guest received", pong);
+      }
+    });
 
     const fetchWithCreds = createFetchWithCreds({
       adapter: this.signinAdapter,

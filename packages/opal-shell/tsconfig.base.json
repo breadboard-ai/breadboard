@@ -20,7 +20,6 @@
     // Type declarations & source maps
     "declaration": true,
     "declarationMap": true,
-    "isolatedDeclarations": true,
     "sourceMap": true,
 
     // Compiler behavior
