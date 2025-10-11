@@ -283,7 +283,7 @@ export class RemoteBoardServer
         return { result: false };
       }
       return { result: true };
-    } catch (err) {
+    } catch {
       return { result: true };
     }
   }
@@ -543,7 +543,7 @@ export class RemoteBoardServer
     if (key) {
       return { key };
     }
-    const token = await getSigninToken(this.tokenVendor);
+    const token = await getSigninToken();
     return { token };
   }
 

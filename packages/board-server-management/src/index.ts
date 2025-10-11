@@ -139,7 +139,7 @@ export async function connectToBoardServer(
             key: apiKey,
           }
         : {
-            token: await getSigninToken(tokenVendor),
+            token: await getSigninToken(),
           };
       const response = await RemoteBoardServer.connect(location, args);
       if (response) {
