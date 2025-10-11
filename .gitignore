@@ -44,8 +44,7 @@ bower_components
 .lock-wscript
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
-build/Release
-
+build/Release`
 # Dependency directories
 node_modules/
 jspm_packages/
@@ -144,3 +143,6 @@ packages/visual-editor/build
 lcov.info
 
 packages/data-store/bundled
+
+# VS Code code searches
+*.code-search

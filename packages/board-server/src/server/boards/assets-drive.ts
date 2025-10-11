@@ -6,7 +6,7 @@
 
 import type { Request, Response } from "express";
 
-import { ok } from "@google-labs/breadboard";
+import { createFetchWithCreds, ok } from "@breadboard-ai/utils";
 import { serverError } from "../errors.js";
 import { Readable } from "node:stream";
 import { GeminiFileApi } from "../blobs/utils/gemini-file-api.js";
@@ -94,7 +94,7 @@ export function makeHandleAssetsDriveRequest() {
     };
     let mimeType = (req.query["mimeType"] as string) ?? "";
     const googleDriveClient = new GoogleDriveClient({
-      getUserAccessToken: async () => accessToken,
+      fetchWithCreds: createFetchWithCreds(async () => accessToken),
     });
 
     const part = CavemanCache.instance().get(driveId.id);

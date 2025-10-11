@@ -54,6 +54,7 @@ export function truncateValueForUtf8(
 
 /** Retries fetch() calls until status is not an internal server error. */
 export async function retryableFetch(
+  fetchWithCreds: typeof globalThis.fetch,
   input: string | Request | URL,
   init?: RequestInit,
   numAttempts: 1 | 2 | 3 | 4 | 5 = 3
@@ -66,7 +67,7 @@ export async function retryableFetch(
     numAttemptsLeft -= 1;
     let response: Response | null = null;
     try {
-      response = await fetch(input, init);
+      response = await fetchWithCreds(input, init);
       if (shouldRetry(response)) {
         console.warn(
           `Error in fetch(${input}). Attempts left: ${numAttemptsLeft}/${numAttempts}. Response:`,

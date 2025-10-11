@@ -367,6 +367,11 @@ export class Main extends SignalWatcher(LitElement) {
       backendApiEndpoint = window.location.href;
     }
 
+    const fetchWithCreds = createFetchWithCreds({
+      adapter: this.signinAdapter,
+      backendApiEndpoint,
+    });
+
     this.#apiClient = new AppCatalystApiClient(
       this.signinAdapter,
       backendApiEndpoint
@@ -383,13 +388,7 @@ export class Main extends SignalWatcher(LitElement) {
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,
       proxyApiBaseUrl,
-      getUserAccessToken: async (scopes?: OAuthScope[]) => {
-        const token = await this.signinAdapter.token(scopes);
-        if (token.state === "valid") {
-          return token.grant.access_token;
-        }
-        throw new Error(`User is signed out`);
-      },
+      fetchWithCreds: fetchWithCreds,
     });
 
     this.#embedHandler = args.embedHandler;
@@ -398,11 +397,6 @@ export class Main extends SignalWatcher(LitElement) {
       if (pong) {
         console.debug("opal shell guest received", pong);
       }
-    });
-
-    const fetchWithCreds = createFetchWithCreds({
-      adapter: this.signinAdapter,
-      backendApiEndpoint,
     });
 
     this.#init(args, { fetchWithCreds, backendApiEndpoint }).then(() => {

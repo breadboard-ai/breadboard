@@ -11,6 +11,7 @@ import {
   type NodeHandlerContext,
   type OutputValues,
 } from "@google-labs/breadboard";
+import { createFetchWithCreds } from "@breadboard-ai/utils";
 import { GoogleStorageBlobStore } from "../blob-store.js";
 import type { ServerConfig } from "../config.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
@@ -262,7 +263,7 @@ async function convertToGcsReferences(
 // Fetch media asset from long term  storage in Drive.
 async function fetchDriveAssetAsBuffer(driveId: string, accessToken: string) {
   const driveClient = new GoogleDriveClient({
-    getUserAccessToken: async () => accessToken,
+    fetchWithCreds: createFetchWithCreds(async () => accessToken),
   });
   const gettingMedia = await driveClient.getFileMedia(driveId);
   const arrayBuffer = await gettingMedia.arrayBuffer();
