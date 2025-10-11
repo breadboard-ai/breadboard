@@ -8,6 +8,7 @@
  * A use case to try
  */
 export type Case = {
+  name: string;
   prompt: string;
 };
 
@@ -87,7 +88,19 @@ export type Capabilities = {
   };
 };
 
-export type Invoke = (capabilities: Capabilities) => Promise<LLMContent>;
+/**
+ * The entry point into the main program module. Must be a default export of the module.
+ */
+export type Invoke = (
+  /**
+   * The inputs to the module.
+   */
+  inputs: LLMContent,
+  /**
+   * The capabilities, provided for the module.
+   */
+  capabilities: Capabilities
+) => Promise<LLMContent>;
 
 export type Screen = {
   screenId: string;
@@ -429,4 +442,29 @@ export type AppImport = {
   spec: string;
   screens: Screen[];
   prompts: Prompt[];
+};
+
+/**
+ * The entry point for the test program module. Must be a default export for
+ * the module.
+ */
+export type Test = {
+  /**
+   * The program to test.
+   */
+  invoke: Invoke;
+  /**
+   * The facilities to provide mock input and observe outputs.
+   */
+  mocks: CapabilityMocks;
+};
+
+export type CapabilityMocks = {
+  generate: GeminiMock;
+};
+
+export type GeminiMock = {
+  onGenerateContent(
+    callback: (args: GeminiInputs) => Promise<GeminiOutputs>
+  ): void;
 };
