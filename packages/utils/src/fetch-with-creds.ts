@@ -4,20 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { AnyAuthClient } from "google-auth-library";
+import { Outcome } from "@breadboard-ai/types";
+import { ok } from "./outcome.js";
 
-export { createServerFetchWithCreds };
+export { createFetchWithCreds };
 
-/**
- * A simplified version of fetchWithCreds that is used on the server. Here,
- * we don't check for scopes -- just get the access token when needed.
- */
-function createServerFetchWithCreds(authClient: AnyAuthClient) {
+export type TokenGetter = () => Promise<Outcome<string>>;
+
+function createFetchWithCreds(tokenGetter: TokenGetter) {
   return async (request: URL | Request | string, init?: RequestInit) => {
     const combinedRequest = new Request(request, init);
+    const token = await tokenGetter();
+    if (!ok(token)) {
+      throw new Error(`Unauthenticated: ${token.$error}`);
+    }
     const oldHeaders = Object.fromEntries(combinedRequest.headers.entries());
-
-    const { token } = await authClient.getAccessToken();
 
     const requestWithCreds = new Request(combinedRequest, {
       headers: {
