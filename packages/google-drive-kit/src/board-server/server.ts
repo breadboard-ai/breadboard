@@ -6,7 +6,6 @@
 
 /// <reference types="@types/gapi.client.drive-v3" />
 
-import type { TokenVendor } from "@breadboard-ai/connection-client";
 import { isStoredData } from "@breadboard-ai/data";
 import {
   type BoardServer,
@@ -61,7 +60,6 @@ class GoogleDriveBoardServer
   static async from(
     title: string,
     user: User,
-    tokenVendor: TokenVendor,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
     userFolderName: string,
@@ -89,7 +87,6 @@ class GoogleDriveBoardServer
       title,
       configuration,
       user,
-      tokenVendor,
       googleDriveClient,
       publishPermissions,
       userFolderName,
@@ -103,7 +100,6 @@ class GoogleDriveBoardServer
   public readonly extensions: BoardServerExtension[] = [];
   public readonly capabilities: BoardServerCapabilities;
   public readonly ops: DriveOperations;
-  readonly #tokenVendor: TokenVendor;
   readonly #googleDriveClient: GoogleDriveClient;
   readonly #loadedGraphMetadata = new Map<
     string,
@@ -141,7 +137,6 @@ class GoogleDriveBoardServer
     public readonly name: string,
     public readonly configuration: BoardServerConfiguration,
     public readonly user: User,
-    tokenVendor: TokenVendor,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
     userFolderName: string,
@@ -154,8 +149,7 @@ class GoogleDriveBoardServer
       },
       userFolderName,
       googleDriveClient,
-      publishPermissions,
-      tokenVendor
+      publishPermissions
     );
 
     this.kits = configuration.kits;
@@ -163,10 +157,9 @@ class GoogleDriveBoardServer
     this.secrets = configuration.secrets;
     this.extensions = configuration.extensions;
     this.capabilities = configuration.capabilities;
-    this.#tokenVendor = tokenVendor;
     this.#googleDriveClient = googleDriveClient;
     this.galleryGraphs = new DriveGalleryGraphCollection(
-      this.#tokenVendor,
+      googleDriveClient.fetchWithCreds,
       backendApiUrl
     );
     this.userGraphs = new DriveUserGraphCollection(this.#googleDriveClient);

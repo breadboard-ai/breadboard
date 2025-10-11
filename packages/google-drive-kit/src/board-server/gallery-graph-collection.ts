@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TokenVendor } from "@breadboard-ai/connection-client";
 import type {
   GraphProviderItem,
   ImmutableGraphCollection,
@@ -15,7 +14,7 @@ import type { NarrowedDriveFile } from "../google-drive-client.js";
 import { readProperties } from "./utils.js";
 
 export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
-  readonly #tokenVendor: TokenVendor;
+  readonly #fetchWithCreds: typeof globalThis.fetch;
   readonly #graphs = new SignalMap<string, GraphProviderItem>();
   readonly #backendApiUrl: string;
 
@@ -46,8 +45,8 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
     return this.#error;
   }
 
-  constructor(tokenVendor: TokenVendor, backendApiUrl: string) {
-    this.#tokenVendor = tokenVendor;
+  constructor(fetchWithCreds: typeof globalThis.fetch, backendApiUrl: string) {
+    this.#fetchWithCreds = fetchWithCreds;
     this.#backendApiUrl = backendApiUrl;
     void this.#initialize();
   }
@@ -104,18 +103,9 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
     if (!endpoint) {
       return undefined;
     }
-    let tokenResult = this.#tokenVendor.getToken("$sign-in");
-    if (tokenResult.state === "expired") {
-      tokenResult = await tokenResult.refresh();
-    }
-    if (tokenResult.state !== "valid") {
-      return undefined;
-    }
-    const token = tokenResult.grant.access_token;
 
-    const locationResponse = await fetch(
-      new URL(`/v1beta1/getLocation`, endpoint),
-      { headers: { Authorization: `Bearer ${token}` } }
+    const locationResponse = await this.#fetchWithCreds(
+      new URL(`/v1beta1/getLocation`, endpoint)
     );
     if (!locationResponse.ok) {
       console.error(

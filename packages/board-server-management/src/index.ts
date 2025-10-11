@@ -55,20 +55,12 @@ declare global {
 export async function createGoogleDriveBoardServer(
   title: string,
   user: User,
-  tokenVendor?: TokenVendor,
   googleDriveClient?: GoogleDriveClient
 ) {
   if (!googleDriveClient) {
     console.error(
       "The Google Drive board server could not be initialized because" +
         " a GoogleDriveClient was not provided"
-    );
-    return null;
-  }
-  if (!tokenVendor) {
-    console.error(
-      "The Google Drive board server could not be initialized because" +
-        " a TokenVendor was not provided"
     );
     return null;
   }
@@ -79,7 +71,6 @@ export async function createGoogleDriveBoardServer(
   return GoogleDriveBoardServer.from(
     title,
     user,
-    tokenVendor,
     googleDriveClient,
     googleDrivePublishPermissions,
     userFolderName,
@@ -111,12 +102,7 @@ export async function getBoardServers(
       }
 
       if (url.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
-        return createGoogleDriveBoardServer(
-          title,
-          user,
-          tokenVendor,
-          googleDriveClient
-        );
+        return createGoogleDriveBoardServer(title, user, googleDriveClient);
       }
 
       console.warn(`Unsupported store URL: ${url}`);
@@ -312,7 +298,7 @@ export async function legacyGraphProviderExists() {
   const db = await idb.openDB("default");
   try {
     await db.getAll("graphs");
-  } catch (err) {
+  } catch {
     return false;
   }
 
@@ -343,7 +329,7 @@ export async function migrateIDBGraphProviders() {
     } else {
       console.warn("Unable to find local Board Server");
     }
-  } catch (err) {
+  } catch {
     // No default database - nothing to migrate.
     return;
   }
