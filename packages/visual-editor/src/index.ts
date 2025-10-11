@@ -373,7 +373,7 @@ export class Main extends SignalWatcher(LitElement) {
     });
 
     this.#apiClient = new AppCatalystApiClient(
-      this.signinAdapter,
+      fetchWithCreds,
       backendApiEndpoint
     );
 
