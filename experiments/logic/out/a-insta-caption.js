@@ -3,53 +3,62 @@ export default async (inputs, capabilities) => {
     generate,
     console
   } = capabilities;
+  const {
+    parts
+  } = inputs;
 
-  const imageParts = inputs.parts.filter(part => "fileData" in part && part.fileData.mimeType.startsWith("image/"));
+  // Filter out any non-image parts from the input.
+  const imageParts = parts.filter(part => "fileData" in part);
 
   if (imageParts.length === 0) {
+    console.error("No images found in the input.");
     return {
       parts: [{
-        text: "No images were provided. Please provide one or more images to get captions."
-      }, ],
+        text: "Error: No images were provided in the input."
+      }]
     };
   }
 
   const outputParts = [];
-  const captionPrompt = "Provide a catchy caption suitable for an Instagram post.";
 
+  // Process each image part to generate a caption.
   for (const imagePart of imageParts) {
+    const prompt = "Provide a catchy caption suitable for an Instagram post.";
+
     try {
-      console.log(`Generating caption for ${imagePart.fileData.fileUri}`);
+      // Call the Gemini API with the image and the prompt.
       const response = await generate.generateContent({
         model: "gemini-2.5-pro",
         contents: [{
-          role: "user",
           parts: [{
-            text: captionPrompt
-          }, imagePart]
+            text: prompt
+          }, imagePart],
         }, ],
       });
 
-      const candidate = response.candidates?.[0];
-      const captionPart = candidate?.content?.parts?.[0];
+      // Extract the caption from the response.
+      const candidate = response.candidates ?.[0];
+      const captionPart = candidate ?.content ?.parts ?.[0];
 
-      if (captionPart && 'text' in captionPart) {
-        outputParts.push(imagePart);
-        outputParts.push({
-          text: `\n\n${captionPart.text.trim()}\n\n`
-        });
+      let caption = "Could not generate a caption for this image.";
+      if (captionPart && "text" in captionPart) {
+        caption = captionPart.text;
       } else {
-        console.error("Could not extract caption from response for:", imagePart.fileData.fileUri);
-        outputParts.push(imagePart);
-        outputParts.push({
-          text: "\n\n---\n*Could not generate a caption for this image.*"
-        });
+        console.error("Failed to extract caption from the model response.", JSON.stringify(response));
       }
-    } catch (e) {
-      console.error("Error during caption generation for:", imagePart.fileData.fileUri, e);
+
+      // Add the original image and its new caption to the output.
       outputParts.push(imagePart);
       outputParts.push({
-        text: `\n\n---\n*An error occurred while generating a caption: ${e.message}*`
+        text: `\n\n${caption.trim()}\n\n`
+      });
+
+    } catch (e) {
+      console.error("An error occurred while generating a caption:", e);
+      // If an error occurs, include the image and an error message in the output.
+      outputParts.push(imagePart);
+      outputParts.push({
+        text: "\n\nError: Could not generate a caption for this image.\n\n"
       });
     }
   }

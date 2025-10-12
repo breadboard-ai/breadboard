@@ -37,4 +37,21 @@ const mocks = new CapabilityMocksImpl();
 
 const test = await runInVm<Test>(testCode);
 
-await test(invoke, mocks);
+await test(
+  async (inputs) => {
+    return invoke(inputs, mocks.capabilities);
+  },
+  mocks,
+  {
+    progress: (...params) => {
+      console.log(...params);
+    },
+    fail: (...params) => {
+      console.error(`❌`, ...params);
+      throw new Error("Test failed");
+    },
+    success: (...params) => {
+      console.log(`✅`, ...params);
+    },
+  }
+);

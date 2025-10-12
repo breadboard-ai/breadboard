@@ -456,18 +456,44 @@ export type Test = (
   /**
    * The facilities to provide mock input and observe outputs.
    */
-  mocks: CapabilityMocks
+  mocks: CapabilityMocks,
+  reporter: TestResultsReporter
 ) => Promise<void>;
 
-export type CapabilityMocks = {
+export type TestResultsReporter = {
   /**
-   * The mock capabilities to be  supplied to the Invoke
+   * Use this function to provide additional info about the test:
+   * - progress
+   * - intermediate state
+   * - etc.
+   * @param params -- same parameters as console.info
    */
-  capabilities: Capabilities;
+  progress(...params: unknown[]): void;
+  /**
+   * Use this function to indicate that a test failed. Calling this function
+   * will terminate the test.
+   * @param params -- same parameters as console.error
+   */
+  fail(...params: unknown[]): void;
+  /**
+   * Use this function to indicate that a test succeeded. Can be called multiple
+   * times throughout the test, for each sub-test.
+   * @param params -- same parameters as console.log
+   */
+  success(...params: unknown[]): void;
+};
+
+export type CapabilityMocks = {
   generate: GeminiMock;
 };
 
 export type GeminiMock = {
+  /**
+   * Sets up a callback for the mocks. Call it before calling the Invoke
+   * function.
+   *
+   * @param callback called whenever the tested program calls `generateContent`
+   */
   onGenerateContent(
     callback: (args: GeminiInputs) => Promise<GeminiOutputs>
   ): void;

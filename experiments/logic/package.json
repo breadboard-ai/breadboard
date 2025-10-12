@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "generate": "wireit",
-    "run": "wireit"
+    "test": "wireit"
   },
   "wireit": {
     "ts": {
@@ -19,8 +19,8 @@
         "ts"
       ]
     },
-    "run": {
-      "command": "tsx --experimental-vm-modules --no-warnings src/run.ts",
+    "test": {
+      "command": "tsx --experimental-vm-modules --no-warnings src/test.ts",
       "dependencies": [
         "ts"
       ]

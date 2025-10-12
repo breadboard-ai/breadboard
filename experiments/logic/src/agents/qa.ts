@@ -46,7 +46,6 @@ ${types}
 
 When writing tests:
 - be loose with text comparisons. The program may add extra line breaks for formatting.
-- when asserting fails, throw an error, including detailed information on what information was expected and was the actual value.
 
   `,
     },
