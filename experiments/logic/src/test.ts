@@ -11,6 +11,8 @@ import { Case, Console, Invoke, Test, TestResultsReporter } from "./types";
 import { CapabilityMocksImpl } from "./capability-mocks";
 import { evalSet } from "./eval-set";
 
+class TestFailedException extends Error {}
+
 class Reporter implements Console, TestResultsReporter {
   readonly #logs: unknown[][] = [];
 
@@ -29,7 +31,7 @@ class Reporter implements Console, TestResultsReporter {
 
   fail(...params: unknown[]) {
     this.#logs.push([`❌`, ...params]);
-    throw new Error("Test failed");
+    throw new TestFailedException();
   }
   success(...params: unknown[]) {
     this.#logs.push([`✅`, ...params]);
@@ -88,8 +90,11 @@ async function evalOne(c: Case) {
     );
     reporter.printLog();
     console.log(`-- "${c.name}" Test Succeeded\n\n`);
-  } catch {
+  } catch (e) {
     reporter.printLog();
     console.log(`-- "${c.name}" Test failed\n\n`);
+    if (!(e instanceof TestFailedException)) {
+      console.log(e);
+    }
   }
 }
