@@ -6,14 +6,9 @@
 
 import { createContext, Module, SourceTextModule } from "vm";
 
-export async function runInVm<T>(code: string): Promise<T> {
+export async function prepareToRunInVM<T>(code: string): Promise<T> {
   const context = createContext({});
-  let module: SourceTextModule;
-  try {
-    module = new SourceTextModule(code, { context });
-  } catch (e) {
-    throw new Error(`Syntax Error: ${(e as Error).message}`);
-  }
+  const module = new SourceTextModule(code, { context });
   const linker = async (specifier: string): Promise<Module> => {
     throw new Error(
       `Dynamic import not allowed: cannot resolve '${specifier}'`

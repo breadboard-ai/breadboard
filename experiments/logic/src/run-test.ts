@@ -6,15 +6,22 @@
 
 import { readFile } from "fs/promises";
 import { join } from "path";
-import { runInVm } from "./run-in-vm";
+import { prepareToRunInVM } from "./run-in-vm";
 import { Case, Console, Invoke, Test, TestResultsReporter } from "./types";
 import { CapabilityMocksImpl } from "./capability-mocks";
-import { evalSet } from "./eval-set";
+
+export { runTest };
+
+export type TestResult = {
+  readonly logs: ReadonlyArray<ReadonlyArray<unknown>>;
+  readonly isError: boolean;
+};
 
 class TestFailedException extends Error {}
 
-class Reporter implements Console, TestResultsReporter {
-  readonly #logs: unknown[][] = [];
+class Reporter implements Console, TestResultsReporter, TestResult {
+  readonly logs: unknown[][] = [];
+  isError = false;
 
   constructor() {
     this.progress = this.progress.bind(this);
@@ -26,58 +33,52 @@ class Reporter implements Console, TestResultsReporter {
   }
 
   progress(...params: unknown[]) {
-    this.#logs.push(params);
+    this.logs.push(params);
   }
 
   fail(...params: unknown[]) {
-    this.#logs.push([`❌`, ...params]);
+    this.logs.push([`❌`, ...params]);
+    this.isError = true;
     throw new TestFailedException();
   }
   success(...params: unknown[]) {
-    this.#logs.push([`✅`, ...params]);
+    this.logs.push([`✅`, ...params]);
   }
   log(...params: unknown[]): void {
-    this.#logs.push([`🤖`, ...params]);
+    this.logs.push([`🤖`, ...params]);
   }
   error(...params: unknown[]): void {
-    this.#logs.push([`🤖`, ...params]);
-  }
-
-  printLog() {
-    for (const item of this.#logs) {
-      console.log(...item);
-    }
+    this.isError = true;
+    this.logs.push([`🤖`, ...params]);
   }
 }
 
 const OUT_DIR = join(import.meta.dirname, "../out");
 
-await Promise.all(evalSet.map((c) => evalOne(c)));
-
-async function evalOne(c: Case) {
+async function runTest(c: Case): Promise<TestResult> {
   const programCodePath = join(OUT_DIR, `${c.name}.js`);
   const programCode = await readFile(programCodePath, "utf-8");
 
   const testCodePath = join(OUT_DIR, `${c.name}.test.js`);
   const testCode = await readFile(testCodePath, "utf-8");
+  const reporter = new Reporter();
 
   let test;
   try {
-    test = await runInVm<Test>(testCode);
+    test = await prepareToRunInVM<Test>(testCode);
   } catch (e) {
-    console.log(`Test failed to compile`, e);
-    return;
+    reporter.error(`Test failed to compile`, e);
+    return reporter;
   }
 
   let invoke;
   try {
-    invoke = await runInVm<Invoke>(programCode);
+    invoke = await prepareToRunInVM<Invoke>(programCode);
   } catch (e) {
-    console.log(`Invoke failed to compile`, e);
-    return;
+    reporter.error(`Program failed to compile`, e);
+    return reporter;
   }
 
-  const reporter = new Reporter();
   const mocks = new CapabilityMocksImpl(reporter);
 
   try {
@@ -88,13 +89,13 @@ async function evalOne(c: Case) {
       mocks,
       reporter
     );
-    reporter.printLog();
-    console.log(`-- "${c.name}" Test Succeeded\n\n`);
+    reporter.log(`-- "${c.name}" Test Succeeded\n\n`);
+    return reporter;
   } catch (e) {
-    reporter.printLog();
-    console.log(`-- "${c.name}" Test failed\n\n`);
+    reporter.error(`-- "${c.name}" Test failed\n\n`);
     if (!(e instanceof TestFailedException)) {
-      console.log(e);
+      reporter.error(e);
     }
+    return reporter;
   }
 }

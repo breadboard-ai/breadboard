@@ -20,7 +20,7 @@
       ]
     },
     "test": {
-      "command": "tsx --experimental-vm-modules --no-warnings src/test.ts",
+      "command": "tsx --experimental-vm-modules --no-warnings src/test-all.ts",
       "dependencies": [
         "ts"
       ]
