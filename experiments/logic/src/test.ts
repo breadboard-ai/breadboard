@@ -7,9 +7,46 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
 import { runInVm } from "./run-in-vm";
-import { Case, Invoke, Test } from "./types";
+import { Case, Console, Invoke, Test, TestResultsReporter } from "./types";
 import { CapabilityMocksImpl } from "./capability-mocks";
 import { evalSet } from "./eval-set";
+
+class Reporter implements Console, TestResultsReporter {
+  readonly #logs: unknown[][] = [];
+
+  constructor() {
+    this.progress = this.progress.bind(this);
+    this.fail = this.fail.bind(this);
+    this.success = this.success.bind(this);
+
+    this.log = this.log.bind(this);
+    this.error = this.error.bind(this);
+  }
+
+  progress(...params: unknown[]) {
+    this.#logs.push(params);
+  }
+
+  fail(...params: unknown[]) {
+    this.#logs.push([`❌`, ...params]);
+    throw new Error("Test failed");
+  }
+  success(...params: unknown[]) {
+    this.#logs.push([`✅`, ...params]);
+  }
+  log(...params: unknown[]): void {
+    this.#logs.push([`🤖`, ...params]);
+  }
+  error(...params: unknown[]): void {
+    this.#logs.push([`🤖`, ...params]);
+  }
+
+  printLog() {
+    for (const item of this.#logs) {
+      console.log(...item);
+    }
+  }
+}
 
 const OUT_DIR = join(import.meta.dirname, "../out");
 
@@ -22,27 +59,37 @@ async function evalOne(c: Case) {
   const testCodePath = join(OUT_DIR, `${c.name}.test.js`);
   const testCode = await readFile(testCodePath, "utf-8");
 
-  const invoke = await runInVm<Invoke>(programCode);
-  const mocks = new CapabilityMocksImpl();
+  let test;
+  try {
+    test = await runInVm<Test>(testCode);
+  } catch (e) {
+    console.log(`Test failed to compile`, e);
+    return;
+  }
 
-  const test = await runInVm<Test>(testCode);
+  let invoke;
+  try {
+    invoke = await runInVm<Invoke>(programCode);
+  } catch (e) {
+    console.log(`Invoke failed to compile`, e);
+    return;
+  }
 
-  await test(
-    async (inputs) => {
-      return invoke(inputs, mocks.capabilities);
-    },
-    mocks,
-    {
-      progress: (...params) => {
-        console.log(...params);
+  const reporter = new Reporter();
+  const mocks = new CapabilityMocksImpl(reporter);
+
+  try {
+    await test(
+      async (inputs) => {
+        return invoke(inputs, mocks.capabilities);
       },
-      fail: (...params) => {
-        console.error(`❌`, ...params);
-        throw new Error("Test failed");
-      },
-      success: (...params) => {
-        console.log(`✅`, ...params);
-      },
-    }
-  );
+      mocks,
+      reporter
+    );
+    reporter.printLog();
+    console.log(`-- "${c.name}" Test Succeeded\n\n`);
+  } catch {
+    reporter.printLog();
+    console.log(`-- "${c.name}" Test failed\n\n`);
+  }
 }

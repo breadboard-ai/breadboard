@@ -476,8 +476,9 @@ export type TestResultsReporter = {
    */
   fail(...params: unknown[]): void;
   /**
-   * Use this function to indicate that a test succeeded. Can be called multiple
-   * times throughout the test, for each sub-test.
+   * Use this function to indicate that a test was a success.
+   * Can be called multiple times throughout the test, like for example,
+   * for each sub-test.
    * @param params -- same parameters as console.log
    */
   success(...params: unknown[]): void;

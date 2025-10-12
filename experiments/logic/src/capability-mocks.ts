@@ -9,6 +9,7 @@ import {
   CallToolResponse,
   Capabilities,
   CapabilityMocks,
+  Console,
   GeminiInputs,
   GeminiMock,
   GeminiOutputs,
@@ -17,6 +18,8 @@ import {
 } from "./types";
 
 export class CapabilityMocksImpl implements CapabilityMocks {
+  constructor(private readonly reporter: Console) {}
+
   #callback?: (args: GeminiInputs) => Promise<GeminiOutputs>;
 
   readonly capabilities: Capabilities = {
@@ -34,11 +37,11 @@ export class CapabilityMocksImpl implements CapabilityMocks {
       },
     },
     console: {
-      error: function (...params: unknown[]): void {
-        console.error("From Invoke", ...params);
+      error: (...params: unknown[]): void => {
+        this.reporter.error(...params);
       },
-      log: function (...params: unknown[]): void {
-        console.log("From Invoke", ...params);
+      log: (...params: unknown[]): void => {
+        this.reporter.log(...params);
       },
     },
     prompts: {

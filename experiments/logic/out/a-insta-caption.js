@@ -1,24 +1,17 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 export default async (inputs, capabilities) => {
   const {
-    generate
-  } = capabilities;
-  const {
+    generate,
     console
   } = capabilities;
 
   const imageParts = inputs.parts.filter((part) => "fileData" in part);
 
   if (imageParts.length === 0) {
+    console.error("No images found in the input.");
     return {
       parts: [{
-        text: "No images were provided. Please provide one or more images to get captions."
-      }, ],
+        text: "Error: No images were provided in the input."
+      }]
     };
   }
 
@@ -26,52 +19,48 @@ export default async (inputs, capabilities) => {
 
   for (const imagePart of imageParts) {
     try {
-      const result = await generate.generateContent({
+      console.log(`Generating caption for image: ${imagePart.fileData.fileUri}`);
+
+      const response = await generate.generateContent({
         model: "gemini-2.5-pro",
         contents: [{
-          role: "user",
           parts: [{
-              text: "Provide a catchy caption suitable for an Instagram post for this image.",
+              text: "Provide a short, catchy caption suitable for an Instagram post for this image."
             },
             imagePart,
           ],
         }, ],
+        generationConfig: {
+          responseMimeType: "text/plain",
+        },
       });
 
-      const candidate = result.candidates[0];
-      let caption = "[Could not generate a caption for this image.]";
-
-      if (
-        candidate &&
-        candidate.content &&
-        candidate.content.parts &&
-        candidate.content.parts.length > 0 &&
-        "text" in candidate.content.parts[0]
-      ) {
-        caption = candidate.content.parts[0].text;
-      } else {
-        console.error(
-          "No text part found in the generated content for image:",
-          imagePart.fileData.fileUri
-        );
+      const candidate = response.candidates?.[0];
+      if (!candidate || !candidate.content) {
+        console.error("No valid candidate found in the LLM response for image:", imagePart.fileData.fileUri);
+        outputParts.push(imagePart);
+        outputParts.push({
+          text: "Could not generate a caption for this image."
+        });
+        continue;
       }
 
-      // Add the original image to the output
-      outputParts.push(imagePart);
-      // Add the generated caption to the output
-      outputParts.push({
-        text: `\n\n${caption}\n\n`
-      });
-
+      const captionPart = candidate.content.parts[0];
+      if ("text" in captionPart) {
+        outputParts.push(imagePart);
+        outputParts.push(captionPart);
+      } else {
+        console.error("LLM did not return a text part for image:", imagePart.fileData.fileUri);
+        outputParts.push(imagePart);
+        outputParts.push({
+          text: "An unexpected response was received from the model."
+        });
+      }
     } catch (e) {
-      console.error(
-        `Error generating caption for image: ${imagePart.fileData.fileUri}`,
-        e
-      );
-      // Still add the image even if caption generation fails
+      console.error(`An error occurred while processing image ${imagePart.fileData.fileUri}:`, e);
       outputParts.push(imagePart);
       outputParts.push({
-        text: `\n\n[An error occurred while generating the caption.]\n\n`
+        text: `Error generating caption for this image: ${e.message}`
       });
     }
   }
