@@ -448,18 +448,22 @@ export type AppImport = {
  * The entry point for the test program module. Must be a default export for
  * the module.
  */
-export type Test = {
+export type Test = (
   /**
    * The program to test.
    */
-  invoke: Invoke;
+  invoke: Invoke,
   /**
    * The facilities to provide mock input and observe outputs.
    */
-  mocks: CapabilityMocks;
-};
+  mocks: CapabilityMocks
+) => Promise<void>;
 
 export type CapabilityMocks = {
+  /**
+   * The mock capabilities to be  supplied to the Invoke
+   */
+  capabilities: Capabilities;
   generate: GeminiMock;
 };
 

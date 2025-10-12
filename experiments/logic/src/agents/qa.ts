@@ -10,8 +10,6 @@ import { join } from "path";
 import { Case } from "../types";
 
 const SRC_DIR = join(import.meta.dirname, "../../src");
-// const APP_DIR = join(SRC_DIR, "apps");
-// const OUT_DIR = join(import.meta.dirname, "../out");
 
 export async function loadQA(
   definition: Case
@@ -45,6 +43,10 @@ Here are all the type defintions:
 \`\`\`typescript
 ${types}
 \`\`\
+
+When writing tests:
+- be loose with text comparisons. The program may add extra line breaks for formatting.
+- when asserting fails, throw an error, including detailed information on what information was expected and was the actual value.
 
   `,
     },

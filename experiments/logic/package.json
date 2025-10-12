@@ -4,7 +4,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "try": "wireit"
+    "generate": "wireit",
+    "run": "wireit"
   },
   "wireit": {
     "ts": {
@@ -12,8 +13,14 @@
         "src/**/*.ts"
       ]
     },
-    "try": {
-      "command": "tsx src/try.ts",
+    "generate": {
+      "command": "tsx src/generate.ts",
+      "dependencies": [
+        "ts"
+      ]
+    },
+    "run": {
+      "command": "tsx --experimental-vm-modules --no-warnings src/run.ts",
       "dependencies": [
         "ts"
       ]
