@@ -5,194 +5,157 @@
  */
 
 export default async (invoke, mocks, reporter) => {
-  // 1. Set up the test case.
-  reporter.progress("Setting up the test case...");
+  const {
+    onGenerateContent
+  } = mocks.generate;
 
-  // We'll provide two mock images as input.
+  // A helper for deep equality checks, useful for complex objects.
+  const deepEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+  reporter.progress("Starting test: Instagram Caption Generation");
+
+  // 1. DEFINE MOCK DATA
+  reporter.progress("Defining mock input images and expected captions.");
   const mockImage1 = {
     fileData: {
-      fileUri: "/vfs/testing/image_one.jpg",
-      mimeType: "image/jpeg",
+      fileUri: "/vfs/test/image_of_a_cat.png",
+      mimeType: "image/png",
     },
   };
   const mockImage2 = {
     fileData: {
-      fileUri: "/vfs/testing/image_two.png",
-      mimeType: "image/png",
+      fileUri: "/vfs/test/image_of_a_dog.jpeg",
+      mimeType: "image/jpeg",
     },
   };
-
-  const input = {
+  const mockInput = {
     parts: [mockImage1, mockImage2],
   };
 
-  // We expect the program to call the Gemini API once for each image,
-  // and we'll provide a mock caption for each call.
-  const expectedCaption1 = "A beautiful day by the sea.";
-  const expectedCaption2 = "City nights and bright lights.";
+  const expectedCaption1 = "Pawsitively purrfect! 🐾 #CatLife #InstaCat";
+  const expectedCaption2 = "Having a ruff day? This should help! 🐶 #Doggo #GoodBoy";
 
-  const expectedLLMCalls = [{
-    image: mockImage1,
-    response: {
-      candidates: [{
-        content: {
-          parts: [{
-            text: expectedCaption1
-          }]
-        },
-      }, ],
-    },
-  }, {
-    image: mockImage2,
-    response: {
-      candidates: [{
-        content: {
-          parts: [{
-            text: expectedCaption2
-          }]
-        },
-      }, ],
-    },
-  }, ];
+  const calls = [];
 
-  let callCount = 0;
+  // 2. SET UP MOCKS
+  reporter.progress("Setting up mock for generate.generateContent.");
+  onGenerateContent(async (args) => {
+    // Keep track of calls for later inspection.
+    calls.push(args);
 
-  // 2. Mock the `generateContent` capability.
-  mocks.generate.onGenerateContent(async (args) => {
-    reporter.progress(`Intercepted call to generateContent #${callCount + 1}`);
+    // The program should call the LLM once for each image.
+    // The prompt should contain a text part and exactly one image part.
+    const parts = args.contents[0].parts;
+    const textPart = parts.find((p) => "text" in p);
+    const imagePart = parts.find((p) => "fileData" in p);
 
-    if (callCount >= expectedLLMCalls.length) {
-      reporter.fail(
-        `Unexpected call to generateContent. Expected ${expectedLLMCalls.length} calls, but received more.`
+    if (!textPart || !imagePart || parts.length !== 2) {
+      throw new Error(
+        `Expected prompt to contain exactly one text part and one image part. Found ${parts.length} parts.`
       );
-      // Return a valid but empty response to prevent a crash.
+    }
+
+    // The text prompt should ask for a caption.
+    if (!textPart.text.toLowerCase().includes("caption")) {
+      throw new Error(
+        `The prompt text does not seem to be asking for a caption. Text was: "${textPart.text}"`
+      );
+    }
+
+    // Return a different caption based on which image was sent.
+    if (imagePart.fileData.fileUri === mockImage1.fileData.fileUri) {
       return {
-        candidates: []
+        candidates: [{
+          content: {
+            parts: [{
+              text: expectedCaption1
+            }],
+          },
+        }, ],
       };
-    }
-
-    const expectedCall = expectedLLMCalls[callCount];
-    const lastContentItem = args.contents[args.contents.length - 1];
-
-    // Verify that the prompt contains a text part asking for a caption.
-    const textPart = lastContentItem.parts.find((p) => "text" in p);
-    if (!textPart) {
-      reporter.fail(`Call #${callCount + 1}: Expected a text part in the prompt.`);
+    } else if (imagePart.fileData.fileUri === mockImage2.fileData.fileUri) {
+      return {
+        candidates: [{
+          content: {
+            parts: [{
+              text: expectedCaption2
+            }],
+          },
+        }, ],
+      };
     } else {
-      const lowerCaseText = textPart.text.toLowerCase();
-      if (!lowerCaseText.includes("caption") ||
-        !lowerCaseText.includes("instagram")
-      ) {
-        reporter.fail(
-          `Call #${
-            callCount + 1
-          }: Prompt text does not seem to ask for an Instagram caption. Received: "${
-            textPart.text
-          }"`
-        );
-      } else {
-        reporter.success(
-          `Call #${callCount + 1}: Prompt text validation passed.`
-        );
-      }
-    }
-
-    // Verify that the prompt contains the correct image.
-    const imagePart = lastContentItem.parts.find((p) => "fileData" in p);
-    if (!imagePart) {
-      reporter.fail(`Call #${callCount + 1}: Expected an image part in the prompt.`);
-    } else if (
-      imagePart.fileData.fileUri !== expectedCall.image.fileData.fileUri
-    ) {
-      reporter.fail(
-        `Call #${
-          callCount + 1
-        }: The prompt contained the wrong image. Expected ${
-          expectedCall.image.fileData.fileUri
-        }, but got ${imagePart.fileData.fileUri}.`
+      throw new Error(
+        `generateContent called with an unexpected image URI: ${imagePart.fileData.fileUri}`
       );
-    } else {
-      reporter.success(`Call #${callCount + 1}: Image part validation passed.`);
     }
-
-    // Return the predefined response for this call.
-    callCount++;
-    return expectedCall.response;
   });
 
-  // 3. Invoke the program under test.
+  // 3. INVOKE THE PROGRAM
   reporter.progress("Invoking the program with two mock images.");
-  const result = await invoke(input);
+  const result = await invoke(mockInput);
 
-  // 4. Assert the results.
-  reporter.progress("Validating the final output...");
+  // 4. ASSERT THE RESULTS
+  reporter.progress("Asserting the results...");
 
-  // Check if the correct number of LLM calls were made.
-  if (callCount !== expectedLLMCalls.length) {
-    return reporter.fail(
-      `Expected ${expectedLLMCalls.length} calls to the Gemini API, but ${callCount} were made.`
+  // Check that the LLM was called twice, once for each image.
+  if (calls.length !== 2) {
+    reporter.fail(
+      `Expected generateContent to be called 2 times, but it was called ${calls.length} times.`
     );
+    return;
   }
-  reporter.success(
-    `Correct number of Gemini API calls were made: ${callCount}.`
-  );
+  reporter.success("generateContent was called the correct number of times (2).");
 
-  // Check the structure of the output.
-  if (!result || !Array.isArray(result.parts)) {
-    return reporter.fail(
-      "The program's output is malformed. Expected an object with a 'parts' array."
+  // Check the final output structure.
+  if (!result || !Array.isArray(result.parts) || result.parts.length !== 4) {
+    reporter.fail(
+      `Expected the output to have 4 parts (image, caption, image, caption), but found ${
+        result?.parts?.length || 0
+      }.`
     );
+    return;
   }
+  reporter.success("Output has the correct number of parts (4).");
 
-  // We expect 4 parts: image1, caption1, image2, caption2.
-  const expectedPartCount = 4;
-  if (result.parts.length !== expectedPartCount) {
-    return reporter.fail(
-      `Expected ${expectedPartCount} parts in the output, but received ${result.parts.length}.`
+  // Check part 1: The first image.
+  if (!deepEqual(result.parts[0], mockImage1)) {
+    reporter.fail(
+      `Part 1: Expected the first input image, but got ${JSON.stringify(
+        result.parts[0]
+      )}.`
     );
+    return;
   }
-  reporter.success(
-    `Output contains the correct number of parts (${expectedPartCount}).`
-  );
+  reporter.success("Part 1 is the correct first image.");
 
-  // Validate each part in the output sequence.
-  // Part 1: First Image
-  const part1 = result.parts[0];
-  if (!part1.fileData || part1.fileData.fileUri !== mockImage1.fileData.fileUri) {
-    return reporter.fail(
-      `Output part 1 should be the first image (${mockImage1.fileData.fileUri}).`
+  // Check part 2: The caption for the first image.
+  if (!result.parts[1].text || !result.parts[1].text.includes(expectedCaption1)) {
+    reporter.fail(
+      `Part 2: Expected caption for the first image, but got "${result.parts[1].text}".`
     );
+    return;
   }
-  reporter.success("Part 1: Correctly contains the first image.");
+  reporter.success("Part 2 is the correct caption for the first image.");
 
-  // Part 2: First Caption
-  const part2 = result.parts[1];
-  if (!part2.text || part2.text.trim() !== expectedCaption1) {
-    return reporter.fail(
-      `Output part 2 should be the first caption. Expected "${expectedCaption1}", but got "${
-        part2.text || ""
-      }".`
+  // Check part 3: The second image.
+  if (!deepEqual(result.parts[2], mockImage2)) {
+    reporter.fail(
+      `Part 3: Expected the second input image, but got ${JSON.stringify(
+        result.parts[2]
+      )}.`
     );
+    return;
   }
-  reporter.success("Part 2: Correctly contains the first caption.");
+  reporter.success("Part 3 is the correct second image.");
 
-  // Part 3: Second Image
-  const part3 = result.parts[2];
-  if (!part3.fileData || part3.fileData.fileUri !== mockImage2.fileData.fileUri) {
-    return reporter.fail(
-      `Output part 3 should be the second image (${mockImage2.fileData.fileUri}).`
+  // Check part 4: The caption for the second image.
+  if (!result.parts[3].text || !result.parts[3].text.includes(expectedCaption2)) {
+    reporter.fail(
+      `Part 4: Expected caption for the second image, but got "${result.parts[3].text}".`
     );
+    return;
   }
-  reporter.success("Part 3: Correctly contains the second image.");
+  reporter.success("Part 4 is the correct caption for the second image.");
 
-  // Part 4: Second Caption
-  const part4 = result.parts[3];
-  if (!part4.text || part4.text.trim() !== expectedCaption2) {
-    return reporter.fail(
-      `Output part 4 should be the second caption. Expected "${expectedCaption2}", but got "${
-        part4.text || ""
-      }".`
-    );
-  }
-  reporter.success("Part 4: Correctly contains the second caption.");
+  reporter.progress("All checks passed!");
 };

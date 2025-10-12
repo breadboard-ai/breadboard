@@ -9,7 +9,8 @@ import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 import { loadDeveloper } from "./agents/developer";
 import { loadQA } from "./agents/qa";
-import { a } from "./cases/a-insta-caption";
+import { evalSet } from "./eval-set";
+import { Case } from "./types";
 
 config({ quiet: true });
 
@@ -25,27 +26,32 @@ if (!GEMINI_API_KEY) {
   console.log(`  🔑 GEMINI_KEY Acquired`);
 }
 
-console.log("  🤖 Generating Code");
 const gemini = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
-const [program, test] = await Promise.all([
-  gemini.models.generateContent(await loadDeveloper(a)),
-  gemini.models.generateContent(await loadQA(a)),
-]);
+await Promise.all(evalSet.map((c) => generateOne(c)));
 
-const programFilename = join(OUT_DIR, `${a.name}.js`);
-const testFilename = join(OUT_DIR, `${a.name}.test.js`);
+async function generateOne(c: Case) {
+  console.log(`  🤖 Generating code for "${c.name}"`);
+  const [program, test] = await Promise.all([
+    gemini.models.generateContent(await loadDeveloper(c)),
+    gemini.models.generateContent(await loadQA(c)),
+  ]);
 
-const programCode = cleanupCode(program.text!);
-const testCode = cleanupCode(test.text!);
+  const programFilename = join(OUT_DIR, `${c.name}.js`);
+  const testFilename = join(OUT_DIR, `${c.name}.test.js`);
 
-try {
-  await mkdir(OUT_DIR, { recursive: true });
-  await writeFile(programFilename, cleanupCode(programCode), "utf-8");
-  await writeFile(testFilename, cleanupCode(testCode), "utf-8");
-} catch {
-  console.error(`  ❌ failed to save to "${a.name}"`);
-  process.exit(1);
+  const programCode = cleanupCode(program.text!);
+  const testCode = cleanupCode(test.text!);
+
+  try {
+    await mkdir(OUT_DIR, { recursive: true });
+    await writeFile(programFilename, cleanupCode(programCode), "utf-8");
+    await writeFile(testFilename, cleanupCode(testCode), "utf-8");
+  } catch {
+    console.error(`  ❌ failed to save to "${c.name}", exiting`);
+    process.exit(1);
+  }
+  console.log(`  🤖 Finished generating code for "${c.name}"`);
 }
 
 function cleanupCode(s: string) {
