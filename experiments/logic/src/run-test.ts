@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { readFile } from "fs/promises";
+import { mkdir, readFile, writeFile } from "fs/promises";
 import { join } from "path";
 import { prepareToRunInVM } from "./run-in-vm";
 import { Case, Console, Invoke, Test, TestResultsReporter } from "./types";
@@ -14,6 +14,7 @@ export { runTest };
 
 export type TestResult = {
   readonly logs: ReadonlyArray<ReadonlyArray<unknown>>;
+  getLogAsString(): string;
   readonly isError: boolean;
 };
 
@@ -51,11 +52,38 @@ class Reporter implements Console, TestResultsReporter, TestResult {
     this.isError = true;
     this.logs.push([`🤖`, ...params]);
   }
+
+  getLogAsString(): string {
+    const lines: string[] = [];
+    for (const item of this.logs) {
+      const objects: string[] = [];
+      for (const o of item) {
+        if (typeof o === "string") {
+          objects.push(o);
+        } else {
+          objects.push(JSON.stringify(o, null, 2));
+        }
+      }
+      lines.push(objects.join(" "));
+    }
+    return lines.join("\n");
+  }
 }
 
 const OUT_DIR = join(import.meta.dirname, "../out");
 
 async function runTest(c: Case): Promise<TestResult> {
+  const result = await getTestResult(c);
+  if (result.isError) {
+    const errorLog = result.getLogAsString();
+    const errorLogFilename = join(OUT_DIR, `${c.name}.error.log`);
+    await mkdir(OUT_DIR, { recursive: true });
+    await writeFile(errorLogFilename, errorLog, "utf-8");
+  }
+  return result;
+}
+
+async function getTestResult(c: Case): Promise<TestResult> {
   const programCodePath = join(OUT_DIR, `${c.name}.js`);
   const programCode = await readFile(programCodePath, "utf-8");
 

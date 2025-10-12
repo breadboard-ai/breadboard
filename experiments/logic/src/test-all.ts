@@ -7,9 +7,11 @@
 import { evalSet } from "./eval-set";
 import { runTest } from "./run-test";
 
-const results = await Promise.all(evalSet.map((c) => runTest(c)));
-for (const result of results) {
-  for (const item of result.logs) {
-    console.log(...item);
-  }
-}
+await Promise.all(
+  evalSet.map(async (c) => {
+    const result = await runTest(c);
+    for (const item of result.logs) {
+      console.log(...item);
+    }
+  })
+);
