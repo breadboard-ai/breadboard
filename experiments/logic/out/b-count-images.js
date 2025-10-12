@@ -1,19 +1,26 @@
-export default async (inputs, capabilities) => {
-  let imageCount = 0;
+export default async (inputs) => {
+  const {
+    input1
+  } = inputs;
+  if (!input1 || !Array.isArray(input1.parts)) {
+    return {
+      parts: [{
+        text: "0"
+      }],
+    };
+  }
 
-  if (inputs && inputs.parts) {
-    for (const part of inputs.parts) {
-      if (part.fileData && part.fileData.mimeType.startsWith("image/")) {
-        imageCount++;
-      } else if (part.inlineData && part.inlineData.mimeType.startsWith("image/")) {
-        imageCount++;
-      }
+  let imageCount = 0;
+  for (const part of input1.parts) {
+    const mimeType = part.fileData?.mimeType || part.inlineData?.mimeType;
+    if (mimeType && mimeType.startsWith("image/")) {
+      imageCount++;
     }
   }
 
   return {
     parts: [{
-      text: `${imageCount}`
+      text: String(imageCount)
     }],
   };
 };

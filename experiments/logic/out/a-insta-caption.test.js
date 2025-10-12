@@ -1,195 +1,183 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
+ * @param {import('./types.js').Invoke} invoke
+ * @param {import('./types.js').CapabilityMocks} mocks
+ * @param {import('./types.js').TestResultsReporter} reporter
+ */
 export default async (invoke, mocks, reporter) => {
-  /**
-   * A reusable test runner for different scenarios.
-   * @param {object} options
-   * @param {string} options.name - The name of the test case.
-   * @param {FileDataPart[]} options.mockImages - An array of image parts to be used as input.
-   * @param {string[]} options.mockCaptions - An array of captions the mock LLM should return.
-   */
-  const runTestCase = async ({ name, mockImages, mockCaptions }) => {
-    reporter.progress(`--- Running test case: "${name}" ---`);
+  // Test Case 1: Multiple Images
+  reporter.progress("--- Running Test Case: Multiple Images ---");
+  await (async () => {
+    // 1. Define mock inputs and expected outputs for this test case.
+    const mockImage1 = {
+      fileData: {
+        fileUri: "/vfs/images/beach.jpg",
+        mimeType: "image/jpeg"
+      },
+    };
+    const mockImage2 = {
+      fileData: {
+        fileUri: "/vfs/images/city.png",
+        mimeType: "image/png"
+      },
+    };
+    const mockInput = {
+      role: "user",
+      parts: [mockImage1, mockImage2],
+    };
 
-    let callCount = 0;
-    const errors = [];
+    const mockCaption1 = "Chasing the waves and living on island time. ☀️ #BeachVibes #Sunset";
+    const mockCaption2 = "City lights and endless nights. ✨ #UrbanExplorer #Cityscape";
 
-    // Set up the mock for the Gemini API call.
+    // 2. Set up the mock for the `generateContent` capability.
+    reporter.progress("Setting up mock for generateContent to return predefined captions.");
+    let generateContentCallCount = 0;
     mocks.generate.onGenerateContent(async (args) => {
-      // Ensure the mock is not called more than expected.
-      if (callCount >= mockImages.length) {
-        errors.push(
-          `generateContent was called more than the expected ${mockImages.length} times.`
-        );
-        // Return a valid empty response to prevent downstream errors.
+      generateContentCallCount++;
+      reporter.progress(`generateContent called (${generateContentCallCount}/2).`);
+
+      if (!args.contents || args.contents.length === 0) {
+        reporter.fail("generateContent was called without any `contents`.");
         return {
-          candidates: [],
+          candidates: []
         };
       }
 
-      reporter.progress(
-        `Verifying generateContent call ${callCount + 1}/${mockImages.length}`
-      );
+      const lastContent = args.contents[args.contents.length - 1];
+      const textPart = lastContent.parts.find((p) => "text" in p);
+      const imagePart = lastContent.parts.find((p) => "fileData" in p);
 
-      const parts = args.contents?.[0]?.parts;
-      if (!parts) {
-        errors.push("generateContent was called with no parts in contents.");
+      if (!textPart || !imagePart) {
+        reporter.fail("Expected generateContent call to contain both a text prompt and an image part.");
         return {
-          candidates: [],
+          candidates: []
         };
       }
 
-      // Verify that each call contains exactly one image.
-      const imageParts = parts.filter((part) => "fileData" in part);
-      if (imageParts.length !== 1) {
-        errors.push(
-          `Expected 1 image part in generateContent call, but got ${imageParts.length}.`
-        );
-      } else if (
-        imageParts[0].fileData.fileUri !==
-        mockImages[callCount].fileData.fileUri
-      ) {
-        errors.push(
-          `Expected image URI ${
-            mockImages[callCount].fileData.fileUri
-          } but got ${imageParts[0].fileData.fileUri}`
-        );
+      const promptText = textPart.text.toLowerCase();
+      if (!promptText.includes("caption") || !promptText.includes("instagram")) {
+        reporter.fail(`The prompt to the model seems incorrect. Expected a request for an Instagram caption, but got: "${textPart.text}"`);
+        return {
+          candidates: []
+        };
       }
 
-      // Verify the prompt is asking for a caption for Instagram.
-      const textParts = parts.filter((part) => "text" in part);
-      const promptText = textParts[0]?.text?.toLowerCase() ?? "";
-      if (
-        !promptText.includes("caption") ||
-        !promptText.includes("instagram")
-      ) {
-        errors.push(
-          `The prompt did not seem to ask for a catchy Instagram caption. Got: "${
-            textParts[0]?.text
-          }"`
-        );
+      // Return the appropriate mock caption based on the image provided.
+      let captionText;
+      if (imagePart.fileData.fileUri === mockImage1.fileData.fileUri) {
+        captionText = mockCaption1;
+      } else if (imagePart.fileData.fileUri === mockImage2.fileData.fileUri) {
+        captionText = mockCaption2;
+      } else {
+        reporter.fail(`generateContent was called with an unexpected image: ${imagePart.fileData.fileUri}`);
+        return {
+          candidates: []
+        };
       }
 
-      // Return the mock caption.
-      const response = {
-        candidates: [
-          {
-            content: {
-              parts: [
-                {
-                  text: mockCaptions[callCount],
-                },
-              ],
-            },
+      return {
+        candidates: [{
+          content: {
+            role: "model",
+            parts: [{
+              text: captionText
+            }],
           },
-        ],
+        }, ],
       };
-
-      callCount++;
-      return response;
     });
 
-    reporter.progress("Invoking the program...");
+    // 3. Invoke the program with the test inputs.
+    reporter.progress("Invoking the program with two images.");
     const result = await invoke({
-      parts: mockImages,
+      input1: mockInput
     });
-    reporter.progress("Program finished. Verifying output...");
 
-    if (callCount !== mockImages.length) {
-      errors.push(
-        `Expected generateContent to be called ${mockImages.length} times, but it was called ${callCount} times.`
-      );
+    // 4. Validate the results.
+    reporter.progress("Validating the program's output.");
+
+    if (generateContentCallCount !== 2) {
+      return reporter.fail(`Expected generateContent to be called 2 times (once per image), but it was called ${generateContentCallCount} times.`);
+    }
+    reporter.success("generateContent was called the correct number of times.");
+
+    if (!result || !Array.isArray(result.parts)) {
+      return reporter.fail("The program's output is not valid. Expected an object with a 'parts' array.");
     }
 
-    // Verify the structure and content of the final output.
-    const expectedPartsLength = mockImages.length * 2;
-    if (result.parts.length !== expectedPartsLength) {
-      errors.push(
-        `Expected ${expectedPartsLength} parts in the output, but got ${result.parts.length}.`
-      );
-    } else {
-      for (let i = 0; i < mockImages.length; i++) {
-        const imageIndex = i * 2;
-        const captionIndex = i * 2 + 1;
-
-        const resultImagePart = result.parts[imageIndex];
-        const resultCaptionPart = result.parts[captionIndex];
-        const expectedImagePart = mockImages[i];
-        const expectedCaption = mockCaptions[i];
-
-        // Check if the image part is correct.
-        if (
-          !resultImagePart?.fileData ||
-          resultImagePart.fileData.fileUri !==
-            expectedImagePart.fileData.fileUri
-        ) {
-          errors.push(
-            `Output part at index ${imageIndex} is not the correct image. Expected URI ${expectedImagePart.fileData.fileUri}, got ${resultImagePart?.fileData?.fileUri}`
-          );
-        }
-
-        // Check if the caption part is correct, allowing for extra whitespace.
-        if (
-          !resultCaptionPart?.text ||
-          resultCaptionPart.text.trim() !== expectedCaption
-        ) {
-          errors.push(
-            `Output part at index ${captionIndex} is not the correct caption. Expected "${expectedCaption}", got "${resultCaptionPart?.text?.trim()}"`
-          );
-        }
-      }
+    const {
+      parts
+    } = result;
+    if (parts.length !== 4) {
+      return reporter.fail(`Expected 4 parts in the output (image, caption, image, caption), but found ${parts.length}.`);
     }
+    reporter.success("Output contains the correct number of parts.");
 
-    if (errors.length > 0) {
-      reporter.fail(
-        `Test case "${name}" failed with ${
-          errors.length
-        } error(s): \n- ${errors.join("\n- ")}`
-      );
-    } else {
-      reporter.success(`Test case "${name}" passed!`);
+    // Validate Part 1: First image
+    if (JSON.stringify(parts[0]) !== JSON.stringify(mockImage1)) {
+      return reporter.fail("The first part of the output should be the first input image.");
     }
-  };
+    reporter.success("Part 1 is the correct image.");
 
-  // Test case 1: A typical scenario with multiple images.
-  await runTestCase({
-    name: "Multiple Images",
-    mockImages: [
-      {
-        fileData: {
-          fileUri: "/vfs/in/image-cat.png",
-          mimeType: "image/png",
-        },
-      },
-      {
-        fileData: {
-          fileUri: "/vfs/in/image-dog.jpeg",
-          mimeType: "image/jpeg",
-        },
-      },
-    ],
-    mockCaptions: [
-      "Just feline good today! 😺 #CatLife #Purrfect",
-      "Having a ruff day? Here's a picture of me! 🐶 #Doggo #GoodBoy",
-    ],
-  });
+    // Validate Part 2: First caption
+    if (!parts[1].text || parts[1].text.trim() !== mockCaption1) {
+      return reporter.fail(`The second part should be the caption for the first image. Expected "${mockCaption1}", but got "${parts[1].text?.trim()}".`);
+    }
+    reporter.success("Part 2 is the correct caption.");
 
-  // Test case 2: A single image to test loop logic.
-  await runTestCase({
-    name: "Single Image",
-    mockImages: [
-      {
-        fileData: {
-          fileUri: "/vfs/in/sunset.webp",
-          mimeType: "image/webp",
-        },
-      },
-    ],
-    mockCaptions: ["Chasing the sun. ✨ #SunsetLover #GoldenHour"],
-  });
+    // Validate Part 3: Second image
+    if (JSON.stringify(parts[2]) !== JSON.stringify(mockImage2)) {
+      return reporter.fail("The third part of the output should be the second input image.");
+    }
+    reporter.success("Part 3 is the correct image.");
 
-  // Test case 3: An empty input to test the edge case.
-  await runTestCase({
-    name: "No Images",
-    mockImages: [],
-    mockCaptions: [],
-  });
+    // Validate Part 4: Second caption
+    if (!parts[3].text || parts[3].text.trim() !== mockCaption2) {
+      return reporter.fail(`The fourth part should be the caption for the second image. Expected "${mockCaption2}", but got "${parts[3].text?.trim()}".`);
+    }
+    reporter.success("Part 4 is the correct caption.");
+  })();
+
+
+  // Test Case 2: No Images (Edge Case)
+  reporter.progress("\n--- Running Test Case: No Images ---");
+  await (async () => {
+    // 1. Define mock input with no image parts.
+    const emptyInput = {
+      role: "user",
+      parts: []
+    };
+
+    // 2. Set up a strict mock that fails if called.
+    let generateContentCallCount = 0;
+    mocks.generate.onGenerateContent(async () => {
+      generateContentCallCount++;
+      reporter.fail("generateContent should not be called when there are no input images.");
+      return {
+        candidates: []
+      };
+    });
+
+    // 3. Invoke the program.
+    reporter.progress("Invoking the program with zero images.");
+    const result = await invoke({
+      input1: emptyInput
+    });
+
+    // 4. Validate the results.
+    if (generateContentCallCount > 0) {
+      return reporter.fail("Test failed because generateContent was called unexpectedly.");
+    }
+    reporter.success("generateContent was not called, which is the correct behavior.");
+
+    if (!result || !Array.isArray(result.parts) || result.parts.length !== 0) {
+      return reporter.fail(`Expected an empty result when no images are provided, but got: ${JSON.stringify(result)}`);
+    }
+    reporter.success("Program correctly returned an empty result for no images.");
+  })();
 };

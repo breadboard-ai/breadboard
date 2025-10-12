@@ -10,6 +10,7 @@
 export type Case = {
   name: string;
   prompt: string;
+  inputs: string[];
 };
 
 export type Schema = {
@@ -95,7 +96,7 @@ export type Invoke = (
   /**
    * The inputs to the module.
    */
-  inputs: LLMContent,
+  inputs: Record<string, LLMContent>,
   /**
    * The capabilities, provided for the module.
    */

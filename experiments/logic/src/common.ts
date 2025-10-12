@@ -1,0 +1,43 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { readFile } from "fs/promises";
+import { join } from "path";
+
+export { objectShapePrompt, jsDevPrompt };
+
+const SRC_DIR = join(import.meta.dirname, "../src");
+
+function makeInputsType(items: string[]) {
+  return `
+type Inputs = {
+${items.map((item) => `  ${item}: LLMContent;`)}
+}`;
+}
+
+function objectShapePrompt(inputs: string[]) {
+  return `The shape of the input object is as follows:
+\`\`\`typescript
+${makeInputsType(inputs)}
+\`\`\``;
+}
+
+async function jsDevPrompt(type: string) {
+  const typesPath = join(SRC_DIR, `types.ts`);
+  const types = await readFile(typesPath, "utf-8");
+
+  return `You will write a Javascript module with a single anonymous async function as a default export.
+      
+The module runs in an isolated environment that has the latest ECMAScript features, but no additional bindings. The function you will write is defined as the \`${type}\` type.
+
+Make sure to write Javascript, not Typescript. Output it directly as Javascript code, with nothing else. This code will be used directly for execution.
+
+Here are all the type defintions:
+
+\`\`\`typescript
+${types}
+\`\`\``;
+}

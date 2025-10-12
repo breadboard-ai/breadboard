@@ -7,8 +7,8 @@ import { GoogleGenAI } from "@google/genai";
 import { config } from "dotenv";
 import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
-import { loadDeveloper } from "./agents/developer";
-import { loadQA } from "./agents/qa";
+import { loadDeveloper } from "./prompts/developer";
+import { loadQA } from "./prompts/qa";
 import { evalSet } from "./eval-set";
 import { Case } from "./types";
 
@@ -58,7 +58,7 @@ function cleanupCode(s: string) {
   // Mechanically fix a common problem with
   // Gemini adding extra spaces in optional
   // property accessors.
-  s = s.replaceAll(/\?\s*\.\s*/g, "?.");
+  s = s.replaceAll(/\?\s*\./g, "?.").replaceAll(/\?\s*\?/g, "??");
 
   const content = s?.trim();
   if (!content) {
