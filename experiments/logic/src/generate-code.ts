@@ -3,34 +3,19 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { GoogleGenAI } from "@google/genai";
-import { config } from "dotenv";
-import { mkdir, writeFile } from "fs/promises";
+
 import { join } from "path";
 import { loadDeveloper } from "./prompts/developer";
 import { loadQA } from "./prompts/qa";
-import { evalSet } from "./eval-set";
 import { Case } from "./types";
+import type { GoogleGenAI } from "@google/genai";
+import { mkdir, writeFile } from "fs/promises";
 
-config({ quiet: true });
+export { generateCode };
 
 const OUT_DIR = join(import.meta.dirname, "../out");
 
-const { GEMINI_API_KEY } = process.env;
-if (!GEMINI_API_KEY) {
-  console.error(
-    `  🔑 Please set GEMINI_KEY environment variable to run this app`
-  );
-  process.exit(1);
-} else {
-  console.log(`  🔑 GEMINI_KEY Acquired`);
-}
-
-const gemini = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-
-await Promise.all(evalSet.map((c) => generateOne(c)));
-
-async function generateOne(c: Case) {
+async function generateCode(gemini: GoogleGenAI, c: Case) {
   console.log(`  🤖 Generating code for "${c.name}"`);
   const [program, test] = await Promise.all([
     gemini.models.generateContent(await loadDeveloper(c)),

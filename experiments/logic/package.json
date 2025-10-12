@@ -14,7 +14,7 @@
       ]
     },
     "generate": {
-      "command": "tsx src/generate.ts",
+      "command": "tsx src/generate-all.ts",
       "dependencies": [
         "ts"
       ]

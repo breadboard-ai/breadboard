@@ -4,105 +4,78 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/**
- * @param {import('./types.js').Invoke} invoke
- * @param {import('./types.js').CapabilityMocks} mocks
- * @param {import('./types.js').TestResultsReporter} reporter
- */
 export default async (invoke, mocks, reporter) => {
-  // Test Case 1: Multiple Images
-  reporter.progress("--- Running Test Case: Multiple Images ---");
+  // Test Case 1: Processes multiple images, ignores non-image parts,
+  // and collates the output correctly.
   await (async () => {
-    // 1. Define mock inputs and expected outputs for this test case.
+    const testCaseName = "[TC1: Multiple Images & Mixed Content]";
+    reporter.progress(`--- Starting ${testCaseName} ---`);
+
     const mockImage1 = {
       fileData: {
-        fileUri: "/vfs/images/beach.jpg",
+        fileUri: "/vfs/testing/image1.jpeg",
         mimeType: "image/jpeg",
       },
     };
     const mockImage2 = {
       fileData: {
-        fileUri: "/vfs/images/city.png",
+        fileUri: "/vfs/testing/image2.png",
         mimeType: "image/png",
       },
     };
-    const mockInput = {
-      role: "user",
-      parts: [mockImage1, mockImage2],
+    const mockTextPart = {
+      text: "This text part should be ignored by the program.",
     };
 
-    const mockCaption1 =
-      "Chasing the waves and living on island time. ☀️ #BeachVibes #Sunset";
-    const mockCaption2 =
-      "City lights and endless nights. ✨ #UrbanExplorer #Cityscape";
+    const mockInputs = {
+      input1: {
+        parts: [mockImage1, mockTextPart, mockImage2],
+      },
+    };
 
-    // 2. Set up the mock for the `generateContent` capability.
-    reporter.progress(
-      "Setting up mock for generateContent to return predefined captions."
-    );
+    const expectedCaption1 = "A stunning sunset over the mountains.";
+    const expectedCaption2 = "A playful puppy chasing a ball in a sunny field.";
+
     let generateContentCallCount = 0;
+    const receivedImageUris = new Set();
+
     mocks.generate.onGenerateContent(async (args) => {
       generateContentCallCount++;
       reporter.progress(
-        `generateContent called (${generateContentCallCount}/2).`
+        `${testCaseName} generateContent call #${generateContentCallCount}`
       );
 
-      if (!args.contents || args.contents.length === 0) {
-        reporter.fail("generateContent was called without any `contents`.");
-        return {
-          candidates: [],
-        };
-      }
+      // The program should send one image at a time for captioning.
+      const imagePart = args.contents[args.contents.length - 1]?.parts.find(
+        (p) => p.fileData
+      );
 
-      const lastContent = args.contents[args.contents.length - 1];
-      const textPart = lastContent.parts.find((p) => "text" in p);
-      const imagePart = lastContent.parts.find((p) => "fileData" in p);
-
-      if (!textPart || !imagePart) {
-        reporter.fail(
-          "Expected generateContent call to contain both a text prompt and an image part."
+      if (!imagePart) {
+        throw new Error(
+          `${testCaseName} generateContent was called without an image part.`
         );
-        return {
-          candidates: [],
-        };
       }
 
-      const promptText = textPart.text.toLowerCase();
-      if (
-        !promptText.includes("caption") ||
-        !promptText.includes("instagram")
-      ) {
-        reporter.fail(
-          `The prompt to the model seems incorrect. Expected a request for an Instagram caption, but got: "${textPart.text}"`
-        );
-        return {
-          candidates: [],
-        };
-      }
+      receivedImageUris.add(imagePart.fileData.fileUri);
 
-      // Return the appropriate mock caption based on the image provided.
-      let captionText;
+      let caption = "";
       if (imagePart.fileData.fileUri === mockImage1.fileData.fileUri) {
-        captionText = mockCaption1;
+        caption = expectedCaption1;
       } else if (imagePart.fileData.fileUri === mockImage2.fileData.fileUri) {
-        captionText = mockCaption2;
+        caption = expectedCaption2;
       } else {
-        reporter.fail(
-          `generateContent was called with an unexpected image: ${imagePart.fileData.fileUri}`
+        throw new Error(
+          `${testCaseName} Unexpected image URI: ${imagePart.fileData.fileUri}`
         );
-        return {
-          candidates: [],
-        };
       }
 
       return {
         candidates: [
           {
             content: {
-              role: "model",
               parts: [
                 {
-                  text: captionText,
+                  text: caption,
                 },
               ],
             },
@@ -111,113 +84,152 @@ export default async (invoke, mocks, reporter) => {
       };
     });
 
-    // 3. Invoke the program with the test inputs.
-    reporter.progress("Invoking the program with two images.");
-    const result = await invoke({
-      input1: mockInput,
-    });
+    reporter.progress(
+      `${testCaseName} Invoking the program with two images and one text part.`
+    );
+    const result = await invoke(mockInputs);
+    reporter.progress(`${testCaseName} Invocation complete.`);
 
-    // 4. Validate the results.
-    reporter.progress("Validating the program's output.");
-
+    // Assertions for Test Case 1
     if (generateContentCallCount !== 2) {
       return reporter.fail(
-        `Expected generateContent to be called 2 times (once per image), but it was called ${generateContentCallCount} times.`
+        `${testCaseName} Expected 2 calls to generateContent for 2 images, but got ${generateContentCallCount}.`
       );
     }
-    reporter.success("generateContent was called the correct number of times.");
-
-    if (!result || !Array.isArray(result.parts)) {
+    if (
+      !receivedImageUris.has(mockImage1.fileData.fileUri) ||
+      !receivedImageUris.has(mockImage2.fileData.fileUri)
+    ) {
       return reporter.fail(
-        "The program's output is not valid. Expected an object with a 'parts' array."
+        `${testCaseName} generateContent was not called with all the expected image URIs.`
       );
     }
+    reporter.success(
+      `${testCaseName} generateContent was called the correct number of times with the correct images.`
+    );
 
-    const { parts } = result;
-    if (parts.length !== 4) {
+    if (!result?.parts || result.parts.length !== 4) {
       return reporter.fail(
-        `Expected 4 parts in the output (image, caption, image, caption), but found ${parts.length}.`
+        `${testCaseName} Expected 4 parts in the output (image, caption, image, caption), but got ${
+          result?.parts?.length || 0
+        }.`
       );
     }
-    reporter.success("Output contains the correct number of parts.");
+    reporter.success(
+      `${testCaseName} Output has the correct number of parts (4).`
+    );
 
-    // Validate Part 1: First image
-    if (JSON.stringify(parts[0]) !== JSON.stringify(mockImage1)) {
-      return reporter.fail(
-        "The first part of the output should be the first input image."
-      );
-    }
-    reporter.success("Part 1 is the correct image.");
+    const [part1, part2, part3, part4] = result.parts;
 
-    // Validate Part 2: First caption
-    if (!parts[1].text || parts[1].text.trim() !== mockCaption1) {
+    if (part1?.fileData?.fileUri !== mockImage1.fileData.fileUri) {
+      return reporter.fail(`${testCaseName} Part 1 is not the first input image.`);
+    }
+    if (part2?.text?.trim() !== expectedCaption1) {
       return reporter.fail(
-        `The second part should be the caption for the first image. Expected "${mockCaption1}", but got "${parts[1].text?.trim()}".`
+        `${testCaseName} Part 2 is not the correct caption for the first image.`
       );
     }
-    reporter.success("Part 2 is the correct caption.");
-
-    // Validate Part 3: Second image
-    if (JSON.stringify(parts[2]) !== JSON.stringify(mockImage2)) {
+    if (part3?.fileData?.fileUri !== mockImage2.fileData.fileUri) {
+      return reporter.fail(`${testCaseName} Part 3 is not the second input image.`);
+    }
+    if (part4?.text?.trim() !== expectedCaption2) {
       return reporter.fail(
-        "The third part of the output should be the second input image."
+        `${testCaseName} Part 4 is not the correct caption for the second image.`
       );
     }
-    reporter.success("Part 3 is the correct image.");
-
-    // Validate Part 4: Second caption
-    if (!parts[3].text || parts[3].text.trim() !== mockCaption2) {
-      return reporter.fail(
-        `The fourth part should be the caption for the second image. Expected "${mockCaption2}", but got "${parts[3].text?.trim()}".`
-      );
-    }
-    reporter.success("Part 4 is the correct caption.");
+    reporter.success(
+      `${testCaseName} All output parts are correct and in the expected order.`
+    );
   })();
 
-  // Test Case 2: No Images (Edge Case)
-  reporter.progress("\n--- Running Test Case: No Images ---");
+  // Test Case 2: Handles input with no images.
   await (async () => {
-    // 1. Define mock input with no image parts.
-    const emptyInput = {
-      role: "user",
-      parts: [],
+    const testCaseName = "[TC2: No Images]";
+    reporter.progress(`--- Starting ${testCaseName} ---`);
+
+    const mockInputs = {
+      input1: {
+        parts: [
+          {
+            text: "Just some text, no images here.",
+          },
+        ],
+      },
     };
 
-    // 2. Set up a strict mock that fails if called.
     let generateContentCallCount = 0;
     mocks.generate.onGenerateContent(async () => {
       generateContentCallCount++;
-      reporter.fail(
-        "generateContent should not be called when there are no input images."
-      );
+      // This should not be called, but we provide a valid return just in case.
       return {
         candidates: [],
       };
     });
 
-    // 3. Invoke the program.
-    reporter.progress("Invoking the program with zero images.");
-    const result = await invoke({
-      input1: emptyInput,
-    });
+    reporter.progress(`${testCaseName} Invoking the program with no images.`);
+    const result = await invoke(mockInputs);
+    reporter.progress(`${testCaseName} Invocation complete.`);
 
-    // 4. Validate the results.
     if (generateContentCallCount > 0) {
       return reporter.fail(
-        "Test failed because generateContent was called unexpectedly."
+        `${testCaseName} Expected generateContent to not be called, but it was called ${generateContentCallCount} times.`
       );
     }
-    reporter.success(
-      "generateContent was not called, which is the correct behavior."
-    );
 
-    if (!result || !Array.isArray(result.parts) || result.parts.length !== 0) {
+    if (!result?.parts || result.parts.length !== 0) {
       return reporter.fail(
-        `Expected an empty result when no images are provided, but got: ${JSON.stringify(result)}`
+        `${testCaseName} Expected an empty parts array in the output, but got ${JSON.stringify(
+          result?.parts
+        )}.`
       );
     }
+
     reporter.success(
-      "Program correctly returned an empty result for no images."
+      `${testCaseName} Correctly handled input with no images, producing an empty output.`
+    );
+  })();
+
+  // Test Case 3: Handles completely empty input.
+  await (async () => {
+    const testCaseName = "[TC3: Empty Input]";
+    reporter.progress(`--- Starting ${testCaseName} ---`);
+
+    const mockInputs = {
+      input1: {
+        parts: [],
+      },
+    };
+
+    let generateContentCallCount = 0;
+    mocks.generate.onGenerateContent(async () => {
+      generateContentCallCount++;
+      return {
+        candidates: [],
+      };
+    });
+
+    reporter.progress(
+      `${testCaseName} Invoking the program with an empty parts array.`
+    );
+    const result = await invoke(mockInputs);
+    reporter.progress(`${testCaseName} Invocation complete.`);
+
+    if (generateContentCallCount > 0) {
+      return reporter.fail(
+        `${testCaseName} Expected generateContent to not be called, but it was called ${generateContentCallCount} times.`
+      );
+    }
+
+    if (!result?.parts || result.parts.length !== 0) {
+      return reporter.fail(
+        `${testCaseName} Expected an empty parts array in the output, but got ${JSON.stringify(
+          result?.parts
+        )}.`
+      );
+    }
+
+    reporter.success(
+      `${testCaseName} Correctly handled an empty input parts array.`
     );
   })();
 };

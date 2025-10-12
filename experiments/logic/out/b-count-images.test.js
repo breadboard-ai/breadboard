@@ -7,165 +7,122 @@
 export default async (invoke, mocks, reporter) => {
   const testCases = [
     {
-      name: "No images",
-      input: {
-        input1: {
-          parts: [{ text: "This is a simple text prompt." }],
-        },
-      },
+      name: "No parts",
+      input: { parts: [] },
       expectedOutput: "0",
     },
     {
-      name: "One image (inlineData)",
+      name: "Only text parts",
+      input: { parts: [{ text: "This is a prompt with no images." }] },
+      expectedOutput: "0",
+    },
+    {
+      name: "One image part",
       input: {
-        input1: {
-          parts: [
-            { text: "Here is one image:" },
-            {
-              inlineData: {
-                mimeType: "image/png",
-                data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
-              },
-            },
-          ],
-        },
+        parts: [{ fileData: { mimeType: "image/jpeg", fileUri: "vfs/1" } }],
       },
       expectedOutput: "1",
     },
     {
-      name: "One image (fileData)",
+      name: "Multiple image parts",
       input: {
-        input1: {
-          parts: [
-            { text: "And another image from a file:" },
-            {
-              fileData: {
-                mimeType: "image/jpeg",
-                fileUri: "/vfs/out/test.jpg",
-              },
-            },
-          ],
-        },
-      },
-      expectedOutput: "1",
-    },
-    {
-      name: "Multiple images",
-      input: {
-        input1: {
-          parts: [
-            { text: "Look at all these pictures." },
-            {
-              fileData: {
-                mimeType: "image/jpeg",
-                fileUri: "/vfs/out/cat.jpg",
-              },
-            },
-            { text: "Here's another one." },
-            {
-              inlineData: {
-                mimeType: "image/gif",
-                data: "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
-              },
-            },
-            {
-              fileData: {
-                mimeType: "image/webp",
-                fileUri: "/vfs/out/dog.webp",
-              },
-            },
-          ],
-        },
+        parts: [
+          { fileData: { mimeType: "image/png", fileUri: "vfs/1" } },
+          { fileData: { mimeType: "image/gif", fileUri: "vfs/2" } },
+          { fileData: { mimeType: "image/webp", fileUri: "vfs/3" } },
+        ],
       },
       expectedOutput: "3",
     },
     {
-      name: "Mixed content types",
+      name: "Mixed text and image parts",
       input: {
-        input1: {
-          parts: [
-            {
-              inlineData: {
-                mimeType: "application/pdf",
-                data: "...",
-              },
-            },
-            {
-              fileData: {
-                mimeType: "image/svg+xml",
-                fileUri: "/vfs/out/chart.svg",
-              },
-            },
-            {
-              inlineData: {
-                mimeType: "video/mp4",
-                data: "...",
-              },
-            },
-            {
-              fileData: {
-                mimeType: "image/png",
-                fileUri: "/vfs/out/logo.png",
-              },
-            },
-          ],
-        },
+        parts: [
+          { text: "Here is the first image:" },
+          { fileData: { mimeType: "image/jpeg", fileUri: "vfs/1" } },
+          { text: "And here is the second one:" },
+          { fileData: { mimeType: "image/png", fileUri: "vfs/2" } },
+        ],
       },
       expectedOutput: "2",
     },
     {
-      name: "Empty parts array",
+      name: "Mixed file types (images and non-images)",
       input: {
-        input1: {
-          parts: [],
-        },
+        parts: [
+          { fileData: { mimeType: "image/jpeg", fileUri: "vfs/1" } },
+          { fileData: { mimeType: "video/mp4", fileUri: "vfs/2" } },
+          { fileData: { mimeType: "application/pdf", fileUri: "vfs/3" } },
+          { fileData: { mimeType: "image/gif", fileUri: "vfs/4" } },
+        ],
       },
-      expectedOutput: "0",
+      expectedOutput: "2",
     },
     {
-      name: "Input has no parts field",
+      name: "Mime types with different cases",
       input: {
-        input1: {
-          // No parts property
-        },
+        parts: [
+          { fileData: { mimeType: "IMAGE/JPEG", fileUri: "vfs/1" } },
+          { fileData: { mimeType: "Image/Png", fileUri: "vfs/2" } },
+        ],
       },
-      expectedOutput: "0",
+      expectedOutput: "2",
+    },
+    {
+      name: "Malformed parts (should be ignored)",
+      input: {
+        parts: [
+          { fileData: { mimeType: "image/jpeg", fileUri: "vfs/1" } },
+          { text: "A valid text part" },
+          {}, // empty part
+          { fileData: {} }, // fileData without mimeType
+          { notAValidPart: true },
+        ],
+      },
+      expectedOutput: "1",
     },
   ];
 
   for (const tc of testCases) {
-    reporter.progress(`Running test: "${tc.name}"`);
+    reporter.progress(`Running test case: "${tc.name}"`);
     try {
-      const result = await invoke(tc.input);
+      const result = await invoke({ input1: tc.input });
 
-      if (!result || !result.parts || result.parts.length === 0) {
+      if (
+        !result ||
+        !result.parts ||
+        !Array.isArray(result.parts) ||
+        result.parts.length === 0
+      ) {
         reporter.fail(
-          `Test "${tc.name}" failed: Program returned no output or no parts in the output.`
+          `Test case "${tc.name}" failed: Output is not a valid LLMContent object.`
         );
         continue;
       }
 
       const textPart = result.parts.find((part) => "text" in part);
-
       if (!textPart) {
         reporter.fail(
-          `Test "${tc.name}" failed: The output did not contain a text part.`
+          `Test case "${tc.name}" failed: Output does not contain a text part.`
         );
         continue;
       }
 
-      const actualOutput = textPart.text.trim();
+      const outputText = textPart.text.trim();
 
-      if (actualOutput !== tc.expectedOutput) {
-        reporter.fail(
-          `Test "${tc.name}" failed: Expected output to be "${tc.expectedOutput}", but got "${actualOutput}".`
+      if (outputText === tc.expectedOutput) {
+        reporter.success(
+          `Test case "${tc.name}" passed. Got "${outputText}" as expected.`
         );
       } else {
-        reporter.success(`Test "${tc.name}" passed.`);
+        reporter.fail(
+          `Test case "${tc.name}" failed: Expected "${tc.expectedOutput}", but got "${outputText}".`
+        );
       }
     } catch (e) {
-      const err = e instanceof Error ? e.message : `${e}`;
-      reporter.fail(`Test "${tc.name}" failed with an exception: ${err}`);
+      reporter.fail(
+        `Test case "${tc.name}" failed with an error: ${e.message}`
+      );
     }
   }
 };
