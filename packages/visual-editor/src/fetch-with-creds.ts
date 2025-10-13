@@ -60,6 +60,7 @@ export function createFetchWithCreds(
 }
 
 class FetchRequestManager {
+  #wasFormData = false;
   readonly request: Request;
 
   constructor(
@@ -68,6 +69,9 @@ class FetchRequestManager {
     init: RequestInit | undefined
   ) {
     this.request = new Request(request, init);
+    if (init?.body instanceof FormData) {
+      this.#wasFormData = true;
+    }
   }
 
   async getToken(): Promise<string> {
@@ -108,6 +112,8 @@ class FetchRequestManager {
     // First, check to see if this is a multi-part POST request and exit early
     // if not.
     if (this.request.method === "GET") return this.request;
+    if (this.#wasFormData) return this.request;
+
     const boundary = this.request.headers
       .get("Content-Type")
       ?.match(/boundary=(.*)/)?.[1];
