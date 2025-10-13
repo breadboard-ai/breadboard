@@ -119,7 +119,6 @@ import {
   type OAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { builtInMcpClients } from "./mcp-clients";
-import { createFetchWithCreds } from "./fetch-with-creds";
 
 type RenderValues = {
   canSave: boolean;
@@ -367,10 +366,7 @@ export class Main extends SignalWatcher(LitElement) {
       backendApiEndpoint = window.location.href;
     }
 
-    const fetchWithCreds = createFetchWithCreds({
-      adapter: this.signinAdapter,
-      backendApiEndpoint,
-    });
+    const fetchWithCreds = this.signinAdapter.fetchWithCreds;
 
     this.#apiClient = new AppCatalystApiClient(
       fetchWithCreds,
@@ -388,7 +384,7 @@ export class Main extends SignalWatcher(LitElement) {
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,
       proxyApiBaseUrl,
-      fetchWithCreds: fetchWithCreds,
+      fetchWithCreds,
     });
 
     this.#embedHandler = args.embedHandler;
