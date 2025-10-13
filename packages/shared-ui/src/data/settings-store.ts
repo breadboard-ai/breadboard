@@ -279,24 +279,36 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
       SETTINGS_NAME,
       SETTINGS_VERSION
     );
-
-    for (const [store, data] of Object.entries(settings)) {
-      const settingsStore = store as BreadboardUI_Types.SETTINGS_TYPE;
-      if (settingsDb.objectStoreNames.contains(settingsStore)) {
-        await settingsDb.clear(settingsStore);
+    const storeNames = (
+      Object.keys(settings) as BreadboardUI_Types.SETTINGS_TYPE[]
+    ).filter((storeName) => {
+      const exists = settingsDb.objectStoreNames.contains(storeName);
+      if (!exists) {
+        console.error(
+          `[settings] Expected IDB object store ` +
+            `${JSON.stringify(storeName)} to exist, but it did not. ` +
+            `Settings for this store will be lost. A schema upgrade is ` +
+            `probably required.`
+        );
       }
+      return exists;
+    });
 
-      const tx = settingsDb.transaction(settingsStore, "readwrite");
-      await Promise.all([
-        [...data.items.values()].map((setting) => {
-          return tx.store.put(setting);
-        }),
-        tx.done,
-      ]);
-    }
-
-    this.#settings = settings;
+    const tx = settingsDb.transaction(storeNames, "readwrite");
+    await Promise.all(
+      storeNames.map(async (storeName) => {
+        const store = tx.objectStore(storeName);
+        await store.clear();
+        const data = settings[storeName];
+        await Promise.all(
+          [...data.items.values()].map((setting) => store.put(setting))
+        );
+      })
+    );
+    tx.commit();
+    await tx.done;
     settingsDb.close();
+    this.#settings = settings;
   }
 
   async restore() {
