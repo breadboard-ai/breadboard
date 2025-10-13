@@ -16,7 +16,6 @@ import { serveInfoAPI } from "./server/info/index.js";
 import { serveMeAPI } from "./server/info/me.js";
 import { serveProxyAPI } from "./server/proxy/index.js";
 import { type BoardServerStore } from "./server/store.js";
-import { loadBoard } from "./server/boards/loader.js";
 import { InMemoryStorageProvider } from "./server/storage-providers/inmemory.js";
 import { FirestoreStorageProvider } from "./server/storage-providers/firestore.js";
 import type { AllowFilterFunction } from "@breadboard-ai/types";
@@ -26,10 +25,6 @@ export { getUserCredentials, requireAuth } from "./server/auth.js";
 
 const DEFAULT_PORT = 3000;
 const DEFAULT_HOST = "localhost";
-
-export const middlewares = {
-  loadBoard,
-};
 
 export function createServer(config: ServerConfig): Express {
   const server = express();
@@ -77,7 +72,7 @@ export function createRouter(config: ServerConfig): Router {
   router.get("/", serveHome);
 
   router.use("/blobs", serveBlobsAPI(config));
-  router.use("/boards", serveBoardsAPI(config));
+  router.use("/boards", serveBoardsAPI());
   router.use("/info", serveInfoAPI());
   router.use("/me", serveMeAPI());
   router.use("/proxy", serveProxyAPI(config));
