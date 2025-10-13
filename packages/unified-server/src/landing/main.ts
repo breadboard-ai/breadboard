@@ -174,6 +174,7 @@ async function init() {
       scopesErrorSignInButton,
       genericErrorDialog,
       genericErrorDialogTitle,
+      genericErrorDialogDetail,
       sharedFlowDialog,
       sharedFlowDialogSignInButton,
       sharedFlowDialogTitle,
@@ -206,14 +207,11 @@ async function init() {
     };
 
     const onClickSignIn = async (target?: MakeUrlInit) => {
-      if (!signinAdapter) {
-        return;
-      }
-
+      console.info(`[landing] Awaiting sign-in result`);
       const result = await signinAdapter.signIn();
+      console.info(`[landing] Received sign-in result`, result);
       if (!result.ok) {
         const { error } = result;
-        console.warn(error);
         await setSignInUrls();
         if (error.code === "missing-scopes") {
           scopesErrorDialog.showModal();
@@ -224,12 +222,16 @@ async function init() {
         } else {
           error.code satisfies "other";
           genericErrorDialogTitle.textContent = `An unexpected signin error occured`;
+          if (error.userMessage) {
+            genericErrorDialogDetail.textContent = error.userMessage;
+          }
           genericErrorDialog.showModal();
         }
         return;
       }
 
       ActionTracker.signInSuccess();
+      console.info(`[landing] Redirecting after sign-in`, target);
       redirect(target);
     };
 

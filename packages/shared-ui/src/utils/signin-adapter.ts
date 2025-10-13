@@ -53,7 +53,7 @@ export type SignInError =
   | { code: "missing-scopes"; missingScopes: string[] }
   | { code: "geo-restriction" }
   | { code: "user-cancelled" }
-  | { code: "other"; detail: string };
+  | { code: "other"; userMessage: string };
 
 /** @return Whether the user opened `signInUrl`. */
 export type SignInRequestHandler = (signInUrl: string) => boolean;
@@ -173,7 +173,7 @@ class SigninAdapter {
     if (token.state === "expired") {
       token = await token.refresh();
       if (token.state === "signedout") {
-        if ((await this.signIn()).ok) {
+        if ((await this.#signIn()).ok) {
           token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
         }
       }
@@ -272,6 +272,21 @@ class SigninAdapter {
   async signIn(
     scopes?: OAuthScope[]
   ): Promise<{ ok: true } | { ok: false; error: SignInError }> {
+    try {
+      return await this.#signIn(scopes);
+    } catch (e) {
+      console.error(`[signin] Unhandled error`, e);
+      return {
+        ok: false,
+        error: { code: "other", userMessage: `Unhandled error` },
+      };
+    }
+  }
+
+  async #signIn(
+    scopes?: OAuthScope[]
+  ): Promise<{ ok: true } | { ok: false; error: SignInError }> {
+    console.info(`[signin] Begin sign-in`);
     const now = Date.now();
     // The OAuth broker page will know to broadcast the token on this unique
     // channel because it also knows the nonce (since we pack that in the OAuth
@@ -281,41 +296,61 @@ class SigninAdapter {
     // we don't want to ever mix up different requests.
     this.#nonce = crypto.randomUUID();
     const channel = new BroadcastChannel(channelName);
+    console.info(`[signin] Awaiting grant response`, channelName);
     const grantResponse = await new Promise<GrantResponse>((resolve) => {
       channel.addEventListener("message", (m) => resolve(m.data), {
         once: true,
       });
     });
+    console.info(`[signin] Received grant response`);
     channel.close();
     if (grantResponse.error !== undefined) {
       if (grantResponse.error === "access_denied") {
-        console.debug(`[signin] user cancelled the sign-in flow`);
+        console.info(`[signin] User cancelled sign-in`);
         return { ok: false, error: { code: "user-cancelled" } };
       } else if (grantResponse.error.includes("region")) {
-        console.debug(`[signin] geo restriction 1`);
-        return {
-          ok: false,
-          error: { code: "geo-restriction" },
-        };
+        // TODO(aomarks) This path shouldn't ever happen anymore, we always
+        // check it below instead, so we can probably remove this case.
+        console.info(`[signin] User is geo restricted (early)`);
+        return { ok: false, error: { code: "geo-restriction" } };
       }
-      console.debug(`[signin] other error`, grantResponse.error);
+      console.error(`[signin] Unknown grant error`, grantResponse.error);
       return {
         ok: false,
-        error: { code: "other", detail: grantResponse.error },
+        error: {
+          code: "other",
+          userMessage: `Unknown grant error ${JSON.stringify(grantResponse.error)}`,
+        },
+      };
+    }
+    if (!grantResponse.access_token) {
+      console.error(`[signin] Missing access token`, grantResponse);
+      return {
+        ok: false,
+        error: { code: "other", userMessage: "Missing access token" },
       };
     }
 
-    if (await this.userHasGeoRestriction()) {
-      console.debug(`[signin] geo restriction 2`);
-      return { ok: false, error: { code: "geo-restriction" } };
+    console.info(`[signin] Checking geo restriction`);
+    try {
+      if (await this.userHasGeoRestriction()) {
+        console.info(`[signin] User is geo restricted`);
+        return { ok: false, error: { code: "geo-restriction" } };
+      }
+    } catch (e) {
+      console.error("[signin] Error checking geo access", e);
+      return {
+        ok: false,
+        error: { code: "other", userMessage: `Error checking geo access` },
+      };
     }
 
     const connection = await this.#getConnection();
     if (!connection) {
-      console.debug(`[signin] no connection`);
+      console.error(`[signin] Connection not found`);
       return {
         ok: false,
-        error: { code: "other", detail: "Connection not found" },
+        error: { code: "other", userMessage: "Connection not found" },
       };
     }
 
@@ -330,7 +365,7 @@ class SigninAdapter {
       (scope) => !actualScopes.has(scope)
     );
     if (missingScopes.length > 0) {
-      console.debug(`[signin] missing scopes`, missingScopes);
+      console.info(`[signin] Missing scopes`, missingScopes);
       return {
         ok: false,
         error: { code: "missing-scopes", missingScopes },
@@ -348,12 +383,21 @@ class SigninAdapter {
       domain: grantResponse.domain,
       scopes: grantResponse.scopes,
     };
-    console.debug("[signin] updating signin storage");
-    await this.#settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connection.id, {
-      name: connection.id,
-      value: JSON.stringify(settingsValue),
-    });
+    console.info("[signin] Updating storage");
+    try {
+      await this.#settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connection.id, {
+        name: connection.id,
+        value: JSON.stringify(settingsValue),
+      });
+    } catch (e) {
+      console.error("[signin] Error updating storage", e);
+      return {
+        ok: false,
+        error: { code: "other", userMessage: `Error updating storage` },
+      };
+    }
     this.#state = this.#makeSignedInState(settingsValue);
+    console.info("[signin] Sign-in complete");
     return { ok: true };
   }
 
@@ -427,7 +471,7 @@ class SigninAdapter {
       for (const scope of tokenInfoScopes.value) {
         canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
       }
-      console.log(`[signin] Upgrading signin storage to include scopes`);
+      console.info(`[signin] Upgrading signin storage to include scopes`);
       await this.#settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connection.id, {
         name: connection.id,
         value: JSON.stringify({
