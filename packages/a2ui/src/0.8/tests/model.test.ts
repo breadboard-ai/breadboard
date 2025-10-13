@@ -8,7 +8,7 @@ import assert from "node:assert";
 import { describe, it, beforeEach } from "node:test";
 import { A2UIModelProcessor } from "../data/model-processor.js";
 
-// Helper function to strip reactivity for clean comparisons
+// Helper function to strip reactivity for clean comparisons.
 const toPlainObject = (obj: unknown) => JSON.parse(JSON.stringify(obj));
 
 describe("A2UIModelProcessor", () => {
@@ -149,7 +149,6 @@ describe("A2UIModelProcessor", () => {
     });
 
     it("should throw an error on circular dependencies", () => {
-      // The error is a console.warn and returns null, so we check for null root.
       assert.throws(() => {
         processor.processMessages([
           {
@@ -211,13 +210,13 @@ describe("A2UIModelProcessor", () => {
 
       assert.strictEqual(plainTree.properties.children.length, 2);
 
-      // Check first generated child
+      // Check first generated child.
       const child1 = plainTree.properties.children[0];
       assert.strictEqual(child1.id, "item-template:0");
       assert.strictEqual(child1.type, "Text");
       assert.strictEqual(child1.dataContextPath, "/items/0");
 
-      // Check second generated child
+      // Check second generated child.
       const child2 = plainTree.properties.children[1];
       assert.strictEqual(child2.id, "item-template:1");
       assert.strictEqual(child2.type, "Text");
@@ -301,7 +300,7 @@ describe("A2UIModelProcessor", () => {
                   },
                 },
               },
-              // These paths would be typical if the component definition was reused
+              // These paths would are typical when a databinding is used.
               {
                 id: "item-template",
                 componentProperties: { Text: { text: { path: "/item/name" } } },
