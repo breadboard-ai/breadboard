@@ -29,7 +29,6 @@ import {
   GraphDescriptor,
   isInlineData,
   isLLMContentArray,
-  NodeValue,
   ok,
 } from "@google-labs/breadboard";
 import { SignalWatcher } from "@lit-labs/signals";
