@@ -52,7 +52,6 @@ export { ConnectionSignin } from "./connection/connection-signin.js";
 export { AccountSwitcher } from "./account/account.js";
 export { AppController } from "./app-controller/app-controller.js";
 export { AppThemeCreator } from "./app-controller/app-theme-creator.js";
-export { BoardServerOverlay } from "./overlay/provider.js";
 export { CanvasController } from "./canvas-controller/canvas-controller.js";
 export { ComponentSelectorOverlay } from "./component-selector/component-selector-overlay.js";
 export { EditorControls } from "./step-editor/editor-controls.js";
@@ -82,7 +81,6 @@ export { GoogleDriveDirectoryPicker } from "./google-drive/google-drive-director
 export { GoogleDriveFileId } from "./google-drive/google-drive-file-id.js";
 export { GoogleDriveFileViewer } from "./google-drive/google-drive-file-viewer.js";
 export { GoogleDriveQuery } from "./google-drive/google-drive-query.js";
-export { GoogleDriveServerPicker } from "./google-drive/google-drive-server-picker.js";
 export { GoogleDriveSharePanel } from "./google-drive/google-drive-share-panel.js";
 
 // Misc.

@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type SigninAdapter } from "../utils/signin-adapter.js";
-
 export interface AppCatalystChatRequest {
   messages: AppCatalystContentChunk[];
   appOptions: {
@@ -34,27 +32,22 @@ export interface AppCatalystContentChunk {
 }
 
 export class AppCatalystApiClient {
-  readonly #signinAdapter: SigninAdapter;
+  readonly #fetchWithCreds: typeof globalThis.fetch;
   readonly #apiBaseUrl: string;
 
-  constructor(signinAdapter: SigninAdapter, apiBaseUrl: string) {
-    this.#signinAdapter = signinAdapter;
+  constructor(fetchWithCreds: typeof globalThis.fetch, apiBaseUrl: string) {
+    this.#fetchWithCreds = fetchWithCreds;
     this.#apiBaseUrl = apiBaseUrl;
   }
 
   async chat(
     request: AppCatalystChatRequest
   ): Promise<AppCatalystChatResponse> {
-    const token = await this.#signinAdapter.token();
-    if (token?.state !== "valid") {
-      throw new Error(`Expected "valid" token, got "${token?.state}"`);
-    }
     const url = new URL("v1beta1/chatGenerateApp", this.#apiBaseUrl);
-    const response = await fetch(url, {
+    const response = await this.#fetchWithCreds(url, {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        authorization: `Bearer ${token.grant.access_token}`,
       },
       body: JSON.stringify(request),
     });
@@ -63,17 +56,11 @@ export class AppCatalystApiClient {
   }
 
   async checkTos(): Promise<CheckAppAccessResponse> {
-    const token = await this.#signinAdapter.token();
-    if (token?.state !== "valid") {
-      throw new Error(`Expected "valid" token, got "${token?.state}"`);
-    }
     try {
       const result = (await (
-        await fetch(new URL(`v1beta1/checkAppAccess`, this.#apiBaseUrl), {
-          headers: {
-            Authorization: `Bearer ${token.grant.access_token}`,
-          },
-        })
+        await this.#fetchWithCreds(
+          new URL(`v1beta1/checkAppAccess`, this.#apiBaseUrl)
+        )
       ).json()) as CheckAppAccessResponse;
 
       // TODO: Remove this override.
@@ -88,17 +75,11 @@ export class AppCatalystApiClient {
   }
 
   async acceptTos(tosVersion: number = 1, acceptTos = false): Promise<void> {
-    const token = await this.#signinAdapter.token();
-    if (token?.state !== "valid") {
-      throw new Error(`Expected "valid" token, got "${token?.state}"`);
-    }
-
     const url = new URL("v1beta1/acceptToS", this.#apiBaseUrl);
-    const response = await fetch(url, {
+    const response = await this.#fetchWithCreds(url, {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        authorization: `Bearer ${token.grant.access_token}`,
       },
       body: JSON.stringify({
         termsOfServiceVersion: tosVersion,

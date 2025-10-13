@@ -30,7 +30,6 @@ import {
 } from "./utils.js";
 import type { GoogleDriveClient } from "../google-drive-client.js";
 import { DriveLookupCache } from "./drive-lookup-cache.js";
-import type { TokenVendor } from "@breadboard-ai/connection-client";
 
 const PROTOCOL = "drive:";
 
@@ -111,7 +110,6 @@ class DriveOperations {
   );
   readonly #googleDriveClient: GoogleDriveClient;
   readonly #publishPermissions: gapi.client.drive.Permission[];
-  readonly #tokenVendor: TokenVendor;
 
   /**
    * @param refreshProjectListCallback will be called when project list may have to be updated.
@@ -120,8 +118,7 @@ class DriveOperations {
     private readonly refreshProjectListCallback: () => Promise<void>,
     userFolderName: string,
     googleDriveClient: GoogleDriveClient,
-    publishPermissions: gapi.client.drive.Permission[],
-    tokenVendor: TokenVendor
+    publishPermissions: gapi.client.drive.Permission[]
   ) {
     if (!userFolderName) {
       throw new Error(`userFolderName was empty`);
@@ -129,7 +126,6 @@ class DriveOperations {
     this.#userFolderName = userFolderName;
     this.#googleDriveClient = googleDriveClient;
     this.#publishPermissions = publishPermissions;
-    this.#tokenVendor = tokenVendor;
   }
 
   /** Invalidates all the caches. */

@@ -119,7 +119,6 @@ import {
   type OAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { builtInMcpClients } from "./mcp-clients";
-import { createFetchWithCreds } from "./fetch-with-creds";
 
 type RenderValues = {
   canSave: boolean;
@@ -338,9 +337,7 @@ export class Main extends SignalWatcher(LitElement) {
       this.signinAdapter.token().then(async (result) => {
         if (
           result.state === "valid" &&
-          (await this.signinAdapter.userHasGeoRestriction(
-            result.grant.access_token
-          ))
+          (await this.signinAdapter.userHasGeoRestriction())
         ) {
           await this.signinAdapter.signOut();
           window.history.pushState(
@@ -367,13 +364,10 @@ export class Main extends SignalWatcher(LitElement) {
       backendApiEndpoint = window.location.href;
     }
 
-    const fetchWithCreds = createFetchWithCreds({
-      adapter: this.signinAdapter,
-      backendApiEndpoint,
-    });
+    const fetchWithCreds = this.signinAdapter.fetchWithCreds;
 
     this.#apiClient = new AppCatalystApiClient(
-      this.signinAdapter,
+      fetchWithCreds,
       backendApiEndpoint
     );
 
@@ -388,7 +382,7 @@ export class Main extends SignalWatcher(LitElement) {
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,
       proxyApiBaseUrl,
-      fetchWithCreds: fetchWithCreds,
+      fetchWithCreds,
     });
 
     this.#embedHandler = args.embedHandler;
@@ -1111,7 +1105,6 @@ export class Main extends SignalWatcher(LitElement) {
 
   #hideAllOverlays() {
     this.#uiState.show.delete("BoardEditModal");
-    this.#uiState.show.delete("BoardServerAddOverlay");
     this.#uiState.show.delete("BetterOnDesktopModal");
     this.#uiState.show.delete("MissingShare");
     this.#uiState.show.delete("StatusUpdateModal");
@@ -1553,9 +1546,6 @@ export class Main extends SignalWatcher(LitElement) {
           ? this.#renderMissingShareDialog()
           : nothing,
         this.#uiState.show.has("TOS") ? this.#renderTosDialog() : nothing,
-        this.#uiState.show.has("BoardServerAddOverlay")
-          ? this.#renderBoardServerAddOverlay()
-          : nothing,
         this.#uiState.show.has("BoardEditModal")
           ? this.#renderBoardEditModal()
           : nothing,
@@ -1673,34 +1663,6 @@ export class Main extends SignalWatcher(LitElement) {
         this.#embedHandler?.sendToEmbedder(message);
       }}
     ></bb-canvas-controller>`;
-  }
-
-  #renderBoardServerAddOverlay() {
-    return html`<bb-board-server-overlay
-      .showGoogleDrive=${true}
-      .boardServers=${this.#boardServers}
-      @bboverlaydismissed=${() => {
-        this.#uiState.show.delete("BoardServerAddOverlay");
-      }}
-      @bbgraphboardserverconnectrequest=${async (
-        evt: BreadboardUI.Events.GraphBoardServerConnectRequestEvent
-      ) => {
-        const result = await this.#runtime.board.connect(
-          evt.location,
-          evt.apiKey
-        );
-
-        if (result.error) {
-          this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
-        }
-
-        if (!result.success) {
-          return;
-        }
-
-        this.#uiState.show.delete("BoardServerAddOverlay");
-      }}
-    ></bb-board-server-overlay>`;
   }
 
   #renderBoardEditModal() {
