@@ -6,7 +6,7 @@
 
 import { GoogleGenAI } from "@google/genai";
 import { config } from "dotenv";
-import { evalSet } from "./eval-set";
+import { cases } from "./cases";
 import { build } from "./build";
 
 config({ quiet: true });
@@ -23,4 +23,4 @@ if (!GEMINI_API_KEY) {
 
 const gemini = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
-await Promise.all(evalSet.map((c) => build(gemini, c)));
+await Promise.all(cases.map((c) => build(gemini, c)));

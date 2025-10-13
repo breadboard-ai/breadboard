@@ -6,7 +6,7 @@
 
 import { Case } from "./types";
 
-export const evalSet: Case[] = [
+export const cases: Case[] = [
   {
     name: "a-insta-caption",
     prompt: `For each image in {{input1}}, provide a catchy caption suitable for an Instagram post. Output them collated into pairs: image + caption + image + caption, etc.`,
