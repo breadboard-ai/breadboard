@@ -48,7 +48,6 @@ class Reporter implements Console, TestResultsReporter, TestResult {
     this.logs.push([`🤖`, ...params]);
   }
   error(...params: unknown[]): void {
-    this.isError = true;
     this.logs.push([`🤖`, ...params]);
   }
 

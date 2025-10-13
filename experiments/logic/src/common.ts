@@ -7,7 +7,7 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
 
-export { objectShapePrompt, jsDevPrompt, cleanupCode };
+export { objectShapePrompt, jsDevPrompt, geminiModelPrompt, cleanupCode };
 
 const SRC_DIR = join(import.meta.dirname, "../src");
 
@@ -23,6 +23,17 @@ function objectShapePrompt(inputs: string[]) {
 \`\`\`typescript
 ${makeInputsType(inputs)}
 \`\`\``;
+}
+
+function geminiModelPrompt() {
+  return `The following Gemini models are available:
+
+- \`gemini-2.5-pro\` - Enhanced thinking and reasoning, multimodal understanding, advanced coding, and more
+- \`gemini-2.5-flash\` - Adaptive thinking, cost efficiency
+- \`gemini-2.5-flash-image-preview\` - Precise, conversational image generation
+  and editing. Importantly, the JSON mode is not enabled for this model.
+- \`veo-3.0-generate-001\` -- state-of-the-art model for generating high-fidelity videos from a text or image prompt. When two images submitted, will use the first image as the starting frame and the second image as the end frame.
+`;
 }
 
 async function jsDevPrompt(type: string) {

@@ -5,7 +5,7 @@
  */
 
 import type { GenerateContentParameters } from "@google/genai";
-import { jsDevPrompt, objectShapePrompt } from "../common";
+import { geminiModelPrompt, jsDevPrompt, objectShapePrompt } from "../common";
 import { Case } from "../types";
 
 export async function loadDeveloper(
@@ -33,13 +33,7 @@ files, where x is the index of the file provided.
 When providing files as outputs, output them as \`FilePart\` structures within the
 \`LLMContent\`, passing the VFS paths as-is.
 
-The following Gemini models are available:
-
-- \`gemini-2.5-pro\` - Enhanced thinking and reasoning, multimodal understanding, advanced coding, and more
-- \`gemini-2.5-flash\` - Adaptive thinking, cost efficiency
-- \`gemini-2.5-flash-image-preview\` - Precise, conversational image generation
-  and editing. Importantly, the JSON mode is not enabled for this model.
-`,
+${geminiModelPrompt()}`,
     },
   };
 }
