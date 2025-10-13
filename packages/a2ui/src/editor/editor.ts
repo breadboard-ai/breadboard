@@ -34,7 +34,11 @@ import {
 } from "./types/types.js";
 import { DrawableCanvas } from "./ui/ui.js";
 
-type Mode = "upload" | "sketch";
+type UserMode = "upload" | "sketch";
+type RenderMode = "surfaces" | "messages";
+
+const USER_MODE_KEY = "ui-user-mode";
+const RENDER_MODE_KEY = "ui-render-mode";
 
 @customElement("a2ui-layout-editor")
 export class A2UILayoutEditor extends SignalWatcher(LitElement) {
@@ -64,6 +68,9 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
 
   @query("drawable-canvas")
   accessor #drawableCanvas: DrawableCanvas | null = null;
+
+  @state()
+  accessor #lastMessages: A2UIProtocolMessage[] | null = null;
 
   static styles = [
     UI.Styles.all,
@@ -229,8 +236,8 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
             }
 
             & button {
-              border-radius: var(--bb-grid-size-2);
               color: var(--primary);
+              border-radius: var(--bb-grid-size-2);
               background: oklch(from var(--primary) l c h / calc(alpha * 0.2));
               opacity: 0.4;
               border: none;
@@ -281,6 +288,43 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
           grid-template-rows: 32px 1fr;
           gap: var(--bb-grid-size-4);
 
+          & #render-mode,
+          & #render-mode > span {
+            display: flex;
+            align-items: center;
+            background: none;
+            border: none;
+            color: var(--primary);
+            padding: 0;
+          }
+
+          & #render-mode {
+            gap: var(--bb-grid-size-3);
+
+            & > span {
+              border-radius: var(--bb-grid-size-2);
+              background: oklch(from var(--primary) l c h / calc(alpha * 0.2));
+              opacity: 0.4;
+              border: none;
+              transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+              width: 100%;
+              max-width: 420px;
+              padding: var(--bb-grid-size-2) var(--bb-grid-size-5);
+              pointer-events: auto;
+
+              &:not(.active):hover {
+                opacity: 1;
+                cursor: pointer;
+              }
+
+              &.active {
+                opacity: 1;
+                color: var(--text-color);
+              }
+            }
+          }
+
+          & #messages,
           & #surfaces {
             display: flex;
             border-radius: var(--bb-grid-size-2);
@@ -295,6 +339,47 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
               width: 100%;
               max-width: 640px;
               max-height: 600px;
+            }
+          }
+
+          & #messages {
+            position: relative;
+            display: block;
+            font-family: var(--font-family-mono);
+            line-height: 1.5;
+
+            & div {
+              white-space: pre-wrap;
+            }
+
+            & button {
+              position: absolute;
+              top: var(--bb-grid-size-3);
+              right: var(--bb-grid-size-3);
+
+              display: flex;
+              align-items: center;
+              border-radius: var(--bb-grid-size-2);
+              background: oklch(from var(--primary) l c h / calc(alpha * 0.2));
+              opacity: 0.4;
+              border: none;
+              transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+              padding: var(--bb-grid-size-2) var(--bb-grid-size-5)
+                var(--bb-grid-size-2) var(--bb-grid-size-2);
+              color: var(--primary);
+
+              & .g-icon {
+                margin-right: var(--bb-grid-size-2);
+              }
+
+              &:not([disabled]) {
+                cursor: pointer;
+
+                &:hover,
+                &:focus {
+                  opacity: 1;
+                }
+              }
             }
           }
 
@@ -338,22 +423,35 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
   ];
 
   @state()
-  set mode(mode: Mode) {
-    this.#mode = mode;
-    localStorage.setItem("ui-mode", mode);
+  set userMode(userMode: UserMode) {
+    this.#userMode = userMode;
+    localStorage.setItem(USER_MODE_KEY, userMode);
   }
-  get mode() {
-    return this.#mode;
+  get userMode() {
+    return this.#userMode;
   }
+  #userMode: UserMode = "upload";
 
-  #mode: Mode = "upload";
+  @state()
+  set renderMode(renderMode: RenderMode) {
+    this.#renderMode = renderMode;
+    localStorage.setItem(RENDER_MODE_KEY, renderMode);
+  }
+  get renderMode() {
+    return this.#renderMode;
+  }
+  #renderMode: RenderMode = "surfaces";
+
   #processor = new A2UIModelProcessor();
   #a2uiClient = new A2UIClient();
 
   constructor() {
     super();
 
-    this.#mode = (localStorage.getItem("ui-mode") as Mode) ?? "upload";
+    this.#userMode =
+      (localStorage.getItem(USER_MODE_KEY) as UserMode) ?? "upload";
+    this.#renderMode =
+      (localStorage.getItem(RENDER_MODE_KEY) as RenderMode) ?? "surfaces";
     this.#a2uiClient.ready.then(() => {
       this.#ready = true;
     });
@@ -388,7 +486,7 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
     return [];
   }
 
-  #renderSurfaces() {
+  #renderSurfacesOrMessages() {
     if (this.#requesting) {
       return html`<section id="surfaces">
         <div id="generating-surfaces">
@@ -401,9 +499,8 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
       </section>`;
     }
 
-    const surfaces = this.#processor.getSurfaces();
-    if (surfaces.size === 0) {
-      return html`<section id="surfaces">
+    const renderNoData = () =>
+      html`<section id="surfaces">
         <div id="no-surfaces">
           <h2 class="typography-w-400 typography-f-s typography-sz-tl">
             No UI Generated Yet
@@ -414,20 +511,45 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
           </p>
         </div>
       </section>`;
+
+    if (this.#renderMode === "surfaces") {
+      const surfaces = this.#processor.getSurfaces();
+
+      if (surfaces.size === 0) {
+        return renderNoData();
+      }
+
+      return html`<section id="surfaces">
+        ${repeat(
+          this.#processor.getSurfaces(),
+          ([surfaceId]) => surfaceId,
+          ([surfaceId, surface]) => {
+            return html`<a2ui-surface
+              .surfaceId=${surfaceId}
+              .surface=${surface}
+              .processor=${this.#processor}
+            ></a2-uisurface>`;
+          }
+        )}
+      </section>`;
     }
 
-    return html`<section id="surfaces">
-      ${repeat(
-        this.#processor.getSurfaces(),
-        ([surfaceId]) => surfaceId,
-        ([surfaceId, surface]) => {
-          return html`<a2ui-surface
-            .surfaceId=${surfaceId}
-            .surface=${surface}
-            .processor=${this.#processor}
-          ></a2-uisurface>`;
-        }
-      )}
+    if (!this.#lastMessages) {
+      return renderNoData();
+    }
+
+    return html`<section id="messages">
+      <div>${JSON.stringify(this.#lastMessages, null, 2)}</div>
+      <button
+        @click=${async () => {
+          const content = JSON.stringify(this.#lastMessages, null, 2);
+          await navigator.clipboard.writeText(content);
+
+          this.snackbar(html`Copied to clipboard`, SnackType.INFORMATION);
+        }}
+      >
+        <span class="g-icon filled round">content_copy</span> Copy to Clipboard
+      </button>
     </section>`;
   }
 
@@ -525,13 +647,13 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
       <div id="controls">
         <button
           class=${classMap({
-            active: this.mode === "upload",
+            active: this.userMode === "upload",
             "typography-w-400": true,
             "typography-f-s": true,
             "typography-sz-tm": true,
           })}
           @click=${() => {
-            this.mode = "upload";
+            this.userMode = "upload";
           }}
           type="button"
         >
@@ -539,13 +661,13 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
         </button>
         <button
           class=${classMap({
-            active: this.mode === "sketch",
+            active: this.userMode === "sketch",
             "typography-w-400": true,
             "typography-f-s": true,
             "typography-sz-tm": true,
           })}
           @click=${() => {
-            this.mode = "sketch";
+            this.userMode = "sketch";
           }}
           type="button"
         >
@@ -582,11 +704,14 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
           this.#processImage(evt.dataTransfer.files[0]);
         }}
         id="upload"
-        class=${classMap({ active: this.mode === "upload" })}
+        class=${classMap({ active: this.userMode === "upload" })}
       >
         ${view}
       </div>
-      <div id="sketch" class=${classMap({ active: this.mode === "sketch" })}>
+      <div
+        id="sketch"
+        class=${classMap({ active: this.userMode === "sketch" })}
+      >
         <drawable-canvas></drawable-canvas>
       </div>
       <textarea
@@ -654,7 +779,7 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
             }
 
             let img: HTMLImageElement | null = this.#image;
-            if (this.mode === "sketch" && this.#drawableCanvas) {
+            if (this.userMode === "sketch" && this.#drawableCanvas) {
               img = await this.#drawableCanvas.getValue();
             }
 
@@ -662,7 +787,7 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
               img,
               instructions as string
             );
-            console.log(messages);
+            this.#lastMessages = messages;
             this.#processor.clearSurfaces();
             this.#processor.processMessages(messages);
           }}
@@ -673,10 +798,31 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
           ${this.#renderInput()}
         </form>
         <div id="surface-container" slot="slot-1">
-          <h2 class="typography-w-400 typography-f-s typography-sz-tl">
+          <h2
+            class="typography-w-400 typography-f-s typography-sz-tl layout-sp-bt"
+          >
             Generated UI
+            <button
+              id="render-mode"
+              @click=${() => {
+                this.renderMode =
+                  this.renderMode === "messages" ? "surfaces" : "messages";
+              }}
+            >
+              <span
+                class=${classMap({ active: this.#renderMode === "surfaces" })}
+              >
+                <span class="g-icon filled round">mobile_layout</span>Surfaces
+              </span>
+
+              <span
+                class=${classMap({ active: this.#renderMode === "messages" })}
+              >
+                <span class="g-icon filled round">communication</span>A2UI
+              </span>
+            </button>
           </h2>
-          ${this.#renderSurfaces()}
+          ${this.#renderSurfacesOrMessages()}
         </div>
       </ui-splitter>
     </section>`;

@@ -128,6 +128,10 @@ export const layout = css`
     justify-content: space-evenly;
   }
 
+  .layout-sp-bt {
+    justify-content: space-between;
+  }
+
   .layout-r-none {
     resize: none;
   }
