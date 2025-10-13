@@ -57,6 +57,7 @@ const CSP_CONFIG = {
     "https://www.google.com",
     "https://www.youtube.com",
     "https://feedback-pa.clients6.google.com",
+    "https://accounts.google.com",
   ],
   ["media-src"]: ["'self'", "blob:", "data:"],
   ["base-uri"]: ["'none'"],
