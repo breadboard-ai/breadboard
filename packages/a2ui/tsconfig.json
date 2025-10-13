@@ -20,11 +20,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": [
-    "src/tests/**/*.ts",
-    "src/index.ts",
-    "src/0.8/**/*.ts",
-    "src/editor/**/*.ts"
-  ],
+  "include": ["src/index.ts", "src/0.8/**/*.ts", "src/editor/**/*.ts"],
   "extends": "@google-labs/tsconfig/base.json"
 }

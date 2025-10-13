@@ -21,7 +21,8 @@
     "build": "wireit",
     "build:tsc": "wireit",
     "lint": "wireit",
-    "dev": "wireit"
+    "dev": "wireit",
+    "test": "wireit"
   },
   "wireit": {
     "dev": {
@@ -68,6 +69,12 @@
         "../../.eslintrc.json"
       ],
       "output": []
+    },
+    "test": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/0.8/**/*.test.js",
+      "dependencies": [
+        "build"
+      ]
     }
   },
   "repository": {
