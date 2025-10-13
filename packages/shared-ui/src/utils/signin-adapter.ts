@@ -219,11 +219,10 @@ class SigninAdapter {
       const url = new URL("list", this.#globalConfig.connectionServerUrl);
       const httpRes = await fetch(url, { credentials: "include" });
       if (!httpRes.ok) {
-        return;
-      } else {
-        console.warn(
+        console.error(
           `SigninAdapter: Failed to fetch connections from ${url.href}, status: ${httpRes.status} ${httpRes.statusText}`
         );
+        return;
       }
       const list = (await httpRes.json()) as ListConnectionsResponse;
       const connection = list.connections.find(
