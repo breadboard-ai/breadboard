@@ -9,12 +9,12 @@ import { ok } from "./outcome.js";
 
 export { createFetchWithCreds };
 
-export type TokenGetter = () => Promise<Outcome<string>>;
+export type TokenGetter = (url: string) => Promise<Outcome<string>>;
 
 function createFetchWithCreds(tokenGetter: TokenGetter) {
   return async (request: URL | Request | string, init?: RequestInit) => {
     const combinedRequest = new Request(request, init);
-    const token = await tokenGetter();
+    const token = await tokenGetter(combinedRequest.url);
     if (!ok(token)) {
       throw new Error(`Unauthenticated: ${token.$error}`);
     }
