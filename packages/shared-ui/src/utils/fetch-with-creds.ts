@@ -6,6 +6,7 @@
 
 import { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
+import { createFetchWithCreds as createFetchWithCredsGeneric } from "@breadboard-ai/utils";
 
 const ASSET_DRIVE_API_ENDPOINT = new URL(
   `/board/boards/@foo/bar/assets/drive`,
@@ -46,48 +47,19 @@ const URL_SCOPE_MAP: ReadonlyMap<string, OAuthScope[]> = new Map([
 
 export type FetchWithCredsConfig = {
   adapter: SigninAdapter;
-  backendApiEndpoint: string;
+  backendApiEndpoint?: string;
 };
 
 export function createFetchWithCreds(
   config: FetchWithCredsConfig
 ): typeof fetch {
-  return async (request: URL | Request | string, init?: RequestInit) => {
-    const manager = new FetchRequestManager(config, request, init);
-    const requestWithCreds = await manager.createRequest();
-    return fetch(requestWithCreds);
-  };
-}
-
-class FetchRequestManager {
-  readonly request: Request;
-
-  constructor(
-    public readonly config: FetchWithCredsConfig,
-    request: URL | Request | string,
-    init: RequestInit | undefined
-  ) {
-    this.request = new Request(request, init);
-  }
-
-  async getToken(): Promise<string> {
-    let scopes: OAuthScope[] | undefined;
-    const url = this.request.url;
-    for (const [urlPattern, urlScopes] of URL_SCOPE_MAP.entries()) {
-      if (url.startsWith(urlPattern)) {
-        scopes = urlScopes;
-        break;
-      }
-    }
-    if (!scopes && url.startsWith(this.config.backendApiEndpoint)) {
-      scopes = GENAI_SCOPES;
-    }
+  return createFetchWithCredsGeneric(async (url) => {
+    const scopes = scopesFromUrl(url, config.backendApiEndpoint);
     if (!scopes) {
       throw new Error(`Unknown URL: ${url}. Unable to fetch.`);
     }
-
     let token: string | undefined;
-    const tokenResult = await this.config.adapter.token(scopes);
+    const tokenResult = await config.adapter.token(scopes);
     if (tokenResult.state === "valid") {
       token = tokenResult.grant.access_token;
     }
@@ -95,18 +67,29 @@ class FetchRequestManager {
       throw new Error(`Unable to obtain access token for URL ${url}`);
     }
     return token;
+  });
+}
+
+function scopesFromUrl(
+  url: string,
+  backendApiEndpoint: string | undefined
+): OAuthScope[] | undefined {
+  if (!backendApiEndpoint) {
+    console.warn(
+      `Backend API Endpoint not specified, falling back to current location`
+    );
+    backendApiEndpoint = window.location.href;
   }
 
-  async createRequest(): Promise<Request> {
-    const oldHeaders = Object.fromEntries(this.request.headers.entries());
-    const token = await this.getToken();
-
-    const initWithCreds = {
-      headers: {
-        ...oldHeaders,
-        Authorization: `Bearer ${token}`,
-      },
-    };
-    return new Request(this.request, initWithCreds);
+  let scopes: OAuthScope[] | undefined;
+  for (const [urlPattern, urlScopes] of URL_SCOPE_MAP.entries()) {
+    if (url.startsWith(urlPattern)) {
+      scopes = urlScopes;
+      break;
+    }
   }
+  if (!scopes && url.startsWith(backendApiEndpoint)) {
+    scopes = GENAI_SCOPES;
+  }
+  return scopes;
 }

@@ -84,16 +84,10 @@ class SigninAdapter {
     this.#globalConfig = globalConfig;
     this.#settingsHelper = settingsHelper;
     this.#handleSignInRequest = handleSignInRequest;
-    let backendApiEndpoint;
-    if (globalConfig.BACKEND_API_ENDPOINT) {
-      backendApiEndpoint = globalConfig.BACKEND_API_ENDPOINT;
-    } else {
-      console.warn(`No BACKEND_API_ENDPOINT in ClientDeploymentConfiguration`);
-      backendApiEndpoint = window.location.href;
-    }
+
     this.fetchWithCreds = createFetchWithCreds({
       adapter: this,
-      backendApiEndpoint,
+      backendApiEndpoint: globalConfig.BACKEND_API_ENDPOINT,
     });
 
     if (globalConfig.signinMode === "disabled") {
