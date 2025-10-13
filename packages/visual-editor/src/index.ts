@@ -1111,7 +1111,6 @@ export class Main extends SignalWatcher(LitElement) {
 
   #hideAllOverlays() {
     this.#uiState.show.delete("BoardEditModal");
-    this.#uiState.show.delete("BoardServerAddOverlay");
     this.#uiState.show.delete("BetterOnDesktopModal");
     this.#uiState.show.delete("MissingShare");
     this.#uiState.show.delete("StatusUpdateModal");
@@ -1553,9 +1552,6 @@ export class Main extends SignalWatcher(LitElement) {
           ? this.#renderMissingShareDialog()
           : nothing,
         this.#uiState.show.has("TOS") ? this.#renderTosDialog() : nothing,
-        this.#uiState.show.has("BoardServerAddOverlay")
-          ? this.#renderBoardServerAddOverlay()
-          : nothing,
         this.#uiState.show.has("BoardEditModal")
           ? this.#renderBoardEditModal()
           : nothing,
@@ -1673,34 +1669,6 @@ export class Main extends SignalWatcher(LitElement) {
         this.#embedHandler?.sendToEmbedder(message);
       }}
     ></bb-canvas-controller>`;
-  }
-
-  #renderBoardServerAddOverlay() {
-    return html`<bb-board-server-overlay
-      .showGoogleDrive=${true}
-      .boardServers=${this.#boardServers}
-      @bboverlaydismissed=${() => {
-        this.#uiState.show.delete("BoardServerAddOverlay");
-      }}
-      @bbgraphboardserverconnectrequest=${async (
-        evt: BreadboardUI.Events.GraphBoardServerConnectRequestEvent
-      ) => {
-        const result = await this.#runtime.board.connect(
-          evt.location,
-          evt.apiKey
-        );
-
-        if (result.error) {
-          this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
-        }
-
-        if (!result.success) {
-          return;
-        }
-
-        this.#uiState.show.delete("BoardServerAddOverlay");
-      }}
-    ></bb-board-server-overlay>`;
   }
 
   #renderBoardEditModal() {
