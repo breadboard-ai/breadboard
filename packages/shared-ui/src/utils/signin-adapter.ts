@@ -26,7 +26,8 @@ import {
   type OAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { clearIdbGraphCache } from "@breadboard-ai/google-drive-kit/board-server/user-graph-collection.js";
-import { createFetchWithCreds } from "./fetch-with-creds";
+import { createFetchWithCreds } from "@breadboard-ai/utils";
+import { scopesFromUrl } from "./scopes-from-url";
 
 export { SigninAdapter };
 
@@ -85,9 +86,20 @@ class SigninAdapter {
     this.#settingsHelper = settingsHelper;
     this.#handleSignInRequest = handleSignInRequest;
 
-    this.fetchWithCreds = createFetchWithCreds({
-      adapter: this,
-      backendApiEndpoint: globalConfig.BACKEND_API_ENDPOINT,
+    this.fetchWithCreds = createFetchWithCreds(async (url) => {
+      const scopes = scopesFromUrl(url, globalConfig.BACKEND_API_ENDPOINT);
+      if (!scopes) {
+        throw new Error(`Unknown URL: ${url}. Unable to fetch.`);
+      }
+      let token: string | undefined;
+      const tokenResult = await this.token(scopes);
+      if (tokenResult.state === "valid") {
+        token = tokenResult.grant.access_token;
+      }
+      if (!token) {
+        throw new Error(`Unable to obtain access token for URL ${url}`);
+      }
+      return token;
     });
 
     if (globalConfig.signinMode === "disabled") {

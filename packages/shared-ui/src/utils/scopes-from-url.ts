@@ -5,8 +5,8 @@
  */
 
 import { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
-import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
-import { createFetchWithCreds as createFetchWithCredsGeneric } from "@breadboard-ai/utils";
+
+export { scopesFromUrl };
 
 const ASSET_DRIVE_API_ENDPOINT = new URL(
   `/board/boards/@foo/bar/assets/drive`,
@@ -44,31 +44,6 @@ const URL_SCOPE_MAP: ReadonlyMap<string, OAuthScope[]> = new Map([
   ["https://gmail.googleapis.com", GMAIL_SCOPES],
   ["https://generativelanguage.googleapis.com/v1beta/models/", GENAI_SCOPES],
 ]);
-
-export type FetchWithCredsConfig = {
-  adapter: SigninAdapter;
-  backendApiEndpoint?: string;
-};
-
-export function createFetchWithCreds(
-  config: FetchWithCredsConfig
-): typeof fetch {
-  return createFetchWithCredsGeneric(async (url) => {
-    const scopes = scopesFromUrl(url, config.backendApiEndpoint);
-    if (!scopes) {
-      throw new Error(`Unknown URL: ${url}. Unable to fetch.`);
-    }
-    let token: string | undefined;
-    const tokenResult = await config.adapter.token(scopes);
-    if (tokenResult.state === "valid") {
-      token = tokenResult.grant.access_token;
-    }
-    if (!token) {
-      throw new Error(`Unable to obtain access token for URL ${url}`);
-    }
-    return token;
-  });
-}
 
 function scopesFromUrl(
   url: string,
