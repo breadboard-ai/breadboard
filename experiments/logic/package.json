@@ -1,0 +1,55 @@
+{
+  "name": "screens",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "generate": "wireit",
+    "test": "wireit",
+    "fix": "wireit",
+    "build": "wireit"
+  },
+  "wireit": {
+    "ts": {
+      "files": [
+        "src/**/*.ts"
+      ]
+    },
+    "fix": {
+      "command": "tsx src/fix-all.ts",
+      "dependencies": [
+        "ts"
+      ]
+    },
+    "build": {
+      "command": "tsx --experimental-vm-modules --no-warnings src/build-all.ts",
+      "dependencies": [
+        "ts"
+      ]
+    },
+    "generate": {
+      "command": "tsx src/generate-all.ts",
+      "dependencies": [
+        "ts"
+      ]
+    },
+    "test": {
+      "command": "tsx --experimental-vm-modules --no-warnings src/test-all.ts",
+      "dependencies": [
+        "ts"
+      ]
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "description": "",
+  "devDependencies": {
+    "tsx": "^4.20.5",
+    "wireit": "^0.14.12"
+  },
+  "dependencies": {
+    "@google/genai": "^1.19.0",
+    "dotenv": "^17.2.2"
+  }
+}
