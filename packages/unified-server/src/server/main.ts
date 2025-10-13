@@ -54,7 +54,6 @@ server.use(
 );
 
 console.log("[unified-server startup] Mounting app view");
-server.use("/app/@:user/:name", boardServer.middlewares.loadBoard());
 server.use("/app", (req, res) => {
   // Redirect the old standalone app view to the new unified view with the app
   // tab opened.
