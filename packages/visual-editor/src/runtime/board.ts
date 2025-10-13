@@ -247,7 +247,7 @@ export class Board extends EventTarget {
       return { success: false };
     } else {
       this.boardServers.servers = [
-        ...(await getBoardServers(this.tokenVendor, this.googleDriveClient)),
+        ...(await getBoardServers(this.googleDriveClient)),
         ...this.boardServers.builtInBoardServers,
       ];
       this.boardServers.loader = createLoader(this.boardServers.servers);
@@ -276,7 +276,7 @@ export class Board extends EventTarget {
       return { success: false };
     }
     this.boardServers.servers = [
-      ...(await getBoardServers(this.tokenVendor, this.googleDriveClient)),
+      ...(await getBoardServers(this.googleDriveClient)),
       ...this.boardServers.builtInBoardServers,
     ];
     this.boardServers.loader = createLoader(this.boardServers.servers);
@@ -1134,7 +1134,7 @@ export class Board extends EventTarget {
       }
 
       return { result: true, url: new URL(urlString) };
-    } catch (e) {
+    } catch {
       return fail;
     } finally {
       if (snackbarId) {
