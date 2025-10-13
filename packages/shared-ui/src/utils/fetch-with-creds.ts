@@ -60,7 +60,6 @@ export function createFetchWithCreds(
 }
 
 class FetchRequestManager {
-  #wasFormData = false;
   readonly request: Request;
 
   constructor(
@@ -69,9 +68,6 @@ class FetchRequestManager {
     init: RequestInit | undefined
   ) {
     this.request = new Request(request, init);
-    if (init?.body instanceof FormData) {
-      this.#wasFormData = true;
-    }
   }
 
   async getToken(): Promise<string> {
@@ -101,38 +97,9 @@ class FetchRequestManager {
     return token;
   }
 
-  /**
-   * For multi-part requests, we need to replace placeholder values with
-   * the access tokens.
-   * In particular, this is needed for batch requests, where each part
-   * in the multipart body is a separate HTTP request, with its own
-   * access token.
-   */
-  async maybeSubstituteTokens(token: string): Promise<Request> {
-    // First, check to see if this is a multi-part POST request and exit early
-    // if not.
-    if (this.request.method === "GET") return this.request;
-    if (this.#wasFormData) return this.request;
-
-    const boundary = this.request.headers
-      .get("Content-Type")
-      ?.match(/boundary=(.*)/)?.[1];
-    if (!boundary) return this.request;
-
-    // Then, replace all placeholders that are shaped as
-    // "Authorization: Bearer [${boundary}]" with the actual access token.
-    const existingBody = await this.request.text();
-    const body = existingBody.replaceAll(
-      new RegExp(`^Authorization: Bearer \\[${boundary}\\]$`, "gm"),
-      `Authorization: Bearer ${token}`
-    );
-    return new Request(this.request, { body });
-  }
-
   async createRequest(): Promise<Request> {
     const oldHeaders = Object.fromEntries(this.request.headers.entries());
     const token = await this.getToken();
-    const request = await this.maybeSubstituteTokens(token);
 
     const initWithCreds = {
       headers: {
@@ -140,6 +107,6 @@ class FetchRequestManager {
         Authorization: `Bearer ${token}`,
       },
     };
-    return new Request(request, initWithCreds);
+    return new Request(this.request, initWithCreds);
   }
 }

@@ -332,7 +332,6 @@ class MultiPartBuilder {
 Content-Type: application/http
 
 ${method} ${url}
-Authorization: Bearer [${this.boundary}]
 
 `;
   }
