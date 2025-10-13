@@ -5,12 +5,19 @@
   "type": "module",
   "scripts": {
     "generate": "wireit",
-    "test": "wireit"
+    "test": "wireit",
+    "fix": "wireit"
   },
   "wireit": {
     "ts": {
       "files": [
         "src/**/*.ts"
+      ]
+    },
+    "fix": {
+      "command": "tsx src/fix-all.ts",
+      "dependencies": [
+        "ts"
       ]
     },
     "generate": {

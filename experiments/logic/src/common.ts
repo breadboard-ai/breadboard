@@ -7,7 +7,7 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
 
-export { objectShapePrompt, jsDevPrompt };
+export { objectShapePrompt, jsDevPrompt, cleanupCode };
 
 const SRC_DIR = join(import.meta.dirname, "../src");
 
@@ -40,4 +40,27 @@ Here are all the type defintions:
 \`\`\`typescript
 ${types}
 \`\`\``;
+}
+
+function cleanupCode(s: string) {
+  // Mechanically fix a common problem with Gemini adding extra spaces in
+  // optional property accessors and ??.
+  s = s.replaceAll(/\?\s*\./g, "?.").replaceAll(/\?\s*\?/g, "??");
+
+  const content = s?.trim();
+  if (!content) {
+    return "// No file generated";
+  }
+  const lines = content.split("\n");
+  const firstLine = lines[0]?.trim();
+  const lastLine = lines.at(-1)?.trim();
+
+  const hasOpeningFence = firstLine?.startsWith("```");
+  const hasClosingFence = lines.length > 1 && lastLine === "```";
+
+  if (hasOpeningFence && hasClosingFence) {
+    return lines.slice(1, -1).join("\n");
+  }
+
+  return s;
 }

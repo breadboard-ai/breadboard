@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { mkdir, readFile, writeFile } from "fs/promises";
-import { join } from "path";
 import { prepareToRunInVM } from "./run-in-vm";
 import { Case, Console, Invoke, Test, TestResultsReporter } from "./types";
 import { CapabilityMocksImpl } from "./capability-mocks";
+import { copy, read, remove, write } from "./file-ops";
 
 export { runTest };
 
@@ -70,25 +69,22 @@ class Reporter implements Console, TestResultsReporter, TestResult {
   }
 }
 
-const OUT_DIR = join(import.meta.dirname, "../out");
-
 async function runTest(c: Case): Promise<TestResult> {
   const result = await getTestResult(c);
   if (result.isError) {
-    const errorLog = result.getLogAsString();
-    const errorLogFilename = join(OUT_DIR, `${c.name}.error.log`);
-    await mkdir(OUT_DIR, { recursive: true });
-    await writeFile(errorLogFilename, errorLog, "utf-8");
+    await write(c, "errors", result.getLogAsString());
+  } else {
+    // await remove(c, "draft");
+    await remove(c, "errors");
+    await copy(c, "draft", "final");
   }
   return result;
 }
 
 async function getTestResult(c: Case): Promise<TestResult> {
-  const programCodePath = join(OUT_DIR, `${c.name}.js`);
-  const programCode = await readFile(programCodePath, "utf-8");
+  const draftCode = await read(c, "draft");
 
-  const testCodePath = join(OUT_DIR, `${c.name}.test.js`);
-  const testCode = await readFile(testCodePath, "utf-8");
+  const testCode = await read(c, "test");
   const reporter = new Reporter();
 
   let test;
@@ -101,7 +97,7 @@ async function getTestResult(c: Case): Promise<TestResult> {
 
   let invoke;
   try {
-    invoke = await prepareToRunInVM<Invoke>(programCode);
+    invoke = await prepareToRunInVM<Invoke>(draftCode);
   } catch (e) {
     reporter.error(`Program failed to compile`, e);
     return reporter;
