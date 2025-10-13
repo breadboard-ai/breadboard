@@ -63,6 +63,11 @@ export function obtainElements() {
   if (!genericErrorDialogTitle) {
     throw new Error("Unable to find generic error dialog title");
   }
+  const genericErrorDialogDetail =
+    genericErrorDialog.querySelector<HTMLParagraphElement>(".detail");
+  if (!genericErrorDialogDetail) {
+    throw new Error("Unable to find generic error dialog detail");
+  }
 
   // Shared Flow Dialog.
   const sharedFlowDialog = document.querySelector<HTMLDialogElement>(
@@ -103,6 +108,7 @@ export function obtainElements() {
     scopesErrorSignInButton,
     genericErrorDialog,
     genericErrorDialogTitle,
+    genericErrorDialogDetail,
     sharedFlowDialog,
     sharedFlowDialogSignInButton,
     sharedFlowDialogTitle,
