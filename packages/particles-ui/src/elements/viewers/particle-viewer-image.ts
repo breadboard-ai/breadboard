@@ -46,6 +46,14 @@ export class ParticleViewerImage extends LitElement implements ParticleViewer {
         display: block;
       }
 
+      button {
+        display: none;
+
+        & > * {
+          pointer-events: none;
+        }
+      }
+
       img {
         display: block;
       }
@@ -54,10 +62,12 @@ export class ParticleViewerImage extends LitElement implements ParticleViewer {
         display: block;
         height: 100%;
         position: relative;
-      }
 
-      button > * {
-        pointer-events: none;
+        &:hover {
+          & button {
+            display: block;
+          }
+        }
       }
 
       span.fade {
