@@ -337,7 +337,9 @@ export class Main extends SignalWatcher(LitElement) {
       this.signinAdapter.token().then(async (result) => {
         if (
           result.state === "valid" &&
-          (await this.signinAdapter.userHasGeoRestriction())
+          (await this.signinAdapter.userHasGeoRestriction(
+            result.grant.access_token
+          ))
         ) {
           await this.signinAdapter.signOut();
           window.history.pushState(
