@@ -12,11 +12,8 @@ import {
   Router,
 } from "express";
 
-import { updateFileApiInfo } from "./file-info.js";
-import { createBlob } from "./create.js";
 import { serveBlob } from "./serve.js";
 
-import { requireAuth } from "../auth.js";
 import { isUUID } from "../blob-store.js";
 import type { ServerConfig } from "../config.js";
 import { badRequest } from "../errors.js";
@@ -27,8 +24,6 @@ export function serveBlobsAPI(config: ServerConfig): Router {
   router.use(requireStorageBucket(config));
 
   router.get("/:blobId", (req, res) => get(config, req, res));
-  router.post("/", requireAuth(), (req, res) => create(config, req, res));
-  router.post("/:blobId/file", (req, res) => update(config, req, res));
 
   return router;
 }
@@ -54,25 +49,4 @@ async function get(
   }
 
   await serveBlob(config.storageBucket!, blobId, request, response);
-}
-
-async function create(
-  config: ServerConfig,
-  request: Request,
-  response: Response
-): Promise<void> {
-  await createBlob(config, request, response);
-}
-
-async function update(
-  config: ServerConfig,
-  request: Request,
-  response: Response
-): Promise<void> {
-  const blobId = request.params["blobId"] ?? "";
-  if (!isUUID(blobId)) {
-    badRequest(response, "Invalid blob ID");
-    return;
-  }
-  await updateFileApiInfo(config.storageBucket!, blobId, request, response);
 }
