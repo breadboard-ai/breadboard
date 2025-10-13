@@ -10,11 +10,6 @@ import * as idb from "idb";
 import { IDBBoardServer } from "@breadboard-ai/idb-board-server";
 import { BoardServer, GraphDescriptor, User } from "@google-labs/breadboard";
 import {
-  ConnectionArgs,
-  getSigninToken,
-  RemoteBoardServer,
-} from "@breadboard-ai/remote-board-server";
-import {
   FileSystemBoardServer,
   type _FileSystemDirectoryHandle,
 } from "@breadboard-ai/filesystem-board-server";
@@ -79,7 +74,6 @@ export async function createGoogleDriveBoardServer(
 }
 
 export async function getBoardServers(
-  tokenVendor?: TokenVendor,
   googleDriveClient?: GoogleDriveClient
 ): Promise<BoardServer[]> {
   const storeUrls = await readAllServers();
@@ -88,13 +82,6 @@ export async function getBoardServers(
     storeUrls.map(({ url, title, user, handle }) => {
       if (url.startsWith(IDBBoardServer.PROTOCOL)) {
         return IDBBoardServer.from(url, title, user);
-      }
-
-      if (
-        url.startsWith(RemoteBoardServer.PROTOCOL) ||
-        url.startsWith(RemoteBoardServer.LOCALHOST)
-      ) {
-        return RemoteBoardServer.from(url, title, user, tokenVendor);
       }
 
       if (url.startsWith(FileSystemBoardServer.PROTOCOL)) {
@@ -119,41 +106,9 @@ export async function connectToBoardServer(
   tokenVendor?: TokenVendor,
   googleDriveClient?: GoogleDriveClient
 ): Promise<{ title: string; url: string } | null> {
-  const existingServers = await getBoardServers(tokenVendor, googleDriveClient);
+  const existingServers = await getBoardServers(googleDriveClient);
   if (location) {
-    if (
-      location.startsWith(RemoteBoardServer.PROTOCOL) ||
-      location.startsWith(RemoteBoardServer.LOCALHOST)
-    ) {
-      const existingServer = existingServers.find(
-        (server) => server.url.origin === location
-      );
-
-      if (existingServer) {
-        console.warn("Server already connected");
-        return null;
-      }
-
-      const args: ConnectionArgs = apiKey
-        ? {
-            key: apiKey,
-          }
-        : {
-            token: await getSigninToken(),
-          };
-      const response = await RemoteBoardServer.connect(location, args);
-      if (response) {
-        const url = new URL(location);
-        await storeBoardServer(url, response.title, {
-          apiKey: apiKey ?? "",
-          secrets: new Map(),
-          username: response.username,
-        });
-        return { title: response.title, url: url.href };
-      }
-
-      return null;
-    } else if (location.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
+    if (location.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
       const existingServer = existingServers.find(
         (server) => server.url.protocol === location
       );

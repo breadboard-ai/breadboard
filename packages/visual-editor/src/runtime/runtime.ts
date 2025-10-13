@@ -218,10 +218,7 @@ export class Runtime extends EventTarget {
 
 export async function create(config: RuntimeConfig): Promise<Runtime> {
   const kits = config.kits;
-  let servers = await getBoardServers(
-    config.tokenVendor,
-    config.googleDriveClient
-  );
+  let servers = await getBoardServers(config.googleDriveClient);
 
   // First run - set everything up.
   if (servers.length === 0) {
@@ -235,10 +232,7 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
       await migrateFileSystemProviders();
     }
 
-    servers = await getBoardServers(
-      config.tokenVendor,
-      config.googleDriveClient
-    );
+    servers = await getBoardServers(config.googleDriveClient);
   }
 
   // Add board servers that are built into
