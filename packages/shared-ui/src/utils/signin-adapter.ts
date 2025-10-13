@@ -338,7 +338,7 @@ class SigninAdapter {
 
     console.info(`[signin] Checking geo restriction`);
     try {
-      if (await this.userHasGeoRestriction()) {
+      if (await this.userHasGeoRestriction(grantResponse.access_token)) {
         console.info(`[signin] User is geo restricted`);
         return { ok: false, error: { code: "geo-restriction" } };
       }
@@ -426,12 +426,13 @@ class SigninAdapter {
     this.#state = { status: "signedout" };
   }
 
-  async userHasGeoRestriction(): Promise<boolean> {
-    const response = await this.fetchWithCreds(
+  async userHasGeoRestriction(token: string): Promise<boolean> {
+    const response = await fetch(
       new URL(
         "/v1beta1/checkAppAccess",
         this.#globalConfig.BACKEND_API_ENDPOINT
-      )
+      ),
+      { headers: { Authorization: `Bearer ${token}` } }
     );
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} error checking geo restriction`);
