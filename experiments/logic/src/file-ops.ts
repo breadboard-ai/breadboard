@@ -12,11 +12,12 @@ import {
   copyFile,
   mkdir,
   readFile,
+  rename,
   rm,
   writeFile,
 } from "fs/promises";
 
-export { write, read, copy, exists, remove };
+export { write, read, copy, exists, remove, move };
 
 const OUT_DIR = join(import.meta.dirname, "../out");
 
@@ -39,9 +40,17 @@ async function copy(c: Case, from: FileType, to: FileType) {
   return copyFile(fromFile, toFile);
 }
 
+async function move(c: Case, from: FileType, to: FileType) {
+  const fromFile = join(OUT_DIR, `${c.name}${getSuffix(from)}`);
+  const toFile = join(OUT_DIR, `${c.name}${getSuffix(to)}`);
+  return rename(fromFile, toFile);
+}
+
 async function exists(c: Case, type: FileType) {
   try {
-    return access(`${c.name}${getSuffix(type)}`, constants.F_OK);
+    const filename = join(OUT_DIR, `${c.name}${getSuffix(type)}`);
+    await access(filename, constants.F_OK);
+    return true;
   } catch {
     return false;
   }
@@ -49,7 +58,11 @@ async function exists(c: Case, type: FileType) {
 
 async function remove(c: Case, type: FileType) {
   const filename = join(OUT_DIR, `${c.name}${getSuffix(type)}`);
-  return rm(filename);
+  try {
+    return await rm(filename);
+  } catch {
+    return;
+  }
 }
 
 function getSuffix(type: FileType) {

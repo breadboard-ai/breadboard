@@ -5,124 +5,179 @@
  */
 
 export default async (invoke, mocks, reporter) => {
-  const testCases = [
-    {
-      name: "No parts",
-      input: { parts: [] },
-      expectedOutput: "0",
-    },
-    {
-      name: "Only text parts",
-      input: { parts: [{ text: "This is a prompt with no images." }] },
-      expectedOutput: "0",
-    },
-    {
-      name: "One image part",
-      input: {
-        parts: [{ fileData: { mimeType: "image/jpeg", fileUri: "vfs/1" } }],
-      },
-      expectedOutput: "1",
-    },
-    {
-      name: "Multiple image parts",
-      input: {
-        parts: [
-          { fileData: { mimeType: "image/png", fileUri: "vfs/1" } },
-          { fileData: { mimeType: "image/gif", fileUri: "vfs/2" } },
-          { fileData: { mimeType: "image/webp", fileUri: "vfs/3" } },
-        ],
-      },
-      expectedOutput: "3",
-    },
-    {
-      name: "Mixed text and image parts",
-      input: {
-        parts: [
-          { text: "Here is the first image:" },
-          { fileData: { mimeType: "image/jpeg", fileUri: "vfs/1" } },
-          { text: "And here is the second one:" },
-          { fileData: { mimeType: "image/png", fileUri: "vfs/2" } },
-        ],
-      },
-      expectedOutput: "2",
-    },
-    {
-      name: "Mixed file types (images and non-images)",
-      input: {
-        parts: [
-          { fileData: { mimeType: "image/jpeg", fileUri: "vfs/1" } },
-          { fileData: { mimeType: "video/mp4", fileUri: "vfs/2" } },
-          { fileData: { mimeType: "application/pdf", fileUri: "vfs/3" } },
-          { fileData: { mimeType: "image/gif", fileUri: "vfs/4" } },
-        ],
-      },
-      expectedOutput: "2",
-    },
-    {
-      name: "Mime types with different cases",
-      input: {
-        parts: [
-          { fileData: { mimeType: "IMAGE/JPEG", fileUri: "vfs/1" } },
-          { fileData: { mimeType: "Image/Png", fileUri: "vfs/2" } },
-        ],
-      },
-      expectedOutput: "2",
-    },
-    {
-      name: "Malformed parts (should be ignored)",
-      input: {
-        parts: [
-          { fileData: { mimeType: "image/jpeg", fileUri: "vfs/1" } },
-          { text: "A valid text part" },
-          {}, // empty part
-          { fileData: {} }, // fileData without mimeType
-          { notAValidPart: true },
-        ],
-      },
-      expectedOutput: "1",
-    },
-  ];
-
-  for (const tc of testCases) {
-    reporter.progress(`Running test case: "${tc.name}"`);
+  /**
+   * A helper function to run a single test case.
+   * @param {string} name - The name of the test case.
+   * @param {import('./index.js').LLMContent | undefined} input1 - The content to pass as `input1`.
+   * @param {string} expectedOutput - The expected string output from the program.
+   */
+  const runTest = async (name, input1, expectedOutput) => {
+    reporter.progress(`Running test: "${name}"`);
     try {
-      const result = await invoke({ input1: tc.input });
+      const result = await invoke({
+        input1
+      });
 
-      if (
-        !result ||
-        !result.parts ||
-        !Array.isArray(result.parts) ||
-        result.parts.length === 0
-      ) {
-        reporter.fail(
-          `Test case "${tc.name}" failed: Output is not a valid LLMContent object.`
-        );
-        continue;
-      }
-
-      const textPart = result.parts.find((part) => "text" in part);
-      if (!textPart) {
-        reporter.fail(
-          `Test case "${tc.name}" failed: Output does not contain a text part.`
-        );
-        continue;
-      }
-
-      const outputText = textPart.text.trim();
-
-      if (outputText === tc.expectedOutput) {
-        reporter.success(
-          `Test case "${tc.name}" passed. Got "${outputText}" as expected.`
-        );
-      } else {
-        reporter.fail(
-          `Test case "${tc.name}" failed: Expected "${tc.expectedOutput}", but got "${outputText}".`
+      if (!result) {
+        return reporter.fail(
+          `Test "${name}": Expected a result but got nothing.`
         );
       }
+
+      if (!result.parts || !Array.isArray(result.parts)) {
+        return reporter.fail(
+          `Test "${name}": Expected result.parts to be an array, but it was not.`
+        );
+      }
+
+      if (result.parts.length !== 1) {
+        return reporter.fail(
+          `Test "${name}": Expected a single part in the output, but got ${result.parts.length} parts.`
+        );
+      }
+
+      const part = result.parts[0];
+      if (!("text" in part)) {
+        return reporter.fail(
+          `Test "${name}": Expected the output part to be a TextPart, but it was not.`
+        );
+      }
+
+      const actualOutput = part.text.trim();
+      if (actualOutput !== expectedOutput) {
+        return reporter.fail(
+          `Test "${name}": Expected output "${expectedOutput}", but got "${actualOutput}"`
+        );
+      }
+
+      reporter.success(`Test "${name}" passed.`);
     } catch (e) {
-      reporter.fail(
-        `Test case "${tc.name}" failed with an error: ${e.message}`
-      );
+      reporter.fail(`Test "${name}": An unexpected error occurred:`, e.message);
     }
-  }
+  };
+
+  await runTest(
+    "should return 0 when there are no parts", {
+      role: "user",
+      parts: [],
+    },
+    "0"
+  );
+
+  await runTest(
+    "should return 0 when there are only text parts", {
+      role: "user",
+      parts: [{
+        text: "This is a test prompt."
+      }, {
+        text: "It has no images."
+      }, ],
+    },
+    "0"
+  );
+
+  await runTest(
+    "should count a single InlineData image part", {
+      role: "user",
+      parts: [{
+        text: "Here is one image:"
+      }, {
+        inlineData: {
+          mimeType: "image/png",
+          data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+        },
+      }, ],
+    },
+    "1"
+  );
+
+  await runTest(
+    "should count a single FileData image part", {
+      role: "user",
+      parts: [{
+        text: "Here is one image from a file:"
+      }, {
+        fileData: {
+          mimeType: "image/jpeg",
+          fileUri: "/vfs/images/test.jpg",
+        },
+      }, ],
+    },
+    "1"
+  );
+
+  await runTest(
+    "should count multiple mixed image parts", {
+      role: "user",
+      parts: [{
+        text: "Here are three images:"
+      }, {
+        inlineData: {
+          mimeType: "image/gif",
+          data: "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+        },
+      }, {
+        text: "and two more"
+      }, {
+        fileData: {
+          mimeType: "image/webp",
+          fileUri: "/vfs/images/another.webp",
+        },
+      }, {
+        fileData: {
+          mimeType: "image/jpeg",
+          fileUri: "/vfs/images/final.jpeg",
+        },
+      }, ],
+    },
+    "3"
+  );
+
+  await runTest(
+    "should only count parts with image mime types", {
+      role: "user",
+      parts: [{
+        text: "A mix of files:"
+      }, {
+        fileData: {
+          mimeType: "application/pdf",
+          fileUri: "/vfs/docs/document.pdf"
+        }
+      }, {
+        fileData: {
+          mimeType: "image/png",
+          fileUri: "/vfs/images/pic.png"
+        }
+      }, {
+        inlineData: {
+          mimeType: "text/plain",
+          data: "dGV4dCBmaWxl"
+        }
+      }, {
+        inlineData: {
+          mimeType: "image/svg+xml",
+          data: "PHN2Zz48L3N2Zz4=",
+        }
+      }, {
+        fileData: {
+          mimeType: "audio/mp3",
+          fileUri: "/vfs/audio/song.mp3"
+        }
+      }, ],
+    },
+    "2"
+  );
+
+  await runTest(
+    "should return 0 when input1 is undefined",
+    undefined,
+    "0"
+  );
+
+  await runTest(
+    "should return 0 when input1 is provided but has no parts property", {
+      role: "user"
+    }, // no `parts` key
+    "0"
+  );
 };

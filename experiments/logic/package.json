@@ -6,7 +6,8 @@
   "scripts": {
     "generate": "wireit",
     "test": "wireit",
-    "fix": "wireit"
+    "fix": "wireit",
+    "build": "wireit"
   },
   "wireit": {
     "ts": {
@@ -16,6 +17,12 @@
     },
     "fix": {
       "command": "tsx src/fix-all.ts",
+      "dependencies": [
+        "ts"
+      ]
+    },
+    "build": {
+      "command": "tsx --experimental-vm-modules --no-warnings src/build-all.ts",
       "dependencies": [
         "ts"
       ]

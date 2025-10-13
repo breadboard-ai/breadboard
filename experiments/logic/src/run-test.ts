@@ -7,7 +7,7 @@
 import { prepareToRunInVM } from "./run-in-vm";
 import { Case, Console, Invoke, Test, TestResultsReporter } from "./types";
 import { CapabilityMocksImpl } from "./capability-mocks";
-import { copy, read, remove, write } from "./file-ops";
+import { exists, move, read, remove, write } from "./file-ops";
 
 export { runTest };
 
@@ -70,13 +70,16 @@ class Reporter implements Console, TestResultsReporter, TestResult {
 }
 
 async function runTest(c: Case): Promise<TestResult> {
+  const hasDraft = await exists(c, "draft");
+  if (!hasDraft) {
+    return new Reporter();
+  }
   const result = await getTestResult(c);
   if (result.isError) {
     await write(c, "errors", result.getLogAsString());
   } else {
-    // await remove(c, "draft");
     await remove(c, "errors");
-    await copy(c, "draft", "final");
+    await move(c, "draft", "final");
   }
   return result;
 }
