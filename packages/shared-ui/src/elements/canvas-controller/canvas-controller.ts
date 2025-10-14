@@ -306,6 +306,8 @@ export class CanvasController extends SignalWatcher(LitElement) {
   get #runStateEffect(): number {
     this.runState.edges.values();
     this.runState.nodes.values();
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    this.projectState?.run.app.state;
     return ++this.#runStateEffectCount;
   }
 
@@ -556,6 +558,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
           this.signedIn,
           this.selectionState,
           this.themeHash,
+          this.#runStateEffect,
           selectionCount,
           this.boardServers,
           this.sideNavItem,
