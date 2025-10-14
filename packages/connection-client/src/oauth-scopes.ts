@@ -29,16 +29,21 @@ export const OAUTH_SCOPES = {
   // https://developers.google.com/workspace/drive/api/guides/api-specific-auth#drive-scopes
   "https://www.googleapis.com/auth/drive.readonly": {
     category: "Google Drive",
+    // TODO(aomarks) Make this incremental.
+    required: true,
   },
 
   // https://developers.google.com/workspace/drive/api/guides/api-specific-auth#drive-scopes
   "https://www.googleapis.com/auth/drive.file": {
     category: "Google Drive",
+    // TODO(aomarks) Make this incremental.
+    required: true,
   },
 
   // https://ai.google.dev/gemini-api/docs/oauth
   "https://www.googleapis.com/auth/generative-language.retriever": {
     category: "Gemini",
+    required: true,
   },
 
   // https://developers.google.com/workspace/calendar/api/auth
