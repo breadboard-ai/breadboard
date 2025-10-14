@@ -128,7 +128,6 @@ type RenderValues = {
   showExperimentalComponents: boolean;
   themeHash: number;
   tabStatus: BreadboardUI.Types.STATUS;
-  topGraphResult: BreadboardUI.Types.TopGraphRunResult;
 };
 
 type InitArgs = {
@@ -819,18 +818,11 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.#runtime.board.addEventListener(
       Runtime.Events.RuntimeTabChangeEvent.eventName,
-      async (evt: Runtime.Events.RuntimeTabChangeEvent) => {
+      async () => {
         this.#tab = this.#runtime.board.currentTab;
         this.#maybeShowWelcomePanel();
 
         if (this.#tab) {
-          // If there is a TGO in the tab change event, honor it and populate a
-          // run with it before switching to the tab proper.
-          // TODO: Remove. This no longer happens.
-          if (evt.topGraphObserver) {
-            this.#runtime.run.create(this.#tab, evt.topGraphObserver);
-          }
-
           if (this.#tab.graph.title) {
             this.#runtime.shell.setPageTitle(this.#tab.graph.title);
           }
@@ -1350,11 +1342,6 @@ export class Main extends SignalWatcher(LitElement) {
   }
 
   #getRenderValues(): RenderValues {
-    const observers = this.#runtime?.run.getObservers(this.#tab?.id ?? null);
-    const topGraphResult =
-      observers?.topGraphObserver?.current() ??
-      BreadboardUI.Utils.TopGraphObserver.entryResult();
-
     let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
     if (this.#tab) {
       tabStatus =
@@ -1412,7 +1399,6 @@ export class Main extends SignalWatcher(LitElement) {
       showExperimentalComponents,
       themeHash,
       tabStatus,
-      topGraphResult,
     } satisfies RenderValues;
   }
 
@@ -1635,7 +1621,6 @@ export class Main extends SignalWatcher(LitElement) {
       .signedIn=${this.signinAdapter.state === "signedin"}
       .status=${renderValues.tabStatus}
       .themeHash=${renderValues.themeHash}
-      .topGraphResult=${renderValues.topGraphResult}
       .visualChangeId=${this.#lastVisualChangeId}
       @bbshowvideomodal=${() => {
         this.#uiState.show.add("VideoModal");

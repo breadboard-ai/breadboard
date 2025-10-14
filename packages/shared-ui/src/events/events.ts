@@ -11,17 +11,12 @@ import type {
   NodeIdentifier,
   NodeValue,
 } from "@breadboard-ai/types";
-import type {
-  InspectablePort,
-  PortIdentifier,
-  Schema,
-} from "@google-labs/breadboard";
+import type { InspectablePort, PortIdentifier } from "@google-labs/breadboard";
 import type {
   AppTemplateAdditionalOptionsAvailable,
   Command,
   EdgeData,
   Settings,
-  TopGraphEdgeInfo,
   UserOutputValues,
   Utterance,
   WorkspaceVisualChangeId,
@@ -589,21 +584,6 @@ export class MoveNodesEvent extends Event {
   }
 }
 
-/** @deprecated */
-export class EdgeValueSelectedEvent extends Event {
-  static eventName = "bbedgevalueselected";
-
-  constructor(
-    public readonly info: TopGraphEdgeInfo[],
-    public readonly schema: Schema | null,
-    public readonly edge: EdgeData | null,
-    public readonly x: number,
-    public readonly y: number
-  ) {
-    super(EdgeValueSelectedEvent.eventName, { ...eventInit });
-  }
-}
-
 export class NodeActivitySelectedEvent extends Event {
   static eventName = "bbnodeactivityselected";
 
@@ -722,21 +702,6 @@ export class GraphInitialDrawEvent extends Event {
 
   constructor(public readonly subGraphId: string | null) {
     super(GraphInitialDrawEvent.eventName, { ...eventInit });
-  }
-}
-
-export class GraphEdgeValueSelectedEvent extends Event {
-  static eventName = "bbgraphedgevalueselected";
-
-  constructor(
-    public readonly info: TopGraphEdgeInfo[],
-    public readonly schema: Schema | null,
-    public readonly edge: EdgeData | null,
-    public readonly x: number,
-    public readonly y: number,
-    public readonly subGraphId: string | null
-  ) {
-    super(GraphEdgeValueSelectedEvent.eventName, { ...eventInit });
   }
 }
 

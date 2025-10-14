@@ -26,7 +26,6 @@ import {
   EdgeAttachmentPoint,
   GraphHighlightState,
   GraphSelectionState,
-  TopGraphRunResult,
 } from "../../types/types";
 import { css, html } from "lit";
 import { toCSSMatrix } from "./utils/to-css-matrix";
@@ -755,10 +754,7 @@ export class Graph extends Box {
     return new DOMRect(0, 0, bounds.width, bounds.height);
   }
 
-  highlightActivity(
-    topGraphResult: TopGraphRunResult | null,
-    runState: RendererRunState | null
-  ) {
+  highlightActivity(runState: RendererRunState | null) {
     for (const node of this.#nodes) {
       const id = node.descriptor.id;
       const graphNode = this.entities.get(id) as GraphNode;
@@ -787,18 +783,6 @@ export class Graph extends Box {
           default:
             graphNode.active = "pre";
         }
-      } else {
-        if (topGraphResult?.currentNode?.descriptor.id === id) {
-          graphNode.active = "current";
-        } else if (
-          topGraphResult?.log.findIndex(
-            (l) => l.type === "node" && l.descriptor.id === id
-          ) !== -1
-        ) {
-          graphNode.active = "post";
-        } else {
-          graphNode.active = "pre";
-        }
       }
     }
 
@@ -811,9 +795,6 @@ export class Graph extends Box {
 
       if (runState) {
         graphEdge.status = runState.edges?.get(edgeId)?.status ?? null;
-      } else {
-        const edgeStatus = topGraphResult?.edgeValues.get(edge);
-        graphEdge.status = edgeStatus?.at(-1)?.status ?? null;
       }
     }
   }

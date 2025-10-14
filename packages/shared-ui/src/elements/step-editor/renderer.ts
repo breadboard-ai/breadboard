@@ -49,7 +49,6 @@ import {
 import {
   NewAsset,
   HighlightStateWithChangeId,
-  TopGraphRunResult,
   WorkspaceSelectionStateWithChangeId,
 } from "../../types/types";
 import {
@@ -104,9 +103,6 @@ export class Renderer extends LitElement {
 
   @property()
   accessor projectState: Project | null = null;
-
-  @property()
-  accessor topGraphResult: TopGraphRunResult | null = null;
 
   @property()
   accessor boardServerKits: Kit[] | null = null;
@@ -973,14 +969,13 @@ export class Renderer extends LitElement {
     }
 
     if (
-      changedProperties.has("topGraphResult") ||
       changedProperties.has("runState") ||
       changedProperties.has("runStateEffect")
     ) {
       const mainGraph = this.#graphs.get(MAIN_BOARD_ID);
       const runState = this.runState;
       if (mainGraph) {
-        mainGraph.highlightActivity(this.topGraphResult, runState);
+        mainGraph.highlightActivity(runState);
       }
     }
 
