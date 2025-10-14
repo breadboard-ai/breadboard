@@ -19,6 +19,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   mcp: false,
   force2DGraph: false,
   gulfRenderer: false,
+  consistentUI: false,
 };
 
 function populateFlags(

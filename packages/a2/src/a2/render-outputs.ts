@@ -24,6 +24,8 @@ import {
   toLLMContent,
   toText,
 } from "./utils";
+import { readFlags } from "./settings";
+import { renderConsistentUI } from "./render-consistent-ui";
 
 export { invoke as default, describe };
 
@@ -38,7 +40,8 @@ type RenderType =
   | "HTML"
   | "GoogleDoc"
   | "GoogleSlides"
-  | "GoogleSheets";
+  | "GoogleSheets"
+  | "ConsistentUI";
 
 type Mode = {
   id: string;
@@ -83,6 +86,13 @@ const MODES: Mode[] = [
     icon: "responsive_layout",
     title: "Manual layout",
     description: "Content is displayed exactly as typed",
+  },
+  {
+    id: "consistent-ui",
+    renderType: "ConsistentUI",
+    title: "Smart Layout",
+    icon: "web",
+    description: "Consistent and automatic layout",
   },
   {
     id: "Auto",
@@ -333,10 +343,7 @@ async function invoke(
   if (!text) {
     text = toLLMContent("");
   }
-  if (!systemInstruction) {
-    systemInstruction = defaultSystemInstruction();
-  }
-  let systemText = toText(systemInstruction);
+  let systemText = toText(systemInstruction ?? defaultSystemInstruction());
   const template = new Template(caps, text);
   const substituting = await template.substitute(params, async () => "");
   if (!ok(substituting)) {
@@ -384,7 +391,7 @@ async function invoke(
         console.error("Failed to generate html output", webPage.$error);
         return webPage;
       } else {
-        out = await webPage;
+        out = webPage;
         console.log(out);
       }
       if (!ok(out)) return err(out);
@@ -413,6 +420,11 @@ async function invoke(
         "application/vnd.google-apps.spreadsheet",
         googleDocTitle
       );
+    }
+    case "ConsistentUI": {
+      const context = await renderConsistentUI(caps, out, systemInstruction);
+      if (!ok(context)) return context;
+      return { context };
     }
   }
   return { context: [out] };
@@ -469,6 +481,16 @@ function advancedSettings(renderType: RenderType): Record<string, Schema> {
         },
       };
     }
+    case "ConsistentUI": {
+      return {
+        "b-system-instruction": {
+          type: "object",
+          behavior: ["llm-content", "config", "hint-advanced"],
+          title: "UI System Instruction",
+          description: "The system instruction used for auto-layout",
+        },
+      };
+    }
   }
   return {};
 }
@@ -477,9 +499,15 @@ async function describe(
   { inputs: { text, "p-render-mode": renderMode } }: DescribeInputs,
   caps: Capabilities
 ) {
-  const modes = MODES;
+  const flags = await readFlags(caps);
+  const showConsistentUIMode = ok(flags) ? flags.consistentUI : false;
+  const modes = showConsistentUIMode
+    ? MODES
+    : MODES.filter(({ id }) => id !== "consistent-ui");
+
   const template = new Template(caps, text);
   const { renderType } = getMode(renderMode);
+
   return {
     inputSchema: {
       type: "object",

@@ -38,6 +38,7 @@ export async function createClientConfig(): Promise<ClientDeploymentConfiguratio
       mcp: flags.ENABLE_MCP,
       force2DGraph: flags.ENABLE_FORCE_2D_GRAPH,
       gulfRenderer: flags.ENABLE_GULF_RENDERER,
+      consistentUI: false,
     },
   };
 }
