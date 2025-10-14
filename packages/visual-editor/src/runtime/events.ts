@@ -183,9 +183,7 @@ export class RuntimeNewerSharedVersionEvent extends Event {
 export class RuntimeTabChangeEvent extends Event {
   static eventName = "runtimetabchange" as const;
 
-  constructor(
-    public readonly topGraphObserver?: BreadboardUI.Utils.TopGraphObserver
-  ) {
+  constructor() {
     super(RuntimeTabChangeEvent.eventName, { ...eventInit });
   }
 }

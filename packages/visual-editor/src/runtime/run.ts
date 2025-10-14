@@ -27,7 +27,6 @@ import {
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
 import { Tab, TabId } from "./types";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { createPlanRunner } from "@breadboard-ai/runtime";
 import { RuntimeBoardRunEvent } from "./events";
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
@@ -39,7 +38,6 @@ export class Run extends EventTarget {
     {
       mainGraphId: MainGraphIdentifier;
       harnessRunner?: HarnessRunner;
-      topGraphObserver?: BreadboardUI.Utils.TopGraphObserver;
       abortController?: AbortController;
       kits: Kit[];
     }
@@ -54,10 +52,9 @@ export class Run extends EventTarget {
     super();
   }
 
-  create(tab: Tab, topGraphObserver: BreadboardUI.Utils.TopGraphObserver) {
+  create(tab: Tab) {
     this.#runs.set(tab.id, {
       mainGraphId: tab.mainGraphId,
-      topGraphObserver,
       kits: [...this.graphStore.kits, ...tab.boardServerKits],
     });
   }
@@ -113,20 +110,6 @@ export class Run extends EventTarget {
     }
 
     return run.abortController ?? null;
-  }
-
-  getObservers(tabId: TabId | null) {
-    if (!tabId) {
-      return null;
-    }
-
-    const run = this.#runs.get(tabId);
-    if (!run) {
-      return null;
-    }
-
-    const { topGraphObserver } = run;
-    return { topGraphObserver };
   }
 
   async prepareRun(tab: Tab, config: RunConfig) {
@@ -274,15 +257,10 @@ export class Run extends EventTarget {
     abortController: AbortController
   ) {
     const harnessRunner = createPlanRunner(config);
-    const topGraphObserver = new BreadboardUI.Utils.TopGraphObserver(
-      harnessRunner,
-      config.signal
-    );
 
     return {
       mainGraphId,
       harnessRunner,
-      topGraphObserver,
       abortController,
       kits: config.kits,
     };

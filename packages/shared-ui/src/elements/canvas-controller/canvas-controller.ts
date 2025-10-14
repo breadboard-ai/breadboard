@@ -33,7 +33,6 @@ import {
   SETTINGS_TYPE,
   STATUS,
   SettingsStore,
-  TopGraphRunResult,
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
 } from "../../types/types.js";
@@ -143,9 +142,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
   @property({ reflect: true })
   accessor status = STATUS.RUNNING;
-
-  @property()
-  accessor topGraphResult: TopGraphRunResult | null = null;
 
   @property()
   accessor visualChangeId: WorkspaceVisualChangeId | null = null;
@@ -310,6 +306,8 @@ export class CanvasController extends SignalWatcher(LitElement) {
   get #runStateEffect(): number {
     this.runState.edges.values();
     this.runState.nodes.values();
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    this.projectState?.run.app.state;
     return ++this.#runStateEffectCount;
   }
 
@@ -408,7 +406,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
         runState,
         this.#runStateEffect,
         this.boardServerKits,
-        this.topGraphResult,
         this.history,
         this.editorRender,
         this.selectionState,
@@ -446,7 +443,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
           .mainGraphId=${this.mainGraphId}
           .readOnly=${this.readOnly}
           .showExperimentalComponents=${showExperimentalComponents}
-          .topGraphResult=${this.topGraphResult}
           @input=${(evt: Event) => {
             const composedPath = evt.composedPath();
             const isFromNLInput = composedPath.some((el) => {
@@ -559,10 +555,10 @@ export class CanvasController extends SignalWatcher(LitElement) {
         [
           graphIsEmpty,
           this.graph,
-          this.topGraphResult,
           this.signedIn,
           this.selectionState,
           this.themeHash,
+          this.#runStateEffect,
           selectionCount,
           this.boardServers,
           this.sideNavItem,
