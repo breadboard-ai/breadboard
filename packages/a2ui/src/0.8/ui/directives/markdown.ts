@@ -14,7 +14,7 @@ import {
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import MarkdownIt from "markdown-it";
 import { RenderRule } from "markdown-it/lib/renderer.mjs";
-import { Sanitizer } from "@breadboard-ai/utils";
+import * as Sanitizer from "./sanitizer";
 
 class MarkdownDirective extends Directive {
   #markdownIt = MarkdownIt({
