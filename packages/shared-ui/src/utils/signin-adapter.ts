@@ -5,8 +5,6 @@
  */
 
 import type {
-  Connection,
-  ListConnectionsResponse,
   SignedOutTokenResult,
   TokenGrant,
   TokenVendor,
@@ -23,15 +21,46 @@ import { createContext } from "@lit/context";
 import { getEmbedderRedirectUri } from "./embed-helpers";
 import {
   ALWAYS_REQUIRED_OAUTH_SCOPES,
+  canonicalizeOAuthScope,
   type OAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { clearIdbGraphCache } from "@breadboard-ai/google-drive-kit/board-server/user-graph-collection.js";
 import { createFetchWithCreds } from "@breadboard-ai/utils";
 import { scopesFromUrl } from "./scopes-from-url";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 
 export { SigninAdapter };
 
 export const SIGN_IN_CONNECTION_ID = "$sign-in";
+
+function makeSignInUrl(opts: {
+  redirectUri: string;
+  nonce: string;
+  scopes?: string[];
+}): string {
+  const url = new URL("https://accounts.google.com/o/oauth2/auth");
+  const params = url.searchParams;
+  params.set("client_id", CLIENT_DEPLOYMENT_CONFIG.OAUTH_CLIENT);
+  params.set("redirect_uri", opts.redirectUri);
+  const uniqueScopes = [
+    ...new Set([...ALWAYS_REQUIRED_OAUTH_SCOPES, ...(opts.scopes ?? [])]),
+  ];
+  params.set("scope", uniqueScopes.join(" "));
+  params.set(
+    "state",
+    JSON.stringify({
+      connectionId: SIGN_IN_CONNECTION_ID,
+      nonce: opts.nonce,
+    } satisfies OAuthStateParameter)
+  );
+  params.set("response_type", "code");
+  params.set("access_type", "offline");
+  // Force re-consent every time, because we always want a refresh token.
+  params.set("prompt", "consent");
+  // Don't lose access to scopes we've previously asked for.
+  params.set("include_granted_scopes", "true");
+  return url.href;
+}
 
 export type SigninAdapterState =
   /** The runtime is not configured to use the sign in. */
@@ -218,60 +247,13 @@ class SigninAdapter {
     }
   }
 
-  #cachedConnection: Promise<Connection | undefined> | undefined;
-
-  async #getConnection(): Promise<Connection | undefined> {
-    return (this.#cachedConnection ??= (async () => {
-      const url = new URL("list", this.#globalConfig.connectionServerUrl);
-      const httpRes = await fetch(url, { credentials: "include" });
-      if (!httpRes.ok) {
-        console.error(
-          `SigninAdapter: Failed to fetch connections from ${url.href}, status: ${httpRes.status} ${httpRes.statusText}`
-        );
-        return;
-      }
-      const list = (await httpRes.json()) as ListConnectionsResponse;
-      const connection = list.connections.find(
-        (connection) => connection.id == SIGN_IN_CONNECTION_ID
-      );
-      if (!connection) {
-        return;
-      }
-      return connection;
-    })());
-  }
-
   async getSigninUrl(scopes?: OAuthScope[]): Promise<string> {
-    const connection = await this.#getConnection();
-    if (!connection) return "";
-
-    let redirectUri = this.#globalConfig.connectionRedirectUrl;
-    if (!redirectUri) return "";
-
-    redirectUri = new URL(redirectUri, new URL(window.location.href).origin)
-      .href;
-
-    // If embedder has passed in a valid oauth redirect, use that instead.
-    redirectUri = getEmbedderRedirectUri() ?? redirectUri;
-
-    const authUrl = new URL(connection.authUrl);
-    authUrl.searchParams.set("redirect_uri", redirectUri);
-    authUrl.searchParams.set(
-      "state",
-      JSON.stringify({
-        connectionId: SIGN_IN_CONNECTION_ID,
-        nonce: this.#nonce,
-      } satisfies OAuthStateParameter)
-    );
-    if (scopes?.length) {
-      authUrl.searchParams.set(
-        "scope",
-        [...new Set([...ALWAYS_REQUIRED_OAUTH_SCOPES, ...scopes])].join(" ")
-      );
-    }
-    // Don't lose access to scopes we've previously asked for.
-    authUrl.searchParams.set("include_granted_scopes", "true");
-    return authUrl.href;
+    return makeSignInUrl({
+      redirectUri:
+        getEmbedderRedirectUri() ?? this.#globalConfig.connectionRedirectUrl,
+      nonce: this.#nonce,
+      scopes,
+    });
   }
 
   async signIn(
@@ -350,21 +332,8 @@ class SigninAdapter {
       };
     }
 
-    const connection = await this.#getConnection();
-    if (!connection) {
-      console.error(`[signin] Connection not found`);
-      return {
-        ok: false,
-        error: { code: "other", userMessage: "Connection not found" },
-      };
-    }
-
     // Check for any missing required scopes.
-    const requiredScopes =
-      scopes ??
-      connection.scopes
-        .filter(({ optional }) => !optional)
-        .map(({ scope }) => scope);
+    const requiredScopes = scopes ?? ALWAYS_REQUIRED_OAUTH_SCOPES;
     const actualScopes = new Set(grantResponse.scopes ?? []);
     const missingScopes = requiredScopes.filter(
       (scope) => !actualScopes.has(scope)
@@ -378,7 +347,7 @@ class SigninAdapter {
     }
 
     const settingsValue: TokenGrant = {
-      client_id: connection.clientId,
+      client_id: CLIENT_DEPLOYMENT_CONFIG.OAUTH_CLIENT,
       access_token: grantResponse.access_token,
       expires_in: grantResponse.expires_in,
       issue_time: now,
@@ -390,10 +359,14 @@ class SigninAdapter {
     };
     console.info("[signin] Updating storage");
     try {
-      await this.#settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connection.id, {
-        name: connection.id,
-        value: JSON.stringify(settingsValue),
-      });
+      await this.#settingsHelper.set(
+        SETTINGS_TYPE.CONNECTIONS,
+        SIGN_IN_CONNECTION_ID,
+        {
+          name: SIGN_IN_CONNECTION_ID,
+          value: JSON.stringify(settingsValue),
+        }
+      );
     } catch (e) {
       console.error("[signin] Error updating storage", e);
       return {
@@ -407,12 +380,11 @@ class SigninAdapter {
   }
 
   async signOut(): Promise<void> {
-    const connection = await this.#getConnection();
-    if (!connection) {
-      return;
-    }
     await Promise.all([
-      this.#settingsHelper.delete(SETTINGS_TYPE.CONNECTIONS, connection.id),
+      this.#settingsHelper.delete(
+        SETTINGS_TYPE.CONNECTIONS,
+        SIGN_IN_CONNECTION_ID
+      ),
       // Clear caches on signout because they contain user-specific data, like
       // the user's graphs, which we must not share across different signins.
       clearIdbGraphCache(),
@@ -445,13 +417,12 @@ class SigninAdapter {
     if (this.state !== "signedin") {
       return { ok: false, error: "User was signed out" };
     }
-    const connection = await this.#getConnection();
-    if (!connection) {
-      return { ok: false, error: "No connection" };
-    }
 
     const settingsValueStr = (
-      await this.#settingsHelper.get(SETTINGS_TYPE.CONNECTIONS, connection.id)
+      await this.#settingsHelper.get(
+        SETTINGS_TYPE.CONNECTIONS,
+        SIGN_IN_CONNECTION_ID
+      )
     )?.value as string | undefined;
     if (!settingsValueStr) {
       return { ok: false, error: "No local connection storage" };
@@ -478,19 +449,21 @@ class SigninAdapter {
         canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
       }
       console.info(`[signin] Upgrading signin storage to include scopes`);
-      await this.#settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connection.id, {
-        name: connection.id,
-        value: JSON.stringify({
-          ...settingsValue,
-          scopes: tokenInfoScopes.value,
-        } satisfies TokenGrant),
-      });
+      await this.#settingsHelper.set(
+        SETTINGS_TYPE.CONNECTIONS,
+        SIGN_IN_CONNECTION_ID,
+        {
+          name: SIGN_IN_CONNECTION_ID,
+          value: JSON.stringify({
+            ...settingsValue,
+            scopes: tokenInfoScopes.value,
+          } satisfies TokenGrant),
+        }
+      );
     }
 
     const canonicalizedRequiredScopes = new Set(
-      connection.scopes
-        .filter(({ optional }) => !optional)
-        .map(({ scope }) => canonicalizeOAuthScope(scope))
+      ALWAYS_REQUIRED_OAUTH_SCOPES.map((scope) => canonicalizeOAuthScope(scope))
     );
     const missingScopes = [...canonicalizedRequiredScopes].filter(
       (scope) => !canonicalizedUserScopes.has(scope)
@@ -537,17 +510,4 @@ class SigninAdapter {
 
     return { ok: true, value: result.scope.split(" ") };
   }
-}
-
-/**
- * Some scopes go by multiple names.
- */
-function canonicalizeOAuthScope(scope: string): string {
-  if (scope === "https://www.googleapis.com/auth/userinfo.profile") {
-    return "profile";
-  }
-  if (scope === "https://www.googleapis.com/auth/userinfo.email") {
-    return "email";
-  }
-  return scope;
 }

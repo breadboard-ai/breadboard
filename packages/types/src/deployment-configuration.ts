@@ -20,6 +20,7 @@ export type ClientDeploymentConfiguration = {
   SURVEY_MODE?: "on" | "off" | "test";
   SURVEY_API_KEY?: string;
   SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID?: string;
+  OAUTH_CLIENT: string;
   /**
    * Allow running 3P modules (modules that are other than A2). Default
    * value is "false"
