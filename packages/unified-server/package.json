@@ -92,9 +92,10 @@
       ]
     },
     "serve": {
-      "command": "[ -f ./secrets/local.json ] && export CONNECTIONS_FILE=./secrets/local.json && export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project) && export FIRESTORE_DB_NAME=unified-server && export STORAGE_BUCKET=opal-blob-store-dev SERVER_URL=http://localhost:3000/board && node --enable-source-maps .",
+      "command": "node --enable-source-maps .",
       "service": true,
       "files": [
+        ".env",
         "vite.config.ts",
         "secrets/*.json"
       ],
