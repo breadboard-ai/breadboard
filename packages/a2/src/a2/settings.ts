@@ -36,6 +36,7 @@ async function readFlags(caps: Capabilities): Promise<Outcome<RuntimeFlags>> {
       mcp: false,
       gulfRenderer: false,
       force2DGraph: false,
+      consistentUI: false,
     };
   }
 

@@ -33,6 +33,10 @@ export type RuntimeFlags = {
    * Use GULF for rendering.
    */
   gulfRenderer: boolean;
+  /**
+   * Experimental Consistent UI output mode
+   */
+  consistentUI: boolean;
 };
 
 /**
