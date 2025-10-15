@@ -9,6 +9,7 @@ import { Root } from "./root";
 import { StringValue } from "../types/primitives";
 import * as Styles from "./styles";
 import { classMap } from "lit/directives/class-map.js";
+import { A2UIModelProcessor } from "../data/model-processor";
 
 @customElement("a2ui-audioplayer")
 export class Audio extends Root {
@@ -44,14 +45,17 @@ export class Audio extends Root {
     if (this.url && typeof this.url === "object") {
       if ("literalString" in this.url) {
         return html`<audio controls src=${this.url.literalString} />`;
+      } else if ("literal" in this.url) {
+        return html`<audio controls src=${this.url.literal} />`;
       } else if (this.url && "path" in this.url && this.url.path) {
-        if (!this.processor) {
+        if (!this.processor || !this.component) {
           return html`(no processor)`;
         }
 
-        const audioUrl = this.processor.getDataByPath(
-          this.processor.resolvePath(this.url.path, this.dataContextPath),
-          this.surfaceId
+        const audioUrl = this.processor.getData(
+          this.component,
+          this.url.path,
+          this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
         );
         if (!audioUrl) {
           return html`Invalid audio URL`;

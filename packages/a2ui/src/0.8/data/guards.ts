@@ -45,15 +45,30 @@ export function isComponentArrayReference(
 }
 
 function isStringValue(value: unknown): value is StringValue {
-  return isObject(value) && ("path" in value || "literalString" in value);
+  return (
+    isObject(value) &&
+    ("path" in value ||
+      ("literal" in value && typeof value.literal === "string") ||
+      "literalString" in value)
+  );
 }
 
 function isNumberValue(value: unknown): value is NumberValue {
-  return isObject(value) && ("path" in value || "literalNumber" in value);
+  return (
+    isObject(value) &&
+    ("path" in value ||
+      ("literal" in value && typeof value.literal === "number") ||
+      "literalNumber" in value)
+  );
 }
 
 function isBooleanValue(value: unknown): value is BooleanValue {
-  return isObject(value) && ("path" in value || "literalBoolean" in value);
+  return (
+    isObject(value) &&
+    ("path" in value ||
+      ("literal" in value && typeof value.literal === "boolean") ||
+      "literalBoolean" in value)
+  );
 }
 
 function isAnyComponentNode(value: unknown): value is AnyComponentNode {

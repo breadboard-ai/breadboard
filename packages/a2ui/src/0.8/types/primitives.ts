@@ -13,6 +13,10 @@ export interface StringValue {
    * A fixed, hardcoded string value.
    */
   literalString?: string;
+  /**
+   * A fixed, hardcoded string value.
+   */
+  literal?: string;
 }
 
 export interface NumberValue {
@@ -24,6 +28,10 @@ export interface NumberValue {
    * A fixed, hardcoded number value.
    */
   literalNumber?: number;
+  /**
+   * A fixed, hardcoded number value.
+   */
+  literal?: number;
 }
 
 export interface BooleanValue {
@@ -35,4 +43,8 @@ export interface BooleanValue {
    * A fixed, hardcoded boolean value.
    */
   literalBoolean?: boolean;
+  /**
+   * A fixed, hardcoded boolean value.
+   */
+  literal?: boolean;
 }

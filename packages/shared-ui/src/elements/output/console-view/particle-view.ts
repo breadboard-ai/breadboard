@@ -16,9 +16,14 @@ import { signal } from "signal-utils";
 import { v0_8 } from "@breadboard-ai/a2ui";
 import { err, ok } from "@breadboard-ai/utils";
 import { repeat } from "lit/directives/repeat.js";
+import { provide } from "@lit/context";
+import { theme as uiTheme } from "./theme/theme.js";
 
 @customElement("bb-particle-view")
 export class ParticleView extends SignalWatcher(LitElement) {
+  @provide({ context: v0_8.UI.Context.themeContext })
+  accessor theme: v0_8.Types.Theme = uiTheme;
+
   @property()
   accessor particle: Particle | null = null;
 
@@ -38,7 +43,6 @@ export class ParticleView extends SignalWatcher(LitElement) {
         .particle=${this.particle}
       ></bb-particle-links>`;
     } else if (type === "a2ui") {
-      const processor = new v0_8.Data.A2UIModelProcessor();
       const body = (this.particle as GroupParticle).group.get(
         "body"
       ) as TextParticle;
@@ -47,17 +51,20 @@ export class ParticleView extends SignalWatcher(LitElement) {
         return nothing;
       }
       const { text } = body;
-      const surfaceUpdate = parseJson(text);
-      if (!ok(surfaceUpdate)) {
+      let messages = parseJson(text);
+      if (!ok(messages)) {
         console.warn("Failed to parse JSON of the payload");
         return nothing;
       }
 
-      processor.processMessages([
-        {
-          surfaceUpdate,
-        },
-      ]);
+      if (!Array.isArray(messages)) {
+        messages = [messages];
+      }
+
+      const processor = new v0_8.Data.A2UIModelProcessor();
+      processor.clearSurfaces();
+      processor.processMessages(messages);
+
       return html`<section id="surfaces">
         ${repeat(
           processor.getSurfaces(),

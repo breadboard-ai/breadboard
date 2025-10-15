@@ -98,6 +98,33 @@ export class A2UIModelProcessor {
     }
   }
 
+  /**
+   * Retrieves the data for a given component node and a relative path string.
+   * This correctly handles the special `.` path, which refers to the node's
+   * own data context.
+   */
+  getData(
+    node: AnyComponentNode,
+    relativePath: string,
+    surfaceId = A2UIModelProcessor.DEFAULT_SURFACE_ID
+  ): DataValue | null {
+    const surface = this.#surfaces.get(surfaceId);
+    if (!surface) return null;
+
+    let finalPath: string;
+
+    // The special `.` path means the final path is the node's data context
+    // path and so we return the dataContextPath as-is.
+    if (relativePath === ".") {
+      finalPath = node.dataContextPath ?? "/";
+    } else {
+      // For all other paths, resolve them against the node's context.
+      finalPath = this.resolvePath(relativePath, node.dataContextPath);
+    }
+
+    return this.#getDataByPath(surface.dataModel, finalPath);
+  }
+
   getDataByPath(path: string, surfaceId: SurfaceID | null = null) {
     if (!surfaceId) {
       surfaceId = A2UIModelProcessor.DEFAULT_SURFACE_ID;
@@ -123,27 +150,84 @@ export class A2UIModelProcessor {
     return this.#setDataByPath(surface.dataModel, path, value);
   }
 
-  resolvePath(path: string, dataContextPath?: string) {
-    if (dataContextPath) {
-      if (path.startsWith("/") || dataContextPath.endsWith("/")) {
-        return `${dataContextPath}${path}`;
-      } else {
-        return `${dataContextPath}/${path}`;
-      }
+  resolvePath(path: string, dataContextPath?: string): string {
+    // If the path is absolute, it overrides any context.
+    if (path.startsWith("/")) {
+      return path;
     }
 
-    return path;
+    if (dataContextPath && dataContextPath !== "/") {
+      // Ensure there's exactly one slash between the context and the path.
+      return dataContextPath.endsWith("/")
+        ? `${dataContextPath}${path}`
+        : `${dataContextPath}/${path}`;
+    }
+
+    // Fallback for no context or root context: make it an absolute path.
+    return `/${path}`;
+  }
+
+  /**
+   * Converts a specific array format [{key: "...", value_string: "..."}, ...]
+   * into a standard Map. It also attempts to parse any string values that
+   * appear to be stringified JSON.
+   */
+  #convertKeyValueArrayToMap(arr: DataArray): DataMap {
+    const map = new SignalMap<string, DataValue>();
+    for (const item of arr) {
+      if (!isObject(item) || !("key" in item)) continue;
+
+      const key = item.key as string;
+
+      // Find the value, which is in a property prefixed with "value_".
+      const valueKey = Object.keys(item).find((k) => k.startsWith("value_"));
+      if (!valueKey) continue;
+
+      let value = item[valueKey];
+
+      // Attempt to parse the value if it's a JSON string.
+      if (typeof value === "string") {
+        const trimmedValue = value.trim();
+        if (
+          (trimmedValue.startsWith("{") && trimmedValue.endsWith("}")) ||
+          (trimmedValue.startsWith("[") && trimmedValue.endsWith("]"))
+        ) {
+          try {
+            value = JSON.parse(value);
+          } catch (e) {
+            // It looked like JSON but wasn't. Keep the original string.
+            console.warn(
+              `Failed to parse potential JSON string for key "${key}":`,
+              e
+            );
+          }
+        }
+      }
+
+      map.set(key, value);
+    }
+    return map;
   }
 
   #setDataByPath(root: DataMap, path: string, value: DataValue): void {
     const segments = path.split("/").filter((s) => s);
     if (segments.length === 0) {
+      // Check if the incoming value is the special key-value array format.
+      if (
+        Array.isArray(value) &&
+        value.length > 0 &&
+        isObject(value[0]) &&
+        "key" in value[0]
+      ) {
+        value = this.#convertKeyValueArrayToMap(value);
+      }
+
       // Root data can either be a Map or an Object. If we receive an Object,
       // however, we will normalize it to a proper Map.
       if (value instanceof Map || isObject(value)) {
         // Normalize an Object to a Map.
-        if (isObject(value)) {
-          value = new Map(Object.entries(value));
+        if (!(value instanceof Map) && isObject(value)) {
+          value = new SignalMap(Object.entries(value));
         }
 
         root.clear();
@@ -196,15 +280,16 @@ export class A2UIModelProcessor {
     const segments = path.split("/").filter((s) => s);
     let current: DataValue = root;
     for (const segment of segments) {
-      if (current === undefined) return null;
+      if (current === undefined || current === null) return null;
 
       if (current instanceof Map) {
         current = current.get(segment) as DataMap;
       } else if (Array.isArray(current) && /^\d+$/.test(segment)) {
         current = current[parseInt(segment, 10)];
       } else if (isObject(current)) {
-        return current[segment];
+        current = current[segment];
       } else {
+        // If we need to traverse deeper but `current` is a primitive, the path is invalid.
         return null;
       }
     }
@@ -306,11 +391,14 @@ export class A2UIModelProcessor {
     visited.add(componentId);
 
     const componentData = components.get(baseComponentId)!;
-    const componentType = Object.keys(componentData.componentProperties)[0];
-    const unresolvedProperties =
-      componentData.componentProperties[
-        componentType as keyof typeof componentData.componentProperties
-      ];
+    const componentType = Object.keys(componentData.component)[0];
+    const unresolvedProperties = componentData.componentProperties
+      ? componentData.componentProperties[
+          componentType as keyof typeof componentData.componentProperties
+        ]
+      : componentData.component[
+          componentType as keyof typeof componentData.component
+        ];
 
     // Manually build the resolvedProperties object by resolving each value in
     // the component's properties.
@@ -417,7 +505,6 @@ export class A2UIModelProcessor {
 
       case "Card":
         if (!isResolvedCard(resolvedProperties)) {
-          console.log(1111111, resolvedProperties);
           throw new Error(`Invalid data; expected ${componentType}`);
         }
         return new SignalObject({
@@ -466,7 +553,7 @@ export class A2UIModelProcessor {
           properties: resolvedProperties,
         }) as AnyComponentNode;
 
-      case "Checkbox":
+      case "CheckBox":
         if (!isResolvedCheckbox(resolvedProperties)) {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
@@ -547,16 +634,22 @@ export class A2UIModelProcessor {
       }
 
       if (value.template) {
-        const data = this.#getDataByPath(
-          surface.dataModel,
-          value.template.dataBinding
+        const fullDataPath = this.resolvePath(
+          value.template.dataBinding,
+          dataContextPath
         );
+        const data = this.#getDataByPath(surface.dataModel, fullDataPath);
 
         const template = value.template;
         if (Array.isArray(data)) {
           return data.map((_, index) => {
-            const syntheticId = `${template.componentId}:${index}`;
-            const childDataContextPath = `${template.dataBinding}/${index}`;
+            const parentIndices = dataContextPath
+              .split("/")
+              .filter((segment) => /^\d+$/.test(segment));
+
+            const newIndices = [...parentIndices, index];
+            const syntheticId = `${template.componentId}:${newIndices.join(":")}`;
+            const childDataContextPath = `${fullDataPath}/${index}`;
 
             return this.#buildNodeRecursive(
               syntheticId,

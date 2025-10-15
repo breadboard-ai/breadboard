@@ -29,6 +29,9 @@ export class Root extends SignalWatcher(LitElement) {
   @property()
   accessor surfaceId: SurfaceID | null = null;
 
+  @property()
+  accessor component: AnyComponentNode | null = null;
+
   @consume({ context: themeContext })
   accessor theme!: Theme;
 
@@ -123,6 +126,7 @@ export class Root extends SignalWatcher(LitElement) {
             component.properties.children;
           return html`<a2ui-list
             id=${component.id}
+            .component=${component}
             .weight=${1}
             .direction=${component.properties.direction ?? "vertical"}
             .processor=${this.processor}
@@ -140,6 +144,7 @@ export class Root extends SignalWatcher(LitElement) {
 
           return html`<a2ui-card
             id=${component.id}
+            .component=${component}
             .weight=${1}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
@@ -151,6 +156,7 @@ export class Root extends SignalWatcher(LitElement) {
         case "Column": {
           return html`<a2ui-column
             id=${component.id}
+            .component=${component}
             .weight=${1}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
@@ -164,6 +170,7 @@ export class Root extends SignalWatcher(LitElement) {
         case "Row": {
           return html`<a2ui-row
             id=${component.id}
+            .component=${component}
             .weight=${1}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
@@ -177,6 +184,7 @@ export class Root extends SignalWatcher(LitElement) {
         case "Image": {
           return html`<a2ui-image
             id=${component.id}
+            .component=${component}
             .weight=${1}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
@@ -188,6 +196,7 @@ export class Root extends SignalWatcher(LitElement) {
         case "AudioPlayer": {
           return html`<a2ui-audioplayer
             id=${component.id}
+            .component=${component}
             .weight=${1}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
@@ -199,6 +208,7 @@ export class Root extends SignalWatcher(LitElement) {
         case "Button": {
           return html`<a2ui-button
             id=${component.id}
+            .component=${component}
             .weight=${1}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
@@ -211,6 +221,7 @@ export class Root extends SignalWatcher(LitElement) {
         case "Text": {
           return html`<a2ui-text
             id=${component.id}
+            .component=${component}
             .weight=${1}
             .model=${this.processor}
             .surfaceId=${this.surfaceId}
@@ -223,6 +234,7 @@ export class Root extends SignalWatcher(LitElement) {
         case "Heading": {
           return html`<a2ui-heading
             id=${component.id}
+            .component=${component}
             .weight=${1}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
@@ -232,9 +244,10 @@ export class Root extends SignalWatcher(LitElement) {
           ></a2ui-heading>`;
         }
 
-        case "Checkbox": {
+        case "CheckBox": {
           return html`<a2ui-checkbox
             id=${component.id}
+            .component=${component}
             .weight=${1}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
@@ -248,6 +261,7 @@ export class Root extends SignalWatcher(LitElement) {
           // TODO: enableDate, enableTime and outputFormat.
           return html`<a2ui-datetimeinput
             id=${component.id}
+            .component=${component}
             .weight=${1}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
@@ -263,6 +277,7 @@ export class Root extends SignalWatcher(LitElement) {
           // TODO: thickness, axis and color.
           return html`<a2ui-divider
             id=${component.id}
+            .component=${component}
             .weight=${1}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
@@ -277,6 +292,7 @@ export class Root extends SignalWatcher(LitElement) {
           // TODO: maxAllowedSelections and selections.
           return html`<a2ui-multiplechoice
             id=${component.id}
+            .component=${component}
             .weight=${1}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
@@ -290,6 +306,7 @@ export class Root extends SignalWatcher(LitElement) {
         case "Slider": {
           return html`<a2ui-slider
             id=${component.id}
+            .component=${component}
             .weight=${1}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
@@ -304,6 +321,7 @@ export class Root extends SignalWatcher(LitElement) {
           // TODO: type and validationRegexp.
           return html`<a2ui-textfield
             id=${component.id}
+            .component=${component}
             .weight=${1}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
@@ -318,6 +336,7 @@ export class Root extends SignalWatcher(LitElement) {
         case "Video": {
           return html`<a2ui-video
             id=${component.id}
+            .component=${component}
             .weight=${1}
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}

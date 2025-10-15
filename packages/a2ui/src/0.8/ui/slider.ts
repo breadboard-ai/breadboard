@@ -9,6 +9,7 @@ import { Root } from "./root";
 import { NumberValue, StringValue } from "../types/primitives";
 import * as Styles from "./styles";
 import { ResolvedTextField } from "../types/types";
+import { A2UIModelProcessor } from "../data/model-processor";
 
 @customElement("a2ui-slider")
 export class Slider extends Root {
@@ -95,17 +96,20 @@ export class Slider extends Root {
     if (this.value && typeof this.value === "object") {
       if ("literalNumber" in this.value && this.value.literalNumber) {
         return this.#renderField(this.value.literalNumber);
+      } else if ("literal" in this.value && this.value.literal !== undefined) {
+        return this.#renderField(this.value.literal);
       } else if (this.value && "path" in this.value && this.value.path) {
-        if (!this.processor) {
+        if (!this.processor || !this.component) {
           return html`(no processor)`;
         }
 
-        const textValue = this.processor.getDataByPath(
-          this.processor.resolvePath(this.value.path, this.dataContextPath),
-          this.surfaceId
+        const textValue = this.processor.getData(
+          this.component,
+          this.value.path,
+          this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
         );
 
-        if (!textValue) {
+        if (textValue === null) {
           return html`Invalid value`;
         }
 

@@ -9,6 +9,7 @@ import { Root } from "./root";
 import { StringValue } from "../types/primitives";
 import * as Styles from "./styles";
 import { classMap } from "lit/directives/class-map.js";
+import { A2UIModelProcessor } from "../data/model-processor";
 
 @customElement("a2ui-heading")
 export class Heading extends Root {
@@ -68,14 +69,19 @@ export class Heading extends Root {
         return html`<h1 class=${classMap(this.theme.components.Heading)}>
           ${this.text.literalString}
         </h1>`;
+      } else if ("literal" in this.text) {
+        return html`<h1 class=${classMap(this.theme.components.Heading)}>
+          ${this.text.literal}
+        </h1>`;
       } else if (this.text && "path" in this.text && this.text.path) {
-        if (!this.processor) {
+        if (!this.processor || !this.component) {
           return html`(no model)`;
         }
 
-        const textValue = this.processor.getDataByPath(
-          this.processor.resolvePath(this.text.path, this.dataContextPath),
-          this.surfaceId
+        const textValue = this.processor.getData(
+          this.component,
+          this.text.path,
+          this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
         );
         if (typeof textValue !== "string") {
           return html`(invalid)`;
