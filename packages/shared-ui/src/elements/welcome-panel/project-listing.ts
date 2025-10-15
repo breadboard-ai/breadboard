@@ -33,10 +33,6 @@ const Strings = StringsHelper.forSection("ProjectListing");
 
 const URL_PARAMS = new URL(document.URL).searchParams;
 const FORCE_NO_BOARDS = URL_PARAMS.has("forceNoBoards");
-const SHOW_GOOGLE_DRIVE_DEBUG_PANEL = URL_PARAMS.has("driveDebug");
-if (SHOW_GOOGLE_DRIVE_DEBUG_PANEL) {
-  import("../google-drive/google-drive-debug-panel.js");
-}
 
 @customElement("bb-project-listing")
 export class ProjectListing extends SignalWatcher(LitElement) {
@@ -325,9 +321,6 @@ export class ProjectListing extends SignalWatcher(LitElement) {
       </div>
 
       ${this.#renderAppVersion()}
-      ${SHOW_GOOGLE_DRIVE_DEBUG_PANEL
-        ? html`<bb-google-drive-debug-panel></bb-google-drive-debug-panel>`
-        : nothing}
     `;
   }
 

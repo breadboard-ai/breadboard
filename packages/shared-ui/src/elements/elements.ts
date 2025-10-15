@@ -77,13 +77,10 @@ export { FlowgenEditorInput } from "../flow-gen/flowgen-editor-input.js";
 export { FlowgenInStepButton } from "../flow-gen/flowgen-in-step-button.js";
 
 // Google Drive.
-export { GoogleDriveDirectoryPicker } from "./google-drive/google-drive-directory-picker.js";
 export { GoogleDriveFileId } from "./google-drive/google-drive-file-id.js";
 export { GoogleDriveFileViewer } from "./google-drive/google-drive-file-viewer.js";
-export { GoogleDriveQuery } from "./google-drive/google-drive-query.js";
 export { GoogleDriveSharePanel } from "./google-drive/google-drive-share-panel.js";
 
 // Misc.
 export { tokenVendorContext } from "../contexts/token-vendor.js";
 export { googleDriveFileIdInputPlugin } from "./google-drive/google-drive-file-id.js";
-export { googleDriveQueryInputPlugin } from "./google-drive/google-drive-query.js";
