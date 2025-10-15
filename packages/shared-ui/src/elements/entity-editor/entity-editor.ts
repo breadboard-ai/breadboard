@@ -1109,7 +1109,7 @@ export class EntityEditor
         </h1>
         <div id="type"></div>
         <div id="content">
-          ${this.#renderPorts(graphId, nodeId, inputPorts, node.title())}
+          ${this.#renderPorts(graphId, nodeId, inputPorts)}
         </div>
         <input type="hidden" name="graph-id" .value=${graphId} />
         <input type="hidden" name="node-id" .value=${nodeId} />
@@ -1199,8 +1199,7 @@ export class EntityEditor
   #renderPorts(
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier,
-    inputPorts: PortLike[],
-    title: string
+    inputPorts: PortLike[]
   ) {
     const hasTextEditor =
       inputPorts.findIndex((port) => isLLMContentBehavior(port.schema)) !== -1;
@@ -1233,18 +1232,7 @@ export class EntityEditor
               ),
             ];
           } else {
-            value = html`<bb-delegating-input
-              id=${port.name}
-              name=${port.name}
-              .metadata=${{
-                docName: title,
-              }}
-              .schema=${port.schema}
-              .value=${port.value}
-              @input=${() => {
-                this.#edited = true;
-              }}
-            ></bb-delegating-input>`;
+            console.warn("[entity editor] Can't render port", port);
           }
           break;
         }
@@ -1514,7 +1502,7 @@ export class EntityEditor
       if (!view || !ok(view)) return nothing;
       const ports = portsFromView(view);
       this.#connectorPorts.set(assetPath, ports);
-      value = this.#renderPorts("", "", ports, asset.title);
+      value = this.#renderPorts("", "", ports);
     } else {
       const graphUrl = new URL(this.graph.raw().url ?? window.location.href);
       const itemData = asset?.data.at(-1) ?? null;
