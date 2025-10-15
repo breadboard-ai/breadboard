@@ -10,7 +10,6 @@ import type { Request, Response } from "express";
 
 import * as flags from "./flags.js";
 import { grant } from "./api/grant.js";
-import { list } from "./api/list.js";
 import { refresh } from "./api/refresh.js";
 import { createConnectionConfig, type ServerConfig } from "./config.js";
 import cookieParser from "cookie-parser";
@@ -51,10 +50,6 @@ export function createServer(config: ServerConfig): Express {
   server.use(cookieParser());
 
   // TODO: #3172 - Common error handling
-
-  server.get("/list", async (req: Request, res: Response) =>
-    list(req, res, config)
-  );
 
   server.get("/grant", async (req: Request, res: Response) =>
     grant(req, res, config)

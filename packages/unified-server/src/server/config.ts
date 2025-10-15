@@ -15,7 +15,9 @@ import type {
  * Create the config object that will be embedded in the HTML payload and
  * passed to the client.
  */
-export async function createClientConfig(): Promise<ClientDeploymentConfiguration> {
+export async function createClientConfig(opts: {
+  OAUTH_CLIENT: string;
+}): Promise<ClientDeploymentConfiguration> {
   return {
     ALLOWED_REDIRECT_ORIGINS: flags.ALLOWED_REDIRECT_ORIGINS,
     MEASUREMENT_ID: flags.MEASUREMENT_ID,
@@ -32,6 +34,7 @@ export async function createClientConfig(): Promise<ClientDeploymentConfiguratio
     SURVEY_API_KEY: flags.SURVEY_API_KEY,
     SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID:
       flags.SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID,
+    OAUTH_CLIENT: opts.OAUTH_CLIENT,
     domains: await loadDomainConfig(),
     flags: {
       generateForEach: flags.ENABLE_GENERATE_FOR_EACH,

@@ -105,7 +105,13 @@ console.log("[unified-server startup] Mounting MCP proxy");
 server.use("/api/mcp-proxy", createMcpProxyHandler());
 
 console.log("[unified-server startup] Mounting static content");
-const clientConfig = await createClientConfig();
+const signInConnection = connectionServerConfig.connections.get("$sign-in");
+if (!signInConnection) {
+  throw new Error(`No $sign-in connection found`);
+}
+const clientConfig = await createClientConfig({
+  OAUTH_CLIENT: signInConnection.oauth.client_id,
+});
 ViteExpress.config({
   transformer: (html: string, req: Request) => {
     const board = req.res?.locals.loadedBoard;

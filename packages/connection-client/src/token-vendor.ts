@@ -7,7 +7,6 @@
 import type {
   ConnectionEnvironment,
   GrantStore,
-  ListConnectionsResponse,
   RefreshRequest,
   RefreshResponse,
   TokenGrant,
@@ -77,10 +76,7 @@ export class TokenVendorImpl implements TokenVendor {
     if (expiredGrant.client_id === undefined) {
       // We used to not store the client_id locally, but later discovered it's
       // helpful to store because it's needed for some APIs.
-      expiredGrant = await this.#repairGrantWithMissingClientId(
-        connectionId,
-        expiredGrant
-      );
+      expiredGrant = await this.#repairGrantWithMissingClientId(expiredGrant);
     }
 
     const refreshUrl = new URL(
@@ -129,41 +125,12 @@ export class TokenVendorImpl implements TokenVendor {
   }
 
   async #repairGrantWithMissingClientId(
-    connectionId: string,
     grant: TokenGrant
   ): Promise<TokenGrant> {
-    const httpRes = await fetch(
-      new URL("list", this.#environment.connectionServerUrl),
-      { credentials: "include" }
-    );
-    if (!httpRes.ok) {
-      throw new Error(
-        `HTTP ${httpRes.status} error calling list connections API ` +
-          `while repairing a grant with missing client id.`
-      );
-    }
-    let jsonRes: ListConnectionsResponse;
-    try {
-      jsonRes = await httpRes.json();
-    } catch {
-      throw new Error(
-        `Error decoding JSON from list connections API ` +
-          `while repairing a grant with missing client id.`
-      );
-    }
-    for (const connection of jsonRes.connections) {
-      if (connection.id === connectionId) {
-        return {
-          ...grant,
-          client_id: connection.clientId,
-        };
-      }
-    }
-    throw new Error(
-      `Could not find a connection with id ` +
-        `"${connectionId}" from list connections API ` +
-        `while repairing a grant with missing client id.`
-    );
+    return {
+      ...grant,
+      client_id: this.#environment.OAUTH_CLIENT,
+    };
   }
 }
 

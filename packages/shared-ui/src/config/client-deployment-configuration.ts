@@ -22,9 +22,9 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   consistentUI: false,
 };
 
-function populateFlags(
-  config: Partial<ClientDeploymentConfiguration>
-): ClientDeploymentConfiguration {
+function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(
+  config: T
+): T & Pick<ClientDeploymentConfiguration, "flags"> {
   return {
     ...config,
     flags: { ...DEFAULT_FLAG_VALUES, ...config?.flags },
@@ -40,13 +40,13 @@ function discoverClientDeploymentConfiguration(): ClientDeploymentConfiguration 
     console.warn(
       "Failed to discover deployment config: DOM element not found."
     );
-    return populateFlags({});
+    return populateFlags({}) as ClientDeploymentConfiguration;
   }
   try {
     return populateFlags(JSON.parse(text));
   } catch (e) {
     console.warn("Failed to discover deployment config:", (e as Error).message);
-    return populateFlags({});
+    return populateFlags({}) as ClientDeploymentConfiguration;
   }
 }
 

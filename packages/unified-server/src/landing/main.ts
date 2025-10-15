@@ -102,7 +102,7 @@ function embedIntroVideo(target: HTMLDivElement) {
 async function init() {
   const globalConfig = {
     connectionServerUrl: new URL("/connection/", window.location.href).href,
-    connectionRedirectUrl: "/oauth/",
+    connectionRedirectUrl: new URL("/oauth/", window.location.href).href,
     signinMode: "required",
     ...deploymentConfiguration,
   } as GlobalConfig;
