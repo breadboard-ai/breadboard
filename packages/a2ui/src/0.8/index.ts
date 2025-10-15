@@ -7,6 +7,7 @@
 export * as Events from "./events/events";
 export * as Types from "./types/types.js";
 export * as Data from "./data/model-processor.js";
+export * as UI from "./ui/ui.js";
 
 import A2UIProtocol from "./schemas/a2ui-message.json";
 import ClientEvent from "./schemas/client-event.json";
