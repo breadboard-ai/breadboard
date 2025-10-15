@@ -23,6 +23,7 @@ const CSP_CONFIG = {
     "https://www.google-analytics.com",
     "https://www.googletagmanager.com",
     "https://www.gstatic.com",
+    "https://www.youtube.com",
   ],
   ["img-src"]: [
     "'self'",
