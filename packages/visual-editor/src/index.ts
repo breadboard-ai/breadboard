@@ -304,18 +304,18 @@ export class Main extends SignalWatcher(LitElement) {
     // Authentication
     this.tokenVendor = createTokenVendor(
       {
-        get: (conectionId: string) => {
+        get: () => {
           return this.settingsHelper.get(
             BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
-            conectionId
+            SIGN_IN_CONNECTION_ID
           )?.value as string;
         },
-        set: async (connectionId: string, grant: string) => {
+        set: async (grant: string) => {
           await this.settingsHelper.set(
             BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
-            connectionId,
+            SIGN_IN_CONNECTION_ID,
             {
-              name: connectionId,
+              name: SIGN_IN_CONNECTION_ID,
               value: grant,
             }
           );

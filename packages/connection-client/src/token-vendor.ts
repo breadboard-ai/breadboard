@@ -7,7 +7,6 @@
 import type {
   ConnectionEnvironment,
   GrantStore,
-  RefreshRequest,
   RefreshResponse,
   TokenGrant,
   TokenResult,
@@ -38,8 +37,8 @@ export class TokenVendorImpl implements TokenVendor {
     this.#environment = environment;
   }
 
-  getToken(connectionId: string): TokenResult {
-    const grantJsonString = this.#store.get(connectionId);
+  getToken(): TokenResult {
+    const grantJsonString = this.#store.get();
     if (grantJsonString === undefined) {
       return { state: "signedout" };
     }
@@ -58,18 +57,17 @@ export class TokenVendorImpl implements TokenVendor {
         state: "expired",
         grant,
         refresh: (opts?: { signal?: AbortSignal }) =>
-          this.#refresh(connectionId, grant, opts?.signal),
+          this.#refresh(grant, opts?.signal),
       };
     }
     return { state: "valid", grant };
   }
 
-  isSignedIn(connectionId: string): boolean {
-    return this.#store.get(connectionId) !== undefined;
+  isSignedIn(): boolean {
+    return this.#store.get() !== undefined;
   }
 
   async #refresh(
-    connectionId: string,
     expiredGrant: TokenGrant,
     signal?: AbortSignal
   ): Promise<TokenResult> {
@@ -83,9 +81,6 @@ export class TokenVendorImpl implements TokenVendor {
       "refresh",
       this.#environment.connectionServerUrl
     );
-    refreshUrl.search = new URLSearchParams({
-      connection_id: connectionId,
-    } satisfies RefreshRequest).toString();
 
     const now = Date.now();
     const httpRes = await fetch(refreshUrl, {
@@ -96,7 +91,7 @@ export class TokenVendorImpl implements TokenVendor {
       if (httpRes.status === 401) {
         const errorJson = (await httpRes.json()) as RefreshResponse;
         if (errorJson.error?.includes("missing cookie: ")) {
-          this.#store.set(connectionId, undefined);
+          this.#store.set(undefined);
           return { state: "signedout" };
         }
       }
@@ -120,7 +115,7 @@ export class TokenVendorImpl implements TokenVendor {
       domain: expiredGrant.domain,
       scopes: expiredGrant.scopes,
     };
-    await this.#store.set(connectionId, JSON.stringify(updatedGrant));
+    await this.#store.set(JSON.stringify(updatedGrant));
     return { state: "valid", grant: updatedGrant };
   }
 

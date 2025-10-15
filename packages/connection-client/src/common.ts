@@ -6,7 +6,6 @@
 
 export interface OAuthStateParameter {
   nonce: string;
-  connectionId: string;
 }
 
 export function oauthTokenBroadcastChannelName(nonce: string): string {

@@ -281,7 +281,7 @@ class SideboardRuntimeImpl
       for (const key of event.data.keys) {
         if (key.startsWith("connection:")) {
           const connectionId = key.slice("connection:".length);
-          let result = this.tokenVendor.getToken(connectionId);
+          let result = this.tokenVendor.getToken();
           if (result.state === "expired") {
             try {
               result = await result.refresh();

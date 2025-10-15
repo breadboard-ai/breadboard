@@ -12,7 +12,7 @@ import * as googleOauth from "./oauth/google.js";
 import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
 
 export interface ServerConfig {
-  connections: Map<string, ConnectionConfig>;
+  connection: ConnectionConfig;
   allowedOrigins: string[];
   refreshTokenCookieSameSite: flags.SameSite;
   validateResponse?: (
@@ -25,7 +25,6 @@ export interface ConnectionsConfigFile {
 }
 
 export interface ConnectionConfig {
-  id: string;
   title?: string;
   description?: string;
   icon?: string;
@@ -46,39 +45,31 @@ export interface ConnectionConfig {
  * from a JSON file at that location. An error will be raised if the file
  * cannot be read.
  *
- * Otherwise, if the OAUTH_CLIENT flag is set, a single connection called
- * "$sign-in" will be created for a Google OAuth client based on the
- * OAUTH_CLIENT, OAUTH_SECRET, and OAUTH_SCOPES flags.
+ * Otherwise, assuming the OAUTH_CLIENT flag is set, the connection will be
+ * created for a Google OAuth client based on the OAUTH_CLIENT, OAUTH_SECRET,
+ * and OAUTH_SCOPES flags.
  *
- * If neither flag is set, an empty config is returned.
+ * Throws if neither flag is set.
  */
-export async function createConnectionConfig(): Promise<
-  Map<string, ConnectionConfig>
-> {
+export async function createConnectionConfig(): Promise<ConnectionConfig> {
   if (flags.CONNECTIONS_FILE) {
     return loadConnectionsFile();
   }
   if (!flags.OAUTH_CLIENT) {
-    return new Map();
+    throw new Error(`Either CONNECTIONS_FILE or OAUTH_CLIENT must be set`);
   }
 
   console.log(
     `[connection-server startup] Creating connection config for [${flags.OAUTH_CLIENT}]`
   );
-  const connections = new Map<string, ConnectionConfig>();
-  connections.set(
-    "$sign-in",
-    googleOauth.createConnection(
-      "$sign-in",
-      flags.OAUTH_CLIENT,
-      flags.OAUTH_SECRET,
-      flags.OAUTH_SCOPES
-    )
+  return googleOauth.createConnection(
+    flags.OAUTH_CLIENT,
+    flags.OAUTH_SECRET,
+    flags.OAUTH_SCOPES
   );
-  return connections;
 }
 
-async function loadConnectionsFile(): Promise<Map<string, ConnectionConfig>> {
+async function loadConnectionsFile(): Promise<ConnectionConfig> {
   console.log(
     `[connection-server startup] Loading connections file from ${flags.CONNECTIONS_FILE}`
   );
@@ -86,33 +77,33 @@ async function loadConnectionsFile(): Promise<Map<string, ConnectionConfig>> {
   const config = JSON.parse(
     await readFile(flags.CONNECTIONS_FILE, "utf8")
   ) as ConnectionsConfigFile;
-  const connections = new Map();
-  for (const connection of config.connections) {
-    if (connections.has(connection.id)) {
-      console.warn(
-        `Connection id ${connection.id} is configured more than once.`
-      );
-    } else {
-      connections.set(connection.id, connection);
-    }
+
+  const connection = config.connections[0];
+  if (!connection) {
+    throw new Error(
+      `Expected connections file to contain at least one connection`
+    );
   }
-  loadSecrets(connections);
-  return connections;
+  if (config.connections.length > 1) {
+    console.warn(
+      `Connection file contained more than one connection. ` +
+        `Only the first one is being used.`
+    );
+  }
+
+  loadSecret(connection);
+  return connection;
 }
 
 /**
- * Load secret from file for every secret that has client_secret_location set.
+ * Load a secret from file if client_secret_location is set.
  *
- * Fails with an error if any secret is not found or can't be read.
+ * Fails with an error if any secret scan't be read.
  */
-async function loadSecrets(
-  connections: Map<string, ConnectionConfig>
-): Promise<void> {
-  for (const connection of connections.values()) {
-    const secretLocation = connection.oauth.client_secret_location;
-    if (secretLocation) {
-      console.log(`Loading client secret from ${secretLocation}`);
-      connection.oauth.client_secret = await readFile(secretLocation, "utf8");
-    }
+async function loadSecret(connection: ConnectionConfig): Promise<void> {
+  const secretLocation = connection.oauth.client_secret_location;
+  if (secretLocation) {
+    console.log(`Loading client secret from ${secretLocation}`);
+    connection.oauth.client_secret = await readFile(secretLocation, "utf8");
   }
 }

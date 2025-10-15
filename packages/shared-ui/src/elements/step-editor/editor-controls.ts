@@ -38,7 +38,6 @@ import { until } from "lit/directives/until.js";
 import { GoogleDriveFileId, ItemSelect } from "../elements.js";
 import { NewAsset } from "../../types/types.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { SIGN_IN_CONNECTION_ID } from "../../utils/signin-adapter.js";
 import { InputChangeEvent } from "../../plugins/input-plugin.js";
 import { icons } from "../../styles/icons.js";
 import { iconSubstitute } from "../../utils/icon-substitute.js";
@@ -1023,7 +1022,6 @@ export class EditorControls extends LitElement {
             <bb-google-drive-file-id
               id="add-drive-proxy"
               ${ref(this.#addDriveInputRef)}
-              .connectionName=${SIGN_IN_CONNECTION_ID}
               @bb-input-change=${(evt: InputChangeEvent) => {
                 const driveFile = evt.value as PickedValue;
 

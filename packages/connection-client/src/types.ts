@@ -7,8 +7,8 @@
 import type { OAuthScope } from "./oauth-scopes.js";
 
 export type TokenVendor = {
-  getToken(connectionId: string, scopes?: OAuthScope[]): TokenResult;
-  isSignedIn(connectionId: string): boolean;
+  getToken(scopes?: OAuthScope[]): TokenResult;
+  isSignedIn(): boolean;
 };
 
 export type ConnectionEnvironment = {
@@ -21,8 +21,8 @@ export type ConnectionEnvironment = {
  * Represents a store that remembers and recalls the stored grant.
  */
 export type GrantStore = {
-  get(connectionId: string): string | undefined;
-  set(connectionId: string, grant: string | undefined): Promise<void>;
+  get(): string | undefined;
+  set(grant: string | undefined): Promise<void>;
 };
 
 export type TokenResult =
@@ -94,18 +94,6 @@ export type RefreshResponse =
       access_token: string;
       expires_in: number;
     };
-
-// IMPORTANT: Keep in sync with
-// breadboard/packages/connection-server/src/api/refresh.ts
-export interface RefreshRequest {
-  connection_id: string;
-}
-
-// IMPORTANT: Keep in sync with
-// breadboard/packages/connection-server/src/api/list.ts
-export interface ListConnectionsResponse {
-  connections: Connection[];
-}
 
 export interface Connection {
   id: string;

@@ -9,7 +9,7 @@ import { createServer, createServerConfig } from "./server.js";
 
 const config = await createServerConfig();
 
-if (config.connections.size === 0) {
+if (!config.connection) {
   console.log(
     `
 ┌─────────────────────────────────────────────────────────────────────────┐

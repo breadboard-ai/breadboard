@@ -215,10 +215,7 @@ export class ConnectionSignin extends LitElement {
     authUrl.searchParams.set("redirect_uri", redirectUri);
     authUrl.searchParams.set(
       "state",
-      JSON.stringify({
-        connectionId: this.connection.id,
-        nonce: this._nonce,
-      } satisfies OAuthStateParameter)
+      JSON.stringify({ nonce: this._nonce } satisfies OAuthStateParameter)
     );
     return authUrl.href;
   }

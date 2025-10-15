@@ -27,8 +27,6 @@ export type PickedValue = {
   id: string;
   mimeType: string;
   resourceKey?: string;
-  /** The connection name under which the file was requested */
-  connectionName: string;
 };
 
 type PickerMetadata = {
@@ -155,9 +153,6 @@ export class GoogleDriveFileId extends LitElement {
   accessor metadata: PickerMetadata | null = null;
 
   @property()
-  accessor connectionName = "$sign-in";
-
-  @property()
   accessor autoTrigger = false;
 
   @consume({ context: googleDriveClientContext })
@@ -202,7 +197,6 @@ export class GoogleDriveFileId extends LitElement {
     if (this._authorization === undefined) {
       return html`<bb-connection-input
         @bbevent=${this.#onToken}
-        connectionId=${this.connectionName}
       ></bb-connection-input>`;
     }
     if (this._pickerLib === undefined) {
@@ -272,7 +266,6 @@ export class GoogleDriveFileId extends LitElement {
         id,
         preview: name,
         mimeType,
-        connectionName: this.connectionName,
       };
       this.dispatchEvent(new InputChangeEvent(this.value));
     } finally {
@@ -333,7 +326,6 @@ export class GoogleDriveFileId extends LitElement {
             preview: name,
             mimeType,
             resourceKey,
-            connectionName: this.connectionName,
           };
           this.docName = name;
           this.dispatchEvent(new InputChangeEvent(this.value));

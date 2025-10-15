@@ -23,6 +23,9 @@ import {
   TokenVendor,
 } from "@breadboard-ai/connection-client";
 import { StateEvent } from "../../events/events.js";
+import { SIGN_IN_CONNECTION_ID } from "../../utils/signin-adapter.js";
+
+// TODO(aomarks) Delete this whole file, it is unused.
 
 /**
  * Input element for handling secrets provided by OAuth connections.
@@ -30,7 +33,7 @@ import { StateEvent } from "../../events/events.js";
 @customElement("bb-connection-input")
 export class ConnectionInput extends LitElement {
   @property()
-  accessor connectionId: string | undefined = undefined;
+  accessor connectionId = SIGN_IN_CONNECTION_ID;
 
   @consume({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig | undefined;
@@ -83,10 +86,10 @@ export class ConnectionInput extends LitElement {
   `;
 
   render() {
-    if (!this.tokenVendor || !this.connectionId) {
+    if (!this.tokenVendor) {
       return nothing;
     }
-    const grant = this.tokenVendor.getToken(this.connectionId);
+    const grant = this.tokenVendor.getToken();
     if (grant.state === "signedout") {
       return this.#renderSigninButton();
     } else if (grant.state === "expired") {
@@ -101,10 +104,6 @@ export class ConnectionInput extends LitElement {
   }
 
   #renderSigninButton() {
-    if (!this.connectionId) {
-      return "";
-    }
-
     if (this.#availableConnections.status === TaskStatus.INITIAL) {
       this.#availableConnections.run();
     }
