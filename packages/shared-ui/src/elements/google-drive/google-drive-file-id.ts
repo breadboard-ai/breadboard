@@ -11,7 +11,6 @@ import {
   InputChangeEvent,
   InputPlugin,
 } from "../../plugins/input-plugin.js";
-import "../connection/connection-input.js";
 import { loadDrivePicker } from "./google-apis.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { getTopLevelOrigin } from "../../utils/embed-helpers.js";
