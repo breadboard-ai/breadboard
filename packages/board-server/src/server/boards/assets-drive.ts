@@ -81,6 +81,30 @@ function success(res: ServerResponse, fileUri: string, mimeType: string) {
   return true;
 }
 
+function successBlob(
+  res: ServerResponse,
+  blobId: string,
+  mimeType: string,
+  bucketId: string,
+  serverUrl: string
+) {
+  res.writeHead(200, {
+    "Content-Type": "application/json",
+  });
+  res.end(
+    JSON.stringify({
+      part: {
+        storedData: {
+          handle: makeBlobUrl(blobId, serverUrl),
+          bucketId,
+          mimeType,
+        },
+      },
+    })
+  );
+  return true;
+}
+
 function extractDriveError(s: string): DriveError | null {
   const start = s.indexOf("{");
   try {
@@ -192,7 +216,7 @@ export function makeHandleAssetsDriveRequest(
           serverError(res, `Unable to save to blob store: ${blobId.$error}`);
           return;
         }
-        success(res, makeBlobUrl(serverUrl, blobId), mimeType);
+        successBlob(res, blobId, mimeType, bucketId, serverUrl);
       } else {
         serverError(res, `Unknown mode: ${mode}`);
         return;
