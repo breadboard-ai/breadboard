@@ -77,7 +77,6 @@ export { FlowgenEditorInput } from "../flow-gen/flowgen-editor-input.js";
 export { FlowgenInStepButton } from "../flow-gen/flowgen-in-step-button.js";
 
 // Google Drive.
-export { GoogleDriveDirectoryPicker } from "./google-drive/google-drive-directory-picker.js";
 export { GoogleDriveFileId } from "./google-drive/google-drive-file-id.js";
 export { GoogleDriveFileViewer } from "./google-drive/google-drive-file-viewer.js";
 export { GoogleDriveQuery } from "./google-drive/google-drive-query.js";
