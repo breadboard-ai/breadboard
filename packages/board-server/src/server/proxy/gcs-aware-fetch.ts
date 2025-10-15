@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import type { FetchInputs, Outcome } from "@breadboard-ai/types";
+import { createFetchWithCreds, err, ok } from "@breadboard-ai/utils";
 import {
   callHandler,
   type InputValues,
@@ -11,13 +14,10 @@ import {
   type NodeHandlerContext,
   type OutputValues,
 } from "@google-labs/breadboard";
-import { createFetchWithCreds } from "@breadboard-ai/utils";
-import { GoogleStorageBlobStore } from "../blob-store.js";
-import type { ServerConfig } from "../config.js";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import type { FetchInputs } from "@breadboard-ai/types";
 import type { Request } from "express";
 import { getAccessToken } from "../auth.js";
+import { GoogleStorageBlobStore } from "../blob-store.js";
+import type { ServerConfig } from "../config.js";
 
 export { GcsAndCredsAwareFetch };
 
@@ -38,7 +38,7 @@ class GcsAndCredsAwareFetch {
     bucketName: string,
     serverUrl: string,
     inputs: InputValues
-  ) {
+  ): Promise<Outcome<InputValues>> {
     return prepareGcsData(inputs, bucketName, serverUrl);
   }
 
@@ -89,6 +89,7 @@ class GcsAndCredsAwareFetch {
             serverUrl,
             inputsWithAuth
           );
+          if (!ok(updatedInputs)) return updatedInputs;
 
           // ... call the nested fetch ...
           const outputs = await callHandler(
@@ -118,7 +119,7 @@ async function prepareGcsData(
   data: InputValues,
   bucketName: string,
   serverUrl: string
-): Promise<InputValues> {
+): Promise<Outcome<InputValues>> {
   let accessToken = "";
   if (data !== null && typeof data === "object" && "headers" in data) {
     const headers = data.headers as Record<string, string>;
@@ -150,7 +151,13 @@ async function prepareGcsData(
     bucket_name: bucketName,
   };
   body["output_gcs_config"] = gcsOutputConfig;
-  await convertToGcsReferences(body, blobStore, bucketName, accessToken);
+  const converting = await convertToGcsReferences(
+    body,
+    blobStore,
+    bucketName,
+    accessToken
+  );
+  if (!ok(converting)) return converting;
   return data;
 }
 
@@ -222,7 +229,7 @@ async function convertToGcsReferences(
   blobStore: GoogleStorageBlobStore,
   bucketName: string,
   accessToken: string
-) {
+): Promise<Outcome<void>> {
   const executionInputs = maybeGetExecutionInputs(body);
   if (!executionInputs) {
     return;
@@ -239,12 +246,21 @@ async function convertToGcsReferences(
         if (storedHandle.startsWith("drive:/")) {
           const driveId = storedHandle.replace(/^drive:\/+/, "");
           console.log("Fetching Drive ID: ", driveId);
-          const arrayBuffer = await fetchDriveAssetAsBuffer(
+          const fetchingAsset = await fetchDriveAssetAsBuffer(
             driveId,
+            mimetype,
             accessToken
           );
+          if (!ok(fetchingAsset)) return fetchingAsset;
+          const { buffer, mimeType } = fetchingAsset;
+          if (mimeType.startsWith("text/")) {
+            chunk.data = buffer.toString("base64");
+            chunk.mimetype = "text/plain";
+            newChunks.push(chunk);
+            continue;
+          }
           // Store temporarily in GCS as file transfer mechanism.
-          blobId = await blobStore.saveBuffer(arrayBuffer, mimetype);
+          blobId = await blobStore.saveBuffer(buffer, mimeType);
         } else {
           blobId = storedHandle.split("/").slice(-1)[0];
         }
@@ -254,18 +270,84 @@ async function convertToGcsReferences(
       }
       newChunks.push(chunk);
     }
+
     executionInputs[key] = {
-      chunks: newChunks,
+      chunks: mergeTextChunks(newChunks),
     };
   }
 }
 
+type AssetFetchResult = {
+  buffer: Buffer;
+  mimeType: string;
+};
+
 // Fetch media asset from long term  storage in Drive.
-async function fetchDriveAssetAsBuffer(driveId: string, accessToken: string) {
+async function fetchDriveAssetAsBuffer(
+  driveId: string,
+  oldMimetype: string,
+  accessToken: string
+): Promise<Outcome<AssetFetchResult>> {
   const driveClient = new GoogleDriveClient({
     fetchWithCreds: createFetchWithCreds(async () => accessToken),
   });
-  const gettingMedia = await driveClient.getFileMedia(driveId);
-  const arrayBuffer = await gettingMedia.arrayBuffer();
-  return Buffer.from(arrayBuffer);
+  let arrayBuffer;
+  let mimeType = oldMimetype;
+  if (oldMimetype.startsWith("application/vnd.google-apps.")) {
+    switch (oldMimetype) {
+      case "application/vnd.google-apps.document":
+        mimeType = "text/markdown";
+        break;
+      case "application/vnd.google-apps.presentation":
+        mimeType = "text/plain";
+        break;
+      case "application/vnd.google-apps.spreadsheet":
+        mimeType = "text/csv";
+        break;
+      default:
+        return err(
+          `Unable to fetch drive asset "${driveId}": unsupported type "${mimeType}"`
+        );
+    }
+    const exporting = await driveClient.exportFile(driveId, { mimeType });
+    if (!exporting.ok) {
+      return err(`Unable to export file "${driveId}"`);
+    }
+    arrayBuffer = await exporting.arrayBuffer();
+  } else {
+    const gettingMedia = await driveClient.getFileMedia(driveId);
+    if (!gettingMedia.ok) {
+      return err(`Unable to get media for file "${driveId}"`);
+    }
+    arrayBuffer = await gettingMedia.arrayBuffer();
+  }
+  return { buffer: Buffer.from(arrayBuffer), mimeType };
+}
+
+function mergeTextChunks(chunks: Chunk[]) {
+  let textChunk: Chunk | undefined = undefined;
+  const merged: Chunk[] = [];
+  for (const chunk of chunks) {
+    if (chunk.mimetype === "text/plain") {
+      if (textChunk) {
+        // Append to textChunk
+        const text = `${toText(chunk.data)}\n${toText(chunk.data)}`;
+        textChunk.data = toBase64(text);
+      } else {
+        textChunk = chunk;
+        merged.push(textChunk);
+      }
+    } else {
+      merged.push(chunk);
+    }
+  }
+  return merged;
+
+  function toText(base64: string) {
+    return Buffer.from(base64, "base64").toString("utf-8");
+  }
+
+  function toBase64(s: string) {
+    return Buffer.from(s, "utf-8").toString("base64");
+  }
 }
