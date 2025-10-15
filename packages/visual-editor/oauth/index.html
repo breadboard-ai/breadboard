@@ -4,6 +4,11 @@
   <title>Redirecting ...</title>
 </head>
 <body>
+  <template>
+    <script type="application/json">
+      {{config}}
+    </script>
+  </template>
   <script type="module" src="../src/oauth-redirect.ts"></script>
   <bb-connection-broker></bb-connection-broker>
 </body>
