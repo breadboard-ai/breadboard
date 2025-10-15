@@ -111,6 +111,14 @@ export class ShowVideoModalEvent extends Event {
   }
 }
 
+export class OnboardingAcknowledgedEvent extends Event {
+  static eventName = "bbonboardingacknowledged";
+
+  constructor() {
+    super(OnboardingAcknowledgedEvent.eventName, { ...eventInit });
+  }
+}
+
 /**
  * Board Management
  */

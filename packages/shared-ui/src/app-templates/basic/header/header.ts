@@ -8,7 +8,7 @@ import * as StringsHelper from "../../../strings/helper.js";
 const Strings = StringsHelper.forSection("Global");
 
 import { LitElement, html, css, nothing } from "lit";
-import { customElement, property, query } from "lit/decorators.js";
+import { customElement, property, query, state } from "lit/decorators.js";
 import { icons } from "../../../styles/icons";
 import { styleMap } from "lit/directives/style-map.js";
 import { SideNav } from "./side-nav";
@@ -20,6 +20,8 @@ import {
   ShowTooltipEvent,
   StateEvent,
 } from "../../../events/events.js";
+
+const REPLAY_WARNING_KEY = "bb-app-header-show-replay-warning";
 
 @customElement("bb-app-header")
 export class Header extends LitElement {
@@ -53,6 +55,9 @@ export class Header extends LitElement {
   @query("#side-nav")
   accessor #sideNav: SideNav | null = null;
 
+  @state()
+  accessor #showReplayWarning = false;
+
   static styles = [
     icons,
     type,
@@ -77,6 +82,7 @@ export class Header extends LitElement {
 
       #menu,
       #replay {
+        position: relative;
         width: 30px;
         height: 30px;
         background: transparent;
@@ -100,6 +106,17 @@ export class Header extends LitElement {
           &:hover {
             opacity: 1;
           }
+        }
+
+        bb-onboarding-tooltip {
+          display: none;
+        }
+
+        &:hover bb-onboarding-tooltip {
+          display: flex;
+        }
+        bb-onboarding-tooltip:hover {
+          display: flex;
         }
       }
 
@@ -222,6 +239,14 @@ export class Header extends LitElement {
     `,
   ];
 
+  constructor() {
+    super();
+
+    const showReplayWarning =
+      globalThis.localStorage.getItem(REPLAY_WARNING_KEY);
+    this.#showReplayWarning = showReplayWarning === null;
+  }
+
   render() {
     return html` <button
         id="menu"
@@ -290,6 +315,19 @@ export class Header extends LitElement {
             }}
           >
             <span class="g-icon">replay</span>
+            ${this.#showReplayWarning
+              ? html`<bb-onboarding-tooltip
+                  title="Are you sure you want to refresh?"
+                  text="Share or download results, otherwise output will be lost."
+                  @bbonboardingacknowledged=${() => {
+                    globalThis.localStorage.setItem(
+                      REPLAY_WARNING_KEY,
+                      "false"
+                    );
+                    this.#showReplayWarning = false;
+                  }}
+                ></bb-onboarding-tooltip>`
+              : nothing}
           </button>`}
 
       <bb-sidenav
