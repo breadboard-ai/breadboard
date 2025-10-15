@@ -48,10 +48,7 @@ function makeSignInUrl(opts: {
   params.set("scope", uniqueScopes.join(" "));
   params.set(
     "state",
-    JSON.stringify({
-      connectionId: SIGN_IN_CONNECTION_ID,
-      nonce: opts.nonce,
-    } satisfies OAuthStateParameter)
+    JSON.stringify({ nonce: opts.nonce } satisfies OAuthStateParameter)
   );
   params.set("response_type", "code");
   params.set("access_type", "offline");
@@ -136,7 +133,7 @@ class SigninAdapter {
       return;
     }
 
-    const token = tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
+    const token = tokenVendor.getToken();
     if (token.state === "signedout") {
       if (globalConfig.signinMode === "incremental") {
         // TODO(aomarks) Temporary weirdness.
@@ -204,12 +201,12 @@ class SigninAdapter {
         return { state: "signedout" };
       }
     }
-    let token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
+    let token = this.#tokenVendor.getToken();
     if (token.state === "expired") {
       token = await token.refresh();
       if (token.state === "signedout") {
         if ((await this.#signIn()).ok) {
-          token = this.#tokenVendor.getToken(SIGN_IN_CONNECTION_ID);
+          token = this.#tokenVendor.getToken();
         }
       }
     }

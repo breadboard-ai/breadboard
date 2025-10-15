@@ -12,7 +12,10 @@ import {
   SETTINGS_TYPE,
 } from "@breadboard-ai/shared-ui/types/types.js";
 import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
-import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
+import {
+  SIGN_IN_CONNECTION_ID,
+  SigninAdapter,
+} from "@breadboard-ai/shared-ui/utils/signin-adapter";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { createTokenVendor } from "@breadboard-ai/connection-client";
 import {
@@ -72,15 +75,21 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   const settingsHelper = new SettingsHelperImpl(settings);
   const tokenVendor = createTokenVendor(
     {
-      get: (conectionId: string) => {
-        return settingsHelper.get(SETTINGS_TYPE.CONNECTIONS, conectionId)
-          ?.value as string;
+      get: () => {
+        return settingsHelper.get(
+          SETTINGS_TYPE.CONNECTIONS,
+          SIGN_IN_CONNECTION_ID
+        )?.value as string;
       },
-      set: async (connectionId: string, grant: string) => {
-        await settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, connectionId, {
-          name: connectionId,
-          value: grant,
-        });
+      set: async (grant: string) => {
+        await settingsHelper.set(
+          SETTINGS_TYPE.CONNECTIONS,
+          SIGN_IN_CONNECTION_ID,
+          {
+            name: SIGN_IN_CONNECTION_ID,
+            value: grant,
+          }
+        );
       },
     },
     globalConfig

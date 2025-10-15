@@ -28,7 +28,7 @@ export async function createServerConfig(): Promise<ServerConfig> {
   console.log("[connection-server startup] Creating connection server config");
   return {
     allowedOrigins: flags.ALLOWED_ORIGINS,
-    connections: await createConnectionConfig(),
+    connection: await createConnectionConfig(),
     refreshTokenCookieSameSite: flags.REFRESH_TOKEN_COOKIE_SAME_SITE,
   };
 }

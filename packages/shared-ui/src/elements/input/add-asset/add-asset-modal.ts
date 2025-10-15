@@ -16,7 +16,6 @@ import { AddAssetEvent, OverlayDismissedEvent } from "../../../events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
 import { DrawableInput } from "../drawable/drawable";
-import { SIGN_IN_CONNECTION_ID } from "../../../utils/signin-adapter";
 import { GoogleDriveFileId } from "../../google-drive/google-drive-file-id";
 import { WebcamVideoInput } from "../webcam/webcam-video";
 import { type } from "../../../styles/host/type";
@@ -446,7 +445,6 @@ export class AddAssetModal extends LitElement {
           <bb-google-drive-file-id
             id="add-drive-proxy"
             ${ref(this.#addDriveInputRef)}
-            .connectionName=${SIGN_IN_CONNECTION_ID}
             .autoTrigger=${true}
             @bbinputcancel=${() => {
               this.dispatchEvent(new OverlayDismissedEvent());

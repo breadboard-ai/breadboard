@@ -9,7 +9,7 @@ import type { TokenVendor } from "@breadboard-ai/connection-client";
 export { getAccessToken };
 
 async function getAccessToken(vendor: TokenVendor): Promise<string | null> {
-  let token = vendor.getToken("$sign-in");
+  let token = vendor.getToken();
   if (token.state === "expired") {
     token = await token.refresh();
   }

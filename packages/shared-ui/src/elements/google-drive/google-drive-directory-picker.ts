@@ -78,7 +78,6 @@ export class GoogleDriveDirectoryPicker extends LitElement {
     if (this._authorization === undefined) {
       return html`<bb-connection-input
         @bbevent=${this.#onToken}
-        connectionId="$sign-in"
       ></bb-connection-input>`;
     }
     if (this._pickerLib === undefined) {

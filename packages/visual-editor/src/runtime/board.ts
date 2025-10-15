@@ -620,7 +620,7 @@ export class Board extends EventTarget {
       }
 
       if (!graph) {
-        if (this.tokenVendor && !this.tokenVendor.isSignedIn("$sign-in")) {
+        if (this.tokenVendor && !this.tokenVendor.isSignedIn()) {
           this.dispatchEvent(new RuntimeRequestSignInEvent());
         } else {
           this.dispatchEvent(new RuntimeErrorEvent("Unable to load board"));

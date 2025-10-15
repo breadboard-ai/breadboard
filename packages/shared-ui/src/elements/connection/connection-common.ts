@@ -6,7 +6,6 @@
 
 export interface OAuthStateParameter {
   nonce: string;
-  connectionId: string;
 }
 
 export function oauthTokenBroadcastChannelName(nonce: string): string {
@@ -30,9 +29,3 @@ export type RefreshResponse =
       access_token: string;
       expires_in: number;
     };
-
-// IMPORTANT: Keep in sync with
-// breadboard/packages/connection-server/src/api/refresh.ts
-export interface RefreshRequest {
-  connection_id: string;
-}

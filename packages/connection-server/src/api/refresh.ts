@@ -10,13 +10,6 @@ import { badRequestJson, internalServerError, okJson } from "../responses.js";
 import type { Request } from "express";
 import * as cookies from "./cookies.js";
 
-// IMPORTANT: Keep in sync with
-// breadboard/packages/visual-editor/src/elements/connection/connection-input.ts
-interface RefreshRequest {
-  connection_id: string;
-  refresh_token: string;
-}
-
 type RefreshResponse =
   | { error: string }
   | {
@@ -33,30 +26,16 @@ export async function refresh(
   res: ServerResponse,
   config: ServerConfig
 ): Promise<void> {
-  const params = Object.fromEntries(
-    new URL(req.url ?? "", "http://example.com").searchParams.entries()
-  ) as object as RefreshRequest;
-  if (!params.connection_id) {
-    return badRequestJson(res, { error: "missing connection_id" });
-  }
   const refreshToken = req.cookies[cookies.REFRESH_TOKEN];
   if (!refreshToken) {
     return badRequestJson(
       res,
-      {
-        error: `missing cookie: ${cookies.REFRESH_TOKEN}`,
-      },
+      { error: `missing cookie: ${cookies.REFRESH_TOKEN}` },
       { httpStatusCode: 401 }
     );
   }
 
-  const connectionConfig = config.connections.get(params.connection_id);
-  if (!connectionConfig) {
-    return badRequestJson(res, {
-      error: `unknown connection ID "${params.connection_id}"`,
-    });
-  }
-
+  const connectionConfig = config.connection;
   const tokenUrl = new URL(connectionConfig.oauth.token_uri);
   tokenUrl.searchParams.set("grant_type", "refresh_token");
   tokenUrl.searchParams.set("refresh_token", refreshToken);

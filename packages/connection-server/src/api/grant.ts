@@ -22,7 +22,6 @@ export type TokenEndpointGrantResponse =
     };
 
 interface GrantRequest {
-  connection_id: string;
   code: string;
   redirect_path: string;
 }
@@ -38,20 +37,11 @@ export async function grant(
   const params = Object.fromEntries(
     new URL(req.url ?? "", "http://example.com").searchParams.entries()
   ) as object as GrantRequest;
-  if (!params.connection_id) {
-    return badRequestJson(res, { error: "missing connection_id" });
-  }
   if (!params.code) {
     return badRequestJson(res, { error: "missing code" });
   }
 
-  const connectionConfig = config.connections.get(params.connection_id);
-  if (!connectionConfig) {
-    return badRequestJson(res, {
-      error: `unknown connection ID "${params.connection_id}"`,
-    });
-  }
-
+  const connectionConfig = config.connection;
   const tokenUrl = new URL(connectionConfig.oauth.token_uri);
   const origin =
     req.headers.origin || inferOriginFromHostname(req.headers.host);

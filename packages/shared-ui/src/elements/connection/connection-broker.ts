@@ -68,11 +68,6 @@ export class ConnectionBroker extends HTMLElement {
     }
 
     // Unpack the data needed to call the token grant API.
-    const connectionId = state.connectionId;
-    if (!connectionId) {
-      displayError('"connection_id" parameter could be found in "state".');
-      return;
-    }
     const code = thisUrl.searchParams.get("code");
     if (!code) {
       displayError('No "code" parameter could be found in the URL.');
@@ -93,7 +88,6 @@ export class ConnectionBroker extends HTMLElement {
       window.location.href
     );
     const grantUrl = new URL("grant", absoluteConnectionServerUrl);
-    grantUrl.searchParams.set("connection_id", connectionId);
     grantUrl.searchParams.set("code", code);
     grantUrl.searchParams.set("redirect_path", redirect_uri);
     const response = await fetch(grantUrl, { credentials: "include" });

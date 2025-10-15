@@ -1,13 +1,17 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import type { ConnectionConfig } from "../config.js";
 
 export function createConnection(
-  connectionId: string,
   clientId: string,
   clientSecret: string,
   scopes: string[]
 ): ConnectionConfig {
   return {
-    id: connectionId,
     oauth: {
       client_id: clientId,
       client_secret: clientSecret,
