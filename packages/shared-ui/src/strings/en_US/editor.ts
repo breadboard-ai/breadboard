@@ -84,5 +84,13 @@ export default {
 
   // Queries.
 
+  // Warnings.
+  WARNING_REFRESH_LOSES_OUTPUT_CONFIRM: {
+    str: "Are you sure you want to refresh?",
+  },
+  WARNING_REFRESH_LOSES_OUTPUT_DETAILS: {
+    str: "Share or download results before refreshing otherwise you will lose output from this run.",
+  },
+
   // Errors.
 } as LanguagePackEntry;

@@ -71,6 +71,7 @@ export { Snackbar } from "./toast/snackbar.js";
 export { Splitter } from "./splitter/splitter.js";
 export { Toast } from "./toast/toast.js";
 export { Tooltip } from "./tooltip/tooltip.js";
+export { OnboardingTooltip } from "./tooltip/onboarding-tooltip.js";
 
 // Flowgen.
 export { FlowgenEditorInput } from "../flow-gen/flowgen-editor-input.js";

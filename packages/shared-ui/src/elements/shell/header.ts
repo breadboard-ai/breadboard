@@ -253,46 +253,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
           & #remix {
             position: relative;
-
-            & #remix-notification {
-              cursor: auto;
-              position: absolute;
-              right: 0;
-              top: calc(100% + var(--bb-grid-size-8));
-              background: var(--n-0);
-              color: var(--n-100);
-              border-radius: var(--bb-grid-size-5);
-              padding: var(--bb-grid-size-5);
-              width: 100svw;
-              max-width: 280px;
-              display: flex;
-              flex-direction: column;
-              align-items: start;
-              animation: fadeIn 1s cubic-bezier(0, 0, 0.3, 1) 1s 1 backwards;
-
-              & h1,
-              & p {
-                text-align: left;
-                color: var(--n-100);
-                margin: 0 0 var(--bb-grid-size-3) 0;
-              }
-
-              & span {
-                cursor: pointer;
-              }
-
-              &::after {
-                content: "";
-                position: absolute;
-                width: 20px;
-                height: 20px;
-                border-radius: 4px;
-                transform: scaleX(0.8) scaleY(1.4) rotate(45deg);
-                right: 32px;
-                top: -6px;
-                background: var(--n-0);
-              }
-            }
           }
         }
       }
@@ -404,16 +364,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
       @media (min-width: 980px) {
         #status {
           display: flex;
-        }
-      }
-
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-        }
-
-        to {
-          opacity: 1;
         }
       }
     `,
@@ -729,28 +679,17 @@ export class VEHeader extends SignalWatcher(LitElement) {
       <span class="round w-500">Remix</span>
 
       ${this.#showRemixInfo
-        ? html`<div
-            id="remix-notification"
-            class="sans md-body-medium"
-            @click=${(evt: Event) => {
-              evt.preventDefault();
-              evt.stopImmediatePropagation();
+        ? html`<bb-onboarding-tooltip
+            delayed
+            title="Remix to Edit"
+            text='You can only run this ${Strings.from(
+              "APP_NAME"
+            )} app. To edit, click the "Remix" button to make a copy.'
+            @bbonboardingacknowledged=${() => {
+              globalThis.localStorage.setItem(REMIX_INFO_KEY, "false");
+              this.#showRemixInfo = false;
             }}
-          >
-            <h1 class="md-label-large">Remix to Edit</h1>
-            <p>
-              You can only run this ${Strings.from("APP_NAME")} app. To edit,
-              click the &quot;Remix&quot; button to make a copy.
-            </p>
-            <span
-              aria-role="button"
-              @click=${() => {
-                globalThis.localStorage.setItem(REMIX_INFO_KEY, "false");
-                this.#showRemixInfo = false;
-              }}
-              >Got it</span
-            >
-          </div>`
+          ></bb-onboarding-tooltip>`
         : nothing}
     </button> `;
   }
