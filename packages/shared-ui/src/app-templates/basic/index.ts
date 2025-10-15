@@ -696,7 +696,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   protected willUpdate(_changedProperties: PropertyValues): void {
-    if (this.run?.status === "running") {
+    if (this.run?.status === "running" && this.resultsUrl) {
       this.resultsUrl = null;
     }
   }
