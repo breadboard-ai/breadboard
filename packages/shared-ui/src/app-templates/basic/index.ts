@@ -162,9 +162,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @query("#export-output-button")
   accessor exportOutputsButton: HTMLButtonElement | null = null;
 
-  @state()
-  accessor hasDownloadedOnce = false;
-
   readonly #shareResultsButton = createRef<HTMLButtonElement>();
 
   get additionalOptions() {
@@ -195,9 +192,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       .replayActive=${true}
       .menuActive=${true}
       .appTitle=${this.graph?.title}
-      .isSafeToReplay=${Boolean(
-        !this.run?.finalOutput || this.hasDownloadedOnce || this.resultsUrl
-      )}
       @bbevent=${(evt: StateEvent<"board.stop">) => {
         if (evt.detail.eventType !== "board.stop") {
           return;
@@ -446,8 +440,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     URL.revokeObjectURL(url);
 
     unlockButton();
-
-    this.hasDownloadedOnce = true;
 
     ActionTracker.shareResults("download");
 
@@ -706,7 +698,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   protected willUpdate(_changedProperties: PropertyValues): void {
     if (this.run?.status === "running") {
       this.resultsUrl = null;
-      this.hasDownloadedOnce = false;
     }
   }
 

@@ -55,9 +55,6 @@ export class Header extends LitElement {
   @query("#side-nav")
   accessor #sideNav: SideNav | null = null;
 
-  @property()
-  accessor isSafeToReplay = false;
-
   @state()
   accessor #showReplayWarning = false;
 
@@ -318,7 +315,7 @@ export class Header extends LitElement {
             }}
           >
             <span class="g-icon">replay</span>
-            ${!this.isSafeToReplay && this.#showReplayWarning
+            ${this.#showReplayWarning
               ? html`<bb-onboarding-tooltip
                   title="Are you sure you want to refresh?"
                   text="Share or download results, otherwise output will be lost."
