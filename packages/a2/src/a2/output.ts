@@ -251,6 +251,26 @@ class StreamableReporter {
     });
   }
 
+  // TODO: Make this much better, this is just a temporary hack.
+  sendA2UI(title: string, body: unknown, icon?: string) {
+    const bodyParticle = {
+      text: JSON.stringify(body),
+      mimeType: "application/json",
+    };
+    const group: SerializedGroupParticle["group"] = [
+      ["title", { text: title }],
+      ["body", bodyParticle],
+    ];
+    if (icon) {
+      group.push(["icon", { text: icon }]);
+    }
+    return this.#sendUpsert({
+      path: ["console"],
+      id: `${this.#id++}`,
+      particle: { type: "a2ui", group },
+    });
+  }
+
   sendUpdate(title: string, body: unknown | undefined, icon?: string) {
     let bodyParticle;
     if (!body) {
