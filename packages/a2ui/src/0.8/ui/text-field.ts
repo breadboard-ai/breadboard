@@ -10,6 +10,7 @@ import { StringValue } from "../types/primitives";
 import * as Styles from "./styles";
 import { classMap } from "lit/directives/class-map.js";
 import { ResolvedTextField } from "../types/types";
+import { A2UIModelProcessor } from "../data/model-processor";
 
 @customElement("a2ui-textfield")
 export class TextField extends Root {
@@ -87,17 +88,20 @@ export class TextField extends Root {
     if (this.text && typeof this.text === "object") {
       if ("literalString" in this.text && this.text.literalString) {
         return this.#renderField(this.text.literalString);
+      } else if ("literal" in this.text && this.text.literal !== undefined) {
+        return this.#renderField(this.text.literal);
       } else if (this.text && "path" in this.text && this.text.path) {
-        if (!this.processor) {
+        if (!this.processor || !this.component) {
           return html`(no model)`;
         }
 
-        const textValue = this.processor.getDataByPath(
-          this.processor.resolvePath(this.text.path, this.dataContextPath),
-          this.surfaceId
+        const textValue = this.processor.getData(
+          this.component,
+          this.text.path,
+          this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
         );
 
-        if (!textValue) {
+        if (textValue === null) {
           return html`Invalid label`;
         }
 

@@ -159,7 +159,8 @@ export type ComponentProperties = {
 /** A raw component instance from a SurfaceUpdate message. */
 export interface ComponentInstance {
   id: string;
-  componentProperties: ComponentProperties;
+  componentProperties?: ComponentProperties;
+  component: ComponentProperties;
 }
 
 export interface BeginRenderingMessage {
@@ -281,7 +282,7 @@ export interface ButtonNode extends BaseComponentNode {
 }
 
 export interface CheckboxNode extends BaseComponentNode {
-  type: "Checkbox";
+  type: "CheckBox";
   properties: ResolvedCheckbox;
 }
 

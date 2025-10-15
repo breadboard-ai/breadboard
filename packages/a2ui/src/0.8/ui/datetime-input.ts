@@ -9,6 +9,7 @@ import { Root } from "./root";
 import { StringValue } from "../types/primitives";
 import * as Styles from "./styles";
 import { classMap } from "lit/directives/class-map.js";
+import { A2UIModelProcessor } from "../data/model-processor";
 
 @customElement("a2ui-datetimeinput")
 export class DateTimeInput extends Root {
@@ -85,14 +86,17 @@ export class DateTimeInput extends Root {
     if (this.value && typeof this.value === "object") {
       if ("literalString" in this.value && this.value.literalString) {
         return this.#renderField(this.value.literalString);
+      } else if ("literal" in this.value && this.value.literal !== undefined) {
+        return this.#renderField(this.value.literal);
       } else if (this.value && "path" in this.value && this.value.path) {
-        if (!this.processor) {
+        if (!this.processor || !this.component) {
           return html`(no model)`;
         }
 
-        const textValue = this.processor.getDataByPath(
-          `${this.dataContextPath}${this.value.path}`,
-          this.surfaceId
+        const textValue = this.processor.getData(
+          this.component,
+          this.value.path,
+          this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
         );
         if (typeof textValue !== "string") {
           return html`(invalid)`;

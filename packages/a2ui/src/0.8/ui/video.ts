@@ -8,6 +8,7 @@ import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root";
 import { StringValue } from "../types/primitives";
 import * as Styles from "./styles";
+import { A2UIModelProcessor } from "../data/model-processor";
 
 @customElement("a2ui-video")
 export class Video extends Root {
@@ -40,14 +41,17 @@ export class Video extends Root {
     if (this.url && typeof this.url === "object") {
       if ("literalString" in this.url) {
         return html`<video src=${this.url.literalString} />`;
+      } else if ("literal" in this.url) {
+        return html`<video src=${this.url.literal} />`;
       } else if (this.url && "path" in this.url && this.url.path) {
-        if (!this.processor) {
+        if (!this.processor || !this.component) {
           return html`(no model processor)`;
         }
 
-        const videoUrl = this.processor.getDataByPath(
-          this.processor.resolvePath(this.url.path, this.dataContextPath),
-          this.surfaceId
+        const videoUrl = this.processor.getData(
+          this.component,
+          this.url.path,
+          this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
         );
         if (!videoUrl) {
           return html`Invalid video URL`;

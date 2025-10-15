@@ -9,6 +9,7 @@ import { Root } from "./root";
 import { StringValue } from "../types/primitives";
 import * as Styles from "./styles";
 import { classMap } from "lit/directives/class-map.js";
+import { A2UIModelProcessor } from "../data/model-processor";
 
 @customElement("a2ui-image")
 export class Image extends Root {
@@ -46,14 +47,18 @@ export class Image extends Root {
       if ("literalString" in this.url) {
         const imageUrl = this.url.literalString ?? "";
         return html`<img src=${imageUrl} />`;
+      } else if ("literal" in this.url) {
+        const imageUrl = this.url.literal ?? "";
+        return html`<img src=${imageUrl} />`;
       } else if (this.url && "path" in this.url && this.url.path) {
-        if (!this.processor) {
+        if (!this.processor || !this.component) {
           return html`(no model)`;
         }
 
-        const imageUrl = this.processor.getDataByPath(
-          this.processor.resolvePath(this.url.path, this.dataContextPath),
-          this.surfaceId
+        const imageUrl = this.processor.getData(
+          this.component,
+          this.url.path,
+          this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
         );
         if (!imageUrl) {
           return html`Invalid image URL`;

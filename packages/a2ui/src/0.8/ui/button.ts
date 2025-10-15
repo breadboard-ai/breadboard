@@ -11,6 +11,7 @@ import { StringValue } from "../types/primitives";
 import * as Styles from "./styles";
 import { classMap } from "lit/directives/class-map.js";
 import { Action } from "../types/components";
+import { A2UIModelProcessor } from "../data/model-processor";
 
 @customElement("a2ui-button")
 export class Button extends Root {
@@ -56,17 +57,20 @@ export class Button extends Root {
     if (this.label && typeof this.label === "object") {
       if ("literalString" in this.label && this.label.literalString) {
         return innerRender(this.label.literalString);
+      } else if ("literal" in this.label && this.label.literal !== undefined) {
+        return innerRender(this.label.literal);
       } else if (this.label && "path" in this.label && this.label.path) {
-        if (!this.processor) {
+        if (!this.processor || !this.component) {
           return html`(no model)`;
         }
 
-        const labelValue = this.processor.getDataByPath(
-          this.processor.resolvePath(this.label.path, this.dataContextPath),
-          this.surfaceId
+        const labelValue = this.processor.getData(
+          this.component,
+          this.label.path,
+          this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
         );
 
-        if (!labelValue) {
+        if (labelValue === null) {
           return html`Invalid label`;
         }
 

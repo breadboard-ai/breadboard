@@ -11,6 +11,7 @@ import { StringValue } from "../types/primitives";
 import * as Styles from "./styles";
 import { appendToAll } from "./utils/utils";
 import { classMap } from "lit/directives/class-map.js";
+import { A2UIModelProcessor } from "../data/model-processor";
 
 @customElement("a2ui-text")
 export class Text extends Root {
@@ -36,15 +37,22 @@ export class Text extends Root {
           this.text.literalString,
           appendToAll(this.theme.markdown, ["ol", "ul", "li"], {})
         )}`;
+      } else if ("literal" in this.text && this.text.literal !== undefined) {
+        return html`${markdown(
+          this.text.literal,
+          appendToAll(this.theme.markdown, ["ol", "ul", "li"], {})
+        )}`;
       } else if (this.text && "path" in this.text && this.text.path) {
-        if (!this.processor) {
+        if (!this.processor || !this.component) {
           return html`(no model)`;
         }
 
-        const textValue = this.processor.getDataByPath(
-          this.processor.resolvePath(this.text.path, this.dataContextPath),
-          this.surfaceId
+        const textValue = this.processor.getData(
+          this.component,
+          this.text.path,
+          this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
         );
+
         if (typeof textValue !== "string") {
           return html`(invalid)`;
         }
