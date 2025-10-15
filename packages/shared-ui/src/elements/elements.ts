@@ -44,7 +44,6 @@ export { PDFViewer } from "./output/pdf-viewer/pdf-viewer.js";
 // Connection Management.
 export { ConnectionBroker } from "./connection/connection-broker.js";
 export { ConnectionEntrySignin } from "./connection/connection-entry-signin.js";
-export { ConnectionInput } from "./connection/connection-input.js";
 export { ConnectionSignin } from "./connection/connection-signin.js";
 
 // General UI.
