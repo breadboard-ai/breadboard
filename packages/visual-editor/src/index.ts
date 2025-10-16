@@ -64,7 +64,7 @@ import {
 import { FileSystemPersistentBackend } from "@breadboard-ai/filesystem-board-server";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import {
-  connectToOpalShellIframeHost,
+  maybeConnectToOpalShellIframeHost,
   opalShellContext,
 } from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
 import { McpClientManager } from "@breadboard-ai/mcp";
@@ -175,7 +175,7 @@ export class Main extends SignalWatcher(LitElement) {
   accessor #uiState!: BreadboardUI.State.UI;
 
   @provide({ context: opalShellContext })
-  accessor opalShell = connectToOpalShellIframeHost();
+  accessor opalShell = maybeConnectToOpalShellIframeHost();
 
   @state()
   accessor #tab: Runtime.Types.Tab | null = null;
@@ -388,7 +388,7 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.#embedHandler = args.embedHandler;
 
-    this.opalShell.ping().then((pong) => {
+    this.opalShell?.ping().then((pong) => {
       if (pong) {
         console.debug("opal shell guest received", pong);
       }

@@ -13,12 +13,20 @@ export const opalShellContext = createContext<OpalShellProtocol | undefined>(
   "OpalShell"
 );
 
-export function connectToOpalShellIframeHost(): OpalShellProtocol {
-  return comlink.wrap<OpalShellProtocol>(
-    comlink.windowEndpoint(
-      parent,
-      undefined,
-      CLIENT_DEPLOYMENT_CONFIG.SHELL_HOST_ORIGIN
-    )
-  );
+export function maybeConnectToOpalShellIframeHost():
+  | OpalShellProtocol
+  | undefined {
+  const hostOrigin = CLIENT_DEPLOYMENT_CONFIG.SHELL_HOST_ORIGIN;
+  if (hostOrigin && hostOrigin !== "*") {
+    return comlink.wrap<OpalShellProtocol>(
+      comlink.windowEndpoint(
+        parent,
+        undefined,
+        // Constrain origins this guest can communicate with, at the postMessage
+        // layer. It would otherwise default to same-origin.
+        // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#targetorigin
+        hostOrigin
+      )
+    );
+  }
 }
