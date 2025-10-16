@@ -6,10 +6,7 @@
 
 import { readFile } from "node:fs/promises";
 import * as flags from "./flags.js";
-import type {
-  ClientDeploymentConfiguration,
-  DomainConfiguration,
-} from "@breadboard-ai/types/deployment-configuration.js";
+import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 
 /**
  * Create the config object that will be embedded in the HTML payload and
@@ -35,7 +32,7 @@ export async function createClientConfig(opts: {
     SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID:
       flags.SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID,
     OAUTH_CLIENT: opts.OAUTH_CLIENT,
-    domains: await loadDomainConfig(),
+    domains: flags.DOMAIN_CONFIG,
     flags: {
       generateForEach: flags.ENABLE_GENERATE_FOR_EACH,
       mcp: flags.ENABLE_MCP,
@@ -44,24 +41,4 @@ export async function createClientConfig(opts: {
       consistentUI: false,
     },
   };
-}
-
-// TODO Delete this once we're no longer using the DOMAIN_CONFIG_FILE flag
-async function loadDomainConfig(): Promise<
-  Record<string, DomainConfiguration>
-> {
-  // Prefer the literal variable if it is set
-  if (process.env.DOMAIN_CONFIG) {
-    return flags.DOMAIN_CONFIG;
-  }
-
-  // Otherwise load from file
-  const path = flags.DOMAIN_CONFIG_FILE;
-  if (!path) {
-    return {};
-  }
-
-  console.log(`[unified-server startup] Loading domain config from ${path}`);
-  const contents = await readFile(path, "utf8");
-  return flags.parseDomainConfig(contents);
 }
