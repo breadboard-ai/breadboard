@@ -21,7 +21,11 @@ import { FirestoreStorageProvider } from "./server/storage-providers/firestore.j
 import type { AllowFilterFunction } from "@breadboard-ai/types";
 
 export type { ServerConfig, StorageProvider };
-export { getUserCredentials, requireAuth } from "./server/auth.js";
+export {
+  getUserCredentials,
+  requireAuth,
+  requireAccessToken,
+} from "./server/auth.js";
 
 const DEFAULT_PORT = 3000;
 const DEFAULT_HOST = "localhost";
