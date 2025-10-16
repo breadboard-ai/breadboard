@@ -66,7 +66,7 @@ import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-
 import {
   connectToOpalShellIframeHost,
   opalShellContext,
-} from "@breadboard-ai/opal-shell/guest/opal-shell-guest.js";
+} from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
 import { McpClientManager } from "@breadboard-ai/mcp";
 import {
   GlobalConfig,

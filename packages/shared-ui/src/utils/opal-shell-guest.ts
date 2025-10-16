@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { OpalShellProtocol } from "@breadboard-ai/opal-shell/protocol/opal-shell-protocol.js";
-import * as comlink from "comlink";
+import type { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { createContext } from "@lit/context";
+import * as comlink from "comlink";
 
 export const opalShellContext = createContext<OpalShellProtocol | undefined>(
   "OpalShell"

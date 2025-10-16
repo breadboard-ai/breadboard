@@ -4,10 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  configureAssets,
-  policyContent,
-} from "@breadboard-ai/visual-editor/vite";
+import { configureAssets } from "@breadboard-ai/visual-editor/vite";
 import { tryGetGitHash } from "@breadboard-ai/visual-editor/build-info";
 import { config } from "dotenv";
 import { defineConfig, loadEnv, UserConfig } from "vite";
@@ -30,6 +27,7 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
     index: "./index.html",
     oauth: "./oauth/index.html",
     landing: "./landing/index.html",
+    shell: "./shell/index.html",
   };
 
   return {
