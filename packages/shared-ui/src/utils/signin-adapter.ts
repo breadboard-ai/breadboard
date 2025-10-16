@@ -247,7 +247,8 @@ class SigninAdapter {
   async getSigninUrl(scopes?: OAuthScope[]): Promise<string> {
     return makeSignInUrl({
       redirectUri:
-        getEmbedderRedirectUri() ?? this.#globalConfig.connectionRedirectUrl,
+        getEmbedderRedirectUri() ??
+        new URL("/oauth/", window.location.origin).href,
       nonce: this.#nonce,
       scopes,
     });
