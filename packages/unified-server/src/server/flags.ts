@@ -19,9 +19,6 @@ export const ALLOWED_REDIRECT_ORIGINS: string[] = getStringList(
 
 export const BACKEND_API_ENDPOINT: string = getString("BACKEND_API_ENDPOINT");
 
-// TODO Deprecate this flag in favor of DOMAIN_CONFIG
-export const DOMAIN_CONFIG_FILE: string = getString("DOMAIN_CONFIG_FILE");
-
 export const DOMAIN_CONFIG: Record<string, DomainConfiguration> =
   getDomainConfig("DOMAIN_CONFIG");
 
