@@ -51,10 +51,6 @@ async function getUrlFromBoardServiceFlag(
 
 async function bootstrap(bootstrapArgs: BootstrapArguments) {
   const globalConfig: GlobalConfig = {
-    connectionServerUrl:
-      bootstrapArgs.connectionServerUrl?.href ||
-      import.meta.env.VITE_CONNECTION_SERVER_URL,
-    connectionRedirectUrl: new URL("/oauth/", window.location.href).href,
     environmentName: CLIENT_DEPLOYMENT_CONFIG.ENVIRONMENT_NAME,
     signinMode: bootstrapArgs.signinMode,
     googleDrive: {

@@ -32,7 +32,6 @@ if (deploymentConfiguration?.MEASUREMENT_ID) {
 
 bootstrap({
   deploymentConfiguration,
-  connectionServerUrl: new URL("/connection/", window.location.href),
   signinMode: "incremental",
   kits: [asRuntimeKit(Core)],
   defaultBoardService: "/board/",

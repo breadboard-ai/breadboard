@@ -77,11 +77,7 @@ export class TokenVendorImpl implements TokenVendor {
       expiredGrant = await this.#repairGrantWithMissingClientId(expiredGrant);
     }
 
-    const refreshUrl = new URL(
-      "refresh",
-      this.#environment.connectionServerUrl
-    );
-
+    const refreshUrl = new URL("/connection/refresh/", window.location.origin);
     const now = Date.now();
     const httpRes = await fetch(refreshUrl, {
       signal,

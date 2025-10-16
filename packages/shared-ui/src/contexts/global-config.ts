@@ -16,8 +16,6 @@ export type GoogleDrivePermission =
 
 export type GlobalConfig = {
   environmentName: string | undefined;
-  connectionServerUrl: string | undefined;
-  connectionRedirectUrl: string;
   signinMode: "disabled" | "required" | "incremental";
   googleDrive: {
     publishPermissions: GoogleDrivePermission[];
