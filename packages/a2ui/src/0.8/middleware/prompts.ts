@@ -5,7 +5,7 @@
  */
 
 import { ClientCapabilitiesDynamic } from "../types/client-event";
-import A2UIProtocolMessage from "../schemas/a2ui-message.json";
+import { A2UIProtocolMessage } from "../schemas/a2ui-message.js";
 
 export function createImageParsePrompt(
   catalog: ClientCapabilitiesDynamic,

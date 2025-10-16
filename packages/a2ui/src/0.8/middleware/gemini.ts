@@ -17,7 +17,7 @@ import { createA2UIPrompt, createImageParsePrompt } from "./prompts";
 import { isObject } from "../data/guards";
 
 // TODO: Reenable.
-// import A2UIProtocolMessage from "../schemas/a2ui-message.json";
+// import { A2UIProtocolMessage } from "../schemas/a2ui-message.js";
 
 const validator = new JSONSchema.Validator();
 validator.addSchema(ClientEvent);
@@ -146,13 +146,16 @@ export const plugin = (): Plugin => {
                       model: "gemini-2.5-flash",
                       contents: prompt,
                       config: {
-                        // TODO: Enable structured output.
                         // responseMimeType: "application/json",
-                        // responseJsonSchema: A2UIProtocolMessage,
-                        systemInstruction: `Please return a valid A2UI Protocol
-                        Message object necessary to build the satisfy the user
-                        request. If no data is provided create some. If there are
-                        any URLs you must make them absolute and begin with a /.
+                        // responseJsonSchema: {
+                        //   type: "array",
+                        //   items: A2UIProtocolMessage,
+                        // },
+                        systemInstruction: `Please return a valid array
+                        necessary to satisfy the user request. If no data is
+                        provided create some. If there are any URLs you must
+                        make them absolute and begin with a /.
+
                         Nothing should ever be loaded from a remote source.
 
                         You are working as part of an AI system, so no chit-chat and

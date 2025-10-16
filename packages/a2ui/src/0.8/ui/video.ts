@@ -9,6 +9,7 @@ import { Root } from "./root";
 import { StringValue } from "../types/primitives";
 import * as Styles from "./styles";
 import { A2UIModelProcessor } from "../data/model-processor";
+import { classMap } from "lit/directives/class-map.js";
 
 @customElement("a2ui-video")
 export class Video extends Root {
@@ -25,27 +26,30 @@ export class Video extends Root {
       :host {
         display: block;
         flex: var(--weight);
+        min-height: 0;
+        overflow: auto;
       }
 
       video {
         display: block;
+        width: 100%;
       }
     `,
   ];
 
-  render() {
+  #renderVideo() {
     if (!this.url) {
       return nothing;
     }
 
     if (this.url && typeof this.url === "object") {
       if ("literalString" in this.url) {
-        return html`<video src=${this.url.literalString} />`;
+        return html`<video controls src=${this.url.literalString} />`;
       } else if ("literal" in this.url) {
-        return html`<video src=${this.url.literal} />`;
+        return html`<video controls src=${this.url.literal} />`;
       } else if (this.url && "path" in this.url && this.url.path) {
         if (!this.processor || !this.component) {
-          return html`(no model processor)`;
+          return html`(no processor)`;
         }
 
         const videoUrl = this.processor.getData(
@@ -65,5 +69,11 @@ export class Video extends Root {
     }
 
     return html`(empty)`;
+  }
+
+  render() {
+    return html`<section class=${classMap(this.theme.components.Video)}>
+      ${this.#renderVideo()}
+    </section>`;
   }
 }

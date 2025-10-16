@@ -9,7 +9,7 @@ export * as Types from "./types/types.js";
 export * as Data from "./data/model-processor.js";
 export * as UI from "./ui/ui.js";
 
-import A2UIProtocol from "./schemas/a2ui-message.json";
+import { A2UIProtocolMessage } from "./schemas/a2ui-message.js";
 import ClientEvent from "./schemas/client-event.json";
 import Catalog from "./catalog/default-catalog.json";
 
@@ -23,6 +23,6 @@ export const Middleware = {
 
 export const Schemas = {
   DefaultCatalog: Catalog,
-  A2UIProtocol,
+  A2UIProtocolMessage,
   ClientEvent,
 };

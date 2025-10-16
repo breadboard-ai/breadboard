@@ -23,9 +23,7 @@ export class Text extends Root {
     css`
       :host {
         display: block;
-        flex-grow: 0;
-        flex-shrink: 0;
-        flex-basis: auto;
+        flex: var(--weight);
       }
     `,
   ];
