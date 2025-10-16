@@ -1,0 +1,12 @@
+<script>
+  // TODO: get these from the right server environment vars or whatever
+  const LOCAL_DEV = true;
+  const NEW_ORIGIN = LOCAL_DEV
+    ? "http://localhost:3000"
+    : "https://opal.google";
+  const LOCAL_STORAGE_KEY = "ga_user_id";
+  window.parent.postMessage(
+    { ga_user_id: window.localStorage.getItem(LOCAL_STORAGE_KEY) },
+    NEW_ORIGIN
+  );
+</script>

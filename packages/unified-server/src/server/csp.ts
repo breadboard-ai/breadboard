@@ -58,6 +58,11 @@ const CSP_CONFIG = {
     "https://www.youtube.com",
     "https://feedback-pa.clients6.google.com",
     "https://accounts.google.com",
+    // To get the old GA user ID for users coming from the old domain.
+    "https://opal.withgoogle.com",
+    "https://opal.corp.com",
+    // TODO: leave for dev? remove?
+    "http://localhost:3000",
   ],
   ["media-src"]: ["'self'", "blob:", "data:"],
   ["base-uri"]: ["'none'"],
