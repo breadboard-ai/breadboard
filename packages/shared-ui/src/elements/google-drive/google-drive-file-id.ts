@@ -11,6 +11,7 @@ import {
   InputChangeEvent,
   InputPlugin,
 } from "../../plugins/input-plugin.js";
+import "../connection/connection-input.js";
 import { loadDrivePicker } from "./google-apis.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { getTopLevelOrigin } from "../../utils/embed-helpers.js";
@@ -194,7 +195,9 @@ export class GoogleDriveFileId extends LitElement {
 
   override render() {
     if (this._authorization === undefined) {
-      return nothing;
+      return html`<bb-connection-input
+        @bbevent=${this.#onToken}
+      ></bb-connection-input>`;
     }
     if (this._pickerLib === undefined) {
       return html`<p>Loading Google Drive Picker ...</p>`;
