@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import type { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import * as comlink from "comlink";
 
@@ -26,7 +27,14 @@ function expose() {
     return;
   }
   const impl = new OpalShellProtocolImpl();
-  comlink.expose(impl, comlink.windowEndpoint(iframe.contentWindow));
+  comlink.expose(
+    impl,
+    comlink.windowEndpoint(
+      iframe.contentWindow,
+      undefined,
+      CLIENT_DEPLOYMENT_CONFIG.SHELL_GUEST_ORIGIN
+    )
+  );
 }
 
 expose();

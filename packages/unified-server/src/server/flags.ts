@@ -77,6 +77,10 @@ export const SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID = getString(
   "SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID"
 );
 
+export const SHELL_GUEST_ORIGIN = getString("SHELL_GUEST_ORIGIN");
+
+export const SHELL_HOST_ORIGIN = getString("SHELL_HOST_ORIGIN");
+
 /** Get the value of the given flag as a string, or empty string if absent. */
 function getString(flagName: string): string {
   return process.env[flagName] ?? "";

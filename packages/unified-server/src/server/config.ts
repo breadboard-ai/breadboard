@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { readFile } from "node:fs/promises";
 import * as flags from "./flags.js";
 import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 
@@ -32,6 +31,8 @@ export async function createClientConfig(opts: {
     SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID:
       flags.SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID,
     OAUTH_CLIENT: opts.OAUTH_CLIENT,
+    SHELL_GUEST_ORIGIN: flags.SHELL_GUEST_ORIGIN,
+    SHELL_HOST_ORIGIN: flags.SHELL_HOST_ORIGIN,
     domains: flags.DOMAIN_CONFIG,
     flags: {
       generateForEach: flags.ENABLE_GENERATE_FOR_EACH,
