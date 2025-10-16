@@ -27,10 +27,12 @@ if (guestOrigin && guestOrigin !== "*") {
     comlink.expose(
       new OpalShellProtocolImpl(),
       comlink.windowEndpoint(
+        // Where this host sends messages.
         iframe.contentWindow,
-        undefined,
+        // Where this host receives messages from.
+        window,
         // Constrain origins this host can communicate with, at the postMessage
-        // layer. It would otherwise default to same-origin.
+        // layer. It would otherwise default to all origins.
         // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#targetorigin
         guestOrigin
       ),

@@ -20,10 +20,12 @@ export function maybeConnectToOpalShellIframeHost():
   if (hostOrigin && hostOrigin !== "*") {
     return comlink.wrap<OpalShellProtocol>(
       comlink.windowEndpoint(
+        // Where this guest sends messages.
         window.parent,
-        undefined,
+        // Where this guest receives messages from.
+        window,
         // Constrain origins this guest can communicate with, at the postMessage
-        // layer. It would otherwise default to same-origin.
+        // layer. It would otherwise default to all origins.
         // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#targetorigin
         hostOrigin
       )
