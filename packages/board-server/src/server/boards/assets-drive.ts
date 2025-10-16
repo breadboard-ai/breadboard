@@ -16,7 +16,9 @@ import {
   GoogleDriveClient,
   type DriveFileId,
 } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { GoogleStorageBlobStore, makeBlobUrl } from "../blob-store.js";
+import { GoogleStorageBlobStore } from "../blob-store.js";
+
+const GCS_BLOB_LIFETIME_IN_MS = 7 * 24 * 60 * 60 * 1000;
 
 type DriveError = {
   error: {
@@ -95,7 +97,7 @@ function successBlob(
     JSON.stringify({
       part: {
         storedData: {
-          handle: makeBlobUrl(blobId, serverUrl),
+          handle: `${serverUrl}/blobs/${blobId}`,
           bucketId,
           mimeType,
         },
@@ -137,7 +139,11 @@ export function makeHandleAssetsDriveRequest(
 
     const part = CavemanCache.instance().get(driveId.id, mode);
     if (part) {
-      success(res, part.fileUri, part.mimeType);
+      if (mode === "file") {
+        success(res, part.fileUri, part.mimeType);
+      } else {
+        successBlob(res, part.fileUri!, part.mimeType!, bucketId!, serverUrl!);
+      }
       return;
     }
 
@@ -216,6 +222,13 @@ export function makeHandleAssetsDriveRequest(
           serverError(res, `Unable to save to blob store: ${blobId.$error}`);
           return;
         }
+        CavemanCache.instance().set(driveId.id, mode, {
+          fileUri: blobId,
+          expirationTime: new Date(
+            Date.now() + GCS_BLOB_LIFETIME_IN_MS
+          ).toISOString(),
+          mimeType,
+        });
         successBlob(res, blobId, mimeType, bucketId, serverUrl);
       } else {
         serverError(res, `Unknown mode: ${mode}`);
