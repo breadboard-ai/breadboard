@@ -10,8 +10,6 @@ export type ClientDeploymentConfiguration = {
   ALLOWED_REDIRECT_ORIGINS?: string[];
   MEASUREMENT_ID?: string;
   BACKEND_API_ENDPOINT?: string;
-  FEEDBACK_LINK?: string;
-  ENABLE_GOOGLE_FEEDBACK?: boolean;
   ENVIRONMENT_NAME?: string;
   GOOGLE_DRIVE_PUBLISH_PERMISSIONS?: GoogleDrivePermission[];
   GOOGLE_DRIVE_USER_FOLDER_NAME?: string;

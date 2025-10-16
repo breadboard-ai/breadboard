@@ -30,17 +30,11 @@ export const ENABLE_GENERATE_FOR_EACH: boolean = getBoolean(
   "ENABLE_GENERATE_FOR_EACH"
 );
 
-export const ENABLE_GOOGLE_FEEDBACK: boolean = getBoolean(
-  "ENABLE_GOOGLE_FEEDBACK"
-);
-
 export const ENABLE_GULF_RENDERER: boolean = getBoolean("ENABLE_GULF_RENDERER");
 
 export const ENABLE_MCP: boolean = getBoolean("ENABLE_MCP");
 
 export const ENVIRONMENT_NAME: string = getString("ENVIRONMENT_NAME");
-
-export const FEEDBACK_LINK: string = getString("FEEDBACK_LINK");
 
 export const GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID: string = getString(
   "GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID"

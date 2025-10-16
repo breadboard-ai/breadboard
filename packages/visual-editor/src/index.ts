@@ -2084,16 +2084,11 @@ export class Main extends SignalWatcher(LitElement) {
           }
 
           case "feedback": {
-            if (this.globalConfig.ENABLE_GOOGLE_FEEDBACK) {
+            if (this.globalConfig.GOOGLE_FEEDBACK_PRODUCT_ID) {
               if (this.#feedbackPanelRef.value) {
                 this.#feedbackPanelRef.value.open();
               } else {
                 console.error(`Feedback panel was not rendered!`);
-              }
-            } else {
-              const feedbackLink = this.globalConfig.FEEDBACK_LINK;
-              if (feedbackLink) {
-                window.open(feedbackLink, "_blank");
               }
             }
             break;
