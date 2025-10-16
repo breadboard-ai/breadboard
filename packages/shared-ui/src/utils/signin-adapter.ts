@@ -10,54 +10,23 @@ import type {
   TokenVendor,
   ValidTokenResult,
 } from "@breadboard-ai/connection-client";
-import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
-import type { GlobalConfig } from "../contexts/global-config";
-import {
-  OAuthStateParameter,
-  oauthTokenBroadcastChannelName,
-} from "../elements/connection/connection-common";
-import { SETTINGS_TYPE, SettingsHelper } from "../types/types";
-import { createContext } from "@lit/context";
-import { getEmbedderRedirectUri } from "./embed-helpers";
 import {
   ALWAYS_REQUIRED_OAUTH_SCOPES,
   canonicalizeOAuthScope,
   type OAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { clearIdbGraphCache } from "@breadboard-ai/google-drive-kit/board-server/user-graph-collection.js";
+import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
 import { createFetchWithCreds } from "@breadboard-ai/utils";
-import { scopesFromUrl } from "./scopes-from-url";
+import { createContext } from "@lit/context";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
-
-export { SigninAdapter };
+import type { GlobalConfig } from "../contexts/global-config";
+import { oauthTokenBroadcastChannelName } from "../elements/connection/connection-common";
+import { SETTINGS_TYPE, SettingsHelper } from "../types/types";
+import { scopesFromUrl } from "./scopes-from-url";
+import { makeSignInUrl } from "./signin-common.js";
 
 export const SIGN_IN_CONNECTION_ID = "$sign-in";
-
-function makeSignInUrl(opts: {
-  redirectUri: string;
-  nonce: string;
-  scopes?: string[];
-}): string {
-  const url = new URL("https://accounts.google.com/o/oauth2/auth");
-  const params = url.searchParams;
-  params.set("client_id", CLIENT_DEPLOYMENT_CONFIG.OAUTH_CLIENT);
-  params.set("redirect_uri", opts.redirectUri);
-  const uniqueScopes = [
-    ...new Set([...ALWAYS_REQUIRED_OAUTH_SCOPES, ...(opts.scopes ?? [])]),
-  ];
-  params.set("scope", uniqueScopes.join(" "));
-  params.set(
-    "state",
-    JSON.stringify({ nonce: opts.nonce } satisfies OAuthStateParameter)
-  );
-  params.set("response_type", "code");
-  params.set("access_type", "offline");
-  // Force re-consent every time, because we always want a refresh token.
-  params.set("prompt", "consent");
-  // Don't lose access to scopes we've previously asked for.
-  params.set("include_granted_scopes", "true");
-  return url.href;
-}
 
 export type SigninAdapterState =
   /** The runtime is not configured to use the sign in. */
@@ -92,7 +61,7 @@ export type SignInRequestHandler = (signInUrl: string) => boolean;
  * used wherever the tokenVendor, environment, and
  * settingsHelper are present.
  */
-class SigninAdapter {
+export class SigninAdapter {
   readonly #tokenVendor: TokenVendor;
   readonly #globalConfig: GlobalConfig;
   readonly #settingsHelper: SettingsHelper;
@@ -245,13 +214,7 @@ class SigninAdapter {
   }
 
   async getSigninUrl(scopes?: OAuthScope[]): Promise<string> {
-    return makeSignInUrl({
-      redirectUri:
-        getEmbedderRedirectUri() ??
-        new URL("/oauth/", window.location.origin).href,
-      nonce: this.#nonce,
-      scopes,
-    });
+    return makeSignInUrl({ nonce: this.#nonce, scopes });
   }
 
   async signIn(
