@@ -17,6 +17,10 @@ import {
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { clearIdbGraphCache } from "@breadboard-ai/google-drive-kit/board-server/user-graph-collection.js";
 import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
+import type {
+  OpalShellProtocol,
+  SignInUrlAndNonce,
+} from "@breadboard-ai/types/opal-shell-protocol.js";
 import { createFetchWithCreds } from "@breadboard-ai/utils";
 import { createContext } from "@lit/context";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
@@ -24,7 +28,6 @@ import type { GlobalConfig } from "../contexts/global-config";
 import { oauthTokenBroadcastChannelName } from "../elements/connection/connection-common";
 import { SETTINGS_TYPE, SettingsHelper } from "../types/types";
 import { scopesFromUrl } from "./scopes-from-url";
-import { makeSignInUrl } from "./signin-common.js";
 
 export const SIGN_IN_CONNECTION_ID = "$sign-in";
 
@@ -66,7 +69,8 @@ export class SigninAdapter {
   readonly #globalConfig: GlobalConfig;
   readonly #settingsHelper: SettingsHelper;
   readonly #handleSignInRequest?: (scopes?: OAuthScope[]) => Promise<boolean>;
-  #nonce = crypto.randomUUID();
+  readonly #opalShell: OpalShellProtocol;
+  #urlAndNonce: Promise<SignInUrlAndNonce>;
   #state: SigninAdapterState;
   readonly fetchWithCreds: typeof globalThis.fetch;
 
@@ -74,12 +78,15 @@ export class SigninAdapter {
     tokenVendor: TokenVendor,
     globalConfig: GlobalConfig,
     settingsHelper: SettingsHelper,
+    opalShell: OpalShellProtocol,
     handleSignInRequest?: () => Promise<boolean>
   ) {
     this.#tokenVendor = tokenVendor;
     this.#globalConfig = globalConfig;
     this.#settingsHelper = settingsHelper;
     this.#handleSignInRequest = handleSignInRequest;
+    this.#opalShell = opalShell;
+    this.#urlAndNonce = this.#opalShell.generateSignInUrlAndNonce();
 
     this.fetchWithCreds = createFetchWithCreds(async (url) => {
       const scopes = scopesFromUrl(url, globalConfig.BACKEND_API_ENDPOINT);
@@ -214,7 +221,9 @@ export class SigninAdapter {
   }
 
   async getSigninUrl(scopes?: OAuthScope[]): Promise<string> {
-    return makeSignInUrl({ nonce: this.#nonce, scopes });
+    this.#urlAndNonce ??= this.#opalShell.generateSignInUrlAndNonce(scopes);
+    const { url } = await this.#urlAndNonce;
+    return url;
   }
 
   async signIn(
@@ -239,10 +248,12 @@ export class SigninAdapter {
     // The OAuth broker page will know to broadcast the token on this unique
     // channel because it also knows the nonce (since we pack that in the OAuth
     // "state" parameter).
-    const channelName = oauthTokenBroadcastChannelName(this.#nonce);
+    const channelName = oauthTokenBroadcastChannelName(
+      (await this.#urlAndNonce).nonce
+    );
     // Reset the nonce in case the user signs out and signs back in again, since
     // we don't want to ever mix up different requests.
-    this.#nonce = crypto.randomUUID();
+    this.#urlAndNonce = this.#opalShell.generateSignInUrlAndNonce();
     const channel = new BroadcastChannel(channelName);
     console.info(`[signin] Awaiting grant response`, channelName);
     const grantResponse = await new Promise<GrantResponse>((resolve) => {

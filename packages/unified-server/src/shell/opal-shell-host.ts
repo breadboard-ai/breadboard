@@ -5,28 +5,15 @@
  */
 
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
-import { makeSignInUrl } from "@breadboard-ai/shared-ui/utils/signin-common.js";
-import type {
-  OpalShellProtocol,
-  SignInUrlAndNonce,
-} from "@breadboard-ai/types/opal-shell-protocol.js";
+import { OAuthBasedOpalShellHost } from "@breadboard-ai/shared-ui/utils/oauth-based-opal-shell-host.js";
 import * as comlink from "comlink";
-
-class OpalShellProtocolImpl implements OpalShellProtocol {
-  async generateSignInUrlAndNonce(
-    scopes?: string[]
-  ): Promise<SignInUrlAndNonce> {
-    const nonce = crypto.randomUUID();
-    return { url: makeSignInUrl({ nonce, scopes }), nonce };
-  }
-}
 
 const guestOrigin = CLIENT_DEPLOYMENT_CONFIG.SHELL_GUEST_ORIGIN;
 if (guestOrigin && guestOrigin !== "*") {
   const iframe = document.querySelector("iframe#opal-app" as "iframe");
   if (iframe?.contentWindow) {
     comlink.expose(
-      new OpalShellProtocolImpl(),
+      new OAuthBasedOpalShellHost(),
       comlink.windowEndpoint(
         // Where this host sends messages.
         iframe.contentWindow,

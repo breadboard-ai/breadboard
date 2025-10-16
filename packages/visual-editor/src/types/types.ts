@@ -16,6 +16,7 @@ import type {
   Outcome,
 } from "@breadboard-ai/types";
 import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
+import { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 export type BootstrapArguments = {
   deploymentConfiguration: ClientDeploymentConfiguration;
@@ -69,6 +70,7 @@ export type MainArguments = {
   env?: FileSystemEntry[];
   embedHandler?: EmbedHandler;
   globalConfig: GlobalConfig;
+  opalShell: OpalShellProtocol;
 };
 
 export enum TosStatus {

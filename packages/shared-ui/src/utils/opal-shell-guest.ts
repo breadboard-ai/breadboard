@@ -8,14 +8,13 @@ import type { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol
 import { createContext } from "@lit/context";
 import * as comlink from "comlink";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
+import { OAuthBasedOpalShellHost } from "./oauth-based-opal-shell-host.js";
 
 export const opalShellContext = createContext<OpalShellProtocol | undefined>(
   "OpalShell"
 );
 
-export function maybeConnectToOpalShellIframeHost():
-  | OpalShellProtocol
-  | undefined {
+export function connectToOpalShellHost(): OpalShellProtocol {
   const hostOrigin = CLIENT_DEPLOYMENT_CONFIG.SHELL_HOST_ORIGIN;
   if (hostOrigin && hostOrigin !== "*") {
     return comlink.wrap<OpalShellProtocol>(
@@ -33,5 +32,10 @@ export function maybeConnectToOpalShellIframeHost():
         hostOrigin
       )
     );
+  } else {
+    // TODO(aomarks) Remove this and throw after we have migrated to the final
+    // Opal shell architecture, and can assume that there must always be an
+    // iframe host that provides all handling for credentialed RPCs.
+    return new OAuthBasedOpalShellHost();
   }
 }

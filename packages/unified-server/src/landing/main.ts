@@ -28,6 +28,7 @@ import {
   MakeUrlInit,
   GraphInit,
 } from "@breadboard-ai/shared-ui/utils/urls.js";
+import { connectToOpalShellHost } from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
 
 import "./carousel.js";
 
@@ -135,10 +136,12 @@ async function init() {
     globalConfig
   );
 
+  const opalShell = connectToOpalShellHost();
   const signinAdapter = new SigninAdapter(
     tokenVendor,
     globalConfig as GlobalConfig,
-    settingsHelper
+    settingsHelper,
+    opalShell
   );
 
   if (
