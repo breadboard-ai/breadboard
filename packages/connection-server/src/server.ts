@@ -16,14 +16,7 @@ import cookieParser from "cookie-parser";
 
 export type { ServerConfig };
 
-/**
- * Create a ServerConfig from environment variables.
- *
- * Parses the file at CONNECTIONS_FILE for connections, and reads
- * ALLOWED_ORIGINS for CORS. Both values are empty by default if absent.
- *
- * Fails if CONNECTIONS_FILE is set but no file is found.
- */
+/** Create a ServerConfig from environment variables */
 export async function createServerConfig(): Promise<ServerConfig> {
   console.log("[connection-server startup] Creating connection server config");
   return {
