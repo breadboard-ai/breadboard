@@ -277,6 +277,7 @@ export const theme: v0_8.Types.Theme = {
     Video: {
       "border-br-5": true,
       "layout-el-cv": true,
+      "layout-w-100": true,
     },
   },
   elements: {
