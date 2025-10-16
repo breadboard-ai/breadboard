@@ -232,6 +232,7 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
           "Third-party services boards can access. When you are signed into a service, any board can access and modify your data on that service.",
         nameEditable: false,
         nameVisible: false,
+        customElement: "bb-connection-settings",
       },
       items: new Map([]),
     },
