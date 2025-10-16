@@ -128,12 +128,12 @@ async function prepareGcsData(
   }
   const blobStore = new GoogleStorageBlobStore(bucketName, serverUrl);
   const apiRequiresGcs: string[] = [
-    "image_generation",
-    "ai_image_editing",
-    "ai_image_tool",
-    "tts",
-    "generate_video",
-    "generate_music",
+    "image_generation", // never sends drive ids
+    "ai_image_editing", // isn't called
+    "ai_image_tool", // "execution_inputs.input_image.chunk[]"
+    "tts", // never sends drive ids
+    "generate_video", // one image as "reference_image"
+    "generate_music", // never sends drive ids
   ];
   if (data === null || typeof data !== "object" || !("body" in data)) {
     return data;
@@ -261,6 +261,9 @@ async function convertToGcsReferences(
           }
           // Store temporarily in GCS as file transfer mechanism.
           blobId = await blobStore.saveBuffer(buffer, mimeType);
+        } else if (mimetype === "text/gcs-path") {
+          newChunks.push(chunk);
+          continue;
         } else {
           blobId = storedHandle.split("/").slice(-1)[0];
         }

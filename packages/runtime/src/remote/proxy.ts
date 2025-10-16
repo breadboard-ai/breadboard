@@ -15,9 +15,10 @@ import type {
   NodeHandlerContext,
   NodeHandlers,
   NodeIdentifier,
+  Outcome,
   OutputValues,
 } from "@breadboard-ai/types";
-import { err, timestamp } from "@breadboard-ai/utils";
+import { err, ok, timestamp } from "@breadboard-ai/utils";
 import { callHandler, handlersFromKits } from "../handler.js";
 import { streamsToAsyncIterable } from "../stream.js";
 import { NodeProxyConfig, NodeProxySpec, ProxyServerConfig } from "./config.js";
@@ -279,4 +280,105 @@ function isGeminiApiFetch(node: NodeDescriptor, inputs: InputValues): boolean {
     typeof inputs.url === "string" &&
     inputs.url.startsWith("https://generativelanguage.googleapis.com")
   );
+}
+
+type OpalBackendStepContentChunk = {
+  mimetype: string;
+  data: string;
+};
+type OpalBackendStepContent = {
+  chunks: OpalBackendStepContentChunk[];
+};
+
+type OpalBackendBody = {
+  execution_inputs: Record<string, OpalBackendStepContent>;
+  planStep: {
+    modelApi?: string;
+  };
+  output_gcs_config?: {
+    bucket_name: string;
+  };
+};
+
+type OpalBackendInputs = {
+  body: OpalBackendBody;
+};
+
+type TransformOutput = {
+  part: {
+    storedData: {
+      handle: string;
+      bucketId: string;
+      mimeType: string;
+    };
+  };
+};
+
+const APIS_REQUIRING_GCS: string[] = [
+  "image_generation",
+  "ai_image_editing",
+  "ai_image_tool",
+  "tts",
+  "generate_video",
+  "generate_music",
+];
+
+function isOpalBackend(data: InputValues): data is OpalBackendInputs {
+  if (data === null || typeof data !== "object" || !("body" in data)) {
+    return false;
+  }
+  const body = data.body as Record<string, unknown>;
+  if (body === null || typeof body !== "object" || !("planStep" in body)) {
+    return false;
+  }
+  const planStep = body.planStep as Record<string, unknown>;
+  const modelApi = planStep["modelApi"] as string;
+  if (!APIS_REQUIRING_GCS.includes(modelApi)) {
+    return false;
+  }
+  if (!("execution_inputs" in body)) {
+    return false;
+  }
+  return true;
+}
+
+async function transformDriveIdToBlobId(
+  driveId: string,
+  mimeType: string
+): Promise<Outcome<TransformOutput>> {
+  return err(`NotImplemented`);
+}
+
+async function convertToGcsReferences(
+  body: OpalBackendBody
+): Promise<Outcome<void>> {
+  for (const [key, input] of Object.entries(body.execution_inputs)) {
+    const newChunks: OpalBackendStepContentChunk[] = [];
+    for (const chunk of input.chunks) {
+      if (chunk.mimetype.startsWith("storedData/")) {
+        const mimeType =
+          chunk.mimetype.replace("storedData/", "") || "image/png";
+        const storedHandle = chunk.data;
+        let blobId;
+        if (storedHandle.startsWith("drive:/")) {
+          const driveId = storedHandle.replace(/^drive:\/+/, "");
+          console.log("Getting Blob from Drive ID: ", driveId);
+          const transforming = await transformDriveIdToBlobId(
+            driveId,
+            mimeType
+          );
+          if (!ok(transforming)) return transforming;
+        } else {
+          blobId = storedHandle.split("/").slice(-1)[0];
+        }
+        const gcsPath = `${blobId}`;
+        chunk.data = btoa(gcsPath);
+        chunk.mimetype = "text/gcs-path";
+      }
+      newChunks.push(chunk);
+    }
+    body.execution_inputs[key] = {
+      chunks: newChunks,
+    };
+  }
 }

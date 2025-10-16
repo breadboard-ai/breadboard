@@ -2,7 +2,13 @@
  * @fileoverview Utilities for generating images.
  */
 
-import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
+import {
+  Capabilities,
+  Chunk,
+  InlineDataCapabilityPart,
+  LLMContent,
+  Outcome,
+} from "@breadboard-ai/types";
 import { GeminiPrompt } from "./gemini-prompt";
 import {
   type ContentMap,
@@ -16,9 +22,11 @@ import {
   llm,
   ok,
   toInlineData,
-  toInlineReference,
   toLLMContent,
 } from "./utils";
+import { BlobStoredData, toBlobStoredData } from "./to-blob-stored-data";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { err } from "@breadboard-ai/utils";
 
 export { callGeminiImage, callImageGen, promptExpander };
 
@@ -28,24 +36,40 @@ const API_NAME = "ai_image_tool";
 
 async function callGeminiImage(
   caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   instruction: string,
   imageContent: LLMContent[],
   disablePromptRewrite: boolean,
   aspectRatio: string = "1:1"
 ): Promise<Outcome<LLMContent[]>> {
   const imageChunks = [];
+  const bucketId = await getBucketId(moduleArgs);
+  if (!ok(bucketId)) {
+    return err(
+      `Unable to call Gemini Image API: Storage bucket is not configured`
+    );
+  }
   for (const element of imageContent) {
-    let inlineChunk;
+    let inlineChunk: InlineDataCapabilityPart["inlineData"] | null | "";
     if (isStoredData(element)) {
-      inlineChunk = toInlineReference(element);
+      const blobStoredData = await toBlobStoredData(
+        moduleArgs.fetchWithCreds,
+        element.parts.at(-1)!
+      );
+      if (!ok(blobStoredData)) return blobStoredData;
+      imageChunks.push(toGcsImageChunk(bucketId, blobStoredData));
     } else {
       inlineChunk = toInlineData(element);
-    }
-    if (inlineChunk && inlineChunk != null && typeof inlineChunk != "string") {
-      imageChunks.push({
-        mimetype: inlineChunk.mimeType,
-        data: inlineChunk.data,
-      });
+      if (
+        inlineChunk &&
+        inlineChunk != null &&
+        typeof inlineChunk != "string"
+      ) {
+        imageChunks.push({
+          mimetype: inlineChunk.mimeType,
+          data: inlineChunk.data,
+        });
+      }
     }
   }
   const input_parameters = ["input_instruction"];
@@ -88,8 +112,9 @@ async function callGeminiImage(
       output: OUTPUT_NAME,
     },
     execution_inputs: executionInputs,
+    output_gcs_config: { bucket_name: bucketId },
   } satisfies ExecuteStepRequest;
-  const response = await executeStep(caps, body);
+  const response = await executeStep(caps, moduleArgs, body, true);
   if (!ok(response)) return response;
 
   return response.chunks;
@@ -97,6 +122,7 @@ async function callGeminiImage(
 
 async function callImageGen(
   caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   imageInstruction: string,
   aspectRatio: string = "1:1"
 ): Promise<Outcome<LLMContent[]>> {
@@ -128,7 +154,7 @@ async function callImageGen(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  const response = await executeStep(caps, body);
+  const response = await executeStep(caps, moduleArgs, body);
   if (!ok(response)) return response;
 
   return response.chunks;
@@ -175,4 +201,55 @@ in terms of color scheme and vibe. Be sure to respect all user provided instruct
 `),
     },
   });
+}
+
+function toGcsImageChunk(
+  bucketId: string,
+  blobStoreData: BlobStoredData
+): Chunk {
+  const {
+    part: {
+      storedData: { handle },
+    },
+  } = blobStoreData;
+
+  // pluck blobId out
+  const blobId = handle.split("/").slice(-1)[0];
+  const path = `${bucketId}/${blobId}`;
+
+  const data = btoa(String.fromCodePoint(...new TextEncoder().encode(path)));
+  return { data, mimetype: "text/gcs-path" };
+}
+
+async function getBucketId({
+  fetchWithCreds,
+}: A2ModuleFactoryArgs): Promise<Outcome<string>> {
+  const gettingBucket = await new Memoize(async () => {
+    const response = await fetchWithCreds(
+      new URL(`/api/data/transform/bucket`, window.location.href)
+    );
+    return response.json();
+  }).get();
+  if (!ok(gettingBucket)) return gettingBucket;
+  const bucketId = (gettingBucket as { bucketId: string }).bucketId;
+  if (!bucketId) {
+    return err(`Failed to get bucket name: invalid response from server`);
+  }
+  return bucketId;
+}
+
+class Memoize<T> {
+  static #promise: Promise<unknown> | null = null;
+  #initializer: () => Promise<T>;
+
+  constructor(initializer: () => Promise<T>) {
+    this.#initializer = initializer;
+  }
+
+  get(): Promise<T> {
+    if (Memoize.#promise === null) {
+      Memoize.#promise = this.#initializer();
+    }
+    return Memoize.#promise as Promise<T>;
+  }
 }

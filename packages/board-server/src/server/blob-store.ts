@@ -27,7 +27,7 @@ import { Readable } from "node:stream";
 import type { BlobStore, BlobStoreGetResult } from "./types.js";
 import type { Result } from "@breadboard-ai/types/result.js";
 
-export { BlobDataStore, GoogleStorageBlobStore, isUUID };
+export { BlobDataStore, GoogleStorageBlobStore, isUUID, makeBlobUrl };
 
 export type FileAPIMetadata = {
   fileUri?: string;
@@ -235,7 +235,7 @@ function idFromHandle(handle: string, origin: string): Result<string> {
       return error(`Invalid handle "${handle}".`);
     }
     return { success: true, result: blob };
-  } catch (e) {
+  } catch {
     return {
       success: false,
       error: `Stored data handle "${handle}" is not a valid URL`,

@@ -5,6 +5,7 @@
 import { Capabilities, Outcome, Schema } from "@breadboard-ai/types";
 import { err, ok } from "../a2/utils";
 import { executeTool } from "../a2/step-executor";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 export { invoke as default, describe };
 
 type Inputs = {
@@ -18,16 +19,22 @@ type Outputs = {
 
 async function invoke(
   inputs: Inputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ): Promise<Outcome<Outputs>> {
   const { query, search_engine_resource_name } = inputs;
   if (!search_engine_resource_name) {
     return err(`Search engine resource name is required`);
   }
-  const executing = await executeTool<string>(caps, "enterprise_search", {
-    query,
-    search_engine_resource_name,
-  });
+  const executing = await executeTool<string>(
+    caps,
+    moduleArgs,
+    "enterprise_search",
+    {
+      query,
+      search_engine_resource_name,
+    }
+  );
   if (!ok(executing)) return executing;
 
   return { results: executing };

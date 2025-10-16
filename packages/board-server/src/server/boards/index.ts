@@ -9,11 +9,18 @@ import { Router } from "express";
 import { requireAccessToken } from "../auth.js";
 
 import { makeHandleAssetsDriveRequest } from "./assets-drive.js";
+import type { ServerConfig } from "../config.js";
 
-export function serveBoardsAPI(): Router {
+export function serveBoardsAPI({
+  storageBucket,
+  serverUrl,
+}: ServerConfig): Router {
   const router = Router();
 
-  const handleAssetsDriveRequest = makeHandleAssetsDriveRequest();
+  const handleAssetsDriveRequest = makeHandleAssetsDriveRequest(
+    storageBucket,
+    serverUrl
+  );
 
   router.post(
     "/@:_user/:_name/assets/drive/:driveId",

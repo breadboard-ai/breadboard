@@ -42,6 +42,7 @@ export { invoke as default, describe };
 
 async function callMusicGen(
   caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   prompt: string
 ): Promise<Outcome<LLMContent>> {
   const executionInputs: ContentMap = {};
@@ -64,7 +65,7 @@ async function callMusicGen(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  const response = await executeStep(caps, body);
+  const response = await executeStep(caps, moduleArgs, body);
   if (!ok(response)) return response;
 
   return response.chunks.at(0)!;
@@ -109,7 +110,7 @@ async function invoke(
         return toLLMContent("Please provide the music prompt.");
       }
       console.log("PROMPT: ", combinedInstruction);
-      return callMusicGen(caps, combinedInstruction);
+      return callMusicGen(caps, moduleArgs, combinedInstruction);
     }
   );
   if (!ok(results)) return results;

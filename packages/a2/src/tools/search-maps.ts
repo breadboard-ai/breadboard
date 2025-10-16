@@ -5,6 +5,7 @@
 import { Capabilities, Outcome, Schema } from "@breadboard-ai/types";
 import { ok } from "../a2/utils";
 import { executeTool } from "../a2/step-executor";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 export { invoke as default, describe };
 
 type Inputs = {
@@ -63,11 +64,17 @@ ${results.places
 
 async function invoke(
   { query }: Inputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ): Promise<Outcome<Outputs>> {
-  const executing = await executeTool<SearchMapResults>(caps, "map_search", {
-    query,
-  });
+  const executing = await executeTool<SearchMapResults>(
+    caps,
+    moduleArgs,
+    "map_search",
+    {
+      query,
+    }
+  );
   if (!ok(executing)) return executing;
 
   const results = formatResults(query, executing);

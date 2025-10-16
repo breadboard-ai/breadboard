@@ -23,6 +23,7 @@ import { createUpdatesHandler } from "./upates.js";
 import { GoogleAuth } from "google-auth-library";
 import { createMcpProxyHandler } from "./mcp-proxy.js";
 import { createFetchWithCreds, err } from "@breadboard-ai/utils";
+import { createDataTransformHandler } from "./data-transform.js";
 
 const FEATURED_GALLERY_CACHE_REFRESH_SECONDS = 10 * 60;
 
@@ -103,6 +104,12 @@ server.use(
 
 console.log("[unified-server startup] Mounting MCP proxy");
 server.use("/api/mcp-proxy", createMcpProxyHandler());
+
+console.log("[unified-server startup] Mounting Data Tranform API");
+server.use(
+  "/api/data/transform",
+  createDataTransformHandler(boardServerConfig.storageBucket)
+);
 
 console.log("[unified-server startup] Mounting static content");
 const clientConfig = await createClientConfig({

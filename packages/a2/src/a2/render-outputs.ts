@@ -26,6 +26,7 @@ import {
 } from "./utils";
 import { readFlags } from "./settings";
 import { renderConsistentUI } from "./render-consistent-ui";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -335,7 +336,8 @@ async function invoke(
     "b-google-doc-title": googleDocTitle,
     ...params
   }: InvokeInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ): Promise<Outcome<InvokeOutputs>> {
   let { modelName } = getModel(modelType);
   const { renderType } = getMode(renderMode);
@@ -382,6 +384,7 @@ async function invoke(
       console.log("SI :", systemText);
       const webPage = await callGenWebpage(
         caps,
+        moduleArgs,
         systemText,
         [context],
         renderType,

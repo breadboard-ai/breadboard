@@ -18,11 +18,10 @@ import Core from "@google-labs/core-kit";
 import { getDataStore } from "@breadboard-ai/data-store";
 
 import { badRequest } from "../errors.js";
-import { secretsKit } from "./secrets.js";
 import type { ServerConfig } from "../config.js";
 import { BlobDataStore, GoogleStorageBlobStore } from "../blob-store.js";
 import { GcsAndCredsAwareFetch } from "./gcs-aware-fetch.js";
-import { requireAuth } from "../auth.js";
+import { requireAccessToken } from "../auth.js";
 
 class ResponseAdapter implements ProxyServerResponse {
   #response: Response;
@@ -49,7 +48,9 @@ class ResponseAdapter implements ProxyServerResponse {
 export function serveProxyAPI(serverConfig: ServerConfig): Router {
   const router = Router();
 
-  router.post("/", requireAuth(), (req, res) => post(serverConfig, req, res));
+  router.post("/", requireAccessToken(), (req, res) =>
+    post(serverConfig, req, res)
+  );
 
   return router;
 }
@@ -71,9 +72,9 @@ async function post(
   store.createGroup("run-board");
 
   const config: ProxyServerConfig = {
-    kits: [secretsKit, augmentedKit],
+    kits: [augmentedKit],
     store,
-    proxy: ["fetch", { node: "secrets" }],
+    proxy: ["fetch"],
     allowed: serverConfig.proxyServerAllowFilter,
   };
 

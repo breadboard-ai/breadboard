@@ -155,7 +155,12 @@ async function invoke(
           }
           const iPrompt = toText(imagePrompt).trim();
           console.log("PROMPT", iPrompt);
-          const generatedImage = await callImageGen(caps, iPrompt, aspectRatio);
+          const generatedImage = await callImageGen(
+            caps,
+            moduleArgs,
+            iPrompt,
+            aspectRatio
+          );
           if (!ok(generatedImage)) return generatedImage;
           return mergeContent(generatedImage, "model");
         }

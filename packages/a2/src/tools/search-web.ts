@@ -99,11 +99,13 @@ ${result.webpage_text_content}
 
 async function getSearchLinks(
   caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   query: string,
   reporter: StreamableReporter
 ): Promise<Outcome<string>> {
   const results = await executeTool<SearchBackendOutput[]>(
     caps,
+    moduleArgs,
     "google_search",
     {
       query,
@@ -129,7 +131,7 @@ async function invoke(
     await reporter.sendUpdate("Search term", query, "search");
     const [summary, links] = await Promise.all([
       generateSummary(caps, moduleArgs, query, reporter),
-      getSearchLinks(caps, query, reporter),
+      getSearchLinks(caps, moduleArgs, query, reporter),
     ]);
     if (!ok(summary)) {
       return summary;

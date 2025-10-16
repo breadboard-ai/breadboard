@@ -22,6 +22,7 @@ import {
   toLLMContentInline,
   toLLMContentStored,
 } from "./utils";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 const DEFAULT_BACKEND_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
@@ -66,8 +67,8 @@ export type PlanStep = {
 
 export type GcsConfig = {
   bucket_name: string;
-  folder_path: string;
-  project_name: string;
+  folder_path?: string;
+  project_name?: string;
 };
 
 export type ExecuteStepRequest = {
@@ -96,6 +97,8 @@ function maybeExtractError(e: string): string {
   }
 }
 
+const GCS_PATH_PREFIX = "text/gcs-path/";
+
 function parseExecutionOutput(input?: Chunk[]): Outcome<ExecutionOutput> {
   let requestedModel: string | undefined = undefined;
   let executedModel: string | undefined = undefined;
@@ -122,6 +125,16 @@ function parseExecutionOutput(input?: Chunk[]): Outcome<ExecutionOutput> {
       return toLLMContentInline(mimetype, decodeBase64(data));
     } else if (mimetype.endsWith("/storedData")) {
       return toLLMContentStored(mimetype.replace("/storedData", ""), data);
+    } else if (mimetype.startsWith(GCS_PATH_PREFIX)) {
+      const gcsPath = new TextDecoder().decode(
+        Uint8Array.from(atob(data), (m) => m.codePointAt(0)!)
+      );
+      const handle = new URL(
+        `/board/blobs/${gcsPath.split("/").at(-1)}`,
+        window.location.href
+      ).href;
+      const actualMimeType = mimetype.slice(GCS_PATH_PREFIX.length);
+      return toLLMContentStored(actualMimeType, handle);
     }
     return toLLMContentInline(mimetype, data);
   }
@@ -131,6 +144,7 @@ async function executeTool<
   T extends JsonSerializable = Record<string, JsonSerializable>,
 >(
   caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   api: string,
   params: Record<string, string>
 ): Promise<Outcome<T | string>> {
@@ -150,7 +164,7 @@ async function executeTool<
       ];
     })
   );
-  const response = await executeStep(caps, {
+  const response = await executeStep(caps, moduleArgs, {
     planStep: {
       stepName: api,
       modelApi: api,
@@ -192,7 +206,9 @@ async function getBackendUrl(caps: Capabilities) {
 
 async function executeStep(
   caps: Capabilities,
-  body: ExecuteStepRequest
+  { fetchWithCreds }: A2ModuleFactoryArgs,
+  body: ExecuteStepRequest,
+  useFetchWithCreds = false
 ): Promise<Outcome<ExecutionOutput>> {
   const model = body.planStep.options?.modelName || body.planStep.stepName;
   const reporter = new StreamableReporter(caps, {
@@ -209,36 +225,65 @@ async function executeStep(
       path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
       data: [],
     });
-    const fetchResult = await caps.fetch({
-      url: url,
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: body,
-    });
-    if (!ok(fetchResult)) {
-      const { status, $error: errObject } = fetchResult as FetchErrorResponse;
-      console.warn("Error response", fetchResult);
-      if (!status) {
-        if (errObject) {
+    let response: ExecuteStepResponse;
+    if (useFetchWithCreds) {
+      try {
+        const fetchResponse = await fetchWithCreds(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+        if (!fetchResponse.ok) {
           return reporter.sendError(
-            err(maybeExtractError(errObject), {
+            err(await fetchResponse.text(), {
               origin: "server",
               model,
             })
           );
         }
+        response = await fetchResponse.json();
+      } catch (e) {
         return reporter.sendError(
-          err("Unknown error", { origin: "server", model })
+          err((e as Error).message, {
+            origin: "server",
+            model,
+          })
         );
       }
-      return err(maybeExtractError(errObject), {
-        origin: "server",
-        model,
+    } else {
+      const fetchResult = await caps.fetch({
+        url: url,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: body,
       });
+      if (!ok(fetchResult)) {
+        const { status, $error: errObject } = fetchResult as FetchErrorResponse;
+        console.warn("Error response", fetchResult);
+        if (!status) {
+          if (errObject) {
+            return reporter.sendError(
+              err(maybeExtractError(errObject), {
+                origin: "server",
+                model,
+              })
+            );
+          }
+          return reporter.sendError(
+            err("Unknown error", { origin: "server", model })
+          );
+        }
+        return err(maybeExtractError(errObject), {
+          origin: "server",
+          model,
+        });
+      }
+      response = fetchResult.response as ExecuteStepResponse;
     }
-    const response = fetchResult.response as ExecuteStepResponse;
     if (!response) {
       return await reporter.sendError(
         err(`Request to "${model}" failed, please try again`, {

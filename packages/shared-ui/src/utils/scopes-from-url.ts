@@ -13,6 +13,11 @@ const ASSET_DRIVE_API_ENDPOINT = new URL(
   window.location.href
 ).href;
 
+const DATA_TRANSFORM_API_ENDPOINT = new URL(
+  `/api/data/transform`,
+  window.location.href
+).href;
+
 const PROXY_API_ENDPOINT = new URL(`/board/proxy`, window.location.href).href;
 
 const CALENDAR_SCOPES: OAuthScope[] = [
@@ -35,6 +40,7 @@ const GENAI_SCOPES: OAuthScope[] = [
 const URL_SCOPE_MAP: ReadonlyMap<string, OAuthScope[]> = new Map([
   [PROXY_API_ENDPOINT, GENAI_SCOPES],
   [ASSET_DRIVE_API_ENDPOINT, DRIVE_SCOPES],
+  [DATA_TRANSFORM_API_ENDPOINT, [...DRIVE_SCOPES, ...GENAI_SCOPES]],
   ["https://www.googleapis.com/calendar/", CALENDAR_SCOPES],
   ["https://www.googleapis.com/drive/", DRIVE_SCOPES],
   ["https://docs.googleapis.com/v1/documents/", DRIVE_SCOPES],

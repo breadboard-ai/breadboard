@@ -37,6 +37,7 @@ const URL_SUFFIX = ".bgl.json";
 
 export type A2ModuleFactoryArgs = {
   mcpClientManager: McpClientManager;
+  fetchWithCreds: typeof globalThis.fetch;
 };
 
 function createA2ModuleFactory(

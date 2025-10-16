@@ -495,6 +495,7 @@ export class Main extends SignalWatcher(LitElement) {
 
     const moduleFactory = createA2ModuleFactory({
       mcpClientManager,
+      fetchWithCreds,
     });
 
     this.#runtime = await Runtime.create({

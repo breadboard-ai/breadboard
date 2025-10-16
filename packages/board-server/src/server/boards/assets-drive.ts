@@ -16,6 +16,9 @@ import {
   GoogleDriveClient,
   type DriveFileId,
 } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { GoogleStorageBlobStore } from "../blob-store.js";
+
+const GCS_BLOB_LIFETIME_IN_MS = 7 * 24 * 60 * 60 * 1000;
 
 type DriveError = {
   error: {
@@ -30,6 +33,8 @@ type CavemanCacheEntry = {
   mimeType: string;
 };
 
+type Mode = "file" | "blob";
+
 /**
  * This is the most primivite cache that could be imagined, but it
  * gets the job done for now.
@@ -37,20 +42,25 @@ type CavemanCacheEntry = {
 class CavemanCache {
   #map: Map<string, CavemanCacheEntry> = new Map();
 
-  get(driveId: string) {
-    const entry = this.#map.get(driveId);
+  #makeKey(driveId: string, mode: Mode) {
+    return `${mode}:${driveId}`;
+  }
+
+  get(driveId: string, mode: Mode) {
+    const key = this.#makeKey(driveId, mode);
+    const entry = this.#map.get(key);
     if (!entry) return;
 
     if (hasExpired(entry.expirationTime)) {
-      this.#map.delete(driveId);
+      this.#map.delete(key);
       return;
     }
 
     return entry;
   }
 
-  set(driveId: string, entry: CavemanCacheEntry) {
-    this.#map.set(driveId, entry);
+  set(driveId: string, mode: Mode, entry: CavemanCacheEntry) {
+    this.#map.set(this.#makeKey(driveId, mode), entry);
   }
 
   static #instance: CavemanCache = new CavemanCache();
@@ -73,6 +83,28 @@ function success(res: ServerResponse, fileUri: string, mimeType: string) {
   return true;
 }
 
+function successBlob(
+  res: ServerResponse,
+  blobId: string,
+  mimeType: string,
+  serverUrl: string
+) {
+  res.writeHead(200, {
+    "Content-Type": "application/json",
+  });
+  res.end(
+    JSON.stringify({
+      part: {
+        storedData: {
+          handle: `${serverUrl}/blobs/${blobId}`,
+          mimeType,
+        },
+      },
+    })
+  );
+  return true;
+}
+
 function extractDriveError(s: string): DriveError | null {
   const start = s.indexOf("{");
   try {
@@ -82,7 +114,10 @@ function extractDriveError(s: string): DriveError | null {
   }
 }
 
-export function makeHandleAssetsDriveRequest() {
+export function makeHandleAssetsDriveRequest(
+  bucketId?: string,
+  serverUrl?: string
+) {
   return async function handleAssetsDriveRequest(
     req: Request,
     res: Response
@@ -93,13 +128,20 @@ export function makeHandleAssetsDriveRequest() {
       resourceKey: req.query["resourceKey"] as string | undefined,
     };
     let mimeType = (req.query["mimeType"] as string) ?? "";
+    let mode = req.query["mode"] as Mode;
+    if (!["file", "blob"].includes(mode)) mode = "file";
+
     const googleDriveClient = new GoogleDriveClient({
       fetchWithCreds: createFetchWithCreds(async () => accessToken),
     });
 
-    const part = CavemanCache.instance().get(driveId.id);
+    const part = CavemanCache.instance().get(driveId.id, mode);
     if (part) {
-      success(res, part.fileUri, part.mimeType);
+      if (mode === "file") {
+        success(res, part.fileUri, part.mimeType);
+      } else {
+        successBlob(res, part.fileUri!, part.mimeType!, serverUrl!);
+      }
       return;
     }
 
@@ -134,28 +176,62 @@ export function makeHandleAssetsDriveRequest() {
 
       // TODO: Handle this more memory-efficiently.
       const buffer = Buffer.from(arrayBuffer);
-      const readable = Readable.from(buffer);
+      if (mode === "file") {
+        const readable = Readable.from(buffer);
 
-      const fileApi = new GeminiFileApi();
-      const uploading = await fileApi.upload(
-        buffer.length,
-        mimeType,
-        driveId.id,
-        readable
-      );
-      if (!ok(uploading)) {
-        serverError(
-          res,
-          `Unable to handle asset drive request: ${uploading.$error}`
+        const fileApi = new GeminiFileApi();
+        const uploading = await fileApi.upload(
+          buffer.length,
+          mimeType,
+          driveId.id,
+          readable
         );
+        if (!ok(uploading)) {
+          serverError(
+            res,
+            `Unable to handle asset drive request: ${uploading.$error}`
+          );
+          return;
+        }
+        CavemanCache.instance().set(driveId.id, mode, {
+          fileUri: uploading.fileUri!,
+          expirationTime: uploading.expirationTime!,
+          mimeType,
+        });
+        success(res, uploading.fileUri!, mimeType);
+      } else if (mode === "blob") {
+        if (!bucketId) {
+          serverError(
+            res,
+            `Unable to save to blob store: Bucket Id is not configured`
+          );
+          return;
+        }
+        if (!serverUrl) {
+          serverError(
+            res,
+            `Unable to save to blob store: Server URL is not configured`
+          );
+          return;
+        }
+        const blobStore = new GoogleStorageBlobStore(bucketId, serverUrl);
+        const blobId = await blobStore.saveBuffer(buffer, mimeType);
+        if (!ok(blobId)) {
+          serverError(res, `Unable to save to blob store: ${blobId.$error}`);
+          return;
+        }
+        CavemanCache.instance().set(driveId.id, mode, {
+          fileUri: blobId,
+          expirationTime: new Date(
+            Date.now() + GCS_BLOB_LIFETIME_IN_MS
+          ).toISOString(),
+          mimeType,
+        });
+        successBlob(res, blobId, mimeType, serverUrl);
+      } else {
+        serverError(res, `Unknown mode: ${mode}`);
         return;
       }
-      CavemanCache.instance().set(driveId.id, {
-        fileUri: uploading.fileUri!,
-        expirationTime: uploading.expirationTime!,
-        mimeType,
-      });
-      success(res, uploading.fileUri!, mimeType);
     } catch (e) {
       const error = extractDriveError((e as Error).message);
       if (error) {
