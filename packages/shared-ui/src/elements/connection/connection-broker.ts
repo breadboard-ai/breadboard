@@ -83,11 +83,7 @@ export class ConnectionBroker extends HTMLElement {
       displayError("Could not find a grant URL for this origin.");
       return;
     }
-    const absoluteConnectionServerUrl = new URL(
-      import.meta.env.VITE_CONNECTION_SERVER_URL,
-      window.location.href
-    );
-    const grantUrl = new URL("grant", absoluteConnectionServerUrl);
+    const grantUrl = new URL("/connection/grant/", window.location.origin);
     grantUrl.searchParams.set("code", code);
     grantUrl.searchParams.set("redirect_path", redirect_uri);
     const response = await fetch(grantUrl, { credentials: "include" });

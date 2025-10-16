@@ -12,7 +12,6 @@ export type TokenVendor = {
 };
 
 export type ConnectionEnvironment = {
-  connectionServerUrl: string | undefined;
   OAUTH_CLIENT: string;
 };
 
