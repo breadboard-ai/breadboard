@@ -51,6 +51,7 @@ const CSP_CONFIG = {
     "https://oauth2.googleapis.com/tokeninfo",
   ],
   ["frame-src"]: [
+    "'self'",
     "https://docs.google.com",
     "https://*.googleapis.com",
     "https://drive.google.com",
