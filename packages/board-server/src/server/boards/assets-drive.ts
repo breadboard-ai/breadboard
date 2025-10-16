@@ -87,7 +87,6 @@ function successBlob(
   res: ServerResponse,
   blobId: string,
   mimeType: string,
-  bucketId: string,
   serverUrl: string
 ) {
   res.writeHead(200, {
@@ -98,7 +97,6 @@ function successBlob(
       part: {
         storedData: {
           handle: `${serverUrl}/blobs/${blobId}`,
-          bucketId,
           mimeType,
         },
       },
@@ -142,7 +140,7 @@ export function makeHandleAssetsDriveRequest(
       if (mode === "file") {
         success(res, part.fileUri, part.mimeType);
       } else {
-        successBlob(res, part.fileUri!, part.mimeType!, bucketId!, serverUrl!);
+        successBlob(res, part.fileUri!, part.mimeType!, serverUrl!);
       }
       return;
     }
@@ -229,7 +227,7 @@ export function makeHandleAssetsDriveRequest(
           ).toISOString(),
           mimeType,
         });
-        successBlob(res, blobId, mimeType, bucketId, serverUrl);
+        successBlob(res, blobId, mimeType, serverUrl);
       } else {
         serverError(res, `Unknown mode: ${mode}`);
         return;

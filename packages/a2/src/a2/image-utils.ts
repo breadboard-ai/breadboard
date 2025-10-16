@@ -13,7 +13,6 @@ import { GeminiPrompt } from "./gemini-prompt";
 import {
   type ContentMap,
   type ExecuteStepRequest,
-  GcsConfig,
   executeStep,
 } from "./step-executor";
 import {
@@ -27,6 +26,7 @@ import {
 } from "./utils";
 import { BlobStoredData, toBlobStoredData } from "./to-blob-stored-data";
 import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { err } from "@breadboard-ai/utils";
 
 export { callGeminiImage, callImageGen, promptExpander };
 
@@ -43,7 +43,12 @@ async function callGeminiImage(
   aspectRatio: string = "1:1"
 ): Promise<Outcome<LLMContent[]>> {
   const imageChunks = [];
-  let gcsBucketId;
+  const bucketId = await getBucketId(moduleArgs);
+  if (!ok(bucketId)) {
+    return err(
+      `Unable to call Gemini Image API: Storage bucket is not configured`
+    );
+  }
   for (const element of imageContent) {
     let inlineChunk: InlineDataCapabilityPart["inlineData"] | null | "";
     if (isStoredData(element)) {
@@ -52,13 +57,7 @@ async function callGeminiImage(
         element.parts.at(-1)!
       );
       if (!ok(blobStoredData)) return blobStoredData;
-      const {
-        part: {
-          storedData: { bucketId },
-        },
-      } = blobStoredData;
-      if (bucketId) gcsBucketId = bucketId;
-      imageChunks.push(toGcsImageChunk(blobStoredData));
+      imageChunks.push(toGcsImageChunk(bucketId, blobStoredData));
     } else {
       inlineChunk = toInlineData(element);
       if (
@@ -101,9 +100,6 @@ async function callGeminiImage(
       chunks: imageChunks,
     };
   }
-  const bucketConfig = gcsBucketId
-    ? { output_gcs_config: { bucket_name: gcsBucketId } satisfies GcsConfig }
-    : {};
   const body = {
     planStep: {
       stepName: STEP_NAME,
@@ -116,7 +112,7 @@ async function callGeminiImage(
       output: OUTPUT_NAME,
     },
     execution_inputs: executionInputs,
-    ...bucketConfig,
+    output_gcs_config: { bucket_name: bucketId },
   } satisfies ExecuteStepRequest;
   const response = await executeStep(caps, moduleArgs, body, true);
   if (!ok(response)) return response;
@@ -207,10 +203,13 @@ in terms of color scheme and vibe. Be sure to respect all user provided instruct
   });
 }
 
-function toGcsImageChunk(blobStoreData: BlobStoredData): Chunk {
+function toGcsImageChunk(
+  bucketId: string,
+  blobStoreData: BlobStoredData
+): Chunk {
   const {
     part: {
-      storedData: { handle, bucketId },
+      storedData: { handle },
     },
   } = blobStoreData;
 
@@ -220,4 +219,37 @@ function toGcsImageChunk(blobStoreData: BlobStoredData): Chunk {
 
   const data = btoa(String.fromCodePoint(...new TextEncoder().encode(path)));
   return { data, mimetype: "text/gcs-path" };
+}
+
+async function getBucketId({
+  fetchWithCreds,
+}: A2ModuleFactoryArgs): Promise<Outcome<string>> {
+  const gettingBucket = await new Memoize(async () => {
+    const response = await fetchWithCreds(
+      new URL(`/api/data/transform/bucket`, window.location.href)
+    );
+    return response.json();
+  }).get();
+  if (!ok(gettingBucket)) return gettingBucket;
+  const bucketId = (gettingBucket as { bucketId: string }).bucketId;
+  if (!bucketId) {
+    return err(`Failed to get bucket name: invalid response from server`);
+  }
+  return bucketId;
+}
+
+class Memoize<T> {
+  static #promise: Promise<unknown> | null = null;
+  #initializer: () => Promise<T>;
+
+  constructor(initializer: () => Promise<T>) {
+    this.#initializer = initializer;
+  }
+
+  get(): Promise<T> {
+    if (Memoize.#promise === null) {
+      Memoize.#promise = this.#initializer();
+    }
+    return Memoize.#promise as Promise<T>;
+  }
 }
