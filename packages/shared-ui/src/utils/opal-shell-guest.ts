@@ -26,6 +26,8 @@ export function maybeConnectToOpalShellIframeHost():
         window,
         // Constrain origins this guest can communicate with, at the postMessage
         // layer. It would otherwise default to all origins.
+        //
+        // https://github.com/GoogleChromeLabs/comlink?tab=readme-ov-file#comlinkwrapendpoint-and-comlinkexposevalue-endpoint-allowedorigins
         // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#targetorigin
         hostOrigin
       )

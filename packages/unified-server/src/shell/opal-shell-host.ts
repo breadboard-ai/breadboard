@@ -33,6 +33,8 @@ if (guestOrigin && guestOrigin !== "*") {
         window,
         // Constrain origins this host can communicate with, at the postMessage
         // layer. It would otherwise default to all origins.
+        //
+        // https://github.com/GoogleChromeLabs/comlink?tab=readme-ov-file#comlinkwrapendpoint-and-comlinkexposevalue-endpoint-allowedorigins
         // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#targetorigin
         guestOrigin
       ),
@@ -40,6 +42,7 @@ if (guestOrigin && guestOrigin !== "*") {
       // It would otherwise default to all origins. Note this is technically
       // redundant, because we already constrained origins at the postMessage
       // layer.
+      //
       // https://github.com/GoogleChromeLabs/comlink?tab=readme-ov-file#comlinkwrapendpoint-and-comlinkexposevalue-endpoint-allowedorigins
       [guestOrigin]
     );
