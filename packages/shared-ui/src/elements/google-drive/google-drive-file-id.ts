@@ -15,10 +15,13 @@ import "../connection/connection-input.js";
 import { loadDrivePicker } from "./google-apis.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { getTopLevelOrigin } from "../../utils/embed-helpers.js";
-import { StateEvent } from "../../events/events.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { consume } from "@lit/context";
+import {
+  SigninAdapter,
+  signinAdapterContext,
+} from "../../utils/signin-adapter.js";
 
 export type PickedValue = {
   // A special value recognized by the "GraphPortLabel": if present in an
@@ -133,11 +136,6 @@ export class GoogleDriveFileId extends LitElement {
   `;
 
   @state()
-  private accessor _authorization:
-    | { clientId: string; secret: string; expiresIn?: number }
-    | undefined = undefined;
-
-  @state()
   private accessor _pickerLib: typeof google.picker | undefined = undefined;
 
   @state()
@@ -158,6 +156,9 @@ export class GoogleDriveFileId extends LitElement {
   @consume({ context: googleDriveClientContext })
   accessor googleDriveClient: GoogleDriveClient | undefined;
 
+  @consume({ context: signinAdapterContext })
+  accessor signinAdapter: SigninAdapter | undefined = undefined;
+
   #picker?: google.picker.Picker;
   #autoTrigger = false;
   #inputRef: Ref<HTMLButtonElement> = createRef();
@@ -168,10 +169,6 @@ export class GoogleDriveFileId extends LitElement {
   }
 
   triggerFlow() {
-    if (this._authorization === undefined) {
-      throw new Error("No authorization");
-    }
-
     if (this._pickerLib === undefined) {
       throw new Error("Google Drive API unavailable");
     }
@@ -194,11 +191,6 @@ export class GoogleDriveFileId extends LitElement {
   }
 
   override render() {
-    if (this._authorization === undefined) {
-      return html`<bb-connection-input
-        @bbevent=${this.#onToken}
-      ></bb-connection-input>`;
-    }
     if (this._pickerLib === undefined) {
       return html`<p>Loading Google Drive Picker ...</p>`;
     }
@@ -224,32 +216,11 @@ export class GoogleDriveFileId extends LitElement {
     `;
   }
 
-  #onToken(event: StateEvent<"board.input">) {
-    if (event.detail.eventType !== "board.input") {
-      console.error(event);
-      throw new Error("Unexpected token event");
-    }
-    // Prevent ui-controller from receiving an unexpected bbevent event.
-    //
-    // TODO(aomarks) Let's not re-use bbevent here, we should instead use
-    // bbtokengranted, but there is a small bit of refactoring necessary for
-    // that to work.
-    event.stopImmediatePropagation();
-    const { clientId, secret } = event.detail.data as {
-      clientId?: string;
-      secret?: string;
-    };
-    if (clientId && secret) {
-      this._authorization = { clientId, secret };
-    }
-  }
-
   async #onCreateNewDoc() {
     if (!this.googleDriveClient) {
       console.error("google drive client was not provided");
       return;
     }
-    if (this._authorization === undefined) return;
 
     const name = this.metadata?.docName ?? this.docName ?? "Untitled Document";
     const mimeType = "application/vnd.google-apps.document";
@@ -273,10 +244,15 @@ export class GoogleDriveFileId extends LitElement {
     }
   }
 
-  #onClickPickFiles() {
-    if (this._authorization === undefined || this._pickerLib === undefined) {
+  async #onClickPickFiles() {
+    if (this.signinAdapter === undefined || this._pickerLib === undefined) {
       return;
     }
+    const token = await this.signinAdapter.token();
+    if (token.state === "signedout") {
+      return;
+    }
+
     this.#destroyPicker();
 
     const myFilesView = new this._pickerLib.DocsView();
@@ -298,8 +274,8 @@ export class GoogleDriveFileId extends LitElement {
       .setOrigin(getTopLevelOrigin())
       .addView(myFilesView)
       .addView(sharedFilesView)
-      .setAppId(this._authorization.clientId)
-      .setOAuthToken(this._authorization.secret)
+      .setAppId(token.grant.client_id)
+      .setOAuthToken(token.grant.access_token)
       .setCallback(this.#pickerCallback.bind(this))
       // .enableFeature(google.picker.Feature.NAV_HIDDEN)
       .build();
