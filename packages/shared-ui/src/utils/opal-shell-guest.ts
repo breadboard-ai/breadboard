@@ -13,12 +13,25 @@ export const opalShellContext = createContext<OpalShellProtocol | undefined>(
   "OpalShell"
 );
 
-export function connectToOpalShellIframeHost(): OpalShellProtocol {
-  return comlink.wrap<OpalShellProtocol>(
-    comlink.windowEndpoint(
-      parent,
-      undefined,
-      CLIENT_DEPLOYMENT_CONFIG.SHELL_HOST_ORIGIN
-    )
-  );
+export function maybeConnectToOpalShellIframeHost():
+  | OpalShellProtocol
+  | undefined {
+  const hostOrigin = CLIENT_DEPLOYMENT_CONFIG.SHELL_HOST_ORIGIN;
+  if (hostOrigin && hostOrigin !== "*") {
+    return comlink.wrap<OpalShellProtocol>(
+      comlink.windowEndpoint(
+        // Where this guest sends messages.
+        window.parent,
+        // Where this guest receives messages from.
+        window,
+        // Constrain origins this guest can send messages to, at the postMessage
+        // layer. It would otherwise default to all origins.
+        //
+        // https://github.com/GoogleChromeLabs/comlink?tab=readme-ov-file#comlinkwrapendpoint-and-comlinkexposevalue-endpoint-allowedorigins
+        // https://github.com/GoogleChromeLabs/comlink/blob/114a4a6448a855a613f1cb9a7c89290606c003cf/src/comlink.ts#L594C26-L594C38
+        // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#targetorigin
+        hostOrigin
+      )
+    );
+  }
 }
