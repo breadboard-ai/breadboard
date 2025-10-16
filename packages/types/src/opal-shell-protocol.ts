@@ -7,4 +7,10 @@
 export interface OpalShellProtocol {
   ping(): Promise<"pong">;
   fetchWithCreds(url: string): Promise<unknown>;
+  generateSignInUrlAndNonce(scopes?: string[]): Promise<SignInUrlAndNonce>;
+}
+
+export interface SignInUrlAndNonce {
+  url: string;
+  nonce: string;
 }

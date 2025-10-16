@@ -5,7 +5,11 @@
  */
 
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
-import type { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { makeSignInUrl } from "@breadboard-ai/shared-ui/utils/signin-common.js";
+import type {
+  OpalShellProtocol,
+  SignInUrlAndNonce,
+} from "@breadboard-ai/types/opal-shell-protocol.js";
 import * as comlink from "comlink";
 
 class OpalShellProtocolImpl implements OpalShellProtocol {
@@ -17,6 +21,13 @@ class OpalShellProtocolImpl implements OpalShellProtocol {
   async fetchWithCreds(_url: string): Promise<unknown> {
     // TODO(aomarks) Implement.
     throw new Error("Not yet implemented");
+  }
+
+  async generateSignInUrlAndNonce(
+    scopes?: string[]
+  ): Promise<SignInUrlAndNonce> {
+    const nonce = crypto.randomUUID();
+    return { url: makeSignInUrl({ nonce, scopes }), nonce };
   }
 }
 
