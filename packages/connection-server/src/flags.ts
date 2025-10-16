@@ -6,8 +6,6 @@ export const ALLOWED_ORIGINS: string[] = getStringList("ALLOWED_ORIGINS", {
   delimiter: /\s+/,
 });
 
-export const CONNECTIONS_FILE: string = getString("CONNECTIONS_FILE");
-
 export const OAUTH_CLIENT: string = getString("OAUTH_CLIENT");
 
 export const OAUTH_SCOPES: string[] = getStringList("OAUTH_SCOPES");
