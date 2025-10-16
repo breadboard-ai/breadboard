@@ -371,7 +371,7 @@ async function convertToGcsReferences(
         } else {
           blobId = storedHandle.split("/").slice(-1)[0];
         }
-        const gcsPath = `${bucketName}/${blobId}`;
+        const gcsPath = `${blobId}`;
         chunk.data = btoa(gcsPath);
         chunk.mimetype = "text/gcs-path";
       }

@@ -6,6 +6,7 @@ import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 import type { ContentMap, ExecuteStepRequest } from "./step-executor";
 import { executeStep } from "./step-executor";
 import { encodeBase64, err, mergeContent, ok } from "./utils";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { callGenWebpage };
 
@@ -13,6 +14,7 @@ const OUTPUT_KEY = "rendered_outputs";
 
 async function callGenWebpage(
   caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   instruction: string,
   content: LLMContent[],
   renderMode: string,
@@ -88,7 +90,7 @@ async function callGenWebpage(
   // TODO(askerryryan): Remove once functional.
   console.log("request body");
   console.log(body);
-  const response = await executeStep(caps, body);
+  const response = await executeStep(caps, moduleArgs, body);
   if (!ok(response)) {
     let errorMessage;
     if (response.$error.includes("The service is currently unavailable")) {

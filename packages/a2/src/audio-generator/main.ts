@@ -53,6 +53,7 @@ export { invoke as default, describe };
 
 async function callAudioGen(
   caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   prompt: string,
   voice: string
 ): Promise<Outcome<LLMContent>> {
@@ -88,7 +89,7 @@ async function callAudioGen(
     },
     execution_inputs: executionInputs,
   } satisfies ExecuteStepRequest;
-  const response = await executeStep(caps, body);
+  const response = await executeStep(caps, moduleArgs, body);
   if (!ok(response)) return response;
 
   return response.chunks.at(0)!;
@@ -135,7 +136,7 @@ async function invoke(
         );
       }
       console.log("PROMPT: ", combinedInstruction);
-      return callAudioGen(caps, combinedInstruction, voice);
+      return callAudioGen(caps, moduleArgs, combinedInstruction, voice);
     }
   );
   if (!ok(results)) return results;

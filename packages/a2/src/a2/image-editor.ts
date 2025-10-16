@@ -152,6 +152,7 @@ async function invoke(
           console.log("PROMPT: " + finalInstruction);
           const generatedImage = await callGeminiImage(
             caps,
+            moduleArgs,
             finalInstruction,
             imageContext,
             true,
@@ -168,6 +169,7 @@ async function invoke(
           console.log("PROMPT", iPrompt);
           const generatedImage = await callGeminiImage(
             caps,
+            moduleArgs,
             iPrompt,
             [],
             true,

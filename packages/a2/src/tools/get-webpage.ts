@@ -5,6 +5,7 @@
 import { Capabilities, Outcome, Schema } from "@breadboard-ai/types";
 import { err, ok } from "../a2/utils";
 import { executeTool } from "../a2/step-executor";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -23,10 +24,12 @@ export type GetContentFromUrlResponse = {
 
 async function getContentFromUrl(
   caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   url: string
 ): Promise<Outcome<string>> {
   const executing = await executeTool<GetContentFromUrlResponse>(
     caps,
+    moduleArgs,
     "get_content_from_url",
     { url }
   );
@@ -45,13 +48,14 @@ async function getContentFromUrl(
 
 async function invoke(
   inputs: Inputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ): Promise<Outcome<Outputs>> {
   const { url } = inputs;
   if (!url) {
     return err(`URL is a required input to Get Webpage tool`);
   }
-  const results = await getContentFromUrl(caps, url);
+  const results = await getContentFromUrl(caps, moduleArgs, url);
   if (!ok(results)) return results;
   return { results };
 }

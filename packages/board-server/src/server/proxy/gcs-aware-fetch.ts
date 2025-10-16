@@ -261,6 +261,9 @@ async function convertToGcsReferences(
           }
           // Store temporarily in GCS as file transfer mechanism.
           blobId = await blobStore.saveBuffer(buffer, mimeType);
+        } else if (mimetype === "text/gcs-path") {
+          newChunks.push(chunk);
+          continue;
         } else {
           blobId = storedHandle.split("/").slice(-1)[0];
         }

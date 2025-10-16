@@ -4,6 +4,7 @@ import {
   JsonSerializable,
   LLMContent,
   Outcome,
+  StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 
 /**
@@ -221,7 +222,9 @@ function isEmpty(c: LLMContent): boolean {
   return true;
 }
 
-function isStoredData(c: LLMContent) {
+function isStoredData(
+  c: LLMContent
+): c is { parts: [part: StoredDataCapabilityPart] } {
   const part = c.parts.at(-1);
   if (!part) {
     return false;
