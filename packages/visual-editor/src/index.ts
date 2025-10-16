@@ -388,12 +388,6 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.#embedHandler = args.embedHandler;
 
-    this.opalShell?.ping().then((pong) => {
-      if (pong) {
-        console.debug("opal shell guest received", pong);
-      }
-    });
-
     this.#init(args, { fetchWithCreds, backendApiEndpoint }).then(() => {
       console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
       this.#ready = true;

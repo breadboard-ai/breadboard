@@ -13,16 +13,6 @@ import type {
 import * as comlink from "comlink";
 
 class OpalShellProtocolImpl implements OpalShellProtocol {
-  async ping() {
-    console.debug("opal shell host received ping");
-    return "pong" as const;
-  }
-
-  async fetchWithCreds(_url: string): Promise<unknown> {
-    // TODO(aomarks) Implement.
-    throw new Error("Not yet implemented");
-  }
-
   async generateSignInUrlAndNonce(
     scopes?: string[]
   ): Promise<SignInUrlAndNonce> {
