@@ -5,40 +5,40 @@
   "main": "./dist/index.js",
   "exports": {
     ".": {
-      "default": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./contexts": {
-      "default": "./dist/contexts/contexts.js",
-      "types": "./dist/contexts/contexts.d.ts"
+      "types": "./dist/contexts/contexts.d.ts",
+      "default": "./dist/contexts/contexts.js"
     },
     "./app-templates/basic": {
-      "default": "./dist/app-templates/basic/index.js",
-      "types": "./dist/app-templates/basic/index.d.ts"
+      "types": "./dist/app-templates/basic/index.d.ts",
+      "default": "./dist/app-templates/basic/index.js"
     },
     "./utils/action-tracker": {
-      "default": "./dist/utils/action-tracker.js",
-      "types": "./dist/utils/action-tracker.d.ts"
+      "types": "./dist/utils/action-tracker.d.ts",
+      "default": "./dist/utils/action-tracker.js"
     },
     "./utils/signin-adapter": {
-      "default": "./dist/utils/signin-adapter.js",
-      "types": "./dist/utils/signin-adapter.d.ts"
+      "types": "./dist/utils/signin-adapter.d.ts",
+      "default": "./dist/utils/signin-adapter.js"
     },
     "./utils/top-graph-observer": {
-      "default": "./dist/utils/top-graph-observer/index.js",
-      "types": "./dist/utils/top-graph-observer/index.d.ts"
+      "types": "./dist/utils/top-graph-observer/index.d.ts",
+      "default": "./dist/utils/top-graph-observer/index.js"
     },
     "./utils/image": {
-      "default": "./dist/utils/image.js",
-      "types": "./dist/utils/image.d.ts"
+      "types": "./dist/utils/image.d.ts",
+      "default": "./dist/utils/image.js"
     },
     "./elements/connection/connection-broker.ts": {
-      "default": "./dist/elements/connection/connection-broker.js",
-      "types": "./dist/elements/connection/connection-broker.d.ts"
+      "types": "./dist/elements/connection/connection-broker.d.ts",
+      "default": "./dist/elements/connection/connection-broker.js"
     },
     "./data/settings-store.js": {
-      "default": "./dist/data/settings-store.js",
-      "types": "./dist/data/settings-store.d.ts"
+      "types": "./dist/data/settings-store.d.ts",
+      "default": "./dist/data/settings-store.js"
     },
     "./editor": {
       "types": "./dist/elements/step-editor/renderer.d.ts",
