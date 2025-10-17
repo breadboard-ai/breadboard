@@ -609,6 +609,8 @@ export class EntityEditor
         }
 
         > div {
+          position: relative;
+
           &.port {
             container-type: inline-size;
           }
@@ -619,9 +621,18 @@ export class EntityEditor
           }
 
           &:not(.stretch):not(.info):has(+ .stretch) {
-            margin-bottom: var(--bb-grid-size-3);
+            margin-bottom: var(--bb-grid-size-14);
             padding-bottom: var(--bb-grid-size-3);
             border-bottom: 1px solid var(--bb-neutral-300);
+
+            &::after {
+              content: "Prompt";
+              font-family: var(--bb-font-family-flex);
+              font-size: 12px;
+              position: absolute;
+              left: var(--bb-grid-size-6);
+              bottom: calc(var(--bb-grid-size-9) * -1);
+            }
           }
 
           &:not(.stretch):not(.info):has(+ :not(.stretch)) {
@@ -689,27 +700,21 @@ export class EntityEditor
               align-items: center;
               gap: 2px;
 
+              width: var(--bb-grid-size-9);
               height: var(--bb-grid-size-9);
-              background: var(--n-98);
               border-radius: var(--bb-grid-size-16);
-              padding: 2px;
-
-              bb-flowgen-in-step-button {
-                z-index: 1;
-              }
 
               #tools {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                width: 38px;
-                height: 34px;
+                width: 100%;
+                height: 100%;
                 border: none;
                 background: var(--n-98);
                 transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
-                border-radius: var(--bb-grid-size-5) var(--bb-grid-size-16)
-                  var(--bb-grid-size-16) var(--bb-grid-size-5);
-                padding: 0 6px 0 0;
+                border-radius: 50%;
+                padding: 0;
 
                 &:not([disabled]) {
                   cursor: pointer;
@@ -721,6 +726,13 @@ export class EntityEditor
                 }
               }
             }
+          }
+
+          bb-flowgen-in-step-button {
+            z-index: 1;
+            position: absolute;
+            bottom: calc(var(--bb-grid-size-11) * -1);
+            right: var(--bb-grid-size-6);
           }
         }
       }
@@ -1337,45 +1349,51 @@ export class EntityEditor
       let controls: HTMLTemplateResult | symbol = nothing;
       if (isControllerBehavior(port.schema)) {
         controls = html`<div id="controls-container">
-          <div id="controls">
-            ${this.graph
-              ? html`<bb-flowgen-in-step-button
-                  monochrome
-                  popoverPosition="below"
-                  .label=${Strings.from("COMMAND_DESCRIBE_EDIT_STEP")}
-                  .currentGraph=${this.graph.raw() satisfies GraphDescriptor}
-                  .constraint=${{
-                    kind: "EDIT_STEP_CONFIG",
-                    stepId: nodeId,
-                  } satisfies FlowGenConstraint}
-                  @bbgraphreplace=${() => {
-                    ActionTracker.editStep("flowgen");
-                    // Ignore all edits to this point so that we don't issue
-                    // a submit and stomp the new values.
-                    this.#edited = false;
-                  }}
-                ></bb-flowgen-in-step-button>`
-              : nothing}
-            ${hasTextEditor
-              ? html`<button
-                  id="tools"
-                  @pointerdown=${() => {
-                    if (!this.#editorRef.value) {
-                      return;
-                    }
+            <div id="controls">
+              ${hasTextEditor
+                ? html`<button
+                    id="tools"
+                    @pointerdown=${() => {
+                      if (!this.#editorRef.value) {
+                        return;
+                      }
 
-                    this.#editorRef.value.storeLastRange();
-                  }}
-                  @click=${(evt: PointerEvent) => {
-                    const bounds = new DOMRect(evt.clientX, evt.clientY, 0, 0);
-                    this.#showFastAccess(bounds);
-                  }}
-                >
-                  <span class="g-icon round">home_repair_service</span>
-                </button>`
-              : nothing}
+                      this.#editorRef.value.storeLastRange();
+                    }}
+                    @click=${(evt: PointerEvent) => {
+                      const bounds = new DOMRect(
+                        evt.clientX,
+                        evt.clientY,
+                        0,
+                        0
+                      );
+                      this.#showFastAccess(bounds);
+                    }}
+                  >
+                    <span class="g-icon round">home_repair_service</span>
+                  </button>`
+                : nothing}
+            </div>
           </div>
-        </div>`;
+
+          ${this.graph
+            ? html`<bb-flowgen-in-step-button
+                monochrome
+                popoverPosition="below"
+                .label=${Strings.from("COMMAND_DESCRIBE_EDIT_STEP")}
+                .currentGraph=${this.graph.raw() satisfies GraphDescriptor}
+                .constraint=${{
+                  kind: "EDIT_STEP_CONFIG",
+                  stepId: nodeId,
+                } satisfies FlowGenConstraint}
+                @bbgraphreplace=${() => {
+                  ActionTracker.editStep("flowgen");
+                  // Ignore all edits to this point so that we don't issue
+                  // a submit and stomp the new values.
+                  this.#edited = false;
+                }}
+              ></bb-flowgen-in-step-button>`
+            : nothing}`;
       }
 
       classes["read-only"] = this.readOnly;

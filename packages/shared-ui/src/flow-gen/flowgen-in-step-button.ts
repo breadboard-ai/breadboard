@@ -48,7 +48,8 @@ export class FlowgenInStepButton extends LitElement {
     css`
       :host {
         position: relative;
-        width: 36px;
+        width: var(--bb-grid-size-9);
+        height: var(--bb-grid-size-9);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -58,23 +59,26 @@ export class FlowgenInStepButton extends LitElement {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 38px;
-        height: 34px;
+        width: 100%;
+        height: 100%;
         margin: 0 var(--bb-grid-size);
-        padding: 0 0 0 6px;
+        padding: 0;
         margin: 0;
         border: none;
-        background: var(--n-98);
-        border-radius: var(--bb-grid-size-16) var(--bb-grid-size-5)
-          var(--bb-grid-size-5) var(--bb-grid-size-16);
+        background: var(--ui-custom-o-10);
+        border-radius: 50%;
         transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+        > * {
+          pointer-events: none;
+        }
 
         &:not([disabled]) {
           cursor: pointer;
 
           &:hover,
           &:focus {
-            background: var(--n-95);
+            background: var(--ui-custom-o-20);
           }
         }
       }
@@ -97,7 +101,7 @@ export class FlowgenInStepButton extends LitElement {
 
       :host([popoverPosition="below"]) #panel {
         top: var(--bb-grid-size-7);
-        right: -22px;
+        right: calc(var(--bb-grid-size-3) * -1);
       }
 
       #panel-top {
