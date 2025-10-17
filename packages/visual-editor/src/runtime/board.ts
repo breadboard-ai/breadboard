@@ -247,7 +247,7 @@ export class Board extends EventTarget {
       return { success: false };
     } else {
       this.boardServers.servers = [
-        ...(await getBoardServers(this.googleDriveClient)),
+        ...(await getBoardServers(this.tokenVendor, this.googleDriveClient)),
         ...this.boardServers.builtInBoardServers,
       ];
       this.boardServers.loader = createLoader(this.boardServers.servers);
@@ -276,7 +276,7 @@ export class Board extends EventTarget {
       return { success: false };
     }
     this.boardServers.servers = [
-      ...(await getBoardServers(this.googleDriveClient)),
+      ...(await getBoardServers(this.tokenVendor, this.googleDriveClient)),
       ...this.boardServers.builtInBoardServers,
     ];
     this.boardServers.loader = createLoader(this.boardServers.servers);
