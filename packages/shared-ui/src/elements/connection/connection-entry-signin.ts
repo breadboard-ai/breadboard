@@ -14,10 +14,11 @@ import {
   SigninAdapter,
   signinAdapterContext,
 } from "../../utils/signin-adapter";
-import { until } from "lit/directives/until.js";
 import { SignInEvent } from "../../events/events";
 import { consume } from "@lit/context";
 
+// TODO(aomarks) Pretty sure this whole element is unused, but it's still in the
+// main render path, so I want to be really sure before deleting.
 @customElement("bb-connection-entry-signin")
 export class ConnectionEntrySignin extends LitElement {
   static styles = css`
@@ -123,7 +124,7 @@ export class ConnectionEntrySignin extends LitElement {
       <div id="logo"></div>
       <h1>Welcome to ${Strings.from("APP_NAME")}</h1>
       <a
-        .href=${until(this.signinAdapter.getSigninUrl())}
+        href="#"
         @click=${this.#onClickSignin}
         target="_blank"
         title="Sign into Google"
@@ -135,7 +136,8 @@ export class ConnectionEntrySignin extends LitElement {
     </div>`;
   }
 
-  async #onClickSignin() {
+  async #onClickSignin(event: Event) {
+    event.preventDefault();
     if (!this.signinAdapter) {
       return;
     }
