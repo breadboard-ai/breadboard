@@ -641,7 +641,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
       </h1>
       ${this.loadState !== "Error" && this.loadState !== "Loading"
         ? html`<div id="right">
-            <bb-homepage-search-button></bb-homepage-search-button>
             ${[this.#renderGlobalItemSelect(), this.#renderUser()]}
           </div>`
         : nothing}

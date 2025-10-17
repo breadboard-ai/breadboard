@@ -12,7 +12,7 @@ import { ToastType } from "../events/events";
 import { UI, UIOverlays, UILoadState } from "./types";
 import { RuntimeFlagManager, RuntimeFlags } from "@breadboard-ai/types";
 import { AsyncComputed } from "signal-utils/async-computed";
-import { devUrlParams, parseUrl } from "../utils/urls.js";
+import { devUrlParams } from "../utils/urls.js";
 
 export { createUIState };
 
@@ -48,9 +48,6 @@ class ReactiveUIState implements UI {
 
   @signal
   accessor loadState: UILoadState = "Home";
-
-  @signal
-  accessor projectFilter: string | null = null;
 
   @signal
   accessor editorSection: "preview" | "console" = "preview";

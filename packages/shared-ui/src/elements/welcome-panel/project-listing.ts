@@ -28,9 +28,11 @@ import { ActionTracker } from "../../utils/action-tracker.js";
 import { blankBoard } from "../../utils/blank-board.js";
 import "./gallery.js";
 import "./homepage-search-button.js";
+import { HomepageSearchButton } from "./homepage-search-button.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
+const PAGE_SIZE = 8;
 const URL_PARAMS = new URL(document.URL).searchParams;
 const FORCE_NO_BOARDS = URL_PARAMS.has("forceNoBoards");
 
@@ -47,7 +49,10 @@ export class ProjectListing extends SignalWatcher(LitElement) {
   accessor recentBoards: RecentBoard[] = [];
 
   @property()
-  accessor filter: string | null = null;
+  accessor userFilter: string | null = null;
+
+  @property()
+  accessor featuredFilter: string | null = null;
 
   static styles = [
     icons,
@@ -201,6 +206,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          gap: var(--bb-grid-size-5);
 
           & #create-new-button-inline {
             display: flex;
@@ -274,8 +280,15 @@ export class ProjectListing extends SignalWatcher(LitElement) {
             order: 1;
             margin-top: var(--bb-grid-size-8);
 
-            & .gallery-title {
-              margin: 0 0 var(--bb-grid-size-6) 0;
+            & .gallery-header {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin: 0 0 var(--bb-grid-size-8) 0;
+
+              & h2 {
+                margin: 0;
+              }
             }
           }
         }
@@ -354,6 +367,14 @@ export class ProjectListing extends SignalWatcher(LitElement) {
     }
 
     const userHasAnyGraphs = userGraphs.size > 0 && !FORCE_NO_BOARDS;
+    const filteredGraphs = this.#filterGraphs(
+      [...userGraphs.entries()],
+      this.userFilter
+    );
+    const featuredGraphs = this.#filterGraphs(
+      [...galleryGraphs.entries()],
+      this.featuredFilter
+    );
 
     return [
       html`
@@ -367,6 +388,21 @@ export class ProjectListing extends SignalWatcher(LitElement) {
             </h2>
 
             <div id="buttons">
+              ${userGraphs.size > PAGE_SIZE
+                ? html`<bb-homepage-search-button
+                    @input=${(evt: InputEvent) => {
+                      const inputs = evt.composedPath();
+                      const input = inputs.find(
+                        (el) => el instanceof HomepageSearchButton
+                      );
+                      if (!input) {
+                        return;
+                      }
+
+                      this.userFilter = input.value;
+                    }}
+                  ></bb-homepage-search-button>`
+                : nothing}
               ${userHasAnyGraphs
                 ? this.#renderInlineCreateNewButton()
                 : nothing}
@@ -376,29 +412,26 @@ export class ProjectListing extends SignalWatcher(LitElement) {
       `,
 
       userHasAnyGraphs
-        ? this.#renderUserGraphs(
-            this.#sortUserGraphs(this.#filterGraphs([...userGraphs.entries()]))
-          )
+        ? this.#renderUserGraphs(this.#sortUserGraphs(filteredGraphs))
         : this.#renderNoUserGraphsPanel(),
 
-      this.#renderFeaturedGraphs(
-        this.#filterGraphs([...galleryGraphs.entries()])
-      ),
+      this.#renderFeaturedGraphs(featuredGraphs),
     ];
   }
 
   #filterGraphs(
-    items: [string, GraphProviderItem][]
+    items: [string, GraphProviderItem][],
+    filter: string | null
   ): [string, GraphProviderItem][] {
-    if (!this.filter) {
+    if (!filter) {
       return items;
     }
-    const filter = this.filter ? new RegExp(this.filter, "gim") : undefined;
+    const filterRegExp = filter ? new RegExp(filter, "gim") : undefined;
     return items.filter(
       ([name, item]) =>
-        !filter ||
-        (item.title && filter.test(item.title)) ||
-        (name && filter.test(name))
+        !filterRegExp ||
+        (item.title && filterRegExp.test(item.title)) ||
+        (name && filterRegExp.test(name))
     );
   }
 
@@ -451,12 +484,18 @@ export class ProjectListing extends SignalWatcher(LitElement) {
   }
 
   #renderUserGraphs(myItems: [string, GraphProviderItem][]) {
+    if (myItems.length === 0) {
+      return html`<div class="gallery-wrapper">
+        <h2 class="sans md-title-small w-400 ta-c">There are no items</h2>
+      </div>`;
+    }
+
     return html`
       <div class="gallery-wrapper">
         <bb-gallery
           .recentBoards=${this.recentBoards}
           .items=${myItems}
-          .pageSize=${8}
+          .pageSize=${PAGE_SIZE}
         ></bb-gallery>
       </div>
     `;
@@ -480,14 +519,34 @@ export class ProjectListing extends SignalWatcher(LitElement) {
   #renderFeaturedGraphs(sampleItems: [string, GraphProviderItem][]) {
     return html`
       <div class="gallery-wrapper">
-        <h2 class="gallery-title md-headline-small sans-flex w-400 round">
-          ${Strings.from("LABEL_SAMPLE_GALLERY_TITLE")}
-        </h2>
-        <bb-gallery
-          .items=${sampleItems}
-          .pageSize=${/* Unlimited */ -1}
-          forceCreatorToBeTeam
-        ></bb-gallery>
+        <section class="gallery-header">
+          <h2 class="gallery-title md-headline-small sans-flex w-400 round">
+            ${Strings.from("LABEL_SAMPLE_GALLERY_TITLE")}
+          </h2>
+          <bb-homepage-search-button
+            @input=${(evt: InputEvent) => {
+              const inputs = evt.composedPath();
+              const input = inputs.find(
+                (el) => el instanceof HomepageSearchButton
+              );
+              if (!input) {
+                return;
+              }
+
+              this.featuredFilter = input.value;
+            }}
+          ></bb-homepage-search-button>
+        </section>
+
+        ${sampleItems.length === 0
+          ? html`<div class="gallery-wrapper">
+              <h2 class="sans md-title-small w-400 ta-c">There are no items</h2>
+            </div>`
+          : html`<bb-gallery
+              .items=${sampleItems}
+              .pageSize=${/* Unlimited */ -1}
+              forceCreatorToBeTeam
+            ></bb-gallery>`}
       </div>
     `;
   }
