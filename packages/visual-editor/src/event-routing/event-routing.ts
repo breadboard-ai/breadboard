@@ -35,6 +35,7 @@ export const eventRoutes = new Map<
   [Board.StopRoute.event, Board.StopRoute],
   [Board.RestartRoute.event, Board.RestartRoute],
   [Board.ReplaceRoute.event, Board.ReplaceRoute],
+  [Board.TogglePinRoute.event, Board.TogglePinRoute],
 
   /** Node */
   [Node.ActionRoute.event, Node.ActionRoute],

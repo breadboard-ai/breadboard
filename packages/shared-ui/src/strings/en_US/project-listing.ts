@@ -38,6 +38,12 @@ export default {
   COMMAND_DUPLICATE: {
     str: "Duplicate",
   },
+  COMMAND_PIN: {
+    str: "Pin",
+  },
+  COMMAND_UNPIN: {
+    str: "Unpin",
+  },
   COMMAND_DELETE: {
     str: "Delete",
   },

@@ -405,35 +405,31 @@ export class ProjectListing extends SignalWatcher(LitElement) {
   #sortUserGraphs(
     items: [string, GraphProviderItem][]
   ): [string, GraphProviderItem][] {
+    const recentBoards = this.recentBoards;
     return items.sort(([, dataA], [, dataB]) => {
-      // Sort by recency.
-      const indexA = this.recentBoards.findIndex(
-        (board) => board.url === dataA.url
-      );
-      const indexB = this.recentBoards.findIndex(
-        (board) => board.url === dataB.url
-      );
+      // Sort by pinned status first if possible.
+      const boardA = recentBoards.find((board) => board.url === dataA.url);
+      const boardB = recentBoards.find((board) => board.url === dataB.url);
 
-      if (indexA !== -1 && indexB === -1) {
-        return -1;
-      }
-      if (indexA === -1 && indexB !== -1) {
-        return 1;
-      }
+      const boardAPinned = boardA && boardA.pinned;
+      const boardBPinned = boardB && boardB.pinned;
+      if (boardAPinned && !boardBPinned) return -1;
+      if (!boardAPinned && boardBPinned) return 1;
 
-      if (indexA !== -1 && indexB !== -1) {
-        return indexA - indexB;
-      }
+      // When both are pinned we fall through to sort by recency.
+      const indexA = recentBoards.findIndex((board) => board.url === dataA.url);
+      const indexB = recentBoards.findIndex((board) => board.url === dataB.url);
 
-      // If both are unknown for recency, choose those that are
-      // mine.
-      if (dataA.mine && !dataB.mine) {
-        return -1;
-      }
+      // One of them is not found, prioritize the one that is.
+      if (indexA !== -1 && indexB === -1) return -1;
+      if (indexA === -1 && indexB !== -1) return 1;
 
-      if (!dataA.mine && dataB.mine) {
-        return 1;
-      }
+      // Both are found, sort by index.
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+
+      // If both are unknown for recency, choose those that are mine.
+      if (dataA.mine && !dataB.mine) return -1;
+      if (!dataA.mine && dataB.mine) return 1;
 
       return 0;
     });
@@ -457,7 +453,11 @@ export class ProjectListing extends SignalWatcher(LitElement) {
   #renderUserGraphs(myItems: [string, GraphProviderItem][]) {
     return html`
       <div class="gallery-wrapper">
-        <bb-gallery .items=${myItems} .pageSize=${8}></bb-gallery>
+        <bb-gallery
+          .recentBoards=${this.recentBoards}
+          .items=${myItems}
+          .pageSize=${8}
+        ></bb-gallery>
       </div>
     `;
   }
