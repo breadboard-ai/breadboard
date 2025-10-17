@@ -202,6 +202,15 @@ export class Gallery extends SignalWatcher(LitElement) {
           opacity: 0;
           right: auto;
           left: var(--bb-grid-size-4);
+
+          & .g-icon::before {
+            content: "keep";
+          }
+
+          &.pinned {
+            opacity: 1;
+            pointer-events: auto;
+          }
         }
 
         &:hover {
@@ -209,6 +218,12 @@ export class Gallery extends SignalWatcher(LitElement) {
           & .remix-button {
             opacity: 1;
             pointer-events: auto;
+          }
+
+          & .overflow-pin.pinned {
+            & .g-icon::before {
+              content: "keep_off";
+            }
           }
         }
 
@@ -589,7 +604,7 @@ export class Gallery extends SignalWatcher(LitElement) {
         )}
         ${mine
           ? html` <button
-                class="overflow-pin"
+                class=${classMap({ "overflow-pin": true, pinned: isPinned })}
                 @click=${(evt: Event) => {
                   evt.preventDefault();
                   evt.stopImmediatePropagation();
@@ -603,9 +618,7 @@ export class Gallery extends SignalWatcher(LitElement) {
                   );
                 }}
               >
-                <span class="g-icon filled-heavy round"
-                  >${isPinned ? "keep_off" : "keep"}</span
-                >
+                <span class="g-icon filled-heavy round"></span>
               </button>
               <button
                 class="overflow-menu"
