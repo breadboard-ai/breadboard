@@ -164,16 +164,21 @@ async function executeTool<
       ];
     })
   );
-  const response = await executeStep(caps, moduleArgs, {
-    planStep: {
-      stepName: api,
-      modelApi: api,
-      output: "data",
-      inputParameters,
-      isListOutput: false,
+  const response = await executeStep(
+    caps,
+    moduleArgs,
+    {
+      planStep: {
+        stepName: api,
+        modelApi: api,
+        output: "data",
+        inputParameters,
+        isListOutput: false,
+      },
+      execution_inputs,
     },
-    execution_inputs,
-  });
+    true
+  );
   if (!ok(response)) return response;
 
   const {
