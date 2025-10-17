@@ -28,6 +28,8 @@ import {
   toTextConcat,
 } from "../a2/utils";
 import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { getBucketId } from "../a2/get-bucket-id";
+import { err } from "@breadboard-ai/utils";
 
 type AudioGeneratorInputs = {
   context: LLMContent[];
@@ -45,6 +47,13 @@ async function callMusicGen(
   moduleArgs: A2ModuleFactoryArgs,
   prompt: string
 ): Promise<Outcome<LLMContent>> {
+  const bucketId = await getBucketId(moduleArgs);
+  if (!ok(bucketId)) {
+    return err(
+      `Unable to call Gemini Image API: Storage bucket is not configured`
+    );
+  }
+
   const executionInputs: ContentMap = {};
   executionInputs["prompt"] = {
     chunks: [
@@ -64,8 +73,9 @@ async function callMusicGen(
       output: "generated_music",
     },
     execution_inputs: executionInputs,
+    output_gcs_config: { bucket_name: bucketId },
   } satisfies ExecuteStepRequest;
-  const response = await executeStep(caps, moduleArgs, body);
+  const response = await executeStep(caps, moduleArgs, body, true);
   if (!ok(response)) return response;
 
   return response.chunks.at(0)!;
