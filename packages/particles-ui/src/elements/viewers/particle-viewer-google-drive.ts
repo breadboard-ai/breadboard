@@ -63,6 +63,7 @@ export class ParticleViewerGoogleDrive
     const fileId = this.value.substring("drive:/".length);
     return html`<bb-google-drive-file-viewer
       .fileId=${fileId}
+      .forcePlaceholder=${true}
     ></bb-google-drive-file-viewer>`;
   }
 }

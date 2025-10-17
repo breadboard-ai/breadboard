@@ -66,6 +66,7 @@ export class ParticleUpdate extends SignalWatcher(LitElement) {
         .lite=${true}
         .clamped=${false}
         .value=${parsed}
+        .forceDrivePlaceholder=${true}
       ></bb-llm-output>`;
     } else if (mimeType?.startsWith("text/")) {
       // This is also a kludge. I only need the "render markdown nicely" part

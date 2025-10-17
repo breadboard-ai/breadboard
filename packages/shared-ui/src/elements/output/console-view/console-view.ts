@@ -491,6 +491,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                                       .lite=${true}
                                       .clamped=${false}
                                       .value=${product}
+                                      .forceDrivePlaceholder=${true}
                                     ></bb-llm-output>
                                   </li>`;
                                 }
@@ -519,6 +520,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                           .lite=${true}
                           .clamped=${false}
                           .value=${item}
+                          .forceDrivePlaceholder=${true}
                         ></bb-llm-output>
                       </div>`;
                     }
