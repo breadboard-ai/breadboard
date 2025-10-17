@@ -557,6 +557,7 @@ export class EntityEditor
               margin-right: var(--bb-grid-size-2);
 
               bb-item-select {
+                --menu-width: 320px;
                 --selected-item-height: var(--bb-grid-size-9);
               }
             }
