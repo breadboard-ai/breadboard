@@ -1085,10 +1085,31 @@ export class Main extends SignalWatcher(LitElement) {
       return;
     }
 
-    this.#embedHandler?.sendToEmbedder({
-      type: "board_id_created",
-      id: saveResult.url.href,
-    });
+    if (this.#embedHandler) {
+      // When the board server is asked to create a new graph, it first makes a
+      // very fast RPC just to allocate a drive file id, returns that file id,
+      // and finishes initializing the graph in the background (uploading the
+      // initial BGL file and setting some metadata). This allows us to show the
+      // editor to the user very quickly, and the board server is smart about
+      // knowing when it needs to wait for the background initialization to
+      // complete (e.g. before saving if the user does an edit).
+      //
+      // However! When we are embedded, as soon as we broadcast the file id to
+      // the embedder, there will be a hard reload of the page with that file
+      // id. If we didn't get a chance to finish initialization, then that graph
+      // will appear to not exist, and the user will get an error.
+      //
+      // So, we need to wait for full initialization before we broadcast.
+      const { url } = saveResult;
+      const boardServer = this.#runtime.board.getBoardServerForURL(url) as
+        | Partial<GoogleDriveBoardServer>
+        | undefined;
+      await boardServer?.flushSaveQueue?.(url.href);
+      this.#embedHandler.sendToEmbedder({
+        type: "board_id_created",
+        id: url.href,
+      });
+    }
   }
 
   #maybeShowWelcomePanel() {
