@@ -748,6 +748,10 @@ export const styles = [
       }
     }
 
+    bb-edit-history-overlay {
+      z-index: 3;
+    }
+
     bb-edit-history-panel {
       width: 100%;
       margin-top: var(--bb-grid-size-4);

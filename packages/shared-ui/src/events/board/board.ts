@@ -53,6 +53,16 @@ export interface TogglePin extends BaseEventDetail<`${Namespace}.togglepin`> {
   readonly status: "pin" | "unpin";
 }
 
+export interface Undo extends BaseEventDetail<`${Namespace}.undo`> {
+  /* Duped to avoid @typescript-eslint/no-empty-object-type */
+  readonly eventType: `${Namespace}.undo`;
+}
+
+export interface Redo extends BaseEventDetail<`${Namespace}.redo`> {
+  /* Duped to avoid @typescript-eslint/no-empty-object-type */
+  readonly eventType: `${Namespace}.redo`;
+}
+
 export interface Stop extends BaseEventDetail<`${Namespace}.stop`> {
   readonly clearLastRun: boolean;
 }

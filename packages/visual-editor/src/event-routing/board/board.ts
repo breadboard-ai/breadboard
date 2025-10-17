@@ -60,6 +60,32 @@ export const LoadRoute: EventRoute<"board.load"> = {
   },
 };
 
+export const UndoRoute: EventRoute<"board.undo"> = {
+  event: "board.undo",
+
+  async do({ runtime, tab }) {
+    if (tab?.readOnly || !tab?.graphIsMine) {
+      return false;
+    }
+
+    runtime.edit.undo(tab);
+    return false;
+  },
+};
+
+export const RedoRoute: EventRoute<"board.redo"> = {
+  event: "board.redo",
+
+  async do({ runtime, tab }) {
+    if (tab?.readOnly || !tab?.graphIsMine) {
+      return false;
+    }
+
+    runtime.edit.redo(tab);
+    return false;
+  },
+};
+
 export const TogglePinRoute: EventRoute<"board.togglepin"> = {
   event: "board.togglepin",
 

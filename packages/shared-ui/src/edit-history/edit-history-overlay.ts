@@ -17,6 +17,13 @@ export class EditHistoryOverlay extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     css`
+      :host {
+        display: block;
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
       #overlay {
         position: absolute;
         top: 0;
@@ -26,6 +33,7 @@ export class EditHistoryOverlay extends SignalWatcher(LitElement) {
         z-index: 1;
         cursor: not-allowed;
       }
+
       .g-icon {
         font-variation-settings:
           "FILL" 0,
@@ -33,7 +41,9 @@ export class EditHistoryOverlay extends SignalWatcher(LitElement) {
           "GRAD" 0,
           "opsz" 48;
       }
+
       #banner {
+        box-sizing: border-box;
         width: 100%;
         padding: var(--bb-grid-size-3);
         font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
@@ -45,14 +55,17 @@ export class EditHistoryOverlay extends SignalWatcher(LitElement) {
         box-shadow: 0 2px 5px 0px rgb(0 0 0 / 10%);
         transition: box-shadow 1s ease-out;
       }
+
       :host([highlighted]) #banner {
         transition: box-shadow 200ms ease-in;
         box-shadow: 0 0 10px 4px rgb(0 150 255 / 50%);
       }
+
       #buttons {
         display: inline-flex;
         align-items: center;
       }
+
       #date {
         font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
           var(--bb-font-family);
@@ -62,12 +75,14 @@ export class EditHistoryOverlay extends SignalWatcher(LitElement) {
         min-width: 10em;
         text-align: center;
       }
+
       #message {
         font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
           var(--bb-font-family);
 
         margin: 0 0 12px 0;
       }
+
       #back-button {
         background: none;
         display: inline;
@@ -82,6 +97,7 @@ export class EditHistoryOverlay extends SignalWatcher(LitElement) {
           color: var(--bb-neutral-600);
         }
       }
+
       #restore-button {
         margin-left: 24px;
         background: var(--bb-ui-500);

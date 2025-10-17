@@ -35,6 +35,12 @@ export default {
   COMMAND_ZOOM_OUT: {
     str: "Zoom Out",
   },
+  COMMAND_UNDO: {
+    str: "Undo",
+  },
+  COMMAND_REDO: {
+    str: "Redo",
+  },
   COMMAND_RUN_ISOLATED: {
     str: "Run this Step",
   },

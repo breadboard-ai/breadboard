@@ -13,13 +13,18 @@ import {
   HideTooltipEvent,
   KitNodeChosenEvent,
   ShowTooltipEvent,
+  StateEvent,
   ToastEvent,
   ToastType,
   ZoomInEvent,
   ZoomOutEvent,
   ZoomToFitEvent,
 } from "../../events/events.js";
-import { GraphIdentifier, NodeIdentifier } from "@breadboard-ai/types";
+import {
+  EditHistory,
+  GraphIdentifier,
+  NodeIdentifier,
+} from "@breadboard-ai/types";
 import {
   GraphStoreEntry,
   GraphStoreUpdateEvent,
@@ -69,6 +74,9 @@ export class EditorControls extends LitElement {
 
   @property()
   accessor showExperimentalComponents = false;
+
+  @state()
+  accessor history: EditHistory | null = null;
 
   @state()
   accessor showComponentLibrary = false;
@@ -164,13 +172,16 @@ export class EditorControls extends LitElement {
               var(--bb-grid-size) var(--bb-grid-size);
           }
 
-          &#zoom-in {
+          &#zoom-in,
+          &#zoom-out,
+          &#undo {
             margin-top: var(--bb-grid-size);
           }
 
-          &#zoom-out {
+          &#redo {
             border-radius: var(--bb-grid-size) var(--bb-grid-size)
               var(--bb-grid-size-12) var(--bb-grid-size-12);
+            margin: var(--bb-grid-size) 0 var(--bb-grid-size-2) 0;
           }
 
           &:not([disabled]) {
@@ -1153,6 +1164,53 @@ export class EditorControls extends LitElement {
         }}
       >
         <span class="g-icon filled round">remove</span>
+      </button>
+
+      <button
+        id="undo"
+        ?disabled=${!this.history?.canUndo()}
+        @pointerover=${(evt: PointerEvent) => {
+          this.dispatchEvent(
+            new ShowTooltipEvent(
+              Strings.from("COMMAND_UNDO"),
+              evt.clientX,
+              evt.clientY
+            )
+          );
+        }}
+        @pointerout=${() => {
+          this.dispatchEvent(new HideTooltipEvent());
+        }}
+        @click=${() => {
+          this.dispatchEvent(
+            new StateEvent<"board.undo">({ eventType: "board.undo" })
+          );
+        }}
+      >
+        <span class="g-icon filled round">undo</span>
+      </button>
+      <button
+        id="redo"
+        ?disabled=${!this.history?.canRedo()}
+        @pointerover=${(evt: PointerEvent) => {
+          this.dispatchEvent(
+            new ShowTooltipEvent(
+              Strings.from("COMMAND_REDO"),
+              evt.clientX,
+              evt.clientY
+            )
+          );
+        }}
+        @pointerout=${() => {
+          this.dispatchEvent(new HideTooltipEvent());
+        }}
+        @click=${() => {
+          this.dispatchEvent(
+            new StateEvent<"board.redo">({ eventType: "board.redo" })
+          );
+        }}
+      >
+        <span class="g-icon filled round">redo</span>
       </button>
     </div>`;
 

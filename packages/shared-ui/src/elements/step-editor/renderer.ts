@@ -75,7 +75,7 @@ import { collectAssetIds, collectNodeIds } from "./utils/collect-ids";
 import { EditorControls } from "./editor-controls";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants";
-import { AssetMetadata, RuntimeFlags } from "@breadboard-ai/types";
+import { AssetMetadata, EditHistory, RuntimeFlags } from "@breadboard-ai/types";
 import { isCtrlCommand, isMacPlatform } from "../../utils/is-ctrl-command";
 import { Project, RendererRunState, RendererState } from "../../state";
 import { colorsLight } from "../../styles/host/colors-light.js";
@@ -192,6 +192,9 @@ export class Renderer extends LitElement {
 
   @state()
   accessor #selectionOverflowMenu: { x: number; y: number } | null = null;
+
+  @state()
+  accessor history: EditHistory | null = null;
 
   static styles = [
     colorsLight,
@@ -1768,6 +1771,7 @@ export class Renderer extends LitElement {
         .graphIsMine=${this.graphIsMine}
         .graphStore=${this.graphStore}
         .graphStoreUpdateId=${this.graphStoreUpdateId}
+        .history=${this.history}
         .mainGraphId=${this.mainGraphId}
         .showDefaultAdd=${showDefaultAdd}
         .showExperimentalComponents=${this.showExperimentalComponents}
