@@ -37,6 +37,7 @@ import {
   Schema,
 } from "@breadboard-ai/types";
 import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { getBucketId } from "../a2/get-bucket-id";
 
 type Model = {
   id: string;
@@ -91,6 +92,13 @@ async function callVideoGen(
   aspectRatio: string,
   modelName: string
 ): Promise<Outcome<LLMContent>> {
+  const bucketId = await getBucketId(moduleArgs);
+  if (!ok(bucketId)) {
+    return err(
+      `Unable to call Gemini Image API: Storage bucket is not configured`
+    );
+  }
+
   const executionInputs: ContentMap = {};
   executionInputs["text_instruction"] = {
     chunks: [
@@ -145,6 +153,7 @@ async function callVideoGen(
       },
     },
     execution_inputs: executionInputs,
+    output_gcs_config: { bucket_name: bucketId },
   } satisfies ExecuteStepRequest;
   const response = await executeStep(caps, moduleArgs, body);
   if (!ok(response)) return response;
