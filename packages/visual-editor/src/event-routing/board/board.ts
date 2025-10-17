@@ -60,6 +60,18 @@ export const LoadRoute: EventRoute<"board.load"> = {
   },
 };
 
+export const TogglePinRoute: EventRoute<"board.togglepin"> = {
+  event: "board.togglepin",
+
+  async do({ runtime, originalEvent }) {
+    runtime.board.setPinnedStatus(
+      originalEvent.detail.url,
+      originalEvent.detail.status
+    );
+    return false;
+  },
+};
+
 export const StopRoute: EventRoute<"board.stop"> = {
   event: "board.stop",
 

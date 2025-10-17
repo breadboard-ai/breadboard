@@ -762,7 +762,7 @@ export class Main extends SignalWatcher(LitElement) {
     this.#runtime.edit.addEventListener(
       Runtime.Events.RuntimeBoardAutonameEvent.eventName,
       (evt: Runtime.Events.RuntimeBoardAutonameEvent) => {
-        console.log("Autoname Status Change:", evt.status);
+        console.log("[Autoname Status Change]:", evt.status);
       }
     );
 
@@ -1520,7 +1520,6 @@ export class Main extends SignalWatcher(LitElement) {
       }}
       @bbunsnackbar=${(evt: BreadboardUI.Events.UnsnackbarEvent) => {
         this.unsnackbar(evt.snackbarId);
-        console.log("Removing", evt.snackbarId);
       }}
       @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
         this.toast(toastEvent.message, toastEvent.toastType);

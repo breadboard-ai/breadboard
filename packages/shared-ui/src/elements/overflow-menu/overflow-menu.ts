@@ -237,6 +237,14 @@ export class OverflowMenu extends LitElement {
           content: "videocam";
         }
 
+        &.pin .g-icon::before {
+          content: "keep";
+        }
+
+        &.unpin .g-icon::before {
+          content: "keep_off";
+        }
+
         &.error .g-icon::before {
           content: "error";
           color: var(--bb-warning-600);

@@ -6,6 +6,9 @@
 
 import * as idb from "idb";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import { SignalArray } from "signal-utils/array";
+import { SignalObject } from "signal-utils/object";
+import { RecentBoard } from "@breadboard-ai/shared-ui/types/types.js";
 
 interface RecentBoardsDB extends idb.DBSchema {
   boards: {
@@ -35,7 +38,16 @@ export class RecentBoardStore {
       RECENT_BOARDS_VERSION
     );
 
-    recentBoardsDb.put("boards", boards, "recent");
+    // Flatten the SignalArray back down so that it can be stored in IDB.
+    const storeBoards = [];
+    for (const board of boards) {
+      storeBoards.push({
+        title: board.title,
+        url: board.url,
+        pinned: board.pinned ?? false,
+      });
+    }
+    recentBoardsDb.put("boards", storeBoards, "recent");
   }
 
   async restore(): Promise<BreadboardUI.Types.RecentBoard[]> {
@@ -51,6 +63,20 @@ export class RecentBoardStore {
     );
 
     const boards = await recentBoardsDb.get("boards", "recent");
-    return boards ?? [];
+    const signalBoards = new SignalArray<RecentBoard>();
+    if (!boards) {
+      return signalBoards;
+    }
+
+    for (const board of boards) {
+      signalBoards.push(
+        new SignalObject({
+          url: board.url,
+          title: board.title,
+          pinned: board.pinned ?? false,
+        })
+      );
+    }
+    return signalBoards;
   }
 }

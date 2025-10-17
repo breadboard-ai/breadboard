@@ -15,7 +15,7 @@ import { styleMap } from "lit/directives/style-map.js";
 import { OverflowMenuActionEvent, StateEvent } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { icons } from "../../styles/icons.js";
-import { OverflowAction } from "../../types/types.js";
+import { OverflowAction, RecentBoard } from "../../types/types.js";
 import {
   type SigninAdapter,
   signinAdapterContext,
@@ -28,12 +28,13 @@ import { guard } from "lit/directives/guard.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
 import { colorsLight } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
+import { SignalWatcher } from "@lit-labs/signals";
 
 const GlobalStrings = StringsHelper.forSection("Global");
 const Strings = StringsHelper.forSection("ProjectListing");
 
 @customElement("bb-gallery")
-export class Gallery extends LitElement {
+export class Gallery extends SignalWatcher(LitElement) {
   static readonly styles = [
     icons,
     colorsLight,
@@ -171,13 +172,7 @@ export class Gallery extends LitElement {
           }
         }
 
-        &:hover {
-          & .remix-button {
-            opacity: 1;
-            pointer-events: auto;
-          }
-        }
-
+        .overflow-pin,
         .overflow-menu {
           position: absolute;
           top: var(--bb-grid-size-6);
@@ -197,6 +192,38 @@ export class Gallery extends LitElement {
 
           &:not([disabled]) {
             cursor: pointer;
+          }
+        }
+
+        .overflow-pin {
+          transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
+          opacity: 0;
+          pointer-events: none;
+          opacity: 0;
+          right: auto;
+          left: var(--bb-grid-size-4);
+
+          & .g-icon::before {
+            content: "keep";
+          }
+
+          &.pinned {
+            opacity: 1;
+            pointer-events: auto;
+          }
+        }
+
+        &:hover {
+          & .overflow-pin,
+          & .remix-button {
+            opacity: 1;
+            pointer-events: auto;
+          }
+
+          & .overflow-pin.pinned {
+            & .g-icon::before {
+              content: "keep_off";
+            }
           }
         }
 
@@ -427,7 +454,24 @@ export class Gallery extends LitElement {
   @property({ type: Number })
   accessor pageSize = 8;
 
+  @property({ attribute: false })
+  accessor recentBoards: RecentBoard[] = [];
+
   readonly #paginationContainer = createRef<HTMLElement>();
+
+  #isPinned(url: string): boolean {
+    const recentBoards = this.recentBoards;
+    const currentItem = recentBoards.find((board) => {
+      return url === board.url;
+    });
+
+    let isPinned = false;
+    if (currentItem) {
+      isPinned = currentItem.pinned ?? false;
+    }
+
+    return isPinned;
+  }
 
   override render() {
     const pageSize = this.pageSize ?? -1;
@@ -441,6 +485,7 @@ export class Gallery extends LitElement {
 
     let boardOverflowMenu: HTMLTemplateResult | symbol = nothing;
     if (this.showOverflowMenu && this.#overflowMenuConfig) {
+      const isPinned = this.#isPinned(this.#overflowMenuConfig.value);
       const actions: OverflowAction[] = [
         {
           title: Strings.from("COMMAND_DELETE"),
@@ -452,6 +497,14 @@ export class Gallery extends LitElement {
           title: Strings.from("COMMAND_DUPLICATE"),
           name: "duplicate",
           icon: "duplicate",
+          value: this.#overflowMenuConfig.value,
+        },
+        {
+          title: isPinned
+            ? Strings.from("COMMAND_UNPIN")
+            : Strings.from("COMMAND_PIN"),
+          name: "pin",
+          icon: isPinned ? "unpin" : "pin",
           value: this.#overflowMenuConfig.value,
         },
       ];
@@ -497,6 +550,17 @@ export class Gallery extends LitElement {
               );
               break;
             }
+
+            case "pin": {
+              this.dispatchEvent(
+                new StateEvent({
+                  eventType: "board.togglepin",
+                  url: this.#overflowMenuConfig.value,
+                  status: isPinned ? "unpin" : "pin",
+                })
+              );
+              break;
+            }
           }
 
           this.#overflowMenuConfig = null;
@@ -505,7 +569,12 @@ export class Gallery extends LitElement {
     }
 
     return html`
-      <div id="boards">${pageItems.map((item) => this.#renderBoard(item))}</div>
+      <div id="boards">
+        ${pageItems.map((item) => {
+          const isPinned = this.#isPinned(item[0]);
+          return this.#renderBoard(item, isPinned);
+        })}
+      </div>
       ${this.#renderPagination()} ${boardOverflowMenu}
     `;
   }
@@ -516,7 +585,7 @@ export class Gallery extends LitElement {
     });
   }
 
-  #renderBoard([name, item]: [string, GraphProviderItem]) {
+  #renderBoard([name, item]: [string, GraphProviderItem], isPinned = false) {
     const { url, mine, title, description, thumbnail } = item;
 
     return html`
@@ -534,32 +603,49 @@ export class Gallery extends LitElement {
           )}`
         )}
         ${mine
-          ? html`<button
-              class="overflow-menu"
-              @click=${(evt: Event) => {
-                evt.preventDefault();
-                evt.stopImmediatePropagation();
+          ? html` <button
+                class=${classMap({ "overflow-pin": true, pinned: isPinned })}
+                @click=${(evt: Event) => {
+                  evt.preventDefault();
+                  evt.stopImmediatePropagation();
 
-                if (!(evt.target instanceof HTMLButtonElement)) {
-                  return;
-                }
+                  this.dispatchEvent(
+                    new StateEvent<"board.togglepin">({
+                      eventType: "board.togglepin",
+                      status: isPinned ? "unpin" : "pin",
+                      url,
+                    })
+                  );
+                }}
+              >
+                <span class="g-icon filled-heavy round"></span>
+              </button>
+              <button
+                class="overflow-menu"
+                @click=${(evt: Event) => {
+                  evt.preventDefault();
+                  evt.stopImmediatePropagation();
 
-                const bounds = evt.target.getBoundingClientRect();
-                let x = bounds.x;
-                if (x + 144 > window.innerWidth) {
-                  x = window.innerWidth - 144;
-                }
+                  if (!(evt.target instanceof HTMLButtonElement)) {
+                    return;
+                  }
 
-                this.#overflowMenuConfig = {
-                  x,
-                  y: bounds.bottom,
-                  value: url,
-                };
-                this.showOverflowMenu = true;
-              }}
-            >
-              <span class="g-icon filled-heavy w-500 round">more_vert</span>
-            </button>`
+                  const bounds = evt.target.getBoundingClientRect();
+                  let x = bounds.x;
+                  if (x + 144 > window.innerWidth) {
+                    x = window.innerWidth - 144;
+                  }
+
+                  this.#overflowMenuConfig = {
+                    x,
+                    y: bounds.bottom,
+                    value: url,
+                  };
+                  this.showOverflowMenu = true;
+                }}
+              >
+                <span class="g-icon filled-heavy w-500 round">more_vert</span>
+              </button>`
           : html` <button
               class=${classMap({
                 "remix-button": true,

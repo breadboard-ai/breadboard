@@ -111,7 +111,7 @@ export class Board extends EventTarget {
     public readonly boardServerKits: Kit[],
     public readonly boardServers: RuntimeConfigBoardServers,
     public readonly recentBoardStore: RecentBoardStore,
-    protected recentBoards: BreadboardUI.Types.RecentBoard[],
+    protected readonly recentBoards: BreadboardUI.Types.RecentBoard[],
     public readonly tokenVendor?: TokenVendor,
     public readonly googleDriveClient?: GoogleDriveClient
   ) {
@@ -139,7 +139,20 @@ export class Board extends EventTarget {
   currentURL: URL | null = null;
 
   getRecentBoards(): readonly BreadboardUI.Types.RecentBoard[] {
-    return this.recentBoards;
+    return this.recentBoards as Readonly<BreadboardUI.Types.RecentBoard[]>;
+  }
+
+  async setPinnedStatus(url: string, status: "pin" | "unpin" = "unpin") {
+    url = url.replace(window.location.origin, "");
+    const boardToUpdate = this.recentBoards.find((board) => board.url === url);
+    if (!boardToUpdate) {
+      console.log(`Unable to find board ${url}`);
+      return;
+    }
+    boardToUpdate.pinned = status === "pin";
+
+    await this.recentBoardStore.store(this.recentBoards);
+    this.dispatchEvent(new RuntimeBoardServerChangeEvent());
   }
 
   async #trackRecentBoard(url?: string) {
@@ -175,7 +188,13 @@ export class Board extends EventTarget {
     url = url.replace(window.location.origin, "");
     const count = this.recentBoards.length;
 
-    this.recentBoards = this.recentBoards.filter((board) => board.url !== url);
+    // Remove in-place because the boards array is read-only.
+    const removeIndex = this.recentBoards.findIndex(
+      (board) => board.url === url
+    );
+    if (removeIndex !== -1) {
+      this.recentBoards.splice(removeIndex, 1);
+    }
 
     if (count === this.recentBoards.length) {
       return;

@@ -48,6 +48,11 @@ export interface Run extends BaseEventDetail<`${Namespace}.run`> {
   readonly eventType: `${Namespace}.run`;
 }
 
+export interface TogglePin extends BaseEventDetail<`${Namespace}.togglepin`> {
+  readonly url: string;
+  readonly status: "pin" | "unpin";
+}
+
 export interface Stop extends BaseEventDetail<`${Namespace}.stop`> {
   readonly clearLastRun: boolean;
 }
