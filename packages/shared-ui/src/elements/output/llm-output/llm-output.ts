@@ -75,6 +75,9 @@ export class LLMOutput extends LitElement {
   @property()
   accessor graphUrl: URL | null = null;
 
+  @property()
+  accessor forceDrivePlaceholder = false;
+
   #partDataURLs = new Map<number, string>();
   #partTask = new Map<number, Task>();
 
@@ -752,6 +755,7 @@ export class LLMOutput extends LitElement {
 
                 value = html`<bb-google-drive-file-viewer
                   .fileId=${fileId}
+                  .forcePlaceholder=${this.forceDrivePlaceholder}
                 ></bb-google-drive-file-viewer>`;
               } else {
                 const { mimeType } = part.storedData;
@@ -885,6 +889,7 @@ export class LLMOutput extends LitElement {
                 if (fileId) {
                   value = html`<bb-google-drive-file-viewer
                     .fileId=${fileId}
+                    .forcePlaceholder=${this.forceDrivePlaceholder}
                   ></bb-google-drive-file-viewer>`;
                   break;
                 }

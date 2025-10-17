@@ -34,14 +34,6 @@ export class GoogleDriveFileViewer extends LitElement {
         min-width: var(--drive-min-width, initial);
       }
 
-      :host {
-        :has(.image-placeholder) {
-          background: var(--bb-neutral-50);
-          border-radius: var(--bb-grid-size);
-          padding: var(--bb-grid-size-3);
-        }
-      }
-
       .loading {
         padding-left: var(--bb-grid-size-8);
         background: url(/images/progress-neutral.svg) 0 center / 20px 20px
@@ -65,16 +57,41 @@ export class GoogleDriveFileViewer extends LitElement {
       }
 
       .image-placeholder {
-        width: 100%;
-        aspect-ratio: 170/220;
         display: flex;
         justify-content: center;
         align-items: center;
         overflow: hidden;
+        position: relative;
+        background: var(--n-80);
+        box-shadow: inset 0 0 0 3px var(--n-90);
+        border-radius: var(--bb-grid-size-3);
+        padding: var(--bb-grid-size-3);
+        width: 100%;
+        aspect-ratio: 268/168;
+        max-width: 240px;
+        max-width: 268px;
 
-        .g-icon {
-          font-size: var(--icon-size, 160px);
-          color: var(--bb-neutral-200);
+        > .g-icon {
+          font-size: var(--icon-size, 60px);
+          color: var(--n-40);
+        }
+
+        & .link-out {
+          position: absolute;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: var(--bb-grid-size-8);
+          height: var(--bb-grid-size-8);
+          border-radius: var(--bb-grid-size-3);
+          background: var(--n-0);
+          color: var(--n-100);
+          top: var(--bb-grid-size-3);
+          right: var(--bb-grid-size-3);
+
+          & > .g-icon {
+            font-size: 18px;
+          }
         }
       }
     `,
@@ -106,6 +123,9 @@ export class GoogleDriveFileViewer extends LitElement {
 
   @state()
   accessor #imageFailedToLoad = false;
+
+  @property({ reflect: true, type: Boolean })
+  accessor forcePlaceholder = false;
 
   readonly #loadTask = new Task(this, {
     task: async ([googleDriveClient, fileId], { signal }) => {
@@ -147,7 +167,7 @@ export class GoogleDriveFileViewer extends LitElement {
         const largerImageUrl = imageUrl.replace(/=s220$/, "=s440");
         return html`
           <a href=${openUrl} target="_blank">
-            ${imageUrl && !this.#imageFailedToLoad
+            ${imageUrl && !this.#imageFailedToLoad && !this.forcePlaceholder
               ? html`
                   <img
                     cross-origin
@@ -158,7 +178,11 @@ export class GoogleDriveFileViewer extends LitElement {
                 `
               : html`
                   <div class="image-placeholder">
-                    <span class="g-icon">docs</span>
+                    <span class="g-icon filled round">docs</span>
+
+                    <span class="link-out">
+                      <span class="g-icon filled-heavy round">open_in_new</span>
+                    </span>
                   </div>
                 `}
           </a>
