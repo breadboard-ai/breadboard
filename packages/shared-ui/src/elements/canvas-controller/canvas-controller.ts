@@ -435,6 +435,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
           .graphIsMine=${this.graphIsMine}
           .graphTopologyUpdateId=${this.graphTopologyUpdateId}
           .graphStore=${this.graphStore}
+          .history=${this.history}
           .state=${this.projectState?.renderer}
           .graphStoreUpdateId=${this.graphStoreUpdateId}
           .selectionState=${this.selectionState}
