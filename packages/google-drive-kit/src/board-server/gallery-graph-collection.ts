@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { TokenVendor } from "@breadboard-ai/connection-client";
 import type {
   GraphProviderItem,
   ImmutableGraphCollection,
@@ -14,6 +15,7 @@ import type { NarrowedDriveFile } from "../google-drive-client.js";
 import { readProperties } from "./utils.js";
 
 export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
+  readonly #tokenVendor: TokenVendor;
   readonly #fetchWithCreds: typeof globalThis.fetch;
   readonly #graphs = new SignalMap<string, GraphProviderItem>();
   readonly #backendApiUrl: string;
@@ -45,7 +47,12 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
     return this.#error;
   }
 
-  constructor(fetchWithCreds: typeof globalThis.fetch, backendApiUrl: string) {
+  constructor(
+    tokenVendor: TokenVendor,
+    fetchWithCreds: typeof globalThis.fetch,
+    backendApiUrl: string
+  ) {
+    this.#tokenVendor = tokenVendor;
     this.#fetchWithCreds = fetchWithCreds;
     this.#backendApiUrl = backendApiUrl;
     void this.#initialize();
@@ -101,6 +108,9 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
   async #getUserLocation(): Promise<string | undefined> {
     const endpoint = this.#backendApiUrl;
     if (!endpoint) {
+      return undefined;
+    }
+    if (!this.#tokenVendor.isSignedIn()) {
       return undefined;
     }
 

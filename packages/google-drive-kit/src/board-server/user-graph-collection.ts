@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { TokenVendor } from "@breadboard-ai/connection-client";
 import type {
   GraphProviderItem,
   MutableGraphCollection,
@@ -75,6 +76,7 @@ type IdbWriteTaskStore<
 
 export class DriveUserGraphCollection implements MutableGraphCollection {
   readonly #graphs = new SignalMap<string, GraphProviderItem>();
+  readonly #tokenVendor: TokenVendor;
 
   has(url: string): boolean {
     return this.#graphs.has(url);
@@ -107,8 +109,9 @@ export class DriveUserGraphCollection implements MutableGraphCollection {
 
   readonly #idb = openIdbGraphCache();
 
-  constructor(drive: GoogleDriveClient) {
+  constructor(drive: GoogleDriveClient, tokenVendor: TokenVendor) {
     this.#drive = drive;
+    this.#tokenVendor = tokenVendor;
     void this.#initialize();
   }
 
@@ -181,6 +184,9 @@ export class DriveUserGraphCollection implements MutableGraphCollection {
   }
 
   async #listDriveGraphs(): Promise<GraphProviderItem[]> {
+    if (!this.#tokenVendor.isSignedIn()) {
+      return [];
+    }
     const query = makeGraphListQuery({
       kind: "editable",
       owner: "me",
