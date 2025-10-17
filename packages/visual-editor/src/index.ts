@@ -1578,7 +1578,6 @@ export class Main extends SignalWatcher(LitElement) {
 
     return html`<bb-project-listing
       .recentBoards=${this.#runtime.board.getRecentBoards()}
-      .filter=${this.#uiState.projectFilter}
     ></bb-project-listing>`;
   }
 
@@ -2037,17 +2036,6 @@ export class Main extends SignalWatcher(LitElement) {
         }
 
         this.#canvasControllerRef.value.openSharePanel();
-      }}
-      @input=${(evt: InputEvent) => {
-        const inputs = evt.composedPath();
-        const input = inputs.find(
-          (el) => el instanceof BreadboardUI.Elements.HomepageSearchButton
-        );
-        if (!input) {
-          return;
-        }
-
-        this.#uiState.projectFilter = input.value;
       }}
       @change=${async (evt: Event) => {
         const [select] = evt.composedPath();

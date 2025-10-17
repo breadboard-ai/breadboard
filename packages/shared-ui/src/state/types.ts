@@ -515,7 +515,6 @@ export type UI = {
    */
   canRunMain: boolean;
   loadState: UILoadState;
-  projectFilter: string | null;
   show: Set<UIOverlays>;
   showStatusUpdateChip: boolean | null;
   toasts: Map<

@@ -140,4 +140,8 @@ export const type = css`
   .w-400 {
     font-weight: 400;
   }
+
+  .ta-c {
+    text-align: center;
+  }
 ` as CSSResultGroup;
