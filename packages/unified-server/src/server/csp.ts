@@ -60,6 +60,14 @@ const CSP_CONFIG = {
     "https://feedback-pa.clients6.google.com",
     "https://accounts.google.com",
   ],
+  ["frame-ancestors"]: [
+    flags.SHELL_HOST_ORIGIN,
+    // This is slightly blurring the implied meaning of
+    // ALLOWED_REDIRECT_ORIGINS, but in practice the set of origins that we
+    // allow to override the OAuth redirect is the exactly same set of origins
+    // that are using the embedded iframe integration.
+    ...flags.ALLOWED_REDIRECT_ORIGINS,
+  ],
   ["media-src"]: ["'self'", "blob:", "data:"],
   ["base-uri"]: ["'none'"],
 };
