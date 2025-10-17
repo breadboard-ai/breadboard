@@ -27,14 +27,6 @@ import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 const DEFAULT_BACKEND_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
 
-type FetchErrorResponse = {
-  $error: string;
-  status: number;
-  statusText: string;
-  contentType: string;
-  responseHeaders: Record<string, string>;
-};
-
 type Chunk = {
   mimetype: string;
   data: string;
@@ -87,15 +79,6 @@ type ExecutionOutput = {
   requestedModel?: string;
   executedModel?: string;
 };
-
-function maybeExtractError(e: string): string {
-  try {
-    const parsed = JSON.parse(e);
-    return parsed.error.message;
-  } catch {
-    return e;
-  }
-}
 
 const GCS_PATH_PREFIX = "text/gcs-path/";
 
@@ -164,21 +147,16 @@ async function executeTool<
       ];
     })
   );
-  const response = await executeStep(
-    caps,
-    moduleArgs,
-    {
-      planStep: {
-        stepName: api,
-        modelApi: api,
-        output: "data",
-        inputParameters,
-        isListOutput: false,
-      },
-      execution_inputs,
+  const response = await executeStep(caps, moduleArgs, {
+    planStep: {
+      stepName: api,
+      modelApi: api,
+      output: "data",
+      inputParameters,
+      isListOutput: false,
     },
-    true
-  );
+    execution_inputs,
+  });
   if (!ok(response)) return response;
 
   const {
@@ -212,8 +190,7 @@ async function getBackendUrl(caps: Capabilities) {
 async function executeStep(
   caps: Capabilities,
   { fetchWithCreds }: A2ModuleFactoryArgs,
-  body: ExecuteStepRequest,
-  useFetchWithCreds = false
+  body: ExecuteStepRequest
 ): Promise<Outcome<ExecutionOutput>> {
   const model = body.planStep.options?.modelName || body.planStep.stepName;
   const reporter = new StreamableReporter(caps, {
@@ -231,63 +208,30 @@ async function executeStep(
       data: [],
     });
     let response: ExecuteStepResponse;
-    if (useFetchWithCreds) {
-      try {
-        const fetchResponse = await fetchWithCreds(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        });
-        if (!fetchResponse.ok) {
-          return reporter.sendError(
-            err(await fetchResponse.text(), {
-              origin: "server",
-              model,
-            })
-          );
-        }
-        response = await fetchResponse.json();
-      } catch (e) {
+    try {
+      const fetchResponse = await fetchWithCreds(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      if (!fetchResponse.ok) {
         return reporter.sendError(
-          err((e as Error).message, {
+          err(await fetchResponse.text(), {
             origin: "server",
             model,
           })
         );
       }
-    } else {
-      const fetchResult = await caps.fetch({
-        url: url,
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: body,
-      });
-      if (!ok(fetchResult)) {
-        const { status, $error: errObject } = fetchResult as FetchErrorResponse;
-        console.warn("Error response", fetchResult);
-        if (!status) {
-          if (errObject) {
-            return reporter.sendError(
-              err(maybeExtractError(errObject), {
-                origin: "server",
-                model,
-              })
-            );
-          }
-          return reporter.sendError(
-            err("Unknown error", { origin: "server", model })
-          );
-        }
-        return err(maybeExtractError(errObject), {
+      response = await fetchResponse.json();
+    } catch (e) {
+      return reporter.sendError(
+        err((e as Error).message, {
           origin: "server",
           model,
-        });
-      }
-      response = fetchResult.response as ExecuteStepResponse;
+        })
+      );
     }
     if (!response) {
       return await reporter.sendError(

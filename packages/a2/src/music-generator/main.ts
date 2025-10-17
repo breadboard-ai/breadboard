@@ -75,7 +75,7 @@ async function callMusicGen(
     execution_inputs: executionInputs,
     output_gcs_config: { bucket_name: bucketId },
   } satisfies ExecuteStepRequest;
-  const response = await executeStep(caps, moduleArgs, body, true);
+  const response = await executeStep(caps, moduleArgs, body);
   if (!ok(response)) return response;
 
   return response.chunks.at(0)!;
