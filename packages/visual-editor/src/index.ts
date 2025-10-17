@@ -530,7 +530,6 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.#boardServers = this.#runtime.board.getBoardServers() || [];
     this.#uiState = this.#runtime.state.getOrCreateUIState();
-    console.log("aomarks init UI state", this.#uiState);
     if (parsedUrl.page === "graph") {
       const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
       ActionTracker.load(this.#uiState.mode, shared);

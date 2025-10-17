@@ -50,12 +50,20 @@ declare global {
 export async function createGoogleDriveBoardServer(
   title: string,
   user: User,
+  tokenVendor?: TokenVendor,
   googleDriveClient?: GoogleDriveClient
 ) {
   if (!googleDriveClient) {
     console.error(
       "The Google Drive board server could not be initialized because" +
         " a GoogleDriveClient was not provided"
+    );
+    return null;
+  }
+  if (!tokenVendor) {
+    console.error(
+      "The Google Drive board server could not be initialized because" +
+        " a TokenVendor was not provided"
     );
     return null;
   }
@@ -66,6 +74,7 @@ export async function createGoogleDriveBoardServer(
   return GoogleDriveBoardServer.from(
     title,
     user,
+    tokenVendor,
     googleDriveClient,
     googleDrivePublishPermissions,
     userFolderName,
@@ -74,6 +83,7 @@ export async function createGoogleDriveBoardServer(
 }
 
 export async function getBoardServers(
+  tokenVendor?: TokenVendor,
   googleDriveClient?: GoogleDriveClient
 ): Promise<BoardServer[]> {
   const storeUrls = await readAllServers();
@@ -89,7 +99,12 @@ export async function getBoardServers(
       }
 
       if (url.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
-        return createGoogleDriveBoardServer(title, user, googleDriveClient);
+        return createGoogleDriveBoardServer(
+          title,
+          user,
+          tokenVendor,
+          googleDriveClient
+        );
       }
 
       console.warn(`Unsupported store URL: ${url}`);
@@ -106,7 +121,7 @@ export async function connectToBoardServer(
   tokenVendor?: TokenVendor,
   googleDriveClient?: GoogleDriveClient
 ): Promise<{ title: string; url: string } | null> {
-  const existingServers = await getBoardServers(googleDriveClient);
+  const existingServers = await getBoardServers(tokenVendor, googleDriveClient);
   if (location) {
     if (location.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
       const existingServer = existingServers.find(
