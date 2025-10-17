@@ -80,6 +80,7 @@ export class GoogleDriveDebugPanel extends LitElement {
         this.#googleDriveBoardServer = GoogleDriveBoardServer.from(
           "Google Drive",
           { username: "", apiKey: "", secrets: new Map() },
+          this.tokenVendor,
           this.googleDriveClient,
           [],
           CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_USER_FOLDER_NAME ||
