@@ -40,7 +40,7 @@ export default {
     str: "Edit title and description...",
   },
   COMMAND_COPY_PROJECT: {
-    str: "Copy Flow",
+    str: "Duplicate App",
   },
   COMMAND_OPEN_MODULE: {
     str: "Open Module...",
