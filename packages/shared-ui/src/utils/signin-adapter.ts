@@ -33,6 +33,8 @@ export { SigninAdapter };
 
 export const SIGN_IN_CONNECTION_ID = "$sign-in";
 
+export type SignInResult = { ok: true } | { ok: false; error: SignInError };
+
 function makeSignInUrl(opts: {
   redirectUri: string;
   nonce: string;
@@ -97,7 +99,6 @@ class SigninAdapter {
   readonly #globalConfig: GlobalConfig;
   readonly #settingsHelper: SettingsHelper;
   readonly #handleSignInRequest?: (scopes?: OAuthScope[]) => Promise<boolean>;
-  #nonce = crypto.randomUUID();
   #state: SigninAdapterState;
   readonly fetchWithCreds: typeof globalThis.fetch;
 
@@ -205,7 +206,10 @@ class SigninAdapter {
     if (token.state === "expired") {
       token = await token.refresh();
       if (token.state === "signedout") {
-        if ((await this.#signIn()).ok) {
+        // TODO(aomarks) I'm virtually certain this never worked, because we're
+        // definitely past an async boundary, which would mean the browser won't
+        // let us open a window.
+        if ((await this.signIn()).ok) {
           token = this.#tokenVendor.getToken();
         }
       }
@@ -244,42 +248,68 @@ class SigninAdapter {
     }
   }
 
-  async getSigninUrl(scopes?: OAuthScope[]): Promise<string> {
-    return makeSignInUrl({
+  async #makeSignInUrlAndNonce(
+    scopes: OAuthScope[]
+  ): Promise<{ url: string; nonce: string }> {
+    scopes = [...scopes]; // Copy in case a caller mutates the array later.
+    const nonce = crypto.randomUUID();
+    const url = makeSignInUrl({
       redirectUri:
         getEmbedderRedirectUri() ??
         new URL("/oauth/", window.location.origin).href,
-      nonce: this.#nonce,
+      nonce,
       scopes,
     });
+    return { url, nonce };
   }
 
-  async signIn(
-    scopes?: OAuthScope[]
-  ): Promise<{ ok: true } | { ok: false; error: SignInError }> {
-    try {
-      return await this.#signIn(scopes);
-    } catch (e) {
-      console.error(`[signin] Unhandled error`, e);
+  async signIn(scopes: OAuthScope[] = []): Promise<SignInResult> {
+    // Important! There must be no awaits before the window.open call, because
+    // we need it to open syncronously so that the browser will allow it in
+    // response to a click event.
+    const signInUrlAndNoncePromise = this.#makeSignInUrlAndNonce(scopes);
+    const popupWidth = 900;
+    const popupHeight = 850;
+    const popup = window.open(
+      "about:blank",
+      "Sign in to Google",
+      `
+      width=${popupWidth}
+      height=${popupHeight}
+      left=${window.screenX + window.innerWidth / 2 - popupWidth / 2}
+      top=${window.screenY + window.innerHeight / 2 - popupHeight / 2 + /* A little extra to account for the tabs, url bar etc.*/ 60}
+      `
+    );
+    if (!popup) {
       return {
         ok: false,
-        error: { code: "other", userMessage: `Unhandled error` },
+        error: { code: "other", userMessage: "Popups are disabled" },
       };
     }
+    const { url, nonce } = await signInUrlAndNoncePromise;
+    const resultPromise = this.#listenForSignInResult(nonce, scopes).catch(
+      (e): SignInResult => {
+        console.error(`[signin] Unhandled error`, e);
+        return {
+          ok: false,
+          error: { code: "other", userMessage: `Unhandled error` },
+        };
+      }
+    );
+    popup.location.href = url;
+    return await resultPromise;
   }
 
-  async #signIn(
+  async #listenForSignInResult(
+    nonce: string,
     scopes?: OAuthScope[]
-  ): Promise<{ ok: true } | { ok: false; error: SignInError }> {
+  ): Promise<SignInResult> {
     console.info(`[signin] Begin sign-in`);
     const now = Date.now();
     // The OAuth broker page will know to broadcast the token on this unique
     // channel because it also knows the nonce (since we pack that in the OAuth
     // "state" parameter).
-    const channelName = oauthTokenBroadcastChannelName(this.#nonce);
-    // Reset the nonce in case the user signs out and signs back in again, since
-    // we don't want to ever mix up different requests.
-    this.#nonce = crypto.randomUUID();
+    const channelName = oauthTokenBroadcastChannelName(nonce);
     const channel = new BroadcastChannel(channelName);
     console.info(`[signin] Awaiting grant response`, channelName);
     const grantResponse = await new Promise<GrantResponse>((resolve) => {
