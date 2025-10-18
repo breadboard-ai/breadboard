@@ -17,9 +17,8 @@ import { env } from "process";
 
 config();
 
-// const objective = `
-// <objective>
-// Stitch these images into a video, with each image as a key frame in the video:
+// const objective = `Stitch these images into a video, with each image as a key
+// frame in the video:
 
 // <file src="/vfs/image1.png"/>
 // <file src="/vfs/image2.png"/>
@@ -27,19 +26,16 @@ config();
 // <file src="/vfs/image4.png"/>
 // <file src="/vfs/image5.png"/>
 // <file src="/vfs/image6.png"/>
-// </objective>
 // `;
 
-// const objective = `<objective>Generate a poem about opals</objective>`;
+// const objective = `Generate a poem about opals`;
 
-// const objective = `<objective>Make a video of a monkey jumping.</objective>`;
+// const objective = `Make a video of a monkey jumping.`;
 
-const objective = `<objective>
-Create a video from two user-supplied images. When asking for second image,
-show the first image as part of user prompt.
+const objective = `Create a video from two user-supplied images. When asking
+for second image, show the first image as part of user prompt.
 After images collected, show both images and ask to confirm that this is what
-the user wants. If not, start over.
-</objective>`;
+the user wants. If not, start over.`;
 
 const systemInstruction = `You are an AI agent. Your job is to fulfill the 
 objective, specified at the start of the conversation context.
@@ -59,13 +55,17 @@ Otherwise, go on.
 
 Create a dependency tree for the tasks. Which tasks can be executed 
 concurrently and which ones must be executed serially?
+
 When faced with the choice of serial or concurrent execution, choose 
 concurrency to save precious time.
+
 Finally, formulate the precise plan for  will reseult in
 fulfilling the objective. Outline this plan on a scratchpad, so that it's clear
 to you how to execute it.
+
 Now start to execute the plan. For concurrent tasks, make sure to generate 
 multiple funciton calls at the same time. 
+
 After each task, examine: is the plan still good? Did the results of the tasks
 affect the outcome? If not, keep going. Otherwise, reexamine the plan and
 adjust it accordingly.
@@ -271,7 +271,7 @@ populated when the "type" is "image", or "video".`,
 
 type Fn = (args: Record<string, string>) => Record<string, string>;
 
-let videoCount = 0;
+let fileCount = 0;
 let terminateLoop = false;
 
 const functions = new Map<string, Fn>([
@@ -279,23 +279,23 @@ const functions = new Map<string, Fn>([
     "video_from_frames",
     ({ startFrame, endFrame }) => {
       console.log("Generating video from", startFrame, "to", endFrame);
-      return { video: `/vfs/video${++videoCount}.mp4` };
+      return { video: `/vfs/video${++fileCount}.mp4` };
     },
   ],
   [
     "concatenate_videos",
     ({ videos }) => {
       console.log("Concatenating videos", videos);
-      return { video: `/vfs/video${++videoCount}.mp4` };
+      return { video: `/vfs/video${++fileCount}.mp4` };
     },
   ],
   [
     "system_objective_fulfilled",
     ({ user_message, objective_outcomes, intermediate_outcomes }) => {
-      console.log("Objective fulfilled");
-      console.log("User message", user_message);
-      console.log("Objective outcomes", objective_outcomes);
-      console.log("Intermediate outcomes", intermediate_outcomes);
+      console.log("SUCCESS! Objective fulfilled");
+      console.log("User message:", user_message);
+      console.log("Objective outcomes:", objective_outcomes);
+      console.log("Intermediate outcomes:", intermediate_outcomes);
       terminateLoop = true;
       return {};
     },
@@ -303,8 +303,8 @@ const functions = new Map<string, Fn>([
   [
     "system_failed_to_fulfill_objective",
     ({ user_message }) => {
-      console.log("FAILED to fulfill the objective");
-      console.log("User message", user_message);
+      console.log("FAILURE! Failed to fulfill the objective");
+      console.log("User message:", user_message);
       terminateLoop = true;
       return {};
     },
@@ -312,14 +312,14 @@ const functions = new Map<string, Fn>([
   [
     "system_write_text_to_file",
     ({ text }) => {
-      console.log("Writing text to file", text);
-      return { file_path: `text${++videoCount}.md` };
+      console.log("Writing text to file:", text);
+      return { file_path: `/vfs/text${++fileCount}.md` };
     },
   ],
   [
     "system_request_user_input",
     ({ user_message, type }) => {
-      console.log("Requesting user input", user_message);
+      console.log("Requesting user input:", user_message);
       if (type === "confirm") {
         return { text: "yes" };
       }
@@ -327,7 +327,7 @@ const functions = new Map<string, Fn>([
         throw new Error("Unsupported type");
       }
       const ext = type === "image" ? "jpeg" : "mp4";
-      return { file_path: `${type}${++videoCount}.${ext}` };
+      return { file_path: `/vfs/${type}${++fileCount}.${ext}` };
     },
   ],
 ]);
@@ -335,7 +335,13 @@ const functions = new Map<string, Fn>([
 const gemini = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
 const contents: Content[] = [
   {
-    parts: [{ text: objective }],
+    parts: [
+      {
+        text: `<objective>
+${objective}
+</objective>`,
+      },
+    ],
   },
 ];
 
@@ -344,15 +350,10 @@ outerLoop: while (!terminateLoop) {
     model: "gemini-flash-latest",
     contents,
     config: {
-      thinkingConfig: {
-        includeThoughts: true,
-        thinkingBudget: -1,
-      },
+      thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
       systemInstruction,
       toolConfig: {
-        functionCallingConfig: {
-          mode: FunctionCallingConfigMode.ANY,
-        },
+        functionCallingConfig: { mode: FunctionCallingConfigMode.ANY },
       },
       tools: [{ functionDeclarations }],
     },
@@ -364,9 +365,7 @@ outerLoop: while (!terminateLoop) {
       console.log("THOUGHT", part.text);
     }
   }
-  const { text, functionCalls } = generated;
-  console.log("TEXT", text);
-  console.log("CALLS", functionCalls);
+  const { functionCalls } = generated;
   contents.push(generated.candidates!.at(0)!.content!);
   if (functionCalls) {
     for (const functionCall of functionCalls) {
