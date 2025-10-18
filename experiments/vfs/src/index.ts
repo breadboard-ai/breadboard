@@ -71,7 +71,14 @@ affect the outcome? If not, keep going. Otherwise, reexamine the plan and
 adjust it accordingly.
 `;
 
-const objectiveFulfilledFunction: FunctionDeclaration = {
+type Fn = FunctionDeclaration & {
+  handler: (args: Record<string, string>) => Record<string, string>;
+};
+
+let fileCount = 0;
+let terminateLoop = false;
+
+const objectiveFulfilledFunction: Fn = {
   name: "system_objective_fulfilled",
   description: `Inidicates completion of the overall objective. 
 Call only when the specified objective is entirely fulfilled`,
@@ -104,9 +111,17 @@ result of fulfilling the objective `,
     },
     required: ["user_message", "objective_outcomes", "intermediate_outcomes"],
   },
+  handler: ({ user_message, objective_outcomes, intermediate_outcomes }) => {
+    console.log("SUCCESS! Objective fulfilled");
+    console.log("User message:", user_message);
+    console.log("Objective outcomes:", objective_outcomes);
+    console.log("Intermediate outcomes:", intermediate_outcomes);
+    terminateLoop = true;
+    return {};
+  },
 };
 
-const failedToFulfillFunction: FunctionDeclaration = {
+const failedToFulfillFunction: Fn = {
   name: "system_failed_to_fulfill_objective",
   description: `Inidicates that the agent failed to fulfill of the overall 
 objective. Call ONLY when all means of fulfilling the objective have been
@@ -123,9 +138,15 @@ is impossible to fulfill and offer helpful suggestions`,
     },
     required: ["user_message"],
   },
+  handler: ({ user_message }) => {
+    console.log("FAILURE! Failed to fulfill the objective");
+    console.log("User message:", user_message);
+    terminateLoop = true;
+    return {};
+  },
 };
 
-const functionDeclarations: FunctionDeclaration[] = [
+const functionDeclarations: Fn[] = [
   {
     name: "video_from_frames",
     description:
@@ -156,6 +177,10 @@ pointing to an existing image`,
       },
       required: ["video"],
     },
+    handler: ({ startFrame, endFrame }) => {
+      console.log("Generating video from", startFrame, "to", endFrame);
+      return { video: `/vfs/video${++fileCount}.mp4` };
+    },
   },
   {
     name: "concatenate_videos",
@@ -184,6 +209,10 @@ The videos will be concatented in the order they are provided`,
       },
       required: ["video"],
     },
+    handler: ({ videos }) => {
+      console.log("Concatenating videos", videos);
+      return { video: `/vfs/video${++fileCount}.mp4` };
+    },
   },
   {
     name: "system_write_text_to_file",
@@ -206,6 +235,10 @@ The videos will be concatented in the order they are provided`,
           description: "The VS path to the file containing the provided text",
         },
       },
+    },
+    handler: ({ text }) => {
+      console.log("Writing text to file:", text);
+      return { file_path: `/vfs/text${++fileCount}.md` };
     },
   },
   {
@@ -264,64 +297,10 @@ populated when the "type" is "image", or "video".`,
         },
       },
     },
-  },
-  objectiveFulfilledFunction,
-  failedToFulfillFunction,
-];
-
-type Fn = (args: Record<string, string>) => Record<string, string>;
-
-let fileCount = 0;
-let terminateLoop = false;
-
-const functions = new Map<string, Fn>([
-  [
-    "video_from_frames",
-    ({ startFrame, endFrame }) => {
-      console.log("Generating video from", startFrame, "to", endFrame);
-      return { video: `/vfs/video${++fileCount}.mp4` };
-    },
-  ],
-  [
-    "concatenate_videos",
-    ({ videos }) => {
-      console.log("Concatenating videos", videos);
-      return { video: `/vfs/video${++fileCount}.mp4` };
-    },
-  ],
-  [
-    "system_objective_fulfilled",
-    ({ user_message, objective_outcomes, intermediate_outcomes }) => {
-      console.log("SUCCESS! Objective fulfilled");
-      console.log("User message:", user_message);
-      console.log("Objective outcomes:", objective_outcomes);
-      console.log("Intermediate outcomes:", intermediate_outcomes);
-      terminateLoop = true;
-      return {};
-    },
-  ],
-  [
-    "system_failed_to_fulfill_objective",
-    ({ user_message }) => {
-      console.log("FAILURE! Failed to fulfill the objective");
-      console.log("User message:", user_message);
-      terminateLoop = true;
-      return {};
-    },
-  ],
-  [
-    "system_write_text_to_file",
-    ({ text }) => {
-      console.log("Writing text to file:", text);
-      return { file_path: `/vfs/text${++fileCount}.md` };
-    },
-  ],
-  [
-    "system_request_user_input",
-    ({ user_message, type }) => {
+    handler: ({ user_message, type }) => {
       console.log("Requesting user input:", user_message);
       if (type === "confirm") {
-        return { text: "yes" };
+        return { text: "yes" } as Record<string, string>;
       }
       if (type !== "image" && type !== "video") {
         throw new Error("Unsupported type");
@@ -329,8 +308,14 @@ const functions = new Map<string, Fn>([
       const ext = type === "image" ? "jpeg" : "mp4";
       return { file_path: `/vfs/${type}${++fileCount}.${ext}` };
     },
-  ],
-]);
+  },
+  objectiveFulfilledFunction,
+  failedToFulfillFunction,
+];
+
+const functions = new Map<string, Fn>(
+  functionDeclarations.map((item) => [item.name!, item])
+);
 
 const gemini = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
 const contents: Content[] = [
@@ -371,11 +356,11 @@ outerLoop: while (!terminateLoop) {
     for (const functionCall of functionCalls) {
       const { name, args } = functionCall;
       const fn = functions.get(name!);
-      if (!fn) {
+      if (!fn || !fn.handler) {
         console.error(`Unknown function`, name);
         break outerLoop;
       }
-      const response = fn(args as Record<string, string>);
+      const response = fn.handler(args as Record<string, string>);
       const functionResponse: FunctionResponse = {
         name,
         response,
