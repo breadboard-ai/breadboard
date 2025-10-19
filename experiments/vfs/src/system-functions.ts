@@ -4,14 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as readline from "node:readline/promises";
+import { stdin as input, stdout as output } from "node:process";
+import * as path from "node:path";
+import { constants } from "node:fs";
+import { access } from "node:fs/promises";
+
 import z from "zod";
 import { defineFunction } from "./define-function";
 
 export { systemFunctions, videoFunctions, terminateLoop };
 
+const FILES_DIR = path.join(import.meta.dirname, "../files");
+
 let fileCount = 0;
 let terminateLoop = false;
-let confirmYes = false;
 
 const systemFunctions = [
   defineFunction(
@@ -126,20 +133,59 @@ uploaded by the user, populated when the "type" is "image", or "video".`),
       },
     },
     async ({ user_message, type }) => {
-      console.log("Requesting user input:", user_message);
-      if (type === "confirm") {
-        if (confirmYes) {
-          return { text: "yes" } as Record<string, string>;
-        } else {
-          confirmYes = true;
-          return { text: "no" };
+      const rl = readline.createInterface({ input, output });
+
+      try {
+        console.log(user_message);
+
+        switch (type) {
+          case "singleline-text":
+          case "multiline-text": {
+            const answer = await rl.question("> ");
+            return { text: answer };
+          }
+
+          case "confirm": {
+            const answer = await rl.question("> (y/n) ");
+            const formattedAnswer = answer.trim().toLowerCase();
+            return {
+              text:
+                formattedAnswer === "y" || formattedAnswer === "yes"
+                  ? "yes"
+                  : "no",
+            };
+          }
+
+          case "image":
+          case "video": {
+            const filename = await rl.question(
+              `> Please enter the filename for the ${type}: `
+            );
+
+            const fullPath = path.join(FILES_DIR, filename);
+            const ext = path.extname(filename);
+
+            try {
+              await access(fullPath, constants.R_OK);
+              console.log(`File found and accessible: ${fullPath}`);
+              // TODO: Implement actual file system.
+              return { file_path: `/vfs/${type}${++fileCount}${ext}` };
+            } catch {
+              console.error(
+                `Error: File not found or not accessible at "${fullPath}"`
+              );
+              throw new Error(`File not found: ${filename}`);
+            }
+          }
+
+          default: {
+            const exhaustiveCheck: never = type;
+            throw new Error(`Unsupported input type: "${exhaustiveCheck}"`);
+          }
         }
+      } finally {
+        rl.close();
       }
-      if (type !== "image" && type !== "video") {
-        throw new Error("Unsupported type");
-      }
-      const ext = type === "image" ? "jpeg" : "mp4";
-      return { file_path: `/vfs/${type}${++fileCount}.${ext}` };
     }
   ),
 ];

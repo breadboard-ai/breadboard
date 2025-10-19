@@ -21,16 +21,16 @@ import { FunctionDefinition } from "./define-function";
 
 config();
 
-const objective = `Stitch these images into a video, with each image as a key
-frame in the video:
+// const objective = `Stitch these images into a video, with each image as a key
+// frame in the video:
 
-<file src="/vfs/image1.png"/>
-<file src="/vfs/image2.png"/>
-<file src="/vfs/image3.png"/>
-<file src="/vfs/image4.png"/>
-<file src="/vfs/image5.png"/>
-<file src="/vfs/image6.png"/>
-`;
+// <file src="/vfs/image1.png"/>
+// <file src="/vfs/image2.png"/>
+// <file src="/vfs/image3.png"/>
+// <file src="/vfs/image4.png"/>
+// <file src="/vfs/image5.png"/>
+// <file src="/vfs/image6.png"/>
+// `;
 
 // const objective = `Generate a poem about opals`;
 
@@ -40,6 +40,25 @@ frame in the video:
 // for second image, show the first image as part of user prompt.
 // After images collected, show both images and ask to confirm that this is what
 // the user wants. If not, start over.`;
+
+// const objective = `Collect the following information from the user:
+// - name of their business
+// - location of the business
+// - type of their business
+// The user may want to ask questions or want to have a conversation that is
+// not relevant to the information. Be polite and gently steer them toward
+// collecting the information. It may take more than one try.
+
+// When you feel confident that you've collected the information, ask the user
+// to confirm`;
+
+const objective = `Have a conversation with the user, acting as the grizzled
+pirate with a kind soul. Talk for as long as it takes, until the user
+specifically signals that they're done with the conversation.
+
+After the user is done, save the summary of the conversation: just the key
+points and things that might be useful to recall in the next chat with the
+users`;
 
 const systemInstruction = `You are an AI agent. Your job is to fulfill the 
 objective, specified at the start of the conversation context.
