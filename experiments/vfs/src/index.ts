@@ -77,6 +77,7 @@ type Fn = FunctionDeclaration & {
 
 let fileCount = 0;
 let terminateLoop = false;
+let confirmYes = false;
 
 const objectiveFulfilledFunction: Fn = {
   name: "system_objective_fulfilled",
@@ -100,22 +101,22 @@ the objective.`,
           description: "A VFS path pointing at the outcome",
         },
       },
-      intermediate_outcomes: {
+      intermediate_files: {
         type: Type.ARRAY,
-        description: `Any intermediate outcomes that were produced as a 
+        description: `Any intermediate files that were produced as a 
 result of fulfilling the objective `,
         items: {
           type: Type.STRING,
         },
       },
     },
-    required: ["user_message", "objective_outcomes", "intermediate_outcomes"],
+    required: ["user_message", "objective_outcomes", "intermediate_files"],
   },
-  handler: ({ user_message, objective_outcomes, intermediate_outcomes }) => {
+  handler: ({ user_message, objective_outcomes, intermediate_files }) => {
     console.log("SUCCESS! Objective fulfilled");
     console.log("User message:", user_message);
     console.log("Objective outcomes:", objective_outcomes);
-    console.log("Intermediate outcomes:", intermediate_outcomes);
+    console.log("Intermediate files:", intermediate_files);
     terminateLoop = true;
     return {};
   },
@@ -300,7 +301,12 @@ populated when the "type" is "image", or "video".`,
     handler: ({ user_message, type }) => {
       console.log("Requesting user input:", user_message);
       if (type === "confirm") {
-        return { text: "yes" } as Record<string, string>;
+        if (confirmYes) {
+          return { text: "yes" } as Record<string, string>;
+        } else {
+          confirmYes = true;
+          return { text: "no" };
+        }
       }
       if (type !== "image" && type !== "video") {
         throw new Error("Unsupported type");
