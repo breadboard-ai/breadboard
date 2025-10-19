@@ -23,7 +23,7 @@ function getFileHandle(ext: string) {
 async function write(buffer: Buffer<ArrayBuffer>, mimeType: string) {
   await mkdir(OUT_DIR, { recursive: true });
   const name = getFilename(mimeType);
-  await writeFile(join(OUT_DIR, getFilename(mimeType)), buffer);
+  await writeFile(join(OUT_DIR, name), buffer);
   return `/vfs/${name}`;
 }
 

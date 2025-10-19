@@ -12,7 +12,7 @@ import { access } from "node:fs/promises";
 
 import z from "zod";
 import { defineFunction } from "../define-function";
-import { getFileHandle } from "../file-system";
+import { getFileHandle, write } from "../file-system";
 
 export { systemFunctions, terminateLoop };
 
@@ -86,7 +86,8 @@ is impossible to fulfill and offer helpful suggestions`),
     },
     async ({ text }) => {
       console.log("Writing text to file:", text);
-      return { file_path: getFileHandle(".md") };
+      const file_path = await write(Buffer.from(text), "text/markdown");
+      return { file_path };
     }
   ),
   defineFunction(

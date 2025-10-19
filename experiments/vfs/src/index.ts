@@ -32,8 +32,16 @@ config();
 
 // const objective = `Generate a poem about opals`;
 
-const objective = `Make a video of a monkey jumping. Use one prompt to generate
-multiple keyframe images.`;
+const objective = `Come up with five ideas for Halloween instagram posts and
+generate images for all of them. Write each post text as a file.
+Output as interleaved files: 
+
+text + image + ...
+
+For context, this is for a small coffee shop in Mountain View.`;
+
+// const objective = `Make a video of a monkey jumping. Use one prompt to generate
+// multiple keyframe images.`;
 
 // const objective = `Create a video from two user-supplied images. When asking
 // for second image, show the first image as part of user prompt.
