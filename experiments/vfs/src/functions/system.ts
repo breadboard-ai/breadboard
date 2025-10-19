@@ -11,13 +11,13 @@ import { constants } from "node:fs";
 import { access } from "node:fs/promises";
 
 import z from "zod";
-import { defineFunction } from "./define-function";
+import { defineFunction } from "../define-function";
+import { getFileHandle } from "../file-system";
 
-export { systemFunctions, videoFunctions, terminateLoop };
+export { systemFunctions, terminateLoop };
 
 const FILES_DIR = path.join(import.meta.dirname, "../files");
 
-let fileCount = 0;
 let terminateLoop = false;
 
 const systemFunctions = [
@@ -86,7 +86,7 @@ is impossible to fulfill and offer helpful suggestions`),
     },
     async ({ text }) => {
       console.log("Writing text to file:", text);
-      return { file_path: `/vfs/text${++fileCount}.md` };
+      return { file_path: getFileHandle(".md") };
     }
   ),
   defineFunction(
@@ -169,7 +169,7 @@ uploaded by the user, populated when the "type" is "image", or "video".`),
               await access(fullPath, constants.R_OK);
               console.log(`File found and accessible: ${fullPath}`);
               // TODO: Implement actual file system.
-              return { file_path: `/vfs/${type}${++fileCount}${ext}` };
+              return { file_path: getFileHandle(ext) };
             } catch {
               console.error(
                 `Error: File not found or not accessible at "${fullPath}"`
@@ -186,54 +186,6 @@ uploaded by the user, populated when the "type" is "image", or "video".`),
       } finally {
         rl.close();
       }
-    }
-  ),
-];
-
-const videoFunctions = [
-  defineFunction(
-    {
-      name: "video_from_frames",
-      description:
-        "Generates a video given two frames: starting frame and ending frame",
-      parameters: {
-        startFrame: z.string().describe(
-          `The starting frame of the video, specified as a VFS 
-  path pointing to an existing image`
-        ),
-        endFrame: z.string()
-          .describe(`The end frame of the video, specified as a VFS path
-  pointing to an existing image`),
-      },
-      response: {
-        video: z
-          .string()
-          .describe("The generated video, specified as a VFS path"),
-      },
-    },
-    async ({ startFrame, endFrame }) => {
-      console.log("Generating video from", startFrame, "to", endFrame);
-      return { video: `/vfs/video${++fileCount}.mp4` };
-    }
-  ),
-  defineFunction(
-    {
-      name: "concatenate_videos",
-      description: "Contatenates two or more videos together",
-      parameters: {
-        videos: z.array(z.string())
-          .describe(`The array of the videos to concatenate. 
-    The videos will be concatented in the order they are provided`),
-      },
-      response: {
-        video: z
-          .string()
-          .describe("The resulting video, provided as a VFS path"),
-      },
-    },
-    async ({ videos }) => {
-      console.log("Concatenating videos", videos);
-      return { video: `/vfs/video${++fileCount}.mp4` };
     }
   ),
 ];

@@ -12,25 +12,22 @@ import {
   GoogleGenAI,
 } from "@google/genai";
 import { env } from "process";
-import {
-  systemFunctions,
-  terminateLoop,
-  videoFunctions,
-} from "./system-functions";
+import { systemFunctions, terminateLoop } from "./functions/system";
 import { FunctionDefinition } from "./define-function";
+import { videoFunctions } from "./functions/video";
 
 config();
 
-// const objective = `Stitch these images into a video, with each image as a key
-// frame in the video:
+const objective = `Stitch these images into a video, with each image as a key
+frame in the video:
 
-// <file src="/vfs/image1.png"/>
-// <file src="/vfs/image2.png"/>
-// <file src="/vfs/image3.png"/>
-// <file src="/vfs/image4.png"/>
-// <file src="/vfs/image5.png"/>
-// <file src="/vfs/image6.png"/>
-// `;
+<file src="/vfs/image1.png"/>
+<file src="/vfs/image2.png"/>
+<file src="/vfs/image3.png"/>
+<file src="/vfs/image4.png"/>
+<file src="/vfs/image5.png"/>
+<file src="/vfs/image6.png"/>
+`;
 
 // const objective = `Generate a poem about opals`;
 
@@ -52,13 +49,13 @@ config();
 // When you feel confident that you've collected the information, ask the user
 // to confirm`;
 
-const objective = `Have a conversation with the user, acting as the grizzled
-pirate with a kind soul. Talk for as long as it takes, until the user
-specifically signals that they're done with the conversation.
+// const objective = `Have a conversation with the user, acting as the grizzled
+// pirate with a kind soul. Talk for as long as it takes, until the user
+// specifically signals that they're done with the conversation.
 
-After the user is done, save the summary of the conversation: just the key
-points and things that might be useful to recall in the next chat with the
-users`;
+// After the user is done, save the summary of the conversation: just the key
+// points and things that might be useful to recall in the next chat with the
+// users`;
 
 const systemInstruction = `You are an AI agent. Your job is to fulfill the 
 objective, specified at the start of the conversation context.
