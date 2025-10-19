@@ -15,23 +15,25 @@ import { env } from "process";
 import { systemFunctions, terminateLoop } from "./functions/system";
 import { FunctionDefinition } from "./define-function";
 import { videoFunctions } from "./functions/video";
+import { generateFunctions } from "./functions/generate";
 
 config();
 
-const objective = `Stitch these images into a video, with each image as a key
-frame in the video:
+// const objective = `Stitch these images into a video, with each image as a key
+// frame in the video:
 
-<file src="/vfs/image1.png"/>
-<file src="/vfs/image2.png"/>
-<file src="/vfs/image3.png"/>
-<file src="/vfs/image4.png"/>
-<file src="/vfs/image5.png"/>
-<file src="/vfs/image6.png"/>
-`;
+// <file src="/vfs/image1.png"/>
+// <file src="/vfs/image2.png"/>
+// <file src="/vfs/image3.png"/>
+// <file src="/vfs/image4.png"/>
+// <file src="/vfs/image5.png"/>
+// <file src="/vfs/image6.png"/>
+// `;
 
 // const objective = `Generate a poem about opals`;
 
-// const objective = `Make a video of a monkey jumping.`;
+const objective = `Make a video of a monkey jumping. Use one prompt to generate
+multiple keyframe images.`;
 
 // const objective = `Create a video from two user-supplied images. When asking
 // for second image, show the first image as part of user prompt.
@@ -91,7 +93,11 @@ affect the outcome? If not, keep going. Otherwise, reexamine the plan and
 adjust it accordingly.
 `;
 
-const functionDeclarations = [...systemFunctions, ...videoFunctions];
+const functionDeclarations = [
+  ...systemFunctions,
+  ...generateFunctions,
+  ...videoFunctions,
+];
 
 const functions = new Map<string, FunctionDefinition>(
   functionDeclarations.map((item) => [item.name!, item])
