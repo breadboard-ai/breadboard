@@ -8,34 +8,38 @@ import { config } from "dotenv";
 import {
   Content,
   FunctionCallingConfigMode,
-  FunctionDeclaration,
   FunctionResponse,
   GoogleGenAI,
-  Type,
 } from "@google/genai";
 import { env } from "process";
+import {
+  systemFunctions,
+  terminateLoop,
+  videoFunctions,
+} from "./system-functions";
+import { FunctionDefinition } from "./define-function";
 
 config();
 
-// const objective = `Stitch these images into a video, with each image as a key
-// frame in the video:
+const objective = `Stitch these images into a video, with each image as a key
+frame in the video:
 
-// <file src="/vfs/image1.png"/>
-// <file src="/vfs/image2.png"/>
-// <file src="/vfs/image3.png"/>
-// <file src="/vfs/image4.png"/>
-// <file src="/vfs/image5.png"/>
-// <file src="/vfs/image6.png"/>
-// `;
+<file src="/vfs/image1.png"/>
+<file src="/vfs/image2.png"/>
+<file src="/vfs/image3.png"/>
+<file src="/vfs/image4.png"/>
+<file src="/vfs/image5.png"/>
+<file src="/vfs/image6.png"/>
+`;
 
 // const objective = `Generate a poem about opals`;
 
 // const objective = `Make a video of a monkey jumping.`;
 
-const objective = `Create a video from two user-supplied images. When asking
-for second image, show the first image as part of user prompt.
-After images collected, show both images and ask to confirm that this is what
-the user wants. If not, start over.`;
+// const objective = `Create a video from two user-supplied images. When asking
+// for second image, show the first image as part of user prompt.
+// After images collected, show both images and ask to confirm that this is what
+// the user wants. If not, start over.`;
 
 const systemInstruction = `You are an AI agent. Your job is to fulfill the 
 objective, specified at the start of the conversation context.
@@ -71,255 +75,9 @@ affect the outcome? If not, keep going. Otherwise, reexamine the plan and
 adjust it accordingly.
 `;
 
-type Fn = FunctionDeclaration & {
-  handler: (args: Record<string, string>) => Record<string, string>;
-};
+const functionDeclarations = [...systemFunctions, ...videoFunctions];
 
-let fileCount = 0;
-let terminateLoop = false;
-let confirmYes = false;
-
-const objectiveFulfilledFunction: Fn = {
-  name: "system_objective_fulfilled",
-  description: `Inidicates completion of the overall objective. 
-Call only when the specified objective is entirely fulfilled`,
-  parameters: {
-    type: Type.OBJECT,
-    properties: {
-      user_message: {
-        type: Type.STRING,
-        description: `Text to display to the user upon fulfillment 
-of the objective. Use the <file src="path" /> syntax to embed the outcome 
-in the text`,
-      },
-      objective_outcomes: {
-        type: Type.ARRAY,
-        description: `The array of outcomes that were requested in 
-the objective.`,
-        items: {
-          type: Type.STRING,
-          description: "A VFS path pointing at the outcome",
-        },
-      },
-      intermediate_files: {
-        type: Type.ARRAY,
-        description: `Any intermediate files that were produced as a 
-result of fulfilling the objective `,
-        items: {
-          type: Type.STRING,
-        },
-      },
-    },
-    required: ["user_message", "objective_outcomes", "intermediate_files"],
-  },
-  handler: ({ user_message, objective_outcomes, intermediate_files }) => {
-    console.log("SUCCESS! Objective fulfilled");
-    console.log("User message:", user_message);
-    console.log("Objective outcomes:", objective_outcomes);
-    console.log("Intermediate files:", intermediate_files);
-    terminateLoop = true;
-    return {};
-  },
-};
-
-const failedToFulfillFunction: Fn = {
-  name: "system_failed_to_fulfill_objective",
-  description: `Inidicates that the agent failed to fulfill of the overall 
-objective. Call ONLY when all means of fulfilling the objective have been
-exhausted.`,
-  parameters: {
-    type: Type.OBJECT,
-    properties: {
-      user_message: {
-        type: Type.STRING,
-        description: `Text to display to the user upon admitting failure to 
-fulfill the objective. Provide a friendly explanation of why the objective
-is impossible to fulfill and offer helpful suggestions`,
-      },
-    },
-    required: ["user_message"],
-  },
-  handler: ({ user_message }) => {
-    console.log("FAILURE! Failed to fulfill the objective");
-    console.log("User message:", user_message);
-    terminateLoop = true;
-    return {};
-  },
-};
-
-const functionDeclarations: Fn[] = [
-  {
-    name: "video_from_frames",
-    description:
-      "Generates a video given two frames: starting frame and ending frame",
-    parameters: {
-      type: Type.OBJECT,
-      properties: {
-        startFrame: {
-          type: Type.STRING,
-          description: `The starting frame of the video, specified as a VFS 
-path pointing to an existing image`,
-        },
-        endFrame: {
-          type: Type.STRING,
-          description: `The end frame of the video, specified as a VFS path
-pointing to an existing image`,
-        },
-      },
-      required: ["startFrame", "endFrame"],
-    },
-    response: {
-      type: Type.OBJECT,
-      properties: {
-        video: {
-          type: Type.STRING,
-          description: "The generated video, specified as a VFS path",
-        },
-      },
-      required: ["video"],
-    },
-    handler: ({ startFrame, endFrame }) => {
-      console.log("Generating video from", startFrame, "to", endFrame);
-      return { video: `/vfs/video${++fileCount}.mp4` };
-    },
-  },
-  {
-    name: "concatenate_videos",
-    description: "Contatenates two or more videos together",
-    parameters: {
-      type: Type.OBJECT,
-      properties: {
-        videos: {
-          type: Type.ARRAY,
-          description: `The array of the videos to concatenate. 
-The videos will be concatented in the order they are provided`,
-          items: {
-            type: Type.STRING,
-          },
-        },
-      },
-      required: ["videos"],
-    },
-    response: {
-      type: Type.OBJECT,
-      properties: {
-        video: {
-          type: Type.STRING,
-          description: "The resulting video, provided as a VFS path",
-        },
-      },
-      required: ["video"],
-    },
-    handler: ({ videos }) => {
-      console.log("Concatenating videos", videos);
-      return { video: `/vfs/video${++fileCount}.mp4` };
-    },
-  },
-  {
-    name: "system_write_text_to_file",
-    description: "Writes provided text to a VFS file",
-    parameters: {
-      type: Type.OBJECT,
-      properties: {
-        text: {
-          type: Type.STRING,
-          description: `The text to write into a VFS file`,
-        },
-      },
-      required: ["text"],
-    },
-    response: {
-      type: Type.OBJECT,
-      properties: {
-        file_path: {
-          type: Type.STRING,
-          description: "The VS path to the file containing the provided text",
-        },
-      },
-    },
-    handler: ({ text }) => {
-      console.log("Writing text to file:", text);
-      return { file_path: `/vfs/text${++fileCount}.md` };
-    },
-  },
-  {
-    name: "system_request_user_input",
-    description: `Requests input from a user. Use this function to obtain
-additional information or confirmation from the user. Use only when necessary.
-Avoid excessive requests to the user.`,
-    parameters: {
-      type: Type.OBJECT,
-      properties: {
-        user_message: {
-          type: Type.STRING,
-          description: `Text to display to the user when requesting input.
-Use the <file src="path" /> syntax to embed any files in the text`,
-        },
-        type: {
-          type: Type.STRING,
-          enum: [
-            "singleline-text",
-            "multiline-text",
-            "confirm",
-            "image",
-            "video",
-          ],
-          description: `Type of the input requested.
-- Use "singleline-text" to request a single line of text. Useful for chat-like
-interactions, when only a brief text is requested. The requested text will be 
-delivered as "text" response. 
-- Use "multiline-text" to request multi-line text. Useful when requesting a 
-longer text, like a review, critique, further instructions, etc. The requested
-text will be delivered as "text" response.
-- Use "confirm" to request confirmation on an action. Use this only
-when specifically requested by the objective. The confirmation will be 
-delivered as "yes" or "no" in "text" response.
-- Use "image" to request an image. Once the user uploads the image, it will be
-delivered as "file_path" response.
-- Use "video" to request a video. Once the user uploads the video, it will be
-delivered as "file_path" response.
-`,
-        },
-      },
-      required: ["user_message", "type"],
-    },
-    response: {
-      type: Type.OBJECT,
-      properties: {
-        text: {
-          type: Type.STRING,
-          description: `The text response from the user, populated when the
-"type" is "singleline-text", "multiline-text", or "confirm".`,
-        },
-        file_path: {
-          type: Type.STRING,
-          description: `The VFS path to the file, uploaded by the user,
-populated when the "type" is "image", or "video".`,
-        },
-      },
-    },
-    handler: ({ user_message, type }) => {
-      console.log("Requesting user input:", user_message);
-      if (type === "confirm") {
-        if (confirmYes) {
-          return { text: "yes" } as Record<string, string>;
-        } else {
-          confirmYes = true;
-          return { text: "no" };
-        }
-      }
-      if (type !== "image" && type !== "video") {
-        throw new Error("Unsupported type");
-      }
-      const ext = type === "image" ? "jpeg" : "mp4";
-      return { file_path: `/vfs/${type}${++fileCount}.${ext}` };
-    },
-  },
-  objectiveFulfilledFunction,
-  failedToFulfillFunction,
-];
-
-const functions = new Map<string, Fn>(
+const functions = new Map<string, FunctionDefinition>(
   functionDeclarations.map((item) => [item.name!, item])
 );
 
@@ -366,7 +124,7 @@ outerLoop: while (!terminateLoop) {
         console.error(`Unknown function`, name);
         break outerLoop;
       }
-      const response = fn.handler(args as Record<string, string>);
+      const response = await fn.handler(args as Record<string, string>);
       const functionResponse: FunctionResponse = {
         name,
         response,

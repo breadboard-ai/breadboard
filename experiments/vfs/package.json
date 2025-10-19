@@ -12,7 +12,9 @@
   "description": "",
   "dependencies": {
     "@google/genai": "^1.25.0",
-    "dotenv": "^17.2.3"
+    "dotenv": "^17.2.3",
+    "zod": "^3.24.1",
+    "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
     "tsx": "^4.20.6"

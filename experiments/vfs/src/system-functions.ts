@@ -1,0 +1,193 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import z from "zod";
+import { defineFunction } from "./define-function";
+
+export { systemFunctions, videoFunctions, terminateLoop };
+
+let fileCount = 0;
+let terminateLoop = false;
+let confirmYes = false;
+
+const systemFunctions = [
+  defineFunction(
+    {
+      name: "system_objective_fulfilled",
+      description: `Inidicates completion of the overall objective. 
+Call only when the specified objective is entirely fulfilled`,
+      parameters: {
+        user_message: z.string()
+          .describe(`Text to display to the user upon fulfillment of the objective. 
+Use the <file src="path" /> syntax to embed the outcome in the text`),
+        objective_outcomes: z
+          .array(z.string().describe(`A VFS path pointing at the outcome`))
+          .describe(
+            `The array of outcomes that were requested in the objective`
+          ),
+        intermediate_files: z.array(
+          z.string().describe(`A VFS path pointing at the outcome`)
+            .describe(`Any intermediate files that were produced as a result 
+of fulfilling the objective `)
+        ),
+      },
+    },
+    async ({ user_message, objective_outcomes, intermediate_files }) => {
+      console.log("SUCCESS! Objective fulfilled");
+      console.log("User message:", user_message);
+      console.log("Objective outcomes:", objective_outcomes);
+      console.log("Intermediate files:", intermediate_files);
+      terminateLoop = true;
+      return {};
+    }
+  ),
+  defineFunction(
+    {
+      name: "system_failed_to_fulfill_objective",
+      description: `Inidicates that the agent failed to fulfill of the overall
+objective. Call ONLY when all means of fulfilling the objective have been
+exhausted.`,
+      parameters: {
+        user_message: z.string()
+          .describe(`Text to display to the user upon admitting failure to
+fulfill the objective. Provide a friendly explanation of why the objective
+is impossible to fulfill and offer helpful suggestions`),
+      },
+    },
+    async ({ user_message }) => {
+      console.log("FAILURE! Failed to fulfill the objective");
+      console.log("User message:", user_message);
+      terminateLoop = true;
+      return {};
+    }
+  ),
+  defineFunction(
+    {
+      name: "system_write_text_to_file",
+      description: "Writes provided text to a VFS file",
+      parameters: {
+        text: z.string().describe(`The text to write into a VFS file`),
+      },
+      response: {
+        file_path: z
+          .string()
+          .describe("The VS path to the file containing the provided text"),
+      },
+    },
+    async ({ text }) => {
+      console.log("Writing text to file:", text);
+      return { file_path: `/vfs/text${++fileCount}.md` };
+    }
+  ),
+  defineFunction(
+    {
+      name: "system_request_user_input",
+      description: `Requests input from a user. Use this function to obtain
+additional information or confirmation from the user. Use only when necessary.
+Avoid excessive requests to the user.`,
+      parameters: {
+        user_message: z.string()
+          .describe(`Text to display to the user when requesting input.
+Use the <file src="path" /> syntax to embed any files in the message`),
+        type: z.enum([
+          "singleline-text",
+          "multiline-text",
+          "confirm",
+          "image",
+          "video",
+        ]).describe(`Type of the input requested.
+- Use "singleline-text" to request a single line of text. Useful for chat-like
+interactions, when only a brief text is requested. The requested text will be 
+delivered as "text" response. 
+- Use "multiline-text" to request multi-line text. Useful when requesting a 
+longer text, like a review, critique, further instructions, etc. The requested
+text will be delivered as "text" response.
+- Use "confirm" to request confirmation on an action. Use this only
+when specifically requested by the objective. The confirmation will be 
+delivered as "yes" or "no" in "text" response.
+- Use "image" to request an image. Once the user uploads the image, it will be
+delivered as "file_path" response.
+- Use "video" to request a video. Once the user uploads the video, it will be
+delivered as "file_path" response.
+`),
+      },
+      response: {
+        text: z
+          .string()
+          .optional()
+          .describe(
+            `The text response from the user, populated when the "type" is "singleline-text", "multiline-text", or "confirm".`
+          ),
+        file_path: z.string().optional().describe(`The VFS path to the file,
+uploaded by the user, populated when the "type" is "image", or "video".`),
+      },
+    },
+    async ({ user_message, type }) => {
+      console.log("Requesting user input:", user_message);
+      if (type === "confirm") {
+        if (confirmYes) {
+          return { text: "yes" } as Record<string, string>;
+        } else {
+          confirmYes = true;
+          return { text: "no" };
+        }
+      }
+      if (type !== "image" && type !== "video") {
+        throw new Error("Unsupported type");
+      }
+      const ext = type === "image" ? "jpeg" : "mp4";
+      return { file_path: `/vfs/${type}${++fileCount}.${ext}` };
+    }
+  ),
+];
+
+const videoFunctions = [
+  defineFunction(
+    {
+      name: "video_from_frames",
+      description:
+        "Generates a video given two frames: starting frame and ending frame",
+      parameters: {
+        startFrame: z.string().describe(
+          `The starting frame of the video, specified as a VFS 
+  path pointing to an existing image`
+        ),
+        endFrame: z.string()
+          .describe(`The end frame of the video, specified as a VFS path
+  pointing to an existing image`),
+      },
+      response: {
+        video: z
+          .string()
+          .describe("The generated video, specified as a VFS path"),
+      },
+    },
+    async ({ startFrame, endFrame }) => {
+      console.log("Generating video from", startFrame, "to", endFrame);
+      return { video: `/vfs/video${++fileCount}.mp4` };
+    }
+  ),
+  defineFunction(
+    {
+      name: "concatenate_videos",
+      description: "Contatenates two or more videos together",
+      parameters: {
+        videos: z.array(z.string())
+          .describe(`The array of the videos to concatenate. 
+    The videos will be concatented in the order they are provided`),
+      },
+      response: {
+        video: z
+          .string()
+          .describe("The resulting video, provided as a VFS path"),
+      },
+    },
+    async ({ videos }) => {
+      console.log("Concatenating videos", videos);
+      return { video: `/vfs/video${++fileCount}.mp4` };
+    }
+  ),
+];
