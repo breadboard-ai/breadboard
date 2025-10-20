@@ -335,7 +335,7 @@ describe("A2UIModelProcessor", () => {
               // These paths would are typical when a databinding is used.
               {
                 id: "item-template",
-                component: { Text: { text: { path: "/item/name" } } },
+                component: { Text: { text: { path: "./item/name" } } },
               },
               {
                 id: "item-template-alt",
@@ -349,11 +349,13 @@ describe("A2UIModelProcessor", () => {
 
       const tree = processor.getSurfaces().get("@default")?.componentTree;
       const plainTree = toPlainObject(tree);
-      const child = plainTree.properties.children[0];
+      const child1 = plainTree.properties.children[0];
+      const child2 = plainTree.properties.children[1];
 
       // The processor should have trimmed `/item` and `./` from the path
       // because we are inside a data context.
-      assert.deepEqual(child.properties.text, { path: "/name" });
+      assert.deepEqual(child1.properties.text, { path: "./item/name" });
+      assert.deepEqual(child2.properties.text, { path: "./item/name" });
     });
   });
 

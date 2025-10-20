@@ -120,6 +120,16 @@ export class Header extends LitElement {
         }
       }
 
+      #menu {
+        display: flex;
+        justify-content: start;
+      }
+
+      #replay {
+        display: flex;
+        justify-content: end;
+      }
+
       #replay-autostart {
         display: flex;
         align-items: center;

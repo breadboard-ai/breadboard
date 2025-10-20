@@ -25,6 +25,7 @@ import { SignalObject } from "signal-utils/object";
 import { SignalArray } from "signal-utils/array";
 import {
   isComponentArrayReference,
+  isDataBinding,
   isObject,
   isPath,
   isResolvedAudioPlayer,
@@ -72,6 +73,8 @@ export class A2UIModelProcessor {
   }
 
   processMessages(messages: A2UIProtocolMessage[]): void {
+    this.#currentSurface = A2UIModelProcessor.DEFAULT_SURFACE_ID;
+
     for (const message of messages) {
       if (message.surfaceId) {
         this.#currentSurface = message.surfaceId;
@@ -80,22 +83,27 @@ export class A2UIModelProcessor {
       if (message.beginRendering) {
         this.#handleBeginRendering(
           message.beginRendering,
-          this.#currentSurface ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
+          this.#currentSurface
         );
-      } else if (message.surfaceUpdate) {
-        this.#handleSurfaceUpdate(
-          message.surfaceUpdate,
-          this.#currentSurface ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
-        );
-      } else if (message.dataModelUpdate) {
+      }
+
+      if (message.surfaceUpdate) {
+        this.#handleSurfaceUpdate(message.surfaceUpdate, this.#currentSurface);
+      }
+
+      if (message.dataModelUpdate) {
         this.#handleDataModelUpdate(
           message.dataModelUpdate,
-          this.#currentSurface ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
+          this.#currentSurface
         );
-      } else if (message.deleteSurface) {
+      }
+
+      if (message.deleteSurface) {
         this.#handleDeleteSurface(message.deleteSurface);
       }
     }
+
+    this.#currentSurface = A2UIModelProcessor.DEFAULT_SURFACE_ID;
   }
 
   /**
@@ -168,58 +176,6 @@ export class A2UIModelProcessor {
   }
 
   /**
-   * A helper to set a value deeply within a Map using dot-notation.
-   * It creates nested Maps and Arrays as needed.
-   * (e.g., "book.0.title" on an empty map).
-   */
-  #deepSetOnMap(root: DataMap, path: string, value: DataValue): void {
-    // Split the path by dots
-    const segments = path.split(".");
-    let current: DataMap | DataArray = root;
-
-    // Traverse the path, creating segments as needed
-    for (let i = 0; i < segments.length - 1; i++) {
-      const segment = segments[i];
-      let target: DataValue | undefined;
-
-      const isNumericSegment = /^\d+$/.test(segment);
-
-      if (current instanceof Map) {
-        target = current.get(segment);
-      } else if (Array.isArray(current) && isNumericSegment) {
-        target = current[parseInt(segment, 10)];
-      }
-
-      // If the path doesn't exist, create it
-      if (
-        target === undefined ||
-        typeof target !== "object" ||
-        target === null
-      ) {
-        // Look ahead to the next segment to decide if we need an array or map
-        const targetIsArray = /^\d+$/.test(segments[i + 1]);
-        target = targetIsArray ? new SignalArray() : new SignalMap();
-
-        if (current instanceof Map) {
-          current.set(segment, target);
-        } else if (Array.isArray(current) && isNumericSegment) {
-          current[parseInt(segment, 10)] = target;
-        }
-      }
-      current = target as DataMap | DataArray;
-    }
-
-    // Set the final value
-    const finalSegment = segments[segments.length - 1];
-    const storedValue = deep(value); // Make the value reactive
-    if (current instanceof Map) {
-      current.set(finalSegment, storedValue);
-    } else if (Array.isArray(current) && /^\d+$/.test(finalSegment)) {
-      current[parseInt(finalSegment, 10)] = storedValue;
-    }
-  }
-
-  /**
    * Converts a specific array format [{key: "...", value_string: "..."}, ...]
    * into a standard Map. It also attempts to parse any string values that
    * appear to be stringified JSON.
@@ -256,7 +212,7 @@ export class A2UIModelProcessor {
         }
       }
 
-      this.#deepSetOnMap(map, key, value);
+      this.#setDataByPath(map, key, value);
     }
     return map;
   }
@@ -748,6 +704,11 @@ export class A2UIModelProcessor {
 
     // 4. If it's a plain object, resolve each of its properties.
     if (isObject(value)) {
+      // This is a data binding so don't recurse any further.
+      if (isDataBinding(value)) {
+        return new SignalObject(value as ResolvedMap);
+      }
+
       const newObj: ResolvedMap = new SignalObject();
       for (const [key, propValue] of Object.entries(value)) {
         // Special case for paths. Here we might get /item/ or ./ on the front

@@ -101,6 +101,7 @@ const p = {
   "typography-sz-bm": true,
   "layout-as-n": true,
   "color-c-n10": true,
+  "typography-ws-p": true,
 };
 
 const orderedList = {
@@ -170,11 +171,7 @@ const listItemLight = v0_8.UI.Utils.merge(listItem, {
 });
 
 export const theme: v0_8.Types.Theme = {
-  additionalStyles: {
-    Card: {
-      border: `1px solid grey`,
-    },
-  },
+  additionalStyles: {},
   components: {
     AudioPlayer: {},
     Button: {
@@ -189,7 +186,7 @@ export const theme: v0_8.Types.Theme = {
       "color-c-n100": true,
       "behavior-ho-70": true,
     },
-    Card: { "border-br-9": true, "color-bgc-p100": true, "layout-p-4": true },
+    Card: { "border-br-9": true, "color-bgc-p100": true, "layout-p-6": true },
     CheckBox: {
       element: {
         "layout-m-0": true,
@@ -255,8 +252,34 @@ export const theme: v0_8.Types.Theme = {
       "layout-g-4": true,
     },
     Slider: {},
-    Tabs: {},
+    Tabs: {
+      element: {
+        "layout-dsp-flexhor": true,
+        "layout-al-fs": true,
+        "layout-g-4": true,
+      },
+      controls: {
+        all: {
+          "color-c-p30": true,
+          "typography-f-sf": true,
+          "typography-v-r": true,
+          "typography-w-400": true,
+          "color-bgc-transparent": true,
+          "border-bw-0": true,
+          "behavior-ho-80": true,
+          "typography-sz-ll": true,
+          "layout-p-0": true,
+        },
+        selected: {},
+      },
+      container: {
+        "layout-g-2": true,
+        "color-c-p30": true,
+        "layout-dsp-flexvert": true,
+      },
+    },
     Text: {
+      "layout-dsp-flexvert": true,
       "layout-w-100": true,
       "layout-g-2": true,
       "color-c-p30": true,

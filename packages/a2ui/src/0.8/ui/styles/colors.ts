@@ -46,4 +46,9 @@ export const colors = [
   color(keyFactory("n")),
   color(keyFactory("nv")),
   color(keyFactory("e")),
+  css`
+    .color-bgc-transparent {
+      background-color: transparent;
+    }
+  `,
 ] as CSSResultArray;

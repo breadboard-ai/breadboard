@@ -723,13 +723,21 @@ async function renderConsistentUI(
 
     await reporter.start();
     await reporter.sendA2UI("Generated UI", toJson(generated.all), "download");
+
+    const textEncoder = new TextEncoder();
+    const bytes = textEncoder.encode(JSON.stringify(generated.all));
+
+    let byteString = "";
+    bytes.forEach((byte) => (byteString += String.fromCharCode(byte)));
+
+    const data = btoa(byteString);
     return [
       {
         role: "user",
         parts: [
           {
             inlineData: {
-              data: btoa(JSON.stringify(generated.all)),
+              data,
               mimeType: "text/a2ui",
             },
           },

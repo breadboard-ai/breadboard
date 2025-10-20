@@ -257,7 +257,31 @@ export const theme: Theme = {
       "layout-g-4": true,
     },
     Slider: {},
-    Tabs: {},
+    Tabs: {
+      element: {
+        "layout-dsp-flexhor": true,
+        "layout-al-fs": true,
+        "layout-g-4": true,
+      },
+      controls: {
+        all: {
+          "color-c-p30": true,
+          "typography-f-sf": true,
+          "typography-v-r": true,
+          "typography-w-400": true,
+          "color-bgc-transparent": true,
+          "border-bw-0": true,
+          "behavior-ho-80": true,
+          "layout-p-0": true,
+        },
+        selected: {},
+      },
+      container: {
+        "layout-g-2": true,
+        "color-c-p30": true,
+        "layout-dsp-flexvert": true,
+      },
+    },
     Text: {
       "layout-w-100": true,
       "layout-g-2": true,
