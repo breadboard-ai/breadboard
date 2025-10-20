@@ -7,4 +7,8 @@
 export interface OpalShellProtocol {
   ping(): Promise<"pong">;
   fetchWithCreds(url: string): Promise<unknown>;
+  generateSignInUrlAndNonce(
+    // TODO(aomarks) Move OAuthScope to types
+    scopes: string[]
+  ): Promise<{ url: string; nonce: string }>;
 }

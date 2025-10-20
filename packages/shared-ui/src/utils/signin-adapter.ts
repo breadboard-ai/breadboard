@@ -12,13 +12,9 @@ import type {
 } from "@breadboard-ai/connection-client";
 import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
 import type { GlobalConfig } from "../contexts/global-config";
-import {
-  OAuthStateParameter,
-  oauthTokenBroadcastChannelName,
-} from "../elements/connection/connection-common";
+import { oauthTokenBroadcastChannelName } from "../elements/connection/connection-common";
 import { SETTINGS_TYPE, SettingsHelper } from "../types/types";
 import { createContext } from "@lit/context";
-import { getEmbedderRedirectUri } from "./embed-helpers";
 import {
   ALWAYS_REQUIRED_OAUTH_SCOPES,
   canonicalizeOAuthScope,
@@ -35,32 +31,6 @@ export { SigninAdapter };
 export const SIGN_IN_CONNECTION_ID = "$sign-in";
 
 export type SignInResult = { ok: true } | { ok: false; error: SignInError };
-
-function makeSignInUrl(opts: {
-  redirectUri: string;
-  nonce: string;
-  scopes?: string[];
-}): string {
-  const url = new URL("https://accounts.google.com/o/oauth2/auth");
-  const params = url.searchParams;
-  params.set("client_id", CLIENT_DEPLOYMENT_CONFIG.OAUTH_CLIENT);
-  params.set("redirect_uri", opts.redirectUri);
-  const uniqueScopes = [
-    ...new Set([...ALWAYS_REQUIRED_OAUTH_SCOPES, ...(opts.scopes ?? [])]),
-  ];
-  params.set("scope", uniqueScopes.join(" "));
-  params.set(
-    "state",
-    JSON.stringify({ nonce: opts.nonce } satisfies OAuthStateParameter)
-  );
-  params.set("response_type", "code");
-  params.set("access_type", "offline");
-  // Force re-consent every time, because we always want a refresh token.
-  params.set("prompt", "consent");
-  // Don't lose access to scopes we've previously asked for.
-  params.set("include_granted_scopes", "true");
-  return url.href;
-}
 
 export type SigninAdapterState =
   /** The runtime is not configured to use the sign in. */
@@ -252,26 +222,12 @@ class SigninAdapter {
     }
   }
 
-  async #makeSignInUrlAndNonce(
-    scopes: OAuthScope[]
-  ): Promise<{ url: string; nonce: string }> {
-    scopes = [...scopes]; // Copy in case a caller mutates the array later.
-    const nonce = crypto.randomUUID();
-    const url = makeSignInUrl({
-      redirectUri:
-        getEmbedderRedirectUri() ??
-        new URL("/oauth/", window.location.origin).href,
-      nonce,
-      scopes,
-    });
-    return { url, nonce };
-  }
-
   async signIn(scopes: OAuthScope[] = []): Promise<SignInResult> {
     // Important! There must be no awaits before the window.open call, because
     // we need it to open syncronously so that the browser will allow it in
     // response to a click event.
-    const signInUrlAndNoncePromise = this.#makeSignInUrlAndNonce(scopes);
+    const signInUrlAndNoncePromise =
+      this.#opalShell.generateSignInUrlAndNonce(scopes);
     const popupWidth = 900;
     const popupHeight = 850;
     const popup = window.open(
