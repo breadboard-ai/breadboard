@@ -16,7 +16,8 @@ export const opalShellContext = createContext<OpalShellProtocol | undefined>(
 
 export function connectToOpalShellHost(): OpalShellProtocol {
   const hostOrigin = CLIENT_DEPLOYMENT_CONFIG.SHELL_HOST_ORIGIN;
-  if (hostOrigin && hostOrigin !== "*") {
+  if (hostOrigin && hostOrigin !== "*" && window !== window.parent) {
+    console.log("[shell guest] Connecting to iframe host");
     return comlink.wrap<OpalShellProtocol>(
       comlink.windowEndpoint(
         // Where this guest sends messages.
@@ -35,6 +36,7 @@ export function connectToOpalShellHost(): OpalShellProtocol {
   } else {
     // TODO(aomarks) Remove once we are fully migrated to the iframe
     // arrangement.
+    console.log("[shell guest] Connecting to legacy host");
     return new OAuthBasedOpalShell();
   }
 }

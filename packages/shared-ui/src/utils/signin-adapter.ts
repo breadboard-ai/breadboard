@@ -10,9 +10,7 @@ import type {
   TokenVendor,
   ValidTokenResult,
 } from "@breadboard-ai/connection-client";
-import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
 import type { GlobalConfig } from "../contexts/global-config";
-import { oauthTokenBroadcastChannelName } from "../elements/connection/connection-common";
 import { SETTINGS_TYPE, SettingsHelper } from "../types/types";
 import { createContext } from "@lit/context";
 import {
@@ -23,14 +21,14 @@ import {
 import { clearIdbGraphCache } from "@breadboard-ai/google-drive-kit/board-server/user-graph-collection.js";
 import { createFetchWithCreds } from "@breadboard-ai/utils";
 import { scopesFromUrl } from "./scopes-from-url";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
-import { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import type {
+  OpalShellProtocol,
+  SignInResult,
+} from "@breadboard-ai/types/opal-shell-protocol.js";
 
 export { SigninAdapter };
 
 export const SIGN_IN_CONNECTION_ID = "$sign-in";
-
-export type SignInResult = { ok: true } | { ok: false; error: SignInError };
 
 export type SigninAdapterState =
   /** The runtime is not configured to use the sign in. */
@@ -48,12 +46,6 @@ export type SigninAdapterState =
 export const signinAdapterContext = createContext<SigninAdapter | undefined>(
   "SigninAdapter"
 );
-
-export type SignInError =
-  | { code: "missing-scopes"; missingScopes: string[] }
-  | { code: "geo-restriction" }
-  | { code: "user-cancelled" }
-  | { code: "other"; userMessage: string };
 
 /** @return Whether the user opened `signInUrl`. */
 export type SignInRequestHandler = (signInUrl: string) => boolean;
@@ -230,7 +222,11 @@ class SigninAdapter {
       this.#opalShell.generateSignInUrlAndNonce(scopes);
     const popupWidth = 900;
     const popupHeight = 850;
+    // TODO(aomarks) We should also show a modal with a regular target="_blank"
+    // link, in case the user's browser or an extension suppresses the popup.
     const popup = window.open(
+      // First open a blank window because generating the actual sign-in URL is
+      // asynchronous, and the window must be opened synchronously.
       "about:blank",
       "Sign in to Google",
       `
@@ -247,124 +243,17 @@ class SigninAdapter {
       };
     }
     const { url, nonce } = await signInUrlAndNoncePromise;
-    const resultPromise = this.#listenForSignInResult(nonce, scopes).catch(
-      (e): SignInResult => {
+    const resultPromise = this.#opalShell
+      .listenForSignIn(nonce)
+      .catch((e): SignInResult => {
         console.error(`[signin] Unhandled error`, e);
         return {
           ok: false,
           error: { code: "other", userMessage: `Unhandled error` },
         };
-      }
-    );
+      });
     popup.location.href = url;
     return await resultPromise;
-  }
-
-  async #listenForSignInResult(
-    nonce: string,
-    scopes?: OAuthScope[]
-  ): Promise<SignInResult> {
-    console.info(`[signin] Begin sign-in`);
-    const now = Date.now();
-    // The OAuth broker page will know to broadcast the token on this unique
-    // channel because it also knows the nonce (since we pack that in the OAuth
-    // "state" parameter).
-    const channelName = oauthTokenBroadcastChannelName(nonce);
-    const channel = new BroadcastChannel(channelName);
-    console.info(`[signin] Awaiting grant response`, channelName);
-    const grantResponse = await new Promise<GrantResponse>((resolve) => {
-      channel.addEventListener("message", (m) => resolve(m.data), {
-        once: true,
-      });
-    });
-    console.info(`[signin] Received grant response`);
-    channel.close();
-    if (grantResponse.error !== undefined) {
-      if (grantResponse.error === "access_denied") {
-        console.info(`[signin] User cancelled sign-in`);
-        return { ok: false, error: { code: "user-cancelled" } };
-      } else if (grantResponse.error.includes("region")) {
-        // TODO(aomarks) This path shouldn't ever happen anymore, we always
-        // check it below instead, so we can probably remove this case.
-        console.info(`[signin] User is geo restricted (early)`);
-        return { ok: false, error: { code: "geo-restriction" } };
-      }
-      console.error(`[signin] Unknown grant error`, grantResponse.error);
-      return {
-        ok: false,
-        error: {
-          code: "other",
-          userMessage: `Unknown grant error ${JSON.stringify(grantResponse.error)}`,
-        },
-      };
-    }
-    if (!grantResponse.access_token) {
-      console.error(`[signin] Missing access token`, grantResponse);
-      return {
-        ok: false,
-        error: { code: "other", userMessage: "Missing access token" },
-      };
-    }
-
-    console.info(`[signin] Checking geo restriction`);
-    try {
-      if (await this.userHasGeoRestriction(grantResponse.access_token)) {
-        console.info(`[signin] User is geo restricted`);
-        return { ok: false, error: { code: "geo-restriction" } };
-      }
-    } catch (e) {
-      console.error("[signin] Error checking geo access", e);
-      return {
-        ok: false,
-        error: { code: "other", userMessage: `Error checking geo access` },
-      };
-    }
-
-    // Check for any missing required scopes.
-    const requiredScopes = scopes ?? ALWAYS_REQUIRED_OAUTH_SCOPES;
-    const actualScopes = new Set(grantResponse.scopes ?? []);
-    const missingScopes = requiredScopes.filter(
-      (scope) => !actualScopes.has(scope)
-    );
-    if (missingScopes.length > 0) {
-      console.info(`[signin] Missing scopes`, missingScopes);
-      return {
-        ok: false,
-        error: { code: "missing-scopes", missingScopes },
-      };
-    }
-
-    const settingsValue: TokenGrant = {
-      client_id: CLIENT_DEPLOYMENT_CONFIG.OAUTH_CLIENT,
-      access_token: grantResponse.access_token,
-      expires_in: grantResponse.expires_in,
-      issue_time: now,
-      name: grantResponse.name,
-      picture: grantResponse.picture,
-      id: grantResponse.id,
-      domain: grantResponse.domain,
-      scopes: grantResponse.scopes,
-    };
-    console.info("[signin] Updating storage");
-    try {
-      await this.#settingsHelper.set(
-        SETTINGS_TYPE.CONNECTIONS,
-        SIGN_IN_CONNECTION_ID,
-        {
-          name: SIGN_IN_CONNECTION_ID,
-          value: JSON.stringify(settingsValue),
-        }
-      );
-    } catch (e) {
-      console.error("[signin] Error updating storage", e);
-      return {
-        ok: false,
-        error: { code: "other", userMessage: `Error updating storage` },
-      };
-    }
-    this.#state = this.#makeSignedInState(settingsValue);
-    console.info("[signin] Sign-in complete");
-    return { ok: true };
   }
 
   async signOut(): Promise<void> {
@@ -386,6 +275,7 @@ class SigninAdapter {
     this.#state = { status: "signedout" };
   }
 
+  // TODO(aomarks) Move to shell.
   async userHasGeoRestriction(token: string): Promise<boolean> {
     const response = await fetch(
       new URL(
