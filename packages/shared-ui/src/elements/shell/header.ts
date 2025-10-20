@@ -194,6 +194,17 @@ export class VEHeader extends SignalWatcher(LitElement) {
               border-radius: 50%;
               pointer-events: none;
             }
+             & #user-pic-unknown {
+              display: flex;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              border-radius: 50%;
+              background-color: lightgray;
+              padding: 2px;
+              width: var(--bb-grid-size-7);
+              height: var(--bb-grid-size-7);
+             }
           }
 
           & #share {
@@ -720,8 +731,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
   #renderUser() {
     if (
       !this.signinAdapter ||
-      this.signinAdapter.state !== "signedin" ||
-      !this.signinAdapter.picture
+      this.signinAdapter.state !== "signedin"
     ) {
       return nothing;
     }
@@ -732,12 +742,17 @@ export class VEHeader extends SignalWatcher(LitElement) {
           this.#showAccountSwitcher = true;
         }}
       >
-        <img
+        ${this.signinAdapter.picture ? 
+          html`<img
           id="user-pic"
           crossorigin
           .src=${this.signinAdapter.picture}
           alt=${this.signinAdapter.name ?? "No name"}
-        />
+        />`  :
+         // For unknown reasons, the token info may not include a `picture` URL or `name`.
+         // Since we use the avatar as a button to access the menu, we render an icon in
+         // place of user picture if it's not available.
+         html`<span id="user-pic-unknown" class="g-icon filled">person</span>`}
       </button>
       ${this.#renderAccountSwitcher()}`;
   }

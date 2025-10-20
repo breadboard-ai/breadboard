@@ -194,10 +194,12 @@ export class AccountSwitcher extends LitElement {
             : Strings.from("APP_NAME")}
         </h1>
         <section id="user-info">
-          <img
-            src=${this.signInAdapter.picture}
-            alt=${this.signInAdapter.name}
-          />
+          ${this.signInAdapter.picture ? 
+            html`<img
+              src=${this.signInAdapter.picture}
+              alt=${this.signInAdapter.name}
+            />`
+           : nothing}
           <div>
             <p>${this.signInAdapter.name}</p>
           </div>
