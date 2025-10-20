@@ -29,6 +29,10 @@ export class Heading extends Root {
         flex-basis: auto;
         min-height: 0;
         overflow: auto;
+
+        & h1 {
+          line-height: 1.2;
+        }
       }
 
       :host([level="1"]) h1 {

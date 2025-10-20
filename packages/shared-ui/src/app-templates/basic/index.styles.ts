@@ -395,7 +395,8 @@ export const styles: CSSResultGroup = [
 
           & gulf-root,
           & particle-ui-list,
-          & bb-multi-output {
+          & bb-multi-output,
+          & #surfaces {
             --output-value-padding-x: var(--bb-grid-size-4);
             --output-value-padding-y: var(--bb-grid-size-4);
             --output-border-radius: var(--bb-grid-size-4);

@@ -30,6 +30,7 @@ export class Row extends Root {
         display: flex;
         flex-direction: row;
         min-width: 100%;
+        height: 100%;
       }
 
       :host[alignment="start"] section {
