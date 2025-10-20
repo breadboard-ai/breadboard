@@ -27,8 +27,8 @@ objective, specified at the start of the conversation context.
 
 You are linked with other AI agents via hyperlinks. The <a href="url">title</a>
 syntax points at another agent. If the objective calls for it, you can transfer
-control to this agent. To transfer control, use the url of the agent when 
-calling the "href" argument of the "system_objective_fulfilled" or the 
+control to this agent. To transfer control, use the url of the agent in the 
+"href" parameter when calling "system_objective_fulfilled" or  
 "system_failed_to_fulfill_objective" function. As a result, the outcomes and the
 intermediate files will be transferred to that agent.
 
