@@ -19,6 +19,15 @@ import { generateFunctions } from "./functions/generate";
 
 config();
 
+const objective = `Ask the user (a middle schooler) about how they would
+like to learn today. Offer them these choices and take them to the one they
+choose:
+
+- <a href="/game">Fun Learning Game</a>
+- <a href="/video">Educational Cartoon</a>
+- <a href="/lesson">Engaging Interactive Lesson</a>
+`;
+
 // const objective = `Stitch these images into a video, with each image as a key
 // frame in the video:
 
@@ -32,13 +41,13 @@ config();
 
 // const objective = `Generate a poem about opals`;
 
-const objective = `Come up with five ideas for Halloween instagram posts and
-generate images for all of them. Write each post text as a file.
-Output as interleaved files: 
+// const objective = `Come up with five ideas for Halloween instagram posts and
+// generate images for all of them. Write each post text as a file.
+// Output as interleaved files:
 
-text + image + ...
+// text + image + ...
 
-For context, this is for a small coffee shop in Mountain View.`;
+// For context, this is for a small coffee shop in Mountain View.`;
 
 // const objective = `Make a video of a monkey jumping. Use one prompt to generate
 // multiple keyframe images.`;
@@ -69,6 +78,13 @@ For context, this is for a small coffee shop in Mountain View.`;
 
 const systemInstruction = `You are an AI agent. Your job is to fulfill the 
 objective, specified at the start of the conversation context.
+
+You are linked with other AI agents via hyperlinks. The <a href="url">title</a>
+syntax points at another agent. If the objective calls for it, you can transfer
+control to this agent. To transfer control, use the url of the agent when 
+calling the "href" argument of the "system_objective_fulfilled" or the 
+"system_failed_to_fulfill_objective" function. As a result, the outcomes and the
+intermediate files will be transferred to that agent.
 
 First, examine the problem in front of you and systematically break it down into
 tasks.

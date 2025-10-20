@@ -40,11 +40,22 @@ Use the <file src="path" /> syntax to embed the outcome in the text`),
             .describe(`Any intermediate files that were produced as a result 
 of fulfilling the objective `)
         ),
+        href: z
+          .string()
+          .describe(
+            `The url of the next agent to which to transfer control upon
+completion. By default, the control is transferred to the root agent "/". 
+If the objective specifies other agent URLs using the
+ <a href="url">title</a> syntax, and calls to choose a different agent to which
+ to  transfer control, then that url should be used instead.`
+          )
+          .default("/"),
       },
     },
-    async ({ user_message, objective_outcomes, intermediate_files }) => {
+    async ({ user_message, objective_outcomes, intermediate_files, href }) => {
       console.log("SUCCESS! Objective fulfilled");
       console.log("User message:", user_message);
+      console.log("Transfer control to", href);
       console.log("Objective outcomes:", objective_outcomes);
       console.log("Intermediate files:", intermediate_files);
       terminateLoop = true;
@@ -62,6 +73,16 @@ exhausted.`,
           .describe(`Text to display to the user upon admitting failure to
 fulfill the objective. Provide a friendly explanation of why the objective
 is impossible to fulfill and offer helpful suggestions`),
+        href: z
+          .string()
+          .describe(
+            `The url of the next agent to which to transfer control upon
+failure. By default, the control is transferred to the root agent "/". 
+If the objective specifies other agent URLs using the
+ <a href="url">title</a> syntax, and calls to choose a different agent to which
+ to  transfer control, then that url should be used instead.`
+          )
+          .default("/"),
       },
     },
     async ({ user_message }) => {
