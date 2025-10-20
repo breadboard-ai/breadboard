@@ -275,6 +275,22 @@ class SigninAdapter {
     this.#state = { status: "signedout" };
   }
 
+  // TODO(aomarks) Move to shell.
+  async userHasGeoRestriction(token: string): Promise<boolean> {
+    const response = await fetch(
+      new URL(
+        "/v1beta1/checkAppAccess",
+        this.#globalConfig.BACKEND_API_ENDPOINT
+      ),
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} error checking geo restriction`);
+    }
+    const result = (await response.json()) as { canAccess?: boolean };
+    return !result.canAccess;
+  }
+
   async validateScopes(): Promise<{ ok: true } | { ok: false; error: string }> {
     if (this.state !== "signedin") {
       return { ok: false, error: "User was signed out" };
