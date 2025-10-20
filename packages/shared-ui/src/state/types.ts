@@ -36,7 +36,6 @@ import { SideBoardRuntime } from "../sideboards/types";
 import { VisualEditorMode } from "../types/types";
 import { HTMLTemplateResult } from "lit";
 import type { AsyncComputedStatus } from "signal-utils/async-computed";
-import type * as GULF from "@breadboard-ai/gulf";
 
 /**
  * Represents the result of AsyncComputed signals helper.
@@ -123,11 +122,6 @@ export type ProjectRun = {
    * Call when the user chooses to dismiss errors shown (if any)
    */
   dismissError(): void;
-
-  /**
-   * [Experimental] A GULF Data Model for powering the UI.
-   */
-  __experimental_gulf: GULF.Data.DataModel;
 };
 
 /**

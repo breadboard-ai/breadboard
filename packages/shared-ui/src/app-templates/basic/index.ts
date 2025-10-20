@@ -52,6 +52,8 @@ import { SigninAdapterState } from "../../utils/signin-adapter";
 import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js";
 import { styles as appStyles } from "./index.styles.js";
 import { theme as uiTheme } from "./theme/light.js";
+import { v0_8 } from "@breadboard-ai/a2ui";
+import { theme as a2uiTheme } from "./theme/a2ui-theme.js";
 
 import "./header/header.js";
 
@@ -72,10 +74,9 @@ import { googleDriveClientContext } from "../../contexts/google-drive-client-con
 import { markdown } from "../../directives/markdown.js";
 import { makeUrl } from "../../utils/urls.js";
 
-import * as GULF from "@breadboard-ai/gulf";
-import "@breadboard-ai/gulf/ui";
-import { LLMContent, RuntimeFlags } from "@breadboard-ai/types";
+import { RuntimeFlags } from "@breadboard-ai/types";
 import { maybeTriggerNlToOpalSatisfactionSurvey } from "../../survey/nl-to-opal-satisfaction-survey.js";
+import { repeat } from "lit/directives/repeat.js";
 
 function isHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -112,6 +113,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   @provide({ context: ParticlesUI.Context.themeContext })
   accessor theme: ParticlesUI.Types.UITheme = uiTheme;
+
+  @provide({ context: v0_8.UI.Context.themeContext })
+  accessor a2uitheme: v0_8.Types.Theme = a2uiTheme;
 
   @state()
   @consume({ context: projectRunContext, subscribe: true })
@@ -217,6 +221,41 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           class="html-view"
           sandbox="allow-scripts allow-forms"
         ></iframe>`;
+      } else if (
+        isLLMContentArray(last.output.context) &&
+        isInlineData(last.output.context[0].parts[0]) &&
+        last.output.context[0].parts[0].inlineData.mimeType === "text/a2ui"
+      ) {
+        const a2UI = last.output.context[0].parts[0];
+        try {
+          const rawData = atob(a2UI.inlineData.data);
+          const data = JSON.parse(rawData);
+          let messages = data[0].parts[0].json;
+          if (!Array.isArray(messages)) {
+            messages = [messages];
+          }
+
+          const processor = new v0_8.Data.A2UIModelProcessor();
+          processor.clearSurfaces();
+          processor.processMessages(messages);
+
+          activityContents = html`<section id="surfaces">
+            ${repeat(
+              processor.getSurfaces(),
+              ([surfaceId]) => surfaceId,
+              ([surfaceId, surface]) => {
+                return html`<a2ui-surface
+                    .surfaceId=${surfaceId}
+                    .surface=${surface}
+                    .processor=${processor}
+                  ></a2-uisurface>`;
+              }
+            )}
+          </section>`;
+        } catch (err) {
+          console.warn(err);
+          activityContents = html`Unable to parse response`;
+        }
       } else {
         // Convert app screen to particles. There's a belt-and-braces check
         // afterwards to ensure that the top-level list has a valid
@@ -873,11 +912,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           break;
 
         case "input":
-          if (this.runtimeFlags?.gulfRenderer) {
-            content = [this.#renderGULF()];
-          } else {
-            content = [this.#renderOutputs(), this.#renderInput()];
-          }
+          content = [this.#renderOutputs(), this.#renderInput()];
           break;
 
         case "output":
@@ -888,11 +923,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               this.boardServer
             );
           }
-          if (this.runtimeFlags?.gulfRenderer) {
-            content = [this.#renderGULF(), this.#renderSaveResultsButtons()];
-          } else {
-            content = [this.#renderOutputs(), this.#renderSaveResultsButtons()];
-          }
+          content = [this.#renderOutputs(), this.#renderSaveResultsButtons()];
           break;
 
         case "error":
@@ -916,66 +947,5 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         ${this.#renderProgress(this.run.app.state === "progress")} ${content}
       </div>
     </section>`;
-  }
-
-  #renderGULF() {
-    if (!this.run) {
-      return nothing;
-    }
-
-    const model = this.run.__experimental_gulf;
-    model.finalize();
-
-    if (!model.current) {
-      return nothing;
-    }
-
-    function wrap(value: unknown): LLMContent {
-      return {
-        role: "user",
-        parts: [{ text: value?.toString() ?? "" }],
-      };
-    }
-
-    return html`<div id="activity">
-      <gulf-root
-        id=${model.current.rootName}
-        .model=${model}
-        .components=${[model.current.root]}
-        @gulfaction=${async (evt: GULF.Events.StateEvent<"gulf.action">) => {
-          if (!model) {
-            return;
-          }
-
-          if (!evt.detail.action.context) {
-            return;
-          }
-
-          const payload: Record<string, unknown> = {};
-          for (const item of evt.detail.action.context) {
-            if (item.value.path) {
-              payload[item.key] = wrap(
-                await model.getDataProperty(item.value.path)
-              );
-            } else if (item.value.literalBoolean) {
-              payload[item.key] = wrap(item.value.literalBoolean);
-            } else if (item.value.literalNumber) {
-              payload[item.key] = wrap(item.value.literalNumber);
-            } else if (item.value.literalString) {
-              payload[item.key] = wrap(item.value.literalString);
-            }
-          }
-
-          this.dispatchEvent(
-            new StateEvent({
-              eventType: "board.input",
-              id: "unknown",
-              data: payload,
-              allowSavingIfSecret: true,
-            })
-          );
-        }}
-      ></gulf-root>
-    </div>`;
   }
 }

@@ -168,6 +168,58 @@ export class A2UIModelProcessor {
   }
 
   /**
+   * A helper to set a value deeply within a Map using dot-notation.
+   * It creates nested Maps and Arrays as needed.
+   * (e.g., "book.0.title" on an empty map).
+   */
+  #deepSetOnMap(root: DataMap, path: string, value: DataValue): void {
+    // Split the path by dots
+    const segments = path.split(".");
+    let current: DataMap | DataArray = root;
+
+    // Traverse the path, creating segments as needed
+    for (let i = 0; i < segments.length - 1; i++) {
+      const segment = segments[i];
+      let target: DataValue | undefined;
+
+      const isNumericSegment = /^\d+$/.test(segment);
+
+      if (current instanceof Map) {
+        target = current.get(segment);
+      } else if (Array.isArray(current) && isNumericSegment) {
+        target = current[parseInt(segment, 10)];
+      }
+
+      // If the path doesn't exist, create it
+      if (
+        target === undefined ||
+        typeof target !== "object" ||
+        target === null
+      ) {
+        // Look ahead to the next segment to decide if we need an array or map
+        const targetIsArray = /^\d+$/.test(segments[i + 1]);
+        target = targetIsArray ? new SignalArray() : new SignalMap();
+
+        if (current instanceof Map) {
+          current.set(segment, target);
+        } else if (Array.isArray(current) && isNumericSegment) {
+          current[parseInt(segment, 10)] = target;
+        }
+      }
+      current = target as DataMap | DataArray;
+    }
+
+    // Set the final value
+    const finalSegment = segments[segments.length - 1];
+    const storedValue = deep(value); // Make the value reactive
+    if (current instanceof Map) {
+      current.set(finalSegment, storedValue);
+    } else if (Array.isArray(current) && /^\d+$/.test(finalSegment)) {
+      current[parseInt(finalSegment, 10)] = storedValue;
+    }
+  }
+
+  /**
    * Converts a specific array format [{key: "...", value_string: "..."}, ...]
    * into a standard Map. It also attempts to parse any string values that
    * appear to be stringified JSON.
@@ -204,13 +256,15 @@ export class A2UIModelProcessor {
         }
       }
 
-      map.set(key, value);
+      this.#deepSetOnMap(map, key, value);
     }
     return map;
   }
 
   #setDataByPath(root: DataMap, path: string, value: DataValue): void {
-    const segments = path.split("/").filter((s) => s);
+    const segments = this.#normalizePath(path)
+      .split("/")
+      .filter((s) => s);
     if (segments.length === 0) {
       // Check if the incoming value is the special key-value array format.
       if (
@@ -276,8 +330,28 @@ export class A2UIModelProcessor {
     }
   }
 
+  /**
+   * Normalizes a path string into a consistent, slash-delimited format.
+   * Converts bracket notation and dot notation in a two-pass.
+   * e.g., "bookRecommendations[0].title" -> "/bookRecommendations/0/title"
+   * e.g., "book.0.title" -> "/book/0/title"
+   */
+  #normalizePath(path: string): string {
+    // 1. Replace all bracket accessors `[index]` with dot accessors `.index`
+    const dotPath = path.replace(/\[(\d+)\]/g, ".$1");
+
+    // 2. Split by dots
+    const segments = dotPath.split(".");
+
+    // 3. Join with slashes and ensure it starts with a slash
+    return "/" + segments.filter((s) => s.length > 0).join("/");
+  }
+
   #getDataByPath(root: DataMap, path: string): DataValue | null {
-    const segments = path.split("/").filter((s) => s);
+    const segments = this.#normalizePath(path)
+      .split("/")
+      .filter((s) => s);
+
     let current: DataValue = root;
     for (const segment of segments) {
       if (current === undefined || current === null) return null;

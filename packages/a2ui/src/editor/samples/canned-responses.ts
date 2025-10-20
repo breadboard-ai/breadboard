@@ -507,3 +507,76 @@ export const fix = [
     },
   },
 ];
+
+export const canned = [
+  {
+    surfaceId: "tabs_with_images_surface",
+    surfaceUpdate: {
+      components: [
+        {
+          id: "image1",
+          component: {
+            Image: {
+              url: {
+                literal: "/assets/placeholder_image1.png",
+              },
+            },
+          },
+        },
+        {
+          id: "image2",
+          component: {
+            Image: {
+              url: {
+                literal: "/assets/placeholder_image2.png",
+              },
+            },
+          },
+        },
+        {
+          id: "image3",
+          component: {
+            Image: {
+              url: {
+                literal: "/assets/placeholder_image3.png",
+              },
+            },
+          },
+        },
+        {
+          id: "mainTabs",
+          component: {
+            Tabs: {
+              tabItems: [
+                {
+                  title: {
+                    literal: "Tab 1",
+                  },
+                  child: "image1",
+                },
+                {
+                  title: {
+                    literal: "Tab 2",
+                  },
+                  child: "image2",
+                },
+                {
+                  title: {
+                    literal: "Tab 3",
+                  },
+                  child: "image3",
+                },
+              ],
+            },
+          },
+        },
+      ],
+    },
+  },
+  {
+    surfaceId: "tabs_with_images_surface",
+    beginRendering: {
+      root: "mainTabs",
+    },
+  },
+];

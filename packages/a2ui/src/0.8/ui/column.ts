@@ -33,6 +33,7 @@ export class Column extends Root {
         grid-auto-rows: auto;
         min-height: 0;
         overflow: auto;
+        width: 100%;
       }
 
       :host[alignment="start"] section {

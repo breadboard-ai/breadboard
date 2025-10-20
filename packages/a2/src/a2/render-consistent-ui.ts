@@ -26,10 +26,10 @@ import {
 export { renderConsistentUI };
 
 const EXAMPLES = [
-  "If the content is predominantly visual media (images and videos) then arrange them in a neat grid using Rows, Columns, and Lists. Try to put a few items on each row and try to make sure the grid is balanced. Put any other content, including audio, below.",
-  "If there are two or more pieces of visual media (images and videos) then give them priority and place them in a Row at the top with everything else underneath in a List.",
-  "If there is one piece of visual media (image or video), place it to the left, and put everything else to the right in a List. Within the list prioritize audio.",
-  "If all else fails and nothing matches the above examples, stack everything up in a vertical List in the order you find them.",
+  "If the content is predominantly visual media (images and videos) then arrange them in a neat grid using Rows, Columns, and Lists. Try to put a few items on each row and try to make sure the grid is balanced. Put any other content, including text and audio, below the media. If there is a title, place it at the top.",
+  "If there are two or more pieces of visual media (images and videos) then give them priority and place them in a Row at the top with everything else underneath in a List. If there is a title, place it at the top.",
+  "If there is one piece of visual media (image or video), place it to the left, and put everything else to the right in a List. Within the list prioritize audio.If there is a title, place it at the top.",
+  "If all else fails and nothing matches the above examples, stack everything up in a vertical List in the order you find them. If there is a title, place it at the top.",
 ];
 
 const UI_SCHEMA: GeminiSchema = {
@@ -581,11 +581,16 @@ function createFullSystemInstruction(si?: LLMContent) {
     components and a beginRendering object so that it's clear what needs to be
     rendered.
 
-    You will be provided data so you must use that and never add, remove, or
-    alter it in any way. Everything part in the provided MUST be represented in
-    the output.
+    Whenever you use a dataBinding you must start paths for child items with no
+    other prefixes such as 'item' etc. Keep the path purely related to the data
+    structure on which it is bound.
 
-    ULTRA IMPORTANT: You MUST preserve all original paths for media.
+    IMPORTANT: You will be provided data so you MUST use that and never add,
+    remove, or alter it in any way. Every part in the provided MUST be
+    represented in the output, including text, media, headers, everything.
+
+    ULTRA IMPORTANT: You MUST preserve all original paths for media. You must
+    also retain any line breaks in literal strings you generate.
   `.asContent();
 }
 
@@ -616,7 +621,9 @@ function substituteLiterals(
         if (Object.prototype.hasOwnProperty.call(currentValue, key)) {
           const value = currentValue[key];
           if (
-            (key === "literal" || key === "literalString") &&
+            (key === "literal" ||
+              key === "literalString" ||
+              key === "value_string") &&
             typeof value === "string"
           ) {
             const part = substitutions.get(value);
@@ -716,7 +723,19 @@ async function renderConsistentUI(
 
     await reporter.start();
     await reporter.sendA2UI("Generated UI", toJson(generated.all), "download");
-    return [llm`See Console`.asContent()];
+    return [
+      {
+        role: "user",
+        parts: [
+          {
+            inlineData: {
+              data: btoa(JSON.stringify(generated.all)),
+              mimeType: "text/a2ui",
+            },
+          },
+        ],
+      },
+    ];
   } finally {
     await reporter.close();
   }

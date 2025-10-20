@@ -148,7 +148,7 @@ export class TextEditor extends LitElement {
         white-space: break-spaces;
         height: var(--text-editor-height, auto);
         width: 100%;
-        min-height: 100%;
+        min-height: max(var(--bb-grid-size-10), 100%);
         line-height: var(--bb-grid-size-6);
         overflow-y: scroll;
         overflow-x: hidden;

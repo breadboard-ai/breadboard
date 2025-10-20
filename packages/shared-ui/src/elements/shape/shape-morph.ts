@@ -110,10 +110,6 @@ export class ShapeMorph extends LitElement {
     super.connectedCallback();
 
     this.#intersectionObserver.observe(this);
-
-    window.addEventListener("dblclick", () => {
-      this.style.display = this.style.display === "block" ? "none" : "block";
-    });
   }
 
   disconnectedCallback(): void {

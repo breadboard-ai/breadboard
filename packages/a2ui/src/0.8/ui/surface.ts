@@ -26,6 +26,10 @@ export class Surface extends LitElement {
       overflow: auto;
       max-height: 100%;
     }
+
+    a2ui-root {
+      flex: 1;
+    }
   `;
 
   render() {
