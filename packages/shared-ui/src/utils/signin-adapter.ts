@@ -28,6 +28,7 @@ import { clearIdbGraphCache } from "@breadboard-ai/google-drive-kit/board-server
 import { createFetchWithCreds } from "@breadboard-ai/utils";
 import { scopesFromUrl } from "./scopes-from-url";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
+import { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 export { SigninAdapter };
 
@@ -98,6 +99,7 @@ class SigninAdapter {
   readonly #tokenVendor: TokenVendor;
   readonly #globalConfig: GlobalConfig;
   readonly #settingsHelper: SettingsHelper;
+  readonly #opalShell: OpalShellProtocol;
   readonly #handleSignInRequest?: (scopes?: OAuthScope[]) => Promise<boolean>;
   #state: SigninAdapterState;
   readonly fetchWithCreds: typeof globalThis.fetch;
@@ -106,11 +108,13 @@ class SigninAdapter {
     tokenVendor: TokenVendor,
     globalConfig: GlobalConfig,
     settingsHelper: SettingsHelper,
+    opalShell: OpalShellProtocol,
     handleSignInRequest?: () => Promise<boolean>
   ) {
     this.#tokenVendor = tokenVendor;
     this.#globalConfig = globalConfig;
     this.#settingsHelper = settingsHelper;
+    this.#opalShell = opalShell;
     this.#handleSignInRequest = handleSignInRequest;
 
     this.fetchWithCreds = createFetchWithCreds(async (url) => {

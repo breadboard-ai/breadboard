@@ -25,6 +25,7 @@ import {
   parseUrl,
 } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { connectToOpalShellHost } from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
 
 export { bootstrap };
 
@@ -91,10 +92,12 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     globalConfig
   );
 
+  const opalShell = await connectToOpalShellHost();
   const signinAdapter = new SigninAdapter(
     tokenVendor,
     globalConfig,
-    settingsHelper
+    settingsHelper,
+    opalShell
   );
 
   const StringsHelper = await import("@breadboard-ai/shared-ui/strings");
@@ -147,6 +150,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       env: bootstrapArgs.env,
       embedHandler: bootstrapArgs.embedHandler,
       globalConfig,
+      opalShell,
     };
     if (mainArgs.globalConfig.googleDrive.publishPermissions.length === 0) {
       console.warn(
