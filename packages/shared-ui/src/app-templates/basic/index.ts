@@ -102,8 +102,6 @@ function isHTMLOutput(screen: AppScreenOutput): string | null {
   return null;
 }
 
-console.log(a2uiTheme);
-
 @customElement("app-basic")
 export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @property({ type: Object })
