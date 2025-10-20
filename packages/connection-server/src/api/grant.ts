@@ -88,14 +88,6 @@ export async function grant(
       id,
       domain,
     };
-    if (config.validateResponse) {
-      const checkedGrantResponse = await config.validateResponse(grantResponse);
-      if (!checkedGrantResponse.ok) {
-        return badRequestJson(res, {
-          error: checkedGrantResponse.error,
-        });
-      }
-    }
     res.setHeader(
       "Set-Cookie",
       [

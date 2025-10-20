@@ -7,15 +7,10 @@
 import * as flags from "./flags.js";
 import * as googleOauth from "./oauth/google.js";
 
-import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
-
 export interface ServerConfig {
   connection: ConnectionConfig;
   allowedOrigins: string[];
   refreshTokenCookieSameSite: flags.SameSite;
-  validateResponse?: (
-    response: GrantResponse
-  ) => Promise<{ ok: true } | { ok: false; error: string }>;
 }
 
 export interface ConnectionsConfigFile {
