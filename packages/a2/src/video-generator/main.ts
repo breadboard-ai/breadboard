@@ -56,6 +56,12 @@ const MODELS: Model[] = [
     modelName: "veo-3.0-generate-preview",
   },
   {
+    id: "veo-3.1",
+    title: "Veo 3.1",
+    description: "Latest state of the art video generation with audio",
+    modelName: "veo-3.1-generate-preview",
+  },
+  {
     id: "veo-2",
     title: "Veo 2",
     description: "Faster video generation, no audio",
