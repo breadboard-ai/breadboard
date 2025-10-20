@@ -171,14 +171,6 @@ class SigninAdapter {
     let token = this.#tokenVendor.getToken();
     if (token.state === "expired") {
       token = await token.refresh();
-      if (token.state === "signedout") {
-        // TODO(aomarks) I'm virtually certain this never worked, because we're
-        // definitely past an async boundary, which would mean the browser won't
-        // let us open a window.
-        if ((await this.signIn()).ok) {
-          token = this.#tokenVendor.getToken();
-        }
-      }
     }
     switch (token.state) {
       case "valid": {
