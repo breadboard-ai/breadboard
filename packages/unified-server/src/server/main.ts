@@ -13,7 +13,6 @@ import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-
 import { InputValues, NodeDescriptor } from "@breadboard-ai/types";
 
 import { makeDriveProxyMiddleware } from "./drive-proxy.js";
-import { allowListChecker } from "./allow-list-checker.js";
 import { createClientConfig } from "./config.js";
 import { makeCspHandler } from "./csp.js";
 import * as flags from "./flags.js";
@@ -38,10 +37,7 @@ const boardServerConfig = boardServer.createServerConfig({
   storageProvider: "firestore",
   proxyServerAllowFilter,
 });
-const connectionServerConfig = {
-  ...(await connectionServer.createServerConfig()),
-  validateResponse: allowListChecker(),
-};
+const connectionServerConfig = await connectionServer.createServerConfig();
 
 console.log("[unified-server startup] Mounting board server");
 boardServer.addMiddleware(server, boardServerConfig);
