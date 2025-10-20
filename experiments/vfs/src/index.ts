@@ -16,65 +16,11 @@ import { systemFunctions, terminateLoop } from "./functions/system";
 import { FunctionDefinition } from "./define-function";
 import { videoFunctions } from "./functions/video";
 import { generateFunctions } from "./functions/generate";
+import { evalSet } from "./eval-set";
 
 config();
 
-const objective = `Ask the user (a middle schooler) about how they would
-like to learn today. Offer them these choices and take them to the one they
-choose:
-
-- <a href="/game">Fun Learning Game</a>
-- <a href="/video">Educational Cartoon</a>
-- <a href="/lesson">Engaging Interactive Lesson</a>
-`;
-
-// const objective = `Stitch these images into a video, with each image as a key
-// frame in the video:
-
-// <file src="/vfs/image1.png"/>
-// <file src="/vfs/image2.png"/>
-// <file src="/vfs/image3.png"/>
-// <file src="/vfs/image4.png"/>
-// <file src="/vfs/image5.png"/>
-// <file src="/vfs/image6.png"/>
-// `;
-
-// const objective = `Generate a poem about opals`;
-
-// const objective = `Come up with five ideas for Halloween instagram posts and
-// generate images for all of them. Write each post text as a file.
-// Output as interleaved files:
-
-// text + image + ...
-
-// For context, this is for a small coffee shop in Mountain View.`;
-
-// const objective = `Make a video of a monkey jumping. Use one prompt to generate
-// multiple keyframe images.`;
-
-// const objective = `Create a video from two user-supplied images. When asking
-// for second image, show the first image as part of user prompt.
-// After images collected, show both images and ask to confirm that this is what
-// the user wants. If not, start over.`;
-
-// const objective = `Collect the following information from the user:
-// - name of their business
-// - location of the business
-// - type of their business
-// The user may want to ask questions or want to have a conversation that is
-// not relevant to the information. Be polite and gently steer them toward
-// collecting the information. It may take more than one try.
-
-// When you feel confident that you've collected the information, ask the user
-// to confirm`;
-
-// const objective = `Have a conversation with the user, acting as the grizzled
-// pirate with a kind soul. Talk for as long as it takes, until the user
-// specifically signals that they're done with the conversation.
-
-// After the user is done, save the summary of the conversation: just the key
-// points and things that might be useful to recall in the next chat with the
-// users`;
+const objective = evalSet.get("monkey");
 
 const systemInstruction = `You are an AI agent. Your job is to fulfill the 
 objective, specified at the start of the conversation context.
