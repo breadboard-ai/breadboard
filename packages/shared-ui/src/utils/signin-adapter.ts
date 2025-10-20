@@ -222,7 +222,11 @@ class SigninAdapter {
       this.#opalShell.generateSignInUrlAndNonce(scopes);
     const popupWidth = 900;
     const popupHeight = 850;
+    // TODO(aomarks) We should also show a modal with a regular target="_blank"
+    // link, in case the user's browser or an extension suppresses the popup.
     const popup = window.open(
+      // First open a blank window because generating the actual sign-in URL is
+      // asynchronous, and the window must be opened synchronously.
       "about:blank",
       "Sign in to Google",
       `
