@@ -94,11 +94,6 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
       if (grantResponse.error === "access_denied") {
         console.info(`[shell host] User cancelled sign-in`);
         return { ok: false, error: { code: "user-cancelled" } };
-      } else if (grantResponse.error.includes("region")) {
-        // TODO(aomarks) This path shouldn't ever happen anymore, we always
-        // check it below instead, so we can probably remove this case.
-        console.info(`[shell host] User is geo restricted (early)`);
-        return { ok: false, error: { code: "geo-restriction" } };
       }
       console.error(`[shell host] Unknown grant error`, grantResponse.error);
       return {
