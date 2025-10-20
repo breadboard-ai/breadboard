@@ -16,7 +16,7 @@ export const opalShellContext = createContext<OpalShellProtocol | undefined>(
 
 export function connectToOpalShellHost(): OpalShellProtocol {
   const hostOrigin = CLIENT_DEPLOYMENT_CONFIG.SHELL_HOST_ORIGIN;
-  if (hostOrigin && hostOrigin !== "*") {
+  if (hostOrigin && hostOrigin !== "*" && window !== window.parent) {
     return comlink.wrap<OpalShellProtocol>(
       comlink.windowEndpoint(
         // Where this guest sends messages.
