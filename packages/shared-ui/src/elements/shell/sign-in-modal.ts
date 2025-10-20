@@ -258,26 +258,10 @@ export class VESignInModal extends LitElement {
       this.#close(false);
       return;
     }
-    const url = await this.signinAdapter.getSigninUrl(
-      this.#state.request.scopes
-    );
-    const signInPromise = this.signinAdapter.signIn(this.#state.request.scopes);
-    const popupWidth = 900;
-    const popupHeight = 850;
-    window.open(
-      url,
-      "Sign in to Google",
-      `
-      width=${popupWidth}
-      height=${popupHeight}
-      left=${window.screenX + window.innerWidth / 2 - popupWidth / 2}
-      top=${window.screenY + window.innerHeight / 2 - popupHeight / 2 + /* A little extra to account for the tabs, url bar etc.*/ 60}
-      `
-    );
-    const outcome = await signInPromise;
+    const result = await this.signinAdapter.signIn(this.#state.request.scopes);
     const { status, request } = this.#state;
-    if (!outcome.ok) {
-      const { code } = outcome.error;
+    if (!result.ok) {
+      const { code } = result.error;
       if (code === "missing-scopes" || code === "geo-restriction") {
         this.#state = { status: code, request };
       } else if (code === "user-cancelled") {
@@ -295,7 +279,7 @@ export class VESignInModal extends LitElement {
       // user icon.
       window.location.reload();
     }
-    this.#close(outcome.ok);
+    this.#close(result.ok);
   }
 
   #close(outcome: boolean) {

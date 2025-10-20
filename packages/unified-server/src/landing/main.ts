@@ -192,34 +192,18 @@ async function init() {
     Shell.setAllAppNameHolders(Strings.from("APP_NAME"));
     landingCarousel.appName = Strings.from("APP_NAME");
 
-    let autoSignInUrl = "";
-    const setSignInUrls = async () => {
-      // Note we need a new sign-in URL for each attempt, because it has a unique
-      // nonce.
-      const signInUrl = await signinAdapter.getSigninUrl();
-      signInButton.href = signInUrl;
-      signInHeaderButton.href = signInUrl;
-      scopesErrorSignInButton.href = signInUrl;
-      sharedFlowDialogSignInButton.href = signInUrl;
-
-      // Track the last known sign in URL so that if we receieve the notice that
-      // the user wants to see a gallery item we can trigger the sign-in flow
-      // without any further interaction.
-      autoSignInUrl = signInUrl;
-    };
-
     const showGeoRestrictionDialog = () => {
       genericErrorDialogTitle.textContent = `${Strings.from("APP_NAME")} is not available in your country yet`;
       genericErrorDialog.showModal();
     };
 
-    const onClickSignIn = async (target?: MakeUrlInit) => {
+    const onClickSignIn = async (event: Event, destination?: MakeUrlInit) => {
+      event.preventDefault();
       console.info(`[landing] Awaiting sign-in result`);
       const result = await signinAdapter.signIn();
       console.info(`[landing] Received sign-in result`, result);
       if (!result.ok) {
         const { error } = result;
-        await setSignInUrls();
         if (error.code === "missing-scopes") {
           scopesErrorDialog.showModal();
         } else if (error.code === "geo-restriction") {
@@ -238,27 +222,25 @@ async function init() {
       }
 
       ActionTracker.signInSuccess();
-      console.info(`[landing] Redirecting after sign-in`, target);
-      redirect(target);
+      console.info(`[landing] Redirecting after sign-in`, event.target);
+      redirect(destination);
     };
 
     embedIntroVideo(introVideo);
 
-    await setSignInUrls();
     const signInHeaderLabel = signInHeaderButton.querySelector("span");
     if (signInHeaderLabel) {
       signInHeaderLabel.textContent = "Sign in";
     }
     signInButton.innerText = `Try ${Strings.from("APP_NAME")}`;
-    signInHeaderButton.addEventListener("click", () => onClickSignIn());
-    signInButton.addEventListener("click", () => onClickSignIn());
-    document.addEventListener("loadgalleryflow", (evt: Event) => {
-      const urlEvent = evt as CustomEvent<GraphInit>;
-      onClickSignIn(urlEvent.detail);
-      window.open(autoSignInUrl, "_blank");
+    signInHeaderButton.addEventListener("click", onClickSignIn);
+    signInButton.addEventListener("click", onClickSignIn);
+    document.addEventListener("loadgalleryflow", (event: Event) => {
+      const urlEvent = event as CustomEvent<GraphInit>;
+      onClickSignIn(event, urlEvent.detail);
     });
-    scopesErrorSignInButton.addEventListener("click", () => {
-      onClickSignIn();
+    scopesErrorSignInButton.addEventListener("click", (event) => {
+      onClickSignIn(event);
       scopesErrorDialog.close();
     });
 
@@ -279,8 +261,8 @@ async function init() {
     } else if (parsedUrl.redirect.page === "graph") {
       sharedFlowDialogTitle.textContent = Strings.from("LABEL_SHARE");
       sharedFlowDialog.showModal();
-      sharedFlowDialogSignInButton.addEventListener("click", () => {
-        onClickSignIn();
+      sharedFlowDialogSignInButton.addEventListener("click", (event) => {
+        onClickSignIn(event);
         sharedFlowDialog.close();
       });
     }
