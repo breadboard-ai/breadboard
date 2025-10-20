@@ -20,6 +20,7 @@ import {
   initializeAnalytics,
 } from "@breadboard-ai/shared-ui/utils/action-tracker.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { connectToOpalShellHost } from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
 import * as Shell from "./shell.js";
 import {
   parseUrl,
@@ -135,10 +136,12 @@ async function init() {
     globalConfig
   );
 
+  const opalShell = await connectToOpalShellHost();
   const signinAdapter = new SigninAdapter(
     tokenVendor,
     globalConfig as GlobalConfig,
-    settingsHelper
+    settingsHelper,
+    opalShell
   );
 
   if (

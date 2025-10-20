@@ -63,10 +63,7 @@ import {
 } from "@breadboard-ai/embed";
 import { FileSystemPersistentBackend } from "@breadboard-ai/filesystem-board-server";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import {
-  maybeConnectToOpalShellIframeHost,
-  opalShellContext,
-} from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
+import { opalShellContext } from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
 import { McpClientManager } from "@breadboard-ai/mcp";
 import {
   GlobalConfig,
@@ -119,6 +116,7 @@ import {
   type OAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { builtInMcpClients } from "./mcp-clients";
+import { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 type RenderValues = {
   canSave: boolean;
@@ -175,7 +173,7 @@ export class Main extends SignalWatcher(LitElement) {
   accessor #uiState!: BreadboardUI.State.UI;
 
   @provide({ context: opalShellContext })
-  accessor opalShell = maybeConnectToOpalShellIframeHost();
+  accessor opalShell: OpalShellProtocol;
 
   @state()
   accessor #tab: Runtime.Types.Tab | null = null;
@@ -326,10 +324,13 @@ export class Main extends SignalWatcher(LitElement) {
       this.globalConfig
     );
 
+    this.opalShell = args.opalShell;
+
     this.signinAdapter = new SigninAdapter(
       this.tokenVendor,
       this.globalConfig,
       this.settingsHelper,
+      this.opalShell,
       (scopes?: OAuthScope[]) => this.#askUserToSignInIfNeeded(scopes)
     );
 

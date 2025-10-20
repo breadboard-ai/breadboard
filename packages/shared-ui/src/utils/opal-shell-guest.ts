@@ -8,14 +8,13 @@ import type { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol
 import { createContext } from "@lit/context";
 import * as comlink from "comlink";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
+import { OAuthBasedOpalShell } from "./oauth-based-opal-shell.js";
 
 export const opalShellContext = createContext<OpalShellProtocol | undefined>(
   "OpalShell"
 );
 
-export function maybeConnectToOpalShellIframeHost():
-  | OpalShellProtocol
-  | undefined {
+export function connectToOpalShellHost(): OpalShellProtocol {
   const hostOrigin = CLIENT_DEPLOYMENT_CONFIG.SHELL_HOST_ORIGIN;
   if (hostOrigin && hostOrigin !== "*") {
     return comlink.wrap<OpalShellProtocol>(
@@ -33,5 +32,9 @@ export function maybeConnectToOpalShellIframeHost():
         hostOrigin
       )
     );
+  } else {
+    // TODO(aomarks) Remove once we are fully migrated to the iframe
+    // arrangement.
+    return new OAuthBasedOpalShell();
   }
 }
