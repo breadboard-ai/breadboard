@@ -18,8 +18,6 @@ import {
   isStoredData,
   joinContent,
   ok,
-  toInlineData,
-  toInlineReference,
   toLLMContent,
   toText,
   toTextConcat,
@@ -32,12 +30,14 @@ import {
 } from "../a2/step-executor";
 import {
   Capabilities,
+  InlineDataCapabilityPart,
   LLMContent,
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
 import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 import { getBucketId } from "../a2/get-bucket-id";
+import { toBlobStoredData, toGcsAwareChunk } from "../a2/to-blob-stored-data";
 
 type Model = {
   id: string;
@@ -121,21 +121,25 @@ async function callVideoGen(
     console.log("Image found, using i2v");
     let imageChunk;
     if (isStoredData(imageContent)) {
-      imageChunk = toInlineReference(imageContent);
+      const blobStoredData = await toBlobStoredData(
+        moduleArgs.fetchWithCreds,
+        imageContent.parts.at(-1)!
+      );
+      if (!ok(blobStoredData)) return blobStoredData;
+      imageChunk = toGcsAwareChunk(bucketId, blobStoredData);
     } else {
-      imageChunk = toInlineData(imageContent);
+      const { inlineData } = imageContent.parts.at(
+        -1
+      )! as InlineDataCapabilityPart;
+      imageChunk = {
+        mimetype: inlineData.mimeType,
+        data: inlineData.data,
+      };
     }
     if (!imageChunk || typeof imageChunk == "string") {
       return err("Image input did not have the expected format");
     }
-    executionInputs["reference_image"] = {
-      chunks: [
-        {
-          mimetype: imageChunk.mimeType,
-          data: imageChunk.data,
-        },
-      ],
-    };
+    executionInputs["reference_image"] = { chunks: [imageChunk] };
     inputParameters.push("reference_image");
   } else {
     console.log("No image found, using t2v");

@@ -17,6 +17,7 @@ import {
   decodeBase64,
   encodeBase64,
   err,
+  ErrorMetadata,
   ErrorWithMetadata,
   ok,
   toLLMContentInline,
@@ -72,6 +73,15 @@ export type ExecuteStepRequest = {
 export type ExecuteStepResponse = {
   executionOutputs: ContentMap;
   errorMessage?: string;
+};
+
+export type ExecuteStepErrorResponse = {
+  error: {
+    code: number;
+    message: string;
+    status: string;
+    details: unknown;
+  };
 };
 
 type ExecutionOutput = {
@@ -217,12 +227,11 @@ async function executeStep(
         body: JSON.stringify(body),
       });
       if (!fetchResponse.ok) {
-        return reporter.sendError(
-          err(await fetchResponse.text(), {
-            origin: "server",
-            model,
-          })
+        const { $error, metadata } = decodeFetchError(
+          await fetchResponse.text(),
+          model
         );
+        return reporter.sendError(err($error, metadata));
       }
       response = await fetchResponse.json();
     } catch (e) {
@@ -312,4 +321,22 @@ function decodeMetadata($error: string, model: string): ErrorWithMetadata {
     return { $error, metadata: { kind: "recitation", origin, model } };
   }
   return { $error, metadata: { origin, model } };
+}
+
+function decodeFetchError($error: string, model?: string): ErrorWithMetadata {
+  try {
+    const { error } = JSON.parse($error) as ExecuteStepErrorResponse;
+    const kind: ErrorMetadata["kind"] =
+      error.status === "INVALID_ARGUMENT" ? "bug" : "unknown";
+    return {
+      $error: error.message,
+      metadata: {
+        origin: "server",
+        kind,
+        model,
+      },
+    };
+  } catch {
+    return { $error };
+  }
 }

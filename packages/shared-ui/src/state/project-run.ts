@@ -475,7 +475,7 @@ class ReactiveProjectRun implements ProjectRun {
           entry.error = error;
           this.renderer.nodes.set(id, {
             status: "failed",
-            errorMessage: error.message,
+            errorMessage: error.details || error.message,
           });
         } else if (nodeState.state === "interrupted") {
           entry.finalizeWorkItemInputs();
