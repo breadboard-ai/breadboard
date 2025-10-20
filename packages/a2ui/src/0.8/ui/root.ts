@@ -22,6 +22,7 @@ import { consume } from "@lit/context";
 import { themeContext } from "./context/theme";
 import { Theme } from "../types/types";
 import * as Styles from "./styles";
+import { StringValue } from "../types/primitives";
 
 // This is the base class all the components will inherit
 @customElement("a2ui-root")
@@ -182,6 +183,7 @@ export class Root extends SignalWatcher(LitElement) {
         }
 
         case "Image": {
+          console.log(component);
           return html`<a2ui-image
             id=${component.id}
             .component=${component}
@@ -345,8 +347,29 @@ export class Root extends SignalWatcher(LitElement) {
           ></a2ui-video>`;
         }
 
-        case "Modal":
         case "Tabs": {
+          const titles: StringValue[] = [];
+          const childComponents: AnyComponentNode[] = [];
+          if (component.properties.tabItems) {
+            for (const item of component.properties.tabItems) {
+              titles.push(item.title);
+              childComponents.push(item.child);
+            }
+          }
+
+          return html`<a2ui-tabs
+            id=${component.id}
+            .component=${component}
+            .weight=${1}
+            .processor=${this.processor}
+            .surfaceId=${this.surfaceId}
+            .dataContextPath=${component.dataContextPath}
+            .titles=${titles}
+            .childComponents=${childComponents}
+          ></a2ui-tabs>`;
+        }
+
+        case "Modal": {
           return html`Element not available`;
         }
       }

@@ -53,7 +53,7 @@ import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js
 import { styles as appStyles } from "./index.styles.js";
 import { theme as uiTheme } from "./theme/light.js";
 import { v0_8 } from "@breadboard-ai/a2ui";
-import { theme as a2uiTheme } from "./theme/a2ui-theme.js";
+import { theme as a2uiTheme } from "../../a2ui-theme/a2ui-theme.js";
 
 import "./header/header.js";
 
@@ -101,6 +101,8 @@ function isHTMLOutput(screen: AppScreenOutput): string | null {
 
   return null;
 }
+
+console.log(a2uiTheme);
 
 @customElement("app-basic")
 export class Template extends SignalWatcher(LitElement) implements AppTemplate {
@@ -228,7 +230,14 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       ) {
         const a2UI = last.output.context[0].parts[0];
         try {
-          const rawData = atob(a2UI.inlineData.data);
+          const binaryString = atob(a2UI.inlineData.data);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+
+          const decoder = new TextDecoder("utf-8");
+          const rawData = decoder.decode(bytes);
           const data = JSON.parse(rawData);
           let messages = data[0].parts[0].json;
           if (!Array.isArray(messages)) {

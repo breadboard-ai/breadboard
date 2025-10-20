@@ -51,12 +51,12 @@ export class Text extends Root {
           this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
         );
 
-        if (typeof textValue !== "string") {
-          return html`(invalid)`;
+        if (textValue === null) {
+          return html`(empty)`;
         }
 
         return html`${markdown(
-          textValue,
+          textValue.toString(),
           appendToAll(this.theme.markdown, ["ol", "ul", "li"], {})
         )}`;
       }

@@ -3,13 +3,14 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, nothing } from "lit";
+import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { SurfaceID, Surface as SurfaceState } from "../types/types";
 import { A2UIModelProcessor } from "../data/model-processor";
+import { Root } from "./root";
 
 @customElement("a2ui-surface")
-export class Surface extends LitElement {
+export class Surface extends Root {
   @property()
   accessor surfaceId: SurfaceID | null = null;
 
@@ -19,18 +20,20 @@ export class Surface extends LitElement {
   @property()
   accessor processor: A2UIModelProcessor | null = null;
 
-  static styles = css`
-    :host {
-      display: flex;
-      min-height: 0;
-      overflow: auto;
-      max-height: 100%;
-    }
+  static styles = [
+    css`
+      :host {
+        display: flex;
+        min-height: 0;
+        overflow: auto;
+        max-height: 100%;
+      }
 
-    a2ui-root {
-      flex: 1;
-    }
-  `;
+      a2ui-root {
+        flex: 1;
+      }
+    `,
+  ];
 
   render() {
     if (!this.surface) {

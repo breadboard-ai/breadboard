@@ -40,7 +40,14 @@ export type Theme = {
     MultipleChoice: Record<string, boolean | string>;
     Row: Record<string, boolean | string>;
     Slider: Record<string, boolean | string>;
-    Tabs: Record<string, boolean | string>;
+    Tabs: {
+      container: Record<string, boolean | string>;
+      element: Record<string, boolean | string>;
+      controls: {
+        all: Record<string, boolean>;
+        selected: Record<string, boolean>;
+      };
+    };
     Text: Record<string, boolean | string>;
     TextField: Record<string, boolean | string>;
     Video: Record<string, boolean | string>;

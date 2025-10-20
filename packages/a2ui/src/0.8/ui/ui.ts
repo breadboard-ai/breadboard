@@ -27,6 +27,7 @@ import { Root } from "./root.js";
 import { Row } from "./row.js";
 import { Slider } from "./slider.js";
 import { Surface } from "./surface.js";
+import { Tabs } from "./tabs.js";
 import { TextField } from "./text-field.js";
 import { Text } from "./text.js";
 import { Video } from "./video.js";
@@ -51,12 +52,13 @@ export {
   Slider,
   Root,
   Surface,
+  Tabs,
   Text,
   TextField,
   Video,
 };
 
-// TODO: Modal, Slider, Tabs
+// TODO: Modal
 
 interface A2UITagNameMap {
   "a2ui-audioplayer": Audio;
@@ -74,6 +76,7 @@ interface A2UITagNameMap {
   "a2ui-row": Row;
   "a2ui-slider": Slider;
   "a2ui-surface": Surface;
+  "a2ui-tabs": Tabs;
   "a2ui-text": Text;
   "a2ui-textfield": TextField;
   "a2ui-video": Video;
