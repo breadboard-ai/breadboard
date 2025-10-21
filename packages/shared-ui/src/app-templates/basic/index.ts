@@ -139,9 +139,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @property()
   accessor disclaimerContent = "";
 
-  @property()
-  accessor state: SigninAdapterState["status"] = "anonymous";
-
   @property({ reflect: true, type: Boolean })
   accessor hasRenderedSplash = false;
 
@@ -876,28 +873,18 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           ></p>
           <div id="input" class="stopped">
             <div>
-              ${this.state === "anonymous" || this.state === "signedin"
-                ? html`<button
-                    id="run"
-                    ?disabled=${!this.run.runnable}
-                    @click=${() => {
-                      ActionTracker.runApp(this.graph?.url, "app_preview");
-                      this.dispatchEvent(
-                        new StateEvent({ eventType: "board.run" })
-                      );
-                    }}
-                  >
-                    <span class="g-icon"></span>Start
-                  </button>`
-                : html`<button
-                    id="sign-in"
-                    ?disabled=${!this.run.runnable}
-                    @click=${() => {
-                      this.dispatchEvent(new SignInRequestedEvent());
-                    }}
-                  >
-                    <span class="g-icon"></span>Sign In
-                  </button>`}
+              <button
+                id="run"
+                ?disabled=${!this.run.runnable}
+                @click=${() => {
+                  ActionTracker.runApp(this.graph?.url, "app_preview");
+                  this.dispatchEvent(
+                    new StateEvent({ eventType: "board.run" })
+                  );
+                }}
+              >
+                <span class="g-icon"></span>Start
+              </button>
             </div>
           </div>
         </section>

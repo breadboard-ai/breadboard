@@ -139,10 +139,7 @@ async function init() {
     opalShell
   );
 
-  if (
-    signinAdapter.state === "anonymous" ||
-    signinAdapter.state === "signedin"
-  ) {
+  if (signinAdapter.state === "signedin") {
     redirect();
     return;
   }

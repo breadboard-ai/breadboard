@@ -407,7 +407,6 @@ export interface AppTemplateOptions {
 }
 
 export interface AppTemplate extends LitElement {
-  state: SigninAdapterState["status"] | null;
   options: AppTemplateOptions;
   graph: GraphDescriptor | null;
   additionalOptions: AppTemplateAdditionalOptionsAvailable;

@@ -31,8 +31,6 @@ export { SigninAdapter };
 export const SIGN_IN_CONNECTION_ID = "$sign-in";
 
 export type SigninAdapterState =
-  /** The runtime is not configured to use the sign in. */
-  | { status: "anonymous" }
   | { status: "signedout" }
   | {
       status: "signedin";
@@ -97,8 +95,7 @@ class SigninAdapter {
 
     const token = tokenVendor.getToken();
     if (token.state === "signedout") {
-      // TODO(aomarks) Temporary weirdness.
-      this.#state = { status: "anonymous" };
+      this.#state = { status: "signedout" };
       return;
     }
 
@@ -149,7 +146,7 @@ class SigninAdapter {
   async token(
     scopes?: OAuthScope[]
   ): Promise<ValidTokenResult | SignedOutTokenResult> {
-    if (this.#state.status === "anonymous") {
+    if (this.#state.status === "signedout") {
       await this.#handleSignInRequest?.(scopes);
       if (
         // Cast needed because TypeScript doesn't realize that the await above

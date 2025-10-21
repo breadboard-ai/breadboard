@@ -335,7 +335,7 @@ export class Main extends SignalWatcher(LitElement) {
     );
 
     // Asyncronously check if the user has a geo-restriction and sign out if so.
-    if (this.signinAdapter.state !== "anonymous") {
+    if (this.signinAdapter.state === "signedin") {
       this.signinAdapter.token().then(async (result) => {
         if (
           result.state === "valid" &&
@@ -380,7 +380,7 @@ export class Main extends SignalWatcher(LitElement) {
     const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
       .href;
     const apiBaseUrl =
-      this.signinAdapter.state === "anonymous"
+      this.signinAdapter.state === "signedout"
         ? proxyApiBaseUrl
         : "https://www.googleapis.com";
     this.googleDriveClient = new GoogleDriveClient({
@@ -591,10 +591,6 @@ export class Main extends SignalWatcher(LitElement) {
     this.sideBoardRuntime.addEventListener("running", () => {
       this.#uiState.canRunMain = false;
     });
-
-    if (this.signinAdapter.state === "signedout") {
-      return;
-    }
 
     this.#graphStore.addEventListener("update", (evt) => {
       const { mainGraphId } = evt;
@@ -1463,14 +1459,6 @@ export class Main extends SignalWatcher(LitElement) {
   render() {
     if (!this.#ready) {
       return nothing;
-    }
-
-    if (this.signinAdapter.state === "signedout") {
-      return html`<bb-connection-entry-signin
-        @bbsignin=${async () => {
-          window.location.reload();
-        }}
-      ></bb-connection-entry-signin>`;
     }
 
     const renderValues = this.#getRenderValues();
