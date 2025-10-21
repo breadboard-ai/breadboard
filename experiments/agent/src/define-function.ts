@@ -40,7 +40,7 @@ type TypedFunctionDefinition<
 
 export type FunctionDefinition = TypedFunctionDefinition<any, any>;
 
-export { defineFunction };
+export { defineFunction, defineFunctionLoose };
 
 function defineFunction<
   TParams extends ArgsRawShape,
@@ -60,6 +60,24 @@ function defineFunction<
   };
   if (response) {
     result["responseJsonSchema"] = zodToJsonSchema(z.object(response));
+  }
+  return result;
+}
+
+function defineFunctionLoose(
+  definition: FunctionDeclaration,
+  handler: (args: Record<string, string>) => Promise<Record<string, string>>
+): FunctionDefinition {
+  const { parametersJsonSchema, responseJsonSchema, name, description } =
+    definition;
+  const result: FunctionDefinition = {
+    name,
+    description,
+    parametersJsonSchema,
+    handler,
+  };
+  if (responseJsonSchema) {
+    result["responseJsonSchema"] = responseJsonSchema;
   }
   return result;
 }

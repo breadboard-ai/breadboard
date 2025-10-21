@@ -11,14 +11,159 @@ import { constants } from "node:fs";
 import { access } from "node:fs/promises";
 
 import z from "zod";
-import { defineFunction } from "../define-function";
+import {
+  defineFunction,
+  defineFunctionLoose,
+  FunctionDefinition,
+} from "../define-function";
 import { getFileHandle, write } from "../file-system";
+import { examples, uiSchema } from "../a2ui";
 
 export { systemFunctions, terminateLoop };
 
 const FILES_DIR = path.join(import.meta.dirname, "../files");
 
 let terminateLoop = false;
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const simpleRequestUserInput: FunctionDefinition = defineFunction(
+  {
+    name: "system_request_user_input",
+    description: `Requests input from a user. Use this function to obtain
+additional information or confirmation from the user. Use only when necessary.
+Avoid excessive requests to the user.`,
+    parameters: {
+      user_message: z.string()
+        .describe(`Text to display to the user when requesting input.
+Use the <file src="path" /> syntax to embed any files in the message`),
+      type: z.enum([
+        "singleline-text",
+        "multiline-text",
+        "confirm",
+        "image",
+        "video",
+      ]).describe(`Type of the input requested.
+- Use "singleline-text" to request a single line of text. Useful for chat-like
+interactions, when only a brief text is requested. The requested text will be 
+delivered as "text" response. 
+- Use "multiline-text" to request multi-line text. Useful when requesting a 
+longer text, like a review, critique, further instructions, etc. The requested
+text will be delivered as "text" response.
+- Use "confirm" to request confirmation on an action. Use this only
+when specifically requested by the objective. The confirmation will be 
+delivered as "yes" or "no" in "text" response.
+- Use "image" to request an image. Once the user uploads the image, it will be
+delivered as "file_path" response.
+- Use "video" to request a video. Once the user uploads the video, it will be
+delivered as "file_path" response.
+`),
+    },
+    response: {
+      text: z
+        .string()
+        .optional()
+        .describe(
+          `The text response from the user, populated when the "type" is "singleline-text", "multiline-text", or "confirm".`
+        ),
+      file_path: z.string().optional().describe(`The VFS path to the file,
+uploaded by the user, populated when the "type" is "image", or "video".`),
+    },
+  },
+  async ({ user_message, type }) => {
+    const rl = readline.createInterface({ input, output });
+
+    try {
+      console.log(user_message);
+
+      switch (type) {
+        case "singleline-text":
+        case "multiline-text": {
+          const answer = await rl.question("> ");
+          return { text: answer };
+        }
+
+        case "confirm": {
+          const answer = await rl.question("> (y/n) ");
+          const formattedAnswer = answer.trim().toLowerCase();
+          return {
+            text:
+              formattedAnswer === "y" || formattedAnswer === "yes"
+                ? "yes"
+                : "no",
+          };
+        }
+
+        case "image":
+        case "video": {
+          const filename = await rl.question(
+            `> Please enter the filename for the ${type}: `
+          );
+
+          const fullPath = path.join(FILES_DIR, filename);
+          const ext = path.extname(filename);
+
+          try {
+            await access(fullPath, constants.R_OK);
+            console.log(`File found and accessible: ${fullPath}`);
+            // TODO: Implement actual file system.
+            return { file_path: getFileHandle(ext) };
+          } catch {
+            console.error(
+              `Error: File not found or not accessible at "${fullPath}"`
+            );
+            throw new Error(`File not found: ${filename}`);
+          }
+        }
+
+        default: {
+          const exhaustiveCheck: never = type;
+          throw new Error(`Unsupported input type: "${exhaustiveCheck}"`);
+        }
+      }
+    } finally {
+      rl.close();
+    }
+  }
+);
+
+const a2uiRequestUserInput = defineFunctionLoose(
+  {
+    name: "system_request_user_input",
+    description: `Requests input from a user. Use this function to obtain
+additional information or confirmation from the user.
+
+The input is requested by creating a layout for a User Interface. It will be using a format called A2UI which has a distinct schema, which I will provide to you, and which you must match.
+
+If the objective contains information about the UI to render, your job is to create the JSON payloads as a single array. Otherwise, use your best judgement.
+In either case, ${examples}.
+
+
+The Component Catalog you can use is defined in the surfaceUpdate components
+list.
+
+The request must be a valid A2UI Protocol Message object necessary to satisfy the user request and build the UI from scratch. If you choose to return multiple
+object, you must wrap them in an array, but you must provide the surfaces,
+components and a beginRendering object so that it's clear what needs to be
+rendered.
+
+Whenever you use a dataBinding you must start paths for child items with no
+other prefixes such as 'item' etc. Keep the path purely related to the data
+structure on which it is bound.
+
+IMPORTANT: You will be provided data so you MUST use that and never add,
+remove, or alter it in any way. Every part in the provided MUST be
+represented in the output, including text, media, headers, everything.
+
+ULTRA IMPORTANT: You MUST preserve all original paths for media. You must
+also retain any line breaks in literal strings you generate.
+`,
+    parametersJsonSchema: uiSchema,
+  },
+  async (request) => {
+    console.log("REQUEST:\n", JSON.stringify(request, null, 2));
+    throw new Error("NOT YET IMPLEMENTED");
+  }
+);
 
 const systemFunctions = [
   defineFunction(
@@ -111,103 +256,5 @@ If the objective specifies other agent URLs using the
       return { file_path };
     }
   ),
-  defineFunction(
-    {
-      name: "system_request_user_input",
-      description: `Requests input from a user. Use this function to obtain
-additional information or confirmation from the user. Use only when necessary.
-Avoid excessive requests to the user.`,
-      parameters: {
-        user_message: z.string()
-          .describe(`Text to display to the user when requesting input.
-Use the <file src="path" /> syntax to embed any files in the message`),
-        type: z.enum([
-          "singleline-text",
-          "multiline-text",
-          "confirm",
-          "image",
-          "video",
-        ]).describe(`Type of the input requested.
-- Use "singleline-text" to request a single line of text. Useful for chat-like
-interactions, when only a brief text is requested. The requested text will be 
-delivered as "text" response. 
-- Use "multiline-text" to request multi-line text. Useful when requesting a 
-longer text, like a review, critique, further instructions, etc. The requested
-text will be delivered as "text" response.
-- Use "confirm" to request confirmation on an action. Use this only
-when specifically requested by the objective. The confirmation will be 
-delivered as "yes" or "no" in "text" response.
-- Use "image" to request an image. Once the user uploads the image, it will be
-delivered as "file_path" response.
-- Use "video" to request a video. Once the user uploads the video, it will be
-delivered as "file_path" response.
-`),
-      },
-      response: {
-        text: z
-          .string()
-          .optional()
-          .describe(
-            `The text response from the user, populated when the "type" is "singleline-text", "multiline-text", or "confirm".`
-          ),
-        file_path: z.string().optional().describe(`The VFS path to the file,
-uploaded by the user, populated when the "type" is "image", or "video".`),
-      },
-    },
-    async ({ user_message, type }) => {
-      const rl = readline.createInterface({ input, output });
-
-      try {
-        console.log(user_message);
-
-        switch (type) {
-          case "singleline-text":
-          case "multiline-text": {
-            const answer = await rl.question("> ");
-            return { text: answer };
-          }
-
-          case "confirm": {
-            const answer = await rl.question("> (y/n) ");
-            const formattedAnswer = answer.trim().toLowerCase();
-            return {
-              text:
-                formattedAnswer === "y" || formattedAnswer === "yes"
-                  ? "yes"
-                  : "no",
-            };
-          }
-
-          case "image":
-          case "video": {
-            const filename = await rl.question(
-              `> Please enter the filename for the ${type}: `
-            );
-
-            const fullPath = path.join(FILES_DIR, filename);
-            const ext = path.extname(filename);
-
-            try {
-              await access(fullPath, constants.R_OK);
-              console.log(`File found and accessible: ${fullPath}`);
-              // TODO: Implement actual file system.
-              return { file_path: getFileHandle(ext) };
-            } catch {
-              console.error(
-                `Error: File not found or not accessible at "${fullPath}"`
-              );
-              throw new Error(`File not found: ${filename}`);
-            }
-          }
-
-          default: {
-            const exhaustiveCheck: never = type;
-            throw new Error(`Unsupported input type: "${exhaustiveCheck}"`);
-          }
-        }
-      } finally {
-        rl.close();
-      }
-    }
-  ),
+  a2uiRequestUserInput,
 ];

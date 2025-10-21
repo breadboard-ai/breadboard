@@ -17,10 +17,11 @@ import { FunctionDefinition } from "./define-function";
 import { videoFunctions } from "./functions/video";
 import { generateFunctions } from "./functions/generate";
 import { evalSet } from "./eval-set";
+import { writeFile } from "fs/promises";
 
 config();
 
-const objective = evalSet.get("monkey");
+const objective = evalSet.get("chat");
 
 const systemInstruction = `You are an AI agent. Your job is to fulfill the 
 objective, specified at the start of the conversation context.
@@ -87,6 +88,7 @@ ${objective}
 ];
 
 outerLoop: while (!terminateLoop) {
+  await writeFile("out.log", JSON.stringify(functionDeclarations));
   const generated = await gemini.models.generateContent({
     model: "gemini-flash-latest",
     contents,
