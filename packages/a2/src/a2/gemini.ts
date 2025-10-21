@@ -8,11 +8,19 @@ import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils";
 import { flattenContext } from "./lists";
 import {
   Capabilities,
+  DataPartTransformer,
+  FileDataPart,
   FileSystemReadWritePath,
+  InlineDataCapabilityPart,
   LLMContent,
   Outcome,
   Schema,
+  StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
+import {
+  isFileDataCapabilityPart,
+  transformDataParts,
+} from "@breadboard-ai/data";
 import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 const defaultSafetySettings = (): SafetySetting[] => [
@@ -361,33 +369,150 @@ function textToJson(content: LLMContent): LLMContent {
   };
 }
 
+export type GoogleDriveToGeminiResponse = {
+  part: FileDataPart;
+};
+
+const GEMINI_FILE_API_URL =
+  "https://generativelanguage.googleapis.com/v1beta/files/";
+
+function isGoogleDriveDocument(part: FileDataPart) {
+  return part.fileData.mimeType.startsWith("application/vnd.google-apps.");
+}
+
+function maybeBlob(handle: string): string | false {
+  const handleParts = handle.split("/");
+  const blob = handleParts.pop();
+  const api = handleParts.join("/");
+  if (!api.startsWith(window.location.origin) || !api.endsWith("/blobs")) {
+    return false;
+  }
+  return blob &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(blob)
+    ? blob
+    : false;
+}
+
+async function driveFileToGeminiFile(
+  { fetchWithCreds }: A2ModuleFactoryArgs,
+  part: FileDataPart
+): Promise<Outcome<FileDataPart>> {
+  const fileId = part.fileData.fileUri.replace(/^drive:\/+/, "");
+  try {
+    // TODO: Un-hardcode the path and get rid of the "@foo/bar".
+    const path =
+      `/board/boards/@foo/bar/assets/drive/${fileId}` +
+      (part.fileData.resourceKey
+        ? `?resourceKey=${part.fileData.resourceKey}`
+        : "");
+    const converting = await fetchWithCreds(path, {
+      method: "POST",
+      credentials: "include",
+      body: JSON.stringify({ part }),
+    });
+    if (!converting.ok) return err(await converting.text());
+
+    const converted =
+      (await converting.json()) as Outcome<GoogleDriveToGeminiResponse>;
+    if (!ok(converted)) return converted;
+
+    return converted.part;
+  } catch (e) {
+    return err((e as Error).message);
+  }
+}
+
+function createDataPartTansformer(
+  moduleArgs: A2ModuleFactoryArgs
+): DataPartTransformer {
+  return {
+    persistPart: async function (
+      _graphUrl: URL,
+      _part: InlineDataCapabilityPart | StoredDataCapabilityPart,
+      _temporary: boolean
+    ): Promise<Outcome<StoredDataCapabilityPart>> {
+      const msg = `Persisting parts is not supported`;
+      console.error(msg);
+      return err(msg);
+    },
+    addEphemeralBlob: function (_blob: Blob): StoredDataCapabilityPart {
+      throw new Error(`Adding Ephemeral blob is not supported`);
+    },
+    persistentToEphemeral: async function (
+      _part: StoredDataCapabilityPart
+    ): Promise<Outcome<StoredDataCapabilityPart>> {
+      const msg = `Converting persistent blobs to ephemeral is not supported`;
+      console.error(msg);
+      return err(msg);
+    },
+    toFileData: async function (
+      _graphUrl: URL,
+      part: StoredDataCapabilityPart | FileDataPart
+    ): Promise<Outcome<FileDataPart>> {
+      if (isFileDataCapabilityPart(part)) {
+        const { fileUri } = part.fileData;
+        // part is FileDataPart
+        if (fileUri.startsWith(GEMINI_FILE_API_URL)) {
+          return part;
+        } else if (isGoogleDriveDocument(part)) {
+          // A document, like
+          return driveFileToGeminiFile(moduleArgs, part);
+        }
+      } else {
+        // part is StoredDataCapabilityPart
+        const { handle, mimeType } = part.storedData;
+        if (handle.startsWith("drive:")) {
+          return driveFileToGeminiFile(moduleArgs, {
+            fileData: { fileUri: handle, mimeType },
+          });
+        } else {
+          // check to see if it's a blob
+          const blobId = maybeBlob(handle);
+          if (blobId) {
+            return err(`ALMOST THERE: ${blobId}`);
+          }
+        }
+      }
+      return err(`Unknown part "${JSON.stringify(part)}"`);
+    },
+  };
+}
+
 /**
  * Modifies the body to remove any
  * Breadboard-specific extensions to LLM Content
  */
-function conformBody(body: GeminiBody): GeminiBody {
-  return {
-    ...body,
-    contents: flattenContext(
-      body.contents.map((content) => {
-        return {
-          ...content,
-          parts: content.parts.map((part) => {
-            if ("json" in part) {
-              return { text: JSON.stringify(part.json) };
-            }
-            return part;
-          }),
-        };
-      }),
-      true
-    ),
-  };
+async function conformBody(
+  moduleArgs: A2ModuleFactoryArgs,
+  body: GeminiBody
+): Promise<Outcome<GeminiBody>> {
+  const preDataTransformContents = flattenContext(
+    body.contents.map((content) => {
+      return {
+        ...content,
+        parts: content.parts.map((part) => {
+          if ("json" in part) {
+            return { text: JSON.stringify(part.json) };
+          }
+          return part;
+        }),
+      };
+    }),
+    true
+  );
+  const contents = await transformDataParts(
+    new URL(window.location.href), // unused
+    preDataTransformContents,
+    "file",
+    createDataPartTansformer(moduleArgs)
+  );
+  if (!ok(contents)) return contents;
+  return { ...body, contents };
 }
 
 async function callAPI(
   caps: Capabilities,
-  _moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleFactoryArgs,
   retries: number,
   model: string,
   body: GeminiBody,
@@ -399,7 +524,9 @@ async function callAPI(
   });
 
   try {
-    const conformedBody = conformBody(body);
+    const conformedBody = await conformBody(moduleArgs, body);
+    if (!ok(conformedBody)) return conformedBody;
+
     await reporter.start();
     await reporter.sendUpdate("Model Input", conformedBody, "upload");
 
