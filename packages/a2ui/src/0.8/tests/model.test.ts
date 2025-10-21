@@ -308,7 +308,7 @@ describe("A2UIModelProcessor", () => {
       );
     });
 
-    it("should trim relative paths within a data context", () => {
+    it("should trim relative paths within a data context (./item)", () => {
       processor.processMessages([
         {
           dataModelUpdate: {
@@ -337,8 +337,50 @@ describe("A2UIModelProcessor", () => {
                 id: "item-template",
                 component: { Text: { text: { path: "./item/name" } } },
               },
+            ],
+          },
+        },
+        { beginRendering: { root: "root" } },
+      ]);
+
+      const tree = processor.getSurfaces().get("@default")?.componentTree;
+      const plainTree = toPlainObject(tree);
+      const child1 = plainTree.properties.children[0];
+      const child2 = plainTree.properties.children[1];
+
+      // The processor should have trimmed `/item` and `./` from the path
+      // because we are inside a data context.
+      assert.deepEqual(child1.properties.text, { path: "name" });
+      assert.deepEqual(child2.properties.text, { path: "name" });
+    });
+
+    it("should trim relative paths within a data context (./name)", () => {
+      processor.processMessages([
+        {
+          dataModelUpdate: {
+            path: "/items",
+            contents: [{ name: "A" }, { name: "B" }],
+          },
+        },
+        {
+          surfaceUpdate: {
+            components: [
               {
-                id: "item-template-alt",
+                id: "root",
+                component: {
+                  List: {
+                    children: {
+                      template: {
+                        componentId: "item-template",
+                        dataBinding: "/items",
+                      },
+                    },
+                  },
+                },
+              },
+              // These paths would are typical when a databinding is used.
+              {
+                id: "item-template",
                 component: { Text: { text: { path: "./name" } } },
               },
             ],
@@ -354,8 +396,8 @@ describe("A2UIModelProcessor", () => {
 
       // The processor should have trimmed `/item` and `./` from the path
       // because we are inside a data context.
-      assert.deepEqual(child1.properties.text, { path: "./item/name" });
-      assert.deepEqual(child2.properties.text, { path: "./item/name" });
+      assert.deepEqual(child1.properties.text, { path: "name" });
+      assert.deepEqual(child2.properties.text, { path: "name" });
     });
   });
 
