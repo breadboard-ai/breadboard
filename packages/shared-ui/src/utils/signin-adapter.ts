@@ -95,19 +95,10 @@ class SigninAdapter {
       return token;
     });
 
-    if (globalConfig.signinMode === "disabled") {
-      this.#state = { status: "anonymous" };
-      return;
-    }
-
     const token = tokenVendor.getToken();
     if (token.state === "signedout") {
-      if (globalConfig.signinMode === "incremental") {
-        // TODO(aomarks) Temporary weirdness.
-        this.#state = { status: "anonymous" };
-        return;
-      }
-      this.#state = { status: "signedout" };
+      // TODO(aomarks) Temporary weirdness.
+      this.#state = { status: "anonymous" };
       return;
     }
 

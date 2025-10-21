@@ -12,5 +12,4 @@ bootstrap({
   kits: loadKits(),
   graphStorePreloader: registerLegacyKits,
   deploymentConfiguration: CLIENT_DEPLOYMENT_CONFIG,
-  signinMode: "disabled",
 });

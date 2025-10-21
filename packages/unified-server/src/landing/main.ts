@@ -104,11 +104,6 @@ function embedIntroVideo(target: HTMLDivElement) {
 }
 
 async function init() {
-  const globalConfig = {
-    signinMode: "required",
-    ...deploymentConfiguration,
-  } as GlobalConfig;
-
   const { SettingsStore } = await import(
     "@breadboard-ai/shared-ui/data/settings-store.js"
   );
@@ -133,13 +128,13 @@ async function init() {
         );
       },
     },
-    globalConfig
+    deploymentConfiguration
   );
 
   const opalShell = await connectToOpalShellHost();
   const signinAdapter = new SigninAdapter(
     tokenVendor,
-    globalConfig as GlobalConfig,
+    deploymentConfiguration as GlobalConfig,
     settingsHelper,
     opalShell
   );

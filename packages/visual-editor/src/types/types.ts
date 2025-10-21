@@ -20,7 +20,6 @@ import { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 export type BootstrapArguments = {
   deploymentConfiguration: ClientDeploymentConfiguration;
-  signinMode: "disabled" | "required" | "incremental";
   defaultBoardService?: string;
   kits?: Kit[];
   /**

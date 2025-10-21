@@ -53,7 +53,6 @@ async function getUrlFromBoardServiceFlag(
 async function bootstrap(bootstrapArgs: BootstrapArguments) {
   const globalConfig: GlobalConfig = {
     environmentName: CLIENT_DEPLOYMENT_CONFIG.ENVIRONMENT_NAME,
-    signinMode: bootstrapArgs.signinMode,
     googleDrive: {
       publishPermissions:
         CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [],
