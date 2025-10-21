@@ -247,14 +247,6 @@ const MODELS: readonly string[] = [
 
 const NO_RETRY_CODES: readonly number[] = [400, 429, 404, 403];
 
-type FetchErrorResponse = {
-  $error: string;
-  status: number;
-  statusText: string;
-  contentType: string;
-  responseHeaders: Record<string, string>;
-};
-
 const REASONS: Record<string, { $error: string; metadata?: ErrorMetadata }> = {
   MAX_TOKENS: {
     $error:
@@ -400,8 +392,7 @@ async function callAPI(
   moduleArgs: A2ModuleFactoryArgs,
   retries: number,
   model: string,
-  body: GeminiBody,
-  $metadata?: Metadata
+  body: GeminiBody
 ): Promise<Outcome<GeminiAPIOutputs>> {
   const reporter = new StreamableReporter(caps, {
     title: `Calling ${model}`,
@@ -423,16 +414,16 @@ async function callAPI(
         path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
         data: [],
       });
-      const result = await caps.fetch({
-        $metadata,
-        url: endpointURL(model),
+      const result = await moduleArgs.fetchWithCreds(endpointURL(model), {
         method: "POST",
-        body: conformedBody,
+        body: JSON.stringify(conformedBody),
       });
-      if (!ok(result)) {
+      const json = await result.json();
+      if (!result.ok) {
         // Fetch is a bit weird, because it returns various props
         // along with the `$error`. Let's handle that here.
-        const { status, $error: errObject } = result as FetchErrorResponse;
+        const errObject = json;
+        const status = result.status;
         if (!status) {
           if (errObject)
             return reporter.sendError(
@@ -467,7 +458,7 @@ async function callAPI(
           )
         );
       } else {
-        const outputs = result.response as GeminiAPIOutputs;
+        const outputs = json as GeminiAPIOutputs;
         const candidate = outputs?.candidates?.at(0);
         if (!candidate) {
           await reporter.sendUpdate(
@@ -519,6 +510,8 @@ async function callAPI(
       $error,
       metadata: { origin: "server", kind: "bug" },
     });
+  } catch (e) {
+    return err((e as Error).message);
   } finally {
     reporter.close();
   }
@@ -642,8 +635,7 @@ async function invoke(
   if (!model) {
     model = MODELS[0];
   }
-  const { context, systemInstruction, prompt, modality, body, $metadata } =
-    inputs;
+  const { context, systemInstruction, prompt, modality, body } = inputs;
   // TODO: Make this configurable.
   const retries = 5;
   if (!("body" in inputs)) {
@@ -676,8 +668,7 @@ async function invoke(
       moduleArgs,
       retries,
       model,
-      augmentBody(body, systemInstruction, prompt, modality),
-      $metadata
+      augmentBody(body, systemInstruction, prompt, modality)
     );
   }
 }
