@@ -43,7 +43,6 @@ export { PDFViewer } from "./output/pdf-viewer/pdf-viewer.js";
 
 // Connection Management.
 export { ConnectionBroker } from "./connection/connection-broker.js";
-export { ConnectionEntrySignin } from "./connection/connection-entry-signin.js";
 
 // General UI.
 export { AccountSwitcher } from "./account/account.js";
