@@ -16,6 +16,8 @@ import { Readable } from "node:stream";
 
 export { createDataTransformHandler };
 
+const CACHE_MODE = "file-blob";
+
 function createDataTransformHandler(
   bucketId: string | undefined,
   serverUrl: string | undefined
@@ -44,6 +46,16 @@ function createDataTransformHandler(
     if (!blobId) {
       res.status(500).json({ $error: "Invalid request: blobId is required" });
     }
+    const cached = GeminiFileApi.cache().get(blobId, CACHE_MODE);
+    if (cached) {
+      const { fileUri, mimeType } = cached;
+      res.json({
+        part: {
+          fileData: { fileUri, mimeType },
+        },
+      });
+      return;
+    }
     const blobStore = new GoogleStorageBlobStore(bucketId, serverUrl);
     const blob = await blobStore.getBlob(blobId);
     if (!ok(blob)) {
@@ -63,7 +75,12 @@ function createDataTransformHandler(
       res.status(500).json(uploading);
       return;
     }
-    const { fileUri } = uploading;
+    const { fileUri, expirationTime } = uploading as Required<typeof uploading>;
+    GeminiFileApi.cache().set(blobId, CACHE_MODE, {
+      fileUri,
+      mimeType,
+      expirationTime,
+    });
     res
       .json({
         part: {
