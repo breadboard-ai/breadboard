@@ -392,8 +392,7 @@ async function callAPI(
   moduleArgs: A2ModuleFactoryArgs,
   retries: number,
   model: string,
-  body: GeminiBody,
-  _metadata?: Metadata
+  body: GeminiBody
 ): Promise<Outcome<GeminiAPIOutputs>> {
   const reporter = new StreamableReporter(caps, {
     title: `Calling ${model}`,
@@ -636,8 +635,7 @@ async function invoke(
   if (!model) {
     model = MODELS[0];
   }
-  const { context, systemInstruction, prompt, modality, body, $metadata } =
-    inputs;
+  const { context, systemInstruction, prompt, modality, body } = inputs;
   // TODO: Make this configurable.
   const retries = 5;
   if (!("body" in inputs)) {
@@ -670,8 +668,7 @@ async function invoke(
       moduleArgs,
       retries,
       model,
-      augmentBody(body, systemInstruction, prompt, modality),
-      $metadata
+      augmentBody(body, systemInstruction, prompt, modality)
     );
   }
 }
