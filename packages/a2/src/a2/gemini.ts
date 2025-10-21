@@ -247,14 +247,6 @@ const MODELS: readonly string[] = [
 
 const NO_RETRY_CODES: readonly number[] = [400, 429, 404, 403];
 
-type FetchErrorResponse = {
-  $error: string;
-  status: number;
-  statusText: string;
-  contentType: string;
-  responseHeaders: Record<string, string>;
-};
-
 const REASONS: Record<string, { $error: string; metadata?: ErrorMetadata }> = {
   MAX_TOKENS: {
     $error:
