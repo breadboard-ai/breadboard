@@ -32,7 +32,6 @@ if (deploymentConfiguration?.MEASUREMENT_ID) {
 
 bootstrap({
   deploymentConfiguration,
-  signinMode: "incremental",
   kits: [asRuntimeKit(Core)],
   defaultBoardService: "/board/",
   moduleInvocationFilter: (context) => {
