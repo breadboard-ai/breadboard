@@ -14,11 +14,9 @@ import { Runtime } from "./runtime/runtime.js";
 import { RuntimeFlagManager } from "@breadboard-ai/types";
 import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
-import {
-  TokenVendor,
-  ValidTokenResult,
-} from "@breadboard-ai/connection-client";
+import type { TokenVendor } from "@breadboard-ai/connection-client";
 import { Project } from "@breadboard-ai/shared-ui/state/types.js";
+import type { ValidTokenResult } from "@breadboard-ai/types/oauth.js";
 
 /**
  * An interface for owners functionality - a command center console for executing operations which

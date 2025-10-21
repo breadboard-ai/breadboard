@@ -4,19 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { RefreshResponse } from "@breadboard-ai/types/oauth.js";
+import type { Request } from "express";
 import type { ServerResponse } from "node:http";
 import type { ServerConfig } from "../config.js";
 import { badRequestJson, internalServerError, okJson } from "../responses.js";
-import type { Request } from "express";
 import * as cookies from "./cookies.js";
-
-type RefreshResponse =
-  | { error: string }
-  | {
-      error?: string;
-      access_token: string;
-      expires_in: number;
-    };
 
 /**
  * API which gets a new authorization token for when an earlier one has expired.

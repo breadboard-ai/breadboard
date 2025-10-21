@@ -4,29 +4,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  SignedOutTokenResult,
-  TokenGrant,
-  TokenVendor,
-  ValidTokenResult,
-} from "@breadboard-ai/connection-client";
-import type { GlobalConfig } from "../contexts/global-config";
-import { SETTINGS_TYPE, SettingsHelper } from "../types/types";
-import { createContext } from "@lit/context";
+import type { TokenVendor } from "@breadboard-ai/connection-client";
 import {
   ALWAYS_REQUIRED_OAUTH_SCOPES,
   canonicalizeOAuthScope,
   type OAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { clearIdbGraphCache } from "@breadboard-ai/google-drive-kit/board-server/user-graph-collection.js";
-import { createFetchWithCreds } from "@breadboard-ai/utils";
-import { scopesFromUrl } from "./scopes-from-url";
+import type {
+  SignedOutTokenResult,
+  TokenGrant,
+  ValidTokenResult,
+} from "@breadboard-ai/types/oauth.js";
 import type {
   OpalShellProtocol,
   SignInResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
-
-export { SigninAdapter };
+import { createFetchWithCreds } from "@breadboard-ai/utils";
+import { createContext } from "@lit/context";
+import type { GlobalConfig } from "../contexts/global-config";
+import { SETTINGS_TYPE, SettingsHelper } from "../types/types";
+import { scopesFromUrl } from "./scopes-from-url";
 
 export const SIGN_IN_CONNECTION_ID = "$sign-in";
 
@@ -55,7 +53,7 @@ export type SignInRequestHandler = (signInUrl: string) => boolean;
  * used wherever the tokenVendor, environment, and
  * settingsHelper are present.
  */
-class SigninAdapter {
+export class SigninAdapter {
   readonly #tokenVendor: TokenVendor;
   readonly #globalConfig: GlobalConfig;
   readonly #settingsHelper: SettingsHelper;

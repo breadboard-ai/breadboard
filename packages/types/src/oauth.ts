@@ -20,3 +20,60 @@ export type GrantResponse =
       domain?: string;
       scopes?: string[];
     };
+
+export type RefreshResponse =
+  | { error: string }
+  | {
+      error?: undefined;
+      access_token: string;
+      expires_in: number;
+    };
+
+export interface TokenGrant {
+  client_id: string;
+  access_token: string;
+  expires_in: number;
+  /**
+   * @deprecated since July 2025 in favor of HttpOnly cookie. Should only be
+   * used to detect when an upgrade to the new cookie is required.
+   */
+  refresh_token?: string;
+  issue_time: number;
+  picture?: string;
+  name?: string;
+  id?: string;
+  domain: string | undefined;
+  scopes: string[] | undefined;
+}
+
+export type TokenResult =
+  | ValidTokenResult
+  | ExpiredTokenResult
+  | SignedOutTokenResult;
+
+/**
+ * The token is valid and ready to be used.
+ */
+export interface ValidTokenResult {
+  state: "valid";
+  grant: TokenGrant;
+}
+
+/**
+ * The user is signed-in to this service, but the token we have is expired. Call
+ * the `refresh` method to automatically refresh it.
+ */
+export interface ExpiredTokenResult {
+  state: "expired";
+  grant: TokenGrant;
+  refresh: (opts?: { signal?: AbortSignal }) => Promise<TokenResult>;
+}
+
+/**
+ * The user is not signed-in to this service. In this case, typically a
+ * `<bb-connection-signin>` element should be displayed to prompt the user to
+ * sign-in.
+ */
+export interface SignedOutTokenResult {
+  state: "signedout";
+}

@@ -4,9 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TokenGrant } from "@breadboard-ai/connection-client";
 import { ALWAYS_REQUIRED_OAUTH_SCOPES } from "@breadboard-ai/connection-client/oauth-scopes.js";
-import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
+import type { GrantResponse, TokenGrant } from "@breadboard-ai/types/oauth.js";
 import type {
   OpalShellProtocol,
   SignInResult,

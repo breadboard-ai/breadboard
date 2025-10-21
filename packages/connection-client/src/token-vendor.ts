@@ -5,11 +5,13 @@
  */
 
 import type {
-  ConnectionEnvironment,
-  GrantStore,
   RefreshResponse,
   TokenGrant,
   TokenResult,
+} from "@breadboard-ai/types/oauth.js";
+import type {
+  ConnectionEnvironment,
+  GrantStore,
   TokenVendor,
 } from "./types.js";
 
