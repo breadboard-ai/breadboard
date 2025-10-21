@@ -49,6 +49,7 @@ export interface TokenGrant {
 export type TokenResult =
   | ValidTokenResult
   | ExpiredTokenResult
+  | MissingScopesTokenResult
   | SignedOutTokenResult;
 
 /**
@@ -66,7 +67,14 @@ export interface ValidTokenResult {
 export interface ExpiredTokenResult {
   state: "expired";
   grant: TokenGrant;
-  refresh: (opts?: { signal?: AbortSignal }) => Promise<TokenResult>;
+  refresh: (opts?: {
+    signal?: AbortSignal;
+  }) => Promise<ValidTokenResult | SignedOutTokenResult>;
+}
+
+export interface MissingScopesTokenResult {
+  state: "missing-scopes";
+  scopes: string[];
 }
 
 /**

@@ -5,6 +5,7 @@
  */
 
 import type { TokenVendor } from "@breadboard-ai/connection-client";
+import type { TokenResult } from "@breadboard-ai/types/oauth.js";
 
 export { getAccessToken };
 
@@ -18,6 +19,6 @@ async function getAccessToken(vendor: TokenVendor): Promise<string | null> {
   } else if (token.state == "signedout") {
     return null;
   } else {
-    throw new Error(`Unexpected token state: ${token.state}`);
+    throw new Error(`Unexpected token state: ${(token as TokenResult).state}`);
   }
 }
