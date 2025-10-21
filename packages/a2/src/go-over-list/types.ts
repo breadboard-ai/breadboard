@@ -3,6 +3,7 @@
  */
 
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export type Task = {
   label: string;
@@ -25,6 +26,7 @@ export type Strategist = {
   name: string;
   execute(
     caps: Capabilities,
+    moduleArgs: A2ModuleFactoryArgs,
     singleStepExecutor: ExecuteStepFunction,
     mutableContext: LLMContent[],
     objective: LLMContent,

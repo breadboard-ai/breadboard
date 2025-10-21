@@ -13,6 +13,9 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
+import { transformDataParts } from "@breadboard-ai/data";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { createDataPartTansformer } from "./data-part-transformer";
 
 const defaultSafetySettings = (): SafetySetting[] => [
   {
@@ -364,28 +367,37 @@ function textToJson(content: LLMContent): LLMContent {
  * Modifies the body to remove any
  * Breadboard-specific extensions to LLM Content
  */
-function conformBody(body: GeminiBody): GeminiBody {
-  return {
-    ...body,
-    contents: flattenContext(
-      body.contents.map((content) => {
-        return {
-          ...content,
-          parts: content.parts.map((part) => {
-            if ("json" in part) {
-              return { text: JSON.stringify(part.json) };
-            }
-            return part;
-          }),
-        };
-      }),
-      true
-    ),
-  };
+async function conformBody(
+  moduleArgs: A2ModuleFactoryArgs,
+  body: GeminiBody
+): Promise<Outcome<GeminiBody>> {
+  const preDataTransformContents = flattenContext(
+    body.contents.map((content) => {
+      return {
+        ...content,
+        parts: content.parts.map((part) => {
+          if ("json" in part) {
+            return { text: JSON.stringify(part.json) };
+          }
+          return part;
+        }),
+      };
+    }),
+    true
+  );
+  const contents = await transformDataParts(
+    new URL(window.location.href), // unused
+    preDataTransformContents,
+    "file",
+    createDataPartTansformer(moduleArgs)
+  );
+  if (!ok(contents)) return contents;
+  return { ...body, contents };
 }
 
 async function callAPI(
   caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   retries: number,
   model: string,
   body: GeminiBody,
@@ -397,7 +409,9 @@ async function callAPI(
   });
 
   try {
-    const conformedBody = conformBody(body);
+    const conformedBody = await conformBody(moduleArgs, body);
+    if (!ok(conformedBody)) return conformedBody;
+
     await reporter.start();
     await reporter.sendUpdate("Model Input", conformedBody, "upload");
 
@@ -617,7 +631,8 @@ function kindFromStatus(status: number): ErrorMetadata["kind"] {
 
 async function invoke(
   inputs: GeminiInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ): Promise<Outcome<GeminiOutputs>> {
   const validatingInputs = validateInputs(inputs);
   if (!ok(validatingInputs)) {
@@ -636,6 +651,7 @@ async function invoke(
     // Behave as if we're wired in.
     const result = await callAPI(
       caps,
+      moduleArgs,
       retries,
       model,
       constructBody(context, systemInstruction, prompt, modality)
@@ -657,6 +673,7 @@ async function invoke(
     // Behave as if we're being invoked.
     return callAPI(
       caps,
+      moduleArgs,
       retries,
       model,
       augmentBody(body, systemInstruction, prompt, modality),

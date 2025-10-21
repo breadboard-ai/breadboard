@@ -425,7 +425,12 @@ async function invoke(
       );
     }
     case "ConsistentUI": {
-      const context = await renderConsistentUI(caps, out, systemInstruction);
+      const context = await renderConsistentUI(
+        caps,
+        moduleArgs,
+        out,
+        systemInstruction
+      );
       if (!ok(context)) return context;
       return { context };
     }

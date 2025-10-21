@@ -48,6 +48,7 @@ export { invoke as default, describe };
 
 function gatheringRequest(
   caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   contents: LLMContent[] | undefined,
   instruction: LLMContent,
   toolManager: ToolManager
@@ -62,6 +63,7 @@ ${instruction}
 Call the tools to gather the necessary information that could be used to create an accurate prompt.`;
   return new GeminiPrompt(
     caps,
+    moduleArgs,
     {
       body: {
         contents: addUserTurn(promptText.asContent(), contents),
@@ -101,7 +103,7 @@ async function invoke(
   const toolManager = new ToolManager(
     caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps)
+    new ArgumentNameGenerator(caps, moduleArgs)
   );
   const substituting = await new Template(caps, instruction).substitute(
     params,
@@ -118,6 +120,7 @@ async function invoke(
       if (toolManager.hasTools()) {
         const gatheringInformation = await gatheringRequest(
           caps,
+          moduleArgs,
           context,
           instruction,
           toolManager

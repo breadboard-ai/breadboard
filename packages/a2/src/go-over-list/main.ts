@@ -53,7 +53,7 @@ async function invoke(
   const toolManager = new ToolManager(
     caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps)
+    new ArgumentNameGenerator(caps, moduleArgs)
   );
   const template = new Template(caps, objective);
   const substituting = await template.substitute(
@@ -74,6 +74,7 @@ async function invoke(
       const disallowNestedLists = makeList && !isList;
       const executor = new Runtime(
         caps,
+        moduleArgs,
         context,
         toolManager,
         disallowNestedLists

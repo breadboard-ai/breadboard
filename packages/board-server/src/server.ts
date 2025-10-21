@@ -27,6 +27,9 @@ export {
   requireAccessToken,
 } from "./server/auth.js";
 
+export { GoogleStorageBlobStore } from "./server/blob-store.js";
+export { GeminiFileApi } from "./server/blobs/utils/gemini-file-api.js";
+
 const DEFAULT_PORT = 3000;
 const DEFAULT_HOST = "localhost";
 

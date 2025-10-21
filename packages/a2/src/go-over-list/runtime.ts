@@ -14,6 +14,7 @@ import { ToolManager } from "../a2/tool-manager";
 import { ok, toLLMContent } from "../a2/utils";
 import { defaultSystemInstruction } from "./system-instruction";
 import { type ExecuteStepFunction, type Strategist, type Task } from "./types";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { generateId, Runtime };
 
@@ -28,6 +29,7 @@ class Runtime {
 
   constructor(
     private readonly caps: Capabilities,
+    private readonly moduleArgs: A2ModuleFactoryArgs,
     context: LLMContent[] | undefined,
     public readonly toolManager: ToolManager,
     public readonly makeList: boolean
@@ -42,6 +44,7 @@ class Runtime {
   ): Promise<Outcome<LLMContent[]>> {
     return strategist.execute(
       this.caps,
+      this.moduleArgs,
       this.execute,
       this.context,
       objective,
@@ -68,6 +71,7 @@ class Runtime {
     }
     const geminiPrompt = new GeminiPrompt(
       this.caps,
+      this.moduleArgs,
       {
         body: {
           contents,

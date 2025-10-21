@@ -16,6 +16,7 @@ import {
 import { defaultSafetySettings, type GeminiSchema } from "./gemini";
 import { GeminiPrompt } from "./gemini-prompt";
 import { err, llm, ok } from "./utils";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { ArgumentNameGenerator };
 
@@ -33,7 +34,10 @@ type NamingResult = {
  * and parameters
  */
 class ArgumentNameGenerator implements DescriberResultTransformer {
-  constructor(private readonly caps: Capabilities) {}
+  constructor(
+    private readonly caps: Capabilities,
+    private readonly moduleArgs: A2ModuleFactoryArgs
+  ) {}
 
   #containsContext(describerResult: DescriberResult): boolean {
     if (!describerResult.inputSchema?.properties) return true;
@@ -92,7 +96,7 @@ class ArgumentNameGenerator implements DescriberResultTransformer {
 
     // When no parameters found, try to discern the parameter name
     // from description and title.
-    const naming = await new GeminiPrompt(this.caps, {
+    const naming = await new GeminiPrompt(this.caps, this.moduleArgs, {
       body: {
         contents: [this.prompt(describerResult)],
         safetySettings: defaultSafetySettings(),

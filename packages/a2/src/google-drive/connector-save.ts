@@ -23,6 +23,7 @@ import { inferSheetValues, SHEETS_MIME_TYPE } from "./sheets";
 import { SimpleSlideBuilder, SLIDES_MIME_TYPE } from "./slides";
 import { inferSlideStructure } from "./slides-schema";
 import type { ConnectorConfiguration } from "./types";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -49,7 +50,8 @@ function contextFromId(id: string, mimeType: string): LLMContent[] {
 
 async function invoke(
   { method, id: connectorId, context, title, graphId, info }: Inputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ): Promise<Outcome<Outputs>> {
   graphId ??= "";
   const mimeType = info?.configuration?.file?.mimeType || DOC_MIME_TYPE;
@@ -93,7 +95,7 @@ async function invoke(
             SLIDES_MIME_TYPE,
             info?.configuration?.file?.id
           ),
-          inferSlideStructure(caps, context),
+          inferSlideStructure(caps, moduleArgs, context),
         ]);
         if (!ok(gettingCollector)) return gettingCollector;
         if (!ok(result)) return result;
@@ -123,7 +125,7 @@ async function invoke(
             SHEETS_MIME_TYPE,
             info?.configuration?.file?.id
           ),
-          inferSheetValues(caps, context),
+          inferSheetValues(caps, moduleArgs, context),
         ]);
         if (!ok(gettingCollector)) return gettingCollector;
         if (!ok(result)) return result;

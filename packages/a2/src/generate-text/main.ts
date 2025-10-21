@@ -63,7 +63,7 @@ class GenerateText {
     const toolManager = new ToolManager(
       this.caps,
       this.moduleArgs,
-      new ArgumentNameGenerator(this.caps)
+      new ArgumentNameGenerator(this.caps, this.moduleArgs)
     );
     const doneTool = createDoneTool();
     const keepChattingTool = createKeepChattingTool();
@@ -162,7 +162,9 @@ class GenerateText {
       }
     }
     inputs.body.systemInstruction = systemInstruction;
-    const prompt = new GeminiPrompt(this.caps, inputs, { toolManager });
+    const prompt = new GeminiPrompt(this.caps, this.moduleArgs, inputs, {
+      toolManager,
+    });
     const result = await prompt.invoke();
     if (!ok(result)) return result;
     const calledTools =
@@ -222,7 +224,12 @@ class GenerateText {
               },
             };
           }
-          const nextTurn = new GeminiPrompt(this.caps, inputs, { toolManager });
+          const nextTurn = new GeminiPrompt(
+            this.caps,
+            this.moduleArgs,
+            inputs,
+            { toolManager }
+          );
           const nextTurnResult = await nextTurn.invoke();
           if (!ok(nextTurnResult)) return nextTurnResult;
           if (nextTurn.saveOutputs) {

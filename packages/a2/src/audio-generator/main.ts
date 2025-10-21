@@ -120,7 +120,7 @@ async function invoke(
   const toolManager = new ToolManager(
     caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps)
+    new ArgumentNameGenerator(caps, moduleArgs)
   );
   const substituting = await template.substitute(
     params,

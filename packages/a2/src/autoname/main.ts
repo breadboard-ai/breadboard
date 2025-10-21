@@ -16,6 +16,7 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -48,7 +49,8 @@ const MODES: Record<
 
 async function invoke(
   { context }: Inputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ): Promise<Outcome<Outputs>> {
   const args = getArguments(context);
   if (!ok(args)) return args;
@@ -60,7 +62,7 @@ async function invoke(
   if (!modeHandler.canAutoname()) {
     return { context: cantAutoname() };
   }
-  const naming = await new GeminiPrompt(caps, {
+  const naming = await new GeminiPrompt(caps, moduleArgs, {
     model: "gemini-2.0-flash-lite",
     body: {
       contents: modeHandler.prompt(),

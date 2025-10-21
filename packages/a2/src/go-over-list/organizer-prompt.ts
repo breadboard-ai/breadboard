@@ -9,6 +9,7 @@ import { type Invokable } from "./types";
 import { listPrompt, listSchema, toList } from "../a2/lists";
 import { defaultSystemInstruction } from "./system-instruction";
 import { Capabilities, LLMContent } from "@breadboard-ai/types";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { organizerPrompt };
 
@@ -16,6 +17,7 @@ type InvokeReturnType = ReturnType<GeminiPrompt["invoke"]>;
 
 function organizerPrompt(
   caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   results: LLMContent[],
   objective: LLMContent,
   makeList: boolean
@@ -61,7 +63,7 @@ ${research}
 `.asContent();
 
   if (makeList) {
-    const geminiPrompt = new GeminiPrompt(caps, {
+    const geminiPrompt = new GeminiPrompt(caps, moduleArgs, {
       body: {
         contents: [listPrompt(prompt)],
         safetySettings: defaultSafetySettings(),
@@ -81,7 +83,7 @@ ${research}
       },
     };
   } else {
-    const geminiPrompt = new GeminiPrompt(caps, {
+    const geminiPrompt = new GeminiPrompt(caps, moduleArgs, {
       body: {
         systemInstruction: defaultSystemInstruction(),
         contents: [prompt],

@@ -104,7 +104,10 @@ server.use("/api/mcp-proxy", createMcpProxyHandler());
 console.log("[unified-server startup] Mounting Data Tranform API");
 server.use(
   "/api/data/transform",
-  createDataTransformHandler(boardServerConfig.storageBucket)
+  createDataTransformHandler(
+    boardServerConfig.storageBucket,
+    boardServerConfig.serverUrl
+  )
 );
 
 console.log("[unified-server startup] Mounting static content");

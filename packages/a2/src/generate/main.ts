@@ -15,6 +15,7 @@ import {
   Schema,
   SchemaEnumValue,
 } from "@breadboard-ai/types";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -268,7 +269,8 @@ function getMode(modeId: ModeId | undefined): GenerationModes {
 
 async function invoke(
   { "generation-mode": mode, "p-for-each": useForEach, ...rest }: Inputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ) {
   const { url: $board, type, modelName } = getMode(mode);
   const flags = await readFlags(caps);
@@ -283,7 +285,7 @@ async function invoke(
     rest["p-model-name"] = modelName;
   }
   if (generateForEach) {
-    return forEach(caps, rest, async (prompt) => {
+    return forEach(caps, moduleArgs, rest, async (prompt) => {
       const ports = { ...rest };
       ports[PROMPT_PORT] = prompt;
       return caps.invoke({ $board, ...forwardPorts(type, ports) }) as Promise<
