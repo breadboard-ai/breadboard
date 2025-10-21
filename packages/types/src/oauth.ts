@@ -45,3 +45,35 @@ export interface TokenGrant {
   domain: string | undefined;
   scopes: string[] | undefined;
 }
+
+export type TokenResult =
+  | ValidTokenResult
+  | ExpiredTokenResult
+  | SignedOutTokenResult;
+
+/**
+ * The token is valid and ready to be used.
+ */
+export interface ValidTokenResult {
+  state: "valid";
+  grant: TokenGrant;
+}
+
+/**
+ * The user is signed-in to this service, but the token we have is expired. Call
+ * the `refresh` method to automatically refresh it.
+ */
+export interface ExpiredTokenResult {
+  state: "expired";
+  grant: TokenGrant;
+  refresh: (opts?: { signal?: AbortSignal }) => Promise<TokenResult>;
+}
+
+/**
+ * The user is not signed-in to this service. In this case, typically a
+ * `<bb-connection-signin>` element should be displayed to prompt the user to
+ * sign-in.
+ */
+export interface SignedOutTokenResult {
+  state: "signedout";
+}

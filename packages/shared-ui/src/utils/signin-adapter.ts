@@ -4,18 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  SignedOutTokenResult,
-  TokenVendor,
-  ValidTokenResult,
-} from "@breadboard-ai/connection-client";
+import type { TokenVendor } from "@breadboard-ai/connection-client";
 import {
   ALWAYS_REQUIRED_OAUTH_SCOPES,
   canonicalizeOAuthScope,
   type OAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { clearIdbGraphCache } from "@breadboard-ai/google-drive-kit/board-server/user-graph-collection.js";
-import { TokenGrant } from "@breadboard-ai/types/oauth.js";
+import type {
+  SignedOutTokenResult,
+  TokenGrant,
+  ValidTokenResult,
+} from "@breadboard-ai/types/oauth.js";
 import type {
   OpalShellProtocol,
   SignInResult,

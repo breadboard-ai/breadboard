@@ -7,11 +7,11 @@
 import type {
   RefreshResponse,
   TokenGrant,
+  TokenResult,
 } from "@breadboard-ai/types/oauth.js";
 import type {
   ConnectionEnvironment,
   GrantStore,
-  TokenResult,
   TokenVendor,
 } from "./types.js";
 
