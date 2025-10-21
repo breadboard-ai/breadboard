@@ -28,3 +28,20 @@ export type RefreshResponse =
       access_token: string;
       expires_in: number;
     };
+
+export interface TokenGrant {
+  client_id: string;
+  access_token: string;
+  expires_in: number;
+  /**
+   * @deprecated since July 2025 in favor of HttpOnly cookie. Should only be
+   * used to detect when an upgrade to the new cookie is required.
+   */
+  refresh_token?: string;
+  issue_time: number;
+  picture?: string;
+  name?: string;
+  id?: string;
+  domain: string | undefined;
+  scopes: string[] | undefined;
+}

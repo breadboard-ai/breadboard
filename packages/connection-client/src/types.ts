@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { TokenGrant } from "@breadboard-ai/types/oauth.js";
 import type { OAuthScope } from "./oauth-scopes.js";
 
 export type TokenVendor = {
@@ -67,23 +68,6 @@ export type GrantResponse =
       name?: string;
       id?: string;
     };
-
-export interface TokenGrant {
-  client_id: string;
-  access_token: string;
-  expires_in: number;
-  /**
-   * @deprecated since July 2025 in favor of HttpOnly cookie. Should only be
-   * used to detect when an upgrade to the new cookie is required.
-   */
-  refresh_token?: string;
-  issue_time: number;
-  picture?: string;
-  name?: string;
-  id?: string;
-  domain: string | undefined;
-  scopes: string[] | undefined;
-}
 
 export interface Connection {
   id: string;
