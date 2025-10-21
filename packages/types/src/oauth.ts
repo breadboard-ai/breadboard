@@ -20,3 +20,11 @@ export type GrantResponse =
       domain?: string;
       scopes?: string[];
     };
+
+export type RefreshResponse =
+  | { error: string }
+  | {
+      error?: undefined;
+      access_token: string;
+      expires_in: number;
+    };

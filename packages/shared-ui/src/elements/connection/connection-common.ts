@@ -21,11 +21,3 @@ export interface TokenGrant {
   name?: string;
   id?: string;
 }
-
-export type RefreshResponse =
-  | { error: string }
-  | {
-      error?: undefined;
-      access_token: string;
-      expires_in: number;
-    };

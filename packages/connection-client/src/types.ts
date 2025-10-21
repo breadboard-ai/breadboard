@@ -85,14 +85,6 @@ export interface TokenGrant {
   scopes: string[] | undefined;
 }
 
-export type RefreshResponse =
-  | { error: string }
-  | {
-      error?: undefined;
-      access_token: string;
-      expires_in: number;
-    };
-
 export interface Connection {
   id: string;
   clientId: string;

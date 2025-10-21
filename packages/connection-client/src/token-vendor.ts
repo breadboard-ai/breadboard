@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { RefreshResponse } from "@breadboard-ai/types/oauth.js";
 import type {
   ConnectionEnvironment,
   GrantStore,
-  RefreshResponse,
   TokenGrant,
   TokenResult,
   TokenVendor,
