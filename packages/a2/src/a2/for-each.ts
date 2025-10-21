@@ -20,6 +20,7 @@ import {
   Outcome,
   OutputValues,
 } from "@breadboard-ai/types";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { forEach };
 
@@ -132,6 +133,7 @@ export type AsyncForEachCallback = (
 
 async function forEach(
   caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   inputs: ForEachInputs,
   callback: AsyncForEachCallback
 ): Promise<OutputValues> {
@@ -160,7 +162,7 @@ async function forEach(
     async () => ""
   );
   if (!ok(mappedParts)) return mappedParts;
-  const splitPrompt = new GeminiPrompt(caps, {
+  const splitPrompt = new GeminiPrompt(caps, moduleArgs, {
     body: {
       safetySettings: defaultSafetySettings(),
       systemInstruction: systemInstruction(),

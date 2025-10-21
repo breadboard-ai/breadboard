@@ -7,6 +7,7 @@ import { type GeminiSchema, defaultSafetySettings } from "../a2/gemini";
 import { GeminiPrompt } from "../a2/gemini-prompt";
 import { err, llm } from "../a2/utils";
 import { type Plan } from "./types";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { getPlan, plannerPrompt, thinkingPlannerPrompt };
 
@@ -82,6 +83,7 @@ function getPlan(content: LLMContent): Outcome<Plan> {
 
 function thinkingPlannerPrompt(
   caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   context: LLMContent[],
   objective: LLMContent,
   plan: Plan,
@@ -165,7 +167,7 @@ ${extraPlannerPrompt}
 `.asContent();
 
   const contents = [instruction];
-  const prompt = new GeminiPrompt(caps, {
+  const prompt = new GeminiPrompt(caps, moduleArgs, {
     body: {
       contents,
       safetySettings: defaultSafetySettings(),
@@ -182,6 +184,7 @@ ${extraPlannerPrompt}
 
 function plannerPrompt(
   caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   context: LLMContent[] | undefined,
   objective: LLMContent,
   extraPlannerPrompt: string,
@@ -194,7 +197,7 @@ Extra instructions:
 ${extraPlannerPrompt}
 `.asContent();
   const contents = [...context, instruction, epilogue];
-  const prompt = new GeminiPrompt(caps, {
+  const prompt = new GeminiPrompt(caps, moduleArgs, {
     body: {
       contents,
       safetySettings: defaultSafetySettings(),

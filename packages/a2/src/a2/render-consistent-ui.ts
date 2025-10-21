@@ -22,6 +22,7 @@ import {
   isTextCapabilityPart,
   isStoredData,
 } from "@google-labs/breadboard";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { renderConsistentUI };
 
@@ -661,6 +662,7 @@ function is(type: string, part: DataPart): part is RemappablePart {
 
 async function renderConsistentUI(
   caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   data: LLMContent,
   systemInstruction?: LLMContent
 ): Promise<Outcome<LLMContent[]>> {
@@ -691,7 +693,7 @@ async function renderConsistentUI(
     return part;
   });
 
-  const prompt = new GeminiPrompt(caps, {
+  const prompt = new GeminiPrompt(caps, moduleArgs, {
     model: "gemini-2.5-flash",
     body: {
       contents: [data],

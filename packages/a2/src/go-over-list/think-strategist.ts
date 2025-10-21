@@ -13,6 +13,7 @@ import {
   thinkingPlannerPrompt,
 } from "./planner-prompt";
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { ThinkStrategist };
 
@@ -38,6 +39,7 @@ Now think real hard: do you need to organize or summarize results?
 
   async execute(
     caps: Capabilities,
+    moduleArgs: A2ModuleFactoryArgs,
     execute: ExecuteStepFunction,
     mutableContext: LLMContent[],
     objective: LLMContent,
@@ -45,6 +47,7 @@ Now think real hard: do you need to organize or summarize results?
   ): Promise<Outcome<LLMContent[]>> {
     const planning = await plannerPrompt(
       caps,
+      moduleArgs,
       mutableContext,
       objective,
       this.extraPlannerPrompt,
@@ -92,6 +95,7 @@ and adjusting the plan if necessary.`,
       this.tasks.push(task.task);
       const thinking = await thinkingPlannerPrompt(
         caps,
+        moduleArgs,
         mutableContext,
         objective,
         plan,
@@ -115,6 +119,7 @@ and adjusting the plan if necessary.`,
 
       const organizing = await organizerPrompt(
         caps,
+        moduleArgs,
         results,
         objective,
         makeList

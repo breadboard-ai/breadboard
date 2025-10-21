@@ -13,6 +13,7 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 const defaultSafetySettings = (): SafetySetting[] => [
   {
@@ -386,6 +387,7 @@ function conformBody(body: GeminiBody): GeminiBody {
 
 async function callAPI(
   caps: Capabilities,
+  _moduleArgs: A2ModuleFactoryArgs,
   retries: number,
   model: string,
   body: GeminiBody,
@@ -617,7 +619,8 @@ function kindFromStatus(status: number): ErrorMetadata["kind"] {
 
 async function invoke(
   inputs: GeminiInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ): Promise<Outcome<GeminiOutputs>> {
   const validatingInputs = validateInputs(inputs);
   if (!ok(validatingInputs)) {
@@ -636,6 +639,7 @@ async function invoke(
     // Behave as if we're wired in.
     const result = await callAPI(
       caps,
+      moduleArgs,
       retries,
       model,
       constructBody(context, systemInstruction, prompt, modality)
@@ -657,6 +661,7 @@ async function invoke(
     // Behave as if we're being invoked.
     return callAPI(
       caps,
+      moduleArgs,
       retries,
       model,
       augmentBody(body, systemInstruction, prompt, modality),

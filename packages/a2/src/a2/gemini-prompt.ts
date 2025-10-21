@@ -11,6 +11,7 @@ import {
 import gemini, { type Candidate, type GeminiInputs } from "./gemini";
 import { ToolManager } from "./tool-manager";
 import { addUserTurn, err, ok } from "./utils";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { GeminiPrompt };
 
@@ -58,6 +59,7 @@ class GeminiPrompt {
 
   constructor(
     private readonly caps: Capabilities,
+    private readonly moduleArgs: A2ModuleFactoryArgs,
     public readonly inputs: GeminiInputs,
     options?: ToolManager | GeminiPromptOptions
   ) {
@@ -103,7 +105,7 @@ class GeminiPrompt {
     this.calledTools = false;
     this.calledCustomTools = false;
     const { allowToolErrors, validator } = this.options;
-    const invoking = await gemini(this.inputs, this.caps);
+    const invoking = await gemini(this.inputs, this.caps, this.moduleArgs);
     if (!ok(invoking)) return invoking;
     if ("context" in invoking) {
       return err("Invalid output from Gemini -- must be candidates", {

@@ -170,6 +170,7 @@ async function callImageGen(
 
 function promptExpander(
   caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   contents: LLMContent[] | undefined,
   instruction: LLMContent
 ): GeminiPrompt {
@@ -198,7 +199,7 @@ Create the following image:
 You output will be fed directly into the text-to-image model, so it must be a prompt only, no additional chit-chat
 """
 `;
-  return new GeminiPrompt(caps, {
+  return new GeminiPrompt(caps, moduleArgs, {
     body: {
       contents: addUserTurn(promptText.asContent(), contents),
       systemInstruction: toLLMContent(`

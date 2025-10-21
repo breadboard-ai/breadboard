@@ -148,7 +148,7 @@ async function invoke(
   const toolManager = new ToolManager(
     caps,
     moduleArgs,
-    new ArgumentNameGenerator(caps)
+    new ArgumentNameGenerator(caps, moduleArgs)
   );
   let content = context || [toLLMContent("Start the research")];
 
@@ -174,7 +174,8 @@ async function invoke(
   for (let i = 0; i <= MAX_ITERATIONS; i++) {
     const askingGemini = await invokeGemini(
       researcherPrompt(content, query, toolManager.list(), i === 0),
-      caps
+      caps,
+      moduleArgs
     );
 
     if (!ok(askingGemini)) {
@@ -213,7 +214,8 @@ async function invoke(
   if (summarize) {
     const producingReport = await invokeGemini(
       reportWriterPrompt(query, research),
-      caps
+      caps,
+      moduleArgs
     );
     if (!ok(producingReport)) {
       return producingReport;
