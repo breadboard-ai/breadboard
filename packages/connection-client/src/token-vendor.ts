@@ -5,9 +5,11 @@
  */
 
 import type {
+  ExpiredTokenResult,
   RefreshResponse,
+  SignedOutTokenResult,
   TokenGrant,
-  TokenResult,
+  ValidTokenResult,
 } from "@breadboard-ai/types/oauth.js";
 import type {
   ConnectionEnvironment,
@@ -39,7 +41,7 @@ export class TokenVendorImpl implements TokenVendor {
     this.#environment = environment;
   }
 
-  getToken(): TokenResult {
+  getToken(): ValidTokenResult | ExpiredTokenResult | SignedOutTokenResult {
     const grantJsonString = this.#store.get();
     if (grantJsonString === undefined) {
       return { state: "signedout" };
@@ -72,7 +74,7 @@ export class TokenVendorImpl implements TokenVendor {
   async #refresh(
     expiredGrant: TokenGrant,
     signal?: AbortSignal
-  ): Promise<TokenResult> {
+  ): Promise<ValidTokenResult | SignedOutTokenResult> {
     if (expiredGrant.client_id === undefined) {
       // We used to not store the client_id locally, but later discovered it's
       // helpful to store because it's needed for some APIs.

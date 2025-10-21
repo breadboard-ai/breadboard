@@ -54,7 +54,6 @@ export type SignInRequestHandler = (signInUrl: string) => boolean;
  * settingsHelper are present.
  */
 export class SigninAdapter {
-  readonly #tokenVendor: TokenVendor;
   readonly #globalConfig: GlobalConfig;
   readonly #settingsHelper: SettingsHelper;
   readonly #opalShell: OpalShellProtocol;
@@ -69,7 +68,6 @@ export class SigninAdapter {
     opalShell: OpalShellProtocol,
     handleSignInRequest?: () => Promise<boolean>
   ) {
-    this.#tokenVendor = tokenVendor;
     this.#globalConfig = globalConfig;
     this.#settingsHelper = settingsHelper;
     this.#opalShell = opalShell;
@@ -144,52 +142,19 @@ export class SigninAdapter {
   async token(
     scopes?: OAuthScope[]
   ): Promise<ValidTokenResult | SignedOutTokenResult> {
-    if (this.#state.status === "signedout") {
-      await this.#handleSignInRequest?.(scopes);
-      if (
-        // Cast needed because TypeScript doesn't realize that the await above
-        // could change the #state type.
-        (this.#state as SigninAdapterState).status !== "signedin"
-      ) {
-        return { state: "signedout" };
+    let token = await this.#opalShell.getToken(scopes);
+    if (
+      (token.state === "signedout" || token.state === "missing-scopes") &&
+      this.#handleSignInRequest
+    ) {
+      if (await this.#handleSignInRequest(scopes)) {
+        token = await this.#opalShell.getToken(scopes);
       }
     }
-    let token = this.#tokenVendor.getToken();
-    if (token.state === "expired") {
-      token = await token.refresh();
+    if (token.state === "missing-scopes") {
+      return { state: "signedout" };
     }
-    switch (token.state) {
-      case "valid": {
-        if (scopes?.length) {
-          const actualScopes = new Set(
-            (token.grant.scopes ?? []).map((scope) =>
-              canonicalizeOAuthScope(scope)
-            )
-          );
-          const missingScopes = scopes.filter(
-            (scope) => !actualScopes.has(scope)
-          );
-          if (missingScopes.length) {
-            if (!this.#handleSignInRequest) {
-              // TODO(aomarks) Add a new "insufficient-scopes" state.
-              return { state: "signedout" };
-            } else {
-              await this.#handleSignInRequest(missingScopes);
-              return this.token(scopes);
-            }
-          }
-        }
-        return token;
-      }
-      case "signedout": {
-        return token;
-      }
-
-      default: {
-        token.state satisfies "expired";
-        throw new Error("Invalid token state after refresh: " + token.state);
-      }
-    }
+    return token;
   }
 
   async signIn(scopes: OAuthScope[] = []): Promise<SignInResult> {

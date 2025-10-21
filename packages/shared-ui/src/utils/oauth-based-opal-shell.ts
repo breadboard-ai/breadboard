@@ -4,8 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ALWAYS_REQUIRED_OAUTH_SCOPES } from "@breadboard-ai/connection-client/oauth-scopes.js";
-import type { GrantResponse, TokenGrant } from "@breadboard-ai/types/oauth.js";
+import {
+  ALWAYS_REQUIRED_OAUTH_SCOPES,
+  canonicalizeOAuthScope,
+} from "@breadboard-ai/connection-client/oauth-scopes.js";
+import { TokenVendorImpl } from "@breadboard-ai/connection-client/token-vendor.js";
+import type {
+  GrantResponse,
+  MissingScopesTokenResult,
+  SignedOutTokenResult,
+  TokenGrant,
+  ValidTokenResult,
+} from "@breadboard-ai/types/oauth.js";
 import type {
   OpalShellProtocol,
   SignInResult,
@@ -23,6 +33,22 @@ import { SIGN_IN_CONNECTION_ID } from "./signin-adapter.js";
 
 export class OAuthBasedOpalShell implements OpalShellProtocol {
   readonly #nonceToScopes = new Map<string, string[]>();
+  readonly #tokenVendor = SettingsStore.restoredInstance().then((settings) => {
+    const settingsHelper = new SettingsHelperImpl(settings);
+    return new TokenVendorImpl(
+      {
+        get: () =>
+          settingsHelper.get(SETTINGS_TYPE.CONNECTIONS, SIGN_IN_CONNECTION_ID)
+            ?.value as string,
+        set: async (grant: string) =>
+          settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, SIGN_IN_CONNECTION_ID, {
+            name: SIGN_IN_CONNECTION_ID,
+            value: grant,
+          }),
+      },
+      { OAUTH_CLIENT: CLIENT_DEPLOYMENT_CONFIG.OAUTH_CLIENT }
+    );
+  });
 
   async ping() {
     console.debug("opal shell host received ping");
@@ -172,6 +198,34 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
     }
     console.info("[shell host] Sign-in complete");
     return { ok: true };
+  }
+
+  async getToken(
+    scopes?: string[]
+  ): Promise<
+    ValidTokenResult | SignedOutTokenResult | MissingScopesTokenResult
+  > {
+    const tokenVendor = await this.#tokenVendor;
+    let token = tokenVendor.getToken();
+    if (token.state === "expired") {
+      token = await token.refresh();
+    }
+    if (token.state === "valid") {
+      if (scopes?.length) {
+        const actualScopes = new Set(
+          (token.grant.scopes ?? []).map((scope) =>
+            canonicalizeOAuthScope(scope)
+          )
+        );
+        const missingScopes = scopes.filter(
+          (scope) => !actualScopes.has(canonicalizeOAuthScope(scope))
+        );
+        if (missingScopes.length) {
+          return { state: "missing-scopes", scopes: missingScopes };
+        }
+      }
+    }
+    return token;
   }
 
   async #userHasGeoRestriction(token: string): Promise<boolean> {
