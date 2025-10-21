@@ -399,12 +399,16 @@ async function driveFileToGeminiFile(
 ): Promise<Outcome<FileDataPart>> {
   const fileId = part.fileData.fileUri.replace(/^drive:\/+/, "");
   try {
+    const searchParams = new URLSearchParams();
+    const { resourceKey, mimeType } = part.fileData;
+    if (resourceKey) {
+      searchParams.set("resourceKey", resourceKey);
+    }
+    if (mimeType) {
+      searchParams.set("mimeType", mimeType);
+    }
     // TODO: Un-hardcode the path and get rid of the "@foo/bar".
-    const path =
-      `/board/boards/@foo/bar/assets/drive/${fileId}` +
-      (part.fileData.resourceKey
-        ? `?resourceKey=${part.fileData.resourceKey}`
-        : "");
+    const path = `/board/boards/@foo/bar/assets/drive/${fileId}?${searchParams}`;
     const converting = await fetchWithCreds(path, {
       method: "POST",
       credentials: "include",
