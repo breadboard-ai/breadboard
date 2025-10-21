@@ -56,19 +56,6 @@ export interface SignedOutTokenResult {
   state: "signedout";
 }
 
-// IMPORTANT: Keep in sync with
-// breadboard/packages/connection-server/src/config.ts
-export type GrantResponse =
-  | { error: string }
-  | {
-      error?: undefined;
-      access_token: string;
-      expires_in: number;
-      picture?: string;
-      name?: string;
-      id?: string;
-    };
-
 export interface Connection {
   id: string;
   clientId: string;
