@@ -422,6 +422,25 @@ async function driveFileToGeminiFile(
   }
 }
 
+async function blobToGeminiFile(
+  { fetchWithCreds }: A2ModuleFactoryArgs,
+  blobId: string
+): Promise<Outcome<FileDataPart>> {
+  try {
+    const path = `/api/data/transform/blob/${blobId}`;
+    const converting = await fetchWithCreds(path, {
+      method: "POST",
+      credentials: "include",
+    });
+    const converted =
+      (await converting.json()) as Outcome<GoogleDriveToGeminiResponse>;
+    if (!ok(converted)) return converted;
+    return converted.part;
+  } catch (e) {
+    return err((e as Error).message);
+  }
+}
+
 function createDataPartTansformer(
   moduleArgs: A2ModuleFactoryArgs
 ): DataPartTransformer {
@@ -469,7 +488,7 @@ function createDataPartTansformer(
           // check to see if it's a blob
           const blobId = maybeBlob(handle);
           if (blobId) {
-            return err(`ALMOST THERE: ${blobId}`);
+            return blobToGeminiFile(moduleArgs, blobId);
           }
         }
       }
