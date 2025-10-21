@@ -401,7 +401,7 @@ async function callAPI(
   retries: number,
   model: string,
   body: GeminiBody,
-  $metadata?: Metadata
+  _metadata?: Metadata
 ): Promise<Outcome<GeminiAPIOutputs>> {
   const reporter = new StreamableReporter(caps, {
     title: `Calling ${model}`,
@@ -423,16 +423,16 @@ async function callAPI(
         path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
         data: [],
       });
-      const result = await caps.fetch({
-        $metadata,
-        url: endpointURL(model),
+      const result = await moduleArgs.fetchWithCreds(endpointURL(model), {
         method: "POST",
-        body: conformedBody,
+        body: JSON.stringify(conformedBody),
       });
-      if (!ok(result)) {
+      const json = await result.json();
+      if (!result.ok) {
         // Fetch is a bit weird, because it returns various props
         // along with the `$error`. Let's handle that here.
-        const { status, $error: errObject } = result as FetchErrorResponse;
+        const errObject = json;
+        const status = result.status;
         if (!status) {
           if (errObject)
             return reporter.sendError(
@@ -467,7 +467,7 @@ async function callAPI(
           )
         );
       } else {
-        const outputs = result.response as GeminiAPIOutputs;
+        const outputs = json as GeminiAPIOutputs;
         const candidate = outputs?.candidates?.at(0);
         if (!candidate) {
           await reporter.sendUpdate(
@@ -519,6 +519,8 @@ async function callAPI(
       $error,
       metadata: { origin: "server", kind: "bug" },
     });
+  } catch (e) {
+    return err((e as Error).message);
   } finally {
     reporter.close();
   }
