@@ -7,6 +7,7 @@
 import { err, type Outcome } from "@google-labs/breadboard";
 import type { FileAPIMetadata } from "../../blob-store.js";
 import type { Readable } from "stream";
+import { hasExpired } from "../file-info.js";
 
 export type FileApiState =
   // The default value. This value is used if the state is omitted.
@@ -60,8 +61,48 @@ const WAITING_TIME_MS = 5 * 1024;
 
 const API_URL = "https://generativelanguage.googleapis.com";
 
+type CavemanCacheEntry = {
+  expirationTime: string;
+  fileUri: string;
+  mimeType: string;
+};
+
+/**
+ * This is the most primivite cache that could be imagined, but it
+ * gets the job done for now.
+ */
+class CavemanCache {
+  #map: Map<string, CavemanCacheEntry> = new Map();
+
+  #makeKey(driveId: string, mode: string) {
+    return `${mode}:${driveId}`;
+  }
+
+  get(driveId: string, mode: string) {
+    const key = this.#makeKey(driveId, mode);
+    const entry = this.#map.get(key);
+    if (!entry) return;
+
+    if (hasExpired(entry.expirationTime)) {
+      this.#map.delete(key);
+      return;
+    }
+
+    return entry;
+  }
+
+  set(driveId: string, mode: string, entry: CavemanCacheEntry) {
+    this.#map.set(this.#makeKey(driveId, mode), entry);
+  }
+}
+
 class GeminiFileApi {
   #apiKey: string;
+
+  static #cache: CavemanCache = new CavemanCache();
+  static cache() {
+    return GeminiFileApi.#cache;
+  }
 
   constructor() {
     this.#apiKey = process.env.GEMINI_KEY ?? "";

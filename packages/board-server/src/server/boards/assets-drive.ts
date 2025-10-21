@@ -10,7 +10,6 @@ import { createFetchWithCreds, ok } from "@breadboard-ai/utils";
 import { serverError } from "../errors.js";
 import { Readable } from "node:stream";
 import { GeminiFileApi } from "../blobs/utils/gemini-file-api.js";
-import { hasExpired } from "../blobs/file-info.js";
 import type { ServerResponse } from "node:http";
 import {
   GoogleDriveClient,
@@ -27,47 +26,7 @@ type DriveError = {
   };
 };
 
-type CavemanCacheEntry = {
-  expirationTime: string;
-  fileUri: string;
-  mimeType: string;
-};
-
 type Mode = "file" | "blob";
-
-/**
- * This is the most primivite cache that could be imagined, but it
- * gets the job done for now.
- */
-class CavemanCache {
-  #map: Map<string, CavemanCacheEntry> = new Map();
-
-  #makeKey(driveId: string, mode: Mode) {
-    return `${mode}:${driveId}`;
-  }
-
-  get(driveId: string, mode: Mode) {
-    const key = this.#makeKey(driveId, mode);
-    const entry = this.#map.get(key);
-    if (!entry) return;
-
-    if (hasExpired(entry.expirationTime)) {
-      this.#map.delete(key);
-      return;
-    }
-
-    return entry;
-  }
-
-  set(driveId: string, mode: Mode, entry: CavemanCacheEntry) {
-    this.#map.set(this.#makeKey(driveId, mode), entry);
-  }
-
-  static #instance: CavemanCache = new CavemanCache();
-  static instance() {
-    return CavemanCache.#instance;
-  }
-}
 
 function success(res: ServerResponse, fileUri: string, mimeType: string) {
   res.writeHead(200, {
@@ -135,7 +94,7 @@ export function makeHandleAssetsDriveRequest(
       fetchWithCreds: createFetchWithCreds(async () => accessToken),
     });
 
-    const part = CavemanCache.instance().get(driveId.id, mode);
+    const part = GeminiFileApi.cache().get(driveId.id, mode);
     if (part) {
       if (mode === "file") {
         success(res, part.fileUri, part.mimeType);
@@ -193,7 +152,7 @@ export function makeHandleAssetsDriveRequest(
           );
           return;
         }
-        CavemanCache.instance().set(driveId.id, mode, {
+        GeminiFileApi.cache().set(driveId.id, mode, {
           fileUri: uploading.fileUri!,
           expirationTime: uploading.expirationTime!,
           mimeType,
@@ -220,7 +179,7 @@ export function makeHandleAssetsDriveRequest(
           serverError(res, `Unable to save to blob store: ${blobId.$error}`);
           return;
         }
-        CavemanCache.instance().set(driveId.id, mode, {
+        GeminiFileApi.cache().set(driveId.id, mode, {
           fileUri: blobId,
           expirationTime: new Date(
             Date.now() + GCS_BLOB_LIFETIME_IN_MS
