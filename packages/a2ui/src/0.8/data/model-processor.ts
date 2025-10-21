@@ -25,7 +25,6 @@ import { SignalObject } from "signal-utils/object";
 import { SignalArray } from "signal-utils/array";
 import {
   isComponentArrayReference,
-  isDataBinding,
   isObject,
   isPath,
   isResolvedAudioPlayer,
@@ -704,11 +703,6 @@ export class A2UIModelProcessor {
 
     // 4. If it's a plain object, resolve each of its properties.
     if (isObject(value)) {
-      // This is a data binding so don't recurse any further.
-      if (isDataBinding(value)) {
-        return new SignalObject(value as ResolvedMap);
-      }
-
       const newObj: ResolvedMap = new SignalObject();
       for (const [key, propValue] of Object.entries(value)) {
         // Special case for paths. Here we might get /item/ or ./ on the front
@@ -717,7 +711,11 @@ export class A2UIModelProcessor {
         // path beginning with /item/ or ./we trim it.
         let propertyValue = propValue;
         if (isPath(key, propValue) && dataContextPath !== "/") {
-          propertyValue = propValue.replace(/^\/item/, "").replace(/^.\//, "/");
+          propertyValue = propValue
+            .replace(/^\.?\/item/, "")
+            .replace(/^\.?\//, "");
+          newObj[key] = propertyValue as ResolvedValue;
+          continue;
         }
 
         newObj[key] = this.#resolvePropertyValue(

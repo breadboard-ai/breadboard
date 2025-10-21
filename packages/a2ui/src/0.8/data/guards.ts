@@ -37,10 +37,6 @@ export function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export function isDataBinding(value: unknown): boolean {
-  return isObject(value) && "path" in value;
-}
-
 export function isComponentArrayReference(
   value: unknown
 ): value is ComponentArrayReference {
