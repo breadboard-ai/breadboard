@@ -13,7 +13,6 @@ import {
   Outcome,
   OutputValues,
   Schema,
-  SchemaEnumValue,
 } from "@breadboard-ai/types";
 import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
@@ -91,6 +90,17 @@ const MODES: Mode[] = [
     modelName: "gemini-2.5-pro",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
+  },
+  {
+    id: "agent",
+    type: "agent",
+    url: "embed://a2/agent.bgl.json#module:main",
+    title: "Agent",
+    description: "Iteratively works to solve the stated objective",
+    icon: "spark",
+    modelName: "gemini-flash-latest",
+    promptPlaceholderText:
+      "Type your goal here. Use @ to include other content.",
   },
   {
     id: "think",
@@ -352,6 +362,11 @@ async function describe(
     behavior.push(...(describing.inputSchema.behavior || []));
   }
 
+  const agentMode = ok(flags) && flags.agentMode;
+  const filteredModes = MODES.filter(
+    (mode) => agentMode || mode.id !== "agent"
+  );
+
   return {
     title: "Generate",
     description: "Uses Gemini to generate content and call tools",
@@ -366,7 +381,7 @@ async function describe(
         "generation-mode": {
           type: "string",
           title: "Mode",
-          enum: MODES as unknown as SchemaEnumValue[],
+          enum: filteredModes,
           behavior: ["config", "hint-preview", "reactive", "hint-controller"],
         },
         context: {
