@@ -29,7 +29,10 @@ import {
 } from "../elements/connection/connection-common.js";
 import { SETTINGS_TYPE } from "../types/types.js";
 import { getEmbedderRedirectUri } from "./embed-helpers.js";
+import { scopesFromUrl } from "./scopes-from-url.js";
 import { SIGN_IN_CONNECTION_ID } from "./signin-adapter.js";
+
+import "./install-opal-shell-comlink-transfer-handlers.js";
 
 export class OAuthBasedOpalShell implements OpalShellProtocol {
   readonly #nonceToScopes = new Map<string, string[]>();
@@ -55,9 +58,48 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
     return "pong" as const;
   }
 
-  async fetchWithCreds(_url: string): Promise<unknown> {
-    // TODO(aomarks) Implement.
-    throw new Error("Not yet implemented");
+  async fetchWithCreds(
+    input: string | URL | RequestInfo,
+    init: RequestInit = {}
+  ): Promise<Response> {
+    const url =
+      input instanceof Request
+        ? input.url
+        : input instanceof URL
+          ? input.href
+          : input;
+    try {
+      new URL(url);
+    } catch {
+      // Don't allow relative URLs, because it's ambiguous which origin we
+      // should resolve it against (the host or guest?).
+      return new Response(
+        `Only valid absolute URLs can be used with fetchWithCreds: ${url}`,
+        { status: 400 }
+      );
+    }
+    const scopes = scopesFromUrl(
+      url,
+      CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT
+    );
+    if (!scopes) {
+      const message = `URL is not in fetchWithCreds allowlist: ${url}`;
+      console.error(`[shell host] ${message}`);
+      return new Response(message, { status: 403 });
+    }
+    const token = await this.getToken(scopes);
+    if (token.state === "signedout") {
+      return new Response("User is signed-out", { status: 401 });
+    }
+    if (token.state === "missing-scopes") {
+      return new Response(
+        `User is signed-in but missing scopes: ${token.scopes.join(", ")}`,
+        { status: 401 }
+      );
+    }
+    const headers = new Headers(init.headers);
+    headers.set("Authorization", `Bearer ${token.grant.access_token}`);
+    return fetch(input, { ...init, headers });
   }
 
   async generateSignInUrlAndNonce(

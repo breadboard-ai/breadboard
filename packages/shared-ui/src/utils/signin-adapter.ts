@@ -20,11 +20,9 @@ import type {
   OpalShellProtocol,
   SignInResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { createFetchWithCreds } from "@breadboard-ai/utils";
 import { createContext } from "@lit/context";
 import type { GlobalConfig } from "../contexts/global-config";
 import { SETTINGS_TYPE, SettingsHelper } from "../types/types";
-import { scopesFromUrl } from "./scopes-from-url";
 
 export const SIGN_IN_CONNECTION_ID = "$sign-in";
 
@@ -73,21 +71,7 @@ export class SigninAdapter {
     this.#opalShell = opalShell;
     this.#handleSignInRequest = handleSignInRequest;
 
-    this.fetchWithCreds = createFetchWithCreds(async (url) => {
-      const scopes = scopesFromUrl(url, globalConfig.BACKEND_API_ENDPOINT);
-      if (!scopes) {
-        throw new Error(`Unknown URL: ${url}. Unable to fetch.`);
-      }
-      let token: string | undefined;
-      const tokenResult = await this.token(scopes);
-      if (tokenResult.state === "valid") {
-        token = tokenResult.grant.access_token;
-      }
-      if (!token) {
-        throw new Error(`Unable to obtain access token for URL ${url}`);
-      }
-      return token;
-    });
+    this.fetchWithCreds = opalShell.fetchWithCreds.bind(opalShell);
 
     const token = tokenVendor.getToken();
     if (token.state === "signedout") {
