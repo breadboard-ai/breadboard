@@ -4,19 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { chunkRepairTransform } from "@breadboard-ai/utils";
 import {
   PatchedReadableStream,
-  parseWithStreams,
   patchReadableStream,
   stringifyWithStreams,
 } from "../stream.js";
-import {
-  ClientBidirectionalStream,
-  ClientTransport,
-  ServerBidirectionalStream,
-  ServerTransport,
-} from "./types.js";
+import { ServerBidirectionalStream, ServerTransport } from "./types.js";
 
 /**
  * Minimal interface in the shape of express.js's request object.
@@ -43,32 +36,6 @@ export const serverStreamEventDecoder = () => {
     transform(chunk, controller) {
       if (chunk.startsWith("data: ")) {
         controller.enqueue(chunk.slice(6));
-      }
-    },
-  });
-};
-
-export const parseWithStreamsTransform = () => {
-  const siphon = new TransformStream();
-  const writer = siphon.writable.getWriter();
-  return new TransformStream({
-    transform(chunk, controller) {
-      const parsed = parseWithStreams(chunk, (id) => {
-        if (id !== 0) {
-          throw new Error(
-            "HTTPClientTransport does not support multiple streams at the moment."
-          );
-        }
-        return siphon.readable;
-      });
-      // Siphon away chunks into the stream.
-      const [type] = Array.isArray(parsed) ? parsed : [];
-      if (type === "http-stream-chunk") {
-        writer.write(parsed[1].chunk);
-      } else if (type === "http-stream-end") {
-        writer.close();
-      } else {
-        controller.enqueue(parsed as Response);
       }
     },
   });
@@ -134,95 +101,6 @@ export class HTTPServerTransport<Request, Response>
         },
         close() {
           response.end();
-        },
-      }),
-    };
-  }
-}
-
-export type HTTPClientTransportOptions = RequestInit & {
-  fetch?: typeof globalThis.fetch;
-};
-
-export class HTTPClientTransport<Request, Response>
-  implements ClientTransport<Request, Response>
-{
-  #url: string;
-  #options: HTTPClientTransportOptions;
-  #fetch: typeof globalThis.fetch;
-
-  constructor(url: string, options?: HTTPClientTransportOptions) {
-    this.#url = url;
-    this.#options = {
-      ...options,
-      method: "POST",
-      credentials: "include",
-    };
-    this.#fetch = this.#options.fetch ?? globalThis.fetch.bind(globalThis);
-  }
-
-  createClientStream(
-    init?: RequestInit
-  ): ClientBidirectionalStream<Request, Response> {
-    let responseResolve:
-      | undefined
-      | ((response: PatchedReadableStream<Response>) => void);
-    const responsePromise: Promise<PatchedReadableStream<Response>> =
-      new Promise((resolve) => {
-        responseResolve = resolve;
-      });
-
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const that = this;
-    return {
-      readableResponses: new ReadableStream<Response>({
-        async pull(controller) {
-          const response = await responsePromise;
-          const reader = response.getReader();
-          for (;;) {
-            const result = await reader.read();
-            if (result.done) {
-              break;
-            } else {
-              console.log(
-                "%cServer-Sent Event Chunk",
-                "background: #009; color: #FFF",
-                result.value
-              );
-              controller.enqueue(result.value as Response);
-            }
-          }
-          controller.close();
-        },
-      }) as PatchedReadableStream<Response>,
-      writableRequests: new WritableStream<Request>({
-        async write(chunk) {
-          if (!responseResolve) {
-            throw new Error(
-              "HTTPClientTransport supports only one write per stream instance."
-            );
-          }
-          const response = await that.#fetch(that.#url, {
-            ...that.#options,
-            ...(init || {}),
-            body: JSON.stringify(chunk),
-          });
-          if (!response.ok) {
-            const details = await response.text();
-            throw new Error(
-              `HTTP error: ${response.status}, details: ${details}`
-            );
-          }
-          responseResolve(
-            response.body
-              ?.pipeThrough(new TextDecoderStream())
-              .pipeThrough(chunkRepairTransform())
-              .pipeThrough(serverStreamEventDecoder())
-              .pipeThrough(
-                parseWithStreamsTransform()
-              ) as PatchedReadableStream<Response>
-          );
-          responseResolve = undefined;
         },
       }),
     };

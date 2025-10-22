@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { HTTPServerTransport, HTTPClientTransport } from "./http.js";
+export { HTTPServerTransport } from "./http.js";
 export {
   PortDispatcher,
   WorkerServerTransport,
