@@ -10,7 +10,6 @@ import ViteExpress from "vite-express";
 import * as boardServer from "@breadboard-ai/board-server";
 import * as connectionServer from "@breadboard-ai/connection-server";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { InputValues, NodeDescriptor } from "@breadboard-ai/types";
 
 import { makeDriveProxyMiddleware } from "./drive-proxy.js";
 import { createClientConfig } from "./config.js";
@@ -36,7 +35,6 @@ server.use(makeCspHandler());
 
 const boardServerConfig = boardServer.createServerConfig({
   storageProvider: "firestore",
-  proxyServerAllowFilter,
 });
 const connectionServerConfig = await connectionServer.createServerConfig();
 
@@ -153,26 +151,4 @@ function escape(s: string) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
-}
-
-function proxyServerAllowFilter(
-  node: NodeDescriptor,
-  inputs: InputValues
-): boolean {
-  // Not a fetch node, so we'll allow it.
-  if (node.type !== "fetch") return true;
-  if (!("url" in inputs && inputs.url)) return false;
-  if (typeof inputs.url !== "string") return false;
-
-  const url = parseUrl(inputs.url);
-  if (!url) return false;
-  return url.origin.endsWith(".googleapis.com");
-}
-
-function parseUrl(s: string): URL | undefined {
-  try {
-    return new URL(s);
-  } catch {
-    return;
-  }
 }

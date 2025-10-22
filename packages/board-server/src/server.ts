@@ -12,12 +12,9 @@ import type { ServerConfig, StorageProvider } from "./server/config.js";
 import { serveBlobsAPI } from "./server/blobs/index.js";
 import { serveBoardsAPI } from "./server/boards/index.js";
 import { serveHome } from "./server/home/index.js";
-import { serveInfoAPI } from "./server/info/index.js";
-import { serveMeAPI } from "./server/info/me.js";
 import { type BoardServerStore } from "./server/store.js";
 import { InMemoryStorageProvider } from "./server/storage-providers/inmemory.js";
 import { FirestoreStorageProvider } from "./server/storage-providers/firestore.js";
-import type { AllowFilterFunction } from "@breadboard-ai/types";
 
 export type { ServerConfig, StorageProvider };
 export {
@@ -79,15 +76,12 @@ export function createRouter(config: ServerConfig): Router {
 
   router.use("/blobs", serveBlobsAPI(config));
   router.use("/boards", serveBoardsAPI(config));
-  router.use("/info", serveInfoAPI());
-  router.use("/me", serveMeAPI());
 
   return router;
 }
 
 export function createServerConfig(opts: {
   storageProvider: StorageProvider;
-  proxyServerAllowFilter?: AllowFilterFunction;
 }): ServerConfig {
   console.log("[board-server startup] Creating board server config");
   const {
@@ -103,6 +97,5 @@ export function createServerConfig(opts: {
     storageProvider: opts?.storageProvider ?? "firestore",
     serverUrl: SERVER_URL,
     storageBucket: STORAGE_BUCKET,
-    proxyServerAllowFilter: opts?.proxyServerAllowFilter,
   };
 }
