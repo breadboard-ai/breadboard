@@ -10,7 +10,7 @@ export {
   WorkerServerTransport,
   WorkerClientTransport,
 } from "./worker.js";
-export { ProxyServer, ProxyClient } from "./proxy.js";
+export { ProxyServer } from "./proxy.js";
 export { InitServer, InitClient } from "./init.js";
 export { defineConfig, hasOrigin, type ProxyServerConfig } from "./config.js";
 export type * from "./types.js";

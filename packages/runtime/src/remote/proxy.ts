@@ -9,20 +9,14 @@ import type {
   AnyProxyRequestMessage,
   AnyProxyResponseMessage,
   ErrorResponse,
-  InputValues,
-  Kit,
-  NodeDescriptor,
-  NodeHandlerContext,
-  NodeHandlers,
-  NodeIdentifier,
   OutputValues,
 } from "@breadboard-ai/types";
-import { err, timestamp } from "@breadboard-ai/utils";
+import { timestamp } from "@breadboard-ai/utils";
 import { callHandler, handlersFromKits } from "../handler.js";
 import { streamsToAsyncIterable } from "../stream.js";
 import { NodeProxyConfig, NodeProxySpec, ProxyServerConfig } from "./config.js";
 import { createTunnelKit, readConfig } from "./tunnel.js";
-import { ClientTransport, ServerTransport } from "./types.js";
+import { ServerTransport } from "./types.js";
 
 type ProxyServerTransport = ServerTransport<
   AnyProxyRequestMessage,
@@ -149,134 +143,4 @@ export class ProxyServer {
       }
     }
   }
-}
-
-type ProxyClientTransport = ClientTransport<
-  AnyProxyRequestMessage,
-  AnyProxyResponseMessage
->;
-
-export class ProxyClient {
-  #transport: ProxyClientTransport;
-
-  constructor(transport: ProxyClientTransport) {
-    this.#transport = transport;
-  }
-
-  shutdownServer() {
-    const stream = this.#transport.createClientStream();
-    const writer = stream.writableRequests.getWriter();
-    writer.write(["end", { timestamp: timestamp() }]);
-    writer.close();
-  }
-
-  async proxy(
-    node: NodeDescriptor,
-    inputs: InputValues,
-    context: NodeHandlerContext
-  ): Promise<OutputValues> {
-    const stream = this.#transport.createClientStream({
-      signal: context.signal,
-    });
-    const writer = stream.writableRequests.getWriter();
-    const reader = stream.readableResponses.getReader();
-
-    const inflateToFileData = isGeminiApiFetch(node, inputs);
-    let result;
-    try {
-      const store = context.store;
-      inputs = store
-        ? ((await inflateData(
-            store,
-            inputs,
-            context.base,
-            inflateToFileData
-          )) as InputValues)
-        : inputs;
-      await writer.write(["proxy", { node, inputs }]);
-      await writer.close();
-
-      result = await reader.read();
-    } catch (e) {
-      return err((e as Error).message);
-    }
-    if (result.done) {
-      throw new Error("Unexpected proxy failure: empty response.");
-    }
-
-    const [type] = result.value;
-    if (type === "proxy") {
-      const [, { outputs }] = result.value;
-      return outputs;
-    } else if (type === "error") {
-      const [, { error }] = result.value;
-      throw new Error(JSON.stringify(error));
-    } else {
-      throw new Error(
-        `Unexpected proxy failure: unknown response type "${type}".`
-      );
-    }
-  }
-
-  createProxyKit(args: NodeProxyConfig = [], fallback: Kit[] = []) {
-    const fallbackHandlers = handlersFromKits(fallback);
-    const nodesToProxy = args.map((arg) => {
-      if (typeof arg === "string") return arg;
-      else return arg.node;
-    });
-    const proxiedNodes = Object.fromEntries(
-      nodesToProxy.map((type) => {
-        return [
-          type,
-          {
-            invoke: async (
-              inputs: InputValues,
-              context: NodeHandlerContext
-            ) => {
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              const descriptor = context.descriptor!;
-              if (keepLocal(descriptor, inputs)) {
-                return invokeFallback(type, inputs, context, fallbackHandlers);
-              }
-              const result = await this.proxy(descriptor, inputs, context);
-              return result;
-            },
-          },
-        ];
-      })
-    );
-    return {
-      url: "proxy",
-      handlers: proxiedNodes,
-    } satisfies Kit;
-  }
-}
-
-async function invokeFallback(
-  id: NodeIdentifier,
-  inputs: InputValues,
-  context: NodeHandlerContext,
-  fallbackHandlers: NodeHandlers
-): Promise<void | OutputValues> {
-  const handler = fallbackHandlers[id];
-  return callHandler(handler, inputs, context);
-}
-
-/**
- * A helper that lets the proxy know not to proxy the handler
- */
-function keepLocal(node: NodeDescriptor, inputs: InputValues): boolean {
-  if (node.type !== "fetch") return false;
-  // We can't handle file system-based fetch on the proxy server.
-  return "file" in inputs;
-}
-
-function isGeminiApiFetch(node: NodeDescriptor, inputs: InputValues): boolean {
-  if (node.type !== "fetch") return false;
-  return (
-    "url" in inputs &&
-    !!inputs.url &&
-    typeof inputs.url === "string" &&
-    inputs.url.startsWith("https://generativelanguage.googleapis.com")
-  );
 }
