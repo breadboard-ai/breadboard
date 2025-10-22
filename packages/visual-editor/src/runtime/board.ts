@@ -9,8 +9,6 @@ import {
   EditHistoryCreator,
   EditHistoryEntry,
   GraphDescriptor,
-  isLLMContentArray,
-  isStoredData,
   Kit,
   MutableGraphStore,
 } from "@google-labs/breadboard";
@@ -45,21 +43,16 @@ import {
   getBoardServers,
 } from "@breadboard-ai/board-server-management";
 import { TokenVendor } from "@breadboard-ai/connection-client";
-import {
-  GraphIdentifier,
-  GraphTheme,
-  ModuleIdentifier,
-} from "@breadboard-ai/types";
-import {
-  generatePaletteFromColor,
-  generatePaletteFromImage,
-} from "@breadboard-ai/theme";
+import { GraphIdentifier, ModuleIdentifier } from "@breadboard-ai/types";
 import * as idb from "idb";
 import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { loadImage } from "@breadboard-ai/shared-ui/utils/image";
 import { RecentBoardStore } from "../data/recent-boards";
 import { type RunResults } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
+import {
+  applyDefaultThemeInformationIfNonePresent,
+  createAppPaletteIfNeeded,
+} from "./util";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -472,129 +465,6 @@ export class Board extends EventTarget {
     this.dispatchEvent(new RuntimeTabChangeEvent());
   }
 
-  async #createAppPaletteIfNeeded(graph: GraphDescriptor) {
-    const themeId = graph.metadata?.visual?.presentation?.theme;
-    if (!themeId) {
-      return;
-    }
-
-    const theme = graph.metadata?.visual?.presentation?.themes?.[themeId];
-    if (!theme || !theme.splashScreen || theme.palette) {
-      return;
-    }
-
-    let splashUrl: URL | undefined = undefined;
-    const { handle } = theme.splashScreen.storedData;
-    const BLOB_HANDLE_PATTERN = /^[./]*blobs\/(.+)/;
-    const blobMatch = handle.match(BLOB_HANDLE_PATTERN);
-
-    if (blobMatch) {
-      const blobId = blobMatch[1];
-      if (blobId) {
-        splashUrl = new URL(`/board/blobs/${blobId}`, window.location.href);
-      }
-    } else if (
-      handle.startsWith("data:") ||
-      handle.startsWith("http:") ||
-      handle.startsWith("https:")
-    ) {
-      splashUrl = new URL(handle);
-    } else if (handle.startsWith("drive:")) {
-      if (!this.googleDriveClient) {
-        return;
-      }
-      splashUrl = new URL(handle);
-    }
-
-    if (!splashUrl) {
-      return;
-    }
-
-    console.warn(`[Runtime] Generated theme dynamically`);
-    console.warn(`[Runtime] Please regenerate the theme for this app`);
-
-    const imgUrl = await loadImage(this.googleDriveClient!, splashUrl.href);
-    if (!imgUrl) return;
-
-    const img = new Image();
-    img.src = imgUrl;
-    img.crossOrigin = "anonymous";
-    const generatedPalette = await generatePaletteFromImage(img);
-    if (generatedPalette) {
-      theme.palette = generatedPalette;
-    }
-  }
-
-  /**
-   * Here for now, but needs to be removed when all legacy theme information has
-   * been handled.
-   *
-   * @deprecated
-   */
-  #migrateThemeInformationIfPresent(graph: GraphDescriptor) {
-    // Already migrated.
-    if (
-      graph.metadata?.visual?.presentation?.themes &&
-      graph.metadata?.visual?.presentation?.theme
-    ) {
-      return;
-    }
-
-    // No legacy theme info available - fit out the default theme.
-    if (!graph.metadata?.visual?.presentation?.themeColors) {
-      graph.metadata ??= {};
-      graph.metadata.visual ??= {};
-      graph.metadata.visual.presentation ??= {};
-      graph.metadata.visual.presentation.themes ??= {};
-
-      const graphTheme: GraphTheme = {
-        themeColors: {
-          primaryColor: "#1a1a1a",
-          secondaryColor: "#7a7a7a",
-          backgroundColor: "#ffffff",
-          textColor: "#1a1a1a",
-          primaryTextColor: "#ffffff",
-        },
-        template: "basic",
-        isDefaultTheme: true,
-        palette: generatePaletteFromColor("#a5a5a5"),
-      };
-
-      const themeId = globalThis.crypto.randomUUID();
-      graph.metadata.visual.presentation.themes[themeId] = graphTheme;
-      graph.metadata.visual.presentation.theme = themeId;
-      return;
-    }
-
-    const { themeColors, template, templateAdditionalOptions } =
-      graph.metadata.visual.presentation;
-    const graphTheme: GraphTheme = {
-      themeColors,
-      templateAdditionalOptions,
-      template,
-    };
-
-    const splashScreen = graph.assets?.["@@splash"];
-    if (
-      isLLMContentArray(splashScreen?.data) &&
-      isStoredData(splashScreen.data[0]?.parts[0])
-    ) {
-      graphTheme.splashScreen = splashScreen.data[0].parts[0];
-    }
-
-    graph.metadata.visual.presentation.themes ??= {};
-
-    // Set the theme.
-    const themeId = globalThis.crypto.randomUUID();
-    graph.metadata.visual.presentation.themes[themeId] = graphTheme;
-    graph.metadata.visual.presentation.theme = themeId;
-
-    // Remove the legacy values.
-    delete graph.metadata.visual.presentation.template;
-    delete graph.metadata.visual.presentation.templateAdditionalOptions;
-    delete graph.metadata.visual.presentation.themeColors;
-  }
-
   async createTabFromURL(
     boardUrl: string,
     currentUrl: string | null = null,
@@ -667,8 +537,8 @@ export class Board extends EventTarget {
         delete graph.graphs?.["Main board"];
       }
 
-      this.#migrateThemeInformationIfPresent(graph);
-      await this.#createAppPaletteIfNeeded(graph);
+      applyDefaultThemeInformationIfNonePresent(graph);
+      await createAppPaletteIfNeeded(graph, this.googleDriveClient);
 
       // This is not elegant, since we actually load the graph by URL,
       // and we should know this mainGraphId by now.
