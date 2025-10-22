@@ -44,7 +44,6 @@ import {
   RuntimeUnsnackbarEvent,
 } from "./events.js";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import { addNodeProxyServerConfig } from "../data/node-proxy-servers.js";
 import { inputsFromSettings } from "@breadboard-ai/shared-ui/data/inputs.js";
 import {
   assetsFromGraphDescriptor,
@@ -115,32 +114,30 @@ export class Runtime extends EventTarget {
       proxyUrl = boardServerProxyUrl;
       break;
     }
+    // There's a very weird race happening here. If I remove the code above,
+    // graph/console rendering starts being flaky.
+    // TODO: Figure out what that is.
+    console.debug("PROXY URL", proxyUrl);
 
-    const runConfig = addNodeProxyServerConfig(
-      [] /* no longer used */,
-      {
-        url,
-        runner: graph,
-        diagnostics: true,
-        kits: [], // The kits are added by the runtime.
-        loader: this.board.getLoader(),
-        graphStore: this.edit.graphStore,
-        fileSystem: this.edit.graphStore.fileSystem.createRunFileSystem({
-          graphUrl: url,
-          env: envFromGraphDescriptor(
-            this.edit.graphStore.fileSystem.env(),
-            graph
-          ),
-          assets: assetsFromGraphDescriptor(graph),
-        }),
-        inputs: inputsFromSettings(settings),
-        interactiveSecrets: true,
-        fetchWithCreds: this.fetchWithCreds,
-      },
-      settings,
-      undefined /* no longer used */,
-      proxyUrl
-    );
+    const runConfig = {
+      url,
+      runner: graph,
+      diagnostics: true,
+      kits: [], // The kits are added by the runtime.
+      loader: this.board.getLoader(),
+      graphStore: this.edit.graphStore,
+      fileSystem: this.edit.graphStore.fileSystem.createRunFileSystem({
+        graphUrl: url,
+        env: envFromGraphDescriptor(
+          this.edit.graphStore.fileSystem.env(),
+          graph
+        ),
+        assets: assetsFromGraphDescriptor(graph),
+      }),
+      inputs: inputsFromSettings(settings),
+      interactiveSecrets: true,
+      fetchWithCreds: this.fetchWithCreds,
+    };
 
     return this.run.prepareRun(tab, runConfig);
   }

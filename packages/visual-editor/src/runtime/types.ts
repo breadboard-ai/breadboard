@@ -7,7 +7,6 @@
 import type {
   BoardServer,
   GraphLoader,
-  HarnessProxyConfig,
   OutputValues,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
@@ -82,7 +81,6 @@ export interface RuntimeConfig {
   tokenVendor: TokenVendor;
   settings: SettingsStore;
   fileSystem: FileSystem;
-  proxy?: HarnessProxyConfig[];
   // The board servers that are built in: initialized separately and come
   // as part of the environment.
   builtInBoardServers: BoardServer[];

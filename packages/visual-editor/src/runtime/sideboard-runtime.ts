@@ -11,11 +11,7 @@ import {
   OutputValues,
   BoardServer,
 } from "@breadboard-ai/types";
-import type {
-  HarnessProxyConfig,
-  HarnessRunner,
-  RunConfig,
-} from "@breadboard-ai/types";
+import type { HarnessRunner, RunConfig } from "@breadboard-ai/types";
 import { createRunner, RunnerErrorEvent } from "@breadboard-ai/runtime";
 import { RuntimeConfig, SideboardRuntimeProvider } from "./types";
 import {
@@ -38,7 +34,6 @@ import {
 import { SecretsHelper } from "../utils/secrets-helper";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { TokenVendor } from "@breadboard-ai/connection-client";
-import { addNodeProxyServerConfig } from "../data/node-proxy-servers";
 import type {
   SideBoardRuntime,
   SideBoardRuntimeEventTarget,
@@ -71,7 +66,6 @@ function createSideboardRuntimeProvider(
         servers,
         config.tokenVendor!,
         config.settings,
-        config.proxy,
         config.fileSystem,
         config.fetchWithCreds
       );
@@ -92,10 +86,9 @@ class SideboardRuntimeImpl
 
   constructor(
     args: GraphStoreArgs,
-    private readonly servers: BoardServer[],
+    servers: BoardServer[],
     public readonly tokenVendor: TokenVendor,
     public readonly settings: SettingsStore,
-    private readonly proxy: HarnessProxyConfig[] | undefined,
     fileSystem: FileSystem | undefined,
     private readonly fetchWithCreds: typeof globalThis.fetch
   ) {
@@ -166,20 +159,9 @@ class SideboardRuntimeImpl
     this.#discardTasks = true;
   }
 
-  async #getProxyURL(urlString: string): Promise<string | null> {
-    const url = new URL(urlString, window.location.href);
-    for (const boardServer of this.servers) {
-      const proxyURL = await boardServer.canProxy?.(url);
-      if (proxyURL) {
-        return proxyURL;
-      }
-    }
-    return null;
-  }
-
   async createConfig(
     graph: GraphDescriptor | string,
-    graphURLForProxy?: string,
+    _graphURLForProxy?: string,
     signal?: AbortSignal
   ): Promise<RunConfig> {
     let loadGraph = false;
@@ -205,7 +187,7 @@ class SideboardRuntimeImpl
       this.#graphStore.addByDescriptor(graph);
       url = graph.url!;
     }
-    let config: RunConfig = {
+    const config: RunConfig = {
       url,
       diagnostics: "silent",
       kits: [...this.#graphStore.kits],
@@ -226,15 +208,6 @@ class SideboardRuntimeImpl
       config.runner = graph;
     }
 
-    if (this.proxy) {
-      config = addNodeProxyServerConfig(
-        this.proxy,
-        config,
-        this.settings,
-        undefined,
-        await this.#getProxyURL(graphURLForProxy ?? url)
-      );
-    }
     return config;
   }
 

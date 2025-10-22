@@ -34,7 +34,6 @@ export type Capability = (
 ) => Promise<Values | void>;
 
 export type CapabilitySpec = {
-  fetch?: Capability;
   invoke?: Capability;
   input?: Capability;
   output?: Capability;

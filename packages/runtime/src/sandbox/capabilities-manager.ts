@@ -265,7 +265,6 @@ class CapabilitiesManagerImpl implements CapabilitiesManager {
       if (this.context) {
         const fs = new FileSystemHandlerFactory(this.context.fileSystem);
         return {
-          fetch: getHandler("fetch", this.context),
           invoke: getHandler("invoke", this.context),
           input: createInputHandler(this.context),
           output: createOutputHandler(this.context),
@@ -293,7 +292,6 @@ class CapabilitiesManagerImpl implements CapabilitiesManager {
 
     this.#dummies = Object.fromEntries(
       [
-        "fetch",
         "invoke",
         "input",
         "output",
