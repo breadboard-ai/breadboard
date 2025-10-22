@@ -270,6 +270,20 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
     return token;
   }
 
+  async setUrl(url: string): Promise<void> {
+    const obj = new URL(url);
+    // Project the guest path under our host path.
+    //
+    // TODO(aomarks) When ready, invert this relationship. The host will serve
+    // at / and the guest will serve at /guest.
+    obj.pathname = `/shell${obj.pathname}`;
+    url = obj.href;
+    // Note that parent windows and iframes have a common history, so because we
+    // want the iframe to be completely in control of history, we always want to
+    // replace here instead of pushing, otherwise we'd break back/forward.
+    history.replaceState(null, "", url);
+  }
+
   async #userHasGeoRestriction(token: string): Promise<boolean> {
     const response = await fetch(
       new URL(

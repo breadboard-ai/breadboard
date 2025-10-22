@@ -18,7 +18,7 @@ export function connectToOpalShellHost(): OpalShellProtocol {
   const hostOrigin = CLIENT_DEPLOYMENT_CONFIG.SHELL_HOST_ORIGIN;
   if (hostOrigin && hostOrigin !== "*" && window !== window.parent) {
     console.log("[shell guest] Connecting to iframe host");
-    return comlink.wrap<OpalShellProtocol>(
+    const host = comlink.wrap<OpalShellProtocol>(
       comlink.windowEndpoint(
         // Where this guest sends messages.
         window.parent,
@@ -33,10 +33,36 @@ export function connectToOpalShellHost(): OpalShellProtocol {
         hostOrigin
       )
     );
+    beginSyncronizingUrls(host);
+    return host;
   } else {
     // TODO(aomarks) Remove once we are fully migrated to the iframe
     // arrangement.
     console.log("[shell guest] Connecting to legacy host");
     return new OAuthBasedOpalShell();
   }
+}
+
+function beginSyncronizingUrls(host: OpalShellProtocol) {
+  for (const name of [
+    "pushState",
+    "replaceState",
+    "back",
+    "forward",
+    "go",
+  ] satisfies Array<keyof typeof history>) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+    const original: Function = history[name].bind(history);
+    history[name] = (...args: unknown[]) => {
+      const result = original(...args);
+      host.setUrl(window.location.href);
+      return result;
+    };
+  }
+
+  window.addEventListener("popstate", () => {
+    host.setUrl(window.location.href);
+  });
+
+  host.setUrl(window.location.href);
 }
