@@ -358,11 +358,15 @@ export const ReplaceRoute: EventRoute<"board.replace"> = {
   event: "board.replace",
 
   async do(deps) {
-    const { tab, runtime, originalEvent } = deps;
+    const { tab, runtime, originalEvent, googleDriveClient } = deps;
+
+    const { replacement } = originalEvent.detail;
+    runtime.util.applyDefaultThemeInformationIfNonePresent(replacement);
+    await runtime.util.createAppPaletteIfNeeded(replacement, googleDriveClient);
 
     await runtime.edit.replaceGraph(
       tab,
-      originalEvent.detail.replacement,
+      replacement,
       originalEvent.detail.creator
     );
 
