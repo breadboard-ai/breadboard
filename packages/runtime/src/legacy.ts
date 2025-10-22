@@ -45,13 +45,7 @@ export { loadRunnerState } from "./serialization.js";
 // Used by `board-server` as part of remote run API.
 export { handleRunGraphRequest } from "./remote/run-graph-server.js";
 // Used by `board-server` as part of proxy API.
-export {
-  ProxyServer,
-  HTTPServerTransport,
-  type ProxyServerConfig,
-} from "./remote/index.js";
-// Used by `board-server` as part of proxy API.
-export type { ServerResponse } from "./remote/http.js";
+export { type ProxyServerConfig } from "./remote/index.js";
 // Used by `board-server` as part of remote run API.
 export { run } from "./harness/index.js";
 // Move to `utils` package.

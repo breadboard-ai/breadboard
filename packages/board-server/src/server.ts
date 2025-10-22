@@ -14,7 +14,6 @@ import { serveBoardsAPI } from "./server/boards/index.js";
 import { serveHome } from "./server/home/index.js";
 import { serveInfoAPI } from "./server/info/index.js";
 import { serveMeAPI } from "./server/info/me.js";
-import { serveProxyAPI } from "./server/proxy/index.js";
 import { type BoardServerStore } from "./server/store.js";
 import { InMemoryStorageProvider } from "./server/storage-providers/inmemory.js";
 import { FirestoreStorageProvider } from "./server/storage-providers/firestore.js";
@@ -82,7 +81,6 @@ export function createRouter(config: ServerConfig): Router {
   router.use("/boards", serveBoardsAPI(config));
   router.use("/info", serveInfoAPI());
   router.use("/me", serveMeAPI());
-  router.use("/proxy", serveProxyAPI(config));
 
   return router;
 }
