@@ -14,6 +14,7 @@ import {
   create,
   getDoc,
   getPresentation,
+  getSpreadsheetMetadata,
   query,
   updateDoc,
   updatePresentation,
@@ -119,12 +120,23 @@ async function invoke(
         ]);
         if (!ok(gettingCollector)) return gettingCollector;
         if (!ok(result)) return result;
-        const { id } = gettingCollector;
         console.log("VALUES", result);
+
+        const { id } = gettingCollector;
+        const sheetInfo = await getSpreadsheetMetadata(moduleArgs, id);
+        if (!ok(sheetInfo)) return sheetInfo;
+
+        const sheet1 = sheetInfo.sheets.at(0)?.properties.title;
+        if (!sheet1) {
+          return err(
+            `Unable to save to Spreadsheet: the document appears to have no sheets`
+          );
+        }
+
         const appending = await appendSpreadsheetValues(
           moduleArgs,
           id,
-          "Sheet1",
+          sheet1,
           { values: result }
         );
         if (!ok(appending)) return appending;
@@ -141,6 +153,7 @@ type CollectorData = {
   id: string;
   end?: number;
   last?: string;
+  sheetName?: string;
 };
 
 /**
