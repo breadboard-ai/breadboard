@@ -9,7 +9,6 @@ import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-conf
 import type { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import type {
   FileSystemEntry,
-  HarnessProxyConfig,
   Kit,
   MutableGraphStore,
   NodeHandlerContext,
@@ -48,7 +47,6 @@ export type BootstrapArguments = {
 
 export type MainArguments = {
   settings: SettingsStore;
-  proxy?: HarnessProxyConfig[];
   languagePack?: string;
   /**
    * The URL of the board server with which this editor instance

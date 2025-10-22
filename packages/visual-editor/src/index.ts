@@ -512,7 +512,6 @@ export class Main extends SignalWatcher(LitElement) {
       tokenVendor: this.tokenVendor,
       sandbox: moduleFactory,
       settings: this.#settings,
-      proxy: [],
       fileSystem,
       builtInBoardServers: [createA2Server()],
       kits: addRunModule(
