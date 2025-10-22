@@ -13,7 +13,7 @@ import type {
 export interface OpalShellProtocol {
   ping(): Promise<"pong">;
 
-  fetchWithCreds(url: string): Promise<unknown>;
+  fetchWithCreds: typeof fetch;
 
   generateSignInUrlAndNonce(
     // TODO(aomarks) Move OAuthScope to types

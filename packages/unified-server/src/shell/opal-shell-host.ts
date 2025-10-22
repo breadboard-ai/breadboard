@@ -8,6 +8,8 @@ import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client
 import { OAuthBasedOpalShell } from "@breadboard-ai/shared-ui/utils/oauth-based-opal-shell.js";
 import * as comlink from "comlink";
 
+import "@breadboard-ai/shared-ui/utils/install-opal-shell-comlink-transfer-handlers.js";
+
 const guestOrigin = CLIENT_DEPLOYMENT_CONFIG.SHELL_GUEST_ORIGIN;
 if (guestOrigin && guestOrigin !== "*") {
   const iframe = document.querySelector("iframe#opal-app" as "iframe");

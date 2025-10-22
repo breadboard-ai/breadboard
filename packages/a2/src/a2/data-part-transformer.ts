@@ -57,11 +57,14 @@ async function driveFileToGeminiFile(
     }
     // TODO: Un-hardcode the path and get rid of the "@foo/bar".
     const path = `/board/boards/@foo/bar/assets/drive/${fileId}?${searchParams}`;
-    const converting = await fetchWithCreds(path, {
-      method: "POST",
-      credentials: "include",
-      body: JSON.stringify({ part }),
-    });
+    const converting = await fetchWithCreds(
+      new URL(path, window.location.origin),
+      {
+        method: "POST",
+        credentials: "include",
+        body: JSON.stringify({ part }),
+      }
+    );
     if (!converting.ok) return err(await converting.text());
 
     const converted =
@@ -80,10 +83,13 @@ async function blobToGeminiFile(
 ): Promise<Outcome<FileDataPart>> {
   try {
     const path = `/api/data/transform/blob/${blobId}`;
-    const converting = await fetchWithCreds(path, {
-      method: "POST",
-      credentials: "include",
-    });
+    const converting = await fetchWithCreds(
+      new URL(path, window.location.origin),
+      {
+        method: "POST",
+        credentials: "include",
+      }
+    );
     const converted =
       (await converting.json()) as Outcome<GoogleDriveToGeminiResponse>;
     if (!ok(converted)) return converted;
