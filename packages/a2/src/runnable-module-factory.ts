@@ -83,7 +83,6 @@ class A2ModuleFactory implements RunnableModuleFactory {
 export type CallableCapability = (inputs: Values) => Promise<Values | void>;
 
 export type CallableCapabilities = {
-  fetch: CallableCapability;
   invoke: CallableCapability;
   input: CallableCapability;
   output: CallableCapability;
@@ -133,7 +132,6 @@ async function invokeCapability(
 }
 
 const CAPABILITY_NAMES: (keyof CallableCapabilities)[] = [
-  "fetch",
   "invoke",
   "input",
   "output",
