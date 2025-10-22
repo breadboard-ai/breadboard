@@ -37,6 +37,7 @@ async function readFlags(caps: Capabilities): Promise<Outcome<RuntimeFlags>> {
       gulfRenderer: false,
       force2DGraph: false,
       consistentUI: false,
+      agentMode: false,
     };
   }
 

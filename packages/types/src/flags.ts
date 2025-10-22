@@ -37,6 +37,10 @@ export type RuntimeFlags = {
    * Experimental Consistent UI output mode
    */
   consistentUI: boolean;
+  /**
+   * Agent mode
+   */
+  agentMode: boolean;
 };
 
 /**
