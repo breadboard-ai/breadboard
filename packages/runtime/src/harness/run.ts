@@ -19,17 +19,11 @@ async function configureKits(
 }
 
 async function* run(config: RunConfig) {
-  if (!config.remote) {
-    yield* asyncGen<HarnessRunResult>(async (next) => {
-      const kits = await configureKits(config, next);
+  yield* asyncGen<HarnessRunResult>(async (next) => {
+    const kits = await configureKits(config, next);
 
-      for await (const data of runLocally(config, kits)) {
-        await next(data);
-      }
-    });
-  } else {
-    throw new Error(
-      `Unsupported harness configuration: ${JSON.stringify(config, null, 2)}`
-    );
-  }
+    for await (const data of runLocally(config, kits)) {
+      await next(data);
+    }
+  });
 }
