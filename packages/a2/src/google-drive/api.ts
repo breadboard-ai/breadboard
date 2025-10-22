@@ -18,10 +18,10 @@ export {
   get,
   getDoc,
   getPresentation,
+  getSpreadsheetMetadata,
   query,
   updateDoc,
   updatePresentation,
-  updateSpreadsheetValues,
 };
 
 // These are various Google Drive-specific types.
@@ -639,6 +639,16 @@ export type SpreadsheetValuesUpdate = {
   responseDateTimeRenderOption?: "SERIAL_NUMBER" | "FORMATTED_STRING";
 };
 
+export type SheetList = {
+  sheets: {
+    properties: {
+      sheetId: number;
+      title: string;
+      index: 0;
+    };
+  }[];
+};
+
 export type SpreadsheetValuesAppend = SpreadsheetValueRange;
 
 export type Metadata = {
@@ -789,22 +799,17 @@ async function updatePresentation(
   );
 }
 
-async function updateSpreadsheetValues(
+async function getSpreadsheetMetadata(
   moduleArgs: A2ModuleFactoryArgs,
-  id: string,
-  body: SpreadsheetValuesUpdate
+  id: string
 ) {
   if (!id) {
     return err("Please supply the id of the spreadsheet to update.");
   }
-  if (!body) {
-    return err("Please supply the body of the spreadsheet update request.");
-  }
-  return api(
+  return api<SheetList>(
     moduleArgs,
-    `https://sheets.googleapis.com/v4/spreadsheets/${id}/values:batchUpdate`,
-    "POST",
-    body
+    `https://sheets.googleapis.com/v4/spreadsheets/${id}?fields=sheets.properties`,
+    "GET"
   );
 }
 
@@ -822,7 +827,7 @@ async function appendSpreadsheetValues(
   }
   return api(
     moduleArgs,
-    `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${range}:append?valueInputOption=USER_ENTERED`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED`,
     "POST",
     body
   );
