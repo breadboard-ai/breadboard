@@ -13,6 +13,7 @@ import { err, ok } from "../a2/utils";
 import { exp, query } from "./api";
 import { DOC_MIME_TYPE, markdownToContext } from "./docs";
 import type { ConnectorConfiguration } from "./types";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -29,9 +30,10 @@ type Outputs = {
 
 async function invoke(
   { id, info: { configuration } }: Inputs,
-  caps: Capabilities
+  _caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs
 ): Promise<Outcome<Outputs>> {
-  const gettingDoc = await getCollector(caps, id, configuration?.file);
+  const gettingDoc = await getCollector(moduleArgs, id, configuration?.file);
   if (!ok(gettingDoc)) return gettingDoc;
   return { context: gettingDoc };
 }
@@ -41,7 +43,7 @@ async function invoke(
  * doc to which context is appended.
  */
 async function getCollector(
-  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   connectorId: string,
   file: ConnectorConfiguration["file"] | undefined
 ): Promise<Outcome<LLMContent[]>> {
@@ -49,9 +51,8 @@ async function getCollector(
   let id;
   if (!fileId) {
     const findFile = await query(
-      caps,
-      `appProperties has { key = 'google-drive-connector' and value = '${connectorId}' } and trashed = false`,
-      { title: "Find the doc to append to" }
+      moduleArgs,
+      `appProperties has { key = 'google-drive-connector' and value = '${connectorId}' } and trashed = false`
     );
     if (!ok(findFile)) return findFile;
     const file = findFile.files.at(0);
@@ -62,13 +63,13 @@ async function getCollector(
   } else {
     id = fileId;
   }
-  const exporter = new Exporter(caps, id, mimeType);
+  const exporter = new Exporter(moduleArgs, id, mimeType);
   return exporter.export();
 }
 
 class Exporter {
   constructor(
-    private readonly caps: Capabilities,
+    private readonly moduleArgs: A2ModuleFactoryArgs,
     public readonly id: string,
     public readonly mimeType: string | undefined
   ) {}
@@ -80,18 +81,14 @@ class Exporter {
   async export(): Promise<Outcome<LLMContent[]>> {
     const { id } = this;
     if (this.isDoc()) {
-      const gettingDoc = await exp(this.caps, id, "text/makdown", {
-        title: "Get current doc contents",
-      });
+      const gettingDoc = await exp(this.moduleArgs, id, "text/makdown");
       if (!ok(gettingDoc)) return gettingDoc;
       if (!(typeof gettingDoc === "string")) {
         return err(`Invalid output from document export. Must be a string`);
       }
       return markdownToContext(gettingDoc);
     } else {
-      const exportingPdf = await exp(this.caps, id, "application/pdf", {
-        title: "Get PDF export of the file",
-      });
+      const exportingPdf = await exp(this.moduleArgs, id, "application/pdf");
       if (!ok(exportingPdf)) return exportingPdf;
       return [{ parts: [exportingPdf as StoredDataCapabilityPart] }];
     }
