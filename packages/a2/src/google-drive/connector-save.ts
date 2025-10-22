@@ -66,7 +66,7 @@ async function invoke(
     switch (mimeType) {
       case DOC_MIME_TYPE: {
         const gettingCollector = await getCollector(
-          caps,
+          moduleArgs,
           connectorId,
           graphId,
           title ?? "Untitled Document",
@@ -76,19 +76,14 @@ async function invoke(
         if (!ok(gettingCollector)) return gettingCollector;
         const { id, end } = gettingCollector;
         const requests = await contextToRequests(caps, context, end!);
-        const updating = await updateDoc(
-          caps,
-          id,
-          { requests },
-          { title: "Append to Google Doc" }
-        );
+        const updating = await updateDoc(moduleArgs, id, { requests });
         if (!ok(updating)) return updating;
         return { context: contextFromId(id, DOC_MIME_TYPE) };
       }
       case SLIDES_MIME_TYPE: {
         const [gettingCollector, result] = await Promise.all([
           getCollector(
-            caps,
+            moduleArgs,
             connectorId,
             graphId,
             title ?? "Untitled Presentation",
@@ -106,19 +101,14 @@ async function invoke(
         }
         const requests = slideBuilder.build([]);
         console.log("REQUESTS", requests);
-        const updating = await updatePresentation(
-          caps,
-          id,
-          { requests },
-          { title: "Append to Google Presentation" }
-        );
+        const updating = await updatePresentation(moduleArgs, id, { requests });
         if (!ok(updating)) return updating;
         return { context: contextFromId(id, SLIDES_MIME_TYPE) };
       }
       case SHEETS_MIME_TYPE: {
         const [gettingCollector, result] = await Promise.all([
           getCollector(
-            caps,
+            moduleArgs,
             connectorId,
             graphId,
             title ?? "Untitled Spreadsheet",
@@ -132,13 +122,10 @@ async function invoke(
         const { id } = gettingCollector;
         console.log("VALUES", result);
         const appending = await appendSpreadsheetValues(
-          caps,
+          moduleArgs,
           id,
           "Sheet1",
-          { values: result },
-          {
-            title: "Append to Google Presentation",
-          }
+          { values: result }
         );
         if (!ok(appending)) return appending;
         return { context: contextFromId(id, SHEETS_MIME_TYPE) };
@@ -161,7 +148,7 @@ type CollectorData = {
  * doc to which context is appended.
  */
 async function getCollector(
-  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   connectorId: string,
   graphId: string,
   title: string,
@@ -172,24 +159,19 @@ async function getCollector(
   if (!fileId) {
     const fileKey = `${getTypeKey(mimeType)}${connectorId}${graphId}`;
     const findFile = await query(
-      caps,
-      `appProperties has { key = 'google-drive-connector' and value = '${fileKey}' } and trashed = false`,
-      { title: "Find the doc to append to" }
+      moduleArgs,
+      `appProperties has { key = 'google-drive-connector' and value = '${fileKey}' } and trashed = false`
     );
     if (!ok(findFile)) return findFile;
     const file = findFile.files.at(0);
     if (!file) {
-      const createdFile = await create(
-        caps,
-        {
-          name: title,
-          mimeType,
-          appProperties: {
-            "google-drive-connector": fileKey,
-          },
+      const createdFile = await create(moduleArgs, {
+        name: title,
+        mimeType,
+        appProperties: {
+          "google-drive-connector": fileKey,
         },
-        { title: "Create new file to which to append" }
-      );
+      });
       if (!ok(createdFile)) return createdFile;
       if (mimeType === DOC_MIME_TYPE) {
         return {
@@ -197,9 +179,10 @@ async function getCollector(
           end: 1,
         };
       } else if (mimeType === SLIDES_MIME_TYPE) {
-        const gettingPresenation = await getPresentation(caps, createdFile.id, {
-          title: "Reading presentation",
-        });
+        const gettingPresenation = await getPresentation(
+          moduleArgs,
+          createdFile.id
+        );
         if (!ok(gettingPresenation)) return gettingPresenation;
         return {
           id: gettingPresenation.presentationId!,
@@ -217,9 +200,7 @@ async function getCollector(
     id = fileId;
   }
   if (mimeType === DOC_MIME_TYPE) {
-    const gettingDoc = await getDoc(caps, id, {
-      title: "Get current doc contents",
-    });
+    const gettingDoc = await getDoc(moduleArgs, id);
     if (!ok(gettingDoc)) return gettingDoc;
     const end =
       (
@@ -230,9 +211,7 @@ async function getCollector(
       ) - 1;
     return { id, end };
   } else if (mimeType === SLIDES_MIME_TYPE) {
-    const gettingPresentation = await getPresentation(caps, id, {
-      title: "Get current doc contents",
-    });
+    const gettingPresentation = await getPresentation(moduleArgs, id);
     if (!ok(gettingPresentation)) return gettingPresentation;
     const end = gettingPresentation.slides?.length || 0;
     return { id, end };

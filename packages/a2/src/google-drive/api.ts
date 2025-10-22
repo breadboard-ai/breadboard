@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities, Outcome } from "@breadboard-ai/types";
+import { Outcome } from "@breadboard-ai/types";
 import { err } from "../a2/utils";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export {
   appendSpreadsheetValues,
   create,
   createMultipart,
-  createPermission,
   createPresentation,
   del,
   exp,
@@ -23,8 +23,6 @@ export {
   updatePresentation,
   updateSpreadsheetValues,
 };
-
-type FetchInputs = Parameters<Capabilities["fetch"]>[0];
 
 // These are various Google Drive-specific types.
 
@@ -650,30 +648,27 @@ export type Metadata = {
 
 export type Method = "GET" | "POST" | "PUT" | "DELETE";
 
-async function get(caps: Capabilities, id: string, metadata: Metadata) {
+async function get(moduleArgs: A2ModuleFactoryArgs, id: string) {
   if (!id) {
     return err("Please supply file id.");
   }
   return api(
-    caps,
-    metadata,
+    moduleArgs,
     `https://www.googleapis.com/drive/v3/files/${id}`,
     "GET"
   );
 }
 
 async function create(
-  caps: Capabilities,
-  body: unknown,
-  metadata: Metadata
+  moduleArgs: A2ModuleFactoryArgs,
+  body: unknown
 ): Promise<Outcome<CreateFileResponse>> {
   if (!body) {
     return err("Please supply the body of the file to create.");
   }
 
   return api(
-    caps,
-    metadata,
+    moduleArgs,
     "https://www.googleapis.com/drive/v3/files",
     "POST",
     body
@@ -681,69 +676,62 @@ async function create(
 }
 
 async function query(
-  caps: Capabilities,
-  query: string,
-  metadata: Metadata
+  moduleArgs: A2ModuleFactoryArgs,
+  query: string
 ): Promise<Outcome<FileQueryResponse>> {
   if (!query) {
     return err("Please supply the query.");
   }
 
   return api(
-    caps,
-    metadata,
+    moduleArgs,
     `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}`,
     "GET"
   );
 }
 
-async function del(caps: Capabilities, id: string, metadata: Metadata) {
+async function del(moduleArgs: A2ModuleFactoryArgs, id: string) {
   if (!id) {
     return err("Please supply the id of the file to delete");
   }
 
   return api(
-    caps,
-    metadata,
+    moduleArgs,
     `https://www.googleapis.com/drive/v3/files/${id}`,
     "DELETE"
   );
 }
 
 async function exp(
-  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   fileId: string,
-  mimeType: string,
-  metadata: Metadata
+  mimeType: string
 ) {
   if (!fileId) {
     return err("Please supply the file id to export.");
   }
   return api(
-    caps,
-    metadata,
+    moduleArgs,
     `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${mimeType}`,
     "GET"
   );
 }
 
-async function getDoc(caps: Capabilities, id: string, metadata: Metadata) {
+async function getDoc(moduleArgs: A2ModuleFactoryArgs, id: string) {
   if (!id) {
     return err("Please supply the doc id to get.");
   }
   return api(
-    caps,
-    metadata,
+    moduleArgs,
     `https://docs.googleapis.com/v1/documents/${id}`,
     "GET"
   );
 }
 
 async function updateDoc(
-  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   id: string,
-  body: unknown,
-  metadata: Metadata
+  body: unknown
 ) {
   if (!id) {
     return err("Please supply the id of the doc to update.");
@@ -752,8 +740,7 @@ async function updateDoc(
     return err("Please supply the body of the doc update request.");
   }
   return api(
-    caps,
-    metadata,
+    moduleArgs,
     `https://docs.googleapis.com/v1/documents/${id}:batchUpdate`,
     "POST",
     body
@@ -761,26 +748,22 @@ async function updateDoc(
 }
 
 async function getPresentation(
-  caps: Capabilities,
-  id: string,
-  metadata: Metadata
+  moduleArgs: A2ModuleFactoryArgs,
+  id: string
 ): Promise<Outcome<SlidesPresentation>> {
   return api(
-    caps,
-    metadata,
+    moduleArgs,
     `https://slides.googleapis.com/v1/presentations/${id}`,
     "GET"
   );
 }
 
 async function createPresentation(
-  caps: Capabilities,
-  title: string,
-  metadata: Metadata
+  moduleArgs: A2ModuleFactoryArgs,
+  title: string
 ): Promise<Outcome<SlidesPresentation>> {
   return api(
-    caps,
-    metadata,
+    moduleArgs,
     "https://slides.googleapis.com/v1/presentations",
     "POST",
     { title }
@@ -788,10 +771,9 @@ async function createPresentation(
 }
 
 async function updatePresentation(
-  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   id: string,
-  body: { requests: SlidesRequest[] },
-  metadata: Metadata
+  body: { requests: SlidesRequest[] }
 ) {
   if (!id) {
     return err("Please supply the id of the presentation to update.");
@@ -800,8 +782,7 @@ async function updatePresentation(
     return err("Please supply the body of the presentation update request.");
   }
   return api(
-    caps,
-    metadata,
+    moduleArgs,
     `https://slides.googleapis.com/v1/presentations/${id}:batchUpdate`,
     "POST",
     body
@@ -809,10 +790,9 @@ async function updatePresentation(
 }
 
 async function updateSpreadsheetValues(
-  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   id: string,
-  body: SpreadsheetValuesUpdate,
-  metadata: Metadata
+  body: SpreadsheetValuesUpdate
 ) {
   if (!id) {
     return err("Please supply the id of the spreadsheet to update.");
@@ -821,8 +801,7 @@ async function updateSpreadsheetValues(
     return err("Please supply the body of the spreadsheet update request.");
   }
   return api(
-    caps,
-    metadata,
+    moduleArgs,
     `https://sheets.googleapis.com/v4/spreadsheets/${id}/values:batchUpdate`,
     "POST",
     body
@@ -830,11 +809,10 @@ async function updateSpreadsheetValues(
 }
 
 async function appendSpreadsheetValues(
-  caps: Capabilities,
+  moduleArgs: A2ModuleFactoryArgs,
   id: string,
   range: string,
-  body: SpreadsheetValuesAppend,
-  metadata: Metadata
+  body: SpreadsheetValuesAppend
 ) {
   if (!id) {
     return err("Please supply the id of the spreadsheet to update.");
@@ -843,8 +821,7 @@ async function appendSpreadsheetValues(
     return err("Please supply the body of the spreadsheet update request.");
   }
   return api(
-    caps,
-    metadata,
+    moduleArgs,
     `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${range}:append?valueInputOption=USER_ENTERED`,
     "POST",
     body
@@ -852,22 +829,20 @@ async function appendSpreadsheetValues(
 }
 
 async function createMultipart(
-  { fetch }: Capabilities,
+  { fetchWithCreds }: A2ModuleFactoryArgs,
   metadata: unknown,
   body: unknown,
-  mimeType: string,
-  $metadata: Metadata
+  mimeType: string
 ): Promise<Outcome<{ id: string }>> {
   const boundary = "BB-BB-BB-BB-BB-BB";
   const url = `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
-  const request: FetchInputs = {
-    ...meta($metadata),
-    url,
-    method: "POST",
-    headers: {
-      ["Content-Type"]: `multipart/related; boundary=${boundary}`,
-    },
-    body: `--${boundary}
+  try {
+    const requestInit: RequestInit = {
+      method: "POST",
+      headers: {
+        ["Content-Type"]: `multipart/related; boundary=${boundary}`,
+      },
+      body: `--${boundary}
 Content-Type: application/json; charset=UTF-8
 
 ${JSON.stringify(metadata, null, 2)}
@@ -877,91 +852,30 @@ Content-Transfer-Encoding: base64
 
 ${body}
 --${boundary}--`,
-  };
-  const { response, $error } = await fetch(request);
-  if ($error) {
-    return err(typeof $error === "string" ? $error : JSON.stringify($error));
+    };
+    const response = await fetchWithCreds(url, requestInit);
+    return response.json() as Promise<Outcome<{ id: string }>>;
+  } catch (e) {
+    return err((e as Error).message);
   }
-  return response as { id: string };
-}
-
-export type Permission = {
-  id?: string;
-  displayName?: string;
-  type?: string;
-  kind?: string;
-  permissionDetails?: [
-    {
-      permissionType?: string;
-      inheritedFrom?: string;
-      role?: string;
-      inherited?: boolean;
-    },
-  ];
-  photoLink?: string;
-  emailAddress?: string;
-  role?: string;
-  allowFileDiscovery?: boolean;
-  domain?: string;
-  expirationTime?: string;
-  teamDrivePermissionDetails?: [
-    {
-      teamDrivePermissionType: string;
-      inheritedFrom: string;
-      role: string;
-      inherited: boolean;
-    },
-  ];
-  deleted?: boolean;
-  view?: string;
-  pendingOwner?: boolean;
-};
-
-async function createPermission(
-  caps: Capabilities,
-  fileId: string,
-  permission: Permission,
-  metadata: Metadata
-): Promise<Outcome<Permission>> {
-  return api(
-    caps,
-    metadata,
-    `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,
-    "POST",
-    permission
-  );
 }
 
 async function api<T>(
-  { fetch }: Capabilities,
-  metadata: Metadata,
+  { fetchWithCreds }: A2ModuleFactoryArgs,
   url: string,
   method: Method,
   body: unknown | null = null
 ): Promise<Outcome<T>> {
-  const request: FetchInputs = {
-    ...meta(metadata),
-    url,
-    method,
-  };
-  if (body) {
-    request.body = body;
+  try {
+    const requestInit: RequestInit = {
+      method,
+    };
+    if (body) {
+      requestInit.body = JSON.stringify(body);
+    }
+    const response = await fetchWithCreds(url, requestInit);
+    return response.json() as Promise<Outcome<T>>;
+  } catch (e) {
+    return err((e as Error).message);
   }
-  const { response, $error } = await fetch(request);
-  if ($error) {
-    return err(typeof $error === "string" ? $error : JSON.stringify($error));
-  }
-  return response as T;
-}
-
-function meta({ title, description }: Metadata = {}) {
-  if (!(title || description)) return {};
-  const $metadata: Metadata = {};
-  if (title) {
-    $metadata.title = title;
-  }
-  if (description) {
-    $metadata.description = description;
-  }
-  return { $metadata };
 }
