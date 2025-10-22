@@ -68,7 +68,7 @@ export class Run extends EventTarget {
 
     const run = this.#runs.get(tabId);
     if (run) {
-      const project = this.state.getOrCreateProjectState(run.mainGraphId);
+      const project = this.state.getProjectState(run.mainGraphId);
       if (project) {
         project.resetRun();
       }

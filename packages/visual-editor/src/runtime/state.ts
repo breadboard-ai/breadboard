@@ -70,9 +70,15 @@ class StateManager {
     return this.#ui;
   }
 
+  getProjectState(mainGraphId?: MainGraphIdentifier): State.Project | null {
+    if (!mainGraphId) return null;
+
+    return this.#map.get(mainGraphId) || null;
+  }
+
   getOrCreateProjectState(
-    mainGraphId?: MainGraphIdentifier,
-    editable?: EditableGraph | null
+    mainGraphId: MainGraphIdentifier,
+    editable: EditableGraph | null
   ): State.Project | null {
     if (!mainGraphId) return null;
 

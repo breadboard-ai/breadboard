@@ -114,9 +114,7 @@ export const StopRoute: EventRoute<"board.stop"> = {
         url.searchParams.delete("results");
         history.pushState(null, "", url);
       }
-      const projectState = runtime.run.state.getOrCreateProjectState(
-        tab.mainGraphId
-      );
+      const projectState = runtime.run.state.getProjectState(tab.mainGraphId);
       projectState?.resetRun();
       return true;
     }
