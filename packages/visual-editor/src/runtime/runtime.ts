@@ -103,22 +103,6 @@ export class Runtime extends EventTarget {
     }
 
     const graph = tab?.graph;
-    const proxyableUrl = new URL(url, window.location.href);
-    let proxyUrl: string | null = null;
-    for (const boardServer of this.board.boardServers.servers) {
-      const boardServerProxyUrl = await boardServer.canProxy?.(proxyableUrl);
-      if (!boardServerProxyUrl) {
-        continue;
-      }
-
-      proxyUrl = boardServerProxyUrl;
-      break;
-    }
-    // There's a very weird race happening here. If I remove the code above,
-    // graph/console rendering starts being flaky.
-    // TODO: Figure out what that is.
-    console.debug("PROXY URL", proxyUrl);
-
     const runConfig = {
       url,
       runner: graph,
@@ -138,6 +122,13 @@ export class Runtime extends EventTarget {
       interactiveSecrets: true,
       fetchWithCreds: this.fetchWithCreds,
     };
+
+    // Let the queued up updates trigger the render before actually preparing
+    // the run. This is necessary, because the main graph is being set in
+    // `bb-renderer` is actually side-effectey, but we don't have another way
+    // to account for this
+    // TODO: Remove side effectey graph-setting in `bb-renderer`.
+    await Promise.resolve();
 
     return this.run.prepareRun(tab, runConfig);
   }
@@ -288,6 +279,16 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
   );
   const shell = new Shell(config.appName, config.appSubName);
 
+  const edit = new Edit(
+    state,
+    loader,
+    kits,
+    config.sandbox,
+    graphStore,
+    sideboards,
+    config.settings
+  );
+
   return new Runtime({
     router: new Router(),
     board: new Board(
@@ -300,16 +301,8 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
       config.tokenVendor,
       config.googleDriveClient
     ),
-    edit: new Edit(
-      state,
-      loader,
-      kits,
-      config.sandbox,
-      graphStore,
-      sideboards,
-      config.settings
-    ),
-    run: new Run(graphStore, dataStore, state, flags),
+    edit,
+    run: new Run(graphStore, dataStore, state, flags, edit),
     state,
     sideboards,
     select: new Select(),

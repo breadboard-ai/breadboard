@@ -31,6 +31,7 @@ import { createPlanRunner } from "@breadboard-ai/runtime";
 import { RuntimeBoardRunEvent } from "./events";
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
 import { StateManager } from "./state";
+import { Edit } from "./edit";
 
 export class Run extends EventTarget {
   #runs = new Map<
@@ -47,7 +48,8 @@ export class Run extends EventTarget {
     public readonly graphStore: MutableGraphStore,
     public readonly dataStore: BoardServerAwareDataStore,
     public readonly state: StateManager,
-    public readonly flags: RuntimeFlagManager
+    public readonly flags: RuntimeFlagManager,
+    public readonly edit: Edit
   ) {
     super();
   }
@@ -218,7 +220,10 @@ export class Run extends EventTarget {
 
     // This incantation connects harnessRunner to the project, populating
     // `Project.run`.
-    const project = this.state.getOrCreateProjectState(tab.mainGraphId);
+    const project = this.state.getOrCreateProjectState(
+      tab.mainGraphId,
+      this.edit.getEditor(tab)
+    );
     if (!project) {
       console.warn(`Unable to get project for graph: ${tab.mainGraphId}`);
     } else {
