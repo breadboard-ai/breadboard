@@ -1385,10 +1385,14 @@ export class Main extends SignalWatcher(LitElement) {
       }
     }
 
-    const projectState = this.#runtime.state.getOrCreateProjectState(
-      this.#tab?.mainGraphId,
-      this.#runtime.edit.getEditor(this.#tab)
-    );
+    const mainGraphId = this.#tab?.mainGraphId;
+
+    const projectState = mainGraphId
+      ? this.#runtime.state.getOrCreateProjectState(
+          mainGraphId,
+          this.#runtime.edit.getEditor(this.#tab)
+        )
+      : null;
 
     if (projectState && this.#tab?.finalOutputValues) {
       const current = new ReactiveAppScreen("", undefined);
@@ -1986,7 +1990,7 @@ export class Main extends SignalWatcher(LitElement) {
 
           case "dismiss": {
             this.#runtime.state
-              .getOrCreateProjectState(this.#tab?.mainGraphId)
+              .getProjectState(this.#tab?.mainGraphId)
               ?.run?.dismissError();
             break;
           }

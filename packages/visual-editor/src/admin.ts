@@ -58,7 +58,7 @@ export class Admin {
   get project(): Project | null {
     const tab = this.runtime.board.tabs.values().next().value;
     if (!tab) return null;
-    return this.runtime.state.getOrCreateProjectState(tab.mainGraphId);
+    return this.runtime.state.getProjectState(tab.mainGraphId);
   }
 
   #gdriveBoardServer(): GoogleDriveBoardServer {

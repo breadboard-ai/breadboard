@@ -134,7 +134,7 @@ export const ActionRoute: EventRoute<"node.action"> = {
   async do({ runtime, tab, uiState, originalEvent }) {
     uiState.blockingAction = true;
     try {
-      const project = runtime.state.getOrCreateProjectState(tab?.mainGraphId);
+      const project = runtime.state.getProjectState(tab?.mainGraphId);
       if (!project) {
         console.warn(`No project for "node.action"`);
         return false;
