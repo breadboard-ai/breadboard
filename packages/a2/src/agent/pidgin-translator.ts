@@ -11,6 +11,10 @@ import { Template } from "../a2/template";
 
 export { PidginTranslator };
 
+/**
+ * Translates to and from Agent pidgin: a simplified XML-like
+ * language that tuned to be understood by Gemini.
+ */
 class PidginTranslator {
   constructor(private readonly caps: Capabilities) {}
 

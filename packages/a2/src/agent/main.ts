@@ -14,6 +14,7 @@ import { Template } from "../a2/template";
 import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 import { Params } from "../a2/common";
 import { PidginTranslator } from "./pidgin-translator";
+import { Loop } from "./loop";
 
 export { invoke as default, describe };
 
@@ -35,7 +36,9 @@ async function invoke(
   );
   const translator = new PidginTranslator(caps);
   const objective = translator.toPidgin(config$prompt, params);
-  console.log("inputs", objective, caps, moduleArgs);
+  const loop = new Loop(caps, moduleArgs);
+  await loop.run(objective);
+  console.log("inputs", objective, moduleArgs);
   return { context: [objective] };
 }
 
