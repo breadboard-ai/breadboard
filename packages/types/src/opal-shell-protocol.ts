@@ -30,6 +30,8 @@ export interface OpalShellProtocol {
   ): Promise<
     ValidTokenResult | SignedOutTokenResult | MissingScopesTokenResult
   >;
+
+  setUrl(url: string): void;
 }
 
 export type SignInResult = { ok: true } | { ok: false; error: SignInError };
