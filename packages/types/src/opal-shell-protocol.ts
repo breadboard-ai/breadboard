@@ -34,6 +34,8 @@ export interface OpalShellProtocol {
   setUrl(url: string): void;
 
   pickDriveFiles(options: PickDriveFilesOptions): Promise<PickDriveFilesResult>;
+
+  checkAppAccess(): Promise<CheckAppAccessResult>;
 }
 
 export type SignInResult = { ok: true } | { ok: false; error: SignInError };
@@ -59,3 +61,5 @@ export interface PickDriveFilesDocument {
   mimeType?: string;
   resourceKey?: string;
 }
+
+export type CheckAppAccessResult = { canAccess: boolean };

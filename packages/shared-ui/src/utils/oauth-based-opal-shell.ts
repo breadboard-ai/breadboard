@@ -19,6 +19,7 @@ import type {
   ValidTokenResult,
 } from "@breadboard-ai/types/oauth.js";
 import type {
+  CheckAppAccessResult,
   OpalShellProtocol,
   PickDriveFilesOptions,
   PickDriveFilesResult,
@@ -189,7 +190,10 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
 
     console.info(`[shell host] Checking geo restriction`);
     try {
-      if (await this.#userHasGeoRestriction(grantResponse.access_token)) {
+      const access = await this.#checkAppAccessWithToken(
+        grantResponse.access_token
+      );
+      if (!access.canAccess) {
         console.info(`[shell host] User is geo restricted`);
         return { ok: false, error: { code: "geo-restriction" } };
       }
@@ -363,7 +367,16 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
     }
   }
 
-  async #userHasGeoRestriction(token: string): Promise<boolean> {
+  async checkAppAccess(): Promise<CheckAppAccessResult> {
+    const token = await this.getToken();
+    if (token.state === "valid") {
+      return await this.#checkAppAccessWithToken(token.grant.access_token);
+    } else {
+      return { canAccess: false };
+    }
+  }
+
+  async #checkAppAccessWithToken(token: string): Promise<CheckAppAccessResult> {
     const response = await fetch(
       new URL(
         "/v1beta1/checkAppAccess",
@@ -375,6 +388,6 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
       throw new Error(`HTTP ${response.status} error checking geo restriction`);
     }
     const result = (await response.json()) as { canAccess?: boolean };
-    return !result.canAccess;
+    return { canAccess: !!result.canAccess };
   }
 }
