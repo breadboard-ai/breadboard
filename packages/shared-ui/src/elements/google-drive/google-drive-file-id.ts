@@ -4,23 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, PropertyValues, css, html, nothing } from "lit";
+import type { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import type { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { consume } from "@lit/context";
+import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import {
   InputCancelEvent,
   InputChangeEvent,
-  InputPlugin,
+  type InputPlugin,
 } from "../../plugins/input-plugin.js";
-import { loadDrivePicker } from "./google-apis.js";
-import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { getTopLevelOrigin } from "../../utils/embed-helpers.js";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
-import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { consume } from "@lit/context";
-import {
-  SigninAdapter,
-  signinAdapterContext,
-} from "../../utils/signin-adapter.js";
+import { opalShellContext } from "../../utils/opal-shell-guest.js";
 
 export type PickedValue = {
   // A special value recognized by the "GraphPortLabel": if present in an
@@ -72,7 +68,7 @@ const ALLOWED_MIME_TYPES = [
   "audio/aac",
   "audio/ogg",
   "audio/flac",
-].join(",");
+];
 
 export const googleDriveFileIdInputPlugin: InputPlugin = {
   instantiate: {
@@ -155,23 +151,13 @@ export class GoogleDriveFileId extends LitElement {
   @consume({ context: googleDriveClientContext })
   accessor googleDriveClient: GoogleDriveClient | undefined;
 
-  @consume({ context: signinAdapterContext })
-  accessor signinAdapter: SigninAdapter | undefined = undefined;
+  @consume({ context: opalShellContext })
+  accessor opalShell: OpalShellProtocol | undefined;
 
-  #picker?: google.picker.Picker;
   #autoTrigger = false;
   #inputRef: Ref<HTMLButtonElement> = createRef();
 
-  override async connectedCallback(): Promise<void> {
-    super.connectedCallback();
-    this._pickerLib ??= await loadDrivePicker();
-  }
-
   triggerFlow() {
-    if (this._pickerLib === undefined) {
-      throw new Error("Google Drive API unavailable");
-    }
-
     this.#onClickPickFiles();
   }
 
@@ -244,53 +230,18 @@ export class GoogleDriveFileId extends LitElement {
   }
 
   async #onClickPickFiles() {
-    if (this.signinAdapter === undefined || this._pickerLib === undefined) {
+    if (this.opalShell === undefined) {
       return;
     }
-    const token = await this.signinAdapter.token();
-    if (token.state === "signedout") {
-      return;
-    }
-
-    this.#destroyPicker();
-
-    const myFilesView = new this._pickerLib.DocsView();
-    myFilesView.setMimeTypes(ALLOWED_MIME_TYPES);
-    myFilesView.setIncludeFolders(true);
-    myFilesView.setSelectFolderEnabled(false);
-    myFilesView.setOwnedByMe(true);
-    myFilesView.setMode(google.picker.DocsViewMode.GRID);
-
-    const sharedFilesView = new this._pickerLib.DocsView();
-    sharedFilesView.setMimeTypes(ALLOWED_MIME_TYPES);
-    sharedFilesView.setIncludeFolders(true);
-    sharedFilesView.setSelectFolderEnabled(false);
-    sharedFilesView.setOwnedByMe(false);
-    sharedFilesView.setMode(google.picker.DocsViewMode.GRID);
-
-    // See https://developers.google.com/drive/picker/reference
-    this.#picker = new this._pickerLib.PickerBuilder()
-      .setOrigin(getTopLevelOrigin())
-      .addView(myFilesView)
-      .addView(sharedFilesView)
-      .setAppId(token.grant.client_id)
-      .setOAuthToken(token.grant.access_token)
-      .setCallback(this.#pickerCallback.bind(this))
-      // .enableFeature(google.picker.Feature.NAV_HIDDEN)
-      .build();
-    this.#picker.setVisible(true);
-  }
-
-  #pickerCallback(result: google.picker.ResponseObject): void {
+    const result = await this.opalShell.pickDriveFiles({
+      mimeTypes: ALLOWED_MIME_TYPES,
+    });
     switch (result.action) {
       case "cancel": {
-        this.#destroyPicker();
         this.dispatchEvent(new InputCancelEvent());
         return;
       }
       case "picked": {
-        this.#destroyPicker();
-        // TODO(aomarks) Show this as a snackbar
         console.log(`Shared 1 Google Drive file with Breadboard`);
         if (result.docs && result.docs.length > 0) {
           const doc = result.docs[0];
@@ -307,14 +258,5 @@ export class GoogleDriveFileId extends LitElement {
         }
       }
     }
-  }
-
-  #destroyPicker() {
-    if (this.#picker === undefined) {
-      return;
-    }
-    this.#picker.setVisible(false);
-    this.#picker.dispose();
-    this.#picker = undefined;
   }
 }

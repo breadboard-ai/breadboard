@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/// <reference types="@types/gapi.client.drive-v3" />
+
 import {
   ALWAYS_REQUIRED_OAUTH_SCOPES,
   canonicalizeOAuthScope,
@@ -18,6 +20,8 @@ import type {
 } from "@breadboard-ai/types/oauth.js";
 import type {
   OpalShellProtocol,
+  PickDriveFilesOptions,
+  PickDriveFilesResult,
   SignInResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
@@ -28,11 +32,12 @@ import {
   type OAuthStateParameter,
 } from "../elements/connection/connection-common.js";
 import { SETTINGS_TYPE } from "../types/types.js";
-import { getEmbedderRedirectUri } from "./embed-helpers.js";
+import { getEmbedderRedirectUri, getTopLevelOrigin } from "./embed-helpers.js";
 import { scopesFromUrl } from "./scopes-from-url.js";
 import { SIGN_IN_CONNECTION_ID } from "./signin-adapter.js";
 
 import "./install-opal-shell-comlink-transfer-handlers.js";
+import { loadDrivePicker } from "../elements/google-drive/google-apis.js";
 
 export class OAuthBasedOpalShell implements OpalShellProtocol {
   readonly #nonceToScopes = new Map<string, string[]>();
@@ -52,11 +57,6 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
       { OAUTH_CLIENT: CLIENT_DEPLOYMENT_CONFIG.OAUTH_CLIENT }
     );
   });
-
-  async ping() {
-    console.debug("opal shell host received ping");
-    return "pong" as const;
-  }
 
   async fetchWithCreds(
     input: string | URL | RequestInfo,
@@ -282,6 +282,70 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
     // want the iframe to be completely in control of history, we always want to
     // replace here instead of pushing, otherwise we'd break back/forward.
     history.replaceState(null, "", url);
+  }
+
+  async pickDriveFiles(
+    options: PickDriveFilesOptions
+  ): Promise<PickDriveFilesResult> {
+    console.info(`[shell host] opening drive picker`);
+    const [pickerLib, token] = await Promise.all([
+      loadDrivePicker(),
+      this.getToken(["https://www.googleapis.com/auth/drive.readonly"]),
+    ]);
+    if (token.state !== "valid") {
+      return {
+        action: "error",
+        error: `Could not open drive picker with token state ${token.state}`,
+      };
+    }
+
+    // See https://developers.google.com/drive/picker/reference
+
+    const myFilesView = new pickerLib.DocsView();
+    myFilesView.setMimeTypes(options.mimeTypes.join(","));
+    myFilesView.setIncludeFolders(true);
+    myFilesView.setSelectFolderEnabled(false);
+    myFilesView.setOwnedByMe(true);
+    myFilesView.setMode(google.picker.DocsViewMode.GRID);
+
+    const sharedFilesView = new pickerLib.DocsView();
+    sharedFilesView.setMimeTypes(options.mimeTypes.join(","));
+    sharedFilesView.setIncludeFolders(true);
+    sharedFilesView.setSelectFolderEnabled(false);
+    sharedFilesView.setOwnedByMe(false);
+    sharedFilesView.setMode(google.picker.DocsViewMode.GRID);
+
+    const result = await new Promise<google.picker.ResponseObject>(
+      (resolve) => {
+        new pickerLib.PickerBuilder()
+          .setOrigin(getTopLevelOrigin())
+          .addView(myFilesView)
+          .addView(sharedFilesView)
+          .setAppId(token.grant.client_id)
+          .setOAuthToken(token.grant.access_token)
+          .setCallback((response) => {
+            if (response.action !== "loaded") {
+              resolve(response);
+            }
+          })
+          .build()
+          .setVisible(true);
+      }
+    );
+
+    console.info(`[shell host] drive picker result`, result);
+    if (result.action === "picked") {
+      return { action: "picked", docs: result.docs ?? [] };
+    } else if (result.action === "cancel") {
+      return { action: "cancel" };
+    } else if (result.action === "error") {
+      return { action: "error", error: "Unknown error from drive picker" };
+    } else {
+      return {
+        action: "error",
+        error: `Unhandled result action ${result.action}`,
+      };
+    }
   }
 
   async #userHasGeoRestriction(token: string): Promise<boolean> {
