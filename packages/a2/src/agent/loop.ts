@@ -23,6 +23,7 @@ import { FunctionDefinition } from "./function-definition";
 import { AgentFileSystem } from "./file-system";
 import { PidginTranslator } from "./pidgin-translator";
 import { Params } from "../a2/common";
+import { AgentUI } from "./ui";
 
 export { Loop };
 
@@ -107,6 +108,7 @@ adjust it accordingly.
 class Loop {
   #translator: PidginTranslator;
   #fileSystem: AgentFileSystem;
+  #ui: AgentUI;
 
   constructor(
     private readonly caps: Capabilities,
@@ -114,6 +116,7 @@ class Loop {
   ) {
     this.#translator = new PidginTranslator(caps);
     this.#fileSystem = new AgentFileSystem();
+    this.#ui = new AgentUI(caps, this.#translator);
   }
 
   async run(
@@ -133,6 +136,7 @@ class Loop {
       intermediate_files: [],
     };
     const systemFunctions = initializeSystemFunctions({
+      ui: this.#ui,
       fileSystem: this.#fileSystem,
       terminateCallback: () => {
         terminateLoop = true;
@@ -209,6 +213,7 @@ class Loop {
           }
           console.log("CALLING FUNCTION", name);
           const response = await fn.handler(args as Record<string, string>);
+          if (!ok(response)) return response;
           const functionResponse: FunctionResponseCapabilityPart["functionResponse"] =
             {
               name,

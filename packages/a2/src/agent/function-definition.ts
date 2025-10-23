@@ -6,6 +6,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { Outcome } from "@breadboard-ai/types";
 import { FunctionDeclaration } from "@google/genai";
 import { z, ZodObject, ZodTypeAny } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
@@ -29,7 +30,7 @@ export type Handler<
   TResponse extends ArgsRawShape,
 > = (
   args: z.infer<ZodObject<TParams>>
-) => Promise<z.infer<ZodObject<TResponse>>>;
+) => Promise<Outcome<z.infer<ZodObject<TResponse>>>>;
 
 type TypedFunctionDefinition<
   TParams extends ArgsRawShape,

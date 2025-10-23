@@ -7,10 +7,12 @@
 import z from "zod";
 import { defineFunction, FunctionDefinition } from "../function-definition";
 import { AgentFileSystem } from "../file-system";
+import { AgentUI } from "../ui";
 
 export { initializeSystemFunctions };
 
 export type SystemFunctionArgs = {
+  ui: AgentUI;
   fileSystem: AgentFileSystem;
   successCallback(
     user_message: string,
@@ -163,8 +165,8 @@ delivered as "file_path" response.
 uploaded by the user, populated when the "type" is "image", or "video".`),
         },
       },
-      async () => {
-        throw new Error("Not implemented");
+      async ({ user_message, type }) => {
+        return args.ui.requestUserInput(user_message, type);
       }
     ),
   ];
