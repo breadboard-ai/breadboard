@@ -25,11 +25,11 @@ async function invoke(
 }
 
 type AgentInputs = {
-  objective: LLMContent;
+  config$prompt: LLMContent;
 };
 
-async function describe({ objective }: AgentInputs, caps: Capabilities) {
-  const template = new Template(caps, objective);
+async function describe({ config$prompt }: AgentInputs, caps: Capabilities) {
+  const template = new Template(caps, config$prompt);
   return {
     inputSchema: {
       type: "object",
@@ -40,12 +40,11 @@ async function describe({ objective }: AgentInputs, caps: Capabilities) {
           title: "Context in",
           behavior: ["main-port"],
         },
-        query: {
+        config$prompt: {
           type: "object",
           behavior: ["llm-content", "config", "hint-preview"],
-          title: "Research Query",
-          description:
-            "Provide a brief description of what to research, what areas to cover, etc.",
+          title: "Objective",
+          description: "The objective for the agent",
         },
         summarize: {
           type: "boolean",
@@ -73,8 +72,8 @@ async function describe({ objective }: AgentInputs, caps: Capabilities) {
       },
       additionalProperties: false,
     } satisfies Schema,
-    title: "Do deep research",
-    description: "Do deep research on the provided query",
+    title: "Agent",
+    description: "Iteratively works to solve the stated objective",
     metadata: {
       icon: "generative-search",
       tags: ["quick-access", "generative"],

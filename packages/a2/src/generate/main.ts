@@ -54,7 +54,12 @@ type Mode = {
    * but stop showing it for new values.
    */
   hidden?: boolean;
+  portMap: Map<string, string>;
 };
+
+const PROMPT_PORT = "config$prompt";
+const ASK_USER_PORT = "config$ask-user";
+const LIST_PORT = "config$list";
 
 const MODES: Mode[] = [
   {
@@ -68,6 +73,11 @@ const MODES: Mode[] = [
     modelName: "gemini-2.0-flash",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
+    portMap: new Map([
+      [PROMPT_PORT, "description"],
+      [ASK_USER_PORT, "p-chat"],
+      [LIST_PORT, "p-list"],
+    ]),
   },
   {
     id: "text",
@@ -79,6 +89,11 @@ const MODES: Mode[] = [
     modelName: "gemini-2.5-flash",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
+    portMap: new Map([
+      [PROMPT_PORT, "description"],
+      [ASK_USER_PORT, "p-chat"],
+      [LIST_PORT, "p-list"],
+    ]),
   },
   {
     id: "text-2.5-pro",
@@ -90,6 +105,11 @@ const MODES: Mode[] = [
     modelName: "gemini-2.5-pro",
     promptPlaceholderText:
       "Type your prompt here. Use @ to include other content.",
+    portMap: new Map([
+      [PROMPT_PORT, "description"],
+      [ASK_USER_PORT, "p-chat"],
+      [LIST_PORT, "p-list"],
+    ]),
   },
   {
     id: "agent",
@@ -101,6 +121,7 @@ const MODES: Mode[] = [
     modelName: "gemini-flash-latest",
     promptPlaceholderText:
       "Type your goal here. Use @ to include other content.",
+    portMap: new Map(),
   },
   {
     id: "think",
@@ -112,6 +133,10 @@ const MODES: Mode[] = [
     modelName: "gemini-2.5-flash",
     promptPlaceholderText:
       "Type your goal here. Use @ to include other content.",
+    portMap: new Map([
+      [PROMPT_PORT, "plan"],
+      [LIST_PORT, "z-list"],
+    ]),
   },
   {
     id: "deep-research",
@@ -123,6 +148,10 @@ const MODES: Mode[] = [
     modelName: "gemini-2.5-flash",
     promptPlaceholderText:
       "Type your research query here. Use @ to include other content.",
+    portMap: new Map([
+      [PROMPT_PORT, "query"],
+      [LIST_PORT, "z-list"],
+    ]),
   },
   {
     id: "image-gen",
@@ -134,6 +163,7 @@ const MODES: Mode[] = [
     promptPlaceholderText:
       "Type your image prompt here. Use @ to include other content.",
     info: "Image generation has limited free quota",
+    portMap: new Map([[PROMPT_PORT, "instruction"]]),
   },
   {
     id: "image",
@@ -145,6 +175,7 @@ const MODES: Mode[] = [
     promptPlaceholderText:
       "Type your image prompt here. Use @ to include other content.",
     info: "Image generation has limited free quota",
+    portMap: new Map([[PROMPT_PORT, "instruction"]]),
   },
   {
     id: "audio",
@@ -156,6 +187,7 @@ const MODES: Mode[] = [
     promptPlaceholderText:
       "Type the text to speak here. Use @ to include other content.",
     info: "Audio generation has limited free quota",
+    portMap: new Map([[PROMPT_PORT, "text"]]),
   },
   {
     id: "video",
@@ -167,6 +199,7 @@ const MODES: Mode[] = [
     promptPlaceholderText:
       "Type your video prompt here. Use @ to include other content.",
     info: "Video generation has limited free quota",
+    portMap: new Map([[PROMPT_PORT, "instruction"]]),
   },
   {
     id: "music",
@@ -178,6 +211,7 @@ const MODES: Mode[] = [
     promptPlaceholderText:
       "Type your music prompt here. Use @ to include other content.",
     info: "Music generation has limited free quota",
+    portMap: new Map([[PROMPT_PORT, "text"]]),
   },
 ] as const;
 
@@ -185,56 +219,10 @@ const DEFAULT_MODE = MODES[0];
 
 const modeMap = new Map(MODES.map((mode) => [mode.id, mode]));
 
-const PROMPT_PORT = "config$prompt";
-const ASK_USER_PORT = "config$ask-user";
-const LIST_PORT = "config$list";
-
 // Maps the prompt port to various names of the other ports.
-const portMapForward = new Map<ModeId, Map<string, string>>([
-  [
-    MODES[0].id,
-    new Map([
-      [PROMPT_PORT, "description"],
-      [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
-    ]),
-  ],
-  [
-    MODES[1].id,
-    new Map([
-      [PROMPT_PORT, "description"],
-      [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
-    ]),
-  ],
-  [
-    MODES[2].id,
-    new Map([
-      [PROMPT_PORT, "description"],
-      [ASK_USER_PORT, "p-chat"],
-      [LIST_PORT, "p-list"],
-    ]),
-  ],
-  [
-    MODES[3].id,
-    new Map([
-      [PROMPT_PORT, "plan"],
-      [LIST_PORT, "z-list"],
-    ]),
-  ],
-  [
-    MODES[4].id,
-    new Map([
-      [PROMPT_PORT, "query"],
-      [LIST_PORT, "z-list"],
-    ]),
-  ],
-  [MODES[5].id, new Map([[PROMPT_PORT, "instruction"]])],
-  [MODES[6].id, new Map([[PROMPT_PORT, "instruction"]])],
-  [MODES[7].id, new Map([[PROMPT_PORT, "text"]])],
-  [MODES[8].id, new Map([[PROMPT_PORT, "instruction"]])],
-  [MODES[9].id, new Map([[PROMPT_PORT, "text"]])],
-]);
+const portMapForward = new Map<ModeId, Map<string, string>>(
+  MODES.map((mode) => [mode.id, mode.portMap])
+);
 
 const portMapReverse = new Map(
   Array.from(portMapForward.entries()).map(([mode, map]) => {
