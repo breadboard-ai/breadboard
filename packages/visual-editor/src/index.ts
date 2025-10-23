@@ -336,13 +336,8 @@ export class Main extends SignalWatcher(LitElement) {
 
     // Asyncronously check if the user has a geo-restriction and sign out if so.
     if (this.signinAdapter.state === "signedin") {
-      this.signinAdapter.token().then(async (result) => {
-        if (
-          result.state === "valid" &&
-          (await this.signinAdapter.userHasGeoRestriction(
-            result.grant.access_token
-          ))
-        ) {
+      this.signinAdapter.checkAppAccess().then(async (access) => {
+        if (!access.canAccess) {
           await this.signinAdapter.signOut();
           window.history.pushState(
             undefined,

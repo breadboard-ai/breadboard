@@ -17,6 +17,7 @@ import type {
   ValidTokenResult,
 } from "@breadboard-ai/types/oauth.js";
 import type {
+  CheckAppAccessResult,
   OpalShellProtocol,
   SignInResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
@@ -185,10 +186,7 @@ export class SigninAdapter {
 
   async signOut(): Promise<void> {
     await Promise.all([
-      this.#settingsHelper.delete(
-        SETTINGS_TYPE.CONNECTIONS,
-        SIGN_IN_CONNECTION_ID
-      ),
+      this.#opalShell.signOut(),
       // Clear caches on signout because they contain user-specific data, like
       // the user's graphs, which we must not share across different signins.
       clearIdbGraphCache(),
@@ -202,20 +200,8 @@ export class SigninAdapter {
     this.#state = { status: "signedout" };
   }
 
-  // TODO(aomarks) Move to shell.
-  async userHasGeoRestriction(token: string): Promise<boolean> {
-    const response = await fetch(
-      new URL(
-        "/v1beta1/checkAppAccess",
-        this.#globalConfig.BACKEND_API_ENDPOINT
-      ),
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status} error checking geo restriction`);
-    }
-    const result = (await response.json()) as { canAccess?: boolean };
-    return !result.canAccess;
+  async checkAppAccess(): Promise<CheckAppAccessResult> {
+    return await this.#opalShell.checkAppAccess();
   }
 
   async validateScopes(): Promise<{ ok: true } | { ok: false; error: string }> {

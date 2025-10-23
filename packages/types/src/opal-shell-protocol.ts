@@ -18,6 +18,8 @@ export interface OpalShellProtocol {
     scopes: string[]
   ): Promise<{ url: string; nonce: string }>;
 
+  signOut(): Promise<void>;
+
   listenForSignIn(nonce: string): Promise<SignInResult>;
 
   // TODO(aomarks) Remove this method once shell migration is complete. Tokens
@@ -32,6 +34,8 @@ export interface OpalShellProtocol {
   setUrl(url: string): void;
 
   pickDriveFiles(options: PickDriveFilesOptions): Promise<PickDriveFilesResult>;
+
+  checkAppAccess(): Promise<CheckAppAccessResult>;
 }
 
 export type SignInResult = { ok: true } | { ok: false; error: SignInError };
@@ -57,3 +61,5 @@ export interface PickDriveFilesDocument {
   mimeType?: string;
   resourceKey?: string;
 }
+
+export type CheckAppAccessResult = { canAccess: boolean };
