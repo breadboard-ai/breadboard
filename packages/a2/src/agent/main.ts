@@ -12,13 +12,14 @@ import {
 } from "@breadboard-ai/types";
 import { Template } from "../a2/template";
 import { A2ModuleFactoryArgs } from "../runnable-module-factory";
-import { isLLMContent, isLLMContentArray } from "@breadboard-ai/data";
+import { Params } from "../a2/common";
+import { PidginTranslator } from "./pidgin-translator";
 
 export { invoke as default, describe };
 
 type AgentInputs = {
   config$prompt: LLMContent;
-};
+} & Params;
 
 type AgentOutputs = {
   context: LLMContent[];
@@ -32,50 +33,8 @@ async function invoke(
   const params = Object.fromEntries(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
-  const template = new Template(caps, config$prompt);
-  const objective = template.simpleSubstitute((param) => {
-    const { type } = param;
-    switch (type) {
-      case "asset": {
-        return `<file src="${param.path}" />`;
-      }
-      case "in": {
-        const value = params[param.path];
-        if (!value) {
-          return "";
-        } else if (typeof value === "string") {
-          return value;
-        } else if (isLLMContent(value)) {
-          return substituteParts(value);
-        } else if (isLLMContentArray(value)) {
-          const last = value.at(-1);
-          if (!last) return "";
-          return substituteParts(last);
-        } else {
-          console.warn(`Agent: Unknown param value type`, value);
-        }
-        return param.title;
-      }
-      case "param":
-        console.warn(`Agent: Params aren't supported in template substitution`);
-        return "";
-      case "tool":
-      default:
-        return param.title;
-    }
-
-    function substituteParts(value: LLMContent) {
-      const values: string[] = [];
-      for (const part of value.parts) {
-        if ("text" in part) {
-          values.push(part.text);
-        } else {
-          values.push(`<file src="${JSON.stringify(part)}" />`);
-        }
-      }
-      return values.join("\n");
-    }
-  });
+  const translator = new PidginTranslator(caps);
+  const objective = translator.toPidgin(config$prompt, params);
   console.log("inputs", objective, caps, moduleArgs);
   return { context: [objective] };
 }

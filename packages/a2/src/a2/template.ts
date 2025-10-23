@@ -302,7 +302,7 @@ class Template {
     return { parts, role: this.#role };
   }
 
-  #toId(param: string) {
+  static toId(param: string): `p-z-${string}` {
     return `p-z-${param}`;
   }
 
@@ -328,7 +328,7 @@ class Template {
     this.#forEachParam((param) => {
       if (!isIn(param)) return;
       hasValues = true;
-      required.push(this.#toId(param.title!));
+      required.push(Template.toId(param.title!));
     });
     return hasValues ? { required } : {};
   }
@@ -337,7 +337,7 @@ class Template {
     const result: [string, Schema][] = [];
     this.#forEachParam((param) => {
       const name = param.title!;
-      const id = this.#toId(param.path!);
+      const id = Template.toId(param.path!);
       if (!isIn(param)) return;
       result.push([
         id,
