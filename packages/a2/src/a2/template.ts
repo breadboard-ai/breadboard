@@ -231,7 +231,7 @@ class Template {
         parts.push(part);
       }
     }
-    return { parts };
+    return { parts: this.#mergeTextParts(parts) };
   }
 
   async mapParams(
