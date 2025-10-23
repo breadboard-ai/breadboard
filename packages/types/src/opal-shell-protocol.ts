@@ -11,8 +11,6 @@ import type {
 } from "./oauth.js";
 
 export interface OpalShellProtocol {
-  ping(): Promise<"pong">;
-
   fetchWithCreds: typeof fetch;
 
   generateSignInUrlAndNonce(

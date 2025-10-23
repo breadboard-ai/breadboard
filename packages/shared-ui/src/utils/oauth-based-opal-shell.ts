@@ -53,11 +53,6 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
     );
   });
 
-  async ping() {
-    console.debug("opal shell host received ping");
-    return "pong" as const;
-  }
-
   async fetchWithCreds(
     input: string | URL | RequestInfo,
     init: RequestInit = {}

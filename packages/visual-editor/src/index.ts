@@ -391,12 +391,6 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.#embedHandler = args.embedHandler;
 
-    this.opalShell?.ping().then((pong) => {
-      if (pong) {
-        console.debug("opal shell guest received", pong);
-      }
-    });
-
     this.#initPromise = this.#init(args, {
       fetchWithCreds,
       backendApiEndpoint,
