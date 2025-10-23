@@ -30,6 +30,8 @@ export interface OpalShellProtocol {
   >;
 
   setUrl(url: string): void;
+
+  pickDriveFiles(options: PickDriveFilesOptions): Promise<PickDriveFilesResult>;
 }
 
 export type SignInResult = { ok: true } | { ok: false; error: SignInError };
@@ -39,3 +41,19 @@ export type SignInError =
   | { code: "geo-restriction" }
   | { code: "user-cancelled" }
   | { code: "other"; userMessage: string };
+
+export interface PickDriveFilesOptions {
+  mimeTypes: string[];
+}
+
+export type PickDriveFilesResult =
+  | { action: "picked"; docs: PickDriveFilesDocument[] }
+  | { action: "cancel" }
+  | { action: "error"; error: string };
+
+export interface PickDriveFilesDocument {
+  id: string;
+  name?: string;
+  mimeType?: string;
+  resourceKey?: string;
+}
