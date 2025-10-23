@@ -40,7 +40,6 @@ import { projectRunContext } from "../../contexts/project-run.js";
 import {
   ResizeEvent,
   ShareRequestedEvent,
-  SignInRequestedEvent,
   SnackbarEvent,
   StateEvent,
   UnsnackbarEvent,
@@ -48,7 +47,6 @@ import {
 import { AppScreenOutput, ProjectRun } from "../../state/types.js";
 import { emptyStyles } from "../../styles/host/colors-empty.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
-import { SigninAdapterState } from "../../utils/signin-adapter";
 import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js";
 import { styles as appStyles } from "./index.styles.js";
 import { theme as uiTheme } from "./theme/light.js";
@@ -220,7 +218,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         ></iframe>`;
       } else if (
         isLLMContentArray(last.output.context) &&
-        isInlineData(last.output.context[0].parts[0]) &&
+        isInlineData(last.output.context[0]?.parts[0]) &&
         last.output.context[0].parts[0].inlineData.mimeType === "text/a2ui"
       ) {
         const a2UI = last.output.context[0].parts[0];
