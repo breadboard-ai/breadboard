@@ -13,8 +13,8 @@ import {
 import { Template } from "../a2/template";
 import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 import { Params } from "../a2/common";
-import { PidginTranslator } from "./pidgin-translator";
 import { Loop } from "./loop";
+import { ok } from "@breadboard-ai/utils";
 
 export { invoke as default, describe };
 
@@ -27,19 +27,22 @@ type AgentOutputs = {
 };
 
 async function invoke(
-  { config$prompt, ...rest }: AgentInputs,
+  { config$prompt: objective, ...rest }: AgentInputs,
   caps: Capabilities,
   moduleArgs: A2ModuleFactoryArgs
 ): Promise<Outcome<AgentOutputs>> {
   const params = Object.fromEntries(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
-  const translator = new PidginTranslator(caps);
-  const objective = translator.toPidgin(config$prompt, params);
   const loop = new Loop(caps, moduleArgs);
-  await loop.run(objective);
-  console.log("inputs", objective, moduleArgs);
-  return { context: [objective] };
+  const result = await loop.run(objective, params);
+  if (!ok(result)) return result;
+  console.log("LOOP", result);
+  const context: LLMContent[] = [];
+  if (result.outcomes) {
+    context.push(result.outcomes);
+  }
+  return { context };
 }
 
 async function describe({ config$prompt }: AgentInputs, caps: Capabilities) {

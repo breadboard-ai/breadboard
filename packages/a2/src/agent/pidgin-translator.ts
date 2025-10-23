@@ -4,10 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities, LLMContent } from "@breadboard-ai/types";
+import {
+  Capabilities,
+  DataPart,
+  LLMContent,
+  Outcome,
+} from "@breadboard-ai/types";
 import { Params } from "../a2/common";
 import { isLLMContent, isLLMContentArray } from "@breadboard-ai/data";
 import { Template } from "../a2/template";
+import { llm, toText } from "../a2/utils";
+import { AgentFileSystem } from "./file-system";
+import { err } from "@breadboard-ai/utils";
 
 export { PidginTranslator };
 
@@ -18,9 +26,43 @@ export { PidginTranslator };
 class PidginTranslator {
   constructor(private readonly caps: Capabilities) {}
 
-  toPidgin(content: LLMContent, params: Params): LLMContent {
+  fromPidginString(content: string): Outcome<LLMContent> {
+    return llm`${content}`.asContent();
+  }
+
+  fromPidginFiles(
+    files: string[],
+    fileSystem: AgentFileSystem
+  ): Outcome<LLMContent> {
+    const errors: string[] = [];
+    const parts: DataPart[] = files
+      .map((path) => {
+        const file = fileSystem.files.get(path);
+        if (!file) {
+          errors.push(`file "${path}" not found`);
+          return null;
+        }
+        if (file.mimeType === "text/markdown") {
+          return {
+            text: file.data,
+          };
+        } else {
+          errors.push(`unknown type "${file.mimeType} for file "${path}"`);
+          return null;
+        }
+      })
+      .filter((part) => part !== null);
+
+    if (errors.length > 0) {
+      return err(`Agent unable to proceed: ${errors.join(",")}`);
+    }
+
+    return { parts, role: "user" };
+  }
+
+  toPidgin(content: LLMContent, params: Params): string {
     const template = new Template(this.caps, content);
-    return template.simpleSubstitute((param) => {
+    const pidginContent = template.simpleSubstitute((param) => {
       const { type } = param;
       switch (type) {
         case "asset": {
@@ -65,5 +107,6 @@ class PidginTranslator {
         return values.join("\n");
       }
     });
+    return toText(pidginContent);
   }
 }

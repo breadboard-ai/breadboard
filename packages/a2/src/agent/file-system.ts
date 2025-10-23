@@ -4,31 +4,42 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { DeepReadonly } from "@breadboard-ai/types";
 import mime from "mime";
 
-export { getFileHandle, write };
-
-let fileCount = 0;
+export { AgentFileSystem };
 
 const KNOWN_TYPES = ["audio", "video", "image"];
 
-function getFileHandle(ext: string) {
-  return `/vfs/video${++fileCount}${ext}`;
-}
+export type FileDescriptor = {
+  mimeType: string;
+  data: string;
+};
 
-async function write(_data: unknown, mimeType: string) {
-  const name = getFilename(mimeType);
-  return `/vfs/${name}`;
-}
+class AgentFileSystem {
+  #fileCount = 0;
 
-function getFilename(mimeType: string) {
-  const name = getName(mimeType);
-  const ext = mime.getExtension(mimeType);
-  return `${name}${++fileCount}.${ext}`;
-}
+  #files: Map<string, FileDescriptor> = new Map();
 
-function getName(mimeType: string) {
-  const first = mimeType.split("/").at(0) || "";
-  if (KNOWN_TYPES.includes(first)) return first;
-  return "file";
+  write(data: string, mimeType: string): string {
+    const name = this.create(mimeType);
+    this.#files.set(name, { data, mimeType });
+    return name;
+  }
+
+  get files(): ReadonlyMap<string, DeepReadonly<FileDescriptor>> {
+    return this.#files;
+  }
+
+  create(mimeType: string) {
+    const name = this.#getName(mimeType);
+    const ext = mime.getExtension(mimeType);
+    return `/vfs/${name}${++this.#fileCount}.${ext}`;
+  }
+
+  #getName(mimeType: string) {
+    const first = mimeType.split("/").at(0) || "";
+    if (KNOWN_TYPES.includes(first)) return first;
+    return "file";
+  }
 }

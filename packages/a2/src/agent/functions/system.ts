@@ -6,17 +6,24 @@
 
 import z from "zod";
 import { defineFunction, FunctionDefinition } from "../function-definition";
-import { write } from "../file-system";
+import { AgentFileSystem } from "../file-system";
 
 export { initializeSystemFunctions };
 
-export type SystemFunctionCallbacks = {
-  terminate(): void;
+export type SystemFunctionArgs = {
+  fileSystem: AgentFileSystem;
+  successCallback(
+    user_message: string,
+    href: string,
+    objective_outcomes: string[],
+    intermediate_files: string[]
+  ): void;
+  terminateCallback(): void;
 };
 
-function initializeSystemFunctions({
-  terminate,
-}: SystemFunctionCallbacks): FunctionDefinition[] {
+function initializeSystemFunctions(
+  args: SystemFunctionArgs
+): FunctionDefinition[] {
   return [
     defineFunction(
       {
@@ -55,12 +62,12 @@ If the objective specifies other agent URLs using the
         intermediate_files,
         href,
       }) => {
-        console.log("SUCCESS! Objective fulfilled");
-        console.log("User message:", user_message);
-        console.log("Transfer control to", href);
-        console.log("Objective outcomes:", objective_outcomes);
-        console.log("Intermediate files:", intermediate_files);
-        terminate();
+        args.successCallback(
+          user_message,
+          href || "/",
+          objective_outcomes,
+          intermediate_files
+        );
         return {};
       }
     ),
@@ -90,7 +97,7 @@ If the objective specifies other agent URLs using the
       async ({ user_message }) => {
         console.log("FAILURE! Failed to fulfill the objective");
         console.log("User message:", user_message);
-        terminate();
+        args.terminateCallback();
         return {};
       }
     ),
@@ -109,7 +116,7 @@ If the objective specifies other agent URLs using the
       },
       async ({ text }) => {
         console.log("Writing text to file:", text);
-        const file_path = await write(text, "text/markdown");
+        const file_path = args.fileSystem.write(text, "text/markdown");
         return { file_path };
       }
     ),

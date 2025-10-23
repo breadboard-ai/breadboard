@@ -20,8 +20,43 @@ import { llm } from "../a2/utils";
 import { err, ok } from "@breadboard-ai/utils";
 import { initializeSystemFunctions } from "./functions/system";
 import { FunctionDefinition } from "./function-definition";
+import { AgentFileSystem } from "./file-system";
+import { PidginTranslator } from "./pidgin-translator";
+import { Params } from "../a2/common";
 
 export { Loop };
+
+export type AgentRawResult = {
+  success: boolean;
+  user_message: string;
+  href: string;
+  objective_outcomes: string[];
+  intermediate_files: string[];
+};
+
+export type AgentResult = {
+  /**
+   * Whether or not agent succeeded in fulfilling the objective.
+   */
+  success: boolean;
+  /**
+   * User message to display to the user
+   */
+  message: LLMContent;
+  /**
+   * The url of the next agent to which to transfer control
+   */
+  href: string;
+  /**
+   * The outcomes of the loop. Will be `undefined` when success = false
+   */
+  outcomes: LLMContent | undefined;
+  /**
+   * Intermediate results that might be worth keeping around. Will be
+   * `undefined` when success = false
+   */
+  intermediate?: LLMContent;
+};
 
 const AGENT_MODEL = "gemini-flash-latest";
 
@@ -70,17 +105,57 @@ adjust it accordingly.
  * The main agent loop
  */
 class Loop {
+  #translator: PidginTranslator;
+  #fileSystem: AgentFileSystem;
+
   constructor(
     private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleFactoryArgs
-  ) {}
+  ) {
+    this.#translator = new PidginTranslator(caps);
+    this.#fileSystem = new AgentFileSystem();
+  }
 
-  async run(objective: LLMContent) {
-    const contents: LLMContent[] = [objective];
+  async run(
+    objective: LLMContent,
+    params: Params
+  ): Promise<Outcome<AgentResult>> {
+    const objectivePidgin = this.#translator.toPidgin(objective, params);
+    const contents: LLMContent[] = [
+      llm`<objective>${objectivePidgin}</objective>`.asContent(),
+    ];
     let terminateLoop = false;
+    let result: AgentRawResult = {
+      success: false,
+      user_message: "",
+      href: "",
+      objective_outcomes: [],
+      intermediate_files: [],
+    };
     const systemFunctions = initializeSystemFunctions({
-      terminate: () => {
+      fileSystem: this.#fileSystem,
+      terminateCallback: () => {
         terminateLoop = true;
+      },
+      successCallback: (
+        user_message,
+        href,
+        objective_outcomes,
+        intermediate_files
+      ) => {
+        terminateLoop = true;
+        console.log("SUCCESS! Objective fulfilled");
+        console.log("User message:", user_message);
+        console.log("Transfer control to", href);
+        console.log("Objective outcomes:", objective_outcomes);
+        console.log("Intermediate files:", intermediate_files);
+        result = {
+          success: true,
+          user_message,
+          href,
+          objective_outcomes,
+          intermediate_files,
+        };
       },
     });
     const functions = new Map<string, FunctionDefinition>(
@@ -143,5 +218,33 @@ class Loop {
         }
       }
     }
+    return this.#finalizeResult(result);
+  }
+
+  #finalizeResult(raw: AgentRawResult): Outcome<AgentResult> {
+    const {
+      success,
+      user_message,
+      href,
+      objective_outcomes,
+      intermediate_files,
+    } = raw;
+    const message = this.#translator.fromPidginString(user_message);
+    if (!ok(message)) return message;
+    let outcomes: Outcome<LLMContent> | undefined = undefined;
+    let intermediate: Outcome<LLMContent> | undefined = undefined;
+    if (success) {
+      outcomes = this.#translator.fromPidginFiles(
+        objective_outcomes,
+        this.#fileSystem
+      );
+      if (!ok(outcomes)) return outcomes;
+      intermediate = this.#translator.fromPidginFiles(
+        intermediate_files,
+        this.#fileSystem
+      );
+      if (!ok(intermediate)) return intermediate;
+    }
+    return { success, message, href, outcomes, intermediate };
   }
 }
