@@ -31,32 +31,40 @@ import {
   oauthTokenBroadcastChannelName,
   type OAuthStateParameter,
 } from "../elements/connection/connection-common.js";
+import { loadDrivePicker } from "../elements/google-drive/google-apis.js";
 import { SETTINGS_TYPE } from "../types/types.js";
 import { getEmbedderRedirectUri, getTopLevelOrigin } from "./embed-helpers.js";
+import "./install-opal-shell-comlink-transfer-handlers.js";
 import { scopesFromUrl } from "./scopes-from-url.js";
 import { SIGN_IN_CONNECTION_ID } from "./signin-adapter.js";
 
-import "./install-opal-shell-comlink-transfer-handlers.js";
-import { loadDrivePicker } from "../elements/google-drive/google-apis.js";
-
 export class OAuthBasedOpalShell implements OpalShellProtocol {
   readonly #nonceToScopes = new Map<string, string[]>();
-  readonly #tokenVendor = SettingsStore.restoredInstance().then((settings) => {
-    const settingsHelper = new SettingsHelperImpl(settings);
-    return new TokenVendorImpl(
-      {
-        get: () =>
-          settingsHelper.get(SETTINGS_TYPE.CONNECTIONS, SIGN_IN_CONNECTION_ID)
-            ?.value as string,
-        set: async (grant: string) =>
-          settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, SIGN_IN_CONNECTION_ID, {
-            name: SIGN_IN_CONNECTION_ID,
-            value: grant,
-          }),
-      },
-      { OAUTH_CLIENT: CLIENT_DEPLOYMENT_CONFIG.OAUTH_CLIENT }
-    );
-  });
+
+  readonly #settingsHelper = SettingsStore.restoredInstance().then(
+    (settings) => new SettingsHelperImpl(settings)
+  );
+
+  readonly #tokenVendor = this.#settingsHelper.then(
+    (settingsHelper) =>
+      new TokenVendorImpl(
+        {
+          get: () =>
+            settingsHelper.get(SETTINGS_TYPE.CONNECTIONS, SIGN_IN_CONNECTION_ID)
+              ?.value as string,
+          set: async (grant: string) =>
+            settingsHelper.set(
+              SETTINGS_TYPE.CONNECTIONS,
+              SIGN_IN_CONNECTION_ID,
+              {
+                name: SIGN_IN_CONNECTION_ID,
+                value: grant,
+              }
+            ),
+        },
+        { OAUTH_CLIENT: CLIENT_DEPLOYMENT_CONFIG.OAUTH_CLIENT }
+      )
+  );
 
   async fetchWithCreds(
     input: string | URL | RequestInfo,
@@ -220,8 +228,7 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
     };
     console.info("[shell host] Updating storage");
 
-    const settings = await SettingsStore.restoredInstance();
-    const settingsHelper = new SettingsHelperImpl(settings);
+    const settingsHelper = await this.#settingsHelper;
     try {
       await settingsHelper.set(
         SETTINGS_TYPE.CONNECTIONS,
@@ -240,6 +247,14 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
     }
     console.info("[shell host] Sign-in complete");
     return { ok: true };
+  }
+
+  async signOut(): Promise<void> {
+    const settingsHelper = await this.#settingsHelper;
+    await settingsHelper.delete(
+      SETTINGS_TYPE.CONNECTIONS,
+      SIGN_IN_CONNECTION_ID
+    );
   }
 
   async getToken(

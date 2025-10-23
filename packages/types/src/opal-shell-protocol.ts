@@ -18,6 +18,8 @@ export interface OpalShellProtocol {
     scopes: string[]
   ): Promise<{ url: string; nonce: string }>;
 
+  signOut(): Promise<void>;
+
   listenForSignIn(nonce: string): Promise<SignInResult>;
 
   // TODO(aomarks) Remove this method once shell migration is complete. Tokens

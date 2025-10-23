@@ -185,10 +185,7 @@ export class SigninAdapter {
 
   async signOut(): Promise<void> {
     await Promise.all([
-      this.#settingsHelper.delete(
-        SETTINGS_TYPE.CONNECTIONS,
-        SIGN_IN_CONNECTION_ID
-      ),
+      this.#opalShell.signOut(),
       // Clear caches on signout because they contain user-specific data, like
       // the user's graphs, which we must not share across different signins.
       clearIdbGraphCache(),
