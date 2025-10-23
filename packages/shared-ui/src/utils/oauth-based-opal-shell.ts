@@ -23,6 +23,7 @@ import type {
   OpalShellProtocol,
   PickDriveFilesOptions,
   PickDriveFilesResult,
+  ShareDriveFilesOptions,
   SignInResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
@@ -32,7 +33,11 @@ import {
   oauthTokenBroadcastChannelName,
   type OAuthStateParameter,
 } from "../elements/connection/connection-common.js";
-import { loadDrivePicker } from "../elements/google-drive/google-apis.js";
+import {
+  loadDrivePicker,
+  loadDriveShareClient,
+  type ShareClient,
+} from "../elements/google-drive/google-apis.js";
 import { SETTINGS_TYPE } from "../types/types.js";
 import { getEmbedderRedirectUri, getTopLevelOrigin } from "./embed-helpers.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
@@ -365,6 +370,86 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
         error: `Unhandled result action ${result.action}`,
       };
     }
+  }
+
+  /**
+   * Re-use the same ShareClient instance across all calls to
+   * {@link shareDriveFiles} because it always dumps bunch of new DOM into the
+   * body every time it's opened, and never cleans it up.
+   */
+  #shareClient?: ShareClient;
+
+  async shareDriveFiles(options: ShareDriveFilesOptions): Promise<void> {
+    const tokenPromise = this.getToken([
+      "https://www.googleapis.com/auth/drive.file",
+    ]);
+    if (!this.#shareClient) {
+      const ShareClient = await loadDriveShareClient();
+      this.#shareClient = new ShareClient();
+    }
+    const token = await tokenPromise;
+    if (token.state !== "valid") {
+      throw new Error("User is signed-out or doesn't have sufficient scope");
+    }
+
+    this.#shareClient.setItemIds(options.fileIds);
+    this.#shareClient.setOAuthToken(token.grant.access_token);
+
+    let status: "opening" | "open" | "closed" = "opening";
+    let observer: MutationObserver | undefined = undefined;
+    const keydownListenerAborter = new AbortController();
+    const closed = Promise.withResolvers<void>();
+
+    const cleanupAndClose = () => {
+      observer?.disconnect();
+      keydownListenerAborter.abort();
+      status = "closed";
+      closed.resolve();
+    };
+
+    // Weirdly, there is no API for getting the dialog element, or for finding
+    // out when the user closes it. Upon opening, a bunch of DOM gets added to
+    // document.body. Upon closing, that DOM stays there forever, but becomes
+    // hidden. So, as a hack, we can use a MutationObserver to notice these
+    // things happening.
+    observer = new MutationObserver(() => {
+      const dialog = document.body.querySelector(
+        `[guidedhelpid="drive_share_dialog"]`
+      );
+      if (dialog) {
+        const ariaHidden = dialog.getAttribute("aria-hidden");
+        if (status === "opening" && ariaHidden !== "true") {
+          status = "open";
+        } else if (status === "open" && ariaHidden === "true") {
+          cleanupAndClose();
+        }
+      }
+    });
+    observer.observe(document.body, {
+      childList: true,
+      attributes: true,
+      subtree: true,
+    });
+
+    window.addEventListener(
+      "keydown",
+      ({ key }) => {
+        if (key === "Escape" && status === "opening") {
+          // This handles an edge case where the user presses Escape before the
+          // ShareClient has finished loading, which means the MutationObserver
+          // logic below won't fire.
+          cleanupAndClose();
+        }
+      },
+      {
+        // Capture so that we see this event before the ShareClient.
+        capture: true,
+        signal: keydownListenerAborter.signal,
+      }
+    );
+
+    this.#shareClient.showSettingsDialog();
+    await closed.promise;
   }
 
   async checkAppAccess(): Promise<CheckAppAccessResult> {

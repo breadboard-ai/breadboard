@@ -35,6 +35,8 @@ export interface OpalShellProtocol {
 
   pickDriveFiles(options: PickDriveFilesOptions): Promise<PickDriveFilesResult>;
 
+  shareDriveFiles(options: ShareDriveFilesOptions): Promise<void>;
+
   checkAppAccess(): Promise<CheckAppAccessResult>;
 }
 
@@ -63,3 +65,7 @@ export interface PickDriveFilesDocument {
 }
 
 export type CheckAppAccessResult = { canAccess: boolean };
+
+export interface ShareDriveFilesOptions {
+  fileIds: string[];
+}
