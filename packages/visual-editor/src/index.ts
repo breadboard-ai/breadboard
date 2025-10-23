@@ -23,7 +23,6 @@ import type {
   BoardServer,
   ConformsToNodeValue,
   FileSystem,
-  RunSecretEvent,
 } from "@breadboard-ai/types";
 import {
   addRunModule,
@@ -941,43 +940,6 @@ export class Main extends SignalWatcher(LitElement) {
               BreadboardUI.Types.STATUS.PAUSED
             );
             break;
-          }
-
-          case "secret": {
-            const event = evt.runEvt as RunSecretEvent;
-            const runner = evt.harnessRunner;
-            const { keys } = event.data;
-            const signInKey = `connection:${SIGN_IN_CONNECTION_ID}`;
-
-            // Check and see if we're being asked for a sign-in key
-            if (keys.at(0) === signInKey) {
-              this.signinAdapter.token().then((token) => {
-                if (!runner?.running()) {
-                  runner?.run({
-                    [signInKey]:
-                      token.state === "valid"
-                        ? token.grant.access_token
-                        : undefined,
-                  });
-                }
-              });
-              return;
-            }
-
-            this.#secretsHelper.setKeys(keys);
-            if (this.#secretsHelper.hasAllSecrets()) {
-              runner?.run(this.#secretsHelper.getSecrets());
-            } else {
-              const result = SecretsHelper.allKeysAreKnown(
-                this.#settings,
-                keys
-              );
-              if (result) {
-                runner?.run(result);
-              } else {
-                this.#secretsHelper.setKeys(keys);
-              }
-            }
           }
         }
       }
