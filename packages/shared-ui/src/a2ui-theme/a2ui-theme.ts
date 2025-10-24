@@ -5,6 +5,7 @@
  */
 
 import { v0_8 } from "@breadboard-ai/a2ui";
+import * as UI from "@breadboard-ai/a2ui/ui";
 
 /** Elements */
 
@@ -150,23 +151,23 @@ const video = {
   "layout-el-cv": true,
 };
 
-const aLight = v0_8.UI.Utils.merge(a, { "color-c-n5": true });
-const inputLight = v0_8.UI.Utils.merge(input, { "color-c-n5": true });
-const textareaLight = v0_8.UI.Utils.merge(textarea, { "color-c-n5": true });
-const buttonLight = v0_8.UI.Utils.merge(button, { "color-c-n100": true });
-const h1Light = v0_8.UI.Utils.merge(h1, { "color-c-n5": true });
-const h2Light = v0_8.UI.Utils.merge(h2, { "color-c-n5": true });
-const h3Light = v0_8.UI.Utils.merge(h3, { "color-c-n5": true });
-const bodyLight = v0_8.UI.Utils.merge(body, { "color-c-n5": true });
-const pLight = v0_8.UI.Utils.merge(p, { "color-c-n35": true });
-const preLight = v0_8.UI.Utils.merge(pre, { "color-c-n35": true });
-const orderedListLight = v0_8.UI.Utils.merge(orderedList, {
+const aLight = UI.Utils.merge(a, { "color-c-n5": true });
+const inputLight = UI.Utils.merge(input, { "color-c-n5": true });
+const textareaLight = UI.Utils.merge(textarea, { "color-c-n5": true });
+const buttonLight = UI.Utils.merge(button, { "color-c-n100": true });
+const h1Light = UI.Utils.merge(h1, { "color-c-n5": true });
+const h2Light = UI.Utils.merge(h2, { "color-c-n5": true });
+const h3Light = UI.Utils.merge(h3, { "color-c-n5": true });
+const bodyLight = UI.Utils.merge(body, { "color-c-n5": true });
+const pLight = UI.Utils.merge(p, { "color-c-n35": true });
+const preLight = UI.Utils.merge(pre, { "color-c-n35": true });
+const orderedListLight = UI.Utils.merge(orderedList, {
   "color-c-n35": true,
 });
-const unorderedListLight = v0_8.UI.Utils.merge(unorderedList, {
+const unorderedListLight = UI.Utils.merge(unorderedList, {
   "color-c-n35": true,
 });
-const listItemLight = v0_8.UI.Utils.merge(listItem, {
+const listItemLight = UI.Utils.merge(listItem, {
   "color-c-n35": true,
 });
 

@@ -14,6 +14,7 @@ import { LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { signal } from "signal-utils";
 import { v0_8 } from "@breadboard-ai/a2ui";
+import * as A2UI from "@breadboard-ai/a2ui/ui";
 import { err, ok } from "@breadboard-ai/utils";
 import { repeat } from "lit/directives/repeat.js";
 import { provide } from "@lit/context";
@@ -21,7 +22,7 @@ import { theme as uiTheme } from "../../../a2ui-theme/a2ui-theme.js";
 
 @customElement("bb-particle-view")
 export class ParticleView extends SignalWatcher(LitElement) {
-  @provide({ context: v0_8.UI.Context.themeContext })
+  @provide({ context: A2UI.Context.themeContext })
   accessor theme: v0_8.Types.Theme = uiTheme;
 
   @property()

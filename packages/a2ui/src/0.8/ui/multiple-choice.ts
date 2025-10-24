@@ -1,13 +1,27 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
+/*
+ Copyright 2025 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
  */
-import { html, css, PropertyValues } from "lit";
+
+import { html, css, PropertyValues, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Root } from "./root";
-import { StringValue } from "../types/primitives";
-import * as Styles from "./styles";
+import { Root } from "./root.js";
+import { StringValue } from "../types/primitives.js";
+import * as Styles from "./styles/index.js";
+import { A2UIModelProcessor } from "../data/model-processor.js";
+import { classMap } from "lit/directives/class-map.js";
+import { styleMap } from "lit/directives/style-map.js";
 
 @customElement("a2ui-multiplechoice")
 export class MultipleChoice extends Root {
@@ -54,9 +68,11 @@ export class MultipleChoice extends Root {
       return;
     }
 
-    this.processor.setDataByPath(
-      this.processor.resolvePath(this.value.path, this.dataContextPath),
-      value
+    this.processor.setData(
+      this.component,
+      this.value.path,
+      value,
+      this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
     );
   }
 
@@ -68,10 +84,13 @@ export class MultipleChoice extends Root {
   }
 
   render() {
-    return html` <div class="description">
-        ${this.description ?? "Select an item"}
-      </div>
+    return html`<section>
+      <div class="description">${this.description ?? "Select an item"}</div>
       <select
+        class=${classMap(this.theme.components.MultipleChoice)}
+        style=${this.theme.additionalStyles?.MultipleChoice
+          ? styleMap(this.theme.additionalStyles?.MultipleChoice)
+          : nothing}
         @change=${(evt: Event) => {
           if (!this.value) {
             return;
@@ -87,6 +106,7 @@ export class MultipleChoice extends Root {
         ${this.options.map(
           (option) => html`<option ${option.value}>${option.label}</option>`
         )}
-      </select>`;
+      </select>
+    </section>`;
   }
 }

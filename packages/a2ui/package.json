@@ -2,8 +2,9 @@
   "name": "@breadboard-ai/a2ui",
   "private": true,
   "version": "0.1.0",
-  "description": "AI-first UI Toolkit Demo",
+  "description": "AI UI Web Library",
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -14,23 +15,13 @@
       "default": "./dist/0.8/ui/ui.js"
     }
   },
-  "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
     "build": "wireit",
-    "build:tsc": "wireit",
-    "lint": "wireit",
-    "dev": "wireit",
-    "test": "wireit"
+    "build:tsc": "wireit"
   },
   "wireit": {
-    "dev": {
-      "command": "vite dev",
-      "dependencies": [
-        "build"
-      ]
-    },
     "build": {
       "dependencies": [
         "build:tsc"
@@ -41,40 +32,16 @@
       "env": {
         "FORCE_COLOR": "1"
       },
-      "dependencies": [
-        "<dependencies>#build"
-      ],
+      "dependencies": [],
       "files": [
         "src/**/*.ts",
-        "tests/**/*.ts",
-        "tsconfig.json",
-        "../../core/tsconfig/base.json"
+        "tsconfig.json"
       ],
       "output": [
         "dist/",
         "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
-    },
-    "lint": {
-      "command": "eslint . --ext .ts",
-      "env": {
-        "FORCE_COLOR": "1"
-      },
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [
-        ".eslintrc",
-        "../../.eslintrc.json"
-      ],
-      "output": []
-    },
-    "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/0.8/**/*.test.js",
-      "dependencies": [
-        "build"
-      ]
     }
   },
   "repository": {
@@ -97,14 +64,10 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@a2a-js/sdk": "^0.3.4",
-    "@breadboard-ai/utils": "^0.1.0",
-    "@google/genai": "^1.22.0",
     "@lit-labs/signals": "^0.1.3",
     "@lit/context": "^1.1.4",
-    "http-proxy": "^1.18.1",
-    "json-rpc-2.0": "^1.7.1",
-    "jsonschema": "^1.5.0",
+    "lit": "^3.3.1",
+    "markdown-it": "^14.1.0",
     "signal-utils": "^0.21.1"
   }
 }

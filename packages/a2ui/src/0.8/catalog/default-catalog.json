@@ -1,5 +1,4 @@
 {
-  "$schema": "../schemas/catalog.json",
   "components": {
     "Heading": {
       "type": "object",

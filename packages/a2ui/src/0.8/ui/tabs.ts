@@ -1,17 +1,29 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
+/*
+ Copyright 2025 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
  */
+
 import { html, css, PropertyValues, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Root } from "./root";
+import { Root } from "./root.js";
 import { repeat } from "lit/directives/repeat.js";
-import { StringValue } from "../types/primitives";
-import { A2UIModelProcessor } from "../data/model-processor";
+import { StringValue } from "../types/primitives.js";
+import { A2UIModelProcessor } from "../data/model-processor.js";
 import { classMap } from "lit/directives/class-map.js";
-import { v0_8 } from "../..";
-import * as Styles from "./styles";
+import * as Utils from "./utils/utils.js";
+import * as Styles from "./styles/index.js";
+import { styleMap } from "lit/directives/style-map.js";
 
 @customElement("a2ui-tabs")
 export class Tabs extends Root {
@@ -52,8 +64,6 @@ export class Tabs extends Root {
       return nothing;
     }
 
-    console.log(this.theme.components.Tabs);
-
     return html`<div
       id="buttons"
       class=${classMap(this.theme.components.Tabs.element)}
@@ -84,15 +94,13 @@ export class Tabs extends Root {
 
         let classes;
         if (this.selected === idx) {
-          classes = v0_8.UI.Utils.merge(
+          classes = Utils.merge(
             this.theme.components.Tabs.controls.all,
             this.theme.components.Tabs.controls.selected
           );
         } else {
           classes = { ...this.theme.components.Tabs.controls.all };
         }
-
-        console.log(66666, classes);
 
         return html`<button
           ?disabled=${this.selected === idx}
@@ -114,6 +122,9 @@ export class Tabs extends Root {
   render() {
     return html`<section
       class=${classMap(this.theme.components.Tabs.container)}
+      style=${this.theme.additionalStyles?.Tabs
+        ? styleMap(this.theme.additionalStyles?.Tabs)
+        : nothing}
     >
       ${[this.#renderTabs(), this.#renderSlot()]}
     </section>`;

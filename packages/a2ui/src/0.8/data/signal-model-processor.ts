@@ -14,7 +14,18 @@
  limitations under the License.
  */
 
-import { createContext } from "@lit/context";
-import { type Theme } from "../../types/types.js";
+import { A2UIModelProcessor } from "./model-processor.js";
 
-export const themeContext = createContext<Theme | undefined>("A2UITheme");
+import { SignalArray } from "signal-utils/array";
+import { SignalMap } from "signal-utils/map";
+import { SignalObject } from "signal-utils/object";
+import { SignalSet } from "signal-utils/set";
+
+export function create() {
+  return new A2UIModelProcessor({
+    arrayCtor: SignalArray as unknown as ArrayConstructor,
+    mapCtor: SignalMap as unknown as MapConstructor,
+    objCtor: SignalObject as unknown as ObjectConstructor,
+    setCtor: SignalSet as unknown as SetConstructor,
+  });
+}

@@ -1,17 +1,29 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
+/*
+ Copyright 2025 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
  */
-import { html, css } from "lit";
+
+import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { markdown } from "./directives/directives";
-import { Root } from "./root";
-import { StringValue } from "../types/primitives";
-import * as Styles from "./styles";
-import { appendToAll } from "./utils/utils";
+import { markdown } from "./directives/directives.js";
+import { Root } from "./root.js";
+import { StringValue } from "../types/primitives.js";
+import * as Styles from "./styles/index.js";
+import { appendToAll } from "./utils/utils.js";
 import { classMap } from "lit/directives/class-map.js";
-import { A2UIModelProcessor } from "../data/model-processor";
+import { A2UIModelProcessor } from "../data/model-processor.js";
+import { styleMap } from "lit/directives/style-map.js";
 
 @customElement("a2ui-text")
 export class Text extends Root {
@@ -51,7 +63,7 @@ export class Text extends Root {
           this.surfaceId ?? A2UIModelProcessor.DEFAULT_SURFACE_ID
         );
 
-        if (textValue === null) {
+        if (textValue === null || textValue === undefined) {
           return html`(empty)`;
         }
 
@@ -66,7 +78,12 @@ export class Text extends Root {
   }
 
   render() {
-    return html`<section class=${classMap(this.theme.components.Text)}>
+    return html`<section
+      class=${classMap(this.theme.components.Text)}
+      style=${this.theme.additionalStyles?.Text
+        ? styleMap(this.theme.additionalStyles?.Text)
+        : nothing}
+    >
       ${this.#renderText()}
     </section>`;
   }
