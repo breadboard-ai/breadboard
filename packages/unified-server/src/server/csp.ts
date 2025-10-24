@@ -63,7 +63,7 @@ const CSP_CONFIG = {
     "https://accounts.google.com",
   ],
   ["frame-ancestors"]: [
-    flags.SHELL_HOST_ORIGIN,
+    ...flags.SHELL_HOST_ORIGINS,
     // This is slightly blurring the implied meaning of
     // ALLOWED_REDIRECT_ORIGINS, but in practice the set of origins that we
     // allow to override the OAuth redirect is the exactly same set of origins
