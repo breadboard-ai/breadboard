@@ -131,9 +131,6 @@ export class GoogleDriveFileId extends LitElement {
   `;
 
   @state()
-  private accessor _pickerLib: typeof google.picker | undefined = undefined;
-
-  @state()
   accessor docName = "";
 
   @state()
@@ -176,9 +173,6 @@ export class GoogleDriveFileId extends LitElement {
   }
 
   override render() {
-    if (this._pickerLib === undefined) {
-      return html`<p>Loading Google Drive Picker ...</p>`;
-    }
     if (this.inProgress) {
       return html`<p>Working ...</p>`;
     }
