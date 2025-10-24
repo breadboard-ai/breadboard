@@ -16,7 +16,6 @@ import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-conf
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 import type { TokenVendor } from "@breadboard-ai/connection-client";
 import { Project } from "@breadboard-ai/shared-ui/state/types.js";
-import type { ValidTokenResult } from "@breadboard-ai/types/oauth.js";
 
 /**
  * An interface for owners functionality - a command center console for executing operations which
@@ -104,35 +103,40 @@ export class Admin {
 
 /** Facilitates mocks/fakes for UI tests. */
 export class TestingHarness {
-  #originalToken?: Function;
+  // #originalToken?: Function;
 
   setupLoginBypass() {
-    if (
-      this.#originalToken &&
-      SigninAdapter.prototype.token === TestingHarness.#fakeToken
-    ) {
-      return "Login bypass was already installed";
-    }
-    if (!this.#originalToken) {
-      // Save the original token function to restore it later.
-      this.#originalToken = SigninAdapter.prototype.token;
-    }
+    // TODO(aomarks) This code assumes that we have access to a token locally,
+    // which now that we have the shell, we do not. Our integration tests are
+    // not currently exercised anyway, so this is just temporarily disabled
+    // entirely.
+    throw new Error(`Not implemented`);
+    // if (
+    //   this.#originalToken &&
+    //   SigninAdapter.prototype.token === TestingHarness.#fakeToken
+    // ) {
+    //   return "Login bypass was already installed";
+    // }
+    // if (!this.#originalToken) {
+    //   // Save the original token function to restore it later.
+    //   this.#originalToken = SigninAdapter.prototype.token;
+    // }
 
-    SigninAdapter.prototype.token = TestingHarness.#fakeToken;
-    return "Login bypassed has been established";
+    // SigninAdapter.prototype.token = TestingHarness.#fakeToken;
+    // return "Login bypassed has been established";
   }
 
-  static #fakeToken(): Promise<ValidTokenResult> {
-    return Promise.resolve({
-      state: "valid",
-      grant: {
-        client_id: "ui-tests",
-        access_token: "ui-test-only",
-        expires_in: 3600,
-        issue_time: Date.now(),
-        domain: undefined,
-        scopes: undefined,
-      },
-    });
-  }
+  // static #fakeToken(): Promise<ValidTokenResult> {
+  //   return Promise.resolve({
+  //     state: "valid",
+  //     grant: {
+  //       client_id: "ui-tests",
+  //       access_token: "ui-test-only",
+  //       expires_in: 3600,
+  //       issue_time: Date.now(),
+  //       domain: undefined,
+  //       scopes: undefined,
+  //     },
+  //   });
+  // }
 }
