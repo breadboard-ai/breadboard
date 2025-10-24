@@ -184,6 +184,7 @@
     "markdown-it": "^14.1.0",
     "pdfjs-dist": "^5.2.133",
     "signal-polyfill": "^0.2.2",
-    "signal-utils": "^0.21.1"
+    "signal-utils": "^0.21.1",
+    "urlpattern-polyfill": "^10.1.0"
   }
 }
