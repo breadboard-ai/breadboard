@@ -7,10 +7,6 @@
 import { type OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { clearIdbGraphCache } from "@breadboard-ai/google-drive-kit/board-server/user-graph-collection.js";
 import type {
-  SignedOutTokenResult,
-  ValidTokenResult,
-} from "@breadboard-ai/types/oauth.js";
-import type {
   CheckAppAccessResult,
   OpalShellProtocol,
   SignInResult,
@@ -71,28 +67,6 @@ export class SigninAdapter {
     return this.#state.status === "signedin"
       ? new Set(this.#state.scopes)
       : undefined;
-  }
-
-  /**
-   * Gets you a token, refreshing automatically if needed, unless the user is
-   * signed out.
-   */
-  async token(
-    scopes?: OAuthScope[]
-  ): Promise<ValidTokenResult | SignedOutTokenResult> {
-    let token = await this.#opalShell.getToken(scopes);
-    if (
-      (token.state === "signedout" || token.state === "missing-scopes") &&
-      this.#handleSignInRequest
-    ) {
-      if (await this.#handleSignInRequest(scopes)) {
-        token = await this.#opalShell.getToken(scopes);
-      }
-    }
-    if (token.state === "missing-scopes") {
-      return { state: "signedout" };
-    }
-    return token;
   }
 
   async signIn(scopes: OAuthScope[] = []): Promise<SignInResult> {

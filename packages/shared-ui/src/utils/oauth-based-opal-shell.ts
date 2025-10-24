@@ -158,7 +158,7 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
     const url = new URL("https://oauth2.googleapis.com/tokeninfo");
     // Make sure we have a fresh token, this API will return HTTP 400 for an
     // expired token.
-    const token = await this.getToken();
+    const token = await this.#getToken();
     if (token.state === "signedout") {
       return { ok: false, error: "User was signed out" };
     }
@@ -213,7 +213,7 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
       console.error(`[shell host] ${message}`);
       return new Response(message, { status: 403 });
     }
-    const token = await this.getToken(scopes);
+    const token = await this.#getToken(scopes);
     if (token.state === "signedout") {
       return new Response("User is signed-out", { status: 401 });
     }
@@ -398,13 +398,13 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
     this.#state = Promise.resolve({ status: "signedout" });
   }
 
-  async getToken(): Promise<ValidTokenResult | SignedOutTokenResult>;
-  async getToken(
+  async #getToken(): Promise<ValidTokenResult | SignedOutTokenResult>;
+  async #getToken(
     scopes: string[]
   ): Promise<
     ValidTokenResult | SignedOutTokenResult | MissingScopesTokenResult
   >;
-  async getToken(
+  async #getToken(
     scopes?: string[]
   ): Promise<
     ValidTokenResult | SignedOutTokenResult | MissingScopesTokenResult
@@ -448,7 +448,7 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
     console.info(`[shell host] opening drive picker`);
     const [pickerLib, token] = await Promise.all([
       loadDrivePicker(),
-      this.getToken(["https://www.googleapis.com/auth/drive.readonly"]),
+      this.#getToken(["https://www.googleapis.com/auth/drive.readonly"]),
     ]);
     if (token.state !== "valid") {
       return {
@@ -514,7 +514,7 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
   #shareClient?: ShareClient;
 
   async shareDriveFiles(options: ShareDriveFilesOptions): Promise<void> {
-    const tokenPromise = this.getToken([
+    const tokenPromise = this.#getToken([
       "https://www.googleapis.com/auth/drive.file",
     ]);
     if (!this.#shareClient) {
@@ -587,7 +587,7 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
   }
 
   async checkAppAccess(): Promise<CheckAppAccessResult> {
-    const token = await this.getToken();
+    const token = await this.#getToken();
     if (token.state === "valid") {
       return await this.#checkAppAccessWithToken(token.grant.access_token);
     } else {

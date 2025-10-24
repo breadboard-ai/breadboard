@@ -4,36 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  MissingScopesTokenResult,
-  SignedOutTokenResult,
-  ValidTokenResult,
-} from "./oauth.js";
-
 export interface OpalShellProtocol {
   getSignInState(): Promise<SignInState>;
 
+  // TODO(aomarks) Do this within getSignInState so that we don't need this
+  // method.
   validateScopes(): Promise<ValidateScopesResult>;
 
   fetchWithCreds: typeof fetch;
 
   generateSignInUrlAndNonce(
-    // TODO(aomarks) Move OAuthScope to types
     scopes: string[]
   ): Promise<{ url: string; nonce: string }>;
 
   signOut(): Promise<void>;
 
   listenForSignIn(nonce: string): Promise<SignInResult>;
-
-  // TODO(aomarks) Remove this method once shell migration is complete. Tokens
-  // should not flow back into the iframe, but they temporarily do to allow for
-  // incremental migration.
-  getToken(
-    scopes?: string[]
-  ): Promise<
-    ValidTokenResult | SignedOutTokenResult | MissingScopesTokenResult
-  >;
 
   setUrl(url: string): void;
 
