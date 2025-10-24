@@ -24,7 +24,7 @@
   },
   "wireit": {
     "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/**/*.test.js",
+      "command": "node --test --enable-source-maps --test-reporter spec ./dist/tests/**/*.test.js",
       "dependencies": [
         "build"
       ]
