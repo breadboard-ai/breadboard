@@ -51,8 +51,6 @@ describe("A2UIModelProcessor", () => {
     processor = new v0_8.Data.A2UIModelProcessor();
   });
 
-  assert.fail("Failing test");
-
   describe("Basic Initialization and State", () => {
     it("should start with no surfaces", () => {
       assert.strictEqual(processor.getSurfaces().size, 0);
