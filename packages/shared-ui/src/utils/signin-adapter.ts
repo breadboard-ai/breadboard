@@ -20,6 +20,7 @@ import type {
   CheckAppAccessResult,
   OpalShellProtocol,
   SignInResult,
+  ValidateScopesResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { createContext } from "@lit/context";
 import type { GlobalConfig } from "../contexts/global-config";
@@ -196,105 +197,11 @@ export class SigninAdapter {
     this.#state = { status: "signedout" };
   }
 
-  async checkAppAccess(): Promise<CheckAppAccessResult> {
-    return await this.#opalShell.checkAppAccess();
+  checkAppAccess(): Promise<CheckAppAccessResult> {
+    return this.#opalShell.checkAppAccess();
   }
 
-  async validateScopes(): Promise<{ ok: true } | { ok: false; error: string }> {
-    if (this.state !== "signedin") {
-      return { ok: false, error: "User was signed out" };
-    }
-
-    const settingsValueStr = (
-      await this.#settingsHelper.get(
-        SETTINGS_TYPE.CONNECTIONS,
-        SIGN_IN_CONNECTION_ID
-      )
-    )?.value as string | undefined;
-    if (!settingsValueStr) {
-      return { ok: false, error: "No local connection storage" };
-    }
-    const settingsValue = JSON.parse(settingsValueStr) as TokenGrant;
-
-    const canonicalizedUserScopes = new Set<string>();
-    if (settingsValue.scopes) {
-      for (const scope of settingsValue.scopes) {
-        canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
-      }
-    } else {
-      // This is an older signin which doesn't have scopes stored locally. We
-      // can fetch them from an API and upgrade the storage for next time.
-      const tokenInfoScopes = await this.#fetchScopesFromTokenInfoApi();
-      if (!tokenInfoScopes.ok) {
-        console.error(
-          `[signin] Unable to fetch scopes from token info API:` +
-            ` ${tokenInfoScopes.error}`
-        );
-        return tokenInfoScopes;
-      }
-      for (const scope of tokenInfoScopes.value) {
-        canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
-      }
-      console.info(`[signin] Upgrading signin storage to include scopes`);
-      await this.#settingsHelper.set(
-        SETTINGS_TYPE.CONNECTIONS,
-        SIGN_IN_CONNECTION_ID,
-        {
-          name: SIGN_IN_CONNECTION_ID,
-          value: JSON.stringify({
-            ...settingsValue,
-            scopes: tokenInfoScopes.value,
-          } satisfies TokenGrant),
-        }
-      );
-    }
-
-    const canonicalizedRequiredScopes = new Set(
-      ALWAYS_REQUIRED_OAUTH_SCOPES.map((scope) => canonicalizeOAuthScope(scope))
-    );
-    const missingScopes = [...canonicalizedRequiredScopes].filter(
-      (scope) => !canonicalizedUserScopes.has(scope)
-    );
-    if (missingScopes.length > 0) {
-      return {
-        ok: false,
-        error: `Missing scopes: ${missingScopes.join(", ")}`,
-      };
-    } else {
-      return { ok: true };
-    }
-  }
-
-  /** See https://cloud.google.com/docs/authentication/token-types#access */
-  async #fetchScopesFromTokenInfoApi(): Promise<
-    { ok: true; value: string[] } | { ok: false; error: string }
-  > {
-    const url = new URL("https://oauth2.googleapis.com/tokeninfo");
-    // Make sure we have a fresh token, this API will return HTTP 400 for an
-    // expired token.
-    const token = await this.token();
-    if (token.state === "signedout") {
-      return { ok: false, error: "User was signed out" };
-    }
-    url.searchParams.set("access_token", token.grant.access_token);
-
-    let response;
-    try {
-      response = await fetch(url);
-    } catch (e) {
-      return { ok: false, error: `Network error: ${e}` };
-    }
-    if (!response.ok) {
-      return { ok: false, error: `HTTP ${response.status} error` };
-    }
-
-    let result: { scope: string };
-    try {
-      result = await response.json();
-    } catch (e) {
-      return { ok: false, error: `JSON parse error: ${e}` };
-    }
-
-    return { ok: true, value: result.scope.split(" ") };
+  validateScopes(): Promise<ValidateScopesResult> {
+    return this.#opalShell.validateScopes();
   }
 }
