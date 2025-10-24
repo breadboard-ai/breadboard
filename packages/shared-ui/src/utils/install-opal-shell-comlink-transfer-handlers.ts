@@ -8,7 +8,7 @@ import { type TransferHandler, transferHandlers } from "comlink";
 
 console.debug(
   `[shell ${window === window.parent ? "host" : "guest"}] ` +
-    `installing comlink transfer handlers`
+    `Installing comlink transfer handlers`
 );
 
 /**
