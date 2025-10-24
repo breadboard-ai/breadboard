@@ -4,7 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DeepReadonly } from "@breadboard-ai/types";
+import {
+  DataPart,
+  DeepReadonly,
+  FileDataPart,
+  InlineDataCapabilityPart,
+  Outcome,
+  StoredDataCapabilityPart,
+} from "@breadboard-ai/types";
+import { err } from "@breadboard-ai/utils";
 import mime from "mime";
 
 export { AgentFileSystem };
@@ -12,8 +20,11 @@ export { AgentFileSystem };
 const KNOWN_TYPES = ["audio", "video", "image"];
 
 export type FileDescriptor = {
+  type: "text" | "storedData" | "inlineData" | "fileData";
   mimeType: string;
   data: string;
+  title?: string;
+  resourceKey?: string;
 };
 
 class AgentFileSystem {
@@ -23,8 +34,71 @@ class AgentFileSystem {
 
   write(data: string, mimeType: string): string {
     const name = this.create(mimeType);
-    this.#files.set(name, { data, mimeType });
+    this.#files.set(name, { data, mimeType, type: "text" });
     return name;
+  }
+
+  get(path: string): Outcome<DataPart> {
+    const file = this.#files.get(path);
+    if (!file) {
+      return err(`file "${path}" not found`);
+    }
+    switch (file.type) {
+      case "fileData":
+        return {
+          fileData: {
+            fileUri: file.data,
+            mimeType: file.mimeType,
+            resourceKey: file.resourceKey,
+          },
+        } satisfies FileDataPart;
+      case "inlineData":
+        return {
+          inlineData: {
+            data: file.data,
+            mimeType: file.mimeType,
+            title: file.title,
+          },
+        } satisfies InlineDataCapabilityPart;
+      case "storedData":
+        return {
+          storedData: {
+            handle: file.data,
+            mimeType: file.mimeType,
+            resourceKey: file.resourceKey,
+          },
+        } satisfies StoredDataCapabilityPart;
+      default:
+      case "text":
+        return {
+          text: file.data,
+        };
+    }
+  }
+
+  add(part: DataPart) {
+    if ("text" in part) {
+      const mimeType = "text/markdown";
+      const name = this.create(mimeType);
+      this.#files.set(name, { type: "text", mimeType, data: part.text });
+    } else if ("inlineData" in part) {
+      const { mimeType, data, title } = part.inlineData;
+      const name = this.create(mimeType);
+      this.#files.set(name, { type: "inlineData", mimeType, data, title });
+    } else if ("storedData" in part) {
+      const { mimeType, handle: data, resourceKey } = part.storedData;
+      const name = this.create(mimeType);
+      this.#files.set(name, {
+        type: "storedData",
+        mimeType,
+        data,
+        resourceKey,
+      });
+    } else if ("fileData" in part) {
+      const { mimeType, fileUri: data, resourceKey } = part.fileData;
+      const name = this.create(mimeType);
+      this.#files.set(name, { type: "fileData", mimeType, data, resourceKey });
+    }
   }
 
   get files(): ReadonlyMap<string, DeepReadonly<FileDescriptor>> {

@@ -114,8 +114,8 @@ class Loop {
     private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleFactoryArgs
   ) {
-    this.#translator = new PidginTranslator(caps);
     this.#fileSystem = new AgentFileSystem();
+    this.#translator = new PidginTranslator(caps, this.#fileSystem);
     this.#ui = new AgentUI(caps, this.#translator);
   }
 
@@ -239,15 +239,9 @@ class Loop {
     let outcomes: Outcome<LLMContent> | undefined = undefined;
     let intermediate: Outcome<LLMContent> | undefined = undefined;
     if (success) {
-      outcomes = this.#translator.fromPidginFiles(
-        objective_outcomes,
-        this.#fileSystem
-      );
+      outcomes = this.#translator.fromPidginFiles(objective_outcomes);
       if (!ok(outcomes)) return outcomes;
-      intermediate = this.#translator.fromPidginFiles(
-        intermediate_files,
-        this.#fileSystem
-      );
+      intermediate = this.#translator.fromPidginFiles(intermediate_files);
       if (!ok(intermediate)) return intermediate;
     }
     return { success, message, href, outcomes, intermediate };
