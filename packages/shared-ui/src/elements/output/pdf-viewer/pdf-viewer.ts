@@ -265,6 +265,7 @@ export class PDFViewer extends LitElement {
 
         this.#isRendering = true;
         const renderTask = pdfPage.render({
+          canvas,
           canvasContext: ctx,
           viewport,
         });

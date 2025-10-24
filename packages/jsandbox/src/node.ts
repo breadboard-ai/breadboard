@@ -56,12 +56,12 @@ class NodeSandbox implements Sandbox {
       ]
     );
     const jsandbox = factory();
+    // @ts-expect-error 2739
     const { instance } = await WebAssembly.instantiate(wasm, {
       "./jsandbox_bg.js": jsandbox,
       wasi_snapshot_preview1: wasi.wasiImport,
     });
     jsandbox.__wbg_set_wasm(instance.exports);
-    // @ts-expect-error 2739
     wasi.start({ exports: instance.exports });
     const result = await jsandbox.run_module(
       invocationId,
