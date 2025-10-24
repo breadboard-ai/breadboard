@@ -4,46 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TokenVendor } from "@breadboard-ai/connection-client";
-import {
-  ALWAYS_REQUIRED_OAUTH_SCOPES,
-  canonicalizeOAuthScope,
-  type OAuthScope,
-} from "@breadboard-ai/connection-client/oauth-scopes.js";
+import { type OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { clearIdbGraphCache } from "@breadboard-ai/google-drive-kit/board-server/user-graph-collection.js";
-import type {
-  SignedOutTokenResult,
-  TokenGrant,
-  ValidTokenResult,
-} from "@breadboard-ai/types/oauth.js";
 import type {
   CheckAppAccessResult,
   OpalShellProtocol,
   SignInResult,
+  SignInState,
+  ValidateScopesResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { createContext } from "@lit/context";
-import type { GlobalConfig } from "../contexts/global-config";
-import { SETTINGS_TYPE, SettingsHelper } from "../types/types";
 
 export const SIGN_IN_CONNECTION_ID = "$sign-in";
-
-export type SigninAdapterState =
-  | { status: "signedout" }
-  | {
-      status: "signedin";
-      id: string | undefined;
-      domain: string | undefined;
-      name: string | undefined;
-      picture: string | undefined;
-      scopes: Set<string>;
-    };
 
 export const signinAdapterContext = createContext<SigninAdapter | undefined>(
   "SigninAdapter"
 );
-
-/** @return Whether the user opened `signInUrl`. */
-export type SignInRequestHandler = (signInUrl: string) => boolean;
 
 /**
  * A specialized adapter to handle sign in using the connection server
@@ -53,55 +29,26 @@ export type SignInRequestHandler = (signInUrl: string) => boolean;
  * settingsHelper are present.
  */
 export class SigninAdapter {
-  readonly #globalConfig: GlobalConfig;
-  readonly #settingsHelper: SettingsHelper;
   readonly #opalShell: OpalShellProtocol;
   readonly #handleSignInRequest?: (scopes?: OAuthScope[]) => Promise<boolean>;
-  #state: SigninAdapterState;
+  #state: SignInState;
   readonly fetchWithCreds: typeof globalThis.fetch;
 
   constructor(
-    tokenVendor: TokenVendor,
-    globalConfig: GlobalConfig,
-    settingsHelper: SettingsHelper,
     opalShell: OpalShellProtocol,
+    // TODO(aomarks) Hacky workaround for asynchrony, revisit the API for the
+    // getters so that we don't need this.
+    initialState: SignInState,
     handleSignInRequest?: () => Promise<boolean>
   ) {
-    this.#globalConfig = globalConfig;
-    this.#settingsHelper = settingsHelper;
     this.#opalShell = opalShell;
     this.#handleSignInRequest = handleSignInRequest;
-
     this.fetchWithCreds = opalShell.fetchWithCreds.bind(opalShell);
-
-    const token = tokenVendor.getToken();
-    if (token.state === "signedout") {
-      this.#state = { status: "signedout" };
-      return;
-    }
-
-    this.#state = this.#makeSignedInState(token.grant);
-  }
-
-  #makeSignedInState(grant: TokenGrant): SigninAdapterState {
-    return {
-      status: "signedin",
-      id: grant.id,
-      name: grant.name,
-      picture: grant.picture,
-      domain: grant.domain,
-      scopes: new Set(
-        (grant.scopes ?? []).map((scope) => canonicalizeOAuthScope(scope))
-      ),
-    };
+    this.#state = initialState;
   }
 
   get state() {
     return this.#state.status;
-  }
-
-  get id() {
-    return this.#state.status === "signedin" ? this.#state.id : undefined;
   }
 
   get name() {
@@ -117,29 +64,9 @@ export class SigninAdapter {
   }
 
   get scopes(): Set<string> | undefined {
-    return this.#state.status === "signedin" ? this.#state.scopes : undefined;
-  }
-
-  /**
-   * Gets you a token, refreshing automatically if needed, unless the user is
-   * signed out.
-   */
-  async token(
-    scopes?: OAuthScope[]
-  ): Promise<ValidTokenResult | SignedOutTokenResult> {
-    let token = await this.#opalShell.getToken(scopes);
-    if (
-      (token.state === "signedout" || token.state === "missing-scopes") &&
-      this.#handleSignInRequest
-    ) {
-      if (await this.#handleSignInRequest(scopes)) {
-        token = await this.#opalShell.getToken(scopes);
-      }
-    }
-    if (token.state === "missing-scopes") {
-      return { state: "signedout" };
-    }
-    return token;
+    return this.#state.status === "signedin"
+      ? new Set(this.#state.scopes)
+      : undefined;
   }
 
   async signIn(scopes: OAuthScope[] = []): Promise<SignInResult> {
@@ -181,7 +108,11 @@ export class SigninAdapter {
         };
       });
     popup.location.href = url;
-    return await resultPromise;
+    const result = await resultPromise;
+    if (result.ok) {
+      this.#state = result.state;
+    }
+    return result;
   }
 
   async signOut(): Promise<void> {
@@ -200,105 +131,11 @@ export class SigninAdapter {
     this.#state = { status: "signedout" };
   }
 
-  async checkAppAccess(): Promise<CheckAppAccessResult> {
-    return await this.#opalShell.checkAppAccess();
+  checkAppAccess(): Promise<CheckAppAccessResult> {
+    return this.#opalShell.checkAppAccess();
   }
 
-  async validateScopes(): Promise<{ ok: true } | { ok: false; error: string }> {
-    if (this.state !== "signedin") {
-      return { ok: false, error: "User was signed out" };
-    }
-
-    const settingsValueStr = (
-      await this.#settingsHelper.get(
-        SETTINGS_TYPE.CONNECTIONS,
-        SIGN_IN_CONNECTION_ID
-      )
-    )?.value as string | undefined;
-    if (!settingsValueStr) {
-      return { ok: false, error: "No local connection storage" };
-    }
-    const settingsValue = JSON.parse(settingsValueStr) as TokenGrant;
-
-    const canonicalizedUserScopes = new Set<string>();
-    if (settingsValue.scopes) {
-      for (const scope of settingsValue.scopes) {
-        canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
-      }
-    } else {
-      // This is an older signin which doesn't have scopes stored locally. We
-      // can fetch them from an API and upgrade the storage for next time.
-      const tokenInfoScopes = await this.#fetchScopesFromTokenInfoApi();
-      if (!tokenInfoScopes.ok) {
-        console.error(
-          `[signin] Unable to fetch scopes from token info API:` +
-            ` ${tokenInfoScopes.error}`
-        );
-        return tokenInfoScopes;
-      }
-      for (const scope of tokenInfoScopes.value) {
-        canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
-      }
-      console.info(`[signin] Upgrading signin storage to include scopes`);
-      await this.#settingsHelper.set(
-        SETTINGS_TYPE.CONNECTIONS,
-        SIGN_IN_CONNECTION_ID,
-        {
-          name: SIGN_IN_CONNECTION_ID,
-          value: JSON.stringify({
-            ...settingsValue,
-            scopes: tokenInfoScopes.value,
-          } satisfies TokenGrant),
-        }
-      );
-    }
-
-    const canonicalizedRequiredScopes = new Set(
-      ALWAYS_REQUIRED_OAUTH_SCOPES.map((scope) => canonicalizeOAuthScope(scope))
-    );
-    const missingScopes = [...canonicalizedRequiredScopes].filter(
-      (scope) => !canonicalizedUserScopes.has(scope)
-    );
-    if (missingScopes.length > 0) {
-      return {
-        ok: false,
-        error: `Missing scopes: ${missingScopes.join(", ")}`,
-      };
-    } else {
-      return { ok: true };
-    }
-  }
-
-  /** See https://cloud.google.com/docs/authentication/token-types#access */
-  async #fetchScopesFromTokenInfoApi(): Promise<
-    { ok: true; value: string[] } | { ok: false; error: string }
-  > {
-    const url = new URL("https://oauth2.googleapis.com/tokeninfo");
-    // Make sure we have a fresh token, this API will return HTTP 400 for an
-    // expired token.
-    const token = await this.token();
-    if (token.state === "signedout") {
-      return { ok: false, error: "User was signed out" };
-    }
-    url.searchParams.set("access_token", token.grant.access_token);
-
-    let response;
-    try {
-      response = await fetch(url);
-    } catch (e) {
-      return { ok: false, error: `Network error: ${e}` };
-    }
-    if (!response.ok) {
-      return { ok: false, error: `HTTP ${response.status} error` };
-    }
-
-    let result: { scope: string };
-    try {
-      result = await response.json();
-    } catch (e) {
-      return { ok: false, error: `JSON parse error: ${e}` };
-    }
-
-    return { ok: true, value: result.scope.split(" ") };
+  validateScopes(): Promise<ValidateScopesResult> {
+    return this.#opalShell.validateScopes();
   }
 }

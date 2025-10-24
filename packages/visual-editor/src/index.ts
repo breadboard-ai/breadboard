@@ -326,10 +326,8 @@ export class Main extends SignalWatcher(LitElement) {
     this.opalShell = args.opalShell;
 
     this.signinAdapter = new SigninAdapter(
-      this.tokenVendor,
-      this.globalConfig,
-      this.settingsHelper,
       this.opalShell,
+      args.initialSignInState,
       (scopes?: OAuthScope[]) => this.#askUserToSignInIfNeeded(scopes)
     );
 

@@ -7,17 +7,9 @@
 import * as pkg from "../package.json";
 import type { BootstrapArguments, MainArguments } from "./types/types.js";
 
-import {
-  type LanguagePack,
-  SETTINGS_TYPE,
-} from "@breadboard-ai/shared-ui/types/types.js";
+import { type LanguagePack } from "@breadboard-ai/shared-ui/types/types.js";
 import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
-import {
-  SIGN_IN_CONNECTION_ID,
-  SigninAdapter,
-} from "@breadboard-ai/shared-ui/utils/signin-adapter";
-import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
-import { createTokenVendor } from "@breadboard-ai/connection-client";
+import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 import {
   type LandingUrlInit,
   makeUrl,
@@ -68,35 +60,11 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     "@breadboard-ai/shared-ui/data/settings-store.js"
   );
   const settings = await SettingsStore.restoredInstance();
-  const settingsHelper = new SettingsHelperImpl(settings);
-  const tokenVendor = createTokenVendor(
-    {
-      get: () => {
-        return settingsHelper.get(
-          SETTINGS_TYPE.CONNECTIONS,
-          SIGN_IN_CONNECTION_ID
-        )?.value as string;
-      },
-      set: async (grant: string) => {
-        await settingsHelper.set(
-          SETTINGS_TYPE.CONNECTIONS,
-          SIGN_IN_CONNECTION_ID,
-          {
-            name: SIGN_IN_CONNECTION_ID,
-            value: grant,
-          }
-        );
-      },
-    },
-    globalConfig
-  );
 
   const opalShell = await connectToOpalShellHost();
   const signinAdapter = new SigninAdapter(
-    tokenVendor,
-    globalConfig,
-    settingsHelper,
-    opalShell
+    opalShell,
+    await opalShell.getSignInState()
   );
 
   const StringsHelper = await import("@breadboard-ai/shared-ui/strings");
@@ -150,6 +118,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       embedHandler: bootstrapArgs.embedHandler,
       globalConfig,
       opalShell,
+      initialSignInState: await opalShell.getSignInState(),
     };
     if (mainArgs.globalConfig.googleDrive.publishPermissions.length === 0) {
       console.warn(

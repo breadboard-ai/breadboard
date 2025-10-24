@@ -15,7 +15,10 @@ import type {
   Outcome,
 } from "@breadboard-ai/types";
 import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
-import { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import {
+  OpalShellProtocol,
+  SignInState,
+} from "@breadboard-ai/types/opal-shell-protocol.js";
 
 export type BootstrapArguments = {
   deploymentConfiguration: ClientDeploymentConfiguration;
@@ -68,6 +71,7 @@ export type MainArguments = {
   embedHandler?: EmbedHandler;
   globalConfig: GlobalConfig;
   opalShell: OpalShellProtocol;
+  initialSignInState: SignInState;
 };
 
 export enum TosStatus {
