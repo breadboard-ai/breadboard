@@ -14,11 +14,17 @@ const guestOrigin = CLIENT_DEPLOYMENT_CONFIG.SHELL_GUEST_ORIGIN;
 if (guestOrigin && guestOrigin !== "*") {
   const iframe = document.querySelector("iframe#opal-app" as "iframe");
   if (iframe?.contentWindow) {
-    const url = new URL(window.location.href, guestOrigin);
-    // TODO(aomarks) Change this replace after we invert the root vs subpath
-    // relationship between host and guest.
-    url.pathname = url.pathname.replace(/^\/shell\/?/, "");
-    iframe.src = url.href;
+    const hostUrl = new URL(window.location.href);
+    const guestUrl = new URL(
+      // TODO(aomarks) Change this replace after we invert the root vs subpath
+      // relationship between host and guest.
+      hostUrl.pathname.replace(/^\/shell\/?/, "") +
+        hostUrl.search +
+        hostUrl.hash,
+      guestOrigin
+    );
+    iframe.src = guestUrl.href;
+    console.log(`[shell host] exposing API to`, guestOrigin);
     comlink.expose(
       new OAuthBasedOpalShell(),
       comlink.windowEndpoint(
