@@ -52,6 +52,7 @@ const CSP_CONFIG = {
   ],
   ["frame-src"]: [
     "'self'",
+    flags.SHELL_GUEST_ORIGIN,
     "https://docs.google.com",
     "https://*.googleapis.com",
     "https://drive.google.com",
