@@ -19,16 +19,9 @@
   "scripts": {
     "prepack": "npm run build",
     "build": "wireit",
-    "build:tsc": "wireit",
-    "test": "wireit"
+    "build:tsc": "wireit"
   },
   "wireit": {
-    "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec ./dist/tests/**/*.test.js",
-      "dependencies": [
-        "build"
-      ]
-    },
     "build": {
       "dependencies": [
         "build:tsc"
