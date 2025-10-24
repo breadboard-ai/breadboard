@@ -121,7 +121,7 @@ export type ListPart = {
   id: string;
 };
 
-export type DataPart =
+export type DataPart = (
   | InlineDataCapabilityPart
   | StoredDataCapabilityPart
   | FileDataPart
@@ -131,7 +131,8 @@ export type DataPart =
   | FunctionResponseCapabilityPart
   | JSONPart
   | ListPart
-  | TextCapabilityPart;
+  | TextCapabilityPart
+) & { thought?: boolean };
 
 export type LLMContent = {
   role?: string;

@@ -20,6 +20,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   force2DGraph: false,
   gulfRenderer: false,
   consistentUI: false,
+  agentMode: false,
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(

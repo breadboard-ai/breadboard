@@ -85,6 +85,7 @@ export type GenerationConfig = {
   responseMimeType?: "text/plain" | "application/json" | "text/x.enum";
   responseSchema?: GeminiSchema;
   responseModalities?: Modality[];
+  thinkingConfig?: ThinkingConfig;
 };
 
 export type SafetySetting = {
@@ -105,6 +106,16 @@ export type GeminiBody = {
   safetySettings?: SafetySetting[];
   generationConfig?: GenerationConfig;
 };
+
+/** The thinking features configuration. */
+export declare interface ThinkingConfig {
+  /** Indicates whether to include thoughts in the response. If true, thoughts are returned only if the model supports thought and thoughts are available.
+   */
+  includeThoughts?: boolean;
+  /** Indicates the thinking budget in tokens. 0 is DISABLED. -1 is AUTOMATIC. The default values and allowed ranges are model dependent.
+   */
+  thinkingBudget?: number;
+}
 
 export type GeminiInputs = {
   // The wireable/configurable properties.

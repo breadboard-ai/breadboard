@@ -5,6 +5,7 @@
  */
 
 import { exports as a2Exports } from "./a2/index";
+import { exports as agentExports } from "./agent/index";
 import { exports as audioGeneratorExports } from "./audio-generator/index";
 import { exports as deepResearchExports } from "./deep-research/index";
 import { exports as generateExports } from "./generate/index";
@@ -18,6 +19,7 @@ import { exports as autonameExports } from "./autoname/index";
 
 export const a2 = {
   a2: a2Exports,
+  agent: agentExports,
   "audio-generator": audioGeneratorExports,
   autoname: autonameExports,
   generate: generateExports,

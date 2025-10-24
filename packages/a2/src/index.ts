@@ -11,6 +11,7 @@ import {
 import { BoardServer } from "@google-labs/breadboard";
 
 import { bgl as a2Bgl } from "./a2/index";
+import { bgl as agentBgl } from "./agent/index";
 import { bgl as audioGeneratorBgl } from "./audio-generator/index";
 import { bgl as deepResearchBgl } from "./deep-research/index";
 import { bgl as generateTextBgl } from "./generate-text/index";
@@ -37,6 +38,7 @@ function createA2Server(): BoardServer {
     SERVER_NAME,
     new Map([
       ["a2", a2Bgl],
+      ["agent", agentBgl],
       ["audio-generator", audioGeneratorBgl],
       ["autoname", autonameBgl],
       ["generate", generateBgl],
