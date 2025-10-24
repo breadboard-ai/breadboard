@@ -30,6 +30,37 @@ export interface OpalShellProtocol {
   checkAppAccess(): Promise<CheckAppAccessResult>;
 }
 
+// TODO(aomarks) We should probably add some version checking for the handshake.
+export interface OpalShellHandshakeRequest {
+  type: "opal-shell-handshake-request";
+}
+
+export interface OpalShellHandshakeResponse {
+  type: "opal-shell-handshake-response";
+}
+
+export function isOpalShellHandshakeRequest(
+  value: unknown
+): value is OpalShellHandshakeRequest {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as Partial<OpalShellHandshakeRequest>).type ===
+      "opal-shell-handshake-request"
+  );
+}
+
+export function isOpalShellHandshakeResponse(
+  value: unknown
+): value is OpalShellHandshakeResponse {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as Partial<OpalShellHandshakeResponse>).type ===
+      "opal-shell-handshake-response"
+  );
+}
+
 export type SignInState =
   | { status: "signedout" }
   | {

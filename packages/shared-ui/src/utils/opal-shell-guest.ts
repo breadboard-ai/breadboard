@@ -4,19 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import {
+  isOpalShellHandshakeResponse,
+  type OpalShellHandshakeRequest,
+  type OpalShellProtocol,
+} from "@breadboard-ai/types/opal-shell-protocol.js";
 import { createContext } from "@lit/context";
 import * as comlink from "comlink";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 import { OAuthBasedOpalShell } from "./oauth-based-opal-shell.js";
+import "./url-pattern-conditional-polyfill.js";
 
 export const opalShellContext = createContext<OpalShellProtocol | undefined>(
   "OpalShell"
 );
 
-export function connectToOpalShellHost(): OpalShellProtocol {
-  const hostOrigin = CLIENT_DEPLOYMENT_CONFIG.SHELL_HOST_ORIGIN;
-  if (hostOrigin && hostOrigin !== "*" && window !== window.parent) {
+export async function connectToOpalShellHost(): Promise<OpalShellProtocol> {
+  const hostOrigin = await discoverShellHostOrigin();
+  if (hostOrigin) {
     console.log("[shell guest] Connecting to iframe host", hostOrigin);
     const host = comlink.wrap<OpalShellProtocol>(
       comlink.windowEndpoint(
@@ -41,6 +46,70 @@ export function connectToOpalShellHost(): OpalShellProtocol {
     console.log("[shell guest] Connecting to legacy host");
     return new OAuthBasedOpalShell();
   }
+}
+
+async function discoverShellHostOrigin(): Promise<string | undefined> {
+  const allowedOriginPatterns = CLIENT_DEPLOYMENT_CONFIG.SHELL_HOST_ORIGINS;
+  if (
+    !allowedOriginPatterns?.length ||
+    /* not iframed */ window === window.parent
+  ) {
+    return;
+  }
+
+  console.log("[shell guest] Requesting handshake from parent window");
+  const unverifiedHandshakeResponseOriginPromise =
+    Promise.withResolvers<string>();
+  const abort = new AbortController();
+  window.addEventListener(
+    "message",
+    (event) => {
+      if (isOpalShellHandshakeResponse(event.data)) {
+        unverifiedHandshakeResponseOriginPromise.resolve(event.origin);
+        abort.abort();
+      }
+    },
+    { signal: abort.signal }
+  );
+  window.parent.postMessage(
+    {
+      type: "opal-shell-handshake-request",
+    } satisfies OpalShellHandshakeRequest,
+    // This initial host origin discovery handshake must be broadcast to all
+    // origins, because:
+    //
+    // 1. We want to support multiple allowed origins, and postMessage
+    //    targetOrigins only takes one.
+    //
+    // 2. We want to support origin patterns (e.g. "*.example.com") , and
+    //    postMessage targetOrigins only supports exact origins (and "*").
+    //
+    // 3. The browser does not allow us to read window.parent.origin unless it
+    //    is same-origin. So our only way to detect the origin is to receive a
+    //    message from it, which includes a readable event.origin property even
+    //    when cross-origin.
+    "*"
+  );
+  const unverifiedHandshakeResponseOrigin =
+    await unverifiedHandshakeResponseOriginPromise.promise;
+  console.log(
+    "[shell guest] Received handshake response from origin",
+    unverifiedHandshakeResponseOrigin
+  );
+
+  for (const pattern of allowedOriginPatterns) {
+    if (new URLPattern(pattern).test(unverifiedHandshakeResponseOrigin)) {
+      console.log(
+        "[shell guest] Verified handshake response origin",
+        unverifiedHandshakeResponseOrigin
+      );
+      return unverifiedHandshakeResponseOrigin;
+    }
+  }
+  console.error(
+    "[shell guest] Failed to verify handshake response origin",
+    unverifiedHandshakeResponseOrigin
+  );
 }
 
 function beginSyncronizingUrls(host: OpalShellProtocol) {
