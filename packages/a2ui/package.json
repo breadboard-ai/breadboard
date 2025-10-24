@@ -19,7 +19,8 @@
   "scripts": {
     "prepack": "npm run build",
     "build": "wireit",
-    "build:tsc": "wireit"
+    "build:tsc": "wireit",
+    "test": "wireit"
   },
   "wireit": {
     "build": {
@@ -42,6 +43,14 @@
         "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
+    },
+    "test": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/*.js",
+      "files": [],
+      "output": [],
+      "dependencies": [
+        "build:tsc"
+      ]
     }
   },
   "repository": {
