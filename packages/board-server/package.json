@@ -24,7 +24,7 @@
     "serve": "wireit",
     "dev": "npm run dev:nowatch --watch",
     "dev:nowatch": "wireit",
-    "test": "find src -name '*.test.ts' | xargs tsx --test --test-reporter=spec",
+    "test": "wireit",
     "test:firestore": "firebase emulators:exec 'tsx --test --test-reporter=spec tests/firestore/*.test.ts'"
   },
   "wireit": {
@@ -99,6 +99,14 @@
           "script": "../visual-editor#serve",
           "cascade": false
         }
+      ]
+    },
+    "test": {
+      "command": "find src -name '*.test.ts' | xargs tsx --test --test-reporter=spec",
+      "files": [],
+      "output": [],
+      "dependencies": [
+        "build:tsc"
       ]
     }
   },
