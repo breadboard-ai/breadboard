@@ -132,7 +132,7 @@ class GeminiFileApi {
   }
 
   #createUploadRequest(
-    body: Buffer,
+    body: Buffer<ArrayBuffer>,
     uploadUrl: string,
     length: number,
     offset: number,
