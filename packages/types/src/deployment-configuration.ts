@@ -20,7 +20,7 @@ export type ClientDeploymentConfiguration = {
   SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID?: string;
   OAUTH_CLIENT: string;
   SHELL_GUEST_ORIGIN?: string;
-  SHELL_HOST_ORIGIN?: string;
+  SHELL_HOST_ORIGINS?: string[];
   /**
    * Allow running 3P modules (modules that are other than A2). Default
    * value is "false"
