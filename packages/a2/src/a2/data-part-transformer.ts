@@ -21,12 +21,10 @@ export type GoogleDriveToGeminiResponse = {
   part: FileDataPart;
 };
 
+const DRIVE_URL_PREFIX = "drive:";
+
 const GEMINI_FILE_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/files/";
-
-function isGoogleDriveDocument(part: FileDataPart) {
-  return part.fileData.mimeType.startsWith("application/vnd.google-apps.");
-}
 
 function maybeBlob(handle: string): string | false {
   const handleParts = handle.split("/");
@@ -131,14 +129,14 @@ function createDataPartTansformer(
         // part is FileDataPart
         if (fileUri.startsWith(GEMINI_FILE_API_URL)) {
           return part;
-        } else if (isGoogleDriveDocument(part)) {
-          // A document, like
+        } else if (fileUri.startsWith(DRIVE_URL_PREFIX)) {
+          console.warn(`This should never happen anymore`, part);
           return driveFileToGeminiFile(moduleArgs, part);
         }
       } else {
         // part is StoredDataCapabilityPart
         const { handle, mimeType } = part.storedData;
-        if (handle.startsWith("drive:")) {
+        if (handle.startsWith(DRIVE_URL_PREFIX)) {
           return driveFileToGeminiFile(moduleArgs, {
             fileData: { fileUri: handle, mimeType },
           });

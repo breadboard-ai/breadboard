@@ -284,8 +284,8 @@ export class AddAssetModal extends LitElement {
             role: "user",
             parts: [
               {
-                fileData: {
-                  fileUri: input.value.id,
+                storedData: {
+                  handle: `drive:/${input.value.id}`,
                   mimeType: input.value.mimeType,
                 },
               },
