@@ -51,6 +51,7 @@ import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js
 import { styles as appStyles } from "./index.styles.js";
 import { theme as uiTheme } from "./theme/light.js";
 import { v0_8 } from "@breadboard-ai/a2ui";
+import * as A2UI from "@breadboard-ai/a2ui/ui";
 import { theme as a2uiTheme } from "../../a2ui-theme/a2ui-theme.js";
 
 import "./header/header.js";
@@ -112,7 +113,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @provide({ context: ParticlesUI.Context.themeContext })
   accessor theme: ParticlesUI.Types.UITheme = uiTheme;
 
-  @provide({ context: v0_8.UI.Context.themeContext })
+  @provide({ context: A2UI.Context.themeContext })
   accessor a2uitheme: v0_8.Types.Theme = a2uiTheme;
 
   @state()

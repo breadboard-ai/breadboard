@@ -1,8 +1,24 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
+/*
+ Copyright 2025 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
  */
+
+export {
+  type ClientToServerMessage as A2UIClientEventMessage,
+  type ClientCapabilitiesDynamic,
+} from "./client-event.js";
+export { type Action } from "./components.js";
 
 import {
   Heading,
@@ -167,29 +183,42 @@ export type ComponentProperties = {
 export interface ComponentInstance {
   id: string;
   componentProperties?: ComponentProperties;
-  component: ComponentProperties;
+  component?: ComponentProperties;
 }
 
 export interface BeginRenderingMessage {
+  surfaceId: string;
   root: string;
-  styles?: Record<string, unknown>;
+  styles?: Record<string, string>;
 }
 
 export interface SurfaceUpdateMessage {
+  surfaceId: string;
   components: ComponentInstance[];
 }
 
 export interface DataModelUpdate {
+  surfaceId: string;
   path?: string;
-  contents: DataValue;
+  contents: {
+    key: string;
+    valueString?: string /** May be JSON */;
+    valueNumber?: number;
+    valueBoolean?: boolean;
+
+    valueList?: {
+      valueString?: string /** May be JSON */;
+      valueNumber?: number;
+      valueBoolean?: boolean;
+    }[];
+  }[];
 }
 
 export interface DeleteSurfaceMessage {
   surfaceId: string;
 }
 
-export interface A2UIProtocolMessage {
-  surfaceId?: string;
+export interface ServerToClientMessage {
   beginRendering?: BeginRenderingMessage;
   surfaceUpdate?: SurfaceUpdateMessage;
   dataModelUpdate?: DataModelUpdate;
@@ -345,7 +374,6 @@ export type ResolvedImage = Image;
 export type ResolvedVideo = Video;
 export type ResolvedAudioPlayer = AudioPlayer;
 export type ResolvedDivider = Divider;
-export type ResolvedButton = Button;
 export type ResolvedCheckbox = Checkbox;
 export type ResolvedTextField = TextField;
 export type ResolvedDateTimeInput = DateTimeInput;
@@ -374,6 +402,11 @@ export interface ResolvedColumn {
     | "spaceAround"
     | "spaceEvenly";
   alignment?: "start" | "center" | "end" | "stretch";
+}
+
+export interface ResolvedButton {
+  child: AnyComponentNode;
+  action: Button["action"];
 }
 
 export interface ResolvedList {
@@ -409,4 +442,5 @@ export interface Surface {
   componentTree: AnyComponentNode | null;
   dataModel: DataMap;
   components: Map<string, ComponentInstance>;
+  styles: Record<string, string>;
 }

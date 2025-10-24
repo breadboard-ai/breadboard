@@ -1,8 +1,19 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
+/*
+ Copyright 2025 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
  */
+
 import { SignalWatcher } from "@lit-labs/signals";
 import {
   css,
@@ -19,10 +30,10 @@ import { effect } from "signal-utils/subtle/microtask-effect";
 import { map } from "lit/directives/map.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
 import { consume } from "@lit/context";
-import { themeContext } from "./context/theme";
-import { Theme } from "../types/types";
-import * as Styles from "./styles";
-import { StringValue } from "../types/primitives";
+import { themeContext } from "./context/theme.js";
+import { Theme } from "../types/types.js";
+import * as Styles from "./styles/index.js";
+import { StringValue } from "../types/primitives.js";
 
 // This is the base class all the components will inherit
 @customElement("a2ui-root")
@@ -183,7 +194,6 @@ export class Root extends SignalWatcher(LitElement) {
         }
 
         case "Image": {
-          console.log(component);
           return html`<a2ui-image
             id=${component.id}
             .component=${component}
@@ -215,8 +225,8 @@ export class Root extends SignalWatcher(LitElement) {
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
             .dataContextPath=${component.dataContextPath ?? ""}
-            .label=${component.properties.label}
             .action=${component.properties.action}
+            .childComponents=${[component.properties.child]}
           ></a2ui-button>`;
         }
 

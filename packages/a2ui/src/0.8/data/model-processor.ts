@@ -1,12 +1,21 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
+/*
+ Copyright 2025 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
  */
 
-import { SignalMap } from "signal-utils/map";
 import {
-  A2UIProtocolMessage,
+  ServerToClientMessage,
   AnyComponentNode,
   BeginRenderingMessage,
   DataArray,
@@ -20,9 +29,6 @@ import {
   SurfaceID,
   SurfaceUpdateMessage,
 } from "../types/types";
-import { SignalSet } from "signal-utils/set";
-import { SignalObject } from "signal-utils/object";
-import { SignalArray } from "signal-utils/array";
 import {
   isComponentArrayReference,
   isObject,
@@ -46,54 +52,64 @@ import {
   isResolvedTextField,
   isResolvedVideo,
 } from "./guards.js";
-import { deep } from "signal-utils/deep";
 
 /**
- * Processes and consolidates A2UIProtocolMessage objects into a
- * structured, hierarchical model of UI surfaces.
+ * Processes and consolidates A2UIProtocolMessage objects into a structured,
+ * hierarchical model of UI surfaces.
  */
 export class A2UIModelProcessor {
   static readonly DEFAULT_SURFACE_ID = "@default";
 
-  #currentSurface = A2UIModelProcessor.DEFAULT_SURFACE_ID;
-  #surfaces: Map<SurfaceID, Surface> = new SignalMap();
-  #styles: Record<string, unknown> = {};
+  #mapCtor: MapConstructor = Map;
+  #arrayCtor: ArrayConstructor = Array;
+  #setCtor: SetConstructor = Set;
+  #objCtor: ObjectConstructor = Object;
+  #surfaces: Map<SurfaceID, Surface>;
+
+  constructor(
+    readonly opts: {
+      mapCtor: MapConstructor;
+      arrayCtor: ArrayConstructor;
+      setCtor: SetConstructor;
+      objCtor: ObjectConstructor;
+    } = { mapCtor: Map, arrayCtor: Array, setCtor: Set, objCtor: Object }
+  ) {
+    this.#arrayCtor = opts.arrayCtor;
+    this.#mapCtor = opts.mapCtor;
+    this.#setCtor = opts.setCtor;
+    this.#objCtor = opts.objCtor;
+
+    this.#surfaces = new opts.mapCtor();
+  }
 
   getSurfaces(): ReadonlyMap<string, Surface> {
     return this.#surfaces;
-  }
-
-  getStyles(): Readonly<Record<string, unknown>> {
-    return this.#styles;
   }
 
   clearSurfaces() {
     this.#surfaces.clear();
   }
 
-  processMessages(messages: A2UIProtocolMessage[]): void {
-    this.#currentSurface = A2UIModelProcessor.DEFAULT_SURFACE_ID;
-
+  processMessages(messages: ServerToClientMessage[]): void {
     for (const message of messages) {
-      if (message.surfaceId) {
-        this.#currentSurface = message.surfaceId;
-      }
-
       if (message.beginRendering) {
         this.#handleBeginRendering(
           message.beginRendering,
-          this.#currentSurface
+          message.beginRendering.surfaceId
         );
       }
 
       if (message.surfaceUpdate) {
-        this.#handleSurfaceUpdate(message.surfaceUpdate, this.#currentSurface);
+        this.#handleSurfaceUpdate(
+          message.surfaceUpdate,
+          message.surfaceUpdate.surfaceId
+        );
       }
 
       if (message.dataModelUpdate) {
         this.#handleDataModelUpdate(
           message.dataModelUpdate,
-          this.#currentSurface
+          message.dataModelUpdate.surfaceId
         );
       }
 
@@ -101,8 +117,6 @@ export class A2UIModelProcessor {
         this.#handleDeleteSurface(message.deleteSurface);
       }
     }
-
-    this.#currentSurface = A2UIModelProcessor.DEFAULT_SURFACE_ID;
   }
 
   /**
@@ -115,14 +129,14 @@ export class A2UIModelProcessor {
     relativePath: string,
     surfaceId = A2UIModelProcessor.DEFAULT_SURFACE_ID
   ): DataValue | null {
-    const surface = this.#surfaces.get(surfaceId);
+    const surface = this.#getOrCreateSurface(surfaceId);
     if (!surface) return null;
 
     let finalPath: string;
 
     // The special `.` path means the final path is the node's data context
     // path and so we return the dataContextPath as-is.
-    if (relativePath === ".") {
+    if (relativePath === "." || relativePath === "") {
       finalPath = node.dataContextPath ?? "/";
     } else {
       // For all other paths, resolve them against the node's context.
@@ -132,29 +146,32 @@ export class A2UIModelProcessor {
     return this.#getDataByPath(surface.dataModel, finalPath);
   }
 
-  getDataByPath(path: string, surfaceId: SurfaceID | null = null) {
-    if (!surfaceId) {
-      surfaceId = A2UIModelProcessor.DEFAULT_SURFACE_ID;
-    }
-    const surface = this.#getOrCreateSurface(surfaceId);
-    if (!surface) {
-      return null;
-    }
-
-    return this.#getDataByPath(surface.dataModel, path) ?? null;
-  }
-
-  setDataByPath(
-    path: string,
+  setData(
+    node: AnyComponentNode | null,
+    relativePath: string,
     value: DataValue,
     surfaceId = A2UIModelProcessor.DEFAULT_SURFACE_ID
-  ) {
-    const surface = this.#getOrCreateSurface(surfaceId);
-    if (!surface) {
-      return null;
+  ): void {
+    if (!node) {
+      console.warn("No component node set");
+      return;
     }
 
-    return this.#setDataByPath(surface.dataModel, path, value);
+    const surface = this.#getOrCreateSurface(surfaceId);
+    if (!surface) return;
+
+    let finalPath: string;
+
+    // The special `.` path means the final path is the node's data context
+    // path and so we return the dataContextPath as-is.
+    if (relativePath === "." || relativePath === "") {
+      finalPath = node.dataContextPath ?? "/";
+    } else {
+      // For all other paths, resolve them against the node's context.
+      finalPath = this.resolvePath(relativePath, node.dataContextPath);
+    }
+
+    this.#setDataByPath(surface.dataModel, finalPath, value);
   }
 
   resolvePath(path: string, dataContextPath?: string): string {
@@ -174,41 +191,67 @@ export class A2UIModelProcessor {
     return `/${path}`;
   }
 
+  #parseIfJsonString(value: DataValue): DataValue {
+    if (typeof value !== "string") {
+      return value;
+    }
+
+    const trimmedValue = value.trim();
+    if (
+      (trimmedValue.startsWith("{") && trimmedValue.endsWith("}")) ||
+      (trimmedValue.startsWith("[") && trimmedValue.endsWith("]"))
+    ) {
+      try {
+        // It looks like JSON, attempt to parse it.
+        return JSON.parse(value);
+      } catch (e) {
+        // It looked like JSON but wasn't. Keep the original string.
+        console.warn(
+          `Failed to parse potential JSON string: "${value.substring(
+            0,
+            50
+          )}..."`,
+          e
+        );
+        return value; // Return original string
+      }
+    }
+
+    // It's a string, but not JSON-like.
+    return value;
+  }
+
   /**
    * Converts a specific array format [{key: "...", value_string: "..."}, ...]
    * into a standard Map. It also attempts to parse any string values that
    * appear to be stringified JSON.
    */
   #convertKeyValueArrayToMap(arr: DataArray): DataMap {
-    const map = new SignalMap<string, DataValue>();
+    const map = new this.#mapCtor<string, DataValue>();
     for (const item of arr) {
       if (!isObject(item) || !("key" in item)) continue;
 
       const key = item.key as string;
 
-      // Find the value, which is in a property prefixed with "value_".
-      const valueKey = Object.keys(item).find((k) => k.startsWith("value_"));
+      // Find the value, which is in a property prefixed with "value".
+      const valueKey = Object.keys(item).find((k) => k.startsWith("value"));
       if (!valueKey) continue;
 
-      let value = item[valueKey];
+      let value: DataValue = item[valueKey];
+      // It's a valueList. We must unwrap its contents.
+      if (valueKey === "valueList" && Array.isArray(value)) {
+        value = value.map((wrappedItem: unknown) => {
+          if (!isObject(wrappedItem)) return null;
+          const innerValueKey = Object.keys(wrappedItem).find((k) =>
+            k.startsWith("value")
+          );
+          if (!innerValueKey) return null;
 
-      // Attempt to parse the value if it's a JSON string.
-      if (typeof value === "string") {
-        const trimmedValue = value.trim();
-        if (
-          (trimmedValue.startsWith("{") && trimmedValue.endsWith("}")) ||
-          (trimmedValue.startsWith("[") && trimmedValue.endsWith("]"))
-        ) {
-          try {
-            value = JSON.parse(value);
-          } catch (e) {
-            // It looked like JSON but wasn't. Keep the original string.
-            console.warn(
-              `Failed to parse potential JSON string for key "${key}":`,
-              e
-            );
-          }
-        }
+          const innerValue = wrappedItem[innerValueKey];
+          return this.#parseIfJsonString(innerValue as DataValue);
+        });
+      } else if (typeof value === "string") {
+        value = this.#parseIfJsonString(value);
       }
 
       this.#setDataByPath(map, key, value);
@@ -217,26 +260,26 @@ export class A2UIModelProcessor {
   }
 
   #setDataByPath(root: DataMap, path: string, value: DataValue): void {
+    // Check if the incoming value is the special key-value array format.
+    if (
+      Array.isArray(value) &&
+      value.length > 0 &&
+      isObject(value[0]) &&
+      "key" in value[0]
+    ) {
+      value = this.#convertKeyValueArrayToMap(value);
+    }
+
     const segments = this.#normalizePath(path)
       .split("/")
       .filter((s) => s);
     if (segments.length === 0) {
-      // Check if the incoming value is the special key-value array format.
-      if (
-        Array.isArray(value) &&
-        value.length > 0 &&
-        isObject(value[0]) &&
-        "key" in value[0]
-      ) {
-        value = this.#convertKeyValueArrayToMap(value);
-      }
-
       // Root data can either be a Map or an Object. If we receive an Object,
       // however, we will normalize it to a proper Map.
       if (value instanceof Map || isObject(value)) {
         // Normalize an Object to a Map.
         if (!(value instanceof Map) && isObject(value)) {
-          value = new SignalMap(Object.entries(value));
+          value = new this.#mapCtor(Object.entries(value));
         }
 
         root.clear();
@@ -266,7 +309,7 @@ export class A2UIModelProcessor {
         target === null
       ) {
         const targetIsArray = /^\d+$/.test(segments[i + 1]);
-        target = targetIsArray ? new SignalArray() : new SignalMap();
+        target = targetIsArray ? new this.#arrayCtor() : new this.#mapCtor();
         if (current instanceof Map) {
           current.set(segment, target);
         } else if (Array.isArray(current)) {
@@ -277,7 +320,7 @@ export class A2UIModelProcessor {
     }
 
     const finalSegment = segments[segments.length - 1];
-    const storedValue = deep(value);
+    const storedValue = value;
     if (current instanceof Map) {
       current.set(finalSegment, storedValue);
     } else if (Array.isArray(current) && /^\d+$/.test(finalSegment)) {
@@ -328,11 +371,12 @@ export class A2UIModelProcessor {
   #getOrCreateSurface(surfaceId: string): Surface {
     let surface: Surface | undefined = this.#surfaces.get(surfaceId);
     if (!surface) {
-      surface = new SignalObject({
+      surface = new this.#objCtor({
         rootComponentId: null,
         componentTree: null,
-        dataModel: new SignalMap(),
-        components: new SignalMap(),
+        dataModel: new this.#mapCtor(),
+        components: new this.#mapCtor(),
+        styles: new this.#objCtor(),
       }) as Surface;
 
       this.#surfaces.set(surfaceId, surface);
@@ -347,7 +391,7 @@ export class A2UIModelProcessor {
   ): void {
     const surface = this.#getOrCreateSurface(surfaceId);
     surface.rootComponentId = message.root;
-    this.#styles = message.styles ?? {};
+    surface.styles = message.styles ?? {};
     this.#rebuildComponentTree(surface);
   }
 
@@ -388,7 +432,7 @@ export class A2UIModelProcessor {
     }
 
     // Track visited nodes to avoid circular references.
-    const visited = new SignalSet<string>();
+    const visited = new this.#setCtor<string>();
     surface.componentTree = this.#buildNodeRecursive(
       surface.rootComponentId,
       surface,
@@ -420,18 +464,15 @@ export class A2UIModelProcessor {
     visited.add(componentId);
 
     const componentData = components.get(baseComponentId)!;
-    const componentType = Object.keys(componentData.component)[0];
-    const unresolvedProperties = componentData.componentProperties
-      ? componentData.componentProperties[
-          componentType as keyof typeof componentData.componentProperties
-        ]
-      : componentData.component[
-          componentType as keyof typeof componentData.component
-        ];
+    const componentProps =
+      componentData.componentProperties ?? componentData.component ?? {};
+    const componentType = Object.keys(componentProps)[0];
+    const unresolvedProperties =
+      componentProps[componentType as keyof typeof componentProps];
 
     // Manually build the resolvedProperties object by resolving each value in
     // the component's properties.
-    const resolvedProperties: ResolvedMap = new SignalObject();
+    const resolvedProperties: ResolvedMap = new this.#objCtor() as ResolvedMap;
     if (isObject(unresolvedProperties)) {
       for (const [key, value] of Object.entries(unresolvedProperties)) {
         resolvedProperties[key] = this.#resolvePropertyValue(
@@ -454,7 +495,7 @@ export class A2UIModelProcessor {
         if (!isResolvedHeading(resolvedProperties)) {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
-        return new SignalObject({
+        return new this.#objCtor({
           ...baseNode,
           type: "Heading",
           properties: resolvedProperties,
@@ -464,7 +505,7 @@ export class A2UIModelProcessor {
         if (!isResolvedText(resolvedProperties)) {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
-        return new SignalObject({
+        return new this.#objCtor({
           ...baseNode,
           type: "Text",
           properties: resolvedProperties,
@@ -474,7 +515,7 @@ export class A2UIModelProcessor {
         if (!isResolvedImage(resolvedProperties)) {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
-        return new SignalObject({
+        return new this.#objCtor({
           ...baseNode,
           type: "Image",
           properties: resolvedProperties,
@@ -484,7 +525,7 @@ export class A2UIModelProcessor {
         if (!isResolvedVideo(resolvedProperties)) {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
-        return new SignalObject({
+        return new this.#objCtor({
           ...baseNode,
           type: "Video",
           properties: resolvedProperties,
@@ -494,7 +535,7 @@ export class A2UIModelProcessor {
         if (!isResolvedAudioPlayer(resolvedProperties)) {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
-        return new SignalObject({
+        return new this.#objCtor({
           ...baseNode,
           type: "AudioPlayer",
           properties: resolvedProperties,
@@ -505,7 +546,7 @@ export class A2UIModelProcessor {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
 
-        return new SignalObject({
+        return new this.#objCtor({
           ...baseNode,
           type: "Row",
           properties: resolvedProperties,
@@ -516,7 +557,7 @@ export class A2UIModelProcessor {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
 
-        return new SignalObject({
+        return new this.#objCtor({
           ...baseNode,
           type: "Column",
           properties: resolvedProperties,
@@ -526,7 +567,7 @@ export class A2UIModelProcessor {
         if (!isResolvedList(resolvedProperties)) {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
-        return new SignalObject({
+        return new this.#objCtor({
           ...baseNode,
           type: "List",
           properties: resolvedProperties,
@@ -536,7 +577,7 @@ export class A2UIModelProcessor {
         if (!isResolvedCard(resolvedProperties)) {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
-        return new SignalObject({
+        return new this.#objCtor({
           ...baseNode,
           type: "Card",
           properties: resolvedProperties,
@@ -546,7 +587,7 @@ export class A2UIModelProcessor {
         if (!isResolvedTabs(resolvedProperties)) {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
-        return new SignalObject({
+        return new this.#objCtor({
           ...baseNode,
           type: "Tabs",
           properties: resolvedProperties,
@@ -556,7 +597,7 @@ export class A2UIModelProcessor {
         if (!isResolvedDivider(resolvedProperties)) {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
-        return new SignalObject({
+        return new this.#objCtor({
           ...baseNode,
           type: "Divider",
           properties: resolvedProperties,
@@ -566,7 +607,7 @@ export class A2UIModelProcessor {
         if (!isResolvedModal(resolvedProperties)) {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
-        return new SignalObject({
+        return new this.#objCtor({
           ...baseNode,
           type: "Modal",
           properties: resolvedProperties,
@@ -576,7 +617,7 @@ export class A2UIModelProcessor {
         if (!isResolvedButton(resolvedProperties)) {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
-        return new SignalObject({
+        return new this.#objCtor({
           ...baseNode,
           type: "Button",
           properties: resolvedProperties,
@@ -586,7 +627,7 @@ export class A2UIModelProcessor {
         if (!isResolvedCheckbox(resolvedProperties)) {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
-        return new SignalObject({
+        return new this.#objCtor({
           ...baseNode,
           type: "Checkbox",
           properties: resolvedProperties,
@@ -596,7 +637,7 @@ export class A2UIModelProcessor {
         if (!isResolvedTextField(resolvedProperties)) {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
-        return new SignalObject({
+        return new this.#objCtor({
           ...baseNode,
           type: "TextField",
           properties: resolvedProperties,
@@ -606,7 +647,7 @@ export class A2UIModelProcessor {
         if (!isResolvedDateTimeInput(resolvedProperties)) {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
-        return new SignalObject({
+        return new this.#objCtor({
           ...baseNode,
           type: "DateTimeInput",
           properties: resolvedProperties,
@@ -616,7 +657,7 @@ export class A2UIModelProcessor {
         if (!isResolvedMultipleChoice(resolvedProperties)) {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
-        return new SignalObject({
+        return new this.#objCtor({
           ...baseNode,
           type: "MultipleChoice",
           properties: resolvedProperties,
@@ -626,7 +667,7 @@ export class A2UIModelProcessor {
         if (!isResolvedSlider(resolvedProperties)) {
           throw new Error(`Invalid data; expected ${componentType}`);
         }
-        return new SignalObject({
+        return new this.#objCtor({
           ...baseNode,
           type: "Slider",
           properties: resolvedProperties,
@@ -677,7 +718,9 @@ export class A2UIModelProcessor {
               .filter((segment) => /^\d+$/.test(segment));
 
             const newIndices = [...parentIndices, index];
-            const syntheticId = `${template.componentId}:${newIndices.join(":")}`;
+            const syntheticId = `${template.componentId}:${newIndices.join(
+              ":"
+            )}`;
             const childDataContextPath = `${fullDataPath}/${index}`;
 
             return this.#buildNodeRecursive(
@@ -690,7 +733,7 @@ export class A2UIModelProcessor {
         }
 
         // Return empty array if the data is not ready yet.
-        return new SignalArray();
+        return new this.#arrayCtor();
       }
     }
 
@@ -703,7 +746,7 @@ export class A2UIModelProcessor {
 
     // 4. If it's a plain object, resolve each of its properties.
     if (isObject(value)) {
-      const newObj: ResolvedMap = new SignalObject();
+      const newObj: ResolvedMap = new this.#objCtor() as ResolvedMap;
       for (const [key, propValue] of Object.entries(value)) {
         // Special case for paths. Here we might get /item/ or ./ on the front
         // of the path which isn't what we want. In this case we check the

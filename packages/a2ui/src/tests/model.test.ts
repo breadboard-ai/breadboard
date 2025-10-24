@@ -1,13 +1,22 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
+/*
+ Copyright 2025 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
  */
 
 import assert from "node:assert";
 import { describe, it, beforeEach } from "node:test";
-import { A2UIModelProcessor } from "../data/model-processor.js";
-import { isObject } from "../data/guards.js";
+import { v0_8 } from "../index.js";
 
 // Helper function to strip reactivity for clean comparisons.
 const toPlainObject = (value: unknown): ReturnType<typeof JSON.parse> => {
@@ -19,11 +28,13 @@ const toPlainObject = (value: unknown): ReturnType<typeof JSON.parse> => {
   if (Array.isArray(value)) {
     return value.map(toPlainObject);
   }
-  if (isObject(value) && value.constructor.name === "SignalObject") {
-    const obj = {};
+  if (
+    v0_8.Data.Guards.isObject(value) &&
+    value.constructor.name === "SignalObject"
+  ) {
+    const obj: Record<string, unknown> = {};
     for (const key in value) {
       if (Object.prototype.hasOwnProperty.call(value, key)) {
-        // @ts-expect-error Objects.
         obj[key] = toPlainObject(value[key]);
       }
     }
@@ -34,20 +45,26 @@ const toPlainObject = (value: unknown): ReturnType<typeof JSON.parse> => {
 };
 
 describe("A2UIModelProcessor", () => {
-  let processor: A2UIModelProcessor;
+  let processor = new v0_8.Data.A2UIModelProcessor();
 
   beforeEach(() => {
-    processor = new A2UIModelProcessor();
+    processor = new v0_8.Data.A2UIModelProcessor();
   });
 
   describe("Basic Initialization and State", () => {
-    it("should start with no surfaces and no styles", () => {
+    it("should start with no surfaces", () => {
       assert.strictEqual(processor.getSurfaces().size, 0);
-      assert.deepStrictEqual(processor.getStyles(), {});
     });
 
     it("should clear surfaces when clearSurfaces is called", () => {
-      processor.processMessages([{ beginRendering: { root: "root" } }]);
+      processor.processMessages([
+        {
+          beginRendering: {
+            root: "root",
+            surfaceId: "@default",
+          },
+        },
+      ]);
       assert.strictEqual(processor.getSurfaces().size, 1);
       processor.clearSurfaces();
       assert.strictEqual(processor.getSurfaces().size, 0);
@@ -61,6 +78,7 @@ describe("A2UIModelProcessor", () => {
           beginRendering: {
             root: "comp-a",
             styles: { color: "blue" },
+            surfaceId: "@default",
           },
         },
       ]);
@@ -70,13 +88,14 @@ describe("A2UIModelProcessor", () => {
       const defaultSurface = surfaces.get("@default");
       assert.ok(defaultSurface, "Default surface should exist");
       assert.strictEqual(defaultSurface.rootComponentId, "comp-a");
-      assert.deepStrictEqual(processor.getStyles(), { color: "blue" });
+      assert.deepStrictEqual(defaultSurface.styles, { color: "blue" });
     });
 
     it("should handle `surfaceUpdate` by adding components", () => {
       const messages = [
         {
           surfaceUpdate: {
+            surfaceId: "@default",
             components: [
               {
                 id: "comp-a",
@@ -99,7 +118,9 @@ describe("A2UIModelProcessor", () => {
 
     it("should handle `deleteSurface`", () => {
       processor.processMessages([
-        { surfaceId: "to-delete", beginRendering: { root: "root" } },
+        {
+          beginRendering: { root: "root", surfaceId: "to-delete" },
+        },
         { deleteSurface: { surfaceId: "to-delete" } },
       ]);
       assert.strictEqual(processor.getSurfaces().has("to-delete"), false);
@@ -111,27 +132,43 @@ describe("A2UIModelProcessor", () => {
       processor.processMessages([
         {
           dataModelUpdate: {
-            path: "/user/name",
-            contents: "Alice",
+            surfaceId: "@default",
+            path: "/user",
+            contents: [{ key: "name", valueString: "Alice" }],
           },
         },
       ]);
-      const name = processor.getDataByPath("/user/name");
+      const name = processor.getData(
+        { dataContextPath: "/" } as v0_8.Types.AnyComponentNode,
+        "/user/name"
+      );
       assert.strictEqual(name, "Alice");
     });
 
     it("should replace the entire data model when path is not provided", () => {
-      const initialData = { user: { name: "Bob" } };
       processor.processMessages([
-        { dataModelUpdate: { contents: initialData } },
+        {
+          dataModelUpdate: {
+            surfaceId: "@default",
+            path: "/",
+            contents: [
+              { key: "user", valueString: JSON.stringify({ name: "Bob" }) },
+            ],
+          },
+        },
       ]);
-      const user = processor.getDataByPath("/user");
+      const user = processor.getData(
+        { dataContextPath: "/" } as v0_8.Types.AnyComponentNode,
+        "/user"
+      );
       assert.deepStrictEqual(toPlainObject(user), { name: "Bob" });
     });
 
     it("should create nested structures when setting data", () => {
-      processor.setDataByPath("/a/b/c", "value");
-      const data = processor.getDataByPath("/a/b/c");
+      const component = { dataContextPath: "/" } as v0_8.Types.AnyComponentNode;
+      // Note: setData is a public method that does not use the key-value format
+      processor.setData(component, "/a/b/c", "value");
+      const data = processor.getData(component, "/a/b/c");
       assert.strictEqual(data, "value");
     });
 
@@ -151,6 +188,7 @@ describe("A2UIModelProcessor", () => {
       processor.processMessages([
         {
           surfaceUpdate: {
+            surfaceId: "@default",
             components: [
               {
                 id: "root",
@@ -167,7 +205,12 @@ describe("A2UIModelProcessor", () => {
             ],
           },
         },
-        { beginRendering: { root: "root" } },
+        {
+          beginRendering: {
+            root: "root",
+            surfaceId: "@default",
+          },
+        },
       ]);
 
       const tree = processor.getSurfaces().get("@default")?.componentTree;
@@ -181,20 +224,31 @@ describe("A2UIModelProcessor", () => {
     });
 
     it("should throw an error on circular dependencies", () => {
+      // First, load the components
+      processor.processMessages([
+        {
+          surfaceUpdate: {
+            surfaceId: "@default",
+            components: [
+              { id: "a", component: { Card: { child: "b" } } },
+              { id: "b", component: { Card: { child: "a" } } },
+            ],
+          },
+        },
+      ]);
+
+      // Now, try to render, which triggers the tree build
       assert.throws(() => {
         processor.processMessages([
           {
-            surfaceUpdate: {
-              components: [
-                { id: "a", component: { Card: { child: "b" } } },
-                { id: "b", component: { Card: { child: "a" } } },
-              ],
+            beginRendering: {
+              root: "a",
+              surfaceId: "@default",
             },
           },
         ]);
-
-        processor.processMessages([{ beginRendering: { root: "a" } }]);
       }, new Error(`Circular dependency for component "a".`));
+
       const tree = processor.getSurfaces().get("@default")?.componentTree;
       assert.strictEqual(
         tree,
@@ -207,12 +261,22 @@ describe("A2UIModelProcessor", () => {
       processor.processMessages([
         {
           dataModelUpdate: {
-            path: "/items",
-            contents: [{ name: "A" }, { name: "B" }],
+            surfaceId: "@default",
+            path: "/",
+            contents: [
+              {
+                key: "items",
+                valueList: [
+                  { valueString: JSON.stringify({ name: "A" }) },
+                  { valueString: JSON.stringify({ name: "B" }) },
+                ],
+              },
+            ],
           },
         },
         {
           surfaceUpdate: {
+            surfaceId: "@default",
             components: [
               {
                 id: "root",
@@ -234,7 +298,12 @@ describe("A2UIModelProcessor", () => {
             ],
           },
         },
-        { beginRendering: { root: "root" } },
+        {
+          beginRendering: {
+            root: "root",
+            surfaceId: "@default",
+          },
+        },
       ]);
 
       const tree = processor.getSurfaces().get("@default")?.componentTree;
@@ -247,18 +316,21 @@ describe("A2UIModelProcessor", () => {
       assert.strictEqual(child1.id, "item-template:0");
       assert.strictEqual(child1.type, "Text");
       assert.strictEqual(child1.dataContextPath, "/items/0");
+      assert.deepStrictEqual(child1.properties.text, { path: "name" });
 
       // Check second generated child.
       const child2 = plainTree.properties.children[1];
       assert.strictEqual(child2.id, "item-template:1");
       assert.strictEqual(child2.type, "Text");
       assert.strictEqual(child2.dataContextPath, "/items/1");
+      assert.deepStrictEqual(child2.properties.text, { path: "name" });
     });
 
     it("should rebuild the tree when data for a template arrives later", () => {
       processor.processMessages([
         {
           surfaceUpdate: {
+            surfaceId: "@default",
             components: [
               {
                 id: "root",
@@ -280,7 +352,12 @@ describe("A2UIModelProcessor", () => {
             ],
           },
         },
-        { beginRendering: { root: "root" } },
+        {
+          beginRendering: {
+            root: "root",
+            surfaceId: "@default",
+          },
+        },
       ]);
 
       let tree = processor.getSurfaces().get("@default")?.componentTree;
@@ -294,8 +371,17 @@ describe("A2UIModelProcessor", () => {
       processor.processMessages([
         {
           dataModelUpdate: {
-            path: "/items",
-            contents: [{ name: "A" }, { name: "B" }],
+            surfaceId: "@default",
+            path: "/",
+            contents: [
+              {
+                key: "items",
+                valueList: [
+                  { valueString: JSON.stringify({ name: "A" }) },
+                  { valueString: JSON.stringify({ name: "B" }) },
+                ],
+              },
+            ],
           },
         },
       ]);
@@ -312,12 +398,22 @@ describe("A2UIModelProcessor", () => {
       processor.processMessages([
         {
           dataModelUpdate: {
-            path: "/items",
-            contents: [{ name: "A" }, { name: "B" }],
+            surfaceId: "@default",
+            path: "/",
+            contents: [
+              {
+                key: "items",
+                valueList: [
+                  { valueString: JSON.stringify({ name: "A" }) },
+                  { valueString: JSON.stringify({ name: "B" }) },
+                ],
+              },
+            ],
           },
         },
         {
           surfaceUpdate: {
+            surfaceId: "@default",
             components: [
               {
                 id: "root",
@@ -340,7 +436,12 @@ describe("A2UIModelProcessor", () => {
             ],
           },
         },
-        { beginRendering: { root: "root" } },
+        {
+          beginRendering: {
+            root: "root",
+            surfaceId: "@default",
+          },
+        },
       ]);
 
       const tree = processor.getSurfaces().get("@default")?.componentTree;
@@ -358,12 +459,22 @@ describe("A2UIModelProcessor", () => {
       processor.processMessages([
         {
           dataModelUpdate: {
-            path: "/items",
-            contents: [{ name: "A" }, { name: "B" }],
+            surfaceId: "@default",
+            path: "/",
+            contents: [
+              {
+                key: "items",
+                valueList: [
+                  { valueString: JSON.stringify({ name: "A" }) },
+                  { valueString: JSON.stringify({ name: "B" }) },
+                ],
+              },
+            ],
           },
         },
         {
           surfaceUpdate: {
+            surfaceId: "@default",
             components: [
               {
                 id: "root",
@@ -386,7 +497,12 @@ describe("A2UIModelProcessor", () => {
             ],
           },
         },
-        { beginRendering: { root: "root" } },
+        {
+          beginRendering: {
+            root: "root",
+            surfaceId: "@default",
+          },
+        },
       ]);
 
       const tree = processor.getSurfaces().get("@default")?.componentTree;
@@ -394,7 +510,7 @@ describe("A2UIModelProcessor", () => {
       const child1 = plainTree.properties.children[0];
       const child2 = plainTree.properties.children[1];
 
-      // The processor should have trimmed `/item` and `./` from the path
+      // The processor should have trimmed `./` from the path
       // because we are inside a data context.
       assert.deepEqual(child1.properties.text, { path: "name" });
       assert.deepEqual(child2.properties.text, { path: "name" });
@@ -405,13 +521,14 @@ describe("A2UIModelProcessor", () => {
     it("should correctly handle and parse the key-value array data format at the root", () => {
       const messages = [
         {
-          surfaceId: "test-surface",
           dataModelUpdate: {
+            surfaceId: "test-surface",
+            path: "/",
             contents: [
-              { key: "title", value_string: "My Title" },
+              { key: "title", valueString: "My Title" },
               {
                 key: "items",
-                value_string: '[{"id": 1}, {"id": 2}]',
+                valueString: '[{"id": 1}, {"id": 2}]',
               },
             ],
           },
@@ -420,8 +537,9 @@ describe("A2UIModelProcessor", () => {
 
       processor.processMessages(messages);
 
-      const title = processor.getDataByPath("/title", "test-surface");
-      const items = processor.getDataByPath("/items", "test-surface");
+      const component = { dataContextPath: "/" } as v0_8.Types.AnyComponentNode;
+      const title = processor.getData(component, "/title", "test-surface");
+      const items = processor.getData(component, "/items", "test-surface");
 
       assert.strictEqual(title, "My Title");
       assert.deepStrictEqual(toPlainObject(items), [{ id: 1 }, { id: 2 }]);
@@ -432,12 +550,15 @@ describe("A2UIModelProcessor", () => {
       processor.processMessages([
         {
           dataModelUpdate: {
-            contents: [{ key: "badData", value_string: invalidJSON }],
+            surfaceId: "@default",
+            path: "/",
+            contents: [{ key: "badData", valueString: invalidJSON }],
           },
         },
       ]);
 
-      const badData = processor.getDataByPath("/badData");
+      const component = { dataContextPath: "/" } as v0_8.Types.AnyComponentNode;
+      const badData = processor.getData(component, "/badData");
       assert.strictEqual(badData, invalidJSON);
     });
   });
@@ -447,21 +568,32 @@ describe("A2UIModelProcessor", () => {
       const messages = [
         {
           dataModelUpdate: {
-            path: "/days",
+            surfaceId: "@default",
+            path: "/",
             contents: [
               {
-                title: "Day 1",
-                activities: ["Morning Walk", "Museum Visit"],
-              },
-              {
-                title: "Day 2",
-                activities: ["Market Trip"],
+                key: "days",
+                valueList: [
+                  {
+                    valueString: JSON.stringify({
+                      title: "Day 1",
+                      activities: ["Morning Walk", "Museum Visit"],
+                    }),
+                  },
+                  {
+                    valueString: JSON.stringify({
+                      title: "Day 2",
+                      activities: ["Market Trip"],
+                    }),
+                  },
+                ],
               },
             ],
           },
         },
         {
           surfaceUpdate: {
+            surfaceId: "@default",
             components: [
               {
                 id: "root",
@@ -508,7 +640,12 @@ describe("A2UIModelProcessor", () => {
             ],
           },
         },
-        { beginRendering: { root: "root" } },
+        {
+          beginRendering: {
+            root: "root",
+            surfaceId: "@default",
+          },
+        },
       ];
 
       processor.processMessages(messages);
@@ -525,6 +662,10 @@ describe("A2UIModelProcessor", () => {
         day1Activities[0].dataContextPath,
         "/days/0/activities/0"
       );
+      assert.deepStrictEqual(day1.properties.children[0].properties.text, {
+        path: "title",
+      });
+      assert.deepStrictEqual(day1Activities[0].properties.text, { path: "." });
 
       // Assert Day 2 structure
       const day2 = plainTree.properties.children[1];
@@ -536,18 +677,33 @@ describe("A2UIModelProcessor", () => {
         day2Activities[0].dataContextPath,
         "/days/1/activities/0"
       );
+      assert.deepStrictEqual(day2.properties.children[0].properties.text, {
+        path: "title",
+      });
+      assert.deepStrictEqual(day2Activities[0].properties.text, { path: "." });
     });
 
     it("should correctly bind to primitive values in an array using path: '.'", () => {
       processor.processMessages([
         {
           dataModelUpdate: {
-            path: "/tags",
-            contents: ["travel", "paris", "guide"],
+            surfaceId: "@default",
+            path: "/",
+            contents: [
+              {
+                key: "tags",
+                valueList: [
+                  { valueString: "travel" },
+                  { valueString: "paris" },
+                  { valueString: "guide" },
+                ],
+              },
+            ],
           },
         },
         {
           surfaceUpdate: {
+            surfaceId: "@default",
             components: [
               {
                 id: "root",
@@ -563,7 +719,12 @@ describe("A2UIModelProcessor", () => {
             ],
           },
         },
-        { beginRendering: { root: "root" } },
+        {
+          beginRendering: {
+            root: "root",
+            surfaceId: "@default",
+          },
+        },
       ]);
 
       const tree = processor.getSurfaces().get("@default")?.componentTree;
@@ -583,12 +744,15 @@ describe("A2UIModelProcessor", () => {
       processor.processMessages([
         // Surface A
         {
-          surfaceId: "A",
-          dataModelUpdate: { contents: { name: "Surface A Data" } },
+          dataModelUpdate: {
+            surfaceId: "A",
+            path: "/",
+            contents: [{ key: "name", valueString: "Surface A Data" }],
+          },
         },
         {
-          surfaceId: "A",
           surfaceUpdate: {
+            surfaceId: "A",
             components: [
               {
                 id: "comp-a",
@@ -597,15 +761,18 @@ describe("A2UIModelProcessor", () => {
             ],
           },
         },
-        { surfaceId: "A", beginRendering: { root: "comp-a" } },
+        { beginRendering: { root: "comp-a", surfaceId: "A" } },
         // Surface B
         {
-          surfaceId: "B",
-          dataModelUpdate: { contents: { name: "Surface B Data" } },
+          dataModelUpdate: {
+            surfaceId: "B",
+            path: "/",
+            contents: [{ key: "name", valueString: "Surface B Data" }],
+          },
         },
         {
-          surfaceId: "B",
           surfaceUpdate: {
+            surfaceId: "B",
             components: [
               {
                 id: "comp-b",
@@ -614,7 +781,7 @@ describe("A2UIModelProcessor", () => {
             ],
           },
         },
-        { surfaceId: "B", beginRendering: { root: "comp-b" } },
+        { beginRendering: { root: "comp-b", surfaceId: "B" } },
       ]);
 
       const surfaces = processor.getSurfaces();
@@ -631,6 +798,10 @@ describe("A2UIModelProcessor", () => {
       assert.deepStrictEqual(toPlainObject(surfaceA.dataModel), {
         name: "Surface A Data",
       });
+      assert.deepStrictEqual(
+        toPlainObject(surfaceA.componentTree).properties.text,
+        { path: "/name" }
+      );
 
       // Check Surface B
       assert.strictEqual(surfaceB.components.size, 1);
@@ -638,6 +809,10 @@ describe("A2UIModelProcessor", () => {
       assert.deepStrictEqual(toPlainObject(surfaceB.dataModel), {
         name: "Surface B Data",
       });
+      assert.deepStrictEqual(
+        toPlainObject(surfaceB.componentTree).properties.text,
+        { path: "/name" }
+      );
     });
   });
 });
