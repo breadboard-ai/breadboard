@@ -4,44 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TokenVendor } from "@breadboard-ai/connection-client";
-import {
-  canonicalizeOAuthScope,
-  type OAuthScope,
-} from "@breadboard-ai/connection-client/oauth-scopes.js";
+import { type OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { clearIdbGraphCache } from "@breadboard-ai/google-drive-kit/board-server/user-graph-collection.js";
 import type {
   SignedOutTokenResult,
-  TokenGrant,
   ValidTokenResult,
 } from "@breadboard-ai/types/oauth.js";
 import type {
   CheckAppAccessResult,
   OpalShellProtocol,
   SignInResult,
+  SignInState,
   ValidateScopesResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { createContext } from "@lit/context";
 
 export const SIGN_IN_CONNECTION_ID = "$sign-in";
 
-export type SigninAdapterState =
-  | { status: "signedout" }
-  | {
-      status: "signedin";
-      id: string | undefined;
-      domain: string | undefined;
-      name: string | undefined;
-      picture: string | undefined;
-      scopes: Set<string>;
-    };
-
 export const signinAdapterContext = createContext<SigninAdapter | undefined>(
   "SigninAdapter"
 );
-
-/** @return Whether the user opened `signInUrl`. */
-export type SignInRequestHandler = (signInUrl: string) => boolean;
 
 /**
  * A specialized adapter to handle sign in using the connection server
@@ -53,39 +35,20 @@ export type SignInRequestHandler = (signInUrl: string) => boolean;
 export class SigninAdapter {
   readonly #opalShell: OpalShellProtocol;
   readonly #handleSignInRequest?: (scopes?: OAuthScope[]) => Promise<boolean>;
-  #state: SigninAdapterState;
+  #state: SignInState;
   readonly fetchWithCreds: typeof globalThis.fetch;
 
   constructor(
-    tokenVendor: TokenVendor,
     opalShell: OpalShellProtocol,
+    // TODO(aomarks) Hacky workaround for asynchrony, revisit the API for the
+    // getters so that we don't need this.
+    initialState: SignInState,
     handleSignInRequest?: () => Promise<boolean>
   ) {
     this.#opalShell = opalShell;
     this.#handleSignInRequest = handleSignInRequest;
-
     this.fetchWithCreds = opalShell.fetchWithCreds.bind(opalShell);
-
-    const token = tokenVendor.getToken();
-    if (token.state === "signedout") {
-      this.#state = { status: "signedout" };
-      return;
-    }
-
-    this.#state = this.#makeSignedInState(token.grant);
-  }
-
-  #makeSignedInState(grant: TokenGrant): SigninAdapterState {
-    return {
-      status: "signedin",
-      id: grant.id,
-      name: grant.name,
-      picture: grant.picture,
-      domain: grant.domain,
-      scopes: new Set(
-        (grant.scopes ?? []).map((scope) => canonicalizeOAuthScope(scope))
-      ),
-    };
+    this.#state = initialState;
   }
 
   get state() {
@@ -105,7 +68,9 @@ export class SigninAdapter {
   }
 
   get scopes(): Set<string> | undefined {
-    return this.#state.status === "signedin" ? this.#state.scopes : undefined;
+    return this.#state.status === "signedin"
+      ? new Set(this.#state.scopes)
+      : undefined;
   }
 
   /**
@@ -169,7 +134,11 @@ export class SigninAdapter {
         };
       });
     popup.location.href = url;
-    return await resultPromise;
+    const result = await resultPromise;
+    if (result.ok) {
+      this.#state = result.state;
+    }
+    return result;
   }
 
   async signOut(): Promise<void> {

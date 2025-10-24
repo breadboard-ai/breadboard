@@ -4,16 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  type LanguagePack,
-  SETTINGS_TYPE,
-} from "@breadboard-ai/shared-ui/types/types.js";
-import {
-  SIGN_IN_CONNECTION_ID,
-  SigninAdapter,
-} from "@breadboard-ai/shared-ui/utils/signin-adapter";
-import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
-import { createTokenVendor } from "@breadboard-ai/connection-client";
+import { type LanguagePack } from "@breadboard-ai/shared-ui/types/types.js";
+import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 import {
   ActionTracker,
   initializeAnalytics,
@@ -103,35 +95,11 @@ function embedIntroVideo(target: HTMLDivElement) {
 }
 
 async function init() {
-  const { SettingsStore } = await import(
-    "@breadboard-ai/shared-ui/data/settings-store.js"
-  );
-  const settings = await SettingsStore.restoredInstance();
-  const settingsHelper = new SettingsHelperImpl(settings);
-  const tokenVendor = createTokenVendor(
-    {
-      get: () => {
-        return settingsHelper.get(
-          SETTINGS_TYPE.CONNECTIONS,
-          SIGN_IN_CONNECTION_ID
-        )?.value as string;
-      },
-      set: async (grant: string) => {
-        await settingsHelper.set(
-          SETTINGS_TYPE.CONNECTIONS,
-          SIGN_IN_CONNECTION_ID,
-          {
-            name: SIGN_IN_CONNECTION_ID,
-            value: grant,
-          }
-        );
-      },
-    },
-    deploymentConfiguration
-  );
-
   const opalShell = await connectToOpalShellHost();
-  const signinAdapter = new SigninAdapter(tokenVendor, opalShell);
+  const signinAdapter = new SigninAdapter(
+    opalShell,
+    await opalShell.getSignInState()
+  );
 
   if (signinAdapter.state === "signedin") {
     redirect();

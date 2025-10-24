@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   Schema,
   InspectableEdgeType,
   InspectableEdge,
@@ -16,7 +16,7 @@ import {
   PortIdentifier,
   InspectableAssetEdgeDirection,
 } from "@google-labs/breadboard";
-import {
+import type {
   AppPalette,
   AssetPath,
   AssetType,
@@ -36,8 +36,7 @@ import type {
   tsLinter,
   tsSync,
 } from "@valtown/codemirror-ts";
-import { SigninAdapterState } from "../utils/signin-adapter";
-import { HTMLTemplateResult, LitElement } from "lit";
+import type { HTMLTemplateResult, LitElement } from "lit";
 
 export const enum HistoryEventType {
   DONE = "done",
