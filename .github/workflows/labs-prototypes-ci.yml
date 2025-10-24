@@ -16,6 +16,11 @@ jobs:
           # - 21.x left here for testing when the node test runnner might be misbahaving
         python-version: [3.11]
 
+    env:
+      # Enable more verbose log output
+      # https://github.com/google/wireit?tab=readme-ov-file#environment-variable-reference
+      WIREIT_LOGGER: metrics
+
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
