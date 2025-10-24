@@ -17,7 +17,7 @@ import mime from "mime";
 
 export { AgentFileSystem };
 
-const KNOWN_TYPES = ["audio", "video", "image"];
+const KNOWN_TYPES = ["audio", "video", "image", "text"];
 
 export type FileDescriptor = {
   type: "text" | "storedData" | "inlineData" | "fileData";
@@ -76,15 +76,17 @@ class AgentFileSystem {
     }
   }
 
-  add(part: DataPart) {
+  add(part: DataPart): Outcome<string> {
     if ("text" in part) {
       const mimeType = "text/markdown";
       const name = this.create(mimeType);
       this.#files.set(name, { type: "text", mimeType, data: part.text });
+      return name;
     } else if ("inlineData" in part) {
       const { mimeType, data, title } = part.inlineData;
       const name = this.create(mimeType);
       this.#files.set(name, { type: "inlineData", mimeType, data, title });
+      return name;
     } else if ("storedData" in part) {
       const { mimeType, handle: data, resourceKey } = part.storedData;
       const name = this.create(mimeType);
@@ -94,11 +96,14 @@ class AgentFileSystem {
         data,
         resourceKey,
       });
+      return name;
     } else if ("fileData" in part) {
       const { mimeType, fileUri: data, resourceKey } = part.fileData;
       const name = this.create(mimeType);
       this.#files.set(name, { type: "fileData", mimeType, data, resourceKey });
+      return name;
     }
+    return err(`Unsupported part: ${JSON.stringify(part)}`);
   }
 
   get files(): ReadonlyMap<string, DeepReadonly<FileDescriptor>> {

@@ -184,6 +184,15 @@ class Template {
     return null;
   }
 
+  async loadAsset(param: ParamPart): Promise<Outcome<LLMContent[]>> {
+    const path: FileSystemPath = `/assets/${param.path}`;
+    const reading = await this.caps.read({ path });
+    if (!ok(reading) || !reading.data) {
+      return err(`Unable to find asset "${param.title}"`);
+    }
+    return reading.data;
+  }
+
   async #replaceParam(
     param: ParamPart,
     params: Params,
@@ -200,12 +209,7 @@ class Template {
       if (ConnectorManager.isConnector(param)) {
         return new ConnectorManager(this.caps, param).materialize();
       }
-      const path: FileSystemPath = `/assets/${param.path}`;
-      const reading = await this.caps.read({ path });
-      if (!ok(reading)) {
-        return err(`Unable to find asset "${param.title}"`);
-      }
-      return reading.data;
+      return this.loadAsset(param);
     } else if (isTool(param)) {
       const substituted = await whenTool(param);
       if (!ok(substituted)) return substituted;
@@ -220,6 +224,20 @@ class Template {
       return reading.data;
     }
     return null;
+  }
+
+  async asyncSimpleSubstitute(
+    callback: (param: ParamPart) => Promise<string>
+  ): Promise<LLMContent> {
+    const parts: DataPart[] = [];
+    for (const part of this.#parts) {
+      if ("type" in part) {
+        parts.push({ text: await callback(part) });
+      } else {
+        parts.push(part);
+      }
+    }
+    return { parts: this.#mergeTextParts(parts) };
   }
 
   simpleSubstitute(callback: (param: ParamPart) => string): LLMContent {
