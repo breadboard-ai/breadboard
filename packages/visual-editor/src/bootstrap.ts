@@ -92,12 +92,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   );
 
   const opalShell = await connectToOpalShellHost();
-  const signinAdapter = new SigninAdapter(
-    tokenVendor,
-    globalConfig,
-    settingsHelper,
-    opalShell
-  );
+  const signinAdapter = new SigninAdapter(tokenVendor, opalShell);
 
   const StringsHelper = await import("@breadboard-ai/shared-ui/strings");
   await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);

@@ -14,7 +14,6 @@ import {
 } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { createTokenVendor } from "@breadboard-ai/connection-client";
-import { GlobalConfig } from "@breadboard-ai/shared-ui/contexts";
 import {
   ActionTracker,
   initializeAnalytics,
@@ -132,12 +131,7 @@ async function init() {
   );
 
   const opalShell = await connectToOpalShellHost();
-  const signinAdapter = new SigninAdapter(
-    tokenVendor,
-    deploymentConfiguration as GlobalConfig,
-    settingsHelper,
-    opalShell
-  );
+  const signinAdapter = new SigninAdapter(tokenVendor, opalShell);
 
   if (signinAdapter.state === "signedin") {
     redirect();

@@ -6,7 +6,6 @@
 
 import type { TokenVendor } from "@breadboard-ai/connection-client";
 import {
-  ALWAYS_REQUIRED_OAUTH_SCOPES,
   canonicalizeOAuthScope,
   type OAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
@@ -23,8 +22,6 @@ import type {
   ValidateScopesResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { createContext } from "@lit/context";
-import type { GlobalConfig } from "../contexts/global-config";
-import { SETTINGS_TYPE, SettingsHelper } from "../types/types";
 
 export const SIGN_IN_CONNECTION_ID = "$sign-in";
 
@@ -54,8 +51,6 @@ export type SignInRequestHandler = (signInUrl: string) => boolean;
  * settingsHelper are present.
  */
 export class SigninAdapter {
-  readonly #globalConfig: GlobalConfig;
-  readonly #settingsHelper: SettingsHelper;
   readonly #opalShell: OpalShellProtocol;
   readonly #handleSignInRequest?: (scopes?: OAuthScope[]) => Promise<boolean>;
   #state: SigninAdapterState;
@@ -63,13 +58,9 @@ export class SigninAdapter {
 
   constructor(
     tokenVendor: TokenVendor,
-    globalConfig: GlobalConfig,
-    settingsHelper: SettingsHelper,
     opalShell: OpalShellProtocol,
     handleSignInRequest?: () => Promise<boolean>
   ) {
-    this.#globalConfig = globalConfig;
-    this.#settingsHelper = settingsHelper;
     this.#opalShell = opalShell;
     this.#handleSignInRequest = handleSignInRequest;
 

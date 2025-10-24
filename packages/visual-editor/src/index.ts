@@ -327,8 +327,6 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.signinAdapter = new SigninAdapter(
       this.tokenVendor,
-      this.globalConfig,
-      this.settingsHelper,
       this.opalShell,
       (scopes?: OAuthScope[]) => this.#askUserToSignInIfNeeded(scopes)
     );
