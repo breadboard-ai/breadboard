@@ -11,6 +11,10 @@ import type {
 } from "./oauth.js";
 
 export interface OpalShellProtocol {
+  getSignInState(): Promise<SignInState>;
+
+  validateScopes(): Promise<ValidateScopesResult>;
+
   fetchWithCreds: typeof fetch;
 
   generateSignInUrlAndNonce(
@@ -40,7 +44,22 @@ export interface OpalShellProtocol {
   checkAppAccess(): Promise<CheckAppAccessResult>;
 }
 
-export type SignInResult = { ok: true } | { ok: false; error: SignInError };
+export type SignInState =
+  | { status: "signedout" }
+  | {
+      status: "signedin";
+      id: string | undefined;
+      domain: string | undefined;
+      name: string | undefined;
+      picture: string | undefined;
+      scopes: string[];
+    };
+
+export type ValidateScopesResult = { ok: true } | { ok: false; error: string };
+
+export type SignInResult =
+  | { ok: true; state: SignInState }
+  | { ok: false; error: SignInError };
 
 export type SignInError =
   | { code: "missing-scopes"; missingScopes: string[] }
