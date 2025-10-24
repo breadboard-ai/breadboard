@@ -123,7 +123,9 @@ class Loop {
     objective: LLMContent,
     params: Params
   ): Promise<Outcome<AgentResult>> {
-    const objectivePidgin = this.#translator.toPidgin(objective, params);
+    const objectivePidgin = await this.#translator.toPidgin(objective, params);
+    if (!ok(objectivePidgin)) return objectivePidgin;
+
     const contents: LLMContent[] = [
       llm`<objective>${objectivePidgin}</objective>`.asContent(),
     ];

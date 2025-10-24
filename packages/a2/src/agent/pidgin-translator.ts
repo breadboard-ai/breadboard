@@ -13,7 +13,7 @@ import {
 import { Params } from "../a2/common";
 import { isLLMContent, isLLMContentArray } from "@breadboard-ai/data";
 import { Template } from "../a2/template";
-import { toText } from "../a2/utils";
+import { mergeTextParts, toText } from "../a2/utils";
 import { AgentFileSystem } from "./file-system";
 import { err, ok } from "@breadboard-ai/utils";
 
@@ -41,7 +41,7 @@ const LINK_PARSE_REGEX = /<a\s+href\s*=\s*"([^"]*)"\s*>\s*([^<]*)\s*<\/a>/;
 
 /**
  * Translates to and from Agent pidgin: a simplified XML-like
- * language that tuned to be understood by Gemini.
+ * language that is tuned to be understood by Gemini.
  */
 class PidginTranslator {
   constructor(
@@ -72,26 +72,23 @@ class PidginTranslator {
       })
       .filter((part) => part !== null);
 
-    return { parts, role: "user" };
+    if (errors.length > 0) {
+      return err(`Agent unable to proceed: ${errors.join(",")}`);
+    }
+
+    return { parts: mergeTextParts(parts), role: "user" };
   }
 
   fromPidginFiles(files: string[]): Outcome<LLMContent> {
     const errors: string[] = [];
     const parts: DataPart[] = files
       .map((path) => {
-        const file = this.fileSystem.files.get(path);
-        if (!file) {
-          errors.push(`file "${path}" not found`);
+        const part = this.fileSystem.get(path);
+        if (!ok(part)) {
+          errors.push(part.$error);
           return null;
         }
-        if (file.mimeType === "text/markdown") {
-          return {
-            text: file.data,
-          };
-        } else {
-          errors.push(`unknown type "${file.mimeType} for file "${path}"`);
-          return null;
-        }
+        return part;
       })
       .filter((part) => part !== null);
 
@@ -99,56 +96,88 @@ class PidginTranslator {
       return err(`Agent unable to proceed: ${errors.join(",")}`);
     }
 
-    return { parts, role: "user" };
+    return { parts: mergeTextParts(parts), role: "user" };
   }
 
-  toPidgin(content: LLMContent, params: Params): string {
+  async toPidgin(
+    content: LLMContent,
+    params: Params
+  ): Promise<Outcome<string>> {
     const template = new Template(this.caps, content);
-    const pidginContent = template.simpleSubstitute((param) => {
-      const { type } = param;
-      switch (type) {
-        case "asset": {
-          return `<file src="${param.path}" />`;
-        }
-        case "in": {
-          const value = params[Template.toId(param.path)];
-          if (!value) {
+    const errors: string[] = [];
+    const pidginContent = await template.asyncSimpleSubstitute(
+      async (param) => {
+        const { type } = param;
+        switch (type) {
+          case "asset": {
+            const content = await template.loadAsset(param);
+            if (!ok(content)) {
+              errors.push(content.$error);
+              return "";
+            }
+            const part = content?.at(-1)?.parts.at(0);
+            if (!part) {
+              errors.push(`invalid asset format`);
+              return "";
+            }
+            const name = this.fileSystem.add(part);
+            return `<file src="${name}" />`;
+          }
+          case "in": {
+            const value = params[Template.toId(param.path)];
+            if (!value) {
+              return "";
+            } else if (typeof value === "string") {
+              return value;
+            } else if (isLLMContent(value)) {
+              return substituteParts(value, this.fileSystem);
+            } else if (isLLMContentArray(value)) {
+              const last = value.at(-1);
+              if (!last) return "";
+              return substituteParts(last, this.fileSystem);
+            } else {
+              errors.push(
+                `Agent: Unknown param value type: "${JSON.stringify(value)}`
+              );
+            }
+            return param.title;
+          }
+          case "param":
+            errors.push(
+              `Agent: Params aren't supported in template substitution`
+            );
             return "";
-          } else if (typeof value === "string") {
-            return value;
-          } else if (isLLMContent(value)) {
-            return substituteParts(value);
-          } else if (isLLMContentArray(value)) {
-            const last = value.at(-1);
-            if (!last) return "";
-            return substituteParts(last);
-          } else {
-            console.warn(`Agent: Unknown param value type`, value);
-          }
-          return param.title;
+          case "tool":
+          default:
+            return param.title;
         }
-        case "param":
-          console.warn(
-            `Agent: Params aren't supported in template substitution`
-          );
-          return "";
-        case "tool":
-        default:
-          return param.title;
-      }
 
-      function substituteParts(value: LLMContent) {
-        const values: string[] = [];
-        for (const part of value.parts) {
-          if ("text" in part) {
-            values.push(part.text);
-          } else {
-            values.push(`<file src="${JSON.stringify(part)}" />`);
+        function substituteParts(
+          value: LLMContent,
+          fileSystem: AgentFileSystem
+        ) {
+          const values: string[] = [];
+          for (const part of value.parts) {
+            if ("text" in part) {
+              values.push(part.text);
+            } else {
+              const name = fileSystem.add(part);
+              if (!ok(name)) {
+                console.warn(name.$error);
+                continue;
+              }
+              values.push(`<file src="${name}" />`);
+            }
           }
+          return values.join("\n");
         }
-        return values.join("\n");
       }
-    });
+    );
+
+    if (errors.length > 0) {
+      return err(`Agent: ${errors.join(",")}`);
+    }
+
     return toText(pidginContent);
   }
 }
