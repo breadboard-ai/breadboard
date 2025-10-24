@@ -17,7 +17,7 @@ import mime from "mime";
 
 export { AgentFileSystem };
 
-const KNOWN_TYPES = ["audio", "video", "image"];
+const KNOWN_TYPES = ["audio", "video", "image", "text"];
 
 export type FileDescriptor = {
   type: "text" | "storedData" | "inlineData" | "fileData";
