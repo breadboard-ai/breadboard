@@ -100,10 +100,6 @@ export class SigninAdapter {
     return this.#state.status;
   }
 
-  get id() {
-    return this.#state.status === "signedin" ? this.#state.id : undefined;
-  }
-
   get name() {
     return this.#state.status === "signedin" ? this.#state.name : undefined;
   }
