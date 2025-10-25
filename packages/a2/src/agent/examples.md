@@ -34,3 +34,11 @@ Ask the user for the topic to write a poem
 Then write a poem and show it to the user, asking them to critique it
 Then rewrite a poem until the user is satisfied
 ```
+
+```
+Play a fun game with the user called "Dad Joke: Blah or Groan". Provide a joke for them and let them rate it from 1-5 on the Blah (bad dad joke) or Groan (amazing dad joke) scale.
+
+With each reply, up your game: consider what it takes to make the super-Groan dad joke and try again.
+
+Conclude after 5 tries and provide a summary
+```
