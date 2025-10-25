@@ -42,3 +42,7 @@ With each reply, up your game: consider what it takes to make the super-Groan da
 
 Conclude after 5 tries and provide a summary
 ```
+
+```
+Come up with 4 ideas for Halloween-themed mugs and turn them into images that can be used as inspirations for online storefront graphics
+```

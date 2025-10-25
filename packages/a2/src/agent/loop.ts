@@ -21,6 +21,7 @@ import { FunctionDefinition } from "./function-definition";
 import { initializeSystemFunctions } from "./functions/system";
 import { PidginTranslator } from "./pidgin-translator";
 import { AgentUI } from "./ui";
+import { initializeGenerateFunctions } from "./functions/generate";
 
 export { Loop };
 
@@ -167,6 +168,17 @@ class Loop {
     const systemFunctionDeclarations = systemFunctions.map(
       ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
     );
+    const generateFunctions = initializeGenerateFunctions({
+      fileSystem: this.#fileSystem,
+      caps: this.caps,
+      moduleArgs: this.moduleArgs,
+    });
+    const generateFunctionDefinitions = new Map<string, FunctionDefinition>(
+      generateFunctions.map((item) => [item.name!, item])
+    );
+    const generateFunctionDeclarations = generateFunctions.map(
+      ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
+    );
     const objectiveTools = objectivePidgin.tools.list().at(0);
     const tools: Tool[] = [
       {
@@ -174,6 +186,7 @@ class Loop {
         functionDeclarations: [
           ...(objectiveTools?.functionDeclarations || []),
           ...systemFunctionDeclarations,
+          ...generateFunctionDeclarations,
         ],
       },
     ];
@@ -204,7 +217,7 @@ class Loop {
       }
       contents.push(content);
       const functionCaller = new FunctionCaller(
-        systemFunctionDefinitions,
+        new Map([...systemFunctionDefinitions, ...generateFunctionDefinitions]),
         objectivePidgin.tools
       );
       const parts = content.parts || [];
