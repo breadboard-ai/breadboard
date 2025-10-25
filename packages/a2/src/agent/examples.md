@@ -46,3 +46,11 @@ Conclude after 5 tries and provide a summary
 ```
 Come up with 4 ideas for Halloween-themed mugs and turn them into images that can be used as inspirations for online storefront graphics
 ```
+
+```
+Introduce yourself to the user as the online storefront brainstorm helper. Ask them for the type of merchandise to brainstorm.
+
+Then ask them for the particular event (holiday, office party, etc.) on which to brainstorm the merchandise.
+
+Then come up with 4 ideas for the event-themed merchandise and turn them into images that can be used as inspirations for online storefront graphics.
+```

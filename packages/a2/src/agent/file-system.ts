@@ -12,7 +12,7 @@ import {
   Outcome,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
-import { err } from "@breadboard-ai/utils";
+import { err, ok } from "@breadboard-ai/utils";
 import mime from "mime";
 
 export { AgentFileSystem };
@@ -27,8 +27,16 @@ export type FileDescriptor = {
   resourceKey?: string;
 };
 
+export type AddFilesToFolioResult = {
+  existing: string[];
+  added: string[];
+  error?: string;
+};
+
 class AgentFileSystem {
   #fileCount = 0;
+
+  #folios: Map<string, Set<string>> = new Map();
 
   #files: Map<string, FileDescriptor> = new Map();
 
@@ -38,12 +46,7 @@ class AgentFileSystem {
     return name;
   }
 
-  get(path: string): Outcome<DataPart> {
-    // Do a path fix-up just in case: sometimes, Gemini decides to use
-    // "vfs/file" instead of "/vfs/file".
-    if (path.startsWith("vfs/")) {
-      path = `/${path}`;
-    }
+  #getFile(path: string): Outcome<DataPart> {
     const file = this.#files.get(path);
     if (!file) {
       return err(`file "${path}" not found`);
@@ -79,6 +82,62 @@ class AgentFileSystem {
           text: file.data,
         };
     }
+  }
+
+  #getFolioFiles(path: string): Outcome<DataPart[]> {
+    const folio = this.#folios.get(path);
+    if (!folio) {
+      return err(`Folio "${folio}" not found`);
+    }
+    const errors: string[] = [];
+    const files = [...folio].map((path) => {
+      const file = this.#getFile(path);
+      if (!ok(file)) {
+        errors.push(file.$error);
+      }
+      return file;
+    });
+    if (errors.length > 0) {
+      return err(errors.join(","));
+    }
+    return files as DataPart[];
+  }
+
+  get(path: string): Outcome<DataPart[]> {
+    // Do a path fix-up just in case: sometimes, Gemini decides to use
+    // "vfs/file" instead of "/vfs/file".
+    if (path.startsWith("vfs/")) {
+      path = `/${path}`;
+    }
+    if (path.startsWith("/vfs/folios")) {
+      return this.#getFolioFiles(path);
+    }
+    const file = this.#getFile(path);
+    if (!ok(file)) return file;
+    return [file];
+  }
+
+  createFolio(name: string): string {
+    return `/vfs/folios/${name}`;
+  }
+
+  addFilesToFolio(folioPath: string, files: string[]): AddFilesToFolioResult {
+    let folio = this.#folios.get(folioPath);
+    if (!folio) {
+      folio = new Set();
+      this.#folios.set(folioPath, folio);
+    }
+    const existing = [...folio];
+    files.forEach((file) => folio.add(file));
+    return {
+      existing,
+      added: files,
+    };
+  }
+
+  listFolioContents(folioPath: string): string[] {
+    const folio = this.#folios.get(folioPath);
+    return [...(folio || [])];
   }
 
   add(part: DataPart): Outcome<string> {

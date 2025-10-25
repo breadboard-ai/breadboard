@@ -169,5 +169,95 @@ uploaded by the user, populated when the "type" is "image", or "video".`),
         return args.ui.requestUserInput(user_message, type);
       }
     ),
+    defineFunction(
+      {
+        name: "system_create_folio",
+        description: `Creates a folio with the provided name. A folio is a
+collection of files. Folios can be used to group files so that they could be
+referenced together. For example, you can create a folio to collect all files relevant to the fulfilling the objective, like a "work" folio. 
+
+Folios are more like groupings rather than folders. Files that are added to the
+folio still retain their original paths, but now also belong to the folio.
+Same file can be part of multiple folios.
+
+Folios are files and all have this VFS path structure:
+"/vfs/folios/[name_of_folio]".
+
+Folios can be referenced as files, like so:
+<file src="/vfs/folios/blah" />
+Such a reference is equivalent to referencing all files within the folio in 
+their insertion order. For example, if a folio "blah" contains three files:
+"/vfs/image1.png", "/vfs/text7.md" and "/vfs/file10.pdf", 
+then  
+
+"<file src="/vfs/folios/blah" />" 
+
+is equivalent to:
+
+<file src="/vfs/image1.png" />
+<file src="/vfs/text7.md" />
+<file src="/vfs/file10.pdf" />
+`,
+        parameters: {
+          name: z.string().describe(`Name of the folio. This is the name tha
+will come after "/vfs/folios/" prefix in the file path. Use snake_case for
+naming.`),
+        },
+        response: {
+          file_path: z.string().describe(`The VFS path to the folio. Will be in 
+the form of "/vfs/folios/[name_of_folio]".`),
+        },
+      },
+      async ({ name }) => {
+        return { file_path: args.fileSystem.createFolio(name) };
+      }
+    ),
+    defineFunction(
+      {
+        name: "system_add_files_to_folio",
+        description: `Adds files to the folio`,
+        parameters: {
+          folio_file_path: z.string().describe(`The VFS path to the folio to
+which to add files`),
+          files_to_add: z.array(
+            z.string().describe(`The VFS path to a file to
+add to the folio`)
+          ),
+        },
+        response: {
+          report: z.string().describe(`A brief report on the updated contents of
+the file`),
+        },
+      },
+      async ({ folio_file_path, files_to_add }) => {
+        const result = args.fileSystem.addFilesToFolio(
+          folio_file_path,
+          files_to_add
+        );
+
+        return {
+          report: `Added files: ${result.added.join(", ")}`,
+        };
+      }
+    ),
+    defineFunction(
+      {
+        name: "system_list_folio_contents",
+        description: `Lists all files currently in the folio`,
+        parameters: {
+          folio_file_path: z.string().describe(`The VFS path to the folio`),
+        },
+        response: {
+          file_paths: z.array(
+            z.string().describe(`The VFS path to a file that is in this folio`)
+          ),
+        },
+      },
+      async ({ folio_file_path }) => {
+        return {
+          file_paths: args.fileSystem.listFolioContents(folio_file_path),
+        };
+      }
+    ),
   ];
 }
