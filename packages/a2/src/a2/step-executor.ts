@@ -23,7 +23,7 @@ import {
   toLLMContentInline,
   toLLMContentStored,
 } from "./utils";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 const DEFAULT_BACKEND_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
@@ -137,7 +137,7 @@ async function executeTool<
   T extends JsonSerializable = Record<string, JsonSerializable>,
 >(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   api: string,
   params: Record<string, string>
 ): Promise<Outcome<T | string>> {
@@ -199,7 +199,7 @@ async function getBackendUrl(caps: Capabilities) {
 
 async function executeStep(
   caps: Capabilities,
-  { fetchWithCreds }: A2ModuleFactoryArgs,
+  { fetchWithCreds }: A2ModuleArgs,
   body: ExecuteStepRequest
 ): Promise<Outcome<ExecutionOutput>> {
   const model = body.planStep.options?.modelName || body.planStep.stepName;

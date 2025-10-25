@@ -13,7 +13,7 @@ import { err, ok } from "../a2/utils";
 import { exp, query } from "./api";
 import { DOC_MIME_TYPE, markdownToContext } from "./docs";
 import type { ConnectorConfiguration } from "./types";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -31,7 +31,7 @@ type Outputs = {
 async function invoke(
   { id, info: { configuration } }: Inputs,
   _caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<Outputs>> {
   const gettingDoc = await getCollector(moduleArgs, id, configuration?.file);
   if (!ok(gettingDoc)) return gettingDoc;
@@ -43,7 +43,7 @@ async function invoke(
  * doc to which context is appended.
  */
 async function getCollector(
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   connectorId: string,
   file: ConnectorConfiguration["file"] | undefined
 ): Promise<Outcome<LLMContent[]>> {
@@ -69,7 +69,7 @@ async function getCollector(
 
 class Exporter {
   constructor(
-    private readonly moduleArgs: A2ModuleFactoryArgs,
+    private readonly moduleArgs: A2ModuleArgs,
     public readonly id: string,
     public readonly mimeType: string | undefined
   ) {}

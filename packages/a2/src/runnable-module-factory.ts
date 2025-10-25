@@ -36,19 +36,17 @@ export { createA2ModuleFactory };
 const URL_PREFIX = "embed://a2/";
 const URL_SUFFIX = ".bgl.json";
 
-export type A2ModuleFactoryArgs = {
+export type A2ModuleArgs = {
   mcpClientManager: McpClientManager;
   fetchWithCreds: typeof globalThis.fetch;
 };
 
-function createA2ModuleFactory(
-  args: A2ModuleFactoryArgs
-): RunnableModuleFactory {
+function createA2ModuleFactory(args: A2ModuleArgs): RunnableModuleFactory {
   return new A2ModuleFactory(args);
 }
 
 class A2ModuleFactory implements RunnableModuleFactory {
-  constructor(private readonly args: A2ModuleFactoryArgs) {}
+  constructor(private readonly args: A2ModuleArgs) {}
 
   getDir(url?: string): Outcome<string> {
     if (!url) {
@@ -161,7 +159,7 @@ function createCallableCapabilities(
 type InvokeFunction = (
   inputs: InvokeInputs,
   capabilities?: CapabilitySpec,
-  args?: A2ModuleFactoryArgs
+  args?: A2ModuleArgs
 ) => Promise<OutputValues>;
 
 type DescribeFunction = (
@@ -172,7 +170,7 @@ type DescribeFunction = (
 class A2Module implements RunnableModule {
   constructor(
     private readonly dir: string,
-    private readonly args: A2ModuleFactoryArgs,
+    private readonly args: A2ModuleArgs,
     private readonly capabilities?: CapabilitiesManager
   ) {}
 

@@ -15,7 +15,7 @@ import { report } from "./output";
 import { Template } from "./template";
 import { ToolManager } from "./tool-manager";
 import { addUserTurn, err, ok, toLLMContent, toText } from "./utils";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 const MAKE_CODE_ICON = "generative-code";
 
@@ -33,7 +33,7 @@ export { invoke as default, describe };
 
 function gatheringRequest(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   contents: LLMContent[] | undefined,
   instruction: LLMContent,
   language: string,
@@ -67,7 +67,7 @@ to be used to create an accurate prompt for a text-to-${language} model.
 
 function promptRequest(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   contents: LLMContent[] | undefined,
   instruction: LLMContent,
   language: string
@@ -126,7 +126,7 @@ If writing JavaScript, and where a variable is private, use private fields (#fie
 
 function codeRequest(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   prompt: LLMContent,
   language: string
 ): GeminiPrompt {
@@ -154,7 +154,7 @@ export type GeminiPromptOutput = {
 class GeminiPrompt {
   constructor(
     private readonly caps: Capabilities,
-    private readonly moduleArgs: A2ModuleFactoryArgs,
+    private readonly moduleArgs: A2ModuleArgs,
     public readonly inputs: GeminiInputs,
     public readonly toolManager?: ToolManager
   ) {}
@@ -207,7 +207,7 @@ const MAX_RETRIES = 5;
 async function invoke(
   { context, instruction, language, ...params }: CodeGeneratorInputs,
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<CodeGeneratorOutputs>> {
   context ??= [];
 

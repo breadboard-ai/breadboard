@@ -7,7 +7,7 @@
 import { CallToolResultContent, McpClient } from "@breadboard-ai/mcp";
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 import { StreamableReporter } from "./output";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 import { filterUndefined, ok } from "@breadboard-ai/utils";
 import { err, ErrorWithMetadata } from "./utils";
 import { DescriberResult } from "./common";
@@ -31,7 +31,7 @@ class McpToolAdapter {
 
   constructor(
     private readonly caps: Capabilities,
-    moduleArgs: A2ModuleFactoryArgs,
+    moduleArgs: A2ModuleArgs,
     private readonly url: string
   ) {
     this.#client = moduleArgs.mcpClientManager.createClient(url, {

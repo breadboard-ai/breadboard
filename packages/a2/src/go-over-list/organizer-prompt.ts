@@ -9,7 +9,7 @@ import { type Invokable } from "./types";
 import { listPrompt, listSchema, toList } from "../a2/lists";
 import { defaultSystemInstruction } from "./system-instruction";
 import { Capabilities, LLMContent } from "@breadboard-ai/types";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { organizerPrompt };
 
@@ -17,7 +17,7 @@ type InvokeReturnType = ReturnType<GeminiPrompt["invoke"]>;
 
 function organizerPrompt(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   results: LLMContent[],
   objective: LLMContent,
   makeList: boolean

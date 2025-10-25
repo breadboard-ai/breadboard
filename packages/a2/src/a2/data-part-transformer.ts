@@ -13,7 +13,7 @@ import {
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { createDataPartTansformer };
 
@@ -40,7 +40,7 @@ function maybeBlob(handle: string): string | false {
 }
 
 async function driveFileToGeminiFile(
-  { fetchWithCreds }: A2ModuleFactoryArgs,
+  { fetchWithCreds }: A2ModuleArgs,
   part: FileDataPart
 ): Promise<Outcome<FileDataPart>> {
   const fileId = part.fileData.fileUri.replace(/^drive:\/+/, "");
@@ -76,7 +76,7 @@ async function driveFileToGeminiFile(
 }
 
 async function blobToGeminiFile(
-  { fetchWithCreds }: A2ModuleFactoryArgs,
+  { fetchWithCreds }: A2ModuleArgs,
   blobId: string
 ): Promise<Outcome<FileDataPart>> {
   try {
@@ -98,7 +98,7 @@ async function blobToGeminiFile(
 }
 
 function createDataPartTansformer(
-  moduleArgs: A2ModuleFactoryArgs
+  moduleArgs: A2ModuleArgs
 ): DataPartTransformer {
   return {
     persistPart: async function (

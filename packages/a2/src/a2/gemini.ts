@@ -14,7 +14,7 @@ import {
   Schema,
 } from "@breadboard-ai/types";
 import { transformDataParts } from "@breadboard-ai/data";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 import { createDataPartTansformer } from "./data-part-transformer";
 
 const defaultSafetySettings = (): SafetySetting[] => [
@@ -371,7 +371,7 @@ function textToJson(content: LLMContent): LLMContent {
  * Breadboard-specific extensions to LLM Content
  */
 async function conformBody(
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   body: GeminiBody
 ): Promise<Outcome<GeminiBody>> {
   const preDataTransformContents = flattenContext(
@@ -400,7 +400,7 @@ async function conformBody(
 
 async function callAPI(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   retries: number,
   model: string,
   body: GeminiBody
@@ -636,7 +636,7 @@ function kindFromStatus(status: number): ErrorMetadata["kind"] {
 async function invoke(
   inputs: GeminiInputs,
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<GeminiOutputs>> {
   const validatingInputs = validateInputs(inputs);
   if (!ok(validatingInputs)) {

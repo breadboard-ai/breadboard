@@ -9,7 +9,7 @@ import { defineFunction, FunctionDefinition } from "../function-definition";
 import { AgentFileSystem } from "../file-system";
 import { callGeminiImage } from "../../a2/image-utils";
 import { Capabilities } from "@breadboard-ai/types";
-import { A2ModuleFactoryArgs } from "../../runnable-module-factory";
+import { A2ModuleArgs } from "../../runnable-module-factory";
 import { err, ok } from "@breadboard-ai/utils";
 
 export { initializeGenerateFunctions };
@@ -17,7 +17,7 @@ export { initializeGenerateFunctions };
 export type GenerateFunctionArgs = {
   fileSystem: AgentFileSystem;
   caps: Capabilities;
-  moduleArgs: A2ModuleFactoryArgs;
+  moduleArgs: A2ModuleArgs;
 };
 
 function initializeGenerateFunctions(

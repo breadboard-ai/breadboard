@@ -16,7 +16,7 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -50,7 +50,7 @@ const MODES: Record<
 async function invoke(
   { context }: Inputs,
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<Outputs>> {
   const args = getArguments(context);
   if (!ok(args)) return args;

@@ -11,7 +11,7 @@ import {
 import { type DescriberResult } from "./common";
 import gemini, { defaultSafetySettings } from "./gemini";
 import { err, ok } from "./utils";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 type AudioGeneratorInputs = {
   context: LLMContent[];
@@ -26,7 +26,7 @@ export { invoke as default, describe };
 async function invoke(
   { context }: AudioGeneratorInputs,
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AudioGeneratorOutputs>> {
   // 1) Get last LLMContent from input.
   const prompt =

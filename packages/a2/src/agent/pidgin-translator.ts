@@ -17,7 +17,7 @@ import { mergeTextParts, toText } from "../a2/utils";
 import { AgentFileSystem } from "./file-system";
 import { err, ok } from "@breadboard-ai/utils";
 import { SimplifiedToolManager, ToolManager } from "../a2/tool-manager";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { PidginTranslator };
 
@@ -53,7 +53,7 @@ const LINK_PARSE_REGEX = /<a\s+href\s*=\s*"([^"]*)"\s*>\s*([^<]*)\s*<\/a>/;
 class PidginTranslator {
   constructor(
     private readonly caps: Capabilities,
-    private readonly moduleArgs: A2ModuleFactoryArgs,
+    private readonly moduleArgs: A2ModuleArgs,
     private readonly fileSystem: AgentFileSystem
   ) {}
 

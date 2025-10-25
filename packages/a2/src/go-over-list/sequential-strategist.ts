@@ -7,7 +7,7 @@ import { report } from "../a2/output";
 import { ok, toLLMContent } from "../a2/utils";
 import { getPlan, plannerPrompt } from "./planner-prompt";
 import { type ExecuteStepFunction, type Strategist } from "./types";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { SequentialStrategist };
 
@@ -18,7 +18,7 @@ All tasks in the plan will be executed in sequence, building on each other.`;
 
   async execute(
     caps: Capabilities,
-    moduleArgs: A2ModuleFactoryArgs,
+    moduleArgs: A2ModuleArgs,
     execute: ExecuteStepFunction,
     mutableContext: LLMContent[],
     objective: LLMContent

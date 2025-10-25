@@ -14,7 +14,7 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { ConnectorManager, createConfigurator };
 
@@ -118,13 +118,13 @@ export type ToolHandler<
   title: string;
   list(
     caps: Capabilities,
-    moduleArgs: A2ModuleFactoryArgs,
+    moduleArgs: A2ModuleArgs,
     id: string,
     info: ConnectorInfo<C>
   ): Promise<Outcome<ListMethodOutput>>;
   invoke(
     caps: Capabilities,
-    moduleArgs: A2ModuleFactoryArgs,
+    moduleArgs: A2ModuleArgs,
     id: string,
     info: ConnectorInfo<C>,
     name: string,

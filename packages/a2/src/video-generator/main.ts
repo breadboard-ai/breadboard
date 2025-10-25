@@ -35,7 +35,7 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 import { getBucketId } from "../a2/get-bucket-id";
 import { toBlobStoredData, toGcsAwareChunk } from "../a2/to-blob-stored-data";
 
@@ -91,7 +91,7 @@ export { invoke as default, describe };
 
 async function callVideoGen(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   prompt: string,
   imageContent: LLMContent | undefined,
   disablePromptRewrite: boolean,
@@ -183,7 +183,7 @@ async function invoke(
     ...params
   }: VideoGeneratorInputs,
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<VideoGeneratorOutputs>> {
   const { modelName } = getModel(modelId);
   context ??= [];

@@ -20,7 +20,7 @@ import {
   Outcome,
   OutputValues,
 } from "@breadboard-ai/types";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { forEach };
 
@@ -133,7 +133,7 @@ export type AsyncForEachCallback = (
 
 async function forEach(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   inputs: ForEachInputs,
   callback: AsyncForEachCallback
 ): Promise<OutputValues> {

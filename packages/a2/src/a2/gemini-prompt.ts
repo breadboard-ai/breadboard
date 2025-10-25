@@ -11,7 +11,7 @@ import {
 import gemini, { type Candidate, type GeminiInputs } from "./gemini";
 import { ToolManager } from "./tool-manager";
 import { addUserTurn, err, ok } from "./utils";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { GeminiPrompt };
 
@@ -59,7 +59,7 @@ class GeminiPrompt {
 
   constructor(
     private readonly caps: Capabilities,
-    private readonly moduleArgs: A2ModuleFactoryArgs,
+    private readonly moduleArgs: A2ModuleArgs,
     public readonly inputs: GeminiInputs,
     options?: ToolManager | GeminiPromptOptions
   ) {

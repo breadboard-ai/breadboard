@@ -14,7 +14,7 @@ import {
   OutputValues,
   Schema,
 } from "@breadboard-ai/types";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -268,7 +268,7 @@ function getMode(modeId: ModeId | undefined): GenerationModes {
 async function invoke(
   { "generation-mode": mode, "p-for-each": useForEach, ...rest }: Inputs,
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs
+  moduleArgs: A2ModuleArgs
 ) {
   const { url: $board, type, modelName } = getMode(mode);
   const flags = await readFlags(caps);

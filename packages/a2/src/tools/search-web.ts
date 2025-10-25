@@ -4,7 +4,7 @@
 
 import { Capabilities, Outcome, Schema } from "@breadboard-ai/types";
 import { ok, toText } from "../a2/utils";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 import { StreamableReporter } from "../a2/output";
 import { ToolManager } from "../a2/tool-manager";
 import { GeminiPrompt } from "../a2/gemini-prompt";
@@ -39,7 +39,7 @@ export type CustomSearchEngineResponse = {
 
 async function generateSummary(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   query: string,
   reporter: StreamableReporter
 ): Promise<Outcome<string>> {
@@ -100,7 +100,7 @@ ${result.webpage_text_content}
 
 async function getSearchLinks(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   query: string,
   reporter: StreamableReporter
 ): Promise<Outcome<string>> {
@@ -121,7 +121,7 @@ async function getSearchLinks(
 async function invoke(
   { query }: SearchWebInputs,
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<SearchWebOutputs>> {
   const reporter = new StreamableReporter(caps, {
     title: "Searching Web",

@@ -5,7 +5,7 @@
 import { Capabilities, Outcome, Schema } from "@breadboard-ai/types";
 import { err, ok } from "../a2/utils";
 import { executeTool } from "../a2/step-executor";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -24,7 +24,7 @@ export type GetContentFromUrlResponse = {
 
 async function getContentFromUrl(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   url: string
 ): Promise<Outcome<string>> {
   const executing = await executeTool<GetContentFromUrlResponse>(
@@ -49,7 +49,7 @@ async function getContentFromUrl(
 async function invoke(
   inputs: Inputs,
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<Outputs>> {
   const { url } = inputs;
   if (!url) {

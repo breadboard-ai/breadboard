@@ -13,7 +13,7 @@ import {
   thinkingPlannerPrompt,
 } from "./planner-prompt";
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { ThinkStrategist };
 
@@ -39,7 +39,7 @@ Now think real hard: do you need to organize or summarize results?
 
   async execute(
     caps: Capabilities,
-    moduleArgs: A2ModuleFactoryArgs,
+    moduleArgs: A2ModuleArgs,
     execute: ExecuteStepFunction,
     mutableContext: LLMContent[],
     objective: LLMContent,
