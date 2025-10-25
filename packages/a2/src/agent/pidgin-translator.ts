@@ -16,8 +16,15 @@ import { Template } from "../a2/template";
 import { mergeTextParts, toText } from "../a2/utils";
 import { AgentFileSystem } from "./file-system";
 import { err, ok } from "@breadboard-ai/utils";
+import { SimplifiedToolManager, ToolManager } from "../a2/tool-manager";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 
 export { PidginTranslator };
+
+export type ToPidginResult = {
+  text: string;
+  tools: SimplifiedToolManager;
+};
 
 export type PidginTextPart = {
   text: string;
@@ -46,6 +53,7 @@ const LINK_PARSE_REGEX = /<a\s+href\s*=\s*"([^"]*)"\s*>\s*([^<]*)\s*<\/a>/;
 class PidginTranslator {
   constructor(
     private readonly caps: Capabilities,
+    private readonly moduleArgs: A2ModuleFactoryArgs,
     private readonly fileSystem: AgentFileSystem
   ) {}
 
@@ -102,8 +110,10 @@ class PidginTranslator {
   async toPidgin(
     content: LLMContent,
     params: Params
-  ): Promise<Outcome<string>> {
+  ): Promise<Outcome<ToPidginResult>> {
     const template = new Template(this.caps, content);
+    const toolManager = new ToolManager(this.caps, this.moduleArgs);
+
     const errors: string[] = [];
     const pidginContent = await template.asyncSimpleSubstitute(
       async (param) => {
@@ -147,9 +157,20 @@ class PidginTranslator {
               `Agent: Params aren't supported in template substitution`
             );
             return "";
-          case "tool":
+          case "tool": {
+            const addingTool = await toolManager.addTool(
+              param.path,
+              param.instance
+            );
+            if (!ok(addingTool)) {
+              errors.push(addingTool.$error);
+              return "";
+            }
+            return addingTool;
+          }
           default:
-            return param.title;
+            console.warn(`Unknown tyep of param`, param);
+            return "";
         }
 
         function substituteParts(
@@ -178,6 +199,6 @@ class PidginTranslator {
       return err(`Agent: ${errors.join(",")}`);
     }
 
-    return toText(pidginContent);
+    return { text: toText(pidginContent), tools: toolManager };
   }
 }
