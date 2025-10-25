@@ -4,13 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import z from "zod";
-import { defineFunction, FunctionDefinition } from "../function-definition";
-import { AgentFileSystem } from "../file-system";
-import { callGeminiImage } from "../../a2/image-utils";
-import { Capabilities } from "@breadboard-ai/types";
-import { A2ModuleArgs } from "../../runnable-module-factory";
+import { Capabilities, Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
+import z from "zod";
+import gemini, { GeminiAPIOutputs, GeminiInputs, Tool } from "../../a2/gemini";
+import { callGeminiImage } from "../../a2/image-utils";
+import { A2ModuleArgs } from "../../runnable-module-factory";
+import { AgentFileSystem } from "../file-system";
+import { defineFunction, FunctionDefinition } from "../function-definition";
+import { defaultSystemInstruction } from "../../generate-text/system-instruction";
+import { mergeTextParts } from "../../a2/utils";
 
 export { initializeGenerateFunctions };
 
@@ -104,6 +107,84 @@ The following strategies will help you create effective prompts to generate exac
           return err(errors.join(","));
         }
         return { images };
+      }
+    ),
+    defineFunction(
+      {
+        name: "generate_text",
+        description: `An extremely versatile text generator, powered by Gemini
+Use it for any tasks that involve generation of text. Supports multimodal 
+content input.`,
+        parameters: {
+          prompt: z.string().describe(`Detailed prompt to use for text
+generation.`),
+          context: z.array(z.string().describe(`The VFS path to a file`))
+            .describe(`A list of files or folios to use as context for the 
+prompt.`),
+          search_grounding: z.boolean().describe(`Whether or not to use
+Google Search grounding. Grounding with Google Search connects the Gemini model
+to real-time web content and works with all available languages. This allows 
+Gemini to provide more accurate answers and cite verifiable sources beyond its 
+knowledge cutoff.`),
+          maps_grounding: z.boolean().describe(`Whether or not to use
+Google Maps grounding. Grounding with Google Maps connects the generative 
+capabilities of Gemini with the rich, factual, and up-to-date data of Google 
+Maps`),
+        },
+        response: {
+          file_path: z.string().describe(`The VFS path with the result`),
+        },
+      },
+      async ({ prompt, search_grounding, maps_grounding, context }) => {
+        console.log(
+          "Generating text from prompt",
+          prompt,
+          "with context",
+          context
+        );
+        let tools: Tool[] | undefined = [];
+        if (search_grounding) {
+          tools.push({ googleSearch: {} });
+        }
+        if (maps_grounding) {
+          tools.push({ googleMaps: {} });
+        }
+        if (tools.length === 0) tools = undefined;
+        const parts = context
+          .flatMap((path) => {
+            const file = fileSystem.get(path);
+            if (!ok(file)) return null;
+            return file;
+          })
+          .filter((file) => file !== null);
+        parts.unshift({ text: prompt });
+        const contents = [{ parts }];
+        const inputs: GeminiInputs = {
+          model: "gemini-pro-latest",
+          systemInstruction: defaultSystemInstruction(),
+          body: {
+            contents,
+            tools,
+          },
+        };
+        const generating = (await gemini(
+          inputs,
+          caps,
+          moduleArgs
+        )) as Outcome<GeminiAPIOutputs>;
+        if (!ok(generating)) return generating;
+        const content = generating.candidates.at(0)?.content;
+        if (!content || content.parts.length === 0) {
+          return err(`No content generated`);
+        }
+        const textParts = mergeTextParts(content.parts);
+        if (textParts.length > 1) {
+          console.warn(`More than one part generated`, content);
+        }
+        const part = textParts[0];
+        const file_path = fileSystem.add(part);
+        if (!ok(file_path)) return file_path;
+        return { file_path };
       }
     ),
   ];

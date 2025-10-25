@@ -133,6 +133,8 @@ export type Tool = {
   functionDeclarations?: FunctionDeclaration[];
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   googleSearch?: {};
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  googleMaps?: {};
   codeExecution?: CodeExecution;
 };
 
