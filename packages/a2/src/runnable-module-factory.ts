@@ -11,6 +11,7 @@ import {
   InputValues,
   OutputValues,
   NodeMetadata,
+  NodeHandlerContext,
 } from "@breadboard-ai/types";
 import {
   CapabilitiesManager,
@@ -69,6 +70,7 @@ class A2ModuleFactory implements RunnableModuleFactory {
   async createRunnableModule(
     _mutable: MutableGraph,
     graph: GraphDescriptor,
+    _context: NodeHandlerContext,
     capabilities?: CapabilitiesManager
   ): Promise<Outcome<RunnableModule>> {
     const dir = this.getDir(graph.url);

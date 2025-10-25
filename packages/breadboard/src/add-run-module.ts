@@ -87,6 +87,7 @@ function addRunModule(
             const module = await factory.createRunnableModule(
               mutable,
               graph,
+              context,
               new CapabilitiesManagerImpl(context)
             );
             if (!ok(module)) {
@@ -125,7 +126,8 @@ function addRunModule(
                 if (mutable) {
                   const module = await factory.createRunnableModule(
                     mutable,
-                    graph
+                    graph,
+                    context
                   );
                   if (ok(module)) {
                     try {

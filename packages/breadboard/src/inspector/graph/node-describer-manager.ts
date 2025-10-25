@@ -149,6 +149,7 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
           );
         }
         const result = await invokeMainDescriber(
+          {},
           this.mutable,
           handle.graph(),
           options.inputs!,
@@ -175,6 +176,7 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
           );
         }
         const result = await invokeMainDescriber(
+          {},
           this.mutable,
           handle.graph(),
           options.inputs!,

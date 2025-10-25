@@ -10,6 +10,7 @@ import {
   ModuleIdentifier,
   MutableGraph,
   NodeDescriberResult,
+  NodeHandlerContext,
 } from "@breadboard-ai/types";
 import { Schema } from "jsonschema";
 import { filterEmptyValues, ok } from "@breadboard-ai/utils";
@@ -18,6 +19,7 @@ import { CapabilitiesManager } from "@breadboard-ai/types/sandbox.js";
 export { invokeDescriber, invokeMainDescriber };
 
 async function invokeDescriber(
+  context: NodeHandlerContext,
   moduleId: ModuleIdentifier,
   mutable: MutableGraph,
   graph: GraphDescriptor,
@@ -34,6 +36,7 @@ async function invokeDescriber(
   const module = await mutable.store.sandbox.createRunnableModule(
     mutable,
     graph,
+    context,
     capabilities
   );
   if (!ok(module)) return;
@@ -71,6 +74,7 @@ async function invokeDescriber(
 }
 
 async function invokeMainDescriber(
+  context: NodeHandlerContext,
   mutable: MutableGraph,
   graph: GraphDescriptor,
   inputs: InputValues,
@@ -86,6 +90,7 @@ async function invokeMainDescriber(
   const module = await mutable.store.sandbox.createRunnableModule(
     mutable,
     graph,
+    context,
     capabilities
   );
   if (!ok(module)) return;
