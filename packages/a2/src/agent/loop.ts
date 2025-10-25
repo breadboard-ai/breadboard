@@ -14,6 +14,7 @@ import gemini, {
   FunctionDeclaration,
   GeminiAPIOutputs,
   GeminiInputs,
+  Tool,
 } from "../a2/gemini";
 import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 import { llm } from "../a2/utils";
@@ -115,7 +116,7 @@ class Loop {
     private readonly moduleArgs: A2ModuleFactoryArgs
   ) {
     this.#fileSystem = new AgentFileSystem();
-    this.#translator = new PidginTranslator(caps, this.#fileSystem);
+    this.#translator = new PidginTranslator(caps, moduleArgs, this.#fileSystem);
     this.#ui = new AgentUI(caps, this.#translator);
   }
 
@@ -127,7 +128,7 @@ class Loop {
     if (!ok(objectivePidgin)) return objectivePidgin;
 
     const contents: LLMContent[] = [
-      llm`<objective>${objectivePidgin}</objective>`.asContent(),
+      llm`<objective>${objectivePidgin.text}</objective>`.asContent(),
     ];
     let terminateLoop = false;
     let result: AgentRawResult = {
@@ -164,12 +165,22 @@ class Loop {
         };
       },
     });
-    const functions = new Map<string, FunctionDefinition>(
+    const systemFunctionDefinitions = new Map<string, FunctionDefinition>(
       systemFunctions.map((item) => [item.name!, item])
     );
-    const functionDeclarations = systemFunctions.map(
+    const systemFunctionDeclarations = systemFunctions.map(
       ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
     );
+    const objectiveTools = objectivePidgin.tools.list().at(0)!;
+    const tools: Tool[] = [
+      {
+        ...objectiveTools,
+        functionDeclarations: [
+          ...objectiveTools.functionDeclarations!,
+          ...systemFunctionDeclarations,
+        ],
+      },
+    ];
     while (!terminateLoop) {
       const inputs: GeminiInputs = {
         model: AGENT_MODEL,
@@ -182,7 +193,7 @@ class Loop {
           toolConfig: {
             functionCallingConfig: { mode: "ANY" },
           },
-          tools: [{ functionDeclarations }],
+          tools,
         },
       };
       const generated = (await gemini(
@@ -208,20 +219,28 @@ class Loop {
         if ("functionCall" in part) {
           const { functionCall } = part;
           const { name, args } = functionCall;
-          const fn = functions.get(name!);
-          if (!fn || !fn.handler) {
-            console.error(`Unknown function`, name);
-            return err(`Unknown function "${name}"`);
-          }
-          console.log("CALLING FUNCTION", name);
-          const response = await fn.handler(args as Record<string, string>);
-          if (!ok(response)) return response;
-          const functionResponse: FunctionResponseCapabilityPart["functionResponse"] =
-            {
+          const fn = systemFunctionDefinitions.get(name!);
+          if (fn && fn.handler) {
+            console.log("CALLING SYSTEM FUNCTION", name);
+            const response = await fn.handler(args as Record<string, string>);
+            if (!ok(response)) return response;
+            const functionResponse = {
               name,
               response,
-            };
-          contents.push({ parts: [{ functionResponse }] });
+            } satisfies FunctionResponseCapabilityPart["functionResponse"];
+            contents.push({ parts: [{ functionResponse }], role: "user" });
+          } else {
+            console.log("CALLING FUNCTION");
+            const callingTool = await objectivePidgin.tools.callTool(part);
+            if (!ok(callingTool)) return callingTool;
+            const parts = callingTool.results
+              .at(0)
+              ?.parts?.filter((part) => "functionResponse" in part);
+            if (!parts || parts.length === 0) {
+              return err(`Empty response from function "${name}"`);
+            }
+            contents.push({ parts, role: "user" });
+          }
         }
       }
     }

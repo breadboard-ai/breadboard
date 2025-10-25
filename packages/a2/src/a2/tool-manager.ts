@@ -4,6 +4,7 @@
 
 import {
   Capabilities,
+  FunctionCallCapabilityPart,
   FunctionResponseCapabilityPart,
   LLMContent,
   Outcome,
@@ -15,7 +16,6 @@ import type {
   ExportDescriberResult,
   ToolOutput,
 } from "./common";
-import { ListToolResult } from "./connector-manager";
 import {
   type FunctionDeclaration,
   type GeminiSchema,
@@ -57,13 +57,22 @@ export type ToolDescriptor =
       url: string;
     };
 
+export type CallToolResult = {
+  saveOutputs: boolean;
+  results: LLMContent[];
+};
+
+export type SimplifiedToolManager = {
+  callTool(part: FunctionCallCapabilityPart): Promise<Outcome<CallToolResult>>;
+  list(): Tool[];
+};
+
 export { ToolManager };
 
-class ToolManager {
+class ToolManager implements SimplifiedToolManager {
   #hasSearch = false;
   #hasCodeExection = false;
   tools: Map<string, ToolHandle> = new Map();
-  toolLists: Map<string, ListToolResult[]> = new Map();
   errors: string[] = [];
 
   constructor(
@@ -182,15 +191,10 @@ class ToolManager {
     const client = new McpToolAdapter(this.caps, this.moduleArgs, url);
     if (instance) {
       // This is an integration. Use MCP connector.
-      let toolList = this.toolLists.get(url);
-      if (!toolList) {
-        const tools = await client.listTools();
-        if (!ok(tools)) return tools;
-        toolList = tools;
-        this.toolLists.set(url, toolList);
-      }
+      const tools = await client.listTools();
+      if (!ok(tools)) return tools;
       const names: string[] = [];
-      for (const tool of toolList) {
+      for (const tool of tools) {
         const { url, description } = tool;
         const { title } = description;
         if (title !== instance) continue;
@@ -200,8 +204,6 @@ class ToolManager {
         console.log("DESCRIPTION", description);
         this.#addOneTool(url, description, false, client);
       }
-      // Return empty string, which will inform the
-      // substitution machinery to just reuse title.
       return names.join(", ");
     }
 
@@ -292,6 +294,64 @@ class ToolManager {
       });
     }
     return !hasInvalidTools;
+  }
+
+  /**
+   * Extracted out of callTools, but is slightly different, because we don't
+   * need to handle custom tools or subgraphs or anything like that.
+   * TODO: Reconcile with callTools
+   */
+  async callTool(
+    part: FunctionCallCapabilityPart
+  ): Promise<Outcome<CallToolResult>> {
+    const { args, name } = part.functionCall;
+    const handle = this.tools.get(name);
+    if (!handle) {
+      return err(`Unknown tool: "${name}"`);
+    }
+
+    const { url, passContext, client } = handle;
+    console.log("CALLING TOOL", url, args, passContext);
+    let callingTool;
+    if (client) {
+      callingTool = await client.callTool(
+        name,
+        args as Record<string, unknown>
+      );
+    } else {
+      callingTool = await this.caps.invoke({
+        $board: url,
+        ...normalizeArgs(args, [], passContext),
+      });
+    }
+    if (!ok(callingTool)) return callingTool;
+
+    let saveOutputs = false;
+    const results: LLMContent[] = [];
+    const toolResult = callingTool as ToolOutput;
+    if ("structured_result" in toolResult) {
+      // The MCP output
+      results.push(toolResult.structured_result);
+      if (toolResult.saveOutputs) {
+        saveOutputs = true;
+      }
+    } else {
+      // The traditional path, where a string is returned.
+      const responsePart: FunctionResponseCapabilityPart = {
+        functionResponse: {
+          name,
+          response: callingTool,
+        },
+      };
+      const toolResponseContent: LLMContent = {
+        role: "user",
+        parts: [responsePart],
+      };
+      console.log("toolResponseContent: ", toolResponseContent);
+      results.push(toolResponseContent);
+      console.log("gemini-prompt processResponse: ", results);
+    }
+    return { saveOutputs, results };
   }
 
   async callTools(
