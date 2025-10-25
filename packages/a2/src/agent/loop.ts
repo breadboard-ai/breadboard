@@ -4,28 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  Capabilities,
-  DataPart,
-  FunctionResponseCapabilityPart,
-  LLMContent,
-  Outcome,
-} from "@breadboard-ai/types";
+import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
+import { err, ok } from "@breadboard-ai/utils";
+import { Params } from "../a2/common";
 import gemini, {
   FunctionDeclaration,
   GeminiAPIOutputs,
   GeminiInputs,
   Tool,
 } from "../a2/gemini";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 import { llm } from "../a2/utils";
-import { err, ok } from "@breadboard-ai/utils";
-import { initializeSystemFunctions } from "./functions/system";
-import { FunctionDefinition } from "./function-definition";
+import { A2ModuleFactoryArgs } from "../runnable-module-factory";
 import { AgentFileSystem } from "./file-system";
+import { FunctionCaller } from "./function-caller";
+import { FunctionDefinition } from "./function-definition";
+import { initializeSystemFunctions } from "./functions/system";
 import { PidginTranslator } from "./pidgin-translator";
-import { Params } from "../a2/common";
 import { AgentUI } from "./ui";
+import { initializeGenerateFunctions } from "./functions/generate";
 
 export { Loop };
 
@@ -172,13 +168,25 @@ class Loop {
     const systemFunctionDeclarations = systemFunctions.map(
       ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
     );
-    const objectiveTools = objectivePidgin.tools.list().at(0)!;
+    const generateFunctions = initializeGenerateFunctions({
+      fileSystem: this.#fileSystem,
+      caps: this.caps,
+      moduleArgs: this.moduleArgs,
+    });
+    const generateFunctionDefinitions = new Map<string, FunctionDefinition>(
+      generateFunctions.map((item) => [item.name!, item])
+    );
+    const generateFunctionDeclarations = generateFunctions.map(
+      ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
+    );
+    const objectiveTools = objectivePidgin.tools.list().at(0);
     const tools: Tool[] = [
       {
         ...objectiveTools,
         functionDeclarations: [
-          ...objectiveTools.functionDeclarations!,
+          ...(objectiveTools?.functionDeclarations || []),
           ...systemFunctionDeclarations,
+          ...generateFunctionDeclarations,
         ],
       },
     ];
@@ -208,9 +216,10 @@ class Loop {
         return err(`Agent unable to proceed: no content in Gemini response`);
       }
       contents.push(content);
-      const functionPromises: Promise<
-        Outcome<FunctionResponseCapabilityPart>
-      >[] = [];
+      const functionCaller = new FunctionCaller(
+        new Map([...systemFunctionDefinitions, ...generateFunctionDefinitions]),
+        objectivePidgin.tools
+      );
       const parts = content.parts || [];
       for (const part of parts) {
         if (part.thought) {
@@ -221,53 +230,15 @@ class Loop {
           }
         }
         if ("functionCall" in part) {
-          const { functionCall } = part;
-          const { name, args } = functionCall;
-          const fn = systemFunctionDefinitions.get(name!);
-          if (fn && fn.handler) {
-            functionPromises.push(
-              (async () => {
-                console.log("CALLING SYSTEM FUNCTION", name);
-                const response = await fn.handler(
-                  args as Record<string, string>
-                );
-                if (!ok(response)) return response;
-                return {
-                  functionResponse: {
-                    name,
-                    response,
-                  },
-                };
-              })()
-            );
-          } else {
-            functionPromises.push(
-              (async () => {
-                console.log("CALLING FUNCTION");
-                const callingTool = await objectivePidgin.tools.callTool(part);
-                if (!ok(callingTool)) return callingTool;
-                const parts = callingTool.results
-                  .at(0)
-                  ?.parts?.filter((part) => "functionResponse" in part);
-                if (!parts || parts.length === 0) {
-                  return err(`Empty response from function "${name}"`);
-                }
-                return parts.at(0)!;
-              })()
-            );
-          }
+          functionCaller.call(part);
         }
       }
-      if (functionPromises.length > 0) {
-        const functionResponses = await Promise.all(functionPromises);
-        const errors = functionResponses
-          .map((response) => (!ok(functionResponses) ? response : null))
-          .filter((response) => response !== null);
-        if (errors.length > 0) {
-          return err(`Agent unable to proceed: ${errors.join(",")}`);
-        }
-        contents.push({ parts: functionResponses as DataPart[] });
+      const functionResults = await functionCaller.getResults();
+      if (!functionResults) continue;
+      if (!ok(functionResults)) {
+        return err(`Agent unable to proceed: ${functionResults.$error}`);
       }
+      contents.push(functionResults);
     }
     return this.#finalizeResult(result);
   }
