@@ -36,17 +36,23 @@ export { createA2ModuleFactory };
 const URL_PREFIX = "embed://a2/";
 const URL_SUFFIX = ".bgl.json";
 
-export type A2ModuleArgs = {
+export type A2ModuleFactoryArgs = {
   mcpClientManager: McpClientManager;
   fetchWithCreds: typeof globalThis.fetch;
 };
 
-function createA2ModuleFactory(args: A2ModuleArgs): RunnableModuleFactory {
+export type A2ModuleArgs = A2ModuleFactoryArgs & {
+  context: NodeHandlerContext;
+};
+
+function createA2ModuleFactory(
+  args: A2ModuleFactoryArgs
+): RunnableModuleFactory {
   return new A2ModuleFactory(args);
 }
 
 class A2ModuleFactory implements RunnableModuleFactory {
-  constructor(private readonly args: A2ModuleArgs) {}
+  constructor(private readonly args: A2ModuleFactoryArgs) {}
 
   getDir(url?: string): Outcome<string> {
     if (!url) {
@@ -68,12 +74,16 @@ class A2ModuleFactory implements RunnableModuleFactory {
   async createRunnableModule(
     _mutable: MutableGraph,
     graph: GraphDescriptor,
-    _context: NodeHandlerContext,
+    context: NodeHandlerContext,
     capabilities?: CapabilitiesManager
   ): Promise<Outcome<RunnableModule>> {
     const dir = this.getDir(graph.url);
     if (!ok(dir)) return dir;
-    return new A2Module(dir, this.args, capabilities);
+    const args: A2ModuleArgs = {
+      ...this.args,
+      context,
+    };
+    return new A2Module(dir, args, capabilities);
   }
 }
 
