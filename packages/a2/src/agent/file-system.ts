@@ -39,6 +39,11 @@ class AgentFileSystem {
   }
 
   get(path: string): Outcome<DataPart> {
+    // Do a path fix-up just in case: sometimes, Gemini decides to use
+    // "vfs/file" instead of "/vfs/file".
+    if (path.startsWith("vfs/")) {
+      path = `/${path}`;
+    }
     const file = this.#files.get(path);
     if (!file) {
       return err(`file "${path}" not found`);

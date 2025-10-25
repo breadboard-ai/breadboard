@@ -6,6 +6,7 @@
 
 import {
   Capabilities,
+  DataPart,
   FunctionResponseCapabilityPart,
   LLMContent,
   Outcome,
@@ -207,6 +208,9 @@ class Loop {
         return err(`Agent unable to proceed: no content in Gemini response`);
       }
       contents.push(content);
+      const functionPromises: Promise<
+        Outcome<FunctionResponseCapabilityPart>
+      >[] = [];
       const parts = content.parts || [];
       for (const part of parts) {
         if (part.thought) {
@@ -221,27 +225,48 @@ class Loop {
           const { name, args } = functionCall;
           const fn = systemFunctionDefinitions.get(name!);
           if (fn && fn.handler) {
-            console.log("CALLING SYSTEM FUNCTION", name);
-            const response = await fn.handler(args as Record<string, string>);
-            if (!ok(response)) return response;
-            const functionResponse = {
-              name,
-              response,
-            } satisfies FunctionResponseCapabilityPart["functionResponse"];
-            contents.push({ parts: [{ functionResponse }], role: "user" });
+            functionPromises.push(
+              (async () => {
+                console.log("CALLING SYSTEM FUNCTION", name);
+                const response = await fn.handler(
+                  args as Record<string, string>
+                );
+                if (!ok(response)) return response;
+                return {
+                  functionResponse: {
+                    name,
+                    response,
+                  },
+                };
+              })()
+            );
           } else {
-            console.log("CALLING FUNCTION");
-            const callingTool = await objectivePidgin.tools.callTool(part);
-            if (!ok(callingTool)) return callingTool;
-            const parts = callingTool.results
-              .at(0)
-              ?.parts?.filter((part) => "functionResponse" in part);
-            if (!parts || parts.length === 0) {
-              return err(`Empty response from function "${name}"`);
-            }
-            contents.push({ parts, role: "user" });
+            functionPromises.push(
+              (async () => {
+                console.log("CALLING FUNCTION");
+                const callingTool = await objectivePidgin.tools.callTool(part);
+                if (!ok(callingTool)) return callingTool;
+                const parts = callingTool.results
+                  .at(0)
+                  ?.parts?.filter((part) => "functionResponse" in part);
+                if (!parts || parts.length === 0) {
+                  return err(`Empty response from function "${name}"`);
+                }
+                return parts.at(0)!;
+              })()
+            );
           }
         }
+      }
+      if (functionPromises.length > 0) {
+        const functionResponses = await Promise.all(functionPromises);
+        const errors = functionResponses
+          .map((response) => (!ok(functionResponses) ? response : null))
+          .filter((response) => response !== null);
+        if (errors.length > 0) {
+          return err(`Agent unable to proceed: ${errors.join(",")}`);
+        }
+        contents.push({ parts: functionResponses as DataPart[] });
       }
     }
     return this.#finalizeResult(result);
