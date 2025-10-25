@@ -199,7 +199,7 @@ async function getBackendUrl(caps: Capabilities) {
 
 async function executeStep(
   caps: Capabilities,
-  { fetchWithCreds }: A2ModuleArgs,
+  { fetchWithCreds, context }: A2ModuleArgs,
   body: ExecuteStepRequest
 ): Promise<Outcome<ExecutionOutput>> {
   const model = body.planStep.options?.modelName || body.planStep.stepName;
@@ -224,6 +224,7 @@ async function executeStep(
         headers: {
           "Content-Type": "application/json",
         },
+        signal: context.signal,
         body: JSON.stringify(body),
       });
       if (!fetchResponse.ok) {

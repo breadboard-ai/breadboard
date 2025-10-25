@@ -12,10 +12,14 @@ export { getBucketId };
 
 async function getBucketId({
   fetchWithCreds,
+  context,
 }: A2ModuleArgs): Promise<Outcome<string>> {
   const gettingBucket = await new Memoize(async () => {
     const response = await fetchWithCreds(
-      new URL(`/api/data/transform/bucket`, window.location.href)
+      new URL(`/api/data/transform/bucket`, window.location.href),
+      {
+        signal: context.signal,
+      }
     );
     return response.json();
   }).get();

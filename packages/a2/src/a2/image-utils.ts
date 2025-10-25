@@ -53,7 +53,7 @@ async function callGeminiImage(
     let inlineChunk: InlineDataCapabilityPart["inlineData"] | null | "";
     if (isStoredData(element)) {
       const blobStoredData = await toBlobStoredData(
-        moduleArgs.fetchWithCreds,
+        moduleArgs,
         element.parts.at(-1)!
       );
       if (!ok(blobStoredData)) return blobStoredData;

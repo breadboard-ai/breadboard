@@ -6,6 +6,7 @@
 
 import { Chunk, Outcome, StoredDataCapabilityPart } from "@breadboard-ai/types";
 import { err } from "@breadboard-ai/utils";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { toBlobStoredData, toGcsAwareChunk };
 
@@ -16,7 +17,7 @@ export type BlobStoredData = {
 };
 
 async function toBlobStoredData(
-  fetchWithCreds: typeof globalThis.fetch,
+  { fetchWithCreds }: A2ModuleArgs,
   part: StoredDataCapabilityPart
 ): Promise<Outcome<BlobStoredData>> {
   const handle = part.storedData.handle;

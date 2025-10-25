@@ -823,7 +823,7 @@ async function appendSpreadsheetValues(
 }
 
 async function createMultipart(
-  { fetchWithCreds }: A2ModuleArgs,
+  { fetchWithCreds, context }: A2ModuleArgs,
   metadata: unknown,
   body: unknown,
   mimeType: string
@@ -846,6 +846,7 @@ Content-Transfer-Encoding: base64
 
 ${body}
 --${boundary}--`,
+      signal: context.signal,
     };
     const response = await fetchWithCreds(url, requestInit);
     return response.json() as Promise<Outcome<{ id: string }>>;
@@ -855,7 +856,7 @@ ${body}
 }
 
 async function api<T>(
-  { fetchWithCreds }: A2ModuleArgs,
+  { fetchWithCreds, context }: A2ModuleArgs,
   url: string,
   method: Method,
   body: unknown | null = null
@@ -863,6 +864,7 @@ async function api<T>(
   try {
     const requestInit: RequestInit = {
       method,
+      signal: context.signal,
     };
     if (body) {
       requestInit.body = JSON.stringify(body);

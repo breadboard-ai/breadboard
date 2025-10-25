@@ -428,6 +428,7 @@ async function callAPI(
       const result = await moduleArgs.fetchWithCreds(endpointURL(model), {
         method: "POST",
         body: JSON.stringify(conformedBody),
+        signal: moduleArgs.context.signal,
       });
       const json = await result.json();
       if (!result.ok) {

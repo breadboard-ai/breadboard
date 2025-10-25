@@ -128,7 +128,7 @@ async function callVideoGen(
     let imageChunk;
     if (isStoredData(imageContent)) {
       const blobStoredData = await toBlobStoredData(
-        moduleArgs.fetchWithCreds,
+        moduleArgs,
         imageContent.parts.at(-1)!
       );
       if (!ok(blobStoredData)) return blobStoredData;
