@@ -190,6 +190,7 @@ class GraphDescriberManager implements GraphDescriber {
         let result;
         if (this.handle.main() === moduleId) {
           result = await invokeMainDescriber(
+            context || {},
             this.mutable,
             this.mutable.graph,
             inputs,
@@ -200,6 +201,7 @@ class GraphDescriberManager implements GraphDescriber {
           );
         } else {
           result = await invokeDescriber(
+            context || {},
             moduleId,
             this.mutable,
             this.mutable.graph,
@@ -322,6 +324,7 @@ class ModuleDescriber implements GraphDescriber {
     context?: NodeDescriberContext
   ): Promise<NodeDescriberResult> {
     const result = await invokeDescriber(
+      context || {},
       this.moduleId,
       this.mutable,
       this.mutable.graph,

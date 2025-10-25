@@ -6,7 +6,7 @@ import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 import type { ContentMap, ExecuteStepRequest } from "./step-executor";
 import { executeStep } from "./step-executor";
 import { encodeBase64, err, mergeContent, ok } from "./utils";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { callGenWebpage };
 
@@ -14,7 +14,7 @@ const OUTPUT_KEY = "rendered_outputs";
 
 async function callGenWebpage(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   instruction: string,
   content: LLMContent[],
   renderMode: string,

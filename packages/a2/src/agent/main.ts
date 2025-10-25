@@ -11,7 +11,7 @@ import {
   Schema,
 } from "@breadboard-ai/types";
 import { Template } from "../a2/template";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 import { Params } from "../a2/common";
 import { Loop } from "./loop";
 import { ok } from "@breadboard-ai/utils";
@@ -29,7 +29,7 @@ type AgentOutputs = {
 async function invoke(
   { config$prompt: objective, ...rest }: AgentInputs,
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AgentOutputs>> {
   const params = Object.fromEntries(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))

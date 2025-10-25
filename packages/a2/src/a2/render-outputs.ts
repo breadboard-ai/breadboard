@@ -26,7 +26,7 @@ import {
 } from "./utils";
 import { readFlags } from "./settings";
 import { renderConsistentUI } from "./render-consistent-ui";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -337,7 +337,7 @@ async function invoke(
     ...params
   }: InvokeInputs,
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<InvokeOutputs>> {
   let { modelName } = getModel(modelType);
   const { renderType } = getMode(renderMode);

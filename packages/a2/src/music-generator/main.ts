@@ -27,7 +27,7 @@ import {
   toText,
   toTextConcat,
 } from "../a2/utils";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 import { getBucketId } from "../a2/get-bucket-id";
 import { err } from "@breadboard-ai/utils";
 
@@ -44,7 +44,7 @@ export { invoke as default, describe };
 
 async function callMusicGen(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   prompt: string
 ): Promise<Outcome<LLMContent>> {
   const bucketId = await getBucketId(moduleArgs);
@@ -84,7 +84,7 @@ async function callMusicGen(
 async function invoke(
   { context, text, ...params }: AudioGeneratorInputs,
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AudioGeneratorOutputs>> {
   context ??= [];
   let instructionText = "";

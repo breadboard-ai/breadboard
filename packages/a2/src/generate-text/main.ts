@@ -27,7 +27,7 @@ import {
   Schema,
 } from "@breadboard-ai/types";
 import { filterUndefined } from "@breadboard-ai/utils";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -51,7 +51,7 @@ class GenerateText {
 
   constructor(
     private readonly caps: Capabilities,
-    private readonly moduleArgs: A2ModuleFactoryArgs,
+    private readonly moduleArgs: A2ModuleArgs,
     public readonly sharedContext: SharedContext
   ) {
     this.invoke = this.invoke.bind(this);
@@ -360,7 +360,7 @@ async function keepChatting(
 async function invoke(
   { context }: Inputs,
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs
+  moduleArgs: A2ModuleArgs
 ) {
   if (!context.description) {
     const msg = "Please provide a prompt for the step";

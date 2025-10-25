@@ -11,6 +11,7 @@ import {
   InputValues,
   OutputValues,
   NodeMetadata,
+  NodeHandlerContext,
 } from "@breadboard-ai/types";
 import {
   CapabilitiesManager,
@@ -38,6 +39,10 @@ const URL_SUFFIX = ".bgl.json";
 export type A2ModuleFactoryArgs = {
   mcpClientManager: McpClientManager;
   fetchWithCreds: typeof globalThis.fetch;
+};
+
+export type A2ModuleArgs = A2ModuleFactoryArgs & {
+  context: NodeHandlerContext;
 };
 
 function createA2ModuleFactory(
@@ -69,11 +74,16 @@ class A2ModuleFactory implements RunnableModuleFactory {
   async createRunnableModule(
     _mutable: MutableGraph,
     graph: GraphDescriptor,
+    context: NodeHandlerContext,
     capabilities?: CapabilitiesManager
   ): Promise<Outcome<RunnableModule>> {
     const dir = this.getDir(graph.url);
     if (!ok(dir)) return dir;
-    return new A2Module(dir, this.args, capabilities);
+    const args: A2ModuleArgs = {
+      ...this.args,
+      context,
+    };
+    return new A2Module(dir, args, capabilities);
   }
 }
 
@@ -159,7 +169,7 @@ function createCallableCapabilities(
 type InvokeFunction = (
   inputs: InvokeInputs,
   capabilities?: CapabilitySpec,
-  args?: A2ModuleFactoryArgs
+  args?: A2ModuleArgs
 ) => Promise<OutputValues>;
 
 type DescribeFunction = (
@@ -170,7 +180,7 @@ type DescribeFunction = (
 class A2Module implements RunnableModule {
   constructor(
     private readonly dir: string,
-    private readonly args: A2ModuleFactoryArgs,
+    private readonly args: A2ModuleArgs,
     private readonly capabilities?: CapabilitiesManager
   ) {}
 

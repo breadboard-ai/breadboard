@@ -5,17 +5,21 @@
  */
 
 import { Outcome } from "@breadboard-ai/types";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 import { err, ok } from "@breadboard-ai/utils";
 
 export { getBucketId };
 
 async function getBucketId({
   fetchWithCreds,
-}: A2ModuleFactoryArgs): Promise<Outcome<string>> {
+  context,
+}: A2ModuleArgs): Promise<Outcome<string>> {
   const gettingBucket = await new Memoize(async () => {
     const response = await fetchWithCreds(
-      new URL(`/api/data/transform/bucket`, window.location.href)
+      new URL(`/api/data/transform/bucket`, window.location.href),
+      {
+        signal: context.signal,
+      }
     );
     return response.json();
   }).get();

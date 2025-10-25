@@ -24,7 +24,7 @@ import {
   toLLMContent,
 } from "./utils";
 import { toBlobStoredData, toGcsAwareChunk } from "./to-blob-stored-data";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 import { err } from "@breadboard-ai/utils";
 import { getBucketId } from "./get-bucket-id";
 
@@ -36,7 +36,7 @@ const API_NAME = "ai_image_tool";
 
 async function callGeminiImage(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   instruction: string,
   imageContent: LLMContent[],
   disablePromptRewrite: boolean,
@@ -53,7 +53,7 @@ async function callGeminiImage(
     let inlineChunk: InlineDataCapabilityPart["inlineData"] | null | "";
     if (isStoredData(element)) {
       const blobStoredData = await toBlobStoredData(
-        moduleArgs.fetchWithCreds,
+        moduleArgs,
         element.parts.at(-1)!
       );
       if (!ok(blobStoredData)) return blobStoredData;
@@ -122,7 +122,7 @@ async function callGeminiImage(
 
 async function callImageGen(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   imageInstruction: string,
   aspectRatio: string = "1:1"
 ): Promise<Outcome<LLMContent[]>> {
@@ -170,7 +170,7 @@ async function callImageGen(
 
 function promptExpander(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   contents: LLMContent[] | undefined,
   instruction: LLMContent
 ): GeminiPrompt {

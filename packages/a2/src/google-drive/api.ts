@@ -6,7 +6,7 @@
 
 import { Outcome } from "@breadboard-ai/types";
 import { err } from "../a2/utils";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export {
   appendSpreadsheetValues,
@@ -658,7 +658,7 @@ export type Metadata = {
 
 export type Method = "GET" | "POST" | "PUT" | "DELETE";
 
-async function get(moduleArgs: A2ModuleFactoryArgs, id: string) {
+async function get(moduleArgs: A2ModuleArgs, id: string) {
   if (!id) {
     return err("Please supply file id.");
   }
@@ -670,7 +670,7 @@ async function get(moduleArgs: A2ModuleFactoryArgs, id: string) {
 }
 
 async function create(
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   body: unknown
 ): Promise<Outcome<CreateFileResponse>> {
   if (!body) {
@@ -686,7 +686,7 @@ async function create(
 }
 
 async function query(
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   query: string
 ): Promise<Outcome<FileQueryResponse>> {
   if (!query) {
@@ -700,7 +700,7 @@ async function query(
   );
 }
 
-async function del(moduleArgs: A2ModuleFactoryArgs, id: string) {
+async function del(moduleArgs: A2ModuleArgs, id: string) {
   if (!id) {
     return err("Please supply the id of the file to delete");
   }
@@ -712,11 +712,7 @@ async function del(moduleArgs: A2ModuleFactoryArgs, id: string) {
   );
 }
 
-async function exp(
-  moduleArgs: A2ModuleFactoryArgs,
-  fileId: string,
-  mimeType: string
-) {
+async function exp(moduleArgs: A2ModuleArgs, fileId: string, mimeType: string) {
   if (!fileId) {
     return err("Please supply the file id to export.");
   }
@@ -727,7 +723,7 @@ async function exp(
   );
 }
 
-async function getDoc(moduleArgs: A2ModuleFactoryArgs, id: string) {
+async function getDoc(moduleArgs: A2ModuleArgs, id: string) {
   if (!id) {
     return err("Please supply the doc id to get.");
   }
@@ -738,11 +734,7 @@ async function getDoc(moduleArgs: A2ModuleFactoryArgs, id: string) {
   );
 }
 
-async function updateDoc(
-  moduleArgs: A2ModuleFactoryArgs,
-  id: string,
-  body: unknown
-) {
+async function updateDoc(moduleArgs: A2ModuleArgs, id: string, body: unknown) {
   if (!id) {
     return err("Please supply the id of the doc to update.");
   }
@@ -758,7 +750,7 @@ async function updateDoc(
 }
 
 async function getPresentation(
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   id: string
 ): Promise<Outcome<SlidesPresentation>> {
   return api(
@@ -769,7 +761,7 @@ async function getPresentation(
 }
 
 async function createPresentation(
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   title: string
 ): Promise<Outcome<SlidesPresentation>> {
   return api(
@@ -781,7 +773,7 @@ async function createPresentation(
 }
 
 async function updatePresentation(
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   id: string,
   body: { requests: SlidesRequest[] }
 ) {
@@ -799,10 +791,7 @@ async function updatePresentation(
   );
 }
 
-async function getSpreadsheetMetadata(
-  moduleArgs: A2ModuleFactoryArgs,
-  id: string
-) {
+async function getSpreadsheetMetadata(moduleArgs: A2ModuleArgs, id: string) {
   if (!id) {
     return err("Please supply the id of the spreadsheet to update.");
   }
@@ -814,7 +803,7 @@ async function getSpreadsheetMetadata(
 }
 
 async function appendSpreadsheetValues(
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   id: string,
   range: string,
   body: SpreadsheetValuesAppend
@@ -834,7 +823,7 @@ async function appendSpreadsheetValues(
 }
 
 async function createMultipart(
-  { fetchWithCreds }: A2ModuleFactoryArgs,
+  { fetchWithCreds, context }: A2ModuleArgs,
   metadata: unknown,
   body: unknown,
   mimeType: string
@@ -857,6 +846,7 @@ Content-Transfer-Encoding: base64
 
 ${body}
 --${boundary}--`,
+      signal: context.signal,
     };
     const response = await fetchWithCreds(url, requestInit);
     return response.json() as Promise<Outcome<{ id: string }>>;
@@ -866,7 +856,7 @@ ${body}
 }
 
 async function api<T>(
-  { fetchWithCreds }: A2ModuleFactoryArgs,
+  { fetchWithCreds, context }: A2ModuleArgs,
   url: string,
   method: Method,
   body: unknown | null = null
@@ -874,6 +864,7 @@ async function api<T>(
   try {
     const requestInit: RequestInit = {
       method,
+      signal: context.signal,
     };
     if (body) {
       requestInit.body = JSON.stringify(body);

@@ -28,7 +28,7 @@ import {
   toText,
   toTextConcat,
 } from "./utils";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 const MAKE_IMAGE_ICON = "generative-image";
 const ASPECT_RATIOS = ["1:1", "9:16", "16:9", "4:3", "3:4"];
@@ -48,7 +48,7 @@ export { invoke as default, describe };
 
 function gatheringRequest(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   contents: LLMContent[] | undefined,
   instruction: LLMContent,
   toolManager: ToolManager
@@ -89,7 +89,7 @@ async function invoke(
     ...params
   }: ImageGeneratorInputs,
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<ImageGeneratorOutputs>> {
   incomingContext ??= [];
   if (!instruction) {

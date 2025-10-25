@@ -11,7 +11,7 @@ import { type GeminiSchema } from "../a2/gemini";
 import { GeminiPrompt } from "../a2/gemini-prompt";
 import { err, llm, ok } from "../a2/utils";
 import type { SheetValues } from "./types";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { inferSheetValues, SHEETS_MIME_TYPE };
 
@@ -37,7 +37,7 @@ function sheetSchema(): GeminiSchema {
 
 async function inferSheetValues(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   contents?: LLMContent[]
 ): Promise<Outcome<unknown[][]>> {
   if (!contents) {

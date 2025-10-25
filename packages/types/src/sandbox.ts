@@ -12,6 +12,7 @@ import {
   OutputValues,
 } from "./graph-descriptor.js";
 import { MutableGraph } from "./inspect.js";
+import { NodeHandlerContext } from "./node-handler.js";
 import { UUID } from "./uuid.js";
 
 export type Values = Record<string, unknown>;
@@ -79,6 +80,7 @@ export type RunnableModuleFactory = {
   createRunnableModule(
     mutable: MutableGraph,
     graph: GraphDescriptor,
+    context: NodeHandlerContext,
     capabilities?: CapabilitiesManager
   ): Promise<Outcome<RunnableModule>>;
 };

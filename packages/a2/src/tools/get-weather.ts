@@ -10,7 +10,7 @@ import {
 } from "@breadboard-ai/types";
 import { err, ok, toLLMContent } from "../a2/utils";
 import { executeTool } from "../a2/step-executor";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -25,7 +25,7 @@ export type Outputs = {
 async function invoke(
   inputs: WeatherInputs,
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs
+  moduleArgs: A2ModuleArgs
 ): Promise<Outcome<Outputs>> {
   const location = (inputs.location || "").trim();
   if (!location) {

@@ -233,6 +233,7 @@ function createDescribeHandler(context: NodeHandlerContext) {
 
       if (addResult.moduleId) {
         const result = await invokeDescriber(
+          context,
           addResult.moduleId,
           mutable,
           mutable.graph,

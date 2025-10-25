@@ -91,6 +91,7 @@ class GraphBasedNodeHandler implements NodeHandlerObject {
         return emptyDescriberResult();
       }
       const result = await invokeDescriber(
+        context,
         moduleId,
         mutable,
         graph,

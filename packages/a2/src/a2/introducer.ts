@@ -16,7 +16,7 @@ import {
 import { defaultSafetySettings, type GeminiSchema } from "./gemini";
 import { GeminiPrompt } from "./gemini-prompt";
 import { err, llm, ok } from "./utils";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { ArgumentNameGenerator };
 
@@ -36,7 +36,7 @@ type NamingResult = {
 class ArgumentNameGenerator implements DescriberResultTransformer {
   constructor(
     private readonly caps: Capabilities,
-    private readonly moduleArgs: A2ModuleFactoryArgs
+    private readonly moduleArgs: A2ModuleArgs
   ) {}
 
   #containsContext(describerResult: DescriberResult): boolean {

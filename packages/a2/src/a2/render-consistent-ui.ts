@@ -22,7 +22,7 @@ import {
   isTextCapabilityPart,
   isStoredData,
 } from "@google-labs/breadboard";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { renderConsistentUI };
 
@@ -879,7 +879,7 @@ function is(type: string, part: DataPart): part is RemappablePart {
 
 async function renderConsistentUI(
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs,
+  moduleArgs: A2ModuleArgs,
   data: LLMContent,
   systemInstruction?: LLMContent
 ): Promise<Outcome<LLMContent[]>> {

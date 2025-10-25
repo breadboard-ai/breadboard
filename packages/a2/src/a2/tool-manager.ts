@@ -23,7 +23,7 @@ import {
 } from "./gemini";
 import { addUserTurn, ok } from "./utils";
 import { err } from "@breadboard-ai/utils";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 import { McpToolAdapter } from "./mcp-tool-adapter";
 
 const CODE_EXECUTION_SUFFIX = "#module:code-execution";
@@ -77,7 +77,7 @@ class ToolManager implements SimplifiedToolManager {
 
   constructor(
     private readonly caps: Capabilities,
-    private readonly moduleArgs: A2ModuleFactoryArgs,
+    private readonly moduleArgs: A2ModuleArgs,
     private readonly describerResultTransformer?: DescriberResultTransformer
   ) {}
 

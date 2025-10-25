@@ -13,7 +13,7 @@ import { report } from "../a2/output";
 import { Template } from "../a2/template";
 import { ToolManager } from "../a2/tool-manager";
 import { addUserTurn, err, llm, ok, toLLMContent } from "../a2/utils";
-import { A2ModuleFactoryArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
 
@@ -142,7 +142,7 @@ async function thought(
 async function invoke(
   { context, query, summarize, ...params }: ResearcherInputs,
   caps: Capabilities,
-  moduleArgs: A2ModuleFactoryArgs
+  moduleArgs: A2ModuleArgs
 ) {
   const tools = RESEARCH_TOOLS.map((descriptor) => descriptor.url);
   const toolManager = new ToolManager(
