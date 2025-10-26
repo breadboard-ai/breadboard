@@ -13,7 +13,7 @@ import { A2ModuleArgs } from "../../runnable-module-factory";
 import { AgentFileSystem } from "../file-system";
 import { defineFunction, FunctionDefinition } from "../function-definition";
 import { defaultSystemInstruction } from "../../generate-text/system-instruction";
-import { mergeTextParts } from "../../a2/utils";
+import { mergeTextParts, toText } from "../../a2/utils";
 
 export { initializeGenerateFunctions };
 
@@ -81,7 +81,7 @@ The following strategies will help you create effective prompts to generate exac
         },
       },
       async ({ prompt }) => {
-        console.log("Generating image from prompt:", prompt);
+        console.log("PROMPT", prompt);
 
         const generated = await callGeminiImage(
           caps,
@@ -118,30 +118,77 @@ content input.`,
         parameters: {
           prompt: z.string().describe(`Detailed prompt to use for text
 generation.`),
-          context: z.array(z.string().describe(`The VFS path to a file`))
-            .describe(`A list of files or folios to use as context for the 
-prompt.`),
-          search_grounding: z.boolean().describe(`Whether or not to use
+          context: z
+            .array(z.string().describe(`The VFS path to a file`))
+            .describe(
+              `A list of files or folios to use as context for the 
+prompt.`
+            )
+            .optional(),
+          output_format: z.enum(["file", "text"]).describe(`The output format.
+When "file" is specified, the output will be saved as a VFS file and the 
+"file_path" response parameter will be provided as output. Use this when you
+expect a long output from the text generator. When "text" is specified, the
+output will be returned as text directlty, and the "text" response parameter
+will be provided.`),
+          folio_path: z
+            .string()
+            .describe(
+              `The VFS path to the folio.
+If specified, the result will be added to this folio`
+            )
+            .optional(),
+          search_grounding: z
+            .boolean()
+            .describe(
+              `Whether or not to use
 Google Search grounding. Grounding with Google Search connects the Gemini model
 to real-time web content and works with all available languages. This allows 
 Gemini to provide more accurate answers and cite verifiable sources beyond its 
-knowledge cutoff.`),
-          maps_grounding: z.boolean().describe(`Whether or not to use
+knowledge cutoff.`
+            )
+            .optional(),
+          maps_grounding: z
+            .boolean()
+            .describe(
+              `Whether or not to use
 Google Maps grounding. Grounding with Google Maps connects the generative 
 capabilities of Gemini with the rich, factual, and up-to-date data of Google 
-Maps`),
+Maps`
+            )
+            .optional(),
         },
         response: {
-          file_path: z.string().describe(`The VFS path with the result`),
+          file_path: z
+            .string()
+            .describe(
+              `The VFS path with the output of the
+generator. Will be provided when the "output_format" is set to "file"`
+            )
+            .optional(),
+          text: z
+            .string()
+            .describe(
+              `The text output of the generator. Will be 
+provided when the "output_format" is set to "text"`
+            )
+            .optional(),
         },
       },
-      async ({ prompt, search_grounding, maps_grounding, context }) => {
-        console.log(
-          "Generating text from prompt",
-          prompt,
-          "with context",
-          context
-        );
+      async ({
+        prompt,
+        search_grounding,
+        maps_grounding,
+        context = [],
+        folio_path,
+        output_format,
+      }) => {
+        console.log("PROMPT", prompt);
+        console.log("CONTEXT", context);
+        console.log("SEARCH_GROUNDING", search_grounding);
+        console.log("MAPS_GROUNDING", maps_grounding);
+        console.log("FOLIO_PATH", folio_path);
+        console.log("OUTPUT_PATH", output_format);
         let tools: Tool[] | undefined = [];
         if (search_grounding) {
           tools.push({ googleSearch: {} });
@@ -184,6 +231,12 @@ Maps`),
         const part = textParts[0];
         const file_path = fileSystem.add(part);
         if (!ok(file_path)) return file_path;
+        if (folio_path) {
+          fileSystem.addFilesToFolio(folio_path, [file_path]);
+        }
+        if (output_format === "text") {
+          return { text: toText([content]) };
+        }
         return { file_path };
       }
     ),
