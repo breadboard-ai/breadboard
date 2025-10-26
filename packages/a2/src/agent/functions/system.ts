@@ -171,57 +171,55 @@ uploaded by the user, populated when the "type" is "image", or "video".`),
     ),
     defineFunction(
       {
-        name: "system_create_folio",
-        description: `Creates a folio with the provided name. A folio is a
-collection of files. Folios can be used to group files so that they could be
-referenced together. For example, you can create a folio to collect all files relevant to the fulfilling the objective, like a "work" folio. 
+        name: "system_create_project",
+        description: `Creates a project with the provided name. A project is a
+collection of files. Projects can be used to group files so that they could be
+referenced together. For example, you can create a project to collect all files relevant to the fulfilling the objective. 
 
-Folios are more like groupings rather than folders. Files that are added to the
-folio still retain their original paths, but now also belong to the folio.
-Same file can be part of multiple folios.
+Projects are more like groupings rather than folders. Files that are added to 
+the project still retain their original paths, but now also belong to the 
+project. Same file can be part of multiple projects.
 
-Folios are files and all have this VFS path structure:
-"/vfs/folios/[name_of_folio]".
+Projects can also be referenced as files and all have this VFS path structure:
+"/vfs/projects/[name_of_project]".
 
-Folios can be referenced as files, like so:
-<file src="/vfs/folios/blah" />
-Such a reference is equivalent to referencing all files within the folio in 
-their insertion order. For example, if a folio "blah" contains three files:
+Such a file reference is equivalent to referencing all files within the project
+in their insertion order. For example, if a project "blah" contains three files:
 "/vfs/image1.png", "/vfs/text7.md" and "/vfs/file10.pdf", 
 then  
 
-"<file src="/vfs/folios/blah" />" 
+"<file src="/vfs/projects/blah" />" 
 
 is equivalent to:
 
-<file src="/vfs/image1.png" />
+"<file src="/vfs/image1.png" />
 <file src="/vfs/text7.md" />
-<file src="/vfs/file10.pdf" />
+<file src="/vfs/file10.pdf" />"
 `,
         parameters: {
-          name: z.string().describe(`Name of the folio. This is the name tha
-will come after "/vfs/folios/" prefix in the file path. Use snake_case for
+          name: z.string().describe(`Name of the project. This is the name tha
+will come after "/vfs/projects/" prefix in the file path. Use snake_case for
 naming.`),
         },
         response: {
-          file_path: z.string().describe(`The VFS path to the folio. Will be in 
-the form of "/vfs/folios/[name_of_folio]".`),
+          file_path: z.string().describe(`The VFS path to the project. Will be
+in the form of "/vfs/projects/[name_of_project]".`),
         },
       },
       async ({ name }) => {
-        return { file_path: args.fileSystem.createFolio(name) };
+        return { file_path: args.fileSystem.createProject(name) };
       }
     ),
     defineFunction(
       {
-        name: "system_add_files_to_folio",
-        description: `Adds files to the folio`,
+        name: "system_add_files_to_project",
+        description: `Adds files to a project`,
         parameters: {
-          folio_file_path: z.string().describe(`The VFS path to the folio to
-which to add files`),
+          project_file_path: z.string().describe(`The VFS path to the project
+to which to add files`),
           files_to_add: z.array(
-            z.string().describe(`The VFS path to a file to
-add to the folio`)
+            z.string().describe(`
+The VFS path to a file to add to the project`)
           ),
         },
         response: {
@@ -229,33 +227,38 @@ add to the folio`)
 the file`),
         },
       },
-      async ({ folio_file_path, files_to_add }) => {
-        const result = args.fileSystem.addFilesToFolio(
-          folio_file_path,
+      async ({ project_file_path, files_to_add }) => {
+        const result = args.fileSystem.addFilesToProject(
+          project_file_path,
           files_to_add
         );
 
         return {
-          report: `Added files: ${result.added.join(", ")}`,
+          report: `
+- Total files: ${result.total}
+- Existing files: ${result.existing.join(", ")}
+- Added files: ${result.added.join(", ")}`,
         };
       }
     ),
     defineFunction(
       {
-        name: "system_list_folio_contents",
-        description: `Lists all files currently in the folio`,
+        name: "system_list_project_contents",
+        description: `Lists all files currently in the project`,
         parameters: {
-          folio_file_path: z.string().describe(`The VFS path to the folio`),
+          project_file_path: z.string().describe(`The VFS path to the project`),
         },
         response: {
           file_paths: z.array(
-            z.string().describe(`The VFS path to a file that is in this folio`)
+            z.string().describe(`
+The VFS path to a file that is in this project
+`)
           ),
         },
       },
-      async ({ folio_file_path }) => {
+      async ({ project_file_path }) => {
         return {
-          file_paths: args.fileSystem.listFolioContents(folio_file_path),
+          file_paths: args.fileSystem.listProjectContents(project_file_path),
         };
       }
     ),

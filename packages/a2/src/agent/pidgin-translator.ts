@@ -84,7 +84,7 @@ class PidginTranslator {
       return err(`Agent unable to proceed: ${errors.join(",")}`);
     }
 
-    return { parts: mergeTextParts(parts), role: "user" };
+    return { parts: mergeTextParts(parts, "\n"), role: "user" };
   }
 
   fromPidginFiles(files: string[]): Outcome<LLMContent> {
@@ -104,7 +104,7 @@ class PidginTranslator {
       return err(`Agent unable to proceed: ${errors.join(",")}`);
     }
 
-    return { parts: mergeTextParts(parts), role: "user" };
+    return { parts: mergeTextParts(parts, "\n"), role: "user" };
   }
 
   async toPidgin(

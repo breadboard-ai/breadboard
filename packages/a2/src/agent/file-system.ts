@@ -27,16 +27,17 @@ export type FileDescriptor = {
   resourceKey?: string;
 };
 
-export type AddFilesToFolioResult = {
+export type AddFilesToProjectResult = {
   existing: string[];
   added: string[];
+  total: number;
   error?: string;
 };
 
 class AgentFileSystem {
   #fileCount = 0;
 
-  #folios: Map<string, Set<string>> = new Map();
+  #projects: Map<string, Set<string>> = new Map();
 
   #files: Map<string, FileDescriptor> = new Map();
 
@@ -84,13 +85,13 @@ class AgentFileSystem {
     }
   }
 
-  #getFolioFiles(path: string): Outcome<DataPart[]> {
-    const folio = this.#folios.get(path);
-    if (!folio) {
-      return err(`Folio "${folio}" not found`);
+  #getProjectFiles(path: string): Outcome<DataPart[]> {
+    const project = this.#projects.get(path);
+    if (!project) {
+      return err(`Project "${project}" not found`);
     }
     const errors: string[] = [];
-    const files = [...folio].map((path) => {
+    const files = [...project].map((path) => {
       const file = this.#getFile(path);
       if (!ok(file)) {
         errors.push(file.$error);
@@ -109,35 +110,39 @@ class AgentFileSystem {
     if (path.startsWith("vfs/")) {
       path = `/${path}`;
     }
-    if (path.startsWith("/vfs/folios")) {
-      return this.#getFolioFiles(path);
+    if (path.startsWith("/vfs/projects")) {
+      return this.#getProjectFiles(path);
     }
     const file = this.#getFile(path);
     if (!ok(file)) return file;
     return [file];
   }
 
-  createFolio(name: string): string {
-    return `/vfs/folios/${name}`;
+  createProject(name: string): string {
+    return `/vfs/projects/${name}`;
   }
 
-  addFilesToFolio(folioPath: string, files: string[]): AddFilesToFolioResult {
-    let folio = this.#folios.get(folioPath);
-    if (!folio) {
-      folio = new Set();
-      this.#folios.set(folioPath, folio);
+  addFilesToProject(
+    projectPath: string,
+    files: string[]
+  ): AddFilesToProjectResult {
+    let project = this.#projects.get(projectPath);
+    if (!project) {
+      project = new Set();
+      this.#projects.set(projectPath, project);
     }
-    const existing = [...folio];
-    files.forEach((file) => folio.add(file));
+    const existing = [...project];
+    files.forEach((file) => project.add(file));
     return {
+      total: project.size,
       existing,
       added: files,
     };
   }
 
-  listFolioContents(folioPath: string): string[] {
-    const folio = this.#folios.get(folioPath);
-    return [...(folio || [])];
+  listProjectContents(projectPath: string): string[] {
+    const project = this.#projects.get(projectPath);
+    return [...(project || [])];
   }
 
   add(part: DataPart): Outcome<string> {

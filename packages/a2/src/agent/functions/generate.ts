@@ -121,7 +121,8 @@ generation.`),
           context: z
             .array(z.string().describe(`The VFS path to a file`))
             .describe(
-              `A list of files or folios to use as context for the 
+              `
+A list of files or projects to use as context for the 
 prompt.`
             )
             .optional(),
@@ -131,11 +132,11 @@ When "file" is specified, the output will be saved as a VFS file and the
 expect a long output from the text generator. When "text" is specified, the
 output will be returned as text directlty, and the "text" response parameter
 will be provided.`),
-          folio_path: z
+          project_path: z
             .string()
             .describe(
-              `The VFS path to the folio.
-If specified, the result will be added to this folio`
+              `The VFS path to the project.
+If specified, the result will be added to this project`
             )
             .optional(),
           search_grounding: z
@@ -180,14 +181,14 @@ provided when the "output_format" is set to "text"`
         search_grounding,
         maps_grounding,
         context = [],
-        folio_path,
+        project_path,
         output_format,
       }) => {
         console.log("PROMPT", prompt);
         console.log("CONTEXT", context);
         console.log("SEARCH_GROUNDING", search_grounding);
         console.log("MAPS_GROUNDING", maps_grounding);
-        console.log("FOLIO_PATH", folio_path);
+        console.log("PROJECT_PATH", project_path);
         console.log("OUTPUT_PATH", output_format);
         let tools: Tool[] | undefined = [];
         if (search_grounding) {
@@ -224,15 +225,15 @@ provided when the "output_format" is set to "text"`
         if (!content || content.parts.length === 0) {
           return err(`No content generated`);
         }
-        const textParts = mergeTextParts(content.parts);
+        const textParts = mergeTextParts(content.parts, "\n");
         if (textParts.length > 1) {
           console.warn(`More than one part generated`, content);
         }
         const part = textParts[0];
         const file_path = fileSystem.add(part);
         if (!ok(file_path)) return file_path;
-        if (folio_path) {
-          fileSystem.addFilesToFolio(folio_path, [file_path]);
+        if (project_path) {
+          fileSystem.addFilesToProject(project_path, [file_path]);
         }
         if (output_format === "text") {
           return { text: toText([content]) };
