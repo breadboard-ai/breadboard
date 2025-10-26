@@ -30,7 +30,6 @@ export type AgentRawResult = {
   user_message: string;
   href: string;
   objective_outcomes: string[];
-  intermediate_files: string[];
 };
 
 export type AgentResult = {
@@ -59,15 +58,15 @@ export type AgentResult = {
 
 const AGENT_MODEL = "gemini-flash-latest";
 
-const systemInstruction = llm`You are an AI agent. Your job is to fulfill the 
-objective, specified at the start of the conversation context.
+const systemInstruction = llm`
+You are an LLM-powred AI agent. Your job is to fulfill the  objective,
+specified at the start of the conversation context.
 
 You are linked with other AI agents via hyperlinks. The <a href="url">title</a>
 syntax points at another agent. If the objective calls for it, you can transfer
 control to this agent. To transfer control, use the url of the agent in the 
 "href" parameter when calling "system_objective_fulfilled" or  
-"system_failed_to_fulfill_objective" function. As a result, the outcomes and the
-intermediate files will be transferred to that agent.
+"system_failed_to_fulfill_objective" function. As a result, the outcomes will be transferred to that agent.
 
 First, examine the problem in front of you and systematically break it down into
 tasks.
@@ -98,6 +97,23 @@ multiple funciton calls at the same time.
 After each task, examine: is the plan still good? Did the results of the tasks
 affect the outcome? If not, keep going. Otherwise, reexamine the plan and
 adjust it accordingly.
+
+Here are the additional agent instructions for you. Please make sure to pay
+attention to them.
+
+<agent-instructions title="When to call generate_text">
+When evaluating objective, make sure to determine whether calling 
+"generate_text" is warranted. The key tradeoff here is latency: the 
+"generate_text" will take longer to run, since it uses a larger model (Pro).
+
+Here is the rule of thumb:
+
+- For short responses like a chat conversation, just do the text generation
+yourself. You are an LLM after all.
+- For longer responses like generating a chapter of a book or a full report,
+use "generate_text".
+
+</agent-instructions>
 
 <agent-instructions title="Using files">
 
@@ -209,7 +225,6 @@ class Loop {
       user_message: "",
       href: "",
       objective_outcomes: [],
-      intermediate_files: [],
     };
     const systemFunctions = initializeSystemFunctions({
       ui: this.#ui,
@@ -217,24 +232,17 @@ class Loop {
       terminateCallback: () => {
         terminateLoop = true;
       },
-      successCallback: (
-        user_message,
-        href,
-        objective_outcomes,
-        intermediate_files
-      ) => {
+      successCallback: (user_message, href, objective_outcomes) => {
         terminateLoop = true;
         console.log("SUCCESS! Objective fulfilled");
         console.log("User message:", user_message);
         console.log("Transfer control to", href);
         console.log("Objective outcomes:", objective_outcomes);
-        console.log("Intermediate files:", intermediate_files);
         result = {
           success: true,
           user_message,
           href,
           objective_outcomes,
-          intermediate_files,
         };
       },
     });
@@ -320,13 +328,7 @@ class Loop {
   }
 
   #finalizeResult(raw: AgentRawResult): Outcome<AgentResult> {
-    const {
-      success,
-      user_message,
-      href,
-      objective_outcomes,
-      intermediate_files,
-    } = raw;
+    const { success, user_message, href, objective_outcomes } = raw;
     const message = this.#translator.fromPidginString(user_message);
     if (!ok(message)) return message;
     let outcomes: Outcome<LLMContent> | undefined = undefined;
@@ -334,7 +336,8 @@ class Loop {
     if (success) {
       outcomes = this.#translator.fromPidginFiles(objective_outcomes);
       if (!ok(outcomes)) return outcomes;
-      intermediate = this.#translator.fromPidginFiles(intermediate_files);
+      const intermediateFiles = [...this.#fileSystem.files.keys()];
+      intermediate = this.#translator.fromPidginFiles(intermediateFiles);
       if (!ok(intermediate)) return intermediate;
     }
     return { success, message, href, outcomes, intermediate };

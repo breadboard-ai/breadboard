@@ -8,6 +8,7 @@ import z from "zod";
 import { defineFunction, FunctionDefinition } from "../function-definition";
 import { AgentFileSystem } from "../file-system";
 import { AgentUI } from "../ui";
+import { ok } from "@breadboard-ai/utils";
 
 export { initializeSystemFunctions };
 
@@ -17,8 +18,7 @@ export type SystemFunctionArgs = {
   successCallback(
     user_message: string,
     href: string,
-    objective_outcomes: string[],
-    intermediate_files: string[]
+    objective_outcomes: string[]
   ): void;
   terminateCallback(): void;
 };
@@ -41,11 +41,6 @@ Use the <file src="path" /> syntax to embed the outcome in the text`),
             .describe(
               `The array of outcomes that were requested in the objective`
             ),
-          intermediate_files: z.array(
-            z.string().describe(`A VFS path pointing at the outcome`)
-              .describe(`Any intermediate files that were produced as a result 
-of fulfilling the objective `)
-          ),
           href: z
             .string()
             .describe(
@@ -58,18 +53,8 @@ If the objective specifies other agent URLs using the
             .default("/"),
         },
       },
-      async ({
-        user_message,
-        objective_outcomes,
-        intermediate_files,
-        href,
-      }) => {
-        args.successCallback(
-          user_message,
-          href || "/",
-          objective_outcomes,
-          intermediate_files
-        );
+      async ({ user_message, objective_outcomes, href }) => {
+        args.successCallback(user_message, href || "/", objective_outcomes);
         return {};
       }
     ),
@@ -109,7 +94,7 @@ If the objective specifies other agent URLs using the
     defineFunction(
       {
         name: "system_write_text_to_file",
-        description: "Writes provided text to a VFS file",
+        description: "Writes provided text to a file",
         parameters: {
           file_name: z.string().describe(
             `
@@ -117,12 +102,15 @@ The name of the file without the extension.
 This is the name that will come after the "/vfs/" prefix in the VFS file path.
 Use snake_case for naming.`.trim()
           ),
-          project_path: z.string().describe(
-            `
+          project_path: z
+            .string()
+            .describe(
+              `
 The VFS path to a project. If specified, the result will be added to that
 project. Use this parameter as a convenient way to add newly created file to an
 existing project.`.trim()
-          ),
+            )
+            .optional(),
           text: z.string().describe(`The text to write into a VFS file`),
         },
         response: {
@@ -131,14 +119,52 @@ existing project.`.trim()
             .describe("The VS path to the file containing the provided text"),
         },
       },
-      async ({ file_name, text }) => {
+      async ({ file_name, project_path, text }) => {
         console.log("FILE_NAME", file_name);
-        console.log("TEXT", text);
+        console.log("TEXT TO WRITE", text);
         const file_path = args.fileSystem.write(
           file_name,
           text,
           "text/markdown"
         );
+        if (project_path) {
+          args.fileSystem.addFilesToProject(project_path, [file_path]);
+        }
+        return { file_path };
+      }
+    ),
+    defineFunction(
+      {
+        name: "system_append_text_to_file",
+        description: "Appends provided text to a file",
+        parameters: {
+          file_path: z.string().describe(
+            `
+The VFS path of the file to which to append text. If a file does not
+exist, it will be created`.trim()
+          ),
+          project_path: z.string().describe(
+            `
+The VFS path to a project. If specified, the result will be added to that
+project. Use this parameter as a convenient way to add newly created file to an
+existing project.`.trim()
+          ),
+          text: z.string().describe(`The text to append to the file`),
+        },
+        response: {
+          file_path: z
+            .string()
+            .describe("The VS path to the file to which the text was appended"),
+        },
+      },
+      async ({ file_path, project_path, text }) => {
+        console.log("FILE_NAME", file_path);
+        console.log("TEXT TO APPEND", text);
+        const appending = args.fileSystem.append(file_path, text);
+        if (!ok(appending)) return appending;
+        if (project_path) {
+          args.fileSystem.addFilesToProject(project_path, [file_path]);
+        }
         return { file_path };
       }
     ),

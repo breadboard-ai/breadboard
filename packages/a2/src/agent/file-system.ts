@@ -47,6 +47,17 @@ class AgentFileSystem {
     return path;
   }
 
+  append(path: string, data: string): Outcome<void> {
+    let file: FileDescriptor | undefined = this.#files.get(path);
+    if (!file) {
+      file = { data, mimeType: "text/markdown", type: "text" };
+      this.#files.set(path, file);
+    } else if (file.type !== "text") {
+      return err(`File "${path}" already exists and it is not a text file`);
+    }
+    file.data = `${file.data}\n${data}`;
+  }
+
   #getFile(path: string): Outcome<DataPart> {
     const file = this.#files.get(path);
     if (!file) {
@@ -88,7 +99,7 @@ class AgentFileSystem {
   #getProjectFiles(path: string): Outcome<DataPart[]> {
     const project = this.#projects.get(path);
     if (!project) {
-      return err(`Project "${project}" not found`);
+      return err(`Project "${path}" not found`);
     }
     const errors: string[] = [];
     const files = [...project].map((path) => {
