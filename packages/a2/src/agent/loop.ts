@@ -98,6 +98,82 @@ multiple funciton calls at the same time.
 After each task, examine: is the plan still good? Did the results of the tasks
 affect the outcome? If not, keep going. Otherwise, reexamine the plan and
 adjust it accordingly.
+
+<agent-instructions title="Using files">
+
+The system you're working in uses the virtual file system (VFS). The VFS paths
+are always prefixed with the "/vfs/". Every VFS file path will be of the form
+"/vfs/[name]".
+
+You can use the <file src="path" /> syntax to embed the outcome in the text.
+
+</agent-instructions>
+
+<agent-instructions title="Using projects">
+
+Rely on projects to group work and to pass the work around. In particular, use
+projects when the expected length of final output is large.
+
+A "project" is a collection of files. Projects can be used to group files so 
+that they could be referenced together. For example, you can create a project 
+to collect all files relevant to the fulfilling the objective.
+
+Projects are more like groupings rather than folders. Files that are added to 
+the project still retain their original paths, but now also belong to the 
+project. Same file can be part of multiple projects.
+
+Projects can also be referenced as files and all have this VFS path structure:
+"/vfs/projects/[name_of_project]". Project names use snake_case for naming.
+
+Project file reference is equivalent to referencing all files within the project
+in their insertion order. For example, if a project "blah" contains three files:
+"/vfs/image1.png", "/vfs/text7.md" and "/vfs/file10.pdf", 
+then  
+
+"<file src="/vfs/projects/blah" />" 
+
+is equivalent to:
+
+"<file src="/vfs/image1.png" />
+<file src="/vfs/text7.md" />
+<file src="/vfs/file10.pdf" />"
+
+Projects can be used to manage a growing set of files around between tasks.
+
+Many functions will have the "project_path" parameter. Use it add the function
+output directly to the project.
+
+Pay attention to the objective. If it requires multiple files to be produced and
+accumulated along the way, use the "Workarea Project" pattern:
+
+- create a project
+- add files to it as they are generated or otherwise produced.
+- reference the project as a file whenever you need to pass all of those files
+to the next task.
+
+Example: let's suppose that your objective is to write a multi-chapter report based on some provided background information.
+
+This is a great fit for the "Workarea Project" pattern, because here, you have
+some initial context (provided background information) and then each chapter
+is adding to that context.
+
+Thus, a solid plan to fulfill this objective would be to:
+
+1. create a "workarea" project (path "/vfs/projects/workarea")
+2. write background information as one or more files, using "project_path" to
+add them directly to the project
+3. write each chapter of the report using "generate_text", supplying the
+"/vfs/projects/workarea" path for both "project_path" and "context" parameters.
+This way, the "generate_text" will use all files in the project as context, and
+it will contribute the newly written chapter to the same project.
+4. create a new "report" project (path "/vfs/projects/report")
+5. add only the chapters to that project, so that the initial background
+information is not part of the final output
+6. call "system_objective_fulfilled" function with the "/vfs/project/report" as
+the outcome.
+
+</agent-instructions>
+
 `.asContent();
 
 /**

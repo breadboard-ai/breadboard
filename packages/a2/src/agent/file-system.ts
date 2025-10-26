@@ -41,10 +41,10 @@ class AgentFileSystem {
 
   #files: Map<string, FileDescriptor> = new Map();
 
-  write(data: string, mimeType: string): string {
-    const name = this.create(mimeType);
-    this.#files.set(name, { data, mimeType, type: "text" });
-    return name;
+  write(name: string, data: string, mimeType: string): string {
+    const path = this.#createNamed(name, mimeType);
+    this.#files.set(path, { data, mimeType, type: "text" });
+    return path;
   }
 
   #getFile(path: string): Outcome<DataPart> {
@@ -177,6 +177,21 @@ class AgentFileSystem {
 
   get files(): ReadonlyMap<string, DeepReadonly<FileDescriptor>> {
     return this.#files;
+  }
+
+  #createNamed(name: string, mimeType: string): string {
+    let filename;
+    if (name.includes(".")) {
+      filename = name;
+    } else {
+      const ext = mime.getExtension(mimeType);
+      filename = `${name}.${ext}`;
+    }
+    const path = `/vfs/${filename}`;
+    if (this.#files.has(path)) {
+      console.warn(`File "${path}" already exists, will be overwritten`);
+    }
+    return path;
   }
 
   create(mimeType: string) {

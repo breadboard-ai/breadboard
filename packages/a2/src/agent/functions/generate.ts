@@ -112,18 +112,21 @@ The following strategies will help you create effective prompts to generate exac
     defineFunction(
       {
         name: "generate_text",
-        description: `An extremely versatile text generator, powered by Gemini
-Use it for any tasks that involve generation of text. Supports multimodal 
-content input.`,
+        description: `
+An extremely versatile text generator, powered by Gemini. Use it for any tasks
+that involve generation of text. Supports multimodal content input.`.trim(),
         parameters: {
-          prompt: z.string().describe(`Detailed prompt to use for text
-generation.`),
+          prompt: z.string().describe(
+            `
+Detailed prompt to use for text generation.`.trim()
+          ),
           context: z
             .array(z.string().describe(`The VFS path to a file`))
             .describe(
               `
-A list of files or projects to use as context for the 
-prompt.`
+A list of files or projects to use as context for the prompt. These must be VFS
+paths. If you need to pass text as context, first write it to file and pass the
+VFS path of that file`.trim()
             )
             .optional(),
           output_format: z.enum(["file", "text"]).describe(`The output format.
@@ -135,18 +138,19 @@ will be provided.`),
           project_path: z
             .string()
             .describe(
-              `The VFS path to the project.
-If specified, the result will be added to this project`
+              `
+The VFS path to a project. If specified, the result will be added to that
+project. Use this parameter as a convenient way to add the generated output to an existing project.`.trim()
             )
             .optional(),
           search_grounding: z
             .boolean()
             .describe(
-              `Whether or not to use
-Google Search grounding. Grounding with Google Search connects the Gemini model
-to real-time web content and works with all available languages. This allows 
-Gemini to provide more accurate answers and cite verifiable sources beyond its 
-knowledge cutoff.`
+              `
+Whether or not to use Google Search grounding. Grounding with Google Search
+connects the Gemini model to real-time web content and works with all available 
+languages. This allows Gemini to provide more accurate answers and cite
+verifiable sources beyond its knowledge cutoff.`.trim()
             )
             .optional(),
           maps_grounding: z

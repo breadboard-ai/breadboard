@@ -80,18 +80,21 @@ If the objective specifies other agent URLs using the
 objective. Call ONLY when all means of fulfilling the objective have been
 exhausted.`,
         parameters: {
-          user_message: z.string()
-            .describe(`Text to display to the user upon admitting failure to
+          user_message: z.string().describe(
+            `
+Text to display to the user upon admitting failure to
 fulfill the objective. Provide a friendly explanation of why the objective
-is impossible to fulfill and offer helpful suggestions`),
+is impossible to fulfill and offer helpful suggestions`.trim()
+          ),
           href: z
             .string()
             .describe(
-              `The url of the next agent to which to transfer control upon
+              `
+The url of the next agent to which to transfer control upon
 failure. By default, the control is transferred to the root agent "/". 
 If the objective specifies other agent URLs using the
  <a href="url">title</a> syntax, and calls to choose a different agent to which
- to  transfer control, then that url should be used instead.`
+ to  transfer control, then that url should be used instead.`.trim()
             )
             .default("/"),
         },
@@ -108,6 +111,18 @@ If the objective specifies other agent URLs using the
         name: "system_write_text_to_file",
         description: "Writes provided text to a VFS file",
         parameters: {
+          file_name: z.string().describe(
+            `
+The name of the file without the extension.
+This is the name that will come after the "/vfs/" prefix in the VFS file path.
+Use snake_case for naming.`.trim()
+          ),
+          project_path: z.string().describe(
+            `
+The VFS path to a project. If specified, the result will be added to that
+project. Use this parameter as a convenient way to add newly created file to an
+existing project.`.trim()
+          ),
           text: z.string().describe(`The text to write into a VFS file`),
         },
         response: {
@@ -116,9 +131,14 @@ If the objective specifies other agent URLs using the
             .describe("The VS path to the file containing the provided text"),
         },
       },
-      async ({ text }) => {
-        console.log("Writing text to file:", text);
-        const file_path = args.fileSystem.write(text, "text/markdown");
+      async ({ file_name, text }) => {
+        console.log("FILE_NAME", file_name);
+        console.log("TEXT", text);
+        const file_path = args.fileSystem.write(
+          file_name,
+          text,
+          "text/markdown"
+        );
         return { file_path };
       }
     ),
@@ -197,7 +217,7 @@ is equivalent to:
 <file src="/vfs/file10.pdf" />"
 `,
         parameters: {
-          name: z.string().describe(`Name of the project. This is the name tha
+          name: z.string().describe(`Name of the project. This is the name that
 will come after "/vfs/projects/" prefix in the file path. Use snake_case for
 naming.`),
         },
