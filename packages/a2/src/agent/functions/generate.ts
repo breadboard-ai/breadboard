@@ -13,7 +13,7 @@ import { A2ModuleArgs } from "../../runnable-module-factory";
 import { AgentFileSystem } from "../file-system";
 import { defineFunction, FunctionDefinition } from "../function-definition";
 import { defaultSystemInstruction } from "../../generate-text/system-instruction";
-import { mergeTextParts, toText } from "../../a2/utils";
+import { mergeContent, mergeTextParts, toText } from "../../a2/utils";
 
 export { initializeGenerateFunctions };
 
@@ -92,17 +92,15 @@ The following strategies will help you create effective prompts to generate exac
         );
         if (!ok(generated)) return generated;
         const errors: string[] = [];
-        const images = (
-          await Promise.all(
-            generated?.at(0)?.parts?.map((part) => fileSystem.add(part)) || []
-          )
-        ).map((part) => {
-          if (!ok(part)) {
-            errors.push(part.$error);
-            return "";
-          }
-          return part;
-        });
+        const images = mergeContent(generated, "user")
+          .parts.map((part) => fileSystem.add(part))
+          .map((part) => {
+            if (!ok(part)) {
+              errors.push(part.$error);
+              return "";
+            }
+            return part;
+          });
         if (errors.length > 0) {
           return err(errors.join(","));
         }
