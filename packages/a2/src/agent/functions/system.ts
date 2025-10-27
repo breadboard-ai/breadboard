@@ -170,53 +170,6 @@ existing project.`.trim()
     ),
     defineFunction(
       {
-        name: "system_request_user_input",
-        description: `Requests input from a user. Use this function to obtain
-additional information or confirmation from the user. Use only when necessary.
-Avoid excessive requests to the user.`,
-        parameters: {
-          user_message: z.string()
-            .describe(`Text to display to the user when requesting input.
-Use the <file src="path" /> syntax to embed any files in the message`),
-          type: z.enum([
-            "singleline-text",
-            "multiline-text",
-            "confirm",
-            "image",
-            "video",
-          ]).describe(`Type of the input requested.
-- Use "singleline-text" to request a single line of text. Useful for chat-like
-interactions, when only a brief text is requested. The requested text will be 
-delivered as "text" response. 
-- Use "multiline-text" to request multi-line text. Useful when requesting a 
-longer text, like a review, critique, further instructions, etc. The requested
-text will be delivered as "text" response.
-- Use "confirm" to request confirmation on an action. Use this only
-when specifically requested by the objective. The confirmation will be 
-delivered as "yes" or "no" in "text" response.
-- Use "image" to request an image. Once the user uploads the image, it will be
-delivered as "file_path" response.
-- Use "video" to request a video. Once the user uploads the video, it will be
-delivered as "file_path" response.
-`),
-        },
-        response: {
-          text: z
-            .string()
-            .optional()
-            .describe(
-              `The text response from the user, populated when the "type" is "singleline-text", "multiline-text", or "confirm".`
-            ),
-          file_path: z.string().optional().describe(`The VFS path to the file,
-uploaded by the user, populated when the "type" is "image", or "video".`),
-        },
-      },
-      async ({ user_message, type }) => {
-        return args.ui.requestUserInput(user_message, type);
-      }
-    ),
-    defineFunction(
-      {
         name: "system_create_project",
         description: `Creates a project with the provided name. A project is a
 collection of files. Projects can be used to group files so that they could be
@@ -306,6 +259,53 @@ The VFS path to a file that is in this project
         return {
           file_paths: args.fileSystem.listProjectContents(project_file_path),
         };
+      }
+    ),
+    defineFunction(
+      {
+        name: "system_request_user_input",
+        description: `Requests input from a user. Use this function to obtain
+additional information or confirmation from the user. Use only when necessary.
+Avoid excessive requests to the user.`,
+        parameters: {
+          user_message: z.string()
+            .describe(`Text to display to the user when requesting input.
+Use the <file src="path" /> syntax to embed any files in the message`),
+          type: z.enum([
+            "singleline-text",
+            "multiline-text",
+            "confirm",
+            "image",
+            "video",
+          ]).describe(`Type of the input requested.
+- Use "singleline-text" to request a single line of text. Useful for chat-like
+interactions, when only a brief text is requested. The requested text will be 
+delivered as "text" response. 
+- Use "multiline-text" to request multi-line text. Useful when requesting a 
+longer text, like a review, critique, further instructions, etc. The requested
+text will be delivered as "text" response.
+- Use "confirm" to request confirmation on an action. Use this only
+when specifically requested by the objective. The confirmation will be 
+delivered as "yes" or "no" in "text" response.
+- Use "image" to request an image. Once the user uploads the image, it will be
+delivered as "file_path" response.
+- Use "video" to request a video. Once the user uploads the video, it will be
+delivered as "file_path" response.
+`),
+        },
+        response: {
+          text: z
+            .string()
+            .optional()
+            .describe(
+              `The text response from the user, populated when the "type" is "singleline-text", "multiline-text", or "confirm".`
+            ),
+          file_path: z.string().optional().describe(`The VFS path to the file,
+uploaded by the user, populated when the "type" is "image", or "video".`),
+        },
+      },
+      async ({ user_message, type }) => {
+        return args.ui.requestUserInput(user_message, type);
       }
     ),
   ];
