@@ -16,11 +16,7 @@ if (guestOrigin && guestOrigin !== "*") {
   if (iframe?.contentWindow) {
     const hostUrl = new URL(window.location.href);
     const guestUrl = new URL(
-      // TODO(aomarks) Change this replace after we invert the root vs subpath
-      // relationship between host and guest.
-      hostUrl.pathname.replace(/^\/shell\/?/, "") +
-        hostUrl.search +
-        hostUrl.hash,
+      "_app" + hostUrl.pathname + hostUrl.search + hostUrl.hash,
       guestOrigin
     );
     guestUrl.searchParams.set(

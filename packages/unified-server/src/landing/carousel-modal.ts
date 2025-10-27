@@ -12,6 +12,7 @@ import { shortestPath } from "./utils.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { map } from "lit/directives/map.js";
+import { makeUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 
 @customElement("landing-carousel-modal")
 export class LandingCarouselModal extends LitElement {
@@ -388,7 +389,11 @@ export class LandingCarouselModal extends LitElement {
           </button>
           <a
             class="try-app"
-            href="/?flow=${galleryItems[this.currentItem].url}&mode=app"
+            .href=${makeUrl({
+              page: "graph",
+              mode: "app",
+              flow: galleryItems[this.currentItem].url,
+            })}
           >
             Try now
           </a>

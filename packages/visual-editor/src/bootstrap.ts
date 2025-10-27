@@ -137,7 +137,8 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   } else {
     // Prevent endless looping.
     if (
-      window.location.pathname !== "/" ||
+      (window.location.pathname !== "/" &&
+        window.location.pathname !== "/_app/") ||
       new URLSearchParams(window.location.search).has("redirect-from-landing")
     ) {
       const { PageNotFound } = await import("./404.js");

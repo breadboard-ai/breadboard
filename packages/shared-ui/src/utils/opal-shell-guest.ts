@@ -11,6 +11,7 @@ import {
 import { createContext } from "@lit/context";
 import * as comlink from "comlink";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
+import "./install-opal-shell-comlink-transfer-handlers.js";
 import { OAuthBasedOpalShell } from "./oauth-based-opal-shell.js";
 import "./url-pattern-conditional-polyfill.js";
 
@@ -125,6 +126,12 @@ async function discoverShellHostOrigin(): Promise<string | undefined> {
 }
 
 function beginSyncronizingUrls(host: OpalShellProtocol) {
+  const setUrl = () => {
+    const url = new URL(window.location.href);
+    url.pathname = url.pathname.replace(/^\/_app/, "");
+    host.setUrl(url.href);
+  };
+
   for (const name of [
     "pushState",
     "replaceState",
@@ -136,14 +143,12 @@ function beginSyncronizingUrls(host: OpalShellProtocol) {
     const original: Function = history[name].bind(history);
     history[name] = (...args: unknown[]) => {
       const result = original(...args);
-      host.setUrl(window.location.href);
+      setUrl();
       return result;
     };
   }
 
-  window.addEventListener("popstate", () => {
-    host.setUrl(window.location.href);
-  });
+  window.addEventListener("popstate", setUrl);
 
-  host.setUrl(window.location.href);
+  setUrl();
 }
