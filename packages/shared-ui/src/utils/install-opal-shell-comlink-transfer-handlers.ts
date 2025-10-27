@@ -49,8 +49,12 @@ type SerializedResponse = {
   init: ResponseInit;
 };
 
+const senderSignalFinalizationRegistry = new FinalizationRegistry<MessagePort>(
+  (port) => port.close()
+);
+
 /**
- * Custom serializtion for the non-cloneable portions of RequestInit.
+ * Custom serialization for the non-cloneable portions of RequestInit.
  */
 transferHandlers.set("RequestInit", {
   canHandle: (value): value is RequestInit =>
@@ -67,6 +71,7 @@ transferHandlers.set("RequestInit", {
   serialize: (init) => {
     init = { ...init };
     const serialized: SerializedRequestInit = { init };
+    const transferables: Transferable[] = [];
     if (init.headers instanceof Headers) {
       // Headers instances are not cloneable, but their entries arrays are,
       // and conveniently those arrays are also valid as headers, so we can
@@ -80,14 +85,34 @@ transferHandlers.set("RequestInit", {
       delete init.body;
     }
     if (init.signal) {
-      // Maybe we could do something fancy with abort signals where we listen to
-      // them on this side, then broadcast over another comlink method to a
-      // newly created signal on the other side if they abort... but it doesn't
-      // seem worth it right now, because aborts are mostly a performance thing,
-      // and we don't make much use of them anyway.
+      // AbortSignals are not transferable, so we bridge them using a
+      // MessageChannel.
+      const signal = init.signal;
+      const channel = new MessageChannel();
+      const { port1: sendPort, port2: receivePort } = channel;
+      // Close the sendPort when the signal is garbage-collected. If we do not
+      // do this, the signals we create on the other side will never get
+      // garbage-collected (tested).
+      senderSignalFinalizationRegistry.register(init.signal, sendPort);
       delete init.signal;
+      serialized.signal = receivePort;
+      transferables.push(receivePort);
+      sendPort.start();
+      if (signal.aborted) {
+        sendPort.postMessage(signal.reason);
+        sendPort.close();
+      } else {
+        signal.addEventListener(
+          "abort",
+          () => {
+            sendPort.postMessage(signal.reason);
+            sendPort.close();
+          },
+          { once: true }
+        );
+      }
     }
-    return [serialized, []];
+    return [serialized, transferables];
   },
 
   deserialize: (serialized) => {
@@ -98,6 +123,20 @@ transferHandlers.set("RequestInit", {
         init.body.set(name, value);
       }
     }
+    if (serialized.signal) {
+      const controller = new AbortController();
+      init.signal = controller.signal;
+      const receivePort = serialized.signal;
+      receivePort.addEventListener(
+        "message",
+        ({ data: reason }) => {
+          controller.abort(reason);
+          receivePort.close();
+        },
+        { once: true }
+      );
+      receivePort.start();
+    }
     return init;
   },
 } satisfies TransferHandler<RequestInit, SerializedRequestInit>);
@@ -105,4 +144,5 @@ transferHandlers.set("RequestInit", {
 type SerializedRequestInit = {
   init: RequestInit;
   formData?: [string, FormDataEntryValue][];
+  signal?: MessagePort;
 };
