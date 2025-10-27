@@ -61,16 +61,16 @@ class PidginTranslator {
     const pidginParts = content.split(SPLIT_REGEX);
     const errors: string[] = [];
     const parts: DataPart[] = pidginParts
-      .map((pidginPart) => {
+      .flatMap((pidginPart) => {
         const fileMatch = pidginPart.match(FILE_PARSE_REGEX);
         if (fileMatch) {
           const path = fileMatch[1];
-          const part = this.fileSystem.get(path);
-          if (!ok(part)) {
-            errors.push(part.$error);
+          const parts = this.fileSystem.get(path);
+          if (!ok(parts)) {
+            errors.push(parts.$error);
             return null;
           }
-          return part;
+          return parts;
         }
         const linkMatch = pidginPart.match(LINK_PARSE_REGEX);
         if (linkMatch) {
@@ -84,19 +84,19 @@ class PidginTranslator {
       return err(`Agent unable to proceed: ${errors.join(",")}`);
     }
 
-    return { parts: mergeTextParts(parts), role: "user" };
+    return { parts: mergeTextParts(parts, "\n"), role: "user" };
   }
 
   fromPidginFiles(files: string[]): Outcome<LLMContent> {
     const errors: string[] = [];
     const parts: DataPart[] = files
-      .map((path) => {
-        const part = this.fileSystem.get(path);
-        if (!ok(part)) {
-          errors.push(part.$error);
+      .flatMap((path) => {
+        const parts = this.fileSystem.get(path);
+        if (!ok(parts)) {
+          errors.push(parts.$error);
           return null;
         }
-        return part;
+        return parts;
       })
       .filter((part) => part !== null);
 
@@ -104,7 +104,7 @@ class PidginTranslator {
       return err(`Agent unable to proceed: ${errors.join(",")}`);
     }
 
-    return { parts: mergeTextParts(parts), role: "user" };
+    return { parts: mergeTextParts(parts, "\n"), role: "user" };
   }
 
   async toPidgin(

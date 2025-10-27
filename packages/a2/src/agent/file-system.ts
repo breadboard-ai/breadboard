@@ -12,7 +12,7 @@ import {
   Outcome,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
-import { err } from "@breadboard-ai/utils";
+import { err, ok } from "@breadboard-ai/utils";
 import mime from "mime";
 
 export { AgentFileSystem };
@@ -27,23 +27,38 @@ export type FileDescriptor = {
   resourceKey?: string;
 };
 
+export type AddFilesToProjectResult = {
+  existing: string[];
+  added: string[];
+  total: number;
+  error?: string;
+};
+
 class AgentFileSystem {
   #fileCount = 0;
 
+  #projects: Map<string, Set<string>> = new Map();
+
   #files: Map<string, FileDescriptor> = new Map();
 
-  write(data: string, mimeType: string): string {
-    const name = this.create(mimeType);
-    this.#files.set(name, { data, mimeType, type: "text" });
-    return name;
+  write(name: string, data: string, mimeType: string): string {
+    const path = this.#createNamed(name, mimeType);
+    this.#files.set(path, { data, mimeType, type: "text" });
+    return path;
   }
 
-  get(path: string): Outcome<DataPart> {
-    // Do a path fix-up just in case: sometimes, Gemini decides to use
-    // "vfs/file" instead of "/vfs/file".
-    if (path.startsWith("vfs/")) {
-      path = `/${path}`;
+  append(path: string, data: string): Outcome<void> {
+    let file: FileDescriptor | undefined = this.#files.get(path);
+    if (!file) {
+      file = { data, mimeType: "text/markdown", type: "text" };
+      this.#files.set(path, file);
+    } else if (file.type !== "text") {
+      return err(`File "${path}" already exists and it is not a text file`);
     }
+    file.data = `${file.data}\n${data}`;
+  }
+
+  #getFile(path: string): Outcome<DataPart> {
     const file = this.#files.get(path);
     if (!file) {
       return err(`file "${path}" not found`);
@@ -81,6 +96,66 @@ class AgentFileSystem {
     }
   }
 
+  #getProjectFiles(path: string): Outcome<DataPart[]> {
+    const project = this.#projects.get(path);
+    if (!project) {
+      return err(`Project "${path}" not found`);
+    }
+    const errors: string[] = [];
+    const files = [...project].map((path) => {
+      const file = this.#getFile(path);
+      if (!ok(file)) {
+        errors.push(file.$error);
+      }
+      return file;
+    });
+    if (errors.length > 0) {
+      return err(errors.join(","));
+    }
+    return files as DataPart[];
+  }
+
+  get(path: string): Outcome<DataPart[]> {
+    // Do a path fix-up just in case: sometimes, Gemini decides to use
+    // "vfs/file" instead of "/vfs/file".
+    if (path.startsWith("vfs/")) {
+      path = `/${path}`;
+    }
+    if (path.startsWith("/vfs/projects")) {
+      return this.#getProjectFiles(path);
+    }
+    const file = this.#getFile(path);
+    if (!ok(file)) return file;
+    return [file];
+  }
+
+  createProject(name: string): string {
+    return `/vfs/projects/${name}`;
+  }
+
+  addFilesToProject(
+    projectPath: string,
+    files: string[]
+  ): AddFilesToProjectResult {
+    let project = this.#projects.get(projectPath);
+    if (!project) {
+      project = new Set();
+      this.#projects.set(projectPath, project);
+    }
+    const existing = [...project];
+    files.forEach((file) => project.add(file));
+    return {
+      total: project.size,
+      existing,
+      added: files,
+    };
+  }
+
+  listProjectContents(projectPath: string): string[] {
+    const project = this.#projects.get(projectPath);
+    return [...(project || [])];
+  }
+
   add(part: DataPart): Outcome<string> {
     if ("text" in part) {
       const mimeType = "text/markdown";
@@ -113,6 +188,21 @@ class AgentFileSystem {
 
   get files(): ReadonlyMap<string, DeepReadonly<FileDescriptor>> {
     return this.#files;
+  }
+
+  #createNamed(name: string, mimeType: string): string {
+    let filename;
+    if (name.includes(".")) {
+      filename = name;
+    } else {
+      const ext = mime.getExtension(mimeType);
+      filename = `${name}.${ext}`;
+    }
+    const path = `/vfs/${filename}`;
+    if (this.#files.has(path)) {
+      console.warn(`File "${path}" already exists, will be overwritten`);
+    }
+    return path;
   }
 
   create(mimeType: string) {
