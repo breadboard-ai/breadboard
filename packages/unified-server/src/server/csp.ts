@@ -33,6 +33,7 @@ const CSP_CONFIG = {
     "https://raw.githubusercontent.com",
     "https://*.gstatic.com",
     "https://*.ytimg.com",
+    "https://img.youtube.com",
   ],
   ["style-src"]: [
     "'self'",
