@@ -127,9 +127,12 @@ function createDataPartTansformer(
       part: StoredDataCapabilityPart | FileDataPart
     ): Promise<Outcome<FileDataPart>> {
       if (isFileDataCapabilityPart(part)) {
-        const { fileUri } = part.fileData;
+        const { fileUri, mimeType } = part.fileData;
         // part is FileDataPart
         if (fileUri.startsWith(GEMINI_FILE_API_URL)) {
+          return part;
+        } else if (mimeType === "video/mp4") {
+          // YouTube video
           return part;
         } else if (fileUri.startsWith(DRIVE_URL_PREFIX)) {
           console.warn(`This should never happen anymore`, part);
