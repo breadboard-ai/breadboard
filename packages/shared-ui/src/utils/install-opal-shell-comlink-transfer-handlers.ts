@@ -49,6 +49,10 @@ type SerializedResponse = {
   init: ResponseInit;
 };
 
+const senderSignalFinalizationRegistry = new FinalizationRegistry<MessagePort>(
+  (port) => port.close()
+);
+
 /**
  * Custom serialization for the non-cloneable portions of RequestInit.
  */
@@ -84,9 +88,13 @@ transferHandlers.set("RequestInit", {
       // AbortSignals are not transferable, so we bridge them using a
       // MessageChannel.
       const signal = init.signal;
-      delete init.signal;
       const channel = new MessageChannel();
       const { port1: sendPort, port2: receivePort } = channel;
+      // Close the sendPort when the signal is garbage-collected. If we do not
+      // do this, the signals we create on the other side will never get
+      // garbage-collected (tested).
+      senderSignalFinalizationRegistry.register(init.signal, sendPort);
+      delete init.signal;
       serialized.signal = receivePort;
       transferables.push(receivePort);
       sendPort.start();
