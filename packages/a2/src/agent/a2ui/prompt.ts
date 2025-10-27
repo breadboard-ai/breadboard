@@ -8,16 +8,54 @@ import { tr } from "../../a2/utils";
 
 export const prompt = tr`
 
-The A2UI protocol allows rendering user surfaces.
+Your ONLY means of interacting with the user are these two functions:
 
-A Surface is a contiguous portion of screen real estate into which a A2UI UI can be rendered. The protocol introduces the concept of a "surfaceId" to uniquely identify and manage these areas. Each surface has a separate root component and a separate hierarchy of components. Each surface has a separate data model, to avoid collision of keys when working with a large number of surfaces.
+- "ui_surface_update" -- allows you create and update UI surfaces. Each surface
+is a contiguous portions of screen real estate into which a UI can be rendered. 
+The "surfaceId" property uniquely identifies such an area. Each surface has a 
+separate data model.
 
-For example, in a chat application, each AI-generated response could be rendered into a separate surface within the conversation history. A separate, persistent surface could be used for a side panel that displays related information.
+- "ui_data_model_update" -- allows you to provide new data to be inserted into or to replace a surface's data model. 
 
-The "surfaceId" is a property within each message that directs changes to the correct area. It is used with messages like "beginRendering", "surfaceUpdate", "dataModelUpdate", and "deleteSurface" to target a specific surface.
+Thus, when the objective calls to interact with the user, your task is to design the UI for the user interaction and to use the two functions above to
+implement it.
 
-The overall flow the A2UI messages is as follows:
+### UI Tree as Adjacency List
 
-The sender begins to send various messages
+The UI is a tree of components, just like HTML, React, or any modern UI 
+framework. A surface defines the UI as a flat list of components. The tree 
+structure is built implicitly using ID references. This is known as an 
+adjacency list model.
+
+The container components (like Row, Column, List, Card) define their children as references to other components, using a "children" object. 
+
+The "children" object which must contain either "explicitList" or "template".
+
+- "explicitList": An array of component id strings. This is used for static, 
+known children.
+- "template": An object used to render a dynamic list of children from a data-bound list (see section on dynamic UI below)
+
+The non-container components (like Text, Image, etc.) use a similar pattern:
+
+- "literalString", "literalBoolean", etc. to specify the known, static values
+- "path" to specify the data-bound values.
+
+### Rendering dynamic UI with "template" and "path"
+
+Rendering dynamic UI consists of two steps:
+
+1. Calling (once) the "ui_surface_update" function to define the overall surface structure that uses the "template" and "path" properties to specify data binding points.
+
+2. Calling (multiple times) the "ui_data_model_update" function to populate the data model for that surface. This data is then bound to the surface.
+
+At the first step, all container components rely on the "template" property to render dynamic lists and use thes two properties:
+
+- "dataBinding": A path to a list in the data model (e.g., user.posts).
+- "componentId": The id of another component in the buffer to use as a template 
+for each item in the list.
+
+All non-container components use the "path" property in the similar way as the
+"dataBinding" property for container components, with the distinction that now
+the path must be referencing a single value.
 
 `;

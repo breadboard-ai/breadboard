@@ -22,6 +22,7 @@ import { initializeSystemFunctions } from "./functions/system";
 import { PidginTranslator } from "./pidgin-translator";
 import { AgentUI } from "./ui";
 import { initializeGenerateFunctions } from "./functions/generate";
+import { prompt as a2UIPrompt } from "./a2ui/prompt";
 
 export { Loop };
 
@@ -59,8 +60,9 @@ export type AgentResult = {
 const AGENT_MODEL = "gemini-flash-latest";
 
 const systemInstruction = llm`
-You are an LLM-powred AI agent. Your job is to fulfill the  objective,
-specified at the start of the conversation context.
+You are an LLM-powered AI agent. You are embedded into an application.
+Your job is to fulfill the objective, specified at the start of the 
+conversation context. The objective is part of the application.
 
 You are linked with other AI agents via hyperlinks. The <a href="url">title</a>
 syntax points at another agent. If the objective calls for it, you can transfer
@@ -190,6 +192,10 @@ the outcome.
 
 </agent-instructions>
 
+<agent-instructions title="Interacting with the user">
+${a2UIPrompt}
+</agent-instructions>
+
 `.asContent();
 
 /**
@@ -227,6 +233,7 @@ class Loop {
       objective_outcomes: [],
     };
     const systemFunctions = initializeSystemFunctions({
+      useA2UI: true,
       ui: this.#ui,
       fileSystem: this.#fileSystem,
       terminateCallback: () => {

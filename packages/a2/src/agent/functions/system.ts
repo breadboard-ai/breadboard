@@ -5,14 +5,24 @@
  */
 
 import z from "zod";
-import { defineFunction, FunctionDefinition } from "../function-definition";
+import {
+  defineFunction,
+  defineFunctionLoose,
+  FunctionDefinition,
+} from "../function-definition";
 import { AgentFileSystem } from "../file-system";
 import { AgentUI } from "../ui";
-import { ok } from "@breadboard-ai/utils";
+import { err, ok } from "@breadboard-ai/utils";
+import {
+  serverSchema as uiServerSchema,
+  clientSchema as uiClientSchema,
+} from "../a2ui/schema";
+import { tr } from "../../a2/utils";
 
 export { initializeSystemFunctions };
 
 export type SystemFunctionArgs = {
+  useA2UI: boolean;
   ui: AgentUI;
   fileSystem: AgentFileSystem;
   successCallback(
@@ -22,6 +32,117 @@ export type SystemFunctionArgs = {
   ): void;
   terminateCallback(): void;
 };
+
+function defineSimpleUiFunctions(
+  args: SystemFunctionArgs
+): FunctionDefinition[] {
+  return [
+    defineFunction(
+      {
+        name: "system_request_user_input",
+        description: `Requests input from a user. Use this function to obtain
+additional information or confirmation from the user. Use only when necessary.
+Avoid excessive requests to the user.`,
+        parameters: {
+          user_message: z.string()
+            .describe(`Text to display to the user when requesting input.
+Use the <file src="path" /> syntax to embed any files in the message`),
+          type: z.enum([
+            "singleline-text",
+            "multiline-text",
+            "confirm",
+            "image",
+            "video",
+          ]).describe(`Type of the input requested.
+- Use "singleline-text" to request a single line of text. Useful for chat-like
+interactions, when only a brief text is requested. The requested text will be 
+delivered as "text" response. 
+- Use "multiline-text" to request multi-line text. Useful when requesting a 
+longer text, like a review, critique, further instructions, etc. The requested
+text will be delivered as "text" response.
+- Use "confirm" to request confirmation on an action. Use this only
+when specifically requested by the objective. The confirmation will be 
+delivered as "yes" or "no" in "text" response.
+- Use "image" to request an image. Once the user uploads the image, it will be
+delivered as "file_path" response.
+- Use "video" to request a video. Once the user uploads the video, it will be
+delivered as "file_path" response.
+`),
+        },
+        response: {
+          text: z
+            .string()
+            .optional()
+            .describe(
+              `The text response from the user, populated when the "type" is "singleline-text", "multiline-text", or "confirm".`
+            ),
+          file_path: z.string().optional().describe(`The VFS path to the file,
+uploaded by the user, populated when the "type" is "image", or "video".`),
+        },
+      },
+      async ({ user_message, type }) => {
+        return args.ui.requestUserInput(user_message, type);
+      }
+    ),
+  ];
+}
+
+function defineA2UIFunctions(_args: SystemFunctionArgs): FunctionDefinition[] {
+  const { surfaceUpdate, dataModelUpdate } = uiServerSchema.properties;
+  const { userAction } = uiClientSchema.properties;
+  return [
+    defineFunctionLoose(
+      {
+        name: "ui_surface_update",
+        description: tr`
+
+Creates and/or updates UI surfaces. Each surface represents a contiguous 
+portion of screen real estate into which a UI can be rendered. 
+The parameters must be an adjacent list of UI components. 
+The "surfaceId" property uniquely identifies a surface. 
+Each surface has a separate data model.
+
+Returns the user response.
+
+`,
+        parametersJsonSchema: {
+          type: "object",
+          properties: surfaceUpdate.properties,
+        },
+        responseJsonSchema: {
+          type: "object",
+          properties: userAction.properties,
+        },
+      },
+      async (args) => {
+        console.log("ARGS", args);
+        return err(`Not implemented`);
+      }
+    ),
+    defineFunctionLoose(
+      {
+        name: "ui_data_model_update",
+        description: tr`
+        
+Updates the data model of the UI surface.
+
+        `,
+        parametersJsonSchema: {
+          type: "object",
+          properties: dataModelUpdate.properties,
+        },
+        responseJsonSchema: {
+          type: "object",
+          properties: userAction.properties,
+        },
+      },
+      async (args) => {
+        console.log("ARGS", args);
+        return err(`Not implemented`);
+      }
+    ),
+  ];
+}
 
 function initializeSystemFunctions(
   args: SystemFunctionArgs
@@ -261,52 +382,8 @@ The VFS path to a file that is in this project
         };
       }
     ),
-    defineFunction(
-      {
-        name: "system_request_user_input",
-        description: `Requests input from a user. Use this function to obtain
-additional information or confirmation from the user. Use only when necessary.
-Avoid excessive requests to the user.`,
-        parameters: {
-          user_message: z.string()
-            .describe(`Text to display to the user when requesting input.
-Use the <file src="path" /> syntax to embed any files in the message`),
-          type: z.enum([
-            "singleline-text",
-            "multiline-text",
-            "confirm",
-            "image",
-            "video",
-          ]).describe(`Type of the input requested.
-- Use "singleline-text" to request a single line of text. Useful for chat-like
-interactions, when only a brief text is requested. The requested text will be 
-delivered as "text" response. 
-- Use "multiline-text" to request multi-line text. Useful when requesting a 
-longer text, like a review, critique, further instructions, etc. The requested
-text will be delivered as "text" response.
-- Use "confirm" to request confirmation on an action. Use this only
-when specifically requested by the objective. The confirmation will be 
-delivered as "yes" or "no" in "text" response.
-- Use "image" to request an image. Once the user uploads the image, it will be
-delivered as "file_path" response.
-- Use "video" to request a video. Once the user uploads the video, it will be
-delivered as "file_path" response.
-`),
-        },
-        response: {
-          text: z
-            .string()
-            .optional()
-            .describe(
-              `The text response from the user, populated when the "type" is "singleline-text", "multiline-text", or "confirm".`
-            ),
-          file_path: z.string().optional().describe(`The VFS path to the file,
-uploaded by the user, populated when the "type" is "image", or "video".`),
-        },
-      },
-      async ({ user_message, type }) => {
-        return args.ui.requestUserInput(user_message, type);
-      }
-    ),
+    ...(args.useA2UI
+      ? defineA2UIFunctions(args)
+      : defineSimpleUiFunctions(args)),
   ];
 }
