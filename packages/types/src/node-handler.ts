@@ -398,6 +398,10 @@ export interface NodeHandlerContext {
    * A way to get the project run state.
    */
   readonly getProjectRunState?: () => SimplifiedProjectRunState | undefined;
+  /**
+   * Information about the current step.
+   */
+  currentStep?: NodeDescriptor;
 }
 
 export type RunArguments = NodeHandlerContext & {

@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities, Outcome } from "@breadboard-ai/types";
+import { Capabilities, ConsoleEntry, Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { PidginTranslator } from "./pidgin-translator";
 import { StreamableReporter } from "../a2/output";
 import { A2UIClientEventMessage } from "./a2ui/schemas";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { AgentUI };
 
@@ -31,15 +32,27 @@ export type RawUserResponse = {
 class AgentUI {
   #reporter: StreamableReporter;
   #reportedStarted: Promise<Outcome<unknown>> | undefined;
+  readonly #entry: ConsoleEntry | undefined;
 
   constructor(
     private readonly caps: Capabilities,
+    private readonly moduleArgs: A2ModuleArgs,
     private readonly translator: PidginTranslator
   ) {
     this.#reporter = new StreamableReporter(this.caps, {
       title: "A2UI",
       icon: "web",
     });
+    const { currentStep, getProjectRunState } = this.moduleArgs.context;
+    const stepId = currentStep?.id;
+    if (stepId) {
+      this.#entry = getProjectRunState?.()?.console.get(stepId);
+    }
+    if (!this.#entry) {
+      console.warn(
+        `Unable to find console entry for this agent. Trying to render UI will fail.`
+      );
+    }
   }
 
   #start(): Promise<Outcome<unknown>> {

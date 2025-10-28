@@ -212,17 +212,13 @@ class Loop {
   ) {
     this.#fileSystem = new AgentFileSystem();
     this.#translator = new PidginTranslator(caps, moduleArgs, this.#fileSystem);
-    this.#ui = new AgentUI(caps, this.#translator);
+    this.#ui = new AgentUI(caps, moduleArgs, this.#translator);
   }
 
   async run(
     objective: LLMContent,
     params: Params
   ): Promise<Outcome<AgentResult>> {
-    console.log(
-      "PROJECT RUN STATE",
-      this.moduleArgs.context.getProjectRunState?.()
-    );
     try {
       const objectivePidgin = await this.#translator.toPidgin(
         objective,
