@@ -41,6 +41,7 @@ import {
   isResolvedDateTimeInput,
   isResolvedDivider,
   isResolvedHeading,
+  isResolvedIcon,
   isResolvedImage,
   isResolvedList,
   isResolvedModal,
@@ -234,7 +235,7 @@ export class A2UIModelProcessor {
       const key = item.key as string;
 
       // Find the value, which is in a property prefixed with "value".
-      const valueKey = Object.keys(item).find((k) => k.startsWith("value"));
+      const valueKey = this.#findValueKey(item);
       if (!valueKey) continue;
 
       let value: DataValue = item[valueKey];
@@ -242,12 +243,13 @@ export class A2UIModelProcessor {
       if (valueKey === "valueList" && Array.isArray(value)) {
         value = value.map((wrappedItem: unknown) => {
           if (!isObject(wrappedItem)) return null;
-          const innerValueKey = Object.keys(wrappedItem).find((k) =>
-            k.startsWith("value")
-          );
-          if (!innerValueKey) return null;
+          const innerValueKey = this.#findValueKey(wrappedItem);
+          if (!innerValueKey) return wrappedItem as DataValue;
 
           const innerValue = wrappedItem[innerValueKey];
+          if (innerValueKey === "valueMap" && Array.isArray(innerValue)) {
+            return this.#convertKeyValueArrayToMap(innerValue);
+          }
           return this.#parseIfJsonString(innerValue as DataValue);
         });
       } else if (typeof value === "string") {
@@ -441,6 +443,11 @@ export class A2UIModelProcessor {
     );
   }
 
+  /** Finds a value key in a map. */
+  #findValueKey(value: Record<string, unknown>): string | undefined {
+    return Object.keys(value).find((k) => k.startsWith("value"));
+  }
+
   /**
    * Builds out the nodes recursively.
    */
@@ -464,8 +471,7 @@ export class A2UIModelProcessor {
     visited.add(componentId);
 
     const componentData = components.get(baseComponentId)!;
-    const componentProps =
-      componentData.componentProperties ?? componentData.component ?? {};
+    const componentProps = componentData.component ?? {};
     const componentType = Object.keys(componentProps)[0];
     const unresolvedProperties =
       componentProps[componentType as keyof typeof componentProps];
@@ -489,7 +495,11 @@ export class A2UIModelProcessor {
     // Now that we have the resolved properties in place we can go ahead and
     // ensure that they meet expectations in terms of types and so forth,
     // casting them into the specific shape for usage.
-    const baseNode = { id: componentId, dataContextPath };
+    const baseNode = {
+      id: componentId,
+      dataContextPath,
+      weight: componentData.weight ?? "initial",
+    };
     switch (componentType) {
       case "Heading":
         if (!isResolvedHeading(resolvedProperties)) {
@@ -518,6 +528,16 @@ export class A2UIModelProcessor {
         return new this.#objCtor({
           ...baseNode,
           type: "Image",
+          properties: resolvedProperties,
+        }) as AnyComponentNode;
+
+      case "Icon":
+        if (!isResolvedIcon(resolvedProperties)) {
+          throw new Error(`Invalid data; expected ${componentType}`);
+        }
+        return new this.#objCtor({
+          ...baseNode,
+          type: "Icon",
           properties: resolvedProperties,
         }) as AnyComponentNode;
 
