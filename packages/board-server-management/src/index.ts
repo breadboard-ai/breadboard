@@ -18,6 +18,7 @@ import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { TokenVendor } from "@breadboard-ai/connection-client";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
 
 const BOARD_SERVER_LISTING_DB = "board-server";
 const BOARD_SERVER_LISTING_VERSION = 1;
@@ -50,6 +51,7 @@ declare global {
 export async function createGoogleDriveBoardServer(
   title: string,
   user: User,
+  signInInfo: SignInInfo,
   tokenVendor?: TokenVendor,
   googleDriveClient?: GoogleDriveClient
 ) {
@@ -75,6 +77,7 @@ export async function createGoogleDriveBoardServer(
     title,
     user,
     tokenVendor,
+    signInInfo,
     googleDriveClient,
     googleDrivePublishPermissions,
     userFolderName,
@@ -83,6 +86,7 @@ export async function createGoogleDriveBoardServer(
 }
 
 export async function getBoardServers(
+  signInInfo: SignInInfo,
   tokenVendor?: TokenVendor,
   googleDriveClient?: GoogleDriveClient
 ): Promise<BoardServer[]> {
@@ -102,6 +106,7 @@ export async function getBoardServers(
         return createGoogleDriveBoardServer(
           title,
           user,
+          signInInfo,
           tokenVendor,
           googleDriveClient
         );
@@ -116,12 +121,17 @@ export async function getBoardServers(
 }
 
 export async function connectToBoardServer(
+  signInInfo: SignInInfo,
   location?: string,
   apiKey?: string,
   tokenVendor?: TokenVendor,
   googleDriveClient?: GoogleDriveClient
 ): Promise<{ title: string; url: string } | null> {
-  const existingServers = await getBoardServers(tokenVendor, googleDriveClient);
+  const existingServers = await getBoardServers(
+    signInInfo,
+    tokenVendor,
+    googleDriveClient
+  );
   if (location) {
     if (location.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
       const existingServer = existingServers.find(
@@ -275,13 +285,13 @@ export async function legacyGraphProviderExists() {
   return true;
 }
 
-export async function migrateIDBGraphProviders() {
+export async function migrateIDBGraphProviders(signInInfo: SignInInfo) {
   try {
     const db = await idb.openDB("default");
     const graphs: GraphDescriptor[] = await db.getAll("graphs");
     db.close();
 
-    const boardServers = await getBoardServers();
+    const boardServers = await getBoardServers(signInInfo);
     const idbBoardServer = boardServers.find(
       (bbs) => bbs.name === "Browser Storage"
     );

@@ -45,6 +45,7 @@ import { SaveDebouncer } from "./save-debouncer.js";
 import { DriveGalleryGraphCollection } from "./gallery-graph-collection.js";
 import { DriveUserGraphCollection } from "./user-graph-collection.js";
 import type { TokenVendor } from "@breadboard-ai/connection-client";
+import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
 
 export { GoogleDriveBoardServer };
 
@@ -62,6 +63,7 @@ class GoogleDriveBoardServer
     title: string,
     user: User,
     tokenVendor: TokenVendor,
+    signInInfo: SignInInfo,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
     userFolderName: string,
@@ -90,6 +92,7 @@ class GoogleDriveBoardServer
       configuration,
       user,
       tokenVendor,
+      signInInfo,
       googleDriveClient,
       publishPermissions,
       userFolderName,
@@ -142,6 +145,7 @@ class GoogleDriveBoardServer
     public readonly configuration: BoardServerConfiguration,
     public readonly user: User,
     tokenVendor: TokenVendor,
+    signInInfo: SignInInfo,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
     userFolderName: string,
@@ -165,13 +169,13 @@ class GoogleDriveBoardServer
     this.#tokenVendor = tokenVendor;
     this.#googleDriveClient = googleDriveClient;
     this.galleryGraphs = new DriveGalleryGraphCollection(
-      this.#tokenVendor,
+      signInInfo,
       googleDriveClient.fetchWithCreds,
       backendApiUrl
     );
     this.userGraphs = new DriveUserGraphCollection(
       this.#googleDriveClient,
-      this.#tokenVendor
+      signInInfo
     );
   }
 

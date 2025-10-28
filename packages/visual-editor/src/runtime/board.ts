@@ -245,6 +245,7 @@ export class Board extends EventTarget {
     }
 
     const boardServerInfo = await connectToBoardServer(
+      this.signinAdapter ?? { state: "signedout" },
       location,
       apiKey,
       this.tokenVendor,
@@ -261,7 +262,11 @@ export class Board extends EventTarget {
       return { success: false };
     } else {
       this.boardServers.servers = [
-        ...(await getBoardServers(this.tokenVendor, this.googleDriveClient)),
+        ...(await getBoardServers(
+          this.signinAdapter ?? { state: "signedout" },
+          this.tokenVendor,
+          this.googleDriveClient
+        )),
         ...this.boardServers.builtInBoardServers,
       ];
       this.boardServers.loader = createLoader(this.boardServers.servers);
@@ -290,7 +295,11 @@ export class Board extends EventTarget {
       return { success: false };
     }
     this.boardServers.servers = [
-      ...(await getBoardServers(this.tokenVendor, this.googleDriveClient)),
+      ...(await getBoardServers(
+        this.signinAdapter ?? { state: "signedout" },
+        this.tokenVendor,
+        this.googleDriveClient
+      )),
       ...this.boardServers.builtInBoardServers,
     ];
     this.boardServers.loader = createLoader(this.boardServers.servers);

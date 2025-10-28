@@ -4,18 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TokenVendor } from "@breadboard-ai/connection-client";
 import type {
   GraphProviderItem,
   ImmutableGraphCollection,
 } from "@breadboard-ai/types";
+import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import type { NarrowedDriveFile } from "../google-drive-client.js";
 import { readProperties } from "./utils.js";
 
 export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
-  readonly #tokenVendor: TokenVendor;
+  readonly #signInInfo: SignInInfo;
   readonly #fetchWithCreds: typeof globalThis.fetch;
   readonly #graphs = new SignalMap<string, GraphProviderItem>();
   readonly #backendApiUrl: string;
@@ -48,11 +48,11 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
   }
 
   constructor(
-    tokenVendor: TokenVendor,
+    signInInfo: SignInInfo,
     fetchWithCreds: typeof globalThis.fetch,
     backendApiUrl: string
   ) {
-    this.#tokenVendor = tokenVendor;
+    this.#signInInfo = signInInfo;
     this.#fetchWithCreds = fetchWithCreds;
     this.#backendApiUrl = backendApiUrl;
     void this.#initialize();
@@ -110,7 +110,7 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
     if (!endpoint) {
       return undefined;
     }
-    if (!this.#tokenVendor.isSignedIn()) {
+    if (this.#signInInfo.state === "signedout") {
       return undefined;
     }
 
