@@ -79,5 +79,4 @@ export { GoogleDriveFileViewer } from "./google-drive/google-drive-file-viewer.j
 export { GoogleDriveSharePanel } from "./google-drive/google-drive-share-panel.js";
 
 // Misc.
-export { tokenVendorContext } from "../contexts/token-vendor.js";
 export { googleDriveFileIdInputPlugin } from "./google-drive/google-drive-file-id.js";

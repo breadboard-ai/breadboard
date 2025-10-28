@@ -22,7 +22,6 @@ import {
   PortIdentifier,
 } from "@google-labs/breadboard";
 
-import { TokenVendor } from "@breadboard-ai/connection-client";
 import {
   AssetPath,
   GraphIdentifier,
@@ -38,6 +37,7 @@ import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-conf
 import { McpClientManager } from "@breadboard-ai/mcp";
 import type { Result } from "@breadboard-ai/types/result.js";
 import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
+import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 
 export enum TabType {
   URL,
@@ -78,7 +78,7 @@ export interface RuntimeConfig {
   sandbox: RunnableModuleFactory;
   experiments: Record<string, boolean>;
   globalConfig?: GlobalConfig;
-  tokenVendor: TokenVendor;
+  signinAdapter: SigninAdapter;
   settings: SettingsStore;
   fileSystem: FileSystem;
   // The board servers that are built in: initialized separately and come

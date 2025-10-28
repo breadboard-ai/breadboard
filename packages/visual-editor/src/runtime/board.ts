@@ -42,7 +42,6 @@ import {
   disconnectFromBoardServer,
   getBoardServers,
 } from "@breadboard-ai/board-server-management";
-import { TokenVendor } from "@breadboard-ai/connection-client";
 import { GraphIdentifier, ModuleIdentifier } from "@breadboard-ai/types";
 import * as idb from "idb";
 import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
@@ -53,6 +52,7 @@ import {
   applyDefaultThemeInformationIfNonePresent,
   createAppPaletteIfNeeded,
 } from "./util";
+import type { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -105,7 +105,7 @@ export class Board extends EventTarget {
     public readonly boardServers: RuntimeConfigBoardServers,
     public readonly recentBoardStore: RecentBoardStore,
     protected readonly recentBoards: BreadboardUI.Types.RecentBoard[],
-    public readonly tokenVendor?: TokenVendor,
+    public readonly signinAdapter: SigninAdapter,
     public readonly googleDriveClient?: GoogleDriveClient
   ) {
     super();
@@ -238,14 +238,10 @@ export class Board extends EventTarget {
     location?: string,
     apiKey?: string
   ): Promise<{ success: boolean; error?: string }> {
-    if (!this.tokenVendor) {
-      return { success: false, error: "Can't connect without a token vendor" };
-    }
-
     const boardServerInfo = await connectToBoardServer(
+      this.signinAdapter,
       location,
       apiKey,
-      this.tokenVendor,
       this.googleDriveClient
     );
     if (!boardServerInfo) {
@@ -259,7 +255,7 @@ export class Board extends EventTarget {
       return { success: false };
     } else {
       this.boardServers.servers = [
-        ...(await getBoardServers(this.tokenVendor, this.googleDriveClient)),
+        ...(await getBoardServers(this.signinAdapter, this.googleDriveClient)),
         ...this.boardServers.builtInBoardServers,
       ];
       this.boardServers.loader = createLoader(this.boardServers.servers);
@@ -288,7 +284,7 @@ export class Board extends EventTarget {
       return { success: false };
     }
     this.boardServers.servers = [
-      ...(await getBoardServers(this.tokenVendor, this.googleDriveClient)),
+      ...(await getBoardServers(this.signinAdapter, this.googleDriveClient)),
       ...this.boardServers.builtInBoardServers,
     ];
     this.boardServers.loader = createLoader(this.boardServers.servers);
@@ -509,7 +505,7 @@ export class Board extends EventTarget {
       }
 
       if (!graph) {
-        if (this.tokenVendor && !this.tokenVendor.isSignedIn()) {
+        if (this.signinAdapter && this.signinAdapter.state === "signedout") {
           this.dispatchEvent(new RuntimeRequestSignInEvent());
         } else {
           this.dispatchEvent(new RuntimeErrorEvent("Unable to load board"));

@@ -4,20 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  ExpiredTokenResult,
-  SignedOutTokenResult,
-  ValidTokenResult,
-} from "@breadboard-ai/types/oauth.js";
-import type { OAuthScope } from "./oauth-scopes.js";
-
-export type TokenVendor = {
-  getToken(
-    scopes?: OAuthScope[]
-  ): ValidTokenResult | ExpiredTokenResult | SignedOutTokenResult;
-  isSignedIn(): boolean;
-};
-
 export type ConnectionEnvironment = {
   OAUTH_CLIENT: string;
 };

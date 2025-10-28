@@ -10,7 +10,7 @@ import {
   ALWAYS_REQUIRED_OAUTH_SCOPES,
   canonicalizeOAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
-import { TokenVendorImpl } from "@breadboard-ai/connection-client/token-vendor.js";
+import { TokenVendor } from "@breadboard-ai/connection-client/token-vendor.js";
 import type {
   GrantResponse,
   MissingScopesTokenResult,
@@ -43,7 +43,8 @@ import { SETTINGS_TYPE } from "../types/types.js";
 import { getEmbedderRedirectUri, getTopLevelOrigin } from "./embed-helpers.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { scopesFromUrl } from "./scopes-from-url.js";
-import { SIGN_IN_CONNECTION_ID } from "./signin-adapter.js";
+
+const SIGN_IN_CONNECTION_ID = "$sign-in";
 
 export class OAuthBasedOpalShell implements OpalShellProtocol {
   readonly #nonceToScopes = new Map<string, string[]>();
@@ -54,7 +55,7 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
 
   readonly #tokenVendor = this.#settingsHelper.then(
     (settingsHelper) =>
-      new TokenVendorImpl(
+      new TokenVendor(
         {
           get: () =>
             settingsHelper.get(SETTINGS_TYPE.CONNECTIONS, SIGN_IN_CONNECTION_ID)

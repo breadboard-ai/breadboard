@@ -206,7 +206,10 @@ export class Runtime extends EventTarget {
 
 export async function create(config: RuntimeConfig): Promise<Runtime> {
   const kits = config.kits;
-  let servers = await getBoardServers(undefined, config.googleDriveClient);
+  let servers = await getBoardServers(
+    config.signinAdapter,
+    config.googleDriveClient
+  );
 
   // First run - set everything up.
   if (servers.length === 0) {
@@ -215,12 +218,15 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
     // Migrate any legacy data. We do this in order so that IDB doesn't get
     // into a bad state with races and the like.
     if (await legacyGraphProviderExists()) {
-      await migrateIDBGraphProviders();
+      await migrateIDBGraphProviders(config.signinAdapter);
       await migrateRemoteGraphProviders();
       await migrateFileSystemProviders();
     }
 
-    servers = await getBoardServers(undefined, config.googleDriveClient);
+    servers = await getBoardServers(
+      config.signinAdapter,
+      config.googleDriveClient
+    );
   }
 
   // Add board servers that are built into
@@ -298,7 +304,7 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
       boardServers,
       config.recentBoardStore,
       recentBoards,
-      config.tokenVendor,
+      config.signinAdapter,
       config.googleDriveClient
     ),
     edit,
