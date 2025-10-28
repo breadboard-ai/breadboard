@@ -27,6 +27,7 @@ import {
   RunNodeStartEvent,
   RunOutputEvent,
   Schema,
+  SimplifiedProjectRunState,
 } from "@breadboard-ai/types";
 import {
   err,
@@ -100,7 +101,7 @@ function error(msg: string) {
   return err(full);
 }
 
-class ReactiveProjectRun implements ProjectRun {
+class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
   app: ReactiveApp = new ReactiveApp(this);
   console: Map<string, ConsoleEntry> = new SignalMap();
 

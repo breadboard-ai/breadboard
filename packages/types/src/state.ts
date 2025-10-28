@@ -9,6 +9,10 @@ import { Particle } from "./particles.js";
 import { NodeRunState } from "./run-status.js";
 import { Schema } from "./schema.js";
 
+export type SimplifiedProjectRunState = {
+  console: Map<string, ConsoleEntry>;
+};
+
 /**
  * Represents an error that occurred during a run.
  */

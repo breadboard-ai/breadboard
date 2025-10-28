@@ -31,6 +31,7 @@ import { Probe } from "./probe.js";
 import { ManagedRunState, RunState } from "./run.js";
 import { RunnableModuleFactory } from "./sandbox.js";
 import { Schema } from "./schema.js";
+import { SimplifiedProjectRunState } from "./state.js";
 import { TraversalResult } from "./traversal.js";
 
 export type ErrorCapability = Capability & {
@@ -393,6 +394,10 @@ export interface NodeHandlerContext {
    * A fetch implementation that automatically handles auth credentials.
    */
   fetchWithCreds?: typeof globalThis.fetch;
+  /**
+   * A way to get the project run state.
+   */
+  readonly getProjectRunState?: () => SimplifiedProjectRunState | undefined;
 }
 
 export type RunArguments = NodeHandlerContext & {

@@ -219,6 +219,10 @@ class Loop {
     objective: LLMContent,
     params: Params
   ): Promise<Outcome<AgentResult>> {
+    console.log(
+      "PROJECT RUN STATE",
+      this.moduleArgs.context.getProjectRunState?.()
+    );
     try {
       const objectivePidgin = await this.#translator.toPidgin(
         objective,

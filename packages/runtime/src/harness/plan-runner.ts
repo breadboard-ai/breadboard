@@ -539,6 +539,7 @@ class InternalRunStateController {
       state,
       graphStore,
       fetchWithCreds,
+      getProjectRunState,
     } = this.config;
 
     const probe: Probe = {
@@ -564,6 +565,7 @@ class InternalRunStateController {
       state,
       graphStore,
       fetchWithCreds,
+      getProjectRunState,
     };
   }
 

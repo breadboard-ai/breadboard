@@ -43,6 +43,7 @@ import {
 } from "./remote.js";
 import { ManagedRunState } from "./run.js";
 import { Schema } from "./schema.js";
+import { SimplifiedProjectRunState } from "./state.js";
 import { TraversalResult } from "./traversal.js";
 import {
   TypedEventTarget,
@@ -214,6 +215,11 @@ export type RunConfig = {
    * A fetch implementation that automatically handles auth credentials.
    */
   fetchWithCreds?: typeof globalThis.fetch;
+
+  /**
+   * A way to get the project run state.
+   */
+  readonly getProjectRunState?: () => SimplifiedProjectRunState | undefined;
 };
 
 export type RunEventMap = {
