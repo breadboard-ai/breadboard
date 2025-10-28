@@ -10,7 +10,7 @@ import {
   ALWAYS_REQUIRED_OAUTH_SCOPES,
   canonicalizeOAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
-import { TokenVendorImpl } from "@breadboard-ai/connection-client/token-vendor.js";
+import { TokenVendor } from "@breadboard-ai/connection-client/token-vendor.js";
 import type {
   GrantResponse,
   MissingScopesTokenResult,
@@ -55,7 +55,7 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
 
   readonly #tokenVendor = this.#settingsHelper.then(
     (settingsHelper) =>
-      new TokenVendorImpl(
+      new TokenVendor(
         {
           get: () =>
             settingsHelper.get(SETTINGS_TYPE.CONNECTIONS, SIGN_IN_CONNECTION_ID)

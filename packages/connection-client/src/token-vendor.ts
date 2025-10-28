@@ -11,11 +11,7 @@ import type {
   TokenGrant,
   ValidTokenResult,
 } from "@breadboard-ai/types/oauth.js";
-import type {
-  ConnectionEnvironment,
-  GrantStore,
-  TokenVendor,
-} from "./types.js";
+import type { ConnectionEnvironment, GrantStore } from "./types.js";
 
 /**
  * If a token is going to expire in less than this many milliseconds, we treat
@@ -28,7 +24,7 @@ const EXPIRY_THRESHOLD_MS = /* 1 minute */ 60_000;
  * Provides access to authorization tokens stored in settings, and the ability
  * to refresh them if they are expired.
  */
-export class TokenVendorImpl implements TokenVendor {
+export class TokenVendor {
   #store: GrantStore;
   #environment: ConnectionEnvironment;
 
