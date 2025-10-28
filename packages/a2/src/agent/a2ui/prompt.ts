@@ -6,11 +6,93 @@
 
 import { tr } from "../../a2/utils";
 
+const singleShotExample = [
+  {
+    surfaceUpdate: {
+      components: [
+        {
+          id: "root",
+          component: {
+            Column: { children: { explicitList: ["profile_card"] } },
+          },
+        },
+        {
+          id: "profile_card",
+          component: { Card: { child: "card_content" } },
+        },
+        {
+          id: "card_content",
+          component: {
+            Column: {
+              children: { explicitList: ["header_row", "bio_text"] },
+            },
+          },
+        },
+        {
+          id: "header_row",
+          component: {
+            Row: {
+              alignment: "center",
+              children: { explicitList: ["avatar", "name_column"] },
+            },
+          },
+        },
+        {
+          id: "avatar",
+          component: {
+            Image: {
+              url: {
+                literalString: "[https://www.example.com/profile.jpg)",
+              },
+            },
+          },
+        },
+        {
+          id: "name_column",
+          component: {
+            Column: {
+              alignment: "start",
+              children: { explicitList: ["name_text", "handle_text"] },
+            },
+          },
+        },
+        {
+          id: "name_text",
+          component: {
+            Heading: {
+              level: "3",
+              text: { literalString: "Flutter Fan" },
+            },
+          },
+        },
+        {
+          id: "handle_text",
+          component: {
+            Text: { text: { literalString: "@flutterdev" } },
+          },
+        },
+        {
+          id: "bio_text",
+          component: {
+            Text: {
+              text: {
+                literalString:
+                  "Building beautiful apps from a single codebase.",
+              },
+            },
+          },
+        },
+      ],
+    },
+  },
+  { beginRendering: { root: "root" } },
+];
+
 export const prompt = tr`
 
 Your ONLY means of interacting with the user are these two functions:
 
-- "ui_render_user_interface" -- allows you to dynamically construct and update the user interface. 
+- "ui_render_user_interface" -- allows you to dynamically construct and update the user interface using specially formatted messages.
 
 - "ui_await_user_input" -- allows you to wait for the user's response.
 
@@ -19,7 +101,34 @@ implement it.
 
 ### Surfaces
 
-The UI is rendered with UI surfaces. Each surface is a contiguous portion of screen real estate into which a UI can be rendered. The "surfaceId" property uniquely identifies such an area. Each surface has a separate data model, and the data model can be updated independently of the surface, allow you to first construct the UI and then to change the values within it without affecting the structure of the user interface.
+The UI is rendered with UI surfaces. Each surface is a tree of UI elements that occupies a contiguous portion of screen real estate. The "surfaceId" property uniquely identifies such an area.
+
+Each surface has a separate data model, and the data model can be updated independently of the surface, allow you to first construct the UI and then to change the values within it without affecting the structure of the user interface.
+
+### Rendering lifecycle
+
+The "ui_render_user_interface" allows four types messages:
+- "surfaceUpdate" -- creates the surface's UI tree of components to be rendered. This message can be sent multiple times. Each update modifies existing surface state.
+- "deleteSurface -- removes a surface and its contents from the UI.
+- "dataModelUpdate" -- updates the underlying surface data model.
+- "beginRendering" -- signals to perform the initial render of the UI. This message is designed to prevent the "flash of incomplete content", allowing you 
+to send multiple "surfaceUpdate" prior to initial render.
+
+There are a couple of typical patterns of using "ui_render_user_interface":
+
+- The "single shot" pattern, which is useful for simple UI interactions that do not involve multiple turns or complex UI. In this pattern, the "surfaceUpdate" is called once with the entire UI tree specified, followed immediately by the "beginRendering" call.
+- The "multi-shot" pattern, which is useful when there are multiple parts to
+the output, delivered at different times. In this pattern, call the "surfaceUpdate" multiple times, followed by the "beginRendering" call.
+
+Here's an example of a single shot pattern, rendering an info card:
+
+\`\`\`json
+${JSON.stringify(singleShotExample, null, 2)}
+\`\`\
+
+
+When designing the UI for the user interaction, see if there's a matching 
+pattern you can follow and use it.
 
 ### UI Tree as Adjacency List
 
