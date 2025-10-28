@@ -76,7 +76,7 @@ type IdbWriteTaskStore<
 
 export class DriveUserGraphCollection implements MutableGraphCollection {
   readonly #graphs = new SignalMap<string, GraphProviderItem>();
-  readonly #tokenVendor: TokenVendor;
+  readonly #signinAdapter: SigninAdapter;
 
   has(url: string): boolean {
     return this.#graphs.has(url);
