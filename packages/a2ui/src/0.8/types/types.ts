@@ -21,52 +21,61 @@ export {
 export { type Action } from "./components.js";
 
 import {
-  Heading,
-  Text,
-  Image,
-  Video,
   AudioPlayer,
-  Divider,
   Button,
   Checkbox,
-  TextField,
   DateTimeInput,
+  Divider,
+  Heading,
+  Icon,
+  Image,
   MultipleChoice,
   Slider,
+  Text,
+  TextField,
+  Video,
 } from "./components";
 import { StringValue } from "./primitives";
 
 export type Theme = {
   components: {
-    AudioPlayer: Record<string, boolean | string>;
-    Button: Record<string, boolean | string>;
-    Card: Record<string, boolean | string>;
-    Column: Record<string, boolean | string>;
+    AudioPlayer: Record<string, boolean>;
+    Button: Record<string, boolean>;
+    Card: Record<string, boolean>;
+    Column: Record<string, boolean>;
     CheckBox: {
-      container: Record<string, boolean | string>;
-      element: Record<string, boolean | string>;
-      label: Record<string, boolean | string>;
+      container: Record<string, boolean>;
+      element: Record<string, boolean>;
+      label: Record<string, boolean>;
     };
-    DateTimeInput: Record<string, boolean | string>;
-    Divider: Record<string, boolean | string>;
-    Heading: Record<string, boolean | string>;
-    Image: Record<string, boolean | string>;
-    List: Record<string, boolean | string>;
-    Modal: Record<string, boolean | string>;
-    MultipleChoice: Record<string, boolean | string>;
-    Row: Record<string, boolean | string>;
-    Slider: Record<string, boolean | string>;
+    DateTimeInput: Record<string, boolean>;
+    Divider: Record<string, boolean>;
+    Heading: {
+      all: Record<string, boolean>;
+      level1: Record<string, boolean>;
+      level2: Record<string, boolean>;
+      level3: Record<string, boolean>;
+      level4: Record<string, boolean>;
+      level5: Record<string, boolean>;
+    };
+    Image: Record<string, boolean>;
+    Icon: Record<string, boolean>;
+    List: Record<string, boolean>;
+    Modal: Record<string, boolean>;
+    MultipleChoice: Record<string, boolean>;
+    Row: Record<string, boolean>;
+    Slider: Record<string, boolean>;
     Tabs: {
-      container: Record<string, boolean | string>;
-      element: Record<string, boolean | string>;
+      container: Record<string, boolean>;
+      element: Record<string, boolean>;
       controls: {
         all: Record<string, boolean>;
         selected: Record<string, boolean>;
       };
     };
-    Text: Record<string, boolean | string>;
-    TextField: Record<string, boolean | string>;
-    Video: Record<string, boolean | string>;
+    Text: Record<string, boolean>;
+    TextField: Record<string, boolean>;
+    Video: Record<string, boolean>;
   };
   elements: {
     a: Record<string, boolean>;
@@ -107,6 +116,7 @@ export type Theme = {
     DateTimeInput?: Record<string, string>;
     Divider?: Record<string, string>;
     Heading?: Record<string, string>;
+    Icon?: Record<string, string>;
     Image?: Record<string, string>;
     List?: Record<string, string>;
     Modal?: Record<string, string>;
@@ -182,7 +192,7 @@ export type ComponentProperties = {
 /** A raw component instance from a SurfaceUpdate message. */
 export interface ComponentInstance {
   id: string;
-  componentProperties?: ComponentProperties;
+  weight?: number;
   component?: ComponentProperties;
 }
 
@@ -205,7 +215,6 @@ export interface DataModelUpdate {
     valueString?: string /** May be JSON */;
     valueNumber?: number;
     valueBoolean?: boolean;
-
     valueList?: {
       valueString?: string /** May be JSON */;
       valueNumber?: number;
@@ -249,6 +258,7 @@ export type ResolvedArray = ResolvedValue[];
  */
 interface BaseComponentNode {
   id: string;
+  weight?: number;
   dataContextPath?: string;
 }
 
@@ -265,6 +275,11 @@ export interface TextNode extends BaseComponentNode {
 export interface ImageNode extends BaseComponentNode {
   type: "Image";
   properties: ResolvedImage;
+}
+
+export interface IconNode extends BaseComponentNode {
+  type: "Icon";
+  properties: ResolvedIcon;
 }
 
 export interface VideoNode extends BaseComponentNode {
@@ -349,6 +364,7 @@ export interface SliderNode extends BaseComponentNode {
 export type AnyComponentNode =
   | HeadingNode
   | TextNode
+  | IconNode
   | ImageNode
   | VideoNode
   | AudioPlayerNode
@@ -370,6 +386,7 @@ export type AnyComponentNode =
 // original interfaces.
 export type ResolvedHeading = Heading;
 export type ResolvedText = Text;
+export type ResolvedIcon = Icon;
 export type ResolvedImage = Image;
 export type ResolvedVideo = Video;
 export type ResolvedAudioPlayer = AudioPlayer;

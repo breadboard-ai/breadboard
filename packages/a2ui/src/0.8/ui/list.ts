@@ -53,7 +53,7 @@ export class List extends Root {
 
         > ::slotted(*) {
           flex: 1 0 fit-content;
-          max-width: min(80%, 480px);
+          max-width: min(80%, 400px);
         }
       }
     `,

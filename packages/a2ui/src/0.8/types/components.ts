@@ -60,6 +60,10 @@ export interface Image {
   url: StringValue;
 }
 
+export interface Icon {
+  name: StringValue;
+}
+
 export interface Video {
   url: StringValue;
 }
