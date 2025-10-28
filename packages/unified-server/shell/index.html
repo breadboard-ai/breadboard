@@ -2,8 +2,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width" />
-  <!-- TODO(aomarks) Share card -->
   <title>Opal [Experiment]</title>
+  <meta
+    property="og:image"
+    content="{{origin}}/images/share-card-{{bucket}}.png"
+  />
+  <meta property="og:image:width" content="1440" />
+  <meta property="og:image:height" content="810" />
+  <meta
+    name="twitter:image"
+    content="{{origin}}/images/share-card-{{bucket}}.png"
+  />
   <style>
     iframe#opal-app {
       width: 100vw;
@@ -18,7 +27,7 @@
 <body>
   <iframe
     id="opal-app"
-    sandbox="allow-scripts allow-same-origin allow-popups"
+    sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
   ></iframe>
   <template>
     <script type="application/json">
