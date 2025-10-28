@@ -108,11 +108,7 @@ async function discoverShellHostOrigin(): Promise<string | undefined> {
   }
 
   for (const pattern of allowedOriginPatterns) {
-    if (
-      pattern.includes("*")
-        ? new URLPattern(pattern).test(shellOrigin)
-        : shellOrigin === pattern
-    ) {
+    if (new URLPattern(pattern).test(shellOrigin)) {
       console.debug(
         `[shell guest] ${shellOrigin} matched allowed origin ${pattern}`
       );
