@@ -9,6 +9,7 @@ import {
   LLMContent,
   NodeEndResponse,
   NodeTypeIdentifier,
+  WorkItem,
 } from "@breadboard-ai/types";
 import { timestamp } from "@breadboard-ai/utils";
 import { InputResponse, OutputResponse, Schema } from "@google-labs/breadboard";
@@ -16,7 +17,7 @@ import { Signal } from "signal-polyfill";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { idFromPath, toLLMContentArray } from "./common";
-import { EphemeralParticleTree, WorkItem } from "./types";
+import { EphemeralParticleTree } from "./types";
 
 export { ReactiveWorkItem };
 

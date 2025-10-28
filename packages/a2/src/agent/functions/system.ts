@@ -12,9 +12,12 @@ import {
 } from "../function-definition";
 import { AgentFileSystem } from "../file-system";
 import { AgentUI } from "../ui";
-import { err, ok } from "@breadboard-ai/utils";
+import { ok } from "@breadboard-ai/utils";
 import { tr } from "../../a2/utils";
 import { UI_SCHEMA } from "../../a2/render-consistent-ui";
+import { A2UIClientEventParameters } from "../a2ui/schemas";
+import { v0_8 } from "@breadboard-ai/a2ui";
+import { GeminiSchema } from "../../a2/gemini";
 
 export { initializeSystemFunctions };
 
@@ -88,7 +91,11 @@ const UI_RENDER_FUNCTION = "ui_render_user_interface";
 const UI_AWAIT_USER_FUNCTION = "ui_await_user_input";
 
 function defineA2UIFunctions(args: SystemFunctionArgs): FunctionDefinition[] {
-  const serverSchema = UI_SCHEMA;
+  const serverSchema: GeminiSchema = {
+    type: "object",
+    properties: { messages: { type: "array", items: UI_SCHEMA } },
+  };
+
   return [
     defineFunctionLoose(
       {
@@ -105,16 +112,14 @@ times to update the UI without being blocked on the user response.
         parametersJsonSchema: serverSchema,
         responseJsonSchema: {
           type: "object",
-          properties: {
-            success: {
-              type: "boolean",
-            },
-          },
+          properties: { success: { type: "boolean" } },
         },
       },
-      async (payload) => {
-        console.log("A2UI surfaceUpdate PAYLOAD", payload);
-        await args.ui.renderUI(payload);
+      async ({ messages }) => {
+        console.log(`A2UI MESSAGES`, messages);
+        args.ui.renderUserInterface(
+          messages as v0_8.Types.ServerToClientMessage[]
+        );
         return { success: true };
       }
     ),
@@ -128,32 +133,10 @@ specified in the UI, rendered with "${UI_RENDER_FUNCTION}".
 
 `,
         parameters: {},
-        response: {
-          name: z.string().describe(tr`
-
-The name of the action, taken from the component's action.name property.
-
-`),
-          surfaceId: z.string().describe(tr`
-    
-The id of the surface where the event originated.
-
-`),
-          sourceComponentId: z.string().describe(tr`
-  
-The id of the component that triggered the event.
-
-`),
-          context: z
-            .object({})
-            .describe(
-              `A JSON object containing the key-value pairs from the component's action.context, after resolving all data bindings.`
-            ),
-        },
+        response: A2UIClientEventParameters,
       },
       async () => {
-        console.log("WAITING FOR USER INPUT");
-        return err(`I can't wait to learn how to wait on user's input!!!1`);
+        return args.ui.awaitUserInput();
       }
     ),
   ];

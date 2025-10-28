@@ -4,10 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities, Outcome } from "@breadboard-ai/types";
-import { ok } from "@breadboard-ai/utils";
+import { Capabilities, ConsoleEntry, Outcome } from "@breadboard-ai/types";
+import { err, ok } from "@breadboard-ai/utils";
 import { PidginTranslator } from "./pidgin-translator";
-import { StreamableReporter } from "../a2/output";
+import { A2ModuleArgs } from "../runnable-module-factory";
+import { A2UIClientWorkItem } from "./a2ui/client-work-item";
+import { A2UIClientEventMessage } from "./a2ui/schemas";
+import { v0_8 } from "@breadboard-ai/a2ui";
 
 export { AgentUI };
 
@@ -28,28 +31,72 @@ export type RawUserResponse = {
 };
 
 class AgentUI {
-  #reporter: StreamableReporter;
-  #reportedStarted: Promise<Outcome<unknown>>;
+  readonly #entry: ConsoleEntry | undefined;
+  #workItem: A2UIClientWorkItem | undefined;
+  #workItemId: string | null = null;
 
   constructor(
     private readonly caps: Capabilities,
+    private readonly moduleArgs: A2ModuleArgs,
     private readonly translator: PidginTranslator
   ) {
-    this.#reporter = new StreamableReporter(this.caps, {
-      title: "A2UI",
-      icon: "web",
-    });
-    this.#reportedStarted = this.#reporter.start();
+    const { currentStep, getProjectRunState } = this.moduleArgs.context;
+    const stepId = currentStep?.id;
+    if (stepId) {
+      this.#entry = getProjectRunState?.()?.console.get(stepId);
+    }
+    if (!this.#entry) {
+      console.warn(
+        `Unable to find console entry for this agent. Trying to render UI will fail.`
+      );
+    }
   }
 
-  async close() {
-    await this.#reportedStarted;
-    return this.#reporter.close();
+  #getWorkItem(): Outcome<A2UIClientWorkItem> {
+    if (!this.#workItem) {
+      return this.#createWorkItem();
+    }
+    return this.#workItem;
   }
 
-  async renderUI(payload: unknown) {
-    await this.#reportedStarted;
-    return this.#reporter.sendA2UI("Render UI", payload, "web");
+  #createWorkItem(): Outcome<A2UIClientWorkItem> {
+    if (!this.#entry) {
+      return err(`Unable to create UI: Console is not available`);
+    }
+    if (!this.#workItemId) {
+      this.#workItemId = crypto.randomUUID();
+    }
+    this.#workItem = new A2UIClientWorkItem("A2UI", "web");
+    this.#entry.work.set(this.#workItemId, this.#workItem);
+    return this.#workItem;
+  }
+
+  #updateWorkItem(): Outcome<A2UIClientWorkItem> {
+    if (!this.#workItem) {
+      return this.#createWorkItem();
+    }
+    if (!this.#entry) {
+      return err(`Unable to update UI: Console is not available`);
+    }
+    this.#entry.work.delete(this.#workItemId!);
+    this.#workItemId = crypto.randomUUID();
+
+    this.#entry.work.set(this.#workItemId, this.#workItem);
+    return this.#workItem;
+  }
+
+  renderUserInterface(
+    payload: v0_8.Types.ServerToClientMessage[]
+  ): Outcome<void> {
+    const workItem = this.#updateWorkItem();
+    if (!ok(workItem)) return workItem;
+    return workItem.renderUserInterface(payload);
+  }
+
+  async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {
+    const workItem = this.#updateWorkItem();
+    if (!ok(workItem)) return workItem;
+    return workItem.awaitUserInput();
   }
 
   async requestUserInput(

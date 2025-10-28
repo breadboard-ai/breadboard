@@ -36,7 +36,7 @@ import { getDataStore } from "@breadboard-ai/data-store";
 import { createSideboardRuntimeProvider } from "./sideboard-runtime.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { Shell } from "./shell.js";
-import { Outcome, RuntimeFlagManager } from "@breadboard-ai/types";
+import { Outcome, RunConfig, RuntimeFlagManager } from "@breadboard-ai/types";
 import {
   RuntimeHostStatusUpdateEvent,
   RuntimeSnackbarEvent,
@@ -103,7 +103,7 @@ export class Runtime extends EventTarget {
     }
 
     const graph = tab?.graph;
-    const runConfig = {
+    const runConfig: RunConfig = {
       url,
       runner: graph,
       diagnostics: true,
@@ -121,6 +121,9 @@ export class Runtime extends EventTarget {
       inputs: inputsFromSettings(settings),
       interactiveSecrets: true,
       fetchWithCreds: this.fetchWithCreds,
+      getProjectRunState: () => {
+        return this.state.getProjectState(tab.mainGraphId)?.run;
+      },
     };
 
     // Let the queued up updates trigger the render before actually preparing

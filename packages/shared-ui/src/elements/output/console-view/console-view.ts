@@ -4,21 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, nothing, PropertyValues } from "lit";
-import { customElement, property } from "lit/decorators.js";
-import { ConsoleEntry, ProjectRun, UI } from "../../../state";
-import { repeat } from "lit/directives/repeat.js";
-import { classMap } from "lit/directives/class-map.js";
-import { icons } from "../../../styles/icons";
-import { SignalWatcher } from "@lit-labs/signals";
 import { isParticle } from "@breadboard-ai/particles";
-import { sharedStyles } from "./shared-styles.js";
-import { colorsLight } from "../../../styles/host/colors-light.js";
-import { type } from "../../../styles/host/type.js";
-import { iconSubstitute } from "../../../utils/icon-substitute.js";
+import { ConsoleEntry } from "@breadboard-ai/types";
+import { SignalWatcher } from "@lit-labs/signals";
+import { consume } from "@lit/context";
+import { css, html, LitElement, nothing, PropertyValues } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { uiStateContext } from "../../../contexts/ui-state.js";
-import { consume } from "@lit/context";
+import { ProjectRun, UI } from "../../../state";
+import { colorsLight } from "../../../styles/host/colors-light.js";
+import { type } from "../../../styles/host/type.js";
+import { icons } from "../../../styles/icons";
+import { iconSubstitute } from "../../../utils/icon-substitute.js";
+import { sharedStyles } from "./shared-styles.js";
 
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {
@@ -427,6 +428,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
 
                     return html` <details
                       ?open=${workItem.awaitingUserInput ||
+                      workItem.openByDefault ||
                       this.#openWorkItems.has(workItemId)}
                     >
                       <summary
@@ -476,7 +478,16 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                                 workItem.product,
                                 ([key]) => key,
                                 ([, product]) => {
-                                  if (isParticle(product)) {
+                                  if ("processor" in product) {
+                                    const { processor, receiver } = product;
+                                    return html`<li>
+                                      <bb-a2ui-client-view
+                                        .processor=${processor}
+                                        .receiver=${receiver}
+                                      >
+                                      </bb-a2ui-client-view>
+                                    </li>`;
+                                  } else if (isParticle(product)) {
                                     return html`<li>
                                       <bb-particle-view
                                         .particle=${product}
