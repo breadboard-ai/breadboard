@@ -65,12 +65,21 @@ export type ConsoleEntry = {
   current: WorkItem | null;
 };
 
+export type A2UIServerReceiver = {
+  /**
+   * Sends a message to the A2UI server.
+   * @param payload -- TODO make this A2UIClientEventMessage
+   */
+  sendMessage(payload: unknown): void;
+};
+
 export type SimplifiedA2UIClient = {
   /**
    * The A2UI Model Processor
    * TODO: Incorporate A2UI types properly into this type system.
    */
   processor: unknown;
+  receiver: A2UIServerReceiver;
 };
 
 /**

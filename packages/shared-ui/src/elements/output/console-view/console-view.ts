@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { v0_8 } from "@breadboard-ai/a2ui";
 import { isParticle } from "@breadboard-ai/particles";
 import { ConsoleEntry } from "@breadboard-ai/types";
 import { SignalWatcher } from "@lit-labs/signals";
@@ -479,11 +478,11 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                                 ([key]) => key,
                                 ([, product]) => {
                                   if ("processor" in product) {
-                                    const processor =
-                                      product.processor as v0_8.Types.ModelProcessor;
+                                    const { processor, receiver } = product;
                                     return html`<li>
                                       <bb-a2ui-client-view
                                         .processor=${processor}
+                                        .receiver=${receiver}
                                       >
                                       </bb-a2ui-client-view>
                                     </li>`;

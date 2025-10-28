@@ -7,9 +7,10 @@
 import { Capabilities, ConsoleEntry, Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { PidginTranslator } from "./pidgin-translator";
-import { A2UIClientEventMessage } from "./a2ui/schemas";
 import { A2ModuleArgs } from "../runnable-module-factory";
 import { A2UIClientWorkItem } from "./a2ui/client-work-item";
+import { A2UIClientEventMessage } from "./a2ui/schemas";
+import { v0_8 } from "@breadboard-ai/a2ui";
 
 export { AgentUI };
 
@@ -61,15 +62,18 @@ class AgentUI {
     return this.#workItem;
   }
 
-  renderUserInterface(payload: unknown): Outcome<void> {
+  renderUserInterface(
+    payload: v0_8.Types.ServerToClientMessage[]
+  ): Outcome<void> {
     const workItem = this.#getWorkItem();
     if (!ok(workItem)) return workItem;
     return workItem.renderUserInterface(payload);
   }
 
   async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    return err(`I can't wait to learn how to wait on user's input!!!1`);
+    const workItem = this.#getWorkItem();
+    if (!ok(workItem)) return workItem;
+    return workItem.awaitUserInput();
   }
 
   async requestUserInput(

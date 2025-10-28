@@ -57,7 +57,7 @@ export type AgentResult = {
   intermediate?: LLMContent;
 };
 
-const AGENT_MODEL = "gemini-flash-latest";
+const AGENT_MODEL = "gemini-pro-latest";
 
 const systemInstruction = llm`
 You are an LLM-powered AI agent. You are embedded into an application.

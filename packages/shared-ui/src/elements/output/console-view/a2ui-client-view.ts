@@ -5,21 +5,21 @@
  */
 
 import { SignalWatcher } from "@lit-labs/signals";
+import { provide } from "@lit/context";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
+
+import { A2UIServerReceiver } from "@breadboard-ai/types";
 
 import { v0_8 } from "@breadboard-ai/a2ui";
 import * as A2UI from "@breadboard-ai/a2ui/ui";
 import { theme as uiTheme } from "../../../a2ui-theme/a2ui-theme.js";
 
-import { icons } from "../../../styles/icons.js";
-import { sharedStyles } from "./shared-styles.js";
 import { colorsLight } from "../../../styles/host/colors-light.js";
 import { type } from "../../../styles/host/type.js";
-
-import "@breadboard-ai/a2ui/ui";
-import { provide } from "@lit/context";
+import { icons } from "../../../styles/icons.js";
+import { sharedStyles } from "./shared-styles.js";
 
 @customElement("bb-a2ui-client-view")
 export class A2UIClientView extends SignalWatcher(LitElement) {
@@ -28,6 +28,9 @@ export class A2UIClientView extends SignalWatcher(LitElement) {
 
   @property()
   accessor processor: v0_8.Types.ModelProcessor | null = null;
+
+  @property()
+  accessor receiver: A2UIServerReceiver | null = null;
 
   static styles = [
     icons,
@@ -101,9 +104,13 @@ export class A2UIClientView extends SignalWatcher(LitElement) {
                 },
               };
 
-              // TODO: Phone home.
-              console.log("A2UI message", message);
-              // debugger;
+              if (!this.receiver) {
+                console.warn(
+                  "A2UI Server receiver unavailable, won't be able to interact with the user"
+                );
+                return;
+              }
+              this.receiver.sendMessage(message);
             }}
           ></a2ui-surface>`;
         }
