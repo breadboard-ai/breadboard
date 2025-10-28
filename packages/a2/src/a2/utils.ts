@@ -39,6 +39,7 @@ export {
   decodeBase64,
   toJson,
   fromJson,
+  tr,
 };
 
 export type ErrorReason =
@@ -456,4 +457,12 @@ function toJson<T = JsonSerializable>(
 
 function fromJson<T>(json: T): LLMContent[] {
   return [{ parts: [{ json: json as JsonSerializable }] }];
+}
+
+function tr(strings: TemplateStringsArray, ...values: unknown[]): string {
+  return strings
+    .reduce((acc, str, i) => {
+      return acc + str + (values[i] || "");
+    }, "")
+    .trim();
 }

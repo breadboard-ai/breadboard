@@ -24,7 +24,7 @@ import {
 } from "@google-labs/breadboard";
 import { A2ModuleArgs } from "../runnable-module-factory";
 
-export { renderConsistentUI };
+export { renderConsistentUI, UI_SCHEMA };
 
 const EXAMPLES = [
   "If the content is predominantly visual media (images and videos) then arrange them in a neat grid using Rows, Columns, and Lists. Try to put a few items on each row and try to make sure the grid is balanced. Put any other content, including text and audio, below the media. If there is a title, place it at the top.",
@@ -67,7 +67,7 @@ const UI_SCHEMA: GeminiSchema = {
         components: {
           type: "array",
           description: "A list containing all UI components for the surface.",
-          minItems: "1",
+          minItems: 1,
           items: {
             type: "object",
             description:
