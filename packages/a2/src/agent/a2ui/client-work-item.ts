@@ -61,6 +61,8 @@ class A2UIClientWorkItem implements WorkItem {
       payload as v0_8.Types.ServerToClientMessage[]
     );
 
+    if (this.product.has(this.workItemId)) return;
+
     this.product.set(this.workItemId, {
       processor: this.#processor,
       receiver: {

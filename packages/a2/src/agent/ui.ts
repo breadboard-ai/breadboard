@@ -33,6 +33,7 @@ export type RawUserResponse = {
 class AgentUI {
   readonly #entry: ConsoleEntry | undefined;
   #workItem: A2UIClientWorkItem | undefined;
+  #workItemId: string | null = null;
 
   constructor(
     private readonly caps: Capabilities,
@@ -53,25 +54,47 @@ class AgentUI {
 
   #getWorkItem(): Outcome<A2UIClientWorkItem> {
     if (!this.#workItem) {
-      if (!this.#entry) {
-        return err(`Unable to create UI: Console is not available`);
-      }
-      this.#workItem = new A2UIClientWorkItem("A2UI", "web");
-      this.#entry.work.set(crypto.randomUUID(), this.#workItem);
+      return this.#createWorkItem();
     }
+    return this.#workItem;
+  }
+
+  #createWorkItem(): Outcome<A2UIClientWorkItem> {
+    if (!this.#entry) {
+      return err(`Unable to create UI: Console is not available`);
+    }
+    if (!this.#workItemId) {
+      this.#workItemId = crypto.randomUUID();
+    }
+    this.#workItem = new A2UIClientWorkItem("A2UI", "web");
+    this.#entry.work.set(this.#workItemId, this.#workItem);
+    return this.#workItem;
+  }
+
+  #updateWorkItem(): Outcome<A2UIClientWorkItem> {
+    if (!this.#workItem) {
+      return this.#createWorkItem();
+    }
+    if (!this.#entry) {
+      return err(`Unable to update UI: Console is not available`);
+    }
+    this.#entry.work.delete(this.#workItemId!);
+    this.#workItemId = crypto.randomUUID();
+
+    this.#entry.work.set(this.#workItemId, this.#workItem);
     return this.#workItem;
   }
 
   renderUserInterface(
     payload: v0_8.Types.ServerToClientMessage[]
   ): Outcome<void> {
-    const workItem = this.#getWorkItem();
+    const workItem = this.#updateWorkItem();
     if (!ok(workItem)) return workItem;
     return workItem.renderUserInterface(payload);
   }
 
   async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {
-    const workItem = this.#getWorkItem();
+    const workItem = this.#updateWorkItem();
     if (!ok(workItem)) return workItem;
     return workItem.awaitUserInput();
   }
