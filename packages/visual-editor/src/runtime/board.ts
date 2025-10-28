@@ -105,7 +105,7 @@ export class Board extends EventTarget {
     public readonly boardServers: RuntimeConfigBoardServers,
     public readonly recentBoardStore: RecentBoardStore,
     protected readonly recentBoards: BreadboardUI.Types.RecentBoard[],
-    public readonly signinAdapter?: SigninAdapter,
+    public readonly signinAdapter: SigninAdapter,
     public readonly googleDriveClient?: GoogleDriveClient
   ) {
     super();
@@ -239,7 +239,7 @@ export class Board extends EventTarget {
     apiKey?: string
   ): Promise<{ success: boolean; error?: string }> {
     const boardServerInfo = await connectToBoardServer(
-      this.signinAdapter ?? { state: "signedout" },
+      this.signinAdapter,
       location,
       apiKey,
       this.googleDriveClient
@@ -255,10 +255,7 @@ export class Board extends EventTarget {
       return { success: false };
     } else {
       this.boardServers.servers = [
-        ...(await getBoardServers(
-          this.signinAdapter ?? { state: "signedout" },
-          this.googleDriveClient
-        )),
+        ...(await getBoardServers(this.signinAdapter, this.googleDriveClient)),
         ...this.boardServers.builtInBoardServers,
       ];
       this.boardServers.loader = createLoader(this.boardServers.servers);
@@ -287,10 +284,7 @@ export class Board extends EventTarget {
       return { success: false };
     }
     this.boardServers.servers = [
-      ...(await getBoardServers(
-        this.signinAdapter ?? { state: "signedout" },
-        this.googleDriveClient
-      )),
+      ...(await getBoardServers(this.signinAdapter, this.googleDriveClient)),
       ...this.boardServers.builtInBoardServers,
     ];
     this.boardServers.loader = createLoader(this.boardServers.servers);
