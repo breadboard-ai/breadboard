@@ -27,10 +27,6 @@ const EXPIRY_THRESHOLD_MS = /* 1 minute */ 60_000;
 /**
  * Provides access to authorization tokens stored in settings, and the ability
  * to refresh them if they are expired.
- *
- * There should typically be one instance of this class per Visual Editor, and
- * elements should discover it using the {@link tokenVendorContext} Lit
- * context, which should be provided by the top-level Visual Editor element.
  */
 export class TokenVendorImpl implements TokenVendor {
   #store: GrantStore;

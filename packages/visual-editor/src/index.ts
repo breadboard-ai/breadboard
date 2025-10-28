@@ -146,8 +146,7 @@ export class Main extends SignalWatcher(LitElement) {
   @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
   accessor settingsHelper: SettingsHelperImpl;
 
-  @provide({ context: BreadboardUI.Elements.tokenVendorContext })
-  accessor tokenVendor: TokenVendor;
+  #tokenVendor: TokenVendor;
 
   @provide({ context: signinAdapterContext })
   accessor signinAdapter: SigninAdapter;
@@ -301,7 +300,7 @@ export class Main extends SignalWatcher(LitElement) {
     this.#secretsHelper = new SecretsHelper(this.#settings);
 
     // Authentication
-    this.tokenVendor = createTokenVendor(
+    this.#tokenVendor = createTokenVendor(
       {
         get: () => {
           return this.settingsHelper.get(
@@ -495,7 +494,7 @@ export class Main extends SignalWatcher(LitElement) {
       graphStore: this.#graphStore,
       experiments: {},
       globalConfig: this.globalConfig,
-      tokenVendor: this.tokenVendor,
+      tokenVendor: this.#tokenVendor,
       signinAdapter: this.signinAdapter,
       sandbox: moduleFactory,
       settings: this.#settings,
