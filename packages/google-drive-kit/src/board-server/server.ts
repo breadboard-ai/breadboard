@@ -44,7 +44,6 @@ import {
 import { SaveDebouncer } from "./save-debouncer.js";
 import { DriveGalleryGraphCollection } from "./gallery-graph-collection.js";
 import { DriveUserGraphCollection } from "./user-graph-collection.js";
-import type { TokenVendor } from "@breadboard-ai/connection-client";
 import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
 
 export { GoogleDriveBoardServer };
@@ -62,7 +61,6 @@ class GoogleDriveBoardServer
   static async from(
     title: string,
     user: User,
-    tokenVendor: TokenVendor,
     signInInfo: SignInInfo,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
@@ -91,7 +89,6 @@ class GoogleDriveBoardServer
       title,
       configuration,
       user,
-      tokenVendor,
       signInInfo,
       googleDriveClient,
       publishPermissions,
@@ -106,7 +103,6 @@ class GoogleDriveBoardServer
   public readonly extensions: BoardServerExtension[] = [];
   public readonly capabilities: BoardServerCapabilities;
   public readonly ops: DriveOperations;
-  readonly #tokenVendor: TokenVendor;
   readonly #googleDriveClient: GoogleDriveClient;
   readonly #loadedGraphMetadata = new Map<
     string,
@@ -144,7 +140,6 @@ class GoogleDriveBoardServer
     public readonly name: string,
     public readonly configuration: BoardServerConfiguration,
     public readonly user: User,
-    tokenVendor: TokenVendor,
     signInInfo: SignInInfo,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
@@ -166,7 +161,6 @@ class GoogleDriveBoardServer
     this.secrets = configuration.secrets;
     this.extensions = configuration.extensions;
     this.capabilities = configuration.capabilities;
-    this.#tokenVendor = tokenVendor;
     this.#googleDriveClient = googleDriveClient;
     this.galleryGraphs = new DriveGalleryGraphCollection(
       signInInfo,

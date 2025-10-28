@@ -208,7 +208,6 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
   const kits = config.kits;
   let servers = await getBoardServers(
     config.signinAdapter,
-    undefined,
     config.googleDriveClient
   );
 
@@ -226,7 +225,6 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
 
     servers = await getBoardServers(
       config.signinAdapter,
-      undefined,
       config.googleDriveClient
     );
   }
@@ -306,7 +304,6 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
       boardServers,
       config.recentBoardStore,
       recentBoards,
-      config.tokenVendor,
       config.signinAdapter,
       config.googleDriveClient
     ),

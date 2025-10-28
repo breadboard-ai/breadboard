@@ -42,7 +42,6 @@ import {
   disconnectFromBoardServer,
   getBoardServers,
 } from "@breadboard-ai/board-server-management";
-import { TokenVendor } from "@breadboard-ai/connection-client";
 import { GraphIdentifier, ModuleIdentifier } from "@breadboard-ai/types";
 import * as idb from "idb";
 import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
@@ -106,7 +105,6 @@ export class Board extends EventTarget {
     public readonly boardServers: RuntimeConfigBoardServers,
     public readonly recentBoardStore: RecentBoardStore,
     protected readonly recentBoards: BreadboardUI.Types.RecentBoard[],
-    public readonly tokenVendor?: TokenVendor,
     public readonly signinAdapter?: SigninAdapter,
     public readonly googleDriveClient?: GoogleDriveClient
   ) {
@@ -240,15 +238,10 @@ export class Board extends EventTarget {
     location?: string,
     apiKey?: string
   ): Promise<{ success: boolean; error?: string }> {
-    if (!this.tokenVendor) {
-      return { success: false, error: "Can't connect without a token vendor" };
-    }
-
     const boardServerInfo = await connectToBoardServer(
       this.signinAdapter ?? { state: "signedout" },
       location,
       apiKey,
-      this.tokenVendor,
       this.googleDriveClient
     );
     if (!boardServerInfo) {
@@ -264,7 +257,6 @@ export class Board extends EventTarget {
       this.boardServers.servers = [
         ...(await getBoardServers(
           this.signinAdapter ?? { state: "signedout" },
-          this.tokenVendor,
           this.googleDriveClient
         )),
         ...this.boardServers.builtInBoardServers,
@@ -297,7 +289,6 @@ export class Board extends EventTarget {
     this.boardServers.servers = [
       ...(await getBoardServers(
         this.signinAdapter ?? { state: "signedout" },
-        this.tokenVendor,
         this.googleDriveClient
       )),
       ...this.boardServers.builtInBoardServers,
