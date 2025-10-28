@@ -172,7 +172,11 @@ const listItemLight = UI.Utils.merge(listItem, {
 });
 
 export const theme: v0_8.Types.Theme = {
-  additionalStyles: {},
+  additionalStyles: {
+    Button: {
+      "--n-35": "var(--n-100)",
+    },
+  },
   components: {
     AudioPlayer: {},
     Button: {
@@ -309,17 +313,20 @@ export const theme: v0_8.Types.Theme = {
       "color-c-p30": true,
     },
     TextField: {
-      "layout-pt-2": true,
-      "layout-pb-2": true,
-      "layout-pl-3": true,
-      "layout-pr-3": true,
-      "border-br-12": true,
-      "border-bw-1": true,
-      "border-bs-s": true,
-      "color-bgc-p100": true,
-      "color-bc-p60": true,
-      "color-c-n30": true,
-      "color-c-p30": true,
+      container: {},
+      element: {
+        "layout-pt-2": true,
+        "layout-pb-2": true,
+        "layout-pl-3": true,
+        "layout-pr-3": true,
+        "border-br-12": true,
+        "border-bw-1": true,
+        "border-bs-s": true,
+        "color-bgc-p100": true,
+        "color-bc-p60": true,
+        "color-c-n30": true,
+        "color-c-p30": true,
+      },
     },
     Video: {
       "border-br-5": true,
