@@ -31,9 +31,7 @@ import {
   createFileSystemBackend,
   getDataStore,
 } from "@breadboard-ai/data-store";
-import { SecretsHelper } from "../utils/secrets-helper";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import { TokenVendor } from "@breadboard-ai/connection-client";
 import type {
   SideBoardRuntime,
   SideBoardRuntimeEventTarget,
@@ -64,7 +62,6 @@ function createSideboardRuntimeProvider(
       return new SideboardRuntimeImpl(
         args,
         servers,
-        config.tokenVendor!,
         config.settings,
         config.fileSystem,
         config.fetchWithCreds
@@ -79,7 +76,6 @@ class SideboardRuntimeImpl
 {
   #graphStore: MutableGraphStore;
   #dataStore: BoardServerAwareDataStore;
-  #secretsHelper: SecretsHelper | undefined;
   #fileSystem: FileSystem;
   #runningTaskCount = 0;
   #discardTasks = false;
@@ -87,7 +83,6 @@ class SideboardRuntimeImpl
   constructor(
     args: GraphStoreArgs,
     servers: BoardServer[],
-    public readonly tokenVendor: TokenVendor,
     public readonly settings: SettingsStore,
     fileSystem: FileSystem | undefined,
     private readonly fetchWithCreds: typeof globalThis.fetch
@@ -228,76 +223,15 @@ class SideboardRuntimeImpl
     signal?: AbortSignal
   ): Promise<HarnessRunner> {
     const config = await this.createConfig(graph, graphURLForProxy, signal);
-
     const runner = createRunner(config);
-    runner.addEventListener("secret", async (event) => {
-      const { keys } = event.data;
-      if (!this.#secretsHelper) {
-        this.#secretsHelper = new SecretsHelper(this.settings);
-        this.#secretsHelper.restoreStoredSecretsForKeys(keys);
-      }
-
-      if (this.#secretsHelper) {
-        this.#secretsHelper.setKeys(keys);
-        if (this.#secretsHelper.hasAllSecrets()) {
-          runner.run(this.#secretsHelper.getSecrets());
-          return;
-        }
-      }
-
-      // TODO(aomarks) The logic in this.#handleSecretEvent does not
-      // seem to support connections, which we definitely need. There
-      // must be some other way that secrets are fulfilled when using
-      // the main editor view. For now, let's just talk to token vendor
-      // directly, ourselves.
-      const secrets: Record<string, string> = {};
-      for (const key of event.data.keys) {
-        if (key.startsWith("connection:")) {
-          const connectionId = key.slice("connection:".length);
-          let result = this.tokenVendor.getToken();
-          if (result.state === "expired") {
-            try {
-              result = await result.refresh();
-            } catch (error) {
-              runner.dispatchEvent(
-                new RunnerErrorEvent({
-                  error:
-                    `Error refreshing access token for ` +
-                    `${connectionId}: ${error}`,
-                  timestamp: Date.now(),
-                })
-              );
-            }
-          }
-          switch (result.state) {
-            case "valid":
-              secrets[key] = result.grant.access_token;
-              break;
-
-            case "expired":
-              runner.dispatchEvent(
-                new RunnerErrorEvent({
-                  error: `Failed to refresh the access token for ${connectionId}.`,
-                  timestamp: Date.now(),
-                })
-              );
-              break;
-
-            default:
-              result.state satisfies "signedout";
-              runner.dispatchEvent(
-                new RunnerErrorEvent({
-                  error: `User is signed out of ${connectionId}.`,
-                  timestamp: Date.now(),
-                })
-              );
-              break;
-          }
-        }
-      }
-
-      runner.run(secrets);
-    });
+    runner.addEventListener("secret", () =>
+      runner.dispatchEvent(
+        new RunnerErrorEvent({
+          error: `Secrets are not supported`,
+          timestamp: Date.now(),
+        })
+      )
+    );
     return runner;
   }
 }
