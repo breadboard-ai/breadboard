@@ -14,6 +14,7 @@ import { LitElement, type PropertyValues, css, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { icons } from "../../styles/icons.js";
+import { HideTooltipEvent, ShowTooltipEvent } from "../../events/events.js";
 
 @customElement("bb-google-drive-file-viewer")
 export class GoogleDriveFileViewer extends LitElement {
@@ -62,7 +63,7 @@ export class GoogleDriveFileViewer extends LitElement {
         align-items: center;
         overflow: hidden;
         position: relative;
-        background: var(--n-80);
+        background: oklch(from var(--n-0) l c h / calc(alpha * 0.2));
         box-shadow: inset 0 0 0 3px var(--n-90);
         border-radius: var(--bb-grid-size-3);
         padding: var(--bb-grid-size-3);
@@ -90,6 +91,7 @@ export class GoogleDriveFileViewer extends LitElement {
           right: var(--bb-grid-size-3);
 
           & > .g-icon {
+            pointer-events: none;
             font-size: 18px;
           }
         }
@@ -180,7 +182,24 @@ export class GoogleDriveFileViewer extends LitElement {
                   <div class="image-placeholder">
                     <span class="g-icon filled round">docs</span>
 
-                    <span class="link-out">
+                    <span
+                      class="link-out"
+                      @pointerover=${(evt: PointerEvent) => {
+                        this.dispatchEvent(
+                          new ShowTooltipEvent(
+                            "Open in new tab",
+                            evt.clientX,
+                            evt.clientY
+                          )
+                        );
+                      }}
+                      @pointerout=${() => {
+                        this.dispatchEvent(new HideTooltipEvent());
+                      }}
+                      @click=${() => {
+                        this.dispatchEvent(new HideTooltipEvent());
+                      }}
+                    >
                       <span class="g-icon filled-heavy round">open_in_new</span>
                     </span>
                   </div>

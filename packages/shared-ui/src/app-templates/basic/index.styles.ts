@@ -50,6 +50,7 @@ export const styles: CSSResultGroup = [
         monospace
       );
       --font-style: normal;
+      --drive-min-width: 280px;
 
       /**
            * Added so that any fixed position overlays are relative to this
