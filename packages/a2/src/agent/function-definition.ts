@@ -69,7 +69,7 @@ function defineFunctionLoose(
   definition: FunctionDeclaration,
   handler: (
     args: Record<string, string>
-  ) => Promise<Outcome<Record<string, string>>>
+  ) => Promise<Outcome<Record<string, unknown>>>
 ): FunctionDefinition {
   const { parametersJsonSchema, responseJsonSchema, name, description } =
     definition;

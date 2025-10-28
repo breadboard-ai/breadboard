@@ -72,7 +72,7 @@ export type GeminiSchema = {
   nullable?: boolean;
   enum?: string[];
   maxItems?: string;
-  minItems?: string;
+  minItems?: number;
   properties?: Record<string, GeminiSchema>;
   anyOf?: Schema[];
   required?: string[];

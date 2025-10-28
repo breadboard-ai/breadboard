@@ -7,6 +7,7 @@
 import { Capabilities, Outcome } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import { PidginTranslator } from "./pidgin-translator";
+import { StreamableReporter } from "../a2/output";
 
 export { AgentUI };
 
@@ -27,10 +28,29 @@ export type RawUserResponse = {
 };
 
 class AgentUI {
+  #reporter: StreamableReporter;
+  #reportedStarted: Promise<Outcome<unknown>>;
+
   constructor(
     private readonly caps: Capabilities,
     private readonly translator: PidginTranslator
-  ) {}
+  ) {
+    this.#reporter = new StreamableReporter(this.caps, {
+      title: "A2UI",
+      icon: "web",
+    });
+    this.#reportedStarted = this.#reporter.start();
+  }
+
+  async close() {
+    await this.#reportedStarted;
+    return this.#reporter.close();
+  }
+
+  async renderUI(payload: unknown) {
+    await this.#reportedStarted;
+    return this.#reporter.sendA2UI("Render UI", payload, "web");
+  }
 
   async requestUserInput(
     message: string,

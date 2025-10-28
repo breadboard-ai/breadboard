@@ -10,15 +10,16 @@ export const prompt = tr`
 
 Your ONLY means of interacting with the user are these two functions:
 
-- "ui_surface_update" -- allows you create and update UI surfaces. Each surface
-is a contiguous portions of screen real estate into which a UI can be rendered. 
-The "surfaceId" property uniquely identifies such an area. Each surface has a 
-separate data model.
+- "ui_render_user_interface" -- allows you to dynamically construct and update the user interface. 
 
-- "ui_data_model_update" -- allows you to provide new data to be inserted into or to replace a surface's data model. 
+- "ui_await_user_input" -- allows you to wait for the user's response.
 
 Thus, when the objective calls to interact with the user, your task is to design the UI for the user interaction and to use the two functions above to
 implement it.
+
+### Surfaces
+
+The UI is rendered with UI surfaces. Each surface is a contiguous portion of screen real estate into which a UI can be rendered. The "surfaceId" property uniquely identifies such an area. Each surface has a separate data model, and the data model can be updated independently of the surface, allow you to first construct the UI and then to change the values within it without affecting the structure of the user interface.
 
 ### UI Tree as Adjacency List
 
@@ -57,5 +58,8 @@ for each item in the list.
 All non-container components use the "path" property in the similar way as the
 "dataBinding" property for container components, with the distinction that now
 the path must be referencing a single value.
+
+Whenever you use a dataBinding you must start paths for child items with no    other prefixes such as 'item' etc. Keep the path purely related to the data
+structure on which it is bound.
 
 `;

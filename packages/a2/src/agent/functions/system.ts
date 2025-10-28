@@ -13,11 +13,8 @@ import {
 import { AgentFileSystem } from "../file-system";
 import { AgentUI } from "../ui";
 import { err, ok } from "@breadboard-ai/utils";
-import {
-  serverSchema as uiServerSchema,
-  clientSchema as uiClientSchema,
-} from "../a2ui/schema";
 import { tr } from "../../a2/utils";
+import { UI_SCHEMA } from "../../a2/render-consistent-ui";
 
 export { initializeSystemFunctions };
 
@@ -87,58 +84,76 @@ uploaded by the user, populated when the "type" is "image", or "video".`),
   ];
 }
 
-function defineA2UIFunctions(_args: SystemFunctionArgs): FunctionDefinition[] {
-  const { surfaceUpdate, dataModelUpdate } = uiServerSchema.properties;
-  const { userAction } = uiClientSchema.properties;
+const UI_RENDER_FUNCTION = "ui_render_user_interface";
+const UI_AWAIT_USER_FUNCTION = "ui_await_user_input";
+
+function defineA2UIFunctions(args: SystemFunctionArgs): FunctionDefinition[] {
+  const serverSchema = UI_SCHEMA;
   return [
     defineFunctionLoose(
       {
-        name: "ui_surface_update",
+        name: UI_RENDER_FUNCTION,
         description: tr`
 
-Creates and/or updates UI surfaces. Each surface represents a contiguous 
-portion of screen real estate into which a UI can be rendered. 
-The parameters must be an adjacent list of UI components. 
-The "surfaceId" property uniquely identifies a surface. 
-Each surface has a separate data model.
-
-Returns the user response.
+Allows to dynamically construct and update the user interface. This function
+is best used in conjuction with "${UI_AWAIT_USER_FUNCTION}". First, use the
+"${UI_RENDER_FUNCTION}" to create the UI, then call "${UI_AWAIT_USER_FUNCTION}"
+to get user's response. The "${UI_RENDER_FUNCTION}" may be call multiple
+times to update the UI without being blocked on the user response.
 
 `,
-        parametersJsonSchema: {
-          type: "object",
-          properties: surfaceUpdate.properties,
-        },
+        parametersJsonSchema: serverSchema,
         responseJsonSchema: {
           type: "object",
-          properties: userAction.properties,
+          properties: {
+            success: {
+              type: "boolean",
+            },
+          },
         },
       },
-      async (args) => {
-        console.log("ARGS", args);
-        return err(`Not implemented`);
+      async (payload) => {
+        console.log("A2UI surfaceUpdate PAYLOAD", payload);
+        await args.ui.renderUI(payload);
+        return { success: true };
       }
     ),
-    defineFunctionLoose(
+    defineFunction(
       {
-        name: "ui_data_model_update",
+        name: UI_AWAIT_USER_FUNCTION,
         description: tr`
-        
-Updates the data model of the UI surface.
 
-        `,
-        parametersJsonSchema: {
-          type: "object",
-          properties: dataModelUpdate.properties,
-        },
-        responseJsonSchema: {
-          type: "object",
-          properties: userAction.properties,
+Awaits user's response. The response will be one of the actions that were
+specified in the UI, rendered with "${UI_RENDER_FUNCTION}".
+
+`,
+        parameters: {},
+        response: {
+          name: z.string().describe(tr`
+
+The name of the action, taken from the component's action.name property.
+
+`),
+          surfaceId: z.string().describe(tr`
+    
+The id of the surface where the event originated.
+
+`),
+          sourceComponentId: z.string().describe(tr`
+  
+The id of the component that triggered the event.
+
+`),
+          context: z
+            .object({})
+            .describe(
+              `A JSON object containing the key-value pairs from the component's action.context, after resolving all data bindings.`
+            ),
         },
       },
-      async (args) => {
-        console.log("ARGS", args);
-        return err(`Not implemented`);
+      async () => {
+        console.log("WAITING FOR USER INPUT");
+        return err(`I can't wait to learn how to wait on user's input!!!1`);
       }
     ),
   ];
