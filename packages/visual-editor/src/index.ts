@@ -560,8 +560,7 @@ export class Main extends SignalWatcher(LitElement) {
       args,
       this.globalConfig,
       this.googleDriveClient,
-      this.signinAdapter,
-      this.tokenVendor
+      this.signinAdapter
     );
     admin.runtime = this.#runtime;
     admin.settingsHelper = this.settingsHelper;

@@ -15,7 +15,6 @@ import {
 } from "@breadboard-ai/filesystem-board-server";
 
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
-import { TokenVendor } from "@breadboard-ai/connection-client";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
