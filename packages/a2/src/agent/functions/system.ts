@@ -12,9 +12,10 @@ import {
 } from "../function-definition";
 import { AgentFileSystem } from "../file-system";
 import { AgentUI } from "../ui";
-import { err, ok } from "@breadboard-ai/utils";
+import { ok } from "@breadboard-ai/utils";
 import { tr } from "../../a2/utils";
 import { UI_SCHEMA } from "../../a2/render-consistent-ui";
+import { A2UIClientEventParameters } from "../a2ui/schemas";
 
 export { initializeSystemFunctions };
 
@@ -114,7 +115,7 @@ times to update the UI without being blocked on the user response.
       },
       async (payload) => {
         console.log("A2UI surfaceUpdate PAYLOAD", payload);
-        await args.ui.renderUI(payload);
+        await args.ui.renderUserInterface(payload);
         return { success: true };
       }
     ),
@@ -128,32 +129,10 @@ specified in the UI, rendered with "${UI_RENDER_FUNCTION}".
 
 `,
         parameters: {},
-        response: {
-          name: z.string().describe(tr`
-
-The name of the action, taken from the component's action.name property.
-
-`),
-          surfaceId: z.string().describe(tr`
-    
-The id of the surface where the event originated.
-
-`),
-          sourceComponentId: z.string().describe(tr`
-  
-The id of the component that triggered the event.
-
-`),
-          context: z
-            .object({})
-            .describe(
-              `A JSON object containing the key-value pairs from the component's action.context, after resolving all data bindings.`
-            ),
-        },
+        response: A2UIClientEventParameters,
       },
       async () => {
-        console.log("WAITING FOR USER INPUT");
-        return err(`I can't wait to learn how to wait on user's input!!!1`);
+        return args.ui.awaitUserInput();
       }
     ),
   ];

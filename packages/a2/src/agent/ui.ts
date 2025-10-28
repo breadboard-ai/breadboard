@@ -5,9 +5,10 @@
  */
 
 import { Capabilities, Outcome } from "@breadboard-ai/types";
-import { ok } from "@breadboard-ai/utils";
+import { err, ok } from "@breadboard-ai/utils";
 import { PidginTranslator } from "./pidgin-translator";
 import { StreamableReporter } from "../a2/output";
+import { A2UIClientEventMessage } from "./a2ui/schemas";
 
 export { AgentUI };
 
@@ -53,9 +54,13 @@ class AgentUI {
     return this.#reporter.close();
   }
 
-  async renderUI(payload: unknown) {
+  async renderUserInterface(payload: unknown) {
     await this.#start();
     return this.#reporter.sendA2UI("Render UI", payload, "web");
+  }
+
+  async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {
+    return err(`I can't wait to learn how to wait on user's input!!!1`);
   }
 
   async requestUserInput(
