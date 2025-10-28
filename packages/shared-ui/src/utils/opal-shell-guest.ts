@@ -85,9 +85,17 @@ async function discoverShellHostOrigin(): Promise<string | undefined> {
   //   2. In the same browser tab, user loads shell2.example, which is also
   //      iframing app.example.
 
-  const passedInShellOrigin = new URL(window.location.href).searchParams.get(
+  const thisUrl = new URL(window.location.href);
+  const passedInShellOrigin = thisUrl.searchParams.get(
     SHELL_ORIGIN_URL_PARAMETER
   );
+  if (passedInShellOrigin) {
+    // Remove the parameter because it is only needed for this very early
+    // initialization and may otherwise find its way back to the displayed shell
+    // URL.
+    thisUrl.searchParams.delete(SHELL_ORIGIN_URL_PARAMETER);
+    history.replaceState(history.state, "", thisUrl);
+  }
   const shellOrigin =
     passedInShellOrigin ||
     sessionStorage.getItem(SHELL_ORIGIN_SESSION_STORAGE_KEY);
