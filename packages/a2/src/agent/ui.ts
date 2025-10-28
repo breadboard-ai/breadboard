@@ -4,21 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  Capabilities,
-  ConsoleEntry,
-  LLMContent,
-  Outcome,
-  Particle,
-  WorkItem,
-} from "@breadboard-ai/types";
+import { Capabilities, ConsoleEntry, Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { PidginTranslator } from "./pidgin-translator";
 import { A2UIClientEventMessage } from "./a2ui/schemas";
 import { A2ModuleArgs } from "../runnable-module-factory";
-import { signal } from "signal-utils";
-import { Signal } from "signal-polyfill";
-import { SignalMap } from "signal-utils/map";
+import { A2UIClientWorkItem } from "./a2ui/client-work-item";
 
 export { AgentUI };
 
@@ -37,37 +28,6 @@ export type UserResponse = {
 export type RawUserResponse = {
   text: string;
 };
-
-const now = new Signal.State(performance.now());
-
-class A2UIClientWorkItem implements WorkItem {
-  @signal
-  accessor end: number | null = null;
-
-  @signal
-  get elapsed(): number {
-    const end = this.end ?? now.get();
-    return end - this.start;
-  }
-
-  @signal
-  get awaitingUserInput() {
-    return false;
-  }
-
-  readonly start: number;
-
-  readonly chat = false;
-
-  readonly product: Map<string, LLMContent | Particle> = new SignalMap();
-
-  constructor(
-    public readonly title: string,
-    public readonly icon: string
-  ) {
-    this.start = performance.now();
-  }
-}
 
 class AgentUI {
   readonly #entry: ConsoleEntry | undefined;
@@ -101,20 +61,10 @@ class AgentUI {
     return this.#workItem;
   }
 
-  async renderUserInterface(payload: unknown): Promise<Outcome<void>> {
+  renderUserInterface(payload: unknown): Outcome<void> {
     const workItem = this.#getWorkItem();
     if (!ok(workItem)) return workItem;
-    const surfaceId = crypto.randomUUID();
-    workItem.product.set(surfaceId, {
-      type: "a2ui",
-      group: new Map([
-        ["title", { text: "TITLE" }],
-        [
-          "body",
-          { text: JSON.stringify(payload), mimeType: "application/json" },
-        ],
-      ]),
-    });
+    return workItem.renderUserInterface(payload);
   }
 
   async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {

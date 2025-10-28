@@ -65,6 +65,14 @@ export type ConsoleEntry = {
   current: WorkItem | null;
 };
 
+export type SimplifiedA2UIClient = {
+  /**
+   * The A2UI Model Processor
+   * TODO: Incorporate A2UI types properly into this type system.
+   */
+  processor: unknown;
+};
+
 /**
  * Represents the Model+Controller for a single work item within the
  * Console entry. Work items are a way for the steps to communicate what they
@@ -102,6 +110,8 @@ export type WorkItem = {
   /**
    * Similar to the `output` of the `ConsoleEntry`, represents the work product
    * of this item.
+   *
+   * The Map type represents the A2UI update.
    */
-  product: Map<string, LLMContent | Particle>;
+  product: Map<string, LLMContent | Particle | SimplifiedA2UIClient>;
 };

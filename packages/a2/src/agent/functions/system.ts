@@ -115,7 +115,7 @@ times to update the UI without being blocked on the user response.
       },
       async (payload) => {
         console.log("A2UI surfaceUpdate PAYLOAD", payload);
-        await args.ui.renderUserInterface(payload);
+        args.ui.renderUserInterface(payload);
         return { success: true };
       }
     ),

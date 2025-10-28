@@ -62,6 +62,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@breadboard-ai/a2ui": "^0.1.0",
     "@breadboard-ai/data": "^0.1.0",
     "@breadboard-ai/embedded-board-server": "0.2.1",
     "@breadboard-ai/loader": "^0.0.3",
