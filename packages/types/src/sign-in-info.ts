@@ -6,7 +6,4 @@
 
 export interface SignInInfo {
   readonly state: "signedin" | "signedout";
-  readonly name?: string;
-  readonly picture?: string;
-  readonly domain?: string;
 }
