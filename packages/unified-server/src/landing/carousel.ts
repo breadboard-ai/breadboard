@@ -13,6 +13,7 @@ import { fonts } from "./fonts.js";
 
 import "./carousel-modal.js";
 import { shortestPath, toCSSMatrix } from "./utils.js";
+import { makeUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 
 @customElement("landing-carousel")
 export class LandingCarousel extends LitElement {
@@ -275,7 +276,11 @@ export class LandingCarousel extends LitElement {
 
       <a
         class="try-app sticky"
-        href="/?flow=${galleryItems[this.currentItem].url}&mode=app"
+        .href=${makeUrl({
+          page: "graph",
+          mode: "app",
+          flow: galleryItems[this.currentItem].url,
+        })}
       >
         Try now
       </a>

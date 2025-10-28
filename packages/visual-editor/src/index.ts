@@ -1932,7 +1932,10 @@ export class Main extends SignalWatcher(LitElement) {
       @bbsignout=${async () => {
         await this.signinAdapter.signOut();
         ActionTracker.signOutSuccess();
-        window.location.href = new URL("/", window.location.href).href;
+        window.location.href = makeUrl({
+          page: "landing",
+          redirect: { page: "home" },
+        });
       }}
       @bbclose=${() => {
         if (!this.#tab) {

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 import { type VisualEditorMode } from "../types/types.js";
 
 export type MakeUrlInit = HomeUrlInit | GraphInit | LandingUrlInit;
@@ -42,7 +43,7 @@ export interface GraphInit extends BaseUrlInit {
   page: "graph";
   mode: VisualEditorMode;
   flow: string;
-  resourceKey: string | undefined;
+  resourceKey?: string | undefined;
   results?: string;
   shared?: boolean;
   redirectFromLanding?: boolean;
@@ -128,6 +129,12 @@ export function makeUrl(
       url.searchParams.set(DEV_PREFIX + key, val);
     }
   }
+  if (
+    CLIENT_DEPLOYMENT_CONFIG.SHELL_HOST_ORIGINS?.length &&
+    window !== window.parent
+  ) {
+    url.pathname = "/_app" + url.pathname;
+  }
   return (
     url.href
       // A little extra cleanup. The URL class escapes search params very
@@ -156,7 +163,8 @@ export function parseUrl(url: string | URL): MakeUrlInit {
       (dev as Record<string, string>)[keySansPrefix] = val;
     }
   }
-  if (url.pathname === "/landing/") {
+  const pathname = url.pathname.replace(/^\/_app/, "");
+  if (pathname === "/landing/") {
     // See note in `makeUrl` above about redirect URLs.
     const redirectUrl = new URL(url);
     redirectUrl.pathname = "/";

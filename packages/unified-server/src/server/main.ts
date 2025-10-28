@@ -109,9 +109,35 @@ server.use(
 );
 
 console.log("[unified-server startup] Mounting static content");
+
 const clientConfig = await createClientConfig({
   OAUTH_CLIENT: connectionServerConfig.connection.oauth.client_id,
 });
+
+if (
+  clientConfig.SHELL_GUEST_ORIGIN &&
+  clientConfig.SHELL_HOST_ORIGINS?.length
+) {
+  // TODO(aomarks) After we are fully in the iframe arrangement, move assets
+  // around so that this re-pathing is not necessary.
+  console.log("[unified-server startup] Serving in shell configuration");
+  server.use("/", (request, _response, next) => {
+    if (request.path.startsWith("/oauth")) {
+      request.url = "/oauth/index.html";
+    } else if (request.path.startsWith("/_app/landing")) {
+      request.url = "/landing/index.html";
+    } else if (request.path.startsWith("/_app")) {
+      request.url = "/index.html";
+    } else if (
+      !request.path.includes(".") &&
+      !request.path.startsWith("/@vite/")
+    ) {
+      request.url = "/shell/index.html";
+    }
+    next();
+  });
+}
+
 ViteExpress.config({
   transformer: (html: string, req: Request) => {
     const board = req.res?.locals.loadedBoard;

@@ -439,9 +439,7 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
     history.replaceState(
       null,
       "",
-      // TODO(aomarks) When ready, invert this relationship. The host will serve
-      // at / and the guest will serve at /guest.
-      "/shell" + pathname + search + hash
+      new URL(pathname + search + hash, window.location.origin)
     );
   }
 

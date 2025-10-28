@@ -36,7 +36,8 @@ function discoverClientDeploymentConfiguration(): ClientDeploymentConfiguration 
   // Fish out the configuration from DOM, which the server is responsible for
   // including in the main HTML file.
   const text =
-    document.querySelector("template")?.content?.firstElementChild?.textContent;
+    globalThis.document?.querySelector("template")?.content?.firstElementChild
+      ?.textContent;
   if (!text) {
     console.warn(
       "Failed to discover deployment config: DOM element not found."
