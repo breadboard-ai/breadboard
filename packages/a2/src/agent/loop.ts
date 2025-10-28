@@ -219,129 +219,119 @@ class Loop {
     objective: LLMContent,
     params: Params
   ): Promise<Outcome<AgentResult>> {
-    try {
-      const objectivePidgin = await this.#translator.toPidgin(
-        objective,
-        params
-      );
-      if (!ok(objectivePidgin)) return objectivePidgin;
+    const objectivePidgin = await this.#translator.toPidgin(objective, params);
+    if (!ok(objectivePidgin)) return objectivePidgin;
 
-      const contents: LLMContent[] = [
-        llm`<objective>${objectivePidgin.text}</objective>`.asContent(),
-      ];
-      let terminateLoop = false;
-      let result: AgentRawResult = {
-        success: false,
-        user_message: "",
-        href: "",
-        objective_outcomes: [],
-      };
-      const systemFunctions = initializeSystemFunctions({
-        useA2UI: true,
-        ui: this.#ui,
-        fileSystem: this.#fileSystem,
-        terminateCallback: () => {
-          terminateLoop = true;
-        },
-        successCallback: (user_message, href, objective_outcomes) => {
-          terminateLoop = true;
-          console.log("SUCCESS! Objective fulfilled");
-          console.log("User message:", user_message);
-          console.log("Transfer control to", href);
-          console.log("Objective outcomes:", objective_outcomes);
-          result = {
-            success: true,
-            user_message,
-            href,
-            objective_outcomes,
-          };
-        },
-      });
-      const systemFunctionDefinitions = new Map<string, FunctionDefinition>(
-        systemFunctions.map((item) => [item.name!, item])
-      );
-      const systemFunctionDeclarations = systemFunctions.map(
-        ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
-      );
-      const generateFunctions = initializeGenerateFunctions({
-        fileSystem: this.#fileSystem,
-        caps: this.caps,
-        moduleArgs: this.moduleArgs,
-      });
-      const generateFunctionDefinitions = new Map<string, FunctionDefinition>(
-        generateFunctions.map((item) => [item.name!, item])
-      );
-      const generateFunctionDeclarations = generateFunctions.map(
-        ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
-      );
-      const objectiveTools = objectivePidgin.tools.list().at(0);
-      const tools: Tool[] = [
-        {
-          ...objectiveTools,
-          functionDeclarations: [
-            ...(objectiveTools?.functionDeclarations || []),
-            ...systemFunctionDeclarations,
-            ...generateFunctionDeclarations,
-          ],
-        },
-      ];
-      while (!terminateLoop) {
-        const inputs: GeminiInputs = {
-          model: AGENT_MODEL,
-          body: {
-            contents,
-            generationConfig: {
-              thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
-            },
-            systemInstruction,
-            toolConfig: {
-              functionCallingConfig: { mode: "ANY" },
-            },
-            tools,
-          },
+    const contents: LLMContent[] = [
+      llm`<objective>${objectivePidgin.text}</objective>`.asContent(),
+    ];
+    let terminateLoop = false;
+    let result: AgentRawResult = {
+      success: false,
+      user_message: "",
+      href: "",
+      objective_outcomes: [],
+    };
+    const systemFunctions = initializeSystemFunctions({
+      useA2UI: true,
+      ui: this.#ui,
+      fileSystem: this.#fileSystem,
+      terminateCallback: () => {
+        terminateLoop = true;
+      },
+      successCallback: (user_message, href, objective_outcomes) => {
+        terminateLoop = true;
+        console.log("SUCCESS! Objective fulfilled");
+        console.log("User message:", user_message);
+        console.log("Transfer control to", href);
+        console.log("Objective outcomes:", objective_outcomes);
+        result = {
+          success: true,
+          user_message,
+          href,
+          objective_outcomes,
         };
-        const generated = (await gemini(
-          inputs,
-          this.caps,
-          this.moduleArgs
-        )) as Outcome<GeminiAPIOutputs>;
-        if (!ok(generated)) return generated;
-        const content = generated.candidates?.at(0)?.content;
-        if (!content) {
-          return err(`Agent unable to proceed: no content in Gemini response`);
-        }
-        contents.push(content);
-        const functionCaller = new FunctionCaller(
-          new Map([
-            ...systemFunctionDefinitions,
-            ...generateFunctionDefinitions,
-          ]),
-          objectivePidgin.tools
-        );
-        const parts = content.parts || [];
-        for (const part of parts) {
-          if (part.thought) {
-            if ("text" in part) {
-              console.log("THOUGHT", part.text);
-            } else {
-              console.log("INVALID THOUGHT", part);
-            }
-          }
-          if ("functionCall" in part) {
-            functionCaller.call(part);
-          }
-        }
-        const functionResults = await functionCaller.getResults();
-        if (!functionResults) continue;
-        if (!ok(functionResults)) {
-          return err(`Agent unable to proceed: ${functionResults.$error}`);
-        }
-        contents.push(functionResults);
+      },
+    });
+    const systemFunctionDefinitions = new Map<string, FunctionDefinition>(
+      systemFunctions.map((item) => [item.name!, item])
+    );
+    const systemFunctionDeclarations = systemFunctions.map(
+      ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
+    );
+    const generateFunctions = initializeGenerateFunctions({
+      fileSystem: this.#fileSystem,
+      caps: this.caps,
+      moduleArgs: this.moduleArgs,
+    });
+    const generateFunctionDefinitions = new Map<string, FunctionDefinition>(
+      generateFunctions.map((item) => [item.name!, item])
+    );
+    const generateFunctionDeclarations = generateFunctions.map(
+      ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
+    );
+    const objectiveTools = objectivePidgin.tools.list().at(0);
+    const tools: Tool[] = [
+      {
+        ...objectiveTools,
+        functionDeclarations: [
+          ...(objectiveTools?.functionDeclarations || []),
+          ...systemFunctionDeclarations,
+          ...generateFunctionDeclarations,
+        ],
+      },
+    ];
+    while (!terminateLoop) {
+      const inputs: GeminiInputs = {
+        model: AGENT_MODEL,
+        body: {
+          contents,
+          generationConfig: {
+            thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
+          },
+          systemInstruction,
+          toolConfig: {
+            functionCallingConfig: { mode: "ANY" },
+          },
+          tools,
+        },
+      };
+      const generated = (await gemini(
+        inputs,
+        this.caps,
+        this.moduleArgs
+      )) as Outcome<GeminiAPIOutputs>;
+      if (!ok(generated)) return generated;
+      const content = generated.candidates?.at(0)?.content;
+      if (!content) {
+        return err(`Agent unable to proceed: no content in Gemini response`);
       }
-      return this.#finalizeResult(result);
-    } finally {
-      await this.#ui.close();
+      contents.push(content);
+      const functionCaller = new FunctionCaller(
+        new Map([...systemFunctionDefinitions, ...generateFunctionDefinitions]),
+        objectivePidgin.tools
+      );
+      const parts = content.parts || [];
+      for (const part of parts) {
+        if (part.thought) {
+          if ("text" in part) {
+            console.log("THOUGHT", part.text);
+          } else {
+            console.log("INVALID THOUGHT", part);
+          }
+        }
+        if ("functionCall" in part) {
+          functionCaller.call(part);
+        }
+      }
+      const functionResults = await functionCaller.getResults();
+      if (!functionResults) continue;
+      if (!ok(functionResults)) {
+        return err(`Agent unable to proceed: ${functionResults.$error}`);
+      }
+      contents.push(functionResults);
     }
+    return this.#finalizeResult(result);
   }
 
   #finalizeResult(raw: AgentRawResult): Outcome<AgentResult> {

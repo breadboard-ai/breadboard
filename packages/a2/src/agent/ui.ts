@@ -4,12 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities, ConsoleEntry, Outcome } from "@breadboard-ai/types";
+import {
+  Capabilities,
+  ConsoleEntry,
+  LLMContent,
+  Outcome,
+  Particle,
+  WorkItem,
+} from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { PidginTranslator } from "./pidgin-translator";
-import { StreamableReporter } from "../a2/output";
 import { A2UIClientEventMessage } from "./a2ui/schemas";
 import { A2ModuleArgs } from "../runnable-module-factory";
+import { signal } from "signal-utils";
+import { Signal } from "signal-polyfill";
+import { SignalMap } from "signal-utils/map";
 
 export { AgentUI };
 
@@ -29,20 +38,46 @@ export type RawUserResponse = {
   text: string;
 };
 
+const now = new Signal.State(performance.now());
+
+class A2UIClientWorkItem implements WorkItem {
+  @signal
+  accessor end: number | null = null;
+
+  @signal
+  get elapsed(): number {
+    const end = this.end ?? now.get();
+    return end - this.start;
+  }
+
+  @signal
+  get awaitingUserInput() {
+    return false;
+  }
+
+  readonly start: number;
+
+  readonly chat = false;
+
+  readonly product: Map<string, LLMContent | Particle> = new SignalMap();
+
+  constructor(
+    public readonly title: string,
+    public readonly icon: string
+  ) {
+    this.start = performance.now();
+  }
+}
+
 class AgentUI {
-  #reporter: StreamableReporter;
-  #reportedStarted: Promise<Outcome<unknown>> | undefined;
   readonly #entry: ConsoleEntry | undefined;
+  #workItem: A2UIClientWorkItem | undefined;
 
   constructor(
     private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs,
     private readonly translator: PidginTranslator
   ) {
-    this.#reporter = new StreamableReporter(this.caps, {
-      title: "A2UI",
-      icon: "web",
-    });
     const { currentStep, getProjectRunState } = this.moduleArgs.context;
     const stepId = currentStep?.id;
     if (stepId) {
@@ -55,24 +90,35 @@ class AgentUI {
     }
   }
 
-  #start(): Promise<Outcome<unknown>> {
-    if (!this.#reportedStarted) {
-      this.#reportedStarted = this.#reporter.start();
+  #getWorkItem(): Outcome<A2UIClientWorkItem> {
+    if (!this.#workItem) {
+      if (!this.#entry) {
+        return err(`Unable to create UI: Console is not available`);
+      }
+      this.#workItem = new A2UIClientWorkItem("A2UI", "web");
+      this.#entry.work.set(crypto.randomUUID(), this.#workItem);
     }
-    return this.#reportedStarted;
+    return this.#workItem;
   }
 
-  async close() {
-    await this.#start();
-    return this.#reporter.close();
-  }
-
-  async renderUserInterface(payload: unknown) {
-    await this.#start();
-    return this.#reporter.sendA2UI("Render UI", payload, "web");
+  async renderUserInterface(payload: unknown): Promise<Outcome<void>> {
+    const workItem = this.#getWorkItem();
+    if (!ok(workItem)) return workItem;
+    const surfaceId = crypto.randomUUID();
+    workItem.product.set(surfaceId, {
+      type: "a2ui",
+      group: new Map([
+        ["title", { text: "TITLE" }],
+        [
+          "body",
+          { text: JSON.stringify(payload), mimeType: "application/json" },
+        ],
+      ]),
+    });
   }
 
   async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     return err(`I can't wait to learn how to wait on user's input!!!1`);
   }
 
