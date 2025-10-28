@@ -16,19 +16,10 @@ import type {
 import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
 import { createContext } from "@lit/context";
 
-export const SIGN_IN_CONNECTION_ID = "$sign-in";
-
 export const signinAdapterContext = createContext<SigninAdapter | undefined>(
   "SigninAdapter"
 );
 
-/**
- * A specialized adapter to handle sign in using the connection server
- * machinery.
- * Is intended as a lightweight instance that can be
- * used wherever the tokenVendor, environment, and
- * settingsHelper are present.
- */
 export class SigninAdapter implements SignInInfo {
   readonly #opalShell: OpalShellProtocol;
   readonly #handleSignInRequest?: (scopes?: OAuthScope[]) => Promise<boolean>;
