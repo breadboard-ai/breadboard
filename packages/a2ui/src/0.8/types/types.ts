@@ -74,7 +74,10 @@ export type Theme = {
       };
     };
     Text: Record<string, boolean>;
-    TextField: Record<string, boolean>;
+    TextField: {
+      container: Record<string, boolean>;
+      element: Record<string, boolean>;
+    };
     Video: Record<string, boolean>;
   };
   elements: {
@@ -215,6 +218,7 @@ export interface DataModelUpdate {
     valueString?: string /** May be JSON */;
     valueNumber?: number;
     valueBoolean?: boolean;
+
     valueList?: {
       valueString?: string /** May be JSON */;
       valueNumber?: number;

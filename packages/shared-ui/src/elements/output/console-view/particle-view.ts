@@ -33,6 +33,8 @@ export class ParticleView extends SignalWatcher(LitElement) {
     return (this.particle as GroupParticle)?.type || null;
   }
 
+  #processor = new v0_8.Data.A2UIModelProcessor();
+
   render() {
     const type = this.#type;
     if (type === "update") {
@@ -62,19 +64,20 @@ export class ParticleView extends SignalWatcher(LitElement) {
         messages = [messages];
       }
 
-      const processor = new v0_8.Data.A2UIModelProcessor();
-      processor.clearSurfaces();
-      processor.processMessages(messages);
+      console.log(111111, messages);
+
+      this.#processor.processMessages(messages);
 
       return html`<section id="surfaces">
         ${repeat(
-          processor.getSurfaces(),
+          this.#processor.getSurfaces(),
           ([surfaceId]) => surfaceId,
           ([surfaceId, surface]) => {
+            console.log("Re-rendering surfaces", surfaceId);
             return html`<a2ui-surface
               .surfaceId=${surfaceId}
               .surface=${surface}
-              .processor=${processor}
+              .processor=${this.#processor}
             ></a2-uisurface>`;
           }
         )}
