@@ -67,10 +67,6 @@ export class TokenVendorImpl implements TokenVendor {
     return { state: "valid", grant };
   }
 
-  isSignedIn(): boolean {
-    return this.#store.get() !== undefined;
-  }
-
   async #refresh(
     expiredGrant: TokenGrant,
     signal?: AbortSignal

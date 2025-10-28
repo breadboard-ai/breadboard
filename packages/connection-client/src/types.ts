@@ -15,7 +15,6 @@ export type TokenVendor = {
   getToken(
     scopes?: OAuthScope[]
   ): ValidTokenResult | ExpiredTokenResult | SignedOutTokenResult;
-  isSignedIn(): boolean;
 };
 
 export type ConnectionEnvironment = {
