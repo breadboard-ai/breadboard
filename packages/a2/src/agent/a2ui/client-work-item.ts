@@ -36,6 +36,8 @@ class A2UIClientWorkItem implements WorkItem {
 
   readonly start: number;
 
+  readonly openByDefault = true;
+
   readonly chat = false;
 
   readonly product: Map<string, SimplifiedA2UIClient> = new SignalMap();

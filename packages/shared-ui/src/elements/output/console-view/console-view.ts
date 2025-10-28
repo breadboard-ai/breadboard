@@ -428,6 +428,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
 
                     return html` <details
                       ?open=${workItem.awaitingUserInput ||
+                      workItem.openByDefault ||
                       this.#openWorkItems.has(workItemId)}
                     >
                       <summary

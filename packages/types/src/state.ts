@@ -107,6 +107,10 @@ export type WorkItem = {
    */
   awaitingUserInput: boolean;
   /**
+   * If true, this work item is open by default.
+   */
+  openByDefault?: boolean;
+  /**
    * If true, indicates that this work item was shown to the user as part
    * of a chat interaction.
    */
