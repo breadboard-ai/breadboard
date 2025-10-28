@@ -6,7 +6,7 @@
 
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { ConsoleEntry, ProjectRun, UI } from "../../../state";
+import { ProjectRun, UI } from "../../../state";
 import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
 import { icons } from "../../../styles/icons";
@@ -19,6 +19,7 @@ import { iconSubstitute } from "../../../utils/icon-substitute.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { uiStateContext } from "../../../contexts/ui-state.js";
 import { consume } from "@lit/context";
+import { ConsoleEntry } from "@breadboard-ai/types";
 
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {

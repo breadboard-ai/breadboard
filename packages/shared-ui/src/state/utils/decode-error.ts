@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ErrorResponse, RunErrorEvent } from "@breadboard-ai/types";
-import { ErrorMetadata, RunError } from "../types";
+import { ErrorResponse, RunError, RunErrorEvent } from "@breadboard-ai/types";
+import { ErrorMetadata } from "../types";
 import { formatError } from "../../utils/format-error";
 import { ActionTracker } from "../../utils/action-tracker";
 

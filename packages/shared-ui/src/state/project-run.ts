@@ -6,6 +6,7 @@
 
 import { type ParticleTree, ParticleTreeImpl } from "@breadboard-ai/particles";
 import {
+  ConsoleEntry,
   EditableGraph,
   ErrorObject,
   ErrorResponse,
@@ -17,6 +18,7 @@ import {
   NodeMetadata,
   NodeRunState,
   RunConfig,
+  RunError,
   RunErrorEvent,
   RunGraphEndEvent,
   RunGraphStartEvent,
@@ -48,12 +50,10 @@ import { ReactiveConsoleEntry } from "./console-entry";
 import { ReactiveRendererRunState } from "./renderer-run-state";
 import {
   AppScreenOutput,
-  ConsoleEntry,
   EphemeralParticleTree,
   ProjectRun,
   ProjectRunStatus,
   RendererRunState,
-  RunError,
   StepEditor,
   UserInput,
 } from "./types";
