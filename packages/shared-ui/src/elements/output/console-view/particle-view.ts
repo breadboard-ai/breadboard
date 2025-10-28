@@ -64,20 +64,72 @@ export class ParticleView extends SignalWatcher(LitElement) {
         messages = [messages];
       }
 
-      console.log(111111, messages);
-
       this.#processor.processMessages(messages);
+
+      console.log("A2UI Processor");
+      console.log(messages, this.#processor.getSurfaces());
 
       return html`<section id="surfaces">
         ${repeat(
           this.#processor.getSurfaces(),
           ([surfaceId]) => surfaceId,
           ([surfaceId, surface]) => {
-            console.log("Re-rendering surfaces", surfaceId);
             return html`<a2ui-surface
               .surfaceId=${surfaceId}
               .surface=${surface}
               .processor=${this.#processor}
+              @a2uiaction=${async (
+                evt: v0_8.Events.StateEvent<"a2ui.action">
+              ) => {
+                const [target] = evt.composedPath();
+                if (!(target instanceof HTMLElement)) {
+                  return;
+                }
+
+                const context: Record<string, unknown> = {};
+                if (evt.detail.action.context) {
+                  const srcContext = evt.detail.action.context;
+                  for (const item of srcContext) {
+                    if (item.value.literalBoolean) {
+                      context[item.key] = item.value.literalBoolean;
+                    } else if (item.value.literalNumber) {
+                      context[item.key] = item.value.literalNumber;
+                    } else if (item.value.literalString) {
+                      context[item.key] = item.value.literalString;
+                    } else if (item.value.path) {
+                      if (!evt.detail.sourceComponent) {
+                        throw new Error(
+                          "No component provided - unable to get data"
+                        );
+                      }
+                      const path = this.#processor.resolvePath(
+                        item.value.path,
+                        evt.detail.dataContextPath
+                      );
+                      const value = this.#processor.getData(
+                        evt.detail.sourceComponent,
+                        path,
+                        surfaceId
+                      );
+                      context[item.key] = value ?? "";
+                    }
+                  }
+                }
+
+                const message: v0_8.Types.A2UIClientEventMessage = {
+                  userAction: {
+                    name: evt.detail.action.name,
+                    surfaceId,
+                    sourceComponentId: target.id,
+                    timestamp: new Date().toISOString(),
+                    context,
+                  },
+                };
+
+                // TODO: Phone home.
+                console.log("A2UI message", message);
+                // debugger;
+              }}
             ></a2-uisurface>`;
           }
         )}

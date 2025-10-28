@@ -50,7 +50,12 @@ export interface UserAction {
    * The name of the action, taken from the component's `action.action`
    * property.
    */
-  actionName: string;
+  name: string;
+  /**
+   * The name of the action, taken from the component's `action.action`
+   * property.
+   */
+  surfaceId: string;
   /**
    * The `id` of the component that triggered the event.
    */
