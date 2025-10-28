@@ -5,10 +5,10 @@
  */
 
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
-import { OAuthBasedOpalShell } from "@breadboard-ai/shared-ui/utils/oauth-based-opal-shell.js";
-import * as comlink from "comlink";
-
 import "@breadboard-ai/shared-ui/utils/install-opal-shell-comlink-transfer-handlers.js";
+import { OAuthBasedOpalShell } from "@breadboard-ai/shared-ui/utils/oauth-based-opal-shell.js";
+import { SHELL_ORIGIN_URL_PARAMETER } from "@breadboard-ai/types/opal-shell-protocol.js";
+import * as comlink from "comlink";
 
 const guestOrigin = CLIENT_DEPLOYMENT_CONFIG.SHELL_GUEST_ORIGIN;
 if (guestOrigin && guestOrigin !== "*") {
@@ -22,6 +22,10 @@ if (guestOrigin && guestOrigin !== "*") {
         hostUrl.search +
         hostUrl.hash,
       guestOrigin
+    );
+    guestUrl.searchParams.set(
+      SHELL_ORIGIN_URL_PARAMETER,
+      window.location.origin
     );
     iframe.src = guestUrl.href;
     console.log(`[shell host] exposing API to`, guestOrigin);

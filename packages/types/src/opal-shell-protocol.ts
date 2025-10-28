@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export const SHELL_ORIGIN_URL_PARAMETER = "shellOrigin";
+
 export interface OpalShellProtocol {
   getSignInState(): Promise<SignInState>;
 

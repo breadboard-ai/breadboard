@@ -30,7 +30,7 @@ export async function createClientConfig(opts: {
       flags.SURVEY_NL_TO_OPAL_SATISFACTION_1_TRIGGER_ID,
     OAUTH_CLIENT: opts.OAUTH_CLIENT,
     SHELL_GUEST_ORIGIN: flags.SHELL_GUEST_ORIGIN,
-    SHELL_HOST_ORIGIN: flags.SHELL_HOST_ORIGIN,
+    SHELL_HOST_ORIGINS: flags.SHELL_HOST_ORIGINS,
     domains: flags.DOMAIN_CONFIG,
     flags: {
       generateForEach: flags.ENABLE_GENERATE_FOR_EACH,
