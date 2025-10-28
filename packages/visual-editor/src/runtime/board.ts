@@ -53,6 +53,7 @@ import {
   applyDefaultThemeInformationIfNonePresent,
   createAppPaletteIfNeeded,
 } from "./util";
+import type { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -106,6 +107,7 @@ export class Board extends EventTarget {
     public readonly recentBoardStore: RecentBoardStore,
     protected readonly recentBoards: BreadboardUI.Types.RecentBoard[],
     public readonly tokenVendor?: TokenVendor,
+    public readonly signinAdapter?: SigninAdapter,
     public readonly googleDriveClient?: GoogleDriveClient
   ) {
     super();
@@ -509,7 +511,7 @@ export class Board extends EventTarget {
       }
 
       if (!graph) {
-        if (this.tokenVendor && !this.tokenVendor.isSignedIn()) {
+        if (this.signinAdapter && this.signinAdapter.state === "signedout") {
           this.dispatchEvent(new RuntimeRequestSignInEvent());
         } else {
           this.dispatchEvent(new RuntimeErrorEvent("Unable to load board"));

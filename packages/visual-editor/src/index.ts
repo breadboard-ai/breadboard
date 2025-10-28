@@ -496,6 +496,7 @@ export class Main extends SignalWatcher(LitElement) {
       experiments: {},
       globalConfig: this.globalConfig,
       tokenVendor: this.tokenVendor,
+      signinAdapter: this.signinAdapter,
       sandbox: moduleFactory,
       settings: this.#settings,
       fileSystem,

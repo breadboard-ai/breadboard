@@ -299,6 +299,7 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
       config.recentBoardStore,
       recentBoards,
       config.tokenVendor,
+      config.signinAdapter,
       config.googleDriveClient
     ),
     edit,
