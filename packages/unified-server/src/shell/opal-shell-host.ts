@@ -5,54 +5,26 @@
  */
 
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
-import "@breadboard-ai/shared-ui/utils/install-opal-shell-comlink-transfer-handlers.js";
 import { OAuthBasedOpalShell } from "@breadboard-ai/shared-ui/utils/oauth-based-opal-shell.js";
-import {
-  isOpalShellHandshakeRequest,
-  type OpalShellHandshakeResponse,
-} from "@breadboard-ai/types/opal-shell-protocol.js";
 import * as comlink from "comlink";
+
+import "@breadboard-ai/shared-ui/utils/install-opal-shell-comlink-transfer-handlers.js";
 
 const guestOrigin = CLIENT_DEPLOYMENT_CONFIG.SHELL_GUEST_ORIGIN;
 if (guestOrigin && guestOrigin !== "*") {
   const iframe = document.querySelector("iframe#opal-app" as "iframe");
-  const contentWindow = iframe?.contentWindow;
-  if (contentWindow) {
-    const handshake = Promise.withResolvers<void>();
-    const abort = new AbortController();
-    window.addEventListener(
-      "message",
-      (event) => {
-        if (
-          event.origin === guestOrigin &&
-          isOpalShellHandshakeRequest(event.data)
-        ) {
-          abort.abort();
-          handshake.resolve();
-        }
-      },
-      { signal: abort.signal }
-    );
-
-    const { pathname, search, hash } = window.location;
-    const url = new URL(pathname + search + hash, guestOrigin);
-    // TODO(aomarks) Change this replace after we invert the root vs subpath
-    // relationship between host and guest.
-    url.pathname = url.pathname.replace(/^\/shell\/?/, "");
-    iframe.src = url.href;
-
-    await handshake.promise;
-    console.log(
-      "[shell host] Received and responding to handshake request from",
+  if (iframe?.contentWindow) {
+    const hostUrl = new URL(window.location.href);
+    const guestUrl = new URL(
+      // TODO(aomarks) Change this replace after we invert the root vs subpath
+      // relationship between host and guest.
+      hostUrl.pathname.replace(/^\/shell\/?/, "") +
+        hostUrl.search +
+        hostUrl.hash,
       guestOrigin
     );
-    contentWindow.postMessage(
-      {
-        type: "opal-shell-handshake-response",
-      } satisfies OpalShellHandshakeResponse,
-      guestOrigin
-    );
-    console.log(`[shell host] Exposing API to`, guestOrigin);
+    iframe.src = guestUrl.href;
+    console.log(`[shell host] exposing API to`, guestOrigin);
     comlink.expose(
       new OAuthBasedOpalShell(),
       comlink.windowEndpoint(

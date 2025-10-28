@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  isOpalShellHandshakeResponse,
-  type OpalShellHandshakeRequest,
-  type OpalShellProtocol,
-} from "@breadboard-ai/types/opal-shell-protocol.js";
+import type { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { createContext } from "@lit/context";
 import * as comlink from "comlink";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
@@ -56,59 +52,27 @@ async function discoverShellHostOrigin(): Promise<string | undefined> {
   ) {
     return;
   }
-
-  console.log("[shell guest] Requesting handshake from parent window");
-  const unverifiedHandshakeResponseOriginPromise =
-    Promise.withResolvers<string>();
-  const abort = new AbortController();
-  window.addEventListener(
-    "message",
-    (event) => {
-      if (isOpalShellHandshakeResponse(event.data)) {
-        unverifiedHandshakeResponseOriginPromise.resolve(event.origin);
-        abort.abort();
-      }
-    },
-    { signal: abort.signal }
-  );
-  window.parent.postMessage(
-    {
-      type: "opal-shell-handshake-request",
-    } satisfies OpalShellHandshakeRequest,
-    // This initial host origin discovery handshake must be broadcast to all
-    // origins, because:
-    //
-    // 1. We want to support multiple allowed origins, and postMessage
-    //    targetOrigins only takes one.
-    //
-    // 2. We want to support origin patterns (e.g. "*.example.com") , and
-    //    postMessage targetOrigins only supports exact origins (and "*").
-    //
-    // 3. The browser does not allow us to read window.parent.origin unless it
-    //    is same-origin. So our only way to detect the origin is to receive a
-    //    message from it, which includes a readable event.origin property even
-    //    when cross-origin.
-    "*"
-  );
-  const unverifiedHandshakeResponseOrigin =
-    await unverifiedHandshakeResponseOriginPromise.promise;
-  console.log(
-    "[shell guest] Received handshake response from origin",
-    unverifiedHandshakeResponseOrigin
-  );
-
+  if (!document.referrer) {
+    console.error("[shell guest] document.referrer was empty");
+    return;
+  }
+  const referrerOrigin = new URL(document.referrer).origin;
   for (const pattern of allowedOriginPatterns) {
-    if (new URLPattern(pattern).test(unverifiedHandshakeResponseOrigin)) {
-      console.log(
-        "[shell guest] Verified handshake response origin",
-        unverifiedHandshakeResponseOrigin
+    if (
+      pattern.includes("*")
+        ? new URLPattern(pattern).test(referrerOrigin)
+        : referrerOrigin === pattern
+    ) {
+      console.debug(
+        `[shell guest] Referrer ${document.referrer} ` +
+          `matched allowed origin ${pattern}`
       );
-      return unverifiedHandshakeResponseOrigin;
+      return referrerOrigin;
     }
   }
   console.error(
-    "[shell guest] Failed to verify handshake response origin",
-    unverifiedHandshakeResponseOrigin
+    "[shell guest] Referrer origin was not in allowlist",
+    referrerOrigin
   );
 }
 
