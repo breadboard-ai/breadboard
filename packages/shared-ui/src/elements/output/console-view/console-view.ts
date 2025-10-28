@@ -482,10 +482,10 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                                     const processor =
                                       product.processor as v0_8.Types.ModelProcessor;
                                     return html`<li>
-                                      <bb-a2ui-work-item-view
+                                      <bb-a2ui-client-view
                                         .processor=${processor}
                                       >
-                                      </bb-a2ui-work-item-view>
+                                      </bb-a2ui-client-view>
                                     </li>`;
                                   } else if (isParticle(product)) {
                                     return html`<li>

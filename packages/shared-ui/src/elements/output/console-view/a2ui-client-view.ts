@@ -13,16 +13,16 @@ import { v0_8 } from "@breadboard-ai/a2ui";
 import * as A2UI from "@breadboard-ai/a2ui/ui";
 import { theme as uiTheme } from "../../../a2ui-theme/a2ui-theme.js";
 
-import { icons } from "../../../styles/icons";
-import { sharedStyles } from "./shared-styles";
-import { colorsLight } from "../../../styles/host/colors-light";
-import { type } from "../../../styles/host/type";
+import { icons } from "../../../styles/icons.js";
+import { sharedStyles } from "./shared-styles.js";
+import { colorsLight } from "../../../styles/host/colors-light.js";
+import { type } from "../../../styles/host/type.js";
 
 import "@breadboard-ai/a2ui/ui";
 import { provide } from "@lit/context";
 
-@customElement("bb-a2ui-work-item-view")
-export class A2UIWorkItemView extends SignalWatcher(LitElement) {
+@customElement("bb-a2ui-client-view")
+export class A2UIClientView extends SignalWatcher(LitElement) {
   @provide({ context: A2UI.Context.themeContext })
   accessor theme: v0_8.Types.Theme = uiTheme;
 
