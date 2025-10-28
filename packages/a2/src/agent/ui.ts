@@ -29,7 +29,7 @@ export type RawUserResponse = {
 
 class AgentUI {
   #reporter: StreamableReporter;
-  #reportedStarted: Promise<Outcome<unknown>>;
+  #reportedStarted: Promise<Outcome<unknown>> | undefined;
 
   constructor(
     private readonly caps: Capabilities,
@@ -39,16 +39,22 @@ class AgentUI {
       title: "A2UI",
       icon: "web",
     });
-    this.#reportedStarted = this.#reporter.start();
+  }
+
+  #start(): Promise<Outcome<unknown>> {
+    if (!this.#reportedStarted) {
+      this.#reportedStarted = this.#reporter.start();
+    }
+    return this.#reportedStarted;
   }
 
   async close() {
-    await this.#reportedStarted;
+    await this.#start();
     return this.#reporter.close();
   }
 
   async renderUI(payload: unknown) {
-    await this.#reportedStarted;
+    await this.#start();
     return this.#reporter.sendA2UI("Render UI", payload, "web");
   }
 
