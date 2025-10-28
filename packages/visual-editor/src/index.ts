@@ -10,10 +10,6 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 import {
-  createTokenVendor,
-  TokenVendor,
-} from "@breadboard-ai/connection-client";
-import {
   createFileSystemBackend,
   createFlagManager,
 } from "@breadboard-ai/data-store";
@@ -89,7 +85,6 @@ import {
   createActionTrackerBackend,
 } from "@breadboard-ai/shared-ui/utils/action-tracker";
 import {
-  SIGN_IN_CONNECTION_ID,
   SigninAdapter,
   signinAdapterContext,
 } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
@@ -145,8 +140,6 @@ export class Main extends SignalWatcher(LitElement) {
 
   @provide({ context: BreadboardUI.Contexts.settingsHelperContext })
   accessor settingsHelper: SettingsHelperImpl;
-
-  #tokenVendor: TokenVendor;
 
   @provide({ context: signinAdapterContext })
   accessor signinAdapter: SigninAdapter;
@@ -300,30 +293,7 @@ export class Main extends SignalWatcher(LitElement) {
     this.#secretsHelper = new SecretsHelper(this.#settings);
 
     // Authentication
-    this.#tokenVendor = createTokenVendor(
-      {
-        get: () => {
-          return this.settingsHelper.get(
-            BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
-            SIGN_IN_CONNECTION_ID
-          )?.value as string;
-        },
-        set: async (grant: string) => {
-          await this.settingsHelper.set(
-            BreadboardUI.Types.SETTINGS_TYPE.CONNECTIONS,
-            SIGN_IN_CONNECTION_ID,
-            {
-              name: SIGN_IN_CONNECTION_ID,
-              value: grant,
-            }
-          );
-        },
-      },
-      this.globalConfig
-    );
-
     this.opalShell = args.opalShell;
-
     this.signinAdapter = new SigninAdapter(
       this.opalShell,
       args.initialSignInState,
@@ -494,7 +464,6 @@ export class Main extends SignalWatcher(LitElement) {
       graphStore: this.#graphStore,
       experiments: {},
       globalConfig: this.globalConfig,
-      tokenVendor: this.#tokenVendor,
       signinAdapter: this.signinAdapter,
       sandbox: moduleFactory,
       settings: this.#settings,

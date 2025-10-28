@@ -22,7 +22,6 @@ import {
   PortIdentifier,
 } from "@google-labs/breadboard";
 
-import { TokenVendor } from "@breadboard-ai/connection-client";
 import {
   AssetPath,
   GraphIdentifier,
@@ -79,7 +78,6 @@ export interface RuntimeConfig {
   sandbox: RunnableModuleFactory;
   experiments: Record<string, boolean>;
   globalConfig?: GlobalConfig;
-  tokenVendor: TokenVendor;
   signinAdapter: SigninAdapter;
   settings: SettingsStore;
   fileSystem: FileSystem;
