@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DataPart, LLMContent } from "@breadboard-ai/types";
-import { AppScreenOutput } from "../../../state";
+import { AppScreenOutput, DataPart, LLMContent } from "@breadboard-ai/types";
 import {
   isFileDataCapabilityPart,
   isInlineData,

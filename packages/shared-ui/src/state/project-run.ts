@@ -6,6 +6,7 @@
 
 import { type ParticleTree, ParticleTreeImpl } from "@breadboard-ai/particles";
 import {
+  AppScreenOutput,
   ConsoleEntry,
   EditableGraph,
   ErrorObject,
@@ -50,7 +51,6 @@ import { getParticleStreamHandle, idFromPath } from "./common";
 import { ReactiveConsoleEntry } from "./console-entry";
 import { ReactiveRendererRunState } from "./renderer-run-state";
 import {
-  AppScreenOutput,
   EphemeralParticleTree,
   ProjectRun,
   ProjectRunStatus,
