@@ -109,9 +109,8 @@ class AgentUI {
   ): Outcome<void> {
     const workItem = this.#updateWorkItem();
     if (!ok(workItem)) return workItem;
-    const translatedMessages = this.translator.fromPidginMessages(messages);
-    if (!ok(translatedMessages)) return translatedMessages;
-    this.client.processUpdates(translatedMessages);
+    const translation = this.translator.fromPidginMessages(messages);
+    this.client.processUpdates(translation);
 
     const ensureAppScreenOutput = this.#ensureAppScreenOutput();
     if (!ok(ensureAppScreenOutput)) return ensureAppScreenOutput;
