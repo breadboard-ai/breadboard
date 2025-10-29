@@ -105,11 +105,13 @@ class AgentUI {
   }
 
   renderUserInterface(
-    payload: v0_8.Types.ServerToClientMessage[]
+    messages: v0_8.Types.ServerToClientMessage[]
   ): Outcome<void> {
     const workItem = this.#updateWorkItem();
     if (!ok(workItem)) return workItem;
-    this.client.processUpdates(payload);
+    const translatedMessages = this.translator.fromPidginMessages(messages);
+    if (!ok(translatedMessages)) return translatedMessages;
+    this.client.processUpdates(translatedMessages);
 
     const ensureAppScreenOutput = this.#ensureAppScreenOutput();
     if (!ok(ensureAppScreenOutput)) return ensureAppScreenOutput;
