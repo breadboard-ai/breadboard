@@ -16,6 +16,7 @@ import {
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import type {
+  AppScreenOutput,
   BoardServer,
   ConformsToNodeValue,
   FileSystem,
@@ -79,7 +80,6 @@ import {
 } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { ReactiveAppScreen } from "@breadboard-ai/shared-ui/state/app-screen.js";
-import { type AppScreenOutput } from "@breadboard-ai/shared-ui/state/types.js";
 import {
   ActionTracker,
   createActionTrackerBackend,
