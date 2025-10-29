@@ -430,7 +430,8 @@ export class A2UIModelProcessor implements ModelProcessor {
       surface.rootComponentId,
       surface,
       visited,
-      "/"
+      "/",
+      "" // Initial idSuffix.
     );
   }
 
@@ -443,23 +444,24 @@ export class A2UIModelProcessor implements ModelProcessor {
    * Builds out the nodes recursively.
    */
   #buildNodeRecursive(
-    componentId: string,
+    baseComponentId: string,
     surface: Surface,
     visited: Set<string>,
-    dataContextPath: string
+    dataContextPath: string,
+    idSuffix = ""
   ): AnyComponentNode | null {
-    const baseComponentId = componentId.split(":").at(0) ?? "";
+    const fullId = `${baseComponentId}${idSuffix}`; // Construct the full ID
     const { components } = surface;
 
     if (!components.has(baseComponentId)) {
       return null;
     }
 
-    if (visited.has(componentId)) {
-      throw new Error(`Circular dependency for component "${componentId}".`);
+    if (visited.has(fullId)) {
+      throw new Error(`Circular dependency for component "${fullId}".`);
     }
 
-    visited.add(componentId);
+    visited.add(fullId);
 
     const componentData = components.get(baseComponentId)!;
     const componentProps = componentData.component ?? {};
@@ -476,18 +478,19 @@ export class A2UIModelProcessor implements ModelProcessor {
           value,
           surface,
           visited,
-          dataContextPath
+          dataContextPath,
+          idSuffix
         );
       }
     }
 
-    visited.delete(componentId);
+    visited.delete(fullId);
 
     // Now that we have the resolved properties in place we can go ahead and
     // ensure that they meet expectations in terms of types and so forth,
     // casting them into the specific shape for usage.
     const baseNode = {
-      id: componentId,
+      id: fullId,
       dataContextPath,
       weight: componentData.weight ?? "initial",
     };
@@ -698,11 +701,18 @@ export class A2UIModelProcessor implements ModelProcessor {
     value: unknown,
     surface: Surface,
     visited: Set<string>,
-    dataContextPath: string
+    dataContextPath: string,
+    idSuffix = ""
   ): ResolvedValue {
     // 1. If it's a string that matches a component ID, build that node.
     if (typeof value === "string" && surface.components.has(value)) {
-      return this.#buildNodeRecursive(value, surface, visited, dataContextPath);
+      return this.#buildNodeRecursive(
+        value,
+        surface,
+        visited,
+        dataContextPath,
+        idSuffix
+      );
     }
 
     // 2. If it's a ComponentArrayReference (e.g., a `children` property),
@@ -710,7 +720,13 @@ export class A2UIModelProcessor implements ModelProcessor {
     if (isComponentArrayReference(value)) {
       if (value.explicitList) {
         return value.explicitList.map((id) =>
-          this.#buildNodeRecursive(id, surface, visited, dataContextPath)
+          this.#buildNodeRecursive(
+            id,
+            surface,
+            visited,
+            dataContextPath,
+            idSuffix
+          )
         );
       }
 
@@ -722,23 +738,42 @@ export class A2UIModelProcessor implements ModelProcessor {
         const data = this.#getDataByPath(surface.dataModel, fullDataPath);
 
         const template = value.template;
+        // Handle Array data.
         if (Array.isArray(data)) {
           return data.map((_, index) => {
+            // Create a synthetic ID based on the template ID and the
+            // full index path of the data (e.g., template-id:0:1)
             const parentIndices = dataContextPath
               .split("/")
               .filter((segment) => /^\d+$/.test(segment));
 
             const newIndices = [...parentIndices, index];
-            const syntheticId = `${template.componentId}:${newIndices.join(
-              ":"
-            )}`;
+            const newSuffix = `:${newIndices.join(":")}`;
             const childDataContextPath = `${fullDataPath}/${index}`;
 
             return this.#buildNodeRecursive(
-              syntheticId,
+              template.componentId, // baseId
               surface,
               visited,
-              childDataContextPath
+              childDataContextPath,
+              newSuffix // new suffix
+            );
+          });
+        }
+
+        // Handle Map data.
+        const mapCtor = this.#mapCtor;
+        if (data instanceof mapCtor) {
+          return Array.from(data.keys(), (key) => {
+            const newSuffix = `:${key}`;
+            const childDataContextPath = `${fullDataPath}/${key}`;
+
+            return this.#buildNodeRecursive(
+              template.componentId, // baseId
+              surface,
+              visited,
+              childDataContextPath,
+              newSuffix // new suffix
             );
           });
         }
@@ -751,7 +786,13 @@ export class A2UIModelProcessor implements ModelProcessor {
     // 3. If it's a plain array, resolve each of its items.
     if (Array.isArray(value)) {
       return value.map((item) =>
-        this.#resolvePropertyValue(item, surface, visited, dataContextPath)
+        this.#resolvePropertyValue(
+          item,
+          surface,
+          visited,
+          dataContextPath,
+          idSuffix
+        )
       );
     }
 
@@ -776,7 +817,8 @@ export class A2UIModelProcessor implements ModelProcessor {
           propertyValue,
           surface,
           visited,
-          dataContextPath
+          dataContextPath,
+          idSuffix
         );
       }
       return newObj;
