@@ -46,6 +46,9 @@ const CSP_CONFIG = {
   ["connect-src"]: [
     "'self'",
     "data:",
+    // TODO(aomarks) Remove this after we have eliminated all credentialed RPCs
+    // to the frontend server.
+    flags.SHELL_GUEST_ORIGIN,
     "https://*.google-analytics.com",
     "https://*.google.com",
     "https://*.googleapis.com/",

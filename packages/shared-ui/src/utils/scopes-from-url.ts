@@ -4,21 +4,34 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
+import type { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 
 export { scopesFromUrl };
 
+/**
+ * If we're in shell mode, when the iframed app makes a request to one of our
+ * Node server APIs, the origin will be that of the app, not the shell. Note
+ * that ultimately these APIs will all be replaced with APIs on the backend
+ * server, so this is only temporary anyway.
+ */
+const ORIGIN_FOR_FRONTEND_SERVER_RPCS =
+  CLIENT_DEPLOYMENT_CONFIG.SHELL_GUEST_ORIGIN ?? window.location.origin;
+
 const ASSET_DRIVE_API_ENDPOINT = new URL(
   `/board/boards/@foo/bar/assets/drive`,
-  window.location.href
+  ORIGIN_FOR_FRONTEND_SERVER_RPCS
 ).href;
 
 const DATA_TRANSFORM_API_ENDPOINT = new URL(
   `/api/data/transform`,
-  window.location.href
+  ORIGIN_FOR_FRONTEND_SERVER_RPCS
 ).href;
 
-const PROXY_API_ENDPOINT = new URL(`/board/proxy`, window.location.href).href;
+const PROXY_API_ENDPOINT = new URL(
+  `/board/proxy`,
+  ORIGIN_FOR_FRONTEND_SERVER_RPCS
+).href;
 
 const CALENDAR_SCOPES: OAuthScope[] = [
   "https://www.googleapis.com/auth/calendar.readonly",
