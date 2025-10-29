@@ -88,3 +88,11 @@ Play a game called "AI Slop or Not".
 4.  **End Game**: After 10 rounds, the game ends.
 5.  **Winner Screen**: The application identifies the single image that survived the most rounds. This image is displayed to the user with a "Winner" message. The user is then given the option to play again.
 ```
+
+```
+Build a never-ending app that presents the user with a sad poem about bugs in software and gives them the button to "Regenerate".
+
+When this button is pressed, give them another poem on the same topic. Don't use generate_text for the poem, just wing it yourself.
+
+The user hitting "Regenerate" is a good thing, that means they're enjoying your poems.
+```
