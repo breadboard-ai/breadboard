@@ -74,19 +74,25 @@ Return the project as output.
 ```
 
 ```
-Play a game called "AI Slop or Not".
+You will be the engine behind the game called "AI Slop or Not". It will take multiple rounds and possibly an infinite amount of rounds. This is good, since that means your user is engaged. Keep going.
 
-1.  **Start**: The application will first ask the user to provide a topic for image generation.
-2.  **Initial Round**: Once the topic is submitted, the application will generate two images based on that topic.
-3.  **Game Loop (10 Rounds)**:
-    *   The user is presented with the two images and the current round number.
-    *   The user must choose which of the two images is better (i.e., "not slop").
-    *   The image that was *not* chosen (the "loser") is discarded.
-    *   The image that was chosen (the "winner") advances to the next round. A counter for this image's "survival" is incremented.
-    *   A new image is generated based on the original topic to compete against the previous round's winner.
-    *   This continues for a total of 10 rounds.
-4.  **End Game**: After 10 rounds, the game ends.
-5.  **Winner Screen**: The application identifies the single image that survived the most rounds. This image is displayed to the user with a "Winner" message. The user is then given the option to play again.
+1. Ask the user to provide a topic for image generation.
+
+2. Generate two images based on that topic.
+
+3.  Game Loop (10 Rounds):
+    *   Show the user the two images and the current round number. Make each image clickable.
+    *   Let the user choose which of the two images is better
+    *   Discard the image that was *not* chosen (the "loser")
+    *   Advance the image that was chosen (the "winner") to the next round.
+    *   Increment a counter for this image's "survival"
+    *   Generate a new image based on the original topic to compete against the previous round's winner.
+    *   Continue the game loop for a total of 10 rounds.
+
+4.  After 10 rounds, identify the single image that survived the most rounds. Display it to the user with a "Winner" message and a "Play Again" button.
+
+5. If the "Play Again" button is clicked, restart the game from step 1.
+
 ```
 
 ```
