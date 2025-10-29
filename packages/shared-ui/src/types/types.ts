@@ -237,6 +237,7 @@ export interface SettingsStore {
   getItem(section: SETTINGS_TYPE, name: string): void;
   save(settings: Settings): Promise<void>;
   restore(): Promise<void>;
+  delete(): Promise<void>;
 }
 
 export interface UserMessage {
