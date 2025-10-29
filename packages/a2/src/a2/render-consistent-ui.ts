@@ -499,7 +499,7 @@ const UI_SCHEMA: GeminiSchema = {
                             },
                           },
                         },
-                        required: ["name"],
+                        required: ["name", "context"],
                       },
                     },
                     required: ["child", "action"],
