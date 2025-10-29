@@ -187,6 +187,7 @@
     "@breadboard-ai/utils": "^0.1.0",
     "@breadboard-ai/visual-editor": "1.30.0",
     "@google-labs/breadboard": "0.36.0",
+    "@google/genai": "^1.27.0",
     "compression": "^1.8.1",
     "express": "^4.21.2",
     "google-auth-library": "^10.1.0",

@@ -28,7 +28,6 @@ import {
   Surface,
   SurfaceID,
   SurfaceUpdateMessage,
-  ModelProcessor,
 } from "../types/types";
 import {
   isComponentArrayReference,
@@ -59,7 +58,7 @@ import {
  * Processes and consolidates A2UIProtocolMessage objects into a structured,
  * hierarchical model of UI surfaces.
  */
-export class A2UIModelProcessor implements ModelProcessor {
+export class A2UIModelProcessor {
   static readonly DEFAULT_SURFACE_ID = "@default";
 
   #mapCtor: MapConstructor = Map;
@@ -240,19 +239,9 @@ export class A2UIModelProcessor implements ModelProcessor {
       if (!valueKey) continue;
 
       let value: DataValue = item[valueKey];
-      // It's a valueList. We must unwrap its contents.
-      if (valueKey === "valueList" && Array.isArray(value)) {
-        value = value.map((wrappedItem: unknown) => {
-          if (!isObject(wrappedItem)) return null;
-          const innerValueKey = this.#findValueKey(wrappedItem);
-          if (!innerValueKey) return wrappedItem as DataValue;
-
-          const innerValue = wrappedItem[innerValueKey];
-          if (innerValueKey === "valueMap" && Array.isArray(innerValue)) {
-            return this.#convertKeyValueArrayToMap(innerValue);
-          }
-          return this.#parseIfJsonString(innerValue as DataValue);
-        });
+      // It's a valueMap. We must recursively convert it.
+      if (valueKey === "valueMap" && Array.isArray(value)) {
+        value = this.#convertKeyValueArrayToMap(value);
       } else if (typeof value === "string") {
         value = this.#parseIfJsonString(value);
       }
