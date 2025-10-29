@@ -58,6 +58,27 @@ class AgentFileSystem {
     file.data = `${file.data}\n${data}`;
   }
 
+  /**
+   * Used by the translator to replace any string that may look
+   * like a path with the corresponding file URL.
+   * Any string can be sent here.
+   */
+  getFileUrl(maybePath: string): string | undefined {
+    const file = this.#files.get(maybePath);
+    if (!file) return undefined;
+    switch (file.type) {
+      case "fileData":
+        return file.data;
+      case "inlineData":
+        return `data:${file.mimeType};base64,${file.data}`;
+      case "storedData":
+        return file.data;
+      default:
+      case "text":
+        return undefined;
+    }
+  }
+
   #getFile(path: string): Outcome<DataPart> {
     const file = this.#files.get(path);
     if (!file) {
