@@ -49,7 +49,8 @@ const SIGN_IN_CONNECTION_ID = "$sign-in";
 export class OAuthBasedOpalShell implements OpalShellProtocol {
   readonly #nonceToScopes = new Map<string, string[]>();
 
-  readonly #settingsHelper = SettingsStore.restoredInstance().then(
+  readonly #settingsStore = SettingsStore.restoredInstance();
+  readonly #settingsHelper = this.#settingsStore.then(
     (settings) => new SettingsHelperImpl(settings)
   );
 
@@ -351,21 +352,35 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
     console.info("[shell host] Updating storage");
 
     const settingsHelper = await this.#settingsHelper;
+    const writeSettings = () =>
+      settingsHelper.set(SETTINGS_TYPE.CONNECTIONS, SIGN_IN_CONNECTION_ID, {
+        name: SIGN_IN_CONNECTION_ID,
+        value: JSON.stringify(settingsValue),
+      });
     try {
-      await settingsHelper.set(
-        SETTINGS_TYPE.CONNECTIONS,
-        SIGN_IN_CONNECTION_ID,
-        {
-          name: SIGN_IN_CONNECTION_ID,
-          value: JSON.stringify(settingsValue),
-        }
+      await writeSettings();
+    } catch (e1) {
+      console.warn(
+        "[shell host] Error updating storage, deleting storage and retrying:",
+        e1
       );
-    } catch (e) {
-      console.error("[shell host] Error updating storage", e);
-      return {
-        ok: false,
-        error: { code: "other", userMessage: `Error updating storage` },
-      };
+      try {
+        const settingsStore = await this.#settingsStore;
+        await settingsStore.delete();
+        await writeSettings();
+      } catch (e2) {
+        console.error(
+          "[shell host] Error updating storage even after deleting:",
+          e2
+        );
+        return {
+          ok: false,
+          error: {
+            code: "other",
+            userMessage: `Error updating storage after delete`,
+          },
+        };
+      }
     }
 
     const state = this.#makeSignedInState(settingsValue);
