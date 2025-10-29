@@ -45,6 +45,7 @@ import { Video } from "./video.js";
 
 export * as Context from "./context/theme.js";
 export * as Utils from "./utils/utils.js";
+export { structuralStyles as allStyles } from "./styles.js";
 
 export {
   Audio,
