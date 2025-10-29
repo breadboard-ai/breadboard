@@ -11,6 +11,8 @@ import { A2ModuleArgs } from "../runnable-module-factory";
 import { A2UIClientWorkItem } from "./a2ui/client-work-item";
 import { A2UIClientEventMessage } from "./a2ui/schemas";
 import { v0_8 } from "@breadboard-ai/a2ui";
+import { A2UIClient } from "./a2ui/client";
+import { A2UIAppScreen } from "./a2ui/app-screen";
 
 export { AgentUI };
 
@@ -31,7 +33,10 @@ export type RawUserResponse = {
 };
 
 class AgentUI {
-  readonly #entry: ConsoleEntry | undefined;
+  readonly client: A2UIClient;
+
+  readonly #consoleEntry: ConsoleEntry | undefined;
+  #appScreen: A2UIAppScreen | undefined;
   #workItem: A2UIClientWorkItem | undefined;
   #workItemId: string | null = null;
 
@@ -40,12 +45,13 @@ class AgentUI {
     private readonly moduleArgs: A2ModuleArgs,
     private readonly translator: PidginTranslator
   ) {
+    this.client = new A2UIClient();
     const { currentStep, getProjectRunState } = this.moduleArgs.context;
     const stepId = currentStep?.id;
     if (stepId) {
-      this.#entry = getProjectRunState?.()?.console.get(stepId);
+      this.#consoleEntry = getProjectRunState?.()?.console.get(stepId);
     }
-    if (!this.#entry) {
+    if (!this.#consoleEntry) {
       console.warn(
         `Unable to find console entry for this agent. Trying to render UI will fail.`
       );
@@ -59,15 +65,29 @@ class AgentUI {
     return this.#workItem;
   }
 
+  #getAppScreen(): Outcome<A2UIAppScreen> {
+    if (!this.#appScreen) {
+      this.#appScreen = new A2UIAppScreen(this.client, "A2UI");
+      const app = this.moduleArgs.context?.getProjectRunState?.()?.app;
+      if (!app) {
+        return err(
+          `Unable to get App. Agent won't be able to render to app preview`
+        );
+      }
+      app.screens.set(crypto.randomUUID(), this.#appScreen);
+    }
+    return this.#appScreen;
+  }
+
   #createWorkItem(): Outcome<A2UIClientWorkItem> {
-    if (!this.#entry) {
+    if (!this.#consoleEntry) {
       return err(`Unable to create UI: Console is not available`);
     }
     if (!this.#workItemId) {
       this.#workItemId = crypto.randomUUID();
     }
-    this.#workItem = new A2UIClientWorkItem("A2UI", "web");
-    this.#entry.work.set(this.#workItemId, this.#workItem);
+    this.#workItem = new A2UIClientWorkItem(this.client, "A2UI", "web");
+    this.#consoleEntry.work.set(this.#workItemId, this.#workItem);
     return this.#workItem;
   }
 
@@ -75,13 +95,13 @@ class AgentUI {
     if (!this.#workItem) {
       return this.#createWorkItem();
     }
-    if (!this.#entry) {
+    if (!this.#consoleEntry) {
       return err(`Unable to update UI: Console is not available`);
     }
-    this.#entry.work.delete(this.#workItemId!);
+    this.#consoleEntry.work.delete(this.#workItemId!);
     this.#workItemId = crypto.randomUUID();
 
-    this.#entry.work.set(this.#workItemId, this.#workItem);
+    this.#consoleEntry.work.set(this.#workItemId, this.#workItem);
     return this.#workItem;
   }
 
@@ -90,13 +110,20 @@ class AgentUI {
   ): Outcome<void> {
     const workItem = this.#updateWorkItem();
     if (!ok(workItem)) return workItem;
-    return workItem.renderUserInterface(payload);
+    this.client.processUpdates(payload);
+    this.#getAppScreen();
+    workItem.renderUserInterface();
   }
 
   async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {
     const workItem = this.#updateWorkItem();
     if (!ok(workItem)) return workItem;
-    return workItem.awaitUserInput();
+    const appScreen = this.#getAppScreen();
+    if (!ok(appScreen)) return appScreen;
+    appScreen.awaitUserInput = true;
+    const result = await this.client.awaitUserInput();
+    appScreen.awaitUserInput = false;
+    return result;
   }
 
   async requestUserInput(

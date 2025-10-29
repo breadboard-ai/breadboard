@@ -6,6 +6,7 @@
 
 import { ParticleTree } from "@breadboard-ai/particles";
 import {
+  App,
   AssetMetadata,
   AssetPath,
   ConsoleEntry,
@@ -124,82 +125,6 @@ export type ProjectRun = {
    * Call when the user chooses to dismiss errors shown (if any)
    */
   dismissError(): void;
-};
-
-/**
- * Represents the App state during the run.
- * Designed so that the App View can be built from this state
- */
-export type App = {
-  /**
-   * Current state of the app. Can be one of the following:
-   * - "splash" -- the app is showing a splash screen
-   * - "output" -- the app is showing the final output
-   * - "progress" -- the app is showing progress
-   * - "input" - the app is asking the user for inputs
-   * - "error" - the app is showing an error
-   */
-  state: "splash" | "output" | "progress" | "input" | "error";
-  /**
-   * A sequence of screens that is produced during the run.
-   */
-  screens: Map<string, AppScreen>;
-  /**
-   * Currently interactive screens
-   */
-  current: ReadonlyMap<string, AppScreen>;
-  /**
-   * The last screen.
-   */
-  last: AppScreen | null;
-};
-
-/**
- * Represents the state of a single App Screen
- */
-export type AppScreen = {
-  /**
-   * The title of the screen
-   */
-  title: string;
-  /**
-   * When "interactive", indicates that this screen is still being created
-   * or is asking user for input.
-   * When "complete", indicates that this screen is finalized and is now
-   * a historical artifact of the run.
-   */
-  status: "interactive" | "complete";
-  /**
-   * The "progress" screen only shows the output to the user, either final
-   * or intermediate results.
-   * The "input" screen shows the output to the user and requests input
-   * from the user.
-   * See https://github.com/breadboard-ai/breadboard/wiki/Screens for details.
-   */
-  type: "progress" | "input";
-  /**
-   * The outputs for this screen
-   */
-  outputs: Map<string, AppScreenOutput>;
-  /**
-   * The last output for the screen
-   */
-  last: AppScreenOutput | null;
-};
-
-/**
- * Represents an output on a screen. There may be more than one output,
- * like multiple bubbling outputs from the step, as well as the final output.
- */
-export type AppScreenOutput = {
-  /**
-   * The Schema of the output values.
-   */
-  schema: Schema | undefined;
-  /**
-   * The output values.
-   */
-  output: OutputValues;
 };
 
 export type ErrorReason =

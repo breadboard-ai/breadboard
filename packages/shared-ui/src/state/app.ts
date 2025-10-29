@@ -7,7 +7,8 @@
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { ReactiveAppScreen } from "./app-screen";
-import { App, AppScreen, ProjectRun } from "./types";
+import { ProjectRun } from "./types";
+import { App, AppScreen } from "@breadboard-ai/types";
 
 export { ReactiveApp };
 

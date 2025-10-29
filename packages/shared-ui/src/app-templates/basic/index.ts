@@ -44,7 +44,7 @@ import {
   StateEvent,
   UnsnackbarEvent,
 } from "../../events/events";
-import { AppScreenOutput, ProjectRun } from "../../state/types.js";
+import { ProjectRun } from "../../state/types.js";
 import { emptyStyles } from "../../styles/host/colors-empty.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
 import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js";
@@ -73,7 +73,7 @@ import { googleDriveClientContext } from "../../contexts/google-drive-client-con
 import { markdown } from "../../directives/markdown.js";
 import { makeUrl } from "../../utils/urls.js";
 
-import { RuntimeFlags } from "@breadboard-ai/types";
+import { AppScreenOutput, RuntimeFlags } from "@breadboard-ai/types";
 import { maybeTriggerNlToOpalSatisfactionSurvey } from "../../survey/nl-to-opal-satisfaction-survey.js";
 import { repeat } from "lit/directives/repeat.js";
 
@@ -259,6 +259,22 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           console.warn(err);
           activityContents = html`Unable to parse response`;
         }
+      } else if (last.a2ui) {
+        const { processor } = last.a2ui;
+        const surfaces = (processor as v0_8.Types.ModelProcessor).getSurfaces();
+        activityContents = html`<section id="surfaces">
+          ${repeat(
+            surfaces,
+            ([surfaceId]) => surfaceId,
+            ([surfaceId, surface]) => {
+              return html`<a2ui-surface
+                    .surfaceId=${surfaceId}
+                    .surface=${surface}
+                    .processor=${processor}
+                  ></a2-uisurface>`;
+            }
+          )}
+        </section>`;
       } else {
         // Convert app screen to particles. There's a belt-and-braces check
         // afterwards to ensure that the top-level list has a valid
