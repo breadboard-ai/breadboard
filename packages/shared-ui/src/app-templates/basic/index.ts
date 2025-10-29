@@ -260,20 +260,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           activityContents = html`Unable to parse response`;
         }
       } else if (last.a2ui) {
-        const { processor } = last.a2ui;
-        const surfaces = (processor as v0_8.Types.ModelProcessor).getSurfaces();
+        const { processor, receiver } = last.a2ui;
         activityContents = html`<section id="surfaces">
-          ${repeat(
-            surfaces,
-            ([surfaceId]) => surfaceId,
-            ([surfaceId, surface]) => {
-              return html`<a2ui-surface
-                    .surfaceId=${surfaceId}
-                    .surface=${surface}
-                    .processor=${processor}
-                  ></a2-uisurface>`;
-            }
-          )}
+          <bb-a2ui-client-view .processor=${processor} .receiver=${receiver}>
+          </bb-a2ui-client-view>
         </section>`;
       } else {
         // Convert app screen to particles. There's a belt-and-braces check
@@ -937,6 +927,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
         case "error":
           content = [this.#renderError()];
+          break;
+
+        case "interactive":
+          content = [this.#renderOutputs()];
           break;
 
         default: {

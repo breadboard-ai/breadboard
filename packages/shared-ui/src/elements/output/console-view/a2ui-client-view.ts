@@ -47,74 +47,70 @@ export class A2UIClientView extends SignalWatcher(LitElement) {
     const surfaces = this.processor?.getSurfaces();
     if (!surfaces) return nothing;
 
-    return html`<section id="surfaces">
-      ${repeat(
-        surfaces,
-        ([surfaceId]) => surfaceId,
-        ([surfaceId, surface]) => {
-          return html`<a2ui-surface
-            .surfaceId=${surfaceId}
-            .surface=${surface}
-            .processor=${this.processor}
-            @a2uiaction=${async (
-              evt: v0_8.Events.StateEvent<"a2ui.action">
-            ) => {
-              const [target] = evt.composedPath();
-              if (!(target instanceof HTMLElement)) {
-                return;
-              }
+    return html`${repeat(
+      surfaces,
+      ([surfaceId]) => surfaceId,
+      ([surfaceId, surface]) => {
+        return html`<a2ui-surface
+          .surfaceId=${surfaceId}
+          .surface=${surface}
+          .processor=${this.processor}
+          @a2uiaction=${async (evt: v0_8.Events.StateEvent<"a2ui.action">) => {
+            const [target] = evt.composedPath();
+            if (!(target instanceof HTMLElement)) {
+              return;
+            }
 
-              const context: Record<string, unknown> = {};
-              if (evt.detail.action.context) {
-                const srcContext = evt.detail.action.context;
-                for (const item of srcContext) {
-                  if (item.value.literalBoolean) {
-                    context[item.key] = item.value.literalBoolean;
-                  } else if (item.value.literalNumber) {
-                    context[item.key] = item.value.literalNumber;
-                  } else if (item.value.literalString) {
-                    context[item.key] = item.value.literalString;
-                  } else if (item.value.path) {
-                    if (!evt.detail.sourceComponent) {
-                      throw new Error(
-                        "No component provided - unable to get data"
-                      );
-                    }
-                    const path = this.processor!.resolvePath(
-                      item.value.path,
-                      evt.detail.dataContextPath
+            const context: Record<string, unknown> = {};
+            if (evt.detail.action.context) {
+              const srcContext = evt.detail.action.context;
+              for (const item of srcContext) {
+                if (item.value.literalBoolean) {
+                  context[item.key] = item.value.literalBoolean;
+                } else if (item.value.literalNumber) {
+                  context[item.key] = item.value.literalNumber;
+                } else if (item.value.literalString) {
+                  context[item.key] = item.value.literalString;
+                } else if (item.value.path) {
+                  if (!evt.detail.sourceComponent) {
+                    throw new Error(
+                      "No component provided - unable to get data"
                     );
-                    const value = this.processor!.getData(
-                      evt.detail.sourceComponent,
-                      path,
-                      surfaceId
-                    );
-                    context[item.key] = value ?? "";
                   }
+                  const path = this.processor!.resolvePath(
+                    item.value.path,
+                    evt.detail.dataContextPath
+                  );
+                  const value = this.processor!.getData(
+                    evt.detail.sourceComponent,
+                    path,
+                    surfaceId
+                  );
+                  context[item.key] = value ?? "";
                 }
               }
+            }
 
-              const message: v0_8.Types.A2UIClientEventMessage = {
-                userAction: {
-                  name: evt.detail.action.name,
-                  surfaceId,
-                  sourceComponentId: target.id,
-                  timestamp: new Date().toISOString(),
-                  context,
-                },
-              };
+            const message: v0_8.Types.A2UIClientEventMessage = {
+              userAction: {
+                name: evt.detail.action.name,
+                surfaceId,
+                sourceComponentId: target.id,
+                timestamp: new Date().toISOString(),
+                context,
+              },
+            };
 
-              if (!this.receiver) {
-                console.warn(
-                  "A2UI Server receiver unavailable, won't be able to interact with the user"
-                );
-                return;
-              }
-              this.receiver.sendMessage(message);
-            }}
-          ></a2ui-surface>`;
-        }
-      )}
-    </section>`;
+            if (!this.receiver) {
+              console.warn(
+                "A2UI Server receiver unavailable, won't be able to interact with the user"
+              );
+              return;
+            }
+            this.receiver.sendMessage(message);
+          }}
+        ></a2ui-surface>`;
+      }
+    )}`;
   }
 }

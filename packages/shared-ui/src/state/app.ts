@@ -21,6 +21,13 @@ class ReactiveApp implements App {
     if (this.run.error) return "error";
     if (this.run.input) return "input";
     if (this.current.size === 0) return "output";
+    if (
+      [...this.screens.values()].some(
+        (screen) => screen.last?.a2ui && screen.status === "interactive"
+      )
+    ) {
+      return "interactive";
+    }
     return "progress";
   }
 
@@ -29,7 +36,7 @@ class ReactiveApp implements App {
     return new Map(
       Array.from(this.screens.entries())
         .map(([id, screen]) =>
-          screen.status === "interactive" ? [id, screen] : null
+          screen.status !== "complete" ? [id, screen] : null
         )
         .filter(Boolean) as [string, AppScreen][]
     );

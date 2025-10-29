@@ -481,11 +481,13 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                                   if ("processor" in product) {
                                     const { processor, receiver } = product;
                                     return html`<li>
-                                      <bb-a2ui-client-view
-                                        .processor=${processor}
-                                        .receiver=${receiver}
-                                      >
-                                      </bb-a2ui-client-view>
+                                      <section id="surfaces">
+                                        <bb-a2ui-client-view
+                                          .processor=${processor}
+                                          .receiver=${receiver}
+                                        >
+                                        </bb-a2ui-client-view>
+                                      </section>
                                     </li>`;
                                   } else if (isParticle(product)) {
                                     return html`<li>

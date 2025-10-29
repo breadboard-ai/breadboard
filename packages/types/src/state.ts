@@ -144,10 +144,13 @@ export type App = {
    * - "splash" -- the app is showing a splash screen
    * - "output" -- the app is showing the final output
    * - "progress" -- the app is showing progress
-   * - "input" - the app is asking the user for inputs
+   * - "input" - the app is asking the user for inputs (this is the non-A2UI
+   * interactivity)
+   * - "interactive" - the app is in the interactive mode, asking user for
+   * inputs and showing outputs (A2UI)
    * - "error" - the app is showing an error
    */
-  state: "splash" | "output" | "progress" | "input" | "error";
+  state: "splash" | "output" | "progress" | "input" | "interactive" | "error";
   /**
    * A sequence of screens that is produced during the run.
    */
@@ -171,20 +174,21 @@ export type AppScreen = {
    */
   title: string;
   /**
-   * When "interactive", indicates that this screen is still being created
-   * or is asking user for input.
+   * When "processing", indicates that this screen is being created.
+   * When "interactive", indicates that this screen engaged in interaction
+   * with the user.
    * When "complete", indicates that this screen is finalized and is now
    * a historical artifact of the run.
    */
-  status: "interactive" | "complete";
+  status: "processing" | "interactive" | "complete";
   /**
    * The "progress" screen only shows the output to the user, either final
    * or intermediate results.
    * The "input" screen shows the output to the user and requests input
    * from the user.
-   * See https://github.com/breadboard-ai/breadboard/wiki/Screens for details.
+   * The "a2ui" screen shows the A2UI surface.
    */
-  type: "progress" | "input";
+  type: "progress" | "input" | "a2ui";
   /**
    * The outputs for this screen
    */
