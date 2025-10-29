@@ -194,7 +194,7 @@ describe("A2UIModelProcessor", () => {
                 valueMap: [
                   {
                     key: "user1", // /data/users/user1
-                    // @ts-expect-error May not exist.
+                    // @ts-expect-error TS thinks it might not exist, but it does.
                     valueMap: [
                       {
                         key: "firstName",
@@ -208,7 +208,7 @@ describe("A2UIModelProcessor", () => {
                   },
                   {
                     key: "user2", // /data/users/user2
-                    // @ts-expect-error May not exist.
+                    // @ts-expect-error TS thinks it might not exist, but it does.
                     valueMap: [
                       {
                         key: "firstName",
@@ -632,7 +632,6 @@ describe("A2UIModelProcessor", () => {
             contents: [
               {
                 key: "days",
-                // valueList is not in the spec.
                 // The correct way to send an array of objects is as a stringified JSON.
                 valueString: JSON.stringify([
                   {
@@ -714,8 +713,6 @@ describe("A2UIModelProcessor", () => {
       assert.strictEqual(day1.dataContextPath, "/days/0");
       const day1Activities = day1.properties.children[1].properties.children;
 
-      // This assertion was failing (0 !== 2) because the data wasn't parsed.
-      // It will now pass.
       assert.strictEqual(day1Activities.length, 2);
       assert.strictEqual(day1Activities[0].id, "activity-text:0:0");
       assert.strictEqual(
