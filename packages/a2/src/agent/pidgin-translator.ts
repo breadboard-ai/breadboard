@@ -40,6 +40,13 @@ export type PidginLinkPart = {
   link: { href: string; title: string };
 };
 
+type ServerMessage = v0_8.Types.ServerToClientMessage;
+
+export type FromPidginMessagesResult = {
+  messages: ServerMessage[];
+  remap: Map<string, string>;
+};
+
 export type PidginPart = PidginTextPart | PidginFilePart | PidginLinkPart;
 
 const SPLIT_REGEX =
@@ -47,8 +54,6 @@ const SPLIT_REGEX =
 
 const FILE_PARSE_REGEX = /<file\s+src\s*=\s*"([^"]*)"\s*\/>/;
 const LINK_PARSE_REGEX = /<a\s+href\s*=\s*"([^"]*)"\s*>\s*([^<]*)\s*<\/a>/;
-
-type ServerMessage = v0_8.Types.ServerToClientMessage;
 
 /**
  * Translates to and from Agent pidgin: a simplified XML-like
@@ -91,28 +96,33 @@ class PidginTranslator {
     return { parts: mergeTextParts(parts, "\n"), role: "user" };
   }
 
-  fromPidginMessages(messages: ServerMessage[]): Outcome<ServerMessage[]> {
-    return messages.map((message) => {
-      const { surfaceUpdate } = message;
-      if (!surfaceUpdate) return message;
+  fromPidginMessages(messages: ServerMessage[]): FromPidginMessagesResult {
+    const remap = new Map<string, string>();
+    return {
+      messages: messages.map((message) => {
+        const { surfaceUpdate } = message;
+        if (!surfaceUpdate) return message;
 
-      const translatedSurfaceUpdate: ServerMessage["surfaceUpdate"] = {
-        ...surfaceUpdate,
-        components: surfaceUpdate.components.map((component) => {
-          const translatedComponent = substituteLiterals(
-            component,
-            this.fileSystem
-          );
-          if (!ok(translatedComponent)) {
-            console.warn("Failed to translate component", component);
-            return component;
-          }
-          return translatedComponent;
-        }),
-      };
+        const translatedSurfaceUpdate: ServerMessage["surfaceUpdate"] = {
+          ...surfaceUpdate,
+          components: surfaceUpdate.components.map((component) => {
+            const translatedComponent = substituteLiterals(
+              component,
+              this.fileSystem,
+              remap
+            );
+            if (!ok(translatedComponent)) {
+              console.warn("Failed to translate component", component);
+              return component;
+            }
+            return translatedComponent;
+          }),
+        };
 
-      return { surfaceUpdate: translatedSurfaceUpdate };
-    });
+        return { surfaceUpdate: translatedSurfaceUpdate };
+      }),
+      remap,
+    };
   }
 
   fromPidginFiles(files: string[]): Outcome<LLMContent> {
@@ -239,7 +249,8 @@ class PidginTranslator {
  */
 function substituteLiterals<T>(
   data: T,
-  fileSystem: AgentFileSystem
+  fileSystem: AgentFileSystem,
+  remap: Map<string, string>
 ): Outcome<T> {
   const clonedData = structuredClone(data);
   const recursiveReplace = (currentValue: JsonSerializable): void => {
@@ -259,6 +270,9 @@ function substituteLiterals<T>(
             typeof value === "string"
           ) {
             const url = fileSystem.getFileUrl(value);
+            if (url) {
+              remap.set(url, value);
+            }
             currentValue[key] = url ?? value;
           } else {
             // Recurse.
