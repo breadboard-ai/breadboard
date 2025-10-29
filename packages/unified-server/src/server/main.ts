@@ -119,20 +119,31 @@ if (
   clientConfig.SHELL_HOST_ORIGINS?.length
 ) {
   // TODO(aomarks) After we are fully in the iframe arrangement, move assets
-  // around so that this re-pathing is not necessary.
+  // around so that this entire re-pathing middleware is not necessary.
   console.log("[unified-server startup] Serving in shell configuration");
   server.use("/", (request, _response, next) => {
-    if (request.path.startsWith("/oauth")) {
-      request.url = "/oauth/index.html";
-    } else if (request.path.startsWith("/_app/landing")) {
-      request.url = "/landing/index.html";
-    } else if (request.path.startsWith("/_app")) {
-      request.url = "/index.html";
-    } else if (
+    if (
+      // Files with extensions are always static and should be served normally.
       !request.path.includes(".") &&
+      // Files in the @vite folder are dev-mode npm dependencies and should be
+      // served normally.
       !request.path.startsWith("/@vite/")
     ) {
-      request.url = "/shell/index.html";
+      if (request.path === "/oauth" || request.path.startsWith("/oauth/")) {
+        request.url = "/oauth/index.html";
+      } else if (
+        request.path === "/_app/landing" ||
+        request.path.startsWith("/_app/landing/")
+      ) {
+        request.url = "/landing/index.html";
+      } else if (
+        request.path === "/_app" ||
+        request.path.startsWith("/_app/")
+      ) {
+        request.url = "/index.html";
+      } else {
+        request.url = "/shell/index.html";
+      }
     }
     next();
   });
