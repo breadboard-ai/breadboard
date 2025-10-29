@@ -365,4 +365,10 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
       await this.save(this.#settings);
     }
   }
+
+  async delete() {
+    console.log(`[settings] Deleting ${SETTINGS_NAME} IndexedDB`);
+    await idb.deleteDB(SETTINGS_NAME);
+    await this.restore();
+  }
 }
