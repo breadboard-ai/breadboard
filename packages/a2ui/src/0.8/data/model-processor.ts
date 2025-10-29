@@ -240,19 +240,9 @@ export class A2UIModelProcessor implements ModelProcessor {
       if (!valueKey) continue;
 
       let value: DataValue = item[valueKey];
-      // It's a valueList. We must unwrap its contents.
-      if (valueKey === "valueList" && Array.isArray(value)) {
-        value = value.map((wrappedItem: unknown) => {
-          if (!isObject(wrappedItem)) return null;
-          const innerValueKey = this.#findValueKey(wrappedItem);
-          if (!innerValueKey) return wrappedItem as DataValue;
-
-          const innerValue = wrappedItem[innerValueKey];
-          if (innerValueKey === "valueMap" && Array.isArray(innerValue)) {
-            return this.#convertKeyValueArrayToMap(innerValue);
-          }
-          return this.#parseIfJsonString(innerValue as DataValue);
-        });
+      // It's a valueMap. We must recursively convert it.
+      if (valueKey === "valueMap" && Array.isArray(value)) {
+        value = this.#convertKeyValueArrayToMap(value);
       } else if (typeof value === "string") {
         value = this.#parseIfJsonString(value);
       }
