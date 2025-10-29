@@ -33,7 +33,7 @@ class A2UIClient implements SimplifiedA2UIClient {
     },
   };
 
-  #processor = new v0_8.Data.A2UIModelProcessor();
+  #processor = v0_8.Data.createSignalA2UIModelProcessor();
 
   processUpdates(messages: v0_8.Types.ServerToClientMessage[]) {
     this.#processor.processMessages(messages);

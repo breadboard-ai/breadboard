@@ -98,10 +98,6 @@ class AgentUI {
     if (!this.#consoleEntry) {
       return err(`Unable to update UI: Console is not available`);
     }
-    this.#consoleEntry.work.delete(this.#workItemId!);
-    this.#workItemId = crypto.randomUUID();
-
-    this.#consoleEntry.work.set(this.#workItemId, this.#workItem);
     return this.#workItem;
   }
 
