@@ -208,4 +208,8 @@ export type AppScreenOutput = {
    * The output values.
    */
   output: OutputValues;
+  /**
+   * A2UI client. Only present on the app outputs that are A2UI-backed
+   */
+  a2ui?: SimplifiedA2UIClient;
 };
