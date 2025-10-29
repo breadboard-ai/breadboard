@@ -19,10 +19,10 @@ export { ReactiveAppScreen };
 
 class ReactiveAppScreen implements AppScreen {
   @signal
-  accessor status: "interactive" | "complete" = "interactive";
+  accessor status: "processing" | "interactive" | "complete" = "processing";
 
   @signal
-  accessor type: "progress" | "input" = "progress";
+  accessor type: "progress" | "input" | "a2ui" = "progress";
 
   @signal
   get last() {

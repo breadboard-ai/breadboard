@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities, ConsoleEntry, Outcome } from "@breadboard-ai/types";
+import {
+  AppScreen,
+  AppScreenOutput,
+  Capabilities,
+  ConsoleEntry,
+  Outcome,
+} from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { PidginTranslator } from "./pidgin-translator";
 import { A2ModuleArgs } from "../runnable-module-factory";
@@ -12,7 +18,7 @@ import { A2UIClientWorkItem } from "./a2ui/client-work-item";
 import { A2UIClientEventMessage } from "./a2ui/schemas";
 import { v0_8 } from "@breadboard-ai/a2ui";
 import { A2UIClient } from "./a2ui/client";
-import { A2UIAppScreen } from "./a2ui/app-screen";
+import { A2UIAppScreenOutput } from "./a2ui/app-screen-output";
 
 export { AgentUI };
 
@@ -35,10 +41,13 @@ export type RawUserResponse = {
 class AgentUI {
   readonly client: A2UIClient;
 
+  #workItemId = crypto.randomUUID();
+
   readonly #consoleEntry: ConsoleEntry | undefined;
-  #appScreen: A2UIAppScreen | undefined;
   #workItem: A2UIClientWorkItem | undefined;
-  #workItemId: string | null = null;
+
+  readonly #appScreen: AppScreen | undefined;
+  #appScreenOutput: AppScreenOutput | undefined;
 
   constructor(
     private readonly caps: Capabilities,
@@ -49,42 +58,36 @@ class AgentUI {
     const { currentStep, getProjectRunState } = this.moduleArgs.context;
     const stepId = currentStep?.id;
     if (stepId) {
-      this.#consoleEntry = getProjectRunState?.()?.console.get(stepId);
+      const runState = getProjectRunState?.();
+      this.#consoleEntry = runState?.console.get(stepId);
+      this.#appScreen = runState?.app.screens.get(stepId);
     }
     if (!this.#consoleEntry) {
       console.warn(
         `Unable to find console entry for this agent. Trying to render UI will fail.`
       );
     }
-  }
-
-  #getWorkItem(): Outcome<A2UIClientWorkItem> {
-    if (!this.#workItem) {
-      return this.#createWorkItem();
-    }
-    return this.#workItem;
-  }
-
-  #getAppScreen(): Outcome<A2UIAppScreen> {
     if (!this.#appScreen) {
-      this.#appScreen = new A2UIAppScreen(this.client, "A2UI");
-      const app = this.moduleArgs.context?.getProjectRunState?.()?.app;
-      if (!app) {
-        return err(
-          `Unable to get App. Agent won't be able to render to app preview`
-        );
-      }
-      app.screens.set(crypto.randomUUID(), this.#appScreen);
+      console.warn(
+        `Unable to find app screen for this agent. Trying to render UI will fail.`
+      );
     }
-    return this.#appScreen;
+  }
+
+  #ensureAppScreenOutput(): Outcome<void> {
+    if (!this.#appScreen) {
+      return err(`Unable to create UI: App screen is not available`);
+    }
+    if (this.#appScreenOutput) return;
+
+    this.#appScreenOutput = new A2UIAppScreenOutput(this.client);
+    this.#appScreen.outputs.set(this.#workItemId, this.#appScreenOutput);
+    this.#appScreen.type = "a2ui";
   }
 
   #createWorkItem(): Outcome<A2UIClientWorkItem> {
     if (!this.#consoleEntry) {
       return err(`Unable to create UI: Console is not available`);
-    }
-    if (!this.#workItemId) {
-      this.#workItemId = crypto.randomUUID();
     }
     this.#workItem = new A2UIClientWorkItem(this.client, "A2UI", "web");
     this.#consoleEntry.work.set(this.#workItemId, this.#workItem);
@@ -107,18 +110,23 @@ class AgentUI {
     const workItem = this.#updateWorkItem();
     if (!ok(workItem)) return workItem;
     this.client.processUpdates(payload);
-    this.#getAppScreen();
+
+    const ensureAppScreenOutput = this.#ensureAppScreenOutput();
+    if (!ok(ensureAppScreenOutput)) return ensureAppScreenOutput;
+
     workItem.renderUserInterface();
   }
 
   async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {
     const workItem = this.#updateWorkItem();
     if (!ok(workItem)) return workItem;
-    const appScreen = this.#getAppScreen();
-    if (!ok(appScreen)) return appScreen;
-    appScreen.awaitUserInput = true;
+
+    const ensureAppScreenOutput = this.#ensureAppScreenOutput();
+    if (!ok(ensureAppScreenOutput)) return ensureAppScreenOutput;
+
+    this.#appScreen!.status = "interactive";
     const result = await this.client.awaitUserInput();
-    appScreen.awaitUserInput = false;
+    this.#appScreen!.status = "processing";
     return result;
   }
 
