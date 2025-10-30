@@ -76,10 +76,6 @@ export type ProjectRun = {
    */
   progress: number;
   /**
-   * Answers whether the project is runnable in its current state.
-   */
-  runnable: boolean;
-  /**
    * Console (fka Activity View)
    */
   console: Map<string, ConsoleEntry>;
