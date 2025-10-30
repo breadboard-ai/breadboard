@@ -32,7 +32,10 @@ export type SideBoardRuntime =
     /**
      * Generates a theme based on the context
      */
-    createTheme(context: LLMContent): Promise<Outcome<LLMContent>>;
+    createTheme(
+      context: LLMContent,
+      signal: AbortSignal
+    ): Promise<Outcome<LLMContent>>;
   };
 
 export type SideBoardRuntimeEmptyEvent = Event;

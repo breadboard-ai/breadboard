@@ -241,7 +241,10 @@ class SideboardRuntimeImpl
     return runner;
   }
 
-  async createTheme(context: LLMContent): Promise<Outcome<LLMContent>> {
+  async createTheme(
+    context: LLMContent,
+    signal: AbortSignal
+  ): Promise<Outcome<LLMContent>> {
     const body = {
       contents: createThemeGenerationPrompt(context),
     };
@@ -249,8 +252,7 @@ class SideboardRuntimeImpl
     const response = await this.fetchWithCreds(endpointURL(IMAGE_GENERATOR), {
       method: "POST",
       body: JSON.stringify(body),
-      // TODO: Plumb signals into sideboard runtime
-      signal: undefined,
+      signal,
     });
     const result = (await response.json()) as {
       candidates: {

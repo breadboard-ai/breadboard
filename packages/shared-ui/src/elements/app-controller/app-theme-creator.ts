@@ -83,6 +83,8 @@ export class AppThemeCreator extends LitElement {
   @state()
   accessor #changed = false;
 
+  #abortController: AbortController | null = null;
+
   static styles = [
     colorsLight,
     type,
@@ -426,7 +428,12 @@ export class AppThemeCreator extends LitElement {
       context.parts.push({ text: additionalInformation });
     }
 
-    const result = await this.sideBoardRuntime.createTheme(context);
+    this.#abortController = new AbortController();
+
+    const result = await this.sideBoardRuntime.createTheme(
+      context,
+      this.#abortController.signal
+    );
     if (!ok(result)) {
       throw new Error(result.$error);
     }
@@ -656,6 +663,7 @@ export class AppThemeCreator extends LitElement {
           id="close"
           @click=${() => {
             this.dispatchEvent(new OverlayDismissedEvent());
+            this.#abortController?.abort();
           }}
         >
           <span class="g-icon round filled w-500">close</span>
