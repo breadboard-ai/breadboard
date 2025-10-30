@@ -16,7 +16,7 @@ export { scopesFromUrl };
  * server, so this is only temporary anyway.
  */
 const ORIGIN_FOR_FRONTEND_SERVER_RPCS =
-  CLIENT_DEPLOYMENT_CONFIG.SHELL_GUEST_ORIGIN ?? window.location.origin;
+  CLIENT_DEPLOYMENT_CONFIG.SHELL_GUEST_ORIGIN || window.location.origin;
 
 const ASSET_DRIVE_API_ENDPOINT = new URL(
   `/board/boards/@foo/bar/assets/drive`,
