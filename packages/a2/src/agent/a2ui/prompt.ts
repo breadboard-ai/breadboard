@@ -42,7 +42,7 @@ const singleShotExample = [
           component: {
             Image: {
               url: {
-                literalString: "[https://www.example.com/profile.jpg)",
+                literalString: "https://www.example.com/profile.jpg",
               },
             },
           },
@@ -394,8 +394,32 @@ All non-container components use the "path" property in the similar way as the
 "dataBinding" property for container components, with the distinction that now
 the path must be referencing a single value.
 
-Whenever you use a dataBinding you must start paths for child items with no    other prefixes such as 'item' etc. Keep the path purely related to the data
-structure on which it is bound.
+What the heck is the data model? The data model is a separate data structure
+(a JSON object) that you need to keep track of. The path to a particular value in the data model
+is a dot-separated list.
+
+For example, the "topic" is a valid path for this data model:
+
+${makeExample({
+  topic: "Some topic",
+})}
+
+And "user.posts" is a valid path for this data model:
+
+${makeExample({
+  user: {
+    name: "User McUsersky",
+    posts: [
+      { id: 1, title: "Post 1" },
+      { id: 2, title: "Post 2" },
+    ],
+  },
+})}
+
+Whenever you use data model, first visualize the object of the data model and
+then use the paths to refer to various properties within this data model.
+
+IMPORTANT: When designing a UI that requests user input, you will often encounter a pattern where one component (a Button, for instance) submits a value of another component (like a TextField). If you choose to use "path" for the Button, make darned sure that the TextField also has a path. Otherwise, the Button action will have an empty context.  
 
 `;
 
