@@ -880,7 +880,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
             <div>
               <button
                 id="run"
-                ?disabled=${!this.run.runnable}
                 @click=${() => {
                   ActionTracker.runApp(this.graph?.url, "app_preview");
                   this.dispatchEvent(

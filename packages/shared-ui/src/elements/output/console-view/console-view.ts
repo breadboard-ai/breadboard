@@ -325,7 +325,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
   }
 
   #renderRun() {
-    if (!this.run?.runnable) {
+    if (!this.run) {
       return nothing;
     }
 

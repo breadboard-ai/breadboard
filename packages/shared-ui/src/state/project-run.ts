@@ -185,12 +185,6 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
   }
 
   @signal
-  get runnable() {
-    this.#topologyChanged.get();
-    return this.#inspectable?.nodes().length !== 0;
-  }
-
-  @signal
   accessor input: UserInput | null = null;
 
   accessor inputSchemas = new SignalMap<string, Schema>();
