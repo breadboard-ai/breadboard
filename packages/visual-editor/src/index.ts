@@ -109,6 +109,7 @@ import {
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { builtInMcpClients } from "./mcp-clients";
 import { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
 
 type RenderValues = {
   canSave: boolean;
@@ -268,6 +269,7 @@ export class Main extends SignalWatcher(LitElement) {
   readonly #apiClient: AppCatalystApiClient;
   readonly #secretsHelper: SecretsHelper;
   readonly #settings: SettingsStore;
+  readonly emailPrefsManager: EmailPrefsManager;
 
   // Event Handlers.
   readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
@@ -332,6 +334,13 @@ export class Main extends SignalWatcher(LitElement) {
     );
 
     this.flowGenerator = new FlowGenerator(this.#apiClient);
+
+    this.emailPrefsManager = new EmailPrefsManager(this.#apiClient);
+    this.emailPrefsManager.refreshPrefs().then(() => {
+      if (!this.emailPrefsManager.hasSetEmailPrefs) {
+        this.#uiState.show.add("WarmWelcome");
+      }
+    });
 
     const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
       .href;
@@ -1668,6 +1677,7 @@ export class Main extends SignalWatcher(LitElement) {
       .showExperimentalComponents=${renderValues.showExperimentalComponents}
       .project=${renderValues.projectState}
       .uiState=${this.#uiState}
+      .emailPrefsManager=${this.emailPrefsManager}
       @bbmodaldismissed=${() => {
       this.#uiState.show.delete("GlobalSettings");
       }}
@@ -1676,6 +1686,7 @@ export class Main extends SignalWatcher(LitElement) {
 
   #renderWarmWelcomeModal() {
     return html`<bb-warm-welcome-modal
+      .emailPrefsManager=${this.emailPrefsManager}
       @bbmodaldismissed=${() => {
       this.#uiState.show.delete("WarmWelcome");
       }}

@@ -7,24 +7,24 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { colorsLight } from "../../styles/host/colors-light";
 import { type } from "../../styles/host/type";
-import { StateEvent } from "../../events/events";
 import { Project } from "../../state";
 import { RuntimeFlags } from "@breadboard-ai/types";
-import { repeat } from "lit/directives/repeat.js";
-import { until } from "lit/directives/until.js";
 import { choose } from "lit/directives/choose.js";
 import '@material/web/tabs/primary-tab.js';
 import '@material/web/tabs/tabs.js';
 import '@material/web/checkbox/checkbox.js';
+import type { MdCheckbox } from '@material/web/checkbox/checkbox.js';
 import type { MdTabs } from '@material/web/tabs/tabs.js';
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import { EmailPrefsManager } from "../../utils/email-prefs-manager.js";
+import { SignalWatcher } from "@lit-labs/signals";
 
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 type TabId = 'general' | 'experimental' | 'integrations' | 'billing';
 
 @customElement("bb-global-settings-modal")
-export class VEGlobalSettingsModal extends LitElement {
+export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
   @property()
   accessor flags: Promise<Readonly<RuntimeFlags>> | null = null;
 
@@ -37,8 +37,16 @@ export class VEGlobalSettingsModal extends LitElement {
   @property()
   accessor uiState: BreadboardUI.State.UI | null = null;
 
+  @property()
+  accessor emailPrefsManager: EmailPrefsManager | null = null;
+
   @state()
   accessor activeTabId: TabId = 'general';
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.emailPrefsManager?.refreshPrefs();
+  }
 
   static styles = [
     type,
@@ -126,11 +134,17 @@ export class VEGlobalSettingsModal extends LitElement {
   #renderGeneral() {
     return html`
     <label>
-      <md-checkbox></md-checkbox>
+      <md-checkbox .checked=${this.emailPrefsManager?.emailPrefs.get('OPAL_MARKETING_UPDATES') ?? false}
+        @change=${({ target }: { target: MdCheckbox }) =>
+        this.emailPrefsManager?.updateEmailPrefs([['OPAL_MARKETING_UPDATES', target.checked]])}
+      ></md-checkbox>
       ${Strings.from('LABEL_EMAIL_UPDATES')}
     </label>
     <label>
-      <md-checkbox></md-checkbox>
+      <md-checkbox .checked=${this.emailPrefsManager?.emailPrefs.get('OPAL_USER_RESEARCH') ?? false}
+        @change=${({ target }: { target: MdCheckbox }) =>
+        this.emailPrefsManager?.updateEmailPrefs([['OPAL_USER_RESEARCH', target.checked]])}
+      ></md-checkbox>
       ${Strings.from('LABEL_RESEARCH_STUDIES')}
     </label>
     `;
