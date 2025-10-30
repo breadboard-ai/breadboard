@@ -77,6 +77,10 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
 
   #state?: Promise<SignInState>;
 
+  constructor() {
+    this.fetchWithCreds = this.fetchWithCreds.bind(this);
+  }
+
   async getSignInState(): Promise<SignInState> {
     return (this.#state ??= (async () => {
       const tokenVendor = await this.#tokenVendor;
