@@ -4,15 +4,36 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LLMContent, TextCapabilityPart } from "@breadboard-ai/types";
+import { ThemePromptArgs } from "@breadboard-ai/shared-ui/sideboards/types.js";
+import { LLMContent } from "@breadboard-ai/types";
 
 export { createThemeGenerationPrompt };
 
-function createThemeGenerationPrompt(context: LLMContent): LLMContent {
-  const part: TextCapabilityPart = {
-    text: `## Context
+function createThemeGenerationPrompt(args: ThemePromptArgs): LLMContent {
+  const { random, title, description, userInstruction = "" } = args;
+  let appName = title;
+  let appDescription = description;
+  if (random) {
+    appName = "Random application";
+    appDescription =
+      "Generate me a fun image of your choosing about anything you like";
+  }
+  appDescription = appDescription
+    ? `The app does the following: ${appDescription}`
+    : "";
+
+  const text = `
+## Objective
 
 You are creating an app splash screen for a mobile web app. You should use the context to understand what the web is called as well as any other requirements for the splash screen.
+
+# Context
+
+ULTRA IMPORTANT: The application's name is: "${appName}".
+
+${appDescription}
+
+${userInstruction ? `Additional instructions: ${userInstruction}` : ""}
 
 ## Style
 
@@ -21,11 +42,7 @@ You should create something unique and interesting, avoiding cliches and obvious
 ## Format
 
 The image absolutely must be a portrait image in a 9:16 ratio, suitable for use on a mobile device's application launch screen. The contents of the image should be centered, leaving plenty of room around it for any background color. The image may be shown truncated to only the middle third of its height (with the top and bottom cut-off) so do your best to vertically center, and design the image to look good under a variety of responsive views. The image must be very high resolution and clear.
+`;
 
-## Context
-
-`,
-  };
-
-  return { parts: [part, ...context.parts] };
+  return { parts: [{ text }] };
 }

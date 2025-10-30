@@ -36,6 +36,7 @@ import type {
   SideBoardRuntime,
   SideBoardRuntimeEventTarget,
   SideBoardRuntimeTaskSpec,
+  ThemePromptArgs,
 } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
 import { formatError } from "@breadboard-ai/shared-ui/utils/format-error.js";
@@ -242,11 +243,11 @@ class SideboardRuntimeImpl
   }
 
   async createTheme(
-    context: LLMContent,
+    args: ThemePromptArgs,
     signal: AbortSignal
   ): Promise<Outcome<LLMContent>> {
     const body = {
-      contents: createThemeGenerationPrompt(context),
+      contents: createThemeGenerationPrompt(args),
     };
 
     const response = await this.fetchWithCreds(endpointURL(IMAGE_GENERATOR), {

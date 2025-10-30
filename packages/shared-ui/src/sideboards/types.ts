@@ -14,6 +14,13 @@ import type {
   TypedEventTargetType,
 } from "@breadboard-ai/types";
 
+export type ThemePromptArgs = {
+  random: boolean;
+  title: string;
+  description?: string;
+  userInstruction?: string;
+};
+
 /**
  * A way to run a board from anywhere in the UI at any time, without assuming
  * the given board is the "main" one the user is editing, but with the same
@@ -33,7 +40,7 @@ export type SideBoardRuntime =
      * Generates a theme based on the context
      */
     createTheme(
-      context: LLMContent,
+      args: ThemePromptArgs,
       signal: AbortSignal
     ): Promise<Outcome<LLMContent>>;
   };

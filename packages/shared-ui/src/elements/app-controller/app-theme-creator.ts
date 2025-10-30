@@ -14,7 +14,6 @@ import {
   GraphDescriptor,
   GraphTheme,
   InlineDataCapabilityPart,
-  LLMContent,
 } from "@breadboard-ai/types";
 import {
   AppTemplateAdditionalOptionsAvailable,
@@ -31,7 +30,7 @@ import { repeat } from "lit/directives/repeat.js";
 import { sideBoardRuntime } from "../../contexts/side-board-runtime.js";
 import { SideBoardRuntime } from "../../sideboards/types.js";
 import { classMap } from "lit/directives/class-map.js";
-import { isInlineData, isStoredData, ok } from "@google-labs/breadboard";
+import { isInlineData, ok } from "@google-labs/breadboard";
 import { until } from "lit/directives/until.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
@@ -403,6 +402,7 @@ export class AppThemeCreator extends LitElement {
   }
 
   async #generateTheme(
+    random: boolean,
     appName: string,
     appDescription?: string,
     additionalInformation?: string
@@ -410,28 +410,15 @@ export class AppThemeCreator extends LitElement {
     if (!this.sideBoardRuntime) {
       throw new Error("Internal error: No side board runtime was available.");
     }
-    const context: LLMContent = {
-      role: "user",
-      parts: [
-        {
-          text: `ULTRA IMPORTANT: The application's name is: "${appName}".`,
-        },
-      ],
-    };
-    if (appDescription) {
-      context.parts.push({
-        text: `The app does the following: "${appDescription}"`,
-      });
-    }
-
-    if (additionalInformation) {
-      context.parts.push({ text: additionalInformation });
-    }
-
     this.#abortController = new AbortController();
 
     const result = await this.sideBoardRuntime.createTheme(
-      context,
+      {
+        random,
+        title: appName,
+        description: appDescription,
+        userInstruction: additionalInformation,
+      },
       this.#abortController.signal
     );
     if (!ok(result)) {
@@ -442,7 +429,7 @@ export class AppThemeCreator extends LitElement {
       (part) => "inlineData" in part || "storedData" in part
     );
 
-    if (!(isInlineData(splashScreen) || isStoredData(splashScreen))) {
+    if (!splashScreen) {
       throw new Error("Invalid model response");
     }
 
@@ -596,15 +583,10 @@ export class AppThemeCreator extends LitElement {
       this.#generating = true;
       this.#generatingRandom = random;
       const newTheme = await this.#generateTheme(
-        random
-          ? "Random application"
-          : (this.graph?.title ?? "Untitled Application"),
-        random
-          ? "No description provided"
-          : (this.graph?.description ?? undefined),
-        random
-          ? "Generate me a fun image of your choosing about anything you like"
-          : this.#generateDescriptionRef.value?.value
+        random,
+        this.graph?.title ?? "Untitled Application",
+        this.graph?.description,
+        this.#generateDescriptionRef.value?.value
       );
       this.dispatchEvent(
         new StateEvent({ eventType: "theme.create", theme: newTheme })
