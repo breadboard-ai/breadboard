@@ -1464,11 +1464,11 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.show.has("StatusUpdateModal")
           ? this.#renderStatusUpdateModal()
           : nothing,
-        this.#uiState.show.has("RuntimeFlags")
-          ? this.#renderRuntimeFlagsModal()
+      this.#uiState.show.has("GlobalSettings")
+        ? this.#renderGlobalSettingsModal(renderValues)
           : nothing,
-        this.#uiState.show.has("MCPServersModal")
-          ? this.#renderMCPServersModal(renderValues)
+      this.#uiState.show.has("WarmWelcome")
+        ? this.#renderWarmWelcomeModal()
           : nothing,
         this.#uiState.show.has("SignInModal")
           ? this.#renderSignInModal()
@@ -1662,22 +1662,24 @@ export class Main extends SignalWatcher(LitElement) {
     ></bb-status-update-modal>`;
   }
 
-  #renderMCPServersModal(renderValues: RenderValues) {
-    return html`<bb-mcp-servers-modal
+  #renderGlobalSettingsModal(renderValues: RenderValues) {
+    return html`<bb-global-settings-modal
+      .flags=${this.#runtime.flags.flags()}
+      .showExperimentalComponents=${renderValues.showExperimentalComponents}
       .project=${renderValues.projectState}
+      .uiState=${this.#uiState}
       @bbmodaldismissed=${() => {
-        this.#uiState.show.delete("MCPServersModal");
+      this.#uiState.show.delete("GlobalSettings");
       }}
-    ></bb-mcp-servers-modal>`;
+    ></bb-global-settings-modal>`;
   }
 
-  #renderRuntimeFlagsModal() {
-    return html`<bb-runtime-flags-modal
-      .flags=${this.#runtime.flags.flags()}
+  #renderWarmWelcomeModal() {
+    return html`<bb-warm-welcome-modal
       @bbmodaldismissed=${() => {
-        this.#uiState.show.delete("RuntimeFlags");
+      this.#uiState.show.delete("WarmWelcome");
       }}
-    ></bb-runtime-flags-modal>`;
+    ></bb-warm-welcome-modal>`;
   }
 
   #renderMissingShareDialog() {
@@ -2019,19 +2021,14 @@ export class Main extends SignalWatcher(LitElement) {
             break;
           }
 
-          case "show-runtime-flags": {
-            this.#uiState.show.add("RuntimeFlags");
+          case "show-global-settings": {
+            this.#uiState.show.add("GlobalSettings");
             break;
           }
 
           case "status-update": {
             this.#uiState.show.add("StatusUpdateModal");
             this.#uiState.showStatusUpdateChip = false;
-            break;
-          }
-
-          case "show-mcp-servers": {
-            this.#uiState.show.add("MCPServersModal");
             break;
           }
 
