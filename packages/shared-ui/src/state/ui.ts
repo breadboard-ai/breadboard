@@ -83,7 +83,6 @@ class ReactiveUIState implements UI {
 
   constructor(flagManager: RuntimeFlagManager) {
     this.#flagManager = flagManager;
-    this.show.add("WarmWelcome");
     if (devUrlParams().forceSignInState) {
       this.show.add("SignInModal");
     }
