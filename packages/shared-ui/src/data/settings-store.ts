@@ -317,7 +317,12 @@ export class SettingsStore implements BreadboardUI_Types.SettingsStore {
       SETTINGS_NAME,
       SETTINGS_VERSION,
       {
-        upgrade(db) {
+        upgrade(db, oldVersion, newVersion) {
+          console.log(`[settings] Upgrading IndexedDB`, {
+            oldVersion,
+            newVersion,
+            objectStoreNames: [...db.objectStoreNames],
+          });
           settingsFound = false;
           for (const groupName of Object.keys(settings)) {
             const name = groupName as BreadboardUI_Types.SETTINGS_TYPE;
