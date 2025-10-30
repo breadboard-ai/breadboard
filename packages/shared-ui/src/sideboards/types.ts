@@ -7,12 +7,12 @@
 import type {
   GraphDescriptor,
   HarnessRunner,
+  LLMContent,
   NodeDescriberResult,
   Outcome,
   TypedEventTarget,
   TypedEventTargetType,
 } from "@breadboard-ai/types";
-import { LLMContent } from "@breadboard-ai/types";
 
 /**
  * A way to run a board from anywhere in the UI at any time, without assuming
@@ -28,6 +28,11 @@ export type SideBoardRuntime =
     describe(url: string): Promise<Outcome<NodeDescriberResult>>;
     runTask(task: SideBoardRuntimeTaskSpec): Promise<Outcome<LLMContent[]>>;
     discardTasks(): void;
+
+    /**
+     * Generates a theme based on the context
+     */
+    createTheme(context: LLMContent): Promise<Outcome<LLMContent>>;
   };
 
 export type SideBoardRuntimeEmptyEvent = Event;

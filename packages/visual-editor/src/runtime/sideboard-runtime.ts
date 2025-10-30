@@ -43,6 +43,7 @@ import {
   assetsFromGraphDescriptor,
   envFromGraphDescriptor,
 } from "@breadboard-ai/data";
+import { createThemeGenerationPrompt } from "../prompts/theme-generation";
 
 export { createSideboardRuntimeProvider };
 
@@ -52,6 +53,11 @@ const EVENT_DICT = {
   composed: true,
 };
 
+const IMAGE_GENERATOR = "gemini-2.5-flash-image";
+
+function endpointURL(model: string) {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+}
 function createSideboardRuntimeProvider(
   args: GraphStoreArgs,
   servers: BoardServer[],
@@ -233,5 +239,32 @@ class SideboardRuntimeImpl
       )
     );
     return runner;
+  }
+
+  async createTheme(context: LLMContent): Promise<Outcome<LLMContent>> {
+    const body = {
+      contents: createThemeGenerationPrompt(context),
+    };
+
+    const response = await this.fetchWithCreds(endpointURL(IMAGE_GENERATOR), {
+      method: "POST",
+      body: JSON.stringify(body),
+      // TODO: Plumb signals into sideboard runtime
+      signal: undefined,
+    });
+    const result = (await response.json()) as {
+      candidates: {
+        content: LLMContent;
+      }[];
+    };
+    if (!response.ok) {
+      console.warn(`Theme generation failed with this error`, result);
+      return err(`Unable to generate theme`);
+    }
+    const content = result.candidates.at(0)?.content;
+    if (!content) {
+      return err(`No content returned`);
+    }
+    return content;
   }
 }

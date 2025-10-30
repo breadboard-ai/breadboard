@@ -16,7 +16,6 @@ import {
   InlineDataCapabilityPart,
   LLMContent,
 } from "@breadboard-ai/types";
-import GenerateAppTheme from "../../sideboards/sideboards-bgl/generate-app-theme.bgl.json" with { type: "json" };
 import {
   AppTemplateAdditionalOptionsAvailable,
   AppTheme,
@@ -409,38 +408,32 @@ export class AppThemeCreator extends LitElement {
     if (!this.sideBoardRuntime) {
       throw new Error("Internal error: No side board runtime was available.");
     }
-    const context: LLMContent[] = [
-      {
-        role: "user",
-        parts: [
-          {
-            text: `ULTRA IMPORTANT: The application's name is: "${appName}".`,
-          },
-        ],
-      },
-    ];
-
+    const context: LLMContent = {
+      role: "user",
+      parts: [
+        {
+          text: `ULTRA IMPORTANT: The application's name is: "${appName}".`,
+        },
+      ],
+    };
     if (appDescription) {
-      context[0].parts.push({
+      context.parts.push({
         text: `The app does the following: "${appDescription}"`,
       });
     }
 
     if (additionalInformation) {
-      context[0].parts.push({ text: additionalInformation });
+      context.parts.push({ text: additionalInformation });
     }
 
-    const result = await this.sideBoardRuntime.runTask({
-      graph: GenerateAppTheme as GraphDescriptor,
-      url: this.graph?.url,
-      context,
-    });
+    const result = await this.sideBoardRuntime.createTheme(context);
     if (!ok(result)) {
       throw new Error(result.$error);
     }
 
-    const [response] = result;
-    const [splashScreen] = response.parts;
+    const [splashScreen] = result.parts.filter(
+      (part) => "inlineData" in part || "storedData" in part
+    );
 
     if (!(isInlineData(splashScreen) || isStoredData(splashScreen))) {
       throw new Error("Invalid model response");
