@@ -93,6 +93,12 @@ export default {
   COMMAND_MANAGE_MCP_SERVERS: {
     str: "Manage MCP Servers",
   },
+  COMMAND_GLOBAL_SETTINGS: {
+    str: "Global Settings"
+  },
+  COMMAND_CONFIRM: {
+    str: "Confirm"
+  },
 
   // Labels.
   LABEL_RUN: {
@@ -142,6 +148,12 @@ export default {
   },
   LABEL_SHARE: {
     str: "A Breadboard mini-app has been shared with you",
+  },
+  LABEL_EMAIL_UPDATES: {
+    str: "I’d like to receive emails for model updates, offers, useful tips and news about Opal",
+  },
+  LABEL_RESEARCH_STUDIES: {
+    str: "I’m interested in being invited to future research studies from Opal",
   },
 
   // Statuses.
@@ -254,4 +266,18 @@ export default {
   TOS_TITLE: {
     str: "Terms of Service",
   },
+
+  TEXT_WARM_WELCOME_TITLE: {
+    str: "Welcome to Opal"
+  },
+  TEXT_WARM_WELCOME_INTRO: {
+    str: "We’re excited to see what you build with Opal, a no code tool to help you create, edit, and share AI workflows and mini-apps."
+  },
+  TEXT_WARM_WELCOME_PRIVACY: {
+    str: "We respect your privacy, and we do not use your data to train Google’s AI models."
+  },
+  TEXT_WARM_WELCOME_EMAIL_UPDATES: {
+    str: "Let us know if you’d like to be involved with future research studies or hear about the latest and greatest from Opal!"
+  },
+
 } as LanguagePackEntry;

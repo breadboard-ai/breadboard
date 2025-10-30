@@ -316,12 +316,12 @@ export type UIOverlays =
   | "BetterOnDesktopModal"
   | "SnackbarDetailsModal"
   | "MissingShare"
-  | "MCPServersModal"
-  | "RuntimeFlags"
+  | "GlobalSettings"
   | "TOS"
   | "VideoModal"
   | "StatusUpdateModal"
-  | "SignInModal";
+  | "SignInModal"
+  | "WarmWelcome";
 
 export type UILoadState = "Home" | "Loading" | "Loaded" | "Error";
 

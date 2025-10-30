@@ -34,6 +34,9 @@ export class VEModal extends LitElement {
   @property({ reflect: true, type: Boolean })
   accessor showSaveCancel = false;
 
+  @property()
+  accessor saveButtonLabel = 'Save';
+
   @property({ reflect: true, type: Boolean })
   accessor blurBackground = false;
 
@@ -265,7 +268,7 @@ export class VEModal extends LitElement {
           this.#close(true);
         }}
       >
-        <header>
+        <header part="header">
           ${this.modalTitle
             ? html`
                 <h1
@@ -318,7 +321,7 @@ export class VEModal extends LitElement {
                   this.#close(true);
                 }}
               >
-                Save
+                ${this.saveButtonLabel}
               </button>
             </aside>`
           : nothing}

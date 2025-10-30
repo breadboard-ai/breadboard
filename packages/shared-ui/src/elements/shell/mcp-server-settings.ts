@@ -14,8 +14,8 @@ import { markdown } from "../../directives/markdown";
 import { ok } from "@google-labs/breadboard";
 import { SignalWatcher } from "@lit-labs/signals";
 
-@customElement("bb-mcp-servers-modal")
-export class VEMCPServersModal extends SignalWatcher(LitElement) {
+@customElement("bb-mcp-servers-settings")
+export class VEMCPServersSettings extends SignalWatcher(LitElement) {
   @property()
   accessor project: Project | null = null;
 
@@ -38,23 +38,12 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
     css`
       :host {
         display: block;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 1;
       }
 
       ul {
         list-style: none;
         margin: 0;
         padding: 0;
-        width: 80svw;
-        max-width: 680px;
-        max-height: 480px;
-        overflow: scroll;
-        scrollbar-width: none;
 
         & li {
           display: grid;
@@ -289,9 +278,9 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
   #renderAddForm() {
     return html` <form
         @submit=${(evt: SubmitEvent) => {
-          evt.preventDefault();
-          this.#processForm();
-        }}
+        evt.preventDefault();
+        this.#processForm();
+      }}
       >
         <input
           class="sans-flex md-body-large round "
@@ -326,9 +315,9 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
         <button
           class="cancel md-label-large sans-flex"
           @click=${() => {
-            this.#status = null;
-            this.mode = "list";
-          }}
+        this.#status = null;
+        this.mode = "list";
+      }}
         >
           Cancel
         </button>
@@ -358,13 +347,13 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
     }
 
     return html` ${servers.value.size === 0
-        ? html`<p>There are no MCP servers available</p>`
-        : html`<ul>
+      ? html`<p>There are no MCP servers available</p>`
+      : html`<ul>
             ${repeat(
-              servers.value,
-              ([id]) => id,
-              ([id, server]) => {
-                return html`<li>
+        servers.value,
+        ([id]) => id,
+        ([id, server]) => {
+          return html`<li>
                   <label for=${id}>
                     <h1 class="sans-flex w-500 round md-title-medium">
                       ${server.title}
@@ -376,23 +365,23 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
                       class="delete"
                       ?disabled=${!server.removable}
                       @click=${async () => {
-                        if (
-                          !confirm(
-                            "Are you sure you want to delete this server from this list?"
-                          )
-                        ) {
-                          return;
-                        }
-                        const removing =
-                          await this.project?.integrations.remove(id);
-                        if (!ok(removing)) {
-                          // TODO: Expose this in UI somehow.
-                          console.error(
-                            "Error deleting MCP server",
-                            removing.$error
-                          );
-                        }
-                      }}
+              if (
+                !confirm(
+                  "Are you sure you want to delete this server from this list?"
+                )
+              ) {
+                return;
+              }
+              const removing =
+                await this.project?.integrations.remove(id);
+              if (!ok(removing)) {
+                // TODO: Expose this in UI somehow.
+                console.error(
+                  "Error deleting MCP server",
+                  removing.$error
+                );
+              }
+            }}
                     >
                       <span class="g-icon filled round">delete</span>
                     </button>
@@ -402,31 +391,31 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
                     id=${id}
                     .checked=${!!server.registered}
                     @change=${(evt: Event) => {
-                      if (
-                        !(evt.target instanceof HTMLInputElement) ||
-                        !this.project
-                      ) {
-                        return;
-                      }
+              if (
+                !(evt.target instanceof HTMLInputElement) ||
+                !this.project
+              ) {
+                return;
+              }
 
-                      if (evt.target.checked) {
-                        this.project.integrations.register(id);
-                      } else {
-                        this.project.integrations.unregister(id);
-                      }
-                    }}
+              if (evt.target.checked) {
+                this.project.integrations.register(id);
+              } else {
+                this.project.integrations.unregister(id);
+              }
+            }}
                   />
                 </li>`;
-              }
-            )}
+        }
+      )}
           </ul>`}
       <div id="controls">
         <button
           class="delete md-label-large sans-flex"
           @click=${() => {
-            this.#status = null;
-            this.mode = "add";
-          }}
+        this.#status = null;
+        this.mode = "add";
+      }}
         >
           <span class="g-icon filled round">add_box</span>Add New MCP Server...
         </button>
@@ -443,9 +432,9 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
         <button
           class="cancel md-label-large sans-flex"
           @click=${() => {
-            this.#status = null;
-            this.mode = "list";
-          }}
+        this.#status = null;
+        this.mode = "list";
+      }}
         >
           Return to listing
         </button>
@@ -453,9 +442,9 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
         <button
           class="add md-label-large sans-flex"
           @click=${() => {
-            this.#status = null;
-            this.mode = "add";
-          }}
+        this.#status = null;
+        this.mode = "add";
+      }}
         >
           <span class="g-icon filled round">add_box</span>Add Another MCP
           Server...
@@ -468,20 +457,10 @@ export class VEMCPServersModal extends SignalWatcher(LitElement) {
       return nothing;
     }
 
-    return html`<bb-modal
-      .icon=${this.mode === "added" ? "check" : "robot_server"}
-      .modalTitle=${this.mode === "list"
-        ? "Manage MCP Servers"
-        : this.mode === "added"
-          ? "MCP Server added successfully"
-          : "Add New MCP Server"}
-      .showCloseButton=${true}
-    >
-      ${this.mode === "add"
-        ? this.#renderAddForm()
-        : this.mode === "added"
-          ? this.#renderDecision()
-          : this.#renderList()}
-    </bb-modal>`;
+    return this.mode === "add"
+      ? this.#renderAddForm()
+      : this.mode === "added"
+        ? this.#renderDecision()
+        : this.#renderList();
   }
 }
