@@ -32,13 +32,24 @@ export class VEWarmWelcomeModal extends LitElement {
         z-index: 1;
       }
 
+      bb-modal {
+        &::part(container) {
+          display: flex;
+          flex-direction: column;
+          width: 720px;
+          max-width: 80%;
+        }
+      
       label {
-        display: block;
+        display: flex;
         padding: var(--bb-grid-size-2) 0;
+        gap: var(--bb-grid-size);
       }
 
       md-checkbox {
+        --md-focus-ring-color: transparent;
         margin-right: var(--bb-grid-size);
+        flex-shrink: 0;
       }
 
       .emphasis {
@@ -73,18 +84,18 @@ export class VEWarmWelcomeModal extends LitElement {
       saveButtonLabel=${Strings.from('COMMAND_CONFIRM')}
       @bbmodaldismissed=${this.#handleModalDismissed}
     >
-      <p>${Strings.from('TEXT_WARM_WELCOME_INTRO')}</p>
-      <p>
+      <p class="md-body-large">
+        ${Strings.from('TEXT_WARM_WELCOME_INTRO')}
         <span class="emphasis">${Strings.from('TEXT_WARM_WELCOME_PRIVACY')}</span>
         ${Strings.from('TEXT_WARM_WELCOME_EMAIL_UPDATES')}
       </p>
-      <label>
+      <label class="md-body-large">
         <md-checkbox .checked=${this.emailUpdates}
           @change=${({ target }: { target: MdCheckbox }) => this.emailUpdates = target.checked}
         ></md-checkbox>
         ${Strings.from('LABEL_EMAIL_UPDATES')}
       </label>
-      <label>
+      <label class="md-body-large">
         <md-checkbox .checked=${this.userResearch}
           @change=${({ target }: { target: MdCheckbox }) => this.userResearch = target.checked}
         ></md-checkbox>
