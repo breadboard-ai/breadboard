@@ -6,22 +6,6 @@
 
 import { EventRoute } from "../types";
 
-export const UpdateRoute: EventRoute<"theme.update"> = {
-  event: "theme.update",
-
-  async do({ runtime, tab, originalEvent, uiState }) {
-    uiState.blockingAction = true;
-    await runtime.edit.updateTheme(
-      tab,
-      originalEvent.detail.id,
-      originalEvent.detail.theme
-    );
-    uiState.blockingAction = false;
-
-    return false;
-  },
-};
-
 export const ChangeRoute: EventRoute<"theme.change"> = {
   event: "theme.change",
 

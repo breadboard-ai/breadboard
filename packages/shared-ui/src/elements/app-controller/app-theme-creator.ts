@@ -674,7 +674,7 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
 
                 this.#uiState.blockingAction = true;
 
-                const deleting = await this.projectState?.themes.deleteTheme(
+                const deleting = await this.projectState.themes.deleteTheme(
                   this.theme
                 );
                 this.#uiState.blockingAction = false;

@@ -89,7 +89,6 @@ export type StateEventDetailMap = EnforceEventTypeMatch<{
   "asset.add": Asset.Add;
 
   "theme.change": Theme.Change;
-  "theme.update": Theme.Update;
 }>;
 
 export class StateEvent<
