@@ -636,6 +636,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
     let themeEditor: HTMLTemplateResult | symbol = nothing;
     if (this.showThemeDesigner) {
       themeEditor = html`<bb-app-theme-creator
+        .projectState=${this.projectState}
         .graph=${this.graph}
         .themeHash=${this.themeHash}
         .themeOptions=${this.#themeOptions}

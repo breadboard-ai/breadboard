@@ -23,6 +23,7 @@ class StateManager {
   #ui: State.UI | null = null;
   #map: Map<MainGraphIdentifier, State.Project> = new Map();
   #store: MutableGraphStore;
+  #fetchWithCreds: typeof globalThis.fetch;
   #runtime: SideBoardRuntime;
   #servers: BoardServer[];
   #flagManager: RuntimeFlagManager;
@@ -30,12 +31,14 @@ class StateManager {
 
   constructor(
     store: MutableGraphStore,
+    fetchWithCreds: typeof globalThis.fetch,
     runtime: SideBoardRuntime,
     boardServers: BoardServer[],
     flagManager: RuntimeFlagManager,
     mcpClientManager: McpClientManager
   ) {
     this.#store = store;
+    this.#fetchWithCreds = fetchWithCreds;
     this.#runtime = runtime;
     this.#servers = boardServers;
     this.#flagManager = flagManager;
@@ -91,6 +94,7 @@ class StateManager {
     state = State.createProjectState(
       mainGraphId,
       this.#store,
+      this.#fetchWithCreds,
       this.#runtime,
       this.#findServer.bind(this),
       this.#mcpClientManager,

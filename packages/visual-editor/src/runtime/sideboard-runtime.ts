@@ -36,7 +36,6 @@ import type {
   SideBoardRuntime,
   SideBoardRuntimeEventTarget,
   SideBoardRuntimeTaskSpec,
-  ThemePromptArgs,
 } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
 import { formatError } from "@breadboard-ai/shared-ui/utils/format-error.js";
@@ -44,7 +43,6 @@ import {
   assetsFromGraphDescriptor,
   envFromGraphDescriptor,
 } from "@breadboard-ai/data";
-import { createThemeGenerationPrompt } from "../prompts/theme-generation";
 
 export { createSideboardRuntimeProvider };
 
@@ -54,11 +52,6 @@ const EVENT_DICT = {
   composed: true,
 };
 
-const IMAGE_GENERATOR = "gemini-2.5-flash-image";
-
-function endpointURL(model: string) {
-  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-}
 function createSideboardRuntimeProvider(
   args: GraphStoreArgs,
   servers: BoardServer[],
@@ -240,34 +233,5 @@ class SideboardRuntimeImpl
       )
     );
     return runner;
-  }
-
-  async createTheme(
-    args: ThemePromptArgs,
-    signal: AbortSignal
-  ): Promise<Outcome<LLMContent>> {
-    const body = {
-      contents: createThemeGenerationPrompt(args),
-    };
-
-    const response = await this.fetchWithCreds(endpointURL(IMAGE_GENERATOR), {
-      method: "POST",
-      body: JSON.stringify(body),
-      signal,
-    });
-    const result = (await response.json()) as {
-      candidates: {
-        content: LLMContent;
-      }[];
-    };
-    if (!response.ok) {
-      console.warn(`Theme generation failed with this error`, result);
-      return err(`Unable to generate theme`);
-    }
-    const content = result.candidates.at(0)?.content;
-    if (!content) {
-      return err(`No content returned`);
-    }
-    return content;
   }
 }

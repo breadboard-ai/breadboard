@@ -7,48 +7,51 @@
 import * as Strings from "../../strings/helper.js";
 const GlobalStrings = Strings.forSection("Global");
 
-import { LitElement, html, css, nothing, PropertyValues } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import { consume } from "@lit/context";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import {
+  generatePaletteFromColor,
+  generatePaletteFromImage,
+} from "@breadboard-ai/theme";
 import {
   GraphDescriptor,
   GraphTheme,
   InlineDataCapabilityPart,
 } from "@breadboard-ai/types";
+import { ok } from "@google-labs/breadboard";
+import { SignalWatcher } from "@lit-labs/signals";
+import { consume } from "@lit/context";
+import { css, html, LitElement, nothing, PropertyValues } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+import { guard } from "lit/directives/guard.js";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { repeat } from "lit/directives/repeat.js";
+import { until } from "lit/directives/until.js";
+import { googleDriveClientContext } from "../../contexts/google-drive-client-context";
+import { OverlayDismissedEvent, SnackbarEvent } from "../../events/events.js";
+import { Project, UI } from "../../state/types.js";
+import { colorsLight } from "../../styles/host/colors-light";
+import { type } from "../../styles/host/type";
+import { icons } from "../../styles/icons";
 import {
   AppTemplateAdditionalOptionsAvailable,
   AppTheme,
   SnackType,
 } from "../../types/types.js";
-import {
-  OverlayDismissedEvent,
-  SnackbarEvent,
-  StateEvent,
-} from "../../events/events.js";
-import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { repeat } from "lit/directives/repeat.js";
-import { sideBoardRuntime } from "../../contexts/side-board-runtime.js";
-import { SideBoardRuntime } from "../../sideboards/types.js";
-import { classMap } from "lit/directives/class-map.js";
-import { isInlineData, ok } from "@google-labs/breadboard";
-import { until } from "lit/directives/until.js";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { renderThumbnail } from "../../utils/image";
-import {
-  generatePaletteFromColor,
-  generatePaletteFromImage,
-} from "@breadboard-ai/theme";
-import { guard } from "lit/directives/guard.js";
-import { colorsLight } from "../../styles/host/colors-light";
-import { type } from "../../styles/host/type";
-import { icons } from "../../styles/icons";
 import { convertImageToInlineData } from "./image-convert.js";
+import { uiStateContext } from "../../contexts/ui-state.js";
 
 const MAX_UPLOAD_SIZE = 5_242_880; // 5MB.
 
 @customElement("bb-app-theme-creator")
-export class AppThemeCreator extends LitElement {
+export class AppThemeCreator extends SignalWatcher(LitElement) {
+  @consume({ context: uiStateContext })
+  accessor #uiState!: UI;
+
+  @property()
+  accessor projectState: Project | null = null;
+
   @property()
   accessor graph: GraphDescriptor | null = null;
 
@@ -66,9 +69,6 @@ export class AppThemeCreator extends LitElement {
 
   @state()
   accessor templates: Array<{ title: string; value: string }> = [];
-
-  @consume({ context: sideBoardRuntime })
-  accessor sideBoardRuntime!: SideBoardRuntime | undefined;
 
   @consume({ context: googleDriveClientContext })
   accessor googleDriveClient!: GoogleDriveClient | undefined;
@@ -401,68 +401,6 @@ export class AppThemeCreator extends LitElement {
     }
   }
 
-  async #generateTheme(
-    random: boolean,
-    appName: string,
-    appDescription?: string,
-    additionalInformation?: string
-  ): Promise<AppTheme> {
-    if (!this.sideBoardRuntime) {
-      throw new Error("Internal error: No side board runtime was available.");
-    }
-    this.#abortController = new AbortController();
-
-    const result = await this.sideBoardRuntime.createTheme(
-      {
-        random,
-        title: appName,
-        description: appDescription,
-        userInstruction: additionalInformation,
-      },
-      this.#abortController.signal
-    );
-    if (!ok(result)) {
-      throw new Error(result.$error);
-    }
-
-    const [splashScreen] = result.parts.filter(
-      (part) => "inlineData" in part || "storedData" in part
-    );
-
-    if (!splashScreen) {
-      throw new Error("Invalid model response");
-    }
-
-    try {
-      let theme = generatePaletteFromColor("#330072");
-      const img = new Image();
-      if (isInlineData(splashScreen)) {
-        img.src = `data:${splashScreen.inlineData.mimeType};base64,${splashScreen.inlineData.data}`;
-      } else {
-        img.src = splashScreen.storedData.handle;
-        img.crossOrigin = "anonymous";
-      }
-      const generatedTheme = await generatePaletteFromImage(img);
-      if (generatedTheme) {
-        theme = generatedTheme;
-      }
-
-      return {
-        ...theme,
-        primaryColor: "",
-        secondaryColor: "",
-        textColor: "",
-        tertiary: "",
-        primaryTextColor: "",
-        backgroundColor: "",
-        splashScreen,
-      };
-    } catch (err) {
-      console.warn(err);
-      throw new Error("Invalid color scheme generated");
-    }
-  }
-
   async #convertImageToTheme(
     splashScreen: InlineDataCapabilityPart
   ): Promise<AppTheme> {
@@ -534,11 +472,18 @@ export class AppThemeCreator extends LitElement {
       }
 
       try {
+        if (!this.projectState) {
+          throw new Error(
+            "Unable to generate theme: project is not initialized"
+          );
+        }
+
         const splashScreen = await convertImageToInlineData(images[0]);
         const appTheme = await this.#convertImageToTheme(splashScreen);
-        this.dispatchEvent(
-          new StateEvent({ eventType: "theme.create", theme: appTheme })
-        );
+        const adding = await this.projectState.themes.addTheme(appTheme);
+        if (!ok(adding)) {
+          throw new Error(adding.$error);
+        }
       } catch (err) {
         this.dispatchEvent(
           new SnackbarEvent(
@@ -582,15 +527,24 @@ export class AppThemeCreator extends LitElement {
 
       this.#generating = true;
       this.#generatingRandom = random;
-      const newTheme = await this.#generateTheme(
-        random,
-        this.graph?.title ?? "Untitled Application",
-        this.graph?.description,
-        this.#generateDescriptionRef.value?.value
+      this.#abortController = new AbortController();
+      if (!this.projectState) {
+        throw new Error("Unable to generate theme: project is not initialized");
+      }
+      this.#uiState.blockingAction = true;
+      const newTheme = await this.projectState.themes.generateTheme(
+        {
+          random,
+          title: this.graph?.title ?? "Untitled Application",
+          description: this.graph?.description,
+          userInstruction: this.#generateDescriptionRef.value?.value,
+        },
+        this.#abortController.signal
       );
-      this.dispatchEvent(
-        new StateEvent({ eventType: "theme.create", theme: newTheme })
-      );
+      this.#uiState.blockingAction = false;
+      if (!ok(newTheme)) {
+        throw new Error(newTheme.$error);
+      }
     } catch (err) {
       console.warn(err);
       let errMessage = "Error";
@@ -599,20 +553,24 @@ export class AppThemeCreator extends LitElement {
       } else if (typeof err === "object") {
         errMessage = (err as Error).message ?? "Unknown error";
       }
-      this.dispatchEvent(
-        new SnackbarEvent(
-          globalThis.crypto.randomUUID(),
-          errMessage,
-          SnackType.ERROR,
-          [],
-          true,
-          true
-        )
-      );
+      this.#displayError(errMessage);
     } finally {
       this.#generating = false;
       this.#generatingRandom = false;
     }
+  }
+
+  #displayError(message: string) {
+    this.dispatchEvent(
+      new SnackbarEvent(
+        globalThis.crypto.randomUUID(),
+        message,
+        SnackType.ERROR,
+        [],
+        true,
+        true
+      )
+    );
   }
 
   async #renderThumbnail(theme: GraphTheme) {
@@ -701,14 +659,25 @@ export class AppThemeCreator extends LitElement {
             </h2>
             <button
               ?disabled=${Object.keys(this.themes).length === 1}
-              @click=${() => {
+              @click=${async () => {
                 if (!this.theme) {
                   return;
                 }
 
-                this.dispatchEvent(
-                  new StateEvent({ eventType: "theme.delete", id: this.theme })
+                if (this.projectState?.themes?.status !== "idle") {
+                  return;
+                }
+
+                this.#uiState.blockingAction = true;
+
+                const deleting = await this.projectState.themes.deleteTheme(
+                  this.theme
                 );
+                this.#uiState.blockingAction = false;
+
+                if (!ok(deleting)) {
+                  this.#displayError(deleting.$error);
+                }
               }}
             >
               <span class="g-icon round filled">delete</span>
@@ -733,10 +702,14 @@ export class AppThemeCreator extends LitElement {
                     class=${classMap({ selected: id === this.theme })}
                     ${this.theme === id ? ref(this.#selectedThemeRef) : nothing}
                     @click=${() => {
+                      if (this.projectState?.themes.status !== "idle") {
+                        return;
+                      }
+
                       this.#changed = true;
-                      this.dispatchEvent(
-                        new StateEvent({ eventType: "theme.change", id })
-                      );
+                      this.#uiState.blockingAction = true;
+                      this.projectState.themes.setCurrent(id);
+                      this.#uiState.blockingAction = false;
                     }}
                   >
                     ${guard(

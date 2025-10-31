@@ -50,6 +50,7 @@ import {
   Project,
   ProjectInternal,
   ProjectRun,
+  ProjectThemeState,
   RendererState,
   StepEditor,
   Tool,
@@ -59,6 +60,7 @@ import { updateMap } from "./utils/update-map";
 import { FilteredIntegrationsImpl } from "./filtered-integrations";
 import { McpClientManager } from "@breadboard-ai/mcp";
 import { StepEditorImpl } from "./step-editor";
+import { ThemeState } from "./theme-state";
 
 export { createProjectState, ReactiveProject };
 
@@ -81,6 +83,7 @@ function isTool(entry: GraphStoreEntry) {
 function createProjectState(
   mainGraphId: MainGraphIdentifier,
   store: MutableGraphStore,
+  fetchWithCreds: typeof globalThis.fetch,
   runtime: SideBoardRuntime,
   boardServerFinder: (url: URL) => BoardServer | null,
   mcpClientManager: McpClientManager,
@@ -89,6 +92,7 @@ function createProjectState(
   return new ReactiveProject(
     mainGraphId,
     store,
+    fetchWithCreds,
     runtime,
     boardServerFinder,
     mcpClientManager,
@@ -104,6 +108,7 @@ class ReactiveProject implements ProjectInternal {
   #mainGraphId: MainGraphIdentifier;
   #store: MutableGraphStore;
   #runtime: SideBoardRuntime;
+  #fetchWithCreds: typeof globalThis.fetch;
   #boardServerFinder: BoardServerFinder;
   #editable?: EditableGraph;
   #connectorInstances: Set<string> = new Set();
@@ -125,10 +130,12 @@ class ReactiveProject implements ProjectInternal {
   readonly renderer: RendererState;
   readonly integrations: Integrations;
   readonly stepEditor: StepEditor;
+  readonly themes: ProjectThemeState;
 
   constructor(
     mainGraphId: MainGraphIdentifier,
     store: MutableGraphStore,
+    fetchWithCreds: typeof globalThis.fetch,
     runtime: SideBoardRuntime,
     boardServerFinder: BoardServerFinder,
     clientManager: McpClientManager,
@@ -136,6 +143,7 @@ class ReactiveProject implements ProjectInternal {
   ) {
     this.#mainGraphId = mainGraphId;
     this.#store = store;
+    this.#fetchWithCreds = fetchWithCreds;
     this.#runtime = runtime;
     this.#boardServerFinder = boardServerFinder;
     this.#editable = editable;
@@ -184,6 +192,7 @@ class ReactiveProject implements ProjectInternal {
     this.#updateMyTools();
     this.#updateParameters();
     this.run = ReactiveProjectRun.createInert(this.#mainGraphId, this.#store);
+    this.themes = new ThemeState(this.#fetchWithCreds, editable, this);
   }
 
   resetRun(): void {

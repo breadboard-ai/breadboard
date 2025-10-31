@@ -9,7 +9,6 @@ import {
   EditHistoryCreator,
   EditSpec,
   GraphDescriptor,
-  isStoredData,
   Kit,
   MoveToGraphTransform,
   MutableGraphStore,
@@ -42,14 +41,12 @@ import {
   GraphIdentifier,
   GraphMetadata,
   GraphTag,
-  GraphTheme,
   NodeMetadata,
   NodeValue,
 } from "@breadboard-ai/types";
 import { createGraphId, MAIN_BOARD_ID } from "./util";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
-  AppTheme,
   AssetEdge,
   EdgeAttachmentPoint,
 } from "@breadboard-ai/shared-ui/types/types.js";
@@ -325,213 +322,6 @@ export class Edit extends EventTarget {
 
     const history = editableGraph.history();
     return history.redo();
-  }
-
-  async createTheme(tab: Tab | null, appTheme: AppTheme) {
-    const mainGraphId = tab?.mainGraphId;
-    if (!mainGraphId) {
-      console.warn(`Failed to create theme: no mainGraphId for tab`);
-      return;
-    }
-
-    const editableGraph = this.getEditor(tab);
-    if (!editableGraph) {
-      console.warn(`Failed to create theme: no editable graph`);
-      return;
-    }
-
-    const project = this.state.getOrCreateProjectState(
-      mainGraphId,
-      editableGraph
-    );
-
-    if (!project) {
-      console.warn(`Failed to create theme: unable to create state`);
-      return;
-    }
-
-    const { primary, secondary, tertiary, error, neutral, neutralVariant } =
-      appTheme;
-
-    const graphTheme: GraphTheme = {
-      template: "basic",
-      templateAdditionalOptions: {},
-      palette: {
-        primary,
-        secondary,
-        tertiary,
-        error,
-        neutral,
-        neutralVariant,
-      },
-      themeColors: {
-        primaryColor: appTheme.primaryColor,
-        secondaryColor: appTheme.secondaryColor,
-        backgroundColor: appTheme.backgroundColor,
-        primaryTextColor: appTheme.primaryTextColor,
-        textColor: appTheme.textColor,
-      },
-    };
-
-    // TODO: Show some status.
-    if (appTheme.splashScreen) {
-      const persisted = await project.persistDataParts([
-        { parts: [appTheme.splashScreen] },
-      ]);
-      const splashScreen = persisted?.[0].parts[0];
-      if (isStoredData(splashScreen)) {
-        graphTheme.splashScreen = splashScreen;
-      } else {
-        console.warn("Unable to save splash screen", splashScreen);
-      }
-    }
-
-    const metadata: GraphMetadata = editableGraph.raw().metadata ?? {};
-    metadata.visual ??= {};
-    metadata.visual.presentation ??= {};
-    metadata.visual.presentation.themes ??= {};
-
-    const id = globalThis.crypto.randomUUID();
-    metadata.visual.presentation.themes[id] = graphTheme;
-    metadata.visual.presentation.theme = id;
-
-    return editableGraph.edit(
-      [{ type: "changegraphmetadata", metadata, graphId: "" }],
-      "Updating theme"
-    );
-  }
-
-  async changeTheme(tab: Tab | null, theme: string) {
-    const editableGraph = this.getEditor(tab);
-    if (!editableGraph) {
-      this.dispatchEvent(
-        new RuntimeErrorEvent("Unable to edit subboard; no active board")
-      );
-      return;
-    }
-
-    const metadata: GraphMetadata = editableGraph.raw().metadata ?? {};
-    metadata.visual ??= {};
-    metadata.visual.presentation ??= {};
-    metadata.visual.presentation.themes ??= {};
-
-    if (!metadata.visual.presentation.themes[theme]) {
-      this.dispatchEvent(new RuntimeErrorEvent("Theme does not exist"));
-      return;
-    }
-
-    metadata.visual.presentation.theme = theme;
-
-    return editableGraph.edit(
-      [{ type: "changegraphmetadata", metadata, graphId: "" }],
-      "Updating theme"
-    );
-  }
-
-  async deleteTheme(tab: Tab | null, theme: string) {
-    const editableGraph = this.getEditor(tab);
-    if (!editableGraph) {
-      this.dispatchEvent(
-        new RuntimeErrorEvent("Unable to edit subboard; no active board")
-      );
-      return;
-    }
-
-    const metadata: GraphMetadata = editableGraph.raw().metadata ?? {};
-    metadata.visual ??= {};
-    metadata.visual.presentation ??= {};
-    metadata.visual.presentation.themes ??= {};
-
-    if (!metadata.visual.presentation.themes[theme]) {
-      this.dispatchEvent(new RuntimeErrorEvent("Theme does not exist"));
-      return;
-    }
-
-    delete metadata.visual.presentation.themes[theme];
-    const themes = Object.keys(metadata.visual.presentation.themes);
-    metadata.visual.presentation.theme = themes.at(-1);
-
-    return editableGraph.edit(
-      [{ type: "changegraphmetadata", metadata, graphId: "" }],
-      "Updating theme"
-    );
-  }
-
-  async updateTheme(tab: Tab | null, themeId: string, theme: GraphTheme) {
-    const editableGraph = this.getEditor(tab);
-    if (!editableGraph) {
-      this.dispatchEvent(
-        new RuntimeErrorEvent("Unable to edit subboard; no active board")
-      );
-      return;
-    }
-
-    const metadata: GraphMetadata = editableGraph.raw().metadata ?? {};
-    metadata.visual ??= {};
-    metadata.visual.presentation ??= {};
-    metadata.visual.presentation.themes ??= {};
-
-    if (!metadata.visual.presentation.themes[themeId]) {
-      this.dispatchEvent(new RuntimeErrorEvent("Theme does not exist"));
-      return;
-    }
-
-    metadata.visual.presentation.themes[themeId] = theme;
-
-    return editableGraph.edit(
-      [{ type: "changegraphmetadata", metadata, graphId: "" }],
-      "Updating theme"
-    );
-  }
-
-  async applyTheme(
-    tab: Tab | null,
-    theme: AppTheme,
-    appTitle: string | null,
-    appDescription: string | null,
-    template: string | null,
-    templateAdditionalOptionsChosen: Record<string, string> | null
-  ) {
-    const editableGraph = this.getEditor(tab);
-    if (!editableGraph) {
-      this.dispatchEvent(
-        new RuntimeErrorEvent("Unable to edit subboard; no active board")
-      );
-      return;
-    }
-
-    const metadata: GraphMetadata = editableGraph.raw().metadata ?? {};
-    metadata.visual ??= {};
-    metadata.visual.presentation ??= {};
-    if (appTitle) {
-      metadata.visual.presentation.title = appTitle;
-    }
-
-    if (appDescription) {
-      metadata.visual.presentation.description = appDescription;
-    }
-
-    if (template) {
-      metadata.visual.presentation.template = template;
-    }
-
-    if (templateAdditionalOptionsChosen) {
-      metadata.visual.presentation.templateAdditionalOptions =
-        templateAdditionalOptionsChosen;
-    }
-
-    metadata.visual.presentation.themeColors = {
-      primaryColor: theme.primaryColor,
-      primaryTextColor: theme.primaryTextColor,
-      secondaryColor: theme.secondaryColor,
-      backgroundColor: theme.backgroundColor,
-      textColor: theme.textColor,
-    };
-
-    return editableGraph.edit(
-      [{ type: "changegraphmetadata", metadata, graphId: "" }],
-      "Updating theme"
-    );
   }
 
   deleteComment(tab: Tab | null, id: string) {

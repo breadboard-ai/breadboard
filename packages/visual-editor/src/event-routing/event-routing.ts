@@ -11,7 +11,6 @@ import * as Host from "./host/host.js";
 import * as Board from "./board/board.js";
 import * as Asset from "./asset/asset.js";
 import * as Node from "./node/node.js";
-import * as Theme from "./theme/theme.js";
 
 export const eventRoutes = new Map<
   keyof BreadboardUI.Events.StateEventDetailMap,
@@ -53,10 +52,4 @@ export const eventRoutes = new Map<
   /** Asset */
   [Asset.AddRoute.event, Asset.AddRoute],
   [Asset.ChangeEdgeRoute.event, Asset.ChangeEdgeRoute],
-
-  /** Theme */
-  [Theme.ChangeRoute.event, Theme.ChangeRoute],
-  [Theme.CreateRoute.event, Theme.CreateRoute],
-  [Theme.DeleteRoute.event, Theme.DeleteRoute],
-  [Theme.UpdateRoute.event, Theme.UpdateRoute],
 ]);
