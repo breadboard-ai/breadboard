@@ -6,9 +6,7 @@
 
 import type {
   GraphDescriptor,
-  HarnessRunner,
   LLMContent,
-  NodeDescriberResult,
   Outcome,
   TypedEventTarget,
   TypedEventTargetType,
@@ -28,13 +26,6 @@ export type ThemePromptArgs = {
  */
 export type SideBoardRuntime =
   TypedEventTargetType<SideBoardRuntimeEventMap> & {
-    createRunner(
-      graph: GraphDescriptor | string,
-      graphURLForProxy?: string
-    ): Promise<HarnessRunner>;
-    describe(url: string): Promise<Outcome<NodeDescriberResult>>;
-    runTask(task: SideBoardRuntimeTaskSpec): Promise<Outcome<LLMContent[]>>;
-    discardTasks(): void;
     autoname(
       context: LLMContent[],
       signal: AbortSignal

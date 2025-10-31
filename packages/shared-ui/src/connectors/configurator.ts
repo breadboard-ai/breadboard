@@ -4,14 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { err, NodeDescriberResult, ok, Outcome } from "@google-labs/breadboard";
+import { err, ok, Outcome } from "@google-labs/breadboard";
 import { ConnectorInitializerResult, ConnectorView } from "./types";
-import {
-  GraphTag,
-  JsonSerializable,
-  LLMContent,
-  UUID,
-} from "@breadboard-ai/types";
+import { JsonSerializable, LLMContent, UUID } from "@breadboard-ai/types";
 import { SideBoardRuntime } from "../sideboards/types";
 
 export { Configurator };
@@ -26,30 +21,17 @@ class Configurator {
   ) {}
 
   async #getConfigurator(): Promise<Outcome<string>> {
-    if (this.#configuratorUrl) return this.#configuratorUrl;
-
-    const describingConnector = await this.runtime.describe(this.url);
-    if (!ok(describingConnector)) return describingConnector;
-
-    const gettingUrl = getExportUrl("connector-configure", describingConnector);
-    if (!ok(gettingUrl)) return gettingUrl;
-
-    this.#configuratorUrl = gettingUrl;
-    return gettingUrl;
+    return err(
+      `Connectors are deprecated and unused. If you see this error, please file Feedback`
+    );
   }
 
   async #invokeConfigurator(
-    payload: JsonSerializable
+    _payload: JsonSerializable
   ): Promise<Outcome<JsonSerializable>> {
-    const configuratorUrl = await this.#getConfigurator();
-    if (!ok(configuratorUrl)) return configuratorUrl;
-    const invokingInitializer = await this.runtime.runTask({
-      graph: configuratorUrl,
-      context: toLLMContentArray(payload),
-    });
-    if (!ok(invokingInitializer)) return invokingInitializer;
-
-    return fromLLMContentArray(invokingInitializer);
+    return err(
+      `Connectors are deprecated and unused. If you see this error, please file Feedback`
+    );
   }
 
   /**
@@ -79,19 +61,11 @@ class Configurator {
   }
 
   async preview(
-    configuration: JsonSerializable
+    _configuration: JsonSerializable
   ): Promise<Outcome<LLMContent[]>> {
-    const configuratorUrl = await this.#getConfigurator();
-    if (!ok(configuratorUrl)) return configuratorUrl;
-    const invokingPreview = await this.runtime.runTask({
-      graph: configuratorUrl,
-      context: toLLMContentArray({
-        stage: "preview",
-        id: this.id,
-        configuration,
-      }),
-    });
-    return invokingPreview;
+    return err(
+      `Connectors are deprecated and unused. If you see this error, please file Feedback`
+    );
   }
 
   async write(
@@ -116,31 +90,4 @@ class Configurator {
     }
     return result;
   }
-}
-
-function toLLMContentArray(json: JsonSerializable) {
-  return [{ parts: [{ json }] }];
-}
-
-function fromLLMContentArray(context: LLMContent[]): Outcome<JsonSerializable> {
-  const part = context.at(-1)?.parts.at(0);
-  if (part && "json" in part) return part.json;
-
-  return err(`Data not found in output`);
-}
-
-function getExportUrl(
-  tag: GraphTag,
-  result: NodeDescriberResult
-): Outcome<string> {
-  const exports = result.exports;
-  if (!exports) return err(`Invalid connector structure: must have exports`);
-  const assetExport = Object.entries(exports).find(([, e]) =>
-    e.metadata?.tags?.includes(tag)
-  );
-  if (!assetExport)
-    return err(
-      `Invalid connector structure: must have export tagged as "${tag}"`
-    );
-  return assetExport[0];
 }
