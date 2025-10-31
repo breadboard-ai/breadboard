@@ -132,14 +132,6 @@ export class AppCatalystApiClient {
     hasStoredPreferences: boolean;
     preferences: Array<[T[number], boolean]>;
   }> {
-    // await new Promise(resolve => setTimeout(resolve, 1000));
-    // const prefs = {
-    //   hasStoredPreferences: false,
-    //   preferences: preferenceKeys.map((key) => [key, false]),
-    //   ...JSON.parse(localStorage.getItem("testingEmailPrefs") ?? "{}"),
-    // };
-    // console.log('fetchEmailPreferences', prefs);
-    // return prefs;
     const url = new URL("v1beta1/getEmailPreferences", this.#apiBaseUrl);
     const request: GetEmailPreferencesRequest = {
       preferenceKeys,
@@ -152,7 +144,6 @@ export class AppCatalystApiClient {
       body: JSON.stringify(request),
     });
     const result = (await response.json()) as GetEmailPreferencesResponse;
-    console.log('fetchEmailPreferences', result);
     return {
       hasStoredPreferences: result.preferenceResponses?.some(
         (pref) => (
@@ -182,18 +173,5 @@ export class AppCatalystApiClient {
       },
       body: JSON.stringify(request),
     });
-    console.log('setEmailPreferences', request);
-    // await new Promise(resolve => setTimeout(resolve, 1000));
-    // const oldPrefs = JSON.parse(localStorage.getItem("testingEmailPrefs") ?? "{}");
-    // const prefMap = new Map(oldPrefs.preferences);
-    // for (const [key, value] of preferences) {
-    //   prefMap.set(key, value);
-    // }
-    // const newPrefs = {
-    //   hasStoredPreferences: true,
-    //   preferences: [...prefMap.entries()],
-    // };
-    // localStorage.setItem("testingEmailPrefs", JSON.stringify(newPrefs));
-    // console.log('setEmailPreferences', newPrefs);
   }
 }
