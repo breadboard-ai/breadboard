@@ -7,7 +7,6 @@
 import { EditableGraph, err, ok, Outcome } from "@google-labs/breadboard";
 import { SideBoardRuntime } from "./types";
 
-import AutonameSideboard from "./sideboards-bgl/autoname.bgl.json" with { type: "json" };
 import {
   GraphIdentifier,
   JsonSerializable,
@@ -95,14 +94,12 @@ class Autoname {
       this.callbacks.statuschange(this.#status);
     }
 
-    const outputs = await this.runtime.runTask({
-      graph: AutonameSideboard,
-      context: asLLMContent({
+    const outputs = await this.runtime.autoname(
+      asLLMContent({
         nodeConfigurationUpdate: { configuration, type },
       } satisfies AutonameArguments),
-      url: editor.raw().url,
-      signal: abortController.signal,
-    });
+      abortController.signal
+    );
     this.#pending.delete(o);
     if (this.#pending.size === 0) {
       this.#status = "idle";

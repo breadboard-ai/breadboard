@@ -35,6 +35,10 @@ export type SideBoardRuntime =
     describe(url: string): Promise<Outcome<NodeDescriberResult>>;
     runTask(task: SideBoardRuntimeTaskSpec): Promise<Outcome<LLMContent[]>>;
     discardTasks(): void;
+    autoname(
+      context: LLMContent[],
+      signal: AbortSignal
+    ): Promise<Outcome<LLMContent[]>>;
   };
 
 export type SideBoardRuntimeEmptyEvent = Event;

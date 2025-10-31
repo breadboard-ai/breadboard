@@ -11,7 +11,12 @@ import {
   OutputValues,
   BoardServer,
 } from "@breadboard-ai/types";
-import type { HarnessRunner, RunConfig } from "@breadboard-ai/types";
+import type {
+  HarnessRunner,
+  MutableGraph,
+  NodeHandlerContext,
+  RunConfig,
+} from "@breadboard-ai/types";
 import { createRunner, RunnerErrorEvent } from "@breadboard-ai/runtime";
 import { RuntimeConfig, SideboardRuntimeProvider } from "./types";
 import {
@@ -43,6 +48,9 @@ import {
   assetsFromGraphDescriptor,
   envFromGraphDescriptor,
 } from "@breadboard-ai/data";
+import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
+import { CapabilitiesManagerImpl } from "@breadboard-ai/runtime/legacy.js";
+import { ok } from "@breadboard-ai/utils";
 
 export { createSideboardRuntimeProvider };
 
@@ -64,7 +72,8 @@ function createSideboardRuntimeProvider(
         servers,
         config.settings,
         config.fileSystem,
-        config.fetchWithCreds
+        config.fetchWithCreds,
+        config.sandbox
       );
     },
   };
@@ -85,7 +94,8 @@ class SideboardRuntimeImpl
     servers: BoardServer[],
     public readonly settings: SettingsStore,
     fileSystem: FileSystem | undefined,
-    private readonly fetchWithCreds: typeof globalThis.fetch
+    private readonly fetchWithCreds: typeof globalThis.fetch,
+    private readonly moduleFactory: RunnableModuleFactory
   ) {
     super();
     this.#dataStore = new BoardServerAwareDataStore(
@@ -233,5 +243,27 @@ class SideboardRuntimeImpl
       )
     );
     return runner;
+  }
+
+  async autoname(
+    inputs: LLMContent[],
+    signal: AbortSignal
+  ): Promise<Outcome<LLMContent[]>> {
+    const context: NodeHandlerContext = {
+      kits: [...this.#graphStore.kits],
+      fileSystem: this.#fileSystem,
+      signal,
+    };
+    const module = await this.moduleFactory.createRunnableModule(
+      {} as unknown as MutableGraph,
+      {
+        url: "embed://a2/autoname.bgl.json#module:main",
+      } as unknown as GraphDescriptor,
+      context,
+      new CapabilitiesManagerImpl(context)
+    );
+    if (!ok(module)) return module;
+    const results = await module.invoke("main", { context: inputs });
+    return (results as { context: LLMContent[] }).context;
   }
 }
