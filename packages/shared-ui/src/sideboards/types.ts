@@ -35,14 +35,6 @@ export type SideBoardRuntime =
     describe(url: string): Promise<Outcome<NodeDescriberResult>>;
     runTask(task: SideBoardRuntimeTaskSpec): Promise<Outcome<LLMContent[]>>;
     discardTasks(): void;
-
-    /**
-     * Generates a theme based on the context
-     */
-    createTheme(
-      args: ThemePromptArgs,
-      signal: AbortSignal
-    ): Promise<Outcome<LLMContent>>;
   };
 
 export type SideBoardRuntimeEmptyEvent = Event;
