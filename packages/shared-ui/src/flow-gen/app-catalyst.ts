@@ -31,36 +31,40 @@ export interface AppCatalystContentChunk {
   data: string;
 }
 
-export interface FetchEmailPreferencesRequest {
-  preferenceKey: readonly string[];
-}
-
 export enum NotifyPreference {
-  UNKNOWN = 0,
-  NOTIFY = 1,
-  DROP = 2,
+  UNKNOWN = "UNKNOWN",
+  NOTIFY = "NOTIFY",
+  DROP = "DROP",
 }
 
 export enum NotifyConsentState {
-  UNKNOWN = 0,
-  NOT_APPLICABLE = 1,
-  UNCONFIRMED = 2,
-  CONFIRMED = 3,
+  UNKNOWN = "UNKNOWN",
+  NOT_APPLICABLE = "NOT_APPLICABLE",
+  UNCONFIRMED = "UNCONFIRMED",
+  CONFIRMED = "CONFIRMED",
 }
 
-export interface FetchEmailPreferencesResponse {
-  preferenceResult: Array<{
-    preferenceKey: string;
-    preference: NotifyPreference;
-    consentState: NotifyConsentState;
-  }>;
+// Represents the user preference for a given email preference key
+// for the `labs_opal` Chime client
+export interface EmailPreference {
+  preferenceKey: string;
+  notifyPreference: NotifyPreference;
+  consentState?: NotifyConsentState;
 }
 
+// Request to get the email preferences for the calling user.
+export interface GetEmailPreferencesRequest {
+  preferenceKeys: readonly string[];
+}
+
+// Response to get the email preferences for the calling user.
+export interface GetEmailPreferencesResponse {
+  preferenceResponses?: EmailPreference[];
+}
+
+// Request to set the email preferences for the calling user.
 export interface SetEmailPreferencesRequest {
-  preferenceEntry: Array<{
-    preferenceKey: string;
-    preference: NotifyPreference;
-  }>;
+  preferenceEntries: EmailPreference[];
 }
 
 export class AppCatalystApiClient {
@@ -128,63 +132,68 @@ export class AppCatalystApiClient {
     hasStoredPreferences: boolean;
     preferences: Array<[T[number], boolean]>;
   }> {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const prefs = {
-      hasStoredPreferences: false,
-      preferences: preferenceKeys.map((key) => [key, false]),
-      ...JSON.parse(localStorage.getItem("testingEmailPrefs") ?? "{}"),
+    // await new Promise(resolve => setTimeout(resolve, 1000));
+    // const prefs = {
+    //   hasStoredPreferences: false,
+    //   preferences: preferenceKeys.map((key) => [key, false]),
+    //   ...JSON.parse(localStorage.getItem("testingEmailPrefs") ?? "{}"),
+    // };
+    // console.log('fetchEmailPreferences', prefs);
+    // return prefs;
+    const url = new URL("v1beta1/getEmailPreferences", this.#apiBaseUrl);
+    const request: GetEmailPreferencesRequest = {
+      preferenceKeys,
     };
-    console.log('fetchEmailPreferences', prefs);
-    return prefs;
-    // const url = new URL("v1beta1/emailPreferences", this.#apiBaseUrl);
-    // const request: FetchEmailPreferencesRequest = {
-    //   preferenceKey: preferenceKeys,
-    // };
-    // const response = await this.#fetchWithCreds(url, {
-    //   method: "GET",
-    //   headers: {
-    //     "content-type": "application/json",
-    //   },
-    //   body: JSON.stringify(request),
-    // });
-    // const result = (await response.json()) as FetchEmailPreferencesResponse;
-    // return {
-    //   hasStoredPreferences: result.preferenceResult.some(
-    //     (pref) => pref.preference !== NotifyPreference.UNKNOWN
-    //   ),
-    //   preferences: result.preferenceResult.map((pref) => [
-    //     pref.preferenceKey,
-    //     pref.preference === NotifyPreference.NOTIFY
-    //   ])
-    // };
+    const response = await this.#fetchWithCreds(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(request),
+    });
+    const result = (await response.json()) as GetEmailPreferencesResponse;
+    console.log('fetchEmailPreferences', result);
+    return {
+      hasStoredPreferences: result.preferenceResponses?.some(
+        (pref) => (
+          pref.notifyPreference !== undefined &&
+          pref.notifyPreference !== NotifyPreference.UNKNOWN
+        )
+      ) ?? false,
+      preferences: result.preferenceResponses?.map((pref) => [
+        pref.preferenceKey,
+        pref.notifyPreference === NotifyPreference.NOTIFY
+      ]) ?? []
+    };
   }
 
   async setEmailPreferences(preferences: Array<[string, boolean]>): Promise<void> {
-    // const url = new URL("v1beta1/emailPreferences", this.#apiBaseUrl);
-    // const request: SetEmailPreferencesRequest = {
-    //   preferenceEntry: preferences.map(([key, value]) => ({
-    //     preferenceKey: key,
-    //     preference: value ? NotifyPreference.NOTIFY : NotifyPreference.DROP,
-    //   })),
-    // };
-    // await this.#fetchWithCreds(url, {
-    //   method: "POST",
-    //   headers: {
-    //     "content-type": "application/json",
-    //   },
-    //   body: JSON.stringify(request),
-    // });
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const oldPrefs = JSON.parse(localStorage.getItem("testingEmailPrefs") ?? "{}");
-    const prefMap = new Map(oldPrefs.preferences);
-    for (const [key, value] of preferences) {
-      prefMap.set(key, value);
-    }
-    const newPrefs = {
-      hasStoredPreferences: true,
-      preferences: [...prefMap.entries()],
+    const url = new URL("v1beta1/setEmailPreferences", this.#apiBaseUrl);
+    const request: SetEmailPreferencesRequest = {
+      preferenceEntries: preferences.map(([key, value]) => ({
+        preferenceKey: key,
+        notifyPreference: NotifyPreference[value ? NotifyPreference.NOTIFY : NotifyPreference.DROP],
+      })),
     };
-    localStorage.setItem("testingEmailPrefs", JSON.stringify(newPrefs));
-    console.log('setEmailPreferences', newPrefs);
+    await this.#fetchWithCreds(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(request),
+    });
+    console.log('setEmailPreferences', request);
+    // await new Promise(resolve => setTimeout(resolve, 1000));
+    // const oldPrefs = JSON.parse(localStorage.getItem("testingEmailPrefs") ?? "{}");
+    // const prefMap = new Map(oldPrefs.preferences);
+    // for (const [key, value] of preferences) {
+    //   prefMap.set(key, value);
+    // }
+    // const newPrefs = {
+    //   hasStoredPreferences: true,
+    //   preferences: [...prefMap.entries()],
+    // };
+    // localStorage.setItem("testingEmailPrefs", JSON.stringify(newPrefs));
+    // console.log('setEmailPreferences', newPrefs);
   }
 }
