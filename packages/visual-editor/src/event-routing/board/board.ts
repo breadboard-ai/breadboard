@@ -359,6 +359,12 @@ export const ReplaceRoute: EventRoute<"board.replace"> = {
     const { tab, runtime, originalEvent, googleDriveClient } = deps;
 
     const { replacement } = originalEvent.detail;
+
+    const themes = runtime.edit.getEditor(tab)?.raw().metadata?.visual
+      ?.presentation?.themes;
+
+    const shouldCreateTheme = themes && Object.values(themes).length === 1;
+
     runtime.util.applyDefaultThemeInformationIfNonePresent(replacement);
     await runtime.util.createAppPaletteIfNeeded(replacement, googleDriveClient);
 
@@ -367,6 +373,22 @@ export const ReplaceRoute: EventRoute<"board.replace"> = {
       replacement,
       originalEvent.detail.creator
     );
+
+    const autoTheme = (await runtime.flags.flags()).autoTheme;
+
+    if (shouldCreateTheme && autoTheme) {
+      const projectState = runtime.state.getProjectState(tab?.mainGraphId);
+      if (projectState) {
+        projectState.themes.generateTheme(
+          {
+            random: false,
+            title: replacement.title || "Opal app",
+            description: replacement.description,
+          },
+          new AbortController().signal
+        );
+      }
+    }
 
     return false;
   },

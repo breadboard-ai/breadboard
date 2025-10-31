@@ -41,6 +41,10 @@ export type RuntimeFlags = {
    * Agent mode
    */
   agentMode: boolean;
+  /**
+   * Automatically kick off theming
+   */
+  autoTheme: boolean;
 };
 
 /**
