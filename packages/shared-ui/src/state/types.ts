@@ -35,8 +35,8 @@ import {
 } from "@google-labs/breadboard";
 import { ConnectorInstance, ConnectorType } from "../connectors/types";
 import { StateEvent, ToastType } from "../events/events";
-import { SideBoardRuntime } from "../sideboards/types";
-import { VisualEditorMode } from "../types/types";
+import { SideBoardRuntime, ThemePromptArgs } from "../sideboards/types";
+import { AppTheme, VisualEditorMode } from "../types/types";
 import { HTMLTemplateResult } from "lit";
 import type { AsyncComputedStatus } from "signal-utils/async-computed";
 
@@ -442,6 +442,7 @@ export type Project = {
   fastAccess: FastAccess;
   renderer: RendererState;
   stepEditor: StepEditor;
+  readonly themes: ProjectThemeState;
 
   /**
    * Resets the current run.
@@ -515,4 +516,14 @@ export type StepEditorSurface = {
    * Returns when save is completed.
    */
   save(): Promise<Outcome<void>>;
+};
+
+/**
+ * Represents the model-controller for the project's themes.
+ */
+export type ProjectThemeState = {
+  generateTheme(
+    args: ThemePromptArgs,
+    signal: AbortSignal
+  ): Promise<Outcome<AppTheme>>;
 };

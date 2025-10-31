@@ -50,6 +50,7 @@ import {
   Project,
   ProjectInternal,
   ProjectRun,
+  ProjectThemeState,
   RendererState,
   StepEditor,
   Tool,
@@ -59,6 +60,7 @@ import { updateMap } from "./utils/update-map";
 import { FilteredIntegrationsImpl } from "./filtered-integrations";
 import { McpClientManager } from "@breadboard-ai/mcp";
 import { StepEditorImpl } from "./step-editor";
+import { ThemeState } from "./theme-state";
 
 export { createProjectState, ReactiveProject };
 
@@ -125,6 +127,7 @@ class ReactiveProject implements ProjectInternal {
   readonly renderer: RendererState;
   readonly integrations: Integrations;
   readonly stepEditor: StepEditor;
+  readonly themes: ProjectThemeState;
 
   constructor(
     mainGraphId: MainGraphIdentifier,
@@ -184,6 +187,7 @@ class ReactiveProject implements ProjectInternal {
     this.#updateMyTools();
     this.#updateParameters();
     this.run = ReactiveProjectRun.createInert(this.#mainGraphId, this.#store);
+    this.themes = new ThemeState(runtime);
   }
 
   resetRun(): void {
