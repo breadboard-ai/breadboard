@@ -401,31 +401,6 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
     }
   }
 
-  async #generateTheme(
-    random: boolean,
-    appName: string,
-    appDescription?: string,
-    additionalInformation?: string
-  ): Promise<AppTheme> {
-    this.#abortController = new AbortController();
-    if (!this.projectState) {
-      throw new Error("Unable to generate theme: project is not initialized");
-    }
-    const theme = await this.projectState.themes.generateTheme(
-      {
-        random,
-        title: appName,
-        description: appDescription,
-        userInstruction: additionalInformation,
-      },
-      this.#abortController.signal
-    );
-    if (!ok(theme)) {
-      throw new Error(theme.$error);
-    }
-    return theme;
-  }
-
   async #convertImageToTheme(
     splashScreen: InlineDataCapabilityPart
   ): Promise<AppTheme> {
@@ -545,12 +520,22 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
 
       this.#generating = true;
       this.#generatingRandom = random;
-      const newTheme = await this.#generateTheme(
-        random,
-        this.graph?.title ?? "Untitled Application",
-        this.graph?.description,
-        this.#generateDescriptionRef.value?.value
+      this.#abortController = new AbortController();
+      if (!this.projectState) {
+        throw new Error("Unable to generate theme: project is not initialized");
+      }
+      const newTheme = await this.projectState.themes.generateTheme(
+        {
+          random,
+          title: this.graph?.title ?? "Untitled Application",
+          description: this.graph?.description,
+          userInstruction: this.#generateDescriptionRef.value?.value,
+        },
+        this.#abortController.signal
       );
+      if (!ok(newTheme)) {
+        throw new Error(newTheme.$error);
+      }
       this.dispatchEvent(
         new StateEvent({ eventType: "theme.create", theme: newTheme })
       );
