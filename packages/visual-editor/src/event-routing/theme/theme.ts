@@ -6,17 +6,6 @@
 
 import { EventRoute } from "../types";
 
-export const CreateRoute: EventRoute<"theme.create"> = {
-  event: "theme.create",
-
-  async do({ runtime, tab, originalEvent, uiState }) {
-    uiState.blockingAction = true;
-    await runtime.edit.createTheme(tab, originalEvent.detail.theme);
-    uiState.blockingAction = false;
-    return false;
-  },
-};
-
 export const DeleteRoute: EventRoute<"theme.delete"> = {
   event: "theme.delete",
 

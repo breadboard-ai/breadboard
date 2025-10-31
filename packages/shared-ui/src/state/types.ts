@@ -522,8 +522,17 @@ export type StepEditorSurface = {
  * Represents the model-controller for the project's themes.
  */
 export type ProjectThemeState = {
+  /**
+   * Adds provided theme to the list of available themes and sets it
+   * as current.
+   */
+  addTheme(theme: AppTheme): Promise<Outcome<void>>;
+  /**
+   * Generates a new theme to the list of available themes and sets it
+   * as current.
+   */
   generateTheme(
     args: ThemePromptArgs,
     signal: AbortSignal
-  ): Promise<Outcome<AppTheme>>;
+  ): Promise<Outcome<void>>;
 };

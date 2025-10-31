@@ -192,7 +192,7 @@ class ReactiveProject implements ProjectInternal {
     this.#updateMyTools();
     this.#updateParameters();
     this.run = ReactiveProjectRun.createInert(this.#mainGraphId, this.#store);
-    this.themes = new ThemeState(this.#fetchWithCreds);
+    this.themes = new ThemeState(this.#fetchWithCreds, editable, this);
   }
 
   resetRun(): void {

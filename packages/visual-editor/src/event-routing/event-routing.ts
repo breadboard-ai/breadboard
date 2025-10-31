@@ -56,7 +56,6 @@ export const eventRoutes = new Map<
 
   /** Theme */
   [Theme.ChangeRoute.event, Theme.ChangeRoute],
-  [Theme.CreateRoute.event, Theme.CreateRoute],
   [Theme.DeleteRoute.event, Theme.DeleteRoute],
   [Theme.UpdateRoute.event, Theme.UpdateRoute],
 ]);

@@ -33,7 +33,7 @@ import {
   SnackbarEvent,
   StateEvent,
 } from "../../events/events.js";
-import { Project } from "../../state/types.js";
+import { Project, UI } from "../../state/types.js";
 import { colorsLight } from "../../styles/host/colors-light";
 import { type } from "../../styles/host/type";
 import { icons } from "../../styles/icons";
@@ -44,11 +44,15 @@ import {
 } from "../../types/types.js";
 import { renderThumbnail } from "../../utils/image";
 import { convertImageToInlineData } from "./image-convert.js";
+import { uiStateContext } from "../../contexts/ui-state.js";
 
 const MAX_UPLOAD_SIZE = 5_242_880; // 5MB.
 
 @customElement("bb-app-theme-creator")
 export class AppThemeCreator extends SignalWatcher(LitElement) {
+  @consume({ context: uiStateContext })
+  accessor #uiState!: UI;
+
   @property()
   accessor projectState: Project | null = null;
 
@@ -472,11 +476,18 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
       }
 
       try {
+        if (!this.projectState) {
+          throw new Error(
+            "Unable to generate theme: project is not initialized"
+          );
+        }
+
         const splashScreen = await convertImageToInlineData(images[0]);
         const appTheme = await this.#convertImageToTheme(splashScreen);
-        this.dispatchEvent(
-          new StateEvent({ eventType: "theme.create", theme: appTheme })
-        );
+        const adding = await this.projectState.themes.addTheme(appTheme);
+        if (!ok(adding)) {
+          throw new Error(adding.$error);
+        }
       } catch (err) {
         this.dispatchEvent(
           new SnackbarEvent(
@@ -524,6 +535,7 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
       if (!this.projectState) {
         throw new Error("Unable to generate theme: project is not initialized");
       }
+      this.#uiState.blockingAction = true;
       const newTheme = await this.projectState.themes.generateTheme(
         {
           random,
@@ -533,12 +545,10 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
         },
         this.#abortController.signal
       );
+      this.#uiState.blockingAction = false;
       if (!ok(newTheme)) {
         throw new Error(newTheme.$error);
       }
-      this.dispatchEvent(
-        new StateEvent({ eventType: "theme.create", theme: newTheme })
-      );
     } catch (err) {
       console.warn(err);
       let errMessage = "Error";

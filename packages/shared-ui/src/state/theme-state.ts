@@ -4,8 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LLMContent, Outcome } from "@breadboard-ai/types";
-import { ProjectThemeState } from "./types";
+import {
+  EditableGraph,
+  GraphMetadata,
+  GraphTheme,
+  LLMContent,
+  Outcome,
+} from "@breadboard-ai/types";
+import { Project, ProjectThemeState } from "./types";
 import { ThemePromptArgs } from "../sideboards/types";
 import { AppTheme } from "../types/types";
 import { err } from "@breadboard-ai/utils";
@@ -13,7 +19,7 @@ import {
   generatePaletteFromColor,
   generatePaletteFromImage,
 } from "@breadboard-ai/theme";
-import { isInlineData } from "@breadboard-ai/data";
+import { isInlineData, isStoredData } from "@breadboard-ai/data";
 import { createThemeGenerationPrompt } from "../prompts/theme-generation";
 
 export { ThemeState };
@@ -25,12 +31,82 @@ function endpointURL(model: string) {
 }
 
 class ThemeState implements ProjectThemeState {
-  constructor(private readonly fetchWithCreds: typeof globalThis.fetch) {}
+  constructor(
+    private readonly fetchWithCreds: typeof globalThis.fetch,
+    private readonly editableGraph: EditableGraph | undefined,
+    private readonly project: Project
+  ) {
+    if (!editableGraph) {
+      console.warn(`Theme Generation will fail: No editable supplied`);
+    }
+  }
+
+  async addTheme(theme: AppTheme): Promise<Outcome<void>> {
+    if (!this.editableGraph) {
+      return err(`Unable to generate themes: can't edit the graph`);
+    }
+
+    const { primary, secondary, tertiary, error, neutral, neutralVariant } =
+      theme;
+
+    const graphTheme: GraphTheme = {
+      template: "basic",
+      templateAdditionalOptions: {},
+      palette: {
+        primary,
+        secondary,
+        tertiary,
+        error,
+        neutral,
+        neutralVariant,
+      },
+      themeColors: {
+        primaryColor: theme.primaryColor,
+        secondaryColor: theme.secondaryColor,
+        backgroundColor: theme.backgroundColor,
+        primaryTextColor: theme.primaryTextColor,
+        textColor: theme.textColor,
+      },
+    };
+
+    // TODO: Show some status.
+    if (theme.splashScreen) {
+      const persisted = await this.project.persistDataParts([
+        { parts: [theme.splashScreen] },
+      ]);
+      const splashScreen = persisted?.[0].parts[0];
+      if (isStoredData(splashScreen)) {
+        graphTheme.splashScreen = splashScreen;
+      } else {
+        console.warn("Unable to save splash screen", splashScreen);
+      }
+    }
+
+    const metadata: GraphMetadata = this.editableGraph.raw().metadata ?? {};
+    metadata.visual ??= {};
+    metadata.visual.presentation ??= {};
+    metadata.visual.presentation.themes ??= {};
+
+    const id = globalThis.crypto.randomUUID();
+    metadata.visual.presentation.themes[id] = graphTheme;
+    metadata.visual.presentation.theme = id;
+
+    const edit = await this.editableGraph.edit(
+      [{ type: "changegraphmetadata", metadata, graphId: "" }],
+      "Updating theme"
+    );
+    if (!edit.success) {
+      return err(edit.error);
+    }
+  }
 
   async generateTheme(
     args: ThemePromptArgs,
     signal: AbortSignal
-  ): Promise<Outcome<AppTheme>> {
+  ): Promise<Outcome<void>> {
+    if (!this.editableGraph) {
+      return err(`Unable to generate themes: can't edit the graph`);
+    }
     const body = {
       contents: createThemeGenerationPrompt(args),
     };
@@ -76,7 +152,7 @@ class ThemeState implements ProjectThemeState {
         theme = generatedTheme;
       }
 
-      return {
+      return this.addTheme({
         ...theme,
         primaryColor: "",
         secondaryColor: "",
@@ -85,7 +161,7 @@ class ThemeState implements ProjectThemeState {
         primaryTextColor: "",
         backgroundColor: "",
         splashScreen,
-      };
+      });
     } catch (e) {
       console.warn(e);
       return err("Invalid color scheme generated");
