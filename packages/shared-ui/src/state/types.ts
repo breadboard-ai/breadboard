@@ -549,4 +549,9 @@ export type ProjectThemeState = {
     args: ThemePromptArgs,
     signal: AbortSignal
   ): Promise<Outcome<void>>;
+
+  /**
+   * Deletes a theme with a given ID
+   */
+  deleteTheme(id: string): Promise<Outcome<void>>;
 };

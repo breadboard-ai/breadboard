@@ -557,20 +557,24 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
       } else if (typeof err === "object") {
         errMessage = (err as Error).message ?? "Unknown error";
       }
-      this.dispatchEvent(
-        new SnackbarEvent(
-          globalThis.crypto.randomUUID(),
-          errMessage,
-          SnackType.ERROR,
-          [],
-          true,
-          true
-        )
-      );
+      this.#displayError(errMessage);
     } finally {
       this.#generating = false;
       this.#generatingRandom = false;
     }
+  }
+
+  #displayError(message: string) {
+    this.dispatchEvent(
+      new SnackbarEvent(
+        globalThis.crypto.randomUUID(),
+        message,
+        SnackType.ERROR,
+        [],
+        true,
+        true
+      )
+    );
   }
 
   async #renderThumbnail(theme: GraphTheme) {
@@ -659,14 +663,25 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
             </h2>
             <button
               ?disabled=${Object.keys(this.themes).length === 1}
-              @click=${() => {
+              @click=${async () => {
                 if (!this.theme) {
                   return;
                 }
 
-                this.dispatchEvent(
-                  new StateEvent({ eventType: "theme.delete", id: this.theme })
+                if (this.projectState?.themes?.status !== "idle") {
+                  return;
+                }
+
+                this.#uiState.blockingAction = true;
+
+                const deleting = await this.projectState?.themes.deleteTheme(
+                  this.theme
                 );
+                this.#uiState.blockingAction = false;
+
+                if (!ok(deleting)) {
+                  this.#displayError(deleting.$error);
+                }
               }}
             >
               <span class="g-icon round filled">delete</span>

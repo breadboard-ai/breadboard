@@ -188,4 +188,37 @@ class ThemeState implements ProjectThemeState {
       return err("Invalid color scheme generated");
     }
   }
+
+  async deleteTheme(theme: string): Promise<Outcome<void>> {
+    if (!this.editableGraph) {
+      return err(`Unable to delete themes: can't edit the graph`);
+    }
+    if (this.status !== "idle") {
+      return err(
+        `Unable to delete a theme: theming is not idle. Current status: "${this.status}"`
+      );
+    }
+    this.status = "editing";
+
+    const metadata: GraphMetadata = this.editableGraph.raw().metadata ?? {};
+    metadata.visual ??= {};
+    metadata.visual.presentation ??= {};
+    metadata.visual.presentation.themes ??= {};
+
+    if (!metadata.visual.presentation.themes[theme]) {
+      return err("Theme does not exist");
+    }
+
+    delete metadata.visual.presentation.themes[theme];
+    const themes = Object.keys(metadata.visual.presentation.themes);
+    metadata.visual.presentation.theme = themes.at(-1);
+
+    const editing = await this.editableGraph.edit(
+      [{ type: "changegraphmetadata", metadata, graphId: "" }],
+      "Updating theme"
+    );
+    if (!editing.success) {
+      return err(editing.error);
+    }
+  }
 }
