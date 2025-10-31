@@ -143,6 +143,9 @@ export class AppCatalystApiClient {
       },
       body: JSON.stringify(request),
     });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch email preferences: ${response.statusText}`);
+    }
     const result = (await response.json()) as GetEmailPreferencesResponse;
     return {
       hasStoredPreferences: result.preferenceResponses?.some(
@@ -166,12 +169,15 @@ export class AppCatalystApiClient {
         notifyPreference: NotifyPreference[value ? NotifyPreference.NOTIFY : NotifyPreference.DROP],
       })),
     };
-    await this.#fetchWithCreds(url, {
+    const response = await this.#fetchWithCreds(url, {
       method: "POST",
       headers: {
         "content-type": "application/json",
       },
       body: JSON.stringify(request),
     });
+    if (!response.ok) {
+      throw new Error(`Failed to set email preferences: ${response.statusText}`);
+    }
   }
 }

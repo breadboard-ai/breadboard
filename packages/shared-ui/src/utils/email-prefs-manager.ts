@@ -21,7 +21,6 @@ export class EmailPrefsManager {
 
   constructor(apiClient: AppCatalystApiClient) {
     this.#apiClient = apiClient;
-    this.refreshPrefs();
   }
 
   async refreshPrefs() {
