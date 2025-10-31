@@ -11,7 +11,7 @@ import {
   LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
-import { Project, ProjectThemeState } from "./types";
+import { Project, ProjectThemeState, ThemeStatus } from "./types";
 import { ThemePromptArgs } from "../sideboards/types";
 import { AppTheme } from "../types/types";
 import { err } from "@breadboard-ai/utils";
@@ -21,6 +21,7 @@ import {
 } from "@breadboard-ai/theme";
 import { isInlineData, isStoredData } from "@breadboard-ai/data";
 import { createThemeGenerationPrompt } from "../prompts/theme-generation";
+import { signal } from "signal-utils";
 
 export { ThemeState };
 
@@ -31,6 +32,9 @@ function endpointURL(model: string) {
 }
 
 class ThemeState implements ProjectThemeState {
+  @signal
+  accessor status: ThemeStatus = "idle";
+
   constructor(
     private readonly fetchWithCreds: typeof globalThis.fetch,
     private readonly editableGraph: EditableGraph | undefined,
@@ -43,8 +47,14 @@ class ThemeState implements ProjectThemeState {
 
   async addTheme(theme: AppTheme): Promise<Outcome<void>> {
     if (!this.editableGraph) {
-      return err(`Unable to generate themes: can't edit the graph`);
+      return err(`Unable to add theme: can't edit the graph`);
     }
+    if (this.status !== "idle") {
+      return err(
+        `Unable to add theme: theming is not idle. Current status: "${this.status}"`
+      );
+    }
+    this.status = "uploading";
 
     const { primary, secondary, tertiary, error, neutral, neutralVariant } =
       theme;
@@ -69,7 +79,6 @@ class ThemeState implements ProjectThemeState {
       },
     };
 
-    // TODO: Show some status.
     if (theme.splashScreen) {
       const persisted = await this.project.persistDataParts([
         { parts: [theme.splashScreen] },
@@ -81,6 +90,8 @@ class ThemeState implements ProjectThemeState {
         console.warn("Unable to save splash screen", splashScreen);
       }
     }
+
+    this.status = "editing";
 
     const metadata: GraphMetadata = this.editableGraph.raw().metadata ?? {};
     metadata.visual ??= {};
@@ -95,6 +106,8 @@ class ThemeState implements ProjectThemeState {
       [{ type: "changegraphmetadata", metadata, graphId: "" }],
       "Updating theme"
     );
+    this.status = "idle";
+
     if (!edit.success) {
       return err(edit.error);
     }
@@ -107,6 +120,13 @@ class ThemeState implements ProjectThemeState {
     if (!this.editableGraph) {
       return err(`Unable to generate themes: can't edit the graph`);
     }
+    if (this.status !== "idle") {
+      return err(
+        `Unable to generate a theme: theming is not idle. Current status: "${this.status}"`
+      );
+    }
+    this.status = "generating";
+
     const body = {
       contents: createThemeGenerationPrompt(args),
     };
@@ -151,6 +171,7 @@ class ThemeState implements ProjectThemeState {
       if (generatedTheme) {
         theme = generatedTheme;
       }
+      this.status = "idle";
 
       return this.addTheme({
         ...theme,

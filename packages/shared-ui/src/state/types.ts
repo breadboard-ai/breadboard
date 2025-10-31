@@ -518,10 +518,24 @@ export type StepEditorSurface = {
   save(): Promise<Outcome<void>>;
 };
 
+export type ThemeStatus = "generating" | "uploading" | "editing" | "idle";
+
 /**
  * Represents the model-controller for the project's themes.
  */
 export type ProjectThemeState = {
+  /**
+   * Reports the current status of the theming machinery. Aside from "idle",
+   * all other statuses are blocking -- calls to mutating functions will fail
+   * silently.
+   *
+   * Valid status values:
+   * - "generating" -- an image is currently being generated for the theme
+   * - "uploading" -- an image is currently being uploaded to Drive
+   * - "editing" -- theme is currently being edited.
+   * - "idle" -- the machinery is idle and ready for operation.
+   */
+  readonly status: ThemeStatus;
   /**
    * Adds provided theme to the list of available themes and sets it
    * as current.
