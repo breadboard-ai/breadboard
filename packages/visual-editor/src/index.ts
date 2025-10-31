@@ -337,7 +337,7 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.emailPrefsManager = new EmailPrefsManager(this.#apiClient);
     this.emailPrefsManager.refreshPrefs().then(() => {
-      if (!this.emailPrefsManager.hasSetEmailPrefs) {
+      if (this.emailPrefsManager.prefsValid && !this.emailPrefsManager.hasSetEmailPrefs) {
         this.#uiState.show.add("WarmWelcome");
       }
     });
