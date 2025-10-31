@@ -554,4 +554,9 @@ export type ProjectThemeState = {
    * Deletes a theme with a given ID
    */
   deleteTheme(id: string): Promise<Outcome<void>>;
+
+  /**
+   * Sets the current them to a given ID
+   */
+  setCurrent(id: string): Promise<Outcome<void>>;
 };

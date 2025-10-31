@@ -217,6 +217,39 @@ class ThemeState implements ProjectThemeState {
       [{ type: "changegraphmetadata", metadata, graphId: "" }],
       "Updating theme"
     );
+    this.status = "idle";
+    if (!editing.success) {
+      return err(editing.error);
+    }
+  }
+
+  async setCurrent(theme: string): Promise<Outcome<void>> {
+    if (!this.editableGraph) {
+      return err(`Unable to set current theme: can't edit the graph`);
+    }
+    if (this.status !== "idle") {
+      return err(
+        `Unable to set current theme: theming is not idle. Current status: "${this.status}"`
+      );
+    }
+    this.status = "editing";
+
+    const metadata: GraphMetadata = this.editableGraph.raw().metadata ?? {};
+    metadata.visual ??= {};
+    metadata.visual.presentation ??= {};
+    metadata.visual.presentation.themes ??= {};
+
+    if (!metadata.visual.presentation.themes[theme]) {
+      return err("Theme does not exist");
+    }
+
+    metadata.visual.presentation.theme = theme;
+
+    const editing = await this.editableGraph.edit(
+      [{ type: "changegraphmetadata", metadata, graphId: "" }],
+      "Updating theme"
+    );
+    this.status = "idle";
     if (!editing.success) {
       return err(editing.error);
     }

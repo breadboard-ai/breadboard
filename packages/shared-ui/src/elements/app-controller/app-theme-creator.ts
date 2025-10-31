@@ -28,11 +28,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
 import { until } from "lit/directives/until.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context";
-import {
-  OverlayDismissedEvent,
-  SnackbarEvent,
-  StateEvent,
-} from "../../events/events.js";
+import { OverlayDismissedEvent, SnackbarEvent } from "../../events/events.js";
 import { Project, UI } from "../../state/types.js";
 import { colorsLight } from "../../styles/host/colors-light";
 import { type } from "../../styles/host/type";
@@ -706,10 +702,14 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
                     class=${classMap({ selected: id === this.theme })}
                     ${this.theme === id ? ref(this.#selectedThemeRef) : nothing}
                     @click=${() => {
+                      if (this.projectState?.themes.status !== "idle") {
+                        return;
+                      }
+
                       this.#changed = true;
-                      this.dispatchEvent(
-                        new StateEvent({ eventType: "theme.change", id })
-                      );
+                      this.#uiState.blockingAction = true;
+                      this.projectState.themes.setCurrent(id);
+                      this.#uiState.blockingAction = false;
                     }}
                   >
                     ${guard(
