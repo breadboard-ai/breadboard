@@ -272,7 +272,6 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
 
   const sideboards = createSideboardRuntimeProvider(
     graphStoreArgs,
-    servers,
     config
   ).createSideboardRuntime();
 

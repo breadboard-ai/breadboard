@@ -538,12 +538,6 @@ export class Main extends SignalWatcher(LitElement) {
     args.graphStorePreloader?.(this.#graphStore);
 
     this.sideBoardRuntime = this.#runtime.sideboards;
-    this.sideBoardRuntime.addEventListener("empty", () => {
-      this.#uiState.canRunMain = true;
-    });
-    this.sideBoardRuntime.addEventListener("running", () => {
-      this.#uiState.canRunMain = false;
-    });
 
     this.#graphStore.addEventListener("update", (evt) => {
       const { mainGraphId } = evt;

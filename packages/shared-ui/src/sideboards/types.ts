@@ -4,51 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  GraphDescriptor,
-  LLMContent,
-  Outcome,
-  TypedEventTarget,
-  TypedEventTargetType,
-} from "@breadboard-ai/types";
-
-export type ThemePromptArgs = {
-  random: boolean;
-  title: string;
-  description?: string;
-  userInstruction?: string;
-};
+import type { LLMContent, Outcome } from "@breadboard-ai/types";
 
 /**
  * A way to run a board from anywhere in the UI at any time, without assuming
  * the given board is the "main" one the user is editing, but with the same
  * configuration (secrets, board server, etc.).
  */
-export type SideBoardRuntime =
-  TypedEventTargetType<SideBoardRuntimeEventMap> & {
-    autoname(
-      context: LLMContent[],
-      signal: AbortSignal
-    ): Promise<Outcome<LLMContent[]>>;
-  };
-
-export type SideBoardRuntimeEmptyEvent = Event;
-export type SideBoardRuntimeBusyEvent = Event;
-
-export type SideBoardRuntimeEventMap = {
-  empty: SideBoardRuntimeEmptyEvent;
-  running: SideBoardRuntimeBusyEvent;
-};
-
-export type SideBoardRuntimeEventTarget =
-  TypedEventTarget<SideBoardRuntimeEventMap>;
-
-export type SideBoardRuntimeTaskSpec = {
-  /**
-   * URL of the graph on behalf of which we run the task.
-   */
-  url?: string;
-  graph: GraphDescriptor | string;
-  context: LLMContent[];
-  signal?: AbortSignal;
+export type SideBoardRuntime = {
+  autoname(
+    context: LLMContent[],
+    signal: AbortSignal
+  ): Promise<Outcome<LLMContent[]>>;
 };

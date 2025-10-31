@@ -5,7 +5,7 @@
  */
 
 import { LLMContent } from "@breadboard-ai/types";
-import { ThemePromptArgs } from "../sideboards/types";
+import { ThemePromptArgs } from "../state/types";
 
 export { createThemeGenerationPrompt };
 
