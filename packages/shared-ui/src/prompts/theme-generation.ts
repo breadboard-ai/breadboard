@@ -22,27 +22,51 @@ function createThemeGenerationPrompt(args: ThemePromptArgs): LLMContent {
     ? `The app does the following: ${appDescription}`
     : "";
 
-  const text = `
-## Objective
+  const text = `## Objective
+  
+  Create a sophisticated and impactful visual metaphor or representation for the given input, ensuring the image communicates professionalism, innovation, and clarity, suitable for a mobile web app splash screen. Generate a high-resolution, visually stunning splash screen that is beautiful, exceptionally well-designed, and sleek, intended to represent a specific concept. In some cases, depending on the prompt it may be appropriate to show a literal item as part of the image. Use your artistic and aesthetic judgment.
 
-You are creating an app splash screen for a mobile web app. You should use the context to understand what the web is called as well as any other requirements for the splash screen.
+## Context
 
-# Context
-
-ULTRA IMPORTANT: The application's name is: "${appName}".
+The application's name is: "${appName}".
 
 ${appDescription}
 
-${userInstruction ? `Additional instructions: ${userInstruction}` : ""}
+Art Medium: 
+- Emphasize matte finishes and soft-touch materials. 
+- Use crisp, high-fidelity details to suggest precision, not just sharp geometric edges.
 
-## Style
+Lighting: 
+- Soft, diffused studio lighting, reminiscent of high-end product photography.
+- Use gentle ambient occlusion and subtle gradients to define form, creating a clean, modern feel without harsh edge lights.
 
-You should create something unique and interesting, avoiding cliches and obvious motifs. You should use relatively few colors. The background must be a solid color without any adornments. You should also use the context to understand if there are additional instructions for what the style and contents should be. Under no circumstances should you ever deviate from the colors provided or use text in the splash screen (do NOT include the HEX color code in the background)
+Composition & Framing:
+ - Layout: Balanced and dynamic composition. Utilize the rule of thirds or a strong central focal point with some minimal abstract elements. The design should feel spacious and intentional.
+- Depth: Create a sense of depth through subtle layering, volumetric lighting, and minimal use of foreground/background elements.
+- Camera Angle: A slightly elevated, wide-angle shot or a clean, eye-level perspective to capture the full scope of the elegant design. Ensure the composition is impactful and clear.
 
-## Format
+Lighting & Color Palette:
+- Lighting: Dramatic yet clean. Backlighting and edge lighting can enhance the sleekness.
 
-The image absolutely must be a portrait image in a 9:16 ratio, suitable for use on a mobile device's application launch screen. The contents of the image should be centered, leaving plenty of room around it for any background color. The image may be shown truncated to only the middle third of its height (with the top and bottom cut-off) so do your best to vertically center, and design the image to look good under a variety of responsive views. The image must be very high resolution and clear.
-`;
+Texture & Details:
+- Detail Level: High level of detail in the image, ensuring crispness and clarity even in subtle elements. Every component should appear intentionally placed and meticulously crafted. Do not clutter the image with too many elements. 
+
+Aspect Ratio: 1:1
+- Constraint: The image must evoke a sense of intelligence and refined elegance. It should be visually engaging without being distracting, and immediately convey a sense of the topic's importance and modernity.
+
+IMPORTANT: 
+- If the user has provided stylistic instructions below you MUST incorporate those into the image! 
+- Do not render text or titles on the splash image. It will be laid over separately and if you do, you'll create a weird double-text rendering.
+- You must never under any circumstances a phone surround on the image
+- No sci-fi, futuristic, glowing lines, neon, circuits, circuit board, cybernetic, biomechanical, chrome, shiny metal, hexagonal grid, HUD interface
+
+${
+  userInstruction
+    ? `## User's stylistic instructions
+
+${userInstruction}`
+    : ""
+}`;
 
   return { parts: [{ text }] };
 }
