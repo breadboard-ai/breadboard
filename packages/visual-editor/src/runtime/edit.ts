@@ -26,7 +26,6 @@ import {
   LLMContent,
 } from "@breadboard-ai/types";
 import {
-  EnhanceSideboard,
   Tab,
   TabId,
   WorkspaceSelectionState,
@@ -35,7 +34,6 @@ import {
 } from "./types";
 import {
   RuntimeBoardEditEvent,
-  RuntimeBoardEnhanceEvent,
   RuntimeErrorEvent,
   RuntimeVisualChangeEvent,
 } from "./events";
@@ -46,7 +44,6 @@ import {
   GraphMetadata,
   GraphTag,
   NodeMetadata,
-  NodeValue,
 } from "@breadboard-ai/types";
 import { createGraphId, MAIN_BOARD_ID } from "./util";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
@@ -862,84 +859,6 @@ export class Edit extends EventTarget {
       ],
       `Change configuration for "${id}"`
     );
-  }
-
-  async enhanceNodeConfiguration(
-    tab: Tab | null,
-    subGraphId: string | null,
-    id: string,
-    sideboard: EnhanceSideboard,
-    property?: string,
-    value?: NodeValue
-  ) {
-    if (!tab) {
-      return;
-    }
-
-    if (tab?.readOnly) {
-      return;
-    }
-
-    const editableGraph = this.getEditor(tab);
-    const graphId = subGraphId || "";
-
-    if (!editableGraph) {
-      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
-      return;
-    }
-
-    const inspectableNode = editableGraph.inspect(graphId).nodeById(id);
-    const configuration = structuredClone(
-      inspectableNode?.descriptor.configuration ?? {}
-    );
-
-    // If there is a value to use over and above the current configuration
-    // value we apply it here.
-    if (property && value) {
-      configuration[property] = value;
-    }
-
-    const result = await sideboard.enhance(configuration);
-
-    if (!result.success) {
-      this.dispatchEvent(
-        new RuntimeErrorEvent(`Enhancing failed with error: ${result.error}`)
-      );
-      return;
-    }
-
-    this.dispatchEvent(
-      new RuntimeBoardEnhanceEvent(tab.id, [id], result.result)
-    );
-  }
-
-  /**
-   * Use this function to trigger autoname on a node. It will force over
-   * `userModified` and disregard any settings.
-   */
-  async autonameNode(
-    tab: Tab | null,
-    id: string,
-    subGraphId: string | null = null
-  ) {
-    if (tab?.readOnly) {
-      return;
-    }
-
-    const editableGraph = this.getEditor(tab);
-
-    if (!editableGraph) {
-      this.dispatchEvent(new RuntimeErrorEvent("Unable to find board to edit"));
-      return;
-    }
-
-    const inspectable = editableGraph.inspect(subGraphId);
-    const configuration = inspectable.nodeById(id)?.configuration();
-    if (!configuration) return;
-
-    const graphId = subGraphId || "";
-
-    return this.#autonameInternal(editableGraph, id, graphId, configuration);
   }
 
   async #autonameInternal(

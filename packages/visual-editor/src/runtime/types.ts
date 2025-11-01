@@ -18,7 +18,6 @@ import {
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
-  NodeConfiguration,
   PortIdentifier,
 } from "@google-labs/breadboard";
 
@@ -35,7 +34,6 @@ import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-d
 import { RecentBoardStore } from "../data/recent-boards";
 import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
 import { McpClientManager } from "@breadboard-ai/mcp";
-import type { Result } from "@breadboard-ai/types/result.js";
 import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 
@@ -103,10 +101,6 @@ export interface RuntimeConfigBoardServers {
 
   builtInBoardServers: BoardServer[];
 }
-
-export type EnhanceSideboard = {
-  enhance(config: NodeConfiguration): Promise<Result<NodeConfiguration>>;
-};
 
 export type ReferenceIdentifier =
   `${NodeIdentifier}|${PortIdentifier}|${number}`;
