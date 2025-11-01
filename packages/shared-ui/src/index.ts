@@ -17,4 +17,3 @@ export * as Strings from "./strings/helper.js";
 export * as State from "./state/index.js";
 export * as Styles from "./styles/styles.js";
 export * as Transforms from "./transforms/index.js";
-export * as SideBoards from "./sideboards/index.js";

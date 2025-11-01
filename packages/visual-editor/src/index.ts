@@ -67,7 +67,6 @@ import {
 } from "@breadboard-ai/shared-ui/contexts";
 import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
 import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
-import { sideBoardRuntime } from "@breadboard-ai/shared-ui/contexts/side-board-runtime.js";
 import { uiStateContext } from "@breadboard-ai/shared-ui/contexts/ui-state.js";
 import { IterateOnPromptEvent } from "@breadboard-ai/shared-ui/events/events.js";
 import {
@@ -78,7 +77,6 @@ import {
   FlowGenerator,
   flowGeneratorContext,
 } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
-import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { ReactiveAppScreen } from "@breadboard-ai/shared-ui/state/app-screen.js";
 import {
   ActionTracker,
@@ -149,9 +147,6 @@ export class Main extends SignalWatcher(LitElement) {
 
   @provide({ context: googleDriveClientContext })
   accessor googleDriveClient: GoogleDriveClient;
-
-  @provide({ context: sideBoardRuntime })
-  accessor sideBoardRuntime!: SideBoardRuntime;
 
   @provide({ context: BreadboardUI.Contexts.embedderContext })
   accessor embedState!: EmbedState;
@@ -537,14 +532,6 @@ export class Main extends SignalWatcher(LitElement) {
     // Google Drive).
     args.graphStorePreloader?.(this.#graphStore);
 
-    this.sideBoardRuntime = this.#runtime.sideboards;
-    this.sideBoardRuntime.addEventListener("empty", () => {
-      this.#uiState.canRunMain = true;
-    });
-    this.sideBoardRuntime.addEventListener("running", () => {
-      this.#uiState.canRunMain = false;
-    });
-
     this.#graphStore.addEventListener("update", (evt) => {
       const { mainGraphId } = evt;
       const current = this.#tab?.mainGraphId;
@@ -706,13 +693,6 @@ export class Main extends SignalWatcher(LitElement) {
       (evt: Runtime.Events.RuntimeVisualChangeEvent) => {
         this.#lastVisualChangeId = evt.visualChangeId;
         this.requestUpdate();
-      }
-    );
-
-    this.#runtime.edit.addEventListener(
-      Runtime.Events.RuntimeBoardAutonameEvent.eventName,
-      (evt: Runtime.Events.RuntimeBoardAutonameEvent) => {
-        console.log("[Autoname Status Change]:", evt.status);
       }
     );
 

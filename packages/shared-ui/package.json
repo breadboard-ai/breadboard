@@ -66,7 +66,6 @@
     "prepack": "npm run build",
     "build": "wireit",
     "build:tsc": "wireit",
-    "update-sideboards": "wireit",
     "test": "wireit"
   },
   "wireit": {
@@ -83,7 +82,6 @@
       ],
       "files": [
         "src/**/*.ts",
-        "src/sideboards/sideboards-bgl/*.bgl.json",
         "tsconfig.json",
         "../../core/tsconfig/base.json"
       ]
@@ -102,9 +100,6 @@
         "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
-    },
-    "update-sideboards": {
-      "command": "cp -f src/sideboards/sideboards-bgl/*.bgl.json dist/sideboards/sideboards-bgl"
     },
     "test": {
       "command": "node --test --enable-source-maps --test-reporter spec dist/tests/",

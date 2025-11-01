@@ -18,7 +18,6 @@ import {
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
-  NodeConfiguration,
   PortIdentifier,
 } from "@google-labs/breadboard";
 
@@ -30,12 +29,10 @@ import {
   NodeIdentifier,
 } from "@breadboard-ai/types";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { RecentBoardStore } from "../data/recent-boards";
 import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
 import { McpClientManager } from "@breadboard-ai/mcp";
-import type { Result } from "@breadboard-ai/types/result.js";
 import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 
@@ -104,10 +101,6 @@ export interface RuntimeConfigBoardServers {
   builtInBoardServers: BoardServer[];
 }
 
-export type EnhanceSideboard = {
-  enhance(config: NodeConfiguration): Promise<Result<NodeConfiguration>>;
-};
-
 export type ReferenceIdentifier =
   `${NodeIdentifier}|${PortIdentifier}|${number}`;
 
@@ -154,9 +147,5 @@ export interface WorkspaceSelectionStateWithChangeId {
 export type TabSelectionState = Map<TabId, WorkspaceSelectionState>;
 export type EditChangeId = ReturnType<typeof crypto.randomUUID>;
 export type MoveToSelection = "immediate" | "animated" | false;
-
-export type SideboardRuntimeProvider = {
-  createSideboardRuntime(): SideBoardRuntime;
-};
 
 export type VisualEditorMode = "app" | "canvas";

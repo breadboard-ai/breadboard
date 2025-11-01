@@ -33,8 +33,6 @@ export * as Types from "./types.js";
 import { Select } from "./select.js";
 import { StateManager } from "./state.js";
 import { getDataStore } from "@breadboard-ai/data-store";
-import { createSideboardRuntimeProvider } from "./sideboard-runtime.js";
-import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { Shell } from "./shell.js";
 import { Outcome, RunConfig, RuntimeFlagManager } from "@breadboard-ai/types";
 import {
@@ -49,6 +47,7 @@ import {
   assetsFromGraphDescriptor,
   envFromGraphDescriptor,
 } from "@breadboard-ai/data";
+import { Autonamer } from "./autonamer.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -58,7 +57,7 @@ export class Runtime extends EventTarget {
   public readonly edit: Edit;
   public readonly kits: Kit[];
   public readonly select: Select;
-  public readonly sideboards: SideBoardRuntime;
+  public readonly autonamer: Autonamer;
   public readonly state: StateManager;
   public readonly flags: RuntimeFlagManager;
   public readonly util: typeof Util;
@@ -72,7 +71,7 @@ export class Runtime extends EventTarget {
     edit: Edit;
     kits: Kit[];
     select: Select;
-    sideboards: SideBoardRuntime;
+    autonamer: Autonamer;
     state: StateManager;
     flags: RuntimeFlagManager;
     util: typeof Util;
@@ -87,7 +86,7 @@ export class Runtime extends EventTarget {
     this.edit = config.edit;
     this.kits = config.kits;
     this.select = config.select;
-    this.sideboards = config.sideboards;
+    this.autonamer = config.autonamer;
     this.state = config.state;
     this.flags = config.flags;
     this.util = config.util;
@@ -270,11 +269,11 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
     undefined
   );
 
-  const sideboards = createSideboardRuntimeProvider(
+  const autonamer = new Autonamer(
     graphStoreArgs,
-    servers,
-    config
-  ).createSideboardRuntime();
+    config.fileSystem,
+    config.sandbox
+  );
 
   const recentBoards = await config.recentBoardStore.restore();
   const flags = config.flags;
@@ -282,7 +281,6 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
   const state = new StateManager(
     graphStore,
     config.fetchWithCreds,
-    sideboards,
     servers,
     flags,
     config.mcpClientManager
@@ -295,7 +293,7 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
     kits,
     config.sandbox,
     graphStore,
-    sideboards,
+    autonamer,
     config.settings
   );
 
@@ -314,7 +312,7 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
     edit,
     run: new Run(graphStore, dataStore, state, flags, edit),
     state,
-    sideboards,
+    autonamer,
     select: new Select(),
     util: Util,
     kits,

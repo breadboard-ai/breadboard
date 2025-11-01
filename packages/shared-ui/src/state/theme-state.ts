@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { isInlineData, isStoredData } from "@breadboard-ai/data";
+import {
+  generatePaletteFromColor,
+  generatePaletteFromImage,
+} from "@breadboard-ai/theme";
 import {
   EditableGraph,
   GraphMetadata,
@@ -11,17 +16,16 @@ import {
   LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
-import { Project, ProjectThemeState, ThemeStatus } from "./types";
-import { ThemePromptArgs } from "../sideboards/types";
-import { AppTheme } from "../types/types";
 import { err } from "@breadboard-ai/utils";
-import {
-  generatePaletteFromColor,
-  generatePaletteFromImage,
-} from "@breadboard-ai/theme";
-import { isInlineData, isStoredData } from "@breadboard-ai/data";
-import { createThemeGenerationPrompt } from "../prompts/theme-generation";
 import { signal } from "signal-utils";
+import { createThemeGenerationPrompt } from "../prompts/theme-generation";
+import { AppTheme } from "../types/types";
+import {
+  Project,
+  ProjectThemeState,
+  ThemePromptArgs,
+  ThemeStatus,
+} from "./types";
 
 export { ThemeState };
 

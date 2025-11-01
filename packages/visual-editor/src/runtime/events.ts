@@ -15,12 +15,7 @@ import {
   WorkspaceVisualChangeId,
 } from "./types";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import {
-  EditHistoryCreator,
-  NodeConfiguration,
-  NodeIdentifier,
-} from "@google-labs/breadboard";
-import { AutonameStatus } from "@breadboard-ai/shared-ui/sideboards/autoname.js";
+import { EditHistoryCreator, NodeIdentifier } from "@google-labs/breadboard";
 import { ToastType } from "@breadboard-ai/shared-ui/events/events.js";
 
 const eventInit = {
@@ -126,26 +121,6 @@ export class RuntimeErrorEvent extends Event {
 
   constructor(public readonly message: string) {
     super(RuntimeErrorEvent.eventName, { ...eventInit });
-  }
-}
-
-export class RuntimeBoardEnhanceEvent extends Event {
-  static eventName = "runtimeboardenhance" as const;
-
-  constructor(
-    public readonly tabId: TabId | null,
-    public readonly affectedNodes: NodeIdentifier[],
-    public readonly configuration: NodeConfiguration
-  ) {
-    super(RuntimeBoardEnhanceEvent.eventName, { ...eventInit });
-  }
-}
-
-export class RuntimeBoardAutonameEvent extends Event {
-  static eventName = "runtimeboardautoname" as const;
-
-  constructor(public readonly status: AutonameStatus) {
-    super(RuntimeBoardAutonameEvent.eventName, { ...eventInit });
   }
 }
 

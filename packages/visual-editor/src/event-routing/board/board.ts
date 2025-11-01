@@ -28,8 +28,6 @@ export const RunRoute: EventRoute<"board.run"> = {
       return false;
     }
 
-    runtime.edit.sideboards.discardTasks();
-
     if (!runtime.run.hasRun(tab)) {
       console.warn(`Unexpected missing run, preparing a run ...`);
       const preparingRun = await runtime.prepareRun(tab, settings);
