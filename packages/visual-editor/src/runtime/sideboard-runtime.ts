@@ -6,7 +6,6 @@
 
 import { createFileSystemBackend } from "@breadboard-ai/data-store";
 import { CapabilitiesManagerImpl } from "@breadboard-ai/runtime/legacy.js";
-import type { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import type {
   Kit,
   MutableGraph,
@@ -23,7 +22,11 @@ import {
   GraphStoreArgs,
   Outcome,
 } from "@google-labs/breadboard";
-import { RuntimeConfig, SideboardRuntimeProvider } from "./types";
+import {
+  RuntimeConfig,
+  SideBoardRuntime,
+  SideboardRuntimeProvider,
+} from "./types";
 
 export { createSideboardRuntimeProvider };
 

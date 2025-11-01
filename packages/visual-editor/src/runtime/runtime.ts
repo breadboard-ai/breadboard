@@ -15,7 +15,12 @@ import { Board } from "./board.js";
 import { Run } from "./run.js";
 import { Edit } from "./edit.js";
 import { Util } from "./util.js";
-import { RuntimeConfig, RuntimeConfigBoardServers, Tab } from "./types.js";
+import {
+  RuntimeConfig,
+  RuntimeConfigBoardServers,
+  SideBoardRuntime,
+  Tab,
+} from "./types.js";
 
 import {
   createDefaultLocalBoardServer,
@@ -34,7 +39,6 @@ import { Select } from "./select.js";
 import { StateManager } from "./state.js";
 import { getDataStore } from "@breadboard-ai/data-store";
 import { createSideboardRuntimeProvider } from "./sideboard-runtime.js";
-import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { Shell } from "./shell.js";
 import { Outcome, RunConfig, RuntimeFlagManager } from "@breadboard-ai/types";
 import {

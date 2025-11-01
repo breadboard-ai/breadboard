@@ -26,6 +26,7 @@ import {
   LLMContent,
 } from "@breadboard-ai/types";
 import {
+  SideBoardRuntime,
   Tab,
   TabId,
   WorkspaceSelectionState,
@@ -51,7 +52,6 @@ import {
   AssetEdge,
   EdgeAttachmentPoint,
 } from "@breadboard-ai/shared-ui/types/types.js";
-import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { StateManager } from "./state";
 import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
 

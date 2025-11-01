@@ -7,6 +7,8 @@
 import type {
   BoardServer,
   GraphLoader,
+  LLMContent,
+  Outcome,
   OutputValues,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
@@ -29,7 +31,6 @@ import {
   NodeIdentifier,
 } from "@breadboard-ai/types";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { RecentBoardStore } from "../data/recent-boards";
 import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
@@ -148,6 +149,13 @@ export interface WorkspaceSelectionStateWithChangeId {
 export type TabSelectionState = Map<TabId, WorkspaceSelectionState>;
 export type EditChangeId = ReturnType<typeof crypto.randomUUID>;
 export type MoveToSelection = "immediate" | "animated" | false;
+
+export type SideBoardRuntime = {
+  autoname(
+    context: LLMContent[],
+    signal: AbortSignal
+  ): Promise<Outcome<LLMContent[]>>;
+};
 
 export type SideboardRuntimeProvider = {
   createSideboardRuntime(): SideBoardRuntime;
