@@ -487,7 +487,7 @@ export class Main extends SignalWatcher(LitElement) {
 
     if (this.globalConfig.ENABLE_EMAIL_OPT_IN) {
       this.emailPrefsManager.refreshPrefs().then(() => {
-        if (this.emailPrefsManager.prefsValid && !this.emailPrefsManager.hasSetEmailPrefs) {
+        if (this.emailPrefsManager.prefsValid && !this.emailPrefsManager.hasStoredPreferences) {
           this.#uiState.show.add("WarmWelcome");
         }
       });

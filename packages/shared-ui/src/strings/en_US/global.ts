@@ -152,8 +152,17 @@ export default {
   LABEL_EMAIL_UPDATES: {
     str: "I’d like to receive emails for model updates, offers, useful tips and news about Opal",
   },
-  LABEL_RESEARCH_STUDIES: {
+  LABEL_EMAIL_RESEARCH: {
     str: "I’m interested in being invited to future research studies from Opal",
+  },
+  LABEL_SETTINGS_GENERAL: {
+    str: "General"
+  },
+  LABEL_SETTINGS_INTEGRATIONS: {
+    str: "Integrations"
+  },
+  LABEL_SETTINGS_EXPERIMENTAL: {
+    str: "Experimental Features"
   },
 
   // Statuses.

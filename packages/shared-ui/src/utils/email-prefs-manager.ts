@@ -26,7 +26,7 @@ export class EmailPrefsManager {
   async refreshPrefs() {
     this.prefsValid = false;
     const prefs = await this.#apiClient.fetchEmailPreferences(PREFERENCE_KEYS);
-    this.hasSetEmailPrefs = prefs.hasStoredPreferences;
+    this.hasStoredPreferences = prefs.hasStoredPreferences;
     this.emailPrefs = new SignalMap(prefs.preferences);
     this.prefsValid = true;
   }
@@ -35,7 +35,7 @@ export class EmailPrefsManager {
   accessor prefsValid = false;
 
   @signal
-  accessor hasSetEmailPrefs = false;
+  accessor hasStoredPreferences = false;
 
   @signal
   accessor emailPrefs = new SignalMap<EmailPreferenceKey, boolean>();
@@ -43,6 +43,7 @@ export class EmailPrefsManager {
   updateEmailPrefs(prefs: Array<[EmailPreferenceKey, boolean]>) {
     for (const [key, value] of prefs) {
       this.emailPrefs.set(key, value);
+      this.hasStoredPreferences = true;
     }
     this.#apiClient.setEmailPreferences(prefs);
   }

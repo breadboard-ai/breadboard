@@ -5,6 +5,7 @@
  */
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
 import { colorsLight } from "../../styles/host/colors-light";
 import { type } from "../../styles/host/type";
 import { Project } from "../../state";
@@ -134,6 +135,10 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
         display: flex;
         padding: var(--bb-grid-size-2) 0;
         gap: var(--bb-grid-size);
+        &.disabled {
+          font-style: italic;
+          opacity: 0.8;
+        }
       }
 
       md-checkbox {
@@ -147,35 +152,35 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
   getTabRenderInfo(): Record<TabId, { name: string, template: () => unknown }> {
     return {
       [TabId.GENERAL]: {
-        name: 'General',
+        name: Strings.from('LABEL_SETTINGS_GENERAL'),
         template: () => html`
           ${CLIENT_DEPLOYMENT_CONFIG.ENABLE_EMAIL_OPT_IN ?
-            (this.emailPrefsManager?.prefsValid ?
-              html`<label>
+          html`<label class=${classMap({ disabled: !this.emailPrefsManager?.prefsValid })}>
               <md-checkbox .checked=${this.emailPrefsManager?.emailPrefs.get('OPAL_MARKETING_UPDATES') ?? false}
+                .disabled=${!this.emailPrefsManager?.prefsValid}
                 @change=${({ target }: { target: MdCheckbox }) =>
                   this.emailPrefsManager?.updateEmailPrefs([['OPAL_MARKETING_UPDATES', target.checked]])}
               ></md-checkbox>
               ${Strings.from('LABEL_EMAIL_UPDATES')}
             </label>
-            <label>
+            <label class=${classMap({ disabled: !this.emailPrefsManager?.prefsValid })}>
               <md-checkbox .checked=${this.emailPrefsManager?.emailPrefs.get('OPAL_USER_RESEARCH') ?? false}
+                .disabled=${!this.emailPrefsManager?.prefsValid}
                 @change=${({ target }: { target: MdCheckbox }) =>
                   this.emailPrefsManager?.updateEmailPrefs([['OPAL_USER_RESEARCH', target.checked]])}
               ></md-checkbox>
-              ${Strings.from('LABEL_RESEARCH_STUDIES')}
-            </label>
-            `: html`Loading email preferences...`)
+              ${Strings.from('LABEL_EMAIL_RESEARCH')}
+            </label>`
             : nothing}`
       },
       [TabId.INTEGRATIONS]: {
-        name: "Integrations",
+        name: Strings.from('LABEL_SETTINGS_INTEGRATIONS'),
         template: () => html`
           <bb-mcp-servers-settings .project=${this.project}>
           </bb-mcp-servers-settings>`
       },
       [TabId.EXPERIMENTAL]: {
-        name: "Experimental Features",
+        name: Strings.from('LABEL_SETTINGS_EXPERIMENTAL'),
         template: () => html`
           <bb-runtime-flags .flags=${this.flags}>
           </bb-runtime-flags>`

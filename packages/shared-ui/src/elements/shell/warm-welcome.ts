@@ -99,7 +99,7 @@ export class VEWarmWelcomeModal extends LitElement {
         <md-checkbox .checked=${this.userResearch}
           @change=${({ target }: { target: MdCheckbox }) => this.userResearch = target.checked}
         ></md-checkbox>
-        ${Strings.from('LABEL_RESEARCH_STUDIES')}
+        ${Strings.from('LABEL_EMAIL_RESEARCH')}
       </label>
     </bb-modal>
     `;
