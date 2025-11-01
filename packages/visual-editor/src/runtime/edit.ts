@@ -8,6 +8,7 @@ import {
   EditableGraph,
   EditHistoryCreator,
   EditSpec,
+  err,
   GraphDescriptor,
   Kit,
   MoveToGraphTransform,
@@ -19,7 +20,11 @@ import {
   Outcome,
   PortIdentifier,
 } from "@google-labs/breadboard";
-import { GraphLoader } from "@breadboard-ai/types";
+import {
+  GraphLoader,
+  JsonSerializable,
+  LLMContent,
+} from "@breadboard-ai/types";
 import {
   EnhanceSideboard,
   Tab,
@@ -29,7 +34,6 @@ import {
   WorkspaceVisualState,
 } from "./types";
 import {
-  RuntimeBoardAutonameEvent,
   RuntimeBoardEditEvent,
   RuntimeBoardEnhanceEvent,
   RuntimeErrorEvent,
@@ -51,14 +55,31 @@ import {
   EdgeAttachmentPoint,
 } from "@breadboard-ai/shared-ui/types/types.js";
 import { SideBoardRuntime } from "@breadboard-ai/shared-ui/sideboards/types.js";
-import { Autoname } from "@breadboard-ai/shared-ui/sideboards/autoname.js";
 import { StateManager } from "./state";
 import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
 
+export type AutonameArguments = {
+  nodeConfigurationUpdate: {
+    type: string;
+    configuration: NodeConfiguration;
+  };
+};
+
+export type NotEnoughContextResult = {
+  notEnoughContext: true;
+};
+
+export type NodeConfigurationUpdateResult = {
+  title: string;
+  description: string;
+};
+
+export type AutonameResult =
+  | NotEnoughContextResult
+  | NodeConfigurationUpdateResult;
+
 export class Edit extends EventTarget {
   #editors = new Map<TabId, EditableGraph>();
-  // Since the tabs are gone, we can have a single instance now.
-  #autoname: Autoname;
 
   constructor(
     public readonly state: StateManager,
@@ -70,12 +91,6 @@ export class Edit extends EventTarget {
     public readonly settings: BreadboardUI.Types.SettingsStore | null
   ) {
     super();
-
-    this.#autoname = new Autoname(sideboards, {
-      statuschange: (status) => {
-        this.dispatchEvent(new RuntimeBoardAutonameEvent(status));
-      },
-    });
   }
 
   getEditor(tab: Tab | null): EditableGraph | null {
@@ -933,16 +948,49 @@ export class Edit extends EventTarget {
     graphId: string,
     configuration: NodeConfiguration
   ): Promise<Outcome<void>> {
-    const generatingAutonames = await this.#autoname.onNodeConfigurationUpdate(
-      editableGraph,
-      id,
-      graphId,
-      configuration
-    );
-    if (!ok(generatingAutonames)) {
-      console.warn("Autonaming error", generatingAutonames.$error);
-      return;
+    const inspector = editableGraph.inspect(graphId);
+    const node = inspector.nodeById(id);
+    if (!node) {
+      const msg = `Unable to find node with id: "${id}"`;
+      console.error(msg);
+      return err(msg);
     }
+    const type = node.descriptor.type;
+
+    const abortController = new AbortController();
+    let graphChanged = false;
+    editableGraph.addEventListener(
+      "graphchange",
+      () => {
+        graphChanged = true;
+        abortController.abort();
+      },
+      { once: true }
+    );
+
+    const outputs = await this.sideboards.autoname(
+      asLLMContent({
+        nodeConfigurationUpdate: { configuration, type },
+      } satisfies AutonameArguments),
+      abortController.signal
+    );
+
+    if (graphChanged) {
+      // Graph changed in the middle of a task, throw away the results.
+      const msg = "Results discarded due to graph change";
+      console.log(msg);
+      return err(msg);
+    }
+    if (!ok(outputs)) {
+      console.error(outputs.$error);
+      return outputs;
+    }
+    const part = outputs.at(0)?.parts.at(0);
+    if (!(part && "json" in part)) {
+      return err(`Invalid sideboard output`);
+    }
+    const generatingAutonames = part.json as AutonameResult;
+    console.log("AUTONAMING RESULT", generatingAutonames);
 
     if ("notEnoughContext" in generatingAutonames) {
       console.log("Not enough context to autoname", id);
@@ -1271,4 +1319,8 @@ export class Edit extends EventTarget {
       `Replace graph`
     );
   }
+}
+
+function asLLMContent<T>(o: T): LLMContent[] {
+  return [{ parts: [{ json: o as JsonSerializable }] }];
 }

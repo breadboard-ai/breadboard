@@ -20,7 +20,6 @@ import {
   NodeConfiguration,
   NodeIdentifier,
 } from "@google-labs/breadboard";
-import { AutonameStatus } from "@breadboard-ai/shared-ui/sideboards/autoname.js";
 import { ToastType } from "@breadboard-ai/shared-ui/events/events.js";
 
 const eventInit = {
@@ -138,14 +137,6 @@ export class RuntimeBoardEnhanceEvent extends Event {
     public readonly configuration: NodeConfiguration
   ) {
     super(RuntimeBoardEnhanceEvent.eventName, { ...eventInit });
-  }
-}
-
-export class RuntimeBoardAutonameEvent extends Event {
-  static eventName = "runtimeboardautoname" as const;
-
-  constructor(public readonly status: AutonameStatus) {
-    super(RuntimeBoardAutonameEvent.eventName, { ...eventInit });
   }
 }
 

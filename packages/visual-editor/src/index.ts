@@ -704,13 +704,6 @@ export class Main extends SignalWatcher(LitElement) {
     );
 
     this.#runtime.edit.addEventListener(
-      Runtime.Events.RuntimeBoardAutonameEvent.eventName,
-      (evt: Runtime.Events.RuntimeBoardAutonameEvent) => {
-        console.log("[Autoname Status Change]:", evt.status);
-      }
-    );
-
-    this.#runtime.edit.addEventListener(
       Runtime.Events.RuntimeBoardEditEvent.eventName,
       () => {
         this.#runtime.board.save(
