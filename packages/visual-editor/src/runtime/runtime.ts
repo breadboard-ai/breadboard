@@ -281,7 +281,6 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
   const state = new StateManager(
     graphStore,
     config.fetchWithCreds,
-    sideboards,
     servers,
     flags,
     config.mcpClientManager

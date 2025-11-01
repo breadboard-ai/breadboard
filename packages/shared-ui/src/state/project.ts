@@ -33,7 +33,6 @@ import {
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { ConnectorType } from "../connectors/types";
-import { SideBoardRuntime } from "../sideboards/types";
 import { ConnectorStateImpl } from "./connectors";
 import { ReactiveFastAccess } from "./fast-access";
 import { GraphAssetImpl } from "./graph-asset";
@@ -84,7 +83,6 @@ function createProjectState(
   mainGraphId: MainGraphIdentifier,
   store: MutableGraphStore,
   fetchWithCreds: typeof globalThis.fetch,
-  runtime: SideBoardRuntime,
   boardServerFinder: (url: URL) => BoardServer | null,
   mcpClientManager: McpClientManager,
   editable?: EditableGraph
@@ -93,7 +91,6 @@ function createProjectState(
     mainGraphId,
     store,
     fetchWithCreds,
-    runtime,
     boardServerFinder,
     mcpClientManager,
     editable
@@ -107,7 +104,6 @@ type BoardServerFinder = (url: URL) => BoardServer | null;
 class ReactiveProject implements ProjectInternal {
   #mainGraphId: MainGraphIdentifier;
   #store: MutableGraphStore;
-  #runtime: SideBoardRuntime;
   #fetchWithCreds: typeof globalThis.fetch;
   #boardServerFinder: BoardServerFinder;
   #editable?: EditableGraph;
@@ -136,7 +132,6 @@ class ReactiveProject implements ProjectInternal {
     mainGraphId: MainGraphIdentifier,
     store: MutableGraphStore,
     fetchWithCreds: typeof globalThis.fetch,
-    runtime: SideBoardRuntime,
     boardServerFinder: BoardServerFinder,
     clientManager: McpClientManager,
     editable?: EditableGraph
@@ -144,7 +139,6 @@ class ReactiveProject implements ProjectInternal {
     this.#mainGraphId = mainGraphId;
     this.#store = store;
     this.#fetchWithCreds = fetchWithCreds;
-    this.#runtime = runtime;
     this.#boardServerFinder = boardServerFinder;
     this.#editable = editable;
     store.addEventListener("update", (event) => {
@@ -214,10 +208,6 @@ class ReactiveProject implements ProjectInternal {
       this.#editable,
       signal
     );
-  }
-
-  runtime(): SideBoardRuntime {
-    return this.#runtime;
   }
 
   async apply(transform: EditTransform): Promise<Outcome<void>> {

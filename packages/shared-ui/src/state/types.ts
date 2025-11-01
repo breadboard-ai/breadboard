@@ -35,7 +35,6 @@ import {
 } from "@google-labs/breadboard";
 import { ConnectorInstance, ConnectorType } from "../connectors/types";
 import { StateEvent, ToastType } from "../events/events";
-import { SideBoardRuntime } from "../sideboards/types";
 import { AppTheme, VisualEditorMode } from "../types/types";
 import { HTMLTemplateResult } from "lit";
 import type { AsyncComputedStatus } from "signal-utils/async-computed";
@@ -474,7 +473,6 @@ export type Project = {
 
 export type ProjectInternal = Project & {
   graphUrl: URL | null;
-  runtime(): SideBoardRuntime;
   apply(transform: EditTransform): Promise<Outcome<void>>;
   edit(spec: EditSpec[], label: string): Promise<Outcome<void>>;
   findOutputPortId(

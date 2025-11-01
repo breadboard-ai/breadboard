@@ -42,8 +42,7 @@ class ConnectorStateImpl implements ConnectorState {
 
     const id = globalThis.crypto.randomUUID();
 
-    const runtime = this.#project.runtime();
-    const configurator = new Configurator(runtime, id, url);
+    const configurator = new Configurator(id, url);
 
     const initializing = await configurator.initialize();
     if (!ok(initializing)) return this.#free(initializing);

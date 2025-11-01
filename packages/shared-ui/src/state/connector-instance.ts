@@ -62,11 +62,7 @@ class ConnectorInstanceImpl implements ConnectorInstance {
     const configuration = this.configuration;
     if (!ok(configuration)) return configuration;
 
-    const configurator = new Configurator(
-      this.project.runtime(),
-      this.id,
-      configuration.url
-    );
+    const configurator = new Configurator(this.id, configuration.url);
 
     return configurator.read(configuration.configuration);
   });
@@ -86,11 +82,7 @@ class ConnectorInstanceImpl implements ConnectorInstance {
     const configuration = this.configuration;
     if (!ok(configuration)) return configuration;
 
-    const configurator = new Configurator(
-      this.project.runtime(),
-      this.id,
-      configuration.url
-    );
+    const configurator = new Configurator(this.id, configuration.url);
 
     return configurator.preview(configuration.configuration);
   });
@@ -110,11 +102,7 @@ class ConnectorInstanceImpl implements ConnectorInstance {
     const configuration = this.configuration;
     if (!ok(configuration)) return configuration;
 
-    const configurator = new Configurator(
-      this.project.runtime(),
-      this.id,
-      configuration.url
-    );
+    const configurator = new Configurator(this.id, configuration.url);
 
     const writing = await configurator.write(values);
     if (!ok(writing)) return writing;

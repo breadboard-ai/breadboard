@@ -7,24 +7,14 @@
 import { err, ok, Outcome } from "@google-labs/breadboard";
 import { ConnectorInitializerResult, ConnectorView } from "./types";
 import { JsonSerializable, LLMContent, UUID } from "@breadboard-ai/types";
-import { SideBoardRuntime } from "../sideboards/types";
 
 export { Configurator };
 
 class Configurator {
-  #configuratorUrl?: string;
-
   constructor(
-    public readonly runtime: SideBoardRuntime,
     public readonly id: UUID,
     public readonly url: string
   ) {}
-
-  async #getConfigurator(): Promise<Outcome<string>> {
-    return err(
-      `Connectors are deprecated and unused. If you see this error, please file Feedback`
-    );
-  }
 
   async #invokeConfigurator(
     _payload: JsonSerializable

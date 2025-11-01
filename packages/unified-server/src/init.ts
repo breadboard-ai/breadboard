@@ -38,8 +38,6 @@ bootstrap({
     // If we allow 3P modules to run, we can exit quickly (no filter)
     if (deploymentConfiguration.ALLOW_3P_MODULES) return;
     const url = baseURLFromContext(context);
-    // Allow sideboards
-    if (url.hostname === "sideboard") return;
     // Disallow anything but A2.
     if (!isA2(url)) {
       return err(`This module is not allowed to run in this configuration`);
