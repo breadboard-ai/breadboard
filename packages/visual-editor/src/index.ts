@@ -336,11 +336,6 @@ export class Main extends SignalWatcher(LitElement) {
     this.flowGenerator = new FlowGenerator(this.#apiClient);
 
     this.emailPrefsManager = new EmailPrefsManager(this.#apiClient);
-    this.emailPrefsManager.refreshPrefs().then(() => {
-      if (this.emailPrefsManager.prefsValid && !this.emailPrefsManager.hasSetEmailPrefs) {
-        this.#uiState.show.add("WarmWelcome");
-      }
-    });
 
     const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
       .href;
@@ -489,6 +484,15 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.#boardServers = this.#runtime.board.getBoardServers() || [];
     this.#uiState = this.#runtime.state.getOrCreateUIState();
+
+    if (this.globalConfig.ENABLE_EMAIL_OPT_IN) {
+      this.emailPrefsManager.refreshPrefs().then(() => {
+        if (this.emailPrefsManager.prefsValid && !this.emailPrefsManager.hasSetEmailPrefs) {
+          this.#uiState.show.add("WarmWelcome");
+        }
+      });
+    }
+
     if (parsedUrl.page === "graph") {
       const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
       ActionTracker.load(this.#uiState.mode, shared);

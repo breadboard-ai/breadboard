@@ -25,6 +25,7 @@ import { consume } from "@lit/context";
 import { uiStateContext } from "../../contexts/ui-state.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { ActionTracker } from "../../utils/action-tracker.js";
+import { hasEnabledGlobalSettings } from "./global-settings.js";
 
 const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
 
@@ -566,11 +567,12 @@ export class VEHeader extends SignalWatcher(LitElement) {
         title: Strings.from("COMMAND_JOIN_CHAT"),
         icon: "open_in_new",
       },
-      {
+      ...(hasEnabledGlobalSettings(this.#uiState, this.showExperimentalComponents) ?
+        [{
         id: "show-global-settings",
         title: Strings.from("COMMAND_GLOBAL_SETTINGS"),
         icon: "settings",
-      },
+        }] : []),
       {
         id: "demo-video",
         title: Strings.from("COMMAND_WATCH_DEMO_VIDEO"),
