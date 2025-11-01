@@ -569,9 +569,9 @@ export class VEHeader extends SignalWatcher(LitElement) {
       },
       ...(hasEnabledGlobalSettings(this.#uiState, this.showExperimentalComponents) ?
         [{
-        id: "show-global-settings",
-        title: Strings.from("COMMAND_GLOBAL_SETTINGS"),
-        icon: "settings",
+          id: "show-global-settings",
+          title: Strings.from("COMMAND_GLOBAL_SETTINGS"),
+          icon: "settings_2",
         }] : []),
       {
         id: "demo-video",
