@@ -26,7 +26,6 @@ import {
   LLMContent,
 } from "@breadboard-ai/types";
 import {
-  SideBoardRuntime,
   Tab,
   TabId,
   WorkspaceSelectionState,
@@ -54,6 +53,7 @@ import {
 } from "@breadboard-ai/shared-ui/types/types.js";
 import { StateManager } from "./state";
 import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
+import { Autonamer } from "./autonamer";
 
 export type AutonameArguments = {
   nodeConfigurationUpdate: {
@@ -84,7 +84,7 @@ export class Edit extends EventTarget {
     public readonly kits: Kit[],
     public readonly sandbox: RunnableModuleFactory,
     public readonly graphStore: MutableGraphStore,
-    public readonly sideboards: SideBoardRuntime,
+    public readonly autonamer: Autonamer,
     public readonly settings: BreadboardUI.Types.SettingsStore | null
   ) {
     super();
@@ -887,7 +887,7 @@ export class Edit extends EventTarget {
       { once: true }
     );
 
-    const outputs = await this.sideboards.autoname(
+    const outputs = await this.autonamer.autoname(
       asLLMContent({
         nodeConfigurationUpdate: { configuration, type },
       } satisfies AutonameArguments),
@@ -906,7 +906,7 @@ export class Edit extends EventTarget {
     }
     const part = outputs.at(0)?.parts.at(0);
     if (!(part && "json" in part)) {
-      return err(`Invalid sideboard output`);
+      return err(`Invalid autoname output`);
     }
     const generatingAutonames = part.json as AutonameResult;
     console.log("AUTONAMING RESULT", generatingAutonames);

@@ -22,26 +22,10 @@ import {
   GraphStoreArgs,
   Outcome,
 } from "@google-labs/breadboard";
-import {
-  RuntimeConfig,
-  SideBoardRuntime,
-  SideboardRuntimeProvider,
-} from "./types";
 
-export { createSideboardRuntimeProvider };
+export { Autonamer };
 
-function createSideboardRuntimeProvider(
-  args: GraphStoreArgs,
-  config: RuntimeConfig
-): SideboardRuntimeProvider {
-  return {
-    createSideboardRuntime() {
-      return new SideboardRuntimeImpl(args, config.fileSystem, config.sandbox);
-    },
-  };
-}
-
-class SideboardRuntimeImpl implements SideBoardRuntime {
+class Autonamer {
   #kits: Kit[];
   #fileSystem: FileSystem;
 

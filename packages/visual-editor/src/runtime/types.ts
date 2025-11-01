@@ -7,8 +7,6 @@
 import type {
   BoardServer,
   GraphLoader,
-  LLMContent,
-  Outcome,
   OutputValues,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
@@ -149,16 +147,5 @@ export interface WorkspaceSelectionStateWithChangeId {
 export type TabSelectionState = Map<TabId, WorkspaceSelectionState>;
 export type EditChangeId = ReturnType<typeof crypto.randomUUID>;
 export type MoveToSelection = "immediate" | "animated" | false;
-
-export type SideBoardRuntime = {
-  autoname(
-    context: LLMContent[],
-    signal: AbortSignal
-  ): Promise<Outcome<LLMContent[]>>;
-};
-
-export type SideboardRuntimeProvider = {
-  createSideboardRuntime(): SideBoardRuntime;
-};
 
 export type VisualEditorMode = "app" | "canvas";
