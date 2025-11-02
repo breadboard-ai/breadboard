@@ -8,7 +8,7 @@ import { LitElement, html, css, type PropertyValues, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import * as StringsHelper from "../strings/helper.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import type { GraphDescriptor } from "@breadboard-ai/types";
+import type { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import { StateEvent, UtteranceEvent } from "../events/events.js";
 import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
@@ -20,6 +20,9 @@ import { spinAnimationStyles } from "../styles/spin-animation.js";
 import { ActionTracker } from "../utils/action-tracker.js";
 import { colorsLight } from "../styles/host/colors-light.js";
 import { type } from "../styles/host/type.js";
+import { projectStateContext } from "../contexts/project-state.js";
+import { Project } from "../state/types.js";
+import { ok } from "@breadboard-ai/utils";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -149,6 +152,9 @@ export class FlowgenEditorInput extends LitElement {
   @consume({ context: flowGeneratorContext })
   accessor flowGenerator: FlowGenerator | undefined;
 
+  @consume({ context: projectStateContext })
+  accessor projectState: Project | undefined;
+
   @property({ type: Object })
   accessor currentGraph: GraphDescriptor | undefined;
 
@@ -276,12 +282,36 @@ export class FlowgenEditorInput extends LitElement {
 
       this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
 
-      void this.#generateBoard(description)
-        .then((graph) => this.#onGenerateComplete(graph))
-        .catch((error) => this.#onGenerateError(error))
+      const generating = this.#generateBoard(description);
+
+      // TODO: Wire the signal to do some good.
+      const signal = new AbortController().signal;
+
+      const creatingTheme = this.projectState?.themes.generateThemeFromIntent(
+        description,
+        signal
+      );
+
+      Promise.allSettled([generating, creatingTheme])
+        .then(([generated, createdTheme]) => {
+          if (generated.status === "rejected") {
+            return this.#onGenerateError(generated.reason);
+          }
+          let theme;
+          if (createdTheme.status === "fulfilled" && ok(createdTheme.value)) {
+            theme = createdTheme.value;
+          }
+          return this.#onGenerateComplete(generated.value, theme);
+        })
         .finally(() => {
           this.dispatchEvent(new StateEvent({ eventType: "host.unlock" }));
         });
+      // void generating
+      //   .then((graph) => this.#onGenerateComplete(graph))
+      //   .catch((error) => this.#onGenerateError(error))
+      //   .finally(() => {
+      //     this.dispatchEvent(new StateEvent({ eventType: "host.unlock" }));
+      //   });
     }
   }
 
@@ -301,7 +331,7 @@ export class FlowgenEditorInput extends LitElement {
     return flow;
   }
 
-  #onGenerateComplete(graph: GraphDescriptor) {
+  #onGenerateComplete(graph: GraphDescriptor, theme?: GraphTheme) {
     if (this.#state.status !== "generating") {
       return;
     }
@@ -309,6 +339,7 @@ export class FlowgenEditorInput extends LitElement {
       new StateEvent({
         eventType: "board.replace",
         replacement: graph,
+        theme,
         creator: { role: "assistant" },
       })
     );

@@ -356,12 +356,12 @@ export const ReplaceRoute: EventRoute<"board.replace"> = {
   async do(deps) {
     const { tab, runtime, originalEvent, googleDriveClient } = deps;
 
-    const { replacement } = originalEvent.detail;
+    const { replacement, theme } = originalEvent.detail;
 
-    const themes = runtime.edit.getEditor(tab)?.raw().metadata?.visual
-      ?.presentation?.themes;
+    // const themes = runtime.edit.getEditor(tab)?.raw().metadata?.visual
+    //   ?.presentation?.themes;
 
-    const shouldCreateTheme = themes && Object.values(themes).length === 1;
+    // const shouldCreateTheme = themes && Object.values(themes).length === 1;
 
     runtime.util.applyDefaultThemeInformationIfNonePresent(replacement);
     await runtime.util.createAppPaletteIfNeeded(replacement, googleDriveClient);
@@ -374,17 +374,10 @@ export const ReplaceRoute: EventRoute<"board.replace"> = {
 
     const autoTheme = (await runtime.flags.flags()).autoTheme;
 
-    if (shouldCreateTheme && autoTheme) {
+    if (autoTheme && theme) {
       const projectState = runtime.state.getProjectState(tab?.mainGraphId);
       if (projectState) {
-        projectState.themes.generateTheme(
-          {
-            random: false,
-            title: replacement.title || "Opal app",
-            description: replacement.description,
-          },
-          new AbortController().signal
-        );
+        await projectState.themes.setTheme(theme);
       }
     }
 

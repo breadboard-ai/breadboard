@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EditHistoryCreator, GraphDescriptor } from "@breadboard-ai/types";
+import {
+  EditHistoryCreator,
+  GraphDescriptor,
+  GraphTheme,
+} from "@breadboard-ai/types";
 import { BaseEventDetail } from "../base";
 
 type Namespace = "board";
@@ -86,4 +90,5 @@ export interface Rename extends BaseEventDetail<`${Namespace}.rename`> {
 export interface Replace extends BaseEventDetail<`${Namespace}.replace`> {
   readonly replacement: GraphDescriptor;
   readonly creator: EditHistoryCreator;
+  readonly theme?: GraphTheme;
 }

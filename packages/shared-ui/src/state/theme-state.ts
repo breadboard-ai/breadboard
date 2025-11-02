@@ -16,9 +16,12 @@ import {
   LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
-import { err } from "@breadboard-ai/utils";
+import { err, ok } from "@breadboard-ai/utils";
 import { signal } from "signal-utils";
-import { createThemeGenerationPrompt } from "../prompts/theme-generation";
+import {
+  createThemeGenerationPrompt,
+  getThemeFromIntentGenerationPrompt,
+} from "../prompts/theme-generation";
 import { AppTheme } from "../types/types";
 import {
   Project,
@@ -117,10 +120,83 @@ class ThemeState implements ProjectThemeState {
     }
   }
 
-  async generateTheme(
-    args: ThemePromptArgs,
+  async #updateGraphWithTheme(graphTheme: GraphTheme): Promise<Outcome<void>> {
+    this.status = "editing";
+
+    const metadata: GraphMetadata = this.editableGraph!.raw().metadata ?? {};
+    metadata.visual ??= {};
+    metadata.visual.presentation ??= {};
+    metadata.visual.presentation.themes ??= {};
+
+    const id = globalThis.crypto.randomUUID();
+    metadata.visual.presentation.themes[id] = graphTheme;
+    metadata.visual.presentation.theme = id;
+
+    const edit = await this.editableGraph!.edit(
+      [{ type: "changegraphmetadata", metadata, graphId: "" }],
+      "Updating theme"
+    );
+    this.status = "idle";
+
+    if (!edit.success) {
+      return err(edit.error);
+    }
+  }
+
+  async setTheme(theme: GraphTheme): Promise<Outcome<void>> {
+    if (!this.editableGraph) {
+      return err(`Unable to add theme: can't edit the graph`);
+    }
+    if (this.status !== "idle") {
+      return err(
+        `Unable to add theme: theming is not idle. Current status: "${this.status}"`
+      );
+    }
+    return this.#updateGraphWithTheme(theme);
+  }
+
+  async #persistTheme(appTheme: AppTheme): Promise<Outcome<GraphTheme>> {
+    const { primary, secondary, tertiary, error, neutral, neutralVariant } =
+      appTheme;
+
+    const graphTheme: GraphTheme = {
+      template: "basic",
+      templateAdditionalOptions: {},
+      palette: {
+        primary,
+        secondary,
+        tertiary,
+        error,
+        neutral,
+        neutralVariant,
+      },
+      themeColors: {
+        primaryColor: appTheme.primaryColor,
+        secondaryColor: appTheme.secondaryColor,
+        backgroundColor: appTheme.backgroundColor,
+        primaryTextColor: appTheme.primaryTextColor,
+        textColor: appTheme.textColor,
+      },
+    };
+
+    if (appTheme.splashScreen) {
+      const persisted = await this.project.persistDataParts([
+        { parts: [appTheme.splashScreen] },
+      ]);
+      const splashScreen = persisted?.[0].parts[0];
+      if (isStoredData(splashScreen)) {
+        graphTheme.splashScreen = splashScreen;
+      } else {
+        console.warn("Unable to save splash screen", splashScreen);
+      }
+    }
+    return graphTheme;
+  }
+
+  async #generateTheme(
+    contents: LLMContent,
     signal: AbortSignal
-  ): Promise<Outcome<void>> {
+  ): Promise<Outcome<AppTheme>> {
     if (!this.editableGraph) {
       return err(`Unable to generate themes: can't edit the graph`);
     }
@@ -131,13 +207,9 @@ class ThemeState implements ProjectThemeState {
     }
     this.status = "generating";
 
-    const body = {
-      contents: createThemeGenerationPrompt(args),
-    };
-
     const response = await this.fetchWithCreds(endpointURL(IMAGE_GENERATOR), {
       method: "POST",
-      body: JSON.stringify(body),
+      body: JSON.stringify({ contents }),
       signal,
     });
     const result = (await response.json()) as {
@@ -175,9 +247,8 @@ class ThemeState implements ProjectThemeState {
       if (generatedTheme) {
         theme = generatedTheme;
       }
-      this.status = "idle";
 
-      return this.addTheme({
+      return {
         ...theme,
         primaryColor: "",
         secondaryColor: "",
@@ -186,11 +257,37 @@ class ThemeState implements ProjectThemeState {
         primaryTextColor: "",
         backgroundColor: "",
         splashScreen,
-      });
+      };
     } catch (e) {
       console.warn(e);
       return err("Invalid color scheme generated");
+    } finally {
+      this.status = "idle";
     }
+  }
+
+  async generateThemeFromIntent(
+    intent: string,
+    signal: AbortSignal
+  ): Promise<Outcome<GraphTheme>> {
+    const appTheme = await this.#generateTheme(
+      getThemeFromIntentGenerationPrompt(intent),
+      signal
+    );
+    if (!ok(appTheme)) return appTheme;
+    return this.#persistTheme(appTheme);
+  }
+
+  async generateTheme(
+    args: ThemePromptArgs,
+    signal: AbortSignal
+  ): Promise<Outcome<void>> {
+    const theme = await this.#generateTheme(
+      createThemeGenerationPrompt(args),
+      signal
+    );
+    if (!ok(theme)) return theme;
+    return this.addTheme(theme);
   }
 
   async deleteTheme(theme: string): Promise<Outcome<void>> {

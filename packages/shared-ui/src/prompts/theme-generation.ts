@@ -7,30 +7,16 @@
 import { LLMContent } from "@breadboard-ai/types";
 import { ThemePromptArgs } from "../state/types";
 
-export { createThemeGenerationPrompt };
+export { createThemeGenerationPrompt, getThemeFromIntentGenerationPrompt };
 
-function createThemeGenerationPrompt(args: ThemePromptArgs): LLMContent {
-  const { random, title, description, userInstruction = "" } = args;
-  let appName = title;
-  let appDescription = description;
-  if (random) {
-    appName = "Random application";
-    appDescription =
-      "Generate me a fun image of your choosing about anything you like";
-  }
-  appDescription = appDescription
-    ? `The app does the following: ${appDescription}`
-    : "";
-
-  const text = `## Objective
+function getInstruction(context: string, userInstruction?: string): string {
+  return `## Objective
   
   Create a sophisticated and impactful visual metaphor or representation for the given input, ensuring the image communicates professionalism, innovation, and clarity, suitable for a mobile web app splash screen. Generate a high-resolution, visually stunning splash screen that is beautiful, exceptionally well-designed, and sleek, intended to represent a specific concept. In some cases, depending on the prompt it may be appropriate to show a literal item as part of the image. Use your artistic and aesthetic judgment.
 
 ## Context
 
-The application's name is: "${appName}".
-
-${appDescription}
+${context}
 
 Art Medium: 
 - Emphasize matte finishes and soft-touch materials. 
@@ -67,6 +53,41 @@ ${
 ${userInstruction}`
     : ""
 }`;
+}
+
+function getThemeFromIntentGenerationPrompt(intent: string): LLMContent {
+  const context = `The application will be designed based on this intent:
+
+<intent>
+${intent}
+</intent>
+
+Try to visualize how the splash screen for this application would look like.
+
+`;
+  const text = getInstruction(context);
+
+  return { parts: [{ text }] };
+}
+
+function createThemeGenerationPrompt(args: ThemePromptArgs): LLMContent {
+  const { random, title, description, userInstruction = "" } = args;
+  let appName = title;
+  let appDescription = description;
+  if (random) {
+    appName = "Random application";
+    appDescription =
+      "Generate me a fun image of your choosing about anything you like";
+  }
+  appDescription = appDescription
+    ? `The app does the following: ${appDescription}`
+    : "";
+
+  const context = `The application's name is: "${appName}".
+
+${appDescription}`;
+
+  const text = getInstruction(context, userInstruction);
 
   return { parts: [{ text }] };
 }
