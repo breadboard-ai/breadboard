@@ -17,7 +17,7 @@ export type EvalHarnessArgs = {
 };
 
 /**
- * Given a GeminiInputs, runs it and returns it
+ * Given a GeminiInputs, runs it and returns GeminiAPIOutputs
  */
 class EvalHarness {
   constructor(private readonly args: EvalHarnessArgs) {}

@@ -226,21 +226,6 @@ class Loop {
       llm`<objective>${objectivePidgin.text}</objective>`.asContent(),
     ];
 
-    // // TEST:
-    // console.log(
-    //   "DESIGN",
-    //   toJson([
-    //     (
-    //       (await gemini(
-    //         getDesignSurfaceSpecsPrompt(contents),
-    //         this.caps,
-    //         this.moduleArgs
-    //       )) as GeminiAPIOutputs
-    //     ).candidates.at(0)!.content!,
-    //   ])
-    // );
-    // throw new Error("STOP HERE");
-
     let terminateLoop = false;
     let result: AgentRawResult = {
       success: false,

@@ -8,6 +8,8 @@ import { EvalHarness } from "../src/eval-harness";
 import { getDesignSurfaceSpecsPrompt } from "../src/agent/prompts/design-surface-specs";
 import { llm } from "../src/a2/utils";
 import { config } from "dotenv";
+import { ok, toJson } from "@breadboard-ai/utils";
+import { exit } from "process";
 
 config();
 
@@ -35,5 +37,9 @@ Before exiting, record the answers and the summary of the session for the teache
 -  where the student should concentrate on learning`.asContent(),
   ])
 );
+if (!ok(result)) {
+  console.log("ERROR", result.$error);
+  exit(-1);
+}
 
-console.log(result);
+console.log(toJson([result.candidates.at(0)!.content!]));
