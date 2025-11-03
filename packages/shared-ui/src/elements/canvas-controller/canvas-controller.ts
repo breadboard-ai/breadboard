@@ -60,7 +60,7 @@ import {
 } from "../../utils/workspace.js";
 import { icons } from "../../styles/icons.js";
 import { EntityEditor } from "../elements.js";
-import { consume } from "@lit/context";
+import { consume, provide } from "@lit/context";
 import { SharePanel } from "../share-panel/share-panel.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
@@ -77,6 +77,7 @@ import "./empty-state.js";
 import { isEmpty } from "../../utils/utils.js";
 import { uiStateContext } from "../../contexts/ui-state.js";
 import { Signal, SignalWatcher } from "@lit-labs/signals";
+import { projectStateContext } from "../../contexts/contexts.js";
 
 @customElement("bb-canvas-controller")
 export class CanvasController extends SignalWatcher(LitElement) {
@@ -122,8 +123,9 @@ export class CanvasController extends SignalWatcher(LitElement) {
   @property()
   accessor mainGraphId: MainGraphIdentifier | null = null;
 
+  @provide({ context: projectStateContext })
   @state()
-  accessor projectState: Project | null = null;
+  accessor projectState!: Project;
 
   @property()
   accessor readOnly = true;

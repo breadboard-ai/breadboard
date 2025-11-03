@@ -11,6 +11,7 @@ import {
   AssetPath,
   ConsoleEntry,
   GraphIdentifier,
+  GraphTheme,
   HarnessRunner,
   InspectableNodePorts,
   LLMContent,
@@ -546,6 +547,14 @@ export type ProjectThemeState = {
    * as current.
    */
   addTheme(theme: AppTheme): Promise<Outcome<void>>;
+
+  /**
+   * Generates a new theme based on the intent and sets is a current
+   */
+  generateThemeFromIntent(intent: string): Promise<Outcome<GraphTheme>>;
+
+  setTheme(theme: GraphTheme): Promise<Outcome<void>>;
+
   /**
    * Generates a new theme to the list of available themes and sets it
    * as current.
