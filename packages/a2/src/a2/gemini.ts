@@ -84,6 +84,7 @@ export type Modality = "TEXT" | "IMAGE" | "AUDIO";
 export type GenerationConfig = {
   responseMimeType?: "text/plain" | "application/json" | "text/x.enum";
   responseSchema?: GeminiSchema;
+  responseJsonSchema?: Schema;
   responseModalities?: Modality[];
   thinkingConfig?: ThinkingConfig;
 };
