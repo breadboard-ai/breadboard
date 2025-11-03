@@ -225,6 +225,7 @@ class Loop {
     const contents: LLMContent[] = [
       llm`<objective>${objectivePidgin.text}</objective>`.asContent(),
     ];
+
     let terminateLoop = false;
     let result: AgentRawResult = {
       success: false,

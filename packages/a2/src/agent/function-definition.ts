@@ -6,10 +6,11 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Outcome } from "@breadboard-ai/types";
+import { Outcome, Schema } from "@breadboard-ai/types";
 import { FunctionDeclaration } from "@google/genai";
 import { z, ZodObject, ZodTypeAny } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
+import { GeminiSchema } from "../a2/gemini";
 
 export type ZodFunctionDefinition<
   TParams extends ArgsRawShape,
@@ -41,7 +42,7 @@ type TypedFunctionDefinition<
 
 export type FunctionDefinition = TypedFunctionDefinition<any, any>;
 
-export { defineFunction, defineFunctionLoose };
+export { defineFunction, defineFunctionLoose, defineResponseSchema };
 
 function defineFunction<
   TParams extends ArgsRawShape,
@@ -63,6 +64,14 @@ function defineFunction<
     result["responseJsonSchema"] = zodToJsonSchema(z.object(response));
   }
   return result;
+}
+
+function defineResponseSchema<TSchema extends ArgsRawShape>(
+  schema: TSchema
+): GeminiSchema {
+  const responseSchema = zodToJsonSchema(z.object(schema)) as Schema;
+
+  return responseSchema as GeminiSchema;
 }
 
 function defineFunctionLoose(

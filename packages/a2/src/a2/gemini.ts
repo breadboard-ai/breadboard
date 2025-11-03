@@ -84,6 +84,7 @@ export type Modality = "TEXT" | "IMAGE" | "AUDIO";
 export type GenerationConfig = {
   responseMimeType?: "text/plain" | "application/json" | "text/x.enum";
   responseSchema?: GeminiSchema;
+  responseJsonSchema?: Schema;
   responseModalities?: Modality[];
   thinkingConfig?: ThinkingConfig;
 };
@@ -391,7 +392,7 @@ async function conformBody(
     true
   );
   const contents = await transformDataParts(
-    new URL(window.location.href), // unused
+    new URL("unused://unused"), // unused
     preDataTransformContents,
     "file",
     createDataPartTansformer(moduleArgs)
