@@ -61,63 +61,10 @@ class ThemeState implements ProjectThemeState {
         `Unable to add theme: theming is not idle. Current status: "${this.status}"`
       );
     }
-    this.status = "uploading";
+    const graphTheme = await this.#persistTheme(theme);
+    if (!ok(graphTheme)) return graphTheme;
 
-    const { primary, secondary, tertiary, error, neutral, neutralVariant } =
-      theme;
-
-    const graphTheme: GraphTheme = {
-      template: "basic",
-      templateAdditionalOptions: {},
-      palette: {
-        primary,
-        secondary,
-        tertiary,
-        error,
-        neutral,
-        neutralVariant,
-      },
-      themeColors: {
-        primaryColor: theme.primaryColor,
-        secondaryColor: theme.secondaryColor,
-        backgroundColor: theme.backgroundColor,
-        primaryTextColor: theme.primaryTextColor,
-        textColor: theme.textColor,
-      },
-    };
-
-    if (theme.splashScreen) {
-      const persisted = await this.project.persistDataParts([
-        { parts: [theme.splashScreen] },
-      ]);
-      const splashScreen = persisted?.[0].parts[0];
-      if (isStoredData(splashScreen)) {
-        graphTheme.splashScreen = splashScreen;
-      } else {
-        console.warn("Unable to save splash screen", splashScreen);
-      }
-    }
-
-    this.status = "editing";
-
-    const metadata: GraphMetadata = this.editableGraph.raw().metadata ?? {};
-    metadata.visual ??= {};
-    metadata.visual.presentation ??= {};
-    metadata.visual.presentation.themes ??= {};
-
-    const id = globalThis.crypto.randomUUID();
-    metadata.visual.presentation.themes[id] = graphTheme;
-    metadata.visual.presentation.theme = id;
-
-    const edit = await this.editableGraph.edit(
-      [{ type: "changegraphmetadata", metadata, graphId: "" }],
-      "Updating theme"
-    );
-    this.status = "idle";
-
-    if (!edit.success) {
-      return err(edit.error);
-    }
+    return this.#updateGraphWithTheme(graphTheme);
   }
 
   async #updateGraphWithTheme(graphTheme: GraphTheme): Promise<Outcome<void>> {
@@ -156,46 +103,51 @@ class ThemeState implements ProjectThemeState {
   }
 
   async #persistTheme(appTheme: AppTheme): Promise<Outcome<GraphTheme>> {
-    const { primary, secondary, tertiary, error, neutral, neutralVariant } =
-      appTheme;
+    this.status = "uploading";
+    try {
+      const { primary, secondary, tertiary, error, neutral, neutralVariant } =
+        appTheme;
 
-    const graphTheme: GraphTheme = {
-      template: "basic",
-      templateAdditionalOptions: {},
-      palette: {
-        primary,
-        secondary,
-        tertiary,
-        error,
-        neutral,
-        neutralVariant,
-      },
-      themeColors: {
-        primaryColor: appTheme.primaryColor,
-        secondaryColor: appTheme.secondaryColor,
-        backgroundColor: appTheme.backgroundColor,
-        primaryTextColor: appTheme.primaryTextColor,
-        textColor: appTheme.textColor,
-      },
-    };
+      const graphTheme: GraphTheme = {
+        template: "basic",
+        templateAdditionalOptions: {},
+        palette: {
+          primary,
+          secondary,
+          tertiary,
+          error,
+          neutral,
+          neutralVariant,
+        },
+        themeColors: {
+          primaryColor: appTheme.primaryColor,
+          secondaryColor: appTheme.secondaryColor,
+          backgroundColor: appTheme.backgroundColor,
+          primaryTextColor: appTheme.primaryTextColor,
+          textColor: appTheme.textColor,
+        },
+      };
 
-    if (appTheme.splashScreen) {
-      const persisted = await this.project.persistDataParts([
-        { parts: [appTheme.splashScreen] },
-      ]);
-      const splashScreen = persisted?.[0].parts[0];
-      if (isStoredData(splashScreen)) {
-        graphTheme.splashScreen = splashScreen;
-      } else {
-        console.warn("Unable to save splash screen", splashScreen);
+      if (appTheme.splashScreen) {
+        const persisted = await this.project.persistDataParts([
+          { parts: [appTheme.splashScreen] },
+        ]);
+        const splashScreen = persisted?.[0].parts[0];
+        if (isStoredData(splashScreen)) {
+          graphTheme.splashScreen = splashScreen;
+        } else {
+          console.warn("Unable to save splash screen", splashScreen);
+        }
       }
+      return graphTheme;
+    } finally {
+      this.status = "idle";
     }
-    return graphTheme;
   }
 
   async #generateTheme(
     contents: LLMContent,
-    signal: AbortSignal
+    signal: AbortSignal | undefined
   ): Promise<Outcome<AppTheme>> {
     if (!this.editableGraph) {
       return err(`Unable to generate themes: can't edit the graph`);
@@ -206,35 +158,34 @@ class ThemeState implements ProjectThemeState {
       );
     }
     this.status = "generating";
-
-    const response = await this.fetchWithCreds(endpointURL(IMAGE_GENERATOR), {
-      method: "POST",
-      body: JSON.stringify({ contents }),
-      signal,
-    });
-    const result = (await response.json()) as {
-      candidates: {
-        content: LLMContent;
-      }[];
-    };
-    if (!response.ok) {
-      console.warn(`Theme generation failed with this error`, result);
-      return err(`Unable to generate theme`);
-    }
-    const content = result.candidates.at(0)?.content;
-    if (!content) {
-      return err(`No content returned`);
-    }
-
-    const [splashScreen] = content.parts.filter(
-      (part) => "inlineData" in part || "storedData" in part
-    );
-
-    if (!splashScreen) {
-      return err("Invalid model response");
-    }
-
     try {
+      const response = await this.fetchWithCreds(endpointURL(IMAGE_GENERATOR), {
+        method: "POST",
+        body: JSON.stringify({ contents }),
+        signal,
+      });
+      const result = (await response.json()) as {
+        candidates: {
+          content: LLMContent;
+        }[];
+      };
+      if (!response.ok) {
+        console.warn(`Theme generation failed with this error`, result);
+        return err(`Unable to generate theme`);
+      }
+      const content = result.candidates.at(0)?.content;
+      if (!content) {
+        return err(`No content returned`);
+      }
+
+      const [splashScreen] = content.parts.filter(
+        (part) => "inlineData" in part || "storedData" in part
+      );
+
+      if (!splashScreen) {
+        return err("Invalid model response");
+      }
+
       let theme = generatePaletteFromColor("#330072");
       const img = new Image();
       if (isInlineData(splashScreen)) {
@@ -266,13 +217,10 @@ class ThemeState implements ProjectThemeState {
     }
   }
 
-  async generateThemeFromIntent(
-    intent: string,
-    signal: AbortSignal
-  ): Promise<Outcome<GraphTheme>> {
+  async generateThemeFromIntent(intent: string): Promise<Outcome<GraphTheme>> {
     const appTheme = await this.#generateTheme(
       getThemeFromIntentGenerationPrompt(intent),
-      signal
+      undefined
     );
     if (!ok(appTheme)) return appTheme;
     return this.#persistTheme(appTheme);
@@ -300,27 +248,29 @@ class ThemeState implements ProjectThemeState {
       );
     }
     this.status = "editing";
+    try {
+      const metadata: GraphMetadata = this.editableGraph.raw().metadata ?? {};
+      metadata.visual ??= {};
+      metadata.visual.presentation ??= {};
+      metadata.visual.presentation.themes ??= {};
 
-    const metadata: GraphMetadata = this.editableGraph.raw().metadata ?? {};
-    metadata.visual ??= {};
-    metadata.visual.presentation ??= {};
-    metadata.visual.presentation.themes ??= {};
+      if (!metadata.visual.presentation.themes[theme]) {
+        return err("Theme does not exist");
+      }
 
-    if (!metadata.visual.presentation.themes[theme]) {
-      return err("Theme does not exist");
-    }
+      delete metadata.visual.presentation.themes[theme];
+      const themes = Object.keys(metadata.visual.presentation.themes);
+      metadata.visual.presentation.theme = themes.at(-1);
 
-    delete metadata.visual.presentation.themes[theme];
-    const themes = Object.keys(metadata.visual.presentation.themes);
-    metadata.visual.presentation.theme = themes.at(-1);
-
-    const editing = await this.editableGraph.edit(
-      [{ type: "changegraphmetadata", metadata, graphId: "" }],
-      "Updating theme"
-    );
-    this.status = "idle";
-    if (!editing.success) {
-      return err(editing.error);
+      const editing = await this.editableGraph.edit(
+        [{ type: "changegraphmetadata", metadata, graphId: "" }],
+        "Updating theme"
+      );
+      if (!editing.success) {
+        return err(editing.error);
+      }
+    } finally {
+      this.status = "idle";
     }
   }
 
@@ -334,25 +284,27 @@ class ThemeState implements ProjectThemeState {
       );
     }
     this.status = "editing";
+    try {
+      const metadata: GraphMetadata = this.editableGraph.raw().metadata ?? {};
+      metadata.visual ??= {};
+      metadata.visual.presentation ??= {};
+      metadata.visual.presentation.themes ??= {};
 
-    const metadata: GraphMetadata = this.editableGraph.raw().metadata ?? {};
-    metadata.visual ??= {};
-    metadata.visual.presentation ??= {};
-    metadata.visual.presentation.themes ??= {};
+      if (!metadata.visual.presentation.themes[theme]) {
+        return err("Theme does not exist");
+      }
 
-    if (!metadata.visual.presentation.themes[theme]) {
-      return err("Theme does not exist");
-    }
+      metadata.visual.presentation.theme = theme;
 
-    metadata.visual.presentation.theme = theme;
-
-    const editing = await this.editableGraph.edit(
-      [{ type: "changegraphmetadata", metadata, graphId: "" }],
-      "Updating theme"
-    );
-    this.status = "idle";
-    if (!editing.success) {
-      return err(editing.error);
+      const editing = await this.editableGraph.edit(
+        [{ type: "changegraphmetadata", metadata, graphId: "" }],
+        "Updating theme"
+      );
+      if (!editing.success) {
+        return err(editing.error);
+      }
+    } finally {
+      this.status = "idle";
     }
   }
 }

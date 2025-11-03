@@ -11,6 +11,7 @@ import { InputValues, ok } from "@google-labs/breadboard";
 import { RuntimeSnackbarEvent } from "../../runtime/events";
 import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { StateEvent } from "@breadboard-ai/shared-ui/events/events.js";
+import { GraphMetadata } from "@breadboard-ai/types";
 
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
@@ -358,28 +359,28 @@ export const ReplaceRoute: EventRoute<"board.replace"> = {
 
     const { replacement, theme } = originalEvent.detail;
 
-    // const themes = runtime.edit.getEditor(tab)?.raw().metadata?.visual
-    //   ?.presentation?.themes;
+    if (theme) {
+      const metadata: GraphMetadata = (replacement.metadata ??= {});
+      metadata.visual ??= {};
+      metadata.visual.presentation ??= {};
+      metadata.visual.presentation.themes ??= {};
 
-    // const shouldCreateTheme = themes && Object.values(themes).length === 1;
-
-    runtime.util.applyDefaultThemeInformationIfNonePresent(replacement);
-    await runtime.util.createAppPaletteIfNeeded(replacement, googleDriveClient);
+      const id = globalThis.crypto.randomUUID();
+      metadata.visual.presentation.themes[id] = theme;
+      metadata.visual.presentation.theme = id;
+    } else {
+      runtime.util.applyDefaultThemeInformationIfNonePresent(replacement);
+      await runtime.util.createAppPaletteIfNeeded(
+        replacement,
+        googleDriveClient
+      );
+    }
 
     await runtime.edit.replaceGraph(
       tab,
       replacement,
       originalEvent.detail.creator
     );
-
-    const autoTheme = (await runtime.flags.flags()).autoTheme;
-
-    if (autoTheme && theme) {
-      const projectState = runtime.state.getProjectState(tab?.mainGraphId);
-      if (projectState) {
-        await projectState.themes.setTheme(theme);
-      }
-    }
 
     return false;
   },

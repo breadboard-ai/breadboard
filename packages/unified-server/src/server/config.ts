@@ -40,7 +40,6 @@ export async function createClientConfig(opts: {
       gulfRenderer: flags.ENABLE_GULF_RENDERER,
       consistentUI: false,
       agentMode: false,
-      autoTheme: false,
     },
   };
 }

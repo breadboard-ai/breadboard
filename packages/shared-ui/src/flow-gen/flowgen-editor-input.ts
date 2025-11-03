@@ -284,13 +284,8 @@ export class FlowgenEditorInput extends LitElement {
 
       const generating = this.#generateBoard(description);
 
-      // TODO: Wire the signal to do some good.
-      const signal = new AbortController().signal;
-
-      const creatingTheme = this.projectState?.themes.generateThemeFromIntent(
-        description,
-        signal
-      );
+      const creatingTheme =
+        this.projectState?.themes.generateThemeFromIntent(description);
 
       Promise.allSettled([generating, creatingTheme])
         .then(([generated, createdTheme]) => {
@@ -306,12 +301,6 @@ export class FlowgenEditorInput extends LitElement {
         .finally(() => {
           this.dispatchEvent(new StateEvent({ eventType: "host.unlock" }));
         });
-      // void generating
-      //   .then((graph) => this.#onGenerateComplete(graph))
-      //   .catch((error) => this.#onGenerateError(error))
-      //   .finally(() => {
-      //     this.dispatchEvent(new StateEvent({ eventType: "host.unlock" }));
-      //   });
     }
   }
 
