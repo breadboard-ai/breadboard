@@ -26,6 +26,7 @@ export type ClientDeploymentConfiguration = {
    * value is "false"
    */
   ALLOW_3P_MODULES?: boolean;
+  ENABLE_EMAIL_OPT_IN?: boolean;
   domains?: Record<string, DomainConfiguration>;
   flags: RuntimeFlags;
 };

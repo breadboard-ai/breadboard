@@ -31,6 +31,7 @@ export async function createClientConfig(opts: {
     OAUTH_CLIENT: opts.OAUTH_CLIENT,
     SHELL_GUEST_ORIGIN: flags.SHELL_GUEST_ORIGIN,
     SHELL_HOST_ORIGINS: flags.SHELL_HOST_ORIGINS,
+    ENABLE_EMAIL_OPT_IN: flags.ENABLE_EMAIL_OPT_IN,
     domains: flags.DOMAIN_CONFIG,
     flags: {
       generateForEach: flags.ENABLE_GENERATE_FOR_EACH,

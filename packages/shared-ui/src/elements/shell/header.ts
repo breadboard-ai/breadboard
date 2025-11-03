@@ -25,6 +25,7 @@ import { consume } from "@lit/context";
 import { uiStateContext } from "../../contexts/ui-state.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { ActionTracker } from "../../utils/action-tracker.js";
+import { hasEnabledGlobalSettings } from "./global-settings.js";
 
 const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
 
@@ -413,25 +414,25 @@ export class VEHeader extends SignalWatcher(LitElement) {
         <button
           id="back-button"
           @click=${() => {
-            this.dispatchEvent(new CloseEvent());
-          }}
+        this.dispatchEvent(new CloseEvent());
+      }}
         >
           <span class="g-icon">arrow_back</span>
         </button>
         <input
           autocomplete="off"
           @blur=${async (evt: Event) => {
-            this.#handleTitleUpdate(evt);
-          }}
+        this.#handleTitleUpdate(evt);
+      }}
           @keydown=${async (evt: KeyboardEvent) => {
-            if (evt.key !== "Enter") {
-              return;
-            }
+        if (evt.key !== "Enter") {
+          return;
+        }
 
-            this.#handleTitleUpdate(evt);
-          }}
+        this.#handleTitleUpdate(evt);
+      }}
           ?disabled=${!this.canSave ||
-          this.saveStatus === BOARD_SAVE_STATUS.SAVING}
+      this.saveStatus === BOARD_SAVE_STATUS.SAVING}
           required
           type="text"
           class="sans-flex round w-500"
@@ -443,13 +444,13 @@ export class VEHeader extends SignalWatcher(LitElement) {
       ${this.#renderModeToggle()}
       <div id="right">
         ${[
-          this.#renderSaveStatusLabel(),
-          this.#renderSharePublishButton(),
-          this.#renderRemixButton(),
-          this.#renderGraphItemSelect(),
-          this.#renderGlobalItemSelect(),
-          this.#renderUser(),
-        ]}
+        this.#renderSaveStatusLabel(),
+        this.#renderSharePublishButton(),
+        this.#renderRemixButton(),
+        this.#renderGraphItemSelect(),
+        this.#renderGlobalItemSelect(),
+        this.#renderUser(),
+      ]}
       </div>
     </section>`;
   }
@@ -461,33 +462,33 @@ export class VEHeader extends SignalWatcher(LitElement) {
       <button
         id="app"
         @click=${() => {
-          this.dispatchEvent(
-            new StateEvent({ eventType: "host.modetoggle", mode: "app" })
-          );
-        }}
+        this.dispatchEvent(
+          new StateEvent({ eventType: "host.modetoggle", mode: "app" })
+        );
+      }}
         class=${classMap({
-          "sans-flex": true,
-          round: true,
-          "w-500": true,
-          "md-body-small": true,
-          selected: this.mode === "app",
-        })}
+        "sans-flex": true,
+        round: true,
+        "w-500": true,
+        "md-body-small": true,
+        selected: this.mode === "app",
+      })}
         >App</button
       >
       <button
         id="canvas"
         @click=${() => {
-          this.dispatchEvent(
-            new StateEvent({ eventType: "host.modetoggle", mode: "canvas" })
-          );
-        }}
+        this.dispatchEvent(
+          new StateEvent({ eventType: "host.modetoggle", mode: "canvas" })
+        );
+      }}
         class=${classMap({
-          "sans-flex": true,
-          round: true,
-          "w-500": true,
-          "md-body-small": true,
-          selected: this.mode === "canvas",
-        })}
+        "sans-flex": true,
+        round: true,
+        "w-500": true,
+        "md-body-small": true,
+        selected: this.mode === "canvas",
+      })}
         >Editor</button
       >
     </button>`;
@@ -526,14 +527,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
         icon: "history",
       },
     ];
-
-    if (this.#uiState.flags?.mcp) {
-      options.push({
-        id: "show-mcp-servers",
-        title: Strings.from("COMMAND_MANAGE_MCP_SERVERS"),
-        icon: "robot_server",
-      });
-    }
 
     if (this.showExperimentalComponents) {
       options.push({
@@ -574,20 +567,18 @@ export class VEHeader extends SignalWatcher(LitElement) {
         title: Strings.from("COMMAND_JOIN_CHAT"),
         icon: "open_in_new",
       },
+      ...(hasEnabledGlobalSettings(this.#uiState, this.showExperimentalComponents) ?
+        [{
+          id: "show-global-settings",
+          title: Strings.from("COMMAND_GLOBAL_SETTINGS"),
+          icon: "settings_2",
+        }] : []),
       {
         id: "demo-video",
         title: Strings.from("COMMAND_WATCH_DEMO_VIDEO"),
         icon: "videocam",
       },
     ];
-
-    if (this.showExperimentalComponents) {
-      options.push({
-        id: "show-runtime-flags",
-        title: "Show Experiments",
-        icon: "experiment",
-      });
-    }
 
     return html`<bb-item-select
       .showDownArrow=${false}
@@ -632,7 +623,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
   #renderExperimentalLabel() {
     return html`${Strings.from("PROVIDER_NAME") !== "PROVIDER_NAME" &&
-    Strings.from("PROVIDER_NAME") !== ""
+      Strings.from("PROVIDER_NAME") !== ""
       ? html`<span class="sans" id="experiment">Experiment</span>`
       : nothing}`;
   }
@@ -693,12 +684,12 @@ export class VEHeader extends SignalWatcher(LitElement) {
             delayed
             title="Remix to Edit"
             text='You can only run this ${Strings.from(
-              "APP_NAME"
-            )} app. To edit, click the "Remix" button to make a copy.'
+          "APP_NAME"
+        )} app. To edit, click the "Remix" button to make a copy.'
             @bbonboardingacknowledged=${() => {
-              globalThis.localStorage.setItem(REMIX_INFO_KEY, "false");
-              this.#showRemixInfo = false;
-            }}
+            globalThis.localStorage.setItem(REMIX_INFO_KEY, "false");
+            this.#showRemixInfo = false;
+          }}
           ></bb-onboarding-tooltip>`
         : nothing}
     </button> `;
@@ -739,20 +730,20 @@ export class VEHeader extends SignalWatcher(LitElement) {
     return html`<button
         id="toggle-user-menu"
         @click=${() => {
-          this.#showAccountSwitcher = true;
-        }}
+        this.#showAccountSwitcher = true;
+      }}
       >
-        ${this.signinAdapter.picture ? 
-          html`<img
+        ${this.signinAdapter.picture ?
+        html`<img
           id="user-pic"
           crossorigin
           .src=${this.signinAdapter.picture}
           alt=${this.signinAdapter.name ?? "No name"}
         />`  :
-         // For unknown reasons, the token info may not include a `picture` URL or `name`.
-         // Since we use the avatar as a button to access the menu, we render an icon in
-         // place of user picture if it's not available.
-         html`<span id="user-pic-unknown" class="g-icon filled">person</span>`}
+        // For unknown reasons, the token info may not include a `picture` URL or `name`.
+        // Since we use the avatar as a button to access the menu, we render an icon in
+        // place of user picture if it's not available.
+        html`<span id="user-pic-unknown" class="g-icon filled">person</span>`}
       </button>
       ${this.#renderAccountSwitcher()}`;
   }

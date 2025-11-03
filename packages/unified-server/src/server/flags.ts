@@ -75,6 +75,8 @@ export const SHELL_GUEST_ORIGIN = getString("SHELL_GUEST_ORIGIN");
 
 export const SHELL_HOST_ORIGINS = getStringList("SHELL_HOST_ORIGINS");
 
+export const ENABLE_EMAIL_OPT_IN = getBoolean("ENABLE_EMAIL_OPT_IN");
+
 /** Get the value of the given flag as a string, or empty string if absent. */
 function getString(flagName: string): string {
   return process.env[flagName] ?? "";

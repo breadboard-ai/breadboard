@@ -109,6 +109,7 @@ import {
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { builtInMcpClients } from "./mcp-clients";
 import { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
 
 type RenderValues = {
   canSave: boolean;
@@ -268,6 +269,7 @@ export class Main extends SignalWatcher(LitElement) {
   readonly #apiClient: AppCatalystApiClient;
   readonly #secretsHelper: SecretsHelper;
   readonly #settings: SettingsStore;
+  readonly emailPrefsManager: EmailPrefsManager;
 
   // Event Handlers.
   readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
@@ -332,6 +334,8 @@ export class Main extends SignalWatcher(LitElement) {
     );
 
     this.flowGenerator = new FlowGenerator(this.#apiClient);
+
+    this.emailPrefsManager = new EmailPrefsManager(this.#apiClient);
 
     const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
       .href;
@@ -480,6 +484,15 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.#boardServers = this.#runtime.board.getBoardServers() || [];
     this.#uiState = this.#runtime.state.getOrCreateUIState();
+
+    if (this.globalConfig.ENABLE_EMAIL_OPT_IN) {
+      this.emailPrefsManager.refreshPrefs().then(() => {
+        if (this.emailPrefsManager.prefsValid && !this.emailPrefsManager.hasStoredPreferences) {
+          this.#uiState.show.add("WarmWelcome");
+        }
+      });
+    }
+
     if (parsedUrl.page === "graph") {
       const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
       ActionTracker.load(this.#uiState.mode, shared);
@@ -1464,11 +1477,11 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.show.has("StatusUpdateModal")
           ? this.#renderStatusUpdateModal()
           : nothing,
-        this.#uiState.show.has("RuntimeFlags")
-          ? this.#renderRuntimeFlagsModal()
+      this.#uiState.show.has("GlobalSettings")
+        ? this.#renderGlobalSettingsModal(renderValues)
           : nothing,
-        this.#uiState.show.has("MCPServersModal")
-          ? this.#renderMCPServersModal(renderValues)
+      this.#uiState.show.has("WarmWelcome")
+        ? this.#renderWarmWelcomeModal()
           : nothing,
         this.#uiState.show.has("SignInModal")
           ? this.#renderSignInModal()
@@ -1662,22 +1675,26 @@ export class Main extends SignalWatcher(LitElement) {
     ></bb-status-update-modal>`;
   }
 
-  #renderMCPServersModal(renderValues: RenderValues) {
-    return html`<bb-mcp-servers-modal
+  #renderGlobalSettingsModal(renderValues: RenderValues) {
+    return html`<bb-global-settings-modal
+      .flags=${this.#runtime.flags.flags()}
+      .showExperimentalComponents=${renderValues.showExperimentalComponents}
       .project=${renderValues.projectState}
+      .uiState=${this.#uiState}
+      .emailPrefsManager=${this.emailPrefsManager}
       @bbmodaldismissed=${() => {
-        this.#uiState.show.delete("MCPServersModal");
+      this.#uiState.show.delete("GlobalSettings");
       }}
-    ></bb-mcp-servers-modal>`;
+    ></bb-global-settings-modal>`;
   }
 
-  #renderRuntimeFlagsModal() {
-    return html`<bb-runtime-flags-modal
-      .flags=${this.#runtime.flags.flags()}
+  #renderWarmWelcomeModal() {
+    return html`<bb-warm-welcome-modal
+      .emailPrefsManager=${this.emailPrefsManager}
       @bbmodaldismissed=${() => {
-        this.#uiState.show.delete("RuntimeFlags");
+      this.#uiState.show.delete("WarmWelcome");
       }}
-    ></bb-runtime-flags-modal>`;
+    ></bb-warm-welcome-modal>`;
   }
 
   #renderMissingShareDialog() {
@@ -2019,19 +2036,14 @@ export class Main extends SignalWatcher(LitElement) {
             break;
           }
 
-          case "show-runtime-flags": {
-            this.#uiState.show.add("RuntimeFlags");
+          case "show-global-settings": {
+            this.#uiState.show.add("GlobalSettings");
             break;
           }
 
           case "status-update": {
             this.#uiState.show.add("StatusUpdateModal");
             this.#uiState.showStatusUpdateChip = false;
-            break;
-          }
-
-          case "show-mcp-servers": {
-            this.#uiState.show.add("MCPServersModal");
             break;
           }
 

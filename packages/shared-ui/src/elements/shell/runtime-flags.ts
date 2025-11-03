@@ -15,8 +15,8 @@ import { repeat } from "lit/directives/repeat.js";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-@customElement("bb-runtime-flags-modal")
-export class VERuntimeFlagsModal extends LitElement {
+@customElement("bb-runtime-flags")
+export class VERuntimeFlags extends LitElement {
   @property()
   accessor flags: Promise<Readonly<RuntimeFlags>> | null = null;
 
@@ -26,18 +26,10 @@ export class VERuntimeFlagsModal extends LitElement {
     css`
       :host {
         display: block;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 1;
       }
 
       p {
         margin: 0 0 var(--bb-grid-size-3) 0;
-        width: 80svw;
-        max-width: 380px;
         color: var(--e-20);
       }
 
@@ -45,9 +37,6 @@ export class VERuntimeFlagsModal extends LitElement {
         display: grid;
         align-items: center;
         row-gap: var(--bb-grid-size-3);
-        width: 80svw;
-        max-width: 380px;
-        max-height: 50svh;
         overflow: scroll;
         scrollbar-width: none;
         padding: var(--bb-grid-size-4) 0;
@@ -122,12 +111,8 @@ export class VERuntimeFlagsModal extends LitElement {
           return 0;
         });
 
-        return html`<bb-modal
-          .modalTitle=${"Warning: experimental features!"}
-          .showCloseButton=${true}
-          .showSaveCancel=${false}
-        >
-          <p class="sans-flex w-400 md-body-small">
+        return html`
+          <p class="sans-flex w-400 md-body-medium">
             By enabling these features you may introduce instability or lose
             work in ${Strings.from("APP_NAME")}. Please proceed with caution.
           </p>
