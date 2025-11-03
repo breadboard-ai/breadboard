@@ -392,7 +392,7 @@ async function conformBody(
     true
   );
   const contents = await transformDataParts(
-    new URL(window.location.href), // unused
+    new URL("unused://unused"), // unused
     preDataTransformContents,
     "file",
     createDataPartTansformer(moduleArgs)
