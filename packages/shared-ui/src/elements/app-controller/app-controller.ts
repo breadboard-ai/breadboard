@@ -102,7 +102,7 @@ export class AppController extends SignalWatcher(LitElement) {
   accessor showGDrive = false;
 
   @property()
-  accessor themeHash: string | null = null;
+  accessor themeHash: number | null = null;
 
   @property()
   accessor readOnly = false;
@@ -131,6 +131,7 @@ export class AppController extends SignalWatcher(LitElement) {
   static styles = appPreviewStyles;
 
   #appTemplate: AppTemplate | null = null;
+  #splashBlobUrls = new Map<number, string>();
 
   @state()
   accessor #template: AppTemplate | HTMLTemplateResult = html`<div
@@ -138,6 +139,12 @@ export class AppController extends SignalWatcher(LitElement) {
   >
     <p class="loading-message">Loading...</p>
   </div>`;
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    this.#clearSplashUrls();
+  }
 
   #createDefaultTheme(): AppTheme {
     const palette = generatePaletteFromColor("#363636");
@@ -155,6 +162,31 @@ export class AppController extends SignalWatcher(LitElement) {
         },
       },
     };
+  }
+
+  #clearSplashUrls() {
+    for (const url of this.#splashBlobUrls.values()) {
+      URL.revokeObjectURL(url);
+    }
+
+    this.#splashBlobUrls.clear();
+  }
+
+  #storeSplashUrl(themeHash: number | null, url: string) {
+    if (themeHash === null) {
+      console.warn("Theme URL attempted to be stored with no theme hash");
+      return;
+    }
+
+    this.#splashBlobUrls.set(themeHash, url);
+  }
+
+  #getSplashUrl(themeHash: number | null) {
+    if (themeHash === null) {
+      return null;
+    }
+
+    return this.#splashBlobUrls.get(themeHash);
   }
 
   #applyThemeToTemplate() {
@@ -212,29 +244,40 @@ export class AppController extends SignalWatcher(LitElement) {
       if (isStoredData(splashScreen)) {
         const themeHash = this.themeHash;
 
+        // Attempt to reuse the splash image.
+        const splashImage = this.#getSplashUrl(themeHash);
+        if (splashImage) {
+          options.splashImage = `url(${splashImage})`;
+          this.#appTemplate.options = { ...options };
+          return;
+        }
+
         // Stored Data splash screen.
         Promise.resolve()
-          .then(async () => {
-            // A newer theme has arrived - bail.
-            if (themeHash !== this.themeHash) {
-              return;
-            }
-
-            return loadPartAsDataUrl(this.googleDriveClient!, splashScreen);
-          })
+          .then(() => loadPartAsDataUrl(this.googleDriveClient!, splashScreen))
           .then((base64DataUrl) => {
-            if (!this.#appTemplate) {
-              return;
-            }
+            if (!base64DataUrl) return;
+            return fetch(base64DataUrl).then((r) => r.blob());
+          })
+          .then(
+            (data?: Blob) => {
+              if (!data || !this.#appTemplate) return;
 
-            // A newer theme has arrived - bail.
-            if (themeHash !== this.themeHash) {
-              return;
-            }
+              // A newer theme has arrived - bail.
+              if (themeHash !== this.themeHash) return;
 
-            options.splashImage = `url(${base64DataUrl})`;
-            this.#appTemplate.options = { ...options };
-          });
+              this.#clearSplashUrls();
+
+              const blobUrl = URL.createObjectURL(data);
+              this.#storeSplashUrl(this.themeHash, blobUrl);
+              options.splashImage = `url(${blobUrl})`;
+
+              this.#appTemplate.options = { ...options };
+            },
+            (reason: unknown) => {
+              console.warn(`Unable to load theme image: ${reason}`);
+            }
+          );
       } else {
         // Inline Data splash screen.
         const splashScreenData = splashScreen.inlineData;
