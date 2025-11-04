@@ -174,6 +174,10 @@ export type AppScreen = {
    */
   title: string;
   /**
+   * A more detailed progress update, if available.
+   */
+  progress: string | undefined;
+  /**
    * When "processing", indicates that this screen is being created.
    * When "interactive", indicates that this screen engaged in interaction
    * with the user.

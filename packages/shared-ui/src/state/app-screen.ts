@@ -29,6 +29,9 @@ class ReactiveAppScreen implements AppScreen {
     return Array.from(this.outputs.values()).at(-1) || null;
   }
 
+  @signal
+  accessor progress: string | undefined;
+
   outputs: Map<string, AppScreenOutput> = new SignalMap();
 
   #outputSchema: Schema | undefined;

@@ -5,6 +5,7 @@
  */
 
 import {
+  AppScreen,
   DataPart,
   FunctionCallCapabilityPart,
   GroupParticle,
@@ -49,7 +50,9 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
 
   constructor(
     public readonly title: string,
-    public readonly icon: string
+    public readonly icon: string,
+    private readonly screen: AppScreen,
+    private readonly functionMap: ReadonlyMap<string, string>
   ) {
     this.start = performance.now();
   }
@@ -69,6 +72,7 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
    * The agent started execution.
    */
   startAgent(objective: LLMContent) {
+    this.screen.progress = "Analyzing the objective";
     this.#add("Objective", "summarize", objective);
   }
 
@@ -87,12 +91,15 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
    */
   thought(text: string) {
     this.#add("Thought", "spark", llm`${text}`.asContent());
+    this.screen.progress = progressFromThought(text);
   }
 
   /**
    * The agent produced a function call.
    */
   functionCall(part: FunctionCallCapabilityPart) {
+    const { name } = part.functionCall;
+    this.screen.progress = this.functionMap.get(name) || `Calling ${name}`;
     this.#addParts("Function call", "robot_server", [part]);
   }
 
@@ -107,6 +114,7 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
    * The agent finished executing.
    */
   finish() {
+    this.screen.progress = undefined;
     this.end = performance.now();
   }
 }
@@ -134,4 +142,9 @@ function createUpdate(title: string, icon: string, body: unknown) {
     ["icon", { text: icon }],
   ]);
   return { type: "update", group };
+}
+
+function progressFromThought(thought: string): string | undefined {
+  const match = thought.match(/\*\*(.*?)\*\*/);
+  return match ? match[1] : undefined;
 }

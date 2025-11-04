@@ -39,6 +39,18 @@ export type RawUserResponse = {
   text: string;
 };
 
+const FUNCTION_MAP = new Map([
+  ["generate_text", "Generating text"],
+  ["generate_images_from_prompt", "Generaeting images"],
+  ["ui_render_user_interface", "Designing user interface"],
+  ["ui_await_user_input", "Processing user input"],
+  ["system_write_text_to_file", "Storing data to remember later"],
+  ["system_append_text_to_file", "Adding data to remember later"],
+  ["system_create_project", "Organizing a new project"],
+  ["system_add_files_to_project", "Adding data to project"],
+  ["system_list_project_contents", "Examining project contents"],
+]);
+
 class AgentUI {
   readonly client: A2UIClient;
 
@@ -53,7 +65,7 @@ class AgentUI {
   /**
    * Handles the console updates for various parts of agent execution
    */
-  readonly progress = new ProgressWorkItem("Agent", "spark");
+  readonly progress;
 
   #outputWorkItem: A2UIClientWorkItem | undefined;
 
@@ -73,6 +85,12 @@ class AgentUI {
       this.#consoleEntry = runState?.console.get(stepId);
       this.#appScreen = runState?.app.screens.get(stepId);
     }
+    this.progress = new ProgressWorkItem(
+      "Agent",
+      "spark",
+      this.#appScreen!,
+      FUNCTION_MAP
+    );
     if (!this.#consoleEntry) {
       console.warn(
         `Unable to find console entry for this agent. Trying to render UI will fail.`
