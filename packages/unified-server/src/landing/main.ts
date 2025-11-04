@@ -20,6 +20,7 @@ import {
   MakeUrlInit,
   GraphInit,
 } from "@breadboard-ai/shared-ui/utils/urls.js";
+import { Handler } from "@breadboard-ai/embed";
 
 import "./carousel.js";
 
@@ -108,7 +109,9 @@ async function init() {
 
   ActionTracker.signInPageView();
 
-  Shell.dispatchToEmbed({
+  const embedHandler = window.self !== window.top ? new Handler() : undefined;
+
+  embedHandler?.sendToEmbedder({
     type: "home_loaded",
     isSignedIn: false,
   });

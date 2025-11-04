@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Handler } from "@breadboard-ai/embed";
 import { LandingCarousel } from "./carousel";
-import type { BreadboardMessage } from "@breadboard-ai/types/embedder.js";
-
-const embedHandler = window.self !== window.top ? new Handler() : undefined;
 
 export function setPageTitle(
   title: string | null,
@@ -151,12 +147,4 @@ export function showExperimental() {
   }
 
   exp.classList.add("visible");
-}
-
-export function dispatchToEmbed(message: BreadboardMessage) {
-  if (!embedHandler) {
-    return;
-  }
-
-  embedHandler.sendToEmbedder(message);
 }
