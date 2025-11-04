@@ -482,7 +482,10 @@ export class Main extends SignalWatcher(LitElement) {
 
     if (this.globalConfig.ENABLE_EMAIL_OPT_IN) {
       this.emailPrefsManager.refreshPrefs().then(() => {
-        if (this.emailPrefsManager.prefsValid && !this.emailPrefsManager.hasStoredPreferences) {
+        if (
+          this.emailPrefsManager.prefsValid &&
+          !this.emailPrefsManager.hasStoredPreferences
+        ) {
           this.#uiState.show.add("WarmWelcome");
         }
       });
@@ -1472,11 +1475,11 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.show.has("StatusUpdateModal")
           ? this.#renderStatusUpdateModal()
           : nothing,
-      this.#uiState.show.has("GlobalSettings")
-        ? this.#renderGlobalSettingsModal(renderValues)
+        this.#uiState.show.has("GlobalSettings")
+          ? this.#renderGlobalSettingsModal(renderValues)
           : nothing,
-      this.#uiState.show.has("WarmWelcome")
-        ? this.#renderWarmWelcomeModal()
+        this.#uiState.show.has("WarmWelcome")
+          ? this.#renderWarmWelcomeModal()
           : nothing,
         this.#uiState.show.has("SignInModal")
           ? this.#renderSignInModal()
@@ -1678,7 +1681,7 @@ export class Main extends SignalWatcher(LitElement) {
       .uiState=${this.#uiState}
       .emailPrefsManager=${this.emailPrefsManager}
       @bbmodaldismissed=${() => {
-      this.#uiState.show.delete("GlobalSettings");
+        this.#uiState.show.delete("GlobalSettings");
       }}
     ></bb-global-settings-modal>`;
   }
@@ -1687,7 +1690,7 @@ export class Main extends SignalWatcher(LitElement) {
     return html`<bb-warm-welcome-modal
       .emailPrefsManager=${this.emailPrefsManager}
       @bbmodaldismissed=${() => {
-      this.#uiState.show.delete("WarmWelcome");
+        this.#uiState.show.delete("WarmWelcome");
       }}
     ></bb-warm-welcome-modal>`;
   }

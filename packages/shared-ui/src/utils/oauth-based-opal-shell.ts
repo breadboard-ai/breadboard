@@ -11,7 +11,6 @@ import {
   canonicalizeOAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { TokenVendor } from "@breadboard-ai/connection-client/token-vendor.js";
-import type { BreadboardMessage } from "@breadboard-ai/types/embedder.js";
 import type {
   GrantResponse,
   MissingScopesTokenResult,
