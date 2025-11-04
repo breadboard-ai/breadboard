@@ -117,13 +117,6 @@ export declare interface HandshakeCompleteMessage {
   origin: string;
 }
 
-/** Checks if a message is of type HandshakeCompleteMessage. */
-export function isHandshakeCompleteMessage(
-  message: EmbedderMessage
-): message is HandshakeCompleteMessage {
-  return message.type === "handshake_complete";
-}
-
 export type MessageType = EmbedderMessage["type"];
 
 export interface EmbedState {
