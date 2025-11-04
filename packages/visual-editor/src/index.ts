@@ -50,12 +50,10 @@ import { SecretsHelper } from "./utils/secrets-helper";
 import { createA2ModuleFactory, createA2Server } from "@breadboard-ai/a2";
 import { getGoogleDriveBoardService } from "@breadboard-ai/board-server-management";
 import {
-  CreateNewBoardMessage,
   EmbedHandler,
   embedState,
   EmbedState,
   IterateOnPromptMessage,
-  ToggleIterateOnPromptMessage,
 } from "@breadboard-ai/embed";
 import { FileSystemPersistentBackend } from "@breadboard-ai/filesystem-board-server";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
@@ -372,25 +370,22 @@ export class Main extends SignalWatcher(LitElement) {
       this.embedState = embedState();
     }
 
-    this.#embedHandler?.subscribe(
+    this.#embedHandler?.addEventListener(
       "toggle_iterate_on_prompt",
-      async (message: ToggleIterateOnPromptMessage) => {
+      ({ message }) => {
         this.embedState.showIterateOnPrompt = message.on;
       }
     );
-    this.#embedHandler?.subscribe(
-      "create_new_board",
-      async (message: CreateNewBoardMessage) => {
-        if (!message.prompt) {
-          // If no prompt provided, generate an empty board.
-          this.#generateBoardFromGraph(BreadboardUI.Utils.blankBoard());
-        } else {
-          void this.#generateGraph(message.prompt)
-            .then((graph) => this.#generateBoardFromGraph(graph))
-            .catch((error) => console.error("Error generating board", error));
-        }
+    this.#embedHandler?.addEventListener("create_new_board", ({ message }) => {
+      if (!message.prompt) {
+        // If no prompt provided, generate an empty board.
+        this.#generateBoardFromGraph(BreadboardUI.Utils.blankBoard());
+      } else {
+        void this.#generateGraph(message.prompt)
+          .then((graph) => this.#generateBoardFromGraph(graph))
+          .catch((error) => console.error("Error generating board", error));
       }
-    );
+    });
     this.#embedHandler?.sendToEmbedder({ type: "handshake_ready" });
   }
 

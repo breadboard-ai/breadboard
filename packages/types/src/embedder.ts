@@ -125,29 +125,32 @@ export function isHandshakeCompleteMessage(
 }
 
 export type MessageType = EmbedderMessage["type"];
-export type MessageCallback = (
-  message: EmbedderMessage
-) => Promise<EmbedderMessage | undefined>;
 
 export interface EmbedState {
   showIterateOnPrompt: boolean;
 }
 
-export interface EmbedHandler {
+export interface EmbedHandler extends EventTarget {
   debug: boolean;
   connect(): Promise<void>;
   disconnect(): Promise<void>;
   sendToEmbedder(message: BreadboardMessage): Promise<void>;
-  subscribe<T extends MessageType>(
+
+  addEventListener<T extends MessageType>(
     type: T,
-    callback: (
-      message: Extract<EmbedderMessage, { type: T }>
-    ) => Promise<EmbedderMessage | void>
-  ): Promise<void>;
-  unsubscribe<T extends MessageType>(
-    type: T,
-    callback: (
-      message: Extract<EmbedderMessage, { type: T }>
-    ) => Promise<EmbedderMessage | void>
-  ): Promise<void>;
+    callback:
+      | EmbedderEventTypeToCallback<T>
+      | { handleEvent: EmbedderEventTypeToCallback<T> }
+      | null,
+    options?: AddEventListenerOptions | boolean
+  ): void;
 }
+
+export type EmbedderMessageEvent<T extends EmbedderMessage> = Event & {
+  type: MessageType;
+  message: T;
+};
+
+type EmbedderEventTypeToCallback<T extends MessageType> = (
+  event: EmbedderMessageEvent<EmbedderMessage & { type: T }>
+) => void;

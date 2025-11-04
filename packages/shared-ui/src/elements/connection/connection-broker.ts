@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Handler } from "@breadboard-ai/embed";
+import { EmbedHandlerImpl } from "@breadboard-ai/embed";
 import type { EmbedHandler } from "@breadboard-ai/types/embedder.js";
 import {
   oauthTokenBroadcastChannelName,
@@ -19,7 +19,8 @@ export class ConnectionBroker extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    this.#embedHandler = window.self !== window.top ? new Handler() : undefined;
+    this.#embedHandler =
+      window.self !== window.top ? new EmbedHandlerImpl() : undefined;
   }
 
   async connectedCallback() {
