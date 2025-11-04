@@ -126,7 +126,6 @@ export interface EmbedState {
 export interface EmbedHandler extends EventTarget {
   debug: boolean;
   connect(): Promise<void>;
-  disconnect(): Promise<void>;
   sendToEmbedder(message: BreadboardMessage): Promise<void>;
 
   addEventListener<T extends MessageType>(

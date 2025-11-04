@@ -35,11 +35,6 @@ export class EmbedHandlerImpl extends EventTarget implements EmbedHandler {
     self.addEventListener("message", this.#onMessageBound);
   }
 
-  async disconnect() {
-    this.#log(`[Embed handler disconnected]`);
-    self.removeEventListener("message", this.#onMessageBound);
-  }
-
   async #onMessage(evt: MessageEvent) {
     this.#log(`[Embed handler received]: `, evt.data);
     this.dispatchEvent(
