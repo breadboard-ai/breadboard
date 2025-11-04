@@ -363,6 +363,7 @@ type GeminiError = {
 };
 
 function textToJson(content: LLMContent): LLMContent {
+  if (!content.parts) return content;
   return {
     ...content,
     parts: content.parts.map((part) => {
@@ -464,6 +465,9 @@ async function conformBody(
 ): Promise<Outcome<GeminiBody>> {
   const preDataTransformContents = flattenContext(
     body.contents.map((content) => {
+      if (!content.parts) {
+        return content;
+      }
       return {
         ...content,
         parts: content.parts.map((part) => {

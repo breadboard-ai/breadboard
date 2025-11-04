@@ -379,6 +379,7 @@ async function transformContent(
   to: DataPartTransformType,
   transformer: DataPartTransformer
 ): Promise<Outcome<LLMContent>> {
+  if (!content.parts) return content;
   const role = content.role || "user";
   const parts = await parallelApply<DataPart>(content.parts, (part) =>
     transformPart(graphUrl, part, to, transformer)

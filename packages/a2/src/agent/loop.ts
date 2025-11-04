@@ -7,10 +7,10 @@
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { Params } from "../a2/common";
-import gemini, {
+import {
   FunctionDeclaration,
-  GeminiAPIOutputs,
   GeminiInputs,
+  streamGenerateContent,
   Tool,
 } from "../a2/gemini";
 import { llm } from "../a2/utils";
@@ -297,40 +297,45 @@ class Loop {
           tools,
         },
       };
-      const generated = (await gemini(
+      const generated = await streamGenerateContent(
         inputs,
         this.caps,
         this.moduleArgs
-      )) as Outcome<GeminiAPIOutputs>;
-      if (!ok(generated)) return generated;
-      const content = generated.candidates?.at(0)?.content;
-      if (!content) {
-        return err(`Agent unable to proceed: no content in Gemini response`);
-      }
-      contents.push(content);
-      const functionCaller = new FunctionCaller(
-        new Map([...systemFunctionDefinitions, ...generateFunctionDefinitions]),
-        objectivePidgin.tools
       );
-      const parts = content.parts || [];
-      for (const part of parts) {
-        if (part.thought) {
-          if ("text" in part) {
-            console.log("THOUGHT", part.text);
-          } else {
-            console.log("INVALID THOUGHT", part);
+      if (!ok(generated)) return generated;
+      for await (const chunk of generated) {
+        const content = chunk.candidates?.at(0)?.content;
+        if (!content) {
+          return err(`Agent unable to proceed: no content in Gemini response`);
+        }
+        contents.push(content);
+        const functionCaller = new FunctionCaller(
+          new Map([
+            ...systemFunctionDefinitions,
+            ...generateFunctionDefinitions,
+          ]),
+          objectivePidgin.tools
+        );
+        const parts = content.parts || [];
+        for (const part of parts) {
+          if (part.thought) {
+            if ("text" in part) {
+              console.log("THOUGHT", part.text);
+            } else {
+              console.log("INVALID THOUGHT", part);
+            }
+          }
+          if ("functionCall" in part) {
+            functionCaller.call(part);
           }
         }
-        if ("functionCall" in part) {
-          functionCaller.call(part);
+        const functionResults = await functionCaller.getResults();
+        if (!functionResults) continue;
+        if (!ok(functionResults)) {
+          return err(`Agent unable to proceed: ${functionResults.$error}`);
         }
+        contents.push(functionResults);
       }
-      const functionResults = await functionCaller.getResults();
-      if (!functionResults) continue;
-      if (!ok(functionResults)) {
-        return err(`Agent unable to proceed: ${functionResults.$error}`);
-      }
-      contents.push(functionResults);
     }
     return this.#finalizeResult(result);
   }
