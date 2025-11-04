@@ -9,7 +9,7 @@ import { err, ok } from "@breadboard-ai/utils";
 import { Params } from "../a2/common";
 import {
   FunctionDeclaration,
-  GeminiInputs,
+  GeminiBody,
   streamGenerateContent,
   Tool,
 } from "../a2/gemini";
@@ -283,23 +283,20 @@ class Loop {
       },
     ];
     while (!terminateLoop) {
-      const inputs: GeminiInputs = {
-        model: AGENT_MODEL,
-        body: {
-          contents,
-          generationConfig: {
-            thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
-          },
-          systemInstruction,
-          toolConfig: {
-            functionCallingConfig: { mode: "ANY" },
-          },
-          tools,
+      const body: GeminiBody = {
+        contents,
+        generationConfig: {
+          thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
         },
+        systemInstruction,
+        toolConfig: {
+          functionCallingConfig: { mode: "ANY" },
+        },
+        tools,
       };
       const generated = await streamGenerateContent(
-        inputs,
-        this.caps,
+        AGENT_MODEL,
+        body,
         this.moduleArgs
       );
       if (!ok(generated)) return generated;
