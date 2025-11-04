@@ -16,6 +16,7 @@ import {
 import { transformDataParts } from "@breadboard-ai/data";
 import { A2ModuleArgs } from "../runnable-module-factory";
 import { createDataPartTansformer } from "./data-part-transformer";
+import { iteratorFromStream } from "@breadboard-ai/utils";
 
 export {
   invoke as default,
@@ -379,82 +380,6 @@ function textToJson(content: LLMContent): LLMContent {
   };
 }
 
-function createGeminiResponseTransform() {
-  let buffer = "";
-  const decoder = new TextDecoder();
-
-  return new TransformStream<Uint8Array<ArrayBuffer>, GeminiAPIOutputs>({
-    transform(chunk, controller) {
-      buffer += decoder.decode(chunk, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-
-      for (const line of lines) {
-        const trimmedLine = line.trim();
-
-        if (trimmedLine.length === 0 || trimmedLine.startsWith(":")) {
-          continue;
-        }
-
-        if (trimmedLine.startsWith("data: ")) {
-          const jsonString = trimmedLine.substring(6).trim();
-          if (jsonString === "[DONE]") {
-            continue;
-          }
-
-          try {
-            const parsedObject = JSON.parse(jsonString) as GeminiAPIOutputs;
-            controller.enqueue(parsedObject);
-          } catch (e) {
-            console.error("Failed to parse JSON chunk:", jsonString, e);
-            controller.error(new Error(`Failed to parse JSON: ${jsonString}`));
-          }
-        }
-      }
-    },
-    flush(controller) {
-      buffer += decoder.decode(undefined, { stream: false });
-
-      const trimmedLine = buffer.trim();
-      if (trimmedLine.startsWith("data: ")) {
-        const jsonString = trimmedLine.substring(6).trim();
-        if (jsonString.length > 0 && jsonString !== "[DONE]") {
-          try {
-            const parsedObject = JSON.parse(jsonString) as GeminiAPIOutputs;
-            controller.enqueue(parsedObject);
-          } catch (e) {
-            console.error("Failed to parse final JSON chunk:", jsonString, e);
-            controller.error(
-              new Error(`Failed to parse final JSON: ${jsonString}`)
-            );
-          }
-        }
-      }
-    },
-  });
-}
-
-function createIterator<T>(
-  source: ReadableStream<Uint8Array<ArrayBuffer>>,
-  transform: TransformStream<Uint8Array<ArrayBuffer>, T>
-): AsyncIterable<T> {
-  const stream = source.pipeThrough(transform);
-  return {
-    [Symbol.asyncIterator]: async function* () {
-      const reader = stream.getReader();
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) return;
-          yield value;
-        }
-      } finally {
-        reader.releaseLock();
-      }
-    },
-  };
-}
-
 /**
  * Modifies the body to remove any
  * Breadboard-specific extensions to LLM Content
@@ -748,7 +673,7 @@ async function streamGenerateContent(
       if (!result.body) {
         return err(`No stream returned`, { origin: "server", model });
       }
-      return createIterator(result.body, createGeminiResponseTransform());
+      return iteratorFromStream(result.body);
     }
   } catch (e) {
     return err((e as Error).message, { origin: "client", model });
