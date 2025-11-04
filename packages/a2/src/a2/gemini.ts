@@ -378,6 +378,82 @@ function textToJson(content: LLMContent): LLMContent {
   };
 }
 
+function createGeminiResponseTransform() {
+  let buffer = "";
+  const decoder = new TextDecoder();
+
+  return new TransformStream<Uint8Array<ArrayBuffer>, GeminiAPIOutputs>({
+    transform(chunk, controller) {
+      buffer += decoder.decode(chunk, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+
+        if (trimmedLine.length === 0 || trimmedLine.startsWith(":")) {
+          continue;
+        }
+
+        if (trimmedLine.startsWith("data: ")) {
+          const jsonString = trimmedLine.substring(6).trim();
+          if (jsonString === "[DONE]") {
+            continue;
+          }
+
+          try {
+            const parsedObject = JSON.parse(jsonString) as GeminiAPIOutputs;
+            controller.enqueue(parsedObject);
+          } catch (e) {
+            console.error("Failed to parse JSON chunk:", jsonString, e);
+            controller.error(new Error(`Failed to parse JSON: ${jsonString}`));
+          }
+        }
+      }
+    },
+    flush(controller) {
+      buffer += decoder.decode(undefined, { stream: false });
+
+      const trimmedLine = buffer.trim();
+      if (trimmedLine.startsWith("data: ")) {
+        const jsonString = trimmedLine.substring(6).trim();
+        if (jsonString.length > 0 && jsonString !== "[DONE]") {
+          try {
+            const parsedObject = JSON.parse(jsonString) as GeminiAPIOutputs;
+            controller.enqueue(parsedObject);
+          } catch (e) {
+            console.error("Failed to parse final JSON chunk:", jsonString, e);
+            controller.error(
+              new Error(`Failed to parse final JSON: ${jsonString}`)
+            );
+          }
+        }
+      }
+    },
+  });
+}
+
+function createIterator<T>(
+  source: ReadableStream<Uint8Array<ArrayBuffer>>,
+  transform: TransformStream<Uint8Array<ArrayBuffer>, T>
+): AsyncIterable<T> {
+  const stream = source.pipeThrough(transform);
+  return {
+    [Symbol.asyncIterator]: async function* () {
+      const reader = stream.getReader();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) return;
+          yield value;
+        }
+      } finally {
+        reader.releaseLock();
+      }
+    },
+  };
+}
+
 /**
  * Modifies the body to remove any
  * Breadboard-specific extensions to LLM Content
@@ -650,7 +726,7 @@ async function streamGenerateContent(
   inputs: GeminiInputs,
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
-): Promise<Outcome<GeminiAPIOutputs>> {
+): Promise<Outcome<AsyncIterable<GeminiAPIOutputs>>> {
   const { model = MODELS[0] } = inputs;
 
   const { body } = inputs;
@@ -678,11 +754,10 @@ async function streamGenerateContent(
       body: JSON.stringify(conformedBody),
       signal: moduleArgs.context.signal,
     });
-    const json = await result.json();
     if (!result.ok) {
       // Fetch is a bit weird, because it returns various props
       // along with the `$error`. Let's handle that here.
-      const errObject = json;
+      const errObject = await result.json();
       const status = result.status;
       if (!status) {
         if (errObject)
@@ -711,51 +786,57 @@ async function streamGenerateContent(
         },
       });
     } else {
-      const outputs = json as GeminiAPIOutputs;
-      const candidate = outputs?.candidates?.at(0);
-      if (!candidate) {
-        await reporter.sendUpdate(
-          "Model Response",
-          outputs || result,
-          "warning"
-        );
-        return reporter.sendError(
-          err("Unable to get a good response from Gemini", {
-            origin: "server",
-            model,
-          })
-        );
+      if (!result.body) {
+        return err(`No stream returned`);
       }
-      if (
-        "content" in candidate &&
-        candidate.content &&
-        candidate.content.parts
-      ) {
-        if (body.generationConfig?.responseMimeType === "application/json") {
-          candidate.content = textToJson(candidate.content);
-        }
-        await reporter.sendUpdate(
-          "Model Response",
-          candidate.content,
-          "download"
-        );
-        return outputs;
-      }
-      await reporter.sendUpdate("Model response", outputs, "warning");
-      if (
-        candidate.finishReason &&
-        candidate.finishReason !== "STOP" &&
-        candidate.finishReason !== "MALFORMED_FUNCTION_CALL"
-      ) {
-        return reporter.sendError(
-          errFromFinishReason(candidate.finishReason, model)
-        );
-      }
+      return createIterator(result.body, createGeminiResponseTransform());
+
+      //   const outputs = json as GeminiAPIOutputs;
+      //   const candidate = outputs?.candidates?.at(0);
+      //   if (!candidate) {
+      //     await reporter.sendUpdate(
+      //       "Model Response",
+      //       outputs || result,
+      //       "warning"
+      //     );
+      //     return reporter.sendError(
+      //       err("Unable to get a good response from Gemini", {
+      //         origin: "server",
+      //         model,
+      //       })
+      //     );
+      //   }
+      //   if (
+      //     "content" in candidate &&
+      //     candidate.content &&
+      //     candidate.content.parts
+      //   ) {
+      //     if (body.generationConfig?.responseMimeType === "application/json") {
+      //       candidate.content = textToJson(candidate.content);
+      //     }
+      //     await reporter.sendUpdate(
+      //       "Model Response",
+      //       candidate.content,
+      //       "download"
+      //     );
+      //     return outputs;
+      //   }
+      //   await reporter.sendUpdate("Model response", outputs, "warning");
+      //   if (
+      //     candidate.finishReason &&
+      //     candidate.finishReason !== "STOP" &&
+      //     candidate.finishReason !== "MALFORMED_FUNCTION_CALL"
+      //   ) {
+      //     return reporter.sendError(
+      //       errFromFinishReason(candidate.finishReason, model)
+      //     );
+      //   }
+      // }
+      // return reporter.sendError({
+      //   $error,
+      //   metadata: { origin: "server", kind: "bug" },
+      // });
     }
-    return reporter.sendError({
-      $error,
-      metadata: { origin: "server", kind: "bug" },
-    });
   } catch (e) {
     return err((e as Error).message);
   } finally {
