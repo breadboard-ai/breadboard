@@ -50,6 +50,7 @@ export interface EmailPreference {
   preferenceKey: string;
   notifyPreference: NotifyPreference;
   consentState?: NotifyConsentState;
+  hasStoredPreference?: boolean;
 }
 
 // Request to get the email preferences for the calling user.
@@ -150,8 +151,7 @@ export class AppCatalystApiClient {
     return {
       hasStoredPreferences: result.preferenceResponses?.some(
         (pref) => (
-          pref.notifyPreference !== undefined &&
-          pref.notifyPreference !== NotifyPreference.UNKNOWN
+          pref.hasStoredPreference
         )
       ) ?? false,
       preferences: result.preferenceResponses?.map((pref) => [
