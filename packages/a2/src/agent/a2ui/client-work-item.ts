@@ -5,15 +5,13 @@
  */
 
 import { SimplifiedA2UIClient, WorkItem } from "@breadboard-ai/types";
-import { Signal } from "signal-polyfill";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 
 import { A2UIClient } from "./client";
+import { now } from "../now";
 
 export { A2UIClientWorkItem };
-
-const now = new Signal.State(performance.now());
 
 class A2UIClientWorkItem implements WorkItem {
   @signal

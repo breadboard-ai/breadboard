@@ -19,6 +19,7 @@ import { A2UIClientEventMessage } from "./a2ui/schemas";
 import { v0_8 } from "@breadboard-ai/a2ui";
 import { A2UIClient } from "./a2ui/client";
 import { A2UIAppScreenOutput } from "./a2ui/app-screen-output";
+import { ProgressWorkItem } from "./progress-work-item";
 
 export { AgentUI };
 
@@ -41,10 +42,20 @@ export type RawUserResponse = {
 class AgentUI {
   readonly client: A2UIClient;
 
-  #workItemId = crypto.randomUUID();
+  /**
+   * The id for the console work item and app output that shows the user-facing
+   * UI.
+   */
+  #outputId = crypto.randomUUID();
 
   readonly #consoleEntry: ConsoleEntry | undefined;
-  #workItem: A2UIClientWorkItem | undefined;
+
+  /**
+   * Handles the console updates for various parts of agent execution
+   */
+  readonly progress = new ProgressWorkItem("Agent", "spark");
+
+  #outputWorkItem: A2UIClientWorkItem | undefined;
 
   readonly #appScreen: AppScreen | undefined;
   #appScreenOutput: AppScreenOutput | undefined;
@@ -66,6 +77,8 @@ class AgentUI {
       console.warn(
         `Unable to find console entry for this agent. Trying to render UI will fail.`
       );
+    } else {
+      this.#consoleEntry.work.set(crypto.randomUUID(), this.progress);
     }
     if (!this.#appScreen) {
       console.warn(
@@ -81,7 +94,7 @@ class AgentUI {
     if (this.#appScreenOutput) return;
 
     this.#appScreenOutput = new A2UIAppScreenOutput(this.client);
-    this.#appScreen.outputs.set(this.#workItemId, this.#appScreenOutput);
+    this.#appScreen.outputs.set(this.#outputId, this.#appScreenOutput);
     this.#appScreen.type = "a2ui";
   }
 
@@ -89,19 +102,19 @@ class AgentUI {
     if (!this.#consoleEntry) {
       return err(`Unable to create UI: Console is not available`);
     }
-    this.#workItem = new A2UIClientWorkItem(this.client, "A2UI", "web");
-    this.#consoleEntry.work.set(this.#workItemId, this.#workItem);
-    return this.#workItem;
+    this.#outputWorkItem = new A2UIClientWorkItem(this.client, "A2UI", "web");
+    this.#consoleEntry.work.set(this.#outputId, this.#outputWorkItem);
+    return this.#outputWorkItem;
   }
 
   #updateWorkItem(): Outcome<A2UIClientWorkItem> {
-    if (!this.#workItem) {
+    if (!this.#outputWorkItem) {
       return this.#createWorkItem();
     }
     if (!this.#consoleEntry) {
       return err(`Unable to update UI: Console is not available`);
     }
-    return this.#workItem;
+    return this.#outputWorkItem;
   }
 
   renderUserInterface(

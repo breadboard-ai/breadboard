@@ -23,6 +23,7 @@ export {
   describe,
   defaultSafetySettings,
   streamGenerateContent,
+  conformBody as conformGeminiBody,
 };
 
 const defaultSafetySettings = (): SafetySetting[] => [
@@ -119,14 +120,14 @@ export type GeminiBody = {
 };
 
 /** The thinking features configuration. */
-export declare interface ThinkingConfig {
+export type ThinkingConfig = {
   /** Indicates whether to include thoughts in the response. If true, thoughts are returned only if the model supports thought and thoughts are available.
    */
   includeThoughts?: boolean;
   /** Indicates the thinking budget in tokens. 0 is DISABLED. -1 is AUTOMATIC. The default values and allowed ranges are model dependent.
    */
   thinkingBudget?: number;
-}
+};
 
 export type GeminiInputs = {
   // The wireable/configurable properties.
@@ -654,16 +655,13 @@ function kindFromStatus(status: number): ErrorMetadata["kind"] {
 async function streamGenerateContent(
   model: string,
   body: GeminiBody,
-  moduleArgs: A2ModuleArgs
+  { fetchWithCreds, context }: A2ModuleArgs
 ): Promise<Outcome<AsyncIterable<GeminiAPIOutputs>>> {
   try {
-    const conformedBody = await conformBody(moduleArgs, body);
-    if (!ok(conformedBody)) return conformedBody;
-
-    const result = await moduleArgs.fetchWithCreds(streamEndpointURL(model), {
+    const result = await fetchWithCreds(streamEndpointURL(model), {
       method: "POST",
-      body: JSON.stringify(conformedBody),
-      signal: moduleArgs.context.signal,
+      body: JSON.stringify(body),
+      signal: context.signal,
     });
     if (!result.ok) {
       // Expect non-streaming error response.
