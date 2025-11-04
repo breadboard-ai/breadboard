@@ -17,6 +17,13 @@ import { transformDataParts } from "@breadboard-ai/data";
 import { A2ModuleArgs } from "../runnable-module-factory";
 import { createDataPartTansformer } from "./data-part-transformer";
 
+export {
+  invoke as default,
+  describe,
+  defaultSafetySettings,
+  streamGenerateContent,
+};
+
 const defaultSafetySettings = (): SafetySetting[] => [
   {
     category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
@@ -36,7 +43,9 @@ function endpointURL(model: string) {
   return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 }
 
-export { invoke as default, describe, defaultSafetySettings };
+function streamEndpointURL(model: string) {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
+}
 
 const VALID_MODALITIES = ["Text", "Text and Image", "Audio"] as const;
 type ValidModalities = (typeof VALID_MODALITIES)[number];
@@ -635,6 +644,123 @@ function validateInputs(inputs: GeminiInputs): Outcome<void> {
 function kindFromStatus(status: number): ErrorMetadata["kind"] {
   if (status === 429) return "capacity";
   return "unknown";
+}
+
+async function streamGenerateContent(
+  inputs: GeminiInputs,
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
+): Promise<Outcome<GeminiAPIOutputs>> {
+  const { model = MODELS[0] } = inputs;
+
+  const { body } = inputs;
+
+  const reporter = new StreamableReporter(caps, {
+    title: `Calling ${model}`,
+    icon: "spark",
+  });
+
+  try {
+    const conformedBody = await conformBody(moduleArgs, body);
+    if (!ok(conformedBody)) return conformedBody;
+
+    await reporter.start();
+    await reporter.sendUpdate("Model Input", conformedBody, "upload");
+
+    let $error: string = "Unknown error";
+    // Record model call with action tracker.
+    caps.write({
+      path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
+      data: [],
+    });
+    const result = await moduleArgs.fetchWithCreds(streamEndpointURL(model), {
+      method: "POST",
+      body: JSON.stringify(conformedBody),
+      signal: moduleArgs.context.signal,
+    });
+    const json = await result.json();
+    if (!result.ok) {
+      // Fetch is a bit weird, because it returns various props
+      // along with the `$error`. Let's handle that here.
+      const errObject = json;
+      const status = result.status;
+      if (!status) {
+        if (errObject)
+          return reporter.sendError(
+            err(errObject, {
+              origin: "server",
+              model,
+            })
+          );
+        // This is not an error response, presume fatal error.
+        return reporter.sendError({
+          $error,
+          metadata: {
+            origin: "server",
+            model,
+          },
+        });
+      }
+      $error = maybeExtractError(errObject);
+      return reporter.sendError({
+        $error,
+        metadata: {
+          origin: "server",
+          kind: kindFromStatus(status),
+          model,
+        },
+      });
+    } else {
+      const outputs = json as GeminiAPIOutputs;
+      const candidate = outputs?.candidates?.at(0);
+      if (!candidate) {
+        await reporter.sendUpdate(
+          "Model Response",
+          outputs || result,
+          "warning"
+        );
+        return reporter.sendError(
+          err("Unable to get a good response from Gemini", {
+            origin: "server",
+            model,
+          })
+        );
+      }
+      if (
+        "content" in candidate &&
+        candidate.content &&
+        candidate.content.parts
+      ) {
+        if (body.generationConfig?.responseMimeType === "application/json") {
+          candidate.content = textToJson(candidate.content);
+        }
+        await reporter.sendUpdate(
+          "Model Response",
+          candidate.content,
+          "download"
+        );
+        return outputs;
+      }
+      await reporter.sendUpdate("Model response", outputs, "warning");
+      if (
+        candidate.finishReason &&
+        candidate.finishReason !== "STOP" &&
+        candidate.finishReason !== "MALFORMED_FUNCTION_CALL"
+      ) {
+        return reporter.sendError(
+          errFromFinishReason(candidate.finishReason, model)
+        );
+      }
+    }
+    return reporter.sendError({
+      $error,
+      metadata: { origin: "server", kind: "bug" },
+    });
+  } catch (e) {
+    return err((e as Error).message);
+  } finally {
+    reporter.close();
+  }
 }
 
 async function invoke(
