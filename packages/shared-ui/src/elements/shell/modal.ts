@@ -37,6 +37,9 @@ export class VEModal extends LitElement {
   @property()
   accessor saveButtonLabel = 'Save';
 
+  @property()
+  accessor otherActions: Array<{ id: string, label: string }> = [];
+
   @property({ reflect: true, type: Boolean })
   accessor blurBackground = false;
 
@@ -149,7 +152,7 @@ export class VEModal extends LitElement {
             align-items: flex-end;
             justify-content: flex-end;
 
-            & #cancel {
+            & .other-action {
               height: 40px;
               border: none;
               background: transparent;
@@ -214,12 +217,12 @@ export class VEModal extends LitElement {
     `,
   ];
 
-  #close(withSave = false) {
+  #close(withSave = false, otherAction?: string) {
     if (!this.#dialog) {
       return;
     }
 
-    const dismissalEvent = new ModalDismissedEvent(withSave);
+    const dismissalEvent = new ModalDismissedEvent(withSave, otherAction);
     this.dispatchEvent(dismissalEvent);
     if (dismissalEvent.defaultPrevented) {
       return;
@@ -306,14 +309,21 @@ export class VEModal extends LitElement {
         ${this.showSaveCancel
           ? html`<aside>
               <button
-                id="cancel"
-                class="cursor md-label-large sans-flex"
+                class="other-action cursor md-label-large sans-flex"
                 @click=${() => {
                   this.#close();
                 }}
               >
                 Cancel
               </button>
+              ${this.otherActions.map((action) => html`<button
+                class="other-action cursor md-label-large sans-flex"
+                @click=${() => {
+                  this.#close(false, action.id);
+                }}
+              >
+                ${action.label}
+              </button>`)}
               <button
                 id="save"
                 class="cursor"

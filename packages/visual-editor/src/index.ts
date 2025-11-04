@@ -108,6 +108,8 @@ import {
 import { builtInMcpClients } from "./mcp-clients";
 import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
+import { ConsentManager } from "@breadboard-ai/shared-ui/utils/consent-manager.js";
+import { consentManagerContext } from "@breadboard-ai/shared-ui/contexts/consent-manager.js";
 
 type RenderValues = {
   canSave: boolean;
@@ -159,6 +161,9 @@ export class Main extends SignalWatcher(LitElement) {
 
   @provide({ context: opalShellContext })
   accessor opalShell: OpalShellHostProtocol;
+
+  @provide({ context: consentManagerContext })
+  accessor #consentManager: ConsentManager | undefined = undefined;
 
   @state()
   accessor #tab: Runtime.Types.Tab | null = null;
@@ -453,6 +458,12 @@ export class Main extends SignalWatcher(LitElement) {
       fetchWithCreds,
     });
 
+    this.#consentManager = new ConsentManager(async (request: BreadboardUI.State.ConsentRequest) => {
+      return new Promise<BreadboardUI.State.ConsentAction>(resolve => {
+        this.#uiState.consentRequests.push({ request, consentCallback: resolve });
+      });
+    });
+
     this.#runtime = await Runtime.create({
       recentBoardStore: this.#recentBoardStore,
       graphStore: this.#graphStore,
@@ -474,6 +485,7 @@ export class Main extends SignalWatcher(LitElement) {
       flags: flagManager,
       mcpClientManager,
       fetchWithCreds,
+      // consentManager: this.#consentManager,
     });
     this.#addRuntimeEventHandlers();
 
@@ -1297,9 +1309,9 @@ export class Main extends SignalWatcher(LitElement) {
 
     const projectState = mainGraphId
       ? this.#runtime.state.getOrCreateProjectState(
-          mainGraphId,
-          this.#runtime.edit.getEditor(this.#tab)
-        )
+        mainGraphId,
+        this.#runtime.edit.getEditor(this.#tab)
+      )
       : null;
 
     if (projectState && this.#tab?.finalOutputValues) {
@@ -1381,13 +1393,13 @@ export class Main extends SignalWatcher(LitElement) {
       ${this.#uiState.show.has("TOS") || this.#uiState.show.has("MissingShare")
         ? nothing
         : [
-            this.#renderCanvasController(renderValues),
-            this.#renderAppController(renderValues),
-            this.#renderWelcomePanel(),
-            this.#uiState.showStatusUpdateChip
-              ? this.#renderStatusUpdateBar()
-              : nothing,
-          ]}
+          this.#renderCanvasController(renderValues),
+          this.#renderAppController(renderValues),
+          this.#renderWelcomePanel(),
+          this.#uiState.showStatusUpdateChip
+            ? this.#renderStatusUpdateBar()
+            : nothing,
+        ]}
     </div>`;
 
     /**
@@ -1402,10 +1414,10 @@ export class Main extends SignalWatcher(LitElement) {
     return html`<div
       id="container"
       @bbevent=${async (
-        evt: BreadboardUI.Events.StateEvent<
-          keyof BreadboardUI.Events.StateEventDetailMap
-        >
-      ) => {
+      evt: BreadboardUI.Events.StateEvent<
+        keyof BreadboardUI.Events.StateEventDetailMap
+      >
+    ) => {
         // Locate the specific handler based on the event type.
         const eventRoute = eventRoutes.get(evt.detail.eventType);
         if (!eventRoute) {
@@ -1488,6 +1500,7 @@ export class Main extends SignalWatcher(LitElement) {
         this.#renderToasts(),
         this.#renderSnackbar(),
         this.#renderFeedbackPanel(),
+        this.#renderConsentRequests(),
       ]}
     </div>`;
   }
@@ -1653,10 +1666,10 @@ export class Main extends SignalWatcher(LitElement) {
       <button
         class="close"
         @click=${(evt: Event) => {
-          evt.preventDefault();
-          evt.stopImmediatePropagation();
-          this.#uiState.showStatusUpdateChip = false;
-        }}
+        evt.preventDefault();
+        evt.stopImmediatePropagation();
+        this.#uiState.showStatusUpdateChip = false;
+      }}
       >
         <span class="g-icon round filled">close</span>
       </button>
@@ -1766,13 +1779,13 @@ export class Main extends SignalWatcher(LitElement) {
         <div class="controls">
           <button
             @click=${async (evt: Event) => {
-              if (!(evt.target instanceof HTMLButtonElement)) {
-                return;
-              }
-              evt.target.disabled = true;
-              await this.#apiClient.acceptTos(tosVersion, true);
-              this.#tosStatus = await this.#apiClient.checkTos();
-            }}
+        if (!(evt.target instanceof HTMLButtonElement)) {
+          return;
+        }
+        evt.target.disabled = true;
+        await this.#apiClient.acceptTos(tosVersion, true);
+        this.#tosStatus = await this.#apiClient.checkTos();
+      }}
           >
             Continue
           </button>
@@ -1808,6 +1821,20 @@ export class Main extends SignalWatcher(LitElement) {
         ></bb-toast>`;
       }
     )}`;
+  }
+
+  #renderConsentRequests() {
+    if (this.#uiState.consentRequests[0]) {
+      return html`
+        <bb-consent-request-modal
+          .consentRequest=${this.#uiState.consentRequests[0]}
+          @bbmodaldismissed=${() => {
+          this.#uiState.consentRequests.shift();
+        }}
+        ></bb-consent-request-modal>
+      `;
+    }
+    return nothing;
   }
 
   async #invokeRemixEventRouteWith(
@@ -1867,22 +1894,22 @@ export class Main extends SignalWatcher(LitElement) {
   #renderSnackbar() {
     return html`<bb-snackbar
       ${ref((el: Element | undefined) => {
-        if (!el) {
-          this.#snackbar = undefined;
-        }
+      if (!el) {
+        this.#snackbar = undefined;
+      }
 
-        this.#snackbar = el as BreadboardUI.Elements.Snackbar;
-        for (const pendingMessage of this.#pendingSnackbarMessages) {
-          const { message, id, persistent, type, actions } =
-            pendingMessage.message;
-          this.snackbar(message, type, actions, persistent, id);
-        }
+      this.#snackbar = el as BreadboardUI.Elements.Snackbar;
+      for (const pendingMessage of this.#pendingSnackbarMessages) {
+        const { message, id, persistent, type, actions } =
+          pendingMessage.message;
+        this.snackbar(message, type, actions, persistent, id);
+      }
 
-        this.#pendingSnackbarMessages.length = 0;
-      })}
+      this.#pendingSnackbarMessages.length = 0;
+    })}
       @bbsnackbaraction=${async (
-        evt: BreadboardUI.Events.SnackbarActionEvent
-      ) => {
+      evt: BreadboardUI.Events.SnackbarActionEvent
+    ) => {
         evt.callback?.();
         switch (evt.action) {
           case "remix": {
@@ -2103,8 +2130,8 @@ export class Main extends SignalWatcher(LitElement) {
       <bb-sign-in-modal
         ${ref(this.#signInModalRef)}
         @bbmodaldismissed=${() => {
-          this.#uiState.show.delete("SignInModal");
-        }}
+        this.#uiState.show.delete("SignInModal");
+      }}
       ></bb-sign-in-modal>
     `;
   }

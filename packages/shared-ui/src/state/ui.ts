@@ -8,8 +8,9 @@ import { signal } from "signal-utils";
 import { VisualEditorMode } from "../types/types";
 import { SignalSet } from "signal-utils/set";
 import { SignalMap } from "signal-utils/map";
+import { SignalArray } from "signal-utils/array";
 import { ToastType } from "../events/events";
-import { UI, UIOverlays, UILoadState } from "./types";
+import { UI, UIOverlays, UILoadState, ConsentRequestWithCallback } from "./types";
 import { RuntimeFlagManager, RuntimeFlags } from "@breadboard-ai/types";
 import { AsyncComputed } from "signal-utils/async-computed";
 import { devUrlParams } from "../utils/urls.js";
@@ -68,6 +69,8 @@ class ReactiveUIState implements UI {
       persistent: boolean;
     }
   >();
+
+  accessor consentRequests = new SignalArray<ConsentRequestWithCallback>();
 
   @signal
   get flags(): RuntimeFlags | null {

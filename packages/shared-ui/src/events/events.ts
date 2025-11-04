@@ -310,7 +310,7 @@ export class RedoEvent extends Event {
 export class ModalDismissedEvent extends Event {
   static eventName = "bbmodaldismissed";
 
-  constructor(public readonly withSave = false) {
+  constructor(public readonly withSave = false, public readonly otherAction?: string) {
     super(ModalDismissedEvent.eventName, { ...eventInit });
   }
 }

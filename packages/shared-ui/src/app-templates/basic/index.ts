@@ -76,6 +76,45 @@ import { makeUrl } from "../../utils/urls.js";
 import { AppScreenOutput, RuntimeFlags } from "@breadboard-ai/types";
 import { maybeTriggerNlToOpalSatisfactionSurvey } from "../../survey/nl-to-opal-satisfaction-survey.js";
 import { repeat } from "lit/directives/repeat.js";
+import { consentManagerContext } from "../../contexts/consent-manager.js";
+import { ConsentManager } from "../../utils/consent-manager.js";
+import { ConsentType } from "../../state/types.js";
+
+const toFunctionString = (fn: Function, bindings?: Record<string, unknown>) => {
+  let str = fn.toString();
+  if (bindings) {
+    for (const [key, value] of Object.entries(bindings)) {
+      str = str.replace(key, `(${JSON.stringify(value)})`);
+    }
+  }
+  return str;
+}
+const scriptifyFunction = (fn: Function, bindings?: Record<string, unknown>) =>
+  `<script>( ${toFunctionString(fn, bindings)} )();</script>`;
+
+// TODO: get from env
+const PARENT_ORIGIN = `http://localhost:3000`;
+
+const interceptPopupsScript = scriptifyFunction(() => {
+  const parentOrigin = PARENT_ORIGIN;
+  customElements.define('open-popup', class extends HTMLElement {
+    connectedCallback() {
+      this.addEventListener('click', () => {
+        const urlStr = this.getAttribute('url');
+        if (!urlStr) {
+          return;
+        }
+        const url = new URL(urlStr);
+        window.parent.postMessage({
+          type: 'request-open-popup',
+          url: url.toString()
+        }, parentOrigin);
+      }, { capture: true });
+    }
+  });
+}, {
+  PARENT_ORIGIN,
+});
 
 function isHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -119,6 +158,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @state()
   @consume({ context: projectRunContext, subscribe: true })
   accessor run: ProjectRun | null = null;
+
+  @state()
+  @consume({ context: consentManagerContext })
+  accessor consentManager: ConsentManager | undefined = undefined;
 
   @property()
   accessor focusWhenIn: FloatingInputFocusState = ["app"];
@@ -164,6 +207,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   readonly #shareResultsButton = createRef<HTMLButtonElement>();
 
+  readonly outputHtmlIframeRef = createRef<HTMLIFrameElement>();
+  #messageListenerController: AbortController | null = null;
+
   get additionalOptions() {
     return {
       font: {
@@ -184,6 +230,34 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   static styles = appStyles;
+
+  connectedCallback() {
+    super.connectedCallback();
+    window.addEventListener("message", async (event: MessageEvent<{ type: string, url: string }>) => {
+      if (event.source === this.outputHtmlIframeRef.value?.contentWindow &&
+        event.data.type === "request-open-popup"
+      ) {
+        const url = new URL(event.data.url);
+        const graphId = this.graph?.url;
+        if (this.consentManager && graphId) {
+          const allow = await this.consentManager.queryConsent({
+            graphId,
+            type: ConsentType.POPUP,
+            scope: url.origin,
+          }, true);
+          if (!allow) {
+            return;
+          }
+        }
+        window.open(url.toString(), "_blank");
+      }
+    }, { signal: this.#messageListenerController?.signal });
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.#messageListenerController?.abort();
+  }
 
   #renderControls() {
     return html`<bb-app-header
@@ -209,10 +283,16 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       | symbol = nothing;
     const last = this.run.app.last?.last;
     if (last) {
+      // const htmlOutput = `
+      //   <open-popup url="https://www.netflix.com"><button>Open Netflix</button></open-popup>
+      //   <open-popup url="https://www.youtube.com"><button>Open Youtube</button></open-popup>
+      //   <open-popup url="https://www.amazon.com"><button>Open Amazon</button></open-popup>
+      //   `;
       const htmlOutput = isHTMLOutput(last);
       if (htmlOutput !== null) {
         activityContents = html`<iframe
-          srcdoc=${htmlOutput}
+          srcdoc=${interceptPopupsScript + htmlOutput}
+          ${ref(this.outputHtmlIframeRef)}
           frameborder="0"
           class="html-view"
           sandbox="allow-scripts allow-forms"
