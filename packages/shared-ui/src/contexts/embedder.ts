@@ -5,7 +5,7 @@
  */
 
 import { createContext } from "@lit/context";
-import type { EmbedState } from "@breadboard-ai/embed";
+import type { EmbedState } from "@breadboard-ai/types/embedder.js";
 
 export const embedderContext = createContext<EmbedState | undefined>(
   "bb-embedder"

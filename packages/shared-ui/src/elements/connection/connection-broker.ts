@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EmbedHandler, Handler } from "@breadboard-ai/embed";
+import { Handler } from "@breadboard-ai/embed";
+import type { EmbedHandler } from "@breadboard-ai/types/embedder.js";
 import {
   oauthTokenBroadcastChannelName,
   type OAuthStateParameter,

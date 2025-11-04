@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   BreadboardMessage,
   EmbedderMessage,
   EmbedHandler,
   EmbedState,
   MessageCallback,
   MessageType,
-} from "./types/types.js";
+} from "@breadboard-ai/types/embedder.js";
 
-export type * from "./types/types.js";
+export * from "@breadboard-ai/types/embedder.js";
 
 export function embedState(): EmbedState {
   return {

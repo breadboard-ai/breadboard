@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BreadboardMessage, Handler } from "@breadboard-ai/embed";
+import { Handler } from "@breadboard-ai/embed";
 import { LandingCarousel } from "./carousel";
+import type { BreadboardMessage } from "@breadboard-ai/types/embedder.js";
 
 const embedHandler = window.self !== window.top ? new Handler() : undefined;
 
