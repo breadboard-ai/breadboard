@@ -24,6 +24,7 @@ async function callGenWebpage(
   const inputParameters: string[] = [];
   let i = 0;
   for (const val of content) {
+    if (!val.parts) continue;
     for (const part of val.parts) {
       i++;
       if ("text" in part) {

@@ -27,3 +27,4 @@ export * from "./template.js";
 export * from "./throttler.js";
 export * from "./timestamp.js";
 export * from "./fetch-with-creds.js";
+export * from "./iterator-from-stream.js";

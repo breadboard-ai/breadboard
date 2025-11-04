@@ -16,6 +16,15 @@ import {
 import { transformDataParts } from "@breadboard-ai/data";
 import { A2ModuleArgs } from "../runnable-module-factory";
 import { createDataPartTansformer } from "./data-part-transformer";
+import { iteratorFromStream } from "@breadboard-ai/utils";
+
+export {
+  invoke as default,
+  describe,
+  defaultSafetySettings,
+  streamGenerateContent,
+  conformBody as conformGeminiBody,
+};
 
 const defaultSafetySettings = (): SafetySetting[] => [
   {
@@ -36,7 +45,9 @@ function endpointURL(model: string) {
   return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 }
 
-export { invoke as default, describe, defaultSafetySettings };
+function streamEndpointURL(model: string) {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
+}
 
 const VALID_MODALITIES = ["Text", "Text and Image", "Audio"] as const;
 type ValidModalities = (typeof VALID_MODALITIES)[number];
@@ -109,14 +120,14 @@ export type GeminiBody = {
 };
 
 /** The thinking features configuration. */
-export declare interface ThinkingConfig {
+export type ThinkingConfig = {
   /** Indicates whether to include thoughts in the response. If true, thoughts are returned only if the model supports thought and thoughts are available.
    */
   includeThoughts?: boolean;
   /** Indicates the thinking budget in tokens. 0 is DISABLED. -1 is AUTOMATIC. The default values and allowed ranges are model dependent.
    */
   thinkingBudget?: number;
-}
+};
 
 export type GeminiInputs = {
   // The wireable/configurable properties.
@@ -354,6 +365,7 @@ type GeminiError = {
 };
 
 function textToJson(content: LLMContent): LLMContent {
+  if (!content.parts) return content;
   return {
     ...content,
     parts: content.parts.map((part) => {
@@ -379,6 +391,9 @@ async function conformBody(
 ): Promise<Outcome<GeminiBody>> {
   const preDataTransformContents = flattenContext(
     body.contents.map((content) => {
+      if (!content.parts) {
+        return content;
+      }
       return {
         ...content,
         parts: content.parts.map((part) => {
@@ -635,6 +650,32 @@ function validateInputs(inputs: GeminiInputs): Outcome<void> {
 function kindFromStatus(status: number): ErrorMetadata["kind"] {
   if (status === 429) return "capacity";
   return "unknown";
+}
+
+async function streamGenerateContent(
+  model: string,
+  body: GeminiBody,
+  { fetchWithCreds, context }: A2ModuleArgs
+): Promise<Outcome<AsyncIterable<GeminiAPIOutputs>>> {
+  try {
+    const result = await fetchWithCreds(streamEndpointURL(model), {
+      method: "POST",
+      body: JSON.stringify(body),
+      signal: context.signal,
+    });
+    if (!result.ok) {
+      // Expect non-streaming error response.
+      const errObject = await result.json();
+      return err(maybeExtractError(errObject), { origin: "server", model });
+    } else {
+      if (!result.body) {
+        return err(`No stream returned`, { origin: "server", model });
+      }
+      return iteratorFromStream(result.body);
+    }
+  } catch (e) {
+    return err((e as Error).message, { origin: "client", model });
+  }
 }
 
 async function invoke(

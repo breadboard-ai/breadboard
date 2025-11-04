@@ -83,7 +83,7 @@ function unzipContent(content: LLMContent): UnzippedResult {
     id,
     contents: new Array(maxLength).fill(0).map((_, entryIndex) => {
       const parts = mergeTextParts(
-        content.parts.flatMap((part, partIndex) => {
+        content.parts?.flatMap((part, partIndex) => {
           if (!info.has(partIndex)) return part;
 
           // We know this exists, so we're ok with not checking
@@ -288,7 +288,7 @@ function zipContexts(
       if (!role) role = item.role;
       zippedParts.push(item.parts);
       // Add separator if previous element was text.
-      const lastItem = item.parts.slice(-1)[0];
+      const lastItem = item.parts?.slice(-1)[0];
       if (separator.length > 0 && lastItem && "text" in lastItem) {
         zippedParts.push({ text: separator });
       }
@@ -309,6 +309,7 @@ function flattenContent(
   separatator = ""
 ): LLMContent[] {
   let hadList = false;
+  if (!content.parts) return [content];
   const flattened = content.parts
     .map((part) => {
       if (isListPart(part)) {
@@ -333,7 +334,7 @@ type ListResponse = {
 };
 
 function toList(content: LLMContent): Outcome<LLMContent> {
-  const jsonPart = content.parts.at(0);
+  const jsonPart = content.parts?.at(0);
   if (!jsonPart || !("json" in jsonPart)) {
     // TODO: Error recovery
     return err(`Gemini generated invalid list`);

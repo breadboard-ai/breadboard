@@ -7,10 +7,11 @@
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { Params } from "../a2/common";
-import gemini, {
+import {
+  conformGeminiBody,
   FunctionDeclaration,
-  GeminiAPIOutputs,
-  GeminiInputs,
+  GeminiBody,
+  streamGenerateContent,
   Tool,
 } from "../a2/gemini";
 import { llm } from "../a2/utils";
@@ -219,73 +220,77 @@ class Loop {
     objective: LLMContent,
     params: Params
   ): Promise<Outcome<AgentResult>> {
-    const objectivePidgin = await this.#translator.toPidgin(objective, params);
-    if (!ok(objectivePidgin)) return objectivePidgin;
+    this.#ui.progress.startAgent(objective);
+    try {
+      const objectivePidgin = await this.#translator.toPidgin(
+        objective,
+        params
+      );
+      if (!ok(objectivePidgin)) return objectivePidgin;
 
-    const contents: LLMContent[] = [
-      llm`<objective>${objectivePidgin.text}</objective>`.asContent(),
-    ];
+      const contents: LLMContent[] = [
+        llm`<objective>${objectivePidgin.text}</objective>`.asContent(),
+      ];
 
-    let terminateLoop = false;
-    let result: AgentRawResult = {
-      success: false,
-      user_message: "",
-      href: "",
-      objective_outcomes: [],
-    };
-    const systemFunctions = initializeSystemFunctions({
-      useA2UI: true,
-      ui: this.#ui,
-      fileSystem: this.#fileSystem,
-      terminateCallback: () => {
-        terminateLoop = true;
-      },
-      successCallback: (user_message, href, objective_outcomes) => {
-        terminateLoop = true;
-        console.log("SUCCESS! Objective fulfilled");
-        console.log("User message:", user_message);
-        console.log("Transfer control to", href);
-        console.log("Objective outcomes:", objective_outcomes);
-        result = {
-          success: true,
-          user_message,
-          href,
-          objective_outcomes,
-        };
-      },
-    });
-    const systemFunctionDefinitions = new Map<string, FunctionDefinition>(
-      systemFunctions.map((item) => [item.name!, item])
-    );
-    const systemFunctionDeclarations = systemFunctions.map(
-      ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
-    );
-    const generateFunctions = initializeGenerateFunctions({
-      fileSystem: this.#fileSystem,
-      caps: this.caps,
-      moduleArgs: this.moduleArgs,
-    });
-    const generateFunctionDefinitions = new Map<string, FunctionDefinition>(
-      generateFunctions.map((item) => [item.name!, item])
-    );
-    const generateFunctionDeclarations = generateFunctions.map(
-      ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
-    );
-    const objectiveTools = objectivePidgin.tools.list().at(0);
-    const tools: Tool[] = [
-      {
-        ...objectiveTools,
-        functionDeclarations: [
-          ...(objectiveTools?.functionDeclarations || []),
-          ...systemFunctionDeclarations,
-          ...generateFunctionDeclarations,
-        ],
-      },
-    ];
-    while (!terminateLoop) {
-      const inputs: GeminiInputs = {
-        model: AGENT_MODEL,
-        body: {
+      let terminateLoop = false;
+      let result: AgentRawResult = {
+        success: false,
+        user_message: "",
+        href: "",
+        objective_outcomes: [],
+      };
+      const systemFunctions = initializeSystemFunctions({
+        useA2UI: true,
+        ui: this.#ui,
+        fileSystem: this.#fileSystem,
+        terminateCallback: () => {
+          terminateLoop = true;
+        },
+        successCallback: (user_message, href, objective_outcomes) => {
+          terminateLoop = true;
+          console.log("SUCCESS! Objective fulfilled");
+          console.log("User message:", user_message);
+          console.log("Transfer control to", href);
+          console.log("Objective outcomes:", objective_outcomes);
+          result = {
+            success: true,
+            user_message,
+            href,
+            objective_outcomes,
+          };
+        },
+      });
+      const systemFunctionDefinitions = new Map<string, FunctionDefinition>(
+        systemFunctions.map((item) => [item.name!, item])
+      );
+      const systemFunctionDeclarations = systemFunctions.map(
+        ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
+      );
+      const generateFunctions = initializeGenerateFunctions({
+        fileSystem: this.#fileSystem,
+        caps: this.caps,
+        moduleArgs: this.moduleArgs,
+      });
+      const generateFunctionDefinitions = new Map<string, FunctionDefinition>(
+        generateFunctions.map((item) => [item.name!, item])
+      );
+      const generateFunctionDeclarations = generateFunctions.map(
+        ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
+      );
+      const objectiveTools = objectivePidgin.tools.list().at(0);
+      const tools: Tool[] = [
+        {
+          ...objectiveTools,
+          functionDeclarations: [
+            ...(objectiveTools?.functionDeclarations || []),
+            ...systemFunctionDeclarations,
+            ...generateFunctionDeclarations,
+          ],
+        },
+      ];
+
+      while (!terminateLoop) {
+        const body: GeminiBody = {
           contents,
           generationConfig: {
             thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
@@ -295,44 +300,61 @@ class Loop {
             functionCallingConfig: { mode: "ANY" },
           },
           tools,
-        },
-      };
-      const generated = (await gemini(
-        inputs,
-        this.caps,
-        this.moduleArgs
-      )) as Outcome<GeminiAPIOutputs>;
-      if (!ok(generated)) return generated;
-      const content = generated.candidates?.at(0)?.content;
-      if (!content) {
-        return err(`Agent unable to proceed: no content in Gemini response`);
-      }
-      contents.push(content);
-      const functionCaller = new FunctionCaller(
-        new Map([...systemFunctionDefinitions, ...generateFunctionDefinitions]),
-        objectivePidgin.tools
-      );
-      const parts = content.parts || [];
-      for (const part of parts) {
-        if (part.thought) {
-          if ("text" in part) {
-            console.log("THOUGHT", part.text);
-          } else {
-            console.log("INVALID THOUGHT", part);
+        };
+        const conformedBody = await conformGeminiBody(this.moduleArgs, body);
+        if (!ok(conformedBody)) return conformedBody;
+
+        this.#ui.progress.sendRequest(AGENT_MODEL, conformedBody);
+
+        const generated = await streamGenerateContent(
+          AGENT_MODEL,
+          conformedBody,
+          this.moduleArgs
+        );
+        if (!ok(generated)) return generated;
+        for await (const chunk of generated) {
+          const content = chunk.candidates?.at(0)?.content;
+          if (!content) {
+            return err(
+              `Agent unable to proceed: no content in Gemini response`
+            );
           }
-        }
-        if ("functionCall" in part) {
-          functionCaller.call(part);
+          contents.push(content);
+          const functionCaller = new FunctionCaller(
+            new Map([
+              ...systemFunctionDefinitions,
+              ...generateFunctionDefinitions,
+            ]),
+            objectivePidgin.tools
+          );
+          const parts = content.parts || [];
+          for (const part of parts) {
+            if (part.thought) {
+              if ("text" in part) {
+                console.log("THOUGHT", part.text);
+                this.#ui.progress.thought(part.text);
+              } else {
+                console.log("INVALID THOUGHT", part);
+              }
+            }
+            if ("functionCall" in part) {
+              this.#ui.progress.functionCall(part);
+              functionCaller.call(part);
+            }
+          }
+          const functionResults = await functionCaller.getResults();
+          if (!functionResults) continue;
+          if (!ok(functionResults)) {
+            return err(`Agent unable to proceed: ${functionResults.$error}`);
+          }
+          this.#ui.progress.functionResult(functionResults);
+          contents.push(functionResults);
         }
       }
-      const functionResults = await functionCaller.getResults();
-      if (!functionResults) continue;
-      if (!ok(functionResults)) {
-        return err(`Agent unable to proceed: ${functionResults.$error}`);
-      }
-      contents.push(functionResults);
+      return this.#finalizeResult(result);
+    } finally {
+      this.#ui.progress.finish();
     }
-    return this.#finalizeResult(result);
   }
 
   #finalizeResult(raw: AgentRawResult): Outcome<AgentResult> {

@@ -242,6 +242,7 @@ function toText(c: LLMContent | LLMContent[]): string {
   return contentToText(last).trim();
 
   function contentToText(content: LLMContent) {
+    if (!content.parts) return "";
     return content.parts
       .map((part) => ("text" in part ? part.text : ""))
       .join("\n\n");

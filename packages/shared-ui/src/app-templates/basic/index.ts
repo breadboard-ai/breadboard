@@ -294,7 +294,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     if (!this.run) return nothing;
 
     const titles = Array.from(this.run.app.current.values()).map(
-      (v) => v.title
+      (v) => v.progress || v.title
     );
 
     const titleList = new Intl.ListFormat("en-US", {
