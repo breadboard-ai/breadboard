@@ -61,10 +61,10 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   );
   const settings = await SettingsStore.restoredInstance();
 
-  const { shellHost: opalShell, embedHandler } = await connectToOpalShellHost();
+  const { shellHost, embedHandler } = await connectToOpalShellHost();
   const signinAdapter = new SigninAdapter(
-    opalShell,
-    await opalShell.getSignInState()
+    shellHost,
+    await shellHost.getSignInState()
   );
 
   const StringsHelper = await import("@breadboard-ai/shared-ui/strings");
@@ -113,8 +113,8 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       env: bootstrapArgs.env,
       embedHandler,
       globalConfig,
-      opalShell,
-      initialSignInState: await opalShell.getSignInState(),
+      shellHost,
+      initialSignInState: await shellHost.getSignInState(),
     };
     if (mainArgs.globalConfig.googleDrive.publishPermissions.length === 0) {
       console.warn(

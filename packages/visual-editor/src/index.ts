@@ -288,7 +288,7 @@ export class Main extends SignalWatcher(LitElement) {
     this.#secretsHelper = new SecretsHelper(this.#settings);
 
     // Authentication
-    this.opalShell = args.opalShell;
+    this.opalShell = args.shellHost;
     this.signinAdapter = new SigninAdapter(
       this.opalShell,
       args.initialSignInState,

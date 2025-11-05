@@ -94,10 +94,10 @@ function embedIntroVideo(target: HTMLDivElement) {
 }
 
 async function init() {
-  const { shellHost: opalShell, embedHandler } = await connectToOpalShellHost();
+  const { shellHost, embedHandler } = await connectToOpalShellHost();
   const signinAdapter = new SigninAdapter(
-    opalShell,
-    await opalShell.getSignInState()
+    shellHost,
+    await shellHost.getSignInState()
   );
 
   if (signinAdapter.state === "signedin") {

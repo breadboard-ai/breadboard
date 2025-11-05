@@ -66,7 +66,7 @@ export type MainArguments = {
   env?: FileSystemEntry[];
   embedHandler?: EmbedHandler;
   globalConfig: GlobalConfig;
-  opalShell: OpalShellHostProtocol;
+  shellHost: OpalShellHostProtocol;
   initialSignInState: SignInState;
 };
 
