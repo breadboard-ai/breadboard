@@ -33,11 +33,16 @@ export type Handler<
   args: z.infer<ZodObject<TParams>>
 ) => Promise<Outcome<z.infer<ZodObject<TResponse>>>>;
 
+export type Describer<TParams extends ArgsRawShape> = (
+  args: z.infer<ZodObject<TParams>>
+) => string;
+
 type TypedFunctionDefinition<
   TParams extends ArgsRawShape,
   TResponse extends ArgsRawShape,
 > = FunctionDeclaration & {
   handler: Handler<TParams, TResponse>;
+  describer: Describer<TParams>;
 };
 
 export type FunctionDefinition = TypedFunctionDefinition<any, any>;
@@ -49,7 +54,8 @@ function defineFunction<
   TResponse extends ArgsRawShape,
 >(
   definition: ZodFunctionDefinition<TParams, TResponse>,
-  handler: Handler<TParams, TResponse>
+  handler: Handler<TParams, TResponse>,
+  describer: Describer<TParams>
 ): TypedFunctionDefinition<TParams, TResponse> {
   const { parameters, response, name, description } = definition;
   // Convert Zod schemas to JSON Schema
@@ -59,6 +65,7 @@ function defineFunction<
     description,
     parametersJsonSchema,
     handler,
+    describer,
   };
   if (response) {
     result["responseJsonSchema"] = zodToJsonSchema(z.object(response));
@@ -78,7 +85,8 @@ function defineFunctionLoose(
   definition: FunctionDeclaration,
   handler: (
     args: Record<string, unknown>
-  ) => Promise<Outcome<Record<string, unknown>>>
+  ) => Promise<Outcome<Record<string, unknown>>>,
+  describer: (args: Record<string, unknown>) => string
 ): FunctionDefinition {
   const { parametersJsonSchema, responseJsonSchema, name, description } =
     definition;
@@ -87,6 +95,7 @@ function defineFunctionLoose(
     description,
     parametersJsonSchema,
     handler,
+    describer,
   };
   if (responseJsonSchema) {
     result["responseJsonSchema"] = responseJsonSchema;
