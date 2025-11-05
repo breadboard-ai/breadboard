@@ -39,6 +39,4 @@ export { StreamCapability } from "./stream.js";
 // Move runtime tests to `runtime` package.
 export { createRunStateManager } from "./run/index.js";
 // Move runtime tests to `runtime` package.
-export { LocalRunner } from "./harness/local-runner.js";
-// Move runtime tests to `runtime` package.
 export { loadRunnerState } from "./serialization.js";
