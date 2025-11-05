@@ -16,7 +16,7 @@ import { createClientConfig } from "./config.js";
 import { makeCspHandler } from "./csp.js";
 import * as flags from "./flags.js";
 import { CachingFeaturedGallery, makeGalleryMiddleware } from "./gallery.js";
-import { createUpdatesHandler } from "./upates.js";
+import { createUpdatesHandler } from "./updates.js";
 
 import { GoogleAuth } from "google-auth-library";
 import { createMcpProxyHandler } from "./mcp-proxy.js";
