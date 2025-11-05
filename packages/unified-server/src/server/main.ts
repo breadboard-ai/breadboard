@@ -8,7 +8,7 @@ import express, { type Request } from "express";
 import ViteExpress from "vite-express";
 
 import * as boardServer from "@breadboard-ai/board-server";
-import * as connectionServer from "@breadboard-ai/connection-server";
+import * as connectionServer from "./connection/server.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 
 import { makeDriveProxyMiddleware } from "./drive-proxy.js";
@@ -16,7 +16,7 @@ import { createClientConfig } from "./config.js";
 import { makeCspHandler } from "./csp.js";
 import * as flags from "./flags.js";
 import { CachingFeaturedGallery, makeGalleryMiddleware } from "./gallery.js";
-import { createUpdatesHandler } from "./upates.js";
+import { createUpdatesHandler } from "./updates.js";
 
 import { GoogleAuth } from "google-auth-library";
 import { createMcpProxyHandler } from "./mcp-proxy.js";
