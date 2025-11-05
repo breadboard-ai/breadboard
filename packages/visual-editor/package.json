@@ -24,7 +24,6 @@
   "scripts": {
     "prepack": "npm run build",
     "dev": "npm run serve --watch",
-    "serve": "wireit",
     "preview": "wireit",
     "deploy": "npm run build:vite && firebase deploy",
     "build": "wireit",
@@ -114,24 +113,6 @@
       "files": [
         "vite.config.ts",
         "scripts/*.ts",
-        ".env"
-      ]
-    },
-    "serve": {
-      "command": "vite",
-      "service": true,
-      "dependencies": [
-        {
-          "script": "typescript-files-and-deps",
-          "cascade": false
-        },
-        {
-          "script": "../connection-server#dev:nowatch",
-          "cascade": false
-        }
-      ],
-      "files": [
-        "vite.config.ts",
         ".env"
       ]
     }
