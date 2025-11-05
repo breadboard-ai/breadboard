@@ -74,7 +74,11 @@ export type Theme = {
       element: Record<string, boolean>;
       label: Record<string, boolean>;
     };
-    DateTimeInput: Record<string, boolean>;
+    DateTimeInput: {
+      container: Record<string, boolean>;
+      element: Record<string, boolean>;
+      label: Record<string, boolean>;
+    };
     Divider: Record<string, boolean>;
     Heading: {
       all: Record<string, boolean>;
@@ -87,10 +91,21 @@ export type Theme = {
     Image: Record<string, boolean>;
     Icon: Record<string, boolean>;
     List: Record<string, boolean>;
-    Modal: Record<string, boolean>;
-    MultipleChoice: Record<string, boolean>;
+    Modal: {
+      backdrop: Record<string, boolean>;
+      element: Record<string, boolean>;
+    };
+    MultipleChoice: {
+      container: Record<string, boolean>;
+      element: Record<string, boolean>;
+      label: Record<string, boolean>;
+    };
     Row: Record<string, boolean>;
-    Slider: Record<string, boolean>;
+    Slider: {
+      container: Record<string, boolean>;
+      element: Record<string, boolean>;
+      label: Record<string, boolean>;
+    };
     Tabs: {
       container: Record<string, boolean>;
       element: Record<string, boolean>;
@@ -292,6 +307,7 @@ interface BaseComponentNode {
   id: string;
   weight?: number;
   dataContextPath?: string;
+  slotName?: string;
 }
 
 export interface HeadingNode extends BaseComponentNode {
