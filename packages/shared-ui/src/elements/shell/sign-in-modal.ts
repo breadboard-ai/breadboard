@@ -3,7 +3,7 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { type OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
+import { type OAuthScope } from "../../connection/oauth-scopes.js";
 import { consume } from "@lit/context";
 import { LitElement, css, html, nothing, type HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";

@@ -9,8 +9,8 @@
 import {
   ALWAYS_REQUIRED_OAUTH_SCOPES,
   canonicalizeOAuthScope,
-} from "@breadboard-ai/connection-client/oauth-scopes.js";
-import { TokenVendor } from "@breadboard-ai/connection-client/token-vendor.js";
+} from "../connection/oauth-scopes.js";
+import { TokenVendor } from "../connection/token-vendor.js";
 import type { BreadboardMessage } from "@breadboard-ai/types/embedder.js";
 import type {
   GrantResponse,

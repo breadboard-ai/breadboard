@@ -104,7 +104,7 @@ import { VESignInModal } from "@breadboard-ai/shared-ui/elements/elements.js";
 import {
   canonicalizeOAuthScope,
   type OAuthScope,
-} from "@breadboard-ai/connection-client/oauth-scopes.js";
+} from "@breadboard-ai/shared-ui/connection/oauth-scopes.js";
 import { builtInMcpClients } from "./mcp-clients";
 import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";

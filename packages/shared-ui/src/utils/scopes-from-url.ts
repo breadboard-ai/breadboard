@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
+import type { OAuthScope } from "../connection/oauth-scopes.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 
 export { scopesFromUrl };

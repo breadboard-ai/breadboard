@@ -4,7 +4,6 @@
   "references": [
     { "path": "packages/board-server-management" },
     { "path": "packages/breadboard" },
-    { "path": "packages/connection-client" },
     { "path": "packages/core-kit" },
     { "path": "packages/data-store" },
     { "path": "packages/embed" },
