@@ -24,7 +24,6 @@
   "scripts": {
     "prepack": "npm run build",
     "dev": "npm run serve --watch",
-    "deploy": "npm run build:vite && firebase deploy",
     "build": "wireit",
     "build:vite": "wireit",
     "build:tsc": "wireit"
