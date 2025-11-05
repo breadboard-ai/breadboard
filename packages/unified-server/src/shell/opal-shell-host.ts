@@ -5,8 +5,10 @@
  */
 
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { addMessageEventListenerToAllowedEmbedderIfPresent } from "@breadboard-ai/shared-ui/utils/embedder.js";
 import "@breadboard-ai/shared-ui/utils/install-opal-shell-comlink-transfer-handlers.js";
 import { OAuthBasedOpalShell } from "@breadboard-ai/shared-ui/utils/oauth-based-opal-shell.js";
+import { EmbedderMessage } from "@breadboard-ai/types/embedder.js";
 import { SHELL_ORIGIN_URL_PARAMETER } from "@breadboard-ai/types/opal-shell-protocol.js";
 import * as comlink from "comlink";
 
@@ -24,7 +26,7 @@ if (guestOrigin && guestOrigin !== "*") {
       window.location.origin
     );
     iframe.src = guestUrl.href;
-    console.log(`[shell host] exposing API to`, guestOrigin);
+    console.log(`[shell host] Exposing API to`, guestOrigin);
     comlink.expose(
       new OAuthBasedOpalShell(),
       comlink.windowEndpoint(
@@ -46,6 +48,12 @@ if (guestOrigin && guestOrigin !== "*") {
       // https://github.com/GoogleChromeLabs/comlink?tab=readme-ov-file#comlinkwrapendpoint-and-comlinkexposevalue-endpoint-allowedorigins
       // https://github.com/GoogleChromeLabs/comlink/blob/114a4a6448a855a613f1cb9a7c89290606c003cf/src/comlink.ts#L310
       [guestOrigin]
+    );
+
+    addMessageEventListenerToAllowedEmbedderIfPresent(
+      (message: EmbedderMessage) => {
+        console.log(`[shell host] TODO message from embedder`, message);
+      }
     );
   } else {
     console.error(`could not find #opal-app iframe`);

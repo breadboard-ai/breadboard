@@ -14,6 +14,8 @@ import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configurat
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { OAuthBasedOpalShell } from "./oauth-based-opal-shell.js";
 import "./url-pattern-conditional-polyfill.js";
+import { addMessageEventListenerToAllowedEmbedderIfPresent } from "./embedder.js";
+import type { EmbedderMessage } from "@breadboard-ai/types/embedder.js";
 
 export const opalShellContext = createContext<OpalShellProtocol | undefined>(
   "OpalShell"
@@ -46,6 +48,11 @@ export async function connectToOpalShellHost(): Promise<OpalShellProtocol> {
     // TODO(aomarks) Remove once we are fully migrated to the iframe
     // arrangement.
     console.log("[shell guest] Connecting to legacy host");
+    addMessageEventListenerToAllowedEmbedderIfPresent(
+      (message: EmbedderMessage) => {
+        console.log(`[shell guest] TODO message from embedder`, message);
+      }
+    );
     return new OAuthBasedOpalShell();
   }
 }
