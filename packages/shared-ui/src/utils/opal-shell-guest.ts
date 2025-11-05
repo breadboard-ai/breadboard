@@ -27,21 +27,20 @@ export async function connectToOpalShellHost(): Promise<OpalShellProtocol> {
   const hostOrigin = await discoverShellHostOrigin();
   if (hostOrigin) {
     console.log("[shell guest] Connecting to iframe host", hostOrigin);
-    const host = comlink.wrap<OpalShellProtocol>(
-      comlink.windowEndpoint(
-        // Where this guest sends messages.
-        window.parent,
-        // Where this guest receives messages from.
-        window,
-        // Constrain origins this guest can send messages to, at the postMessage
-        // layer. It would otherwise default to all origins.
-        //
-        // https://github.com/GoogleChromeLabs/comlink?tab=readme-ov-file#comlinkwrapendpoint-and-comlinkexposevalue-endpoint-allowedorigins
-        // https://github.com/GoogleChromeLabs/comlink/blob/114a4a6448a855a613f1cb9a7c89290606c003cf/src/comlink.ts#L594C26-L594C38
-        // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#targetorigin
-        hostOrigin
-      )
+    const hostEndpoint = comlink.windowEndpoint(
+      // Where this guest sends messages.
+      window.parent,
+      // Where this guest receives messages from.
+      window,
+      // Constrain origins this guest can send messages to, at the postMessage
+      // layer. It would otherwise default to all origins.
+      //
+      // https://github.com/GoogleChromeLabs/comlink?tab=readme-ov-file#comlinkwrapendpoint-and-comlinkexposevalue-endpoint-allowedorigins
+      // https://github.com/GoogleChromeLabs/comlink/blob/114a4a6448a855a613f1cb9a7c89290606c003cf/src/comlink.ts#L594C26-L594C38
+      // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#targetorigin
+      hostOrigin
     );
+    const host = comlink.wrap<OpalShellProtocol>(hostEndpoint);
     beginSyncronizingUrls(host);
     return host;
   } else {

@@ -27,21 +27,22 @@ if (guestOrigin && guestOrigin !== "*") {
     );
     iframe.src = guestUrl.href;
     console.log(`[shell host] Exposing API to`, guestOrigin);
+    const guestEndpoint = comlink.windowEndpoint(
+      // Where this host sends messages.
+      iframe.contentWindow,
+      // Where this host receives messages from.
+      window,
+      // Constrain origins this host can send messages to, at the postMessage
+      // layer. It would otherwise default to all origins.
+      //
+      // https://github.com/GoogleChromeLabs/comlink?tab=readme-ov-file#comlinkwrapendpoint-and-comlinkexposevalue-endpoint-allowedorigins
+      // https://github.com/GoogleChromeLabs/comlink/blob/114a4a6448a855a613f1cb9a7c89290606c003cf/src/comlink.ts#L594C26-L594C38
+      // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#targetorigin
+      guestOrigin
+    );
     comlink.expose(
       new OAuthBasedOpalShell(),
-      comlink.windowEndpoint(
-        // Where this host sends messages.
-        iframe.contentWindow,
-        // Where this host receives messages from.
-        window,
-        // Constrain origins this host can send messages to, at the postMessage
-        // layer. It would otherwise default to all origins.
-        //
-        // https://github.com/GoogleChromeLabs/comlink?tab=readme-ov-file#comlinkwrapendpoint-and-comlinkexposevalue-endpoint-allowedorigins
-        // https://github.com/GoogleChromeLabs/comlink/blob/114a4a6448a855a613f1cb9a7c89290606c003cf/src/comlink.ts#L594C26-L594C38
-        // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#targetorigin
-        guestOrigin
-      ),
+      guestEndpoint,
       // Constrain origins this host can receive messages from, at the comlink
       // layer. It would otherwise default to all origins.
       //
