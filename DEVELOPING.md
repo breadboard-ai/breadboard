@@ -23,7 +23,6 @@ are actively published _to_ npm.
 | _Tools & Support Libraries_                                               |                                                                                                                                                             |                                                                                    |
 | _Internal/Experiments_                                                    |                                                                                                                                                             |                                                                                    |
 | [`@google-labs/breadboard-schema`](./packages/breadboard-schema)          | _Unpublished_                                                                                                                                               | An internal tool that generates a JSON schema from the Breadboard TypeScript types |
-| [`@google-labs/connection-server`](./packages/connection-server)          | _Unpublished_                                                                                                                                               | Used for handling connections to third party services                              |
 
 ## Building a package
 

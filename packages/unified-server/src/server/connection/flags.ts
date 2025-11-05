@@ -37,16 +37,6 @@ function getStringList(
   );
 }
 
-/**
- * Get the value of the given flag as a boolean.
- *
- * Anything other than the literal string "true" (case-insensitive) will be
- * interpreted as false
- */
-function getBoolean(flagName: string): boolean {
-  return getString(flagName).toLowerCase() === "true";
-}
-
 function getSameSite(flagName: string, opts: { default: SameSite }): SameSite {
   const flagValue = getString(flagName) || opts.default;
   if (!["Lax", "Strict", "None"].includes(flagValue)) {
