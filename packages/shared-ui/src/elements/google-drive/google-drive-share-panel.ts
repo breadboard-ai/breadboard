@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { consume } from "@lit/context";
 import { css, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -21,7 +21,7 @@ export class GoogleDriveSharePanel extends LitElement {
   ];
 
   @consume({ context: opalShellContext })
-  accessor opalShell: OpalShellProtocol | undefined;
+  accessor opalShell: OpalShellHostProtocol | undefined;
 
   @property({ type: Array })
   accessor fileIds: string[] | undefined;

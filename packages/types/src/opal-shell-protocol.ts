@@ -8,7 +8,7 @@ import type { BreadboardMessage } from "./embedder.js";
 
 export const SHELL_ORIGIN_URL_PARAMETER = "shellOrigin";
 
-export interface OpalShellProtocol {
+export interface OpalShellHostProtocol {
   getSignInState(): Promise<SignInState>;
 
   // TODO(aomarks) Do this within getSignInState so that we don't need this

@@ -106,7 +106,7 @@ import {
   type OAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { builtInMcpClients } from "./mcp-clients";
-import { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
 
 type RenderValues = {
@@ -158,7 +158,7 @@ export class Main extends SignalWatcher(LitElement) {
   accessor #uiState!: BreadboardUI.State.UI;
 
   @provide({ context: opalShellContext })
-  accessor opalShell: OpalShellProtocol;
+  accessor opalShell: OpalShellHostProtocol;
 
   @state()
   accessor #tab: Runtime.Types.Tab | null = null;

@@ -6,7 +6,7 @@
 
 import {
   SHELL_ORIGIN_URL_PARAMETER,
-  type OpalShellProtocol,
+  type OpalShellHostProtocol,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { createContext } from "@lit/context";
 import * as comlink from "comlink";
@@ -17,13 +17,13 @@ import "./url-pattern-conditional-polyfill.js";
 import { addMessageEventListenerToAllowedEmbedderIfPresent } from "./embedder.js";
 import type { EmbedderMessage } from "@breadboard-ai/types/embedder.js";
 
-export const opalShellContext = createContext<OpalShellProtocol | undefined>(
-  "OpalShell"
-);
+export const opalShellContext = createContext<
+  OpalShellHostProtocol | undefined
+>("OpalShell");
 
 const SHELL_ORIGIN_SESSION_STORAGE_KEY = "shellOrigin";
 
-export async function connectToOpalShellHost(): Promise<OpalShellProtocol> {
+export async function connectToOpalShellHost(): Promise<OpalShellHostProtocol> {
   const hostOrigin = await discoverShellHostOrigin();
   if (hostOrigin) {
     console.log("[shell guest] Connecting to iframe host", hostOrigin);
@@ -40,7 +40,7 @@ export async function connectToOpalShellHost(): Promise<OpalShellProtocol> {
       // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#targetorigin
       hostOrigin
     );
-    const host = comlink.wrap<OpalShellProtocol>(hostEndpoint);
+    const host = comlink.wrap<OpalShellHostProtocol>(hostEndpoint);
     beginSyncronizingUrls(host);
     return host;
   } else {
@@ -131,7 +131,7 @@ async function discoverShellHostOrigin(): Promise<string | undefined> {
   console.error("[shell guest] Shell origin was not in allowlist", shellOrigin);
 }
 
-function beginSyncronizingUrls(host: OpalShellProtocol) {
+function beginSyncronizingUrls(host: OpalShellHostProtocol) {
   const setUrl = () => {
     const url = new URL(window.location.href);
     url.pathname = url.pathname.replace(/^\/_app/, "");

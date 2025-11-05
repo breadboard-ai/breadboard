@@ -21,7 +21,7 @@ import type {
 } from "@breadboard-ai/types/oauth.js";
 import type {
   CheckAppAccessResult,
-  OpalShellProtocol,
+  OpalShellHostProtocol,
   PickDriveFilesOptions,
   PickDriveFilesResult,
   ShareDriveFilesOptions,
@@ -48,7 +48,7 @@ import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 
 const SIGN_IN_CONNECTION_ID = "$sign-in";
 
-export class OAuthBasedOpalShell implements OpalShellProtocol {
+export class OAuthBasedOpalShell implements OpalShellHostProtocol {
   readonly #nonceToScopes = new Map<string, string[]>();
 
   readonly #settingsStore = SettingsStore.restoredInstance();

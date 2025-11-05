@@ -10,7 +10,7 @@ import type {
   EmbedHandler,
   EmbedState,
 } from "@breadboard-ai/types/embedder.js";
-import type { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 export * from "@breadboard-ai/types/embedder.js";
 
@@ -23,9 +23,9 @@ export function embedState(): EmbedState {
 export class EmbedHandlerImpl extends EventTarget implements EmbedHandler {
   public debug = false;
   readonly #onMessageBound = this.#onMessage.bind(this);
-  readonly #shellHost: OpalShellProtocol;
+  readonly #shellHost: OpalShellHostProtocol;
 
-  constructor(shellHost: OpalShellProtocol) {
+  constructor(shellHost: OpalShellHostProtocol) {
     super();
     this.#shellHost = shellHost;
   }

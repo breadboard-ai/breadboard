@@ -16,7 +16,7 @@ import type {
 } from "@breadboard-ai/types";
 import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 import {
-  OpalShellProtocol,
+  OpalShellHostProtocol,
   SignInState,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 
@@ -66,7 +66,7 @@ export type MainArguments = {
   env?: FileSystemEntry[];
   embedHandler?: EmbedHandler;
   globalConfig: GlobalConfig;
-  opalShell: OpalShellProtocol;
+  opalShell: OpalShellHostProtocol;
   initialSignInState: SignInState;
 };
 
