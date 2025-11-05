@@ -91,8 +91,8 @@ const toFunctionString = (fn: Function, bindings?: Record<string, unknown>) => {
 const scriptifyFunction = (fn: Function, bindings?: Record<string, unknown>) =>
   `<script>( ${toFunctionString(fn, bindings)} )();</script>`;
 
-// TODO: get from env
-const PARENT_ORIGIN = `http://localhost:3000`;
+// Will be bound into the iframe script as the targetOrigin for postMessage
+const PARENT_ORIGIN = window.location.origin;
 
 const interceptPopupsScript = scriptifyFunction(() => {
   const parentOrigin = PARENT_ORIGIN;
@@ -241,7 +241,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         if (this.consentManager && graphId) {
           const allow = await this.consentManager.queryConsent({
             graphId,
-            type: ConsentType.POPUP,
+            type: ConsentType.OPEN_WEBPAGE,
             scope: url.origin,
           }, true);
           if (!allow) {
@@ -282,11 +282,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       | symbol = nothing;
     const last = this.run.app.last?.last;
     if (last) {
-      // const htmlOutput = `
-      //   <open-popup url="https://www.netflix.com"><button>Open Netflix</button></open-popup>
-      //   <open-popup url="https://www.youtube.com"><button>Open Youtube</button></open-popup>
-      //   <open-popup url="https://www.amazon.com"><button>Open Amazon</button></open-popup>
-      //   `;
       const htmlOutput = isHTMLOutput(last);
       if (htmlOutput !== null) {
         activityContents = html`<iframe

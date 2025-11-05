@@ -33,27 +33,27 @@ type ConsentRenderInfoMap = {
 };
 
 const CONSENT_RENDER_INFO: ConsentRenderInfoMap = {
-  [ConsentType.POPUP]: {
-    name: "Open popup?",
+  [ConsentType.OPEN_WEBPAGE]: {
+    name: "Open webpage?",
     description: (request) => html`
-      <p>This Opal would like to open a popup to the following website:</p>
-      <p>${request.scope}</p>
-      <p>Only click allow if you recognize this website and trust the Opal.</p>
+      <p>This Opal would like to open a webpage on the following server:</p>
+      <p class="center">${request.scope}</p>
+      <p>Only click allow if you recognize this server and trust the Opal.</p>
     `
   },
-  [ConsentType.FETCH]: {
-    name: "Allow network request?",
+  [ConsentType.GET_WEBPAGE]: {
+    name: "Allow access to webpage?",
     description: (request) => html`
-      <p>This Opal would like to make a network request to the following website:</p>
-      <p>${request.scope}</p>
-      <p>Only click allow if you recognize this website and trust the Opal.</p>
+      <p>This Opal would like to access a webpage on the following server:</p>
+      <p class="center">${request.scope}</p>
+      <p>The Opal may send data you have provided to it to this webpage. Only click allow if you recognize this server and trust the Opal.</p>
     `
   },
-  [ConsentType.MCP]: {
+  [ConsentType.USE_MCP]: {
     name: "Connect to MCP server?",
     description: (request) => html`
       <p>This Opal would like to connect to MCP server at ${request.scope.url} with scope ${request.scope.scope}</p>
-      <p>Only click allow if you recognize this website and trust the Opal.</p>
+      <p>The Opal may send data you have provided to it to the MCP server. Only click allow if you recognize this server and trust the Opal.</p>
     `
   }
 };
@@ -87,6 +87,9 @@ export class VEConsentRequestModal extends SignalWatcher(LitElement) {
           max-width: 80%;
         }
       }
+      .center {
+        text-align: center;
+      }
       
     `,
   ];
@@ -118,8 +121,8 @@ export class VEConsentRequestModal extends SignalWatcher(LitElement) {
       .showCloseButton=${true}
       .showSaveCancel=${true}
       .otherActions=${[
-        {id: "alwaysDeny", label: "Never Allow"},
-        {id: "alwaysAllow", label: "Always Allow"},
+      { id: "alwaysDeny", label: "Never Allow" },
+      { id: "alwaysAllow", label: "Always Allow" },
       ]}
       saveButtonLabel="Allow"
       cancelButtonLabel="Deny"

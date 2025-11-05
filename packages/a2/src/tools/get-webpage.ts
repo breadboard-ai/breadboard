@@ -39,7 +39,7 @@ async function getContentFromUrl(
   const parsedUrl = new URL(fullUrl);
   const allow = await moduleArgs.context.consentManager?.queryConsent({
     graphId,
-    type: ConsentType.FETCH,
+    type: ConsentType.GET_WEBPAGE,
     scope: parsedUrl.origin,
   }, true);
   if (!allow) {

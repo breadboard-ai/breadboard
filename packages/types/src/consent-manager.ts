@@ -5,9 +5,9 @@
  */
 
 export enum ConsentType {
-  MCP = 'mcp',
-  FETCH = 'fetch',
-  POPUP = 'popup',
+  GET_WEBPAGE = 'GET_WEBPAGE',
+  OPEN_WEBPAGE = 'OPEN_WEBPAGE',
+  USE_MCP = 'MCP',
 }
 
 export enum ConsentAction {
@@ -18,16 +18,16 @@ export enum ConsentAction {
 }
 
 export type ConsentRequest = ({
-  type: ConsentType.MCP,
+  type: ConsentType.USE_MCP,
   scope: {
     url: string;
     scope: string;
   }
 } | {
-  type: ConsentType.FETCH,
+  type: ConsentType.GET_WEBPAGE,
   scope: string;
 } | {
-  type: ConsentType.POPUP,
+  type: ConsentType.OPEN_WEBPAGE,
   scope: string;
 }) & { graphId: string };
 
