@@ -24,6 +24,7 @@ import {
   ParameterMetadata,
   RunError,
   RuntimeFlags,
+  ConsentRequestWithCallback,
 } from "@breadboard-ai/types";
 import {
   EditSpec,
@@ -330,38 +331,6 @@ export type UIOverlays =
   | "WarmWelcome";
 
 export type UILoadState = "Home" | "Loading" | "Loaded" | "Error";
-
-export enum ConsentType {
-  MCP = 'mcp',
-  FETCH = 'fetch',
-  POPUP = 'popup',
-}
-
-export enum ConsentAction {
-  ALLOW = 'allow',
-  DENY = 'deny',
-  ALWAYS_ALLOW = 'alwaysAllow',
-  ALWAYS_DENY = 'alwaysDeny',
-}
-
-export type ConsentRequest = ({
-  type: ConsentType.MCP,
-  scope: {
-    url: string;
-    scope: string;
-  }
-} | {
-  type: ConsentType.FETCH,
-  scope: string;
-} | {
-  type: ConsentType.POPUP,
-  scope: string;
-}) & { graphId: string };
-
-export type ConsentRequestWithCallback = {
-  request: ConsentRequest;
-  consentCallback: (action: ConsentAction) => void;
-}
 
 export type UI = {
   mode: VisualEditorMode;

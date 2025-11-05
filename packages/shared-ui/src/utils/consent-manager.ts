@@ -1,8 +1,12 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { ConsentAction } from "../state/types.js";
-
-export type ConsentRequest = BreadboardUI.State.ConsentRequest;
+import { ConsentAction, ConsentRequest, ConsentManager as ConsentManagerInterface } from "@breadboard-ai/types";
 
 interface ConsentRecord {
   graphId: string;
@@ -23,7 +27,7 @@ const DB_NAME = 'consent-settings';
 const DB_VERSION = 1;
 const STORE_NAME = 'consents';
 
-export class ConsentManager {
+export class ConsentManager implements ConsentManagerInterface {
 
   #dbPromise: Promise<IDBPDatabase<ConsentDB>>;
   #requestConsentCallback: (request: ConsentRequest) => Promise<ConsentAction>;
@@ -43,7 +47,7 @@ export class ConsentManager {
     });
   }
 
-  private stringifyScope(scope: ConsentRequest['scope']): string {
+  #stringifyScope(scope: ConsentRequest['scope']): string {
     if (typeof scope === 'string') {
       return scope;
     }
@@ -56,7 +60,7 @@ export class ConsentManager {
     const record: ConsentRecord = {
       graphId: request.graphId,
       type: request.type,
-      scope: this.stringifyScope(request.scope),
+      scope: this.#stringifyScope(request.scope),
       allow,
     };
     await db.put(STORE_NAME, record);
@@ -64,7 +68,7 @@ export class ConsentManager {
 
   async queryConsent(request: ConsentRequest, askIfMissing: boolean): Promise<boolean | undefined> {
     const db = await this.#dbPromise;
-    const record = await db.get(STORE_NAME, [request.graphId, request.type, this.stringifyScope(request.scope)]);
+    const record = await db.get(STORE_NAME, [request.graphId, request.type, this.#stringifyScope(request.scope)]);
     let allow = record?.allow;
     if (allow === undefined && askIfMissing) {
       const action = await this.#requestConsentCallback(request);
@@ -90,7 +94,7 @@ export class ConsentManager {
 
   async revokeConsent(request: ConsentRequest): Promise<void> {
     const db = await this.#dbPromise;
-    await db.delete(STORE_NAME, [request.graphId, request.type, this.stringifyScope(request.scope)]);
+    await db.delete(STORE_NAME, [request.graphId, request.type, this.#stringifyScope(request.scope)]);
   }
 
   async getAllConsentsByType(

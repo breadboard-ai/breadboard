@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ConsentManager } from "./consent-manager.js";
 import { DataStore, FileSystem, Outcome } from "./data.js";
 import { DeepReadonly } from "./deep-read-only.js";
 import { ClientDeploymentConfiguration } from "./deployment-configuration.js";
@@ -215,6 +216,11 @@ export type RunConfig = {
    * A fetch implementation that automatically handles auth credentials.
    */
   fetchWithCreds?: typeof globalThis.fetch;
+
+  /**
+   * A facility for requesting consent from the user before performing sensitive actions.
+   */
+  consentManager?: ConsentManager;
 
   /**
    * A way to get the project run state.

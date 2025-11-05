@@ -34,6 +34,7 @@ import { RunnableModuleFactory } from "./sandbox.js";
 import { Schema } from "./schema.js";
 import { SimplifiedProjectRunState } from "./state.js";
 import { TraversalResult } from "./traversal.js";
+import { ConsentManager } from "./consent-manager.js";
 
 export type ErrorCapability = Capability & {
   readonly kind: "error";
@@ -395,6 +396,10 @@ export interface NodeHandlerContext {
    * A fetch implementation that automatically handles auth credentials.
    */
   fetchWithCreds?: typeof globalThis.fetch;
+  /**
+   * A facility for requesting consent from user before performing sensitive actions.
+   */
+  consentManager?: ConsentManager;
   /**
    * A way to get the project run state.
    */

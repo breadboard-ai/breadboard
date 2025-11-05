@@ -9,6 +9,7 @@ import type {
   GraphLoader,
   OutputValues,
   RuntimeFlagManager,
+  ConsentManager,
 } from "@breadboard-ai/types";
 import {
   EditHistoryCreator,
@@ -89,6 +90,7 @@ export interface RuntimeConfig {
   flags: RuntimeFlagManager;
   mcpClientManager: McpClientManager;
   fetchWithCreds: typeof globalThis.fetch;
+  consentManager: ConsentManager;
 }
 
 export interface RuntimeConfigBoardServers {

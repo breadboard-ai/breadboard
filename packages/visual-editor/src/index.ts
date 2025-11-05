@@ -20,6 +20,8 @@ import type {
   BoardServer,
   ConformsToNodeValue,
   FileSystem,
+  ConsentAction,
+  ConsentRequest,
 } from "@breadboard-ai/types";
 import {
   addRunModule,
@@ -458,8 +460,8 @@ export class Main extends SignalWatcher(LitElement) {
       fetchWithCreds,
     });
 
-    this.#consentManager = new ConsentManager(async (request: BreadboardUI.State.ConsentRequest) => {
-      return new Promise<BreadboardUI.State.ConsentAction>(resolve => {
+    this.#consentManager = new ConsentManager(async (request: ConsentRequest) => {
+      return new Promise<ConsentAction>(resolve => {
         this.#uiState.consentRequests.push({ request, consentCallback: resolve });
       });
     });
@@ -485,7 +487,7 @@ export class Main extends SignalWatcher(LitElement) {
       flags: flagManager,
       mcpClientManager,
       fetchWithCreds,
-      // consentManager: this.#consentManager,
+      consentManager: this.#consentManager,
     });
     this.#addRuntimeEventHandlers();
 

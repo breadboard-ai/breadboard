@@ -73,12 +73,11 @@ import { googleDriveClientContext } from "../../contexts/google-drive-client-con
 import { markdown } from "../../directives/markdown.js";
 import { makeUrl } from "../../utils/urls.js";
 
-import { AppScreenOutput, RuntimeFlags } from "@breadboard-ai/types";
+import { AppScreenOutput, RuntimeFlags, ConsentType } from "@breadboard-ai/types";
 import { maybeTriggerNlToOpalSatisfactionSurvey } from "../../survey/nl-to-opal-satisfaction-survey.js";
 import { repeat } from "lit/directives/repeat.js";
 import { consentManagerContext } from "../../contexts/consent-manager.js";
 import { ConsentManager } from "../../utils/consent-manager.js";
-import { ConsentType } from "../../state/types.js";
 
 const toFunctionString = (fn: Function, bindings?: Record<string, unknown>) => {
   let str = fn.toString();

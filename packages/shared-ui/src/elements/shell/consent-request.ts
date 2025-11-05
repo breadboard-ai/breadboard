@@ -13,7 +13,7 @@ import '@material/web/checkbox/checkbox.js';
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { SignalWatcher } from "@lit-labs/signals";
 import { ModalDismissedEvent } from "../../events/events.js";
-import { ConsentRequestWithCallback, ConsentRequest, ConsentType, ConsentAction } from "../../state/types.js";
+import { ConsentRequestWithCallback, ConsentRequest, ConsentType, ConsentAction } from "@breadboard-ai/types";
 import { HTMLTemplateResult } from "lit";
 
 const Strings = BreadboardUI.Strings.forSection("Global");

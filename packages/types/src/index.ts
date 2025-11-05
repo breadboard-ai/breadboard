@@ -30,3 +30,5 @@ export type * from "./state.js";
 export type * from "./traversal.js";
 export type * from "./typed-event-target.js";
 export type * from "./uuid.js";
+export { ConsentType, ConsentAction } from "./consent-manager.js";
+export type * from "./consent-manager.js";
