@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.js";
+import { type OAuthScope } from "../connection/oauth-scopes.js";
 import { clearIdbGraphCache } from "@breadboard-ai/google-drive-kit/board-server/user-graph-collection.js";
 import type {
   CheckAppAccessResult,
