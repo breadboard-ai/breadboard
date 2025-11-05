@@ -315,11 +315,6 @@ export type RunEdgeStateChangeEvent = Event & {
 };
 export type RunEventTarget = TypedEventTarget<RunEventMap>;
 
-export type HarnessObserver = {
-  observe(result: HarnessRunResult): Promise<void>;
-  resume?(): void;
-};
-
 export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
   /**
    * Check if the runner is running or not.
