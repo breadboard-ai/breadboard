@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { BreadboardMessage } from "./embedder.js";
+
 export const SHELL_ORIGIN_URL_PARAMETER = "shellOrigin";
 
 export interface OpalShellProtocol {
@@ -30,6 +32,8 @@ export interface OpalShellProtocol {
   shareDriveFiles(options: ShareDriveFilesOptions): Promise<void>;
 
   checkAppAccess(): Promise<CheckAppAccessResult>;
+
+  sendToEmbedder(message: BreadboardMessage): Promise<void>;
 }
 
 export type SignInState =

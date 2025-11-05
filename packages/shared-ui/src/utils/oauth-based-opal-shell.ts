@@ -11,6 +11,7 @@ import {
   canonicalizeOAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { TokenVendor } from "@breadboard-ai/connection-client/token-vendor.js";
+import type { BreadboardMessage } from "@breadboard-ai/types/embedder.js";
 import type {
   GrantResponse,
   MissingScopesTokenResult,
@@ -43,6 +44,7 @@ import { SETTINGS_TYPE } from "../types/types.js";
 import { getEmbedderRedirectUri, getTopLevelOrigin } from "./embed-helpers.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { scopesFromUrl } from "./scopes-from-url.js";
+import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 
 const SIGN_IN_CONNECTION_ID = "$sign-in";
 
@@ -624,5 +626,9 @@ export class OAuthBasedOpalShell implements OpalShellProtocol {
     }
     const result = (await response.json()) as { canAccess?: boolean };
     return { canAccess: !!result.canAccess };
+  }
+
+  async sendToEmbedder(message: BreadboardMessage): Promise<void> {
+    sendToAllowedEmbedderIfPresent(message);
   }
 }

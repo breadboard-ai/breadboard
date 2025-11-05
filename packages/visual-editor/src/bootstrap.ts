@@ -99,7 +99,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     document.head.appendChild(fontPack);
 
     const embedHandler =
-      window.self !== window.top ? new EmbedHandlerImpl() : undefined;
+      window.self !== window.top ? new EmbedHandlerImpl(opalShell) : undefined;
     if (embedHandler) {
       embedHandler.connect();
     }

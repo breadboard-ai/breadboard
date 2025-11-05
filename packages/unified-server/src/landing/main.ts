@@ -110,7 +110,7 @@ async function init() {
   ActionTracker.signInPageView();
 
   const embedHandler =
-    window.self !== window.top ? new EmbedHandlerImpl() : undefined;
+    window.self !== window.top ? new EmbedHandlerImpl(opalShell) : undefined;
 
   embedHandler?.sendToEmbedder({
     type: "home_loaded",
