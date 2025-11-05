@@ -20,8 +20,6 @@ import {
   MakeUrlInit,
   GraphInit,
 } from "@breadboard-ai/shared-ui/utils/urls.js";
-import { EmbedHandlerImpl } from "@breadboard-ai/embed";
-
 import "./carousel.js";
 
 const parsedUrl = parseUrl(window.location.href) as LandingUrlInit;
@@ -96,10 +94,10 @@ function embedIntroVideo(target: HTMLDivElement) {
 }
 
 async function init() {
-  const opalShell = await connectToOpalShellHost();
+  const { shellHost, embedHandler } = await connectToOpalShellHost();
   const signinAdapter = new SigninAdapter(
-    opalShell,
-    await opalShell.getSignInState()
+    shellHost,
+    await shellHost.getSignInState()
   );
 
   if (signinAdapter.state === "signedin") {
@@ -108,9 +106,6 @@ async function init() {
   }
 
   ActionTracker.signInPageView();
-
-  const embedHandler =
-    window.self !== window.top ? new EmbedHandlerImpl() : undefined;
 
   embedHandler?.sendToEmbedder({
     type: "home_loaded",

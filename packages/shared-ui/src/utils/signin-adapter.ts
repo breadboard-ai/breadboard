@@ -8,7 +8,7 @@ import { type OAuthScope } from "@breadboard-ai/connection-client/oauth-scopes.j
 import { clearIdbGraphCache } from "@breadboard-ai/google-drive-kit/board-server/user-graph-collection.js";
 import type {
   CheckAppAccessResult,
-  OpalShellProtocol,
+  OpalShellHostProtocol,
   SignInResult,
   SignInState,
   ValidateScopesResult,
@@ -21,13 +21,13 @@ export const signinAdapterContext = createContext<SigninAdapter | undefined>(
 );
 
 export class SigninAdapter implements SignInInfo {
-  readonly #opalShell: OpalShellProtocol;
+  readonly #opalShell: OpalShellHostProtocol;
   readonly #handleSignInRequest?: (scopes?: OAuthScope[]) => Promise<boolean>;
   #state: SignInState;
   readonly fetchWithCreds: typeof globalThis.fetch;
 
   constructor(
-    opalShell: OpalShellProtocol,
+    opalShell: OpalShellHostProtocol,
     // TODO(aomarks) Hacky workaround for asynchrony, revisit the API for the
     // getters so that we don't need this.
     initialState: SignInState,

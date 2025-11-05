@@ -4,23 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EmbedHandlerImpl } from "@breadboard-ai/embed";
-import type { EmbedHandler } from "@breadboard-ai/types/embedder.js";
+import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
+import { getEmbedderRedirectUri } from "../../utils/embed-helpers.js";
+import { sendToAllowedEmbedderIfPresent } from "../../utils/embedder.js";
 import {
   oauthTokenBroadcastChannelName,
   type OAuthStateParameter,
 } from "./connection-common.js";
-import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
-import { getEmbedderRedirectUri } from "../../utils/embed-helpers.js";
 
 export class ConnectionBroker extends HTMLElement {
-  #embedHandler?: EmbedHandler;
-
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    this.#embedHandler =
-      window.self !== window.top ? new EmbedHandlerImpl() : undefined;
   }
 
   async connectedCallback() {
@@ -29,7 +24,7 @@ export class ConnectionBroker extends HTMLElement {
       const p = document.createElement("p");
       p.textContent = `Error: ${message} Please close this window and try to sign in again.`;
       shadow.appendChild(p);
-      this.#embedHandler?.sendToEmbedder({
+      sendToAllowedEmbedderIfPresent({
         type: "oauth_redirect",
         success: false,
       });
@@ -106,7 +101,7 @@ export class ConnectionBroker extends HTMLElement {
 
     // Send the grant response back to the originating tab and close up shop.
     channel.postMessage(grantResponse);
-    this.#embedHandler?.sendToEmbedder({
+    sendToAllowedEmbedderIfPresent({
       type: "oauth_redirect",
       success: true,
     });

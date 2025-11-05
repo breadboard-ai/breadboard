@@ -16,7 +16,7 @@ import type {
 } from "@breadboard-ai/types";
 import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 import {
-  OpalShellProtocol,
+  OpalShellHostProtocol,
   SignInState,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 
@@ -42,10 +42,6 @@ export type BootstrapArguments = {
    * system.
    */
   env?: FileSystemEntry[];
-  /**
-   * Provides a way to handle embedded versions of Breadboard.
-   */
-  embedHandler?: EmbedHandler;
 };
 
 export type MainArguments = {
@@ -70,7 +66,7 @@ export type MainArguments = {
   env?: FileSystemEntry[];
   embedHandler?: EmbedHandler;
   globalConfig: GlobalConfig;
-  opalShell: OpalShellProtocol;
+  shellHost: OpalShellHostProtocol;
   initialSignInState: SignInState;
 };
 

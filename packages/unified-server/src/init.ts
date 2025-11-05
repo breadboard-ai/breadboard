@@ -12,7 +12,6 @@ import Core from "@google-labs/core-kit";
 import { isA2 } from "@breadboard-ai/a2";
 import { JsonSerializable, LLMContent } from "@breadboard-ai/types";
 
-import { EmbedHandlerImpl } from "@breadboard-ai/embed";
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import { initializeAnalytics } from "@breadboard-ai/shared-ui/utils/action-tracker";
 
@@ -50,7 +49,6 @@ bootstrap({
       data: toLLMContent({ endpoint_url: executeStepEndpoint }),
     },
   ],
-  embedHandler: window.self !== window.top ? new EmbedHandlerImpl() : undefined,
 });
 
 function toLLMContent(json: JsonSerializable): LLMContent[] {

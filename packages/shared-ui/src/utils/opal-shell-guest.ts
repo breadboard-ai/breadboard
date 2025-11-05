@@ -4,49 +4,90 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type {
+  EmbedderMessage,
+  EmbedHandler,
+} from "@breadboard-ai/types/embedder.js";
 import {
   SHELL_ORIGIN_URL_PARAMETER,
-  type OpalShellProtocol,
+  type OpalShellGuestProtocol,
+  type OpalShellHostProtocol,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { createContext } from "@lit/context";
 import * as comlink from "comlink";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
+import { addMessageEventListenerToAllowedEmbedderIfPresent } from "./embedder.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { OAuthBasedOpalShell } from "./oauth-based-opal-shell.js";
 import "./url-pattern-conditional-polyfill.js";
+import { EmbedHandlerImpl } from "@breadboard-ai/embed";
 
-export const opalShellContext = createContext<OpalShellProtocol | undefined>(
-  "OpalShell"
-);
+export const opalShellContext = createContext<
+  OpalShellHostProtocol | undefined
+>("OpalShell");
 
 const SHELL_ORIGIN_SESSION_STORAGE_KEY = "shellOrigin";
 
-export async function connectToOpalShellHost(): Promise<OpalShellProtocol> {
+export async function connectToOpalShellHost(): Promise<{
+  shellHost: OpalShellHostProtocol;
+  embedHandler: EmbedHandler;
+}> {
   const hostOrigin = await discoverShellHostOrigin();
   if (hostOrigin) {
-    console.log("[shell guest] Connecting to iframe host", hostOrigin);
-    const host = comlink.wrap<OpalShellProtocol>(
-      comlink.windowEndpoint(
-        // Where this guest sends messages.
-        window.parent,
-        // Where this guest receives messages from.
-        window,
-        // Constrain origins this guest can send messages to, at the postMessage
-        // layer. It would otherwise default to all origins.
-        //
-        // https://github.com/GoogleChromeLabs/comlink?tab=readme-ov-file#comlinkwrapendpoint-and-comlinkexposevalue-endpoint-allowedorigins
-        // https://github.com/GoogleChromeLabs/comlink/blob/114a4a6448a855a613f1cb9a7c89290606c003cf/src/comlink.ts#L594C26-L594C38
-        // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#targetorigin
-        hostOrigin
-      )
+    console.log("[shell guest] Connecting to host API at", hostOrigin);
+    const hostEndpoint = comlink.windowEndpoint(
+      // Where this guest sends messages.
+      window.parent,
+      // Where this guest receives messages from.
+      window,
+      // Constrain origins this guest can send messages to, at the postMessage
+      // layer. It would otherwise default to all origins.
+      //
+      // https://github.com/GoogleChromeLabs/comlink?tab=readme-ov-file#comlinkwrapendpoint-and-comlinkexposevalue-endpoint-allowedorigins
+      // https://github.com/GoogleChromeLabs/comlink/blob/114a4a6448a855a613f1cb9a7c89290606c003cf/src/comlink.ts#L594C26-L594C38
+      // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#targetorigin
+      hostOrigin
     );
-    beginSyncronizingUrls(host);
-    return host;
+    const shellHost = comlink.wrap<OpalShellHostProtocol>(hostEndpoint);
+    beginSyncronizingUrls(shellHost);
+
+    console.log("[shell guest] Exposing guest API to", hostOrigin);
+    const embedHandler = new EmbedHandlerImpl(shellHost);
+    comlink.expose(
+      new OpalShellGuest(embedHandler) satisfies OpalShellGuestProtocol,
+      hostEndpoint,
+      [hostOrigin]
+    );
+    return { shellHost, embedHandler };
   } else {
     // TODO(aomarks) Remove once we are fully migrated to the iframe
     // arrangement.
-    console.log("[shell guest] Connecting to legacy host");
-    return new OAuthBasedOpalShell();
+    console.log("[shell guest] Creating legacy host");
+    const shellHost = new OAuthBasedOpalShell();
+    const embedHandler = new EmbedHandlerImpl(shellHost);
+    addMessageEventListenerToAllowedEmbedderIfPresent(
+      (message: EmbedderMessage) =>
+        embedHandler.dispatchEvent(new EmbedderMessageEventImpl(message))
+    );
+    return { shellHost, embedHandler };
+  }
+}
+
+class OpalShellGuest implements OpalShellGuestProtocol {
+  readonly #embedHandler: EmbedHandler;
+  constructor(embedHandler: EmbedHandler) {
+    this.#embedHandler = embedHandler;
+  }
+  async receiveFromEmbedder(message: EmbedderMessage): Promise<void> {
+    this.#embedHandler.dispatchEvent(new EmbedderMessageEventImpl(message));
+  }
+}
+
+class EmbedderMessageEventImpl<T extends EmbedderMessage> extends Event {
+  readonly message: T;
+  constructor(message: T) {
+    super(message.type);
+    this.message = message;
   }
 }
 
@@ -125,7 +166,7 @@ async function discoverShellHostOrigin(): Promise<string | undefined> {
   console.error("[shell guest] Shell origin was not in allowlist", shellOrigin);
 }
 
-function beginSyncronizingUrls(host: OpalShellProtocol) {
+function beginSyncronizingUrls(host: OpalShellHostProtocol) {
   const setUrl = () => {
     const url = new URL(window.location.href);
     url.pathname = url.pathname.replace(/^\/_app/, "");

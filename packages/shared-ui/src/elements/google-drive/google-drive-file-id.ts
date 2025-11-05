@@ -5,7 +5,7 @@
  */
 
 import type { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import type { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
@@ -149,7 +149,7 @@ export class GoogleDriveFileId extends LitElement {
   accessor googleDriveClient: GoogleDriveClient | undefined;
 
   @consume({ context: opalShellContext })
-  accessor opalShell: OpalShellProtocol | undefined;
+  accessor opalShell: OpalShellHostProtocol | undefined;
 
   #autoTrigger = false;
   #inputRef: Ref<HTMLButtonElement> = createRef();

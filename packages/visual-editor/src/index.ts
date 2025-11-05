@@ -106,7 +106,7 @@ import {
   type OAuthScope,
 } from "@breadboard-ai/connection-client/oauth-scopes.js";
 import { builtInMcpClients } from "./mcp-clients";
-import { OpalShellProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
 
 type RenderValues = {
@@ -158,7 +158,7 @@ export class Main extends SignalWatcher(LitElement) {
   accessor #uiState!: BreadboardUI.State.UI;
 
   @provide({ context: opalShellContext })
-  accessor opalShell: OpalShellProtocol;
+  accessor opalShell: OpalShellHostProtocol;
 
   @state()
   accessor #tab: Runtime.Types.Tab | null = null;
@@ -288,7 +288,7 @@ export class Main extends SignalWatcher(LitElement) {
     this.#secretsHelper = new SecretsHelper(this.#settings);
 
     // Authentication
-    this.opalShell = args.opalShell;
+    this.opalShell = args.shellHost;
     this.signinAdapter = new SigninAdapter(
       this.opalShell,
       args.initialSignInState,
@@ -482,7 +482,10 @@ export class Main extends SignalWatcher(LitElement) {
 
     if (this.globalConfig.ENABLE_EMAIL_OPT_IN) {
       this.emailPrefsManager.refreshPrefs().then(() => {
-        if (this.emailPrefsManager.prefsValid && !this.emailPrefsManager.hasStoredPreferences) {
+        if (
+          this.emailPrefsManager.prefsValid &&
+          !this.emailPrefsManager.hasStoredPreferences
+        ) {
           this.#uiState.show.add("WarmWelcome");
         }
       });
@@ -1472,11 +1475,11 @@ export class Main extends SignalWatcher(LitElement) {
         this.#uiState.show.has("StatusUpdateModal")
           ? this.#renderStatusUpdateModal()
           : nothing,
-      this.#uiState.show.has("GlobalSettings")
-        ? this.#renderGlobalSettingsModal(renderValues)
+        this.#uiState.show.has("GlobalSettings")
+          ? this.#renderGlobalSettingsModal(renderValues)
           : nothing,
-      this.#uiState.show.has("WarmWelcome")
-        ? this.#renderWarmWelcomeModal()
+        this.#uiState.show.has("WarmWelcome")
+          ? this.#renderWarmWelcomeModal()
           : nothing,
         this.#uiState.show.has("SignInModal")
           ? this.#renderSignInModal()
@@ -1678,7 +1681,7 @@ export class Main extends SignalWatcher(LitElement) {
       .uiState=${this.#uiState}
       .emailPrefsManager=${this.emailPrefsManager}
       @bbmodaldismissed=${() => {
-      this.#uiState.show.delete("GlobalSettings");
+        this.#uiState.show.delete("GlobalSettings");
       }}
     ></bb-global-settings-modal>`;
   }
@@ -1687,7 +1690,7 @@ export class Main extends SignalWatcher(LitElement) {
     return html`<bb-warm-welcome-modal
       .emailPrefsManager=${this.emailPrefsManager}
       @bbmodaldismissed=${() => {
-      this.#uiState.show.delete("WarmWelcome");
+        this.#uiState.show.delete("WarmWelcome");
       }}
     ></bb-warm-welcome-modal>`;
   }
