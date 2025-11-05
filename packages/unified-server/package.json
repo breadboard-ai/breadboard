@@ -163,8 +163,10 @@
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.2",
     "@types/compression": "^1.8.1",
+    "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.1",
     "@types/gtag.js": "^0.0.20",
+    "@types/jwt-decode": "^2.2.1",
     "@types/node": "^22.0.0",
     "@types/picomatch": "^4.0.2",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
@@ -186,8 +188,10 @@
     "@google-labs/breadboard": "0.36.0",
     "@google/genai": "^1.27.0",
     "compression": "^1.8.1",
+    "cookie-parser": "^1.4.7",
     "express": "^4.21.2",
     "google-auth-library": "^10.1.0",
+    "jwt-decode": "^4.0.0",
     "picomatch": "^4.0.3",
     "vite": "^7.0.5",
     "vite-express": "^0.21.1"
