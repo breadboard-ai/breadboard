@@ -105,7 +105,8 @@ The following strategies will help you create effective prompts to generate exac
           return err(errors.join(","));
         }
         return { images };
-      }
+      },
+      () => "Generating Image(s)"
     ),
     defineFunction(
       {
@@ -241,6 +242,12 @@ provided when the "output_format" is set to "text"`
           return { text: toText([content]) };
         }
         return { file_path };
+      },
+      ({ search_grounding, maps_grounding }) => {
+        if (search_grounding || maps_grounding) {
+          return "Researching";
+        }
+        return "Generating Text";
       }
     ),
   ];

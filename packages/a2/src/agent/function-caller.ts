@@ -57,6 +57,15 @@ class FunctionCaller {
     return parts.at(0)!;
   }
 
+  describe(part: FunctionCallCapabilityPart): string {
+    const { name, args } = part.functionCall;
+    const builtInFunction = this.builtIn.get(name);
+    if (builtInFunction) {
+      return builtInFunction.describer(args);
+    }
+    return `Calling "${name}"`;
+  }
+
   call(part: FunctionCallCapabilityPart): void {
     const name = part.functionCall.name;
     if (this.builtIn.has(name)) {

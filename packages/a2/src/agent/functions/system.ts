@@ -82,7 +82,8 @@ uploaded by the user, populated when the "type" is "image", or "video".`),
       },
       async ({ user_message, type }) => {
         return args.ui.requestUserInput(user_message, type);
-      }
+      },
+      () => "Asking User for Input"
     ),
   ];
 }
@@ -121,7 +122,8 @@ times to update the UI without being blocked on the user response.
           messages as v0_8.Types.ServerToClientMessage[]
         );
         return { success: true };
-      }
+      },
+      () => "Designing User Interface"
     ),
     defineFunction(
       {
@@ -137,7 +139,8 @@ specified in the UI, rendered with "${UI_RENDER_FUNCTION}".
       },
       async () => {
         return args.ui.awaitUserInput();
-      }
+      },
+      () => "Processing user input"
     ),
   ];
 }
@@ -175,7 +178,8 @@ If the objective specifies other agent URLs using the
       async ({ user_message, objective_outcomes, href }) => {
         args.successCallback(user_message, href || "/", objective_outcomes);
         return {};
-      }
+      },
+      () => "Declaring Success"
     ),
     defineFunction(
       {
@@ -208,7 +212,8 @@ If the objective specifies other agent URLs using the
         console.log("User message:", user_message);
         args.terminateCallback();
         return {};
-      }
+      },
+      () => "Admitting Defeat"
     ),
     defineFunction(
       {
@@ -250,7 +255,8 @@ existing project.`.trim()
           args.fileSystem.addFilesToProject(project_path, [file_path]);
         }
         return { file_path };
-      }
+      },
+      () => "Storing Data to Remember Later"
     ),
     defineFunction(
       {
@@ -285,7 +291,8 @@ existing project.`.trim()
           args.fileSystem.addFilesToProject(project_path, [file_path]);
         }
         return { file_path };
-      }
+      },
+      () => "Adding Data to Remember Later"
     ),
     defineFunction(
       {
@@ -326,7 +333,8 @@ in the form of "/vfs/projects/[name_of_project]".`),
       },
       async ({ name }) => {
         return { file_path: args.fileSystem.createProject(name) };
-      }
+      },
+      ({ name }) => `Creating a new project "${name}"`
     ),
     defineFunction(
       {
@@ -357,7 +365,8 @@ the file`),
 - Existing files: ${result.existing.join(", ")}
 - Added files: ${result.added.join(", ")}`,
         };
-      }
+      },
+      () => "Adding Data to Project"
     ),
     defineFunction(
       {
@@ -378,7 +387,8 @@ The VFS path to a file that is in this project
         return {
           file_paths: args.fileSystem.listProjectContents(project_file_path),
         };
-      }
+      },
+      () => "Examining Project Contents"
     ),
     ...(args.useA2UI
       ? defineA2UIFunctions(args)

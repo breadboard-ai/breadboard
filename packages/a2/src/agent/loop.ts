@@ -338,7 +338,10 @@ class Loop {
               }
             }
             if ("functionCall" in part) {
-              this.#ui.progress.functionCall(part);
+              this.#ui.progress.functionCall(
+                part,
+                functionCaller.describe(part)
+              );
               functionCaller.call(part);
             }
           }

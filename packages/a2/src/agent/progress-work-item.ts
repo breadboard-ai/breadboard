@@ -51,8 +51,7 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
   constructor(
     public readonly title: string,
     public readonly icon: string,
-    private readonly screen: AppScreen,
-    private readonly functionMap: ReadonlyMap<string, string>
+    private readonly screen: AppScreen
   ) {
     this.start = performance.now();
   }
@@ -97,10 +96,9 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
   /**
    * The agent produced a function call.
    */
-  functionCall(part: FunctionCallCapabilityPart) {
-    const { name } = part.functionCall;
-    this.screen.progress = this.functionMap.get(name) || `Calling ${name}`;
-    this.#addParts("Function call", "robot_server", [part]);
+  functionCall(part: FunctionCallCapabilityPart, description: string) {
+    this.screen.progress = description;
+    this.#addParts(description, "robot_server", [part]);
   }
 
   /**

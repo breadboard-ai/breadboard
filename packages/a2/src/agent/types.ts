@@ -26,7 +26,7 @@ export type AgentProgressManager = {
   /**
    * The agent produced a function call.
    */
-  functionCall(part: FunctionCallCapabilityPart): void;
+  functionCall(part: FunctionCallCapabilityPart, description: string): void;
 
   /**
    * The agent produced a function result.
