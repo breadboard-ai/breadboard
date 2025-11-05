@@ -42,7 +42,6 @@ import {
   OutputResponse,
 } from "./remote.js";
 import { ManagedRunState } from "./run.js";
-import { Schema } from "./schema.js";
 import { SimplifiedProjectRunState } from "./state.js";
 import { TraversalResult } from "./traversal.js";
 import {
@@ -316,42 +315,13 @@ export type RunEdgeStateChangeEvent = Event & {
 };
 export type RunEventTarget = TypedEventTarget<RunEventMap>;
 
-export type HarnessObserver = {
-  observe(result: HarnessRunResult): Promise<void>;
-  resume?(): void;
-};
-
 export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
-  addObserver(observer: HarnessObserver): void;
-
   /**
    * Check if the runner is running or not.
    *
    * @returns -- true if the runner is currently running, or false otherwise.
    */
   running(): boolean;
-
-  /**
-   * A convenience method to get the secret keys that the runner is
-   * waiting for. This information can also be obtained by listening to
-   * the `secret` event.
-   *
-   * Returns null if the runner is not waiting for any secrets.
-   *
-   * @returns -- set of secret keys that the runner is waiting for, or null.
-   */
-  secretKeys(): string[] | null;
-
-  /**
-   * A convenience method to get the input schema that the runner is
-   * waiting for. This information can also be obtained by listening to
-   * the `input` event.
-   *
-   * Returns null if the runner is not waiting for any inputs.
-   *
-   * @returns -- the input schema that the runner is waiting for, or null.
-   */
-  inputSchema(): Schema | null;
 
   /**
    * Starts or resumes the running of the board.
@@ -372,45 +342,45 @@ export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
   /**
    * For new runtime only: the current plan for the run.
    */
-  plan?: DeepReadonly<OrchestrationPlan>;
+  plan: DeepReadonly<OrchestrationPlan>;
 
   /**
    * For new runtime only: the current state of the orchestrator.
    */
-  state?: DeepReadonly<OrchestratorState>;
+  state: DeepReadonly<OrchestratorState>;
 
   /**
    * For new runtime only: current breakpoints
    */
-  breakpoints?: Map<NodeIdentifier, BreakpointSpec>;
+  breakpoints: Map<NodeIdentifier, BreakpointSpec>;
 
   /**
    * For new runtime only: run a single node and stop.
    */
-  runNode?(id: NodeIdentifier): Promise<Outcome<void>>;
+  runNode(id: NodeIdentifier): Promise<Outcome<void>>;
   /**
    * For new runtime only: run (restart if necessary) from node until
    * completion
    */
-  runFrom?(id: NodeIdentifier): Promise<Outcome<void>>;
+  runFrom(id: NodeIdentifier): Promise<Outcome<void>>;
 
   /**
    * For new runtime only: stop the run
    */
-  stop?(id: NodeIdentifier): Promise<Outcome<void>>;
+  stop(id: NodeIdentifier): Promise<Outcome<void>>;
 
   /**
    * For new runtime only: A way to dynamically update
    * the graph descriptor for a runner.
    *
    */
-  updateGraph?(graph: GraphDescriptor): Promise<void>;
+  updateGraph(graph: GraphDescriptor): Promise<void>;
 
   /**
    * For new runtime only: A map of all steps that are currently waiting for
    * input.
    */
-  waiting?: Map<string, OrchestratorNodeState>;
+  waiting: Map<string, OrchestratorNodeState>;
 };
 
 /**
