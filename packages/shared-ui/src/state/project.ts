@@ -118,6 +118,7 @@ class ReactiveProject implements ProjectInternal {
 
   readonly tools: SignalMap<string, Tool>;
   readonly myTools: SignalMap<string, Tool>;
+  readonly controlFlowTools: SignalMap<string, Tool>;
   readonly organizer: Organizer;
   readonly fastAccess: FastAccess;
   readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
@@ -147,6 +148,7 @@ class ReactiveProject implements ProjectInternal {
         this.#updateGraphAssets();
         this.#updateParameters();
         this.#updateMyTools();
+        this.#updateControlFlowTools();
       }
       this.#updateConnectors();
       this.#updateTools();
@@ -162,6 +164,7 @@ class ReactiveProject implements ProjectInternal {
     this.stepEditor = new StepEditorImpl();
     this.graphAssets = new SignalMap();
     this.tools = new SignalMap();
+    this.controlFlowTools = new SignalMap();
     this.components = new SignalMap();
     this.myTools = new SignalMap();
     this.parameters = new SignalMap();
@@ -175,6 +178,7 @@ class ReactiveProject implements ProjectInternal {
       this.graphAssets,
       this.tools,
       this.myTools,
+      this.controlFlowTools,
       this.components,
       this.parameters,
       new FilteredIntegrationsImpl(this.integrations.registered)
@@ -184,6 +188,7 @@ class ReactiveProject implements ProjectInternal {
     this.#updateComponents();
     this.#updateTools();
     this.#updateMyTools();
+    this.#updateControlFlowTools();
     this.#updateParameters();
     this.run = ReactiveProjectRun.createInert(this.#mainGraphId, this.#store);
     this.themes = new ThemeState(this.#fetchWithCreds, editable, this);
@@ -409,6 +414,28 @@ class ReactiveProject implements ProjectInternal {
         } satisfies Tool,
       ];
     }
+  }
+
+  #updateControlFlowTools() {
+    const tools: [string, Tool][] = [];
+    // Add the "Go to" tool.
+    const mutable = this.#store.get(this.#mainGraphId);
+    if (!mutable) return;
+    // Make this condition a bit more robust:
+    // - only show if there are other nodes besides the current node that aren't
+    //   already used by an existing "Go to" chiclet.
+    // - only show this for the "Agent" mode.
+    if (mutable.graph.nodes.length > 1) {
+      tools.push([
+        `Go to:`,
+        {
+          url: "SPECIAL !!! GO TO URL",
+          title: "Go to:",
+          icon: "spark",
+        },
+      ]);
+    }
+    updateMap(this.controlFlowTools, tools);
   }
 
   #updateComponents() {

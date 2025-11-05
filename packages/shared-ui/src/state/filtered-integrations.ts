@@ -7,7 +7,7 @@
 import { signal } from "signal-utils";
 import { FilteredIntegrations, IntegrationState, Tool } from "./types";
 
-export { FilteredIntegrationsImpl };
+export { FilteredIntegrationsImpl, FilteredMap };
 
 class FilteredIntegrationsImpl implements FilteredIntegrations {
   @signal
@@ -42,4 +42,26 @@ class FilteredIntegrationsImpl implements FilteredIntegrations {
   constructor(
     private readonly integrations: ReadonlyMap<string, IntegrationState>
   ) {}
+}
+
+export type TitledItem = {
+  title: string;
+};
+
+class FilteredMap<Item extends TitledItem> {
+  @signal
+  accessor filter: string = "";
+
+  @signal
+  get results(): ReadonlyMap<string, Item> {
+    if (!this.filter) return this.items;
+    const filter = new RegExp(this.filter, "gim");
+    const filtered = new Map<string, Item>();
+    this.items.forEach((item, url) => {
+      if (filter.test(item.title)) filtered.set(url, item);
+    });
+    return filtered;
+  }
+
+  constructor(private readonly items: ReadonlyMap<string, Item>) {}
 }

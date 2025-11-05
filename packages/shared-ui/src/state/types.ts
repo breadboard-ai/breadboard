@@ -282,6 +282,7 @@ export type FastAccess = {
   graphAssets: Map<AssetPath, GraphAsset>;
   tools: Map<string, Tool>;
   myTools: Map<string, Tool>;
+  controlFlow: Map<string, Tool>;
   components: Map<GraphIdentifier, Components>;
   parameters: Map<string, ParameterMetadata>;
   integrations: FilteredIntegrations;

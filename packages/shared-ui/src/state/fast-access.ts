@@ -28,6 +28,7 @@ class ReactiveFastAccess implements FastAccess {
     public readonly graphAssets: Map<AssetPath, GraphAsset>,
     public readonly tools: Map<string, Tool>,
     public readonly myTools: Map<string, Tool>,
+    public readonly controlFlow: Map<string, Tool>,
     public readonly components: Map<GraphIdentifier, Components>,
     public readonly parameters: Map<string, ParameterMetadata>,
     public readonly integrations: FilteredIntegrations
