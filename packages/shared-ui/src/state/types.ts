@@ -39,6 +39,7 @@ import { StateEvent, ToastType } from "../events/events";
 import { AppTheme, VisualEditorMode } from "../types/types";
 import { HTMLTemplateResult } from "lit";
 import type { AsyncComputedStatus } from "signal-utils/async-computed";
+import { FilteredMap } from "./utils/filtered-map";
 
 /**
  * Represents the result of AsyncComputed signals helper.
@@ -282,7 +283,7 @@ export type FastAccess = {
   graphAssets: Map<AssetPath, GraphAsset>;
   tools: Map<string, Tool>;
   myTools: Map<string, Tool>;
-  controlFlow: Map<string, Tool>;
+  controlFlow: FilteredMap<Tool>;
   components: Map<GraphIdentifier, Components>;
   parameters: Map<string, ParameterMetadata>;
   integrations: FilteredIntegrations;

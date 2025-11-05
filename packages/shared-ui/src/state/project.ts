@@ -174,7 +174,6 @@ class ReactiveProject implements ProjectInternal {
     this.organizer = new ReactiveOrganizer(this);
     this.integrations = new IntegrationsImpl(clientManager, editable);
     this.fastAccess = new ReactiveFastAccess(
-      this,
       this.graphAssets,
       this.tools,
       this.myTools,
@@ -417,11 +416,11 @@ class ReactiveProject implements ProjectInternal {
   }
 
   #updateControlFlowTools() {
-    const tools: [string, Tool][] = [];
-    // Add the "Go to" tool.
     const mutable = this.#store.get(this.#mainGraphId);
     if (!mutable) return;
-    // Make this condition a bit more robust:
+
+    const tools: [string, Tool][] = [];
+    // TODO: Make this condition a bit more robust:
     // - only show if there are other nodes besides the current node that aren't
     //   already used by an existing "Go to" chiclet.
     // - only show this for the "Agent" mode.

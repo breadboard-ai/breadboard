@@ -14,25 +14,24 @@ import {
   FastAccess,
   FilteredIntegrations,
   GraphAsset,
-  ProjectInternal,
   Tool,
 } from "./types";
+import { FilteredMap } from "./utils/filtered-map";
 
 export { ReactiveFastAccess };
 
 class ReactiveFastAccess implements FastAccess {
-  #project: ProjectInternal;
+  readonly controlFlow: FilteredMap<Tool>;
 
   constructor(
-    project: ProjectInternal,
     public readonly graphAssets: Map<AssetPath, GraphAsset>,
     public readonly tools: Map<string, Tool>,
     public readonly myTools: Map<string, Tool>,
-    public readonly controlFlow: Map<string, Tool>,
+    unfilteredControlFlow: Map<string, Tool>,
     public readonly components: Map<GraphIdentifier, Components>,
     public readonly parameters: Map<string, ParameterMetadata>,
     public readonly integrations: FilteredIntegrations
   ) {
-    this.#project = project;
+    this.controlFlow = new FilteredMap(unfilteredControlFlow);
   }
 }
