@@ -24,9 +24,6 @@
   "scripts": {
     "prepack": "npm run build",
     "dev": "npm run serve --watch",
-    "serve": "wireit",
-    "preview": "wireit",
-    "deploy": "npm run build:vite && firebase deploy",
     "build": "wireit",
     "build:vite": "wireit",
     "build:tsc": "wireit"
@@ -49,8 +46,6 @@
         "tsconfig.json",
         "../../core/tsconfig/base.json",
         "package.json",
-        ".env.development",
-        ".env.production",
         "langs"
       ]
     },
@@ -95,44 +90,6 @@
         "index.html",
         "icons/",
         "oauth"
-      ]
-    },
-    "preview": {
-      "command": "vite preview",
-      "service": true,
-      "dependencies": [
-        "build",
-        {
-          "script": "typescript-files-and-deps",
-          "cascade": false
-        },
-        {
-          "script": "../connection-server#dev:nowatch",
-          "cascade": false
-        }
-      ],
-      "files": [
-        "vite.config.ts",
-        "scripts/*.ts",
-        ".env"
-      ]
-    },
-    "serve": {
-      "command": "vite",
-      "service": true,
-      "dependencies": [
-        {
-          "script": "typescript-files-and-deps",
-          "cascade": false
-        },
-        {
-          "script": "../connection-server#dev:nowatch",
-          "cascade": false
-        }
-      ],
-      "files": [
-        "vite.config.ts",
-        ".env"
       ]
     }
   },
