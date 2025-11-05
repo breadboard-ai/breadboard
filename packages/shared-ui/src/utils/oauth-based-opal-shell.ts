@@ -188,6 +188,38 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     return { ok: true, value: result.scope.split(" ") };
   }
 
+  /**
+   * Use this method to tweak the body of the request if necessary.
+   */
+  #maybeAugmentInit(url: string, init: RequestInit, accessToken: string) {
+    /**
+     * Add the accessToken param to the backend API request that needs it
+     * to transform files.
+     */
+    if (url.endsWith("/uploadGeminiFile")) {
+      const body = init.body;
+      if (typeof body !== "string") {
+        console.warn(
+          "When augmenting /uploadGeminiFile, request body is not string, bailing..."
+        );
+        return init;
+      }
+      try {
+        const json = JSON.parse(body);
+        return {
+          ...init,
+          body: JSON.stringify({ ...json, accessToken }),
+        };
+      } catch {
+        console.warn(
+          "When augmenting /uploadGeminiFile, request body is not JSON parsable, bailing"
+        );
+        return init;
+      }
+    }
+    return init;
+  }
+
   async fetchWithCreds(
     input: string | URL | RequestInfo,
     init: RequestInit = {}
@@ -227,9 +259,13 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
         { status: 401 }
       );
     }
-    const headers = new Headers(init.headers);
-    headers.set("Authorization", `Bearer ${token.grant.access_token}`);
-    return fetch(input, { ...init, headers });
+
+    const accessToken = token.grant.access_token;
+    const maybeAugmentedInit = this.#maybeAugmentInit(url, init, accessToken);
+
+    const headers = new Headers(maybeAugmentedInit.headers);
+    headers.set("Authorization", `Bearer ${accessToken}`);
+    return fetch(input, { ...maybeAugmentedInit, headers });
   }
 
   async generateSignInUrlAndNonce(

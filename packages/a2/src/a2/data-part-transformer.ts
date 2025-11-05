@@ -21,10 +21,17 @@ export type GoogleDriveToGeminiResponse = {
   part: FileDataPart;
 };
 
+export type UploadGeminiFileResponse = {
+  geminiFileName: string;
+};
+
 const DRIVE_URL_PREFIX = "drive:";
 
-const GEMINI_FILE_API_URL =
-  "https://generativelanguage.googleapis.com/v1beta/files/";
+const GEMINI_API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/";
+
+const GEMINI_FILE_API_URL = `${GEMINI_API_ENDPOINT}/files/`;
+
+const BACKEND_UPLOAD_GEMINI_FILE_ENDPOINT = "/v1beta1/uploadGeminiFile";
 
 function maybeBlob(handle: string): string | false {
   const handleParts = handle.split("/");
@@ -43,7 +50,7 @@ async function driveFileToGeminiFile(
   { fetchWithCreds, context }: A2ModuleArgs,
   part: FileDataPart
 ): Promise<Outcome<FileDataPart>> {
-  const fileId = part.fileData.fileUri.replace(/^drive:\/+/, "");
+  const driveFileId = part.fileData.fileUri.replace(/^drive:\/+/, "");
   try {
     const searchParams = new URLSearchParams();
     const { resourceKey, mimeType } = part.fileData;
@@ -53,24 +60,31 @@ async function driveFileToGeminiFile(
     if (mimeType) {
       searchParams.set("mimeType", mimeType);
     }
-    // TODO: Un-hardcode the path and get rid of the "@foo/bar".
-    const path = `/board/boards/@foo/bar/assets/drive/${fileId}?${searchParams}`;
-    const converting = await fetchWithCreds(
-      new URL(path, window.location.origin),
-      {
-        method: "POST",
-        credentials: "include",
-        body: JSON.stringify({ part }),
-        signal: context.signal,
-      }
+    const backendApiEndpoint =
+      context.clientDeploymentConfiguration?.BACKEND_API_ENDPOINT;
+    if (!backendApiEndpoint) {
+      return err(`Unable to transform: backend API endpoint not specified`);
+    }
+    const url = new URL(
+      BACKEND_UPLOAD_GEMINI_FILE_ENDPOINT,
+      backendApiEndpoint
     );
+    const converting = await fetchWithCreds(url, {
+      method: "POST",
+      body: JSON.stringify({ driveFileId }),
+      signal: context.signal,
+    });
     if (!converting.ok) return err(await converting.text());
 
     const converted =
-      (await converting.json()) as Outcome<GoogleDriveToGeminiResponse>;
+      (await converting.json()) as Outcome<UploadGeminiFileResponse>;
     if (!ok(converted)) return converted;
 
-    return converted.part;
+    return {
+      fileData: {
+        fileUri: new URL(converted.geminiFileName, GEMINI_API_ENDPOINT).href,
+      },
+    } as FileDataPart;
   } catch (e) {
     return err((e as Error).message);
   }
