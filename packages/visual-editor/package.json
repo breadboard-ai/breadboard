@@ -46,8 +46,6 @@
         "tsconfig.json",
         "../../core/tsconfig/base.json",
         "package.json",
-        ".env.development",
-        ".env.production",
         "langs"
       ]
     },
