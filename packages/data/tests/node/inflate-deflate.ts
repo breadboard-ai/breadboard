@@ -2,11 +2,7 @@ import { describe, it, mock, beforeEach } from "node:test";
 import assert from "node:assert";
 import { DataPartTransformer, DataStore } from "@breadboard-ai/types";
 import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
-import {
-  deflateData,
-  inflateData,
-  transformContents,
-} from "../../src/inflate-deflate.js";
+import { inflateData, transformContents } from "../../src/inflate-deflate.js";
 import { isStoredData } from "../../src/common.js";
 
 function makeStoredData(handle: string) {
@@ -87,51 +83,6 @@ describe("inflate-deflate", () => {
       assert(result.inlineData);
       assert.strictEqual(result.inlineData.mimeType, "text/plain");
       assert.strictEqual(typeof result.inlineData.data, "string");
-    });
-  });
-
-  describe("deflateData", () => {
-    function makeInlineData(data: string, mimeType = "text/plain") {
-      return { inlineData: { data, mimeType } };
-    }
-
-    it("should leave primitives unchanged", async () => {
-      assert.equal(await deflateData(mockStore, 42), 42);
-      assert.equal(await deflateData(mockStore, "hello"), "hello");
-      assert.equal(await deflateData(mockStore, null), null);
-      assert.equal(await deflateData(mockStore, undefined), undefined);
-    });
-
-    it("should convert InlineDataCapabilityPart to StoredDataCapabilityPart", async () => {
-      const data = makeInlineData(
-        Buffer.from("hello").toString("base64"),
-        "text/plain"
-      );
-      const result = await deflateData(mockStore, data);
-      assert(isStoredData(result));
-      assert.equal(stored.length, 1);
-    });
-
-    it("should leave StoredDataCapabilityPart unchanged except for deleting .data", async () => {
-      const data = { storedData: { handle: "abc" }, data: "should be deleted" };
-      const result = await deflateData(mockStore, data);
-      assert(isStoredData(result));
-      assert.equal(result.storedData.handle, "abc");
-      assert(!("data" in result), ".data should be deleted");
-    });
-
-    it("should recursively deflate InlineDataCapabilityPart", async () => {
-      const arr = [
-        makeInlineData(Buffer.from("foo").toString("base64")),
-        {
-          someProp: makeInlineData(Buffer.from("b").toString("base64")),
-        },
-      ];
-      const result = await deflateData(mockStore, arr);
-      assert(Array.isArray(result));
-      assert(isStoredData(result[0]));
-      assert(isStoredData(result[1].someProp));
-      assert.equal(stored.length, 2);
     });
   });
 

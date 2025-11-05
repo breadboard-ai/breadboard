@@ -81,7 +81,6 @@ export { transformBlobs } from "./file-system/blob-transform.js";
 export { StubFileSystem } from "./file-system/stub-file-system.js";
 export {
   createDefaultDataStore,
-  deflateData,
   inflateData,
   purgeStoredDataInMemoryValues,
   transformContents,

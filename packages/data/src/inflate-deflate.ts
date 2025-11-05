@@ -5,7 +5,6 @@
  */
 
 import {
-  DataDeflator,
   DataInflator,
   DataPartTransformType,
   DataStore,
@@ -19,7 +18,6 @@ import {
   asBase64,
   asBlob,
   isFileDataCapabilityPart,
-  isInlineData,
   isStoredData,
   transformDataParts,
 } from "./common.js";
@@ -115,31 +113,6 @@ export const inflateData = async (
       const data = await asBase64(blob);
       const mimeType = blob.type;
       return { inlineData: { data, mimeType } };
-    }
-    return value;
-  });
-};
-
-/**
- * Recursively descends into the data object and deflates any
- * `InlineDataCapabilityPart`, turning it into
- * `StoredDataCapabilityPart`.
- * @param data -- data to deflate
- * @returns -- a new object with all `InlineDataCapabilityPart`
- * replaced with `StoredDataCapabilityPart`
- */
-export const deflateData = async (deflator: DataDeflator, data: unknown) => {
-  return visitGraphNodes(data, async (value) => {
-    if (isStoredData(value) && value.storedData.handle) {
-      // Deleting stored value, for sanity, checking if the handle is assigned.
-      delete value.data;
-    }
-    if (isInlineData(value)) {
-      const { mimeType, data } = value.inlineData;
-      const blob = await fetch(`data:${mimeType};base64,${data}`).then((r) =>
-        r.blob()
-      );
-      return await deflator.store(blob);
     }
     return value;
   });
