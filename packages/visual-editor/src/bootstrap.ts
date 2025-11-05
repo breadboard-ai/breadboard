@@ -18,6 +18,7 @@ import {
 } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import { connectToOpalShellHost } from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
+import { EmbedHandlerImpl } from "@breadboard-ai/embed";
 
 export { bootstrap };
 
@@ -97,8 +98,10 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     fontPack.textContent = FONT_PACK;
     document.head.appendChild(fontPack);
 
-    if (bootstrapArgs.embedHandler) {
-      bootstrapArgs.embedHandler.connect();
+    const embedHandler =
+      window.self !== window.top ? new EmbedHandlerImpl() : undefined;
+    if (embedHandler) {
+      embedHandler.connect();
     }
 
     window.oncontextmenu = (evt) => evt.preventDefault();
@@ -115,7 +118,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       graphStorePreloader: bootstrapArgs.graphStorePreloader,
       moduleInvocationFilter: bootstrapArgs.moduleInvocationFilter,
       env: bootstrapArgs.env,
-      embedHandler: bootstrapArgs.embedHandler,
+      embedHandler,
       globalConfig,
       opalShell,
       initialSignInState: await opalShell.getSignInState(),

@@ -42,10 +42,6 @@ export type BootstrapArguments = {
    * system.
    */
   env?: FileSystemEntry[];
-  /**
-   * Provides a way to handle embedded versions of Breadboard.
-   */
-  embedHandler?: EmbedHandler;
 };
 
 export type MainArguments = {
