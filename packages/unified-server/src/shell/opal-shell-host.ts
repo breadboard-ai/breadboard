@@ -8,8 +8,12 @@ import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client
 import { addMessageEventListenerToAllowedEmbedderIfPresent } from "@breadboard-ai/shared-ui/utils/embedder.js";
 import "@breadboard-ai/shared-ui/utils/install-opal-shell-comlink-transfer-handlers.js";
 import { OAuthBasedOpalShell } from "@breadboard-ai/shared-ui/utils/oauth-based-opal-shell.js";
-import { EmbedderMessage } from "@breadboard-ai/types/embedder.js";
-import { SHELL_ORIGIN_URL_PARAMETER } from "@breadboard-ai/types/opal-shell-protocol.js";
+import type { EmbedderMessage } from "@breadboard-ai/types/embedder.js";
+import {
+  type OpalShellGuestProtocol,
+  type OpalShellHostProtocol,
+  SHELL_ORIGIN_URL_PARAMETER,
+} from "@breadboard-ai/types/opal-shell-protocol.js";
 import * as comlink from "comlink";
 
 const guestOrigin = CLIENT_DEPLOYMENT_CONFIG.SHELL_GUEST_ORIGIN;
@@ -26,7 +30,7 @@ if (guestOrigin && guestOrigin !== "*") {
       window.location.origin
     );
     iframe.src = guestUrl.href;
-    console.log(`[shell host] Exposing API to`, guestOrigin);
+
     const guestEndpoint = comlink.windowEndpoint(
       // Where this host sends messages.
       iframe.contentWindow,
@@ -40,8 +44,10 @@ if (guestOrigin && guestOrigin !== "*") {
       // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#targetorigin
       guestOrigin
     );
+
+    console.log(`[shell host] Exposing host API to`, guestOrigin);
     comlink.expose(
-      new OAuthBasedOpalShell(),
+      new OAuthBasedOpalShell() satisfies OpalShellHostProtocol,
       guestEndpoint,
       // Constrain origins this host can receive messages from, at the comlink
       // layer. It would otherwise default to all origins.
@@ -51,10 +57,10 @@ if (guestOrigin && guestOrigin !== "*") {
       [guestOrigin]
     );
 
+    console.log(`[shell host] Connecting to guest API at`, guestOrigin);
+    const guest = comlink.wrap<OpalShellGuestProtocol>(guestEndpoint);
     addMessageEventListenerToAllowedEmbedderIfPresent(
-      (message: EmbedderMessage) => {
-        console.log(`[shell host] TODO message from embedder`, message);
-      }
+      (message: EmbedderMessage) => guest.receiveFromEmbedder(message)
     );
   } else {
     console.error(`could not find #opal-app iframe`);
