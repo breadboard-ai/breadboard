@@ -256,7 +256,11 @@ export type Tool = {
   title?: string;
   description?: string;
   icon?: string;
-  connectorInstance?: string;
+  /**
+   * The identifier of the tool. This is useful in cases when URL points at a
+   * tool server, not the actual tool.
+   */
+  id?: string;
   order?: number;
   tags?: string[];
 };

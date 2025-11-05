@@ -545,7 +545,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
           tool.title ?? "Untitled tool",
           "tool",
           undefined,
-          tool.connectorInstance
+          tool.id
         )
       );
       return;
@@ -803,7 +803,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                                     tool.title!,
                                     "tool",
                                     undefined,
-                                    tool.connectorInstance
+                                    tool.id
                                   )
                                 );
                               }}

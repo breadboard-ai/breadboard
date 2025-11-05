@@ -40,7 +40,7 @@ function fromMcpTool(url: string, tool: McpListToolResult["tools"][0]): Tool {
     title: tool.title || tool.name,
     description: tool.description,
     icon: "robot_server",
-    connectorInstance: tool.name,
+    id: tool.name,
     order: Number.MAX_SAFE_INTEGER,
     tags: [],
   };
@@ -96,7 +96,7 @@ class IntegrationManager implements IntegrationState {
       const listing = await client.listTools();
       listing.tools.forEach((mcpTool) => {
         const tool = fromMcpTool(this.integration.url, mcpTool);
-        this.tools.set(tool.connectorInstance!, tool);
+        this.tools.set(tool.id!, tool);
       });
       this.status = "complete";
     } catch (e) {

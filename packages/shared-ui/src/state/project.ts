@@ -389,7 +389,7 @@ class ReactiveProject implements ProjectInternal {
           url: connector.type.url,
           title: `${title} Tools`,
           icon: connector.type.icon,
-          connectorInstance: path,
+          id: path,
         } satisfies Tool,
       ]);
     }
