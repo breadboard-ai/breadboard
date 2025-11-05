@@ -5,6 +5,7 @@
  */
 
 import { DataStore, FileSystem } from "./data.js";
+import { ClientDeploymentConfiguration } from "./deployment-configuration.js";
 import { RuntimeFlagManager } from "./flags.js";
 import {
   Capability,
@@ -402,6 +403,10 @@ export interface NodeHandlerContext {
    * Information about the current step.
    */
   currentStep?: NodeDescriptor;
+  /**
+   * A way to look at all the config flags.
+   */
+  readonly clientDeploymentConfiguration?: ClientDeploymentConfiguration;
 }
 
 export type RunArguments = NodeHandlerContext & {
