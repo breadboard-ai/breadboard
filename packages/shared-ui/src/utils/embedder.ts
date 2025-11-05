@@ -31,7 +31,7 @@ export function addMessageEventListenerToAllowedEmbedderIfPresent(
   callback: (message: EmbedderMessage) => void
 ) {
   if (UNVERIFIED_EMBEDDER_WINDOW) {
-    UNVERIFIED_EMBEDDER_WINDOW.addEventListener("message", (event) => {
+    window.addEventListener("message", (event) => {
       if (ALLOWED_EMBEDDER_ORIGINS.has(event.origin)) {
         callback(event.data as EmbedderMessage);
       } else {
