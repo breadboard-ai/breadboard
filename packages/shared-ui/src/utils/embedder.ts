@@ -34,11 +34,6 @@ export function addMessageEventListenerToAllowedEmbedderIfPresent(
     window.addEventListener("message", (event) => {
       if (ALLOWED_EMBEDDER_ORIGINS.has(event.origin)) {
         callback(event.data as EmbedderMessage);
-      } else {
-        console.warn(
-          `[embedded] Dropping message from disallowed origin`,
-          event.origin
-        );
       }
     });
   }
