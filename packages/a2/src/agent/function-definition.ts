@@ -38,23 +38,33 @@ type ArgsRawShape = {
   [k: string]: ZodTypeAny;
 };
 
+/**
+ * A callback that allows function handlers to update status of the agent.
+ * When the value is `null`, it means that the function handler doesn't want
+ * to update the status anymore (and the agent can revert to previous status).
+ * Think of it as "clear my status".
+ *
+ * If `isThought` is true, then the status is treated as if it's in the
+ * standard Gemini thought format.
+ */
+export type StatusUpdateCallback = (
+  status: string | null,
+  isThought?: boolean
+) => void;
+
 export type Handler<
   TParams extends ArgsRawShape,
   TResponse extends ArgsRawShape,
 > = (
-  args: z.infer<ZodObject<TParams>>
+  args: z.infer<ZodObject<TParams>>,
+  statusUpdateCallback: StatusUpdateCallback
 ) => Promise<Outcome<z.infer<ZodObject<TResponse>>>>;
-
-export type Describer<TParams extends ArgsRawShape> = (
-  args: z.infer<ZodObject<TParams>>
-) => string;
 
 type TypedFunctionDefinition<
   TParams extends ArgsRawShape,
   TResponse extends ArgsRawShape,
 > = FunctionDeclaration & {
   handler: Handler<TParams, TResponse>;
-  describer: Describer<TParams>;
 };
 
 export type FunctionDefinition = TypedFunctionDefinition<any, any>;
@@ -64,8 +74,7 @@ function defineFunction<
   TResponse extends ArgsRawShape,
 >(
   definition: ZodFunctionDefinition<TParams, TResponse>,
-  handler: Handler<TParams, TResponse>,
-  describer: Describer<TParams>
+  handler: Handler<TParams, TResponse>
 ): TypedFunctionDefinition<TParams, TResponse> {
   const { parameters, response, name, description } = definition;
   // Convert Zod schemas to JSON Schema
@@ -75,7 +84,6 @@ function defineFunction<
     description,
     parametersJsonSchema,
     handler,
-    describer,
   };
   if (response) {
     result["responseJsonSchema"] = zodToJsonSchema(z.object(response));
@@ -94,9 +102,9 @@ function defineResponseSchema<TSchema extends ArgsRawShape>(
 function defineFunctionLoose(
   definition: FunctionDeclaration,
   handler: (
-    args: Record<string, unknown>
-  ) => Promise<Outcome<Record<string, unknown>>>,
-  describer: (args: Record<string, unknown>) => string
+    args: Record<string, unknown>,
+    statusUpdateCallback: StatusUpdateCallback
+  ) => Promise<Outcome<Record<string, unknown>>>
 ): FunctionDefinition {
   const { parametersJsonSchema, responseJsonSchema, name, description } =
     definition;
@@ -105,7 +113,6 @@ function defineFunctionLoose(
     description,
     parametersJsonSchema,
     handler,
-    describer,
   };
   if (responseJsonSchema) {
     result["responseJsonSchema"] = responseJsonSchema;

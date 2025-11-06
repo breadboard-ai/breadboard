@@ -50,14 +50,14 @@ times to update the UI without being blocked on the user response.
           properties: { success: { type: "boolean" } },
         },
       },
-      async ({ messages }) => {
+      async ({ messages }, statusUpdater) => {
         console.log(`A2UI MESSAGES`, messages);
+        statusUpdater("Designing User Interface");
         args.ui.renderUserInterface(
           messages as v0_8.Types.ServerToClientMessage[]
         );
         return { success: true };
-      },
-      () => "Designing User Interface"
+      }
     ),
     defineFunction(
       {
@@ -71,10 +71,10 @@ specified in the UI, rendered with "${UI_RENDER_FUNCTION}".
         parameters: {},
         response: A2UIClientEventParameters,
       },
-      async () => {
+      async (_, statusUpdater) => {
+        statusUpdater("Processing user input");
         return args.ui.awaitUserInput();
-      },
-      () => "Processing user input"
+      }
     ),
   ];
 }

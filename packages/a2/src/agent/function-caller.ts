@@ -11,7 +11,10 @@ import {
   LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
-import { FunctionDefinition } from "./function-definition";
+import {
+  FunctionDefinition,
+  StatusUpdateCallback,
+} from "./function-definition";
 import { SimplifiedToolManager } from "../a2/tool-manager";
 import { err, ok } from "@breadboard-ai/utils";
 
@@ -26,13 +29,17 @@ class FunctionCaller {
   ) {}
 
   async #callBuiltIn(
-    part: FunctionCallCapabilityPart
+    part: FunctionCallCapabilityPart,
+    statusUpdateCallback: StatusUpdateCallback
   ): Promise<Outcome<FunctionResponseCapabilityPart>> {
     const { functionCall } = part;
     const { name, args } = functionCall;
     const definition = this.builtIn.get(name)!;
     console.log("CALLING SYSTEM FUNCTION", name);
-    const response = await definition.handler(args as Record<string, string>);
+    const response = await definition.handler(
+      args as Record<string, string>,
+      statusUpdateCallback
+    );
     if (!ok(response)) return response;
     return {
       functionResponse: {
@@ -57,19 +64,15 @@ class FunctionCaller {
     return parts.at(0)!;
   }
 
-  describe(part: FunctionCallCapabilityPart): string {
-    const { name, args } = part.functionCall;
-    const builtInFunction = this.builtIn.get(name);
-    if (builtInFunction) {
-      return builtInFunction.describer(args);
-    }
-    return `Calling "${name}"`;
-  }
-
-  call(part: FunctionCallCapabilityPart): void {
+  call(
+    part: FunctionCallCapabilityPart,
+    statusUpdateCallback: StatusUpdateCallback
+  ): void {
     const name = part.functionCall.name;
     if (this.builtIn.has(name)) {
-      this.#functionPromises.push(this.#callBuiltIn(part));
+      this.#functionPromises.push(
+        this.#callBuiltIn(part, statusUpdateCallback)
+      );
     } else {
       this.#functionPromises.push(this.#callCustom(part));
     }

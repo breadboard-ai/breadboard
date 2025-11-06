@@ -21,7 +21,7 @@ import { emptyDefinitions, mapDefinitions } from "./function-definition";
 import { defineSystemFunctions } from "./functions/system";
 import { PidginTranslator } from "./pidgin-translator";
 import { AgentUI } from "./ui";
-import { initializeGenerateFunctions } from "./functions/generate";
+import { defineGenerateFunctions } from "./functions/generate";
 import { prompt as a2UIPrompt } from "./a2ui/prompt";
 import { defineA2UIFunctions } from "./functions/ui";
 
@@ -62,7 +62,7 @@ type SystemInstructionArgs = {
   useUI: boolean;
 };
 
-const AGENT_MODEL = "gemini-pro-latest";
+const AGENT_MODEL = "gemini-2.5-pro";
 
 function createSystemInstruction(args: SystemInstructionArgs) {
   return llm`
@@ -111,15 +111,15 @@ attention to them.
 
 <agent-instructions title="When to call generate_text">
 When evaluating objective, make sure to determine whether calling 
-"generate_text" is warranted. The key tradeoff here is latency: the 
-"generate_text" will take longer to run, since it uses a larger model (Pro).
+"generate_text" is warranted. The key tradeoff here is latency: because it is an additional model call, the "generate_text" will take longer to finish.
+
+Your job is fulfill the objective as efficiently as possible, so weigh the need to invoke "generate_text" carefully.
 
 Here is the rule of thumb:
 
-- For short responses like a chat conversation, just do the text generation
-yourself. You are an LLM after all.
-- For longer responses like generating a chapter of a book or a full report,
-use "generate_text".
+- For shorter responses like a chat conversation, just do the text generation
+yourself. You are an LLM and you can do it without.
+- For longer responses like generating a chapter of a book or analyzing a large and complex set of files, use "generate_text".
 
 </agent-instructions>
 
@@ -280,7 +280,7 @@ class Loop {
         : emptyDefinitions();
 
       const generateFunctions = mapDefinitions(
-        initializeGenerateFunctions({
+        defineGenerateFunctions({
           fileSystem: this.#fileSystem,
           caps: this.caps,
           moduleArgs: this.moduleArgs,
@@ -350,11 +350,15 @@ class Loop {
               }
             }
             if ("functionCall" in part) {
-              this.#ui.progress.functionCall(
-                part,
-                functionCaller.describe(part)
-              );
-              functionCaller.call(part);
+              this.#ui.progress.functionCall(part);
+              functionCaller.call(part, (status, isThought) => {
+                if (isThought) {
+                  if (!status) return;
+                  this.#ui.progress.thought(status);
+                } else {
+                  this.#ui.progress.functionCallUpdate(part, status);
+                }
+              });
             }
           }
           const functionResults = await functionCaller.getResults();
