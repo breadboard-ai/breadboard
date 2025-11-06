@@ -7,10 +7,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { Outcome, Schema } from "@breadboard-ai/types";
-import { FunctionDeclaration } from "@google/genai";
 import { z, ZodObject, ZodTypeAny } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
-import { GeminiSchema } from "../a2/gemini";
+import { FunctionDeclaration, GeminiSchema } from "../a2/gemini";
+
+export {
+  defineFunction,
+  defineFunctionLoose,
+  defineResponseSchema,
+  mapDefinitions,
+  emptyDefinitions,
+};
+
+export type MappedDefinitions = {
+  definitions: Map<string, FunctionDefinition>;
+  declarations: FunctionDeclaration[];
+};
 
 export type ZodFunctionDefinition<
   TParams extends ArgsRawShape,
@@ -46,8 +58,6 @@ type TypedFunctionDefinition<
 };
 
 export type FunctionDefinition = TypedFunctionDefinition<any, any>;
-
-export { defineFunction, defineFunctionLoose, defineResponseSchema };
 
 function defineFunction<
   TParams extends ArgsRawShape,
@@ -101,4 +111,19 @@ function defineFunctionLoose(
     result["responseJsonSchema"] = responseJsonSchema;
   }
   return result;
+}
+
+function mapDefinitions(functions: FunctionDefinition[]): MappedDefinitions {
+  const definitions = new Map<string, FunctionDefinition>(
+    functions.map((item) => [item.name!, item])
+  );
+  const declarations = functions.map(
+    ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
+  );
+
+  return { definitions, declarations };
+}
+
+function emptyDefinitions(): MappedDefinitions {
+  return { definitions: new Map(), declarations: [] };
 }

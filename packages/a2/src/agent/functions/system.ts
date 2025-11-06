@@ -5,25 +5,13 @@
  */
 
 import z from "zod";
-import {
-  defineFunction,
-  defineFunctionLoose,
-  FunctionDefinition,
-} from "../function-definition";
+import { defineFunction, FunctionDefinition } from "../function-definition";
 import { AgentFileSystem } from "../file-system";
-import { AgentUI } from "../ui";
 import { ok } from "@breadboard-ai/utils";
-import { tr } from "../../a2/utils";
-import { UI_SCHEMA } from "../../a2/render-consistent-ui";
-import { A2UIClientEventParameters } from "../a2ui/schemas";
-import { v0_8 } from "@breadboard-ai/a2ui";
-import { GeminiSchema } from "../../a2/gemini";
 
-export { initializeSystemFunctions };
+export { defineSystemFunctions };
 
 export type SystemFunctionArgs = {
-  useA2UI: boolean;
-  ui: AgentUI;
   fileSystem: AgentFileSystem;
   successCallback(
     user_message: string,
@@ -33,121 +21,7 @@ export type SystemFunctionArgs = {
   terminateCallback(): void;
 };
 
-function defineSimpleUiFunctions(
-  args: SystemFunctionArgs
-): FunctionDefinition[] {
-  return [
-    defineFunction(
-      {
-        name: "system_request_user_input",
-        description: `Requests input from a user. Use this function to obtain
-additional information or confirmation from the user. Use only when necessary.
-Avoid excessive requests to the user.`,
-        parameters: {
-          user_message: z.string()
-            .describe(`Text to display to the user when requesting input.
-Use the <file src="path" /> syntax to embed any files in the message`),
-          type: z.enum([
-            "singleline-text",
-            "multiline-text",
-            "confirm",
-            "image",
-            "video",
-          ]).describe(`Type of the input requested.
-- Use "singleline-text" to request a single line of text. Useful for chat-like
-interactions, when only a brief text is requested. The requested text will be 
-delivered as "text" response. 
-- Use "multiline-text" to request multi-line text. Useful when requesting a 
-longer text, like a review, critique, further instructions, etc. The requested
-text will be delivered as "text" response.
-- Use "confirm" to request confirmation on an action. Use this only
-when specifically requested by the objective. The confirmation will be 
-delivered as "yes" or "no" in "text" response.
-- Use "image" to request an image. Once the user uploads the image, it will be
-delivered as "file_path" response.
-- Use "video" to request a video. Once the user uploads the video, it will be
-delivered as "file_path" response.
-`),
-        },
-        response: {
-          text: z
-            .string()
-            .optional()
-            .describe(
-              `The text response from the user, populated when the "type" is "singleline-text", "multiline-text", or "confirm".`
-            ),
-          file_path: z.string().optional().describe(`The VFS path to the file,
-uploaded by the user, populated when the "type" is "image", or "video".`),
-        },
-      },
-      async ({ user_message, type }) => {
-        return args.ui.requestUserInput(user_message, type);
-      },
-      () => "Asking User for Input"
-    ),
-  ];
-}
-
-const UI_RENDER_FUNCTION = "ui_render_user_interface";
-const UI_AWAIT_USER_FUNCTION = "ui_await_user_input";
-
-function defineA2UIFunctions(args: SystemFunctionArgs): FunctionDefinition[] {
-  const serverSchema: GeminiSchema = {
-    type: "object",
-    properties: { messages: { type: "array", items: UI_SCHEMA } },
-  };
-
-  return [
-    defineFunctionLoose(
-      {
-        name: UI_RENDER_FUNCTION,
-        description: tr`
-
-Allows to dynamically construct and update the user interface. This function
-is best used in conjuction with "${UI_AWAIT_USER_FUNCTION}". First, use the
-"${UI_RENDER_FUNCTION}" to create the UI, then call "${UI_AWAIT_USER_FUNCTION}"
-to get user's response. The "${UI_RENDER_FUNCTION}" may be call multiple
-times to update the UI without being blocked on the user response.
-
-`,
-        parametersJsonSchema: serverSchema,
-        responseJsonSchema: {
-          type: "object",
-          properties: { success: { type: "boolean" } },
-        },
-      },
-      async ({ messages }) => {
-        console.log(`A2UI MESSAGES`, messages);
-        args.ui.renderUserInterface(
-          messages as v0_8.Types.ServerToClientMessage[]
-        );
-        return { success: true };
-      },
-      () => "Designing User Interface"
-    ),
-    defineFunction(
-      {
-        name: UI_AWAIT_USER_FUNCTION,
-        description: tr`
-
-Awaits user's response. The response will be one of the actions that were
-specified in the UI, rendered with "${UI_RENDER_FUNCTION}".
-
-`,
-        parameters: {},
-        response: A2UIClientEventParameters,
-      },
-      async () => {
-        return args.ui.awaitUserInput();
-      },
-      () => "Processing user input"
-    ),
-  ];
-}
-
-function initializeSystemFunctions(
-  args: SystemFunctionArgs
-): FunctionDefinition[] {
+function defineSystemFunctions(args: SystemFunctionArgs): FunctionDefinition[] {
   return [
     defineFunction(
       {
@@ -390,8 +264,5 @@ The VFS path to a file that is in this project
       },
       () => "Examining Project Contents"
     ),
-    ...(args.useA2UI
-      ? defineA2UIFunctions(args)
-      : defineSimpleUiFunctions(args)),
   ];
 }
