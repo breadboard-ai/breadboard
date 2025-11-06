@@ -13,11 +13,12 @@ export function expandChiclet(
   part: TemplatePart,
   projectState: Project | null,
   subGraphId: string | null
-): { tags?: string[]; icon?: string | null } {
+): { tags?: string[]; icon?: string | null; title?: string | null } {
   const { type, path, instance } = part;
 
   let icon: string | null | undefined;
   let tags: string[] | undefined;
+  let title: string | null = null;
 
   if (!projectState) {
     return {};
@@ -39,6 +40,15 @@ export function expandChiclet(
         icon = getStepIcon(metadata.icon, ports);
         tags = metadata.tags ?? [];
       }
+
+      const nodeTitle = projectState.getTitleForNode(
+        path,
+        subGraphId ? subGraphId : ""
+      );
+      if (ok(nodeTitle)) {
+        title = nodeTitle ?? null;
+      }
+
       break;
     }
 
@@ -71,5 +81,6 @@ export function expandChiclet(
   return {
     tags,
     icon,
+    title,
   };
 }

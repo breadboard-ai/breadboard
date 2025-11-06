@@ -314,6 +314,21 @@ class ReactiveProject implements ProjectInternal {
     return node.currentPorts();
   }
 
+  getTitleForNode(
+    nodeId: NodeIdentifier,
+    graphId: GraphIdentifier
+  ): Outcome<string> {
+    const inspectable = this.#store.inspect(this.#mainGraphId, graphId);
+    if (!inspectable) {
+      return err(`Unable to inspect graph with "${this.#mainGraphId}"`);
+    }
+    const node = inspectable.nodeById(nodeId);
+    if (!node) {
+      return err(`Unable to find node with id "${nodeId}`);
+    }
+    return node.title();
+  }
+
   findOutputPortId(
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier

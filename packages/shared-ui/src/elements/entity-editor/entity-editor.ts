@@ -1727,14 +1727,17 @@ export class EntityEditor
             }
 
             this.#editorRef.value.restoreLastRange(false /* offsetLastChar */);
-            this.#editorRef.value.addItem(
-              evt.path,
-              evt.title,
-              evt.accessType,
-              evt.mimeType,
-              evt.instance,
-              "none"
-            );
+
+            const part: TemplatePart = {
+              path: evt.path,
+              title: evt.title,
+              type: evt.accessType,
+              mimeType: evt.mimeType,
+              instance: evt.instance,
+              parameterType: "none",
+            };
+
+            this.#editorRef.value.addItem(part);
           }}
           .graphId=${null}
           .nodeId=${null}

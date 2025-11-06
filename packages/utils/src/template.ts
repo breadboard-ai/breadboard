@@ -46,6 +46,11 @@ export type TemplatePart = {
    * it will have its own drop down menu to further define the chip.
    */
   parameterType?: TemplatePartParameterType;
+  /**
+   * Target. If this is a parameter type of "step", then it will have to target
+   * another chip.
+   */
+  parameterTarget?: string;
 };
 
 export type TemplatePartTransformCallback = (
@@ -59,7 +64,7 @@ export type ParsedTemplate = (string | TemplatePart)[];
 
 const PARSING_REGEX = /{(?<json>{(?:.*?)})}/gim;
 
-function isTemplatePart(o: unknown): o is TemplatePart {
+export function isTemplatePart(o: unknown): o is TemplatePart {
   if (!o || typeof o !== "object") return false;
   return "type" in o && "path" in o && "title" in o;
 }
@@ -195,18 +200,22 @@ class Template {
     mimeType,
     instance,
     parameterType = "none",
+    parameterTarget,
   }: TemplatePart) {
     const maybeMimeType = mimeType
       ? `"mimeType": ${JSON.stringify(mimeType)}, `
       : "";
     const maybeInstance = instance
-      ? `"instance": ${JSON.stringify(instance)},`
+      ? `"instance": ${JSON.stringify(instance)}, `
       : "";
     const maybeParameterType =
       parameterType !== "none"
-        ? `"parameterType": ${JSON.stringify(parameterType)},`
+        ? `"parameterType": ${JSON.stringify(parameterType)}, `
         : "";
-    return `{{"type": ${JSON.stringify(type)}, "path": ${JSON.stringify(path)}, ${maybeMimeType}${maybeInstance}${maybeParameterType}"title": "`;
+    const maybeParameterTarget = parameterTarget
+      ? `"parameterTarget": ${JSON.stringify(parameterTarget)}, `
+      : "";
+    return `{{"type": ${JSON.stringify(type)}, "path": ${JSON.stringify(path)}, ${maybeMimeType}${maybeInstance}${maybeParameterType}${maybeParameterTarget}"title": "`;
   }
 
   static postamble() {

@@ -51,6 +51,10 @@ export const styles = [
           &::after {
             content: attr(data-icon);
           }
+
+          &.target {
+            margin-left: var(--bb-grid-size-4);
+          }
         }
 
         &.visible-after {
@@ -61,6 +65,7 @@ export const styles = [
           user-select: none;
           pointer-events: none;
           width: calc(100% - var(--bb-grid-size-5));
+          max-width: 145px;
 
           &::after {
             font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
@@ -80,6 +85,11 @@ export const styles = [
       &.input {
         background: var(--ui-get-input-secondary) 5px center / 16px 16px
           no-repeat;
+        color: var(--n-10);
+      }
+
+      &.output {
+        background: var(--ui-display) 5px center / 16px 16px no-repeat;
         color: var(--n-10);
       }
 

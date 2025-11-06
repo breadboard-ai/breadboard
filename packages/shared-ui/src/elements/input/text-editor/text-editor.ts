@@ -3,18 +3,14 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import {
-  Template,
-  TemplatePart,
-  TemplatePartType,
-} from "@google-labs/breadboard";
+import { Template, TemplatePart } from "@google-labs/breadboard";
 import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { FastAccessSelectEvent } from "../../../events/events";
 import { Project } from "../../../state";
 import { FastAccessMenu } from "../../elements";
-import { Sanitizer, TemplatePartParameterType } from "@breadboard-ai/utils";
+import { isTemplatePart, Sanitizer } from "@breadboard-ai/utils";
 import { styles as ChicletStyles } from "../../../styles/chiclet.js";
 import { getAssetType } from "../../../utils/mime-type";
 import { icons } from "../../../styles/icons";
@@ -26,14 +22,22 @@ function chicletHtml(
   projectState: Project | null,
   subGraphId: string | null
 ) {
-  const { type, title, invalid, mimeType, parameterType = "none" } = part;
+  const {
+    type,
+    invalid,
+    mimeType,
+    parameterType = "none",
+    parameterTarget,
+  } = part;
   const assetType = getAssetType(mimeType) ?? "";
-  const { icon: metadataIcon, tags: metadataTags } = expandChiclet(
+  const { icon: srcIcon, tags: metadataTags } = expandChiclet(
     part,
     projectState,
     subGraphId
   );
 
+  const { title } = part;
+  let metadataIcon = srcIcon;
   const label = document.createElement("label");
   label.classList.add("chiclet");
 
@@ -60,6 +64,7 @@ function chicletHtml(
 
   if (parameterType !== "none") {
     label.dataset.parameter = parameterType;
+    metadataIcon = "start";
   }
 
   label.setAttribute("contenteditable", "false");
@@ -84,8 +89,36 @@ function chicletHtml(
 
   label.appendChild(preambleEl);
   label.appendChild(titleEl);
-  label.appendChild(postambleEl);
 
+  // If there is a target then we need to expand this.
+  if (parameterType === "step") {
+    let targetIcon;
+    let targetTitle;
+    if (parameterTarget) {
+      const { icon, title } = expandChiclet(
+        { path: parameterTarget, type: "in", title: "unknown" },
+        projectState,
+        subGraphId
+      );
+
+      targetTitle = title;
+      targetIcon = icon;
+    }
+
+    if (targetIcon) {
+      const icon = document.createElement("span");
+      icon.classList.add("g-icon", "filled", "round", "target");
+      icon.dataset.icon = targetIcon;
+      label.appendChild(icon);
+    }
+
+    const targetTitleEl = document.createElement("span");
+    targetTitleEl.classList.add("visible-after", "target");
+    targetTitleEl.dataset.label = targetTitle ?? "(not set)";
+    label.appendChild(targetTitleEl);
+  }
+
+  label.appendChild(postambleEl);
   return label.outerHTML;
 }
 
@@ -208,6 +241,7 @@ export class TextEditor extends LitElement {
   #renderableValue = "";
   #isUsingFastAccess = false;
   #showFastAccessMenuOnKeyUp = false;
+  #fastAccessTarget: TemplatePart | null = null;
   #lastRange: Range | null = null;
   #editorRef: Ref<HTMLSpanElement> = createRef();
   #proxyRef: Ref<HTMLDivElement> = createRef();
@@ -279,6 +313,7 @@ export class TextEditor extends LitElement {
 
   #onGlobalPointerDown() {
     this.#hideFastAccess();
+    this.#setFastAccessTarget(null);
   }
 
   #startTrackingSelections(evt: Event) {
@@ -295,6 +330,7 @@ export class TextEditor extends LitElement {
 
   #stopTrackingSelections(evt: PointerEvent) {
     if (!this.#shouldCheckSelections) {
+      this.#triggerFastAccessIfOnStepParam();
       return;
     }
 
@@ -339,14 +375,7 @@ export class TextEditor extends LitElement {
     }
   }
 
-  addItem(
-    path: string,
-    title: string,
-    templatePartType: TemplatePartType,
-    mimeType: string | undefined,
-    instance: string | undefined,
-    parameterType: TemplatePartParameterType
-  ) {
+  addItem(part: TemplatePart) {
     if (!this.#editorRef.value) {
       return null;
     }
@@ -355,7 +384,7 @@ export class TextEditor extends LitElement {
       this.restoreLastRange();
     }
 
-    const completeAddAction = () => {
+    const completeAddAction = (appendedEl?: ChildNode) => {
       this.#ensureAllChicletsHaveSpace();
       this.#ensureSafeRangePosition();
       this.#captureEditorValue();
@@ -368,6 +397,15 @@ export class TextEditor extends LitElement {
           cancelable: true,
         })
       );
+
+      // Fresh add of a routing tool – trigger the fast access menu for the
+      // step. We wait a frame so that the processing from adding the step has
+      // completed (including unsetting the fast access menu target).
+      if (part.parameterType === "step" && !part.parameterTarget) {
+        requestAnimationFrame(() => {
+          this.#triggerFastAccessIfOnStepParam(appendedEl);
+        });
+      }
     };
 
     requestAnimationFrame(() => {
@@ -375,17 +413,9 @@ export class TextEditor extends LitElement {
         return;
       }
 
-      const part: TemplatePart = {
-        path,
-        title,
-        type: templatePartType,
-        instance,
-        mimeType,
-        parameterType,
-      };
-
       const escapedValue = JSON.stringify(part);
       const template = new Template(`{${escapedValue}}`);
+
       template.substitute(
         (part) => chicletHtml(part, this.projectState, this.subGraphId),
         (part) => Sanitizer.escapeNodeText(part)
@@ -394,14 +424,17 @@ export class TextEditor extends LitElement {
       const fragment = document.createDocumentFragment();
       const tempEl = document.createElement("div");
       tempEl.innerHTML = template.renderable;
-      while (tempEl.firstChild) {
+      let appendedEl: ChildNode | undefined;
+      if (tempEl.firstChild) {
+        // We can just take the last item even though this is using a while.
+        appendedEl = tempEl.firstChild;
         fragment.append(tempEl.firstChild);
       }
 
       const range = this.#getCurrentRange();
       if (!range) {
         this.#editorRef.value.appendChild(fragment);
-        completeAddAction();
+        completeAddAction(appendedEl);
       } else {
         if (
           range.commonAncestorContainer !== this.#editorRef.value &&
@@ -425,7 +458,7 @@ export class TextEditor extends LitElement {
 
           selection.removeAllRanges();
           selection.addRange(range);
-          completeAddAction();
+          completeAddAction(appendedEl);
         });
       }
     });
@@ -487,6 +520,80 @@ export class TextEditor extends LitElement {
     range.selectNode(possibleChiclet);
     selection.removeAllRanges();
     selection.addRange(range);
+  }
+
+  /**
+   * @param targetChild If set, will force the behavior for this child. Used to
+   *   trigger the fast access behavior on newly-added steps.
+   */
+  #triggerFastAccessIfOnStepParam(targetChild?: ChildNode) {
+    if (!this.#editorRef.value) {
+      return;
+    }
+
+    const children = this.#editorRef.value.childNodes;
+    for (const child of children) {
+      if (!(child instanceof HTMLElement)) {
+        continue;
+      }
+
+      // Check newly-added chiclets first.
+      if (targetChild) {
+        if (child !== targetChild) {
+          continue;
+        }
+
+        if (!child.classList.contains("selected")) {
+          const selection = this.#getCurrentSelection();
+          if (!selection) {
+            console.warn("Unable to select newly added step");
+            return;
+          }
+
+          const range = new Range();
+          range.selectNode(child);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      } else if (
+        !child.classList.contains("chiclet") ||
+        !child.classList.contains("selected")
+      ) {
+        // Check selected chiclets.
+        continue;
+      }
+
+      // Now confirm this is due to select steps.
+      if (!child.dataset.parameter || child.dataset.parameter !== "step") {
+        continue;
+      }
+
+      // Redirect the fast access add call back to the chiclet rather than the
+      // main editor.
+      this.storeLastRange();
+
+      // Obtain a part from the child
+      this.#setFastAccessTarget(this.#chicletToTemplatePart(child));
+      this.#showFastAccess(child.getBoundingClientRect());
+    }
+  }
+
+  #chicletToTemplatePart(chiclet: HTMLElement): TemplatePart {
+    try {
+      const chicletValue = new Template(chiclet.textContent);
+      if (!chicletValue.hasPlaceholders) {
+        throw new Error(`Item is not a valid value: ${chiclet.textContent}`);
+      }
+
+      const tmpl = chicletValue.placeholders.at(0);
+      if (!isTemplatePart(tmpl)) {
+        throw new Error(`Item is not a valid value: ${chiclet.textContent}`);
+      }
+      return tmpl;
+    } catch (err) {
+      console.warn(err);
+      throw new Error("Unable to parse chiclet into template");
+    }
   }
 
   #nodeIsChiclet(node: Node | null): node is HTMLElement {
@@ -926,6 +1033,14 @@ export class TextEditor extends LitElement {
 
       this.#fastAccessRef.value.focusFilter();
     });
+
+    this.#fastAccessRef.value.selectedIndex = 0;
+    this.#fastAccessRef.value.showAssets = this.#fastAccessTarget === null;
+    this.#fastAccessRef.value.showTools = this.#fastAccessTarget === null;
+    this.#fastAccessRef.value.showParameters = false;
+    this.#fastAccessRef.value.showControlFlowTools =
+      this.showControlFlowTools && this.#fastAccessTarget === null;
+
     this.#isUsingFastAccess = true;
   }
 
@@ -936,6 +1051,10 @@ export class TextEditor extends LitElement {
     }
 
     this.#fastAccessRef.value.classList.remove("active");
+  }
+
+  #setFastAccessTarget(part: TemplatePart | null) {
+    this.#fastAccessTarget = part;
   }
 
   #updateEditorValue() {
@@ -1051,25 +1170,45 @@ export class TextEditor extends LitElement {
           this.#hideFastAccess();
           this.#captureEditorValue();
           this.restoreLastRange();
+          this.#setFastAccessTarget(null);
         }}
         @bbfastaccessselect=${(evt: FastAccessSelectEvent) => {
           this.#hideFastAccess();
           this.restoreLastRange();
-          this.addItem(
-            evt.path,
-            evt.title,
-            evt.accessType,
-            evt.mimeType,
-            evt.instance,
-            evt.parameterType
-          );
 
+          // By default we assume that the part to be added is constructed from
+          // the event we received in.
+          let targetPart: TemplatePart = {
+            path: evt.path,
+            title: evt.title,
+            type: evt.accessType,
+            mimeType: evt.mimeType,
+            instance: evt.instance,
+            parameterType: evt.parameterType,
+          };
+
+          // If, however, there is a fast access target, i.e., an existing
+          // TemplatePart, we should adjust it so that the newly added part is
+          // set as the parameterTarget.
+          if (this.#fastAccessTarget !== null) {
+            targetPart = {
+              ...this.#fastAccessTarget,
+              parameterTarget: evt.path,
+            };
+          }
+
+          this.addItem(targetPart);
+
+          this.#setFastAccessTarget(null);
           this.#captureEditorValue();
           this.#togglePlaceholder();
         }}
         .graphId=${this.subGraphId}
         .nodeId=${this.nodeId}
-        .showControlFlowTools=${this.showControlFlowTools}
+        .showControlFlowTools=${this.showControlFlowTools &&
+        this.#fastAccessTarget === null}
+        .showAssets=${this.#fastAccessTarget === null}
+        .showTools=${this.#fastAccessTarget === null}
         .state=${this.projectState?.fastAccess}
       ></bb-fast-access-menu>
       <div ${ref(this.#proxyRef)} id="proxy"></div>`;

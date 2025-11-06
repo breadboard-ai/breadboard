@@ -69,14 +69,38 @@ export function createChiclets(
   const chiclets: HTMLTemplateResult[] = [];
   const template = new Template(valStr);
   template.placeholders.forEach((part) => {
-    const { type, title, invalid, mimeType } = part;
+    const { type, title, invalid, mimeType, parameterType } = part;
     const assetType = getAssetType(mimeType) ?? "";
 
-    const { icon: metadataIcon, tags: metadataTags } = expandChiclet(
+    const { icon: srcIcon, tags: metadataTags } = expandChiclet(
       part,
       projectState,
       subGraphId
     );
+
+    let targetIcon;
+    let targetTitle;
+    let metadataIcon = srcIcon;
+    if (parameterType) {
+      switch (parameterType) {
+        case "step":
+          metadataIcon = "start";
+          if (part.parameterTarget) {
+            const { icon, title } = expandChiclet(
+              { path: part.parameterTarget, type: "in", title: "unknown" },
+              projectState,
+              subGraphId
+            );
+
+            targetIcon = icon;
+            targetTitle = title;
+          } else {
+            targetTitle = " (not set)";
+          }
+
+          break;
+      }
+    }
 
     chiclets.push(
       html`<label
@@ -92,7 +116,17 @@ export function createChiclets(
           : nothing}
         <span>${Template.preamble(part)}</span
         ><span class="visible-after" data-label=${title}>${title}</span
-        ><span>${Template.postamble()}</span></label
+        >${targetIcon
+          ? html`<span
+              class="g-icon filled round target"
+              data-icon="${targetIcon}"
+            ></span>`
+          : nothing}${targetTitle
+          ? html`<span
+              class="visible-after target"
+              data-label=${targetTitle}
+            ></span>`
+          : nothing}<span>${Template.postamble()}</span></label
       >`
     );
   });
