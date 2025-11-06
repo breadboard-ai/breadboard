@@ -54,6 +54,7 @@ type Mode = {
    * but stop showing it for new values.
    */
   hidden?: boolean;
+  showControlFlowTools?: boolean;
   portMap: Map<string, string>;
 };
 
@@ -118,7 +119,8 @@ const MODES: Mode[] = [
     title: "Agent",
     description: "Iteratively works to solve the stated objective",
     icon: "spark",
-    modelName: "gemini-flash-latest",
+    modelName: "gemini-pro-latest",
+    showControlFlowTools: true,
     promptPlaceholderText:
       "Type your goal here. Use @ to include other content.",
     portMap: new Map(),

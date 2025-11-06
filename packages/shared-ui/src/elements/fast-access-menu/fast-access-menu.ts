@@ -62,7 +62,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   accessor showTools = true;
 
   @property()
-  accessor showControlFlowTools = true;
+  accessor showControlFlowTools = false;
 
   @property()
   accessor showComponents = true;
