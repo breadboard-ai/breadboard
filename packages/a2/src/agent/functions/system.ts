@@ -8,6 +8,7 @@ import z from "zod";
 import { defineFunction, FunctionDefinition } from "../function-definition";
 import { AgentFileSystem } from "../file-system";
 import { ok } from "@breadboard-ai/utils";
+import { tr } from "../../a2/utils";
 
 export { defineSystemFunctions };
 
@@ -150,18 +151,64 @@ existing project.`.trim()
         response: {
           file_path: z
             .string()
-            .describe("The VS path to the file to which the text was appended"),
+            .describe("The VS path to the file to which the text was appended")
+            .optional(),
+          error: z
+            .string()
+            .describe(
+              tr`
+
+If an error has occurred, will contain a description of the error`
+            )
+            .optional(),
         },
       },
       async ({ file_path, project_path, text }) => {
         console.log("FILE_NAME", file_path);
         console.log("TEXT TO APPEND", text);
         const appending = args.fileSystem.append(file_path, text);
-        if (!ok(appending)) return appending;
+        if (!ok(appending)) return { error: appending.$error };
+
         if (project_path) {
           args.fileSystem.addFilesToProject(project_path, [file_path]);
         }
         return { file_path };
+      }
+    ),
+    defineFunction(
+      {
+        name: "system_read_text_from_file",
+        description:
+          "Reads text from a file and return text as string. If the file does not contain text, empty string will be returned",
+        parameters: {
+          file_path: z.string().describe(
+            tr`
+The VFS path of the file to read the text from.`.trim()
+          ),
+        },
+        response: {
+          text: z
+            .string()
+            .describe(
+              tr`
+The text contents of a file as a string.`
+            )
+            .optional(),
+          error: z
+            .string()
+            .describe(
+              tr`
+
+If an error has occurred, will contain a description of the error`
+            )
+            .optional(),
+        },
+      },
+      async ({ file_path }) => {
+        console.log("FILE PATH", file_path);
+        const text = args.fileSystem.readText(file_path);
+        if (!ok(text)) return { error: text.$error };
+        return { text };
       }
     ),
     defineFunction(
