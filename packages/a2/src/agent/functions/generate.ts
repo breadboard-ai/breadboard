@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities, Outcome } from "@breadboard-ai/types";
+import { Capabilities, TextCapabilityPart } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import z from "zod";
-import gemini, { GeminiAPIOutputs, GeminiInputs, Tool } from "../../a2/gemini";
+import { streamGenerateContent, Tool } from "../../a2/gemini";
 import { callGeminiImage } from "../../a2/image-utils";
 import { A2ModuleArgs } from "../../runnable-module-factory";
 import { AgentFileSystem } from "../file-system";
 import { defineFunction, FunctionDefinition } from "../function-definition";
 import { defaultSystemInstruction } from "../../generate-text/system-instruction";
-import { mergeContent, mergeTextParts, toText } from "../../a2/utils";
+import { mergeContent, mergeTextParts, toText, tr } from "../../a2/utils";
 
 export { defineGenerateFunctions };
 
@@ -128,6 +128,15 @@ paths. If you need to pass text as context, first write it to file and pass the
 VFS path of that file`.trim()
             )
             .optional(),
+          model: z.enum(["pro", "flash", "lite"]).describe(tr`
+
+The Gemini model to use for text generation. How to choose the right model:
+
+- choose "pro" when reasoning over complex problems in code, math, and STEM, as well as analyzing large datasets, codebases, and documents using long context. Use this model only when dealing with exceptionally complex problems.
+- choose "flash" for large scale processing, low-latency, high volume tasks that require thinking. This is the model you would use most of the time.
+- choose "lite" for high throughput. Use this model when speed is paramount.
+
+`),
           output_format: z.enum(["file", "text"]).describe(`The output format.
 When "file" is specified, the output will be saved as a VFS file and the 
 "file_path" response parameter will be provided as output. Use this when you
@@ -163,6 +172,12 @@ Maps`
             .optional(),
         },
         response: {
+          error: z
+            .string()
+            .describe(
+              `If an error has occurred, will contain a description of the error`
+            )
+            .optional(),
           file_path: z
             .string()
             .describe(
@@ -182,6 +197,7 @@ provided when the "output_format" is set to "text"`
       async (
         {
           prompt,
+          model,
           search_grounding,
           maps_grounding,
           context = [],
@@ -191,6 +207,7 @@ provided when the "output_format" is set to "text"`
         statusUpdater
       ) => {
         console.log("PROMPT", prompt);
+        console.log("MODEL", model);
         console.log("CONTEXT", context);
         console.log("SEARCH_GROUNDING", search_grounding);
         console.log("MAPS_GROUNDING", maps_grounding);
@@ -220,27 +237,45 @@ provided when the "output_format" is set to "text"`
           .filter((file) => file !== null);
         parts.unshift({ text: prompt });
         const contents = [{ parts }];
-        const inputs: GeminiInputs = {
-          model: "gemini-pro-latest",
-          systemInstruction: defaultSystemInstruction(),
-          body: {
+        const resolvedModel = resolveModel(model);
+        const generating = await streamGenerateContent(
+          resolvedModel,
+          {
+            systemInstruction: defaultSystemInstruction(),
             contents,
             tools,
+            generationConfig: {
+              thinkingConfig: {
+                thinkingBudget: -1,
+                includeThoughts: true,
+              },
+            },
           },
-        };
-        const generating = (await gemini(
-          inputs,
-          caps,
           moduleArgs
-        )) as Outcome<GeminiAPIOutputs>;
-        if (!ok(generating)) return generating;
-        const content = generating.candidates.at(0)?.content;
-        if (!content || content.parts.length === 0) {
-          return err(`No content generated`);
+        );
+        if (!ok(generating)) {
+          return { error: generating.$error };
         }
-        const textParts = mergeTextParts(content.parts, "\n");
+        const results: TextCapabilityPart[] = [];
+        for await (const chunk of generating) {
+          const parts = chunk.candidates.at(0)?.content?.parts;
+          if (!parts) continue;
+          for (const part of parts) {
+            if (!part || !("text" in part)) continue;
+            if (part.thought) {
+              statusUpdater(part.text, true);
+            } else {
+              results.push(part);
+            }
+          }
+        }
+        statusUpdater(null);
+        const textParts = mergeTextParts(results, "\n");
+        if (textParts.length === 0) {
+          return { error: `No text was generated. Please try again` };
+        }
         if (textParts.length > 1) {
-          console.warn(`More than one part generated`, content);
+          console.warn(`More than one part generated`, results);
         }
         const part = textParts[0];
         const file_path = fileSystem.add(part);
@@ -249,10 +284,21 @@ provided when the "output_format" is set to "text"`
           fileSystem.addFilesToProject(project_path, [file_path]);
         }
         if (output_format === "text") {
-          return { text: toText([content]) };
+          return { text: toText({ parts: textParts }) };
         }
         return { file_path };
       }
     ),
   ];
+}
+
+function resolveModel(model: "pro" | "lite" | "flash"): string {
+  switch (model) {
+    case "pro":
+      return "gemini-2.5-pro";
+    case "flash":
+      return "gemini-2.5-flash";
+    default:
+      return "gemini-2.5-lite";
+  }
 }

@@ -43,8 +43,14 @@ type ArgsRawShape = {
  * When the value is `null`, it means that the function handler doesn't want
  * to update the status anymore (and the agent can revert to previous status).
  * Think of it as "clear my status".
+ *
+ * If `isThought` is true, then the status is treated as if it's in the
+ * standard Gemini thought format.
  */
-export type StatusUpdateCallback = (status: string | null) => void;
+export type StatusUpdateCallback = (
+  status: string | null,
+  isThought?: boolean
+) => void;
 
 export type Handler<
   TParams extends ArgsRawShape,

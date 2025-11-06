@@ -48,6 +48,8 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
 
   index = 0;
 
+  #previousStatus: string | undefined;
+
   constructor(
     public readonly title: string,
     public readonly icon: string,
@@ -90,6 +92,7 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
    */
   thought(text: string) {
     this.#add("Thought", "spark", llm`${text}`.asContent());
+    this.#previousStatus = this.screen.progress;
     this.screen.progress = progressFromThought(text);
   }
 
@@ -108,9 +111,14 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
    * The agent function call produced an update
    */
   functionCallUpdate(_part: FunctionCallCapabilityPart, status: string | null) {
-    if (!status) return;
-
-    this.screen.progress = status;
+    if (status == null) {
+      if (this.#previousStatus) {
+        this.screen.progress = this.#previousStatus;
+      }
+    } else {
+      this.#previousStatus = this.screen.progress;
+      this.screen.progress = status;
+    }
   }
 
   /**
