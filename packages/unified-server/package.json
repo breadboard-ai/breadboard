@@ -179,7 +179,6 @@
   "dependencies": {
     "@breadboard-ai/a2": "0.6.0",
     "@breadboard-ai/board-server": "0.16.0",
-    "@breadboard-ai/embed": "0.0.3",
     "@breadboard-ai/mcp": "^0.1.0",
     "@breadboard-ai/shared-ui": "1.27.0",
     "@breadboard-ai/types": "0.9.0",

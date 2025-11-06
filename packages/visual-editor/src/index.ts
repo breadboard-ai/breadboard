@@ -54,7 +54,7 @@ import {
   embedState,
   EmbedState,
   IterateOnPromptMessage,
-} from "@breadboard-ai/embed";
+} from "@breadboard-ai/shared-ui/embed/embed.js";
 import { FileSystemPersistentBackend } from "@breadboard-ai/filesystem-board-server";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { opalShellContext } from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";

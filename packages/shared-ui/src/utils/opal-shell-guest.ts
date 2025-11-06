@@ -20,7 +20,7 @@ import { addMessageEventListenerToAllowedEmbedderIfPresent } from "./embedder.js
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { OAuthBasedOpalShell } from "./oauth-based-opal-shell.js";
 import "./url-pattern-conditional-polyfill.js";
-import { EmbedHandlerImpl } from "@breadboard-ai/embed";
+import { EmbedHandlerImpl } from "../embed/embed.js";
 
 export const opalShellContext = createContext<
   OpalShellHostProtocol | undefined

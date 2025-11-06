@@ -91,7 +91,7 @@
   "bugs": {
     "url": "https://github.com/breadboard-ai/breadboard/issues"
   },
-  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/embed#readme",
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/theme#readme",
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.2",
     "esbuild": "^0.25.5",

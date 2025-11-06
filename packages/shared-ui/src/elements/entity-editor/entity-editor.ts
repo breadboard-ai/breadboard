@@ -77,7 +77,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { icons } from "../../styles/icons";
 import { consume } from "@lit/context";
 import { embedderContext } from "../../contexts/embedder";
-import { embedState } from "@breadboard-ai/embed";
+import { embedState } from "../../embed/embed.js";
 import type { EmbedState } from "@breadboard-ai/types/embedder.js";
 import { getBoardUrlFromCurrentWindow } from "../../utils/board-id.js";
 import { colorsLight } from "../../styles/host/colors-light";
