@@ -8,6 +8,8 @@ export { Template };
 
 export type TemplatePartType = "in" | "asset" | "tool" | "param";
 
+export type TemplatePartParameterType = "none" | "step";
+
 export type TemplatePart = {
   /**
    * The type of the part:
@@ -38,6 +40,12 @@ export type TemplatePart = {
    * connector tool bundle to a particular instance of a connector.
    */
   instance?: string;
+  /**
+   * Parameter Type. If not specified or set to "none", this part does not
+   * support any sort of parameters. Otherwise, this chip has parameters:
+   * it will have its own drop down menu to further define the chip.
+   */
+  parameterType?: TemplatePartParameterType;
 };
 
 export type TemplatePartTransformCallback = (
@@ -181,14 +189,24 @@ class Template {
     return `{${JSON.stringify(part)}}`;
   }
 
-  static preamble({ type, path, mimeType, instance }: TemplatePart) {
+  static preamble({
+    type,
+    path,
+    mimeType,
+    instance,
+    parameterType = "none",
+  }: TemplatePart) {
     const maybeMimeType = mimeType
       ? `"mimeType": ${JSON.stringify(mimeType)}, `
       : "";
     const maybeInstance = instance
       ? `"instance": ${JSON.stringify(instance)},`
       : "";
-    return `{{"type": ${JSON.stringify(type)}, "path": ${JSON.stringify(path)}, ${maybeMimeType}${maybeInstance}"title": "`;
+    const maybeParameterType =
+      parameterType !== "none"
+        ? `"parameterType": ${JSON.stringify(parameterType)},`
+        : "";
+    return `{{"type": ${JSON.stringify(type)}, "path": ${JSON.stringify(path)}, ${maybeMimeType}${maybeInstance}${maybeParameterType}"title": "`;
   }
 
   static postamble() {
