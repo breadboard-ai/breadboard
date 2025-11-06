@@ -21,7 +21,7 @@ import { emptyDefinitions, mapDefinitions } from "./function-definition";
 import { defineSystemFunctions } from "./functions/system";
 import { PidginTranslator } from "./pidgin-translator";
 import { AgentUI } from "./ui";
-import { initializeGenerateFunctions } from "./functions/generate";
+import { defineGenerateFunctions } from "./functions/generate";
 import { prompt as a2UIPrompt } from "./a2ui/prompt";
 import { defineA2UIFunctions } from "./functions/ui";
 
@@ -280,7 +280,7 @@ class Loop {
         : emptyDefinitions();
 
       const generateFunctions = mapDefinitions(
-        initializeGenerateFunctions({
+        defineGenerateFunctions({
           fileSystem: this.#fileSystem,
           caps: this.caps,
           moduleArgs: this.moduleArgs,
@@ -350,11 +350,10 @@ class Loop {
               }
             }
             if ("functionCall" in part) {
-              this.#ui.progress.functionCall(
-                part,
-                functionCaller.describe(part)
+              this.#ui.progress.functionCall(part);
+              functionCaller.call(part, (status) =>
+                this.#ui.progress.functionCallUpdate(part, status)
               );
-              functionCaller.call(part);
             }
           }
           const functionResults = await functionCaller.getResults();

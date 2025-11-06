@@ -15,7 +15,7 @@ import { defineFunction, FunctionDefinition } from "../function-definition";
 import { defaultSystemInstruction } from "../../generate-text/system-instruction";
 import { mergeContent, mergeTextParts, toText } from "../../a2/utils";
 
-export { initializeGenerateFunctions };
+export { defineGenerateFunctions };
 
 export type GenerateFunctionArgs = {
   fileSystem: AgentFileSystem;
@@ -23,7 +23,7 @@ export type GenerateFunctionArgs = {
   moduleArgs: A2ModuleArgs;
 };
 
-function initializeGenerateFunctions(
+function defineGenerateFunctions(
   args: GenerateFunctionArgs
 ): FunctionDefinition[] {
   const { fileSystem, caps, moduleArgs } = args;
@@ -80,7 +80,8 @@ The following strategies will help you create effective prompts to generate exac
             .describe(`Array of generated images`),
         },
       },
-      async ({ prompt }) => {
+      async ({ prompt }, statusUpdater) => {
+        statusUpdater("Generating Image(s)");
         console.log("PROMPT", prompt);
 
         const generated = await callGeminiImage(
@@ -105,8 +106,7 @@ The following strategies will help you create effective prompts to generate exac
           return err(errors.join(","));
         }
         return { images };
-      },
-      () => "Generating Image(s)"
+      }
     ),
     defineFunction(
       {
@@ -179,20 +179,30 @@ provided when the "output_format" is set to "text"`
             .optional(),
         },
       },
-      async ({
-        prompt,
-        search_grounding,
-        maps_grounding,
-        context = [],
-        project_path,
-        output_format,
-      }) => {
+      async (
+        {
+          prompt,
+          search_grounding,
+          maps_grounding,
+          context = [],
+          project_path,
+          output_format,
+        },
+        statusUpdater
+      ) => {
         console.log("PROMPT", prompt);
         console.log("CONTEXT", context);
         console.log("SEARCH_GROUNDING", search_grounding);
         console.log("MAPS_GROUNDING", maps_grounding);
         console.log("PROJECT_PATH", project_path);
         console.log("OUTPUT_PATH", output_format);
+
+        if (search_grounding || maps_grounding) {
+          statusUpdater("Researching");
+        } else {
+          statusUpdater("Generating Text");
+        }
+
         let tools: Tool[] | undefined = [];
         if (search_grounding) {
           tools.push({ googleSearch: {} });
@@ -242,12 +252,6 @@ provided when the "output_format" is set to "text"`
           return { text: toText([content]) };
         }
         return { file_path };
-      },
-      ({ search_grounding, maps_grounding }) => {
-        if (search_grounding || maps_grounding) {
-          return "Researching";
-        }
-        return "Generating Text";
       }
     ),
   ];

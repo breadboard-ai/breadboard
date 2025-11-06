@@ -96,9 +96,21 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
   /**
    * The agent produced a function call.
    */
-  functionCall(part: FunctionCallCapabilityPart, description: string) {
-    this.screen.progress = description;
-    this.#addParts(description, "robot_server", [part]);
+  functionCall(part: FunctionCallCapabilityPart) {
+    this.#addParts(
+      `Calling function "${part.functionCall.name}"`,
+      "robot_server",
+      [part]
+    );
+  }
+
+  /**
+   * The agent function call produced an update
+   */
+  functionCallUpdate(_part: FunctionCallCapabilityPart, status: string | null) {
+    if (!status) return;
+
+    this.screen.progress = status;
   }
 
   /**
