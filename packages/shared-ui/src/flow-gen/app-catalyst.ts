@@ -32,16 +32,16 @@ export interface AppCatalystContentChunk {
 }
 
 export enum NotifyPreference {
-  UNKNOWN = "UNKNOWN",
-  NOTIFY = "NOTIFY",
-  DROP = "DROP",
+  UNKNOWN = "NOTIFY_PREFERENCE_UNKNOWN",
+  NOTIFY = "NOTIFY_PREFERENCE_NOTIFY",
+  DROP = "NOTIFY_PREFERENCE_DROP",
 }
 
 export enum NotifyConsentState {
-  UNKNOWN = "UNKNOWN",
-  NOT_APPLICABLE = "NOT_APPLICABLE",
-  UNCONFIRMED = "UNCONFIRMED",
-  CONFIRMED = "CONFIRMED",
+  UNKNOWN = "NOTIFY_CONSENT_STATE_UNKNOWN",
+  NOT_APPLICABLE = "NOTIFY_CONSENT_STATE_NOT_APPLICABLE",
+  UNCONFIRMED = "NOTIFY_CONSENT_STATE_UNCONFIRMED",
+  CONFIRMED = "NOTIFY_CONSENT_STATE_CONFIRMED",
 }
 
 // Represents the user preference for a given email preference key
@@ -166,7 +166,7 @@ export class AppCatalystApiClient {
     const request: SetEmailPreferencesRequest = {
       preferenceEntries: preferences.map(([key, value]) => ({
         preferenceKey: key,
-        notifyPreference: NotifyPreference[value ? NotifyPreference.NOTIFY : NotifyPreference.DROP],
+        notifyPreference: value ? NotifyPreference.NOTIFY : NotifyPreference.DROP,
       })),
     };
     const response = await this.#fetchWithCreds(url, {
