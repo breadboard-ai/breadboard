@@ -55,6 +55,10 @@ export const styles = [
           &.target {
             margin-left: var(--bb-grid-size-4);
           }
+
+          &.down-arrow {
+            margin-left: var(--bb-grid-size-2);
+          }
         }
 
         &.visible-after {
@@ -66,6 +70,7 @@ export const styles = [
           pointer-events: none;
           width: calc(100% - var(--bb-grid-size-5));
           max-width: 145px;
+          white-space: pre;
 
           &::after {
             font: normal var(--bb-body-small) / var(--bb-body-line-height-small)
@@ -77,6 +82,10 @@ export const styles = [
             max-width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
+          }
+
+          &[data-label=""] {
+            min-width: 65px;
           }
         }
       }

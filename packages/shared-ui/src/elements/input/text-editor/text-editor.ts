@@ -114,8 +114,13 @@ function chicletHtml(
 
     const targetTitleEl = document.createElement("span");
     targetTitleEl.classList.add("visible-after", "target");
-    targetTitleEl.dataset.label = targetTitle ?? "(not set)";
+    targetTitleEl.dataset.label = targetTitle ?? "";
     label.appendChild(targetTitleEl);
+
+    const dropDown = document.createElement("span");
+    dropDown.classList.add("g-icon", "filled", "round", "down-arrow");
+    dropDown.dataset.icon = "keyboard_arrow_down";
+    label.appendChild(dropDown);
   }
 
   label.appendChild(postambleEl);

@@ -95,7 +95,7 @@ export function createChiclets(
             targetIcon = icon;
             targetTitle = title;
           } else {
-            targetTitle = " (not set)";
+            targetTitle = " " + "[not set]";
           }
 
           break;
