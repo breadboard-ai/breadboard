@@ -426,9 +426,9 @@ class ReactiveProject implements ProjectInternal {
     // - only show this for the "Agent" mode.
     if (mutable.graph.nodes.length > 1) {
       tools.push([
-        `Go to:`,
+        `control-flow/routing`,
         {
-          url: "SPECIAL !!! GO TO URL",
+          url: "routing",
           title: "Go to:",
           icon: "spark",
         },
