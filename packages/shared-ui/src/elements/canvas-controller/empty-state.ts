@@ -124,7 +124,7 @@ export class EmptyState extends LitElement {
               evt.preventDefault();
               this.dispatchEvent(new ShowVideoModalEvent());
             }}
-            href="https://youtube.com/watch?v=E0hrcDO3Noc"
+            href="https://youtube.com/watch?v=NWNNDvehBIU"
             >demo video</a
           >
         </div>
