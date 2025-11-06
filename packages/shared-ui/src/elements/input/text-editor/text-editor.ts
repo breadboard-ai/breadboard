@@ -113,6 +113,9 @@ export class TextEditor extends LitElement {
   accessor supportsFastAccess = true;
 
   @property()
+  accessor showControlFlowTools = false;
+
+  @property()
   accessor nodeId: string | null = null;
 
   @property()
@@ -1059,6 +1062,7 @@ export class TextEditor extends LitElement {
         }}
         .graphId=${this.subGraphId}
         .nodeId=${this.nodeId}
+        .showControlFlowTools=${this.showControlFlowTools}
         .state=${this.projectState?.fastAccess}
       ></bb-fast-access-menu>
       <div ${ref(this.#proxyRef)} id="proxy"></div>`;

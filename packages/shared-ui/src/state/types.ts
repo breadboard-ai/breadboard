@@ -39,6 +39,7 @@ import { StateEvent, ToastType } from "../events/events";
 import { AppTheme, VisualEditorMode } from "../types/types";
 import { HTMLTemplateResult } from "lit";
 import type { AsyncComputedStatus } from "signal-utils/async-computed";
+import { FilteredMap } from "./utils/filtered-map";
 
 /**
  * Represents the result of AsyncComputed signals helper.
@@ -256,7 +257,11 @@ export type Tool = {
   title?: string;
   description?: string;
   icon?: string;
-  connectorInstance?: string;
+  /**
+   * The identifier of the tool. This is useful in cases when URL points at a
+   * tool server, not the actual tool.
+   */
+  id?: string;
   order?: number;
   tags?: string[];
 };
@@ -278,6 +283,7 @@ export type FastAccess = {
   graphAssets: Map<AssetPath, GraphAsset>;
   tools: Map<string, Tool>;
   myTools: Map<string, Tool>;
+  controlFlow: FilteredMap<Tool>;
   components: Map<GraphIdentifier, Components>;
   parameters: Map<string, ParameterMetadata>;
   integrations: FilteredIntegrations;

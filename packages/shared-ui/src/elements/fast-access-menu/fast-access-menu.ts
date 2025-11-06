@@ -62,6 +62,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   accessor showTools = true;
 
   @property()
+  accessor showControlFlowTools = false;
+
+  @property()
   accessor showComponents = true;
 
   @property()
@@ -125,7 +128,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       #tools,
       #outputs,
       #parameters,
-      section.integration {
+      section.group {
         & h3 {
           font-size: 12px;
           color: var(--n-40);
@@ -198,6 +201,10 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       }
 
       #tools menu button {
+        --background: var(--n-90);
+      }
+
+      section.tools menu button {
         --background: var(--n-90);
       }
 
@@ -545,7 +552,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
           tool.title ?? "Untitled tool",
           "tool",
           undefined,
-          tool.connectorInstance
+          tool.id
         )
       );
       return;
@@ -607,6 +614,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
             this.filter = evt.target.value;
             if (this.state) {
               this.state.integrations.filter = this.filter;
+              this.state.controlFlow.filter = this.filter;
             }
           }}
         />
@@ -743,6 +751,46 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
             : nothing}
       </section>
 
+      <section class="group tools">
+        ${this.showControlFlowTools
+          ? html`<h3 class="sans-flex w-400 round">Utility</h3>
+              ${this.state?.controlFlow.results.size
+                ? html`<menu>
+                    ${repeat(
+                      this.state.controlFlow.results,
+                      ([id]) => id,
+                      ([id, tool]) => {
+                        const active = idx === this.selectedIndex;
+                        const globalIndex = idx;
+                        idx++;
+                        return html`<li>
+                          <button
+                            class=${classMap({ active })}
+                            @pointerover=${() => {
+                              this.selectedIndex = globalIndex;
+                            }}
+                            @click=${() => {
+                              this.dispatchEvent(
+                                new FastAccessSelectEvent(
+                                  id,
+                                  tool.title!,
+                                  "tool",
+                                  undefined,
+                                  tool.id
+                                )
+                              );
+                            }}
+                          >
+                            <span class="title">${tool.title}</span>
+                          </button>
+                        </li>`;
+                      }
+                    )}
+                  </menu>`
+                : html`<div class="no-items">No utilities</div>`}`
+          : nothing}
+      </section>
+
       <section id="outputs">
         ${this.showComponents
           ? html`<h3 class="sans-flex w-400 round">Steps</h3>`
@@ -803,7 +851,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                                     tool.title!,
                                     "tool",
                                     undefined,
-                                    tool.connectorInstance
+                                    tool.id
                                   )
                                 );
                               }}
@@ -822,7 +870,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                     return html`<li>No integrations are available</li>`;
                 }
               };
-              return html`<section class="integration">
+              return html`<section class="group">
                 <h3 class="sans-flex w-400 round">${integration.title}</h3>
                 <menu>${menu()}</menu>
               </section>`;
