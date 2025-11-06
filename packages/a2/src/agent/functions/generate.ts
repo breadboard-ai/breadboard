@@ -7,7 +7,11 @@
 import { Capabilities, TextCapabilityPart } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import z from "zod";
-import { streamGenerateContent, Tool } from "../../a2/gemini";
+import {
+  conformGeminiBody,
+  streamGenerateContent,
+  Tool,
+} from "../../a2/gemini";
 import { callGeminiImage } from "../../a2/image-utils";
 import { A2ModuleArgs } from "../../runnable-module-factory";
 import { AgentFileSystem } from "../file-system";
@@ -237,20 +241,22 @@ provided when the "output_format" is set to "text"`
           .filter((file) => file !== null);
         parts.unshift({ text: prompt });
         const contents = [{ parts }];
+        const body = await conformGeminiBody(moduleArgs, {
+          systemInstruction: defaultSystemInstruction(),
+          contents,
+          tools,
+          generationConfig: {
+            thinkingConfig: {
+              thinkingBudget: -1,
+              includeThoughts: true,
+            },
+          },
+        });
+        if (!ok(body)) return body;
         const resolvedModel = resolveModel(model);
         const generating = await streamGenerateContent(
           resolvedModel,
-          {
-            systemInstruction: defaultSystemInstruction(),
-            contents,
-            tools,
-            generationConfig: {
-              thinkingConfig: {
-                thinkingBudget: -1,
-                includeThoughts: true,
-              },
-            },
-          },
+          body,
           moduleArgs
         );
         if (!ok(generating)) {
