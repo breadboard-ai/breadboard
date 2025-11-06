@@ -388,7 +388,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       this.#items.assets.length +
       this.#items.tools.length +
       this.#items.components.length +
-      this.#items.parameters.length;
+      this.#items.parameters.length +
+      (this.state?.controlFlow.results.size ?? 0);
 
     this.selectedIndex = this.#clamp(this.selectedIndex, 0, totalSize - 1);
   }
@@ -446,7 +447,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       this.#items.assets.length +
       this.#items.tools.length +
       this.#items.parameters.length +
-      this.#items.components.length;
+      this.#items.components.length +
+      (this.state?.controlFlow.results.size ?? 0);
 
     switch (evt.key) {
       case "Enter": {
@@ -498,6 +500,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       this.#items.components.length === 0 &&
       this.#items.parameters.length === 0 &&
       this.#items.tools.length === 0 &&
+      (this.state?.controlFlow.results.size ?? 0) === 0 &&
       this.filter !== "";
 
     if (idx === -1) {
@@ -566,6 +569,24 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       );
       return;
     }
+
+    const controlFlowSize = this.state?.controlFlow.results.size ?? 0;
+    idx -= this.#items.components.length;
+    if (idx < controlFlowSize) {
+      const [id, tool] = [...this.state!.controlFlow.results][idx];
+      this.dispatchEvent(
+        new FastAccessSelectEvent(
+          id,
+          tool.title!,
+          "tool",
+          undefined,
+          tool.id,
+          "step"
+        )
+      );
+      return;
+    }
+
     console.warn("Index out of bounds for fast access selection");
   }
 
@@ -592,6 +613,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         <input
           autofocus
           type="text"
+          autocomplete="off"
           .placeholder=${"Search"}
           ${ref(this.#filterInputRef)}
           .value=${this.filter}
@@ -751,47 +773,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
             : nothing}
       </section>
 
-      <section class="group tools">
-        ${this.showControlFlowTools
-          ? html`<h3 class="sans-flex w-400 round">Utility</h3>
-              ${this.state?.controlFlow.results.size
-                ? html`<menu>
-                    ${repeat(
-                      this.state.controlFlow.results,
-                      ([id]) => id,
-                      ([id, tool]) => {
-                        const active = idx === this.selectedIndex;
-                        const globalIndex = idx;
-                        idx++;
-                        return html`<li>
-                          <button
-                            class=${classMap({ active })}
-                            @pointerover=${() => {
-                              this.selectedIndex = globalIndex;
-                            }}
-                            @click=${() => {
-                              this.dispatchEvent(
-                                new FastAccessSelectEvent(
-                                  id,
-                                  tool.title!,
-                                  "tool",
-                                  undefined,
-                                  tool.id,
-                                  "step"
-                                )
-                              );
-                            }}
-                          >
-                            <span class="title">${tool.title}</span>
-                          </button>
-                        </li>`;
-                      }
-                    )}
-                  </menu>`
-                : html`<div class="no-items">No utilities</div>`}`
-          : nothing}
-      </section>
-
       <section id="outputs">
         ${this.showComponents
           ? html`<h3 class="sans-flex w-400 round">Steps</h3>`
@@ -826,6 +807,57 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
           : this.showComponents
             ? html`<div class="no-items">No components</div>`
             : nothing}
+      </section>
+
+      <section class="group tools">
+        ${this.showControlFlowTools
+          ? html`<h3 class="sans-flex w-400 round">Utility</h3>
+              ${this.state?.controlFlow.results.size
+                ? html`<menu>
+                    ${repeat(
+                      this.state.controlFlow.results,
+                      ([id]) => id,
+                      ([id, tool]) => {
+                        const active = idx === this.selectedIndex;
+                        const globalIndex = idx;
+                        idx++;
+
+                        return html`<li>
+                          <button
+                            class=${classMap({ active })}
+                            @pointerover=${() => {
+                              this.selectedIndex = globalIndex;
+                            }}
+                            @click=${() => {
+                              this.dispatchEvent(
+                                new FastAccessSelectEvent(
+                                  id,
+                                  tool.title!,
+                                  "tool",
+                                  undefined,
+                                  tool.id,
+                                  "step"
+                                )
+                              );
+                            }}
+                          >
+                            ${tool.url === "routing"
+                              ? html`<span class="g-icon filled round"
+                                  >start</span
+                                >`
+                              : nothing}
+                            <span class="title"
+                              >${tool.title}${tool.url === "routing"
+                                ? html`...`
+                                : nothing}</span
+                            >
+                          </button>
+                        </li>`;
+                      }
+                    )}
+                  </menu>`
+                : html`<div class="no-items">No utilities</div>`}`
+          : nothing}
       </section>
 
       ${this.state

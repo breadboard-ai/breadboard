@@ -470,6 +470,11 @@ export type Project = {
     graphId: GraphIdentifier
   ): Outcome<InspectableNodePorts>;
 
+  getTitleForNode(
+    nodeId: NodeIdentifier,
+    graphId: GraphIdentifier
+  ): Outcome<string>;
+
   persistDataParts(contents: LLMContent[]): Promise<LLMContent[]>;
   connectHarnessRunner(
     runner: HarnessRunner,
