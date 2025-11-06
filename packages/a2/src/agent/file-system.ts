@@ -14,6 +14,7 @@ import {
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import mime from "mime";
+import { toText } from "../a2/utils";
 
 export { AgentFileSystem };
 
@@ -134,6 +135,13 @@ class AgentFileSystem {
       return err(errors.join(","));
     }
     return files as DataPart[];
+  }
+
+  readText(path: string): Outcome<string> {
+    const parts = this.get(path);
+    if (!ok(parts)) return parts;
+
+    return toText({ parts });
   }
 
   get(path: string): Outcome<DataPart[]> {
