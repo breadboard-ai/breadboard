@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { EmbedHandler } from "@breadboard-ai/embed";
+import type { EmbedHandler } from "@breadboard-ai/shared-ui/embed/embed.js";
 import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
 import type { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import type {
