@@ -1732,7 +1732,8 @@ export class EntityEditor
               evt.title,
               evt.accessType,
               evt.mimeType,
-              evt.instance
+              evt.instance,
+              "none"
             );
           }}
           .graphId=${null}

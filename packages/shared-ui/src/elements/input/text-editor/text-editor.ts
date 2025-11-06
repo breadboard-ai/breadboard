@@ -14,7 +14,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { FastAccessSelectEvent } from "../../../events/events";
 import { Project } from "../../../state";
 import { FastAccessMenu } from "../../elements";
-import { Sanitizer } from "@breadboard-ai/utils";
+import { Sanitizer, TemplatePartParameterType } from "@breadboard-ai/utils";
 import { styles as ChicletStyles } from "../../../styles/chiclet.js";
 import { getAssetType } from "../../../utils/mime-type";
 import { icons } from "../../../styles/icons";
@@ -26,7 +26,7 @@ function chicletHtml(
   projectState: Project | null,
   subGraphId: string | null
 ) {
-  const { type, title, invalid, mimeType } = part;
+  const { type, title, invalid, mimeType, parameterType = "none" } = part;
   const assetType = getAssetType(mimeType) ?? "";
   const { icon: metadataIcon, tags: metadataTags } = expandChiclet(
     part,
@@ -56,6 +56,10 @@ function chicletHtml(
 
   if (invalid) {
     label.classList.add("invalid");
+  }
+
+  if (parameterType !== "none") {
+    label.dataset.parameter = parameterType;
   }
 
   label.setAttribute("contenteditable", "false");
@@ -339,8 +343,9 @@ export class TextEditor extends LitElement {
     path: string,
     title: string,
     templatePartType: TemplatePartType,
-    mimeType?: string,
-    instance?: string
+    mimeType: string | undefined,
+    instance: string | undefined,
+    parameterType: TemplatePartParameterType
   ) {
     if (!this.#editorRef.value) {
       return null;
@@ -376,6 +381,7 @@ export class TextEditor extends LitElement {
         type: templatePartType,
         instance,
         mimeType,
+        parameterType,
       };
 
       const escapedValue = JSON.stringify(part);
@@ -1054,7 +1060,8 @@ export class TextEditor extends LitElement {
             evt.title,
             evt.accessType,
             evt.mimeType,
-            evt.instance
+            evt.instance,
+            evt.parameterType
           );
 
           this.#captureEditorValue();

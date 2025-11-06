@@ -776,7 +776,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                                   tool.title!,
                                   "tool",
                                   undefined,
-                                  tool.id
+                                  tool.id,
+                                  "step"
                                 )
                               );
                             }}

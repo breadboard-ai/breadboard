@@ -12,6 +12,7 @@ import type {
   NodeValue,
 } from "@breadboard-ai/types";
 import type { InspectablePort, PortIdentifier } from "@google-labs/breadboard";
+import type { TemplatePartParameterType } from "@breadboard-ai/utils";
 import type {
   AppTemplateAdditionalOptionsAvailable,
   Command,
@@ -915,7 +916,8 @@ export class FastAccessSelectEvent extends Event {
     public readonly title: string,
     public readonly accessType: "asset" | "tool" | "in" | "param",
     public readonly mimeType?: string,
-    public readonly instance?: string
+    public readonly instance?: string,
+    public readonly parameterType: TemplatePartParameterType = "none"
   ) {
     super(FastAccessSelectEvent.eventName, { ...eventInit });
   }
