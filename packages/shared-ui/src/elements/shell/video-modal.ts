@@ -43,7 +43,7 @@ export class VEVideoModal extends LitElement {
       <iframe
         width="100%"
         height="100%"
-        src="https://www.youtube.com/embed/E0hrcDO3Noc"
+        src="https://www.youtube.com/embed/NWNNDvehBIU"
         title="How to build an app"
         frameborder="0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
