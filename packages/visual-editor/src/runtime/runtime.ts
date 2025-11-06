@@ -123,6 +123,7 @@ export class Runtime extends EventTarget {
       getProjectRunState: () => {
         return this.state.getProjectState(tab.mainGraphId)?.run;
       },
+      flags: this.flags,
     };
 
     // Let the queued up updates trigger the render before actually preparing

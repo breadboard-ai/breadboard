@@ -702,6 +702,7 @@ class InternalRunStateController {
       graphStore,
       fetchWithCreds,
       getProjectRunState,
+      flags,
     } = this.config;
 
     const probe: Probe = {
@@ -728,6 +729,7 @@ class InternalRunStateController {
       graphStore,
       fetchWithCreds,
       getProjectRunState,
+      flags,
     };
   }
 

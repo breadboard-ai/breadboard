@@ -9,7 +9,6 @@ import { err, ok } from "@breadboard-ai/utils";
 import { Params } from "../a2/common";
 import {
   conformGeminiBody,
-  FunctionDeclaration,
   GeminiBody,
   streamGenerateContent,
   Tool,
@@ -18,12 +17,13 @@ import { llm } from "../a2/utils";
 import { A2ModuleArgs } from "../runnable-module-factory";
 import { AgentFileSystem } from "./file-system";
 import { FunctionCaller } from "./function-caller";
-import { FunctionDefinition } from "./function-definition";
-import { initializeSystemFunctions } from "./functions/system";
+import { emptyDefinitions, mapDefinitions } from "./function-definition";
+import { defineSystemFunctions } from "./functions/system";
 import { PidginTranslator } from "./pidgin-translator";
 import { AgentUI } from "./ui";
 import { initializeGenerateFunctions } from "./functions/generate";
 import { prompt as a2UIPrompt } from "./a2ui/prompt";
+import { defineA2UIFunctions } from "./functions/ui";
 
 export { Loop };
 
@@ -58,9 +58,14 @@ export type AgentResult = {
   intermediate?: LLMContent;
 };
 
+type SystemInstructionArgs = {
+  useUI: boolean;
+};
+
 const AGENT_MODEL = "gemini-pro-latest";
 
-const systemInstruction = llm`
+function createSystemInstruction(args: SystemInstructionArgs) {
+  return llm`
 You are an LLM-powered AI agent. You are embedded into an application.
 Your job is to fulfill the objective, specified at the start of the 
 conversation context. The objective is part of the application.
@@ -194,10 +199,12 @@ the outcome.
 </agent-instructions>
 
 <agent-instructions title="Interacting with the user">
-${a2UIPrompt}
+
+${args.useUI ? a2UIPrompt : "You do not have a way to interact with the user during your session"}
 </agent-instructions>
 
 `.asContent();
+}
 
 /**
  * The main agent loop
@@ -222,6 +229,8 @@ class Loop {
   ): Promise<Outcome<AgentResult>> {
     this.#ui.progress.startAgent(objective);
     try {
+      const useUI = !!(await this.moduleArgs.context.flags?.flags())
+        ?.consistentUI;
       const objectivePidgin = await this.#translator.toPidgin(
         objective,
         params
@@ -239,52 +248,54 @@ class Loop {
         href: "",
         objective_outcomes: [],
       };
-      const systemFunctions = initializeSystemFunctions({
-        useA2UI: true,
-        ui: this.#ui,
-        fileSystem: this.#fileSystem,
-        terminateCallback: () => {
-          terminateLoop = true;
-        },
-        successCallback: (user_message, href, objective_outcomes) => {
-          terminateLoop = true;
-          console.log("SUCCESS! Objective fulfilled");
-          console.log("User message:", user_message);
-          console.log("Transfer control to", href);
-          console.log("Objective outcomes:", objective_outcomes);
-          result = {
-            success: true,
-            user_message,
-            href,
-            objective_outcomes,
-          };
-        },
-      });
-      const systemFunctionDefinitions = new Map<string, FunctionDefinition>(
-        systemFunctions.map((item) => [item.name!, item])
+
+      const systemFunctions = mapDefinitions(
+        defineSystemFunctions({
+          fileSystem: this.#fileSystem,
+          terminateCallback: () => {
+            terminateLoop = true;
+          },
+          successCallback: (user_message, href, objective_outcomes) => {
+            terminateLoop = true;
+            console.log("SUCCESS! Objective fulfilled");
+            console.log("User message:", user_message);
+            console.log("Transfer control to", href);
+            console.log("Objective outcomes:", objective_outcomes);
+            result = {
+              success: true,
+              user_message,
+              href,
+              objective_outcomes,
+            };
+          },
+        })
       );
-      const systemFunctionDeclarations = systemFunctions.map(
-        ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
+
+      const uiFunctions = useUI
+        ? mapDefinitions(
+            defineA2UIFunctions({
+              ui: this.#ui,
+            })
+          )
+        : emptyDefinitions();
+
+      const generateFunctions = mapDefinitions(
+        initializeGenerateFunctions({
+          fileSystem: this.#fileSystem,
+          caps: this.caps,
+          moduleArgs: this.moduleArgs,
+        })
       );
-      const generateFunctions = initializeGenerateFunctions({
-        fileSystem: this.#fileSystem,
-        caps: this.caps,
-        moduleArgs: this.moduleArgs,
-      });
-      const generateFunctionDefinitions = new Map<string, FunctionDefinition>(
-        generateFunctions.map((item) => [item.name!, item])
-      );
-      const generateFunctionDeclarations = generateFunctions.map(
-        ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
-      );
+
       const objectiveTools = objectivePidgin.tools.list().at(0);
       const tools: Tool[] = [
         {
           ...objectiveTools,
           functionDeclarations: [
             ...(objectiveTools?.functionDeclarations || []),
-            ...systemFunctionDeclarations,
-            ...generateFunctionDeclarations,
+            ...systemFunctions.declarations,
+            ...generateFunctions.declarations,
+            ...uiFunctions.declarations,
           ],
         },
       ];
@@ -295,7 +306,7 @@ class Loop {
           generationConfig: {
             thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
           },
-          systemInstruction,
+          systemInstruction: createSystemInstruction({ useUI }),
           toolConfig: {
             functionCallingConfig: { mode: "ANY" },
           },
@@ -322,8 +333,9 @@ class Loop {
           contents.push(content);
           const functionCaller = new FunctionCaller(
             new Map([
-              ...systemFunctionDefinitions,
-              ...generateFunctionDefinitions,
+              ...systemFunctions.definitions,
+              ...generateFunctions.definitions,
+              ...uiFunctions.definitions,
             ]),
             objectivePidgin.tools
           );
