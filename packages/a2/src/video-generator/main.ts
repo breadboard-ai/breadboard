@@ -87,7 +87,7 @@ type VideoGeneratorOutputs = {
   context: LLMContent[] | DescriberResult;
 };
 
-export { invoke as default, describe };
+export { invoke as default, describe, callVideoGen, expandVeoError };
 
 async function callVideoGen(
   caps: Capabilities,
