@@ -27,6 +27,8 @@ import { A2ModuleArgs } from "../runnable-module-factory";
 import { McpToolAdapter } from "./mcp-tool-adapter";
 
 const CODE_EXECUTION_SUFFIX = "#module:code-execution";
+const SEARCH_WEB_SUFFIX = "tools.bgl.json#module:search-web";
+const SEARCH_MAPS_SUFFIX = "tools.bgl.json#module:search-maps";
 
 export type ToolHandle = {
   title?: string;
@@ -71,6 +73,7 @@ export { ToolManager };
 
 class ToolManager implements SimplifiedToolManager {
   #hasSearch = false;
+  #hasMaps = false;
   #hasCodeExection = false;
   tools: Map<string, ToolHandle> = new Map();
   errors: string[] = [];
@@ -187,6 +190,14 @@ class ToolManager implements SimplifiedToolManager {
     if (url?.endsWith(CODE_EXECUTION_SUFFIX)) {
       this.#hasCodeExection = true;
       return "Code Execution";
+    }
+    if (url?.endsWith(SEARCH_WEB_SUFFIX)) {
+      this.#hasSearch = true;
+      return "Search Web";
+    }
+    if (url?.endsWith(SEARCH_MAPS_SUFFIX)) {
+      this.#hasMaps = true;
+      return "Search Maps";
     }
     const client = new McpToolAdapter(this.caps, this.moduleArgs, url);
     if (instance) {
@@ -479,6 +490,9 @@ class ToolManager implements SimplifiedToolManager {
     if (this.#hasSearch) {
       size++;
     }
+    if (this.#hasMaps) {
+      size++;
+    }
     return size !== 0;
   }
 
@@ -490,6 +504,9 @@ class ToolManager implements SimplifiedToolManager {
     }
     if (this.#hasSearch) {
       declaration.googleSearch = {};
+    }
+    if (this.#hasMaps) {
+      declaration.googleMaps = {};
     }
     if (this.#hasCodeExection) {
       declaration.codeExecution = {};
