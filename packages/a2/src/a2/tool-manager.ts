@@ -71,6 +71,7 @@ export { ToolManager };
 
 class ToolManager implements SimplifiedToolManager {
   #hasSearch = false;
+  #hasMaps = false;
   #hasCodeExection = false;
   tools: Map<string, ToolHandle> = new Map();
   errors: string[] = [];
@@ -479,6 +480,9 @@ class ToolManager implements SimplifiedToolManager {
     if (this.#hasSearch) {
       size++;
     }
+    if (this.#hasMaps) {
+      size++;
+    }
     return size !== 0;
   }
 
@@ -490,6 +494,9 @@ class ToolManager implements SimplifiedToolManager {
     }
     if (this.#hasSearch) {
       declaration.googleSearch = {};
+    }
+    if (this.#hasMaps) {
+      declaration.googleMaps = {};
     }
     if (this.#hasCodeExection) {
       declaration.codeExecution = {};

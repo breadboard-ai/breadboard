@@ -197,10 +197,23 @@ export type FinishReason =
   | "MALFORMED_FUNCTION_CALL";
 
 export type GroundingMetadata = {
-  groundingChunks: {
-    web: {
+  groundingChunks?: {
+    web?: {
       uri: string;
       title: string;
+    };
+    maps?: {
+      uri: string;
+      title: string;
+      text: string;
+      placeId: string;
+      placeAnswerSources: {
+        reviewSnippets: {
+          reviewId: string;
+          googleMapsUri: string;
+          title: string;
+        }[];
+      };
     };
   }[];
   groundingSupports: {
@@ -512,6 +525,18 @@ async function callAPI(
         ) {
           if (body.generationConfig?.responseMimeType === "application/json") {
             candidate.content = textToJson(candidate.content);
+          }
+          const links = candidate.groundingMetadata?.groundingChunks
+            ?.map((chunk) => {
+              if (chunk.web) return { ...chunk.web, iconUri: chunk.web.title };
+              if (chunk.maps) {
+                return { ...chunk.maps, iconUri: "maps.google.com" };
+              }
+              return null;
+            })
+            .filter((item) => item !== null);
+          if (links && links.length > 0) {
+            await reporter.sendLinks("Grounding metadata", links, "link");
           }
           await reporter.sendUpdate(
             "Model Response",

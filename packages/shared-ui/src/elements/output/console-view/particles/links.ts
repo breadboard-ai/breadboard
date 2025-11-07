@@ -23,6 +23,7 @@ import { sharedStyles } from "../shared-styles";
 type Link = {
   uri: string;
   title: string;
+  iconUri: string;
 };
 
 @customElement("bb-particle-links")
@@ -71,7 +72,7 @@ export class ParticleLinks extends SignalWatcher(LitElement) {
             href=${link.uri}
             class="sans-flex w-500 round md-body-small"
             ><img
-              src="https://www.google.com/s2/favicons?domain=${link.title}&sz=48"
+              src="https://www.google.com/s2/favicons?domain=${link.iconUri}&sz=48"
             /><span>${link.title}</span
             ><span class="g-icon inline filled round">open_in_new</span></a
           >
