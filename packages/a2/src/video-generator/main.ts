@@ -46,7 +46,7 @@ type Model = {
   modelName: string;
 };
 
-const ASPECT_RATIOS = ["9:16", "16:9"];
+const ASPECT_RATIOS = ["16:9", "9:16"];
 const OUTPUT_NAME = "generated_video";
 const MODELS: Model[] = [
   {
@@ -79,7 +79,7 @@ type VideoGeneratorInputs = {
   context: LLMContent[];
   instruction?: LLMContent;
   "p-disable-prompt-rewrite": boolean;
-  "p-video-aspect-ratio": string;
+  "p-aspect-ratio": string;
   "b-model-name": string;
 };
 
@@ -178,7 +178,7 @@ async function invoke(
     context,
     instruction,
     "p-disable-prompt-rewrite": disablePromptRewrite,
-    "p-video-aspect-ratio": aspectRatio,
+    "p-aspect-ratio": aspectRatio,
     "b-model-name": modelId,
     ...params
   }: VideoGeneratorInputs,
@@ -191,11 +191,8 @@ async function invoke(
   if (instruction) {
     instructionText = toText(instruction).trim();
   }
-  if (!aspectRatio || modelId == "veo-3") {
-    // Veo 3 currently crashes on aspect ration 9:16. This is a bug on Vertex.
-    aspectRatio = "16:9";
-  }
-  // 2) Substitute variables and magic image reference.
+  aspectRatio ??= "16:9";
+  // Substitute variables and magic image reference.
   // Note: it is important that images are not subsituted in here as they will
   // not be handled properly. At this point, only text variables should be left.
   const template = new Template(caps, toLLMContent(instructionText));
@@ -379,7 +376,7 @@ async function describe(
           title: "Aspect Ratio",
           enum: ASPECT_RATIOS,
           description: "The aspect ratio of the generated video",
-          default: "1:1",
+          default: ASPECT_RATIOS[0],
         },
         "b-model-name": {
           type: "string",
