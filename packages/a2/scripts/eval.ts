@@ -59,7 +59,7 @@ async function generateSpec(harness: EvalHarness): Promise<ParsedSurfaces> {
 
 async function chooseSurfaces(
   parsedSurfaces: ParsedSurfaces
-): Promise<{ surface: number; real: boolean }> {
+): Promise<{ surface: number; type: string }> {
   return inquirer.prompt([
     {
       type: "list",
@@ -75,10 +75,10 @@ async function chooseSurfaces(
         ),
     },
     {
-      type: "confirm",
-      name: "real",
-      message: "Generate real data?",
-      default: true,
+      type: "list",
+      name: "type",
+      message: "Which surface do you want?",
+      choices: ["ui", "data"],
     },
   ]);
 }
@@ -130,15 +130,25 @@ async function evaluate() {
       ? parsedSurfaces.surfaces
       : [parsedSurfaces.surfaces.at(choices.surface)!];
 
-  const workload = chosenSurfaces.map((surface) =>
-    new WorkItem().run(`ui`, harness, surface, renderSurface, emit)
-  );
-  if (choices.real) {
-    workload.push(
-      ...chosenSurfaces.map((surface) =>
-        new WorkItem().run("data", harness, surface, createDataUpdate, emit)
-      )
-    );
+  const workload: Promise<WorkItem>[] = [];
+  switch (choices.type) {
+    case "ui": {
+      workload.push(
+        ...chosenSurfaces.map((surface) =>
+          new WorkItem().run(`ui`, harness, surface, renderSurface, emit)
+        )
+      );
+      break;
+    }
+
+    case "data": {
+      workload.push(
+        ...chosenSurfaces.map((surface) =>
+          new WorkItem().run("data", harness, surface, createDataUpdate, emit)
+        )
+      );
+      break;
+    }
   }
 
   const renderWork = await Promise.all(workload);
