@@ -274,7 +274,7 @@ provided when the "output_format" is set to "text"`
           for (const part of parts) {
             if (!part || !("text" in part)) continue;
             if (part.thought) {
-              statusUpdater(part.text, true);
+              statusUpdater(part.text, { isThought: true });
             } else {
               results.push(part);
             }
@@ -343,7 +343,9 @@ The following elements should be included in your prompt:
       async ({ prompt, aspectRatio }, statusUpdateCallback) => {
         console.log("PROMPT", prompt);
         console.log("ASPECT RATIO", aspectRatio);
-        statusUpdateCallback("Generating Video");
+        statusUpdateCallback("Generating Video", {
+          expectedDurationInSec: 70,
+        });
         const generating = await callVideoGen(
           caps,
           moduleArgs,
@@ -388,7 +390,9 @@ The following elements should be included in your prompt:
         },
       },
       async ({ text }, statusUpdateCallback) => {
-        statusUpdateCallback("Generating Speech");
+        statusUpdateCallback("Generating Speech", {
+          expectedDurationInSec: 20,
+        });
         const generating = await callAudioGen(
           caps,
           moduleArgs,
@@ -449,7 +453,7 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
         },
       },
       async ({ prompt }, statusUpdateCallback) => {
-        statusUpdateCallback("Generating Music");
+        statusUpdateCallback("Generating Music", { expectedDurationInSec: 30 });
         const generating = await callMusicGen(caps, moduleArgs, prompt);
         if (!ok(generating)) return { error: generating.$error };
 

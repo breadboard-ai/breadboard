@@ -39,17 +39,26 @@ type ArgsRawShape = {
 };
 
 /**
+ * If `isThought` is true, then the status is treated as if it's in the
+ * standard Gemini thought format.
+ *
+ * If `expectedDurationInSec` is specified, it indicates approximately how long
+ * this status is expected stay around.
+ */
+export type StatusUpdateCallbackOptions = {
+  isThought?: boolean;
+  expectedDurationInSec?: number;
+};
+
+/**
  * A callback that allows function handlers to update status of the agent.
  * When the value is `null`, it means that the function handler doesn't want
  * to update the status anymore (and the agent can revert to previous status).
  * Think of it as "clear my status".
- *
- * If `isThought` is true, then the status is treated as if it's in the
- * standard Gemini thought format.
  */
 export type StatusUpdateCallback = (
   status: string | null,
-  isThought?: boolean
+  options?: StatusUpdateCallbackOptions
 ) => void;
 
 export type Handler<

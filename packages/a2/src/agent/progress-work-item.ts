@@ -20,6 +20,7 @@ import { SignalMap } from "signal-utils/map";
 import { GeminiBody } from "../a2/gemini";
 import { AgentProgressManager } from "./types";
 import { llm } from "../a2/utils";
+import { StatusUpdateCallbackOptions } from "./function-definition";
 
 export { ProgressWorkItem };
 
@@ -74,6 +75,7 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
    */
   startAgent(objective: LLMContent) {
     this.screen.progress = "Analyzing the objective";
+    this.screen.expectedDuration = -1;
     this.#add("Objective", "summarize", objective);
   }
 
@@ -94,6 +96,7 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
     this.#add("Thought", "spark", llm`${text}`.asContent());
     this.#previousStatus = this.screen.progress;
     this.screen.progress = progressFromThought(text);
+    this.screen.expectedDuration = -1;
   }
 
   /**
@@ -110,14 +113,30 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
   /**
    * The agent function call produced an update
    */
-  functionCallUpdate(_part: FunctionCallCapabilityPart, status: string | null) {
-    if (status == null) {
-      if (this.#previousStatus) {
-        this.screen.progress = this.#previousStatus;
-      }
+  functionCallUpdate(
+    _part: FunctionCallCapabilityPart,
+    status: string | null,
+    options?: StatusUpdateCallbackOptions
+  ) {
+    if (options?.isThought) {
+      if (!status) return;
+      this.thought(status);
     } else {
-      this.#previousStatus = this.screen.progress;
-      this.screen.progress = status;
+      if (status == null) {
+        if (this.#previousStatus) {
+          this.screen.progress = this.#previousStatus;
+        }
+        this.screen.expectedDuration = -1;
+      } else {
+        if (options?.expectedDurationInSec) {
+          this.screen.expectedDuration = options.expectedDurationInSec;
+        } else {
+          this.screen.expectedDuration = -1;
+        }
+
+        this.#previousStatus = this.screen.progress;
+        this.screen.progress = status;
+      }
     }
   }
 
@@ -133,6 +152,7 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
    */
   finish() {
     this.screen.progress = undefined;
+    this.screen.expectedDuration = -1;
     this.end = performance.now();
   }
 }
