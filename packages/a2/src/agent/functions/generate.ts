@@ -19,6 +19,7 @@ import { defineFunction, FunctionDefinition } from "../function-definition";
 import { defaultSystemInstruction } from "../../generate-text/system-instruction";
 import { mergeContent, mergeTextParts, toText, tr } from "../../a2/utils";
 import { callVideoGen, expandVeoError } from "../../video-generator/main";
+import { callAudioGen } from "../../audio-generator/main";
 
 export { defineGenerateFunctions };
 
@@ -256,7 +257,7 @@ provided when the "output_format" is set to "text"`
           },
         });
         if (!ok(body)) return body;
-        const resolvedModel = resolveModel(model);
+        const resolvedModel = resolveTextModel(model);
         const generating = await streamGenerateContent(
           resolvedModel,
           body,
@@ -365,10 +366,48 @@ The following elements should be included in your prompt:
         return { video };
       }
     ),
+    defineFunction(
+      {
+        name: "generate_speech_from_text",
+        description: "Generates speech from text",
+        parameters: {
+          text: z.string().describe("The verbatim text to turn into speech."),
+        },
+        response: {
+          error: z
+            .string()
+            .describe(
+              `If an error has occurred, will contain a description of the error`
+            )
+            .optional(),
+          speech: z
+            .string()
+            .describe("Generated speech as a VFS file path")
+            .optional(),
+        },
+      },
+      async ({ text }) => {
+        const generating = await callAudioGen(
+          caps,
+          moduleArgs,
+          text,
+          "Female (English)" // TODO: Make configurable
+        );
+        if (!ok(generating)) return { error: generating.$error };
+
+        const dataPart = generating.parts.at(0);
+        if (!dataPart || !("storedData" in dataPart)) {
+          return { error: `No speech was generated` };
+        }
+        const speech = fileSystem.add(dataPart);
+        if (!ok(speech)) return { error: speech.$error };
+        return { speech };
+      }
+    ),
   ];
 }
 
-function resolveModel(model: "pro" | "lite" | "flash"): string {
+function resolveTextModel(model: "pro" | "lite" | "flash"): string {
   switch (model) {
     case "pro":
       return "gemini-2.5-pro";
