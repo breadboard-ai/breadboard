@@ -40,7 +40,7 @@ type AudioGeneratorOutputs = {
   context: LLMContent[] | DescriberResult;
 };
 
-export { invoke as default, describe };
+export { invoke as default, describe, callMusicGen };
 
 async function callMusicGen(
   caps: Capabilities,

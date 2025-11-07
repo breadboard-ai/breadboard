@@ -31,10 +31,12 @@ import { A2ModuleArgs } from "../runnable-module-factory";
 import { getBucketId } from "../a2/get-bucket-id";
 import { err } from "@breadboard-ai/utils";
 
+export { callAudioGen };
+
 type AudioGeneratorInputs = {
   context: LLMContent[];
   text: LLMContent;
-  voice: string;
+  voice: VoiceOption;
 };
 
 type AudioGeneratorOutputs = {
@@ -57,7 +59,7 @@ async function callAudioGen(
   caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   prompt: string,
-  voice: string
+  voice: VoiceOption
 ): Promise<Outcome<LLMContent>> {
   const bucketId = await getBucketId(moduleArgs);
   if (!ok(bucketId)) {
