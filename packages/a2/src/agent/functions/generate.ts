@@ -20,6 +20,7 @@ import { defaultSystemInstruction } from "../../generate-text/system-instruction
 import { mergeContent, mergeTextParts, toText, tr } from "../../a2/utils";
 import { callVideoGen, expandVeoError } from "../../video-generator/main";
 import { callAudioGen } from "../../audio-generator/main";
+import { callMusicGen } from "../../music-generator/main";
 
 export { defineGenerateFunctions };
 
@@ -386,7 +387,8 @@ The following elements should be included in your prompt:
             .optional(),
         },
       },
-      async ({ text }) => {
+      async ({ text }, statusUpdateCallback) => {
+        statusUpdateCallback("Generating Speech");
         const generating = await callAudioGen(
           caps,
           moduleArgs,
@@ -402,6 +404,62 @@ The following elements should be included in your prompt:
         const speech = fileSystem.add(dataPart);
         if (!ok(speech)) return { error: speech.$error };
         return { speech };
+      }
+    ),
+    defineFunction(
+      {
+        name: "generate_music_from_text",
+        description: tr`
+Generates instrumental music and audio soundscapes based on the provided prompt.
+
+To get your generated music closer to what you want, start with identifying your core musical idea and then refine your idea by adding keywords and modifiers.
+
+The following elements should be considered for your prompt:
+
+- Genre & Style: The primary musical category (e.g., electronic dance, classical, jazz, ambient) and stylistic characteristics (e.g., 8-bit, cinematic, lo-fi).
+- Mood & Emotion: The desired feeling the music should evoke (e.g., energetic, melancholy, peaceful, tense).
+- Instrumentation: Key instruments you want to hear (e.g., piano, synthesizer, acoustic guitar, string orchestra, electronic drums).
+- Tempo & Rhythm: The pace (e.g., fast tempo, slow ballad, 120 BPM) and rhythmic character (e.g., driving beat, syncopated rhythm, gentle waltz).
+- (Optional) Arrangement/Structure: How the music progresses or layers (e.g., starts with a solo piano, then strings enter, crescendo into a powerful chorus).
+- (Optional) Soundscape/Ambiance: Background sounds or overall sonic environment (e.g., rain falling, city nightlife, spacious reverb, underwater feel).
+- (Optional) Production Quality: Desired audio fidelity or recording style (e.g., high-quality production, clean mix, vintage recording, raw demo feel).
+
+For example:
+
+An energetic (mood) electronic dance track (genre) with a fast tempo (tempo) and a driving beat (rhythm), featuring prominent synthesizers (instrumentation) and electronic drums (instrumentation). High-quality production (production quality).	
+
+A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synthesizers (instrumentation) and soft, evolving pads (instrumentation/arrangement). Slow tempo (tempo) with a spacious reverb (ambiance/production). Starts with a simple synth melody, then adds layers of atmospheric pads (arrangement).
+`,
+        parameters: {
+          prompt: z
+            .string()
+            .describe(`The prompt from which to generate music`),
+        },
+        response: {
+          error: z
+            .string()
+            .describe(
+              `If an error has occurred, will contain a description of the error`
+            )
+            .optional(),
+          music: z
+            .string()
+            .describe("Generated music as a VFS file path")
+            .optional(),
+        },
+      },
+      async ({ prompt }, statusUpdateCallback) => {
+        statusUpdateCallback("Generating Music");
+        const generating = await callMusicGen(caps, moduleArgs, prompt);
+        if (!ok(generating)) return { error: generating.$error };
+
+        const dataPart = generating.parts.at(0);
+        if (!dataPart || !("storedData" in dataPart)) {
+          return { error: `No speech was generated` };
+        }
+        const music = fileSystem.add(dataPart);
+        if (!ok(music)) return { error: music.$error };
+        return { music };
       }
     ),
   ];
