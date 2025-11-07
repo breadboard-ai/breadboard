@@ -293,9 +293,11 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   #renderProgress(active: boolean) {
     if (!this.run) return nothing;
 
-    const titles = Array.from(this.run.app.current.values()).map(
-      (v) => v.progress || v.title
-    );
+    const titles = Array.from(this.run.app.current.values()).map((screen) => {
+      if (!screen.progress) return screen.title;
+      if (screen.progressCompletion < 0) return screen.progress;
+      return `${screen.progress}: ${screen.progressCompletion}%`;
+    });
 
     const titleList = new Intl.ListFormat("en-US", {
       style: "long",

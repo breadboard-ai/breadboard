@@ -75,6 +75,7 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
    */
   startAgent(objective: LLMContent) {
     this.screen.progress = "Analyzing the objective";
+    this.screen.expectedDuration = -1;
     this.#add("Objective", "summarize", objective);
   }
 
@@ -95,6 +96,7 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
     this.#add("Thought", "spark", llm`${text}`.asContent());
     this.#previousStatus = this.screen.progress;
     this.screen.progress = progressFromThought(text);
+    this.screen.expectedDuration = -1;
   }
 
   /**
@@ -124,7 +126,14 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
         if (this.#previousStatus) {
           this.screen.progress = this.#previousStatus;
         }
+        this.screen.expectedDuration = -1;
       } else {
+        if (options?.expectedDurationInSec) {
+          this.screen.expectedDuration = options.expectedDurationInSec;
+        } else {
+          this.screen.expectedDuration = -1;
+        }
+
         this.#previousStatus = this.screen.progress;
         this.screen.progress = status;
       }
@@ -143,6 +152,7 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
    */
   finish() {
     this.screen.progress = undefined;
+    this.screen.expectedDuration = -1;
     this.end = performance.now();
   }
 }

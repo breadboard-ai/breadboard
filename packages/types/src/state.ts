@@ -178,6 +178,15 @@ export type AppScreen = {
    */
   progress: string | undefined;
   /**
+   * An expected duration of the current progress update. If -1, then there
+   * no expectations on the duration of this update.
+   */
+  expectedDuration: number;
+  /**
+   * Percentage of completion toward the expected duration.
+   */
+  progressCompletion: number;
+  /**
    * When "processing", indicates that this screen is being created.
    * When "interactive", indicates that this screen engaged in interaction
    * with the user.
