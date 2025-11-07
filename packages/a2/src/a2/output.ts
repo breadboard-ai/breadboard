@@ -43,6 +43,7 @@ type ReportInputs = {
 export type Link = {
   uri: string;
   title: string;
+  iconUri: string;
 };
 
 export { report, StreamableReporter };

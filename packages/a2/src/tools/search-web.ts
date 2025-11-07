@@ -62,14 +62,14 @@ async function generateSummary(
   let results = toText(result.last);
   await reporter.sendUpdate("Search Summary", results, "text_analysis");
   const links = result.candidate?.groundingMetadata?.groundingChunks?.map(
-    (chunk) => chunk.web
+    (chunk) => ({ ...chunk.web!, iconUri: chunk.web?.title || "" })
   );
   if (links) {
     await reporter.sendLinks("References", links, "link");
   }
   const chunks =
     result.candidate?.groundingMetadata?.groundingChunks?.map((chunk) => {
-      const { title, uri } = chunk.web;
+      const { title, uri } = chunk.web!;
       return `- [${title}](${uri})`;
     }) || [];
   if (chunks.length) {
