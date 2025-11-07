@@ -104,7 +104,9 @@ async function createDataUpdate(
 ) {
   console.log(`Creating additional data for ${renderableSurface.surfaceId}`);
   const prompt = getUIDataUpdatePrompt([
-    llm`Create some data akin to the example data for this surface:
+    objective,
+
+    llm`Create some data on the same topic as the example data for this surface. You must match the quiz objective above.
 
     ${JSON.stringify(renderableSurface)}`.asContent(),
   ]);

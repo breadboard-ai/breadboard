@@ -43,7 +43,12 @@ The UI will be built in two phases. In the first phase another LLM-powered creat
 
 If the dataModelUpdate requires you to send valueMaps you will need to be very careful with paths that access that data. For example, if you are sending a valueMap that looks like this: { "key": "person", "valueMap": [ { "key": "name", "valueString": "John Doe" }, { "key": "age", "valueNumber": 41 }, { "key": "isSubscriber", "valueBoolean": true } ] } you would need to reference the name as "/person/name" without any other additions or suffixes.`.asContent();
 
+const strippedSchema: GeminiSchema = { ...UI_SCHEMA };
+delete strippedSchema.properties?.["beginRendering"];
+delete strippedSchema.properties?.["surfaceUpdate"];
+delete strippedSchema.properties?.["deleteSurface"];
+
 const responseJsonSchema: GeminiSchema = {
   type: "array",
-  items: UI_SCHEMA,
+  items: strippedSchema,
 };
