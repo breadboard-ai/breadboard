@@ -5,6 +5,7 @@
  */
 
 import { EvalHarness } from "../src/eval-harness";
+import { getUIDataUpdatePrompt } from "../src/agent/prompts/create-data-update";
 import { getDesignSurfaceSpecsPrompt } from "../src/agent/prompts/design-surface-specs";
 import { getCreateUILayoutPrompt } from "../src/agent/prompts/create-ui-layout";
 import { llm } from "../src/a2/utils";
@@ -18,6 +19,7 @@ import { WorkItem } from "./work-item";
 config();
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const emit = { time: true, result: false };
 
 const objective =
   llm`Play a learning quiz on the following subject with a high school student, using a series of multiple-choice questions:
@@ -101,7 +103,7 @@ async function createDataUpdate(
   renderableSurface: Surface
 ) {
   console.log(`Creating additional data for ${renderableSurface.surfaceId}`);
-  const prompt = getCreateUILayoutPrompt([
+  const prompt = getUIDataUpdatePrompt([
     llm`Create some data akin to the example data for this surface:
 
     ${JSON.stringify(renderableSurface)}`.asContent(),
@@ -127,12 +129,12 @@ async function evaluate() {
       : [parsedSurfaces.surfaces.at(choices.surface)!];
 
   const workload = chosenSurfaces.map((surface) =>
-    new WorkItem().run(`ui`, harness, surface, renderSurface)
+    new WorkItem().run(`ui`, harness, surface, renderSurface, emit)
   );
   if (choices.real) {
     workload.push(
       ...chosenSurfaces.map((surface) =>
-        new WorkItem().run("data", harness, surface, createDataUpdate)
+        new WorkItem().run("data", harness, surface, createDataUpdate, emit)
       )
     );
   }
