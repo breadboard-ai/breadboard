@@ -274,7 +274,7 @@ provided when the "output_format" is set to "text"`
           for (const part of parts) {
             if (!part || !("text" in part)) continue;
             if (part.thought) {
-              statusUpdater(part.text, true);
+              statusUpdater(part.text, { isThought: true });
             } else {
               results.push(part);
             }

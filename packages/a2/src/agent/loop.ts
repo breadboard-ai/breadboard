@@ -351,14 +351,9 @@ class Loop {
             }
             if ("functionCall" in part) {
               this.#ui.progress.functionCall(part);
-              functionCaller.call(part, (status, isThought) => {
-                if (isThought) {
-                  if (!status) return;
-                  this.#ui.progress.thought(status);
-                } else {
-                  this.#ui.progress.functionCallUpdate(part, status);
-                }
-              });
+              functionCaller.call(part, (status, opts) =>
+                this.#ui.progress.functionCallUpdate(part, status, opts)
+              );
             }
           }
           const functionResults = await functionCaller.getResults();

@@ -20,6 +20,7 @@ import { SignalMap } from "signal-utils/map";
 import { GeminiBody } from "../a2/gemini";
 import { AgentProgressManager } from "./types";
 import { llm } from "../a2/utils";
+import { StatusUpdateCallbackOptions } from "./function-definition";
 
 export { ProgressWorkItem };
 
@@ -110,14 +111,23 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
   /**
    * The agent function call produced an update
    */
-  functionCallUpdate(_part: FunctionCallCapabilityPart, status: string | null) {
-    if (status == null) {
-      if (this.#previousStatus) {
-        this.screen.progress = this.#previousStatus;
-      }
+  functionCallUpdate(
+    _part: FunctionCallCapabilityPart,
+    status: string | null,
+    options?: StatusUpdateCallbackOptions
+  ) {
+    if (options?.isThought) {
+      if (!status) return;
+      this.thought(status);
     } else {
-      this.#previousStatus = this.screen.progress;
-      this.screen.progress = status;
+      if (status == null) {
+        if (this.#previousStatus) {
+          this.screen.progress = this.#previousStatus;
+        }
+      } else {
+        this.#previousStatus = this.screen.progress;
+        this.screen.progress = status;
+      }
     }
   }
 
