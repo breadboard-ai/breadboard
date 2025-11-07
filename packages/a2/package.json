@@ -58,6 +58,7 @@
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.34.1",
     "dotenv": "^16.4.7",
+    "inquirer": "^12.10.0",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
   },
