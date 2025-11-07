@@ -27,8 +27,6 @@ import { A2ModuleArgs } from "../runnable-module-factory";
 import { McpToolAdapter } from "./mcp-tool-adapter";
 
 const CODE_EXECUTION_SUFFIX = "#module:code-execution";
-const SEARCH_WEB_SUFFIX = "tools.bgl.json#module:search-web";
-const SEARCH_MAPS_SUFFIX = "tools.bgl.json#module:search-maps";
 
 export type ToolHandle = {
   title?: string;
@@ -190,14 +188,6 @@ class ToolManager implements SimplifiedToolManager {
     if (url?.endsWith(CODE_EXECUTION_SUFFIX)) {
       this.#hasCodeExection = true;
       return "Code Execution";
-    }
-    if (url?.endsWith(SEARCH_WEB_SUFFIX)) {
-      this.#hasSearch = true;
-      return "Search Web";
-    }
-    if (url?.endsWith(SEARCH_MAPS_SUFFIX)) {
-      this.#hasMaps = true;
-      return "Search Maps";
     }
     const client = new McpToolAdapter(this.caps, this.moduleArgs, url);
     if (instance) {
