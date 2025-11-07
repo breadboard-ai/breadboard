@@ -14,7 +14,16 @@ declare global {
   }
 }
 
-const LOCAL_STORAGE_KEY = "ga_user_id";
+function getLocalStorageKey() {
+  // b/458498343 This should be simply be a module-scope const
+  // LOCAL_STORAGE_KEY. However there appears to be a bug affecting iOS 18 such
+  // that exported functions can be invoked by importers before module-level
+  // consts are initialized. It only affects our bundled production mode, but
+  // the relevant module factoring is similar, so it seems more like a JSC bug
+  // than a bundler bug. As a hacky workaround, writing this as a hoisted
+  // function corrects the ordering.
+  return "ga_user_id";
+}
 
 /**
  * Initializes Google Analytics.
@@ -42,18 +51,18 @@ function initializeAnalytics(id: string, signedIn: boolean) {
   document.body.appendChild(tagManagerScript);
 
   function getUserId() {
-    let userId = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+    let userId = window.localStorage.getItem(getLocalStorageKey());
     if (!userId) {
       // Generate a random GUUID that will be associated with this user.
       userId = crypto.randomUUID();
-      window.localStorage.setItem(LOCAL_STORAGE_KEY, userId);
+      window.localStorage.setItem(getLocalStorageKey(), userId);
     }
     return userId;
   }
 }
 
 function resetAnalyticsUserId() {
-  window.localStorage.removeItem(LOCAL_STORAGE_KEY);
+  window.localStorage.removeItem(getLocalStorageKey());
 }
 
 /**
