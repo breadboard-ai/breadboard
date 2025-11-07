@@ -18,8 +18,11 @@ import { AgentFileSystem } from "../file-system";
 import { defineFunction, FunctionDefinition } from "../function-definition";
 import { defaultSystemInstruction } from "../../generate-text/system-instruction";
 import { mergeContent, mergeTextParts, toText, tr } from "../../a2/utils";
+import { callVideoGen, expandVeoError } from "../../video-generator/main";
 
 export { defineGenerateFunctions };
+
+const VIDEO_MODEL_NAME = "veo-3.1-generate-preview";
 
 export type GenerateFunctionArgs = {
   fileSystem: AgentFileSystem;
@@ -293,6 +296,73 @@ provided when the "output_format" is set to "text"`
           return { text: toText({ parts: textParts }) };
         }
         return { file_path };
+      }
+    ),
+    defineFunction(
+      {
+        name: "generate_video",
+        description:
+          "Generating high-fidelity, 8-second videos featuring stunning realism and natively generated audio",
+        parameters: {
+          prompt: z.string().describe(tr`
+The prompt to generate the video.
+
+Good prompts are descriptive and clear. Start with identifying your core idea, refine your idea by adding keywords and modifiers, and incorporate video-specific terminology into your prompts.
+
+The following elements should be included in your prompt:
+
+- Subject: The object, person, animal, or scenery that you want in your video, such as cityscape, nature, vehicles, or puppies.
+- Action: What the subject is doing (for example, walking, running, or turning their head).
+- Style: Specify creative direction using specific film style keywords, such as sci-fi, horror film, film noir, or animated styles like cartoon.
+- Camera positioning and motion: [Optional] Control the camera's location and movement using terms like aerial view, eye-level, top-down shot, dolly shot, or worms eye.
+- Composition: [Optional] How the shot is framed, such as wide shot, close-up, single-shot or two-shot.
+- Focus and lens effects: [Optional] Use terms like shallow focus, deep focus, soft focus, macro lens, and wide-angle lens to achieve specific visual effects.
+- Ambiance: [Optional] How the color and light contribute to the scene, such as blue tones, night, or warm tones.
+
+`),
+          aspectRatio: z
+            .enum(["16:9", "9:16"])
+            .describe(`The aspect ratio of the video`)
+            .default("16:9"),
+        },
+        response: {
+          error: z
+            .string()
+            .describe(
+              `If an error has occurred, will contain a description of the error`
+            )
+            .optional(),
+          video: z
+            .string()
+            .describe(`Generated video, specified as VFS path`)
+            .optional(),
+        },
+      },
+      async ({ prompt, aspectRatio }, statusUpdateCallback) => {
+        console.log("PROMPT", prompt);
+        console.log("ASPECT RATIO", aspectRatio);
+        statusUpdateCallback("Generating Video");
+        const generating = await callVideoGen(
+          caps,
+          moduleArgs,
+          prompt,
+          undefined,
+          false,
+          aspectRatio ?? "16:9",
+          VIDEO_MODEL_NAME
+        );
+        if (!ok(generating)) {
+          return { error: expandVeoError(generating, VIDEO_MODEL_NAME).$error };
+        }
+        const dataPart = generating.parts.at(0);
+        if (!dataPart || !("storedData" in dataPart)) {
+          return { error: `No video was generated` };
+        }
+        const video = fileSystem.add(dataPart);
+        if (!ok(video)) {
+          return { error: video.$error };
+        }
+        return { video };
       }
     ),
   ];

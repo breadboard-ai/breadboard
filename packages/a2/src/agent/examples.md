@@ -102,3 +102,11 @@ When this button is pressed, give them another poem on the same topic. Don't use
 
 The user hitting "Regenerate" is a good thing, that means they're enjoying your poems.
 ```
+
+```
+Look up the location and menu information on this restaurant:
+
+<restaurant>Chef Chu's in Los Altos</restaurant>
+
+Then, generate a promotional video for this restaurant, suitable for TikTok (portrait orientation)
+```
