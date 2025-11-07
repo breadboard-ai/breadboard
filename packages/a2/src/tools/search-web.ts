@@ -9,6 +9,7 @@ import { ok, toText } from "../a2/utils";
 import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { invoke as default, describe };
+
 export type SearchWebInputs = {
   query: string;
 };
@@ -17,29 +18,11 @@ export type SearchWebOutputs = {
   results: string;
 };
 
-export type SearchBackendOutput = {
-  url: string;
-  webpage_text_content: string;
-};
-
-export type CustomSearchEngineResponse = {
-  queries: {
-    request: {
-      title: string;
-    }[];
-  };
-  items: {
-    title: string;
-    snippet: string;
-    link: string;
-  }[];
-};
-
-async function generateSummary(
+async function invoke(
+  { query }: SearchWebInputs,
   caps: Capabilities,
-  moduleArgs: A2ModuleArgs,
-  query: string
-): Promise<Outcome<string>> {
+  moduleArgs: A2ModuleArgs
+): Promise<Outcome<SearchWebOutputs>> {
   const toolManager = new ToolManager(caps, moduleArgs);
   toolManager.addSearch();
   const result = await new GeminiPrompt(
@@ -65,18 +48,7 @@ async function generateSummary(
   if (chunks.length) {
     results += `\n## References:\n${chunks.join("\n")}\n`;
   }
-  return `\n## Summary\n${results}`;
-}
-
-async function invoke(
-  { query }: SearchWebInputs,
-  caps: Capabilities,
-  moduleArgs: A2ModuleArgs
-): Promise<Outcome<SearchWebOutputs>> {
-  const summary = await generateSummary(caps, moduleArgs, query);
-  if (!ok(summary)) return summary;
-
-  return { results: `Query: ${query}\n${summary}` };
+  return { results: `\n## Summary\n${results}` };
 }
 
 async function describe() {
