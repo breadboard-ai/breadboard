@@ -23,7 +23,8 @@ export type EvalHarnessArgs = {
   apiKey?: string;
   fileSystem: AgentFileSystem;
   logger: {
-    log(...args: unknown[]): void;
+    request(url: string, init?: RequestInit): number;
+    response(id: number, res: Response): Promise<void>;
   };
 };
 
@@ -94,14 +95,16 @@ class EvalHarness {
   readonly moduleArgs: A2ModuleArgs = {
     mcpClientManager: {} as unknown as McpClientManager,
     fetchWithCreds: async (url: RequestInfo | URL, init?: RequestInit) => {
-      this.args.logger.log({ req: { url, init } });
-      return fetch(url, {
+      const entryId = this.args.logger.request(url as string, init);
+      const response = await fetch(url, {
         ...init,
         headers: {
           ...init?.headers,
           "x-goog-api-key": this.args.apiKey!,
         },
       });
+      this.args.logger.response(entryId, response.clone());
+      return response;
     },
     context: {
       currentStep: {

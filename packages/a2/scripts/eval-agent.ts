@@ -28,7 +28,6 @@ globalThis.window = { location: new URL("https://example.com/") } as Window;
 mock.method(globalThis, "setInterval", autoClearingInterval.setInterval);
 
 const logger = new Logger();
-mock.method(globalThis.console, "log", logger.log);
 
 config();
 
@@ -48,10 +47,14 @@ const loop = new Loop(
 const objective =
   llm`<objective>Come up with 4 ideas for Halloween-themed mugs and turn them into images that can be used as inspirations for online storefront graphics</objective>`.asContent();
 const result = await loop.run(objective, {});
-logger.log(result);
+console.log("RESULT", result);
 
 autoClearingInterval.clearAllIntervals();
 
 await ensureDir(OUT_DIR);
 
-await writeFile(join(OUT_DIR, "out.txt"), logger.getAll(), "utf-8");
+await writeFile(
+  join(OUT_DIR, "har.json"),
+  JSON.stringify(logger.getHar(), null, 2),
+  "utf-8"
+);
