@@ -15,6 +15,8 @@ import { A2ModuleArgs } from "../runnable-module-factory";
 import { Params } from "../a2/common";
 import { Loop } from "./loop";
 import { ok } from "@breadboard-ai/utils";
+import { FunctionCallerImpl } from "./function-caller";
+import { AgentFileSystem } from "./file-system";
 
 export { invoke as default, describe };
 
@@ -34,7 +36,11 @@ async function invoke(
   const params = Object.fromEntries(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
-  const loop = new Loop(caps, moduleArgs);
+  const loop = new Loop(caps, moduleArgs, new AgentFileSystem(), {
+    create(builtIn, custom) {
+      return new FunctionCallerImpl(builtIn, custom);
+    },
+  });
   const result = await loop.run(objective, params);
   if (!ok(result)) return result;
   console.log("LOOP", result);

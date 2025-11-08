@@ -17,10 +17,11 @@ import {
 } from "./function-definition";
 import { SimplifiedToolManager } from "../a2/tool-manager";
 import { err, ok } from "@breadboard-ai/utils";
+import { FunctionCaller } from "./types";
 
-export { FunctionCaller };
+export { FunctionCallerImpl };
 
-class FunctionCaller {
+class FunctionCallerImpl implements FunctionCaller {
   #functionPromises: Promise<Outcome<FunctionResponseCapabilityPart>>[] = [];
 
   constructor(

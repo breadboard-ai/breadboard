@@ -4,15 +4,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities } from "@breadboard-ai/types";
+import { Capabilities, Outcome } from "@breadboard-ai/types";
 
 import { A2ModuleArgs } from "./runnable-module-factory";
 import { McpClientManager } from "@breadboard-ai/mcp";
+import {
+  FunctionDefinition,
+  StatusUpdateCallback,
+} from "./agent/function-definition";
+import { FunctionCallerImpl } from "./agent/function-caller";
+import { SimplifiedToolManager } from "./a2/tool-manager";
+import { AgentFileSystem } from "./agent/file-system";
+import { ok } from "@breadboard-ai/utils";
 
 export { EvalHarness };
 
 export type EvalHarnessArgs = {
   apiKey?: string;
+  fileSystem: AgentFileSystem;
+  logger: {
+    log(...args: unknown[]): void;
+  };
 };
 
 /**
@@ -50,9 +62,39 @@ class EvalHarness {
     },
   };
 
+  readonly functionCallerFactory = {
+    create: (
+      builtIn: Map<string, FunctionDefinition>,
+      custom: SimplifiedToolManager
+    ) => {
+      mock("generate_images_from_prompt", async () => {
+        const image = this.args.fileSystem.add({
+          text: "Mock Generated Image",
+        });
+        if (!ok(image)) return { error: image.$error };
+        return { images: [image] };
+      });
+      return new FunctionCallerImpl(builtIn, custom);
+
+      function mock(
+        name: string,
+        handler: (
+          args: Record<string, unknown>,
+          statusUpdateCallback: StatusUpdateCallback
+        ) => Promise<Outcome<Record<string, unknown>>>
+      ) {
+        const def = builtIn.get(name);
+        if (!def) return;
+        const mocked: FunctionDefinition = { ...def, handler };
+        builtIn.set(name, mocked);
+      }
+    },
+  };
+
   readonly moduleArgs: A2ModuleArgs = {
     mcpClientManager: {} as unknown as McpClientManager,
     fetchWithCreds: async (url: RequestInfo | URL, init?: RequestInit) => {
+      this.args.logger.log({ req: { url, init } });
       return fetch(url, {
         ...init,
         headers: {

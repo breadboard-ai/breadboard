@@ -16,7 +16,6 @@ import {
 import { llm } from "../a2/utils";
 import { A2ModuleArgs } from "../runnable-module-factory";
 import { AgentFileSystem } from "./file-system";
-import { FunctionCaller } from "./function-caller";
 import { emptyDefinitions, mapDefinitions } from "./function-definition";
 import { defineSystemFunctions } from "./functions/system";
 import { PidginTranslator } from "./pidgin-translator";
@@ -24,6 +23,7 @@ import { AgentUI } from "./ui";
 import { defineGenerateFunctions } from "./functions/generate";
 import { prompt as a2UIPrompt } from "./a2ui/prompt";
 import { defineA2UIFunctions } from "./functions/ui";
+import { FunctionCallerFactory } from "./types";
 
 export { Loop };
 
@@ -211,15 +211,15 @@ ${args.useUI ? a2UIPrompt : "You do not have a way to interact with the user dur
  */
 class Loop {
   #translator: PidginTranslator;
-  #fileSystem: AgentFileSystem;
   #ui: AgentUI;
 
   constructor(
     private readonly caps: Capabilities,
-    private readonly moduleArgs: A2ModuleArgs
+    private readonly moduleArgs: A2ModuleArgs,
+    private readonly fileSystem: AgentFileSystem,
+    private readonly functionCallerFactory: FunctionCallerFactory
   ) {
-    this.#fileSystem = new AgentFileSystem();
-    this.#translator = new PidginTranslator(caps, moduleArgs, this.#fileSystem);
+    this.#translator = new PidginTranslator(caps, moduleArgs, this.fileSystem);
     this.#ui = new AgentUI(caps, moduleArgs, this.#translator);
   }
 
@@ -251,7 +251,7 @@ class Loop {
 
       const systemFunctions = mapDefinitions(
         defineSystemFunctions({
-          fileSystem: this.#fileSystem,
+          fileSystem: this.fileSystem,
           terminateCallback: () => {
             terminateLoop = true;
           },
@@ -281,7 +281,7 @@ class Loop {
 
       const generateFunctions = mapDefinitions(
         defineGenerateFunctions({
-          fileSystem: this.#fileSystem,
+          fileSystem: this.fileSystem,
           caps: this.caps,
           moduleArgs: this.moduleArgs,
           translator: this.#translator,
@@ -300,6 +300,11 @@ class Loop {
           ],
         },
       ];
+      const functionDefinitionMap = new Map([
+        ...systemFunctions.definitions,
+        ...generateFunctions.definitions,
+        ...uiFunctions.definitions,
+      ]);
 
       while (!terminateLoop) {
         const body: GeminiBody = {
@@ -334,12 +339,8 @@ class Loop {
             );
           }
           contents.push(content);
-          const functionCaller = new FunctionCaller(
-            new Map([
-              ...systemFunctions.definitions,
-              ...generateFunctions.definitions,
-              ...uiFunctions.definitions,
-            ]),
+          const functionCaller = this.functionCallerFactory.create(
+            functionDefinitionMap,
             objectivePidgin.tools
           );
           const parts = content.parts || [];
@@ -383,7 +384,7 @@ class Loop {
     if (success) {
       outcomes = this.#translator.fromPidginFiles(objective_outcomes);
       if (!ok(outcomes)) return outcomes;
-      const intermediateFiles = [...this.#fileSystem.files.keys()];
+      const intermediateFiles = [...this.fileSystem.files.keys()];
       intermediate = this.#translator.fromPidginFiles(intermediateFiles);
       if (!ok(intermediate)) return intermediate;
     }
