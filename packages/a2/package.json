@@ -5,7 +5,7 @@
   "main": "./dist/src/index.js",
   "type": "module",
   "scripts": {
-    "push": "tsx scripts/push.ts",
+    "eval:agent": "tsx scripts/eval-agent.ts",
     "build": "wireit"
   },
   "wireit": {
@@ -38,6 +38,14 @@
         "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
+    },
+    "eval:agent": {
+      "dependencies": [
+        "build"
+      ],
+      "files": [
+        "scripts/eval-agent.ts"
+      ]
     }
   },
   "repository": {

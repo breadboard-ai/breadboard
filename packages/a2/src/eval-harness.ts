@@ -61,7 +61,51 @@ class EvalHarness {
         },
       });
     },
-    context: {},
+    context: {
+      currentStep: {
+        id: "current-step",
+        type: "mock",
+      },
+      getProjectRunState: () => {
+        return {
+          console: new Map([
+            [
+              "current-step",
+              {
+                title: "Current Step",
+                open: true,
+                rerun: false,
+                work: new Map(),
+                output: new Map(),
+                error: null,
+                completed: false,
+                current: null,
+              },
+            ],
+          ]),
+          app: {
+            state: "splash",
+            screens: new Map([
+              [
+                "current-step",
+                {
+                  title: "Current Step",
+                  progress: undefined,
+                  expectedDuration: -1,
+                  progressCompletion: -1,
+                  status: "interactive",
+                  type: "progress",
+                  outputs: new Map(),
+                  last: null,
+                },
+              ],
+            ]),
+            current: new Map(),
+            last: null,
+          },
+        };
+      },
+    },
   };
 
   constructor(private readonly args: EvalHarnessArgs) {
