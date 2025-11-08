@@ -15,6 +15,11 @@ import { exit } from "process";
 import inquirer from "inquirer";
 import { ParsedSurfaces, Surface } from "./surface";
 import { WorkItem } from "./work-item";
+import { Outcome } from "@breadboard-ai/types";
+import generateContent, {
+  GeminiAPIOutputs,
+  GeminiInputs,
+} from "../src/a2/gemini";
 
 config();
 
@@ -39,8 +44,20 @@ Before exiting, record the answers and the summary of the session for the teache
 - what the student learned
 -  where the student should concentrate on learning`.asContent();
 
+async function gemini(
+  harness: EvalHarness,
+  inputs: GeminiInputs
+): Promise<Outcome<GeminiAPIOutputs>> {
+  return generateContent(inputs, harness.caps, harness.moduleArgs) as Promise<
+    Outcome<GeminiAPIOutputs>
+  >;
+}
+
 async function generateSpec(harness: EvalHarness): Promise<ParsedSurfaces> {
-  const surfaces = await harness.run(getDesignSurfaceSpecsPrompt([objective]));
+  const surfaces = await gemini(
+    harness,
+    getDesignSurfaceSpecsPrompt([objective])
+  );
   if (!ok(surfaces)) {
     console.log("ERROR", surfaces.$error);
     exit(-1);
@@ -89,7 +106,7 @@ async function renderSurface(harness: EvalHarness, renderableSurface: Surface) {
     llm`${JSON.stringify(renderableSurface)}`.asContent(),
   ]);
 
-  const ui = await harness.run(prompt);
+  const ui = await gemini(harness, prompt);
   if (!ok(ui)) {
     console.log("ERROR", ui.$error);
     exit(-1);
@@ -111,7 +128,7 @@ async function createDataUpdate(
     ${JSON.stringify(renderableSurface)}`.asContent(),
   ]);
 
-  const ui = await harness.run(prompt);
+  const ui = await gemini(harness, prompt);
   if (!ok(ui)) {
     console.log("ERROR", ui.$error);
     exit(-1);
