@@ -98,6 +98,9 @@ export type GenerationConfig = {
   responseJsonSchema?: Schema;
   responseModalities?: Modality[];
   thinkingConfig?: ThinkingConfig;
+  temperature?: number;
+  topP?: number;
+  topK?: number;
 };
 
 export type SafetySetting = {

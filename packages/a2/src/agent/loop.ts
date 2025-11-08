@@ -129,7 +129,7 @@ The system you're working in uses the virtual file system (VFS). The VFS paths
 are always prefixed with the "/vfs/". Every VFS file path will be of the form
 "/vfs/[name]".
 
-You can use the <file src="path" /> syntax to embed the outcome in the text.
+You can use the <file src="path" /> syntax to embed them in text.
 
 </agent-instructions>
 
@@ -164,7 +164,7 @@ is equivalent to:
 
 Projects can be used to manage a growing set of files around between tasks.
 
-Many functions will have the "project_path" parameter. Use it add the function
+Many functions will have the "project_path" parameter. Use it add their
 output directly to the project.
 
 Pay attention to the objective. If it requires multiple files to be produced and
@@ -177,23 +177,23 @@ to the next task.
 
 Example: let's suppose that your objective is to write a multi-chapter report based on some provided background information.
 
-This is a great fit for the "Workarea Project" pattern, because here, you have
+This is a great fit for the "Workarea Project" pattern, because you have
 some initial context (provided background information) and then each chapter
 is adding to that context.
 
 Thus, a solid plan to fulfill this objective would be to:
 
-1. create a "workarea" project (path "/vfs/projects/workarea")
-2. write background information as one or more files, using "project_path" to
+1. Create a "workarea" project (path "/vfs/projects/workarea")
+2. Write background information as one or more files, using "project_path" to
 add them directly to the project
-3. write each chapter of the report using "generate_text", supplying the
-"/vfs/projects/workarea" path for both "project_path" and "context" parameters.
+3. Write each chapter of the report using "generate_text", referencing the
+"/vfs/projects/workarea" VFS path in the prompt and supplying this same path as the "project_path" for the output.
 This way, the "generate_text" will use all files in the project as context, and
 it will contribute the newly written chapter to the same project.
-4. create a new "report" project (path "/vfs/projects/report")
-5. add only the chapters to that project, so that the initial background
+4. When done generating information, create a new "report" project (path "/vfs/projects/report")
+5. Add only the chapters to that project, so that the initial background
 information is not part of the final output
-6. call "system_objective_fulfilled" function with the "/vfs/project/report" as
+6. Call "system_objective_fulfilled" function with the "/vfs/project/report" as
 the outcome.
 
 </agent-instructions>
@@ -284,6 +284,7 @@ class Loop {
           fileSystem: this.#fileSystem,
           caps: this.caps,
           moduleArgs: this.moduleArgs,
+          translator: this.#translator,
         })
       );
 
@@ -304,6 +305,8 @@ class Loop {
         const body: GeminiBody = {
           contents,
           generationConfig: {
+            temperature: 0,
+            topP: 1,
             thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
           },
           systemInstruction: createSystemInstruction({ useUI }),

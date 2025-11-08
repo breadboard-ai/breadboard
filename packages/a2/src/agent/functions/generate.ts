@@ -21,21 +21,24 @@ import { mergeContent, mergeTextParts, toText, tr } from "../../a2/utils";
 import { callVideoGen, expandVeoError } from "../../video-generator/main";
 import { callAudioGen } from "../../audio-generator/main";
 import { callMusicGen } from "../../music-generator/main";
+import { PidginTranslator } from "../pidgin-translator";
 
 export { defineGenerateFunctions };
 
 const VIDEO_MODEL_NAME = "veo-3.1-generate-preview";
+const RETRY_SLEEP_MS = 700;
 
 export type GenerateFunctionArgs = {
   fileSystem: AgentFileSystem;
   caps: Capabilities;
   moduleArgs: A2ModuleArgs;
+  translator: PidginTranslator;
 };
 
 function defineGenerateFunctions(
   args: GenerateFunctionArgs
 ): FunctionDefinition[] {
-  const { fileSystem, caps, moduleArgs } = args;
+  const { fileSystem, caps, moduleArgs, translator } = args;
   return [
     defineFunction(
       {
@@ -124,19 +127,12 @@ The following strategies will help you create effective prompts to generate exac
 An extremely versatile text generator, powered by Gemini. Use it for any tasks
 that involve generation of text. Supports multimodal content input.`.trim(),
         parameters: {
-          prompt: z.string().describe(
-            `
-Detailed prompt to use for text generation.`.trim()
-          ),
-          context: z
-            .array(z.string().describe(`The VFS path to a file`))
-            .describe(
-              `
-A list of files or projects to use as context for the prompt. These must be VFS
-paths. If you need to pass text as context, first write it to file and pass the
-VFS path of that file`.trim()
-            )
-            .optional(),
+          prompt: z.string().describe(tr`
+
+Detailed prompt to use for text generation The prompt may include references to VFS files. For instance, if you have an existing file at "/vfs/text3.md", you can reference it as <file src="/vfs/text3.md"> in the prompt.
+
+These references can point to files of any type, such as images, audio, videos, etc. Projects can also be referenced in this way.
+`),
           model: z.enum(["pro", "flash", "lite"]).describe(tr`
 
 The Gemini model to use for text generation. How to choose the right model:
@@ -146,12 +142,11 @@ The Gemini model to use for text generation. How to choose the right model:
 - choose "lite" for high throughput. Use this model when speed is paramount.
 
 `),
-          output_format: z.enum(["file", "text"]).describe(`The output format.
-When "file" is specified, the output will be saved as a VFS file and the 
-"file_path" response parameter will be provided as output. Use this when you
-expect a long output from the text generator. When "text" is specified, the
-output will be returned as text directlty, and the "text" response parameter
-will be provided.`),
+          output_format: z.enum(["file", "text"]).describe(tr`
+
+The output format. When "file" is specified, the output will be saved as a VFS file and the "file_path" response parameter will be provided as output. Use this when you expect a long output from the text generator. NOTE that choosing this option will prevent you from seeing the output directly: you only get back the VFS path to the file. You can read this file as a separate action, but if you do expect to read it, the "text" output format might be a better choice.
+
+When "text" is specified, the output will be returned as text directlty, and the "text" response parameter will be provided.`),
           project_path: z
             .string()
             .describe(
@@ -209,7 +204,6 @@ provided when the "output_format" is set to "text"`
           model,
           search_grounding,
           maps_grounding,
-          context = [],
           project_path,
           output_format,
         },
@@ -217,7 +211,6 @@ provided when the "output_format" is set to "text"`
       ) => {
         console.log("PROMPT", prompt);
         console.log("MODEL", model);
-        console.log("CONTEXT", context);
         console.log("SEARCH_GROUNDING", search_grounding);
         console.log("MAPS_GROUNDING", maps_grounding);
         console.log("PROJECT_PATH", project_path);
@@ -237,18 +230,11 @@ provided when the "output_format" is set to "text"`
           tools.push({ googleMaps: {} });
         }
         if (tools.length === 0) tools = undefined;
-        const parts = context
-          .flatMap((path) => {
-            const file = fileSystem.get(path);
-            if (!ok(file)) return null;
-            return file;
-          })
-          .filter((file) => file !== null);
-        parts.unshift({ text: prompt });
-        const contents = [{ parts }];
+        const translated = translator.fromPidginString(prompt);
+        if (!ok(translated)) return { error: translated.$error };
         const body = await conformGeminiBody(moduleArgs, {
           systemInstruction: defaultSystemInstruction(),
-          contents,
+          contents: [translated],
           tools,
           generationConfig: {
             thinkingConfig: {
@@ -259,27 +245,32 @@ provided when the "output_format" is set to "text"`
         });
         if (!ok(body)) return body;
         const resolvedModel = resolveTextModel(model);
-        const generating = await streamGenerateContent(
-          resolvedModel,
-          body,
-          moduleArgs
-        );
-        if (!ok(generating)) {
-          return { error: generating.$error };
-        }
         const results: TextCapabilityPart[] = [];
-        for await (const chunk of generating) {
-          const parts = chunk.candidates.at(0)?.content?.parts;
-          if (!parts) continue;
-          for (const part of parts) {
-            if (!part || !("text" in part)) continue;
-            if (part.thought) {
-              statusUpdater(part.text, { isThought: true });
-            } else {
-              results.push(part);
+        let maxRetries = 5;
+        do {
+          const generating = await streamGenerateContent(
+            resolvedModel,
+            body,
+            moduleArgs
+          );
+          if (!ok(generating)) {
+            return { error: generating.$error };
+          }
+          for await (const chunk of generating) {
+            const parts = chunk.candidates.at(0)?.content?.parts;
+            if (!parts) continue;
+            for (const part of parts) {
+              if (!part || !("text" in part)) continue;
+              if (part.thought) {
+                statusUpdater(part.text, { isThought: true });
+              } else {
+                results.push(part);
+              }
             }
           }
-        }
+          if (results.length > 0) break;
+          await new Promise((resolve) => setTimeout(resolve, RETRY_SLEEP_MS));
+        } while (maxRetries-- > 0);
         statusUpdater(null);
         const textParts = mergeTextParts(results, "\n");
         if (textParts.length === 0) {
