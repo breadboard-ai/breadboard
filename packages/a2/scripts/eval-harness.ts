@@ -12,6 +12,7 @@ import { Logger } from "./logger";
 import { Har } from "har-format";
 import { mock } from "node:test";
 import type { callGeminiImage } from "../src/a2/image-utils";
+import { autoClearingInterval } from "./auto-clearing-interval";
 
 export { EvalHarness };
 
@@ -36,7 +37,7 @@ export type EvalHarnessArgs = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyFunction = (...args: any[]) => any;
 
-export function mockFunction<T extends AnyFunction>(
+function mockFunction<T extends AnyFunction>(
   moduleSpecifier: string,
   functionName: string,
   implementation?: T
@@ -154,6 +155,11 @@ class EvalHarness {
   }
 
   async eval(evalFunction: EvalHarnessFunction): Promise<Har> {
+    // @ts-expect-error "Can't define window? Haha"
+    globalThis.window = { location: new URL("https://example.com/") } as Window;
+
+    mock.method(globalThis, "setInterval", autoClearingInterval.setInterval);
+
     mockFunction<typeof callGeminiImage>(
       "../src/a2/image-utils",
       "callGeminiImage",
@@ -176,6 +182,8 @@ class EvalHarness {
     await evalFunction(this);
     const har = this.logger.getHar();
     mock.restoreAll();
+    autoClearingInterval.clearAllIntervals();
+
     return har;
   }
 }

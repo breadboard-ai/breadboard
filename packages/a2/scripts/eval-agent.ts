@@ -7,8 +7,6 @@
 import { config } from "dotenv";
 import { EvalHarness } from "./eval-harness";
 import { llm } from "../src/a2/utils";
-import { mock } from "node:test";
-import { autoClearingInterval } from "./auto-clearing-interval";
 import { mkdir, writeFile } from "fs/promises";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -20,10 +18,6 @@ const OUT_DIR = join(ROOT_DIR, "out");
 async function ensureDir(dir: string) {
   await mkdir(dir, { recursive: true });
 }
-// @ts-expect-error "Can't define window? Haha"
-globalThis.window = { location: new URL("https://example.com/") } as Window;
-
-mock.method(globalThis, "setInterval", autoClearingInterval.setInterval);
 
 config();
 
@@ -40,8 +34,6 @@ const har = await harness.eval(async ({ caps, moduleArgs }) => {
   const result = await loop.run(objective, {});
   console.log("RESULT", result);
 });
-
-autoClearingInterval.clearAllIntervals();
 
 await ensureDir(OUT_DIR);
 
