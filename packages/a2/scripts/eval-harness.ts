@@ -6,18 +6,18 @@
 
 import { Capabilities, Outcome } from "@breadboard-ai/types";
 
-import { A2ModuleArgs } from "./runnable-module-factory";
+import { A2ModuleArgs } from "../src/runnable-module-factory";
 import { McpClientManager } from "@breadboard-ai/mcp";
 import {
   FunctionDefinition,
   StatusUpdateCallback,
-} from "./agent/function-definition";
-import { FunctionCallerImpl } from "./agent/function-caller";
-import { SimplifiedToolManager } from "./a2/tool-manager";
-import { AgentFileSystem } from "./agent/file-system";
+} from "../src/agent/function-definition";
+import { FunctionCallerImpl } from "../src/agent/function-caller";
+import { SimplifiedToolManager } from "../src//a2/tool-manager";
+import { AgentFileSystem } from "../src/agent/file-system";
 import { ok } from "@breadboard-ai/utils";
 import { Logger } from "./logger";
-import { FunctionCallerFactory } from "./agent/types";
+import { FunctionCallerFactory } from "../src/agent/types";
 import { Har } from "har-format";
 
 export { EvalHarness };

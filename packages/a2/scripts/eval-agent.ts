@@ -5,7 +5,7 @@
  */
 
 import { config } from "dotenv";
-import { EvalHarness } from "../src/eval-harness";
+import { EvalHarness } from "./eval-harness";
 import { llm } from "../src/a2/utils";
 import { AgentFileSystem } from "../src/agent/file-system";
 import { mock } from "node:test";
@@ -30,13 +30,13 @@ config();
 
 const apiKey = process.env.GEMINI_API_KEY;
 
-// Need to import dynamically to let the mocks do their job.
-const Loop = (await import("../src/agent/loop")).Loop;
-
 const fileSystem = new AgentFileSystem();
 const harness = new EvalHarness({ name: "eval-agent", apiKey, fileSystem });
 const har = await harness.eval(
   async ({ caps, moduleArgs, functionCallerFactory }) => {
+    // Need to import dynamically to let the mocks do their job.
+    const Loop = (await import("../src/agent/loop")).Loop;
+
     const loop = new Loop(caps, moduleArgs, fileSystem, functionCallerFactory);
     const objective =
       llm`<objective>Come up with 4 ideas for Halloween-themed mugs and turn them into images that can be used as inspirations for online storefront graphics. Caption each with a witty, humorous paragraph of text suitable for an instagram post</objective>`.asContent();
