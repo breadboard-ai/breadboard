@@ -9,12 +9,18 @@ import { Capabilities } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../src/runnable-module-factory";
 import { McpClientManager } from "@breadboard-ai/mcp";
 import { Logger } from "./logger";
-import { Har } from "har-format";
 import { mock } from "node:test";
 import type { callGeminiImage } from "../src/a2/image-utils";
 import { autoClearingInterval } from "./auto-clearing-interval";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+import { mkdir, writeFile } from "fs/promises";
 
 export { EvalHarness };
+
+const MODULE_DIR = dirname(fileURLToPath(import.meta.url));
+const ROOT_DIR = join(MODULE_DIR, "..");
+const OUT_DIR = join(ROOT_DIR, "out");
 
 export type EvalHarnessRuntimeArgs = {
   caps: Capabilities;
@@ -33,22 +39,6 @@ export type EvalHarnessArgs = {
   name: string;
   apiKey?: string;
 };
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyFunction = (...args: any[]) => any;
-
-function mockFunction<T extends AnyFunction>(
-  moduleSpecifier: string,
-  functionName: string,
-  implementation?: T
-) {
-  const resolvedPath = import.meta.resolve(moduleSpecifier);
-  const mocked = mock.fn(implementation);
-
-  mock.module(resolvedPath, { namedExports: { [functionName]: mocked } });
-
-  return mocked;
-}
 
 /**
  * Given a GeminiInputs, runs it and returns GeminiAPIOutputs
@@ -154,7 +144,7 @@ class EvalHarness {
     }
   }
 
-  async eval(evalFunction: EvalHarnessFunction): Promise<Har> {
+  async eval(evalFunction: EvalHarnessFunction): Promise<void> {
     // @ts-expect-error "Can't define window? Haha"
     globalThis.window = { location: new URL("https://example.com/") } as Window;
 
@@ -183,7 +173,44 @@ class EvalHarness {
     const har = this.logger.getHar();
     mock.restoreAll();
     autoClearingInterval.clearAllIntervals();
-
-    return har;
+    await ensureDir(OUT_DIR);
+    await writeFile(
+      join(OUT_DIR, `${this.args.name}-${timestamp()}.har`),
+      JSON.stringify(har, null, 2),
+      "utf-8"
+    );
   }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFunction = (...args: any[]) => any;
+
+function mockFunction<T extends AnyFunction>(
+  moduleSpecifier: string,
+  functionName: string,
+  implementation?: T
+) {
+  const resolvedPath = import.meta.resolve(moduleSpecifier);
+  const mocked = mock.fn(implementation);
+
+  mock.module(resolvedPath, { namedExports: { [functionName]: mocked } });
+
+  return mocked;
+}
+
+async function ensureDir(dir: string) {
+  await mkdir(dir, { recursive: true });
+}
+
+function timestamp(): string {
+  const now = new Date();
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+
+  return `${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
 }

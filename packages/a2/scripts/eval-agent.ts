@@ -7,24 +7,13 @@
 import { config } from "dotenv";
 import { EvalHarness } from "./eval-harness";
 import { llm } from "../src/a2/utils";
-import { mkdir, writeFile } from "fs/promises";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
-
-const MODULE_DIR = dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = join(MODULE_DIR, "..");
-const OUT_DIR = join(ROOT_DIR, "out");
-
-async function ensureDir(dir: string) {
-  await mkdir(dir, { recursive: true });
-}
 
 config();
 
 const apiKey = process.env.GEMINI_API_KEY;
 
 const harness = new EvalHarness({ name: "eval-agent", apiKey });
-const har = await harness.eval(async ({ caps, moduleArgs }) => {
+await harness.eval(async ({ caps, moduleArgs }) => {
   // Need to import dynamically to let the mocks do their job.
   const Loop = (await import("../src/agent/loop")).Loop;
 
@@ -34,11 +23,3 @@ const har = await harness.eval(async ({ caps, moduleArgs }) => {
   const result = await loop.run(objective, {});
   console.log("RESULT", result);
 });
-
-await ensureDir(OUT_DIR);
-
-await writeFile(
-  join(OUT_DIR, "har.json"),
-  JSON.stringify(har, null, 2),
-  "utf-8"
-);
