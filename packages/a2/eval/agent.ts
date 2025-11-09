@@ -29,13 +29,13 @@ session({ name: "Agent Loop", apiKey }, async (session) => {
     const result = await loop.run(objective, {});
     console.log("RESULT", result);
   });
-  //   session.eval(async ({ caps, moduleArgs }) => {
-  //     const loop = new Loop(caps, moduleArgs);
-  //     const objective =
-  //       llm`Given a product, come up with a rubric for evaulating a marketing pitch for the rubric, then generate four different marketing pitches for the product, evaluate each using the rubric, and return the winning pitch
+  session.eval("Marketing Pitch w/Critique", async ({ caps, moduleArgs }) => {
+    const loop = new Loop(caps, moduleArgs);
+    const objective =
+      llm`Given a product, come up with a rubric for evaulating a marketing pitch for the rubric, then generate four different marketing pitches for the product, evaluate each using the rubric, and return the winning pitch
 
-  // Product: Bluetooth-enabled Electric Toothbrush`.asContent();
-  //     const result = await loop.run(objective, {});
-  //     console.log("RESULT", result);
-  //   });
+  Product: Bluetooth-enabled Electric Toothbrush`.asContent();
+    const result = await loop.run(objective, {});
+    console.log("RESULT", result);
+  });
 });
