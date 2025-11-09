@@ -4,189 +4,254 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EvalHarness } from "../src/eval-harness";
-import { getUIDataUpdatePrompt } from "../src/agent/prompts/create-data-update";
-import { getDesignSurfaceSpecsPrompt } from "../src/agent/prompts/design-surface-specs";
-import { getCreateUILayoutPrompt } from "../src/agent/prompts/create-ui-layout";
-import { llm } from "../src/a2/utils";
-import { config } from "dotenv";
-import { ok, toJson } from "@breadboard-ai/utils";
-import { exit } from "process";
-import inquirer from "inquirer";
-import { ParsedSurfaces, Surface } from "./surface";
-import { WorkItem } from "./work-item";
-import { Outcome } from "@breadboard-ai/types";
-import generateContent, {
-  GeminiAPIOutputs,
-  GeminiInputs,
-} from "../src/a2/gemini";
+import { Capabilities } from "@breadboard-ai/types";
 
-config();
+import { A2ModuleArgs } from "../src/runnable-module-factory";
+import { McpClientManager } from "@breadboard-ai/mcp";
+import { Logger } from "./logger";
+import { mock } from "node:test";
+import type { callGeminiImage } from "../src/a2/image-utils";
+import { autoClearingInterval } from "./auto-clearing-interval";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+import { mkdir, writeFile } from "fs/promises";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const emit = { time: true, result: false };
+export { session };
 
-const objective =
-  llm`Play a learning quiz on the following subject with a high school student, using a series of multiple-choice questions:
+const MODULE_DIR = dirname(fileURLToPath(import.meta.url));
+const ROOT_DIR = join(MODULE_DIR, "..");
+const OUT_DIR = join(ROOT_DIR, "out");
 
-<subject>Fall of Communism in Soviet Russia</subject>
+export type EvalHarnessRuntimeArgs = {
+  caps: Capabilities;
+  moduleArgs: A2ModuleArgs;
+};
 
-As the student answers the question, regulate the difficulty of questions. Start with the easy ones, and if the student is answering them correctly, proceed to the more challenging ones.
+export type EvalHarnessSession = {
+  eval(evalName: string, fn: EvalHarnessFunction): Promise<void>;
+};
 
-When the student fails to answer the question correctly, give them a brief historical overview and re-ask the question again in a slightly different way to test their knowledge.
+export type EvalHarnessSessionFunction = (
+  session: EvalHarnessSession
+) => Promise<void>;
 
-After 5 questions, congratulate the student and exit the quiz. A student may decide to exit early and that is okay.
+export type EvalHarnessFunction = (
+  args: EvalHarnessRuntimeArgs
+) => Promise<void>;
 
-Before exiting, record the answers and the summary of the session for the teacher:
+export type EvalHarnessArgs = {
+  /**
+   * The name of the eval. Will be used to name the output
+   * file.
+   */
+  name: string;
+  apiKey?: string;
+};
 
-- questions asked and student's responses
-- whether or not the student completed the quiz
-- what the student learned
--  where the student should concentrate on learning`.asContent();
-
-async function gemini(
-  harness: EvalHarness,
-  inputs: GeminiInputs
-): Promise<Outcome<GeminiAPIOutputs>> {
-  return generateContent(inputs, harness.caps, harness.moduleArgs) as Promise<
-    Outcome<GeminiAPIOutputs>
-  >;
-}
-
-async function generateSpec(harness: EvalHarness): Promise<ParsedSurfaces> {
-  const surfaces = await gemini(
-    harness,
-    getDesignSurfaceSpecsPrompt([objective])
-  );
-  if (!ok(surfaces)) {
-    console.log("ERROR", surfaces.$error);
-    exit(-1);
-  }
-
-  const parsedSurfaces: { surfaces: Surface[] } | undefined = toJson([
-    surfaces.candidates.at(0)!.content!,
-  ]);
-  if (!parsedSurfaces) {
-    console.log("ERROR", "No surfaces found");
-    exit(-1);
-  }
-
-  return parsedSurfaces;
-}
-
-async function chooseSurfaces(
-  parsedSurfaces: ParsedSurfaces
-): Promise<{ surface: number; type: string }> {
-  return inquirer.prompt([
-    {
-      type: "list",
-      name: "surface",
-      message: "Which surface do you want?",
-      choices: [
-        ...parsedSurfaces.surfaces.map((surface) => surface.surfaceId),
-        "All",
-      ],
-      filter: (choice) =>
-        parsedSurfaces.surfaces.findIndex(
-          (surface) => surface.surfaceId === choice
-        ),
-    },
-    {
-      type: "list",
-      name: "type",
-      message: "Which surface do you want?",
-      choices: ["ui", "data"],
-    },
-  ]);
-}
-
-async function renderSurface(harness: EvalHarness, renderableSurface: Surface) {
-  console.log(`Rendering ${renderableSurface.surfaceId}`);
-  const prompt = getCreateUILayoutPrompt([
-    llm`${JSON.stringify(renderableSurface)}`.asContent(),
-  ]);
-
-  const ui = await gemini(harness, prompt);
-  if (!ok(ui)) {
-    console.log("ERROR", ui.$error);
-    exit(-1);
-  }
-
-  return toJson([ui.candidates.at(0)!.content!]);
-}
-
-async function createDataUpdate(
-  harness: EvalHarness,
-  renderableSurface: Surface
+function session(
+  args: EvalHarnessArgs,
+  sessionFunction: EvalHarnessSessionFunction
 ) {
-  console.log(`Creating additional data for ${renderableSurface.surfaceId}`);
-  const prompt = getUIDataUpdatePrompt([
-    objective,
-
-    llm`Create some data on the same topic as the example data for this surface. You must match the quiz objective above.
-
-    ${JSON.stringify(renderableSurface)}`.asContent(),
-  ]);
-
-  const ui = await gemini(harness, prompt);
-  if (!ok(ui)) {
-    console.log("ERROR", ui.$error);
-    exit(-1);
-  }
-
-  return toJson([ui.candidates.at(0)!.content!]);
+  const harness = new EvalHarness(args);
+  return harness.session(sessionFunction);
 }
 
-async function evaluate() {
-  const harness = new EvalHarness({ apiKey: GEMINI_API_KEY });
-  const parsedSurfaces = await generateSpec(harness);
-  const choices = await chooseSurfaces(parsedSurfaces);
+/**
+ * Given a GeminiInputs, runs it and returns GeminiAPIOutputs
+ */
+class EvalHarness {
+  readonly logger = new Logger();
 
-  const chosenSurfaces =
-    choices.surface === -1
-      ? parsedSurfaces.surfaces
-      : [parsedSurfaces.surfaces.at(choices.surface)!];
-
-  const workload: Promise<WorkItem>[] = [];
-  switch (choices.type) {
-    case "ui": {
-      workload.push(
-        ...chosenSurfaces.map((surface) =>
-          new WorkItem().run(`ui`, harness, surface, renderSurface, emit)
-        )
-      );
-      break;
-    }
-
-    case "data": {
-      workload.push(
-        ...chosenSurfaces.map((surface) =>
-          new WorkItem().run("data", harness, surface, createDataUpdate, emit)
-        )
-      );
-      break;
-    }
-  }
-
-  const renderWork = await Promise.all(workload);
-  console.table(
-    renderWork.map((item) => ({ guid: item.uuid, duration: item.duration }))
-  );
-
-  const listAll = await inquirer.prompt([
-    {
-      type: "confirm",
-      name: "list",
-      message: "List all results?",
-      default: true,
+  readonly caps: Capabilities = {
+    fetch() {
+      throw new Error(`Not implemented`);
     },
-  ]);
+    invoke() {
+      throw new Error(`Not implemented`);
+    },
+    input() {
+      throw new Error(`Not implemented`);
+    },
+    async output(data) {
+      console.log(data.$metadata?.title);
+      return { delivered: true };
+    },
+    describe() {
+      throw new Error(`Not implemented`);
+    },
+    query() {
+      throw new Error(`Not implemented`);
+    },
+    read() {
+      throw new Error(`Not implemented`);
+    },
+    async write() {
+      // Do nothing
+    },
+    blob() {
+      throw new Error(`Not implemented`);
+    },
+  };
 
-  if (listAll.list) {
-    renderWork.forEach((item) =>
-      console.log(JSON.stringify(item.result, null, 2))
+  readonly moduleArgs: A2ModuleArgs = {
+    mcpClientManager: {} as unknown as McpClientManager,
+    fetchWithCreds: async (url: RequestInfo | URL, init?: RequestInit) => {
+      const entryId = this.logger.request(url as string, init);
+      const response = await fetch(url, {
+        ...init,
+        headers: {
+          ...init?.headers,
+          "x-goog-api-key": this.args.apiKey!,
+        },
+      });
+      this.logger.response(entryId, response.clone());
+      return response;
+    },
+    context: {
+      currentStep: {
+        id: "current-step",
+        type: "mock",
+      },
+      getProjectRunState: () => {
+        return {
+          console: new Map([
+            [
+              "current-step",
+              {
+                title: "Current Step",
+                open: true,
+                rerun: false,
+                work: new Map(),
+                output: new Map(),
+                error: null,
+                completed: false,
+                current: null,
+              },
+            ],
+          ]),
+          app: {
+            state: "splash",
+            screens: new Map([
+              [
+                "current-step",
+                {
+                  title: "Current Step",
+                  progress: undefined,
+                  expectedDuration: -1,
+                  progressCompletion: -1,
+                  status: "interactive",
+                  type: "progress",
+                  outputs: new Map(),
+                  last: null,
+                },
+              ],
+            ]),
+            current: new Map(),
+            last: null,
+          },
+        };
+      },
+    },
+  };
+
+  constructor(private readonly args: EvalHarnessArgs) {
+    if (!args.apiKey) {
+      throw new Error(`Unable to run: no Gemini API Key supplied`);
+    }
+  }
+
+  async session(sessionFunction: EvalHarnessSessionFunction) {
+    // @ts-expect-error "Can't define window? Haha"
+    globalThis.window = { location: new URL("https://example.com/") } as Window;
+
+    mock.method(globalThis, "setInterval", autoClearingInterval.setInterval);
+
+    mockFunction<typeof callGeminiImage>(
+      "../src/a2/image-utils",
+      "callGeminiImage",
+      async () => {
+        return [
+          {
+            parts: [
+              {
+                storedData: {
+                  handle: "https://example.com/fakeurl",
+                  mimeType: "image/png",
+                },
+              },
+            ],
+          },
+        ];
+      }
     );
+
+    const evals: Promise<void>[] = [];
+    await sessionFunction({
+      eval: async (
+        evalName: string,
+        evalFunction: EvalHarnessFunction
+      ): Promise<void> => {
+        const runEval = async () => {
+          await evalFunction(this);
+          const har = this.logger.getHar();
+          await ensureDir(OUT_DIR);
+          await writeFile(
+            join(
+              OUT_DIR,
+              `${toKebabFilename(this.args.name)}-${toKebabFilename(evalName)}-${timestamp()}.har`
+            ),
+            JSON.stringify(har, null, 2),
+            "utf-8"
+          );
+        };
+        evals.push(runEval());
+      },
+    });
+    await Promise.all(evals);
+
+    mock.restoreAll();
+    autoClearingInterval.clearAllIntervals();
   }
 }
 
-evaluate();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFunction = (...args: any[]) => any;
+
+function mockFunction<T extends AnyFunction>(
+  moduleSpecifier: string,
+  functionName: string,
+  implementation?: T
+) {
+  const resolvedPath = import.meta.resolve(moduleSpecifier);
+  const mocked = mock.fn(implementation);
+
+  mock.module(resolvedPath, { namedExports: { [functionName]: mocked } });
+
+  return mocked;
+}
+
+async function ensureDir(dir: string) {
+  await mkdir(dir, { recursive: true });
+}
+
+function timestamp(): string {
+  const now = new Date();
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+
+  return `${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
+}
+
+function toKebabFilename(str: string): string {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
