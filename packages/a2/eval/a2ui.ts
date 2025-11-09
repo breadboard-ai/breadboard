@@ -12,14 +12,14 @@ import { config } from "dotenv";
 import { ok, toJson } from "@breadboard-ai/utils";
 import { exit } from "process";
 import inquirer from "inquirer";
-import { ParsedSurfaces, Surface } from "./surface";
-import { WorkItem } from "./work-item";
+import { ParsedSurfaces, Surface } from "../scripts/surface";
+import { WorkItem } from "../scripts/work-item";
 import { Outcome } from "@breadboard-ai/types";
 import generateContent, {
   GeminiAPIOutputs,
   GeminiInputs,
 } from "../src/a2/gemini";
-import { session } from "./eval";
+import { session } from "../scripts/eval";
 
 config();
 

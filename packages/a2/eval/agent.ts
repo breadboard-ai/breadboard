@@ -6,7 +6,7 @@
 
 import { config } from "dotenv";
 import { llm } from "../src/a2/utils";
-import { session } from "./eval";
+import { session } from "../scripts/eval";
 
 config();
 
