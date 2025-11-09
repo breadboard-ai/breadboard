@@ -23,7 +23,7 @@ import { AgentUI } from "./ui";
 import { defineGenerateFunctions } from "./functions/generate";
 import { prompt as a2UIPrompt } from "./a2ui/prompt";
 import { defineA2UIFunctions } from "./functions/ui";
-import { FunctionCallerFactory } from "./types";
+import { FunctionCallerImpl } from "./function-caller";
 
 export { Loop };
 
@@ -211,15 +211,15 @@ ${args.useUI ? a2UIPrompt : "You do not have a way to interact with the user dur
  */
 class Loop {
   #translator: PidginTranslator;
+  #fileSystem: AgentFileSystem;
   #ui: AgentUI;
 
   constructor(
     private readonly caps: Capabilities,
-    private readonly moduleArgs: A2ModuleArgs,
-    private readonly fileSystem: AgentFileSystem,
-    private readonly functionCallerFactory: FunctionCallerFactory
+    private readonly moduleArgs: A2ModuleArgs
   ) {
-    this.#translator = new PidginTranslator(caps, moduleArgs, this.fileSystem);
+    this.#fileSystem = new AgentFileSystem();
+    this.#translator = new PidginTranslator(caps, moduleArgs, this.#fileSystem);
     this.#ui = new AgentUI(caps, moduleArgs, this.#translator);
   }
 
@@ -251,7 +251,7 @@ class Loop {
 
       const systemFunctions = mapDefinitions(
         defineSystemFunctions({
-          fileSystem: this.fileSystem,
+          fileSystem: this.#fileSystem,
           terminateCallback: () => {
             terminateLoop = true;
           },
@@ -281,7 +281,7 @@ class Loop {
 
       const generateFunctions = mapDefinitions(
         defineGenerateFunctions({
-          fileSystem: this.fileSystem,
+          fileSystem: this.#fileSystem,
           caps: this.caps,
           moduleArgs: this.moduleArgs,
           translator: this.#translator,
@@ -339,7 +339,7 @@ class Loop {
             );
           }
           contents.push(content);
-          const functionCaller = this.functionCallerFactory.create(
+          const functionCaller = new FunctionCallerImpl(
             functionDefinitionMap,
             objectivePidgin.tools
           );
@@ -384,7 +384,7 @@ class Loop {
     if (success) {
       outcomes = this.#translator.fromPidginFiles(objective_outcomes);
       if (!ok(outcomes)) return outcomes;
-      const intermediateFiles = [...this.fileSystem.files.keys()];
+      const intermediateFiles = [...this.#fileSystem.files.keys()];
       intermediate = this.#translator.fromPidginFiles(intermediateFiles);
       if (!ok(intermediate)) return intermediate;
     }

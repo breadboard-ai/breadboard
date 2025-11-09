@@ -4,27 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities, Outcome } from "@breadboard-ai/types";
+import { Capabilities } from "@breadboard-ai/types";
 
 import { A2ModuleArgs } from "../src/runnable-module-factory";
 import { McpClientManager } from "@breadboard-ai/mcp";
-import {
-  FunctionDefinition,
-  StatusUpdateCallback,
-} from "../src/agent/function-definition";
-import { FunctionCallerImpl } from "../src/agent/function-caller";
-import { SimplifiedToolManager } from "../src//a2/tool-manager";
-import { AgentFileSystem } from "../src/agent/file-system";
-import { ok } from "@breadboard-ai/utils";
 import { Logger } from "./logger";
-import { FunctionCallerFactory } from "../src/agent/types";
 import { Har } from "har-format";
+import { mock } from "node:test";
+import type { callGeminiImage } from "../src/a2/image-utils";
 
 export { EvalHarness };
 
 export type EvalHarnessRuntimeArgs = {
   caps: Capabilities;
-  functionCallerFactory: FunctionCallerFactory;
   moduleArgs: A2ModuleArgs;
 };
 
@@ -39,8 +31,23 @@ export type EvalHarnessArgs = {
    */
   name: string;
   apiKey?: string;
-  fileSystem: AgentFileSystem;
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFunction = (...args: any[]) => any;
+
+export function mockFunction<T extends AnyFunction>(
+  moduleSpecifier: string,
+  functionName: string,
+  implementation?: T
+) {
+  const resolvedPath = import.meta.resolve(moduleSpecifier);
+  const mocked = mock.fn(implementation);
+
+  mock.module(resolvedPath, { namedExports: { [functionName]: mocked } });
+
+  return mocked;
+}
 
 /**
  * Given a GeminiInputs, runs it and returns GeminiAPIOutputs
@@ -76,38 +83,6 @@ class EvalHarness {
     },
     blob() {
       throw new Error(`Not implemented`);
-    },
-  };
-
-  readonly functionCallerFactory = {
-    create: (
-      builtIn: Map<string, FunctionDefinition>,
-      custom: SimplifiedToolManager
-    ) => {
-      mock("generate_images_from_prompt", async () => {
-        const image = this.args.fileSystem.add({
-          storedData: {
-            handle: "https://example.com/fakeurl",
-            mimeType: "image/png",
-          },
-        });
-        if (!ok(image)) return { error: image.$error };
-        return { images: [image] };
-      });
-      return new FunctionCallerImpl(builtIn, custom);
-
-      function mock(
-        name: string,
-        handler: (
-          args: Record<string, unknown>,
-          statusUpdateCallback: StatusUpdateCallback
-        ) => Promise<Outcome<Record<string, unknown>>>
-      ) {
-        const def = builtIn.get(name);
-        if (!def) return;
-        const mocked: FunctionDefinition = { ...def, handler };
-        builtIn.set(name, mocked);
-      }
     },
   };
 
@@ -179,7 +154,28 @@ class EvalHarness {
   }
 
   async eval(evalFunction: EvalHarnessFunction): Promise<Har> {
+    mockFunction<typeof callGeminiImage>(
+      "../src/a2/image-utils",
+      "callGeminiImage",
+      async () => {
+        return [
+          {
+            parts: [
+              {
+                storedData: {
+                  handle: "https://example.com/fakeurl",
+                  mimeType: "image/png",
+                },
+              },
+            ],
+          },
+        ];
+      }
+    );
+
     await evalFunction(this);
-    return this.logger.getHar();
+    const har = this.logger.getHar();
+    mock.restoreAll();
+    return har;
   }
 }

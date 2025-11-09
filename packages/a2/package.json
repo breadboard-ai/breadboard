@@ -5,7 +5,7 @@
   "main": "./dist/src/index.js",
   "type": "module",
   "scripts": {
-    "eval:agent": "tsx scripts/eval-agent.ts",
+    "eval:agent": "tsx --experimental-test-module-mocks scripts/eval-agent.ts",
     "build": "wireit"
   },
   "wireit": {
