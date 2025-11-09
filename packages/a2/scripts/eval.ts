@@ -60,6 +60,112 @@ function session(
  * Given a GeminiInputs, runs it and returns GeminiAPIOutputs
  */
 class EvalHarness {
+  constructor(private readonly args: EvalHarnessArgs) {
+    if (!args.apiKey) {
+      throw new Error(`Unable to run: no Gemini API Key supplied`);
+    }
+  }
+
+  async session(sessionFunction: EvalHarnessSessionFunction) {
+    // @ts-expect-error "Can't define window? Haha"
+    globalThis.window = { location: new URL("https://example.com/") } as Window;
+
+    mock.method(globalThis, "setInterval", autoClearingInterval.setInterval);
+
+    mockFunction<typeof callGeminiImage>(
+      "../src/a2/image-utils",
+      "callGeminiImage",
+      async () => {
+        return [
+          {
+            parts: [
+              {
+                storedData: {
+                  handle: "https://example.com/fakeurl",
+                  mimeType: "image/png",
+                },
+              },
+            ],
+          },
+        ];
+      }
+    );
+
+    const evals: Promise<void>[] = [];
+    await sessionFunction({
+      eval: async (
+        evalName: string,
+        evalFunction: EvalHarnessFunction
+      ): Promise<void> => {
+        const runEval = async () => {
+          const run = new EvalRun(this.args);
+          await evalFunction(run);
+          const har = run.logger.getHar();
+          await ensureDir(OUT_DIR);
+          await writeFile(
+            join(
+              OUT_DIR,
+              `${toKebabFilename(this.args.name)}-${toKebabFilename(evalName)}-${timestamp()}.har`
+            ),
+            JSON.stringify(har, null, 2),
+            "utf-8"
+          );
+        };
+        evals.push(runEval());
+      },
+    });
+    await Promise.all(evals);
+
+    mock.restoreAll();
+    autoClearingInterval.clearAllIntervals();
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFunction = (...args: any[]) => any;
+
+function mockFunction<T extends AnyFunction>(
+  moduleSpecifier: string,
+  functionName: string,
+  implementation?: T
+) {
+  const resolvedPath = import.meta.resolve(moduleSpecifier);
+  const mocked = mock.fn(implementation);
+
+  mock.module(resolvedPath, { namedExports: { [functionName]: mocked } });
+
+  return mocked;
+}
+
+async function ensureDir(dir: string) {
+  await mkdir(dir, { recursive: true });
+}
+
+function timestamp(): string {
+  const now = new Date();
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+
+  return `${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
+}
+
+function toKebabFilename(str: string): string {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+class EvalRun implements EvalHarnessRuntimeArgs {
+  constructor(private readonly args: EvalHarnessArgs) {}
+
   readonly logger = new Logger();
 
   readonly caps: Capabilities = {
@@ -153,105 +259,4 @@ class EvalHarness {
       },
     },
   };
-
-  constructor(private readonly args: EvalHarnessArgs) {
-    if (!args.apiKey) {
-      throw new Error(`Unable to run: no Gemini API Key supplied`);
-    }
-  }
-
-  async session(sessionFunction: EvalHarnessSessionFunction) {
-    // @ts-expect-error "Can't define window? Haha"
-    globalThis.window = { location: new URL("https://example.com/") } as Window;
-
-    mock.method(globalThis, "setInterval", autoClearingInterval.setInterval);
-
-    mockFunction<typeof callGeminiImage>(
-      "../src/a2/image-utils",
-      "callGeminiImage",
-      async () => {
-        return [
-          {
-            parts: [
-              {
-                storedData: {
-                  handle: "https://example.com/fakeurl",
-                  mimeType: "image/png",
-                },
-              },
-            ],
-          },
-        ];
-      }
-    );
-
-    const evals: Promise<void>[] = [];
-    await sessionFunction({
-      eval: async (
-        evalName: string,
-        evalFunction: EvalHarnessFunction
-      ): Promise<void> => {
-        const runEval = async () => {
-          await evalFunction(this);
-          const har = this.logger.getHar();
-          await ensureDir(OUT_DIR);
-          await writeFile(
-            join(
-              OUT_DIR,
-              `${toKebabFilename(this.args.name)}-${toKebabFilename(evalName)}-${timestamp()}.har`
-            ),
-            JSON.stringify(har, null, 2),
-            "utf-8"
-          );
-        };
-        evals.push(runEval());
-      },
-    });
-    await Promise.all(evals);
-
-    mock.restoreAll();
-    autoClearingInterval.clearAllIntervals();
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyFunction = (...args: any[]) => any;
-
-function mockFunction<T extends AnyFunction>(
-  moduleSpecifier: string,
-  functionName: string,
-  implementation?: T
-) {
-  const resolvedPath = import.meta.resolve(moduleSpecifier);
-  const mocked = mock.fn(implementation);
-
-  mock.module(resolvedPath, { namedExports: { [functionName]: mocked } });
-
-  return mocked;
-}
-
-async function ensureDir(dir: string) {
-  await mkdir(dir, { recursive: true });
-}
-
-function timestamp(): string {
-  const now = new Date();
-
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  const hours = String(now.getHours()).padStart(2, "0");
-  const minutes = String(now.getMinutes()).padStart(2, "0");
-  const seconds = String(now.getSeconds()).padStart(2, "0");
-
-  return `${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
-}
-
-function toKebabFilename(str: string): string {
-  return str
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
 }
