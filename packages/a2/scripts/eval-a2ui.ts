@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EvalHarness } from "../src/eval-harness";
 import { getUIDataUpdatePrompt } from "../src/agent/prompts/create-data-update";
 import { getDesignSurfaceSpecsPrompt } from "../src/agent/prompts/design-surface-specs";
 import { getCreateUILayoutPrompt } from "../src/agent/prompts/create-ui-layout";
@@ -20,14 +19,17 @@ import generateContent, {
   GeminiAPIOutputs,
   GeminiInputs,
 } from "../src/a2/gemini";
+import { session } from "./eval";
 
 config();
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const emit = { time: true, result: false };
 
-const objective =
-  llm`Play a learning quiz on the following subject with a high school student, using a series of multiple-choice questions:
+session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
+  session.eval("Quiz", async ({ caps, moduleArgs }) => {
+    const objective =
+      llm`Play a learning quiz on the following subject with a high school student, using a series of multiple-choice questions:
 
 <subject>Fall of Communism in Soviet Russia</subject>
 
@@ -44,149 +46,145 @@ Before exiting, record the answers and the summary of the session for the teache
 - what the student learned
 -  where the student should concentrate on learning`.asContent();
 
-async function gemini(
-  harness: EvalHarness,
-  inputs: GeminiInputs
-): Promise<Outcome<GeminiAPIOutputs>> {
-  return generateContent(inputs, harness.caps, harness.moduleArgs) as Promise<
-    Outcome<GeminiAPIOutputs>
-  >;
-}
+    async function gemini(
+      inputs: GeminiInputs
+    ): Promise<Outcome<GeminiAPIOutputs>> {
+      return generateContent(inputs, caps, moduleArgs) as Promise<
+        Outcome<GeminiAPIOutputs>
+      >;
+    }
 
-async function generateSpec(harness: EvalHarness): Promise<ParsedSurfaces> {
-  const surfaces = await gemini(
-    harness,
-    getDesignSurfaceSpecsPrompt([objective])
-  );
-  if (!ok(surfaces)) {
-    console.log("ERROR", surfaces.$error);
-    exit(-1);
-  }
+    async function generateSpec(): Promise<ParsedSurfaces> {
+      const surfaces = await gemini(getDesignSurfaceSpecsPrompt([objective]));
+      if (!ok(surfaces)) {
+        console.log("ERROR", surfaces.$error);
+        exit(-1);
+      }
 
-  const parsedSurfaces: { surfaces: Surface[] } | undefined = toJson([
-    surfaces.candidates.at(0)!.content!,
-  ]);
-  if (!parsedSurfaces) {
-    console.log("ERROR", "No surfaces found");
-    exit(-1);
-  }
+      const parsedSurfaces: { surfaces: Surface[] } | undefined = toJson([
+        surfaces.candidates.at(0)!.content!,
+      ]);
+      if (!parsedSurfaces) {
+        console.log("ERROR", "No surfaces found");
+        exit(-1);
+      }
 
-  return parsedSurfaces;
-}
+      return parsedSurfaces;
+    }
 
-async function chooseSurfaces(
-  parsedSurfaces: ParsedSurfaces
-): Promise<{ surface: number; type: string }> {
-  return inquirer.prompt([
-    {
-      type: "list",
-      name: "surface",
-      message: "Which surface do you want?",
-      choices: [
-        ...parsedSurfaces.surfaces.map((surface) => surface.surfaceId),
-        "All",
-      ],
-      filter: (choice) =>
-        parsedSurfaces.surfaces.findIndex(
-          (surface) => surface.surfaceId === choice
-        ),
-    },
-    {
-      type: "list",
-      name: "type",
-      message: "Which surface do you want?",
-      choices: ["ui", "data"],
-    },
-  ]);
-}
+    async function chooseSurfaces(
+      parsedSurfaces: ParsedSurfaces
+    ): Promise<{ surface: number; type: string }> {
+      return inquirer.prompt([
+        {
+          type: "list",
+          name: "surface",
+          message: "Which surface do you want?",
+          choices: [
+            ...parsedSurfaces.surfaces.map((surface) => surface.surfaceId),
+            "All",
+          ],
+          filter: (choice) =>
+            parsedSurfaces.surfaces.findIndex(
+              (surface) => surface.surfaceId === choice
+            ),
+        },
+        {
+          type: "list",
+          name: "type",
+          message: "Which surface do you want?",
+          choices: ["ui", "data"],
+        },
+      ]);
+    }
 
-async function renderSurface(harness: EvalHarness, renderableSurface: Surface) {
-  console.log(`Rendering ${renderableSurface.surfaceId}`);
-  const prompt = getCreateUILayoutPrompt([
-    llm`${JSON.stringify(renderableSurface)}`.asContent(),
-  ]);
+    async function renderSurface(renderableSurface: Surface) {
+      console.log(`Rendering ${renderableSurface.surfaceId}`);
+      const prompt = getCreateUILayoutPrompt([
+        llm`${JSON.stringify(renderableSurface)}`.asContent(),
+      ]);
 
-  const ui = await gemini(harness, prompt);
-  if (!ok(ui)) {
-    console.log("ERROR", ui.$error);
-    exit(-1);
-  }
+      const ui = await gemini(prompt);
+      if (!ok(ui)) {
+        console.log("ERROR", ui.$error);
+        exit(-1);
+      }
 
-  return toJson([ui.candidates.at(0)!.content!]);
-}
+      return toJson([ui.candidates.at(0)!.content!]);
+    }
 
-async function createDataUpdate(
-  harness: EvalHarness,
-  renderableSurface: Surface
-) {
-  console.log(`Creating additional data for ${renderableSurface.surfaceId}`);
-  const prompt = getUIDataUpdatePrompt([
-    objective,
+    async function createDataUpdate(renderableSurface: Surface) {
+      console.log(
+        `Creating additional data for ${renderableSurface.surfaceId}`
+      );
+      const prompt = getUIDataUpdatePrompt([
+        objective,
 
-    llm`Create some data on the same topic as the example data for this surface. You must match the quiz objective above.
+        llm`Create some data on the same topic as the example data for this surface. You must match the quiz objective above.
 
     ${JSON.stringify(renderableSurface)}`.asContent(),
-  ]);
+      ]);
 
-  const ui = await gemini(harness, prompt);
-  if (!ok(ui)) {
-    console.log("ERROR", ui.$error);
-    exit(-1);
-  }
+      const ui = await gemini(prompt);
+      if (!ok(ui)) {
+        console.log("ERROR", ui.$error);
+        exit(-1);
+      }
 
-  return toJson([ui.candidates.at(0)!.content!]);
-}
-
-async function evaluate() {
-  const harness = new EvalHarness({ apiKey: GEMINI_API_KEY });
-  const parsedSurfaces = await generateSpec(harness);
-  const choices = await chooseSurfaces(parsedSurfaces);
-
-  const chosenSurfaces =
-    choices.surface === -1
-      ? parsedSurfaces.surfaces
-      : [parsedSurfaces.surfaces.at(choices.surface)!];
-
-  const workload: Promise<WorkItem>[] = [];
-  switch (choices.type) {
-    case "ui": {
-      workload.push(
-        ...chosenSurfaces.map((surface) =>
-          new WorkItem().run(`ui`, harness, surface, renderSurface, emit)
-        )
-      );
-      break;
+      return toJson([ui.candidates.at(0)!.content!]);
     }
 
-    case "data": {
-      workload.push(
-        ...chosenSurfaces.map((surface) =>
-          new WorkItem().run("data", harness, surface, createDataUpdate, emit)
-        )
+    async function evaluate() {
+      const parsedSurfaces = await generateSpec();
+      const choices = await chooseSurfaces(parsedSurfaces);
+
+      const chosenSurfaces =
+        choices.surface === -1
+          ? parsedSurfaces.surfaces
+          : [parsedSurfaces.surfaces.at(choices.surface)!];
+
+      const workload: Promise<WorkItem>[] = [];
+      switch (choices.type) {
+        case "ui": {
+          workload.push(
+            ...chosenSurfaces.map((surface) =>
+              new WorkItem().run(`ui`, surface, renderSurface, emit)
+            )
+          );
+          break;
+        }
+
+        case "data": {
+          workload.push(
+            ...chosenSurfaces.map((surface) =>
+              new WorkItem().run("data", surface, createDataUpdate, emit)
+            )
+          );
+          break;
+        }
+      }
+
+      const renderWork = await Promise.all(workload);
+      console.table(
+        renderWork.map((item) => ({ guid: item.uuid, duration: item.duration }))
       );
-      break;
+
+      const listAll = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "list",
+          message: "List all results?",
+          default: true,
+        },
+      ]);
+
+      if (listAll.list) {
+        renderWork.forEach((item) =>
+          console.log(JSON.stringify(item.result, null, 2))
+        );
+      }
     }
-  }
 
-  const renderWork = await Promise.all(workload);
-  console.table(
-    renderWork.map((item) => ({ guid: item.uuid, duration: item.duration }))
-  );
-
-  const listAll = await inquirer.prompt([
-    {
-      type: "confirm",
-      name: "list",
-      message: "List all results?",
-      default: true,
-    },
-  ]);
-
-  if (listAll.list) {
-    renderWork.forEach((item) =>
-      console.log(JSON.stringify(item.result, null, 2))
-    );
-  }
-}
-
-evaluate();
+    return evaluate();
+  });
+});

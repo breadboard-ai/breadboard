@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "eval:agent": "tsx --experimental-test-module-mocks scripts/eval-agent.ts",
+    "eval:a2ui": "tsx --experimental-test-module-mocks scripts/eval-a2ui.ts",
     "build": "wireit"
   },
   "wireit": {
@@ -38,14 +39,6 @@
         "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
-    },
-    "eval:agent": {
-      "dependencies": [
-        "build"
-      ],
-      "files": [
-        "scripts/eval-agent.ts"
-      ]
     }
   },
   "repository": {
