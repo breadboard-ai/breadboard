@@ -19,7 +19,7 @@ class Logger {
     const postDataText = (init?.method === "POST" ? init?.body : undefined) as
       | string
       | undefined;
-    const exchange: PartialEntry = {
+    const entry: PartialEntry = {
       startedDateTime: new Date().toISOString(),
       cache: {},
       time: performance.now(),
@@ -42,7 +42,7 @@ class Logger {
       },
     };
     const requestId = ++this.#currentRequestId;
-    this.entries.set(requestId, exchange);
+    this.entries.set(requestId, entry);
     return requestId;
   }
 

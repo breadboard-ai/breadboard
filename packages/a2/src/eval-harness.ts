@@ -16,22 +16,38 @@ import { FunctionCallerImpl } from "./agent/function-caller";
 import { SimplifiedToolManager } from "./a2/tool-manager";
 import { AgentFileSystem } from "./agent/file-system";
 import { ok } from "@breadboard-ai/utils";
+import { Logger } from "./logger";
+import { FunctionCallerFactory } from "./agent/types";
+import { Har } from "har-format";
 
 export { EvalHarness };
 
+export type EvalHarnessRuntimeArgs = {
+  caps: Capabilities;
+  functionCallerFactory: FunctionCallerFactory;
+  moduleArgs: A2ModuleArgs;
+};
+
+export type EvalHarnessFunction = (
+  args: EvalHarnessRuntimeArgs
+) => Promise<void>;
+
 export type EvalHarnessArgs = {
+  /**
+   * The name of the eval. Will be used to name the output
+   * file.
+   */
+  name: string;
   apiKey?: string;
   fileSystem: AgentFileSystem;
-  logger: {
-    request(url: string, init?: RequestInit): number;
-    response(id: number, res: Response): Promise<void>;
-  };
 };
 
 /**
  * Given a GeminiInputs, runs it and returns GeminiAPIOutputs
  */
 class EvalHarness {
+  readonly logger = new Logger();
+
   readonly caps: Capabilities = {
     fetch() {
       throw new Error(`Not implemented`);
@@ -70,7 +86,10 @@ class EvalHarness {
     ) => {
       mock("generate_images_from_prompt", async () => {
         const image = this.args.fileSystem.add({
-          text: "Mock Generated Image",
+          storedData: {
+            handle: "https://example.com/fakeurl",
+            mimeType: "image/png",
+          },
         });
         if (!ok(image)) return { error: image.$error };
         return { images: [image] };
@@ -95,7 +114,7 @@ class EvalHarness {
   readonly moduleArgs: A2ModuleArgs = {
     mcpClientManager: {} as unknown as McpClientManager,
     fetchWithCreds: async (url: RequestInfo | URL, init?: RequestInit) => {
-      const entryId = this.args.logger.request(url as string, init);
+      const entryId = this.logger.request(url as string, init);
       const response = await fetch(url, {
         ...init,
         headers: {
@@ -103,7 +122,7 @@ class EvalHarness {
           "x-goog-api-key": this.args.apiKey!,
         },
       });
-      this.args.logger.response(entryId, response.clone());
+      this.logger.response(entryId, response.clone());
       return response;
     },
     context: {
@@ -157,5 +176,10 @@ class EvalHarness {
     if (!args.apiKey) {
       throw new Error(`Unable to run: no Gemini API Key supplied`);
     }
+  }
+
+  async eval(evalFunction: EvalHarnessFunction): Promise<Har> {
+    await evalFunction(this);
+    return this.logger.getHar();
   }
 }
