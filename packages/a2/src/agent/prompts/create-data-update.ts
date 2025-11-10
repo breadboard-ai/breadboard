@@ -5,9 +5,8 @@
  */
 
 import { llm } from "../../a2/utils";
-import { GeminiInputs, GeminiSchema } from "../../a2/gemini";
+import { GeminiInputs } from "../../a2/gemini";
 import { LLMContent } from "@breadboard-ai/types";
-import { UI_SCHEMA } from "../../a2/render-consistent-ui";
 
 const SPEC_DESIGNER_MODEL = "gemini-flash-latest";
 
@@ -21,7 +20,7 @@ function getUIDataUpdatePrompt(contents: LLMContent[]): GeminiInputs {
       systemInstruction,
       generationConfig: {
         responseMimeType: "application/json",
-        responseSchema: responseJsonSchema,
+        responseJsonSchema: responseJsonSchema,
       },
     },
   };
@@ -39,16 +38,68 @@ You will be provided with a surface along with an ID, description, surface speci
 
 The responses are actions that the user can take within the UI that will built.
 
-The UI will be built in two phases. In the first phase another LLM-powered creator defined the user interface but provided it with the example data using the provided schema. You are now responsible for the second phase, where the UI will be repopulated with real data. This will require you to provide an array containing a single dataModelUpdate only. The data you should use is as provided, and the schema must match the dataModelSchema you are being provided.
+You are responsible for populating the view with data. This will require you to provide an array containing a single dataModelUpdate only that contains a nested data structure that can power the view. The nested structure can contain strings, booleans, numbers, Arrays, and objects. You should work on the basis that paths must map 1x:1 to this data structure.
 
-If the dataModelUpdate requires you to send valueMaps you will need to be very careful with paths that access that data. For example, if you are sending a valueMap that looks like this: { "key": "person", "valueMap": [ { "key": "name", "valueString": "John Doe" }, { "key": "age", "valueNumber": 41 }, { "key": "isSubscriber", "valueBoolean": true } ] } you would need to reference the name as "/person/name" without any other additions or suffixes.`.asContent();
+## Data Paths
 
-const strippedSchema: GeminiSchema = structuredClone(UI_SCHEMA);
-delete strippedSchema.properties?.["beginRendering"];
-delete strippedSchema.properties?.["surfaceUpdate"];
-delete strippedSchema.properties?.["deleteSurface"];
+You MUST look at paths in the generated UI and ensure that the structure of the dataModelUpdate's contents you provide matches the expected structure. EVERY segment of a path MUST be represented in the final structure.
 
-const responseJsonSchema: GeminiSchema = {
+### GOOD Data Structure for paths.
+The following approach is considered good:
+
+{
+  "options": [
+    {
+      "label": "Item 1"
+    },
+    {
+      "label": "Item 2"
+    },
+    {
+      "label": "Item 3"
+    }
+  ]
+}
+Reason this is good: a path of "/options/0/label" meets the data contract because options -> 0 -> label would result in "Item 1".
+
+A BAD version of this would be:
+
+{
+  "options": [
+    "Item 1",
+    "Item 2",
+    "Item 3"
+  ]
+}
+
+Reason this is bad: "/options/0/label" would not resolve correctly as options -> 0 would result in "Item 1" and therefore the "label" segment would fail.
+`.asContent();
+
+const responseJsonSchema = {
   type: "array",
-  items: strippedSchema,
+  items: {
+    type: "object",
+    properties: {
+      dataModelUpdate: {
+        type: "object",
+        properties: {
+          surfaceId: {
+            type: "string",
+            description:
+              "The unique identifier for the UI surface this data model update applies to.",
+          },
+          path: {
+            type: "string",
+            description:
+              "An optional slash-delimited path to a location within the data model (e.g., '/user/name'). If omitted, or set to '/', the entire data model will be replaced with the contents.",
+          },
+          contents: {
+            additionalProperties: {},
+            description:
+              "A nested object that represents the data needed to power the view",
+          },
+        },
+      },
+    },
+  },
 };
