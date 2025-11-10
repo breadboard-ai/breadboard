@@ -109,7 +109,7 @@ async function driveFileToGeminiFile(
       body: JSON.stringify({ driveFileId }),
       signal: context.signal,
     });
-    if (!converting.ok) return err(await converting.text());
+    if (!converting.ok) return err(decodeError(await converting.text()));
 
     const converted =
       (await converting.json()) as Outcome<UploadGeminiFileResponse>;
@@ -153,7 +153,7 @@ async function driveFileToGeminiFileOld(
         signal: context.signal,
       }
     );
-    if (!converting.ok) return err(await converting.text());
+    if (!converting.ok) return err(decodeError(await converting.text()));
 
     const converted =
       (await converting.json()) as Outcome<GoogleDriveToGeminiResponse>;
@@ -196,7 +196,7 @@ async function blobToGeminiFile(
       body: JSON.stringify({ gcsUri: `${bucketId}/${blobId}` }),
       signal: context.signal,
     });
-    if (!converting.ok) return err(await converting.text());
+    if (!converting.ok) return err(decodeError(await converting.text()));
 
     const converted =
       (await converting.json()) as Outcome<UploadGeminiFileResponse>;
