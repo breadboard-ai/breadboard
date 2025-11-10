@@ -22,7 +22,8 @@ export type GoogleDriveToGeminiResponse = {
 };
 
 export type UploadGeminiFileResponse = {
-  geminiFileName: string;
+  fileUrl: string;
+  mimeType: string;
 };
 
 const DRIVE_URL_PREFIX = "drive:";
@@ -82,7 +83,8 @@ async function driveFileToGeminiFile(
 
     return {
       fileData: {
-        fileUri: new URL(converted.geminiFileName, GEMINI_API_ENDPOINT).href,
+        fileUri: new URL(converted.fileUrl, GEMINI_API_ENDPOINT).href,
+        mimeType: converted.mimeType,
       },
     } as FileDataPart;
   } catch (e) {
