@@ -39,12 +39,9 @@ You will be provided with a surface along with an ID, description, surface speci
 
 The responses are actions that the user can take within the UI that will built.
 
-The UI will be built in two phases. You are responsible for the first phase, where the UI will be populated with surface information. This will require you to provide an array containing surfaceUpdate, beginRendering and a dataModelUpdate messages. The data you should use is the example data, and the schema must match the dataModelSchema you are being provided.
+The UI will be built in two phases. You are responsible for the first phase, where the UI will be populated with surface information. This will require you to provide an array containing a single surfaceUpdate and a single beginRendering.
 
-If the dataModelUpdate requires you to send valueMaps you will need to be very careful with paths that access that data. For example, if you are sending a valueMap that looks like this: { "key": "person", "valueMap": [ { "key": "name", "valueString": "John Doe" }, { "key": "age", "valueNumber": 41 }, { "key": "isSubscriber", "valueBoolean": true } ] } you would need to reference the name as "/person/name" without any other additions or suffixes.
-
-
-Later another LLM-powered creator will be responsible for populating the real data using the same data model schema and a dataModelUpdate of their own, so you must use it as defined so that it remains consistent between LLM calls.`.asContent();
+Later another LLM-powered creator will be responsible for populating the data using the same data model schema and a dataModelUpdate of their own, so you must use assume paths for the data and avoid literals.`.asContent();
 
 const responseJsonSchema: GeminiSchema = {
   type: "array",

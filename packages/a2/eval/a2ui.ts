@@ -11,9 +11,7 @@ import { llm } from "../src/a2/utils";
 import { config } from "dotenv";
 import { ok, toJson } from "@breadboard-ai/utils";
 import { exit } from "process";
-import inquirer from "inquirer";
 import { ParsedSurfaces, Surface } from "../scripts/surface";
-import { WorkItem } from "../scripts/work-item";
 import { Outcome } from "@breadboard-ai/types";
 import generateContent, {
   GeminiAPIOutputs,
@@ -24,28 +22,23 @@ import { session } from "../scripts/eval";
 config();
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const emit = { time: true, result: false };
 
 session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
-  session.eval("Quiz", async ({ caps, moduleArgs }) => {
-    const objective =
-      llm`Play a learning quiz on the following subject with a high school student, using a series of multiple-choice questions:
+  const objective = `Play a learning quiz on the following subject with a high school student, using a series of multiple-choice questions:
+  <subject>Fall of Communism in Soviet Russia</subject>
 
-<subject>Fall of Communism in Soviet Russia</subject>
+  As the student answers the question, regulate the difficulty of questions. Start with the easy ones, and if the student is answering them correctly, proceed to the more challenging ones.
+  When the student fails to answer the question correctly, give them a brief historical overview and re-ask the question again in a slightly different way to test their knowledge.
 
-As the student answers the question, regulate the difficulty of questions. Start with the easy ones, and if the student is answering them correctly, proceed to the more challenging ones.
+  After 5 questions, congratulate the student and exit the quiz. A student may decide to exit early and that is okay.
+  Before exiting, record the answers and the summary of the session for the teacher:
 
-When the student fails to answer the question correctly, give them a brief historical overview and re-ask the question again in a slightly different way to test their knowledge.
+  - questions asked and student's responses
+  - whether or not the student completed the quiz
+  - what the student learned
+  - where the student should concentrate on learning`;
 
-After 5 questions, congratulate the student and exit the quiz. A student may decide to exit early and that is okay.
-
-Before exiting, record the answers and the summary of the session for the teacher:
-
-- questions asked and student's responses
-- whether or not the student completed the quiz
-- what the student learned
--  where the student should concentrate on learning`.asContent();
-
+  session.eval("Quiz (spec)", async ({ caps, moduleArgs }) => {
     async function gemini(
       inputs: GeminiInputs
     ): Promise<Outcome<GeminiAPIOutputs>> {
@@ -55,7 +48,9 @@ Before exiting, record the answers and the summary of the session for the teache
     }
 
     async function generateSpec(): Promise<ParsedSurfaces> {
-      const surfaces = await gemini(getDesignSurfaceSpecsPrompt([objective]));
+      const surfaces = await gemini(
+        getDesignSurfaceSpecsPrompt([llm`${objective}`.asContent()])
+      );
       if (!ok(surfaces)) {
         console.log("ERROR", surfaces.$error);
         exit(-1);
@@ -70,32 +65,6 @@ Before exiting, record the answers and the summary of the session for the teache
       }
 
       return parsedSurfaces;
-    }
-
-    async function chooseSurfaces(
-      parsedSurfaces: ParsedSurfaces
-    ): Promise<{ surface: number; type: string }> {
-      return inquirer.prompt([
-        {
-          type: "list",
-          name: "surface",
-          message: "Which surface do you want?",
-          choices: [
-            ...parsedSurfaces.surfaces.map((surface) => surface.surfaceId),
-            "All",
-          ],
-          filter: (choice) =>
-            parsedSurfaces.surfaces.findIndex(
-              (surface) => surface.surfaceId === choice
-            ),
-        },
-        {
-          type: "list",
-          name: "type",
-          message: "Which surface do you want?",
-          choices: ["ui", "data"],
-        },
-      ]);
     }
 
     async function renderSurface(renderableSurface: Surface) {
@@ -113,16 +82,210 @@ Before exiting, record the answers and the summary of the session for the teache
       return toJson([ui.candidates.at(0)!.content!]);
     }
 
-    async function createDataUpdate(renderableSurface: Surface) {
-      console.log(
-        `Creating additional data for ${renderableSurface.surfaceId}`
-      );
+    const parsedSurfaces = await generateSpec();
+    const surfaces = await Promise.all(
+      parsedSurfaces.surfaces.map((surface) => renderSurface(surface))
+    );
+    for (const surface of surfaces) {
+      console.log(JSON.stringify(surface, null, 2));
+    }
+  });
+
+  session.eval("Quiz (example data)", async ({ caps, moduleArgs }) => {
+    const quizQuestionSurface = [
+      {
+        surfaceUpdate: {
+          surfaceId: "quiz_question_surface",
+          components: [
+            {
+              id: "root_column",
+              component: {
+                Column: {
+                  children: {
+                    explicitList: [
+                      "heading_quiz_title",
+                      "text_progress",
+                      "text_question",
+                      "multiple_choice_answers",
+                      "row_actions",
+                    ],
+                  },
+                },
+              },
+            },
+            {
+              id: "heading_quiz_title",
+              component: {
+                Heading: {
+                  text: {
+                    path: "/quiz_title",
+                  },
+                  level: "1",
+                },
+              },
+            },
+            {
+              id: "text_progress",
+              component: {
+                Text: {
+                  text: {
+                    path: "/progress_text",
+                  },
+                },
+              },
+            },
+            {
+              id: "text_question",
+              component: {
+                Text: {
+                  text: {
+                    path: "/question_text",
+                  },
+                },
+              },
+            },
+            {
+              id: "multiple_choice_answers",
+              component: {
+                MultipleChoice: {
+                  selections: {
+                    path: "/selection_results",
+                  },
+                  options: [
+                    {
+                      label: {
+                        path: "/options/0/label",
+                      },
+                      value: "a",
+                    },
+                    {
+                      label: {
+                        path: "/options/1/label",
+                      },
+                      value: "b",
+                    },
+                    {
+                      label: {
+                        path: "/options/2/label",
+                      },
+                      value: "c",
+                    },
+                    {
+                      label: {
+                        path: "/options/3/label",
+                      },
+                      value: "d",
+                    },
+                  ],
+                  maxAllowedSelections: 1,
+                },
+              },
+            },
+            {
+              id: "row_actions",
+              component: {
+                Row: {
+                  children: {
+                    explicitList: ["button_exit", "button_submit"],
+                  },
+                  distribution: "spaceBetween",
+                },
+              },
+            },
+            {
+              id: "text_exit",
+              component: {
+                Text: {
+                  text: {
+                    literalString: "Exit Quiz",
+                  },
+                },
+              },
+            },
+            {
+              id: "button_exit",
+              component: {
+                Button: {
+                  child: "text_exit",
+                  action: {
+                    name: "QUIZ_RESPONSE",
+                    context: [
+                      {
+                        key: "selected_option_id",
+                        value: {
+                          literalString: "",
+                        },
+                      },
+                      {
+                        key: "exit_requested",
+                        value: {
+                          literalBoolean: true,
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            {
+              id: "text_submit",
+              component: {
+                Text: {
+                  text: {
+                    literalString: "Submit Answer",
+                  },
+                },
+              },
+            },
+            {
+              id: "button_submit",
+              component: {
+                Button: {
+                  child: "text_submit",
+                  action: {
+                    name: "QUIZ_RESPONSE",
+                    context: [
+                      {
+                        key: "selected_option_id",
+                        value: {
+                          path: "/selection_results/0",
+                        },
+                      },
+                      {
+                        key: "exit_requested",
+                        value: {
+                          literalBoolean: false,
+                        },
+                      },
+                    ],
+                  },
+                  primary: true,
+                },
+              },
+            },
+          ],
+        },
+      },
+      {
+        beginRendering: {
+          root: "root_column",
+          surfaceId: "quiz_question_surface",
+        },
+      },
+    ];
+
+    async function gemini(
+      inputs: GeminiInputs
+    ): Promise<Outcome<GeminiAPIOutputs>> {
+      return generateContent(inputs, caps, moduleArgs) as Promise<
+        Outcome<GeminiAPIOutputs>
+      >;
+    }
+
+    async function renderExampleData(): Promise<Array<unknown> | undefined> {
       const prompt = getUIDataUpdatePrompt([
-        objective,
-
-        llm`Create some data on the same topic as the example data for this surface. You must match the quiz objective above.
-
-    ${JSON.stringify(renderableSurface)}`.asContent(),
+        llm`This is the objective: ${objective}`.asContent(),
+        llm`This is the UI that was generated: ${JSON.stringify(quizQuestionSurface)}`.asContent(),
       ]);
 
       const ui = await gemini(prompt);
@@ -131,60 +294,17 @@ Before exiting, record the answers and the summary of the session for the teache
         exit(-1);
       }
 
-      return toJson([ui.candidates.at(0)!.content!]);
+      return toJson<unknown[]>([ui.candidates.at(0)!.content!]);
     }
 
-    async function evaluate() {
-      const parsedSurfaces = await generateSpec();
-      const choices = await chooseSurfaces(parsedSurfaces);
-
-      const chosenSurfaces =
-        choices.surface === -1
-          ? parsedSurfaces.surfaces
-          : [parsedSurfaces.surfaces.at(choices.surface)!];
-
-      const workload: Promise<WorkItem>[] = [];
-      switch (choices.type) {
-        case "ui": {
-          workload.push(
-            ...chosenSurfaces.map((surface) =>
-              new WorkItem().run(`ui`, surface, renderSurface, emit)
-            )
-          );
-          break;
-        }
-
-        case "data": {
-          workload.push(
-            ...chosenSurfaces.map((surface) =>
-              new WorkItem().run("data", surface, createDataUpdate, emit)
-            )
-          );
-          break;
-        }
-      }
-
-      const renderWork = await Promise.all(workload);
-      console.table(
-        renderWork.map((item) => ({ guid: item.uuid, duration: item.duration }))
-      );
-
-      const listAll = await inquirer.prompt([
-        {
-          type: "confirm",
-          name: "list",
-          message: "List all results?",
-          default: true,
-        },
-      ]);
-
-      if (listAll.list) {
-        renderWork.forEach((item) =>
-          console.log(JSON.stringify(item.result, null, 2))
-        );
-      }
+    const dataUpdate = await renderExampleData();
+    if (!dataUpdate) {
+      console.log("No data generated");
+      return;
     }
 
-    return evaluate();
+    for (const update of dataUpdate) {
+      console.log(JSON.stringify(update, null, 2));
+    }
   });
 });
