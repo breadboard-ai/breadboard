@@ -14,6 +14,7 @@ import {
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory";
+import { getBucketId } from "./get-bucket-id";
 
 export { createDataPartTansformer };
 
@@ -48,9 +49,17 @@ function maybeBlob(handle: string): string | false {
 }
 
 async function driveFileToGeminiFile(
-  { fetchWithCreds, context }: A2ModuleArgs,
+  moduleArgs: A2ModuleArgs,
   part: FileDataPart
 ): Promise<Outcome<FileDataPart>> {
+  const enableBackendTransforms = !!(await moduleArgs.context.flags?.flags())
+    ?.backendTransforms;
+  if (!enableBackendTransforms) {
+    return driveFileToGeminiFileOld(moduleArgs, part);
+  }
+
+  const { fetchWithCreds, context } = moduleArgs;
+
   const driveFileId = part.fileData.fileUri.replace(/^drive:\/+/, "");
   try {
     const searchParams = new URLSearchParams();
@@ -92,7 +101,91 @@ async function driveFileToGeminiFile(
   }
 }
 
+async function driveFileToGeminiFileOld(
+  moduleArgs: A2ModuleArgs,
+  part: FileDataPart
+): Promise<Outcome<FileDataPart>> {
+  const { fetchWithCreds, context } = moduleArgs;
+
+  const fileId = part.fileData.fileUri.replace(/^drive:\/+/, "");
+  try {
+    const searchParams = new URLSearchParams();
+    const { resourceKey, mimeType } = part.fileData;
+    if (resourceKey) {
+      searchParams.set("resourceKey", resourceKey);
+    }
+    if (mimeType) {
+      searchParams.set("mimeType", mimeType);
+    }
+    // TODO: Un-hardcode the path and get rid of the "@foo/bar".
+    const path = `/board/boards/@foo/bar/assets/drive/${fileId}?${searchParams}`;
+    const converting = await fetchWithCreds(
+      new URL(path, window.location.origin),
+      {
+        method: "POST",
+        credentials: "include",
+        body: JSON.stringify({ part }),
+        signal: context.signal,
+      }
+    );
+    if (!converting.ok) return err(await converting.text());
+
+    const converted =
+      (await converting.json()) as Outcome<GoogleDriveToGeminiResponse>;
+    if (!ok(converted)) return converted;
+
+    return converted.part;
+  } catch (e) {
+    return err((e as Error).message);
+  }
+}
+
 async function blobToGeminiFile(
+  moduleArgs: A2ModuleArgs,
+  blobId: string
+): Promise<Outcome<FileDataPart>> {
+  const enableBackendTransforms = !!(await moduleArgs.context.flags?.flags())
+    ?.backendTransforms;
+  if (!enableBackendTransforms) {
+    return blobToGeminiFileOld(moduleArgs, blobId);
+  }
+
+  const { fetchWithCreds, context } = moduleArgs;
+  try {
+    const backendApiEndpoint =
+      context.clientDeploymentConfiguration?.BACKEND_API_ENDPOINT;
+    if (!backendApiEndpoint) {
+      return err(`Unable to transform: backend API endpoint not specified`);
+    }
+    const url = new URL(
+      BACKEND_UPLOAD_GEMINI_FILE_ENDPOINT,
+      backendApiEndpoint
+    );
+    const bucketId = await getBucketId(moduleArgs);
+
+    const converting = await fetchWithCreds(url, {
+      method: "POST",
+      body: JSON.stringify({ gcsUri: `${bucketId}/${blobId}` }),
+      signal: context.signal,
+    });
+    if (!converting.ok) return err(await converting.text());
+
+    const converted =
+      (await converting.json()) as Outcome<UploadGeminiFileResponse>;
+    if (!ok(converted)) return converted;
+
+    return {
+      fileData: {
+        fileUri: new URL(converted.fileUrl, GEMINI_API_ENDPOINT).href,
+        mimeType: converted.mimeType,
+      },
+    };
+  } catch (e) {
+    return err((e as Error).message);
+  }
+}
+
+async function blobToGeminiFileOld(
   { fetchWithCreds, context }: A2ModuleArgs,
   blobId: string
 ): Promise<Outcome<FileDataPart>> {
