@@ -4,8 +4,32 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { FunctionCallCapabilityPart, LLMContent } from "@breadboard-ai/types";
+import {
+  FunctionCallCapabilityPart,
+  LLMContent,
+  Outcome,
+} from "@breadboard-ai/types";
 import { GeminiBody } from "../a2/gemini";
+import {
+  FunctionDefinition,
+  StatusUpdateCallback,
+} from "./function-definition";
+import { SimplifiedToolManager } from "../a2/tool-manager";
+
+export type FunctionCallerFactory = {
+  create(
+    builtIn: Map<string, FunctionDefinition>,
+    custom: SimplifiedToolManager
+  ): FunctionCaller;
+};
+
+export type FunctionCaller = {
+  call(
+    part: FunctionCallCapabilityPart,
+    statusUpdateCallback: StatusUpdateCallback
+  ): void;
+  getResults(): Promise<Outcome<LLMContent | null>>;
+};
 
 export type AgentProgressManager = {
   /**

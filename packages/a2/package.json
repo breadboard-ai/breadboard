@@ -5,7 +5,8 @@
   "main": "./dist/src/index.js",
   "type": "module",
   "scripts": {
-    "push": "tsx scripts/push.ts",
+    "eval:agent": "tsx --experimental-test-module-mocks eval/agent.ts",
+    "eval:a2ui": "tsx --experimental-test-module-mocks eval/a2ui.ts",
     "build": "wireit"
   },
   "wireit": {
@@ -54,6 +55,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@google-cloud/firestore": "^7.11.0",
+    "@types/har-format": "^1.2.16",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.34.1",

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EvalHarness } from "../src/eval-harness";
 import { Surface } from "./surface";
 import { time, timeEnd } from "./time";
 
@@ -17,15 +16,14 @@ class WorkItem {
 
   async run(
     type: "ui" | "data",
-    harness: EvalHarness,
     surface: Surface,
-    task: (harness: EvalHarness, surface: Surface) => Promise<unknown>,
+    task: (surface: Surface) => Promise<unknown>,
     emit = { result: false, time: false }
   ) {
     this.#uuid = `${surface.surfaceId}-${type}`;
     time(this.#uuid);
 
-    this.#result = await task(harness, surface);
+    this.#result = await task(surface);
     this.#duration = timeEnd(this.#uuid);
 
     if (emit.time) {

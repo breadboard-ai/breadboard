@@ -16,7 +16,6 @@ import {
 import { llm } from "../a2/utils";
 import { A2ModuleArgs } from "../runnable-module-factory";
 import { AgentFileSystem } from "./file-system";
-import { FunctionCaller } from "./function-caller";
 import { emptyDefinitions, mapDefinitions } from "./function-definition";
 import { defineSystemFunctions } from "./functions/system";
 import { PidginTranslator } from "./pidgin-translator";
@@ -24,6 +23,7 @@ import { AgentUI } from "./ui";
 import { defineGenerateFunctions } from "./functions/generate";
 import { prompt as a2UIPrompt } from "./a2ui/prompt";
 import { defineA2UIFunctions } from "./functions/ui";
+import { FunctionCallerImpl } from "./function-caller";
 
 export { Loop };
 
@@ -300,6 +300,11 @@ class Loop {
           ],
         },
       ];
+      const functionDefinitionMap = new Map([
+        ...systemFunctions.definitions,
+        ...generateFunctions.definitions,
+        ...uiFunctions.definitions,
+      ]);
 
       while (!terminateLoop) {
         const body: GeminiBody = {
@@ -334,12 +339,8 @@ class Loop {
             );
           }
           contents.push(content);
-          const functionCaller = new FunctionCaller(
-            new Map([
-              ...systemFunctions.definitions,
-              ...generateFunctions.definitions,
-              ...uiFunctions.definitions,
-            ]),
+          const functionCaller = new FunctionCallerImpl(
+            functionDefinitionMap,
             objectivePidgin.tools
           );
           const parts = content.parts || [];
