@@ -41,6 +41,10 @@ export type RuntimeFlags = {
    * Agent mode
    */
   agentMode: boolean;
+  /**
+   * Moves data transformations (B2F, D2F, D2B) to the backend
+   */
+  backendTransforms: boolean;
 };
 
 /**

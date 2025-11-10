@@ -32,6 +32,10 @@ export const ENABLE_GENERATE_FOR_EACH: boolean = getBoolean(
 
 export const ENABLE_AGENT_MODE: boolean = getBoolean("ENABLE_AGENT_MODE");
 
+export const ENABLE_BACKEND_TRANSFORMS = getBoolean(
+  "ENABLE_BACKEND_TRANSFORMS"
+);
+
 export const ENABLE_CONSISTENT_UI: boolean = getBoolean("ENABLE_CONSISTENT_UI");
 
 export const ENABLE_GULF_RENDERER: boolean = getBoolean("ENABLE_GULF_RENDERER");
