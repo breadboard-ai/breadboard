@@ -23,7 +23,7 @@ import {
   toInlineData,
   toLLMContent,
 } from "./utils";
-import { toBlobStoredData, toGcsAwareChunk } from "./to-blob-stored-data";
+import { driveFileToBlob, toGcsAwareChunk } from "./data-transforms";
 import { A2ModuleArgs } from "../runnable-module-factory";
 import { err } from "@breadboard-ai/utils";
 import { getBucketId } from "./get-bucket-id";
@@ -52,7 +52,7 @@ async function callGeminiImage(
   for (const element of imageContent) {
     let inlineChunk: InlineDataCapabilityPart["inlineData"] | null | "";
     if (isStoredData(element)) {
-      const blobStoredData = await toBlobStoredData(
+      const blobStoredData = await driveFileToBlob(
         moduleArgs,
         element.parts.at(-1)!
       );
