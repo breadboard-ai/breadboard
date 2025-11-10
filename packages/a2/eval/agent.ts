@@ -35,4 +35,10 @@ session({ name: "Agent Loop", apiKey }, async (session) => {
   Product: Bluetooth-enabled Electric Toothbrush`.asContent();
     return loop.run(objective, {});
   });
+  session.eval("Impossible chat", async ({ caps, moduleArgs }) => {
+    const loop = new Loop(caps, moduleArgs);
+    const objective =
+      llm`Ask the user for their name and location and then compose a poem based on that information`.asContent();
+    return loop.run(objective, {});
+  });
 });
