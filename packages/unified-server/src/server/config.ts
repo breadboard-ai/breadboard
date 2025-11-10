@@ -39,7 +39,7 @@ export async function createClientConfig(opts: {
       force2DGraph: flags.ENABLE_FORCE_2D_GRAPH,
       gulfRenderer: flags.ENABLE_GULF_RENDERER,
       consistentUI: false,
-      agentMode: false,
+      agentMode: flags.ENABLE_AGENT_MODE,
     },
   };
 }
