@@ -6,6 +6,7 @@
 
 import { DataStore, FileSystem, Outcome } from "./data.js";
 import { DeepReadonly } from "./deep-read-only.js";
+import { ClientDeploymentConfiguration } from "./deployment-configuration.js";
 import { RuntimeFlagManager } from "./flags.js";
 import {
   Edge,
@@ -219,6 +220,11 @@ export type RunConfig = {
    * A way to get the project run state.
    */
   readonly getProjectRunState?: () => SimplifiedProjectRunState | undefined;
+
+  /**
+   * A way to look at all the config flags.
+   */
+  readonly clientDeploymentConfiguration?: ClientDeploymentConfiguration;
 };
 
 export type RunEventMap = {
