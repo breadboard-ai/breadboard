@@ -5,7 +5,7 @@
  */
 
 import { llm } from "../../a2/utils";
-import { GeminiInputs } from "../../a2/gemini";
+import { GeminiInputs, GeminiSchema } from "../../a2/gemini";
 import { LLMContent } from "@breadboard-ai/types";
 
 const SPEC_DESIGNER_MODEL = "gemini-flash-latest";
@@ -20,12 +20,40 @@ function getUIDataUpdatePrompt(contents: LLMContent[]): GeminiInputs {
       systemInstruction,
       generationConfig: {
         responseMimeType: "application/json",
-        responseJsonSchema: responseJsonSchema,
       },
     },
   };
   return prompt;
 }
+
+const responseJsonSchema = {
+  type: "array",
+  items: {
+    type: "object",
+    properties: {
+      dataModelUpdate: {
+        type: "object",
+        properties: {
+          surfaceId: {
+            type: "string",
+            description:
+              "The unique identifier for the UI surface this data model update applies to.",
+          },
+          path: {
+            type: "string",
+            description:
+              "An optional slash-delimited path to a location within the data model (e.g., '/user/name'). If omitted, or set to '/', the entire data model will be replaced with the contents.",
+          },
+          contents: {
+            additionalProperties: true,
+            description:
+              "A nested object that represents the data needed to power the view",
+          },
+        },
+      },
+    },
+  },
+};
 
 const systemInstruction = llm`
 You are an LLM-powered UI creator, embedded into an application.
@@ -38,7 +66,7 @@ You will be provided with a surface along with an ID, description, surface speci
 
 The responses are actions that the user can take within the UI that will built.
 
-You are responsible for populating the view with data. This will require you to provide an array containing a single dataModelUpdate only that contains a nested data structure that can power the view. The nested structure can contain strings, booleans, numbers, Arrays, and objects. You should work on the basis that paths must map 1x:1 to this data structure.
+You are responsible for populating the view with data. This will require you to provide an array containing a SINGLE dataModelUpdate that contains a complete nested data structure that can power the view. The nested structure can contain strings, booleans, numbers, Arrays, and objects. You should work on the basis that paths must map 1x:1 to this data structure.
 
 ## Data Paths
 
@@ -73,33 +101,9 @@ A BAD version of this would be:
 }
 
 Reason this is bad: "/options/0/label" would not resolve correctly as options -> 0 would result in "Item 1" and therefore the "label" segment would fail.
-`.asContent();
 
-const responseJsonSchema = {
-  type: "array",
-  items: {
-    type: "object",
-    properties: {
-      dataModelUpdate: {
-        type: "object",
-        properties: {
-          surfaceId: {
-            type: "string",
-            description:
-              "The unique identifier for the UI surface this data model update applies to.",
-          },
-          path: {
-            type: "string",
-            description:
-              "An optional slash-delimited path to a location within the data model (e.g., '/user/name'). If omitted, or set to '/', the entire data model will be replaced with the contents.",
-          },
-          contents: {
-            additionalProperties: {},
-            description:
-              "A nested object that represents the data needed to power the view",
-          },
-        },
-      },
-    },
-  },
-};
+Here's your schema:
+
+${JSON.stringify(responseJsonSchema, null, 2)}
+
+`.asContent();
