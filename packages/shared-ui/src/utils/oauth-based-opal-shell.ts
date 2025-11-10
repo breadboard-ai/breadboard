@@ -196,7 +196,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
      * Add the accessToken param to the backend API request that needs it
      * to transform files.
      */
-    if (url.endsWith("/uploadGeminiFile")) {
+    if (url.endsWith("/uploadGeminiFile") || url.endsWith("/uploadBlobFile")) {
       const body = init.body;
       if (typeof body !== "string") {
         console.warn(
