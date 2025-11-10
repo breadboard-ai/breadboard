@@ -15,6 +15,7 @@ import { autoClearingInterval } from "./auto-clearing-interval";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { mkdir, writeFile } from "fs/promises";
+import { collateContexts } from "./collate-context";
 
 export { session };
 
@@ -37,7 +38,7 @@ export type EvalHarnessSessionFunction = (
 
 export type EvalHarnessFunction = (
   args: EvalHarnessRuntimeArgs
-) => Promise<void>;
+) => Promise<unknown>;
 
 export type EvalHarnessArgs = {
   /**
@@ -99,17 +100,35 @@ class EvalHarness {
       ): Promise<void> => {
         const runEval = async () => {
           const run = new EvalRun(this.args);
-          await evalFunction(run);
+          const outcome = await evalFunction(run);
           const har = run.logger.getHar();
           await ensureDir(OUT_DIR);
+          const filename = `${toKebabFilename(this.args.name)}-${toKebabFilename(evalName)}-${timestamp()}`;
+          const harFilename = `${filename}.har`;
+          const logFilename = `${filename}.log.json`;
           await writeFile(
-            join(
-              OUT_DIR,
-              `${toKebabFilename(this.args.name)}-${toKebabFilename(evalName)}-${timestamp()}.har`
-            ),
+            join(OUT_DIR, `${harFilename}`),
             JSON.stringify(har, null, 2),
             "utf-8"
           );
+          const log = collateContexts(har);
+          await writeFile(
+            join(OUT_DIR, `${logFilename}`),
+            JSON.stringify([...log, { type: "outcome", outcome }], null, 2),
+            "utf-8"
+          );
+
+          const stats = log.map((entry) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { context, startedDateTime, type, ...entryStats } = entry;
+            entryStats.totalDurationMs = entryStats.totalDurationMs | 0;
+            entryStats.totalRequestTimeMs = entryStats.totalRequestTimeMs | 0;
+            return entryStats;
+          });
+          console.log(`\n\n${evalName}`);
+          console.table(stats);
+          console.log(`HAR: "${harFilename}"`);
+          console.log(`Log: "${logFilename}"`);
         };
         evals.push(runEval());
       },
