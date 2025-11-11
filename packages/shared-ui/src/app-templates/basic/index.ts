@@ -94,23 +94,54 @@ const scriptifyFunction = (fn: Function, bindings?: Record<string, unknown>) =>
 // Will be bound into the iframe script as the targetOrigin for postMessage
 const PARENT_ORIGIN = window.location.origin;
 
+// This script will be run in the AppCat-generated iframe, and will intercept
+// any popups that are opened by the app to post back to Opal to request
+// opening after gaining consent. The iframe is sandboxed and does not allow
+// popups itself, so this is a best-effort to 
 const interceptPopupsScript = scriptifyFunction(() => {
-  const parentOrigin = PARENT_ORIGIN;
-  customElements.define('open-popup', class extends HTMLElement {
-    connectedCallback() {
-      this.addEventListener('click', () => {
-        const urlStr = this.getAttribute('url');
-        if (!urlStr) {
-          return;
-        }
-        const url = new URL(urlStr);
-        window.parent.postMessage({
-          type: 'request-open-popup',
-          url: url.toString()
-        }, parentOrigin);
-      }, { capture: true });
-    }
+  const requestPopup = (url: URL) => window.parent.postMessage({
+    type: 'request-open-popup',
+    url: url.toString()
+  }, PARENT_ORIGIN);
+  // This script is guaranteed to be run before any generated scripts, and
+  // we don't let the generated HTML override this
+  Object.defineProperty(window, "open", {
+    value: function (url?: string | URL) {
+      if (url) {
+        requestPopup(new URL(url));
+      }
+      return undefined;
+    },
+    writable: false,
+    configurable: false,
+    enumerable: false
   });
+  const findAncestorTag = <T extends keyof HTMLElementTagNameMap>(event: Event, tag: T) => {
+    const path = event.composedPath();
+    return path.find((el) => (el as HTMLElement).localName === tag) as HTMLElementTagNameMap[typeof tag] | undefined;
+  }
+  // This listener is capturing and guaranteed to be run before any
+  // generated scripts, so we always get first crack at intercepting popups
+  window.addEventListener("click", (evt) => {
+    console.log("[OUTPUT] click", evt.composedPath());
+    const anchor = findAncestorTag(evt, "a");
+    if (anchor) {
+      requestPopup(new URL(anchor.href));
+      evt.preventDefault();
+      evt.stopImmediatePropagation();
+    }
+  }, true);
+  // This listener is capturing and guaranteed to be run before any
+  // generated scripts, so we always get first crack at intercepting form submission
+  window.addEventListener("submit", (evt) => {
+    console.log("[OUTPUT] submit", evt.composedPath());
+    const form = findAncestorTag(evt, "form");
+    if (form) {
+      requestPopup(new URL(form.action));
+      evt.preventDefault();
+      evt.stopImmediatePropagation();
+    }
+  }, true);
 }, {
   PARENT_ORIGIN,
 });

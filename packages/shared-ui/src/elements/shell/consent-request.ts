@@ -50,14 +50,10 @@ export class VEConsentRequestModal extends SignalWatcher(LitElement) {
     `,
   ];
 
-  #handleModalDismissed({ withSave, otherAction }: ModalDismissedEvent) {
+  #handleModalDismissed({ withSave }: ModalDismissedEvent) {
     let action: ConsentAction;
     if (withSave) {
-      action = ConsentAction.ALLOW;
-    } else if (otherAction === "alwaysAllow") {
       action = ConsentAction.ALWAYS_ALLOW;
-    } else if (otherAction === "alwaysDeny") {
-      action = ConsentAction.ALWAYS_DENY;
     } else {
       action = ConsentAction.DENY;
     }
@@ -76,12 +72,7 @@ export class VEConsentRequestModal extends SignalWatcher(LitElement) {
       modalTitle=${renderInfo.name}
       .showCloseButton=${true}
       .showSaveCancel=${true}
-      .otherActions=${[
-      { id: "alwaysDeny", label: "Never Allow" },
-      { id: "alwaysAllow", label: "Always Allow" },
-      ]}
-      saveButtonLabel="Allow"
-      cancelButtonLabel="Deny"
+      saveButtonLabel="Always Allow"
       @bbmodaldismissed=${this.#handleModalDismissed}
     >
       ${renderInfo.description(this.consentRequest.request as any)}
