@@ -44,7 +44,7 @@ export const RunRoute: EventRoute<"board.run"> = {
     const graph = editor?.inspect("");
 
     if (
-      // !tab.graphIsMine &&
+      !tab.graphIsMine &&
       graph?.usesTool("embed://a2/tools.bgl.json#module:get-webpage")
     ) {
       if (!(await runtime.consentManager.queryConsent({

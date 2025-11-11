@@ -42,9 +42,9 @@ export const CONSENT_RENDER_INFO: ConsentRenderInfoMap = {
   [ConsentType.OPEN_WEBPAGE]: {
     name: "Open webpage?",
     description: (request) => html`
-      <p>This Opal would like to open a webpage on the following server:</p>
-      <p class="center">${request.scope}</p>
-      <p>Only click allow if you recognize this server and trust the Opal.</p>
+      <p>This Opal would like to open a webpage on the following site:</p>
+      <p class="center" style="word-break: break-all;">${request.scope}</p>
+      <p>Only click allow if you recognize this site and trust the Opal.</p>
     `
   },
 };
