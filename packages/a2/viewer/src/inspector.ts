@@ -14,24 +14,13 @@
  limitations under the License.
  */
 
-import {
-  LitElement,
-  html,
-  css,
-  HTMLTemplateResult,
-  unsafeCSS,
-  PropertyValues,
-  nothing,
-} from "lit";
+import { LitElement, html, css, unsafeCSS, PropertyValues, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { provide } from "@lit/context";
 import { theme as uiTheme } from "./theme/theme.js";
 import "./ui/ui.js";
 import { classMap } from "lit/directives/class-map.js";
-import { ref } from "lit/directives/ref.js";
-
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
 
 import { v0_8 } from "@breadboard-ai/a2ui";
 import * as UI from "@breadboard-ai/a2ui/ui";
@@ -104,11 +93,6 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
   #renderMode: RenderMode = "surfaces";
   #fileSystem = new FileSystemEvalBackend();
-  #snackbar: BreadboardUI.Elements.Snackbar | undefined = undefined;
-  #pendingSnackbarMessages: Array<{
-    message: BreadboardUI.Types.SnackbarMessage;
-    replaceAll: boolean;
-  }> = [];
 
   static styles = [
     unsafeCSS(v0_8.Styles.structuralStyles),
@@ -592,11 +576,6 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
         @click=${async () => {
           const content = JSON.stringify(this.#outcomes, null, 2);
           await navigator.clipboard.writeText(content);
-
-          this.snackbar(
-            html`Copied to clipboard`,
-            BreadboardUI.Types.SnackType.INFORMATION
-          );
         }}
       >
         <span class="g-icon filled round">content_copy</span> Copy to Clipboard
@@ -755,69 +734,8 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     </section>`;
   }
 
-  #renderSnackbar() {
-    return html`<bb-snackbar
-      ${ref((el: Element | undefined) => {
-        if (!el) {
-          this.#snackbar = undefined;
-        }
-
-        this.#snackbar = el as BreadboardUI.Elements.Snackbar;
-        for (const pendingMessage of this.#pendingSnackbarMessages) {
-          const { message, id, persistent, type, actions } =
-            pendingMessage.message;
-          this.snackbar(message, type, actions, persistent, id);
-        }
-
-        this.#pendingSnackbarMessages.length = 0;
-      })}
-    ></bb-snackbar>`;
-  }
-
   #renderUI() {
-    return [this.#renderHeader(), this.#renderMain(), this.#renderSnackbar()];
-  }
-
-  snackbar(
-    message: string | HTMLTemplateResult,
-    type: BreadboardUI.Types.SnackType,
-    actions: BreadboardUI.Types.SnackbarAction[] = [],
-    persistent = false,
-    id = globalThis.crypto.randomUUID(),
-    replaceAll = false
-  ) {
-    if (!this.#snackbar) {
-      this.#pendingSnackbarMessages.push({
-        message: {
-          id,
-          message,
-          type,
-          persistent,
-          actions,
-        },
-        replaceAll,
-      });
-      return;
-    }
-
-    return this.#snackbar.show(
-      {
-        id,
-        message,
-        type,
-        persistent,
-        actions,
-      },
-      replaceAll
-    );
-  }
-
-  unsnackbar(id?: BreadboardUI.Types.SnackbarUUID) {
-    if (!this.#snackbar) {
-      return;
-    }
-
-    this.#snackbar.hide(id);
+    return [this.#renderHeader(), this.#renderMain()];
   }
 
   render() {
