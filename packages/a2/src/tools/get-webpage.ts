@@ -2,7 +2,7 @@
  * @fileoverview Given a URL of a webpage, returns its content as Markdown with a list of links and other metadata.
  */
 
-import { Capabilities, Outcome, Schema, ConsentType } from "@breadboard-ai/types";
+import { Capabilities, Outcome, Schema, ConsentType, ConsentUIType } from "@breadboard-ai/types";
 import { err, ok } from "../a2/utils";
 import { executeTool } from "../a2/step-executor";
 import { A2ModuleArgs } from "../runnable-module-factory";
@@ -27,24 +27,6 @@ async function getContentFromUrl(
   moduleArgs: A2ModuleArgs,
   url: string
 ): Promise<Outcome<string>> {
-  const graphId = moduleArgs.context.board?.url;
-  if (!graphId) {
-    throw new Error('Expected graphId to be present');
-  }
-  // The backend accepts protocol-less URLs (and will assume https if not present)
-  let fullUrl = url;
-  if (!fullUrl.startsWith('http://') && !fullUrl.startsWith('https://')) {
-    fullUrl = 'https://' + fullUrl;
-  }
-  const parsedUrl = new URL(fullUrl);
-  const allow = await moduleArgs.context.consentManager?.queryConsent({
-    graphId,
-    type: ConsentType.GET_WEBPAGE,
-    scope: parsedUrl.origin,
-  }, true);
-  if (!allow) {
-    return err(`User has not granted consent to fetch content from ${parsedUrl.origin}`);
-  }
   const executing = await executeTool<GetContentFromUrlResponse>(
     caps,
     moduleArgs,

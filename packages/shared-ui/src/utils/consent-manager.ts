@@ -6,10 +6,51 @@
 
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { ConsentAction, ConsentRequest, ConsentManager as ConsentManagerInterface } from "@breadboard-ai/types";
+import {
+  ConsentAction,
+  ConsentRequest,
+  ConsentManager as ConsentManagerInterface,
+  ConsentType,
+  ConsentUIType,
+} from "@breadboard-ai/types";
+import { HTMLTemplateResult, html } from "lit";
+
+const Strings = BreadboardUI.Strings.forSection("Global");
+
+// Helper type to extract the specific ConsentRequest subtype based on the ConsentType
+type ConsentRequestOfType<T extends ConsentType> = Extract<ConsentRequest, { type: T }>;
+
+// Interface for the render info for a single ConsentType
+interface ConsentRenderInfo<T extends ConsentType> {
+  name: string;
+  description: (request: ConsentRequestOfType<T>) => HTMLTemplateResult;
+}
+
+// The type for the main CONSENT_RENDER_INFO object
+type ConsentRenderInfoMap = {
+  [K in ConsentType]: ConsentRenderInfo<K>;
+};
+
+export const CONSENT_RENDER_INFO: ConsentRenderInfoMap = {
+  [ConsentType.GET_ANY_WEBPAGE]: {
+    name: "Allow access to webpages?",
+    description: () => html`
+      <p>This Opal was created by another person and accesses external websites.</p>
+      <p>Keep your personal info private by only sharing info with Opals you trust.</p>
+    `
+  },
+  [ConsentType.OPEN_WEBPAGE]: {
+    name: "Open webpage?",
+    description: (request) => html`
+      <p>This Opal would like to open a webpage on the following server:</p>
+      <p class="center">${request.scope}</p>
+      <p>Only click allow if you recognize this server and trust the Opal.</p>
+    `
+  },
+};
 
 interface ConsentRecord {
-  graphId: string;
+  graphUrl: string;
   type: ConsentRequest['type'];
   scope: string;
   allow: boolean;
@@ -17,9 +58,9 @@ interface ConsentRecord {
 
 interface ConsentDB extends DBSchema {
   consents: {
-    key: [/* graphId */ string, /* type */ string, /* scope */ string];
+    key: [/* graphUrl */ string, /* type */ string, /* scope */ string];
     value: ConsentRecord;
-    indexes: { 'by-type': ConsentRequest['type'], 'by-graph-id': string };
+    indexes: { 'by-type': ConsentRequest['type'], 'by-graph-url': string };
   };
 }
 
@@ -30,18 +71,18 @@ const STORE_NAME = 'consents';
 export class ConsentManager implements ConsentManagerInterface {
 
   #dbPromise: Promise<IDBPDatabase<ConsentDB>>;
-  #requestConsentCallback: (request: ConsentRequest) => Promise<ConsentAction>;
+  #requestConsentCallback: (request: ConsentRequest, uiType: ConsentUIType) => Promise<ConsentAction>;
 
-  constructor(requestConsentCallback: (request: ConsentRequest) => Promise<ConsentAction>) {
+  constructor(requestConsentCallback: (request: ConsentRequest, uiType: ConsentUIType) => Promise<ConsentAction>) {
     this.#requestConsentCallback = requestConsentCallback;
     this.#dbPromise = openDB<ConsentDB>(DB_NAME, DB_VERSION, {
       upgrade(db) {
         if (!db.objectStoreNames.contains(STORE_NAME)) {
           const store = db.createObjectStore(STORE_NAME, {
-            keyPath: ["graphId", "type", "scope"]
+            keyPath: ["graphUrl", "type", "scope"]
           });
           store.createIndex('by-type', 'type');
-          store.createIndex('by-graph-id', 'graphId');
+          store.createIndex('by-graph-url', 'graphUrl');
         }
       },
     });
@@ -58,7 +99,7 @@ export class ConsentManager implements ConsentManagerInterface {
   async setConsent(request: ConsentRequest, allow: boolean): Promise<void> {
     const db = await this.#dbPromise;
     const record: ConsentRecord = {
-      graphId: request.graphId,
+      graphUrl: request.graphUrl,
       type: request.type,
       scope: this.#stringifyScope(request.scope),
       allow,
@@ -66,12 +107,12 @@ export class ConsentManager implements ConsentManagerInterface {
     await db.put(STORE_NAME, record);
   }
 
-  async queryConsent(request: ConsentRequest, askIfMissing: boolean): Promise<boolean | undefined> {
+  async queryConsent(request: ConsentRequest, askUsingUiType?: ConsentUIType): Promise<boolean | undefined> {
     const db = await this.#dbPromise;
-    const record = await db.get(STORE_NAME, [request.graphId, request.type, this.#stringifyScope(request.scope)]);
+    const record = await db.get(STORE_NAME, [request.graphUrl, request.type, this.#stringifyScope(request.scope)]);
     let allow = record?.allow;
-    if (allow === undefined && askIfMissing) {
-      const action = await this.#requestConsentCallback(request);
+    if (allow === undefined && askUsingUiType) {
+      const action = await this.#requestConsentCallback(request, askUsingUiType);
       switch (action) {
         case ConsentAction.ALLOW:
           allow = true;
@@ -94,7 +135,7 @@ export class ConsentManager implements ConsentManagerInterface {
 
   async revokeConsent(request: ConsentRequest): Promise<void> {
     const db = await this.#dbPromise;
-    await db.delete(STORE_NAME, [request.graphId, request.type, this.#stringifyScope(request.scope)]);
+    await db.delete(STORE_NAME, [request.graphUrl, request.type, this.#stringifyScope(request.scope)]);
   }
 
   async getAllConsentsByType(

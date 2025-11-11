@@ -11,7 +11,7 @@ import { InputValues, ok } from "@google-labs/breadboard";
 import { RuntimeSnackbarEvent } from "../../runtime/events";
 import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { StateEvent } from "@breadboard-ai/shared-ui/events/events.js";
-import { GraphMetadata } from "@breadboard-ai/types";
+import { GraphMetadata, ConsentType, ConsentUIType } from "@breadboard-ai/types";
 
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
@@ -34,6 +34,22 @@ export const RunRoute: EventRoute<"board.run"> = {
       const preparingRun = await runtime.prepareRun(tab, settings);
       if (!ok(preparingRun)) {
         console.warn(preparingRun.$error);
+        return false;
+      }
+    }
+
+    const editor = runtime.edit.getEditor(tab);
+    const graph = editor?.inspect("");
+
+    if (
+      // !tab.graphIsMine &&
+      graph?.usesTool("embed://a2/tools.bgl.json#module:get-webpage")
+    ) {
+      if (!(await runtime.consentManager.queryConsent({
+        type: ConsentType.GET_ANY_WEBPAGE,
+        scope: {},
+        graphUrl: tab.graph.url!,
+      }, ConsentUIType.IN_APP))) {
         return false;
       }
     }

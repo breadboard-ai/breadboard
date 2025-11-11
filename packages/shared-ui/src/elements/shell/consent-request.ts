@@ -4,60 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LitElement, html, css, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { colorsLight } from "../../styles/host/colors-light";
 import { type } from "../../styles/host/type";
 import '@material/web/tabs/primary-tab.js';
 import '@material/web/tabs/tabs.js';
 import '@material/web/checkbox/checkbox.js';
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { SignalWatcher } from "@lit-labs/signals";
 import { ModalDismissedEvent } from "../../events/events.js";
-import { ConsentRequestWithCallback, ConsentRequest, ConsentType, ConsentAction } from "@breadboard-ai/types";
-import { HTMLTemplateResult } from "lit";
-
-const Strings = BreadboardUI.Strings.forSection("Global");
-
-// Helper type to extract the specific ConsentRequest subtype based on the ConsentType
-type ConsentRequestOfType<T extends ConsentType> = Extract<ConsentRequest, { type: T }>;
-
-// Interface for the render info for a single ConsentType
-interface ConsentRenderInfo<T extends ConsentType> {
-  name: string;
-  description: (request: ConsentRequestOfType<T>) => HTMLTemplateResult;
-}
-
-// The type for the main CONSENT_RENDER_INFO object
-type ConsentRenderInfoMap = {
-  [K in ConsentType]: ConsentRenderInfo<K>;
-};
-
-const CONSENT_RENDER_INFO: ConsentRenderInfoMap = {
-  [ConsentType.OPEN_WEBPAGE]: {
-    name: "Open webpage?",
-    description: (request) => html`
-      <p>This Opal would like to open a webpage on the following server:</p>
-      <p class="center">${request.scope}</p>
-      <p>Only click allow if you recognize this server and trust the Opal.</p>
-    `
-  },
-  [ConsentType.GET_WEBPAGE]: {
-    name: "Allow access to webpage?",
-    description: (request) => html`
-      <p>This Opal would like to access a webpage on the following server:</p>
-      <p class="center">${request.scope}</p>
-      <p>The Opal may send data you have provided to it to this webpage. Only click allow if you recognize this server and trust the Opal.</p>
-    `
-  },
-  [ConsentType.USE_MCP]: {
-    name: "Connect to MCP server?",
-    description: (request) => html`
-      <p>This Opal would like to connect to MCP server at ${request.scope.url} with scope ${request.scope.scope}</p>
-      <p>The Opal may send data you have provided to it to the MCP server. Only click allow if you recognize this server and trust the Opal.</p>
-    `
-  }
-};
-
+import { ConsentRequestWithCallback, ConsentAction } from "@breadboard-ai/types";
+import { CONSENT_RENDER_INFO } from "../../utils/consent-manager.js";
 
 @customElement("bb-consent-request-modal")
 export class VEConsentRequestModal extends SignalWatcher(LitElement) {

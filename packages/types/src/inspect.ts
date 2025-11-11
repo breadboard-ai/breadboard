@@ -377,6 +377,10 @@ export type InspectableGraph = {
    * node configuration.
    */
   assetEdges(): Outcome<InspectableAssetEdge[]>;
+  /**
+   * Returns whether a given tool is used in this Opal (by tool path)
+   */
+  usesTool(path: string): boolean
 };
 
 /**

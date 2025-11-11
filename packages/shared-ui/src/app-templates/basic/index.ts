@@ -73,11 +73,11 @@ import { googleDriveClientContext } from "../../contexts/google-drive-client-con
 import { markdown } from "../../directives/markdown.js";
 import { makeUrl } from "../../utils/urls.js";
 
-import { AppScreenOutput, RuntimeFlags, ConsentType } from "@breadboard-ai/types";
+import { AppScreenOutput, RuntimeFlags, ConsentAction, ConsentType, ConsentUIType } from "@breadboard-ai/types";
 import { maybeTriggerNlToOpalSatisfactionSurvey } from "../../survey/nl-to-opal-satisfaction-survey.js";
 import { repeat } from "lit/directives/repeat.js";
 import { consentManagerContext } from "../../contexts/consent-manager.js";
-import { ConsentManager } from "../../utils/consent-manager.js";
+import { ConsentManager, CONSENT_RENDER_INFO } from "../../utils/consent-manager.js";
 
 const toFunctionString = (fn: Function, bindings?: Record<string, unknown>) => {
   let str = fn.toString();
@@ -237,13 +237,13 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         event.data.type === "request-open-popup"
       ) {
         const url = new URL(event.data.url);
-        const graphId = this.graph?.url;
-        if (this.consentManager && graphId) {
+        const graphUrl = this.graph?.url;
+        if (this.consentManager && graphUrl) {
           const allow = await this.consentManager.queryConsent({
-            graphId,
+            graphUrl,
             type: ConsentType.OPEN_WEBPAGE,
             scope: url.origin,
-          }, true);
+          }, ConsentUIType.MODAL);
           if (!allow) {
             return;
           }
@@ -425,6 +425,27 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     </section>`;
 
     return html`<div id="activity">${[activityContents]}</div>`;
+  }
+
+  #renderConsent() {
+    const consentRequest = this.run?.app.consentRequests[0];
+    if (!consentRequest) {
+      return nothing;
+    }
+    const renderInfo = CONSENT_RENDER_INFO[consentRequest.request.type];
+    return html`
+      <h1>${renderInfo.name}</h1>
+      ${renderInfo.description(consentRequest as any)}
+      <button
+        id="grant-consent"
+        @click=${() => {
+        this.run?.app.consentRequests.shift();
+        consentRequest.consentCallback(ConsentAction.ALWAYS_ALLOW);
+      }}
+      >
+        <span class="g-icon"></span>Continue
+      </button>
+    `;
   }
 
   #renderEmptyState() {
@@ -1006,6 +1027,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
         case "interactive":
           content = [this.#renderOutputs()];
+          break;
+
+        case "consent":
+          content = [this.#renderConsent()];
           break;
 
         default: {

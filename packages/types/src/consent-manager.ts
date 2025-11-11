@@ -5,9 +5,9 @@
  */
 
 export enum ConsentType {
-  GET_WEBPAGE = 'GET_WEBPAGE',
+  GET_ANY_WEBPAGE = 'GET_WEBPAGE',
   OPEN_WEBPAGE = 'OPEN_WEBPAGE',
-  USE_MCP = 'MCP',
+  // TODO: Add MCP, etc.
 }
 
 export enum ConsentAction {
@@ -17,19 +17,18 @@ export enum ConsentAction {
   ALWAYS_DENY = 'alwaysDeny',
 }
 
+export enum ConsentUIType {
+  MODAL = 'MODAL',
+  IN_APP = 'IN_APP',
+}
+
 export type ConsentRequest = ({
-  type: ConsentType.USE_MCP,
-  scope: {
-    url: string;
-    scope: string;
-  }
-} | {
-  type: ConsentType.GET_WEBPAGE,
-  scope: string;
+  type: ConsentType.GET_ANY_WEBPAGE,
+  scope: {}
 } | {
   type: ConsentType.OPEN_WEBPAGE,
   scope: string;
-}) & { graphId: string };
+}) & { graphUrl: string };
 
 export type ConsentRequestWithCallback = {
   request: ConsentRequest;
@@ -38,7 +37,7 @@ export type ConsentRequestWithCallback = {
 
 export interface ConsentManager {
   setConsent(request: ConsentRequest, allow: boolean): Promise<void>;
-  queryConsent(request: ConsentRequest, askIfMissing: boolean): Promise<boolean | undefined>;
+  queryConsent(request: ConsentRequest, askUsingUiType?: ConsentUIType): Promise<boolean | undefined>;
   revokeConsent(request: ConsentRequest): Promise<void>;
   getAllConsentsByType(type: ConsentRequest['type']): Promise<ConsentRequest[]>;
   clearAllConsents(): Promise<void>;

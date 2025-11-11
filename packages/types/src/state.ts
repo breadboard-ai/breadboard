@@ -9,6 +9,7 @@ import { LLMContent } from "./llm-content.js";
 import { Particle } from "./particles.js";
 import { NodeRunState } from "./run-status.js";
 import { Schema } from "./schema.js";
+import { ConsentRequestWithCallback } from "./consent-manager.js";
 
 export type SimplifiedProjectRunState = {
   console: Map<string, ConsoleEntry>;
@@ -150,7 +151,7 @@ export type App = {
    * inputs and showing outputs (A2UI)
    * - "error" - the app is showing an error
    */
-  state: "splash" | "output" | "progress" | "input" | "interactive" | "error";
+  state: "splash" | "output" | "progress" | "input" | "interactive" | "error" | "consent";
   /**
    * A sequence of screens that is produced during the run.
    */
@@ -163,6 +164,10 @@ export type App = {
    * The last screen.
    */
   last: AppScreen | null;
+  /**
+   * In-app consent requests that are pending user approval.
+   */
+  consentRequests: ConsentRequestWithCallback[];
 };
 
 /**

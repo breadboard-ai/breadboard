@@ -20,9 +20,9 @@ import type {
   BoardServer,
   ConformsToNodeValue,
   FileSystem,
-  ConsentAction,
   ConsentRequest,
 } from "@breadboard-ai/types";
+import { ConsentUIType, ConsentAction } from "@breadboard-ai/types";
 import {
   addRunModule,
   composeFileSystemBackends,
@@ -460,9 +460,19 @@ export class Main extends SignalWatcher(LitElement) {
       fetchWithCreds,
     });
 
-    this.#consentManager = new ConsentManager(async (request: ConsentRequest) => {
+    this.#consentManager = new ConsentManager(async (request: ConsentRequest, uiType: ConsentUIType) => {
       return new Promise<ConsentAction>(resolve => {
-        this.#uiState.consentRequests.push({ request, consentCallback: resolve });
+        if (uiType === ConsentUIType.MODAL) {
+          this.#uiState.consentRequests.push({ request, consentCallback: resolve });
+        } else {
+          const appState = this.#runtime.state.getProjectState(this.#tab?.mainGraphId)?.run.app;
+          if (appState) {
+            appState.consentRequests.push({ request, consentCallback: resolve });
+          } else {
+            console.warn("In-app consent requested when no app state existed");
+            resolve(ConsentAction.DENY);
+          }
+        }
       });
     });
 

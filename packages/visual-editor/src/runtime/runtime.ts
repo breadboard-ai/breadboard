@@ -124,7 +124,6 @@ export class Runtime extends EventTarget {
       inputs: inputsFromSettings(settings),
       interactiveSecrets: true,
       fetchWithCreds: this.fetchWithCreds,
-      consentManager: this.consentManager,
       getProjectRunState: () => {
         return this.state.getProjectState(tab.mainGraphId)?.run;
       },
