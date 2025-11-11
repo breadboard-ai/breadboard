@@ -92,13 +92,15 @@ export class Surface extends Root {
       }
     }
 
+    if (!this.surface || !this.surface.componentTree) {
+      return nothing;
+    }
+
     return html`<a2ui-root
       style=${styleMap(styles)}
       .surfaceId=${this.surfaceId}
       .processor=${this.processor}
-      .childComponents=${this.surface?.componentTree
-        ? [this.surface.componentTree]
-        : null}
+      .childComponents=${this.surface.componentTree}
     ></a2ui-root>`;
   }
 

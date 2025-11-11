@@ -1,0 +1,830 @@
+/*
+ Copyright 2025 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
+
+import {
+  LitElement,
+  html,
+  css,
+  HTMLTemplateResult,
+  unsafeCSS,
+  PropertyValues,
+  nothing,
+} from "lit";
+import { customElement, property, state } from "lit/decorators.js";
+import { SignalWatcher } from "@lit-labs/signals";
+import { provide } from "@lit/context";
+import { theme as uiTheme } from "./theme/theme.js";
+import "./ui/ui.js";
+import { classMap } from "lit/directives/class-map.js";
+import { ref } from "lit/directives/ref.js";
+
+import * as BreadboardUI from "@breadboard-ai/shared-ui";
+
+import { v0_8 } from "@breadboard-ai/a2ui";
+import * as UI from "@breadboard-ai/a2ui/ui";
+import { map } from "lit/directives/map.js";
+import {
+  FileSystemEvalBackend,
+  FileSystemEvalBackendHandle,
+} from "./filesystem.js";
+import { ok } from "@breadboard-ai/utils";
+import { FileSystemQueryEntry } from "@breadboard-ai/types";
+import { signal } from "signal-utils";
+
+type EvalFileData = Array<Outcome | Context>;
+
+interface Context {
+  type: "context";
+}
+
+interface OutcomeData {
+  a2ui: v0_8.Types.ServerToClientMessage[];
+}
+
+interface Outcome {
+  type: "outcome";
+  outcome: OutcomeData[];
+}
+
+type RenderMode = "surfaces" | "messages";
+
+const RENDER_MODE_KEY = "eval-inspector-render-mode";
+
+@customElement("a2ui-eval-inspector")
+export class A2UIEvalInspector extends SignalWatcher(LitElement) {
+  @provide({ context: UI.Context.themeContext })
+  accessor theme: v0_8.Types.Theme = uiTheme;
+
+  @state()
+  accessor #ready = true;
+
+  @state()
+  accessor #requesting = false;
+
+  @property()
+  accessor selectedPath: FileSystemEvalBackendHandle | null = null;
+
+  @property()
+  accessor selectedFilePath: string | null = null;
+
+  @signal
+  accessor #selectedOutcome: number = 0;
+
+  @signal
+  accessor #filesInMountedDir: FileSystemQueryEntry[] = [];
+
+  @signal
+  accessor #dirs: FileSystemEvalBackendHandle[] = [];
+
+  @signal
+  accessor #outcomes: OutcomeData[] | null = null;
+  #processor = v0_8.Data.createSignalA2UIModelProcessor();
+
+  @state()
+  set renderMode(renderMode: RenderMode) {
+    this.#renderMode = renderMode;
+    localStorage.setItem(RENDER_MODE_KEY, renderMode);
+  }
+  get renderMode() {
+    return this.#renderMode;
+  }
+
+  #renderMode: RenderMode = "surfaces";
+  #fileSystem = new FileSystemEvalBackend();
+  #snackbar: BreadboardUI.Elements.Snackbar | undefined = undefined;
+  #pendingSnackbarMessages: Array<{
+    message: BreadboardUI.Types.SnackbarMessage;
+    replaceAll: boolean;
+  }> = [];
+
+  static styles = [
+    unsafeCSS(v0_8.Styles.structuralStyles),
+    css`
+      * {
+        box-sizing: border-box;
+      }
+
+      :host {
+        display: grid;
+        width: 100%;
+        height: 100%;
+        color: var(--text-color);
+        grid-template-rows: 42px 1fr;
+
+        --bb-neutral-900: var(--primary);
+      }
+
+      header {
+        border-bottom: 1px solid var(--border-color);
+        padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
+      }
+
+      .rotate {
+        animation: rotate 1s linear infinite;
+      }
+
+      .g-icon.large {
+        font-size: 100px;
+      }
+
+      h1,
+      h2 {
+        display: flex;
+        align-items: center;
+        margin: 0;
+
+        & .g-icon {
+          margin-right: var(--bb-grid-size-2);
+        }
+      }
+
+      @media (min-height: 960px) {
+        #main #controls-container {
+          grid-template-rows: 32px 1fr 42px;
+          gap: var(--bb-grid-size-5);
+
+          & #controls {
+            margin-bottom: var(--bb-grid-size-3);
+          }
+        }
+      }
+
+      #main {
+        & ui-splitter {
+          height: 100%;
+        }
+
+        & #controls-container {
+          padding: var(--bb-grid-size-6);
+          display: grid;
+          grid-template-rows: 32px 40px 1fr;
+          gap: var(--bb-grid-size-3);
+
+          & #mount-dir,
+          & #mount-dir > span {
+            display: flex;
+            align-items: center;
+            background: none;
+            border: none;
+            color: var(--n-100);
+            padding: 0;
+          }
+
+          & #mount-dir {
+            gap: var(--bb-grid-size-3);
+
+            & > span {
+              border-radius: var(--bb-grid-size-2);
+              background: oklch(from var(--primary) l c h / calc(alpha * 0.2));
+              opacity: 0.8;
+              border: none;
+              transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+              width: 100%;
+              max-width: 420px;
+              padding: var(--bb-grid-size-2) var(--bb-grid-size-5)
+                var(--bb-grid-size-2) var(--bb-grid-size-2);
+              pointer-events: auto;
+
+              &:not(.active):hover {
+                opacity: 1;
+                cursor: pointer;
+              }
+
+              &.active {
+                opacity: 1;
+                color: var(--text-color);
+              }
+            }
+          }
+
+          & #dir-selector {
+            width: 100%;
+            height: 100%;
+            background: oklch(from var(--primary) l c h / calc(alpha * 0.2));
+            border-radius: var(--bb-grid-size-2);
+            border: 1px solid var(--primary);
+            color: var(--n-100);
+            padding: 0;
+          }
+
+          & #controls {
+            display: flex;
+            align-items: end;
+            margin-bottom: var(--bb-grid-size-3);
+
+            & button {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              flex: 1;
+              min-height: 42px;
+              padding: 0;
+              border: none;
+              background: none;
+              color: var(--text-color);
+              opacity: 0.5;
+              border-bottom: 2px solid var(--border-color);
+              transition:
+                opacity 0.3s cubic-bezier(0, 0, 0.3, 1),
+                border-color 0.3s cubic-bezier(0, 0, 0.3, 1);
+
+              &:not([disabled]):not(.active) {
+                cursor: pointer;
+              }
+
+              & .g-icon {
+                margin-right: var(--bb-grid-size-2);
+              }
+
+              &.active {
+                opacity: 1;
+                border-bottom: 2px solid var(--primary);
+              }
+            }
+          }
+
+          & #instructions {
+            border-radius: var(--bb-grid-size-2);
+            border: 1px solid var(--border-color);
+            padding: var(--bb-grid-size-2);
+            color: var(--text-color);
+            background: var(--elevated-background-light);
+            resize: none;
+            font-family: var(--font-family-mono);
+            width: 100%;
+            overflow: auto;
+
+            & #file-list {
+              padding: 0;
+              margin: 0;
+              list-style: none;
+              display: flex;
+              flex-direction: column;
+              gap: var(--bb-grid-size-2);
+
+              li {
+                width: 100%;
+                overflow: auto;
+
+                button {
+                  background: oklch(
+                    from var(--primary) l c h / calc(alpha * 0.2)
+                  );
+                  border: none;
+                  border-radius: var(--bb-grid-size-2);
+                  color: var(--n-100);
+                  padding: var(--bb-grid-size-2);
+                  font-family: var(--font-family-mono);
+                  text-align: left;
+                  width: 100%;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  white-space: nowrap;
+                  cursor: pointer;
+
+                  &[selected] {
+                    background: oklch(
+                      from var(--primary) l c h / calc(alpha * 0.4)
+                    );
+                  }
+                }
+              }
+            }
+          }
+
+          & button[type="submit"] {
+            border-radius: var(--bb-grid-size-2);
+            color: var(--text-color);
+            background: var(--primary);
+            opacity: 0.4;
+            border: none;
+            transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+            width: 100%;
+            max-width: 420px;
+            justify-self: center;
+
+            &:not([disabled]) {
+              opacity: 1;
+              cursor: pointer;
+            }
+          }
+        }
+
+        & #surface-container {
+          padding: var(--bb-grid-size-6);
+          border-left: 1px solid var(--border-color);
+          display: grid;
+          grid-template-rows: 32px 1fr;
+          gap: var(--bb-grid-size-4);
+
+          & #render-mode,
+          & #render-mode > span {
+            display: flex;
+            align-items: center;
+            background: none;
+            border: none;
+            color: var(--primary);
+            padding: 0;
+          }
+
+          & #render-mode {
+            gap: var(--bb-grid-size-3);
+
+            & > span {
+              border-radius: var(--bb-grid-size-2);
+              background: oklch(from var(--primary) l c h / calc(alpha * 0.2));
+              opacity: 0.4;
+              border: none;
+              transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+              width: 100%;
+              max-width: 420px;
+              padding: var(--bb-grid-size-2) var(--bb-grid-size-5);
+              pointer-events: auto;
+
+              &:not(.active):hover {
+                opacity: 1;
+                cursor: pointer;
+              }
+
+              &.active {
+                opacity: 1;
+                color: var(--text-color);
+              }
+            }
+          }
+
+          & #messages,
+          & #surfaces {
+            display: flex;
+            border-radius: var(--bb-grid-size-2);
+            border: 1px dashed var(--border-color);
+            align-items: center;
+            justify-content: center;
+            padding: var(--bb-grid-size-4);
+            overflow: scroll;
+            scrollbar-width: none;
+            position: relative;
+
+            & a2ui-surface {
+              width: 100%;
+              max-width: 640px;
+              max-height: 600px;
+            }
+          }
+
+          & #surfaces {
+            background: var(--n-100);
+
+            & #outcome-select {
+              position: absolute;
+              top: 10px;
+              left: 10px;
+              padding: var(--bb-grid-size-2);
+              border: 1px solid var(--primary);
+              border-radius: var(--bb-grid-size-2);
+            }
+          }
+
+          & #messages {
+            position: relative;
+            display: block;
+            font-family: var(--font-family-mono);
+            line-height: 1.5;
+
+            & div {
+              white-space: pre-wrap;
+            }
+
+            & button {
+              position: absolute;
+              top: var(--bb-grid-size-3);
+              right: var(--bb-grid-size-3);
+
+              display: flex;
+              align-items: center;
+              border-radius: var(--bb-grid-size-2);
+              background: oklch(from var(--primary) l c h / calc(alpha * 0.2));
+              opacity: 0.4;
+              border: none;
+              transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+              padding: var(--bb-grid-size-2) var(--bb-grid-size-5)
+                var(--bb-grid-size-2) var(--bb-grid-size-2);
+              color: var(--primary);
+
+              & .g-icon {
+                margin-right: var(--bb-grid-size-2);
+              }
+
+              &:not([disabled]) {
+                cursor: pointer;
+
+                &:hover,
+                &:focus {
+                  opacity: 1;
+                }
+              }
+            }
+          }
+
+          & #generating-surfaces,
+          & #no-surfaces {
+            p {
+              color: var(--n-60);
+            }
+
+            width: 50%;
+            max-width: 400px;
+            text-align: center;
+          }
+
+          & #generating-surfaces {
+            & h2 {
+              justify-content: center;
+              white-space: nowrap;
+            }
+          }
+
+          & #no-surfaces {
+            & h2 {
+              display: block;
+              text-align: center;
+            }
+          }
+        }
+      }
+
+      @keyframes rotate {
+        from {
+          rotate: 0deg;
+        }
+
+        to {
+          rotate: 360deg;
+        }
+      }
+    `,
+  ];
+
+  constructor() {
+    super();
+
+    this.#renderMode =
+      (localStorage.getItem(RENDER_MODE_KEY) as RenderMode) ?? "surfaces";
+
+    this.#refresh();
+  }
+
+  protected willUpdate(changedProperties: PropertyValues<this>): void {
+    if (changedProperties.has("selectedPath")) {
+      if (this.selectedPath) {
+        this.#fileSystem.query(this.selectedPath.path).then((f) => {
+          if (!ok(f)) {
+            this.#filesInMountedDir = [];
+            return;
+          }
+
+          this.#filesInMountedDir = f.entries;
+        });
+      } else {
+        this.#filesInMountedDir = [];
+      }
+    }
+
+    if (changedProperties.has("selectedFilePath")) {
+      this.#selectedOutcome = 0;
+    }
+  }
+
+  #refresh() {
+    return this.#fileSystem.getAll().then((items) => {
+      this.#dirs = items;
+      if (!this.selectedPath && items.length) {
+        this.selectedPath = items.at(0) ?? null;
+      }
+      return items;
+    });
+  }
+
+  #renderSurfacesOrMessages() {
+    if (this.#requesting) {
+      return html`<section id="surfaces">
+        <div id="generating-surfaces">
+          <h2 class="typography-w-400 typography-f-s typography-sz-tl">
+            <span class="g-icon filled round rotate">progress_activity</span
+            >Generating your UI
+          </h2>
+          <p class="typography-f-s typography-sz-bl">Working on it...</p>
+        </div>
+      </section>`;
+    }
+
+    const renderNoData = () =>
+      html`<section id="surfaces">
+        <div id="no-surfaces">
+          <h2 class="typography-w-400 typography-f-s typography-sz-tl">
+            No UI Generated Yet
+          </h2>
+          <p class="typography-f-s typography-sz-bl">
+            Select a file to see the result here.
+          </p>
+        </div>
+      </section>`;
+
+    const surfaces = this.#processor.getSurfaces();
+    if (surfaces.size === 0) {
+      return renderNoData();
+    }
+
+    if (this.renderMode === "surfaces") {
+      return html`<section id="surfaces">
+        ${this.#outcomes
+          ? html`<select
+              @change=${(evt: Event) => {
+                if (!(evt.target instanceof HTMLSelectElement)) {
+                  return;
+                }
+
+                this.#selectedOutcome = evt.target.selectedIndex;
+                this.#processor.clearSurfaces();
+
+                const selectedOutcome = this.#outcomes?.at(
+                  this.#selectedOutcome
+                );
+                if (!selectedOutcome) {
+                  return;
+                }
+
+                this.#processor.processMessages(selectedOutcome.a2ui);
+              }}
+              id="outcome-select"
+            >
+              ${map(this.#outcomes, (_, idx) => {
+                return html`<option>Outcome ${idx + 1}</option>`;
+              })}
+            </select>`
+          : nothing}
+        ${map(this.#processor.getSurfaces(), ([surfaceId, surface]) => {
+          return html`<a2ui-surface
+              .surfaceId=${surfaceId}
+              .surface=${surface}
+              .processor=${this.#processor}
+              ></a2-uisurface>`;
+        })}
+      </section>`;
+    }
+
+    return html`<section id="messages">
+      <div>${JSON.stringify(this.#outcomes, null, 2)}</div>
+      <button
+        @click=${async () => {
+          const content = JSON.stringify(this.#outcomes, null, 2);
+          await navigator.clipboard.writeText(content);
+
+          this.snackbar(
+            html`Copied to clipboard`,
+            BreadboardUI.Types.SnackType.INFORMATION
+          );
+        }}
+      >
+        <span class="g-icon filled round">content_copy</span> Copy to Clipboard
+      </button>
+    </section>`;
+  }
+
+  #renderInput() {
+    const selectedOutcomeIndex = this.#selectedOutcome;
+    return html`<div>
+        ${this.#dirs.length > 0
+          ? html`<select
+              id="dir-selector"
+              @change=${(evt: Event) => {
+                if (!(evt.target instanceof HTMLSelectElement)) {
+                  return;
+                }
+
+                const target = evt.target;
+                this.selectedPath =
+                  this.#dirs.find((val) => val.path === target.value) ?? null;
+              }}
+            >
+              ${map(
+                this.#dirs,
+                (dir) =>
+                  html`<option
+                    ?selected=${dir.path === this.selectedPath?.path}
+                  >
+                    ${dir.title}
+                  </option>`
+              )}
+            </select>`
+          : html`<div>Mount a directory to continue</div>`}
+      </div>
+      <div
+        id="instructions"
+        class=${classMap({
+          "typography-w-400": true,
+          "typography-f-s": true,
+          "typography-sz-bl": true,
+        })}
+      >
+        <ul id="file-list">
+          ${this.#filesInMountedDir.map((file) => {
+            const fileName = file.path.split("/").at(-1);
+            return html`<li>
+              <button
+                ?selected=${file.path === this.selectedFilePath}
+                @click=${async () => {
+                  this.#processor.clearSurfaces();
+
+                  this.selectedFilePath = file.path;
+                  const data = await this.#fileSystem.read(file.path);
+                  if (!ok(data)) {
+                    return;
+                  }
+
+                  try {
+                    const fileData = JSON.parse(data) as EvalFileData;
+                    this.#outcomes = null;
+                    const outcomes: Outcome[] = fileData.filter(
+                      (item) => item.type === "outcome"
+                    );
+
+                    for (const outcome of outcomes) {
+                      this.#outcomes = outcome.outcome;
+                      this.#processor.clearSurfaces();
+
+                      const selectedOutcome =
+                        outcome.outcome.at(selectedOutcomeIndex);
+                      if (!selectedOutcome) {
+                        continue;
+                      }
+
+                      this.#processor.processMessages(selectedOutcome.a2ui);
+                    }
+                  } catch (err) {
+                    console.warn(err);
+                    this.renderMode = "messages";
+                    return;
+                  }
+                }}
+              >
+                ${fileName}
+              </button>
+            </li>`;
+          })}
+        </ul>
+      </div>`;
+  }
+
+  #renderHeader() {
+    return html`<header
+      class="typography-w-400 typography-f-sf typography-sz-tm"
+    >
+      A2UI Inspector
+    </header>`;
+  }
+
+  #renderMain() {
+    return html`<section id="main">
+      <ui-splitter
+        direction=${"horizontal"}
+        name="layout-main"
+        split="[0.20, 0.80]"
+        .minSegmentSizeHorizontal=${325}
+      >
+        <div id="controls-container" slot="slot-0">
+          <h2
+            class="typography-w-400 typography-f-s typography-sz-tl layout-sp-bt"
+          >
+            Files
+            <button
+              id="mount-dir"
+              @click=${async () => {
+                await this.#fileSystem.query(
+                  `/mnt/${globalThis.crypto.randomUUID()}/`
+                );
+                this.#refresh();
+              }}
+            >
+              <span><span class="g-icon filled round">add</span>Mount</span>
+            </button>
+          </h2>
+          ${this.#renderInput()}
+        </div>
+        <div id="surface-container" slot="slot-1">
+          <h2
+            class="typography-w-400 typography-f-s typography-sz-tl layout-sp-bt"
+          >
+            Generated UI
+            <button
+              id="render-mode"
+              @click=${() => {
+                this.renderMode =
+                  this.renderMode === "messages" ? "surfaces" : "messages";
+              }}
+            >
+              <span
+                class=${classMap({ active: this.#renderMode === "surfaces" })}
+              >
+                <span class="g-icon filled round">mobile_layout</span>Surfaces
+              </span>
+
+              <span
+                class=${classMap({ active: this.#renderMode === "messages" })}
+              >
+                <span class="g-icon filled round">communication</span>A2UI
+              </span>
+            </button>
+          </h2>
+          ${this.#renderSurfacesOrMessages()}
+        </div>
+      </ui-splitter>
+    </section>`;
+  }
+
+  #renderSnackbar() {
+    return html`<bb-snackbar
+      ${ref((el: Element | undefined) => {
+        if (!el) {
+          this.#snackbar = undefined;
+        }
+
+        this.#snackbar = el as BreadboardUI.Elements.Snackbar;
+        for (const pendingMessage of this.#pendingSnackbarMessages) {
+          const { message, id, persistent, type, actions } =
+            pendingMessage.message;
+          this.snackbar(message, type, actions, persistent, id);
+        }
+
+        this.#pendingSnackbarMessages.length = 0;
+      })}
+    ></bb-snackbar>`;
+  }
+
+  #renderUI() {
+    return [this.#renderHeader(), this.#renderMain(), this.#renderSnackbar()];
+  }
+
+  snackbar(
+    message: string | HTMLTemplateResult,
+    type: BreadboardUI.Types.SnackType,
+    actions: BreadboardUI.Types.SnackbarAction[] = [],
+    persistent = false,
+    id = globalThis.crypto.randomUUID(),
+    replaceAll = false
+  ) {
+    if (!this.#snackbar) {
+      this.#pendingSnackbarMessages.push({
+        message: {
+          id,
+          message,
+          type,
+          persistent,
+          actions,
+        },
+        replaceAll,
+      });
+      return;
+    }
+
+    return this.#snackbar.show(
+      {
+        id,
+        message,
+        type,
+        persistent,
+        actions,
+      },
+      replaceAll
+    );
+  }
+
+  unsnackbar(id?: BreadboardUI.Types.SnackbarUUID) {
+    if (!this.#snackbar) {
+      return;
+    }
+
+    this.#snackbar.hide(id);
+  }
+
+  render() {
+    if (!this.#ready) {
+      return html`Loading...`;
+    }
+
+    return this.#renderUI();
+  }
+}

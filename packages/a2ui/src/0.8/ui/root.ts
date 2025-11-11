@@ -48,7 +48,7 @@ export class Root extends SignalWatcher(LitElement) {
   accessor theme!: Theme;
 
   @property({ attribute: false })
-  accessor childComponents: AnyComponentNode[] | null = null;
+  accessor childComponents: AnyComponentNode[] | AnyComponentNode | null = null;
 
   @property({ attribute: false })
   accessor processor: A2UIModelProcessor | null = null;
@@ -86,7 +86,7 @@ export class Root extends SignalWatcher(LitElement) {
   #lightDomEffectDisposer: null | (() => void) = null;
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
-    if (changedProperties.has("childComponents") && this.childComponents) {
+    if (changedProperties.has("childComponents")) {
       if (this.#lightDomEffectDisposer) {
         this.#lightDomEffectDisposer();
       }
@@ -120,15 +120,14 @@ export class Root extends SignalWatcher(LitElement) {
    * Turns the SignalMap into a renderable TemplateResult for Lit.
    */
   private renderComponentTree(
-    components: AnyComponentNode[] | null
+    components: AnyComponentNode[] | AnyComponentNode | null
   ): TemplateResult | typeof nothing {
     if (!components) {
       return nothing;
     }
 
-    if (!Array.isArray(components)) {
-      console.warn("Found non-array children", components);
-      return nothing;
+    if (!Array.isArray(components) && components) {
+      components = [components];
     }
 
     return html` ${map(components, (component) => {
