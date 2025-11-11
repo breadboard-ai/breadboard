@@ -22,6 +22,7 @@ export {
   invoke as default,
   describe,
   defaultSafetySettings,
+  generateContent,
   streamGenerateContent,
   conformBody as conformGeminiBody,
 };
@@ -680,6 +681,32 @@ function validateInputs(inputs: GeminiInputs): Outcome<void> {
 function kindFromStatus(status: number): ErrorMetadata["kind"] {
   if (status === 429) return "capacity";
   return "unknown";
+}
+
+/**
+ * The new official API endpoint for non-streaming Gemini API.
+ */
+async function generateContent(
+  model: string,
+  body: GeminiBody,
+  { fetchWithCreds, context }: A2ModuleArgs
+): Promise<Outcome<GeminiAPIOutputs>> {
+  try {
+    const result = await fetchWithCreds(endpointURL(model), {
+      method: "POST",
+      body: JSON.stringify(body),
+      signal: context.signal,
+    });
+    if (!result.ok) {
+      // Expect non-streaming error response.
+      const errObject = await result.json();
+      return err(maybeExtractError(errObject), { origin: "server", model });
+    } else {
+      return result.json();
+    }
+  } catch (e) {
+    return err((e as Error).message, { origin: "client", model });
+  }
 }
 
 async function streamGenerateContent(

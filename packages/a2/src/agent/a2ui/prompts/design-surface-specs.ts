@@ -5,28 +5,22 @@
  */
 
 import { z } from "zod";
-import { defineResponseSchema } from "../function-definition";
-import { llm } from "../../a2/utils";
-import type { GeminiInputs } from "../../a2/gemini";
+import { defineResponseSchema } from "../../function-definition";
+import { llm } from "../../../a2/utils";
+import type { GeminiBody } from "../../../a2/gemini";
 import type { LLMContent } from "@breadboard-ai/types";
-
-const SPEC_DESIGNER_MODEL = "gemini-flash-latest";
 
 export { getDesignSurfaceSpecsPrompt };
 
-function getDesignSurfaceSpecsPrompt(contents: LLMContent[]): GeminiInputs {
-  const prompt: GeminiInputs = {
-    model: SPEC_DESIGNER_MODEL,
-    body: {
-      contents,
-      systemInstruction,
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseJsonSchema,
-      },
+function getDesignSurfaceSpecsPrompt(contents: LLMContent[]): GeminiBody {
+  return {
+    contents,
+    systemInstruction,
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseJsonSchema,
     },
   };
-  return prompt;
 }
 
 const systemInstruction = llm`

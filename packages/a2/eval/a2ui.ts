@@ -4,24 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getUIDataUpdatePrompt } from "../src/agent/prompts/create-data-update";
-import { getDesignSurfaceSpecsPrompt } from "../src/agent/prompts/design-surface-specs";
-import { getCreateUILayoutPrompt } from "../src/agent/prompts/create-ui-layout";
+import { getUIDataUpdatePrompt } from "../src/agent/a2ui/prompts/create-data-update";
+import { getDesignSurfaceSpecsPrompt } from "../src/agent/a2ui/prompts/design-surface-specs";
+import { getCreateUILayoutPrompt } from "../src/agent/a2ui/prompts/create-ui-layout";
 import { llm } from "../src/a2/utils";
 import { config } from "dotenv";
-import { ok, toJson } from "@breadboard-ai/utils";
+import { err, ok, toJson } from "@breadboard-ai/utils";
 import { exit } from "process";
 import type { ParsedSurfaces, Surface } from "../scripts/surface";
-import type { Outcome } from "@breadboard-ai/types";
-import type { GeminiAPIOutputs, GeminiInputs } from "../src/a2/gemini";
 import { session } from "../scripts/eval";
+import { Outcome } from "@breadboard-ai/types";
 
 config();
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
-  const generateContent = (await import("../src/a2/gemini")).default;
+  const generateContent = (await import("../src/a2/gemini")).generateContent;
 
   const objective = `Play a learning quiz on the following subject with a high school student, using a series of multiple-choice questions:
   <subject>Fall of Communism in Soviet Russia</subject>
@@ -37,30 +36,21 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
   - what the student learned
   - where the student should concentrate on learning`;
 
-  session.eval("Quiz (spec)", async ({ caps, moduleArgs }) => {
-    async function gemini(
-      inputs: GeminiInputs
-    ): Promise<Outcome<GeminiAPIOutputs>> {
-      return generateContent(inputs, caps, moduleArgs) as Promise<
-        Outcome<GeminiAPIOutputs>
-      >;
-    }
-
-    async function generateSpec(): Promise<ParsedSurfaces> {
-      const surfaces = await gemini(
-        getDesignSurfaceSpecsPrompt([llm`${objective}`.asContent()])
+  session.eval("Quiz (spec)", async ({ moduleArgs }) => {
+    async function generateSpec(): Promise<Outcome<ParsedSurfaces>> {
+      const surfaces = await generateContent(
+        "gemini-flash-latest",
+        getDesignSurfaceSpecsPrompt([llm`${objective}`.asContent()]),
+        moduleArgs
       );
-      if (!ok(surfaces)) {
-        console.log("ERROR", surfaces.$error);
-        exit(-1);
-      }
+      if (!ok(surfaces)) return surfaces;
 
       const parsedSurfaces: { surfaces: Surface[] } | undefined = toJson([
         surfaces.candidates.at(0)!.content!,
       ]);
       if (!parsedSurfaces) {
         console.log("ERROR", "No surfaces found");
-        exit(-1);
+        return err(`No surfaces found`);
       }
 
       return parsedSurfaces;
@@ -72,16 +62,19 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
         llm`${JSON.stringify(renderableSurface)}`.asContent(),
       ]);
 
-      const ui = await gemini(prompt);
-      if (!ok(ui)) {
-        console.log("ERROR", ui.$error);
-        exit(-1);
-      }
+      const ui = await generateContent(
+        "gemini-flash-latest",
+        prompt,
+        moduleArgs
+      );
+      if (!ok(ui)) return ui;
 
       return toJson([ui.candidates.at(0)!.content!]);
     }
 
     const parsedSurfaces = await generateSpec();
+    if (!ok(parsedSurfaces)) return parsedSurfaces;
+
     return Promise.all(
       parsedSurfaces.surfaces.map((surface) =>
         renderSurface(surface).then((a2ui) => ({ a2ui }))
@@ -89,7 +82,7 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
     );
   });
 
-  session.eval("Quiz (example data)", async ({ caps, moduleArgs }) => {
+  session.eval("Quiz (example data)", async ({ moduleArgs }) => {
     const quizQuestionSurface = [
       {
         surfaceUpdate: {
@@ -272,21 +265,17 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
       },
     ];
 
-    async function gemini(
-      inputs: GeminiInputs
-    ): Promise<Outcome<GeminiAPIOutputs>> {
-      return generateContent(inputs, caps, moduleArgs) as Promise<
-        Outcome<GeminiAPIOutputs>
-      >;
-    }
-
     async function renderExampleData(): Promise<Array<unknown> | undefined> {
       const prompt = getUIDataUpdatePrompt([
         llm`This is the objective: ${objective}`.asContent(),
         llm`This is the UI that was generated: ${JSON.stringify(quizQuestionSurface)}`.asContent(),
       ]);
 
-      const ui = await gemini(prompt);
+      const ui = await generateContent(
+        "gemini-flash-latest",
+        prompt,
+        moduleArgs
+      );
       if (!ok(ui)) {
         console.log("ERROR", ui.$error);
         exit(-1);
