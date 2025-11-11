@@ -5,12 +5,53 @@
  */
 
 import z from "zod";
-import { defineFunction, FunctionDefinition } from "../function-definition";
+import {
+  defineFunction,
+  defineFunctionLoose,
+  FunctionDefinition,
+} from "../function-definition";
 import { AgentFileSystem } from "../file-system";
 import { ok } from "@breadboard-ai/utils";
 import { tr } from "../../a2/utils";
 
 export { defineSystemFunctions };
+
+const TASK_TREE_SCHEMA = {
+  type: "object",
+  definitions: {
+    TaskNode: {
+      type: "object",
+      required: ["description", "execution_mode"],
+      properties: {
+        description: {
+          type: "string",
+          description:
+            "Detailed explanation of what fulfilling this objective entails.",
+        },
+        execution_mode: {
+          type: "string",
+          description:
+            "Defines how immediate subtasks should be executed. 'serial' means one by one in order; 'concurrent' means all at the same time.",
+          enum: ["serial", "concurrent"],
+        },
+        subtasks: {
+          type: "array",
+          description:
+            "Ordered list of child tasks. If execution_mode is serial, the order matters.",
+          items: {
+            $ref: "#/definitions/TaskNode",
+          },
+        },
+      },
+    },
+  },
+  properties: {
+    taskTree: {
+      type: "object",
+      $ref: "#/definitions/TaskNode",
+    },
+  },
+};
 
 export type SystemFunctionArgs = {
   fileSystem: AgentFileSystem;
@@ -302,6 +343,26 @@ The VFS path to a file that is in this project
         return {
           file_paths: args.fileSystem.listProjectContents(project_file_path),
         };
+      }
+    ),
+    defineFunctionLoose(
+      {
+        name: "create_task_tree_scratchpad",
+        description:
+          "When working on complicated problem, use this throw-away scratch pad to reason about a dependency tree of tasks, like about the order of tasks, and which tasks can be executed concurrently and which ones must be executed serially. To better help yourself, make sure to include all meta-tasks: formatting/preparing the outputs, creating or updating projects, and so on.",
+        parametersJsonSchema: TASK_TREE_SCHEMA,
+        responseJsonSchema: {
+          type: "object",
+          properties: {
+            taskTreeSaved: {
+              type: "boolean",
+            },
+          },
+        },
+      },
+      async (params) => {
+        console.log("PARAMS", params);
+        return { taskTreeSaved: true };
       }
     ),
   ];
