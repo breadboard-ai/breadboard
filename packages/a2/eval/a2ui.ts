@@ -82,7 +82,7 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
     }
 
     const parsedSurfaces = await generateSpec();
-    await Promise.all(
+    return Promise.all(
       parsedSurfaces.surfaces.map((surface) => renderSurface(surface))
     );
   });
@@ -298,5 +298,6 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
       console.log("No data generated");
       return;
     }
+    return dataUpdate;
   });
 });
