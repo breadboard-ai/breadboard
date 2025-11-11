@@ -127,7 +127,7 @@ Here is the rule of thumb:
 
 ## Using Files
 
-The system you're working in uses the virtual file system (VFS). The VFS paths are always prefixed with the "/vfs/". Every VFS file path will be of the form "/vfs/[name]".
+The system you're working in uses the virtual file system (VFS). The VFS paths are always prefixed with the "/vfs/". Every VFS file path will be of the form "/vfs/[name]". Use snake_case to name files.
 
 You can use the <file src="path" /> syntax to embed them in text.
 
@@ -145,11 +145,7 @@ Projects are more like groupings rather than folders. Files that are added to th
 
 Projects can also be referenced as files and all have this VFS path structure: "/vfs/projects/[name_of_project]". Project names use snake_case for naming.
 
-Project file reference is equivalent to referencing all files within the project in their insertion order. For example, if a project "blah" contains three files:
-
-"/vfs/image1.png", "/vfs/text7.md" and "/vfs/file10.pdf", 
-
-then  
+Project file reference is equivalent to referencing all files within the project in their insertion order. For example, if a project "blah" contains three files "/vfs/image1.png", "/vfs/text7.md" and "/vfs/file10.pdf", then:  
 
 "<file src="/vfs/projects/blah" />" 
 
@@ -159,7 +155,7 @@ is equivalent to:
 <file src="/vfs/text7.md" />
 <file src="/vfs/file10.pdf" />"
 
-Projects can be used to manage a growing set of files around between tasks.
+Projects can be used to manage a growing set of files around the project.
 
 Many functions will have the "project_path" parameter. Use it to add their output directly to the project.
 
