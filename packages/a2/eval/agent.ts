@@ -30,7 +30,7 @@ session({ name: "Agent Loop", apiKey }, async (session) => {
   session.eval("Marketing Pitch w/Critique", async ({ caps, moduleArgs }) => {
     const loop = new Loop(caps, moduleArgs);
     const objective =
-      llm`Given a product, come up with a rubric for evaulating a marketing pitch for the rubric, then generate four different marketing pitches for the product, evaluate each using the rubric, and return the winning pitch
+      llm`Given a product, come up with a rubric for evaluating a marketing pitch for the rubric, then generate four different marketing pitches for the product, evaluate each using the rubric, and return the winning pitch
 
   Product: Bluetooth-enabled Electric Toothbrush`.asContent();
     return loop.run(objective, {});
