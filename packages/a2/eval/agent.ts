@@ -41,4 +41,15 @@ session({ name: "Agent Loop", apiKey }, async (session) => {
       llm`Ask the user for their name and location and then compose a poem based on that information`.asContent();
     return loop.run(objective, {});
   });
+
+  session.eval("Print or display", async ({ caps, moduleArgs }) => {
+    const loop = new Loop(caps, moduleArgs);
+    const objective = llm`
+Depending on the directive below, either go to <a href="/print">Print</a> to print the page or to <a href="/display">Display</a> to display the page
+
+Directive:
+
+Could you please print the page?`.asContent();
+    return loop.run(objective, {});
+  });
 });
