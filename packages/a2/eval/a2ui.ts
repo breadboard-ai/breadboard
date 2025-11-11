@@ -11,12 +11,9 @@ import { llm } from "../src/a2/utils";
 import { config } from "dotenv";
 import { ok, toJson } from "@breadboard-ai/utils";
 import { exit } from "process";
-import { ParsedSurfaces, Surface } from "../scripts/surface";
-import { Outcome } from "@breadboard-ai/types";
-import generateContent, {
-  GeminiAPIOutputs,
-  GeminiInputs,
-} from "../src/a2/gemini";
+import type { ParsedSurfaces, Surface } from "../scripts/surface";
+import type { Outcome } from "@breadboard-ai/types";
+import type { GeminiAPIOutputs, GeminiInputs } from "../src/a2/gemini";
 import { session } from "../scripts/eval";
 
 config();
@@ -24,6 +21,8 @@ config();
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
+  const generateContent = (await import("../src/a2/gemini")).default;
+
   const objective = `Play a learning quiz on the following subject with a high school student, using a series of multiple-choice questions:
   <subject>Fall of Communism in Soviet Russia</subject>
 
