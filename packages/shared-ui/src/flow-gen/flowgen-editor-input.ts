@@ -22,7 +22,7 @@ import { colorsLight } from "../styles/host/colors-light.js";
 import { type } from "../styles/host/type.js";
 import { projectStateContext } from "../contexts/project-state.js";
 import { Project } from "../state/types.js";
-import { ok } from "@breadboard-ai/utils";
+import { err, ok } from "@breadboard-ai/utils";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -284,8 +284,10 @@ export class FlowgenEditorInput extends LitElement {
 
       const generating = this.#generateBoard(description);
 
-      const creatingTheme =
-        this.projectState?.themes.generateThemeFromIntent(description);
+      const newGraph = (this.currentGraph?.nodes.length || 0) === 0;
+      const creatingTheme = newGraph
+        ? this.projectState?.themes.generateThemeFromIntent(description)
+        : Promise.resolve(err(`Existing graph, skipping theme generation`));
 
       Promise.allSettled([generating, creatingTheme])
         .then(([generated, createdTheme]) => {

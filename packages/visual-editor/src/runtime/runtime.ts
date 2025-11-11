@@ -48,6 +48,7 @@ import {
   envFromGraphDescriptor,
 } from "@breadboard-ai/data";
 import { Autonamer } from "./autonamer.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -123,6 +124,7 @@ export class Runtime extends EventTarget {
       getProjectRunState: () => {
         return this.state.getProjectState(tab.mainGraphId)?.run;
       },
+      clientDeploymentConfiguration: CLIENT_DEPLOYMENT_CONFIG,
       flags: this.flags,
     };
 

@@ -15,7 +15,7 @@ import {
 } from "@breadboard-ai/types";
 import { transformDataParts } from "@breadboard-ai/data";
 import { A2ModuleArgs } from "../runnable-module-factory";
-import { createDataPartTansformer } from "./data-part-transformer";
+import { createDataPartTansformer } from "./data-transforms";
 import { iteratorFromStream } from "@breadboard-ai/utils";
 
 export {

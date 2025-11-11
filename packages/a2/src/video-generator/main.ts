@@ -37,7 +37,7 @@ import {
 } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory";
 import { getBucketId } from "../a2/get-bucket-id";
-import { toBlobStoredData, toGcsAwareChunk } from "../a2/to-blob-stored-data";
+import { driveFileToBlob, toGcsAwareChunk } from "../a2/data-transforms";
 
 type Model = {
   id: string;
@@ -127,7 +127,7 @@ async function callVideoGen(
     console.log("Image found, using i2v");
     let imageChunk;
     if (isStoredData(imageContent)) {
-      const blobStoredData = await toBlobStoredData(
+      const blobStoredData = await driveFileToBlob(
         moduleArgs,
         imageContent.parts.at(-1)!
       );

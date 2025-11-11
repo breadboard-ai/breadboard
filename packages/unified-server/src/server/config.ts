@@ -38,8 +38,9 @@ export async function createClientConfig(opts: {
       mcp: flags.ENABLE_MCP,
       force2DGraph: flags.ENABLE_FORCE_2D_GRAPH,
       gulfRenderer: flags.ENABLE_GULF_RENDERER,
-      consistentUI: false,
-      agentMode: false,
+      consistentUI: flags.ENABLE_CONSISTENT_UI,
+      agentMode: flags.ENABLE_AGENT_MODE,
+      backendTransforms: flags.ENABLE_BACKEND_TRANSFORMS,
     },
   };
 }

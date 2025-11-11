@@ -702,6 +702,7 @@ class InternalRunStateController {
       graphStore,
       fetchWithCreds,
       getProjectRunState,
+      clientDeploymentConfiguration,
       flags,
     } = this.config;
 
@@ -729,6 +730,7 @@ class InternalRunStateController {
       graphStore,
       fetchWithCreds,
       getProjectRunState,
+      clientDeploymentConfiguration,
       flags,
     };
   }

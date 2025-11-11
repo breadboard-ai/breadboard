@@ -5,8 +5,8 @@
  */
 
 import { llm } from "../../a2/utils";
-import { GeminiInputs } from "../../a2/gemini";
-import { LLMContent } from "@breadboard-ai/types";
+import type { GeminiInputs } from "../../a2/gemini";
+import type { LLMContent } from "@breadboard-ai/types";
 
 const SPEC_DESIGNER_MODEL = "gemini-flash-latest";
 
