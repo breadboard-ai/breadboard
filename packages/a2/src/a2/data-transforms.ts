@@ -36,7 +36,7 @@ export type BlobStoredData = {
 };
 
 export type UploadBlobFileResponse = {
-  gcsUri: string;
+  blobId: string;
   mimeType: string;
 };
 
@@ -323,15 +323,11 @@ async function driveFileToBlob(
     return err(`Unknown blob URL: "${existingHandle}`);
   }
   const driveFileId = existingHandle.replace("drive:/", "");
-  const bucketName = await getBucketId(moduleArgs);
   try {
     const blobifying = await fetchWithCreds(url, {
       method: "POST",
       body: JSON.stringify({
         driveFileId,
-        gcsConfig: {
-          bucketName,
-        },
       }),
       signal: context.signal,
     });
@@ -339,8 +335,12 @@ async function driveFileToBlob(
     const blobified =
       (await blobifying.json()) as Outcome<UploadBlobFileResponse>;
     if (!ok(blobified)) return blobified;
+    const { blobId } = blobified;
+    if (!blobId) {
+      return err(`Failed to convert Drive file to Blob: No Blob Id returned`);
+    }
     const handle = new URL(
-      `/board/blobs/${blobified.gcsUri.split("/")[1]}`,
+      `/board/blobs/${blobified.blobId}`,
       window.location.href
     ).href;
     return { part: { storedData: { handle, mimeType: blobified.mimeType } } };
