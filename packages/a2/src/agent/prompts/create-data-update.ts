@@ -31,6 +31,7 @@ const responseJsonSchema = {
               "An optional slash-delimited path to a location within the data model (e.g., '/user/name'). If omitted, or set to '/', the entire data model will be replaced with the contents.",
           },
           contents: {
+            type: "object",
             additionalProperties: true,
             description:
               "A nested object that represents the data needed to power the view",
