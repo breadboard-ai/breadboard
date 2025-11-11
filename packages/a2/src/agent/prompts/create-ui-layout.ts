@@ -5,9 +5,9 @@
  */
 
 import { llm } from "../../a2/utils";
-import { GeminiInputs, GeminiSchema } from "../../a2/gemini";
-import { LLMContent } from "@breadboard-ai/types";
-import { UI_SCHEMA } from "../../a2/render-consistent-ui";
+import type { GeminiInputs, GeminiSchema } from "../../a2/gemini";
+import type { LLMContent } from "@breadboard-ai/types";
+import { A2UI_SCHEMA } from "../../a2/au2ui-schema";
 
 const SPEC_DESIGNER_MODEL = "gemini-flash-latest";
 
@@ -45,5 +45,5 @@ Later another LLM-powered creator will be responsible for populating the data us
 
 const responseJsonSchema: GeminiSchema = {
   type: "array",
-  items: UI_SCHEMA,
+  items: A2UI_SCHEMA,
 };

@@ -124,23 +124,35 @@ function collateAllInternalTurns(har: Har): InternalTurn[] {
     const responseText = entry.response.content?.text;
     const mimeType = entry.response.content?.mimeType;
 
-    if (responseText && mimeType === "text/event-stream") {
-      const lines = responseText.split("\n");
-      for (const line of lines) {
-        const trimmedLine = line.trim();
-        if (trimmedLine.startsWith("data: ")) {
-          const jsonString = trimmedLine.substring(6);
-          if (jsonString) {
-            try {
-              const sseObject: GeminiAPIOutputs = JSON.parse(jsonString);
-              const parts = sseObject.candidates?.[0]?.content?.parts;
-              if (Array.isArray(parts)) {
-                allResponseParts.push(...parts);
+    if (responseText) {
+      if (mimeType === "text/event-stream") {
+        const lines = responseText.split("\n");
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (trimmedLine.startsWith("data: ")) {
+            const jsonString = trimmedLine.substring(6);
+            if (jsonString) {
+              try {
+                const sseObject: GeminiAPIOutputs = JSON.parse(jsonString);
+                const parts = sseObject.candidates?.[0]?.content?.parts;
+                if (Array.isArray(parts)) {
+                  allResponseParts.push(...parts);
+                }
+              } catch {
+                /* Ignore parse errors */
               }
-            } catch {
-              /* Ignore parse errors */
             }
           }
+        }
+      } else if (mimeType.startsWith("application/json")) {
+        try {
+          const content: GeminiAPIOutputs = JSON.parse(responseText);
+          const parts = content.candidates?.[0]?.content?.parts;
+          if (Array.isArray(parts)) {
+            allResponseParts.push(...parts);
+          }
+        } catch {
+          /* Ignore parse errors */
         }
       }
     }
