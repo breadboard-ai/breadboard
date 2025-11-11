@@ -12,20 +12,6 @@ const SPEC_DESIGNER_MODEL = "gemini-flash-latest";
 
 export { getUIDataUpdatePrompt };
 
-function getUIDataUpdatePrompt(contents: LLMContent[]): GeminiInputs {
-  const prompt: GeminiInputs = {
-    model: SPEC_DESIGNER_MODEL,
-    body: {
-      contents,
-      systemInstruction,
-      generationConfig: {
-        responseMimeType: "application/json",
-      },
-    },
-  };
-  return prompt;
-}
-
 const responseJsonSchema = {
   type: "array",
   items: {
@@ -54,6 +40,21 @@ const responseJsonSchema = {
     },
   },
 };
+
+function getUIDataUpdatePrompt(contents: LLMContent[]): GeminiInputs {
+  const prompt: GeminiInputs = {
+    model: SPEC_DESIGNER_MODEL,
+    body: {
+      contents,
+      systemInstruction,
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseJsonSchema,
+      },
+    },
+  };
+  return prompt;
+}
 
 const systemInstruction = llm`
 You are an LLM-powered UI creator, embedded into an application.
@@ -100,10 +101,4 @@ A BAD version of this would be:
   ]
 }
 
-Reason this is bad: "/options/0/label" would not resolve correctly as options -> 0 would result in "Item 1" and therefore the "label" segment would fail.
-
-Here's your schema:
-
-${JSON.stringify(responseJsonSchema, null, 2)}
-
-`.asContent();
+Reason this is bad: "/options/0/label" would not resolve correctly as options -> 0 would result in "Item 1" and therefore the "label" segment would fail.`.asContent();
