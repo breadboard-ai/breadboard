@@ -434,17 +434,23 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     }
     const renderInfo = CONSENT_RENDER_INFO[consentRequest.request.type];
     return html`
-      <h1>${renderInfo.name}</h1>
-      ${renderInfo.description(consentRequest as any)}
-      <button
-        id="grant-consent"
-        @click=${() => {
+      <div id="consent" class="default">
+        <section id="consent-content-container">
+          <h1>${renderInfo.name}</h1>
+          ${renderInfo.description(consentRequest as any)}
+          <button
+            id="grant-consent"
+            @click=${() => {
+      consentRequest.consentCallback(ConsentAction.ALWAYS_ALLOW);
+      // This is gross, but allows the next screen to render so we don't
+      // jank back to the starting screen for a split second
+      setTimeout(() => {
         this.run?.app.consentRequests.shift();
-        consentRequest.consentCallback(ConsentAction.ALWAYS_ALLOW);
-      }}
-      >
-        <span class="g-icon"></span>Continue
-      </button>
+      });
+    }}
+          >Allow Access</button>
+        </section>
+      </div>
     `;
   }
 

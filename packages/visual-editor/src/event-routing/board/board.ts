@@ -38,6 +38,8 @@ export const RunRoute: EventRoute<"board.run"> = {
       }
     }
 
+    // b/452677430 - Check for consent before running shared Opals that
+    // use the get_webpage tool, as this could be a data exfiltration vector
     const editor = runtime.edit.getEditor(tab);
     const graph = editor?.inspect("");
 
