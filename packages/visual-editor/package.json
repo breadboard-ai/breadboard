@@ -130,7 +130,7 @@
     "dotenv": "^16.4.7",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
-    "vite": "^7.0.5",
+    "vite": "^7.2.2",
     "vite-plugin-full-reload": "^1.2.0",
     "vite-plugin-watch-and-run": "^1.7.5"
   },
@@ -150,7 +150,7 @@
     "@breadboard-ai/utils": "^0.1.0",
     "@google-labs/breadboard": "^0.36.0",
     "@google-labs/core-kit": "^0.19.2",
-    "@lit/context": "^1.1.4",
+    "@lit/context": "^1.1.6",
     "@types/gapi": "^0.0.47",
     "@types/gapi.client.drive-v3": "^0.0.5",
     "@types/google.picker": "^0.0.51",
