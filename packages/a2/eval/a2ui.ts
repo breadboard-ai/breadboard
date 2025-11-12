@@ -7,110 +7,60 @@
 import { llm } from "../src/a2/utils";
 import { config } from "dotenv";
 import { ok } from "@breadboard-ai/utils";
-import { exit } from "process";
 import { session } from "../scripts/eval";
 import { AgentFileSystem } from "../src/agent/file-system";
 import { PidginTranslator } from "../src/agent/pidgin-translator";
-import { isTextCapabilityPart } from "@breadboard-ai/data";
-import { A2ModuleArgs } from "../src/runnable-module-factory.js";
-import { LLMContent, Outcome } from "@breadboard-ai/types";
-import { getUIDataFunctionPrompt } from "../src/agent/a2ui/prompts/create-data-function";
+import { makeFunction } from "../src/agent/a2ui/make-function";
 
 config();
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
-  const generateContent = (await import("../src/a2/gemini")).generateContent;
   const generateSpec = (await import("../src/agent/a2ui/generate-spec"))
     .generateSpec;
   const generateTemplate = (await import("../src/agent/a2ui/generate-template"))
     .generateTemplate;
 
-  const renderDataFunction = async (
-    promptSource: LLMContent[],
-    moduleArgs: A2ModuleArgs
-  ): Promise<Outcome<string>> => {
-    const prompt = getUIDataFunctionPrompt(promptSource);
-    const data = await generateContent(
-      "gemini-flash-latest",
-      prompt,
-      moduleArgs
-    );
-    if (!ok(data)) {
-      console.log("ERROR", data.$error);
-      exit(-1);
-    }
-
-    const firstPart = data.candidates.at(0)!.content?.parts.at(0);
-    if (isTextCapabilityPart(firstPart)) {
-      try {
-        const content = firstPart.text;
-        return content;
-      } catch (err) {
-        console.warn(err);
-        return { $error: String(err) };
-      }
-    }
-
-    return { $error: "Unable to generate" };
-  };
-
-  session.eval("Quiz (e2e)", async ({ moduleArgs }) => {
+  session.eval("Quiz (e2e)", async ({ moduleArgs, logger }) => {
     // 1. Start with the objective.
     const { objective } = await import("./data/quiz/objective.js");
 
     // 2. Create a spec from the objective.
     const spec = await generateSpec(llm`${objective}`.asContent(), moduleArgs);
     if (!ok(spec)) {
-      console.warn("Unable to generate spec");
+      logger.log({ type: "warning", data: "Unable to generate spec" });
       return [];
     }
+    logger.log({ type: "spec", data: spec });
 
-    // 3. From the spec, choose a random one and generate the A2UI.
-    const finalSurface = spec.at(Math.floor(Math.random() * spec.length));
-    if (!finalSurface) {
-      console.warn("Unable to find surface");
-      return [];
-    }
+    // 3. For each spec, generate the A2UI.
+    await Promise.all(
+      spec.map(async (surfaceSpec) => {
+        const a2UIPayload = await generateTemplate(surfaceSpec, moduleArgs);
+        logger.log({ type: "template", data: spec });
 
-    const a2UIPayload = await generateTemplate(finalSurface, moduleArgs);
+        // 4. Create a function handler.
+        const functionHandler = makeFunction(surfaceSpec, a2UIPayload, {
+          render: async (payload: unknown[]) => {
+            logger.log({ type: "a2ui", data: payload });
+            // TODO: Figure out how to handle actions
+            return { success: true };
+          },
+        });
 
-    // 4. Create a data update function for this surface.
-    const promptSource = [
-      llm`This is the specification: ${JSON.stringify(spec)}`.asContent(),
-      llm`This is the UI that was generated: ${JSON.stringify(a2UIPayload)}`.asContent(),
-    ];
-    const dataFunction = await renderDataFunction(promptSource, moduleArgs);
-    if (!ok(dataFunction)) {
-      console.warn("Unable to render data function");
-      return [];
-    }
-
-    // 5. Call it with the surface's example data, combine and return.
-    try {
-      const dataMessage = eval(
-        `(${dataFunction})(${JSON.stringify(finalSurface.exampleData)})`
-      );
-      return [{ spec, dataFunction, a2ui: [...a2UIPayload, dataMessage] }];
-    } catch (err) {
-      console.warn(err);
-      return [];
-    }
+        // 5. Call it with the surface's example data.
+        await functionHandler.handler(
+          surfaceSpec.exampleData as Record<string, unknown>,
+          (status) => {
+            console.log("Status update", status);
+          }
+        );
+      })
+    );
   });
 
-  session.eval("Katamari discernment (spec)", async ({ caps, moduleArgs }) => {
-    const katamariData = (await import("./data/katamari/data.json")).default;
-
-    const fileSystem = new AgentFileSystem();
-    const translator = new PidginTranslator(caps, moduleArgs, fileSystem);
-
-    const text = await translator.toPidgin({ parts: katamariData }, {});
-
-    return generateSpec(llm`${text}`.asContent(), moduleArgs);
-  });
-
-  session.eval("Katamari (e2e)", async ({ caps, moduleArgs }) => {
+  session.eval("Katamari (e2e)", async ({ caps, moduleArgs, logger }) => {
     // 1. Start with the data.
     const katamariData = (await import("./data/katamari/data.json")).default;
 
@@ -126,35 +76,42 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
       return [];
     }
 
-    // 3. From the spec, choose a random one and generate the A2UI.
-    const finalSurface = spec.at(Math.floor(Math.random() * spec.length));
-    if (!finalSurface) {
-      console.warn("Unable to find surface");
-      return [];
+    if (spec.length > 1) {
+      logger.log({
+        type: "warning",
+        data: "More than one surface was generated",
+      });
     }
 
-    const a2UIPayload = await generateTemplate(finalSurface, moduleArgs);
-
-    // 4. Create a data update function for this surface.
-    const promptSource = [
-      llm`This is the specification: ${JSON.stringify(spec)}`.asContent(),
-      llm`This is the UI that was generated: ${JSON.stringify(a2UIPayload)}`.asContent(),
-    ];
-    const dataFunction = await renderDataFunction(promptSource, moduleArgs);
-    if (!ok(dataFunction)) {
-      console.warn("Unable to render data function");
-      return [];
+    if (spec.length === 0) {
+      logger.log({
+        type: "warning",
+        data: "No surfaces were generated",
+      });
     }
 
-    // 5. Call it with the surface's example data, combine and return.
-    try {
-      const dataMessage = eval(
-        `(${dataFunction})(${JSON.stringify(finalSurface.exampleData)})`
-      );
-      return [{ spec, dataFunction, a2ui: [...a2UIPayload, dataMessage] }];
-    } catch (err) {
-      console.warn(err);
-      return [];
-    }
+    // 3. For each spec, generate A2UI
+    await Promise.all(
+      spec.map(async (surfaceSpec) => {
+        const a2UIPayload = await generateTemplate(surfaceSpec, moduleArgs);
+
+        // 4. Create a function handler.
+        const functionHandler = makeFunction(surfaceSpec, a2UIPayload, {
+          render: async (payload: unknown[]) => {
+            logger.log({ type: "a2ui", data: payload });
+            // TODO: Figure out how to handle actions
+            return { success: true };
+          },
+        });
+
+        // 5. Call it with the surface's example data.
+        await functionHandler.handler(
+          surfaceSpec.exampleData as Record<string, unknown>,
+          (status) => {
+            console.log("Status update", status);
+          }
+        );
+      })
+    );
   });
 });
