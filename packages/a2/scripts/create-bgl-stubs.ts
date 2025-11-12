@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/** eslint: disable */
+
 /**
  * This is a one-time migration script that generates `bgl.json` stubs
  * for each A2 `*.bgl.json` file and places it into the `src` directory

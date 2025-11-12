@@ -1,0 +1,171 @@
+[
+  {
+    "surfaceId": "quiz_surface",
+    "description": "Displays the current multiple-choice question, options, and handles user submission. It also displays historical context and re-asks the question if the previous attempt was incorrect, allowing for adaptive learning.",
+    "surfaceSpec": "The layout is a vertical Column. At the top, a Heading displays the current question number (e.g., 'Question 1 of 5'). Below this is a Text component displaying the current 'question_text'. If 'feedback_visible' is true, a Text component displaying the 'feedback_text' (historical overview/correction) is shown immediately below the question text. Next, a MultipleChoice component presents the available 'options'. Finally, a Row component at the bottom contains two Buttons: 'Submit Answer' and 'Exit Quiz'.",
+    "dataModelSpec": "The data model tracks the current state of the quiz interaction. It includes the current 'question_number' and 'total_questions'. It holds the content of the question ('question_text') and the list of choices ('options', including ID and text). It also includes state variables to manage the feedback loop: 'feedback_visible' (boolean) determines if the historical overview should be displayed, and 'feedback_text' holds the content of that overview.",
+    "exampleData": {
+      "question_number": 2,
+      "total_questions": 5,
+      "question_text": "Which Soviet leader introduced the policies of Glasnost (openness) and Perestroika (restructuring)?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Leonid Brezhnev"
+        },
+        {
+          "id": "b",
+          "text": "Mikhail Gorbachev"
+        },
+        {
+          "id": "c",
+          "text": "Yuri Andropov"
+        },
+        {
+          "id": "d",
+          "text": "Konstantin Chernenko"
+        }
+      ],
+      "feedback_visible": false,
+      "feedback_text": ""
+    },
+    "dataModelSchema": {
+      "type": "object",
+      "properties": {
+        "question_number": {
+          "type": "integer"
+        },
+        "total_questions": {
+          "type": "integer"
+        },
+        "question_text": {
+          "type": "string"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": ["id", "text"]
+          }
+        },
+        "feedback_visible": {
+          "type": "boolean"
+        },
+        "feedback_text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "question_number",
+        "total_questions",
+        "question_text",
+        "options",
+        "feedback_visible",
+        "feedback_text"
+      ]
+    },
+    "responseSchema": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": ["submit", "exit"]
+        },
+        "selected_option_id": {
+          "type": "string",
+          "description": "ID of the selected option, required if action is 'submit'"
+        }
+      },
+      "required": ["action"]
+    }
+  },
+  {
+    "surfaceId": "summary_surface",
+    "description": "Displays the final summary of the quiz session for the teacher, detailing performance, learning outcomes, and areas for future concentration.",
+    "surfaceSpec": "The layout is a vertical Column. It starts with a Heading titled 'Quiz Summary'. Below this, a Text component displays the overall 'session_summary'. Next, a List component iterates through the 'question_log'. Each item in the list is a Card displaying the 'question_text', the 'student_response', and a Text component indicating if the answer was 'is_correct'. Following the question log, there is a Heading for 'What the student learned' followed by the 'learning_summary' Text. Then, a Heading for 'Areas for Concentration' followed by the 'concentration_areas' Text. Finally, a 'Done' Button is placed at the bottom.",
+    "dataModelSpec": "The data model contains high-level summary texts: 'session_summary' (overall performance and completion status), 'learning_summary' (what the student grasped), and 'concentration_areas' (topics needing more focus). It also includes a detailed 'question_log', which is an array of objects, each recording the question asked, the student's final response, whether that response was correct, and the number of attempts taken.",
+    "exampleData": {
+      "session_summary": "The student completed 5 out of 5 questions. Overall performance was strong, correctly answering 4 questions on the first attempt.",
+      "learning_summary": "The student demonstrated strong knowledge of key figures like Gorbachev and the concepts of Glasnost and Perestroika. They successfully identified the year the USSR officially dissolved.",
+      "concentration_areas": "The student struggled with questions related to the economic stagnation preceding the reforms. Focus should be placed on the timeline of economic decline.",
+      "question_log": [
+        {
+          "question_text": "When did the Soviet Union officially dissolve?",
+          "student_response": "December 26, 1991",
+          "is_correct": true,
+          "attempts": 1
+        },
+        {
+          "question_text": "Which Soviet leader introduced the policies of Glasnost and Perestroika?",
+          "student_response": "Mikhail Gorbachev",
+          "is_correct": true,
+          "attempts": 1
+        }
+      ]
+    },
+    "dataModelSchema": {
+      "type": "object",
+      "properties": {
+        "session_summary": {
+          "type": "string"
+        },
+        "learning_summary": {
+          "type": "string"
+        },
+        "concentration_areas": {
+          "type": "string"
+        },
+        "question_log": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "question_text": {
+                "type": "string"
+              },
+              "student_response": {
+                "type": "string"
+              },
+              "is_correct": {
+                "type": "boolean"
+              },
+              "attempts": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "question_text",
+              "student_response",
+              "is_correct",
+              "attempts"
+            ]
+          }
+        }
+      },
+      "required": [
+        "session_summary",
+        "learning_summary",
+        "concentration_areas",
+        "question_log"
+      ]
+    },
+    "responseSchema": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": ["done"]
+        }
+      },
+      "required": ["action"]
+    }
+  }
+]

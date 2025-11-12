@@ -167,18 +167,14 @@ export class FileSystemEvalBackend {
     }
 
     // 3. Check the permission on the handle.
-    let permission = await handle.handle.queryPermission({ mode });
+    const permission = await handle.handle.queryPermission({ mode });
     if (permission !== "granted") {
+      return permission;
       // 4. Renew the permission if needed.
-      permission = await handle.handle.requestPermission({ mode });
+      // permission = await handle.handle.requestPermission({ mode });
     }
 
-    // 5. If the permission request failed for any reason, fail here.
-    if (!permission) {
-      return null;
-    }
-
-    // 6. Return the handle.
+    // 5. Return the handle.
     return handle.handle;
   }
 
@@ -186,7 +182,7 @@ export class FileSystemEvalBackend {
     path: FileSystemPath,
     mode: Mode,
     createIfNeeded = true
-  ) {
+  ): Promise<FileSystemDirectoryHandle | null | "prompt"> {
     const key = this.#getKey(path, true);
     return this.#obtainHandle(key, mode, createIfNeeded);
   }
@@ -195,7 +191,7 @@ export class FileSystemEvalBackend {
     path: FileSystemPath,
     mode: Mode,
     createIfNeeded = true
-  ): Promise<FileSystemDirectoryHandle | null> {
+  ): Promise<FileSystemDirectoryHandle | null | "prompt"> {
     const key = this.#getKey(path, false);
     return this.#obtainHandle(key, mode, createIfNeeded);
   }
@@ -207,10 +203,31 @@ export class FileSystemEvalBackend {
     return all;
   }
 
+  async refreshAccess(path: FileSystemPath): Promise<Outcome<boolean>> {
+    const key = this.#getKey(path, false);
+    const handlesDb = await this.#db();
+    const handle = await handlesDb.get("handles", key);
+    handlesDb.close();
+
+    if (!handle) {
+      return { $error: "No handle found" };
+    }
+
+    const mode = "read";
+    let permission = await handle.handle.queryPermission({ mode });
+    if (permission === "granted") return true;
+
+    permission = await handle.handle.requestPermission({ mode });
+    return permission === "granted";
+  }
+
   async query(path: FileSystemPath): Promise<FileSystemQueryResult> {
     const handle = await this.#obtainDirHandle(path, "read");
     if (!handle) {
       return { $error: "Permission to read from directory was refused" };
+    }
+    if (handle === "prompt") {
+      return { $error: "prompt" };
     }
 
     try {
@@ -239,6 +256,9 @@ export class FileSystemEvalBackend {
     const handle = await this.#obtainFileDirHandle(path, "read", false);
     if (!handle) {
       return { $error: "Permission to read from directory was refused" };
+    }
+    if (handle === "prompt") {
+      return { $error: "prompt" };
     }
 
     try {

@@ -24,6 +24,8 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.js",
+    "scripts/eval.ts",
+    "eval/**/*.ts",
     "bgl/**/*.bgl.json",
     "src/environment.d.ts"
   ],

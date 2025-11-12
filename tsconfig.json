@@ -2,6 +2,7 @@
   "extends": "@google-labs/tsconfig/base.json",
   "files": [],
   "references": [
+    { "path": "packages/a2" },
     { "path": "packages/board-server-management" },
     { "path": "packages/breadboard" },
     { "path": "packages/core-kit" },

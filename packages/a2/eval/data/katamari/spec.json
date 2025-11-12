@@ -1,0 +1,170 @@
+[
+  {
+    "surfaceId": "combined_content_dashboard",
+    "description": "A comprehensive dashboard combining narrative text, media assets, a detailed corporate profile (Apple Inc.), and summaries of AI evaluation frameworks into a single, organized layout using columns, cards, and tabs.",
+    "surfaceSpec": "The surface is structured as a single vertical Column. The content is divided into four main sections:\r\n\r\n1.  **Narrative Section:** Contains a Level 1 Heading titled 'The Evals Engineer's Dilemma' followed by a Text component displaying the full narrative story.\r\n2.  **Media Section:** Separated by a Divider, this section starts with a Level 2 Heading titled 'Associated Media Assets'. It contains a horizontal Row component, distributed evenly, displaying six media components: three Image components, two AudioPlayer components, and one Video component, using the paths provided in the data model.\r\n3.  **AI Evaluation Frameworks Section:** Separated by a Divider, this section starts with a Level 2 Heading titled 'AI Evaluation Frameworks Overview'. It contains a Column layout where the general summary is placed in a Card (with a Level 3 Heading 'What are AI Evals?'). Below this card, a horizontal Row displays four additional Card components, one for each specific framework (OpenAI Evals, Hugging Face Evaluate, DeepEval, RAGAs). Each framework card contains a Level 3 Heading and the corresponding summary Text.\r\n4.  **Corporate Profile Section (Apple Inc.):** Separated by a Divider, this section starts with a Level 2 Heading titled 'Corporate Profile: Apple Inc.'. The detailed corporate information is organized within a Tabs component with six tabs:\r\n    *   **Tab 1 (History & Mission):** Displays Company History, Founding Principles, and Corporate Mission, each preceded by a Level 3 Heading.\r\n    *   **Tab 2 (Products & Services):** Displays the breakdown of Hardware, Software, and Services, preceded by a Level 3 Heading.\r\n    *   **Tab 3 (Financials & Competition):** Displays Financial Performance and Competitive Landscape, each preceded by a Level 3 Heading.\r\n    *   **Tab 4 (Strategy & R&D):** Displays Innovation Strategies and R&D, preceded by a Level 3 Heading.\r\n    *   **Tab 5 (Operations & CSR):** Displays Supply Chain & Manufacturing and CSR & Labor Practices, each preceded by a Level 3 Heading.\r\n    *   **Tab 6 (Leadership & Brand):** Displays Executive Leadership & Structure and Brand Perception & Marketing, each preceded by a Level 3 Heading.",
+    "dataModelSpec": "The data model is a single object containing four main fields: 'narrative_story' (string), 'media_assets' (an array of objects, each specifying the media type and file path), 'evals_data' (an object holding the general AI evals summary and four specific framework summaries), and 'apple_profile' (a complex object holding all the structured corporate information for Apple Inc., organized into sub-sections corresponding to the tabs and headings in the UI spec).",
+    "exampleData": {
+      "narrative_story": "Brown fur, strong and grand,\nForest king with watchful eyes,\nWild spirit roams. Anya adjusted her spectacles... [truncated]... The evals had done their job.",
+      "media_assets": [
+        {
+          "type": "image",
+          "path": "/vfs/image1.png"
+        },
+        {
+          "type": "image",
+          "path": "/vfs/image2.png"
+        },
+        {
+          "type": "audio",
+          "path": "/vfs/audio3.wav"
+        },
+        {
+          "type": "video",
+          "path": "/vfs/video4.mp4"
+        },
+        {
+          "type": "image",
+          "path": "/vfs/image5.png"
+        },
+        {
+          "type": "audio",
+          "path": "/vfs/audio6.wav"
+        }
+      ],
+      "evals_data": {
+        "general_summary": "Evals in AI, short for AI evaluations, refer to the systematic process of assessing the performance, reliability, fairness, and overall impact of Artificial Intelligence systems... [truncated]",
+        "openai_evals": "OpenAI Evals is an open-source framework designed by OpenAI for systematically evaluating large language models (LLMs) and systems built using them... [truncated]",
+        "huggingface_evals": "Hugging Face Evaluate (🤗 Evaluate) is a Python library designed to streamline the evaluation and comparison of machine learning models and datasets... [truncated]",
+        "deepeval": "DeepEval is an open-source framework designed for the comprehensive evaluation of Large Language Models (LLMs) and their applications... [truncated]",
+        "ragas": "RAGAs (Retrieval-Augmented Generation Assessment Suite) is a specialized open-source framework designed to evaluate and optimize Large Language Model (LLM) applications... [truncated]"
+      },
+      "apple_profile": {
+        "history": "Apple Inc. was founded on April 1, 1976, by Steve Jobs, Steve Wozniak, and Ronald Wayne in Los Altos, California... [truncated]",
+        "principles": "Apple's founding principles were deeply rooted in a desire to democratize technology and empower individuals... [truncated]",
+        "mission": "Apple does not typically publish a concise, single-sentence mission statement, but its overarching corporate mission and philosophy can be derived from its public statements... [truncated]",
+        "products_services": "Hardware:\n\n*   iPhone: iPhone 15, iPhone 15 Plus...\n\nSoftware:\n\n*   Operating Systems: iOS (iPhone), iPadOS (iPad)...\n\nServices:\n\n*   Subscription Services: Apple Music, Apple TV+... [truncated]",
+        "financials": "Apple Inc.'s financial performance is characterized by robust revenue growth, high profit margins, and a dominant market capitalization... [truncated]",
+        "competition": "Smartphones (iPhone)\n*   Primary Competitors: Samsung, Xiaomi, Google (Pixel)... [truncated]",
+        "innovation_rd": "Apple's innovation strategy is characterized by several core tenets:\n\n*   Vertical Integration: Apple designs its own hardware, software, and services... [truncated]",
+        "supply_chain_ops": "Apple's Supply Chain Management\nApple employs a highly integrated and global supply chain strategy characterized by... [truncated]",
+        "csr_labor": "Apple's Corporate Social Responsibility Initiatives, Environmental Impact, and Labor Practices\nApple's CSR initiatives span various areas beyond environmental and labor practices... [truncated]",
+        "leadership_structure": "Apple Inc. Executive Leadership\n\n*   Tim Cook: Chief Executive Officer\n*   Luca Maestri: Chief Financial Officer... [truncated]",
+        "brand_marketing": "Brand Perception:\n*   Premium & Innovative: Widely seen as a luxury brand offering cutting-edge technology... [truncated]"
+      }
+    },
+    "dataModelSchema": {
+      "type": "object",
+      "properties": {
+        "narrative_story": {
+          "type": "string",
+          "description": "The full narrative story about the Evals Engineer."
+        },
+        "media_assets": {
+          "type": "array",
+          "description": "List of media files to be displayed.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["image", "audio", "video"]
+              },
+              "path": {
+                "type": "string",
+                "description": "VFS path to the media file."
+              }
+            },
+            "required": ["type", "path"]
+          }
+        },
+        "evals_data": {
+          "type": "object",
+          "properties": {
+            "general_summary": {
+              "type": "string"
+            },
+            "openai_evals": {
+              "type": "string"
+            },
+            "huggingface_evals": {
+              "type": "string"
+            },
+            "deepeval": {
+              "type": "string"
+            },
+            "ragas": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "general_summary",
+            "openai_evals",
+            "huggingface_evals",
+            "deepeval",
+            "ragas"
+          ]
+        },
+        "apple_profile": {
+          "type": "object",
+          "properties": {
+            "history": {
+              "type": "string"
+            },
+            "principles": {
+              "type": "string"
+            },
+            "mission": {
+              "type": "string"
+            },
+            "products_services": {
+              "type": "string",
+              "description": "Combined text detailing hardware, software, and services."
+            },
+            "financials": {
+              "type": "string"
+            },
+            "competition": {
+              "type": "string"
+            },
+            "innovation_rd": {
+              "type": "string"
+            },
+            "supply_chain_ops": {
+              "type": "string"
+            },
+            "csr_labor": {
+              "type": "string"
+            },
+            "leadership_structure": {
+              "type": "string"
+            },
+            "brand_marketing": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "history",
+            "principles",
+            "mission",
+            "products_services",
+            "financials",
+            "competition",
+            "innovation_rd",
+            "supply_chain_ops",
+            "csr_labor",
+            "leadership_structure",
+            "brand_marketing"
+          ]
+        }
+      },
+      "required": [
+        "narrative_story",
+        "media_assets",
+        "evals_data",
+        "apple_profile"
+      ]
+    },
+    "responseSchema": {}
+  }
+]
