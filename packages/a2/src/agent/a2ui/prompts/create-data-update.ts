@@ -4,11 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { llm } from "../../a2/utils";
-import type { GeminiInputs } from "../../a2/gemini";
+import { llm } from "../../../a2/utils";
+import type { GeminiBody } from "../../../a2/gemini";
 import type { LLMContent } from "@breadboard-ai/types";
-
-const SPEC_DESIGNER_MODEL = "gemini-flash-latest";
 
 export { getUIDataUpdatePrompt };
 
@@ -42,19 +40,15 @@ const responseJsonSchema = {
   },
 };
 
-function getUIDataUpdatePrompt(contents: LLMContent[]): GeminiInputs {
-  const prompt: GeminiInputs = {
-    model: SPEC_DESIGNER_MODEL,
-    body: {
-      contents,
-      systemInstruction,
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseJsonSchema,
-      },
+function getUIDataUpdatePrompt(contents: LLMContent[]): GeminiBody {
+  return {
+    contents,
+    systemInstruction,
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseJsonSchema,
     },
   };
-  return prompt;
 }
 
 const systemInstruction = llm`

@@ -14,7 +14,7 @@ import {
 import { Params } from "../a2/common";
 import { isLLMContent, isLLMContentArray } from "@breadboard-ai/data";
 import { Template } from "../a2/template";
-import { mergeTextParts, toText } from "../a2/utils";
+import { mergeTextParts } from "../a2/utils";
 import { AgentFileSystem } from "./file-system";
 import { err, ok } from "@breadboard-ai/utils";
 import { SimplifiedToolManager, ToolManager } from "../a2/tool-manager";
@@ -210,26 +210,6 @@ class PidginTranslator {
             console.warn(`Unknown tyep of param`, param);
             return "";
         }
-
-        function substituteParts(
-          value: LLMContent,
-          fileSystem: AgentFileSystem
-        ) {
-          const values: string[] = [];
-          for (const part of value.parts) {
-            if ("text" in part) {
-              values.push(part.text);
-            } else {
-              const name = fileSystem.add(part);
-              if (!ok(name)) {
-                console.warn(name.$error);
-                continue;
-              }
-              values.push(`<file src="${name}" />`);
-            }
-          }
-          return values.join("\n");
-        }
       }
     );
 
@@ -237,7 +217,27 @@ class PidginTranslator {
       return err(`Agent: ${errors.join(",")}`);
     }
 
-    return { text: toText(pidginContent), tools: toolManager };
+    return {
+      text: substituteParts(pidginContent, this.fileSystem),
+      tools: toolManager,
+    };
+
+    function substituteParts(value: LLMContent, fileSystem: AgentFileSystem) {
+      const values: string[] = [];
+      for (const part of value.parts) {
+        if ("text" in part) {
+          values.push(part.text);
+        } else {
+          const name = fileSystem.add(part);
+          if (!ok(name)) {
+            console.warn(name.$error);
+            continue;
+          }
+          values.push(`<file src="${name}" />`);
+        }
+      }
+      return values.join("\n");
+    }
   }
 }
 
