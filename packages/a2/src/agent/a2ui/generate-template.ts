@@ -4,14 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { llm } from "../../../a2/utils";
-import type { GeminiBody, GeminiSchema } from "../../../a2/gemini";
+import { llm, ok, toJson } from "../../a2/utils";
+import {
+  generateContent,
+  type GeminiBody,
+  type GeminiSchema,
+} from "../../a2/gemini";
 import type { LLMContent } from "@breadboard-ai/types";
-import { A2UI_SCHEMA } from "../../../a2/au2ui-schema";
+import { A2UI_SCHEMA } from "../../a2/au2ui-schema";
+import { SurfaceSpec } from "./generate-spec";
+import { A2ModuleArgs } from "../../runnable-module-factory";
 
-export { getCreateUILayoutPrompt };
+export { generateTemplate };
 
-function getCreateUILayoutPrompt(contents: LLMContent[]): GeminiBody {
+function createPrompt(contents: LLMContent[]): GeminiBody {
   return {
     contents,
     systemInstruction,
@@ -41,3 +47,13 @@ const responseJsonSchema: GeminiSchema = {
   type: "array",
   items: A2UI_SCHEMA,
 };
+
+async function generateTemplate(spec: SurfaceSpec, moduleArgs: A2ModuleArgs) {
+  console.log(`Rendering ${spec.surfaceId}`);
+  const prompt = createPrompt([llm`${JSON.stringify(spec)}`.asContent()]);
+
+  const ui = await generateContent("gemini-flash-latest", prompt, moduleArgs);
+  if (!ok(ui)) return ui;
+
+  return toJson([ui.candidates.at(0)!.content!]);
+}

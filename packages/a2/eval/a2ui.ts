@@ -5,8 +5,6 @@
  */
 
 import { getUIDataUpdatePrompt } from "../src/agent/a2ui/prompts/create-data-update";
-import type { SurfaceSpec } from "../src/agent/a2ui/generate-spec";
-import { getCreateUILayoutPrompt } from "../src/agent/a2ui/prompts/create-ui-layout";
 import { llm } from "../src/a2/utils";
 import { config } from "dotenv";
 import { ok, toJson } from "@breadboard-ai/utils";
@@ -21,6 +19,8 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
   const generateContent = (await import("../src/a2/gemini")).generateContent;
   const generateSpec = (await import("../src/agent/a2ui/generate-spec"))
     .generateSpec;
+  const generateTemplate = (await import("../src/agent/a2ui/generate-template"))
+    .generateTemplate;
 
   const objective = `Play a learning quiz on the following subject with a high school student, using a series of multiple-choice questions:
   <subject>Fall of Communism in Soviet Russia</subject>
@@ -37,22 +37,6 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
   - where the student should concentrate on learning`;
 
   session.eval("Quiz (spec)", async ({ moduleArgs }) => {
-    async function renderSurface(renderableSurface: SurfaceSpec) {
-      console.log(`Rendering ${renderableSurface.surfaceId}`);
-      const prompt = getCreateUILayoutPrompt([
-        llm`${JSON.stringify(renderableSurface)}`.asContent(),
-      ]);
-
-      const ui = await generateContent(
-        "gemini-flash-latest",
-        prompt,
-        moduleArgs
-      );
-      if (!ok(ui)) return ui;
-
-      return toJson([ui.candidates.at(0)!.content!]);
-    }
-
     const parsedSurfaces = await generateSpec(
       llm`${objective}`.asContent(),
       moduleArgs
@@ -61,7 +45,7 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
 
     return Promise.all(
       parsedSurfaces.surfaces.map((surface) =>
-        renderSurface(surface).then((a2ui) => ({ a2ui }))
+        generateTemplate(surface, moduleArgs).then((a2ui) => ({ a2ui }))
       )
     );
   });

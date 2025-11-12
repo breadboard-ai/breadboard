@@ -14,7 +14,7 @@ import { err, ok, toJson } from "@breadboard-ai/utils";
 
 export { generateSpec };
 
-function getDesignSurfaceSpecsPrompt(content: LLMContent): GeminiBody {
+function prompt(content: LLMContent): GeminiBody {
   return {
     contents: [content],
     systemInstruction,
@@ -132,7 +132,7 @@ async function generateSpec(
 ): Promise<Outcome<SurfaceSpecs>> {
   const surfaces = await generateContent(
     "gemini-flash-latest",
-    getDesignSurfaceSpecsPrompt(content),
+    prompt(content),
     moduleArgs
   );
   if (!ok(surfaces)) return surfaces;
