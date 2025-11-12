@@ -62,3 +62,11 @@ export type AgentProgressManager = {
    */
   finish(): void;
 };
+
+export type A2UIRenderer = {
+  /**
+   * Presents the UI, then waits until the user responds and returns the
+   * action context object.
+   */
+  render(a2UIPayload: unknown[]): Promise<Outcome<Record<string, unknown>>>;
+};
