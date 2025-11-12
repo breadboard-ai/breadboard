@@ -32,6 +32,8 @@ export async function createClientConfig(opts: {
     SHELL_GUEST_ORIGIN: flags.SHELL_GUEST_ORIGIN,
     SHELL_HOST_ORIGINS: flags.SHELL_HOST_ORIGINS,
     ENABLE_EMAIL_OPT_IN: flags.ENABLE_EMAIL_OPT_IN,
+    ENABLE_OPAL_ADK: flags.ENABLE_OPAL_ADK,
+    ENABLE_GOOGLE_ONE: flags.ENABLE_GOOGLE_ONE,
     domains: flags.DOMAIN_CONFIG,
     flags: {
       generateForEach: flags.ENABLE_GENERATE_FOR_EACH,

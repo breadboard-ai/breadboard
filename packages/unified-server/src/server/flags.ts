@@ -85,6 +85,10 @@ export const SHELL_HOST_ORIGINS = getStringList("SHELL_HOST_ORIGINS");
 
 export const ENABLE_EMAIL_OPT_IN = getBoolean("ENABLE_EMAIL_OPT_IN");
 
+export const ENABLE_OPAL_ADK = getBoolean("ENABLE_OPAL_ADK")
+
+export const ENABLE_GOOGLE_ONE = getBoolean("ENABLE_GOOGLE_ONE")
+
 /** Get the value of the given flag as a string, or empty string if absent. */
 function getString(flagName: string): string {
   return process.env[flagName] ?? "";
