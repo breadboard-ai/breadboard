@@ -16,7 +16,12 @@ import {
 import { err, ok } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory";
 
-export { createDataPartTansformer, driveFileToBlob, toGcsAwareChunk };
+export {
+  createDataPartTansformer,
+  driveFileToBlob,
+  toGcsAwareChunk,
+  shouldCallBackend,
+};
 
 const BLOB_PREFIX = new URL("/board/blobs/", window.location.href).href;
 
@@ -177,7 +182,7 @@ async function driveFileToBlob(
 }
 
 function toGcsAwareChunk(
-  bucketId: string,
+  bucketId: string | null,
   blobStoreData: BlobStoredData
 ): Chunk {
   const {
@@ -188,7 +193,7 @@ function toGcsAwareChunk(
 
   // pluck blobId out
   const blobId = handle.split("/").slice(-1)[0];
-  const path = `${bucketId}/${blobId}`;
+  const path = bucketId === null ? blobId : `${bucketId}/${blobId}`;
 
   const data = btoa(String.fromCodePoint(...new TextEncoder().encode(path)));
   return { data, mimetype: "text/gcs-path" };

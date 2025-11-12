@@ -100,7 +100,7 @@ async function callGeminiImage(
       chunks: imageChunks,
     };
   }
-  const body = {
+  let body: ExecuteStepRequest = {
     planStep: {
       stepName: STEP_NAME,
       modelApi: API_NAME,
@@ -112,8 +112,10 @@ async function callGeminiImage(
       output: OUTPUT_NAME,
     },
     execution_inputs: executionInputs,
-    output_gcs_config: { bucket_name: bucketId },
-  } satisfies ExecuteStepRequest;
+  };
+  if (bucketId !== null) {
+    body = { ...body, output_gcs_config: { bucket_name: bucketId } };
+  }
   const response = await executeStep(caps, moduleArgs, body);
   if (!ok(response)) return response;
 
@@ -151,7 +153,7 @@ async function callImageGen(
     ],
   };
   const inputParameters: string[] = ["image_prompt"];
-  const body = {
+  let body: ExecuteStepRequest = {
     planStep: {
       stepName: "GenerateImage",
       modelApi: "image_generation",
@@ -160,8 +162,10 @@ async function callImageGen(
       output: OUTPUT_NAME,
     },
     execution_inputs: executionInputs,
-    output_gcs_config: { bucket_name: bucketId },
-  } satisfies ExecuteStepRequest;
+  };
+  if (bucketId !== null) {
+    body = { ...body, output_gcs_config: { bucket_name: bucketId } };
+  }
   const response = await executeStep(caps, moduleArgs, body);
   if (!ok(response)) return response;
 

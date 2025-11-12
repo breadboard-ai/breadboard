@@ -7,13 +7,16 @@
 import { Outcome } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory";
 import { err, ok } from "@breadboard-ai/utils";
+import { shouldCallBackend } from "./data-transforms";
 
 export { getBucketId };
 
-async function getBucketId({
-  fetchWithCreds,
-  context,
-}: A2ModuleArgs): Promise<Outcome<string>> {
+async function getBucketId(
+  moduleArgs: A2ModuleArgs
+): Promise<Outcome<string | null>> {
+  const callBackend = await shouldCallBackend(moduleArgs);
+  if (callBackend) return null;
+  const { fetchWithCreds, context } = moduleArgs;
   const gettingBucket = await new Memoize(async () => {
     const response = await fetchWithCreds(
       new URL(`/api/data/transform/bucket`, window.location.href),
