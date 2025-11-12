@@ -30,6 +30,7 @@ export type EvalHarnessRuntimeArgs = {
 
 export type EvalHarnessSession = {
   eval(evalName: string, fn: EvalHarnessFunction): Promise<void>;
+  evalOnly(evalName: string, fn: EvalHarnessFunction): Promise<void>;
 };
 
 export type EvalHarnessSessionFunction = (
@@ -92,48 +93,73 @@ class EvalHarness {
       }
     );
 
-    const evals: Promise<void>[] = [];
-    await sessionFunction({
-      eval: async (
-        evalName: string,
-        evalFunction: EvalHarnessFunction
-      ): Promise<void> => {
-        const runEval = async () => {
-          const run = new EvalRun(this.args);
-          const outcome = await evalFunction(run);
-          const har = run.logger.getHar();
-          await ensureDir(OUT_DIR);
-          const filename = `${toKebabFilename(this.args.name)}-${toKebabFilename(evalName)}-${timestamp()}`;
-          const harFilename = `${filename}.har`;
-          const logFilename = `${filename}.log.json`;
-          await writeFile(
-            join(OUT_DIR, `${harFilename}`),
-            JSON.stringify(har, null, 2),
-            "utf-8"
-          );
-          const log = collateContexts(har);
-          await writeFile(
-            join(OUT_DIR, `${logFilename}`),
-            JSON.stringify([...log, { type: "outcome", outcome }], null, 2),
-            "utf-8"
-          );
+    const runEvalFn = async (
+      evalName: string,
+      evalFunction: EvalHarnessFunction
+    ): Promise<void> => {
+      const run = new EvalRun(this.args);
+      const outcome = await evalFunction(run);
+      const har = run.logger.getHar();
+      await ensureDir(OUT_DIR);
+      const filename = `${toKebabFilename(this.args.name)}-${toKebabFilename(evalName)}-${timestamp()}`;
+      const harFilename = `${filename}.har`;
+      const logFilename = `${filename}.log.json`;
+      await writeFile(
+        join(OUT_DIR, `${harFilename}`),
+        JSON.stringify(har, null, 2),
+        "utf-8"
+      );
+      const log = collateContexts(har);
+      await writeFile(
+        join(OUT_DIR, `${logFilename}`),
+        JSON.stringify([...log, { type: "outcome", outcome }], null, 2),
+        "utf-8"
+      );
 
-          const stats = log.map((entry) => {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { context, startedDateTime, type, ...entryStats } = entry;
-            entryStats.totalDurationMs = entryStats.totalDurationMs | 0;
-            entryStats.totalRequestTimeMs = entryStats.totalRequestTimeMs | 0;
-            return entryStats;
-          });
-          console.log(`\n\n${evalName}`);
-          console.table(stats);
-          console.log(`HAR: "${harFilename}"`);
-          console.log(`Log: "${logFilename}"`);
-        };
-        evals.push(runEval());
-      },
+      const stats = log.map((entry) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { context, startedDateTime, type, ...entryStats } = entry;
+        entryStats.totalDurationMs = entryStats.totalDurationMs | 0;
+        entryStats.totalRequestTimeMs = entryStats.totalRequestTimeMs | 0;
+        return entryStats;
+      });
+      console.log(`\n\n${evalName}`);
+      console.table(stats);
+      console.log(`HAR: "${harFilename}"`);
+      console.log(`Log: "${logFilename}"`);
+    };
+
+    // Create a pool for evals and evalOnly callbacks.
+    const evalTargets = {
+      eval: new Map<string, EvalHarnessFunction>(),
+      evalOnly: new Map<string, EvalHarnessFunction>(),
+    };
+
+    // Populate them via the session functions.
+    const sessionEvalFn = async (
+      target: "eval" | "evalOnly",
+      evalName: string,
+      evalFunction: EvalHarnessFunction
+    ): Promise<void> => {
+      evalTargets[target].set(evalName, evalFunction);
+    };
+
+    await sessionFunction({
+      evalOnly: sessionEvalFn.bind(null, "evalOnly"),
+      eval: sessionEvalFn.bind(null, "eval"),
     });
-    await Promise.all(evals);
+
+    // Now check if there are any in the evalOnly Map. If so, use those,
+    // otherwise fall back to the default eval Map. Then run each and return.
+    const runEvalTargets =
+      evalTargets.evalOnly.size > 0
+        ? [...evalTargets.evalOnly]
+        : [...evalTargets.eval];
+    if (evalTargets.evalOnly.size > 0) {
+      console.warn(`Exclusive evaluations: ${evalTargets.evalOnly.size}`);
+    }
+
+    await Promise.all(runEvalTargets.map(([name, fn]) => runEvalFn(name, fn)));
 
     mock.restoreAll();
     autoClearingInterval.clearAllIntervals();
