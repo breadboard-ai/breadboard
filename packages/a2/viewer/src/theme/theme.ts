@@ -184,6 +184,9 @@ export const theme: v0_8.Types.Theme = {
     Button: {
       "--n-35": "var(--n-100)",
     },
+    AudioPlayer: {
+      minWidth: "200px",
+    },
   },
   components: {
     AudioPlayer: {},
@@ -324,7 +327,30 @@ export const theme: v0_8.Types.Theme = {
       label: {},
       element: {},
     },
-    Tabs: { container: {}, controls: { all: {}, selected: {} }, element: {} },
+    Tabs: {
+      container: {},
+      controls: {
+        all: {
+          "border-br-2": true,
+          "color-bgc-p100": true,
+          "layout-p-2": true,
+          "border-bw-1": true,
+          "border-bs-s": true,
+          "color-bc-p100": true,
+          "color-c-p60": true,
+          "behavior-ho-80": true,
+        },
+        selected: {
+          "color-bgc-p90": true,
+          "color-c-p40": true,
+        },
+      },
+      element: {
+        "layout-dsp-flexhor": true,
+        "layout-g-2": true,
+        "layout-mb-3": true,
+      },
+    },
     Text: {
       "layout-w-100": true,
       "layout-g-2": true,

@@ -12,6 +12,10 @@ import { exit } from "process";
 import { session } from "../scripts/eval";
 import { AgentFileSystem } from "../src/agent/file-system";
 import { PidginTranslator } from "../src/agent/pidgin-translator";
+import { SurfaceSpec } from "../src/agent/a2ui/generate-spec";
+import { isTextCapabilityPart } from "@breadboard-ai/data";
+import { A2ModuleArgs } from "../src/runnable-module-factory.js";
+import { LLMContent } from "@breadboard-ai/types";
 
 config();
 
@@ -24,26 +28,43 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
   const generateTemplate = (await import("../src/agent/a2ui/generate-template"))
     .generateTemplate;
 
-  const objective = `Play a learning quiz on the following subject with a high school student, using a series of multiple-choice questions:
-  <subject>Fall of Communism in Soviet Russia</subject>
-
-  As the student answers the question, regulate the difficulty of questions. Start with the easy ones, and if the student is answering them correctly, proceed to the more challenging ones.
-  When the student fails to answer the question correctly, give them a brief historical overview and re-ask the question again in a slightly different way to test their knowledge.
-
-  After 5 questions, congratulate the student and exit the quiz. A student may decide to exit early and that is okay.
-  Before exiting, record the answers and the summary of the session for the teacher:
-
-  - questions asked and student's responses
-  - whether or not the student completed the quiz
-  - what the student learned
-  - where the student should concentrate on learning`;
-
-  session.eval("Quiz (spec)", async ({ moduleArgs }) => {
-    const parsedSurfaces = await generateSpec(
-      llm`${objective}`.asContent(),
+  const renderExampleData = async (
+    promptSource: LLMContent[],
+    moduleArgs: A2ModuleArgs
+  ) => {
+    const prompt = getUIDataUpdatePrompt(promptSource);
+    const data = await generateContent(
+      "gemini-flash-latest",
+      prompt,
       moduleArgs
     );
-    if (!ok(parsedSurfaces)) return parsedSurfaces;
+    if (!ok(data)) {
+      console.log("ERROR", data.$error);
+      exit(-1);
+    }
+
+    const firstPart = data.candidates.at(0)!.content?.parts.at(0);
+    if (isTextCapabilityPart(firstPart)) {
+      try {
+        const content = JSON.parse(firstPart.text);
+        return content;
+      } catch (err) {
+        console.warn(err);
+        return [];
+      }
+    }
+
+    return toJson<unknown[]>([data.candidates.at(0)!.content!]);
+  };
+
+  session.eval("Quiz (spec)", async ({ moduleArgs }) => {
+    const { objective } = await import("./data/quiz/objective.js");
+    return generateSpec(llm`${objective}`.asContent(), moduleArgs);
+  });
+
+  session.eval("Quiz (surface)", async ({ moduleArgs }) => {
+    const parsedSurfaces = (await import("./data/quiz/spec.json"))
+      .default as unknown as SurfaceSpec[];
 
     return Promise.all(
       parsedSurfaces.map((surface) =>
@@ -52,224 +73,60 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
     );
   });
 
-  session.eval("Katamari discernment", async ({ caps, moduleArgs }) => {
-    const katamari = (await import("./data/katamari.json")).default;
-
-    const fileSystem = new AgentFileSystem();
-    const translator = new PidginTranslator(caps, moduleArgs, fileSystem);
-
-    const text = await translator.toPidgin({ parts: katamari }, {});
-
-    return generateSpec(llm`${text}`.asContent(), moduleArgs);
-  });
-
   session.eval("Quiz (example data)", async ({ moduleArgs }) => {
-    const quizQuestionSurface = [
-      {
-        surfaceUpdate: {
-          surfaceId: "quiz_question_surface",
-          components: [
-            {
-              id: "root_column",
-              component: {
-                Column: {
-                  children: {
-                    explicitList: [
-                      "heading_quiz_title",
-                      "text_progress",
-                      "text_question",
-                      "multiple_choice_answers",
-                      "row_actions",
-                    ],
-                  },
-                },
-              },
-            },
-            {
-              id: "heading_quiz_title",
-              component: {
-                Heading: {
-                  text: {
-                    path: "/quiz_title",
-                  },
-                  level: "1",
-                },
-              },
-            },
-            {
-              id: "text_progress",
-              component: {
-                Text: {
-                  text: {
-                    path: "/progress_text",
-                  },
-                },
-              },
-            },
-            {
-              id: "text_question",
-              component: {
-                Text: {
-                  text: {
-                    path: "/question_text",
-                  },
-                },
-              },
-            },
-            {
-              id: "multiple_choice_answers",
-              component: {
-                MultipleChoice: {
-                  selections: {
-                    path: "/selection_results",
-                  },
-                  options: [
-                    {
-                      label: {
-                        path: "/options/0/label",
-                      },
-                      value: "a",
-                    },
-                    {
-                      label: {
-                        path: "/options/1/label",
-                      },
-                      value: "b",
-                    },
-                    {
-                      label: {
-                        path: "/options/2/label",
-                      },
-                      value: "c",
-                    },
-                    {
-                      label: {
-                        path: "/options/3/label",
-                      },
-                      value: "d",
-                    },
-                  ],
-                  maxAllowedSelections: 1,
-                },
-              },
-            },
-            {
-              id: "row_actions",
-              component: {
-                Row: {
-                  children: {
-                    explicitList: ["button_exit", "button_submit"],
-                  },
-                  distribution: "spaceBetween",
-                },
-              },
-            },
-            {
-              id: "text_exit",
-              component: {
-                Text: {
-                  text: {
-                    literalString: "Exit Quiz",
-                  },
-                },
-              },
-            },
-            {
-              id: "button_exit",
-              component: {
-                Button: {
-                  child: "text_exit",
-                  action: {
-                    name: "QUIZ_RESPONSE",
-                    context: [
-                      {
-                        key: "selected_option_id",
-                        value: {
-                          literalString: "",
-                        },
-                      },
-                      {
-                        key: "exit_requested",
-                        value: {
-                          literalBoolean: true,
-                        },
-                      },
-                    ],
-                  },
-                },
-              },
-            },
-            {
-              id: "text_submit",
-              component: {
-                Text: {
-                  text: {
-                    literalString: "Submit Answer",
-                  },
-                },
-              },
-            },
-            {
-              id: "button_submit",
-              component: {
-                Button: {
-                  child: "text_submit",
-                  action: {
-                    name: "QUIZ_RESPONSE",
-                    context: [
-                      {
-                        key: "selected_option_id",
-                        value: {
-                          path: "/selection_results/0",
-                        },
-                      },
-                      {
-                        key: "exit_requested",
-                        value: {
-                          literalBoolean: false,
-                        },
-                      },
-                    ],
-                  },
-                  primary: true,
-                },
-              },
-            },
-          ],
-        },
-      },
-      {
-        beginRendering: {
-          root: "root_column",
-          surfaceId: "quiz_question_surface",
-        },
-      },
+    const { objective } = await import("./data/quiz/objective.js");
+    const quizQuestionSurface = (await import("./data/quiz/surface.json"))
+      .default;
+
+    const promptSource = [
+      llm`This is the objective: ${objective}`.asContent(),
+      llm`This is the UI that was generated: ${JSON.stringify(quizQuestionSurface)}`.asContent(),
     ];
 
-    async function renderExampleData(): Promise<Array<unknown> | undefined> {
-      const prompt = getUIDataUpdatePrompt([
-        llm`This is the objective: ${objective}`.asContent(),
-        llm`This is the UI that was generated: ${JSON.stringify(quizQuestionSurface)}`.asContent(),
-      ]);
-
-      const ui = await generateContent(
-        "gemini-flash-latest",
-        prompt,
-        moduleArgs
-      );
-      if (!ok(ui)) {
-        console.log("ERROR", ui.$error);
-        exit(-1);
-      }
-
-      return toJson<unknown[]>([ui.candidates.at(0)!.content!]);
-    }
-
-    const dataUpdate = await renderExampleData();
+    const dataUpdate = await renderExampleData(promptSource, moduleArgs);
     if (!dataUpdate) {
       console.log("No data generated");
       return;
     }
     return [{ a2ui: [...quizQuestionSurface, ...dataUpdate] }];
   });
+
+  session.eval("Katamari discernment (spec)", async ({ caps, moduleArgs }) => {
+    const katamariData = (await import("./data/katamari/data.json")).default;
+
+    const fileSystem = new AgentFileSystem();
+    const translator = new PidginTranslator(caps, moduleArgs, fileSystem);
+
+    const text = await translator.toPidgin({ parts: katamariData }, {});
+
+    return generateSpec(llm`${text}`.asContent(), moduleArgs);
+  });
+
+  session.eval("Katamari discernment (surface)", async ({ moduleArgs }) => {
+    const parsedSurfaces = (await import("./data/katamari/spec.json"))
+      .default as unknown as SurfaceSpec[];
+
+    return Promise.all(
+      parsedSurfaces.map((surface) =>
+        generateTemplate(surface, moduleArgs).then((a2ui) => ({ a2ui }))
+      )
+    );
+  });
+
+  session.eval(
+    "Katamari discernment (example data)",
+    async ({ moduleArgs }) => {
+      const katamari = (await import("./data/katamari/surface.json")).default;
+      const promptSource = [
+        llm`This is the UI that was generated: ${JSON.stringify(katamari)}`.asContent(),
+        llm`Ensure all paths are absolute to the current origin, i.e., /video.mp4, /image.jpg etc`.asContent(),
+      ];
+      const dataUpdate = await renderExampleData(promptSource, moduleArgs);
+      if (!dataUpdate) {
+        console.log("No data generated");
+        return;
+      }
+      return [{ a2ui: [...katamari, ...dataUpdate] }];
+    }
+  );
 });

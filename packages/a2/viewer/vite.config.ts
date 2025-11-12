@@ -6,6 +6,7 @@
 
 import { config } from "dotenv";
 import { UserConfig } from "vite";
+import * as Middleware from "./middleware";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -19,7 +20,13 @@ export default async () => {
   };
 
   return {
-    plugins: [],
+    plugins: [
+      Middleware.FileFallbackMiddleware.plugin({
+        image: "public/sample.png",
+        audio: "public/sample.wav",
+        video: "public/sample.mp4",
+      }),
+    ],
     build: {
       rollupOptions: {
         input: entry,

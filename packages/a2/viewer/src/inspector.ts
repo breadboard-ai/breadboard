@@ -30,7 +30,11 @@ import {
   FileSystemEvalBackendHandle,
 } from "./filesystem.js";
 import { ok } from "@breadboard-ai/utils";
-import { FileSystemQueryEntry } from "@breadboard-ai/types";
+import {
+  FileSystemPath,
+  FileSystemQueryEntry,
+  FileSystemQueryResult,
+} from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 
 type EvalFileData = Array<Outcome | Context>;
@@ -71,6 +75,9 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
   @signal
   accessor #selectedOutcome: number = 0;
+
+  @signal
+  accessor #showPromptOption: FileSystemPath | null = null;
 
   @signal
   accessor #filesInMountedDir: FileSystemQueryEntry[] = [];
@@ -364,8 +371,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
             & a2ui-surface {
               width: 100%;
-              max-width: 640px;
-              max-height: 600px;
+              max-width: 840px;
             }
           }
 
@@ -474,14 +480,8 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     if (changedProperties.has("selectedPath")) {
       if (this.selectedPath) {
-        this.#fileSystem.query(this.selectedPath.path).then((f) => {
-          if (!ok(f)) {
-            this.#filesInMountedDir = [];
-            return;
-          }
-
-          this.#filesInMountedDir = f.entries;
-        });
+        const path = this.selectedPath.path;
+        this.#fileSystem.query(path).then((f) => this.#updateFiles(f, path));
       } else {
         this.#filesInMountedDir = [];
       }
@@ -490,6 +490,19 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     if (changedProperties.has("selectedFilePath")) {
       this.#selectedOutcome = 0;
     }
+  }
+
+  #updateFiles(f: FileSystemQueryResult, path: FileSystemPath) {
+    if (!ok(f)) {
+      this.#filesInMountedDir = [];
+      if (f.$error === "prompt") {
+        this.#showPromptOption = path;
+      }
+      return;
+    }
+
+    this.#showPromptOption = null;
+    this.#filesInMountedDir = f.entries;
   }
 
   #refresh() {
@@ -619,6 +632,33 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           "typography-sz-bl": true,
         })}
       >
+        ${this.#showPromptOption
+          ? html`<div>
+              <h1>Access expired</h1>
+              <button
+                @click=${async () => {
+                  if (!this.#showPromptOption) {
+                    return;
+                  }
+
+                  const refresh = await this.#fileSystem.refreshAccess(
+                    this.#showPromptOption
+                  );
+                  if (!ok(refresh)) {
+                    console.warn("Refresh failed");
+                    return;
+                  }
+
+                  const files = await this.#fileSystem.query(
+                    this.#showPromptOption
+                  );
+                  this.#updateFiles(files, this.#showPromptOption!);
+                }}
+              >
+                Request access
+              </button>
+            </div>`
+          : nothing}
         <ul id="file-list">
           ${this.#filesInMountedDir.map((file) => {
             const fileName = file.path.split("/").at(-1);
@@ -644,6 +684,11 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                     for (const outcome of outcomes) {
                       this.#outcomes = outcome.outcome;
                       this.#processor.clearSurfaces();
+
+                      if (!outcome.outcome) {
+                        throw new Error("No outcomes found");
+                        continue;
+                      }
 
                       const selectedOutcome =
                         outcome.outcome.at(selectedOutcomeIndex);
