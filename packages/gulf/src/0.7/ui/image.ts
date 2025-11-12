@@ -63,7 +63,7 @@ export class Image extends Root {
       }
     }
 
-    return html`(empty)`;
+    return html``;
   }
 
   render() {

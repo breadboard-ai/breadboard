@@ -60,7 +60,7 @@ export class Audio extends Root {
       }
     }
 
-    return html`(empty)`;
+    return html``;
   }
 
   render() {

@@ -54,5 +54,5 @@ async function generateTemplate(spec: SurfaceSpec, moduleArgs: A2ModuleArgs) {
   const prompt = createPrompt([llm`${JSON.stringify(spec)}`.asContent()]);
 
   const ui = await generateContent("gemini-flash-latest", prompt, moduleArgs);
-  return parseJson(ui);
+  return parseJson(ui) as unknown[];
 }
