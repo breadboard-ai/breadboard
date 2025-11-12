@@ -11,7 +11,6 @@ import { getUserCredentials } from "./server/auth.js";
 import type { ServerConfig, StorageProvider } from "./server/config.js";
 import { serveBlobsAPI } from "./server/blobs/index.js";
 import { serveBoardsAPI } from "./server/boards/index.js";
-import { serveHome } from "./server/home/index.js";
 import { type BoardServerStore } from "./server/store.js";
 import { InMemoryStorageProvider } from "./server/storage-providers/inmemory.js";
 import { FirestoreStorageProvider } from "./server/storage-providers/firestore.js";
@@ -71,9 +70,6 @@ export function createRouter(config: ServerConfig): Router {
       maxAge: 24 * 60 * 60,
     })
   );
-
-  router.get("/", serveHome);
-
   router.use("/blobs", serveBlobsAPI(config));
   router.use("/boards", serveBoardsAPI(config));
 
