@@ -38,21 +38,23 @@ export const RunRoute: EventRoute<"board.run"> = {
       }
     }
 
-    // b/452677430 - Check for consent before running shared Opals that
-    // use the get_webpage tool, as this could be a data exfiltration vector
-    const editor = runtime.edit.getEditor(tab);
-    const graph = editor?.inspect("");
+    if ((await runtime.flags.flags()).requireConsentForGetWebpage) {
+      // b/452677430 - Check for consent before running shared Opals that
+      // use the get_webpage tool, as this could be a data exfiltration vector
+      const editor = runtime.edit.getEditor(tab);
+      const graph = editor?.inspect("");
 
-    if (
-      !tab.graphIsMine &&
-      graph?.usesTool("embed://a2/tools.bgl.json#module:get-webpage")
-    ) {
-      if (!(await runtime.consentManager.queryConsent({
-        type: ConsentType.GET_ANY_WEBPAGE,
-        scope: {},
-        graphUrl: tab.graph.url!,
-      }, ConsentUIType.IN_APP))) {
-        return false;
+      if (
+        !tab.graphIsMine &&
+        graph?.usesTool("embed://a2/tools.bgl.json#module:get-webpage")
+      ) {
+        if (!(await runtime.consentManager.queryConsent({
+          type: ConsentType.GET_ANY_WEBPAGE,
+          scope: {},
+          graphUrl: tab.graph.url!,
+        }, ConsentUIType.IN_APP))) {
+          return false;
+        }
       }
     }
 

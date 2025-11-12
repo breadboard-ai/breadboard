@@ -263,25 +263,27 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   connectedCallback() {
     super.connectedCallback();
-    window.addEventListener("message", async (event: MessageEvent<{ type: string, url: string }>) => {
-      if (event.source === this.outputHtmlIframeRef.value?.contentWindow &&
-        event.data.type === "request-open-popup"
-      ) {
-        const url = new URL(event.data.url);
-        const graphUrl = this.graph?.url;
-        if (this.consentManager && graphUrl) {
-          const allow = await this.consentManager.queryConsent({
-            graphUrl,
-            type: ConsentType.OPEN_WEBPAGE,
-            scope: url.origin,
-          }, ConsentUIType.MODAL);
-          if (!allow) {
-            return;
+    if (this.runtimeFlags?.requireConsentForOpenWebpage) {
+      window.addEventListener("message", async (event: MessageEvent<{ type: string, url: string }>) => {
+        if (event.source === this.outputHtmlIframeRef.value?.contentWindow &&
+          event.data.type === "request-open-popup"
+        ) {
+          const url = new URL(event.data.url);
+          const graphUrl = this.graph?.url;
+          if (this.consentManager && graphUrl) {
+            const allow = await this.consentManager.queryConsent({
+              graphUrl,
+              type: ConsentType.OPEN_WEBPAGE,
+              scope: url.origin,
+            }, ConsentUIType.MODAL);
+            if (!allow) {
+              return;
+            }
           }
+          window.open(url.toString(), "_blank");
         }
-        window.open(url.toString(), "_blank");
-      }
-    }, { signal: this.#messageListenerController?.signal });
+      }, { signal: this.#messageListenerController?.signal });
+    }
   }
 
   disconnectedCallback() {

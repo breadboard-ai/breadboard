@@ -33,10 +33,10 @@ type ConsentRenderInfoMap = {
 
 export const CONSENT_RENDER_INFO: ConsentRenderInfoMap = {
   [ConsentType.GET_ANY_WEBPAGE]: {
-    name: "Allow access to webpages?",
+    name: "This Opal may access external sites",
     description: () => html`
-      <p>This Opal was created by another person and accesses external websites.</p>
-      <p>Keep your personal info private by only sharing info with Opals you trust.</p>
+      <p>This app was created by another user. Be cautious and only continue with apps you trust.</p>
+      <p>Don't share personal or sensitive information, such as passwords or payment details.</p>
     `
   },
   [ConsentType.OPEN_WEBPAGE]: {

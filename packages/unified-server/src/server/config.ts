@@ -41,6 +41,8 @@ export async function createClientConfig(opts: {
       consistentUI: flags.ENABLE_CONSISTENT_UI,
       agentMode: flags.ENABLE_AGENT_MODE,
       backendTransforms: flags.ENABLE_BACKEND_TRANSFORMS,
+      requireConsentForGetWebpage: flags.ENABLE_REQUIRE_CONSENT_FOR_GET_WEBPAGE,
+      requireConsentForOpenWebpage: flags.ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE,
     },
   };
 }
