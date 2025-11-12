@@ -55,7 +55,7 @@ export class Text extends Root {
       }
     }
 
-    return html`(empty)`;
+    return html``;
   }
 
   render() {

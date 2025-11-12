@@ -502,7 +502,11 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     }
 
     this.#showPromptOption = null;
-    this.#filesInMountedDir = f.entries;
+    this.#filesInMountedDir = f.entries.sort((a, b) => {
+      if (a.path > b.path) return 1;
+      if (a.path < b.path) return -1;
+      return 0;
+    });
   }
 
   #refresh() {
@@ -687,7 +691,6 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
                       if (!outcome.outcome) {
                         throw new Error("No outcomes found");
-                        continue;
                       }
 
                       const selectedOutcome =

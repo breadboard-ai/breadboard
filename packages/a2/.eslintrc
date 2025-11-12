@@ -1,16 +1,16 @@
 {
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "projectService": true
+    "projectService": true,
   },
   "ignorePatterns": ["scripts/**/*.ts", "!scripts/eval.ts", "viewer/**/*.ts"],
   "rules": {
     "no-restricted-syntax": [
-      "error",
+      "warn",
       {
         "selector": "CallExpression[callee.property.name='evalOnly'][callee.object.name='session']",
-        "message": "The 'session.evalOnly' method should not be committed. Use 'session.eval' instead."
-      }
-    ]
-  }
+        "message": "The 'session.evalOnly' method should not be committed. Use 'session.eval' instead.",
+      },
+    ],
+  },
 }

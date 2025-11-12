@@ -82,7 +82,7 @@ export class Icon extends Root {
       }
     }
 
-    return html`(empty)`;
+    return html``;
   }
 
   render() {

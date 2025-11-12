@@ -84,6 +84,6 @@ export class Heading extends Root {
       }
     }
 
-    return html`(empty)`;
+    return html``;
   }
 }

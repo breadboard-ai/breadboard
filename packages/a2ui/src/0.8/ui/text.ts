@@ -64,7 +64,7 @@ export class Text extends Root {
         );
 
         if (textValue === null || textValue === undefined) {
-          return html`(empty)`;
+          return html``;
         }
 
         return html`${markdown(
@@ -74,7 +74,7 @@ export class Text extends Root {
       }
     }
 
-    return html`(empty)`;
+    return html``;
   }
 
   render() {
