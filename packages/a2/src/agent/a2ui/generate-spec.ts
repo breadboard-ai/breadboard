@@ -5,16 +5,18 @@
  */
 
 import { z } from "zod";
-import { defineResponseSchema } from "../../function-definition";
-import { llm } from "../../../a2/utils";
-import type { GeminiBody } from "../../../a2/gemini";
-import type { LLMContent } from "@breadboard-ai/types";
+import { defineResponseSchema } from "../function-definition";
+import { llm } from "../../a2/utils";
+import { generateContent, type GeminiBody } from "../../a2/gemini";
+import type { LLMContent, Outcome } from "@breadboard-ai/types";
+import { A2ModuleArgs } from "../../runnable-module-factory";
+import { err, ok, toJson } from "@breadboard-ai/utils";
 
-export { getDesignSurfaceSpecsPrompt };
+export { generateSpec };
 
-function getDesignSurfaceSpecsPrompt(contents: LLMContent[]): GeminiBody {
+function getDesignSurfaceSpecsPrompt(content: LLMContent): GeminiBody {
   return {
-    contents,
+    contents: [content],
     systemInstruction,
     generationConfig: {
       responseMimeType: "application/json",
@@ -84,36 +86,64 @@ Finally, here are the interactive components. These components provide responses
 
 `.asContent();
 
-const responseJsonSchema = defineResponseSchema({
-  surfaces: z
-    .array(
-      z.object({
-        surfaceId: z
-          .string()
-          .describe(`Unique id of the UI surface, in snake_case`),
-        description: z
-          .string()
-          .describe(`Detailed description of what this UI surface does`),
-        surfaceSpec: z
-          .string()
-          .describe(
-            `Detailed spec of the UI layout in plain English: what goes where, how UI components are laid out relative to each other. Note that this spec should not include styling or theming: these are provided separately.`
-          ),
-        dataModelSpec: z
-          .string()
-          .describe(
-            `Detailed description of the data model structure in plain English`
-          ),
-        exampleData: z.string().describe(`An example of the data model values`),
-        dataModelSchema: z
-          .string()
-          .describe(`The JSON schema of the UI surface data model.`),
-        responseSchema: z
-          .string()
-          .describe(
-            `The JSON schema of the responses from the UI surface. The schema must define the structure of the data that the UI the surface provides as output. If the surface provides no output, the schema may be empty`
-          ),
-      })
-    )
-    .describe(`The list of surfaces that must exist to fullfil the objective.`),
+const surfaceSpecZodSchema = z.object({
+  surfaceId: z.string().describe(`Unique id of the UI surface, in snake_case`),
+  description: z
+    .string()
+    .describe(`Detailed description of what this UI surface does`),
+  surfaceSpec: z
+    .string()
+    .describe(
+      `Detailed spec of the UI layout in plain English: what goes where, how UI components are laid out relative to each other. Note that this spec should not include styling or theming: these are provided separately.`
+    ),
+  dataModelSpec: z
+    .string()
+    .describe(
+      `Detailed description of the data model structure in plain English`
+    ),
+  exampleData: z.string().describe(`An example of the data model values`),
+  dataModelSchema: z
+    .string()
+    .describe(`The JSON schema of the UI surface data model.`),
+  responseSchema: z
+    .string()
+    .describe(
+      `The JSON schema of the responses from the UI surface. The schema must define the structure of the data that the UI the surface provides as output. If the surface provides no output, the schema may be empty`
+    ),
 });
+
+const surfaceSpecsZodObject = {
+  surfaces: z
+    .array(surfaceSpecZodSchema)
+    .describe(`The list of surfaces that must exist to fullfil the objective.`),
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const surfaceSpecsZodSchema = z.object(surfaceSpecsZodObject);
+
+const responseJsonSchema = defineResponseSchema(surfaceSpecsZodObject);
+
+export type SurfaceSpec = z.infer<typeof surfaceSpecZodSchema>;
+export type SurfaceSpecs = z.infer<typeof surfaceSpecsZodSchema>;
+
+async function generateSpec(
+  content: LLMContent,
+  moduleArgs: A2ModuleArgs
+): Promise<Outcome<SurfaceSpecs>> {
+  const surfaces = await generateContent(
+    "gemini-flash-latest",
+    getDesignSurfaceSpecsPrompt(content),
+    moduleArgs
+  );
+  if (!ok(surfaces)) return surfaces;
+
+  const parsedSurfaces: { surfaces: SurfaceSpec[] } | undefined = toJson([
+    surfaces.candidates.at(0)!.content!,
+  ]);
+  if (!parsedSurfaces) {
+    console.log("ERROR", "No surfaces found");
+    return err(`No surfaces found`);
+  }
+
+  return parsedSurfaces;
+}

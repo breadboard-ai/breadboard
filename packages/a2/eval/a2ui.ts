@@ -5,15 +5,13 @@
  */
 
 import { getUIDataUpdatePrompt } from "../src/agent/a2ui/prompts/create-data-update";
-import { getDesignSurfaceSpecsPrompt } from "../src/agent/a2ui/prompts/design-surface-specs";
+import type { SurfaceSpec } from "../src/agent/a2ui/generate-spec";
 import { getCreateUILayoutPrompt } from "../src/agent/a2ui/prompts/create-ui-layout";
 import { llm } from "../src/a2/utils";
 import { config } from "dotenv";
-import { err, ok, toJson } from "@breadboard-ai/utils";
+import { ok, toJson } from "@breadboard-ai/utils";
 import { exit } from "process";
-import type { ParsedSurfaces, Surface } from "../scripts/surface";
 import { session } from "../scripts/eval";
-import { Outcome } from "@breadboard-ai/types";
 
 config();
 
@@ -21,6 +19,8 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
   const generateContent = (await import("../src/a2/gemini")).generateContent;
+  const generateSpec = (await import("../src/agent/a2ui/generate-spec"))
+    .generateSpec;
 
   const objective = `Play a learning quiz on the following subject with a high school student, using a series of multiple-choice questions:
   <subject>Fall of Communism in Soviet Russia</subject>
@@ -37,26 +37,7 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
   - where the student should concentrate on learning`;
 
   session.eval("Quiz (spec)", async ({ moduleArgs }) => {
-    async function generateSpec(): Promise<Outcome<ParsedSurfaces>> {
-      const surfaces = await generateContent(
-        "gemini-flash-latest",
-        getDesignSurfaceSpecsPrompt([llm`${objective}`.asContent()]),
-        moduleArgs
-      );
-      if (!ok(surfaces)) return surfaces;
-
-      const parsedSurfaces: { surfaces: Surface[] } | undefined = toJson([
-        surfaces.candidates.at(0)!.content!,
-      ]);
-      if (!parsedSurfaces) {
-        console.log("ERROR", "No surfaces found");
-        return err(`No surfaces found`);
-      }
-
-      return parsedSurfaces;
-    }
-
-    async function renderSurface(renderableSurface: Surface) {
+    async function renderSurface(renderableSurface: SurfaceSpec) {
       console.log(`Rendering ${renderableSurface.surfaceId}`);
       const prompt = getCreateUILayoutPrompt([
         llm`${JSON.stringify(renderableSurface)}`.asContent(),
@@ -72,7 +53,10 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
       return toJson([ui.candidates.at(0)!.content!]);
     }
 
-    const parsedSurfaces = await generateSpec();
+    const parsedSurfaces = await generateSpec(
+      llm`${objective}`.asContent(),
+      moduleArgs
+    );
     if (!ok(parsedSurfaces)) return parsedSurfaces;
 
     return Promise.all(
