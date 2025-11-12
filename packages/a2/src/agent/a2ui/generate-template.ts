@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { llm, ok, toJson } from "../../a2/utils";
+import { llm } from "../../a2/utils";
 import {
   generateContent,
   type GeminiBody,
@@ -14,6 +14,7 @@ import type { LLMContent } from "@breadboard-ai/types";
 import { A2UI_SCHEMA } from "../../a2/au2ui-schema";
 import { SurfaceSpec } from "./generate-spec";
 import { A2ModuleArgs } from "../../runnable-module-factory";
+import { parseJson } from "../../parse-json";
 
 export { generateTemplate };
 
@@ -53,7 +54,5 @@ async function generateTemplate(spec: SurfaceSpec, moduleArgs: A2ModuleArgs) {
   const prompt = createPrompt([llm`${JSON.stringify(spec)}`.asContent()]);
 
   const ui = await generateContent("gemini-flash-latest", prompt, moduleArgs);
-  if (!ok(ui)) return ui;
-
-  return toJson([ui.candidates.at(0)!.content!]);
+  return parseJson(ui);
 }

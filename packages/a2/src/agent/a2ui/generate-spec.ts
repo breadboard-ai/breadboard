@@ -10,7 +10,7 @@ import { llm } from "../../a2/utils";
 import { generateContent, type GeminiBody } from "../../a2/gemini";
 import type { LLMContent, Outcome } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../../runnable-module-factory";
-import { err, ok, toJson } from "@breadboard-ai/utils";
+import { parseJson } from "../../parse-json";
 
 export { generateSpec };
 
@@ -135,15 +135,5 @@ async function generateSpec(
     prompt(content),
     moduleArgs
   );
-  if (!ok(surfaces)) return surfaces;
-
-  const parsedSurfaces: { surfaces: SurfaceSpec[] } | undefined = toJson([
-    surfaces.candidates.at(0)!.content!,
-  ]);
-  if (!parsedSurfaces) {
-    console.log("ERROR", "No surfaces found");
-    return err(`No surfaces found`);
-  }
-
-  return parsedSurfaces;
+  return parseJson(surfaces);
 }
