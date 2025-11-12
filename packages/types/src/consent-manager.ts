@@ -5,7 +5,7 @@
  */
 
 export enum ConsentType {
-  GET_ANY_WEBPAGE = 'GET_WEBPAGE',
+  GET_ANY_WEBPAGE = 'GET_ANY_WEBPAGE',
   OPEN_WEBPAGE = 'OPEN_WEBPAGE',
   // TODO: Add MCP, etc.
 }
