@@ -10,6 +10,8 @@ import { config } from "dotenv";
 import { ok, toJson } from "@breadboard-ai/utils";
 import { exit } from "process";
 import { session } from "../scripts/eval";
+import { AgentFileSystem } from "../src/agent/file-system";
+import { PidginTranslator } from "../src/agent/pidgin-translator";
 
 config();
 
@@ -44,10 +46,21 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
     if (!ok(parsedSurfaces)) return parsedSurfaces;
 
     return Promise.all(
-      parsedSurfaces.surfaces.map((surface) =>
+      parsedSurfaces.map((surface) =>
         generateTemplate(surface, moduleArgs).then((a2ui) => ({ a2ui }))
       )
     );
+  });
+
+  session.eval("Katamari discernment", async ({ caps, moduleArgs }) => {
+    const katamari = (await import("./data/katamari.json")).default;
+
+    const fileSystem = new AgentFileSystem();
+    const translator = new PidginTranslator(caps, moduleArgs, fileSystem);
+
+    const text = await translator.toPidgin({ parts: katamari }, {});
+
+    return generateSpec(llm`${text}`.asContent(), moduleArgs);
   });
 
   session.eval("Quiz (example data)", async ({ moduleArgs }) => {

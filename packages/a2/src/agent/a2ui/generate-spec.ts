@@ -7,10 +7,19 @@
 import { z } from "zod";
 import { defineResponseSchema } from "../function-definition";
 import { llm } from "../../a2/utils";
-import { generateContent, type GeminiBody } from "../../a2/gemini";
-import type { LLMContent, Outcome } from "@breadboard-ai/types";
+import {
+  type GeminiSchema,
+  generateContent,
+  type GeminiBody,
+} from "../../a2/gemini";
+import type {
+  JsonSerializable,
+  LLMContent,
+  Outcome,
+} from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../../runnable-module-factory";
 import { parseJson } from "../../parse-json";
+import { err, ok } from "@breadboard-ai/utils";
 
 export { generateSpec };
 
@@ -21,6 +30,8 @@ function prompt(content: LLMContent): GeminiBody {
     generationConfig: {
       responseMimeType: "application/json",
       responseJsonSchema,
+      temperature: 0,
+      topP: 1,
     },
   };
 }
@@ -123,17 +134,73 @@ const surfaceSpecsZodSchema = z.object(surfaceSpecsZodObject);
 
 const responseJsonSchema = defineResponseSchema(surfaceSpecsZodObject);
 
-export type SurfaceSpec = z.infer<typeof surfaceSpecZodSchema>;
-export type SurfaceSpecs = z.infer<typeof surfaceSpecsZodSchema>;
+type SurfaceSpecInternal = z.infer<typeof surfaceSpecZodSchema>;
+type SurfaceSpecs = z.infer<typeof surfaceSpecsZodSchema>;
+
+export type SurfaceSpec = Omit<
+  SurfaceSpecInternal,
+  "dataModelSchema" | "responseSchema" | "exampleData"
+> & {
+  exampleData: JsonSerializable;
+  dataModelSchema: GeminiSchema;
+  responseSchema: GeminiSchema;
+};
 
 async function generateSpec(
   content: LLMContent,
   moduleArgs: A2ModuleArgs
-): Promise<Outcome<SurfaceSpecs>> {
+): Promise<Outcome<SurfaceSpec[]>> {
   const surfaces = await generateContent(
     "gemini-flash-latest",
     prompt(content),
     moduleArgs
   );
-  return parseJson(surfaces);
+  const rawSpecs = parseJson<SurfaceSpecs>(surfaces);
+  if (!ok(rawSpecs)) return rawSpecs;
+
+  let hasErrors = false;
+  const specs = rawSpecs.surfaces.map((rawSpec) => {
+    let dataModelSchema = parseToSchema(rawSpec.dataModelSchema);
+    if (!ok(dataModelSchema)) {
+      hasErrors = true;
+      dataModelSchema = { type: "object" };
+    }
+    let responseSchema = parseToSchema(rawSpec.responseSchema);
+    if (!ok(responseSchema)) {
+      hasErrors = true;
+      responseSchema = { type: "object" };
+    }
+    let exampleData = toPlainJson(rawSpec.exampleData);
+    if (!ok(exampleData)) {
+      hasErrors = true;
+      exampleData = { type: "object" };
+    }
+    return {
+      ...rawSpec,
+      exampleData,
+      dataModelSchema,
+      responseSchema,
+    };
+  });
+  if (hasErrors) {
+    return err(`Failed to parse JSON schemas`);
+  }
+  return specs;
+}
+
+function toPlainJson(s: string): Outcome<JsonSerializable> {
+  try {
+    return JSON.parse(s);
+  } catch (e) {
+    return err((e as Error).message);
+  }
+}
+
+function parseToSchema(s: string): Outcome<GeminiSchema> {
+  try {
+    // TODO: Validate JSON Schema
+    return JSON.parse(s);
+  } catch (e) {
+    return err((e as Error).message);
+  }
 }
