@@ -9,6 +9,8 @@ import type {
   EmbedHandler,
 } from "@breadboard-ai/types/embedder.js";
 import {
+  SHELL_ESTABLISH_MESSAGE_CHANNEL_REQUEST,
+  SHELL_ESTABLISH_MESSAGE_CHANNEL_RESPONSE,
   SHELL_ORIGIN_URL_PARAMETER,
   type OpalShellGuestProtocol,
   type OpalShellHostProtocol,
@@ -16,11 +18,11 @@ import {
 import { createContext } from "@lit/context";
 import * as comlink from "comlink";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
+import { EmbedHandlerImpl } from "../embed/embed.js";
 import { addMessageEventListenerToAllowedEmbedderIfPresent } from "./embedder.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { OAuthBasedOpalShell } from "./oauth-based-opal-shell.js";
 import "./url-pattern-conditional-polyfill.js";
-import { EmbedHandlerImpl } from "../embed/embed.js";
 
 export const opalShellContext = createContext<
   OpalShellHostProtocol | undefined
@@ -33,33 +35,7 @@ export async function connectToOpalShellHost(): Promise<{
   embedHandler: EmbedHandler;
 }> {
   const hostOrigin = await discoverShellHostOrigin();
-  if (hostOrigin) {
-    console.log("[shell guest] Connecting to host API at", hostOrigin);
-    const hostEndpoint = comlink.windowEndpoint(
-      // Where this guest sends messages.
-      window.parent,
-      // Where this guest receives messages from.
-      window,
-      // Constrain origins this guest can send messages to, at the postMessage
-      // layer. It would otherwise default to all origins.
-      //
-      // https://github.com/GoogleChromeLabs/comlink?tab=readme-ov-file#comlinkwrapendpoint-and-comlinkexposevalue-endpoint-allowedorigins
-      // https://github.com/GoogleChromeLabs/comlink/blob/114a4a6448a855a613f1cb9a7c89290606c003cf/src/comlink.ts#L594C26-L594C38
-      // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#targetorigin
-      hostOrigin
-    );
-    const shellHost = comlink.wrap<OpalShellHostProtocol>(hostEndpoint);
-    beginSyncronizingUrls(shellHost);
-
-    console.log("[shell guest] Exposing guest API to", hostOrigin);
-    const embedHandler = new EmbedHandlerImpl(shellHost);
-    comlink.expose(
-      new OpalShellGuest(embedHandler) satisfies OpalShellGuestProtocol,
-      hostEndpoint,
-      [hostOrigin]
-    );
-    return { shellHost, embedHandler };
-  } else {
+  if (!hostOrigin) {
     // TODO(aomarks) Remove once we are fully migrated to the iframe
     // arrangement.
     console.log("[shell guest] Creating legacy host");
@@ -71,6 +47,69 @@ export async function connectToOpalShellHost(): Promise<{
     );
     return { shellHost, embedHandler };
   }
+
+  // Establish MessageChannel
+  const shellPort = await establishMessageChannelWithShellHost(hostOrigin);
+
+  // Initialize bi-directional comlink APIs
+  console.log("[shell guest] Connecting to host API");
+  const shellHost = comlink.wrap<OpalShellHostProtocol>(shellPort);
+  beginSyncronizingUrls(shellHost);
+  console.log("[shell guest] Exposing guest API");
+  const embedHandler = new EmbedHandlerImpl(shellHost);
+  comlink.expose(
+    new OpalShellGuest(embedHandler) satisfies OpalShellGuestProtocol,
+    shellPort
+  );
+
+  return { shellHost, embedHandler };
+}
+
+/**
+ * Establish a MessageChannel connection between the shell host and client.
+ *
+ * Background: Comlink supports using window postMessage directly, however we
+ * found that password management extensions including 1Password and Bitwarden
+ * break the ability to exchange _certain_ objects as tranferables (HTTP
+ * responses break, but MessageChannel ports do not). The best theory we have is
+ * that these extensions register their own window message event handlers, which
+ * cause transferable objects to be transfered into the extension's "isolated
+ * world", instead of our normal context, making them inaccessible to us.
+ */
+async function establishMessageChannelWithShellHost(
+  hostOrigin: string
+): Promise<MessagePort> {
+  const { port1, port2 } = new MessageChannel();
+  console.log(
+    "[shell guest] Sending establish MessageChannel request to",
+    hostOrigin
+  );
+  window.parent.postMessage(
+    { type: SHELL_ESTABLISH_MESSAGE_CHANNEL_REQUEST },
+    hostOrigin,
+    [port2]
+  );
+  const responseReceived = Promise.withResolvers<void>();
+  const listenerAbortCtl = new AbortController();
+  port1.start();
+  port1.addEventListener(
+    "message",
+    (event) => {
+      if (
+        event.isTrusted &&
+        typeof event.data === "object" &&
+        event.data !== null &&
+        event.data.type === SHELL_ESTABLISH_MESSAGE_CHANNEL_RESPONSE
+      ) {
+        console.log("[shell guest] Received establish MessageChannel response");
+        responseReceived.resolve();
+        listenerAbortCtl.abort();
+      }
+    },
+    { signal: listenerAbortCtl.signal }
+  );
+  await responseReceived.promise;
+  return port1;
 }
 
 class OpalShellGuest implements OpalShellGuestProtocol {
