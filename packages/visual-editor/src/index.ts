@@ -460,21 +460,33 @@ export class Main extends SignalWatcher(LitElement) {
       fetchWithCreds,
     });
 
-    this.#consentManager = new ConsentManager(async (request: ConsentRequest, uiType: ConsentUIType) => {
-      return new Promise<ConsentAction>(resolve => {
-        if (uiType === ConsentUIType.MODAL) {
-          this.#uiState.consentRequests.push({ request, consentCallback: resolve });
-        } else {
-          const appState = this.#runtime.state.getProjectState(this.#tab?.mainGraphId)?.run.app;
-          if (appState) {
-            appState.consentRequests.push({ request, consentCallback: resolve });
+    this.#consentManager = new ConsentManager(
+      async (request: ConsentRequest, uiType: ConsentUIType) => {
+        return new Promise<ConsentAction>((resolve) => {
+          if (uiType === ConsentUIType.MODAL) {
+            this.#uiState.consentRequests.push({
+              request,
+              consentCallback: resolve,
+            });
           } else {
-            console.warn("In-app consent requested when no app state existed");
-            resolve(ConsentAction.DENY);
+            const appState = this.#runtime.state.getProjectState(
+              this.#tab?.mainGraphId
+            )?.run.app;
+            if (appState) {
+              appState.consentRequests.push({
+                request,
+                consentCallback: resolve,
+              });
+            } else {
+              console.warn(
+                "In-app consent requested when no app state existed"
+              );
+              resolve(ConsentAction.DENY);
+            }
           }
-        }
-      });
-    });
+        });
+      }
+    );
 
     this.#runtime = await Runtime.create({
       recentBoardStore: this.#recentBoardStore,
@@ -1321,9 +1333,9 @@ export class Main extends SignalWatcher(LitElement) {
 
     const projectState = mainGraphId
       ? this.#runtime.state.getOrCreateProjectState(
-        mainGraphId,
-        this.#runtime.edit.getEditor(this.#tab)
-      )
+          mainGraphId,
+          this.#runtime.edit.getEditor(this.#tab)
+        )
       : null;
 
     if (projectState && this.#tab?.finalOutputValues) {
@@ -1368,7 +1380,7 @@ export class Main extends SignalWatcher(LitElement) {
   ) {
     const boardServer = this.boardServer;
     if (!boardServer) {
-      throw new Error('Expected board server to have been mounted');
+      throw new Error("Expected board server to have been mounted");
     }
     return {
       originalEvent: evt,
@@ -1380,7 +1392,7 @@ export class Main extends SignalWatcher(LitElement) {
       googleDriveClient: this.googleDriveClient,
       askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>
         this.#askUserToSignInIfNeeded(scopes),
-      boardServer
+      boardServer,
     };
   }
 
@@ -1410,13 +1422,13 @@ export class Main extends SignalWatcher(LitElement) {
       ${this.#uiState.show.has("TOS") || this.#uiState.show.has("MissingShare")
         ? nothing
         : [
-          this.#renderCanvasController(renderValues),
-          this.#renderAppController(renderValues),
-          this.#renderWelcomePanel(),
-          this.#uiState.showStatusUpdateChip
-            ? this.#renderStatusUpdateBar()
-            : nothing,
-        ]}
+            this.#renderCanvasController(renderValues),
+            this.#renderAppController(renderValues),
+            this.#renderWelcomePanel(),
+            this.#uiState.showStatusUpdateChip
+              ? this.#renderStatusUpdateBar()
+              : nothing,
+          ]}
     </div>`;
 
     /**
@@ -1431,10 +1443,10 @@ export class Main extends SignalWatcher(LitElement) {
     return html`<div
       id="container"
       @bbevent=${async (
-      evt: BreadboardUI.Events.StateEvent<
-        keyof BreadboardUI.Events.StateEventDetailMap
-      >
-    ) => {
+        evt: BreadboardUI.Events.StateEvent<
+          keyof BreadboardUI.Events.StateEventDetailMap
+        >
+      ) => {
         // Locate the specific handler based on the event type.
         const eventRoute = eventRoutes.get(evt.detail.eventType);
         if (!eventRoute) {
@@ -1683,10 +1695,10 @@ export class Main extends SignalWatcher(LitElement) {
       <button
         class="close"
         @click=${(evt: Event) => {
-        evt.preventDefault();
-        evt.stopImmediatePropagation();
-        this.#uiState.showStatusUpdateChip = false;
-      }}
+          evt.preventDefault();
+          evt.stopImmediatePropagation();
+          this.#uiState.showStatusUpdateChip = false;
+        }}
       >
         <span class="g-icon round filled">close</span>
       </button>
@@ -1796,13 +1808,13 @@ export class Main extends SignalWatcher(LitElement) {
         <div class="controls">
           <button
             @click=${async (evt: Event) => {
-        if (!(evt.target instanceof HTMLButtonElement)) {
-          return;
-        }
-        evt.target.disabled = true;
-        await this.#apiClient.acceptTos(tosVersion, true);
-        this.#tosStatus = await this.#apiClient.checkTos();
-      }}
+              if (!(evt.target instanceof HTMLButtonElement)) {
+                return;
+              }
+              evt.target.disabled = true;
+              await this.#apiClient.acceptTos(tosVersion, true);
+              this.#tosStatus = await this.#apiClient.checkTos();
+            }}
           >
             Continue
           </button>
@@ -1846,8 +1858,8 @@ export class Main extends SignalWatcher(LitElement) {
         <bb-consent-request-modal
           .consentRequest=${this.#uiState.consentRequests[0]}
           @bbmodaldismissed=${() => {
-          this.#uiState.consentRequests.shift();
-        }}
+            this.#uiState.consentRequests.shift();
+          }}
         ></bb-consent-request-modal>
       `;
     }
@@ -1911,22 +1923,22 @@ export class Main extends SignalWatcher(LitElement) {
   #renderSnackbar() {
     return html`<bb-snackbar
       ${ref((el: Element | undefined) => {
-      if (!el) {
-        this.#snackbar = undefined;
-      }
+        if (!el) {
+          this.#snackbar = undefined;
+        }
 
-      this.#snackbar = el as BreadboardUI.Elements.Snackbar;
-      for (const pendingMessage of this.#pendingSnackbarMessages) {
-        const { message, id, persistent, type, actions } =
-          pendingMessage.message;
-        this.snackbar(message, type, actions, persistent, id);
-      }
+        this.#snackbar = el as BreadboardUI.Elements.Snackbar;
+        for (const pendingMessage of this.#pendingSnackbarMessages) {
+          const { message, id, persistent, type, actions } =
+            pendingMessage.message;
+          this.snackbar(message, type, actions, persistent, id);
+        }
 
-      this.#pendingSnackbarMessages.length = 0;
-    })}
+        this.#pendingSnackbarMessages.length = 0;
+      })}
       @bbsnackbaraction=${async (
-      evt: BreadboardUI.Events.SnackbarActionEvent
-    ) => {
+        evt: BreadboardUI.Events.SnackbarActionEvent
+      ) => {
         evt.callback?.();
         switch (evt.action) {
           case "remix": {
@@ -2147,8 +2159,8 @@ export class Main extends SignalWatcher(LitElement) {
       <bb-sign-in-modal
         ${ref(this.#signInModalRef)}
         @bbmodaldismissed=${() => {
-        this.#uiState.show.delete("SignInModal");
-      }}
+          this.#uiState.show.delete("SignInModal");
+        }}
       ></bb-sign-in-modal>
     `;
   }

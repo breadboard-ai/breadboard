@@ -243,13 +243,13 @@ class GraphQueries {
       scanConfiguration(node.configuration(), (part) => {
         if (part.type === "tool") {
           tools.push(part);
-        };
+        }
       });
     }
     return tools;
   }
 
   usesTool(path: string): boolean {
-    return this.tools().some(tool => tool.path === path);
+    return this.tools().some((tool) => tool.path === path);
   }
 }
