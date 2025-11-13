@@ -55,6 +55,12 @@ async function initializeOpalShellGuest() {
   console.log("[shell host] Connecting to guest API");
   const guest = comlink.wrap<OpalShellGuestProtocol>(guestPort);
 
+  // Prevent garbage collection of the comlink proxy by shoving it onto the
+  // window. If we don't do this, the proxy will get garbage collected,
+  // triggering some FinalizationRegistry logic in comlink which will close the
+  // port, severing the link bi-directionally.
+  (window as typeof window & Record<symbol, unknown>)[Symbol()] = guest;
+
   // Start relaying embedder (i.e. AIFlow) messages to guest
   addMessageEventListenerToAllowedEmbedderIfPresent(
     (message: EmbedderMessage) => guest.receiveFromEmbedder(message)
