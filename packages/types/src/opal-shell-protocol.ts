@@ -8,6 +8,11 @@ import type { BreadboardMessage, EmbedderMessage } from "./embedder.js";
 
 export const SHELL_ORIGIN_URL_PARAMETER = "shellOrigin";
 
+export const SHELL_ESTABLISH_MESSAGE_CHANNEL_REQUEST =
+  "opal_shell_establish_message_channel_request";
+export const SHELL_ESTABLISH_MESSAGE_CHANNEL_RESPONSE =
+  "opal_shell_establish_message_channel_response";
+
 export interface OpalShellHostProtocol {
   getSignInState(): Promise<SignInState>;
 

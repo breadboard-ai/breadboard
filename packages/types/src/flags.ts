@@ -53,6 +53,14 @@ export type RuntimeFlags = {
    * Enables Opal-ADK support
    */
   opalAdk: boolean;
+  /** 
+   * Requres users consent to use of get_webpage tool
+   */
+  requireConsentForGetWebpage: boolean;
+  /**
+   * Requres users consent to use of open_webpage tool
+   */
+  requireConsentForOpenWebpage: boolean;
 };
 
 /**

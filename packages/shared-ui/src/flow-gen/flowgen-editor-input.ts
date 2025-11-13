@@ -86,6 +86,10 @@ export class FlowgenEditorInput extends LitElement {
         align-items: center;
         justify-content: space-between;
         margin-bottom: var(--bb-grid-size-4);
+
+        > *:not(button) {
+          user-select: text;
+        }
       }
 
       #gradient-border-container {

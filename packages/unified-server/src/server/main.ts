@@ -19,7 +19,6 @@ import { CachingFeaturedGallery, makeGalleryMiddleware } from "./gallery.js";
 import { createUpdatesHandler } from "./updates.js";
 
 import { GoogleAuth } from "google-auth-library";
-import { createMcpProxyHandler } from "./mcp-proxy.js";
 import { createFetchWithCreds, err } from "@breadboard-ai/utils";
 import { createDataTransformHandler } from "./data-transform.js";
 
@@ -95,9 +94,6 @@ server.use(
     mediaCacheMaxAgeSeconds: FEATURED_GALLERY_CACHE_REFRESH_SECONDS,
   })
 );
-
-console.log("[unified-server startup] Mounting MCP proxy");
-server.use("/api/mcp-proxy", createMcpProxyHandler());
 
 console.log("[unified-server startup] Mounting Data Tranform API");
 server.use(

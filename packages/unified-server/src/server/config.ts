@@ -43,6 +43,9 @@ export async function createClientConfig(opts: {
       backendTransforms: flags.ENABLE_BACKEND_TRANSFORMS,
       opalAdk: flags.ENABLE_OPAL_ADK,
       googleOne: flags.ENABLE_GOOGLE_ONE,
+      requireConsentForGetWebpage: flags.ENABLE_REQUIRE_CONSENT_FOR_GET_WEBPAGE,
+      requireConsentForOpenWebpage:
+        flags.ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE,
     },
   };
 }

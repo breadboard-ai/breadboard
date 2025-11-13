@@ -90,7 +90,7 @@ async function callAudioGen(
     ],
   };
   const inputParameters: string[] = ["text_to_speak"];
-  const body = {
+  let body: ExecuteStepRequest = {
     planStep: {
       stepName: "GenerateAudio",
       modelApi: "tts",
@@ -99,8 +99,10 @@ async function callAudioGen(
       output: "generated_speech",
     },
     execution_inputs: executionInputs,
-    output_gcs_config: { bucket_name: bucketId },
-  } satisfies ExecuteStepRequest;
+  };
+  if (bucketId !== null) {
+    body = { ...body, output_gcs_config: { bucket_name: bucketId } };
+  }
 
   const response = await executeStep(caps, moduleArgs, body);
   if (!ok(response)) return response;

@@ -26,6 +26,7 @@ const OUT_DIR = join(ROOT_DIR, "out");
 export type EvalHarnessRuntimeArgs = {
   caps: Capabilities;
   moduleArgs: A2ModuleArgs;
+  logger: EvalLogger;
 };
 
 export type EvalHarnessSession = {
@@ -49,6 +50,12 @@ export type EvalHarnessArgs = {
   name: string;
   apiKey?: string;
 };
+
+export type EvalLogger = {
+  log(entry: EvalLogEntry): void;
+};
+
+export type EvalLogEntry = { type: string; data: unknown };
 
 function session(
   args: EvalHarnessArgs,
@@ -97,9 +104,12 @@ class EvalHarness {
       evalName: string,
       evalFunction: EvalHarnessFunction
     ): Promise<void> => {
-      const run = new EvalRun(this.args);
+      const logEntries: EvalLogEntry[] = [];
+      const run = new EvalRun(this.args, {
+        log: (entry) => logEntries.push(entry),
+      });
       const outcome = await evalFunction(run);
-      const har = run.logger.getHar();
+      const har = run.requestLogger.getHar();
       await ensureDir(OUT_DIR);
       const filename = `${toKebabFilename(this.args.name)}-${toKebabFilename(evalName)}-${timestamp()}`;
       const harFilename = `${filename}.har`;
@@ -110,9 +120,12 @@ class EvalHarness {
         "utf-8"
       );
       const log = collateContexts(har);
+      const outcomeEntry: unknown[] = outcome
+        ? [{ type: "outcome", outcome }]
+        : [];
       await writeFile(
         join(OUT_DIR, `${logFilename}`),
-        JSON.stringify([...log, { type: "outcome", outcome }], null, 2),
+        JSON.stringify([...log, ...logEntries, ...outcomeEntry], null, 2),
         "utf-8"
       );
 
@@ -209,9 +222,12 @@ function toKebabFilename(str: string): string {
 }
 
 class EvalRun implements EvalHarnessRuntimeArgs {
-  constructor(private readonly args: EvalHarnessArgs) {}
+  constructor(
+    private readonly args: EvalHarnessArgs,
+    public readonly logger: EvalLogger
+  ) {}
 
-  readonly logger = new Logger();
+  readonly requestLogger = new Logger();
 
   readonly caps: Capabilities = {
     fetch() {
@@ -247,7 +263,7 @@ class EvalRun implements EvalHarnessRuntimeArgs {
   readonly moduleArgs: A2ModuleArgs = {
     mcpClientManager: {} as unknown as McpClientManager,
     fetchWithCreds: async (url: RequestInfo | URL, init?: RequestInit) => {
-      const entryId = this.logger.request(url as string, init);
+      const entryId = this.requestLogger.request(url as string, init);
       const response = await fetch(url, {
         ...init,
         headers: {
@@ -255,7 +271,7 @@ class EvalRun implements EvalHarnessRuntimeArgs {
           "x-goog-api-key": this.args.apiKey!,
         },
       });
-      this.logger.response(entryId, response.clone());
+      this.requestLogger.response(entryId, response.clone());
       return response;
     },
     context: {
@@ -299,6 +315,7 @@ class EvalRun implements EvalHarnessRuntimeArgs {
             ]),
             current: new Map(),
             last: null,
+            consentRequests: [],
           },
         };
       },

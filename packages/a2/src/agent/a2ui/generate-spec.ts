@@ -102,7 +102,9 @@ const surfaceSpecZodSchema = z.object({
   surfaceId: z.string().describe(`Unique id of the UI surface, in snake_case`),
   description: z
     .string()
-    .describe(`Detailed description of what this UI surface does`),
+    .describe(
+      `Detailed description of what this UI surface sholuld do in the imperative mood: "Show ... " and "Present ... `
+    ),
   surfaceSpec: z
     .string()
     .describe(

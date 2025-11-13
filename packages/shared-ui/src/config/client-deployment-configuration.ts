@@ -24,6 +24,8 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   backendTransforms: false,
   opalAdk: false,
   googleOne: false,
+  requireConsentForGetWebpage: false,
+  requireConsentForOpenWebpage: false,
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(

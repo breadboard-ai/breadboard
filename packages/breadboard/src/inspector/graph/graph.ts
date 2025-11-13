@@ -155,4 +155,8 @@ class Graph implements InspectableGraph {
   assetEdges(): Outcome<InspectableAssetEdge[]> {
     return new GraphQueries(this.#mutable, this.#graphId).assetEdges();
   }
+
+  usesTool(path: string): boolean {
+    return new GraphQueries(this.#mutable, this.#graphId).usesTool(path);
+  }
 }

@@ -150,7 +150,7 @@ async function callVideoGen(
   } else {
     console.log("No image found, using t2v");
   }
-  const body = {
+  let body: ExecuteStepRequest = {
     planStep: {
       stepName: "GenerateVideo",
       modelApi: "generate_video",
@@ -163,8 +163,11 @@ async function callVideoGen(
       },
     },
     execution_inputs: executionInputs,
-    output_gcs_config: { bucket_name: bucketId },
-  } satisfies ExecuteStepRequest;
+  };
+  if (bucketId !== null) {
+    body = { ...body, output_gcs_config: { bucket_name: bucketId } };
+  }
+
   const response = await executeStep(caps, moduleArgs, body);
   if (!ok(response)) return response;
 

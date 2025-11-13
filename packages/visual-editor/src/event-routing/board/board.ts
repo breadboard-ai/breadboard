@@ -11,12 +11,17 @@ import { InputValues, ok } from "@google-labs/breadboard";
 import { RuntimeSnackbarEvent } from "../../runtime/events";
 import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { StateEvent } from "@breadboard-ai/shared-ui/events/events.js";
-import { GraphMetadata } from "@breadboard-ai/types";
+import {
+  GraphMetadata,
+  ConsentType,
+  ConsentUIType,
+} from "@breadboard-ai/types";
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
 
-  async do({ tab, runtime, settings, askUserToSignInIfNeeded }) {
+  async do({ tab, runtime, settings, askUserToSignInIfNeeded, boardServer }) {
     if (!tab) {
       console.warn(`Unable to prepare run: no Tab provided`);
       return false;
@@ -35,6 +40,36 @@ export const RunRoute: EventRoute<"board.run"> = {
       if (!ok(preparingRun)) {
         console.warn(preparingRun.$error);
         return false;
+      }
+    }
+
+    // b/452677430 - Check for consent before running shared Opals that
+    // use the get_webpage tool, as this could be a data exfiltration vector
+    if ((await runtime.flags.flags()).requireConsentForGetWebpage) {
+      const editor = runtime.edit.getEditor(tab);
+      const graph = editor?.inspect("");
+      const url = tab.graph.url;
+      const isGalleryApp =
+        boardServer instanceof GoogleDriveBoardServer &&
+        url &&
+        boardServer.galleryGraphs.has(url);
+      if (
+        !isGalleryApp &&
+        !tab.graphIsMine &&
+        graph?.usesTool("embed://a2/tools.bgl.json#module:get-webpage")
+      ) {
+        if (
+          !(await runtime.consentManager.queryConsent(
+            {
+              type: ConsentType.GET_ANY_WEBPAGE,
+              scope: {},
+              graphUrl: tab.graph.url!,
+            },
+            ConsentUIType.IN_APP
+          ))
+        ) {
+          return false;
+        }
       }
     }
 
@@ -157,6 +192,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
     googleDriveClient,
     uiState,
     askUserToSignInIfNeeded,
+    boardServer,
   }) {
     await StopRoute.do({
       tab,
@@ -170,6 +206,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       googleDriveClient,
       uiState,
       askUserToSignInIfNeeded,
+      boardServer,
     });
     await RunRoute.do({
       tab,
@@ -182,6 +219,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       googleDriveClient,
       uiState,
       askUserToSignInIfNeeded,
+      boardServer,
     });
     return false;
   },

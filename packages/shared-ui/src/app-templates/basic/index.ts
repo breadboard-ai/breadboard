@@ -73,9 +73,91 @@ import { googleDriveClientContext } from "../../contexts/google-drive-client-con
 import { markdown } from "../../directives/markdown.js";
 import { makeUrl } from "../../utils/urls.js";
 
-import { AppScreenOutput, RuntimeFlags } from "@breadboard-ai/types";
+import {
+  AppScreenOutput,
+  RuntimeFlags,
+  ConsentAction,
+  ConsentType,
+  ConsentUIType,
+} from "@breadboard-ai/types";
 import { maybeTriggerNlToOpalSatisfactionSurvey } from "../../survey/nl-to-opal-satisfaction-survey.js";
 import { repeat } from "lit/directives/repeat.js";
+import { consentManagerContext } from "../../contexts/consent-manager.js";
+import {
+  ConsentManager,
+  CONSENT_RENDER_INFO,
+} from "../../utils/consent-manager.js";
+
+const toFunctionString = (fn: Function, bindings?: Record<string, unknown>) => {
+  let str = fn.toString();
+  if (bindings) {
+    for (const [key, value] of Object.entries(bindings)) {
+      str = str.replace(key, `(${JSON.stringify(value)})`);
+    }
+  }
+  return str;
+};
+const scriptifyFunction = (fn: Function, bindings?: Record<string, unknown>) =>
+  `<script>( ${toFunctionString(fn, bindings)} )();</script>`;
+
+// Will be bound into the iframe script as the targetOrigin for postMessage
+const PARENT_ORIGIN = window.location.origin;
+
+// This script will be run in the AppCat-generated iframe, and will intercept
+// any popups that are opened by the app to post back to Opal to request
+// opening after gaining consent. The iframe is sandboxed and does not allow
+// popups itself, so this is a best-effort to
+const interceptPopupsScript = scriptifyFunction(
+  () => {
+    const requestPopup = (url: URL) =>
+      window.parent.postMessage(
+        {
+          type: "request-open-popup",
+          url: url.toString(),
+        },
+        PARENT_ORIGIN
+      );
+    // This script is guaranteed to be run before any generated scripts, and
+    // we don't let the generated HTML override this
+    Object.defineProperty(window, "open", {
+      value: function (url?: string | URL) {
+        if (url) {
+          requestPopup(new URL(url));
+        }
+        return undefined;
+      },
+      writable: false,
+      configurable: false,
+      enumerable: false,
+    });
+    const findAncestorTag = <T extends keyof HTMLElementTagNameMap>(
+      event: Event,
+      tag: T
+    ) => {
+      const path = event.composedPath();
+      return path.find((el) => (el as HTMLElement).localName === tag) as
+        | HTMLElementTagNameMap[typeof tag]
+        | undefined;
+    };
+    // This listener is capturing and guaranteed to be run before any
+    // generated scripts, so we always get first crack at intercepting popups
+    window.addEventListener(
+      "click",
+      (evt) => {
+        const anchor = findAncestorTag(evt, "a");
+        if (anchor) {
+          requestPopup(new URL(anchor.href));
+          evt.preventDefault();
+          evt.stopImmediatePropagation();
+        }
+      },
+      true
+    );
+  },
+  {
+    PARENT_ORIGIN,
+  }
+);
 
 function isHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -119,6 +201,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @state()
   @consume({ context: projectRunContext, subscribe: true })
   accessor run: ProjectRun | null = null;
+
+  @state()
+  @consume({ context: consentManagerContext })
+  accessor consentManager: ConsentManager | undefined = undefined;
 
   @property()
   accessor focusWhenIn: FloatingInputFocusState = ["app"];
@@ -164,6 +250,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   readonly #shareResultsButton = createRef<HTMLButtonElement>();
 
+  readonly outputHtmlIframeRef = createRef<HTMLIFrameElement>();
+  #messageListenerController: AbortController | null = null;
+
   get additionalOptions() {
     return {
       font: {
@@ -184,6 +273,44 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   static styles = appStyles;
+
+  connectedCallback() {
+    super.connectedCallback();
+    if (this.runtimeFlags?.requireConsentForOpenWebpage) {
+      window.addEventListener(
+        "message",
+        async (event: MessageEvent<{ type: string; url: string }>) => {
+          if (
+            event.source === this.outputHtmlIframeRef.value?.contentWindow &&
+            event.data.type === "request-open-popup"
+          ) {
+            const url = new URL(event.data.url);
+            const graphUrl = this.graph?.url;
+            if (this.consentManager && graphUrl) {
+              const allow = await this.consentManager.queryConsent(
+                {
+                  graphUrl,
+                  type: ConsentType.OPEN_WEBPAGE,
+                  scope: url.origin,
+                },
+                ConsentUIType.MODAL
+              );
+              if (!allow) {
+                return;
+              }
+            }
+            window.open(url.toString(), "_blank");
+          }
+        },
+        { signal: this.#messageListenerController?.signal }
+      );
+    }
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.#messageListenerController?.abort();
+  }
 
   #renderControls() {
     return html`<bb-app-header
@@ -212,7 +339,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       const htmlOutput = isHTMLOutput(last);
       if (htmlOutput !== null) {
         activityContents = html`<iframe
-          srcdoc=${htmlOutput}
+          srcdoc=${interceptPopupsScript + htmlOutput}
+          ${ref(this.outputHtmlIframeRef)}
           frameborder="0"
           class="html-view"
           sandbox="allow-scripts allow-forms"
@@ -351,6 +479,35 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     </section>`;
 
     return html`<div id="activity">${[activityContents]}</div>`;
+  }
+
+  #renderConsent() {
+    const consentRequest = this.run?.app.consentRequests[0];
+    if (!consentRequest) {
+      return nothing;
+    }
+    const renderInfo = CONSENT_RENDER_INFO[consentRequest.request.type];
+    return html`
+      <div id="consent" class="default">
+        <section id="consent-content-container">
+          <h1>${renderInfo.name}</h1>
+          ${renderInfo.description(consentRequest as any)}
+          <button
+            id="grant-consent"
+            @click=${() => {
+              consentRequest.consentCallback(ConsentAction.ALWAYS_ALLOW);
+              // This is gross, but allows the next screen to render so we don't
+              // jank back to the starting screen for a split second
+              setTimeout(() => {
+                this.run?.app.consentRequests.shift();
+              });
+            }}
+          >
+            Allow Access
+          </button>
+        </section>
+      </div>
+    `;
   }
 
   #renderEmptyState() {
@@ -932,6 +1089,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
         case "interactive":
           content = [this.#renderOutputs()];
+          break;
+
+        case "consent":
+          content = [this.#renderConsent()];
           break;
 
         default: {

@@ -12,57 +12,94 @@ import type { EmbedderMessage } from "@breadboard-ai/types/embedder.js";
 import {
   type OpalShellGuestProtocol,
   type OpalShellHostProtocol,
+  SHELL_ESTABLISH_MESSAGE_CHANNEL_REQUEST,
+  SHELL_ESTABLISH_MESSAGE_CHANNEL_RESPONSE,
   SHELL_ORIGIN_URL_PARAMETER,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import * as comlink from "comlink";
 
-const guestOrigin = CLIENT_DEPLOYMENT_CONFIG.SHELL_GUEST_ORIGIN;
-if (guestOrigin && guestOrigin !== "*") {
-  const iframe = document.querySelector("iframe#opal-app" as "iframe");
-  if (iframe?.contentWindow) {
-    const hostUrl = new URL(window.location.href);
-    const guestUrl = new URL(
-      "_app" + hostUrl.pathname + hostUrl.search + hostUrl.hash,
-      guestOrigin
-    );
-    guestUrl.searchParams.set(
-      SHELL_ORIGIN_URL_PARAMETER,
-      window.location.origin
-    );
-    iframe.src = guestUrl.href;
+initializeOpalShellGuest();
 
-    const guestEndpoint = comlink.windowEndpoint(
-      // Where this host sends messages.
-      iframe.contentWindow,
-      // Where this host receives messages from.
-      window,
-      // Constrain origins this host can send messages to, at the postMessage
-      // layer. It would otherwise default to all origins.
-      //
-      // https://github.com/GoogleChromeLabs/comlink?tab=readme-ov-file#comlinkwrapendpoint-and-comlinkexposevalue-endpoint-allowedorigins
-      // https://github.com/GoogleChromeLabs/comlink/blob/114a4a6448a855a613f1cb9a7c89290606c003cf/src/comlink.ts#L594C26-L594C38
-      // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#targetorigin
-      guestOrigin
-    );
-
-    console.log(`[shell host] Exposing host API to`, guestOrigin);
-    comlink.expose(
-      new OAuthBasedOpalShell() satisfies OpalShellHostProtocol,
-      guestEndpoint,
-      // Constrain origins this host can receive messages from, at the comlink
-      // layer. It would otherwise default to all origins.
-      //
-      // https://github.com/GoogleChromeLabs/comlink?tab=readme-ov-file#comlinkwrapendpoint-and-comlinkexposevalue-endpoint-allowedorigins
-      // https://github.com/GoogleChromeLabs/comlink/blob/114a4a6448a855a613f1cb9a7c89290606c003cf/src/comlink.ts#L310
-      [guestOrigin]
-    );
-
-    console.log(`[shell host] Connecting to guest API at`, guestOrigin);
-    const guest = comlink.wrap<OpalShellGuestProtocol>(guestEndpoint);
-    addMessageEventListenerToAllowedEmbedderIfPresent(
-      (message: EmbedderMessage) => guest.receiveFromEmbedder(message)
-    );
-  } else {
-    console.error(`could not find #opal-app iframe`);
+async function initializeOpalShellGuest() {
+  const guestOrigin = CLIENT_DEPLOYMENT_CONFIG.SHELL_GUEST_ORIGIN;
+  if (!guestOrigin || guestOrigin === "*") {
+    return;
   }
+
+  // Initialize iframe
+  const iframe = document.querySelector("iframe#opal-app" as "iframe");
+  if (!iframe?.contentWindow) {
+    console.error(`Could not find #opal-app iframe`);
+    return;
+  }
+  const hostUrl = new URL(window.location.href);
+  const guestUrl = new URL(
+    "_app" + hostUrl.pathname + hostUrl.search + hostUrl.hash,
+    guestOrigin
+  );
+  guestUrl.searchParams.set(SHELL_ORIGIN_URL_PARAMETER, window.location.origin);
+  iframe.src = guestUrl.href;
+
+  // Establish MessageChannel
+  const guestPort = await establishMessageChannelWithShellGuest(
+    guestOrigin,
+    iframe.contentWindow
+  );
+
+  // Initialize bi-directional comlink APIs
+  console.log("[shell host] Exposing host API");
+  comlink.expose(
+    new OAuthBasedOpalShell() satisfies OpalShellHostProtocol,
+    guestPort
+  );
+  console.log("[shell host] Connecting to guest API");
+  const guest = comlink.wrap<OpalShellGuestProtocol>(guestPort);
+
+  // Prevent garbage collection of the comlink proxy by shoving it onto the
+  // window. If we don't do this, the proxy will get garbage collected,
+  // triggering some FinalizationRegistry logic in comlink which will close the
+  // port, severing the link bi-directionally.
+  (window as typeof window & Record<symbol, unknown>)[Symbol()] = guest;
+
+  // Start relaying embedder (i.e. AIFlow) messages to guest
+  addMessageEventListenerToAllowedEmbedderIfPresent(
+    (message: EmbedderMessage) => guest.receiveFromEmbedder(message)
+  );
+}
+
+/**
+ * See `establishMessageChannelWithShellHost` in `opal-shell-guest.ts` for
+ * explanation.
+ */
+async function establishMessageChannelWithShellGuest(
+  guestOrigin: string,
+  iframeContentWindow: Window
+): Promise<MessagePort> {
+  const requestReceived = Promise.withResolvers<MessagePort>();
+  const listenerAbortCtl = new AbortController();
+  window.addEventListener(
+    "message",
+    (event) => {
+      if (
+        event.isTrusted &&
+        event.source === iframeContentWindow &&
+        event.origin === guestOrigin &&
+        typeof event.data === "object" &&
+        event.data !== null &&
+        event.data.type === SHELL_ESTABLISH_MESSAGE_CHANNEL_REQUEST
+      ) {
+        console.log(
+          "[shell host] Received establish MessageChannel request from",
+          event.origin
+        );
+        requestReceived.resolve(event.ports[0]);
+        listenerAbortCtl.abort();
+      }
+    },
+    { signal: listenerAbortCtl.signal }
+  );
+  const guestPort = await requestReceived.promise;
+  console.log("[shell host] Sending establish MessageChannel response");
+  guestPort.postMessage({ type: SHELL_ESTABLISH_MESSAGE_CHANNEL_RESPONSE });
+  return guestPort;
 }

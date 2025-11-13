@@ -37,20 +37,16 @@ import {
 } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 
-type EvalFileData = Array<Outcome | Context>;
+type EvalFileData = Array<Context | A2UIData>;
 
 interface Context {
   type: "context";
 }
 
-interface OutcomeData {
-  a2ui: v0_8.Types.ServerToClientMessage[];
-}
-
-interface Outcome {
-  type: "outcome";
-  outcome: OutcomeData[];
-}
+type A2UIData = {
+  type: "a2ui";
+  data: v0_8.Types.ServerToClientMessage[][];
+};
 
 type RenderMode = "surfaces" | "messages";
 
@@ -74,7 +70,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   accessor selectedFilePath: string | null = null;
 
   @signal
-  accessor #selectedOutcome: number = 0;
+  accessor #selectedSurface: number = 0;
 
   @signal
   accessor #showPromptOption: FileSystemPath | null = null;
@@ -86,7 +82,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   accessor #dirs: FileSystemEvalBackendHandle[] = [];
 
   @signal
-  accessor #outcomes: OutcomeData[] | null = null;
+  accessor #surfaces: v0_8.Types.ServerToClientMessage[][] | null = null;
   #processor = v0_8.Data.createSignalA2UIModelProcessor();
 
   @state()
@@ -378,7 +374,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           & #surfaces {
             background: var(--n-100);
 
-            & #outcome-select {
+            & #surface-select {
               position: absolute;
               top: 10px;
               left: 10px;
@@ -488,7 +484,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     }
 
     if (changedProperties.has("selectedFilePath")) {
-      this.#selectedOutcome = 0;
+      this.#selectedSurface = 0;
     }
   }
 
@@ -544,36 +540,35 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
         </div>
       </section>`;
 
-    const surfaces = this.#processor.getSurfaces();
-    if (surfaces.size === 0) {
+    if (this.#surfaces?.length === 0) {
       return renderNoData();
     }
 
     if (this.renderMode === "surfaces") {
       return html`<section id="surfaces">
-        ${this.#outcomes
+        ${this.#surfaces
           ? html`<select
               @change=${(evt: Event) => {
                 if (!(evt.target instanceof HTMLSelectElement)) {
                   return;
                 }
 
-                this.#selectedOutcome = evt.target.selectedIndex;
+                this.#selectedSurface = evt.target.selectedIndex;
                 this.#processor.clearSurfaces();
 
-                const selectedOutcome = this.#outcomes?.at(
-                  this.#selectedOutcome
+                const selectedSurface = this.#surfaces?.at(
+                  this.#selectedSurface
                 );
-                if (!selectedOutcome) {
+                if (!selectedSurface) {
                   return;
                 }
 
-                this.#processor.processMessages(selectedOutcome.a2ui);
+                this.#processor.processMessages(selectedSurface);
               }}
-              id="outcome-select"
+              id="surface-select"
             >
-              ${map(this.#outcomes, (_, idx) => {
-                return html`<option>Outcome ${idx + 1}</option>`;
+              ${map(this.#surfaces, (_, idx) => {
+                return html`<option>Surface ${idx + 1}</option>`;
               })}
             </select>`
           : nothing}
@@ -588,10 +583,10 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     }
 
     return html`<section id="messages">
-      <div>${JSON.stringify(this.#outcomes, null, 2)}</div>
+      <div>${JSON.stringify(this.#surfaces, null, 2)}</div>
       <button
         @click=${async () => {
-          const content = JSON.stringify(this.#outcomes, null, 2);
+          const content = JSON.stringify(this.#surfaces, null, 2);
           await navigator.clipboard.writeText(content);
         }}
       >
@@ -601,7 +596,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   }
 
   #renderInput() {
-    const selectedOutcomeIndex = this.#selectedOutcome;
+    const selectedSurfaceIndex = this.#selectedSurface;
     return html`<div>
         ${this.#dirs.length > 0
           ? html`<select
@@ -680,26 +675,22 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
                   try {
                     const fileData = JSON.parse(data) as EvalFileData;
-                    this.#outcomes = null;
-                    const outcomes: Outcome[] = fileData.filter(
-                      (item) => item.type === "outcome"
+                    this.#surfaces = [];
+                    const a2ui: A2UIData[] = fileData.filter(
+                      (item) => item.type === "a2ui"
                     );
 
-                    for (const outcome of outcomes) {
-                      this.#outcomes = outcome.outcome;
-                      this.#processor.clearSurfaces();
+                    this.#processor.clearSurfaces();
+                    for (const { data } of a2ui.values()) {
+                      for (let s = 0; s < data.length; s++) {
+                        const surface = data[s];
+                        this.#surfaces.push(surface);
+                        if (s !== selectedSurfaceIndex) {
+                          continue;
+                        }
 
-                      if (!outcome.outcome) {
-                        throw new Error("No outcomes found");
+                        this.#processor.processMessages(surface);
                       }
-
-                      const selectedOutcome =
-                        outcome.outcome.at(selectedOutcomeIndex);
-                      if (!selectedOutcome) {
-                        continue;
-                      }
-
-                      this.#processor.processMessages(selectedOutcome.a2ui);
                     }
                   } catch (err) {
                     console.warn(err);
