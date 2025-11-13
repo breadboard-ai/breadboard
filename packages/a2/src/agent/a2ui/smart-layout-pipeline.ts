@@ -83,12 +83,16 @@ class SmartLayoutPipeline {
     };
 
     // 3. Process all the surfaces in parallel.
-    const processAllSurfaces = async (spec: SurfaceSpec[]) => {
-      return Promise.all(
-        spec.map((surfaceSpec) => processSurface(surfaceSpec))
-      );
-    };
+    const results = await Promise.all(
+      spec.map((surfaceSpec) => processSurface(surfaceSpec))
+    );
+    const errors = results
+      .map((result) => (!ok(result) ? result.$error : null))
+      .filter((error) => error !== null);
+    if (errors.length > 0) {
+      return err(errors.join("\n"));
+    }
 
-    return processAllSurfaces(spec);
+    return results;
   }
 }
