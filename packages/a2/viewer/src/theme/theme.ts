@@ -203,7 +203,7 @@ export const theme: v0_8.Types.Theme = {
       "behavior-ho-70": true,
     },
     Card: {
-      "border-br-2": true,
+      "border-br-8": true,
       "color-bgc-p100": true,
       "layout-p-4": true,
       "border-bw-1": true,
