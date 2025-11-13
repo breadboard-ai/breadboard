@@ -40,18 +40,14 @@ async function initializeOpalShellGuest() {
   guestUrl.searchParams.set(SHELL_ORIGIN_URL_PARAMETER, window.location.origin);
   iframe.src = guestUrl.href;
 
+  const shellHost = new OAuthBasedOpalShell();
+
   const boxedState: {
     value?: {
       port: MessagePort;
       guest: comlink.Remote<OpalShellGuestProtocol>;
     };
   } = {};
-
-  // Prevent garbage collection of the comlink proxy by shoving it onto the
-  // window. If we don't do this, the proxy will get garbage collected,
-  // triggering some FinalizationRegistry logic in comlink which will close the
-  // port, severing the link bi-directionally.
-  (window as typeof window & Record<symbol, unknown>)[Symbol()] = boxedState;
 
   // Establish MessageChannel.
   window.addEventListener("message", (event) => {
@@ -90,10 +86,7 @@ async function initializeOpalShellGuest() {
 
       // Initialize bi-directional comlink APIs
       console.log("[shell host] Exposing host API");
-      comlink.expose(
-        new OAuthBasedOpalShell() satisfies OpalShellHostProtocol,
-        port
-      );
+      comlink.expose(shellHost satisfies OpalShellHostProtocol, port);
       console.log("[shell host] Connecting to guest API");
       const guest = comlink.wrap<OpalShellGuestProtocol>(port);
       boxedState.value = { port, guest };
