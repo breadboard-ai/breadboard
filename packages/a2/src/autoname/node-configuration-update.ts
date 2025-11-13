@@ -68,13 +68,14 @@ function outputFromConfiguration(
     const mode = c["generation-mode"] as string;
     switch (mode) {
       case "image-gen":
-        return "a single image";
+        return "a single image file";
       case "image":
-        return "images and text";
+        return "one or more image files (see text to infer how many)";
+      case "music":
       case "audio":
-        return "audio";
+        return "an audio file";
       case "video":
-        return "video";
+        return "a video file";
       default:
         return "text";
     }
@@ -90,16 +91,18 @@ function createStepHandler(
     canAutoname: text.length > 10,
     prompt: [
       llm`
-  Analyze the text below and provide suggestions for title and description that could be used
-  to automatically label this text as one of the steps in a visual, a no-code application builder.
-  Builders are creating applications by placing steps on a canvas and wiring them together into a visual flow.
+  Analyze the text below and provide suggestions for title and description that could be used to automatically label this text as one of the steps in a visual, a no-code application builder. Additionally, supply information about the expected output types and their contents.
+  
+  The users of the builder are creating applications by placing steps on a canvas and wiring them together into a visual flow.
+  
   This text will ${typeSpecficPrompt}.
 
   Important:
   - Both the title and intent must be accurate, concise, and specific to the text
   - The description must be one sentence
   - Each title must be verb-first, action oriented, short and to the point
-  - The builders are non-technical, so avoid overly technical jargon
+  - The users are non-technical, so avoid overly technical jargon
+  - The descriptions of the expected output contents must add more detail to the already supplied information (type and count of items). For example, if the type is "text", what kind of text is it? If the type is "audio" what does this audio file contain?
 
   Text:
   
@@ -156,8 +159,30 @@ class NodeConfigurationUpdateMode implements AutonameMode {
           description:
             "Suggested description for the prompt. Seven words or less",
         },
+        expected_output: {
+          type: "array",
+          description:
+            "The sequence of all expected outputs, inferred from the configuration and the type of the step.",
+          items: {
+            type: "object",
+            properties: {
+              type: {
+                type: "string",
+                enum: ["image", "text", "video", "audio"],
+              },
+              description: {
+                type: "string",
+                description: `7-word description of the contents of the output`,
+              },
+              count: {
+                type: "number",
+                description: `The expected number of outputs. For instance, if the step is expected to create two images, this value would be 2 and the type will be "image".`,
+              },
+            },
+          },
+        },
       },
-      required: ["title", "description"],
+      required: ["title", "description", "expected_output"],
     };
   }
 }
@@ -169,6 +194,8 @@ function textFromConfiguration(
 ): string {
   if (!configuration) return "";
 
+  let fileIndex = 0;
+
   return Object.entries(configuration)
     .map(([name, value]) => {
       if (!allow.includes(name)) return "";
@@ -177,6 +204,9 @@ function textFromConfiguration(
         return toText(
           template.simpleSubstitute((part) => {
             if (part.type == "tool") return part.title;
+            if (part.type === "in") {
+              return `<file src="/vfs/file${++fileIndex}" title="${part.title}" />`;
+            }
             if (part.type === "asset") return `{{${part.title}}}`;
             return ``;
           })
