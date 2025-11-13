@@ -289,10 +289,10 @@ export const theme: v0_8.Types.Theme = {
       "border-br-5": true,
     },
     Icon: {
-      "color-c-p30": true,
+      "color-c-p100": true,
     },
     List: {
-      "layout-g-4": true,
+      "layout-g-2": true,
       "layout-pt-2": true,
       "layout-pb-2": true,
     },
