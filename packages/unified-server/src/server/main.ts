@@ -23,8 +23,6 @@ const FEATURED_GALLERY_CACHE_REFRESH_SECONDS = 10 * 60;
 
 console.log("[unified-server startup] Starting unified server");
 
-console.log("[unified-server startup] Loading env file");
-
 const server = express();
 
 server.use(makeCspHandler(MAIN_APP_CSP));
