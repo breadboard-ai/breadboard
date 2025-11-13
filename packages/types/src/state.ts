@@ -151,7 +151,14 @@ export type App = {
    * inputs and showing outputs (A2UI)
    * - "error" - the app is showing an error
    */
-  state: "splash" | "output" | "progress" | "input" | "interactive" | "error" | "consent";
+  state:
+    | "splash"
+    | "output"
+    | "progress"
+    | "input"
+    | "interactive"
+    | "error"
+    | "consent";
   /**
    * A sequence of screens that is produced during the run.
    */

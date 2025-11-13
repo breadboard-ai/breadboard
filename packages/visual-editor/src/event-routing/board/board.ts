@@ -11,7 +11,11 @@ import { InputValues, ok } from "@google-labs/breadboard";
 import { RuntimeSnackbarEvent } from "../../runtime/events";
 import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { StateEvent } from "@breadboard-ai/shared-ui/events/events.js";
-import { GraphMetadata, ConsentType, ConsentUIType } from "@breadboard-ai/types";
+import {
+  GraphMetadata,
+  ConsentType,
+  ConsentUIType,
+} from "@breadboard-ai/types";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 export const RunRoute: EventRoute<"board.run"> = {
@@ -46,18 +50,24 @@ export const RunRoute: EventRoute<"board.run"> = {
       const graph = editor?.inspect("");
       const url = tab.graph.url;
       const isGalleryApp =
-        (boardServer instanceof GoogleDriveBoardServer) &&
-        url && boardServer.galleryGraphs.has(url);
+        boardServer instanceof GoogleDriveBoardServer &&
+        url &&
+        boardServer.galleryGraphs.has(url);
       if (
         !isGalleryApp &&
         !tab.graphIsMine &&
         graph?.usesTool("embed://a2/tools.bgl.json#module:get-webpage")
       ) {
-        if (!(await runtime.consentManager.queryConsent({
-          type: ConsentType.GET_ANY_WEBPAGE,
-          scope: {},
-          graphUrl: tab.graph.url!,
-        }, ConsentUIType.IN_APP))) {
+        if (
+          !(await runtime.consentManager.queryConsent(
+            {
+              type: ConsentType.GET_ANY_WEBPAGE,
+              scope: {},
+              graphUrl: tab.graph.url!,
+            },
+            ConsentUIType.IN_APP
+          ))
+        ) {
           return false;
         }
       }

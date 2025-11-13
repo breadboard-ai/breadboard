@@ -42,7 +42,8 @@ export async function createClientConfig(opts: {
       agentMode: flags.ENABLE_AGENT_MODE,
       backendTransforms: flags.ENABLE_BACKEND_TRANSFORMS,
       requireConsentForGetWebpage: flags.ENABLE_REQUIRE_CONSENT_FOR_GET_WEBPAGE,
-      requireConsentForOpenWebpage: flags.ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE,
+      requireConsentForOpenWebpage:
+        flags.ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE,
     },
   };
 }

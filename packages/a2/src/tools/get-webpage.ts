@@ -2,7 +2,13 @@
  * @fileoverview Given a URL of a webpage, returns its content as Markdown with a list of links and other metadata.
  */
 
-import { Capabilities, Outcome, Schema, ConsentType, ConsentUIType } from "@breadboard-ai/types";
+import {
+  Capabilities,
+  Outcome,
+  Schema,
+  ConsentType,
+  ConsentUIType,
+} from "@breadboard-ai/types";
 import { err, ok } from "../a2/utils";
 import { executeTool } from "../a2/step-executor";
 import { A2ModuleArgs } from "../runnable-module-factory";

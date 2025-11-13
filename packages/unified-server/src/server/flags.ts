@@ -85,9 +85,13 @@ export const SHELL_HOST_ORIGINS = getStringList("SHELL_HOST_ORIGINS");
 
 export const ENABLE_EMAIL_OPT_IN = getBoolean("ENABLE_EMAIL_OPT_IN");
 
-export const ENABLE_REQUIRE_CONSENT_FOR_GET_WEBPAGE = getBoolean("ENABLE_REQUIRE_CONSENT_FOR_GET_WEBPAGE");
+export const ENABLE_REQUIRE_CONSENT_FOR_GET_WEBPAGE = getBoolean(
+  "ENABLE_REQUIRE_CONSENT_FOR_GET_WEBPAGE"
+);
 
-export const ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE = getBoolean("ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE");
+export const ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE = getBoolean(
+  "ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE"
+);
 
 /** Get the value of the given flag as a string, or empty string if absent. */
 function getString(flagName: string): string {

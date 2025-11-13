@@ -380,7 +380,7 @@ export type InspectableGraph = {
   /**
    * Returns whether a given tool is used in this Opal (by tool path)
    */
-  usesTool(path: string): boolean
+  usesTool(path: string): boolean;
 };
 
 /**

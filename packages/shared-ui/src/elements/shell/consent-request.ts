@@ -7,17 +7,19 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { colorsLight } from "../../styles/host/colors-light";
 import { type } from "../../styles/host/type";
-import '@material/web/tabs/primary-tab.js';
-import '@material/web/tabs/tabs.js';
-import '@material/web/checkbox/checkbox.js';
+import "@material/web/tabs/primary-tab.js";
+import "@material/web/tabs/tabs.js";
+import "@material/web/checkbox/checkbox.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { ModalDismissedEvent } from "../../events/events.js";
-import { ConsentRequestWithCallback, ConsentAction } from "@breadboard-ai/types";
+import {
+  ConsentRequestWithCallback,
+  ConsentAction,
+} from "@breadboard-ai/types";
 import { CONSENT_RENDER_INFO } from "../../utils/consent-manager.js";
 
 @customElement("bb-consent-request-modal")
 export class VEConsentRequestModal extends SignalWatcher(LitElement) {
-
   @property()
   accessor consentRequest: ConsentRequestWithCallback | null = null;
 
@@ -46,7 +48,6 @@ export class VEConsentRequestModal extends SignalWatcher(LitElement) {
       .center {
         text-align: center;
       }
-      
     `,
   ];
 

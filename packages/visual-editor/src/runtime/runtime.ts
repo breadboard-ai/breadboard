@@ -34,7 +34,12 @@ import { Select } from "./select.js";
 import { StateManager } from "./state.js";
 import { getDataStore } from "@breadboard-ai/data-store";
 import { Shell } from "./shell.js";
-import { Outcome, RunConfig, RuntimeFlagManager, ConsentManager } from "@breadboard-ai/types";
+import {
+  Outcome,
+  RunConfig,
+  RuntimeFlagManager,
+  ConsentManager,
+} from "@breadboard-ai/types";
 import {
   RuntimeHostStatusUpdateEvent,
   RuntimeSnackbarEvent,
@@ -78,7 +83,7 @@ export class Runtime extends EventTarget {
     flags: RuntimeFlagManager;
     util: typeof Util;
     fetchWithCreds: typeof globalThis.fetch;
-    consentManager: ConsentManager,
+    consentManager: ConsentManager;
   }) {
     super();
 

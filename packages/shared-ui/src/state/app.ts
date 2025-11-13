@@ -9,12 +9,16 @@ import { SignalMap } from "signal-utils/map";
 import { SignalArray } from "signal-utils/array";
 import { ReactiveAppScreen } from "./app-screen";
 import { ProjectRun } from "./types";
-import { App, AppScreen, ConsentRequestWithCallback } from "@breadboard-ai/types";
+import {
+  App,
+  AppScreen,
+  ConsentRequestWithCallback,
+} from "@breadboard-ai/types";
 
 export { ReactiveApp };
 
 class ReactiveApp implements App {
-  constructor(private readonly run: ProjectRun) { }
+  constructor(private readonly run: ProjectRun) {}
 
   /**
    * Consent requests that will be displayed in the app view

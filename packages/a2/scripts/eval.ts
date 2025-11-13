@@ -315,7 +315,7 @@ class EvalRun implements EvalHarnessRuntimeArgs {
             ]),
             current: new Map(),
             last: null,
-            consentRequests: []
+            consentRequests: [],
           },
         };
       },
