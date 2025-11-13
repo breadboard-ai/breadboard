@@ -45,7 +45,7 @@ interface Context {
 
 type A2UIData = {
   type: "a2ui";
-  data: v0_8.Types.ServerToClientMessage[];
+  data: v0_8.Types.ServerToClientMessage[][];
 };
 
 type RenderMode = "surfaces" | "messages";
@@ -681,14 +681,16 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                     );
 
                     this.#processor.clearSurfaces();
-                    for (const [index, { data }] of a2ui.entries()) {
-                      this.#surfaces.push(data);
+                    for (const { data } of a2ui.values()) {
+                      for (let s = 0; s < data.length; s++) {
+                        const surface = data[s];
+                        this.#surfaces.push(surface);
+                        if (s !== selectedSurfaceIndex) {
+                          continue;
+                        }
 
-                      if (index !== selectedSurfaceIndex) {
-                        continue;
+                        this.#processor.processMessages(surface);
                       }
-
-                      this.#processor.processMessages(data);
                     }
                   } catch (err) {
                     console.warn(err);
