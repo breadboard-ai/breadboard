@@ -34,7 +34,12 @@ import { Select } from "./select.js";
 import { StateManager } from "./state.js";
 import { getDataStore } from "@breadboard-ai/data-store";
 import { Shell } from "./shell.js";
-import { Outcome, RunConfig, RuntimeFlagManager } from "@breadboard-ai/types";
+import {
+  Outcome,
+  RunConfig,
+  RuntimeFlagManager,
+  ConsentManager,
+} from "@breadboard-ai/types";
 import {
   RuntimeHostStatusUpdateEvent,
   RuntimeSnackbarEvent,
@@ -63,6 +68,7 @@ export class Runtime extends EventTarget {
   public readonly flags: RuntimeFlagManager;
   public readonly util: typeof Util;
   public readonly fetchWithCreds: typeof globalThis.fetch;
+  public readonly consentManager: ConsentManager;
 
   constructor(config: {
     shell: Shell;
@@ -77,6 +83,7 @@ export class Runtime extends EventTarget {
     flags: RuntimeFlagManager;
     util: typeof Util;
     fetchWithCreds: typeof globalThis.fetch;
+    consentManager: ConsentManager;
   }) {
     super();
 
@@ -92,6 +99,7 @@ export class Runtime extends EventTarget {
     this.flags = config.flags;
     this.util = config.util;
     this.fetchWithCreds = config.fetchWithCreds;
+    this.consentManager = config.consentManager;
 
     this.#setupPassthruHandlers();
   }
@@ -322,5 +330,6 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
     shell,
     flags,
     fetchWithCreds: config.fetchWithCreds,
+    consentManager: config.consentManager,
   });
 }

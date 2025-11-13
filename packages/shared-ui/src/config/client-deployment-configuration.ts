@@ -22,6 +22,8 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   consistentUI: false,
   agentMode: false,
   backendTransforms: false,
+  requireConsentForGetWebpage: false,
+  requireConsentForOpenWebpage: false,
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(

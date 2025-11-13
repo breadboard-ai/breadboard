@@ -20,7 +20,9 @@ import type {
   BoardServer,
   ConformsToNodeValue,
   FileSystem,
+  ConsentRequest,
 } from "@breadboard-ai/types";
+import { ConsentUIType, ConsentAction } from "@breadboard-ai/types";
 import {
   addRunModule,
   composeFileSystemBackends,
@@ -108,6 +110,8 @@ import {
 import { builtInMcpClients } from "./mcp-clients";
 import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
+import { ConsentManager } from "@breadboard-ai/shared-ui/utils/consent-manager.js";
+import { consentManagerContext } from "@breadboard-ai/shared-ui/contexts/consent-manager.js";
 
 type RenderValues = {
   canSave: boolean;
@@ -159,6 +163,9 @@ export class Main extends SignalWatcher(LitElement) {
 
   @provide({ context: opalShellContext })
   accessor opalShell: OpalShellHostProtocol;
+
+  @provide({ context: consentManagerContext })
+  accessor #consentManager: ConsentManager | undefined = undefined;
 
   @state()
   accessor #tab: Runtime.Types.Tab | null = null;
@@ -453,6 +460,34 @@ export class Main extends SignalWatcher(LitElement) {
       fetchWithCreds,
     });
 
+    this.#consentManager = new ConsentManager(
+      async (request: ConsentRequest, uiType: ConsentUIType) => {
+        return new Promise<ConsentAction>((resolve) => {
+          if (uiType === ConsentUIType.MODAL) {
+            this.#uiState.consentRequests.push({
+              request,
+              consentCallback: resolve,
+            });
+          } else {
+            const appState = this.#runtime.state.getProjectState(
+              this.#tab?.mainGraphId
+            )?.run.app;
+            if (appState) {
+              appState.consentRequests.push({
+                request,
+                consentCallback: resolve,
+              });
+            } else {
+              console.warn(
+                "In-app consent requested when no app state existed"
+              );
+              resolve(ConsentAction.DENY);
+            }
+          }
+        });
+      }
+    );
+
     this.#runtime = await Runtime.create({
       recentBoardStore: this.#recentBoardStore,
       graphStore: this.#graphStore,
@@ -474,6 +509,7 @@ export class Main extends SignalWatcher(LitElement) {
       flags: flagManager,
       mcpClientManager,
       fetchWithCreds,
+      consentManager: this.#consentManager,
     });
     this.#addRuntimeEventHandlers();
 
@@ -1342,6 +1378,10 @@ export class Main extends SignalWatcher(LitElement) {
       keyof BreadboardUI.Events.StateEventDetailMap
     >
   ) {
+    const boardServer = this.boardServer;
+    if (!boardServer) {
+      throw new Error("Expected board server to have been mounted");
+    }
     return {
       originalEvent: evt,
       runtime: this.#runtime,
@@ -1352,6 +1392,7 @@ export class Main extends SignalWatcher(LitElement) {
       googleDriveClient: this.googleDriveClient,
       askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>
         this.#askUserToSignInIfNeeded(scopes),
+      boardServer,
     };
   }
 
@@ -1488,6 +1529,7 @@ export class Main extends SignalWatcher(LitElement) {
         this.#renderToasts(),
         this.#renderSnackbar(),
         this.#renderFeedbackPanel(),
+        this.#renderConsentRequests(),
       ]}
     </div>`;
   }
@@ -1808,6 +1850,20 @@ export class Main extends SignalWatcher(LitElement) {
         ></bb-toast>`;
       }
     )}`;
+  }
+
+  #renderConsentRequests() {
+    if (this.#uiState.consentRequests[0]) {
+      return html`
+        <bb-consent-request-modal
+          .consentRequest=${this.#uiState.consentRequests[0]}
+          @bbmodaldismissed=${() => {
+            this.#uiState.consentRequests.shift();
+          }}
+        ></bb-consent-request-modal>
+      `;
+    }
+    return nothing;
   }
 
   async #invokeRemixEventRouteWith(

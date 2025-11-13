@@ -45,6 +45,14 @@ export type RuntimeFlags = {
    * Moves data transformations (B2F, D2F, D2B) to the backend
    */
   backendTransforms: boolean;
+  /**
+   * Requres users consent to use of get_webpage tool
+   */
+  requireConsentForGetWebpage: boolean;
+  /**
+   * Requres users consent to use of open_webpage tool
+   */
+  requireConsentForOpenWebpage: boolean;
 };
 
 /**

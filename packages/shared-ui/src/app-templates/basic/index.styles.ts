@@ -790,6 +790,90 @@ export const styles: CSSResultGroup = [
         }
       }
 
+      & #consent {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        align-items: center;
+        animation: fadeIn 1s cubic-bezier(0, 0, 0.3, 1);
+        overflow: scroll;
+        scrollbar-width: none;
+        padding-top: 10%;
+
+        &::before {
+          content: "";
+          width: 50%;
+          background: var(--bb-logo) center center / contain no-repeat;
+          padding: var(--bb-grid-size-3);
+          background-clip: content-box;
+          border-radius: var(--bb-grid-size-5);
+          box-sizing: border-box;
+          flex: 1;
+          max-height: calc(45cqh - 54px);
+        }
+
+        #consent-content-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+        }
+
+        & h1 {
+          background: var(--background-color, none);
+          color: var(--p-25, var(--bb-neutral-700));
+          margin: var(--bb-grid-size-10) 0 var(--bb-grid-size-4) 0;
+          flex: 0 0 auto;
+          max-width: 80%;
+          width: max-content;
+          text-align: center;
+          font: 500 var(--font-style, normal) var(--bb-title-large) /
+            var(--bb-title-line-height-large)
+            var(--font-family, var(--bb-font-family));
+        }
+
+        & p {
+          flex: 0 0 auto;
+          font: 400 var(--font-style) 16px / 20px var(--font-family);
+          color: var(--p-25, var(--bb-neutral-700));
+          margin: 0 0 var(--bb-grid-size-3);
+
+          max-width: 65%;
+          width: max-content;
+          text-align: center;
+        }
+
+        & button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 200px;
+          height: var(--bb-grid-size-12);
+          background: var(--p-15, var(--bb-ui-50));
+          color: var(--p-100, var(--bb-ui-700));
+          border-radius: var(--bb-grid-size-12);
+          font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
+            var(--bb-font-family);
+          padding: 0;
+          opacity: 0.85;
+          border: none;
+          cursor: pointer;
+          margin-top: var(--bb-grid-size-4);
+
+          --transition-properties: opacity;
+          transition: var(--transition);
+
+          &:hover,
+          &:focus {
+            opacity: 1;
+          }
+
+          & .g-icon {
+            margin-right: var(--bb-grid-size-2);
+          }
+        }
+      }
+
       @container (min-width: 820px) {
         & #content {
           justify-content: center;
