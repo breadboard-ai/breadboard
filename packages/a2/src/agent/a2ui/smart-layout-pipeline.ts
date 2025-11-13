@@ -47,8 +47,12 @@ class SmartLayoutPipeline {
     }
 
     // 2. Set up the handler for processing a single surface.
-    const processSurface = async (surfaceSpec: SurfaceSpec) => {
+    const processSurface = async (
+      surfaceSpec: SurfaceSpec
+    ): Promise<Outcome<unknown[]>> => {
       const a2UIPayload = await generateTemplate(surfaceSpec, moduleArgs);
+      if (!ok(a2UIPayload)) return a2UIPayload;
+
       let resolver: (payload: Outcome<unknown[]>) => void;
       const layoutResult = new Promise<Outcome<unknown[]>>((resolve) => {
         resolver = resolve;
