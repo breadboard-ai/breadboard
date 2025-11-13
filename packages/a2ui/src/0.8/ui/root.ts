@@ -74,7 +74,6 @@ export class Root extends SignalWatcher(LitElement) {
       :host {
         display: flex;
         gap: 8px;
-        max-height: 80%;
       }
     `,
   ];

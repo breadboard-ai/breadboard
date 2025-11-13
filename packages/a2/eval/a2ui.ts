@@ -19,7 +19,7 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
   ).SmartLayoutPipeline;
 
   session.eval("Quiz (e2e)", async ({ caps, moduleArgs, logger }) => {
-    const { objective } = await import("./data/quiz/objective.js");
+    const { objective } = await import("./data/quiz.js");
 
     const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
 
@@ -35,7 +35,7 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
   });
 
   session.eval("Katamari (e2e)", async ({ caps, moduleArgs, logger }) => {
-    const katamariData = (await import("./data/katamari/data.json")).default;
+    const katamariData = (await import("./data/katamari.json")).default;
 
     const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
 
@@ -88,7 +88,7 @@ Picture:
   session.eval("Costume Maker", async ({ caps, moduleArgs, logger }) => {
     const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
 
-    const content = (await import("./data/costume/data.js")).content;
+    const content = (await import("./data/costume.js")).content;
 
     const result = await pipeline.run(content, {});
     if (!ok(result)) {
@@ -104,7 +104,23 @@ Picture:
   session.eval("Personal Info", async ({ caps, moduleArgs, logger }) => {
     const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
 
-    const content = (await import("./data/person-info/data.js")).content;
+    const content = (await import("./data/person-info.js")).content;
+
+    const result = await pipeline.run(content, {});
+    if (!ok(result)) {
+      logger.log({
+        type: "warning",
+        data: result.$error,
+      });
+      return;
+    }
+    logger.log({ type: "a2ui", data: result });
+  });
+
+  session.evalOnly("Podcast App", async ({ caps, moduleArgs, logger }) => {
+    const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
+
+    const content = (await import("./data/podcast.js")).content;
 
     const result = await pipeline.run(content, {});
     if (!ok(result)) {
