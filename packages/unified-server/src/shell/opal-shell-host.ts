@@ -40,66 +40,63 @@ async function initializeOpalShellGuest() {
   guestUrl.searchParams.set(SHELL_ORIGIN_URL_PARAMETER, window.location.origin);
   iframe.src = guestUrl.href;
 
-  // Establish MessageChannel
-  const guestPort = await establishMessageChannelWithShellGuest(
-    guestOrigin,
-    iframe.contentWindow
-  );
-
-  // Initialize bi-directional comlink APIs
-  console.log("[shell host] Exposing host API");
-  comlink.expose(
-    new OAuthBasedOpalShell() satisfies OpalShellHostProtocol,
-    guestPort
-  );
-  console.log("[shell host] Connecting to guest API");
-  const guest = comlink.wrap<OpalShellGuestProtocol>(guestPort);
+  const boxedState: {
+    value?: {
+      port: MessagePort;
+      guest: comlink.Remote<OpalShellGuestProtocol>;
+    };
+  } = {};
 
   // Prevent garbage collection of the comlink proxy by shoving it onto the
   // window. If we don't do this, the proxy will get garbage collected,
   // triggering some FinalizationRegistry logic in comlink which will close the
   // port, severing the link bi-directionally.
-  (window as typeof window & Record<symbol, unknown>)[Symbol()] = guest;
+  (window as typeof window & Record<symbol, unknown>)[Symbol()] = boxedState;
 
-  // Start relaying embedder (i.e. AIFlow) messages to guest
-  addMessageEventListenerToAllowedEmbedderIfPresent(
-    (message: EmbedderMessage) => guest.receiveFromEmbedder(message)
-  );
-}
+  // Establish MessageChannel.
+  window.addEventListener("message", (event) => {
+    if (
+      event.isTrusted &&
+      event.source === iframe.contentWindow &&
+      event.origin === guestOrigin &&
+      typeof event.data === "object" &&
+      event.data !== null &&
+      event.data.type === SHELL_ESTABLISH_MESSAGE_CHANNEL_REQUEST
+    ) {
+      console.log(
+        "[shell host] Received establish MessageChannel request from",
+        event.origin
+      );
 
-/**
- * See `establishMessageChannelWithShellHost` in `opal-shell-guest.ts` for
- * explanation.
- */
-async function establishMessageChannelWithShellGuest(
-  guestOrigin: string,
-  iframeContentWindow: Window
-): Promise<MessagePort> {
-  const requestReceived = Promise.withResolvers<MessagePort>();
-  const listenerAbortCtl = new AbortController();
-  window.addEventListener(
-    "message",
-    (event) => {
-      if (
-        event.isTrusted &&
-        event.source === iframeContentWindow &&
-        event.origin === guestOrigin &&
-        typeof event.data === "object" &&
-        event.data !== null &&
-        event.data.type === SHELL_ESTABLISH_MESSAGE_CHANNEL_REQUEST
-      ) {
+      if (boxedState.value) {
         console.log(
-          "[shell host] Received establish MessageChannel request from",
-          event.origin
+          "[shell host] Discarding previous guest, iframe must have navigated"
         );
-        requestReceived.resolve(event.ports[0]);
-        listenerAbortCtl.abort();
+        boxedState.value.guest[comlink.releaseProxy]();
+        boxedState.value.port.close();
+      } else {
+        // Start relaying embedder (i.e. AIFlow) messages to guest
+        addMessageEventListenerToAllowedEmbedderIfPresent(
+          (message: EmbedderMessage) =>
+            // Note we box the guest so that this callback doesn't need to be
+            // re-attached when the guest is replaced due to navigation.
+            boxedState.value?.guest.receiveFromEmbedder(message)
+        );
       }
-    },
-    { signal: listenerAbortCtl.signal }
-  );
-  const guestPort = await requestReceived.promise;
-  console.log("[shell host] Sending establish MessageChannel response");
-  guestPort.postMessage({ type: SHELL_ESTABLISH_MESSAGE_CHANNEL_RESPONSE });
-  return guestPort;
+
+      console.log("[shell host] Sending establish MessageChannel response");
+      const port = event.ports[0];
+      port.postMessage({ type: SHELL_ESTABLISH_MESSAGE_CHANNEL_RESPONSE });
+
+      // Initialize bi-directional comlink APIs
+      console.log("[shell host] Exposing host API");
+      comlink.expose(
+        new OAuthBasedOpalShell() satisfies OpalShellHostProtocol,
+        port
+      );
+      console.log("[shell host] Connecting to guest API");
+      const guest = comlink.wrap<OpalShellGuestProtocol>(port);
+      boxedState.value = { port, guest };
+    }
+  });
 }
