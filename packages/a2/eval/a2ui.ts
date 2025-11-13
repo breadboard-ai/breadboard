@@ -21,6 +21,8 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
     .generateSpec;
   const generateTemplate = (await import("../src/agent/a2ui/generate-template"))
     .generateTemplate;
+  const generateOutput = (await import("../src/agent/a2ui/generate-output"))
+    .generateOutputFunction;
 
   session.eval("Quiz (e2e)", async ({ moduleArgs, logger }) => {
     // 1. Start with the objective.
@@ -90,28 +92,35 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
       });
     }
 
-    // 3. For each spec, generate A2UI
-    await Promise.all(
-      spec.map(async (surfaceSpec) => {
-        const a2UIPayload = await generateTemplate(surfaceSpec, moduleArgs);
+    const surfaceSpec = spec.at(0)!;
 
-        // 4. Create a function handler.
-        const functionHandler = makeFunction(surfaceSpec, a2UIPayload, {
-          render: async (payload: unknown[]) => {
-            logger.log({ type: "a2ui", data: payload });
-            // TODO: Figure out how to handle actions
-            return { success: true };
-          },
-        });
+    // 3. Generate A2UI
+    const a2UIPayload = await generateTemplate(surfaceSpec, moduleArgs);
 
-        // 5. Call it with the surface's example data.
-        await functionHandler.handler(
-          surfaceSpec.exampleData as Record<string, unknown>,
-          (status) => {
-            console.log("Status update", status);
-          }
-        );
-      })
+    // 4. Create a function function definition.
+    const functionDefinition = makeFunction(surfaceSpec, a2UIPayload, {
+      render: async (payload: unknown[]) => {
+        logger.log({ type: "a2ui", data: payload });
+        // TODO: Figure out how to handle actions
+        return { success: true };
+      },
+    });
+
+    // 5. Call it with the surface's example data.
+    await functionDefinition.handler(
+      surfaceSpec.exampleData as Record<string, unknown>,
+      (status) => {
+        console.log("Status update", status);
+      }
     );
+
+    // 6. Generate consistent UI
+    const result = await generateOutput(
+      llm`${text}`.asContent(),
+      surfaceSpec.exampleData,
+      functionDefinition,
+      moduleArgs
+    );
+    return result;
   });
 });
