@@ -6,6 +6,8 @@
 
 import { DataPart, LLMContent } from "@breadboard-ai/types";
 
+export const title = "Comparison Table";
+
 const parts: DataPart[] = [
   {
     text: `# The setup

@@ -6,6 +6,8 @@
 
 import { DataPart, LLMContent } from "@breadboard-ai/types";
 
+export const title = "Podcast App";
+
 const parts: DataPart[] = [
   {
     text: `# The Setup:

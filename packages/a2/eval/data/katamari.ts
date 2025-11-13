@@ -6,6 +6,8 @@ import { LLMContent } from "@breadboard-ai/types";
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export const title = "Katamari";
+
 export const objective: LLMContent = {
   parts: [
     {

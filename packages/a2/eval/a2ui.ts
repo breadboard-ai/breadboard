@@ -18,49 +18,44 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
     await import("../src/agent/a2ui/smart-layout-pipeline")
   ).SmartLayoutPipeline;
 
-  function evalObjective(title: string, filename: string, only = false) {
+  async function evalObjective(filename: string, only = false) {
+    const { objective, title } = await import(filename);
+    const params: Parameters<typeof session.eval> = [
+      title,
+      async ({ caps, moduleArgs, logger }) => {
+        const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
+
+        const result = await pipeline.run(llm`${objective}`.asContent(), {});
+        if (!ok(result)) {
+          logger.log({
+            type: "warning",
+            data: result.$error,
+          });
+          return;
+        }
+        logger.log({ type: "a2ui", data: result });
+      },
+    ];
+
     if (only) {
       // eslint-disable-next-line no-restricted-syntax
-      session.evalOnly(title, async ({ caps, moduleArgs, logger }) => {
-        const { objective } = await import(filename);
-
-        const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
-
-        const result = await pipeline.run(llm`${objective}`.asContent(), {});
-        if (!ok(result)) {
-          logger.log({
-            type: "warning",
-            data: result.$error,
-          });
-          return;
-        }
-        logger.log({ type: "a2ui", data: result });
-      });
+      session.evalOnly(...params);
     } else {
-      session.eval(title, async ({ caps, moduleArgs, logger }) => {
-        const { objective } = await import(filename);
-
-        const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
-
-        const result = await pipeline.run(llm`${objective}`.asContent(), {});
-        if (!ok(result)) {
-          logger.log({
-            type: "warning",
-            data: result.$error,
-          });
-          return;
-        }
-        logger.log({ type: "a2ui", data: result });
-      });
+      session.eval(...params);
     }
   }
 
-  evalObjective("Simple poem w/picture", "./data/poem-w-picture.js");
-  evalObjective("Katamari (e2e)", "./data/katamari.js");
-  evalObjective("Quiz (e2e)", "./data/quiz.js");
-  evalObjective("Costume Maker", "./data/costume.js");
-  evalObjective("Personal Info", "./data/person-info.js");
-  evalObjective("Podcast App", "./data/podcast.js");
-  evalObjective("Flight Form", "./data/flight.js");
-  evalObjective("Comparison Table", "./data/comparison.js");
+  await evalObjective("./data/comparison.js");
+  await evalObjective("./data/costume.js");
+  await evalObjective("./data/flight.js");
+  await evalObjective("./data/katamari.js");
+  await evalObjective("./data/language-tutor.js");
+  await evalObjective("./data/menu-planner.js");
+  await evalObjective("./data/person-info.js");
+  await evalObjective("./data/podcast.js");
+  await evalObjective("./data/poem-w-picture.js");
+  await evalObjective("./data/prompting-tutor.js");
+  await evalObjective("./data/quiz.js");
+  await evalObjective("./data/secret-santa.js");
+  await evalObjective("./data/timer.js");
 });

@@ -6,6 +6,8 @@
 
 import { DataPart, LLMContent } from "@breadboard-ai/types";
 
+export const title = "Personal Info";
+
 const parts: DataPart[] = [
   // Layout description.
   {

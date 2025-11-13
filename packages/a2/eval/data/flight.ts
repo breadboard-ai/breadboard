@@ -6,6 +6,8 @@
 
 import { DataPart, LLMContent } from "@breadboard-ai/types";
 
+export const title = "Flight Form";
+
 const parts: DataPart[] = [
   {
     text: `A single large Card representing the form.

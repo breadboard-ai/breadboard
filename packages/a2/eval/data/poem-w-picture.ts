@@ -6,6 +6,8 @@
 
 import { llm } from "../../src/a2/utils";
 
+export const title = "Simple poem w/picture";
+
 export const objective = llm`
 
 Place the poem in the left column, and a picture in the right, with the caption
