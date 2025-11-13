@@ -22,7 +22,7 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
   const generateTemplate = (await import("../src/agent/a2ui/generate-template"))
     .generateTemplate;
   const generateOutput = (await import("../src/agent/a2ui/generate-output"))
-    .generateOutput;
+    .generateOutputFunction;
 
   session.eval("Quiz (e2e)", async ({ moduleArgs, logger }) => {
     // 1. Start with the objective.
@@ -62,7 +62,7 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
     );
   });
 
-  session.evalOnly("Katamari (e2e)", async ({ caps, moduleArgs, logger }) => {
+  session.eval("Katamari (e2e)", async ({ caps, moduleArgs, logger }) => {
     // 1. Start with the data.
     const katamariData = (await import("./data/katamari/data.json")).default;
 
@@ -117,6 +117,7 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
     // 6. Generate consistent UI
     const result = await generateOutput(
       llm`${text}`.asContent(),
+      surfaceSpec.exampleData,
       functionDefinition,
       moduleArgs
     );
