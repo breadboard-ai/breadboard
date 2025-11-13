@@ -115,4 +115,4 @@ discovery, and grow into thoughtful, engaged citizens."`,
   },
 ];
 
-export const content: LLMContent = { role: "user", parts };
+export const objective: LLMContent = { role: "user", parts };

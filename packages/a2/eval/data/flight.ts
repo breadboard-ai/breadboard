@@ -27,4 +27,4 @@ Include labels for form fields like TextField and DateTimeInput
   },
 ];
 
-export const content: LLMContent = { role: "user", parts };
+export const objective: LLMContent = { role: "user", parts };

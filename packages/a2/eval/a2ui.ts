@@ -18,21 +18,42 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
     await import("../src/agent/a2ui/smart-layout-pipeline")
   ).SmartLayoutPipeline;
 
-  session.eval("Quiz (e2e)", async ({ caps, moduleArgs, logger }) => {
-    const { objective } = await import("./data/quiz.js");
+  function evalObjective(title: string, filename: string, only = false) {
+    if (only) {
+      // eslint-disable-next-line no-restricted-syntax
+      session.evalOnly(title, async ({ caps, moduleArgs, logger }) => {
+        const { objective } = await import(filename);
 
-    const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
+        const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
 
-    const result = await pipeline.run(llm`${objective}`.asContent(), {});
-    if (!ok(result)) {
-      logger.log({
-        type: "warning",
-        data: result.$error,
+        const result = await pipeline.run(llm`${objective}`.asContent(), {});
+        if (!ok(result)) {
+          logger.log({
+            type: "warning",
+            data: result.$error,
+          });
+          return;
+        }
+        logger.log({ type: "a2ui", data: result });
       });
-      return;
+    } else {
+      session.eval(title, async ({ caps, moduleArgs, logger }) => {
+        const { objective } = await import(filename);
+
+        const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
+
+        const result = await pipeline.run(llm`${objective}`.asContent(), {});
+        if (!ok(result)) {
+          logger.log({
+            type: "warning",
+            data: result.$error,
+          });
+          return;
+        }
+        logger.log({ type: "a2ui", data: result });
+      });
     }
-    logger.log({ type: "a2ui", data: result });
-  });
+  }
 
   session.eval("Katamari (e2e)", async ({ caps, moduleArgs, logger }) => {
     const katamariData = (await import("./data/katamari.json")).default;
@@ -85,83 +106,10 @@ Picture:
     }
   );
 
-  session.eval("Costume Maker", async ({ caps, moduleArgs, logger }) => {
-    const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
-
-    const content = (await import("./data/costume.js")).content;
-
-    const result = await pipeline.run(content, {});
-    if (!ok(result)) {
-      logger.log({
-        type: "warning",
-        data: result.$error,
-      });
-      return;
-    }
-    logger.log({ type: "a2ui", data: result });
-  });
-
-  session.eval("Personal Info", async ({ caps, moduleArgs, logger }) => {
-    const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
-
-    const content = (await import("./data/person-info.js")).content;
-
-    const result = await pipeline.run(content, {});
-    if (!ok(result)) {
-      logger.log({
-        type: "warning",
-        data: result.$error,
-      });
-      return;
-    }
-    logger.log({ type: "a2ui", data: result });
-  });
-
-  session.eval("Podcast App", async ({ caps, moduleArgs, logger }) => {
-    const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
-
-    const content = (await import("./data/podcast.js")).content;
-
-    const result = await pipeline.run(content, {});
-    if (!ok(result)) {
-      logger.log({
-        type: "warning",
-        data: result.$error,
-      });
-      return;
-    }
-    logger.log({ type: "a2ui", data: result });
-  });
-
-  session.eval("Flight Form", async ({ caps, moduleArgs, logger }) => {
-    const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
-
-    const content = (await import("./data/flight.js")).content;
-
-    const result = await pipeline.run(content, {});
-    if (!ok(result)) {
-      logger.log({
-        type: "warning",
-        data: result.$error,
-      });
-      return;
-    }
-    logger.log({ type: "a2ui", data: result });
-  });
-
-  session.eval("Comparison Table", async ({ caps, moduleArgs, logger }) => {
-    const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
-
-    const content = (await import("./data/comparison.js")).content;
-
-    const result = await pipeline.run(content, {});
-    if (!ok(result)) {
-      logger.log({
-        type: "warning",
-        data: result.$error,
-      });
-      return;
-    }
-    logger.log({ type: "a2ui", data: result });
-  });
+  evalObjective("Quiz (e2e)", "./data/quiz.js");
+  evalObjective("Costume Maker", "./data/costume.js");
+  evalObjective("Personal Info", "./data/person-info.js");
+  evalObjective("Podcast App", "./data/podcast.js");
+  evalObjective("Flight Form", "./data/flight.js");
+  evalObjective("Comparison Table", "./data/comparison.js");
 });
