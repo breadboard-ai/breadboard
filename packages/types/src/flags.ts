@@ -46,6 +46,14 @@ export type RuntimeFlags = {
    */
   backendTransforms: boolean;
   /**
+   * Enables Google One Quotas
+   */
+  googleOne: boolean;
+  /**
+   * Enables Opal-ADK support
+   */
+  opalAdk: boolean;
+  /** 
    * Requres users consent to use of get_webpage tool
    */
   requireConsentForGetWebpage: boolean;

@@ -22,6 +22,8 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   consistentUI: false,
   agentMode: false,
   backendTransforms: false,
+  opalAdk: false,
+  googleOne: false,
   requireConsentForGetWebpage: false,
   requireConsentForOpenWebpage: false,
 };
