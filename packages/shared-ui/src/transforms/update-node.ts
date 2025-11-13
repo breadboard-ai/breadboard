@@ -93,8 +93,7 @@ class UpdateNode implements EditTransform {
         id,
         metadata: newMetadata,
         graphId,
-      }),
-        `Change metadata for "${id}"`;
+      });
     }
 
     const editResult = await context.apply(

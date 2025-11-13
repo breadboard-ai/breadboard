@@ -24,6 +24,7 @@ import {
   GraphLoader,
   JsonSerializable,
   LLMContent,
+  NodeExpectedOutput,
 } from "@breadboard-ai/types";
 import {
   Tab,
@@ -54,6 +55,7 @@ import {
 import { StateManager } from "./state";
 import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
 import { Autonamer } from "./autonamer";
+import { filterUndefined, toJson } from "@breadboard-ai/utils";
 
 export type AutonameArguments = {
   nodeConfigurationUpdate: {
@@ -69,6 +71,7 @@ export type NotEnoughContextResult = {
 export type NodeConfigurationUpdateResult = {
   title: string;
   description: string;
+  expected_output?: NodeExpectedOutput[];
 };
 
 export type AutonameResult =
@@ -904,11 +907,10 @@ export class Edit extends EventTarget {
       console.error(outputs.$error);
       return outputs;
     }
-    const part = outputs.at(0)?.parts.at(0);
-    if (!(part && "json" in part)) {
-      return err(`Invalid autoname output`);
+    const generatingAutonames = toJson<AutonameResult>(outputs);
+    if (!generatingAutonames) {
+      return err(`Autonaming result not found`);
     }
-    const generatingAutonames = part.json as AutonameResult;
     console.log("AUTONAMING RESULT", generatingAutonames);
 
     if ("notEnoughContext" in generatingAutonames) {
@@ -925,10 +927,11 @@ export class Edit extends EventTarget {
 
     // For now, only edit titles and set `userModifed` so that the autoname
     // only works once.
-    const metadata: NodeMetadata = {
+    const metadata: NodeMetadata = filterUndefined({
       title: generatingAutonames.title,
       userModified: true,
-    };
+      expected_output: generatingAutonames.expected_output,
+    });
 
     const applyingAutonames = await editableGraph.apply(
       new BreadboardUI.Transforms.UpdateNode(id, graphId, null, metadata, null)

@@ -209,6 +209,27 @@ export type NodeMetadata = {
    * Then, it will be chosen as a starting node.
    */
   start?: boolean;
+  /**
+   * Expected output of the node.
+   */
+  expected_output?: NodeExpectedOutput[];
+};
+
+/**
+ * A guess at what the node might output.
+ */
+export type NodeExpectedOutput = {
+  /**
+   * The modality of the output
+   */
+  type: "image" | "text" | "video" | "audio";
+  description: string;
+  /**
+   * `Whether this output is a list of files of the same kind. For instance,
+   * if the step is expected to create two images, this value would be "true"
+   * and the type will be "image"
+   */
+  list: boolean;
 };
 
 /**

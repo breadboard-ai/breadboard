@@ -174,9 +174,9 @@ class NodeConfigurationUpdateMode implements AutonameMode {
                 type: "string",
                 description: `7-word description of the contents of the output`,
               },
-              count: {
-                type: "number",
-                description: `The expected number of outputs. For instance, if the step is expected to create two images, this value would be 2 and the type will be "image".`,
+              list: {
+                type: "boolean",
+                description: `Whether this output is a list of files of the same kind. For instance, if the step is expected to create two images, this value would be "true" and the type will be "image".`,
               },
             },
           },
