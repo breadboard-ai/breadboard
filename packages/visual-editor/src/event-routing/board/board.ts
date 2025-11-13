@@ -12,11 +12,12 @@ import { RuntimeSnackbarEvent } from "../../runtime/events";
 import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { StateEvent } from "@breadboard-ai/shared-ui/events/events.js";
 import { GraphMetadata, ConsentType, ConsentUIType } from "@breadboard-ai/types";
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
 
-  async do({ tab, runtime, settings, askUserToSignInIfNeeded }) {
+  async do({ tab, runtime, settings, askUserToSignInIfNeeded, boardServer }) {
     if (!tab) {
       console.warn(`Unable to prepare run: no Tab provided`);
       return false;
@@ -43,7 +44,12 @@ export const RunRoute: EventRoute<"board.run"> = {
     if ((await runtime.flags.flags()).requireConsentForGetWebpage) {
       const editor = runtime.edit.getEditor(tab);
       const graph = editor?.inspect("");
+      const url = tab.graph.url;
+      const isGalleryApp =
+        (boardServer instanceof GoogleDriveBoardServer) &&
+        url && boardServer.galleryGraphs.has(url);
       if (
+        !isGalleryApp &&
         !tab.graphIsMine &&
         graph?.usesTool("embed://a2/tools.bgl.json#module:get-webpage")
       ) {
@@ -176,6 +182,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
     googleDriveClient,
     uiState,
     askUserToSignInIfNeeded,
+    boardServer,
   }) {
     await StopRoute.do({
       tab,
@@ -189,6 +196,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       googleDriveClient,
       uiState,
       askUserToSignInIfNeeded,
+      boardServer,
     });
     await RunRoute.do({
       tab,
@@ -201,6 +209,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       googleDriveClient,
       uiState,
       askUserToSignInIfNeeded,
+      boardServer,
     });
     return false;
   },

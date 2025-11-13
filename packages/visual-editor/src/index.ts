@@ -1366,6 +1366,10 @@ export class Main extends SignalWatcher(LitElement) {
       keyof BreadboardUI.Events.StateEventDetailMap
     >
   ) {
+    const boardServer = this.boardServer;
+    if (!boardServer) {
+      throw new Error('Expected board server to have been mounted');
+    }
     return {
       originalEvent: evt,
       runtime: this.#runtime,
@@ -1376,6 +1380,7 @@ export class Main extends SignalWatcher(LitElement) {
       googleDriveClient: this.googleDriveClient,
       askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>
         this.#askUserToSignInIfNeeded(scopes),
+      boardServer
     };
   }
 
