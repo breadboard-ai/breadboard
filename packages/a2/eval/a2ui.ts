@@ -100,4 +100,20 @@ Picture:
     }
     logger.log({ type: "a2ui", data: result });
   });
+
+  session.eval("Personal Info", async ({ caps, moduleArgs, logger }) => {
+    const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
+
+    const content = (await import("./data/person-info/data.js")).content;
+
+    const result = await pipeline.run(content, {});
+    if (!ok(result)) {
+      logger.log({
+        type: "warning",
+        data: result.$error,
+      });
+      return;
+    }
+    logger.log({ type: "a2ui", data: result });
+  });
 });
