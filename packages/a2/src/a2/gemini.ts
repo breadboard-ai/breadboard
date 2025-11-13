@@ -698,8 +698,7 @@ async function generateContent(
       signal: context.signal,
     });
     if (!result.ok) {
-      // Expect non-streaming error response.
-      const errObject = await result.json();
+      const errObject = await result.text();
       return err(maybeExtractError(errObject), { origin: "server", model });
     } else {
       return result.json();
@@ -722,7 +721,7 @@ async function streamGenerateContent(
     });
     if (!result.ok) {
       // Expect non-streaming error response.
-      const errObject = await result.json();
+      const errObject = await result.text();
       return err(maybeExtractError(errObject), { origin: "server", model });
     } else {
       if (!result.body) {
