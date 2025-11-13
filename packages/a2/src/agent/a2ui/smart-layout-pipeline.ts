@@ -9,7 +9,7 @@ import { AgentFileSystem } from "../file-system";
 import { PidginTranslator } from "../pidgin-translator";
 import { A2ModuleArgs } from "../../runnable-module-factory";
 import { Params } from "../../a2/common";
-import { generateSpec } from "./generate-spec";
+import { generateSpec, SurfaceSpec } from "./generate-spec";
 import { llm, ok } from "../../a2/utils";
 import { err } from "@breadboard-ai/utils";
 import { generateTemplate } from "./generate-template";
@@ -42,48 +42,53 @@ class SmartLayoutPipeline {
     );
     if (!ok(spec)) return spec;
 
-    if (spec.length > 1) {
-      return err(`More than one surface was generated`);
-    }
-
     if (spec.length === 0) {
       return err(`No surfaces were generated`);
     }
 
-    const surfaceSpec = spec.at(0)!;
+    // 2. Set up the handler for processing a single surface.
+    const processSurface = async (surfaceSpec: SurfaceSpec) => {
+      const a2UIPayload = await generateTemplate(surfaceSpec, moduleArgs);
+      let resolver: (payload: Outcome<unknown[]>) => void;
+      const layoutResult = new Promise<Outcome<unknown[]>>((resolve) => {
+        resolver = resolve;
+      });
 
-    // 2. Generate A2UI
-    const a2UIPayload = await generateTemplate(surfaceSpec, moduleArgs);
+      // 2a. Create a function definition for populating the data.
+      const functionDefinition = makeFunction(surfaceSpec, a2UIPayload, {
+        render: async (payload: unknown[]) => {
+          resolver(payload);
+          return { success: true };
+        },
+      });
 
-    let resolve: (payload: Outcome<unknown[]>) => void;
-    const layoutResult = new Promise<Outcome<unknown[]>>((r) => {
-      resolve = r;
-    });
+      // 2b. Call it with the surface's example data.
+      await functionDefinition.handler(
+        surfaceSpec.exampleData as Record<string, unknown>,
+        (status) => {
+          console.log("Status update", status);
+        }
+      );
 
-    // 3. Create a function function definition.
-    const functionDefinition = makeFunction(surfaceSpec, a2UIPayload, {
-      render: async (payload: unknown[]) => {
-        resolve(payload);
-        return { success: true };
-      },
-    });
+      // 2c. Generate consistent UI, which will create the full payload and
+      // ultimately trigger the functionDefinition render above, which will then
+      // resolve the layoutResult.
+      const output = await generateOutputViaFunction(
+        llm`${translated.text}`.asContent(),
+        functionDefinition,
+        moduleArgs
+      );
+      if (!ok(output)) return output;
+      return layoutResult;
+    };
 
-    // 4. Call it with the surface's example data.
-    await functionDefinition.handler(
-      surfaceSpec.exampleData as Record<string, unknown>,
-      (status) => {
-        console.log("Status update", status);
-      }
-    );
+    // 3. Process all the surfaces in parallel.
+    const processAllSurfaces = async (spec: SurfaceSpec[]) => {
+      return Promise.all(
+        spec.map((surfaceSpec) => processSurface(surfaceSpec))
+      );
+    };
 
-    // 5. Generate consistent UI
-    const output = await generateOutputViaFunction(
-      llm`${translated.text}`.asContent(),
-      functionDefinition,
-      moduleArgs
-    );
-    if (!ok(output)) return output;
-
-    return layoutResult;
+    return processAllSurfaces(spec);
   }
 }
