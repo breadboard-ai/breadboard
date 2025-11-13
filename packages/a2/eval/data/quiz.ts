@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export const title = "Quiz";
+
 export const objective = `Play a learning quiz on the following subject with a high school student, using a series of multiple-choice questions:
   <subject>Fall of Communism in Soviet Russia</subject>
 

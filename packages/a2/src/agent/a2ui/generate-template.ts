@@ -10,11 +10,12 @@ import {
   type GeminiBody,
   type GeminiSchema,
 } from "../../a2/gemini";
-import type { LLMContent } from "@breadboard-ai/types";
+import type { LLMContent, Outcome } from "@breadboard-ai/types";
 import { A2UI_SCHEMA } from "../../a2/au2ui-schema";
 import { SurfaceSpec } from "./generate-spec";
 import { A2ModuleArgs } from "../../runnable-module-factory";
 import { parseJson } from "../../parse-json";
+import { ok } from "@breadboard-ai/utils";
 
 export { generateTemplate };
 
@@ -111,10 +112,14 @@ const responseJsonSchema: GeminiSchema = {
   items: A2UI_SCHEMA,
 };
 
-async function generateTemplate(spec: SurfaceSpec, moduleArgs: A2ModuleArgs) {
+async function generateTemplate(
+  spec: SurfaceSpec,
+  moduleArgs: A2ModuleArgs
+): Promise<Outcome<unknown[]>> {
   console.log(`Rendering ${spec.surfaceId}`);
   const prompt = createPrompt([llm`${JSON.stringify(spec)}`.asContent()]);
 
   const ui = await generateContent("gemini-flash-latest", prompt, moduleArgs);
+  if (!ok(ui)) return ui;
   return parseJson(ui) as unknown[];
 }

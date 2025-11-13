@@ -6,6 +6,8 @@
 
 import { DataPart, LLMContent } from "@breadboard-ai/types";
 
+export const title = "Personal Info";
+
 const parts: DataPart[] = [
   // Layout description.
   {
@@ -115,4 +117,4 @@ discovery, and grow into thoughtful, engaged citizens."`,
   },
 ];
 
-export const content: LLMContent = { role: "user", parts };
+export const objective: LLMContent = { role: "user", parts };

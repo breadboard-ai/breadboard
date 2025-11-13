@@ -6,6 +6,8 @@
 
 import { DataPart, LLMContent } from "@breadboard-ai/types";
 
+export const title = "Podcast App";
+
 const parts: DataPart[] = [
   {
     text: `# The Setup:
@@ -67,4 +69,4 @@ Other episodes:
   },
 ];
 
-export const content: LLMContent = { role: "user", parts };
+export const objective: LLMContent = { role: "user", parts };

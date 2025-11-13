@@ -6,6 +6,8 @@
 
 import { DataPart, LLMContent } from "@breadboard-ai/types";
 
+export const title = "Costume Maker";
+
 const parts: DataPart[] = [
   // Layout description.
   {
@@ -62,4 +64,4 @@ Kids: Dust Bunnies - round, fluffy white or grey costumes made from fleece or fa
   },
 ];
 
-export const content: LLMContent = { role: "user", parts };
+export const objective: LLMContent = { role: "user", parts };

@@ -6,6 +6,8 @@
 
 import { DataPart, LLMContent } from "@breadboard-ai/types";
 
+export const title = "Comparison Table";
+
 const parts: DataPart[] = [
   {
     text: `# The setup
@@ -82,4 +84,4 @@ Use this plan info to populate the Cards.
   },
 ];
 
-export const content: LLMContent = { role: "user", parts };
+export const objective: LLMContent = { role: "user", parts };
