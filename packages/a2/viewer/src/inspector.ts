@@ -367,7 +367,6 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
             & a2ui-surface {
               width: 100%;
-              height: 100%;
               max-width: 840px;
             }
           }

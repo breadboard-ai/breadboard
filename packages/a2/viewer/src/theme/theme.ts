@@ -183,6 +183,7 @@ export const theme: v0_8.Types.Theme = {
   additionalStyles: {
     Button: {
       "--n-35": "var(--n-100)",
+      "--p-0": "var(--n-100)",
     },
     AudioPlayer: {
       minWidth: "200px",
@@ -241,7 +242,20 @@ export const theme: v0_8.Types.Theme = {
     },
     DateTimeInput: {
       container: {},
-      label: {},
+      label: {
+        "layout-dsp-block": true,
+        "color-c-p0": true,
+        "color-c-p30": true,
+        "typography-f-sf": true,
+        "typography-v-r": true,
+        "typography-w-400": true,
+        "layout-ml-0": true,
+        "layout-mr-0": true,
+        "layout-mt-0": true,
+        "layout-mb-2": true,
+        "layout-p-0": true,
+        "typography-sz-bs": true,
+      },
       element: {
         "layout-pt-2": true,
         "layout-pb-2": true,
@@ -289,7 +303,7 @@ export const theme: v0_8.Types.Theme = {
       "border-br-5": true,
     },
     Icon: {
-      "color-c-p100": true,
+      "color-c-p0": true,
     },
     List: {
       "layout-g-2": true,
@@ -320,7 +334,7 @@ export const theme: v0_8.Types.Theme = {
       },
     },
     Row: {
-      "layout-g-4": true,
+      "layout-g-2": true,
     },
     Slider: {
       container: {},
@@ -328,7 +342,9 @@ export const theme: v0_8.Types.Theme = {
       element: {},
     },
     Tabs: {
-      container: {},
+      container: {
+        "layout-dsp-flexvert": true,
+      },
       controls: {
         all: {
           "border-br-2": true,
@@ -366,6 +382,15 @@ export const theme: v0_8.Types.Theme = {
       },
       label: {
         "layout-flx-0": true,
+        "layout-dsp-block": true,
+        "color-c-p0": true,
+        "color-c-p30": true,
+        "typography-f-sf": true,
+        "typography-v-r": true,
+        "typography-w-400": true,
+        "layout-m-0": true,
+        "layout-p-0": true,
+        "typography-sz-bs": true,
       },
       element: {
         "typography-sz-bm": true,

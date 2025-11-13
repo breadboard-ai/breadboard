@@ -165,6 +165,7 @@ const A2UI_SCHEMA: GeminiSchema = {
                               "error",
                               "favorite",
                               "favoriteOff",
+                              "flight",
                               "folder",
                               "help",
                               "home",

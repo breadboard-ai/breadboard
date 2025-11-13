@@ -34,6 +34,7 @@ import {
   isComponentArrayReference,
   isObject,
   isPath,
+  isAnyComponentNode,
   isResolvedAudioPlayer,
   isResolvedButton,
   isResolvedCard,
@@ -590,6 +591,22 @@ export class A2UIModelProcessor implements ModelProcessor {
 
       case "Column":
         if (!isResolvedColumn(resolvedProperties)) {
+          console.log(
+            isObject(resolvedProperties),
+            "children" in resolvedProperties,
+            Array.isArray(resolvedProperties.children),
+            // @ts-expect-error Err.
+            resolvedProperties.children!.every(isAnyComponentNode)
+          ); // &&
+
+          console.log(
+            // @ts-expect-error Err.
+            resolvedProperties.children.map((c) => {
+              console.log(c, isAnyComponentNode(c));
+            })
+          );
+
+          // props.children.every(isAnyComponentNode)
           throw new Error(`Invalid data; expected ${componentType}`);
         }
 
