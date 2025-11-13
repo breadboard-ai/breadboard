@@ -123,21 +123,9 @@ const interceptPopupsScript = scriptifyFunction(() => {
   // This listener is capturing and guaranteed to be run before any
   // generated scripts, so we always get first crack at intercepting popups
   window.addEventListener("click", (evt) => {
-    console.log("[OUTPUT] click", evt.composedPath());
     const anchor = findAncestorTag(evt, "a");
     if (anchor) {
       requestPopup(new URL(anchor.href));
-      evt.preventDefault();
-      evt.stopImmediatePropagation();
-    }
-  }, true);
-  // This listener is capturing and guaranteed to be run before any
-  // generated scripts, so we always get first crack at intercepting form submission
-  window.addEventListener("submit", (evt) => {
-    console.log("[OUTPUT] submit", evt.composedPath());
-    const form = findAncestorTag(evt, "form");
-    if (form) {
-      requestPopup(new URL(form.action));
       evt.preventDefault();
       evt.stopImmediatePropagation();
     }
