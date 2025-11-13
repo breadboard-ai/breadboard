@@ -23,7 +23,7 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
 
     const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
 
-    const result = await pipeline.runAll(llm`${objective}`.asContent(), {});
+    const result = await pipeline.run(llm`${objective}`.asContent(), {});
     if (!ok(result)) {
       logger.log({
         type: "warning",
@@ -39,7 +39,7 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
 
     const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
 
-    const result = await pipeline.runAll({ parts: katamariData }, {});
+    const result = await pipeline.run({ parts: katamariData }, {});
     if (!ok(result)) {
       logger.log({
         type: "warning",
@@ -73,7 +73,7 @@ Picture:
         storedData: { handle: "fakehandle", mimeType: "image/png" },
       });
 
-      const result = await pipeline.runAll(content, {});
+      const result = await pipeline.run(content, {});
       if (!ok(result)) {
         logger.log({
           type: "warning",
