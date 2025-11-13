@@ -8,7 +8,7 @@ import * as flags from "./flags.js";
 
 import type { Handler, NextFunction, Request, Response } from "express";
 
-const CSP_CONFIG = {
+export const MAIN_APP_CSP = {
   ["default-src"]: ["'none'"],
   ["script-src"]: [
     "'self'",
@@ -79,8 +79,8 @@ const CSP_CONFIG = {
 const CSP_HEADER_NAME = "Content-Security-Policy";
 
 /** https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP */
-export function makeCspHandler(): Handler {
-  const cspConfig = structuredClone(CSP_CONFIG);
+export function makeCspHandler(csp: Record<string, string[]>): Handler {
+  const cspConfig = structuredClone(csp);
   if (flags.BACKEND_API_ENDPOINT) {
     cspConfig["connect-src"].push(flags.BACKEND_API_ENDPOINT);
   }

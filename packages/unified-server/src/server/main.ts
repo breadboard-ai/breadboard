@@ -4,23 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import express, { type Request } from "express";
-import ViteExpress from "vite-express";
-
 import * as boardServer from "@breadboard-ai/board-server";
-import * as connectionServer from "./connection/server.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-
-import { makeDriveProxyMiddleware } from "./drive-proxy.js";
+import { createFetchWithCreds, err } from "@breadboard-ai/utils";
+import express, { type Request } from "express";
+import { GoogleAuth } from "google-auth-library";
+import ViteExpress from "vite-express";
 import { createClientConfig } from "./config.js";
-import { makeCspHandler } from "./csp.js";
+import * as connectionServer from "./connection/server.js";
+import { MAIN_APP_CSP, makeCspHandler } from "./csp.js";
+import { createDataTransformHandler } from "./data-transform.js";
+import { makeDriveProxyMiddleware } from "./drive-proxy.js";
 import * as flags from "./flags.js";
 import { CachingFeaturedGallery, makeGalleryMiddleware } from "./gallery.js";
 import { createUpdatesHandler } from "./updates.js";
-
-import { GoogleAuth } from "google-auth-library";
-import { createFetchWithCreds, err } from "@breadboard-ai/utils";
-import { createDataTransformHandler } from "./data-transform.js";
 
 const FEATURED_GALLERY_CACHE_REFRESH_SECONDS = 10 * 60;
 
@@ -30,7 +27,7 @@ console.log("[unified-server startup] Loading env file");
 
 const server = express();
 
-server.use(makeCspHandler());
+server.use(makeCspHandler(MAIN_APP_CSP));
 
 const boardServerConfig = boardServer.createServerConfig({
   storageProvider: "firestore",
