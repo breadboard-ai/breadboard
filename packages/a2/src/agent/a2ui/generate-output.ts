@@ -9,6 +9,7 @@ import {
   conformGeminiBody,
   GeminiSchema,
   generateContent,
+  GenerationConfig,
 } from "../../a2/gemini";
 import { llm } from "../../a2/utils";
 import { A2ModuleArgs } from "../../runnable-module-factory";
@@ -16,34 +17,40 @@ import { FunctionDefinition, mapDefinitions } from "../function-definition";
 import { err, ok } from "@breadboard-ai/utils";
 import { parseJson } from "../../parse-json";
 
-export { generateOutputJson, generateOutputFunction };
+export { generateOutputViaJson, generateOutputViaFunction };
+
+const commonConfig: GenerationConfig = {
+  temperature: 0,
+  topP: 1,
+  thinkingConfig: { thinkingBudget: -1 },
+};
+
+const commonInstruction = `
+Ensure full fidelity of translation: 
+- all content in the provided input must appear in your output. 
+- DO NOT truncate or elide text from the input
+- Preserve the input text formatting, markdown in particular.`;
 
 /**
  * Generates output, combining content input and a provided function.
  */
-async function generateOutputJson(
+async function generateOutputViaJson(
   content: LLMContent,
-  example: unknown,
   fn: FunctionDefinition,
   moduleArgs: A2ModuleArgs
 ) {
   const systemInstruction = llm`
-You are an LLM-powered output translator. Your job is to generate structured data (JSON) based on the provided input. Ensure full fidelity of translation: everything in the provide input must appear in your output.
+You are an LLM-powered output translator.
 
-Here's an example of the output(with sample data):
-\`\`\`json
-${JSON.stringify(example)}
-\`\`\`
+Your job is to generate structured data (JSON) based on the provided input. 
 
-Your output must have the same structure, but include all of the input data.
-`.asContent();
+${commonInstruction}`.asContent();
 
   const body = await conformGeminiBody(moduleArgs, {
     contents: [content],
     systemInstruction,
     generationConfig: {
-      temperature: 0,
-      topP: 1,
+      ...commonConfig,
       responseMimeType: "application/json",
       responseJsonSchema: fn.parametersJsonSchema as GeminiSchema,
     },
@@ -64,29 +71,24 @@ Your output must have the same structure, but include all of the input data.
   });
 }
 
-async function generateOutputFunction(
+async function generateOutputViaFunction(
   content: LLMContent,
-  example: unknown,
   fn: FunctionDefinition,
   moduleArgs: A2ModuleArgs
 ) {
   const systemInstruction = llm`
-You are an LLM-powered output translator. Your job is to call provided function with the right arguments to generate output based on the provided input. Ensure full fidelity of translation: everything in the provide input must appear in your output.
+You are an LLM-powered output translator.
 
-Here's an example of the output(with sample data):
-\`\`\`json
-${JSON.stringify(example)}
-\`\`\`
+Your job is to call provided function with the right arguments to generate output based on the provided input.
 
-Your output must have the same structure, but include all of the input data.
-`.asContent();
+${commonInstruction}`.asContent();
 
   const defs = mapDefinitions([fn]);
   const body = await conformGeminiBody(moduleArgs, {
-    contents: [content],
     systemInstruction,
+    contents: [content],
     toolConfig: { functionCallingConfig: { mode: "ANY" } },
-    generationConfig: { temperature: 0, topP: 1 },
+    generationConfig: commonConfig,
     tools: [{ functionDeclarations: defs.declarations }],
   });
   if (!ok(body)) return body;
