@@ -84,4 +84,20 @@ Picture:
       logger.log({ type: "a2ui", data: result });
     }
   );
+
+  session.eval("Costume Maker", async ({ caps, moduleArgs, logger }) => {
+    const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
+
+    const content = (await import("./data/costume/data.js")).content;
+
+    const result = await pipeline.run(content, {});
+    if (!ok(result)) {
+      logger.log({
+        type: "warning",
+        data: result.$error,
+      });
+      return;
+    }
+    logger.log({ type: "a2ui", data: result });
+  });
 });
