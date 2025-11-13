@@ -281,16 +281,18 @@ export const theme: v0_8.Types.Theme = {
         "layout-p-0": true,
       },
       level1: {
-        "typography-sz-tl": true,
+        "typography-w-500": true,
+        "typography-sz-hm": true,
       },
       level2: {
-        "typography-sz-tm": true,
+        "typography-w-500": true,
+        "typography-sz-hs": true,
       },
       level3: {
-        "typography-sz-ts": true,
+        "typography-sz-tl": true,
       },
       level4: {
-        "typography-sz-bl": true,
+        "typography-sz-tm": true,
       },
       level5: {
         "typography-sz-bm": true,
