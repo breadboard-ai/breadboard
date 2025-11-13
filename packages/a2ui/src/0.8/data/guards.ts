@@ -82,7 +82,7 @@ function isBooleanValue(value: unknown): value is BooleanValue {
   );
 }
 
-function isAnyComponentNode(value: unknown): value is AnyComponentNode {
+export function isAnyComponentNode(value: unknown): value is AnyComponentNode {
   if (!isObject(value)) return false;
   const hasBaseKeys = "id" in value && "type" in value && "properties" in value;
   if (!hasBaseKeys) return false;

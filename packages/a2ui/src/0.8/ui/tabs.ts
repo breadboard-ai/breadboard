@@ -39,6 +39,8 @@ export class Tabs extends Root {
       :host {
         display: block;
         flex: var(--weight);
+        min-height: 0;
+        overflow: auto;
       }
     `,
   ];
@@ -116,7 +118,7 @@ export class Tabs extends Root {
   }
 
   #renderSlot() {
-    return html`<slot name="current"></slot>`;
+    return html`<div><slot name="current"></slot></div>`;
   }
 
   render() {
