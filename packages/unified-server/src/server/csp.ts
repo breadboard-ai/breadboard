@@ -13,7 +13,6 @@ const CSP_CONFIG = {
   ["script-src"]: [
     "'self'",
     "'unsafe-inline'",
-    "'wasm-unsafe-eval'",
     "https://apis.google.com",
     "https://cdn.tailwindcss.com",
     "https://unpkg.com",
