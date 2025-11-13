@@ -16,6 +16,9 @@ export { ReactiveApp };
 class ReactiveApp implements App {
   constructor(private readonly run: ProjectRun) { }
 
+  /**
+   * Consent requests that will be displayed in the app view
+   */
   readonly consentRequests = new SignalArray<ConsentRequestWithCallback>();
 
   @signal

@@ -356,6 +356,9 @@ export type UI = {
       persistent: boolean;
     }
   >;
+  /**
+   * Consent requests that will be displayed as a modal popup
+   */
   consentRequests: Array<ConsentRequestWithCallback>;
   blockingAction: boolean;
   lastSnackbarDetailsInfo: HTMLTemplateResult | string | null;

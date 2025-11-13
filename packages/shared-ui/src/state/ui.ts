@@ -70,6 +70,9 @@ class ReactiveUIState implements UI {
     }
   >();
 
+  /**
+   * Consent requests that will be displayed as a modal popup
+   */
   accessor consentRequests = new SignalArray<ConsentRequestWithCallback>();
 
   @signal
