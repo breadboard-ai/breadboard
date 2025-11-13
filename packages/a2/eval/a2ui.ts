@@ -55,57 +55,8 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
     }
   }
 
-  session.eval("Katamari (e2e)", async ({ caps, moduleArgs, logger }) => {
-    const katamariData = (await import("./data/katamari.json")).default;
-
-    const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
-
-    const result = await pipeline.run({ parts: katamariData }, {});
-    if (!ok(result)) {
-      logger.log({
-        type: "warning",
-        data: result.$error,
-      });
-      return;
-    }
-    logger.log({ type: "a2ui", data: result });
-  });
-
-  session.eval(
-    "Simple poem w/picture",
-    async ({ caps, moduleArgs, logger }) => {
-      const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
-
-      const content = llm`
-
-Place the poem in the left column, and a picture in the right, with the caption
-under the picture. Put the picture and the caption into a separate card.
-
-Picture:
-A Shattered Rainbow in a stone, It holds the ocean, the sunset's moan. With fire-filled milk and shifting light, A dreamy flicker, cold and bright. The earth's own magic, deep and sweet, Where all the colors gently meet.
-
-Caption:
-The picture of a shattered Rainbow opal
-
-Picture:
-`.asContent();
-
-      content.parts.push({
-        storedData: { handle: "fakehandle", mimeType: "image/png" },
-      });
-
-      const result = await pipeline.run(content, {});
-      if (!ok(result)) {
-        logger.log({
-          type: "warning",
-          data: result.$error,
-        });
-        return;
-      }
-      logger.log({ type: "a2ui", data: result });
-    }
-  );
-
+  evalObjective("Simple poem w/picture", "./data/poem-w-picture.js");
+  evalObjective("Katamari (e2e)", "./data/katamari.js");
   evalObjective("Quiz (e2e)", "./data/quiz.js");
   evalObjective("Costume Maker", "./data/costume.js");
   evalObjective("Personal Info", "./data/person-info.js");
