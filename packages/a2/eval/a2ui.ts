@@ -133,7 +133,7 @@ Picture:
     logger.log({ type: "a2ui", data: result });
   });
 
-  session.evalOnly("Flight Form", async ({ caps, moduleArgs, logger }) => {
+  session.eval("Flight Form", async ({ caps, moduleArgs, logger }) => {
     const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
 
     const content = (await import("./data/flight.js")).content;
