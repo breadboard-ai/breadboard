@@ -107,10 +107,7 @@ const clientConfig = await createClientConfig({
   OAUTH_CLIENT: connectionServerConfig.connection.oauth.client_id,
 });
 
-if (
-  clientConfig.SHELL_GUEST_ORIGIN &&
-  clientConfig.SHELL_HOST_ORIGINS?.length
-) {
+if (flags.SHELL_ENABLED) {
   // TODO(aomarks) After we are fully in the iframe arrangement, move assets
   // around so that this entire re-pathing middleware is not necessary.
   console.log("[unified-server startup] Serving in shell configuration");
