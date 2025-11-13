@@ -52,7 +52,11 @@ export class Text extends Root {
           this.text.literal,
           Styles.appendToAll(this.theme.markdown, ["ol", "ul", "li"], {})
         )}`;
-      } else if (this.text && "path" in this.text && this.text.path) {
+      } else if (
+        this.text &&
+        "path" in this.text &&
+        this.text.path !== undefined
+      ) {
         if (!this.processor || !this.component) {
           return html`(no model)`;
         }
