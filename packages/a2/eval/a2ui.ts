@@ -8,8 +8,6 @@ import { llm } from "../src/a2/utils";
 import { config } from "dotenv";
 import { ok } from "@breadboard-ai/utils";
 import { session } from "../scripts/eval";
-import { AgentFileSystem } from "../src/agent/file-system";
-import { PidginTranslator } from "../src/agent/pidgin-translator";
 import { makeFunction } from "../src/agent/a2ui/make-function";
 
 config();
@@ -21,8 +19,10 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
     .generateSpec;
   const generateTemplate = (await import("../src/agent/a2ui/generate-template"))
     .generateTemplate;
-  const generateOutput = (await import("../src/agent/a2ui/generate-output"))
-    .generateOutputFunction;
+
+  const SmartLayoutPipeline = (
+    await import("../src/agent/a2ui/smart-layout-pipeline")
+  ).SmartLayoutPipeline;
 
   session.eval("Quiz (e2e)", async ({ moduleArgs, logger }) => {
     // 1. Start with the objective.
@@ -63,64 +63,53 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
   });
 
   session.eval("Katamari (e2e)", async ({ caps, moduleArgs, logger }) => {
-    // 1. Start with the data.
     const katamariData = (await import("./data/katamari/data.json")).default;
 
-    const fileSystem = new AgentFileSystem();
-    const translator = new PidginTranslator(caps, moduleArgs, fileSystem);
+    const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
 
-    const text = await translator.toPidgin({ parts: katamariData }, {});
-
-    // 2. Create a spec from the data.
-    const spec = await generateSpec(llm`${text}`.asContent(), moduleArgs);
-    if (!ok(spec)) {
-      console.warn("Unable to generate spec");
-      return [];
-    }
-
-    if (spec.length > 1) {
+    const result = await pipeline.run({ parts: katamariData }, {});
+    if (!ok(result)) {
       logger.log({
         type: "warning",
-        data: "More than one surface was generated",
+        data: result.$error,
       });
+      return;
     }
-
-    if (spec.length === 0) {
-      logger.log({
-        type: "warning",
-        data: "No surfaces were generated",
-      });
-    }
-
-    const surfaceSpec = spec.at(0)!;
-
-    // 3. Generate A2UI
-    const a2UIPayload = await generateTemplate(surfaceSpec, moduleArgs);
-
-    // 4. Create a function function definition.
-    const functionDefinition = makeFunction(surfaceSpec, a2UIPayload, {
-      render: async (payload: unknown[]) => {
-        logger.log({ type: "a2ui", data: payload });
-        // TODO: Figure out how to handle actions
-        return { success: true };
-      },
-    });
-
-    // 5. Call it with the surface's example data.
-    await functionDefinition.handler(
-      surfaceSpec.exampleData as Record<string, unknown>,
-      (status) => {
-        console.log("Status update", status);
-      }
-    );
-
-    // 6. Generate consistent UI
-    const result = await generateOutput(
-      llm`${text}`.asContent(),
-      surfaceSpec.exampleData,
-      functionDefinition,
-      moduleArgs
-    );
-    return result;
+    logger.log({ type: "a2ui", data: result });
   });
+
+  session.eval(
+    "Simple poem w/picture",
+    async ({ caps, moduleArgs, logger }) => {
+      const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
+
+      const content = llm`
+
+Place the poem in the left column, and a picture in the right, with the caption
+under the picture. Put the picture and the caption into a separate card.
+
+Picture:
+A Shattered Rainbow in a stone, It holds the ocean, the sunset's moan. With fire-filled milk and shifting light, A dreamy flicker, cold and bright. The earth's own magic, deep and sweet, Where all the colors gently meet.
+
+Caption:
+The picture of a shattered Rainbow opal
+
+Picture:
+`.asContent();
+
+      content.parts.push({
+        storedData: { handle: "fakehandle", mimeType: "image/png" },
+      });
+
+      const result = await pipeline.run(content, {});
+      if (!ok(result)) {
+        logger.log({
+          type: "warning",
+          data: result.$error,
+        });
+        return;
+      }
+      logger.log({ type: "a2ui", data: result });
+    }
+  );
 });
