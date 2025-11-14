@@ -72,6 +72,7 @@ export const MAIN_APP_CSP = {
     "https://cdnjs.cloudflare.com",
     "https://support.google.com",
     "https://www.google-analytics.com",
+    "https://www.google.com", // Feedback
     "https://www.googletagmanager.com",
     "https://www.gstatic.com",
     ...(flags.SHELL_ENABLED ? [] : ["https://apis.google.com"]),
@@ -98,11 +99,11 @@ export const MAIN_APP_CSP = {
   ["connect-src"]: [
     "'self'",
     "data:",
+    "https://*.google.com",
     "https://*.google-analytics.com",
     ...(flags.SHELL_ENABLED
       ? []
       : [
-          "https://*.google.com",
           "https://*.googleapis.com",
           flags.BACKEND_API_ENDPOINT,
           flags.SHELL_GUEST_ORIGIN,
