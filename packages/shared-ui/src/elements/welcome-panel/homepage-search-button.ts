@@ -9,7 +9,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { icons } from "../../styles/icons.js";
-import { colorsLight } from "../../styles/host/colors-light.js";
+import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
@@ -18,7 +18,7 @@ const Strings = StringsHelper.forSection("ProjectListing");
 export class HomepageSearchButton extends LitElement {
   static styles = [
     icons,
-    colorsLight,
+    baseColors,
     type,
     css`
       :host {

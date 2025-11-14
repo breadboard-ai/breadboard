@@ -16,7 +16,7 @@ import { v0_8 } from "@breadboard-ai/a2ui";
 import * as A2UI from "@breadboard-ai/a2ui/ui";
 import { theme as uiTheme } from "../../../a2ui-theme/a2ui-theme.js";
 
-import { colorsLight } from "../../../styles/host/colors-light.js";
+import { baseColors } from "../../../styles/host/base-colors.js";
 import { type } from "../../../styles/host/type.js";
 import { icons } from "../../../styles/icons.js";
 import { sharedStyles } from "./shared-styles.js";
@@ -35,7 +35,7 @@ export class A2UIClientView extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     sharedStyles,
-    colorsLight,
+    baseColors,
     type,
     css`
       :host {

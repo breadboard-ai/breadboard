@@ -5,7 +5,7 @@
  */
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { colorsLight } from "../../styles/host/colors-light";
+import { baseColors } from "../../styles/host/base-colors";
 import { type } from "../../styles/host/type";
 import { VisualEditorStatusUpdate } from "../../types/types";
 import { repeat } from "lit/directives/repeat.js";
@@ -20,7 +20,7 @@ export class VEStatusUpdateModal extends LitElement {
 
   static styles = [
     type,
-    colorsLight,
+    baseColors,
     icons,
     css`
       :host {

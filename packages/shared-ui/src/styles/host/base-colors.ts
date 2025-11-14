@@ -170,7 +170,7 @@ function toProp(key: string) {
   return `--${key[0]}-${key.slice(1)}`;
 }
 
-export const colorsLight = css`
+export const baseColors = css`
   :host {
     --ui-custom-o-100: ${unsafeCSS(custom.c100)};
     --ui-custom-o-25: oklch(

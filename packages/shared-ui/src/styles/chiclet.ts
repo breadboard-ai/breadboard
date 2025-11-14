@@ -5,12 +5,12 @@
  */
 
 import { css, CSSResultGroup } from "lit";
-import { colorsLight } from "./host/colors-light";
+import { baseColors } from "./host/base-colors";
 import { type } from "./host/type";
 
 export const styles = [
   type,
-  colorsLight,
+  baseColors,
   css`
     .chiclet {
       cursor: pointer;

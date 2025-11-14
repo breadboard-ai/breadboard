@@ -77,7 +77,7 @@ import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants";
 import { AssetMetadata, EditHistory, RuntimeFlags } from "@breadboard-ai/types";
 import { isCtrlCommand, isMacPlatform } from "../../utils/is-ctrl-command";
 import { Project, RendererRunState, RendererState } from "../../state";
-import { colorsLight } from "../../styles/host/colors-light.js";
+import { baseColors } from "../../styles/host/base-colors.js";
 import { ItemSelect } from "../elements.js";
 
 @customElement("bb-renderer")
@@ -196,7 +196,7 @@ export class Renderer extends LitElement {
   accessor history: EditHistory | null = null;
 
   static styles = [
-    colorsLight,
+    baseColors,
     css`
       * {
         box-sizing: border-box;

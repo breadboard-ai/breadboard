@@ -15,7 +15,7 @@ import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { uiStateContext } from "../../../contexts/ui-state.js";
 import { ProjectRun, UI } from "../../../state";
-import { colorsLight } from "../../../styles/host/colors-light.js";
+import { baseColors } from "../../../styles/host/base-colors.js";
 import { type } from "../../../styles/host/type.js";
 import { icons } from "../../../styles/icons";
 import { iconSubstitute } from "../../../utils/icon-substitute.js";
@@ -38,7 +38,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     sharedStyles,
-    colorsLight,
+    baseColors,
     type,
     css`
       * {

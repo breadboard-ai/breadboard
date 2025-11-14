@@ -9,7 +9,7 @@ import { SnackbarMessage, SnackbarUUID, SnackType } from "../../types/types";
 import { repeat } from "lit/directives/repeat.js";
 import { icons } from "../../styles/icons";
 import { SnackbarActionEvent } from "../../events/events";
-import { colorsLight } from "../../styles/host/colors-light";
+import { baseColors } from "../../styles/host/base-colors";
 import { type } from "../../styles/host/type";
 import { classMap } from "lit/directives/class-map.js";
 
@@ -31,7 +31,7 @@ export class Snackbar extends LitElement {
 
   static styles = [
     icons,
-    colorsLight,
+    baseColors,
     type,
     css`
       :host {

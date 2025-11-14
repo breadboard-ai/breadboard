@@ -20,7 +20,7 @@ import {
 import { StateEvent } from "../../events/events";
 import "../../flow-gen/flowgen-homepage-panel.js";
 import * as StringsHelper from "../../strings/helper.js";
-import { colorsLight } from "../../styles/host/colors-light.js";
+import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
 import type { RecentBoard } from "../../types/types.js";
@@ -56,7 +56,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
 
   static styles = [
     icons,
-    colorsLight,
+    baseColors,
     type,
     css`
       * {

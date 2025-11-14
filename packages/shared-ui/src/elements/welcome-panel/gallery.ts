@@ -26,7 +26,7 @@ import { googleDriveClientContext } from "../../contexts/google-drive-client-con
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { guard } from "lit/directives/guard.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
-import { colorsLight } from "../../styles/host/colors-light.js";
+import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { SignalWatcher } from "@lit-labs/signals";
 
@@ -37,7 +37,7 @@ const Strings = StringsHelper.forSection("ProjectListing");
 export class Gallery extends SignalWatcher(LitElement) {
   static readonly styles = [
     icons,
-    colorsLight,
+    baseColors,
     type,
     css`
       :host {
