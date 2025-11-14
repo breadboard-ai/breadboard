@@ -66,7 +66,6 @@ export const MAIN_APP_CSP = {
   ["script-src"]: [
     "'self'",
     "'unsafe-inline'",
-    "https://apis.google.com",
     "https://cdn.tailwindcss.com",
     "https://unpkg.com",
     "https://cdn.jsdelivr.net",
@@ -75,6 +74,7 @@ export const MAIN_APP_CSP = {
     "https://www.google-analytics.com",
     "https://www.googletagmanager.com",
     "https://www.gstatic.com",
+    ...(flags.SHELL_ENABLED ? [] : ["https://apis.google.com"]),
   ],
   ["img-src"]: [
     "'self'",
@@ -98,17 +98,18 @@ export const MAIN_APP_CSP = {
   ["connect-src"]: [
     "'self'",
     "data:",
-    // TODO(aomarks) Remove this after we have eliminated all credentialed RPCs
-    // to the frontend server.
-    flags.SHELL_GUEST_ORIGIN,
-    flags.BACKEND_API_ENDPOINT,
     "https://*.google-analytics.com",
-    "https://*.google.com",
-    "https://*.googleapis.com",
+    ...(flags.SHELL_ENABLED
+      ? []
+      : [
+          "https://*.google.com",
+          "https://*.googleapis.com",
+          flags.BACKEND_API_ENDPOINT,
+          flags.SHELL_GUEST_ORIGIN,
+        ]),
   ],
   ["frame-src"]: [
     "'self'",
-    flags.SHELL_GUEST_ORIGIN,
     "https://docs.google.com",
     "https://*.googleapis.com",
     "https://drive.google.com",
@@ -117,14 +118,9 @@ export const MAIN_APP_CSP = {
     "https://feedback-pa.clients6.google.com",
     "https://accounts.google.com",
   ],
-  ["frame-ancestors"]: [
-    ...flags.SHELL_HOST_ORIGINS,
-    // This is slightly blurring the implied meaning of
-    // ALLOWED_REDIRECT_ORIGINS, but in practice the set of origins that we
-    // allow to override the OAuth redirect is the exactly same set of origins
-    // that are using the embedded iframe integration.
-    ...flags.ALLOWED_REDIRECT_ORIGINS,
-  ],
+  ["frame-ancestors"]: flags.SHELL_ENABLED
+    ? [...flags.SHELL_HOST_ORIGINS]
+    : [...flags.ALLOWED_REDIRECT_ORIGINS],
   ["media-src"]: ["'self'", "blob:", "data:"],
   ["base-uri"]: ["'none'"],
 };
