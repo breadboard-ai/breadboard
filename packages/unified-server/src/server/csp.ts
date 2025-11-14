@@ -41,8 +41,13 @@ export const SHELL_CSP = {
     // that are using the embedded iframe integration.
     ...flags.ALLOWED_REDIRECT_ORIGINS,
   ],
-  ["frame-src"]: ["https://drive.google.com", flags.SHELL_GUEST_ORIGIN],
-  ["script-src"]: ["'self'"],
+  ["frame-src"]: [
+    "https://docs.google.com",
+    "https://drive.google.com",
+    flags.SHELL_GUEST_ORIGIN,
+  ],
+  ["img-src"]: ["https://*.gstatic.com"],
+  ["script-src"]: ["'self'", "https://apis.google.com"],
   ["style-src"]: ["'unsafe-inline'"],
 };
 
