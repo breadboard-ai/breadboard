@@ -135,7 +135,6 @@ class NodeConfigurationUpdateMode implements AutonameMode {
     public readonly args: Arguments
   ) {
     this.#stepHandler = stepHandlerFromArgs(caps, args);
-    console.log("PROMPT", toText(this.#stepHandler.prompt));
   }
 
   canAutoname() {
@@ -179,6 +178,7 @@ class NodeConfigurationUpdateMode implements AutonameMode {
                 description: `Whether this output is a list of files of the same kind. For instance, if the step is expected to create two images, this value would be "true" and the type will be "image".`,
               },
             },
+            required: ["type", "description", "list"],
           },
         },
       },

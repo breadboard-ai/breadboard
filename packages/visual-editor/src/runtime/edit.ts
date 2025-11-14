@@ -868,7 +868,8 @@ export class Edit extends EventTarget {
     editableGraph: EditableGraph,
     id: NodeIdentifier,
     graphId: string,
-    configuration: NodeConfiguration
+    configuration: NodeConfiguration,
+    titleUserModified: boolean
   ): Promise<Outcome<void>> {
     const inspector = editableGraph.inspect(graphId);
     const node = inspector.nodeById(id);
@@ -933,6 +934,10 @@ export class Edit extends EventTarget {
       expected_output: generatingAutonames.expected_output,
     });
 
+    if (titleUserModified) {
+      delete metadata.title;
+    }
+
     const applyingAutonames = await editableGraph.apply(
       new BreadboardUI.Transforms.UpdateNode(id, graphId, null, metadata, null)
     );
@@ -974,16 +979,12 @@ export class Edit extends EventTarget {
       console.warn("Failed to change node configuration", editing.error);
       return;
     }
-    if (updateNodeTransform.titleUserModified) {
-      // Don't autoname when title was modified by the user.
-      return;
-    }
-
     return this.#autonameInternal(
       editableGraph,
       id,
       graphId,
-      configurationPart
+      configurationPart,
+      updateNodeTransform.titleUserModified
     );
   }
 
