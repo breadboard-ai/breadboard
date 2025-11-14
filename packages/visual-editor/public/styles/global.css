@@ -108,3 +108,7 @@ body {
   background: var(--n-100);
   overflow: hidden;
 }
+
+body.dark-theme {
+  color-scheme: dark;
+}

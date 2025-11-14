@@ -41,6 +41,7 @@ export async function createClientConfig(opts: {
       consistentUI: flags.ENABLE_CONSISTENT_UI,
       agentMode: flags.ENABLE_AGENT_MODE,
       backendTransforms: flags.ENABLE_BACKEND_TRANSFORMS,
+      observeSystemTheme: flags.OBSERVE_SYSTEM_THEME,
       opalAdk: flags.ENABLE_OPAL_ADK,
       outputTemplates: flags.ENABLE_OUTPUT_TEMPLATES,
       googleOne: flags.ENABLE_GOOGLE_ONE,

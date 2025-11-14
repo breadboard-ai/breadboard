@@ -39,6 +39,7 @@ async function readFlags(caps: Capabilities): Promise<Outcome<RuntimeFlags>> {
       consistentUI: false,
       agentMode: false,
       backendTransforms: false,
+      observeSystemTheme: false,
       opalAdk: false,
       outputTemplates: false,
       googleOne: false,

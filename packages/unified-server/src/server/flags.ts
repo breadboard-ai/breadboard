@@ -36,6 +36,8 @@ export const ENABLE_BACKEND_TRANSFORMS = getBoolean(
   "ENABLE_BACKEND_TRANSFORMS"
 );
 
+export const OBSERVE_SYSTEM_THEME = getBoolean("OBSERVE_SYSTEM_THEME");
+
 export const ENABLE_CONSISTENT_UI: boolean = getBoolean("ENABLE_CONSISTENT_UI");
 
 export const ENABLE_GULF_RENDERER: boolean = getBoolean("ENABLE_GULF_RENDERER");
