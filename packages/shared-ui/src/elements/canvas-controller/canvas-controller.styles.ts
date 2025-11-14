@@ -30,7 +30,7 @@ export const styles = [
       height: 100%;
       overscroll-behavior: contain;
       overflow: auto;
-      color: var(--n-10);
+      color: var(--light-dark-n-10);
       contain: strict;
     }
 
@@ -40,7 +40,7 @@ export const styles = [
         position: absolute;
         top: 0;
         left: 0;
-        background: oklch(from var(--n-10) l c h / 33%);
+        background: oklch(from var(--light-dark-n-10) l c h / 33%);
         width: 100%;
         height: 100%;
         z-index: 5;
@@ -81,7 +81,7 @@ export const styles = [
     #controls-activity {
       display: grid;
       grid-auto-rows: 1fr calc(var(--bb-grid-size) * 14);
-      background: var(--n-100);
+      background: var(--light-dark-n-100);
     }
 
     #controls-activity-content {
@@ -93,8 +93,8 @@ export const styles = [
     }
 
     #stop {
-      background: var(--n-100) var(--bb-icon-stop-circle) center center / 24px
-        24px no-repeat;
+      background: var(--light-dark-n-100) var(--bb-icon-stop-circle) center
+        center / 24px 24px no-repeat;
       height: 32px;
       width: 32px;
       font-size: 0;
@@ -108,7 +108,7 @@ export const styles = [
     }
 
     #controls {
-      border-top: 1px solid var(--n-90);
+      border-top: 1px solid var(--light-dark-n-90);
       display: flex;
       flex-direction: row;
       align-items: center;
@@ -143,7 +143,7 @@ export const styles = [
       display: block;
       position: absolute;
       z-index: 100;
-      background: var(--n-100);
+      background: var(--light-dark-n-100);
       padding: 10px;
       width: 90%;
       max-width: 35vw;
@@ -168,7 +168,7 @@ export const styles = [
     }
 
     .failed-to-load {
-      background: var(--n-98);
+      background: var(--light-dark-n-98);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -180,14 +180,14 @@ export const styles = [
       margin: 0 0 calc(var(--bb-grid-size) * 2) 0;
       font-size: var(--bb-title-large);
       font-weight: 500;
-      color: var(--n-20);
+      color: var(--light-dark-n-20);
     }
 
     .failed-to-load p {
       margin: 0;
       font-size: var(--bb-label-medium);
       font-weight: 400;
-      color: var(--n-98);
+      color: var(--light-dark-n-98);
     }
 
     .failed-to-load h1,
@@ -209,7 +209,7 @@ export const styles = [
       width: 100%;
       height: 100%;
       z-index: 11;
-      background: var(--p-98);
+      background: var(--light-dark-p-98);
     }
 
     #side-nav,
@@ -226,7 +226,7 @@ export const styles = [
       justify-content: space-between;
       position: relative;
       z-index: 2;
-      background: var(--n-100);
+      background: var(--light-dark-n-100);
 
       & #side-nav-controls {
         display: flex;
@@ -237,15 +237,16 @@ export const styles = [
         height: var(--bb-grid-size-14);
 
         &.showing-preview {
-          background: var(--s-90, var(--n-100));
-          border-bottom: 1px solid var(--s-80, var(--n-90));
+          background: var(--light-dark-s-90, var(--light-dark-n-100));
+          border-bottom: 1px solid
+            var(--light-dark-s-80, var(--light-dark-n-90));
 
           & button {
-            color: var(--p-15, var(--n-10));
+            color: var(--light-dark-p-15, var(--light-dark-n-10));
 
             &:hover,
             &[disabled] {
-              background: var(--s-95, var(--n-98));
+              background: var(--light-dark-s-95, var(--light-dark-n-98));
             }
           }
         }
@@ -261,7 +262,7 @@ export const styles = [
           border-radius: var(--bb-grid-size-16);
           font-size: 12px;
           background: none;
-          color: var(--n-15, var(--n-10));
+          color: var(--light-dark-n-15, var(--light-dark-n-10));
           height: 32px;
           border: none;
           margin: 0 var(--bb-grid-size-2);
@@ -273,7 +274,7 @@ export const styles = [
 
           &:hover,
           &[disabled] {
-            background: var(--n-95, var(--n-98));
+            background: var(--light-dark-n-95, var(--light-dark-n-98));
           }
 
           &[disabled] {
@@ -310,7 +311,7 @@ export const styles = [
         background: none;
         border-radius: var(--bb-grid-size-2);
         border: none;
-        color: var(--n-40);
+        color: var(--light-dark-n-40);
         cursor: pointer;
         display: flex;
         font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
@@ -331,10 +332,10 @@ export const styles = [
         }
 
         &#toggle-edit-history:hover {
-          background: var(--n-98);
+          background: var(--light-dark-n-98);
         }
         &#close-edit-history:hover {
-          color: var(--n-10);
+          color: var(--light-dark-n-10);
         }
       }
     }
@@ -373,7 +374,7 @@ export const styles = [
       padding: var(--bb-grid-size-2);
       font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
         var(--bb-font-family);
-      border-bottom: 1px solid var(--n-90);
+      border-bottom: 1px solid var(--light-dark-n-90);
       justify-content: space-between;
     }
 
@@ -394,13 +395,13 @@ export const styles = [
 
     #create-new:hover,
     #create-new:focus {
-      background-color: var(--n-98);
+      background-color: var(--light-dark-n-98);
       opacity: 1;
     }
 
     #section-nav {
       height: var(--bb-grid-size-14);
-      border-bottom: 1px solid var(--n-90);
+      border-bottom: 1px solid var(--light-dark-n-90);
       display: flex;
       align-items: flex-end;
       justify-content: center;
@@ -413,11 +414,11 @@ export const styles = [
         margin: 0 var(--bb-grid-size-2);
         font: 400 var(--bb-label-small) / var(--bb-label-line-height-small)
           var(--bb-font-family);
-        color: var(--n-10);
+        color: var(--light-dark-n-10);
 
         &[disabled] {
           opacity: 1;
-          color: var(--p-50);
+          color: var(--light-dark-p-50);
 
           &::after {
             content: "";
@@ -427,7 +428,7 @@ export const styles = [
             bottom: 0;
             left: 0;
             border-radius: var(--bb-grid-size) var(--bb-grid-size) 0 0;
-            background: var(--p-50);
+            background: var(--light-dark-p-50);
           }
         }
 
@@ -435,7 +436,7 @@ export const styles = [
           cursor: pointer;
 
           &:hover {
-            color: var(--p-30);
+            color: var(--light-dark-p-30);
           }
         }
       }
@@ -449,7 +450,7 @@ export const styles = [
       width: 18px;
       height: 18px;
       background: var(--bb-input-500);
-      color: var(--n-100);
+      color: var(--light-dark-n-100);
       border-radius: 50%;
       font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
         var(--bb-font-family);
@@ -475,7 +476,7 @@ export const styles = [
     }
 
     bb-event-details {
-      background: var(--n-100);
+      background: var(--light-dark-n-100);
       position: absolute;
       top: 0px;
       left: 0px;
@@ -491,12 +492,12 @@ export const styles = [
       position: absolute;
       top: 8px;
       right: 4px;
-      background: var(--n-100) var(--bb-icon-arrow-back) 6px center / 20px 20px
-        no-repeat;
-      border: 1px solid var(--n-98);
+      background: var(--light-dark-n-100) var(--bb-icon-arrow-back) 6px center /
+        20px 20px no-repeat;
+      border: 1px solid var(--light-dark-n-98);
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
-      color: var(--n-40);
+      color: var(--light-dark-n-40);
       padding: var(--bb-grid-size) var(--bb-grid-size-4) var(--bb-grid-size)
         var(--bb-grid-size-8);
       margin-right: var(--bb-grid-size-2);
@@ -508,8 +509,8 @@ export const styles = [
 
       &:hover,
       &:focus {
-        background-color: var(--n-98);
-        color: var(--n-10);
+        background-color: var(--light-dark-n-98);
+        color: var(--light-dark-n-10);
       }
     }
 

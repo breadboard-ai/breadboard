@@ -44,7 +44,7 @@ export class VEEditBoardModal extends LitElement {
         & textarea {
           padding: var(--bb-grid-size-4);
           border-radius: var(--bb-grid-size-4);
-          border: 1px solid var(--n-70);
+          border: 1px solid var(--light-dark-n-70);
           box-sizing: border-box;
           resize: none;
           field-sizing: content;

@@ -16,8 +16,8 @@ export const styles = [
       cursor: pointer;
       display: inline-flex;
       padding: 0 var(--bb-grid-size-2) 0;
-      background: var(--n-98);
-      color: var(--n-40);
+      background: var(--light-dark-n-98);
+      color: var(--light-dark-n-40);
       border-radius: var(--bb-grid-size-2);
       border: none;
       height: var(--bb-grid-size-5);
@@ -94,42 +94,42 @@ export const styles = [
       &.input {
         background: var(--ui-get-input-secondary) 5px center / 16px 16px
           no-repeat;
-        color: var(--n-10);
+        color: var(--light-dark-n-10);
       }
 
       &.output {
         background: var(--ui-display) 5px center / 16px 16px no-repeat;
-        color: var(--n-10);
+        color: var(--light-dark-n-10);
       }
 
       &.generative {
         background: var(--ui-generate-secondary) 5px center / 16px 16px
           no-repeat;
-        color: var(--n-10);
+        color: var(--light-dark-n-10);
       }
 
       &.asset {
         background: var(--ui-asset-secondary) 5px center / 16px 16px no-repeat;
-        color: var(--n-10);
+        color: var(--light-dark-n-10);
       }
 
       &.tool {
-        background: var(--n-90) 5px center / 16px 16px no-repeat;
-        color: var(--n-10);
+        background: var(--light-dark-n-90) 5px center / 16px 16px no-repeat;
+        color: var(--light-dark-n-10);
       }
 
       &.param {
-        background: var(--n-60) 5px center / 16px 16px no-repeat;
-        color: var(--n-10);
+        background: var(--light-dark-n-60) 5px center / 16px 16px no-repeat;
+        color: var(--light-dark-n-10);
       }
 
       &.selected {
-        outline: 1px solid var(--n-0);
+        outline: 1px solid var(--light-dark-n-0);
       }
 
       &.invalid {
-        background-color: var(--e-90);
-        color: var(--e-30);
+        background-color: var(--light-dark-e-90);
+        color: var(--light-dark-e-30);
       }
     }
   `,

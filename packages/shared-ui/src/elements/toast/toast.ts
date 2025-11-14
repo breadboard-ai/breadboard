@@ -43,8 +43,8 @@ export class Toast extends LitElement {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--n-0);
-        color: var(--n-100);
+        background: var(--light-dark-n-0);
+        color: var(--light-dark-n-100);
         box-shadow:
           0 2px 3px 0 rgba(0, 0, 0, 0.13),
           0 7px 9px 0 rgba(0, 0, 0, 0.16);
@@ -58,11 +58,11 @@ export class Toast extends LitElement {
       }
 
       :host([type="warning"]) {
-        color: var(--e-90);
+        color: var(--light-dark-e-90);
       }
 
       :host([type="error"]) {
-        color: var(--e-80);
+        color: var(--light-dark-e-80);
       }
 
       :host(.toasted) {

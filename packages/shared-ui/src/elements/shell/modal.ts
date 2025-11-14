@@ -99,12 +99,12 @@ export class VEModal extends LitElement {
         border: none;
         position: relative;
         background: transparent;
-        color: var(--color, var(--n-0));
+        color: var(--color, var(--light-dark-n-0));
 
         & #container {
           animation: fadeAndScaleIn 0.3s cubic-bezier(0.5, 0, 0.3, 1) 0.15s
             backwards;
-          background: var(--background, var(--n-100));
+          background: var(--background, var(--light-dark-n-100));
           padding: var(--bb-grid-size-4) var(--bb-grid-size-6);
           border-radius: var(--bb-grid-size-4);
           position: fixed;
@@ -154,7 +154,7 @@ export class VEModal extends LitElement {
               border: none;
               background: transparent;
 
-              color: var(--n-0);
+              color: var(--light-dark-n-0);
               padding: 0 var(--bb-grid-size-4);
               border-radius: var(--bb-grid-size-16);
               margin-right: var(--bb-grid-size-3);
@@ -163,10 +163,10 @@ export class VEModal extends LitElement {
             & #save {
               height: 40px;
               border: none;
-              background: var(--n-0);
+              background: var(--light-dark-n-0);
               border-radius: var(--bb-grid-size-16);
 
-              color: var(--n-100);
+              color: var(--light-dark-n-100);
               padding: 0 var(--bb-grid-size-4);
             }
           }
@@ -174,7 +174,7 @@ export class VEModal extends LitElement {
 
         a {
           display: block;
-          color: var(--n-80);
+          color: var(--light-dark-n-80);
           font-weight: 500;
           text-decoration: none;
           text-align: center;

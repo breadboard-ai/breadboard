@@ -38,7 +38,9 @@ export class LandingCarouselModal extends LitElement {
 
       dialog {
         animation: fadeIn 0.4s cubic-bezier(0, 0, 0.3, 1) 0.2s backwards;
-        background: oklch(from var(--n-100) l c h / calc(alpha * 0.4));
+        background: oklch(
+          from var(--light-dark-n-100) l c h / calc(alpha * 0.4)
+        );
         border: none;
         width: 100%;
         height: 100%;
@@ -76,9 +78,9 @@ export class LandingCarouselModal extends LitElement {
               align-items: center;
               justify-content: center;
               border-radius: 50%;
-              background: var(--n-0);
+              background: var(--light-dark-n-0);
               border: none;
-              color: var(--n-100);
+              color: var(--light-dark-n-100);
               width: 56px;
               height: 56px;
               cursor: pointer;
@@ -144,8 +146,8 @@ export class LandingCarouselModal extends LitElement {
 
             & .navigation {
               border-radius: 50%;
-              background: var(--n-0);
-              color: var(--n-100);
+              background: var(--light-dark-n-0);
+              color: var(--light-dark-n-100);
               display: flex;
               align-items: center;
               justify-content: center;
@@ -183,8 +185,8 @@ export class LandingCarouselModal extends LitElement {
               align-items: center;
               border: none;
               font-size: 16px;
-              color: var(--n-100);
-              background: var(--n-0);
+              color: var(--light-dark-n-100);
+              background: var(--light-dark-n-0);
               border-radius: 60px;
               height: 56px;
               padding: 0 var(--bb-grid-size-6);
@@ -257,7 +259,9 @@ export class LandingCarouselModal extends LitElement {
       }
 
       dialog::backdrop {
-        background: oklch(from var(--n-100) l c h / calc(alpha * 0.1));
+        background: oklch(
+          from var(--light-dark-n-100) l c h / calc(alpha * 0.1)
+        );
         animation: fadeIn 0.3s cubic-bezier(0, 0, 0.3, 1) forwards;
         backdrop-filter: blur(16px);
       }

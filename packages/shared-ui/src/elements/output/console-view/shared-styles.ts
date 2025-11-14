@@ -16,8 +16,8 @@ export const sharedStyles = [
       margin-top: var(--bb-grid-size-9);
       border-radius: var(--bb-grid-size-2);
       padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
-      border: 1px solid var(--n-90);
-      color: var(--n-10);
+      border: 1px solid var(--light-dark-n-90);
+      color: var(--light-dark-n-10);
       font-size: 12px;
       display: flex;
       align-items: center;
@@ -36,7 +36,7 @@ export const sharedStyles = [
         position: absolute;
         left: var(--bb-grid-size-3);
         top: calc(-4px - var(--bb-grid-size-5));
-        color: var(--n-40);
+        color: var(--light-dark-n-40);
       }
 
       &::before {
@@ -44,7 +44,7 @@ export const sharedStyles = [
         position: absolute;
         left: var(--bb-grid-size-3);
         top: calc(-1px - var(--bb-grid-size-5));
-        color: var(--n-40);
+        color: var(--light-dark-n-40);
       }
 
       &:has(.g-icon)::before {
@@ -57,7 +57,7 @@ export const sharedStyles = [
     }
 
     .step-error {
-      border-color: var(--e-50);
+      border-color: var(--light-dark-e-50);
     }
   `,
 ] as CSSResultGroup;

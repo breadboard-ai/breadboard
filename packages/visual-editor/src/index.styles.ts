@@ -75,8 +75,8 @@ export const styles = [
       }
 
       &.urgent {
-        background: var(--e-90);
-        color: var(--e-40);
+        background: var(--light-dark-e-90);
+        color: var(--light-dark-e-40);
       }
 
       &.warning {
@@ -130,8 +130,8 @@ export const styles = [
     .close-board:not([disabled]):hover {
       transition-duration: 0.1s;
       opacity: 1;
-      background-color: var(--n-90);
-      border: 2px solid var(--n-90);
+      background-color: var(--light-dark-n-90);
+      border: 2px solid var(--light-dark-n-90);
     }
 
     #tab-edit {
@@ -162,7 +162,7 @@ export const styles = [
     #toggle-preview,
     #toggle-settings,
     #toggle-overflow-menu {
-      color: var(--n-40);
+      color: var(--light-dark-n-40);
       padding: 0 16px 0 42px;
       font-size: var(--bb-text-medium);
       margin: 0 var(--bb-grid-size-4) 0 0;
@@ -180,13 +180,13 @@ export const styles = [
 
     #toggle-board-item {
       height: var(--bb-grid-size-7);
-      border: 1px solid var(--n-90);
+      border: 1px solid var(--light-dark-n-90);
       padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
       border-radius: var(--bb-grid-size-16);
       margin: 0 var(--bb-grid-size-2) 0 0;
-      background: var(--n-100);
+      background: var(--light-dark-n-100);
       cursor: pointer;
 
       &.flow {
@@ -252,7 +252,7 @@ export const styles = [
     }
 
     #toggle-preview.active {
-      background-color: var(--p-20);
+      background-color: var(--light-dark-p-20);
     }
 
     #toggle-settings {
@@ -264,7 +264,7 @@ export const styles = [
     }
 
     #toggle-settings.active {
-      background-color: var(--n-98);
+      background-color: var(--light-dark-n-98);
     }
 
     #new-board {
@@ -295,10 +295,10 @@ export const styles = [
     }
 
     header {
-      background: var(--n-100);
-      border-bottom: 1px solid var(--n-90);
+      background: var(--light-dark-n-100);
+      border-bottom: 1px solid var(--light-dark-n-90);
       display: block;
-      color: var(--n-40);
+      color: var(--light-dark-n-40);
       z-index: 1;
       width: 100%;
       overflow: hidden;
@@ -332,7 +332,7 @@ export const styles = [
         font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
           var(--bb-font-family);
         height: var(--bb-grid-size-14);
-        border-bottom: 1px solid var(--n-98);
+        border-bottom: 1px solid var(--light-dark-n-98);
         padding: 0 var(--bb-grid-size-6);
       }
 
@@ -350,7 +350,7 @@ export const styles = [
       .controls {
         display: flex;
         justify-content: flex-end;
-        border-top: 1px solid var(--n-98);
+        border-top: 1px solid var(--light-dark-n-98);
         padding: var(--bb-grid-size-6);
       }
 
@@ -358,7 +358,7 @@ export const styles = [
         padding: var(--bb-grid-size-2);
         border: none;
         border-radius: var(--bb-grid-size);
-        background-color: var(--p-40);
+        background-color: var(--light-dark-p-40);
         color: white;
 
         &[disabled] {
@@ -419,8 +419,8 @@ export const styles = [
           font-size: 0;
           padding: 0;
           margin: 0;
-          background: var(--n-98);
-          border: 1px solid var(--n-90);
+          background: var(--light-dark-n-98);
+          border: 1px solid var(--light-dark-n-90);
           border-radius: var(--bb-grid-size-16);
 
           &::before,
@@ -448,15 +448,15 @@ export const styles = [
           }
 
           &.create::before {
-            background: var(--p-50) var(--bb-icon-flowchart-inverted) 10px
-              center / 20px 20px no-repeat;
-            color: var(--n-100);
+            background: var(--light-dark-p-50) var(--bb-icon-flowchart-inverted)
+              10px center / 20px 20px no-repeat;
+            color: var(--light-dark-n-100);
           }
 
           &.deploy::after {
-            background: var(--p-50) var(--bb-icon-phone-inverted) 10px center /
-              20px 20px no-repeat;
-            color: var(--n-100);
+            background: var(--light-dark-p-50) var(--bb-icon-phone-inverted)
+              10px center / 20px 20px no-repeat;
+            color: var(--light-dark-n-100);
           }
         }
       }
@@ -494,7 +494,7 @@ export const styles = [
       content: "";
       width: 48px;
       height: 1px;
-      background: var(--p-30);
+      background: var(--light-dark-p-30);
       bottom: -1px;
       left: 0;
       position: absolute;
@@ -512,8 +512,11 @@ export const styles = [
     #tab-container .tab {
       font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
-      background: linear-gradient(var(--n-100) 86%, var(--n-98));
-      color: var(--n-20);
+      background: linear-gradient(
+        var(--light-dark-n-100) 86%,
+        var(--light-dark-n-98)
+      );
+      color: var(--light-dark-n-20);
       margin: 0;
       height: calc(100% - var(--bb-grid-size) * 2);
       border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
@@ -537,17 +540,17 @@ export const styles = [
       max-width: 320px;
       min-width: 10%;
       field-sizing: content;
-      color: var(--n-20);
+      color: var(--light-dark-n-20);
       margin-right: var(--bb-grid-size-2);
       outline: none;
       background: transparent;
 
       &:hover {
-        border: 1px solid var(--n-98);
+        border: 1px solid var(--light-dark-n-98);
       }
 
       &:focus {
-        border: 1px solid var(--n-40);
+        border: 1px solid var(--light-dark-n-40);
       }
     }
 
@@ -559,7 +562,7 @@ export const styles = [
       padding-left: var(--bb-grid-size-5);
       font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
         var(--bb-font-family);
-      color: var(--n-50);
+      color: var(--light-dark-n-50);
     }
 
     .save-status.can-save,
@@ -598,7 +601,7 @@ export const styles = [
     }
 
     #content {
-      background: var(--n-95);
+      background: var(--light-dark-n-95);
       max-height: calc(100svh - var(--header-height));
       display: flex;
       flex-direction: column;
@@ -677,7 +680,7 @@ export const styles = [
       padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-9);
       border-radius: var(--bb-grid-size-16);
       margin: 0 var(--bb-grid-size-2) 0 0;
-      background: var(--n-100);
+      background: var(--light-dark-n-100);
       cursor: pointer;
 
       color: #004a77;

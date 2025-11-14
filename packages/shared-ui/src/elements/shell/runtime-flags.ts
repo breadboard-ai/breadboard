@@ -30,7 +30,7 @@ export class VERuntimeFlags extends LitElement {
 
       p {
         margin: 0 0 var(--bb-grid-size-3) 0;
-        color: var(--e-20);
+        color: var(--light-dark-e-20);
       }
 
       form {
@@ -57,8 +57,8 @@ export class VERuntimeFlags extends LitElement {
             padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
             border-radius: var(--bb-grid-size-16);
             cursor: pointer;
-            background: var(--n-0);
-            color: var(--n-100);
+            background: var(--light-dark-n-0);
+            color: var(--light-dark-n-100);
             border: none;
 
             -webkit-appearance: none;

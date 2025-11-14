@@ -86,7 +86,7 @@ export class FeedbackPanel extends LitElement {
 
         .g-icon {
           animation: spin 1s linear infinite;
-          color: var(--p-40);
+          color: var(--light-dark-p-40);
           margin-right: var(--bb-grid-size-2);
         }
 

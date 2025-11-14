@@ -109,7 +109,7 @@ export class FlowgenInStepButton extends LitElement {
         align-items: center;
         border-radius: var(--bb-grid-size-7);
         border: 1px solid transparent;
-        background: var(--n-100);
+        background: var(--light-dark-n-100);
         padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
 
         bb-speech-to-text {
@@ -149,7 +149,7 @@ export class FlowgenInStepButton extends LitElement {
           margin: 0;
           padding: 0;
           background-color: transparent;
-          color: var(--n-70);
+          color: var(--light-dark-n-70);
 
           & .g-icon {
             font-size: 30px;
@@ -163,7 +163,7 @@ export class FlowgenInStepButton extends LitElement {
         }
 
         &:has(textarea:invalid) #submit-button .g-icon::before {
-          color: var(--n-90);
+          color: var(--light-dark-n-90);
         }
       }
 
@@ -194,11 +194,11 @@ export class FlowgenInStepButton extends LitElement {
       #generating-status-detail {
         font-size: 14px;
         margin-top: 8px;
-        color: var(--n-40);
+        color: var(--light-dark-n-40);
       }
 
       #error {
-        color: var(--e-40);
+        color: var(--light-dark-e-40);
         margin: var(--bb-grid-size-2);
         overflow: auto;
       }

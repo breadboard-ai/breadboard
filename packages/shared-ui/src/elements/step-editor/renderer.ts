@@ -204,7 +204,7 @@ export class Renderer extends LitElement {
 
       :host {
         display: block;
-        background: var(--n-95);
+        background: var(--light-dark-n-95);
         overflow: hidden;
         transform: translate(0, 0);
         contain: strict;
@@ -232,7 +232,7 @@ export class Renderer extends LitElement {
         width: 100%;
         margin: 0;
         font: 500 10px / 1 var(--bb-font-family);
-        color: var(--n-50, var(--n-98));
+        color: var(--light-dark-n-50, var(--light-dark-n-98));
         text-align: center;
         padding: var(--bb-grid-size);
         background: transparent;
@@ -259,8 +259,8 @@ export class Renderer extends LitElement {
         display: block;
         pointer-events: none;
         position: absolute;
-        border: 1px solid var(--n-98);
-        background: oklch(from var(--n-10) l c h / 0.05);
+        border: 1px solid var(--light-dark-n-98);
+        background: oklch(from var(--light-dark-n-10) l c h / 0.05);
         z-index: 4;
       }
 

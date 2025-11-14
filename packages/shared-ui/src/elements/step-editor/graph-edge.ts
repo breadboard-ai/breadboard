@@ -141,7 +141,7 @@ export class GraphEdge extends Box {
 
       .g-icon {
         font-size: 12px;
-        color: var(--n-0);
+        color: var(--light-dark-n-0);
       }
     `,
   ];

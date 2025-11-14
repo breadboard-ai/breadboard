@@ -179,10 +179,10 @@ export class TextEditor extends LitElement {
 
       :host {
         display: block;
-        background: var(--n-100);
+        background: var(--light-dark-n-100);
         font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
           var(--bb-font-family);
-        color: var(--n-10);
+        color: var(--light-dark-n-10);
         line-height: var(--bb-grid-size-6);
         position: relative;
       }
@@ -206,7 +206,7 @@ export class TextEditor extends LitElement {
           content: "Type your prompt here";
           font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
-          color: var(--n-50);
+          color: var(--light-dark-n-50);
           line-height: var(--bb-grid-size-6);
 
           position: absolute;

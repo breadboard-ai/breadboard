@@ -66,7 +66,7 @@ export class VEMCPServersSettings extends SignalWatcher(LitElement) {
             border-radius: var(--bb-grid-size-2);
             padding: var(--bb-grid-size-3) var(--bb-grid-size-12)
               var(--bb-grid-size-3) var(--bb-grid-size-3);
-            outline: 1px solid var(--n-80);
+            outline: 1px solid var(--light-dark-n-80);
             cursor: pointer;
             opacity: 0.6;
             transition:
@@ -77,12 +77,12 @@ export class VEMCPServersSettings extends SignalWatcher(LitElement) {
 
             &:hover,
             &:focus {
-              outline: 3px solid var(--n-60);
+              outline: 3px solid var(--light-dark-n-60);
               opacity: 0.8;
             }
 
             &:has(+ input:checked) {
-              outline: 3px solid var(--n-0);
+              outline: 3px solid var(--light-dark-n-0);
               opacity: 1;
             }
           }
@@ -94,12 +94,12 @@ export class VEMCPServersSettings extends SignalWatcher(LitElement) {
             display: flex;
             align-items: center;
             padding: 0;
-            color: var(--n-0);
+            color: var(--light-dark-n-0);
             width: 32px;
             height: 32px;
             border: none;
             border-radius: 50%;
-            background: var(--n-100);
+            background: var(--light-dark-n-100);
             white-space: nowrap;
             opacity: 0.7;
             transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
@@ -126,7 +126,7 @@ export class VEMCPServersSettings extends SignalWatcher(LitElement) {
         & input {
           padding: var(--bb-grid-size-4);
           border-radius: var(--bb-grid-size-4);
-          border: 1px solid var(--n-70);
+          border: 1px solid var(--light-dark-n-70);
           box-sizing: border-box;
         }
 
@@ -145,7 +145,7 @@ export class VEMCPServersSettings extends SignalWatcher(LitElement) {
           flex: 1;
           display: flex;
           align-items: center;
-          color: var(--n-0);
+          color: var(--light-dark-n-0);
           margin: 0 0 var(--bb-grid-size-2) 0;
 
           & .g-icon {
@@ -157,7 +157,7 @@ export class VEMCPServersSettings extends SignalWatcher(LitElement) {
           }
 
           & .error {
-            color: var(--e-40);
+            color: var(--light-dark-e-40);
           }
         }
 
@@ -166,7 +166,7 @@ export class VEMCPServersSettings extends SignalWatcher(LitElement) {
           border: none;
           background: transparent;
 
-          color: var(--n-0);
+          color: var(--light-dark-n-0);
           padding: 0 var(--bb-grid-size-4);
           border-radius: var(--bb-grid-size-16);
           margin-right: var(--bb-grid-size-3);
@@ -186,9 +186,9 @@ export class VEMCPServersSettings extends SignalWatcher(LitElement) {
           align-items: center;
           height: 40px;
           border: none;
-          background: var(--n-0);
+          background: var(--light-dark-n-0);
           border-radius: var(--bb-grid-size-16);
-          color: var(--n-100);
+          color: var(--light-dark-n-100);
           padding: 0 var(--bb-grid-size-4);
 
           & .g-icon {

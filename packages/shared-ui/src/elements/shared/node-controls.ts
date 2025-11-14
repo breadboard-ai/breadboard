@@ -70,7 +70,7 @@ export class NodeRunControl extends LitElement {
         &::before {
           content: "";
           border-radius: 50%;
-          background: oklch(from var(--n-0) l c h / 0.05);
+          background: oklch(from var(--light-dark-n-0) l c h / 0.05);
           position: absolute;
           width: 100%;
           height: 100%;

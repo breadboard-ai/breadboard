@@ -70,8 +70,8 @@ export class Graph extends Box {
 
       #graph-boundary {
         position: fixed;
-        border: 1px solid var(--p-80);
-        background: oklch(from var(--n-100) l c h / 0.25);
+        border: 1px solid var(--light-dark-p-80);
+        background: oklch(from var(--light-dark-n-100) l c h / 0.25);
         border-radius: var(--bb-grid-size-4);
         transform-origin: 0 0;
         left: 0;
@@ -87,11 +87,11 @@ export class Graph extends Box {
           left: var(--bb-grid-size-5);
           top: calc(-1 * var(--bb-grid-size-3));
           padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
-          border: 1px solid var(--p-80);
+          border: 1px solid var(--light-dark-p-80);
           border-radius: var(--bb-grid-size-16);
-          background: var(--bb-icon-home-repair-service) var(--p-98) 8px
-            center / 20px 20px no-repeat;
-          color: var(--p-10);
+          background: var(--bb-icon-home-repair-service) var(--light-dark-p-98)
+            8px center / 20px 20px no-repeat;
+          color: var(--light-dark-p-10);
           font: 500 var(--bb-label-medium) / var(--bb-label-line-height-medium)
             var(--bb-font-family);
         }

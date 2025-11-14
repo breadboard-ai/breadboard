@@ -57,10 +57,10 @@ export class ItemModal extends LitElement {
           & button {
             display: flex;
             align-items: center;
-            border: 1px solid var(--n-95);
+            border: 1px solid var(--light-dark-n-95);
             padding: 0 var(--bb-grid-size-2);
             height: var(--bb-grid-size-10);
-            background: var(--n-100);
+            background: var(--light-dark-n-100);
             width: 100%;
             border-radius: var(--bb-grid-size-16);
             text-align: left;
@@ -75,8 +75,8 @@ export class ItemModal extends LitElement {
 
               &:hover,
               &:focus {
-                border: 1px solid var(--n-90);
-                background: var(--n-98);
+                border: 1px solid var(--light-dark-n-90);
+                background: var(--light-dark-n-98);
               }
             }
           }
@@ -86,8 +86,8 @@ export class ItemModal extends LitElement {
       #create-new {
         display: flex;
         align-items: center;
-        background: var(--n-0, var(--n-98));
-        color: var(--n-100, var(--n-40));
+        background: var(--light-dark-n-0, var(--light-dark-n-98));
+        color: var(--light-dark-n-100, var(--light-dark-n-40));
         border-radius: var(--bb-grid-size-16);
         border: none;
         padding: 0 var(--bb-grid-size-4);

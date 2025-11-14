@@ -59,7 +59,7 @@ export class FlowgenHomepagePanel extends LitElement {
       #dismiss-button {
         background: none;
         border: none;
-        color: var(--n-0);
+        color: var(--light-dark-n-0);
         font-size: 1.2rem;
         cursor: pointer;
         padding: 0;
@@ -67,24 +67,24 @@ export class FlowgenHomepagePanel extends LitElement {
       }
 
       .dismiss-button:hover {
-        color: var(--n-80);
+        color: var(--light-dark-n-80);
       }
 
       p {
         word-break: break-all;
-        color: var(--n-0);
+        color: var(--light-dark-n-0);
         margin: var(--bb-grid-size-2) 0;
 
         & .error {
           word-break: auto-phrase;
-          color: var(--e-30);
+          color: var(--light-dark-e-30);
         }
       }
 
       #feedback {
-        color: var(--n-0);
+        color: var(--light-dark-n-0);
         transition: var(--color-transition);
-        background: var(--n-100);
+        background: var(--light-dark-n-100);
         border-radius: var(--bb-grid-size-2);
         padding-left: var(--bb-grid-size-5);
         padding-right: var(--bb-grid-size-5);
@@ -124,7 +124,7 @@ export class FlowgenHomepagePanel extends LitElement {
         flex: 1;
         width: 100%;
         background: #fff;
-        color: var(--n-0, var(--n-10));
+        color: var(--light-dark-n-0, var(--light-dark-n-10));
         border: none;
         border-radius: 40px;
         padding: 0.5lh 1lh;
@@ -133,10 +133,10 @@ export class FlowgenHomepagePanel extends LitElement {
         font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
           var(--bb-font-family);
         line-height: 20px;
-        caret-color: var(--p-50);
+        caret-color: var(--light-dark-p-50);
 
         &::part(textarea)::placeholder {
-          color: var(--n-98);
+          color: var(--light-dark-n-98);
         }
 
         &:focus-within {
@@ -147,7 +147,7 @@ export class FlowgenHomepagePanel extends LitElement {
           display: flex;
           align-items: center;
           justify-content: flex-end;
-          color: var(--n-70);
+          color: var(--light-dark-n-70);
           font-size: 30px;
           width: 30px;
           height: 30px;

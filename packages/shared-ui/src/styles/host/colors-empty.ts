@@ -9,10 +9,10 @@
  * overrides.
  */
 export const emptyStyles: Record<string, string> = {
-  "--s-90": "var(--n-100)",
-  "--s-95": "var(--n-95)",
-  "--s-80": "var(--n-90)",
-  "--s-70": "var(--n-90)",
-  "--p-30": "var(--n-30)",
-  "--p-15": "var(--n-15)",
+  "--light-dark-s-90": "var(--light-dark-n-100)",
+  "--light-dark-s-95": "var(--light-dark-n-95)",
+  "--light-dark-s-80": "var(--light-dark-n-90)",
+  "--light-dark-s-70": "var(--light-dark-n-90)",
+  "--light-dark-p-30": "var(--light-dark-n-30)",
+  "--light-dark-p-15": "var(--light-dark-n-15)",
 };

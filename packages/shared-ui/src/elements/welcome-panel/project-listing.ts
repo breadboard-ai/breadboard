@@ -65,7 +65,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
 
       :host {
         display: block;
-        background: var(--n-100);
+        background: var(--light-dark-n-100);
         --items-per-column: 4;
         --column-gap: var(--bb-grid-size-8);
         --row-gap: var(--bb-grid-size-6);
@@ -117,7 +117,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
           display: flex;
           align-items: center;
           justify-content: center;
-          color: var(--n-40);
+          color: var(--light-dark-n-40);
           font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
           margin: var(--bb-grid-size-10) 0;
@@ -154,7 +154,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
             align-items: center;
             justify-content: center;
             height: 184px;
-            color: var(--n-0);
+            color: var(--light-dark-n-0);
             transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
 
             > * {
@@ -165,11 +165,11 @@ export class ProjectListing extends SignalWatcher(LitElement) {
               display: flex;
               justify-content: center;
               align-items: center;
-              color: var(--n-70);
+              color: var(--light-dark-n-70);
               font-size: 30px;
               width: 48px;
               height: 48px;
-              background: var(--n-100);
+              background: var(--light-dark-n-100);
               border-radius: 50%;
               margin-bottom: var(--bb-grid-size-4);
               font-weight: 500;
@@ -211,10 +211,10 @@ export class ProjectListing extends SignalWatcher(LitElement) {
           & #create-new-button-inline {
             display: flex;
             align-items: center;
-            color: var(--n-100);
+            color: var(--light-dark-n-100);
             border-radius: var(--bb-grid-size-16);
             border: none;
-            background: var(--n-0);
+            background: var(--light-dark-n-0);
             height: var(--bb-grid-size-10);
             padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
 
@@ -223,7 +223,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
             }
 
             & .g-icon {
-              color: var(--n-100);
+              color: var(--light-dark-n-100);
               margin-right: var(--bb-grid-size-2);
 
               &::after {
@@ -245,7 +245,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
 
               &:focus,
               &:hover {
-                background: var(--n-10);
+                background: var(--light-dark-n-10);
               }
             }
           }
@@ -297,7 +297,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
       #app-version {
         font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
           var(--bb-font-family);
-        color: var(--n-98);
+        color: var(--light-dark-n-98);
         position: relative;
         text-align: right;
         margin-top: -32px;

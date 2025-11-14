@@ -146,7 +146,7 @@ export class EntityEditor
     css`
       :host {
         display: block;
-        background: var(--n-100);
+        background: var(--light-dark-n-100);
       }
 
       #invalid-item,
@@ -163,7 +163,7 @@ export class EntityEditor
         margin: 0;
         height: var(--bb-grid-size-12);
         padding: 0 var(--bb-grid-size-6);
-        border-bottom: 1px solid var(--n-90);
+        border-bottom: 1px solid var(--light-dark-n-90);
         font: 500 var(--bb-title-medium) / var(--bb-title-line-height-medium)
           var(--bb-font-family);
         flex: 0 0 auto;
@@ -204,7 +204,7 @@ export class EntityEditor
         white-space: nowrap;
         padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-4);
         border-radius: var(--bb-grid-size-16);
-        background: var(--n-100);
+        background: var(--light-dark-n-100);
         color: #004a77;
         font: 500 var(--bb-title-small) / var(--bb-title-line-height-small)
           var(--bb-font-family);
@@ -238,8 +238,8 @@ export class EntityEditor
 
       .node {
         & h1 {
-          --outer-border: var(--n-80);
-          background: var(--n-90);
+          --outer-border: var(--light-dark-n-80);
+          background: var(--light-dark-n-90);
         }
 
         &.module {
@@ -292,8 +292,8 @@ export class EntityEditor
         > details {
           display: flex;
           flex-direction: column;
-          border-top: 1px solid var(--n-90);
-          color: var(--n-10);
+          border-top: 1px solid var(--light-dark-n-90);
+          color: var(--light-dark-n-10);
           font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
             var(--bb-font-family);
           padding: var(--bb-grid-size-3) var(--bb-grid-size-6)
@@ -345,7 +345,7 @@ export class EntityEditor
             --text-editor-padding-bottom: var(--bb-grid-size-2);
             --text-editor-padding-left: var(--bb-grid-size-3);
             border-radius: var(--bb-grid-size-2);
-            border: 1px solid var(--n-90);
+            border: 1px solid var(--light-dark-n-90);
           }
 
           & .port {
@@ -394,8 +394,8 @@ export class EntityEditor
                   outline: none;
 
                   &::before {
-                    border: 1px solid var(--p-30);
-                    outline: 1px solid var(--p-30);
+                    border: 1px solid var(--light-dark-p-30);
+                    outline: 1px solid var(--light-dark-p-30);
                   }
                 }
               }
@@ -618,13 +618,13 @@ export class EntityEditor
 
           &.stretch:has(+ .port:not(.stretch)) {
             margin-bottom: var(--bb-grid-size-3);
-            border-bottom: 1px solid var(--n-90);
+            border-bottom: 1px solid var(--light-dark-n-90);
           }
 
           &:not(.stretch):not(.info):has(+ .stretch) {
             margin-bottom: var(--bb-grid-size-14);
             padding-bottom: var(--bb-grid-size-3);
-            border-bottom: 1px solid var(--n-90);
+            border-bottom: 1px solid var(--light-dark-n-90);
 
             &::after {
               content: "Prompt";
@@ -642,9 +642,9 @@ export class EntityEditor
 
           &.info {
             height: var(--bb-grid-size-14);
-            background: var(--n-95);
-            border-top: 1px solid var(--n-90);
-            border-bottom: 1px solid var(--n-90);
+            background: var(--light-dark-n-95);
+            border-top: 1px solid var(--light-dark-n-90);
+            border-bottom: 1px solid var(--light-dark-n-90);
             display: flex;
             align-items: center;
             padding: 0 var(--bb-grid-size-6);
@@ -686,7 +686,7 @@ export class EntityEditor
 
           &:has(bb-text-editor) {
             &:not(:last-of-type) {
-              border-bottom: 1px solid var(--n-90);
+              border-bottom: 1px solid var(--light-dark-n-90);
             }
           }
 
@@ -712,7 +712,7 @@ export class EntityEditor
                 width: 100%;
                 height: 100%;
                 border: none;
-                background: var(--n-98);
+                background: var(--light-dark-n-98);
                 transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
                 border-radius: 50%;
                 padding: 0;
@@ -722,7 +722,7 @@ export class EntityEditor
 
                   &:hover,
                   &:focus {
-                    background: var(--n-95);
+                    background: var(--light-dark-n-95);
                   }
                 }
               }

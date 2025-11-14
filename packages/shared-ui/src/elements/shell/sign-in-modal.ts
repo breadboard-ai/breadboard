@@ -77,10 +77,10 @@ export class VESignInModal extends LitElement {
       #add-scope-button {
         /* TODO(aomarks) Use the common button styles class */
         margin-top: var(--bb-grid-size-4);
-        background: var(--n-0);
+        background: var(--light-dark-n-0);
         border: none;
         border-radius: var(--bb-grid-size-16);
-        color: var(--n-100);
+        color: var(--light-dark-n-100);
         padding: 16px 24px;
         font-size: 16px;
         cursor: pointer;
@@ -89,7 +89,7 @@ export class VESignInModal extends LitElement {
           margin-right: 8px;
         }
         &:hover {
-          background: var(--n-25);
+          background: var(--light-dark-n-25);
         }
       }
 

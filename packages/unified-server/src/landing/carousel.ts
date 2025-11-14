@@ -129,8 +129,8 @@ export class LandingCarousel extends LitElement {
         align-items: center;
         border: none;
         font-size: 16px;
-        color: var(--n-100);
-        background: var(--n-0);
+        color: var(--light-dark-n-100);
+        background: var(--light-dark-n-0);
         border-radius: 60px;
         height: 56px;
         padding: 0 var(--bb-grid-size-6);

@@ -52,8 +52,8 @@ export class WebcamVideoInput extends LitElement {
       #error {
         width: 100%;
         height: 100%;
-        background: var(--n-98);
-        color: var(--n-0);
+        background: var(--light-dark-n-98);
+        color: var(--light-dark-n-0);
         padding: var(--bb-grid-size-4);
         display: flex;
         align-items: center;
@@ -68,7 +68,7 @@ export class WebcamVideoInput extends LitElement {
         position: absolute;
         top: calc(50% - 10px);
         left: calc(50% - 10px);
-        color: var(--n-0);
+        color: var(--light-dark-n-0);
         animation: rotate linear 1s infinite forwards;
       }
 
@@ -89,8 +89,9 @@ export class WebcamVideoInput extends LitElement {
         align-items: center;
         justify-content: center;
         border-radius: var(--bb-grid-size-16);
-        background: var(--n-0, var(--n-98)) 8px center / 20px 20px no-repeat;
-        color: var(--n-100, var(--n-20));
+        background: var(--light-dark-n-0, var(--light-dark-n-98)) 8px center /
+          20px 20px no-repeat;
+        color: var(--light-dark-n-100, var(--light-dark-n-20));
         transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
         border: none;
         border: none;

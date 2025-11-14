@@ -63,8 +63,8 @@ export class GoogleDriveFileViewer extends LitElement {
         align-items: center;
         overflow: hidden;
         position: relative;
-        background: oklch(from var(--n-0) l c h / calc(alpha * 0.2));
-        box-shadow: inset 0 0 0 3px var(--n-90);
+        background: oklch(from var(--light-dark-n-0) l c h / calc(alpha * 0.2));
+        box-shadow: inset 0 0 0 3px var(--light-dark-n-90);
         border-radius: var(--bb-grid-size-3);
         padding: var(--bb-grid-size-3);
         width: 100%;
@@ -74,7 +74,7 @@ export class GoogleDriveFileViewer extends LitElement {
 
         > .g-icon {
           font-size: var(--icon-size, 60px);
-          color: var(--n-40);
+          color: var(--light-dark-n-40);
         }
 
         & .link-out {
@@ -85,8 +85,8 @@ export class GoogleDriveFileViewer extends LitElement {
           width: var(--bb-grid-size-8);
           height: var(--bb-grid-size-8);
           border-radius: var(--bb-grid-size-3);
-          background: var(--n-0);
-          color: var(--n-100);
+          background: var(--light-dark-n-0);
+          color: var(--light-dark-n-100);
           top: var(--bb-grid-size-3);
           right: var(--bb-grid-size-3);
 

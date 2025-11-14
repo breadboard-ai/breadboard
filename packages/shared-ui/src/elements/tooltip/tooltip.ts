@@ -112,8 +112,8 @@ export class Tooltip extends LitElement {
       :host {
         display: none;
         position: fixed;
-        background: var(--n-10);
-        color: var(--n-100);
+        background: var(--light-dark-n-10);
+        color: var(--light-dark-n-100);
         padding: var(--bb-grid-size) var(--bb-grid-size-2);
         border-radius: var(--bb-grid-size);
         z-index: 2000;

@@ -96,7 +96,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        border-bottom: 1px solid var(--n-90);
+        border-bottom: 1px solid var(--light-dark-n-90);
         padding: 0 var(--bb-grid-size-5);
         scrollbar-width: none;
         position: relative;
@@ -125,7 +125,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
             display: flex;
             align-items: center;
 
-            background: var(--n-90);
+            background: var(--light-dark-n-90);
             cursor: pointer;
             height: var(--bb-grid-size-8);
             border: none;
@@ -165,7 +165,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
           bb-item-select {
             --selected-item-padding-left: var(--bb-grid-size);
             --selected-item-padding-right: var(--bb-grid-size);
-            --selected-item-hover-color: var(--n-95);
+            --selected-item-hover-color: var(--light-dark-n-95);
             --selected-item-border-radius: 50%;
 
             margin: 0 0 0 var(--bb-grid-size-3);
@@ -211,12 +211,12 @@ export class VEHeader extends SignalWatcher(LitElement) {
           & #share {
             display: flex;
             align-items: center;
-            background: var(--n-100);
-            border: 1px solid var(--n-95);
+            background: var(--light-dark-n-100);
+            border: 1px solid var(--light-dark-n-95);
             border-radius: var(--bb-grid-size-16);
             margin: 0 0 0 var(--bb-grid-size-6);
 
-            color: var(--n-0);
+            color: var(--light-dark-n-0);
             height: var(--bb-grid-size-8);
             padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-2);
             font-size: 12px;
@@ -230,7 +230,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
               cursor: pointer;
 
               &:hover {
-                border: 1px solid var(--n-80);
+                border: 1px solid var(--light-dark-n-80);
               }
             }
           }
@@ -239,12 +239,12 @@ export class VEHeader extends SignalWatcher(LitElement) {
           & #remix {
             display: none;
             align-items: center;
-            background: var(--n-0);
+            background: var(--light-dark-n-0);
             border: none;
             border-radius: var(--bb-grid-size-16);
             margin: 0 var(--bb-grid-size) 0 var(--bb-grid-size-6);
 
-            color: var(--n-100);
+            color: var(--light-dark-n-100);
             height: var(--bb-grid-size-8);
             padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-2);
             font-size: 12px;
@@ -258,7 +258,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
               cursor: pointer;
 
               &:hover {
-                background: var(--n-25);
+                background: var(--light-dark-n-25);
               }
             }
           }
@@ -273,7 +273,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
       #tab-title {
         margin: 0;
         line-height: 1;
-        color: var(--n-0);
+        color: var(--light-dark-n-0);
         display: flex;
         align-items: center;
 
@@ -290,7 +290,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
         max-width: 200px;
         min-width: 10%;
         field-sizing: content;
-        color: var(--p-0);
+        color: var(--light-dark-p-0);
         margin-right: var(--bb-grid-size-2);
         outline: none;
         background: transparent;
@@ -303,11 +303,11 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
         &:not([disabled]) {
           &:hover {
-            border: 1px solid var(--n-70);
+            border: 1px solid var(--light-dark-n-70);
           }
 
           &:focus {
-            border: 1px solid var(--n-50);
+            border: 1px solid var(--light-dark-n-50);
           }
         }
       }
@@ -318,8 +318,9 @@ export class VEHeader extends SignalWatcher(LitElement) {
         line-height: 1;
         padding: var(--bb-grid-size) var(--bb-grid-size-3);
         border-radius: var(--bb-grid-size-16);
-        border: 1px solid var(--n-0);
+        border: 1px solid var(--light-dark-n-0);
         text-transform: uppercase;
+        color: var(--light-dark-p-0);
       }
 
       #status {
@@ -327,7 +328,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
         align-items: center;
         font-size: 10px;
         margin-left: var(--bb-grid-size-3);
-        color: var(--n-10);
+        color: var(--light-dark-n-10);
 
         & .g-icon {
           margin-right: var(--bb-grid-size);

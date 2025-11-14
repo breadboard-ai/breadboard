@@ -48,11 +48,11 @@ export class VEBetterOnDesktopModal extends LitElement {
       #switch {
         display: flex;
         align-items: center;
-        background: var(--n-0);
+        background: var(--light-dark-n-0);
         border: none;
         border-radius: var(--bb-grid-size-16);
         margin: 0 var(--bb-grid-size) 0 var(--bb-grid-size-6);
-        color: var(--n-100);
+        color: var(--light-dark-n-100);
         height: var(--bb-grid-size-8);
         padding: 0 var(--bb-grid-size-4);
         font-size: 14px;

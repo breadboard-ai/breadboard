@@ -72,8 +72,8 @@ export const styles: CSSResultGroup = [
     }
 
     .app-template {
-      background: var(--s-90, var(--background-color));
-      color: var(--p-25, var(--text-color));
+      background: var(--light-dark-s-90, var(--background-color));
+      color: var(--light-dark-p-25, var(--text-color));
       display: grid;
       grid-template-rows: minmax(0, 1fr) max-content;
       width: 100%;
@@ -87,23 +87,23 @@ export const styles: CSSResultGroup = [
         width: 100%;
         margin: 0;
         font: 500 14px / 1.3 var(--bb-font-family);
-        color: var(--n-50, var(--n-20));
+        color: var(--light-dark-n-50, var(--light-dark-n-20));
         text-align: center;
         padding: var(--bb-grid-size) var(--bb-grid-size) var(--bb-grid-size-2)
           var(--bb-grid-size);
-        background: var(--s-90, var(--neutral-50, transparent));
+        background: var(--light-dark-s-90, var(--neutral-50, transparent));
         max-width: 80%;
         translate: -50% 0;
       }
 
       & #content-warning {
-        border-top: 1px solid var(--n-100);
+        border-top: 1px solid var(--light-dark-n-100);
         display: flex;
         justify-content: space-between;
-        background: var(--n-98);
+        background: var(--light-dark-n-98);
         padding: var(--bb-grid-size-6) var(--bb-grid-size-3);
         min-height: var(--bb-grid-size-11);
-        color: var(--n-10);
+        color: var(--light-dark-n-10);
         font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
           var(--bb-font-family);
 
@@ -112,13 +112,13 @@ export const styles: CSSResultGroup = [
 
           & a {
             font-weight: 500;
-            color: var(--p-50);
+            color: var(--light-dark-p-50);
             text-decoration: none;
           }
         }
 
         & .dismiss {
-          color: var(--p-40);
+          color: var(--light-dark-p-40);
           padding: 0;
           margin: 0;
           background: transparent;
@@ -131,7 +131,7 @@ export const styles: CSSResultGroup = [
 
             &:focus,
             &:hover {
-              color: var(--p-40);
+              color: var(--light-dark-p-40);
             }
           }
         }
@@ -186,18 +186,18 @@ export const styles: CSSResultGroup = [
           font: 400 var(--font-style, normal) var(--bb-title-medium) /
             var(--bb-title-line-height-medium)
             var(--font-family, var(--bb-font-family));
-          color: var(--text-color, var(--n-10));
+          color: var(--text-color, var(--light-dark-n-10));
 
           & h1 {
             font: 500 var(--font-style, normal) var(--bb-title-large) /
               var(--bb-title-line-height-large)
               var(--font-family, var(--bb-font-family));
-            color: var(--s-80, var(--n-10));
+            color: var(--light-dark-s-80, var(--light-dark-n-10));
             margin: 0 0 var(--bb-grid-size) 0;
           }
 
           & p {
-            color: var(--text-color, var(--n-40));
+            color: var(--text-color, var(--light-dark-n-40));
             margin: 0 0 var(--bb-grid-size-2) 0;
           }
         }
@@ -245,7 +245,7 @@ export const styles: CSSResultGroup = [
 
           & h1 {
             background: var(--background-color, none);
-            color: var(--p-25, var(--n-40));
+            color: var(--light-dark-p-25, var(--light-dark-n-40));
             margin: var(--bb-grid-size-10) 0 var(--bb-grid-size-4) 0;
             flex: 0 0 auto;
             max-width: 80%;
@@ -256,7 +256,7 @@ export const styles: CSSResultGroup = [
           & p {
             flex: 0 0 auto;
             font: 400 var(--font-style) 16px / 20px var(--font-family);
-            color: var(--p-25, var(--n-40));
+            color: var(--light-dark-p-25, var(--light-dark-n-40));
             margin: 0 0 var(--bb-grid-size-3);
 
             max-width: 65%;
@@ -270,7 +270,8 @@ export const styles: CSSResultGroup = [
           align-items: center;
           justify-content: space-between;
           height: 76px;
-          border-bottom: 1px solid var(--s-70, var(--n-100));
+          border-bottom: 1px solid
+            var(--light-dark-s-70, var(--light-dark-n-100));
           padding: 0 var(--bb-grid-size-4);
           position: relative;
 
@@ -286,8 +287,8 @@ export const styles: CSSResultGroup = [
             padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
             font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
               var(--bb-font-family);
-            background: var(--p-98);
-            color: var(--p-20);
+            background: var(--light-dark-p-98);
+            color: var(--light-dark-p-20);
             border-radius: var(--bb-grid-size-2);
             opacity: 0;
             transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
@@ -310,7 +311,7 @@ export const styles: CSSResultGroup = [
             width: 100%;
             max-width: 320px;
             height: 4px;
-            background: var(--p-70);
+            background: var(--light-dark-p-70);
             border-radius: var(--bb-grid-size-16);
             position: relative;
 
@@ -322,7 +323,7 @@ export const styles: CSSResultGroup = [
               width: calc(var(--percentage) * 100%);
               max-width: 100%;
               height: 4px;
-              background: var(--p-40);
+              background: var(--light-dark-p-40);
               border-radius: var(--bb-grid-size-16);
               transition: width 0.3s cubic-bezier(0, 0, 0.3, 1);
             }
@@ -337,7 +338,7 @@ export const styles: CSSResultGroup = [
             opacity: 0.6;
             transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
             padding: 0;
-            color: var(--p-15, var(--n-20));
+            color: var(--light-dark-p-15, var(--light-dark-n-20));
 
             &#back {
               opacity: 0;
@@ -407,7 +408,7 @@ export const styles: CSSResultGroup = [
             --output-string-width: 95%;
             --output-string-margin-bottom-y: var(--bb-grid-size-3);
             --output-margin-bottom: var(--bb-grid-size-4);
-            --output-background-color: var(--n-100);
+            --output-background-color: var(--light-dark-n-100);
             --multi-output-value-padding-x: 0;
             flex: 1 0 auto;
             margin: 0 auto;
@@ -477,7 +478,7 @@ export const styles: CSSResultGroup = [
 
           & .empty-state {
             flex: 1;
-            color: var(--n-50);
+            color: var(--light-dark-n-50);
             text-align: center;
           }
 
@@ -489,7 +490,7 @@ export const styles: CSSResultGroup = [
             margin: 0 auto;
             max-width: 270px;
             text-align: center;
-            color: var(--n-0);
+            color: var(--light-dark-n-0);
 
             & summary {
               list-style: none;
@@ -516,7 +517,7 @@ export const styles: CSSResultGroup = [
             font: 400 var(--font-style, normal) var(--bb-title-medium) /
               var(--bb-title-line-height-medium)
               var(--font-family, var(--bb-font-family));
-            color: var(--text-color, var(--n-10));
+            color: var(--text-color, var(--light-dark-n-10));
             margin: 0 var(--bb-grid-size-3)
               var(--output-string-margin-bottom-y, var(--bb-grid-size-2))
               var(--bb-grid-size-3);
@@ -532,7 +533,7 @@ export const styles: CSSResultGroup = [
               font: 500 var(--font-style, normal) var(--bb-title-small) /
                 var(--bb-title-line-height-small)
                 var(--font-family, var(--bb-font-family));
-              color: var(--s-80, var(--n-10));
+              color: var(--light-dark-s-80, var(--light-dark-n-10));
               margin: 0 0 var(--bb-grid-size-2) 0;
             }
 
@@ -551,8 +552,8 @@ export const styles: CSSResultGroup = [
             width: calc(100% - var(--bb-grid-size-12));
             left: 50%;
             transform: translateX(-50%);
-            background: var(--p-20);
-            color: var(--p-100);
+            background: var(--light-dark-p-20);
+            color: var(--light-dark-p-100);
             padding: var(--bb-grid-size-3) var(--bb-grid-size-4)
               var(--bb-grid-size-3) var(--bb-grid-size-3);
             border-radius: var(--bb-grid-size-3);
@@ -576,7 +577,9 @@ export const styles: CSSResultGroup = [
               content: "";
               flex: 0 0 auto;
               margin-left: var(--bb-grid-size-3);
-              color: oklch(from var(--p-15) l c h / calc(alpha - 0.4));
+              color: oklch(
+                from var(--light-dark-p-15) l c h / calc(alpha - 0.4)
+              );
             }
           }
         }
@@ -612,8 +615,8 @@ export const styles: CSSResultGroup = [
             justify-content: center;
             width: 200px;
             height: var(--bb-grid-size-12);
-            background: var(--p-15, var(--p-98));
-            color: var(--p-100, var(--p-30));
+            background: var(--light-dark-p-15, var(--light-dark-p-98));
+            color: var(--light-dark-p-100, var(--light-dark-p-30));
             border-radius: var(--bb-grid-size-12);
             font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
               var(--bb-font-family);
@@ -625,8 +628,8 @@ export const styles: CSSResultGroup = [
             transition: var(--transition);
 
             &.running {
-              background: var(--p-50) url(/images/progress-ui.svg) 8px center /
-                16px 16px no-repeat;
+              background: var(--light-dark-p-50) url(/images/progress-ui.svg)
+                8px center / 16px 16px no-repeat;
             }
 
             &:not([disabled]) {
@@ -670,7 +673,7 @@ export const styles: CSSResultGroup = [
                 var(--bb-grid-size-4) var(--bb-grid-size-3);
               transition: transform 0.6s cubic-bezier(0, 0, 0.3, 1);
               transform: translateY(100%);
-              background: var(--s-95);
+              background: var(--light-dark-s-95);
               color: var(--primary-text-color);
               width: 100%;
               display: flex;
@@ -735,8 +738,8 @@ export const styles: CSSResultGroup = [
               }
 
               bb-add-asset-button {
-                --background-color: var(--p-80);
-                --text-color: var(--p-15);
+                --background-color: var(--light-dark-p-80);
+                --text-color: var(--light-dark-p-15);
               }
 
               & .controls {
@@ -745,9 +748,12 @@ export const styles: CSSResultGroup = [
                 align-items: flex-end;
 
                 bb-speech-to-text {
-                  --background-color: var(--p-80);
-                  --text-color: var(--p-15);
-                  --active-color: linear-gradient(var(--p-40), transparent);
+                  --background-color: var(--light-dark-p-80);
+                  --text-color: var(--light-dark-p-15);
+                  --active-color: linear-gradient(
+                    var(--light-dark-p-40),
+                    transparent
+                  );
                 }
 
                 & #continue {
@@ -755,8 +761,8 @@ export const styles: CSSResultGroup = [
                   align-items: center;
                   justify-content: center;
                   margin-left: var(--bb-grid-size-2);
-                  background: var(--p-80);
-                  color: var(--p-15);
+                  background: var(--light-dark-p-80);
+                  color: var(--light-dark-p-15);
                   width: 40px;
                   height: 40px;
                   border: none;
@@ -821,7 +827,7 @@ export const styles: CSSResultGroup = [
 
         & h1 {
           background: var(--background-color, none);
-          color: var(--p-25, var(--n-40));
+          color: var(--light-dark-p-25, var(--light-dark-n-40));
           margin: var(--bb-grid-size-10) 0 var(--bb-grid-size-4) 0;
           flex: 0 0 auto;
           max-width: 80%;
@@ -835,7 +841,7 @@ export const styles: CSSResultGroup = [
         & p {
           flex: 0 0 auto;
           font: 400 var(--font-style) 16px / 20px var(--font-family);
-          color: var(--p-25, var(--n-40));
+          color: var(--light-dark-p-25, var(--light-dark-n-40));
           margin: 0 0 var(--bb-grid-size-3);
 
           max-width: 65%;
@@ -849,8 +855,8 @@ export const styles: CSSResultGroup = [
           justify-content: center;
           width: 200px;
           height: var(--bb-grid-size-12);
-          background: var(--p-15, var(--p-98));
-          color: var(--p-100, var(--p-30));
+          background: var(--light-dark-p-15, var(--light-dark-p-98));
+          color: var(--light-dark-p-100, var(--light-dark-p-30));
           border-radius: var(--bb-grid-size-12);
           font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
@@ -958,10 +964,10 @@ export const styles: CSSResultGroup = [
         background: none;
         border: none;
         padding: 0 var(--bb-grid-size-4) 0 0;
-        border-color: var(--n-80);
+        border-color: var(--light-dark-n-80);
         transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
         opacity: 0.7;
-        color: var(--n-0);
+        color: var(--light-dark-n-0);
 
         &: [disabled] {
           opacity: 0.5;
