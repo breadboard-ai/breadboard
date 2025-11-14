@@ -22,6 +22,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   consistentUI: false,
   agentMode: false,
   backendTransforms: false,
+  observeSystemTheme: false,
   opalAdk: false,
   outputTemplates: false,
   googleOne: false,

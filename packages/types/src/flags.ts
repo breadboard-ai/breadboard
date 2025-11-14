@@ -54,6 +54,10 @@ export type RuntimeFlags = {
    */
   opalAdk: boolean;
   /**
+   * Enables the UI to switch based on the system theme.
+   */
+  observeSystemTheme: boolean;
+  /**
    * Enables output templates for consistent output.
    */
   outputTemplates: boolean;

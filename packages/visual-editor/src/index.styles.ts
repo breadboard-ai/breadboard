@@ -22,9 +22,16 @@ export const styles = [
       display: flex;
     }
 
+    @media (prefers-color-scheme: dark) {
+      #container.systemTheme {
+        color-scheme: dark;
+      }
+    }
+
     #container {
       display: grid;
       flex: 1 0 auto;
+      background-color: var(--light-dark-n-100);
       grid-template-rows: auto;
     }
 
