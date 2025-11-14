@@ -121,7 +121,7 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
       }
 
       md-tabs {
-        --md-sys-color-surface: var(--n-100);
+        --md-sys-color-surface: var(--light-dark-n-100);
       }
 
       .container {

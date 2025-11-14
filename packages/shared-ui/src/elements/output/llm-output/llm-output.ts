@@ -121,8 +121,8 @@ export class LLMOutput extends LitElement {
           var(--bb-body-line-height-medium) var(--bb-font-family);
         --md-p-margin: 0 0 var(--bb-grid-size-2) 0;
         --md-p-text-align: left;
-        --md-color: var(--n-10);
-        --md-a-color: var(--primary-color, var(--p-30));
+        --md-color: var(--light-dark-n-10);
+        --md-a-color: var(--primary-color, var(--light-dark-p-30));
 
         & .content {
           border-radius: var(--output-border-radius, var(--bb-grid-size));
@@ -142,7 +142,10 @@ export class LLMOutput extends LitElement {
 
       :host([lite]) {
         & .content {
-          background: var(--output-lite-background-color, var(--n-100));
+          background: var(
+            --output-lite-background-color,
+            var(--light-dark-n-100)
+          );
 
           &:has(.html-view) {
             border: none;
@@ -193,7 +196,7 @@ export class LLMOutput extends LitElement {
             var(--output-value-margin-x, 0);
           font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
-          color: var(--n-10);
+          color: var(--light-dark-n-10);
 
           padding: var(--output-value-padding-y, 0)
             var(--output-value-padding-x, 0);
@@ -250,7 +253,7 @@ export class LLMOutput extends LitElement {
           }
 
           & .empty-text-part {
-            color: var(--n-10);
+            color: var(--light-dark-n-10);
             margin: 0;
             padding: 0;
             border-radius: var(--bb-grid-size-16);
@@ -273,8 +276,8 @@ export class LLMOutput extends LitElement {
             padding: 0;
             margin: 0;
             border: none;
-            color: var(--n-100);
-            background: var(--n-40);
+            color: var(--light-dark-n-100);
+            background: var(--light-dark-n-40);
             position: absolute;
             bottom: calc(
               var(--output-value-padding-y, 0) + var(--bb-grid-size-2)
@@ -297,7 +300,7 @@ export class LLMOutput extends LitElement {
           white-space: pre;
           font: 500 var(--bb-body-small) / var(--bb-body-line-height-small)
             var(--bb-font-family-mono);
-          color: var(--n-10);
+          color: var(--light-dark-n-10);
         }
 
         & .markdown {
@@ -364,11 +367,11 @@ export class LLMOutput extends LitElement {
       }
 
       .play-audio {
-        background: var(--n-100) var(--bb-icon-sound) 6px 3px / 16px 16px
-          no-repeat;
+        background: var(--light-dark-n-100) var(--bb-icon-sound) 6px 3px / 16px
+          16px no-repeat;
         border-radius: 20px;
-        color: var(--n-10);
-        border: 1px solid var(--n-50);
+        color: var(--light-dark-n-10);
+        border: 1px solid var(--light-dark-n-50);
         height: 24px;
         padding: 0 16px 0 28px;
         cursor: pointer;
@@ -386,7 +389,7 @@ export class LLMOutput extends LitElement {
         & button {
           width: 32px;
           height: 32px;
-          background: var(--background-color, var(--n-100))
+          background: var(--background-color, var(--light-dark-n-100))
             var(--bb-icon-copy-to-clipboard) center center / 20px 20px no-repeat;
           position: absolute;
           top: 50%;
@@ -394,7 +397,7 @@ export class LLMOutput extends LitElement {
           translate: -50% -50%;
           border-radius: 50%;
           cursor: pointer;
-          border: 1px solid var(--n-90);
+          border: 1px solid var(--light-dark-n-90);
           font-size: 0;
           opacity: 0;
           transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);

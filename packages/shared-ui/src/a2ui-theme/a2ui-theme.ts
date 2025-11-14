@@ -173,7 +173,7 @@ const listItemLight = v0_8.Styles.merge(listItem, {
 export const theme: v0_8.Types.Theme = {
   additionalStyles: {
     Button: {
-      "--n-35": "var(--n-100)",
+      "--light-dark-n-35": "var(--light-dark-n-100)",
     },
   },
   components: {

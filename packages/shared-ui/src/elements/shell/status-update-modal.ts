@@ -49,15 +49,15 @@ export class VEStatusUpdateModal extends LitElement {
 
         & .update {
           margin-bottom: var(--bb-grid-size-2);
-          border: 1px solid var(--n-90);
+          border: 1px solid var(--light-dark-n-90);
           border-radius: var(--bb-grid-size-3);
           padding: var(--bb-grid-size-4);
-          background: var(--n-98);
+          background: var(--light-dark-n-98);
 
           &.urgent {
-            border-color: var(--e-80);
-            background: var(--e-95);
-            color: var(--e-30);
+            border-color: var(--light-dark-e-80);
+            background: var(--light-dark-e-95);
+            color: var(--light-dark-e-30);
           }
 
           &.warning {

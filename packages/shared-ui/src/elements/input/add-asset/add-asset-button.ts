@@ -62,8 +62,14 @@ export class AddAssetButton extends LitElement {
         width: var(--button-size, 40px);
         height: var(--button-size, 40px);
         border: none;
-        background: var(--background-color, var(--n-90, var(--n-90)));
-        color: var(--text-color, var(--p-40, var(--n-20)));
+        background: var(
+          --background-color,
+          var(--light-dark-n-90, var(--light-dark-n-90))
+        );
+        color: var(
+          --text-color,
+          var(--light-dark-p-40, var(--light-dark-n-20))
+        );
         flex: 0 0 auto;
         border-radius: var(--button-border-radius, 50%);
         transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
@@ -88,10 +94,10 @@ export class AddAssetButton extends LitElement {
         top: 0;
         left: 0;
         width: min-content;
-        --border-color: var(--s-80);
-        --inner-border-color: var(--s-80);
-        --background-color: var(--s-90);
-        --text-color: var(--p-15);
+        --border-color: var(--light-dark-s-80);
+        --inner-border-color: var(--light-dark-s-80);
+        --background-color: var(--light-dark-s-90);
+        --text-color: var(--light-dark-p-15);
       }
     `,
   ];

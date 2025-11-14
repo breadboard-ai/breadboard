@@ -66,7 +66,7 @@ export class ShapeMorph extends LitElement {
 
     #target {
       will-change: transform;
-      fill: var(--p-30, #ccc);
+      fill: var(--light-dark-p-30, #ccc);
     }
 
     @keyframes rotate {

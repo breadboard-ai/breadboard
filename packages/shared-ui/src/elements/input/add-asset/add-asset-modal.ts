@@ -74,13 +74,14 @@ export class AddAssetModal extends LitElement {
 
         &::backdrop {
           background: oklch(
-            from var(--n-90, var(--n-10)) l c h / calc(alpha * 0.1)
+            from var(--light-dark-n-90, var(--light-dark-n-10)) l c h /
+              calc(alpha * 0.1)
           );
         }
       }
 
       #content {
-        background: var(--background-color, var(--n-100));
+        background: var(--background-color, var(--light-dark-n-100));
         border: none;
         box-shadow:
           0px 8px 12px 6px rgba(0, 0, 0, 0.05),
@@ -107,7 +108,7 @@ export class AddAssetModal extends LitElement {
         & h1 {
           font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
-          color: var(--text-color, var(--n-10));
+          color: var(--text-color, var(--light-dark-n-10));
           margin: 0 0 var(--bb-grid-size-2) 0;
         }
 
@@ -120,10 +121,10 @@ export class AddAssetModal extends LitElement {
           display: block;
           width: 100%;
           border-radius: var(--bb-grid-size);
-          background: var(--n-100, var(--n-100));
-          color: var(--n-0, var(--n-10));
+          background: var(--light-dark-n-100, var(--light-dark-n-100));
+          color: var(--light-dark-n-0, var(--light-dark-n-10));
           padding: var(--bb-grid-size-2);
-          border: 1px solid var(--n-40, var(--n-90));
+          border: 1px solid var(--light-dark-n-40, var(--light-dark-n-90));
           resize: none;
         }
 
@@ -142,8 +143,8 @@ export class AddAssetModal extends LitElement {
         input::file-selector-button {
           height: var(--bb-grid-size-7);
           border-radius: var(--bb-grid-size-16);
-          background: var(--secondary-color, var(--n-98));
-          color: var(--primary-text-color, var(--n-10));
+          background: var(--secondary-color, var(--light-dark-n-98));
+          color: var(--primary-text-color, var(--light-dark-n-10));
           border: none;
         }
 
@@ -157,7 +158,7 @@ export class AddAssetModal extends LitElement {
 
         & #cancel {
           background: transparent;
-          color: var(--n-0, var(--n-40));
+          color: var(--light-dark-n-0, var(--light-dark-n-40));
           border: none;
           margin-right: var(--bb-grid-size-4);
           height: var(--bb-grid-size-10);
@@ -169,8 +170,8 @@ export class AddAssetModal extends LitElement {
 
         & #submit {
           display: block;
-          background: var(--n-0, var(--n-98));
-          color: var(--n-100, var(--n-40));
+          background: var(--light-dark-n-0, var(--light-dark-n-98));
+          color: var(--light-dark-n-100, var(--light-dark-n-40));
           border-radius: var(--bb-grid-size-16);
           border: none;
           padding: 0 var(--bb-grid-size-4);

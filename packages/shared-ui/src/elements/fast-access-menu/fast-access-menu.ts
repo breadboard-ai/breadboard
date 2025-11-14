@@ -85,7 +85,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       :host {
         display: block;
         width: 240px;
-        background: var(--n-100);
+        background: var(--light-dark-n-100);
         height: 300px;
         overflow: scroll;
         scrollbar-width: none;
@@ -107,8 +107,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         margin-bottom: var(--bb-grid-size-2);
         position: sticky;
         top: 0;
-        background: var(--n-100);
-        box-shadow: 0 0 0 12px var(--n-100);
+        background: var(--light-dark-n-100);
+        box-shadow: 0 0 0 12px var(--light-dark-n-100);
 
         & input {
           width: 100%;
@@ -118,9 +118,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
             var(--bb-font-family);
           border-radius: var(--bb-grid-size-16);
           padding: 0 var(--bb-grid-size-2);
-          border: 1px solid var(--n-60);
-          outline: 1px solid var(--n-60);
-          background: var(--n-95);
+          border: 1px solid var(--light-dark-n-60);
+          outline: 1px solid var(--light-dark-n-60);
+          background: var(--light-dark-n-95);
         }
       }
 
@@ -131,7 +131,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       section.group {
         & h3 {
           font-size: 12px;
-          color: var(--n-40);
+          color: var(--light-dark-n-40);
           margin: 0 0 var(--bb-grid-size-3) 0;
         }
 
@@ -148,7 +148,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
             background-color: var(--background);
             border: none;
             border-radius: var(--bb-grid-size-2);
-            color: var(--n-10);
+            color: var(--light-dark-n-10);
             margin: 0 0 var(--bb-grid-size-3) 0;
             height: var(--bb-grid-size-6);
             padding: 0 var(--bb-grid-size-2);
@@ -181,7 +181,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
               &.active,
               &:hover {
-                outline: 1px solid var(--n-0);
+                outline: 1px solid var(--light-dark-n-0);
               }
             }
           }
@@ -201,11 +201,11 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       }
 
       #tools menu button {
-        --background: var(--n-90);
+        --background: var(--light-dark-n-90);
       }
 
       section.tools menu button {
-        --background: var(--n-90);
+        --background: var(--light-dark-n-90);
       }
 
       #outputs menu button {
@@ -248,7 +248,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       }
 
       .integration menu button {
-        --background: var(--n-90);
+        --background: var(--light-dark-n-90);
       }
 
       #parameters {
@@ -261,8 +261,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
           border-radius: var(--bb-grid-size-16);
           height: var(--bb-grid-size-7);
           border: none;
-          background: var(--bb-icon-add) var(--n-98) 4px center / 20px 20px
-            no-repeat;
+          background: var(--bb-icon-add) var(--light-dark-n-98) 4px center /
+            20px 20px no-repeat;
           padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
           font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
             var(--bb-font-family);
@@ -274,7 +274,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
             &:hover,
             &:focus {
-              background-color: var(--n-90);
+              background-color: var(--light-dark-n-90);
             }
           }
         }

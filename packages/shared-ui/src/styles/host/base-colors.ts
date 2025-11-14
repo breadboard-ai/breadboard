@@ -6,6 +6,7 @@
 
 import { css, CSSResultGroup, unsafeCSS } from "lit";
 import { ColorPalettes } from "../../types/types";
+import * as Theme from "@breadboard-ai/theme";
 
 export const custom = {
   c100: "#665ef6",
@@ -34,7 +35,7 @@ export const palette: ColorPalettes = {
   },
 
   primary: {
-    p100: "color-mix(in srgb, #665ef6 0%, white 100%)",
+    p100: "#ffffff",
     p99: "color-mix(in srgb, #665ef6 2%, white 98%)",
     p98: "color-mix(in srgb, #665ef6 4%, white 96%)",
     p95: "color-mix(in srgb, #665ef6 10%, white 90%)",
@@ -51,7 +52,7 @@ export const palette: ColorPalettes = {
     p15: "color-mix(in srgb, #665ef6 20%, black 80%)",
     p10: "color-mix(in srgb, #665ef6 10%, black 90%)",
     p5: "color-mix(in srgb, #665ef6 5%, black 95%)",
-    p0: "color-mix(in srgb, #665ef6 0%, black 100%)",
+    p0: "#000000",
   },
 
   secondary: {
@@ -150,40 +151,43 @@ export const steps = {
   assetSecondary: "#fceee9",
 };
 
-function createThemeStyles(palettes: ColorPalettes): Record<string, string> {
-  const styles: Record<string, string> = {};
-  for (const palette of Object.values(palettes)) {
-    for (const [key, val] of Object.entries(palette)) {
-      const prop = toProp(key);
-      styles[prop] = val;
-    }
-  }
-
-  return styles;
-}
-
-function toProp(key: string) {
-  if (key.startsWith("nv")) {
-    return `--nv-${key.slice(2)}`;
-  }
-
-  return `--${key[0]}-${key.slice(1)}`;
-}
-
 export const baseColors = css`
   :host {
-    --ui-custom-o-100: ${unsafeCSS(custom.c100)};
+    --ui-custom-o-100: light-dark(
+      ${unsafeCSS(custom.c100)},
+      ${unsafeCSS(Theme.mapColor(custom.c100))}
+    );
     --ui-custom-o-25: oklch(
-      from var(--ui-custom-o-100) l c h / calc(alpha * 0.25)
+      from
+        light-dark(
+          var(--ui-custom-o-100),
+          ${unsafeCSS(Theme.mapColor("--ui-custom-o-100"))}
+        )
+        l c h / calc(alpha * 0.25)
     );
     --ui-custom-o-20: oklch(
-      from var(--ui-custom-o-100) l c h / calc(alpha * 0.2)
+      from
+        light-dark(
+          var(--ui-custom-o-100),
+          ${unsafeCSS(Theme.mapColor("--ui-custom-o-100"))}
+        )
+        l c h / calc(alpha * 0.2)
     );
     --ui-custom-o-10: oklch(
-      from var(--ui-custom-o-100) l c h / calc(alpha * 0.1)
+      from
+        light-dark(
+          var(--ui-custom-o-100),
+          ${unsafeCSS(Theme.mapColor("--ui-custom-o-100"))}
+        )
+        l c h / calc(alpha * 0.1)
     );
     --ui-custom-o-5: oklch(
-      from var(--ui-custom-o-100) l c h / calc(alpha * 0.05)
+      from
+        light-dark(
+          var(--ui-custom-o-100),
+          ${unsafeCSS(Theme.mapColor("--ui-custom-o-100"))}
+        )
+        l c h / calc(alpha * 0.05)
     );
     --ui-scrim: rgba(0, 0, 0, 0.6);
     --ui-flowgen-step: #e2e1f1;
@@ -196,19 +200,53 @@ export const baseColors = css`
   }
 
   :host {
-    --ui-generate: ${unsafeCSS(steps.generate)};
-    --ui-generate-secondary: ${unsafeCSS(steps.generateSecondary)};
-    --ui-display: ${unsafeCSS(steps.display)};
-    --ui-display-secondary: ${unsafeCSS(steps.displaySecondary)};
-    --ui-get-input: ${unsafeCSS(steps.getInput)};
-    --ui-get-input-secondary: ${unsafeCSS(steps.getInputSecondary)};
-    --ui-asset: ${unsafeCSS(steps.asset)};
-    --ui-asset-secondary: ${unsafeCSS(steps.assetSecondary)};
+    --ui-generate: light-dark(
+      ${unsafeCSS(steps.generate)},
+      ${unsafeCSS(Theme.mapColor(steps.generate))}
+    );
+    --ui-generate-secondary: light-dark(
+      ${unsafeCSS(steps.generateSecondary)},
+      ${unsafeCSS(Theme.mapColor(steps.generateSecondary))}
+    );
+    --ui-display: light-dark(
+      ${unsafeCSS(steps.display)},
+      ${unsafeCSS(Theme.mapColor(steps.display))}
+    );
+    --ui-display-secondary: light-dark(
+      ${unsafeCSS(steps.displaySecondary)},
+      ${unsafeCSS(Theme.mapColor(steps.displaySecondary))}
+    );
+    --ui-get-input: light-dark(
+      ${unsafeCSS(steps.getInput)},
+      ${unsafeCSS(Theme.mapColor(steps.getInput))}
+    );
+    --ui-get-input-secondary: light-dark(
+      ${unsafeCSS(steps.getInputSecondary)},
+      ${unsafeCSS(Theme.mapColor(steps.getInputSecondary))}
+    );
+    --ui-asset: light-dark(
+      ${unsafeCSS(steps.asset)},
+      ${unsafeCSS(Theme.mapColor(steps.asset))}
+    );
+    --ui-asset-secondary: light-dark(
+      ${unsafeCSS(steps.assetSecondary)},
+      ${unsafeCSS(Theme.mapColor(steps.assetSecondary))}
+    );
   }
 
   :host {
     ${unsafeCSS(
-      Object.entries(createThemeStyles(palette))
+      Object.entries(Theme.createThemeMapping(palette))
+        .map(([key, value]) => {
+          return `${key}: ${value};`;
+        })
+        .join("\n")
+    )}
+  }
+
+  :host {
+    ${unsafeCSS(
+      Object.entries(Theme.createThemeStyles(palette))
         .map(([key, value]) => {
           return `${key}: ${value};`;
         })

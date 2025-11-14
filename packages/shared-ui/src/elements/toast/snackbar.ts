@@ -35,7 +35,7 @@ export class Snackbar extends LitElement {
     type,
     css`
       :host {
-        --text-color: var(--n-100);
+        --text-color: var(--light-dark-n-100);
 
         display: flex;
         align-items: center;
@@ -46,7 +46,7 @@ export class Snackbar extends LitElement {
         opacity: 0;
         pointer-events: none;
         border-radius: var(--bb-grid-size-2);
-        background: var(--n-10);
+        background: var(--light-dark-n-10);
         padding: var(--bb-grid-size-3) var(--bb-grid-size-6);
         width: 60svw;
         max-width: 720px;
@@ -64,8 +64,8 @@ export class Snackbar extends LitElement {
       }
 
       :host([error]) {
-        background: var(--e-98);
-        --text-color: var(--e-20);
+        background: var(--light-dark-e-98);
+        --text-color: var(--light-dark-e-20);
       }
 
       .g-icon {
@@ -84,10 +84,10 @@ export class Snackbar extends LitElement {
         margin-right: var(--bb-grid-size-11);
         a,
         a:visited {
-          color: var(--p-40);
+          color: var(--light-dark-p-40);
           text-decoration: none;
           &:hover {
-            color: var(--p-50);
+            color: var(--light-dark-p-50);
             text-decoration: underline;
           }
         }

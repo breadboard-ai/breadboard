@@ -32,8 +32,8 @@ export class VEVideoModal extends LitElement {
       }
 
       bb-modal {
-        --background: var(--n-0);
-        --color: var(--n-100);
+        --background: var(--light-dark-n-0);
+        --color: var(--light-dark-n-100);
       }
     `,
   ];

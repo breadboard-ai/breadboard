@@ -30,8 +30,8 @@ export class OnboardingTooltip extends LitElement {
         position: absolute;
         right: 0;
         top: calc(100% + var(--bb-grid-size-8));
-        background: var(--n-0);
-        color: var(--n-100);
+        background: var(--light-dark-n-0);
+        color: var(--light-dark-n-100);
         border-radius: var(--bb-grid-size-5);
         padding: var(--bb-grid-size-5);
         width: 100svw;
@@ -49,7 +49,7 @@ export class OnboardingTooltip extends LitElement {
       h1,
       p {
         text-align: left;
-        color: var(--n-100);
+        color: var(--light-dark-n-100);
         margin: 0 0 var(--bb-grid-size-3) 0;
       }
 
@@ -68,7 +68,7 @@ export class OnboardingTooltip extends LitElement {
         transform: scaleX(0.8) scaleY(1.4) rotate(45deg);
         right: 32px;
         top: -6px;
-        background: var(--n-0);
+        background: var(--light-dark-n-0);
       }
 
       :host::before {

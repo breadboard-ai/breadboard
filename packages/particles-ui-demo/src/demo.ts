@@ -71,10 +71,10 @@ export class GoalDemo extends LitElement {
 
         details {
           border-radius: var(--g-3);
-          background: var(--n-98);
+          background: var(--light-dark-n-98);
           width: 100%;
           overflow: scroll;
-          color: var(--n-40);
+          color: var(--light-dark-n-40);
 
           & pre {
             padding: var(--g-2);
@@ -87,7 +87,7 @@ export class GoalDemo extends LitElement {
             user-select: none;
             padding: var(--g-3);
             font-size: 12px;
-            background: var(--n-95);
+            background: var(--light-dark-n-95);
             border-radius: var(--g-3);
           }
         }
@@ -97,8 +97,8 @@ export class GoalDemo extends LitElement {
           text-transform: uppercase;
           font-size: 11px;
           font-family: var(--font-family-mono);
-          background: var(--n-98);
-          color: var(--n-60);
+          background: var(--light-dark-n-98);
+          color: var(--light-dark-n-60);
           position: absolute;
           top: -32px;
           left: 10px;
@@ -114,8 +114,8 @@ export class GoalDemo extends LitElement {
           text-transform: uppercase;
           font-size: 11px;
           font-family: var(--font-family-mono);
-          background: var(--n-98);
-          color: var(--n-60);
+          background: var(--light-dark-n-98);
+          color: var(--light-dark-n-60);
           position: absolute;
           top: -32px;
           left: calc(53% + 32px);

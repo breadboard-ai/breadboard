@@ -26,7 +26,7 @@ export class Overlay extends LitElement {
       left: 0;
       right: 0;
       bottom: 0;
-      color: var(--n-10);
+      color: var(--light-dark-n-10);
     }
 
     #background {
@@ -35,7 +35,7 @@ export class Overlay extends LitElement {
       left: 0;
       right: 0;
       bottom: 0;
-      background: oklch(from var(--p-10) l c h/0.1);
+      background: oklch(from var(--light-dark-p-10) l c h/0.1);
     }
 
     #wrapper {
@@ -51,7 +51,7 @@ export class Overlay extends LitElement {
 
     #content {
       border-radius: var(--bb-grid-size-2);
-      background: var(--n-100);
+      background: var(--light-dark-n-100);
 
       display: flex;
       flex-direction: column;
@@ -74,7 +74,7 @@ export class Overlay extends LitElement {
       position: fixed;
       left: var(--left, auto);
       top: var(--top, auto);
-      border: 1px solid var(--outer-border, var(--n-90));
+      border: 1px solid var(--outer-border, var(--light-dark-n-90));
       box-shadow:
         0 8px 8px 0 rgba(0, 0, 0, 0.07),
         0 15px 12px 0 rgba(0, 0, 0, 0.09);

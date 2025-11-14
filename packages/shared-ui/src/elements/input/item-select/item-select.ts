@@ -121,7 +121,7 @@ export class ItemSelect extends LitElement {
         background-color: transparent;
         text-align: left;
         transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
-        color: var(--n-10);
+        color: var(--light-dark-n-10);
         width: 100%;
         display: grid;
         align-items: center;
@@ -130,7 +130,7 @@ export class ItemSelect extends LitElement {
 
         &.tag {
           .i-tag {
-            color: var(--n-98);
+            color: var(--light-dark-n-98);
           }
         }
 
@@ -150,7 +150,7 @@ export class ItemSelect extends LitElement {
           cursor: pointer;
 
           &.active {
-            background-color: var(--n-95);
+            background-color: var(--light-dark-n-95);
           }
         }
 
@@ -173,13 +173,13 @@ export class ItemSelect extends LitElement {
         }
 
         & .description {
-          color: var(--n-40);
+          color: var(--light-dark-n-40);
           font: normal var(--bb-label-small) / var(--bb-label-line-height-small)
             var(--bb-font-family);
         }
 
         &.selected {
-          background: var(--n-98);
+          background: var(--light-dark-n-98);
           width: max-content;
           max-width: 100%;
           height: var(--selected-item-height);
@@ -199,7 +199,7 @@ export class ItemSelect extends LitElement {
           &:not([disabled]) {
             &:hover,
             &:focus {
-              background: var(--n-95);
+              background: var(--light-dark-n-95);
             }
           }
         }
@@ -208,19 +208,19 @@ export class ItemSelect extends LitElement {
       #item-selector {
         position: fixed;
         left: var(--left);
-        background: var(--n-100);
+        background: var(--light-dark-n-100);
         padding: 0;
         width: var(--menu-width);
         height: fit-content;
         margin: 0;
         border: none;
         overflow: auto;
-        color: var(--n-10);
+        color: var(--light-dark-n-10);
         border-radius: var(--bb-grid-size-3);
         box-shadow: var(--bb-elevation-5);
 
         & .heading {
-          color: var(--n-98);
+          color: var(--light-dark-n-98);
           font: normal var(--bb-label-small) / var(--bb-label-line-height-small)
             var(--bb-font-family);
           margin: var(--bb-grid-size-2) var(--bb-grid-size-3);

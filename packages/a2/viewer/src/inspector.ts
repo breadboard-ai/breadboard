@@ -111,7 +111,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
         color: var(--text-color);
         grid-template-rows: 42px 1fr;
 
-        --n-10: var(--primary);
+        --light-dark-n-10: var(--primary);
       }
 
       header {
@@ -166,7 +166,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
             align-items: center;
             background: none;
             border: none;
-            color: var(--n-100);
+            color: var(--light-dark-n-100);
             padding: 0;
           }
 
@@ -203,7 +203,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
             background: oklch(from var(--primary) l c h / calc(alpha * 0.2));
             border-radius: var(--bb-grid-size-2);
             border: 1px solid var(--primary);
-            color: var(--n-100);
+            color: var(--light-dark-n-100);
             padding: 0;
           }
 
@@ -272,7 +272,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                   );
                   border: none;
                   border-radius: var(--bb-grid-size-2);
-                  color: var(--n-100);
+                  color: var(--light-dark-n-100);
                   padding: var(--bb-grid-size-2);
                   font-family: var(--font-family-mono);
                   text-align: left;
@@ -372,7 +372,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           }
 
           & #surfaces {
-            background: var(--n-100);
+            background: var(--light-dark-n-100);
 
             & #surface-select {
               position: absolute;
@@ -428,7 +428,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           & #generating-surfaces,
           & #no-surfaces {
             p {
-              color: var(--n-60);
+              color: var(--light-dark-n-60);
             }
 
             width: 50%;

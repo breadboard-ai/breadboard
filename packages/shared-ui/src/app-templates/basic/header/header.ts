@@ -67,17 +67,17 @@ export class Header extends LitElement {
         align-items: center;
         justify-content: space-between;
         height: 54px;
-        border-bottom: 1px solid var(--s-70, var(--n-98));
+        border-bottom: 1px solid var(--light-dark-s-70, var(--light-dark-n-98));
         padding: 0 var(--bb-grid-size-4);
         position: relative;
         flex: 0 0 auto;
         z-index: 2;
-        color: var(--p-40, var(--n-10));
+        color: var(--light-dark-p-40, var(--light-dark-n-10));
       }
 
       :host([neutral]) {
-        border-top: 1px solid var(--n-95);
-        border-bottom: 1px solid var(--n-90);
+        border-top: 1px solid var(--light-dark-n-95);
+        border-bottom: 1px solid var(--light-dark-n-90);
       }
 
       #menu,
@@ -90,7 +90,7 @@ export class Header extends LitElement {
         opacity: 0;
         transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
         padding: 0;
-        color: var(--n-0);
+        color: var(--light-dark-n-0);
         border-radius: 50%;
         width: 82px;
 
@@ -135,11 +135,11 @@ export class Header extends LitElement {
         align-items: center;
         height: 32px;
         padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-2);
-        border: 1px solid var(--n-80);
+        border: 1px solid var(--light-dark-n-80);
         border-radius: var(--bb-grid-size-16);
-        background: var(--n-100);
+        background: var(--light-dark-n-100);
         gap: var(--bb-grid-size-2);
-        color: var(--n-35);
+        color: var(--light-dark-n-35);
         opacity: 0;
         transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
         width: 82px;
@@ -177,8 +177,8 @@ export class Header extends LitElement {
           width: 100%;
           max-width: 260px;
           height: 4px;
-          background: var(--n-100, var(--n-90));
-          outline: 1px solid var(--n-100);
+          background: var(--light-dark-n-100, var(--light-dark-n-90));
+          outline: 1px solid var(--light-dark-n-100);
           border-radius: var(--bb-grid-size-16);
           position: relative;
 
@@ -191,7 +191,7 @@ export class Header extends LitElement {
             min-width: 4px;
             max-width: 100%;
             height: 4px;
-            background: var(--p-40, var(--n-50));
+            background: var(--light-dark-p-40, var(--light-dark-n-50));
             border-radius: var(--bb-grid-size-16);
             transition: width 0.3s cubic-bezier(0, 0, 0.3, 1);
           }
@@ -200,7 +200,7 @@ export class Header extends LitElement {
 
       :host([isempty]) #progress-container > #progress,
       :host([neutral]) #progress-container > #progress {
-        background: var(--s-80, var(--n-90));
+        background: var(--light-dark-s-80, var(--light-dark-n-90));
       }
 
       ul {
@@ -227,14 +227,14 @@ export class Header extends LitElement {
           align-items: center;
           height: var(--bb-grid-size-10);
           text-decoration: none;
-          color: var(--p-40, var(--n-20));
+          color: var(--light-dark-p-40, var(--light-dark-n-20));
           transition: color 0.2s cubic-bezier(0, 0, 0.3, 1);
           padding-left: var(--bb-grid-size-6);
 
           &:hover,
           &:focus {
             cursor: pointer;
-            color: var(--p-20, var(--n-10));
+            color: var(--light-dark-p-20, var(--light-dark-n-10));
           }
 
           > * {

@@ -75,17 +75,17 @@ export class LLMPartInput extends LitElement {
         width: 100%;
         padding: var(--bb-grid-size) var(--bb-grid-size-6) var(--bb-grid-size-5)
           var(--bb-grid-size-6);
-        border-bottom: 1px solid var(--n-98);
+        border-bottom: 1px solid var(--light-dark-n-98);
 
         & input {
           flex: 1;
           border-radius: var(--bb-grid-size);
-          border: 1px solid var(--n-90);
+          border: 1px solid var(--light-dark-n-90);
           height: var(--bb-grid-size-8);
           padding: 0 var(--bb-grid-size-2);
           font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
-          color: var(--n-10);
+          color: var(--light-dark-n-10);
         }
       }
 
@@ -101,7 +101,7 @@ export class LLMPartInput extends LitElement {
           justify-content: end;
           padding: var(--bb-grid-size) var(--bb-grid-size-6)
             var(--bb-grid-size-5) var(--bb-grid-size-6);
-          border-bottom: 1px solid var(--n-98);
+          border-bottom: 1px solid var(--light-dark-n-98);
         }
       }
 
@@ -112,7 +112,7 @@ export class LLMPartInput extends LitElement {
           justify-content: end;
           padding: var(--bb-grid-size) var(--bb-grid-size-6)
             var(--bb-grid-size-5) var(--bb-grid-size-6);
-          border-bottom: 1px solid var(--n-98);
+          border-bottom: 1px solid var(--light-dark-n-98);
         }
 
         & #drawable-container {
@@ -123,8 +123,8 @@ export class LLMPartInput extends LitElement {
       .apply {
         height: var(--bb-grid-size-8);
         border-radius: var(--bb-grid-size-16);
-        background: var(--n-98);
-        color: var(--n-20);
+        background: var(--light-dark-n-98);
+        color: var(--light-dark-n-20);
         font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
           var(--bb-font-family);
         transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
@@ -149,13 +149,13 @@ export class LLMPartInput extends LitElement {
 
           &:hover,
           &:focus {
-            background: var(--n-90);
+            background: var(--light-dark-n-90);
           }
         }
       }
 
       .no-edit-available {
-        color: var(--n-10);
+        color: var(--light-dark-n-10);
         margin: var(--bb-grid-size) var(--bb-grid-size-6) var(--bb-grid-size-3)
           var(--bb-grid-size-6);
         padding: 0;

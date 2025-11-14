@@ -8,9 +8,9 @@ import { css } from "lit";
 
 export const toolbarStyles = css`
   .bb-toolbar {
-    background: var(--n-100);
+    background: var(--light-dark-n-100);
     border-radius: var(--bb-grid-size-16);
-    border: 1px solid var(--n-90);
+    border: 1px solid var(--light-dark-n-90);
     display: flex;
     height: var(--bb-grid-size-8);
     padding: 0 var(--bb-grid-size-2);
@@ -37,7 +37,7 @@ export const toolbarStyles = css`
     }
 
     & .bb-divider {
-      background: var(--n-98);
+      background: var(--light-dark-n-98);
       margin: 0 var(--bb-grid-size-2);
       width: 1px;
     }

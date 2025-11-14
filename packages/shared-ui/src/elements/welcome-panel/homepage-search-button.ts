@@ -41,8 +41,8 @@ export class HomepageSearchButton extends LitElement {
       }
 
       input {
-        border: 1px solid var(--n-70);
-        background: var(--n-98);
+        border: 1px solid var(--light-dark-n-70);
+        background: var(--light-dark-n-98);
         height: 100%;
         border-radius: var(--bb-grid-size-16);
         padding: 0 32px 0 var(--bb-grid-size-4);
@@ -53,7 +53,7 @@ export class HomepageSearchButton extends LitElement {
 
       #label {
         font-size: 12px;
-        color: var(--n-35);
+        color: var(--light-dark-n-35);
       }
 
       #search-icon {

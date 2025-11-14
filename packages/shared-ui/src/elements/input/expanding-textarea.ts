@@ -131,7 +131,7 @@ export class ExpandingTextarea extends LitElement {
         background: none;
         border: none;
         cursor: pointer;
-        color: var(--n-60);
+        color: var(--light-dark-n-60);
         padding: 4px;
         display: flex;
         align-items: center;
@@ -140,7 +140,7 @@ export class ExpandingTextarea extends LitElement {
       }
 
       #submit:hover {
-        color: var(--n-30);
+        color: var(--light-dark-n-30);
       }
 
       ::slotted(.g-icon) {

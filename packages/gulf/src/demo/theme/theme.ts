@@ -175,8 +175,8 @@ const listItemLight = Utils.merge(listItem, {
 export const theme: Theme = {
   additionalStyles: {
     Card: {
-      boxShadow: `0px 2px 3px oklch(from var(--p-30) l c h / calc(alpha * 0.1)),
-          0px 8px 14px oklch(from var(--p-30) l c h / calc(alpha * 0.03))`,
+      boxShadow: `0px 2px 3px oklch(from var(--light-dark-p-30) l c h / calc(alpha * 0.1)),
+          0px 8px 14px oklch(from var(--light-dark-p-30) l c h / calc(alpha * 0.03))`,
     },
   },
   components: {

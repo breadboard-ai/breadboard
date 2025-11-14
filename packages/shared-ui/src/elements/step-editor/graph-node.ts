@@ -149,7 +149,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         user-select: none;
         font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
           var(--bb-font-family);
-        color: var(--n-10);
+        color: var(--light-dark-n-10);
         line-height: var(--bb-grid-size-6);
         z-index: 3;
         outline: none;
@@ -171,10 +171,10 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         top: calc(var(--bb-grid-size-2) * -1);
         background: conic-gradient(
             from var(--highlight-angle) at 50% 50%,
-            oklch(from var(--p-30) l c h / calc(alpha * 0.48)),
-            oklch(from var(--p-30) l c h / calc(alpha * 0.12)),
-            oklch(from var(--p-30) l c h / calc(alpha * 0.12)),
-            oklch(from var(--p-30) l c h / calc(alpha * 0.48))
+            oklch(from var(--light-dark-p-30) l c h / calc(alpha * 0.48)),
+            oklch(from var(--light-dark-p-30) l c h / calc(alpha * 0.12)),
+            oklch(from var(--light-dark-p-30) l c h / calc(alpha * 0.12)),
+            oklch(from var(--light-dark-p-30) l c h / calc(alpha * 0.48))
           )
           border-box;
         animation: spin-highlight 2s linear infinite;
@@ -186,11 +186,11 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       }
 
       :host {
-        --background: var(--n-70);
+        --background: var(--light-dark-n-70);
       }
 
       :host([updating]) {
-        --background: var(--n-90);
+        --background: var(--light-dark-n-90);
 
         & #content {
           min-height: 120px;
@@ -241,7 +241,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       :host([selected]) #container #outline,
       :host([selected]) #container #chat-adornment {
         transition: outline 0.15s cubic-bezier(0, 0, 0.3, 1);
-        outline: 3px solid var(--n-0);
+        outline: 3px solid var(--light-dark-n-0);
       }
 
       :host(:not([updating])[highlighted][highlighttype="model"])
@@ -262,16 +262,16 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
       :host([selected][active="error"]) #container #outline,
       :host([selected][active="error"]) #container #chat-adornment {
-        outline: 3px solid var(--e-40);
+        outline: 3px solid var(--light-dark-e-40);
       }
 
       #container {
         width: 300px;
         border-radius: calc(var(--bb-grid-size-3) + 1px);
-        color: var(--n-10);
+        color: var(--light-dark-n-10);
         position: relative;
         cursor: pointer;
-        border: 1px solid var(--n-90);
+        border: 1px solid var(--light-dark-n-90);
 
         #edge {
           position: absolute;
@@ -308,10 +308,10 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           border-radius: calc(var(--bb-grid-size-3) + 1px) 0 0
             calc(var(--bb-grid-size-3) + 1px);
           outline: 2px solid transparent;
-          color: var(--n-10);
+          color: var(--light-dark-n-10);
           position: absolute;
           cursor: pointer;
-          background: var(--n-90);
+          background: var(--light-dark-n-90);
 
           & header {
             background: color-mix(in lab, var(--background), white 50%);
@@ -339,7 +339,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           top: calc(100% + var(--bb-grid-size-10));
           width: 100%;
           border-radius: var(--bb-grid-size-3);
-          color: var(--n-10);
+          color: var(--light-dark-n-10);
           cursor: pointer;
 
           header {
@@ -404,13 +404,13 @@ export class GraphNode extends Box implements DragConnectorReceiver {
             height: 10px;
             border: none;
             border-radius: 50%;
-            background: var(--n-100);
+            background: var(--light-dark-n-100);
             right: -5px;
             top: 23px;
             translate: 0 -50%;
             font-size: 0;
             padding: 0;
-            outline: 2px solid var(--n-0);
+            outline: 2px solid var(--light-dark-n-0);
 
             &::after {
               content: "";
@@ -419,7 +419,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
               width: 4px;
               height: 4px;
               border-radius: 50%;
-              background: var(--n-0);
+              background: var(--light-dark-n-0);
               left: 3px;
               top: 3px;
             }
@@ -443,12 +443,12 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
         & #content {
           position: relative;
-          background: var(--n-100);
+          background: var(--light-dark-n-100);
           padding: var(--bb-grid-size-3) var(--bb-grid-size-4)
             var(--bb-grid-size-4) var(--bb-grid-size-4);
           font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
-          color: var(--n-10);
+          color: var(--light-dark-n-10);
           line-height: var(--bb-grid-size-6);
           border-radius: 0 0 var(--bb-grid-size-3) var(--bb-grid-size-3);
           pointer-events: none;
@@ -505,18 +505,18 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                 & .missing {
                   width: 100%;
                   white-space: normal;
-                  color: var(--n-50);
+                  color: var(--light-dark-n-50);
 
                   & span {
                     display: inline-flex;
                     align-items: center;
                     margin-top: var(--bb-grid-size);
-                    background: var(--n-90) var(--bb-icon-add) 8px center / 20px
-                      20px no-repeat;
+                    background: var(--light-dark-n-90) var(--bb-icon-add) 8px
+                      center / 20px 20px no-repeat;
                     height: var(--bb-grid-size-7);
                     padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-7);
                     border-radius: var(--bb-grid-size-16);
-                    color: var(--n-40);
+                    color: var(--light-dark-n-40);
                   }
                 }
               }
@@ -527,16 +527,16 @@ export class GraphNode extends Box implements DragConnectorReceiver {
                   display: block;
                   width: 20px;
                   height: 20px;
-                  background: var(--n-100);
+                  background: var(--light-dark-n-100);
                   margin-right: var(--bb-grid-size-2);
                   border-radius: var(--bb-grid-size);
-                  border: 1px solid var(--n-90);
+                  border: 1px solid var(--light-dark-n-90);
                   box-sizing: border-box;
                 }
 
                 &.checked::before {
-                  background: var(--n-100) var(--bb-icon-check) center center /
-                    20px 20px no-repeat;
+                  background: var(--light-dark-n-100) var(--bb-icon-check)
+                    center center / 20px 20px no-repeat;
                 }
               }
 
@@ -604,7 +604,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
           & .used-in-step {
             margin: var(--bb-grid-size-3) 0;
-            color: var(--n-0);
+            color: var(--light-dark-n-0);
           }
 
           & .chiclet {
@@ -617,12 +617,12 @@ export class GraphNode extends Box implements DragConnectorReceiver {
         position: absolute;
         top: calc((20px + var(--bb-grid-size-2)) * -1);
         right: var(--bb-grid-size-4);
-        color: var(--e-20);
+        color: var(--light-dark-e-20);
       }
 
       :host([active="error"]) #container {
-        border: 1px solid var(--e-40);
-        outline: 1px solid var(--e-40);
+        border: 1px solid var(--light-dark-e-40);
+        outline: 1px solid var(--light-dark-e-40);
       }
 
       @keyframes spin-highlight {

@@ -9,7 +9,7 @@ import { css } from "lit";
 export default css`
   @scope (.app-template.light) {
     :scope {
-      --bb-icon-color: var(--n-10);
+      --bb-icon-color: var(--light-dark-n-10);
 
       --bb-progress: url(/images/progress.svg);
 
@@ -489,7 +489,7 @@ export default css`
 
   @scope (.app-template.dark) {
     :scope {
-      --bb-icon-color: var(--n-100);
+      --bb-icon-color: var(--light-dark-n-100);
 
       --bb-progress: url(/images/progress-inverted.svg);
 

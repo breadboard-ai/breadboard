@@ -101,7 +101,7 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
       #container {
         display: flex;
         flex-direction: column;
-        background: var(--n-100);
+        background: var(--light-dark-n-100);
         border-radius: var(--bb-grid-size-4);
         height: 100%;
         overflow: auto;
@@ -110,7 +110,7 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 1px solid var(--n-90);
+          border-bottom: 1px solid var(--light-dark-n-90);
           height: var(--bb-grid-size-14);
           padding: 0 var(--bb-grid-size-3);
 
@@ -121,7 +121,7 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
           & #close {
             width: 30px;
             height: 30px;
-            color: var(--n-0);
+            color: var(--light-dark-n-0);
             background: none;
             border: none;
             opacity: 0.6;
@@ -151,13 +151,13 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
           #explainer {
             margin: 0;
             padding: var(--bb-grid-size-4) var(--bb-grid-size-3);
-            color: var(--n-60);
+            color: var(--light-dark-n-60);
           }
 
           form.generate-container {
             display: flex;
             align-items: center;
-            background: var(--n-100);
+            background: var(--light-dark-n-100);
             border-radius: var(--bb-grid-size-3);
             outline: 3px solid var(--ui-custom-o-10);
             padding: var(--bb-grid-size-3);
@@ -173,13 +173,13 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
               flex: 1;
               outline: none;
               resize: none;
-              background: var(--n-100);
+              background: var(--light-dark-n-100);
             }
 
             & #start-generate {
               padding: 0;
               margin: 0;
-              color: var(--n-0);
+              color: var(--light-dark-n-0);
               background: none;
               border: none;
               opacity: 0.6;
@@ -228,7 +228,7 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
               & button {
                 padding: 0;
                 margin: 0;
-                color: var(--n-0);
+                color: var(--light-dark-n-0);
                 background: none;
                 border: none;
                 opacity: 0.6;
@@ -337,7 +337,7 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
                 border-radius: var(--bb-grid-size-3);
                 transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
                 flex: 1;
-                color: var(--n-0);
+                color: var(--light-dark-n-0);
 
                 & .g-icon {
                   pointer-events: none;

@@ -148,13 +148,13 @@ export class SharePanel extends LitElement {
         }
 
         & #advisory {
-          color: var(--n-40);
+          color: var(--light-dark-n-40);
           font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
             var(--bb-font-family);
           margin: var(--bb-grid-size-6) 0 0 0;
 
           a {
-            color: var(--p-40);
+            color: var(--light-dark-p-40);
           }
         }
       }
@@ -199,7 +199,7 @@ export class SharePanel extends LitElement {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: var(--n-98);
+        background: var(--light-dark-n-98);
         margin: var(--bb-grid-size-4) calc(-1 * var(--bb-grid-size-5)) 0
           calc(-1 * var(--bb-grid-size-5));
         padding: 0 var(--bb-grid-size-6);
@@ -228,15 +228,15 @@ export class SharePanel extends LitElement {
         font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
           var(--bb-font-family);
         text-align: right;
-        color: var(--e-50);
+        color: var(--light-dark-e-50);
         max-width: 360px;
         align-self: flex-end;
         margin-top: var(--bb-grid-size-3);
         > a,
         > a:visited {
-          color: var(--p-40);
+          color: var(--light-dark-p-40);
           &:hover {
-            color: var(--p-60);
+            color: var(--light-dark-p-60);
           }
         }
         > .g-icon {
@@ -274,11 +274,11 @@ export class SharePanel extends LitElement {
           --md-switch-track-height: 24px;
           --md-switch-selected-handle-width: 20px;
           --md-switch-selected-handle-height: 20px;
-          --md-sys-color-primary: var(--n-10);
-          --md-sys-color-primary-container: var(--n-98);
-          --md-sys-color-surface: var(--n-80);
-          --md-sys-color-surface-container-highest: var(--n-98);
-          --md-sys-color-outline: var(--n-50);
+          --md-sys-color-primary: var(--light-dark-n-10);
+          --md-sys-color-primary-container: var(--light-dark-n-98);
+          --md-sys-color-surface: var(--light-dark-n-80);
+          --md-sys-color-surface-container-highest: var(--light-dark-n-98);
+          --md-sys-color-outline: var(--light-dark-n-50);
           &[disabled] {
             cursor: wait;
           }
@@ -290,7 +290,7 @@ export class SharePanel extends LitElement {
           font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
           text-align: center;
-          color: var(--n-98);
+          color: var(--light-dark-n-98);
         }
       }
 
@@ -303,7 +303,7 @@ export class SharePanel extends LitElement {
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
-          border: 1px solid var(--n-98);
+          border: 1px solid var(--light-dark-n-98);
           padding: 0 var(--bb-grid-size-3);
           border-radius: var(--bb-grid-size-2);
           font: 500 var(--bb-body-large) / var(--bb-body-line-height-large)
@@ -312,7 +312,7 @@ export class SharePanel extends LitElement {
 
         #app-link-copy-button {
           margin-left: var(--bb-grid-size-8);
-          border-color: var(--n-98);
+          border-color: var(--light-dark-n-98);
           font-weight: 500;
         }
       }
@@ -379,7 +379,7 @@ export class SharePanel extends LitElement {
 
       .spinner {
         animation: rotate 1s linear infinite;
-        color: var(--p-40);
+        color: var(--light-dark-p-40);
         vertical-align: middle;
       }
     `,

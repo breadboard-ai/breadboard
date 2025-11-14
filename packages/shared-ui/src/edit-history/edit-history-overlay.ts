@@ -51,7 +51,7 @@ export class EditHistoryOverlay extends SignalWatcher(LitElement) {
         display: inline-flex;
         flex-direction: column;
         cursor: initial;
-        background: var(--n-100);
+        background: var(--light-dark-n-100);
         box-shadow: 0 2px 5px 0px rgb(0 0 0 / 10%);
         transition: box-shadow 1s ease-out;
       }
@@ -94,19 +94,19 @@ export class EditHistoryOverlay extends SignalWatcher(LitElement) {
           font-size: 24px;
         }
         &:hover {
-          color: var(--n-50);
+          color: var(--light-dark-n-50);
         }
       }
 
       #restore-button {
         margin-left: 24px;
-        background: var(--p-50);
+        background: var(--light-dark-p-50);
         display: inline-flex;
         align-items: center;
         font-family: inherit;
         border: none;
         border-radius: 64px;
-        color: var(--n-100);
+        color: var(--light-dark-n-100);
         padding: 10px 20px;
         font-weight: 500;
         font-size: 14px;

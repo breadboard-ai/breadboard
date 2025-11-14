@@ -38,8 +38,8 @@ export class OverflowMenu extends LitElement {
         position: fixed;
         top: 20px;
         right: 20px;
-        background: var(--background-color, var(--n-100));
-        border: 1px solid var(--border-color, var(--n-90));
+        background: var(--background-color, var(--light-dark-n-100));
+        border: 1px solid var(--border-color, var(--light-dark-n-90));
         border-radius: var(--bb-grid-size-2);
         z-index: 2;
         box-shadow:
@@ -58,7 +58,7 @@ export class OverflowMenu extends LitElement {
           var(--bb-font-family);
         padding: var(--bb-grid-size-3) var(--bb-grid-size-4)
           var(--bb-grid-size-3) var(--bb-grid-size-3);
-        color: var(--text-color, var(--n-10));
+        color: var(--text-color, var(--light-dark-n-10));
         background: transparent;
         border: none;
         text-align: left;
@@ -79,7 +79,8 @@ export class OverflowMenu extends LitElement {
           &:hover,
           &:focus {
             background-color: oklch(
-              from var(--text-color, var(--n-10)) l c h / calc(alpha - 0.9)
+              from var(--text-color, var(--light-dark-n-10)) l c h /
+                calc(alpha - 0.9)
             );
           }
         }
@@ -246,14 +247,15 @@ export class OverflowMenu extends LitElement {
 
         &.error .g-icon::before {
           content: "error";
-          color: var(--e-40);
+          color: var(--light-dark-e-40);
         }
       }
 
       div {
         display: flex;
         align-items: center;
-        border-bottom: 1px solid var(--inner-border-color, var(--n-98));
+        border-bottom: 1px solid
+          var(--inner-border-color, var(--light-dark-n-98));
       }
 
       div:last-of-type {

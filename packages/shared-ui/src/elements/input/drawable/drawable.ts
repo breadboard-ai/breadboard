@@ -24,10 +24,10 @@ export class DrawableInput extends LitElement {
       position: relative;
       display: block;
       width: 100%;
-      background-color: var(--n-100);
+      background-color: var(--light-dark-n-100);
       border-radius: var(--bb-grid-size-3);
       aspect-ratio: 4/3;
-      outline: 1px solid var(--primary-color, var(--n-90));
+      outline: 1px solid var(--primary-color, var(--light-dark-n-90));
     }
 
     canvas {
@@ -52,8 +52,8 @@ export class DrawableInput extends LitElement {
       top: var(--bb-grid-size-4);
       right: var(--bb-grid-size-4);
       padding: var(--bb-grid-size);
-      background: var(--background-color, var(--n-100));
-      border: 1px solid var(--primary-color, var(--n-90));
+      background: var(--background-color, var(--light-dark-n-100));
+      border: 1px solid var(--primary-color, var(--light-dark-n-90));
       border-radius: var(--bb-grid-size-2);
       cursor: auto;
       z-index: 1;

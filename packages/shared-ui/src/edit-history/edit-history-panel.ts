@@ -45,7 +45,7 @@ export class EditHistoryPanel extends SignalWatcher(LitElement) {
       #no-history-msg {
         margin: auto;
         margin-top: 24px;
-        color: var(--n-98, currentColor);
+        color: var(--light-dark-n-98, currentColor);
         display: flex;
         & > .g-icon {
           margin-right: 8px;
@@ -77,7 +77,7 @@ export class EditHistoryPanel extends SignalWatcher(LitElement) {
           background: transparent;
           &:hover,
           &:focus {
-            background: var(--n-98);
+            background: var(--light-dark-n-98);
           }
           &.current {
             &:hover,
@@ -88,7 +88,7 @@ export class EditHistoryPanel extends SignalWatcher(LitElement) {
         }
         &.displayed {
           cursor: initial;
-          background: var(--n-98);
+          background: var(--light-dark-n-98);
         }
         &.current {
           background: #e9f7e6;

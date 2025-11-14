@@ -36,15 +36,15 @@ export const styles = [
 
       width: 100%;
       height: 100%;
-      background: var(--s-90, var(--n-100));
+      background: var(--light-dark-s-90, var(--light-dark-n-100));
       position: relative;
       container-type: size;
 
       & #status {
         padding: var(--bb-grid-size-2);
         border-radius: var(--bb-grid-size-2);
-        background: var(--p-98);
-        color: var(--p-30);
+        background: var(--light-dark-p-98);
+        color: var(--light-dark-p-30);
         opacity: 0;
         transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
         font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
@@ -66,7 +66,7 @@ export const styles = [
       }
 
       --output-border-width: 1px;
-      --output-border-color: var(--n-90);
+      --output-border-color: var(--light-dark-n-90);
       --output-border-radius: var(--bb-grid-size-4);
       --output-padding: var(--bb-grid-size-5);
 
@@ -86,14 +86,14 @@ export const styles = [
           position: absolute;
           left: calc(-1 * var(--output-padding));
           width: calc(100% + 2 * var(--output-padding));
-          background: var(--n-90);
+          background: var(--light-dark-n-90);
         }
 
         & > div > button {
           font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
           background: none;
-          color: var(--n-50);
+          color: var(--light-dark-n-50);
           height: 32px;
           border: none;
           margin: 0 var(--bb-grid-size-2);
@@ -104,7 +104,7 @@ export const styles = [
           cursor: pointer;
 
           &[disabled] {
-            color: var(--n-10);
+            color: var(--light-dark-n-10);
             cursor: auto;
 
             &::after {
@@ -114,7 +114,7 @@ export const styles = [
               left: 0;
               width: 100%;
               border-radius: var(--bb-grid-size) var(--bb-grid-size) 0 0;
-              background: var(--p-50);
+              background: var(--light-dark-p-50);
               height: 3px;
             }
           }
@@ -127,11 +127,11 @@ export const styles = [
         justify-content: center;
         padding: var(--bb-grid-size-3) 12% var(--bb-grid-size-4) 12%;
         width: 100%;
-        background: var(--s-90);
-        border-top: 1px solid var(--s-70, var(--n-80));
+        background: var(--light-dark-s-90);
+        border-top: 1px solid var(--light-dark-s-70, var(--light-dark-n-80));
 
         &.empty {
-          border-top: 1px solid var(--n-90, var(--n-80));
+          border-top: 1px solid var(--light-dark-n-90, var(--light-dark-n-80));
         }
 
         & #share-app {
@@ -149,9 +149,9 @@ export const styles = [
 
           height: var(--bb-grid-size-10);
           border-radius: var(--bb-grid-size-16);
-          background: var(--n-100, var(--n-100)) 8px center / 20px 20px
-            no-repeat;
-          color: var(--p-30, var(--n-20));
+          background: var(--light-dark-n-100, var(--light-dark-n-100)) 8px
+            center / 20px 20px no-repeat;
+          color: var(--light-dark-p-30, var(--light-dark-n-20));
           font: 500 var(--bb-body-small) / var(--bb-body-line-height-small)
             var(--bb-font-family);
           transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
@@ -171,7 +171,7 @@ export const styles = [
 
             &:hover,
             &:focus {
-              background-color: var(--s-98, var(--n-90));
+              background-color: var(--light-dark-s-98, var(--light-dark-n-90));
             }
           }
         }
@@ -190,7 +190,7 @@ export const styles = [
         font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
           var(--bb-font-family);
         position: relative;
-        background: var(--s-90, var(--n-100));
+        background: var(--light-dark-s-90, var(--light-dark-n-100));
 
         & .loading {
           display: flex;
@@ -215,7 +215,7 @@ export const styles = [
           align-items: center;
           justify-content: center;
           padding: var(--bb-grid-size-2) var(--bb-grid-size-6);
-          background: var(--n-100);
+          background: var(--light-dark-n-100);
           border-radius: 0 0 var(--bb-grid-size-2) var(--bb-grid-size-2);
         }
 
@@ -243,8 +243,8 @@ export const styles = [
               display: block;
               padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
               border-radius: var(--bb-grid-size-16);
-              background: var(--p-95) var(--bb-icon-check) 8px center / 20px
-                20px no-repeat;
+              background: var(--light-dark-p-95) var(--bb-icon-check) 8px
+                center / 20px 20px no-repeat;
 
               &[disabled] {
                 opacity: 0.4;
@@ -290,23 +290,24 @@ export const styles = [
               width: var(--bb-grid-size-5);
               height: var(--bb-grid-size-5);
               border-radius: 50%;
-              background: var(--n-100) center center / 20px 20px no-repeat;
+              background: var(--light-dark-n-100) center center / 20px 20px
+                no-repeat;
             }
           }
 
           & .value {
-            color: var(--n-10);
+            color: var(--light-dark-n-10);
           }
 
           & .title {
-            color: var(--n-10);
+            color: var(--light-dark-n-10);
             margin: 2px 0 var(--bb-grid-size) 0;
             font: 500 var(--bb-label-medium) /
               var(--bb-label-line-height-medium) var(--bb-font-family);
           }
 
           & label {
-            color: var(--n-98);
+            color: var(--light-dark-n-98);
             font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
               var(--bb-font-family);
             margin-bottom: var(--bb-grid-size-2);
@@ -316,7 +317,7 @@ export const styles = [
         .status {
           font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
             var(--bb-font-family);
-          color: var(--n-98);
+          color: var(--light-dark-n-98);
           background: url(/images/progress-ui.svg) 0 center / 20px 20px
             no-repeat;
           padding-left: var(--bb-grid-size-7);
@@ -331,7 +332,7 @@ export const styles = [
             var(--bb-font-family);
           padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
           text-align: center;
-          color: var(--n-40);
+          color: var(--light-dark-n-40);
         }
       }
     }

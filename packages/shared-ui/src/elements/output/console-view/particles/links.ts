@@ -102,7 +102,7 @@ export class ParticleLinks extends SignalWatcher(LitElement) {
           margin-bottom: var(--bb-grid-size-2);
 
           a {
-            color: var(--n-0);
+            color: var(--light-dark-n-0);
             display: flex;
             align-items: center;
           }
@@ -117,7 +117,7 @@ export class ParticleLinks extends SignalWatcher(LitElement) {
             object-fit: cover;
             border-radius: 50%;
             margin-right: var(--bb-grid-size-2);
-            border: 1px solid var(--n-90);
+            border: 1px solid var(--light-dark-n-90);
           }
         }
       }

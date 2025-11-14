@@ -104,15 +104,15 @@ export class GulfMain extends LitElement {
             flex: 1;
             border-radius: 32px;
             padding: 16px 24px;
-            border: 1px solid var(--p-60);
+            border: 1px solid var(--light-dark-p-60);
             font-size: 16px;
           }
 
           & > button {
             display: flex;
             align-items: center;
-            background: var(--p-40);
-            color: var(--n-100);
+            background: var(--light-dark-p-40);
+            color: var(--light-dark-n-100);
             border: none;
             padding: 8px 16px;
             border-radius: 32px;
@@ -161,9 +161,9 @@ export class GulfMain extends LitElement {
       }
 
       .error {
-        color: var(--e-40);
-        background-color: var(--e-95);
-        border: 1px solid var(--e-80);
+        color: var(--light-dark-e-40);
+        background-color: var(--light-dark-e-95);
+        border: 1px solid var(--light-dark-e-80);
         padding: 16px;
         border-radius: 8px;
       }

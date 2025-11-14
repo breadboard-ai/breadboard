@@ -8,7 +8,7 @@ import { css } from "lit";
 
 export const fabStyles = css`
   .bb-fab {
-    background: var(--background-color, var(--p-50))
+    background: var(--background-color, var(--light-dark-p-50))
       var(--bb-icon, var(--bb-icon-help)) center center /
       var(--background-size, 20px) var(--background-size, 20px) no-repeat;
     width: var(--bb-grid-size-9);
@@ -25,7 +25,10 @@ export const fabStyles = css`
 
       &:focus,
       &:hover {
-        background-color: var(--background-color-active, var(--p-30));
+        background-color: var(
+          --background-color-active,
+          var(--light-dark-p-30)
+        );
       }
     }
   }

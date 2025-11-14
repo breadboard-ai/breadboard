@@ -51,13 +51,13 @@ export class FlowgenEditorInput extends LitElement {
         max-width: 540px;
         margin: 0 var(--bb-grid-size-2);
 
-        --placeholder-color: var(--n-70);
+        --placeholder-color: var(--light-dark-n-70);
       }
 
       #dismiss-button {
         background: none;
         border: none;
-        color: var(--n-90);
+        color: var(--light-dark-n-90);
         font-size: 1.2rem;
         cursor: pointer;
         padding: 0;
@@ -65,7 +65,7 @@ export class FlowgenEditorInput extends LitElement {
       }
 
       .dismiss-button:hover {
-        color: var(--n-80);
+        color: var(--light-dark-n-80);
       }
 
       p {
@@ -75,9 +75,9 @@ export class FlowgenEditorInput extends LitElement {
       #feedback {
         font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
           var(--bb-font-family);
-        color: var(--n-90);
+        color: var(--light-dark-n-90);
         transition: var(--color-transition);
-        background: var(--n-20);
+        background: var(--light-dark-n-20);
         border-radius: var(--bb-grid-size-2);
         padding-left: var(--bb-grid-size-5);
         padding-right: var(--bb-grid-size-5);
@@ -118,9 +118,9 @@ export class FlowgenEditorInput extends LitElement {
       bb-expanding-textarea {
         flex: 1;
         width: 100%;
-        color: var(--n-0);
+        color: var(--light-dark-n-0);
         transition: var(--color-transition);
-        background: var(--n-100);
+        background: var(--light-dark-n-100);
         border: none;
         border-radius: var(--bb-grid-size-7);
         padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
@@ -129,7 +129,7 @@ export class FlowgenEditorInput extends LitElement {
         font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
           var(--bb-font-family);
         line-height: 1lh;
-        caret-color: var(--n-0);
+        caret-color: var(--light-dark-n-0);
 
         &:focus-within {
           outline: 1px solid var(--ui-custom-o-100);
@@ -139,7 +139,7 @@ export class FlowgenEditorInput extends LitElement {
           display: flex;
           align-items: center;
           justify-content: flex-end;
-          color: var(--n-70);
+          color: var(--light-dark-n-70);
           font-size: 30px;
           width: 30px;
           height: 30px;
