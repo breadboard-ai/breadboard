@@ -4,33 +4,34 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import express, { type Request } from "express";
-import ViteExpress from "vite-express";
-
 import * as boardServer from "@breadboard-ai/board-server";
-import * as connectionServer from "./connection/server.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-
-import { makeDriveProxyMiddleware } from "./drive-proxy.js";
+import { createFetchWithCreds, err } from "@breadboard-ai/utils";
+import express, { type Request } from "express";
+import { GoogleAuth } from "google-auth-library";
+import ViteExpress from "vite-express";
 import { createClientConfig } from "./config.js";
-import { makeCspHandler } from "./csp.js";
+import * as connectionServer from "./connection/server.js";
+import {
+  FALLBACK_CSP,
+  MAIN_APP_CSP,
+  makeCspHandler,
+  OAUTH_REDIRECT_CSP,
+  SHELL_CSP,
+} from "./csp.js";
+import { createDataTransformHandler } from "./data-transform.js";
+import { makeDriveProxyMiddleware } from "./drive-proxy.js";
 import * as flags from "./flags.js";
 import { CachingFeaturedGallery, makeGalleryMiddleware } from "./gallery.js";
 import { createUpdatesHandler } from "./updates.js";
-
-import { GoogleAuth } from "google-auth-library";
-import { createFetchWithCreds, err } from "@breadboard-ai/utils";
-import { createDataTransformHandler } from "./data-transform.js";
 
 const FEATURED_GALLERY_CACHE_REFRESH_SECONDS = 10 * 60;
 
 console.log("[unified-server startup] Starting unified server");
 
-console.log("[unified-server startup] Loading env file");
-
 const server = express();
 
-server.use(makeCspHandler());
+server.use(makeCspHandler(FALLBACK_CSP));
 
 const boardServerConfig = boardServer.createServerConfig({
   storageProvider: "firestore",
@@ -110,40 +111,35 @@ const clientConfig = await createClientConfig({
   OAUTH_CLIENT: connectionServerConfig.connection.oauth.client_id,
 });
 
-if (
-  clientConfig.SHELL_GUEST_ORIGIN &&
-  clientConfig.SHELL_HOST_ORIGINS?.length
-) {
+if (flags.SHELL_ENABLED) {
   // TODO(aomarks) After we are fully in the iframe arrangement, move assets
   // around so that this entire re-pathing middleware is not necessary.
   console.log("[unified-server startup] Serving in shell configuration");
-  server.use("/", (request, _response, next) => {
-    if (
-      // Files with extensions are always static and should be served normally.
-      !request.path.includes(".") &&
-      // Files in the @vite folder are dev-mode npm dependencies and should be
-      // served normally.
-      !request.path.startsWith("/@vite/")
-    ) {
-      if (request.path === "/oauth" || request.path.startsWith("/oauth/")) {
-        request.url = "/oauth/index.html";
-      } else if (
-        request.path === "/_app/landing" ||
-        request.path.startsWith("/_app/landing/")
-      ) {
-        request.url = "/landing/index.html";
-      } else if (
-        request.path === "/_app" ||
-        request.path.startsWith("/_app/")
-      ) {
-        request.url = "/index.html";
-      } else {
-        request.url = "/shell/index.html";
-      }
+  server.get(
+    ["/", "/landing/"],
+    makeCspHandler(SHELL_CSP),
+    (req, _res, next) => {
+      req.url = "/shell/index.html";
+      next();
     }
+  );
+  server.get("/_app/", makeCspHandler(MAIN_APP_CSP), (req, _res, next) => {
+    req.url = "/index.html";
     next();
   });
+  server.get(
+    "/_app/landing/",
+    makeCspHandler(MAIN_APP_CSP),
+    (req, _res, next) => {
+      req.url = "/landing/index.html";
+      next();
+    }
+  );
+} else {
+  server.get(["/", "/landing/"], makeCspHandler(MAIN_APP_CSP));
 }
+
+server.get("/oauth/", makeCspHandler(OAUTH_REDIRECT_CSP));
 
 ViteExpress.config({
   transformer: (html: string, req: Request) => {

@@ -8,12 +8,64 @@ import * as flags from "./flags.js";
 
 import type { Handler, NextFunction, Request, Response } from "express";
 
-const CSP_CONFIG = {
+export const FALLBACK_CSP = {
+  ["base-uri"]: ["'none'"],
+  ["default-src"]: ["'none'"],
+  ["form-action"]: ["'none'"],
+  ["frame-ancestors"]: ["'none'"],
+};
+
+export const OAUTH_REDIRECT_CSP = {
+  ["base-uri"]: ["'none'"],
+  ["connect-src"]: ["'self'"],
+  ["default-src"]: ["'none'"],
+  ["font-src"]: [
+    // Google Fonts seems to be required by Chrome itself. Without it, despite
+    // not rendering any text in the shell, the console shows lots of CSP
+    // violations.
+    "https://fonts.gstatic.com",
+  ],
+  ["form-action"]: ["'none'"],
+  ["frame-ancestors"]: ["'none'"],
+  ["script-src"]: ["'self'"],
+};
+
+export const SHELL_CSP = {
+  ["base-uri"]: ["'none'"],
+  ["connect-src"]: [
+    "'self'",
+    "https://*.google.com",
+    "https://*.googleapis.com",
+    flags.BACKEND_API_ENDPOINT,
+    // TODO(aomarks) Remove this after we have eliminated all credentialed RPCs
+    // to the frontend server.
+    flags.SHELL_GUEST_ORIGIN,
+  ],
+  ["default-src"]: ["'none'"],
+  ["font-src"]: ["https://fonts.gstatic.com"],
+  ["form-action"]: ["'none'"],
+  ["frame-ancestors"]: [
+    // This is slightly blurring the implied meaning of
+    // ALLOWED_REDIRECT_ORIGINS, but in practice the set of origins that we
+    // allow to override the OAuth redirect is the exactly same set of origins
+    // that are using the embedded iframe integration.
+    ...flags.ALLOWED_REDIRECT_ORIGINS,
+  ],
+  ["frame-src"]: [
+    "https://docs.google.com",
+    "https://drive.google.com",
+    flags.SHELL_GUEST_ORIGIN,
+  ],
+  ["img-src"]: ["https://*.gstatic.com"],
+  ["script-src"]: ["'self'", "https://apis.google.com"],
+  ["style-src"]: ["'unsafe-inline'"],
+};
+
+export const MAIN_APP_CSP = {
   ["default-src"]: ["'none'"],
   ["script-src"]: [
     "'self'",
     "'unsafe-inline'",
-    "https://apis.google.com",
     "https://cdn.tailwindcss.com",
     "https://unpkg.com",
     "https://cdn.jsdelivr.net",
@@ -22,6 +74,7 @@ const CSP_CONFIG = {
     "https://www.google-analytics.com",
     "https://www.googletagmanager.com",
     "https://www.gstatic.com",
+    ...(flags.SHELL_ENABLED ? [] : ["https://apis.google.com"]),
   ],
   ["img-src"]: [
     "'self'",
@@ -45,17 +98,18 @@ const CSP_CONFIG = {
   ["connect-src"]: [
     "'self'",
     "data:",
-    // TODO(aomarks) Remove this after we have eliminated all credentialed RPCs
-    // to the frontend server.
-    flags.SHELL_GUEST_ORIGIN,
     "https://*.google-analytics.com",
-    "https://*.google.com",
-    "https://*.googleapis.com/",
-    "https://oauth2.googleapis.com/tokeninfo",
+    ...(flags.SHELL_ENABLED
+      ? []
+      : [
+          "https://*.google.com",
+          "https://*.googleapis.com",
+          flags.BACKEND_API_ENDPOINT,
+          flags.SHELL_GUEST_ORIGIN,
+        ]),
   ],
   ["frame-src"]: [
     "'self'",
-    flags.SHELL_GUEST_ORIGIN,
     "https://docs.google.com",
     "https://*.googleapis.com",
     "https://drive.google.com",
@@ -64,14 +118,9 @@ const CSP_CONFIG = {
     "https://feedback-pa.clients6.google.com",
     "https://accounts.google.com",
   ],
-  ["frame-ancestors"]: [
-    ...flags.SHELL_HOST_ORIGINS,
-    // This is slightly blurring the implied meaning of
-    // ALLOWED_REDIRECT_ORIGINS, but in practice the set of origins that we
-    // allow to override the OAuth redirect is the exactly same set of origins
-    // that are using the embedded iframe integration.
-    ...flags.ALLOWED_REDIRECT_ORIGINS,
-  ],
+  ["frame-ancestors"]: flags.SHELL_ENABLED
+    ? [...flags.SHELL_HOST_ORIGINS]
+    : [...flags.ALLOWED_REDIRECT_ORIGINS],
   ["media-src"]: ["'self'", "blob:", "data:"],
   ["base-uri"]: ["'none'"],
 };
@@ -79,12 +128,8 @@ const CSP_CONFIG = {
 const CSP_HEADER_NAME = "Content-Security-Policy";
 
 /** https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP */
-export function makeCspHandler(): Handler {
-  const cspConfig = structuredClone(CSP_CONFIG);
-  if (flags.BACKEND_API_ENDPOINT) {
-    cspConfig["connect-src"].push(flags.BACKEND_API_ENDPOINT);
-  }
-  const cspHeaderValue = Object.entries(cspConfig)
+export function makeCspHandler(csp: Record<string, string[]>): Handler {
+  const cspHeaderValue = Object.entries(csp)
     .map(([key, vals]) => `${key} ${vals.join(" ")}`)
     .join(";");
 
