@@ -8,6 +8,13 @@ import * as flags from "./flags.js";
 
 import type { Handler, NextFunction, Request, Response } from "express";
 
+export const FALLBACK_CSP = {
+  ["base-uri"]: ["'none'"],
+  ["default-src"]: ["'none'"],
+  ["form-action"]: ["'none'"],
+  ["frame-ancestors"]: ["'none'"],
+};
+
 export const MAIN_APP_CSP = {
   ["default-src"]: ["'none'"],
   ["script-src"]: [
@@ -78,7 +85,6 @@ export const MAIN_APP_CSP = {
 };
 
 export const SHELL_CSP = MAIN_APP_CSP;
-export const FALLBACK_CSP = MAIN_APP_CSP;
 
 const CSP_HEADER_NAME = "Content-Security-Policy";
 
