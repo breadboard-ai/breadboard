@@ -33,7 +33,7 @@ import {
 } from "../../contexts/global-config";
 import { getStepIcon } from "../../utils/get-step-icon";
 import { icons } from "../../styles/icons";
-import { colorsLight } from "../../styles/host/colors-light";
+import { baseColors } from "../../styles/host/base-colors";
 import { type } from "../../styles/host/type";
 import { iconSubstitute } from "../../utils/icon-substitute";
 import { repeat } from "lit/directives/repeat.js";
@@ -75,7 +75,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
   static styles = [
     icons,
-    colorsLight,
+    baseColors,
     type,
     css`
       * {

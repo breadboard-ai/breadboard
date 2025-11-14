@@ -48,11 +48,7 @@ import {
 } from "../../events/events";
 import { createChiclets } from "./utils/create-chiclets.js";
 import { icons } from "../../styles/icons.js";
-import {
-  colorsLight,
-  palette,
-  custom,
-} from "../../styles/host/colors-light.js";
+import { baseColors, palette, custom } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import { NodeRunState } from "@breadboard-ai/types";
@@ -139,7 +135,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
   static styles = [
     type,
-    colorsLight,
+    baseColors,
     icons,
     Box.styles,
     ChicletStyles,

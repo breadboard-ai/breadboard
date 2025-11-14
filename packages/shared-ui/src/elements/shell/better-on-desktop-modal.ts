@@ -5,7 +5,7 @@
  */
 import { LitElement, html, css } from "lit";
 import { customElement } from "lit/decorators.js";
-import { colorsLight } from "../../styles/host/colors-light";
+import { baseColors } from "../../styles/host/base-colors";
 import { type } from "../../styles/host/type";
 import { icons } from "../../styles/icons";
 import { ModalDismissedEvent, StateEvent } from "../../events/events";
@@ -14,7 +14,7 @@ import { ModalDismissedEvent, StateEvent } from "../../events/events";
 export class VEBetterOnDesktopModal extends LitElement {
   static styles = [
     type,
-    colorsLight,
+    baseColors,
     icons,
     css`
       :host {

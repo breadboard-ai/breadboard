@@ -35,7 +35,7 @@ import { InspectableAsset, ok } from "@google-labs/breadboard";
 import { SignalWatcher } from "@lit-labs/signals";
 import { GraphAsset as GraphAssetState } from "../../state/types.js";
 import { icons } from "../../styles/icons.js";
-import { colorsLight } from "../../styles/host/colors-light.js";
+import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 
 const EDGE_STANDARD = getGlobalColor("--n-80");
@@ -102,7 +102,7 @@ export class GraphAsset
 
   static styles = [
     type,
-    colorsLight,
+    baseColors,
     icons,
     Box.styles,
     css`

@@ -16,7 +16,7 @@ import { customElement, property } from "lit/decorators.js";
 import { signal } from "signal-utils";
 
 import { icons } from "../../../../styles/icons";
-import { colorsLight } from "../../../../styles/host/colors-light";
+import { baseColors } from "../../../../styles/host/base-colors";
 import { type } from "../../../../styles/host/type";
 import { sharedStyles } from "../shared-styles";
 
@@ -84,7 +84,7 @@ export class ParticleLinks extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     sharedStyles,
-    colorsLight,
+    baseColors,
     type,
     css`
       :host {

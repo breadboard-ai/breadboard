@@ -8,7 +8,7 @@ import { LitElement, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { ref } from "lit/directives/ref.js";
 import { icons } from "../../../styles/icons";
-import { colorsLight } from "../../../styles/host/colors-light";
+import { baseColors } from "../../../styles/host/base-colors";
 import { type } from "../../../styles/host/type";
 
 @customElement("bb-webcam-video-input")
@@ -29,7 +29,7 @@ export class WebcamVideoInput extends LitElement {
   accessor #value: string | null = null;
 
   static styles = [
-    colorsLight,
+    baseColors,
     icons,
     type,
     css`

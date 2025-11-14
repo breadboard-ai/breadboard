@@ -5,7 +5,7 @@
  */
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { colorsLight } from "../../styles/host/colors-light";
+import { baseColors } from "../../styles/host/base-colors";
 import { type } from "../../styles/host/type";
 import "@material/web/tabs/primary-tab.js";
 import "@material/web/tabs/tabs.js";
@@ -25,7 +25,7 @@ export class VEConsentRequestModal extends SignalWatcher(LitElement) {
 
   static styles = [
     type,
-    colorsLight,
+    baseColors,
     css`
       :host {
         display: block;

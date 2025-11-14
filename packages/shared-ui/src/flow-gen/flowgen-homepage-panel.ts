@@ -19,7 +19,7 @@ import { type FlowGenerator, flowGeneratorContext } from "./flow-generator.js";
 import { classMap } from "lit/directives/class-map.js";
 import { spinAnimationStyles } from "../styles/spin-animation.js";
 import { ActionTracker } from "../utils/action-tracker.js";
-import { colorsLight } from "../styles/host/colors-light.js";
+import { baseColors } from "../styles/host/base-colors.js";
 import { type } from "../styles/host/type.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
@@ -45,7 +45,7 @@ export class FlowgenHomepagePanel extends LitElement {
     outlineButtonWithIcon,
     icons,
     spinAnimationStyles,
-    colorsLight,
+    baseColors,
     type,
     css`
       :host {

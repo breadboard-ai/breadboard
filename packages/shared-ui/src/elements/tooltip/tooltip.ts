@@ -5,7 +5,7 @@
  */
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { colorsLight } from "../../styles/host/colors-light";
+import { baseColors } from "../../styles/host/base-colors";
 import { type } from "../../styles/host/type";
 import { classMap } from "lit/directives/class-map.js";
 
@@ -102,7 +102,7 @@ export class Tooltip extends LitElement {
   }
 
   static styles = [
-    colorsLight,
+    baseColors,
     type,
     css`
       * {

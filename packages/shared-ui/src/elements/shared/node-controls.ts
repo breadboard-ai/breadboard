@@ -14,7 +14,7 @@ import { LitElement, html, css, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { icons } from "../../styles/icons";
 import { type } from "../../styles/host/type";
-import { colorsLight } from "../../styles/host/colors-light";
+import { baseColors } from "../../styles/host/base-colors";
 
 @customElement("bb-node-run-control")
 export class NodeRunControl extends LitElement {
@@ -36,7 +36,7 @@ export class NodeRunControl extends LitElement {
   static styles = [
     icons,
     type,
-    colorsLight,
+    baseColors,
     css`
       :host {
         display: flex;

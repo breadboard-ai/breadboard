@@ -6,13 +6,13 @@
 import { LitElement, html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 import { type } from "../../styles/host/type";
-import { colorsLight } from "../../styles/host/colors-light";
+import { baseColors } from "../../styles/host/base-colors";
 import { ShowVideoModalEvent } from "../../events/events";
 
 @customElement("bb-empty-state")
 export class EmptyState extends LitElement {
   static styles = [
-    colorsLight,
+    baseColors,
     type,
     css`
       :host {

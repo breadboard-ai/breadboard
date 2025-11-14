@@ -7,7 +7,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, query } from "lit/decorators.js";
 import { ref } from "lit/directives/ref.js";
 import { ModalDismissedEvent } from "../../events/events";
-import { colorsLight } from "../../styles/host/colors-light";
+import { baseColors } from "../../styles/host/base-colors";
 import { type } from "../../styles/host/type";
 import { icons } from "../../styles/icons";
 import { behavior } from "../../styles/host/behavior";
@@ -35,7 +35,7 @@ export class VEModal extends LitElement {
   accessor showSaveCancel = false;
 
   @property()
-  accessor saveButtonLabel = 'Save';
+  accessor saveButtonLabel = "Save";
 
   @property({ reflect: true, type: Boolean })
   accessor blurBackground = false;
@@ -48,7 +48,7 @@ export class VEModal extends LitElement {
 
   static styles = [
     icons,
-    colorsLight,
+    baseColors,
     type,
     behavior,
     css`

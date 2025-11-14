@@ -30,7 +30,7 @@ import { until } from "lit/directives/until.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context";
 import { OverlayDismissedEvent, SnackbarEvent } from "../../events/events.js";
 import { Project, UI } from "../../state/types.js";
-import { colorsLight } from "../../styles/host/colors-light";
+import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type";
 import { icons } from "../../styles/icons";
 import {
@@ -85,7 +85,7 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
   #abortController: AbortController | null = null;
 
   static styles = [
-    colorsLight,
+    baseColors,
     type,
     icons,
     css`

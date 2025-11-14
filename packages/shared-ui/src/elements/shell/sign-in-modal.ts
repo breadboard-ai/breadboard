@@ -8,7 +8,7 @@ import { consume } from "@lit/context";
 import { LitElement, css, html, nothing, type HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import * as StringsHelper from "../../strings/helper.js";
-import { colorsLight } from "../../styles/host/colors-light.js";
+import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import {
   signinAdapterContext,
@@ -51,7 +51,7 @@ export class VESignInModal extends LitElement {
 
   static styles = [
     type,
-    colorsLight,
+    baseColors,
     css`
       :host {
         display: contents;

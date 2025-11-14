@@ -6,7 +6,7 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { icons } from "../../styles/icons.js";
-import { colorsLight } from "../../styles/host/colors-light.js";
+import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { OnboardingAcknowledgedEvent } from "../../events/events.js";
 
@@ -18,7 +18,7 @@ export class OnboardingTooltip extends LitElement {
 
   static styles = [
     icons,
-    colorsLight,
+    baseColors,
     type,
     css`
       * {

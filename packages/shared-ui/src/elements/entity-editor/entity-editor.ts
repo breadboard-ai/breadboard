@@ -80,7 +80,7 @@ import { embedderContext } from "../../contexts/embedder";
 import { embedState } from "../../embed/embed.js";
 import type { EmbedState } from "@breadboard-ai/types/embedder.js";
 import { getBoardUrlFromCurrentWindow } from "../../utils/board-id.js";
-import { colorsLight } from "../../styles/host/colors-light";
+import { baseColors } from "../../styles/host/base-colors";
 import { type } from "../../styles/host/type";
 import { iconSubstitute } from "../../utils/icon-substitute";
 import { ActionTracker } from "../../utils/action-tracker";
@@ -141,7 +141,7 @@ export class EntityEditor
 
   static styles = [
     icons,
-    colorsLight,
+    baseColors,
     type,
     css`
       :host {

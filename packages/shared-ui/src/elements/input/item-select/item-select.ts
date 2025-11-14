@@ -10,7 +10,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
 import { icons } from "../../../styles/icons";
 import { EnumValue } from "../../../types/types";
-import { colorsLight } from "../../../styles/host/colors-light";
+import { baseColors } from "../../../styles/host/base-colors";
 import { type } from "../../../styles/host/type";
 
 @customElement("bb-item-select")
@@ -74,7 +74,7 @@ export class ItemSelect extends LitElement {
 
   static styles = [
     icons,
-    colorsLight,
+    baseColors,
     type,
     css`
       :host {

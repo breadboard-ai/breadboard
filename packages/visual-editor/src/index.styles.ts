@@ -9,7 +9,7 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 
 export const styles = [
   BreadboardUI.Styles.HostType.type,
-  BreadboardUI.Styles.HostColors.colorsLight,
+  BreadboardUI.Styles.HostColors.baseColors,
   BreadboardUI.Styles.HostIcons.icons,
   css`
     * {

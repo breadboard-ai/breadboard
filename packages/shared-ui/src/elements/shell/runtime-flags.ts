@@ -5,7 +5,7 @@
  */
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { colorsLight } from "../../styles/host/colors-light";
+import { baseColors } from "../../styles/host/base-colors";
 import { type } from "../../styles/host/type";
 import { StateEvent } from "../../events/events";
 import { RuntimeFlags } from "@breadboard-ai/types";
@@ -22,7 +22,7 @@ export class VERuntimeFlags extends LitElement {
 
   static styles = [
     type,
-    colorsLight,
+    baseColors,
     css`
       :host {
         display: block;

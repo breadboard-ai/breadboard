@@ -17,7 +17,7 @@ import { signal } from "signal-utils";
 
 import { icons } from "../../../../styles/icons";
 import { sharedStyles } from "./../shared-styles";
-import { colorsLight } from "../../../../styles/host/colors-light";
+import { baseColors } from "../../../../styles/host/base-colors";
 import { type } from "../../../../styles/host/type";
 
 @customElement("bb-particle-update")
@@ -85,7 +85,7 @@ export class ParticleUpdate extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     sharedStyles,
-    colorsLight,
+    baseColors,
     type,
     css`
       :host {

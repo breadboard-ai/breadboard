@@ -25,7 +25,7 @@ import {
   type FlowGenConstraint,
   type FlowGenerator,
 } from "./flow-generator.js";
-import { colorsLight } from "../styles/host/colors-light.js";
+import { baseColors } from "../styles/host/base-colors.js";
 import { type } from "../styles/host/type.js";
 
 const Strings = StringsHelper.forSection("Editor");
@@ -43,7 +43,7 @@ export class FlowgenInStepButton extends LitElement {
     floatingPanelStyles,
     multiLineInputStyles,
     icons,
-    colorsLight,
+    baseColors,
     type,
     css`
       :host {

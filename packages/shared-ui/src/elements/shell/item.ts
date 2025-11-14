@@ -5,7 +5,7 @@
  */
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { colorsLight } from "../../styles/host/colors-light";
+import { baseColors } from "../../styles/host/base-colors";
 import { type } from "../../styles/host/type";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import {
@@ -27,7 +27,7 @@ export class ItemModal extends LitElement {
   static styles = [
     icons,
     type,
-    colorsLight,
+    baseColors,
     css`
       :host {
         display: block;

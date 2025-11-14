@@ -24,7 +24,7 @@ import { clamp } from "./utils/clamp";
 import { Entity } from "./entity";
 import { calculatePointsOnCubicBezierCurve } from "./utils/cubic-bezier";
 import { icons } from "../../styles/icons";
-import { palette } from "../../styles/host/colors-light";
+import { palette } from "../../styles/host/base-colors";
 
 interface Connection {
   n1: DOMPoint;

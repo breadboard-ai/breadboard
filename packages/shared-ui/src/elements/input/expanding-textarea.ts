@@ -8,7 +8,7 @@ import { LitElement, css, html, type PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { icons } from "../../styles/icons.js";
-import { colorsLight } from "../../styles/host/colors-light.js";
+import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 
 /**
@@ -53,7 +53,7 @@ export class ExpandingTextarea extends LitElement {
 
   static override styles = [
     icons,
-    colorsLight,
+    baseColors,
     type,
     css`
       :host {
