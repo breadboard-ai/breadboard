@@ -985,7 +985,7 @@ export class Edit extends EventTarget {
     const { titleUserModified } = updateNodeTransform;
     const enableOutputTemplates = (await this.flags.flags()).outputTemplates;
 
-    if (!enableOutputTemplates && !titleUserModified) {
+    if (!enableOutputTemplates && titleUserModified) {
       return;
     }
 
