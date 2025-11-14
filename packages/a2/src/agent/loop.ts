@@ -29,7 +29,6 @@ export { Loop };
 
 export type AgentRawResult = {
   success: boolean;
-  user_message: string;
   href: string;
   objective_outcomes: string[];
 };
@@ -39,10 +38,6 @@ export type AgentResult = {
    * Whether or not agent succeeded in fulfilling the objective.
    */
   success: boolean;
-  /**
-   * User message to display to the user
-   */
-  message: LLMContent;
   /**
    * The url of the next agent to which to transfer control
    */
@@ -230,7 +225,6 @@ class Loop {
       let terminateLoop = false;
       let result: AgentRawResult = {
         success: false,
-        user_message: "",
         href: "",
         objective_outcomes: [],
       };
@@ -241,15 +235,13 @@ class Loop {
           terminateCallback: () => {
             terminateLoop = true;
           },
-          successCallback: (user_message, href, objective_outcomes) => {
+          successCallback: (href, objective_outcomes) => {
             terminateLoop = true;
             console.log("SUCCESS! Objective fulfilled");
-            console.log("User message:", user_message);
             console.log("Transfer control to", href);
             console.log("Objective outcomes:", objective_outcomes);
             result = {
               success: true,
-              user_message,
               href,
               objective_outcomes,
             };
@@ -362,9 +354,7 @@ class Loop {
   }
 
   #finalizeResult(raw: AgentRawResult): Outcome<AgentResult> {
-    const { success, user_message, href, objective_outcomes } = raw;
-    const message = this.#translator.fromPidginString(user_message);
-    if (!ok(message)) return message;
+    const { success, href, objective_outcomes } = raw;
     let outcomes: Outcome<LLMContent> | undefined = undefined;
     let intermediate: Outcome<LLMContent> | undefined = undefined;
     if (success) {
@@ -374,6 +364,6 @@ class Loop {
       intermediate = this.#translator.fromPidginFiles(intermediateFiles);
       if (!ok(intermediate)) return intermediate;
     }
-    return { success, message, href, outcomes, intermediate };
+    return { success, href, outcomes, intermediate };
   }
 }
