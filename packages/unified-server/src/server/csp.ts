@@ -15,6 +15,37 @@ export const FALLBACK_CSP = {
   ["frame-ancestors"]: ["'none'"],
 };
 
+export const SHELL_CSP = {
+  ["base-uri"]: ["'none'"],
+  ["connect-src"]: [
+    "'self'",
+    "https://*.google.com",
+    "https://*.googleapis.com",
+    flags.BACKEND_API_ENDPOINT,
+    // TODO(aomarks) Remove this after we have eliminated all credentialed RPCs
+    // to the frontend server.
+    flags.SHELL_GUEST_ORIGIN,
+  ],
+  ["default-src"]: ["'none'"],
+  ["font-src"]: [
+    // Google Fonts seems to be required by Chrome itself. Without it, despite
+    // not rendering any text in the shell, the console shows lots of CSP
+    // violations.
+    "https://fonts.gstatic.com",
+  ],
+  ["form-action"]: ["'none'"],
+  ["frame-ancestors"]: [
+    // This is slightly blurring the implied meaning of
+    // ALLOWED_REDIRECT_ORIGINS, but in practice the set of origins that we
+    // allow to override the OAuth redirect is the exactly same set of origins
+    // that are using the embedded iframe integration.
+    ...flags.ALLOWED_REDIRECT_ORIGINS,
+  ],
+  ["frame-src"]: ["https://drive.google.com", flags.SHELL_GUEST_ORIGIN],
+  ["script-src"]: ["'self'"],
+  ["style-src"]: ["'unsafe-inline'"],
+};
+
 export const MAIN_APP_CSP = {
   ["default-src"]: ["'none'"],
   ["script-src"]: [
@@ -82,8 +113,6 @@ export const MAIN_APP_CSP = {
   ["media-src"]: ["'self'", "blob:", "data:"],
   ["base-uri"]: ["'none'"],
 };
-
-export const SHELL_CSP = MAIN_APP_CSP;
 
 const CSP_HEADER_NAME = "Content-Security-Policy";
 
