@@ -53,7 +53,11 @@ export type RuntimeFlags = {
    * Enables Opal-ADK support
    */
   opalAdk: boolean;
-  /** 
+  /**
+   * Enables output templates for consistent output.
+   */
+  outputTemplates: boolean;
+  /**
    * Requres users consent to use of get_webpage tool
    */
   requireConsentForGetWebpage: boolean;

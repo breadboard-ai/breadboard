@@ -7,6 +7,7 @@
   "scripts": {
     "eval:agent": "tsx --experimental-test-module-mocks eval/agent.ts",
     "eval:a2ui": "tsx --experimental-test-module-mocks eval/a2ui.ts",
+    "eval:autoname": "tsx --experimental-test-module-mocks eval/autoname.ts",
     "eval:viewer": "vite dev viewer",
     "build": "wireit",
     "lint": "wireit"

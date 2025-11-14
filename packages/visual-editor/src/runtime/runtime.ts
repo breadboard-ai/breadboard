@@ -305,6 +305,7 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
     config.sandbox,
     graphStore,
     autonamer,
+    flags,
     config.settings
   );
 

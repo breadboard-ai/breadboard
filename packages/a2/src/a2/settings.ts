@@ -40,6 +40,7 @@ async function readFlags(caps: Capabilities): Promise<Outcome<RuntimeFlags>> {
       agentMode: false,
       backendTransforms: false,
       opalAdk: false,
+      outputTemplates: false,
       googleOne: false,
       requireConsentForGetWebpage: false,
       requireConsentForOpenWebpage: false,

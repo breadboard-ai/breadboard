@@ -91,6 +91,8 @@ export const ENABLE_EMAIL_OPT_IN = getBoolean("ENABLE_EMAIL_OPT_IN");
 
 export const ENABLE_OPAL_ADK = getBoolean("ENABLE_OPAL_ADK");
 
+export const ENABLE_OUTPUT_TEMPLATES = getBoolean("ENABLE_OUTPUT_TEMPLATES");
+
 export const ENABLE_GOOGLE_ONE = getBoolean("ENABLE_GOOGLE_ONE");
 export const ENABLE_REQUIRE_CONSENT_FOR_GET_WEBPAGE = getBoolean(
   "ENABLE_REQUIRE_CONSENT_FOR_GET_WEBPAGE"
