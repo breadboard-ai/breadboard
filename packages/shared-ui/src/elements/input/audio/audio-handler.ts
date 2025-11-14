@@ -67,24 +67,24 @@ export class AudioHandler extends LitElement {
 
     #request-permission {
       height: var(--bb-grid-size-10);
-      color: var(--bb-neutral-700);
+      color: var(--n-40);
       border-radius: var(--bb-grid-size-16);
-      background: var(--bb-neutral-0);
-      border: 1px solid var(--bb-neutral-300);
+      background: var(--n-100);
+      border: 1px solid var(--n-90);
       transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
       grid-column: 1 / 4;
       cursor: pointer;
 
       &:hover,
       &:focus {
-        background-color: var(--bb-neutral-50);
+        background-color: var(--n-98);
       }
     }
 
     #container {
       overflow: hidden;
       position: relative;
-      border: 1px solid var(--bb-neutral-300);
+      border: 1px solid var(--n-90);
       border-radius: var(--bb-grid-size-16);
       background: transparent;
       width: var(--bb-grid-size-11);
@@ -114,12 +114,12 @@ export class AudioHandler extends LitElement {
       }
 
       & #play {
-        background: var(--color-play-button, var(--bb-ui-500))
+        background: var(--color-play-button, var(--p-50))
           var(--icon-play, var(--bb-icon-play-filled-inverted)) center center /
           20px 20px no-repeat;
 
         &.playing {
-          background: var(--color-play-button, var(--bb-ui-500))
+          background: var(--color-play-button, var(--p-50))
             var(--icon-play, var(--bb-icon-pause-filled-inverted)) center
             center / 20px 20px no-repeat;
         }
@@ -129,18 +129,18 @@ export class AudioHandler extends LitElement {
 
           &:hover,
           &:focus {
-            background-color: var(--color-play-button-active, var(--bb-ui-600));
+            background-color: var(--color-play-button-active, var(--p-40));
           }
         }
       }
 
       & #capture {
-        background: var(--color-capture-button, var(--bb-ui-500))
+        background: var(--color-capture-button, var(--p-50))
           var(--icon-mic, var(--bb-icon-mic-inverted)) center center / 20px 20px
           no-repeat;
 
         &.playing {
-          background: var(--color-capture-button, var(--bb-ui-500))
+          background: var(--color-capture-button, var(--p-50))
             var(--icon-mic, var(--bb-icon-mic-inverted)) center center / 20px
             20px no-repeat;
         }
@@ -150,10 +150,7 @@ export class AudioHandler extends LitElement {
 
           &:hover,
           &:focus {
-            background-color: var(
-              --color-capture-button-active,
-              var(--bb-ui-600)
-            );
+            background-color: var(--color-capture-button-active, var(--p-40));
           }
         }
       }
@@ -167,7 +164,7 @@ export class AudioHandler extends LitElement {
         white-space: nowrap;
         font: 500 var(--bb-label-small) / var(--bb-label-line-height-small)
           var(--bb-font-family);
-        color: var(--reset-text-color, var(--bb-neutral-700));
+        color: var(--reset-text-color, var(--n-40));
 
         & #stop,
         & #reset {
@@ -182,7 +179,7 @@ export class AudioHandler extends LitElement {
           width: 20px;
           font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
             var(--bb-font-family);
-          color: var(--bb-neutral-700);
+          color: var(--n-40);
           font-size: 0;
           margin: 0 var(--bb-grid-size-2);
 
@@ -216,7 +213,7 @@ export class AudioHandler extends LitElement {
     :host([lite="true"]) {
       #request-permission {
         font-size: 0;
-        background: var(--color-capture-button, var(--bb-ui-500))
+        background: var(--color-capture-button, var(--p-50))
           var(--icon-mic, var(--bb-icon-mic-inverted)) center center / 20px 20px
           no-repeat;
       }

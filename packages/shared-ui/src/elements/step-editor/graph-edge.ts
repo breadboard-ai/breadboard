@@ -46,7 +46,7 @@ const EDGE_STORED = palette.neutral.n80;
 
 // Value is on the wire, but hasn't been consumed by receiving component yet.
 const EDGE_USER = getGlobalColor("--bb-joiner-600");
-const EDGE_MODEL = getGlobalColor("--bb-generative-600");
+const EDGE_MODEL = getGlobalColor("--ui-custom-o-100");
 
 const EDGE_CLEARANCE = 0;
 const HALF_HEADER_HEIGHT = 24;

@@ -103,18 +103,18 @@ export class Splitter extends LitElement {
       height: 36px;
       font-size: 0;
       cursor: pointer;
-      border: 1px solid var(--bb-neutral-300);
+      border: 1px solid var(--n-90);
       border-radius: 50% 0 0 50%;
     }
 
     #quick-expand.expand {
-      background: var(--bb-neutral-0) var(--bb-icon-before) center center / 16px
-        16px no-repeat;
+      background: var(--n-100) var(--bb-icon-before) center center / 16px 16px
+        no-repeat;
     }
 
     #quick-expand.collapse {
-      background: var(--bb-neutral-0) var(--bb-icon-next) center center / 16px
-        16px no-repeat;
+      background: var(--n-100) var(--bb-icon-next) center center / 16px 16px
+        no-repeat;
     }
 
     :host([showQuickExpandCollapse="false"]) #quick-expand {

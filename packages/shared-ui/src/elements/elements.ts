@@ -24,8 +24,6 @@ export { AddAssetButton } from "./input/add-asset/add-asset-button.js";
 export { AddAssetModal } from "./input/add-asset/add-asset-modal.js";
 export { AssetShelf } from "./input/add-asset/asset-shelf.js";
 export { AudioHandler } from "./input/audio/audio-handler.js";
-export { AudioInput } from "./input/audio/audio.js";
-export { CodeEditor } from "./input/code-editor/code-editor.js";
 export { DrawableInput } from "./input/drawable/drawable.js";
 export { FloatingInput } from "./input/floating-input/floating-input.js";
 export { ItemSelect } from "./input/item-select/item-select.js";

@@ -85,7 +85,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       :host {
         display: block;
         width: 240px;
-        background: var(--bb-neutral-0);
+        background: var(--n-100);
         height: 300px;
         overflow: scroll;
         scrollbar-width: none;
@@ -148,7 +148,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
             background-color: var(--background);
             border: none;
             border-radius: var(--bb-grid-size-2);
-            color: var(--bb-neutral-900);
+            color: var(--n-10);
             margin: 0 0 var(--bb-grid-size-3) 0;
             height: var(--bb-grid-size-6);
             padding: 0 var(--bb-grid-size-2);
@@ -261,8 +261,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
           border-radius: var(--bb-grid-size-16);
           height: var(--bb-grid-size-7);
           border: none;
-          background: var(--bb-icon-add) var(--bb-neutral-100) 4px center / 20px
-            20px no-repeat;
+          background: var(--bb-icon-add) var(--n-98) 4px center / 20px 20px
+            no-repeat;
           padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
           font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
             var(--bb-font-family);
@@ -274,7 +274,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
             &:hover,
             &:focus {
-              background-color: var(--bb-neutral-200);
+              background-color: var(--n-90);
             }
           }
         }

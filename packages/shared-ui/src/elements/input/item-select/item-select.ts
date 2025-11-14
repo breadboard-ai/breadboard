@@ -121,7 +121,7 @@ export class ItemSelect extends LitElement {
         background-color: transparent;
         text-align: left;
         transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
-        color: var(--bb-neutral-900);
+        color: var(--n-10);
         width: 100%;
         display: grid;
         align-items: center;
@@ -130,7 +130,7 @@ export class ItemSelect extends LitElement {
 
         &.tag {
           .i-tag {
-            color: var(--bb-neutral-500);
+            color: var(--n-98);
           }
         }
 
@@ -173,7 +173,7 @@ export class ItemSelect extends LitElement {
         }
 
         & .description {
-          color: var(--bb-neutral-700);
+          color: var(--n-40);
           font: normal var(--bb-label-small) / var(--bb-label-line-height-small)
             var(--bb-font-family);
         }
@@ -208,19 +208,19 @@ export class ItemSelect extends LitElement {
       #item-selector {
         position: fixed;
         left: var(--left);
-        background: var(--bb-neutral-0);
+        background: var(--n-100);
         padding: 0;
         width: var(--menu-width);
         height: fit-content;
         margin: 0;
         border: none;
         overflow: auto;
-        color: var(--bb-neutral-900);
+        color: var(--n-10);
         border-radius: var(--bb-grid-size-3);
         box-shadow: var(--bb-elevation-5);
 
         & .heading {
-          color: var(--bb-neutral-500);
+          color: var(--n-98);
           font: normal var(--bb-label-small) / var(--bb-label-line-height-small)
             var(--bb-font-family);
           margin: var(--bb-grid-size-2) var(--bb-grid-size-3);

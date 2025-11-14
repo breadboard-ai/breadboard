@@ -86,8 +86,8 @@ export class ItemModal extends LitElement {
       #create-new {
         display: flex;
         align-items: center;
-        background: var(--n-0, var(--bb-neutral-100));
-        color: var(--n-100, var(--bb-neutral-700));
+        background: var(--n-0, var(--n-98));
+        color: var(--n-100, var(--n-40));
         border-radius: var(--bb-grid-size-16);
         border: none;
         padding: 0 var(--bb-grid-size-4);

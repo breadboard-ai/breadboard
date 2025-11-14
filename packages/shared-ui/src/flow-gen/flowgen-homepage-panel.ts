@@ -67,7 +67,7 @@ export class FlowgenHomepagePanel extends LitElement {
       }
 
       .dismiss-button:hover {
-        color: var(--bb-neutral-400);
+        color: var(--n-80);
       }
 
       p {
@@ -124,7 +124,7 @@ export class FlowgenHomepagePanel extends LitElement {
         flex: 1;
         width: 100%;
         background: #fff;
-        color: var(--n-0, var(--bb-neutral-900));
+        color: var(--n-0, var(--n-10));
         border: none;
         border-radius: 40px;
         padding: 0.5lh 1lh;
@@ -133,10 +133,10 @@ export class FlowgenHomepagePanel extends LitElement {
         font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
           var(--bb-font-family);
         line-height: 20px;
-        caret-color: var(--bb-ui-500);
+        caret-color: var(--p-50);
 
         &::part(textarea)::placeholder {
-          color: var(--bb-neutral-500);
+          color: var(--n-98);
         }
 
         &:focus-within {

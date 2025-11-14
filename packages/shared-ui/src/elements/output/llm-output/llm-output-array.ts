@@ -81,33 +81,33 @@ export class LLMOutputArray extends LitElement {
       height: var(--bb-grid-size-7);
       margin-right: var(--bb-grid-size);
       border-radius: 50%;
-      border: 1px solid var(--bb-neutral-300);
+      border: 1px solid var(--n-90);
       font-size: 0;
-      background: var(--bb-neutral-0) var(--bb-icon-human) center center / 20px
-        20px no-repeat;
+      background: var(--n-100) var(--bb-icon-human) center center / 20px 20px
+        no-repeat;
     }
 
     #controls button.model {
-      background: var(--bb-neutral-0) var(--bb-icon-model) center center / 20px
-        20px no-repeat;
+      background: var(--n-100) var(--bb-icon-model) center center / 20px 20px
+        no-repeat;
     }
 
     #controls button.user {
-      background: var(--bb-neutral-0) var(--bb-icon-human) center center / 20px
-        20px no-repeat;
+      background: var(--n-100) var(--bb-icon-human) center center / 20px 20px
+        no-repeat;
     }
 
     #controls button[disabled] {
       cursor: auto;
-      background-color: var(--bb-ui-100);
+      background-color: var(--p-95);
     }
 
     #controls select {
       display: block;
       border-radius: var(--bb-grid-size);
-      background: var(--bb-neutral-0);
+      background: var(--n-100);
       padding: var(--bb-grid-size) var(--bb-grid-size-2);
-      border: 1px solid var(--bb-neutral-300);
+      border: 1px solid var(--n-90);
     }
 
     bb-llm-output {

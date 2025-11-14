@@ -92,10 +92,10 @@ export class GoogleDriveFileId extends LitElement {
     }
 
     button {
-      background: var(--secondary-color, var(--bb-neutral-100));
+      background: var(--secondary-color, var(--n-98));
       border-radius: var(--bb-grid-size-16);
       border: none;
-      color: var(--primary-text-color, var(--bb-neutral-700));
+      color: var(--primary-text-color, var(--n-40));
       font: 500 var(--bb-label-small) / var(--bb-label-line-height-small)
         var(--bb-font-family);
       height: var(--bb-grid-size-7);
@@ -120,10 +120,10 @@ export class GoogleDriveFileId extends LitElement {
       display: block;
       width: 100%;
       border-radius: var(--bb-grid-size);
-      background: var(--background-color, var(--bb-neutral-0));
-      color: var(--text-color, var(--bb-neutral-900));
+      background: var(--background-color, var(--n-100));
+      color: var(--text-color, var(--n-10));
       padding: var(--bb-grid-size-2);
-      border: 1px solid var(--bb-neutral-300);
+      border: 1px solid var(--n-90);
       resize: none;
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);

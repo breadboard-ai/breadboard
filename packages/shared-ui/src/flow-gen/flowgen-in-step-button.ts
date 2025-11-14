@@ -109,7 +109,7 @@ export class FlowgenInStepButton extends LitElement {
         align-items: center;
         border-radius: var(--bb-grid-size-7);
         border: 1px solid transparent;
-        background: var(--bb-neutral-0);
+        background: var(--n-100);
         padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
 
         bb-speech-to-text {
@@ -194,7 +194,7 @@ export class FlowgenInStepButton extends LitElement {
       #generating-status-detail {
         font-size: 14px;
         margin-top: 8px;
-        color: var(--bb-neutral-700);
+        color: var(--n-40);
       }
 
       #error {

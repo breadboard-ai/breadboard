@@ -50,30 +50,17 @@ export class SpeechToText extends LitElement {
         height: var(--button-size, 40px);
 
         --active-color: linear-gradient(
-          oklch(
-              from var(--p-50, var(--bb-neutral-600)) l c h / calc(alpha * 0.7)
-            )
-            0%,
-          oklch(
-              from var(--p-50, var(--bb-neutral-600)) l c h / calc(alpha * 0.44)
-            )
-            34%,
-          oklch(
-              from var(--p-50, var(--bb-neutral-600)) l c h / calc(alpha * 0.2)
-            )
-            69%,
-          oklch(from var(--p-50, var(--bb-neutral-600)) l c h / calc(alpha * 0))
-            99%
+          oklch(from var(--p-50, var(--n-50)) l c h / calc(alpha * 0.7)) 0%,
+          oklch(from var(--p-50, var(--n-50)) l c h / calc(alpha * 0.44)) 34%,
+          oklch(from var(--p-50, var(--n-50)) l c h / calc(alpha * 0.2)) 69%,
+          oklch(from var(--p-50, var(--n-50)) l c h / calc(alpha * 0)) 99%
         );
       }
 
       :host([active]) button {
         animation: pulse linear 1s infinite forwards;
 
-        --default-background: var(
-          --background-color,
-          var(--n-90, var(--bb-neutral-200))
-        );
+        --default-background: var(--background-color, var(--n-90, var(--n-90)));
 
         &::before {
           box-sizing: border-box;
@@ -111,8 +98,8 @@ export class SpeechToText extends LitElement {
       button {
         width: var(--button-size, 40px);
         height: var(--button-size, 40px);
-        background: var(--background-color, var(--n-90, var(--bb-neutral-200)));
-        color: var(--text-color, var(--n-0, var(--bb-neutral-800)));
+        background: var(--background-color, var(--n-90, var(--n-90)));
+        color: var(--text-color, var(--n-0, var(--n-20)));
         font-size: 0;
         border: none;
         border-radius: 50%;

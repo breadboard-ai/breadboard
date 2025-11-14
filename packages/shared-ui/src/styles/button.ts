@@ -10,7 +10,7 @@ export const buttonStyles = css`
   .bb-button-filled,
   .bb-button-outlined,
   .bb-button-text {
-    color: var(--bb-neutral-700);
+    color: var(--n-40);
     border-radius: 100px;
     padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
     font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
@@ -36,12 +36,12 @@ export const buttonStyles = css`
 
   .bb-button-filled {
     border: none;
-    background: var(--bb-neutral-300);
+    background: var(--n-90);
 
     &:not([disabled]) {
       &:focus,
       &:hover {
-        background: var(--bb-button-hover-background, var(--bb-neutral-100));
+        background: var(--bb-button-hover-background, var(--n-98));
       }
     }
   }

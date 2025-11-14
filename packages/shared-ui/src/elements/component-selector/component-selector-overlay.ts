@@ -69,9 +69,9 @@ export class ComponentSelectorOverlay extends LitElement {
       width: 328px;
       max-height: 400px;
       flex-direction: column;
-      color: var(--bb-neutral-900);
-      background: var(--bb-neutral-0);
-      border: 1px solid var(--bb-neutral-300);
+      color: var(--n-10);
+      background: var(--n-100);
+      border: 1px solid var(--n-90);
       border-radius: var(--bb-grid-size-2);
       box-shadow: var(--bb-elevation-5);
     }
@@ -81,9 +81,9 @@ export class ComponentSelectorOverlay extends LitElement {
       height: 40px;
       padding: var(--bb-grid-size-3) var(--bb-grid-size-3) var(--bb-grid-size-2)
         var(--bb-grid-size-6);
-      background: var(--bb-neutral-50);
+      background: var(--n-98);
       border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
-      border-bottom: 1px solid var(--bb-neutral-300);
+      border-bottom: 1px solid var(--n-90);
       font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
         var(--bb-font-family);
     }
@@ -99,11 +99,11 @@ export class ComponentSelectorOverlay extends LitElement {
       row-gap: var(--bb-grid-size-2);
       padding: var(--bb-grid-size-3) var(--bb-grid-size-3) var(--bb-grid-size-3)
         var(--bb-grid-size-3);
-      border-bottom: 1px solid var(--bb-neutral-300);
+      border-bottom: 1px solid var(--n-90);
 
       & #search {
         grid-column: 1 / 3;
-        background: var(--bb-ui-50) var(--bb-icon-search) 8px center / 20px 20px
+        background: var(--p-98) var(--bb-icon-search) 8px center / 20px 20px
           no-repeat;
         border-radius: var(--bb-grid-size-16);
         border: none;
@@ -120,7 +120,7 @@ export class ComponentSelectorOverlay extends LitElement {
           border: none;
           border-radius: var(--bb-grid-size-16);
           background: none;
-          color: var(--bb-neutral-900);
+          color: var(--n-10);
           opacity: 0.4;
           height: var(--bb-grid-size-7);
           font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
@@ -129,7 +129,7 @@ export class ComponentSelectorOverlay extends LitElement {
 
           &[disabled] {
             opacity: 1;
-            background: var(--bb-neutral-50);
+            background: var(--n-98);
           }
         }
       }
@@ -163,7 +163,7 @@ export class ComponentSelectorOverlay extends LitElement {
             top: 2px;
             width: calc(100% - 4px);
             height: calc(100% - 4px);
-            background: var(--bb-neutral-50);
+            background: var(--n-98);
             z-index: 0;
             border-radius: var(--bb-grid-size);
             opacity: 0;
@@ -176,7 +176,7 @@ export class ComponentSelectorOverlay extends LitElement {
 
           & .node-id {
             position: relative;
-            color: var(--bb-neutral-900);
+            color: var(--n-10);
             margin-bottom: var(--bb-grid-size);
             font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
               var(--bb-font-family);
@@ -184,7 +184,7 @@ export class ComponentSelectorOverlay extends LitElement {
 
           & .node-description {
             position: relative;
-            color: var(--bb-neutral-700);
+            color: var(--n-40);
             font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
               var(--bb-font-family);
           }

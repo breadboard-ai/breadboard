@@ -38,7 +38,7 @@ import { icons } from "../../styles/icons.js";
 import { colorsLight } from "../../styles/host/colors-light.js";
 import { type } from "../../styles/host/type.js";
 
-const EDGE_STANDARD = getGlobalColor("--bb-neutral-400");
+const EDGE_STANDARD = getGlobalColor("--n-80");
 
 const arrowWidth = 46;
 const arrowHeight = 36;
@@ -115,7 +115,7 @@ export class GraphAsset
         user-select: none;
         font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
           var(--bb-font-family);
-        color: var(--bb-neutral-900);
+        color: var(--n-10);
         line-height: var(--bb-grid-size-6);
         z-index: 3;
         outline: none;
@@ -140,7 +140,7 @@ export class GraphAsset
       #container {
         width: 300px;
         border-radius: var(--bb-grid-size-3);
-        color: var(--bb-neutral-900);
+        color: var(--n-10);
         position: relative;
 
         #right-arrow {
@@ -157,13 +157,13 @@ export class GraphAsset
           left: 100%;
           transform: translateX(48px) translateY(-50%);
           z-index: 4;
-          border: 1px solid var(--bb-neutral-300);
-          color: var(--bb-neutral-600);
+          border: 1px solid var(--n-90);
+          color: var(--n-50);
           font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
           border-radius: var(--bb-grid-size-16);
-          background: var(--bb-neutral-50) var(--bb-icon-library-add) 8px
-            center / 20px 20px no-repeat;
+          background: var(--n-98) var(--bb-icon-library-add) 8px center / 20px
+            20px no-repeat;
           padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
           transition: border 0.2s cubic-bezier(0, 0, 0.3, 1);
           height: var(--bb-grid-size-7);
@@ -172,7 +172,7 @@ export class GraphAsset
           pointer-events: auto;
 
           &:hover {
-            border: 1px solid var(--bb-neutral-500);
+            border: 1px solid var(--n-98);
           }
         }
 
@@ -254,11 +254,11 @@ export class GraphAsset
 
         & #content {
           position: relative;
-          background: var(--bb-neutral-0);
+          background: var(--n-100);
           padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
           font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
-          color: var(--bb-neutral-900);
+          color: var(--n-10);
           line-height: var(--bb-grid-size-6);
           border-radius: 0 0 var(--bb-grid-size-3) var(--bb-grid-size-3);
           pointer-events: none;
