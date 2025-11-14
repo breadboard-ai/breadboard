@@ -15,6 +15,21 @@ export const FALLBACK_CSP = {
   ["frame-ancestors"]: ["'none'"],
 };
 
+export const OAUTH_REDIRECT_CSP = {
+  ["base-uri"]: ["'none'"],
+  ["connect-src"]: ["'self'"],
+  ["default-src"]: ["'none'"],
+  ["font-src"]: [
+    // Google Fonts seems to be required by Chrome itself. Without it, despite
+    // not rendering any text in the shell, the console shows lots of CSP
+    // violations.
+    "https://fonts.gstatic.com",
+  ],
+  ["form-action"]: ["'none'"],
+  ["frame-ancestors"]: ["'none'"],
+  ["script-src"]: ["'self'"],
+};
+
 export const SHELL_CSP = {
   ["base-uri"]: ["'none'"],
   ["connect-src"]: [
@@ -27,12 +42,7 @@ export const SHELL_CSP = {
     flags.SHELL_GUEST_ORIGIN,
   ],
   ["default-src"]: ["'none'"],
-  ["font-src"]: [
-    // Google Fonts seems to be required by Chrome itself. Without it, despite
-    // not rendering any text in the shell, the console shows lots of CSP
-    // violations.
-    "https://fonts.gstatic.com",
-  ],
+  ["font-src"]: ["https://fonts.gstatic.com"],
   ["form-action"]: ["'none'"],
   ["frame-ancestors"]: [
     // This is slightly blurring the implied meaning of

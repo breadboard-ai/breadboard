@@ -16,6 +16,7 @@ import {
   FALLBACK_CSP,
   MAIN_APP_CSP,
   makeCspHandler,
+  OAUTH_REDIRECT_CSP,
   SHELL_CSP,
 } from "./csp.js";
 import { createDataTransformHandler } from "./data-transform.js";
@@ -114,17 +115,31 @@ if (flags.SHELL_ENABLED) {
   // TODO(aomarks) After we are fully in the iframe arrangement, move assets
   // around so that this entire re-pathing middleware is not necessary.
   console.log("[unified-server startup] Serving in shell configuration");
-  server.get("/", makeCspHandler(SHELL_CSP), (req, _res, next) => {
-    req.url = "/shell/index.html";
-    next();
-  });
+  server.get(
+    ["/", "/landing/"],
+    makeCspHandler(SHELL_CSP),
+    (req, _res, next) => {
+      req.url = "/shell/index.html";
+      next();
+    }
+  );
   server.get("/_app/", makeCspHandler(MAIN_APP_CSP), (req, _res, next) => {
     req.url = "/index.html";
     next();
   });
+  server.get(
+    "/_app/landing/",
+    makeCspHandler(MAIN_APP_CSP),
+    (req, _res, next) => {
+      req.url = "/landing/index.html";
+      next();
+    }
+  );
 } else {
-  server.get("/", makeCspHandler(MAIN_APP_CSP));
+  server.get(["/", "/landing/"], makeCspHandler(MAIN_APP_CSP));
 }
+
+server.get("/oauth/", makeCspHandler(OAUTH_REDIRECT_CSP));
 
 ViteExpress.config({
   transformer: (html: string, req: Request) => {
