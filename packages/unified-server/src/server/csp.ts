@@ -26,7 +26,7 @@ export const OAUTH_REDIRECT_CSP = {
     "https://fonts.gstatic.com",
   ],
   ["form-action"]: ["'none'"],
-  ["frame-ancestors"]: ["'none'"],
+  ["frame-ancestors"]: noneIfEmpty(flags.ALLOWED_REDIRECT_ORIGINS),
   ["script-src"]: ["'self'"],
 };
 
@@ -44,13 +44,7 @@ export const SHELL_CSP = {
   ["default-src"]: ["'none'"],
   ["font-src"]: ["https://fonts.gstatic.com"],
   ["form-action"]: ["'none'"],
-  ["frame-ancestors"]: [
-    // This is slightly blurring the implied meaning of
-    // ALLOWED_REDIRECT_ORIGINS, but in practice the set of origins that we
-    // allow to override the OAuth redirect is the exactly same set of origins
-    // that are using the embedded iframe integration.
-    ...flags.ALLOWED_REDIRECT_ORIGINS,
-  ],
+  ["frame-ancestors"]: noneIfEmpty(flags.ALLOWED_REDIRECT_ORIGINS),
   ["frame-src"]: [
     "https://docs.google.com",
     "https://drive.google.com",
@@ -118,15 +112,21 @@ export const MAIN_APP_CSP = {
     "https://feedback-pa.clients6.google.com",
     "https://accounts.google.com",
   ],
-  ["frame-ancestors"]: [
+  ["frame-ancestors"]: noneIfEmpty([
     // Note that frame-ancestors applies recursively. If A iframes B iframes C,
     // then C must allow both B and A.
     ...flags.ALLOWED_REDIRECT_ORIGINS,
-    ...(flags.SHELL_ENABLED ? [...flags.SHELL_HOST_ORIGINS] : []),
-  ],
+    ...(flags.SHELL_ENABLED ? flags.SHELL_HOST_ORIGINS : []),
+  ]),
   ["media-src"]: ["'self'", "blob:", "data:"],
   ["base-uri"]: ["'none'"],
 };
+
+function noneIfEmpty(directives: string[]): string[] {
+  return directives.filter((directive) => directive.trim()).length === 0
+    ? ["'none'"]
+    : directives;
+}
 
 const CSP_HEADER_NAME = "Content-Security-Policy";
 
