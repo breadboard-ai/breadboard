@@ -58,8 +58,7 @@ export const MAIN_APP_CSP = {
     flags.BACKEND_API_ENDPOINT,
     "https://*.google-analytics.com",
     "https://*.google.com",
-    "https://*.googleapis.com/",
-    "https://oauth2.googleapis.com/tokeninfo",
+    "https://*.googleapis.com",
   ],
   ["frame-src"]: [
     "'self'",
