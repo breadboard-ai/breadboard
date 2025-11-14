@@ -48,6 +48,7 @@ export const MAIN_APP_CSP = {
     // TODO(aomarks) Remove this after we have eliminated all credentialed RPCs
     // to the frontend server.
     flags.SHELL_GUEST_ORIGIN,
+    flags.BACKEND_API_ENDPOINT,
     "https://*.google-analytics.com",
     "https://*.google.com",
     "https://*.googleapis.com/",
@@ -80,11 +81,7 @@ const CSP_HEADER_NAME = "Content-Security-Policy";
 
 /** https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP */
 export function makeCspHandler(csp: Record<string, string[]>): Handler {
-  const cspConfig = structuredClone(csp);
-  if (flags.BACKEND_API_ENDPOINT) {
-    cspConfig["connect-src"].push(flags.BACKEND_API_ENDPOINT);
-  }
-  const cspHeaderValue = Object.entries(cspConfig)
+  const cspHeaderValue = Object.entries(csp)
     .map(([key, vals]) => `${key} ${vals.join(" ")}`)
     .join(";");
 
