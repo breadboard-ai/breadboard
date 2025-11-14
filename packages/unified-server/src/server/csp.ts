@@ -118,9 +118,12 @@ export const MAIN_APP_CSP = {
     "https://feedback-pa.clients6.google.com",
     "https://accounts.google.com",
   ],
-  ["frame-ancestors"]: flags.SHELL_ENABLED
-    ? [...flags.SHELL_HOST_ORIGINS]
-    : [...flags.ALLOWED_REDIRECT_ORIGINS],
+  ["frame-ancestors"]: [
+    // Note that frame-ancestors applies recursively. If A iframes B iframes C,
+    // then C must allow both B and A.
+    ...flags.ALLOWED_REDIRECT_ORIGINS,
+    ...(flags.SHELL_ENABLED ? [...flags.SHELL_HOST_ORIGINS] : []),
+  ],
   ["media-src"]: ["'self'", "blob:", "data:"],
   ["base-uri"]: ["'none'"],
 };
