@@ -55,11 +55,7 @@ const TASK_TREE_SCHEMA = {
 
 export type SystemFunctionArgs = {
   fileSystem: AgentFileSystem;
-  successCallback(
-    user_message: string,
-    href: string,
-    objective_outcomes: string[]
-  ): void;
+  successCallback(href: string, objective_outcomes: string[]): void;
   terminateCallback(): void;
 };
 
@@ -71,13 +67,10 @@ function defineSystemFunctions(args: SystemFunctionArgs): FunctionDefinition[] {
         description: `Inidicates completion of the overall objective. 
 Call only when the specified objective is entirely fulfilled`,
         parameters: {
-          user_message: z.string()
-            .describe(`Text to display to the user upon fulfillment of the objective. 
-Use the <file src="path" /> syntax to embed the outcome in the text`),
           objective_outcomes: z
             .array(z.string().describe(`A VFS path pointing at the outcome`))
             .describe(
-              `The array of outcomes that were requested in the objective`
+              `The array of files that fulfill in the objective. Can be either a file or a project`
             ),
           href: z
             .string()
@@ -91,8 +84,8 @@ If the objective specifies other agent URLs using the
             .default("/"),
         },
       },
-      async ({ user_message, objective_outcomes, href }) => {
-        args.successCallback(user_message, href || "/", objective_outcomes);
+      async ({ objective_outcomes, href }) => {
+        args.successCallback(href || "/", objective_outcomes);
         return {};
       }
     ),
@@ -132,7 +125,7 @@ If the objective specifies other agent URLs using the
     defineFunction(
       {
         name: "system_write_text_to_file",
-        description: "Writes provided text to a file",
+        description: "Writes the provided text to a file",
         parameters: {
           file_name: z.string().describe(
             `
@@ -164,6 +157,48 @@ existing project.`.trim()
           file_name,
           text,
           "text/markdown"
+        );
+        if (project_path) {
+          args.fileSystem.addFilesToProject(project_path, [file_path]);
+        }
+        return { file_path };
+      }
+    ),
+    defineFunction(
+      {
+        name: "system_write_json_to_file",
+        description: "Writes the provided JSON string to a file",
+        parameters: {
+          file_name: z.string().describe(
+            `
+The name of the file without the extension.
+This is the name that will come after the "/vfs/" prefix in the VFS file path.
+Use snake_case for naming.`.trim()
+          ),
+          project_path: z
+            .string()
+            .describe(
+              `
+The VFS path to a project. If specified, the result will be added to that
+project. Use this parameter as a convenient way to add newly created file to an
+existing project.`.trim()
+            )
+            .optional(),
+          text: z.string().describe(`The text to write into a VFS file`),
+        },
+        response: {
+          file_path: z
+            .string()
+            .describe("The VS path to the file containing the provided text"),
+        },
+      },
+      async ({ file_name, project_path, text }) => {
+        console.log("FILE_NAME", file_name);
+        console.log("JSON TO WRITE", text);
+        const file_path = args.fileSystem.write(
+          file_name,
+          text,
+          "application/javascript"
         );
         if (project_path) {
           args.fileSystem.addFilesToProject(project_path, [file_path]);
