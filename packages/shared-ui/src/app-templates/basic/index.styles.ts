@@ -87,7 +87,7 @@ export const styles: CSSResultGroup = [
         width: 100%;
         margin: 0;
         font: 500 14px / 1.3 var(--bb-font-family);
-        color: var(--n-50, var(--bb-neutral-800));
+        color: var(--n-50, var(--n-20));
         text-align: center;
         padding: var(--bb-grid-size) var(--bb-grid-size) var(--bb-grid-size-2)
           var(--bb-grid-size);
@@ -97,13 +97,13 @@ export const styles: CSSResultGroup = [
       }
 
       & #content-warning {
-        border-top: 1px solid var(--bb-neutral-0);
+        border-top: 1px solid var(--n-100);
         display: flex;
         justify-content: space-between;
-        background: var(--bb-neutral-100);
+        background: var(--n-98);
         padding: var(--bb-grid-size-6) var(--bb-grid-size-3);
         min-height: var(--bb-grid-size-11);
-        color: var(--bb-neutral-900);
+        color: var(--n-10);
         font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
           var(--bb-font-family);
 
@@ -112,13 +112,13 @@ export const styles: CSSResultGroup = [
 
           & a {
             font-weight: 500;
-            color: var(--bb-ui-500);
+            color: var(--p-50);
             text-decoration: none;
           }
         }
 
         & .dismiss {
-          color: var(--bb-ui-600);
+          color: var(--p-40);
           padding: 0;
           margin: 0;
           background: transparent;
@@ -131,7 +131,7 @@ export const styles: CSSResultGroup = [
 
             &:focus,
             &:hover {
-              color: var(--bb-ui-600);
+              color: var(--p-40);
             }
           }
         }
@@ -186,18 +186,18 @@ export const styles: CSSResultGroup = [
           font: 400 var(--font-style, normal) var(--bb-title-medium) /
             var(--bb-title-line-height-medium)
             var(--font-family, var(--bb-font-family));
-          color: var(--text-color, var(--bb-neutral-900));
+          color: var(--text-color, var(--n-10));
 
           & h1 {
             font: 500 var(--font-style, normal) var(--bb-title-large) /
               var(--bb-title-line-height-large)
               var(--font-family, var(--bb-font-family));
-            color: var(--s-80, var(--bb-neutral-900));
+            color: var(--s-80, var(--n-10));
             margin: 0 0 var(--bb-grid-size) 0;
           }
 
           & p {
-            color: var(--text-color, var(--bb-neutral-700));
+            color: var(--text-color, var(--n-40));
             margin: 0 0 var(--bb-grid-size-2) 0;
           }
         }
@@ -245,7 +245,7 @@ export const styles: CSSResultGroup = [
 
           & h1 {
             background: var(--background-color, none);
-            color: var(--p-25, var(--bb-neutral-700));
+            color: var(--p-25, var(--n-40));
             margin: var(--bb-grid-size-10) 0 var(--bb-grid-size-4) 0;
             flex: 0 0 auto;
             max-width: 80%;
@@ -256,7 +256,7 @@ export const styles: CSSResultGroup = [
           & p {
             flex: 0 0 auto;
             font: 400 var(--font-style) 16px / 20px var(--font-family);
-            color: var(--p-25, var(--bb-neutral-700));
+            color: var(--p-25, var(--n-40));
             margin: 0 0 var(--bb-grid-size-3);
 
             max-width: 65%;
@@ -270,7 +270,7 @@ export const styles: CSSResultGroup = [
           align-items: center;
           justify-content: space-between;
           height: 76px;
-          border-bottom: 1px solid var(--s-70, var(--bb-neutral-0));
+          border-bottom: 1px solid var(--s-70, var(--n-100));
           padding: 0 var(--bb-grid-size-4);
           position: relative;
 
@@ -286,8 +286,8 @@ export const styles: CSSResultGroup = [
             padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
             font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
               var(--bb-font-family);
-            background: var(--bb-ui-50);
-            color: var(--bb-ui-800);
+            background: var(--p-98);
+            color: var(--p-20);
             border-radius: var(--bb-grid-size-2);
             opacity: 0;
             transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
@@ -337,7 +337,7 @@ export const styles: CSSResultGroup = [
             opacity: 0.6;
             transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
             padding: 0;
-            color: var(--p-15, var(--bb-neutral-800));
+            color: var(--p-15, var(--n-20));
 
             &#back {
               opacity: 0;
@@ -407,7 +407,7 @@ export const styles: CSSResultGroup = [
             --output-string-width: 95%;
             --output-string-margin-bottom-y: var(--bb-grid-size-3);
             --output-margin-bottom: var(--bb-grid-size-4);
-            --output-background-color: var(--bb-neutral-0);
+            --output-background-color: var(--n-100);
             --multi-output-value-padding-x: 0;
             flex: 1 0 auto;
             margin: 0 auto;
@@ -516,7 +516,7 @@ export const styles: CSSResultGroup = [
             font: 400 var(--font-style, normal) var(--bb-title-medium) /
               var(--bb-title-line-height-medium)
               var(--font-family, var(--bb-font-family));
-            color: var(--text-color, var(--bb-neutral-900));
+            color: var(--text-color, var(--n-10));
             margin: 0 var(--bb-grid-size-3)
               var(--output-string-margin-bottom-y, var(--bb-grid-size-2))
               var(--bb-grid-size-3);
@@ -532,7 +532,7 @@ export const styles: CSSResultGroup = [
               font: 500 var(--font-style, normal) var(--bb-title-small) /
                 var(--bb-title-line-height-small)
                 var(--font-family, var(--bb-font-family));
-              color: var(--s-80, var(--bb-neutral-900));
+              color: var(--s-80, var(--n-10));
               margin: 0 0 var(--bb-grid-size-2) 0;
             }
 
@@ -612,8 +612,8 @@ export const styles: CSSResultGroup = [
             justify-content: center;
             width: 200px;
             height: var(--bb-grid-size-12);
-            background: var(--p-15, var(--bb-ui-50));
-            color: var(--p-100, var(--bb-ui-700));
+            background: var(--p-15, var(--p-98));
+            color: var(--p-100, var(--p-30));
             border-radius: var(--bb-grid-size-12);
             font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
               var(--bb-font-family);
@@ -625,8 +625,8 @@ export const styles: CSSResultGroup = [
             transition: var(--transition);
 
             &.running {
-              background: var(--bb-ui-500) url(/images/progress-ui.svg) 8px
-                center / 16px 16px no-repeat;
+              background: var(--p-50) url(/images/progress-ui.svg) 8px center /
+                16px 16px no-repeat;
             }
 
             &:not([disabled]) {
@@ -821,7 +821,7 @@ export const styles: CSSResultGroup = [
 
         & h1 {
           background: var(--background-color, none);
-          color: var(--p-25, var(--bb-neutral-700));
+          color: var(--p-25, var(--n-40));
           margin: var(--bb-grid-size-10) 0 var(--bb-grid-size-4) 0;
           flex: 0 0 auto;
           max-width: 80%;
@@ -835,7 +835,7 @@ export const styles: CSSResultGroup = [
         & p {
           flex: 0 0 auto;
           font: 400 var(--font-style) 16px / 20px var(--font-family);
-          color: var(--p-25, var(--bb-neutral-700));
+          color: var(--p-25, var(--n-40));
           margin: 0 0 var(--bb-grid-size-3);
 
           max-width: 65%;
@@ -849,8 +849,8 @@ export const styles: CSSResultGroup = [
           justify-content: center;
           width: 200px;
           height: var(--bb-grid-size-12);
-          background: var(--p-15, var(--bb-ui-50));
-          color: var(--p-100, var(--bb-ui-700));
+          background: var(--p-15, var(--p-98));
+          color: var(--p-100, var(--p-30));
           border-radius: var(--bb-grid-size-12);
           font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
@@ -958,7 +958,7 @@ export const styles: CSSResultGroup = [
         background: none;
         border: none;
         padding: 0 var(--bb-grid-size-4) 0 0;
-        border-color: var(--bb-neutral-400);
+        border-color: var(--n-80);
         transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
         opacity: 0.7;
         color: var(--n-0);

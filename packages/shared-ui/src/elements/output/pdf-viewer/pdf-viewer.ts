@@ -72,7 +72,7 @@ export class PDFViewer extends LitElement {
         width: 20px;
         height: 20px;
         padding: 0;
-        background: var(--bb-neutral-50);
+        background: var(--n-98);
         opacity: 0.5;
 
         &:not([disabled]) {
@@ -120,8 +120,8 @@ export class PDFViewer extends LitElement {
       position: relative;
 
       padding: 8px;
-      border: 1px solid var(--bb-neutral-100);
-      background: var(--bb-neutral-50);
+      border: 1px solid var(--n-98);
+      background: var(--n-98);
       overflow: scroll;
       scrollbar-width: none;
 

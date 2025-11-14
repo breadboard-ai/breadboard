@@ -41,7 +41,7 @@ export class Gallery extends SignalWatcher(LitElement) {
     type,
     css`
       :host {
-        --border: 1px solid var(--bb-neutral-300);
+        --border: 1px solid var(--n-90);
         --column-gap: var(--bb-grid-size-8);
         --row-gap: var(--bb-grid-size-6);
         --thumbnail-height: 175px;
@@ -84,7 +84,7 @@ export class Gallery extends SignalWatcher(LitElement) {
 
       .board {
         position: relative;
-        background: var(--bb-neutral-0);
+        background: var(--n-100);
         outline: 1px solid transparent;
         border-radius: var(--bb-grid-size-4);
         cursor: pointer;
@@ -270,7 +270,7 @@ export class Gallery extends SignalWatcher(LitElement) {
         }
 
         &.default {
-          background-color: var(--bb-neutral-0);
+          background-color: var(--n-100);
           object-fit: contain;
           box-sizing: border-box;
           padding: var(--bb-grid-size-8);
@@ -353,7 +353,7 @@ export class Gallery extends SignalWatcher(LitElement) {
           border: none;
           margin-left: var(--bb-grid-size-2);
           border-radius: var(--bb-grid-size-2);
-          color: var(--bb-neutral-900);
+          color: var(--n-10);
           transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
           padding: 0;
 
@@ -362,12 +362,12 @@ export class Gallery extends SignalWatcher(LitElement) {
 
             &:hover,
             &:focus {
-              background: var(--bb-neutral-50);
+              background: var(--n-98);
             }
           }
 
           &[disabled] {
-            background: var(--bb-neutral-100);
+            background: var(--n-98);
           }
 
           &#prev,
@@ -376,7 +376,7 @@ export class Gallery extends SignalWatcher(LitElement) {
 
             &[disabled] {
               background: transparent;
-              color: var(--bb-neutral-400);
+              color: var(--n-80);
 
               &::before,
               &::after {

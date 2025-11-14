@@ -65,7 +65,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
 
       :host {
         display: block;
-        background: var(--bb-neutral-0);
+        background: var(--n-100);
         --items-per-column: 4;
         --column-gap: var(--bb-grid-size-8);
         --row-gap: var(--bb-grid-size-6);
@@ -117,7 +117,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
           display: flex;
           align-items: center;
           justify-content: center;
-          color: var(--bb-neutral-700);
+          color: var(--n-40);
           font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
           margin: var(--bb-grid-size-10) 0;
@@ -297,7 +297,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
       #app-version {
         font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
           var(--bb-font-family);
-        color: var(--bb-neutral-500);
+        color: var(--n-98);
         position: relative;
         text-align: right;
         margin-top: -32px;

@@ -66,9 +66,9 @@ export class AccountSwitcher extends LitElement {
           top: var(--bb-grid-size-13);
           right: var(--bb-grid-size-3);
           padding: var(--bb-grid-size-4) var(--bb-grid-size-6);
-          background: var(--bb-neutral-0);
+          background: var(--n-100);
           border-radius: var(--bb-grid-size-4);
-          border: 1px solid var(--bb-neutral-100);
+          border: 1px solid var(--n-98);
           width: 100%;
           max-width: 300px;
 
@@ -106,8 +106,8 @@ export class AccountSwitcher extends LitElement {
             margin-bottom: var(--bb-grid-size-3);
             height: var(--bb-grid-size-10);
             border-radius: var(--bb-grid-size-16);
-            border: 1px solid var(--bb-neutral-300);
-            background: var(--bb-neutral-100);
+            border: 1px solid var(--n-90);
+            background: var(--n-98);
             margin-bottom: var(--bb-grid-size-6);
             transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
 
@@ -116,7 +116,7 @@ export class AccountSwitcher extends LitElement {
 
               &:hover,
               &:focus {
-                background: var(--bb-neutral-200);
+                background: var(--n-90);
               }
             }
           }
@@ -124,7 +124,7 @@ export class AccountSwitcher extends LitElement {
           a {
             display: block;
             font: 500 var(--bb-body-small) / 1 var(--bb-font-family);
-            color: var(--bb-neutral-800);
+            color: var(--n-20);
             text-decoration: none;
             text-align: center;
           }
@@ -194,12 +194,12 @@ export class AccountSwitcher extends LitElement {
             : Strings.from("APP_NAME")}
         </h1>
         <section id="user-info">
-          ${this.signInAdapter.picture ? 
-            html`<img
-              src=${this.signInAdapter.picture}
-              alt=${this.signInAdapter.name}
-            />`
-           : nothing}
+          ${this.signInAdapter.picture
+            ? html`<img
+                src=${this.signInAdapter.picture}
+                alt=${this.signInAdapter.name}
+              />`
+            : nothing}
           <div>
             <p>${this.signInAdapter.name}</p>
           </div>

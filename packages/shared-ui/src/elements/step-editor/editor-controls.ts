@@ -11,7 +11,6 @@ import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   HideTooltipEvent,
-  KitNodeChosenEvent,
   ShowTooltipEvent,
   StateEvent,
   ToastEvent,
@@ -20,11 +19,7 @@ import {
   ZoomOutEvent,
   ZoomToFitEvent,
 } from "../../events/events.js";
-import {
-  EditHistory,
-  GraphIdentifier,
-  NodeIdentifier,
-} from "@breadboard-ai/types";
+import { EditHistory } from "@breadboard-ai/types";
 import {
   GraphStoreEntry,
   GraphStoreUpdateEvent,
@@ -32,7 +27,6 @@ import {
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
-  PortIdentifier,
 } from "@google-labs/breadboard";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -49,8 +43,6 @@ import { iconSubstitute } from "../../utils/icon-substitute.js";
 import type { PickedValue } from "../google-drive/google-drive-file-id.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
 import { parseBase64DataUrl } from "@breadboard-ai/utils";
-
-const QUICK_ADD_ADJUSTMENT = -20;
 
 @customElement("bb-editor-controls")
 export class EditorControls extends LitElement {
@@ -77,17 +69,6 @@ export class EditorControls extends LitElement {
 
   @state()
   accessor history: EditHistory | null = null;
-
-  @state()
-  accessor showComponentLibrary = false;
-  #componentLibraryConfiguration: {
-    x: number;
-    y: number;
-    freeDrop: boolean;
-    id: NodeIdentifier | null;
-    portId: PortIdentifier | null;
-    subGraphId: GraphIdentifier | null;
-  } | null = null;
 
   @state()
   accessor showComponentPicker = false;
@@ -134,7 +115,7 @@ export class EditorControls extends LitElement {
         flex-direction: column;
         right: var(--bb-grid-size-6);
         bottom: var(--bb-grid-size-7);
-        background: var(--bb-neutral-0);
+        background: var(--n-100);
         border-radius: var(--bb-grid-size-16);
         padding: var(--bb-grid-size) var(--bb-grid-size);
         box-shadow: var(--bb-elevation-16-light);
@@ -146,11 +127,11 @@ export class EditorControls extends LitElement {
           height: 1px;
           left: 1px;
           top: var(--bb-grid-size-12);
-          background: var(--bb-neutral-200);
+          background: var(--n-90);
         }
 
         & button {
-          background: var(--bb-neutral-0) center center / 20px 20px no-repeat;
+          background: var(--n-100) center center / 20px 20px no-repeat;
           width: var(--bb-grid-size-7);
           height: var(--bb-grid-size-7);
           padding: 0;
@@ -189,7 +170,7 @@ export class EditorControls extends LitElement {
 
             &:hover,
             &:focus {
-              background-color: var(--bb-neutral-50);
+              background-color: var(--n-98);
             }
           }
         }
@@ -224,7 +205,7 @@ export class EditorControls extends LitElement {
 
           border-radius: var(--bb-grid-size-16);
           height: var(--bb-grid-size-10);
-          background: var(--bb-neutral-0);
+          background: var(--n-100);
           padding: 0;
 
           & bb-item-select {
@@ -234,7 +215,7 @@ export class EditorControls extends LitElement {
             --menu-width: 200px;
             --selected-item-column-gap: var(--bb-grid-size);
             --selected-item-height: var(--bb-grid-size-9);
-            --selected-item-hover-color: var(--bb-neutral-50);
+            --selected-item-hover-color: var(--n-98);
             --selected-item-border-radius: var(--bb-grid-size-2)
               var(--bb-grid-size-16) var(--bb-grid-size-16)
               var(--bb-grid-size-2);
@@ -258,7 +239,7 @@ export class EditorControls extends LitElement {
             align-items: center;
             color: var(--n-0);
             margin-right: var(--bb-grid-size);
-            background-color: var(--bb-neutral-0);
+            background-color: var(--n-100);
             transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
 
             &:first-of-type {
@@ -274,7 +255,7 @@ export class EditorControls extends LitElement {
 
             &:hover,
             &:focus {
-              background-color: var(--bb-neutral-50);
+              background-color: var(--n-98);
             }
           }
         }
@@ -288,7 +269,7 @@ export class EditorControls extends LitElement {
           padding: 0 var(--bb-grid-size-2);
           position: relative;
           opacity: 0.3;
-          background: var(--bb-neutral-0);
+          background: var(--n-100);
           font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
           transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
@@ -326,8 +307,8 @@ export class EditorControls extends LitElement {
         left: var(--component-picker-x, 100px);
         bottom: var(--component-picker-y, 100px);
         z-index: 5;
-        background: var(--bb-neutral-0);
-        border: 1px solid var(--bb-neutral-300);
+        background: var(--n-100);
+        border: 1px solid var(--n-90);
         width: 172px;
         border-radius: var(--bb-grid-size-2);
         box-shadow: var(--bb-elevation-5);
@@ -361,7 +342,7 @@ export class EditorControls extends LitElement {
               top: 2px;
               width: calc(100% - 4px);
               height: calc(100% - 4px);
-              background: var(--bb-neutral-50);
+              background: var(--n-98);
               z-index: 0;
               border-radius: var(--bb-grid-size);
               opacity: 0;
@@ -374,7 +355,7 @@ export class EditorControls extends LitElement {
 
             & .node-id {
               position: relative;
-              color: var(--bb-neutral-900);
+              color: var(--n-10);
               margin-bottom: var(--bb-grid-size);
               font: 400 var(--bb-body-medium) /
                 var(--bb-body-line-height-medium) var(--bb-font-family);
@@ -505,7 +486,7 @@ export class EditorControls extends LitElement {
           }
 
           & li.separator {
-            border-top: 1px solid var(--bb-neutral-200);
+            border-top: 1px solid var(--n-90);
           }
         }
       }
@@ -542,8 +523,6 @@ export class EditorControls extends LitElement {
   #addDriveInputRef: Ref<GoogleDriveFileId> = createRef();
 
   hidePickers() {
-    this.#componentLibraryConfiguration = null;
-    this.showComponentLibrary = false;
     this.showComponentPicker = false;
   }
 
@@ -676,23 +655,6 @@ export class EditorControls extends LitElement {
     return kitList;
   }
 
-  showComponentLibraryAt(
-    x: number,
-    y: number,
-    nodeId: string,
-    subGraphId: string | null
-  ) {
-    this.#componentLibraryConfiguration = {
-      x: x,
-      y: y,
-      freeDrop: true,
-      id: nodeId,
-      subGraphId: subGraphId,
-      portId: null,
-    };
-    this.showComponentLibrary = true;
-  }
-
   #storeReady: Promise<void> = Promise.resolve();
   willUpdate() {
     this.#storeReady = Promise.resolve();
@@ -740,14 +702,7 @@ export class EditorControls extends LitElement {
     let y;
     let nodeId;
     let subGraphId;
-    let createAtCenter = true;
-    if (this.#componentLibraryConfiguration?.freeDrop) {
-      x = this.#componentLibraryConfiguration.x;
-      y = this.#componentLibraryConfiguration.y;
-      nodeId = this.#componentLibraryConfiguration.id ?? undefined;
-      subGraphId = this.#componentLibraryConfiguration.subGraphId ?? undefined;
-      createAtCenter = false;
-    }
+    const createAtCenter = true;
     this.dispatchEvent(
       new NodeAddEvent(nodeType, createAtCenter, x, y, nodeId, subGraphId)
     );
@@ -757,37 +712,6 @@ export class EditorControls extends LitElement {
   render() {
     if (!this.graph) {
       return nothing;
-    }
-
-    let componentLibrary: HTMLTemplateResult | symbol = nothing;
-    if (this.showComponentLibrary) {
-      const isDetached = this.#componentLibraryConfiguration !== null;
-      if (this.#componentLibraryConfiguration) {
-        let { x, y } = this.#componentLibraryConfiguration;
-        x -= QUICK_ADD_ADJUSTMENT;
-        y -= QUICK_ADD_ADJUSTMENT;
-
-        this.style.setProperty("--component-library-x", `${x}px`);
-        this.style.setProperty("--component-library-y", `${y}px`);
-      } else {
-        this.style.removeProperty("--component-library-x");
-        this.style.removeProperty("--component-library-y");
-      }
-
-      componentLibrary = html`<bb-component-selector-overlay
-        .detached=${isDetached}
-        .graphStoreUpdateId=${this.graphStoreUpdateId}
-        .showExperimentalComponents=${this.showExperimentalComponents}
-        .boardServerKits=${this.boardServerKits}
-        .graphStore=${this.graphStore}
-        .mainGraphId=${this.mainGraphId}
-        @bbkitnodechosen=${(evt: KitNodeChosenEvent) =>
-          this.#handleChosenKitItem(evt.nodeType)}
-        @pointerdown=${(evt: PointerEvent) => {
-          evt.stopImmediatePropagation();
-        }}
-      >
-      </bb-component-selector-overlay>`;
     }
 
     const mainItems = this.#storeReady.then(() => {
@@ -1281,6 +1205,6 @@ export class EditorControls extends LitElement {
       </div>`;
     }
 
-    return [topShelf, shelf, graphControls, componentLibrary, componentPicker];
+    return [topShelf, shelf, graphControls, componentPicker];
   }
 }

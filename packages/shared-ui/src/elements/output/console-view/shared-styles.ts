@@ -16,8 +16,8 @@ export const sharedStyles = [
       margin-top: var(--bb-grid-size-9);
       border-radius: var(--bb-grid-size-2);
       padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
-      border: 1px solid var(--bb-neutral-200);
-      color: var(--bb-neutral-900);
+      border: 1px solid var(--n-90);
+      color: var(--n-10);
       font-size: 12px;
       display: flex;
       align-items: center;
@@ -57,7 +57,7 @@ export const sharedStyles = [
     }
 
     .step-error {
-      border-color: var(--bb-notify-300);
+      border-color: var(--e-50);
     }
   `,
 ] as CSSResultGroup;

@@ -16,8 +16,8 @@ export const styles = [
       cursor: pointer;
       display: inline-flex;
       padding: 0 var(--bb-grid-size-2) 0;
-      background: var(--bb-neutral-50);
-      color: var(--bb-neutral-700);
+      background: var(--n-98);
+      color: var(--n-40);
       border-radius: var(--bb-grid-size-2);
       border: none;
       height: var(--bb-grid-size-5);
@@ -128,8 +128,8 @@ export const styles = [
       }
 
       &.invalid {
-        background-color: var(--bb-warning-100);
-        color: var(--bb-warning-700);
+        background-color: var(--e-90);
+        color: var(--e-30);
       }
     }
   `,

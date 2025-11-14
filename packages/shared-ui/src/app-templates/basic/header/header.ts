@@ -67,12 +67,12 @@ export class Header extends LitElement {
         align-items: center;
         justify-content: space-between;
         height: 54px;
-        border-bottom: 1px solid var(--s-70, var(--bb-neutral-100));
+        border-bottom: 1px solid var(--s-70, var(--n-98));
         padding: 0 var(--bb-grid-size-4);
         position: relative;
         flex: 0 0 auto;
         z-index: 2;
-        color: var(--p-40, var(--bb-neutral-900));
+        color: var(--p-40, var(--n-10));
       }
 
       :host([neutral]) {
@@ -177,7 +177,7 @@ export class Header extends LitElement {
           width: 100%;
           max-width: 260px;
           height: 4px;
-          background: var(--n-100, var(--bb-neutral-200));
+          background: var(--n-100, var(--n-90));
           outline: 1px solid var(--n-100);
           border-radius: var(--bb-grid-size-16);
           position: relative;
@@ -191,7 +191,7 @@ export class Header extends LitElement {
             min-width: 4px;
             max-width: 100%;
             height: 4px;
-            background: var(--p-40, var(--bb-neutral-600));
+            background: var(--p-40, var(--n-50));
             border-radius: var(--bb-grid-size-16);
             transition: width 0.3s cubic-bezier(0, 0, 0.3, 1);
           }
@@ -200,7 +200,7 @@ export class Header extends LitElement {
 
       :host([isempty]) #progress-container > #progress,
       :host([neutral]) #progress-container > #progress {
-        background: var(--s-80, var(--bb-neutral-200));
+        background: var(--s-80, var(--n-90));
       }
 
       ul {
@@ -227,14 +227,14 @@ export class Header extends LitElement {
           align-items: center;
           height: var(--bb-grid-size-10);
           text-decoration: none;
-          color: var(--p-40, var(--bb-neutral-800));
+          color: var(--p-40, var(--n-20));
           transition: color 0.2s cubic-bezier(0, 0, 0.3, 1);
           padding-left: var(--bb-grid-size-6);
 
           &:hover,
           &:focus {
             cursor: pointer;
-            color: var(--p-20, var(--bb-neutral-900));
+            color: var(--p-20, var(--n-10));
           }
 
           > * {

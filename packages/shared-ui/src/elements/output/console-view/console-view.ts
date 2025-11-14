@@ -52,7 +52,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
       }
 
       bb-header {
-        border-top: 1px solid var(--s-90, var(--bb-neutral-100));
+        border-top: 1px solid var(--s-90, var(--n-98));
       }
 
       #container {
@@ -69,7 +69,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         justify-content: center;
         font: 400 var(--bb-body-large) / var(--bb-body-line-height-large)
           var(--bb-font-family);
-        color: var(--bb-neutral-700);
+        color: var(--n-40);
         text-align: center;
 
         > p {
@@ -82,12 +82,12 @@ export class ConsoleView extends SignalWatcher(LitElement) {
           justify-content: center;
           min-width: 76px;
           height: var(--bb-grid-size-10);
-          background: var(--primary-color, var(--bb-ui-50))
+          background: var(--primary-color, var(--p-98))
             var(--start-icon, var(--bb-icon-generative)) 12px center / 16px 16px
             no-repeat;
-          color: var(--n-40, var(--bb-neutral-700));
+          color: var(--n-40, var(--n-40));
           border-radius: var(--bb-grid-size-16);
-          border: 1px solid var(--n-60, var(--bb-neutral-500));
+          border: 1px solid var(--n-60, var(--n-98));
           font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
           padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-2);
@@ -153,9 +153,9 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             border-radius: var(--bb-grid-size-3);
             list-style: none;
             padding: 0 var(--bb-grid-size-3);
-            background: var(--n-98, var(--bb-neutral-50));
+            background: var(--n-98, var(--n-98));
             font-size: 12px;
-            color: var(--n-0, var(--bb-neutral-900));
+            color: var(--n-0, var(--n-10));
             cursor: pointer;
 
             > * {
@@ -235,7 +235,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         & > details {
           & > summary {
             height: var(--bb-grid-size-12);
-            background: var(--n-98, var(--bb-neutral-200));
+            background: var(--n-98, var(--n-90));
 
             & .title {
               flex: 0 1 auto;

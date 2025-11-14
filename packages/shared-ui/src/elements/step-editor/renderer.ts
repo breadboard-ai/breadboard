@@ -41,7 +41,6 @@ import {
   GraphEdgeAttachmentMoveEvent,
   NodeAddEvent,
   NodeConfigurationRequestEvent,
-  NodeSelectEvent,
   SelectGraphContentsEvent,
   SelectionMoveEvent,
   SelectionTranslateEvent,
@@ -233,7 +232,7 @@ export class Renderer extends LitElement {
         width: 100%;
         margin: 0;
         font: 500 10px / 1 var(--bb-font-family);
-        color: var(--n-50, var(--bb-neutral-500));
+        color: var(--n-50, var(--n-98));
         text-align: center;
         padding: var(--bb-grid-size);
         background: transparent;
@@ -260,8 +259,8 @@ export class Renderer extends LitElement {
         display: block;
         pointer-events: none;
         position: absolute;
-        border: 1px solid var(--bb-neutral-500);
-        background: oklch(from var(--bb-neutral-900) l c h / 0.05);
+        border: 1px solid var(--n-98);
+        background: oklch(from var(--n-10) l c h / 0.05);
         z-index: 4;
       }
 
@@ -1653,18 +1652,6 @@ export class Renderer extends LitElement {
                 )
               );
             }}
-            @bbnodeselect=${(evt: NodeSelectEvent) => {
-              if (!this.#editorControls.value || !evt.connectedTo) {
-                return;
-              }
-
-              this.#editorControls.value.showComponentLibraryAt(
-                evt.x - this.#boundsForInteraction.x,
-                evt.y - this.#boundsForInteraction.y,
-                evt.connectedTo,
-                graphId
-              );
-            }}
             @bbdragconnectorstart=${(evt: DragConnectorStartEvent) => {
               this.dragConnector.offset = new DOMPoint(
                 this.#boundsForInteraction.x,
@@ -1686,24 +1673,6 @@ export class Renderer extends LitElement {
                 this.dragConnector.graphId = graphId;
                 this.dragConnector.nodeId = nodeId;
                 this.dragConnector.portId = portId;
-
-                this.dragConnector.addEventListener(
-                  "bbnodeselect",
-                  (evt: Event) => {
-                    if (!this.#editorControls.value || !nodeId) {
-                      return;
-                    }
-
-                    const selectEvent = evt as NodeSelectEvent;
-                    this.#editorControls.value.showComponentLibraryAt(
-                      selectEvent.x - this.#boundsForInteraction.x,
-                      selectEvent.y - this.#boundsForInteraction.y,
-                      nodeId,
-                      graphId
-                    );
-                  },
-                  { once: true }
-                );
               } else if (evt.connectorType === "asset") {
                 const { graphId, assetPath } = collectAssetIds(evt);
                 this.dragConnector.graphId = graphId;

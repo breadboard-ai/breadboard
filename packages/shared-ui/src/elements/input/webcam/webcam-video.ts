@@ -89,9 +89,8 @@ export class WebcamVideoInput extends LitElement {
         align-items: center;
         justify-content: center;
         border-radius: var(--bb-grid-size-16);
-        background: var(--n-0, var(--bb-neutral-100)) 8px center / 20px 20px
-          no-repeat;
-        color: var(--n-100, var(--bb-neutral-800));
+        background: var(--n-0, var(--n-98)) 8px center / 20px 20px no-repeat;
+        color: var(--n-100, var(--n-20));
         transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
         border: none;
         border: none;

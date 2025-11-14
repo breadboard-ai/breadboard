@@ -94,7 +94,7 @@ export class FloatingInput extends LitElement {
       #disclaimer {
         margin: 0 auto;
         font: 400 14px / 1.3 var(--bb-font-family);
-        color: var(--n-50, var(--bb-neutral-800));
+        color: var(--n-50, var(--n-20));
         text-align: center;
         padding: var(--bb-grid-size-2) 0 0 0;
         background: var(--s-90, var(--neutral-50, transparent));
@@ -112,8 +112,8 @@ export class FloatingInput extends LitElement {
         margin: var(--container-margin, 0);
         padding: var(--bb-grid-size-4);
         border-radius: var(--bb-grid-size-4);
-        border: 1px solid var(--nv-50, var(--bb-neutral-500));
-        background: var(--n-95, var(--bb-neutral-50));
+        border: 1px solid var(--nv-50, var(--n-98));
+        background: var(--n-95, var(--n-98));
 
         & bb-asset-shelf[populated] {
           margin-bottom: var(--bb-grid-size-4);
@@ -156,7 +156,7 @@ export class FloatingInput extends LitElement {
             outline: none;
             width: 100%;
             scrollbar-width: none;
-            color: var(--p-15, var(--n-15, var(--bb-neutral-900)));
+            color: var(--p-15, var(--n-15, var(--n-10)));
           }
         }
 
@@ -170,10 +170,10 @@ export class FloatingInput extends LitElement {
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--p-40, var(--bb-neutral-900));
+            background: var(--p-40, var(--n-10));
             border: none;
             border-radius: 50%;
-            color: var(--p-100, var(--bb-neutral-0));
+            color: var(--p-100, var(--n-100));
             margin-left: var(--bb-grid-size-2);
 
             &:not([disabled]) {

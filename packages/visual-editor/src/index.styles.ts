@@ -130,8 +130,8 @@ export const styles = [
     .close-board:not([disabled]):hover {
       transition-duration: 0.1s;
       opacity: 1;
-      background-color: var(--bb-neutral-200);
-      border: 2px solid var(--bb-neutral-200);
+      background-color: var(--n-90);
+      border: 2px solid var(--n-90);
     }
 
     #tab-edit {
@@ -162,7 +162,7 @@ export const styles = [
     #toggle-preview,
     #toggle-settings,
     #toggle-overflow-menu {
-      color: var(--bb-neutral-700);
+      color: var(--n-40);
       padding: 0 16px 0 42px;
       font-size: var(--bb-text-medium);
       margin: 0 var(--bb-grid-size-4) 0 0;
@@ -180,13 +180,13 @@ export const styles = [
 
     #toggle-board-item {
       height: var(--bb-grid-size-7);
-      border: 1px solid var(--bb-neutral-300);
+      border: 1px solid var(--n-90);
       padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
       font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
         var(--bb-font-family);
       border-radius: var(--bb-grid-size-16);
       margin: 0 var(--bb-grid-size-2) 0 0;
-      background: var(--bb-neutral-0);
+      background: var(--n-100);
       cursor: pointer;
 
       &.flow {
@@ -252,7 +252,7 @@ export const styles = [
     }
 
     #toggle-preview.active {
-      background-color: var(--bb-ui-800);
+      background-color: var(--p-20);
     }
 
     #toggle-settings {
@@ -264,7 +264,7 @@ export const styles = [
     }
 
     #toggle-settings.active {
-      background-color: var(--bb-neutral-100);
+      background-color: var(--n-98);
     }
 
     #new-board {
@@ -295,10 +295,10 @@ export const styles = [
     }
 
     header {
-      background: var(--bb-neutral-0);
-      border-bottom: 1px solid var(--bb-neutral-300);
+      background: var(--n-100);
+      border-bottom: 1px solid var(--n-90);
       display: block;
-      color: var(--bb-neutral-700);
+      color: var(--n-40);
       z-index: 1;
       width: 100%;
       overflow: hidden;
@@ -332,7 +332,7 @@ export const styles = [
         font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
           var(--bb-font-family);
         height: var(--bb-grid-size-14);
-        border-bottom: 1px solid var(--bb-neutral-100);
+        border-bottom: 1px solid var(--n-98);
         padding: 0 var(--bb-grid-size-6);
       }
 
@@ -350,7 +350,7 @@ export const styles = [
       .controls {
         display: flex;
         justify-content: flex-end;
-        border-top: 1px solid var(--bb-neutral-100);
+        border-top: 1px solid var(--n-98);
         padding: var(--bb-grid-size-6);
       }
 
@@ -358,7 +358,7 @@ export const styles = [
         padding: var(--bb-grid-size-2);
         border: none;
         border-radius: var(--bb-grid-size);
-        background-color: var(--bb-ui-600);
+        background-color: var(--p-40);
         color: white;
 
         &[disabled] {
@@ -419,8 +419,8 @@ export const styles = [
           font-size: 0;
           padding: 0;
           margin: 0;
-          background: var(--bb-neutral-50);
-          border: 1px solid var(--bb-neutral-300);
+          background: var(--n-98);
+          border: 1px solid var(--n-90);
           border-radius: var(--bb-grid-size-16);
 
           &::before,
@@ -448,15 +448,15 @@ export const styles = [
           }
 
           &.create::before {
-            background: var(--bb-ui-500) var(--bb-icon-flowchart-inverted) 10px
+            background: var(--p-50) var(--bb-icon-flowchart-inverted) 10px
               center / 20px 20px no-repeat;
-            color: var(--bb-neutral-0);
+            color: var(--n-100);
           }
 
           &.deploy::after {
-            background: var(--bb-ui-500) var(--bb-icon-phone-inverted) 10px
-              center / 20px 20px no-repeat;
-            color: var(--bb-neutral-0);
+            background: var(--p-50) var(--bb-icon-phone-inverted) 10px center /
+              20px 20px no-repeat;
+            color: var(--n-100);
           }
         }
       }
@@ -494,7 +494,7 @@ export const styles = [
       content: "";
       width: 48px;
       height: 1px;
-      background: var(--bb-ui-700);
+      background: var(--p-30);
       bottom: -1px;
       left: 0;
       position: absolute;
@@ -512,11 +512,8 @@ export const styles = [
     #tab-container .tab {
       font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
         var(--bb-font-family);
-      background: linear-gradient(
-        var(--bb-neutral-0) 86%,
-        var(--bb-neutral-50)
-      );
-      color: var(--bb-neutral-800);
+      background: linear-gradient(var(--n-100) 86%, var(--n-98));
+      color: var(--n-20);
       margin: 0;
       height: calc(100% - var(--bb-grid-size) * 2);
       border-radius: var(--bb-grid-size-2) var(--bb-grid-size-2) 0 0;
@@ -540,17 +537,17 @@ export const styles = [
       max-width: 320px;
       min-width: 10%;
       field-sizing: content;
-      color: var(--bb-neutral-800);
+      color: var(--n-20);
       margin-right: var(--bb-grid-size-2);
       outline: none;
       background: transparent;
 
       &:hover {
-        border: 1px solid var(--bb-neutral-500);
+        border: 1px solid var(--n-98);
       }
 
       &:focus {
-        border: 1px solid var(--bb-neutral-700);
+        border: 1px solid var(--n-40);
       }
     }
 
@@ -562,7 +559,7 @@ export const styles = [
       padding-left: var(--bb-grid-size-5);
       font: 400 var(--bb-body-x-small) / var(--bb-body-line-height-x-small)
         var(--bb-font-family);
-      color: var(--bb-neutral-600);
+      color: var(--n-50);
     }
 
     .save-status.can-save,
@@ -680,7 +677,7 @@ export const styles = [
       padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-9);
       border-radius: var(--bb-grid-size-16);
       margin: 0 var(--bb-grid-size-2) 0 0;
-      background: var(--bb-neutral-0);
+      background: var(--n-100);
       cursor: pointer;
 
       color: #004a77;

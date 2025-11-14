@@ -57,7 +57,7 @@ export class FlowgenEditorInput extends LitElement {
       #dismiss-button {
         background: none;
         border: none;
-        color: var(--bb-neutral-200);
+        color: var(--n-90);
         font-size: 1.2rem;
         cursor: pointer;
         padding: 0;
@@ -65,7 +65,7 @@ export class FlowgenEditorInput extends LitElement {
       }
 
       .dismiss-button:hover {
-        color: var(--bb-neutral-400);
+        color: var(--n-80);
       }
 
       p {
@@ -75,9 +75,9 @@ export class FlowgenEditorInput extends LitElement {
       #feedback {
         font: 400 var(--bb-title-small) / var(--bb-title-line-height-small)
           var(--bb-font-family);
-        color: var(--bb-neutral-200);
+        color: var(--n-90);
         transition: var(--color-transition);
-        background: var(--bb-neutral-800);
+        background: var(--n-20);
         border-radius: var(--bb-grid-size-2);
         padding-left: var(--bb-grid-size-5);
         padding-right: var(--bb-grid-size-5);

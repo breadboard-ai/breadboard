@@ -28,8 +28,8 @@ export const chipStyles = css`
     border: none;
     font-size: 12px;
     border-radius: 100px;
-    color: var(--bb-neutral-700);
-    background: var(--bb-neutral-100);
+    color: var(--n-40);
+    background: var(--n-98);
     margin: 0 0.4167em;
     padding: 0.3333em 0.6667em;
     cursor: pointer;

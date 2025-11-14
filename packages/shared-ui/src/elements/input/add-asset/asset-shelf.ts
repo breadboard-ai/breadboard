@@ -56,7 +56,7 @@ export class AssetShelf extends LitElement {
           height: 100%;
           border-radius: var(--bb-grid-size-4);
           box-sizing: border-box;
-          border: 4px solid var(--p-100, var(--bb-neutral-0));
+          border: 4px solid var(--p-100, var(--n-100));
           box-shadow: 0px 0px 5.4px rgba(0, 0, 0, 0.25);
           overflow: hidden;
           --icon-size: 32px;
@@ -75,7 +75,7 @@ export class AssetShelf extends LitElement {
         & .text,
         & .movie,
         & .pdf {
-          background: var(--p-10, var(--bb-neutral-700));
+          background: var(--p-10, var(--n-40));
         }
 
         .scrim {
@@ -91,7 +91,7 @@ export class AssetShelf extends LitElement {
           );
           display: flex;
           align-items: flex-end;
-          color: var(--p-100, var(--bb-neutral-0));
+          color: var(--p-100, var(--n-100));
 
           & .info {
             white-space: nowrap;
@@ -122,7 +122,7 @@ export class AssetShelf extends LitElement {
           border: none;
           border-radius: 50%;
           font-size: 0;
-          background: var(--n-80, var(--bb-neutral-400));
+          background: var(--n-80, var(--n-80));
           z-index: 1;
           box-shadow: 0px 0px 5.4px rgba(0, 0, 0, 0.25);
 

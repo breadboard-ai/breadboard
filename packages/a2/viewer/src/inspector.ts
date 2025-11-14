@@ -111,7 +111,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
         color: var(--text-color);
         grid-template-rows: 42px 1fr;
 
-        --bb-neutral-900: var(--primary);
+        --n-10: var(--primary);
       }
 
       header {
