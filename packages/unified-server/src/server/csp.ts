@@ -77,6 +77,9 @@ export const MAIN_APP_CSP = {
   ["base-uri"]: ["'none'"],
 };
 
+export const SHELL_CSP = MAIN_APP_CSP;
+export const FALLBACK_CSP = MAIN_APP_CSP;
+
 const CSP_HEADER_NAME = "Content-Security-Policy";
 
 /** https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP */

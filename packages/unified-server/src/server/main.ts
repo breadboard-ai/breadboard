@@ -12,7 +12,12 @@ import { GoogleAuth } from "google-auth-library";
 import ViteExpress from "vite-express";
 import { createClientConfig } from "./config.js";
 import * as connectionServer from "./connection/server.js";
-import { MAIN_APP_CSP, makeCspHandler } from "./csp.js";
+import {
+  FALLBACK_CSP,
+  MAIN_APP_CSP,
+  makeCspHandler,
+  SHELL_CSP,
+} from "./csp.js";
 import { createDataTransformHandler } from "./data-transform.js";
 import { makeDriveProxyMiddleware } from "./drive-proxy.js";
 import * as flags from "./flags.js";
@@ -25,7 +30,7 @@ console.log("[unified-server startup] Starting unified server");
 
 const server = express();
 
-server.use(makeCspHandler(MAIN_APP_CSP));
+server.use(makeCspHandler(FALLBACK_CSP));
 
 const boardServerConfig = boardServer.createServerConfig({
   storageProvider: "firestore",
@@ -109,32 +114,16 @@ if (flags.SHELL_ENABLED) {
   // TODO(aomarks) After we are fully in the iframe arrangement, move assets
   // around so that this entire re-pathing middleware is not necessary.
   console.log("[unified-server startup] Serving in shell configuration");
-  server.use("/", (request, _response, next) => {
-    if (
-      // Files with extensions are always static and should be served normally.
-      !request.path.includes(".") &&
-      // Files in the @vite folder are dev-mode npm dependencies and should be
-      // served normally.
-      !request.path.startsWith("/@vite/")
-    ) {
-      if (request.path === "/oauth" || request.path.startsWith("/oauth/")) {
-        request.url = "/oauth/index.html";
-      } else if (
-        request.path === "/_app/landing" ||
-        request.path.startsWith("/_app/landing/")
-      ) {
-        request.url = "/landing/index.html";
-      } else if (
-        request.path === "/_app" ||
-        request.path.startsWith("/_app/")
-      ) {
-        request.url = "/index.html";
-      } else {
-        request.url = "/shell/index.html";
-      }
-    }
+  server.get("/", makeCspHandler(SHELL_CSP), (req, _res, next) => {
+    req.url = "/shell/index.html";
     next();
   });
+  server.get("/_app/", makeCspHandler(MAIN_APP_CSP), (req, _res, next) => {
+    req.url = "/index.html";
+    next();
+  });
+} else {
+  server.get("/", makeCspHandler(MAIN_APP_CSP));
 }
 
 ViteExpress.config({
