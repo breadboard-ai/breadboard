@@ -25,6 +25,7 @@ import {
   JsonSerializable,
   LLMContent,
   NodeExpectedOutput,
+  RuntimeFlagManager,
 } from "@breadboard-ai/types";
 import {
   Tab,
@@ -88,6 +89,7 @@ export class Edit extends EventTarget {
     public readonly sandbox: RunnableModuleFactory,
     public readonly graphStore: MutableGraphStore,
     public readonly autonamer: Autonamer,
+    public readonly flags: RuntimeFlagManager,
     public readonly settings: BreadboardUI.Types.SettingsStore | null
   ) {
     super();
@@ -979,12 +981,20 @@ export class Edit extends EventTarget {
       console.warn("Failed to change node configuration", editing.error);
       return;
     }
+
+    const { titleUserModified } = updateNodeTransform;
+    const enableOutputTemplates = (await this.flags.flags()).outputTemplates;
+
+    if (!enableOutputTemplates && !titleUserModified) {
+      return;
+    }
+
     return this.#autonameInternal(
       editableGraph,
       id,
       graphId,
       configurationPart,
-      updateNodeTransform.titleUserModified
+      titleUserModified
     );
   }
 
