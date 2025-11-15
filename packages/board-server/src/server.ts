@@ -13,11 +13,7 @@ import { serveBlobsAPI } from "./server/blobs/index.js";
 import { serveBoardsAPI } from "./server/boards/index.js";
 
 export type { ServerConfig };
-export {
-  getUserCredentials,
-  requireAuth,
-  requireAccessToken,
-} from "./server/auth.js";
+export { getUserCredentials, requireAccessToken } from "./server/auth.js";
 
 export { GoogleStorageBlobStore } from "./server/blob-store.js";
 export { GeminiFileApi } from "./server/blobs/utils/gemini-file-api.js";
