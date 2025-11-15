@@ -13,7 +13,6 @@ import type {
   TraversalResult,
 } from "@breadboard-ai/types";
 import { timestamp } from "@breadboard-ai/utils";
-import { loadRunnerState, saveRunnerState } from "./serialization.js";
 
 export class RunResult implements BreadboardRunResult {
   #type: RunResultType;
@@ -74,10 +73,6 @@ export class RunResult implements BreadboardRunResult {
     return this.#state;
   }
 
-  save() {
-    return saveRunnerState(this.#type, this.#state);
-  }
-
   get timestamp(): number {
     return timestamp();
   }
@@ -87,11 +82,6 @@ export class RunResult implements BreadboardRunResult {
       this.#state.newOpportunities.length === 0 &&
       this.#state.opportunities.length === 0
     );
-  }
-
-  static load(stringifiedResult: string): RunResult {
-    const { state, type } = loadRunnerState(stringifiedResult);
-    return new RunResult(state, type, 0, []);
   }
 }
 

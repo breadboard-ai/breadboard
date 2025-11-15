@@ -24,7 +24,6 @@ import {
 } from "@breadboard-ai/utils";
 import { bubbleUpInputsIfNeeded, bubbleUpOutputsIfNeeded } from "../bubble.js";
 import { InputStageResult, OutputStageResult } from "../run.js";
-import { cloneState } from "../serialization.js";
 import { TraversalMachine } from "../traversal/machine.js";
 import { NodeInvoker } from "./node-invoker.js";
 
@@ -114,7 +113,6 @@ export async function* runGraph(
           path: path(),
           timestamp: timestamp(),
         },
-        result: cloneState(result),
       });
 
       if (prepareToStopAtStartNode) {
