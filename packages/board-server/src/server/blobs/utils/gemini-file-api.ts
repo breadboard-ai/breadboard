@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { err, type Outcome } from "@google-labs/breadboard";
 import type { FileAPIMetadata } from "../../blob-store.js";
 import type { Readable } from "stream";
 import { hasExpired } from "../file-info.js";
+import type { Outcome } from "@breadboard-ai/types";
+import { err } from "@breadboard-ai/utils";
 
 export type FileApiState =
   // The default value. This value is used if the state is omitted.

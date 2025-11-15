@@ -77,25 +77,17 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/node": "^22.0.0",
-    "@types/supertest": "^6.0.3",
-    "@types/uuid": "^10.0.0",
-    "supertest": "^7.1.0",
+    "@types/express": "^5.0.1",
     "typescript": "^5.8.3",
     "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {
     "@breadboard-ai/data-store": "0.5.0",
     "@breadboard-ai/google-drive-kit": "0.8.0",
-    "@breadboard-ai/runtime": "0.2.0",
     "@breadboard-ai/types": "0.9.0",
     "@breadboard-ai/utils": "0.1.0",
     "@google-cloud/storage": "^7.15.2",
-    "@google-labs/breadboard": "^0.36.0",
-    "@google-labs/core-kit": "^0.19.2",
-    "@types/express": "^5.0.1",
     "cors": "^2.8.5",
-    "express": "^4.21.2",
-    "lit": "^3.3.1",
-    "uuid": "^11.1.0"
+    "express": "^4.21.2"
   }
 }

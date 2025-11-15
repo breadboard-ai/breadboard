@@ -6,8 +6,9 @@
 
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 
-import { ok, type Outcome } from "@google-labs/breadboard";
 import * as errors from "./errors.js";
+import { ok } from "@breadboard-ai/utils";
+import type { Outcome } from "@breadboard-ai/types";
 
 /**
  * Extracts user credentials from the request.

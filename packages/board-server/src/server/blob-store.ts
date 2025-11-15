@@ -5,8 +5,9 @@
  */
 
 import { Storage } from "@google-cloud/storage";
-import { err, type Outcome } from "@google-labs/breadboard";
 import type { BlobStore, BlobStoreGetResult } from "./types.js";
+import type { Outcome } from "@breadboard-ai/types";
+import { err } from "@breadboard-ai/utils";
 
 export { GoogleStorageBlobStore, isUUID };
 
