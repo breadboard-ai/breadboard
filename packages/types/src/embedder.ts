@@ -17,7 +17,8 @@ export type BreadboardMessage =
   | BackClickedMessage
   | HomeLoadedMessage
   | BoardIdCreatedMessage
-  | IterateOnPromptMessage;
+  | IterateOnPromptMessage
+  | ResizeMessage;
 
 /** Event for enabling debug. */
 export declare interface DebugMessage {
@@ -58,6 +59,18 @@ export declare interface BoardIdCreatedMessage {
    */
   id: string;
 }
+
+/** 
+ * Event to notify the parent of iframe content size change 
+ * 
+ * Currently only fired from the ?g-gallery=true mode.
+ */
+export declare interface ResizeMessage {
+  type: "resize";
+  height: number;
+  width: number;
+}
+
 
 /** Event when a new breadboard has been created. */
 export declare interface IterateOnPromptMessage {

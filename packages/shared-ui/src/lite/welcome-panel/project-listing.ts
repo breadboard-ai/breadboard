@@ -1,0 +1,417 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import {
+  type BoardServer,
+  type GraphProviderItem,
+} from "@google-labs/breadboard";
+import { SignalWatcher } from "@lit-labs/signals";
+import { consume } from "@lit/context";
+import { css, html, LitElement, nothing } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
+import { boardServerContext } from "../../contexts/board-server.js";
+import {
+  globalConfigContext,
+  type GlobalConfig,
+} from "../../contexts/global-config.js";
+import { StateEvent } from "../../events/events.js";
+import "../../flow-gen/flowgen-homepage-panel.js";
+import * as StringsHelper from "../../strings/helper.js";
+import { baseColors } from "../../styles/host/base-colors.js";
+import { type } from "../../styles/host/type.js";
+import { icons } from "../../styles/icons.js";
+import type { RecentBoard } from "../../types/types.js";
+import { ActionTracker } from "../../utils/action-tracker.js";
+import { blankBoard } from "../../utils/blank-board.js";
+import "./gallery.js";
+import "../../elements/welcome-panel/homepage-search-button.js";
+
+const Strings = StringsHelper.forSection("ProjectListing");
+
+const PAGE_SIZE = 8;
+const URL_PARAMS = new URL(document.URL).searchParams;
+const FORCE_NO_BOARDS = URL_PARAMS.has("forceNoBoards");
+
+@customElement("bb-project-listing-lite")
+export class ProjectListingLite extends SignalWatcher(LitElement) {
+  @consume({ context: globalConfigContext })
+  accessor globalConfig: GlobalConfig | undefined;
+
+  @consume({ context: boardServerContext, subscribe: true })
+  @state()
+  accessor boardServer: BoardServer | undefined;
+
+  @property({ attribute: false })
+  accessor recentBoards: RecentBoard[] = [];
+
+  @property()
+  accessor userFilter: string | null = null;
+
+  @property()
+  accessor featuredFilter: string | null = null;
+
+  static styles = [
+    icons,
+    baseColors,
+    type,
+    css`
+      * {
+        box-sizing: border-box;
+      }
+
+      :host {
+        display: block;
+        background: var(--light-dark-n-100);
+        --items-per-column: 4;
+        --column-gap: 10px;
+        --row-gap: 10px;
+        --items-per-column: 4;
+        --max-title-lines: 3;
+        --max-description-lines: 3;
+        --border: 1px solid var(--light-dark-n-90);
+        --thumbnail-height: 175px;
+        --details-min-height: 108px;
+        --profile-pic-size: 28px;
+        --todo-gemini-button-color: #0B57D0;
+        --todo-gemini-surface-color: #f0f4f9;
+        --todo-gemini-button-text-label-color: #0b57d0;
+      }
+
+      @media (min-width: 480px) and (max-width: 800px) {
+        :host {
+          --items-per-column: 3;
+        }
+      }
+      @media (min-width: 0px) and (max-width: 480px) {
+        :host {
+          --items-per-column: 2;
+        }
+      }
+
+      #hero {
+        padding: 0 var(--bb-grid-size-16);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      #hero h1 {
+        margin: var(--bb-grid-size-9) 0 0 0;
+        text-align: center;
+      }
+
+      #board-listing {
+        margin-top: 24px;
+      }
+
+      #loading-message {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--light-dark-n-40);
+        font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
+          var(--bb-font-family);
+        margin: var(--bb-grid-size-10) 0;
+      }
+
+      #loading-message::before {
+        content: "";
+        display: block;
+        width: 20px;
+        height: 20px;
+        background: url(/images/progress-ui.svg) center center / 20px 20px
+          no-repeat;
+        margin-right: var(--bb-grid-size-2);
+      }
+
+      #loading-message p {
+        margin: 0 0 var(--bb-grid-size) 0;
+      }
+
+      #no-projects-panel {
+        background: var(--todo-gemini-surface-color);
+        padding: 24px;
+        border-radius: 24px;
+        text-align: center;
+
+        .g-icon {
+          vertical-align: bottom;
+        }
+      }
+
+      #create-new-button-inline {
+        display: flex;
+        align-items: center;
+        color: var(--light-dark-n-100);
+        border-radius: var(--bb-grid-size-16);
+        border: none;
+        background: var(--todo-gemini-button-color);
+        height: var(--bb-grid-size-10);
+        padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
+
+        &[disabled] .g-icon {
+          animation: rotate 1s linear infinite;
+        }
+  
+        &[disabled] .g-icon::after {
+          content: "progress_activity";
+        }
+  
+        &:not([disabled]) {
+          cursor: pointer;
+        }
+  
+        &:not([disabled]):focus,
+        &:not([disabled]):hover {
+          background: var(--light-dark-n-10);
+        }
+
+        .g-icon {
+          color: var(--light-dark-n-100);
+          margin-right: var(--bb-grid-size-2);
+        }
+
+        .g-icon::after {
+          content: "add";
+        }
+
+      }
+
+
+      #new-project-container {
+        display: flex;
+        justify-content: center;
+      }
+
+      #location-selector-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      #location-selector-container #location-selector-outer {
+        display: flex;
+        align-items: center;
+      }
+
+      #location-selector-container #location-selector-outer #location-selector {
+        padding: 0;
+        border: none;
+      }
+
+      #content {
+        display: flex;
+        flex-direction: column;
+      }
+
+      #content .gallery-wrapper {
+        margin-top: var(--bb-grid-size-8);
+      }
+
+      #content .gallery-wrapper .gallery-header h2 {
+        margin: 0;
+      }
+
+      @keyframes rotate {
+        from {
+          rotate: 0deg;
+        }
+
+        to {
+          rotate: 360deg;
+        }
+      }
+    `,
+  ];
+
+  override render() {
+    const { boardServer } = this;
+    if (!boardServer) {
+      return html`<nav id="menu">
+        ${Strings.from("ERROR_LOADING_PROJECTS")}
+      </nav>`;
+    }
+
+    return html`
+      ${this.#renderHero()}
+
+      <div id="board-listing">
+        <div id="content">${this.#renderBoardListing()}</div>
+      </div>
+    `;
+  }
+
+  #renderHero() {
+    return html`
+      <section id="hero">
+        <h1 class="sans-flex w-500 md-headline-medium">
+          ${Strings.from("LABEL_WELCOME_MESSAGE_G")}
+        </h1>
+      </section>
+    `;
+  }
+
+  #renderBoardListing() {
+    const server = this.boardServer;
+    if (!server) {
+      console.error(`[homepage] No board server provided`);
+      return nothing;
+    }
+    const { userGraphs, galleryGraphs } = server;
+    if (!userGraphs || !galleryGraphs) {
+      console.error(
+        `[homepage] Board server was missing userGraphs and/or galleryGraphs`
+      );
+      return nothing;
+    }
+    if (userGraphs.loading || galleryGraphs.loading) {
+      return html`
+        <div id="loading-message">${Strings.from("STATUS_LOADING")}</div>
+      `;
+    }
+    const userHasAnyGraphs = userGraphs.size > 0 && !FORCE_NO_BOARDS;
+    const filteredGraphs = this.#filterGraphs(
+      [...userGraphs.entries()],
+      this.userFilter
+    );
+    const featuredGraphs = this.#filterGraphs(
+      [...galleryGraphs.entries()],
+      this.featuredFilter
+    );
+    
+    return [
+      this.#renderFeaturedGraphs(featuredGraphs),
+      this.#renderUserGraphs(this.#sortUserGraphs(filteredGraphs)),
+      userHasAnyGraphs ? nothing : this.#renderNoUserGraphsPanel(),
+    ];
+  }
+
+  #filterGraphs(
+    items: [string, GraphProviderItem][],
+    filter: string | null
+  ): [string, GraphProviderItem][] {
+    if (!filter) {
+      return items;
+    }
+    const filterRegExp = filter ? new RegExp(filter, "gim") : undefined;
+    return items.filter(
+      ([name, item]) =>
+        !filterRegExp ||
+        (item.title && filterRegExp.test(item.title)) ||
+        (name && filterRegExp.test(name))
+    );
+  }
+
+  #sortUserGraphs(
+    items: [string, GraphProviderItem][]
+  ): [string, GraphProviderItem][] {
+    const recentBoards = this.recentBoards;
+    return items.sort(([, dataA], [, dataB]) => {
+      // Sort by pinned status first if possible.
+      const boardA = recentBoards.find((board) => board.url === dataA.url);
+      const boardB = recentBoards.find((board) => board.url === dataB.url);
+
+      const boardAPinned = boardA && boardA.pinned;
+      const boardBPinned = boardB && boardB.pinned;
+      if (boardAPinned && !boardBPinned) return -1;
+      if (!boardAPinned && boardBPinned) return 1;
+
+      // When both are pinned we fall through to sort by recency.
+      const indexA = recentBoards.findIndex((board) => board.url === dataA.url);
+      const indexB = recentBoards.findIndex((board) => board.url === dataB.url);
+
+      // One of them is not found, prioritize the one that is.
+      if (indexA !== -1 && indexB === -1) return -1;
+      if (indexA === -1 && indexB !== -1) return 1;
+
+      // Both are found, sort by index.
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+
+      // If both are unknown for recency, choose those that are mine.
+      if (dataA.mine && !dataB.mine) return -1;
+      if (!dataA.mine && dataB.mine) return 1;
+
+      return 0;
+    });
+  }
+
+  #renderUserGraphs(myItems: [string, GraphProviderItem][]) {
+    return html`
+      <div class="gallery-wrapper">
+        <bb-g-gallery
+          .headerText=${Strings.from("LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS_G")}
+          .recentBoards=${this.recentBoards}
+          .items=${myItems}
+          .pageSize=${PAGE_SIZE}
+        >
+          <button
+            slot="actions"
+            id="create-new-button-inline"
+            class="md-title-small sans-flex w-400"
+            @click=${this.#clickNewProjectButton}
+          >
+            <span class="g-icon"></span>
+            ${Strings.from("COMMAND_NEW_PROJECT")}
+          </button>
+        </bb-g-gallery>
+      </div>
+    `;
+  }
+
+  #renderNoUserGraphsPanel() {
+    return html`
+      <div id="no-projects-panel">
+        <span class="g-icon">pentagon</span>
+        ${Strings.from("LABEL_NO_OPALS")}
+      </div>
+    `;
+  }
+
+  #renderFeaturedGraphs(sampleItems: [string, GraphProviderItem][]) {
+    return html`
+      ${sampleItems.length === 0
+        ? html`<div class="gallery-wrapper">
+            <h2 class="sans md-title-small w-400 ta-c">There are no items</h2>
+          </div>`
+        : html`<bb-g-gallery
+            collapsable
+            .headerText=${Strings.from("LABEL_SAMPLE_GALLERY_TITLE_G")}
+            .items=${sampleItems}
+            .pageSize=${/* Unlimited */ -1}
+            forceCreatorToBeTeam
+          >
+          </bb-g-gallery>`}
+    `;
+  }
+
+  #clickNewProjectButton(evt: Event) {
+    if (!(evt.target instanceof HTMLButtonElement)) {
+      return;
+    }
+
+    ActionTracker.createNew();
+
+    evt.target.disabled = true;
+    this.dispatchEvent(
+      new StateEvent({
+        eventType: "board.create",
+        editHistoryCreator: { role: "user" },
+        graph: blankBoard(),
+        messages: {
+          start: "",
+          end: "",
+          error: "",
+        },
+      })
+    );
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "bb-project-listing-lite": ProjectListingLite;
+  }
+}

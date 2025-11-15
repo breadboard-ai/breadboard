@@ -75,7 +75,11 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   const { lite, page } = parsedUrl;
   if (
     (signinAdapter.state === "signedin" && scopeValidation.ok) ||
-    (signinAdapter.state === "signedout" && page === "graph")
+    (signinAdapter.state === "signedout" &&
+      // Signed-out users can access public graphs
+      (page === "graph" ||
+        // The Lite gallery has a signed-out mode
+        (lite && page === "home")))
   ) {
     const icon = document.createElement("link");
     icon.rel = "icon";
@@ -124,9 +128,15 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     }
 
     if (lite) {
-      const { LiteMain } = await import("./index-lite.js");
-      const liteMain = new LiteMain(mainArgs);
-      document.body.appendChild(liteMain);
+      if (page === "home") {
+        const { LiteHome } = await import("./index-lite-home.js");
+        const liteHome = new LiteHome(mainArgs);
+        document.body.appendChild(liteHome);
+      } else {
+        const { LiteMain } = await import("./index-lite.js");
+        const liteMain = new LiteMain(mainArgs);
+        document.body.appendChild(liteMain);
+      }
     } else {
       const { Main } = await import("./index.js");
       const main = new Main(mainArgs);
