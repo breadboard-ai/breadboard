@@ -63,7 +63,6 @@ const BEHAVIOR_AFFECTS_TYPE_CHECKING: { [K in BehaviorSchema]: boolean } = {
   // only affect formatting?
   bubble: true,
   board: true,
-  stream: true,
   error: true,
   "llm-content": true,
   "json-schema": true,
