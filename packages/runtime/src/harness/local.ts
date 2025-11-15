@@ -132,8 +132,7 @@ async function* runLocally(config: RunConfig, kits: Kit[]) {
     const loader = config.loader; // || createLoader();
     const store = config.store || createDefaultDataStore();
     const fileSystem = config.fileSystem;
-    const { base, signal, inputs, state, start, stopAfter, graphStore } =
-      config;
+    const { base, signal, inputs, start, stopAfter, graphStore } = config;
 
     try {
       let last: LastNode | undefined;
@@ -155,7 +154,6 @@ async function* runLocally(config: RunConfig, kits: Kit[]) {
         base,
         signal,
         inputs,
-        state,
         start,
         stopAfter,
         graphStore,

@@ -21,8 +21,6 @@ export {
 export { invokeGraph } from "./run/invoke-graph.js";
 // Move runtime tests to here (`runtime` package).
 export { runGraph } from "./run/run-graph.js";
-// Run state probably needs to be its own package
-export { LifecycleManager } from "./run/lifecycle.js";
 // Move `GraphDescriberManager` to `runtime` package
 export { ParameterManager } from "./run/parameter-manager.js";
 // Move `GraphDescriberManager` to `runtime` package
@@ -36,7 +34,5 @@ export {
 export { GraphRepresentationImpl } from "./traversal/representation.js";
 // Move runtime tests to `runtime` package.
 export { StreamCapability } from "./stream.js";
-// Move runtime tests to `runtime` package.
-export { createRunStateManager } from "./run/index.js";
 // Move runtime tests to `runtime` package.
 export { loadRunnerState } from "./serialization.js";

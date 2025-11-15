@@ -29,7 +29,7 @@ import {
 } from "./llm-content.js";
 import { GraphLoader } from "./loader.js";
 import { Probe } from "./probe.js";
-import { ManagedRunState, RunState } from "./run.js";
+import { RunState } from "./run.js";
 import { RunnableModuleFactory } from "./sandbox.js";
 import { Schema } from "./schema.js";
 import { SimplifiedProjectRunState } from "./state.js";
@@ -365,7 +365,6 @@ export interface NodeHandlerContext {
     path: number[]
   ) => Promise<void>;
   readonly invocationPath?: number[];
-  readonly state?: ManagedRunState;
   /**
    * The `AbortSignal` that can be used to stop the board run.
    */

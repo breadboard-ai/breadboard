@@ -42,7 +42,6 @@ import {
   LoadResponse,
   OutputResponse,
 } from "./remote.js";
-import { ManagedRunState } from "./run.js";
 import { SimplifiedProjectRunState } from "./state.js";
 import { TraversalResult } from "./traversal.js";
 import {
@@ -195,10 +194,6 @@ export type RunConfig = {
    * A way to see and manage runtime flags.
    */
   flags?: RuntimeFlagManager;
-  /**
-   * The state from which to resume the run.
-   */
-  state?: ManagedRunState;
   /**
    * Start node for the run. This is useful for specifying a particular
    * node as the start of the run. If not provided, nodes without any incoming

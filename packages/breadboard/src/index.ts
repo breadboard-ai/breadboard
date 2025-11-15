@@ -88,14 +88,7 @@ export {
 
 export { err, ok } from "@breadboard-ai/utils";
 
-/**
- * Managed Run State API
- */
-export {
-  createRunStateManager,
-  invokeGraph,
-  runGraph,
-} from "@breadboard-ai/runtime/legacy.js";
+export { invokeGraph, runGraph } from "@breadboard-ai/runtime/legacy.js";
 export type * from "@breadboard-ai/types/run.js";
 
 export { blankImperative, defaultModuleContent } from "@breadboard-ai/utils";
