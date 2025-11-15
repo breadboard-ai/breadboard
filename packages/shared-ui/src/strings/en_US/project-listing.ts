@@ -47,6 +47,12 @@ export default {
   COMMAND_DELETE: {
     str: "Delete",
   },
+  COMMAND_SHOW_MORE: {
+    str: "Show more",
+  },
+  COMMAND_SHOW_LESS: {
+    str: "Show less",
+  },
 
   // Statuses.
   STATUS_LOADING: {

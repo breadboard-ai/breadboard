@@ -7,7 +7,11 @@
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 import { type VisualEditorMode } from "../types/types.js";
 
-export type MakeUrlInit = HomeUrlInit | GraphInit | LandingUrlInit;
+export type MakeUrlInit =
+  | HomeUrlInit
+  | GraphInit
+  | LandingUrlInit
+  | GGalleryUrlInit;
 
 export interface BaseUrlInit {
   /**
@@ -36,6 +40,11 @@ export function devUrlParams(): Required<BaseUrlInit>["dev"] {
 export interface HomeUrlInit extends BaseUrlInit {
   page: "home";
   mode?: VisualEditorMode;
+  redirectFromLanding?: boolean;
+}
+
+export interface GGalleryUrlInit extends BaseUrlInit {
+  page: "g-gallery";
   redirectFromLanding?: boolean;
 }
 
@@ -68,6 +77,7 @@ const MISSING_SCOPES = "missing-scopes";
 const RESOURCE_KEY = "resourcekey";
 export const OAUTH_REDIRECT = "oauth_redirect";
 const DEV_PREFIX = "dev-";
+const GALLERY = "g-gallery";
 
 /**
  * Generate a URL for a page on the Breadboard Visual Editor.
@@ -83,7 +93,10 @@ export function makeUrl(
   if (init?.oauthRedirect) {
     url.searchParams.set(OAUTH_REDIRECT, init.oauthRedirect);
   }
-  if (page === "home") {
+  if (page === "g-gallery") {
+    url.pathname = "/";
+    url.searchParams.set(GALLERY, "true");
+  } else if (page === "home") {
     url.pathname = "/";
     url.searchParams.set(MODE, init.mode ?? MODE_CANVAS);
   } else if (page === "graph") {
@@ -189,6 +202,17 @@ export function parseUrl(url: string | URL): MakeUrlInit {
       landing.dev = dev;
     }
     return landing;
+  } else if (url.searchParams.get(GALLERY)) {
+    const gallery: GGalleryUrlInit = {
+      page: "g-gallery",
+    };
+    if (dev) {
+      gallery.dev = dev;
+    }
+    if (oauthRedirect) {
+      gallery.oauthRedirect = oauthRedirect;
+    }
+    return gallery;
   } else {
     const flow = url.searchParams.get(FLOW) || url.searchParams.get(TAB0);
     if (!flow) {

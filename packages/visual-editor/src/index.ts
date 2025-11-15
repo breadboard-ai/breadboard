@@ -363,6 +363,11 @@ export class Main extends SignalWatcher(LitElement) {
       console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
       this.#ready = true;
     });
+
+    if (parsedUrl.page === "g-gallery") {
+      // The gallery view's body should fit the content
+      document.body.style.setProperty("--bb-body-height", "auto");
+    }
   }
 
   connectedCallback(): void {
@@ -603,6 +608,22 @@ export class Main extends SignalWatcher(LitElement) {
 
     this.#runtime.shell.startTrackUpdates();
     await this.#runtime.router.init();
+  }
+
+  #addGGalleryResizeController(el: Element | undefined) {
+    if (el instanceof HTMLElement) {
+      const notifyResize = () => {
+        this.#embedHandler?.sendToEmbedder({
+          type: "resize",
+          width: el.offsetWidth,
+          height: el.offsetHeight,
+        });
+      };
+      const resizeObserver = new ResizeObserver(notifyResize);
+      resizeObserver.observe(el);
+      // Send initial notification
+      notifyResize();
+    }
   }
 
   #findSelectedBoardServer(args: MainArguments) {
@@ -1411,6 +1432,13 @@ export class Main extends SignalWatcher(LitElement) {
   render() {
     if (!this.#ready) {
       return nothing;
+    }
+
+    if (parsedUrl.page === "g-gallery") {
+      return html`<bb-g-project-listing
+        ${ref((el) => this.#addGGalleryResizeController(el))}
+        .recentBoards=${this.#runtime.board.getRecentBoards()}
+      ></bb-g-project-listing>`;
     }
 
     const renderValues = this.#getRenderValues();

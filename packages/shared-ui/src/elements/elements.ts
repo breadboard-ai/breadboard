@@ -56,6 +56,7 @@ export { EditorControls } from "./step-editor/editor-controls.js";
 export { EntityEditor } from "./entity-editor/entity-editor.js";
 export { FastAccessMenu } from "./fast-access-menu/fast-access-menu.js";
 export { FeedbackPanel } from "./feedback/feedback-panel.js";
+export { GProjectListing } from "./g-gallery/project-listing.js";
 export { HomepageSearchButton } from "./welcome-panel/homepage-search-button.js";
 export { JSONTree } from "./json-tree/json-tree.js";
 export { NodeRunControl } from "./shared/node-controls.js";

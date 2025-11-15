@@ -74,7 +74,8 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   const page = parseUrl(window.location.href).page;
   if (
     (signinAdapter.state === "signedin" && scopeValidation.ok) ||
-    (signinAdapter.state === "signedout" && page === "graph")
+    (signinAdapter.state === "signedout" &&
+      (page === "graph" || page === "g-gallery"))
   ) {
     const icon = document.createElement("link");
     icon.rel = "icon";
