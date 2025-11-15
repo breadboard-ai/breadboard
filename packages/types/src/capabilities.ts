@@ -132,7 +132,6 @@ export type DescribeOutputs = {
 };
 
 export type Capabilities = {
-  fetch(url: FetchInputs): Promise<FetchOutputs>;
   invoke(inputs: InvokeInputs): Promise<InvokeOutputs>;
   input(inputs: InputInputs): Promise<InputOutputs>;
   output(inputs: OutputInputs): Promise<OutputOutputs>;
