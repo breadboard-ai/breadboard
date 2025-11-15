@@ -9,7 +9,6 @@ import {
   invokeDescriber,
   invokeGraph,
   invokeMainDescriber,
-  ParameterManager,
 } from "@breadboard-ai/runtime/legacy.js";
 import type {
   GraphDescriber,
@@ -44,14 +43,12 @@ export { GraphDescriberManager };
  * describing a node or a graph
  */
 class GraphDescriberManager implements GraphDescriber {
-  private readonly params: ParameterManager;
   private readonly exports: ExportsDescriber;
 
   private constructor(
     public readonly handle: GraphDescriptorHandle,
     public readonly mutable: MutableGraph
   ) {
-    this.params = new ParameterManager(handle.graph());
     this.exports = new ExportsDescriber(mutable, (graphId, mutable) => {
       if (isModule(graphId)) {
         return new ModuleDescriber(mutable, getModuleId(graphId));
@@ -150,7 +147,6 @@ class GraphDescriberManager implements GraphDescriber {
               type: "array",
               items: { type: "object", behavior: ["llm-content"] },
             },
-            ...this.params.propertiesSchema(),
           },
         },
         outputSchema: {
