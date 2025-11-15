@@ -124,9 +124,7 @@ export async function* runGraph(
       let outputs: OutputValues | undefined = undefined;
 
       if (descriptor.type === "input") {
-        await next(
-          new InputStageResult(result, undefined, invocationId, path())
-        );
+        await next(new InputStageResult(result, invocationId, path()));
         await bubbleUpInputsIfNeeded(
           graph,
           context,

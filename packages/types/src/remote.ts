@@ -18,7 +18,6 @@ import {
   NodeStartProbeMessage,
   SkipProbeMessage,
 } from "./probe.js";
-import { RunState } from "./run.js";
 import { Schema } from "./schema.js";
 import { TraversalResult } from "./traversal.js";
 
@@ -130,7 +129,7 @@ export type AsRemoteMessage<T extends GenericResult> = [
  * It basically just pokes the server to start running.
  */
 export type RunRequest = Record<string, never>;
-export type RunRequestMessage = ["run", RunRequest, RunState?];
+export type RunRequestMessage = ["run", RunRequest];
 export type OutputRemoteMessage = ["output", OutputResponse];
 export type InputRemoteMessage = ["input", InputResponse, next?: string];
 

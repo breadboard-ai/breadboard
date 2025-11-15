@@ -29,7 +29,6 @@ import {
 } from "./llm-content.js";
 import { GraphLoader } from "./loader.js";
 import { Probe } from "./probe.js";
-import { RunState } from "./run.js";
 import { RunnableModuleFactory } from "./sandbox.js";
 import { Schema } from "./schema.js";
 import { SimplifiedProjectRunState } from "./state.js";
@@ -291,8 +290,6 @@ export interface BreadboardRunResult {
    * The timestamp of when this result was issued.
    */
   get timestamp(): number;
-  /** The current run state associated with the result. */
-  get runState(): RunState | undefined;
 
   save(): string;
 }
@@ -349,8 +346,7 @@ export interface NodeHandlerContext {
   readonly requestInput?: (
     schema: Schema,
     node: NodeDescriptor,
-    path: number[],
-    state: RunState
+    path: number[]
   ) => Promise<OutputValues | undefined>;
   /**
    * Provide output directly to the user. This will bypass the normal output

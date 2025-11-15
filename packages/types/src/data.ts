@@ -12,7 +12,6 @@ import {
   LLMContent,
   StoredDataCapabilityPart,
 } from "./llm-content.js";
-import { ReanimationState } from "./run.js";
 import { Schema } from "./schema.js";
 import { UUID } from "./uuid.js";
 
@@ -65,11 +64,6 @@ export type DataStore = DataInflator &
     ): Promise<StoreDataResult>;
     retrieveData(key: string): Promise<RetrieveDataResult>;
   };
-
-export type StateStore = {
-  load(key?: string): Promise<ReanimationState | undefined>;
-  save(state: ReanimationState): Promise<string>;
-};
 
 export type StoreDataResult =
   | {

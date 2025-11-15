@@ -10,7 +10,6 @@ import type {
   NodeDescriptor,
   OutputValues,
   RunResultType,
-  RunState,
   TraversalResult,
 } from "@breadboard-ai/types";
 import { timestamp } from "@breadboard-ai/utils";
@@ -19,8 +18,6 @@ import { loadRunnerState, saveRunnerState } from "./serialization.js";
 export class RunResult implements BreadboardRunResult {
   #type: RunResultType;
   #state: TraversalResult;
-  // TODO: Remove #state and rename this to #state
-  #runState: RunState | undefined;
   // TODO: Remove this once RunState machinery works
   #invocationId;
   #path: number[];
@@ -28,13 +25,11 @@ export class RunResult implements BreadboardRunResult {
   constructor(
     state: TraversalResult,
     type: RunResultType,
-    runState: RunState | undefined,
     invocationId: number,
     path: number[]
   ) {
     this.#state = state;
     this.#type = type;
-    this.#runState = runState;
     this.#invocationId = invocationId;
     this.#path = path;
   }
@@ -83,10 +78,6 @@ export class RunResult implements BreadboardRunResult {
     return saveRunnerState(this.#type, this.#state);
   }
 
-  get runState(): RunState | undefined {
-    return this.#runState;
-  }
-
   get timestamp(): number {
     return timestamp();
   }
@@ -100,18 +91,13 @@ export class RunResult implements BreadboardRunResult {
 
   static load(stringifiedResult: string): RunResult {
     const { state, type } = loadRunnerState(stringifiedResult);
-    return new RunResult(state, type, undefined, 0, []);
+    return new RunResult(state, type, 0, []);
   }
 }
 
 export class InputStageResult extends RunResult {
-  constructor(
-    state: TraversalResult,
-    runState: RunState | undefined,
-    invocationId: number,
-    path: number[]
-  ) {
-    super(state, "input", runState, invocationId, path);
+  constructor(state: TraversalResult, invocationId: number, path: number[]) {
+    super(state, "input", invocationId, path);
   }
 
   get outputs(): OutputValues {
@@ -121,7 +107,7 @@ export class InputStageResult extends RunResult {
 
 export class OutputStageResult extends RunResult {
   constructor(state: TraversalResult, invocationId: number, path: number[]) {
-    super(state, "output", undefined, invocationId, path);
+    super(state, "output", invocationId, path);
   }
 
   get inputArguments(): InputValues {

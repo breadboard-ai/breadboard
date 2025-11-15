@@ -123,7 +123,7 @@ test("createErrorMessage makes sensible messages", (t) => {
 test("createBubbleHandler works as expected", async (t) => {
   const descriptor = { id: "id", type: "type" };
   {
-    const handler = createBubbleHandler({}, {}, descriptor, []);
+    const handler = createBubbleHandler({}, {}, descriptor);
     await t.throwsAsync(
       handler(
         {
@@ -167,8 +167,7 @@ test("createBubbleHandler works as expected", async (t) => {
       {
         board: { title: "Foo" } as GraphDescriptor,
       },
-      descriptor,
-      []
+      descriptor
     );
     await t.throwsAsync(
       handler(
@@ -185,8 +184,7 @@ test("createBubbleHandler works as expected", async (t) => {
       {
         requestInput: async () => ({ foo: "bar" }),
       } satisfies NodeHandlerContext,
-      descriptor,
-      []
+      descriptor
     );
     t.deepEqual(
       await handler({ properties: { foo: { type: "string" } } }, []),
@@ -202,7 +200,7 @@ test("createBubbleHandler works as expected", async (t) => {
     );
   }
   {
-    const handler = createBubbleHandler({}, {}, descriptor, []);
+    const handler = createBubbleHandler({}, {}, descriptor);
     t.deepEqual(
       await handler(
         { properties: { foo: { type: "string", default: "bar" } } },

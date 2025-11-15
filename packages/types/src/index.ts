@@ -23,7 +23,6 @@ export type * from "./probe.js";
 export type * from "./remote.js";
 export type * from "./result.js";
 export type * from "./run-status.js";
-export type * from "./run.js";
 export type { Sandbox } from "./sandbox.js";
 export type * from "./schema.js";
 export type * from "./state.js";
