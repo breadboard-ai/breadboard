@@ -65,7 +65,7 @@
     "url": "https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
-    "dist/src"
+    "dist"
   ],
   "keywords": [],
   "author": "Google Labs Team",
