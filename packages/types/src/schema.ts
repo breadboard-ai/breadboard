@@ -31,11 +31,6 @@ export type BehaviorSchema =
    */
   | "board"
   /**
-   * Indicates that the input or output port is a `StreamCapability`.
-   * @see [StreamCapability]
-   */
-  | "stream"
-  /**
    * Indicates that the input or output port is an `ErrorCapability`.
    * @see [ErrorCapability]
    */

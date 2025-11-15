@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { StreamCapability } from "@breadboard-ai/runtime/legacy.js";
 import { KitBuilder } from "../../src/legacy/index.js";
 import type {
   BreadboardCapability,
@@ -184,22 +183,6 @@ export const TestKit = new KitBuilder({
         outputSchema: schema("Reversed: "),
       };
     },
-  },
-  /**
-   * Supplies a simple stream output that can be used to test interactions with
-   * streams.
-   */
-  streamer: async () => {
-    const words = "Breadboard is a project that helps you make AI boards.";
-    const stream = new ReadableStream({
-      start(controller) {
-        for (const word of words.split(" ")) {
-          controller.enqueue(`${word} `);
-        }
-        controller.close();
-      },
-    });
-    return { stream: new StreamCapability(stream) };
   },
   /**
    * Unsafe JS runner. Needed to test serializing boards that are pure code.
