@@ -4,11 +4,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createServer, createServerConfig } from "./server.js";
-
-const config = createServerConfig({
-  storageProvider: "firestore",
-});
-const server = createServer(config);
-
-server.listen(config.port);
+console.log("Do not use directly");

@@ -6,7 +6,6 @@
 
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 
-import type { BoardServerStore } from "./store.js";
 import { ok, type Outcome } from "@google-labs/breadboard";
 import * as errors from "./errors.js";
 
@@ -34,17 +33,6 @@ export function getUserCredentials(): RequestHandler {
     res: Response,
     next: NextFunction
   ): Promise<void> => {
-    const key = req.query.API_KEY as string | undefined;
-    if (key) {
-      res.locals.apiKey = key;
-
-      const store: BoardServerStore = req.app.locals.store;
-      const userId = await store.findUserIdByApiKey(key);
-      if (userId) {
-        res.locals.userId = userId;
-      }
-    }
-
     const token = getAccessToken(req);
     if (token) {
       res.locals.accessToken = token;

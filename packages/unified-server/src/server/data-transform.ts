@@ -18,10 +18,7 @@ export { createDataTransformHandler };
 
 const CACHE_MODE = "file-blob";
 
-function createDataTransformHandler(
-  bucketId: string | undefined,
-  serverUrl: string | undefined
-) {
+function createDataTransformHandler(bucketId: string | undefined) {
   const router = Router();
   router.use(
     cors({
@@ -56,7 +53,7 @@ function createDataTransformHandler(
       });
       return;
     }
-    const blobStore = new GoogleStorageBlobStore(bucketId, serverUrl);
+    const blobStore = new GoogleStorageBlobStore(bucketId);
     const blob = await blobStore.getBlob(blobId);
     if (!ok(blob)) {
       res.status(500).json(blob);

@@ -33,13 +33,11 @@ const server = express();
 
 server.use(makeCspHandler(FALLBACK_CSP));
 
-const boardServerConfig = boardServer.createServerConfig({
-  storageProvider: "firestore",
-});
+const boardServerConfig = boardServer.createServerConfig();
 const connectionServerConfig = await connectionServer.createServerConfig();
 
 console.log("[unified-server startup] Mounting board server");
-boardServer.addMiddleware(server, boardServerConfig);
+boardServer.addMiddleware(server);
 server.use("/board", boardServer.createRouter(boardServerConfig));
 
 console.log("[unified-server startup] Mounting connection server");
@@ -99,10 +97,7 @@ server.use(
 console.log("[unified-server startup] Mounting Data Tranform API");
 server.use(
   "/api/data/transform",
-  createDataTransformHandler(
-    boardServerConfig.storageBucket,
-    boardServerConfig.serverUrl
-  )
+  createDataTransformHandler(boardServerConfig.storageBucket)
 );
 
 console.log("[unified-server startup] Mounting static content");
