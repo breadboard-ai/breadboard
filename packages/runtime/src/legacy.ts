@@ -30,5 +30,3 @@ export {
 } from "./sandbox/invoke-describer.js";
 // Leave as is?
 export { GraphRepresentationImpl } from "./traversal/representation.js";
-// Move runtime tests to `runtime` package.
-export { StreamCapability } from "./stream.js";
