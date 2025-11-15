@@ -12,7 +12,6 @@ import type {
   NodeValue,
   OutputValues,
 } from "./graph-descriptor.js";
-import type { TraversalResult } from "./traversal.js";
 
 /**
  * Sent by the runner just before a node is about to run.
@@ -88,7 +87,6 @@ export type EdgeResponse = {
 export type NodeStartProbeMessage = {
   type: "nodestart";
   data: NodeStartResponse;
-  result?: TraversalResult;
 };
 
 export type NodeEndProbeMessage = {
