@@ -290,8 +290,6 @@ export interface BreadboardRunResult {
    * The timestamp of when this result was issued.
    */
   get timestamp(): number;
-
-  save(): string;
 }
 
 export type ErrorObject = {

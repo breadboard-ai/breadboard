@@ -28,7 +28,6 @@ function fromProbe<Probe extends ProbeMessage>(probe: Probe) {
   return {
     type: probe.type,
     data,
-    result: probe.type === "nodestart" ? probe.result : undefined,
     reply: async () => {
       // Do nothing
     },

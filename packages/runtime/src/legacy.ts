@@ -32,5 +32,3 @@ export {
 export { GraphRepresentationImpl } from "./traversal/representation.js";
 // Move runtime tests to `runtime` package.
 export { StreamCapability } from "./stream.js";
-// Move runtime tests to `runtime` package.
-export { loadRunnerState } from "./serialization.js";
