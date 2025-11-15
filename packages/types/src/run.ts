@@ -5,7 +5,6 @@
  */
 
 import {
-  Edge,
   NodeConfiguration,
   NodeIdentifier,
   OutputValues,
@@ -54,44 +53,6 @@ export type LifecyclePathRegistryEntry<Data> = {
   children: LifecyclePathRegistryEntry<Data>[];
   // parent: LifecyclePathRegistryEntry | null;
   data: Data | null;
-};
-
-export type ManagedRunStateLifecycle = {
-  /**
-   * Signifies the beginning of a new graph being run or invoked.
-   * @param url -- url of the graph that is starting
-   */
-  dispatchGraphStart(url: string, invocationPath: number[]): void;
-  dispatchNodeStart(
-    result: TraversalResult,
-    invocationPath: number[]
-  ): Promise<void>;
-  dispatchNodeEnd(
-    outputs: OutputValues | undefined,
-    invocationPath: number[]
-  ): void;
-  dispatchGraphEnd(): void;
-  dispatchSkip(): void;
-  dispatchEdge(edge: Edge): void;
-  supplyPartialOutputs(
-    outputs: OutputValues,
-    invocationPath: number[]
-  ): Promise<void>;
-  state(): RunState;
-  reanimationState(): ReanimationState;
-  pathFor(node: NodeIdentifier): number[] | undefined;
-};
-
-/**
- * The representation of Breadboard runtime.
- * TODO: Rename to ManagedRuntime.
- */
-export type ManagedRunState = {
-  /**
-   * The entry point for signaling run lifecycle changes.
-   */
-  lifecycle(): ManagedRunStateLifecycle;
-  reanimation(): ReanimationController;
 };
 
 export type ReanimationStateCache = Record<string, RunStackEntry>;

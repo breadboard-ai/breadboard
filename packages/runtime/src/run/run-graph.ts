@@ -40,7 +40,7 @@ export async function* runGraph(
 ): AsyncGenerator<BreadboardRunResult> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { inputs: initialInputs, start, stopAfter, ...context } = args;
-  const { probe, state, invocationPath = [] } = context;
+  const { probe, invocationPath = [] } = context;
 
   graphToRun = resolveGraphUrls(graphToRun);
 
@@ -51,116 +51,12 @@ export async function* runGraph(
     graphToRun = { graph };
   }
 
-  const lifecycle = state?.lifecycle();
   yield* asyncGen<BreadboardRunResult>(async (next) => {
     const nodeInvoker = new NodeInvoker(args, graphToRun, next);
-
-    lifecycle?.dispatchGraphStart(graph.url!, invocationPath);
 
     let invocationId = 0;
 
     let prepareToStopAtStartNode = false;
-
-    const reanimation = state?.reanimation();
-    if (reanimation) {
-      const frame = reanimation.enter(invocationPath);
-      const mode = frame.mode();
-      switch (mode) {
-        case "replay": {
-          // This can only happen when `runGraph` is called by `invokeGraph`,
-          // which means that all we need to do is provide the output and
-          // return.
-          const { result, invocationId: id, path } = frame.replay();
-          await next(new OutputStageResult(result, id, path));
-          // The nodeend and graphend will be dispatched by `invokeGraph`.
-          return;
-        }
-        case "resume": {
-          const { result, invocationPath } = frame.resume();
-
-          resumeFrom = result;
-          // Adjust invocationId to match the point from which we are resuming.
-          invocationId = invocationPath[invocationPath.length - 1];
-
-          await lifecycle?.dispatchNodeStart(result, invocationPath);
-
-          let outputs: OutputValues | undefined = undefined;
-
-          const type = result.descriptor.type;
-          const descriptor = result.descriptor;
-          const outputHasValues = Object.keys(result.outputs || {}).length > 0;
-          if (type === "input") {
-            if (outputHasValues) {
-              outputs = result.outputs;
-            } else {
-              await next(
-                new InputStageResult(
-                  result,
-                  lifecycle?.state(),
-                  invocationId,
-                  invocationPath
-                )
-              );
-              await bubbleUpInputsIfNeeded(
-                graph,
-                context,
-                descriptor,
-                result,
-                invocationPath,
-                lifecycle?.state()
-              );
-              outputs = result.outputs
-                ? await resolveBoardCapabilities(
-                    result.outputs,
-                    context,
-                    graph.url
-                  )
-                : undefined;
-            }
-          } else if (descriptor.type === "output") {
-            if (outputHasValues) {
-              outputs = result.outputs;
-            } else {
-              if (
-                !(await bubbleUpOutputsIfNeeded(
-                  result.inputs,
-                  descriptor,
-                  context,
-                  invocationPath
-                ))
-              ) {
-                await next(
-                  new OutputStageResult(result, invocationId, invocationPath)
-                );
-              }
-              outputs = result.outputs;
-            }
-          } else {
-            outputs = await nodeInvoker.invokeNode(result, invocationPath);
-            result.outputs = outputs;
-            resumeFrom = result;
-          }
-
-          lifecycle?.dispatchNodeEnd(outputs, invocationPath);
-
-          await probe?.report?.({
-            type: "nodeend",
-            data: {
-              node: result.descriptor,
-              inputs: result.inputs,
-              outputs: outputs as OutputValues,
-              path: invocationPath,
-              timestamp: timestamp(),
-              newOpportunities: structuredClone(result.newOpportunities),
-            },
-          });
-
-          if (stopAfter === result.descriptor.id) {
-            prepareToStopAtStartNode = true;
-          }
-        }
-      }
-    }
 
     const path = () => [...invocationPath, invocationId];
 
@@ -186,20 +82,17 @@ export async function* runGraph(
       invocationId++;
       const { inputs, descriptor, missingInputs } = result;
 
-      lifecycle?.dispatchEdge(result.current);
       await probe?.report?.({
         type: "edge",
         data: {
           edge: result.current,
           to: path(),
-          from: lifecycle?.pathFor(result.current.from),
           timestamp: timestamp(),
           value: inputs,
         },
       });
 
       if (result.skip) {
-        lifecycle?.dispatchSkip();
         await probe?.report?.({
           type: "skip",
           data: {
@@ -212,8 +105,6 @@ export async function* runGraph(
         });
         continue;
       }
-
-      await lifecycle?.dispatchNodeStart(result, path());
 
       await probe?.report?.({
         type: "nodestart",
@@ -234,15 +125,14 @@ export async function* runGraph(
 
       if (descriptor.type === "input") {
         await next(
-          new InputStageResult(result, lifecycle?.state(), invocationId, path())
+          new InputStageResult(result, undefined, invocationId, path())
         );
         await bubbleUpInputsIfNeeded(
           graph,
           context,
           descriptor,
           result,
-          path(),
-          lifecycle?.state()
+          path()
         );
         outputs = result.outputs
           ? await resolveBoardCapabilities(result.outputs, context, graph.url)
@@ -259,8 +149,6 @@ export async function* runGraph(
         outputs = await nodeInvoker.invokeNode(result, path());
         remainingOutputs = { result, path: path() };
       }
-
-      lifecycle?.dispatchNodeEnd(outputs, path());
 
       await probe?.report?.({
         type: "nodeend",
@@ -294,8 +182,6 @@ export async function* runGraph(
         )
       );
     }
-
-    lifecycle?.dispatchGraphEnd();
 
     await probe?.report?.({
       type: "graphend",
