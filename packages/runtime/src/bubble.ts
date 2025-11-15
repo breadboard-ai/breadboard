@@ -12,12 +12,10 @@ import type {
   NodeValue,
   OutputValues,
   RunArguments,
-  RunState,
   Schema,
   TraversalResult,
 } from "@breadboard-ai/types";
 import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
-import { loadRunnerState, saveRunnerState } from "./serialization.js";
 
 export const createErrorMessage = (
   inputName: string | string[],
@@ -37,8 +35,7 @@ export const bubbleUpInputsIfNeeded = async (
   context: NodeHandlerContext,
   descriptor: NodeDescriptor,
   result: TraversalResult,
-  path: number[],
-  state: RunState = []
+  path: number[]
 ): Promise<void> => {
   // If we have no way to bubble up inputs, we just return and not
   // enforce required inputs.
@@ -46,24 +43,15 @@ export const bubbleUpInputsIfNeeded = async (
 
   const outputs = result.outputs ?? {};
   const reader = new InputSchemaReader(outputs, result.inputs, path);
-  if (state.length > 0) {
-    const last = state[state.length - 1];
-    if (last.state) {
-      const unpackedState = loadRunnerState(last.state).state;
-      unpackedState.partialOutputs = outputs;
-      last.state = saveRunnerState("nodestart", unpackedState);
-    }
-  }
   result.outputs = await reader.read(
-    createBubbleHandler(metadata, context, descriptor, state)
+    createBubbleHandler(metadata, context, descriptor)
   );
 };
 
 export const createBubbleHandler = (
   metadata: GraphInlineMetadata,
   context: NodeHandlerContext,
-  descriptor: NodeDescriptor,
-  state: RunState
+  descriptor: NodeDescriptor
 ) => {
   return (async (propertiesSchema, path) => {
     const entries = Object.entries(propertiesSchema.properties || {});
@@ -97,8 +85,7 @@ export const createBubbleHandler = (
     const outputs = await context.requestInput?.(
       inputRequestSchema,
       descriptor,
-      path,
-      state
+      path
     );
     // If the run was aborted, let's bail
     if (context?.signal?.aborted) {
@@ -174,12 +161,7 @@ export class RequestedInputsManager {
     next: (result: RunResult) => Promise<void>,
     result: TraversalResult
   ): NodeHandlerContext["requestInput"] {
-    return async (
-      schema: Schema,
-      node: NodeDescriptor,
-      path: number[],
-      state: RunState
-    ) => {
+    return async (schema: Schema, node: NodeDescriptor, path: number[]) => {
       // Retrieve all cached values
       const propertiesToRequest = Object.entries(schema.properties || {});
       const cachedValues: OutputValues = {};
@@ -210,7 +192,7 @@ export class RequestedInputsManager {
           } satisfies Schema,
         },
       };
-      await next(new InputStageResult(requestInputResult, state, -1, path));
+      await next(new InputStageResult(requestInputResult, -1, path));
       const outputs = requestInputResult.outputs;
       const requestedProperties = schema.properties || {};
       const remainingProperties = outputs
@@ -228,8 +210,7 @@ export class RequestedInputsManager {
         (await this.#context.requestInput?.(
           { properties: remainingProperties },
           descriptor,
-          path,
-          state
+          path
         )) || {};
       // Cache all non-transient properties.
       for (const [name, propertySchema] of uncachedProperties) {

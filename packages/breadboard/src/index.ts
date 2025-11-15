@@ -89,7 +89,6 @@ export {
 export { err, ok } from "@breadboard-ai/utils";
 
 export { invokeGraph, runGraph } from "@breadboard-ai/runtime/legacy.js";
-export type * from "@breadboard-ai/types/run.js";
 
 export { blankImperative, defaultModuleContent } from "@breadboard-ai/utils";
 export { addRunModule } from "./add-run-module.js";
