@@ -12,18 +12,9 @@ import type {
   GraphDescriptorBoardCapability,
   InputValues,
   NodeDescriberResult,
-  NodeHandlerContext,
   Schema,
 } from "../../src/types.js";
 
-type IncludeInputValues = InputValues & {
-  graph?: GraphDescriptor;
-};
-
-type InvokeInputValues = InputValues & {
-  board?: BreadboardCapability;
-  path?: string;
-};
 /**
  * This is a Kit designed specifically for use in the testing harness.
  */
@@ -48,64 +39,16 @@ export const TestKit = new KitBuilder({
    * This is a primitive implementation of the `include` node in Core Kit,
    * just enough for testing.
    */
-  include: async (inputs: InputValues, context: NodeHandlerContext) => {
-    const { graph } = inputs as IncludeInputValues;
-    if (!graph) {
-      throw new Error("Must provide a graph to include");
-    }
-    return await invokeGraph({ graph }, inputs, context);
+  include: async () => {
+    throw new Error("Not meant to run");
   },
   /**
    * This is a primitive implementation of the `invoke` node in Core Kit,
    * just enough for testing.
    */
   invoke: {
-    invoke: async (inputs: InvokeInputValues, context: NodeHandlerContext) => {
-      const { $board, ...args } = inputs;
-      const base = context.base || new URL(import.meta.url);
-
-      if ($board) {
-        let result = undefined;
-        if (($board as BreadboardCapability).kind === "board") {
-          result = await getGraphDescriptor(
-            $board as BreadboardCapability,
-            context
-          );
-        } else if (typeof $board === "string") {
-          result = await context.loader?.load($board, {
-            base,
-            outerGraph: context.outerGraph,
-          });
-        }
-
-        if (!result) throw new Error("Must provide valid $board to invoke");
-
-        if (!result.success) {
-          throw new Error(result.error);
-        }
-
-        return await invokeGraph(result, args, context);
-      } else {
-        const { board, path, ...args } = inputs;
-
-        const result = board
-          ? await getGraphDescriptor(board, context)
-          : path
-            ? await context.loader?.load(path, {
-                base,
-                outerGraph: context.outerGraph,
-              })
-            : undefined;
-
-        if (!result) {
-          throw new Error("Must provide valid board to invoke");
-        }
-        if (!result.success) {
-          throw new Error(result.error);
-        }
-
-        return await invokeGraph(result, args, context);
-      }
+    invoke: async () => {
+      throw new Error("Not meant to be run");
     },
     describe: async (inputs?: InputValues): Promise<NodeDescriberResult> => {
       // Bare subset of describe() for invoke: Find the first input and output
@@ -218,5 +161,3 @@ export const TestKit = new KitBuilder({
 /**
  * Board grammar versions of the above, with types.
  */
-import { getGraphDescriptor } from "@breadboard-ai/loader";
-import { invokeGraph } from "../../src/index.js";

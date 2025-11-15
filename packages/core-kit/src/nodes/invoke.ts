@@ -13,8 +13,9 @@ import type {
   GraphToRun,
   NodeHandlerObject,
 } from "@google-labs/breadboard";
-import { getGraphDescriptor, invokeGraph } from "@google-labs/breadboard";
+import { getGraphDescriptor } from "@google-labs/breadboard";
 import { getRunner, loadGraphFromPath } from "../utils.js";
+import { invokeGraph } from "@breadboard-ai/runtime/legacy.js";
 
 export type InvokeNodeInputs = InputValues & {
   $board?: string | BreadboardCapability | GraphDescriptor;
