@@ -19,16 +19,6 @@ export const badRequest = (res: ServerResponse, error: string) => {
   res.end(error || "Bad Request");
 };
 
-export const methodNotAllowed = (res: ServerResponse, error: string) => {
-  res.writeHead(405, "Method Not Allowed");
-  res.end(error);
-};
-
-export const notFound = (res: ServerResponse, error: string) => {
-  res.writeHead(404, "Page not found");
-  res.end(error);
-};
-
 export function unauthorized(res: Response): void {
   res.sendStatus(401);
 }

@@ -6,47 +6,31 @@
   "private": true,
   "version": "0.16.0",
   "description": "Board Server",
-  "main": "./dist/server/index.js",
+  "main": "./dist/index.js",
   "exports": {
-    ".": "./dist/lib/src/server.js"
+    ".": "./dist/server.js"
   },
   "type": "module",
   "scripts": {
     "start": "node .",
     "prepack": "npm run build",
     "build": "wireit",
-    "build:lib": "wireit",
-    "build:esbuild": "wireit",
-    "build:docker": "docker build --build-context breadboard=../../ -t board-server .",
-    "deploy": "npm run build && gcloud app deploy",
-    "deploy:gcr": "npm run build && gcloud run deploy --source .",
-    "add": "tsx scripts/create-account.ts",
-    "serve": "wireit",
-    "dev": "npm run dev:nowatch --watch",
-    "dev:nowatch": "wireit",
-    "test": "wireit",
-    "test:firestore": "firebase emulators:exec 'tsx --test --test-reporter=spec tests/firestore/*.test.ts'"
+    "test": "wireit"
   },
   "wireit": {
     "build": {
-      "dependencies": [
-        "build:esbuild",
-        "build:lib"
-      ]
-    },
-    "build:lib": {
       "dependencies": [
         "build:tsc"
       ]
     },
     "build:tsc": {
-      "command": "tsc -b tsconfig.lib.json --pretty",
+      "command": "tsc -b tsconfig.json --pretty",
       "env": {
         "FORCE_COLOR": "1"
       },
       "files": [],
       "output": [
-        "dist/lib"
+        "dist/"
       ],
       "dependencies": [
         "typescript-server-files-and-deps"
@@ -66,43 +50,8 @@
         "<dependencies>#build"
       ]
     },
-    "build:esbuild": {
-      "command": "tsx scripts/build.ts",
-      "files": [
-        "scripts/build.ts"
-      ],
-      "output": [
-        "dist/server",
-        "dist/scripts"
-      ],
-      "dependencies": [
-        "typescript-server-files-and-deps"
-      ],
-      "clean": "if-file-deleted"
-    },
-    "serve": {
-      "service": true,
-      "command": "node .",
-      "dependencies": [
-        "build"
-      ]
-    },
-    "dev:nowatch": {
-      "command": "export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project) && node .",
-      "service": true,
-      "env": {
-        "SERVER_URL": "http://localhost:3000"
-      },
-      "dependencies": [
-        "build",
-        {
-          "script": "../visual-editor#serve",
-          "cascade": false
-        }
-      ]
-    },
     "test": {
-      "command": "find src -name '*.test.ts' | xargs tsx --test --test-reporter=spec",
+      "command": "echo no tests",
       "files": [],
       "output": [],
       "dependencies": [
@@ -116,7 +65,7 @@
     "url": "https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
-    "dist/src"
+    "dist"
   ],
   "keywords": [],
   "author": "Google Labs Team",
@@ -126,32 +75,19 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.12",
     "@types/cors": "^2.8.19",
     "@types/node": "^22.0.0",
-    "@types/supertest": "^6.0.3",
-    "@types/uuid": "^10.0.0",
-    "esbuild": "^0.25.5",
-    "supertest": "^7.1.0",
+    "@types/express": "^5.0.1",
     "typescript": "^5.8.3",
     "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {
     "@breadboard-ai/data-store": "0.5.0",
     "@breadboard-ai/google-drive-kit": "0.8.0",
-    "@breadboard-ai/runtime": "0.2.0",
     "@breadboard-ai/types": "0.9.0",
     "@breadboard-ai/utils": "0.1.0",
-    "@google-cloud/firestore": "^7.11.0",
-    "@google-cloud/secret-manager": "^6.1.0",
     "@google-cloud/storage": "^7.15.2",
-    "@google-labs/breadboard": "^0.36.0",
-    "@google-labs/core-kit": "^0.19.2",
-    "@types/express": "^5.0.1",
-    "better-sqlite3": "^12.2.0",
     "cors": "^2.8.5",
-    "express": "^4.21.2",
-    "lit": "^3.3.1",
-    "uuid": "^11.1.0"
+    "express": "^4.21.2"
   }
 }

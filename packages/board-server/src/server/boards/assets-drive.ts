@@ -173,7 +173,7 @@ export function makeHandleAssetsDriveRequest(
           );
           return;
         }
-        const blobStore = new GoogleStorageBlobStore(bucketId, serverUrl);
+        const blobStore = new GoogleStorageBlobStore(bucketId);
         const blobId = await blobStore.saveBuffer(buffer, mimeType);
         if (!ok(blobId)) {
           serverError(res, `Unable to save to blob store: ${blobId.$error}`);

@@ -6,27 +6,23 @@
 
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 
-import type { BoardServerStore } from "./store.js";
-import { ok, type Outcome } from "@google-labs/breadboard";
 import * as errors from "./errors.js";
+import { ok } from "@breadboard-ai/utils";
+import type { Outcome } from "@breadboard-ai/types";
 
 /**
  * Extracts user credentials from the request.
  *
- * The server accepts both an API_KEY query parameter and an access token in an
- * authorization header. These values are added to Response.locals.apiKey or
- * Response.locals.accessToken if present.
+ * The value is added to Response.locals.accessToken if present.
  *
- * If either value is present, attempts to resolve the given credential to a
+ * If the value is present, attempts to resolve the given credential to a
  * known user. If a user is found, sets Response.locals.userId.
  *
- * If accessToken or apiKey is set, but userId is not, that indicates that the
+ * If accessToken  is set, but userId is not, that indicates that the
  * token or API key was not validated.
  *
  * Because not all endpoints require authentication, this middleware never
- * errors. Endpoints that require authentication should use `requireAuth` to
- * accept either mechanism, or `requireAccessToken` to specifically require a
- * validated access token.
+ * errors.
  */
 export function getUserCredentials(): RequestHandler {
   return async (
@@ -34,17 +30,6 @@ export function getUserCredentials(): RequestHandler {
     res: Response,
     next: NextFunction
   ): Promise<void> => {
-    const key = req.query.API_KEY as string | undefined;
-    if (key) {
-      res.locals.apiKey = key;
-
-      const store: BoardServerStore = req.app.locals.store;
-      const userId = await store.findUserIdByApiKey(key);
-      if (userId) {
-        res.locals.userId = userId;
-      }
-    }
-
     const token = getAccessToken(req);
     if (token) {
       res.locals.accessToken = token;
@@ -73,23 +58,7 @@ export function getAccessToken(req: Request): string {
 }
 
 /**
- * Middleware for a handler that requires an authorized user. Returns 401 if a
- * validated user was not found.
- */
-export function requireAuth(): RequestHandler {
-  return (_req: Request, res: Response, next: NextFunction): void => {
-    if (!res.locals.userId) {
-      errors.unauthorized(res);
-      return;
-    }
-    next();
-  };
-}
-
-/**
- * Middleware for a handler that requires a valid access token. This is a
- * stronger check than requireAuth, because it does not allow API key
- * authentication.
+ * Middleware for a handler that requires a valid access token.
  */
 export function requireAccessToken(): RequestHandler {
   return (_req: Request, res: Response, next: NextFunction): void => {
