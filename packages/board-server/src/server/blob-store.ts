@@ -6,7 +6,6 @@
 
 import { Storage } from "@google-cloud/storage";
 import { err, type Outcome } from "@google-labs/breadboard";
-import { Readable } from "node:stream";
 import type { BlobStore, BlobStoreGetResult } from "./types.js";
 
 export { GoogleStorageBlobStore, isUUID };
@@ -23,10 +22,6 @@ class GoogleStorageBlobStore implements BlobStore {
   constructor(bucketId: string) {
     this.#storage = new Storage();
     this.#bucketId = bucketId;
-  }
-
-  async getReadableStream(blobId: string): Promise<Readable> {
-    return this.#storage.bucket(this.#bucketId).file(blobId).createReadStream();
   }
 
   async saveBuffer(
