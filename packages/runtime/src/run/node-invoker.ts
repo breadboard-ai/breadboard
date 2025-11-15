@@ -22,7 +22,6 @@ import { FileSystemEntry } from "@breadboard-ai/types";
 import { createOutputProvider, RequestedInputsManager } from "../bubble.js";
 import { callHandler, getHandler } from "../handler.js";
 import { RunResult } from "../run.js";
-import { ParameterManager } from "./parameter-manager.js";
 
 type ResultSupplier = (result: RunResult) => Promise<void>;
 
@@ -32,7 +31,6 @@ export class NodeInvoker {
   #graph: GraphToRun;
   #context: NodeHandlerContext;
   #initialInputs?: InputValues;
-  #params: ParameterManager;
 
   constructor(
     args: RunArguments,
@@ -46,7 +44,6 @@ export class NodeInvoker {
     this.#graph = graph;
     this.#context = context;
     this.#initialInputs = inputs;
-    this.#params = new ParameterManager(graph.graph, inputs);
   }
 
   #adjustInputs(result: TraversalResult) {
@@ -109,30 +106,25 @@ export class NodeInvoker {
       outerGraph,
     });
 
-    // Request parameters, if needed.
-    let newContext = await this.#params.requestParameters(
-      {
-        ...this.#context,
-        descriptor,
-        board: resolveGraph(this.#graph),
-        // This is important: outerGraph is the value of the parent graph
-        // if this.#graph is a subgraph.
-        // Or it equals to "board" it this is not a subgraph
-        // TODO: Make this more elegant.
-        outerGraph,
-        base,
-        kits,
-        requestInput,
-        provideOutput: createOutputProvider(
-          this.#resultSupplier,
-          result,
-          this.#context
-        ),
-        invocationPath,
-      },
+    let newContext: NodeHandlerContext = {
+      ...this.#context,
+      descriptor,
+      board: resolveGraph(this.#graph),
+      // This is important: outerGraph is the value of the parent graph
+      // if this.#graph is a subgraph.
+      // Or it equals to "board" it this is not a subgraph
+      // TODO: Make this more elegant.
+      outerGraph,
+      base,
+      kits,
+      requestInput,
+      provideOutput: createOutputProvider(
+        this.#resultSupplier,
+        result,
+        this.#context
+      ),
       invocationPath,
-      result
-    );
+    };
 
     // only for top-level steps, update env with the current step
     if (invocationPath.length === 1) {
