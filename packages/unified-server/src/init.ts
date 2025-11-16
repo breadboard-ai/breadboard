@@ -7,8 +7,7 @@
 /// <reference types="vite/client" />
 
 import { bootstrap } from "@breadboard-ai/visual-editor/bootstrap";
-import { asRuntimeKit, baseURLFromContext, err } from "@google-labs/breadboard";
-import Core from "@google-labs/core-kit";
+import { baseURLFromContext, err } from "@google-labs/breadboard";
 import { isA2 } from "@breadboard-ai/a2";
 import { JsonSerializable, LLMContent } from "@breadboard-ai/types";
 
@@ -31,7 +30,7 @@ if (deploymentConfiguration?.MEASUREMENT_ID) {
 
 bootstrap({
   deploymentConfiguration,
-  kits: [asRuntimeKit(Core)],
+  kits: [],
   defaultBoardService: "/board/",
   moduleInvocationFilter: (context) => {
     // If we allow 3P modules to run, we can exit quickly (no filter)

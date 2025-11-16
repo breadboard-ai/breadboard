@@ -6,10 +6,9 @@
 
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import { bootstrap } from "./bootstrap";
-import { loadKits, registerLegacyKits } from "./utils/kit-loader";
 
 bootstrap({
-  kits: loadKits(),
-  graphStorePreloader: registerLegacyKits,
+  kits: [],
+  graphStorePreloader: () => {},
   deploymentConfiguration: CLIENT_DEPLOYMENT_CONFIG,
 });

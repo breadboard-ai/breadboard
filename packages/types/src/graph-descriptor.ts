@@ -241,7 +241,6 @@ export type NodeTag = string;
  * Represents references to a "kit": a collection of `NodeHandlers`.
  * The basic premise here is that people can publish kits with interesting
  * handlers, and then graphs can specify which ones they use.
- * The `@google-labs/core-kit` package is an example of kit.
  */
 export type KitReference = {
   /**
