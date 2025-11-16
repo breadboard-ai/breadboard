@@ -6,7 +6,6 @@
 
 export type * from "./types.js";
 
-export { callHandler } from "@breadboard-ai/runtime/legacy.js";
 export { combineSchemas, SchemaBuilder } from "@breadboard-ai/utils";
 
 export type * from "@breadboard-ai/utils";

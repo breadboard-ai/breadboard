@@ -11,7 +11,6 @@
 export { describerResultToNodeHandlerMetadata } from "./graph-based-node-handler.js";
 // Move to `invoke` (or something) package.
 export {
-  callHandler,
   getGraphHandlerFromMutableGraph,
   getHandler,
   getGraphHandler,
