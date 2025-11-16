@@ -127,7 +127,6 @@ export class Runtime extends EventTarget {
         assets: assetsFromGraphDescriptor(graph),
       }),
       inputs: inputsFromSettings(settings),
-      interactiveSecrets: true,
       fetchWithCreds: this.fetchWithCreds,
       getProjectRunState: () => {
         return this.state.getProjectState(tab.mainGraphId)?.run;

@@ -48,14 +48,12 @@ import {
   PauseEvent,
   ResumeEvent,
   RunnerErrorEvent,
-  SecretEvent,
   SkipEvent,
   StartEvent,
 } from "./events.js";
 import { run } from "./run.js";
 
 import { fromProbe, fromRunnerResult } from "./local.js";
-import { configureKits } from "./run.js";
 
 export { PlanRunner };
 
@@ -179,33 +177,6 @@ class PlanRunner
           }
           case "output": {
             this.dispatchEvent(new OutputEvent(data));
-            break;
-          }
-          case "secret": {
-            if (inputs) {
-              // When there are inputs to consume, consume them and
-              // continue the run.
-              this.dispatchEvent(new SecretEvent(true, data));
-              reply({ inputs });
-              inputs = undefined;
-            } else {
-              // When there are no inputs to consume, pause the run
-              // and wait for the next input.
-              this.#pendingResult = result.value;
-              this.dispatchEvent(new SecretEvent(false, data));
-              if (this.#resumeWith) {
-                reply({ inputs: this.#resumeWith });
-                this.#pendingResult = null;
-                this.#resumeWith = undefined;
-              } else {
-                this.dispatchEvent(
-                  new PauseEvent(false, {
-                    timestamp: timestamp(),
-                  })
-                );
-                return false;
-              }
-            }
             break;
           }
         }
@@ -690,7 +661,7 @@ class InternalRunStateController {
   async initializeNodeHandlerContext(
     next: (data: HarnessRunResult) => Promise<void>
   ): Promise<NodeHandlerContext> {
-    const kits = await configureKits(this.config, next);
+    const kits = this.config.kits;
 
     const {
       loader,

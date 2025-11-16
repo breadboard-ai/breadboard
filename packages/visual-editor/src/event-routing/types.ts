@@ -8,7 +8,6 @@ import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { Runtime } from "../runtime/runtime";
 import { Tab } from "../runtime/types";
 import type * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { SecretsHelper } from "../utils/secrets-helper";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { type OAuthScope } from "@breadboard-ai/shared-ui/connection/oauth-scopes.js";
 import { BoardServer } from "@breadboard-ai/types";
@@ -21,7 +20,6 @@ export interface EventRouteDeps<
 > {
   originalEvent: StateCustomEvent<K>;
   runtime: Runtime;
-  secretsHelper: SecretsHelper;
   settings: SettingsStore | null;
   tab: Tab | null;
   uiState: BreadboardUI.State.UI;

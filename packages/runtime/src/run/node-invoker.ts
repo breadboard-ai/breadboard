@@ -47,14 +47,7 @@ export class NodeInvoker {
   }
 
   #adjustInputs(result: TraversalResult) {
-    const { inputs, current, descriptor } = result;
-    if (descriptor.type === "secrets") {
-      // Somewhat gross hack: don't supply extra inputs to secret, since
-      // it has no inputs.
-      // Also, this messes with the proxy server quite a bit, and we are
-      // better off not doing this.
-      return inputs;
-    }
+    const { inputs, current } = result;
     if (current.from === "$entry") {
       return { ...inputs, ...this.#initialInputs };
     }

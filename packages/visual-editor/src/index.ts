@@ -47,7 +47,6 @@ import {
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
 } from "./runtime/types";
-import { SecretsHelper } from "./utils/secrets-helper";
 
 import { createA2ModuleFactory, createA2Server } from "@breadboard-ai/a2";
 import { getGoogleDriveBoardService } from "@breadboard-ai/board-server-management";
@@ -272,7 +271,6 @@ export class Main extends SignalWatcher(LitElement) {
   readonly #lastPointerPosition = { x: 0, y: 0 };
   readonly #embedHandler?: EmbedHandler;
   readonly #apiClient: AppCatalystApiClient;
-  readonly #secretsHelper: SecretsHelper;
   readonly #settings: SettingsStore;
   readonly emailPrefsManager: EmailPrefsManager;
 
@@ -292,7 +290,6 @@ export class Main extends SignalWatcher(LitElement) {
     // User settings
     this.#settings = args.settings;
     this.settingsHelper = new SettingsHelperImpl(this.#settings);
-    this.#secretsHelper = new SecretsHelper(this.#settings);
 
     // Authentication
     this.opalShell = args.shellHost;
@@ -1386,7 +1383,6 @@ export class Main extends SignalWatcher(LitElement) {
       originalEvent: evt,
       runtime: this.#runtime,
       settings: this.#settings,
-      secretsHelper: this.#secretsHelper,
       tab: this.#tab,
       uiState: this.#uiState,
       googleDriveClient: this.googleDriveClient,

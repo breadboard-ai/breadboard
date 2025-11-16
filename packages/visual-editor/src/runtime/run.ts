@@ -22,7 +22,6 @@ import {
   RunNodeEndEvent,
   RunNodeStartEvent,
   RunOutputEvent,
-  RunSecretEvent,
   RunSkipEvent,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
@@ -164,12 +163,6 @@ export class Run extends EventTarget {
     });
 
     harnessRunner.addEventListener("output", (evt: RunOutputEvent) => {
-      this.dispatchEvent(
-        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
-      );
-    });
-
-    harnessRunner.addEventListener("secret", (evt: RunSecretEvent) => {
       this.dispatchEvent(
         new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
