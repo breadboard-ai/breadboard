@@ -8,7 +8,6 @@ import { KitBuilder } from "@google-labs/breadboard/legacy.js";
 
 import fetch from "./nodes/fetch.js";
 import invoke from "./nodes/invoke.js";
-import runJavascript from "./nodes/run-javascript.js";
 import runModule from "./nodes/run-module.js";
 import secrets from "./nodes/secrets.js";
 
@@ -24,7 +23,6 @@ const builder = new KitBuilder(metadata);
 const Core = builder.build({
   invoke,
   fetch,
-  runJavascript,
   runModule,
   secrets,
 });
