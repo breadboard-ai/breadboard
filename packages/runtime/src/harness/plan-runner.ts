@@ -55,7 +55,6 @@ import {
 import { run } from "./run.js";
 
 import { fromProbe, fromRunnerResult } from "./local.js";
-import { configureKits } from "./run.js";
 
 export { PlanRunner };
 
@@ -690,7 +689,7 @@ class InternalRunStateController {
   async initializeNodeHandlerContext(
     next: (data: HarnessRunResult) => Promise<void>
   ): Promise<NodeHandlerContext> {
-    const kits = await configureKits(this.config, next);
+    const kits = this.config.kits;
 
     const {
       loader,

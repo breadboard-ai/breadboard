@@ -38,19 +38,6 @@ import type {
 } from "@valtown/codemirror-ts";
 import type { HTMLTemplateResult, LitElement } from "lit";
 
-export const enum HistoryEventType {
-  DONE = "done",
-  ERROR = "error",
-  INPUT = "input",
-  LOAD = "load",
-  OUTPUT = "output",
-  NODESTART = "nodestart",
-  NODEEND = "nodeend",
-  SECRETS = "secrets",
-  GRAPHSTART = "graphstart",
-  GRAPHEND = "graphend",
-}
-
 export type InputCallback = (data: Record<string, unknown>) => void;
 
 export type Board = {
