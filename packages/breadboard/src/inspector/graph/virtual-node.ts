@@ -21,11 +21,11 @@ import { describeInput, describeOutput } from "./schemas.js";
 
 export { VirtualNode };
 
-type VirtualNodeType = "fetch" | "invoke" | "output" | "unknown";
+type VirtualNodeType = "invoke" | "output" | "unknown";
 
 function discernType(id: string): VirtualNodeType {
   const [type] = id.split("-");
-  if (["fetch", "invoke", "output"].includes(type)) {
+  if (["invoke", "output"].includes(type)) {
     return type as VirtualNodeType;
   }
   return "unknown";
