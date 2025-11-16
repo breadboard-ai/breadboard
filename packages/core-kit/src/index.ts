@@ -7,7 +7,6 @@
 import { KitBuilder } from "@google-labs/breadboard/legacy.js";
 
 import invoke from "./nodes/invoke.js";
-import runModule from "./nodes/run-module.js";
 
 const metadata = {
   title: "Core Kit",
@@ -18,9 +17,6 @@ const metadata = {
 
 const builder = new KitBuilder(metadata);
 
-const Core = builder.build({
-  invoke,
-  runModule,
-});
+const Core = builder.build({ invoke });
 
 export default Core;
