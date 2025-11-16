@@ -29,7 +29,6 @@ import {
   IDBProjectStoreProject as IDBBoardServerProject,
   LocalStoreData,
 } from "./types/idb-types.js";
-import { kitFromGraphDescriptor } from "@google-labs/breadboard/legacy.js";
 
 const loadedExtensions: BoardServerExtension[] = [];
 
@@ -318,21 +317,6 @@ export class IDBBoardServer extends EventTarget implements BoardServer {
           },
         ],
       };
-    }
-
-    const boardServerKit = kitFromGraphDescriptor({
-      url: `${this.url.href}/bsk`,
-      version: "0.0.1",
-      title: "Board Server Kit",
-      graphs: graphs,
-      exports: Object.keys(graphs).map((name) => `#${name}`),
-      edges: [],
-      nodes: [],
-    });
-
-    this.kits = this.kits.filter((kit) => kit.title !== "Board Server Kit");
-    if (boardServerKit) {
-      this.kits.push(boardServerKit);
     }
   }
 

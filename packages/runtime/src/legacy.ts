@@ -16,8 +16,6 @@ export {
   getHandler,
   getGraphHandler,
 } from "./handler.js";
-// Move to `invoke` (or something) package.
-// Move `kitFromGraphDescriptor` from `breadboard` package there, too
 export { invokeGraph } from "./run/invoke-graph.js";
 // Move `GraphDescriberManager` to `runtime` package
 export { CapabilitiesManagerImpl } from "./sandbox/capabilities-manager.js";
