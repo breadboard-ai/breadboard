@@ -6,7 +6,6 @@
 
 import { KitBuilder } from "@google-labs/breadboard/legacy.js";
 
-import fetch from "./nodes/fetch.js";
 import invoke from "./nodes/invoke.js";
 import runModule from "./nodes/run-module.js";
 
@@ -21,7 +20,6 @@ const builder = new KitBuilder(metadata);
 
 const Core = builder.build({
   invoke,
-  fetch,
   runModule,
 });
 
