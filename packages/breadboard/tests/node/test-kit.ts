@@ -90,22 +90,6 @@ export const testKit: Kit = {
         return promptTemplateHandler(template as string, parameters);
       },
     },
-    runJavascript: {
-      invoke: async (inputs) => {
-        const { code, functionName = "run", raw, ...args } = inputs;
-        const vm = await import("node:vm");
-        const codeToRun = `${code}\n${functionName}(${JSON.stringify(args)});`;
-        const context = vm.createContext({ console, structuredClone });
-        const script = new vm.Script(codeToRun);
-        const result = await script.runInNewContext(context);
-        return raw
-          ? result
-          : {
-              result:
-                typeof result === "string" ? result : JSON.stringify(result),
-            };
-      },
-    },
     secrets: {
       invoke: async (inputs) => {
         const { keys } = inputs as { keys: string[] };

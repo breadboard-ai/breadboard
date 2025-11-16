@@ -127,20 +127,4 @@ export const TestKit = new KitBuilder({
       };
     },
   },
-  /**
-   * Unsafe JS runner. Needed to test serializing boards that are pure code.
-   */
-  runJavascript: async (inputs) => {
-    const { code, name, raw, ...rest } = inputs;
-    const result = eval(
-      `${code} (async () => { return await ${name}(${JSON.stringify(
-        rest
-      )}); })();`
-    );
-    return raw ? result : { result };
-  },
 });
-
-/**
- * Board grammar versions of the above, with types.
- */
