@@ -5,11 +5,10 @@
  */
 
 import { transformContents } from "@breadboard-ai/data";
-import { baseURLFromContext } from "@breadboard-ai/loader";
+import { baseURLFromContext, getGraphDescriptor } from "@breadboard-ai/loader";
 import {
   GraphInlineMetadata,
   InputValues,
-  Kit,
   LLMContent,
   NodeDescriptor,
   NodeHandlerContext,
@@ -27,42 +26,37 @@ import {
   CapabilitySpec,
   Capability,
 } from "@breadboard-ai/types/sandbox.js";
+import { invokeGraph } from "../run/invoke-graph.js";
 
 export { CapabilitiesManagerImpl };
 
-function findHandler(handlerName: string, kits?: Kit[]) {
-  const handler = kits
-    ?.flatMap((kit) => Object.entries(kit.handlers))
-    .find(([name]) => name === handlerName)
-    ?.at(1);
-
-  return handler;
-}
-
-function getHandler(handlerName: string, context: NodeHandlerContext) {
-  const handler = findHandler(handlerName, context.kits);
-
-  if (!handler || typeof handler === "string") {
-    throw new Error(
-      `Trying to get one of the non-core handlers: ${JSON.stringify(handlerName)}`
-    );
-  }
-
-  const invoke = "invoke" in handler ? handler.invoke : handler;
-
+function createInvokeHandler(context: NodeHandlerContext): Capability {
   return (async (inputs: InputValues, invocationPath: number[]) => {
     try {
-      const result = await invoke(inputs as InputValues, {
-        ...context,
-        invocationPath,
-        descriptor: {
-          id: `${handlerName}-called-from-run-module`,
-          type: handlerName,
-        },
-      });
-      return maybeUnwrapError(result);
+      const { $board, ...args } = inputs;
+      if (!$board || typeof $board !== "string") {
+        return err(`The "$board" argument is required to invoke`);
+      }
+      const graph = await getGraphDescriptor($board, context);
+      if (!graph.success) {
+        return err(graph.error);
+      }
+      // If the current board has a URL, pass it as new base.
+      // Otherwise, use the previous base.
+      const base = context.board?.url && new URL(context.board?.url);
+      const descriptor: NodeDescriptor = {
+        id: `invoke-called-from-run-module`,
+        type: "invoke",
+      };
+      const invocationContext: NodeHandlerContext = base
+        ? { ...context, base, invocationPath, descriptor }
+        : { ...context, invocationPath, descriptor };
+
+      return maybeUnwrapError(
+        await invokeGraph(graph, args, invocationContext)
+      );
     } catch (e) {
-      return { $error: (e as Error).message };
+      return err((e as Error).message);
     }
   }) as Capability;
 }
@@ -266,7 +260,7 @@ class CapabilitiesManagerImpl implements CapabilitiesManager {
       if (this.context) {
         const fs = new FileSystemHandlerFactory(this.context.fileSystem);
         return {
-          invoke: getHandler("invoke", this.context),
+          invoke: createInvokeHandler(this.context),
           input: createInputHandler(this.context),
           output: createOutputHandler(this.context),
           describe: createDescribeHandler(this.context),
