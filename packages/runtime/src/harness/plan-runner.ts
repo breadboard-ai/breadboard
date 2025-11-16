@@ -6,6 +6,7 @@
 
 import { isLLMContentArray } from "@breadboard-ai/data";
 import {
+  AnyClientRunResult,
   BreakpointSpec,
   FileSystemEntry,
   GraphDescriptor,
@@ -51,7 +52,6 @@ import {
   SkipEvent,
   StartEvent,
 } from "./events.js";
-import { run } from "./run.js";
 
 import { fromProbe, fromRunnerResult } from "./local.js";
 
@@ -72,7 +72,7 @@ class PlanRunner
   #controller: InternalRunStateController | null = null;
 
   readonly config: RunConfig;
-  #run: ReturnType<typeof run> | null = null;
+  #run: AsyncGenerator<AnyClientRunResult, void, unknown> | null = null;
   #pendingResult: HarnessRunResult | null = null;
   #inRun = false;
   #resumeWith: InputValues | undefined;
