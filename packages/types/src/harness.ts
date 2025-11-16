@@ -36,7 +36,6 @@ import {
 import {
   AnyClientRunResult,
   AnyProbeClientRunResult,
-  ClientRunResult,
   End,
   InputResponse,
   LoadResponse,
@@ -73,14 +72,6 @@ export type OutputResult = {
   data: OutputResponse;
 };
 
-/**
- * Sent when the harness is asking for secret
- */
-export type SecretResult = {
-  type: "secret";
-  data: SecretResponse;
-};
-
 export type SecretResponse = {
   keys: string[];
   timestamp: number;
@@ -102,9 +93,7 @@ export type EndResult = {
   data: Record<string, never>;
 };
 
-export type HarnessRunResult =
-  | AnyClientRunResult
-  | ClientRunResult<SecretResult>;
+export type HarnessRunResult = AnyClientRunResult;
 
 export type HarnessProbeResult = AnyProbeClientRunResult;
 
@@ -219,7 +208,6 @@ export type RunEventMap = {
   next: RunNextEvent;
   input: RunInputEvent;
   output: RunOutputEvent;
-  secret: RunSecretEvent;
   error: RunErrorEvent;
   skip: RunSkipEvent;
   graphstart: RunGraphStartEvent;
@@ -248,11 +236,6 @@ export type RunInputEvent = Event & {
 export type RunOutputEvent = Event & {
   data: OutputResponse;
   running: true;
-};
-
-export type RunSecretEvent = Event & {
-  data: SecretResult["data"];
-  running: boolean;
 };
 
 export type RunErrorEvent = Event & {

@@ -32,9 +32,7 @@ import {
   RunNodeStartEvent,
   RunNodeStateChangeEvent,
   RunOutputEvent,
-  RunSecretEvent,
   RunSkipEvent,
-  SecretResult,
   SkipProbeMessage,
   TraversalResult,
 } from "@breadboard-ai/types";
@@ -70,17 +68,6 @@ export class OutputEvent extends Event implements RunOutputEvent {
 
   constructor(public data: OutputResponse) {
     super(OutputEvent.eventName, { ...opts });
-  }
-}
-
-export class SecretEvent extends Event implements RunSecretEvent {
-  static readonly eventName = "secret";
-
-  constructor(
-    public readonly running: boolean,
-    public data: SecretResult["data"]
-  ) {
-    super(SecretEvent.eventName, { ...opts });
   }
 }
 
