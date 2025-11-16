@@ -8,8 +8,6 @@ import { HarnessRunner, RunConfig } from "@breadboard-ai/types";
 import { PlanRunner } from "./plan-runner.js";
 export { RunnerErrorEvent } from "./events.js";
 
-export { run } from "./run.js";
-
 export function createPlanRunner(config: RunConfig): HarnessRunner {
   return new PlanRunner(config);
 }
