@@ -19,17 +19,17 @@ const ORIGIN_FOR_FRONTEND_SERVER_RPCS =
 const ASSET_DRIVE_API_ENDPOINT = new URL(
   `/board/boards/@foo/bar/assets/drive`,
   ORIGIN_FOR_FRONTEND_SERVER_RPCS
-).href;
+);
 
 const DATA_TRANSFORM_API_ENDPOINT = new URL(
   `/api/data/transform`,
   ORIGIN_FOR_FRONTEND_SERVER_RPCS
-).href;
+);
 
 const PROXY_API_ENDPOINT = new URL(
   `/board/proxy`,
   ORIGIN_FOR_FRONTEND_SERVER_RPCS
-).href;
+);
 
 const CALENDAR_SCOPES: OAuthScope[] = [
   "https://www.googleapis.com/auth/calendar.readonly",
@@ -48,23 +48,26 @@ const GENAI_SCOPES: OAuthScope[] = [
   "https://www.googleapis.com/auth/generative-language.retriever",
 ];
 
-const URL_SCOPE_MAP_ENTRIES: Array<[string, OAuthScope[]]> = [
+const URL_SCOPE_MAPPINGS: Array<[URL, OAuthScope[]]> = [
   [PROXY_API_ENDPOINT, GENAI_SCOPES],
   [ASSET_DRIVE_API_ENDPOINT, DRIVE_SCOPES],
   [DATA_TRANSFORM_API_ENDPOINT, [...DRIVE_SCOPES, ...GENAI_SCOPES]],
-  ["https://www.googleapis.com/calendar/", CALENDAR_SCOPES],
-  ["https://www.googleapis.com/drive/", DRIVE_SCOPES],
-  ["https://docs.googleapis.com/v1/documents/", DRIVE_SCOPES],
-  ["https://slides.googleapis.com/v1/presentations/", DRIVE_SCOPES],
-  ["https://sheets.googleapis.com/v4/spreadsheets/", DRIVE_SCOPES],
-  ["https://www.googleapis.com/upload/drive/v3/", DRIVE_SCOPES],
-  ["https://gmail.googleapis.com/", GMAIL_SCOPES],
-  ["https://generativelanguage.googleapis.com/v1beta/models/", GENAI_SCOPES],
+  [new URL("https://www.googleapis.com/calendar/"), CALENDAR_SCOPES],
+  [new URL("https://www.googleapis.com/drive/"), DRIVE_SCOPES],
+  [new URL("https://docs.googleapis.com/v1/documents/"), DRIVE_SCOPES],
+  [new URL("https://slides.googleapis.com/v1/presentations/"), DRIVE_SCOPES],
+  [new URL("https://sheets.googleapis.com/v4/spreadsheets/"), DRIVE_SCOPES],
+  [new URL("https://www.googleapis.com/upload/drive/v3/"), DRIVE_SCOPES],
+  [new URL("https://gmail.googleapis.com/"), GMAIL_SCOPES],
+  [
+    new URL("https://generativelanguage.googleapis.com/v1beta/models/"),
+    GENAI_SCOPES,
+  ],
 ];
 
 const { BACKEND_API_ENDPOINT } = CLIENT_DEPLOYMENT_CONFIG;
 if (BACKEND_API_ENDPOINT) {
-  URL_SCOPE_MAP_ENTRIES.push([BACKEND_API_ENDPOINT, GENAI_SCOPES]);
+  URL_SCOPE_MAPPINGS.push([new URL(BACKEND_API_ENDPOINT), GENAI_SCOPES]);
 } else {
   console.warn(
     `BACKEND_API_ENDPOINT was not configured, ` +
@@ -72,13 +75,9 @@ if (BACKEND_API_ENDPOINT) {
   );
 }
 
-const URL_SCOPE_MAP: ReadonlyMap<URL, OAuthScope[]> = new Map(
-  URL_SCOPE_MAP_ENTRIES.map(([url, scopes]) => [new URL(url), scopes])
-);
-
 export function scopesFromUrl(url: string): OAuthScope[] | undefined {
   const parsedUrl = new URL(url);
-  for (const [scopeUrl, scopes] of URL_SCOPE_MAP) {
+  for (const [scopeUrl, scopes] of URL_SCOPE_MAPPINGS) {
     if (
       parsedUrl.origin === scopeUrl.origin &&
       parsedUrl.pathname.startsWith(scopeUrl.pathname)
