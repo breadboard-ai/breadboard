@@ -3,7 +3,7 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { html, css } from "lit";
+import { html, css, nothing } from "lit";
 import { customElement } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
 
@@ -99,6 +99,25 @@ export class LiteMain extends MainBase {
   }
 
   render() {
+    if (!this.ready) return nothing;
+
+    switch (this.uiState.loadState) {
+      case "Home":
+        return html`Home (TODO)`;
+      case "Loading":
+        return html`Loading (TODO)`;
+      case "Error":
+        return html`Error (TODO)`;
+      case "Loaded":
+        break;
+      default:
+        console.warn("Unknown UI load state", this.uiState.loadState);
+        return nothing;
+    }
+
+    const renderValues = this.getRenderValues();
+    console.log("PROJECT STATE", renderValues.projectState);
+
     return html`<section id="lite-shell">
       <bb-splitter
         direction=${"horizontal"}
