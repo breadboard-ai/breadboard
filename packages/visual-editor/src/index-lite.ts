@@ -3,15 +3,15 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css } from "lit";
+import { html, css } from "lit";
 import { customElement } from "lit/decorators.js";
-import { SignalWatcher } from "@lit-labs/signals";
 import { MainArguments } from "./types/types";
 
 import * as BBLite from "@breadboard-ai/shared-ui/lite";
+import { MainBase } from "./main-base";
 
 @customElement("bb-lite")
-export class LiteMain extends SignalWatcher(LitElement) {
+export class LiteMain extends MainBase {
   static styles = [
     BBLite.Styles.HostIcons.icons,
     BBLite.Styles.HostBehavior.behavior,
@@ -45,8 +45,8 @@ export class LiteMain extends SignalWatcher(LitElement) {
     `,
   ];
 
-  constructor(_args: MainArguments) {
-    super();
+  constructor(args: MainArguments) {
+    super(args);
   }
 
   #renderList() {
