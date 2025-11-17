@@ -26,17 +26,20 @@ suite("home", () => {
   testSymmetrical(`${BASE_URL}/?mode=canvas`, {
     page: "home",
     mode: "canvas",
+    lite: false,
   });
 
   testSymmetrical(`${BASE_URL}/?mode=app`, {
     page: "home",
     mode: "app",
+    lite: false,
   });
 
   test("default to home w/ canvas", () => {
     assert.deepEqual(parseUrl(`${BASE_URL}/`), {
       page: "home",
       mode: "canvas",
+      lite: false,
     });
   });
 
@@ -44,6 +47,7 @@ suite("home", () => {
     testSymmetrical(`${BASE_URL}/?mode=canvas&dev-foo=hello&dev-bar=`, {
       page: "home",
       mode: "canvas",
+      lite: false,
       dev: {
         foo: "hello",
         bar: "",
@@ -63,6 +67,7 @@ suite("app", () => {
     mode: "app",
     flow: "drive:/abc123",
     resourceKey: undefined,
+    lite: false,
   });
 
   testSymmetrical(
@@ -72,6 +77,7 @@ suite("app", () => {
       mode: "app",
       flow: "drive:/abc123",
       resourceKey: "ghi789",
+      lite: false,
     }
   );
 
@@ -84,6 +90,7 @@ suite("app", () => {
       resourceKey: undefined,
       results: "def456",
       shared: true,
+      lite: false,
     }
   );
 
@@ -93,6 +100,7 @@ suite("app", () => {
       mode: "canvas",
       flow: "drive:/abc123",
       resourceKey: undefined,
+      lite: false,
     } satisfies MakeUrlInit);
   });
 
@@ -102,6 +110,7 @@ suite("app", () => {
       mode: "canvas",
       flow: "drive:/abc123",
       resourceKey: undefined,
+      lite: false,
     } satisfies MakeUrlInit);
   });
 
@@ -113,6 +122,7 @@ suite("app", () => {
         mode: "app",
         flow: "drive:/abc123",
         resourceKey: undefined,
+        lite: false,
         dev: {
           foo: "hello",
           bar: "",
@@ -128,6 +138,7 @@ suite("canvas", () => {
     mode: "canvas",
     flow: "drive:/abc123",
     resourceKey: undefined,
+    lite: false,
   });
 
   test("preserves dev params", () => {
@@ -138,6 +149,7 @@ suite("canvas", () => {
         mode: "canvas",
         flow: "drive:/abc123",
         resourceKey: undefined,
+        lite: false,
         dev: {
           foo: "hello",
           bar: "",
@@ -150,14 +162,24 @@ suite("canvas", () => {
 suite("landing", () => {
   testSymmetrical(`${BASE_URL}/landing/`, {
     page: "landing",
-    redirect: { page: "home", mode: "canvas", redirectFromLanding: true },
+    redirect: {
+      page: "home",
+      mode: "canvas",
+      redirectFromLanding: true,
+      lite: false,
+    },
   });
 
   testSymmetrical(
     `${BASE_URL}/landing/?geo-restriction=true&missing-scopes=true`,
     {
       page: "landing",
-      redirect: { page: "home", mode: "canvas", redirectFromLanding: true },
+      redirect: {
+        page: "home",
+        mode: "canvas",
+        redirectFromLanding: true,
+        lite: false,
+      },
       geoRestriction: true,
       missingScopes: true,
     }
@@ -171,6 +193,7 @@ suite("landing", () => {
       redirectFromLanding: true,
       flow: "drive:/abc123",
       resourceKey: undefined,
+      lite: false,
     },
   });
 
@@ -186,6 +209,7 @@ suite("landing", () => {
         resourceKey: "ghi789",
         results: "def456",
         shared: true,
+        lite: false,
       },
     }
   );
@@ -202,6 +226,7 @@ suite("landing", () => {
         redirectFromLanding: true,
         flow: "drive:/abc123",
         resourceKey: undefined,
+        lite: false,
       },
     }
   );
@@ -217,6 +242,7 @@ suite("landing", () => {
           foo: "hello",
           bar: "",
         } as object as BaseUrlInit["dev"],
+        lite: false,
       },
       dev: {
         foo: "hello",
