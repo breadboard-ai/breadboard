@@ -1431,30 +1431,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         evt: BreadboardUI.Events.StateEvent<
           keyof BreadboardUI.Events.StateEventDetailMap
         >
-      ) => {
-        // Locate the specific handler based on the event type.
-        const eventRoute = eventRoutes.get(evt.detail.eventType);
-        if (!eventRoute) {
-          console.warn(`No event handler for "${evt.detail.eventType}"`);
-          return;
-        }
-
-        // Pass the handler everything it may need in order to function. Usually
-        // the most important of these are the runtime, originalEvent (which
-        // contains the data needed) and the tab so that the runtime can locate
-        // the appropriate editor etc.
-        const shouldRender = await eventRoute.do(
-          this.#collectEventRouteDeps(evt)
-        );
-
-        // Some legacy actions require an update after running, so if the event
-        // handler returns with a true, schedule an update.
-        if (shouldRender) {
-          requestAnimationFrame(() => {
-            this.requestUpdate();
-          });
-        }
-      }}
+      ) => this.handleRoutedEvent(evt)}
       @bbsnackbar=${(snackbarEvent: BreadboardUI.Events.SnackbarEvent) => {
         this.snackbar(
           snackbarEvent.message,
@@ -2148,5 +2125,32 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         }}
       ></bb-sign-in-modal>
     `;
+  }
+
+  protected async handleRoutedEvent(
+    evt: BreadboardUI.Events.StateEvent<
+      keyof BreadboardUI.Events.StateEventDetailMap
+    >
+  ) {
+    // Locate the specific handler based on the event type.
+    const eventRoute = eventRoutes.get(evt.detail.eventType);
+    if (!eventRoute) {
+      console.warn(`No event handler for "${evt.detail.eventType}"`);
+      return;
+    }
+
+    // Pass the handler everything it may need in order to function. Usually
+    // the most important of these are the runtime, originalEvent (which
+    // contains the data needed) and the tab so that the runtime can locate
+    // the appropriate editor etc.
+    const shouldRender = await eventRoute.do(this.#collectEventRouteDeps(evt));
+
+    // Some legacy actions require an update after running, so if the event
+    // handler returns with a true, schedule an update.
+    if (shouldRender) {
+      requestAnimationFrame(() => {
+        this.requestUpdate();
+      });
+    }
   }
 }

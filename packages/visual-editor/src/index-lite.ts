@@ -12,6 +12,10 @@ import * as BBLite from "@breadboard-ai/shared-ui/lite";
 import { MainBase, RenderValues } from "./main-base";
 import { StepListState } from "@breadboard-ai/shared-ui/state/types.js";
 import { classMap } from "lit/directives/class-map.js";
+import {
+  StateEvent,
+  StateEventDetailMap,
+} from "@breadboard-ai/shared-ui/events/events.js";
 
 @customElement("bb-lite")
 export class LiteMain extends MainBase {
@@ -68,7 +72,12 @@ export class LiteMain extends MainBase {
   }
 
   #renderApp(renderValues: RenderValues) {
-    return html` <div id="app-view" slot="slot-1">
+    return html` <div
+      id="app-view"
+      slot="slot-1"
+      @bbevent=${async (evt: StateEvent<keyof StateEventDetailMap>) =>
+        this.handleRoutedEvent(evt)}
+    >
       <bb-app-controller
         class=${classMap({ active: true })}
         .graph=${this.tab?.graph ?? null}

@@ -153,7 +153,7 @@ export type StepListStepState = {
    */
   title: string;
   /**
-   * Current status of the step,
+   * Current status of the step.
    */
   status: "loading" | "working" | "ready" | "complete" | "pending";
   /**
