@@ -240,10 +240,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
         { status: 400 }
       );
     }
-    const scopes = scopesFromUrl(
-      url,
-      CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT
-    );
+    const scopes = scopesFromUrl(url);
     if (!scopes) {
       const message = `URL is not in fetchWithCreds allowlist: ${url}`;
       console.error(`[shell host] ${message}`);

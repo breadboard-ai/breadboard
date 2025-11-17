@@ -4,10 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { OAuthScope } from "../connection/oauth-scopes.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
-
-export { scopesFromUrl };
+import type { OAuthScope } from "../connection/oauth-scopes.js";
 
 /**
  * If we're in shell mode, when the iframed app makes a request to one of our
@@ -21,17 +19,17 @@ const ORIGIN_FOR_FRONTEND_SERVER_RPCS =
 const ASSET_DRIVE_API_ENDPOINT = new URL(
   `/board/boards/@foo/bar/assets/drive`,
   ORIGIN_FOR_FRONTEND_SERVER_RPCS
-).href;
+);
 
 const DATA_TRANSFORM_API_ENDPOINT = new URL(
   `/api/data/transform`,
   ORIGIN_FOR_FRONTEND_SERVER_RPCS
-).href;
+);
 
 const PROXY_API_ENDPOINT = new URL(
   `/board/proxy`,
   ORIGIN_FOR_FRONTEND_SERVER_RPCS
-).href;
+);
 
 const CALENDAR_SCOPES: OAuthScope[] = [
   "https://www.googleapis.com/auth/calendar.readonly",
@@ -50,40 +48,41 @@ const GENAI_SCOPES: OAuthScope[] = [
   "https://www.googleapis.com/auth/generative-language.retriever",
 ];
 
-const URL_SCOPE_MAP: ReadonlyMap<string, OAuthScope[]> = new Map([
+const URL_SCOPE_MAPPINGS: Array<[URL, OAuthScope[]]> = [
   [PROXY_API_ENDPOINT, GENAI_SCOPES],
   [ASSET_DRIVE_API_ENDPOINT, DRIVE_SCOPES],
   [DATA_TRANSFORM_API_ENDPOINT, [...DRIVE_SCOPES, ...GENAI_SCOPES]],
-  ["https://www.googleapis.com/calendar/", CALENDAR_SCOPES],
-  ["https://www.googleapis.com/drive/", DRIVE_SCOPES],
-  ["https://docs.googleapis.com/v1/documents/", DRIVE_SCOPES],
-  ["https://slides.googleapis.com/v1/presentations/", DRIVE_SCOPES],
-  ["https://sheets.googleapis.com/v4/spreadsheets/", DRIVE_SCOPES],
-  ["https://www.googleapis.com/upload/drive/v3/", DRIVE_SCOPES],
-  ["https://gmail.googleapis.com", GMAIL_SCOPES],
-  ["https://generativelanguage.googleapis.com/v1beta/models/", GENAI_SCOPES],
-]);
+  [new URL("https://www.googleapis.com/calendar/"), CALENDAR_SCOPES],
+  [new URL("https://www.googleapis.com/drive/"), DRIVE_SCOPES],
+  [new URL("https://docs.googleapis.com/v1/documents/"), DRIVE_SCOPES],
+  [new URL("https://slides.googleapis.com/v1/presentations/"), DRIVE_SCOPES],
+  [new URL("https://sheets.googleapis.com/v4/spreadsheets/"), DRIVE_SCOPES],
+  [new URL("https://www.googleapis.com/upload/drive/v3/"), DRIVE_SCOPES],
+  [new URL("https://gmail.googleapis.com/"), GMAIL_SCOPES],
+  [
+    new URL("https://generativelanguage.googleapis.com/v1beta/models/"),
+    GENAI_SCOPES,
+  ],
+];
 
-function scopesFromUrl(
-  url: string,
-  backendApiEndpoint: string | undefined
-): OAuthScope[] | undefined {
-  if (!backendApiEndpoint) {
-    console.warn(
-      `Backend API Endpoint not specified, falling back to current location`
-    );
-    backendApiEndpoint = window.location.href;
-  }
+const { BACKEND_API_ENDPOINT } = CLIENT_DEPLOYMENT_CONFIG;
+if (BACKEND_API_ENDPOINT) {
+  URL_SCOPE_MAPPINGS.push([new URL(BACKEND_API_ENDPOINT), GENAI_SCOPES]);
+} else {
+  console.warn(
+    `BACKEND_API_ENDPOINT was not configured, ` +
+      `backend RPCs with credentials will be unavailable.`
+  );
+}
 
-  let scopes: OAuthScope[] | undefined;
-  for (const [urlPattern, urlScopes] of URL_SCOPE_MAP.entries()) {
-    if (url.startsWith(urlPattern)) {
-      scopes = urlScopes;
-      break;
+export function scopesFromUrl(url: string): OAuthScope[] | undefined {
+  const parsedUrl = new URL(url);
+  for (const [scopeUrl, scopes] of URL_SCOPE_MAPPINGS) {
+    if (
+      parsedUrl.origin === scopeUrl.origin &&
+      parsedUrl.pathname.startsWith(scopeUrl.pathname)
+    ) {
+      return scopes;
     }
   }
-  if (!scopes && url.startsWith(backendApiEndpoint)) {
-    scopes = GENAI_SCOPES;
-  }
-  return scopes;
 }
