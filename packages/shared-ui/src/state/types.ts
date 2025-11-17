@@ -147,7 +147,7 @@ export type StepListStepState = {
   /**
    * The icon, associated with the step.
    */
-  icon: string;
+  icon?: string;
   /**
    * The title of the step
    */
@@ -167,7 +167,7 @@ export type StepListStepState = {
   /**
    * The prompt from step's configuration
    */
-  prompt: LLMContent;
+  prompt: string;
 };
 
 export type ErrorReason =

@@ -113,7 +113,7 @@ import { consentManagerContext } from "@breadboard-ai/shared-ui/contexts/consent
 
 export { MainBase };
 
-type RenderValues = {
+export type RenderValues = {
   canSave: boolean;
   saveStatus: BreadboardUI.Types.BOARD_SAVE_STATUS;
   projectState: BreadboardUI.State.Project | null;
@@ -167,7 +167,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   accessor #consentManager: ConsentManager | undefined = undefined;
 
   @state()
-  accessor #tab: Runtime.Types.Tab | null = null;
+  protected accessor tab: Runtime.Types.Tab | null = null;
 
   @state()
   accessor #boardServers: BoardServer[] = [];
@@ -451,7 +451,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
             });
           } else {
             const appState = this.runtime.state.getProjectState(
-              this.#tab?.mainGraphId
+              this.tab?.mainGraphId
             )?.run.app;
             if (appState) {
               appState.consentRequests.push({
@@ -562,7 +562,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.#graphStore.addEventListener("update", (evt) => {
       const { mainGraphId } = evt;
-      const current = this.#tab?.mainGraphId;
+      const current = this.tab?.mainGraphId;
       this.graphStoreUpdateId++;
       if (
         !current ||
@@ -728,7 +728,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       Runtime.Events.RuntimeBoardEditEvent.eventName,
       () => {
         this.runtime.board.save(
-          this.#tab?.id ?? null,
+          this.tab?.id ?? null,
           BOARD_AUTO_SAVE_TIMEOUT,
           null
         );
@@ -748,7 +748,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.board.addEventListener(
       Runtime.Events.RuntimeBoardLoadErrorEvent.eventName,
       () => {
-        if (this.#tab) {
+        if (this.tab) {
           this.uiState.loadState = "Error";
         }
 
@@ -783,16 +783,16 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.board.addEventListener(
       Runtime.Events.RuntimeTabChangeEvent.eventName,
       async () => {
-        this.#tab = this.runtime.board.currentTab;
+        this.tab = this.runtime.board.currentTab;
         this.#maybeShowWelcomePanel();
 
-        if (this.#tab) {
-          if (this.#tab.graph.title) {
-            this.runtime.shell.setPageTitle(this.#tab.graph.title);
+        if (this.tab) {
+          if (this.tab.graph.title) {
+            this.runtime.shell.setPageTitle(this.tab.graph.title);
           }
 
           const preparingNextRun = await this.runtime.prepareRun(
-            this.#tab,
+            this.tab,
             this.#settings
           );
           if (!ok(preparingNextRun)) {
@@ -801,7 +801,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
           this.uiState.loadState = "Loaded";
           this.runtime.select.refresh(
-            this.#tab.id,
+            this.tab.id,
             this.runtime.util.createWorkspaceSelectionChangeId()
           );
         } else {
@@ -832,7 +832,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           return;
         }
 
-        if (this.#tab?.id !== evt.tabId) {
+        if (this.tab?.id !== evt.tabId) {
           return;
         }
 
@@ -859,7 +859,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.run.addEventListener(
       Runtime.Events.RuntimeBoardRunEvent.eventName,
       (evt: Runtime.Events.RuntimeBoardRunEvent) => {
-        if (this.#tab && evt.tabId === this.#tab.id) {
+        if (this.tab && evt.tabId === this.tab.id) {
           this.requestUpdate();
         }
 
@@ -928,8 +928,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
         // Close tab, go to the home page.
         if (parseUrl(urlWithoutMode).page === "home") {
-          if (this.#tab) {
-            this.runtime.board.closeTab(this.#tab.id);
+          if (this.tab) {
+            this.runtime.board.closeTab(this.tab.id);
             return;
           }
 
@@ -940,7 +940,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         } else {
           // Load the tab.
           const boardUrl = this.runtime.board.getBoardURL(urlWithoutMode);
-          if (!boardUrl || boardUrl === this.#tab?.graph.url) {
+          if (!boardUrl || boardUrl === this.tab?.graph.url) {
             return;
           }
 
@@ -1034,7 +1034,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   #maybeShowWelcomePanel() {
-    if (this.#tab === null) {
+    if (this.tab === null) {
       this.uiState.loadState = "Home";
     }
 
@@ -1126,7 +1126,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     const deps: KeyboardCommandDeps = {
       runtime: this.runtime,
       selectionState: this.#selectionState,
-      tab: this.#tab,
+      tab: this.tab,
       originalEvent: evt,
       pointerLocation: this.#lastPointerPosition,
       settings: this.#settings,
@@ -1135,7 +1135,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     } as const;
 
     for (const [keys, command] of keyboardCommands) {
-      if (keys.includes(key) && command.willHandle(this.#tab, evt)) {
+      if (keys.includes(key) && command.willHandle(this.tab, evt)) {
         evt.preventDefault();
         evt.stopImmediatePropagation();
 
@@ -1291,39 +1291,39 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   protected getRenderValues(): RenderValues {
     let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
-    if (this.#tab) {
+    if (this.tab) {
       tabStatus =
-        this.#boardRunStatus.get(this.#tab.id) ??
+        this.#boardRunStatus.get(this.tab.id) ??
         BreadboardUI.Types.STATUS.STOPPED;
     }
 
     let themeHash = 0;
     if (
-      this.#tab?.graph?.metadata?.visual?.presentation?.themes &&
-      this.#tab?.graph?.metadata?.visual?.presentation?.theme
+      this.tab?.graph?.metadata?.visual?.presentation?.themes &&
+      this.tab?.graph?.metadata?.visual?.presentation?.theme
     ) {
-      const theme = this.#tab.graph.metadata.visual.presentation.theme;
-      const themes = this.#tab.graph.metadata.visual.presentation.themes;
+      const theme = this.tab.graph.metadata.visual.presentation.theme;
+      const themes = this.tab.graph.metadata.visual.presentation.themes;
 
       if (themes[theme]) {
         themeHash = hash(themes[theme]);
       }
     }
 
-    const mainGraphId = this.#tab?.mainGraphId;
+    const mainGraphId = this.tab?.mainGraphId;
 
     const projectState = mainGraphId
       ? this.runtime.state.getOrCreateProjectState(
           mainGraphId,
-          this.runtime.edit.getEditor(this.#tab)
+          this.runtime.edit.getEditor(this.tab)
         )
       : null;
 
-    if (projectState && this.#tab?.finalOutputValues) {
+    if (projectState && this.tab?.finalOutputValues) {
       const current = new ReactiveAppScreen("", undefined);
       current.status = "complete";
       const last: AppScreenOutput = {
-        output: this.#tab.finalOutputValues,
+        output: this.tab.finalOutputValues,
         schema: {},
       };
       current.outputs.set("final", last);
@@ -1334,12 +1334,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
       .items.get("Show Experimental Components")?.value as boolean;
 
-    const canSave = this.#tab
-      ? this.runtime.board.canSave(this.#tab.id) && !this.#tab.readOnly
+    const canSave = this.tab
+      ? this.runtime.board.canSave(this.tab.id) && !this.tab.readOnly
       : false;
 
-    const saveStatus = this.#tab
-      ? (this.runtime.board.saveStatus(this.#tab.id) ??
+    const saveStatus = this.tab
+      ? (this.runtime.board.saveStatus(this.tab.id) ??
         BreadboardUI.Types.BOARD_SAVE_STATUS.SAVED)
       : BreadboardUI.Types.BOARD_SAVE_STATUS.ERROR;
 
@@ -1367,7 +1367,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       originalEvent: evt,
       runtime: this.runtime,
       settings: this.#settings,
-      tab: this.#tab,
+      tab: this.tab,
       uiState: this.uiState,
       googleDriveClient: this.googleDriveClient,
       askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>
@@ -1530,16 +1530,16 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   #renderAppController(renderValues: RenderValues) {
-    const graphIsEmpty = BreadboardUI.Utils.isEmpty(this.#tab?.graph ?? null);
+    const graphIsEmpty = BreadboardUI.Utils.isEmpty(this.tab?.graph ?? null);
     const active =
       this.uiState.mode === "app" && this.uiState.loadState !== "Home";
 
     return html` <bb-app-controller
       class=${classMap({ active })}
-      .graph=${this.#tab?.graph ?? null}
+      .graph=${this.tab?.graph ?? null}
       .graphIsEmpty=${graphIsEmpty}
       .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-      .isMine=${this.#tab?.graphIsMine ?? false}
+      .isMine=${this.tab?.graphIsMine ?? false}
       .projectRun=${renderValues.projectState?.run}
       .readOnly=${true}
       .runtimeFlags=${this.uiState.flags}
@@ -1555,19 +1555,19 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return html` <bb-canvas-controller
       ${ref(this.#canvasControllerRef)}
       ?inert=${renderValues.showingOverlay}
-      .boardServerKits=${this.#tab?.boardServerKits ?? []}
+      .boardServerKits=${this.tab?.boardServerKits ?? []}
       .boardServers=${this.#boardServers}
       .canRun=${this.uiState.canRunMain}
-      .editor=${this.runtime.edit.getEditor(this.#tab)}
-      .graph=${this.#tab?.graph ?? null}
-      .graphIsMine=${this.#tab?.graphIsMine ?? false}
+      .editor=${this.runtime.edit.getEditor(this.tab)}
+      .graph=${this.tab?.graph ?? null}
+      .graphIsMine=${this.tab?.graphIsMine ?? false}
       .graphStore=${this.#graphStore}
       .graphStoreUpdateId=${this.graphStoreUpdateId}
       .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-      .history=${this.runtime.edit.getHistory(this.#tab)}
-      .mainGraphId=${this.#tab?.mainGraphId}
+      .history=${this.runtime.edit.getHistory(this.tab)}
+      .mainGraphId=${this.tab?.mainGraphId}
       .projectState=${renderValues.projectState}
-      .readOnly=${this.#tab?.readOnly ?? true}
+      .readOnly=${this.tab?.readOnly ?? true}
       .selectionState=${this.#selectionState}
       .settings=${this.#settings}
       .signedIn=${this.signinAdapter.state === "signedin"}
@@ -1584,11 +1584,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         this.#lastPointerPosition.y = evt.y;
       }}
       @bbinteraction=${() => {
-        if (!this.#tab) {
+        if (!this.tab) {
           return;
         }
 
-        this.runtime.board.clearPendingBoardSave(this.#tab.id);
+        this.runtime.board.clearPendingBoardSave(this.tab.id);
       }}
       @bbiterateonprompt=${(iterateOnPromptEvent: IterateOnPromptEvent) => {
         const message: IterateOnPromptMessage = {
@@ -1606,8 +1606,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   #renderBoardEditModal() {
     return html`<bb-edit-board-modal
-      .boardTitle=${this.#tab?.graph.title ?? null}
-      .boardDescription=${this.#tab?.graph.description ?? null}
+      .boardTitle=${this.tab?.graph.title ?? null}
+      .boardDescription=${this.tab?.graph.description ?? null}
       @bbmodaldismissed=${() => {
         this.uiState.show.delete("BoardEditModal");
       }}
@@ -1943,7 +1943,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
           case "dismiss": {
             this.runtime.state
-              .getProjectState(this.#tab?.mainGraphId)
+              .getProjectState(this.tab?.mainGraphId)
               ?.run?.dismissError();
             break;
           }
@@ -1956,12 +1956,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return html`<bb-ve-header
       ?inert=${renderValues.showingOverlay || this.uiState.blockingAction}
       .signinAdapter=${this.signinAdapter}
-      .hasActiveTab=${this.#tab !== null}
-      .tabTitle=${this.#tab?.graph?.title ?? null}
-      .url=${this.#tab?.graph?.url ?? null}
+      .hasActiveTab=${this.tab !== null}
+      .tabTitle=${this.tab?.graph?.title ?? null}
+      .url=${this.tab?.graph?.url ?? null}
       .loadState=${this.uiState.loadState}
       .canSave=${renderValues.canSave}
-      .isMine=${this.runtime.board.isMine(this.#tab?.graph.url)}
+      .isMine=${this.runtime.board.isMine(this.tab?.graph.url)}
       .saveStatus=${renderValues.saveStatus}
       .showExperimentalComponents=${renderValues.showExperimentalComponents}
       .mode=${this.uiState.mode}
@@ -1974,7 +1974,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         });
       }}
       @bbclose=${() => {
-        if (!this.#tab) {
+        if (!this.tab) {
           return;
         }
         this.#embedHandler?.sendToEmbedder({
@@ -2014,7 +2014,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
         switch (select.value) {
           case "edit-title-and-description": {
-            if (!this.#tab) {
+            if (!this.tab) {
               return;
             }
 
@@ -2023,21 +2023,21 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
 
           case "delete": {
-            if (!this.#tab?.graph || !this.#tab.graph.url) {
+            if (!this.tab?.graph || !this.tab.graph.url) {
               return;
             }
 
-            this.#invokeDeleteEventRouteWith(this.#tab.graph.url);
+            this.#invokeDeleteEventRouteWith(this.tab.graph.url);
             break;
           }
 
           case "duplicate": {
-            if (!this.#tab?.graph || !this.#tab.graph.url) {
+            if (!this.tab?.graph || !this.tab.graph.url) {
               return;
             }
 
-            ActionTracker.remixApp(this.#tab.graph.url, "editor");
-            this.#invokeRemixEventRouteWith(this.#tab.graph.url, {
+            ActionTracker.remixApp(this.tab.graph.url, "editor");
+            this.#invokeRemixEventRouteWith(this.tab.graph.url, {
               start: Strings.from("STATUS_GENERIC_WORKING"),
               end: Strings.from("STATUS_PROJECT_CREATED"),
               error: Strings.from("ERROR_GENERIC"),
@@ -2087,12 +2087,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
 
           case "copy-board-contents": {
-            if (!this.#tab) {
+            if (!this.tab) {
               return;
             }
 
             await navigator.clipboard.writeText(
-              JSON.stringify(this.#tab.graph, null, 2)
+              JSON.stringify(this.tab.graph, null, 2)
             );
             this.toast(
               Strings.from("STATUS_PROJECT_CONTENTS_COPIED"),
