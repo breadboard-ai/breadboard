@@ -8,6 +8,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./lite": {
+      "types": "./dist/lite/lite.d.ts",
+      "default": "./dist/lite/lite.js"
+    },
     "./contexts": {
       "types": "./dist/contexts/contexts.d.ts",
       "default": "./dist/contexts/contexts.js"

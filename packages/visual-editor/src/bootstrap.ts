@@ -71,7 +71,8 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
 
   const scopeValidation = await signinAdapter.validateScopes();
-  const page = parseUrl(window.location.href).page;
+  const parsedUrl = parseUrl(window.location.href);
+  const { lite, page } = parsedUrl;
   if (
     (signinAdapter.state === "signedin" && scopeValidation.ok) ||
     (signinAdapter.state === "signedout" && page === "graph")
@@ -99,7 +100,6 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
 
     window.oncontextmenu = (evt) => evt.preventDefault();
 
-    const { Main } = await import("./index.js");
     const mainArgs: MainArguments = {
       settings,
       boardServerUrl: await getUrlFromBoardServiceFlag(
@@ -123,8 +123,15 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       );
     }
 
-    const main = new Main(mainArgs);
-    document.body.appendChild(main);
+    if (lite) {
+      const { LiteMain } = await import("./index-lite.js");
+      const liteMain = new LiteMain(mainArgs);
+      document.body.appendChild(liteMain);
+    } else {
+      const { Main } = await import("./index.js");
+      const main = new Main(mainArgs);
+      document.body.appendChild(main);
+    }
 
     const Strings = StringsHelper.forSection("Global");
     console.log(
