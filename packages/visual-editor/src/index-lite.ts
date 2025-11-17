@@ -5,20 +5,29 @@
  */
 
 import { html, css, nothing } from "lit";
-import { customElement } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
 
 import * as BBLite from "@breadboard-ai/shared-ui/lite";
 import { MainBase, RenderValues } from "./main-base";
-import { StepListState } from "@breadboard-ai/shared-ui/state/types.js";
+import {
+  Project,
+  StepListState,
+} from "@breadboard-ai/shared-ui/state/types.js";
 import { classMap } from "lit/directives/class-map.js";
 import {
   StateEvent,
   StateEventDetailMap,
 } from "@breadboard-ai/shared-ui/events/events.js";
+import { provide } from "@lit/context";
+import { projectStateContext } from "@breadboard-ai/shared-ui/contexts";
 
 @customElement("bb-lite")
 export class LiteMain extends MainBase {
+  @provide({ context: projectStateContext })
+  @state()
+  accessor projectState: Project | undefined;
+
   static styles = [
     BBLite.Styles.HostIcons.icons,
     BBLite.Styles.HostBehavior.behavior,
@@ -67,17 +76,20 @@ export class LiteMain extends MainBase {
 
   #renderList(state: StepListState | undefined) {
     return html`<div id="controls-view" slot="slot-0">
-      <bb-step-list-view .state=${state}></bb-step-list-view>
+      <div id="list">
+        <bb-step-list-view .state=${state}></bb-step-list-view>
+      </div>
+      <div id="flowgen">
+        <bb-flowgen-editor-input
+          .hasEmptyGraph=${state?.empty}
+          .currentGraph=${state?.graph}
+        ></bb-flowgen-editor-input>
+      </div>
     </div>`;
   }
 
   #renderApp(renderValues: RenderValues) {
-    return html` <div
-      id="app-view"
-      slot="slot-1"
-      @bbevent=${async (evt: StateEvent<keyof StateEventDetailMap>) =>
-        this.handleRoutedEvent(evt)}
-    >
+    return html` <div id="app-view" slot="slot-1">
       <bb-app-controller
         class=${classMap({ active: true })}
         .graph=${this.tab?.graph ?? null}
@@ -114,7 +126,13 @@ export class LiteMain extends MainBase {
 
     const renderValues = this.getRenderValues();
 
-    return html`<section id="lite-shell">
+    this.projectState = renderValues.projectState || undefined;
+
+    return html`<section
+      id="lite-shell"
+      @bbevent=${async (evt: StateEvent<keyof StateEventDetailMap>) =>
+        this.handleRoutedEvent(evt)}
+    >
       <bb-splitter
         direction=${"horizontal"}
         name="layout-main"

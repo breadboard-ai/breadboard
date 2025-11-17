@@ -25,6 +25,7 @@ import {
   RunError,
   RuntimeFlags,
   ConsentRequestWithCallback,
+  GraphDescriptor,
 } from "@breadboard-ai/types";
 import {
   EditSpec,
@@ -136,6 +137,15 @@ export type StepListState = {
    * "metadata.intent" property. If "null", no intent was specified.
    */
   intent: string | null;
+
+  /**
+   * True when the underlying graph is brand new and has no nodes.
+   */
+  empty: boolean;
+  /**
+   * The current graph
+   */
+  graph: GraphDescriptor | null;
 
   /**
    * The list of steps according to the current run plan

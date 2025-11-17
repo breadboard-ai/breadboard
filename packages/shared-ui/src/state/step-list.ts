@@ -34,6 +34,16 @@ class StepList implements StepListState {
     return this.run.graph?.metadata?.intent || null;
   }
 
+  @signal
+  get empty(): boolean {
+    return (this.run.graph?.nodes.length || 0) === 0;
+  }
+
+  @signal
+  get graph(): GraphDescriptor | null {
+    return this.run.graph || null;
+  }
+
   constructor(private readonly run: ReactiveProjectRun) {}
 }
 
