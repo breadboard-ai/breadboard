@@ -62,6 +62,7 @@ import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
 import { edgeToString } from "../utils/workspace";
 import { Signal } from "signal-polyfill";
+import { StepList } from "./step-list";
 
 export { createProjectRunStateFromFinalOutput, ReactiveProjectRun };
 
@@ -107,6 +108,8 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
 
   #dismissedErrors = new SignalSet<NodeIdentifier>();
   #seenErrors = new Set<NodeIdentifier>();
+
+  readonly stepList = new StepList();
 
   @signal
   accessor #fatalError: RunError | null = null;

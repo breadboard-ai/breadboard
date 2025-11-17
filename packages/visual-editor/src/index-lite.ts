@@ -3,12 +3,14 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
+
 import { html, css, nothing } from "lit";
 import { customElement } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
 
 import * as BBLite from "@breadboard-ai/shared-ui/lite";
 import { MainBase } from "./main-base";
+import { StepListState } from "@breadboard-ai/shared-ui/state/types.js";
 
 @customElement("bb-lite")
 export class LiteMain extends MainBase {
@@ -49,9 +51,10 @@ export class LiteMain extends MainBase {
     super(args);
   }
 
-  #renderList() {
+  #renderList(state: StepListState | undefined) {
     return html`<div id="controls-view" slot="slot-0">
       <bb-step-list-view
+        .state=${state}
         .listTitle=${"Running 5 Steps..."}
         .listDescription=${`I will be running the following steps to create an app that generates a newsletter with multimedia assets based on a topic that a user gives it.`}
         .listItems=${[
@@ -115,8 +118,7 @@ export class LiteMain extends MainBase {
         return nothing;
     }
 
-    const renderValues = this.getRenderValues();
-    console.log("PROJECT STATE", renderValues.projectState);
+    const { projectState } = this.getRenderValues();
 
     return html`<section id="lite-shell">
       <bb-splitter
@@ -124,7 +126,7 @@ export class LiteMain extends MainBase {
         name="layout-main"
         split="[0.70, 0.30]"
       >
-        ${[this.#renderList(), this.#renderApp()]}
+        ${[this.#renderList(projectState?.run.stepList), this.#renderApp()]}
       </bb-splitter>
     </section>`;
   }

@@ -9,6 +9,7 @@ import { customElement, property } from "lit/decorators.js";
 import * as Styles from "../../styles/styles";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
+import { StepListState } from "../../state";
 
 interface ListItem {
   icon?: string;
@@ -19,6 +20,9 @@ interface ListItem {
 
 @customElement("bb-step-list-view")
 export class StepListView extends SignalWatcher(LitElement) {
+  @property()
+  accessor state: StepListState | null = null;
+
   @property()
   accessor listItems: ListItem[] = [];
 
@@ -181,11 +185,9 @@ export class StepListView extends SignalWatcher(LitElement) {
     </h1>`;
   }
 
-  #renderDescription() {
-    if (!this.listDescription) return nothing;
-    return html`<p class="sans w-400 md-body-medium">
-      ${this.listDescription}
-    </p>`;
+  #renderIntent() {
+    if (!this.state?.intent) return nothing;
+    return html`<p class="sans w-400 md-body-medium">${this.state.intent}</p>`;
   }
 
   #renderList() {
@@ -234,8 +236,10 @@ export class StepListView extends SignalWatcher(LitElement) {
   }
 
   render() {
+    if (!this.state) return nothing;
+
     return html`<section>
-      ${[this.#renderTitle(), this.#renderDescription(), this.#renderList()]}
+      ${[this.#renderTitle(), this.#renderIntent(), this.#renderList()]}
     </section>`;
   }
 }
