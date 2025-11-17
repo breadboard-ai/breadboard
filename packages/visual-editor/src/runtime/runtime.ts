@@ -22,7 +22,6 @@ import {
   getBoardServers,
   migrateIDBGraphProviders,
   migrateRemoteGraphProviders,
-  migrateFileSystemProviders,
   legacyGraphProviderExists,
   BoardServerAwareDataStore,
 } from "@breadboard-ai/board-server-management";
@@ -232,7 +231,6 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
     if (await legacyGraphProviderExists()) {
       await migrateIDBGraphProviders(config.signinAdapter);
       await migrateRemoteGraphProviders();
-      await migrateFileSystemProviders();
     }
 
     servers = await getBoardServers(

@@ -6,7 +6,6 @@
     { "path": "packages/board-server-management" },
     { "path": "packages/breadboard" },
     { "path": "packages/data-store" },
-    { "path": "packages/filesystem-board-server" },
     { "path": "packages/gulf" },
     { "path": "packages/google-drive-kit" },
     { "path": "packages/idb-board-server" },

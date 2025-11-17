@@ -56,7 +56,6 @@ import {
   EmbedState,
   IterateOnPromptMessage,
 } from "@breadboard-ai/shared-ui/embed/embed.js";
-import { FileSystemPersistentBackend } from "@breadboard-ai/filesystem-board-server";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { opalShellContext } from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
 import { McpClientManager } from "@breadboard-ai/mcp";
@@ -431,22 +430,6 @@ export class Main extends SignalWatcher(LitElement) {
       local: createFileSystemBackend(createEphemeralBlobStore()),
       mnt: composeFileSystemBackends(
         new Map<string, PersistentBackend>([
-          [
-            "fs",
-            new FileSystemPersistentBackend(async (callback) => {
-              return new Promise((resolve) => {
-                // TOOD: Make this less terrible.
-                const b = document.createElement("button");
-                b.textContent = "Allow Access";
-                b.style.cssText = `position:absolute;left:0;top:0;z-index:10000`;
-                document.body.appendChild(b);
-                b.addEventListener("click", () => {
-                  resolve(callback());
-                  b.remove();
-                });
-              });
-            }),
-          ],
           ["track", createActionTrackerBackend()],
         ])
       ),
