@@ -36,6 +36,7 @@ export function devUrlParams(): Required<BaseUrlInit>["dev"] {
 export interface HomeUrlInit extends BaseUrlInit {
   page: "home";
   mode?: VisualEditorMode;
+  lite?: boolean;
   redirectFromLanding?: boolean;
 }
 
@@ -46,6 +47,7 @@ export interface GraphInit extends BaseUrlInit {
   resourceKey?: string | undefined;
   results?: string;
   shared?: boolean;
+  lite?: boolean;
   redirectFromLanding?: boolean;
 }
 
@@ -53,12 +55,14 @@ export interface LandingUrlInit extends BaseUrlInit {
   page: "landing";
   redirect: MakeUrlInit;
   missingScopes?: boolean;
+  lite?: boolean;
   geoRestriction?: boolean;
 }
 
 const FLOW = "flow";
 const TAB0 = "tab0";
 const MODE = "mode";
+const LITE = "lite" as const;
 const MODE_APP = "app" as const;
 const MODE_CANVAS = "canvas" as const;
 const RESULTS = "results";
@@ -86,6 +90,9 @@ export function makeUrl(
   if (page === "home") {
     url.pathname = "/";
     url.searchParams.set(MODE, init.mode ?? MODE_CANVAS);
+    if (init.lite) {
+      url.searchParams.set(LITE, init.lite === true ? "true" : "false");
+    }
   } else if (page === "graph") {
     url.searchParams.set(FLOW, init.flow);
     if (init.resourceKey) {
@@ -97,6 +104,9 @@ export function makeUrl(
     if (init.results) {
       url.searchParams.set(RESULTS, init.results);
     }
+    if (init.lite) {
+      url.searchParams.set(LITE, init.lite === true ? "true" : "false");
+    }
     url.searchParams.set(MODE, init.mode);
   } else if (page === "landing") {
     url.pathname = "landing/";
@@ -105,6 +115,9 @@ export function makeUrl(
     }
     if (init.missingScopes) {
       url.searchParams.set(MISSING_SCOPES, "true");
+    }
+    if (init.lite) {
+      url.searchParams.set(LITE, init.lite === true ? "true" : "false");
     }
     if (init.redirect.page === "graph") {
       // To encode the redirect URL, we just copy all the search params directly
@@ -196,6 +209,7 @@ export function parseUrl(url: string | URL): MakeUrlInit {
         page: "home",
         mode:
           url.searchParams.get("mode") === MODE_APP ? MODE_APP : MODE_CANVAS,
+        lite: url.searchParams.get("lite") === "true",
       };
       if (dev) {
         home.dev = dev;
@@ -208,6 +222,7 @@ export function parseUrl(url: string | URL): MakeUrlInit {
     const graph: GraphInit = {
       page: "graph",
       mode: url.searchParams.get(MODE) === "app" ? "app" : "canvas",
+      lite: url.searchParams.get(LITE) === "true",
       flow: flow,
       resourceKey: url.searchParams.get(RESOURCE_KEY) ?? undefined,
     };
