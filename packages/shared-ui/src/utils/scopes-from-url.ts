@@ -48,7 +48,7 @@ const GENAI_SCOPES: OAuthScope[] = [
   "https://www.googleapis.com/auth/generative-language.retriever",
 ];
 
-const URL_SCOPE_MAP: Map<string, OAuthScope[]> = new Map([
+const URL_SCOPE_MAP_ENTRIES: Array<[string, OAuthScope[]]> = [
   [PROXY_API_ENDPOINT, GENAI_SCOPES],
   [ASSET_DRIVE_API_ENDPOINT, DRIVE_SCOPES],
   [DATA_TRANSFORM_API_ENDPOINT, [...DRIVE_SCOPES, ...GENAI_SCOPES]],
@@ -60,29 +60,30 @@ const URL_SCOPE_MAP: Map<string, OAuthScope[]> = new Map([
   ["https://www.googleapis.com/upload/drive/v3/", DRIVE_SCOPES],
   ["https://gmail.googleapis.com/", GMAIL_SCOPES],
   ["https://generativelanguage.googleapis.com/v1beta/models/", GENAI_SCOPES],
-]);
+];
 
 const { BACKEND_API_ENDPOINT } = CLIENT_DEPLOYMENT_CONFIG;
 if (BACKEND_API_ENDPOINT) {
-  URL_SCOPE_MAP.set(normalizeUrl(BACKEND_API_ENDPOINT), GENAI_SCOPES);
+  URL_SCOPE_MAP_ENTRIES.push([BACKEND_API_ENDPOINT, GENAI_SCOPES]);
 } else {
   console.warn(
-    `BACKEND_API_ENDPOINT was not configured, backend RPCs will be unavailable`
+    `BACKEND_API_ENDPOINT was not configured, ` +
+      `backend RPCs with credentials will be unavailable.`
   );
 }
 
+const URL_SCOPE_MAP: ReadonlyMap<URL, OAuthScope[]> = new Map(
+  URL_SCOPE_MAP_ENTRIES.map(([url, scopes]) => [new URL(url), scopes])
+);
+
 export function scopesFromUrl(url: string): OAuthScope[] | undefined {
-  const normalizedUrl = normalizeUrl(url);
-  for (const [urlPrefix, urlScopes] of URL_SCOPE_MAP) {
-    if (normalizedUrl.startsWith(urlPrefix)) {
-      return urlScopes;
+  const parsedUrl = new URL(url);
+  for (const [scopeUrl, scopes] of URL_SCOPE_MAP) {
+    if (
+      scopeUrl.origin === parsedUrl.origin &&
+      scopeUrl.pathname.startsWith(parsedUrl.pathname)
+    ) {
+      return scopes;
     }
   }
-}
-
-/**
- * Collapse path traversals, and add missing trailing slash to bare origins.
- */
-function normalizeUrl(url: string): string {
-  return new URL(url).href;
 }
