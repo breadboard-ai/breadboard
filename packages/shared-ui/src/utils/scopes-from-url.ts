@@ -80,8 +80,8 @@ export function scopesFromUrl(url: string): OAuthScope[] | undefined {
   const parsedUrl = new URL(url);
   for (const [scopeUrl, scopes] of URL_SCOPE_MAP) {
     if (
-      scopeUrl.origin === parsedUrl.origin &&
-      scopeUrl.pathname.startsWith(parsedUrl.pathname)
+      parsedUrl.origin === scopeUrl.origin &&
+      parsedUrl.pathname.startsWith(scopeUrl.pathname)
     ) {
       return scopes;
     }
