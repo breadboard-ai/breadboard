@@ -213,6 +213,10 @@ export type NodeMetadata = {
    * Expected output of the node.
    */
   expected_output?: NodeExpectedOutput[];
+  /**
+   * The intent for the step
+   */
+  step_intent?: string;
 };
 
 /**

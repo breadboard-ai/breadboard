@@ -510,6 +510,10 @@
 						"$ref": "#/definitions/NodeExpectedOutput"
 					},
 					"description": "Expected output of the node."
+				},
+				"step_intent": {
+					"type": "string",
+					"description": "The intent for the step"
 				}
 			},
 			"additionalProperties": false,

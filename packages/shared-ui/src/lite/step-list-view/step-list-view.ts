@@ -7,26 +7,14 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import * as Styles from "../../styles/styles";
-import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
-
-interface ListItem {
-  icon?: string;
-  title?: string;
-  content?: string;
-  status: "loading" | "working" | "ready" | "complete" | "pending";
-}
+import { StepListState } from "../../state";
+import { repeat } from "lit/directives/repeat.js";
 
 @customElement("bb-step-list-view")
 export class StepListView extends SignalWatcher(LitElement) {
   @property()
-  accessor listItems: ListItem[] = [];
-
-  @property()
-  accessor listTitle: string | null = null;
-
-  @property()
-  accessor listDescription: string | null = null;
+  accessor state: StepListState | null = null;
 
   static styles = [
     Styles.HostIcons.icons,
@@ -174,68 +162,66 @@ export class StepListView extends SignalWatcher(LitElement) {
     `,
   ];
 
-  #renderTitle() {
-    if (!this.listTitle) return nothing;
-    return html`<h1 class="sans-flex w-500 md-title-medium">
-      ${this.listTitle}
-    </h1>`;
-  }
-
-  #renderDescription() {
-    if (!this.listDescription) return nothing;
-    return html`<p class="sans w-400 md-body-medium">
-      ${this.listDescription}
-    </p>`;
+  #renderIntent() {
+    if (!this.state?.intent) return nothing;
+    return html`<p class="sans w-400 md-body-medium">${this.state.intent}</p>`;
   }
 
   #renderList() {
-    if (!this.listItems.length) return nothing;
+    const steps = this.state?.steps;
+    if (!steps || steps.size === 0) return nothing;
     return html`<ul id="list">
-      ${map(this.listItems, (item) => {
-        const markerClasses: Record<string, boolean> = {
-          marker: true,
-          "g-icon": true,
-          "filled-heavy": true,
-          [item.status]: true,
-        };
+      ${repeat(
+        steps,
+        (entry) => entry[0],
+        ([, step]) => {
+          const markerClasses: Record<string, boolean> = {
+            marker: true,
+            "g-icon": true,
+            "filled-heavy": true,
+            [step.status]: true,
+          };
 
-        const renderPlaceholder = () => html`
-          <div class="placeholder">
-            <span class="g-icon filled-heavy round pending"
-              >progress_activity<span> </span
-            ></span>
-          </div>
-        `;
-
-        const renderStep = () => html`
-          <details>
-            <summary>
-              <span class=${classMap(markerClasses)}> </span>
-              <span class="step-icon g-icon filled-heavy round"
-                >${item.icon}</span
-              >
-              <span class="step-title sans md-title-medium w-500"
-                >${item.title}</span
-              >
-            </summary>
-            <div class="step-content sans md-body-medium w-400">
-              ${item.content}
+          const renderPlaceholder = () => html`
+            <div class="placeholder">
+              <span class="g-icon filled-heavy round pending"
+                >progress_activity<span> </span
+              ></span>
             </div>
-          </details>
-        `;
+          `;
 
-        return html`
-          <li>
-            ${item.status === "loading" ? renderPlaceholder() : renderStep()}
-          </li>
-        `;
-      })}
+          const renderStep = () => html`
+            <details>
+              <summary>
+                <span class=${classMap(markerClasses)}> </span>
+                <span class="step-icon g-icon filled-heavy round"
+                  >${step.icon}</span
+                >
+                <span class="step-title sans md-title-medium w-500"
+                  >${step.title}</span
+                >
+              </summary>
+              <div class="step-content sans md-body-medium w-400">
+                ${step.prompt}
+              </div>
+            </details>
+          `;
+
+          return html`
+            <li>
+              ${step.status === "loading" ? renderPlaceholder() : renderStep()}
+            </li>
+          `;
+        }
+      )}
     </ul>`;
   }
 
   render() {
+    if (!this.state) return nothing;
+
     return html`<section>
-      ${[this.#renderTitle(), this.#renderDescription(), this.#renderList()]}
+      ${[this.#renderIntent(), this.#renderList()]}
     </section>`;
   }
 }

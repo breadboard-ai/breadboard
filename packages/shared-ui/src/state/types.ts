@@ -123,6 +123,51 @@ export type ProjectRun = {
    * Call when the user chooses to dismiss errors shown (if any)
    */
   dismissError(): void;
+
+  /**
+   * Represents step list view (aka lite)
+   */
+  stepList: StepListState;
+};
+
+export type StepListState = {
+  /**
+   * The intent behind the app. This value is taken from the BGL
+   * "metadata.intent" property. If "null", no intent was specified.
+   */
+  intent: string | null;
+
+  /**
+   * The list of steps according to the current run plan
+   */
+  steps: Map<string, StepListStepState>;
+};
+
+export type StepListStepState = {
+  /**
+   * The icon, associated with the step.
+   */
+  icon?: string;
+  /**
+   * The title of the step
+   */
+  title: string;
+  /**
+   * Current status of the step.
+   */
+  status: "loading" | "working" | "ready" | "complete" | "pending";
+  /**
+   * The current progress (when "working")
+   * - optional title allows custom title for the progress, like
+   * "Question to user"
+   * - details should give the user a sense of what's happening or contain the
+   * data input by user.
+   */
+  progress?: { title?: string; details: string };
+  /**
+   * The prompt from step's configuration
+   */
+  prompt: string;
 };
 
 export type ErrorReason =

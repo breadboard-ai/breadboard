@@ -56,12 +56,14 @@ import {
   ProjectRunStatus,
   RendererRunState,
   StepEditor,
+  StepListState,
   UserInput,
 } from "./types";
 import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
 import { edgeToString } from "../utils/workspace";
 import { Signal } from "signal-polyfill";
+import { StepList } from "./step-list";
 
 export { createProjectRunStateFromFinalOutput, ReactiveProjectRun };
 
@@ -103,6 +105,8 @@ function error(msg: string) {
 
 class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
   app: ReactiveApp = new ReactiveApp(this);
+  readonly stepList: StepListState = new StepList(this);
+
   console: Map<string, ConsoleEntry> = new SignalMap();
 
   #dismissedErrors = new SignalSet<NodeIdentifier>();
@@ -219,6 +223,13 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
 
   #idCache = new IdCache();
 
+  /**
+   * Not part of the public interface, but used by its children (like
+   * StepList).
+   */
+  @signal
+  accessor graph: GraphDescriptor | undefined;
+
   private constructor(
     private readonly stepEditor: StepEditor | undefined,
     private readonly mainGraphId: MainGraphIdentifier,
@@ -231,11 +242,13 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     if (!graphStore) return;
 
     this.#inspectable = this.graphStore?.inspect(this.mainGraphId, "");
+    this.graph = this.#inspectable?.raw();
 
     editable?.addEventListener("graphchange", (e) => {
       this.#inspectable = editable.inspect("");
       if (e.topologyChange) {
         this.#topologyChanged.set({});
+        this.graph = e.graph;
         this.#updateRunner(e.graph);
       }
     });
