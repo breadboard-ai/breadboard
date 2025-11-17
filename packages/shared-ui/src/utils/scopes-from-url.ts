@@ -4,10 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { OAuthScope } from "../connection/oauth-scopes.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
-
-export { scopesFromUrl };
+import type { OAuthScope } from "../connection/oauth-scopes.js";
 
 /**
  * If we're in shell mode, when the iframed app makes a request to one of our
@@ -50,7 +48,7 @@ const GENAI_SCOPES: OAuthScope[] = [
   "https://www.googleapis.com/auth/generative-language.retriever",
 ];
 
-const URL_SCOPE_MAP: ReadonlyMap<string, OAuthScope[]> = new Map([
+const URL_SCOPE_MAP: Map<string, OAuthScope[]> = new Map([
   [PROXY_API_ENDPOINT, GENAI_SCOPES],
   [ASSET_DRIVE_API_ENDPOINT, DRIVE_SCOPES],
   [DATA_TRANSFORM_API_ENDPOINT, [...DRIVE_SCOPES, ...GENAI_SCOPES]],
@@ -64,26 +62,27 @@ const URL_SCOPE_MAP: ReadonlyMap<string, OAuthScope[]> = new Map([
   ["https://generativelanguage.googleapis.com/v1beta/models/", GENAI_SCOPES],
 ]);
 
-function scopesFromUrl(
-  url: string,
-  backendApiEndpoint: string | undefined
-): OAuthScope[] | undefined {
-  if (!backendApiEndpoint) {
-    console.warn(
-      `Backend API Endpoint not specified, falling back to current location`
-    );
-    backendApiEndpoint = window.location.href;
-  }
+const { BACKEND_API_ENDPOINT } = CLIENT_DEPLOYMENT_CONFIG;
+if (BACKEND_API_ENDPOINT) {
+  URL_SCOPE_MAP.set(normalizeUrl(BACKEND_API_ENDPOINT), GENAI_SCOPES);
+} else {
+  console.warn(
+    `BACKEND_API_ENDPOINT was not configured, backend RPCs will be unavailable`
+  );
+}
 
-  let scopes: OAuthScope[] | undefined;
-  for (const [urlPattern, urlScopes] of URL_SCOPE_MAP.entries()) {
-    if (url.startsWith(urlPattern)) {
-      scopes = urlScopes;
-      break;
+export function scopesFromUrl(url: string): OAuthScope[] | undefined {
+  const normalizedUrl = normalizeUrl(url);
+  for (const [urlPattern, urlScopes] of URL_SCOPE_MAP) {
+    if (normalizedUrl.startsWith(urlPattern)) {
+      return urlScopes;
     }
   }
-  if (!scopes && url.startsWith(backendApiEndpoint)) {
-    scopes = GENAI_SCOPES;
-  }
-  return scopes;
+}
+
+/**
+ * Collapse path traversals, and add missing trailing slash to bare origins.
+ */
+function normalizeUrl(url: string): string {
+  return new URL(url).href;
 }
