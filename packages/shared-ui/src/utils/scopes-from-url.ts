@@ -73,8 +73,8 @@ if (BACKEND_API_ENDPOINT) {
 
 export function scopesFromUrl(url: string): OAuthScope[] | undefined {
   const normalizedUrl = normalizeUrl(url);
-  for (const [urlPattern, urlScopes] of URL_SCOPE_MAP) {
-    if (normalizedUrl.startsWith(urlPattern)) {
+  for (const [urlPrefix, urlScopes] of URL_SCOPE_MAP) {
+    if (normalizedUrl.startsWith(urlPrefix)) {
       return urlScopes;
     }
   }
