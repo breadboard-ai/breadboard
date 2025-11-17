@@ -21,6 +21,8 @@ import {
 } from "@breadboard-ai/shared-ui/events/events.js";
 import { provide } from "@lit/context";
 import { projectStateContext } from "@breadboard-ai/shared-ui/contexts";
+import { ActionTracker } from "@breadboard-ai/shared-ui/utils/action-tracker";
+import { blankBoard } from "@breadboard-ai/shared-ui/utils/utils.js";
 
 @customElement("bb-lite")
 export class LiteMain extends MainBase {
@@ -112,7 +114,34 @@ export class LiteMain extends MainBase {
 
     switch (this.uiState.loadState) {
       case "Home":
-        return html`Home (TODO)`;
+        return html`<section id="home">
+          <h1>HOME</h1>
+          <button
+            @click=${(evt: Event) => {
+              if (!(evt.target instanceof HTMLButtonElement)) {
+                return;
+              }
+
+              ActionTracker.createNew();
+
+              evt.target.disabled = true;
+              this.handleRoutedEvent(
+                new StateEvent({
+                  eventType: "board.create",
+                  editHistoryCreator: { role: "user" },
+                  graph: blankBoard(),
+                  messages: {
+                    start: "",
+                    end: "",
+                    error: "",
+                  },
+                })
+              );
+            }}
+          >
+            CREATE
+          </button>
+        </section>`;
       case "Loading":
         return html`Loading (TODO)`;
       case "Error":
@@ -130,7 +159,7 @@ export class LiteMain extends MainBase {
 
     return html`<section
       id="lite-shell"
-      @bbevent=${async (evt: StateEvent<keyof StateEventDetailMap>) =>
+      @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) =>
         this.handleRoutedEvent(evt)}
     >
       <bb-splitter

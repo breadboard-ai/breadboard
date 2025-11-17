@@ -248,8 +248,9 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
       this.#inspectable = editable.inspect("");
       if (e.topologyChange) {
         this.#topologyChanged.set({});
-        this.graph = e.graph;
-        this.#updateRunner(e.graph);
+        const newGraph = { ...e.graph };
+        this.graph = newGraph;
+        this.#updateRunner(newGraph);
       }
     });
 
