@@ -164,9 +164,8 @@ export class StepListView extends SignalWatcher(LitElement) {
     `,
   ];
 
-  #renderIntent() {
-    if (!this.state?.intent) return nothing;
-    return html`<p class="sans w-400 md-body-medium">${this.state.intent}</p>`;
+  #renderTitle() {
+    return html`<h1 class="w-400 sans-flex md-title-medium">Steps</h1>`;
   }
 
   #renderList() {
@@ -225,8 +224,7 @@ export class StepListView extends SignalWatcher(LitElement) {
     if (!this.state) return nothing;
 
     return html`<section>
-      <h1 class="w-400 sans-flex md-title-medium">Steps</h1>
-      ${[this.#renderIntent(), this.#renderList()]}
+      ${[this.#renderTitle(), this.#renderList()]}
     </section>`;
   }
 }
