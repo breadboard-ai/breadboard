@@ -49,8 +49,6 @@ import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 const SIGN_IN_CONNECTION_ID = "$sign-in";
 
 export class OAuthBasedOpalShell implements OpalShellHostProtocol {
-  readonly #nonceToScopes = new Map<string, string[]>();
-
   readonly #settingsStore = SettingsStore.restoredInstance();
   readonly #settingsHelper = this.#settingsStore.then(
     (settings) => new SettingsHelperImpl(settings)
@@ -265,15 +263,38 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     return fetch(input, { ...maybeAugmentedInit, headers });
   }
 
-  async generateSignInUrlAndNonce(
-    scopes: string[] = []
-  ): Promise<{ url: string; nonce: string }> {
+  async signIn(scopes: string[] = []): Promise<SignInResult> {
+    const { url, nonce } = this.#generateSignInUrlAndNonce(scopes);
+    const popupWidth = 900;
+    const popupHeight = 850;
+    const popup = window.open(
+      url,
+      "Sign in to Google",
+      `
+      width=${popupWidth}
+      height=${popupHeight}
+      left=${window.screenX + window.innerWidth / 2 - popupWidth / 2}
+      top=${window.screenY + window.innerHeight / 2 - popupHeight / 2 + /* A little extra to account for the tabs, url bar etc.*/ 60}
+      `
+    );
+    if (!popup) {
+      return {
+        ok: false,
+        error: { code: "other", userMessage: "Popups are disabled" },
+      };
+    }
+    return await this.#listenForSignIn(nonce, scopes);
+  }
+
+  #generateSignInUrlAndNonce(scopes: string[] = []): {
+    url: string;
+    nonce: string;
+  } {
     console.info("[shell host] Generating sign-in URL and nonce");
     const nonce = crypto.randomUUID();
     const uniqueScopes = [
       ...new Set([...ALWAYS_REQUIRED_OAUTH_SCOPES, ...scopes]),
     ];
-    this.#nonceToScopes.set(nonce, uniqueScopes);
     const url = new URL("https://accounts.google.com/o/oauth2/auth");
     const params = url.searchParams;
     params.set("client_id", CLIENT_DEPLOYMENT_CONFIG.OAUTH_CLIENT);
@@ -296,16 +317,17 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     return { url: url.href, nonce };
   }
 
-  async listenForSignIn(nonce: string): Promise<SignInResult> {
+  async #listenForSignIn(
+    nonce: string,
+    scopes: string[]
+  ): Promise<SignInResult> {
     console.info(`[shell host] Listening for sign in`);
-    const scopes = this.#nonceToScopes.get(nonce);
     if (!scopes) {
       return {
         ok: false,
         error: { code: "other", userMessage: "Unexpected sign-in attempt" },
       };
     }
-    this.#nonceToScopes.delete(nonce);
     // The OAuth broker page will know to broadcast the token on this unique
     // channel because it also knows the nonce (since we pack that in the OAuth
     // "state" parameter).

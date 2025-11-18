@@ -62,45 +62,7 @@ export class SigninAdapter implements SignInInfo {
   }
 
   async signIn(scopes: OAuthScope[] = []): Promise<SignInResult> {
-    // Important! There must be no awaits before the window.open call, because
-    // we need it to open syncronously so that the browser will allow it in
-    // response to a click event.
-    const signInUrlAndNoncePromise =
-      this.#opalShell.generateSignInUrlAndNonce(scopes);
-    const popupWidth = 900;
-    const popupHeight = 850;
-    // TODO(aomarks) We should also show a modal with a regular target="_blank"
-    // link, in case the user's browser or an extension suppresses the popup.
-    const popup = window.open(
-      // First open a blank window because generating the actual sign-in URL is
-      // asynchronous, and the window must be opened synchronously.
-      "about:blank",
-      "Sign in to Google",
-      `
-      width=${popupWidth}
-      height=${popupHeight}
-      left=${window.screenX + window.innerWidth / 2 - popupWidth / 2}
-      top=${window.screenY + window.innerHeight / 2 - popupHeight / 2 + /* A little extra to account for the tabs, url bar etc.*/ 60}
-      `
-    );
-    if (!popup) {
-      return {
-        ok: false,
-        error: { code: "other", userMessage: "Popups are disabled" },
-      };
-    }
-    const { url, nonce } = await signInUrlAndNoncePromise;
-    const resultPromise = this.#opalShell
-      .listenForSignIn(nonce)
-      .catch((e): SignInResult => {
-        console.error(`[signin] Unhandled error`, e);
-        return {
-          ok: false,
-          error: { code: "other", userMessage: `Unhandled error` },
-        };
-      });
-    popup.location.href = url;
-    const result = await resultPromise;
+    const result = await this.#opalShell.signIn(scopes);
     if (result.ok) {
       this.#state = result.state;
     }
