@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as BreadboardUI from "@breadboard-ai/shared-ui";
+const Strings = BreadboardUI.Strings.forSection("Global");
+
 import { html, css, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
@@ -49,12 +52,15 @@ export class LiteMain extends MainBase {
         display: block;
         height: 100%;
         width: 100%;
-        padding: var(--bb-grid-size-3);
+        padding: var(--bb-grid-size-3) var(--bb-grid-size-3) 0
+          var(--bb-grid-size);
 
         & #controls {
           display: flex;
           flex-direction: column;
           gap: var(--bb-grid-size-2);
+          padding-left: var(--bb-grid-size-2);
+          padding-bottom: var(--bb-grid-size-3);
 
           & bb-prompt-view {
             flex: 0 0 auto;
@@ -68,6 +74,14 @@ export class LiteMain extends MainBase {
 
           & bb-editor-input-lite {
             flex: 0 0 auto;
+            box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.16);
+          }
+
+          & #message {
+            text-align: center;
+            height: var(--bb-grid-size-4);
+            margin: var(--bb-grid-size-2) 0;
+            color: light-dark(#575b5f, #fff);
           }
         }
 
@@ -78,6 +92,7 @@ export class LiteMain extends MainBase {
           display: flex;
           flex-direction: column;
           overflow: hidden;
+          margin-bottom: var(--bb-grid-size-13);
 
           & header {
             height: var(--bb-grid-size-16);
@@ -144,17 +159,21 @@ export class LiteMain extends MainBase {
 
   #renderOriginalPrompt() {
     return html`<bb-prompt-view
-      .prompt=${`An app that asks how many people I'll have for dinner, looks for seasonal ingredients on GoodEggs website, then plans a menu and then decides what to do. It's all very exciting when this works and we see content and stuff.`}
+      .prompt=${this.tab?.graph.metadata?.intent}
     ></bb-prompt-view>`;
   }
 
   #renderUserInput(state: StepListState | undefined) {
-    return html`<div id="flowgen">
-      <bb-editor-input-lite
-        .hasEmptyGraph=${state?.empty}
-        .currentGraph=${state?.graph}
-      ></bb-editor-input-lite>
-    </div>`;
+    return html`<bb-editor-input-lite
+      .hasEmptyGraph=${state?.empty}
+      .currentGraph=${state?.graph}
+    ></bb-editor-input-lite>`;
+  }
+
+  #renderMessage() {
+    return html`<p id="message" class="w-400 md-body-small sans-flex">
+      ${Strings.from("LABEL_DISCLAIMER")}
+    </p>`;
   }
 
   #renderControls(state: StepListState | undefined) {
@@ -163,6 +182,7 @@ export class LiteMain extends MainBase {
         this.#renderOriginalPrompt(),
         this.#renderList(state),
         this.#renderUserInput(state),
+        this.#renderMessage(),
       ]}
     </div>`;
   }
@@ -176,7 +196,7 @@ export class LiteMain extends MainBase {
       <header class="w-400 md-title-small sans-flex">
         <div class="left">${this.tab?.name ?? "Untitled app"}</div>
         <div class="right">
-          <a href="/?mode=canvas&" target="_blank"
+          <a href="/?mode=canvas&flow=${this.tab?.graph.url}" target="_blank"
             ><span class="g-icon">open_in_new</span>Open Advanced Editor</a
           >
           <button><span class="g-icon">share</span>Share</button>
@@ -277,7 +297,7 @@ export class LiteMain extends MainBase {
       >
         <bb-splitter
           direction=${"horizontal"}
-          name="layout-main"
+          name="layout-lite"
           split="[0.30, 0.70]"
         >
           ${[this.#renderControls(stepList), this.#renderApp(renderValues)]}
