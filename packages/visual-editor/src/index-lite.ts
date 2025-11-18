@@ -7,7 +7,7 @@
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import { html, css, nothing } from "lit";
+import { html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
 
@@ -26,6 +26,7 @@ import { provide } from "@lit/context";
 import { projectStateContext } from "@breadboard-ai/shared-ui/contexts";
 import { ActionTracker } from "@breadboard-ai/shared-ui/utils/action-tracker";
 import { blankBoard } from "@breadboard-ai/shared-ui/utils/utils.js";
+import { ref } from "lit/directives/ref.js";
 
 @customElement("bb-lite")
 export class LiteMain extends MainBase {
@@ -99,6 +100,7 @@ export class LiteMain extends MainBase {
         }
 
         & #app-view {
+          position: relative;
           margin: 0 0 0 var(--bb-grid-size-3);
           border-radius: var(--bb-grid-size-4);
           border: 1px solid var(--light-dark-n-90);
@@ -106,6 +108,12 @@ export class LiteMain extends MainBase {
           flex-direction: column;
           overflow: hidden;
           margin-bottom: var(--bb-grid-size-13);
+
+          & bb-snackbar {
+            width: calc(100% - var(--bb-grid-size-12));
+            left: 50%;
+            position: absolute;
+          }
 
           & header {
             height: var(--bb-grid-size-16);
@@ -176,6 +184,16 @@ export class LiteMain extends MainBase {
     `,
   ];
 
+  // The snackbar is not held as a Ref because we need to track pending snackbar
+  // messages as they are coming in and, once the snackbar has rendered, we add
+  // them. This means we use the ref callback to handle this case instead of
+  // using to create and store the reference itself.
+  #snackbar: BBLite.Snackbar | undefined = undefined;
+  #pendingSnackbarMessages: Array<{
+    message: BBLite.Types.SnackbarMessage;
+    replaceAll: boolean;
+  }> = [];
+
   constructor(args: MainArguments) {
     super(args);
   }
@@ -245,6 +263,7 @@ export class LiteMain extends MainBase {
         }}
       >
       </bb-app-controller>
+      ${this.#renderSnackbar()}
     </section>`;
   }
 
@@ -283,6 +302,25 @@ export class LiteMain extends MainBase {
     </section>`;
   }
 
+  #renderSnackbar() {
+    return html`<bb-snackbar
+      ${ref((el: Element | undefined) => {
+        if (!el) {
+          this.#snackbar = undefined;
+        }
+
+        this.#snackbar = el as BreadboardUI.Elements.Snackbar;
+        for (const pendingMessage of this.#pendingSnackbarMessages) {
+          const { message, id, persistent, type, actions } =
+            pendingMessage.message;
+          this.snackbar(message, type, actions, persistent, id);
+        }
+
+        this.#pendingSnackbarMessages.length = 0;
+      })}
+    ></bb-snackbar>`;
+  }
+
   render() {
     if (!this.ready) return nothing;
 
@@ -298,8 +336,10 @@ export class LiteMain extends MainBase {
         </div>`;
       case "Error":
         return html`Error`;
-      case "Loaded":
+      case "Loaded": {
+        this.unsnackbar();
         break;
+      }
       default:
         console.warn("Unknown UI load state", this.uiState.loadState);
         return nothing;
@@ -336,5 +376,47 @@ export class LiteMain extends MainBase {
         </bb-splitter>
       </section>`;
     }
+  }
+
+  snackbar(
+    message: string | HTMLTemplateResult,
+    type: BBLite.Types.SnackType,
+    actions: BBLite.Types.SnackbarAction[] = [],
+    persistent = false,
+    id = globalThis.crypto.randomUUID(),
+    replaceAll = false
+  ) {
+    if (!this.#snackbar) {
+      this.#pendingSnackbarMessages.push({
+        message: {
+          id,
+          message,
+          type,
+          persistent,
+          actions,
+        },
+        replaceAll,
+      });
+      return;
+    }
+
+    return this.#snackbar.show(
+      {
+        id,
+        message,
+        type,
+        persistent,
+        actions,
+      },
+      replaceAll
+    );
+  }
+
+  unsnackbar(id?: BreadboardUI.Types.SnackbarUUID) {
+    if (!this.#snackbar) {
+      return;
+    }
+
+    this.#snackbar.hide(id);
   }
 }
