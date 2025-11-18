@@ -8,31 +8,28 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 import { html, css, nothing, HTMLTemplateResult } from "lit";
-import { customElement, state } from "lit/decorators.js";
+import { customElement } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
 
 import * as BBLite from "@breadboard-ai/shared-ui/lite";
-import { MainBase, RenderValues } from "./main-base";
-import {
-  Project,
-  StepListState,
-} from "@breadboard-ai/shared-ui/state/types.js";
+import { MainBase } from "./main-base";
+import { StepListState } from "@breadboard-ai/shared-ui/state/types.js";
 import { classMap } from "lit/directives/class-map.js";
 import {
   StateEvent,
   StateEventDetailMap,
 } from "@breadboard-ai/shared-ui/events/events.js";
-import { provide } from "@lit/context";
-import { projectStateContext } from "@breadboard-ai/shared-ui/contexts";
 import { ref } from "lit/directives/ref.js";
 import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
+import { LiteEditInputController } from "@breadboard-ai/shared-ui/lite/input/editor-input-lite.js";
+import { GraphDescriptor, GraphTheme, Outcome } from "@breadboard-ai/types";
+import { err, ok } from "@breadboard-ai/utils";
+import { RuntimeTabChangeEvent } from "./runtime/events";
+import { eventRoutes } from "./event-routing/event-routing";
+import { blankBoard } from "@breadboard-ai/shared-ui/utils/utils.js";
 
 @customElement("bb-lite")
-export class LiteMain extends MainBase {
-  @provide({ context: projectStateContext })
-  @state()
-  accessor projectState: Project | undefined;
-
+export class LiteMain extends MainBase implements LiteEditInputController {
   static styles = [
     BBLite.Styles.HostIcons.icons,
     BBLite.Styles.HostBehavior.behavior,
@@ -197,6 +194,67 @@ export class LiteMain extends MainBase {
     super(args);
   }
 
+  async generate(intent: string): Promise<Outcome<void>> {
+    let projectState = this.getProjectState();
+
+    if (!projectState) {
+      // This is a zero state: we don't yet have a projectState.
+      // Let's create it.
+
+      // This is plain nasty: we're basically trying to line up a bunch of
+      // event-driven operations into a sequence of async invocations.
+      let resolve: (() => void) | undefined = undefined;
+      const waitForTabToChange = new Promise<void>((resolveToSave) => {
+        resolve = resolveToSave;
+      });
+      this.runtime.board.addEventListener(
+        RuntimeTabChangeEvent.eventName,
+        () => resolve?.(),
+        { once: true }
+      );
+      await this.invokeBoardCreateRoute();
+      await waitForTabToChange;
+      projectState = this.getProjectState();
+      if (!projectState) {
+        return err(`Failed to create a new opal.`);
+      }
+    }
+
+    const currentGraph = projectState.run.stepList.graph;
+    if (!currentGraph) {
+      console.warn("No current graph detected, exting flow generation");
+      return;
+    }
+
+    if (!this.flowGenerator) {
+      return err(`No FlowGenerator was provided`);
+    }
+    const generating = this.flowGenerator.oneShot({
+      intent,
+      context: { flow: currentGraph },
+    });
+
+    const newGraph = (currentGraph?.nodes.length || 0) === 0;
+    const creatingTheme = newGraph
+      ? projectState.themes.generateThemeFromIntent(intent)
+      : Promise.resolve(err(`Existing graph, skipping theme generation`));
+
+    const [generated, createdTheme] = await Promise.allSettled([
+      generating,
+      creatingTheme,
+    ]);
+
+    if (generated.status === "rejected") {
+      return err(generated.reason);
+    }
+    let theme;
+    if (createdTheme.status === "fulfilled" && ok(createdTheme.value)) {
+      theme = createdTheme.value;
+    }
+    const { flow } = generated.value;
+    await this.invokeBoardReplaceRoute(flow, theme);
+  }
+
   #renderOriginalPrompt() {
     return html`<bb-prompt-view
       .prompt=${this.tab?.graph.metadata?.intent}
@@ -205,6 +263,7 @@ export class LiteMain extends MainBase {
 
   #renderUserInput(state: StepListState | undefined) {
     return html`<bb-editor-input-lite
+      .controller=${this}
       .hasEmptyGraph=${state?.empty}
       .currentGraph=${state?.graph}
     ></bb-editor-input-lite>`;
@@ -231,7 +290,8 @@ export class LiteMain extends MainBase {
     return html` <bb-step-list-view .state=${state}></bb-step-list-view> `;
   }
 
-  #renderApp(renderValues: RenderValues) {
+  #renderApp() {
+    const renderValues = this.getRenderValues();
     return html` <section id="app-view" slot="slot-1">
       <header class="w-400 md-title-small sans-flex">
         <div class="left">${this.tab?.name ?? "Untitled app"}</div>
@@ -292,13 +352,13 @@ export class LiteMain extends MainBase {
   render() {
     if (!this.ready) return nothing;
 
-    let isNew = false;
+    let zeroState = false;
 
     switch (this.uiState.loadState) {
       case "Home": {
         const parsedUrl = parseUrl(window.location.href);
-        isNew = !!(parsedUrl.page === "home" && parsedUrl.new);
-        if (!isNew) {
+        zeroState = !!(parsedUrl.page === "home" && parsedUrl.new);
+        if (!zeroState) {
           console.warn("Invalid Home URL state", parsedUrl);
           return nothing;
         }
@@ -320,20 +380,16 @@ export class LiteMain extends MainBase {
         return nothing;
     }
 
-    const renderValues = this.getRenderValues();
+    const stepList = this.getProjectState()?.run.stepList;
 
-    this.projectState = renderValues.projectState || undefined;
-
-    const stepList = renderValues.projectState?.run.stepList;
-
-    if (stepList?.empty || isNew) {
-      // For new graph, show the welcome mat and no app view.
+    if (stepList?.empty || zeroState) {
+      // For new graph or zero-state, show the welcome mat and no app view.
       return html`<section
         id="lite-shell"
         @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) =>
           this.handleRoutedEvent(evt)}
       >
-        ${[this.#renderWelcomeMat(), this.#renderList(stepList)]}
+        ${[this.#renderWelcomeMat(), this.#renderUserInput(stepList)]}
       </section>`;
     } else {
       // When there are nodes in the graph, show the app view.
@@ -347,7 +403,7 @@ export class LiteMain extends MainBase {
           name="layout-lite"
           split="[0.30, 0.70]"
         >
-          ${[this.#renderControls(stepList), this.#renderApp(renderValues)]}
+          ${[this.#renderControls(stepList), this.#renderApp()]}
         </bb-splitter>
       </section>`;
     }
@@ -393,5 +449,49 @@ export class LiteMain extends MainBase {
     }
 
     this.#snackbar.hide(id);
+  }
+
+  protected async invokeBoardReplaceRoute(
+    replacement: GraphDescriptor,
+    theme: GraphTheme | undefined
+  ) {
+    return eventRoutes.get("board.replace")?.do(
+      this.collectEventRouteDeps(
+        new BreadboardUI.Events.StateEvent({
+          eventType: "board.replace",
+          replacement,
+          theme,
+          creator: { role: "assistant" },
+        })
+      )
+    );
+  }
+
+  protected async invokeBoardCreateRoute() {
+    return eventRoutes.get("board.create")?.do(
+      this.collectEventRouteDeps(
+        new BreadboardUI.Events.StateEvent({
+          eventType: "board.create",
+          editHistoryCreator: { role: "user" },
+          graph: blankBoard(),
+          messages: {
+            start: "",
+            end: "",
+            error: "",
+          },
+        })
+      )
+    );
+  }
+
+  getProjectState() {
+    const mainGraphId = this.tab?.mainGraphId;
+
+    return mainGraphId
+      ? this.runtime.state.getOrCreateProjectState(
+          mainGraphId,
+          this.runtime.edit.getEditor(this.tab)
+        )
+      : null;
   }
 }

@@ -1354,7 +1354,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     } satisfies RenderValues;
   }
 
-  #collectEventRouteDeps(
+  protected collectEventRouteDeps(
     evt: BreadboardUI.Events.StateEvent<
       keyof BreadboardUI.Events.StateEventDetailMap
     >
@@ -1839,7 +1839,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.uiState.blockingAction = true;
     const remixRoute = eventRoutes.get("board.remix");
     const refresh = await remixRoute?.do(
-      this.#collectEventRouteDeps(
+      this.collectEventRouteDeps(
         new BreadboardUI.Events.StateEvent({
           eventType: "board.remix",
           messages,
@@ -1860,7 +1860,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.uiState.blockingAction = true;
     const deleteRoute = eventRoutes.get("board.delete");
     const refresh = await deleteRoute?.do(
-      this.#collectEventRouteDeps(
+      this.collectEventRouteDeps(
         new BreadboardUI.Events.StateEvent({
           eventType: "board.delete",
           messages: {
@@ -2143,7 +2143,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // the most important of these are the runtime, originalEvent (which
     // contains the data needed) and the tab so that the runtime can locate
     // the appropriate editor etc.
-    const shouldRender = await eventRoute.do(this.#collectEventRouteDeps(evt));
+    const shouldRender = await eventRoute.do(this.collectEventRouteDeps(evt));
 
     // Some legacy actions require an update after running, so if the event
     // handler returns with a true, schedule an update.

@@ -8,23 +8,20 @@ import { LitElement, html, css, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import type { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
-import { consume } from "@lit/context";
+import type { GraphDescriptor, Outcome } from "@breadboard-ai/types";
 import { StateEvent } from "../../events/events.js";
 import "../../elements/input/expanding-textarea.js";
-import {
-  type FlowGenerator,
-  flowGeneratorContext,
-} from "../../flow-gen/flow-generator.js";
 import { classMap } from "lit/directives/class-map.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
-import { projectStateContext } from "../../contexts/project-state.js";
-import { Project } from "../../state/types.js";
-import { err, ok } from "@breadboard-ai/utils";
+import { ok } from "@breadboard-ai/utils";
 import { SignalWatcher } from "@lit-labs/signals";
 import * as Styles from "../../styles/styles";
 
 const Strings = StringsHelper.forSection("Editor");
+
+export type LiteEditInputController = {
+  generate(intent: string): Promise<Outcome<void>>;
+};
 
 type State =
   | { status: "initial" }
@@ -81,12 +78,6 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
     `,
   ];
 
-  @consume({ context: flowGeneratorContext })
-  accessor flowGenerator: FlowGenerator | undefined;
-
-  @consume({ context: projectStateContext })
-  accessor projectState: Project | undefined;
-
   @property({ type: Object })
   accessor currentGraph: GraphDescriptor | undefined;
 
@@ -104,6 +95,9 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
 
   @property({ reflect: true, type: Boolean })
   accessor highlighted = false;
+
+  @property()
+  accessor controller: LiteEditInputController | undefined = undefined;
 
   readonly #descriptionInput = createRef<HTMLTextAreaElement>();
 
@@ -144,79 +138,40 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
     }
   }
 
-  #onInputChange() {
+  async #onInputChange() {
     const input = this.#descriptionInput.value;
     if (!input) {
       return;
     }
 
     const description = input?.value;
-    if (description) {
-      if (description === "/force generating") {
-        this.#state = { status: "generating" };
-        return;
-      } else if (description === "/force initial") {
-        this.#state = { status: "initial" };
-        return;
-      }
+    if (!description) return;
+
+    if (description === "/force generating") {
       this.#state = { status: "generating" };
-
-      ActionTracker.flowGenEdit(this.currentGraph?.url);
-
-      this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
-
-      const generating = this.#generateBoard(description);
-
-      const newGraph = (this.currentGraph?.nodes.length || 0) === 0;
-      const creatingTheme = newGraph
-        ? this.projectState?.themes.generateThemeFromIntent(description)
-        : Promise.resolve(err(`Existing graph, skipping theme generation`));
-
-      Promise.allSettled([generating, creatingTheme])
-        .then(([generated, createdTheme]) => {
-          if (generated.status === "rejected") {
-            return this.#onGenerateError(generated.reason);
-          }
-          let theme;
-          if (createdTheme.status === "fulfilled" && ok(createdTheme.value)) {
-            theme = createdTheme.value;
-          }
-          return this.#onGenerateComplete(generated.value, theme);
-        })
-        .finally(() => {
-          this.dispatchEvent(new StateEvent({ eventType: "host.unlock" }));
-        });
-    }
-  }
-
-  #onClearError() {
-    this.#state = { status: "initial" };
-  }
-
-  async #generateBoard(intent: string): Promise<GraphDescriptor> {
-    if (!this.flowGenerator) {
-      throw new Error(`No FlowGenerator was provided`);
-    }
-    this.generating = true;
-    const { flow } = await this.flowGenerator.oneShot({
-      intent,
-      context: { flow: this.currentGraph },
-    });
-    return flow;
-  }
-
-  #onGenerateComplete(graph: GraphDescriptor, theme?: GraphTheme) {
-    if (this.#state.status !== "generating") {
+      return;
+    } else if (description === "/force initial") {
+      this.#state = { status: "initial" };
       return;
     }
-    this.dispatchEvent(
-      new StateEvent({
-        eventType: "board.replace",
-        replacement: graph,
-        theme,
-        creator: { role: "assistant" },
-      })
-    );
+    this.#state = { status: "generating" };
+
+    ActionTracker.flowGenEdit(this.currentGraph?.url);
+
+    this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
+
+    this.generating = true;
+    const result = await this.controller?.generate(description);
+    if (!ok(result)) {
+      this.#onGenerateError(result.$error);
+    } else {
+      this.#onGenerateComplete();
+    }
+
+    this.dispatchEvent(new StateEvent({ eventType: "host.unlock" }));
+  }
+
+  #onGenerateComplete() {
     this.#state = { status: "initial" };
     this.#clearInput();
     this.generating = false;
