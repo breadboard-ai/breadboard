@@ -97,6 +97,18 @@ export default {
     LABEL_SEARCH_BOARDS: {
       str: "Search opals",
     },
+    LABEL_WELCOME_MESSAGE_LITE: {
+      str: "Build mini-apps and workflows with Super Gems",
+    },
+    LABEL_SAMPLE_GALLERY_TITLE_LITE: {
+      str: "Super Gems made by Google",
+    },
+    LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS_LITE: {
+      str: "My Super Gems",
+    },
+    LABEL_NO_OPALS_LITE: {
+      str: "The Super Gems you create will appear here",
+    },
     ERROR_LOADING_PROJECTS: {
       str: "Error loading opal server",
     },
