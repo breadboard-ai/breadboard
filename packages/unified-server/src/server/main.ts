@@ -111,7 +111,7 @@ if (flags.SHELL_ENABLED) {
   // around so that this entire re-pathing middleware is not necessary.
   console.log("[unified-server startup] Serving in shell configuration");
   server.get(
-    ["/", "/landing/"],
+    ["/", "/landing/", "/home-lite/"],
     makeCspHandler(SHELL_CSP),
     (req, _res, next) => {
       req.url = "/shell/index.html";
@@ -130,8 +130,16 @@ if (flags.SHELL_ENABLED) {
       next();
     }
   );
+  server.get(
+    "/_app/home-lite/",
+    makeCspHandler(MAIN_APP_CSP),
+    (req, _res, next) => {
+      req.url = "/home-lite/index.html";
+      next();
+    }
+  );
 } else {
-  server.get(["/", "/landing/"], makeCspHandler(MAIN_APP_CSP));
+  server.get(["/", "/landing/", "/home-lite/"], makeCspHandler(MAIN_APP_CSP));
 }
 
 server.get("/oauth/", makeCspHandler(OAUTH_REDIRECT_CSP));

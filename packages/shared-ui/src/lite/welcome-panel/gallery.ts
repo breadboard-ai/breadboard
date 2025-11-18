@@ -93,14 +93,16 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           margin-left: var(--bb-grid-size-2);
 
           &::after {
-            content: "expand_all";
           }
           &.collapsed::after {
             content: "collapse_all";
           }
+          &.expanded::after {
+            content: "expand_all";
+          }
         }
       }
-      
+
       .board {
         position: relative;
         background: var(--light-dark-n-100);
@@ -651,21 +653,28 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           ${this.headerText}
         </h2>
         <slot name="actions"></slot>
-        ${this.collapsable ? html`
-          <button
-            id="show-more-button"
-            class="md-title-small sans-flex w-400"
-            @click=${this.#toggleCollapsedState}
-          >
-          ${Strings.from(this.#isCollapsed ? "COMMAND_SHOW_MORE": "COMMAND_SHOW_LESS")}
-          <span class=${classMap({
-            "g-icon": true,
-            collapsed: this.collapsable && this.#isCollapsed 
-          })}></span>
-          </button>
-        ` : nothing}
+        ${this.collapsable
+          ? html`
+              <button
+                id="show-more-button"
+                class="md-title-small sans-flex w-400"
+                @click=${this.#toggleCollapsedState}
+              >
+                ${Strings.from(
+                  this.#isCollapsed ? "COMMAND_SHOW_MORE" : "COMMAND_SHOW_LESS"
+                )}
+                <span
+                  class=${classMap({
+                    "g-icon": true,
+                    collapsed: this.collapsable && this.#isCollapsed,
+                  })}
+                ></span>
+              </button>
+            `
+          : nothing}
       </section>
-      <div id="boards" 
+      <div
+        id="boards"
         ${ref(this.#boardsContainer)}
         class=${classMap({ collapsed: this.collapsable && this.#isCollapsed })}
       >
@@ -762,9 +771,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
               ${Strings.from("COMMAND_REMIX")}
             </button>`}
         <div class="info">
-          <h4 class="title sans-flex w-500 md-label-large">
-            ${title ?? name}
-          </h4>
+          <h4 class="title sans-flex w-500 md-label-large">${title ?? name}</h4>
           <p class="description sans-flex w-400 md-label-small">
             ${description ?? "No description"}
           </p>

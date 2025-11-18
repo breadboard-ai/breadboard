@@ -18,6 +18,9 @@ import {
 } from "@breadboard-ai/shared-ui/contexts";
 import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
 import type { BoardServer } from "@breadboard-ai/types";
+import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 @customElement("bb-lite-home")
 export class LiteHome extends LitElement {
@@ -30,7 +33,7 @@ export class LiteHome extends LitElement {
 
   @provide({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig;
-  
+
   @provide({ context: boardServerContext })
   accessor boardServer: BoardServer | undefined;
 
@@ -39,25 +42,66 @@ export class LiteHome extends LitElement {
     // Static deployment config
     this.globalConfig = mainArgs.globalConfig;
     this.#embedHandler = mainArgs.embedHandler;
+
+    // Authentication
+    const opalShell = mainArgs.shellHost;
+    const signinAdapter = new SigninAdapter(
+      opalShell,
+      mainArgs.initialSignInState,
+      () => {
+        throw new Error("Expected scopes to be granted");
+      }
+    );
+
+    const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
+      .href;
+    const apiBaseUrl =
+      signinAdapter.state === "signedout"
+        ? proxyApiBaseUrl
+        : "https://www.googleapis.com";
+    const googleDriveClient = new GoogleDriveClient({
+      apiBaseUrl,
+      proxyApiBaseUrl,
+      fetchWithCreds: opalShell.fetchWithCreds,
+    });
+    const googleDrivePublishPermissions =
+      this.globalConfig.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [];
+    const userFolderName =
+      this.globalConfig.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
+    GoogleDriveBoardServer.from(
+      "doesn't matter",
+      {
+        username: "doesn't matter",
+        apiKey: "doesn't matter",
+        secrets: new Map(),
+      },
+      signinAdapter,
+      googleDriveClient,
+      googleDrivePublishPermissions,
+      userFolderName,
+      this.globalConfig.BACKEND_API_ENDPOINT ?? ""
+    ).then((boardServer) => {
+      this.boardServer = boardServer;
+    });
   }
 
   readonly #embedHandler?: EmbedHandler;
 
   #addGGalleryResizeController(el: Element | undefined) {
-  if (el instanceof HTMLElement) {
-    const notifyResize = () => {
-      this.#embedHandler?.sendToEmbedder({
-        type: "resize",
-        width: el.offsetWidth,
-        height: el.offsetHeight,
-      });
-    };
-    const resizeObserver = new ResizeObserver(notifyResize);
-    resizeObserver.observe(el);
-    // Send initial notification
-    notifyResize();
+    if (el instanceof HTMLElement) {
+      const notifyResize = () => {
+        this.#embedHandler?.sendToEmbedder({
+          type: "resize",
+          width: el.offsetWidth,
+          height: el.offsetHeight,
+        });
+      };
+      const resizeObserver = new ResizeObserver(notifyResize);
+      resizeObserver.observe(el);
+      // Send initial notification
+      notifyResize();
+    }
   }
-}
 
   render() {
     return html`<bb-project-listing-lite

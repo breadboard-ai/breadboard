@@ -341,7 +341,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
   #renderUserGraphs(myItems: [string, GraphProviderItem][]) {
     return html`
       <div class="gallery-wrapper">
-        <bb-g-gallery
+        <bb-gallery-lite
           .headerText=${Strings.from("LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS_G")}
           .recentBoards=${this.recentBoards}
           .items=${myItems}
@@ -356,7 +356,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
             <span class="g-icon"></span>
             ${Strings.from("COMMAND_NEW_PROJECT")}
           </button>
-        </bb-g-gallery>
+        </bb-gallery-lite>
       </div>
     `;
   }
@@ -376,14 +376,14 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
         ? html`<div class="gallery-wrapper">
             <h2 class="sans md-title-small w-400 ta-c">There are no items</h2>
           </div>`
-        : html`<bb-g-gallery
+        : html`<bb-gallery-lite
             collapsable
             .headerText=${Strings.from("LABEL_SAMPLE_GALLERY_TITLE_G")}
             .items=${sampleItems}
             .pageSize=${/* Unlimited */ -1}
             forceCreatorToBeTeam
           >
-          </bb-g-gallery>`}
+          </bb-gallery-lite>`}
     `;
   }
 

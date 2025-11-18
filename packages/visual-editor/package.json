@@ -87,6 +87,7 @@
     "prepare-assets": {
       "files": [
         "public/",
+        "home-lite/",
         "index.html",
         "icons/",
         "oauth"
