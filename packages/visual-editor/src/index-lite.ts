@@ -109,39 +109,49 @@ export class LiteMain extends MainBase {
     </div>`;
   }
 
+  #renderWelcomeMat() {
+    return html`<h1>What do you want to build?</h1>`;
+  }
+
+  #renderHome() {
+    return html`<section id="home">
+      <h1>HOME</h1>
+      <button
+        @click=${(evt: Event) => {
+          if (!(evt.target instanceof HTMLButtonElement)) {
+            return;
+          }
+
+          ActionTracker.createNew();
+
+          evt.target.disabled = true;
+          this.handleRoutedEvent(
+            new StateEvent({
+              eventType: "board.create",
+              editHistoryCreator: { role: "user" },
+              graph: blankBoard(),
+              messages: {
+                start: "",
+                end: "",
+                error: "",
+              },
+            })
+          );
+        }}
+      >
+        CREATE
+      </button>
+    </section>`;
+  }
+
   render() {
     if (!this.ready) return nothing;
 
     switch (this.uiState.loadState) {
       case "Home":
-        return html`<section id="home">
-          <h1>HOME</h1>
-          <button
-            @click=${(evt: Event) => {
-              if (!(evt.target instanceof HTMLButtonElement)) {
-                return;
-              }
-
-              ActionTracker.createNew();
-
-              evt.target.disabled = true;
-              this.handleRoutedEvent(
-                new StateEvent({
-                  eventType: "board.create",
-                  editHistoryCreator: { role: "user" },
-                  graph: blankBoard(),
-                  messages: {
-                    start: "",
-                    end: "",
-                    error: "",
-                  },
-                })
-              );
-            }}
-          >
-            CREATE
-          </button>
-        </section>`;
+        // This likely does not belong here.
+        // TODO: Figure out what the right thing is.
+        return this.#renderHome();
       case "Loading":
         return html`Loading (TODO)`;
       case "Error":
@@ -157,21 +167,32 @@ export class LiteMain extends MainBase {
 
     this.projectState = renderValues.projectState || undefined;
 
-    return html`<section
-      id="lite-shell"
-      @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) =>
-        this.handleRoutedEvent(evt)}
-    >
-      <bb-splitter
-        direction=${"horizontal"}
-        name="layout-main"
-        split="[0.70, 0.30]"
+    const stepList = renderValues.projectState?.run.stepList;
+
+    if (stepList?.empty) {
+      // For new graph, show the welcome mat and no app view.
+      return html`<section
+        id="lite-shell"
+        @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) =>
+          this.handleRoutedEvent(evt)}
       >
-        ${[
-          this.#renderList(renderValues.projectState?.run.stepList),
-          this.#renderApp(renderValues),
-        ]}
-      </bb-splitter>
-    </section>`;
+        ${[this.#renderWelcomeMat(), this.#renderList(stepList)]}
+      </section>`;
+    } else {
+      // When there are nodes in the graph, show the app view.
+      return html`<section
+        id="lite-shell"
+        @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) =>
+          this.handleRoutedEvent(evt)}
+      >
+        <bb-splitter
+          direction=${"horizontal"}
+          name="layout-main"
+          split="[0.70, 0.30]"
+        >
+          ${[this.#renderList(stepList), this.#renderApp(renderValues)]}
+        </bb-splitter>
+      </section>`;
+    }
   }
 }
