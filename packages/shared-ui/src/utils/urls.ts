@@ -48,6 +48,7 @@ export interface GraphInit extends BaseUrlInit {
   results?: string;
   shared?: boolean;
   lite?: boolean;
+  new?: boolean;
   redirectFromLanding?: boolean;
 }
 
@@ -63,6 +64,7 @@ const FLOW = "flow";
 const TAB0 = "tab0";
 const MODE = "mode";
 const LITE = "lite" as const;
+const NEW = "new";
 const MODE_APP = "app" as const;
 const MODE_CANVAS = "canvas" as const;
 const RESULTS = "results";
@@ -106,6 +108,9 @@ export function makeUrl(
     }
     if (init.lite) {
       url.searchParams.set(LITE, init.lite === true ? "true" : "false");
+    }
+    if (init.new) {
+      url.searchParams.set(NEW, init.new === true ? "true" : "false");
     }
     url.searchParams.set(MODE, init.mode);
   } else if (page === "landing") {
@@ -223,6 +228,7 @@ export function parseUrl(url: string | URL): MakeUrlInit {
       page: "graph",
       mode: url.searchParams.get(MODE) === "app" ? "app" : "canvas",
       lite: url.searchParams.get(LITE) === "true",
+      new: url.searchParams.get(NEW) === "true",
       flow: flow,
       resourceKey: url.searchParams.get(RESOURCE_KEY) ?? undefined,
     };
