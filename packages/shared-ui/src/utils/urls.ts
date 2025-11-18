@@ -35,6 +35,7 @@ export function devUrlParams(): Required<BaseUrlInit>["dev"] {
 
 export interface HomeUrlInit extends BaseUrlInit {
   page: "home";
+  new?: boolean;
   mode?: VisualEditorMode;
   lite?: boolean;
   redirectFromLanding?: boolean;
@@ -48,7 +49,6 @@ export interface GraphInit extends BaseUrlInit {
   results?: string;
   shared?: boolean;
   lite?: boolean;
-  new?: boolean;
   redirectFromLanding?: boolean;
 }
 
@@ -95,6 +95,9 @@ export function makeUrl(
     if (init.lite) {
       url.searchParams.set(LITE, init.lite === true ? "true" : "false");
     }
+    if (init.new) {
+      url.searchParams.set(NEW, init.new === true ? "true" : "false");
+    }
   } else if (page === "graph") {
     url.searchParams.set(FLOW, init.flow);
     if (init.resourceKey) {
@@ -108,9 +111,6 @@ export function makeUrl(
     }
     if (init.lite) {
       url.searchParams.set(LITE, init.lite === true ? "true" : "false");
-    }
-    if (init.new) {
-      url.searchParams.set(NEW, init.new === true ? "true" : "false");
     }
     url.searchParams.set(MODE, init.mode);
   } else if (page === "landing") {
@@ -215,6 +215,7 @@ export function parseUrl(url: string | URL): MakeUrlInit {
         mode:
           url.searchParams.get("mode") === MODE_APP ? MODE_APP : MODE_CANVAS,
         lite: url.searchParams.get("lite") === "true",
+        new: url.searchParams.get(NEW) === "true",
       };
       if (dev) {
         home.dev = dev;
@@ -228,7 +229,6 @@ export function parseUrl(url: string | URL): MakeUrlInit {
       page: "graph",
       mode: url.searchParams.get(MODE) === "app" ? "app" : "canvas",
       lite: url.searchParams.get(LITE) === "true",
-      new: url.searchParams.get(NEW) === "true",
       flow: flow,
       resourceKey: url.searchParams.get(RESOURCE_KEY) ?? undefined,
     };

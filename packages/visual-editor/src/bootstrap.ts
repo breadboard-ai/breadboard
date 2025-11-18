@@ -128,7 +128,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     }
 
     if (lite) {
-      if (page === "home") {
+      if (page === "home" && !parsedUrl.new) {
         const { LiteHome } = await import("./index-lite-home.js");
         const liteHome = new LiteHome(mainArgs);
         document.body.appendChild(liteHome);

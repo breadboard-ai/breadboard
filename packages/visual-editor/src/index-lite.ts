@@ -24,9 +24,8 @@ import {
 } from "@breadboard-ai/shared-ui/events/events.js";
 import { provide } from "@lit/context";
 import { projectStateContext } from "@breadboard-ai/shared-ui/contexts";
-import { ActionTracker } from "@breadboard-ai/shared-ui/utils/action-tracker";
-import { blankBoard } from "@breadboard-ai/shared-ui/utils/utils.js";
 import { ref } from "lit/directives/ref.js";
+import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 
 @customElement("bb-lite")
 export class LiteMain extends MainBase {
@@ -271,37 +270,6 @@ export class LiteMain extends MainBase {
     return html`<h1>What do you want to build?</h1>`;
   }
 
-  #renderHome() {
-    return html`<section id="home">
-      <h1>HOME</h1>
-      <button
-        @click=${(evt: Event) => {
-          if (!(evt.target instanceof HTMLButtonElement)) {
-            return;
-          }
-
-          ActionTracker.createNew();
-
-          evt.target.disabled = true;
-          this.handleRoutedEvent(
-            new StateEvent({
-              eventType: "board.create",
-              editHistoryCreator: { role: "user" },
-              graph: blankBoard(),
-              messages: {
-                start: "",
-                end: "",
-                error: "",
-              },
-            })
-          );
-        }}
-      >
-        CREATE
-      </button>
-    </section>`;
-  }
-
   #renderSnackbar() {
     return html`<bb-snackbar
       ${ref((el: Element | undefined) => {
@@ -324,11 +292,18 @@ export class LiteMain extends MainBase {
   render() {
     if (!this.ready) return nothing;
 
+    let isNew = false;
+
     switch (this.uiState.loadState) {
-      case "Home":
-        // This likely does not belong here.
-        // TODO: Figure out what the right thing is.
-        return this.#renderHome();
+      case "Home": {
+        const parsedUrl = parseUrl(window.location.href);
+        isNew = !!(parsedUrl.page === "home" && parsedUrl.new);
+        if (!isNew) {
+          console.warn("Invalid Home URL state", parsedUrl);
+          return nothing;
+        }
+        break;
+      }
       case "Loading":
         return html`<div id="loading">
           <span class="g-icon heavy-filled round">progress_activity</span
@@ -351,7 +326,7 @@ export class LiteMain extends MainBase {
 
     const stepList = renderValues.projectState?.run.stepList;
 
-    if (stepList?.empty) {
+    if (stepList?.empty || isNew) {
       // For new graph, show the welcome mat and no app view.
       return html`<section
         id="lite-shell"
