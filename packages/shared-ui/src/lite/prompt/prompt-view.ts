@@ -9,8 +9,6 @@ import { SignalWatcher } from "@lit-labs/signals";
 import * as Styles from "../../styles/styles";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
 
-const MAX_HEIGHT = 96;
-
 @customElement("bb-prompt-view")
 export class PromptView extends SignalWatcher(LitElement) {
   @property()
@@ -98,7 +96,10 @@ export class PromptView extends SignalWatcher(LitElement) {
       return;
     }
 
-    if (this.#promptContainer.value.scrollHeight > MAX_HEIGHT) {
+    if (
+      this.#promptContainer.value.scrollHeight >
+      this.#promptContainer.value.clientHeight
+    ) {
       requestAnimationFrame(() => {
         this.overflowing = true;
       });
