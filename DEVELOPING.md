@@ -9,21 +9,6 @@ capability.
 Each item within the project lives as an `npm` package, though not all packages
 are actively published _to_ npm.
 
-### Packages
-
-| Package Name                                                              | NPM                                                                                                                                                         | Description                                                                        |
-| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| _Core_                                                                    |                                                                                                                                                             |                                                                                    |
-| [`@google-labs/breadboard`](./packages/breadboard)                        | [![Published on npm](https://img.shields.io/npm/v/@google-labs/breadboard.svg?logo=npm)](https://www.npmjs.com/package/@google-labs/breadboard)             | The core Breadboard library                                                        |
-| [`@breadboard-ai/visual-editor`](./packages/visual-editor)                | _Unpublished_                                                                                                                                               | The source code for the Breadboard Visual Editor                                   |
-| _Kits_                                                                    |                                                                                                                                                             |                                                                                    |
-| [`@google-labs/core-kit`](./packages/core-kit)                            | [![Published on npm](https://img.shields.io/npm/v/@google-labs/core-kit.svg?logo=npm)](https://www.npmjs.com/package/@google-labs/core-kit)                 | Breadboard kit for foundational board operations like `map` and `invoke`           |
-| [`@google-labs/google-drive-kit`](./packages/google-drive-kit)            | [![Published on npm](https://img.shields.io/npm/v/@google-labs/google-drive-kit.svg?logo=npm)](https://www.npmjs.com/package/@google-labs/google-drive-kit) | Breadboard kit for working with Google Drive                                       |
-| [`@exadev/breadboard-kits`](https://github.com/ExaDev-io/breadboard-kits) | [![Published on npm](https://img.shields.io/npm/v/@exadev/breadboard-kits?logo=npm)](https://www.npmjs.com/package/@exadev/breadboard-kits)                 | A variety of utilities, general purpose nodes, and kits specific scenarios         |
-| _Tools & Support Libraries_                                               |                                                                                                                                                             |                                                                                    |
-| _Internal/Experiments_                                                    |                                                                                                                                                             |                                                                                    |
-| [`@google-labs/breadboard-schema`](./packages/breadboard-schema)          | _Unpublished_                                                                                                                                               | An internal tool that generates a JSON schema from the Breadboard TypeScript types |
-
 ## Building a package
 
 We use [Wireit](https://github.com/google/wireit) as the build tool for the
@@ -75,22 +60,10 @@ npm run test
 ```
 
 Most of the time, you will likely want to bring up the Breadboard Web UI. To do
-so, run the `w` command:
+so, run the `dev` command:
 
 ```bash
-npm run w
-```
-
-To start a doc site server:
-
-```bash
-npm run d
-```
-
-To start a board server and a Breadboard Web UI:
-
-```bash
-npm run s
+npm run dev
 ```
 
 Occasionally, there will be changes that will require a full rebuild with
@@ -105,7 +78,6 @@ to restart with `npm i` and all those things.
 
 ```bash
 npm run clean
-
 ```
 
 ## Creating a new package
@@ -315,117 +287,3 @@ change lands, and provides an opportunity for code review.
 > populate the title and description from your commits. See the
 > [create command documentation](https://cli.github.com/manual/gh_pr_create) for
 > more information.
-
-### Changesets
-
-This repo uses [Changesets](https://github.com/changesets/changesets) to ease
-the burden of releasing of NPM packages. The benefits are that it publishes
-multiple packages at once, understands the dependencies between all packages in
-the monorepo, automatically updates the `package.json` and `CHANGELOG.md` files,
-and automatically creates release tags.
-
-> [!TIP] If you need to publish NPM packages, see the
-> [Publishing NPM packages](#publishing-npm-packages) section below.
-
-After sending a PR, you may receive a comment from
-[**changeset-bot**](https://github.com/apps/changeset-bot) that looks like this:
-
-![changeset-bot comment](https://user-images.githubusercontent.com/11481355/66183943-dc418680-e6bd-11e9-998d-e43f90a974bd.png)
-
-This bot is telling you that your PR does not contain a
-[Changeset file](https://github.com/changesets/changesets/blob/main/docs/detailed-explanation.md).
-Changeset files are how Changesets understands which packages need to be
-released at any given time, along with the kind of version bump that is needed
-for them.
-
-The easiest way to create a Changeset file for your PR is to run this command
-from the root of the monorepo:
-
-```
-npx changeset
-```
-
-This command will prompt you with an interactive list of packages. Select the
-packages that the PR affects and indicate whether the changes are
-[semver](https://semver.org/) `major` (breaking), `minor` (new features), or
-`patch` (bug fixes).
-
-> [!NOTE] If your change only affects **unpublished** packages, then you can
-> safely skip adding a changeset file and ignore the bot.
-
-Then just push the generated changeset file to your PR!
-
-## Publishing NPM packages
-
-To publish an NPM package, you have to be a Googler. This is unlikely to change
-in the future. Having said that, here are the steps to publish a package.
-
-1. At the root of the repository, ensure you are synchronized to the tip of
-   `main` and create a new release branch.
-
-   ```bash
-   git checkout main
-   git pull
-   git checkout -b release
-   ```
-
-2. Use the Changesets
-   [version](https://github.com/changesets/changesets/blob/main/docs/command-line-options.md#version)
-   command to find all packages that need releasing and automatically update
-   their `package.json` and `CHANGELOG.md` files. Note that Changesets
-   automatically bumps the semver constraints for dependent packages when
-   needed, so there is no need to manually edit any `package.json` files.
-
-   ```bash
-   npx changeset version
-   ```
-
-   > [!NOTE] Sometimes, the command may fail with a fairly cryptic error like
-   > "TypeError: Cannot destructure property 'packageJson' of 'undefined' as it
-   > is undefined.". This typically means that a package was renamed sometime
-   > between the last release and now. To fix, look through the `.md` files in
-   > the `./.changeset` directory, and remove all lines that reference the
-   > package by its old name.
-
-3. Check what is planned to be published by looking at the latest commit which
-   Changesets created in the previous step. Make sure it looks reasonable, and
-   send a PR with the changes so that others can see what will be published.
-
-   ```bash
-   git show
-   gh pr create -f # or git push if you don't have the gh tools
-   ```
-
-4. Sign in to NPM:
-
-   ```bash
-   npm adduser
-   ```
-
-5. Generate a token for the Google NPM release proxy registry. Running the
-   command below will open a browser window. Select _24 hour temporary token_
-   after which the command should exit by itself.
-
-   ```bash
-   npm login --registry https://wombat-dressing-room.appspot.com
-   ```
-
-6. Wait for the PR from step 3 to pass CI.
-
-7. Use the Changesets
-   [publish](https://github.com/changesets/changesets/blob/main/docs/command-line-options.md#publish)
-   command to publish all changes and generate release tags (e.g.
-   `@google-labs/breadboard@0.8.0`).
-
-   ```bash
-   npx changeset publish
-   ```
-
-8. Push the release tags added in step 7 to GitHub so that they are associated
-   with the commit from step 2.
-
-   ```bash
-   git push --follow-tags
-   ```
-
-9. Merge the PR from step 3.
