@@ -51,8 +51,74 @@ export class LiteMain extends MainBase {
         width: 100%;
         padding: var(--bb-grid-size-3);
 
+        & #controls {
+          display: flex;
+          flex-direction: column;
+          gap: var(--bb-grid-size-2);
+
+          & bb-prompt-view {
+            flex: 0 0 auto;
+            margin-bottom: var(--bb-grid-size-8);
+          }
+
+          & bb-step-list-view {
+            flex: 1 1 auto;
+            overflow: auto;
+          }
+
+          & bb-editor-input-lite {
+            flex: 0 0 auto;
+          }
+        }
+
         & #app-view {
           margin: 0 0 0 var(--bb-grid-size-3);
+          border-radius: var(--bb-grid-size-4);
+          border: 1px solid var(--light-dark-n-90);
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+
+          & header {
+            height: var(--bb-grid-size-16);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-5);
+            color: var(--light-dark-n-10);
+
+            & .left {
+              flex: 1;
+            }
+
+            & .left,
+            & .right {
+              display: flex;
+              align-items: center;
+              white-space: nowrap;
+              gap: var(--bb-grid-size-8);
+            }
+
+            button,
+            a {
+              display: flex;
+              align-items: center;
+              color: var(--light-dark-n-10);
+              border: none;
+              background: none;
+              padding: 0;
+              cursor: pointer;
+              text-decoration: none;
+
+              & .g-icon {
+                margin-right: var(--bb-grid-size-2);
+              }
+            }
+          }
+
+          & bb-app-view-controller {
+            flex: 1 1 auto;
+          }
         }
 
         & bb-splitter {
@@ -76,22 +142,46 @@ export class LiteMain extends MainBase {
     super(args);
   }
 
-  #renderList(state: StepListState | undefined) {
-    return html`<div id="controls-view" slot="slot-0">
-      <div id="list">
-        <bb-step-list-view .state=${state}></bb-step-list-view>
-      </div>
-      <div id="flowgen">
-        <bb-flowgen-editor-input
-          .hasEmptyGraph=${state?.empty}
-          .currentGraph=${state?.graph}
-        ></bb-flowgen-editor-input>
-      </div>
+  #renderOriginalPrompt() {
+    return html`<bb-prompt-view
+      .prompt=${`An app that asks how many people I'll have for dinner, looks for seasonal ingredients on GoodEggs website, then plans a menu and then decides what to do. It's all very exciting when this works and we see content and stuff.`}
+    ></bb-prompt-view>`;
+  }
+
+  #renderUserInput(state: StepListState | undefined) {
+    return html`<div id="flowgen">
+      <bb-editor-input-lite
+        .hasEmptyGraph=${state?.empty}
+        .currentGraph=${state?.graph}
+      ></bb-editor-input-lite>
     </div>`;
   }
 
+  #renderControls(state: StepListState | undefined) {
+    return html`<div id="controls" slot="slot-0">
+      ${[
+        this.#renderOriginalPrompt(),
+        this.#renderList(state),
+        this.#renderUserInput(state),
+      ]}
+    </div>`;
+  }
+
+  #renderList(state: StepListState | undefined) {
+    return html` <bb-step-list-view .state=${state}></bb-step-list-view> `;
+  }
+
   #renderApp(renderValues: RenderValues) {
-    return html` <div id="app-view" slot="slot-1">
+    return html` <section id="app-view" slot="slot-1">
+      <header class="w-400 md-title-small sans-flex">
+        <div class="left">${this.tab?.name ?? "Untitled app"}</div>
+        <div class="right">
+          <a href="/?mode=canvas&" target="_blank"
+            ><span class="g-icon">open_in_new</span>Open Advanced Editor</a
+          >
+          <button><span class="g-icon">share</span>Share</button>
+        </div>
+      </header>
       <bb-app-controller
         class=${classMap({ active: true })}
         .graph=${this.tab?.graph ?? null}
@@ -106,7 +196,7 @@ export class LiteMain extends MainBase {
         .themeHash=${renderValues.themeHash}
       >
       </bb-app-controller>
-    </div>`;
+    </section>`;
   }
 
   #renderWelcomeMat() {
@@ -188,9 +278,9 @@ export class LiteMain extends MainBase {
         <bb-splitter
           direction=${"horizontal"}
           name="layout-main"
-          split="[0.70, 0.30]"
+          split="[0.30, 0.70]"
         >
-          ${[this.#renderList(stepList), this.#renderApp(renderValues)]}
+          ${[this.#renderControls(stepList), this.#renderApp(renderValues)]}
         </bb-splitter>
       </section>`;
     }

@@ -39,7 +39,7 @@ export class StepListView extends SignalWatcher(LitElement) {
 
         & > h1 {
           color: var(--light-dark-n-0);
-          margin: 0 0 var(--bb-grid-size-2) 0;
+          margin: 0;
         }
 
         & > p {
@@ -48,6 +48,7 @@ export class StepListView extends SignalWatcher(LitElement) {
         }
 
         & > #list {
+          width: 100%;
           flex: 1 1 auto;
           overflow-x: hidden;
           overflow-y: scroll;
@@ -59,11 +60,12 @@ export class StepListView extends SignalWatcher(LitElement) {
           padding: 0;
           margin: 0;
           gap: var(--bb-grid-size-2);
-          padding-bottom: var(--bb-grid-size-8);
+          padding: var(--bb-grid-size-2) 0 var(--bb-grid-size-5) 0;
           mask: linear-gradient(
             to bottom,
-            #ffffff 0%,
-            #ffffff calc(100% - var(--bb-grid-size-8)),
+            #ffffff00 0%,
+            #ffffff var(--bb-grid-size-2),
+            #ffffff calc(100% - var(--bb-grid-size-5)),
             #ff00ff00 100%
           );
 
@@ -202,7 +204,9 @@ export class StepListView extends SignalWatcher(LitElement) {
                 >
               </summary>
               <div class="step-content sans md-body-medium w-400">
-                ${step.prompt}
+                ${step.prompt && step.prompt.trim() !== ""
+                  ? step.prompt
+                  : html`Not provided`}
               </div>
             </details>
           `;
@@ -221,6 +225,7 @@ export class StepListView extends SignalWatcher(LitElement) {
     if (!this.state) return nothing;
 
     return html`<section>
+      <h1 class="w-400 sans-flex md-title-medium">Steps</h1>
       ${[this.#renderIntent(), this.#renderList()]}
     </section>`;
   }
