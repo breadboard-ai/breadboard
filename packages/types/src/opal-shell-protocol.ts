@@ -22,13 +22,9 @@ export interface OpalShellHostProtocol {
 
   fetchWithCreds: typeof fetch;
 
-  generateSignInUrlAndNonce(
-    scopes: string[]
-  ): Promise<{ url: string; nonce: string }>;
+  signIn(scopes: string[]): Promise<SignInResult>;
 
   signOut(): Promise<void>;
-
-  listenForSignIn(nonce: string): Promise<SignInResult>;
 
   setUrl(url: string): void;
 
