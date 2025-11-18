@@ -3,11 +3,13 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import * as Styles from "../../styles/styles";
-import { ref } from "lit/directives/ref.js";
+import { createRef, Ref, ref } from "lit/directives/ref.js";
+
+const MAX_HEIGHT = 96;
 
 @customElement("bb-prompt-view")
 export class PromptView extends SignalWatcher(LitElement) {
@@ -16,6 +18,9 @@ export class PromptView extends SignalWatcher(LitElement) {
 
   @property({ reflect: true, attribute: true, type: Boolean })
   accessor expanded = false;
+
+  @property({ reflect: true, attribute: true, type: Boolean })
+  accessor overflowing = false;
 
   static styles = [
     Styles.HostIcons.icons,
@@ -50,11 +55,15 @@ export class PromptView extends SignalWatcher(LitElement) {
         width: 100%;
         padding: 0;
         margin: 0;
-        cursor: pointer;
         color: var(--light-dark-n-70);
         border-radius: var(--bb-grid-size);
 
+        &:not([disabled]) {
+          cursor: pointer;
+        }
+
         & .g-icon {
+          display: none;
           color: var(--light-dark-n-0);
           &::before {
             content: "keyboard_arrow_down";
@@ -73,12 +82,28 @@ export class PromptView extends SignalWatcher(LitElement) {
           content: "keyboard_arrow_up";
         }
       }
+
+      :host([overflowing]) {
+        & button .g-icon {
+          display: flex;
+        }
+      }
     `,
   ];
 
-  #resizeObserver = new ResizeObserver((entries) => {
-    console.log(entries);
-  });
+  #promptContainer: Ref<HTMLDivElement> = createRef();
+
+  protected updated(changedProperties: PropertyValues<this>): void {
+    if (!changedProperties.has("prompt") || !this.#promptContainer.value) {
+      return;
+    }
+
+    if (this.#promptContainer.value.scrollHeight > MAX_HEIGHT) {
+      requestAnimationFrame(() => {
+        this.overflowing = true;
+      });
+    }
+  }
 
   render() {
     if (!this.prompt) {
@@ -88,6 +113,7 @@ export class PromptView extends SignalWatcher(LitElement) {
     return html`<div id="container">
       <button
         class="w-400 md-body-small sans-flex"
+        ?disabled=${!this.overflowing}
         @click=${() => {
           this.expanded = !this.expanded;
         }}
@@ -96,18 +122,13 @@ export class PromptView extends SignalWatcher(LitElement) {
         <span class="g-icon filled-heavy round"></span>
       </button>
       <div
-        ${ref((el: Element | undefined) => {
-          if (!el) {
-            this.#resizeObserver.disconnect();
-            return;
-          }
-
-          this.#resizeObserver.observe(el);
-        })}
+        ${ref(this.#promptContainer)}
         id="content"
         class="w-400 md-title-medium sans-flex"
       >
-        ${this.prompt}
+        ${this.prompt && this.prompt.trim() !== ""
+          ? this.prompt
+          : "No prompt provided"}
       </div>
     </div>`;
   }

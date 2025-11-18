@@ -10,6 +10,7 @@ import { createRef, ref } from "lit/directives/ref.js";
 import { icons } from "../../styles/icons.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
+import { classMap } from "lit/directives/class-map.js";
 
 /**
  * TODO(aomarks) Replace with some proper HTML, but that requires switching to a
@@ -47,6 +48,12 @@ export class ExpandingTextarea extends LitElement {
   @property({ type: Boolean })
   accessor tabCompletesPlaceholder = false;
 
+  @property()
+  accessor classes = "sans-flex w-500 round md-body-large";
+
+  @property({ reflect: true, type: String })
+  accessor orientation: "horizontal" | "vertical" = "horizontal";
+
   #measure = createRef<HTMLElement>();
   #textarea = createRef<HTMLTextAreaElement>();
   #resizeObserver = new ResizeObserver(() => this.#recomputeHeight());
@@ -59,9 +66,9 @@ export class ExpandingTextarea extends LitElement {
       :host {
         --min-lines: 3;
         --max-lines: 10;
-        padding: 0.5lh;
-        border: 1px solid currentColor;
-        border-radius: 0.5lh;
+        padding: var(--padding, 0.5lh);
+        border: 1px solid var(--border-color, currentColor);
+        border-radius: var(--border-radius, 0.5lh);
         overflow-y: hidden;
       }
 
@@ -71,13 +78,29 @@ export class ExpandingTextarea extends LitElement {
         --line-height: 24px;
       }
 
+      :host([orientation="vertical"]) {
+        box-sizing: border-box;
+
+        #outer-container {
+          box-sizing: border-box;
+          flex-direction: column;
+          justify-content: end;
+          align-items: end;
+
+          > #inner-container {
+            box-sizing: border-box;
+            width: 100%;
+          }
+        }
+      }
+
       #inner-container {
         flex: 1;
         display: flex;
         justify-content: center;
         align-items: center;
         position: relative;
-        margin: var(--bb-grid-size-2);
+        padding: var(--bb-grid-size-2);
       }
 
       textarea,
@@ -130,17 +153,22 @@ export class ExpandingTextarea extends LitElement {
       #submit {
         background: none;
         border: none;
-        cursor: pointer;
-        color: var(--light-dark-n-60);
+        color: var(--light-dark-n-30);
+        opacity: 0.5;
         padding: 4px;
         display: flex;
         align-items: center;
         justify-content: center;
         margin: -4px;
-      }
+        transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
 
-      #submit:hover {
-        color: var(--light-dark-n-30);
+        &:not([disabled]) {
+          cursor: pointer;
+
+          &:hover {
+            opacity: 1;
+          }
+        }
       }
 
       ::slotted(.g-icon) {
@@ -166,13 +194,18 @@ export class ExpandingTextarea extends LitElement {
   }
 
   override render() {
+    const classes: Record<string, boolean> = Object.fromEntries(
+      this.classes.split(" ").map((val) => {
+        return [val, true];
+      })
+    );
     return html`
       <div id="outer-container">
         <div id="inner-container">
           <textarea
             ${ref(this.#textarea)}
             part="textarea"
-            class="sans-flex w-500 round md-body-large"
+            class=${classMap(classes)}
             .value=${this.value}
             .placeholder=${this.tabCompletesPlaceholder
               ? this.placeholder + TEMPORARY_TAB_ICON_TEXT
@@ -183,12 +216,17 @@ export class ExpandingTextarea extends LitElement {
           ></textarea>
           <div
             id="measure"
-            class="sans-flex w-500 round md-body-large"
+            class=${classMap(classes)}
             ${ref(this.#measure)}
           ></div>
         </div>
         <slot name="mic"></slot>
-        <button id="submit" aria-label="Submit" @click=${this.#submit}>
+        <button
+          ?disabled=${this.disabled}
+          id="submit"
+          aria-label="Submit"
+          @click=${this.#submit}
+        >
           <slot name="submit">
             <span class="g-icon">spark</span>
           </slot>
