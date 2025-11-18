@@ -102,7 +102,7 @@ body {
   font-family: var(--bb-font-family, Arial);
   color: var(--bb-font-color);
   width: 100svw;
-  height: var(--bb-body-height, 100svh);
+  height: 100svh;
   display: flex;
   flex-direction: column;
   background: var(--n-100);

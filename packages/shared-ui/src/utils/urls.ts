@@ -72,7 +72,6 @@ const MISSING_SCOPES = "missing-scopes";
 const RESOURCE_KEY = "resourcekey";
 export const OAUTH_REDIRECT = "oauth_redirect";
 const DEV_PREFIX = "dev-";
-const GALLERY = "g-gallery";
 
 /**
  * Generate a URL for a page on the Breadboard Visual Editor.
