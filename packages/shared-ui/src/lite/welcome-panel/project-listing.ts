@@ -248,7 +248,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
     return html`
       <section id="hero">
         <h1 class="sans-flex w-500 md-headline-medium">
-          ${Strings.from("LABEL_WELCOME_MESSAGE_G")}
+          ${Strings.from("LABEL_WELCOME_MESSAGE_LITE")}
         </h1>
       </section>
     `;
@@ -341,7 +341,9 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
     return html`
       <div class="gallery-wrapper">
         <bb-gallery-lite
-          .headerText=${Strings.from("LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS_G")}
+          .headerText=${Strings.from(
+            "LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS_LITE"
+          )}
           .recentBoards=${this.recentBoards}
           .items=${myItems}
           .pageSize=${PAGE_SIZE}
@@ -364,7 +366,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
     return html`
       <div id="no-projects-panel">
         <span class="g-icon">pentagon</span>
-        ${Strings.from("LABEL_NO_OPALS")}
+        ${Strings.from("LABEL_NO_OPALS_LITE")}
       </div>
     `;
   }
@@ -377,7 +379,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
           </div>`
         : html`<bb-gallery-lite
             collapsable
-            .headerText=${Strings.from("LABEL_SAMPLE_GALLERY_TITLE_G")}
+            .headerText=${Strings.from("LABEL_SAMPLE_GALLERY_TITLE_LITE")}
             .items=${sampleItems}
             .pageSize=${/* Unlimited */ -1}
             forceCreatorToBeTeam

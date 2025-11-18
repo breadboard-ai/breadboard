@@ -30,17 +30,20 @@ export class LiteHome extends LitElement {
     BBLite.Styles.HostColors.baseColors,
     BBLite.Styles.HostType.type,
   ];
-
+  
   @provide({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig;
-
+  
   @provide({ context: boardServerContext })
   accessor boardServer: BoardServer | undefined;
-
+  
+  readonly #embedHandler?: EmbedHandler;
   constructor(mainArgs: MainArguments) {
     super();
     // Static deployment config
     this.globalConfig = mainArgs.globalConfig;
+    
+    // Communication with embedder
     this.#embedHandler = mainArgs.embedHandler;
 
     // Authentication
@@ -53,6 +56,7 @@ export class LiteHome extends LitElement {
       }
     );
 
+    // Board server
     const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
       .href;
     const apiBaseUrl =
@@ -69,10 +73,11 @@ export class LiteHome extends LitElement {
     const userFolderName =
       this.globalConfig.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
     GoogleDriveBoardServer.from(
-      "doesn't matter",
+      // TODO: The first two args are not used but currently required
+      "",
       {
-        username: "doesn't matter",
-        apiKey: "doesn't matter",
+        username: "",
+        apiKey: "",
         secrets: new Map(),
       },
       signinAdapter,
@@ -94,7 +99,6 @@ export class LiteHome extends LitElement {
     }
   }
 
-  readonly #embedHandler?: EmbedHandler;
 
   #addGGalleryResizeController(el: Element | undefined) {
     if (el instanceof HTMLElement) {
