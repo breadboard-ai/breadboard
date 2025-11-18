@@ -48,6 +48,19 @@ export class LiteMain extends MainBase {
         flex: 1;
       }
 
+      #loading {
+        display: flex;
+        height: 100%;
+        width: 100%;
+        align-items: center;
+        justify-content: center;
+
+        & .g-icon {
+          margin-right: var(--bb-grid-size-2);
+          animation: rotate 1s linear infinite;
+        }
+      }
+
       #lite-shell {
         display: block;
         height: 100%;
@@ -148,6 +161,16 @@ export class LiteMain extends MainBase {
         &.active {
           z-index: 100;
           display: block;
+        }
+      }
+
+      @keyframes rotate {
+        from {
+          rotate: 0deg;
+        }
+
+        to {
+          rotate: 360deg;
         }
       }
     `,
@@ -263,9 +286,12 @@ export class LiteMain extends MainBase {
         // TODO: Figure out what the right thing is.
         return this.#renderHome();
       case "Loading":
-        return html`Loading (TODO)`;
+        return html`<div id="loading">
+          <span class="g-icon heavy-filled round">progress_activity</span
+          >Loading
+        </div>`;
       case "Error":
-        return html`Error (TODO)`;
+        return html`Error`;
       case "Loaded":
         break;
       default:
