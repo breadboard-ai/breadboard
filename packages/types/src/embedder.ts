@@ -63,7 +63,7 @@ export declare interface BoardIdCreatedMessage {
 /** 
  * Event to notify the parent of iframe content size change 
  * 
- * Currently only fired from the ?g-gallery=true mode.
+ * Currently only fired from the bb-lite-home component (/?lite=true).
  */
 export declare interface ResizeMessage {
   type: "resize";
