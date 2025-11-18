@@ -233,6 +233,19 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @property()
   accessor readOnly = true;
 
+  @property()
+  accessor headerConfig: {
+    replay: boolean;
+    menu: boolean;
+    fullscreen: boolean;
+    small: boolean;
+  } = {
+    replay: true,
+    menu: true,
+    fullscreen: false,
+    small: false,
+  };
+
   @consume({ context: boardServerContext, subscribe: true })
   accessor boardServer: BoardServer | undefined;
 
@@ -316,8 +329,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     return html`<bb-app-header
       .isEmpty=${this.isEmpty}
       .progress=${this.run?.progress}
-      .replayActive=${true}
-      .menuActive=${true}
+      .replayActive=${this.headerConfig.replay}
+      .menuActive=${this.headerConfig.menu}
+      .fullScreenActive=${this.headerConfig.fullscreen}
+      .small=${this.headerConfig.small}
       .appTitle=${this.graph?.title}
       @bbevent=${(evt: StateEvent<"board.stop">) => {
         if (evt.detail.eventType !== "board.stop") {

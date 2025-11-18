@@ -237,6 +237,12 @@ export class LiteMain extends MainBase {
         .showGDrive=${this.signinAdapter.state === "signedin"}
         .status=${renderValues.tabStatus}
         .themeHash=${renderValues.themeHash}
+        .headerConfig=${{
+          menu: false,
+          replay: true,
+          fullscreen: true,
+          small: true,
+        }}
       >
       </bb-app-controller>
     </section>`;

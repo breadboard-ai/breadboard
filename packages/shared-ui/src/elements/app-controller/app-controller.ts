@@ -120,6 +120,14 @@ export class AppController extends SignalWatcher(LitElement) {
   accessor appDescription: string | null = null;
 
   @property()
+  accessor headerConfig = {
+    replay: true,
+    menu: true,
+    fullscreen: false,
+    small: false,
+  };
+
+  @property()
   accessor theme: AppTheme = this.#createDefaultTheme();
 
   @state()
@@ -402,6 +410,7 @@ export class AppController extends SignalWatcher(LitElement) {
       this.#appTemplate.isEmpty = this.graphIsEmpty;
       this.#appTemplate.focusWhenIn = this.focusWhenIn;
       this.#appTemplate.runtimeFlags = this.runtimeFlags;
+      this.#appTemplate.headerConfig = this.headerConfig;
     }
 
     return html`

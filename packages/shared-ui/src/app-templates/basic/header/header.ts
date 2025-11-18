@@ -37,6 +37,13 @@ export class Header extends LitElement {
   @property()
   accessor replayActive = false;
 
+  // Note: if this is true it supersedes menuActive.
+  @property()
+  accessor fullScreenActive = false;
+
+  @property({ reflect: true, type: Boolean })
+  accessor small = false;
+
   @property()
   accessor running = false;
 
@@ -80,6 +87,7 @@ export class Header extends LitElement {
         border-bottom: 1px solid var(--light-dark-n-90);
       }
 
+      #fullscreen,
       #menu,
       #replay {
         position: relative;
@@ -120,6 +128,7 @@ export class Header extends LitElement {
         }
       }
 
+      #fullscreen,
       #menu {
         display: flex;
         justify-content: start;
@@ -161,6 +170,19 @@ export class Header extends LitElement {
           &:focus,
           &:hover {
             opacity: 1;
+          }
+        }
+      }
+
+      :host([small]) {
+        #fullscreen,
+        #menu,
+        #replay {
+          width: 20px;
+          height: 20px;
+
+          & .g-icon {
+            font-size: 20px;
           }
         }
       }
@@ -258,19 +280,28 @@ export class Header extends LitElement {
   }
 
   render() {
-    return html` <button
-        id="menu"
-        ?disabled=${!this.menuActive}
-        @click=${() => {
-          if (!this.#sideNav) {
-            return;
-          }
+    return html` ${this.fullScreenActive
+        ? html`<button
+            id="fullscreen"
+            @click=${() => {
+              // TODO.
+            }}
+          >
+            <span class="g-icon">fullscreen</span>
+          </button>`
+        : html`<button
+            id="menu"
+            ?disabled=${!this.menuActive}
+            @click=${() => {
+              if (!this.#sideNav) {
+                return;
+              }
 
-          this.#sideNav.active = true;
-        }}
-      >
-        <span class="g-icon">menu</span>
-      </button>
+              this.#sideNav.active = true;
+            }}
+          >
+            <span class="g-icon">menu</span>
+          </button>`}
 
       <div id="progress-container">
         <div
