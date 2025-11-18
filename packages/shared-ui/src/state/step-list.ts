@@ -5,7 +5,7 @@
  */
 
 import { signal } from "signal-utils";
-import { StepListState, StepListStepState } from "./types";
+import { StepListState, StepListStateStatus, StepListStepState } from "./types";
 import { ReactiveProjectRun } from "./project-run";
 import { GraphDescriptor, NodeRunStatus } from "@breadboard-ai/types";
 
@@ -18,7 +18,8 @@ class StepList implements StepListState {
       Array.from(this.run.console.entries()).map(([id, entry]) => {
         const prompt = getPrompt(id, this.run.graph);
         const status: StepListStepState["status"] = getStatus(
-          entry.status?.status
+          entry.status?.status,
+          this.status
         );
         const { icon, title } = entry;
         return [
@@ -34,6 +35,19 @@ class StepList implements StepListState {
     return this.run.graph?.metadata?.intent || null;
   }
 
+  @signal
+  get empty(): boolean {
+    return (this.run.graph?.nodes.length || 0) === 0;
+  }
+
+  @signal
+  accessor status: StepListStateStatus = "ready";
+
+  @signal
+  get graph(): GraphDescriptor | null {
+    return this.run.graph || null;
+  }
+
   constructor(private readonly run: ReactiveProjectRun) {}
 }
 
@@ -45,10 +59,11 @@ function getPrompt(id: string, graph: GraphDescriptor | undefined): string {
 }
 
 function getStatus(
-  status: NodeRunStatus | "failed" | undefined
+  stepStatus: NodeRunStatus | "failed" | undefined,
+  listStatus: StepListStateStatus
 ): StepListStepState["status"] {
-  if (!status) return "pending";
-  switch (status) {
+  if (!stepStatus || listStatus === "planning") return "pending";
+  switch (stepStatus) {
     case "working":
     case "waiting":
       return "working";

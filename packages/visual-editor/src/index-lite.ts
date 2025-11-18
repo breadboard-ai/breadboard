@@ -5,20 +5,31 @@
  */
 
 import { html, css, nothing } from "lit";
-import { customElement } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
 
 import * as BBLite from "@breadboard-ai/shared-ui/lite";
 import { MainBase, RenderValues } from "./main-base";
-import { StepListState } from "@breadboard-ai/shared-ui/state/types.js";
+import {
+  Project,
+  StepListState,
+} from "@breadboard-ai/shared-ui/state/types.js";
 import { classMap } from "lit/directives/class-map.js";
 import {
   StateEvent,
   StateEventDetailMap,
 } from "@breadboard-ai/shared-ui/events/events.js";
+import { provide } from "@lit/context";
+import { projectStateContext } from "@breadboard-ai/shared-ui/contexts";
+import { ActionTracker } from "@breadboard-ai/shared-ui/utils/action-tracker";
+import { blankBoard } from "@breadboard-ai/shared-ui/utils/utils.js";
 
 @customElement("bb-lite")
 export class LiteMain extends MainBase {
+  @provide({ context: projectStateContext })
+  @state()
+  accessor projectState: Project | undefined;
+
   static styles = [
     BBLite.Styles.HostIcons.icons,
     BBLite.Styles.HostBehavior.behavior,
@@ -67,17 +78,20 @@ export class LiteMain extends MainBase {
 
   #renderList(state: StepListState | undefined) {
     return html`<div id="controls-view" slot="slot-0">
-      <bb-step-list-view .state=${state}></bb-step-list-view>
+      <div id="list">
+        <bb-step-list-view .state=${state}></bb-step-list-view>
+      </div>
+      <div id="flowgen">
+        <bb-flowgen-editor-input
+          .hasEmptyGraph=${state?.empty}
+          .currentGraph=${state?.graph}
+        ></bb-flowgen-editor-input>
+      </div>
     </div>`;
   }
 
   #renderApp(renderValues: RenderValues) {
-    return html` <div
-      id="app-view"
-      slot="slot-1"
-      @bbevent=${async (evt: StateEvent<keyof StateEventDetailMap>) =>
-        this.handleRoutedEvent(evt)}
-    >
+    return html` <div id="app-view" slot="slot-1">
       <bb-app-controller
         class=${classMap({ active: true })}
         .graph=${this.tab?.graph ?? null}
@@ -95,12 +109,49 @@ export class LiteMain extends MainBase {
     </div>`;
   }
 
+  #renderWelcomeMat() {
+    return html`<h1>What do you want to build?</h1>`;
+  }
+
+  #renderHome() {
+    return html`<section id="home">
+      <h1>HOME</h1>
+      <button
+        @click=${(evt: Event) => {
+          if (!(evt.target instanceof HTMLButtonElement)) {
+            return;
+          }
+
+          ActionTracker.createNew();
+
+          evt.target.disabled = true;
+          this.handleRoutedEvent(
+            new StateEvent({
+              eventType: "board.create",
+              editHistoryCreator: { role: "user" },
+              graph: blankBoard(),
+              messages: {
+                start: "",
+                end: "",
+                error: "",
+              },
+            })
+          );
+        }}
+      >
+        CREATE
+      </button>
+    </section>`;
+  }
+
   render() {
     if (!this.ready) return nothing;
 
     switch (this.uiState.loadState) {
       case "Home":
-        return html`Home (TODO)`;
+        // This likely does not belong here.
+        // TODO: Figure out what the right thing is.
+        return this.#renderHome();
       case "Loading":
         return html`Loading (TODO)`;
       case "Error":
@@ -114,17 +165,34 @@ export class LiteMain extends MainBase {
 
     const renderValues = this.getRenderValues();
 
-    return html`<section id="lite-shell">
-      <bb-splitter
-        direction=${"horizontal"}
-        name="layout-main"
-        split="[0.70, 0.30]"
+    this.projectState = renderValues.projectState || undefined;
+
+    const stepList = renderValues.projectState?.run.stepList;
+
+    if (stepList?.empty) {
+      // For new graph, show the welcome mat and no app view.
+      return html`<section
+        id="lite-shell"
+        @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) =>
+          this.handleRoutedEvent(evt)}
       >
-        ${[
-          this.#renderList(renderValues.projectState?.run.stepList),
-          this.#renderApp(renderValues),
-        ]}
-      </bb-splitter>
-    </section>`;
+        ${[this.#renderWelcomeMat(), this.#renderList(stepList)]}
+      </section>`;
+    } else {
+      // When there are nodes in the graph, show the app view.
+      return html`<section
+        id="lite-shell"
+        @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) =>
+          this.handleRoutedEvent(evt)}
+      >
+        <bb-splitter
+          direction=${"horizontal"}
+          name="layout-main"
+          split="[0.70, 0.30]"
+        >
+          ${[this.#renderList(stepList), this.#renderApp(renderValues)]}
+        </bb-splitter>
+      </section>`;
+    }
   }
 }

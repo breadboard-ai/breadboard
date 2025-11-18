@@ -25,6 +25,7 @@ import {
   RunError,
   RuntimeFlags,
   ConsentRequestWithCallback,
+  GraphDescriptor,
 } from "@breadboard-ai/types";
 import {
   EditSpec,
@@ -130,12 +131,30 @@ export type ProjectRun = {
   stepList: StepListState;
 };
 
+export type StepListStateStatus = "planning" | "running" | "ready";
+
 export type StepListState = {
+  /**
+   * - "planning" - there's a planning operation (flowgen generate or edit)
+   *   going on.
+   * - "running" -- the flow is running
+   * - "ready" -- interactive state
+   */
+  status: StepListStateStatus;
   /**
    * The intent behind the app. This value is taken from the BGL
    * "metadata.intent" property. If "null", no intent was specified.
    */
   intent: string | null;
+
+  /**
+   * True when the underlying graph is brand new and has no nodes.
+   */
+  empty: boolean;
+  /**
+   * The current graph
+   */
+  graph: GraphDescriptor | null;
 
   /**
    * The list of steps according to the current run plan
@@ -154,6 +173,12 @@ export type StepListStepState = {
   title: string;
   /**
    * Current status of the step.
+   * - "loading" -- the step is loading (not sure if we need this)
+   * - "working" -- the step is either in "working" or "waiting" state
+   * - "ready" -- the step is in "ready" state
+   * - "complete" -- (not sure if we need this)
+   * - "pending" -- the step is in indeterminate state, because planner is
+   *   running
    */
   status: "loading" | "working" | "ready" | "complete" | "pending";
   /**
