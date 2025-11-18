@@ -82,22 +82,19 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         border: none;
         height: var(--bb-grid-size-10);
         padding: 0 var(--bb-grid-size-4);
+        color: var(--todo-gemini-button-text-label-color);  
         cursor: pointer;
 
         &:hover {
-          color: var(--todo-gemini-button-text-label-color);
           background: var(--todo-gemini-surface-color);
         }
 
         .g-icon {
           margin-left: var(--bb-grid-size-2);
-
           &::after {
-          }
-          &.collapsed::after {
             content: "collapse_all";
           }
-          &.expanded::after {
+          &.collapsed::after {
             content: "expand_all";
           }
         }

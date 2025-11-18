@@ -126,7 +126,6 @@
       ],
       "output": [
         "public/",
-        "hoe-lite/",
         "icons/",
         "index.html",
         "oauth/"

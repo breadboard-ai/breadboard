@@ -210,8 +210,7 @@ export function parseUrl(url: string | URL): MakeUrlInit {
         page: "home",
         mode:
           url.searchParams.get("mode") === MODE_APP ? MODE_APP : MODE_CANVAS,
-        lite:
-          url.searchParams.get("lite") === "true" || pathname === "/home-lite/",
+        lite: url.searchParams.get("lite") === "true",
       };
       if (dev) {
         home.dev = dev;

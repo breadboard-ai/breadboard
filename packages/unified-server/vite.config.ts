@@ -28,7 +28,6 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
     oauth: "./oauth/index.html",
     landing: "./landing/index.html",
     shell: "./shell/index.html",
-    "home-lite": "./home-lite/index.html",
   };
 
   return {
