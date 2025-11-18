@@ -404,6 +404,12 @@ export interface AppTemplate extends LitElement {
   isEmpty: boolean;
   focusWhenIn: ["canvas", "preview" | "console"] | ["app"];
   runtimeFlags: RuntimeFlags | null;
+  headerConfig: {
+    replay: boolean;
+    menu: boolean;
+    fullscreen: boolean;
+    small: boolean;
+  };
 }
 
 export interface Utterance {
