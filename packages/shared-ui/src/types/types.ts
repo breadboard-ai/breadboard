@@ -28,7 +28,6 @@ import type {
   RuntimeFlags,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
-import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
 import type { HTMLTemplateResult, LitElement } from "lit";
 
 export type InputCallback = (data: Record<string, unknown>) => void;

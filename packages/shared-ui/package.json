@@ -158,7 +158,6 @@
     "@lit/context": "^1.1.6",
     "@lit/task": "^1.0.2",
     "@material/web": "^2.3.0",
-    "@typescript/vfs": "^1.6.1",
     "ajv": "^8.17.1",
     "comlink": "^4.4.2",
     "flubber": "^0.4.2",
