@@ -131,12 +131,16 @@ export type ProjectRun = {
   stepList: StepListState;
 };
 
+export type StepListStateStatus = "planning" | "running" | "ready";
+
 export type StepListState = {
   /**
-   * When true, the step list is effectively in a disabled state: there's
-   * a planning operation (flowgen generate or edit) going on.
+   * - "planning" - there's a planning operation (flowgen generate or edit)
+   *   going on.
+   * - "running" -- the flow is running
+   * - "ready" -- interactive state
    */
-  planning: boolean;
+  status: StepListStateStatus;
   /**
    * The intent behind the app. This value is taken from the BGL
    * "metadata.intent" property. If "null", no intent was specified.

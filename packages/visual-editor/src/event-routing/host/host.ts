@@ -48,7 +48,7 @@ export const LockRoute: EventRoute<"host.lock"> = {
   async do({ uiState, runtime, tab }) {
     const projectState = runtime.state.getProjectState(tab?.mainGraphId);
     if (projectState) {
-      projectState.run.stepList.planning = true;
+      projectState.run.stepList.status = "planning";
     }
     uiState.blockingAction = true;
     return false;
@@ -61,7 +61,7 @@ export const UnlockRoute: EventRoute<"host.unlock"> = {
   async do({ uiState, runtime, tab }) {
     const projectState = runtime.state.getProjectState(tab?.mainGraphId);
     if (projectState) {
-      projectState.run.stepList.planning = false;
+      projectState.run.stepList.status = "planning";
     }
 
     uiState.blockingAction = false;
