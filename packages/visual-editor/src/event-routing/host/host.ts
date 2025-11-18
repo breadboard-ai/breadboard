@@ -61,7 +61,7 @@ export const UnlockRoute: EventRoute<"host.unlock"> = {
   async do({ uiState, runtime, tab }) {
     const projectState = runtime.state.getProjectState(tab?.mainGraphId);
     if (projectState) {
-      projectState.run.stepList.status = "planning";
+      projectState.run.stepList.status = "ready";
     }
 
     uiState.blockingAction = false;
