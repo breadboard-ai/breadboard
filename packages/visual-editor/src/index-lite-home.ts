@@ -85,6 +85,15 @@ export class LiteHome extends LitElement {
     });
   }
 
+  connectedCallback() {
+    super.connectedCallback();
+    // TODO: remove (small convenience for development)
+    if (new URLSearchParams(window.location.search).get("scroll") === "true") {
+      this.style.overflow = "auto";
+      this.style.padding = "24px";
+    }
+  }
+
   readonly #embedHandler?: EmbedHandler;
 
   #addGGalleryResizeController(el: Element | undefined) {

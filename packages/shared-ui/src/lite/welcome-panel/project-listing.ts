@@ -273,10 +273,9 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
       `;
     }
     const userHasAnyGraphs = userGraphs.size > 0 && !FORCE_NO_BOARDS;
-    const filteredGraphs = this.#filterGraphs(
-      [...userGraphs.entries()],
-      this.userFilter
-    );
+    const filteredGraphs = FORCE_NO_BOARDS
+      ? []
+      : this.#filterGraphs([...userGraphs.entries()], this.userFilter);
     const featuredGraphs = this.#filterGraphs(
       [...galleryGraphs.entries()],
       this.featuredFilter
