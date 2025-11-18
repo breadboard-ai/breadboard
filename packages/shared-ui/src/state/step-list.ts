@@ -18,7 +18,8 @@ class StepList implements StepListState {
       Array.from(this.run.console.entries()).map(([id, entry]) => {
         const prompt = getPrompt(id, this.run.graph);
         const status: StepListStepState["status"] = getStatus(
-          entry.status?.status
+          entry.status?.status,
+          this.planning
         );
         const { icon, title } = entry;
         return [
@@ -40,6 +41,9 @@ class StepList implements StepListState {
   }
 
   @signal
+  accessor planning = false;
+
+  @signal
   get graph(): GraphDescriptor | null {
     return this.run.graph || null;
   }
@@ -55,9 +59,10 @@ function getPrompt(id: string, graph: GraphDescriptor | undefined): string {
 }
 
 function getStatus(
-  status: NodeRunStatus | "failed" | undefined
+  status: NodeRunStatus | "failed" | undefined,
+  planning: boolean
 ): StepListStepState["status"] {
-  if (!status) return "pending";
+  if (!status || planning) return "pending";
   switch (status) {
     case "working":
     case "waiting":

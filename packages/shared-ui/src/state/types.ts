@@ -133,6 +133,11 @@ export type ProjectRun = {
 
 export type StepListState = {
   /**
+   * When true, the step list is effectively in a disabled state: there's
+   * a planning operation (flowgen generate or edit) going on.
+   */
+  planning: boolean;
+  /**
    * The intent behind the app. This value is taken from the BGL
    * "metadata.intent" property. If "null", no intent was specified.
    */
@@ -164,6 +169,12 @@ export type StepListStepState = {
   title: string;
   /**
    * Current status of the step.
+   * - "loading" -- the step is loading (not sure if we need this)
+   * - "working" -- the step is either in "working" or "waiting" state
+   * - "ready" -- the step is in "ready" state
+   * - "complete" -- (not sure if we need this)
+   * - "pending" -- the step is in indeterminate state, because planner is
+   *   running
    */
   status: "loading" | "working" | "ready" | "complete" | "pending";
   /**
