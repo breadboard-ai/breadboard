@@ -29,13 +29,6 @@ import type {
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 import type { VirtualTypeScriptEnvironment } from "@typescript/vfs";
-import type {
-  tsAutocomplete,
-  tsFacet,
-  tsHover,
-  tsLinter,
-  tsSync,
-} from "@valtown/codemirror-ts";
 import type { HTMLTemplateResult, LitElement } from "lit";
 
 export type InputCallback = (data: Record<string, unknown>) => void;
@@ -234,19 +227,6 @@ export interface UserMessage {
 }
 
 export type RunIdentifier = string;
-
-export type CodeMirrorExtensions = {
-  tsSync: typeof tsSync;
-  tsFacet: typeof tsFacet;
-  tsLinter: typeof tsLinter;
-  tsAutocomplete: typeof tsAutocomplete;
-  tsHover: typeof tsHover;
-};
-
-export type TypeScriptLanguageSupport = {
-  env: VirtualTypeScriptEnvironment | null;
-  extensions: CodeMirrorExtensions | null;
-};
 
 export interface Command {
   title: string;
