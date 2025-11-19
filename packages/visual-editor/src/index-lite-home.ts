@@ -7,7 +7,7 @@
 import * as BBLite from "@breadboard-ai/shared-ui/lite";
 import "@breadboard-ai/shared-ui/lite/welcome-panel/project-listing.js";
 import "@breadboard-ai/shared-ui/elements/overflow-menu/overflow-menu.js";
-import { html, LitElement } from "lit";
+import { html, HTMLTemplateResult, LitElement } from "lit";
 import { ref } from "lit/directives/ref.js";
 import { customElement } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
@@ -18,16 +18,20 @@ import {
   globalConfigContext,
 } from "@breadboard-ai/shared-ui/contexts";
 import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
-import type { BoardServer, Outcome, UUID } from "@breadboard-ai/types";
+import type { Outcome, UUID } from "@breadboard-ai/types";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import type {
+  SnackbarActionEvent,
   StateEvent,
   StateEventDetailMap,
 } from "@breadboard-ai/shared-ui/events/events.js";
 import { err, ok } from "@breadboard-ai/utils";
-import { SnackType } from "@breadboard-ai/shared-ui/types/types.js";
+import {
+  SnackbarMessage,
+  SnackType,
+} from "@breadboard-ai/shared-ui/types/types.js";
 import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
 
 const DELETE_BOARD_MESSAGE =
@@ -48,7 +52,7 @@ export class LiteHome extends LitElement {
   accessor globalConfig: GlobalConfig;
 
   @provide({ context: boardServerContext })
-  accessor boardServer: BoardServer | undefined;
+  accessor boardServer: GoogleDriveBoardServer | undefined;
 
   @provide({ context: googleDriveClientContext })
   accessor googleDriveClient!: GoogleDriveClient;
@@ -57,6 +61,15 @@ export class LiteHome extends LitElement {
    * Indicates whether we're currently remixing or deleting boards.
    */
   #busy = false;
+
+  /**
+   * The snackbar machinery
+   */
+  accessor #snackbar: BBLite.Snackbar | undefined;
+  #pendingSnackbarMessages: Array<{
+    message: SnackbarMessage;
+    replaceAll: boolean;
+  }> = [];
 
   readonly #embedHandler?: EmbedHandler;
   constructor(mainArgs: MainArguments) {
@@ -143,7 +156,8 @@ export class LiteHome extends LitElement {
 
     const report = (outcome: Outcome<void>) => {
       if (!ok(outcome)) {
-        this.snackbar(outcome.$error, SnackType.ERROR);
+        const snackbarId = crypto.randomUUID();
+        this.snackbar(outcome.$error, SnackType.ERROR, snackbarId);
       }
     };
 
@@ -171,17 +185,52 @@ export class LiteHome extends LitElement {
     console.log("Unimplemented: removing recent URL", url);
   }
 
-  snackbar(message: string, type: SnackType): UUID {
-    console.log(
-      "Unimplemented: show this message in a snack bar",
+  #renderSnackbar() {
+    return html`<bb-snackbar
+      ${ref((el: Element | undefined) => {
+        if (!el) {
+          this.#snackbar = undefined;
+        }
+
+        this.#snackbar = el as BBLite.Snackbar;
+        for (const pendingMessage of this.#pendingSnackbarMessages) {
+          const { message, id, type } = pendingMessage.message;
+          if (message) {
+            this.snackbar(message, type, id);
+          }
+        }
+
+        this.#pendingSnackbarMessages.length = 0;
+      })}
+      @bbsnackbaraction=${async (evt: SnackbarActionEvent) => {
+        evt.callback?.();
+      }}
+    ></bb-snackbar>`;
+  }
+
+  snackbar(message: string | HTMLTemplateResult, type: SnackType, id: UUID) {
+    const replaceAll = true;
+    const snackbarMessage: SnackbarMessage = {
+      id,
       message,
-      type
-    );
-    return crypto.randomUUID();
+      type,
+      persistent: false,
+      actions: [],
+    };
+
+    if (!this.#snackbar) {
+      this.#pendingSnackbarMessages.push({
+        message: snackbarMessage,
+        replaceAll,
+      });
+      return;
+    }
+
+    return this.#snackbar.show(snackbarMessage, replaceAll);
   }
 
   unsnackbar(id: UUID) {
-    console.log("Unimplemented: hide snackbar with id", id);
+    this.#snackbar?.hide(id);
   }
 
   async deleteBoard(url: string): Promise<Outcome<void>> {
@@ -192,13 +241,14 @@ export class LiteHome extends LitElement {
     if (this.#busy) return;
     this.#busy = true;
 
-    const snackbarId = this.snackbar(DELETING_BOARD_MESSAGE, SnackType.PENDING);
+    const snackbarId = crypto.randomUUID();
+    this.snackbar(DELETING_BOARD_MESSAGE, SnackType.PENDING, snackbarId);
     try {
       if (!confirm(DELETE_BOARD_MESSAGE)) {
         return;
       }
       const result = await this.boardServer.delete(new URL(url));
-      if (result.result) {
+      if (!result.result) {
         return err(result.error || `Unable to delete "${url}"`);
       }
       this.removeRecentUrl(url);
@@ -215,7 +265,8 @@ export class LiteHome extends LitElement {
     if (!this.boardServer) {
       return err(`Board server is undefined. Likely a misconfiguration`);
     }
-    const snackbarId = this.snackbar(REMIXING_BOARD_MESSAGE, SnackType.PENDING);
+    const snackbarId = crypto.randomUUID();
+    this.snackbar(REMIXING_BOARD_MESSAGE, SnackType.PENDING, snackbarId);
     try {
       const url = new URL(urlString);
       // 1. Load graph
@@ -232,6 +283,7 @@ export class LiteHome extends LitElement {
       if (!newUrlString) {
         return err(`Unable to save remixed board "${url}"`);
       }
+      await this.boardServer.flushSaveQueue(newUrlString);
       // 5: Go to the new graph URL
       this.navigateTo(newUrlString);
     } finally {
@@ -249,10 +301,13 @@ export class LiteHome extends LitElement {
   }
 
   render() {
-    return html`<bb-project-listing-lite
-      ${ref((el) => this.#addGalleryResizeController(el))}
-      .recentBoards=${[] /* TODO */}
-      @bbevent=${this.handleRoutedEvent}
-    ></bb-project-listing-lite>`;
+    return html`<section id="home">
+      <bb-project-listing-lite
+        ${ref((el) => this.#addGalleryResizeController(el))}
+        .recentBoards=${[] /* TODO */}
+        @bbevent=${this.handleRoutedEvent}
+      ></bb-project-listing-lite>
+      ${this.#renderSnackbar()}
+    </section>`;
   }
 }
