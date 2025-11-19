@@ -378,21 +378,29 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       };
     }
 
-    console.info(`[shell host] Checking geo restriction`);
-    try {
-      // const access = await this.#checkAppAccessWithToken(
-      //   grantResponse.access_token
-      // );
-      // if (!access.canAccess) {
-      //   console.info(`[shell host] User is geo restricted`);
-      //   return { ok: false, error: { code: "geo-restriction" } };
-      // }
-    } catch (e) {
-      console.error("[shell host] Error checking geo access", e);
-      return {
-        ok: false,
-        error: { code: "other", userMessage: `Error checking geo access` },
-      };
+    if (CLIENT_DEPLOYMENT_CONFIG.USE_TESTGAIA) {
+      // TODO: AppCat currently does not support Test Gaia, so just skip the geo
+      // check during development
+      console.info(
+        `[shell host] Skipping geo restriction check (USE_TESTGAIA=true)`
+      );
+    } else {
+      console.info(`[shell host] Checking geo restriction`);
+      try {
+        const access = await this.#checkAppAccessWithToken(
+          grantResponse.access_token
+        );
+        if (!access.canAccess) {
+          console.info(`[shell host] User is geo restricted`);
+          return { ok: false, error: { code: "geo-restriction" } };
+        }
+      } catch (e) {
+        console.error("[shell host] Error checking geo access", e);
+        return {
+          ok: false,
+          error: { code: "other", userMessage: `Error checking geo access` },
+        };
+      }
     }
 
     // Check for any missing required scopes.

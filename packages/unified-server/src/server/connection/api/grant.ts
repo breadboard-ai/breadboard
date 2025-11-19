@@ -10,6 +10,7 @@ import type { ServerConfig } from "../config.js";
 import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
 import { badRequestJson, internalServerError, okJson } from "../responses.js";
 import * as cookies from "./cookies.js";
+import { oauthFetch } from "../fetch.js";
 
 export type TokenEndpointGrantResponse =
   | { error: string }
@@ -55,7 +56,7 @@ export async function grant(
     connectionConfig.oauth.client_secret ?? ""
   );
 
-  const httpRes = await fetch(tokenUrl, {
+  const httpRes = await oauthFetch(tokenUrl, {
     method: "POST",
     headers: { Accept: "application/json" },
   });
