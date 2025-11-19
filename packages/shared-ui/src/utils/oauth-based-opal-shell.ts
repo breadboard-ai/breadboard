@@ -6,18 +6,14 @@
 
 /// <reference types="@types/gapi.client.drive-v3" />
 
-import {
-  ALWAYS_REQUIRED_OAUTH_SCOPES,
-  canonicalizeOAuthScope,
-} from "../connection/oauth-scopes.js";
-import { TokenVendor } from "../connection/token-vendor.js";
 import type { BreadboardMessage } from "@breadboard-ai/types/embedder.js";
-import type {
-  GrantResponse,
-  MissingScopesTokenResult,
-  SignedOutTokenResult,
-  TokenGrant,
-  ValidTokenResult,
+import {
+  OAUTH_POPUP_MESSAGE_TYPE,
+  type MissingScopesTokenResult,
+  type OAuthPopupMessage,
+  type SignedOutTokenResult,
+  type TokenGrant,
+  type ValidTokenResult,
 } from "@breadboard-ai/types/oauth.js";
 import type {
   CheckAppAccessResult,
@@ -29,12 +25,14 @@ import type {
   SignInState,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
+import {
+  ALWAYS_REQUIRED_OAUTH_SCOPES,
+  canonicalizeOAuthScope,
+} from "../connection/oauth-scopes.js";
+import { TokenVendor } from "../connection/token-vendor.js";
 import { SettingsHelperImpl } from "../data/settings-helper.js";
 import { SettingsStore } from "../data/settings-store.js";
-import {
-  oauthTokenBroadcastChannelName,
-  type OAuthStateParameter,
-} from "../elements/connection/connection-common.js";
+import { type OAuthStateParameter } from "../elements/connection/connection-common.js";
 import {
   loadDrivePicker,
   loadDriveShareClient,
@@ -42,9 +40,9 @@ import {
 } from "../elements/google-drive/google-apis.js";
 import { SETTINGS_TYPE } from "../types/types.js";
 import { getEmbedderRedirectUri, getTopLevelOrigin } from "./embed-helpers.js";
+import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { scopesFromUrl } from "./scopes-from-url.js";
-import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 
 const SIGN_IN_CONNECTION_ID = "$sign-in";
 
@@ -287,7 +285,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
         error: { code: "other", userMessage: "Popups are disabled" },
       };
     }
-    return await this.#listenForSignIn(nonce, scopes);
+    return await this.#listenForSignIn(nonce, scopes, popup);
   }
 
   #generateSignInUrlAndNonce(scopes: string[] = []): {
@@ -323,7 +321,8 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
 
   async #listenForSignIn(
     nonce: string,
-    scopes: string[]
+    scopes: string[],
+    popup: Window
   ): Promise<SignInResult> {
     console.info(`[shell host] Listening for sign in`);
     if (!scopes) {
@@ -332,20 +331,36 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
         error: { code: "other", userMessage: "Unexpected sign-in attempt" },
       };
     }
-    // The OAuth broker page will know to broadcast the token on this unique
-    // channel because it also knows the nonce (since we pack that in the OAuth
-    // "state" parameter).
-    const channelName = oauthTokenBroadcastChannelName(nonce);
-    const channel = new BroadcastChannel(channelName);
-    console.info(`[shell host] Awaiting grant response`, channelName);
-    const grantResponse = await new Promise<GrantResponse>((resolve) => {
-      channel.addEventListener("message", (m) => resolve(m.data), {
-        once: true,
-      });
+    console.info(`[shell host] Awaiting grant response`);
+    const abortCtl = new AbortController();
+    const popupMessage = await new Promise<OAuthPopupMessage>((resolve) => {
+      window.addEventListener(
+        "message",
+        (m) => {
+          if (
+            m.isTrusted &&
+            m.source === popup &&
+            m.origin === window.location.origin &&
+            typeof m.data === "object" &&
+            m.data !== null &&
+            m.data.type === OAUTH_POPUP_MESSAGE_TYPE
+          ) {
+            resolve(m.data);
+            abortCtl.abort();
+          }
+        },
+        { signal: abortCtl.signal }
+      );
     });
+    if (popupMessage.nonce !== nonce) {
+      return {
+        ok: false,
+        error: { code: "other", userMessage: "Mismatched nonce" },
+      };
+    }
+    const { grantResponse } = popupMessage;
     const issueTime = Date.now();
     console.info(`[shell host] Received grant response`);
-    channel.close();
     if (grantResponse.error !== undefined) {
       if (grantResponse.error === "access_denied") {
         console.info(`[shell host] User cancelled sign-in`);

@@ -4,13 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GrantResponse } from "@breadboard-ai/types/oauth.js";
+import {
+  OAUTH_POPUP_MESSAGE_TYPE,
+  type GrantResponse,
+  type OAuthPopupMessage,
+} from "@breadboard-ai/types/oauth.js";
 import { getEmbedderRedirectUri } from "../../utils/embed-helpers.js";
 import { sendToAllowedEmbedderIfPresent } from "../../utils/embedder.js";
-import {
-  oauthTokenBroadcastChannelName,
-  type OAuthStateParameter,
-} from "./connection-common.js";
+import { type OAuthStateParameter } from "./connection-common.js";
 
 export class ConnectionBroker extends HTMLElement {
   constructor() {
@@ -51,15 +52,19 @@ export class ConnectionBroker extends HTMLElement {
       displayError('No "nonce" parameter could be found in "state".');
       return;
     }
-    const channelName = oauthTokenBroadcastChannelName(nonce);
-    const channel = new BroadcastChannel(channelName);
+
+    function sendToOpener(grantResponse: GrantResponse): void {
+      window.opener.postMessage(
+        { type: OAUTH_POPUP_MESSAGE_TYPE, nonce, grantResponse },
+        window.location.origin
+      );
+    }
 
     // Check for errors, most notably "access_denied" which will be set if the
     // user clicks "Cancel" during the OAuth flow.
     const error = thisUrl.searchParams.get("error");
     if (error) {
-      channel.postMessage({ error });
-      channel.close();
+      sendToOpener({ error });
       window.close();
       return;
     }
@@ -80,6 +85,9 @@ export class ConnectionBroker extends HTMLElement {
       displayError("Could not find a grant URL for this origin.");
       return;
     }
+    // TODO(aomarks) Would it be better to send the code directly back to the
+    // opener, so that it can check the nonce, and only then do this grant RPC
+    // itself?
     const grantUrl = new URL("/connection/grant/", window.location.origin);
     grantUrl.searchParams.set("code", code);
     grantUrl.searchParams.set("redirect_path", redirect_uri);
@@ -100,12 +108,11 @@ export class ConnectionBroker extends HTMLElement {
     }
 
     // Send the grant response back to the originating tab and close up shop.
-    channel.postMessage(grantResponse);
+    sendToOpener(grantResponse);
     sendToAllowedEmbedderIfPresent({
       type: "oauth_redirect",
       success: true,
     });
-    channel.close();
     window.close();
   }
 }

@@ -7,7 +7,3 @@
 export interface OAuthStateParameter {
   nonce: string;
 }
-
-export function oauthTokenBroadcastChannelName(nonce: string): string {
-  return `oauth_token_${nonce}`;
-}

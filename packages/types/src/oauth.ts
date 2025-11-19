@@ -4,6 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export const OAUTH_POPUP_MESSAGE_TYPE = "oauth-popup-message";
+
+export type OAuthPopupMessage = {
+  type: typeof OAUTH_POPUP_MESSAGE_TYPE;
+  nonce: string;
+  grantResponse: GrantResponse;
+};
+
 export type GrantResponse =
   | { error: string }
   | {
