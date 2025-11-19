@@ -123,7 +123,7 @@ export class AppController extends SignalWatcher(LitElement) {
   accessor headerConfig = {
     replay: true,
     menu: true,
-    fullscreen: false,
+    fullscreen: null,
     small: false,
   };
 

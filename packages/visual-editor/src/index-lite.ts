@@ -8,7 +8,7 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 import { html, css, nothing, HTMLTemplateResult } from "lit";
-import { customElement } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
 
 import * as BBLite from "@breadboard-ai/shared-ui/lite";
@@ -30,6 +30,9 @@ import { blankBoard } from "@breadboard-ai/shared-ui/utils/utils.js";
 
 @customElement("bb-lite")
 export class LiteMain extends MainBase implements LiteEditInputController {
+  @property()
+  accessor showAppFullscreen = false;
+
   static styles = [
     BBLite.Styles.HostIcons.icons,
     BBLite.Styles.HostBehavior.behavior,
@@ -153,6 +156,17 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           }
         }
 
+        &.full {
+          padding: 0;
+
+          #app-view {
+            height: 100%;
+            border: none;
+            border-radius: 0;
+            margin: 0;
+          }
+        }
+
         & bb-splitter {
           height: 100%;
           width: 100%;
@@ -192,6 +206,12 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   constructor(args: MainArguments) {
     super(args);
+
+    // Set the app to fullscreen if the parsed URL indicates that this was
+    // opened from a share action.
+    this.showAppFullscreen =
+      (args.parsedUrl && "flow" in args.parsedUrl && args.parsedUrl.shared) ??
+      false;
   }
 
   /**
@@ -302,16 +322,23 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderApp() {
     const renderValues = this.getRenderValues();
-    return html` <section id="app-view" slot="slot-1">
-      <header class="w-400 md-title-small sans-flex">
-        <div class="left">${this.tab?.name ?? "Untitled app"}</div>
-        <div class="right">
-          <a href="/?mode=canvas&flow=${this.tab?.graph.url}" target="_blank"
-            ><span class="g-icon">open_in_new</span>Open Advanced Editor</a
-          >
-          <button><span class="g-icon">share</span>Share</button>
-        </div>
-      </header>
+    return html` <section
+      id="app-view"
+      slot=${this.showAppFullscreen ? nothing : "slot-1"}
+    >
+      ${this.showAppFullscreen
+        ? nothing
+        : html` <header class="w-400 md-title-small sans-flex">
+            <div class="left">${this.tab?.name ?? "Untitled app"}</div>
+            <div class="right">
+              <a
+                href="/?mode=canvas&flow=${this.tab?.graph.url}"
+                target="_blank"
+                ><span class="g-icon">open_in_new</span>Open Advanced Editor</a
+              >
+              <button><span class="g-icon">share</span>Share</button>
+            </div>
+          </header>`}
       <bb-app-controller
         class=${classMap({ active: true })}
         .graph=${this.tab?.graph ?? null}
@@ -327,7 +354,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         .headerConfig=${{
           menu: false,
           replay: true,
-          fullscreen: true,
+          fullscreen: this.showAppFullscreen ? "active" : "available",
           small: true,
         }}
       >
@@ -405,16 +432,25 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       // When there are nodes in the graph, show the app view.
       return html`<section
         id="lite-shell"
-        @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) =>
-          this.handleRoutedEvent(evt)}
+        class=${classMap({ full: this.showAppFullscreen })}
+        @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) => {
+          if (evt.detail.eventType === "app.fullscreen") {
+            this.showAppFullscreen = evt.detail.action === "activate";
+            return;
+          }
+
+          return this.handleRoutedEvent(evt);
+        }}
       >
-        <bb-splitter
-          direction=${"horizontal"}
-          name="layout-lite"
-          split="[0.30, 0.70]"
-        >
-          ${[this.#renderControls(stepList), this.#renderApp()]}
-        </bb-splitter>
+        ${this.showAppFullscreen
+          ? this.#renderApp()
+          : html` <bb-splitter
+              direction=${"horizontal"}
+              name="layout-lite"
+              split="[0.30, 0.70]"
+            >
+              ${[this.#renderControls(stepList), this.#renderApp()]}
+            </bb-splitter>`}
       </section>`;
     }
   }

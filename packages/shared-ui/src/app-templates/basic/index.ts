@@ -88,6 +88,7 @@ import {
   CONSENT_RENDER_INFO,
 } from "../../utils/consent-manager.js";
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 const toFunctionString = (fn: Function, bindings?: Record<string, unknown>) => {
   let str = fn.toString();
   if (bindings) {
@@ -97,6 +98,8 @@ const toFunctionString = (fn: Function, bindings?: Record<string, unknown>) => {
   }
   return str;
 };
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 const scriptifyFunction = (fn: Function, bindings?: Record<string, unknown>) =>
   `<script>( ${toFunctionString(fn, bindings)} )();</script>`;
 
@@ -237,12 +240,12 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   accessor headerConfig: {
     replay: boolean;
     menu: boolean;
-    fullscreen: boolean;
+    fullscreen: "available" | "active" | null;
     small: boolean;
   } = {
     replay: true,
     menu: true,
-    fullscreen: false,
+    fullscreen: null,
     small: false,
   };
 
@@ -502,11 +505,15 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return nothing;
     }
     const renderInfo = CONSENT_RENDER_INFO[consentRequest.request.type];
+
+    // TypeScript struggles to disambiguate this, so marking it as `any`.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const detypedConsentRequest = consentRequest as any;
     return html`
       <div id="consent" class="default">
         <section id="consent-content-container">
           <h1>${renderInfo.name}</h1>
-          ${renderInfo.description(consentRequest as any)}
+          ${renderInfo.description(detypedConsentRequest)}
           <button
             id="grant-consent"
             @click=${() => {

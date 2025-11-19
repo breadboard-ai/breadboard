@@ -39,7 +39,7 @@ export class Header extends LitElement {
 
   // Note: if this is true it supersedes menuActive.
   @property()
-  accessor fullScreenActive = false;
+  accessor fullScreenActive: "available" | "active" | null = null;
 
   @property({ reflect: true, type: Boolean })
   accessor small = false;
@@ -280,14 +280,26 @@ export class Header extends LitElement {
   }
 
   render() {
-    return html` ${this.fullScreenActive
+    return html` ${this.fullScreenActive !== null
         ? html`<button
             id="fullscreen"
             @click=${() => {
-              // TODO.
+              this.dispatchEvent(
+                new StateEvent({
+                  eventType: "app.fullscreen",
+                  action:
+                    this.fullScreenActive === "available"
+                      ? "activate"
+                      : "deactivate",
+                })
+              );
             }}
           >
-            <span class="g-icon">fullscreen</span>
+            <span class="g-icon"
+              >${this.fullScreenActive === "active"
+                ? "close"
+                : "fullscreen"}</span
+            >
           </button>`
         : html`<button
             id="menu"

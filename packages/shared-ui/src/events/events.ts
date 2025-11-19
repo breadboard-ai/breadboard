@@ -45,6 +45,7 @@ import type * as Board from "./board/board.js";
 import type * as Host from "./host/host.js";
 import type * as Node from "./node/node.js";
 import type * as Asset from "./asset/asset.js";
+import type * as App from "./app/app.js";
 import { BaseEventDetail } from "./base.js";
 import { HTMLTemplateResult } from "lit";
 
@@ -87,6 +88,8 @@ export type StateEventDetailMap = EnforceEventTypeMatch<{
 
   "asset.changeedge": Asset.ChangeEdge;
   "asset.add": Asset.Add;
+
+  "app.fullscreen": App.Fullscreen;
 }>;
 
 export class StateEvent<
