@@ -171,6 +171,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
   }
 
   #onGenerateError(error: string) {
+    // TODO: Display error correctly.
     console.error("Error generating board", error);
     this.flowGen.status = "error";
     this.flowGen.error = error;
