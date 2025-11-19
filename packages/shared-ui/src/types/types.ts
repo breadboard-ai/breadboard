@@ -386,7 +386,7 @@ export interface AppTemplate extends LitElement {
   headerConfig: {
     replay: boolean;
     menu: boolean;
-    fullscreen: boolean;
+    fullscreen: "available" | "active" | null;
     small: boolean;
   };
 }

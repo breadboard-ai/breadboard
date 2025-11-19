@@ -19,6 +19,7 @@ import {
   OpalShellHostProtocol,
   SignInState,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { MakeUrlInit } from "@breadboard-ai/shared-ui/utils/urls.js";
 
 export type BootstrapArguments = {
   deploymentConfiguration: ClientDeploymentConfiguration;
@@ -68,6 +69,7 @@ export type MainArguments = {
   globalConfig: GlobalConfig;
   shellHost: OpalShellHostProtocol;
   initialSignInState: SignInState;
+  parsedUrl?: MakeUrlInit;
 };
 
 export enum TosStatus {

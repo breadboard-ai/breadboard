@@ -119,6 +119,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       globalConfig,
       shellHost,
       initialSignInState: await shellHost.getSignInState(),
+      parsedUrl,
     };
     if (mainArgs.globalConfig.googleDrive.publishPermissions.length === 0) {
       console.warn(
