@@ -350,7 +350,15 @@ export class LiteHome extends LitElement {
   }
 
   async togglePin(url: string) {
-    console.log("TOGGLE PIN", url);
+    url = url.replace(window.location.origin, "");
+    const boardToUpdate = this.recentBoards.find((board) => board.url === url);
+    if (!boardToUpdate) {
+      console.log(`Unable to find board ${url}`);
+      return;
+    }
+    boardToUpdate.pinned = !boardToUpdate.pinned;
+
+    await this.#recentBoardStore.store(this.recentBoards);
   }
 
   render() {
