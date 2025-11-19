@@ -6,6 +6,8 @@
 
 import { type TransferHandler, transferHandlers } from "comlink";
 
+const NULL_BODY_STATUS: ReadonlySet<number> = new Set([204, 205, 304]);
+
 console.debug(
   `[shell ${window === window.parent ? "host" : "guest"}] ` +
     `Installing comlink transfer handlers`
@@ -41,7 +43,8 @@ transferHandlers.set("Response", {
     // Transfers the body.
     body ? [body] : [],
   ],
-  deserialize: ({ body, init }) => new Response(body, init),
+  deserialize: ({ body, init }) =>
+    new Response(NULL_BODY_STATUS.has(init.status || 0) ? null : body, init),
 } satisfies TransferHandler<Response, SerializedResponse>);
 
 type SerializedResponse = {
