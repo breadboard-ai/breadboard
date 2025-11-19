@@ -58,7 +58,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
           --border-radius: var(--bb-grid-size-6);
 
           &:focus-within {
-            outline: 1px solid var(--light-dark-p-70);
+            outline: 1px solid var(--light-dark-n-70);
           }
         }
       }
