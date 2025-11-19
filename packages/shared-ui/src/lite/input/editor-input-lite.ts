@@ -95,12 +95,12 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
   accessor controller: LiteEditInputController | undefined = undefined;
 
   @property()
-  accessor flowGen!: LiteViewState;
+  accessor state!: LiteViewState;
 
   readonly #descriptionInput = createRef<HTMLTextAreaElement>();
 
   override render() {
-    const isGenerating = this.flowGen.status === "generating";
+    const isGenerating = this.state.status === "generating";
     const iconClasses = {
       "g-icon": true,
       "filled-heavy": true,
@@ -114,7 +114,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
           .disabled=${isGenerating}
           .classes=${"sans-flex w-400 md-body-large"}
           .orientation=${"vertical"}
-          .value=${this.flowGen?.intent}
+          .value=${this.state?.intent}
           .placeholder=${this.hasEmptyGraph
             ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW")
             : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
@@ -147,9 +147,9 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
     const description = input?.value;
     if (!description) return;
 
-    this.flowGen.setIntent(description);
+    this.state.setIntent(description);
 
-    this.flowGen.status = "generating";
+    this.state.status = "generating";
 
     ActionTracker.flowGenEdit(this.currentGraph?.url);
 
@@ -166,15 +166,15 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
   }
 
   #onGenerateComplete() {
-    this.flowGen.status = "initial";
+    this.state.status = "initial";
     this.#clearInput();
   }
 
   #onGenerateError(error: string) {
     // TODO: Display error correctly.
     console.error("Error generating board", error);
-    this.flowGen.status = "error";
-    this.flowGen.error = error;
+    this.state.status = "error";
+    this.state.error = error;
   }
 
   #clearInput() {

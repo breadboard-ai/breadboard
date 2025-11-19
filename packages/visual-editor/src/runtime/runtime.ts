@@ -107,6 +107,7 @@ export class Runtime extends EventTarget {
     } = config;
 
     const state = new StateManager(
+      this,
       graphStore,
       fetchWithCreds,
       servers,

@@ -6,21 +6,26 @@
 
 import { McpClientManager } from "@breadboard-ai/mcp";
 import { State } from "@breadboard-ai/shared-ui";
-import { createFlowGenState } from "@breadboard-ai/shared-ui/state/flow-gen.js";
-import { LiteViewState } from "@breadboard-ai/shared-ui/state/types.js";
+import { createLiteViewState } from "@breadboard-ai/shared-ui/state/lite-view.js";
+import {
+  LiteViewState,
+  Project,
+  RuntimeContext,
+} from "@breadboard-ai/shared-ui/state/types.js";
 import { BoardServer, RuntimeFlagManager } from "@breadboard-ai/types";
 import {
   EditableGraph,
   MainGraphIdentifier,
   MutableGraphStore,
 } from "@google-labs/breadboard";
+import { Runtime } from "./runtime";
 
 export { StateManager };
 
 /**
  * Holds various important bits of UI state
  */
-class StateManager {
+class StateManager implements RuntimeContext {
   #ui: State.UI | null = null;
   #map: Map<MainGraphIdentifier, State.Project> = new Map();
   #store: MutableGraphStore;
@@ -29,9 +34,10 @@ class StateManager {
   #flagManager: RuntimeFlagManager;
   #mcpClientManager: McpClientManager;
 
-  readonly flowGen: LiteViewState;
+  readonly liteView: LiteViewState;
 
   constructor(
+    private readonly runtime: Runtime,
     store: MutableGraphStore,
     fetchWithCreds: typeof globalThis.fetch,
     boardServers: BoardServer[],
@@ -43,7 +49,7 @@ class StateManager {
     this.#servers = boardServers;
     this.#flagManager = flagManager;
     this.#mcpClientManager = mcpClientManager;
-    this.flowGen = createFlowGenState();
+    this.liteView = createLiteViewState(this);
   }
 
   #findServer(url: URL): BoardServer | null {
@@ -72,6 +78,15 @@ class StateManager {
     }
 
     return this.#ui;
+  }
+
+  currentProjectState(): Project | null {
+    const tab = this.runtime.board.currentTab;
+    if (!tab) return null;
+
+    const mainGraphId = tab.mainGraphId;
+    const editor = this.runtime.edit.getEditor(tab);
+    return this.getOrCreateProjectState(mainGraphId, editor);
   }
 
   getProjectState(mainGraphId?: MainGraphIdentifier): State.Project | null {

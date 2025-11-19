@@ -268,7 +268,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   #renderUserInput(state: StepListState | undefined) {
     return html`<bb-editor-input-lite
       .controller=${this}
-      .flowGen=${this.runtime.state.flowGen}
+      .state=${this.runtime.state.liteView}
       .hasEmptyGraph=${state?.empty}
       .currentGraph=${state?.graph}
     ></bb-editor-input-lite>`;
