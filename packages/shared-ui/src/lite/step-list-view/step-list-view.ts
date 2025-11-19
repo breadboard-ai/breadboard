@@ -125,10 +125,19 @@ export class StepListView extends SignalWatcher(LitElement) {
 
               & > .step-content {
                 padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
-                border-radius: var(--bb-grid-size-2);
+                border-radius: var(--bb-grid-size-3);
                 border: 1px solid var(--light-dark-n-90);
                 color: var(--light-dark-n-0);
                 margin-top: var(--bb-grid-size-2);
+
+                > p {
+                  margin: 0;
+                }
+
+                & > .step-title {
+                  color: var(--light-dark-n-70);
+                  margin: 0 0 var(--bb-grid-size-2) 0;
+                }
               }
             }
 
@@ -169,6 +178,7 @@ export class StepListView extends SignalWatcher(LitElement) {
   }
 
   #renderList() {
+    console.log(this.state);
     const steps = this.state?.steps;
     if (!steps || steps.size === 0) return nothing;
     return html`<ul id="list">
@@ -203,9 +213,16 @@ export class StepListView extends SignalWatcher(LitElement) {
                 >
               </summary>
               <div class="step-content sans md-body-medium w-400">
-                ${step.prompt && step.prompt.trim() !== ""
-                  ? step.prompt
-                  : html`Not provided`}
+                <h1 class="step-title w-400 md-body-small sans-flex">
+                  ${step.tags?.includes("input")
+                    ? "Question to user:"
+                    : "Prompt"}
+                </h1>
+                <p>
+                  ${step.prompt && step.prompt.trim() !== ""
+                    ? step.prompt
+                    : html`Not provided`}
+                </p>
               </div>
             </details>
           `;
