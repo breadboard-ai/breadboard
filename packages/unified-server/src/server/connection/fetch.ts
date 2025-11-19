@@ -40,8 +40,8 @@ export async function oauthFetch(url: URL, init: RequestInit): Promise<Response>
       console.warn(`${flags.OAUTH_FETCH_COMMAND} stderr: ${stderr}`);
     }
     return new Response(stdout);
-  } catch (error: any) {
-    error = String(error);
+  } catch (err) {
+    let error = String(err);
     if (error.includes("command not found")) {
       error = `Command ${flags.OAUTH_FETCH_COMMAND} passed as OAUTH_FETCH_COMMAND not found. Do you need to install it?`;
     }
