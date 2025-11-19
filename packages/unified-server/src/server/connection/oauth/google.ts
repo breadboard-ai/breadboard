@@ -18,7 +18,7 @@ export function createConnection(
       client_id: clientId,
       client_secret: clientSecret,
       auth_uri: authUri || "https://accounts.google.com/o/oauth2/auth",
-      token_uri: tokenUri || "https://accounts.google.com/o/oauth2/token",
+      token_uri: tokenUri || "https://oauth2.googleapis.com/token",
       scopes,
     },
   };
