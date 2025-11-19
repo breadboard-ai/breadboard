@@ -224,6 +224,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       }
     }
 
+    // TODO: Convert this to use liteView
     const currentGraph = projectState.run.stepList.graph;
     if (!currentGraph) {
       console.warn("No current graph detected, exting flow generation");
@@ -385,7 +386,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         return nothing;
     }
 
-    const stepList = this.getProjectState()?.run.stepList;
+    const stepList = this.runtime.state.liteView.stepList;
 
     if (stepList?.empty || zeroState) {
       // For new graph or zero-state, show the welcome mat and no app view.

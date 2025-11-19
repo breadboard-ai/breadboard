@@ -9,6 +9,7 @@ import {
   FlowGenGenerationStatus,
   LiteViewState,
   RuntimeContext,
+  StepListState,
 } from "./types";
 
 export { createLiteViewState };
@@ -35,6 +36,10 @@ class ReactiveLiteViewState implements LiteViewState {
 
   setIntent(intent: string) {
     this.#intent = intent;
+  }
+
+  get stepList(): StepListState | undefined {
+    return this.context.currentProjectState()?.run.stepList;
   }
 
   constructor(private readonly context: RuntimeContext) {}

@@ -445,6 +445,8 @@ export type LiteViewState = {
   error?: string;
   intent: string;
 
+  stepList: StepListState | undefined;
+
   setIntent(intent: string): void;
 };
 
