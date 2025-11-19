@@ -440,12 +440,22 @@ export type FlowGenGenerationStatus = "generating" | "initial" | "error";
 /**
  * Represents the flow gen state
  */
-export type FlowGenState = {
+export type LiteViewState = {
   status: FlowGenGenerationStatus;
   error?: string;
   intent: string;
 
+  stepList: StepListState | undefined;
+
   setIntent(intent: string): void;
+};
+
+/**
+ * Represents the context of the runtime. This is actually a very simplified
+ * representation of the `Runtime` from visual editor.
+ */
+export type RuntimeContext = {
+  currentProjectState(): Project | null;
 };
 
 export type IntegrationState = {

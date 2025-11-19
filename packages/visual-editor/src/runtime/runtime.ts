@@ -38,6 +38,9 @@ import {
   RunConfig,
   RuntimeFlagManager,
   ConsentManager,
+  BoardServer,
+  MutableGraphStore,
+  GraphLoader,
 } from "@breadboard-ai/types";
 import {
   RuntimeHostStatusUpdateEvent,
@@ -73,32 +76,71 @@ export class Runtime extends EventTarget {
     shell: Shell;
     router: Router;
     board: Board;
-    run: Run;
-    edit: Edit;
     kits: Kit[];
-    select: Select;
     autonamer: Autonamer;
-    state: StateManager;
-    flags: RuntimeFlagManager;
-    util: typeof Util;
-    fetchWithCreds: typeof globalThis.fetch;
-    consentManager: ConsentManager;
+    servers: BoardServer[];
+    config: RuntimeConfig;
+    graphStore: MutableGraphStore;
+    dataStore: BoardServerAwareDataStore;
+    loader: GraphLoader;
   }) {
     super();
 
-    this.shell = config.shell;
-    this.router = config.router;
-    this.board = config.board;
-    this.run = config.run;
-    this.edit = config.edit;
-    this.kits = config.kits;
-    this.select = config.select;
-    this.autonamer = config.autonamer;
-    this.state = config.state;
-    this.flags = config.flags;
-    this.util = config.util;
-    this.fetchWithCreds = config.fetchWithCreds;
-    this.consentManager = config.consentManager;
+    const {
+      shell,
+      router,
+      board,
+      servers,
+      loader,
+      kits,
+      graphStore,
+      autonamer,
+      dataStore,
+      config: {
+        fetchWithCreds,
+        flags,
+        consentManager,
+        settings,
+        mcpClientManager,
+        sandbox,
+      },
+    } = config;
+
+    const state = new StateManager(
+      this,
+      graphStore,
+      fetchWithCreds,
+      servers,
+      flags,
+      mcpClientManager
+    );
+
+    const edit = new Edit(
+      state,
+      loader,
+      kits,
+      sandbox,
+      graphStore,
+      autonamer,
+      flags,
+      settings
+    );
+
+    this.shell = shell;
+    this.util = Util;
+    this.select = new Select();
+    this.router = router;
+    this.board = board;
+    this.state = state;
+
+    this.edit = edit;
+    this.run = new Run(graphStore, dataStore, state, flags, edit);
+
+    this.kits = kits;
+    this.autonamer = autonamer;
+    this.flags = flags;
+    this.fetchWithCreds = fetchWithCreds;
+    this.consentManager = consentManager;
 
     this.#setupPassthruHandlers();
   }
@@ -284,27 +326,7 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
   );
 
   const recentBoards = await config.recentBoardStore.restore();
-  const flags = config.flags;
-
-  const state = new StateManager(
-    graphStore,
-    config.fetchWithCreds,
-    servers,
-    flags,
-    config.mcpClientManager
-  );
   const shell = new Shell(config.appName, config.appSubName);
-
-  const edit = new Edit(
-    state,
-    loader,
-    kits,
-    config.sandbox,
-    graphStore,
-    autonamer,
-    flags,
-    config.settings
-  );
 
   return new Runtime({
     router: new Router(),
@@ -318,16 +340,13 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
       config.signinAdapter,
       config.googleDriveClient
     ),
-    edit,
-    run: new Run(graphStore, dataStore, state, flags, edit),
-    state,
+    dataStore,
     autonamer,
-    select: new Select(),
-    util: Util,
+    servers,
+    graphStore,
     kits,
     shell,
-    flags,
-    fetchWithCreds: config.fetchWithCreds,
-    consentManager: config.consentManager,
+    config,
+    loader,
   });
 }

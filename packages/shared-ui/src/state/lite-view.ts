@@ -5,15 +5,20 @@
  */
 
 import { signal } from "signal-utils";
-import { FlowGenGenerationStatus, FlowGenState } from "./types";
+import {
+  FlowGenGenerationStatus,
+  LiteViewState,
+  RuntimeContext,
+  StepListState,
+} from "./types";
 
-export { createFlowGenState };
+export { createLiteViewState };
 
-function createFlowGenState() {
-  return new ReactiveFlowGenState();
+function createLiteViewState(context: RuntimeContext) {
+  return new ReactiveLiteViewState(context);
 }
 
-class ReactiveFlowGenState implements FlowGenState {
+class ReactiveLiteViewState implements LiteViewState {
   @signal
   accessor status: FlowGenGenerationStatus = "initial";
 
@@ -32,4 +37,10 @@ class ReactiveFlowGenState implements FlowGenState {
   setIntent(intent: string) {
     this.#intent = intent;
   }
+
+  get stepList(): StepListState | undefined {
+    return this.context.currentProjectState()?.run.stepList;
+  }
+
+  constructor(private readonly context: RuntimeContext) {}
 }

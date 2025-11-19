@@ -8,4 +8,4 @@ export * from "./types.js";
 export { createProjectState } from "./project.js";
 export { createUIState } from "./ui.js";
 export type * from "./organizer.js";
-export { createFlowGenState } from "./flow-gen.js";
+export { createLiteViewState } from "./lite-view.js";
