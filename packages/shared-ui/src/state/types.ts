@@ -435,6 +435,19 @@ export type UI = {
   flags: RuntimeFlags | null;
 };
 
+export type FlowGenGenerationStatus = "generating" | "initial" | "error";
+
+/**
+ * Represents the flow gen state
+ */
+export type FlowGenState = {
+  status: FlowGenGenerationStatus;
+  error?: string;
+  intent: string;
+
+  setIntent(intent: string): void;
+};
+
 export type IntegrationState = {
   title: string;
   url: string;

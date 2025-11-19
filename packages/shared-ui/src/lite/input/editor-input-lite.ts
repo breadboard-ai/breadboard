@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, type PropertyValues } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { LitElement, html, css } from "lit";
+import { customElement, property } from "lit/decorators.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import type { GraphDescriptor, Outcome } from "@breadboard-ai/types";
@@ -16,6 +16,9 @@ import { ActionTracker } from "../../utils/action-tracker.js";
 import { ok } from "@breadboard-ai/utils";
 import { SignalWatcher } from "@lit-labs/signals";
 import * as Styles from "../../styles/styles";
+import { consume } from "@lit/context";
+import { uiStateContext } from "../../contexts/ui-state.js";
+import { FlowGenState, UI } from "../../state/types.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -23,13 +26,11 @@ export type LiteEditInputController = {
   generate(intent: string): Promise<Outcome<void>>;
 };
 
-type State =
-  | { status: "initial" }
-  | { status: "generating" }
-  | { status: "error"; error: unknown };
-
 @customElement("bb-editor-input-lite")
 export class EditorInputLite extends SignalWatcher(LitElement) {
+  @consume({ context: uiStateContext })
+  accessor uiState!: UI;
+
   static styles = [
     Styles.HostIcons.icons,
     Styles.HostBehavior.behavior,
@@ -81,14 +82,8 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
   @property({ type: Object })
   accessor currentGraph: GraphDescriptor | undefined;
 
-  @state()
-  accessor #state: State = { status: "initial" };
-
   @property({ type: Boolean, reflect: true })
   accessor focused = false;
-
-  @property({ type: Boolean, reflect: true })
-  accessor generating = false;
 
   @property({ type: Boolean, reflect: true })
   accessor hasEmptyGraph = false;
@@ -99,10 +94,13 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
   @property()
   accessor controller: LiteEditInputController | undefined = undefined;
 
+  @property()
+  accessor flowGen!: FlowGenState;
+
   readonly #descriptionInput = createRef<HTMLTextAreaElement>();
 
   override render() {
-    const isGenerating = this.#state.status === "generating";
+    const isGenerating = this.flowGen.status === "generating";
     const iconClasses = {
       "g-icon": true,
       "filled-heavy": true,
@@ -116,6 +114,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
           .disabled=${isGenerating}
           .classes=${"sans-flex w-400 md-body-large"}
           .orientation=${"vertical"}
+          .value=${this.flowGen?.intent}
           .placeholder=${this.hasEmptyGraph
             ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW")
             : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
@@ -130,13 +129,14 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
     `;
   }
 
-  override async updated(changes: PropertyValues) {
-    if (changes.has("#state") && this.#state.status === "error") {
-      this.#descriptionInput.value?.focus();
-      this.highlighted = true;
-      setTimeout(() => (this.highlighted = false), 2500);
-    }
-  }
+  // TODO: Reimplement with Signals
+  // override async updated(changes: PropertyValues) {
+  //   if (changes.has("#state") && this.#state.status === "error") {
+  //     this.#descriptionInput.value?.focus();
+  //     this.highlighted = true;
+  //     setTimeout(() => (this.highlighted = false), 2500);
+  //   }
+  // }
 
   async #onInputChange() {
     const input = this.#descriptionInput.value;
@@ -147,20 +147,14 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
     const description = input?.value;
     if (!description) return;
 
-    if (description === "/force generating") {
-      this.#state = { status: "generating" };
-      return;
-    } else if (description === "/force initial") {
-      this.#state = { status: "initial" };
-      return;
-    }
-    this.#state = { status: "generating" };
+    this.flowGen.setIntent(description);
+
+    this.flowGen.status = "generating";
 
     ActionTracker.flowGenEdit(this.currentGraph?.url);
 
     this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
 
-    this.generating = true;
     const result = await this.controller?.generate(description);
     if (!ok(result)) {
       this.#onGenerateError(result.$error);
@@ -172,18 +166,14 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
   }
 
   #onGenerateComplete() {
-    this.#state = { status: "initial" };
+    this.flowGen.status = "initial";
     this.#clearInput();
-    this.generating = false;
   }
 
-  #onGenerateError(error: unknown) {
-    if (this.#state.status !== "generating") {
-      return;
-    }
+  #onGenerateError(error: string) {
     console.error("Error generating board", error);
-    this.#state = { status: "error", error };
-    this.generating = false;
+    this.flowGen.status = "error";
+    this.flowGen.error = error;
   }
 
   #clearInput() {

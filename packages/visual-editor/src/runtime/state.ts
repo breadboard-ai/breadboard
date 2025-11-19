@@ -6,6 +6,8 @@
 
 import { McpClientManager } from "@breadboard-ai/mcp";
 import { State } from "@breadboard-ai/shared-ui";
+import { createFlowGenState } from "@breadboard-ai/shared-ui/state/flow-gen.js";
+import { FlowGenState } from "@breadboard-ai/shared-ui/state/types.js";
 import { BoardServer, RuntimeFlagManager } from "@breadboard-ai/types";
 import {
   EditableGraph,
@@ -27,6 +29,8 @@ class StateManager {
   #flagManager: RuntimeFlagManager;
   #mcpClientManager: McpClientManager;
 
+  readonly flowGen: FlowGenState;
+
   constructor(
     store: MutableGraphStore,
     fetchWithCreds: typeof globalThis.fetch,
@@ -39,6 +43,7 @@ class StateManager {
     this.#servers = boardServers;
     this.#flagManager = flagManager;
     this.#mcpClientManager = mcpClientManager;
+    this.flowGen = createFlowGenState();
   }
 
   #findServer(url: URL): BoardServer | null {
