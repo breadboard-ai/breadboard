@@ -9,14 +9,16 @@ import type { ConnectionConfig } from "../config.js";
 export function createConnection(
   clientId: string,
   clientSecret: string,
-  scopes: string[]
+  scopes: string[],
+  authUri?: string,
+  tokenUri?: string
 ): ConnectionConfig {
   return {
     oauth: {
       client_id: clientId,
       client_secret: clientSecret,
-      auth_uri: "https://accounts.google.com/o/oauth2/auth",
-      token_uri: "https://oauth2.googleapis.com/token",
+      auth_uri: authUri || "https://accounts.google.com/o/oauth2/auth",
+      token_uri: tokenUri || "https://oauth2.googleapis.com/token",
       scopes,
     },
   };

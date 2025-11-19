@@ -10,6 +10,7 @@ import type { ServerResponse } from "node:http";
 import type { ServerConfig } from "../config.js";
 import { badRequestJson, internalServerError, okJson } from "../responses.js";
 import * as cookies from "./cookies.js";
+import { oauthFetch } from "../fetch.js";
 
 /**
  * API which gets a new authorization token for when an earlier one has expired.
@@ -38,7 +39,7 @@ export async function refresh(
     connectionConfig.oauth.client_secret ?? ""
   );
 
-  const httpRes = await fetch(tokenUrl, {
+  const httpRes = await oauthFetch(tokenUrl, {
     method: "POST",
     headers: { Accept: "application/json" },
   });

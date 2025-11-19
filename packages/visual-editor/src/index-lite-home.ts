@@ -62,7 +62,8 @@ export class LiteHome extends LitElement {
     const apiBaseUrl =
       signinAdapter.state === "signedout"
         ? proxyApiBaseUrl
-        : "https://www.googleapis.com";
+        : this.globalConfig.GOOGLE_DRIVE_API_ENDPOINT ||
+          "https://www.googleapis.com";
     const googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,
       proxyApiBaseUrl,

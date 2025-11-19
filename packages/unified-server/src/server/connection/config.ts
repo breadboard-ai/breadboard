@@ -48,6 +48,8 @@ export async function createConnectionConfig(): Promise<ConnectionConfig> {
   return googleOauth.createConnection(
     flags.OAUTH_CLIENT,
     flags.OAUTH_SECRET,
-    flags.OAUTH_SCOPES
+    flags.OAUTH_SCOPES,
+    flags.GOOGLE_OAUTH_AUTH_ENDPOINT,
+    flags.GOOGLE_OAUTH_TOKEN_ENDPOINT
   );
 }

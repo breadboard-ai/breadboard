@@ -214,11 +214,16 @@ export class DriveUserGraphCollection implements MutableGraphCollection {
 
     return response.files
       .filter(
-        // Filter down to graphs created by whatever the current OAuth app is.
-        // Otherwise, graphs from different OAuth apps will appear in this list
-        // too, and if they are selected, we won't be able to edit them. Note
-        // there is no way to do this in the query itself.
-        (file) => file.isAppAuthorized
+        (file) =>
+          // Filter down to graphs created by whatever the current OAuth app is.
+          // Otherwise, graphs from different OAuth apps will appear in this list
+          // too, and if they are selected, we won't be able to edit them. Note
+          // there is no way to do this in the query itself.
+          file.isAppAuthorized ||
+          // Note when running on testGaia, isAppAuthorized seems to always be false
+          // so just allow all files in that case (they should all be from the test
+          // client anyway)
+          this.#drive.isTest()
       )
       .map((file): GraphProviderItem => {
         const url = `drive:/${file.id}`;

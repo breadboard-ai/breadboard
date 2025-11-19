@@ -11,6 +11,9 @@ export type ClientDeploymentConfiguration = {
   MEASUREMENT_ID?: string;
   BACKEND_API_ENDPOINT?: string;
   ENVIRONMENT_NAME?: string;
+  GOOGLE_OAUTH_TOKEN_ENDPOINT?: string;
+  GOOGLE_OAUTH_AUTH_ENDPOINT?: string;
+  GOOGLE_DRIVE_API_ENDPOINT?: string;
   GOOGLE_DRIVE_PUBLISH_PERMISSIONS?: GoogleDrivePermission[];
   GOOGLE_DRIVE_USER_FOLDER_NAME?: string;
   GOOGLE_FEEDBACK_PRODUCT_ID?: string;

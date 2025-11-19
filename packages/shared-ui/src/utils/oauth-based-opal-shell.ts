@@ -48,6 +48,10 @@ import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 
 const SIGN_IN_CONNECTION_ID = "$sign-in";
 
+const PROD_AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/auth";
+const AUTH_ENDPOINT =
+  CLIENT_DEPLOYMENT_CONFIG.GOOGLE_OAUTH_AUTH_ENDPOINT || PROD_AUTH_ENDPOINT;
+
 export class OAuthBasedOpalShell implements OpalShellHostProtocol {
   readonly #settingsStore = SettingsStore.restoredInstance();
   readonly #settingsHelper = this.#settingsStore.then(
@@ -295,7 +299,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     const uniqueScopes = [
       ...new Set([...ALWAYS_REQUIRED_OAUTH_SCOPES, ...scopes]),
     ];
-    const url = new URL("https://accounts.google.com/o/oauth2/auth");
+    const url = new URL(AUTH_ENDPOINT);
     const params = url.searchParams;
     params.set("client_id", CLIENT_DEPLOYMENT_CONFIG.OAUTH_CLIENT);
     params.set(
@@ -364,21 +368,29 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       };
     }
 
-    console.info(`[shell host] Checking geo restriction`);
-    try {
-      const access = await this.#checkAppAccessWithToken(
-        grantResponse.access_token
+    if (AUTH_ENDPOINT !== PROD_AUTH_ENDPOINT) {
+      // TODO: AppCat doesn't support Test Gaia login, so we can't check geo
+      // restrictions.
+      console.info(
+        `[shell host] Using test gaia; Skipping geo restriction check`
       );
-      if (!access.canAccess) {
-        console.info(`[shell host] User is geo restricted`);
-        return { ok: false, error: { code: "geo-restriction" } };
+    } else {
+      console.info(`[shell host] Checking geo restriction`);
+      try {
+        const access = await this.#checkAppAccessWithToken(
+          grantResponse.access_token
+        );
+        if (!access.canAccess) {
+          console.info(`[shell host] User is geo restricted`);
+          return { ok: false, error: { code: "geo-restriction" } };
+        }
+      } catch (e) {
+        console.error("[shell host] Error checking geo access", e);
+        return {
+          ok: false,
+          error: { code: "other", userMessage: `Error checking geo access` },
+        };
       }
-    } catch (e) {
-      console.error("[shell host] Error checking geo access", e);
-      return {
-        ok: false,
-        error: { code: "other", userMessage: `Error checking geo access` },
-      };
     }
 
     // Check for any missing required scopes.
