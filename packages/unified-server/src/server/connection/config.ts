@@ -28,7 +28,6 @@ export interface ConnectionConfig {
     auth_uri: string;
     token_uri: string;
     scopes: Array<string | { scope: string; optional: boolean }>;
-    fetchCommand?: string;
   };
 }
 
