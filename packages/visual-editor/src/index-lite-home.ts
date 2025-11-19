@@ -121,7 +121,7 @@ export class LiteHome extends LitElement {
     }
   }
 
-  #addGGalleryResizeController(el: Element | undefined) {
+  #addGalleryResizeController(el: Element | undefined) {
     if (el instanceof HTMLElement) {
       const notifyResize = () => {
         this.#embedHandler?.sendToEmbedder({
@@ -250,7 +250,7 @@ export class LiteHome extends LitElement {
 
   render() {
     return html`<bb-project-listing-lite
-      ${ref((el) => this.#addGGalleryResizeController(el))}
+      ${ref((el) => this.#addGalleryResizeController(el))}
       .recentBoards=${[] /* TODO */}
       @bbevent=${this.handleRoutedEvent}
     ></bb-project-listing-lite>`;
