@@ -53,15 +53,18 @@ export class ConnectionBroker extends HTMLElement {
       return;
     }
 
+    function sendToOpener(grantResponse: GrantResponse): void {
+      window.opener.postMessage(
+        { type: OAUTH_POPUP_MESSAGE_TYPE, nonce, grantResponse },
+        window.location.origin
+      );
+    }
+
     // Check for errors, most notably "access_denied" which will be set if the
     // user clicks "Cancel" during the OAuth flow.
     const error = thisUrl.searchParams.get("error");
     if (error) {
-      window.opener.postMessage({
-        type: OAUTH_POPUP_MESSAGE_TYPE,
-        nonce,
-        grantResponse: { error },
-      } satisfies OAuthPopupMessage);
+      sendToOpener({ error });
       window.close();
       return;
     }
@@ -105,11 +108,7 @@ export class ConnectionBroker extends HTMLElement {
     }
 
     // Send the grant response back to the originating tab and close up shop.
-    window.opener.postMessage({
-      type: OAUTH_POPUP_MESSAGE_TYPE,
-      nonce,
-      grantResponse: grantResponse,
-    } satisfies OAuthPopupMessage);
+    sendToOpener(grantResponse);
     sendToAllowedEmbedderIfPresent({
       type: "oauth_redirect",
       success: true,
