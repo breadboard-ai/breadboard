@@ -154,6 +154,8 @@ export class LiteHome extends LitElement {
         return this.remixBoard(payload.url).then(report);
       case "board.togglepin":
         return this.togglePin(payload.url).then(report);
+      case "board.load":
+        return this.navigateTo(payload.url).then(report);
       default:
         console.warn("Unknown event type", eventType, payload);
         break;
@@ -230,10 +232,16 @@ export class LiteHome extends LitElement {
       if (!newUrlString) {
         return err(`Unable to save remixed board "${url}"`);
       }
+      // 5: Go to the new graph URL
+      this.navigateTo(newUrlString);
     } finally {
       this.unsnackbar(snackbarId);
       this.#busy = false;
     }
+  }
+
+  async navigateTo(urlString: string) {
+    console.log("Unimplemented: navigate to", urlString);
   }
 
   async togglePin(url: string) {
