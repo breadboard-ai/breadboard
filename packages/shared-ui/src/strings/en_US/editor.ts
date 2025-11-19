@@ -51,7 +51,7 @@ export default {
     str: "Describe what you want to build",
   },
   COMMAND_DESCRIBE_EDIT_FLOW: {
-    str: "Suggest an edit",
+    str: "Edit these steps",
   },
   COMMAND_DESCRIBE_EDIT_STEP: {
     str: "Suggest an edit to the prompt",
