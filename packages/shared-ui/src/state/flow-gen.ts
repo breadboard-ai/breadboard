@@ -5,7 +5,7 @@
  */
 
 import { signal } from "signal-utils";
-import { FlowGenGenerationStatus, FlowGenState } from "./types";
+import { FlowGenGenerationStatus, LiteViewState } from "./types";
 
 export { createFlowGenState };
 
@@ -13,7 +13,7 @@ function createFlowGenState() {
   return new ReactiveFlowGenState();
 }
 
-class ReactiveFlowGenState implements FlowGenState {
+class ReactiveFlowGenState implements LiteViewState {
   @signal
   accessor status: FlowGenGenerationStatus = "initial";
 

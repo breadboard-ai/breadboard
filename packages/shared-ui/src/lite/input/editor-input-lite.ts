@@ -18,7 +18,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import * as Styles from "../../styles/styles";
 import { consume } from "@lit/context";
 import { uiStateContext } from "../../contexts/ui-state.js";
-import { FlowGenState, UI } from "../../state/types.js";
+import { LiteViewState, UI } from "../../state/types.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -95,7 +95,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
   accessor controller: LiteEditInputController | undefined = undefined;
 
   @property()
-  accessor flowGen!: FlowGenState;
+  accessor flowGen!: LiteViewState;
 
   readonly #descriptionInput = createRef<HTMLTextAreaElement>();
 

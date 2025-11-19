@@ -440,7 +440,7 @@ export type FlowGenGenerationStatus = "generating" | "initial" | "error";
 /**
  * Represents the flow gen state
  */
-export type FlowGenState = {
+export type LiteViewState = {
   status: FlowGenGenerationStatus;
   error?: string;
   intent: string;

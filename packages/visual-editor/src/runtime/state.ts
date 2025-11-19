@@ -7,7 +7,7 @@
 import { McpClientManager } from "@breadboard-ai/mcp";
 import { State } from "@breadboard-ai/shared-ui";
 import { createFlowGenState } from "@breadboard-ai/shared-ui/state/flow-gen.js";
-import { FlowGenState } from "@breadboard-ai/shared-ui/state/types.js";
+import { LiteViewState } from "@breadboard-ai/shared-ui/state/types.js";
 import { BoardServer, RuntimeFlagManager } from "@breadboard-ai/types";
 import {
   EditableGraph,
@@ -29,7 +29,7 @@ class StateManager {
   #flagManager: RuntimeFlagManager;
   #mcpClientManager: McpClientManager;
 
-  readonly flowGen: FlowGenState;
+  readonly flowGen: LiteViewState;
 
   constructor(
     store: MutableGraphStore,
