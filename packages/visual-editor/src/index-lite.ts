@@ -261,6 +261,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderOriginalPrompt() {
+    if (!this.tab?.graph.metadata?.intent) {
+      return nothing;
+    }
+
     return html`<bb-prompt-view
       .prompt=${this.tab?.graph.metadata?.intent}
     ></bb-prompt-view>`;
