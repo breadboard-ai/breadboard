@@ -7,9 +7,9 @@
 import * as BBLite from "@breadboard-ai/shared-ui/lite";
 import "@breadboard-ai/shared-ui/lite/welcome-panel/project-listing.js";
 import "@breadboard-ai/shared-ui/elements/overflow-menu/overflow-menu.js";
-import { html, LitElement } from "lit";
+import { html, HTMLTemplateResult, LitElement } from "lit";
 import { ref } from "lit/directives/ref.js";
-import { customElement } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
 import { EmbedHandler } from "@breadboard-ai/shared-ui/embed/embed.js";
 import { provide } from "@lit/context";
@@ -18,17 +18,23 @@ import {
   globalConfigContext,
 } from "@breadboard-ai/shared-ui/contexts";
 import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
-import type { BoardServer, Outcome, UUID } from "@breadboard-ai/types";
+import type { Outcome, UUID } from "@breadboard-ai/types";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import type {
+  SnackbarActionEvent,
   StateEvent,
   StateEventDetailMap,
 } from "@breadboard-ai/shared-ui/events/events.js";
 import { err, ok } from "@breadboard-ai/utils";
-import { SnackType } from "@breadboard-ai/shared-ui/types/types.js";
+import {
+  RecentBoard,
+  SnackbarMessage,
+  SnackType,
+} from "@breadboard-ai/shared-ui/types/types.js";
 import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
+import { RecentBoardStore } from "./data/recent-boards";
 
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
@@ -48,7 +54,7 @@ export class LiteHome extends LitElement {
   accessor globalConfig: GlobalConfig;
 
   @provide({ context: boardServerContext })
-  accessor boardServer: BoardServer | undefined;
+  accessor boardServer: GoogleDriveBoardServer | undefined;
 
   @provide({ context: googleDriveClientContext })
   accessor googleDriveClient!: GoogleDriveClient;
@@ -57,6 +63,23 @@ export class LiteHome extends LitElement {
    * Indicates whether we're currently remixing or deleting boards.
    */
   #busy = false;
+
+  /**
+   * The snackbar machinery
+   */
+  accessor #snackbar: BBLite.Snackbar | undefined;
+  #pendingSnackbarMessages: Array<{
+    message: SnackbarMessage;
+    replaceAll: boolean;
+  }> = [];
+
+  /**
+   * Recent boards machinery.
+   */
+  #recentBoardStore = RecentBoardStore.instance();
+
+  @state()
+  accessor recentBoards: RecentBoard[] = [];
 
   readonly #embedHandler?: EmbedHandler;
   constructor(mainArgs: MainArguments) {
@@ -110,6 +133,9 @@ export class LiteHome extends LitElement {
     ).then((boardServer) => {
       this.boardServer = boardServer;
     });
+    this.#recentBoardStore
+      .restore()
+      .then((recentBoards) => (this.recentBoards = recentBoards));
   }
 
   connectedCallback() {
@@ -143,7 +169,8 @@ export class LiteHome extends LitElement {
 
     const report = (outcome: Outcome<void>) => {
       if (!ok(outcome)) {
-        this.snackbar(outcome.$error, SnackType.ERROR);
+        const snackbarId = crypto.randomUUID();
+        this.snackbar(outcome.$error, SnackType.ERROR, snackbarId);
       }
     };
 
@@ -166,22 +193,94 @@ export class LiteHome extends LitElement {
    * Removes a URL from the recent boards list.
    * @param url -- url to remove
    */
-  async removeRecentUrl(url: string) {
-    // TODO: Implement this.
-    console.log("Unimplemented: removing recent URL", url);
+  async removeRecentBoard(url: string) {
+    const count = this.recentBoards.length;
+
+    const removeIndex = this.recentBoards.findIndex(
+      (board) => board.url === url
+    );
+    if (removeIndex !== -1) {
+      this.recentBoards.splice(removeIndex, 1);
+    }
+
+    if (count === this.recentBoards.length) {
+      return;
+    }
+
+    await this.#recentBoardStore.store(this.recentBoards);
   }
 
-  snackbar(message: string, type: SnackType): UUID {
-    console.log(
-      "Unimplemented: show this message in a snack bar",
-      message,
-      type
+  async addRecentBoard(url: string, title: string) {
+    url = url.replace(window.location.origin, "");
+    const currentIndex = this.recentBoards.findIndex(
+      (board) => board.url === url
     );
-    return crypto.randomUUID();
+    if (currentIndex === -1) {
+      this.recentBoards.unshift({
+        title,
+        url,
+      });
+    } else {
+      const [item] = this.recentBoards.splice(currentIndex, 1);
+      if (title) {
+        item.title = title;
+      }
+      this.recentBoards.unshift(item);
+    }
+
+    if (this.recentBoards.length > 50) {
+      this.recentBoards.length = 50;
+    }
+
+    await this.#recentBoardStore.store(this.recentBoards);
+  }
+
+  #renderSnackbar() {
+    return html`<bb-snackbar
+      ${ref((el: Element | undefined) => {
+        if (!el) {
+          this.#snackbar = undefined;
+        }
+
+        this.#snackbar = el as BBLite.Snackbar;
+        for (const pendingMessage of this.#pendingSnackbarMessages) {
+          const { message, id, type } = pendingMessage.message;
+          if (message) {
+            this.snackbar(message, type, id);
+          }
+        }
+
+        this.#pendingSnackbarMessages.length = 0;
+      })}
+      @bbsnackbaraction=${async (evt: SnackbarActionEvent) => {
+        evt.callback?.();
+      }}
+    ></bb-snackbar>`;
+  }
+
+  snackbar(message: string | HTMLTemplateResult, type: SnackType, id: UUID) {
+    const replaceAll = true;
+    const snackbarMessage: SnackbarMessage = {
+      id,
+      message,
+      type,
+      persistent: false,
+      actions: [],
+    };
+
+    if (!this.#snackbar) {
+      this.#pendingSnackbarMessages.push({
+        message: snackbarMessage,
+        replaceAll,
+      });
+      return;
+    }
+
+    return this.#snackbar.show(snackbarMessage, replaceAll);
   }
 
   unsnackbar(id: UUID) {
-    console.log("Unimplemented: hide snackbar with id", id);
+    this.#snackbar?.hide(id);
   }
 
   async deleteBoard(url: string): Promise<Outcome<void>> {
@@ -192,16 +291,17 @@ export class LiteHome extends LitElement {
     if (this.#busy) return;
     this.#busy = true;
 
-    const snackbarId = this.snackbar(DELETING_BOARD_MESSAGE, SnackType.PENDING);
+    const snackbarId = crypto.randomUUID();
+    this.snackbar(DELETING_BOARD_MESSAGE, SnackType.PENDING, snackbarId);
     try {
       if (!confirm(DELETE_BOARD_MESSAGE)) {
         return;
       }
       const result = await this.boardServer.delete(new URL(url));
-      if (result.result) {
+      if (!result.result) {
         return err(result.error || `Unable to delete "${url}"`);
       }
-      this.removeRecentUrl(url);
+      this.removeRecentBoard(url);
     } finally {
       this.unsnackbar(snackbarId);
       this.#busy = false;
@@ -215,7 +315,8 @@ export class LiteHome extends LitElement {
     if (!this.boardServer) {
       return err(`Board server is undefined. Likely a misconfiguration`);
     }
-    const snackbarId = this.snackbar(REMIXING_BOARD_MESSAGE, SnackType.PENDING);
+    const snackbarId = crypto.randomUUID();
+    this.snackbar(REMIXING_BOARD_MESSAGE, SnackType.PENDING, snackbarId);
     try {
       const url = new URL(urlString);
       // 1. Load graph
@@ -232,6 +333,10 @@ export class LiteHome extends LitElement {
       if (!newUrlString) {
         return err(`Unable to save remixed board "${url}"`);
       }
+      await Promise.all([
+        this.boardServer.flushSaveQueue(newUrlString),
+        this.addRecentBoard(newUrlString, remix.title),
+      ]);
       // 5: Go to the new graph URL
       this.navigateTo(newUrlString);
     } finally {
@@ -245,14 +350,25 @@ export class LiteHome extends LitElement {
   }
 
   async togglePin(url: string) {
-    console.log("TOGGLE PIN", url);
+    url = url.replace(window.location.origin, "");
+    const boardToUpdate = this.recentBoards.find((board) => board.url === url);
+    if (!boardToUpdate) {
+      console.log(`Unable to find board ${url}`);
+      return;
+    }
+    boardToUpdate.pinned = !boardToUpdate.pinned;
+
+    await this.#recentBoardStore.store(this.recentBoards);
   }
 
   render() {
-    return html`<bb-project-listing-lite
-      ${ref((el) => this.#addGalleryResizeController(el))}
-      .recentBoards=${[] /* TODO */}
-      @bbevent=${this.handleRoutedEvent}
-    ></bb-project-listing-lite>`;
+    return html`<section id="home">
+      <bb-project-listing-lite
+        ${ref((el) => this.#addGalleryResizeController(el))}
+        .recentBoards=${this.recentBoards}
+        @bbevent=${this.handleRoutedEvent}
+      ></bb-project-listing-lite>
+      ${this.#renderSnackbar()}
+    </section>`;
   }
 }

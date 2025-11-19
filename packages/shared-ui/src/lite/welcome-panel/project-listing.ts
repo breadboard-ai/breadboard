@@ -48,9 +48,6 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
   accessor recentBoards: RecentBoard[] = [];
 
   @property()
-  accessor userFilter: string | null = null;
-
-  @property()
   accessor featuredFilter: string | null = null;
 
   static styles = [
@@ -75,7 +72,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
         --thumbnail-height: 175px;
         --details-min-height: 108px;
         --profile-pic-size: 28px;
-        --todo-gemini-button-color: #0B57D0;
+        --todo-gemini-button-color: #0b57d0;
         --todo-gemini-surface-color: #f0f4f9;
         --todo-gemini-button-text-label-color: #0b57d0;
       }
@@ -155,15 +152,15 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
         &[disabled] .g-icon {
           animation: rotate 1s linear infinite;
         }
-  
+
         &[disabled] .g-icon::after {
           content: "progress_activity";
         }
-  
+
         &:not([disabled]) {
           cursor: pointer;
         }
-  
+
         &:not([disabled]):focus,
         &:not([disabled]):hover {
           background: var(--light-dark-n-10);
@@ -177,9 +174,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
         .g-icon::after {
           content: "add";
         }
-
       }
-
 
       #new-project-container {
         display: flex;
@@ -273,14 +268,12 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
       `;
     }
     const userHasAnyGraphs = userGraphs.size > 0 && !FORCE_NO_BOARDS;
-    const filteredGraphs = FORCE_NO_BOARDS
-      ? []
-      : this.#filterGraphs([...userGraphs.entries()], this.userFilter);
+    const filteredGraphs = FORCE_NO_BOARDS ? [] : [...userGraphs.entries()];
     const featuredGraphs = this.#filterGraphs(
       [...galleryGraphs.entries()],
       this.featuredFilter
     );
-    
+
     return [
       this.#renderFeaturedGraphs(featuredGraphs),
       this.#renderUserGraphs(this.#sortUserGraphs(filteredGraphs)),
