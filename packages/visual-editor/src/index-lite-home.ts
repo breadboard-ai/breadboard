@@ -6,6 +6,7 @@
 
 import * as BBLite from "@breadboard-ai/shared-ui/lite";
 import "@breadboard-ai/shared-ui/lite/welcome-panel/project-listing.js";
+import "@breadboard-ai/shared-ui/elements/overflow-menu/overflow-menu.js";
 import { html, LitElement } from "lit";
 import { ref } from "lit/directives/ref.js";
 import { customElement } from "lit/decorators.js";
@@ -30,19 +31,19 @@ export class LiteHome extends LitElement {
     BBLite.Styles.HostColors.baseColors,
     BBLite.Styles.HostType.type,
   ];
-  
+
   @provide({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig;
-  
+
   @provide({ context: boardServerContext })
   accessor boardServer: BoardServer | undefined;
-  
+
   readonly #embedHandler?: EmbedHandler;
   constructor(mainArgs: MainArguments) {
     super();
     // Static deployment config
     this.globalConfig = mainArgs.globalConfig;
-    
+
     // Communication with embedder
     this.#embedHandler = mainArgs.embedHandler;
 
@@ -99,7 +100,6 @@ export class LiteHome extends LitElement {
       this.style.padding = "24px";
     }
   }
-
 
   #addGGalleryResizeController(el: Element | undefined) {
     if (el instanceof HTMLElement) {
