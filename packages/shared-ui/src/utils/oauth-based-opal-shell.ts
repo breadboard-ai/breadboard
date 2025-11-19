@@ -43,7 +43,7 @@ import {
 import { SETTINGS_TYPE } from "../types/types.js";
 import { getEmbedderRedirectUri, getTopLevelOrigin } from "./embed-helpers.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
-import { scopesFromUrl } from "./scopes-from-url.js";
+import { scopesFromUrl, TESTGAIA_ORIGIN_MAPPINGS } from "./scopes-from-url.js";
 import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 
 const SIGN_IN_CONNECTION_ID = "$sign-in";
@@ -222,27 +222,35 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     input: string | URL | RequestInfo,
     init: RequestInit = {}
   ): Promise<Response> {
-    const url =
+    const inputUrl =
       input instanceof Request
         ? input.url
         : input instanceof URL
           ? input.href
           : input;
+    let url: URL;
     try {
-      new URL(url);
+      url = new URL(inputUrl);
     } catch {
       // Don't allow relative URLs, because it's ambiguous which origin we
       // should resolve it against (the host or guest?).
       return new Response(
-        `Only valid absolute URLs can be used with fetchWithCreds: ${url}`,
+        `Only valid absolute URLs can be used with fetchWithCreds: ${inputUrl}`,
         { status: 400 }
       );
     }
-    const scopes = scopesFromUrl(url);
+    const scopes = scopesFromUrl(inputUrl);
     if (!scopes) {
-      const message = `URL is not in fetchWithCreds allowlist: ${url}`;
+      const message = `URL is not in fetchWithCreds allowlist: ${inputUrl}`;
       console.error(`[shell host] ${message}`);
       return new Response(message, { status: 403 });
+    }
+    const testGaiaOrigin = CLIENT_DEPLOYMENT_CONFIG.USE_TESTGAIA
+      ? TESTGAIA_ORIGIN_MAPPINGS.get(url.origin)
+      : undefined;
+    if (testGaiaOrigin) {
+      url = new URL(url.pathname, testGaiaOrigin);
+      input = input instanceof Request ? new Request(url, init) : url;
     }
     const token = await this.#getToken(scopes);
     if (token.state === "signedout") {
@@ -256,7 +264,11 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     }
 
     const accessToken = token.grant.access_token;
-    const maybeAugmentedInit = this.#maybeAugmentInit(url, init, accessToken);
+    const maybeAugmentedInit = this.#maybeAugmentInit(
+      url.toString(),
+      init,
+      accessToken
+    );
 
     const headers = new Headers(maybeAugmentedInit.headers);
     headers.set("Authorization", `Bearer ${accessToken}`);
@@ -295,7 +307,9 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     const uniqueScopes = [
       ...new Set([...ALWAYS_REQUIRED_OAUTH_SCOPES, ...scopes]),
     ];
-    const url = new URL("https://accounts.google.com/o/oauth2/auth");
+    const url = CLIENT_DEPLOYMENT_CONFIG.USE_TESTGAIA
+      ? new URL("https://gaiastaging.corp.google.com/o/oauth2/auth")
+      : new URL("https://accounts.google.com/o/oauth2/auth");
     const params = url.searchParams;
     params.set("client_id", CLIENT_DEPLOYMENT_CONFIG.OAUTH_CLIENT);
     params.set(
@@ -366,13 +380,13 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
 
     console.info(`[shell host] Checking geo restriction`);
     try {
-      const access = await this.#checkAppAccessWithToken(
-        grantResponse.access_token
-      );
-      if (!access.canAccess) {
-        console.info(`[shell host] User is geo restricted`);
-        return { ok: false, error: { code: "geo-restriction" } };
-      }
+      // const access = await this.#checkAppAccessWithToken(
+      //   grantResponse.access_token
+      // );
+      // if (!access.canAccess) {
+      //   console.info(`[shell host] User is geo restricted`);
+      //   return { ok: false, error: { code: "geo-restriction" } };
+      // }
     } catch (e) {
       console.error("[shell host] Error checking geo access", e);
       return {

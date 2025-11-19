@@ -27,6 +27,7 @@ export type ClientDeploymentConfiguration = {
    */
   ALLOW_3P_MODULES?: boolean;
   ENABLE_EMAIL_OPT_IN?: boolean;
+  USE_TESTGAIA?: boolean;
   domains?: Record<string, DomainConfiguration>;
   flags: RuntimeFlags;
 };

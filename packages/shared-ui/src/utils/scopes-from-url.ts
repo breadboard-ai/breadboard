@@ -65,6 +65,11 @@ const URL_SCOPE_MAPPINGS: Array<[URL, OAuthScope[]]> = [
   ],
 ];
 
+// Not everything we use is set up for test gaia yet!
+export const TESTGAIA_ORIGIN_MAPPINGS: Map<string, string> = new Map([
+  ["https://www.googleapis.com", "https://test-www.sandbox.googleapis.com	"],
+]);
+
 const { BACKEND_API_ENDPOINT } = CLIENT_DEPLOYMENT_CONFIG;
 if (BACKEND_API_ENDPOINT) {
   URL_SCOPE_MAPPINGS.push([new URL(BACKEND_API_ENDPOINT), GENAI_SCOPES]);
@@ -86,3 +91,4 @@ export function scopesFromUrl(url: string): OAuthScope[] | undefined {
     }
   }
 }
+

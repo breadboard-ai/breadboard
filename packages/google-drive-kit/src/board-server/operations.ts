@@ -467,8 +467,8 @@ class DriveOperations {
       `name=${quote(this.#userFolderName)}` +
       ` and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"` +
       ` and trashed=false`;
-    const { files } = await this.#googleDriveClient.listFiles(query, {
-      fields: ["id"],
+    let { files } = await this.#googleDriveClient.listFiles(query, {
+      fields: ["id", "mimeType"],
       orderBy: [
         {
           field: "createdTime",
@@ -476,6 +476,9 @@ class DriveOperations {
         },
       ],
     });
+    // This shouldn't be required based on the query above, but for some reason
+    // the TestGaia drive endpoint doesn't seem to respect the mimeType query
+    files = files.filter((f) => f.mimeType === GOOGLE_DRIVE_FOLDER_MIME_TYPE);
     if (files.length > 0) {
       if (files.length > 1) {
         console.warn(

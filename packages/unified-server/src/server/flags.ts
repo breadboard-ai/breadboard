@@ -104,6 +104,8 @@ export const ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE = getBoolean(
   "ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE"
 );
 
+export const USE_TESTGAIA = getBoolean("USE_TESTGAIA");
+
 /** Get the value of the given flag as a string, or empty string if absent. */
 function getString(flagName: string): string {
   return process.env[flagName] ?? "";

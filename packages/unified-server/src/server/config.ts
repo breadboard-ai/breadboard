@@ -32,6 +32,7 @@ export async function createClientConfig(opts: {
     SHELL_GUEST_ORIGIN: flags.SHELL_GUEST_ORIGIN,
     SHELL_HOST_ORIGINS: flags.SHELL_HOST_ORIGINS,
     ENABLE_EMAIL_OPT_IN: flags.ENABLE_EMAIL_OPT_IN,
+    USE_TESTGAIA: flags.USE_TESTGAIA,
     domains: flags.DOMAIN_CONFIG,
     flags: {
       generateForEach: flags.ENABLE_GENERATE_FOR_EACH,

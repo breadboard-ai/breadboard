@@ -48,6 +48,7 @@ export async function createConnectionConfig(): Promise<ConnectionConfig> {
   return googleOauth.createConnection(
     flags.OAUTH_CLIENT,
     flags.OAUTH_SECRET,
-    flags.OAUTH_SCOPES
+    flags.OAUTH_SCOPES,
+    flags.USE_TESTGAIA
   );
 }
