@@ -193,6 +193,10 @@ export type StepListStepState = {
    * The prompt from step's configuration
    */
   prompt: string;
+  /**
+   * The type from step's configuration
+   */
+  tags?: string[];
 };
 
 export type ErrorReason =

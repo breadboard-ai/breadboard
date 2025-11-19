@@ -21,10 +21,10 @@ class StepList implements StepListState {
           entry.status?.status,
           this.status
         );
-        const { icon, title } = entry;
+        const { icon, title, tags } = entry;
         return [
           id,
-          { icon, title, status, prompt } satisfies StepListStepState,
+          { icon, title, status, prompt, tags } satisfies StepListStepState,
         ];
       })
     );
