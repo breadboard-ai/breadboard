@@ -27,12 +27,14 @@ suite("home", () => {
     page: "home",
     mode: "canvas",
     lite: false,
+    new: false,
   });
 
   testSymmetrical(`${BASE_URL}/?mode=app`, {
     page: "home",
     mode: "app",
     lite: false,
+    new: false,
   });
 
   test("default to home w/ canvas", () => {
@@ -40,6 +42,7 @@ suite("home", () => {
       page: "home",
       mode: "canvas",
       lite: false,
+      new: false,
     });
   });
 
@@ -48,6 +51,7 @@ suite("home", () => {
       page: "home",
       mode: "canvas",
       lite: false,
+      new: false,
       dev: {
         foo: "hello",
         bar: "",
@@ -164,6 +168,7 @@ suite("landing", () => {
     page: "landing",
     redirect: {
       page: "home",
+      new: false,
       mode: "canvas",
       redirectFromLanding: true,
       lite: false,
@@ -176,6 +181,7 @@ suite("landing", () => {
       page: "landing",
       redirect: {
         page: "home",
+        new: false,
         mode: "canvas",
         redirectFromLanding: true,
         lite: false,
@@ -237,6 +243,7 @@ suite("landing", () => {
       redirect: {
         page: "home",
         mode: "canvas",
+        new: false,
         redirectFromLanding: true,
         dev: {
           foo: "hello",

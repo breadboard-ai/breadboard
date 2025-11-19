@@ -35,6 +35,7 @@ export function devUrlParams(): Required<BaseUrlInit>["dev"] {
 
 export interface HomeUrlInit extends BaseUrlInit {
   page: "home";
+  new?: boolean;
   mode?: VisualEditorMode;
   lite?: boolean;
   redirectFromLanding?: boolean;
@@ -63,6 +64,7 @@ const FLOW = "flow";
 const TAB0 = "tab0";
 const MODE = "mode";
 const LITE = "lite" as const;
+const NEW = "new";
 const MODE_APP = "app" as const;
 const MODE_CANVAS = "canvas" as const;
 const RESULTS = "results";
@@ -92,6 +94,9 @@ export function makeUrl(
     url.searchParams.set(MODE, init.mode ?? MODE_CANVAS);
     if (init.lite) {
       url.searchParams.set(LITE, init.lite === true ? "true" : "false");
+    }
+    if (init.new) {
+      url.searchParams.set(NEW, init.new === true ? "true" : "false");
     }
   } else if (page === "graph") {
     url.searchParams.set(FLOW, init.flow);
@@ -210,6 +215,7 @@ export function parseUrl(url: string | URL): MakeUrlInit {
         mode:
           url.searchParams.get("mode") === MODE_APP ? MODE_APP : MODE_CANVAS,
         lite: url.searchParams.get("lite") === "true",
+        new: url.searchParams.get(NEW) === "true",
       };
       if (dev) {
         home.dev = dev;

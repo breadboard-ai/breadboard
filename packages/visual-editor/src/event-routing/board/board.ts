@@ -283,15 +283,20 @@ export const CreateRoute: EventRoute<"board.create"> = {
       return false;
     }
 
+    const { lite, dev } = parseUrl(window.location.href);
+
     runtime.router.go(
       {
         page: "graph",
         // Ensure we always go back to the canvas when a board is created.
         mode: "canvas",
+        // Ensure that we correctly preserve the "lite" mode.
+        lite,
         flow: result.url.href,
-        // Resource key not required because we know the current user created it.
+        // Resource key not required because we know the current user
+        // created it.
         resourceKey: undefined,
-        dev: parseUrl(window.location.href).dev,
+        dev,
       },
       tab?.id,
       originalEvent.detail.editHistoryCreator
