@@ -344,7 +344,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     const apiBaseUrl =
       this.signinAdapter.state === "signedout"
         ? proxyApiBaseUrl
-        : "https://www.googleapis.com";
+        : this.globalConfig.GOOGLE_DRIVE_API_ENDPOINT ||
+          "https://www.googleapis.com";
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,
       proxyApiBaseUrl,

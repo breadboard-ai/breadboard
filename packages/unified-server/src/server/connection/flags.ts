@@ -12,7 +12,9 @@ export const OAUTH_SCOPES: string[] = getStringList("OAUTH_SCOPES");
 
 export const OAUTH_SECRET: string = getString("OAUTH_SECRET");
 
-export const USE_TESTGAIA: boolean = getBoolean("USE_TESTGAIA");
+export const GOOGLE_OAUTH_TOKEN_ENDPOINT: string = getString(
+  "GOOGLE_OAUTH_TOKEN_ENDPOINT"
+);
 
 export const REFRESH_TOKEN_COOKIE_SAME_SITE: SameSite = getSameSite(
   "REFRESH_TOKEN_COOKIE_SAME_SITE",
@@ -20,16 +22,6 @@ export const REFRESH_TOKEN_COOKIE_SAME_SITE: SameSite = getSameSite(
     default: "Strict",
   }
 );
-
-/**
- * Get the value of the given flag as a boolean.
- *
- * Anything other than the literal string "true" (case-insensitive) will be
- * interpreted as false
- */
-function getBoolean(flagName: string): boolean {
-  return getString(flagName).toLowerCase() === "true";
-}
 
 /** Get the value of the given flag as a string, or empty string if absent. */
 function getString(flagName: string): string {

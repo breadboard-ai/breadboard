@@ -9,7 +9,7 @@ import {promisify} from 'util';
 import * as flags from './flags.js';
 
 export async function oauthFetch(url: URL, init: RequestInit): Promise<Response> {
-  if (!flags.USE_TESTGAIA) {
+  if (!flags.GOOGLE_OAUTH_TOKEN_ENDPOINT) {
     return fetch(url, init);
   }
 

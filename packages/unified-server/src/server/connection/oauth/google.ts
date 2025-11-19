@@ -10,20 +10,14 @@ export function createConnection(
   clientId: string,
   clientSecret: string,
   scopes: string[],
-  useTestGaia: boolean
+  tokenUri?: string
 ): ConnectionConfig {
-  const authUri = useTestGaia
-    ? "https://gaiastaging.corp.google.com/o/oauth2/auth"
-    : "https://accounts.google.com/o/oauth2/auth";
-  const tokenUri = useTestGaia
-    ? "https://gaiastaging.corp.google.com/o/oauth2/token"
-    : "https://accounts.google.com/o/oauth2/token";
   return {
     oauth: {
       client_id: clientId,
       client_secret: clientSecret,
-      auth_uri: authUri,
-      token_uri: tokenUri,
+      auth_uri: "https://accounts.google.com/o/oauth2/auth",
+      token_uri: tokenUri || "https://accounts.google.com/o/oauth2/token",
       scopes,
     },
   };

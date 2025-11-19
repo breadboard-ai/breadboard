@@ -43,7 +43,7 @@ import {
 import { SETTINGS_TYPE } from "../types/types.js";
 import { getEmbedderRedirectUri, getTopLevelOrigin } from "./embed-helpers.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
-import { scopesFromUrl, TESTGAIA_ORIGIN_MAPPINGS } from "./scopes-from-url.js";
+import { scopesFromUrl } from "./scopes-from-url.js";
 import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 
 const SIGN_IN_CONNECTION_ID = "$sign-in";
@@ -222,35 +222,27 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     input: string | URL | RequestInfo,
     init: RequestInit = {}
   ): Promise<Response> {
-    const inputUrl =
+    const url =
       input instanceof Request
         ? input.url
         : input instanceof URL
           ? input.href
           : input;
-    let url: URL;
     try {
-      url = new URL(inputUrl);
+      new URL(url);
     } catch {
       // Don't allow relative URLs, because it's ambiguous which origin we
       // should resolve it against (the host or guest?).
       return new Response(
-        `Only valid absolute URLs can be used with fetchWithCreds: ${inputUrl}`,
+        `Only valid absolute URLs can be used with fetchWithCreds: ${url}`,
         { status: 400 }
       );
     }
-    const scopes = scopesFromUrl(inputUrl);
+    const scopes = scopesFromUrl(url);
     if (!scopes) {
-      const message = `URL is not in fetchWithCreds allowlist: ${inputUrl}`;
+      const message = `URL is not in fetchWithCreds allowlist: ${url}`;
       console.error(`[shell host] ${message}`);
       return new Response(message, { status: 403 });
-    }
-    const testGaiaOrigin = CLIENT_DEPLOYMENT_CONFIG.USE_TESTGAIA
-      ? TESTGAIA_ORIGIN_MAPPINGS.get(url.origin)
-      : undefined;
-    if (testGaiaOrigin) {
-      url = new URL(url.pathname, testGaiaOrigin);
-      input = input instanceof Request ? new Request(url, init) : url;
     }
     const token = await this.#getToken(scopes);
     if (token.state === "signedout") {
@@ -264,11 +256,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     }
 
     const accessToken = token.grant.access_token;
-    const maybeAugmentedInit = this.#maybeAugmentInit(
-      url.toString(),
-      init,
-      accessToken
-    );
+    const maybeAugmentedInit = this.#maybeAugmentInit(url, init, accessToken);
 
     const headers = new Headers(maybeAugmentedInit.headers);
     headers.set("Authorization", `Bearer ${accessToken}`);
@@ -307,9 +295,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     const uniqueScopes = [
       ...new Set([...ALWAYS_REQUIRED_OAUTH_SCOPES, ...scopes]),
     ];
-    const url = CLIENT_DEPLOYMENT_CONFIG.USE_TESTGAIA
-      ? new URL("https://gaiastaging.corp.google.com/o/oauth2/auth")
-      : new URL("https://accounts.google.com/o/oauth2/auth");
+    const url = new URL("https://accounts.google.com/o/oauth2/auth");
     const params = url.searchParams;
     params.set("client_id", CLIENT_DEPLOYMENT_CONFIG.OAUTH_CLIENT);
     params.set(
@@ -378,29 +364,21 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       };
     }
 
-    if (CLIENT_DEPLOYMENT_CONFIG.USE_TESTGAIA) {
-      // TODO: AppCat currently does not support Test Gaia, so just skip the geo
-      // check during development
-      console.info(
-        `[shell host] Skipping geo restriction check (USE_TESTGAIA=true)`
+    console.info(`[shell host] Checking geo restriction`);
+    try {
+      const access = await this.#checkAppAccessWithToken(
+        grantResponse.access_token
       );
-    } else {
-      console.info(`[shell host] Checking geo restriction`);
-      try {
-        const access = await this.#checkAppAccessWithToken(
-          grantResponse.access_token
-        );
-        if (!access.canAccess) {
-          console.info(`[shell host] User is geo restricted`);
-          return { ok: false, error: { code: "geo-restriction" } };
-        }
-      } catch (e) {
-        console.error("[shell host] Error checking geo access", e);
-        return {
-          ok: false,
-          error: { code: "other", userMessage: `Error checking geo access` },
-        };
+      if (!access.canAccess) {
+        console.info(`[shell host] User is geo restricted`);
+        return { ok: false, error: { code: "geo-restriction" } };
       }
+    } catch (e) {
+      console.error("[shell host] Error checking geo access", e);
+      return {
+        ok: false,
+        error: { code: "other", userMessage: `Error checking geo access` },
+      };
     }
 
     // Check for any missing required scopes.

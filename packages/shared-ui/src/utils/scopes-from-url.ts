@@ -36,6 +36,18 @@ const CALENDAR_SCOPES: OAuthScope[] = [
   "https://www.googleapis.com/auth/calendar.events.owned",
 ];
 
+const GOOGLE_DRIVE_API_ENDPOINT = new URL(
+  "drive/",
+  CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_API_ENDPOINT ||
+    "https://www.googleapis.com"
+);
+
+const GOOGLE_DRIVE_UPLOAD_API_ENDPOINT = new URL(
+  "upload/drive/v3/",
+  CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_API_ENDPOINT ||
+    "https://www.googleapis.com"
+);
+
 const DRIVE_SCOPES: OAuthScope[] = [
   "https://www.googleapis.com/auth/drive.readonly",
 ];
@@ -53,22 +65,17 @@ const URL_SCOPE_MAPPINGS: Array<[URL, OAuthScope[]]> = [
   [ASSET_DRIVE_API_ENDPOINT, DRIVE_SCOPES],
   [DATA_TRANSFORM_API_ENDPOINT, [...DRIVE_SCOPES, ...GENAI_SCOPES]],
   [new URL("https://www.googleapis.com/calendar/"), CALENDAR_SCOPES],
-  [new URL("https://www.googleapis.com/drive/"), DRIVE_SCOPES],
+  [GOOGLE_DRIVE_API_ENDPOINT, DRIVE_SCOPES],
+  [GOOGLE_DRIVE_UPLOAD_API_ENDPOINT, DRIVE_SCOPES],
   [new URL("https://docs.googleapis.com/v1/documents/"), DRIVE_SCOPES],
   [new URL("https://slides.googleapis.com/v1/presentations/"), DRIVE_SCOPES],
   [new URL("https://sheets.googleapis.com/v4/spreadsheets/"), DRIVE_SCOPES],
-  [new URL("https://www.googleapis.com/upload/drive/v3/"), DRIVE_SCOPES],
   [new URL("https://gmail.googleapis.com/"), GMAIL_SCOPES],
   [
     new URL("https://generativelanguage.googleapis.com/v1beta/models/"),
     GENAI_SCOPES,
   ],
 ];
-
-// Not everything we use is set up for test gaia yet!
-export const TESTGAIA_ORIGIN_MAPPINGS: Map<string, string> = new Map([
-  ["https://www.googleapis.com", "https://test-www.sandbox.googleapis.com	"],
-]);
 
 const { BACKEND_API_ENDPOINT } = CLIENT_DEPLOYMENT_CONFIG;
 if (BACKEND_API_ENDPOINT) {
@@ -91,4 +98,3 @@ export function scopesFromUrl(url: string): OAuthScope[] | undefined {
     }
   }
 }
-

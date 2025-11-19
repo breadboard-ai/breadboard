@@ -167,6 +167,8 @@ export type DriveFileId = { id: string; resourceKey?: string };
 
 type GoogleApiAuthorization = "fetchWithCreds" | "anonymous";
 
+const PROD_API_ENDPOINT = "https://www.googleapis.com";
+
 export class GoogleDriveClient {
   readonly #apiUrl: string;
   readonly #publicProxy:
@@ -179,7 +181,7 @@ export class GoogleDriveClient {
   readonly fetchWithCreds: typeof globalThis.fetch;
 
   constructor(options: GoogleDriveClientOptions) {
-    this.#apiUrl = options.apiBaseUrl || "https://www.googleapis.com";
+    this.#apiUrl = options.apiBaseUrl || PROD_API_ENDPOINT;
     this.#publicProxy = options.proxyApiBaseUrl
       ? {
           apiUrl: options.proxyApiBaseUrl,
@@ -187,6 +189,10 @@ export class GoogleDriveClient {
         }
       : undefined;
     this.fetchWithCreds = options.fetchWithCreds;
+  }
+
+  isTest() {
+    return this.#apiUrl !== PROD_API_ENDPOINT;
   }
 
   async #fetch(

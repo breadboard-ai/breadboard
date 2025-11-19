@@ -46,6 +46,14 @@ export const ENABLE_MCP: boolean = getBoolean("ENABLE_MCP");
 
 export const ENVIRONMENT_NAME: string = getString("ENVIRONMENT_NAME");
 
+export const GOOGLE_OAUTH_TOKEN_ENDPOINT: string = getString(
+  "GOOGLE_OAUTH_TOKEN_ENDPOINT"
+);
+
+export const GOOGLE_DRIVE_API_ENDPOINT: string = getString(
+  "GOOGLE_DRIVE_API_ENDPOINT"
+);
+
 export const GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID: string = getString(
   "GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID"
 );
@@ -103,8 +111,6 @@ export const ENABLE_REQUIRE_CONSENT_FOR_GET_WEBPAGE = getBoolean(
 export const ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE = getBoolean(
   "ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE"
 );
-
-export const USE_TESTGAIA = getBoolean("USE_TESTGAIA");
 
 /** Get the value of the given flag as a string, or empty string if absent. */
 function getString(flagName: string): string {
