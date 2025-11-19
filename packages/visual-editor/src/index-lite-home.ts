@@ -9,7 +9,7 @@ import "@breadboard-ai/shared-ui/lite/welcome-panel/project-listing.js";
 import "@breadboard-ai/shared-ui/elements/overflow-menu/overflow-menu.js";
 import { html, HTMLTemplateResult, LitElement } from "lit";
 import { ref } from "lit/directives/ref.js";
-import { customElement } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
 import { EmbedHandler } from "@breadboard-ai/shared-ui/embed/embed.js";
 import { provide } from "@lit/context";
@@ -29,10 +29,12 @@ import type {
 } from "@breadboard-ai/shared-ui/events/events.js";
 import { err, ok } from "@breadboard-ai/utils";
 import {
+  RecentBoard,
   SnackbarMessage,
   SnackType,
 } from "@breadboard-ai/shared-ui/types/types.js";
 import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
+import { RecentBoardStore } from "./data/recent-boards";
 
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
@@ -70,6 +72,14 @@ export class LiteHome extends LitElement {
     message: SnackbarMessage;
     replaceAll: boolean;
   }> = [];
+
+  /**
+   * Recent boards machinery.
+   */
+  #recentBoardStore = RecentBoardStore.instance();
+
+  @state()
+  accessor recentBoards: RecentBoard[] = [];
 
   readonly #embedHandler?: EmbedHandler;
   constructor(mainArgs: MainArguments) {
@@ -123,6 +133,9 @@ export class LiteHome extends LitElement {
     ).then((boardServer) => {
       this.boardServer = boardServer;
     });
+    this.#recentBoardStore
+      .restore()
+      .then((recentBoards) => (this.recentBoards = recentBoards));
   }
 
   connectedCallback() {
@@ -180,9 +193,46 @@ export class LiteHome extends LitElement {
    * Removes a URL from the recent boards list.
    * @param url -- url to remove
    */
-  async removeRecentUrl(url: string) {
-    // TODO: Implement this.
-    console.log("Unimplemented: removing recent URL", url);
+  async removeRecentBoard(url: string) {
+    const count = this.recentBoards.length;
+
+    const removeIndex = this.recentBoards.findIndex(
+      (board) => board.url === url
+    );
+    if (removeIndex !== -1) {
+      this.recentBoards.splice(removeIndex, 1);
+    }
+
+    if (count === this.recentBoards.length) {
+      return;
+    }
+
+    await this.#recentBoardStore.store(this.recentBoards);
+  }
+
+  async addRecentBoard(url: string, title: string) {
+    url = url.replace(window.location.origin, "");
+    const currentIndex = this.recentBoards.findIndex(
+      (board) => board.url === url
+    );
+    if (currentIndex === -1) {
+      this.recentBoards.unshift({
+        title,
+        url,
+      });
+    } else {
+      const [item] = this.recentBoards.splice(currentIndex, 1);
+      if (title) {
+        item.title = title;
+      }
+      this.recentBoards.unshift(item);
+    }
+
+    if (this.recentBoards.length > 50) {
+      this.recentBoards.length = 50;
+    }
+
+    await this.#recentBoardStore.store(this.recentBoards);
   }
 
   #renderSnackbar() {
@@ -251,7 +301,7 @@ export class LiteHome extends LitElement {
       if (!result.result) {
         return err(result.error || `Unable to delete "${url}"`);
       }
-      this.removeRecentUrl(url);
+      this.removeRecentBoard(url);
     } finally {
       this.unsnackbar(snackbarId);
       this.#busy = false;
@@ -283,7 +333,10 @@ export class LiteHome extends LitElement {
       if (!newUrlString) {
         return err(`Unable to save remixed board "${url}"`);
       }
-      await this.boardServer.flushSaveQueue(newUrlString);
+      await Promise.all([
+        this.boardServer.flushSaveQueue(newUrlString),
+        this.addRecentBoard(newUrlString, remix.title),
+      ]);
       // 5: Go to the new graph URL
       this.navigateTo(newUrlString);
     } finally {
@@ -304,7 +357,7 @@ export class LiteHome extends LitElement {
     return html`<section id="home">
       <bb-project-listing-lite
         ${ref((el) => this.#addGalleryResizeController(el))}
-        .recentBoards=${[] /* TODO */}
+        .recentBoards=${this.recentBoards}
         @bbevent=${this.handleRoutedEvent}
       ></bb-project-listing-lite>
       ${this.#renderSnackbar()}
