@@ -10,13 +10,14 @@ export function createConnection(
   clientId: string,
   clientSecret: string,
   scopes: string[],
+  authUri?: string,
   tokenUri?: string
 ): ConnectionConfig {
   return {
     oauth: {
       client_id: clientId,
       client_secret: clientSecret,
-      auth_uri: "https://accounts.google.com/o/oauth2/auth",
+      auth_uri: authUri || "https://accounts.google.com/o/oauth2/auth",
       token_uri: tokenUri || "https://accounts.google.com/o/oauth2/token",
       scopes,
     },

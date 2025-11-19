@@ -28,6 +28,7 @@ export interface ConnectionConfig {
     auth_uri: string;
     token_uri: string;
     scopes: Array<string | { scope: string; optional: boolean }>;
+    fetchCommand?: string;
   };
 }
 
@@ -49,6 +50,7 @@ export async function createConnectionConfig(): Promise<ConnectionConfig> {
     flags.OAUTH_CLIENT,
     flags.OAUTH_SECRET,
     flags.OAUTH_SCOPES,
+    flags.GOOGLE_OAUTH_AUTH_ENDPOINT,
     flags.GOOGLE_OAUTH_TOKEN_ENDPOINT
   );
 }

@@ -9,17 +9,12 @@ import {promisify} from 'util';
 import * as flags from './flags.js';
 
 export async function oauthFetch(url: URL, init: RequestInit): Promise<Response> {
-  if (!flags.GOOGLE_OAUTH_TOKEN_ENDPOINT) {
+  if (!flags.OAUTH_FETCH_COMMAND) {
     return fetch(url, init);
   }
-
-  // When running on test gaia, the grant/token fetch happens via
-  // gaiastaging, which is behind uberproxy and may not be directly
-  // reachable via standard node fetch. This provides an approximation
-  // to `fetch` via `gosso`.
   const execPromise = promisify(exec);
   try {
-    let command = `gosso -url "${url.href}"`;
+    let command = `${flags.OAUTH_FETCH_COMMAND} -url "${url.href}"`;
 
     if (init.method) {
       command += ` -method="${init.method}"`;
@@ -33,20 +28,22 @@ export async function oauthFetch(url: URL, init: RequestInit): Promise<Response>
     }
 
     if (init.body) {
-      throw new Error('Body not supported for gsso');
+      throw new Error(
+        "Body not currently supported when using OAUTH_FETCH_COMMAND"
+      );
     }
 
-    const {stdout, stderr} = await execPromise(command);
+    const { stdout, stderr } = await execPromise(command);
 
     if (stderr) {
-      console.warn(`gosso stderr: ${stderr}`);
+      console.warn(`${flags.OAUTH_FETCH_COMMAND} stderr: ${stderr}`);
     }
     return new Response(stdout);
   } catch (error: any) {
     error = String(error);
-    if (error.includes('command not found')) {
-      error = 'When running in test gaia, gosso is required. Install using `sudo mule install gosso`'
+    if (error.includes("command not found")) {
+      error = `Command ${flags.OAUTH_FETCH_COMMAND} passed as OAUTH_FETCH_COMMAND not found. Do you need to install it?`;
     }
-    return new Response(JSON.stringify({error}), {status: 500});
+    return new Response(JSON.stringify({ error }), { status: 500 });
   }
 }

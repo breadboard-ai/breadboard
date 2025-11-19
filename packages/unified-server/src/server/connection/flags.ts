@@ -12,6 +12,12 @@ export const OAUTH_SCOPES: string[] = getStringList("OAUTH_SCOPES");
 
 export const OAUTH_SECRET: string = getString("OAUTH_SECRET");
 
+export const OAUTH_FETCH_COMMAND: string = getString("OAUTH_FETCH_COMMAND");
+
+export const GOOGLE_OAUTH_AUTH_ENDPOINT: string = getString(
+  "GOOGLE_OAUTH_AUTH_ENDPOINT"
+);
+
 export const GOOGLE_OAUTH_TOKEN_ENDPOINT: string = getString(
   "GOOGLE_OAUTH_TOKEN_ENDPOINT"
 );

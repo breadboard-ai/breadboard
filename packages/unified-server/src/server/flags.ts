@@ -46,6 +46,10 @@ export const ENABLE_MCP: boolean = getBoolean("ENABLE_MCP");
 
 export const ENVIRONMENT_NAME: string = getString("ENVIRONMENT_NAME");
 
+export const GOOGLE_OAUTH_AUTH_ENDPOINT: string = getString(
+  "GOOGLE_OAUTH_AUTH_ENDPOINT"
+);
+
 export const GOOGLE_OAUTH_TOKEN_ENDPOINT: string = getString(
   "GOOGLE_OAUTH_TOKEN_ENDPOINT"
 );
