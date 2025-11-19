@@ -194,6 +194,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     super(args);
   }
 
+  /**
+   * This method is called by bb-editor-input-lite whenever it needs to
+   * generate a new graph.
+   */
   async generate(intent: string): Promise<Outcome<void>> {
     let projectState = this.getProjectState();
 
