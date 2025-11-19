@@ -343,7 +343,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
             m.origin === window.location.origin &&
             typeof m.data === "object" &&
             m.data !== null &&
-            m.type === OAUTH_POPUP_MESSAGE_TYPE
+            m.data.type === OAUTH_POPUP_MESSAGE_TYPE
           ) {
             resolve(m.data);
             abortCtl.abort();
