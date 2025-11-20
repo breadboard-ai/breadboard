@@ -9,7 +9,7 @@ import { customElement, property } from "lit/decorators.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import type { Outcome } from "@breadboard-ai/types";
-import { StateEvent } from "../../events/events.js";
+import { SnackbarEvent, StateEvent } from "../../events/events.js";
 import "../../elements/input/expanding-textarea.js";
 import { classMap } from "lit/directives/class-map.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
@@ -19,6 +19,7 @@ import * as Styles from "../../styles/styles";
 import { consume } from "@lit/context";
 import { uiStateContext } from "../../contexts/ui-state.js";
 import { LiteViewState, UI } from "../../state/types.js";
+import { SnackType } from "../../types/types.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -101,7 +102,6 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
       round: true,
       rotate: isGenerating,
     };
-    console.log(this.state.empty);
     return html`
       <div id="container">
         <bb-expanding-textarea
@@ -170,6 +170,17 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
     console.error("Error generating board", error);
     this.state.status = "error";
     this.state.error = error;
+
+    this.dispatchEvent(
+      new SnackbarEvent(
+        globalThis.crypto.randomUUID(),
+        error,
+        SnackType.INFORMATION,
+        [],
+        true,
+        true
+      )
+    );
   }
 
   #clearInput() {

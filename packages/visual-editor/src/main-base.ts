@@ -1504,7 +1504,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           : nothing,
         this.renderTooltip(),
         this.#renderToasts(),
-        this.#renderSnackbar(),
+        this.renderSnackbar(),
         this.#renderFeedbackPanel(),
         this.#renderConsentRequests(),
       ]}
@@ -1897,7 +1897,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     }
   }
 
-  #renderSnackbar() {
+  protected renderSnackbar() {
     return html`<bb-snackbar
       ${ref((el: Element | undefined) => {
         if (!el) {
