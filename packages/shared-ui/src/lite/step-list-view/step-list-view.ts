@@ -214,9 +214,7 @@ export class StepListView extends SignalWatcher(LitElement) {
               </summary>
               <div class="step-content sans md-body-medium w-400">
                 <h1 class="step-title w-400 md-body-small sans-flex">
-                  ${step.tags?.includes("input")
-                    ? "Question to user:"
-                    : "Prompt"}
+                  ${step.label}
                 </h1>
                 <p>
                   ${step.prompt && step.prompt.trim() !== ""
