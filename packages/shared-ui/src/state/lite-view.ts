@@ -67,6 +67,7 @@ class ReactiveLiteViewState implements LiteViewState {
   }
 
   get empty(): boolean {
+    console.log(1111, this.run?.graph?.nodes);
     return (this.run?.graph?.nodes.length || 0) === 0;
   }
 
