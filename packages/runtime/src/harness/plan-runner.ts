@@ -83,6 +83,14 @@ class PlanRunner
 
   async run(inputs?: InputValues, interactiveMode = false): Promise<boolean> {
     if (this.#inRun) {
+      if (!inputs) {
+        // This is a situation when the "Start" button is clicked on a run
+        // while we're paused. This may happen when the first step is
+        // interrupted.
+        await this.#controller?.restart();
+
+        return true;
+      }
       this.#resumeWith = inputs;
       return false;
     }
@@ -634,6 +642,11 @@ class InternalRunStateController {
 
   async runFrom(id: NodeIdentifier): Promise<Outcome<void>> {
     this.orchestrator.restartAtNode(id);
+    return this.run();
+  }
+
+  async restart(): Promise<Outcome<void>> {
+    this.orchestrator.restartAtCurrentState();
     return this.run();
   }
 
