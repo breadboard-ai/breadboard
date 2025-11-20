@@ -322,6 +322,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
 
     this.console.clear();
     this.renderer.nodes.clear();
+    this.input = null;
 
     runner.state?.forEach(({ state, outputs }, id) => {
       const inspectableNode = this.#inspectable?.nodeById(id);
