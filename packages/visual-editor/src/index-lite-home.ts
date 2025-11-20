@@ -154,22 +154,21 @@ export class LiteHome extends LitElement {
       this.style.overflow = "auto";
       this.style.padding = "24px";
     }
+    this.#addResizeController();
   }
 
-  #addGalleryResizeController(el: Element | undefined) {
-    if (el instanceof HTMLElement) {
-      const notifyResize = () => {
-        this.#embedHandler?.sendToEmbedder({
-          type: "resize",
-          width: el.offsetWidth,
-          height: el.offsetHeight,
-        });
-      };
-      const resizeObserver = new ResizeObserver(notifyResize);
-      resizeObserver.observe(el);
-      // Send initial notification
-      notifyResize();
-    }
+  #addResizeController() {
+    const notifyResize = () => {
+      this.#embedHandler?.sendToEmbedder({
+        type: "resize",
+        width: this.offsetWidth,
+        height: this.offsetHeight,
+      });
+    };
+    const resizeObserver = new ResizeObserver(notifyResize);
+    resizeObserver.observe(this);
+    // Send initial notification
+    notifyResize();
   }
 
   handleRoutedEvent(evt: Event) {
@@ -384,7 +383,6 @@ export class LiteHome extends LitElement {
   render() {
     return html`<section id="home">
       <bb-project-listing-lite
-        ${ref((el) => this.#addGalleryResizeController(el))}
         .recentBoards=${this.recentBoards}
         @bbevent=${this.handleRoutedEvent}
       ></bb-project-listing-lite>
