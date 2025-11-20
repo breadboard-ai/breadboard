@@ -283,6 +283,20 @@ export class Header extends LitElement {
     return html` ${this.fullScreenActive !== null
         ? html`<button
             id="fullscreen"
+            @pointerover=${(evt: PointerEvent) => {
+              this.dispatchEvent(
+                new ShowTooltipEvent(
+                  this.fullScreenActive === "available"
+                    ? "Fullscreen view"
+                    : "Exit Fullscreen view",
+                  evt.clientX,
+                  evt.clientY
+                )
+              );
+            }}
+            @pointerout=${() => {
+              this.dispatchEvent(new HideTooltipEvent());
+            }}
             @click=${() => {
               this.dispatchEvent(
                 new StateEvent({
@@ -358,6 +372,14 @@ export class Header extends LitElement {
         : html`<button
             id="replay"
             ?disabled=${!this.replayActive}
+            @pointerover=${(evt: PointerEvent) => {
+              this.dispatchEvent(
+                new ShowTooltipEvent("Restart app", evt.clientX, evt.clientY)
+              );
+            }}
+            @pointerout=${() => {
+              this.dispatchEvent(new HideTooltipEvent());
+            }}
             @click=${() => {
               this.dispatchEvent(
                 new StateEvent({
