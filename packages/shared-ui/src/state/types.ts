@@ -182,21 +182,13 @@ export type StepListStepState = {
    */
   status: "loading" | "working" | "ready" | "complete" | "pending";
   /**
-   * The current progress (when "working")
-   * - optional title allows custom title for the progress, like
-   * "Question to user"
-   * - details should give the user a sense of what's happening or contain the
-   * data input by user.
-   */
-  progress?: { title?: string; details: string };
-  /**
    * The prompt from step's configuration
    */
   prompt: string;
   /**
-   * The type from step's configuration
+   * The text label for the prompt;
    */
-  tags?: string[];
+  label: string;
 };
 
 export type ErrorReason =
