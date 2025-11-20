@@ -646,7 +646,7 @@ class InternalRunStateController {
   }
 
   async restart(): Promise<Outcome<void>> {
-    this.orchestrator.restartAtCurrentState();
+    this.orchestrator.restartAtCurrentStage();
     return this.run();
   }
 
