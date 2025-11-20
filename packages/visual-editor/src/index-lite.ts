@@ -498,7 +498,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   render() {
     if (!this.ready) return nothing;
 
-    const { viewType } = { viewType: "home" }; //this.runtime.state.liteView;
+    const { viewType } = this.runtime.state.liteView;
 
     let content: HTMLTemplateResult | symbol = nothing;
     switch (viewType) {
