@@ -1267,6 +1267,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   unsnackbar(id?: BreadboardUI.Types.SnackbarUUID) {
     if (!this.snackbarElement) {
+      if (!id) {
+        this.pendingSnackbarMessages.length = 0;
+      } else {
+        this.pendingSnackbarMessages = this.pendingSnackbarMessages.filter(
+          (message) => message.message.id !== id
+        );
+      }
       return;
     }
 
