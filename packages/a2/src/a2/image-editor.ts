@@ -38,6 +38,7 @@ type ImageGeneratorInputs = {
   context: LLMContent[];
   instruction: LLMContent;
   "p-aspect-ratio": string;
+  "p-model-name": string;
 } & Params;
 
 type ImageGeneratorOutputs = {
@@ -85,6 +86,7 @@ async function invoke(
     context: incomingContext,
     instruction,
     "p-aspect-ratio": aspectRatio,
+    "p-model-name": modelName,
     ...params
   }: ImageGeneratorInputs,
   caps: Capabilities,
@@ -156,6 +158,7 @@ async function invoke(
           const generatedImage = await callGeminiImage(
             caps,
             moduleArgs,
+            modelName,
             finalInstruction,
             imageContext,
             true,
@@ -173,6 +176,7 @@ async function invoke(
           const generatedImage = await callGeminiImage(
             caps,
             moduleArgs,
+            modelName,
             iPrompt,
             [],
             true,

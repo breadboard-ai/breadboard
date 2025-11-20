@@ -190,6 +190,20 @@ const MODES: Mode[] = [
     title: "Gemini 2.5 Flash Image (Nano Banana)",
     description: "Generates images from text and images",
     icon: "photo_spark",
+    modelName: "ai_image_tool",
+    promptPlaceholderText:
+      "Type your image prompt here. Use @ to include other content.",
+    info: "Image generation has limited free quota",
+    portMap: new Map([[PROMPT_PORT, "instruction"]]),
+  },
+  {
+    id: "image-pro",
+    type: "image",
+    url: "embed://a2/a2.bgl.json#module:image-editor",
+    title: "Gemini 3 Pro Image (Nano Banana)",
+    description: "Optimized fro professional asset production",
+    icon: "photo_spark",
+    modelName: "gemini-3-pro-image-preview",
     promptPlaceholderText:
       "Type your image prompt here. Use @ to include other content.",
     info: "Image generation has limited free quota",
