@@ -37,6 +37,7 @@ const API_NAME = "ai_image_tool";
 async function callGeminiImage(
   caps: Capabilities,
   moduleArgs: A2ModuleArgs,
+  modelName: string,
   instruction: string,
   imageContent: LLMContent[],
   disablePromptRewrite: boolean,
@@ -107,6 +108,7 @@ async function callGeminiImage(
       inputParameters: input_parameters,
       systemPrompt: "",
       options: {
+        modelName,
         disablePromptRewrite: disablePromptRewrite,
       },
       output: OUTPUT_NAME,

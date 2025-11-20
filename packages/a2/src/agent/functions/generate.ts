@@ -99,6 +99,7 @@ The following strategies will help you create effective prompts to generate exac
         const generated = await callGeminiImage(
           caps,
           moduleArgs,
+          "gemini-2.5-flash-image",
           prompt,
           [],
           true
