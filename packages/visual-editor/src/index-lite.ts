@@ -45,6 +45,11 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       :host {
         display: block;
         flex: 1;
+
+        --example-color: light-dark(#e9eef6, #000000);
+        --example-text-color: light-dark(#575b5f, #ffffff);
+        --example-icon-background-color: light-dark(#d9d7fd, #ffffff);
+        --example-icon-color: light-dark(#665ef6, #ffffff);
       }
 
       #loading {
@@ -83,18 +88,18 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             flex: 1 1 auto;
             overflow: auto;
           }
+        }
 
-          & bb-editor-input-lite {
-            flex: 0 0 auto;
-            box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.16);
-          }
+        & bb-editor-input-lite {
+          flex: 0 0 auto;
+          box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.16);
+        }
 
-          & #message {
-            text-align: center;
-            height: var(--bb-grid-size-4);
-            margin: var(--bb-grid-size-2) 0;
-            color: light-dark(#575b5f, #fff);
-          }
+        & #message {
+          text-align: center;
+          height: var(--bb-grid-size-4);
+          margin: var(--bb-grid-size-2) 0;
+          color: light-dark(#575b5f, #fff);
         }
 
         & #app-view {
@@ -155,6 +160,89 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           }
         }
 
+        & #welcome {
+          display: flex;
+          flex-direction: column;
+          gap: var(--bb-grid-size-4);
+          height: 100%;
+
+          & > h1 {
+            margin: 0 0 var(--bb-grid-size-11) 0;
+          }
+
+          & > h2 {
+            margin: 0 0 var(--bb-grid-size-4) 0;
+          }
+
+          & > #examples {
+            flex: 1;
+            ul {
+              list-style: none;
+              display: grid;
+              padding: 0;
+              margin: 0;
+              gap: var(--bb-grid-size-3);
+              grid-template-columns: repeat(4, 1fr);
+
+              li {
+                height: 100%;
+
+                & button {
+                  display: flex;
+                  flex-direction: column;
+                  gap: var(--bb-grid-size-3);
+                  height: 100%;
+                  align-items: start;
+                  justify-content: start;
+                  padding: var(--bb-grid-size-4);
+                  border-radius: var(--bb-grid-size-4);
+                  text-align: left;
+                  background: var(--example-color);
+                  border: none;
+                  color: var(--example-text-color);
+                  transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+                  &:not([disabled]) {
+                    cursor: pointer;
+
+                    &:hover {
+                      background: oklch(
+                        from var(--example-color) calc(l * 0.98) c h
+                      );
+                    }
+                  }
+
+                  & .example-icon {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 20px;
+                    height: 20px;
+                    background: var(--example-icon-background-color);
+                    border-radius: 50%;
+
+                    & .g-icon {
+                      font-size: 14px;
+                      position: relative;
+                      color: var(--example-icon-color);
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          & bb-editor-input-lite {
+            max-width: 90%;
+            width: 100%;
+            margin: 0 auto;
+          }
+
+          & #message {
+            margin-bottom: var(--bb-grid-size-4);
+          }
+        }
+
         &.full {
           padding: 0;
 
@@ -164,6 +252,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             border-radius: 0;
             margin: 0;
           }
+        }
+
+        &.welcome {
+          padding: var(--bb-grid-size-3);
         }
 
         & bb-splitter {
@@ -359,18 +451,37 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderWelcomeMat() {
-    return html`<h1>What do you want to build?</h1>
-      <section id="examples">
+    return html`<section id="welcome">
+      <h1 class="w-400 md-display-small sans-flex">
+        What do you want to build?
+      </h1>
+      <h2 class="w-400 md-title-large sans-flex">
+        Looking for inspiration? Try one of our prompts
+      </h2>
+      <aside id="examples">
         <ul>
           ${repeat(this.runtime.state.liteView.examples, (example) => {
-            return html`<li><button @click=${(evt: Event) => {
-              if (!(evt.target instanceof HTMLButtonElement)) return;
+            return html`<li>
+              <button
+                class="w-400 md-body-small sans-flex"
+                @click=${(evt: Event) => {
+                  if (!(evt.target instanceof HTMLButtonElement)) return;
 
-              this.runtime.state.liteView.currentExampleIntent = example.intent;
-            }}>${example.intent}</li>`;
+                  this.runtime.state.liteView.currentExampleIntent =
+                    example.intent;
+                }}
+              >
+                <span class="example-icon">
+                  <span class="g-icon filled-heavy round">pentagon</span>
+                </span>
+                <span>${example.intent}</span>
+              </button>
+            </li>`;
           })}
         </ul>
-      </section>`;
+      </aside>
+      ${[this.#renderUserInput(), this.#renderMessage()]}
+    </section>`;
   }
 
   #renderSnackbar() {
@@ -401,10 +512,11 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       case "home":
         return html`<section
           id="lite-shell"
+          class=${classMap({ welcome: true })}
           @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) =>
             this.handleRoutedEvent(evt)}
         >
-          ${[this.#renderWelcomeMat(), this.#renderUserInput()]}
+          ${this.#renderWelcomeMat()}
         </section>`;
       case "editor":
         return html`<section

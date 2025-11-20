@@ -50,6 +50,9 @@ export default {
   COMMAND_DESCRIBE_FRESH_FLOW: {
     str: "Describe what you want to build",
   },
+  COMMAND_DESCRIBE_FRESH_FLOW_ALT: {
+    str: "An app or workflow that...",
+  },
   COMMAND_DESCRIBE_EDIT_FLOW: {
     str: "Edit these steps",
   },

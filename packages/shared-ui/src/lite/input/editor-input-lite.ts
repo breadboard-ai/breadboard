@@ -101,6 +101,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
       round: true,
       rotate: isGenerating,
     };
+    console.log(this.state.empty);
     return html`
       <div id="container">
         <bb-expanding-textarea
@@ -110,7 +111,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
           .orientation=${"vertical"}
           .value=${this.state.currentExampleIntent}
           .placeholder=${this.state.empty
-            ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW")
+            ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW_ALT")
             : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
           @change=${this.#onInputChange}
           @focus=${this.#onInputFocus}
