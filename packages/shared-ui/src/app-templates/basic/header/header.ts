@@ -37,7 +37,8 @@ export class Header extends LitElement {
   @property()
   accessor replayActive = false;
 
-  // Note: if this is true it supersedes menuActive.
+  // Note: if this is true it supersedes menuActive. It will also switch the
+  // order of the buttons, too.
   @property()
   accessor fullScreenActive: "available" | "active" | null = null;
 
@@ -279,169 +280,192 @@ export class Header extends LitElement {
     this.#showReplayWarning = showReplayWarning === null;
   }
 
+  #renderFullScreen() {
+    if (this.fullScreenActive === null) {
+      return nothing;
+    }
+
+    return html`<button
+      id="fullscreen"
+      @pointerover=${(evt: PointerEvent) => {
+        this.dispatchEvent(
+          new ShowTooltipEvent(
+            this.fullScreenActive === "available"
+              ? "Fullscreen view"
+              : "Exit Fullscreen view",
+            evt.clientX,
+            evt.clientY
+          )
+        );
+      }}
+      @pointerout=${() => {
+        this.dispatchEvent(new HideTooltipEvent());
+      }}
+      @click=${() => {
+        this.dispatchEvent(
+          new StateEvent({
+            eventType: "app.fullscreen",
+            action:
+              this.fullScreenActive === "available" ? "activate" : "deactivate",
+          })
+        );
+      }}
+    >
+      <span class="g-icon"
+        >${this.fullScreenActive === "active" ? "close" : "fullscreen"}</span
+      >
+    </button>`;
+  }
+
+  #renderMenuButton() {
+    return html`<button
+      id="menu"
+      ?disabled=${!this.menuActive}
+      @click=${() => {
+        if (!this.#sideNav) {
+          return;
+        }
+
+        this.#sideNav.active = true;
+      }}
+    >
+      <span class="g-icon">menu</span>
+    </button>`;
+  }
+
+  #renderProgress() {
+    return html`<div id="progress-container">
+      <div
+        id="progress"
+        style=${styleMap({ "--progress": this.progress })}
+      ></div>
+    </div>`;
+  }
+
+  #renderReplayAutoStartButton() {
+    return html`<button
+      id="replay-autostart"
+      class="w-500 round sans-flex md-body-small"
+      ?disabled=${!this.replayActive}
+      @pointerover=${(evt: PointerEvent) => {
+        this.dispatchEvent(
+          new ShowTooltipEvent("Run all steps", evt.clientX, evt.clientY)
+        );
+      }}
+      @pointerout=${() => {
+        this.dispatchEvent(new HideTooltipEvent());
+      }}
+      @click=${() => {
+        this.dispatchEvent(new HideTooltipEvent());
+        if (this.running) {
+          this.dispatchEvent(
+            new StateEvent({
+              eventType: "board.stop",
+              clearLastRun: true,
+            })
+          );
+        } else {
+          this.dispatchEvent(
+            new StateEvent({
+              eventType: "board.restart",
+            })
+          );
+        }
+      }}
+    >
+      <span class="g-icon">spark</span> ${this.running ? "Stop" : "Start"}
+    </button>`;
+  }
+
+  #renderReplayButton() {
+    return html`<button
+      id="replay"
+      ?disabled=${!this.replayActive}
+      @pointerover=${(evt: PointerEvent) => {
+        this.dispatchEvent(
+          new ShowTooltipEvent("Restart app", evt.clientX, evt.clientY)
+        );
+      }}
+      @pointerout=${() => {
+        this.dispatchEvent(new HideTooltipEvent());
+      }}
+      @click=${() => {
+        this.dispatchEvent(
+          new StateEvent({
+            eventType: "board.stop",
+            clearLastRun: true,
+          })
+        );
+      }}
+    >
+      <span class="g-icon">replay</span>
+      ${this.#showReplayWarning
+        ? html`<bb-onboarding-tooltip
+            title="Are you sure you want to refresh?"
+            text="Share or download results, otherwise output will be lost."
+            @bbonboardingacknowledged=${() => {
+              globalThis.localStorage.setItem(REPLAY_WARNING_KEY, "false");
+              this.#showReplayWarning = false;
+            }}
+          ></bb-onboarding-tooltip>`
+        : nothing}
+    </button>`;
+  }
+
+  #renderSideNav() {
+    return html`<bb-sidenav
+      id="side-nav"
+      @bboverlaydismissed=${() => {
+        if (!this.#sideNav) {
+          return;
+        }
+
+        this.#sideNav.active = false;
+      }}
+      >${this.appTitle
+        ? html`<h1 class="md-headline-small sans-flex round" slot="title">
+            ${this.appTitle}
+          </h1>`
+        : nothing}
+
+      <ul slot="bottom">
+        <li>
+          <a
+            href="https://policies.google.com/"
+            class="w-400 round md-title-medium"
+            ><span class="g-icon filled round w-500">shield_person</span>Privacy
+            & Terms<span class="g-icon filled round w-500 open-in-new"
+              >open_in_new</span
+            ></a
+          >
+        </li>
+        <li>
+          <a href="/" class="w-400 round md-title-medium"
+            ><span class="g-icon filled round w-500">gallery_thumbnail</span
+            >View more ${Strings.from("APP_NAME")} apps<span
+              class="g-icon filled round w-500 open-in-new"
+              >open_in_new</span
+            ></a
+          >
+        </li>
+      </ul>
+    </bb-sidenav>`;
+  }
+
   render() {
-    return html` ${this.fullScreenActive !== null
-        ? html`<button
-            id="fullscreen"
-            @pointerover=${(evt: PointerEvent) => {
-              this.dispatchEvent(
-                new ShowTooltipEvent(
-                  this.fullScreenActive === "available"
-                    ? "Fullscreen view"
-                    : "Exit Fullscreen view",
-                  evt.clientX,
-                  evt.clientY
-                )
-              );
-            }}
-            @pointerout=${() => {
-              this.dispatchEvent(new HideTooltipEvent());
-            }}
-            @click=${() => {
-              this.dispatchEvent(
-                new StateEvent({
-                  eventType: "app.fullscreen",
-                  action:
-                    this.fullScreenActive === "available"
-                      ? "activate"
-                      : "deactivate",
-                })
-              );
-            }}
-          >
-            <span class="g-icon"
-              >${this.fullScreenActive === "active"
-                ? "close"
-                : "fullscreen"}</span
-            >
-          </button>`
-        : html`<button
-            id="menu"
-            ?disabled=${!this.menuActive}
-            @click=${() => {
-              if (!this.#sideNav) {
-                return;
-              }
+    const replay = this.replayAutoStart
+      ? this.#renderReplayAutoStartButton()
+      : this.#renderReplayButton();
 
-              this.#sideNav.active = true;
-            }}
-          >
-            <span class="g-icon">menu</span>
-          </button>`}
+    if (this.fullScreenActive !== null) {
+      return [replay, this.#renderProgress(), this.#renderFullScreen()];
+    }
 
-      <div id="progress-container">
-        <div
-          id="progress"
-          style=${styleMap({ "--progress": this.progress })}
-        ></div>
-      </div>
-
-      ${this.replayAutoStart
-        ? html`<button
-            id="replay-autostart"
-            class="w-500 round sans-flex md-body-small"
-            ?disabled=${!this.replayActive}
-            @pointerover=${(evt: PointerEvent) => {
-              this.dispatchEvent(
-                new ShowTooltipEvent("Run all steps", evt.clientX, evt.clientY)
-              );
-            }}
-            @pointerout=${() => {
-              this.dispatchEvent(new HideTooltipEvent());
-            }}
-            @click=${() => {
-              this.dispatchEvent(new HideTooltipEvent());
-              if (this.running) {
-                this.dispatchEvent(
-                  new StateEvent({
-                    eventType: "board.stop",
-                    clearLastRun: true,
-                  })
-                );
-              } else {
-                this.dispatchEvent(
-                  new StateEvent({
-                    eventType: "board.restart",
-                  })
-                );
-              }
-            }}
-          >
-            <span class="g-icon">spark</span> ${this.running ? "Stop" : "Start"}
-          </button>`
-        : html`<button
-            id="replay"
-            ?disabled=${!this.replayActive}
-            @pointerover=${(evt: PointerEvent) => {
-              this.dispatchEvent(
-                new ShowTooltipEvent("Restart app", evt.clientX, evt.clientY)
-              );
-            }}
-            @pointerout=${() => {
-              this.dispatchEvent(new HideTooltipEvent());
-            }}
-            @click=${() => {
-              this.dispatchEvent(
-                new StateEvent({
-                  eventType: "board.stop",
-                  clearLastRun: true,
-                })
-              );
-            }}
-          >
-            <span class="g-icon">replay</span>
-            ${this.#showReplayWarning
-              ? html`<bb-onboarding-tooltip
-                  title="Are you sure you want to refresh?"
-                  text="Share or download results, otherwise output will be lost."
-                  @bbonboardingacknowledged=${() => {
-                    globalThis.localStorage.setItem(
-                      REPLAY_WARNING_KEY,
-                      "false"
-                    );
-                    this.#showReplayWarning = false;
-                  }}
-                ></bb-onboarding-tooltip>`
-              : nothing}
-          </button>`}
-
-      <bb-sidenav
-        id="side-nav"
-        @bboverlaydismissed=${() => {
-          if (!this.#sideNav) {
-            return;
-          }
-
-          this.#sideNav.active = false;
-        }}
-        >${this.appTitle
-          ? html`<h1 class="md-headline-small sans-flex round" slot="title">
-              ${this.appTitle}
-            </h1>`
-          : nothing}
-
-        <ul slot="bottom">
-          <li>
-            <a
-              href="https://policies.google.com/"
-              class="w-400 round md-title-medium"
-              ><span class="g-icon filled round w-500">shield_person</span
-              >Privacy & Terms<span
-                class="g-icon filled round w-500 open-in-new"
-                >open_in_new</span
-              ></a
-            >
-          </li>
-          <li>
-            <a href="/" class="w-400 round md-title-medium"
-              ><span class="g-icon filled round w-500">gallery_thumbnail</span
-              >View more ${Strings.from("APP_NAME")} apps<span
-                class="g-icon filled round w-500 open-in-new"
-                >open_in_new</span
-              ></a
-            >
-          </li>
-        </ul>
-      </bb-sidenav>`;
+    return [
+      this.#renderMenuButton(),
+      this.#renderProgress(),
+      replay,
+      this.#renderSideNav(),
+    ];
   }
 }
