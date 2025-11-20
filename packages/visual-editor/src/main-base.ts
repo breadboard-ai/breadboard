@@ -1027,9 +1027,15 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         | Partial<GoogleDriveBoardServer>
         | undefined;
       await boardServer?.flushSaveQueue?.(url.href);
+      this.notifyEmbeddedBoardCreated(url.href);
+    }
+  }
+
+  notifyEmbeddedBoardCreated(url: string) {
+    if (this.#embedHandler) {
       this.#embedHandler.sendToEmbedder({
         type: "board_id_created",
-        id: url.href,
+        id: url,
       });
     }
   }

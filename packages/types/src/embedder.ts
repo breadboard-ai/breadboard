@@ -18,7 +18,9 @@ export type BreadboardMessage =
   | HomeLoadedMessage
   | BoardIdCreatedMessage
   | IterateOnPromptMessage
-  | ResizeMessage;
+  | ResizeMessage
+  | LoadBoardMessage
+  | CreateBoardMessage;
 
 /** Event for enabling debug. */
 export declare interface DebugMessage {
@@ -60,9 +62,9 @@ export declare interface BoardIdCreatedMessage {
   id: string;
 }
 
-/** 
- * Event to notify the parent of iframe content size change 
- * 
+/**
+ * Event to notify the parent of iframe content size change
+ *
  * Currently only fired from the bb-lite-home component (/?lite=true).
  */
 export declare interface ResizeMessage {
@@ -71,6 +73,20 @@ export declare interface ResizeMessage {
   width: number;
 }
 
+/**
+ * Event to notify the parent to load a given board
+ */
+export declare interface LoadBoardMessage {
+  type: "load_board";
+  boardId: string;
+}
+
+/**
+ * Event to notify the parent to create a new board
+ */
+export declare interface CreateBoardMessage {
+  type: "create_board";
+}
 
 /** Event when a new breadboard has been created. */
 export declare interface IterateOnPromptMessage {
