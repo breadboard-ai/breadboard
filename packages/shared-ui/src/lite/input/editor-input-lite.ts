@@ -108,7 +108,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
           .disabled=${isGenerating}
           .classes=${"sans-flex w-400 md-body-large"}
           .orientation=${"vertical"}
-          .value=${this.state?.intent}
+          .value=${this.state.currentExampleIntent}
           .placeholder=${this.state.empty
             ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW")
             : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}

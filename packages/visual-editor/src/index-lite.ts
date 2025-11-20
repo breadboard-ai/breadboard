@@ -25,6 +25,7 @@ import { err, ok } from "@breadboard-ai/utils";
 import { RuntimeTabChangeEvent } from "./runtime/events";
 import { eventRoutes } from "./event-routing/event-routing";
 import { blankBoard } from "@breadboard-ai/shared-ui/utils/utils.js";
+import { repeat } from "lit/directives/repeat.js";
 
 @customElement("bb-lite")
 export class LiteMain extends MainBase implements LiteEditInputController {
@@ -236,7 +237,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       }
     }
 
-    // TODO: Convert this to use liteView
     const currentGraph = this.runtime.state.liteView.graph;
     if (!currentGraph) {
       console.warn("No current graph detected, exting flow generation");
@@ -359,7 +359,18 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderWelcomeMat() {
-    return html`<h1>What do you want to build?</h1>`;
+    return html`<h1>What do you want to build?</h1>
+      <section id="examples">
+        <ul>
+          ${repeat(this.runtime.state.liteView.examples, (example) => {
+            return html`<li><button @click=${(evt: Event) => {
+              if (!(evt.target instanceof HTMLButtonElement)) return;
+
+              this.runtime.state.liteView.currentExampleIntent = example.intent;
+            }}>${example.intent}</li>`;
+          })}
+        </ul>
+      </section>`;
   }
 
   #renderSnackbar() {

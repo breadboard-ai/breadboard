@@ -8,6 +8,7 @@ import { signal } from "signal-utils";
 import {
   FlowGenGenerationStatus,
   ListViewType,
+  LiteViewExample,
   LiteViewState,
   RuntimeContext,
   StepListState,
@@ -21,6 +22,25 @@ export { createLiteViewState };
 function createLiteViewState(context: RuntimeContext) {
   return new ReactiveLiteViewState(context);
 }
+
+const EXAMPLES: LiteViewExample[] = [
+  {
+    intent:
+      "An app that reads current news and creates an alternative fiction story based on these news",
+  },
+  {
+    intent:
+      "Take a photo of the leftovers in the fridge and generate different recipes with photos of the final dish",
+  },
+  {
+    intent:
+      "Analyze a meeting transcript and draft an email of the key takeaways and action items",
+  },
+  {
+    intent:
+      "An app that invents a family board game based on the ideas I provide",
+  },
+];
 
 class ReactiveLiteViewState implements LiteViewState {
   @signal
@@ -42,19 +62,14 @@ class ReactiveLiteViewState implements LiteViewState {
     this.#intent = intent;
   }
 
-  // This should be a signal, but it can't be, because the project accessor
-  // is not a signal.
-  // TODO: Make this a signal.
   get run(): ReactiveProjectRun | undefined {
     return this.context.project?.run as ReactiveProjectRun;
   }
 
-  @signal
   get empty(): boolean {
     return (this.run?.graph?.nodes.length || 0) === 0;
   }
 
-  @signal
   get graph(): GraphDescriptor | null {
     return this.run?.graph || null;
   }
@@ -96,6 +111,13 @@ class ReactiveLiteViewState implements LiteViewState {
   get stepList(): StepListState | undefined {
     return this.context.project?.run.stepList;
   }
+
+  get examples() {
+    return EXAMPLES;
+  }
+
+  @signal
+  accessor currentExampleIntent: string = "";
 
   constructor(private readonly context: RuntimeContext) {}
 }

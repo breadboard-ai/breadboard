@@ -426,16 +426,21 @@ export type FlowGenGenerationStatus = "generating" | "initial" | "error";
 
 export type ListViewType = "loading" | "home" | "editor" | "invalid";
 
+export type LiteViewExample = {
+  intent: string;
+};
+
 /**
  * Represents the flow gen state
  */
 export type LiteViewState = {
+  viewType: ListViewType;
+
   // FlowGen bits
   status: FlowGenGenerationStatus;
   error?: string;
   intent: string;
-
-  viewType: ListViewType;
+  setIntent(intent: string): void;
 
   /**
    * True when the underlying graph is brand new and has no nodes.
@@ -448,7 +453,8 @@ export type LiteViewState = {
 
   stepList: StepListState | undefined;
 
-  setIntent(intent: string): void;
+  examples: LiteViewExample[];
+  currentExampleIntent: string;
 };
 
 /**
