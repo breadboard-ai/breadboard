@@ -148,15 +148,6 @@ export type StepListState = {
   intent: string | null;
 
   /**
-   * True when the underlying graph is brand new and has no nodes.
-   */
-  empty: boolean;
-  /**
-   * The current graph
-   */
-  graph: GraphDescriptor | null;
-
-  /**
    * The list of steps according to the current run plan
    */
   steps: Map<string, StepListStepState>;
@@ -445,6 +436,15 @@ export type LiteViewState = {
   intent: string;
 
   viewType: ListViewType;
+
+  /**
+   * True when the underlying graph is brand new and has no nodes.
+   */
+  empty: boolean;
+  /**
+   * The current graph
+   */
+  graph: GraphDescriptor | null;
 
   stepList: StepListState | undefined;
 

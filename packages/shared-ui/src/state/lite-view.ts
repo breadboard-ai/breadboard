@@ -13,6 +13,8 @@ import {
   StepListState,
 } from "./types";
 import { parseUrl } from "../utils/urls";
+import { GraphDescriptor } from "@breadboard-ai/types";
+import { ReactiveProjectRun } from "./project-run";
 
 export { createLiteViewState };
 
@@ -38,6 +40,21 @@ class ReactiveLiteViewState implements LiteViewState {
 
   setIntent(intent: string) {
     this.#intent = intent;
+  }
+
+  @signal
+  get run(): ReactiveProjectRun | undefined {
+    return this.context.project?.run as ReactiveProjectRun;
+  }
+
+  @signal
+  get empty(): boolean {
+    return (this.run?.graph?.nodes.length || 0) === 0;
+  }
+
+  @signal
+  get graph(): GraphDescriptor | null {
+    return this.run?.graph || null;
   }
 
   @signal
@@ -70,7 +87,7 @@ class ReactiveLiteViewState implements LiteViewState {
         return "invalid";
     }
     if (zeroState) return "home";
-    if (!this.stepList || this.stepList.empty) return "home";
+    if (!this.stepList || this.empty) return "home";
     return "editor";
   }
 

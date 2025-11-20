@@ -51,17 +51,7 @@ class StepList implements StepListState {
   }
 
   @signal
-  get empty(): boolean {
-    return (this.run.graph?.nodes.length || 0) === 0;
-  }
-
-  @signal
   accessor status: StepListStateStatus = "ready";
-
-  @signal
-  get graph(): GraphDescriptor | null {
-    return this.run.graph || null;
-  }
 
   constructor(private readonly run: ReactiveProjectRun) {}
 }

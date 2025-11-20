@@ -13,7 +13,6 @@ import { MainArguments } from "./types/types";
 
 import * as BBLite from "@breadboard-ai/shared-ui/lite";
 import { MainBase } from "./main-base";
-import { StepListState } from "@breadboard-ai/shared-ui/state/types.js";
 import { classMap } from "lit/directives/class-map.js";
 import {
   StateEvent,
@@ -218,7 +217,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
    * generate a new graph.
    */
   async generate(intent: string): Promise<Outcome<void>> {
-    let projectState = this.getProjectState();
+    let projectState = this.runtime.state.project;
 
     if (!projectState) {
       // This is a zero state: we don't yet have a projectState.
@@ -241,14 +240,14 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       if (url) {
         this.notifyEmbeddedBoardCreated(url);
       }
-      projectState = this.getProjectState();
+      projectState = this.runtime.state.project;
       if (!projectState) {
         return err(`Failed to create a new opal.`);
       }
     }
 
     // TODO: Convert this to use liteView
-    const currentGraph = projectState.run.stepList.graph;
+    const currentGraph = this.runtime.state.liteView.graph;
     if (!currentGraph) {
       console.warn("No current graph detected, exting flow generation");
       return;
@@ -293,12 +292,11 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     ></bb-prompt-view>`;
   }
 
-  #renderUserInput(state: StepListState | undefined) {
+  #renderUserInput() {
+    const { liteView } = this.runtime.state;
     return html`<bb-editor-input-lite
       .controller=${this}
-      .state=${this.runtime.state.liteView}
-      .hasEmptyGraph=${state?.empty}
-      .currentGraph=${state?.graph}
+      .state=${liteView}
     ></bb-editor-input-lite>`;
   }
 
@@ -308,19 +306,23 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     </p>`;
   }
 
-  #renderControls(state: StepListState | undefined) {
+  #renderControls() {
     return html`<div id="controls" slot="slot-0">
       ${[
         this.#renderOriginalPrompt(),
-        this.#renderList(state),
-        this.#renderUserInput(state),
+        this.#renderList(),
+        this.#renderUserInput(),
         this.#renderMessage(),
       ]}
     </div>`;
   }
 
-  #renderList(state: StepListState | undefined) {
-    return html` <bb-step-list-view .state=${state}></bb-step-list-view> `;
+  #renderList() {
+    return html`
+      <bb-step-list-view
+        .state=${this.runtime.state.liteView.stepList}
+      ></bb-step-list-view>
+    `;
   }
 
   #renderApp() {
@@ -392,7 +394,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   render() {
     if (!this.ready) return nothing;
 
-    const { viewType, stepList } = this.runtime.state.liteView;
+    const { viewType } = this.runtime.state.liteView;
 
     switch (viewType) {
       case "home":
@@ -401,7 +403,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) =>
             this.handleRoutedEvent(evt)}
         >
-          ${[this.#renderWelcomeMat(), this.#renderUserInput(stepList)]}
+          ${[this.#renderWelcomeMat(), this.#renderUserInput()]}
         </section>`;
       case "editor":
         return html`<section
@@ -423,7 +425,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
                 name="layout-lite"
                 split="[0.30, 0.70]"
               >
-                ${[this.#renderControls(stepList), this.#renderApp()]}
+                ${[this.#renderControls(), this.#renderApp()]}
               </bb-splitter>`}
         </section>`;
       case "loading":
@@ -510,16 +512,5 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         })
       )
     );
-  }
-
-  getProjectState() {
-    const mainGraphId = this.tab?.mainGraphId;
-
-    return mainGraphId
-      ? this.runtime.state.getOrCreateProjectState(
-          mainGraphId,
-          this.runtime.edit.getEditor(this.tab)
-        )
-      : null;
   }
 }

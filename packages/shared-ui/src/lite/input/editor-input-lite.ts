@@ -8,7 +8,7 @@ import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import type { GraphDescriptor, Outcome } from "@breadboard-ai/types";
+import type { Outcome } from "@breadboard-ai/types";
 import { StateEvent } from "../../events/events.js";
 import "../../elements/input/expanding-textarea.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -79,14 +79,8 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
     `,
   ];
 
-  @property({ type: Object })
-  accessor currentGraph: GraphDescriptor | undefined;
-
   @property({ type: Boolean, reflect: true })
   accessor focused = false;
-
-  @property({ type: Boolean, reflect: true })
-  accessor hasEmptyGraph = false;
 
   @property({ reflect: true, type: Boolean })
   accessor highlighted = false;
@@ -115,7 +109,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
           .classes=${"sans-flex w-400 md-body-large"}
           .orientation=${"vertical"}
           .value=${this.state?.intent}
-          .placeholder=${this.hasEmptyGraph
+          .placeholder=${this.state.empty
             ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW")
             : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
           @change=${this.#onInputChange}
@@ -151,7 +145,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
 
     this.state.status = "generating";
 
-    ActionTracker.flowGenEdit(this.currentGraph?.url);
+    ActionTracker.flowGenEdit(this.state.graph?.url);
 
     this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
 
