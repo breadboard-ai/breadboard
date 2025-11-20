@@ -7,7 +7,7 @@
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import { html, css, nothing, HTMLTemplateResult } from "lit";
+import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
 
@@ -192,16 +192,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     `,
   ];
 
-  // The snackbar is not held as a Ref because we need to track pending snackbar
-  // messages as they are coming in and, once the snackbar has rendered, we add
-  // them. This means we use the ref callback to handle this case instead of
-  // using to create and store the reference itself.
-  #snackbar: BBLite.Snackbar | undefined = undefined;
-  #pendingSnackbarMessages: Array<{
-    message: BBLite.Types.SnackbarMessage;
-    replaceAll: boolean;
-  }> = [];
-
   constructor(args: MainArguments) {
     super(args);
 
@@ -376,17 +366,17 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     return html`<bb-snackbar
       ${ref((el: Element | undefined) => {
         if (!el) {
-          this.#snackbar = undefined;
+          this.snackbarElement = undefined;
         }
 
-        this.#snackbar = el as BreadboardUI.Elements.Snackbar;
-        for (const pendingMessage of this.#pendingSnackbarMessages) {
+        this.snackbarElement = el as BreadboardUI.Elements.Snackbar;
+        for (const pendingMessage of this.pendingSnackbarMessages) {
           const { message, id, persistent, type, actions } =
             pendingMessage.message;
           this.snackbar(message, type, actions, persistent, id);
         }
 
-        this.#pendingSnackbarMessages.length = 0;
+        this.pendingSnackbarMessages.length = 0;
       })}
     ></bb-snackbar>`;
   }
@@ -437,48 +427,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         console.log("Invalid lite view state");
         return nothing;
     }
-  }
-
-  snackbar(
-    message: string | HTMLTemplateResult,
-    type: BBLite.Types.SnackType,
-    actions: BBLite.Types.SnackbarAction[] = [],
-    persistent = false,
-    id = globalThis.crypto.randomUUID(),
-    replaceAll = false
-  ) {
-    if (!this.#snackbar) {
-      this.#pendingSnackbarMessages.push({
-        message: {
-          id,
-          message,
-          type,
-          persistent,
-          actions,
-        },
-        replaceAll,
-      });
-      return;
-    }
-
-    return this.#snackbar.show(
-      {
-        id,
-        message,
-        type,
-        persistent,
-        actions,
-      },
-      replaceAll
-    );
-  }
-
-  unsnackbar(id?: BreadboardUI.Types.SnackbarUUID) {
-    if (!this.#snackbar) {
-      return;
-    }
-
-    this.#snackbar.hide(id);
   }
 
   protected async invokeBoardReplaceRoute(
