@@ -42,7 +42,9 @@ class ReactiveLiteViewState implements LiteViewState {
     this.#intent = intent;
   }
 
-  @signal
+  // This should be a signal, but it can't be, because the project accessor
+  // is not a signal.
+  // TODO: Make this a signal.
   get run(): ReactiveProjectRun | undefined {
     return this.context.project?.run as ReactiveProjectRun;
   }
