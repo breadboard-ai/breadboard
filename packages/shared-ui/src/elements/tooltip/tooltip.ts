@@ -9,7 +9,7 @@ import { baseColors } from "../../styles/host/base-colors";
 import { type } from "../../styles/host/type";
 import { classMap } from "lit/directives/class-map.js";
 
-const PADDING = 20;
+const PADDING = 26;
 
 @customElement("bb-tooltip")
 export class Tooltip extends LitElement {
@@ -24,16 +24,34 @@ export class Tooltip extends LitElement {
   @property()
   accessor message: string | null = null;
 
+  #x = 100;
+  #y = 100;
+  #visible = false;
+
+  get #viewportBounds(): { width: number; height: number } {
+    return {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    };
+  }
+
+  get #currentBounds(): DOMRect {
+    return this.getBoundingClientRect();
+  }
+
   @property()
   set x(x: number) {
-    const bounds = this.#boundingClientRect;
-    const root = this.#rootBounds;
+    const bounds = this.#currentBounds;
+    const root = this.#viewportBounds;
 
-    if (bounds && root) {
-      if (bounds.left < 0) {
-        x = bounds.width * 0.5 + PADDING;
-      } else if (bounds.right > root.width) {
-        x = root.width - bounds.width * 0.5 - PADDING;
+    // Only adjust if we have a real width.
+    if (bounds.width > 0) {
+      const tooltipHalfWidth = bounds.width * 0.5;
+      // Check boundaries.
+      if (x - tooltipHalfWidth < PADDING) {
+        x = tooltipHalfWidth + PADDING * 0.5;
+      } else if (x + tooltipHalfWidth > root.width - PADDING) {
+        x = root.width - tooltipHalfWidth - PADDING * 0.5;
       }
     }
 
@@ -46,14 +64,18 @@ export class Tooltip extends LitElement {
 
   @property()
   set y(y: number) {
-    const bounds = this.#boundingClientRect;
-    const root = this.#rootBounds;
+    const bounds = this.#currentBounds;
+    const root = this.#viewportBounds;
 
-    if (bounds && root) {
-      if (bounds.top < 0) {
-        y = bounds.height * 0.5 + PADDING;
-      } else if (bounds.bottom > root.height) {
-        y = root.height - bounds.height * 0.5 - PADDING;
+    // Only adjust if we have a real height.
+    if (bounds.height > 0) {
+      const tooltipHeight = bounds.height;
+
+      // Check boundaries (accounting for the CSS translateY(-100%) shift).
+      if (y - tooltipHeight - PADDING < PADDING) {
+        y = tooltipHeight + PADDING;
+      } else if (y > root.height - PADDING) {
+        y = root.height - PADDING;
       }
     }
 
@@ -67,22 +89,10 @@ export class Tooltip extends LitElement {
   @property({ reflect: true })
   accessor status: { title: string } | false = false;
 
-  #visible = false;
-  #x = 100;
-  #y = 100;
-  #boundingClientRect: DOMRectReadOnly | null = null;
-  #rootBounds: DOMRectReadOnly | null = null;
-  #intersectionObserver = new IntersectionObserver((entries) => {
-    const [intersection] = entries;
-
-    this.#boundingClientRect = intersection.boundingClientRect;
-    this.#rootBounds = intersection.rootBounds;
-  });
-
   #animationStartBound = this.#animationStart.bind(this);
   #animationStart() {
-    // Force an update on the position now we know the precise sizing of the
-    // tooltip.
+    // Force the setters to run *now* that the element has a non-zero size
+    // (due to display: block being applied).
     this.x = this.x + 0;
     this.y = this.y + 0;
   }
@@ -90,15 +100,11 @@ export class Tooltip extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
     this.addEventListener("animationstart", this.#animationStartBound);
-
-    this.#intersectionObserver.observe(this);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     this.removeEventListener("animationstart", this.#animationStartBound);
-
-    this.#intersectionObserver.disconnect();
   }
 
   static styles = [

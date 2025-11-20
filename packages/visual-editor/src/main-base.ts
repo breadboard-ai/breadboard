@@ -1502,7 +1502,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         this.uiState.show.has("SignInModal")
           ? this.#renderSignInModal()
           : nothing,
-        this.#renderTooltip(),
+        this.renderTooltip(),
         this.#renderToasts(),
         this.#renderSnackbar(),
         this.#renderFeedbackPanel(),
@@ -1806,7 +1806,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     `;
   }
 
-  #renderTooltip() {
+  protected renderTooltip() {
     return html`<bb-tooltip ${ref(this.#tooltipRef)}></bb-tooltip>`;
   }
 

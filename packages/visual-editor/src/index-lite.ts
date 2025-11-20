@@ -408,27 +408,28 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         </section>`;
       case "editor":
         return html`<section
-          id="lite-shell"
-          class=${classMap({ full: this.showAppFullscreen })}
-          @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) => {
-            if (evt.detail.eventType === "app.fullscreen") {
-              this.showAppFullscreen = evt.detail.action === "activate";
-              return;
-            }
+            id="lite-shell"
+            class=${classMap({ full: this.showAppFullscreen })}
+            @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) => {
+              if (evt.detail.eventType === "app.fullscreen") {
+                this.showAppFullscreen = evt.detail.action === "activate";
+                return;
+              }
 
-            return this.handleRoutedEvent(evt);
-          }}
-        >
-          ${this.showAppFullscreen
-            ? this.#renderApp()
-            : html` <bb-splitter
-                direction=${"horizontal"}
-                name="layout-lite"
-                split="[0.30, 0.70]"
-              >
-                ${[this.#renderControls(), this.#renderApp()]}
-              </bb-splitter>`}
-        </section>`;
+              return this.handleRoutedEvent(evt);
+            }}
+          >
+            ${this.showAppFullscreen
+              ? this.#renderApp()
+              : html` <bb-splitter
+                  direction=${"horizontal"}
+                  name="layout-lite"
+                  split="[0.30, 0.70]"
+                >
+                  ${[this.#renderControls(), this.#renderApp()]}
+                </bb-splitter>`}
+          </section>
+          ${this.renderTooltip()}`;
       case "loading":
         return html`<div id="loading">
           <span class="g-icon heavy-filled round">progress_activity</span
