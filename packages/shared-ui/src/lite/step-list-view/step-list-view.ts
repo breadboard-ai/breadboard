@@ -178,7 +178,6 @@ export class StepListView extends SignalWatcher(LitElement) {
   }
 
   #renderList() {
-    console.log(this.state);
     const steps = this.state?.steps;
     if (!steps || steps.size === 0) return nothing;
     return html`<ul id="list">

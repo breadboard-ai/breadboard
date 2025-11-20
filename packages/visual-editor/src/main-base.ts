@@ -253,8 +253,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   // messages as they are coming in and, once the snackbar has rendered, we add
   // them. This means we use the ref callback to handle this case instead of
   // using to create and store the reference itself.
-  #snackbar: BreadboardUI.Elements.Snackbar | undefined = undefined;
-  #pendingSnackbarMessages: Array<{
+  protected snackbarElement: BreadboardUI.Elements.Snackbar | undefined =
+    undefined;
+  protected pendingSnackbarMessages: Array<{
     message: BreadboardUI.Types.SnackbarMessage;
     replaceAll: boolean;
   }> = [];
@@ -1238,8 +1239,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     id = globalThis.crypto.randomUUID(),
     replaceAll = false
   ) {
-    if (!this.#snackbar) {
-      this.#pendingSnackbarMessages.push({
+    if (!this.snackbarElement) {
+      this.pendingSnackbarMessages.push({
         message: {
           id,
           message,
@@ -1252,7 +1253,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       return;
     }
 
-    return this.#snackbar.show(
+    return this.snackbarElement.show(
       {
         id,
         message,
@@ -1265,11 +1266,18 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   unsnackbar(id?: BreadboardUI.Types.SnackbarUUID) {
-    if (!this.#snackbar) {
+    if (!this.snackbarElement) {
+      if (!id) {
+        this.pendingSnackbarMessages.length = 0;
+      } else {
+        this.pendingSnackbarMessages = this.pendingSnackbarMessages.filter(
+          (message) => message.message.id !== id
+        );
+      }
       return;
     }
 
-    this.#snackbar.hide(id);
+    this.snackbarElement.hide(id);
   }
 
   #attemptImportFromDrop(evt: DragEvent) {
@@ -1893,17 +1901,17 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return html`<bb-snackbar
       ${ref((el: Element | undefined) => {
         if (!el) {
-          this.#snackbar = undefined;
+          this.snackbarElement = undefined;
         }
 
-        this.#snackbar = el as BreadboardUI.Elements.Snackbar;
-        for (const pendingMessage of this.#pendingSnackbarMessages) {
+        this.snackbarElement = el as BreadboardUI.Elements.Snackbar;
+        for (const pendingMessage of this.pendingSnackbarMessages) {
           const { message, id, persistent, type, actions } =
             pendingMessage.message;
           this.snackbar(message, type, actions, persistent, id);
         }
 
-        this.#pendingSnackbarMessages.length = 0;
+        this.pendingSnackbarMessages.length = 0;
       })}
       @bbsnackbaraction=${async (
         evt: BreadboardUI.Events.SnackbarActionEvent

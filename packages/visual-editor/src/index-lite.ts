@@ -7,26 +7,25 @@
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import { html, css, nothing, HTMLTemplateResult } from "lit";
+import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
 
 import * as BBLite from "@breadboard-ai/shared-ui/lite";
 import { MainBase } from "./main-base";
-import { StepListState } from "@breadboard-ai/shared-ui/state/types.js";
 import { classMap } from "lit/directives/class-map.js";
 import {
   StateEvent,
   StateEventDetailMap,
 } from "@breadboard-ai/shared-ui/events/events.js";
 import { ref } from "lit/directives/ref.js";
-import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { LiteEditInputController } from "@breadboard-ai/shared-ui/lite/input/editor-input-lite.js";
 import { GraphDescriptor, GraphTheme, Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { RuntimeTabChangeEvent } from "./runtime/events";
 import { eventRoutes } from "./event-routing/event-routing";
 import { blankBoard } from "@breadboard-ai/shared-ui/utils/utils.js";
+import { repeat } from "lit/directives/repeat.js";
 
 @customElement("bb-lite")
 export class LiteMain extends MainBase implements LiteEditInputController {
@@ -194,16 +193,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     `,
   ];
 
-  // The snackbar is not held as a Ref because we need to track pending snackbar
-  // messages as they are coming in and, once the snackbar has rendered, we add
-  // them. This means we use the ref callback to handle this case instead of
-  // using to create and store the reference itself.
-  #snackbar: BBLite.Snackbar | undefined = undefined;
-  #pendingSnackbarMessages: Array<{
-    message: BBLite.Types.SnackbarMessage;
-    replaceAll: boolean;
-  }> = [];
-
   constructor(args: MainArguments) {
     super(args);
 
@@ -219,7 +208,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
    * generate a new graph.
    */
   async generate(intent: string): Promise<Outcome<void>> {
-    let projectState = this.getProjectState();
+    let projectState = this.runtime.state.project;
 
     if (!projectState) {
       // This is a zero state: we don't yet have a projectState.
@@ -242,14 +231,13 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       if (url) {
         this.notifyEmbeddedBoardCreated(url);
       }
-      projectState = this.getProjectState();
+      projectState = this.runtime.state.project;
       if (!projectState) {
         return err(`Failed to create a new opal.`);
       }
     }
 
-    // TODO: Convert this to use liteView
-    const currentGraph = projectState.run.stepList.graph;
+    const currentGraph = this.runtime.state.liteView.graph;
     if (!currentGraph) {
       console.warn("No current graph detected, exting flow generation");
       return;
@@ -294,12 +282,11 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     ></bb-prompt-view>`;
   }
 
-  #renderUserInput(state: StepListState | undefined) {
+  #renderUserInput() {
+    const { liteView } = this.runtime.state;
     return html`<bb-editor-input-lite
       .controller=${this}
-      .state=${this.runtime.state.liteView}
-      .hasEmptyGraph=${state?.empty}
-      .currentGraph=${state?.graph}
+      .state=${liteView}
     ></bb-editor-input-lite>`;
   }
 
@@ -309,19 +296,23 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     </p>`;
   }
 
-  #renderControls(state: StepListState | undefined) {
+  #renderControls() {
     return html`<div id="controls" slot="slot-0">
       ${[
         this.#renderOriginalPrompt(),
-        this.#renderList(state),
-        this.#renderUserInput(state),
+        this.#renderList(),
+        this.#renderUserInput(),
         this.#renderMessage(),
       ]}
     </div>`;
   }
 
-  #renderList(state: StepListState | undefined) {
-    return html` <bb-step-list-view .state=${state}></bb-step-list-view> `;
+  #renderList() {
+    return html`
+      <bb-step-list-view
+        .state=${this.runtime.state.liteView.stepList}
+      ></bb-step-list-view>
+    `;
   }
 
   #renderApp() {
@@ -368,24 +359,35 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderWelcomeMat() {
-    return html`<h1>What do you want to build?</h1>`;
+    return html`<h1>What do you want to build?</h1>
+      <section id="examples">
+        <ul>
+          ${repeat(this.runtime.state.liteView.examples, (example) => {
+            return html`<li><button @click=${(evt: Event) => {
+              if (!(evt.target instanceof HTMLButtonElement)) return;
+
+              this.runtime.state.liteView.currentExampleIntent = example.intent;
+            }}>${example.intent}</li>`;
+          })}
+        </ul>
+      </section>`;
   }
 
   #renderSnackbar() {
     return html`<bb-snackbar
       ${ref((el: Element | undefined) => {
         if (!el) {
-          this.#snackbar = undefined;
+          this.snackbarElement = undefined;
         }
 
-        this.#snackbar = el as BreadboardUI.Elements.Snackbar;
-        for (const pendingMessage of this.#pendingSnackbarMessages) {
+        this.snackbarElement = el as BreadboardUI.Elements.Snackbar;
+        for (const pendingMessage of this.pendingSnackbarMessages) {
           const { message, id, persistent, type, actions } =
             pendingMessage.message;
           this.snackbar(message, type, actions, persistent, id);
         }
 
-        this.#pendingSnackbarMessages.length = 0;
+        this.pendingSnackbarMessages.length = 0;
       })}
     ></bb-snackbar>`;
   }
@@ -393,112 +395,49 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   render() {
     if (!this.ready) return nothing;
 
-    let zeroState = false;
+    const { viewType } = this.runtime.state.liteView;
 
-    switch (this.uiState.loadState) {
-      case "Home": {
-        const parsedUrl = parseUrl(window.location.href);
-        zeroState = !!(parsedUrl.page === "home" && parsedUrl.new);
-        if (!zeroState) {
-          console.warn("Invalid Home URL state", parsedUrl);
-          return nothing;
-        }
-        break;
-      }
-      case "Loading":
+    switch (viewType) {
+      case "home":
+        return html`<section
+          id="lite-shell"
+          @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) =>
+            this.handleRoutedEvent(evt)}
+        >
+          ${[this.#renderWelcomeMat(), this.#renderUserInput()]}
+        </section>`;
+      case "editor":
+        return html`<section
+          id="lite-shell"
+          class=${classMap({ full: this.showAppFullscreen })}
+          @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) => {
+            if (evt.detail.eventType === "app.fullscreen") {
+              this.showAppFullscreen = evt.detail.action === "activate";
+              return;
+            }
+
+            return this.handleRoutedEvent(evt);
+          }}
+        >
+          ${this.showAppFullscreen
+            ? this.#renderApp()
+            : html` <bb-splitter
+                direction=${"horizontal"}
+                name="layout-lite"
+                split="[0.30, 0.70]"
+              >
+                ${[this.#renderControls(), this.#renderApp()]}
+              </bb-splitter>`}
+        </section>`;
+      case "loading":
         return html`<div id="loading">
           <span class="g-icon heavy-filled round">progress_activity</span
           >Loading
         </div>`;
-      case "Error":
-        return html`Error`;
-      case "Loaded": {
-        this.unsnackbar();
-        break;
-      }
       default:
-        console.warn("Unknown UI load state", this.uiState.loadState);
+        console.log("Invalid lite view state");
         return nothing;
     }
-
-    const stepList = this.runtime.state.liteView.stepList;
-
-    if (stepList?.empty || zeroState) {
-      // For new graph or zero-state, show the welcome mat and no app view.
-      return html`<section
-        id="lite-shell"
-        @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) =>
-          this.handleRoutedEvent(evt)}
-      >
-        ${[this.#renderWelcomeMat(), this.#renderUserInput(stepList)]}
-      </section>`;
-    } else {
-      // When there are nodes in the graph, show the app view.
-      return html`<section
-        id="lite-shell"
-        class=${classMap({ full: this.showAppFullscreen })}
-        @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) => {
-          if (evt.detail.eventType === "app.fullscreen") {
-            this.showAppFullscreen = evt.detail.action === "activate";
-            return;
-          }
-
-          return this.handleRoutedEvent(evt);
-        }}
-      >
-        ${this.showAppFullscreen
-          ? this.#renderApp()
-          : html` <bb-splitter
-              direction=${"horizontal"}
-              name="layout-lite"
-              split="[0.30, 0.70]"
-            >
-              ${[this.#renderControls(stepList), this.#renderApp()]}
-            </bb-splitter>`}
-      </section>`;
-    }
-  }
-
-  snackbar(
-    message: string | HTMLTemplateResult,
-    type: BBLite.Types.SnackType,
-    actions: BBLite.Types.SnackbarAction[] = [],
-    persistent = false,
-    id = globalThis.crypto.randomUUID(),
-    replaceAll = false
-  ) {
-    if (!this.#snackbar) {
-      this.#pendingSnackbarMessages.push({
-        message: {
-          id,
-          message,
-          type,
-          persistent,
-          actions,
-        },
-        replaceAll,
-      });
-      return;
-    }
-
-    return this.#snackbar.show(
-      {
-        id,
-        message,
-        type,
-        persistent,
-        actions,
-      },
-      replaceAll
-    );
-  }
-
-  unsnackbar(id?: BreadboardUI.Types.SnackbarUUID) {
-    if (!this.#snackbar) {
-      return;
-    }
-
-    this.#snackbar.hide(id);
   }
 
   protected async invokeBoardReplaceRoute(
@@ -532,16 +471,5 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         })
       )
     );
-  }
-
-  getProjectState() {
-    const mainGraphId = this.tab?.mainGraphId;
-
-    return mainGraphId
-      ? this.runtime.state.getOrCreateProjectState(
-          mainGraphId,
-          this.runtime.edit.getEditor(this.tab)
-        )
-      : null;
   }
 }

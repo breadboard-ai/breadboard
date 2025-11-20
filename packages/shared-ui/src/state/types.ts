@@ -148,15 +148,6 @@ export type StepListState = {
   intent: string | null;
 
   /**
-   * True when the underlying graph is brand new and has no nodes.
-   */
-  empty: boolean;
-  /**
-   * The current graph
-   */
-  graph: GraphDescriptor | null;
-
-  /**
    * The list of steps according to the current run plan
    */
   steps: Map<string, StepListStepState>;
@@ -433,17 +424,37 @@ export type UI = {
 
 export type FlowGenGenerationStatus = "generating" | "initial" | "error";
 
+export type ListViewType = "loading" | "home" | "editor" | "invalid";
+
+export type LiteViewExample = {
+  intent: string;
+};
+
 /**
  * Represents the flow gen state
  */
 export type LiteViewState = {
+  viewType: ListViewType;
+
+  // FlowGen bits
   status: FlowGenGenerationStatus;
   error?: string;
   intent: string;
+  setIntent(intent: string): void;
+
+  /**
+   * True when the underlying graph is brand new and has no nodes.
+   */
+  empty: boolean;
+  /**
+   * The current graph
+   */
+  graph: GraphDescriptor | null;
 
   stepList: StepListState | undefined;
 
-  setIntent(intent: string): void;
+  examples: LiteViewExample[];
+  currentExampleIntent: string;
 };
 
 /**
@@ -451,7 +462,8 @@ export type LiteViewState = {
  * representation of the `Runtime` from visual editor.
  */
 export type RuntimeContext = {
-  currentProjectState(): Project | null;
+  readonly project: Project | null;
+  readonly ui: UI;
 };
 
 export type IntegrationState = {
