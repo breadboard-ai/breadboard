@@ -202,6 +202,10 @@ class Orchestrator {
     this.#progress = starting == 0 ? "initial" : "advanced";
   }
 
+  restartAtCurrentStage(): Outcome<void> {
+    return this.restartAtStage(this.#currentStage);
+  }
+
   restartAtStage(stage: number): Outcome<void> {
     if (stage < 0) {
       return this.reset();
