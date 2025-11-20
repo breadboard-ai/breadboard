@@ -82,6 +82,7 @@ export class LiteHome extends LitElement {
   accessor recentBoards: RecentBoard[] = [];
 
   readonly #embedHandler?: EmbedHandler;
+
   constructor(mainArgs: MainArguments) {
     super();
     // Static deployment config
@@ -182,7 +183,9 @@ export class LiteHome extends LitElement {
       case "board.togglepin":
         return this.togglePin(payload.url).then(report);
       case "board.load":
-        return this.navigateTo(payload.url).then(report);
+        return this.loadBoard(payload.url).then(report);
+      case "board.create":
+        return this.createBoard().then(report);
       default:
         console.warn("Unknown event type", eventType, payload);
         break;
@@ -338,15 +341,24 @@ export class LiteHome extends LitElement {
         this.addRecentBoard(newUrlString, remix.title),
       ]);
       // 5: Go to the new graph URL
-      this.navigateTo(newUrlString);
+      this.loadBoard(newUrlString);
     } finally {
       this.unsnackbar(snackbarId);
       this.#busy = false;
     }
   }
 
-  async navigateTo(urlString: string) {
-    console.log("Unimplemented: navigate to", urlString);
+  async loadBoard(urlString: string) {
+    this.#embedHandler?.sendToEmbedder({
+      type: "load_board",
+      boardId: urlString,
+    });
+  }
+
+  async createBoard() {
+    this.#embedHandler?.sendToEmbedder({
+      type: "create_board",
+    });
   }
 
   async togglePin(url: string) {

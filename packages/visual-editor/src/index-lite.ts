@@ -238,6 +238,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       );
       await this.invokeBoardCreateRoute();
       await waitForTabToChange;
+      const url = this.tab?.graph.url;
+      if (url) {
+        this.notifyEmbeddedBoardCreated(url);
+      }
       projectState = this.getProjectState();
       if (!projectState) {
         return err(`Failed to create a new opal.`);
