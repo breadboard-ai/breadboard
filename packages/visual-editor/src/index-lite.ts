@@ -7,7 +7,7 @@
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import { html, css, nothing } from "lit";
+import { html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
 
@@ -18,7 +18,6 @@ import {
   StateEvent,
   StateEventDetailMap,
 } from "@breadboard-ai/shared-ui/events/events.js";
-import { ref } from "lit/directives/ref.js";
 import { LiteEditInputController } from "@breadboard-ai/shared-ui/lite/input/editor-input-lite.js";
 import { GraphDescriptor, GraphTheme, Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
@@ -176,6 +175,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
           & > #examples {
             flex: 1;
+            position: relative;
+
             ul {
               list-style: none;
               display: grid;
@@ -229,6 +230,11 @@ export class LiteMain extends MainBase implements LiteEditInputController {
                   }
                 }
               }
+            }
+
+            & bb-snackbar {
+              position: absolute;
+              bottom: 0;
             }
           }
 
@@ -446,7 +452,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         }}
       >
       </bb-app-controller>
-      ${this.#renderSnackbar()}
+      ${this.renderSnackbar()}
     </section>`;
   }
 
@@ -479,69 +485,39 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             </li>`;
           })}
         </ul>
+        ${this.renderSnackbar()}
       </aside>
       ${[this.#renderUserInput(), this.#renderMessage()]}
     </section>`;
   }
 
-  #renderSnackbar() {
-    return html`<bb-snackbar
-      ${ref((el: Element | undefined) => {
-        if (!el) {
-          this.snackbarElement = undefined;
-        }
-
-        this.snackbarElement = el as BreadboardUI.Elements.Snackbar;
-        for (const pendingMessage of this.pendingSnackbarMessages) {
-          const { message, id, persistent, type, actions } =
-            pendingMessage.message;
-          this.snackbar(message, type, actions, persistent, id);
-        }
-
-        this.pendingSnackbarMessages.length = 0;
-      })}
-    ></bb-snackbar>`;
+  #renderShellUI() {
+    return [this.renderTooltip()];
   }
 
   render() {
     if (!this.ready) return nothing;
 
-    const { viewType } = this.runtime.state.liteView;
+    const { viewType } = { viewType: "home" }; //this.runtime.state.liteView;
 
+    let content: HTMLTemplateResult | symbol = nothing;
     switch (viewType) {
-      case "home":
-        return html`<section
-          id="lite-shell"
-          class=${classMap({ welcome: true })}
-          @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) =>
-            this.handleRoutedEvent(evt)}
-        >
-          ${this.#renderWelcomeMat()}
-        </section>`;
-      case "editor":
-        return html`<section
-            id="lite-shell"
-            class=${classMap({ full: this.showAppFullscreen })}
-            @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) => {
-              if (evt.detail.eventType === "app.fullscreen") {
-                this.showAppFullscreen = evt.detail.action === "activate";
-                return;
-              }
-
-              return this.handleRoutedEvent(evt);
-            }}
-          >
-            ${this.showAppFullscreen
-              ? this.#renderApp()
-              : html` <bb-splitter
-                  direction=${"horizontal"}
-                  name="layout-lite"
-                  split="[0.30, 0.70]"
-                >
-                  ${[this.#renderControls(), this.#renderApp()]}
-                </bb-splitter>`}
-          </section>
-          ${this.renderTooltip()}`;
+      case "home": {
+        content = this.#renderWelcomeMat();
+        break;
+      }
+      case "editor": {
+        content = html`${this.showAppFullscreen
+          ? this.#renderApp()
+          : html` <bb-splitter
+              direction=${"horizontal"}
+              name="layout-lite"
+              split="[0.30, 0.70]"
+            >
+              ${[this.#renderControls(), this.#renderApp()]}
+            </bb-splitter>`}`;
+        break;
+      }
       case "loading":
         return html`<div id="loading">
           <span class="g-icon heavy-filled round">progress_activity</span
@@ -551,6 +527,36 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         console.log("Invalid lite view state");
         return nothing;
     }
+
+    return html`<section
+        id="lite-shell"
+        class=${classMap({
+          full: this.showAppFullscreen,
+          welcome: viewType === "home",
+        })}
+        ?inert=${this.uiState.blockingAction}
+        @bbsnackbar=${(snackbarEvent: BreadboardUI.Events.SnackbarEvent) => {
+          this.snackbar(
+            snackbarEvent.message,
+            snackbarEvent.snackType,
+            snackbarEvent.actions,
+            snackbarEvent.persistent,
+            snackbarEvent.snackbarId,
+            snackbarEvent.replaceAll
+          );
+        }}
+        @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) => {
+          if (evt.detail.eventType === "app.fullscreen") {
+            this.showAppFullscreen = evt.detail.action === "activate";
+            return;
+          }
+
+          return this.handleRoutedEvent(evt);
+        }}
+      >
+        ${content}
+      </section>
+      ${this.#renderShellUI()}`;
   }
 
   protected async invokeBoardReplaceRoute(
