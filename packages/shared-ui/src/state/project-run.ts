@@ -493,6 +493,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
           });
         } else if (nodeState.state === "interrupted") {
           entry.finalizeWorkItemInputs();
+          this.app.screens.delete(id);
         } else {
           this.renderer.nodes.set(id, { status: "succeeded" });
         }
