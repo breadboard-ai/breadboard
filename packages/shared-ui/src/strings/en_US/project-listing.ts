@@ -138,6 +138,18 @@ export default {
   LABEL_SAMPLE_GALLERY_DESCRIPTION: {
     str: "Get inspired by exploring some sample flows and apps",
   },
+  LABEL_WELCOME_MESSAGE_LITE: {
+    str: "Build mini-apps and workflows with Breadboard",
+  },
+  LABEL_SAMPLE_GALLERY_TITLE_LITE: {
+    str: "Breadboard apps made by Google",
+  },
+  LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS_LITE: {
+    str: "My Breadboard apps",
+  },
+  LABEL_NO_OPALS_LITE: {
+    str: "The Breadboard apps you create will appear here",
+  },
 
   // Queries.
   QUERY_CONFIRM_REMOVE_SERVER: {

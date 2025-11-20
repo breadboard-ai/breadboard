@@ -7,7 +7,7 @@
 import * as BBLite from "@breadboard-ai/shared-ui/lite";
 import "@breadboard-ai/shared-ui/lite/welcome-panel/project-listing.js";
 import "@breadboard-ai/shared-ui/elements/overflow-menu/overflow-menu.js";
-import { html, HTMLTemplateResult, LitElement } from "lit";
+import { css, html, HTMLTemplateResult, LitElement } from "lit";
 import { ref } from "lit/directives/ref.js";
 import { customElement, state } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
@@ -48,6 +48,14 @@ export class LiteHome extends LitElement {
     BBLite.Styles.HostBehavior.behavior,
     BBLite.Styles.HostColors.baseColors,
     BBLite.Styles.HostType.type,
+    css`
+      :host {
+        --welcome-text-color: light-dark(#1b1c1d, #ffffff);
+        --welcome-button-color: light-dark(#0b57d0, #000000);
+        --welcome-surface-color: light-dark(#f0f4f9, #1a1a1a);
+        --welcome-button-text-label-color: (#0b57d0, #ffffff);
+      }
+    `,
   ];
 
   @provide({ context: globalConfigContext })
