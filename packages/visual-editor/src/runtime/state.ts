@@ -11,6 +11,7 @@ import {
   LiteViewState,
   Project,
   RuntimeContext,
+  UI,
 } from "@breadboard-ai/shared-ui/state/types.js";
 import { BoardServer, RuntimeFlagManager } from "@breadboard-ai/types";
 import {
@@ -80,7 +81,11 @@ class StateManager implements RuntimeContext {
     return this.#ui;
   }
 
-  currentProjectState(): Project | null {
+  get ui(): UI {
+    return this.getOrCreateUIState();
+  }
+
+  get project(): Project | null {
     const tab = this.runtime.board.currentTab;
     if (!tab) return null;
 

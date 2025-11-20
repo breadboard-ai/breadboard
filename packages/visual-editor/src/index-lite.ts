@@ -20,7 +20,6 @@ import {
   StateEventDetailMap,
 } from "@breadboard-ai/shared-ui/events/events.js";
 import { ref } from "lit/directives/ref.js";
-import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { LiteEditInputController } from "@breadboard-ai/shared-ui/lite/input/editor-input-lite.js";
 import { GraphDescriptor, GraphTheme, Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
@@ -393,69 +392,48 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   render() {
     if (!this.ready) return nothing;
 
-    let zeroState = false;
+    const { viewType, stepList } = this.runtime.state.liteView;
 
-    switch (this.uiState.loadState) {
-      case "Home": {
-        const parsedUrl = parseUrl(window.location.href);
-        zeroState = !!(parsedUrl.page === "home" && parsedUrl.new);
-        if (!zeroState) {
-          console.warn("Invalid Home URL state", parsedUrl);
-          return nothing;
-        }
-        break;
-      }
-      case "Loading":
+    switch (viewType) {
+      case "home":
+        return html`<section
+          id="lite-shell"
+          @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) =>
+            this.handleRoutedEvent(evt)}
+        >
+          ${[this.#renderWelcomeMat(), this.#renderUserInput(stepList)]}
+        </section>`;
+      case "editor":
+        return html`<section
+          id="lite-shell"
+          class=${classMap({ full: this.showAppFullscreen })}
+          @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) => {
+            if (evt.detail.eventType === "app.fullscreen") {
+              this.showAppFullscreen = evt.detail.action === "activate";
+              return;
+            }
+
+            return this.handleRoutedEvent(evt);
+          }}
+        >
+          ${this.showAppFullscreen
+            ? this.#renderApp()
+            : html` <bb-splitter
+                direction=${"horizontal"}
+                name="layout-lite"
+                split="[0.30, 0.70]"
+              >
+                ${[this.#renderControls(stepList), this.#renderApp()]}
+              </bb-splitter>`}
+        </section>`;
+      case "loading":
         return html`<div id="loading">
           <span class="g-icon heavy-filled round">progress_activity</span
           >Loading
         </div>`;
-      case "Error":
-        return html`Error`;
-      case "Loaded": {
-        this.unsnackbar();
-        break;
-      }
       default:
-        console.warn("Unknown UI load state", this.uiState.loadState);
+        console.log("Invalid lite view state");
         return nothing;
-    }
-
-    const stepList = this.runtime.state.liteView.stepList;
-
-    if (stepList?.empty || zeroState) {
-      // For new graph or zero-state, show the welcome mat and no app view.
-      return html`<section
-        id="lite-shell"
-        @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) =>
-          this.handleRoutedEvent(evt)}
-      >
-        ${[this.#renderWelcomeMat(), this.#renderUserInput(stepList)]}
-      </section>`;
-    } else {
-      // When there are nodes in the graph, show the app view.
-      return html`<section
-        id="lite-shell"
-        class=${classMap({ full: this.showAppFullscreen })}
-        @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) => {
-          if (evt.detail.eventType === "app.fullscreen") {
-            this.showAppFullscreen = evt.detail.action === "activate";
-            return;
-          }
-
-          return this.handleRoutedEvent(evt);
-        }}
-      >
-        ${this.showAppFullscreen
-          ? this.#renderApp()
-          : html` <bb-splitter
-              direction=${"horizontal"}
-              name="layout-lite"
-              split="[0.30, 0.70]"
-            >
-              ${[this.#renderControls(stepList), this.#renderApp()]}
-            </bb-splitter>`}
-      </section>`;
     }
   }
 

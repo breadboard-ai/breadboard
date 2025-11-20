@@ -433,13 +433,18 @@ export type UI = {
 
 export type FlowGenGenerationStatus = "generating" | "initial" | "error";
 
+export type ListViewType = "loading" | "home" | "editor" | "invalid";
+
 /**
  * Represents the flow gen state
  */
 export type LiteViewState = {
+  // FlowGen bits
   status: FlowGenGenerationStatus;
   error?: string;
   intent: string;
+
+  viewType: ListViewType;
 
   stepList: StepListState | undefined;
 
@@ -451,7 +456,8 @@ export type LiteViewState = {
  * representation of the `Runtime` from visual editor.
  */
 export type RuntimeContext = {
-  currentProjectState(): Project | null;
+  readonly project: Project | null;
+  readonly ui: UI;
 };
 
 export type IntegrationState = {
