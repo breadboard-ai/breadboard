@@ -678,9 +678,12 @@ export type ProjectThemeState = {
   addTheme(theme: AppTheme): Promise<Outcome<void>>;
 
   /**
-   * Generates a new theme based on the intent and sets is a current
+   * Generates a new theme based on the intent and sets it as current
    */
-  generateThemeFromIntent(intent: string): Promise<Outcome<GraphTheme>>;
+  generateThemeFromIntent(
+    intent: string,
+    abortSignal?: AbortSignal
+  ): Promise<Outcome<GraphTheme>>;
 
   setTheme(theme: GraphTheme): Promise<Outcome<void>>;
 

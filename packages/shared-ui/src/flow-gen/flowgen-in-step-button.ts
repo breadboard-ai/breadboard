@@ -409,12 +409,15 @@ export class FlowgenInStepButton extends LitElement {
     if (!this.flowGenerator) {
       throw new Error(`No FlowGenerator was provided`);
     }
-    const { flow } = await this.flowGenerator.oneShot({
+    const generated = await this.flowGenerator.oneShot({
       intent,
       context: { flow: currentFlow },
       constraint: this.constraint,
     });
-    return flow;
+    if ("error" in generated) {
+      throw new Error(generated.error);
+    }
+    return generated.flow;
   }
 
   #onEditComplete(graph: GraphDescriptor) {

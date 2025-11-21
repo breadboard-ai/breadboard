@@ -979,8 +979,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   async #generateGraph(intent: string): Promise<GraphDescriptor> {
-    const { flow } = await this.flowGenerator.oneShot({ intent });
-    return flow;
+    const generated = await this.flowGenerator.oneShot({ intent });
+    if ("error" in generated) {
+      throw new Error(generated.error);
+    }
+    return generated.flow;
   }
 
   async #generateBoardFromGraph(graph: GraphDescriptor) {

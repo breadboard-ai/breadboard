@@ -28,9 +28,18 @@ export interface OneShotFlowGenRequest {
   constraint?: FlowGenConstraint;
 }
 
-export interface OneShotFlowGenResponse {
+export type OneShotFlowGenResponse =
+  | OneShotFlowGenSuccessResponse
+  | OneShotFlowGenFailureResponse;
+
+export type OneShotFlowGenSuccessResponse = {
   flow: GraphDescriptor;
-}
+};
+
+export type OneShotFlowGenFailureResponse = {
+  error: string;
+  suggestedIntent?: string;
+};
 
 export type FlowGenConstraint = EditStepFlowGenConstraint;
 
@@ -105,6 +114,7 @@ export class FlowGenerator {
     );
     const responseFlows: GraphDescriptor[] = [];
     const responseMessages: string[] = [];
+    const suggestions: string[] = [];
     for (
       let i = /* Skip our own messages */ request.messages.length;
       i < messages.length;
@@ -115,6 +125,8 @@ export class FlowGenerator {
         responseFlows.push(JSON.parse(atob(message.data)));
       } else if (message.mimetype === "text/plain") {
         responseMessages.push(atob(message.data));
+      } else if (message.mimetype === "text/rewritten") {
+        suggestions.push(atob(message.data));
       }
     }
     const generatedFlow = responseFlows.at(-1);
@@ -123,9 +135,11 @@ export class FlowGenerator {
       // explaining why.
       const probableErrorMessage = responseMessages.join("\n\n");
       if (probableErrorMessage) {
-        // TODO(aomarks) This shouldn't be an exception, it's a very normal part
-        // of the expected flow. Return a more detailed result object instead.
-        throw new Error(probableErrorMessage);
+        return {
+          error: probableErrorMessage,
+          suggestedIntent:
+            suggestions.length === 0 ? undefined : suggestions.join("\n"),
+        };
       }
       throw new Error(
         `Unexpected error: backend did not return a response. Please try again.`

@@ -19,14 +19,15 @@ import {
   StateEventDetailMap,
 } from "@breadboard-ai/shared-ui/events/events.js";
 import { LiteEditInputController } from "@breadboard-ai/shared-ui/lite/input/editor-input-lite.js";
-import { GraphDescriptor, GraphTheme, Outcome } from "@breadboard-ai/types";
-import { err, ok } from "@breadboard-ai/utils";
+import { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
 import { RuntimeTabChangeEvent } from "./runtime/events";
 import { eventRoutes } from "./event-routing/event-routing";
 import { blankBoard } from "@breadboard-ai/shared-ui/utils/utils.js";
 import { repeat } from "lit/directives/repeat.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
+import { OneShotFlowGenFailureResponse } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
+import { flowGenWithTheme } from "@breadboard-ai/shared-ui/flow-gen/flowgen-with-theme.js";
 
 const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
 
@@ -318,7 +319,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
    * This method is called by bb-editor-input-lite whenever it needs to
    * generate a new graph.
    */
-  async generate(intent: string): Promise<Outcome<void>> {
+  async generate(
+    intent: string
+  ): Promise<OneShotFlowGenFailureResponse | undefined> {
     let projectState = this.runtime.state.project;
 
     if (!projectState) {
@@ -344,43 +347,29 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       }
       projectState = this.runtime.state.project;
       if (!projectState) {
-        return err(`Failed to create a new opal.`);
+        return { error: `Failed to create a new opal.` };
       }
     }
 
     const currentGraph = this.runtime.state.liteView.graph;
     if (!currentGraph) {
-      console.warn("No current graph detected, exting flow generation");
-      return;
+      return { error: "No current graph detected, exting flow generation" };
     }
 
     if (!this.flowGenerator) {
-      return err(`No FlowGenerator was provided`);
+      return { error: `No FlowGenerator was provided` };
     }
-    const generating = this.flowGenerator.oneShot({
+
+    const generated = await flowGenWithTheme(
+      this.flowGenerator,
       intent,
-      context: { flow: currentGraph },
-    });
-
-    const newGraph = (currentGraph?.nodes.length || 0) === 0;
-    const creatingTheme = newGraph
-      ? projectState.themes.generateThemeFromIntent(intent)
-      : Promise.resolve(err(`Existing graph, skipping theme generation`));
-
-    const [generated, createdTheme] = await Promise.allSettled([
-      generating,
-      creatingTheme,
-    ]);
-
-    if (generated.status === "rejected") {
-      return err(generated.reason);
+      currentGraph,
+      projectState
+    );
+    if ("error" in generated) {
+      return generated;
     }
-    let theme;
-    if (createdTheme.status === "fulfilled" && ok(createdTheme.value)) {
-      theme = createdTheme.value;
-    }
-    const { flow } = generated.value;
-    await this.invokeBoardReplaceRoute(flow, theme);
+    await this.invokeBoardReplaceRoute(generated.flow, generated.theme);
   }
 
   #renderOriginalPrompt() {

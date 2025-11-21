@@ -4,27 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css } from "lit";
-import { customElement, property } from "lit/decorators.js";
-import * as StringsHelper from "../../strings/helper.js";
-import { createRef, ref } from "lit/directives/ref.js";
-import type { Outcome } from "@breadboard-ai/types";
-import { SnackbarEvent, StateEvent } from "../../events/events.js";
-import "../../elements/input/expanding-textarea.js";
-import { classMap } from "lit/directives/class-map.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
-import { ok } from "@breadboard-ai/utils";
 import { SignalWatcher } from "@lit-labs/signals";
-import * as Styles from "../../styles/styles";
 import { consume } from "@lit/context";
+import { LitElement, css, html } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+import { createRef, ref } from "lit/directives/ref.js";
 import { uiStateContext } from "../../contexts/ui-state.js";
+import "../../elements/input/expanding-textarea.js";
+import { SnackbarEvent, StateEvent } from "../../events/events.js";
+import { OneShotFlowGenFailureResponse } from "../../flow-gen/flow-generator.js";
 import { LiteViewState, UI } from "../../state/types.js";
+import * as StringsHelper from "../../strings/helper.js";
+import * as Styles from "../../styles/styles";
 import { SnackType } from "../../types/types.js";
+import { ActionTracker } from "../../utils/action-tracker.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
 export type LiteEditInputController = {
-  generate(intent: string): Promise<Outcome<void>>;
+  generate(intent: string): Promise<OneShotFlowGenFailureResponse | undefined>;
 };
 
 @customElement("bb-editor-input-lite")
@@ -151,8 +150,11 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
     this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
 
     const result = await this.controller?.generate(description);
-    if (!ok(result)) {
-      this.#onGenerateError(result.$error);
+    if (!result) {
+      return;
+    }
+    if ("error" in result) {
+      this.#onGenerateError(result.error, result.suggestedIntent);
     } else {
       this.#onGenerateComplete();
     }
@@ -165,9 +167,9 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
     this.#clearInput();
   }
 
-  #onGenerateError(error: string) {
-    // TODO: Display error correctly.
+  #onGenerateError(error: string, suggestedIntent?: string) {
     console.error("Error generating board", error);
+    console.error("Suggested intent", suggestedIntent);
     this.state.status = "error";
     this.state.error = error;
 
