@@ -95,11 +95,7 @@ import { RuntimeBoardServerChangeEvent } from "./runtime/events.js";
 import { MainArguments } from "./types/types";
 import { envFromFlags } from "./utils/env-from-flags";
 import { envFromSettings } from "./utils/env-from-settings";
-import {
-  makeUrl,
-  type MakeUrlInit,
-  parseUrl,
-} from "@breadboard-ai/shared-ui/utils/urls.js";
+import { makeUrl, parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { VESignInModal } from "@breadboard-ai/shared-ui/elements/elements.js";
 import {
   canonicalizeOAuthScope,
@@ -110,6 +106,7 @@ import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.
 import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
 import { ConsentManager } from "@breadboard-ai/shared-ui/utils/consent-manager.js";
 import { consentManagerContext } from "@breadboard-ai/shared-ui/contexts/consent-manager.js";
+import { MakeUrlInit } from "@breadboard-ai/shared-ui/types/types.js";
 
 export { MainBase };
 
@@ -1843,7 +1840,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return nothing;
   }
 
-  async #invokeRemixEventRouteWith(
+  protected async invokeRemixEventRouteWith(
     url: string,
     messages = {
       start: Strings.from("STATUS_REMIXING_PROJECT"),
@@ -1923,7 +1920,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
               return;
             }
 
-            this.#invokeRemixEventRouteWith(evt.value);
+            this.invokeRemixEventRouteWith(evt.value);
             break;
           }
 
@@ -2029,7 +2026,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
             }
 
             ActionTracker.remixApp(this.tab.graph.url, "editor");
-            this.#invokeRemixEventRouteWith(this.tab.graph.url, {
+            this.invokeRemixEventRouteWith(this.tab.graph.url, {
               start: Strings.from("STATUS_GENERIC_WORKING"),
               end: Strings.from("STATUS_PROJECT_CREATED"),
               error: Strings.from("ERROR_GENERIC"),

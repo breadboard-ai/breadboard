@@ -5,60 +5,17 @@
  */
 
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
-import { type VisualEditorMode } from "../types/types.js";
-
-export type MakeUrlInit = HomeUrlInit | GraphInit | LandingUrlInit;
-
-export interface BaseUrlInit {
-  /**
-   * Any `dev-` prefixed search-param will be stored here (e.g.
-   * `?dev-fooBar=baz` becomes`{dev: {fooBar: "baz"}}` and vice-versa).
-   * Prefer camelCase names for consistency, and be sure to make all properties
-   * ?optional.
-   */
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  dev?: {
-    forceSignInState?:
-      | "sign-in"
-      | "add-scope"
-      | "geo-restriction"
-      | "missing-scopes";
-    forceSurveySelection?: "true";
-  };
-  oauthRedirect?: string;
-}
+import {
+  BaseUrlInit,
+  GraphInit,
+  HomeUrlInit,
+  LandingUrlInit,
+  MakeUrlInit,
+} from "../types/types.js";
 
 export function devUrlParams(): Required<BaseUrlInit>["dev"] {
   // TODO(aomarks) Add a flag so that we only allow these in dev.
   return parseUrl(window.location.href).dev ?? {};
-}
-
-export interface HomeUrlInit extends BaseUrlInit {
-  page: "home";
-  new?: boolean;
-  mode?: VisualEditorMode;
-  lite?: boolean;
-  remix?: string;
-  redirectFromLanding?: boolean;
-}
-
-export interface GraphInit extends BaseUrlInit {
-  page: "graph";
-  mode: VisualEditorMode;
-  flow: string;
-  resourceKey?: string | undefined;
-  results?: string;
-  shared?: boolean;
-  lite?: boolean;
-  redirectFromLanding?: boolean;
-}
-
-export interface LandingUrlInit extends BaseUrlInit {
-  page: "landing";
-  redirect: MakeUrlInit;
-  missingScopes?: boolean;
-  lite?: boolean;
-  geoRestriction?: boolean;
 }
 
 const FLOW = "flow";

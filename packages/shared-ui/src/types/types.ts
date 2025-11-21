@@ -520,3 +520,56 @@ export interface VisualEditorStatusUpdate {
 export type FloatingInputFocusState =
   | ["canvas", "preview" | "console"]
   | ["app"];
+
+export type ParsedUrlProvider = {
+  readonly parsedUrl: MakeUrlInit;
+};
+
+export type MakeUrlInit = HomeUrlInit | GraphInit | LandingUrlInit;
+
+export interface BaseUrlInit {
+  /**
+   * Any `dev-` prefixed search-param will be stored here (e.g.
+   * `?dev-fooBar=baz` becomes`{dev: {fooBar: "baz"}}` and vice-versa).
+   * Prefer camelCase names for consistency, and be sure to make all properties
+   * ?optional.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  dev?: {
+    forceSignInState?:
+      | "sign-in"
+      | "add-scope"
+      | "geo-restriction"
+      | "missing-scopes";
+    forceSurveySelection?: "true";
+  };
+  oauthRedirect?: string;
+}
+
+export interface HomeUrlInit extends BaseUrlInit {
+  page: "home";
+  new?: boolean;
+  mode?: VisualEditorMode;
+  lite?: boolean;
+  remix?: string;
+  redirectFromLanding?: boolean;
+}
+
+export interface GraphInit extends BaseUrlInit {
+  page: "graph";
+  mode: VisualEditorMode;
+  flow: string;
+  resourceKey?: string | undefined;
+  results?: string;
+  shared?: boolean;
+  lite?: boolean;
+  redirectFromLanding?: boolean;
+}
+
+export interface LandingUrlInit extends BaseUrlInit {
+  page: "landing";
+  redirect: MakeUrlInit;
+  missingScopes?: boolean;
+  lite?: boolean;
+  geoRestriction?: boolean;
+}

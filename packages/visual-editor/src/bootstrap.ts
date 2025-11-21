@@ -7,11 +7,13 @@
 import * as pkg from "../package.json";
 import type { BootstrapArguments, MainArguments } from "./types/types.js";
 
-import { type LanguagePack } from "@breadboard-ai/shared-ui/types/types.js";
+import {
+  LandingUrlInit,
+  type LanguagePack,
+} from "@breadboard-ai/shared-ui/types/types.js";
 import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 import {
-  type LandingUrlInit,
   makeUrl,
   OAUTH_REDIRECT,
   parseUrl,

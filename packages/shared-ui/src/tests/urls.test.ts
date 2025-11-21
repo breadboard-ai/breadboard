@@ -6,12 +6,8 @@
 
 import assert from "node:assert";
 import { suite, test } from "node:test";
-import {
-  BaseUrlInit,
-  makeUrl,
-  type MakeUrlInit,
-  parseUrl,
-} from "../utils/urls.js";
+import { makeUrl, parseUrl } from "../utils/urls.js";
+import type { BaseUrlInit, MakeUrlInit } from "../types/types.js";
 
 const BASE_URL = "https://example.com";
 
