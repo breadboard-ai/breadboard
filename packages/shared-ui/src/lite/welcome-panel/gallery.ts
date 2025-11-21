@@ -363,6 +363,10 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         justify-self: flex-end;
         margin-top: var(--bb-grid-size-4);
 
+        #page-numbers {
+          margin-right: var(--bb-grid-size-3);
+        }
+
         & input {
           width: var(--bb-grid-size-4);
           text-align: center;
