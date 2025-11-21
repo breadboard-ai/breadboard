@@ -39,7 +39,14 @@ class StepList implements StepListState {
         }
         return [
           id,
-          { icon, title, status, prompt, label } satisfies StepListStepState,
+          {
+            icon,
+            title,
+            status,
+            prompt,
+            label,
+            tags,
+          } satisfies StepListStepState,
         ];
       })
     );

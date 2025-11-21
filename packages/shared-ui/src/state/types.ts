@@ -180,6 +180,10 @@ export type StepListStepState = {
    * The text label for the prompt;
    */
   label: string;
+  /**
+   * The tags used for this step
+   */
+  tags?: string[];
 };
 
 export type ErrorReason =
