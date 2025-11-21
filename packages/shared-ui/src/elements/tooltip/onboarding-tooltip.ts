@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LitElement, html, css, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { icons } from "../../styles/icons.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
@@ -12,9 +12,14 @@ import { OnboardingAcknowledgedEvent } from "../../events/events.js";
 
 @customElement("bb-onboarding-tooltip")
 export class OnboardingTooltip extends LitElement {
-  @property() accessor name = "";
-  @property() accessor title = "";
-  @property() accessor text = "";
+  @property()
+  accessor tooltipTitle: string | null = null;
+
+  @property()
+  accessor text: string | null = null;
+
+  @property({ reflect: true, type: Boolean })
+  accessor delayed = false;
 
   static styles = [
     icons,
@@ -28,8 +33,8 @@ export class OnboardingTooltip extends LitElement {
       :host {
         cursor: auto;
         position: absolute;
-        right: 0;
-        top: calc(100% + var(--bb-grid-size-8));
+        right: var(--right, 0);
+        top: var(--top, calc(100% + var(--bb-grid-size-8)));
         background: var(--light-dark-n-0);
         color: var(--light-dark-n-100);
         border-radius: var(--bb-grid-size-5);
@@ -92,23 +97,53 @@ export class OnboardingTooltip extends LitElement {
     `,
   ];
 
-  constructor() {
-    super();
-    this.addEventListener("click", (evt) => {
-      evt.preventDefault();
-      evt.stopImmediatePropagation();
-    });
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    this.addEventListener("click", this.#onClickBound);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    this.removeEventListener("click", this.#onClickBound);
+  }
+
+  #onClickBound = this.#onClick.bind(this);
+  #onClick(evt: Event) {
+    console.log(evt);
+    evt.preventDefault();
+    evt.stopImmediatePropagation();
+  }
+
+  #renderTitle() {
+    if (!this.tooltipTitle) {
+      return nothing;
+    }
+
+    return html`<h1 class="md-label-large">${this.tooltipTitle}</h1>`;
+  }
+
+  #renderText() {
+    if (!this.text) {
+      return nothing;
+    }
+
+    return html`<p class="md-body-medium">${this.text}</p>`;
+  }
+
+  #renderButton() {
+    return html`<span
+      aria-role="button"
+      @click=${(evt: Event) => {
+        this.#onClickBound(evt);
+        this.dispatchEvent(new OnboardingAcknowledgedEvent());
+      }}
+      >Got it</span
+    >`;
   }
 
   render() {
-    return html` <h1 class="md-label-large">${this.title}</h1>
-      <p class="md-body-medium">${this.text}</p>
-      <span
-        aria-role="button"
-        @click=${() => {
-          this.dispatchEvent(new OnboardingAcknowledgedEvent());
-        }}
-        >Got it</span
-      >`;
+    return [this.#renderTitle(), this.#renderText(), this.#renderButton()];
   }
 }

@@ -8,7 +8,7 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 import { html, css, nothing, HTMLTemplateResult } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
 
 import * as BBLite from "@breadboard-ai/shared-ui/lite";
@@ -25,11 +25,18 @@ import { RuntimeTabChangeEvent } from "./runtime/events";
 import { eventRoutes } from "./event-routing/event-routing";
 import { blankBoard } from "@breadboard-ai/shared-ui/utils/utils.js";
 import { repeat } from "lit/directives/repeat.js";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { styleMap } from "lit/directives/style-map.js";
+
+const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
 
 @customElement("bb-lite")
 export class LiteMain extends MainBase implements LiteEditInputController {
   @property()
   accessor showAppFullscreen = false;
+
+  @state()
+  accessor #showAdvancedEditorOnboardingTooltip = true;
 
   static styles = [
     BBLite.Styles.HostIcons.icons,
@@ -291,6 +298,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     `,
   ];
 
+  #advancedEditorLink: Ref<HTMLElement> = createRef();
+
   constructor(args: MainArguments) {
     super(args);
 
@@ -299,6 +308,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     this.showAppFullscreen =
       (args.parsedUrl && "flow" in args.parsedUrl && args.parsedUrl.shared) ??
       false;
+
+    this.#showAdvancedEditorOnboardingTooltip =
+      (globalThis.localStorage.getItem(ADVANCED_EDITOR_KEY) ?? "true") ===
+      "true";
   }
 
   /**
@@ -413,6 +426,37 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     `;
   }
 
+  #renderOnboardingTooltip() {
+    if (
+      !this.#showAdvancedEditorOnboardingTooltip ||
+      !this.#advancedEditorLink.value
+    ) {
+      return nothing;
+    }
+
+    const targetBounds = this.#advancedEditorLink.value.getBoundingClientRect();
+    if (!targetBounds.width) {
+      return nothing;
+    }
+
+    const PADDING = 30;
+    const x = Math.round(window.innerWidth - targetBounds.right + PADDING);
+    const y = Math.round(targetBounds.y + targetBounds.height + PADDING);
+    const styles: Record<string, string> = {
+      "--right": `${x}px`,
+      "--top": `${y}px`,
+    };
+
+    return html`<bb-onboarding-tooltip
+      @bbonboardingacknowledged=${() => {
+        this.#showAdvancedEditorOnboardingTooltip = false;
+        globalThis.localStorage.setItem(ADVANCED_EDITOR_KEY, "false");
+      }}
+      style=${styleMap(styles)}
+      .text=${"To edit or view full prompt, open in advanced editor"}
+    ></bb-onboarding-tooltip>`;
+  }
+
   #renderApp() {
     const renderValues = this.getRenderValues();
     return html` <section
@@ -425,6 +469,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             <div class="left">${this.tab?.name ?? "Untitled app"}</div>
             <div class="right">
               <a
+                ${ref(this.#advancedEditorLink)}
                 href="/?mode=canvas&flow=${this.tab?.graph.url}"
                 target="_blank"
                 ><span class="g-icon">open_in_new</span>Open Advanced Editor</a
@@ -492,7 +537,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderShellUI() {
-    return [this.renderTooltip()];
+    return [this.renderTooltip(), this.#renderOnboardingTooltip()];
   }
 
   render() {

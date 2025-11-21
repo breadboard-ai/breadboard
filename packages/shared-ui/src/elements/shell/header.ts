@@ -689,8 +689,8 @@ export class VEHeader extends SignalWatcher(LitElement) {
       ${this.#showRemixInfo
         ? html`<bb-onboarding-tooltip
             delayed
-            title="Remix to Edit"
-            text='You can only run this ${Strings.from(
+            .tooltipTitle="Remix to Edit"
+            .text='You can only run this ${Strings.from(
               "APP_NAME"
             )} app. To edit, click the "Remix" button to make a copy.'
             @bbonboardingacknowledged=${() => {
