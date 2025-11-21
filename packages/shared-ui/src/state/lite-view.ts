@@ -82,12 +82,13 @@ class ReactiveLiteViewState implements LiteViewState {
     switch (loadState) {
       case "Home": {
         const parsedUrl = parseUrl(window.location.href);
-        zeroState = !!(parsedUrl.page === "home" && parsedUrl.new);
-        if (!zeroState) {
-          console.warn("Invalid Home URL state", parsedUrl);
-          return "invalid";
+        if (parsedUrl.page === "home") {
+          if (parsedUrl.remix) return "loading";
+          zeroState = !!parsedUrl.new;
+          if (zeroState) return "home";
         }
-        break;
+        console.warn("Invalid Home URL state", parsedUrl);
+        return "invalid";
       }
       case "Loading":
         if (this.status === "generating") {
@@ -103,7 +104,6 @@ class ReactiveLiteViewState implements LiteViewState {
         console.warn("Unknown UI load state", loadState);
         return "invalid";
     }
-    if (zeroState) return "home";
     if (!this.stepList || this.empty) return "home";
     return "editor";
   }
