@@ -46,6 +46,7 @@ export class ParticleViewerAudio extends LitElement implements ParticleViewer {
         display: flex;
         overflow: hidden;
         flex: 1 1 fit-content;
+        min-width: 240px;
       }
 
       :host > * {
