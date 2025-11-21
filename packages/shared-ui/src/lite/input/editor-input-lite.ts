@@ -4,21 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css } from "lit";
-import { customElement, property } from "lit/decorators.js";
-import * as StringsHelper from "../../strings/helper.js";
-import { createRef, ref } from "lit/directives/ref.js";
-import { SnackbarEvent, StateEvent } from "../../events/events.js";
-import "../../elements/input/expanding-textarea.js";
-import { classMap } from "lit/directives/class-map.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import * as Styles from "../../styles/styles";
 import { consume } from "@lit/context";
+import { LitElement, css, html } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+import { createRef, ref } from "lit/directives/ref.js";
 import { uiStateContext } from "../../contexts/ui-state.js";
-import { LiteViewState, UI } from "../../state/types.js";
-import { SnackType } from "../../types/types.js";
+import "../../elements/input/expanding-textarea.js";
+import { SnackbarEvent, StateEvent } from "../../events/events.js";
 import { OneShotFlowGenFailureResponse } from "../../flow-gen/flow-generator.js";
+import { LiteViewState, UI } from "../../state/types.js";
+import * as StringsHelper from "../../strings/helper.js";
+import * as Styles from "../../styles/styles";
+import { SnackType } from "../../types/types.js";
+import { ActionTracker } from "../../utils/action-tracker.js";
 
 const Strings = StringsHelper.forSection("Editor");
 

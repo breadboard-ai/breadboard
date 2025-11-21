@@ -4,24 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, type PropertyValues, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import * as StringsHelper from "../strings/helper.js";
-import { createRef, ref } from "lit/directives/ref.js";
 import type { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
-import { StateEvent, UtteranceEvent } from "../events/events.js";
-import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
-import { icons } from "../styles/icons.js";
-import "../elements/input/expanding-textarea.js";
-import { type FlowGenerator, flowGeneratorContext } from "./flow-generator.js";
+import { LitElement, type PropertyValues, css, html, nothing } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { spinAnimationStyles } from "../styles/spin-animation.js";
-import { ActionTracker } from "../utils/action-tracker.js";
+import { createRef, ref } from "lit/directives/ref.js";
+import { projectStateContext } from "../contexts/project-state.js";
+import "../elements/input/expanding-textarea.js";
+import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
+import { StateEvent, UtteranceEvent } from "../events/events.js";
+import { Project } from "../state/types.js";
+import * as StringsHelper from "../strings/helper.js";
 import { baseColors } from "../styles/host/base-colors.js";
 import { type } from "../styles/host/type.js";
-import { projectStateContext } from "../contexts/project-state.js";
-import { Project } from "../state/types.js";
+import { icons } from "../styles/icons.js";
+import { spinAnimationStyles } from "../styles/spin-animation.js";
+import { ActionTracker } from "../utils/action-tracker.js";
+import { type FlowGenerator, flowGeneratorContext } from "./flow-generator.js";
 import { flowGenWithTheme } from "./flowgen-with-theme.js";
 
 const Strings = StringsHelper.forSection("Editor");
