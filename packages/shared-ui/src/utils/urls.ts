@@ -38,6 +38,7 @@ export interface HomeUrlInit extends BaseUrlInit {
   new?: boolean;
   mode?: VisualEditorMode;
   lite?: boolean;
+  remix?: string;
   redirectFromLanding?: boolean;
 }
 
@@ -65,6 +66,7 @@ const TAB0 = "tab0";
 const MODE = "mode";
 const LITE = "lite" as const;
 const NEW = "new";
+const REMIX = "remix";
 const MODE_APP = "app" as const;
 const MODE_CANVAS = "canvas" as const;
 const RESULTS = "results";
@@ -97,6 +99,9 @@ export function makeUrl(
     }
     if (init.new) {
       url.searchParams.set(NEW, init.new === true ? "true" : "false");
+    }
+    if (init.remix) {
+      url.searchParams.set(REMIX, init.remix);
     }
   } else if (page === "graph") {
     url.searchParams.set(FLOW, init.flow);
@@ -217,6 +222,10 @@ export function parseUrl(url: string | URL): MakeUrlInit {
         lite: url.searchParams.get("lite") === "true",
         new: url.searchParams.get(NEW) === "true",
       };
+      const remix = url.searchParams.get(REMIX);
+      if (remix) {
+        home.remix = remix;
+      }
       if (dev) {
         home.dev = dev;
       }

@@ -37,6 +37,28 @@ suite("home", () => {
     new: false,
   });
 
+  testSymmetrical(`${BASE_URL}/?mode=app&lite=true&new=true`, {
+    page: "home",
+    mode: "app",
+    lite: true,
+    new: true,
+  });
+
+  testSymmetrical(`${BASE_URL}/?mode=app&lite=true`, {
+    page: "home",
+    mode: "app",
+    lite: true,
+    new: false,
+  });
+
+  testSymmetrical(`${BASE_URL}/?mode=app&lite=true&remix=test`, {
+    page: "home",
+    mode: "app",
+    lite: true,
+    new: false,
+    remix: "test",
+  });
+
   test("default to home w/ canvas", () => {
     assert.deepEqual(parseUrl(`${BASE_URL}/`), {
       page: "home",
