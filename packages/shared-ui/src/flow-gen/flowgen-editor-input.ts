@@ -135,7 +135,7 @@ export class FlowgenEditorInput extends LitElement {
           outline: 1px solid var(--ui-custom-o-100);
         }
 
-        > [slot~="submit"] {
+        .submit-button {
           display: flex;
           align-items: center;
           justify-content: flex-end;
@@ -143,6 +143,10 @@ export class FlowgenEditorInput extends LitElement {
           font-size: 30px;
           width: 30px;
           height: 30px;
+        }
+
+        .submit-button.enabled {
+          color: var(--light-dark-n-0);
         }
 
         &::part(textarea)::placeholder {
@@ -170,6 +174,9 @@ export class FlowgenEditorInput extends LitElement {
 
   @property({ type: Boolean, reflect: true })
   accessor generating = false;
+
+  @property({ type: Boolean, reflect: true })
+  accessor hasInputValue = false;
 
   @property({ type: Boolean, reflect: true })
   accessor hasEmptyGraph = false;
@@ -240,6 +247,7 @@ export class FlowgenEditorInput extends LitElement {
             : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
           @change=${this.#onInputChange}
           @focus=${this.#onInputFocus}
+          @input=${this.#onInput}
           @blur=${this.#onInputBlur}
         >
           <bb-speech-to-text
@@ -257,9 +265,11 @@ export class FlowgenEditorInput extends LitElement {
           <span
             slot="submit"
             class=${classMap({
+              "submit-button": true,
               "g-icon": true,
               filled: true,
               round: true,
+              enabled: this.hasInputValue,
               spin: isGenerating,
             })}
             >${isGenerating ? "progress_activity" : "send"}</span
@@ -267,6 +277,11 @@ export class FlowgenEditorInput extends LitElement {
         </bb-expanding-textarea>
       </div>
     `;
+  }
+
+  #onInput() {
+    const input = this.#descriptionInput.value;
+    this.hasInputValue = !!input?.value;
   }
 
   #onInputChange() {
