@@ -117,9 +117,9 @@ class OpalShellGuest implements OpalShellGuestProtocol {
   constructor(embedHandler: EmbedHandler) {
     this.#embedHandler = embedHandler;
   }
-  async receiveFromEmbedder(message: EmbedderMessage): Promise<void> {
+  receiveFromEmbedder = async (message: EmbedderMessage): Promise<void> => {
     this.#embedHandler.dispatchEvent(new EmbedderMessageEventImpl(message));
-  }
+  };
 }
 
 class EmbedderMessageEventImpl<T extends EmbedderMessage> extends Event {
