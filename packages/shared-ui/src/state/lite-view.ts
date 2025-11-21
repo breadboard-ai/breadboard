@@ -25,7 +25,7 @@ function createLiteViewState(context: RuntimeContext) {
 const EXAMPLES: LiteViewExample[] = [
   {
     intent:
-      "An app that reads current news and creates an alternative fiction story based on these news",
+      "An app that reads current news and creates an alternative history fiction story based on these news",
   },
   {
     intent:
