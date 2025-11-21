@@ -543,10 +543,13 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   render() {
     if (!this.ready) return nothing;
 
-    const { viewType } = this.runtime.state.liteView;
+    const liteView = this.runtime.state.liteView;
+    if (liteView.remixUrl) {
+      this.invokeRemixEventRouteWith(liteView.remixUrl);
+    }
 
     let content: HTMLTemplateResult | symbol = nothing;
-    switch (viewType) {
+    switch (liteView.viewType) {
       case "home": {
         content = this.#renderWelcomeMat();
         break;
@@ -577,7 +580,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         id="lite-shell"
         class=${classMap({
           full: this.showAppFullscreen,
-          welcome: viewType === "home",
+          welcome: liteView.viewType === "home",
         })}
         ?inert=${this.uiState.blockingAction}
         @bbsnackbar=${(snackbarEvent: BreadboardUI.Events.SnackbarEvent) => {

@@ -94,6 +94,10 @@ class StateManager implements RuntimeContext {
     return this.getOrCreateProjectState(mainGraphId, editor);
   }
 
+  get router() {
+    return this.runtime.router;
+  }
+
   getProjectState(mainGraphId?: MainGraphIdentifier): State.Project | null {
     if (!mainGraphId) return null;
 
