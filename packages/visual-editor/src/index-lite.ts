@@ -515,9 +515,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             return html`<li>
               <button
                 class="w-400 md-body-small sans-flex"
-                @click=${(evt: Event) => {
-                  if (!(evt.target instanceof HTMLButtonElement)) return;
-
+                @click=${() => {
                   this.runtime.state.liteView.currentExampleIntent =
                     example.intent;
                 }}
