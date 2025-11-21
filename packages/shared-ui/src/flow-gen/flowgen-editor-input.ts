@@ -22,14 +22,14 @@ import { baseColors } from "../styles/host/base-colors.js";
 import { type } from "../styles/host/type.js";
 import { projectStateContext } from "../contexts/project-state.js";
 import { Project } from "../state/types.js";
-import { err, ok } from "@breadboard-ai/utils";
+import { flowGenWithTheme } from "./flowgen-with-theme.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
 type State =
   | { status: "initial" }
   | { status: "generating" }
-  | { status: "error"; error: unknown };
+  | { status: "error"; error: unknown; suggestedIntent?: string };
 
 @customElement("bb-flowgen-editor-input")
 export class FlowgenEditorInput extends LitElement {
@@ -286,23 +286,24 @@ export class FlowgenEditorInput extends LitElement {
 
       this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
 
-      const generating = this.#generateBoard(description);
+      if (!this.flowGenerator) return;
+      if (!this.currentGraph) return;
+      if (!this.projectState) return;
 
-      const newGraph = (this.currentGraph?.nodes.length || 0) === 0;
-      const creatingTheme = newGraph
-        ? this.projectState?.themes.generateThemeFromIntent(description)
-        : Promise.resolve(err(`Existing graph, skipping theme generation`));
-
-      Promise.allSettled([generating, creatingTheme])
-        .then(([generated, createdTheme]) => {
-          if (generated.status === "rejected") {
-            return this.#onGenerateError(generated.reason);
+      flowGenWithTheme(
+        this.flowGenerator,
+        description,
+        this.currentGraph,
+        this.projectState
+      )
+        .then((response) => {
+          if ("error" in response) {
+            return this.#onGenerateError(
+              response.error,
+              response.suggestedIntent
+            );
           }
-          let theme;
-          if (createdTheme.status === "fulfilled" && ok(createdTheme.value)) {
-            theme = createdTheme.value;
-          }
-          return this.#onGenerateComplete(generated.value, theme);
+          return this.#onGenerateComplete(response.flow, response.theme);
         })
         .finally(() => {
           this.dispatchEvent(new StateEvent({ eventType: "host.unlock" }));
@@ -312,18 +313,6 @@ export class FlowgenEditorInput extends LitElement {
 
   #onClearError() {
     this.#state = { status: "initial" };
-  }
-
-  async #generateBoard(intent: string): Promise<GraphDescriptor> {
-    if (!this.flowGenerator) {
-      throw new Error(`No FlowGenerator was provided`);
-    }
-    this.generating = true;
-    const { flow } = await this.flowGenerator.oneShot({
-      intent,
-      context: { flow: this.currentGraph },
-    });
-    return flow;
   }
 
   #onGenerateComplete(graph: GraphDescriptor, theme?: GraphTheme) {
@@ -343,12 +332,13 @@ export class FlowgenEditorInput extends LitElement {
     this.generating = false;
   }
 
-  #onGenerateError(error: unknown) {
+  #onGenerateError(error: unknown, suggestedIntent?: string) {
     if (this.#state.status !== "generating") {
       return;
     }
     console.error("Error generating board", error);
-    this.#state = { status: "error", error };
+    console.log("Suggested intent", suggestedIntent);
+    this.#state = { status: "error", error, suggestedIntent };
     this.generating = false;
   }
 

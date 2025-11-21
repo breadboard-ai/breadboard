@@ -313,8 +313,11 @@ export class FlowgenHomepagePanel extends LitElement {
     if (!this.flowGenerator) {
       throw new Error(`No FlowGenerator was provided`);
     }
-    const { flow } = await this.flowGenerator.oneShot({ intent });
-    return flow;
+    const generated = await this.flowGenerator.oneShot({ intent });
+    if ("error" in generated) {
+      throw new Error(generated.error);
+    }
+    return generated.flow;
   }
 
   #onGenerateComplete(graph: GraphDescriptor) {
