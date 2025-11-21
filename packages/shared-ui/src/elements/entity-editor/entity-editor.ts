@@ -263,7 +263,11 @@ export class EntityEditor
           }
         }
 
-        &.output {
+        &.responsive_layout,
+        &.drive_presentation,
+        &.web,
+        &.docs,
+        &.sheets {
           & h1 {
             --outer-border: oklch(from var(--ui-display) calc(l - 0.2) c h);
             background: var(--ui-display);
@@ -1060,11 +1064,12 @@ export class EntityEditor
         return nothing;
       }
 
-      const metadata = node.type().currentMetadata();
+      const icon = node.currentDescribe().metadata?.icon;
+
       const classes: Record<string, boolean> = { node: true };
 
-      if (metadata.icon) {
-        classes[metadata.icon] = true;
+      if (icon) {
+        classes[icon] = true;
       }
 
       if (node.type().type().startsWith("#module")) {
@@ -1092,12 +1097,13 @@ export class EntityEditor
             );
           }
         });
+      console.log(classes);
 
       return html`<div class=${classMap(classes)}>
         <h1 id="title">
-          ${metadata.icon
+          ${icon
             ? html`<span class="g-icon filled round"
-                >${iconSubstitute(metadata.icon)}</span
+                >${iconSubstitute(icon)}</span
               >`
             : nothing}
           <input
@@ -1184,6 +1190,7 @@ export class EntityEditor
     showControlFlowTools: boolean
   ) {
     const portValue = getLLMContentPortValue(value, port.schema);
+
     const textPart = portValue.parts.find((part) => isTextCapabilityPart(part));
     if (!textPart) {
       return html`Invalid value`;
