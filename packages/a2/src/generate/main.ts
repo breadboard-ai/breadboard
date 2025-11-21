@@ -201,7 +201,7 @@ const MODES: Mode[] = [
     type: "image",
     url: "embed://a2/a2.bgl.json#module:image-editor",
     title: "Gemini 3 Pro Image (Nano Banana)",
-    description: "Optimized fro professional asset production",
+    description: "Optimized for professional asset production",
     icon: "photo_spark",
     modelName: "gemini-3-pro-image-preview",
     promptPlaceholderText:
