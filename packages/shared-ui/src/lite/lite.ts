@@ -16,3 +16,4 @@ export { Splitter } from "../elements/splitter/splitter.js";
 export { EditorInputLite } from "./input/editor-input-lite.js";
 export { PromptView } from "./prompt/prompt-view.js";
 export { Snackbar } from "../elements/toast/snackbar.js";
+export { OnboardingTooltip } from "../elements/tooltip/onboarding-tooltip.js";
