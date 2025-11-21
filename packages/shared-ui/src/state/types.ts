@@ -38,7 +38,7 @@ import {
 } from "@google-labs/breadboard";
 import { ConnectorInstance, ConnectorType } from "../connectors/types";
 import { StateEvent, ToastType } from "../events/events";
-import { AppTheme, VisualEditorMode } from "../types/types";
+import { AppTheme, ParsedUrlProvider, VisualEditorMode } from "../types/types";
 import { HTMLTemplateResult } from "lit";
 import type { AsyncComputedStatus } from "signal-utils/async-computed";
 import { FilteredMap } from "./utils/filtered-map";
@@ -440,6 +440,13 @@ export type LiteViewExample = {
 export type LiteViewState = {
   viewType: ListViewType;
 
+  // Remix triggering bits
+
+  /**
+   * The URL of the graph to remix. If null, there's nothing to remix.
+   */
+  remixUrl: string | null;
+
   // FlowGen bits
   status: FlowGenGenerationStatus;
   error?: string;
@@ -468,6 +475,7 @@ export type LiteViewState = {
 export type RuntimeContext = {
   readonly project: Project | null;
   readonly ui: UI;
+  readonly router: ParsedUrlProvider;
 };
 
 export type IntegrationState = {

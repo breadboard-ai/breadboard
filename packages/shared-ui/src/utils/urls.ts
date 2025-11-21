@@ -5,59 +5,17 @@
  */
 
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
-import { type VisualEditorMode } from "../types/types.js";
-
-export type MakeUrlInit = HomeUrlInit | GraphInit | LandingUrlInit;
-
-export interface BaseUrlInit {
-  /**
-   * Any `dev-` prefixed search-param will be stored here (e.g.
-   * `?dev-fooBar=baz` becomes`{dev: {fooBar: "baz"}}` and vice-versa).
-   * Prefer camelCase names for consistency, and be sure to make all properties
-   * ?optional.
-   */
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  dev?: {
-    forceSignInState?:
-      | "sign-in"
-      | "add-scope"
-      | "geo-restriction"
-      | "missing-scopes";
-    forceSurveySelection?: "true";
-  };
-  oauthRedirect?: string;
-}
+import {
+  BaseUrlInit,
+  GraphInit,
+  HomeUrlInit,
+  LandingUrlInit,
+  MakeUrlInit,
+} from "../types/types.js";
 
 export function devUrlParams(): Required<BaseUrlInit>["dev"] {
   // TODO(aomarks) Add a flag so that we only allow these in dev.
   return parseUrl(window.location.href).dev ?? {};
-}
-
-export interface HomeUrlInit extends BaseUrlInit {
-  page: "home";
-  new?: boolean;
-  mode?: VisualEditorMode;
-  lite?: boolean;
-  redirectFromLanding?: boolean;
-}
-
-export interface GraphInit extends BaseUrlInit {
-  page: "graph";
-  mode: VisualEditorMode;
-  flow: string;
-  resourceKey?: string | undefined;
-  results?: string;
-  shared?: boolean;
-  lite?: boolean;
-  redirectFromLanding?: boolean;
-}
-
-export interface LandingUrlInit extends BaseUrlInit {
-  page: "landing";
-  redirect: MakeUrlInit;
-  missingScopes?: boolean;
-  lite?: boolean;
-  geoRestriction?: boolean;
 }
 
 const FLOW = "flow";
@@ -65,6 +23,7 @@ const TAB0 = "tab0";
 const MODE = "mode";
 const LITE = "lite" as const;
 const NEW = "new";
+const REMIX = "remix";
 const MODE_APP = "app" as const;
 const MODE_CANVAS = "canvas" as const;
 const RESULTS = "results";
@@ -97,6 +56,9 @@ export function makeUrl(
     }
     if (init.new) {
       url.searchParams.set(NEW, init.new === true ? "true" : "false");
+    }
+    if (init.remix) {
+      url.searchParams.set(REMIX, init.remix);
     }
   } else if (page === "graph") {
     url.searchParams.set(FLOW, init.flow);
@@ -217,6 +179,10 @@ export function parseUrl(url: string | URL): MakeUrlInit {
         lite: url.searchParams.get("lite") === "true",
         new: url.searchParams.get(NEW) === "true",
       };
+      const remix = url.searchParams.get(REMIX);
+      if (remix) {
+        home.remix = remix;
+      }
       if (dev) {
         home.dev = dev;
       }

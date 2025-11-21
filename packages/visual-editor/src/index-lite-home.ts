@@ -39,7 +39,6 @@ import { RecentBoardStore } from "./data/recent-boards";
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
 const DELETING_BOARD_MESSAGE = "Deleting gem";
-const REMIXING_BOARD_MESSAGE = "Duplicating gem";
 
 @customElement("bb-lite-home")
 export class LiteHome extends LitElement {
@@ -319,40 +318,10 @@ export class LiteHome extends LitElement {
   }
 
   async remixBoard(urlString: string) {
-    if (this.#busy) return;
-    this.#busy = true;
-
-    if (!this.boardServer) {
-      return err(`Board server is undefined. Likely a misconfiguration`);
-    }
-    const snackbarId = crypto.randomUUID();
-    this.snackbar(REMIXING_BOARD_MESSAGE, SnackType.PENDING, snackbarId);
-    try {
-      const url = new URL(urlString);
-      // 1. Load graph
-      const graph = await this.boardServer.load(url);
-      if (!graph) {
-        return err(`Unable to load board "${url}"`);
-      }
-      // 2. Deep copy
-      const remix = await this.boardServer.deepCopy(url, graph);
-      // 3. Title as a remix
-      remix.title = `${remix.title ?? "Untitled"} Remix`;
-      // 4. Create new graph
-      const { url: newUrlString } = await this.boardServer.create(url, remix);
-      if (!newUrlString) {
-        return err(`Unable to save remixed board "${url}"`);
-      }
-      await Promise.all([
-        this.boardServer.flushSaveQueue(newUrlString),
-        this.addRecentBoard(newUrlString, remix.title),
-      ]);
-      // 5: Go to the new graph URL
-      this.loadBoard(newUrlString);
-    } finally {
-      this.unsnackbar(snackbarId);
-      this.#busy = false;
-    }
+    this.#embedHandler?.sendToEmbedder({
+      type: "remix_board",
+      boardId: urlString,
+    });
   }
 
   async loadBoard(urlString: string) {

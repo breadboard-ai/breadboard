@@ -13,7 +13,6 @@ import {
   RuntimeContext,
   StepListState,
 } from "./types";
-import { parseUrl } from "../utils/urls";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import { ReactiveProjectRun } from "./project-run";
 
@@ -62,6 +61,16 @@ class ReactiveLiteViewState implements LiteViewState {
     this.#intent = intent;
   }
 
+  accessor #remixing = false;
+
+  @signal
+  get remixUrl() {
+    if (this.#remixing) return null;
+    this.#remixing = true;
+    const parsedUrl = this.context.router.parsedUrl;
+    return parsedUrl.page === "home" ? parsedUrl.remix || null : null;
+  }
+
   get run(): ReactiveProjectRun | undefined {
     return this.context.project?.run as ReactiveProjectRun;
   }
@@ -81,13 +90,14 @@ class ReactiveLiteViewState implements LiteViewState {
     const { loadState } = this.context.ui;
     switch (loadState) {
       case "Home": {
-        const parsedUrl = parseUrl(window.location.href);
-        zeroState = !!(parsedUrl.page === "home" && parsedUrl.new);
-        if (!zeroState) {
-          console.warn("Invalid Home URL state", parsedUrl);
-          return "invalid";
+        const parsedUrl = this.context.router.parsedUrl;
+        if (parsedUrl.page === "home") {
+          if (parsedUrl.remix) return "loading";
+          zeroState = !!parsedUrl.new;
+          if (zeroState) return "home";
         }
-        break;
+        console.warn("Invalid Home URL state", parsedUrl);
+        return "invalid";
       }
       case "Loading":
         if (this.status === "generating") {
@@ -103,7 +113,6 @@ class ReactiveLiteViewState implements LiteViewState {
         console.warn("Unknown UI load state", loadState);
         return "invalid";
     }
-    if (zeroState) return "home";
     if (!this.stepList || this.empty) return "home";
     return "editor";
   }

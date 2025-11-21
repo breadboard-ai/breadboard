@@ -4,16 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  makeUrl,
-  type MakeUrlInit,
-  parseUrl,
-} from "@breadboard-ai/shared-ui/utils/urls.js";
+import { makeUrl, parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { type EditHistoryCreator } from "@google-labs/breadboard";
 import { RuntimeURLChangeEvent } from "./events.js";
 import { type TabId } from "./types.js";
+import { signal } from "signal-utils";
+import {
+  MakeUrlInit,
+  ParsedUrlProvider,
+} from "@breadboard-ai/shared-ui/types/types.js";
 
-export class Router extends EventTarget {
+export class Router extends EventTarget implements ParsedUrlProvider {
+  @signal
+  accessor parsedUrl: MakeUrlInit;
+
   constructor() {
     super();
     const parsed = parseUrl(window.location.href);
@@ -27,6 +31,7 @@ export class Router extends EventTarget {
     window.addEventListener("popstate", () => {
       this.#emit();
     });
+    this.parsedUrl = parsed;
   }
 
   go(init: MakeUrlInit, tabId?: TabId, creator?: EditHistoryCreator) {
@@ -57,6 +62,7 @@ export class Router extends EventTarget {
   #emit(id?: TabId, creator?: EditHistoryCreator) {
     const currentUrl = new URL(window.location.href);
     const currentParsed = parseUrl(currentUrl);
+    this.parsedUrl = currentParsed;
     const mode = currentParsed.page === "graph" ? currentParsed.mode : "canvas";
     const resultsFileId =
       currentParsed.page === "graph" ? currentParsed.results : undefined;

@@ -19,7 +19,7 @@ import {
   OpalShellHostProtocol,
   SignInState,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { MakeUrlInit } from "@breadboard-ai/shared-ui/utils/urls.js";
+import { MakeUrlInit } from "@breadboard-ai/shared-ui/types/types.js";
 
 export type BootstrapArguments = {
   deploymentConfiguration: ClientDeploymentConfiguration;

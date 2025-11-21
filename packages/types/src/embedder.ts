@@ -20,7 +20,8 @@ export type BreadboardMessage =
   | IterateOnPromptMessage
   | ResizeMessage
   | LoadBoardMessage
-  | CreateBoardMessage;
+  | CreateBoardMessage
+  | RemixBoardMessage;
 
 /** Event for enabling debug. */
 export declare interface DebugMessage {
@@ -86,6 +87,14 @@ export declare interface LoadBoardMessage {
  */
 export declare interface CreateBoardMessage {
   type: "create_board";
+}
+
+/**
+ * Event to notify the parent to remix existing board
+ */
+export declare interface RemixBoardMessage {
+  type: "remix_board";
+  boardId: string;
 }
 
 /** Event when a new breadboard has been created. */
