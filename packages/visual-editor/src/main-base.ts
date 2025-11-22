@@ -271,6 +271,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   readonly #apiClient: AppCatalystApiClient;
   readonly #settings: SettingsStore;
   readonly emailPrefsManager: EmailPrefsManager;
+  protected readonly hostOrigin: URL;
 
   // Event Handlers.
   readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
@@ -294,8 +295,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.signinAdapter = new SigninAdapter(
       this.opalShell,
       args.initialSignInState,
-      (scopes?: OAuthScope[]) => this.#askUserToSignInIfNeeded(scopes)
+      (scopes?: OAuthScope[]) => this.askUserToSignInIfNeeded(scopes)
     );
+    this.hostOrigin = args.hostOrigin;
 
     // Asyncronously check if the user has a geo-restriction and sign out if so.
     if (this.signinAdapter.state === "signedin") {
@@ -664,7 +666,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.runtime.board.addEventListener(
       Runtime.Events.RuntimeRequestSignInEvent.eventName,
-      () => this.#askUserToSignInIfNeeded()
+      () => this.askUserToSignInIfNeeded()
     );
 
     this.runtime.addEventListener(
@@ -1028,15 +1030,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         | Partial<GoogleDriveBoardServer>
         | undefined;
       await boardServer?.flushSaveQueue?.(url.href);
-      this.notifyEmbeddedBoardCreated(url.href);
-    }
-  }
-
-  notifyEmbeddedBoardCreated(url: string) {
-    if (this.#embedHandler) {
       this.#embedHandler.sendToEmbedder({
         type: "board_id_created",
-        id: url,
+        id: url.href,
       });
     }
   }
@@ -1386,8 +1382,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       uiState: this.uiState,
       googleDriveClient: this.googleDriveClient,
       askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>
-        this.#askUserToSignInIfNeeded(scopes),
+        this.askUserToSignInIfNeeded(scopes),
       boardServer,
+      embedHandler: this.#embedHandler,
     };
   }
 
@@ -1500,7 +1497,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           ? this.#renderWarmWelcomeModal()
           : nothing,
         this.uiState.show.has("SignInModal")
-          ? this.#renderSignInModal()
+          ? this.renderSignInModal()
           : nothing,
         this.renderTooltip(),
         this.#renderToasts(),
@@ -1863,7 +1860,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       )
     );
     this.uiState.blockingAction = false;
-
     if (refresh) {
       requestAnimationFrame(() => {
         this.requestUpdate();
@@ -2106,7 +2102,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     </bb-ve-header>`;
   }
 
-  async #askUserToSignInIfNeeded(scopes?: OAuthScope[]): Promise<boolean> {
+  protected async askUserToSignInIfNeeded(
+    scopes?: OAuthScope[]
+  ): Promise<boolean> {
+    // this.#uiState won't exist until init is done.
+    await this.#initPromise;
     if (this.signinAdapter.state === "signedin") {
       if (!scopes?.length) {
         return true;
@@ -2121,8 +2121,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         return true;
       }
     }
-    // this.#uiState won't exist until init is done.
-    await this.#initPromise;
     this.uiState.show.add("SignInModal");
     await this.updateComplete;
     const signInModal = this.#signInModalRef.value;
@@ -2134,7 +2132,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   readonly #signInModalRef = createRef<VESignInModal>();
-  #renderSignInModal() {
+  protected renderSignInModal() {
     return html`
       <bb-sign-in-modal
         ${ref(this.#signInModalRef)}

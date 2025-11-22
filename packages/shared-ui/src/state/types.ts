@@ -442,11 +442,6 @@ export type LiteModeState = {
 
   // Remix triggering bits
 
-  /**
-   * The URL of the graph to remix. If null, there's nothing to remix.
-   */
-  remixUrl: string | null;
-
   // FlowGen bits
   status: FlowGenGenerationStatus;
   error?: string;

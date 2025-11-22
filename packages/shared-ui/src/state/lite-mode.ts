@@ -75,16 +75,6 @@ class ReactiveLiteModeState implements LiteModeState {
     this.#intent = intent;
   }
 
-  accessor #remixing = false;
-
-  @signal
-  get remixUrl() {
-    if (this.#remixing) return null;
-    this.#remixing = true;
-    const parsedUrl = this.context.router.parsedUrl;
-    return parsedUrl.page === "home" ? parsedUrl.remix || null : null;
-  }
-
   get run(): ReactiveProjectRun | undefined {
     return this.context.project?.run as ReactiveProjectRun;
   }
