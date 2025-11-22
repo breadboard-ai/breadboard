@@ -428,17 +428,17 @@ export type UI = {
 
 export type FlowGenGenerationStatus = "generating" | "initial" | "error";
 
-export type ListViewType = "loading" | "home" | "editor" | "invalid";
+export type LiteModeType = "loading" | "home" | "editor" | "invalid";
 
-export type LiteViewExample = {
+export type LiteModeIntentExample = {
   intent: string;
 };
 
 /**
  * Represents the flow gen state
  */
-export type LiteViewState = {
-  viewType: ListViewType;
+export type LiteModeState = {
+  viewType: LiteModeType;
 
   // Remix triggering bits
 
@@ -450,8 +450,8 @@ export type LiteViewState = {
   // FlowGen bits
   status: FlowGenGenerationStatus;
   error?: string;
-  intent: string;
-  setIntent(intent: string): void;
+  startGenerating(): void;
+  finishGenerating(): void;
 
   /**
    * True when the underlying graph is brand new and has no nodes.
@@ -464,7 +464,7 @@ export type LiteViewState = {
 
   stepList: StepListState | undefined;
 
-  examples: LiteViewExample[];
+  examples: LiteModeIntentExample[];
   currentExampleIntent: string;
 };
 

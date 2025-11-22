@@ -351,7 +351,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       }
     }
 
-    const currentGraph = this.runtime.state.liteView.graph;
+    const currentGraph = this.runtime.state.lite.graph;
     if (!currentGraph) {
       return { error: "No current graph detected, exting flow generation" };
     }
@@ -383,10 +383,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderUserInput() {
-    const { liteView } = this.runtime.state;
+    const { lite } = this.runtime.state;
     return html`<bb-editor-input-lite
       .controller=${this}
-      .state=${liteView}
+      .state=${lite}
     ></bb-editor-input-lite>`;
   }
 
@@ -410,7 +410,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   #renderList() {
     return html`
       <bb-step-list-view
-        .state=${this.runtime.state.liteView.stepList}
+        .state=${this.runtime.state.lite.stepList}
       ></bb-step-list-view>
     `;
   }
@@ -500,13 +500,12 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       </h2>
       <aside id="examples">
         <ul>
-          ${repeat(this.runtime.state.liteView.examples, (example) => {
+          ${repeat(this.runtime.state.lite.examples, (example) => {
             return html`<li>
               <button
                 class="w-400 md-body-small sans-flex"
                 @click=${() => {
-                  this.runtime.state.liteView.currentExampleIntent =
-                    example.intent;
+                  this.runtime.state.lite.currentExampleIntent = example.intent;
                 }}
               >
                 <span class="example-icon">
@@ -530,13 +529,13 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   render() {
     if (!this.ready) return nothing;
 
-    const liteView = this.runtime.state.liteView;
-    if (liteView.remixUrl) {
-      this.invokeRemixEventRouteWith(liteView.remixUrl);
+    const lite = this.runtime.state.lite;
+    if (lite.remixUrl) {
+      this.invokeRemixEventRouteWith(lite.remixUrl);
     }
 
     let content: HTMLTemplateResult | symbol = nothing;
-    switch (liteView.viewType) {
+    switch (lite.viewType) {
       case "home": {
         content = this.#renderWelcomeMat();
         break;
@@ -567,9 +566,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         id="lite-shell"
         class=${classMap({
           full: this.showAppFullscreen,
-          welcome: liteView.viewType === "home",
+          welcome: lite.viewType === "home",
         })}
-        ?inert=${this.uiState.blockingAction}
+        ?inert=${this.uiState.blockingAction || lite.status == "generating"}
         @bbsnackbar=${(snackbarEvent: BreadboardUI.Events.SnackbarEvent) => {
           this.snackbar(
             snackbarEvent.message,

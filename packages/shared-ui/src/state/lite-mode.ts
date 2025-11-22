@@ -7,22 +7,22 @@
 import { signal } from "signal-utils";
 import {
   FlowGenGenerationStatus,
-  ListViewType,
-  LiteViewExample,
-  LiteViewState,
+  LiteModeType,
+  LiteModeIntentExample,
+  LiteModeState,
   RuntimeContext,
   StepListState,
 } from "./types";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import { ReactiveProjectRun } from "./project-run";
 
-export { createLiteViewState };
+export { createLiteModeState };
 
-function createLiteViewState(context: RuntimeContext) {
-  return new ReactiveLiteViewState(context);
+function createLiteModeState(context: RuntimeContext) {
+  return new ReactiveLiteModeState(context);
 }
 
-const EXAMPLES: LiteViewExample[] = [
+const EXAMPLES: LiteModeIntentExample[] = [
   {
     intent:
       "An app that reads current news and creates an alternative history fiction story based on these news",
@@ -41,12 +41,26 @@ const EXAMPLES: LiteViewExample[] = [
   },
 ];
 
-class ReactiveLiteViewState implements LiteViewState {
+class ReactiveLiteModeState implements LiteModeState {
   @signal
   accessor status: FlowGenGenerationStatus = "initial";
 
   @signal
   accessor error: string | undefined;
+
+  startGenerating(): void {
+    if (this.stepList) {
+      this.stepList.status = "planning";
+    }
+    this.status = "generating";
+  }
+
+  finishGenerating(): void {
+    if (this.stepList) {
+      this.stepList.status = "ready";
+    }
+    this.status = "initial";
+  }
 
   @signal
   get intent() {
@@ -84,7 +98,7 @@ class ReactiveLiteViewState implements LiteViewState {
   }
 
   @signal
-  get viewType(): ListViewType {
+  get viewType(): LiteModeType {
     let zeroState = false;
 
     const { loadState } = this.context.ui;
