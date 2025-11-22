@@ -6,9 +6,9 @@
 
 import { McpClientManager } from "@breadboard-ai/mcp";
 import { State } from "@breadboard-ai/shared-ui";
-import { createLiteViewState } from "@breadboard-ai/shared-ui/state/lite-view.js";
+import { createLiteModeState } from "@breadboard-ai/shared-ui/state/lite-mode.js";
 import {
-  LiteViewState,
+  LiteModeState,
   Project,
   RuntimeContext,
   UI,
@@ -35,7 +35,7 @@ class StateManager implements RuntimeContext {
   #flagManager: RuntimeFlagManager;
   #mcpClientManager: McpClientManager;
 
-  readonly liteView: LiteViewState;
+  readonly lite: LiteModeState;
 
   constructor(
     private readonly runtime: Runtime,
@@ -50,7 +50,7 @@ class StateManager implements RuntimeContext {
     this.#servers = boardServers;
     this.#flagManager = flagManager;
     this.#mcpClientManager = mcpClientManager;
-    this.liteView = createLiteViewState(this);
+    this.lite = createLiteModeState(this);
   }
 
   #findServer(url: URL): BoardServer | null {

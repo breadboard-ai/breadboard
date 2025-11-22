@@ -14,7 +14,7 @@ import { uiStateContext } from "../../contexts/ui-state.js";
 import "../../elements/input/expanding-textarea.js";
 import { SnackbarEvent } from "../../events/events.js";
 import { OneShotFlowGenFailureResponse } from "../../flow-gen/flow-generator.js";
-import { LiteViewState, UI } from "../../state/types.js";
+import { LiteModeState, UI } from "../../state/types.js";
 import * as StringsHelper from "../../strings/helper.js";
 import * as Styles from "../../styles/styles";
 import { SnackType } from "../../types/types.js";
@@ -89,7 +89,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
   accessor controller: LiteEditInputController | undefined = undefined;
 
   @property()
-  accessor state!: LiteViewState;
+  accessor state!: LiteModeState;
 
   readonly #descriptionInput = createRef<HTMLTextAreaElement>();
 
@@ -140,8 +140,6 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
 
     const description = input?.value;
     if (!description) return;
-
-    this.state.setIntent(description);
 
     ActionTracker.flowGenEdit(this.state.graph?.url);
 
