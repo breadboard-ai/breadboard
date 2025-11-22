@@ -63,7 +63,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   );
   const settings = await SettingsStore.restoredInstance();
 
-  const { shellHost, embedHandler } = await connectToOpalShellHost();
+  const { shellHost, embedHandler, hostOrigin } = await connectToOpalShellHost();
   const signinAdapter = new SigninAdapter(
     shellHost,
     await shellHost.getSignInState()
@@ -122,6 +122,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       shellHost,
       initialSignInState: await shellHost.getSignInState(),
       parsedUrl,
+      hostOrigin,
     };
     if (mainArgs.globalConfig.googleDrive.publishPermissions.length === 0) {
       console.warn(

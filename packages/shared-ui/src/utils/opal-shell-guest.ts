@@ -33,6 +33,7 @@ const SHELL_ORIGIN_SESSION_STORAGE_KEY = "shellOrigin";
 export async function connectToOpalShellHost(): Promise<{
   shellHost: OpalShellHostProtocol;
   embedHandler: EmbedHandler;
+  hostOrigin: URL;
 }> {
   const hostOrigin = await discoverShellHostOrigin();
   if (!hostOrigin) {
@@ -45,7 +46,7 @@ export async function connectToOpalShellHost(): Promise<{
       (message: EmbedderMessage) =>
         embedHandler.dispatchEvent(new EmbedderMessageEventImpl(message))
     );
-    return { shellHost, embedHandler };
+    return { shellHost, embedHandler, hostOrigin: new URL(location.origin) };
   }
 
   // Establish MessageChannel
@@ -62,7 +63,7 @@ export async function connectToOpalShellHost(): Promise<{
     shellPort
   );
 
-  return { shellHost, embedHandler };
+  return { shellHost, embedHandler, hostOrigin: new URL(hostOrigin) };
 }
 
 /**
