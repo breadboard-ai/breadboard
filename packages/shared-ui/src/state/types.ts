@@ -452,6 +452,8 @@ export type LiteViewState = {
   error?: string;
   intent: string;
   setIntent(intent: string): void;
+  startGenerating(): void;
+  finishGenerating(): void;
 
   /**
    * True when the underlying graph is brand new and has no nodes.

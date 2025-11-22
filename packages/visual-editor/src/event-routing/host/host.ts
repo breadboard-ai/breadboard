@@ -45,11 +45,7 @@ export const SelectionStateChangeRoute: EventRoute<"host.selectionstatechange"> 
 export const LockRoute: EventRoute<"host.lock"> = {
   event: "host.lock",
 
-  async do({ uiState, runtime, tab }) {
-    const projectState = runtime.state.getProjectState(tab?.mainGraphId);
-    if (projectState) {
-      projectState.run.stepList.status = "planning";
-    }
+  async do({ uiState }) {
     uiState.blockingAction = true;
     return false;
   },
@@ -58,12 +54,7 @@ export const LockRoute: EventRoute<"host.lock"> = {
 export const UnlockRoute: EventRoute<"host.unlock"> = {
   event: "host.unlock",
 
-  async do({ uiState, runtime, tab }) {
-    const projectState = runtime.state.getProjectState(tab?.mainGraphId);
-    if (projectState) {
-      projectState.run.stepList.status = "ready";
-    }
-
+  async do({ uiState }) {
     uiState.blockingAction = false;
     return false;
   },

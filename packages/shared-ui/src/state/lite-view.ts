@@ -48,6 +48,20 @@ class ReactiveLiteViewState implements LiteViewState {
   @signal
   accessor error: string | undefined;
 
+  startGenerating(): void {
+    if (this.stepList) {
+      this.stepList.status = "planning";
+    }
+    this.status = "generating";
+  }
+
+  finishGenerating(): void {
+    if (this.stepList) {
+      this.stepList.status = "ready";
+    }
+    this.status = "initial";
+  }
+
   @signal
   get intent() {
     if (this.status !== "initial" && this.#intent) return this.#intent;

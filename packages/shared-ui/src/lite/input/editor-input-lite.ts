@@ -12,7 +12,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { uiStateContext } from "../../contexts/ui-state.js";
 import "../../elements/input/expanding-textarea.js";
-import { SnackbarEvent, StateEvent } from "../../events/events.js";
+import { SnackbarEvent } from "../../events/events.js";
 import { OneShotFlowGenFailureResponse } from "../../flow-gen/flow-generator.js";
 import { LiteViewState, UI } from "../../state/types.js";
 import * as StringsHelper from "../../strings/helper.js";
@@ -143,28 +143,17 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
 
     this.state.setIntent(description);
 
-    this.state.status = "generating";
-
     ActionTracker.flowGenEdit(this.state.graph?.url);
 
-    this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
+    this.state.startGenerating();
 
     const result = await this.controller?.generate(description);
-    if (!result) {
-      return;
-    }
-    if ("error" in result) {
+    if (result && "error" in result) {
       this.#onGenerateError(result.error, result.suggestedIntent);
     } else {
-      this.#onGenerateComplete();
+      this.#clearInput();
     }
-
-    this.dispatchEvent(new StateEvent({ eventType: "host.unlock" }));
-  }
-
-  #onGenerateComplete() {
-    this.state.status = "initial";
-    this.#clearInput();
+    this.state.finishGenerating();
   }
 
   #onGenerateError(error: string, suggestedIntent?: string) {

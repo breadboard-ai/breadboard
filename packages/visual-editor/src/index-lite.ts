@@ -569,7 +569,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           full: this.showAppFullscreen,
           welcome: liteView.viewType === "home",
         })}
-        ?inert=${this.uiState.blockingAction}
+        ?inert=${this.uiState.blockingAction || liteView.status == "generating"}
         @bbsnackbar=${(snackbarEvent: BreadboardUI.Events.SnackbarEvent) => {
           this.snackbar(
             snackbarEvent.message,
