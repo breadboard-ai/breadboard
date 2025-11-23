@@ -59,6 +59,16 @@ When composing the prompt, be as descriptive as possible. Describe the scene, do
 The model's core strength is its deep language understanding. A narrative, descriptive paragraph will almost always produce a better, more coherent image than a list of disconnected words.
 
 This function allows you to use multiple input images to compose a new scene or transfer the style from one image to another.
+
+Here are some possible applications:
+
+- Text-to-Image: Generate high-quality images from simple or complex text descriptions. Provide a text prompt and no images as input.
+
+- Image + Text-to-Image (Editing): Provide an image and use the text prompt to add, remove, or modify elements, change the style, or adjust the color grading.
+
+- Multi-Image to Image (Composition & style transfer): Use multiple input images to compose a new scene or transfer the style from one image to another.
+
+- High-Fidelity text rendering: Accurately generate images that contain legible and well-placed text, ideal for logos, diagrams, and posters.
 `),
           model: z.enum(["pro", "flash"]).describe(tr`
 
