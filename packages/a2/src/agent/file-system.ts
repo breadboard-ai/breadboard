@@ -144,6 +144,24 @@ class AgentFileSystem {
     return toText({ parts });
   }
 
+  getMany(paths: string[]): Outcome<DataPart[]> {
+    const inputErrors: string[] = [];
+    const files: DataPart[] = paths
+      .map((path) => this.get(path))
+      .filter((part) => {
+        if (!ok(part)) {
+          inputErrors.push(part.$error);
+          return false;
+        }
+        return true;
+      })
+      .flat() as DataPart[];
+    if (inputErrors.length > 0) {
+      return err(inputErrors.join(","));
+    }
+    return files;
+  }
+
   get(path: string): Outcome<DataPart[]> {
     // Do a path fix-up just in case: sometimes, Gemini decides to use
     // "vfs/file" instead of "/vfs/file".

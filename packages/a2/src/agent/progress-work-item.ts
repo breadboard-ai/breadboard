@@ -128,6 +128,8 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
         }
         this.screen.expectedDuration = -1;
       } else {
+        // Remove the occasional ellipsis from the status
+        status = status.replace(/\.+$/, "");
         if (options?.expectedDurationInSec) {
           this.screen.expectedDuration = options.expectedDurationInSec;
         } else {

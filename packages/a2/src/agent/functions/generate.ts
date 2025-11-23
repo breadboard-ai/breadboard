@@ -5,7 +5,7 @@
  */
 
 import { Capabilities, TextCapabilityPart } from "@breadboard-ai/types";
-import { err, ok } from "@breadboard-ai/utils";
+import { ok } from "@breadboard-ai/utils";
 import z from "zod";
 import {
   conformGeminiBody,
@@ -42,15 +42,15 @@ function defineGenerateFunctions(
   return [
     defineFunction(
       {
-        name: "generate_images_from_prompt",
-        description: `Generates one or more images based on a prompt`,
+        name: "generate_images",
+        description: `Generates one or more images based on a prompt and optionally, one or more images`,
         parameters: {
           prompt: z.string()
             .describe(`Detailed prompt to use for image generation.
 
 This model can generate multiple images from a single prompt. Especially when
 looking for consistency across images (for instance, when generating video 
-keyframews), this is a very useful capability.
+keyframes), this is a very useful capability.
 
 Be specific about how many images to generate.
 
@@ -58,50 +58,74 @@ When composing the prompt, be as descriptive as possible. Describe the scene, do
 
 The model's core strength is its deep language understanding. A narrative, descriptive paragraph will almost always produce a better, more coherent image than a list of disconnected words.
 
-The following strategies will help you create effective prompts to generate exactly the images you're looking for.
+This function allows you to use multiple input images to compose a new scene or transfer the style from one image to another.
 
-- Be Hyper-Specific: The more detail you provide, the more control you have. Instead of "fantasy armor," describe it: "ornate elven plate armor, etched with silver leaf patterns, with a high collar and pauldrons shaped like falcon wings."
-- Provide Context and Intent: Explain the purpose of the image. The model's understanding of context will influence the final output. For example, "Create a logo for a high-end, minimalist skincare brand" will yield better results than just "Create a logo."
+Here are some possible applications:
 
-- Use Step-by-Step Instructions: For complex scenes with many elements, break your prompt into steps. "First, create a background of a serene, misty forest at dawn. Then, in the foreground, add a moss-covered ancient stone altar. Finally, place a single, glowing sword on top of the altar."
+- Text-to-Image: Generate high-quality images from simple or complex text descriptions. Provide a text prompt and no images as input.
 
-- Use "Semantic Negative Prompts": Instead of saying "no cars," describe the desired scene positively: "an empty, deserted street with no signs of traffic."
+- Image + Text-to-Image (Editing): Provide an image and use the text prompt to add, remove, or modify elements, change the style, or adjust the color grading.
 
-- Control the Camera: Use photographic and cinematic language to control the composition. Terms like wide-angle shot, macro shot, low-angle perspective
+- Multi-Image to Image (Composition & style transfer): Use multiple input images to compose a new scene or transfer the style from one image to another.
 
-- Use the full breadth of styles:
-
-1. Photorealistic scenes - For realistic images, use photography terms. Mention camera angles, lens types, lighting, and fine details to guide the model toward a photorealistic result.
-
-2. Stylized illustrations & stickers - To create stickers, icons, or assets, be explicit about the style and request a transparent background.
-
-3. Accurate text in images - Gemini excels at rendering text. Be clear about the text, the font style (descriptively), and the overall design.
-
-4. Product mockups & commercial photography - Perfect for creating clean, professional product shots for e-commerce, advertising, or branding.
-
-5. Minimalist & negative space design - Excellent for creating backgrounds for websites, presentations, or marketing materials where text will be overlaid.
-
-6. Sequential art (Comic panel / Storyboard) - Builds on character consistency and scene description to create panels for visual storytelling.
+- High-Fidelity text rendering: Accurately generate images that contain legible and well-placed text, ideal for logos, diagrams, and posters.
 `),
+          model: z.enum(["pro", "flash"]).describe(tr`
+
+The Gemini model to use for image generation. How to choose the right model:
+
+- choose "pro" to accurately generate images that contain legible and well-placed text, ideal for logos, diagrams, and posters. This model is designed for professional asset production and complex instructions
+- choose "flash" for speed and efficiency. This model is optimized for high-volume, low-latency tasks
+
+`),
+          images: z
+            .array(
+              z.string().describe("An input image, specified as a VS path")
+            )
+            .describe("A list of input images, specified as VFS paths"),
+          status_update: z.string().describe(tr`
+A status update to show in the UI that provides more detail on the reason why this function was called.
+
+For example, "Generating page 4 of the report" or "Combining the images into one"`),
         },
         response: {
+          error: z
+            .string()
+            .describe(
+              `If an error has occurred, will contain a description of the error`
+            )
+            .optional(),
           images: z
             .array(
               z.string().describe(`A generated image, specified as a VFS path`)
             )
-            .describe(`Array of generated images`),
+            .describe(`Array of generated images`)
+            .optional(),
         },
       },
-      async ({ prompt }, statusUpdater) => {
-        statusUpdater("Generating Image(s)");
+      async (
+        { prompt, images: inputImages, status_update, model },
+        statusUpdater
+      ) => {
+        statusUpdater(status_update || "Generating Image(s)", {
+          expectedDurationInSec: 50,
+        });
         console.log("PROMPT", prompt);
+
+        const imageParts = fileSystem.getMany(inputImages);
+        if (!ok(imageParts)) return { error: imageParts.$error };
+
+        const modelName =
+          model == "pro"
+            ? "gemini-3-pro-image-preview"
+            : "gemini-2.5-flash-image";
 
         const generated = await callGeminiImage(
           caps,
           moduleArgs,
-          "gemini-2.5-flash-image",
+          modelName,
           prompt,
-          [],
+          imageParts.map((part) => ({ parts: [part] })),
           true
         );
         if (!ok(generated)) return generated;
@@ -116,7 +140,7 @@ The following strategies will help you create effective prompts to generate exac
             return part;
           });
         if (errors.length > 0) {
-          return err(errors.join(","));
+          return { error: errors.join(",") };
         }
         return { images };
       }
@@ -175,6 +199,10 @@ capabilities of Gemini with the rich, factual, and up-to-date data of Google
 Maps`
             )
             .optional(),
+          status_update: z.string().describe(tr`
+A status update to show in the UI that provides more detail on the reason why this function was called.
+
+For example, "Researching the story" or "Writing a poem"`),
         },
         response: {
           error: z
@@ -207,6 +235,7 @@ provided when the "output_format" is set to "text"`
           maps_grounding,
           project_path,
           output_format,
+          status_update,
         },
         statusUpdater
       ) => {
@@ -217,12 +246,15 @@ provided when the "output_format" is set to "text"`
         console.log("PROJECT_PATH", project_path);
         console.log("OUTPUT_PATH", output_format);
 
-        if (search_grounding || maps_grounding) {
-          statusUpdater("Researching");
+        if (status_update) {
+          statusUpdater(status_update);
         } else {
-          statusUpdater("Generating Text");
+          if (search_grounding || maps_grounding) {
+            statusUpdater("Researching");
+          } else {
+            statusUpdater("Generating Text");
+          }
         }
-
         let tools: Tool[] | undefined = [];
         if (search_grounding) {
           tools.push({ googleSearch: {} });
@@ -314,7 +346,11 @@ The following elements should be included in your prompt:
 - Ambiance: [Optional] How the color and light contribute to the scene, such as blue tones, night, or warm tones.
 
 `),
-          aspectRatio: z
+          status_update: z.string().describe(tr`
+A status update to show in the UI that provides more detail on the reason why this function was called.
+
+For example, "Making a marketing video" or "Creating the video concept"`),
+          aspect_ratio: z
             .enum(["16:9", "9:16"])
             .describe(`The aspect ratio of the video`)
             .default("16:9"),
@@ -332,10 +368,10 @@ The following elements should be included in your prompt:
             .optional(),
         },
       },
-      async ({ prompt, aspectRatio }, statusUpdateCallback) => {
+      async ({ prompt, status_update, aspect_ratio }, statusUpdateCallback) => {
         console.log("PROMPT", prompt);
-        console.log("ASPECT RATIO", aspectRatio);
-        statusUpdateCallback("Generating Video", {
+        console.log("ASPECT RATIO", aspect_ratio);
+        statusUpdateCallback(status_update || "Generating Video", {
           expectedDurationInSec: 70,
         });
         const generating = await callVideoGen(
@@ -344,7 +380,7 @@ The following elements should be included in your prompt:
           prompt,
           undefined,
           false,
-          aspectRatio ?? "16:9",
+          aspect_ratio ?? "16:9",
           VIDEO_MODEL_NAME
         );
         if (!ok(generating)) {
@@ -367,6 +403,8 @@ The following elements should be included in your prompt:
         description: "Generates speech from text",
         parameters: {
           text: z.string().describe("The verbatim text to turn into speech."),
+          status_update: z.string().describe(tr`
+A status update to show in the UI that provides more detail on the reason why this function was called.`),
         },
         response: {
           error: z
@@ -381,8 +419,8 @@ The following elements should be included in your prompt:
             .optional(),
         },
       },
-      async ({ text }, statusUpdateCallback) => {
-        statusUpdateCallback("Generating Speech", {
+      async ({ text, status_update }, statusUpdateCallback) => {
+        statusUpdateCallback(status_update || "Generating Speech", {
           expectedDurationInSec: 20,
         });
         const generating = await callAudioGen(
@@ -430,6 +468,8 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
           prompt: z
             .string()
             .describe(`The prompt from which to generate music`),
+          status_update: z.string().describe(tr`
+A status update to show in the UI that provides more detail on the reason why this function was called.`),
         },
         response: {
           error: z
@@ -444,8 +484,10 @@ A calm and dreamy (mood) ambient soundscape (genre/style) featuring layered synt
             .optional(),
         },
       },
-      async ({ prompt }, statusUpdateCallback) => {
-        statusUpdateCallback("Generating Music", { expectedDurationInSec: 30 });
+      async ({ prompt, status_update }, statusUpdateCallback) => {
+        statusUpdateCallback(status_update || "Generating Music", {
+          expectedDurationInSec: 30,
+        });
         const generating = await callMusicGen(caps, moduleArgs, prompt);
         if (!ok(generating)) return { error: generating.$error };
 
