@@ -58,4 +58,5 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
   await evalObjective("./data/quiz.js");
   await evalObjective("./data/secret-santa.js");
   await evalObjective("./data/timer.js");
+  await evalObjective("./data/story-chooser.js");
 });
