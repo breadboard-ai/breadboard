@@ -28,6 +28,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   googleOne: false,
   requireConsentForGetWebpage: false,
   requireConsentForOpenWebpage: false,
+  interactiveAgent: false,
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(
