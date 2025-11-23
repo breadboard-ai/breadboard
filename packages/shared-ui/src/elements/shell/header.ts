@@ -559,6 +559,11 @@ export class VEHeader extends SignalWatcher(LitElement) {
         icon: "flag",
       },
       {
+        id: "documentation",
+        title: Strings.from("COMMAND_DOCUMENTATION"),
+        icon: "quick_reference_all",
+      },
+      {
         id: "status-update",
         title: Strings.from("COMMAND_STATUS_UPDATE"),
         icon: "bigtop_updates",
