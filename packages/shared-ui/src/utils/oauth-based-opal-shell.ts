@@ -309,8 +309,8 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     params.set("client_id", CLIENT_DEPLOYMENT_CONFIG.OAUTH_CLIENT);
     params.set(
       "redirect_uri",
-      getEmbedderRedirectUri() ??
-        new URL("/oauth/", window.location.origin).href
+      // getEmbedderRedirectUri() ??
+      new URL("/oauth/", window.location.origin).href
     );
     params.set("scope", uniqueScopes.join(" "));
     params.set(
