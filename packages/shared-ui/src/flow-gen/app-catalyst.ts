@@ -15,6 +15,19 @@ export interface AppCatalystChatResponse {
   messages: AppCatalystContentChunk[];
 }
 
+export interface AppCatalystG1SubscriptionStatusRequest {
+  include_credit_data: false;
+}
+
+export interface AppCatalystG1SubscriptionStatusResponse {
+  is_member: false;
+  remaining_credits: number;
+}
+
+export interface AppCatalystG1CreditsResponse {
+  remaining_credits: number;
+}
+
 export type CheckAppAccessResponse =
   | {
     canAccess: false;
@@ -75,6 +88,36 @@ export class AppCatalystApiClient {
   constructor(fetchWithCreds: typeof globalThis.fetch, apiBaseUrl: string) {
     this.#fetchWithCreds = fetchWithCreds;
     this.#apiBaseUrl = apiBaseUrl;
+  }
+
+  async getG1SubscriptionStatus(
+    request: AppCatalystG1SubscriptionStatusRequest
+  ): Promise<AppCatalystG1SubscriptionStatusResponse> {
+    const url = new URL("v1beta1/getG1SubscriptionStatus", this.#apiBaseUrl);
+    const response = await this.#fetchWithCreds(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(request)
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to get G1 subscription status: ${response.statusText}`);
+    }
+    const result = (await response.json()) as AppCatalystG1SubscriptionStatusResponse;
+    return result
+  }
+
+  async getG1Credits(): Promise<AppCatalystG1CreditsResponse> {
+    const url = new URL("v1beta1/getG1Credits", this.#apiBaseUrl);
+    const response = await this.#fetchWithCreds(url, {
+      method: "GET",
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to get G1 subscription status: ${response.statusText}`);
+    }
+    const result = (await response.json()) as AppCatalystG1CreditsResponse;
+    return result
   }
 
   async chat(
