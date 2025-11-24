@@ -422,7 +422,8 @@ const showSnackWithActionButton = (
   message: string,
   action: BreadboardUI.Types.SnackbarAction
 ) => {
-  setTimeout(() => {
+  const showCustomSnackbarEventTimeout = setTimeout(() => {
+    clearTimeout(showCustomSnackbarEventTimeout);
     dispatchShowCustomSnackbarEvent(
       "",
       [action],
@@ -435,8 +436,8 @@ const showSnackWithActionButton = (
 
 const initAiCreditsLimitation = () => {
   // @TODO integrate the backend once it's ready for google user detection and if limit is reached
-  const limitReached = false;
-  const isGoogleUser = true;
+  const limitReached = true;
+  const isGoogleUser = false;
 
   if (!limitReached) {
     return;
