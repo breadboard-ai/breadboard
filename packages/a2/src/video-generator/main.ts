@@ -436,7 +436,7 @@ const showSnackWithActionButton = (
 
 const initAiCreditsLimitation = () => {
   // @TODO integrate the backend once it's ready for google user detection and if limit is reached
-  const limitReached = true;
+  const limitReached = false;
   const isGoogleUser = false;
 
   if (!limitReached) {
