@@ -8,6 +8,8 @@ import { llm } from "../src/a2/utils";
 import { config } from "dotenv";
 import { ok } from "@breadboard-ai/utils";
 import { session } from "../scripts/eval";
+import { AgentFileSystem } from "../src/agent/file-system";
+import { PidginTranslator } from "../src/agent/pidgin-translator";
 
 config();
 
@@ -23,7 +25,14 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
     const params: Parameters<typeof session.eval> = [
       title,
       async ({ caps, moduleArgs, logger }) => {
-        const pipeline = new SmartLayoutPipeline(caps, moduleArgs);
+        const fileSystem = new AgentFileSystem();
+        const translator = new PidginTranslator(caps, moduleArgs, fileSystem);
+        const pipeline = new SmartLayoutPipeline({
+          caps,
+          moduleArgs,
+          fileSystem,
+          translator,
+        });
 
         const result = await pipeline.run(llm`${objective}`.asContent(), {});
         if (!ok(result)) {

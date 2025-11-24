@@ -22,8 +22,8 @@ import { PidginTranslator } from "./pidgin-translator";
 import { AgentUI } from "./ui";
 import { defineGenerateFunctions } from "./functions/generate";
 import { prompt as a2UIPrompt } from "./a2ui/prompt";
-import { defineA2UIFunctions } from "./functions/ui";
 import { FunctionCallerImpl } from "./function-caller";
+import { SmartLayoutPipeline } from "./a2ui/smart-layout-pipeline";
 
 export { Loop };
 
@@ -191,31 +191,31 @@ ${args.useUI ? a2UIPrompt : `You do not have a way to interact with the user dur
  * The main agent loop
  */
 class Loop {
-  #translator: PidginTranslator;
-  #fileSystem: AgentFileSystem;
-  #ui: AgentUI;
+  private readonly translator: PidginTranslator;
+  private readonly fileSystem: AgentFileSystem;
+  private readonly ui: AgentUI;
 
   constructor(
     private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs
   ) {
-    this.#fileSystem = new AgentFileSystem();
-    this.#translator = new PidginTranslator(caps, moduleArgs, this.#fileSystem);
-    this.#ui = new AgentUI(caps, moduleArgs, this.#translator);
+    this.fileSystem = new AgentFileSystem();
+    this.translator = new PidginTranslator(caps, moduleArgs, this.fileSystem);
+    this.ui = new AgentUI(caps, moduleArgs, this.translator);
   }
 
   async run(
     objective: LLMContent,
     params: Params
   ): Promise<Outcome<AgentResult>> {
-    this.#ui.progress.startAgent(objective);
+    const { caps, moduleArgs, fileSystem, translator, ui } = this;
+
+    ui.progress.startAgent(objective);
     try {
-      const useUI = !!(await this.moduleArgs.context.flags?.flags())
-        ?.consistentUI;
-      const objectivePidgin = await this.#translator.toPidgin(
-        objective,
-        params
-      );
+      const enableInteractiveAgent = !!(await moduleArgs.context.flags?.flags())
+        ?.interactiveAgent;
+
+      const objectivePidgin = await translator.toPidgin(objective, params);
       if (!ok(objectivePidgin)) return objectivePidgin;
 
       const contents: LLMContent[] = [
@@ -231,7 +231,7 @@ class Loop {
 
       const systemFunctions = mapDefinitions(
         defineSystemFunctions({
-          fileSystem: this.#fileSystem,
+          fileSystem,
           terminateCallback: () => {
             terminateLoop = true;
           },
@@ -249,22 +249,35 @@ class Loop {
         })
       );
 
-      const uiFunctions = useUI
-        ? mapDefinitions(
-            defineA2UIFunctions({
-              ui: this.#ui,
-            })
-          )
-        : emptyDefinitions();
-
       const generateFunctions = mapDefinitions(
         defineGenerateFunctions({
-          fileSystem: this.#fileSystem,
-          caps: this.caps,
-          moduleArgs: this.moduleArgs,
-          translator: this.#translator,
+          fileSystem,
+          caps,
+          moduleArgs,
+          translator,
         })
       );
+
+      let uiFunctions = emptyDefinitions();
+
+      if (enableInteractiveAgent) {
+        const layoutPipeline = new SmartLayoutPipeline({
+          caps,
+          moduleArgs,
+          fileSystem,
+          translator,
+          ui,
+        });
+        ui.progress.generatingLayouts();
+        console.time("LAYOUT GENERATION");
+        const layouts = await layoutPipeline.prepareFunctionDefinitions(
+          objective,
+          params
+        );
+        console.timeEnd("LAYOUT GENERATION");
+        if (!ok(layouts)) return layouts;
+        uiFunctions = mapDefinitions(layouts);
+      }
 
       const objectiveTools = objectivePidgin.tools.list().at(0);
       const tools: Tool[] = [
@@ -292,21 +305,23 @@ class Loop {
             topP: 1,
             thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
           },
-          systemInstruction: createSystemInstruction({ useUI }),
+          systemInstruction: createSystemInstruction({
+            useUI: enableInteractiveAgent,
+          }),
           toolConfig: {
             functionCallingConfig: { mode: "ANY" },
           },
           tools,
         };
-        const conformedBody = await conformGeminiBody(this.moduleArgs, body);
+        const conformedBody = await conformGeminiBody(moduleArgs, body);
         if (!ok(conformedBody)) return conformedBody;
 
-        this.#ui.progress.sendRequest(AGENT_MODEL, conformedBody);
+        ui.progress.sendRequest(AGENT_MODEL, conformedBody);
 
         const generated = await streamGenerateContent(
           AGENT_MODEL,
           conformedBody,
-          this.moduleArgs
+          moduleArgs
         );
         if (!ok(generated)) return generated;
         for await (const chunk of generated) {
@@ -326,15 +341,15 @@ class Loop {
             if (part.thought) {
               if ("text" in part) {
                 console.log("THOUGHT", part.text);
-                this.#ui.progress.thought(part.text);
+                ui.progress.thought(part.text);
               } else {
                 console.log("INVALID THOUGHT", part);
               }
             }
             if ("functionCall" in part) {
-              this.#ui.progress.functionCall(part);
+              ui.progress.functionCall(part);
               functionCaller.call(part, (status, opts) =>
-                this.#ui.progress.functionCallUpdate(part, status, opts)
+                ui.progress.functionCallUpdate(part, status, opts)
               );
             }
           }
@@ -343,13 +358,13 @@ class Loop {
           if (!ok(functionResults)) {
             return err(`Agent unable to proceed: ${functionResults.$error}`);
           }
-          this.#ui.progress.functionResult(functionResults);
+          ui.progress.functionResult(functionResults);
           contents.push(functionResults);
         }
       }
       return this.#finalizeResult(result);
     } finally {
-      this.#ui.progress.finish();
+      ui.progress.finish();
     }
   }
 
@@ -358,10 +373,10 @@ class Loop {
     let outcomes: Outcome<LLMContent> | undefined = undefined;
     let intermediate: Outcome<LLMContent> | undefined = undefined;
     if (success) {
-      outcomes = this.#translator.fromPidginFiles(objective_outcomes);
+      outcomes = this.translator.fromPidginFiles(objective_outcomes);
       if (!ok(outcomes)) return outcomes;
-      const intermediateFiles = [...this.#fileSystem.files.keys()];
-      intermediate = this.#translator.fromPidginFiles(intermediateFiles);
+      const intermediateFiles = [...this.fileSystem.files.keys()];
+      intermediate = this.translator.fromPidginFiles(intermediateFiles);
       if (!ok(intermediate)) return intermediate;
     }
     return { success, href, outcomes, intermediate };

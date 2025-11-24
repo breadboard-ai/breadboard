@@ -79,6 +79,11 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
     this.#add("Objective", "summarize", objective);
   }
 
+  generatingLayouts() {
+    this.screen.progress = "Generating layouts";
+    this.screen.expectedDuration = 20;
+  }
+
   /**
    * The agent sent initial request.
    */
