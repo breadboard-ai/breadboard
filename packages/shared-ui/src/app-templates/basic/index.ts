@@ -755,7 +755,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               {
                 title: "Share",
                 action: "callback",
-                callback: () => this.dispatchEvent(new ShareRequestedEvent()),
+                callback: () => {
+                  this.dispatchEvent(new ShareRequestedEvent());
+                },
               },
             ],
             true,
