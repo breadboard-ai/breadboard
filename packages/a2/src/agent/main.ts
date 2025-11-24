@@ -38,8 +38,6 @@ async function invoke(
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AgentOutputs>> {
-  console.log("ENABLE UI", enableUI);
-  console.log("UI PROMPT", uiPrompt);
   const params = Object.fromEntries(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
