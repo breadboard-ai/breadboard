@@ -274,7 +274,7 @@ class Loop {
           translator,
           ui,
         });
-        ui.progress.generatingLayouts();
+        ui.progress.generatingLayouts(uiPrompt);
         console.time("LAYOUT GENERATION");
         const layouts = await layoutPipeline.prepareFunctionDefinitions(
           llm`${objective}\n\n${uiPrompt}`.asContent(),
