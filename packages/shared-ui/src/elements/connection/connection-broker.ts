@@ -78,7 +78,8 @@ export class ConnectionBroker extends HTMLElement {
 
     // If embedder has passed in a valid oauth redirect, use that instead.
     const redirect_uri =
-      getEmbedderRedirectUri() ?? new URL(window.location.href).pathname;
+      // getEmbedderRedirectUri() ??
+      new URL(window.location.href).pathname;
 
     // Call the token grant API.
     if (!import.meta.env.VITE_CONNECTION_SERVER_URL) {
