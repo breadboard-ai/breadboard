@@ -40,7 +40,6 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { A2ModuleArgs } from "../runnable-module-factory";
 import { getBucketId } from "../a2/get-bucket-id";
 import { driveFileToBlob, toGcsAwareChunk } from "../a2/data-transforms";
-import { userDomainStorageKey } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 
 type Model = {
   id: string;
@@ -435,16 +434,17 @@ const showSnackWithActionButton = (
 };
 
 const initAiCreditsLimitation = () => {
-  const userDomain = localStorage.getItem(userDomainStorageKey);
-  const limitReached = false; // @TODO integrate the backend once it's ready for limit reached detection
-  const isGoogleUser = userDomain && userDomain.match("google");
+  // @TODO integrate the backend once it's ready for google user detection and if limit is reached
+  const limitReached = false;
+  const isGoogleUser = true;
 
   if (!limitReached) {
     return;
   }
 
   if (isGoogleUser) {
-    const outOfCredits = false; // @TODO integrate the backend once it's ready for out of credits detection
+    // @TODO integrate the backend once it's ready for out of credits detection
+    const outOfCredits = false;
     if (outOfCredits) {
       showSnackWithActionButton(
         "You need more AI credits to create more videos. Each video you generate uses 20 AI credits from your Google AI plan.",

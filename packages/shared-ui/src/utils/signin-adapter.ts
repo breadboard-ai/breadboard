@@ -20,8 +20,6 @@ export const signinAdapterContext = createContext<SigninAdapter | undefined>(
   "SigninAdapter"
 );
 
-export const userDomainStorageKey = "userDomain";
-
 export class SigninAdapter implements SignInInfo {
   readonly #opalShell: OpalShellHostProtocol;
   readonly #handleSignInRequest?: (scopes?: OAuthScope[]) => Promise<boolean>;
@@ -67,7 +65,6 @@ export class SigninAdapter implements SignInInfo {
     const result = await this.#opalShell.signIn(scopes);
     if (result.ok) {
       this.#state = result.state;
-      localStorage.setItem(userDomainStorageKey, this.domain?.toString() || "");
     }
     return result;
   }
@@ -86,7 +83,6 @@ export class SigninAdapter implements SignInInfo {
         ))(),
     ]);
     this.#state = { status: "signedout" };
-    localStorage.removeItem(userDomainStorageKey);
   }
 
   checkAppAccess(): Promise<CheckAppAccessResult> {
