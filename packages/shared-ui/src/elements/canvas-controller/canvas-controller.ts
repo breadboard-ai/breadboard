@@ -281,6 +281,11 @@ export class CanvasController extends SignalWatcher(LitElement) {
     ) {
       this.sideNavItem = "app-view";
     }
+
+    // Set theme designer to hidden when navigating away
+    if (changedProperties.has("graph")) {
+      this.showThemeDesigner = false;
+    }
   }
 
   #projectStateUpdated = new Signal.State({});
