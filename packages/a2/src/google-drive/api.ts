@@ -22,6 +22,7 @@ export {
   query,
   updateDoc,
   updatePresentation,
+  addSheet,
 };
 
 // These are various Google Drive-specific types.
@@ -819,6 +820,33 @@ async function appendSpreadsheetValues(
     `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED`,
     "POST",
     body
+  );
+}
+
+async function addSheet(
+  moduleArgs: A2ModuleArgs,
+  id: string,
+  title: string
+): Promise<Outcome<unknown>> {
+  if (!id) {
+    return err("Please supply the id of the spreadsheet.");
+  }
+  return api(
+    moduleArgs,
+    `https://sheets.googleapis.com/v4/spreadsheets/${id}:batchUpdate`,
+    "POST",
+    {
+      requests: [
+        {
+          addSheet: {
+            properties: {
+              title: title,
+              index: 0,
+            },
+          },
+        },
+      ],
+    }
   );
 }
 

@@ -11,6 +11,7 @@ import {
 import { err, ok } from "../a2/utils";
 import {
   appendSpreadsheetValues,
+  addSheet,
   create,
   getDoc,
   getPresentation,
@@ -121,24 +122,29 @@ async function invoke(
         if (!ok(gettingCollector)) return gettingCollector;
         if (!ok(result)) return result;
         console.log("VALUES", result);
-
         const { id } = gettingCollector;
-        const sheetInfo = await getSpreadsheetMetadata(moduleArgs, id);
-        if (!ok(sheetInfo)) return sheetInfo;
+        const dateStr = new Date()
+          .toLocaleString("en-GB", {
+            day: "numeric",
+            month: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+            second: "numeric",
+          })
+          .replace(/,/g, "");
+        const newSheetTitle = `${title || "Data"} ${dateStr}`;
 
-        const sheet1 = sheetInfo.sheets.at(0)?.properties.title;
-        if (!sheet1) {
-          return err(
-            `Unable to save to Spreadsheet: the document appears to have no sheets`
-          );
-        }
+        const creatingSheet = await addSheet(moduleArgs, id, newSheetTitle);
+
+        if (!ok(creatingSheet)) return creatingSheet;
 
         const appending = await appendSpreadsheetValues(
           moduleArgs,
           id,
-          sheet1,
+          newSheetTitle,
           { values: result }
         );
+
         if (!ok(appending)) return appending;
         return { context: contextFromId(id, SHEETS_MIME_TYPE) };
       }
@@ -213,16 +219,7 @@ async function getCollector(
     id = fileId;
   }
   if (mimeType === DOC_MIME_TYPE) {
-    const gettingDoc = await getDoc(moduleArgs, id);
-    if (!ok(gettingDoc)) return gettingDoc;
-    const end =
-      (
-        gettingDoc as { body: { content: { endIndex: number }[] } }
-      ).body.content.reduce(
-        (acc, element) => Math.max(acc, element.endIndex || 0),
-        1
-      ) - 1;
-    return { id, end };
+    return { id, end: 1 };
   } else if (mimeType === SLIDES_MIME_TYPE) {
     const gettingPresentation = await getPresentation(moduleArgs, id);
     if (!ok(gettingPresentation)) return gettingPresentation;
