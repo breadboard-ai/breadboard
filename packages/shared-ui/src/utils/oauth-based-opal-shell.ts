@@ -39,7 +39,7 @@ import {
   type ShareClient,
 } from "../elements/google-drive/google-apis.js";
 import { SETTINGS_TYPE } from "../types/types.js";
-import { getEmbedderRedirectUri, getTopLevelOrigin } from "./embed-helpers.js";
+import { getTopLevelOrigin } from "./embed-helpers.js";
 import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { scopesFromUrl } from "./scopes-from-url.js";
@@ -307,11 +307,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     const url = new URL(AUTH_ENDPOINT);
     const params = url.searchParams;
     params.set("client_id", CLIENT_DEPLOYMENT_CONFIG.OAUTH_CLIENT);
-    params.set(
-      "redirect_uri",
-      // getEmbedderRedirectUri() ??
-      new URL("/oauth/", window.location.origin).href
-    );
+    params.set("redirect_uri", new URL("/oauth/", window.location.origin).href);
     params.set("scope", uniqueScopes.join(" "));
     params.set(
       "state",

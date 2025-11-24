@@ -7,9 +7,7 @@
 import {
   OAUTH_POPUP_MESSAGE_TYPE,
   type GrantResponse,
-  type OAuthPopupMessage,
 } from "@breadboard-ai/types/oauth.js";
-import { getEmbedderRedirectUri } from "../../utils/embed-helpers.js";
 import { sendToAllowedEmbedderIfPresent } from "../../utils/embedder.js";
 import { type OAuthStateParameter } from "./connection-common.js";
 
@@ -76,11 +74,6 @@ export class ConnectionBroker extends HTMLElement {
       return;
     }
 
-    // If embedder has passed in a valid oauth redirect, use that instead.
-    const redirect_uri =
-      // getEmbedderRedirectUri() ??
-      new URL(window.location.href).pathname;
-
     // Call the token grant API.
     if (!import.meta.env.VITE_CONNECTION_SERVER_URL) {
       displayError("Could not find a grant URL for this origin.");
@@ -91,7 +84,10 @@ export class ConnectionBroker extends HTMLElement {
     // itself?
     const grantUrl = new URL("/connection/grant/", window.location.origin);
     grantUrl.searchParams.set("code", code);
-    grantUrl.searchParams.set("redirect_path", redirect_uri);
+    grantUrl.searchParams.set(
+      "redirect_path",
+      new URL(window.location.href).pathname
+    );
     const response = await fetch(grantUrl, { credentials: "include" });
     let grantResponse: GrantResponse;
     try {
