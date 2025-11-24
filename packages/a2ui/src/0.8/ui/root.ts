@@ -33,7 +33,7 @@ import { StringValue } from "../types/primitives.js";
 import { AnyComponentNode, SurfaceID } from "../types/types";
 import { Theme } from "../types/types.js";
 import { themeContext } from "./context/theme.js";
-import { structuralStyles } from "./styles";
+import { structuralStyles } from "./styles.js";
 
 type NodeOfType<T extends AnyComponentNode["type"]> = Extract<
   AnyComponentNode,
@@ -60,6 +60,9 @@ export class Root extends SignalWatcher(LitElement) {
 
   @property()
   accessor dataContextPath: string = "";
+
+  @property()
+  accessor enableCustomElements = false;
 
   @property()
   set weight(weight: string | number) {
@@ -148,6 +151,7 @@ export class Root extends SignalWatcher(LitElement) {
             .processor=${this.processor}
             .surfaceId=${this.surfaceId}
             .childComponents=${childComponents}
+            .enableCustomElements=${this.enableCustomElements}
           ></a2ui-list>`;
         }
 
@@ -168,6 +172,7 @@ export class Root extends SignalWatcher(LitElement) {
             .surfaceId=${this.surfaceId}
             .childComponents=${childComponents}
             .dataContextPath=${node.dataContextPath ?? ""}
+            .enableCustomElements=${this.enableCustomElements}
           ></a2ui-card>`;
         }
 
@@ -184,6 +189,7 @@ export class Root extends SignalWatcher(LitElement) {
             .dataContextPath=${node.dataContextPath ?? ""}
             .alignment=${node.properties.alignment ?? "stretch"}
             .distribution=${node.properties.distribution ?? "start"}
+            .enableCustomElements=${this.enableCustomElements}
           ></a2ui-column>`;
         }
 
@@ -200,6 +206,7 @@ export class Root extends SignalWatcher(LitElement) {
             .dataContextPath=${node.dataContextPath ?? ""}
             .alignment=${node.properties.alignment ?? "stretch"}
             .distribution=${node.properties.distribution ?? "start"}
+            .enableCustomElements=${this.enableCustomElements}
           ></a2ui-row>`;
         }
 
@@ -215,6 +222,7 @@ export class Root extends SignalWatcher(LitElement) {
             .url=${node.properties.url ?? null}
             .dataContextPath=${node.dataContextPath ?? ""}
             .usageHint=${node.properties.usageHint}
+            .enableCustomElements=${this.enableCustomElements}
           ></a2ui-image>`;
         }
 
@@ -229,6 +237,7 @@ export class Root extends SignalWatcher(LitElement) {
             .surfaceId=${this.surfaceId}
             .name=${node.properties.name ?? null}
             .dataContextPath=${node.dataContextPath ?? ""}
+            .enableCustomElements=${this.enableCustomElements}
           ></a2ui-icon>`;
         }
 
@@ -243,6 +252,7 @@ export class Root extends SignalWatcher(LitElement) {
             .surfaceId=${this.surfaceId}
             .url=${node.properties.url ?? null}
             .dataContextPath=${node.dataContextPath ?? ""}
+            .enableCustomElements=${this.enableCustomElements}
           ></a2ui-audioplayer>`;
         }
 
@@ -258,6 +268,7 @@ export class Root extends SignalWatcher(LitElement) {
             .dataContextPath=${node.dataContextPath ?? ""}
             .action=${node.properties.action}
             .childComponents=${[node.properties.child]}
+            .enableCustomElements=${this.enableCustomElements}
           ></a2ui-button>`;
         }
 
@@ -274,6 +285,7 @@ export class Root extends SignalWatcher(LitElement) {
             .dataContextPath=${node.dataContextPath}
             .text=${node.properties.text}
             .usageHint=${node.properties.usageHint}
+            .enableCustomElements=${this.enableCustomElements}
           ></a2ui-text>`;
         }
 
@@ -289,6 +301,7 @@ export class Root extends SignalWatcher(LitElement) {
             .dataContextPath=${node.dataContextPath ?? ""}
             .label=${node.properties.label}
             .value=${node.properties.value}
+            .enableCustomElements=${this.enableCustomElements}
           ></a2ui-checkbox>`;
         }
 
@@ -306,6 +319,7 @@ export class Root extends SignalWatcher(LitElement) {
             .enableTime=${node.properties.enableTime ?? true}
             .outputFormat=${node.properties.outputFormat}
             .value=${node.properties.value}
+            .enableCustomElements=${this.enableCustomElements}
           ></a2ui-datetimeinput>`;
         }
 
@@ -323,6 +337,7 @@ export class Root extends SignalWatcher(LitElement) {
             .thickness=${node.properties.thickness}
             .axis=${node.properties.axis}
             .color=${node.properties.color}
+            .enableCustomElements=${this.enableCustomElements}
           ></a2ui-divider>`;
         }
 
@@ -340,6 +355,7 @@ export class Root extends SignalWatcher(LitElement) {
             .options=${node.properties.options}
             .maxAllowedSelections=${node.properties.maxAllowedSelections}
             .selections=${node.properties.selections}
+            .enableCustomElements=${this.enableCustomElements}
           ></a2ui-multiplechoice>`;
         }
 
@@ -356,6 +372,7 @@ export class Root extends SignalWatcher(LitElement) {
             .value=${node.properties.value}
             .minValue=${node.properties.minValue}
             .maxValue=${node.properties.maxValue}
+            .enableCustomElements=${this.enableCustomElements}
           ></a2ui-slider>`;
         }
 
@@ -374,6 +391,7 @@ export class Root extends SignalWatcher(LitElement) {
             .text=${node.properties.text}
             .type=${node.properties.type}
             .validationRegexp=${node.properties.validationRegexp}
+            .enableCustomElements=${this.enableCustomElements}
           ></a2ui-textfield>`;
         }
 
@@ -388,6 +406,7 @@ export class Root extends SignalWatcher(LitElement) {
             .surfaceId=${this.surfaceId}
             .dataContextPath=${node.dataContextPath}
             .url=${node.properties.url}
+            .enableCustomElements=${this.enableCustomElements}
           ></a2ui-video>`;
         }
 
@@ -412,6 +431,7 @@ export class Root extends SignalWatcher(LitElement) {
             .dataContextPath=${node.dataContextPath}
             .titles=${titles}
             .childComponents=${childComponents}
+            .enableCustomElements=${this.enableCustomElements}
           ></a2ui-tabs>`;
         }
 
@@ -433,7 +453,37 @@ export class Root extends SignalWatcher(LitElement) {
             .surfaceId=${this.surfaceId}
             .dataContextPath=${node.dataContextPath}
             .childComponents=${childComponents}
+            .enableCustomElements=${this.enableCustomElements}
           ></a2ui-modal>`;
+        }
+
+        default: {
+          if (!this.enableCustomElements) {
+            return;
+          }
+
+          const node = component as AnyComponentNode;
+          const elCtor = customElements.get(component.type);
+          if (!elCtor) {
+            return html`Unknown element ${component.type}`;
+          }
+
+          const el = new elCtor() as Root;
+          el.id = node.id;
+          if (node.slotName) {
+            el.slot = node.slotName;
+          }
+          el.component = node;
+          el.weight = node.weight ?? "initial";
+          el.processor = this.processor;
+          el.surfaceId = this.surfaceId;
+          el.dataContextPath = node.dataContextPath ?? "/";
+
+          for (const [prop, val] of Object.entries(component.properties)) {
+            // @ts-expect-error We're off the books.
+            el[prop] = val;
+          }
+          return html`${el}`;
         }
       }
     })}`;
