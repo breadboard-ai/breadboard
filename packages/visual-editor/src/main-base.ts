@@ -632,7 +632,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.snackbar(
       html`
         Users from ${domain} should prefer
-        <a href="${url}">${new URL(url).hostname}</a>
+        <a href="${url}" target="_blank">${new URL(url).hostname}</a>
       `,
       BreadboardUI.Types.SnackType.WARNING,
       [],
