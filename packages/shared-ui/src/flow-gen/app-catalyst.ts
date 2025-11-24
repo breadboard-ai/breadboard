@@ -94,12 +94,9 @@ export class AppCatalystApiClient {
     request: AppCatalystG1SubscriptionStatusRequest
   ): Promise<AppCatalystG1SubscriptionStatusResponse> {
     const url = new URL("v1beta1/getG1SubscriptionStatus", this.#apiBaseUrl);
+    url.searchParams.set("include_credit_data", String(request.include_credit_data));
     const response = await this.#fetchWithCreds(url, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(request)
+      method: "GET",
     });
     if (!response.ok) {
       throw new Error(`Failed to get G1 subscription status: ${response.statusText}`);
@@ -114,7 +111,7 @@ export class AppCatalystApiClient {
       method: "GET",
     });
     if (!response.ok) {
-      throw new Error(`Failed to get G1 subscription status: ${response.statusText}`);
+      throw new Error(`Failed to get G1 credits: ${response.statusText}`);
     }
     const result = (await response.json()) as AppCatalystG1CreditsResponse;
     return result
