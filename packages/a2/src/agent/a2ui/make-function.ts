@@ -16,7 +16,7 @@ function makeFunction(
   renderer: A2UIRenderer
 ) {
   const { surfaceId, description, dataModelSchema, responseSchema } = spec;
-  const name = `ui_render_${surfaceId}`;
+  const name = `ui_ask_user_${surfaceId}`;
   const parametersJsonSchema = dataModelSchema;
   const responseJsonSchema = responseSchema;
   return defineFunctionLoose(

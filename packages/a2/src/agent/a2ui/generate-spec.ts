@@ -20,7 +20,7 @@ import type {
 import { A2ModuleArgs } from "../../runnable-module-factory";
 import { parseJson } from "../../parse-json";
 import { err, ok } from "@breadboard-ai/utils";
-import Ajv from "ajv";
+import { Validator } from "@cfworker/json-schema";
 
 export { generateSpec };
 
@@ -201,12 +201,9 @@ function toPlainJson(s: string): Outcome<JsonSerializable> {
 
 function parseToSchema(s: string): Outcome<GeminiSchema> {
   try {
-    const ajv = new Ajv();
     const maybeSchema = JSON.parse(s);
-    const isSchema = ajv.validateSchema(maybeSchema);
-    if (!isSchema) {
-      return err(`JSON Schema is invalid`);
-    }
+    // Throws if schema is invalid
+    new Validator(maybeSchema);
     return maybeSchema;
   } catch (e) {
     return err((e as Error).message);

@@ -20,6 +20,7 @@ import { v0_8 } from "@breadboard-ai/a2ui";
 import { A2UIClient } from "./a2ui/client";
 import { A2UIAppScreenOutput } from "./a2ui/app-screen-output";
 import { ProgressWorkItem } from "./progress-work-item";
+import { A2UIRenderer } from "./types";
 
 export { AgentUI };
 
@@ -39,7 +40,7 @@ export type RawUserResponse = {
   text: string;
 };
 
-class AgentUI {
+class AgentUI implements A2UIRenderer {
   readonly client: A2UIClient;
 
   /**
@@ -118,6 +119,16 @@ class AgentUI {
     return this.#outputWorkItem;
   }
 
+  async render(
+    a2UIPayload: unknown[]
+  ): Promise<Outcome<Record<string, unknown>>> {
+    const rendering = this.renderUserInterface(
+      a2UIPayload as v0_8.Types.ServerToClientMessage[]
+    );
+    if (!ok(rendering)) return rendering;
+    return this.awaitUserInput();
+  }
+
   renderUserInterface(
     messages: v0_8.Types.ServerToClientMessage[]
   ): Outcome<void> {
@@ -143,27 +154,5 @@ class AgentUI {
     const result = await this.client.awaitUserInput();
     this.#appScreen!.status = "processing";
     return result;
-  }
-
-  async requestUserInput(
-    message: string,
-    type: UserInputType
-  ): Promise<Outcome<UserResponse>> {
-    console.log("REQUEST USER INPUT");
-    console.log("MESSAGE", message);
-    console.log("TYPE", type);
-    await this.caps.output({
-      schema: {
-        properties: { message: { type: "object", behavior: ["llm-content"] } },
-      },
-      message: this.translator.fromPidginString(message),
-    });
-    const response = (await this.caps.input({
-      schema: {
-        properties: { text: { type: "string", behavior: ["transient"] } },
-      },
-    })) as Outcome<RawUserResponse>;
-    if (!ok(response)) return response;
-    return response;
   }
 }
