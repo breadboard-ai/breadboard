@@ -1916,7 +1916,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       @bbsnackbaraction=${async (
         evt: BreadboardUI.Events.SnackbarActionEvent
       ) => {
-        evt.callback?.();
+        if ("callback" in evt && evt.callback) {
+          await evt.callback();
+        }
+
         switch (evt.action) {
           case "remix": {
             if (!evt.value || typeof evt.value !== "string") {

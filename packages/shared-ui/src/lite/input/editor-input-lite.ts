@@ -12,7 +12,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { uiStateContext } from "../../contexts/ui-state.js";
 import "../../elements/input/expanding-textarea.js";
-import { SnackbarEvent } from "../../events/events.js";
+import { SnackbarEvent, UnsnackbarEvent } from "../../events/events.js";
 import { OneShotFlowGenFailureResponse } from "../../flow-gen/flow-generator.js";
 import { LiteModeState, UI } from "../../state/types.js";
 import * as StringsHelper from "../../strings/helper.js";
@@ -165,7 +165,21 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
         globalThis.crypto.randomUUID(),
         error,
         SnackType.INFORMATION,
-        [],
+        [
+          {
+            action: "copy",
+            title: "Copy Prompt",
+            value: suggestedIntent,
+            callback: async () => {
+              if (!suggestedIntent) {
+                return;
+              }
+
+              await navigator.clipboard.writeText(suggestedIntent);
+              this.dispatchEvent(new UnsnackbarEvent());
+            },
+          },
+        ],
         true,
         true
       )
