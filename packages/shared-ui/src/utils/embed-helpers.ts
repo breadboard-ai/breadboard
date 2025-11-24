@@ -9,19 +9,6 @@ import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configurat
 export const REDIRECT_PARAM = "oauth_redirect";
 
 /**
- * Returns embedder-provided redirect URI if valid.
- *
- * Retrieves redirect URI as provided in search params and validates
- * against the build-time provided list of valid redirect origins.
- * If there is no provided redirect URI, or the one provided is not
- * on the list, returns null.
- */
-export function getEmbedderRedirectUri(): string | null {
-  const embedderRedirectUrl = getEmbedderRedirectUrl();
-  return embedderRedirectUrl ? embedderRedirectUrl.href : null;
-}
-
-/**
  * Returns embedder-provided origin if valid; otherwise returns window origin.
  *
  * Retrieves redirect origin as provided in search params and validates
