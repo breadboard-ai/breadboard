@@ -492,6 +492,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       consentManager: this.#consentManager,
     });
     this.#addRuntimeEventHandlers();
+    this.#addCustomEventHandlers();
 
     this.#boardServers = this.runtime.board.getBoardServers() || [];
     this.uiState = this.runtime.state.getOrCreateUIState();
@@ -638,6 +639,23 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       [],
       true
     );
+  }
+
+  #addCustomEventHandlers() {
+    window.addEventListener(BreadboardUI.Events.showCustomSnackbarEvent, ((
+      evt: CustomEvent
+    ) => {
+      if (evt.detail) {
+        this.snackbar(
+          evt.detail.message,
+          evt.detail.snackType,
+          evt.detail.actions || [],
+          evt.detail.persistent || false,
+          evt.detail.snackbarId,
+          evt.detail.replaceAll || false
+        );
+      }
+    }) as EventListener);
   }
 
   #addRuntimeEventHandlers() {

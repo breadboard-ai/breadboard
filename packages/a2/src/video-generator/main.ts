@@ -9,6 +9,7 @@ import { Template } from "../a2/template";
 import { ToolManager } from "../a2/tool-manager";
 import {
   defaultLLMContent,
+  dispatchShowCustomSnackbarEvent,
   encodeBase64,
   err,
   ErrorReason,
@@ -35,9 +36,11 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
+import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { A2ModuleArgs } from "../runnable-module-factory";
 import { getBucketId } from "../a2/get-bucket-id";
 import { driveFileToBlob, toGcsAwareChunk } from "../a2/data-transforms";
+import { userDomainStorageKey } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 
 type Model = {
   id: string;
@@ -250,6 +253,8 @@ async function invoke(
         });
       }
 
+      initAiCreditsLimitation();
+
       console.log(`PROMPT(${modelName}): ${combinedInstruction}`);
 
       // 2) Call backend to generate video.
@@ -413,3 +418,61 @@ async function describe(
     },
   };
 }
+
+const showSnackWithActionButton = (
+  message: string,
+  action: BreadboardUI.Types.SnackbarAction
+) => {
+  setTimeout(() => {
+    dispatchShowCustomSnackbarEvent(
+      "",
+      [action],
+      BreadboardUI.Types.SnackType.ERROR
+    );
+  });
+
+  throw new Error(message);
+};
+
+const initAiCreditsLimitation = () => {
+  const userDomain = localStorage.getItem(userDomainStorageKey);
+  const limitReached = false; // @TODO integrate the backend once it's ready for limit reached detection
+  const isGoogleUser = userDomain && userDomain.match("google");
+
+  if (!limitReached) {
+    return;
+  }
+
+  if (isGoogleUser) {
+    const outOfCredits = false; // @TODO integrate the backend once it's ready for out of credits detection
+    if (outOfCredits) {
+      showSnackWithActionButton(
+        "You need more AI credits to create more videos. Each video you generate uses 20 AI credits from your Google AI plan.",
+        {
+          title: "Get more AI credits",
+          action: "getMoreAiCredits",
+          callback: () => {
+            // window.open("url goes here");
+          },
+          cssClass: "long-button",
+        }
+      );
+    } else {
+      dispatchShowCustomSnackbarEvent(
+        "You’ve reached the daily limit for creating videos. Each video you generate after that will use 20 AI credits from your Google AI plan."
+      );
+    }
+  } else {
+    showSnackWithActionButton(
+      "You’ve reached the daily limit for creating videos. Each video you generate after that will use 20 AI credits from your Google AI plan.",
+      {
+        title: "See Google AI plans",
+        action: "seeGoogleAiPlans",
+        cssClass: "long-button",
+        callback: () => {
+          // window.open("url goes here");
+        },
+      }
+    );
+  }
+};

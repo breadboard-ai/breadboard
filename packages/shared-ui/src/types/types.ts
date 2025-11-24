@@ -448,6 +448,7 @@ export type SnackbarAction = {
   action: string;
   value?: HTMLTemplateResult | string;
   callback?: () => void;
+  cssClass?: string;
 };
 
 export type SnackbarMessage = {

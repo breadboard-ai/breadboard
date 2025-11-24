@@ -1089,6 +1089,8 @@ export class ResizeEvent extends Event {
   }
 }
 
+export const showCustomSnackbarEvent = "showCustomSnackbarEvent";
+
 declare global {
   interface HTMLElementEventMap {
     bbtoast: ToastEvent;

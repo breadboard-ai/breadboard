@@ -6,6 +6,7 @@ import {
   Outcome,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
+import * as BreadboardUI from "@breadboard-ai/shared-ui";
 
 /**
  * @fileoverview Common utils for manipulating LLM Content and other relevant types.
@@ -466,4 +467,31 @@ function tr(strings: TemplateStringsArray, ...values: unknown[]): string {
       return acc + str + (values[i] || "");
     }, "")
     .trim();
+}
+
+export function dispatchShowCustomSnackbarEvent(
+  message: string,
+  actions: BreadboardUI.Types.SnackbarAction[] = [],
+  snackType: BreadboardUI.Types.SnackType = BreadboardUI.Types.SnackType
+    .INFORMATION
+) {
+  if (typeof window !== "undefined") {
+    const snackbarEvent = new CustomEvent(
+      BreadboardUI.Events.showCustomSnackbarEvent,
+      {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        detail: {
+          snackbarId: globalThis.crypto.randomUUID(),
+          message,
+          snackType,
+          actions,
+          persistent: true,
+          replaceAll: false,
+        },
+      }
+    );
+    window.dispatchEvent(snackbarEvent);
+  }
 }
