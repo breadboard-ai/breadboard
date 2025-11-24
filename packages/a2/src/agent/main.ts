@@ -20,6 +20,8 @@ export { invoke as default, describe };
 
 type AgentInputs = {
   config$prompt: LLMContent;
+  "b-ui-enable": boolean;
+  "b-ui-prompt": LLMContent;
 } & Params;
 
 type AgentOutputs = {
@@ -27,15 +29,22 @@ type AgentOutputs = {
 };
 
 async function invoke(
-  { config$prompt: objective, ...rest }: AgentInputs,
+  {
+    config$prompt: objective,
+    "b-ui-enable": enableUI,
+    "b-ui-prompt": uiPrompt,
+    ...rest
+  }: AgentInputs,
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ): Promise<Outcome<AgentOutputs>> {
+  console.log("ENABLE UI", enableUI);
+  console.log("UI PROMPT", uiPrompt);
   const params = Object.fromEntries(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
   const loop = new Loop(caps, moduleArgs);
-  const result = await loop.run(objective, params);
+  const result = await loop.run({ objective, params, enableUI, uiPrompt });
   if (!ok(result)) return result;
   console.log("LOOP", result);
   const context: LLMContent[] = [];
@@ -45,7 +54,22 @@ async function invoke(
   return { context };
 }
 
-async function describe({ config$prompt }: AgentInputs, caps: Capabilities) {
+async function describe(
+  {
+    inputs: { config$prompt, "b-ui-enable": enableUI },
+  }: { inputs: AgentInputs },
+  caps: Capabilities
+) {
+  const uiPromptSchema: Schema["properties"] = enableUI
+    ? {
+        "b-ui-prompt": {
+          type: "object",
+          behavior: ["llm-content", "config", "hint-advanced"],
+          title: "UI Layout instructions",
+          description: "Instructions for UI layout",
+        },
+      }
+    : {};
   const template = new Template(caps, config$prompt);
   return {
     inputSchema: {
@@ -63,6 +87,14 @@ async function describe({ config$prompt }: AgentInputs, caps: Capabilities) {
           title: "Objective",
           description: "The objective for the agent",
         },
+        "b-ui-enable": {
+          type: "boolean",
+          title: "Interact with user",
+          description:
+            "If checked, enables the agent to interact with the user",
+          behavior: ["config", "hint-advanced", "reactive"],
+        },
+        ...uiPromptSchema,
         ...template.schemas(),
       },
       behavior: ["at-wireable"],

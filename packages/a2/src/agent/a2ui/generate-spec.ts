@@ -161,21 +161,21 @@ async function generateSpec(
   const rawSpecs = parseJson<SurfaceSpecs>(surfaces);
   if (!ok(rawSpecs)) return rawSpecs;
 
-  let hasErrors = false;
+  const errors: string[] = [];
   const specs = rawSpecs.surfaces.map((rawSpec) => {
     let dataModelSchema = parseToSchema(rawSpec.dataModelSchema);
     if (!ok(dataModelSchema)) {
-      hasErrors = true;
+      errors.push(dataModelSchema.$error);
       dataModelSchema = { type: "object" };
     }
     let responseSchema = parseToSchema(rawSpec.responseSchema);
     if (!ok(responseSchema)) {
-      hasErrors = true;
+      errors.push(responseSchema.$error);
       responseSchema = { type: "object" };
     }
     let exampleData = toPlainJson(rawSpec.exampleData);
     if (!ok(exampleData)) {
-      hasErrors = true;
+      errors.push(exampleData);
       exampleData = { type: "object" };
     }
     return {
@@ -185,8 +185,8 @@ async function generateSpec(
       responseSchema,
     };
   });
-  if (hasErrors) {
-    return err(`Failed to parse JSON schemas`);
+  if (errors.length > 0) {
+    return err(errors.join("\n\n"));
   }
   return specs;
 }
@@ -206,6 +206,7 @@ function parseToSchema(s: string): Outcome<GeminiSchema> {
     new Validator(maybeSchema);
     return maybeSchema;
   } catch (e) {
+    console.log("FAILED TO PARSE SURFACE SPEC SCHEMA", e);
     return err((e as Error).message);
   }
 }

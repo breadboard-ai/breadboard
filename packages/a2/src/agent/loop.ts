@@ -27,6 +27,13 @@ import { SmartLayoutPipeline } from "./a2ui/smart-layout-pipeline";
 
 export { Loop };
 
+export type AgentRunArgs = {
+  objective: LLMContent;
+  params: Params;
+  enableUI?: boolean;
+  uiPrompt?: LLMContent;
+};
+
 export type AgentRawResult = {
   success: boolean;
   href: string;
@@ -204,17 +211,16 @@ class Loop {
     this.ui = new AgentUI(caps, moduleArgs, this.translator);
   }
 
-  async run(
-    objective: LLMContent,
-    params: Params
-  ): Promise<Outcome<AgentResult>> {
+  async run({
+    objective,
+    params,
+    uiPrompt,
+    enableUI = false,
+  }: AgentRunArgs): Promise<Outcome<AgentResult>> {
     const { caps, moduleArgs, fileSystem, translator, ui } = this;
 
     ui.progress.startAgent(objective);
     try {
-      const enableInteractiveAgent = !!(await moduleArgs.context.flags?.flags())
-        ?.interactiveAgent;
-
       const objectivePidgin = await translator.toPidgin(objective, params);
       if (!ok(objectivePidgin)) return objectivePidgin;
 
@@ -260,7 +266,7 @@ class Loop {
 
       let uiFunctions = emptyDefinitions();
 
-      if (enableInteractiveAgent) {
+      if (enableUI) {
         const layoutPipeline = new SmartLayoutPipeline({
           caps,
           moduleArgs,
@@ -271,7 +277,7 @@ class Loop {
         ui.progress.generatingLayouts();
         console.time("LAYOUT GENERATION");
         const layouts = await layoutPipeline.prepareFunctionDefinitions(
-          objective,
+          llm`${objective}\n\n${uiPrompt}`.asContent(),
           params
         );
         console.timeEnd("LAYOUT GENERATION");
@@ -306,7 +312,7 @@ class Loop {
             thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
           },
           systemInstruction: createSystemInstruction({
-            useUI: enableInteractiveAgent,
+            useUI: enableUI,
           }),
           toolConfig: {
             functionCallingConfig: { mode: "ANY" },
