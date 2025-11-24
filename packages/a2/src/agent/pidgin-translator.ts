@@ -100,26 +100,41 @@ class PidginTranslator {
     const remap = new Map<string, string>();
     return {
       messages: messages.map((message) => {
-        const { surfaceUpdate } = message;
-        if (!surfaceUpdate) return message;
+        const { surfaceUpdate, dataModelUpdate } = message;
+        if (surfaceUpdate) {
+          const translatedSurfaceUpdate: ServerMessage["surfaceUpdate"] = {
+            ...surfaceUpdate,
+            components: surfaceUpdate.components.map((component) => {
+              const translatedComponent = substituteLiterals(
+                component,
+                this.fileSystem,
+                remap
+              );
+              if (!ok(translatedComponent)) {
+                console.warn("Failed to translate component", component);
+                return component;
+              }
+              return translatedComponent;
+            }),
+          };
 
-        const translatedSurfaceUpdate: ServerMessage["surfaceUpdate"] = {
-          ...surfaceUpdate,
-          components: surfaceUpdate.components.map((component) => {
-            const translatedComponent = substituteLiterals(
-              component,
-              this.fileSystem,
-              remap
+          return { surfaceUpdate: translatedSurfaceUpdate };
+        } else if (dataModelUpdate) {
+          const contents = substituteContents(
+            dataModelUpdate.contents,
+            this.fileSystem
+          );
+          if (!ok(contents)) {
+            console.warn(
+              "Failed to translate dataModelUpdate",
+              dataModelUpdate
             );
-            if (!ok(translatedComponent)) {
-              console.warn("Failed to translate component", component);
-              return component;
-            }
-            return translatedComponent;
-          }),
-        };
-
-        return { surfaceUpdate: translatedSurfaceUpdate };
+            return message;
+          }
+          return { dataModelUpdate: { ...dataModelUpdate, contents } };
+        } else {
+          return message;
+        }
       }),
       remap,
     };
@@ -278,6 +293,39 @@ function substituteLiterals<T>(
             // Recurse.
             recursiveReplace(value);
           }
+        }
+      }
+    }
+  };
+
+  try {
+    recursiveReplace(clonedData as JsonSerializable);
+  } catch (e) {
+    return err((e as Error).message);
+  }
+  return clonedData;
+}
+
+function substituteContents<T>(
+  data: T,
+  fileSystem: AgentFileSystem
+): Outcome<T> {
+  const clonedData = structuredClone(data);
+  const recursiveReplace = (currentValue: JsonSerializable): void => {
+    if (Array.isArray(currentValue)) {
+      currentValue.forEach(recursiveReplace);
+      return;
+    }
+
+    if (typeof currentValue === "object" && currentValue !== null) {
+      for (const key in currentValue) {
+        if (!Object.prototype.hasOwnProperty.call(currentValue, key)) continue;
+        const value = currentValue[key];
+        if (typeof value === "string") {
+          const url = fileSystem.getFileUrl(value);
+          currentValue[key] = url ?? value;
+        } else {
+          recursiveReplace(value);
         }
       }
     }
