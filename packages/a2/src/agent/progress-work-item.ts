@@ -81,7 +81,7 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
 
   generatingLayouts() {
     this.screen.progress = "Generating layouts";
-    this.screen.expectedDuration = 20;
+    this.screen.expectedDuration = 70;
   }
 
   /**
