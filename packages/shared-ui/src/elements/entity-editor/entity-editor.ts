@@ -801,9 +801,17 @@ export class EntityEditor
 
     return (evt: Event) => {
       const { target } = evt;
+      let value = null;
       if (target instanceof HTMLSelectElement || target instanceof ItemSelect) {
+        value = target.value;
+      } else if (
+        target instanceof HTMLInputElement &&
+        target.type === "checkbox"
+      ) {
+        value = !port.value;
+      }
+      if (value !== null) {
         this.#edited = true;
-        const { value } = target;
         this.values = {
           ...this.values,
           [port.name]: value,
@@ -1293,6 +1301,7 @@ export class EntityEditor
                 : ""}</label
             ><input
               type="checkbox"
+              @change=${this.#reactiveChange(port)}
               ?checked=${port.value === true}
               id=${port.name}
               name=${port.name}

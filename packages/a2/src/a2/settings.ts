@@ -45,7 +45,6 @@ async function readFlags(caps: Capabilities): Promise<Outcome<RuntimeFlags>> {
       googleOne: false,
       requireConsentForGetWebpage: false,
       requireConsentForOpenWebpage: false,
-      interactiveAgent: false,
     };
   }
 
