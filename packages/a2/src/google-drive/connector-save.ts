@@ -123,6 +123,8 @@ async function invoke(
         if (!ok(result)) return result;
         console.log("VALUES", result);
         const { id } = gettingCollector;
+<<<<<<< HEAD
+<<<<<<< HEAD
         const dateStr = new Date()
           .toLocaleString("en-GB", {
             day: "numeric",
@@ -133,9 +135,17 @@ async function invoke(
           })
           .replace(/,/g, "");
         const newSheetTitle = `${title || "Data"} ${dateStr}`;
+=======
+>>>>>>> 9f29a968f (b/459871602-Google Doc Prepend instead of append, Sheet - new Sheet on every run with date/time added to the title)
 
+        const newSheetTitle = generateSheetName();
         const creatingSheet = await addSheet(moduleArgs, id, newSheetTitle);
 
+=======
+        const newSheetTitle = generateSheetName();
+        const creatingSheet = await addSheet(moduleArgs, id, newSheetTitle);
+
+>>>>>>> 99d2e2ed1 (b/459871602-Google Doc Prepend instead of append, Sheet - new Sheet on every run with date/time added to the title)
         if (!ok(creatingSheet)) return creatingSheet;
 
         const appending = await appendSpreadsheetValues(
@@ -265,4 +275,24 @@ async function describe() {
       },
     } satisfies Schema,
   } satisfies DescribeOutputs;
+}
+
+function generateSheetName(): string {
+  const now = new Date();
+
+  const day = String(now.getDate()).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const year = String(now.getFullYear()).slice(-2);
+  
+  const datePart = `${day}.${month}.${year}`;
+
+  const timePart = now.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  })
+  .toLowerCase()
+  .replace(/\s+/g, '');
+
+  return `${datePart} ${timePart}`;
 }
