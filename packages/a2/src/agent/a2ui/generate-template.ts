@@ -114,12 +114,13 @@ const responseJsonSchema: GeminiSchema = {
 
 async function generateTemplate(
   spec: SurfaceSpec,
-  moduleArgs: A2ModuleArgs
+  moduleArgs: A2ModuleArgs,
+  modelName: string
 ): Promise<Outcome<unknown[]>> {
-  console.log(`Rendering ${spec.surfaceId}`);
+  console.log(`Generating template for surface "${spec.surfaceId}"`);
   const prompt = createPrompt([llm`${JSON.stringify(spec)}`.asContent()]);
 
-  const ui = await generateContent("gemini-flash-latest", prompt, moduleArgs);
+  const ui = await generateContent(modelName, prompt, moduleArgs);
   if (!ok(ui)) return ui;
   return parseJson(ui) as unknown[];
 }

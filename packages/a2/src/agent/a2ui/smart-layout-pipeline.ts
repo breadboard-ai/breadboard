@@ -20,6 +20,9 @@ import { A2UIRenderer } from "../types";
 
 export { SmartLayoutPipeline };
 
+const SPEC_MODEL = "gemini-flash-latest";
+const TEMPLATE_MODEL = "gemini-flash-latest";
+
 export type SmartLayoutPipelineArgs = {
   caps: Capabilities;
   moduleArgs: A2ModuleArgs;
@@ -51,7 +54,8 @@ class SmartLayoutPipeline {
     // 1. Create a spec from the data.
     const spec = await generateSpec(
       llm`${translated.text}`.asContent(),
-      moduleArgs
+      moduleArgs,
+      SPEC_MODEL
     );
     if (!ok(spec)) return spec;
 
@@ -62,7 +66,11 @@ class SmartLayoutPipeline {
     // 2. Create function definitions.
     const results = await Promise.all(
       spec.map(async (surfaceSpec) => {
-        const a2UIPayload = await generateTemplate(surfaceSpec, moduleArgs);
+        const a2UIPayload = await generateTemplate(
+          surfaceSpec,
+          moduleArgs,
+          TEMPLATE_MODEL
+        );
         if (!ok(a2UIPayload)) return a2UIPayload;
         return makeFunction(surfaceSpec, a2UIPayload, ui);
       })
@@ -87,7 +95,8 @@ class SmartLayoutPipeline {
     // 1. Create a spec from the data.
     const spec = await generateSpec(
       llm`${translated.text}`.asContent(),
-      moduleArgs
+      moduleArgs,
+      SPEC_MODEL
     );
     if (!ok(spec)) return spec;
 
@@ -99,7 +108,11 @@ class SmartLayoutPipeline {
     const processSurface = async (
       surfaceSpec: SurfaceSpec
     ): Promise<Outcome<unknown[]>> => {
-      const a2UIPayload = await generateTemplate(surfaceSpec, moduleArgs);
+      const a2UIPayload = await generateTemplate(
+        surfaceSpec,
+        moduleArgs,
+        TEMPLATE_MODEL
+      );
       if (!ok(a2UIPayload)) return a2UIPayload;
 
       let resolver: (payload: Outcome<unknown[]>) => void;

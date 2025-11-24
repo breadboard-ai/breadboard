@@ -153,12 +153,13 @@ export type SurfaceSpec = Omit<
 
 async function generateSpec(
   content: LLMContent,
-  moduleArgs: A2ModuleArgs
+  moduleArgs: A2ModuleArgs,
+  modelName: string
 ): Promise<Outcome<SurfaceSpec[]>> {
   let retryCount = MAX_RETRIES;
   for (;;) {
     const surfaces = await generateContent(
-      "gemini-flash-latest",
+      modelName,
       prompt(content),
       moduleArgs
     );
