@@ -271,38 +271,19 @@ export const theme: v0_8.Types.Theme = {
       },
     },
     Divider: {},
-    Heading: {
-      all: {
-        "color-c-p30": true,
-        "typography-f-sf": true,
-        "typography-v-r": true,
-        "typography-w-400": true,
-        "layout-m-0": true,
-        "layout-p-0": true,
-      },
-      level1: {
-        "typography-w-500": true,
-        "typography-sz-hm": true,
-      },
-      level2: {
-        "typography-w-500": true,
-        "typography-sz-hs": true,
-      },
-      level3: {
-        "typography-sz-tl": true,
-      },
-      level4: {
-        "typography-sz-tm": true,
-      },
-      level5: {
-        "typography-sz-bm": true,
-      },
-    },
     Image: {
-      "layout-el-cv": true,
-      "layout-w-100": true,
-      "layout-h-100": true,
-      "border-br-5": true,
+      all: {
+        "layout-el-cv": true,
+        "layout-w-100": true,
+        "layout-h-100": true,
+        "border-br-5": true,
+      },
+      avatar: {},
+      header: {},
+      icon: {},
+      largeFeature: {},
+      mediumFeature: {},
+      smallFeature: {},
     },
     Icon: {
       "color-c-p0": true,
@@ -370,9 +351,52 @@ export const theme: v0_8.Types.Theme = {
       },
     },
     Text: {
-      "layout-w-100": true,
-      "layout-g-2": true,
-      "color-c-p30": true,
+      all: {
+        "layout-w-100": true,
+        "layout-g-2": true,
+        "color-c-p30": true,
+        "typography-w-400": true,
+      },
+
+      h1: {
+        "typography-f-sf": true,
+        "typography-v-r": true,
+        "layout-m-0": true,
+        "layout-p-0": true,
+        "typography-w-500": true,
+        "typography-sz-hm": true,
+      },
+      h2: {
+        "typography-f-sf": true,
+        "typography-v-r": true,
+        "layout-m-0": true,
+        "layout-p-0": true,
+        "typography-w-500": true,
+        "typography-sz-hs": true,
+      },
+      h3: {
+        "typography-f-sf": true,
+        "typography-v-r": true,
+        "layout-m-0": true,
+        "layout-p-0": true,
+        "typography-sz-tl": true,
+      },
+      h4: {
+        "typography-f-sf": true,
+        "typography-v-r": true,
+        "layout-m-0": true,
+        "layout-p-0": true,
+        "typography-sz-tm": true,
+      },
+      h5: {
+        "typography-f-sf": true,
+        "typography-v-r": true,
+        "layout-m-0": true,
+        "layout-p-0": true,
+        "typography-sz-bm": true,
+      },
+      body: {},
+      caption: {},
     },
     TextField: {
       container: {
