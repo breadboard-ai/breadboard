@@ -69,10 +69,6 @@ export type RuntimeFlags = {
    * Requres users consent to use of open_webpage tool
    */
   requireConsentForOpenWebpage: boolean;
-  /**
-   * Allows agent to ask information of user using A2UI
-   */
-  interactiveAgent: boolean;
 };
 
 /**
