@@ -25,7 +25,6 @@ import {
   ResolvedColumn,
   ResolvedDateTimeInput,
   ResolvedDivider,
-  ResolvedHeading,
   ResolvedIcon,
   ResolvedImage,
   ResolvedList,
@@ -82,7 +81,7 @@ function isBooleanValue(value: unknown): value is BooleanValue {
   );
 }
 
-export function isAnyComponentNode(value: unknown): value is AnyComponentNode {
+function isAnyComponentNode(value: unknown): value is AnyComponentNode {
   if (!isObject(value)) return false;
   const hasBaseKeys = "id" in value && "type" in value && "properties" in value;
   if (!hasBaseKeys) return false;
@@ -150,10 +149,6 @@ export function isResolvedDivider(props: unknown): props is ResolvedDivider {
   // Dividers can have all optional properties, so just checking if
   // it's an object is enough.
   return isObject(props);
-}
-
-export function isResolvedHeading(props: unknown): props is ResolvedHeading {
-  return isObject(props) && "text" in props && isStringValue(props.text);
 }
 
 export function isResolvedImage(props: unknown): props is ResolvedImage {

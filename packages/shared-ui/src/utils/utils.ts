@@ -6,7 +6,6 @@
 
 export { formatError } from "./format-error";
 export { getBoardUrlFromCurrentWindow } from "./board-id";
-export { getEmbedderRedirectUri } from "./embed-helpers";
 export { getModuleId } from "./module-id.js";
 export * as Workspace from "./workspace.js";
 export { SigninAdapter } from "./signin-adapter.js";

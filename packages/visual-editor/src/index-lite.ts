@@ -304,15 +304,34 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   constructor(args: MainArguments) {
     super(args);
 
+    const { parsedUrl } = args;
+
     // Set the app to fullscreen if the parsed URL indicates that this was
     // opened from a share action.
     this.showAppFullscreen =
-      (args.parsedUrl && "flow" in args.parsedUrl && args.parsedUrl.shared) ??
-      false;
+      (parsedUrl && "flow" in parsedUrl && parsedUrl.shared) ?? false;
 
     this.#showAdvancedEditorOnboardingTooltip =
       (globalThis.localStorage.getItem(ADVANCED_EDITOR_KEY) ?? "true") ===
       "true";
+
+    this.#init(parsedUrl);
+  }
+
+  /**
+   * Perform any async initialization
+   */
+  async #init(
+    parsedUrl: BreadboardUI.Types.MakeUrlInit | undefined
+  ): Promise<void> {
+    // On lite mode, we always show login/consent before taking any action
+    await this.askUserToSignInIfNeeded();
+    if (parsedUrl) {
+      const remixUrl = parsedUrl.page === "home" ? parsedUrl.remix : null;
+      if (remixUrl) {
+        this.invokeRemixEventRouteWith(remixUrl);
+      }
+    }
   }
 
   /**
@@ -341,10 +360,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       );
       await this.invokeBoardCreateRoute();
       await waitForTabToChange;
-      const url = this.tab?.graph.url;
-      if (url) {
-        this.notifyEmbeddedBoardCreated(url);
-      }
       projectState = this.runtime.state.project;
       if (!projectState) {
         return { error: `Failed to create a new opal.` };
@@ -459,7 +474,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             <div class="right">
               <a
                 ${ref(this.#advancedEditorLink)}
-                href="/?mode=canvas&flow=${this.tab?.graph.url}"
+                href="${this.hostOrigin}?mode=canvas&flow=${this.tab?.graph
+                  .url}"
                 target="_blank"
                 ><span class="g-icon">open_in_new</span>Open Advanced Editor</a
               >
@@ -523,16 +539,19 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderShellUI() {
-    return [this.renderTooltip(), this.#renderOnboardingTooltip()];
+    return [
+      this.renderTooltip(),
+      this.#renderOnboardingTooltip(),
+      this.uiState.show.has("SignInModal")
+        ? this.renderSignInModal(true)
+        : nothing,
+    ];
   }
 
   render() {
     if (!this.ready) return nothing;
 
     const lite = this.runtime.state.lite;
-    if (lite.remixUrl) {
-      this.invokeRemixEventRouteWith(lite.remixUrl);
-    }
 
     let content: HTMLTemplateResult | symbol = nothing;
     switch (lite.viewType) {
@@ -554,9 +573,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       }
       case "loading":
         return html`<div id="loading">
-          <span class="g-icon heavy-filled round">progress_activity</span
-          >Loading
-        </div>`;
+            <span class="g-icon heavy-filled round">progress_activity</span
+            >Loading
+          </div>
+          ${this.#renderShellUI()}`;
       default:
         console.log("Invalid lite view state");
         return nothing;
@@ -578,6 +598,11 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             snackbarEvent.snackbarId,
             snackbarEvent.replaceAll
           );
+        }}
+        @bbunsnackbar=${(
+          unsnackbarEvent: BreadboardUI.Events.UnsnackbarEvent
+        ) => {
+          this.unsnackbar(unsnackbarEvent.snackbarId);
         }}
         @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) => {
           if (evt.detail.eventType === "app.fullscreen") {

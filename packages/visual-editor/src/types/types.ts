@@ -68,6 +68,7 @@ export type MainArguments = {
   embedHandler?: EmbedHandler;
   globalConfig: GlobalConfig;
   shellHost: OpalShellHostProtocol;
+  hostOrigin: URL;
   initialSignInState: SignInState;
   parsedUrl?: MakeUrlInit;
 };

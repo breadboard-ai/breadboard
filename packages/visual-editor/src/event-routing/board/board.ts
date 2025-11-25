@@ -263,7 +263,7 @@ export const RenameRoute: EventRoute<"board.rename"> = {
 export const CreateRoute: EventRoute<"board.create"> = {
   event: "board.create",
 
-  async do({ tab, runtime, uiState, originalEvent }) {
+  async do({ tab, runtime, uiState, originalEvent, embedHandler }) {
     const boardServerName = uiState.boardServer;
     const location = uiState.boardLocation;
     const fileName = globalThis.crypto.randomUUID();
@@ -301,6 +301,10 @@ export const CreateRoute: EventRoute<"board.create"> = {
       tab?.id,
       originalEvent.detail.editHistoryCreator
     );
+    embedHandler?.sendToEmbedder({
+      type: "board_id_created",
+      id: result.url.href,
+    });
 
     return false;
   },

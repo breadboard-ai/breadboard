@@ -447,7 +447,7 @@ export type SnackbarAction = {
   title: string;
   action: string;
   value?: HTMLTemplateResult | string;
-  callback?: () => void;
+  callback?: () => Promise<void> | void;
   cssClass?: string;
 };
 

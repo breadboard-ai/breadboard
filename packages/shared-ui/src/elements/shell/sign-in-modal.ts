@@ -46,6 +46,9 @@ export class VESignInModal extends LitElement {
   @property({ attribute: false })
   accessor signinAdapter: SigninAdapter | undefined = undefined;
 
+  @property({ type: Boolean })
+  accessor undismissable = false;
+
   @state()
   accessor #state: State = { status: "closed" };
 
@@ -202,6 +205,7 @@ export class VESignInModal extends LitElement {
         appearance="basic"
         blurBackground
         .modalTitle=${title}
+        .undismissable=${this.undismissable}
         @bbmodaldismissed=${() => this.#close(false)}
       >
         <section id="container">${content}</section>
