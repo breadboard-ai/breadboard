@@ -446,6 +446,14 @@ export type LiteModeIntentExample = {
  * Represents the flow gen state
  */
 export type LiteModeState = {
+  /**
+   * The various view types:
+   * - "loading" -- the Load Opal ghostie that is presented whenever
+   * an opal is loaded.
+   * - "home" -- user can create a new opal from here
+   * - "editor" -- user can run/edit opal from here
+   * - "invalid" -- some invalid state that we don't know about
+   */
   viewType: LiteModeType;
 
   // Remix triggering bits
