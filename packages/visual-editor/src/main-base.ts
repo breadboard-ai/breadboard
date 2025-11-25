@@ -142,7 +142,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   accessor signinAdapter: SigninAdapter;
 
   @provide({ context: flowGeneratorContext })
-  accessor flowGenerator: FlowGenerator;
+  accessor flowGenerator!: FlowGenerator;
 
   @provide({ context: googleDriveClientContext })
   accessor googleDriveClient: GoogleDriveClient;
@@ -335,8 +335,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       backendApiEndpoint
     );
 
-    this.flowGenerator = new FlowGenerator(this.#apiClient);
-
     this.emailPrefsManager = new EmailPrefsManager(this.#apiClient);
 
     const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
@@ -494,6 +492,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       consentManager: this.#consentManager,
     });
     this.#addRuntimeEventHandlers();
+
+    const agentMode = flags.agentMode;
+    this.flowGenerator = new FlowGenerator(this.#apiClient, agentMode);
 
     this.#boardServers = this.runtime.board.getBoardServers() || [];
     this.uiState = this.runtime.state.getOrCreateUIState();
