@@ -59,11 +59,9 @@ function transformConfiguration(
             const text = template.transform((part) => {
               const transformed = templateTransformer(part, id);
               if (transformed === null) {
-                return part;
-              } else {
                 didTransform = true;
-                return transformed;
               }
+              return transformed;
             });
             parts.push({ text });
             continue;

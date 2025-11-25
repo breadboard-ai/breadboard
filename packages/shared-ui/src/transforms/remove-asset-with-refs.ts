@@ -28,9 +28,9 @@ class RemoveAssetWithRefs implements EditTransform {
         (part) => {
           const { type, path } = part;
           if (type === "asset" && path === this.path) {
-            return { ...part, invalid: true };
+            return null;
           }
-          return null;
+          return part;
         },
         `Marking references to asset "${this.path}" invalid`
       ).apply(context);

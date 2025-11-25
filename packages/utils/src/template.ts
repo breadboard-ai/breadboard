@@ -55,7 +55,7 @@ export type TemplatePart = {
 
 export type TemplatePartTransformCallback = (
   part: TemplatePart
-) => TemplatePart;
+) => TemplatePart | null;
 
 export type TemplatePartCallback = (part: TemplatePart) => string;
 export type TemplateStringPartCallback = (part: string) => string;
@@ -152,7 +152,7 @@ class Template {
   get recombined() {
     return this.#parsed
       .map((part) => {
-        if (typeof part === "string") return part;
+        if (typeof part === "string") return part.trim();
         return Template.part(part);
       })
       .join("");
@@ -162,7 +162,7 @@ class Template {
     for (const [index, part] of this.#parsed.entries()) {
       if (typeof part === "string") continue;
       const transformed = callback(part);
-      this.#parsed[index] = transformed;
+      this.#parsed[index] = transformed || "";
     }
     return this.recombined;
   }
