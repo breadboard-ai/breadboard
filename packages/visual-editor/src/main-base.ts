@@ -1956,6 +1956,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       .saveStatus=${renderValues.saveStatus}
       .showExperimentalComponents=${renderValues.showExperimentalComponents}
       .mode=${this.uiState.mode}
+      .runtimeFlags=${this.uiState.flags}
       @bbsignout=${async () => {
         await this.signinAdapter.signOut();
         ActionTracker.signOutSuccess();

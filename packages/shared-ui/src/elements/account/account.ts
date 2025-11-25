@@ -7,6 +7,7 @@ import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("Global");
 
 import { LitElement, html, css, nothing } from "lit";
+
 import { customElement, property, query } from "lit/decorators.js";
 import { ref } from "lit/directives/ref.js";
 import {
@@ -16,6 +17,8 @@ import {
 import { icons } from "../../styles/icons.js";
 import { SigninAdapter } from "../../utils/signin-adapter.js";
 
+import { RuntimeFlags } from "@breadboard-ai/types";   
+
 @customElement("bb-account-switcher")
 export class AccountSwitcher extends LitElement {
   @property()
@@ -23,6 +26,9 @@ export class AccountSwitcher extends LitElement {
 
   @query("dialog")
   accessor #dialog: HTMLDialogElement | null = null;
+
+  @property()
+  accessor runtimeFlags: RuntimeFlags | null = null;
 
   @query("#container")
   accessor #container: HTMLElement | null = null;
@@ -99,9 +105,70 @@ export class AccountSwitcher extends LitElement {
             }
           }
 
+          & #g1-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            place-items: center;
+            gap: var(--bb-grid-size-3);
+            width: 100%;
+            max-width: 300px;
+            font: 500 var(--bb-title-medium) / 1 var(--bb-font-family);
+            margin-bottom: var(--bb-grid-size-3);
+            height: var(--bb-grid-size-14);
+            border-radius: var(--bb-grid-size-16);
+            border: 1px solid var(--light-dark-n-90);
+            background: var(--light-dark-n-98);
+            margin-bottom: var(--bb-grid-size-5);
+          }
+
+          & #get-ai-credits {
+            width: 100%;
+            max-width: 100px;
+            font: 500 var(--bb-title-medium) / 1 var(--bb-font-family);
+            margin-bottom: var(--bb-grid-size-3);
+            height: var(--bb-grid-size-10);
+            border-radius: var(--bb-grid-size-16);
+            border: 1px solid var(--light-dark-n-90);
+            background: var(--light-dark-n-98);
+            margin-bottom: var(--bb-grid-size-2);
+            transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+            &:not([disabled]) {
+              cursor: pointer;
+
+              &:hover,
+              &:focus {
+                background: var(--light-dark-n-90);
+              }
+            }
+          }
+
+          & #manage-membership {
+            width: 100%;
+            max-width: 300px;
+            font: 500 var(--bb-title-medium) / 1 var(--bb-font-family);
+            margin-bottom: var(--bb-grid-size-3);
+            height: var(--bb-grid-size-10);
+            border-radius: var(--bb-grid-size-16);
+            border: 1px solid var(--light-dark-n-90);
+            background: var(--light-dark-n-98);
+            margin-bottom: var(--bb-grid-size-2);
+            transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
+
+            &:not([disabled]) {
+              cursor: pointer;
+
+              &:hover,
+              &:focus {
+                background: var(--light-dark-n-90);
+              }
+            }
+          }
+
+
           & #sign-out {
             width: 100%;
-            max-width: 200px;
+            max-width: 300px;
             font: 500 var(--bb-title-medium) / 1 var(--bb-font-family);
             margin-bottom: var(--bb-grid-size-3);
             height: var(--bb-grid-size-10);
@@ -150,6 +217,7 @@ export class AccountSwitcher extends LitElement {
     if (!this.signInAdapter) {
       return nothing;
     }
+    console.log(this.runtimeFlags?.googleOne)
 
     return html`<dialog
       @click=${(evt: Event) => {
@@ -204,6 +272,34 @@ export class AccountSwitcher extends LitElement {
             <p>${this.signInAdapter.name}</p>
           </div>
         </section>
+        ${true //this.runtimeFlags?.googleOne
+          ? html`
+          <section id="g1-container">
+            <span>
+              100 AI Credits
+            </span>
+            <button
+              id="get-ai-credits"
+              @click=${(evt: Event) => {
+                evt.stopImmediatePropagation();
+
+                this.dispatchEvent(new OverflowMenuActionEvent("get-ai-credits"));
+              }}
+            >
+              Get AI credits
+            </button>
+          </section>
+          <button
+            id="manage-membership"
+            @click=${(evt: Event) => {
+              evt.stopImmediatePropagation();
+
+              this.dispatchEvent(new OverflowMenuActionEvent("manage-membership"));
+            }}
+          >
+            Manage membership
+          </button>`
+          : nothing}
         <button
           id="sign-out"
           @click=${(evt: Event) => {
