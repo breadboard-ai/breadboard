@@ -217,10 +217,13 @@ class ThemeState implements ProjectThemeState {
     }
   }
 
-  async generateThemeFromIntent(intent: string): Promise<Outcome<GraphTheme>> {
+  async generateThemeFromIntent(
+    intent: string,
+    abortSignal?: AbortSignal
+  ): Promise<Outcome<GraphTheme>> {
     const appTheme = await this.#generateTheme(
       getThemeFromIntentGenerationPrompt(intent),
-      undefined
+      abortSignal
     );
     if (!ok(appTheme)) return appTheme;
     return this.#persistTheme(appTheme);

@@ -31,7 +31,7 @@ import "../../elements/welcome-panel/homepage-search-button.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 4;
 const URL_PARAMS = new URL(document.URL).searchParams;
 const FORCE_NO_BOARDS = URL_PARAMS.has("forceNoBoards");
 
@@ -72,9 +72,6 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
         --thumbnail-height: 175px;
         --details-min-height: 108px;
         --profile-pic-size: 28px;
-        --todo-gemini-button-color: #0b57d0;
-        --todo-gemini-surface-color: #f0f4f9;
-        --todo-gemini-button-text-label-color: #0b57d0;
       }
 
       @media (min-width: 480px) and (max-width: 800px) {
@@ -129,9 +126,9 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
       }
 
       #no-projects-panel {
-        background: var(--todo-gemini-surface-color);
-        padding: 24px;
-        border-radius: 24px;
+        background: var(--welcome-surface-color);
+        padding: var(--bb-grid-size-4);
+        border-radius: var(--bb-grid-size-3);
         text-align: center;
 
         .g-icon {
@@ -145,9 +142,10 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
         color: var(--light-dark-n-100);
         border-radius: var(--bb-grid-size-16);
         border: none;
-        background: var(--todo-gemini-button-color);
+        background: var(--welcome-button-color);
         height: var(--bb-grid-size-10);
         padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
+        transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
 
         &[disabled] .g-icon {
           animation: rotate 1s linear infinite;
@@ -163,7 +161,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
 
         &:not([disabled]):focus,
         &:not([disabled]):hover {
-          background: var(--light-dark-n-10);
+          background: oklch(from var(--welcome-button-color) calc(l * 0.9) c h);
         }
 
         .g-icon {
@@ -231,21 +229,9 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
     }
 
     return html`
-      ${this.#renderHero()}
-
       <div id="board-listing">
         <div id="content">${this.#renderBoardListing()}</div>
       </div>
-    `;
-  }
-
-  #renderHero() {
-    return html`
-      <section id="hero">
-        <h1 class="sans-flex w-500 md-headline-medium">
-          ${Strings.from("LABEL_WELCOME_MESSAGE_LITE")}
-        </h1>
-      </section>
     `;
   }
 

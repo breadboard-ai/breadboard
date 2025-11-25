@@ -68,9 +68,12 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        color: var(--welcome-text-color);
+        padding-bottom: var(--bb-grid-size-4);
 
-        .gallery-title {
+        & .gallery-title {
           flex: 1 0 0;
+          margin: 0;
         }
       }
 
@@ -82,11 +85,15 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         border: none;
         height: var(--bb-grid-size-10);
         padding: 0 var(--bb-grid-size-4);
-        color: var(--todo-gemini-button-text-label-color);  
+        color: var(--welcome-button-color);
         cursor: pointer;
+        transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
 
-        &:hover {
-          background: var(--todo-gemini-surface-color);
+        &:not([disabled]) {
+          &:hover,
+          &:focus {
+            background: var(--welcome-surface-color);
+          }
         }
 
         .g-icon {
@@ -104,7 +111,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         position: relative;
         background: var(--light-dark-n-100);
         outline: 1px solid transparent;
-        border-radius: var(--bb-grid-size-4);
+        border-radius: var(--bb-grid-size-3);
         cursor: pointer;
         overflow: hidden;
         display: flex;
@@ -142,7 +149,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           width: calc(100% - 6px);
           height: calc(100% - 6px);
           z-index: 2;
-          border-radius: calc(var(--bb-grid-size-4) - 3px);
+          border-radius: calc(var(--bb-grid-size-3) - 3px);
           outline: 7px solid var(--light-dark-n-0);
           opacity: 0;
           transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
@@ -354,30 +361,34 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         display: flex;
         justify-content: flex-end;
         justify-self: flex-end;
-        margin-bottom: var(--bb-grid-size-10);
-        max-width: 100%;
-        overflow: hidden;
+        margin-top: var(--bb-grid-size-4);
 
         #page-numbers {
-          flex: 1;
-          display: flex;
-          overflow-x: hidden;
+          margin-right: var(--bb-grid-size-3);
+        }
+
+        & input {
+          width: var(--bb-grid-size-4);
+          text-align: center;
+          field-sizing: content;
+          border: 1px solid var(--light-dark-n-90);
+          border-radius: var(--bb-grid-size);
+        }
+
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
         }
 
         & button {
           display: flex;
           align-items: center;
           justify-content: center;
-          font: 400 var(--bb-body-medium) / var(--bb-body-line-height-medium)
-            var(--bb-font-family);
-          width: var(--bb-grid-size-8);
-          height: var(--bb-grid-size-8);
           background: none;
           border: none;
-          margin-left: var(--bb-grid-size-2);
-          border-radius: var(--bb-grid-size-2);
           color: var(--light-dark-n-10);
-          transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+          transition: color 0.2s cubic-bezier(0, 0, 0.3, 1);
           padding: 0;
 
           &:not([disabled]) {
@@ -385,53 +396,12 @@ export class GalleryLite extends SignalWatcher(LitElement) {
 
             &:hover,
             &:focus {
-              background: var(--light-dark-n-98);
+              color: var(--light-dark-n-50);
             }
           }
 
           &[disabled] {
-            background: var(--light-dark-n-98);
-          }
-
-          &#prev,
-          &#next {
-            width: auto;
-
-            &[disabled] {
-              background: transparent;
-              color: var(--light-dark-n-80);
-
-              &::before,
-              &::after {
-                opacity: 0.4;
-              }
-            }
-          }
-
-          &#prev {
-            padding: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size);
-
-            &::before {
-              content: "";
-              width: 20px;
-              height: 20px;
-              background: var(--bb-icon-before) center center / 20px 20px
-                no-repeat;
-              margin-right: var(--bb-grid-size-2);
-            }
-          }
-
-          &#next {
-            padding: 0 var(--bb-grid-size) 0 var(--bb-grid-size-2);
-
-            &::after {
-              content: "";
-              width: 20px;
-              height: 20px;
-              background: var(--bb-icon-next) center center / 20px 20px
-                no-repeat;
-              margin-left: var(--bb-grid-size-2);
-            }
+            color: var(--light-dark-n-70);
           }
         }
       }
@@ -484,7 +454,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
    * How many items to display per page. Set to -1 to disable pagination.
    */
   @property({ type: Number })
-  accessor pageSize = 8;
+  accessor pageSize = 4;
 
   @property({ attribute: false })
   accessor recentBoards: RecentBoard[] = [];
@@ -646,7 +616,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
 
     return html`
       <section class="gallery-header">
-        <h2 class="gallery-title md-headline-small sans-flex w-400">
+        <h2 class="gallery-title md-title-medium sans-flex w-400">
           ${this.headerText}
         </h2>
         <slot name="actions"></slot>
@@ -768,7 +738,9 @@ export class GalleryLite extends SignalWatcher(LitElement) {
               ${Strings.from("COMMAND_REMIX")}
             </button>`}
         <div class="info">
-          <h4 class="title sans-flex w-500 md-label-large">${title ?? name}</h4>
+          <h4 class="title sans-flex w-500 md-label-large round">
+            ${title ?? name}
+          </h4>
           <p class="description sans-flex w-400 md-label-small">
             ${description ?? "No description"}
           </p>
@@ -788,40 +760,50 @@ export class GalleryLite extends SignalWatcher(LitElement) {
       return nothing;
     }
     return html`
-      <menu id="pagination">
-        <span>
-          <button
-            id="prev"
-            ?disabled=${this.page === 0}
-            @click=${this.#onClickPrevPage}
-          >
-            ${Strings.from("COMMAND_PREVIOUS")}
-          </button>
-        </span>
+      <menu id="pagination" class="md-label-medium">
         <div id="page-numbers" ${ref(this.#paginationContainer)}>
-          ${new Array(pages).fill(undefined).map((_, idx) => {
-            return html`
-              <span>
-                <button
-                  ?disabled=${idx === this.page}
-                  data-page-idx=${idx}
-                  @click=${this.#onClickPageNumber}
-                >
-                  ${idx + 1}
-                </button>
-              </span>
-            `;
-          })}
+          <input
+            @keydown=${(evt: KeyboardEvent) => {
+              if (
+                evt.key !== "Enter" ||
+                !(evt.target instanceof HTMLInputElement)
+              ) {
+                return;
+              }
+
+              const value = Number.parseInt(evt.target.value);
+              if (
+                Number.isNaN(value) ||
+                value === this.page ||
+                value < 1 ||
+                value > pages
+              ) {
+                return;
+              }
+
+              this.page = value - 1;
+            }}
+            name="page-number"
+            class="md-label-medium"
+            type="number"
+            .value=${this.page + 1}
+          />
+          of ${pages}
         </div>
-        <span>
-          <button
-            id="next"
-            ?disabled=${this.page === pages - 1}
-            @click=${this.#onClickNextPage}
-          >
-            ${Strings.from("COMMAND_NEXT")}
-          </button>
-        </span>
+        <button
+          id="prev"
+          ?disabled=${this.page === 0}
+          @click=${this.#onClickPrevPage}
+        >
+          <span class="g-icon filled-heavy round">chevron_left</span>
+        </button>
+        <button
+          id="next"
+          ?disabled=${this.page === pages - 1}
+          @click=${this.#onClickNextPage}
+        >
+          <span class="g-icon filled-heavy round">chevron_right</span>
+        </button>
       </menu>
     `;
   }

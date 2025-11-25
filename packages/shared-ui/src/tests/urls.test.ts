@@ -6,12 +6,8 @@
 
 import assert from "node:assert";
 import { suite, test } from "node:test";
-import {
-  BaseUrlInit,
-  makeUrl,
-  type MakeUrlInit,
-  parseUrl,
-} from "../utils/urls.js";
+import { makeUrl, parseUrl } from "../utils/urls.js";
+import type { BaseUrlInit, MakeUrlInit } from "../types/types.js";
 
 const BASE_URL = "https://example.com";
 
@@ -35,6 +31,28 @@ suite("home", () => {
     mode: "app",
     lite: false,
     new: false,
+  });
+
+  testSymmetrical(`${BASE_URL}/?mode=app&lite=true&new=true`, {
+    page: "home",
+    mode: "app",
+    lite: true,
+    new: true,
+  });
+
+  testSymmetrical(`${BASE_URL}/?mode=app&lite=true`, {
+    page: "home",
+    mode: "app",
+    lite: true,
+    new: false,
+  });
+
+  testSymmetrical(`${BASE_URL}/?mode=app&lite=true&remix=test`, {
+    page: "home",
+    mode: "app",
+    lite: true,
+    new: false,
+    remix: "test",
   });
 
   test("default to home w/ canvas", () => {

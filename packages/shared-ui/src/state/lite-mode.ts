@@ -7,26 +7,25 @@
 import { signal } from "signal-utils";
 import {
   FlowGenGenerationStatus,
-  ListViewType,
-  LiteViewExample,
-  LiteViewState,
+  LiteModeType,
+  LiteModeIntentExample,
+  LiteModeState,
   RuntimeContext,
   StepListState,
 } from "./types";
-import { parseUrl } from "../utils/urls";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import { ReactiveProjectRun } from "./project-run";
 
-export { createLiteViewState };
+export { createLiteModeState };
 
-function createLiteViewState(context: RuntimeContext) {
-  return new ReactiveLiteViewState(context);
+function createLiteModeState(context: RuntimeContext) {
+  return new ReactiveLiteModeState(context);
 }
 
-const EXAMPLES: LiteViewExample[] = [
+const EXAMPLES: LiteModeIntentExample[] = [
   {
     intent:
-      "An app that reads current news and creates an alternative fiction story based on these news",
+      "An app that reads current news and creates an alternative history fiction story based on these news",
   },
   {
     intent:
@@ -42,12 +41,26 @@ const EXAMPLES: LiteViewExample[] = [
   },
 ];
 
-class ReactiveLiteViewState implements LiteViewState {
+class ReactiveLiteModeState implements LiteModeState {
   @signal
   accessor status: FlowGenGenerationStatus = "initial";
 
   @signal
   accessor error: string | undefined;
+
+  startGenerating(): void {
+    if (this.stepList) {
+      this.stepList.status = "planning";
+    }
+    this.status = "generating";
+  }
+
+  finishGenerating(): void {
+    if (this.stepList) {
+      this.stepList.status = "ready";
+    }
+    this.status = "initial";
+  }
 
   @signal
   get intent() {
@@ -75,19 +88,20 @@ class ReactiveLiteViewState implements LiteViewState {
   }
 
   @signal
-  get viewType(): ListViewType {
+  get viewType(): LiteModeType {
     let zeroState = false;
 
     const { loadState } = this.context.ui;
     switch (loadState) {
       case "Home": {
-        const parsedUrl = parseUrl(window.location.href);
-        zeroState = !!(parsedUrl.page === "home" && parsedUrl.new);
-        if (!zeroState) {
-          console.warn("Invalid Home URL state", parsedUrl);
-          return "invalid";
+        const parsedUrl = this.context.router.parsedUrl;
+        if (parsedUrl.page === "home") {
+          if (parsedUrl.remix) return "loading";
+          zeroState = !!parsedUrl.new;
+          if (zeroState) return "home";
         }
-        break;
+        console.warn("Invalid Home URL state", parsedUrl);
+        return "invalid";
       }
       case "Loading":
         if (this.status === "generating") {
@@ -103,7 +117,6 @@ class ReactiveLiteViewState implements LiteViewState {
         console.warn("Unknown UI load state", loadState);
         return "invalid";
     }
-    if (zeroState) return "home";
     if (!this.stepList || this.empty) return "home";
     return "editor";
   }

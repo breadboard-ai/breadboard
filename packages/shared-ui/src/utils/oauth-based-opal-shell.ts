@@ -39,7 +39,7 @@ import {
   type ShareClient,
 } from "../elements/google-drive/google-apis.js";
 import { SETTINGS_TYPE } from "../types/types.js";
-import { getEmbedderRedirectUri, getTopLevelOrigin } from "./embed-helpers.js";
+import { getTopLevelOrigin } from "./embed-helpers.js";
 import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { scopesFromUrl } from "./scopes-from-url.js";
@@ -49,6 +49,11 @@ const SIGN_IN_CONNECTION_ID = "$sign-in";
 const PROD_AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/auth";
 const AUTH_ENDPOINT =
   CLIENT_DEPLOYMENT_CONFIG.GOOGLE_OAUTH_AUTH_ENDPOINT || PROD_AUTH_ENDPOINT;
+
+// IMPORTANT! Some versions of comlink will only expose methods that are
+// own-properties of the proxy object, in order to improve security. For this
+// reason, all methods that are intended to be exposed below are defined with
+// property assignment to arrow functions instead of with method declarations.
 
 export class OAuthBasedOpalShell implements OpalShellHostProtocol {
   readonly #settingsStore = SettingsStore.restoredInstance();
@@ -79,7 +84,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
 
   #state?: Promise<SignInState>;
 
-  async getSignInState(): Promise<SignInState> {
+  getSignInState = async (): Promise<SignInState> => {
     return (this.#state ??= (async () => {
       const tokenVendor = await this.#tokenVendor;
       const token = tokenVendor.getToken();
@@ -89,9 +94,11 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       token.state satisfies "valid" | "expired";
       return this.#makeSignedInState(token.grant);
     })());
-  }
+  };
 
-  async validateScopes(): Promise<{ ok: true } | { ok: false; error: string }> {
+  validateScopes = async (): Promise<
+    { ok: true } | { ok: false; error: string }
+  > => {
     const state = await this.getSignInState();
     if (state.status !== "signedin") {
       return { ok: false, error: "User was signed out" };
@@ -153,7 +160,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     } else {
       return { ok: true };
     }
-  }
+  };
 
   /** See https://cloud.google.com/docs/authentication/token-types#access */
   async #fetchScopesFromTokenInfoApi(): Promise<
@@ -220,10 +227,10 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     return init;
   }
 
-  async fetchWithCreds(
+  fetchWithCreds = async (
     input: string | URL | RequestInfo,
     init: RequestInit = {}
-  ): Promise<Response> {
+  ): Promise<Response> => {
     const url =
       input instanceof Request
         ? input.url
@@ -263,9 +270,9 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     const headers = new Headers(maybeAugmentedInit.headers);
     headers.set("Authorization", `Bearer ${accessToken}`);
     return fetch(input, { ...maybeAugmentedInit, headers });
-  }
+  };
 
-  async signIn(scopes: string[] = []): Promise<SignInResult> {
+  signIn = async (scopes: string[] = []): Promise<SignInResult> => {
     const { url, nonce } = this.#generateSignInUrlAndNonce(scopes);
     const popupWidth = 900;
     const popupHeight = 850;
@@ -286,7 +293,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       };
     }
     return await this.#listenForSignIn(nonce, scopes, popup);
-  }
+  };
 
   #generateSignInUrlAndNonce(scopes: string[] = []): {
     url: string;
@@ -300,11 +307,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     const url = new URL(AUTH_ENDPOINT);
     const params = url.searchParams;
     params.set("client_id", CLIENT_DEPLOYMENT_CONFIG.OAUTH_CLIENT);
-    params.set(
-      "redirect_uri",
-      getEmbedderRedirectUri() ??
-        new URL("/oauth/", window.location.origin).href
-    );
+    params.set("redirect_uri", new URL("/oauth/", window.location.origin).href);
     params.set("scope", uniqueScopes.join(" "));
     params.set(
       "state",
@@ -486,7 +489,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     };
   }
 
-  async signOut(): Promise<void> {
+  signOut = async (): Promise<void> => {
     if ((await this.getSignInState()).status === "signedout") {
       return;
     }
@@ -496,7 +499,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       SIGN_IN_CONNECTION_ID
     );
     this.#state = Promise.resolve({ status: "signedout" });
-  }
+  };
 
   async #getToken(): Promise<ValidTokenResult | SignedOutTokenResult>;
   async #getToken(
@@ -528,7 +531,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     return token;
   }
 
-  async setUrl(url: string): Promise<void> {
+  setUrl = async (url: string): Promise<void> => {
     // Project the guest path under our host path.
     //
     // Note that parent windows and iframes have a common history, so because we
@@ -540,11 +543,11 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       "",
       new URL(pathname + search + hash, window.location.origin)
     );
-  }
+  };
 
-  async pickDriveFiles(
+  pickDriveFiles = async (
     options: PickDriveFilesOptions
-  ): Promise<PickDriveFilesResult> {
+  ): Promise<PickDriveFilesResult> => {
     console.info(`[shell host] opening drive picker`);
     const [pickerLib, token] = await Promise.all([
       loadDrivePicker(),
@@ -604,7 +607,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
         error: `Unhandled result action ${result.action}`,
       };
     }
-  }
+  };
 
   /**
    * Re-use the same ShareClient instance across all calls to
@@ -613,7 +616,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
    */
   #shareClient?: ShareClient;
 
-  async shareDriveFiles(options: ShareDriveFilesOptions): Promise<void> {
+  shareDriveFiles = async (options: ShareDriveFilesOptions): Promise<void> => {
     const tokenPromise = this.#getToken([
       "https://www.googleapis.com/auth/drive.file",
     ]);
@@ -684,16 +687,16 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
 
     this.#shareClient.showSettingsDialog();
     await closed.promise;
-  }
+  };
 
-  async checkAppAccess(): Promise<CheckAppAccessResult> {
+  checkAppAccess = async (): Promise<CheckAppAccessResult> => {
     const token = await this.#getToken();
     if (token.state === "valid") {
       return await this.#checkAppAccessWithToken(token.grant.access_token);
     } else {
       return { canAccess: false };
     }
-  }
+  };
 
   async #checkAppAccessWithToken(token: string): Promise<CheckAppAccessResult> {
     const response = await fetch(
@@ -710,7 +713,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     return { canAccess: !!result.canAccess };
   }
 
-  async sendToEmbedder(message: BreadboardMessage): Promise<void> {
+  sendToEmbedder = async (message: BreadboardMessage): Promise<void> => {
     sendToAllowedEmbedderIfPresent(message);
-  }
+  };
 }

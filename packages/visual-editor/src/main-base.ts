@@ -95,11 +95,7 @@ import { RuntimeBoardServerChangeEvent } from "./runtime/events.js";
 import { MainArguments } from "./types/types";
 import { envFromFlags } from "./utils/env-from-flags";
 import { envFromSettings } from "./utils/env-from-settings";
-import {
-  makeUrl,
-  type MakeUrlInit,
-  parseUrl,
-} from "@breadboard-ai/shared-ui/utils/urls.js";
+import { makeUrl, parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { VESignInModal } from "@breadboard-ai/shared-ui/elements/elements.js";
 import {
   canonicalizeOAuthScope,
@@ -110,6 +106,7 @@ import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.
 import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
 import { ConsentManager } from "@breadboard-ai/shared-ui/utils/consent-manager.js";
 import { consentManagerContext } from "@breadboard-ai/shared-ui/contexts/consent-manager.js";
+import { MakeUrlInit } from "@breadboard-ai/shared-ui/types/types.js";
 
 export { MainBase };
 
@@ -274,6 +271,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   readonly #apiClient: AppCatalystApiClient;
   readonly #settings: SettingsStore;
   readonly emailPrefsManager: EmailPrefsManager;
+  protected readonly hostOrigin: URL;
 
   // Event Handlers.
   readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
@@ -297,8 +295,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.signinAdapter = new SigninAdapter(
       this.opalShell,
       args.initialSignInState,
-      (scopes?: OAuthScope[]) => this.#askUserToSignInIfNeeded(scopes)
+      (scopes?: OAuthScope[]) => this.askUserToSignInIfNeeded(scopes)
     );
+    this.hostOrigin = args.hostOrigin;
 
     // Asyncronously check if the user has a geo-restriction and sign out if so.
     if (this.signinAdapter.state === "signedin") {
@@ -635,7 +634,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.snackbar(
       html`
         Users from ${domain} should prefer
-        <a href="${url}">${new URL(url).hostname}</a>
+        <a href="${url}" target="_blank">${new URL(url).hostname}</a>
       `,
       BreadboardUI.Types.SnackType.WARNING,
       [],
@@ -667,7 +666,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.runtime.board.addEventListener(
       Runtime.Events.RuntimeRequestSignInEvent.eventName,
-      () => this.#askUserToSignInIfNeeded()
+      () => this.askUserToSignInIfNeeded()
     );
 
     this.runtime.addEventListener(
@@ -982,8 +981,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   async #generateGraph(intent: string): Promise<GraphDescriptor> {
-    const { flow } = await this.flowGenerator.oneShot({ intent });
-    return flow;
+    const generated = await this.flowGenerator.oneShot({ intent });
+    if ("error" in generated) {
+      throw new Error(generated.error);
+    }
+    return generated.flow;
   }
 
   async #generateBoardFromGraph(graph: GraphDescriptor) {
@@ -1028,15 +1030,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         | Partial<GoogleDriveBoardServer>
         | undefined;
       await boardServer?.flushSaveQueue?.(url.href);
-      this.notifyEmbeddedBoardCreated(url.href);
-    }
-  }
-
-  notifyEmbeddedBoardCreated(url: string) {
-    if (this.#embedHandler) {
       this.#embedHandler.sendToEmbedder({
         type: "board_id_created",
-        id: url,
+        id: url.href,
       });
     }
   }
@@ -1386,8 +1382,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       uiState: this.uiState,
       googleDriveClient: this.googleDriveClient,
       askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>
-        this.#askUserToSignInIfNeeded(scopes),
+        this.askUserToSignInIfNeeded(scopes),
       boardServer,
+      embedHandler: this.#embedHandler,
     };
   }
 
@@ -1500,7 +1497,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           ? this.#renderWarmWelcomeModal()
           : nothing,
         this.uiState.show.has("SignInModal")
-          ? this.#renderSignInModal()
+          ? this.renderSignInModal(false)
           : nothing,
         this.renderTooltip(),
         this.#renderToasts(),
@@ -1843,7 +1840,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return nothing;
   }
 
-  async #invokeRemixEventRouteWith(
+  protected async invokeRemixEventRouteWith(
     url: string,
     messages = {
       start: Strings.from("STATUS_REMIXING_PROJECT"),
@@ -1863,7 +1860,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       )
     );
     this.uiState.blockingAction = false;
-
     if (refresh) {
       requestAnimationFrame(() => {
         this.requestUpdate();
@@ -1916,14 +1912,17 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       @bbsnackbaraction=${async (
         evt: BreadboardUI.Events.SnackbarActionEvent
       ) => {
-        evt.callback?.();
+        if ("callback" in evt && evt.callback) {
+          await evt.callback();
+        }
+
         switch (evt.action) {
           case "remix": {
             if (!evt.value || typeof evt.value !== "string") {
               return;
             }
 
-            this.#invokeRemixEventRouteWith(evt.value);
+            this.invokeRemixEventRouteWith(evt.value);
             break;
           }
 
@@ -2029,7 +2028,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
             }
 
             ActionTracker.remixApp(this.tab.graph.url, "editor");
-            this.#invokeRemixEventRouteWith(this.tab.graph.url, {
+            this.invokeRemixEventRouteWith(this.tab.graph.url, {
               start: Strings.from("STATUS_GENERIC_WORKING"),
               end: Strings.from("STATUS_PROJECT_CREATED"),
               error: Strings.from("ERROR_GENERIC"),
@@ -2108,7 +2107,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     </bb-ve-header>`;
   }
 
-  async #askUserToSignInIfNeeded(scopes?: OAuthScope[]): Promise<boolean> {
+  protected async askUserToSignInIfNeeded(
+    scopes?: OAuthScope[]
+  ): Promise<boolean> {
+    // this.#uiState won't exist until init is done.
+    await this.#initPromise;
     if (this.signinAdapter.state === "signedin") {
       if (!scopes?.length) {
         return true;
@@ -2123,8 +2126,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         return true;
       }
     }
-    // this.#uiState won't exist until init is done.
-    await this.#initPromise;
     this.uiState.show.add("SignInModal");
     await this.updateComplete;
     const signInModal = this.#signInModalRef.value;
@@ -2136,10 +2137,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   readonly #signInModalRef = createRef<VESignInModal>();
-  #renderSignInModal() {
+  protected renderSignInModal(undismissable: boolean) {
     return html`
       <bb-sign-in-modal
         ${ref(this.#signInModalRef)}
+        .undismissable=${undismissable}
         @bbmodaldismissed=${() => {
           this.uiState.show.delete("SignInModal");
         }}

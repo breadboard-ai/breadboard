@@ -180,7 +180,11 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
       return 0;
     }
 
-    return this.console.size / this.estimatedEntryCount;
+    const completed = [...this.renderer.nodes.values()].filter(
+      (node) => node.status === "succeeded"
+    ).length;
+
+    return completed / this.estimatedEntryCount;
   }
 
   @signal
@@ -318,6 +322,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
 
     this.console.clear();
     this.renderer.nodes.clear();
+    this.input = null;
 
     runner.state?.forEach(({ state, outputs }, id) => {
       const inspectableNode = this.#inspectable?.nodeById(id);
@@ -488,6 +493,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
           });
         } else if (nodeState.state === "interrupted") {
           entry.finalizeWorkItemInputs();
+          this.app.screens.delete(id);
         } else {
           this.renderer.nodes.set(id, { status: "succeeded" });
         }

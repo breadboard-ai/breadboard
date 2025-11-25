@@ -8,7 +8,7 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 import { html, css, nothing, HTMLTemplateResult } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
 
 import * as BBLite from "@breadboard-ai/shared-ui/lite";
@@ -19,17 +19,25 @@ import {
   StateEventDetailMap,
 } from "@breadboard-ai/shared-ui/events/events.js";
 import { LiteEditInputController } from "@breadboard-ai/shared-ui/lite/input/editor-input-lite.js";
-import { GraphDescriptor, GraphTheme, Outcome } from "@breadboard-ai/types";
-import { err, ok } from "@breadboard-ai/utils";
+import { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
 import { RuntimeTabChangeEvent } from "./runtime/events";
 import { eventRoutes } from "./event-routing/event-routing";
 import { blankBoard } from "@breadboard-ai/shared-ui/utils/utils.js";
 import { repeat } from "lit/directives/repeat.js";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { styleMap } from "lit/directives/style-map.js";
+import { OneShotFlowGenFailureResponse } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
+import { flowGenWithTheme } from "@breadboard-ai/shared-ui/flow-gen/flowgen-with-theme.js";
+
+const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
 
 @customElement("bb-lite")
 export class LiteMain extends MainBase implements LiteEditInputController {
   @property()
   accessor showAppFullscreen = false;
+
+  @state()
+  accessor #showAdvancedEditorOnboardingTooltip = true;
 
   static styles = [
     BBLite.Styles.HostIcons.icons,
@@ -291,21 +299,48 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     `,
   ];
 
+  #advancedEditorLink: Ref<HTMLElement> = createRef();
+
   constructor(args: MainArguments) {
     super(args);
+
+    const { parsedUrl } = args;
 
     // Set the app to fullscreen if the parsed URL indicates that this was
     // opened from a share action.
     this.showAppFullscreen =
-      (args.parsedUrl && "flow" in args.parsedUrl && args.parsedUrl.shared) ??
-      false;
+      (parsedUrl && "flow" in parsedUrl && parsedUrl.shared) ?? false;
+
+    this.#showAdvancedEditorOnboardingTooltip =
+      (globalThis.localStorage.getItem(ADVANCED_EDITOR_KEY) ?? "true") ===
+      "true";
+
+    this.#init(parsedUrl);
+  }
+
+  /**
+   * Perform any async initialization
+   */
+  async #init(
+    parsedUrl: BreadboardUI.Types.MakeUrlInit | undefined
+  ): Promise<void> {
+    // On lite mode, we always show login/consent before taking any action
+    await this.askUserToSignInIfNeeded();
+    if (parsedUrl) {
+      const remixUrl = parsedUrl.page === "home" ? parsedUrl.remix : null;
+      if (remixUrl) {
+        this.invokeRemixEventRouteWith(remixUrl);
+      }
+    }
   }
 
   /**
    * This method is called by bb-editor-input-lite whenever it needs to
    * generate a new graph.
    */
-  async generate(intent: string): Promise<Outcome<void>> {
+  async generate(
+    intent: string
+  ): Promise<OneShotFlowGenFailureResponse | undefined> {
     let projectState = this.runtime.state.project;
 
     if (!projectState) {
@@ -325,49 +360,31 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       );
       await this.invokeBoardCreateRoute();
       await waitForTabToChange;
-      const url = this.tab?.graph.url;
-      if (url) {
-        this.notifyEmbeddedBoardCreated(url);
-      }
       projectState = this.runtime.state.project;
       if (!projectState) {
-        return err(`Failed to create a new opal.`);
+        return { error: `Failed to create a new opal.` };
       }
     }
 
-    const currentGraph = this.runtime.state.liteView.graph;
+    const currentGraph = this.runtime.state.lite.graph;
     if (!currentGraph) {
-      console.warn("No current graph detected, exting flow generation");
-      return;
+      return { error: "No current graph detected, exting flow generation" };
     }
 
     if (!this.flowGenerator) {
-      return err(`No FlowGenerator was provided`);
+      return { error: `No FlowGenerator was provided` };
     }
-    const generating = this.flowGenerator.oneShot({
+
+    const generated = await flowGenWithTheme(
+      this.flowGenerator,
       intent,
-      context: { flow: currentGraph },
-    });
-
-    const newGraph = (currentGraph?.nodes.length || 0) === 0;
-    const creatingTheme = newGraph
-      ? projectState.themes.generateThemeFromIntent(intent)
-      : Promise.resolve(err(`Existing graph, skipping theme generation`));
-
-    const [generated, createdTheme] = await Promise.allSettled([
-      generating,
-      creatingTheme,
-    ]);
-
-    if (generated.status === "rejected") {
-      return err(generated.reason);
+      currentGraph,
+      projectState
+    );
+    if ("error" in generated) {
+      return generated;
     }
-    let theme;
-    if (createdTheme.status === "fulfilled" && ok(createdTheme.value)) {
-      theme = createdTheme.value;
-    }
-    const { flow } = generated.value;
-    await this.invokeBoardReplaceRoute(flow, theme);
+    await this.invokeBoardReplaceRoute(generated.flow, generated.theme);
   }
 
   #renderOriginalPrompt() {
@@ -381,10 +398,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderUserInput() {
-    const { liteView } = this.runtime.state;
+    const { lite } = this.runtime.state;
     return html`<bb-editor-input-lite
       .controller=${this}
-      .state=${liteView}
+      .state=${lite}
     ></bb-editor-input-lite>`;
   }
 
@@ -408,9 +425,40 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   #renderList() {
     return html`
       <bb-step-list-view
-        .state=${this.runtime.state.liteView.stepList}
+        .state=${this.runtime.state.lite.stepList}
       ></bb-step-list-view>
     `;
+  }
+
+  #renderOnboardingTooltip() {
+    if (
+      !this.#showAdvancedEditorOnboardingTooltip ||
+      !this.#advancedEditorLink.value
+    ) {
+      return nothing;
+    }
+
+    const targetBounds = this.#advancedEditorLink.value.getBoundingClientRect();
+    if (!targetBounds.width) {
+      return nothing;
+    }
+
+    const PADDING = 30;
+    const x = Math.round(window.innerWidth - targetBounds.right + PADDING);
+    const y = Math.round(targetBounds.y + targetBounds.height + PADDING);
+    const styles: Record<string, string> = {
+      "--right": `${x}px`,
+      "--top": `${y}px`,
+    };
+
+    return html`<bb-onboarding-tooltip
+      @bbonboardingacknowledged=${() => {
+        this.#showAdvancedEditorOnboardingTooltip = false;
+        globalThis.localStorage.setItem(ADVANCED_EDITOR_KEY, "false");
+      }}
+      style=${styleMap(styles)}
+      .text=${"To edit or view full prompt, open in advanced editor"}
+    ></bb-onboarding-tooltip>`;
   }
 
   #renderApp() {
@@ -425,7 +473,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             <div class="left">${this.tab?.name ?? "Untitled app"}</div>
             <div class="right">
               <a
-                href="/?mode=canvas&flow=${this.tab?.graph.url}"
+                ${ref(this.#advancedEditorLink)}
+                href="${this.hostOrigin}?mode=canvas&flow=${this.tab?.graph
+                  .url}"
                 target="_blank"
                 ><span class="g-icon">open_in_new</span>Open Advanced Editor</a
               >
@@ -466,15 +516,12 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       </h2>
       <aside id="examples">
         <ul>
-          ${repeat(this.runtime.state.liteView.examples, (example) => {
+          ${repeat(this.runtime.state.lite.examples, (example) => {
             return html`<li>
               <button
                 class="w-400 md-body-small sans-flex"
-                @click=${(evt: Event) => {
-                  if (!(evt.target instanceof HTMLButtonElement)) return;
-
-                  this.runtime.state.liteView.currentExampleIntent =
-                    example.intent;
+                @click=${() => {
+                  this.runtime.state.lite.currentExampleIntent = example.intent;
                 }}
               >
                 <span class="example-icon">
@@ -492,16 +539,22 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderShellUI() {
-    return [this.renderTooltip()];
+    return [
+      this.renderTooltip(),
+      this.#renderOnboardingTooltip(),
+      this.uiState.show.has("SignInModal")
+        ? this.renderSignInModal(true)
+        : nothing,
+    ];
   }
 
   render() {
     if (!this.ready) return nothing;
 
-    const { viewType } = this.runtime.state.liteView;
+    const lite = this.runtime.state.lite;
 
     let content: HTMLTemplateResult | symbol = nothing;
-    switch (viewType) {
+    switch (lite.viewType) {
       case "home": {
         content = this.#renderWelcomeMat();
         break;
@@ -520,9 +573,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       }
       case "loading":
         return html`<div id="loading">
-          <span class="g-icon heavy-filled round">progress_activity</span
-          >Loading
-        </div>`;
+            <span class="g-icon heavy-filled round">progress_activity</span
+            >Loading
+          </div>
+          ${this.#renderShellUI()}`;
       default:
         console.log("Invalid lite view state");
         return nothing;
@@ -532,9 +586,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         id="lite-shell"
         class=${classMap({
           full: this.showAppFullscreen,
-          welcome: viewType === "home",
+          welcome: lite.viewType === "home",
         })}
-        ?inert=${this.uiState.blockingAction}
+        ?inert=${this.uiState.blockingAction || lite.status == "generating"}
         @bbsnackbar=${(snackbarEvent: BreadboardUI.Events.SnackbarEvent) => {
           this.snackbar(
             snackbarEvent.message,
@@ -544,6 +598,11 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             snackbarEvent.snackbarId,
             snackbarEvent.replaceAll
           );
+        }}
+        @bbunsnackbar=${(
+          unsnackbarEvent: BreadboardUI.Events.UnsnackbarEvent
+        ) => {
+          this.unsnackbar(unsnackbarEvent.snackbarId);
         }}
         @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) => {
           if (evt.detail.eventType === "app.fullscreen") {

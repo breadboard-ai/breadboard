@@ -90,7 +90,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         overflow: scroll;
         scrollbar-width: none;
         border-radius: var(--bb-grid-size-2);
-        box-shadow: var(--bb-elevation-0);
+        box-shadow: 0px 0 20px rgb(0, 0, 0, 0.1);
         padding: var(--bb-grid-size-3) var(--bb-grid-size-3);
         white-space: normal;
         scroll-padding-top: var(--bb-grid-size-11);

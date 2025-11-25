@@ -28,7 +28,7 @@ class ReactiveApp implements App {
   @signal
   get state() {
     if (this.consentRequests.length > 0) return "consent";
-    if (this.screens.size === 0) return "splash";
+    if (!this.last) return "splash";
     if (this.run.error) return "error";
     if (this.run.input) return "input";
     if (this.current.size === 0) return "output";
@@ -57,6 +57,10 @@ class ReactiveApp implements App {
 
   @signal
   get last(): ReactiveAppScreen | null {
-    return Array.from(this.screens.values()).at(-1) || null;
+    return (
+      Array.from(this.screens.values()).findLast(
+        (screen) => !(screen.type === "input" && screen.status === "complete")
+      ) || null
+    );
   }
 }

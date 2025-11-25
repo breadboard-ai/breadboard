@@ -79,6 +79,12 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
     this.#add("Objective", "summarize", objective);
   }
 
+  generatingLayouts(uiPrompt: LLMContent | undefined) {
+    this.screen.progress = "Generating layouts";
+    this.screen.expectedDuration = 70;
+    this.#add("Generating Layouts", "web", uiPrompt ?? llm``.asContent());
+  }
+
   /**
    * The agent sent initial request.
    */
@@ -128,6 +134,8 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
         }
         this.screen.expectedDuration = -1;
       } else {
+        // Remove the occasional ellipsis from the status
+        status = status.replace(/\.+$/, "");
         if (options?.expectedDurationInSec) {
           this.screen.expectedDuration = options.expectedDurationInSec;
         } else {

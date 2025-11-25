@@ -15,20 +15,77 @@ import { err } from "@breadboard-ai/utils";
 import { generateTemplate } from "./generate-template";
 import { makeFunction } from "./make-function";
 import { generateOutputViaFunction } from "./generate-output";
+import { FunctionDefinition } from "../function-definition";
+import { A2UIRenderer } from "../types";
 
 export { SmartLayoutPipeline };
+
+const SPEC_MODEL = "gemini-flash-latest";
+const TEMPLATE_MODEL = "gemini-flash-latest";
+
+export type SmartLayoutPipelineArgs = {
+  caps: Capabilities;
+  moduleArgs: A2ModuleArgs;
+  fileSystem: AgentFileSystem;
+  translator: PidginTranslator;
+  ui?: A2UIRenderer;
+};
 
 /**
  * The full "Smart Layout" pipeline
  */
 class SmartLayoutPipeline {
-  constructor(
-    private readonly caps: Capabilities,
-    private readonly moduleArgs: A2ModuleArgs
-  ) {}
+  constructor(private readonly args: SmartLayoutPipelineArgs) {}
+
+  async prepareFunctionDefinitions(
+    content: LLMContent,
+    params: Params
+  ): Promise<Outcome<FunctionDefinition[]>> {
+    const { ui, moduleArgs, translator } = this.args;
+    if (!ui) {
+      return err(
+        `No renderer provided, unable to prepare function definitions`
+      );
+    }
+
+    const translated = await translator.toPidgin(content, params);
+    if (!ok(translated)) return translated;
+
+    // 1. Create a spec from the data.
+    const spec = await generateSpec(
+      llm`${translated.text}`.asContent(),
+      moduleArgs,
+      SPEC_MODEL
+    );
+    if (!ok(spec)) return spec;
+
+    if (spec.length === 0) {
+      return err(`No surfaces were generated`);
+    }
+
+    // 2. Create function definitions.
+    const results = await Promise.all(
+      spec.map(async (surfaceSpec) => {
+        const a2UIPayload = await generateTemplate(
+          surfaceSpec,
+          moduleArgs,
+          TEMPLATE_MODEL
+        );
+        if (!ok(a2UIPayload)) return a2UIPayload;
+        return makeFunction(surfaceSpec, a2UIPayload, ui);
+      })
+    );
+    const errors = results
+      .map((result) => (!ok(result) ? result.$error : null))
+      .filter((error) => error !== null);
+    if (errors.length > 0) {
+      return err(errors.join("\n"));
+    }
+    return results as FunctionDefinition[];
+  }
 
   async run(content: LLMContent, params: Params): Promise<Outcome<unknown[]>> {
-    const { caps, moduleArgs } = this;
+    const { caps, moduleArgs } = this.args;
     const fileSystem = new AgentFileSystem();
     const translator = new PidginTranslator(caps, moduleArgs, fileSystem);
 
@@ -38,7 +95,8 @@ class SmartLayoutPipeline {
     // 1. Create a spec from the data.
     const spec = await generateSpec(
       llm`${translated.text}`.asContent(),
-      moduleArgs
+      moduleArgs,
+      SPEC_MODEL
     );
     if (!ok(spec)) return spec;
 
@@ -50,7 +108,11 @@ class SmartLayoutPipeline {
     const processSurface = async (
       surfaceSpec: SurfaceSpec
     ): Promise<Outcome<unknown[]>> => {
-      const a2UIPayload = await generateTemplate(surfaceSpec, moduleArgs);
+      const a2UIPayload = await generateTemplate(
+        surfaceSpec,
+        moduleArgs,
+        TEMPLATE_MODEL
+      );
       if (!ok(a2UIPayload)) return a2UIPayload;
 
       let resolver: (payload: Outcome<unknown[]>) => void;

@@ -399,10 +399,11 @@ export class Header extends LitElement {
       }}
     >
       <span class="g-icon">replay</span>
-      ${this.#showReplayWarning
+      ${this.progress > 0 && this.#showReplayWarning
         ? html`<bb-onboarding-tooltip
-            title="Are you sure you want to refresh?"
-            text="Share or download results, otherwise output will be lost."
+            delayed
+            .tooltipTitle=${"Are you sure you want to refresh?"}
+            .text=${"Share or download results, otherwise output will be lost."}
             @bbonboardingacknowledged=${() => {
               globalThis.localStorage.setItem(REPLAY_WARNING_KEY, "false");
               this.#showReplayWarning = false;

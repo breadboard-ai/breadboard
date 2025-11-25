@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type LanguagePack } from "@breadboard-ai/shared-ui/types/types.js";
+import type {
+  LandingUrlInit,
+  MakeUrlInit,
+  LanguagePack,
+  GraphInit,
+} from "@breadboard-ai/shared-ui/types/types.js";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
 import {
   ActionTracker,
@@ -13,13 +18,7 @@ import {
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import { connectToOpalShellHost } from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
 import * as Shell from "./shell.js";
-import {
-  parseUrl,
-  makeUrl,
-  LandingUrlInit,
-  MakeUrlInit,
-  GraphInit,
-} from "@breadboard-ai/shared-ui/utils/urls.js";
+import { parseUrl, makeUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 import "./carousel.js";
 
 const parsedUrl = parseUrl(window.location.href) as LandingUrlInit;

@@ -15,7 +15,7 @@
  */
 
 import { A2UIModelProcessor } from "../../data/model-processor.js";
-import type { NumberValue, StringValue } from "../../types/primitives.js";
+import { NumberValue, type StringValue } from "../../types/primitives.js";
 import { type AnyComponentNode } from "../../types/types.js";
 
 export function extractStringValue(

@@ -61,6 +61,7 @@ type Mode = {
 const PROMPT_PORT = "config$prompt";
 const ASK_USER_PORT = "config$ask-user";
 const LIST_PORT = "config$list";
+const LIMIT_MSG = "generation has a daily limit";
 
 const MODES: Mode[] = [
   {
@@ -180,7 +181,7 @@ const MODES: Mode[] = [
     icon: "photo_spark",
     promptPlaceholderText:
       "Type your image prompt here. Use @ to include other content.",
-    info: "Image generation has limited free quota",
+    info: `Image ${LIMIT_MSG}`,
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
   },
   {
@@ -190,9 +191,23 @@ const MODES: Mode[] = [
     title: "Gemini 2.5 Flash Image (Nano Banana)",
     description: "Generates images from text and images",
     icon: "photo_spark",
+    modelName: "ai_image_tool",
     promptPlaceholderText:
       "Type your image prompt here. Use @ to include other content.",
     info: "Image generation has limited free quota",
+    portMap: new Map([[PROMPT_PORT, "instruction"]]),
+  },
+  {
+    id: "image-pro",
+    type: "image",
+    url: "embed://a2/a2.bgl.json#module:image-editor",
+    title: "Gemini 3 Pro Image (Nano Banana)",
+    description: "Optimized for professional asset production",
+    icon: "photo_spark",
+    modelName: "gemini-3-pro-image-preview",
+    promptPlaceholderText:
+      "Type your image prompt here. Use @ to include other content.",
+    info: `Image ${LIMIT_MSG}`,
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
   },
   {
@@ -204,7 +219,7 @@ const MODES: Mode[] = [
     icon: "audio_magic_eraser",
     promptPlaceholderText:
       "Type the text to speak here. Use @ to include other content.",
-    info: "Audio generation has limited free quota",
+    info: `Audio ${LIMIT_MSG}`,
     portMap: new Map([[PROMPT_PORT, "text"]]),
   },
   {
@@ -216,7 +231,7 @@ const MODES: Mode[] = [
     icon: "videocam_auto",
     promptPlaceholderText:
       "Type your video prompt here. Use @ to include other content.",
-    info: "Video generation has limited free quota",
+    info: `Video ${LIMIT_MSG}`,
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
   },
   {
@@ -228,7 +243,7 @@ const MODES: Mode[] = [
     icon: "audio_magic_eraser",
     promptPlaceholderText:
       "Type your music prompt here. Use @ to include other content.",
-    info: "Music generation has limited free quota",
+    info: `Music ${LIMIT_MSG}`,
     portMap: new Map([[PROMPT_PORT, "text"]]),
   },
 ] as const;

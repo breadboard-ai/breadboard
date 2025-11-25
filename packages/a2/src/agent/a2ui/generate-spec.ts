@@ -20,9 +20,11 @@ import type {
 import { A2ModuleArgs } from "../../runnable-module-factory";
 import { parseJson } from "../../parse-json";
 import { err, ok } from "@breadboard-ai/utils";
-import Ajv from "ajv";
+import { Validator } from "@cfworker/json-schema";
 
 export { generateSpec };
+
+const MAX_RETRIES = 3;
 
 function prompt(content: LLMContent): GeminiBody {
   return {
@@ -151,44 +153,49 @@ export type SurfaceSpec = Omit<
 
 async function generateSpec(
   content: LLMContent,
-  moduleArgs: A2ModuleArgs
+  moduleArgs: A2ModuleArgs,
+  modelName: string
 ): Promise<Outcome<SurfaceSpec[]>> {
-  const surfaces = await generateContent(
-    "gemini-flash-latest",
-    prompt(content),
-    moduleArgs
-  );
-  const rawSpecs = parseJson<SurfaceSpecs>(surfaces);
-  if (!ok(rawSpecs)) return rawSpecs;
+  let retryCount = MAX_RETRIES;
+  for (;;) {
+    const surfaces = await generateContent(
+      modelName,
+      prompt(content),
+      moduleArgs
+    );
+    const rawSpecs = parseJson<SurfaceSpecs>(surfaces);
+    if (!ok(rawSpecs)) return rawSpecs;
 
-  let hasErrors = false;
-  const specs = rawSpecs.surfaces.map((rawSpec) => {
-    let dataModelSchema = parseToSchema(rawSpec.dataModelSchema);
-    if (!ok(dataModelSchema)) {
-      hasErrors = true;
-      dataModelSchema = { type: "object" };
+    const errors: string[] = [];
+    const specs = rawSpecs.surfaces.map((rawSpec) => {
+      let dataModelSchema = parseToSchema(rawSpec.dataModelSchema);
+      if (!ok(dataModelSchema)) {
+        errors.push(dataModelSchema.$error);
+        dataModelSchema = { type: "object" };
+      }
+      let responseSchema = parseToSchema(rawSpec.responseSchema);
+      if (!ok(responseSchema)) {
+        errors.push(responseSchema.$error);
+        responseSchema = { type: "object" };
+      }
+      let exampleData = toPlainJson(rawSpec.exampleData);
+      if (!ok(exampleData)) {
+        errors.push(exampleData);
+        exampleData = { type: "object" };
+      }
+      return {
+        ...rawSpec,
+        exampleData,
+        dataModelSchema,
+        responseSchema,
+      };
+    });
+    if (errors.length === 0) return specs;
+    if (!retryCount--) {
+      return err(errors.join("\n\n"));
     }
-    let responseSchema = parseToSchema(rawSpec.responseSchema);
-    if (!ok(responseSchema)) {
-      hasErrors = true;
-      responseSchema = { type: "object" };
-    }
-    let exampleData = toPlainJson(rawSpec.exampleData);
-    if (!ok(exampleData)) {
-      hasErrors = true;
-      exampleData = { type: "object" };
-    }
-    return {
-      ...rawSpec,
-      exampleData,
-      dataModelSchema,
-      responseSchema,
-    };
-  });
-  if (hasErrors) {
-    return err(`Failed to parse JSON schemas`);
+    console.log("Failed to generate surfaces, retrying", errors, retryCount);
   }
-  return specs;
 }
 
 function toPlainJson(s: string): Outcome<JsonSerializable> {
@@ -201,14 +208,12 @@ function toPlainJson(s: string): Outcome<JsonSerializable> {
 
 function parseToSchema(s: string): Outcome<GeminiSchema> {
   try {
-    const ajv = new Ajv();
     const maybeSchema = JSON.parse(s);
-    const isSchema = ajv.validateSchema(maybeSchema);
-    if (!isSchema) {
-      return err(`JSON Schema is invalid`);
-    }
+    // Throws if schema is invalid
+    new Validator(maybeSchema);
     return maybeSchema;
   } catch (e) {
+    console.log("FAILED TO PARSE SURFACE SPEC SCHEMA", e);
     return err((e as Error).message);
   }
 }

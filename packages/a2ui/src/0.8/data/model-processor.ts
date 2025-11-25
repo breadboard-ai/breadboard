@@ -41,7 +41,6 @@ import {
   isResolvedColumn,
   isResolvedDateTimeInput,
   isResolvedDivider,
-  isResolvedHeading,
   isResolvedIcon,
   isResolvedImage,
   isResolvedList,
@@ -517,16 +516,6 @@ export class A2UIModelProcessor implements ModelProcessor {
       weight: componentData.weight ?? "initial",
     };
     switch (componentType) {
-      case "Heading":
-        if (!isResolvedHeading(resolvedProperties)) {
-          throw new Error(`Invalid data; expected ${componentType}`);
-        }
-        return new this.#objCtor({
-          ...baseNode,
-          type: "Heading",
-          properties: resolvedProperties,
-        }) as AnyComponentNode;
-
       case "Text":
         if (!isResolvedText(resolvedProperties)) {
           throw new Error(`Invalid data; expected ${componentType}`);
@@ -665,7 +654,7 @@ export class A2UIModelProcessor implements ModelProcessor {
         }
         return new this.#objCtor({
           ...baseNode,
-          type: "Checkbox",
+          type: "CheckBox",
           properties: resolvedProperties,
         }) as AnyComponentNode;
 
@@ -710,7 +699,12 @@ export class A2UIModelProcessor implements ModelProcessor {
         }) as AnyComponentNode;
 
       default:
-        throw new Error(`Unknown component type: "${componentType}"`);
+        // Catch-all for other custom component types.
+        return new this.#objCtor({
+          ...baseNode,
+          type: componentType,
+          properties: resolvedProperties,
+        }) as AnyComponentNode;
     }
   }
 
@@ -830,6 +824,8 @@ export class A2UIModelProcessor implements ModelProcessor {
         if (isPath(key, propValue) && dataContextPath !== "/") {
           propertyValue = propValue
             .replace(/^\.?\/item/, "")
+            .replace(/^\.?\/text/, "")
+            .replace(/^\.?\/label/, "")
             .replace(/^\.?\//, "");
           newObj[key] = propertyValue as ResolvedValue;
           continue;

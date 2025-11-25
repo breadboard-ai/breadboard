@@ -4,27 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css } from "lit";
-import { customElement, property } from "lit/decorators.js";
-import * as StringsHelper from "../../strings/helper.js";
-import { createRef, ref } from "lit/directives/ref.js";
-import type { Outcome } from "@breadboard-ai/types";
-import { SnackbarEvent, StateEvent } from "../../events/events.js";
-import "../../elements/input/expanding-textarea.js";
-import { classMap } from "lit/directives/class-map.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
-import { ok } from "@breadboard-ai/utils";
 import { SignalWatcher } from "@lit-labs/signals";
-import * as Styles from "../../styles/styles";
 import { consume } from "@lit/context";
+import { LitElement, css, html } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+import { createRef, ref } from "lit/directives/ref.js";
 import { uiStateContext } from "../../contexts/ui-state.js";
-import { LiteViewState, UI } from "../../state/types.js";
+import "../../elements/input/expanding-textarea.js";
+import { SnackbarEvent, UnsnackbarEvent } from "../../events/events.js";
+import { OneShotFlowGenFailureResponse } from "../../flow-gen/flow-generator.js";
+import { LiteModeState, UI } from "../../state/types.js";
+import * as StringsHelper from "../../strings/helper.js";
+import * as Styles from "../../styles/styles";
 import { SnackType } from "../../types/types.js";
+import { ActionTracker } from "../../utils/action-tracker.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
 export type LiteEditInputController = {
-  generate(intent: string): Promise<Outcome<void>>;
+  generate(intent: string): Promise<OneShotFlowGenFailureResponse | undefined>;
 };
 
 @customElement("bb-editor-input-lite")
@@ -90,7 +89,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
   accessor controller: LiteEditInputController | undefined = undefined;
 
   @property()
-  accessor state!: LiteViewState;
+  accessor state!: LiteModeState;
 
   readonly #descriptionInput = createRef<HTMLTextAreaElement>();
 
@@ -142,32 +141,22 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
     const description = input?.value;
     if (!description) return;
 
-    this.state.setIntent(description);
-
-    this.state.status = "generating";
-
     ActionTracker.flowGenEdit(this.state.graph?.url);
 
-    this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
+    this.state.startGenerating();
 
     const result = await this.controller?.generate(description);
-    if (!ok(result)) {
-      this.#onGenerateError(result.$error);
+    if (result && "error" in result) {
+      this.#onGenerateError(result.error, result.suggestedIntent);
     } else {
-      this.#onGenerateComplete();
+      this.#clearInput();
     }
-
-    this.dispatchEvent(new StateEvent({ eventType: "host.unlock" }));
+    this.state.finishGenerating();
   }
 
-  #onGenerateComplete() {
-    this.state.status = "initial";
-    this.#clearInput();
-  }
-
-  #onGenerateError(error: string) {
-    // TODO: Display error correctly.
+  #onGenerateError(error: string, suggestedIntent?: string) {
     console.error("Error generating board", error);
+    console.error("Suggested intent", suggestedIntent);
     this.state.status = "error";
     this.state.error = error;
 
@@ -176,7 +165,21 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
         globalThis.crypto.randomUUID(),
         error,
         SnackType.INFORMATION,
-        [],
+        [
+          {
+            action: "copy",
+            title: "Copy Prompt",
+            value: suggestedIntent,
+            callback: async () => {
+              if (!suggestedIntent) {
+                return;
+              }
+
+              await navigator.clipboard.writeText(suggestedIntent);
+              this.dispatchEvent(new UnsnackbarEvent());
+            },
+          },
+        ],
         true,
         true
       )

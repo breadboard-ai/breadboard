@@ -395,23 +395,16 @@ export class Edit extends EventTarget {
       return;
     }
 
-    const newGraph = structuredClone(tab.graph);
-    if (title !== null) {
-      newGraph.title = title;
-    }
-    if (description !== null) {
-      newGraph.description = description;
-    }
-
     await editableGraph.edit(
       [
         {
-          type: "replacegraph",
-          replacement: newGraph,
-          creator: { role: "user" },
+          type: "changegraphmetadata",
+          title: title || undefined,
+          description: description || undefined,
+          graphId: "",
         },
       ],
-      "Updating graph"
+      "Updating title and description"
     );
   }
 

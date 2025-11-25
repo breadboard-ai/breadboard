@@ -7,7 +7,7 @@
 import * as BBLite from "@breadboard-ai/shared-ui/lite";
 import "@breadboard-ai/shared-ui/lite/welcome-panel/project-listing.js";
 import "@breadboard-ai/shared-ui/elements/overflow-menu/overflow-menu.js";
-import { html, HTMLTemplateResult, LitElement } from "lit";
+import { css, html, HTMLTemplateResult, LitElement } from "lit";
 import { ref } from "lit/directives/ref.js";
 import { customElement, state } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
@@ -39,7 +39,6 @@ import { RecentBoardStore } from "./data/recent-boards";
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
 const DELETING_BOARD_MESSAGE = "Deleting gem";
-const REMIXING_BOARD_MESSAGE = "Duplicating gem";
 
 @customElement("bb-lite-home")
 export class LiteHome extends LitElement {
@@ -48,6 +47,14 @@ export class LiteHome extends LitElement {
     BBLite.Styles.HostBehavior.behavior,
     BBLite.Styles.HostColors.baseColors,
     BBLite.Styles.HostType.type,
+    css`
+      :host {
+        --welcome-text-color: light-dark(#1b1c1d, #ffffff);
+        --welcome-button-color: light-dark(#0b57d0, #000000);
+        --welcome-surface-color: light-dark(#f0f4f9, #1a1a1a);
+        --welcome-button-text-label-color: (#0b57d0, #ffffff);
+      }
+    `,
   ];
 
   @provide({ context: globalConfigContext })
@@ -146,22 +153,21 @@ export class LiteHome extends LitElement {
       this.style.overflow = "auto";
       this.style.padding = "24px";
     }
+    this.#addResizeController();
   }
 
-  #addGalleryResizeController(el: Element | undefined) {
-    if (el instanceof HTMLElement) {
-      const notifyResize = () => {
-        this.#embedHandler?.sendToEmbedder({
-          type: "resize",
-          width: el.offsetWidth,
-          height: el.offsetHeight,
-        });
-      };
-      const resizeObserver = new ResizeObserver(notifyResize);
-      resizeObserver.observe(el);
-      // Send initial notification
-      notifyResize();
-    }
+  #addResizeController() {
+    const notifyResize = () => {
+      this.#embedHandler?.sendToEmbedder({
+        type: "resize",
+        width: this.offsetWidth,
+        height: this.offsetHeight,
+      });
+    };
+    const resizeObserver = new ResizeObserver(notifyResize);
+    resizeObserver.observe(this);
+    // Send initial notification
+    notifyResize();
   }
 
   handleRoutedEvent(evt: Event) {
@@ -312,40 +318,10 @@ export class LiteHome extends LitElement {
   }
 
   async remixBoard(urlString: string) {
-    if (this.#busy) return;
-    this.#busy = true;
-
-    if (!this.boardServer) {
-      return err(`Board server is undefined. Likely a misconfiguration`);
-    }
-    const snackbarId = crypto.randomUUID();
-    this.snackbar(REMIXING_BOARD_MESSAGE, SnackType.PENDING, snackbarId);
-    try {
-      const url = new URL(urlString);
-      // 1. Load graph
-      const graph = await this.boardServer.load(url);
-      if (!graph) {
-        return err(`Unable to load board "${url}"`);
-      }
-      // 2. Deep copy
-      const remix = await this.boardServer.deepCopy(url, graph);
-      // 3. Title as a remix
-      remix.title = `${remix.title ?? "Untitled"} Remix`;
-      // 4. Create new graph
-      const { url: newUrlString } = await this.boardServer.create(url, remix);
-      if (!newUrlString) {
-        return err(`Unable to save remixed board "${url}"`);
-      }
-      await Promise.all([
-        this.boardServer.flushSaveQueue(newUrlString),
-        this.addRecentBoard(newUrlString, remix.title),
-      ]);
-      // 5: Go to the new graph URL
-      this.loadBoard(newUrlString);
-    } finally {
-      this.unsnackbar(snackbarId);
-      this.#busy = false;
-    }
+    this.#embedHandler?.sendToEmbedder({
+      type: "remix_board",
+      boardId: urlString,
+    });
   }
 
   async loadBoard(urlString: string) {
@@ -376,7 +352,6 @@ export class LiteHome extends LitElement {
   render() {
     return html`<section id="home">
       <bb-project-listing-lite
-        ${ref((el) => this.#addGalleryResizeController(el))}
         .recentBoards=${this.recentBoards}
         @bbevent=${this.handleRoutedEvent}
       ></bb-project-listing-lite>
