@@ -10,6 +10,7 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    open-pull-requests-limit: 10
     # Use a cooldown to wait for updates to become stable before applying them.
     # This helps to mitigate npm attacks, because the more time has elapsed
     # since an attack was published, the more likely it has been discovered and
@@ -31,11 +32,6 @@ updates:
         applies-to: version-updates
         patterns:
           - "typescript"
-      # Major changes will often be breaking.
-      major:
-        applies-to: version-updates
-        update-types:
-          - "major"
       # Minor and patch changes should in theory never be breaking.
       minor-and-patch:
         applies-to: version-updates
