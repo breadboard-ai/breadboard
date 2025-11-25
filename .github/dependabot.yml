@@ -1,25 +1,60 @@
+# References:
+#
+# https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference
+#
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/optimizing-pr-creation-version-updates#setting-up-a-cooldown-period-for-dependency-updates
+
 version: 2
 updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "daily"
-    reviewers:
-      - dglazkov
-      - aomarks
+    # Use a cooldown to wait for updates to become stable before applying them.
+    # This helps to mitigate npm attacks, because the more time has elapsed
+    # since an attack was published, the more likely it has been discovered and
+    # removed. Major and minor updates are also further slowed to reduce churn
+    # and review time.
+    #
+    # Note that known security updates always bypasses this cooldown.
+    cooldown:
+      default-days: 7
+      semver-patch-days: 7
+      semver-minor-days: 14
+      semver-major-days: 21
+    # Instead of sending every update as a separate PR, consolidate them into a
+    # few groups.
+    groups:
+      security:
+        applies-to: security-updates
+      # TypeScript doesn't follow semver, because it regularly publishes
+      # breaking changes (e.g. stricter type-checking) as minor updates.
+      typescript:
+        applies-to: version-updates
+        patterns:
+          - "typescript"
+      # Major changes will often be breaking.
+      major:
+        applies-to: version-updates
+        update-types:
+          - "major"
+      # Minor and patch changes should in theory never be breaking.
+      minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: "github-actions"
     directory: ".github/workflows"
     schedule:
       interval: "daily"
-    reviewers:
-      - dglazkov
-      - aomarks
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: "devcontainers"
     directory: ".devcontainer"
     schedule:
       interval: "daily"
-    reviewers:
-      - dglazkov
-      - aomarks
+    cooldown:
+      default-days: 7
