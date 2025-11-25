@@ -33,7 +33,7 @@ jobs:
         if: github.event_name != 'pull_request' # For PRs, caching is disabled to ensure a clean build
 
       - name: Clean Installing dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Generating the build
         run: npm run build
