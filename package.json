@@ -32,7 +32,8 @@
     "test": {
       "dependencies": [
         "<workspaces>#<this>",
-        "!./packages/ui-tests#<this>"
+        "!./packages/ui-tests#<this>",
+        "!./experiments/screens#<this>"
       ]
     },
     "lint": {
