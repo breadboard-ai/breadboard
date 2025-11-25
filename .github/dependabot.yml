@@ -25,8 +25,6 @@ updates:
     # Instead of sending every update as a separate PR, consolidate them into a
     # few groups.
     groups:
-      security:
-        applies-to: security-updates
       # TypeScript doesn't follow semver, because it regularly publishes
       # breaking changes (e.g. stricter type-checking) as minor updates.
       typescript:
