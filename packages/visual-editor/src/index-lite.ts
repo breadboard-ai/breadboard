@@ -349,6 +349,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   async generate(
     intent: string
   ): Promise<OneShotFlowGenFailureResponse | undefined> {
+    if (!(await this.askUserToSignInIfNeeded())) {
+      return { error: "" };
+    }
     let projectState = this.runtime.state.project;
 
     if (!projectState) {
