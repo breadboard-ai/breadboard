@@ -262,6 +262,13 @@ export class ResetEvent extends Event {
   }
 }
 
+export class SubscriberCreditRefreshEvent extends Event {
+  static eventName = "bbsubscribercreditrefresh";
+  constructor() {
+    super(SubscriberCreditRefreshEvent.eventName, { ...eventInit });
+  }
+}
+
 export class OverflowMenuActionEvent extends Event {
   static eventName = "bboverflowmenuaction";
 

@@ -13,29 +13,39 @@ import { ref } from "lit/directives/ref.js";
 import {
   OverflowMenuActionEvent,
   OverlayDismissedEvent,
+  SubscriberCreditRefreshEvent,
 } from "../../events/events";
 import { icons } from "../../styles/icons.js";
 import { SigninAdapter } from "../../utils/signin-adapter.js";
 
-import { RuntimeFlags } from "@breadboard-ai/types";   
+import { SignalWatcher } from "@lit-labs/signals";
+import { consume } from "@lit/context";
+import { uiStateContext } from "../../contexts/ui-state.js";
+import { UI } from "../../state/types.js";
+import { type } from "../../styles/host/type.js";
 
 @customElement("bb-account-switcher")
-export class AccountSwitcher extends LitElement {
+export class AccountSwitcher extends SignalWatcher(LitElement) {
   @property()
   accessor signInAdapter: SigninAdapter | null = null;
 
+  @consume({ context: uiStateContext })
+  accessor uiState!: UI;
+
   @query("dialog")
   accessor #dialog: HTMLDialogElement | null = null;
-
-  @property()
-  accessor runtimeFlags: RuntimeFlags | null = null;
 
   @query("#container")
   accessor #container: HTMLElement | null = null;
 
   static styles = [
     icons,
+    type,
     css`
+      * {
+        box-sizing: border-box;
+      }
+
       :host {
         display: block;
       }
@@ -75,8 +85,11 @@ export class AccountSwitcher extends LitElement {
           background: var(--light-dark-n-100);
           border-radius: var(--bb-grid-size-4);
           border: 1px solid var(--light-dark-n-98);
+          box-shadow:
+            0px 4px 8px 3px rgba(0, 0, 0, 0.15),
+            0px 1px 3px rgba(0, 0, 0, 0.3);
           width: 100%;
-          max-width: 300px;
+          max-width: 360px;
 
           h1 {
             margin: 0 0 var(--bb-grid-size-5) 0;
@@ -106,75 +119,75 @@ export class AccountSwitcher extends LitElement {
           }
 
           & #g1-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            place-items: center;
-            gap: var(--bb-grid-size-3);
+            display: flex;
             width: 100%;
-            max-width: 300px;
-            font: 500 var(--bb-title-medium) / 1 var(--bb-font-family);
+            align-items: center;
+            justify-content: space-between;
             margin-bottom: var(--bb-grid-size-3);
-            height: var(--bb-grid-size-14);
-            border-radius: var(--bb-grid-size-16);
-            border: 1px solid var(--light-dark-n-90);
+            padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
+            border-radius: var(--bb-grid-size-5);
             background: var(--light-dark-n-98);
-            margin-bottom: var(--bb-grid-size-5);
-          }
 
-          & #get-ai-credits {
-            width: 100%;
-            max-width: 100px;
-            font: 500 var(--bb-title-medium) / 1 var(--bb-font-family);
-            margin-bottom: var(--bb-grid-size-3);
-            height: var(--bb-grid-size-10);
-            border-radius: var(--bb-grid-size-16);
-            border: 1px solid var(--light-dark-n-90);
-            background: var(--light-dark-n-98);
-            margin-bottom: var(--bb-grid-size-2);
-            transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
+            & #credit-count {
+              display: flex;
+              align-items: center;
 
-            &:not([disabled]) {
+              & .g-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 24px;
+                height: 24px;
+                margin-right: var(--bb-grid-size-2);
+                position: relative;
+
+                &.rotate {
+                  animation: rotate 1s linear infinite;
+                }
+
+                &.circle {
+                  &::after {
+                    content: "";
+                    border-radius: 50%;
+                    position: absolute;
+                    width: calc(100% - 4px);
+                    height: calc(100% - 4px);
+                    border: 2px solid var(--light-dark-n-0);
+                    top: 0;
+                    left: 0;
+                  }
+                }
+              }
+            }
+
+            & #get-ai-credits {
+              background: var(--light-dark-n-95);
+              border: none;
+              border-radius: var(--bb-grid-size-5);
+              padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
               cursor: pointer;
+              transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
 
-              &:hover,
-              &:focus {
-                background: var(--light-dark-n-90);
+              &:not([disabled]) {
+                cursor: pointer;
+
+                &:hover,
+                &:focus {
+                  background: var(--light-dark-n-90);
+                }
               }
             }
           }
 
-          & #manage-membership {
-            width: 100%;
-            max-width: 300px;
-            font: 500 var(--bb-title-medium) / 1 var(--bb-font-family);
-            margin-bottom: var(--bb-grid-size-3);
-            height: var(--bb-grid-size-10);
-            border-radius: var(--bb-grid-size-16);
-            border: 1px solid var(--light-dark-n-90);
-            background: var(--light-dark-n-98);
-            margin-bottom: var(--bb-grid-size-2);
-            transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
-
-            &:not([disabled]) {
-              cursor: pointer;
-
-              &:hover,
-              &:focus {
-                background: var(--light-dark-n-90);
-              }
-            }
-          }
-
-
+          & #manage-membership,
           & #sign-out {
             width: 100%;
             max-width: 300px;
-            font: 500 var(--bb-title-medium) / 1 var(--bb-font-family);
             margin-bottom: var(--bb-grid-size-3);
             height: var(--bb-grid-size-10);
             border-radius: var(--bb-grid-size-16);
             border: 1px solid var(--light-dark-n-90);
-            background: var(--light-dark-n-98);
+            background: var(--light-dark-n-100);
             margin-bottom: var(--bb-grid-size-6);
             transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
 
@@ -183,9 +196,13 @@ export class AccountSwitcher extends LitElement {
 
               &:hover,
               &:focus {
-                background: var(--light-dark-n-90);
+                background: var(--light-dark-n-95);
               }
             }
+          }
+
+          & #manage-membership {
+            margin-bottom: var(--bb-grid-size);
           }
 
           a {
@@ -201,6 +218,16 @@ export class AccountSwitcher extends LitElement {
           background: transparent;
         }
       }
+
+      @keyframes rotate {
+        from {
+          rotate: 0deg;
+        }
+
+        to {
+          rotate: 360deg;
+        }
+      }
     `,
   ];
 
@@ -213,11 +240,31 @@ export class AccountSwitcher extends LitElement {
     this.dispatchEvent(new OverlayDismissedEvent());
   }
 
+  #renderCreditCount() {
+    const innerRender = () => {
+      if (this.uiState.subscriptionCredits === -2) {
+        return html` <span class="g-icon filled-heavy round">error</span>Failed
+          to retrieve`;
+      }
+
+      if (this.uiState.subscriptionCredits === -1) {
+        return html` <span class="g-icon rotate filled-heavy round"
+            >progress_activity</span
+          >Updating...`;
+      }
+
+      return html`<span class="g-icon circle filled-heavy round">spark</span
+        >${this.uiState.subscriptionCredits} AI
+        Credit${this.uiState.subscriptionCredits !== 1 ? "s" : ""}`;
+    };
+
+    return html`<span id="credit-count"> ${innerRender()} </span>`;
+  }
+
   render() {
     if (!this.signInAdapter) {
       return nothing;
     }
-    console.log(this.runtimeFlags?.googleOne)
 
     return html`<dialog
       @click=${(evt: Event) => {
@@ -243,6 +290,16 @@ export class AccountSwitcher extends LitElement {
 
         const dialog = el as HTMLDialogElement;
         requestAnimationFrame(() => {
+          if (dialog.open) {
+            return;
+          }
+
+          if (
+            this.uiState.flags?.googleOne &&
+            this.uiState.subscriptionStatus === "subscribed"
+          ) {
+            this.dispatchEvent(new SubscriberCreditRefreshEvent());
+          }
           dialog.showModal();
         });
       })}
@@ -272,36 +329,45 @@ export class AccountSwitcher extends LitElement {
             <p>${this.signInAdapter.name}</p>
           </div>
         </section>
-        ${true //this.runtimeFlags?.googleOne
-          ? html`
-          <section id="g1-container">
-            <span>
-              100 AI Credits
-            </span>
-            <button
-              id="get-ai-credits"
-              @click=${(evt: Event) => {
-                evt.stopImmediatePropagation();
+        ${this.uiState.flags?.googleOne &&
+        (this.uiState.subscriptionStatus === "subscribed" ||
+          this.uiState.subscriptionStatus === "error")
+          ? html` <section
+                id="g1-container"
+                class="w-500 sans-flex md-body-medium"
+              >
+                ${this.#renderCreditCount()}
+                <button
+                  id="get-ai-credits"
+                  class="sans-flex w-500 md-body-medium"
+                  @click=${(evt: Event) => {
+                    evt.stopImmediatePropagation();
 
-                this.dispatchEvent(new OverflowMenuActionEvent("get-ai-credits"));
-              }}
-            >
-              Get AI credits
-            </button>
-          </section>
-          <button
-            id="manage-membership"
-            @click=${(evt: Event) => {
-              evt.stopImmediatePropagation();
+                    this.dispatchEvent(
+                      new OverflowMenuActionEvent("get-ai-credits")
+                    );
+                  }}
+                >
+                  Upgrade
+                </button>
+              </section>
+              <button
+                id="manage-membership"
+                class="sans-flex w-500 md-body-medium"
+                @click=${(evt: Event) => {
+                  evt.stopImmediatePropagation();
 
-              this.dispatchEvent(new OverflowMenuActionEvent("manage-membership"));
-            }}
-          >
-            Manage membership
-          </button>`
+                  this.dispatchEvent(
+                    new OverflowMenuActionEvent("manage-membership")
+                  );
+                }}
+              >
+                Manage membership
+              </button>`
           : nothing}
         <button
           id="sign-out"
+          class="sans-flex w-500 md-body-medium"
           @click=${(evt: Event) => {
             evt.stopImmediatePropagation();
 

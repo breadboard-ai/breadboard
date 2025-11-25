@@ -10,7 +10,7 @@ import { SignalSet } from "signal-utils/set";
 import { SignalMap } from "signal-utils/map";
 import { SignalArray } from "signal-utils/array";
 import { ToastType } from "../events/events";
-import { UI, UIOverlays, UILoadState } from "./types";
+import { UI, UIOverlays, UILoadState, SubscriptionStatus } from "./types";
 import {
   RuntimeFlagManager,
   RuntimeFlags,
@@ -62,6 +62,12 @@ class ReactiveUIState implements UI {
 
   @signal
   accessor lastSnackbarDetailsInfo = null;
+
+  @signal
+  accessor subscriptionStatus: SubscriptionStatus = "indeterminate";
+
+  @signal
+  accessor subscriptionCredits: number = -1;
 
   accessor show = new SignalSet<UIOverlays>();
 

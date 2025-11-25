@@ -498,6 +498,24 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.#boardServers = this.runtime.board.getBoardServers() || [];
     this.uiState = this.runtime.state.getOrCreateUIState();
 
+    try {
+      const flags = await flagManager.flags();
+      if (flags.googleOne) {
+        console.log(`[Google One] Checking subscriber status`);
+        const response = await this.#apiClient.getG1SubscriptionStatus({
+          include_credit_data: true,
+        });
+        this.uiState.subscriptionStatus = response.is_member
+          ? "subscribed"
+          : "not-subscribed";
+        this.uiState.subscriptionCredits = response.remaining_credits;
+      }
+    } catch (err) {
+      console.warn(err);
+      this.uiState.subscriptionStatus = "error";
+      this.uiState.subscriptionCredits = -2;
+    }
+
     if (this.globalConfig.ENABLE_EMAIL_OPT_IN) {
       this.emailPrefsManager.refreshPrefs().then(() => {
         if (
@@ -1956,7 +1974,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       .saveStatus=${renderValues.saveStatus}
       .showExperimentalComponents=${renderValues.showExperimentalComponents}
       .mode=${this.uiState.mode}
-      .runtimeFlags=${this.uiState.flags}
       @bbsignout=${async () => {
         await this.signinAdapter.signOut();
         ActionTracker.signOutSuccess();
@@ -1989,6 +2006,16 @@ abstract class MainBase extends SignalWatcher(LitElement) {
               redirect: homepage,
             })
           );
+        }
+      }}
+      @bbsubscribercreditrefresh=${async () => {
+        try {
+          this.uiState.subscriptionCredits = -1;
+          const response = await this.#apiClient.getG1Credits();
+          this.uiState.subscriptionCredits = response.remaining_credits;
+        } catch (err) {
+          this.uiState.subscriptionCredits = -2;
+          console.warn(err);
         }
       }}
       @bbsharerequested=${() => {

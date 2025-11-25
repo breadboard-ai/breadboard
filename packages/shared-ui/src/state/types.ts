@@ -424,7 +424,15 @@ export type UI = {
   blockingAction: boolean;
   lastSnackbarDetailsInfo: HTMLTemplateResult | string | null;
   flags: RuntimeFlags | null;
+  subscriptionStatus: SubscriptionStatus;
+  subscriptionCredits: number;
 };
+
+export type SubscriptionStatus =
+  | "indeterminate"
+  | "error"
+  | "subscribed"
+  | "not-subscribed";
 
 export type FlowGenGenerationStatus = "generating" | "initial" | "error";
 
