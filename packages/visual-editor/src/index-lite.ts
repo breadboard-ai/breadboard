@@ -314,22 +314,30 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     this.#showAdvancedEditorOnboardingTooltip =
       (globalThis.localStorage.getItem(ADVANCED_EDITOR_KEY) ?? "true") ===
       "true";
-
-    this.#init(parsedUrl);
   }
 
-  /**
-   * Perform any async initialization
-   */
-  async #init(
-    parsedUrl: BreadboardUI.Types.MakeUrlInit | undefined
-  ): Promise<void> {
-    // On lite mode, we always show login/consent before taking any action
-    await this.askUserToSignInIfNeeded();
-    if (parsedUrl) {
-      const remixUrl = parsedUrl.page === "home" ? parsedUrl.remix : null;
-      if (remixUrl) {
-        this.invokeRemixEventRouteWith(remixUrl);
+  override async doPostInitWork(): Promise<void> {
+    const parsedUrl = this.runtime.router.parsedUrl;
+    switch (parsedUrl.page) {
+      case "graph": {
+        let resolve: () => void;
+        const waitForBoardToLoad = new Promise<void>((r) => {
+          resolve = r;
+        });
+        this.runtime.board.addEventListener(
+          RuntimeTabChangeEvent.eventName,
+          () => resolve!()
+        );
+
+        const remixUrl = parsedUrl.remix ? parsedUrl.flow : null;
+        if (remixUrl) {
+          await waitForBoardToLoad;
+          this.invokeRemixEventRouteWith(remixUrl);
+        }
+        break;
+      }
+      case "home": {
+        await this.askUserToSignInIfNeeded();
       }
     }
   }
@@ -502,7 +510,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         }}
       >
       </bb-app-controller>
-      ${this.renderSnackbar()}
+      ${this.renderSnackbar()} ${this.#renderShellUI()}
     </section>`;
   }
 
