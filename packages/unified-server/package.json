@@ -169,7 +169,7 @@
     "@types/jwt-decode": "^2.2.1",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
-    "@typescript-eslint/parser": "^8.34.1",
+    "@typescript-eslint/parser": "^8.48.0",
     "dotenv": "^16.4.7",
     "typescript": "^5.8.3",
     "vite-plugin-compression2": "^2.2.0",
