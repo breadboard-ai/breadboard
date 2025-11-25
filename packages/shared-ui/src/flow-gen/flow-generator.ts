@@ -54,9 +54,11 @@ export const flowGeneratorContext = createContext<FlowGenerator | undefined>(
 
 export class FlowGenerator {
   #appCatalystApiClient: AppCatalystApiClient;
+  #agentMode: boolean;
 
-  constructor(appCatalystApiClient: AppCatalystApiClient) {
+  constructor(appCatalystApiClient: AppCatalystApiClient, agentMode = false) {
     this.#appCatalystApiClient = appCatalystApiClient;
+    this.#agentMode = agentMode;
   }
 
   async oneShot({
@@ -83,6 +85,7 @@ export class FlowGenerator {
       ],
       appOptions: {
         format: "FORMAT_GEMINI_FLOWS",
+        ...(this.#agentMode && { featureFlags: { enable_agent_mode_planner: true } }),
       },
     };
     // Check to see if there's an existing flow with nodes and if so,

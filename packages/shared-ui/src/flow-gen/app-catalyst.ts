@@ -8,6 +8,7 @@ export interface AppCatalystChatRequest {
   messages: AppCatalystContentChunk[];
   appOptions: {
     format: "FORMAT_GEMINI_FLOWS";
+    featureFlags?: Record<string, boolean>;
   };
 }
 
