@@ -10,7 +10,9 @@ import { MainBase } from "./main-base";
 export { Main };
 
 @customElement("bb-main")
-class Main extends MainBase {}
+class Main extends MainBase {
+  async doPostInitWork() {}
+}
 
 declare global {
   interface HTMLElementTagNameMap {

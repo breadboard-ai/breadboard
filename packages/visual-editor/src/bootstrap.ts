@@ -63,7 +63,8 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   );
   const settings = await SettingsStore.restoredInstance();
 
-  const { shellHost, embedHandler, hostOrigin } = await connectToOpalShellHost();
+  const { shellHost, embedHandler, hostOrigin } =
+    await connectToOpalShellHost();
   const signinAdapter = new SigninAdapter(
     shellHost,
     await shellHost.getSignInState()
@@ -132,7 +133,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     }
 
     if (lite) {
-      if (page === "home" && !parsedUrl.new && !parsedUrl.remix) {
+      if (page === "home" && !parsedUrl.new) {
         const { LiteHome } = await import("./index-lite-home.js");
         const liteHome = new LiteHome(mainArgs);
         document.body.appendChild(liteHome);

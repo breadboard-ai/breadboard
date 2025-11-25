@@ -263,7 +263,18 @@ export const RenameRoute: EventRoute<"board.rename"> = {
 export const CreateRoute: EventRoute<"board.create"> = {
   event: "board.create",
 
-  async do({ tab, runtime, uiState, originalEvent, embedHandler }) {
+  async do({
+    tab,
+    runtime,
+    uiState,
+    originalEvent,
+    askUserToSignInIfNeeded,
+    embedHandler,
+  }) {
+    if (!(await askUserToSignInIfNeeded())) {
+      return false;
+    }
+
     const boardServerName = uiState.boardServer;
     const location = uiState.boardLocation;
     const fileName = globalThis.crypto.randomUUID();
