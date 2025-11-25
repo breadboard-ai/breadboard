@@ -57,13 +57,13 @@ export function makeUrl(
     if (init.new) {
       url.searchParams.set(NEW, init.new === true ? "true" : "false");
     }
-    if (init.remix) {
-      url.searchParams.set(REMIX, init.remix);
-    }
   } else if (page === "graph") {
     url.searchParams.set(FLOW, init.flow);
     if (init.resourceKey) {
       url.searchParams.set(RESOURCE_KEY, init.resourceKey);
+    }
+    if (init.remix) {
+      url.searchParams.set(REMIX, init.remix ? "true" : "false");
     }
     if (init.shared) {
       url.searchParams.set(SHARED, "");
@@ -179,10 +179,6 @@ export function parseUrl(url: string | URL): MakeUrlInit {
         lite: url.searchParams.get("lite") === "true",
         new: url.searchParams.get(NEW) === "true",
       };
-      const remix = url.searchParams.get(REMIX);
-      if (remix) {
-        home.remix = remix;
-      }
       if (dev) {
         home.dev = dev;
       }
@@ -198,6 +194,10 @@ export function parseUrl(url: string | URL): MakeUrlInit {
       flow: flow,
       resourceKey: url.searchParams.get(RESOURCE_KEY) ?? undefined,
     };
+    const remix = url.searchParams.get(REMIX);
+    if (remix) {
+      graph.remix = remix === "true";
+    }
     const results = url.searchParams.get(RESULTS);
     if (results) {
       graph.results = results;

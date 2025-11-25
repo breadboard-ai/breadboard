@@ -47,14 +47,6 @@ suite("home", () => {
     new: false,
   });
 
-  testSymmetrical(`${BASE_URL}/?mode=app&lite=true&remix=test`, {
-    page: "home",
-    mode: "app",
-    lite: true,
-    new: false,
-    remix: "test",
-  });
-
   test("default to home w/ canvas", () => {
     assert.deepEqual(parseUrl(`${BASE_URL}/`), {
       page: "home",
@@ -102,6 +94,15 @@ suite("app", () => {
       lite: false,
     }
   );
+
+  testSymmetrical(`${BASE_URL}/?flow=333&remix=true&lite=true&mode=app`, {
+    page: "graph",
+    mode: "app",
+    flow: "333",
+    lite: true,
+    remix: true,
+    resourceKey: undefined,
+  });
 
   testSymmetrical(
     `${BASE_URL}/?flow=drive:/abc123&shared&results=def456&mode=app`,

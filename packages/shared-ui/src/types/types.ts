@@ -551,7 +551,6 @@ export interface HomeUrlInit extends BaseUrlInit {
   new?: boolean;
   mode?: VisualEditorMode;
   lite?: boolean;
-  remix?: string;
   redirectFromLanding?: boolean;
 }
 
@@ -559,6 +558,7 @@ export interface GraphInit extends BaseUrlInit {
   page: "graph";
   mode: VisualEditorMode;
   flow: string;
+  remix?: boolean;
   resourceKey?: string | undefined;
   results?: string;
   shared?: boolean;

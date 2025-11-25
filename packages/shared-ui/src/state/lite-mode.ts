@@ -96,7 +96,6 @@ class ReactiveLiteModeState implements LiteModeState {
       case "Home": {
         const parsedUrl = this.context.router.parsedUrl;
         if (parsedUrl.page === "home") {
-          if (parsedUrl.remix) return "loading";
           zeroState = !!parsedUrl.new;
           if (zeroState) return "home";
         }
