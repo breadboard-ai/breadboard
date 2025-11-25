@@ -25,7 +25,8 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "<workspaces>#<this>"
+        "<workspaces>#<this>",
+        "!./experiments/logic#<this>"
       ]
     },
     "test": {
