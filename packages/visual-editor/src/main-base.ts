@@ -358,8 +358,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     }).then(() => {
       console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
       this.ready = true;
+      this.doPostInitWork();
     });
   }
+
+  abstract doPostInitWork(): Promise<void>;
 
   connectedCallback(): void {
     super.connectedCallback();
