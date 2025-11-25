@@ -97,7 +97,7 @@
     "@types/gapi.client.gmail-v1": "^0.0.4",
     "idb": "^8.0.3",
     "mimetext": "^3.0.27",
-    "zod": "^3.23.8",
+    "zod": "^4.1.12",
     "zod-to-json-schema": "^3.24.6"
   }
 }

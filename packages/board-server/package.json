@@ -88,6 +88,6 @@
     "@breadboard-ai/utils": "0.1.0",
     "@google-cloud/storage": "^7.15.2",
     "cors": "^2.8.5",
-    "express": "^4.21.2"
+    "express": "^5.1.0"
   }
 }
