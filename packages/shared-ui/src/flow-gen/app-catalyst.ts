@@ -16,11 +16,11 @@ export interface AppCatalystChatResponse {
 }
 
 export interface AppCatalystG1SubscriptionStatusRequest {
-  include_credit_data: false;
+  include_credit_data: boolean;
 }
 
 export interface AppCatalystG1SubscriptionStatusResponse {
-  is_member: false;
+  is_member: boolean;
   remaining_credits: number;
 }
 
@@ -30,13 +30,13 @@ export interface AppCatalystG1CreditsResponse {
 
 export type CheckAppAccessResponse =
   | {
-    canAccess: false;
-    accessStatus: string;
-    termsOfService?: {
-      version: number;
-      terms: string;
-    };
-  }
+      canAccess: false;
+      accessStatus: string;
+      termsOfService?: {
+        version: number;
+        terms: string;
+      };
+    }
   | { canAccess: true; accessStatus: string };
 
 export interface AppCatalystContentChunk {
@@ -94,15 +94,21 @@ export class AppCatalystApiClient {
     request: AppCatalystG1SubscriptionStatusRequest
   ): Promise<AppCatalystG1SubscriptionStatusResponse> {
     const url = new URL("v1beta1/getG1SubscriptionStatus", this.#apiBaseUrl);
-    url.searchParams.set("include_credit_data", String(request.include_credit_data));
+    url.searchParams.set(
+      "include_credit_data",
+      String(request.include_credit_data)
+    );
     const response = await this.#fetchWithCreds(url, {
       method: "GET",
     });
     if (!response.ok) {
-      throw new Error(`Failed to get G1 subscription status: ${response.statusText}`);
+      throw new Error(
+        `Failed to get G1 subscription status: ${response.statusText}`
+      );
     }
-    const result = (await response.json()) as AppCatalystG1SubscriptionStatusResponse;
-    return result
+    const result =
+      (await response.json()) as AppCatalystG1SubscriptionStatusResponse;
+    return result;
   }
 
   async getG1Credits(): Promise<AppCatalystG1CreditsResponse> {
@@ -114,7 +120,7 @@ export class AppCatalystApiClient {
       throw new Error(`Failed to get G1 credits: ${response.statusText}`);
     }
     const result = (await response.json()) as AppCatalystG1CreditsResponse;
-    return result
+    return result;
   }
 
   async chat(
@@ -169,7 +175,9 @@ export class AppCatalystApiClient {
     }
   }
 
-  async fetchEmailPreferences<T extends readonly string[]>(preferenceKeys: T): Promise<{
+  async fetchEmailPreferences<T extends readonly string[]>(
+    preferenceKeys: T
+  ): Promise<{
     hasStoredPreferences: boolean;
     preferences: Array<[T[number], boolean]>;
   }> {
@@ -185,28 +193,33 @@ export class AppCatalystApiClient {
       body: JSON.stringify(request),
     });
     if (!response.ok) {
-      throw new Error(`Failed to fetch email preferences: ${response.statusText}`);
+      throw new Error(
+        `Failed to fetch email preferences: ${response.statusText}`
+      );
     }
     const result = (await response.json()) as GetEmailPreferencesResponse;
     return {
-      hasStoredPreferences: result.preferenceResponses?.some(
-        (pref) => (
-          pref.hasStoredPreference
-        )
-      ) ?? false,
-      preferences: result.preferenceResponses?.map((pref) => [
-        pref.preferenceKey,
-        pref.notifyPreference === NotifyPreference.NOTIFY
-      ]) ?? []
+      hasStoredPreferences:
+        result.preferenceResponses?.some((pref) => pref.hasStoredPreference) ??
+        false,
+      preferences:
+        result.preferenceResponses?.map((pref) => [
+          pref.preferenceKey,
+          pref.notifyPreference === NotifyPreference.NOTIFY,
+        ]) ?? [],
     };
   }
 
-  async setEmailPreferences(preferences: Array<[string, boolean]>): Promise<void> {
+  async setEmailPreferences(
+    preferences: Array<[string, boolean]>
+  ): Promise<void> {
     const url = new URL("v1beta1/setEmailPreferences", this.#apiBaseUrl);
     const request: SetEmailPreferencesRequest = {
       preferenceEntries: preferences.map(([key, value]) => ({
         preferenceKey: key,
-        notifyPreference: value ? NotifyPreference.NOTIFY : NotifyPreference.DROP,
+        notifyPreference: value
+          ? NotifyPreference.NOTIFY
+          : NotifyPreference.DROP,
       })),
     };
     const response = await this.#fetchWithCreds(url, {
@@ -217,7 +230,9 @@ export class AppCatalystApiClient {
       body: JSON.stringify(request),
     });
     if (!response.ok) {
-      throw new Error(`Failed to set email preferences: ${response.statusText}`);
+      throw new Error(
+        `Failed to set email preferences: ${response.statusText}`
+      );
     }
   }
 }

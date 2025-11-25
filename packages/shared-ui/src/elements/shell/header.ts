@@ -15,6 +15,7 @@ import { BOARD_SAVE_STATUS, EnumValue } from "../../types/types.js";
 import { icons } from "../../styles/icons.js";
 import {
   CloseEvent,
+  OverflowMenuActionEvent,
   ShareRequestedEvent,
   SignOutEvent,
   StateEvent,
@@ -26,7 +27,6 @@ import { uiStateContext } from "../../contexts/ui-state.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { ActionTracker } from "../../utils/action-tracker.js";
 import { hasEnabledGlobalSettings } from "./global-settings.js";
-import { RuntimeFlags } from "@breadboard-ai/types";   
 
 const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
 
@@ -64,9 +64,6 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
   @property()
   accessor status: "Draft" | "Published" = "Draft";
-
-  @property()
-  accessor runtimeFlags: RuntimeFlags | null = null;
 
   @state()
   accessor #showAccountSwitcher = false;
@@ -766,14 +763,23 @@ export class VEHeader extends SignalWatcher(LitElement) {
     return html`<bb-account-switcher
       id="user-overflow"
       .signInAdapter=${this.signinAdapter}
-      .runtimeFlags=${this.runtimeFlags}
       @bboverlaydismissed=${() => {
         this.#showAccountSwitcher = false;
       }}
-      @bboverflowmenuaction=${() => {
+      @bboverflowmenuaction=${(evt: OverflowMenuActionEvent) => {
         this.#showAccountSwitcher = false;
-        
-        this.dispatchEvent(new SignOutEvent());
+
+        switch (evt.action) {
+          case "logout": {
+            this.dispatchEvent(new SignOutEvent());
+            break;
+          }
+
+          default: {
+            console.log("Action: ", evt.action);
+            break;
+          }
+        }
       }}
     ></bb-account-switcher>`;
   }
