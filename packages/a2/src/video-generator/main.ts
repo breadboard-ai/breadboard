@@ -36,7 +36,12 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import {
+  removeVeoDailyLimitExpirationKey,
+  setVeoDailyLimitExpirationKey,
+} from "@breadboard-ai/utils";
+import * as BreadboardUiTypes from "@breadboard-ai/shared-ui/types";
+
 import { A2ModuleArgs } from "../runnable-module-factory";
 import { getBucketId } from "../a2/get-bucket-id";
 import { driveFileToBlob, toGcsAwareChunk } from "../a2/data-transforms";
@@ -420,14 +425,14 @@ async function describe(
 
 const showSnackWithActionButton = (
   message: string,
-  action: BreadboardUI.Types.SnackbarAction
+  action: BreadboardUiTypes.SnackbarAction
 ) => {
   const showCustomSnackbarEventTimeout = setTimeout(() => {
     clearTimeout(showCustomSnackbarEventTimeout);
     dispatchShowCustomSnackbarEvent(
       "",
       [action],
-      BreadboardUI.Types.SnackType.ERROR
+      BreadboardUiTypes.SnackType.ERROR
     );
   });
 
@@ -440,7 +445,7 @@ const initAiCreditsLimitation = () => {
   const isGoogleUser = true;
 
   if (!limitReached) {
-    BreadboardUI.Utils.removeVeoDailyLimitExpirationKey();
+    removeVeoDailyLimitExpirationKey();
     return;
   }
 
@@ -461,7 +466,7 @@ const initAiCreditsLimitation = () => {
       );
     } else {
       // Set expiration time of the localstorage key
-      BreadboardUI.Utils.setVeoDailyLimitExpirationKey();
+      setVeoDailyLimitExpirationKey();
       dispatchShowCustomSnackbarEvent(
         "You’ve reached the daily limit for creating videos. Each video you generate after that will use 20 AI credits from your Google AI plan."
       );

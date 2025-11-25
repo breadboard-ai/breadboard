@@ -69,7 +69,7 @@ import {
   isControllerBehavior,
   isLLMContentArrayBehavior,
 } from "../../utils/behaviors";
-
+import { isVeoDailyLimitReached } from "@breadboard-ai/utils";
 import * as StringsHelper from "../../strings/helper.js";
 import { FlowGenConstraint } from "../../flow-gen/flow-generator";
 import { ConnectorView } from "../../connectors/types";
@@ -84,7 +84,6 @@ import { baseColors } from "../../styles/host/base-colors";
 import { type } from "../../styles/host/type";
 import { iconSubstitute } from "../../utils/icon-substitute";
 import { ActionTracker } from "../../utils/action-tracker";
-import { isVeoDailyLimitReached } from "../../utils/veo";
 
 const Strings = StringsHelper.forSection("Editor");
 

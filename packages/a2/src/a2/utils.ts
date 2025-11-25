@@ -6,7 +6,8 @@ import {
   Outcome,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUiTypes from "@breadboard-ai/shared-ui/types";
+import * as BreadboardUiEvents from "@breadboard-ai/shared-ui/events";
 
 /**
  * @fileoverview Common utils for manipulating LLM Content and other relevant types.
@@ -471,13 +472,13 @@ function tr(strings: TemplateStringsArray, ...values: unknown[]): string {
 
 export function dispatchShowCustomSnackbarEvent(
   message: string,
-  actions: BreadboardUI.Types.SnackbarAction[] = [],
-  snackType: BreadboardUI.Types.SnackType = BreadboardUI.Types.SnackType
+  actions: BreadboardUiTypes.SnackbarAction[] = [],
+  snackType: BreadboardUiTypes.SnackType = BreadboardUiTypes.SnackType
     .INFORMATION
 ) {
   if (typeof window !== "undefined") {
     const snackbarEvent = new CustomEvent(
-      BreadboardUI.Events.showCustomSnackbarEvent,
+      BreadboardUiEvents.showCustomSnackbarEvent,
       {
         bubbles: true,
         cancelable: true,
