@@ -95,7 +95,7 @@
     "@breadboard-ai/utils": "^0.1.0",
     "@cfworker/json-schema": "^4.1.1",
     "@google-labs/breadboard": "^0.36.0",
-    "marked": "^16.3.0",
+    "marked": "^17.0.1",
     "mime": "^4.1.0",
     "signal-polyfill": "^0.2.2",
     "signal-utils": "^0.21.1",
