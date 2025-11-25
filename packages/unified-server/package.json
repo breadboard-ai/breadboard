@@ -170,7 +170,7 @@
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.34.1",
-    "dotenv": "^16.4.7",
+    "dotenv": "^17.2.3",
     "typescript": "^5.8.3",
     "vite-plugin-compression2": "^2.2.0",
     "wireit": "^0.15.0-pre.2"

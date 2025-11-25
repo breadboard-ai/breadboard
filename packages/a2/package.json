@@ -78,7 +78,7 @@
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.34.1",
-    "dotenv": "^16.4.7",
+    "dotenv": "^17.2.3",
     "idb": "^8.0.3",
     "inquirer": "^12.10.0",
     "tsx": "^4.20.3",
