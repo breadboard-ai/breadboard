@@ -8,6 +8,7 @@ import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
+import { styleMap } from "lit/directives/style-map.js";
 import { icons } from "../../../styles/icons";
 import { EnumValue } from "../../../types/types";
 import { baseColors } from "../../../styles/host/base-colors";
@@ -144,6 +145,15 @@ export class ItemSelect extends LitElement {
 
         &.tag.icon {
           grid-template-columns: 20px minmax(0, 1fr) max-content;
+        }
+
+        & .svg-icon {
+          width: 20px;
+          height: 20px;
+          display: inline-block;
+          background-repeat: no-repeat;
+          background-position: center;
+          background-size: 20px 20px;
         }
 
         &:not([disabled]) {
@@ -295,6 +305,29 @@ export class ItemSelect extends LitElement {
     });
   }
 
+  #hasIcon(value: Pick<EnumValue, "icon" | "svgIcon">) {
+    return value.icon !== undefined || value.svgIcon !== undefined;
+  }
+
+  #renderIcon(value: Pick<EnumValue, "icon" | "svgIcon">) {
+    if (value.icon) {
+      return html`<span class="g-icon filled">${value.icon}</span>`;
+    }
+
+    if (value.svgIcon) {
+      const icon = value.svgIcon.trim();
+      const background = icon.startsWith("var(") ? icon : `var(${icon})`;
+      return html`<span
+        class="svg-icon"
+        style=${styleMap({
+          background: `${background} center center / 20px 20px no-repeat`,
+        })}
+      ></span>`;
+    }
+
+    return nothing;
+  }
+
   render() {
     const idx = this.freezeValue !== -1 ? this.freezeValue : this.#selected;
     const renderedValue = this.#values[idx] ?? {
@@ -303,7 +336,7 @@ export class ItemSelect extends LitElement {
     };
     const classes: Record<string, boolean> = {
       selected: true,
-      icon: renderedValue.icon !== undefined,
+      icon: this.#hasIcon(renderedValue),
       round: true,
       "w-500": true,
       "sans-flex": true,
@@ -322,9 +355,7 @@ export class ItemSelect extends LitElement {
             }}
             ${ref(this.#toggleRef)}
           >
-            ${renderedValue.icon
-              ? html`<span class="g-icon filled">${renderedValue.icon}</span>`
-              : nothing}
+            ${this.#renderIcon(renderedValue)}
             ${renderedValue.title
               ? html`<span class="title">${renderedValue.title}</span>`
               : nothing}
@@ -424,7 +455,7 @@ export class ItemSelect extends LitElement {
 
               const classes: Record<string, boolean> = {
                 double: value.description !== undefined,
-                icon: value.icon !== undefined,
+                icon: this.#hasIcon(value),
                 tag: value.tag !== undefined,
                 active: idx === this.#highlighted,
                 round: true,
@@ -444,9 +475,7 @@ export class ItemSelect extends LitElement {
                   }}
                   class=${classMap(classes)}
                 >
-                  ${value.icon
-                    ? html`<span class="g-icon filled">${value.icon}</span>`
-                    : nothing}
+                  ${this.#renderIcon(value)}
                   <span>
                     <span class="title">${value.title}</span>
 
