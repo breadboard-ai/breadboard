@@ -23,21 +23,18 @@ updates:
       semver-patch-days: 7
       semver-minor-days: 14
       semver-major-days: 21
-    # Instead of sending every update as a separate PR, consolidate them into a
-    # few groups.
     groups:
-      # TypeScript doesn't follow semver, because it regularly publishes
-      # breaking changes (e.g. stricter type-checking) as minor updates.
-      typescript:
-        applies-to: version-updates
-        patterns:
-          - "typescript"
-      # Minor and patch changes should in theory never be breaking.
+      # Minor and patch changes should in theory never be breaking, so let's
+      # consolidate them into a single PR so that they can be merged together.
       minor-and-patch:
         applies-to: version-updates
         update-types:
           - "minor"
           - "patch"
+        exclude-patterns:
+          # TypeScript doesn't follow semver, because it regularly publishes
+          # breaking changes (e.g. stricter type-checking) as minor updates.
+          - typescript
 
   - package-ecosystem: "github-actions"
     directory: ".github/workflows"
