@@ -16,7 +16,7 @@ updates:
     # removed. Major and minor updates are also further slowed to reduce churn
     # and review time.
     #
-    # Note that known security updates always bypasses this cooldown.
+    # Note that known security updates always bypass this cooldown.
     cooldown:
       default-days: 7
       semver-patch-days: 7
