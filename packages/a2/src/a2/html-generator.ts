@@ -2,7 +2,7 @@
  * @fileoverview Utility for calling generate_webpage tool.
  */
 
-import { Capabilities, JSONPart, LLMContent, Outcome } from "@breadboard-ai/types";
+import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 import type { ContentMap, ExecuteStepRequest } from "./step-executor";
 import { executeStep } from "./step-executor";
 import { executeWebpageStream } from "./generate-webpage-stream";
@@ -12,14 +12,6 @@ import { A2ModuleArgs } from "../runnable-module-factory";
 export { callGenWebpage };
 
 const OUTPUT_KEY = "rendered_outputs";
-
-async function readStreamGenWebpageFlag(caps: Capabilities): Promise<boolean> {
-  const reading = await caps.read({ path: "/env/flags" });
-  if (!ok(reading)) return false;
-  const json = (reading.data?.at(0)?.parts?.at(0) as JSONPart)?.json;
-  if (!json) return false;
-  return !!(json as { streamGenWebpage?: boolean }).streamGenWebpage;
-}
 
 /**
  * Legacy (non-streaming) implementation of GenerateWebpage.
@@ -130,7 +122,8 @@ async function callGenWebpage(
   renderMode: string,
   modelName: string
 ): Promise<Outcome<LLMContent>> {
-  const useStreaming = await readStreamGenWebpageFlag(caps);
+  const flags = await moduleArgs.context.flags?.flags();
+  const useStreaming = flags?.streamGenWebpage ?? false;
 
   if (useStreaming) {
     console.log("[html-generator] Using streaming API for GenerateWebpage");
@@ -155,3 +148,4 @@ async function callGenWebpage(
     );
   }
 }
+
