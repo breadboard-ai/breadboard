@@ -131,6 +131,7 @@ export class EditorControls extends LitElement {
         }
 
         & button {
+          color: var(--light-dark-n-0);
           background: var(--light-dark-n-100) center center / 20px 20px
             no-repeat;
           width: var(--bb-grid-size-7);
@@ -206,7 +207,7 @@ export class EditorControls extends LitElement {
 
           border-radius: var(--bb-grid-size-16);
           height: var(--bb-grid-size-10);
-          background: var(--light-dark-n-100);
+          background: light-dark(var(--n-100), var(--n-10));
           padding: 0;
 
           & bb-item-select {
@@ -216,7 +217,7 @@ export class EditorControls extends LitElement {
             --menu-width: 200px;
             --selected-item-column-gap: var(--bb-grid-size);
             --selected-item-height: var(--bb-grid-size-9);
-            --selected-item-hover-color: var(--light-dark-n-98);
+            --selected-item-hover-color: light-dark(var(--n-98), var(--n-20));
             --selected-item-border-radius: var(--bb-grid-size-2)
               var(--bb-grid-size-16) var(--bb-grid-size-16)
               var(--bb-grid-size-2);
@@ -240,7 +241,7 @@ export class EditorControls extends LitElement {
             align-items: center;
             color: var(--light-dark-n-0);
             margin-right: var(--bb-grid-size);
-            background-color: var(--light-dark-n-100);
+            background: light-dark(var(--n-100), var(--n-10));
             transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
 
             &:first-of-type {
@@ -256,7 +257,7 @@ export class EditorControls extends LitElement {
 
             &:hover,
             &:focus {
-              background-color: var(--light-dark-n-98);
+              background: light-dark(var(--n-98), var(--n-20));
             }
           }
         }

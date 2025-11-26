@@ -268,7 +268,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       #container {
         width: 300px;
         border-radius: calc(var(--bb-grid-size-3) + 1px);
-        color: var(--light-dark-n-10);
+        color: light-dark(var(--n-10), var(--n-0));
         position: relative;
         cursor: pointer;
         border: 1px solid var(--light-dark-n-90);
@@ -608,6 +608,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           }
 
           & .chiclet {
+            color: light-dark(var(--n-0), var(--n-0));
             max-width: 100%;
           }
         }

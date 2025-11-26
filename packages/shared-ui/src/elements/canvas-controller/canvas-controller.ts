@@ -66,7 +66,6 @@ import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-d
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { effects } from "../../styles/host/effects.js";
 import { GraphTheme } from "@breadboard-ai/types";
-import { createThemeStyles } from "@breadboard-ai/theme";
 import { styleMap } from "lit/directives/style-map.js";
 import { emptyStyles } from "../../styles/host/colors-empty.js";
 
@@ -78,6 +77,7 @@ import { isEmpty } from "../../utils/utils.js";
 import { uiStateContext } from "../../contexts/ui-state.js";
 import { Signal, SignalWatcher } from "@lit-labs/signals";
 import { projectStateContext } from "../../contexts/contexts.js";
+import * as Theme from "@breadboard-ai/theme";
 
 @customElement("bb-canvas-controller")
 export class CanvasController extends SignalWatcher(LitElement) {
@@ -532,7 +532,10 @@ export class CanvasController extends SignalWatcher(LitElement) {
       if (themes[theme]) {
         const appPalette = themes[theme].palette;
         if (appPalette) {
-          themeStyles = createThemeStyles(appPalette);
+          themeStyles = Theme.createThemeStyles(
+            appPalette,
+            Theme.appColorMapping
+          );
         }
       }
     }

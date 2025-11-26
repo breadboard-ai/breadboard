@@ -97,6 +97,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        background: light-dark(var(--n-100), var(--n-5));
         border-bottom: 1px solid var(--light-dark-n-90);
         padding: 0 var(--bb-grid-size-5);
         scrollbar-width: none;
@@ -126,6 +127,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
             display: flex;
             align-items: center;
 
+            color: var(--light-dark-n-0);
             background: var(--light-dark-n-90);
             cursor: pointer;
             height: var(--bb-grid-size-8);
@@ -176,7 +178,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
             display: none;
             font-size: 10px;
             line-height: 1;
-            color: var(--ui-secondary-text);
+            color: var(--light-dark-n-100);
             margin: 0 0 0 var(--bb-grid-size-4);
             min-width: 45px;
           }
@@ -343,6 +345,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
       #back-button {
         padding: 0;
         margin: 0 var(--bb-grid-size-3) 0 0;
+        color: var(--light-dark-n-0);
         background: none;
         border: none;
         transition: translate 0.2s cubic-bezier(0, 0, 0.3, 1);
