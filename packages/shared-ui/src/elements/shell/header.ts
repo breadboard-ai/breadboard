@@ -568,7 +568,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
         id: "chat",
         title: Strings.from("COMMAND_JOIN_CHAT"),
         svgIcon:
-          "var(--bb-icon-step-next, url(/third_party/icons/discord.svg))",
+          "var(--bb-icon-discord, url(/third_party/icons/discord.svg))",
       },
       ...(hasEnabledGlobalSettings(
         this.#uiState,
