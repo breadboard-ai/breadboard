@@ -394,6 +394,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           .catch((error) => console.error("Error generating board", error));
       }
     });
+    this.embedHandler?.addEventListener("request_consent", ({ message }) => {
+      this.#signInConsentMessage = message.consentMessage ?? null;
+    });
     this.embedHandler?.sendToEmbedder({ type: "handshake_ready" });
   }
 
@@ -2171,11 +2174,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return signInModal.openAndWaitForSignIn(scopes);
   }
 
+  #signInConsentMessage: string | null = null;
   readonly #signInModalRef = createRef<VESignInModal>();
   protected renderSignInModal() {
     return html`
       <bb-sign-in-modal
         ${ref(this.#signInModalRef)}
+        .consentMessage=${this.#signInConsentMessage}
         @bbmodaldismissed=${() => {
           this.uiState.show.delete("SignInModal");
         }}
