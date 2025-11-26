@@ -34,6 +34,7 @@ export type TemplatePart = {
    * dangling autowire or missing asset
    */
   invalid?: true;
+  removed?: false;
   mimeType?: string;
   /**
    * Connector instance. Used to point a tool that represents the
@@ -55,7 +56,7 @@ export type TemplatePart = {
 
 export type TemplatePartTransformCallback = (
   part: TemplatePart
-) => TemplatePart | null;
+) => TemplatePart;
 
 export type TemplatePartCallback = (part: TemplatePart) => string;
 export type TemplateStringPartCallback = (part: string) => string;
@@ -162,7 +163,7 @@ class Template {
     for (const [index, part] of this.#parsed.entries()) {
       if (typeof part === "string") continue;
       const transformed = callback(part);
-      this.#parsed[index] = transformed || "";
+      this.#parsed[index] = transformed.removed ? "" : transformed;
     }
     return this.recombined;
   }
