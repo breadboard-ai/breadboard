@@ -52,6 +52,7 @@ export async function createClientConfig(opts: {
       requireConsentForOpenWebpage:
         flags.ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE,
       streamPlanner: flags.STREAM_PLANNER,
+      streamGenWebpage: flags.ENABLE_STREAM_GEN_WEBPAGE,
     },
   };
 }

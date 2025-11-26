@@ -29,6 +29,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   requireConsentForGetWebpage: false,
   requireConsentForOpenWebpage: false,
   streamPlanner: false,
+  streamGenWebpage: false,
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(
