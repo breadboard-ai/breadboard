@@ -155,14 +155,15 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
   }
 
   #onGenerateError(error: string, suggestedIntent?: string) {
-    console.error("Error generating board", error);
-    console.error("Suggested intent", suggestedIntent);
-
     // Special case: an ignorable error. We use this special case to handle the
     // case when the user isn't signed in and dismissed the sign in dialog
     if (error.length === 0) {
       return;
     }
+
+    console.error("Error generating board", error);
+    console.error("Suggested intent", suggestedIntent);
+
     this.state.status = "error";
     this.state.error = error;
 

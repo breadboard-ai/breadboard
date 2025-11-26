@@ -581,11 +581,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         break;
       }
       case "loading":
-        return html`<div id="loading">
-            <span class="g-icon heavy-filled round">progress_activity</span
-            >Loading
-          </div>
-          ${this.#renderShellUI()}`;
+        return html`<div id="loading" @bbevent=${this.handleUserSignIn}>
+          <span class="g-icon heavy-filled round">progress_activity</span
+          >Loading ${this.#renderShellUI()}
+        </div> `;
       default:
         console.log("Invalid lite view state");
         return nothing;
@@ -618,6 +617,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             this.showAppFullscreen = evt.detail.action === "activate";
             return;
           }
+
+          if (this.handleUserSignIn(evt)) return;
 
           return this.handleRoutedEvent(evt);
         }}
@@ -658,5 +659,23 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         })
       )
     );
+  }
+
+  private handleUserSignIn(
+    evt: StateEvent<keyof StateEventDetailMap>
+  ): boolean {
+    if (evt.detail.eventType !== "host.usersignin") return false;
+
+    const { result } = evt.detail;
+    const { viewType } = this.runtime.state.lite;
+
+    if (result === "success") return true;
+
+    if (viewType === "loading") {
+      // Happens when loading an inacessible opal
+      console.log('Embedder request: navigate to "gallery/library" view');
+      this.embedHandler?.sendToEmbedder({ type: "back_clicked" });
+    }
+    return true;
   }
 }

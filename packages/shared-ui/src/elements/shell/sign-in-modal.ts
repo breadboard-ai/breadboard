@@ -16,6 +16,7 @@ import {
 } from "../../utils/signin-adapter.js";
 import { devUrlParams } from "../../utils/urls.js";
 import { UserSignInResponse } from "../../types/types.js";
+import { StateEvent } from "../../events/events.js";
 
 type State =
   | { status: "closed" }
@@ -249,7 +250,11 @@ export class VESignInModal extends LitElement {
         scopes,
       },
     };
-    return (await outcomePromise) ? "success" : "failure";
+    const result = await outcomePromise;
+    this.dispatchEvent(
+      new StateEvent({ eventType: "host.usersignin", result })
+    );
+    return result ? "success" : "failure";
   }
 
   async #onClickSignIn() {

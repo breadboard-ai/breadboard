@@ -270,7 +270,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   readonly #boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
   readonly #recentBoardStore = RecentBoardStore.instance();
   readonly #lastPointerPosition = { x: 0, y: 0 };
-  readonly #embedHandler?: EmbedHandler;
+  protected readonly embedHandler?: EmbedHandler;
   readonly #apiClient: AppCatalystApiClient;
   readonly #settings: SettingsStore;
   readonly emailPrefsManager: EmailPrefsManager;
@@ -352,7 +352,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       fetchWithCreds,
     });
 
-    this.#embedHandler = args.embedHandler;
+    this.embedHandler = args.embedHandler;
 
     this.#initPromise = this.#init(args, {
       fetchWithCreds,
@@ -374,17 +374,17 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     window.addEventListener("pointerdown", this.#hideTooltipBound);
     window.addEventListener("keydown", this.#onKeyboardShortCut);
 
-    if (this.#embedHandler) {
+    if (this.embedHandler) {
       this.embedState = embedState();
     }
 
-    this.#embedHandler?.addEventListener(
+    this.embedHandler?.addEventListener(
       "toggle_iterate_on_prompt",
       ({ message }) => {
         this.embedState.showIterateOnPrompt = message.on;
       }
     );
-    this.#embedHandler?.addEventListener("create_new_board", ({ message }) => {
+    this.embedHandler?.addEventListener("create_new_board", ({ message }) => {
       if (!message.prompt) {
         // If no prompt provided, generate an empty board.
         this.#generateBoardFromGraph(BreadboardUI.Utils.blankBoard());
@@ -394,7 +394,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           .catch((error) => console.error("Error generating board", error));
       }
     });
-    this.#embedHandler?.sendToEmbedder({ type: "handshake_ready" });
+    this.embedHandler?.sendToEmbedder({ type: "handshake_ready" });
   }
 
   disconnectedCallback(): void {
@@ -599,7 +599,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     });
 
     // Once we've determined the sign-in status, relay it to an embedder.
-    this.#embedHandler?.sendToEmbedder({
+    this.embedHandler?.sendToEmbedder({
       type: "home_loaded",
       isSignedIn: this.signinAdapter.state === "signedin",
     });
@@ -1034,7 +1034,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       return;
     }
 
-    if (this.#embedHandler) {
+    if (this.embedHandler) {
       // When the board server is asked to create a new graph, it first makes a
       // very fast RPC just to allocate a drive file id, returns that file id,
       // and finishes initializing the graph in the background (uploading the
@@ -1054,7 +1054,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         | Partial<GoogleDriveBoardServer>
         | undefined;
       await boardServer?.flushSaveQueue?.(url.href);
-      this.#embedHandler.sendToEmbedder({
+      this.embedHandler.sendToEmbedder({
         type: "board_id_created",
         id: url.href,
       });
@@ -1408,7 +1408,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>
         this.askUserToSignInIfNeeded(scopes),
       boardServer,
-      embedHandler: this.#embedHandler,
+      embedHandler: this.embedHandler,
     };
   }
 
@@ -1612,7 +1612,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           nodeId: iterateOnPromptEvent.nodeId,
           modelId: iterateOnPromptEvent.modelId,
         };
-        this.#embedHandler?.sendToEmbedder(message);
+        this.embedHandler?.sendToEmbedder(message);
       }}
     ></bb-canvas-controller>`;
   }
@@ -1992,7 +1992,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         if (!this.tab) {
           return;
         }
-        this.#embedHandler?.sendToEmbedder({
+        this.embedHandler?.sendToEmbedder({
           type: "back_clicked",
         });
         const homepage: MakeUrlInit = {

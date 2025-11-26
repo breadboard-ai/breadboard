@@ -6,6 +6,7 @@
 
 import { RuntimeFlags } from "@breadboard-ai/types";
 import {
+  UserSignInResponse,
   VisualEditorMode,
   WorkspaceSelectionChangeId,
   WorkspaceSelectionState,
@@ -53,4 +54,8 @@ export interface Unlock extends BaseEventDetail<`${Namespace}.unlock`> {
 export interface FlagChange extends BaseEventDetail<`${Namespace}.flagchange`> {
   readonly flag: keyof RuntimeFlags;
   readonly value: boolean | undefined;
+}
+
+export interface UserSignIn extends BaseEventDetail<`${Namespace}.usersignin`> {
+  readonly result: UserSignInResponse;
 }
