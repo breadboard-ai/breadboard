@@ -553,9 +553,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     return [
       this.renderTooltip(),
       this.#renderOnboardingTooltip(),
-      this.uiState.show.has("SignInModal")
-        ? this.renderSignInModal(true)
-        : nothing,
+      this.uiState.show.has("SignInModal") ? this.renderSignInModal() : nothing,
     ];
   }
 

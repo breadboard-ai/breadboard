@@ -1519,7 +1519,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           ? this.#renderWarmWelcomeModal()
           : nothing,
         this.uiState.show.has("SignInModal")
-          ? this.renderSignInModal(false)
+          ? this.renderSignInModal()
           : nothing,
         this.renderTooltip(),
         this.#renderToasts(),
@@ -2164,11 +2164,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   readonly #signInModalRef = createRef<VESignInModal>();
-  protected renderSignInModal(undismissable: boolean) {
+  protected renderSignInModal() {
     return html`
       <bb-sign-in-modal
         ${ref(this.#signInModalRef)}
-        .undismissable=${undismissable}
         @bbmodaldismissed=${() => {
           this.uiState.show.delete("SignInModal");
         }}
