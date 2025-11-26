@@ -20,7 +20,10 @@ import {
 } from "@breadboard-ai/shared-ui/events/events.js";
 import { LiteEditInputController } from "@breadboard-ai/shared-ui/lite/input/editor-input-lite.js";
 import { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
-import { RuntimeTabChangeEvent } from "./runtime/events";
+import {
+  RuntimeBoardLoadErrorEvent,
+  RuntimeTabChangeEvent,
+} from "./runtime/events";
 import { eventRoutes } from "./event-routing/event-routing";
 import { blankBoard } from "@breadboard-ai/shared-ui/utils/utils.js";
 import { repeat } from "lit/directives/repeat.js";
@@ -59,7 +62,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         --example-icon-color: light-dark(#665ef6, #ffffff);
       }
 
-      #loading {
+      #loading,
+      #error {
         display: flex;
         height: 100%;
         width: 100%;
@@ -317,6 +321,15 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   override async doPostInitWork(): Promise<void> {
+    this.runtime.board.addEventListener(
+      RuntimeBoardLoadErrorEvent.eventName,
+      () => {
+        this.runtime.state.lite.viewError = Strings.from(
+          "ERROR_UNABLE_TO_LOAD_PROJECT"
+        );
+      }
+    );
+
     const parsedUrl = this.runtime.router.parsedUrl;
     switch (parsedUrl.page) {
       case "graph": {
@@ -581,10 +594,18 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         break;
       }
       case "loading":
-        return html`<div id="loading" @bbevent=${this.handleUserSignIn}>
-          <span class="g-icon heavy-filled round">progress_activity</span
-          >Loading ${this.#renderShellUI()}
-        </div> `;
+        return html`<section id="lite-shell" @bbevent=${this.handleUserSignIn}>
+          <div id="loading">
+            <span class="g-icon heavy-filled round">progress_activity</span
+            >Loading
+          </div>
+          ${this.renderSnackbar()}${this.#renderShellUI()}
+        </section>`;
+      case "error":
+        return html`<section id="lite-shell" @bbevent=${this.handleUserSignIn}>
+          <div id="error">${lite.viewError}</div>
+          ${this.renderSnackbar()}${this.#renderShellUI()}
+        </section>`;
       default:
         console.log("Invalid lite view state");
         return nothing;
@@ -667,14 +688,13 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     if (evt.detail.eventType !== "host.usersignin") return false;
 
     const { result } = evt.detail;
-    const { viewType } = this.runtime.state.lite;
+    const { lite } = this.runtime.state;
 
     if (result === "success") return true;
 
-    if (viewType === "loading") {
+    if (lite.viewType === "loading") {
       // Happens when loading an inacessible opal
-      console.log('Embedder request: navigate to "gallery/library" view');
-      this.embedHandler?.sendToEmbedder({ type: "back_clicked" });
+      lite.viewError = Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT");
     }
     return true;
   }

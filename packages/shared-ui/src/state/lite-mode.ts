@@ -43,6 +43,9 @@ const EXAMPLES: LiteModeIntentExample[] = [
 
 class ReactiveLiteModeState implements LiteModeState {
   @signal
+  accessor viewError: string = "";
+
+  @signal
   accessor status: FlowGenGenerationStatus = "initial";
 
   @signal
@@ -90,6 +93,8 @@ class ReactiveLiteModeState implements LiteModeState {
   @signal
   get viewType(): LiteModeType {
     let zeroState = false;
+
+    if (this.viewError) return "error";
 
     const { loadState } = this.context.ui;
     switch (loadState) {
