@@ -12,7 +12,6 @@ import { styleMap } from "lit/directives/style-map.js";
 import { toCSSMatrix } from "./utils/to-css-matrix";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { intersects } from "./utils/rect-intersection";
-import { getGlobalColor } from "../../utils/color";
 import { EdgeAttachmentPoint } from "../../types/types";
 import { inspectableEdgeToString } from "../../utils/workspace";
 import { InspectableAssetEdge, InspectableEdge } from "@google-labs/breadboard";
@@ -34,19 +33,28 @@ interface Connection {
   distance: number;
 }
 
-const EDGE_STANDARD = palette.neutral.n80;
-const EDGE_SELECTED = palette.neutral.n0;
+const EDGE_STANDARD = {
+  light: palette.neutral.n80,
+  dark: palette.neutral.n80,
+};
+
+const EDGE_SELECTED = {
+  light: palette.neutral.n0,
+  dark: palette.neutral.n100,
+};
 
 // Value is no longer on the wire, because it was consumed by the receiving
 // component. Constant wires never reach this state.
-const EDGE_CONSUMED = palette.neutral.n80;
+const EDGE_CONSUMED = {
+  light: palette.neutral.n80,
+  dark: palette.neutral.n20,
+};
 
 // Value is on the wire, but hasn't been consumed by receiving component yet.
-const EDGE_STORED = palette.neutral.n80;
-
-// Value is on the wire, but hasn't been consumed by receiving component yet.
-const EDGE_USER = getGlobalColor("--bb-joiner-600");
-const EDGE_MODEL = getGlobalColor("--ui-custom-o-100");
+const EDGE_STORED = {
+  light: palette.neutral.n80,
+  dark: palette.neutral.n20,
+};
 
 const EDGE_CLEARANCE = 0;
 const HALF_HEADER_HEIGHT = 24;
@@ -88,6 +96,10 @@ export class GraphEdge extends Box {
 
   @property({ reflect: true, type: Boolean })
   accessor highlighted = false;
+
+  // Set up the current color scheme.
+  #darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  #lightDark: "light" | "dark" = this.#darkModeQuery.matches ? "dark" : "light";
 
   static styles = [
     icons,
@@ -164,6 +176,22 @@ export class GraphEdge extends Box {
     super();
 
     this.cullable = true;
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    this.#darkModeQuery.addEventListener("change", this.#themeChangeBound);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#darkModeQuery.removeEventListener("change", this.#themeChangeBound);
+  }
+
+  #themeChangeBound = this.#themeChange.bind(this);
+  #themeChange(evt: MediaQueryListEvent) {
+    this.#lightDark = evt.matches ? "dark" : "light";
+    console.log(this.#lightDark);
   }
 
   #isInspectableEdge(
@@ -724,33 +752,19 @@ export class GraphEdge extends Box {
     let edgeColor;
     switch (this.status) {
       case "stored": {
-        edgeColor = EDGE_STORED;
+        edgeColor = EDGE_STORED[this.#lightDark];
         break;
       }
 
       case "consumed": {
-        edgeColor = EDGE_CONSUMED;
+        edgeColor = EDGE_CONSUMED[this.#lightDark];
         break;
       }
 
       case "initial":
       default: {
-        edgeColor = EDGE_STANDARD;
+        edgeColor = EDGE_STANDARD[this.#lightDark];
         break;
-      }
-    }
-
-    if (this.highlighted) {
-      switch (this.highlightType) {
-        case "user": {
-          edgeColor = EDGE_USER;
-          break;
-        }
-
-        case "model": {
-          edgeColor = EDGE_MODEL;
-          break;
-        }
       }
     }
 
@@ -899,7 +913,7 @@ export class GraphEdge extends Box {
 
                 <g mask="url(#line-mask)">
                   <path d=${steps.join(" ")}
-                    stroke=${this.selected ? EDGE_SELECTED : edgeColor}
+                    stroke=${this.selected ? EDGE_SELECTED[this.#lightDark] : edgeColor}
                     stroke-width="2" fill="none" stroke-linecap="round" stroke-dasharray=${dashArray} />
 
                   <path ${ref(this.#edgeHitAreaRef)} d=${steps.join(" ")}
@@ -911,13 +925,13 @@ export class GraphEdge extends Box {
                     x2=${connectionPoints.n2.x - arrowSize}
                     y2=${connectionPoints.n2.y - arrowSize}
                     transform=${`rotate(${rotation}, ${connectionPoints.n2.x}, ${connectionPoints.n2.y})`}
-                    stroke=${this.selected ? EDGE_SELECTED : edgeColor} stroke-width="2" stroke-linecap="round" />
+                    stroke=${this.selected ? EDGE_SELECTED[this.#lightDark] : edgeColor} stroke-width="2" stroke-linecap="round" />
 
                   <line x1=${connectionPoints.n2.x} y1=${connectionPoints.n2.y}
                     x2=${connectionPoints.n2.x - arrowSize}
                     y2=${connectionPoints.n2.y + arrowSize}
                     transform=${`rotate(${rotation}, ${connectionPoints.n2.x}, ${connectionPoints.n2.y})`}
-                    stroke=${this.selected ? EDGE_SELECTED : edgeColor} stroke-width="2" stroke-linecap="round" />
+                    stroke=${this.selected ? EDGE_SELECTED[this.#lightDark] : edgeColor} stroke-width="2" stroke-linecap="round" />
                 </g>
                 ${
                   this.status === "stored"

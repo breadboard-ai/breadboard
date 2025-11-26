@@ -80,6 +80,8 @@ export class ItemSelect extends LitElement {
       :host {
         display: block;
         position: relative;
+        color: var(--light-dark-n-0);
+
         --menu-width: 280px;
         --menu-item-column-gap: var(--bb-grid-size-3);
         --selected-item-column-gap: var(--bb-grid-size-3);

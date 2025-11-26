@@ -131,6 +131,7 @@ export class EditorControls extends LitElement {
         }
 
         & button {
+          color: var(--light-dark-n-0);
           background: var(--light-dark-n-100) center center / 20px 20px
             no-repeat;
           width: var(--bb-grid-size-7);
