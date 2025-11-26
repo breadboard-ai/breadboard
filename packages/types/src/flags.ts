@@ -69,6 +69,10 @@ export type RuntimeFlags = {
    * Requres users consent to use of open_webpage tool
    */
   requireConsentForOpenWebpage: boolean;
+  /**
+   * Enables SSE streaming for planner calls.
+   */
+  streamPlanner: boolean;
 };
 
 /**
