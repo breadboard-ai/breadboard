@@ -15,6 +15,7 @@ import {
   type SigninAdapter,
 } from "../../utils/signin-adapter.js";
 import { devUrlParams } from "../../utils/urls.js";
+import { UserSignInResponse } from "../../types/types.js";
 
 type State =
   | { status: "closed" }
@@ -30,8 +31,8 @@ type State =
 
 type SignInRequest = {
   scopes: OAuthScope[] | undefined;
-  outcomePromise: Promise<boolean>;
-  outcomeResolve: (outcome: boolean) => void;
+  outcomePromise: Promise<UserSignInResponse>;
+  outcomeResolve: (outcome: UserSignInResponse) => void;
 };
 
 function appName() {
@@ -202,7 +203,7 @@ export class VESignInModal extends LitElement {
         appearance="basic"
         blurBackground
         .modalTitle=${title}
-        @bbmodaldismissed=${() => this.#close(false)}
+        @bbmodaldismissed=${() => this.#close("dismissed")}
       >
         <section id="container">${content}</section>
       </bb-modal>
@@ -230,14 +231,16 @@ export class VESignInModal extends LitElement {
   async openAndWaitForSignIn(
     scopes?: OAuthScope[],
     status?: "sign-in" | "add-scope"
-  ): Promise<boolean> {
+  ): Promise<UserSignInResponse> {
     if (this.#state.status !== "closed") {
-      return this.#state.request.outcomePromise;
+      return (await this.#state.request.outcomePromise) ? "success" : "failure";
     }
     status ??=
       this.signinAdapter?.state === "signedin" ? "add-scope" : "sign-in";
-    let resolve: (outcome: boolean) => void;
-    const outcomePromise = new Promise<boolean>((r) => (resolve = r));
+    let resolve: (outcome: UserSignInResponse) => void;
+    const outcomePromise = new Promise<UserSignInResponse>(
+      (r) => (resolve = r)
+    );
     this.#state = {
       status,
       request: {
@@ -246,7 +249,7 @@ export class VESignInModal extends LitElement {
         scopes,
       },
     };
-    return outcomePromise;
+    return (await outcomePromise) ? "success" : "failure";
   }
 
   async #onClickSignIn() {
@@ -255,7 +258,7 @@ export class VESignInModal extends LitElement {
     }
     if (!this.signinAdapter) {
       console.warn(`sign-in-modal was not provided a signinAdapter`);
-      this.#close(false);
+      this.#close("failure");
       return;
     }
     const result = await this.signinAdapter.signIn(this.#state.request.scopes);
@@ -279,10 +282,10 @@ export class VESignInModal extends LitElement {
       // user icon.
       window.location.reload();
     }
-    this.#close(result.ok);
+    this.#close(result.ok ? "success" : "failure");
   }
 
-  #close(outcome: boolean) {
+  #close(outcome: UserSignInResponse) {
     if (this.#state.status === "closed") {
       return;
     }

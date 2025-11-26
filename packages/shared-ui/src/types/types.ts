@@ -573,3 +573,4 @@ export interface LandingUrlInit extends BaseUrlInit {
   lite?: boolean;
   geoRestriction?: boolean;
 }
+export type UserSignInResponse = "success" | "failure" | "dismissed";

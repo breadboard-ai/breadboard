@@ -30,7 +30,7 @@ export const RunRoute: EventRoute<"board.run"> = {
       console.warn(`Unable to prepare run: no settings store provided`);
       return false;
     }
-    if (!(await askUserToSignInIfNeeded())) {
+    if ((await askUserToSignInIfNeeded()) !== "success") {
       return false;
     }
 
@@ -271,7 +271,7 @@ export const CreateRoute: EventRoute<"board.create"> = {
     askUserToSignInIfNeeded,
     embedHandler,
   }) {
-    if (!(await askUserToSignInIfNeeded())) {
+    if ((await askUserToSignInIfNeeded()) !== "success") {
       return false;
     }
 

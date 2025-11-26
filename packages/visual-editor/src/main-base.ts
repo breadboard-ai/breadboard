@@ -106,7 +106,10 @@ import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.
 import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
 import { ConsentManager } from "@breadboard-ai/shared-ui/utils/consent-manager.js";
 import { consentManagerContext } from "@breadboard-ai/shared-ui/contexts/consent-manager.js";
-import { MakeUrlInit } from "@breadboard-ai/shared-ui/types/types.js";
+import {
+  MakeUrlInit,
+  UserSignInResponse,
+} from "@breadboard-ai/shared-ui/types/types.js";
 
 export { MainBase };
 
@@ -294,8 +297,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.opalShell = args.shellHost;
     this.signinAdapter = new SigninAdapter(
       this.opalShell,
-      args.initialSignInState,
-      (scopes?: OAuthScope[]) => this.askUserToSignInIfNeeded(scopes)
+      args.initialSignInState
     );
     this.hostOrigin = args.hostOrigin;
 
@@ -2136,12 +2138,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   protected async askUserToSignInIfNeeded(
     scopes?: OAuthScope[]
-  ): Promise<boolean> {
+  ): Promise<UserSignInResponse> {
     // this.#uiState won't exist until init is done.
     await this.#initPromise;
     if (this.signinAdapter.state === "signedin") {
       if (!scopes?.length) {
-        return true;
+        return "success";
       }
       const currentScopes = this.signinAdapter.scopes;
       if (
@@ -2150,7 +2152,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           currentScopes.has(canonicalizeOAuthScope(scope))
         )
       ) {
-        return true;
+        return "success";
       }
     }
     this.uiState.show.add("SignInModal");
@@ -2158,7 +2160,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     const signInModal = this.#signInModalRef.value;
     if (!signInModal) {
       console.warn(`Could not find sign-in modal.`);
-      return false;
+      return "failure";
     }
     return signInModal.openAndWaitForSignIn(scopes);
   }
