@@ -177,7 +177,30 @@ export class FlowgenEditorInput extends LitElement {
   @property({ reflect: true, type: Boolean })
   accessor highlighted = false;
 
+  @property({ type: Boolean })
+  accessor requireConfirmation = false;
+
   readonly #descriptionInput = createRef<ExpandingTextarea>();
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    
+    // Only add confirmation flow listeners if required
+    if (this.requireConfirmation) {
+      // Listen for parent's confirmation to proceed with submission
+      this.addEventListener("bbproceedwithsubmit", ((evt: CustomEvent) => {
+        const description = evt.detail?.value;
+        if (description) {
+          this.#processSubmission(description);
+        }
+      }) as EventListener);
+      
+      // Listen for parent's request to clear input after cancellation
+      this.addEventListener("bbclearinput", () => {
+        this.#clearInput();
+      });
+    }
+  }
 
   override render() {
     const feedback = html` <div id="feedback">
@@ -280,35 +303,56 @@ export class FlowgenEditorInput extends LitElement {
         this.#state = { status: "initial" };
         return;
       }
-      this.#state = { status: "generating" };
 
-      ActionTracker.flowGenEdit(this.currentGraph?.url);
-
-      this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
-
-      if (!this.flowGenerator) return;
-      if (!this.currentGraph) return;
-      if (!this.projectState) return;
-
-      flowGenWithTheme(
-        this.flowGenerator,
-        description,
-        this.currentGraph,
-        this.projectState
-      )
-        .then((response) => {
-          if ("error" in response) {
-            return this.#onGenerateError(
-              response.error,
-              response.suggestedIntent
-            );
-          }
-          return this.#onGenerateComplete(response.flow, response.theme);
-        })
-        .finally(() => {
-          this.dispatchEvent(new StateEvent({ eventType: "host.unlock" }));
+      // Emit event to allow parent to intercept first submission (only if required)
+      if (this.requireConfirmation) {
+        const firstSubmitEvent = new CustomEvent("bbfirstinputsubmit", {
+          bubbles: true,
+          composed: true,
+          cancelable: true,
         });
+        this.dispatchEvent(firstSubmitEvent);
+
+        // If event was not prevented, proceed with submission
+        if (!firstSubmitEvent.defaultPrevented) {
+          this.#processSubmission(description);
+        }
+      } else {
+        // No confirmation required, proceed directly
+        this.#processSubmission(description);
+      }
     }
+  }
+
+  #processSubmission(description: string) {
+    this.#state = { status: "generating" };
+
+    ActionTracker.flowGenEdit(this.currentGraph?.url);
+
+    this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
+
+    if (!this.flowGenerator) return;
+    if (!this.currentGraph) return;
+    if (!this.projectState) return;
+
+    flowGenWithTheme(
+      this.flowGenerator,
+      description,
+      this.currentGraph,
+      this.projectState
+    )
+      .then((response) => {
+        if ("error" in response) {
+          return this.#onGenerateError(
+            response.error,
+            response.suggestedIntent
+          );
+        }
+        return this.#onGenerateComplete(response.flow, response.theme);
+      })
+      .finally(() => {
+        this.dispatchEvent(new StateEvent({ eventType: "host.unlock" }));
+      });
   }
 
   #onClearError() {

@@ -40,6 +40,7 @@ import { styles as canvasControllerStyles } from "./canvas-controller.styles.js"
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import {
   CommandsSetSwitchEvent,
+  ModalDismissedEvent,
   NodeConfigurationUpdateRequestEvent,
   StateEvent,
   ThemeEditRequestEvent,
@@ -72,6 +73,7 @@ import { emptyStyles } from "../../styles/host/colors-empty.js";
 
 const focusAppControllerWhenIn = ["canvas", "preview"];
 const SIDE_ITEM_KEY = "bb-canvas-controller-side-nav-item";
+const FLOWGEN_EDIT_CONFIRMED_KEY = "bb-flowgen-edit-confirmed";
 
 import "./empty-state.js";
 import { isEmpty } from "../../utils/utils.js";
@@ -199,6 +201,11 @@ export class CanvasController extends SignalWatcher(LitElement) {
   #entityEditorRef: Ref<EntityEditor> = createRef();
   #sharePanelRef: Ref<SharePanel> = createRef();
   #lastKnownNlEditValue = "";
+  #hasUserConfirmedFlowgenEdit = 
+    globalThis.localStorage?.getItem(FLOWGEN_EDIT_CONFIRMED_KEY) === "true";
+
+  @state()
+  accessor #showFirstInputModal = false;
 
   static styles = [icons, effects, canvasControllerStyles];
 
@@ -221,6 +228,12 @@ export class CanvasController extends SignalWatcher(LitElement) {
     if (changedProperties.has("projectState")) {
       this.#projectStateUpdated.set({});
     }
+
+    // Clear input value when graph changes
+    if (changedProperties.has("graph")) {
+      this.#lastKnownNlEditValue = "";
+    }
+
     if (changedProperties.has("selectionState")) {
       // If this is an imperative board with no selection state then set the
       // selection to be the main.
@@ -446,6 +459,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
           .mainGraphId=${this.mainGraphId}
           .readOnly=${this.readOnly}
           .showExperimentalComponents=${showExperimentalComponents}
+          .requireFlowgenConfirmation=${true}
           @input=${(evt: Event) => {
             const composedPath = evt.composedPath();
             const isFromNLInput = composedPath.some((el) => {
@@ -463,6 +477,20 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
               this.#lastKnownNlEditValue = target.value;
               this.requestUpdate();
+            }
+          }}
+          @bbfirstinputsubmit=${(evt: Event) => {
+            // Only show confirmation modal for edits to existing graphs, not for new/empty graphs
+            // And only if user hasn't confirmed before (checked via localStorage)
+            const isEmptyGraph = graph?.raw().nodes.length === 0;
+            
+            if (!this.#hasUserConfirmedFlowgenEdit && this.#lastKnownNlEditValue.trim() && !isEmptyGraph) {
+              // Prevent the default submission
+              evt.preventDefault();
+              evt.stopImmediatePropagation();
+              
+              // Show the confirmation modal
+              this.#showFirstInputModal = true;
             }
           }}
           @bbautofocuseditor=${() => {
@@ -740,6 +768,36 @@ export class CanvasController extends SignalWatcher(LitElement) {
         <bb-share-panel .graph=${this.graph} ${ref(this.#sharePanelRef)}>
         </bb-share-panel>
       `,
+      this.#showFirstInputModal
+        ? html`<bb-modal
+            .modalTitle=${"Confirm Edit"}
+            .showCloseButton=${false}
+            .showSaveCancel=${true}
+            .saveButtonLabel=${"Confirm"}
+            @bbmodaldismissed=${(evt: ModalDismissedEvent) => {
+              this.#showFirstInputModal = false;
+              if (evt.withSave) {
+                // User confirmed - store in localStorage so we never show modal again
+                this.#hasUserConfirmedFlowgenEdit = true;
+                globalThis.localStorage?.setItem(FLOWGEN_EDIT_CONFIRMED_KEY, "true");
+                
+                // Trigger submission by dispatching proceed event to the flowgen input
+                const renderer = this.shadowRoot?.querySelector("bb-renderer");
+                const editorControls = renderer?.shadowRoot?.querySelector("bb-editor-controls");
+                const flowgenInput = editorControls?.shadowRoot?.querySelector("bb-flowgen-editor-input");
+                if (flowgenInput) {
+                  flowgenInput.dispatchEvent(
+                    new CustomEvent("bbproceedwithsubmit", {
+                      detail: { value: this.#lastKnownNlEditValue },
+                    })
+                  );
+                }
+              }
+            }}
+          >
+            <p>This may edit your entire Opal. Confirm to continue</p>
+          </bb-modal>`
+        : nothing,
     ];
   }
 
