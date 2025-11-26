@@ -5,6 +5,7 @@
  */
 
 import { GraphDescriptor, LLMContent } from "@breadboard-ai/types";
+import { iteratorFromStream } from "@breadboard-ai/utils";
 
 export interface AppCatalystChatRequest {
   messages: AppCatalystContentChunk[];
@@ -206,30 +207,7 @@ export class AppCatalystApiClient {
       throw new Error(`Failed to start stream: ${response.statusText}`);
     }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-
-      for (const line of lines) {
-        const prefix = "data: ";
-        if (line.startsWith(prefix)) {
-          const data = line.slice(prefix.length);
-          try {
-            const chunk = JSON.parse(data) as LLMContent;
-            yield chunk;
-          } catch (e) {
-            console.error("Failed to parse LLM content chunk", e);
-          }
-        }
-      }
-    }
+    yield* iteratorFromStream<LLMContent>(response.body);
   }
 
   async checkTos(): Promise<CheckAppAccessResponse> {
