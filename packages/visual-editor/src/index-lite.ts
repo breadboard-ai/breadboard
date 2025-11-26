@@ -339,7 +339,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         });
         this.runtime.board.addEventListener(
           RuntimeTabChangeEvent.eventName,
-          () => resolve!()
+          () => resolve!(),
+          { once: true }
         );
 
         const remixUrl = parsedUrl.remix ? parsedUrl.flow : null;

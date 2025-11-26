@@ -1927,6 +1927,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       ${ref((el: Element | undefined) => {
         if (!el) {
           this.snackbarElement = undefined;
+          return;
         }
 
         this.snackbarElement = el as BreadboardUI.Elements.Snackbar;
