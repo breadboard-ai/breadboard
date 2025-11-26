@@ -8,10 +8,12 @@ import type {
   GraphDescriptor,
   NodeConfiguration,
   NodeDescriptor,
+  LLMContent,
 } from "@breadboard-ai/types";
 import type {
   AppCatalystApiClient,
   AppCatalystChatRequest,
+  AppCatalystContentChunk,
 } from "./app-catalyst.js";
 import {
   isLLMContent,
@@ -55,10 +57,16 @@ export const flowGeneratorContext = createContext<FlowGenerator | undefined>(
 export class FlowGenerator {
   #appCatalystApiClient: AppCatalystApiClient;
   #agentMode: boolean;
+  #streamPlanner: boolean;
 
-  constructor(appCatalystApiClient: AppCatalystApiClient, agentMode = false) {
+  constructor(
+    appCatalystApiClient: AppCatalystApiClient,
+    agentMode = false,
+    streamPlanner = false
+  ) {
     this.#appCatalystApiClient = appCatalystApiClient;
     this.#agentMode = agentMode;
+    this.#streamPlanner = streamPlanner;
   }
 
   async oneShot({
@@ -110,28 +118,27 @@ export class FlowGenerator {
       });
     }
 
-    const { messages } = await this.#appCatalystApiClient.chat(request);
-    console.log(
-      `[flowgen] AppCatalyst responses:`,
-      ...messages.map((message) => ({ ...message, data: atob(message.data) }))
-    );
     const responseFlows: GraphDescriptor[] = [];
     const responseMessages: string[] = [];
     const suggestions: string[] = [];
-    for (
-      let i = /* Skip our own messages */ request.messages.length;
-      i < messages.length;
-      i++
-    ) {
-      const message = messages[i];
-      if (message.mimetype === "text/breadboard") {
-        responseFlows.push(JSON.parse(atob(message.data)));
-      } else if (message.mimetype === "text/plain") {
-        responseMessages.push(atob(message.data));
-      } else if (message.mimetype === "text/rewritten") {
-        suggestions.push(atob(message.data));
-      }
+
+    if (this.#streamPlanner && !constraint) {
+      await this.#streamOneShot(
+        intent,
+        context,
+        responseFlows,
+        responseMessages,
+        suggestions
+      );
+    } else {
+      await this.#blockOneShot(
+        request,
+        responseFlows,
+        responseMessages,
+        suggestions
+      );
     }
+
     const generatedFlow = responseFlows.at(-1);
     if (!generatedFlow) {
       // If the backend can't make a flow, it will usually return some text
@@ -155,6 +162,111 @@ export class FlowGenerator {
       };
     }
     return { flow: generatedFlow };
+  }
+
+  async #streamOneShot(
+    intent: string,
+    context: OneShotFlowGenRequest["context"],
+    responseFlows: GraphDescriptor[],
+    responseMessages: string[],
+    suggestions: string[]
+  ) {
+    let stream: AsyncGenerator<LLMContent>;
+    if (context?.flow && context.flow.nodes.length > 0) {
+      stream = this.#appCatalystApiClient.editOpalStream(
+        intent,
+        context.flow,
+        this.#agentMode
+      );
+    } else {
+      stream = this.#appCatalystApiClient.generateOpalStream(
+        intent,
+        this.#agentMode
+      );
+    }
+
+    for await (const chunk of stream) {
+      for (const part of chunk.parts) {
+        this.#processStreamPart(
+          part,
+          responseFlows,
+          responseMessages,
+          suggestions
+        );
+      }
+    }
+  }
+
+  #processStreamPart(
+    part: any,
+    responseFlows: GraphDescriptor[],
+    responseMessages: string[],
+    suggestions: string[]
+  ) {
+    const partWithMetadata = part as any;
+    const type = partWithMetadata.partMetadata?.chunk_type;
+    if ("text" in part) {
+      const isThought = type === "thought";
+      const isStatus = type === "planning_status";
+
+      if (isThought) {
+        console.log(`[flowgen] Thought: ${part.text}`);
+      } else if (isStatus) {
+        console.log(`[flowgen] Status: ${part.text}`);
+      } else if (type === "breadboard") {
+        try {
+          responseFlows.push(JSON.parse(part.text));
+        } catch (e) {
+          console.warn("Failed to parse breadboard chunk from text", e);
+          responseMessages.push(part.text);
+        }
+      } else if (type === "rewritten") {
+        suggestions.push(part.text);
+      } else {
+        responseMessages.push(part.text);
+      }
+    }
+  }
+
+  async #blockOneShot(
+    request: AppCatalystChatRequest,
+    responseFlows: GraphDescriptor[],
+    responseMessages: string[],
+    suggestions: string[]
+  ) {
+    const { messages } = await this.#appCatalystApiClient.chat(request);
+    console.log(
+      `[flowgen] AppCatalyst responses:`,
+      ...messages.map((message) => ({ ...message, data: atob(message.data) }))
+    );
+    for (
+      let i = /* Skip our own messages */ request.messages.length;
+      i < messages.length;
+      i++
+    ) {
+      this.#processBlockResponse(
+        messages[i],
+        responseFlows,
+        responseMessages,
+        suggestions
+      );
+    }
+  }
+
+  #processBlockResponse(
+    message: AppCatalystContentChunk,
+    responseFlows: GraphDescriptor[],
+    responseMessages: string[],
+    suggestions: string[]
+  ) {
+    const decodedData = atob(message.data);
+    if (message.mimetype === "text/breadboard") {
+      responseFlows.push(JSON.parse(decodedData));
+    } else if (message.mimetype === "text/plain") {
+      responseMessages.push(decodedData);
+    } else if (message.mimetype === "text/rewritten") {
+      suggestions.push(decodedData);
+    }
   }
 
   #promptForConstraint(

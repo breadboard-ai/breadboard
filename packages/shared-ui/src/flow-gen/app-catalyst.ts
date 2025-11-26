@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GraphDescriptor, LLMContent } from "@breadboard-ai/types";
+
 export interface AppCatalystChatRequest {
   messages: AppCatalystContentChunk[];
   appOptions: {
@@ -11,6 +13,7 @@ export interface AppCatalystChatRequest {
     featureFlags?: Record<string, boolean>;
   };
 }
+
 
 export interface AppCatalystChatResponse {
   messages: AppCatalystContentChunk[];
@@ -139,6 +142,96 @@ export class AppCatalystApiClient {
     return result;
   }
 
+  async *generateOpalStream(
+    intent: string,
+    agentMode = false
+  ): AsyncGenerator<LLMContent> {
+    const request: any = {
+      intent,
+      app_options: {
+        format: "FORMAT_GEMINI_FLOWS",
+        ...(agentMode && {
+          featureFlags: { enable_agent_mode_planner: true },
+        }),
+      },
+    };
+    yield* this.chatStream(request, "generateOpalStream");
+  }
+
+  async *editOpalStream(
+    intent: string,
+    flow: GraphDescriptor,
+    agentMode = false
+  ): AsyncGenerator<LLMContent> {
+    const request = {
+      revise_intent: intent,
+      app_options: {
+        format: "FORMAT_GEMINI_FLOWS",
+        ...(agentMode && {
+          featureFlags: { enable_agent_mode_planner: true },
+        }),
+      },
+      app: {
+        parts: [
+          {
+            text: JSON.stringify(flow),
+            partMetadata: {
+              chunk_type: "breadboard",
+            },
+          },
+        ],
+      },
+    };
+    yield* this.chatStream(request, "editOpalStream");
+  }
+
+  async *chatStream(
+    request: any,
+    endpoint:
+      | "generateOpalStream"
+      | "editOpalStream"
+      | "rewriteOpalPromptStream" = "generateOpalStream"
+  ): AsyncGenerator<LLMContent> {
+    const url = new URL(`v1beta1/${endpoint}`, this.#apiBaseUrl);
+    url.searchParams.set("alt", "sse");
+    const response = await this.#fetchWithCreds(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok || !response.body) {
+      throw new Error(`Failed to start stream: ${response.statusText}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        const prefix = "data: ";
+        if (line.startsWith(prefix)) {
+          const data = line.slice(prefix.length);
+          try {
+            const chunk = JSON.parse(data) as LLMContent;
+            yield chunk;
+          } catch (e) {
+            console.error("Failed to parse LLM content chunk", e);
+          }
+        }
+      }
+    }
+  }
+
   async checkTos(): Promise<CheckAppAccessResponse> {
     try {
       const result = (await (
@@ -153,7 +246,6 @@ export class AppCatalystApiClient {
       }
       return result;
     } catch (e) {
-      console.warn("[API Client]", e);
       return { canAccess: false, accessStatus: "Unable to check" };
     }
   }

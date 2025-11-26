@@ -494,7 +494,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.#addRuntimeEventHandlers();
 
     const agentMode = flags.agentMode;
-    this.flowGenerator = new FlowGenerator(this.#apiClient, agentMode);
+    const streamPlanner = flags.streamPlanner;
+    this.flowGenerator = new FlowGenerator(
+      this.#apiClient,
+      agentMode,
+      streamPlanner
+    );
 
     this.#boardServers = this.runtime.board.getBoardServers() || [];
     this.uiState = this.runtime.state.getOrCreateUIState();
