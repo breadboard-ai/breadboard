@@ -289,6 +289,10 @@ export const stepsDark = {
 
 export const baseColors = css`
   :host {
+    color-scheme: light;
+  }
+
+  :host {
     --ui-custom-o-100: light-dark(
       ${unsafeCSS(custom.c100)},
       ${unsafeCSS(custom.c100)}

@@ -86,13 +86,11 @@ body.hide-cursor {
   color-scheme: light;
 }
 
-/*
-TODO: Enable once mapping is ready.
 @media screen and (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
   }
-} */
+}
 
 html,
 body {

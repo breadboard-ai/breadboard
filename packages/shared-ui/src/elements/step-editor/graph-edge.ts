@@ -191,7 +191,6 @@ export class GraphEdge extends Box {
   #themeChangeBound = this.#themeChange.bind(this);
   #themeChange(evt: MediaQueryListEvent) {
     this.#lightDark = evt.matches ? "dark" : "light";
-    console.log(this.#lightDark);
   }
 
   #isInspectableEdge(
