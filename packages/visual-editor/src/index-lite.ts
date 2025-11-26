@@ -494,7 +494,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       ${this.showAppFullscreen
         ? nothing
         : html` <header class="w-400 md-title-small sans-flex">
-            <div class="left">${this.tab?.name ?? "Untitled app"}</div>
+            <div class="left">${this.tab?.graph.title ?? "Untitled app"}</div>
             <div class="right">
               <a
                 ${ref(this.#advancedEditorLink)}
