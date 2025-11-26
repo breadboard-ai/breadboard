@@ -436,7 +436,7 @@ export type SubscriptionStatus =
 
 export type FlowGenGenerationStatus = "generating" | "initial" | "error";
 
-export type LiteModeType = "loading" | "home" | "editor" | "invalid";
+export type LiteModeType = "loading" | "home" | "editor" | "error" | "invalid";
 
 export type LiteModeIntentExample = {
   intent: string;
@@ -452,11 +452,16 @@ export type LiteModeState = {
    * an opal is loaded.
    * - "home" -- user can create a new opal from here
    * - "editor" -- user can run/edit opal from here
+   * - "error" -- the distinct error state for when we're neither in home nor
+   *   in editor (like, trying to load an invalid/inacessible opal)
    * - "invalid" -- some invalid state that we don't know about
    */
   viewType: LiteModeType;
 
-  // Remix triggering bits
+  /**
+   * Call this to trigger the "error" view
+   */
+  viewError: string;
 
   // FlowGen bits
   status: FlowGenGenerationStatus;

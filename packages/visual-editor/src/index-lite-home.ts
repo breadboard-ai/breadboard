@@ -102,10 +102,7 @@ export class LiteHome extends LitElement {
     const opalShell = mainArgs.shellHost;
     const signinAdapter = new SigninAdapter(
       opalShell,
-      mainArgs.initialSignInState,
-      () => {
-        throw new Error("Expected scopes to be granted");
-      }
+      mainArgs.initialSignInState
     );
 
     // Board server

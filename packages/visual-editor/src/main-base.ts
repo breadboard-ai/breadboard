@@ -106,7 +106,10 @@ import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.
 import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
 import { ConsentManager } from "@breadboard-ai/shared-ui/utils/consent-manager.js";
 import { consentManagerContext } from "@breadboard-ai/shared-ui/contexts/consent-manager.js";
-import { MakeUrlInit } from "@breadboard-ai/shared-ui/types/types.js";
+import {
+  MakeUrlInit,
+  UserSignInResponse,
+} from "@breadboard-ai/shared-ui/types/types.js";
 
 export { MainBase };
 
@@ -267,7 +270,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   readonly #boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
   readonly #recentBoardStore = RecentBoardStore.instance();
   readonly #lastPointerPosition = { x: 0, y: 0 };
-  readonly #embedHandler?: EmbedHandler;
+  protected readonly embedHandler?: EmbedHandler;
   readonly #apiClient: AppCatalystApiClient;
   readonly #settings: SettingsStore;
   readonly emailPrefsManager: EmailPrefsManager;
@@ -294,8 +297,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.opalShell = args.shellHost;
     this.signinAdapter = new SigninAdapter(
       this.opalShell,
-      args.initialSignInState,
-      (scopes?: OAuthScope[]) => this.askUserToSignInIfNeeded(scopes)
+      args.initialSignInState
     );
     this.hostOrigin = args.hostOrigin;
 
@@ -350,7 +352,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       fetchWithCreds,
     });
 
-    this.#embedHandler = args.embedHandler;
+    this.embedHandler = args.embedHandler;
 
     this.#initPromise = this.#init(args, {
       fetchWithCreds,
@@ -372,17 +374,17 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     window.addEventListener("pointerdown", this.#hideTooltipBound);
     window.addEventListener("keydown", this.#onKeyboardShortCut);
 
-    if (this.#embedHandler) {
+    if (this.embedHandler) {
       this.embedState = embedState();
     }
 
-    this.#embedHandler?.addEventListener(
+    this.embedHandler?.addEventListener(
       "toggle_iterate_on_prompt",
       ({ message }) => {
         this.embedState.showIterateOnPrompt = message.on;
       }
     );
-    this.#embedHandler?.addEventListener("create_new_board", ({ message }) => {
+    this.embedHandler?.addEventListener("create_new_board", ({ message }) => {
       if (!message.prompt) {
         // If no prompt provided, generate an empty board.
         this.#generateBoardFromGraph(BreadboardUI.Utils.blankBoard());
@@ -392,7 +394,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           .catch((error) => console.error("Error generating board", error));
       }
     });
-    this.#embedHandler?.sendToEmbedder({ type: "handshake_ready" });
+    this.embedHandler?.sendToEmbedder({ type: "handshake_ready" });
   }
 
   disconnectedCallback(): void {
@@ -602,7 +604,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     });
 
     // Once we've determined the sign-in status, relay it to an embedder.
-    this.#embedHandler?.sendToEmbedder({
+    this.embedHandler?.sendToEmbedder({
       type: "home_loaded",
       isSignedIn: this.signinAdapter.state === "signedin",
     });
@@ -1037,7 +1039,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       return;
     }
 
-    if (this.#embedHandler) {
+    if (this.embedHandler) {
       // When the board server is asked to create a new graph, it first makes a
       // very fast RPC just to allocate a drive file id, returns that file id,
       // and finishes initializing the graph in the background (uploading the
@@ -1057,7 +1059,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         | Partial<GoogleDriveBoardServer>
         | undefined;
       await boardServer?.flushSaveQueue?.(url.href);
-      this.#embedHandler.sendToEmbedder({
+      this.embedHandler.sendToEmbedder({
         type: "board_id_created",
         id: url.href,
       });
@@ -1411,7 +1413,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>
         this.askUserToSignInIfNeeded(scopes),
       boardServer,
-      embedHandler: this.#embedHandler,
+      embedHandler: this.embedHandler,
     };
   }
 
@@ -1524,7 +1526,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           ? this.#renderWarmWelcomeModal()
           : nothing,
         this.uiState.show.has("SignInModal")
-          ? this.renderSignInModal(false)
+          ? this.renderSignInModal()
           : nothing,
         this.renderTooltip(),
         this.#renderToasts(),
@@ -1615,7 +1617,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           nodeId: iterateOnPromptEvent.nodeId,
           modelId: iterateOnPromptEvent.modelId,
         };
-        this.#embedHandler?.sendToEmbedder(message);
+        this.embedHandler?.sendToEmbedder(message);
       }}
     ></bb-canvas-controller>`;
   }
@@ -1995,7 +1997,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         if (!this.tab) {
           return;
         }
-        this.#embedHandler?.sendToEmbedder({
+        this.embedHandler?.sendToEmbedder({
           type: "back_clicked",
         });
         const homepage: MakeUrlInit = {
@@ -2141,12 +2143,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   protected async askUserToSignInIfNeeded(
     scopes?: OAuthScope[]
-  ): Promise<boolean> {
+  ): Promise<UserSignInResponse> {
     // this.#uiState won't exist until init is done.
     await this.#initPromise;
     if (this.signinAdapter.state === "signedin") {
       if (!scopes?.length) {
-        return true;
+        return "success";
       }
       const currentScopes = this.signinAdapter.scopes;
       if (
@@ -2155,7 +2157,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           currentScopes.has(canonicalizeOAuthScope(scope))
         )
       ) {
-        return true;
+        return "success";
       }
     }
     this.uiState.show.add("SignInModal");
@@ -2163,17 +2165,16 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     const signInModal = this.#signInModalRef.value;
     if (!signInModal) {
       console.warn(`Could not find sign-in modal.`);
-      return false;
+      return "failure";
     }
     return signInModal.openAndWaitForSignIn(scopes);
   }
 
   readonly #signInModalRef = createRef<VESignInModal>();
-  protected renderSignInModal(undismissable: boolean) {
+  protected renderSignInModal() {
     return html`
       <bb-sign-in-modal
         ${ref(this.#signInModalRef)}
-        .undismissable=${undismissable}
         @bbmodaldismissed=${() => {
           this.uiState.show.delete("SignInModal");
         }}

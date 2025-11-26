@@ -20,7 +20,10 @@ import {
 } from "@breadboard-ai/shared-ui/events/events.js";
 import { LiteEditInputController } from "@breadboard-ai/shared-ui/lite/input/editor-input-lite.js";
 import { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
-import { RuntimeTabChangeEvent } from "./runtime/events";
+import {
+  RuntimeBoardLoadErrorEvent,
+  RuntimeTabChangeEvent,
+} from "./runtime/events";
 import { eventRoutes } from "./event-routing/event-routing";
 import { blankBoard } from "@breadboard-ai/shared-ui/utils/utils.js";
 import { repeat } from "lit/directives/repeat.js";
@@ -59,7 +62,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         --example-icon-color: light-dark(#665ef6, #ffffff);
       }
 
-      #loading {
+      #loading,
+      #error {
         display: flex;
         height: 100%;
         width: 100%;
@@ -317,6 +321,15 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   override async doPostInitWork(): Promise<void> {
+    this.runtime.board.addEventListener(
+      RuntimeBoardLoadErrorEvent.eventName,
+      () => {
+        this.runtime.state.lite.viewError = Strings.from(
+          "ERROR_UNABLE_TO_LOAD_PROJECT"
+        );
+      }
+    );
+
     const parsedUrl = this.runtime.router.parsedUrl;
     switch (parsedUrl.page) {
       case "graph": {
@@ -349,7 +362,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   async generate(
     intent: string
   ): Promise<OneShotFlowGenFailureResponse | undefined> {
-    if (!(await this.askUserToSignInIfNeeded())) {
+    if (!((await this.askUserToSignInIfNeeded()) !== "success")) {
       return { error: "" };
     }
     let projectState = this.runtime.state.project;
@@ -553,9 +566,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     return [
       this.renderTooltip(),
       this.#renderOnboardingTooltip(),
-      this.uiState.show.has("SignInModal")
-        ? this.renderSignInModal(true)
-        : nothing,
+      this.uiState.show.has("SignInModal") ? this.renderSignInModal() : nothing,
     ];
   }
 
@@ -583,11 +594,18 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         break;
       }
       case "loading":
-        return html`<div id="loading">
+        return html`<section id="lite-shell" @bbevent=${this.handleUserSignIn}>
+          <div id="loading">
             <span class="g-icon heavy-filled round">progress_activity</span
             >Loading
           </div>
-          ${this.#renderShellUI()}`;
+          ${this.renderSnackbar()}${this.#renderShellUI()}
+        </section>`;
+      case "error":
+        return html`<section id="lite-shell" @bbevent=${this.handleUserSignIn}>
+          <div id="error">${lite.viewError}</div>
+          ${this.renderSnackbar()}${this.#renderShellUI()}
+        </section>`;
       default:
         console.log("Invalid lite view state");
         return nothing;
@@ -620,6 +638,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             this.showAppFullscreen = evt.detail.action === "activate";
             return;
           }
+
+          if (this.handleUserSignIn(evt)) return;
 
           return this.handleRoutedEvent(evt);
         }}
@@ -660,5 +680,22 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         })
       )
     );
+  }
+
+  private handleUserSignIn(
+    evt: StateEvent<keyof StateEventDetailMap>
+  ): boolean {
+    if (evt.detail.eventType !== "host.usersignin") return false;
+
+    const { result } = evt.detail;
+    const { lite } = this.runtime.state;
+
+    if (result === "success") return true;
+
+    if (lite.viewType === "loading") {
+      // Happens when loading an inacessible opal
+      lite.viewError = Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT");
+    }
+    return true;
   }
 }
