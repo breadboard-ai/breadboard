@@ -74,7 +74,7 @@ export type GraphProvider = {
    * @returns Whether the currently signed-in user owns the given graph, or
    * `undefined` if we don't know because the graph hasn't been loaded yet.
    */
-  isMine?: (url: URL) => boolean | undefined;
+  isMine: (url: URL) => boolean;
 
   /**
    * Given a URL, loads a `GraphDescriptor` instance from that URL. May
@@ -125,12 +125,6 @@ export type GraphProvider = {
    * @returns -- the provider-specific URL as a string or null when the URL can't be created.
    */
   createURL: (location: string, fileName: string) => Promise<string | null>;
-  /**
-   * Provides a map of locations and their respective stores (lists of files)
-   * that can be used to enumerate all items that the provider can provide.
-   * @deprecated Use {@link userGraphs} and {@link galleryGraphs} instead.
-   */
-  items?: () => Map<string, GraphProviderStore>;
   /**
    * A signal-backed collection of graphs owned by the signed-in user.
    */

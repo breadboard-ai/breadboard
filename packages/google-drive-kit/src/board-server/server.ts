@@ -155,8 +155,8 @@ class GoogleDriveBoardServer
     return this.galleryGraphs.has(fileId);
   }
 
-  isMine(url: URL): boolean | undefined {
-    return this.#loadedGraphMetadata.get(url.href)?.isMine;
+  isMine(url: URL): boolean {
+    return this.#loadedGraphMetadata.get(url.href)?.isMine || false;
   }
 
   canProvide(url: URL): false | GraphProviderCapabilities {
