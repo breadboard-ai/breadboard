@@ -122,7 +122,7 @@ export class LiteHome extends LitElement {
       this.globalConfig.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [];
     const userFolderName =
       this.globalConfig.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
-    this.boardServer = GoogleDriveBoardServer.from(
+    this.boardServer = new GoogleDriveBoardServer(
       // TODO: The first two args are not used but currently required
       "",
       {

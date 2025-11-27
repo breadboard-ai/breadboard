@@ -10,7 +10,6 @@ import { isStoredData } from "@breadboard-ai/data";
 import {
   type BoardServer,
   type BoardServerCapabilities,
-  type BoardServerConfiguration,
   type BoardServerEventTarget,
   type BoardServerExtension,
   type ChangeNotificationCallback,
@@ -58,45 +57,6 @@ class GoogleDriveBoardServer
 {
   static PROTOCOL = PROTOCOL;
 
-  static from(
-    title: string,
-    user: User,
-    signInInfo: SignInInfo,
-    googleDriveClient: GoogleDriveClient,
-    publishPermissions: gapi.client.drive.Permission[],
-    userFolderName: string,
-    backendApiUrl: string
-  ) {
-    const configuration = {
-      url: new URL(`${PROTOCOL}/`),
-      projects: Promise.resolve([]),
-      kits: [],
-      users: [],
-      secrets: new Map(),
-      extensions: [],
-      capabilities: {
-        connect: true,
-        disconnect: true,
-        refresh: true,
-        watch: false,
-        preview: true,
-        events: true,
-        autosave: true,
-      },
-    };
-
-    return new GoogleDriveBoardServer(
-      title,
-      configuration,
-      user,
-      signInInfo,
-      googleDriveClient,
-      publishPermissions,
-      userFolderName,
-      backendApiUrl
-    );
-  }
-
   public readonly url = new URL(PROTOCOL);
   public readonly users: User[];
   public readonly secrets = new Map<string, string>();
@@ -138,7 +98,6 @@ class GoogleDriveBoardServer
 
   constructor(
     public readonly name: string,
-    public readonly configuration: BoardServerConfiguration,
     public readonly user: User,
     signInInfo: SignInInfo,
     googleDriveClient: GoogleDriveClient,
@@ -147,6 +106,24 @@ class GoogleDriveBoardServer
     backendApiUrl: string
   ) {
     super();
+
+    const configuration = {
+      url: new URL(`${PROTOCOL}/`),
+      projects: Promise.resolve([]),
+      kits: [],
+      users: [],
+      secrets: new Map(),
+      extensions: [],
+      capabilities: {
+        connect: true,
+        disconnect: true,
+        refresh: true,
+        watch: false,
+        preview: true,
+        events: true,
+        autosave: true,
+      },
+    };
     this.ops = new DriveOperations(
       async () => {
         this.dispatchEvent(new RefreshEvent());

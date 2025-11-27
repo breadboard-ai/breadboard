@@ -29,7 +29,7 @@ function createGoogleDriveBoardServer(
     CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [];
   const userFolderName =
     CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
-  return GoogleDriveBoardServer.from(
+  return new GoogleDriveBoardServer(
     title,
     user,
     signInInfo,
