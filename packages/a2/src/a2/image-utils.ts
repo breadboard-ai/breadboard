@@ -25,8 +25,6 @@ import {
 } from "./utils";
 import { driveFileToBlob, toGcsAwareChunk } from "./data-transforms";
 import { A2ModuleArgs } from "../runnable-module-factory";
-import { err } from "@breadboard-ai/utils";
-import { getBucketId } from "./get-bucket-id";
 
 export { callGeminiImage, callImageGen, promptExpander };
 
@@ -44,12 +42,6 @@ async function callGeminiImage(
   aspectRatio: string = "1:1"
 ): Promise<Outcome<LLMContent[]>> {
   const imageChunks = [];
-  const bucketId = await getBucketId(moduleArgs);
-  if (!ok(bucketId)) {
-    return err(
-      `Unable to call Gemini Image API: Storage bucket is not configured`
-    );
-  }
   for (const element of imageContent) {
     let inlineChunk: InlineDataCapabilityPart["inlineData"] | null | "";
     if (isStoredData(element)) {
@@ -58,7 +50,7 @@ async function callGeminiImage(
         element.parts.at(-1)!
       );
       if (!ok(blobStoredData)) return blobStoredData;
-      imageChunks.push(toGcsAwareChunk(bucketId, blobStoredData));
+      imageChunks.push(toGcsAwareChunk(blobStoredData));
     } else {
       inlineChunk = toInlineData(element);
       if (
@@ -101,7 +93,7 @@ async function callGeminiImage(
       chunks: imageChunks,
     };
   }
-  let body: ExecuteStepRequest = {
+  const body: ExecuteStepRequest = {
     planStep: {
       stepName: STEP_NAME,
       modelApi: API_NAME,
@@ -115,9 +107,6 @@ async function callGeminiImage(
     },
     execution_inputs: executionInputs,
   };
-  if (bucketId !== null) {
-    body = { ...body, output_gcs_config: { bucket_name: bucketId } };
-  }
   const response = await executeStep(caps, moduleArgs, body);
   if (!ok(response)) return response;
 
@@ -130,13 +119,6 @@ async function callImageGen(
   imageInstruction: string,
   aspectRatio: string = "1:1"
 ): Promise<Outcome<LLMContent[]>> {
-  const bucketId = await getBucketId(moduleArgs);
-  if (!ok(bucketId)) {
-    return err(
-      `Unable to call Image Generation API: Storage bucket is not configured`
-    );
-  }
-
   const executionInputs: ContentMap = {};
   executionInputs["image_prompt"] = {
     chunks: [
@@ -155,7 +137,7 @@ async function callImageGen(
     ],
   };
   const inputParameters: string[] = ["image_prompt"];
-  let body: ExecuteStepRequest = {
+  const body: ExecuteStepRequest = {
     planStep: {
       stepName: "GenerateImage",
       modelApi: "image_generation",
@@ -165,9 +147,6 @@ async function callImageGen(
     },
     execution_inputs: executionInputs,
   };
-  if (bucketId !== null) {
-    body = { ...body, output_gcs_config: { bucket_name: bucketId } };
-  }
   const response = await executeStep(caps, moduleArgs, body);
   if (!ok(response)) return response;
 

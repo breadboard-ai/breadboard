@@ -28,8 +28,6 @@ import {
   toTextConcat,
 } from "../a2/utils";
 import { A2ModuleArgs } from "../runnable-module-factory";
-import { getBucketId } from "../a2/get-bucket-id";
-import { err } from "@breadboard-ai/utils";
 
 export { callAudioGen };
 
@@ -61,13 +59,6 @@ async function callAudioGen(
   prompt: string,
   voice: VoiceOption
 ): Promise<Outcome<LLMContent>> {
-  const bucketId = await getBucketId(moduleArgs);
-  if (!ok(bucketId)) {
-    return err(
-      `Unable to call Gemini Image API: Storage bucket is not configured`
-    );
-  }
-
   let voiceParam = "en-US-female";
   if (voice in VoiceMap) {
     voiceParam = VoiceMap[voice as VoiceOption];
@@ -90,7 +81,7 @@ async function callAudioGen(
     ],
   };
   const inputParameters: string[] = ["text_to_speak"];
-  let body: ExecuteStepRequest = {
+  const body: ExecuteStepRequest = {
     planStep: {
       stepName: "GenerateAudio",
       modelApi: "tts",
@@ -100,10 +91,6 @@ async function callAudioGen(
     },
     execution_inputs: executionInputs,
   };
-  if (bucketId !== null) {
-    body = { ...body, output_gcs_config: { bucket_name: bucketId } };
-  }
-
   const response = await executeStep(caps, moduleArgs, body);
   if (!ok(response)) return response;
 

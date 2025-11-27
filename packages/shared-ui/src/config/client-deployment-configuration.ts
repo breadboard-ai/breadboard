@@ -21,7 +21,6 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   gulfRenderer: false,
   consistentUI: false,
   agentMode: false,
-  backendTransforms: false,
   observeSystemTheme: false,
   opalAdk: false,
   outputTemplates: false,

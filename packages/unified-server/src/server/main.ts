@@ -19,7 +19,6 @@ import {
   OAUTH_REDIRECT_CSP,
   SHELL_CSP,
 } from "./csp.js";
-import { createDataTransformHandler } from "./data-transform.js";
 import { makeDriveProxyMiddleware } from "./drive-proxy.js";
 import * as flags from "./flags.js";
 import { CachingFeaturedGallery, makeGalleryMiddleware } from "./gallery.js";
@@ -92,12 +91,6 @@ server.use(
       cachingGallery.isFeaturedGalleryAsset(fileId),
     mediaCacheMaxAgeSeconds: FEATURED_GALLERY_CACHE_REFRESH_SECONDS,
   })
-);
-
-console.log("[unified-server startup] Mounting Data Tranform API");
-server.use(
-  "/api/data/transform",
-  createDataTransformHandler(boardServerConfig.storageBucket)
 );
 
 console.log("[unified-server startup] Mounting static content");
