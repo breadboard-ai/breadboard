@@ -10,13 +10,11 @@ import express, { type Express, Router } from "express";
 import { getUserCredentials } from "./server/auth.js";
 import type { ServerConfig } from "./server/config.js";
 import { serveBlobsAPI } from "./server/blobs/index.js";
-import { serveBoardsAPI } from "./server/boards/index.js";
 
 export type { ServerConfig };
 export { getUserCredentials, requireAccessToken } from "./server/auth.js";
 
 export { GoogleStorageBlobStore } from "./server/blob-store.js";
-export { GeminiFileApi } from "./server/blobs/utils/gemini-file-api.js";
 
 const DEFAULT_PORT = 3000;
 const DEFAULT_HOST = "localhost";
@@ -49,8 +47,6 @@ export function createRouter(config: ServerConfig): Router {
   );
 
   router.use("/blobs", serveBlobsAPI(config));
-  router.use("/boards", serveBoardsAPI(config));
-
   return router;
 }
 
