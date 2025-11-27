@@ -13,8 +13,6 @@ export const createDefaultDataStore = (): DataStore => {
 export {
   purgeStoredDataInMemoryValues,
   transformContents,
-  visitGraphNodes,
-  remapData,
 } from "./inflate-deflate.js";
 
 export * from "./common.js";

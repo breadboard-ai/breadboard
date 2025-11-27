@@ -7,14 +7,11 @@
 import {
   DataInflator,
   DataPartTransformType,
-  DataStore,
   GraphDescriptor,
-  InlineDataCapabilityPart,
   LLMContent,
   Outcome,
-  SerializedDataStoreGroup,
 } from "@breadboard-ai/types";
-import { asBlob, isStoredData, transformDataParts } from "./common.js";
+import { isStoredData, transformDataParts } from "./common.js";
 import { ok } from "@breadboard-ai/utils";
 
 export { transformContents };
@@ -41,35 +38,6 @@ async function transformContents(
 
   return transforming;
 }
-
-/**
- * Recursively descends into the data object and replaces any
- * instances of `StoredDataCapabilityPart` with another `StoredDataCapabilityPart`, using `SerializedDataStoreGroup` to map between the two.
- */
-export const remapData = async (
-  store: DataStore,
-  o: unknown,
-  serializedData: SerializedDataStoreGroup
-) => {
-  const handleMap = new Map<string, InlineDataCapabilityPart>();
-  for (const item of serializedData) {
-    const { handle } = item;
-    handleMap.set(handle, item);
-  }
-
-  return visitGraphNodes(o, async (value) => {
-    if (isStoredData(value)) {
-      const { handle } = value.storedData;
-      const serialized = handleMap.get(handle);
-      if (!serialized) {
-        throw new Error(`Could not find serialized data for handle: ${handle}`);
-      }
-      const blob = await asBlob(serialized);
-      return store.store(blob);
-    }
-    return value;
-  });
-};
 
 /** Deletes all .data value from StoredDataCapabilityPart. */
 export const purgeStoredDataInMemoryValues = async (graph: GraphDescriptor) => {
