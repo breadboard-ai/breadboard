@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as boardServer from "@breadboard-ai/board-server";
+import * as boardServer from "./server.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { createFetchWithCreds, err } from "@breadboard-ai/utils";
 import express, { type Request } from "express";
