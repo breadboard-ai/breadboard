@@ -4,13 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as boardServer from "@breadboard-ai/board-server";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { createFetchWithCreds, err } from "@breadboard-ai/utils";
 import express, { type Request } from "express";
 import { GoogleAuth } from "google-auth-library";
 import ViteExpress from "vite-express";
-import { createClientConfig } from "./config.js";
+import { createClientConfig, createServerConfig } from "./config.js";
 import * as connectionServer from "./connection/server.js";
 import {
   FALLBACK_CSP,
@@ -23,6 +22,7 @@ import { makeDriveProxyMiddleware } from "./drive-proxy.js";
 import * as flags from "./flags.js";
 import { CachingFeaturedGallery, makeGalleryMiddleware } from "./gallery.js";
 import { createUpdatesHandler } from "./updates.js";
+import { makeBlobsHandler } from "./blobs/index.js";
 
 const FEATURED_GALLERY_CACHE_REFRESH_SECONDS = 10 * 60;
 
@@ -32,12 +32,13 @@ const server = express();
 
 server.use(makeCspHandler(FALLBACK_CSP));
 
-const boardServerConfig = boardServer.createServerConfig();
+console.log("[unified-server startup] Creating server config");
+const serverConfig = createServerConfig();
 const connectionServerConfig = await connectionServer.createServerConfig();
+server.use(express.json({ limit: "2GB", type: "*/*" }));
 
-console.log("[unified-server startup] Mounting board server");
-boardServer.addMiddleware(server);
-server.use("/board", boardServer.createRouter(boardServerConfig));
+console.log("[unified-server startup] Mounting blobs handler");
+server.use("/board/blobs", makeBlobsHandler(serverConfig));
 
 console.log("[unified-server startup] Mounting connection server");
 server.use(
@@ -134,7 +135,7 @@ ViteExpress.config({
     const board = req.res?.locals.loadedBoard;
     const displayName = board?.displayName || "Loading ...";
     const serverUrl = new URL(
-      flags.SERVER_URL || `http://localhost:${boardServerConfig.port}`
+      flags.SERVER_URL || `http://localhost:${serverConfig.port}`
     );
     const clientConfigStr = JSON.stringify(clientConfig).replaceAll(
       "</script>",
@@ -155,9 +156,9 @@ ViteExpress.static({
   enableBrotli: true,
 });
 
-ViteExpress.listen(server, boardServerConfig.port, () => {
+ViteExpress.listen(server, serverConfig.port, () => {
   console.log(
-    `[unified-server startup] Listening for requests on port ${boardServerConfig.port}`
+    `[unified-server startup] Listening for requests on port ${serverConfig.port}`
   );
 });
 

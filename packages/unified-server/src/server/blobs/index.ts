@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import cors from "cors";
 import {
   type NextFunction,
   type Request,
@@ -14,12 +15,23 @@ import {
 
 import { serveBlob } from "./serve.js";
 
-import { isUUID } from "../blob-store.js";
-import type { ServerConfig } from "../config.js";
-import { badRequest } from "../errors.js";
+import type { ServerConfig } from "../../types.js";
+import { isUUID } from "./blob-store.js";
+import { badRequest } from "./errors.js";
 
-export function serveBlobsAPI(config: ServerConfig): Router {
+export function makeBlobsHandler(config: ServerConfig): Router {
   const router = Router();
+
+  router.use(
+    cors({
+      origin: true,
+      credentials: true,
+      // Different browsers allow different max values for max age. The highest
+      // seems to be 24 hours.
+      // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Max-Age
+      maxAge: 24 * 60 * 60,
+    })
+  );
 
   router.use(requireStorageBucket(config));
 
