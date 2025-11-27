@@ -66,29 +66,16 @@ export async function getBoardServers(
   signInInfo: SignInInfo,
   googleDriveClient?: GoogleDriveClient
 ): Promise<BoardServer[]> {
-  const storeUrls = await readAllServers();
-
-  const stores = await Promise.all(
-    storeUrls.map(({ url, title, user }) => {
-      if (url.startsWith(IDBBoardServer.PROTOCOL)) {
-        return IDBBoardServer.from(url, title, user);
-      }
-
-      if (url.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
-        return createGoogleDriveBoardServer(
-          title,
-          user,
-          signInInfo,
-          googleDriveClient
-        );
-      }
-
-      console.warn(`Unsupported store URL: ${url}`);
-      return null;
-    })
+  const server = await createGoogleDriveBoardServer(
+    "Google Drive",
+    { apiKey: "", secrets: new Map(), username: "board-builder " },
+    signInInfo,
+    googleDriveClient
   );
 
-  return stores.filter((store) => store !== null);
+  if (!server) return [];
+
+  return [server];
 }
 
 export async function connectToBoardServer(
