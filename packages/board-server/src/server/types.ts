@@ -7,7 +7,6 @@
 import type { Outcome } from "@breadboard-ai/types";
 
 export type BlobStore = {
-  saveBuffer(buffer: Buffer, contentType: string): Promise<Outcome<string>>;
   getBlob(blobId: string): Promise<Outcome<BlobStoreGetResult>>;
 };
 

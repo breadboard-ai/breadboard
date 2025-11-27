@@ -11,11 +11,6 @@ import { err } from "@breadboard-ai/utils";
 
 export { GoogleStorageBlobStore, isUUID };
 
-export type FileAPIMetadata = {
-  fileUri?: string;
-  expirationTime?: string;
-};
-
 class GoogleStorageBlobStore implements BlobStore {
   #storage: Storage;
   #bucketId: string;
@@ -23,23 +18,6 @@ class GoogleStorageBlobStore implements BlobStore {
   constructor(bucketId: string) {
     this.#storage = new Storage();
     this.#bucketId = bucketId;
-  }
-
-  async saveBuffer(
-    buffer: Buffer,
-    contentType: string
-  ): Promise<Outcome<string>> {
-    try {
-      const uuid = crypto.randomUUID();
-
-      const bucket = this.#storage.bucket(this.#bucketId);
-      const file = bucket.file(uuid);
-      await file.save(buffer, { contentType });
-
-      return uuid;
-    } catch (e) {
-      return err((e as Error).message);
-    }
   }
 
   async getBlob(handle: string): Promise<Outcome<BlobStoreGetResult>> {

@@ -17,14 +17,6 @@ export { GoogleStorageBlobStore } from "./server/blob-store.js";
 const DEFAULT_PORT = 3000;
 const DEFAULT_HOST = "localhost";
 
-export function createServer(config: ServerConfig): Express {
-  const server = express();
-  addMiddleware(server);
-  server.use(createRouter(config));
-
-  return server;
-}
-
 export function addMiddleware(server: Express) {
   server.use(express.json({ limit: "2GB", type: "*/*" }));
 }
