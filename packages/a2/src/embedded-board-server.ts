@@ -11,7 +11,9 @@ import {
   DataPartTransformer,
   GraphDescriptor,
   GraphProviderCapabilities,
+  GraphProviderItem,
   GraphProviderStore,
+  MutableGraphCollection,
   Outcome,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
@@ -82,23 +84,14 @@ class EmbeddedBoardServer
     return `${EMBEDDED_SERVER_PREFIX}${this.urlPrefix}/${id}.bgl.json`;
   }
 
-  #bglKeyFromUrl(url: URL): Outcome<string> {
-    const urlString = url.href;
-    const prefix = `${EMBEDDED_SERVER_PREFIX}${this.urlPrefix}/`;
-    if (urlString.startsWith(prefix)) {
-      return urlString.slice(prefix.length, -".bgl.json".length);
-    }
-    return err(`Nope`);
-  }
-
   canProvide(url: URL): false | GraphProviderCapabilities {
-    const key = this.#bglKeyFromUrl(url);
+    const key = bglKeyFromUrl(url.href, this.urlPrefix);
     if (!ok(key)) return false;
     return { load: true, save: false, delete: false };
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {
-    const key = this.#bglKeyFromUrl(url);
+    const key = bglKeyFromUrl(url.href, this.urlPrefix);
     if (!ok(key)) return null;
     return this.bgls.get(key) || null;
   }
@@ -134,7 +127,52 @@ class EmbeddedBoardServer
     return null;
   }
 
+  get userGraphs(): MutableGraphCollection | undefined {
+    return new UserGraphs(this.#items.get("default")!.items, this.urlPrefix);
+  }
+
   items(): Map<string, GraphProviderStore> {
     return this.#items;
   }
+}
+
+class UserGraphs implements MutableGraphCollection {
+  constructor(
+    private readonly items: Map<string, GraphProviderItem>,
+    private readonly urlPrefix: string
+  ) {}
+
+  put(): void {
+    throw new Error(`Embedded board server entries aren't mutable`);
+  }
+  delete(): boolean {
+    throw new Error(`Embedded board server entries aren't mutable`);
+  }
+  loading = false;
+
+  loaded: Promise<void> = Promise.resolve();
+
+  error: Error | undefined;
+
+  get size() {
+    return this.items.size;
+  }
+
+  entries(): IterableIterator<[string, GraphProviderItem]> {
+    return this.items.entries();
+  }
+
+  has(url: string): boolean {
+    const key = bglKeyFromUrl(url, this.urlPrefix);
+    if (!ok(key)) return false;
+    return this.items.has(key);
+  }
+}
+
+function bglKeyFromUrl(urlString: string, urlPrefix: string): Outcome<string> {
+  const prefix = `${EMBEDDED_SERVER_PREFIX}${urlPrefix}/`;
+  if (urlString.startsWith(prefix)) {
+    return urlString.slice(prefix.length, -".bgl.json".length);
+  }
+  return err(`Nope`);
 }

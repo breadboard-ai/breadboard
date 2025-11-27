@@ -259,8 +259,13 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
     ),
   ];
 
+  const a2Server = config.builtInBoardServers.at(0);
+  if (!a2Server) {
+    throw new Error("Mis-configuration: A2 embedded server is not present");
+  }
+
   // Add board servers that are built into
-  servers.push(...config.builtInBoardServers);
+  servers.push(a2Server);
 
   const loader = createLoader(servers);
   const graphStoreArgs = {
@@ -270,6 +275,10 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
     fileSystem: config.fileSystem,
   };
   const graphStore = createGraphStore(graphStoreArgs);
+
+  for (const [, item] of a2Server.userGraphs?.entries() || []) {
+    graphStore.addByURL(item.url, [], {});
+  }
 
   const boardServers: RuntimeConfigBoardServers = {
     servers,
