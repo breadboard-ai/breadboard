@@ -136,17 +136,6 @@ export class RuntimeBoardEditEvent extends Event {
   }
 }
 
-export class RuntimeBoardServerChangeEvent extends Event {
-  static eventName = "runtimeboardserverchange" as const;
-
-  constructor(
-    public readonly connectedBoardServerName?: string,
-    public readonly connectedBoardServerURL?: string
-  ) {
-    super(RuntimeBoardServerChangeEvent.eventName, { ...eventInit });
-  }
-}
-
 export class RuntimeNewerSharedVersionEvent extends Event {
   static eventName = "runtimenewersharedversion" as const;
 

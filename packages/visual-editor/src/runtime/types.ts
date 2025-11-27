@@ -83,7 +83,7 @@ export interface RuntimeConfig {
   // as part of the environment.
   builtInBoardServers: BoardServer[];
   kits: Kit[];
-  googleDriveClient?: GoogleDriveClient;
+  googleDriveClient: GoogleDriveClient;
   appName: string;
   appSubName: string;
   recentBoardStore: RecentBoardStore;

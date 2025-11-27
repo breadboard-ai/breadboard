@@ -20,9 +20,9 @@ import {
 import { Tab, TabId } from "./types";
 import { createPlanRunner } from "@breadboard-ai/runtime";
 import { RuntimeBoardRunEvent } from "./events";
-import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
 import { StateManager } from "./state";
 import { Edit } from "./edit";
+import { BoardServerAwareDataStore } from "@breadboard-ai/data";
 
 export class Run extends EventTarget {
   #runs = new Map<

@@ -122,7 +122,7 @@ export class LiteHome extends LitElement {
       this.globalConfig.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [];
     const userFolderName =
       this.globalConfig.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
-    GoogleDriveBoardServer.from(
+    this.boardServer = new GoogleDriveBoardServer(
       // TODO: The first two args are not used but currently required
       "",
       {
@@ -135,9 +135,7 @@ export class LiteHome extends LitElement {
       googleDrivePublishPermissions,
       userFolderName,
       this.globalConfig.BACKEND_API_ENDPOINT ?? ""
-    ).then((boardServer) => {
-      this.boardServer = boardServer;
-    });
+    );
     this.#recentBoardStore
       .restore()
       .then((recentBoards) => (this.recentBoards = recentBoards));

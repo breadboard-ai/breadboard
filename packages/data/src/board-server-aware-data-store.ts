@@ -5,19 +5,17 @@
  */
 
 import {
-  HarnessRunResult,
-  StoredDataCapabilityPart,
-} from "@breadboard-ai/types";
-import {
   BoardServer,
   DataPartTransformer,
   DataStore,
   DataStoreScope,
+  HarnessRunResult,
   RetrieveDataResult,
   Schema,
   SerializedDataStoreGroup,
   StoreDataResult,
-} from "@google-labs/breadboard";
+  StoredDataCapabilityPart,
+} from "@breadboard-ai/types";
 
 export { BoardServerAwareDataStore };
 
@@ -32,7 +30,7 @@ class BoardServerAwareDataStore implements DataStore {
     let graphUrl;
     try {
       graphUrl = new URL(graphUrlString);
-    } catch (e) {
+    } catch {
       // Eat the error and presume that the URL is bogus.
     }
     return new BoardServerAwareDataStore(

@@ -12,19 +12,18 @@ import {
   BoardServerProject,
   ChangeNotificationCallback,
   DataPartTransformer,
-  err,
   GraphDescriptor,
   GraphProviderCapabilities,
   GraphProviderExtendedCapabilities,
   GraphProviderPreloadHandler,
   GraphProviderStore,
   Kit,
-  ok,
   Outcome,
   Permission,
   Secrets,
   User,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
+import { err, ok } from "@breadboard-ai/utils";
 
 export { EmbeddedBoardServer, isFromEmbeddedServer };
 

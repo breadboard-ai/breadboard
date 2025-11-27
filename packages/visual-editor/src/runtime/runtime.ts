@@ -17,15 +17,6 @@ import { Edit } from "./edit.js";
 import { Util } from "./util.js";
 import { RuntimeConfig, RuntimeConfigBoardServers, Tab } from "./types.js";
 
-import {
-  createDefaultLocalBoardServer,
-  getBoardServers,
-  migrateIDBGraphProviders,
-  migrateRemoteGraphProviders,
-  legacyGraphProviderExists,
-  BoardServerAwareDataStore,
-} from "@breadboard-ai/board-server-management";
-
 export * as Events from "./events.js";
 export * as Types from "./types.js";
 
@@ -52,10 +43,12 @@ import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { inputsFromSettings } from "@breadboard-ai/shared-ui/data/inputs.js";
 import {
   assetsFromGraphDescriptor,
+  BoardServerAwareDataStore,
   envFromGraphDescriptor,
 } from "@breadboard-ai/data";
 import { Autonamer } from "./autonamer.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { createGoogleDriveBoardServer } from "@breadboard-ai/shared-ui/utils/create-server.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -259,27 +252,12 @@ export class Runtime extends EventTarget {
 
 export async function create(config: RuntimeConfig): Promise<Runtime> {
   const kits = config.kits;
-  let servers = await getBoardServers(
-    config.signinAdapter,
-    config.googleDriveClient
-  );
-
-  // First run - set everything up.
-  if (servers.length === 0) {
-    await createDefaultLocalBoardServer();
-
-    // Migrate any legacy data. We do this in order so that IDB doesn't get
-    // into a bad state with races and the like.
-    if (await legacyGraphProviderExists()) {
-      await migrateIDBGraphProviders(config.signinAdapter);
-      await migrateRemoteGraphProviders();
-    }
-
-    servers = await getBoardServers(
+  const servers: BoardServer[] = [
+    createGoogleDriveBoardServer(
       config.signinAdapter,
       config.googleDriveClient
-    );
-  }
+    ),
+  ];
 
   // Add board servers that are built into
   servers.push(...config.builtInBoardServers);
@@ -292,19 +270,6 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
     fileSystem: config.fileSystem,
   };
   const graphStore = createGraphStore(graphStoreArgs);
-
-  servers.forEach((server) => {
-    server.ready().then(() => {
-      server.kits.forEach((kit) => {
-        graphStore.registerKit(kit, []);
-      });
-      if (server.preload) {
-        server.preload((item) => {
-          graphStore.addByURL(item.url, [], {});
-        });
-      }
-    });
-  });
 
   const boardServers: RuntimeConfigBoardServers = {
     servers,

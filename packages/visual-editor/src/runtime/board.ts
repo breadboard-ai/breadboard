@@ -5,7 +5,6 @@
  */
 
 import {
-  createLoader,
   EditHistoryCreator,
   EditHistoryEntry,
   GraphDescriptor,
@@ -28,7 +27,6 @@ import {
   RuntimeErrorEvent,
   RuntimeTabChangeEvent,
   RuntimeTabCloseEvent,
-  RuntimeBoardServerChangeEvent,
   RuntimeBoardSaveStatusChangeEvent,
   RuntimeSnackbarEvent,
   RuntimeUnsnackbarEvent,
@@ -36,10 +34,6 @@ import {
   RuntimeRequestSignInEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import {
-  connectToBoardServer,
-  getBoardServers,
-} from "@breadboard-ai/board-server-management";
 import { GraphIdentifier, ModuleIdentifier } from "@breadboard-ai/types";
 import * as idb from "idb";
 import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
@@ -143,7 +137,6 @@ export class Board extends EventTarget {
     boardToUpdate.pinned = status === "pin";
 
     await this.recentBoardStore.store(this.recentBoards);
-    this.dispatchEvent(new RuntimeBoardServerChangeEvent());
   }
 
   async #trackRecentBoard(url?: string) {
@@ -230,43 +223,6 @@ export class Board extends EventTarget {
       }
     }
     return boardUrl;
-  }
-
-  async connect(
-    location?: string,
-    apiKey?: string
-  ): Promise<{ success: boolean; error?: string }> {
-    const boardServerInfo = await connectToBoardServer(
-      this.signinAdapter,
-      location,
-      apiKey,
-      this.googleDriveClient
-    );
-    if (!boardServerInfo) {
-      this.dispatchEvent(
-        new RuntimeErrorEvent(`Unable to connect to Server "${location}"`)
-      );
-
-      // We return true here because we don't need the toast from the Visual
-      // Editor. Instead we use the above RuntimeErrorEvent to ensure that
-      // the user is notified.
-      return { success: false };
-    } else {
-      this.boardServers.servers = [
-        ...(await getBoardServers(this.signinAdapter, this.googleDriveClient)),
-        ...this.boardServers.builtInBoardServers,
-      ];
-      this.boardServers.loader = createLoader(this.boardServers.servers);
-      this.dispatchEvent(
-        new RuntimeBoardServerChangeEvent(
-          boardServerInfo.title,
-          boardServerInfo.url
-        )
-      );
-      return { success: true };
-    }
-
-    return { success: false };
   }
 
   getBoardServerByName(name: string) {
