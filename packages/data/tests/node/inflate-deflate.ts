@@ -1,8 +1,8 @@
 import { describe, it, mock, beforeEach } from "node:test";
 import assert from "node:assert";
 import { DataPartTransformer, DataStore } from "@breadboard-ai/types";
-import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
-import { inflateData, transformContents } from "../../src/inflate-deflate.js";
+import { LLMContent } from "@breadboard-ai/types";
+import { transformContents } from "../../src/inflate-deflate.js";
 import { isStoredData } from "../../src/common.js";
 
 function makeStoredData(handle: string) {
@@ -43,46 +43,6 @@ describe("inflate-deflate", () => {
       const handle = `mock-handle-${stored.length}`;
       stored.push({ blob, handle });
       return makeStoredData(handle);
-    });
-  });
-
-  describe("inflateData", () => {
-    it("returns primitives as is", async () => {
-      assert.equal(await inflateData(mockStore, 42), 42);
-      assert.equal(await inflateData(mockStore, "foo"), "foo");
-      assert.equal(await inflateData(mockStore, null), null);
-    });
-
-    it("processes objects recursively", async () => {
-      const obj = {
-        a: 1,
-        b: { storedData: { handle: "test-handle" } },
-        c: "foo",
-      };
-      const result = await inflateData(mockStore, obj);
-      assert.deepEqual(
-        {
-          a: 1,
-          b: {
-            inlineData: { data: "aGVsbG8gd29ybGQ", mimeType: "text/plain" },
-          },
-          c: "foo",
-        },
-        result
-      );
-    });
-
-    it("inflates storedData to inlineData", async () => {
-      const obj = {
-        storedData: { handle: "test-handle" },
-      };
-      const result = (await inflateData(
-        mockStore,
-        obj
-      )) as InlineDataCapabilityPart;
-      assert(result.inlineData);
-      assert.strictEqual(result.inlineData.mimeType, "text/plain");
-      assert.strictEqual(typeof result.inlineData.data, "string");
     });
   });
 

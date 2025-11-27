@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { inflateData } from "@breadboard-ai/data";
 import { CapabilitiesManagerImpl } from "@breadboard-ai/runtime/legacy.js";
 import type {
   InputValues,
@@ -64,7 +63,7 @@ function addRunModule(
       url: import.meta.url,
       handlers: {
         runModule: {
-          invoke: async ({ $module, ...rest }, context) => {
+          invoke: async ({ $module, ...inputs }, context) => {
             // Run invocation filter first, and report error if it tells us
             // we can't run this module.
             const filtering = invocationFilter?.(context);
@@ -94,13 +93,6 @@ function addRunModule(
               return err(`Unable to create runnable module: ${module.$error}`);
             }
 
-            const inputs = context.store
-              ? ((await inflateData(
-                  context.store,
-                  rest,
-                  context.base
-                )) as InputValues)
-              : rest;
             const result = await module.invoke(
               $module as string,
               inputs,

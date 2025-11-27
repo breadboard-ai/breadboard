@@ -77,12 +77,6 @@ export { PartialPersistentBackend } from "./file-system/partial-persistent-backe
 export { transformBlobs } from "./file-system/blob-transform.js";
 
 export { StubFileSystem } from "./file-system/stub-file-system.js";
-export {
-  createDefaultDataStore,
-  inflateData,
-  purgeStoredDataInMemoryValues,
-  transformContents,
-} from "@breadboard-ai/data";
 
 export { err, ok } from "@breadboard-ai/utils";
 
