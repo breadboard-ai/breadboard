@@ -3,7 +3,6 @@
   "files": [],
   "references": [
     { "path": "packages/a2" },
-    { "path": "packages/board-server-management" },
     { "path": "packages/breadboard" },
     { "path": "packages/data-store" },
     { "path": "packages/gulf" },

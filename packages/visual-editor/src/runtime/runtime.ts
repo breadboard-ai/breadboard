@@ -17,11 +17,6 @@ import { Edit } from "./edit.js";
 import { Util } from "./util.js";
 import { RuntimeConfig, RuntimeConfigBoardServers, Tab } from "./types.js";
 
-import {
-  BoardServerAwareDataStore,
-  createGoogleDriveBoardServer,
-} from "@breadboard-ai/board-server-management";
-
 export * as Events from "./events.js";
 export * as Types from "./types.js";
 
@@ -48,10 +43,12 @@ import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { inputsFromSettings } from "@breadboard-ai/shared-ui/data/inputs.js";
 import {
   assetsFromGraphDescriptor,
+  BoardServerAwareDataStore,
   envFromGraphDescriptor,
 } from "@breadboard-ai/data";
 import { Autonamer } from "./autonamer.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { createGoogleDriveBoardServer } from "@breadboard-ai/shared-ui/utils/create-server.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;

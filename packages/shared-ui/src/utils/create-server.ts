@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/// <reference types="@types/gapi.client.drive-v3" />
-
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
@@ -29,5 +27,3 @@ export function createGoogleDriveBoardServer(
     CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT ?? ""
   );
 }
-
-export { BoardServerAwareDataStore } from "./board-server-aware-data-store";

@@ -26,3 +26,5 @@ export {
   extensionFromMimeType,
 } from "./save-outputs-as-file.js";
 export * from "./file-system.js";
+
+export { BoardServerAwareDataStore } from "./board-server-aware-data-store.js";
