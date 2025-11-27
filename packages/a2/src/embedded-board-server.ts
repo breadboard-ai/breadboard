@@ -84,23 +84,14 @@ class EmbeddedBoardServer
     return `${EMBEDDED_SERVER_PREFIX}${this.urlPrefix}/${id}.bgl.json`;
   }
 
-  #bglKeyFromUrl(url: URL): Outcome<string> {
-    const urlString = url.href;
-    const prefix = `${EMBEDDED_SERVER_PREFIX}${this.urlPrefix}/`;
-    if (urlString.startsWith(prefix)) {
-      return urlString.slice(prefix.length, -".bgl.json".length);
-    }
-    return err(`Nope`);
-  }
-
   canProvide(url: URL): false | GraphProviderCapabilities {
-    const key = this.#bglKeyFromUrl(url);
+    const key = bglKeyFromUrl(url.href, this.urlPrefix);
     if (!ok(key)) return false;
     return { load: true, save: false, delete: false };
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {
-    const key = this.#bglKeyFromUrl(url);
+    const key = bglKeyFromUrl(url.href, this.urlPrefix);
     if (!ok(key)) return null;
     return this.bgls.get(key) || null;
   }
@@ -151,14 +142,6 @@ class UserGraphs implements MutableGraphCollection {
     private readonly urlPrefix: string
   ) {}
 
-  #bglKeyFromUrl(urlString: string): Outcome<string> {
-    const prefix = `${EMBEDDED_SERVER_PREFIX}${this.urlPrefix}/`;
-    if (urlString.startsWith(prefix)) {
-      return urlString.slice(prefix.length, -".bgl.json".length);
-    }
-    return err(`Nope`);
-  }
-
   put(): void {
     throw new Error(`Embedded board server entries aren't mutable`);
   }
@@ -180,8 +163,16 @@ class UserGraphs implements MutableGraphCollection {
   }
 
   has(url: string): boolean {
-    const key = this.#bglKeyFromUrl(url);
+    const key = bglKeyFromUrl(url, this.urlPrefix);
     if (!ok(key)) return false;
     return this.items.has(key);
   }
+}
+
+function bglKeyFromUrl(urlString: string, urlPrefix: string): Outcome<string> {
+  const prefix = `${EMBEDDED_SERVER_PREFIX}${urlPrefix}/`;
+  if (urlString.startsWith(prefix)) {
+    return urlString.slice(prefix.length, -".bgl.json".length);
+  }
+  return err(`Nope`);
 }
