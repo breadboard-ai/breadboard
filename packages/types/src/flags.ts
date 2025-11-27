@@ -42,10 +42,6 @@ export type RuntimeFlags = {
    */
   agentMode: boolean;
   /**
-   * Moves data transformations (B2F, D2F, D2B) to the backend
-   */
-  backendTransforms: boolean;
-  /**
    * Enables Google One Quotas
    */
   googleOne: boolean;
