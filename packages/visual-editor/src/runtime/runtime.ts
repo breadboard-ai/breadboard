@@ -18,11 +18,7 @@ import { Util } from "./util.js";
 import { RuntimeConfig, RuntimeConfigBoardServers, Tab } from "./types.js";
 
 import {
-  createDefaultLocalBoardServer,
   getBoardServers,
-  migrateIDBGraphProviders,
-  migrateRemoteGraphProviders,
-  legacyGraphProviderExists,
   BoardServerAwareDataStore,
 } from "@breadboard-ai/board-server-management";
 
@@ -259,27 +255,10 @@ export class Runtime extends EventTarget {
 
 export async function create(config: RuntimeConfig): Promise<Runtime> {
   const kits = config.kits;
-  let servers = await getBoardServers(
+  const servers = getBoardServers(
     config.signinAdapter,
     config.googleDriveClient
   );
-
-  // First run - set everything up.
-  if (servers.length === 0) {
-    await createDefaultLocalBoardServer();
-
-    // Migrate any legacy data. We do this in order so that IDB doesn't get
-    // into a bad state with races and the like.
-    if (await legacyGraphProviderExists()) {
-      await migrateIDBGraphProviders(config.signinAdapter);
-      await migrateRemoteGraphProviders();
-    }
-
-    servers = await getBoardServers(
-      config.signinAdapter,
-      config.googleDriveClient
-    );
-  }
 
   // Add board servers that are built into
   servers.push(...config.builtInBoardServers);
@@ -292,19 +271,6 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
     fileSystem: config.fileSystem,
   };
   const graphStore = createGraphStore(graphStoreArgs);
-
-  servers.forEach((server) => {
-    server.ready().then(() => {
-      server.kits.forEach((kit) => {
-        graphStore.registerKit(kit, []);
-      });
-      if (server.preload) {
-        server.preload((item) => {
-          graphStore.addByURL(item.url, [], {});
-        });
-      }
-    });
-  });
 
   const boardServers: RuntimeConfigBoardServers = {
     servers,

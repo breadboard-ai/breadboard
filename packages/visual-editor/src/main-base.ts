@@ -49,7 +49,6 @@ import {
 } from "./runtime/types";
 
 import { createA2ModuleFactory, createA2Server } from "@breadboard-ai/a2";
-import { getGoogleDriveBoardService } from "@breadboard-ai/board-server-management";
 import {
   EmbedHandler,
   embedState,
@@ -510,6 +509,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     );
 
     this.#boardServers = this.runtime.board.getBoardServers() || [];
+    this.boardServer = this.#boardServers.at(0);
+    if (!this.boardServer) {
+      console.warn("No Google Drive Board server found");
+    }
     this.uiState = this.runtime.state.getOrCreateUIState();
 
     try {
@@ -548,32 +551,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       ActionTracker.load("home", false);
     }
     this.#graphStore = this.runtime.board.getGraphStore();
-
-    const hasMountedBoardServer = this.#findSelectedBoardServer(args);
-    if (!hasMountedBoardServer && args.boardServerUrl) {
-      console.log(`[Status] Mounting server "${args.boardServerUrl.href}" ...`);
-      this.runtime.board.connect();
-      this.#findSelectedBoardServer(args);
-      console.log(`[Status] Connected to server`);
-
-      // Since we late-mounted the server we have to add it to the state
-      // manager so it can be used by the Reactive Project.
-      const mountedServer = this.runtime.board.getBoardServerForURL(
-        new URL(args.boardServerUrl.href)
-      );
-
-      this.runtime.state.appendServer(mountedServer);
-    }
-
-    if (
-      args.boardServerUrl &&
-      args.boardServerUrl.protocol === GoogleDriveBoardServer.PROTOCOL
-    ) {
-      const gdrive = await getGoogleDriveBoardService();
-      if (gdrive) {
-        args.boardServerUrl = new URL(gdrive.url);
-      }
-    }
+    args.boardServerUrl = new URL("drive:");
 
     // Admin.
     const admin = new Admin(
@@ -613,20 +591,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.runtime.shell.startTrackUpdates();
     await this.runtime.router.init();
-  }
-
-  #findSelectedBoardServer(args: MainArguments) {
-    let hasMountedBoardServer = false;
-    for (const server of this.#boardServers) {
-      if (server.url.href === args.boardServerUrl?.href) {
-        hasMountedBoardServer = true;
-        this.uiState.boardServer = server.name;
-        this.uiState.boardLocation = server.url.href;
-        this.boardServer = server;
-        break;
-      }
-    }
-    return hasMountedBoardServer;
   }
 
   #maybeNotifyAboutDesktopModality() {
