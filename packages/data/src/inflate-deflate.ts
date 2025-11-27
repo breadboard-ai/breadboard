@@ -58,7 +58,7 @@ export const purgeStoredDataInMemoryValues = async (graph: GraphDescriptor) => {
  *   1. Processing the data in parallel vs 1 by 1.
  *   2. Decouples the walking logic from the actual domain specific transformation logic.
  */
-export const visitGraphNodes = async (
+const visitGraphNodes = async (
   graph: unknown,
   nodeMapper: (data: unknown) => unknown
 ): Promise<unknown> => {
