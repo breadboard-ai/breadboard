@@ -47,8 +47,6 @@ const documentStyles = getComputedStyle(document.documentElement);
 
 type ValidColorStrings = `#${string}` | `--${string}`;
 
-const USER_REGEX = /\/@[^/]+\//;
-
 const SHARED_VERSION_HISTORY_KEY = "shared-version-history";
 const SHARED_VERSION_HISTORY_VERSION = 1;
 interface SharedVersionHistoryDBSchema extends idb.DBSchema {
@@ -636,27 +634,7 @@ export class Board extends EventTarget {
     if (!boardServer) {
       return false;
     }
-    const isMineAccordingToBoardServer = boardServer.isMine?.(boardUrl);
-    if (isMineAccordingToBoardServer !== undefined) {
-      return isMineAccordingToBoardServer;
-    }
-
-    const capabilities = boardServer.canProvide(boardUrl);
-    if (!capabilities || !capabilities.save) {
-      return false;
-    }
-
-    for (const store of boardServer.items?.().values() ?? []) {
-      for (const item of store.items.values()) {
-        if (item.url !== url && item.url.replace(USER_REGEX, "/") !== url) {
-          continue;
-        }
-
-        return item.mine;
-      }
-    }
-
-    return false;
+    return boardServer.isMine(boardUrl);
   }
 
   #tabSaveId = new Map<

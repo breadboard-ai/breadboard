@@ -131,8 +131,8 @@ class EmbeddedBoardServer
     return new UserGraphs(this.#items.get("default")!.items, this.urlPrefix);
   }
 
-  items(): Map<string, GraphProviderStore> {
-    return this.#items;
+  isMine() {
+    return false;
   }
 }
 
