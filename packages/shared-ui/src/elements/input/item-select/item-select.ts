@@ -147,15 +147,6 @@ export class ItemSelect extends LitElement {
           grid-template-columns: 20px minmax(0, 1fr) max-content;
         }
 
-        & .svg-icon {
-          width: 20px;
-          height: 20px;
-          display: inline-block;
-          background-repeat: no-repeat;
-          background-position: center;
-          background-size: 20px 20px;
-        }
-
         &:not([disabled]) {
           cursor: pointer;
 
