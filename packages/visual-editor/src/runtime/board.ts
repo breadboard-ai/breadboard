@@ -222,12 +222,6 @@ export class Board extends EventTarget {
     return boardUrl;
   }
 
-  getBoardServerByName(name: string) {
-    return (
-      this.boardServers.servers.find((server) => server.name === name) || null
-    );
-  }
-
   getBoardServerForURL(url: URL) {
     return (
       this.boardServers.servers.find((server) => server.canProvide(url)) || null
@@ -824,7 +818,7 @@ export class Board extends EventTarget {
   #isSavingAs = false;
 
   async saveAs(
-    boardServerName: string,
+    _boardServerName: string,
     _location: string,
     _fileName: string,
     graph: GraphDescriptor,
@@ -853,7 +847,7 @@ export class Board extends EventTarget {
     }
 
     const fail = { result: false, error: "Unable to save", url: undefined };
-    const boardServer = this.getBoardServerByName(boardServerName);
+    const boardServer = this.boardServers.servers.at(0);
     if (!boardServer) {
       this.#isSavingAs = false;
       if (snackbarId) {
@@ -915,7 +909,7 @@ export class Board extends EventTarget {
   }
 
   async delete(
-    providerName: string,
+    _providerName: string,
     url: string,
     messages: { start: string; end: string; error: string }
   ) {
@@ -932,7 +926,7 @@ export class Board extends EventTarget {
     );
 
     const fail = { result: false, error: "Unable to delete" };
-    const boardServer = this.getBoardServerByName(providerName);
+    const boardServer = this.boardServers.servers.at(0);
     if (!boardServer) {
       return fail;
     }
