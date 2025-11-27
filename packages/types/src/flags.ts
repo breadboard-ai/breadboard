@@ -73,6 +73,10 @@ export type RuntimeFlags = {
    * Enables SSE streaming for planner calls.
    */
   streamPlanner: boolean;
+  /**
+   * Enables SSE streaming for GenerateWebpage (output node HTML generation).
+   */
+  streamGenWebpage: boolean;
 };
 
 /**

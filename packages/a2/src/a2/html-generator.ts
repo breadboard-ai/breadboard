@@ -5,6 +5,7 @@
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 import type { ContentMap, ExecuteStepRequest } from "./step-executor";
 import { executeStep } from "./step-executor";
+import { executeWebpageStream } from "./generate-webpage-stream";
 import { encodeBase64, err, mergeContent, ok } from "./utils";
 import { A2ModuleArgs } from "../runnable-module-factory";
 
@@ -12,7 +13,10 @@ export { callGenWebpage };
 
 const OUTPUT_KEY = "rendered_outputs";
 
-async function callGenWebpage(
+/**
+ * Legacy (non-streaming) implementation of GenerateWebpage.
+ */
+async function callGenWebpageLegacy(
   caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   instruction: string,
@@ -105,3 +109,43 @@ async function callGenWebpage(
 
   return mergeContent(response.chunks, "model");
 }
+
+/**
+ * Main entry point for generating webpage HTML.
+ * Uses streaming API when streamGenWebpage flag is enabled.
+ */
+async function callGenWebpage(
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs,
+  instruction: string,
+  content: LLMContent[],
+  renderMode: string,
+  modelName: string
+): Promise<Outcome<LLMContent>> {
+  const flags = await moduleArgs.context.flags?.flags();
+  const useStreaming = flags?.streamGenWebpage ?? false;
+
+  if (useStreaming) {
+    console.log("[html-generator] Using streaming API for GenerateWebpage");
+    return executeWebpageStream(
+      caps,
+      moduleArgs,
+      instruction,
+      content,
+      modelName
+    );
+  } else {
+    console.log(
+      "[html-generator] Using legacy executeStep for GenerateWebpage"
+    );
+    return callGenWebpageLegacy(
+      caps,
+      moduleArgs,
+      instruction,
+      content,
+      renderMode,
+      modelName
+    );
+  }
+}
+
