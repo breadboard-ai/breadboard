@@ -90,7 +90,6 @@ import { Admin } from "./admin";
 import { keyboardCommands } from "./commands/commands";
 import { KeyboardCommandDeps } from "./commands/types";
 import { eventRoutes } from "./event-routing/event-routing";
-import { RuntimeBoardServerChangeEvent } from "./runtime/events.js";
 import { MainArguments } from "./types/types";
 import { envFromFlags } from "./utils/env-from-flags";
 import { envFromSettings } from "./utils/env-from-settings";
@@ -641,13 +640,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     }
 
     const currentUrl = new URL(window.location.href);
-
-    this.runtime.board.addEventListener(
-      RuntimeBoardServerChangeEvent.eventName,
-      () => {
-        this.#boardServers = this.runtime.board.getBoardServers() || [];
-      }
-    );
 
     this.runtime.board.addEventListener(
       Runtime.Events.RuntimeShareMissingEvent.eventName,

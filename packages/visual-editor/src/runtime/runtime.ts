@@ -18,8 +18,8 @@ import { Util } from "./util.js";
 import { RuntimeConfig, RuntimeConfigBoardServers, Tab } from "./types.js";
 
 import {
-  getBoardServers,
   BoardServerAwareDataStore,
+  createGoogleDriveBoardServer,
 } from "@breadboard-ai/board-server-management";
 
 export * as Events from "./events.js";
@@ -255,10 +255,12 @@ export class Runtime extends EventTarget {
 
 export async function create(config: RuntimeConfig): Promise<Runtime> {
   const kits = config.kits;
-  const servers = getBoardServers(
-    config.signinAdapter,
-    config.googleDriveClient
-  );
+  const servers: BoardServer[] = [
+    createGoogleDriveBoardServer(
+      config.signinAdapter,
+      config.googleDriveClient
+    ),
+  ];
 
   // Add board servers that are built into
   servers.push(...config.builtInBoardServers);

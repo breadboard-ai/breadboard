@@ -5,7 +5,6 @@
  */
 
 import {
-  createLoader,
   EditHistoryCreator,
   EditHistoryEntry,
   GraphDescriptor,
@@ -28,7 +27,6 @@ import {
   RuntimeErrorEvent,
   RuntimeTabChangeEvent,
   RuntimeTabCloseEvent,
-  RuntimeBoardServerChangeEvent,
   RuntimeBoardSaveStatusChangeEvent,
   RuntimeSnackbarEvent,
   RuntimeUnsnackbarEvent,
@@ -36,7 +34,6 @@ import {
   RuntimeRequestSignInEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { getBoardServers } from "@breadboard-ai/board-server-management";
 import { GraphIdentifier, ModuleIdentifier } from "@breadboard-ai/types";
 import * as idb from "idb";
 import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
@@ -140,7 +137,6 @@ export class Board extends EventTarget {
     boardToUpdate.pinned = status === "pin";
 
     await this.recentBoardStore.store(this.recentBoards);
-    this.dispatchEvent(new RuntimeBoardServerChangeEvent());
   }
 
   async #trackRecentBoard(url?: string) {
@@ -227,17 +223,6 @@ export class Board extends EventTarget {
       }
     }
     return boardUrl;
-  }
-
-  connect(): void {
-    this.boardServers.servers = [
-      ...getBoardServers(this.signinAdapter, this.googleDriveClient),
-      ...this.boardServers.builtInBoardServers,
-    ];
-    this.boardServers.loader = createLoader(this.boardServers.servers);
-    this.dispatchEvent(
-      new RuntimeBoardServerChangeEvent("Google Drive", "drive:")
-    );
   }
 
   getBoardServerByName(name: string) {
