@@ -45,7 +45,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   static styles = [
     BBLite.Styles.HostIcons.icons,
     BBLite.Styles.HostBehavior.behavior,
-    BBLite.Styles.HostColors.baseColors,
+    BBLite.Styles.HostColorsMaterial.baseColors,
     BBLite.Styles.HostType.type,
     css`
       * {
@@ -55,11 +55,15 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       :host {
         display: block;
         flex: 1;
+        background: var(--sys-color--body-background);
 
-        --example-color: light-dark(#e9eef6, #000000);
+        --example-color: var(--sys-color--surface-container-low);
         --example-text-color: light-dark(#575b5f, #ffffff);
-        --example-icon-background-color: light-dark(#d9d7fd, #ffffff);
-        --example-icon-color: light-dark(#665ef6, #ffffff);
+        --example-icon-background-color: light-dark(
+          #d9d7fd,
+          var(--sys-color--on-surface-low)
+        );
+        --example-icon-color: light-dark(#665ef6, #665ef6);
       }
 
       #loading,
@@ -69,6 +73,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         width: 100%;
         align-items: center;
         justify-content: center;
+        color: var(--sys-color--on-surface);
 
         & .g-icon {
           margin-right: var(--bb-grid-size-2);
@@ -110,14 +115,14 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           text-align: center;
           height: var(--bb-grid-size-4);
           margin: var(--bb-grid-size-2) 0;
-          color: light-dark(#575b5f, #fff);
+          color: var(--sys-color--on-surface-variant);
         }
 
         & #app-view {
           position: relative;
           margin: 0 0 0 var(--bb-grid-size-3);
           border-radius: var(--bb-grid-size-4);
-          border: 1px solid var(--light-dark-n-90);
+          border: 1px solid var(--sys-color--surface-variant);
           display: flex;
           flex-direction: column;
           overflow: hidden;
@@ -135,7 +140,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             align-items: center;
             justify-content: space-between;
             padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-5);
-            color: var(--light-dark-n-10);
+            background: var(--sys-color--surface);
+            color: var(--sys-color--on-surface);
 
             & .left {
               flex: 1;
@@ -153,7 +159,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             a {
               display: flex;
               align-items: center;
-              color: var(--light-dark-n-10);
+              color: var(--sys-color--on-surface);
               border: none;
               background: none;
               padding: 0;
@@ -176,12 +182,16 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           flex-direction: column;
           gap: var(--bb-grid-size-4);
           height: 100%;
+          max-width: 800px;
+          margin: 0 auto;
 
           & > h1 {
+            color: var(--sys-color--on-surface);
             margin: 0 0 var(--bb-grid-size-11) 0;
           }
 
           & > h2 {
+            color: var(--sys-color--on-surface);
             margin: 0 0 var(--bb-grid-size-4) 0;
           }
 
@@ -525,6 +535,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           fullscreen: this.showAppFullscreen ? "active" : "available",
           small: true,
         }}
+        .systemThemeOverride=${true}
       >
       </bb-app-controller>
       ${this.renderSnackbar()} ${this.#renderShellUI()}

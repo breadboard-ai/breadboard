@@ -7,9 +7,7 @@
 import { LitElement, css, html, type PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import { icons } from "../../styles/icons.js";
-import { baseColors } from "../../styles/host/base-colors.js";
-import { type } from "../../styles/host/type.js";
+import * as Styles from "../../styles/styles.js";
 import { classMap } from "lit/directives/class-map.js";
 
 /**
@@ -54,14 +52,19 @@ export class ExpandingTextarea extends LitElement {
   @property({ reflect: true, type: String })
   accessor orientation: "horizontal" | "vertical" = "horizontal";
 
+  @property({ reflect: true, type: Boolean })
+  accessor systemThemeOverride = false;
+
   #measure = createRef<HTMLElement>();
   #textarea = createRef<HTMLTextAreaElement>();
   #resizeObserver = new ResizeObserver(() => this.#recomputeHeight());
 
   static override styles = [
-    icons,
-    baseColors,
-    type,
+    Styles.HostIcons.icons,
+    Styles.HostBehavior.behavior,
+    Styles.HostColorsBase.baseColors,
+    Styles.HostType.type,
+    Styles.HostColorScheme.light,
     css`
       :host {
         --min-lines: 3;
@@ -70,6 +73,7 @@ export class ExpandingTextarea extends LitElement {
         border: 1px solid var(--border-color, currentColor);
         border-radius: var(--border-radius, 0.5lh);
         overflow-y: hidden;
+        background: var(--background-color, currentColor);
       }
 
       #outer-container {

@@ -8,11 +8,9 @@ const Strings = StringsHelper.forSection("Global");
 
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { baseColors } from "../../styles/host/base-colors.js";
-import { type } from "../../styles/host/type";
+import * as Styles from "../../styles/styles.js";
 import { SigninAdapter } from "../../utils/signin-adapter.js";
 import { BOARD_SAVE_STATUS, EnumValue } from "../../types/types.js";
-import { icons } from "../../styles/icons.js";
 import {
   CloseEvent,
   OverflowMenuActionEvent,
@@ -75,9 +73,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
   accessor #uiState!: UI;
 
   static styles = [
-    icons,
-    baseColors,
-    type,
+    Styles.HostType.type,
+    Styles.HostIcons.icons,
+    Styles.HostColorsBase.baseColors,
+    Styles.HostColorScheme.light,
     css`
       * {
         box-sizing: border-box;

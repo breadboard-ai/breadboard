@@ -7,9 +7,7 @@
 import { ToastRemovedEvent, ToastType } from "../../events/events.js";
 import { LitElement, html, css, PropertyValueMap } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { baseColors } from "../../styles/host/base-colors.js";
-import { type } from "../../styles/host/type.js";
-import { icons } from "../../styles/icons.js";
+import * as Styles from "../../styles/styles.js";
 import { classMap } from "lit/directives/class-map.js";
 
 const DEFAULT_TIMEOUT = 8000;
@@ -32,9 +30,10 @@ export class Toast extends LitElement {
   accessor offset = 0;
 
   static styles = [
-    baseColors,
-    type,
-    icons,
+    Styles.HostType.type,
+    Styles.HostIcons.icons,
+    Styles.HostColorsBase.baseColors,
+    Styles.HostColorScheme.light,
     css`
       :host {
         position: fixed;

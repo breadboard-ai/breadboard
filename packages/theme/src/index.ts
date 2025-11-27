@@ -171,6 +171,23 @@ function convertColorPaletteToAppPalette(p: ColorPalettes): AppPalette {
 }
 
 const refPalette = paletteFactory();
+
+/**
+ * This will create a reference set of colors. For example, it will create
+ * --p-100: #{color}
+ * --p-90: #{color} etc.
+ *
+ * If will also create a light-dark variant of the color, which will use any
+ * mapping provided. For example, without a mapping you will get:
+ *
+ * --light-dark-p-100: var(--p-100);
+ *
+ * But if a mapping is provided, such as '--p-100' => '--p-0':
+ *
+ * --light-dark-p-100: light-dark(var(--p-100), var(--p-0));
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/light-dark
+ */
 export function createThemeStyles(
   palette: AppPalette | ColorPalettes,
   mapping?: Map<string, string>
@@ -181,15 +198,17 @@ export function createThemeStyles(
 
   const styles: Record<string, string> = {};
   const keys = Object.keys(refPalette) as Array<keyof typeof palette>;
-
   for (const k of keys) {
     for (const t of toneVals) {
       const key = toStyleName(k, t);
       const lightDarkKey = toStyleName(k, t, "light-dark-");
       const col = palette[k][t] ?? "#000000";
       styles[key] = col;
-      styles[lightDarkKey] =
-        `light-dark(var(${key}), var(${mapping?.get(key) ?? key}))`;
+
+      const remappedValue = mapping?.get(key);
+      styles[lightDarkKey] = remappedValue
+        ? `light-dark(var(${key}), var(${remappedValue}))`
+        : `var(${key})`;
     }
   }
 

@@ -45,14 +45,13 @@ export class LiteHome extends LitElement {
   static styles = [
     BBLite.Styles.HostIcons.icons,
     BBLite.Styles.HostBehavior.behavior,
-    BBLite.Styles.HostColors.baseColors,
+    BBLite.Styles.HostColorsMaterial.baseColors,
     BBLite.Styles.HostType.type,
     css`
       :host {
-        --welcome-text-color: light-dark(#1b1c1d, #ffffff);
-        --welcome-button-color: light-dark(#0b57d0, #000000);
-        --welcome-surface-color: light-dark(#f0f4f9, #1a1a1a);
-        --welcome-button-text-label-color: (#0b57d0, #ffffff);
+        display: block;
+        min-height: 100%;
+        background: var(--sys-color--body-background);
       }
     `,
   ];
