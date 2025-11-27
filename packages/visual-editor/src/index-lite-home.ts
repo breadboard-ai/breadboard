@@ -125,11 +125,6 @@ export class LiteHome extends LitElement {
     this.boardServer = new GoogleDriveBoardServer(
       // TODO: The first two args are not used but currently required
       "",
-      {
-        username: "",
-        apiKey: "",
-        secrets: new Map(),
-      },
       signinAdapter,
       this.googleDriveClient,
       googleDrivePublishPermissions,

@@ -13,8 +13,6 @@ import {
 } from "@google-labs/breadboard";
 import type {
   BoardServer,
-  BoardServerExtension,
-  BoardServerExtensionNamespace,
   BoardServerSaveEventStatus,
   GraphLoader,
   GraphProvider,
@@ -22,7 +20,6 @@ import type {
 } from "@breadboard-ai/types";
 import { RuntimeConfigBoardServers, Tab, TabId, TabType } from "./types";
 import {
-  RuntimeHostAPIEvent,
   RuntimeBoardLoadErrorEvent,
   RuntimeErrorEvent,
   RuntimeTabChangeEvent,
@@ -415,12 +412,10 @@ export class Board extends EventTarget {
       const base = new URL(window.location.href);
       let boardServer: BoardServer | null = null;
 
-      let kits = this.boardServerKits;
       let graph: GraphDescriptor | null = null;
       if (this.#canParse(url, base.href)) {
         boardServer = this.getBoardServerForURL(new URL(url, base));
         if (boardServer && this.boardServers) {
-          kits = (boardServer as BoardServer).kits ?? this.boardServerKits;
           const resourceKey = urlAtTimeOfCall
             ? new URL(urlAtTimeOfCall).searchParams.get("resourcekey")
             : null;
@@ -518,7 +513,7 @@ export class Board extends EventTarget {
 
       this.#tabs.set(id, {
         id,
-        boardServerKits: kits,
+        boardServerKits: this.boardServerKits,
         name: graph.title ?? "Untitled board",
         graph,
         graphIsMine,
@@ -668,29 +663,6 @@ export class Board extends EventTarget {
     }
 
     return false;
-  }
-
-  canPreview(id: TabId | null): boolean {
-    if (!id) {
-      return false;
-    }
-
-    const tab = this.#tabs.get(id);
-    if (!tab) {
-      return false;
-    }
-
-    if (!tab.graph || !tab.graph.url) {
-      return false;
-    }
-
-    const boardUrl = new URL(tab.graph.url);
-    const boardServer = this.getBoardServerForURL(boardUrl);
-    if (!boardServer) {
-      return false;
-    }
-
-    return boardServer.capabilities.preview;
   }
 
   #tabSaveId = new Map<
@@ -984,107 +956,6 @@ export class Board extends EventTarget {
     );
 
     return result;
-  }
-
-  async extensionAction<T extends BoardServerExtensionNamespace>(
-    id: TabId | null,
-    namespace: T,
-    action: keyof BoardServerExtension[T],
-    ...args: unknown[]
-  ) {
-    if (!id) {
-      return;
-    }
-
-    const tab = this.#tabs.get(id);
-    if (!tab) {
-      return;
-    }
-
-    switch (namespace) {
-      case "node": {
-        switch (action) {
-          case "onSelect": {
-            // id: NodeIdentifier,
-            // type: string,
-            // configuration: NodeConfiguration
-            const node = tab.graph.nodes.find((node) => node.id === args[0]);
-            const comment = tab.graph.metadata?.comments?.find(
-              (comment) => comment.id === args[0]
-            );
-            args = [
-              ...args,
-              node ? node.type : comment ? "comment" : "unknown",
-              node ? node.configuration : comment ? comment.text : {},
-            ];
-            break;
-          }
-
-          case "onDeselect": {
-            // Noop.
-            break;
-          }
-
-          case "onAction": {
-            // action: string,
-            // kits: Kit[],
-            // id: NodeIdentifier,
-            // type: string,
-            // configuration: NodeConfiguration
-            const node = tab.graph.nodes.find((node) => node.id === args[0]);
-            const comment = tab.graph.metadata?.comments?.find(
-              (comment) => comment.id === args[0]
-            );
-            args = [
-              "replaceContent",
-              tab.boardServerKits,
-              ...args,
-              node ? node.type : comment ? "comment" : "unknown",
-              node ? node.configuration : comment ? comment.text : {},
-            ];
-            break;
-          }
-        }
-      }
-    }
-
-    // API.
-    const dispatchEvent = this.dispatchEvent.bind(this);
-    args.unshift({
-      async send(method: string, args: unknown[]) {
-        dispatchEvent(new RuntimeHostAPIEvent(tab, method, args));
-      },
-    });
-
-    return this.#handleExtensionAction(tab, namespace, action, ...args);
-  }
-
-  async #handleExtensionAction<T extends BoardServerExtensionNamespace>(
-    tab: Tab,
-    namespace: T,
-    action: keyof BoardServerExtension[T],
-    ...args: unknown[]
-  ) {
-    if (!tab.graph || !tab.graph.url) {
-      return;
-    }
-
-    const boardUrl = new URL(tab.graph.url);
-    const boardServer = this.getBoardServerForURL(boardUrl);
-    if (!boardServer) {
-      return;
-    }
-
-    for (const extension of boardServer.extensions) {
-      const ns = extension[namespace];
-      if (ns && ns[action]) {
-        if (typeof ns[action] !== "function") {
-          continue;
-        }
-
-        await ns[action].call(null, ...args);
-      }
-    }
   }
 
   async #loadLocalHistory(url: string): Promise<EditHistoryEntry[]> {

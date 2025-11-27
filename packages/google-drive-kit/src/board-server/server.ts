@@ -11,15 +11,9 @@ import {
   type BoardServer,
   type BoardServerCapabilities,
   type BoardServerEventTarget,
-  type BoardServerExtension,
-  type ChangeNotificationCallback,
   type DataPartTransformer,
   type GraphDescriptor,
   type GraphProviderCapabilities,
-  type GraphProviderExtendedCapabilities,
-  type Kit,
-  type Permission,
-  type User,
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import {
@@ -58,9 +52,6 @@ class GoogleDriveBoardServer
   static PROTOCOL = PROTOCOL;
 
   public readonly url = new URL(PROTOCOL);
-  public readonly users: User[];
-  public readonly secrets = new Map<string, string>();
-  public readonly extensions: BoardServerExtension[] = [];
   public readonly capabilities: BoardServerCapabilities;
   public readonly ops: DriveOperations;
   readonly #googleDriveClient: GoogleDriveClient;
@@ -94,11 +85,8 @@ class GoogleDriveBoardServer
   readonly galleryGraphs: DriveGalleryGraphCollection;
   readonly userGraphs: DriveUserGraphCollection;
 
-  kits: Kit[];
-
   constructor(
     public readonly name: string,
-    public readonly user: User,
     signInInfo: SignInInfo,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
@@ -109,17 +97,7 @@ class GoogleDriveBoardServer
 
     const configuration = {
       url: new URL(`${PROTOCOL}/`),
-      projects: Promise.resolve([]),
-      kits: [],
-      users: [],
-      secrets: new Map(),
-      extensions: [],
       capabilities: {
-        connect: true,
-        disconnect: true,
-        refresh: true,
-        watch: false,
-        preview: true,
         events: true,
         autosave: true,
       },
@@ -133,10 +111,6 @@ class GoogleDriveBoardServer
       publishPermissions
     );
 
-    this.kits = configuration.kits;
-    this.users = configuration.users;
-    this.secrets = configuration.secrets;
-    this.extensions = configuration.extensions;
     this.capabilities = configuration.capabilities;
     this.#googleDriveClient = googleDriveClient;
     this.galleryGraphs = new DriveGalleryGraphCollection(
@@ -151,8 +125,6 @@ class GoogleDriveBoardServer
   }
 
   #saving = new Map<string, SaveDebouncer>();
-
-  async ready(): Promise<void> {}
 
   #googleDriveClientSeeded?: Promise<void>;
   async #seedGoogleDriveClientWithFeaturedGraphIdsOnce() {
@@ -183,14 +155,6 @@ class GoogleDriveBoardServer
     return this.galleryGraphs.has(fileId);
   }
 
-  getAccess(_url: URL, _user: User): Promise<Permission> {
-    throw new Error("Method not implemented.");
-  }
-
-  isSupported(): boolean {
-    return true;
-  }
-
   isMine(url: URL): boolean | undefined {
     return this.#loadedGraphMetadata.get(url.href)?.isMine;
   }
@@ -217,17 +181,6 @@ class GoogleDriveBoardServer
       load: true,
       save: metadata.isMine,
       delete: metadata.isMine,
-    };
-  }
-
-  extendedCapabilities(): GraphProviderExtendedCapabilities {
-    return {
-      modify: true,
-      connect: true,
-      disconnect: true,
-      refresh: true,
-      watch: false,
-      preview: false,
     };
   }
 
@@ -325,10 +278,6 @@ class GoogleDriveBoardServer
     return { result: true };
   }
 
-  createBlank(_url: URL): Promise<{ result: boolean; error?: string }> {
-    throw new Error("Method not implemented.");
-  }
-
   readonly #createdDuringThisSession = new Set<string>();
 
   createdDuringThisSession(url: URL): boolean {
@@ -420,51 +369,16 @@ class GoogleDriveBoardServer
     return { result: true };
   }
 
-  async connect(_location?: string, _auth?: unknown): Promise<boolean> {
-    throw new Error("Method not implemented.");
-  }
-
-  async disconnect(_location: string): Promise<boolean> {
-    throw new Error("Method not implemented.");
-  }
-
-  async refresh(_location: string): Promise<boolean> {
-    return true;
-  }
-
   async createURL(): Promise<string> {
     const fileId = (await this.#googleDriveClient.generateIds(1))[0];
     return `drive:/${fileId}`;
   }
-
-  parseURL(_url: URL): { location: string; fileName: string } {
-    throw new Error("Method not implemented.");
-  }
-
-  async restore(): Promise<void> {}
 
   dataPartTransformer(_graphUrl: URL): DataPartTransformer {
     return new GoogleDriveDataPartTransformer(
       this.#googleDriveClient,
       this.ops
     );
-  }
-
-  startingURL(): URL | null {
-    throw new Error("Method not implemented.");
-  }
-
-  async canProxy(url: URL): Promise<string | false> {
-    if (!this.canProvide(url)) {
-      return false;
-    }
-    return new URL("/board/proxy", location.origin).href;
-  }
-
-  watch(_callback: ChangeNotificationCallback) {}
-
-  async preview(_url: URL): Promise<URL> {
-    throw new Error("Method not implemented.");
   }
 }
 
