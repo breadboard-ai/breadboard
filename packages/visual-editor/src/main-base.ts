@@ -883,13 +883,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         }
 
         switch (evt.runEvt.type) {
-          case "next":
-          case "graphstart":
-          case "skip": {
-            // Noops.
-            break;
-          }
-
           case "start": {
             this.#boardRunStatus.set(
               evt.tabId,
