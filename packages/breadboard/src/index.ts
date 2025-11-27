@@ -79,7 +79,6 @@ export { transformBlobs } from "./file-system/blob-transform.js";
 export { StubFileSystem } from "./file-system/stub-file-system.js";
 export {
   createDefaultDataStore,
-  inflateData,
   purgeStoredDataInMemoryValues,
   transformContents,
 } from "@breadboard-ai/data";

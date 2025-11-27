@@ -11,7 +11,6 @@ export const createDefaultDataStore = (): DataStore => {
 };
 
 export {
-  inflateData,
   purgeStoredDataInMemoryValues,
   transformContents,
   visitGraphNodes,

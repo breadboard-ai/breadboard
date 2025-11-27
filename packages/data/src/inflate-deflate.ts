@@ -14,13 +14,7 @@ import {
   Outcome,
   SerializedDataStoreGroup,
 } from "@breadboard-ai/types";
-import {
-  asBase64,
-  asBlob,
-  isFileDataCapabilityPart,
-  isStoredData,
-  transformDataParts,
-} from "./common.js";
+import { asBlob, isStoredData, transformDataParts } from "./common.js";
 import { ok } from "@breadboard-ai/utils";
 
 export { transformContents };
@@ -47,76 +41,6 @@ async function transformContents(
 
   return transforming;
 }
-
-/**
- * Recursively descends into the data object and inflates any
- * `StoreDataCapabilityPart`, turning it into
- * `InlineDataCapabilityPart`.
- * @param data -- data to inflate
- * @returns -- a new object with all `StoredDataCapabilityPart`
- * replaced with `InlineDataCapabilityPart`
- */
-export const inflateData = async (
-  store: DataInflator,
-  data: unknown,
-  graphUrl?: URL,
-  inflateToFileData?: boolean
-) => {
-  return visitGraphNodes(data, async (value) => {
-    if (isFileDataCapabilityPart(value)) {
-      if (inflateToFileData && store.transformer && graphUrl) {
-        if (inflateToFileData && store.transformer && graphUrl) {
-          const contents: LLMContent[] = [{ parts: [value] }];
-          const transformer = store.transformer(graphUrl);
-          if (transformer) {
-            const transforming = await transformDataParts(
-              graphUrl,
-              contents,
-              "file",
-              transformer
-            );
-            if (ok(transforming)) {
-              const part = transforming.at(0)?.parts.at(0);
-              if (part) return part;
-            } else {
-              throw new Error(transforming.$error);
-            }
-          }
-        }
-      }
-    } else if (isStoredData(value)) {
-      if (
-        (value.storedData.handle.startsWith("https://") ||
-          value.storedData.handle.startsWith("http://") ||
-          value.storedData.handle.startsWith("drive:/")) &&
-        !inflateToFileData
-      ) {
-        return value;
-      }
-      if (inflateToFileData && store.transformer && graphUrl) {
-        const contents: LLMContent[] = [{ parts: [value] }];
-        const transformer = store.transformer(graphUrl);
-        if (transformer) {
-          const transforming = await transformDataParts(
-            graphUrl,
-            contents,
-            "file",
-            transformer
-          );
-          if (ok(transforming)) {
-            const part = transforming.at(0)?.parts.at(0);
-            if (part) return part;
-          }
-        }
-      }
-      const blob = await store.retrieveAsBlob(value, graphUrl);
-      const data = await asBase64(blob);
-      const mimeType = blob.type;
-      return { inlineData: { data, mimeType } };
-    }
-    return value;
-  });
-};
 
 /**
  * Recursively descends into the data object and replaces any
