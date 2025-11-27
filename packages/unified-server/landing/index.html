@@ -101,10 +101,30 @@
           <span class="app-name"></span>
         </h1>
         <div class="sans-flex round w-500 md-title-large" id="video-container">
+          <div class="dimmed-cover">
+            <div class="play-button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="68" height="48" viewBox="0 0 68 48">
+                <defs>
+                  <!-- Perfectly crisp transparent triangle mask -->
+                  <mask id="triangle">
+                    <rect width="68" height="48" fill="white"/>
+                    <path d="M45 24L27 36V12z" fill="black"/>
+                  </mask>
+                </defs>
+
+                <!-- Clean white button with razor-sharp edges and transparent triangle -->
+                <path d="M66.52 7.48c-.78-2.93-2.49-5.41-5.42-6.19C55.79.46 34 0 34 0S12.21.46 6.9 1.29C3.97 2.07 2.26 4.55.79 7.48-.12 12.81 0 24 0 24s-.12 11.19.79 16.52c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.54 34 48 34 48s21.79-.46 27.1-1.29c2.93-.78 4.64-3.26 5.42-6.19C67.88 35.19 68 24 68 24s.12-11.19-.48-16.52z"
+                      fill="#ffffff"
+                      mask="url(#triangle)"
+                      shape-rendering="geometricPrecision"/>
+              </svg>
+            </div>
+          </div>
           <iframe
+            id="video-player"
             width="100%"
             height="100%"
-            src="https://www.youtube.com/embed/g9RBGnz-vqk"
+            src="https://www.youtube.com/embed/g9RBGnz-vqk?enablejsapi=1"
             title="Bring your app ideas to life with Opal"
             frameborder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
