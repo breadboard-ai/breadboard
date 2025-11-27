@@ -88,7 +88,6 @@
   "dependencies": {
     "@breadboard-ai/a2ui": "^0.1.0",
     "@breadboard-ai/data": "^0.1.0",
-    "@breadboard-ai/embedded-board-server": "0.2.1",
     "@breadboard-ai/loader": "^0.0.3",
     "@breadboard-ai/mcp": "^0.1.0",
     "@breadboard-ai/types": "0.9.0",
