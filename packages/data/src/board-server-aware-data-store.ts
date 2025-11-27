@@ -5,19 +5,17 @@
  */
 
 import {
-  HarnessRunResult,
-  StoredDataCapabilityPart,
-} from "@breadboard-ai/types";
-import {
   BoardServer,
   DataPartTransformer,
   DataStore,
   DataStoreScope,
+  HarnessRunResult,
   RetrieveDataResult,
   Schema,
   SerializedDataStoreGroup,
   StoreDataResult,
-} from "@google-labs/breadboard";
+  StoredDataCapabilityPart,
+} from "@breadboard-ai/types";
 
 export { BoardServerAwareDataStore };
 
