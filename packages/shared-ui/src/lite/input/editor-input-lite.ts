@@ -34,7 +34,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
   static styles = [
     Styles.HostIcons.icons,
     Styles.HostBehavior.behavior,
-    Styles.HostColors.baseColors,
+    Styles.HostColorsMaterial.baseColors,
     Styles.HostType.type,
     css`
       * {
@@ -54,8 +54,10 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
           --min-lines: 1;
           --max-lines: 4;
           --padding: var(--bb-grid-size-3);
-          --border-color: var(--light-dark-n-90);
+          --border-color: var(--sys-color--outline-variant);
           --border-radius: var(--bb-grid-size-6);
+          --background-color: var(--sys-color--body-background);
+          color: var(--sys-color--on-surface);
 
           &:focus-within {
             outline: 1px solid var(--light-dark-n-70);
@@ -112,6 +114,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
           .placeholder=${this.state.empty
             ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW_ALT")
             : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
+          .systemThemeOverride=${true}
           @change=${this.#onInputChange}
           @focus=${this.#onInputFocus}
           @blur=${this.#onInputBlur}

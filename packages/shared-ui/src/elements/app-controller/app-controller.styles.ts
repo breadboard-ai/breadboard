@@ -4,10 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { css } from "lit";
-import { icons } from "../../styles/icons";
+import * as Styles from "../../styles/styles.js";
 
 export const styles = [
-  icons,
+  Styles.HostType.type,
+  Styles.HostIcons.icons,
+  Styles.HostColorsBase.baseColors,
+  Styles.HostColorScheme.light,
   css`
     @keyframes fadeIn {
       from {

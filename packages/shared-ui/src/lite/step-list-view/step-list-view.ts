@@ -19,7 +19,7 @@ export class StepListView extends SignalWatcher(LitElement) {
   static styles = [
     Styles.HostIcons.icons,
     Styles.HostBehavior.behavior,
-    Styles.HostColors.baseColors,
+    Styles.HostColorsMaterial.baseColors,
     Styles.HostType.type,
     css`
       * {
@@ -29,6 +29,7 @@ export class StepListView extends SignalWatcher(LitElement) {
       :host {
         display: block;
         flex: 1;
+        color: var(--sys-color--on-surface);
       }
 
       section {
@@ -38,12 +39,12 @@ export class StepListView extends SignalWatcher(LitElement) {
         align-items: start;
 
         & > h1 {
-          color: var(--light-dark-n-0);
+          color: var(--sys-color--on-surface);
           margin: 0;
         }
 
         & > p {
-          color: light-dark(#575b5f, #ffffff);
+          color: var(--sys-color--on-surface);
           margin: 0 0 var(--bb-grid-size-2) 0;
         }
 
@@ -80,9 +81,12 @@ export class StepListView extends SignalWatcher(LitElement) {
                 align-items: center;
                 outline: none;
 
-                color: light-dark(#575b5f, #ffffff);
+                color: light-dark(#575b5f, #a2a9b0);
                 border-radius: var(--bb-grid-size-4);
-                background: light-dark(#f0f4f9, #3d3f42);
+                background: light-dark(
+                  #f0f4f9,
+                  var(--sys-color--surface-container)
+                );
                 padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
                 list-style: none;
                 gap: var(--bb-grid-size-4);
@@ -91,7 +95,7 @@ export class StepListView extends SignalWatcher(LitElement) {
                 min-height: 48px;
 
                 & .step-title {
-                  color: var(--light-dark-n-0);
+                  color: var(--sys-color--on-surface);
                   padding-right: var(--bb-grid-size-4);
                 }
 
@@ -126,8 +130,8 @@ export class StepListView extends SignalWatcher(LitElement) {
               & > .step-content {
                 padding: var(--bb-grid-size-2) var(--bb-grid-size-3);
                 border-radius: var(--bb-grid-size-3);
-                border: 1px solid var(--light-dark-n-90);
-                color: var(--light-dark-n-0);
+                border: 1px solid var(--sys-color--surface-variant);
+                color: var(--sys-color--on-surface-variant);
                 margin-top: var(--bb-grid-size-2);
 
                 > p {

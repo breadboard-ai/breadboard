@@ -143,6 +143,12 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
         document.body.appendChild(liteMain);
       }
     } else {
+      // const scheme = document.createElement("style");
+      // scheme.textContent = `@media (prefers-color-scheme: dark) {
+      //   :root { color-scheme: light }
+      // }`;
+      // document.head.appendChild(scheme);
+
       const { Main } = await import("./index.js");
       const main = new Main(mainArgs);
       document.body.appendChild(main);

@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { css } from "lit";
-import { baseColors } from "../../styles/host/base-colors";
-import { type } from "../../styles/host/type";
+import * as Styles from "../../styles/styles.js";
 
 export const styles = [
-  baseColors,
-  type,
+  Styles.HostType.type,
+  Styles.HostIcons.icons,
+  Styles.HostColorsBase.baseColors,
+  Styles.HostColorScheme.light,
   css`
     * {
       box-sizing: border-box;
