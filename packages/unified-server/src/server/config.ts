@@ -4,8 +4,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ServerConfig } from "../types.js";
 import * as flags from "./flags.js";
 import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
+
+const DEFAULT_PORT = 3000;
+const DEFAULT_HOST = "localhost";
+
+export function createServerConfig(): ServerConfig {
+  const {
+    PORT = DEFAULT_PORT,
+    HOST = DEFAULT_HOST,
+    STORAGE_BUCKET,
+    SERVER_URL,
+  } = process.env;
+
+  return {
+    hostname: `http://${HOST}:${PORT}`,
+    port: +PORT || DEFAULT_PORT,
+    serverUrl: SERVER_URL,
+    storageBucket: STORAGE_BUCKET,
+  };
+}
 
 /**
  * Create the config object that will be embedded in the HTML payload and
