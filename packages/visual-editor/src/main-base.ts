@@ -845,13 +845,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     );
 
     this.runtime.board.addEventListener(
-      Runtime.Events.RuntimeModuleChangeEvent.eventName,
-      () => {
-        this.requestUpdate();
-      }
-    );
-
-    this.runtime.board.addEventListener(
       Runtime.Events.RuntimeWorkspaceItemChangeEvent.eventName,
       () => {
         this.requestUpdate();
