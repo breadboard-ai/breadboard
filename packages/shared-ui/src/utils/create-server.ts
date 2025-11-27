@@ -19,7 +19,6 @@ export function createGoogleDriveBoardServer(
     CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
   return new GoogleDriveBoardServer(
     "Google Drive",
-    { apiKey: "", secrets: new Map(), username: "board-builder " },
     signInInfo,
     googleDriveClient,
     googleDrivePublishPermissions,

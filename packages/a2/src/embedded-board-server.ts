@@ -8,20 +8,11 @@ import {
   BoardServer,
   BoardServerCapabilities,
   BoardServerEventTarget,
-  BoardServerExtension,
-  BoardServerProject,
-  ChangeNotificationCallback,
   DataPartTransformer,
   GraphDescriptor,
   GraphProviderCapabilities,
-  GraphProviderExtendedCapabilities,
-  GraphProviderPreloadHandler,
   GraphProviderStore,
-  Kit,
   Outcome,
-  Permission,
-  Secrets,
-  User,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 
@@ -43,24 +34,9 @@ class EmbeddedBoardServer
   extends (EventTarget as BoardServerEventTarget)
   implements BoardServer
 {
-  user: User = {
-    username: "",
-    apiKey: "",
-    secrets: new Map(),
-  };
   name = "Embedded Board Server";
   url: URL = new URL(import.meta.url);
-  kits: Kit[] = [];
-  users: User[] = [];
-  secrets: Secrets = new Map();
-  extensions: BoardServerExtension[] = [];
-  capabilities: BoardServerCapabilities = {
-    connect: false,
-    disconnect: false,
-    refresh: false,
-    watch: false,
-    preview: false,
-  };
+  capabilities: BoardServerCapabilities = {};
 
   #items: Map<string, GraphProviderStore>;
 
@@ -100,8 +76,6 @@ class EmbeddedBoardServer
   deepCopy(_url: URL, graph: GraphDescriptor): Promise<GraphDescriptor> {
     return Promise.resolve(graph);
   }
-  canProxy?: ((url: URL) => Promise<string | false>) | undefined;
-  renewAccess?: (() => Promise<void>) | undefined;
   dataPartTransformer?: ((graphUrl: URL) => DataPartTransformer) | undefined;
 
   #makeBoardUrl(id: string) {
@@ -117,52 +91,10 @@ class EmbeddedBoardServer
     return err(`Nope`);
   }
 
-  get projects(): Promise<BoardServerProject[]> {
-    return Promise.resolve<BoardServerProject[]>(
-      [...this.bgls.entries()].map(([urlString, descriptor]) => {
-        const url = new URL(urlString);
-        const metadata = { owner: "", access: new Map() };
-        return {
-          url,
-          metadata,
-          board: { url, metadata, descriptor },
-        } satisfies BoardServerProject;
-      })
-    );
-  }
-
-  async preload(preloader: GraphProviderPreloadHandler): Promise<void> {
-    const def = this.#items.get("default")!;
-    for (const entry of def.items.values()) {
-      preloader(entry);
-    }
-  }
-
-  getAccess(_url: URL, _user: User): Promise<Permission> {
-    throw new Error("Method not implemented.");
-  }
-
-  async ready(): Promise<void> {}
-
-  isSupported(): boolean {
-    return true;
-  }
-
   canProvide(url: URL): false | GraphProviderCapabilities {
     const key = this.#bglKeyFromUrl(url);
     if (!ok(key)) return false;
     return { load: true, save: false, delete: false };
-  }
-
-  extendedCapabilities(): GraphProviderExtendedCapabilities {
-    return {
-      modify: false,
-      connect: false,
-      disconnect: false,
-      refresh: false,
-      watch: false,
-      preview: false,
-    };
   }
 
   async load(url: URL): Promise<GraphDescriptor | null> {
@@ -176,13 +108,6 @@ class EmbeddedBoardServer
     _descriptor: GraphDescriptor
   ): Promise<{ result: boolean; error?: string }> {
     return { result: false, error: "Can't save to embedded board server" };
-  }
-
-  async createBlank(_url: URL): Promise<{ result: boolean; error?: string }> {
-    return {
-      result: false,
-      error: "Can't create boards on embedded board server",
-    };
   }
 
   async create(
@@ -202,18 +127,6 @@ class EmbeddedBoardServer
     };
   }
 
-  async connect(_location?: string, _auth?: unknown): Promise<boolean> {
-    return false;
-  }
-
-  async disconnect(_location: string): Promise<boolean> {
-    return false;
-  }
-
-  async refresh(_location: string): Promise<boolean> {
-    return true;
-  }
-
   async createURL(
     _location: string,
     _fileName: string
@@ -221,23 +134,7 @@ class EmbeddedBoardServer
     return null;
   }
 
-  parseURL(_url: URL): { location: string; fileName: string } {
-    throw new Error("Method not implemented.");
-  }
-
-  async restore(): Promise<void> {}
-
   items(): Map<string, GraphProviderStore> {
     return this.#items;
-  }
-
-  startingURL(): URL | null {
-    return null;
-  }
-
-  watch(_callback: ChangeNotificationCallback): void {}
-
-  preview(_url: URL): Promise<URL> {
-    throw new Error("Method not implemented.");
   }
 }

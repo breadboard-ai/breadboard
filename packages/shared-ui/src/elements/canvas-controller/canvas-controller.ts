@@ -313,26 +313,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
     return ++this.#runStateEffectCount;
   }
 
-  async #deriveAppURL() {
-    if (!this.graph?.url) {
-      return;
-    }
-
-    for (const server of this.boardServers) {
-      const graphUrl = new URL(this.graph.url);
-      const capabilities = server.canProvide(graphUrl);
-      if (!capabilities) {
-        continue;
-      }
-
-      if (server.extendedCapabilities().preview) {
-        return server.preview(graphUrl);
-      }
-    }
-
-    return null;
-  }
-
   render() {
     const collapseNodesByDefault = this.settings
       ? this.settings
