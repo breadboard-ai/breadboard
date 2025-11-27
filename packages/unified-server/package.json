@@ -84,8 +84,8 @@
         "dist/server.tsbuildinfo"
       ],
       "dependencies": [
-        "../mcp#build:tsc",
-        "../types#build:tsc"
+        "<dependencies>#build:tsc",
+        "!../visual-editror#build:tsc"
       ]
     },
     "serve": {
@@ -177,7 +177,7 @@
   },
   "dependencies": {
     "@breadboard-ai/a2": "0.6.0",
-    "@breadboard-ai/google-drive-kit": "^0.8.0",
+    "@breadboard-ai/google-drive-kit": "0.8.0",
     "@breadboard-ai/mcp": "^0.1.0",
     "@breadboard-ai/shared-ui": "1.27.0",
     "@breadboard-ai/types": "0.9.0",
