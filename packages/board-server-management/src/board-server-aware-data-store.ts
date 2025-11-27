@@ -32,7 +32,7 @@ class BoardServerAwareDataStore implements DataStore {
     let graphUrl;
     try {
       graphUrl = new URL(graphUrlString);
-    } catch (e) {
+    } catch {
       // Eat the error and presume that the URL is bogus.
     }
     return new BoardServerAwareDataStore(

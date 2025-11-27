@@ -137,7 +137,6 @@
     "@breadboard-ai/data": "^0.1.0",
     "@breadboard-ai/data-store": "0.5.0",
     "@breadboard-ai/google-drive-kit": "0.8.0",
-    "@breadboard-ai/idb-board-server": "1.19.6",
     "@breadboard-ai/mcp": "^0.1.0",
     "@breadboard-ai/runtime": "0.2.0",
     "@breadboard-ai/shared-ui": "1.27.0",

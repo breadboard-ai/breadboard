@@ -8,7 +8,6 @@
     { "path": "packages/data-store" },
     { "path": "packages/gulf" },
     { "path": "packages/google-drive-kit" },
-    { "path": "packages/idb-board-server" },
     { "path": "packages/schema" },
     { "path": "packages/particles-ui" },
     { "path": "packages/shared-ui" },

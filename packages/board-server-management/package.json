@@ -73,9 +73,7 @@
   },
   "dependencies": {
     "@breadboard-ai/google-drive-kit": "0.8.0",
-    "@breadboard-ai/idb-board-server": "1.19.6",
     "@breadboard-ai/shared-ui": "^1.27.0",
-    "@google-labs/breadboard": "^0.36.0",
-    "idb": "^8.0.3"
+    "@google-labs/breadboard": "^0.36.0"
   }
 }
