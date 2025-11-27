@@ -191,14 +191,6 @@ export class RuntimeVisualChangeEvent extends Event {
   }
 }
 
-export class RuntimeWorkspaceItemChangeEvent extends Event {
-  static eventName = "runtimeworkspaceitemchange" as const;
-
-  constructor() {
-    super(RuntimeWorkspaceItemChangeEvent.eventName, { ...eventInit });
-  }
-}
-
 export class RuntimeBoardRunEvent extends Event {
   static eventName = "runtimeboardrun" as const;
 

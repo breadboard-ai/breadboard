@@ -29,7 +29,6 @@ import {
   RuntimeTabChangeEvent,
   RuntimeTabCloseEvent,
   RuntimeBoardServerChangeEvent,
-  RuntimeWorkspaceItemChangeEvent,
   RuntimeBoardSaveStatusChangeEvent,
   RuntimeSnackbarEvent,
   RuntimeUnsnackbarEvent,
@@ -638,27 +637,6 @@ export class Board extends EventTarget {
 
     this.#currentTabId = id;
     this.dispatchEvent(new RuntimeTabChangeEvent());
-  }
-
-  changeWorkspaceItem(
-    id: TabId,
-    subGraphId: GraphIdentifier | null,
-    moduleId: ModuleIdentifier | null
-  ) {
-    const tab = this.#tabs.get(id);
-    if (!tab) {
-      return;
-    }
-
-    if (subGraphId && moduleId) {
-      console.error("Unable to select both a subgraph and module");
-      return;
-    }
-
-    tab.subGraphId = subGraphId;
-    tab.moduleId = moduleId;
-
-    this.dispatchEvent(new RuntimeWorkspaceItemChangeEvent());
   }
 
   closeAllTabs() {
