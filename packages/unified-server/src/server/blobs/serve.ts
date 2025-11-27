@@ -5,7 +5,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from "http";
-import { GoogleStorageBlobStore } from "../blob-store.js";
+import { GoogleStorageBlobStore } from "./blob-store.js";
 import { ok } from "@breadboard-ai/utils";
 
 export { serveBlob };

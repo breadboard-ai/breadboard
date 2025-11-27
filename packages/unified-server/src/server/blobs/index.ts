@@ -14,9 +14,9 @@ import {
 
 import { serveBlob } from "./serve.js";
 
-import { isUUID } from "../blob-store.js";
-import type { ServerConfig } from "../config.js";
-import { badRequest } from "../errors.js";
+import { isUUID } from "./blob-store.js";
+import type { ServerConfig } from "../../types.js";
+import { badRequest } from "./errors.js";
 
 export function serveBlobsAPI(config: ServerConfig): Router {
   const router = Router();

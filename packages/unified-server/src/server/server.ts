@@ -7,12 +7,12 @@
 import cors from "cors";
 import express, { type Express, Router } from "express";
 
-import type { ServerConfig } from "./server/config.js";
-import { serveBlobsAPI } from "./server/blobs/index.js";
+import type { ServerConfig } from "../types.js";
+import { serveBlobsAPI } from "./blobs/index.js";
 
 export type { ServerConfig };
 
-export { GoogleStorageBlobStore } from "./server/blob-store.js";
+export { GoogleStorageBlobStore } from "./blobs/blob-store.js";
 
 const DEFAULT_PORT = 3000;
 const DEFAULT_HOST = "localhost";
