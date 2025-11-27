@@ -326,7 +326,7 @@ export class VESignInModal extends LitElement {
     this.dispatchEvent(
       new StateEvent({ eventType: "host.usersignin", result })
     );
-    return result ? "success" : "failure";
+    return result;
   }
 
   async #onClickSignIn() {
