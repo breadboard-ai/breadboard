@@ -158,14 +158,6 @@ export async function getGoogleDriveBoardService(): Promise<
   );
 }
 
-export async function disconnectFromBoardServer(location: string) {
-  const db = await getServersDb();
-  const url = new URL(location);
-  await db.delete("servers", IDBKeyRange.only(url.href));
-  db.close();
-  return true;
-}
-
 async function storeBoardServer(
   url: URL,
   title: string,

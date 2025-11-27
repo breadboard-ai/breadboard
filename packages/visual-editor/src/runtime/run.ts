@@ -14,15 +14,7 @@ import {
   RunConfig,
   RunEndEvent,
   RunErrorEvent,
-  RunGraphEndEvent,
-  RunGraphStartEvent,
-  RunInputEvent,
   RunLifecycleEvent,
-  RunNextEvent,
-  RunNodeEndEvent,
-  RunNodeStartEvent,
-  RunOutputEvent,
-  RunSkipEvent,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
 import { Tab, TabId } from "./types";
@@ -150,55 +142,7 @@ export class Run extends EventTarget {
       );
     });
 
-    harnessRunner.addEventListener("next", (evt: RunNextEvent) => {
-      this.dispatchEvent(
-        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
-      );
-    });
-
-    harnessRunner.addEventListener("input", (evt: RunInputEvent) => {
-      this.dispatchEvent(
-        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
-      );
-    });
-
-    harnessRunner.addEventListener("output", (evt: RunOutputEvent) => {
-      this.dispatchEvent(
-        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
-      );
-    });
-
     harnessRunner.addEventListener("error", (evt: RunErrorEvent) => {
-      this.dispatchEvent(
-        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
-      );
-    });
-
-    harnessRunner.addEventListener("skip", (evt: RunSkipEvent) => {
-      this.dispatchEvent(
-        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
-      );
-    });
-
-    harnessRunner.addEventListener("graphstart", (evt: RunGraphStartEvent) => {
-      this.dispatchEvent(
-        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
-      );
-    });
-
-    harnessRunner.addEventListener("graphend", (evt: RunGraphEndEvent) => {
-      this.dispatchEvent(
-        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
-      );
-    });
-
-    harnessRunner.addEventListener("nodestart", (evt: RunNodeStartEvent) => {
-      this.dispatchEvent(
-        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
-      );
-    });
-
-    harnessRunner.addEventListener("nodeend", (evt: RunNodeEndEvent) => {
       this.dispatchEvent(
         new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );

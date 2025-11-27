@@ -171,14 +171,6 @@ export class RuntimeTabCloseEvent extends Event {
   }
 }
 
-export class RuntimeModuleChangeEvent extends Event {
-  static eventName = "runtimemodulechange" as const;
-
-  constructor() {
-    super(RuntimeModuleChangeEvent.eventName, { ...eventInit });
-  }
-}
-
 export class RuntimeSelectionChangeEvent extends Event {
   static eventName = "runtimeselectionchange" as const;
 
@@ -196,14 +188,6 @@ export class RuntimeVisualChangeEvent extends Event {
 
   constructor(public readonly visualChangeId: WorkspaceVisualChangeId) {
     super(RuntimeVisualChangeEvent.eventName, { ...eventInit });
-  }
-}
-
-export class RuntimeWorkspaceItemChangeEvent extends Event {
-  static eventName = "runtimeworkspaceitemchange" as const;
-
-  constructor() {
-    super(RuntimeWorkspaceItemChangeEvent.eventName, { ...eventInit });
   }
 }
 

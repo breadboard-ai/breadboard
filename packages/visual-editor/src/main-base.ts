@@ -845,20 +845,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     );
 
     this.runtime.board.addEventListener(
-      Runtime.Events.RuntimeModuleChangeEvent.eventName,
-      () => {
-        this.requestUpdate();
-      }
-    );
-
-    this.runtime.board.addEventListener(
-      Runtime.Events.RuntimeWorkspaceItemChangeEvent.eventName,
-      () => {
-        this.requestUpdate();
-      }
-    );
-
-    this.runtime.board.addEventListener(
       Runtime.Events.RuntimeTabCloseEvent.eventName,
       async (evt: Runtime.Events.RuntimeTabCloseEvent) => {
         if (!evt.tabId) {
@@ -897,13 +883,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         }
 
         switch (evt.runEvt.type) {
-          case "next":
-          case "graphstart":
-          case "skip": {
-            // Noops.
-            break;
-          }
-
           case "start": {
             this.#boardRunStatus.set(
               evt.tabId,

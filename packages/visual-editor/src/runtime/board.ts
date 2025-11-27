@@ -29,7 +29,6 @@ import {
   RuntimeTabChangeEvent,
   RuntimeTabCloseEvent,
   RuntimeBoardServerChangeEvent,
-  RuntimeWorkspaceItemChangeEvent,
   RuntimeBoardSaveStatusChangeEvent,
   RuntimeSnackbarEvent,
   RuntimeUnsnackbarEvent,
@@ -39,7 +38,6 @@ import {
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
   connectToBoardServer,
-  disconnectFromBoardServer,
   getBoardServers,
 } from "@breadboard-ai/board-server-management";
 import { GraphIdentifier, ModuleIdentifier } from "@breadboard-ai/types";
@@ -269,26 +267,6 @@ export class Board extends EventTarget {
     }
 
     return { success: false };
-  }
-
-  async disconnect(location: string) {
-    const success = await disconnectFromBoardServer(location);
-    if (!success) {
-      this.dispatchEvent(
-        new RuntimeErrorEvent("Unable to disconnect from Board Server")
-      );
-
-      // We return true here because we don't need the toast from the Visual
-      // Editor. Instead we use the above RuntimeErrorEvent to ensure that
-      // the user is notified.
-      return { success: false };
-    }
-    this.boardServers.servers = [
-      ...(await getBoardServers(this.signinAdapter, this.googleDriveClient)),
-      ...this.boardServers.builtInBoardServers,
-    ];
-    this.boardServers.loader = createLoader(this.boardServers.servers);
-    this.dispatchEvent(new RuntimeBoardServerChangeEvent());
   }
 
   getBoardServerByName(name: string) {
@@ -638,27 +616,6 @@ export class Board extends EventTarget {
 
     this.#currentTabId = id;
     this.dispatchEvent(new RuntimeTabChangeEvent());
-  }
-
-  changeWorkspaceItem(
-    id: TabId,
-    subGraphId: GraphIdentifier | null,
-    moduleId: ModuleIdentifier | null
-  ) {
-    const tab = this.#tabs.get(id);
-    if (!tab) {
-      return;
-    }
-
-    if (subGraphId && moduleId) {
-      console.error("Unable to select both a subgraph and module");
-      return;
-    }
-
-    tab.subGraphId = subGraphId;
-    tab.moduleId = moduleId;
-
-    this.dispatchEvent(new RuntimeWorkspaceItemChangeEvent());
   }
 
   closeAllTabs() {
