@@ -58,7 +58,7 @@ class GoogleDriveBoardServer
 {
   static PROTOCOL = PROTOCOL;
 
-  static async from(
+  static from(
     title: string,
     user: User,
     signInInfo: SignInInfo,

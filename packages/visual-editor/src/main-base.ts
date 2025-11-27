@@ -552,21 +552,17 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     const hasMountedBoardServer = this.#findSelectedBoardServer(args);
     if (!hasMountedBoardServer && args.boardServerUrl) {
       console.log(`[Status] Mounting server "${args.boardServerUrl.href}" ...`);
-      const connecting = await this.runtime.board.connect(
-        args.boardServerUrl.href
+      this.runtime.board.connect();
+      this.#findSelectedBoardServer(args);
+      console.log(`[Status] Connected to server`);
+
+      // Since we late-mounted the server we have to add it to the state
+      // manager so it can be used by the Reactive Project.
+      const mountedServer = this.runtime.board.getBoardServerForURL(
+        new URL(args.boardServerUrl.href)
       );
-      if (connecting?.success) {
-        this.#findSelectedBoardServer(args);
-        console.log(`[Status] Connected to server`);
 
-        // Since we late-mounted the server we have to add it to the state
-        // manager so it can be used by the Reactive Project.
-        const mountedServer = this.runtime.board.getBoardServerForURL(
-          new URL(args.boardServerUrl.href)
-        );
-
-        this.runtime.state.appendServer(mountedServer);
-      }
+      this.runtime.state.appendServer(mountedServer);
     }
 
     if (

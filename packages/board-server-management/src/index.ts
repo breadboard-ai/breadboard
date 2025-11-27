@@ -34,7 +34,7 @@ interface BoardServerListing extends idb.DBSchema {
   };
 }
 
-export async function createGoogleDriveBoardServer(
+function createGoogleDriveBoardServer(
   title: string,
   user: User,
   signInInfo: SignInInfo,
@@ -62,11 +62,11 @@ export async function createGoogleDriveBoardServer(
   );
 }
 
-export async function getBoardServers(
+export function getBoardServers(
   signInInfo: SignInInfo,
   googleDriveClient?: GoogleDriveClient
-): Promise<BoardServer[]> {
-  const server = await createGoogleDriveBoardServer(
+): BoardServer[] {
+  const server = createGoogleDriveBoardServer(
     "Google Drive",
     { apiKey: "", secrets: new Map(), username: "board-builder " },
     signInInfo,
@@ -76,43 +76,6 @@ export async function getBoardServers(
   if (!server) return [];
 
   return [server];
-}
-
-export async function connectToBoardServer(
-  signInInfo: SignInInfo,
-  location?: string,
-  apiKey?: string,
-  googleDriveClient?: GoogleDriveClient
-): Promise<{ title: string; url: string } | null> {
-  const existingServers = await getBoardServers(signInInfo, googleDriveClient);
-  if (location) {
-    if (location.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
-      const existingServer = existingServers.find(
-        (server) => server.url.protocol === location
-      );
-      if (existingServer) {
-        console.warn("Server already connected");
-      }
-
-      const url = new URL(location);
-      const response = {
-        url: "drive:",
-        title: "Google Drive",
-        username: "board-builder",
-      };
-      if (response) {
-        await storeBoardServer(url, response.title, {
-          apiKey: apiKey ?? "",
-          secrets: new Map(),
-          username: response.username,
-        });
-
-        return { title: response.title, url: url.href };
-      }
-    }
-  }
-  // Unknown location + protocol combination.
-  return null;
 }
 
 function getServersDb(): Promise<idb.IDBPDatabase<BoardServerListing>> {
