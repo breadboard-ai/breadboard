@@ -7,12 +7,10 @@
 import cors from "cors";
 import express, { type Express, Router } from "express";
 
-import { getUserCredentials } from "./server/auth.js";
 import type { ServerConfig } from "./server/config.js";
 import { serveBlobsAPI } from "./server/blobs/index.js";
 
 export type { ServerConfig };
-export { getUserCredentials, requireAccessToken } from "./server/auth.js";
 
 export { GoogleStorageBlobStore } from "./server/blob-store.js";
 
@@ -29,7 +27,6 @@ export function createServer(config: ServerConfig): Express {
 
 export function addMiddleware(server: Express) {
   server.use(express.json({ limit: "2GB", type: "*/*" }));
-  server.use(getUserCredentials());
 }
 
 export function createRouter(config: ServerConfig): Router {
