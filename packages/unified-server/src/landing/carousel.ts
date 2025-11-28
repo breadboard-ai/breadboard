@@ -88,7 +88,7 @@ export class LandingCarousel extends LitElement {
               width: 90%;
               text-align: center;
               margin: 0 auto;
-              line-height: 1;
+              line-height: 1.1;
             }
 
             & p {
@@ -96,11 +96,17 @@ export class LandingCarousel extends LitElement {
                 opacity 0.1s cubic-bezier(0.5, 0, 0.3, 1),
                 transform 0.1s cubic-bezier(0.5, 0, 0.3, 1);
               opacity: 0;
-              font-size: 12px;
               text-align: center;
               font-size: clamp(7px, 1cqw, 9px);
               margin: 0 auto;
               width: 90%;
+              line-height: 1.4;
+              font-weight: 500;
+              font-variation-settings:
+                "wdth" 100,
+                "GRAD" 0,
+                "ROND" 100,
+                "slnt" 0;
             }
           }
         }
