@@ -10,10 +10,7 @@ export const createDefaultDataStore = (): DataStore => {
   return new DefaultDataStore();
 };
 
-export {
-  purgeStoredDataInMemoryValues,
-  transformContents,
-} from "./inflate-deflate.js";
+export { purgeStoredDataInMemoryValues } from "./inflate-deflate.js";
 
 export * from "./common.js";
 
