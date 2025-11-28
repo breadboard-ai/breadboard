@@ -10,6 +10,7 @@ import type {
   NodeDescriptor,
   LLMContent,
   DataPart,
+  RuntimeFlagManager,
 } from "@breadboard-ai/types";
 import type {
   AppCatalystApiClient,
@@ -63,17 +64,14 @@ export const flowGeneratorContext = createContext<FlowGenerator | undefined>(
 
 export class FlowGenerator {
   #appCatalystApiClient: AppCatalystApiClient;
-  #agentMode: boolean;
-  #streamPlanner: boolean;
+  #flagManager: RuntimeFlagManager;
 
   constructor(
     appCatalystApiClient: AppCatalystApiClient,
-    agentMode = false,
-    streamPlanner = false
+    flagManager: RuntimeFlagManager
   ) {
     this.#appCatalystApiClient = appCatalystApiClient;
-    this.#agentMode = agentMode;
-    this.#streamPlanner = streamPlanner;
+    this.#flagManager = flagManager;
   }
 
   async oneShot({
@@ -81,6 +79,7 @@ export class FlowGenerator {
     context,
     constraint,
   }: OneShotFlowGenRequest): Promise<OneShotFlowGenResponse> {
+    const flags = await this.#flagManager.flags();
     if (constraint && !context?.flow) {
       throw new Error(
         `Error editing flow with constraint ${constraint.kind}:` +
@@ -100,7 +99,7 @@ export class FlowGenerator {
       ],
       appOptions: {
         format: "FORMAT_GEMINI_FLOWS",
-        ...(this.#agentMode && {
+        ...(flags.agentMode && {
           featureFlags: { enable_agent_mode_planner: true },
         }),
       },
@@ -131,7 +130,7 @@ export class FlowGenerator {
     const responseMessages: string[] = [];
     const suggestions: string[] = [];
 
-    if (this.#streamPlanner && !constraint) {
+    if (flags.streamPlanner && !constraint) {
       await this.#streamOneShot(
         intent,
         context,
@@ -180,17 +179,18 @@ export class FlowGenerator {
     responseMessages: string[],
     suggestions: string[]
   ) {
+    const flags = await this.#flagManager.flags();
     let stream: AsyncGenerator<LLMContent>;
     if (context?.flow && context.flow.nodes.length > 0) {
       stream = this.#appCatalystApiClient.editOpalStream(
         intent,
         context.flow,
-        this.#agentMode
+        flags.agentMode
       );
     } else {
       stream = this.#appCatalystApiClient.generateOpalStream(
         intent,
-        this.#agentMode
+        flags.agentMode
       );
     }
 

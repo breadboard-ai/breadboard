@@ -401,9 +401,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     window.removeEventListener("keydown", this.#onKeyboardShortCut);
   }
 
+  /**
+   * Initializes the main component.
+   * TODO(dglazkov): Make this entirely sync and fold into constructor.
+   */
   async #init(args: MainArguments, initArgs: InitArgs) {
     const flagManager = createFlagManager(this.globalConfig.flags);
-    const flags = await flagManager.flags();
 
     const { fetchWithCreds, backendApiEndpoint } = initArgs;
 
@@ -488,13 +491,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     });
     this.#addRuntimeEventHandlers();
 
-    const agentMode = flags.agentMode;
-    const streamPlanner = flags.streamPlanner;
-    this.flowGenerator = new FlowGenerator(
-      this.#apiClient,
-      agentMode,
-      streamPlanner
-    );
+    this.flowGenerator = new FlowGenerator(this.#apiClient, flagManager);
 
     this.boardServer = this.runtime.board.boardServers.googleDriveBoardServer;
     if (!this.boardServer) {
