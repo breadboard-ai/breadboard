@@ -40,6 +40,14 @@
       "types": "./dist/elements/connection/connection-broker.d.ts",
       "default": "./dist/elements/connection/connection-broker.js"
     },
+    "./types": {
+      "types": "./dist/types/types.d.ts",
+      "default": "./dist/types/types.js"
+    },
+    "./events": {
+      "types": "./dist/events/events.d.ts",
+      "default": "./dist/events/events.js"
+    },
     "./data/settings-store.js": {
       "types": "./dist/data/settings-store.d.ts",
       "default": "./dist/data/settings-store.js"

@@ -69,7 +69,7 @@ import {
   isControllerBehavior,
   isLLMContentArrayBehavior,
 } from "../../utils/behaviors";
-
+import { isVeoDailyLimitReached } from "@breadboard-ai/utils";
 import * as StringsHelper from "../../strings/helper.js";
 import { FlowGenConstraint } from "../../flow-gen/flow-generator";
 import { ConnectorView } from "../../connectors/types";
@@ -1428,13 +1428,26 @@ export class EntityEditor
         return item.id === port.value && item.info !== undefined;
       });
 
-      const extendedInfoOutput =
+      let extendedInfoStr =
         extendedInfo && typeof extendedInfo !== "string"
-          ? html`<div class="info">
-              <span class="g-icon round filled">warning</span
-              >${extendedInfo.info}
-            </div>`
+          ? extendedInfo.info
           : nothing;
+
+      if (
+        extendedInfo &&
+        typeof extendedInfo !== "string" &&
+        extendedInfo?.id === "video" &&
+        isVeoDailyLimitReached()
+      ) {
+        extendedInfoStr =
+          "Each video you create will use 20 AI credits from your Google AI plan because you’ve reached the daily limit";
+      }
+
+      const extendedInfoOutput = extendedInfoStr
+        ? html`<div class="info">
+            <span class="g-icon round filled">warning</span>${extendedInfoStr}
+          </div>`
+        : nothing;
 
       return [
         html`<div class=${classMap(classes)}>${value} ${controls}</div>`,
