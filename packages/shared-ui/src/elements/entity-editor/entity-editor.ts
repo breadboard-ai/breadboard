@@ -373,7 +373,6 @@ export class EntityEditor
             height: var(--bb-grid-size-14);
             background: light-dark(var(--n-95), var(--n-10));
             border-top: 1px solid light-dark(var(--n-90), var(--n-10));
-            border-bottom: 1px solid light-dark(var(--n-90), var(--n-10));
             display: flex;
             align-items: center;
             padding: 0 var(--bb-grid-size-6);
