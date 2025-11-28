@@ -8,7 +8,5 @@ import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client
 import { bootstrap } from "./bootstrap";
 
 bootstrap({
-  kits: [],
-  graphStorePreloader: () => {},
   deploymentConfiguration: CLIENT_DEPLOYMENT_CONFIG,
 });

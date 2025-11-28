@@ -17,10 +17,11 @@ import type {
   AppScreenOutput,
   BoardServer,
   ConformsToNodeValue,
-  FileSystem,
   ConsentRequest,
+  FileSystem,
+  RuntimeFlagManager,
 } from "@breadboard-ai/types";
-import { ConsentUIType, ConsentAction } from "@breadboard-ai/types";
+import { ConsentAction, ConsentUIType } from "@breadboard-ai/types";
 import {
   addRunModule,
   composeFileSystemBackends,
@@ -47,22 +48,27 @@ import {
 } from "./runtime/types";
 
 import { createA2ModuleFactory } from "@breadboard-ai/a2";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { McpClientManager } from "@breadboard-ai/mcp";
+import {
+  canonicalizeOAuthScope,
+  type OAuthScope,
+} from "@breadboard-ai/shared-ui/connection/oauth-scopes.js";
+import {
+  GlobalConfig,
+  globalConfigContext,
+} from "@breadboard-ai/shared-ui/contexts";
+import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
+import { consentManagerContext } from "@breadboard-ai/shared-ui/contexts/consent-manager.js";
+import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
+import { uiStateContext } from "@breadboard-ai/shared-ui/contexts/ui-state.js";
+import { VESignInModal } from "@breadboard-ai/shared-ui/elements/elements.js";
 import {
   EmbedHandler,
   embedState,
   EmbedState,
   IterateOnPromptMessage,
 } from "@breadboard-ai/shared-ui/embed/embed.js";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { opalShellContext } from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
-import { McpClientManager } from "@breadboard-ai/mcp";
-import {
-  GlobalConfig,
-  globalConfigContext,
-} from "@breadboard-ai/shared-ui/contexts";
-import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
-import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
-import { uiStateContext } from "@breadboard-ai/shared-ui/contexts/ui-state.js";
 import { IterateOnPromptEvent } from "@breadboard-ai/shared-ui/events/events.js";
 import {
   AppCatalystApiClient,
@@ -74,13 +80,22 @@ import {
 } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
 import { ReactiveAppScreen } from "@breadboard-ai/shared-ui/state/app-screen.js";
 import {
+  MakeUrlInit,
+  UserSignInResponse,
+} from "@breadboard-ai/shared-ui/types/types.js";
+import {
   ActionTracker,
   createActionTrackerBackend,
 } from "@breadboard-ai/shared-ui/utils/action-tracker";
+import { ConsentManager } from "@breadboard-ai/shared-ui/utils/consent-manager.js";
+import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
+import { opalShellContext } from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
 import {
   SigninAdapter,
   signinAdapterContext,
 } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
+import { makeUrl, parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
+import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { classMap } from "lit/directives/class-map.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
@@ -88,23 +103,9 @@ import { Admin } from "./admin";
 import { keyboardCommands } from "./commands/commands";
 import { KeyboardCommandDeps } from "./commands/types";
 import { eventRoutes } from "./event-routing/event-routing";
+import { builtInMcpClients } from "./mcp-clients";
 import { MainArguments } from "./types/types";
 import { envFromSettings } from "./utils/env-from-settings";
-import { makeUrl, parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
-import { VESignInModal } from "@breadboard-ai/shared-ui/elements/elements.js";
-import {
-  canonicalizeOAuthScope,
-  type OAuthScope,
-} from "@breadboard-ai/shared-ui/connection/oauth-scopes.js";
-import { builtInMcpClients } from "./mcp-clients";
-import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
-import { ConsentManager } from "@breadboard-ai/shared-ui/utils/consent-manager.js";
-import { consentManagerContext } from "@breadboard-ai/shared-ui/contexts/consent-manager.js";
-import {
-  MakeUrlInit,
-  UserSignInResponse,
-} from "@breadboard-ai/shared-ui/types/types.js";
 
 export { MainBase };
 
@@ -401,9 +402,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     window.removeEventListener("keydown", this.#onKeyboardShortCut);
   }
 
+  /**
+   * Initializes the main component.
+   * TODO(dglazkov): Make this entirely sync and fold into constructor.
+   * DO NOT Add any more async code to this function.
+   */
   async #init(args: MainArguments, initArgs: InitArgs) {
     const flagManager = createFlagManager(this.globalConfig.flags);
-    const flags = await flagManager.flags();
 
     const { fetchWithCreds, backendApiEndpoint } = initArgs;
 
@@ -473,11 +478,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       sandbox: moduleFactory,
       settings: this.#settings,
       fileSystem,
-      kits: addRunModule(
-        moduleFactory,
-        args.kits || [],
-        args.moduleInvocationFilter
-      ),
+      kits: addRunModule(moduleFactory, [], args.moduleInvocationFilter),
       googleDriveClient: this.googleDriveClient,
       appName: Strings.from("APP_NAME"),
       appSubName: Strings.from("SUB_APP_NAME"),
@@ -488,37 +489,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     });
     this.#addRuntimeEventHandlers();
 
-    const agentMode = flags.agentMode;
-    const streamPlanner = flags.streamPlanner;
-    this.flowGenerator = new FlowGenerator(
-      this.#apiClient,
-      agentMode,
-      streamPlanner
-    );
+    this.flowGenerator = new FlowGenerator(this.#apiClient, flagManager);
 
     this.boardServer = this.runtime.board.boardServers.googleDriveBoardServer;
     if (!this.boardServer) {
       console.warn("No Google Drive Board server found");
     }
     this.uiState = this.runtime.state.getOrCreateUIState();
-
-    try {
-      const flags = await flagManager.flags();
-      if (flags.googleOne) {
-        console.log(`[Google One] Checking subscriber status`);
-        const response = await this.#apiClient.getG1SubscriptionStatus({
-          include_credit_data: true,
-        });
-        this.uiState.subscriptionStatus = response.is_member
-          ? "subscribed"
-          : "not-subscribed";
-        this.uiState.subscriptionCredits = response.remaining_credits;
-      }
-    } catch (err) {
-      console.warn(err);
-      this.uiState.subscriptionStatus = "error";
-      this.uiState.subscriptionCredits = -2;
-    }
 
     if (this.globalConfig.ENABLE_EMAIL_OPT_IN) {
       this.emailPrefsManager.refreshPrefs().then(() => {
@@ -550,10 +527,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     admin.runtime = this.runtime;
     admin.settingsHelper = this.settingsHelper;
 
-    // This is currently used only for legacy graph kits (Agent,
-    // Google Drive).
-    args.graphStorePreloader?.(this.#graphStore);
-
     this.#graphStore.addEventListener("update", (evt) => {
       const { mainGraphId } = evt;
       const current = this.tab?.mainGraphId;
@@ -578,6 +551,28 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.runtime.shell.startTrackUpdates();
     this.runtime.router.init();
+
+    void this.#checkSubscriptionStatus(flagManager);
+  }
+
+  async #checkSubscriptionStatus(flagManager: RuntimeFlagManager) {
+    try {
+      const flags = await flagManager.flags();
+      if (flags.googleOne) {
+        console.log(`[Google One] Checking subscriber status`);
+        const response = await this.#apiClient.getG1SubscriptionStatus({
+          include_credit_data: true,
+        });
+        this.uiState.subscriptionStatus = response.is_member
+          ? "subscribed"
+          : "not-subscribed";
+        this.uiState.subscriptionCredits = response.remaining_credits;
+      }
+    } catch (err) {
+      console.warn(err);
+      this.uiState.subscriptionStatus = "error";
+      this.uiState.subscriptionCredits = -2;
+    }
   }
 
   #maybeNotifyAboutDesktopModality() {

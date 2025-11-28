@@ -129,13 +129,9 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
 
     const mainArgs: MainArguments = {
       settings,
-      boardServerUrl: await getUrlFromBoardServiceFlag(
-        BOARD_SERVICE || bootstrapArgs.defaultBoardService
-      ),
+      boardServerUrl: await getUrlFromBoardServiceFlag(BOARD_SERVICE),
       enableTos: ENABLE_TOS,
       tosHtml: TOS_HTML,
-      kits: bootstrapArgs.kits,
-      graphStorePreloader: bootstrapArgs.graphStorePreloader,
       moduleInvocationFilter: bootstrapArgs.moduleInvocationFilter,
       env: bootstrapArgs.env,
       embedHandler,
