@@ -308,9 +308,9 @@ export class Gallery extends SignalWatcher(LitElement) {
           .g-icon {
             width: var(--profile-pic-size);
             height: var(--profile-pic-size);
-            color: var(--light-dark-n-100);
+            color: var(--n-100);
             border-radius: 50%;
-            background: var(--light-dark-n-0);
+            background: var(--n-0);
             font-size: 20px;
             display: flex;
             align-items: center;
@@ -319,7 +319,7 @@ export class Gallery extends SignalWatcher(LitElement) {
         }
 
         .name {
-          color: var(--light-dark-n-100);
+          color: var(--n-100);
           margin: 0 0 0 8px;
           display: inline-flex;
           align-items: center;
