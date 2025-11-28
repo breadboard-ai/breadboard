@@ -189,9 +189,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected accessor tosStatus: CheckAppAccessResponse | null = null;
 
   @state()
-  protected accessor ready = false;
-
-  @state()
   protected set statusUpdates(
     values: ConformsToNodeValue<BreadboardUI.Types.VisualEditorStatusUpdate>[]
   ) {
@@ -472,7 +469,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     void this.#checkSubscriptionStatus(flagManager);
     console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
-    this.ready = true;
     this.doPostInitWork();
   }
 

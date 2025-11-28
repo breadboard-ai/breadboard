@@ -29,10 +29,6 @@ class Main extends MainBase {
   async doPostInitWork() {}
 
   render() {
-    if (!this.ready) {
-      return nothing;
-    }
-
     const renderValues = this.getRenderValues();
 
     const content = html`<div
@@ -448,8 +444,6 @@ class Main extends MainBase {
       }
     )}`;
   }
-
-
 
   #renderHeader(renderValues: RenderValues) {
     return html`<bb-ve-header

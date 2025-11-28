@@ -585,8 +585,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   render() {
-    if (!this.ready) return nothing;
-
     const lite = this.runtime.state.lite;
 
     let content: HTMLTemplateResult | symbol = nothing;
