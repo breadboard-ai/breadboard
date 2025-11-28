@@ -137,6 +137,10 @@ export type NodeDescriberContext = {
    * describer to avoid doing extra work handling dynamic schemas, etc.
    */
   asType?: boolean;
+  /**
+   * Runtime Flags
+   */
+  flags?: RuntimeFlagManager;
 };
 
 export type NodeDescriberWires = {
