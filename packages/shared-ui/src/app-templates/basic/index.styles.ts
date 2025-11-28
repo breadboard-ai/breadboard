@@ -7,14 +7,13 @@
 import { css, CSSResultGroup } from "lit";
 import Mode from "../shared/styles/icons.js";
 import Animations from "../shared/styles/animations.js";
-import { icons } from "../../styles/icons";
+import * as Styles from "../../styles/styles.js";
 import { buttonStyles } from "../../styles/button.js";
-import { type } from "../../styles/host/type.js";
 
 export const styles: CSSResultGroup = [
-  icons,
+  Styles.HostIcons.icons,
+  Styles.HostType.type,
   buttonStyles,
-  type,
   css`
     * {
       box-sizing: border-box;
@@ -72,8 +71,12 @@ export const styles: CSSResultGroup = [
     }
 
     .app-template {
-      background: var(--light-dark-s-90, var(--background-color));
-      color: var(--light-dark-p-25, var(--text-color));
+      --custom-color-text: light-dark(var(--p-25), var(--p-80));
+      --custom-color-header: light-dark(var(--n-5), var(--n-95));
+      --custom-color-button: light-dark(var(--n-100), var(--n-0));
+
+      background: light-dark(var(--s-90), var(--p-30));
+      color: light-dark(var(--p-25), var(--p-80));
       display: grid;
       grid-template-rows: minmax(0, 1fr) max-content;
       width: 100%;
@@ -87,11 +90,11 @@ export const styles: CSSResultGroup = [
         width: 100%;
         margin: 0;
         font: 500 14px / 1.3 var(--bb-font-family);
-        color: var(--light-dark-n-50, var(--light-dark-n-20));
+        color: light-dark(var(--s-30), var(--p-80));
         text-align: center;
         padding: var(--bb-grid-size) var(--bb-grid-size) var(--bb-grid-size-2)
           var(--bb-grid-size);
-        background: var(--light-dark-s-90, var(--neutral-50, transparent));
+        background: light-dark(var(--s-90), var(--p-30));
         max-width: 80%;
         translate: -50% 0;
       }
@@ -245,7 +248,7 @@ export const styles: CSSResultGroup = [
 
           & h1 {
             background: var(--background-color, none);
-            color: var(--light-dark-p-25, var(--light-dark-n-40));
+            color: light-dark(var(--p-25), var(--p-80));
             margin: var(--bb-grid-size-10) 0 var(--bb-grid-size-4) 0;
             flex: 0 0 auto;
             max-width: 80%;
@@ -256,7 +259,7 @@ export const styles: CSSResultGroup = [
           & p {
             flex: 0 0 auto;
             font: 400 var(--font-style) 16px / 20px var(--font-family);
-            color: var(--light-dark-p-25, var(--light-dark-n-40));
+            color: light-dark(var(--p-25), var(--p-80));
             margin: 0 0 var(--bb-grid-size-3);
 
             max-width: 65%;
@@ -615,8 +618,8 @@ export const styles: CSSResultGroup = [
             justify-content: center;
             width: 200px;
             height: var(--bb-grid-size-12);
-            background: var(--light-dark-p-15, var(--light-dark-p-98));
-            color: var(--light-dark-p-100, var(--light-dark-p-30));
+            background: light-dark(var(--p-15), var(--p-90));
+            color: light-dark(var(--p-100), var(--p-30));
             border-radius: var(--bb-grid-size-12);
             font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
               var(--bb-font-family);

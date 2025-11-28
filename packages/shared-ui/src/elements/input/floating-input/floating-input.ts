@@ -60,6 +60,9 @@ export class FloatingInput extends LitElement {
   @property()
   accessor disclaimerContent: HTMLTemplateResult | string | null = null;
 
+  @property({ reflect: true, type: Boolean })
+  accessor neutral = false;
+
   @query("#asset-shelf")
   accessor assetShelf: AssetShelf | null = null;
 
@@ -94,10 +97,10 @@ export class FloatingInput extends LitElement {
       #disclaimer {
         margin: 0 auto;
         font: 400 14px / 1.3 var(--bb-font-family);
-        color: var(--light-dark-n-50, var(--light-dark-n-20));
+        color: light-dark(var(--s-30), var(--p-80));
         text-align: center;
         padding: var(--bb-grid-size-2) 0 0 0;
-        background: var(--light-dark-s-90, var(--neutral-50, transparent));
+        background: light-dark(var(--s-90), var(--p-30));
         max-width: 80%;
 
         & a {
@@ -112,8 +115,8 @@ export class FloatingInput extends LitElement {
         margin: var(--container-margin, 0);
         padding: var(--bb-grid-size-4);
         border-radius: var(--bb-grid-size-4);
-        border: 1px solid var(--light-dark-nv-50, var(--light-dark-n-98));
-        background: var(--light-dark-n-95, var(--light-dark-n-98));
+        border: 1px solid light-dark(var(--nv-80), var(--nv-35));
+        background: light-dark(var(--n-95), var(--n-10));
 
         & bb-asset-shelf[populated] {
           margin-bottom: var(--bb-grid-size-4);
@@ -156,10 +159,7 @@ export class FloatingInput extends LitElement {
             outline: none;
             width: 100%;
             scrollbar-width: none;
-            color: var(
-              --light-dark-p-15,
-              var(--light-dark-n-15, var(--light-dark-n-10))
-            );
+            color: light-dark(var(--p-35), var(--nv-95));
           }
         }
 
@@ -173,16 +173,29 @@ export class FloatingInput extends LitElement {
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--light-dark-p-40, var(--light-dark-n-10));
+            background: var(--p-40);
             border: none;
             border-radius: 50%;
-            color: var(--light-dark-p-100, var(--light-dark-n-100));
+            color: var(--p-100);
             margin-left: var(--bb-grid-size-2);
 
             &:not([disabled]) {
               cursor: pointer;
             }
           }
+        }
+      }
+
+      bb-speech-to-text,
+      bb-add-asset-button {
+        --text-color: light-dark(var(--p-40), var(--n-95));
+        --background-color: light-dark(var(--n-90), var(--n-20));
+      }
+
+      :host([neutral]) {
+        & #disclaimer {
+          background: transparent;
+          color: light-dark(var(--n-30), var(--n-80));
         }
       }
 

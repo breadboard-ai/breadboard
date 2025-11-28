@@ -48,24 +48,32 @@ import {
   video,
 } from "./shared.js";
 
-const aLight = ParticlesUI.Utils.merge(a, { "color-c-n5": true });
-const inputLight = ParticlesUI.Utils.merge(input, { "color-c-n5": true });
-const textareaLight = ParticlesUI.Utils.merge(textarea, { "color-c-n5": true });
-const buttonLight = ParticlesUI.Utils.merge(button, { "color-c-n100": true });
-const h1Light = ParticlesUI.Utils.merge(h1, { "color-c-n5": true });
-const h2Light = ParticlesUI.Utils.merge(h2, { "color-c-n5": true });
-const h3Light = ParticlesUI.Utils.merge(h3, { "color-c-n5": true });
-const bodyLight = ParticlesUI.Utils.merge(body, { "color-c-n5": true });
-const pLight = ParticlesUI.Utils.merge(p, { "color-c-n35": true });
-const preLight = ParticlesUI.Utils.merge(pre, { "color-c-n35": true });
+const aLight = ParticlesUI.Utils.merge(a, { "color-custom-header": true });
+const inputLight = ParticlesUI.Utils.merge(input, {
+  "color-custom-header": true,
+});
+const textareaLight = ParticlesUI.Utils.merge(textarea, {
+  "color-custom-header": true,
+});
+const buttonLight = ParticlesUI.Utils.merge(button, {
+  "color-custom-button": true,
+});
+const h1Light = ParticlesUI.Utils.merge(h1, { "color-custom-header": true });
+const h2Light = ParticlesUI.Utils.merge(h2, { "color-custom-header": true });
+const h3Light = ParticlesUI.Utils.merge(h3, { "color-custom-header": true });
+const bodyLight = ParticlesUI.Utils.merge(body, {
+  "color-custom-header": true,
+});
+const pLight = ParticlesUI.Utils.merge(p, { "color-custom-text": true });
+const preLight = ParticlesUI.Utils.merge(pre, { "color-custom-text": true });
 const orderedListLight = ParticlesUI.Utils.merge(orderedList, {
-  "color-c-n35": true,
+  "color-custom-text": true,
 });
 const unorderedListLight = ParticlesUI.Utils.merge(unorderedList, {
-  "color-c-n35": true,
+  "color-custom-text": true,
 });
 const listItemLight = ParticlesUI.Utils.merge(listItem, {
-  "color-c-n35": true,
+  "color-custom-text": true,
 });
 
 export const theme: ParticlesUI.Types.UITheme = {

@@ -232,7 +232,7 @@ export class Renderer extends LitElement {
         width: 100%;
         margin: 0;
         font: 500 10px / 1 var(--bb-font-family);
-        color: var(--light-dark-n-50, var(--light-dark-n-98));
+        color: light-dark(var(--s-30), var(--p-80));
         text-align: center;
         padding: var(--bb-grid-size);
         background: transparent;

@@ -10,7 +10,7 @@ export const styles = [
   Styles.HostType.type,
   Styles.HostIcons.icons,
   Styles.HostColorsBase.baseColors,
-  Styles.HostColorScheme.light,
+  Styles.HostColorScheme.matchOnlyLight,
   css`
     * {
       box-sizing: border-box;
@@ -234,23 +234,7 @@ export const styles = [
         align-items: center;
         justify-content: center;
         flex: 0 0 auto;
-
         height: var(--bb-grid-size-14);
-
-        &.showing-preview {
-          background: var(--light-dark-s-90, var(--light-dark-n-100));
-          border-bottom: 1px solid
-            var(--light-dark-s-80, var(--light-dark-n-90));
-
-          & button {
-            color: var(--light-dark-p-15, var(--light-dark-n-10));
-
-            &:hover,
-            &[disabled] {
-              background: var(--light-dark-s-95, var(--light-dark-n-98));
-            }
-          }
-        }
 
         > div {
           display: flex;
@@ -263,7 +247,7 @@ export const styles = [
           border-radius: var(--bb-grid-size-16);
           font-size: 12px;
           background: none;
-          color: var(--light-dark-n-15, var(--light-dark-n-10));
+          color: light-dark(var(--n-15), var(--n-70));
           height: 32px;
           border: none;
           margin: 0 var(--bb-grid-size-2);
@@ -271,11 +255,14 @@ export const styles = [
           position: relative;
           cursor: pointer;
           white-space: nowrap;
-          transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
+          transition:
+            background 0.2s cubic-bezier(0, 0, 0.3, 1),
+            color 0.2s cubic-bezier(0, 0, 0.3, 1);
 
           &:hover,
           &[disabled] {
-            background: var(--light-dark-n-95, var(--light-dark-n-98));
+            color: light-dark(var(--n-15), var(--n-10));
+            background: light-dark(var(--n-98), var(--n-80));
           }
 
           &[disabled] {
@@ -285,6 +272,20 @@ export const styles = [
           &.invisible {
             opacity: 0.4;
             pointer-events: none;
+          }
+        }
+
+        &.showing-preview {
+          background: light-dark(var(--s-90), var(--p-30));
+          border-bottom: 1px solid light-darK(var(--s-70), var(--p-50));
+
+          & button {
+            color: var(--p-15);
+
+            &:hover,
+            &[disabled] {
+              background: light-dark(var(--p-98), var(--p-80));
+            }
           }
         }
       }

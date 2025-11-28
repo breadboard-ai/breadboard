@@ -76,7 +76,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
     Styles.HostType.type,
     Styles.HostIcons.icons,
     Styles.HostColorsBase.baseColors,
-    Styles.HostColorScheme.light,
+    Styles.HostColorScheme.matchOnlyLight,
     css`
       * {
         box-sizing: border-box;
