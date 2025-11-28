@@ -27,7 +27,7 @@ export { getGraphDescriptor } from "@breadboard-ai/loader";
  */
 export { PortStatus } from "@breadboard-ai/types";
 export * from "@breadboard-ai/types/inspect.js";
-export { createGraphStore, inspect } from "./inspector/index.js";
+export { createGraphStore } from "./inspector/index.js";
 
 /**
  * The Editor API.

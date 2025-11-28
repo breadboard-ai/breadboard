@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InspectableGraphOptions } from "@breadboard-ai/types";
+import type {
+  InspectableGraphOptions,
+  RuntimeFlagManager,
+} from "@breadboard-ai/types";
 import { GraphStore } from "../../src/inspector/graph-store.js";
 import { makeFs } from "../node/test-file-system.js";
 
@@ -24,5 +27,22 @@ function makeTestGraphStore(options: InspectableGraphOptions = {}) {
         throw new Error("Do not load graphs with test graph store");
       },
     },
+    flags: {
+      env: () => {
+        throw new Error("Do not use flags with test graph store");
+      },
+      overrides: () => {
+        throw new Error("Do not use flags with test graph store");
+      },
+      flags: () => {
+        throw new Error("Do not use flags with test graph store");
+      },
+      override() {
+        throw new Error("Do not use flags with test graph store");
+      },
+      clearOverride() {
+        throw new Error("Do not use flags with test graph store");
+      },
+    } satisfies RuntimeFlagManager,
   });
 }

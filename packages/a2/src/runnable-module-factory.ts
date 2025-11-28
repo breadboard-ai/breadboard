@@ -172,7 +172,8 @@ type InvokeFunction = (
 
 type DescribeFunction = (
   inputs: DescriberInputs,
-  capabilities?: CapabilitySpec
+  capabilities?: CapabilitySpec,
+  args?: A2ModuleArgs
 ) => Promise<DescriberOutputs>;
 
 class A2Module implements RunnableModule {
@@ -223,7 +224,8 @@ class A2Module implements RunnableModule {
     }
     return (func as DescribeFunction)(
       filterUndefined(inputs),
-      this.capabilities?.createSpec()
+      this.capabilities?.createSpec(),
+      this.args
     );
   }
 }

@@ -81,6 +81,7 @@ export class Runtime extends EventTarget {
       loader,
       sandbox: config.sandbox,
       fileSystem: config.fileSystem,
+      flags: config.flags,
     };
     const graphStore = createGraphStore(graphStoreArgs);
 
