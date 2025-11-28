@@ -82,9 +82,9 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
           top: var(--bb-grid-size-13);
           right: var(--bb-grid-size-3);
           padding: var(--bb-grid-size-4) var(--bb-grid-size-6);
-          background: var(--light-dark-n-100);
+          background: light-dark(var(--n-100), var(--n-20));
           border-radius: var(--bb-grid-size-4);
-          border: 1px solid var(--light-dark-n-98);
+          border: 1px solid light-dark(var(--n-98), var(--n-20));
           box-shadow:
             0px 4px 8px 3px rgba(0, 0, 0, 0.15),
             0px 1px 3px rgba(0, 0, 0, 0.3);
@@ -124,9 +124,10 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
             align-items: center;
             justify-content: space-between;
             margin-bottom: var(--bb-grid-size-3);
-            padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
+            padding: var(--bb-grid-size-2) var(--bb-grid-size-2)
+              var(--bb-grid-size-2) var(--bb-grid-size-4);
             border-radius: var(--bb-grid-size-5);
-            background: var(--light-dark-n-98);
+            background: light-dark(var(--n-98), var(--n-10));
 
             & #credit-count {
               display: flex;
@@ -161,9 +162,9 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
             }
 
             & #get-ai-credits {
-              background: var(--light-dark-n-95);
+              background: light-dark(var(--n-95), var(--n-30));
               border: none;
-              border-radius: var(--bb-grid-size-5);
+              border-radius: var(--bb-grid-size-3);
               padding: var(--bb-grid-size-2) var(--bb-grid-size-4);
               cursor: pointer;
               transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
@@ -173,7 +174,7 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
 
                 &:hover,
                 &:focus {
-                  background: var(--light-dark-n-90);
+                  background: light-dark(var(--n-90), var(--n-40));
                 }
               }
             }
@@ -182,12 +183,11 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
           & #manage-membership,
           & #sign-out {
             width: 100%;
-            max-width: 300px;
             margin-bottom: var(--bb-grid-size-3);
             height: var(--bb-grid-size-10);
             border-radius: var(--bb-grid-size-16);
-            border: 1px solid var(--light-dark-n-90);
-            background: var(--light-dark-n-100);
+            border: 1px solid light-dark(var(--n-90), var(--n-20));
+            background: light-dark(var(--n-100), var(--n-30));
             margin-bottom: var(--bb-grid-size-6);
             transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
 
@@ -196,7 +196,7 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
 
               &:hover,
               &:focus {
-                background: var(--light-dark-n-95);
+                background: light-dark(var(--n-95), var(--n-40));
               }
             }
           }
@@ -296,7 +296,8 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
 
           if (
             this.uiState.flags?.googleOne &&
-            this.uiState.subscriptionStatus === "subscribed"
+            (this.uiState.subscriptionStatus === "error" ||
+              this.uiState.subscriptionStatus === "subscribed")
           ) {
             this.dispatchEvent(new SubscriberCreditRefreshEvent());
           }
