@@ -61,6 +61,9 @@ class ReactiveLiteModeState implements LiteModeState {
   finishGenerating(): void {
     if (this.stepList) {
       this.stepList.status = "ready";
+      // Consume intent.
+      this.#intent = undefined;
+      this.currentExampleIntent = "";
     }
     this.status = "initial";
   }
