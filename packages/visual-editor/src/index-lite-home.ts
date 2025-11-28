@@ -9,7 +9,7 @@ import "@breadboard-ai/shared-ui/lite/welcome-panel/project-listing.js";
 import "@breadboard-ai/shared-ui/elements/overflow-menu/overflow-menu.js";
 import { css, html, HTMLTemplateResult, LitElement } from "lit";
 import { ref } from "lit/directives/ref.js";
-import { customElement, state } from "lit/decorators.js";
+import { customElement } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
 import { EmbedHandler } from "@breadboard-ai/shared-ui/embed/embed.js";
 import { provide } from "@lit/context";
@@ -29,19 +29,19 @@ import type {
 } from "@breadboard-ai/shared-ui/events/events.js";
 import { err, ok } from "@breadboard-ai/utils";
 import {
-  RecentBoard,
   SnackbarMessage,
   SnackType,
 } from "@breadboard-ai/shared-ui/types/types.js";
 import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
 import { RecentBoardStore } from "./data/recent-boards";
+import { SignalWatcher } from "@lit-labs/signals";
 
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
 const DELETING_BOARD_MESSAGE = "Deleting gem";
 
 @customElement("bb-lite-home")
-export class LiteHome extends LitElement {
+export class LiteHome extends SignalWatcher(LitElement) {
   static styles = [
     BBLite.Styles.HostColorScheme.match,
     BBLite.Styles.HostIcons.icons,
@@ -84,9 +84,6 @@ export class LiteHome extends LitElement {
    * Recent boards machinery.
    */
   #recentBoardStore = RecentBoardStore.instance();
-
-  @state()
-  accessor recentBoards: RecentBoard[] = [];
 
   readonly #embedHandler?: EmbedHandler;
 
@@ -131,9 +128,7 @@ export class LiteHome extends LitElement {
       userFolderName,
       this.globalConfig.BACKEND_API_ENDPOINT ?? ""
     );
-    this.#recentBoardStore
-      .restore()
-      .then((recentBoards) => (this.recentBoards = recentBoards));
+    this.#recentBoardStore.restore();
   }
 
   connectedCallback() {
@@ -193,45 +188,15 @@ export class LiteHome extends LitElement {
    * @param url -- url to remove
    */
   async removeRecentBoard(url: string) {
-    const count = this.recentBoards.length;
-
-    const removeIndex = this.recentBoards.findIndex(
-      (board) => board.url === url
-    );
-    if (removeIndex !== -1) {
-      this.recentBoards.splice(removeIndex, 1);
-    }
-
-    if (count === this.recentBoards.length) {
-      return;
-    }
-
-    await this.#recentBoardStore.store(this.recentBoards);
+    await this.#recentBoardStore.remove(url);
   }
 
   async addRecentBoard(url: string, title: string) {
     url = url.replace(window.location.origin, "");
-    const currentIndex = this.recentBoards.findIndex(
-      (board) => board.url === url
-    );
-    if (currentIndex === -1) {
-      this.recentBoards.unshift({
-        title,
-        url,
-      });
-    } else {
-      const [item] = this.recentBoards.splice(currentIndex, 1);
-      if (title) {
-        item.title = title;
-      }
-      this.recentBoards.unshift(item);
-    }
-
-    if (this.recentBoards.length > 50) {
-      this.recentBoards.length = 50;
-    }
-
-    await this.#recentBoardStore.store(this.recentBoards);
+    await this.#recentBoardStore.add({
+      title,
+      url,
+    });
   }
 
   #renderSnackbar() {
@@ -329,20 +294,16 @@ export class LiteHome extends LitElement {
 
   async togglePin(url: string) {
     url = url.replace(window.location.origin, "");
-    const boardToUpdate = this.recentBoards.find((board) => board.url === url);
-    if (!boardToUpdate) {
-      console.log(`Unable to find board ${url}`);
-      return;
+    const board = this.#recentBoardStore.boards.find((b) => b.url === url);
+    if (board) {
+      await this.#recentBoardStore.setPin(url, !board.pinned);
     }
-    boardToUpdate.pinned = !boardToUpdate.pinned;
-
-    await this.#recentBoardStore.store(this.recentBoards);
   }
 
   render() {
     return html`<section id="home">
       <bb-project-listing-lite
-        .recentBoards=${this.recentBoards}
+        .recentBoards=${this.#recentBoardStore.boards}
         @bbevent=${this.handleRoutedEvent}
       ></bb-project-listing-lite>
       ${this.#renderSnackbar()}

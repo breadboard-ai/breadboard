@@ -119,11 +119,6 @@ export type RenderValues = {
   tabStatus: BreadboardUI.Types.STATUS;
 };
 
-type InitArgs = {
-  fetchWithCreds: typeof globalThis.fetch;
-  backendApiEndpoint: string;
-};
-
 const LOADING_TIMEOUT = 1250;
 const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
 const UPDATE_HASH_KEY = "bb-main-update-hash";
@@ -141,7 +136,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   accessor signinAdapter: SigninAdapter;
 
   @provide({ context: flowGeneratorContext })
-  accessor flowGenerator!: FlowGenerator;
+  accessor flowGenerator: FlowGenerator;
 
   @provide({ context: googleDriveClientContext })
   accessor googleDriveClient: GoogleDriveClient;
@@ -150,17 +145,17 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   accessor embedState!: EmbedState;
 
   @provide({ context: boardServerContext })
-  accessor boardServer: BoardServer | undefined;
+  accessor boardServer: BoardServer;
 
   @provide({ context: uiStateContext })
   @state()
-  accessor uiState!: BreadboardUI.State.UI;
+  accessor uiState: BreadboardUI.State.UI;
 
   @provide({ context: opalShellContext })
   accessor opalShell: OpalShellHostProtocol;
 
   @provide({ context: consentManagerContext })
-  accessor #consentManager: ConsentManager | undefined = undefined;
+  accessor #consentManager: ConsentManager;
 
   @state()
   protected accessor tab: Runtime.Types.Tab | null = null;
@@ -200,8 +195,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   @state()
   protected accessor ready = false;
-
-  #initPromise: Promise<void>;
 
   @state()
   set #statusUpdates(
@@ -254,10 +247,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }> = [];
 
   // Created or set up in the constructor / #init.
-  #graphStore!: MutableGraphStore;
+  #graphStore: MutableGraphStore;
   #selectionState: WorkspaceSelectionStateWithChangeId | null = null;
   #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
-  protected runtime!: Runtime.Runtime;
+  protected runtime: Runtime.Runtime;
 
   // Various bits of state.
   readonly #boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
@@ -347,70 +340,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.embedHandler = args.embedHandler;
 
-    this.#initPromise = this.#init(args, {
-      fetchWithCreds,
-      backendApiEndpoint,
-    }).then(() => {
-      console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
-      this.ready = true;
-      this.doPostInitWork();
-    });
-  }
-
-  abstract doPostInitWork(): Promise<void>;
-
-  connectedCallback(): void {
-    super.connectedCallback();
-
-    window.addEventListener("bbshowtooltip", this.#onShowTooltipBound);
-    window.addEventListener("bbhidetooltip", this.#hideTooltipBound);
-    window.addEventListener("pointerdown", this.#hideTooltipBound);
-    window.addEventListener("keydown", this.#onKeyboardShortCut);
-
-    if (this.embedHandler) {
-      this.embedState = embedState();
-    }
-
-    this.embedHandler?.addEventListener(
-      "toggle_iterate_on_prompt",
-      ({ message }) => {
-        this.embedState.showIterateOnPrompt = message.on;
-      }
-    );
-    this.embedHandler?.addEventListener("create_new_board", ({ message }) => {
-      if (!message.prompt) {
-        // If no prompt provided, generate an empty board.
-        this.#generateBoardFromGraph(BreadboardUI.Utils.blankBoard());
-      } else {
-        void this.#generateGraph(message.prompt)
-          .then((graph) => this.#generateBoardFromGraph(graph))
-          .catch((error) => console.error("Error generating board", error));
-      }
-    });
-    this.embedHandler?.addEventListener("request_consent", ({ message }) => {
-      this.#signInConsentMessage = message.consentMessage ?? null;
-    });
-    this.embedHandler?.sendToEmbedder({ type: "handshake_ready" });
-  }
-
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    window.removeEventListener("bbshowtooltip", this.#onShowTooltipBound);
-    window.removeEventListener("bbhidetooltip", this.#hideTooltipBound);
-    window.removeEventListener("pointerdown", this.#hideTooltipBound);
-    window.removeEventListener("keydown", this.#onKeyboardShortCut);
-  }
-
-  /**
-   * Initializes the main component.
-   * TODO(dglazkov): Make this entirely sync and fold into constructor.
-   * DO NOT Add any more async code to this function.
-   */
-  async #init(args: MainArguments, initArgs: InitArgs) {
     const flagManager = createFlagManager(this.globalConfig.flags);
-
-    const { fetchWithCreds, backendApiEndpoint } = initArgs;
 
     // eslint-disable-next-line prefer-const
     let fileSystem: FileSystem;
@@ -469,9 +399,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       }
     );
 
-    this.runtime = await Runtime.create({
+    this.runtime = new Runtime.Runtime({
       recentBoardStore: this.#recentBoardStore,
-      graphStore: this.#graphStore,
       experiments: {},
       globalConfig: this.globalConfig,
       signinAdapter: this.signinAdapter,
@@ -553,6 +482,54 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.router.init();
 
     void this.#checkSubscriptionStatus(flagManager);
+    console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
+    this.ready = true;
+    this.doPostInitWork();
+  }
+
+  abstract doPostInitWork(): Promise<void>;
+
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    window.addEventListener("bbshowtooltip", this.#onShowTooltipBound);
+    window.addEventListener("bbhidetooltip", this.#hideTooltipBound);
+    window.addEventListener("pointerdown", this.#hideTooltipBound);
+    window.addEventListener("keydown", this.#onKeyboardShortCut);
+
+    if (this.embedHandler) {
+      this.embedState = embedState();
+    }
+
+    this.embedHandler?.addEventListener(
+      "toggle_iterate_on_prompt",
+      ({ message }) => {
+        this.embedState.showIterateOnPrompt = message.on;
+      }
+    );
+    this.embedHandler?.addEventListener("create_new_board", ({ message }) => {
+      if (!message.prompt) {
+        // If no prompt provided, generate an empty board.
+        this.#generateBoardFromGraph(BreadboardUI.Utils.blankBoard());
+      } else {
+        void this.#generateGraph(message.prompt)
+          .then((graph) => this.#generateBoardFromGraph(graph))
+          .catch((error) => console.error("Error generating board", error));
+      }
+    });
+    this.embedHandler?.addEventListener("request_consent", ({ message }) => {
+      this.#signInConsentMessage = message.consentMessage ?? null;
+    });
+    this.embedHandler?.sendToEmbedder({ type: "handshake_ready" });
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    window.removeEventListener("bbshowtooltip", this.#onShowTooltipBound);
+    window.removeEventListener("bbhidetooltip", this.#hideTooltipBound);
+    window.removeEventListener("pointerdown", this.#hideTooltipBound);
+    window.removeEventListener("keydown", this.#onKeyboardShortCut);
   }
 
   async #checkSubscriptionStatus(flagManager: RuntimeFlagManager) {
@@ -2060,8 +2037,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected async askUserToSignInIfNeeded(
     scopes?: OAuthScope[]
   ): Promise<UserSignInResponse> {
-    // this.#uiState won't exist until init is done.
-    await this.#initPromise;
     if (this.signinAdapter.state === "signedin") {
       if (!scopes?.length) {
         return "success";

@@ -17,7 +17,6 @@ import {
   GraphDescriptor,
   Kit,
   MainGraphIdentifier,
-  MutableGraphStore,
   PortIdentifier,
 } from "@google-labs/breadboard";
 
@@ -72,7 +71,6 @@ export interface Tab {
 }
 
 export interface RuntimeConfig {
-  graphStore: MutableGraphStore;
   sandbox: RunnableModuleFactory;
   experiments: Record<string, boolean>;
   globalConfig?: GlobalConfig;
