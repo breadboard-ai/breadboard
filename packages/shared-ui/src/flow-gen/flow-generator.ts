@@ -9,6 +9,7 @@ import type {
   NodeConfiguration,
   NodeDescriptor,
   LLMContent,
+  DataPart,
 } from "@breadboard-ai/types";
 import type {
   AppCatalystApiClient,
@@ -48,6 +49,12 @@ export type FlowGenConstraint = EditStepFlowGenConstraint;
 export type EditStepFlowGenConstraint = {
   kind: "EDIT_STEP_CONFIG";
   stepId: string;
+};
+
+export type FlowGenLLMContentPart = DataPart & {
+  partMetadata?: {
+    chunk_type: string;
+  };
 };
 
 export const flowGeneratorContext = createContext<FlowGenerator | undefined>(
@@ -93,7 +100,9 @@ export class FlowGenerator {
       ],
       appOptions: {
         format: "FORMAT_GEMINI_FLOWS",
-        ...(this.#agentMode && { featureFlags: { enable_agent_mode_planner: true } }),
+        ...(this.#agentMode && {
+          featureFlags: { enable_agent_mode_planner: true },
+        }),
       },
     };
     // Check to see if there's an existing flow with nodes and if so,
@@ -198,12 +207,12 @@ export class FlowGenerator {
   }
 
   #processStreamPart(
-    part: any,
+    part: DataPart,
     responseFlows: GraphDescriptor[],
     responseMessages: string[],
     suggestions: string[]
   ) {
-    const partWithMetadata = part as any;
+    const partWithMetadata = part as FlowGenLLMContentPart;
     const type = partWithMetadata.partMetadata?.chunk_type;
     if ("text" in part) {
       const isThought = type === "thought";
