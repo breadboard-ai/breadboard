@@ -540,6 +540,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       >
       </bb-app-controller>
       ${this.renderSnackbar()} ${this.#renderShellUI()}
+      ${this.renderConsentRequests()}
     </section>`;
   }
 

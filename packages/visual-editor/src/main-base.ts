@@ -34,7 +34,7 @@ import {
   PersistentBackend,
 } from "@google-labs/breadboard";
 import { provide } from "@lit/context";
-import { html, HTMLTemplateResult, LitElement } from "lit";
+import { html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { state } from "lit/decorators.js";
 
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
@@ -1458,6 +1458,20 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         }}
       ></bb-sign-in-modal>
     `;
+  }
+
+  protected renderConsentRequests() {
+    if (this.uiState.consentRequests[0]) {
+      return html`
+        <bb-consent-request-modal
+          .consentRequest=${this.uiState.consentRequests[0]}
+          @bbmodaldismissed=${() => {
+            this.uiState.consentRequests.shift();
+          }}
+        ></bb-consent-request-modal>
+      `;
+    }
+    return nothing;
   }
 
   protected async handleRoutedEvent(

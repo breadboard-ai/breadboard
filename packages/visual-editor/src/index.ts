@@ -131,7 +131,7 @@ class Main extends MainBase {
         this.#renderToasts(),
         this.renderSnackbar(),
         this.#renderFeedbackPanel(),
-        this.#renderConsentRequests(),
+        this.renderConsentRequests(),
       ]}
     </div>`;
   }
@@ -449,19 +449,7 @@ class Main extends MainBase {
     )}`;
   }
 
-  #renderConsentRequests() {
-    if (this.uiState.consentRequests[0]) {
-      return html`
-        <bb-consent-request-modal
-          .consentRequest=${this.uiState.consentRequests[0]}
-          @bbmodaldismissed=${() => {
-            this.uiState.consentRequests.shift();
-          }}
-        ></bb-consent-request-modal>
-      `;
-    }
-    return nothing;
-  }
+
 
   #renderHeader(renderValues: RenderValues) {
     return html`<bb-ve-header
