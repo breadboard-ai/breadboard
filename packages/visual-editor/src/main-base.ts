@@ -225,7 +225,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected graphStore: MutableGraphStore;
   protected selectionState: WorkspaceSelectionStateWithChangeId | null = null;
   protected lastVisualChangeId: WorkspaceVisualChangeId | null = null;
-  protected runtime!: Runtime.Runtime;
+  protected runtime: Runtime.Runtime;
 
   protected snackbarElement: BreadboardUI.Elements.Snackbar | undefined =
     undefined;
@@ -242,7 +242,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     createRef();
   protected feedbackPanelRef: Ref<BreadboardUI.Elements.FeedbackPanel> =
     createRef();
-  protected readonly embedHandler?: EmbedHandler;
+  protected readonly embedHandler: EmbedHandler | undefined;
   protected readonly apiClient: AppCatalystApiClient;
   protected readonly settings: SettingsStore;
   readonly emailPrefsManager: EmailPrefsManager;
