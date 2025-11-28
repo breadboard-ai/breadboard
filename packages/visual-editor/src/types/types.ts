@@ -21,7 +21,6 @@ import { MakeUrlInit } from "@breadboard-ai/shared-ui/types/types.js";
 
 export type BootstrapArguments = {
   deploymentConfiguration: ClientDeploymentConfiguration;
-  defaultBoardService?: string;
   /**
    * Allows filtering what modules can be invoked by the runtime.
    * @param context
