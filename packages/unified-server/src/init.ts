@@ -30,7 +30,6 @@ if (deploymentConfiguration?.MEASUREMENT_ID) {
 
 bootstrap({
   deploymentConfiguration,
-  kits: [],
   defaultBoardService: "/board/",
   moduleInvocationFilter: (context) => {
     // If we allow 3P modules to run, we can exit quickly (no filter)

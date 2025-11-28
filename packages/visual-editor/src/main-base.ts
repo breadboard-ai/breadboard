@@ -477,11 +477,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       sandbox: moduleFactory,
       settings: this.#settings,
       fileSystem,
-      kits: addRunModule(
-        moduleFactory,
-        args.kits || [],
-        args.moduleInvocationFilter
-      ),
+      kits: addRunModule(moduleFactory, [], args.moduleInvocationFilter),
       googleDriveClient: this.googleDriveClient,
       appName: Strings.from("APP_NAME"),
       appSubName: Strings.from("SUB_APP_NAME"),
@@ -529,10 +525,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     );
     admin.runtime = this.runtime;
     admin.settingsHelper = this.settingsHelper;
-
-    // This is currently used only for legacy graph kits (Agent,
-    // Google Drive).
-    args.graphStorePreloader?.(this.#graphStore);
 
     this.#graphStore.addEventListener("update", (evt) => {
       const { mainGraphId } = evt;
