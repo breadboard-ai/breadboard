@@ -15,6 +15,7 @@ export function iconSubstitute(
   switch (src) {
     case "content":
       return "text_fields";
+    case "generative-text":
     case "generative":
       return "spark";
     case "ask-user":

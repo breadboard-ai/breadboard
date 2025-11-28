@@ -51,7 +51,7 @@ export class FlowgenEditorInput extends LitElement {
         max-width: 540px;
         margin: 0 var(--bb-grid-size-2);
 
-        --placeholder-color: var(--light-dark-n-70);
+        --placeholder-color: var(--n-50);
       }
 
       #dismiss-button {
@@ -97,7 +97,7 @@ export class FlowgenEditorInput extends LitElement {
         display: flex;
         align-items: center;
         width: 100%;
-        background: var(--ui-custom-o-10);
+        background: light-dark(var(--ui-custom-o-10), var(--ui-custom-o-30));
         border-radius: var(--bb-grid-size-10);
         padding: var(--bb-grid-size-3);
       }
@@ -139,7 +139,7 @@ export class FlowgenEditorInput extends LitElement {
           display: flex;
           align-items: center;
           justify-content: flex-end;
-          color: var(--light-dark-n-70);
+          color: light-dark(var(--n-70), var(--n-40));
           font-size: 30px;
           width: 30px;
           height: 30px;

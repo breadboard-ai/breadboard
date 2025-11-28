@@ -44,19 +44,13 @@ async function getUrlFromBoardServiceFlag(
   return new URL(boardService);
 }
 
-function setColorScheme(lite = false, colorScheme?: "light" | "dark") {
+function setColorScheme(colorScheme?: "light" | "dark") {
   const scheme = document.createElement("style");
   if (colorScheme) {
     scheme.textContent = `:root { --color-scheme: ${colorScheme}; }`;
   } else {
     const defaultScheme = window.matchMedia("(prefers-color-scheme: dark)");
     const setScheme = (query: MediaQueryList) => {
-      // TODO: Remove hardcoded 'light' scheme when dark theme for the shell
-      // UI is ready.
-      if (!lite) {
-        scheme.textContent = `:root { --color-scheme: light; }`;
-        return;
-      }
       const chosenScheme: "light" | "dark" = query.matches ? "dark" : "light";
       scheme.textContent = `:root { --color-scheme: ${chosenScheme}; }`;
     };
@@ -158,7 +152,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       );
     }
 
-    setColorScheme(lite, colorScheme);
+    setColorScheme(colorScheme);
     if (lite) {
       if (page === "home" && !parsedUrl.new) {
         const { LiteHome } = await import("./index-lite-home.js");

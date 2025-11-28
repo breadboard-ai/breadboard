@@ -101,9 +101,11 @@ export class GraphAsset
 
       #container {
         width: 300px;
-        border-radius: var(--bb-grid-size-3);
+        border-radius: calc(var(--bb-grid-size-3) + 1px);
         color: light-dark(var(--n-10), var(--n-0));
         position: relative;
+        cursor: pointer;
+        border: 1px solid light-dark(var(--n-90), var(--n-30));
 
         #right-arrow {
           position: absolute;
@@ -151,6 +153,8 @@ export class GraphAsset
           line-height: 24px;
           cursor: pointer;
           position: relative;
+          z-index: 3;
+          color: light-dark(var(--n-0), var(--n-10));
 
           & span:not(.g-icon) {
             text-overflow: ellipsis;
@@ -216,11 +220,11 @@ export class GraphAsset
 
         & #content {
           position: relative;
-          background: var(--light-dark-n-100);
+          background: light-dark(var(--n-100), var(--n-20));
           padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
           font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
-          color: var(--light-dark-n-10);
+          color: light-dark(var(--n-10), var(--n-90));
           line-height: var(--bb-grid-size-6);
           border-radius: 0 0 var(--bb-grid-size-3) var(--bb-grid-size-3);
           pointer-events: none;
@@ -241,6 +245,7 @@ export class GraphAsset
 
           bb-llm-output {
             --output-lite-border-color: transparent;
+            --output-lite-background-color: transparent;
             --output-border-radius: var(--bb-grid-size);
             margin-bottom: 0;
           }

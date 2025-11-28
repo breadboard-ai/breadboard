@@ -145,11 +145,11 @@ export class Header extends LitElement {
         align-items: center;
         height: 32px;
         padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-2);
-        border: 1px solid var(--light-dark-n-80);
+        border: 1px solid light-dark(var(--n-80), var(--n-30));
         border-radius: var(--bb-grid-size-16);
-        background: var(--light-dark-n-100);
+        background: light-dark(var(--n-100), var(--n-20));
         gap: var(--bb-grid-size-2);
-        color: var(--light-dark-n-35);
+        color: light-dark(var(--n-35), var(--n-90));
         opacity: 0;
         transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
         width: 82px;
@@ -223,11 +223,11 @@ export class Header extends LitElement {
 
       :host([isempty]) #progress-container > #progress,
       :host([neutral]) #progress-container > #progress {
-        background: light-dark(var(--n-80), var(--n-10));
-        outline: 1px solid light-dark(var(--n-80), var(--n-10));
+        background: light-dark(var(--original-n-80), var(--original-n-0));
+        outline: 1px solid light-dark(var(--original-n-80), var(--original-n-0));
 
         &::before {
-          background: light-dark(var(--n-30), var(--n-80));
+          background: light-dark(var(--original-n-30), var(--original-n-80));
         }
       }
 

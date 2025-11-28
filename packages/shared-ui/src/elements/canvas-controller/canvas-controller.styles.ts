@@ -41,7 +41,10 @@ export const styles = [
         position: absolute;
         top: 0;
         left: 0;
-        background: oklch(from var(--light-dark-n-10) l c h / 33%);
+        background: light-dark(
+          oklch(from var(--n-10) l c h / 38%),
+          oklch(from var(--n-0) l c h / 60%)
+        );
         width: 100%;
         height: 100%;
         z-index: 5;
@@ -227,7 +230,7 @@ export const styles = [
       justify-content: space-between;
       position: relative;
       z-index: 2;
-      background: var(--light-dark-n-100);
+      background: light-dark(var(--n-100), var(--original-n-10));
 
       & #side-nav-controls {
         display: flex;

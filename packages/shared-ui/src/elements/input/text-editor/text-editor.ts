@@ -179,7 +179,7 @@ export class TextEditor extends LitElement {
 
       :host {
         display: block;
-        background: var(--light-dark-n-100);
+        background: light-dark(var(--n-100), var(--n-10));
         font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
           var(--bb-font-family);
         color: var(--light-dark-n-10);
