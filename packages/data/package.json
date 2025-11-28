@@ -20,7 +20,6 @@
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
-    "test": "wireit",
     "build": "wireit",
     "lint": "wireit"
   },
@@ -58,37 +57,6 @@
       ],
       "clean": "if-file-deleted"
     },
-    "test": {
-      "dependencies": [
-        "test:ava",
-        "test:node"
-      ]
-    },
-    "test:ava": {
-      "command": "ava",
-      "env": {
-        "FORCE_COLOR": "1"
-      },
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [
-        "tests/ava/**/*.json",
-        "!tests/node/**/*.ts"
-      ],
-      "output": []
-    },
-    "test:node": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/node/*.js",
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [
-        "tests/node/**/*.ts",
-        "tests/bgl/*.bgl.json"
-      ],
-      "output": []
-    },
     "lint": {
       "command": "eslint . --ext .ts",
       "env": {
@@ -104,19 +72,6 @@
       "output": []
     }
   },
-  "ava": {
-    "timeout": "30s",
-    "files": [
-      "tests/ava/**/*.ts"
-    ],
-    "workerThreads": false,
-    "typescript": {
-      "rewritePaths": {
-        "./": "dist/"
-      },
-      "compile": false
-    }
-  },
   "keywords": [],
   "author": "Google Labs Team",
   "license": "Apache-2.0",
@@ -125,12 +80,10 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@ava/typescript": "6.0.0",
     "@google-labs/tsconfig": "^0.0.2",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.34.1",
-    "ava": "6.4.1",
     "typescript": "^5.8.3"
   },
   "dependencies": {
