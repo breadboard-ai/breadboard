@@ -89,7 +89,6 @@ import { keyboardCommands } from "./commands/commands";
 import { KeyboardCommandDeps } from "./commands/types";
 import { eventRoutes } from "./event-routing/event-routing";
 import { MainArguments } from "./types/types";
-import { envFromFlags } from "./utils/env-from-flags";
 import { envFromSettings } from "./utils/env-from-settings";
 import { makeUrl, parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
 import { VESignInModal } from "@breadboard-ai/shared-ui/elements/elements.js";
@@ -423,11 +422,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     );
 
     fileSystem = createFileSystem({
-      env: [
-        ...envFromSettings(this.#settings),
-        ...(args.env || []),
-        ...envFromFlags(flags),
-      ],
+      env: [...envFromSettings(this.#settings), ...(args.env || [])],
       local: createFileSystemBackend(createEphemeralBlobStore()),
       mnt: composeFileSystemBackends(
         new Map<string, PersistentBackend>([

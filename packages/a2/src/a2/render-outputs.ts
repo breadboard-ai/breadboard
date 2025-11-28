@@ -505,10 +505,11 @@ function advancedSettings(renderType: RenderType): Record<string, Schema> {
 
 async function describe(
   { inputs: { text, "p-render-mode": renderMode } }: DescribeInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
 ) {
-  const flags = await readFlags(caps);
-  const showConsistentUIMode = ok(flags) ? flags.consistentUI : false;
+  const flags = await readFlags(moduleArgs);
+  const showConsistentUIMode = flags?.consistentUI ?? false;
   const modes = showConsistentUIMode
     ? MODES
     : MODES.filter(({ id }) => id !== "consistent-ui");

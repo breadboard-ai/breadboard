@@ -9,6 +9,7 @@ import {
   RuntimeFlags,
 } from "@breadboard-ai/types";
 import { ok } from "./utils";
+import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { readSettings, readFlags };
 
@@ -24,30 +25,9 @@ async function readSettings(
   return json as Record<string, boolean>;
 }
 
-async function readFlags(caps: Capabilities): Promise<Outcome<RuntimeFlags>> {
-  const reading = await caps.read({ path: "/env/flags" });
-  if (!ok(reading)) return reading;
-
-  const json = (reading.data?.at(0)?.parts?.at(0) as JSONPart).json;
-  if (!json) {
-    // Return default values.
-    return {
-      generateForEach: false,
-      mcp: false,
-      gulfRenderer: false,
-      force2DGraph: false,
-      consistentUI: false,
-      agentMode: false,
-      streamPlanner: false,
-      observeSystemTheme: false,
-      opalAdk: false,
-      outputTemplates: false,
-      googleOne: false,
-      requireConsentForGetWebpage: false,
-      requireConsentForOpenWebpage: false,
-      streamGenWebpage: false,
-    };
-  }
-
-  return json as RuntimeFlags;
+async function readFlags({
+  context,
+}: A2ModuleArgs): Promise<Readonly<RuntimeFlags> | undefined> {
+  if (!context.flags) return;
+  return context.flags.flags();
 }
