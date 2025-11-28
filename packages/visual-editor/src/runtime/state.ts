@@ -13,13 +13,14 @@ import {
   RuntimeContext,
   UI,
 } from "@breadboard-ai/shared-ui/state/types.js";
-import { BoardServer, RuntimeFlagManager } from "@breadboard-ai/types";
+import { RuntimeFlagManager } from "@breadboard-ai/types";
 import {
   EditableGraph,
   MainGraphIdentifier,
   MutableGraphStore,
 } from "@google-labs/breadboard";
 import { Runtime } from "./runtime";
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 export { StateManager };
 
@@ -31,7 +32,7 @@ class StateManager implements RuntimeContext {
   #map: Map<MainGraphIdentifier, State.Project> = new Map();
   #store: MutableGraphStore;
   #fetchWithCreds: typeof globalThis.fetch;
-  #servers: BoardServer[];
+  #boardServer: GoogleDriveBoardServer;
   #flagManager: RuntimeFlagManager;
   #mcpClientManager: McpClientManager;
 
@@ -41,36 +42,16 @@ class StateManager implements RuntimeContext {
     private readonly runtime: Runtime,
     store: MutableGraphStore,
     fetchWithCreds: typeof globalThis.fetch,
-    boardServers: BoardServer[],
+    boardServer: GoogleDriveBoardServer,
     flagManager: RuntimeFlagManager,
     mcpClientManager: McpClientManager
   ) {
     this.#store = store;
     this.#fetchWithCreds = fetchWithCreds;
-    this.#servers = boardServers;
+    this.#boardServer = boardServer;
     this.#flagManager = flagManager;
     this.#mcpClientManager = mcpClientManager;
     this.lite = createLiteModeState(this);
-  }
-
-  #findServer(url: URL): BoardServer | null {
-    for (const server of this.#servers) {
-      if (server.canProvide(url)) {
-        return server;
-      }
-    }
-    return null;
-  }
-
-  appendServer(boardServer: BoardServer | null) {
-    if (
-      !boardServer ||
-      this.#servers.findIndex((server) => server === boardServer) !== -1
-    ) {
-      return;
-    }
-
-    this.#servers.push(boardServer);
   }
 
   getOrCreateUIState() {
@@ -120,7 +101,7 @@ class StateManager implements RuntimeContext {
       mainGraphId,
       this.#store,
       this.#fetchWithCreds,
-      this.#findServer.bind(this),
+      this.#boardServer,
       this.#mcpClientManager,
       editable || undefined
     );

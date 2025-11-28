@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DataPartTransformer } from "./data.js";
 import { GraphDescriptor, GraphTag } from "./graph-descriptor.js";
 import { GraphToRun } from "./node-handler.js";
 import {
@@ -133,10 +132,6 @@ export type GraphProvider = {
    * A signal-backed collection of featured gallery graphs.
    */
   galleryGraphs?: ImmutableGraphCollection;
-  /**
-   * Provides a way to transfom DataParts (InlineDataPart and StoredDataPart).
-   */
-  dataPartTransformer?: (graphUrl: URL) => DataPartTransformer;
 };
 
 /**

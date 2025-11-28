@@ -47,6 +47,7 @@ import {
 import { Autonamer } from "./autonamer.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import { createGoogleDriveBoardServer } from "@breadboard-ai/shared-ui/utils/create-server.js";
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -99,7 +100,7 @@ export class Runtime extends EventTarget {
       this,
       graphStore,
       fetchWithCreds,
-      servers,
+      servers.at(0) as GoogleDriveBoardServer,
       flags,
       mcpClientManager
     );

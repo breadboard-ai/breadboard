@@ -627,7 +627,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return;
     }
 
-    const boardServer = this.boardServer;
+    const boardServer = this.boardServer as GoogleDriveBoardServer;
     if (!boardServer) {
       console.error(`No board server`);
       unlockButton();
@@ -641,7 +641,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     }
 
     const outputs = await inlineAllContent(
-      boardServer,
+      boardServer.dataPartTransformer(),
       this.run.finalOutput,
       currentGraphUrl
     );
@@ -807,7 +807,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     const shareableGraphUrl = `drive:/${shareableGraphFileId}`;
     const finalOutputValues = await inlineAllContent(
-      boardServer,
+      boardServer.dataPartTransformer(),
       this.run.finalOutput,
       shareableGraphUrl
     );
