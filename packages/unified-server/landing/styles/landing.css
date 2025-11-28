@@ -315,10 +315,6 @@
   background: rgba(0, 0, 0, 0.3);
 }
 
-.dimmed-cover .play-button {
-  margin-top: 8px;
-}
-
 #video-container .dimmed-cover {
   opacity: 1;
   visibility: visible;
