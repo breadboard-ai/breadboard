@@ -82,6 +82,7 @@ export class Board extends EventTarget {
 
   constructor(
     public readonly loader: GraphLoader,
+    public readonly graphStore: MutableGraphStore,
     /**
      * Extra Kits, supplied by the board server.
      * */
@@ -93,24 +94,22 @@ export class Board extends EventTarget {
     public readonly googleDriveClient?: GoogleDriveClient
   ) {
     super();
-    boardServers.servers.forEach((server) => {
-      if (server.capabilities.events) {
-        // install event listeners
-        server.addEventListener("savestatuschange", ({ url, status }) => {
-          if (!this.#currentTabId) {
-            return;
-          }
+    boardServers.googleDriveBoardServer.addEventListener(
+      "savestatuschange",
+      ({ url, status }) => {
+        if (!this.#currentTabId) {
+          return;
+        }
 
-          const currentTab = this.#tabs.get(this.#currentTabId);
-          if (!currentTab || currentTab.graph?.url !== url) {
-            return;
-          }
+        const currentTab = this.#tabs.get(this.#currentTabId);
+        if (!currentTab || currentTab.graph?.url !== url) {
+          return;
+        }
 
-          this.#tabSaveStatus.set(this.#currentTabId, toSaveStatus(status));
-          this.dispatchEvent(new RuntimeBoardSaveStatusChangeEvent());
-        });
+        this.#tabSaveStatus.set(this.#currentTabId, toSaveStatus(status));
+        this.dispatchEvent(new RuntimeBoardSaveStatusChangeEvent());
       }
-    });
+    );
   }
 
   currentURL: URL | null = null;
@@ -217,22 +216,11 @@ export class Board extends EventTarget {
     return boardUrl;
   }
 
-  getBoardServerForURL(url: URL) {
-    return (
-      this.boardServers.servers.find((server) => server.canProvide(url)) || null
-    );
-  }
-
   getBoardServers(): BoardServer[] {
-    return this.boardServers.servers;
-  }
-
-  getLoader(): GraphLoader {
-    return this.boardServers.loader;
-  }
-
-  getGraphStore(): MutableGraphStore {
-    return this.boardServers.graphStore;
+    return [
+      this.boardServers.googleDriveBoardServer,
+      this.boardServers.a2Server,
+    ];
   }
 
   get tabs() {
@@ -344,7 +332,7 @@ export class Board extends EventTarget {
     const moduleId = descriptor.main || null;
 
     const id = globalThis.crypto.randomUUID();
-    const mainGraphId = this.getGraphStore().addByDescriptor(descriptor);
+    const mainGraphId = this.graphStore.addByDescriptor(descriptor);
     if (!mainGraphId.success) {
       throw new Error(`Unable to add graph: ${mainGraphId.error}`);
     }
@@ -394,23 +382,17 @@ export class Board extends EventTarget {
 
       let graph: GraphDescriptor | null = null;
       if (this.#canParse(url, base.href)) {
-        boardServer = this.getBoardServerForURL(new URL(url, base));
-        if (boardServer && this.boardServers) {
-          const resourceKey = urlAtTimeOfCall
-            ? new URL(urlAtTimeOfCall).searchParams.get("resourcekey")
-            : null;
-          const urlMaybeWithResourceKey = resourceKey
-            ? url + `?resourcekey=${resourceKey}`
-            : url;
-          const loadResult = await this.boardServers.loader.load(
-            urlMaybeWithResourceKey,
-            { base }
-          );
-          graph = loadResult.success ? loadResult.graph : null;
-        } else {
-          const loadResult = await this.loader.load(url, { base });
-          graph = loadResult.success ? loadResult.graph : null;
-        }
+        boardServer = this.boardServers.googleDriveBoardServer;
+        const resourceKey = urlAtTimeOfCall
+          ? new URL(urlAtTimeOfCall).searchParams.get("resourcekey")
+          : null;
+        const urlMaybeWithResourceKey = resourceKey
+          ? url + `?resourcekey=${resourceKey}`
+          : url;
+        const loadResult = await this.loader.load(urlMaybeWithResourceKey, {
+          base,
+        });
+        graph = loadResult.success ? loadResult.graph : null;
       }
 
       if (!graph) {
@@ -448,7 +430,7 @@ export class Board extends EventTarget {
       // This is not elegant, since we actually load the graph by URL,
       // and we should know this mainGraphId by now.
       // TODO: Make this more elegant.
-      const mainGraphId = this.getGraphStore().addByDescriptor(graph);
+      const mainGraphId = this.graphStore.addByDescriptor(graph);
       if (!mainGraphId.success) {
         throw new Error(`Unable to add graph: ${mainGraphId.error}`);
       }
@@ -603,7 +585,7 @@ export class Board extends EventTarget {
     }
 
     const boardUrl = new URL(tab.graph.url);
-    const boardServer = this.getBoardServerForURL(boardUrl);
+    const boardServer = this.boardServers.googleDriveBoardServer;
     if (!boardServer) {
       return false;
     }
@@ -618,7 +600,7 @@ export class Board extends EventTarget {
     }
 
     const boardUrl = new URL(url);
-    const boardServer = this.getBoardServerForURL(boardUrl);
+    const boardServer = this.boardServers.googleDriveBoardServer;
     if (!boardServer) {
       return false;
     }
@@ -726,10 +708,7 @@ export class Board extends EventTarget {
       delete tab.graph.assets["@@thumbnail"];
 
       const boardUrl = new URL(tab.graph.url);
-      const boardServer = this.getBoardServerForURL(boardUrl);
-      if (!boardServer) {
-        return noSave;
-      }
+      const boardServer = this.boardServers.googleDriveBoardServer;
 
       const capabilities = boardServer.canProvide(boardUrl);
       if (!capabilities || !capabilities.save) {
@@ -813,7 +792,7 @@ export class Board extends EventTarget {
     }
 
     const fail = { result: false, error: "Unable to save", url: undefined };
-    const boardServer = this.boardServers.servers.at(0);
+    const boardServer = this.boardServers.googleDriveBoardServer;
     if (!boardServer) {
       this.#isSavingAs = false;
       if (snackbarId) {
@@ -892,7 +871,7 @@ export class Board extends EventTarget {
     );
 
     const fail = { result: false, error: "Unable to delete" };
-    const boardServer = this.boardServers.servers.at(0);
+    const boardServer = this.boardServers.googleDriveBoardServer;
     if (!boardServer) {
       return fail;
     }

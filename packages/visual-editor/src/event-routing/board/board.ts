@@ -343,7 +343,7 @@ export const RemixRoute: EventRoute<"board.remix"> = {
       )
     );
 
-    const graphStore = runtime.board.getGraphStore();
+    const graphStore = runtime.board.graphStore;
     const addResult = graphStore.addByURL(originalEvent.detail.url, [], {});
     const graph = structuredClone(
       (await graphStore.getLatest(addResult.mutable)).graph
@@ -371,13 +371,7 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
 
   async do(deps) {
     const { tab, runtime, originalEvent, uiState } = deps;
-    const boardServer = runtime.board.getBoardServerForURL(
-      new URL(originalEvent.detail.url)
-    );
-    if (!boardServer) {
-      return false;
-    }
-
+    const boardServer = runtime.board.boardServers.googleDriveBoardServer;
     if (!confirm(originalEvent.detail.messages.query)) {
       return false;
     }

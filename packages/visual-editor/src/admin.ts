@@ -59,7 +59,7 @@ export class Admin {
   }
 
   #gdriveBoardServer(): GoogleDriveBoardServer {
-    return this.runtime.board.getBoardServers().at(0) as GoogleDriveBoardServer;
+    return this.runtime.board.boardServers.googleDriveBoardServer;
   }
 
   get gdrive() {

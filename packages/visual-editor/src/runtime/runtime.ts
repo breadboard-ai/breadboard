@@ -28,7 +28,6 @@ import {
   RunConfig,
   RuntimeFlagManager,
   ConsentManager,
-  BoardServer,
   MutableGraphStore,
   GraphLoader,
 } from "@breadboard-ai/types";
@@ -148,7 +147,7 @@ export class Runtime extends EventTarget {
       runner: graph,
       diagnostics: true,
       kits: [], // The kits are added by the runtime.
-      loader: this.board.getLoader(),
+      loader: this.board.loader,
       graphStore: this.edit.graphStore,
       fileSystem: this.edit.graphStore.fileSystem.createRunFileSystem({
         graphUrl: url,
@@ -257,10 +256,7 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
   );
   const a2Server = createA2Server();
 
-  // Add board servers that are built into
-  const servers: BoardServer[] = [googleDriveBoardServer, a2Server];
-
-  const loader = createLoader(servers);
+  const loader = createLoader([googleDriveBoardServer, a2Server]);
   const graphStoreArgs = {
     kits,
     loader,
@@ -274,9 +270,8 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
   }
 
   const boardServers: RuntimeConfigBoardServers = {
-    servers,
-    loader,
-    graphStore,
+    a2Server,
+    googleDriveBoardServer,
   };
 
   const autonamer = new Autonamer(
@@ -291,6 +286,7 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
     router: new Router(),
     board: new Board(
       loader,
+      graphStore,
       kits,
       boardServers,
       config.recentBoardStore,
