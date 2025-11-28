@@ -136,7 +136,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   accessor signinAdapter: SigninAdapter;
 
   @provide({ context: flowGeneratorContext })
-  accessor flowGenerator!: FlowGenerator;
+  accessor flowGenerator: FlowGenerator;
 
   @provide({ context: googleDriveClientContext })
   accessor googleDriveClient: GoogleDriveClient;
@@ -145,17 +145,17 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   accessor embedState!: EmbedState;
 
   @provide({ context: boardServerContext })
-  accessor boardServer: BoardServer | undefined;
+  accessor boardServer: BoardServer;
 
   @provide({ context: uiStateContext })
   @state()
-  accessor uiState!: BreadboardUI.State.UI;
+  accessor uiState: BreadboardUI.State.UI;
 
   @provide({ context: opalShellContext })
   accessor opalShell: OpalShellHostProtocol;
 
   @provide({ context: consentManagerContext })
-  accessor #consentManager: ConsentManager | undefined = undefined;
+  accessor #consentManager: ConsentManager;
 
   @state()
   protected accessor tab: Runtime.Types.Tab | null = null;
@@ -247,10 +247,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }> = [];
 
   // Created or set up in the constructor / #init.
-  #graphStore!: MutableGraphStore;
+  #graphStore: MutableGraphStore;
   #selectionState: WorkspaceSelectionStateWithChangeId | null = null;
   #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
-  protected runtime!: Runtime.Runtime;
+  protected runtime: Runtime.Runtime;
 
   // Various bits of state.
   readonly #boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
@@ -401,7 +401,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.runtime = new Runtime.Runtime({
       recentBoardStore: this.#recentBoardStore,
-      graphStore: this.#graphStore,
       experiments: {},
       globalConfig: this.globalConfig,
       signinAdapter: this.signinAdapter,
