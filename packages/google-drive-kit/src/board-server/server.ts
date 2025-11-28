@@ -375,10 +375,7 @@ class GoogleDriveBoardServer
   }
 
   dataPartTransformer(): DataPartTransformer {
-    return new GoogleDriveDataPartTransformer(
-      this.#googleDriveClient,
-      this.ops
-    );
+    return new GoogleDriveDataPartTransformer(this.ops);
   }
 }
 
