@@ -13,7 +13,7 @@ import { createRef, ref } from "lit/directives/ref.js";
 import { projectStateContext } from "../contexts/project-state.js";
 import "../elements/input/expanding-textarea.js";
 import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
-import { StateEvent, UtteranceEvent } from "../events/events.js";
+import { SnackbarEvent, StateEvent, UtteranceEvent } from "../events/events.js";
 import { Project } from "../state/types.js";
 import * as StringsHelper from "../strings/helper.js";
 import { baseColors } from "../styles/host/base-colors.js";
@@ -23,6 +23,7 @@ import { spinAnimationStyles } from "../styles/spin-animation.js";
 import { ActionTracker } from "../utils/action-tracker.js";
 import { type FlowGenerator, flowGeneratorContext } from "./flow-generator.js";
 import { flowGenWithTheme } from "./flowgen-with-theme.js";
+import { SnackType } from "../types/types.js";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -282,6 +283,16 @@ export class FlowgenEditorInput extends LitElement {
       }
       this.#state = { status: "generating" };
 
+      if (!this.hasEmptyGraph) {
+        dispatchEvent(new CustomEvent("bbflowgen:generate:complete"));
+        this.dispatchEvent(
+          new StateEvent({
+            eventType: "board.stop",
+            clearLastRun: true,
+          })
+        );
+      }
+
       ActionTracker.flowGenEdit(this.currentGraph?.url);
 
       this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
@@ -319,6 +330,32 @@ export class FlowgenEditorInput extends LitElement {
     if (this.#state.status !== "generating") {
       return;
     }
+
+    const isFirstGeneration = this.hasEmptyGraph;
+
+    if (!isFirstGeneration) {
+      dispatchEvent(new CustomEvent("bbflowgen:generate:complete"));
+
+      this.dispatchEvent(
+        new SnackbarEvent(
+          globalThis.crypto.randomUUID(),
+          Strings.from("LABEL_EDIT_WAS_MADE"),
+          SnackType.INFORMATION,
+          [
+            {
+              value: Strings.from("LABEL_EDIT_WAS_MADE"),
+              title: Strings.from("LABEL_START_BOARD"),
+              action: "start",
+              callback: () =>
+                this.dispatchEvent(new StateEvent({ eventType: "board.run" })),
+            },
+          ],
+          false,
+          true
+        )
+      );
+    }
+
     this.dispatchEvent(
       new StateEvent({
         eventType: "board.replace",
