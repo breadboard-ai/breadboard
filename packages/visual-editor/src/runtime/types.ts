@@ -6,7 +6,6 @@
 
 import type {
   BoardServer,
-  GraphLoader,
   OutputValues,
   RuntimeFlagManager,
   ConsentManager,
@@ -36,6 +35,7 @@ import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-conf
 import { McpClientManager } from "@breadboard-ai/mcp";
 import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
 import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 export enum TabType {
   URL,
@@ -91,9 +91,8 @@ export interface RuntimeConfig {
 }
 
 export interface RuntimeConfigBoardServers {
-  servers: BoardServer[];
-  loader: GraphLoader;
-  graphStore: MutableGraphStore;
+  a2Server: BoardServer;
+  googleDriveBoardServer: GoogleDriveBoardServer;
 }
 
 export type ReferenceIdentifier =

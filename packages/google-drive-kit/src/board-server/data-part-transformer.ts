@@ -14,7 +14,6 @@ import {
   type DataPartTransformer,
   type Outcome,
 } from "@google-labs/breadboard";
-import type { GoogleDriveClient } from "../google-drive-client.js";
 import type { DriveOperations } from "./operations.js";
 
 export { GoogleDriveDataPartTransformer };
@@ -24,10 +23,7 @@ export type GoogleDriveToGeminiResponse = {
 };
 
 class GoogleDriveDataPartTransformer implements DataPartTransformer {
-  constructor(
-    public readonly client: GoogleDriveClient,
-    private readonly ops: DriveOperations
-  ) {}
+  constructor(private readonly ops: DriveOperations) {}
 
   async persistPart(
     _graphUrl: URL,
