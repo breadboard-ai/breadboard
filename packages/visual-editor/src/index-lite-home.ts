@@ -43,6 +43,7 @@ const DELETING_BOARD_MESSAGE = "Deleting gem";
 @customElement("bb-lite-home")
 export class LiteHome extends LitElement {
   static styles = [
+    BBLite.Styles.HostColorScheme.match,
     BBLite.Styles.HostIcons.icons,
     BBLite.Styles.HostBehavior.behavior,
     BBLite.Styles.HostColorsMaterial.baseColors,

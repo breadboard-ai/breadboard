@@ -39,7 +39,6 @@ export class OverflowMenu extends LitElement {
         top: 20px;
         right: 20px;
         background: var(--background-color, var(--light-dark-n-100));
-        border: 1px solid var(--border-color, var(--light-dark-n-90));
         border-radius: var(--bb-grid-size-2);
         z-index: 2;
         box-shadow:

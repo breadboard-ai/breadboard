@@ -43,6 +43,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   accessor #showAdvancedEditorOnboardingTooltip = true;
 
   static styles = [
+    BBLite.Styles.HostColorScheme.match,
     BBLite.Styles.HostIcons.icons,
     BBLite.Styles.HostBehavior.behavior,
     BBLite.Styles.HostColorsMaterial.baseColors,

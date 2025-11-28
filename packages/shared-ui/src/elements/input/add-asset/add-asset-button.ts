@@ -94,10 +94,10 @@ export class AddAssetButton extends LitElement {
         top: 0;
         left: 0;
         width: min-content;
-        --border-color: var(--light-dark-s-80);
-        --inner-border-color: var(--light-dark-s-80);
-        --background-color: var(--light-dark-s-90);
-        --text-color: var(--light-dark-p-15);
+        --border-color: transparent;
+        --inner-border-color: light-dark(var(--n-90), var(--n-30));
+        --background-color: light-dark(var(--p-98), var(--n-20));
+        --text-color: light-dark(var(--n-30), var(--nv-95));
       }
     `,
   ];

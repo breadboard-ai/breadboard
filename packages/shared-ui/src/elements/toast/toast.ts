@@ -33,7 +33,7 @@ export class Toast extends LitElement {
     Styles.HostType.type,
     Styles.HostIcons.icons,
     Styles.HostColorsBase.baseColors,
-    Styles.HostColorScheme.light,
+    Styles.HostColorScheme.matchOnlyLight,
     css`
       :host {
         position: fixed;

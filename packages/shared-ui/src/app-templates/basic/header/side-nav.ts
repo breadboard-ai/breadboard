@@ -21,7 +21,6 @@ export class SideNav extends LitElement {
       display: block;
       position: fixed;
       pointer-events: none;
-      border: inset 1px solid red;
       top: 0;
       left: 0;
       height: 100%;
@@ -44,7 +43,7 @@ export class SideNav extends LitElement {
       z-index: 1;
       transition: translate 0.3s cubic-bezier(0, 0, 0.3, 1);
       translate: calc(-100% - 10px) 0;
-      background: var(--light-dark-s-90, var(--neutral-0));
+      background: light-dark(var(--s-90), var(--p-30));
       box-shadow: 0px 0px 8.1px -1px rgba(0, 0, 0, 0.15);
       padding: var(--bb-grid-size-5) var(--bb-grid-size-3);
       overflow: scroll;

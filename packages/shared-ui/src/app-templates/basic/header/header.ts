@@ -75,7 +75,7 @@ export class Header extends LitElement {
         align-items: center;
         justify-content: space-between;
         height: 54px;
-        border-bottom: 1px solid var(--light-dark-s-70, var(--light-dark-n-98));
+        border-bottom: 1px solid light-dark(var(--s-70), var(--p-50));
         padding: 0 var(--bb-grid-size-4);
         position: relative;
         flex: 0 0 auto;
@@ -99,7 +99,7 @@ export class Header extends LitElement {
         opacity: 0;
         transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
         padding: 0;
-        color: var(--light-dark-n-0);
+        color: light-dark(var(--p-35), var(--p-80));
         border-radius: 50%;
         width: 82px;
 
@@ -200,8 +200,8 @@ export class Header extends LitElement {
           width: 100%;
           max-width: 260px;
           height: 4px;
-          background: var(--light-dark-n-100, var(--light-dark-n-90));
-          outline: 1px solid var(--light-dark-n-100);
+          background: light-dark(var(--s-80), var(--p-10));
+          outline: 1px solid light-dark(var(--s-80), var(--p-10));
           border-radius: var(--bb-grid-size-16);
           position: relative;
 
@@ -214,7 +214,7 @@ export class Header extends LitElement {
             min-width: 4px;
             max-width: 100%;
             height: 4px;
-            background: var(--light-dark-p-40, var(--light-dark-n-50));
+            background: light-dark(var(--p-30), var(--p-80));
             border-radius: var(--bb-grid-size-16);
             transition: width 0.3s cubic-bezier(0, 0, 0.3, 1);
           }
@@ -223,7 +223,12 @@ export class Header extends LitElement {
 
       :host([isempty]) #progress-container > #progress,
       :host([neutral]) #progress-container > #progress {
-        background: var(--light-dark-s-80, var(--light-dark-n-90));
+        background: light-dark(var(--n-80), var(--n-10));
+        outline: 1px solid light-dark(var(--n-80), var(--n-10));
+
+        &::before {
+          background: light-dark(var(--n-30), var(--n-80));
+        }
       }
 
       ul {

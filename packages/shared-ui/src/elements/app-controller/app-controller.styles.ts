@@ -10,7 +10,7 @@ export const styles = [
   Styles.HostType.type,
   Styles.HostIcons.icons,
   Styles.HostColorsBase.baseColors,
-  Styles.HostColorScheme.light,
+  Styles.HostColorScheme.matchOnlyLight,
   css`
     @keyframes fadeIn {
       from {
