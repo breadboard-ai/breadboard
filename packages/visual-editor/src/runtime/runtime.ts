@@ -22,7 +22,6 @@ export * as Types from "./types.js";
 
 import { Select } from "./select.js";
 import { StateManager } from "./state.js";
-import { getDataStore } from "@breadboard-ai/data-store";
 import { Shell } from "./shell.js";
 import {
   Outcome,
@@ -43,7 +42,6 @@ import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { inputsFromSettings } from "@breadboard-ai/shared-ui/data/inputs.js";
 import {
   assetsFromGraphDescriptor,
-  BoardServerAwareDataStore,
   envFromGraphDescriptor,
 } from "@breadboard-ai/data";
 import { Autonamer } from "./autonamer.js";
@@ -74,7 +72,6 @@ export class Runtime extends EventTarget {
     servers: BoardServer[];
     config: RuntimeConfig;
     graphStore: MutableGraphStore;
-    dataStore: BoardServerAwareDataStore;
     loader: GraphLoader;
   }) {
     super();
@@ -88,7 +85,6 @@ export class Runtime extends EventTarget {
       kits,
       graphStore,
       autonamer,
-      dataStore,
       config: {
         fetchWithCreds,
         flags,
@@ -127,7 +123,7 @@ export class Runtime extends EventTarget {
     this.state = state;
 
     this.edit = edit;
-    this.run = new Run(graphStore, dataStore, state, flags, edit);
+    this.run = new Run(graphStore, state, flags, edit);
 
     this.kits = kits;
     this.autonamer = autonamer;
@@ -287,12 +283,6 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
     builtInBoardServers: config.builtInBoardServers,
   };
 
-  const dataStore = new BoardServerAwareDataStore(
-    getDataStore(),
-    servers,
-    undefined
-  );
-
   const autonamer = new Autonamer(
     graphStoreArgs,
     config.fileSystem,
@@ -314,7 +304,6 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
       config.signinAdapter,
       config.googleDriveClient
     ),
-    dataStore,
     autonamer,
     servers,
     graphStore,

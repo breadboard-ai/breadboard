@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DataStore, FileSystem } from "./data.js";
+import { FileSystem } from "./data.js";
 import { ClientDeploymentConfiguration } from "./deployment-configuration.js";
 import { RuntimeFlagManager } from "./flags.js";
 import {
@@ -363,10 +363,6 @@ export interface NodeHandlerContext {
    * The `AbortSignal` that can be used to stop the board run.
    */
   readonly signal?: AbortSignal;
-  /**
-   * The data store that can be used to store data across nodes.
-   */
-  readonly store?: DataStore;
   /**
    * JS Sandbox that will be used to run the imperative graphs.
    */
