@@ -214,6 +214,12 @@ export class CanvasController extends SignalWatcher(LitElement) {
     } else {
       this.sideNavItem = sideNavItem;
     }
+
+    window.addEventListener("bbflowgen:generate:complete", () => {
+      this.sideNavItem = "app-view";
+
+      globalThis.localStorage.setItem(SIDE_ITEM_KEY, "app-view");
+    });
   }
 
   editorRender = 0;

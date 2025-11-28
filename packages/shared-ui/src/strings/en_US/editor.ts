@@ -66,6 +66,9 @@ export default {
   // Statuses.
 
   // Labels.
+  LABEL_START_BOARD: {
+    str: "Start",
+  },
   LABEL_COMPONENT_LIBRARY: {
     str: "Library",
   },
@@ -89,6 +92,9 @@ export default {
   },
   LABEL_ADD_ASSETS: {
     str: "Assets",
+  },
+  LABEL_EDIT_WAS_MADE: {
+    str: "An edit has been made, click start to run the app",
   },
 
   // Queries.
