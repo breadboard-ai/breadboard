@@ -84,8 +84,8 @@ export class Header extends LitElement {
       }
 
       :host([neutral]) {
-        border-top: 1px solid var(--light-dark-n-95);
-        border-bottom: 1px solid var(--light-dark-n-90);
+        border-top: 1px solid light-dark(var(--n-95), var(--n-30));
+        border-bottom: 1px solid light-dark(--light-dark-n-95), var(--n-30));
       }
 
       #fullscreen,

@@ -230,7 +230,7 @@ export const styles = [
       justify-content: space-between;
       position: relative;
       z-index: 2;
-      background: light-dark(var(--n-100), var(--original-n-10));
+      background: light-dark(var(--n-100), var(--original-n-15));
 
       & #side-nav-controls {
         display: flex;

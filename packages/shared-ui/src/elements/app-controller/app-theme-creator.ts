@@ -101,7 +101,7 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
       #container {
         display: flex;
         flex-direction: column;
-        background: light-dark(var(--n-100), var(--n-10));
+        background: light-dark(var(--n-100), var(--n-15));
         border-radius: var(--bb-grid-size-4);
         height: 100%;
         overflow: auto;
