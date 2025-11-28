@@ -1949,7 +1949,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         try {
           this.uiState.subscriptionCredits = -1;
           const response = await this.#apiClient.getG1Credits();
-          this.uiState.subscriptionCredits = response.remaining_credits;
+          this.uiState.subscriptionCredits = response.remaining_credits ?? 0;
         } catch (err) {
           this.uiState.subscriptionCredits = -2;
           console.warn(err);
