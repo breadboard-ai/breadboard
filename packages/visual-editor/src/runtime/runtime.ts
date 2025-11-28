@@ -28,8 +28,6 @@ import {
   RunConfig,
   RuntimeFlagManager,
   ConsentManager,
-  MutableGraphStore,
-  GraphLoader,
 } from "@breadboard-ai/types";
 import {
   RuntimeHostStatusUpdateEvent,
@@ -46,7 +44,6 @@ import {
 import { Autonamer } from "./autonamer.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import { createGoogleDriveBoardServer } from "@breadboard-ai/shared-ui/utils/create-server.js";
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { createA2Server } from "@breadboard-ai/a2";
 
 export class Runtime extends EventTarget {
@@ -64,36 +61,53 @@ export class Runtime extends EventTarget {
   public readonly fetchWithCreds: typeof globalThis.fetch;
   public readonly consentManager: ConsentManager;
 
-  constructor(config: {
-    router: Router;
-    board: Board;
-    kits: Kit[];
-    autonamer: Autonamer;
-    googleDriveBoardServer: GoogleDriveBoardServer;
-    config: RuntimeConfig;
-    graphStore: MutableGraphStore;
-    loader: GraphLoader;
-  }) {
+  constructor(
+    config: RuntimeConfig,
+    recentBoards: BreadboardUI.Types.RecentBoard[]
+  ) {
     super();
 
-    const {
-      router,
-      board,
-      googleDriveBoardServer,
-      loader,
+    const kits = config.kits;
+
+    const googleDriveBoardServer = createGoogleDriveBoardServer(
+      config.signinAdapter,
+      config.googleDriveClient
+    );
+    const a2Server = createA2Server();
+
+    const loader = createLoader([googleDriveBoardServer, a2Server]);
+    const graphStoreArgs = {
       kits,
-      graphStore,
-      autonamer,
-      config: {
-        fetchWithCreds,
-        flags,
-        consentManager,
-        settings,
-        mcpClientManager,
-        sandbox,
-        appName,
-        appSubName,
-      },
+      loader,
+      sandbox: config.sandbox,
+      fileSystem: config.fileSystem,
+    };
+    const graphStore = createGraphStore(graphStoreArgs);
+
+    for (const [, item] of a2Server.userGraphs?.entries() || []) {
+      graphStore.addByURL(item.url, [], {});
+    }
+
+    const boardServers: RuntimeConfigBoardServers = {
+      a2Server,
+      googleDriveBoardServer,
+    };
+
+    const autonamer = new Autonamer(
+      graphStoreArgs,
+      config.fileSystem,
+      config.sandbox
+    );
+
+    const {
+      fetchWithCreds,
+      flags,
+      consentManager,
+      settings,
+      mcpClientManager,
+      sandbox,
+      appName,
+      appSubName,
     } = config;
 
     const state = new StateManager(
@@ -119,8 +133,17 @@ export class Runtime extends EventTarget {
     this.shell = new Shell(appName, appSubName);
     this.util = Util;
     this.select = new Select();
-    this.router = router;
-    this.board = board;
+    this.router = new Router();
+    this.board = new Board(
+      loader,
+      graphStore,
+      kits,
+      boardServers,
+      config.recentBoardStore,
+      recentBoards,
+      config.signinAdapter,
+      config.googleDriveClient
+    );
     this.state = state;
 
     this.edit = edit;
@@ -248,57 +271,6 @@ export class Runtime extends EventTarget {
 }
 
 export async function create(config: RuntimeConfig): Promise<Runtime> {
-  const kits = config.kits;
-
-  const googleDriveBoardServer = createGoogleDriveBoardServer(
-    config.signinAdapter,
-    config.googleDriveClient
-  );
-  const a2Server = createA2Server();
-
-  const loader = createLoader([googleDriveBoardServer, a2Server]);
-  const graphStoreArgs = {
-    kits,
-    loader,
-    sandbox: config.sandbox,
-    fileSystem: config.fileSystem,
-  };
-  const graphStore = createGraphStore(graphStoreArgs);
-
-  for (const [, item] of a2Server.userGraphs?.entries() || []) {
-    graphStore.addByURL(item.url, [], {});
-  }
-
-  const boardServers: RuntimeConfigBoardServers = {
-    a2Server,
-    googleDriveBoardServer,
-  };
-
-  const autonamer = new Autonamer(
-    graphStoreArgs,
-    config.fileSystem,
-    config.sandbox
-  );
-
   const recentBoards = await config.recentBoardStore.restore();
-
-  return new Runtime({
-    router: new Router(),
-    board: new Board(
-      loader,
-      graphStore,
-      kits,
-      boardServers,
-      config.recentBoardStore,
-      recentBoards,
-      config.signinAdapter,
-      config.googleDriveClient
-    ),
-    autonamer,
-    googleDriveBoardServer,
-    graphStore,
-    kits,
-    config,
-    loader,
-  });
+  return new Runtime(config, recentBoards);
 }

@@ -582,7 +582,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.#maybeNotifyAboutDesktopModality();
 
     this.runtime.shell.startTrackUpdates();
-    await this.runtime.router.init();
+    this.runtime.router.init();
   }
 
   #maybeNotifyAboutDesktopModality() {
