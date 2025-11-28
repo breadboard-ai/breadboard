@@ -79,9 +79,6 @@ export interface RuntimeConfig {
   signinAdapter: SigninAdapter;
   settings: SettingsStore;
   fileSystem: FileSystem;
-  // The board servers that are built in: initialized separately and come
-  // as part of the environment.
-  builtInBoardServers: BoardServer[];
   kits: Kit[];
   googleDriveClient: GoogleDriveClient;
   appName: string;
@@ -97,10 +94,6 @@ export interface RuntimeConfigBoardServers {
   servers: BoardServer[];
   loader: GraphLoader;
   graphStore: MutableGraphStore;
-  // The board servers that are built in: initialized separately and come
-  // as part of the environment.
-
-  builtInBoardServers: BoardServer[];
 }
 
 export type ReferenceIdentifier =
