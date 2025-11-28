@@ -64,7 +64,7 @@ export class ExpandingTextarea extends LitElement {
     Styles.HostBehavior.behavior,
     Styles.HostColorsBase.baseColors,
     Styles.HostType.type,
-    Styles.HostColorScheme.matchOnlyLight,
+    Styles.HostColorScheme.match,
     css`
       :host {
         --min-lines: 3;

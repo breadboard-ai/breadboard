@@ -10,7 +10,7 @@ export const styles = [
   Styles.HostType.type,
   Styles.HostIcons.icons,
   Styles.HostColorsBase.baseColors,
-  Styles.HostColorScheme.matchOnlyLight,
+  Styles.HostColorScheme.match,
   css`
     * {
       box-sizing: border-box;
