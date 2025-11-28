@@ -165,9 +165,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   @state()
   protected accessor tab: Runtime.Types.Tab | null = null;
 
-  @state()
-  accessor #boardServers: BoardServer[] = [];
-
   /**
    * Monotonically increases whenever the graph topology of a graph in the
    * current tab changes. Graph topology == any non-visual change to the graph.
@@ -504,7 +501,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       streamPlanner
     );
 
-    this.#boardServers = this.runtime.board.getBoardServers();
     this.boardServer = this.runtime.board.boardServers.googleDriveBoardServer;
     if (!this.boardServer) {
       console.warn("No Google Drive Board server found");
@@ -1504,7 +1500,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       ${ref(this.#canvasControllerRef)}
       ?inert=${renderValues.showingOverlay}
       .boardServerKits=${this.tab?.boardServerKits ?? []}
-      .boardServers=${this.#boardServers}
       .canRun=${this.uiState.canRunMain}
       .editor=${this.runtime.edit.getEditor(this.tab)}
       .graph=${this.tab?.graph ?? null}

@@ -216,13 +216,6 @@ export class Board extends EventTarget {
     return boardUrl;
   }
 
-  getBoardServers(): BoardServer[] {
-    return [
-      this.boardServers.googleDriveBoardServer,
-      this.boardServers.a2Server,
-    ];
-  }
-
   get tabs() {
     return this.#tabs;
   }

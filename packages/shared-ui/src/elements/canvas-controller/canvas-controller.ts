@@ -10,7 +10,6 @@ const Strings = StringsHelper.forSection("UIController");
 const GlobalStrings = StringsHelper.forSection("Global");
 
 import {
-  BoardServer,
   EditHistory,
   EditableGraph,
   GraphDescriptor,
@@ -86,9 +85,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
   @property()
   accessor boardServerKits: Kit[] = [];
-
-  @property()
-  accessor boardServers: BoardServer[] = [];
 
   /**
    * Indicates whether or not the UI can currently run a flow or not.
@@ -546,7 +542,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
           this.themeHash,
           this.#runStateEffect,
           selectionCount,
-          this.boardServers,
           this.sideNavItem,
           this.graphTopologyUpdateId,
           this.#uiState.flags,
