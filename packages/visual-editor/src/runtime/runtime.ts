@@ -61,10 +61,7 @@ export class Runtime extends EventTarget {
   public readonly fetchWithCreds: typeof globalThis.fetch;
   public readonly consentManager: ConsentManager;
 
-  constructor(
-    config: RuntimeConfig,
-    recentBoards: BreadboardUI.Types.RecentBoard[]
-  ) {
+  constructor(config: RuntimeConfig) {
     super();
 
     const kits = config.kits;
@@ -141,7 +138,6 @@ export class Runtime extends EventTarget {
       kits,
       boardServers,
       config.recentBoardStore,
-      recentBoards,
       config.signinAdapter,
       config.googleDriveClient
     );
@@ -272,6 +268,6 @@ export class Runtime extends EventTarget {
 }
 
 export async function create(config: RuntimeConfig): Promise<Runtime> {
-  const recentBoards = await config.recentBoardStore.restore();
-  return new Runtime(config, recentBoards);
+  await config.recentBoardStore.restore();
+  return new Runtime(config);
 }
