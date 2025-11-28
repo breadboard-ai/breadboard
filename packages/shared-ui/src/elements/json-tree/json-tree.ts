@@ -83,19 +83,19 @@ export class JSONTree extends LitElement {
     }
 
     .number {
-      color: rgb(0, 0, 255);
+      color: light-dark(rgb(0, 0, 255), rgba(145, 145, 255, 1));
     }
 
     .string {
-      color: rgb(0, 118, 15);
+      color: light-dark(rgb(0, 118, 15), rgba(159, 207, 166, 1));
     }
 
     .boolean {
-      color: rgb(33, 200, 210);
+      color: light-dark(rgb(33, 200, 210), rgba(155, 233, 237, 1));
     }
 
     .key {
-      color: var(--bb-font-color, rgb(68, 61, 116));
+      color: light-dark(rgb(68, 61, 116), rgba(177, 171, 218, 1));
       font-weight: bold;
     }
 

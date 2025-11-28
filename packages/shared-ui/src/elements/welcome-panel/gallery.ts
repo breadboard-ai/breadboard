@@ -71,6 +71,7 @@ export class Gallery extends SignalWatcher(LitElement) {
       bb-overflow-menu {
         position: fixed;
         right: auto;
+        z-index: 20;
       }
 
       #boards {
@@ -125,7 +126,7 @@ export class Gallery extends SignalWatcher(LitElement) {
           height: calc(100% - 6px);
           z-index: 2;
           border-radius: calc(var(--bb-grid-size-4) - 3px);
-          outline: 7px solid var(--light-dark-n-0);
+          outline: 7px solid light-dark(var(--n-0), var(--n-80));
           opacity: 0;
           transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
         }
@@ -183,7 +184,7 @@ export class Gallery extends SignalWatcher(LitElement) {
           padding: 0;
           border: none;
           background: transparent;
-          color: var(--light-dark-n-100);
+          color: var(--n-100);
           z-index: 10;
 
           > * {
@@ -232,7 +233,7 @@ export class Gallery extends SignalWatcher(LitElement) {
           bottom: var(--bb-grid-size-5);
           left: var(--bb-grid-size-6);
           z-index: 10;
-          color: var(--light-dark-n-100);
+          color: var(--n-100);
           width: calc(100% - var(--bb-grid-size-10));
 
           & .title {
@@ -353,7 +354,7 @@ export class Gallery extends SignalWatcher(LitElement) {
           border: none;
           margin-left: var(--bb-grid-size-2);
           border-radius: var(--bb-grid-size-2);
-          color: var(--light-dark-n-10);
+          color: light-dark(var(--n-10), var(--n-70));
           transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
           padding: 0;
 
@@ -362,12 +363,12 @@ export class Gallery extends SignalWatcher(LitElement) {
 
             &:hover,
             &:focus {
-              background: var(--light-dark-n-98);
+              background: light-dark(var(--n-98), var(--n-20));
             }
           }
 
           &[disabled] {
-            background: var(--light-dark-n-98);
+            background: light-dark(var(--n-98), var(--n-20));
           }
 
           &#prev,
@@ -386,29 +387,11 @@ export class Gallery extends SignalWatcher(LitElement) {
           }
 
           &#prev {
-            padding: 0 var(--bb-grid-size-2) 0 var(--bb-grid-size);
-
-            &::before {
-              content: "";
-              width: 20px;
-              height: 20px;
-              background: var(--bb-icon-before) center center / 20px 20px
-                no-repeat;
-              margin-right: var(--bb-grid-size-2);
-            }
+            padding: 0 var(--bb-grid-size-2);
           }
 
           &#next {
-            padding: 0 var(--bb-grid-size) 0 var(--bb-grid-size-2);
-
-            &::after {
-              content: "";
-              width: 20px;
-              height: 20px;
-              background: var(--bb-icon-next) center center / 20px 20px
-                no-repeat;
-              margin-left: var(--bb-grid-size-2);
-            }
+            padding: 0 var(--bb-grid-size-2);
           }
         }
       }

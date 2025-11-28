@@ -65,7 +65,8 @@ export class ProjectListing extends SignalWatcher(LitElement) {
 
       :host {
         display: block;
-        background: var(--light-dark-n-100);
+        background: light-dark(var(--n-100), var(--n-10));
+        color: light-dark(var(--n-0), var(--n-80));
         --items-per-column: 4;
         --column-gap: var(--bb-grid-size-8);
         --row-gap: var(--bb-grid-size-6);

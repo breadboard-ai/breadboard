@@ -146,7 +146,7 @@ export class EntityEditor
     css`
       :host {
         display: block;
-        background: var(--light-dark-n-100);
+        background: light-dark(var(--n-100), var(--n-10));
       }
 
       #invalid-item,
@@ -240,6 +240,11 @@ export class EntityEditor
         & h1 {
           --outer-border: var(--light-dark-n-80);
           background: var(--light-dark-n-90);
+          color: var(--n-0);
+        }
+
+        & input {
+          color: var(--n-0);
         }
 
         &.module {
@@ -345,7 +350,7 @@ export class EntityEditor
             --text-editor-padding-bottom: var(--bb-grid-size-2);
             --text-editor-padding-left: var(--bb-grid-size-3);
             border-radius: var(--bb-grid-size-2);
-            border: 1px solid var(--light-dark-n-90);
+            border: 1px solid light-dark(var(--n-90), var(--n-70));
           }
 
           & .port {
@@ -560,6 +565,11 @@ export class EntityEditor
               bb-item-select {
                 --menu-width: 320px;
                 --selected-item-height: var(--bb-grid-size-9);
+
+                --selected-item-hover-color: light-dark(
+                  var(--n-95),
+                  var(--n-30)
+                );
               }
             }
           }
@@ -712,7 +722,7 @@ export class EntityEditor
                 width: 100%;
                 height: 100%;
                 border: none;
-                background: var(--light-dark-n-98);
+                background: light-dark(var(--n-98), var(--n-30));
                 transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
                 border-radius: 50%;
                 padding: 0;

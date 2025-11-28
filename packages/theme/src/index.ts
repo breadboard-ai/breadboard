@@ -190,7 +190,8 @@ const refPalette = paletteFactory();
  */
 export function createThemeStyles(
   palette: AppPalette | ColorPalettes,
-  mapping?: Map<string, string>
+  mapping?: Map<string, string>,
+  prefix = ""
 ): Record<string, string> {
   if (isColorPalette(palette)) {
     palette = convertColorPaletteToAppPalette(palette);
@@ -200,8 +201,8 @@ export function createThemeStyles(
   const keys = Object.keys(refPalette) as Array<keyof typeof palette>;
   for (const k of keys) {
     for (const t of toneVals) {
-      const key = toStyleName(k, t);
-      const lightDarkKey = toStyleName(k, t, "light-dark-");
+      const key = toStyleName(k, t, prefix);
+      const lightDarkKey = toStyleName(k, t, `light-dark-${prefix}`);
       const col = palette[k][t] ?? "#000000";
       styles[key] = col;
 

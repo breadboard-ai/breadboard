@@ -289,34 +289,25 @@ export const stepsDark = {
 
 export const baseColors = css`
   :host {
-    --ui-custom-o-100: light-dark(
-      ${unsafeCSS(custom.c100)},
-      ${unsafeCSS(custom.c100)}
-    );
-    --ui-custom-o-25: oklch(
-      from light-dark(var(--ui-custom-o-100), var(--ui-custom-o-100)) l c h /
-        calc(alpha * 0.25)
-    );
-    --ui-custom-o-20: oklch(
-      from light-dark(var(--ui-custom-o-100), var(--ui-custom-o-100)) l c h /
-        calc(alpha * 0.2)
-    );
-    --ui-custom-o-10: oklch(
-      from light-dark(var(--ui-custom-o-100), var(--ui-custom-o-100)) l c h /
-        calc(alpha * 0.1)
-    );
-    --ui-custom-o-5: oklch(
-      from light-dark(var(--ui-custom-o-100), var(--ui-custom-o-100)) l c h /
-        calc(alpha * 0.05)
-    );
-    --ui-scrim: rgba(0, 0, 0, 0.6);
-    --ui-flowgen-step: #e2e1f1;
-    --ui-theme-segment: #f1f4f8;
-    --ui-theme-generating: #d6e2fb;
+    ${unsafeCSS(
+      Object.entries(Theme.createThemeStyles(palette, uiColorMapping))
+        .map(([key, value]) => {
+          return `${key}: ${value};`;
+        })
+        .join("\n")
+    )}
+  }
 
-    --ui-warning-border-color: #b2affbff;
-    --ui-warning-background-color: #d8d7fe;
-    --ui-warning-text-color: #33324f;
+  :host {
+    ${unsafeCSS(
+      Object.entries(
+        Theme.createThemeStyles(palette, uiColorMapping, "original-")
+      )
+        .map(([key, value]) => {
+          return `${key}: ${value};`;
+        })
+        .join("\n")
+    )}
   }
 
   :host {
@@ -355,12 +346,29 @@ export const baseColors = css`
   }
 
   :host {
+    --ui-custom-o-100: ${unsafeCSS(custom.c100)};
+
     ${unsafeCSS(
-      Object.entries(Theme.createThemeStyles(palette, uiColorMapping))
-        .map(([key, value]) => {
-          return `${key}: ${value};`;
+      new Array(19)
+        .fill(0)
+        .map((_, idx) => {
+          const alpha = (idx + 1) * 0.05;
+          const opacity = (idx + 1) * 5;
+
+          return `--ui-custom-o-${opacity}: oklch(
+            from var(--ui-custom-o-100) l c h / calc(alpha * ${alpha})
+          );`;
         })
         .join("\n")
     )}
+
+    --ui-scrim: rgba(0, 0, 0, 0.6);
+    --ui-flowgen-step: light-dark(#e2e1f1, var(--n-20));
+    --ui-theme-segment: light-dark(#f1f4f8, var(--n-10));
+    --ui-theme-generating: light-dark(#d6e2fb, var(--n-50));
+
+    --ui-warning-border-color: light-dark(#b2affb, var(--n-20));
+    --ui-warning-background-color: light-dark(#d8d7fe, var(--n-20));
+    --ui-warning-text-color: light-dark(#33324f, var(--n-70));
   }
 ` as CSSResultGroup;

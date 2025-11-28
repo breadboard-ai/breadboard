@@ -3,7 +3,7 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { Box } from "./box";
 import { css, html, HTMLTemplateResult, nothing, svg } from "lit";
 import { map } from "lit/directives/map.js";
@@ -35,7 +35,7 @@ interface Connection {
 
 const EDGE_STANDARD = {
   light: palette.neutral.n80,
-  dark: palette.neutral.n80,
+  dark: palette.neutral.n60,
 };
 
 const EDGE_SELECTED = {
@@ -47,13 +47,13 @@ const EDGE_SELECTED = {
 // component. Constant wires never reach this state.
 const EDGE_CONSUMED = {
   light: palette.neutral.n80,
-  dark: palette.neutral.n20,
+  dark: palette.neutral.n50,
 };
 
 // Value is on the wire, but hasn't been consumed by receiving component yet.
 const EDGE_STORED = {
   light: palette.neutral.n80,
-  dark: palette.neutral.n20,
+  dark: palette.neutral.n50,
 };
 
 const EDGE_CLEARANCE = 0;
@@ -99,7 +99,11 @@ export class GraphEdge extends Box {
 
   // Set up the current color scheme.
   #darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
-  #lightDark: "light" | "dark" = this.#darkModeQuery.matches ? "dark" : "light";
+
+  @state()
+  accessor #lightDark: "light" | "dark" = this.#darkModeQuery.matches
+    ? "dark"
+    : "light";
 
   static styles = [
     icons,

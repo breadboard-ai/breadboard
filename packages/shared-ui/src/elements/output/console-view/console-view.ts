@@ -40,6 +40,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         display: flex;
         flex-direction: column;
         height: 100%;
+        background: light-dark(var(--n-100), var(--n-10));
       }
 
       bb-header {
@@ -144,7 +145,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             border-radius: var(--bb-grid-size-3);
             list-style: none;
             padding: 0 var(--bb-grid-size-3);
-            background: light-dark(var(--n-98), var(--nv-10));
+            background: light-dark(var(--n-98), var(--n-20));
             font-size: 12px;
             color: light-dark(var(--n-0), var(--nv-98));
             cursor: pointer;
