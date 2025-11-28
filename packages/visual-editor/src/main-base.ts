@@ -387,7 +387,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.runtime = new Runtime.Runtime({
       recentBoardStore: this.recentBoardStore,
-      experiments: {},
       globalConfig: this.globalConfig,
       signinAdapter: this.signinAdapter,
       sandbox: moduleFactory,

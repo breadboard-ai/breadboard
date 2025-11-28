@@ -4,12 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import type * as BreadboardUI from "@breadboard-ai/shared-ui";
-import {
-  createGraphStore,
-  createLoader,
-  err,
-  Kit,
-} from "@google-labs/breadboard";
+import { createGraphStore, createLoader, err } from "@google-labs/breadboard";
 import { Router } from "./router.js";
 import { Board } from "./board.js";
 import { Run } from "./run.js";
@@ -52,9 +47,7 @@ export class Runtime extends EventTarget {
   public readonly board: Board;
   public readonly run: Run;
   public readonly edit: Edit;
-  public readonly kits: Kit[];
   public readonly select: Select;
-  public readonly autonamer: Autonamer;
   public readonly state: StateManager;
   public readonly flags: RuntimeFlagManager;
   public readonly util: typeof Util;
@@ -146,8 +139,6 @@ export class Runtime extends EventTarget {
     this.edit = edit;
     this.run = new Run(graphStore, state, flags, edit);
 
-    this.kits = kits;
-    this.autonamer = autonamer;
     this.flags = flags;
     this.fetchWithCreds = fetchWithCreds;
     this.consentManager = consentManager;

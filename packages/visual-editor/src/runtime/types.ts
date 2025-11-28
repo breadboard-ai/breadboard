@@ -72,7 +72,6 @@ export interface Tab {
 
 export interface RuntimeConfig {
   sandbox: RunnableModuleFactory;
-  experiments: Record<string, boolean>;
   globalConfig?: GlobalConfig;
   signinAdapter: SigninAdapter;
   settings: SettingsStore;
