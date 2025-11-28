@@ -31,7 +31,7 @@ export class Snackbar extends LitElement {
     Styles.HostType.type,
     Styles.HostIcons.icons,
     Styles.HostColorsBase.baseColors,
-    Styles.HostColorScheme.matchOnlyLight,
+    Styles.HostColorScheme.match,
     css`
       :host {
         --text-color: var(--light-dark-n-100);

@@ -44,6 +44,32 @@ async function getUrlFromBoardServiceFlag(
   return new URL(boardService);
 }
 
+function setColorScheme(lite = false, colorScheme?: "light" | "dark") {
+  const scheme = document.createElement("style");
+  if (colorScheme) {
+    scheme.textContent = `:root { --color-scheme: ${colorScheme}; }`;
+  } else {
+    const defaultScheme = window.matchMedia("(prefers-color-scheme: dark)");
+    const setScheme = (query: MediaQueryList) => {
+      // TODO: Remove hardcoded 'light' scheme when dark theme for the shell
+      // UI is ready.
+      if (!lite) {
+        scheme.textContent = `:root { --color-scheme: light; }`;
+        return;
+      }
+      const chosenScheme: "light" | "dark" = query.matches ? "dark" : "light";
+      scheme.textContent = `:root { --color-scheme: ${chosenScheme}; }`;
+    };
+    setScheme(defaultScheme);
+
+    // Watch for changes.
+    defaultScheme.addEventListener("change", () => {
+      setScheme(defaultScheme);
+    });
+  }
+  document.head.appendChild(scheme);
+}
+
 async function bootstrap(bootstrapArgs: BootstrapArguments) {
   const globalConfig: GlobalConfig = {
     environmentName: CLIENT_DEPLOYMENT_CONFIG.ENVIRONMENT_NAME,
@@ -75,7 +101,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
 
   const scopeValidation = await signinAdapter.validateScopes();
   const parsedUrl = parseUrl(window.location.href);
-  const { lite, page } = parsedUrl;
+  const { lite, page, colorScheme } = parsedUrl;
   if (
     (signinAdapter.state === "signedin" && scopeValidation.ok) ||
     (signinAdapter.state === "signedout" &&
@@ -132,6 +158,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       );
     }
 
+    setColorScheme(lite, colorScheme);
     if (lite) {
       if (page === "home" && !parsedUrl.new) {
         const { LiteHome } = await import("./index-lite-home.js");
@@ -143,12 +170,6 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
         document.body.appendChild(liteMain);
       }
     } else {
-      // const scheme = document.createElement("style");
-      // scheme.textContent = `@media (prefers-color-scheme: dark) {
-      //   :root { color-scheme: light }
-      // }`;
-      // document.head.appendChild(scheme);
-
       const { Main } = await import("./index.js");
       const main = new Main(mainArgs);
       document.body.appendChild(main);

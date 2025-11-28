@@ -11,7 +11,7 @@ export const styles = [
   BreadboardUI.Styles.HostType.type,
   BreadboardUI.Styles.HostColorsBase.baseColors,
   BreadboardUI.Styles.HostIcons.icons,
-  BreadboardUI.Styles.HostColorScheme.matchOnlyLight,
+  BreadboardUI.Styles.HostColorScheme.match,
   css`
     * {
       box-sizing: border-box;

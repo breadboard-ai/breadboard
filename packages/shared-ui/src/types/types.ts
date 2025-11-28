@@ -551,6 +551,7 @@ export interface HomeUrlInit extends BaseUrlInit {
   new?: boolean;
   mode?: VisualEditorMode;
   lite?: boolean;
+  colorScheme?: "light" | "dark";
   redirectFromLanding?: boolean;
 }
 
@@ -563,6 +564,7 @@ export interface GraphInit extends BaseUrlInit {
   results?: string;
   shared?: boolean;
   lite?: boolean;
+  colorScheme?: "light" | "dark";
   redirectFromLanding?: boolean;
 }
 
@@ -571,6 +573,7 @@ export interface LandingUrlInit extends BaseUrlInit {
   redirect: MakeUrlInit;
   missingScopes?: boolean;
   lite?: boolean;
+  colorScheme?: "light" | "dark";
   geoRestriction?: boolean;
 }
 export type UserSignInResponse = "success" | "failure" | "dismissed";
