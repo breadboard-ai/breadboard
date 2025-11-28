@@ -61,7 +61,7 @@ export default {
     str: "Send feedback",
   },
   COMMAND_JOIN_CHAT: {
-    str: "Google Labs Discord",
+    str: "Discord",
   },
   COMMAND_WATCH_DEMO_VIDEO: {
     str: "Watch Demo Video",
