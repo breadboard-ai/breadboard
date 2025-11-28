@@ -153,6 +153,7 @@ export class Runtime extends EventTarget {
     this.consentManager = consentManager;
 
     this.#setupPassthruHandlers();
+    void config.recentBoardStore.restore();
   }
 
   async prepareRun(tab: Tab, settings: SettingsStore): Promise<Outcome<void>> {
@@ -265,9 +266,4 @@ export class Runtime extends EventTarget {
       }
     );
   }
-}
-
-export async function create(config: RuntimeConfig): Promise<Runtime> {
-  await config.recentBoardStore.restore();
-  return new Runtime(config);
 }

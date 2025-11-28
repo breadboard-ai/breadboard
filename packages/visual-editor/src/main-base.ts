@@ -469,7 +469,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       }
     );
 
-    this.runtime = await Runtime.create({
+    this.runtime = new Runtime.Runtime({
       recentBoardStore: this.#recentBoardStore,
       graphStore: this.#graphStore,
       experiments: {},
