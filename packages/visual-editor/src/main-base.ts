@@ -405,6 +405,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   /**
    * Initializes the main component.
    * TODO(dglazkov): Make this entirely sync and fold into constructor.
+   * DO NOT Add any more async code to this function.
    */
   async #init(args: MainArguments, initArgs: InitArgs) {
     const flagManager = createFlagManager(this.globalConfig.flags);
