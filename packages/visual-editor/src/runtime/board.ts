@@ -15,7 +15,6 @@ import type {
   BoardServer,
   BoardServerSaveEventStatus,
   GraphLoader,
-  GraphProvider,
   OutputValues,
 } from "@breadboard-ai/types";
 import { RuntimeConfigBoardServers, Tab, TabId, TabType } from "./types";
@@ -82,8 +81,6 @@ export class Board extends EventTarget {
   #currentTabId: TabId | null = null;
 
   constructor(
-    /** @deprecated */
-    public readonly providers: GraphProvider[],
     public readonly loader: GraphLoader,
     /**
      * Extra Kits, supplied by the board server.
@@ -228,15 +225,6 @@ export class Board extends EventTarget {
 
   getBoardServers(): BoardServer[] {
     return this.boardServers.servers;
-  }
-
-  /**
-   *
-   * @deprecated Use getBoardServers() instead.
-   */
-  getProviders(): GraphProvider[] {
-    console.warn("getProviders is deprecated - use getBoardServers instead.");
-    return this.providers;
   }
 
   getLoader(): GraphLoader {

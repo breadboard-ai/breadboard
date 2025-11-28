@@ -247,8 +247,12 @@ export async function retrieveAsBlob(
     }
     handle = url.href;
   }
-  const response = await fetch(handle);
-  return await response.blob();
+  if (handle.startsWith("drive:")) {
+    throw new Error("D2I support is not yet implemented");
+  } else {
+    const response = await fetch(handle);
+    return response.blob();
+  }
 
   function allowedBlobUrl(url: URL) {
     // Allow blob:/ URLs.

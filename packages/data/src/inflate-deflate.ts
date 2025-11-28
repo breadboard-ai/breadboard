@@ -4,40 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  DataInflator,
-  DataPartTransformType,
-  GraphDescriptor,
-  LLMContent,
-  Outcome,
-} from "@breadboard-ai/types";
-import { isStoredData, transformDataParts } from "./common.js";
-import { ok } from "@breadboard-ai/utils";
-
-export { transformContents };
-
-async function transformContents(
-  store: DataInflator,
-  content: LLMContent[],
-  type: DataPartTransformType,
-  graphUrl: URL
-): Promise<Outcome<LLMContent[]>> {
-  const transformer = store.transformer?.(graphUrl);
-  if (!transformer) return content;
-
-  // TODO: Implement support for other types.
-  if (type !== "persistent-temporary") return content;
-
-  const transforming = await transformDataParts(
-    graphUrl,
-    content,
-    type,
-    transformer
-  );
-  if (!ok(transforming)) return transforming;
-
-  return transforming;
-}
+import { GraphDescriptor } from "@breadboard-ai/types";
+import { isStoredData } from "./common.js";
 
 /** Deletes all .data value from StoredDataCapabilityPart. */
 export const purgeStoredDataInMemoryValues = async (graph: GraphDescriptor) => {

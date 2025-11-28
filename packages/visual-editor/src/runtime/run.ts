@@ -22,7 +22,6 @@ import { createPlanRunner } from "@breadboard-ai/runtime";
 import { RuntimeBoardRunEvent } from "./events";
 import { StateManager } from "./state";
 import { Edit } from "./edit";
-import { BoardServerAwareDataStore } from "@breadboard-ai/data";
 
 export class Run extends EventTarget {
   #runs = new Map<
@@ -37,7 +36,6 @@ export class Run extends EventTarget {
 
   constructor(
     public readonly graphStore: MutableGraphStore,
-    public readonly dataStore: BoardServerAwareDataStore,
     public readonly state: StateManager,
     public readonly flags: RuntimeFlagManager,
     public readonly edit: Edit
@@ -110,7 +108,6 @@ export class Run extends EventTarget {
     const tabId = tab.id;
     config = {
       ...config,
-      store: this.dataStore.createRunDataStore(config.url),
       kits: [...this.graphStore.kits, ...tab.boardServerKits],
       signal: abortController.signal,
       graphStore: this.graphStore,

@@ -100,7 +100,6 @@ export type CallableCapabilities = {
   query: CallableCapability;
   read: CallableCapability;
   write: CallableCapability;
-  blob: CallableCapability;
 };
 
 async function invokeCapability(
@@ -149,7 +148,6 @@ const CAPABILITY_NAMES: (keyof CallableCapabilities)[] = [
   "query",
   "read",
   "write",
-  "blob",
 ];
 
 function createCallableCapabilities(

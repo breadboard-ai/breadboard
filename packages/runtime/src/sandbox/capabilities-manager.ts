@@ -4,12 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { transformContents } from "@breadboard-ai/data";
-import { baseURLFromContext, getGraphDescriptor } from "@breadboard-ai/loader";
+import { getGraphDescriptor } from "@breadboard-ai/loader";
 import {
   GraphInlineMetadata,
   InputValues,
-  LLMContent,
   NodeDescriptor,
   NodeHandlerContext,
   NodeMetadata,
@@ -17,7 +15,7 @@ import {
   Schema,
   TraversalResult,
 } from "@breadboard-ai/types";
-import { err, ok } from "@breadboard-ai/utils";
+import { err } from "@breadboard-ai/utils";
 import { bubbleUpInputsIfNeeded, bubbleUpOutputsIfNeeded } from "../bubble.js";
 import { FileSystemHandlerFactory } from "./file-system-handler-factory.js";
 import { invokeDescriber } from "./invoke-describer.js";
@@ -137,55 +135,6 @@ function createOutputHandler(context: NodeHandlerContext) {
   }) as Capability;
 }
 
-type BlobCapabilityArguments = {
-  contents: LLMContent[];
-  transform: "persistent-temporary";
-};
-
-function isBlobCapabilityAruments(
-  inputs: unknown
-): inputs is BlobCapabilityArguments {
-  return (
-    !!inputs &&
-    typeof inputs === "object" &&
-    "contents" in inputs &&
-    "transform" in inputs
-  );
-}
-
-function createBlobHandler(context: NodeHandlerContext) {
-  return (async (inputs: unknown) => {
-    if (!isBlobCapabilityAruments(inputs)) {
-      return err(`Invalid blob arguments`);
-    }
-
-    const { contents, transform } = inputs;
-    if (transform !== "persistent-temporary") {
-      return err(`Only "persistent-temporary" transform is supported.`);
-    }
-
-    const { store } = context;
-    if (!store) {
-      return err(`DataStore is required to provide blob transform`);
-    }
-
-    const graphUrl = baseURLFromContext(context);
-    if (!graphUrl) {
-      return err(`Graph URL is required to provide blob transform`);
-    }
-
-    const transforming = await transformContents(
-      store,
-      contents,
-      transform,
-      graphUrl
-    );
-    if (!ok(transforming)) return transforming;
-
-    return { contents: transforming };
-  }) as Capability;
-}
-
 type DescribeInputs = {
   url: string;
   inputs?: InputValues;
@@ -267,7 +216,6 @@ class CapabilitiesManagerImpl implements CapabilitiesManager {
           query: fs.query(),
           read: fs.read(),
           write: fs.write(),
-          blob: createBlobHandler(this.context),
         };
       }
     } catch (e) {

@@ -22,7 +22,6 @@ export * as Types from "./types.js";
 
 import { Select } from "./select.js";
 import { StateManager } from "./state.js";
-import { getDataStore } from "@breadboard-ai/data-store";
 import { Shell } from "./shell.js";
 import {
   Outcome,
@@ -43,12 +42,13 @@ import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import { inputsFromSettings } from "@breadboard-ai/shared-ui/data/inputs.js";
 import {
   assetsFromGraphDescriptor,
-  BoardServerAwareDataStore,
   envFromGraphDescriptor,
 } from "@breadboard-ai/data";
 import { Autonamer } from "./autonamer.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import { createGoogleDriveBoardServer } from "@breadboard-ai/shared-ui/utils/create-server.js";
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
+import { createA2Server } from "@breadboard-ai/a2";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -66,29 +66,25 @@ export class Runtime extends EventTarget {
   public readonly consentManager: ConsentManager;
 
   constructor(config: {
-    shell: Shell;
     router: Router;
     board: Board;
     kits: Kit[];
     autonamer: Autonamer;
-    servers: BoardServer[];
+    googleDriveBoardServer: GoogleDriveBoardServer;
     config: RuntimeConfig;
     graphStore: MutableGraphStore;
-    dataStore: BoardServerAwareDataStore;
     loader: GraphLoader;
   }) {
     super();
 
     const {
-      shell,
       router,
       board,
-      servers,
+      googleDriveBoardServer,
       loader,
       kits,
       graphStore,
       autonamer,
-      dataStore,
       config: {
         fetchWithCreds,
         flags,
@@ -96,6 +92,8 @@ export class Runtime extends EventTarget {
         settings,
         mcpClientManager,
         sandbox,
+        appName,
+        appSubName,
       },
     } = config;
 
@@ -103,7 +101,7 @@ export class Runtime extends EventTarget {
       this,
       graphStore,
       fetchWithCreds,
-      servers,
+      googleDriveBoardServer,
       flags,
       mcpClientManager
     );
@@ -119,7 +117,7 @@ export class Runtime extends EventTarget {
       settings
     );
 
-    this.shell = shell;
+    this.shell = new Shell(appName, appSubName);
     this.util = Util;
     this.select = new Select();
     this.router = router;
@@ -127,7 +125,7 @@ export class Runtime extends EventTarget {
     this.state = state;
 
     this.edit = edit;
-    this.run = new Run(graphStore, dataStore, state, flags, edit);
+    this.run = new Run(graphStore, state, flags, edit);
 
     this.kits = kits;
     this.autonamer = autonamer;
@@ -252,20 +250,15 @@ export class Runtime extends EventTarget {
 
 export async function create(config: RuntimeConfig): Promise<Runtime> {
   const kits = config.kits;
-  const servers: BoardServer[] = [
-    createGoogleDriveBoardServer(
-      config.signinAdapter,
-      config.googleDriveClient
-    ),
-  ];
 
-  const a2Server = config.builtInBoardServers.at(0);
-  if (!a2Server) {
-    throw new Error("Mis-configuration: A2 embedded server is not present");
-  }
+  const googleDriveBoardServer = createGoogleDriveBoardServer(
+    config.signinAdapter,
+    config.googleDriveClient
+  );
+  const a2Server = createA2Server();
 
   // Add board servers that are built into
-  servers.push(a2Server);
+  const servers: BoardServer[] = [googleDriveBoardServer, a2Server];
 
   const loader = createLoader(servers);
   const graphStoreArgs = {
@@ -284,14 +277,7 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
     servers,
     loader,
     graphStore,
-    builtInBoardServers: config.builtInBoardServers,
   };
-
-  const dataStore = new BoardServerAwareDataStore(
-    getDataStore(),
-    servers,
-    undefined
-  );
 
   const autonamer = new Autonamer(
     graphStoreArgs,
@@ -300,12 +286,10 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
   );
 
   const recentBoards = await config.recentBoardStore.restore();
-  const shell = new Shell(config.appName, config.appSubName);
 
   return new Runtime({
     router: new Router(),
     board: new Board(
-      [],
       loader,
       kits,
       boardServers,
@@ -314,12 +298,10 @@ export async function create(config: RuntimeConfig): Promise<Runtime> {
       config.signinAdapter,
       config.googleDriveClient
     ),
-    dataStore,
     autonamer,
-    servers,
+    googleDriveBoardServer,
     graphStore,
     kits,
-    shell,
     config,
     loader,
   });

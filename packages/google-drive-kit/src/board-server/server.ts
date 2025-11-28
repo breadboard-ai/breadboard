@@ -374,7 +374,7 @@ class GoogleDriveBoardServer
     return `drive:/${fileId}`;
   }
 
-  dataPartTransformer(_graphUrl: URL): DataPartTransformer {
+  dataPartTransformer(): DataPartTransformer {
     return new GoogleDriveDataPartTransformer(
       this.#googleDriveClient,
       this.ops

@@ -3,17 +3,8 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { DataStore } from "@breadboard-ai/types";
-import { DefaultDataStore } from "./default-data-store.js";
 
-export const createDefaultDataStore = (): DataStore => {
-  return new DefaultDataStore();
-};
-
-export {
-  purgeStoredDataInMemoryValues,
-  transformContents,
-} from "./inflate-deflate.js";
+export { purgeStoredDataInMemoryValues } from "./inflate-deflate.js";
 
 export * from "./common.js";
 
@@ -23,5 +14,3 @@ export {
   extensionFromMimeType,
 } from "./save-outputs-as-file.js";
 export * from "./file-system.js";
-
-export { BoardServerAwareDataStore } from "./board-server-aware-data-store.js";

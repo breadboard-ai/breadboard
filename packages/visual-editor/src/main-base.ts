@@ -48,7 +48,7 @@ import {
   WorkspaceVisualChangeId,
 } from "./runtime/types";
 
-import { createA2ModuleFactory, createA2Server } from "@breadboard-ai/a2";
+import { createA2ModuleFactory } from "@breadboard-ai/a2";
 import {
   EmbedHandler,
   embedState,
@@ -483,7 +483,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       sandbox: moduleFactory,
       settings: this.#settings,
       fileSystem,
-      builtInBoardServers: [createA2Server()],
       kits: addRunModule(
         moduleFactory,
         args.kits || [],

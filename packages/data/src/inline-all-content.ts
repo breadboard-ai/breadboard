@@ -5,7 +5,7 @@
  */
 
 import {
-  BoardServer,
+  DataPartTransformer,
   NodeValue,
   Outcome,
   OutputValues,
@@ -73,12 +73,12 @@ function findBlobUrlsInHtml(
 }
 
 async function inlineAllContent(
-  boardServer: BoardServer,
+  transformer: DataPartTransformer,
   outputs: OutputValues,
   shareableGraphUrl: string
 ): Promise<Outcome<OutputValues>> {
   const finalOutputValues = structuredClone(outputs);
-  if (!boardServer.dataPartTransformer) {
+  if (!transformer) {
     return err(`Board Server does not support data part transformation`);
   }
   const errors: { $error: string }[] = [];
@@ -93,7 +93,7 @@ async function inlineAllContent(
         new URL(shareableGraphUrl),
         value,
         "inline",
-        boardServer.dataPartTransformer!(new URL(shareableGraphUrl))
+        transformer
       );
       if (!ok(inlined)) {
         console.error(`Error inlining results content for ${key}`, inlined);
