@@ -258,7 +258,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       shellHost: this.opalShell,
       initialSignInState: args.initialSignInState,
       env: args.env,
-      moduleInvocationFilter: args.moduleInvocationFilter,
       appName: Strings.from("APP_NAME"),
       appSubName: Strings.from("SUB_APP_NAME"),
     });

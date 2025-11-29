@@ -13,7 +13,6 @@ import type {
   NodeDescriberResult,
   NodeHandlerContext,
   NodeHandlerObject,
-  Outcome,
   Schema,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
@@ -30,7 +29,6 @@ export { addRunModule };
  * allows tuning capabilities for each invoked module, including module
  * invocation itself.
  */
-type RunModuleInvocationFilter = (context: NodeHandlerContext) => Outcome<void>;
 
 function findHandler(handlerName: string, kits?: Kit[]) {
   const handler = kits
@@ -41,11 +39,7 @@ function findHandler(handlerName: string, kits?: Kit[]) {
   return handler;
 }
 
-function addRunModule(
-  factory: RunnableModuleFactory,
-  kits: Kit[],
-  invocationFilter?: RunModuleInvocationFilter
-): Kit[] {
+function addRunModule(factory: RunnableModuleFactory, kits: Kit[]): Kit[] {
   const existingRunModule = findHandler("runModule", kits);
   const originalDescriber =
     (existingRunModule &&
@@ -64,11 +58,6 @@ function addRunModule(
       handlers: {
         runModule: {
           invoke: async ({ $module, ...inputs }, context) => {
-            // Run invocation filter first, and report error if it tells us
-            // we can't run this module.
-            const filtering = invocationFilter?.(context);
-            if (!ok(filtering)) return filtering;
-
             const graph = context.outerGraph;
 
             const moduleDeclaration = graph?.modules;

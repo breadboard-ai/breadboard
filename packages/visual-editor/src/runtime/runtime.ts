@@ -136,7 +136,7 @@ export class Runtime extends EventTarget {
       fetchWithCreds: this.fetchWithCreds,
     });
 
-    const kits = addRunModule(sandbox, [], config.moduleInvocationFilter);
+    const kits = addRunModule(sandbox, []);
 
     this.consentManager = new ConsentManager(
       async (request: ConsentRequest, uiType: ConsentUIType) => {

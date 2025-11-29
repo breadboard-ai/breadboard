@@ -7,8 +7,6 @@
 /// <reference types="vite/client" />
 
 import { bootstrap } from "@breadboard-ai/visual-editor/bootstrap";
-import { baseURLFromContext, err } from "@google-labs/breadboard";
-import { isA2 } from "@breadboard-ai/a2";
 import { JsonSerializable, LLMContent } from "@breadboard-ai/types";
 
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
@@ -30,16 +28,6 @@ if (deploymentConfiguration?.MEASUREMENT_ID) {
 
 bootstrap({
   deploymentConfiguration,
-  moduleInvocationFilter: (context) => {
-    // If we allow 3P modules to run, we can exit quickly (no filter)
-    if (deploymentConfiguration.ALLOW_3P_MODULES) return;
-    const url = baseURLFromContext(context);
-    // Disallow anything but A2.
-    if (!isA2(url)) {
-      return err(`This module is not allowed to run in this configuration`);
-    }
-  },
-  // Keep this in sync with `packages/unified-server/src/client/app/utils/run-config.ts`
   env: [
     {
       path: "/env/settings/backend",

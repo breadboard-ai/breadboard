@@ -7,11 +7,7 @@
 import type { EmbedHandler } from "@breadboard-ai/shared-ui/embed/embed.js";
 import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
 import type { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import type {
-  FileSystemEntry,
-  NodeHandlerContext,
-  Outcome,
-} from "@breadboard-ai/types";
+import type { FileSystemEntry } from "@breadboard-ai/types";
 import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 import {
   OpalShellHostProtocol,
@@ -21,12 +17,6 @@ import { MakeUrlInit } from "@breadboard-ai/shared-ui/types/types.js";
 
 export type BootstrapArguments = {
   deploymentConfiguration: ClientDeploymentConfiguration;
-  /**
-   * Allows filtering what modules can be invoked by the runtime.
-   * @param context
-   * @returns
-   */
-  moduleInvocationFilter?: (context: NodeHandlerContext) => Outcome<void>;
   /**
    * Provides a way to specify additional entries as part of the `/env/` file
    * system.
@@ -41,7 +31,7 @@ export type MainArguments = {
   enableTos?: boolean;
   /** Terms of Service content. */
   tosHtml?: string;
-  moduleInvocationFilter?: (context: NodeHandlerContext) => Outcome<void>;
+
   /**
    * Provides a way to specify additional entries as part of the `/env/` file
    * system.

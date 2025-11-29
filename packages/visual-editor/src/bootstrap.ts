@@ -110,7 +110,6 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       settings,
       enableTos: ENABLE_TOS,
       tosHtml: TOS_HTML,
-      moduleInvocationFilter: bootstrapArgs.moduleInvocationFilter,
       env: bootstrapArgs.env,
       embedHandler,
       globalConfig,
