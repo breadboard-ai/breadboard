@@ -18,12 +18,7 @@ export * as Types from "./types.js";
 import { Select } from "./select.js";
 import { StateManager } from "./state.js";
 import { Shell } from "./shell.js";
-import {
-  Outcome,
-  RunConfig,
-  RuntimeFlagManager,
-  ConsentManager,
-} from "@breadboard-ai/types";
+import { Outcome, RunConfig, RuntimeFlagManager } from "@breadboard-ai/types";
 import {
   RuntimeHostStatusUpdateEvent,
   RuntimeSnackbarEvent,
@@ -39,7 +34,32 @@ import {
 import { Autonamer } from "./autonamer.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
 import { createGoogleDriveBoardServer } from "@breadboard-ai/shared-ui/utils/create-server.js";
-import { createA2Server } from "@breadboard-ai/a2";
+import { createA2Server, createA2ModuleFactory } from "@breadboard-ai/a2";
+import {
+  createFileSystemBackend,
+  createFlagManager,
+} from "@breadboard-ai/data-store";
+import {
+  addRunModule,
+  composeFileSystemBackends,
+  createEphemeralBlobStore,
+  createFileSystem,
+  PersistentBackend,
+} from "@google-labs/breadboard";
+import { RecentBoardStore } from "../data/recent-boards";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { McpClientManager } from "@breadboard-ai/mcp";
+import {
+  ConsentAction,
+  ConsentUIType,
+  ConsentRequest,
+  FileSystem,
+} from "@breadboard-ai/types";
+import { ConsentManager } from "@breadboard-ai/shared-ui/utils/consent-manager.js";
+import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
+import { createActionTrackerBackend } from "@breadboard-ai/shared-ui/utils/action-tracker";
+import { envFromSettings } from "../utils/env-from-settings";
+import { builtInMcpClients } from "../mcp-clients";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -53,15 +73,103 @@ export class Runtime extends EventTarget {
   public readonly util: typeof Util;
   public readonly fetchWithCreds: typeof globalThis.fetch;
   public readonly consentManager: ConsentManager;
+  public readonly signinAdapter: SigninAdapter;
+  public readonly googleDriveClient: GoogleDriveClient;
+  public readonly fileSystem: FileSystem;
+  public readonly mcpClientManager: McpClientManager;
+  public readonly recentBoardStore: RecentBoardStore;
 
   constructor(config: RuntimeConfig) {
     super();
 
-    const kits = config.kits;
+    this.flags = createFlagManager(config.globalConfig.flags);
+
+    this.signinAdapter = new SigninAdapter(
+      config.shellHost,
+      config.initialSignInState
+    );
+    this.fetchWithCreds = this.signinAdapter.fetchWithCreds;
+
+    const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
+      .href;
+    const apiBaseUrl =
+      this.signinAdapter.state === "signedout"
+        ? proxyApiBaseUrl
+        : config.globalConfig.GOOGLE_DRIVE_API_ENDPOINT ||
+          "https://www.googleapis.com";
+
+    this.googleDriveClient = new GoogleDriveClient({
+      apiBaseUrl,
+      proxyApiBaseUrl,
+      fetchWithCreds: this.fetchWithCreds,
+    });
+
+    this.fileSystem = createFileSystem({
+      env: [...envFromSettings(config.settings), ...(config.env || [])],
+      local: createFileSystemBackend(createEphemeralBlobStore()),
+      mnt: composeFileSystemBackends(
+        new Map<string, PersistentBackend>([
+          ["track", createActionTrackerBackend()],
+        ])
+      ),
+    });
+
+    let backendApiEndpoint = config.globalConfig.BACKEND_API_ENDPOINT;
+    if (!backendApiEndpoint) {
+      console.warn(`No BACKEND_API_ENDPOINT in ClientDeploymentConfiguration`);
+      backendApiEndpoint = window.location.href;
+    }
+
+    this.mcpClientManager = new McpClientManager(
+      builtInMcpClients,
+      {
+        fileSystem: this.fileSystem,
+        fetchWithCreds: this.fetchWithCreds,
+      },
+      backendApiEndpoint
+    );
+
+    const sandbox = createA2ModuleFactory({
+      mcpClientManager: this.mcpClientManager,
+      fetchWithCreds: this.fetchWithCreds,
+    });
+
+    const kits = addRunModule(sandbox, [], config.moduleInvocationFilter);
+
+    this.consentManager = new ConsentManager(
+      async (request: ConsentRequest, uiType: ConsentUIType) => {
+        return new Promise<ConsentAction>((resolve) => {
+          if (uiType === ConsentUIType.MODAL) {
+            const uiState = this.state.getOrCreateUIState();
+            uiState.consentRequests.push({
+              request,
+              consentCallback: resolve,
+            });
+          } else {
+            const appState = this.state.getProjectState(
+              this.board.currentTab?.mainGraphId
+            )?.run.app;
+            if (appState) {
+              appState.consentRequests.push({
+                request,
+                consentCallback: resolve,
+              });
+            } else {
+              console.warn(
+                "In-app consent requested when no app state existed"
+              );
+              resolve(ConsentAction.DENY);
+            }
+          }
+        });
+      }
+    );
+
+    this.recentBoardStore = RecentBoardStore.instance();
 
     const googleDriveBoardServer = createGoogleDriveBoardServer(
-      config.signinAdapter,
-      config.googleDriveClient
+      this.signinAdapter,
+      this.googleDriveClient
     );
     const a2Server = createA2Server();
 
@@ -69,9 +177,9 @@ export class Runtime extends EventTarget {
     const graphStoreArgs = {
       kits,
       loader,
-      sandbox: config.sandbox,
-      fileSystem: config.fileSystem,
-      flags: config.flags,
+      sandbox,
+      fileSystem: this.fileSystem,
+      flags: this.flags,
     };
     const graphStore = createGraphStore(graphStoreArgs);
 
@@ -84,30 +192,17 @@ export class Runtime extends EventTarget {
       googleDriveBoardServer,
     };
 
-    const autonamer = new Autonamer(
-      graphStoreArgs,
-      config.fileSystem,
-      config.sandbox
-    );
+    const autonamer = new Autonamer(graphStoreArgs, this.fileSystem, sandbox);
 
-    const {
-      fetchWithCreds,
-      flags,
-      consentManager,
-      settings,
-      mcpClientManager,
-      sandbox,
-      appName,
-      appSubName,
-    } = config;
+    const { settings, appName, appSubName } = config;
 
     const state = new StateManager(
       this,
       graphStore,
-      fetchWithCreds,
+      this.fetchWithCreds,
       googleDriveBoardServer,
-      flags,
-      mcpClientManager
+      this.flags,
+      this.mcpClientManager
     );
 
     const edit = new Edit(
@@ -117,7 +212,7 @@ export class Runtime extends EventTarget {
       sandbox,
       graphStore,
       autonamer,
-      flags,
+      this.flags,
       settings
     );
 
@@ -130,21 +225,17 @@ export class Runtime extends EventTarget {
       graphStore,
       kits,
       boardServers,
-      config.recentBoardStore,
-      config.signinAdapter,
-      config.googleDriveClient
+      this.recentBoardStore,
+      this.signinAdapter,
+      this.googleDriveClient
     );
     this.state = state;
 
     this.edit = edit;
-    this.run = new Run(graphStore, state, flags, edit);
-
-    this.flags = flags;
-    this.fetchWithCreds = fetchWithCreds;
-    this.consentManager = consentManager;
+    this.run = new Run(graphStore, state, this.flags, edit);
 
     this.#setupPassthruHandlers();
-    void config.recentBoardStore.restore();
+    void this.recentBoardStore.restore();
   }
 
   async prepareRun(tab: Tab, settings: SettingsStore): Promise<Outcome<void>> {

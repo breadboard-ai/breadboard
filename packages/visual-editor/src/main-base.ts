@@ -7,31 +7,19 @@
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import {
-  createFileSystemBackend,
-  createFlagManager,
-} from "@breadboard-ai/data-store";
 import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
 import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import type {
   AppScreenOutput,
   BoardServer,
   ConformsToNodeValue,
-  ConsentRequest,
-  FileSystem,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
-import { ConsentAction, ConsentUIType } from "@breadboard-ai/types";
 import {
-  addRunModule,
-  composeFileSystemBackends,
-  createEphemeralBlobStore,
-  createFileSystem,
   GraphDescriptor,
   hash,
   MutableGraphStore,
   ok,
-  PersistentBackend,
 } from "@google-labs/breadboard";
 import { provide } from "@lit/context";
 import { html, HTMLTemplateResult, LitElement, nothing } from "lit";
@@ -47,9 +35,8 @@ import {
   WorkspaceVisualChangeId,
 } from "./runtime/types";
 
-import { createA2ModuleFactory } from "@breadboard-ai/a2";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { McpClientManager } from "@breadboard-ai/mcp";
+
 import {
   canonicalizeOAuthScope,
   type OAuthScope,
@@ -79,10 +66,7 @@ import {
 } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
 import { ReactiveAppScreen } from "@breadboard-ai/shared-ui/state/app-screen.js";
 import { UserSignInResponse } from "@breadboard-ai/shared-ui/types/types.js";
-import {
-  ActionTracker,
-  createActionTrackerBackend,
-} from "@breadboard-ai/shared-ui/utils/action-tracker";
+import { ActionTracker } from "@breadboard-ai/shared-ui/utils/action-tracker";
 import { ConsentManager } from "@breadboard-ai/shared-ui/utils/consent-manager.js";
 import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
 import { opalShellContext } from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
@@ -98,9 +82,8 @@ import { Admin } from "./admin";
 import { keyboardCommands } from "./commands/commands";
 import { KeyboardCommandDeps } from "./commands/types";
 import { eventRoutes } from "./event-routing/event-routing";
-import { builtInMcpClients } from "./mcp-clients";
+
 import { MainArguments } from "./types/types";
-import { envFromSettings } from "./utils/env-from-settings";
 
 export { MainBase };
 
@@ -235,7 +218,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }> = [];
 
   protected boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
-  protected recentBoardStore = RecentBoardStore.instance();
+  protected recentBoardStore: RecentBoardStore;
   protected lastPointerPosition = { x: 0, y: 0 };
   protected tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
   protected canvasControllerRef: Ref<BreadboardUI.Elements.CanvasController> =
@@ -267,11 +250,23 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     // Authentication
     this.opalShell = args.shellHost;
-    this.signinAdapter = new SigninAdapter(
-      this.opalShell,
-      args.initialSignInState
-    );
     this.hostOrigin = args.hostOrigin;
+
+    this.runtime = new Runtime.Runtime({
+      globalConfig: this.globalConfig,
+      settings: this.settings,
+      shellHost: this.opalShell,
+      initialSignInState: args.initialSignInState,
+      env: args.env,
+      moduleInvocationFilter: args.moduleInvocationFilter,
+      appName: Strings.from("APP_NAME"),
+      appSubName: Strings.from("SUB_APP_NAME"),
+    });
+
+    this.signinAdapter = this.runtime.signinAdapter;
+    this.googleDriveClient = this.runtime.googleDriveClient;
+    this.#consentManager = this.runtime.consentManager;
+    this.recentBoardStore = this.runtime.recentBoardStore;
 
     // Asyncronously check if the user has a geo-restriction and sign out if so.
     if (this.signinAdapter.state === "signedin") {
@@ -311,99 +306,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.emailPrefsManager = new EmailPrefsManager(this.apiClient);
 
-    const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
-      .href;
-    const apiBaseUrl =
-      this.signinAdapter.state === "signedout"
-        ? proxyApiBaseUrl
-        : this.globalConfig.GOOGLE_DRIVE_API_ENDPOINT ||
-          "https://www.googleapis.com";
-    this.googleDriveClient = new GoogleDriveClient({
-      apiBaseUrl,
-      proxyApiBaseUrl,
-      fetchWithCreds,
-    });
-
     this.embedHandler = args.embedHandler;
 
-    const flagManager = createFlagManager(this.globalConfig.flags);
-
-    // eslint-disable-next-line prefer-const
-    let fileSystem: FileSystem;
-
-    const mcpClientManager = new McpClientManager(
-      builtInMcpClients,
-      {
-        get fileSystem() {
-          return fileSystem!;
-        },
-        fetchWithCreds,
-      },
-      backendApiEndpoint
-    );
-
-    fileSystem = createFileSystem({
-      env: [...envFromSettings(this.settings), ...(args.env || [])],
-      local: createFileSystemBackend(createEphemeralBlobStore()),
-      mnt: composeFileSystemBackends(
-        new Map<string, PersistentBackend>([
-          ["track", createActionTrackerBackend()],
-        ])
-      ),
-    });
-
-    const moduleFactory = createA2ModuleFactory({
-      mcpClientManager,
-      fetchWithCreds,
-    });
-
-    this.#consentManager = new ConsentManager(
-      async (request: ConsentRequest, uiType: ConsentUIType) => {
-        return new Promise<ConsentAction>((resolve) => {
-          if (uiType === ConsentUIType.MODAL) {
-            this.uiState.consentRequests.push({
-              request,
-              consentCallback: resolve,
-            });
-          } else {
-            const appState = this.runtime.state.getProjectState(
-              this.tab?.mainGraphId
-            )?.run.app;
-            if (appState) {
-              appState.consentRequests.push({
-                request,
-                consentCallback: resolve,
-              });
-            } else {
-              console.warn(
-                "In-app consent requested when no app state existed"
-              );
-              resolve(ConsentAction.DENY);
-            }
-          }
-        });
-      }
-    );
-
-    this.runtime = new Runtime.Runtime({
-      recentBoardStore: this.recentBoardStore,
-      globalConfig: this.globalConfig,
-      signinAdapter: this.signinAdapter,
-      sandbox: moduleFactory,
-      settings: this.settings,
-      fileSystem,
-      kits: addRunModule(moduleFactory, [], args.moduleInvocationFilter),
-      googleDriveClient: this.googleDriveClient,
-      appName: Strings.from("APP_NAME"),
-      appSubName: Strings.from("SUB_APP_NAME"),
-      flags: flagManager,
-      mcpClientManager,
-      fetchWithCreds,
-      consentManager: this.#consentManager,
-    });
     this.#addRuntimeEventHandlers();
 
-    this.flowGenerator = new FlowGenerator(this.apiClient, flagManager);
+    this.flowGenerator = new FlowGenerator(this.apiClient, this.runtime.flags);
 
     this.boardServer = this.runtime.board.boardServers.googleDriveBoardServer;
     if (!this.boardServer) {
@@ -466,7 +373,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.shell.startTrackUpdates();
     this.runtime.router.init();
 
-    void this.#checkSubscriptionStatus(flagManager);
+    void this.#checkSubscriptionStatus(this.runtime.flags);
     console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
     this.doPostInitWork();
   }
