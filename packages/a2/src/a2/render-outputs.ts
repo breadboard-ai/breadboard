@@ -515,7 +515,7 @@ async function describe(
     : MODES.filter(({ id }) => id !== "consistent-ui");
 
   const template = new Template(caps, text);
-  const { renderType } = getMode(renderMode);
+  const { renderType, icon } = getMode(renderMode);
 
   return {
     inputSchema: {
@@ -558,7 +558,7 @@ async function describe(
     } satisfies Schema,
     title: "Output",
     metadata: {
-      icon: "output",
+      icon: icon,
       tags: ["quick-access", "core", "output"],
       order: 100,
     },
