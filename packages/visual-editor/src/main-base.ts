@@ -336,7 +336,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       ActionTracker.load("home", false);
     }
     this.graphStore = this.runtime.board.graphStore;
-    args.boardServerUrl = new URL("drive:");
 
     // Admin.
     const admin = new Admin(

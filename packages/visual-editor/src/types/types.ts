@@ -37,11 +37,6 @@ export type BootstrapArguments = {
 export type MainArguments = {
   settings: SettingsStore;
   languagePack?: string;
-  /**
-   * The URL of the board server with which this editor instance
-   * is associated.
-   */
-  boardServerUrl?: URL;
   /** If true enforces ToS acceptance by the user on the first visit. */
   enableTos?: boolean;
   /** Terms of Service content. */

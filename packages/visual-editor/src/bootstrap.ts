@@ -23,27 +23,6 @@ import { connectToOpalShellHost } from "@breadboard-ai/shared-ui/utils/opal-shel
 
 export { bootstrap };
 
-async function getUrlFromBoardServiceFlag(
-  boardService: string | undefined
-): Promise<URL | undefined> {
-  if (!boardService) return undefined;
-
-  const { GoogleDriveBoardServer } = await import(
-    "@breadboard-ai/google-drive-kit"
-  );
-
-  if (boardService.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
-    // Just say GDrive here, it will be appended with the folder ID once it's fetched in
-    // packages/visual-editor/src/index.ts
-    return new URL(boardService);
-  } else if (boardService.startsWith("/")) {
-    // Convert relative URLs.
-    return new URL(boardService, window.location.href);
-  }
-  // Fallback.
-  return new URL(boardService);
-}
-
 function setColorScheme(colorScheme?: "light" | "dark") {
   const scheme = document.createElement("style");
   if (colorScheme) {
@@ -129,7 +108,6 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
 
     const mainArgs: MainArguments = {
       settings,
-      boardServerUrl: await getUrlFromBoardServiceFlag(BOARD_SERVICE),
       enableTos: ENABLE_TOS,
       tosHtml: TOS_HTML,
       moduleInvocationFilter: bootstrapArgs.moduleInvocationFilter,
