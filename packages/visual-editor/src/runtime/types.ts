@@ -12,8 +12,6 @@ import {
   Kit,
   MainGraphIdentifier,
   PortIdentifier,
-  NodeHandlerContext,
-  Outcome,
   FileSystemEntry,
 } from "@google-labs/breadboard";
 
@@ -66,17 +64,12 @@ export interface Tab {
   finalOutputValues?: OutputValues;
 }
 
-export type ModuleInvocationFilter = (
-  context: NodeHandlerContext
-) => Outcome<void>;
-
 export interface RuntimeConfig {
   globalConfig: GlobalConfig;
   settings: SettingsStore;
   shellHost: OpalShellHostProtocol;
   initialSignInState: SignInState;
   env?: FileSystemEntry[];
-  moduleInvocationFilter?: ModuleInvocationFilter;
   appName: string;
   appSubName: string;
 }
