@@ -57,7 +57,7 @@ export class Run extends EventTarget {
 
     const run = this.#runs.get(tabId);
     if (run) {
-      const project = this.state.getProjectState(run.mainGraphId);
+      const project = this.state.project;
       if (project) {
         project.resetRun();
       }
@@ -154,10 +154,7 @@ export class Run extends EventTarget {
 
     // This incantation connects harnessRunner to the project, populating
     // `Project.run`.
-    const project = this.state.getOrCreateProjectState(
-      tab.mainGraphId,
-      this.edit.getEditor(tab)
-    );
+    const project = this.state.project;
     if (!project) {
       console.warn(`Unable to get project for graph: ${tab.mainGraphId}`);
     } else {

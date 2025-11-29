@@ -313,10 +313,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.flowGenerator = new FlowGenerator(this.apiClient, this.runtime.flags);
 
     this.boardServer = this.runtime.board.boardServers.googleDriveBoardServer;
-    if (!this.boardServer) {
-      console.warn("No Google Drive Board server found");
-    }
-    this.uiState = this.runtime.state.getOrCreateUIState();
+    this.uiState = this.runtime.state.ui;
 
     if (this.globalConfig.ENABLE_EMAIL_OPT_IN) {
       this.emailPrefsManager.refreshPrefs().then(() => {
@@ -1133,14 +1130,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       }
     }
 
-    const mainGraphId = this.tab?.mainGraphId;
-
-    const projectState = mainGraphId
-      ? this.runtime.state.getOrCreateProjectState(
-          mainGraphId,
-          this.runtime.edit.getEditor(this.tab)
-        )
-      : null;
+    const projectState = this.runtime.state.project;
 
     if (projectState && this.tab?.finalOutputValues) {
       const current = new ReactiveAppScreen("", undefined);
@@ -1182,10 +1172,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       keyof BreadboardUI.Events.StateEventDetailMap
     >
   ) {
-    const boardServer = this.boardServer;
-    if (!boardServer) {
-      throw new Error("Expected board server to have been mounted");
-    }
     return {
       originalEvent: evt,
       runtime: this.runtime,
@@ -1195,7 +1181,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       googleDriveClient: this.googleDriveClient,
       askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>
         this.askUserToSignInIfNeeded(scopes),
-      boardServer,
+      boardServer: this.boardServer,
       embedHandler: this.embedHandler,
     };
   }
@@ -1310,9 +1296,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
 
           case "dismiss": {
-            this.runtime.state
-              .getProjectState(this.tab?.mainGraphId)
-              ?.run?.dismissError();
+            this.runtime.state.project?.run?.dismissError();
             break;
           }
         }

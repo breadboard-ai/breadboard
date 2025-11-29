@@ -60,6 +60,7 @@ import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js"
 import { createActionTrackerBackend } from "@breadboard-ai/shared-ui/utils/action-tracker";
 import { envFromSettings } from "../utils/env-from-settings";
 import { builtInMcpClients } from "../mcp-clients";
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -78,6 +79,7 @@ export class Runtime extends EventTarget {
   public readonly fileSystem: FileSystem;
   public readonly mcpClientManager: McpClientManager;
   public readonly recentBoardStore: RecentBoardStore;
+  public readonly googleDriveBoardServer: GoogleDriveBoardServer;
 
   constructor(config: RuntimeConfig) {
     super();
@@ -140,15 +142,13 @@ export class Runtime extends EventTarget {
       async (request: ConsentRequest, uiType: ConsentUIType) => {
         return new Promise<ConsentAction>((resolve) => {
           if (uiType === ConsentUIType.MODAL) {
-            const uiState = this.state.getOrCreateUIState();
+            const uiState = this.state.ui;
             uiState.consentRequests.push({
               request,
               consentCallback: resolve,
             });
           } else {
-            const appState = this.state.getProjectState(
-              this.board.currentTab?.mainGraphId
-            )?.run.app;
+            const appState = this.state.project?.run.app;
             if (appState) {
               appState.consentRequests.push({
                 request,
@@ -167,13 +167,13 @@ export class Runtime extends EventTarget {
 
     this.recentBoardStore = RecentBoardStore.instance();
 
-    const googleDriveBoardServer = createGoogleDriveBoardServer(
+    this.googleDriveBoardServer = createGoogleDriveBoardServer(
       this.signinAdapter,
       this.googleDriveClient
     );
     const a2Server = createA2Server();
 
-    const loader = createLoader([googleDriveBoardServer, a2Server]);
+    const loader = createLoader([this.googleDriveBoardServer, a2Server]);
     const graphStoreArgs = {
       kits,
       loader,
@@ -189,21 +189,14 @@ export class Runtime extends EventTarget {
 
     const boardServers: RuntimeConfigBoardServers = {
       a2Server,
-      googleDriveBoardServer,
+      googleDriveBoardServer: this.googleDriveBoardServer,
     };
 
     const autonamer = new Autonamer(graphStoreArgs, this.fileSystem, sandbox);
 
     const { settings, appName, appSubName } = config;
 
-    const state = new StateManager(
-      this,
-      graphStore,
-      this.fetchWithCreds,
-      googleDriveBoardServer,
-      this.flags,
-      this.mcpClientManager
-    );
+    const state = new StateManager(this, graphStore);
 
     const edit = new Edit(
       state,
@@ -263,7 +256,7 @@ export class Runtime extends EventTarget {
       inputs: inputsFromSettings(settings),
       fetchWithCreds: this.fetchWithCreds,
       getProjectRunState: () => {
-        return this.state.getProjectState(tab.mainGraphId)?.run;
+        return this.state.project?.run;
       },
       clientDeploymentConfiguration: CLIENT_DEPLOYMENT_CONFIG,
       flags: this.flags,
