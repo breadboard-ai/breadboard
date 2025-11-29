@@ -34,10 +34,7 @@ export const AddRoute: EventRoute<"asset.add"> = {
       return false;
     }
 
-    const projectState = runtime.state.getOrCreateProjectState(
-      tab.mainGraphId,
-      runtime.edit.getEditor(tab)
-    );
+    const projectState = runtime.state.project;
 
     if (!projectState) {
       return false;
