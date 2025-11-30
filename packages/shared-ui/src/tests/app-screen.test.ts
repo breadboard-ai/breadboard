@@ -8,6 +8,7 @@
 import { describe, it, before } from "node:test";
 import assert from "node:assert";
 import { Signal } from "signal-polyfill";
+import { SignalWatcher } from "./signal-watcher.js";
 
 describe("AppScreen", () => {
   let ReactiveAppScreen: any;
@@ -90,16 +91,11 @@ describe("AppScreen", () => {
 
     it("triggers watcher when status changes", async () => {
       const screen = new ReactiveAppScreen("test", undefined);
-      let triggerCount = 0;
       const computed = new Signal.Computed(() => screen.status);
-      const watcher = new Signal.subtle.Watcher(() => {
-        triggerCount++;
-      });
-      watcher.watch(computed);
+      const watcher = new SignalWatcher(computed);
+      watcher.watch();
 
-      // Pull once to activate
-      computed.get();
-      assert.strictEqual(triggerCount, 0);
+      assert.strictEqual(watcher.count, 0);
 
       // Change status
       const data = {
@@ -110,7 +106,7 @@ describe("AppScreen", () => {
       };
       screen.finalize(data);
 
-      assert.ok(triggerCount > 0, "Watcher should have been triggered");
+      assert.ok(watcher.count > 0, "Watcher should have been triggered");
     });
 
     it("finalizes correctly", () => {
@@ -129,30 +125,24 @@ describe("AppScreen", () => {
 
     it("triggers watcher on progressCompletion updates", async () => {
       const screen = new ReactiveAppScreen("test", undefined);
-      let triggerCount = 0;
       const computed = new Signal.Computed(() => screen.progressCompletion);
-      const watcher = new Signal.subtle.Watcher(() => {
-        triggerCount++;
-      });
-      watcher.watch(computed);
+      const watcher = new SignalWatcher(computed);
+      watcher.watch();
 
-      // Pull once to activate
-      computed.get();
-      assert.strictEqual(triggerCount, 0);
+      assert.strictEqual(watcher.count, 0);
 
       // 1. Set expected duration
       currentTime = 1000;
       screen.expectedDuration = 10;
       // Watcher should trigger because expectedDuration changed
       assert.ok(
-        triggerCount > 0,
+        watcher.count > 0,
         "Watcher should trigger after setting expectedDuration"
       );
-      const countAfterSet = triggerCount;
+      const countAfterSet = watcher.count;
 
       // Re-watch if necessary (signal-polyfill watchers might be one-shot)
-      watcher.watch(computed);
-      computed.get(); // Ensure it's clean/activated
+      watcher.watch();
 
       // 2. Advance time
       currentTime = 2000;
@@ -162,19 +152,18 @@ describe("AppScreen", () => {
       // This updates 'now' signal. progressCompletion depends on 'now'.
       // Watcher should trigger.
       assert.ok(
-        triggerCount > countAfterSet,
+        watcher.count > countAfterSet,
         "Watcher should trigger after time update"
       );
-      const countAfterTime = triggerCount;
+      const countAfterTime = watcher.count;
 
       // Re-watch if necessary
-      watcher.watch(computed);
-      computed.get();
+      watcher.watch();
 
       // 3. Reset expected duration
       screen.expectedDuration = -1;
       assert.ok(
-        triggerCount > countAfterTime,
+        watcher.count > countAfterTime,
         "Watcher should trigger after resetting expectedDuration"
       );
     });
