@@ -16,7 +16,7 @@ class FilteredIntegrationsImpl implements FilteredIntegrations {
   @signal
   get results(): ReadonlyMap<string, IntegrationState> {
     if (!this.filter) return this.integrations;
-    const filter = new RegExp(this.filter, "gim");
+    const filter = new RegExp(this.filter, "im");
     const filtered = new Map<string, IntegrationState>();
     this.integrations.forEach((integration, url) => {
       const tools = new Map<string, Tool>();

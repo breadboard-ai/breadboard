@@ -33,7 +33,11 @@ These are some significant packages:
 - `packages/shared-ui`, `packages/visual-editor` -- contain the majority of the
   frontend code for the project.
 
-- `unfified-server` -- contains the nodejs server, the backend of the project.
+- `unified-server` -- contains the nodejs server, the backend of the project.
+
+## Signals
+
+The repo is using `signal-polyfil` and `signal-utils` as its signal infrastructure.
 
 ## Coding Conventions
 
@@ -65,7 +69,7 @@ function quz() {
 
 ## Tests
 
-To write tests, use node's built-in test framework.
+To write tests, use node's built-in test framework. Use the `npm run test` command within the package to run tests.
 
 Name tests as `[name of tested file].test.ts` and place it into
 `packages/[package name]/tests/` directory. All packages are configured to pick
