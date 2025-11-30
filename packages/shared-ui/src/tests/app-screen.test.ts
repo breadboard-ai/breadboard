@@ -11,8 +11,9 @@ import { Signal } from "signal-polyfill";
 import { SignalWatcher } from "./signal-watcher.js";
 
 describe("AppScreen", () => {
-  let ReactiveAppScreen: any;
-  let getElasticProgress: any;
+  type AppScreenModule = typeof import("../state/app-screen.js");
+  let ReactiveAppScreen: AppScreenModule["ReactiveAppScreen"];
+  let getElasticProgress: AppScreenModule["getElasticProgress"];
   let intervalCallback: (() => void) | undefined;
   let currentTime = 1000; // Start at non-zero time
 
@@ -71,10 +72,11 @@ describe("AppScreen", () => {
     it("adds output correctly", () => {
       const screen = new ReactiveAppScreen("test", undefined);
       const data = {
-        node: { id: "node1", configuration: {} },
+        node: { id: "node1", type: "test", configuration: {} },
         outputs: { foo: "bar" },
         path: [0],
         timestamp: 0,
+        bubbled: false,
       };
       screen.addOutput(data, null);
       assert.strictEqual(screen.outputs.size, 1);
@@ -99,10 +101,12 @@ describe("AppScreen", () => {
 
       // Change status
       const data = {
-        node: { id: "node1" },
+        node: { id: "node1", type: "test" },
         outputs: { result: "done" },
         path: [0],
         timestamp: 0,
+        inputs: {},
+        newOpportunities: [],
       };
       screen.finalize(data);
 
@@ -112,10 +116,12 @@ describe("AppScreen", () => {
     it("finalizes correctly", () => {
       const screen = new ReactiveAppScreen("test", undefined);
       const data = {
-        node: { id: "node1" },
+        node: { id: "node1", type: "test" },
         outputs: { result: "done" },
         path: [0],
         timestamp: 0,
+        inputs: {},
+        newOpportunities: [],
       };
       screen.finalize(data);
       assert.strictEqual(screen.status, "complete");
