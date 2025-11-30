@@ -12,15 +12,27 @@ import { Signal } from "signal-polyfill";
 describe("AppScreen", () => {
   let ReactiveAppScreen: any;
   let getElasticProgress: any;
+  let intervalCallback: (() => void) | undefined;
+  let currentTime = 1000; // Start at non-zero time
 
   before(async () => {
-    // Mock setInterval to prevent the top-level interval in app-screen.ts from keeping the process alive.
-    // We do this before importing the module.
-    global.setInterval = (() => {
+    // Mock performance.now
+    // We need to do this on the global object for it to be picked up by the module
+    Object.defineProperty(global, "performance", {
+      value: {
+        now: () => currentTime,
+      },
+      writable: true,
+    });
+
+    // Mock setInterval to capture the callback
+    global.setInterval = ((callback: () => void) => {
+      intervalCallback = callback;
       return {} as NodeJS.Timeout;
     }) as unknown as typeof global.setInterval;
 
-    // Dynamic import to ensure setInterval is mocked before the module executes.
+    // Dynamic import to ensure mocks are in place before module execution
+    // We use a query param to bypass cache if needed, though usually not needed in this context
     const module = await import("../state/app-screen.js");
     ReactiveAppScreen = module.ReactiveAppScreen;
     getElasticProgress = module.getElasticProgress;
@@ -98,14 +110,6 @@ describe("AppScreen", () => {
       };
       screen.finalize(data);
 
-      // In signal-polyfill, watchers are notified synchronously of dirtiness.
-      // However, we might need to pull again or wait for microtask depending on implementation details.
-      // But typically, the notification happens when dependency changes.
-      // Let's check if it triggered.
-
-      // Actually, standard signal watcher notifies when it *might* have changed (stale).
-      // We often need to read it to confirm.
-      // But let's assert triggerCount > 0.
       assert.ok(triggerCount > 0, "Watcher should have been triggered");
     });
 
@@ -123,17 +127,112 @@ describe("AppScreen", () => {
       assert.deepStrictEqual(screen.last?.output, { result: "done" });
     });
 
-    it("handles expectedDuration updates", () => {
+    it("triggers watcher on progressCompletion updates", async () => {
+      const screen = new ReactiveAppScreen("test", undefined);
+      let triggerCount = 0;
+      const computed = new Signal.Computed(() => screen.progressCompletion);
+      const watcher = new Signal.subtle.Watcher(() => {
+        triggerCount++;
+      });
+      watcher.watch(computed);
+
+      // Pull once to activate
+      computed.get();
+      assert.strictEqual(triggerCount, 0);
+
+      // 1. Set expected duration
+      currentTime = 1000;
+      screen.expectedDuration = 10;
+      // Watcher should trigger because expectedDuration changed
+      assert.ok(
+        triggerCount > 0,
+        "Watcher should trigger after setting expectedDuration"
+      );
+      const countAfterSet = triggerCount;
+
+      // Re-watch if necessary (signal-polyfill watchers might be one-shot)
+      watcher.watch(computed);
+      computed.get(); // Ensure it's clean/activated
+
+      // 2. Advance time
+      currentTime = 2000;
+      assert.ok(intervalCallback, "intervalCallback should be defined");
+      if (intervalCallback) intervalCallback();
+
+      // This updates 'now' signal. progressCompletion depends on 'now'.
+      // Watcher should trigger.
+      assert.ok(
+        triggerCount > countAfterSet,
+        "Watcher should trigger after time update"
+      );
+      const countAfterTime = triggerCount;
+
+      // Re-watch if necessary
+      watcher.watch(computed);
+      computed.get();
+
+      // 3. Reset expected duration
+      screen.expectedDuration = -1;
+      assert.ok(
+        triggerCount > countAfterTime,
+        "Watcher should trigger after resetting expectedDuration"
+      );
+    });
+
+    it("handles expectedDuration updates and progress calculation", () => {
       const screen = new ReactiveAppScreen("test", undefined);
       assert.strictEqual(screen.expectedDuration, -1);
       assert.strictEqual(screen.progressCompletion, -1);
 
+      // Set expected duration to 10 seconds
+      currentTime = 1000; // Reset time
       screen.expectedDuration = 10;
       assert.strictEqual(screen.expectedDuration, 10);
-      // Can't easily test progressCompletion value without mocking time/signal,
-      // but we can verify it doesn't crash and returns a number
-      assert.ok(typeof screen.progressCompletion === "number");
 
+      // At t=0 (relative to set time), progress should be 0
+      // We need to trigger the interval to update 'now' signal
+      if (intervalCallback) intervalCallback();
+
+      // progressCompletion = (now - lastSet) / (duration * 1000)
+      // (1000 - 1000) / 10000 = 0
+      assert.strictEqual(screen.progressCompletion, 0);
+
+      // Advance time by 5 seconds (50% progress)
+      currentTime = 6000; // 1000 + 5000
+      if (intervalCallback) intervalCallback();
+
+      // (6000 - 1000) / 10000 = 0.5
+      // getElasticProgress(0.5) = 0.5
+      // 0.5 * 100 = 50
+      assert.strictEqual(screen.progressCompletion, 50);
+
+      // Advance time by 7.5 seconds (75% progress - knee)
+      currentTime = 8500; // 1000 + 7500
+      if (intervalCallback) intervalCallback();
+
+      // (8500 - 1000) / 10000 = 0.75
+      // getElasticProgress(0.75) = 0.75
+      // 0.75 * 100 = 75
+      assert.strictEqual(screen.progressCompletion, 75);
+
+      // Advance time by 10 seconds (100% linear time, but elastic)
+      currentTime = 11000; // 1000 + 10000
+      if (intervalCallback) intervalCallback();
+
+      // (11000 - 1000) / 10000 = 1.0
+      // getElasticProgress(1.0) -> elastic phase
+      // overtime = 1.0 - 0.75 = 0.25
+      // remainingUI = 0.25
+      // result = 1.0 - 0.25 * exp(-0.25 * 5.0)
+      // exp(-1.25) ~= 0.2865
+      // 1.0 - 0.25 * 0.2865 = 1.0 - 0.0716 = 0.9284
+      // floor(92.84) = 92
+      const progress = screen.progressCompletion;
+      assert.ok(progress > 75);
+      assert.ok(progress < 100);
+      assert.strictEqual(progress, 92);
+
+      // Reset expected duration
       screen.expectedDuration = -1;
       assert.strictEqual(screen.expectedDuration, -1);
       assert.strictEqual(screen.progressCompletion, -1);
