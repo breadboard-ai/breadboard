@@ -24,6 +24,7 @@ import {
   toLLMContentStored,
 } from "./utils";
 import { A2ModuleArgs } from "../runnable-module-factory";
+import { asBase64, retrieveAsBlob } from "@breadboard-ai/data";
 
 const DEFAULT_BACKEND_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
@@ -262,10 +263,49 @@ async function executeStep(
       "download"
     );
     const output_key = body.planStep.output || "";
-    return parseExecutionOutput(response.executionOutputs[output_key]?.chunks);
+    return temporaryBlobFixup(
+      parseExecutionOutput(response.executionOutputs[output_key]?.chunks)
+    );
   } finally {
     await reporter.close();
   }
+}
+
+// This function scans for "storedData" parts in the incoming data and converts
+// them into "inlineData" parts by loading the data from the blob stored in the
+// "storedData" handle.
+// TODO: Remove this function once the backend emits inline data again.
+async function temporaryBlobFixup(
+  output: Outcome<ExecutionOutput>
+): Promise<Outcome<ExecutionOutput>> {
+  if (!ok(output)) return output;
+
+  const newChunks: LLMContent[] = [];
+  for (const chunk of output.chunks) {
+    const firstPart = chunk.parts.at(0)!;
+    if ("inlineData" in firstPart) {
+      newChunks.push(chunk);
+    } else if ("storedData" in firstPart) {
+      if (
+        firstPart.storedData.mimeType !== "text" &&
+        firstPart.storedData.mimeType !== "text/plain"
+      ) {
+        newChunks.push(chunk);
+        continue;
+      }
+      const blob = await retrieveAsBlob(firstPart);
+      const data = await asBase64(blob);
+      newChunks.push({
+        ...chunk,
+        parts: [{ inlineData: { data, mimeType: "text/plain" } }],
+      });
+    }
+  }
+  return {
+    chunks: newChunks,
+    requestedModel: output.requestedModel,
+    executedModel: output.executedModel,
+  };
 }
 
 export function elideEncodedData<T>(obj: T): T {
