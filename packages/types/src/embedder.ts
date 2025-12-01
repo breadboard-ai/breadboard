@@ -148,8 +148,7 @@ export declare interface IterateOnPromptMessage {
 export type EmbedderMessage =
   | ToggleIterateOnPromptMessage
   | CreateNewBoardMessage
-  | HandshakeCompleteMessage
-  | RequestConsentMessage;
+  | HandshakeCompleteMessage;
 
 /** Message to determine whether to display Iterate-on-prompt button. */
 export declare interface ToggleIterateOnPromptMessage {
@@ -174,15 +173,6 @@ export declare interface HandshakeCompleteMessage {
   origin: string;
 }
 
-/**
- * Message that tells Breadboard to use a consent dialog instead of the
- * standard sign-in dialog .
- */
-export declare interface RequestConsentMessage {
-  type: "request_consent";
-  // The message to show in the consent dialog, in markdown
-  consentMessage: string;
-}
 
 export type MessageType = EmbedderMessage["type"];
 

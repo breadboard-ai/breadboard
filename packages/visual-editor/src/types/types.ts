@@ -9,7 +9,8 @@ import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-conf
 import type { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import type { FileSystemEntry } from "@breadboard-ai/types";
 import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
-import {
+import type {
+  GuestConfiguration,
   OpalShellHostProtocol,
   SignInState,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
@@ -39,6 +40,7 @@ export type MainArguments = {
   env?: FileSystemEntry[];
   embedHandler?: EmbedHandler;
   globalConfig: GlobalConfig;
+  guestConfiguration: GuestConfiguration;
   shellHost: OpalShellHostProtocol;
   hostOrigin: URL;
   initialSignInState: SignInState;

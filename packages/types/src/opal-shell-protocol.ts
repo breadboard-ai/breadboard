@@ -20,6 +20,8 @@ export interface OpalShellHostProtocol {
   // method.
   validateScopes(): Promise<ValidateScopesResult>;
 
+  getConfiguration(): Promise<GuestConfiguration>;
+
   fetchWithCreds: typeof fetch;
 
   signIn(scopes: string[]): Promise<SignInResult>;
@@ -85,3 +87,7 @@ export type CheckAppAccessResult = { canAccess: boolean };
 export interface ShareDriveFilesOptions {
   fileIds: string[];
 }
+
+export type GuestConfiguration = {
+  consentMessage: string;
+};

@@ -75,7 +75,10 @@ import {
   signinAdapterContext,
 } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
 import { makeUrl, parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
-import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import {
+  GuestConfiguration,
+  OpalShellHostProtocol,
+} from "@breadboard-ai/types/opal-shell-protocol.js";
 import { SignalWatcher } from "@lit-labs/signals";
 
 import { Admin } from "./admin";
@@ -231,6 +234,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   readonly emailPrefsManager: EmailPrefsManager;
   protected readonly hostOrigin: URL;
 
+  // Configuration provided by shell host
+  protected readonly guestConfiguration: GuestConfiguration;
+
   // Event Handlers.
   readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
   readonly #hideTooltipBound = this.#hideTooltip.bind(this);
@@ -243,6 +249,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     // Static deployment config
     this.globalConfig = args.globalConfig;
+
+    // Configuration provided by shell hos
+    this.guestConfiguration = args.guestConfiguration;
 
     // User settings
     this.settings = args.settings;
@@ -369,6 +378,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.router.init();
 
     void this.#checkSubscriptionStatus(this.runtime.flags);
+
     console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
     this.doPostInitWork();
   }
@@ -402,9 +412,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           .then((graph) => this.#generateBoardFromGraph(graph))
           .catch((error) => console.error("Error generating board", error));
       }
-    });
-    this.embedHandler?.addEventListener("request_consent", ({ message }) => {
-      this.signInConsentMessage = message.consentMessage ?? null;
     });
     this.embedHandler?.sendToEmbedder({ type: "handshake_ready" });
   }
@@ -1330,13 +1337,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return signInModal.openAndWaitForSignIn(scopes);
   }
 
-  protected signInConsentMessage: string | null = null;
   protected readonly signInModalRef = createRef<VESignInModal>();
   protected renderSignInModal() {
     return html`
       <bb-sign-in-modal
         ${ref(this.signInModalRef)}
-        .consentMessage=${this.signInConsentMessage}
+        .consentMessage=${this.guestConfiguration.consentMessage}
         @bbmodaldismissed=${() => {
           this.uiState.show.delete("SignInModal");
         }}

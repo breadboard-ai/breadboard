@@ -17,6 +17,7 @@ import {
 } from "@breadboard-ai/types/oauth.js";
 import type {
   CheckAppAccessResult,
+  GuestConfiguration,
   OpalShellHostProtocol,
   PickDriveFilesOptions,
   PickDriveFilesResult,
@@ -162,6 +163,12 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     }
   };
 
+  getConfiguration = async (): Promise<GuestConfiguration> => {
+    return {
+      consentMessage: "",
+    };
+  };
+
   /** See https://cloud.google.com/docs/authentication/token-types#access */
   async #fetchScopesFromTokenInfoApi(): Promise<
     { ok: true; value: string[] } | { ok: false; error: string }
@@ -210,9 +217,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     ) {
       const body = init.body;
       if (typeof body !== "string") {
-        console.warn(
-          "When augmenting request, body is not string, bailing..."
-        );
+        console.warn("When augmenting request, body is not string, bailing...");
         return init;
       }
       try {
