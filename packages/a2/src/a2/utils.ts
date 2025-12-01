@@ -467,3 +467,34 @@ function tr(strings: TemplateStringsArray, ...values: unknown[]): string {
     }, "")
     .trim();
 }
+
+export type SnackbarAction = {
+  title: string;
+  action: string;
+  value?: string;
+  callback?: () => Promise<void> | void;
+  cssClass?: string;
+};
+
+export function dispatchShowCustomSnackbarEvent(
+  message: string,
+  actions: SnackbarAction[] = [],
+  snackType: string = "info"
+) {
+  if (typeof window !== "undefined") {
+    const snackbarEvent = new CustomEvent("showCustomSnackbarEvent", {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      detail: {
+        snackbarId: globalThis.crypto.randomUUID(),
+        message,
+        snackType,
+        actions,
+        persistent: true,
+        replaceAll: false,
+      },
+    });
+    window.dispatchEvent(snackbarEvent);
+  }
+}
