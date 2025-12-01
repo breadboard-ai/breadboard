@@ -31,6 +31,7 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { OneShotFlowGenFailureResponse } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
 import { flowGenWithTheme } from "@breadboard-ai/shared-ui/flow-gen/flowgen-with-theme.js";
+import { EmbedHandler } from "@breadboard-ai/types/embedder.js";
 
 const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
 
@@ -315,11 +316,14 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   ];
 
   #advancedEditorLink: Ref<HTMLElement> = createRef();
+  readonly #embedHandler?: EmbedHandler;
 
   constructor(args: MainArguments) {
     super(args);
 
-    const { parsedUrl } = args;
+    const { parsedUrl, embedHandler } = args;
+
+    this.#embedHandler = embedHandler;
 
     // Set the app to fullscreen if the parsed URL indicates that this was
     // opened from a share action.
@@ -508,14 +512,45 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         : html` <header class="w-400 md-title-small sans-flex">
             <div class="left">${this.tab?.graph.title ?? "Untitled app"}</div>
             <div class="right">
-              <a
+              <button
                 ${ref(this.#advancedEditorLink)}
                 href="${this.hostOrigin}?mode=canvas&flow=${this.tab?.graph
                   .url}"
-                target="_blank"
-                ><span class="g-icon">open_in_new</span>Open Advanced Editor</a
+                @click=${() => {
+                  if (!this.#embedHandler || !this.tab?.graph.url) {
+                    this.snackbar(
+                      html`Unable to open Advanced Editor`,
+                      BreadboardUI.Types.SnackType.ERROR
+                    );
+                    return;
+                  }
+
+                  this.#embedHandler.sendToEmbedder({
+                    type: "open_in_advanced_editor",
+                    boardId: this.tab.graph.url,
+                  });
+                }}
               >
-              <button><span class="g-icon">share</span>Share</button>
+                <span class="g-icon">open_in_new</span>Open Advanced Editor
+              </button>
+              <button
+                @click=${() => {
+                  if (!this.#embedHandler || !this.tab?.graph.url) {
+                    this.snackbar(
+                      html`Unable to share`,
+                      BreadboardUI.Types.SnackType.ERROR
+                    );
+                    return;
+                  }
+
+                  this.#embedHandler.sendToEmbedder({
+                    type: "trigger_share",
+                    boardId: this.tab.graph.url,
+                  });
+                }}
+              >
+                <span class="g-icon">share</span>Share
+              </button>
             </div>
           </header>`}
       <bb-app-controller
