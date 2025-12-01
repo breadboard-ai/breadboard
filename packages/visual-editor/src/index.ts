@@ -564,6 +564,11 @@ class Main extends MainBase {
             break;
           }
 
+          case "documentation": {
+            window.open("https://developers.google.com/opal", "_blank");
+            break;
+          }
+
           case "demo-video": {
             this.uiState.show.add("VideoModal");
             break;
