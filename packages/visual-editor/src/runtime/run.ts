@@ -14,21 +14,12 @@ import {
   RunConfig,
   RunEndEvent,
   RunErrorEvent,
-  RunGraphEndEvent,
-  RunGraphStartEvent,
-  RunInputEvent,
   RunLifecycleEvent,
-  RunNextEvent,
-  RunNodeEndEvent,
-  RunNodeStartEvent,
-  RunOutputEvent,
-  RunSkipEvent,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
 import { Tab, TabId } from "./types";
 import { createPlanRunner } from "@breadboard-ai/runtime";
 import { RuntimeBoardRunEvent } from "./events";
-import { BoardServerAwareDataStore } from "@breadboard-ai/board-server-management";
 import { StateManager } from "./state";
 import { Edit } from "./edit";
 
@@ -45,7 +36,6 @@ export class Run extends EventTarget {
 
   constructor(
     public readonly graphStore: MutableGraphStore,
-    public readonly dataStore: BoardServerAwareDataStore,
     public readonly state: StateManager,
     public readonly flags: RuntimeFlagManager,
     public readonly edit: Edit
@@ -67,7 +57,7 @@ export class Run extends EventTarget {
 
     const run = this.#runs.get(tabId);
     if (run) {
-      const project = this.state.getProjectState(run.mainGraphId);
+      const project = this.state.project;
       if (project) {
         project.resetRun();
       }
@@ -118,7 +108,6 @@ export class Run extends EventTarget {
     const tabId = tab.id;
     config = {
       ...config,
-      store: this.dataStore.createRunDataStore(config.url),
       kits: [...this.graphStore.kits, ...tab.boardServerKits],
       signal: abortController.signal,
       graphStore: this.graphStore,
@@ -150,55 +139,7 @@ export class Run extends EventTarget {
       );
     });
 
-    harnessRunner.addEventListener("next", (evt: RunNextEvent) => {
-      this.dispatchEvent(
-        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
-      );
-    });
-
-    harnessRunner.addEventListener("input", (evt: RunInputEvent) => {
-      this.dispatchEvent(
-        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
-      );
-    });
-
-    harnessRunner.addEventListener("output", (evt: RunOutputEvent) => {
-      this.dispatchEvent(
-        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
-      );
-    });
-
     harnessRunner.addEventListener("error", (evt: RunErrorEvent) => {
-      this.dispatchEvent(
-        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
-      );
-    });
-
-    harnessRunner.addEventListener("skip", (evt: RunSkipEvent) => {
-      this.dispatchEvent(
-        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
-      );
-    });
-
-    harnessRunner.addEventListener("graphstart", (evt: RunGraphStartEvent) => {
-      this.dispatchEvent(
-        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
-      );
-    });
-
-    harnessRunner.addEventListener("graphend", (evt: RunGraphEndEvent) => {
-      this.dispatchEvent(
-        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
-      );
-    });
-
-    harnessRunner.addEventListener("nodestart", (evt: RunNodeStartEvent) => {
-      this.dispatchEvent(
-        new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
-      );
-    });
-
-    harnessRunner.addEventListener("nodeend", (evt: RunNodeEndEvent) => {
       this.dispatchEvent(
         new RuntimeBoardRunEvent(tabId, evt, harnessRunner, abortController)
       );
@@ -213,10 +154,7 @@ export class Run extends EventTarget {
 
     // This incantation connects harnessRunner to the project, populating
     // `Project.run`.
-    const project = this.state.getOrCreateProjectState(
-      tab.mainGraphId,
-      this.edit.getEditor(tab)
-    );
+    const project = this.state.project;
     if (!project) {
       console.warn(`Unable to get project for graph: ${tab.mainGraphId}`);
     } else {

@@ -10,7 +10,6 @@ const Strings = StringsHelper.forSection("UIController");
 const GlobalStrings = StringsHelper.forSection("Global");
 
 import {
-  BoardServer,
   EditHistory,
   EditableGraph,
   GraphDescriptor,
@@ -66,7 +65,6 @@ import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-d
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { effects } from "../../styles/host/effects.js";
 import { GraphTheme } from "@breadboard-ai/types";
-import { createThemeStyles } from "@breadboard-ai/theme";
 import { styleMap } from "lit/directives/style-map.js";
 import { emptyStyles } from "../../styles/host/colors-empty.js";
 
@@ -78,6 +76,7 @@ import { isEmpty } from "../../utils/utils.js";
 import { uiStateContext } from "../../contexts/ui-state.js";
 import { Signal, SignalWatcher } from "@lit-labs/signals";
 import { projectStateContext } from "../../contexts/contexts.js";
+import * as Theme from "@breadboard-ai/theme";
 
 @customElement("bb-canvas-controller")
 export class CanvasController extends SignalWatcher(LitElement) {
@@ -86,9 +85,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
   @property()
   accessor boardServerKits: Kit[] = [];
-
-  @property()
-  accessor boardServers: BoardServer[] = [];
 
   /**
    * Indicates whether or not the UI can currently run a flow or not.
@@ -281,6 +277,11 @@ export class CanvasController extends SignalWatcher(LitElement) {
     ) {
       this.sideNavItem = "app-view";
     }
+
+    // Set theme designer to hidden when navigating away
+    if (changedProperties.has("graph")) {
+      this.showThemeDesigner = false;
+    }
   }
 
   #projectStateUpdated = new Signal.State({});
@@ -311,26 +312,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     this.projectState?.run.app.state;
     return ++this.#runStateEffectCount;
-  }
-
-  async #deriveAppURL() {
-    if (!this.graph?.url) {
-      return;
-    }
-
-    for (const server of this.boardServers) {
-      const graphUrl = new URL(this.graph.url);
-      const capabilities = server.canProvide(graphUrl);
-      if (!capabilities) {
-        continue;
-      }
-
-      if (server.extendedCapabilities().preview) {
-        return server.preview(graphUrl);
-      }
-    }
-
-    return null;
   }
 
   render() {
@@ -532,7 +513,10 @@ export class CanvasController extends SignalWatcher(LitElement) {
       if (themes[theme]) {
         const appPalette = themes[theme].palette;
         if (appPalette) {
-          themeStyles = createThemeStyles(appPalette);
+          themeStyles = Theme.createThemeStyles(
+            appPalette,
+            Theme.appColorMapping
+          );
         }
       }
     }
@@ -563,7 +547,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
           this.themeHash,
           this.#runStateEffect,
           selectionCount,
-          this.boardServers,
           this.sideNavItem,
           this.graphTopologyUpdateId,
           this.#uiState.flags,

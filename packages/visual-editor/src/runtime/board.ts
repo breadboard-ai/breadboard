@@ -5,7 +5,6 @@
  */
 
 import {
-  createLoader,
   EditHistoryCreator,
   EditHistoryEntry,
   GraphDescriptor,
@@ -14,22 +13,16 @@ import {
 } from "@google-labs/breadboard";
 import type {
   BoardServer,
-  BoardServerExtension,
-  BoardServerExtensionNamespace,
   BoardServerSaveEventStatus,
   GraphLoader,
-  GraphProvider,
   OutputValues,
 } from "@breadboard-ai/types";
 import { RuntimeConfigBoardServers, Tab, TabId, TabType } from "./types";
 import {
-  RuntimeHostAPIEvent,
   RuntimeBoardLoadErrorEvent,
   RuntimeErrorEvent,
   RuntimeTabChangeEvent,
   RuntimeTabCloseEvent,
-  RuntimeBoardServerChangeEvent,
-  RuntimeWorkspaceItemChangeEvent,
   RuntimeBoardSaveStatusChangeEvent,
   RuntimeSnackbarEvent,
   RuntimeUnsnackbarEvent,
@@ -37,11 +30,6 @@ import {
   RuntimeRequestSignInEvent,
 } from "./events";
 import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import {
-  connectToBoardServer,
-  disconnectFromBoardServer,
-  getBoardServers,
-} from "@breadboard-ai/board-server-management";
 import { GraphIdentifier, ModuleIdentifier } from "@breadboard-ai/types";
 import * as idb from "idb";
 import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
@@ -57,8 +45,6 @@ import type { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapte
 const documentStyles = getComputedStyle(document.documentElement);
 
 type ValidColorStrings = `#${string}` | `--${string}`;
-
-const USER_REGEX = /\/@[^/]+\//;
 
 const SHARED_VERSION_HISTORY_KEY = "shared-version-history";
 const SHARED_VERSION_HISTORY_VERSION = 1;
@@ -95,57 +81,45 @@ export class Board extends EventTarget {
   #currentTabId: TabId | null = null;
 
   constructor(
-    /** @deprecated */
-    public readonly providers: GraphProvider[],
     public readonly loader: GraphLoader,
+    public readonly graphStore: MutableGraphStore,
     /**
      * Extra Kits, supplied by the board server.
      * */
     public readonly boardServerKits: Kit[],
     public readonly boardServers: RuntimeConfigBoardServers,
     public readonly recentBoardStore: RecentBoardStore,
-    protected readonly recentBoards: BreadboardUI.Types.RecentBoard[],
     public readonly signinAdapter: SigninAdapter,
     public readonly googleDriveClient?: GoogleDriveClient
   ) {
     super();
-    boardServers.servers.forEach((server) => {
-      if (server.capabilities.events) {
-        // install event listeners
-        server.addEventListener("savestatuschange", ({ url, status }) => {
-          if (!this.#currentTabId) {
-            return;
-          }
+    boardServers.googleDriveBoardServer.addEventListener(
+      "savestatuschange",
+      ({ url, status }) => {
+        if (!this.#currentTabId) {
+          return;
+        }
 
-          const currentTab = this.#tabs.get(this.#currentTabId);
-          if (!currentTab || currentTab.graph?.url !== url) {
-            return;
-          }
+        const currentTab = this.#tabs.get(this.#currentTabId);
+        if (!currentTab || currentTab.graph?.url !== url) {
+          return;
+        }
 
-          this.#tabSaveStatus.set(this.#currentTabId, toSaveStatus(status));
-          this.dispatchEvent(new RuntimeBoardSaveStatusChangeEvent());
-        });
+        this.#tabSaveStatus.set(this.#currentTabId, toSaveStatus(status));
+        this.dispatchEvent(new RuntimeBoardSaveStatusChangeEvent());
       }
-    });
+    );
   }
 
   currentURL: URL | null = null;
 
   getRecentBoards(): readonly BreadboardUI.Types.RecentBoard[] {
-    return this.recentBoards as Readonly<BreadboardUI.Types.RecentBoard[]>;
+    return this.recentBoardStore.boards;
   }
 
   async setPinnedStatus(url: string, status: "pin" | "unpin" = "unpin") {
     url = url.replace(window.location.origin, "");
-    const boardToUpdate = this.recentBoards.find((board) => board.url === url);
-    if (!boardToUpdate) {
-      console.log(`Unable to find board ${url}`);
-      return;
-    }
-    boardToUpdate.pinned = status === "pin";
-
-    await this.recentBoardStore.store(this.recentBoards);
-    this.dispatchEvent(new RuntimeBoardServerChangeEvent());
+    await this.recentBoardStore.setPin(url, status === "pin");
   }
 
   async #trackRecentBoard(url?: string) {
@@ -154,46 +128,15 @@ export class Board extends EventTarget {
     }
 
     url = url.replace(window.location.origin, "");
-    const currentIndex = this.recentBoards.findIndex(
-      (board) => board.url === url
-    );
-    if (currentIndex === -1) {
-      this.recentBoards.unshift({
-        title: this.currentTab.graph.title ?? "Untitled",
-        url,
-      });
-    } else {
-      const [item] = this.recentBoards.splice(currentIndex, 1);
-      if (this.currentTab.graph.title) {
-        item.title = this.currentTab.graph.title;
-      }
-      this.recentBoards.unshift(item);
-    }
-
-    if (this.recentBoards.length > 50) {
-      this.recentBoards.length = 50;
-    }
-
-    await this.recentBoardStore.store(this.recentBoards);
+    await this.recentBoardStore.add({
+      title: this.currentTab.graph.title ?? "Untitled",
+      url,
+    });
   }
 
   async #removeRecentUrl(url: string) {
     url = url.replace(window.location.origin, "");
-    const count = this.recentBoards.length;
-
-    // Remove in-place because the boards array is read-only.
-    const removeIndex = this.recentBoards.findIndex(
-      (board) => board.url === url
-    );
-    if (removeIndex !== -1) {
-      this.recentBoards.splice(removeIndex, 1);
-    }
-
-    if (count === this.recentBoards.length) {
-      return;
-    }
-
-    await this.recentBoardStore.store(this.recentBoards);
+    await this.recentBoardStore.remove(url);
   }
 
   #canParse(url: string, base?: string) {
@@ -232,96 +175,6 @@ export class Board extends EventTarget {
       }
     }
     return boardUrl;
-  }
-
-  async connect(
-    location?: string,
-    apiKey?: string
-  ): Promise<{ success: boolean; error?: string }> {
-    const boardServerInfo = await connectToBoardServer(
-      this.signinAdapter,
-      location,
-      apiKey,
-      this.googleDriveClient
-    );
-    if (!boardServerInfo) {
-      this.dispatchEvent(
-        new RuntimeErrorEvent(`Unable to connect to Server "${location}"`)
-      );
-
-      // We return true here because we don't need the toast from the Visual
-      // Editor. Instead we use the above RuntimeErrorEvent to ensure that
-      // the user is notified.
-      return { success: false };
-    } else {
-      this.boardServers.servers = [
-        ...(await getBoardServers(this.signinAdapter, this.googleDriveClient)),
-        ...this.boardServers.builtInBoardServers,
-      ];
-      this.boardServers.loader = createLoader(this.boardServers.servers);
-      this.dispatchEvent(
-        new RuntimeBoardServerChangeEvent(
-          boardServerInfo.title,
-          boardServerInfo.url
-        )
-      );
-      return { success: true };
-    }
-
-    return { success: false };
-  }
-
-  async disconnect(location: string) {
-    const success = await disconnectFromBoardServer(location);
-    if (!success) {
-      this.dispatchEvent(
-        new RuntimeErrorEvent("Unable to disconnect from Board Server")
-      );
-
-      // We return true here because we don't need the toast from the Visual
-      // Editor. Instead we use the above RuntimeErrorEvent to ensure that
-      // the user is notified.
-      return { success: false };
-    }
-    this.boardServers.servers = [
-      ...(await getBoardServers(this.signinAdapter, this.googleDriveClient)),
-      ...this.boardServers.builtInBoardServers,
-    ];
-    this.boardServers.loader = createLoader(this.boardServers.servers);
-    this.dispatchEvent(new RuntimeBoardServerChangeEvent());
-  }
-
-  getBoardServerByName(name: string) {
-    return (
-      this.boardServers.servers.find((server) => server.name === name) || null
-    );
-  }
-
-  getBoardServerForURL(url: URL) {
-    return (
-      this.boardServers.servers.find((server) => server.canProvide(url)) || null
-    );
-  }
-
-  getBoardServers(): BoardServer[] {
-    return this.boardServers.servers;
-  }
-
-  /**
-   *
-   * @deprecated Use getBoardServers() instead.
-   */
-  getProviders(): GraphProvider[] {
-    console.warn("getProviders is deprecated - use getBoardServers instead.");
-    return this.providers;
-  }
-
-  getLoader(): GraphLoader {
-    return this.boardServers.loader;
-  }
-
-  getGraphStore(): MutableGraphStore {
-    return this.boardServers.graphStore;
   }
 
   get tabs() {
@@ -433,7 +286,7 @@ export class Board extends EventTarget {
     const moduleId = descriptor.main || null;
 
     const id = globalThis.crypto.randomUUID();
-    const mainGraphId = this.getGraphStore().addByDescriptor(descriptor);
+    const mainGraphId = this.graphStore.addByDescriptor(descriptor);
     if (!mainGraphId.success) {
       throw new Error(`Unable to add graph: ${mainGraphId.error}`);
     }
@@ -481,27 +334,19 @@ export class Board extends EventTarget {
       const base = new URL(window.location.href);
       let boardServer: BoardServer | null = null;
 
-      let kits = this.boardServerKits;
       let graph: GraphDescriptor | null = null;
       if (this.#canParse(url, base.href)) {
-        boardServer = this.getBoardServerForURL(new URL(url, base));
-        if (boardServer && this.boardServers) {
-          kits = (boardServer as BoardServer).kits ?? this.boardServerKits;
-          const resourceKey = urlAtTimeOfCall
-            ? new URL(urlAtTimeOfCall).searchParams.get("resourcekey")
-            : null;
-          const urlMaybeWithResourceKey = resourceKey
-            ? url + `?resourcekey=${resourceKey}`
-            : url;
-          const loadResult = await this.boardServers.loader.load(
-            urlMaybeWithResourceKey,
-            { base }
-          );
-          graph = loadResult.success ? loadResult.graph : null;
-        } else {
-          const loadResult = await this.loader.load(url, { base });
-          graph = loadResult.success ? loadResult.graph : null;
-        }
+        boardServer = this.boardServers.googleDriveBoardServer;
+        const resourceKey = urlAtTimeOfCall
+          ? new URL(urlAtTimeOfCall).searchParams.get("resourcekey")
+          : null;
+        const urlMaybeWithResourceKey = resourceKey
+          ? url + `?resourcekey=${resourceKey}`
+          : url;
+        const loadResult = await this.loader.load(urlMaybeWithResourceKey, {
+          base,
+        });
+        graph = loadResult.success ? loadResult.graph : null;
       }
 
       if (!graph) {
@@ -539,7 +384,7 @@ export class Board extends EventTarget {
       // This is not elegant, since we actually load the graph by URL,
       // and we should know this mainGraphId by now.
       // TODO: Make this more elegant.
-      const mainGraphId = this.getGraphStore().addByDescriptor(graph);
+      const mainGraphId = this.graphStore.addByDescriptor(graph);
       if (!mainGraphId.success) {
         throw new Error(`Unable to add graph: ${mainGraphId.error}`);
       }
@@ -584,7 +429,7 @@ export class Board extends EventTarget {
 
       this.#tabs.set(id, {
         id,
-        boardServerKits: kits,
+        boardServerKits: this.boardServerKits,
         name: graph.title ?? "Untitled board",
         graph,
         graphIsMine,
@@ -638,27 +483,6 @@ export class Board extends EventTarget {
 
     this.#currentTabId = id;
     this.dispatchEvent(new RuntimeTabChangeEvent());
-  }
-
-  changeWorkspaceItem(
-    id: TabId,
-    subGraphId: GraphIdentifier | null,
-    moduleId: ModuleIdentifier | null
-  ) {
-    const tab = this.#tabs.get(id);
-    if (!tab) {
-      return;
-    }
-
-    if (subGraphId && moduleId) {
-      console.error("Unable to select both a subgraph and module");
-      return;
-    }
-
-    tab.subGraphId = subGraphId;
-    tab.moduleId = moduleId;
-
-    this.dispatchEvent(new RuntimeWorkspaceItemChangeEvent());
   }
 
   closeAllTabs() {
@@ -715,7 +539,7 @@ export class Board extends EventTarget {
     }
 
     const boardUrl = new URL(tab.graph.url);
-    const boardServer = this.getBoardServerForURL(boardUrl);
+    const boardServer = this.boardServers.googleDriveBoardServer;
     if (!boardServer) {
       return false;
     }
@@ -730,54 +554,11 @@ export class Board extends EventTarget {
     }
 
     const boardUrl = new URL(url);
-    const boardServer = this.getBoardServerForURL(boardUrl);
+    const boardServer = this.boardServers.googleDriveBoardServer;
     if (!boardServer) {
       return false;
     }
-    const isMineAccordingToBoardServer = boardServer.isMine?.(boardUrl);
-    if (isMineAccordingToBoardServer !== undefined) {
-      return isMineAccordingToBoardServer;
-    }
-
-    const capabilities = boardServer.canProvide(boardUrl);
-    if (!capabilities || !capabilities.save) {
-      return false;
-    }
-
-    for (const store of boardServer.items?.().values() ?? []) {
-      for (const item of store.items.values()) {
-        if (item.url !== url && item.url.replace(USER_REGEX, "/") !== url) {
-          continue;
-        }
-
-        return item.mine;
-      }
-    }
-
-    return false;
-  }
-
-  canPreview(id: TabId | null): boolean {
-    if (!id) {
-      return false;
-    }
-
-    const tab = this.#tabs.get(id);
-    if (!tab) {
-      return false;
-    }
-
-    if (!tab.graph || !tab.graph.url) {
-      return false;
-    }
-
-    const boardUrl = new URL(tab.graph.url);
-    const boardServer = this.getBoardServerForURL(boardUrl);
-    if (!boardServer) {
-      return false;
-    }
-
-    return boardServer.capabilities.preview;
+    return boardServer.isMine(boardUrl);
   }
 
   #tabSaveId = new Map<
@@ -881,10 +662,7 @@ export class Board extends EventTarget {
       delete tab.graph.assets["@@thumbnail"];
 
       const boardUrl = new URL(tab.graph.url);
-      const boardServer = this.getBoardServerForURL(boardUrl);
-      if (!boardServer) {
-        return noSave;
-      }
+      const boardServer = this.boardServers.googleDriveBoardServer;
 
       const capabilities = boardServer.canProvide(boardUrl);
       if (!capabilities || !capabilities.save) {
@@ -939,7 +717,7 @@ export class Board extends EventTarget {
   #isSavingAs = false;
 
   async saveAs(
-    boardServerName: string,
+    _boardServerName: string,
     _location: string,
     _fileName: string,
     graph: GraphDescriptor,
@@ -968,7 +746,7 @@ export class Board extends EventTarget {
     }
 
     const fail = { result: false, error: "Unable to save", url: undefined };
-    const boardServer = this.getBoardServerByName(boardServerName);
+    const boardServer = this.boardServers.googleDriveBoardServer;
     if (!boardServer) {
       this.#isSavingAs = false;
       if (snackbarId) {
@@ -1030,7 +808,7 @@ export class Board extends EventTarget {
   }
 
   async delete(
-    providerName: string,
+    _providerName: string,
     url: string,
     messages: { start: string; end: string; error: string }
   ) {
@@ -1047,7 +825,7 @@ export class Board extends EventTarget {
     );
 
     const fail = { result: false, error: "Unable to delete" };
-    const boardServer = this.getBoardServerByName(providerName);
+    const boardServer = this.boardServers.googleDriveBoardServer;
     if (!boardServer) {
       return fail;
     }
@@ -1071,107 +849,6 @@ export class Board extends EventTarget {
     );
 
     return result;
-  }
-
-  async extensionAction<T extends BoardServerExtensionNamespace>(
-    id: TabId | null,
-    namespace: T,
-    action: keyof BoardServerExtension[T],
-    ...args: unknown[]
-  ) {
-    if (!id) {
-      return;
-    }
-
-    const tab = this.#tabs.get(id);
-    if (!tab) {
-      return;
-    }
-
-    switch (namespace) {
-      case "node": {
-        switch (action) {
-          case "onSelect": {
-            // id: NodeIdentifier,
-            // type: string,
-            // configuration: NodeConfiguration
-            const node = tab.graph.nodes.find((node) => node.id === args[0]);
-            const comment = tab.graph.metadata?.comments?.find(
-              (comment) => comment.id === args[0]
-            );
-            args = [
-              ...args,
-              node ? node.type : comment ? "comment" : "unknown",
-              node ? node.configuration : comment ? comment.text : {},
-            ];
-            break;
-          }
-
-          case "onDeselect": {
-            // Noop.
-            break;
-          }
-
-          case "onAction": {
-            // action: string,
-            // kits: Kit[],
-            // id: NodeIdentifier,
-            // type: string,
-            // configuration: NodeConfiguration
-            const node = tab.graph.nodes.find((node) => node.id === args[0]);
-            const comment = tab.graph.metadata?.comments?.find(
-              (comment) => comment.id === args[0]
-            );
-            args = [
-              "replaceContent",
-              tab.boardServerKits,
-              ...args,
-              node ? node.type : comment ? "comment" : "unknown",
-              node ? node.configuration : comment ? comment.text : {},
-            ];
-            break;
-          }
-        }
-      }
-    }
-
-    // API.
-    const dispatchEvent = this.dispatchEvent.bind(this);
-    args.unshift({
-      async send(method: string, args: unknown[]) {
-        dispatchEvent(new RuntimeHostAPIEvent(tab, method, args));
-      },
-    });
-
-    return this.#handleExtensionAction(tab, namespace, action, ...args);
-  }
-
-  async #handleExtensionAction<T extends BoardServerExtensionNamespace>(
-    tab: Tab,
-    namespace: T,
-    action: keyof BoardServerExtension[T],
-    ...args: unknown[]
-  ) {
-    if (!tab.graph || !tab.graph.url) {
-      return;
-    }
-
-    const boardUrl = new URL(tab.graph.url);
-    const boardServer = this.getBoardServerForURL(boardUrl);
-    if (!boardServer) {
-      return;
-    }
-
-    for (const extension of boardServer.extensions) {
-      const ns = extension[namespace];
-      if (ns && ns[action]) {
-        if (typeof ns[action] !== "function") {
-          continue;
-        }
-
-        await ns[action].call(null, ...args);
-      }
-    }
   }
 
   async #loadLocalHistory(url: string): Promise<EditHistoryEntry[]> {

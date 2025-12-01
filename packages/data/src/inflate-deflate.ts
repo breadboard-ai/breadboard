@@ -4,148 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  DataInflator,
-  DataPartTransformType,
-  DataStore,
-  GraphDescriptor,
-  InlineDataCapabilityPart,
-  LLMContent,
-  Outcome,
-  SerializedDataStoreGroup,
-} from "@breadboard-ai/types";
-import {
-  asBase64,
-  asBlob,
-  isFileDataCapabilityPart,
-  isStoredData,
-  transformDataParts,
-} from "./common.js";
-import { ok } from "@breadboard-ai/utils";
-
-export { transformContents };
-
-async function transformContents(
-  store: DataInflator,
-  content: LLMContent[],
-  type: DataPartTransformType,
-  graphUrl: URL
-): Promise<Outcome<LLMContent[]>> {
-  const transformer = store.transformer?.(graphUrl);
-  if (!transformer) return content;
-
-  // TODO: Implement support for other types.
-  if (type !== "persistent-temporary") return content;
-
-  const transforming = await transformDataParts(
-    graphUrl,
-    content,
-    type,
-    transformer
-  );
-  if (!ok(transforming)) return transforming;
-
-  return transforming;
-}
-
-/**
- * Recursively descends into the data object and inflates any
- * `StoreDataCapabilityPart`, turning it into
- * `InlineDataCapabilityPart`.
- * @param data -- data to inflate
- * @returns -- a new object with all `StoredDataCapabilityPart`
- * replaced with `InlineDataCapabilityPart`
- */
-export const inflateData = async (
-  store: DataInflator,
-  data: unknown,
-  graphUrl?: URL,
-  inflateToFileData?: boolean
-) => {
-  return visitGraphNodes(data, async (value) => {
-    if (isFileDataCapabilityPart(value)) {
-      if (inflateToFileData && store.transformer && graphUrl) {
-        if (inflateToFileData && store.transformer && graphUrl) {
-          const contents: LLMContent[] = [{ parts: [value] }];
-          const transformer = store.transformer(graphUrl);
-          if (transformer) {
-            const transforming = await transformDataParts(
-              graphUrl,
-              contents,
-              "file",
-              transformer
-            );
-            if (ok(transforming)) {
-              const part = transforming.at(0)?.parts.at(0);
-              if (part) return part;
-            } else {
-              throw new Error(transforming.$error);
-            }
-          }
-        }
-      }
-    } else if (isStoredData(value)) {
-      if (
-        (value.storedData.handle.startsWith("https://") ||
-          value.storedData.handle.startsWith("http://") ||
-          value.storedData.handle.startsWith("drive:/")) &&
-        !inflateToFileData
-      ) {
-        return value;
-      }
-      if (inflateToFileData && store.transformer && graphUrl) {
-        const contents: LLMContent[] = [{ parts: [value] }];
-        const transformer = store.transformer(graphUrl);
-        if (transformer) {
-          const transforming = await transformDataParts(
-            graphUrl,
-            contents,
-            "file",
-            transformer
-          );
-          if (ok(transforming)) {
-            const part = transforming.at(0)?.parts.at(0);
-            if (part) return part;
-          }
-        }
-      }
-      const blob = await store.retrieveAsBlob(value, graphUrl);
-      const data = await asBase64(blob);
-      const mimeType = blob.type;
-      return { inlineData: { data, mimeType } };
-    }
-    return value;
-  });
-};
-
-/**
- * Recursively descends into the data object and replaces any
- * instances of `StoredDataCapabilityPart` with another `StoredDataCapabilityPart`, using `SerializedDataStoreGroup` to map between the two.
- */
-export const remapData = async (
-  store: DataStore,
-  o: unknown,
-  serializedData: SerializedDataStoreGroup
-) => {
-  const handleMap = new Map<string, InlineDataCapabilityPart>();
-  for (const item of serializedData) {
-    const { handle } = item;
-    handleMap.set(handle, item);
-  }
-
-  return visitGraphNodes(o, async (value) => {
-    if (isStoredData(value)) {
-      const { handle } = value.storedData;
-      const serialized = handleMap.get(handle);
-      if (!serialized) {
-        throw new Error(`Could not find serialized data for handle: ${handle}`);
-      }
-      const blob = await asBlob(serialized);
-      return store.store(blob);
-    }
-    return value;
-  });
-};
+import { GraphDescriptor } from "@breadboard-ai/types";
+import { isStoredData } from "./common.js";
 
 /** Deletes all .data value from StoredDataCapabilityPart. */
 export const purgeStoredDataInMemoryValues = async (graph: GraphDescriptor) => {
@@ -166,7 +26,7 @@ export const purgeStoredDataInMemoryValues = async (graph: GraphDescriptor) => {
  *   1. Processing the data in parallel vs 1 by 1.
  *   2. Decouples the walking logic from the actual domain specific transformation logic.
  */
-export const visitGraphNodes = async (
+const visitGraphNodes = async (
   graph: unknown,
   nodeMapper: (data: unknown) => unknown
 ): Promise<unknown> => {

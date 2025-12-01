@@ -4,10 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  EmbeddedBoardServer,
-  isFromEmbeddedServer,
-} from "@breadboard-ai/embedded-board-server";
 import { BoardServer } from "@google-labs/breadboard";
 
 import { bgl as a2Bgl } from "./a2/index";
@@ -22,6 +18,10 @@ import { bgl as musicGeneratorBgl } from "./music-generator/index";
 import { bgl as toolsBgl } from "./tools/index";
 import { bgl as videoGeneratorBgl } from "./video-generator/index";
 import { bgl as autonameBgl } from "./autoname/index";
+import {
+  EmbeddedBoardServer,
+  isFromEmbeddedServer,
+} from "./embedded-board-server";
 
 export { createA2ModuleFactory } from "./runnable-module-factory";
 export { createA2Server, isA2 };

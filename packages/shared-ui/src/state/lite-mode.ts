@@ -43,6 +43,9 @@ const EXAMPLES: LiteModeIntentExample[] = [
 
 class ReactiveLiteModeState implements LiteModeState {
   @signal
+  accessor viewError: string = "";
+
+  @signal
   accessor status: FlowGenGenerationStatus = "initial";
 
   @signal
@@ -58,6 +61,9 @@ class ReactiveLiteModeState implements LiteModeState {
   finishGenerating(): void {
     if (this.stepList) {
       this.stepList.status = "ready";
+      // Consume intent.
+      this.#intent = undefined;
+      this.currentExampleIntent = "";
     }
     this.status = "initial";
   }
@@ -91,12 +97,13 @@ class ReactiveLiteModeState implements LiteModeState {
   get viewType(): LiteModeType {
     let zeroState = false;
 
+    if (this.viewError) return "error";
+
     const { loadState } = this.context.ui;
     switch (loadState) {
       case "Home": {
         const parsedUrl = this.context.router.parsedUrl;
         if (parsedUrl.page === "home") {
-          if (parsedUrl.remix) return "loading";
           zeroState = !!parsedUrl.new;
           if (zeroState) return "home";
         }

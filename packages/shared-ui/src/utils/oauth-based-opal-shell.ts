@@ -203,11 +203,15 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
      * Add the accessToken param to the backend API request that needs it
      * to transform files.
      */
-    if (url.endsWith("/uploadGeminiFile") || url.endsWith("/uploadBlobFile")) {
+    if (
+      url.endsWith("/uploadGeminiFile") ||
+      url.endsWith("/uploadBlobFile") ||
+      url.includes("/generateWebpageStream")
+    ) {
       const body = init.body;
       if (typeof body !== "string") {
         console.warn(
-          "When augmenting /uploadGeminiFile, request body is not string, bailing..."
+          "When augmenting request, body is not string, bailing..."
         );
         return init;
       }
@@ -219,7 +223,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
         };
       } catch {
         console.warn(
-          "When augmenting /uploadGeminiFile, request body is not JSON parsable, bailing"
+          "When augmenting request, body is not JSON parsable, bailing"
         );
         return init;
       }

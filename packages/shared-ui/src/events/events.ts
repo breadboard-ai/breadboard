@@ -78,6 +78,7 @@ export type StateEventDetailMap = EnforceEventTypeMatch<{
   "host.lock": Host.Lock;
   "host.unlock": Host.Unlock;
   "host.flagchange": Host.FlagChange;
+  "host.usersignin": Host.UserSignIn;
 
   "node.action": Node.Action;
   "node.addwithedge": Node.AddWithEdge;
@@ -259,6 +260,13 @@ export class ResetEvent extends Event {
   static eventName = "bbreset";
   constructor() {
     super(ResetEvent.eventName, { ...eventInit });
+  }
+}
+
+export class SubscriberCreditRefreshEvent extends Event {
+  static eventName = "bbsubscribercreditrefresh";
+  constructor() {
+    super(SubscriberCreditRefreshEvent.eventName, { ...eventInit });
   }
 }
 

@@ -12,8 +12,8 @@ import {
 import { OutputResponse, Schema } from "@google-labs/breadboard";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
-import { idFromPath, isParticleMode } from "./common";
-import { EphemeralParticleTree } from "./types";
+import { idFromPath, isParticleMode } from "./common.js";
+import { EphemeralParticleTree } from "./types.js";
 import { Signal } from "signal-polyfill";
 
 export { ReactiveAppScreen };

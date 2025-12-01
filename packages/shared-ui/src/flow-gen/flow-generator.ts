@@ -8,10 +8,14 @@ import type {
   GraphDescriptor,
   NodeConfiguration,
   NodeDescriptor,
+  LLMContent,
+  DataPart,
+  RuntimeFlagManager,
 } from "@breadboard-ai/types";
 import type {
   AppCatalystApiClient,
   AppCatalystChatRequest,
+  AppCatalystContentChunk,
 } from "./app-catalyst.js";
 import {
   isLLMContent,
@@ -48,15 +52,26 @@ export type EditStepFlowGenConstraint = {
   stepId: string;
 };
 
+export type FlowGenLLMContentPart = DataPart & {
+  partMetadata?: {
+    chunk_type: string;
+  };
+};
+
 export const flowGeneratorContext = createContext<FlowGenerator | undefined>(
   "FlowGenerator"
 );
 
 export class FlowGenerator {
   #appCatalystApiClient: AppCatalystApiClient;
+  #flagManager: RuntimeFlagManager;
 
-  constructor(appCatalystApiClient: AppCatalystApiClient) {
+  constructor(
+    appCatalystApiClient: AppCatalystApiClient,
+    flagManager: RuntimeFlagManager
+  ) {
     this.#appCatalystApiClient = appCatalystApiClient;
+    this.#flagManager = flagManager;
   }
 
   async oneShot({
@@ -64,6 +79,7 @@ export class FlowGenerator {
     context,
     constraint,
   }: OneShotFlowGenRequest): Promise<OneShotFlowGenResponse> {
+    const flags = await this.#flagManager.flags();
     if (constraint && !context?.flow) {
       throw new Error(
         `Error editing flow with constraint ${constraint.kind}:` +
@@ -83,6 +99,9 @@ export class FlowGenerator {
       ],
       appOptions: {
         format: "FORMAT_GEMINI_FLOWS",
+        ...(flags.agentMode && {
+          featureFlags: { enable_agent_mode_planner: true },
+        }),
       },
     };
     // Check to see if there's an existing flow with nodes and if so,
@@ -107,28 +126,27 @@ export class FlowGenerator {
       });
     }
 
-    const { messages } = await this.#appCatalystApiClient.chat(request);
-    console.log(
-      `[flowgen] AppCatalyst responses:`,
-      ...messages.map((message) => ({ ...message, data: atob(message.data) }))
-    );
     const responseFlows: GraphDescriptor[] = [];
     const responseMessages: string[] = [];
     const suggestions: string[] = [];
-    for (
-      let i = /* Skip our own messages */ request.messages.length;
-      i < messages.length;
-      i++
-    ) {
-      const message = messages[i];
-      if (message.mimetype === "text/breadboard") {
-        responseFlows.push(JSON.parse(atob(message.data)));
-      } else if (message.mimetype === "text/plain") {
-        responseMessages.push(atob(message.data));
-      } else if (message.mimetype === "text/rewritten") {
-        suggestions.push(atob(message.data));
-      }
+
+    if (flags.streamPlanner && !constraint) {
+      await this.#streamOneShot(
+        intent,
+        context,
+        responseFlows,
+        responseMessages,
+        suggestions
+      );
+    } else {
+      await this.#blockOneShot(
+        request,
+        responseFlows,
+        responseMessages,
+        suggestions
+      );
     }
+
     const generatedFlow = responseFlows.at(-1);
     if (!generatedFlow) {
       // If the backend can't make a flow, it will usually return some text
@@ -152,6 +170,112 @@ export class FlowGenerator {
       };
     }
     return { flow: generatedFlow };
+  }
+
+  async #streamOneShot(
+    intent: string,
+    context: OneShotFlowGenRequest["context"],
+    responseFlows: GraphDescriptor[],
+    responseMessages: string[],
+    suggestions: string[]
+  ) {
+    const flags = await this.#flagManager.flags();
+    let stream: AsyncGenerator<LLMContent>;
+    if (context?.flow && context.flow.nodes.length > 0) {
+      stream = this.#appCatalystApiClient.editOpalStream(
+        intent,
+        context.flow,
+        flags.agentMode
+      );
+    } else {
+      stream = this.#appCatalystApiClient.generateOpalStream(
+        intent,
+        flags.agentMode
+      );
+    }
+
+    for await (const chunk of stream) {
+      for (const part of chunk.parts) {
+        this.#processStreamPart(
+          part,
+          responseFlows,
+          responseMessages,
+          suggestions
+        );
+      }
+    }
+  }
+
+  #processStreamPart(
+    part: DataPart,
+    responseFlows: GraphDescriptor[],
+    responseMessages: string[],
+    suggestions: string[]
+  ) {
+    const partWithMetadata = part as FlowGenLLMContentPart;
+    const type = partWithMetadata.partMetadata?.chunk_type;
+    if ("text" in part) {
+      const isThought = type === "thought";
+      const isStatus = type === "planning_status";
+
+      if (isThought) {
+        console.log(`[flowgen] Thought: ${part.text}`);
+      } else if (isStatus) {
+        console.log(`[flowgen] Status: ${part.text}`);
+      } else if (type === "breadboard") {
+        try {
+          responseFlows.push(JSON.parse(part.text));
+        } catch (e) {
+          console.warn("Failed to parse breadboard chunk from text", e);
+          responseMessages.push(part.text);
+        }
+      } else if (type === "rewritten") {
+        suggestions.push(part.text);
+      } else {
+        responseMessages.push(part.text);
+      }
+    }
+  }
+
+  async #blockOneShot(
+    request: AppCatalystChatRequest,
+    responseFlows: GraphDescriptor[],
+    responseMessages: string[],
+    suggestions: string[]
+  ) {
+    const { messages } = await this.#appCatalystApiClient.chat(request);
+    console.log(
+      `[flowgen] AppCatalyst responses:`,
+      ...messages.map((message) => ({ ...message, data: atob(message.data) }))
+    );
+    for (
+      let i = /* Skip our own messages */ request.messages.length;
+      i < messages.length;
+      i++
+    ) {
+      this.#processBlockResponse(
+        messages[i],
+        responseFlows,
+        responseMessages,
+        suggestions
+      );
+    }
+  }
+
+  #processBlockResponse(
+    message: AppCatalystContentChunk,
+    responseFlows: GraphDescriptor[],
+    responseMessages: string[],
+    suggestions: string[]
+  ) {
+    const decodedData = atob(message.data);
+    if (message.mimetype === "text/breadboard") {
+      responseFlows.push(JSON.parse(decodedData));
+    } else if (message.mimetype === "text/plain") {
+      responseMessages.push(decodedData);
+    } else if (message.mimetype === "text/rewritten") {
+      suggestions.push(decodedData);
+    }
   }
 
   #promptForConstraint(

@@ -84,9 +84,8 @@
         "dist/server.tsbuildinfo"
       ],
       "dependencies": [
-        "../board-server#build:tsc",
-        "../mcp#build:tsc",
-        "../types#build:tsc"
+        "<dependencies>#build:tsc",
+        "!../visual-editror#build:tsc"
       ]
     },
     "serve": {
@@ -164,29 +163,32 @@
     "@google-labs/tsconfig": "^0.0.2",
     "@types/compression": "^1.8.1",
     "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.1",
     "@types/gtag.js": "^0.0.20",
     "@types/jwt-decode": "^2.2.1",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.34.1",
-    "dotenv": "^16.4.7",
+    "dotenv": "^17.2.3",
     "typescript": "^5.8.3",
     "vite-plugin-compression2": "^2.2.0",
     "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {
     "@breadboard-ai/a2": "0.6.0",
-    "@breadboard-ai/board-server": "0.16.0",
+    "@breadboard-ai/google-drive-kit": "0.8.0",
     "@breadboard-ai/mcp": "^0.1.0",
     "@breadboard-ai/shared-ui": "1.27.0",
     "@breadboard-ai/types": "0.9.0",
     "@breadboard-ai/utils": "^0.1.0",
     "@breadboard-ai/visual-editor": "1.30.0",
+    "@google-cloud/storage": "^7.15.2",
     "@google-labs/breadboard": "0.36.0",
     "@google/genai": "^1.27.0",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
     "express": "^4.21.2",
     "google-auth-library": "^10.1.0",
     "jwt-decode": "^4.0.0",

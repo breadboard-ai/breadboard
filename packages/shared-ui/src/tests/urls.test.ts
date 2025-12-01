@@ -24,6 +24,7 @@ suite("home", () => {
     mode: "canvas",
     lite: false,
     new: false,
+    colorScheme: undefined,
   });
 
   testSymmetrical(`${BASE_URL}/?mode=app`, {
@@ -31,6 +32,7 @@ suite("home", () => {
     mode: "app",
     lite: false,
     new: false,
+    colorScheme: undefined,
   });
 
   testSymmetrical(`${BASE_URL}/?mode=app&lite=true&new=true`, {
@@ -38,6 +40,7 @@ suite("home", () => {
     mode: "app",
     lite: true,
     new: true,
+    colorScheme: undefined,
   });
 
   testSymmetrical(`${BASE_URL}/?mode=app&lite=true`, {
@@ -45,14 +48,7 @@ suite("home", () => {
     mode: "app",
     lite: true,
     new: false,
-  });
-
-  testSymmetrical(`${BASE_URL}/?mode=app&lite=true&remix=test`, {
-    page: "home",
-    mode: "app",
-    lite: true,
-    new: false,
-    remix: "test",
+    colorScheme: undefined,
   });
 
   test("default to home w/ canvas", () => {
@@ -61,6 +57,7 @@ suite("home", () => {
       mode: "canvas",
       lite: false,
       new: false,
+      colorScheme: undefined,
     });
   });
 
@@ -70,6 +67,7 @@ suite("home", () => {
       mode: "canvas",
       lite: false,
       new: false,
+      colorScheme: undefined,
       dev: {
         foo: "hello",
         bar: "",
@@ -90,6 +88,7 @@ suite("app", () => {
     flow: "drive:/abc123",
     resourceKey: undefined,
     lite: false,
+    colorScheme: undefined,
   });
 
   testSymmetrical(
@@ -100,8 +99,19 @@ suite("app", () => {
       flow: "drive:/abc123",
       resourceKey: "ghi789",
       lite: false,
+      colorScheme: undefined,
     }
   );
+
+  testSymmetrical(`${BASE_URL}/?flow=333&remix=true&lite=true&mode=app`, {
+    page: "graph",
+    mode: "app",
+    flow: "333",
+    lite: true,
+    remix: true,
+    resourceKey: undefined,
+    colorScheme: undefined,
+  });
 
   testSymmetrical(
     `${BASE_URL}/?flow=drive:/abc123&shared&results=def456&mode=app`,
@@ -113,6 +123,7 @@ suite("app", () => {
       results: "def456",
       shared: true,
       lite: false,
+      colorScheme: undefined,
     }
   );
 
@@ -122,6 +133,7 @@ suite("app", () => {
       mode: "canvas",
       flow: "drive:/abc123",
       resourceKey: undefined,
+      colorScheme: undefined,
       lite: false,
     } satisfies MakeUrlInit);
   });
@@ -133,6 +145,7 @@ suite("app", () => {
       flow: "drive:/abc123",
       resourceKey: undefined,
       lite: false,
+      colorScheme: undefined,
     } satisfies MakeUrlInit);
   });
 
@@ -144,6 +157,7 @@ suite("app", () => {
         mode: "app",
         flow: "drive:/abc123",
         resourceKey: undefined,
+        colorScheme: undefined,
         lite: false,
         dev: {
           foo: "hello",
@@ -161,6 +175,7 @@ suite("canvas", () => {
     flow: "drive:/abc123",
     resourceKey: undefined,
     lite: false,
+    colorScheme: undefined,
   });
 
   test("preserves dev params", () => {
@@ -171,6 +186,7 @@ suite("canvas", () => {
         mode: "canvas",
         flow: "drive:/abc123",
         resourceKey: undefined,
+        colorScheme: undefined,
         lite: false,
         dev: {
           foo: "hello",
@@ -190,6 +206,7 @@ suite("landing", () => {
       mode: "canvas",
       redirectFromLanding: true,
       lite: false,
+      colorScheme: undefined,
     },
   });
 
@@ -203,6 +220,7 @@ suite("landing", () => {
         mode: "canvas",
         redirectFromLanding: true,
         lite: false,
+        colorScheme: undefined,
       },
       geoRestriction: true,
       missingScopes: true,
@@ -218,6 +236,7 @@ suite("landing", () => {
       flow: "drive:/abc123",
       resourceKey: undefined,
       lite: false,
+      colorScheme: undefined,
     },
   });
 
@@ -234,6 +253,7 @@ suite("landing", () => {
         results: "def456",
         shared: true,
         lite: false,
+        colorScheme: undefined,
       },
     }
   );
@@ -250,6 +270,7 @@ suite("landing", () => {
         redirectFromLanding: true,
         flow: "drive:/abc123",
         resourceKey: undefined,
+        colorScheme: undefined,
         lite: false,
       },
     }
@@ -268,6 +289,7 @@ suite("landing", () => {
           bar: "",
         } as object as BaseUrlInit["dev"],
         lite: false,
+        colorScheme: undefined,
       },
       dev: {
         foo: "hello",

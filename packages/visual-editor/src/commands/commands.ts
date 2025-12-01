@@ -140,10 +140,7 @@ const DeleteCommand: KeyboardCommand = {
       // Then delete any selected Assets.
       if (selectionGraph.assets.size) {
         if (!projectState) {
-          projectState = runtime.state.getOrCreateProjectState(
-            tab.mainGraphId,
-            editor
-          );
+          projectState = runtime.state.project;
         }
 
         if (!projectState) {

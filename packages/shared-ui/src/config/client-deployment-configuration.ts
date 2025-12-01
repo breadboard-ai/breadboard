@@ -21,13 +21,14 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   gulfRenderer: false,
   consistentUI: false,
   agentMode: false,
-  backendTransforms: false,
   observeSystemTheme: false,
   opalAdk: false,
   outputTemplates: false,
   googleOne: false,
   requireConsentForGetWebpage: false,
   requireConsentForOpenWebpage: false,
+  streamPlanner: false,
+  streamGenWebpage: false,
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(

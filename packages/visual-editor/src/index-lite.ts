@@ -20,7 +20,10 @@ import {
 } from "@breadboard-ai/shared-ui/events/events.js";
 import { LiteEditInputController } from "@breadboard-ai/shared-ui/lite/input/editor-input-lite.js";
 import { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
-import { RuntimeTabChangeEvent } from "./runtime/events";
+import {
+  RuntimeBoardLoadErrorEvent,
+  RuntimeTabChangeEvent,
+} from "./runtime/events";
 import { eventRoutes } from "./event-routing/event-routing";
 import { blankBoard } from "@breadboard-ai/shared-ui/utils/utils.js";
 import { repeat } from "lit/directives/repeat.js";
@@ -40,9 +43,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   accessor #showAdvancedEditorOnboardingTooltip = true;
 
   static styles = [
+    BBLite.Styles.HostColorScheme.match,
     BBLite.Styles.HostIcons.icons,
     BBLite.Styles.HostBehavior.behavior,
-    BBLite.Styles.HostColors.baseColors,
+    BBLite.Styles.HostColorsMaterial.baseColors,
     BBLite.Styles.HostType.type,
     css`
       * {
@@ -52,19 +56,25 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       :host {
         display: block;
         flex: 1;
+        background: var(--sys-color--body-background);
 
-        --example-color: light-dark(#e9eef6, #000000);
+        --example-color: var(--sys-color--surface-container-low);
         --example-text-color: light-dark(#575b5f, #ffffff);
-        --example-icon-background-color: light-dark(#d9d7fd, #ffffff);
-        --example-icon-color: light-dark(#665ef6, #ffffff);
+        --example-icon-background-color: light-dark(
+          #d9d7fd,
+          var(--sys-color--on-surface-low)
+        );
+        --example-icon-color: light-dark(#665ef6, #665ef6);
       }
 
-      #loading {
+      #loading,
+      #error {
         display: flex;
         height: 100%;
         width: 100%;
         align-items: center;
         justify-content: center;
+        color: var(--sys-color--on-surface);
 
         & .g-icon {
           margin-right: var(--bb-grid-size-2);
@@ -106,14 +116,14 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           text-align: center;
           height: var(--bb-grid-size-4);
           margin: var(--bb-grid-size-2) 0;
-          color: light-dark(#575b5f, #fff);
+          color: var(--sys-color--on-surface-variant);
         }
 
         & #app-view {
           position: relative;
           margin: 0 0 0 var(--bb-grid-size-3);
           border-radius: var(--bb-grid-size-4);
-          border: 1px solid var(--light-dark-n-90);
+          border: 1px solid var(--sys-color--surface-variant);
           display: flex;
           flex-direction: column;
           overflow: hidden;
@@ -131,7 +141,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             align-items: center;
             justify-content: space-between;
             padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-5);
-            color: var(--light-dark-n-10);
+            background: var(--sys-color--surface);
+            color: var(--sys-color--on-surface);
 
             & .left {
               flex: 1;
@@ -149,7 +160,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             a {
               display: flex;
               align-items: center;
-              color: var(--light-dark-n-10);
+              color: var(--sys-color--on-surface);
               border: none;
               background: none;
               padding: 0;
@@ -172,12 +183,16 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           flex-direction: column;
           gap: var(--bb-grid-size-4);
           height: 100%;
+          max-width: 800px;
+          margin: 0 auto;
 
           & > h1 {
+            color: var(--sys-color--on-surface);
             margin: 0 0 var(--bb-grid-size-11) 0;
           }
 
           & > h2 {
+            color: var(--sys-color--on-surface);
             margin: 0 0 var(--bb-grid-size-4) 0;
           }
 
@@ -314,22 +329,40 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     this.#showAdvancedEditorOnboardingTooltip =
       (globalThis.localStorage.getItem(ADVANCED_EDITOR_KEY) ?? "true") ===
       "true";
-
-    this.#init(parsedUrl);
   }
 
-  /**
-   * Perform any async initialization
-   */
-  async #init(
-    parsedUrl: BreadboardUI.Types.MakeUrlInit | undefined
-  ): Promise<void> {
-    // On lite mode, we always show login/consent before taking any action
-    await this.askUserToSignInIfNeeded();
-    if (parsedUrl) {
-      const remixUrl = parsedUrl.page === "home" ? parsedUrl.remix : null;
-      if (remixUrl) {
-        this.invokeRemixEventRouteWith(remixUrl);
+  override async doPostInitWork(): Promise<void> {
+    this.runtime.board.addEventListener(
+      RuntimeBoardLoadErrorEvent.eventName,
+      () => {
+        this.runtime.state.lite.viewError = Strings.from(
+          "ERROR_UNABLE_TO_LOAD_PROJECT"
+        );
+      }
+    );
+
+    const parsedUrl = this.runtime.router.parsedUrl;
+    switch (parsedUrl.page) {
+      case "graph": {
+        let resolve: () => void;
+        const waitForBoardToLoad = new Promise<void>((r) => {
+          resolve = r;
+        });
+        this.runtime.board.addEventListener(
+          RuntimeTabChangeEvent.eventName,
+          () => resolve!(),
+          { once: true }
+        );
+
+        const remixUrl = parsedUrl.remix ? parsedUrl.flow : null;
+        if (remixUrl) {
+          await waitForBoardToLoad;
+          this.invokeRemixEventRouteWith(remixUrl);
+        }
+        break;
+      }
+      case "home": {
+        await this.askUserToSignInIfNeeded();
       }
     }
   }
@@ -341,6 +374,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   async generate(
     intent: string
   ): Promise<OneShotFlowGenFailureResponse | undefined> {
+    if ((await this.askUserToSignInIfNeeded()) !== "success") {
+      return { error: "" };
+    }
     let projectState = this.runtime.state.project;
 
     if (!projectState) {
@@ -470,7 +506,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       ${this.showAppFullscreen
         ? nothing
         : html` <header class="w-400 md-title-small sans-flex">
-            <div class="left">${this.tab?.name ?? "Untitled app"}</div>
+            <div class="left">${this.tab?.graph.title ?? "Untitled app"}</div>
             <div class="right">
               <a
                 ${ref(this.#advancedEditorLink)}
@@ -500,9 +536,11 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           fullscreen: this.showAppFullscreen ? "active" : "available",
           small: true,
         }}
+        .systemThemeOverride=${true}
       >
       </bb-app-controller>
-      ${this.renderSnackbar()}
+      ${this.renderSnackbar()} ${this.#renderShellUI()}
+      ${this.renderConsentRequests()}
     </section>`;
   }
 
@@ -542,15 +580,11 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     return [
       this.renderTooltip(),
       this.#renderOnboardingTooltip(),
-      this.uiState.show.has("SignInModal")
-        ? this.renderSignInModal(true)
-        : nothing,
+      this.uiState.show.has("SignInModal") ? this.renderSignInModal() : nothing,
     ];
   }
 
   render() {
-    if (!this.ready) return nothing;
-
     const lite = this.runtime.state.lite;
 
     let content: HTMLTemplateResult | symbol = nothing;
@@ -572,11 +606,18 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         break;
       }
       case "loading":
-        return html`<div id="loading">
+        return html`<section id="lite-shell" @bbevent=${this.handleUserSignIn}>
+          <div id="loading">
             <span class="g-icon heavy-filled round">progress_activity</span
             >Loading
           </div>
-          ${this.#renderShellUI()}`;
+          ${this.renderSnackbar()}${this.#renderShellUI()}
+        </section>`;
+      case "error":
+        return html`<section id="lite-shell" @bbevent=${this.handleUserSignIn}>
+          <div id="error">${lite.viewError}</div>
+          ${this.renderSnackbar()}${this.#renderShellUI()}
+        </section>`;
       default:
         console.log("Invalid lite view state");
         return nothing;
@@ -609,6 +650,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             this.showAppFullscreen = evt.detail.action === "activate";
             return;
           }
+
+          if (this.handleUserSignIn(evt)) return;
 
           return this.handleRoutedEvent(evt);
         }}
@@ -649,5 +692,22 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         })
       )
     );
+  }
+
+  private handleUserSignIn(
+    evt: StateEvent<keyof StateEventDetailMap>
+  ): boolean {
+    if (evt.detail.eventType !== "host.usersignin") return false;
+
+    const { result } = evt.detail;
+    const { lite } = this.runtime.state;
+
+    if (result === "success") return true;
+
+    if (lite.viewType === "loading") {
+      // Happens when loading an inacessible opal
+      lite.viewError = Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT");
+    }
+    return true;
   }
 }

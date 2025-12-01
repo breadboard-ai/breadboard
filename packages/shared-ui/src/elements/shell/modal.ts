@@ -40,9 +40,6 @@ export class VEModal extends LitElement {
   @property({ reflect: true, type: Boolean })
   accessor blurBackground = false;
 
-  @property({ type: Boolean })
-  accessor undismissable = false;
-
   @query("dialog")
   accessor #dialog: HTMLDialogElement | null = null;
 
@@ -218,9 +215,6 @@ export class VEModal extends LitElement {
   ];
 
   #close(withSave = false) {
-    if (this.undismissable) {
-      return;
-    }
     if (!this.#dialog) {
       return;
     }

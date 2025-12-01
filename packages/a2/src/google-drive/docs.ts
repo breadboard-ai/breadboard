@@ -1,12 +1,7 @@
 import { mergeTextParts, toText } from "../a2/utils";
 import { marked, Token, Tokens } from "marked";
 import { unescape } from "./unescape";
-import {
-  Capabilities,
-  DataPart,
-  LLMContent,
-  StoredDataCapabilityPart,
-} from "@breadboard-ai/types";
+import { DataPart, LLMContent } from "@breadboard-ai/types";
 import { parseBase64DataUrl } from "@breadboard-ai/utils";
 
 export { contextToRequests, DOC_MIME_TYPE, markdownToContext };
@@ -71,7 +66,6 @@ function markdownToContext(markdown: string): LLMContent[] {
 }
 
 async function contextToRequests(
-  caps: Capabilities,
   context: LLMContent[] | undefined,
   startIndex: number
 ): Promise<unknown[]> {
@@ -86,24 +80,6 @@ async function contextToRequests(
       const { lastIndex, requests } = tokensToRequests(tokens, index);
       result.push(...requests);
       index = lastIndex;
-    } else if ("inlineData" in part) {
-      const contents = await caps.blob({
-        contents: [{ parts: [part] }],
-        transform: "persistent-temporary",
-      });
-      const storedPart = contents?.contents
-        ?.at(0)
-        ?.parts?.at(0) as StoredDataCapabilityPart;
-      if (storedPart) {
-        result.push({
-          insertInlineImage: {
-            uri: storedPart.storedData.handle,
-            location: {
-              index,
-            },
-          },
-        } satisfies DocsInsertInlineImageRequest);
-      }
     }
   }
   return result;

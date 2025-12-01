@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { inflateData } from "@breadboard-ai/data";
 import { CapabilitiesManagerImpl } from "@breadboard-ai/runtime/legacy.js";
 import type {
   InputValues,
@@ -14,7 +13,6 @@ import type {
   NodeDescriberResult,
   NodeHandlerContext,
   NodeHandlerObject,
-  Outcome,
   Schema,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
@@ -31,7 +29,6 @@ export { addRunModule };
  * allows tuning capabilities for each invoked module, including module
  * invocation itself.
  */
-type RunModuleInvocationFilter = (context: NodeHandlerContext) => Outcome<void>;
 
 function findHandler(handlerName: string, kits?: Kit[]) {
   const handler = kits
@@ -42,11 +39,7 @@ function findHandler(handlerName: string, kits?: Kit[]) {
   return handler;
 }
 
-function addRunModule(
-  factory: RunnableModuleFactory,
-  kits: Kit[],
-  invocationFilter?: RunModuleInvocationFilter
-): Kit[] {
+function addRunModule(factory: RunnableModuleFactory, kits: Kit[]): Kit[] {
   const existingRunModule = findHandler("runModule", kits);
   const originalDescriber =
     (existingRunModule &&
@@ -64,12 +57,7 @@ function addRunModule(
       url: import.meta.url,
       handlers: {
         runModule: {
-          invoke: async ({ $module, ...rest }, context) => {
-            // Run invocation filter first, and report error if it tells us
-            // we can't run this module.
-            const filtering = invocationFilter?.(context);
-            if (!ok(filtering)) return filtering;
-
+          invoke: async ({ $module, ...inputs }, context) => {
             const graph = context.outerGraph;
 
             const moduleDeclaration = graph?.modules;
@@ -94,13 +82,6 @@ function addRunModule(
               return err(`Unable to create runnable module: ${module.$error}`);
             }
 
-            const inputs = context.store
-              ? ((await inflateData(
-                  context.store,
-                  rest,
-                  context.base
-                )) as InputValues)
-              : rest;
             const result = await module.invoke(
               $module as string,
               inputs,

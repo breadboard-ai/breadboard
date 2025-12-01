@@ -32,6 +32,7 @@ import type {
   NodeHandlerContext,
   NodeHandlerMetadata,
   Result,
+  RuntimeFlagManager,
 } from "@breadboard-ai/types";
 import {
   filterEmptyValues,
@@ -128,6 +129,7 @@ class GraphStore
   readonly sandbox: RunnableModuleFactory;
   readonly loader: GraphLoader;
   readonly fileSystem: FileSystem;
+  readonly flags: RuntimeFlagManager;
 
   #legacyKits: GraphStoreEntry[];
 
@@ -152,6 +154,7 @@ class GraphStore
     this.sandbox = args.sandbox;
     this.loader = args.loader;
     this.fileSystem = args.fileSystem;
+    this.flags = args.flags;
     this.types = new DescribeResultTypeCache(
       new NodeTypeDescriberManager(this)
     );

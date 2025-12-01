@@ -304,11 +304,8 @@ async function invoke(
   moduleArgs: A2ModuleArgs
 ) {
   const { url: $board, type, modelName } = getMode(mode);
-  const flags = await readFlags(caps);
-  let generateForEach = false;
-  if (ok(flags)) {
-    generateForEach = flags.generateForEach && !!useForEach;
-  }
+  const generateForEach =
+    ((await readFlags(moduleArgs))?.generateForEach && !!useForEach) ?? false;
   // Model is treated as part of the Mode, but actually maps N:1
   // on actual underlying step type.
   if (modelName) {
@@ -330,7 +327,8 @@ async function invoke(
 
 async function describe(
   { inputs: { "generation-mode": mode, ...rest }, asType }: DescribeInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
 ) {
   const metadata = {
     title: "Generate",
@@ -352,10 +350,10 @@ async function describe(
     };
   }
 
-  const flags = await readFlags(caps);
+  const flags = await readFlags(moduleArgs);
   let generateForEachSchema: Schema["properties"] = {};
   const generateForEachBehavior: BehaviorSchema[] = [];
-  if (ok(flags) && flags.generateForEach) {
+  if (flags?.generateForEach) {
     generateForEachSchema = {
       "p-for-each": {
         type: "boolean",
@@ -383,7 +381,7 @@ async function describe(
     behavior.push(...(describing.inputSchema.behavior || []));
   }
 
-  const agentMode = ok(flags) && flags.agentMode;
+  const agentMode = flags?.agentMode;
   const filteredModes = MODES.filter(
     (mode) => agentMode || mode.id !== "agent"
   );

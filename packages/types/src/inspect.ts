@@ -38,13 +38,14 @@ import {
   NodeHandlerContext,
   NodeHandlerMetadata,
 } from "./node-handler.js";
-import { RunnableModule, RunnableModuleFactory, Sandbox } from "./sandbox.js";
+import { RunnableModuleFactory } from "./sandbox.js";
 import { BehaviorSchema, Schema } from "./schema.js";
 import {
   TypedEventTarget,
   TypedEventTargetType,
 } from "./typed-event-target.js";
 import { UUID } from "./uuid.js";
+import { RuntimeFlagManager } from "./flags.js";
 
 export type GraphVersion = number;
 
@@ -794,7 +795,9 @@ export type GraphStoreEntry = NodeHandlerMetadata & {
   updating: boolean;
 };
 
-export type GraphStoreArgs = Required<InspectableGraphOptions>;
+export type GraphStoreArgs = Required<InspectableGraphOptions> & {
+  flags: RuntimeFlagManager;
+};
 
 export type GraphStoreUpdateEvent = Event & {
   mainGraphId: MainGraphIdentifier;
@@ -825,6 +828,7 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
     readonly loader: GraphLoader;
     readonly fileSystem: FileSystem;
     readonly types: InspectableDescriberResultTypeCache;
+    readonly flags: RuntimeFlagManager;
 
     get(mainGraphId: MainGraphIdentifier): MutableGraph | undefined;
 

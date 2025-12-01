@@ -42,10 +42,6 @@ export type RuntimeFlags = {
    */
   agentMode: boolean;
   /**
-   * Moves data transformations (B2F, D2F, D2B) to the backend
-   */
-  backendTransforms: boolean;
-  /**
    * Enables Google One Quotas
    */
   googleOne: boolean;
@@ -69,6 +65,14 @@ export type RuntimeFlags = {
    * Requres users consent to use of open_webpage tool
    */
   requireConsentForOpenWebpage: boolean;
+  /**
+   * Enables SSE streaming for planner calls.
+   */
+  streamPlanner: boolean;
+  /**
+   * Enables SSE streaming for GenerateWebpage (output node HTML generation).
+   */
+  streamGenWebpage: boolean;
 };
 
 /**

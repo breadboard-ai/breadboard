@@ -80,10 +80,13 @@ export class ItemSelect extends LitElement {
       :host {
         display: block;
         position: relative;
+        color: var(--light-dark-n-0);
+
         --menu-width: 280px;
         --menu-item-column-gap: var(--bb-grid-size-3);
         --selected-item-column-gap: var(--bb-grid-size-3);
         --selected-item-height: var(--bb-grid-size-7);
+        --selected-item-background-color: light-dark(var(--n-98), var(--n-20));
         --selected-item-hover-color: transparent;
         --selected-item-border-radius: var(--bb-grid-size);
         --selected-item-font: normal var(--bb-label-medium) /
@@ -150,7 +153,7 @@ export class ItemSelect extends LitElement {
           cursor: pointer;
 
           &.active {
-            background-color: var(--light-dark-n-95);
+            background-color: light-dark(var(--n-95), var(--n-30));
           }
         }
 
@@ -179,7 +182,7 @@ export class ItemSelect extends LitElement {
         }
 
         &.selected {
-          background: var(--light-dark-n-98);
+          background: var(--selected-item-background-color);
           width: max-content;
           max-width: 100%;
           height: var(--selected-item-height);
@@ -199,7 +202,7 @@ export class ItemSelect extends LitElement {
           &:not([disabled]) {
             &:hover,
             &:focus {
-              background: var(--light-dark-n-95);
+              background: var(--selected-item-hover-color);
             }
           }
         }
@@ -208,7 +211,7 @@ export class ItemSelect extends LitElement {
       #item-selector {
         position: fixed;
         left: var(--left);
-        background: var(--light-dark-n-100);
+        background: light-dark(var(--n-100), var(--n-20));
         padding: 0;
         width: var(--menu-width);
         height: fit-content;
@@ -220,7 +223,7 @@ export class ItemSelect extends LitElement {
         box-shadow: var(--bb-elevation-5);
 
         & .heading {
-          color: var(--light-dark-n-98);
+          color: light-dark(var(--n-98), var(--n-70));
           font: normal var(--bb-label-small) / var(--bb-label-line-height-small)
             var(--bb-font-family);
           margin: var(--bb-grid-size-2) var(--bb-grid-size-3);

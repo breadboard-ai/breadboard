@@ -23,13 +23,13 @@ export class PromptView extends SignalWatcher(LitElement) {
   static styles = [
     Styles.HostIcons.icons,
     Styles.HostBehavior.behavior,
-    Styles.HostColors.baseColors,
+    Styles.HostColorsMaterial.baseColors,
     Styles.HostType.type,
     css`
       :host {
         display: block;
         padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
-        border: 1px solid var(--light-dark-n-90);
+        border: 1px solid var(--sys-color--surface-variant);
         border-radius: var(--bb-grid-size-4);
       }
 
@@ -41,6 +41,7 @@ export class PromptView extends SignalWatcher(LitElement) {
         overflow: hidden;
         text-overflow: ellipsis;
         box-sizing: content-box;
+        color: var(--sys-color--on-surface);
       }
 
       button {
@@ -53,7 +54,7 @@ export class PromptView extends SignalWatcher(LitElement) {
         width: 100%;
         padding: 0;
         margin: 0;
-        color: var(--light-dark-n-70);
+        color: var(--sys-color--on-surface);
         border-radius: var(--bb-grid-size);
 
         &:not([disabled]) {
@@ -62,7 +63,8 @@ export class PromptView extends SignalWatcher(LitElement) {
 
         & .g-icon {
           display: none;
-          color: var(--light-dark-n-0);
+          color: var(--sys-color--on-surface);
+
           &::before {
             content: "keyboard_arrow_down";
           }

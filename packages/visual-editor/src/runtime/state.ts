@@ -4,16 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { McpClientManager } from "@breadboard-ai/mcp";
 import { State } from "@breadboard-ai/shared-ui";
 import { createLiteModeState } from "@breadboard-ai/shared-ui/state/lite-mode.js";
 import {
   LiteModeState,
   Project,
   RuntimeContext,
-  UI,
 } from "@breadboard-ai/shared-ui/state/types.js";
-import { BoardServer, RuntimeFlagManager } from "@breadboard-ai/types";
 import {
   EditableGraph,
   MainGraphIdentifier,
@@ -27,62 +24,20 @@ export { StateManager };
  * Holds various important bits of UI state
  */
 class StateManager implements RuntimeContext {
-  #ui: State.UI | null = null;
+  ui: State.UI;
   #map: Map<MainGraphIdentifier, State.Project> = new Map();
   #store: MutableGraphStore;
-  #fetchWithCreds: typeof globalThis.fetch;
-  #servers: BoardServer[];
-  #flagManager: RuntimeFlagManager;
-  #mcpClientManager: McpClientManager;
 
   readonly lite: LiteModeState;
 
   constructor(
-    private readonly runtime: Runtime,
-    store: MutableGraphStore,
-    fetchWithCreds: typeof globalThis.fetch,
-    boardServers: BoardServer[],
-    flagManager: RuntimeFlagManager,
-    mcpClientManager: McpClientManager
+    // Omitting state to avoid circular references
+    private readonly runtime: Omit<Runtime, "state">,
+    store: MutableGraphStore
   ) {
     this.#store = store;
-    this.#fetchWithCreds = fetchWithCreds;
-    this.#servers = boardServers;
-    this.#flagManager = flagManager;
-    this.#mcpClientManager = mcpClientManager;
+    this.ui = State.createUIState(this.runtime.flags);
     this.lite = createLiteModeState(this);
-  }
-
-  #findServer(url: URL): BoardServer | null {
-    for (const server of this.#servers) {
-      if (server.canProvide(url)) {
-        return server;
-      }
-    }
-    return null;
-  }
-
-  appendServer(boardServer: BoardServer | null) {
-    if (
-      !boardServer ||
-      this.#servers.findIndex((server) => server === boardServer) !== -1
-    ) {
-      return;
-    }
-
-    this.#servers.push(boardServer);
-  }
-
-  getOrCreateUIState() {
-    if (!this.#ui) {
-      this.#ui = State.createUIState(this.#flagManager);
-    }
-
-    return this.#ui;
-  }
-
-  get ui(): UI {
-    return this.getOrCreateUIState();
   }
 
   get project(): Project | null {
@@ -98,13 +53,7 @@ class StateManager implements RuntimeContext {
     return this.runtime.router;
   }
 
-  getProjectState(mainGraphId?: MainGraphIdentifier): State.Project | null {
-    if (!mainGraphId) return null;
-
-    return this.#map.get(mainGraphId) || null;
-  }
-
-  getOrCreateProjectState(
+  private getOrCreateProjectState(
     mainGraphId: MainGraphIdentifier,
     editable: EditableGraph | null
   ): State.Project | null {
@@ -119,9 +68,9 @@ class StateManager implements RuntimeContext {
     state = State.createProjectState(
       mainGraphId,
       this.#store,
-      this.#fetchWithCreds,
-      this.#findServer.bind(this),
-      this.#mcpClientManager,
+      this.runtime.fetchWithCreds,
+      this.runtime.googleDriveBoardServer,
+      this.runtime.mcpClientManager,
       editable || undefined
     );
     this.#map.set(mainGraphId, state);

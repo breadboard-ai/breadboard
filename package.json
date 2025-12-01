@@ -25,13 +25,15 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "<workspaces>#<this>"
+        "<workspaces>#<this>",
+        "!./experiments/logic#<this>"
       ]
     },
     "test": {
       "dependencies": [
         "<workspaces>#<this>",
-        "!./packages/ui-tests#<this>"
+        "!./packages/ui-tests#<this>",
+        "!./experiments/screens#<this>"
       ]
     },
     "lint": {
@@ -100,7 +102,7 @@
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.34.1",
-    "ava": "6.4.0",
+    "ava": "6.4.1",
     "eslint": "^8.57.1",
     "eslint-plugin-expect-type": "^0.6.2",
     "prettier": "^3.6.2",
@@ -110,7 +112,8 @@
   },
   "workspaces": [
     "./core/*",
-    "./packages/*"
+    "./packages/*",
+    "./experiments/*"
   ],
   "repository": {
     "type": "git",

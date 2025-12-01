@@ -3,17 +3,8 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import * as StringsHelper from "../../strings/helper.js";
-const Strings = StringsHelper.forSection("Editor");
 
-import {
-  html,
-  css,
-  PropertyValues,
-  nothing,
-  HTMLTemplateResult,
-  svg,
-} from "lit";
+import { html, css, PropertyValues, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -21,7 +12,6 @@ import { toCSSMatrix } from "./utils/to-css-matrix";
 import { Box } from "./box";
 import {
   NodeBoundsUpdateRequestEvent,
-  NodeSelectEvent,
   SelectionTranslateEvent,
 } from "./events/events";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
@@ -29,7 +19,6 @@ import { repeat } from "lit/directives/repeat.js";
 import { toGridSize } from "./utils/to-grid-size";
 import { DragConnectorReceiver } from "../../types/types";
 import { DragConnectorStartEvent } from "../../events/events";
-import { getGlobalColor } from "../../utils/color.js";
 import { AssetPath, LLMContent } from "@breadboard-ai/types";
 import { InspectableAsset, ok } from "@google-labs/breadboard";
 import { SignalWatcher } from "@lit-labs/signals";
@@ -37,33 +26,6 @@ import { GraphAsset as GraphAssetState } from "../../state/types.js";
 import { icons } from "../../styles/icons.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
-
-const EDGE_STANDARD = getGlobalColor("--light-dark-n-80");
-
-const arrowWidth = 46;
-const arrowHeight = 36;
-const arrowSize = 8;
-const rightArrow = html`${svg`
-  <svg id="right-arrow" version="1.1"
-      width="${arrowWidth}" height=${arrowHeight}
-      xmlns="http://www.w3.org/2000/svg">
-    <line x1="0"
-      y1=${arrowHeight * 0.5}
-      x2=${arrowWidth}
-      y2=${arrowHeight * 0.5}
-      stroke=${EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
-
-    <line x1=${arrowWidth}
-      y1=${arrowHeight * 0.5}
-      x2=${arrowWidth - arrowSize}
-      y2=${arrowHeight * 0.5 - arrowSize}
-      stroke=${EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
-
-    <line x1=${arrowWidth} y1=${arrowHeight * 0.5}
-    x2=${arrowWidth - arrowSize}
-    y2=${arrowHeight * 0.5 + arrowSize}
-    stroke=${EDGE_STANDARD} stroke-width="2" stroke-linecap="round" />
-  </svg>`}`;
 
 @customElement("bb-graph-asset")
 export class GraphAsset
@@ -139,9 +101,11 @@ export class GraphAsset
 
       #container {
         width: 300px;
-        border-radius: var(--bb-grid-size-3);
-        color: var(--light-dark-n-10);
+        border-radius: calc(var(--bb-grid-size-3) + 1px);
+        color: light-dark(var(--n-10), var(--n-0));
         position: relative;
+        cursor: pointer;
+        border: 1px solid light-dark(var(--n-90), var(--n-30));
 
         #right-arrow {
           position: absolute;
@@ -189,6 +153,8 @@ export class GraphAsset
           line-height: 24px;
           cursor: pointer;
           position: relative;
+          z-index: 3;
+          color: light-dark(var(--n-0), var(--n-10));
 
           & span:not(.g-icon) {
             text-overflow: ellipsis;
@@ -254,11 +220,11 @@ export class GraphAsset
 
         & #content {
           position: relative;
-          background: var(--light-dark-n-100);
+          background: light-dark(var(--n-100), var(--n-20));
           padding: var(--bb-grid-size-3) var(--bb-grid-size-4);
           font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
-          color: var(--light-dark-n-10);
+          color: light-dark(var(--n-10), var(--n-90));
           line-height: var(--bb-grid-size-6);
           border-radius: 0 0 var(--bb-grid-size-3) var(--bb-grid-size-3);
           pointer-events: none;
@@ -279,6 +245,7 @@ export class GraphAsset
 
           bb-llm-output {
             --output-lite-border-color: transparent;
+            --output-lite-background-color: transparent;
             --output-border-radius: var(--bb-grid-size);
             margin-bottom: 0;
           }
@@ -378,30 +345,6 @@ export class GraphAsset
     const styles: Record<string, string> = {
       transform: toCSSMatrix(this.worldTransform, this.force2D),
     };
-
-    let defaultAdd: HTMLTemplateResult | symbol = nothing;
-    if (this.showDefaultAdd) {
-      defaultAdd = html` ${rightArrow}
-        <button
-          id="default-add"
-          @click=${async (evt: PointerEvent) => {
-            evt.stopImmediatePropagation();
-
-            if (!this.worldBounds || !(evt.target instanceof HTMLElement)) {
-              return;
-            }
-
-            this.showDefaultAdd = false;
-
-            const target = evt.target.getBoundingClientRect();
-            this.dispatchEvent(
-              new NodeSelectEvent(target.x + 16, target.y, this.assetPath)
-            );
-          }}
-        >
-          ${Strings.from("LABEL_ADD_ITEM")}
-        </button>`;
-    }
 
     let icon = "text_fields";
     if (this.asset?.type === "file") {
@@ -508,7 +451,6 @@ export class GraphAsset
         >
           <span class="g-icon filled round">${icon}</span>
           <span>${this.assetTitle}</span>
-          ${defaultAdd}
           <button
             id="connection-trigger"
             ?disabled=${this.updating}

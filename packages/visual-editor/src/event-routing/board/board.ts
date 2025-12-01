@@ -30,7 +30,7 @@ export const RunRoute: EventRoute<"board.run"> = {
       console.warn(`Unable to prepare run: no settings store provided`);
       return false;
     }
-    if (!(await askUserToSignInIfNeeded())) {
+    if ((await askUserToSignInIfNeeded()) !== "success") {
       return false;
     }
 
@@ -148,8 +148,7 @@ export const StopRoute: EventRoute<"board.stop"> = {
         url.searchParams.delete("results");
         history.pushState(null, "", url);
       }
-      const projectState = runtime.run.state.getProjectState(tab.mainGraphId);
-      projectState?.resetRun();
+      runtime.state.project?.resetRun();
       return true;
     }
 
@@ -263,7 +262,18 @@ export const RenameRoute: EventRoute<"board.rename"> = {
 export const CreateRoute: EventRoute<"board.create"> = {
   event: "board.create",
 
-  async do({ tab, runtime, uiState, originalEvent, embedHandler }) {
+  async do({
+    tab,
+    runtime,
+    uiState,
+    originalEvent,
+    askUserToSignInIfNeeded,
+    embedHandler,
+  }) {
+    if ((await askUserToSignInIfNeeded()) !== "success") {
+      return false;
+    }
+
     const boardServerName = uiState.boardServer;
     const location = uiState.boardLocation;
     const fileName = globalThis.crypto.randomUUID();
@@ -332,7 +342,7 @@ export const RemixRoute: EventRoute<"board.remix"> = {
       )
     );
 
-    const graphStore = runtime.board.getGraphStore();
+    const graphStore = runtime.board.graphStore;
     const addResult = graphStore.addByURL(originalEvent.detail.url, [], {});
     const graph = structuredClone(
       (await graphStore.getLatest(addResult.mutable)).graph
@@ -360,13 +370,7 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
 
   async do(deps) {
     const { tab, runtime, originalEvent, uiState } = deps;
-    const boardServer = runtime.board.getBoardServerForURL(
-      new URL(originalEvent.detail.url)
-    );
-    if (!boardServer) {
-      return false;
-    }
-
+    const boardServer = runtime.board.boardServers.googleDriveBoardServer;
     if (!confirm(originalEvent.detail.messages.query)) {
       return false;
     }

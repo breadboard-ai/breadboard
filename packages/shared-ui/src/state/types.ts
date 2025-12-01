@@ -424,11 +424,19 @@ export type UI = {
   blockingAction: boolean;
   lastSnackbarDetailsInfo: HTMLTemplateResult | string | null;
   flags: RuntimeFlags | null;
+  subscriptionStatus: SubscriptionStatus;
+  subscriptionCredits: number;
 };
+
+export type SubscriptionStatus =
+  | "indeterminate"
+  | "error"
+  | "subscribed"
+  | "not-subscribed";
 
 export type FlowGenGenerationStatus = "generating" | "initial" | "error";
 
-export type LiteModeType = "loading" | "home" | "editor" | "invalid";
+export type LiteModeType = "loading" | "home" | "editor" | "error" | "invalid";
 
 export type LiteModeIntentExample = {
   intent: string;
@@ -438,9 +446,22 @@ export type LiteModeIntentExample = {
  * Represents the flow gen state
  */
 export type LiteModeState = {
+  /**
+   * The various view types:
+   * - "loading" -- the Load Opal ghostie that is presented whenever
+   * an opal is loaded.
+   * - "home" -- user can create a new opal from here
+   * - "editor" -- user can run/edit opal from here
+   * - "error" -- the distinct error state for when we're neither in home nor
+   *   in editor (like, trying to load an invalid/inacessible opal)
+   * - "invalid" -- some invalid state that we don't know about
+   */
   viewType: LiteModeType;
 
-  // Remix triggering bits
+  /**
+   * Call this to trigger the "error" view
+   */
+  viewError: string;
 
   // FlowGen bits
   status: FlowGenGenerationStatus;

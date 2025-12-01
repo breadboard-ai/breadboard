@@ -252,9 +252,6 @@ class EvalRun implements EvalHarnessRuntimeArgs {
     async write() {
       // Do nothing
     },
-    blob() {
-      throw new Error(`Not implemented`);
-    },
   };
 
   readonly moduleArgs: A2ModuleArgs = {

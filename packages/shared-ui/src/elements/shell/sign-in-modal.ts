@@ -15,6 +15,10 @@ import {
   type SigninAdapter,
 } from "../../utils/signin-adapter.js";
 import { devUrlParams } from "../../utils/urls.js";
+import { UserSignInResponse } from "../../types/types.js";
+import { StateEvent } from "../../events/events.js";
+import { markdown } from "../../directives/markdown.js";
+import { classMap } from "lit/directives/class-map.js";
 
 type State =
   | { status: "closed" }
@@ -30,8 +34,8 @@ type State =
 
 type SignInRequest = {
   scopes: OAuthScope[] | undefined;
-  outcomePromise: Promise<boolean>;
-  outcomeResolve: (outcome: boolean) => void;
+  outcomePromise: Promise<UserSignInResponse>;
+  outcomeResolve: (outcome: UserSignInResponse) => void;
 };
 
 function appName() {
@@ -46,8 +50,8 @@ export class VESignInModal extends LitElement {
   @property({ attribute: false })
   accessor signinAdapter: SigninAdapter | undefined = undefined;
 
-  @property({ type: Boolean })
-  accessor undismissable = false;
+  @property()
+  accessor consentMessage: string | undefined = undefined;
 
   @state()
   accessor #state: State = { status: "closed" };
@@ -60,14 +64,16 @@ export class VESignInModal extends LitElement {
         display: contents;
       }
 
-      bb-modal::part(container) {
-        max-width: 318px;
-      }
-
       #container {
         display: flex;
         align-items: center;
         flex-direction: column;
+        max-width: 318px;
+
+        &.large {
+          max-width: 500px;
+          align-items: flex-end;
+        }
       }
 
       p {
@@ -98,6 +104,38 @@ export class VESignInModal extends LitElement {
 
       #missing-scopes-animation {
         margin: var(--bb-grid-size-2) 0;
+      }
+
+      div#consent {
+        p {
+          text-align: revert;
+          font-size: revert;
+        }
+      }
+
+      div#buttons {
+        display: flex;
+        flex-direction: row;
+        button {
+          margin-left: 16px;
+        }
+      }
+
+      #cancel-button {
+        margin-top: var(--bb-grid-size-4);
+        border-radius: var(--bb-grid-size-16);
+        background: none;
+        border: none;
+        padding: 16px 24px;
+        font-size: 16px;
+        cursor: pointer;
+        display: flex;
+        img {
+          margin-right: 8px;
+        }
+        &:hover {
+          background: var(--light-dark-n-98);
+        }
       }
     `,
   ];
@@ -143,19 +181,30 @@ export class VESignInModal extends LitElement {
   }
 
   #renderSignIn() {
-    return this.#renderModal(
-      `Sign in to use ${appName()}`,
-      html`
-        <p>To continue, you'll need to sign in with your Google account.</p>
-        ${this.#renderSignInButton()}
-      `
-    );
+    if (this.consentMessage) {
+      return this.#renderModal(
+        `Welcome to ${appName()}`,
+        "large",
+        html`<div id="consent">${markdown(this.consentMessage)}</div>
+          ${this.#renderAcceptCancelButtons()} `
+      );
+    } else {
+      return this.#renderModal(
+        `Sign in to use ${appName()}`,
+        "small",
+        html`
+          <p>To continue, you'll need to sign in with your Google account.</p>
+          ${this.#renderSignInButton()}
+        `
+      );
+    }
   }
 
   #renderAddScope() {
     // TODO(aomarks) Customize this based on the scope being requested.
     return this.#renderModal(
       "Additional access needed",
+      "small",
       html`
         <p>
           To continue, you'll need to grant additional access to your Google
@@ -169,6 +218,7 @@ export class VESignInModal extends LitElement {
   #renderGeoRestriction() {
     return this.#renderModal(
       `${appName()} is not available in your country yet`,
+      "small",
       nothing
     );
   }
@@ -176,6 +226,7 @@ export class VESignInModal extends LitElement {
   #renderMissingScopes() {
     return this.#renderModal(
       "Additional access required",
+      "small",
       html`
         <p>
           Please click <em>Sign in</em> again, and choose
@@ -195,21 +246,40 @@ export class VESignInModal extends LitElement {
   #renderOtherError() {
     return this.#renderModal(
       "Unexpected error",
+      "small",
       html`<p>An unexpected error occured.</p>`
     );
   }
 
-  #renderModal(title: string, content: HTMLTemplateResult | typeof nothing) {
+  #renderModal(
+    title: string,
+    type: "large" | "small",
+    content: HTMLTemplateResult | typeof nothing
+  ) {
     return html`
       <bb-modal
         appearance="basic"
         blurBackground
         .modalTitle=${title}
-        .undismissable=${this.undismissable}
-        @bbmodaldismissed=${() => this.#close(false)}
+        @bbmodaldismissed=${() => this.#close("dismissed")}
       >
-        <section id="container">${content}</section>
+        <section id="container" class=${classMap({ large: type === "large" })}>
+          ${content}
+        </section>
       </bb-modal>
+    `;
+  }
+
+  #renderAcceptCancelButtons() {
+    return html`
+      <div id="buttons">
+        <button id="cancel-button" class="sans" @click=${this.#close}>
+          Cancel
+        </button>
+        <button id="sign-in-button" class="sans" @click=${this.#onClickSignIn}>
+          Accept
+        </button>
+      </div>
     `;
   }
 
@@ -234,14 +304,16 @@ export class VESignInModal extends LitElement {
   async openAndWaitForSignIn(
     scopes?: OAuthScope[],
     status?: "sign-in" | "add-scope"
-  ): Promise<boolean> {
+  ): Promise<UserSignInResponse> {
     if (this.#state.status !== "closed") {
-      return this.#state.request.outcomePromise;
+      return (await this.#state.request.outcomePromise) ? "success" : "failure";
     }
     status ??=
       this.signinAdapter?.state === "signedin" ? "add-scope" : "sign-in";
-    let resolve: (outcome: boolean) => void;
-    const outcomePromise = new Promise<boolean>((r) => (resolve = r));
+    let resolve: (outcome: UserSignInResponse) => void;
+    const outcomePromise = new Promise<UserSignInResponse>(
+      (r) => (resolve = r)
+    );
     this.#state = {
       status,
       request: {
@@ -250,7 +322,11 @@ export class VESignInModal extends LitElement {
         scopes,
       },
     };
-    return outcomePromise;
+    const result = await outcomePromise;
+    this.dispatchEvent(
+      new StateEvent({ eventType: "host.usersignin", result })
+    );
+    return result;
   }
 
   async #onClickSignIn() {
@@ -259,7 +335,7 @@ export class VESignInModal extends LitElement {
     }
     if (!this.signinAdapter) {
       console.warn(`sign-in-modal was not provided a signinAdapter`);
-      this.#close(false);
+      this.#close("failure");
       return;
     }
     const result = await this.signinAdapter.signIn(this.#state.request.scopes);
@@ -283,10 +359,10 @@ export class VESignInModal extends LitElement {
       // user icon.
       window.location.reload();
     }
-    this.#close(result.ok);
+    this.#close(result.ok ? "success" : "failure");
   }
 
-  #close(outcome: boolean) {
+  #close(outcome: UserSignInResponse) {
     if (this.#state.status === "closed") {
       return;
     }

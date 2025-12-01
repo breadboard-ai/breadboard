@@ -9,8 +9,9 @@ import * as BreadboardUI from "@breadboard-ai/shared-ui";
 
 export const styles = [
   BreadboardUI.Styles.HostType.type,
-  BreadboardUI.Styles.HostColors.baseColors,
+  BreadboardUI.Styles.HostColorsBase.baseColors,
   BreadboardUI.Styles.HostIcons.icons,
+  BreadboardUI.Styles.HostColorScheme.match,
   css`
     * {
       box-sizing: border-box;
@@ -20,12 +21,6 @@ export const styles = [
       --header-height: 0;
       flex: 1 0 auto;
       display: flex;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      #container.systemTheme {
-        color-scheme: dark;
-      }
     }
 
     #container {

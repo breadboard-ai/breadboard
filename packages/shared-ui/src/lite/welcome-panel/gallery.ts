@@ -14,7 +14,6 @@ import { createRef, ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { OverflowMenuActionEvent, StateEvent } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
-import { icons } from "../../styles/icons.js";
 import { OverflowAction, RecentBoard } from "../../types/types.js";
 import {
   type SigninAdapter,
@@ -26,9 +25,8 @@ import { googleDriveClientContext } from "../../contexts/google-drive-client-con
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { guard } from "lit/directives/guard.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
-import { baseColors } from "../../styles/host/base-colors.js";
-import { type } from "../../styles/host/type.js";
 import { SignalWatcher } from "@lit-labs/signals";
+import * as Styles from "../../styles/styles.js";
 
 const GlobalStrings = StringsHelper.forSection("Global");
 const Strings = StringsHelper.forSection("ProjectListing");
@@ -36,14 +34,15 @@ const Strings = StringsHelper.forSection("ProjectListing");
 @customElement("bb-gallery-lite")
 export class GalleryLite extends SignalWatcher(LitElement) {
   static readonly styles = [
-    icons,
-    baseColors,
-    type,
+    Styles.HostIcons.icons,
+    Styles.HostColorsMaterial.baseColors,
+    Styles.HostType.type,
     css`
       :host {
         display: block;
         overflow: hidden;
       }
+
       bb-overflow-menu {
         position: fixed;
         right: auto;
@@ -68,7 +67,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        color: var(--welcome-text-color);
+        color: var(--sys-color--on-surface);
         padding-bottom: var(--bb-grid-size-4);
 
         & .gallery-title {
@@ -85,14 +84,14 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         border: none;
         height: var(--bb-grid-size-10);
         padding: 0 var(--bb-grid-size-4);
-        color: var(--welcome-button-color);
+        color: var(--sys-color--primary);
         cursor: pointer;
         transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
 
         &:not([disabled]) {
           &:hover,
           &:focus {
-            background: var(--welcome-surface-color);
+            background: var(--sys-color--surface-container-low);
           }
         }
 
@@ -362,6 +361,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         justify-content: flex-end;
         justify-self: flex-end;
         margin-top: var(--bb-grid-size-4);
+        color: var(--sys-color--on-surface);
 
         #page-numbers {
           margin-right: var(--bb-grid-size-3);
@@ -371,8 +371,9 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           width: var(--bb-grid-size-4);
           text-align: center;
           field-sizing: content;
-          border: 1px solid var(--light-dark-n-90);
+          border: 1px solid var(--sys-color--surface-container-highest);
           border-radius: var(--bb-grid-size);
+          background: var(--sys-color--surface);
         }
 
         input[type="number"]::-webkit-outer-spin-button,
@@ -387,7 +388,9 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           justify-content: center;
           background: none;
           border: none;
-          color: var(--light-dark-n-10);
+          color: oklch(
+            from var(--sys-color--on-surface) l c h / calc(alpha * 0.38)
+          );
           transition: color 0.2s cubic-bezier(0, 0, 0.3, 1);
           padding: 0;
 
@@ -396,12 +399,8 @@ export class GalleryLite extends SignalWatcher(LitElement) {
 
             &:hover,
             &:focus {
-              color: var(--light-dark-n-50);
+              color: var(--sys-color--on-surface);
             }
-          }
-
-          &[disabled] {
-            color: var(--light-dark-n-70);
           }
         }
       }

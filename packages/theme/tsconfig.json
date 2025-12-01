@@ -5,7 +5,6 @@
     "resolveJsonModule": true,
     "esModuleInterop": true
   },
-  "include": ["src/**/*", "tests/**/*"],
-  "exclude": ["bundled"],
+  "include": ["src/**/*.ts"],
   "extends": "@google-labs/tsconfig/base.json"
 }

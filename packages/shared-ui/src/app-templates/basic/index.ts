@@ -23,7 +23,7 @@ import {
 } from "../../types/types";
 
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
-import { createThemeStyles } from "@breadboard-ai/theme";
+import * as Theme from "@breadboard-ai/theme";
 import {
   BoardServer,
   GraphDescriptor,
@@ -627,7 +627,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return;
     }
 
-    const boardServer = this.boardServer;
+    const boardServer = this.boardServer as GoogleDriveBoardServer;
     if (!boardServer) {
       console.error(`No board server`);
       unlockButton();
@@ -641,7 +641,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     }
 
     const outputs = await inlineAllContent(
-      boardServer,
+      boardServer.dataPartTransformer(),
       this.run.finalOutput,
       currentGraphUrl
     );
@@ -807,7 +807,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     const shareableGraphUrl = `drive:/${shareableGraphFileId}`;
     const finalOutputValues = await inlineAllContent(
-      boardServer,
+      boardServer.dataPartTransformer(),
       this.run.finalOutput,
       shareableGraphUrl
     );
@@ -954,7 +954,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     if (this.options.theme) {
       styles = this.isEmpty
         ? emptyStyles
-        : createThemeStyles(this.options.theme);
+        : Theme.createThemeStyles(this.options.theme, Theme.appColorMapping);
     }
 
     // Special-case the default theme based on the mime types.

@@ -101,7 +101,7 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
       #container {
         display: flex;
         flex-direction: column;
-        background: var(--light-dark-n-100);
+        background: light-dark(var(--n-100), var(--n-15));
         border-radius: var(--bb-grid-size-4);
         height: 100%;
         overflow: auto;
@@ -110,18 +110,19 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 1px solid var(--light-dark-n-90);
+          border-bottom: 1px solid light-dark(var(--n-90), var(--n-30));
           height: var(--bb-grid-size-14);
           padding: 0 var(--bb-grid-size-3);
 
           & h1 {
             flex: 1;
+            color: light-dark(var(--n-0), var(--n-80));
           }
 
           & #close {
             width: 30px;
             height: 30px;
-            color: var(--light-dark-n-0);
+            color: light-dark(var(--n-0), var(--n-80));
             background: none;
             border: none;
             opacity: 0.6;
@@ -330,7 +331,10 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
                 margin: var(--bb-grid-size-2) 0;
                 border: none;
                 height: var(--bb-grid-size-12);
-                background: var(--ui-custom-o-25);
+                background: light-dark(
+                  var(--ui-custom-o-25),
+                  var(--ui-custom-o-30)
+                );
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -357,7 +361,10 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
 
                   &:hover,
                   &:focus {
-                    background: var(--ui-custom-o-20);
+                    background: light-dark(
+                      var(--ui-custom-o-20),
+                      var(--ui-custom-o-50)
+                    );
                   }
                 }
               }

@@ -11,12 +11,9 @@ import type {
 } from "@breadboard-ai/types";
 import {
   err,
-  isFileDataCapabilityPart,
-  ok,
   type DataPartTransformer,
   type Outcome,
 } from "@google-labs/breadboard";
-import type { GoogleDriveClient } from "../google-drive-client.js";
 import type { DriveOperations } from "./operations.js";
 
 export { GoogleDriveDataPartTransformer };
@@ -26,18 +23,7 @@ export type GoogleDriveToGeminiResponse = {
 };
 
 class GoogleDriveDataPartTransformer implements DataPartTransformer {
-  constructor(
-    public readonly client: GoogleDriveClient,
-    private readonly ops: DriveOperations
-  ) {}
-
-  async #createRequest(path: string, body: unknown): Promise<Request> {
-    return new Request(path, {
-      method: "POST",
-      credentials: "include",
-      body: JSON.stringify(body),
-    });
-  }
+  constructor(private readonly ops: DriveOperations) {}
 
   async persistPart(
     _graphUrl: URL,
@@ -58,82 +44,8 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
     }
   }
 
-  async toFileData(
-    _graphUrl: URL,
-    part: StoredDataCapabilityPart | FileDataPart
-  ): Promise<Outcome<FileDataPart>> {
-    let mimeType;
-    // Called by ProxyClient.proxy to ensure that parts are correctly turned
-    // into handles that Gemini API can understand.
-    // There are two kinds:
-    // 1) FileDataPart that is a Drive File. These need to be first exported
-    //    as PDF, then uploaded using Gemini File API to get the right fileUri.
-    // 2) StoredDataCapabilityPart. These need to be uploaded using
-    //    Gemini File API to create the right FileDataPart.
-    if (isFileDataCapabilityPart(part)) {
-      if (
-        part.fileData.fileUri.startsWith(
-          "https://generativelanguage.googleapis.com/v1beta/files/"
-        )
-      )
-        return part;
-      mimeType = part.fileData.mimeType;
-      if (isGoogleDriveDocument(part)) {
-        try {
-          const fileId = part.fileData.fileUri;
-          // TODO: Un-hardcode the path and get rid of the "@foo/bar".
-          const path =
-            `/board/boards/@foo/bar/assets/drive/${fileId}` +
-            (part.fileData.resourceKey
-              ? `?resourceKey=${part.fileData.resourceKey}`
-              : "");
-          const converting = await this.client.fetchWithCreds(
-            await this.#createRequest(path, { part })
-          );
-          if (!converting.ok) return err(await converting.text());
-
-          const converted =
-            (await converting.json()) as Outcome<GoogleDriveToGeminiResponse>;
-          if (!ok(converted)) return converted;
-
-          return converted.part;
-        } catch (e) {
-          return err((e as Error).message);
-        }
-      } else if (mimeType === "video/mp4") {
-        // this is a YouTube video, pass it through
-        return part;
-      }
-    } else {
-      const url = part.storedData.handle;
-      mimeType = part.storedData.mimeType;
-      if (url.startsWith("drive:")) {
-        try {
-          // TODO: Dedupe this code with above.
-          const fileId = url.replace(/^drive:\/+/, "");
-
-          const path =
-            `/board/boards/@foo/bar/assets/drive/${fileId}?mimeType=${mimeType}` +
-            (part.storedData.resourceKey
-              ? `&resourceKey=${part.storedData.resourceKey}`
-              : "");
-          const converting = await this.client.fetchWithCreds(
-            await this.#createRequest(path, { part })
-          );
-          if (!converting.ok) return err(await converting.text());
-
-          const converted =
-            (await converting.json()) as Outcome<GoogleDriveToGeminiResponse>;
-          if (!ok(converted)) return converted;
-
-          return converted.part;
-        } catch (e) {
-          return err((e as Error).message);
-        }
-      }
-      mimeType = part.storedData.mimeType;
-    }
-    const msg = `Converting to FileData of type "${mimeType}" is not supported with Google Drive backend`;
+  async toFileData(): Promise<Outcome<FileDataPart>> {
+    const msg = `This code path should never be travelled.`;
     console.debug(msg);
     return err(msg);
   }
@@ -149,8 +61,4 @@ class GoogleDriveDataPartTransformer implements DataPartTransformer {
   addEphemeralBlob(_blob: Blob): StoredDataCapabilityPart {
     throw new Error("Not implemented");
   }
-}
-
-function isGoogleDriveDocument(part: FileDataPart) {
-  return part.fileData.mimeType.startsWith("application/vnd.google-apps.");
 }
