@@ -16,7 +16,7 @@ import {
 } from "../../utils/signin-adapter.js";
 import { devUrlParams } from "../../utils/urls.js";
 import { UserSignInResponse } from "../../types/types.js";
-import { StateEvent } from "../../events/events.js";
+import { ModalDismissedEvent, StateEvent } from "../../events/events.js";
 import { markdown } from "../../directives/markdown.js";
 import { classMap } from "lit/directives/class-map.js";
 
@@ -273,7 +273,11 @@ export class VESignInModal extends LitElement {
   #renderAcceptCancelButtons() {
     return html`
       <div id="buttons">
-        <button id="cancel-button" class="sans" @click=${this.#close}>
+        <button
+          id="cancel-button"
+          class="sans"
+          @click=${() => this.dispatchEvent(new ModalDismissedEvent())}
+        >
           Cancel
         </button>
         <button id="sign-in-button" class="sans" @click=${this.#onClickSignIn}>

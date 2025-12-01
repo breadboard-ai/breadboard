@@ -73,6 +73,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
 
   const scopeValidation = await signinAdapter.validateScopes();
+  const guestConfiguration = await shellHost.getConfiguration();
   const parsedUrl = parseUrl(window.location.href);
   const { lite, page, colorScheme } = parsedUrl;
   if (
@@ -113,6 +114,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       env: bootstrapArgs.env,
       embedHandler,
       globalConfig,
+      guestConfiguration,
       shellHost,
       initialSignInState: await shellHost.getSignInState(),
       parsedUrl,
