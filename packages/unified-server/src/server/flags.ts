@@ -38,10 +38,6 @@ export const ENABLE_AGENT_MODE: boolean = getBoolean("ENABLE_AGENT_MODE");
 
 export const STREAM_PLANNER: boolean = getBoolean("ENABLE_STREAM_PLANNER");
 
-export const ENABLE_BACKEND_TRANSFORMS = getBoolean(
-  "ENABLE_BACKEND_TRANSFORMS"
-);
-
 export const OBSERVE_SYSTEM_THEME = getBoolean("OBSERVE_SYSTEM_THEME");
 
 export const ENABLE_CONSISTENT_UI: boolean = getBoolean("ENABLE_CONSISTENT_UI");
