@@ -109,6 +109,14 @@ export type ErrorWithMetadata = { $error: string; metadata?: ErrorMetadata };
 
 export type NonPromise<T> = T extends Promise<unknown> ? never : T;
 
+export type SnackbarAction = {
+  title: string;
+  action: string;
+  value?: string;
+  callback?: () => Promise<void> | void;
+  cssClass?: string;
+};
+
 function ok<T>(o: Outcome<NonPromise<T>>): o is NonPromise<T> {
   return !(o && typeof o === "object" && "$error" in o);
 }
@@ -467,14 +475,6 @@ function tr(strings: TemplateStringsArray, ...values: unknown[]): string {
     }, "")
     .trim();
 }
-
-export type SnackbarAction = {
-  title: string;
-  action: string;
-  value?: string;
-  callback?: () => Promise<void> | void;
-  cssClass?: string;
-};
 
 export function dispatchShowCustomSnackbarEvent(
   message: string,
