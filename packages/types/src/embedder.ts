@@ -21,7 +21,9 @@ export type BreadboardMessage =
   | ResizeMessage
   | LoadBoardMessage
   | CreateBoardMessage
-  | RemixBoardMessage;
+  | RemixBoardMessage
+  | OpenInAdvancedEditorMessage
+  | TriggerShareMessage;
 
 /** Event for enabling debug. */
 export declare interface DebugMessage {
@@ -94,6 +96,22 @@ export declare interface CreateBoardMessage {
  */
 export declare interface RemixBoardMessage {
   type: "remix_board";
+  boardId: string;
+}
+
+/**
+ * Event to notify the parent to open the standard view with the board
+ */
+export declare interface OpenInAdvancedEditorMessage {
+  type: "open_in_advanced_editor";
+  boardId: string;
+}
+
+/**
+ * Event to notify the parent to start the board sharing flow
+ */
+export declare interface TriggerShareMessage {
+  type: "trigger_share";
   boardId: string;
 }
 

@@ -164,24 +164,26 @@ export class LiteHome extends LitElement {
     const { payload } = evt as StateEvent<keyof StateEventDetailMap>;
     const { eventType } = payload;
 
-    const report = (outcome: Outcome<void>) => {
-      if (!ok(outcome)) {
-        const snackbarId = crypto.randomUUID();
-        this.snackbar(outcome.$error, SnackType.ERROR, snackbarId);
+    const maybeReportError = (outcome: Outcome<void>) => {
+      if (ok(outcome)) {
+        return;
       }
+
+      const snackbarId = crypto.randomUUID();
+      this.snackbar(outcome.$error, SnackType.ERROR, snackbarId);
     };
 
     switch (eventType) {
       case "board.delete":
-        return this.deleteBoard(payload.url).then(report);
+        return this.deleteBoard(payload.url).then(maybeReportError);
       case "board.remix":
-        return this.remixBoard(payload.url).then(report);
+        return this.remixBoard(payload.url).then(maybeReportError);
       case "board.togglepin":
-        return this.togglePin(payload.url).then(report);
+        return this.togglePin(payload.url).then(maybeReportError);
       case "board.load":
-        return this.loadBoard(payload.url).then(report);
+        return this.loadBoard(payload.url).then(maybeReportError);
       case "board.create":
-        return this.createBoard().then(report);
+        return this.createBoard().then(maybeReportError);
       default:
         console.warn("Unknown event type", eventType, payload);
         break;
