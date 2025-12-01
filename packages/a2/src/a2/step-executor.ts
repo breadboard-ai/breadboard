@@ -282,22 +282,24 @@ async function temporaryBlobFixup(
 
   const newChunks: LLMContent[] = [];
   for (const chunk of output.chunks) {
-    let newChunk: LLMContent = chunk;
-    const firstPart = chunk.parts.at(0);
-    if (
-      firstPart &&
-      "storedData" in firstPart &&
-      (firstPart.storedData.mimeType === "text" ||
-        firstPart.storedData.mimeType === "text/plain")
-    ) {
+    const firstPart = chunk.parts.at(0)!;
+    if ("inlineData" in firstPart) {
+      newChunks.push(chunk);
+    } else if ("storedData" in firstPart) {
+      if (
+        firstPart.storedData.mimeType !== "text" &&
+        firstPart.storedData.mimeType !== "text/plain"
+      ) {
+        newChunks.push(chunk);
+        continue;
+      }
       const blob = await retrieveAsBlob(firstPart);
       const data = await asBase64(blob);
-      newChunk = {
+      newChunks.push({
         ...chunk,
         parts: [{ inlineData: { data, mimeType: "text/plain" } }],
-      };
+      });
     }
-    newChunks.push(newChunk);
   }
   return {
     chunks: newChunks,
