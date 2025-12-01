@@ -3,16 +3,30 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, nothing, PropertyValues } from "lit";
+import {
+  LitElement,
+  html,
+  css,
+  nothing,
+  PropertyValues,
+  HTMLTemplateResult,
+} from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import * as Styles from "../../styles/styles";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
+import { LiteModeState } from "../../state";
 
 @customElement("bb-prompt-view")
 export class PromptView extends SignalWatcher(LitElement) {
   @property()
   accessor prompt: string | null = null;
+
+  @property()
+  accessor viewType: LiteModeState["viewType"] | null = null;
+
+  @property()
+  accessor status: LiteModeState["status"] | null = null;
 
   @property({ reflect: true, attribute: true, type: Boolean })
   accessor expanded = false;
@@ -33,6 +47,16 @@ export class PromptView extends SignalWatcher(LitElement) {
         border-radius: var(--bb-grid-size-4);
       }
 
+      @keyframes glide {
+        from {
+          background-position: bottom right;
+        }
+
+        to {
+          background-position: top left;
+        }
+      }
+
       #content {
         display: block;
         display: -webkit-box;
@@ -42,6 +66,31 @@ export class PromptView extends SignalWatcher(LitElement) {
         text-overflow: ellipsis;
         box-sizing: content-box;
         color: var(--sys-color--on-surface);
+
+        & .placeholder {
+          border-radius: var(--bb-grid-size);
+          height: var(--bb-grid-size-4);
+          width: 100%;
+          margin-bottom: var(--bb-grid-size-2);
+
+          --light: oklch(
+            from var(--sys-color--surface-container-high) l c h / 20%
+          );
+          --dark: oklch(
+            from var(--sys-color--surface-container-high) l c h / 80%
+          );
+
+          background: linear-gradient(
+            123deg,
+            var(--light) 0%,
+            var(--dark) 25%,
+            var(--light) 50%,
+            var(--dark) 75%,
+            var(--light) 100%
+          );
+          background-size: 200% 200%;
+          animation: glide 2150ms linear infinite;
+        }
       }
 
       button {
@@ -109,14 +158,24 @@ export class PromptView extends SignalWatcher(LitElement) {
   }
 
   render() {
-    if (!this.prompt) {
-      return nothing;
+    let content: HTMLTemplateResult | symbol;
+    if (this.prompt && this.prompt.trim() !== "") {
+      content = html`${this.prompt}`;
+    } else if (
+      this.viewType === "loading" ||
+      (this.viewType === "home" && this.status === "generating")
+    ) {
+      content = html`<div class="placeholder"></div>
+        <div class="placeholder"></div>
+        <div class="placeholder"></div>`;
+    } else {
+      content = nothing;
     }
 
     return html`<div id="container">
       <button
         class="w-400 md-body-small sans-flex"
-        ?disabled=${!this.overflowing}
+        ?disabled=${!this.overflowing || this.viewType === "loading"}
         @click=${() => {
           this.expanded = !this.expanded;
         }}
@@ -129,9 +188,7 @@ export class PromptView extends SignalWatcher(LitElement) {
         id="content"
         class="w-400 md-title-medium sans-flex"
       >
-        ${this.prompt && this.prompt.trim() !== ""
-          ? this.prompt
-          : "No prompt provided"}
+        ${content}
       </div>
     </div>`;
   }

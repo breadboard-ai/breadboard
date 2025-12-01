@@ -25,6 +25,16 @@ export const styles: CSSResultGroup = [
       height: 100%;
     }
 
+    @keyframes glide {
+      from {
+        background-position: bottom right;
+      }
+
+      to {
+        background-position: top left;
+      }
+    }
+
     /** Fonts */
 
     .app-template {
@@ -61,7 +71,7 @@ export const styles: CSSResultGroup = [
     /** General styles */
 
     :host([hasrenderedsplash]) {
-      @scope (.app-template) {
+      .app-template {
         & #content {
           & #splash {
             animation: none;
@@ -213,6 +223,7 @@ export const styles: CSSResultGroup = [
           animation: fadeIn 1s cubic-bezier(0, 0, 0.3, 1);
           overflow: scroll;
           scrollbar-width: none;
+          position: relative;
 
           #splash-content-container {
             display: flex;
@@ -222,16 +233,40 @@ export const styles: CSSResultGroup = [
           }
 
           &::before {
+            --light: oklch(from var(--p-60) l c h / 20%);
+            --dark: oklch(from var(--p-60) l c h / 60%);
+
             content: "";
             width: var(--splash-width, 100%);
-            background: var(--splash-image, var(--bb-logo)) center center /
-              var(--splash-fill, cover) no-repeat;
+            background: linear-gradient(
+              123deg,
+              var(--light) 0%,
+              var(--dark) 25%,
+              var(--light) 50%,
+              var(--dark) 75%,
+              var(--light) 100%
+            );
+            background-size: 200% 200%;
             padding: var(--bb-grid-size-3);
-            background-clip: content-box;
             border-radius: var(--bb-grid-size-5);
             box-sizing: border-box;
+            background-clip: content-box;
             flex: 1;
             max-height: calc(45cqh - 54px);
+            animation: glide 2150ms linear infinite;
+          }
+
+          &:not(.retrieving-splash) {
+            &::before {
+              animation: fadeIn 0.7s cubic-bezier(0.6, 0, 0.3, 1) 1 forwards;
+              background: var(--splash-image, var(--bb-logo)) center center /
+                var(--splash-fill, cover) no-repeat;
+              background-clip: content-box;
+            }
+
+            &::after {
+              display: none;
+            }
           }
 
           &.default {
