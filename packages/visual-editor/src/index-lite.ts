@@ -32,6 +32,7 @@ import { styleMap } from "lit/directives/style-map.js";
 import { OneShotFlowGenFailureResponse } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
 import { flowGenWithTheme } from "@breadboard-ai/shared-ui/flow-gen/flowgen-with-theme.js";
 import { EmbedHandler } from "@breadboard-ai/types/embedder.js";
+import { markdown } from "@breadboard-ai/shared-ui/directives/markdown.js";
 
 const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
 
@@ -118,6 +119,14 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           height: var(--bb-grid-size-4);
           margin: var(--bb-grid-size-2) 0;
           color: var(--sys-color--on-surface-variant);
+
+          p {
+            margin: 0;
+          }
+
+          a {
+            color: var(--sys-color--on-surface);
+          }
         }
 
         & #app-view {
@@ -450,9 +459,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderMessage() {
-    return html`<p id="message" class="w-400 md-body-small sans-flex">
-      ${Strings.from("LABEL_DISCLAIMER")}
-    </p>`;
+    return html`<div id="message" class="w-400 md-body-small sans-flex">
+      ${markdown(Strings.from("LABEL_DISCLAIMER_LITE"))}
+    </div>`;
   }
 
   #renderControls() {
