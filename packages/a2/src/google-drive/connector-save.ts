@@ -18,6 +18,7 @@ import {
   query,
   updateDoc,
   updatePresentation,
+  addSheet,
 } from "./api";
 import { contextToRequests, DOC_MIME_TYPE } from "./docs";
 import { inferSheetValues, SHEETS_MIME_TYPE } from "./sheets";
@@ -126,17 +127,15 @@ async function invoke(
         const sheetInfo = await getSpreadsheetMetadata(moduleArgs, id);
         if (!ok(sheetInfo)) return sheetInfo;
 
-        const sheet1 = sheetInfo.sheets.at(0)?.properties.title;
-        if (!sheet1) {
-          return err(
-            `Unable to save to Spreadsheet: the document appears to have no sheets`
-          );
-        }
+        const newSheetTitle = generateSheetName();
+        const creatingSheet = await addSheet(moduleArgs, id, newSheetTitle);
+
+        if (!ok(creatingSheet)) return creatingSheet;
 
         const appending = await appendSpreadsheetValues(
           moduleArgs,
           id,
-          sheet1,
+          newSheetTitle,
           { values: result }
         );
         if (!ok(appending)) return appending;
@@ -259,4 +258,25 @@ async function describe() {
       },
     } satisfies Schema,
   } satisfies DescribeOutputs;
+}
+
+function generateSheetName(): string {
+  const now = new Date();
+
+  const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const year = String(now.getFullYear()).slice(-2);
+
+  const datePart = `${day}.${month}.${year}`;
+
+  const timePart = now
+    .toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    })
+    .toLowerCase()
+    .replace(/\s+/g, "");
+
+  return `${datePart} ${timePart}`;
 }
