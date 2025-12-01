@@ -213,16 +213,7 @@ async function getCollector(
     id = fileId;
   }
   if (mimeType === DOC_MIME_TYPE) {
-    const gettingDoc = await getDoc(moduleArgs, id);
-    if (!ok(gettingDoc)) return gettingDoc;
-    const end =
-      (
-        gettingDoc as { body: { content: { endIndex: number }[] } }
-      ).body.content.reduce(
-        (acc, element) => Math.max(acc, element.endIndex || 0),
-        1
-      ) - 1;
-    return { id, end };
+    return { id, end: 1 };
   } else if (mimeType === SLIDES_MIME_TYPE) {
     const gettingPresentation = await getPresentation(moduleArgs, id);
     if (!ok(gettingPresentation)) return gettingPresentation;
