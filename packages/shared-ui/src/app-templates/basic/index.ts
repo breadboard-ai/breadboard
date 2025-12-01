@@ -225,7 +225,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   accessor isEmpty = false;
 
   @property()
-  accessor disclaimerContent = "";
+  accessor disclaimerContent: HTMLTemplateResult | string = "";
 
   @property({ reflect: true, type: Boolean })
   accessor hasRenderedSplash = false;
@@ -972,10 +972,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       styles["--splash-image"] = this.options.splashImage;
     }
 
-    if (
-      typeof this.options.splashImage === "boolean" &&
-      this.options.splashImage
-    ) {
+    if (!this.options.title) {
       if (!this.run || this.run.status === "stopped") {
         return html`<section
           class=${classMap(classes)}
@@ -988,10 +985,15 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       }
     }
 
+    const retrievingSplash =
+      typeof this.options.splashImage === "boolean" && this.options.splashImage;
     const splashScreen = html`
       <div
         id="splash"
-        class=${classMap({ default: this.options.isDefaultTheme ?? false })}
+        class=${classMap({
+          "retrieving-splash": retrievingSplash,
+          default: this.options.isDefaultTheme ?? false,
+        })}
         @animationend=${() => {
           this.hasRenderedSplash = true;
         }}

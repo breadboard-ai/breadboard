@@ -8,13 +8,19 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import * as Styles from "../../styles/styles";
 import { classMap } from "lit/directives/class-map.js";
-import { StepListState } from "../../state";
+import { LiteModeState, StepListStepState } from "../../state";
 import { repeat } from "lit/directives/repeat.js";
 
 @customElement("bb-step-list-view")
 export class StepListView extends SignalWatcher(LitElement) {
   @property()
-  accessor state: StepListState | null = null;
+  accessor stepList: LiteModeState["stepList"] | null = null;
+
+  @property()
+  accessor status: LiteModeState["status"] | null = null;
+
+  @property()
+  accessor viewType: LiteModeState["viewType"] | null = null;
 
   static styles = [
     Styles.HostIcons.icons,
@@ -24,6 +30,16 @@ export class StepListView extends SignalWatcher(LitElement) {
     css`
       * {
         box-sizing: border-box;
+      }
+
+      @keyframes glide {
+        from {
+          background-position: bottom right;
+        }
+
+        to {
+          background-position: top left;
+        }
       }
 
       :host {
@@ -94,6 +110,26 @@ export class StepListView extends SignalWatcher(LitElement) {
                 cursor: pointer;
                 min-height: 48px;
 
+                &.loading {
+                  --light: oklch(
+                    from var(--sys-color--surface-container-high) l c h / 20%
+                  );
+                  --dark: oklch(
+                    from var(--sys-color--surface-container-high) l c h / 80%
+                  );
+
+                  background: linear-gradient(
+                    123deg,
+                    var(--light) 0%,
+                    var(--dark) 25%,
+                    var(--light) 50%,
+                    var(--dark) 75%,
+                    var(--light) 100%
+                  );
+                  background-size: 200% 200%;
+                  animation: glide 2150ms linear infinite;
+                }
+
                 & .step-title {
                   color: var(--sys-color--on-surface);
                   padding-right: var(--bb-grid-size-4);
@@ -103,20 +139,34 @@ export class StepListView extends SignalWatcher(LitElement) {
                   flex: 0 0 auto;
                 }
 
-                & > .marker {
+                & > .marker-container {
                   flex: 0 0 auto;
+                  position: relative;
 
-                  &::before {
-                    content: "keyboard_arrow_down";
-                  }
-
-                  &.pending,
-                  &.working {
-                    animation: rotate 1s linear infinite;
+                  & > .marker {
+                    flex: 0 0 auto;
 
                     &::before {
-                      content: "progress_activity";
+                      content: "keyboard_arrow_down";
                     }
+
+                    &.pending,
+                    &.working {
+                      animation: rotate 1s linear infinite;
+
+                      &::before {
+                        content: "progress_activity";
+                      }
+                    }
+                  }
+
+                  & > .generating {
+                    flex: 0 0 auto;
+                    position: absolute;
+                    font-size: 12px;
+                    left: 4px;
+                    top: 4px;
+                    color: light-dark(var(--p-40), var(--p-80));
                   }
                 }
               }
@@ -182,8 +232,103 @@ export class StepListView extends SignalWatcher(LitElement) {
   }
 
   #renderList() {
-    const steps = this.state?.steps;
-    if (!steps || steps.size === 0) return nothing;
+    const renderStep = (
+      markerClasses: Record<string, boolean>,
+      step: StepListStepState,
+      status?: "generating" | "loading"
+    ) => {
+      if (status === "loading") {
+        return html`<details>
+          <summary
+            inert
+            class=${classMap({ loading: status === "loading" })}
+          ></summary>
+        </details>`;
+      }
+
+      return html`
+        <details>
+          <summary>
+            <span class="marker-container">
+              <span class=${classMap(markerClasses)}></span>
+              ${status === "generating"
+                ? html`<span class="generating g-icon filled-heavy round"
+                    >pentagon</span
+                  >`
+                : nothing}
+            </span>
+            ${step.icon
+              ? html`<span class="step-icon g-icon filled-heavy round"
+                  >${step.icon}</span
+                >`
+              : nothing}
+            <span class="step-title sans md-title-medium w-500"
+              >${step.title}</span
+            >
+          </summary>
+          <div class="step-content sans md-body-medium w-400">
+            <h1 class="step-title w-400 md-body-small sans-flex">
+              ${step.tags?.includes("input") ? "Question to user:" : "Prompt"}
+            </h1>
+            <p>
+              ${step.prompt && step.prompt.trim() !== ""
+                ? step.prompt
+                : step.label
+                  ? step.label
+                  : html`Not provided`}
+            </p>
+          </div>
+        </details>
+      `;
+    };
+
+    const steps = this.stepList?.steps;
+    if (!steps || steps.size === 0) {
+      if (this.viewType === "loading") {
+        return html`<ul id="list">
+          ${repeat(new Array(4), () => {
+            return html`<li>
+              ${renderStep(
+                {
+                  marker: true,
+                  "g-icon": true,
+                  "filled-heavy": true,
+                },
+                {
+                  label: "",
+                  prompt: "",
+                  status: "loading",
+                  title: "",
+                },
+                "loading"
+              )}
+            </li>`;
+          })}
+        </ul>`;
+      } else if (this.status === "generating") {
+        return html`<ul id="list">
+          <li>
+            ${renderStep(
+              {
+                marker: true,
+                "g-icon": true,
+                "filled-heavy": true,
+                working: true,
+              },
+              {
+                label: "Thinking...",
+                prompt: "",
+                status: "pending",
+                title: "Creating your app...",
+              },
+              "generating"
+            )}
+          </li>
+        </ul>`;
+      }
+      return nothing;
+    }
+
     return html`<ul id="list">
       ${repeat(
         steps,
@@ -204,37 +349,11 @@ export class StepListView extends SignalWatcher(LitElement) {
             </div>
           `;
 
-          const renderStep = () => html`
-            <details>
-              <summary>
-                <span class=${classMap(markerClasses)}> </span>
-                <span class="step-icon g-icon filled-heavy round"
-                  >${step.icon}</span
-                >
-                <span class="step-title sans md-title-medium w-500"
-                  >${step.title}</span
-                >
-              </summary>
-              <div class="step-content sans md-body-medium w-400">
-                <h1 class="step-title w-400 md-body-small sans-flex">
-                  ${step.tags?.includes("input")
-                    ? "Question to user:"
-                    : "Prompt"}
-                </h1>
-                <p>
-                  ${step.prompt && step.prompt.trim() !== ""
-                    ? step.prompt
-                    : step.label
-                      ? step.label
-                      : html`Not provided`}
-                </p>
-              </div>
-            </details>
-          `;
-
           return html`
             <li>
-              ${step.status === "loading" ? renderPlaceholder() : renderStep()}
+              ${step.status === "loading"
+                ? renderPlaceholder()
+                : renderStep(markerClasses, step)}
             </li>
           `;
         }
@@ -243,8 +362,6 @@ export class StepListView extends SignalWatcher(LitElement) {
   }
 
   render() {
-    if (!this.state) return nothing;
-
     return html`<section>
       ${[this.#renderTitle(), this.#renderList()]}
     </section>`;

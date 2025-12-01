@@ -382,6 +382,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       return { error: "" };
     }
     let projectState = this.runtime.state.project;
+    this.runtime.state.lite.currentExampleIntent = intent;
 
     if (!projectState) {
       // This is a zero state: we don't yet have a projectState.
@@ -428,12 +429,15 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderOriginalPrompt() {
-    if (!this.tab?.graph.metadata?.intent) {
-      return nothing;
-    }
+    const prompt =
+      this.tab?.graph.metadata?.intent ??
+      this.runtime.state.lite.currentExampleIntent ??
+      null;
 
     return html`<bb-prompt-view
-      .prompt=${this.tab?.graph.metadata?.intent}
+      .prompt=${prompt}
+      .viewType=${this.runtime.state.lite.viewType}
+      .status=${this.runtime.state.lite.status}
     ></bb-prompt-view>`;
   }
 
@@ -465,7 +469,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   #renderList() {
     return html`
       <bb-step-list-view
-        .state=${this.runtime.state.lite.stepList}
+        .stepList=${this.runtime.state.lite.stepList}
+        .status=${this.runtime.state.lite.status}
+        .viewType=${this.runtime.state.lite.viewType}
       ></bb-step-list-view>
     `;
   }
@@ -503,6 +509,12 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderApp() {
     const renderValues = this.getRenderValues();
+
+    const title =
+      this.runtime.state.lite.viewType === "editor"
+        ? (this.tab?.graph.title ?? "Untitled app")
+        : "...";
+
     return html` <section
       id="app-view"
       slot=${this.showAppFullscreen ? nothing : "slot-1"}
@@ -510,7 +522,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       ${this.showAppFullscreen
         ? nothing
         : html` <header class="w-400 md-title-small sans-flex">
-            <div class="left">${this.tab?.graph.title ?? "Untitled app"}</div>
+            <div class="left">${title}</div>
             <div class="right">
               <button
                 ${ref(this.#advancedEditorLink)}
@@ -620,15 +632,18 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   render() {
-    const lite = this.runtime.state.lite;
+    const lite: BreadboardUI.State.LiteModeState = this.runtime.state.lite;
 
     let content: HTMLTemplateResult | symbol = nothing;
     switch (lite.viewType) {
-      case "home": {
-        content = this.#renderWelcomeMat();
-        break;
-      }
-      case "editor": {
+      case "home":
+      case "editor":
+      case "loading": {
+        if (lite.viewType === "home" && lite.status !== "generating") {
+          content = this.#renderWelcomeMat();
+          break;
+        }
+
         content = html`${this.showAppFullscreen
           ? this.#renderApp()
           : html` <bb-splitter
@@ -640,14 +655,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             </bb-splitter>`}`;
         break;
       }
-      case "loading":
-        return html`<section id="lite-shell" @bbevent=${this.handleUserSignIn}>
-          <div id="loading">
-            <span class="g-icon heavy-filled round">progress_activity</span
-            >Loading
-          </div>
-          ${this.renderSnackbar()}${this.#renderShellUI()}
-        </section>`;
       case "error":
         return html`<section id="lite-shell" @bbevent=${this.handleUserSignIn}>
           <div id="error">${lite.viewError}</div>
@@ -659,12 +666,14 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     }
 
     return html`<section
+        ?inert=${this.uiState.blockingAction ||
+        lite.status == "generating" ||
+        lite.viewType === "loading"}
         id="lite-shell"
         class=${classMap({
           full: this.showAppFullscreen,
           welcome: lite.viewType === "home",
         })}
-        ?inert=${this.uiState.blockingAction || lite.status == "generating"}
         @bbsnackbar=${(snackbarEvent: BreadboardUI.Events.SnackbarEvent) => {
           this.snackbar(
             snackbarEvent.message,
