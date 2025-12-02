@@ -3,14 +3,7 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import {
-  LitElement,
-  html,
-  css,
-  nothing,
-  PropertyValues,
-  HTMLTemplateResult,
-} from "lit";
+import { LitElement, html, css, PropertyValues, HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import * as Styles from "../../styles/styles";
@@ -167,7 +160,7 @@ export class PromptView extends SignalWatcher(LitElement) {
         <div class="placeholder"></div>
         <div class="placeholder"></div>`;
     } else {
-      content = nothing;
+      content = html`No prompt provided`;
     }
 
     return html`<div id="container">
