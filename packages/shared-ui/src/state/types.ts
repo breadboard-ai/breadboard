@@ -136,11 +136,6 @@ export type StepListState = {
    * - "ready" -- interactive state
    */
   status: StepListStateStatus;
-  /**
-   * The intent behind the app. This value is taken from the BGL
-   * "metadata.intent" property. If "null", no intent was specified.
-   */
-  intent: string | null;
 
   /**
    * The list of steps according to the current run plan

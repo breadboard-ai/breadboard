@@ -53,11 +53,6 @@ class StepList implements StepListState {
   }
 
   @signal
-  get intent(): string | null {
-    return this.run.graph?.metadata?.intent || null;
-  }
-
-  @signal
   accessor status: StepListStateStatus = "ready";
 
   constructor(private readonly run: ReactiveProjectRun) {}
