@@ -56,10 +56,7 @@ import {
   EmbedState,
 } from "@breadboard-ai/shared-ui/embed/embed.js";
 
-import {
-  AppCatalystApiClient,
-  CheckAppAccessResponse,
-} from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
+import { CheckAppAccessResponse } from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
 import {
   FlowGenerator,
   flowGeneratorContext,
@@ -229,7 +226,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected feedbackPanelRef: Ref<BreadboardUI.Elements.FeedbackPanel> =
     createRef();
   protected readonly embedHandler: EmbedHandler | undefined;
-  protected readonly apiClient: AppCatalystApiClient;
   protected readonly settings: SettingsStore;
   readonly emailPrefsManager: EmailPrefsManager;
   protected readonly hostOrigin: URL;
@@ -295,7 +291,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       });
     }
 
-    this.apiClient = this.runtime.apiClient;
     this.emailPrefsManager = this.runtime.emailPrefsManager;
     this.flowGenerator = this.runtime.flowGenerator;
 
@@ -413,7 +408,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       const flags = await flagManager.flags();
       if (flags.googleOne) {
         console.log(`[Google One] Checking subscriber status`);
-        const response = await this.apiClient.getG1SubscriptionStatus({
+        const response = await this.runtime.apiClient.getG1SubscriptionStatus({
           include_credit_data: true,
         });
         this.uiState.subscriptionStatus = response.is_member

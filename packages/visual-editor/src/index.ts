@@ -408,8 +408,8 @@ class Main extends MainBase {
                 return;
               }
               evt.target.disabled = true;
-              await this.apiClient.acceptTos(tosVersion, true);
-              this.tosStatus = await this.apiClient.checkTos();
+              await this.runtime.apiClient.acceptTos(tosVersion, true);
+              this.tosStatus = await this.runtime.apiClient.checkTos();
             }}
           >
             Continue
@@ -494,7 +494,7 @@ class Main extends MainBase {
       @bbsubscribercreditrefresh=${async () => {
         try {
           this.uiState.subscriptionCredits = -1;
-          const response = await this.apiClient.getG1Credits();
+          const response = await this.runtime.apiClient.getG1Credits();
           this.uiState.subscriptionCredits = response.remaining_credits ?? 0;
         } catch (err) {
           this.uiState.subscriptionCredits = -2;
