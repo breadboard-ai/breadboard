@@ -9,7 +9,6 @@ import {
   EditHistoryCreator,
   EditHistoryEntry,
   GraphDescriptor,
-  Kit,
   MainGraphIdentifier,
   PortIdentifier,
   FileSystemEntry,
@@ -28,7 +27,6 @@ import {
   OpalShellHostProtocol,
   SignInState,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 export enum TabType {
   URL,
@@ -41,7 +39,6 @@ export type TabURL = string;
 export type TabName = string;
 export interface Tab {
   id: TabId;
-  boardServerKits: Kit[];
   name: TabName;
   mainGraphId: MainGraphIdentifier;
   graph: GraphDescriptor;
@@ -72,11 +69,6 @@ export interface RuntimeConfig {
   env?: FileSystemEntry[];
   appName: string;
   appSubName: string;
-}
-
-export interface RuntimeConfigBoardServers {
-  a2Server: BoardServer;
-  googleDriveBoardServer: GoogleDriveBoardServer;
 }
 
 export type ReferenceIdentifier =

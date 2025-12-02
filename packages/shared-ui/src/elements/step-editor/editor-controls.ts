@@ -24,7 +24,6 @@ import {
   GraphStoreEntry,
   GraphStoreUpdateEvent,
   InspectableGraph,
-  Kit,
   MainGraphIdentifier,
   MutableGraphStore,
 } from "@google-labs/breadboard";
@@ -48,9 +47,6 @@ import { parseBase64DataUrl } from "@breadboard-ai/utils";
 export class EditorControls extends LitElement {
   @property({ reflect: true, type: Boolean })
   accessor readOnly = false;
-
-  @property()
-  accessor boardServerKits: Kit[] | null = null;
 
   @property()
   accessor graph: InspectableGraph | null = null;

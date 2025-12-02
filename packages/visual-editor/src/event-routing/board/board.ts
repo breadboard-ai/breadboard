@@ -370,7 +370,7 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
 
   async do(deps) {
     const { tab, runtime, originalEvent, uiState } = deps;
-    const boardServer = runtime.board.boardServers.googleDriveBoardServer;
+    const boardServer = runtime.board.googleDriveBoardServer;
     if (!confirm(originalEvent.detail.messages.query)) {
       return false;
     }

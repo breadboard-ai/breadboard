@@ -10,7 +10,7 @@ import { Board } from "./board.js";
 import { Run } from "./run.js";
 import { Edit } from "./edit.js";
 import { Util } from "./util.js";
-import { RuntimeConfig, RuntimeConfigBoardServers, Tab } from "./types.js";
+import { RuntimeConfig, Tab } from "./types.js";
 
 export * as Events from "./events.js";
 export * as Types from "./types.js";
@@ -187,45 +187,27 @@ export class Runtime extends EventTarget {
       graphStore.addByURL(item.url, [], {});
     }
 
-    const boardServers: RuntimeConfigBoardServers = {
-      a2Server,
-      googleDriveBoardServer: this.googleDriveBoardServer,
-    };
-
     const autonamer = new Autonamer(graphStoreArgs, this.fileSystem, sandbox);
 
-    const { settings, appName, appSubName } = config;
-
-    const state = new StateManager(this, graphStore);
-
-    const edit = new Edit(
-      state,
-      loader,
-      kits,
-      sandbox,
-      graphStore,
-      autonamer,
-      this.flags,
-      settings
-    );
-
+    const { appName, appSubName } = config;
     this.shell = new Shell(appName, appSubName);
-    this.util = Util;
-    this.select = new Select();
-    this.router = new Router();
+
     this.board = new Board(
       loader,
       graphStore,
-      kits,
-      boardServers,
+      this.googleDriveBoardServer,
       this.recentBoardStore,
       this.signinAdapter,
       this.googleDriveClient
     );
-    this.state = state;
+    this.util = Util;
+    this.select = new Select();
+    this.router = new Router();
+    this.state = new StateManager(this, graphStore);
 
-    this.edit = edit;
-    this.run = new Run(graphStore, state, this.flags, edit);
+    this.edit = new Edit(graphStore, autonamer, this.flags);
+
+    this.run = new Run(graphStore, this.state, this.flags, kits);
 
     this.#setupPassthruHandlers();
     void this.recentBoardStore.restore();
