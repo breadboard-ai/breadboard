@@ -42,12 +42,14 @@ const defaultSafetySettings = (): SafetySetting[] => [
   },
 ];
 
-function endpointURL(model: string) {
-  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+function endpointURL(model: string, apiKey?: string) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  return apiKey ? `${url}?key=${apiKey}` : url;
 }
 
-function streamEndpointURL(model: string) {
-  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
+function streamEndpointURL(model: string, apiKey?: string) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
+  return apiKey ? `${url}&key=${apiKey}` : url;
 }
 
 const VALID_MODALITIES = ["Text", "Text and Image", "Audio"] as const;
@@ -259,8 +261,8 @@ export type GeminiAPIOutputs = {
 export type GeminiOutputs =
   | GeminiAPIOutputs
   | {
-      context: LLMContent[];
-    };
+    context: LLMContent[];
+  };
 
 const MODELS: readonly string[] = [
   "gemini-2.5-flash",
@@ -462,7 +464,14 @@ async function callAPI(
         path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
         data: [],
       });
-      const result = await moduleArgs.fetchWithCreds(endpointURL(model), {
+      const config = moduleArgs.context.clientDeploymentConfiguration;
+      const apiKey =
+        config?.USE_API_KEY_LOCAL_DEV && config?.GEMINI_KEY
+          ? config.GEMINI_KEY
+          : undefined;
+      const url = endpointURL(model, apiKey);
+      const fetcher = apiKey ? globalThis.fetch : moduleArgs.fetchWithCreds;
+      const result = await fetcher(url, {
         method: "POST",
         body: JSON.stringify(conformedBody),
         signal: moduleArgs.context.signal,
@@ -692,7 +701,14 @@ async function generateContent(
   { fetchWithCreds, context }: A2ModuleArgs
 ): Promise<Outcome<GeminiAPIOutputs>> {
   try {
-    const result = await fetchWithCreds(endpointURL(model), {
+    const config = context.clientDeploymentConfiguration;
+    const apiKey =
+      config?.USE_API_KEY_LOCAL_DEV && config?.GEMINI_KEY
+        ? config.GEMINI_KEY
+        : undefined;
+    const url = endpointURL(model, apiKey);
+    const fetcher = apiKey ? globalThis.fetch : fetchWithCreds;
+    const result = await fetcher(url, {
       method: "POST",
       body: JSON.stringify(body),
       signal: context.signal,
@@ -714,7 +730,14 @@ async function streamGenerateContent(
   { fetchWithCreds, context }: A2ModuleArgs
 ): Promise<Outcome<AsyncIterable<GeminiAPIOutputs>>> {
   try {
-    const result = await fetchWithCreds(streamEndpointURL(model), {
+    const config = context.clientDeploymentConfiguration;
+    const apiKey =
+      config?.USE_API_KEY_LOCAL_DEV && config?.GEMINI_KEY
+        ? config.GEMINI_KEY
+        : undefined;
+    const url = streamEndpointURL(model, apiKey);
+    const fetcher = apiKey ? globalThis.fetch : fetchWithCreds;
+    const result = await fetcher(url, {
       method: "POST",
       body: JSON.stringify(body),
       signal: context.signal,
@@ -799,29 +822,29 @@ async function describe({ inputs }: DescribeInputs) {
   const maybeAddSystemInstruction: Schema["properties"] =
     canHaveSystemInstruction
       ? {
-          systemInstruction: {
-            type: "object",
-            behavior: ["llm-content", "config"],
-            title: "System Instruction",
-            default: '{"role":"user","parts":[{"text":""}]}',
-            description:
-              "(Optional) Give the model additional context on what to do," +
-              "like specific rules/guidelines to adhere to or specify behavior" +
-              "separate from the provided context",
-          },
-        }
+        systemInstruction: {
+          type: "object",
+          behavior: ["llm-content", "config"],
+          title: "System Instruction",
+          default: '{"role":"user","parts":[{"text":""}]}',
+          description:
+            "(Optional) Give the model additional context on what to do," +
+            "like specific rules/guidelines to adhere to or specify behavior" +
+            "separate from the provided context",
+        },
+      }
       : {};
   const maybeAddModalities: Schema["properties"] = canHaveModalities
     ? {
-        modality: {
-          type: "string",
-          enum: [...VALID_MODALITIES],
-          title: "Output Modality",
-          behavior: ["config"],
-          description:
-            "(Optional) Tell the model what kind of output you're looking for.",
-        },
-      }
+      modality: {
+        type: "string",
+        enum: [...VALID_MODALITIES],
+        title: "Output Modality",
+        behavior: ["config"],
+        description:
+          "(Optional) Tell the model what kind of output you're looking for.",
+      },
+    }
     : {};
   return {
     inputSchema: {

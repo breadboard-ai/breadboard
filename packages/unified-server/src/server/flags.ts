@@ -40,6 +40,10 @@ export const STREAM_PLANNER: boolean = getBoolean("ENABLE_STREAM_PLANNER");
 
 export const OBSERVE_SYSTEM_THEME = getBoolean("OBSERVE_SYSTEM_THEME");
 
+export const GEMINI_KEY: string = getString("GEMINI_KEY");
+
+export const USE_API_KEY_LOCAL_DEV: boolean = getBoolean("USE_API_KEY_LOCAL_DEV");
+
 export const ENABLE_CONSISTENT_UI: boolean = getBoolean("ENABLE_CONSISTENT_UI");
 
 export const ENABLE_GULF_RENDERER: boolean = getBoolean("ENABLE_GULF_RENDERER");
