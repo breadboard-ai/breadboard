@@ -445,8 +445,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
     return html`<bb-prompt-view
       .prompt=${prompt}
-      .viewType=${this.runtime.state.lite.viewType}
-      .status=${this.runtime.state.lite.status}
+      .state=${this.runtime.state.lite}
     ></bb-prompt-view>`;
   }
 

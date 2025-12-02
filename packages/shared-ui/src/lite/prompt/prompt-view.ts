@@ -23,10 +23,7 @@ export class PromptView extends SignalWatcher(LitElement) {
   accessor prompt: string | null = null;
 
   @property()
-  accessor viewType: LiteModeState["viewType"] | null = null;
-
-  @property()
-  accessor status: LiteModeState["status"] | null = null;
+  accessor state: LiteModeState | null = null;
 
   @property({ reflect: true, attribute: true, type: Boolean })
   accessor expanded = false;
@@ -159,11 +156,12 @@ export class PromptView extends SignalWatcher(LitElement) {
 
   render() {
     let content: HTMLTemplateResult | symbol;
+    const { viewType, status } = this.state || {};
     if (this.prompt && this.prompt.trim() !== "") {
       content = html`${this.prompt}`;
     } else if (
-      this.viewType === "loading" ||
-      (this.viewType === "home" && this.status === "generating")
+      viewType === "loading" ||
+      (viewType === "home" && status === "generating")
     ) {
       content = html`<div class="placeholder"></div>
         <div class="placeholder"></div>
@@ -175,7 +173,7 @@ export class PromptView extends SignalWatcher(LitElement) {
     return html`<div id="container">
       <button
         class="w-400 md-body-small sans-flex"
-        ?disabled=${!this.overflowing || this.viewType === "loading"}
+        ?disabled=${!this.overflowing || viewType === "loading"}
         @click=${() => {
           this.expanded = !this.expanded;
         }}
