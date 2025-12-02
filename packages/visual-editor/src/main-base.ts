@@ -320,7 +320,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.flowGenerator = new FlowGenerator(this.apiClient, this.runtime.flags);
 
-    this.boardServer = this.runtime.board.boardServers.googleDriveBoardServer;
+    this.boardServer = this.runtime.board.googleDriveBoardServer;
     this.uiState = this.runtime.state.ui;
 
     if (this.globalConfig.ENABLE_EMAIL_OPT_IN) {
@@ -842,9 +842,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       //
       // So, we need to wait for full initialization before we broadcast.
       const { url } = saveResult;
-      const boardServer =
-        this.runtime.board.boardServers.googleDriveBoardServer;
-      await boardServer?.flushSaveQueue?.(url.href);
+      const boardServer = this.runtime.board.googleDriveBoardServer;
+      await boardServer.flushSaveQueue(url.href);
       this.embedHandler.sendToEmbedder({
         type: "board_id_created",
         id: url.href,

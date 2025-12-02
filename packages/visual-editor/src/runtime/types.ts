@@ -27,7 +27,6 @@ import {
   OpalShellHostProtocol,
   SignInState,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 export enum TabType {
   URL,
@@ -70,11 +69,6 @@ export interface RuntimeConfig {
   env?: FileSystemEntry[];
   appName: string;
   appSubName: string;
-}
-
-export interface RuntimeConfigBoardServers {
-  a2Server: BoardServer;
-  googleDriveBoardServer: GoogleDriveBoardServer;
 }
 
 export type ReferenceIdentifier =

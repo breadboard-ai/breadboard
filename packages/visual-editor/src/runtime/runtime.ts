@@ -10,7 +10,7 @@ import { Board } from "./board.js";
 import { Run } from "./run.js";
 import { Edit } from "./edit.js";
 import { Util } from "./util.js";
-import { RuntimeConfig, RuntimeConfigBoardServers, Tab } from "./types.js";
+import { RuntimeConfig, Tab } from "./types.js";
 
 export * as Events from "./events.js";
 export * as Types from "./types.js";
@@ -187,11 +187,6 @@ export class Runtime extends EventTarget {
       graphStore.addByURL(item.url, [], {});
     }
 
-    const boardServers: RuntimeConfigBoardServers = {
-      a2Server,
-      googleDriveBoardServer: this.googleDriveBoardServer,
-    };
-
     const autonamer = new Autonamer(graphStoreArgs, this.fileSystem, sandbox);
 
     const { appName, appSubName } = config;
@@ -200,7 +195,7 @@ export class Runtime extends EventTarget {
     this.board = new Board(
       loader,
       graphStore,
-      boardServers,
+      this.googleDriveBoardServer,
       this.recentBoardStore,
       this.signinAdapter,
       this.googleDriveClient

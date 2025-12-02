@@ -16,7 +16,7 @@ import type {
   GraphLoader,
   OutputValues,
 } from "@breadboard-ai/types";
-import { RuntimeConfigBoardServers, Tab, TabId, TabType } from "./types";
+import { Tab, TabId, TabType } from "./types";
 import {
   RuntimeBoardLoadErrorEvent,
   RuntimeErrorEvent,
@@ -40,6 +40,7 @@ import {
   createAppPaletteIfNeeded,
 } from "./util";
 import type { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -82,13 +83,13 @@ export class Board extends EventTarget {
   constructor(
     public readonly loader: GraphLoader,
     public readonly graphStore: MutableGraphStore,
-    public readonly boardServers: RuntimeConfigBoardServers,
-    public readonly recentBoardStore: RecentBoardStore,
-    public readonly signinAdapter: SigninAdapter,
-    public readonly googleDriveClient?: GoogleDriveClient
+    public readonly googleDriveBoardServer: GoogleDriveBoardServer,
+    private readonly recentBoardStore: RecentBoardStore,
+    private readonly signinAdapter: SigninAdapter,
+    private readonly googleDriveClient?: GoogleDriveClient
   ) {
     super();
-    boardServers.googleDriveBoardServer.addEventListener(
+    this.googleDriveBoardServer.addEventListener(
       "savestatuschange",
       ({ url, status }) => {
         if (!this.#currentTabId) {
@@ -330,7 +331,7 @@ export class Board extends EventTarget {
 
       let graph: GraphDescriptor | null = null;
       if (this.#canParse(url, base.href)) {
-        boardServer = this.boardServers.googleDriveBoardServer;
+        boardServer = this.googleDriveBoardServer;
         const resourceKey = urlAtTimeOfCall
           ? new URL(urlAtTimeOfCall).searchParams.get("resourcekey")
           : null;
@@ -532,7 +533,7 @@ export class Board extends EventTarget {
     }
 
     const boardUrl = new URL(tab.graph.url);
-    const boardServer = this.boardServers.googleDriveBoardServer;
+    const boardServer = this.googleDriveBoardServer;
     if (!boardServer) {
       return false;
     }
@@ -547,7 +548,7 @@ export class Board extends EventTarget {
     }
 
     const boardUrl = new URL(url);
-    const boardServer = this.boardServers.googleDriveBoardServer;
+    const boardServer = this.googleDriveBoardServer;
     if (!boardServer) {
       return false;
     }
@@ -655,7 +656,7 @@ export class Board extends EventTarget {
       delete tab.graph.assets["@@thumbnail"];
 
       const boardUrl = new URL(tab.graph.url);
-      const boardServer = this.boardServers.googleDriveBoardServer;
+      const boardServer = this.googleDriveBoardServer;
 
       const capabilities = boardServer.canProvide(boardUrl);
       if (!capabilities || !capabilities.save) {
@@ -739,7 +740,7 @@ export class Board extends EventTarget {
     }
 
     const fail = { result: false, error: "Unable to save", url: undefined };
-    const boardServer = this.boardServers.googleDriveBoardServer;
+    const boardServer = this.googleDriveBoardServer;
     if (!boardServer) {
       this.#isSavingAs = false;
       if (snackbarId) {
@@ -818,7 +819,7 @@ export class Board extends EventTarget {
     );
 
     const fail = { result: false, error: "Unable to delete" };
-    const boardServer = this.boardServers.googleDriveBoardServer;
+    const boardServer = this.googleDriveBoardServer;
     if (!boardServer) {
       return fail;
     }
