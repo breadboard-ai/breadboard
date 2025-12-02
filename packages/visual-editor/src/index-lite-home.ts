@@ -51,7 +51,6 @@ export class LiteHome extends SignalWatcher(LitElement) {
     css`
       :host {
         display: block;
-        min-height: 100%;
         background: var(--sys-color--body-background);
       }
     `,
