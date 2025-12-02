@@ -61,6 +61,9 @@ import { createActionTrackerBackend } from "@breadboard-ai/shared-ui/utils/actio
 import { envFromSettings } from "../utils/env-from-settings";
 import { builtInMcpClients } from "../mcp-clients";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
+import { FlowGenerator } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
+import { AppCatalystApiClient } from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
+import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -80,6 +83,9 @@ export class Runtime extends EventTarget {
   public readonly mcpClientManager: McpClientManager;
   public readonly recentBoardStore: RecentBoardStore;
   public readonly googleDriveBoardServer: GoogleDriveBoardServer;
+  public readonly flowGenerator: FlowGenerator;
+  public readonly apiClient: AppCatalystApiClient;
+  public readonly emailPrefsManager: EmailPrefsManager;
 
   constructor(config: RuntimeConfig) {
     super();
@@ -210,6 +216,14 @@ export class Runtime extends EventTarget {
     this.run = new Run(graphStore, this.state, this.flags, kits);
 
     this.#setupPassthruHandlers();
+
+    this.apiClient = new AppCatalystApiClient(
+      this.fetchWithCreds,
+      backendApiEndpoint
+    );
+    this.emailPrefsManager = new EmailPrefsManager(this.apiClient);
+    this.flowGenerator = new FlowGenerator(this.apiClient, this.flags);
+
     void this.recentBoardStore.restore();
   }
 

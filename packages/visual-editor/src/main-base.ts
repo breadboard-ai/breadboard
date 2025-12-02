@@ -295,32 +295,15 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       });
     }
 
-    // API Clients
-    let backendApiEndpoint = this.globalConfig.BACKEND_API_ENDPOINT;
-    if (!backendApiEndpoint) {
-      console.warn(`No BACKEND_API_ENDPOINT in ClientDeploymentConfiguration`);
-      // Supply some value, so that we fail while calling the API, rather
-      // than at initialization.
-      // TODO: Come up with a more elegant solution.
-      backendApiEndpoint = window.location.href;
-    }
-
-    const fetchWithCreds = this.signinAdapter.fetchWithCreds;
-
-    this.apiClient = new AppCatalystApiClient(
-      fetchWithCreds,
-      backendApiEndpoint
-    );
-
-    this.emailPrefsManager = new EmailPrefsManager(this.apiClient);
+    this.apiClient = this.runtime.apiClient;
+    this.emailPrefsManager = this.runtime.emailPrefsManager;
+    this.flowGenerator = this.runtime.flowGenerator;
 
     this.embedHandler = args.embedHandler;
 
     this.#addRuntimeEventHandlers();
 
-    this.flowGenerator = new FlowGenerator(this.apiClient, this.runtime.flags);
-
-    this.boardServer = this.runtime.board.googleDriveBoardServer;
+    this.boardServer = this.runtime.googleDriveBoardServer;
     this.uiState = this.runtime.state.ui;
 
     if (this.globalConfig.ENABLE_EMAIL_OPT_IN) {
