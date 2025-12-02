@@ -28,7 +28,6 @@ import {
   GraphIdentifier,
   InspectableGraph,
   InspectableNode,
-  Kit,
   MainGraphIdentifier,
   MutableGraphStore,
   NodeDescriptor,
@@ -102,9 +101,6 @@ export class Renderer extends LitElement {
 
   @property()
   accessor projectState: Project | null = null;
-
-  @property()
-  accessor boardServerKits: Kit[] | null = null;
 
   @property()
   accessor graph: InspectableGraph | null = null;
@@ -1735,7 +1731,6 @@ export class Renderer extends LitElement {
       </div>`,
       html`<bb-editor-controls
         ${ref(this.#editorControls)}
-        .boardServerKits=${this.boardServerKits}
         .graph=${this.graph}
         .graphIsMine=${this.graphIsMine}
         .graphStore=${this.graphStore}

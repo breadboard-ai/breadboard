@@ -9,7 +9,6 @@ import {
   EditHistoryCreator,
   EditHistoryEntry,
   GraphDescriptor,
-  Kit,
   MainGraphIdentifier,
   PortIdentifier,
   FileSystemEntry,
@@ -41,7 +40,6 @@ export type TabURL = string;
 export type TabName = string;
 export interface Tab {
   id: TabId;
-  boardServerKits: Kit[];
   name: TabName;
   mainGraphId: MainGraphIdentifier;
   graph: GraphDescriptor;

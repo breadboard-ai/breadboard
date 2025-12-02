@@ -200,7 +200,6 @@ export class Runtime extends EventTarget {
     this.board = new Board(
       loader,
       graphStore,
-      kits,
       boardServers,
       this.recentBoardStore,
       this.signinAdapter,
@@ -213,7 +212,7 @@ export class Runtime extends EventTarget {
 
     this.edit = new Edit(graphStore, autonamer, this.flags);
 
-    this.run = new Run(graphStore, this.state, this.flags, this.edit);
+    this.run = new Run(graphStore, this.state, this.flags, kits);
 
     this.#setupPassthruHandlers();
     void this.recentBoardStore.restore();

@@ -13,7 +13,6 @@ import {
   EditHistory,
   EditableGraph,
   GraphDescriptor,
-  Kit,
   MainGraphIdentifier,
   MutableGraphStore,
 } from "@google-labs/breadboard";
@@ -82,9 +81,6 @@ import * as Theme from "@breadboard-ai/theme";
 export class CanvasController extends SignalWatcher(LitElement) {
   @consume({ context: uiStateContext })
   accessor #uiState!: UI;
-
-  @property()
-  accessor boardServerKits: Kit[] = [];
 
   /**
    * Indicates whether or not the UI can currently run a flow or not.
@@ -388,7 +384,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
         this.projectState,
         runState,
         this.#runStateEffect,
-        this.boardServerKits,
         this.history,
         this.editorRender,
         this.selectionState,
@@ -409,7 +404,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
       ],
       () => {
         return html`<bb-renderer
-          .boardServerKits=${this.boardServerKits}
           .projectState=${this.projectState}
           .runState=${runState}
           .runStateEffect=${this.#runStateEffect}

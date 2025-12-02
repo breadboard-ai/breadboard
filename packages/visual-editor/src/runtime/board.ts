@@ -8,7 +8,6 @@ import {
   EditHistoryCreator,
   EditHistoryEntry,
   GraphDescriptor,
-  Kit,
   MutableGraphStore,
 } from "@google-labs/breadboard";
 import type {
@@ -83,10 +82,6 @@ export class Board extends EventTarget {
   constructor(
     public readonly loader: GraphLoader,
     public readonly graphStore: MutableGraphStore,
-    /**
-     * Extra Kits, supplied by the board server.
-     * */
-    public readonly boardServerKits: Kit[],
     public readonly boardServers: RuntimeConfigBoardServers,
     public readonly recentBoardStore: RecentBoardStore,
     public readonly signinAdapter: SigninAdapter,
@@ -292,7 +287,6 @@ export class Board extends EventTarget {
     }
     this.#tabs.set(id, {
       id,
-      boardServerKits: this.boardServerKits,
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
       graphIsMine: true,
@@ -429,7 +423,6 @@ export class Board extends EventTarget {
 
       this.#tabs.set(id, {
         id,
-        boardServerKits: this.boardServerKits,
         name: graph.title ?? "Untitled board",
         graph,
         graphIsMine,
