@@ -32,11 +32,9 @@ import {
   globalConfigContext,
 } from "../../contexts/global-config";
 import { getStepIcon } from "../../utils/get-step-icon";
-import { icons } from "../../styles/icons";
-import { baseColors } from "../../styles/host/base-colors";
-import { type } from "../../styles/host/type";
 import { iconSubstitute } from "../../utils/icon-substitute";
 import { repeat } from "lit/directives/repeat.js";
+import * as Styles from "../../styles/styles.js";
 
 @customElement("bb-fast-access-menu")
 export class FastAccessMenu extends SignalWatcher(LitElement) {
@@ -74,9 +72,10 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   accessor globalConfig: GlobalConfig | undefined;
 
   static styles = [
-    icons,
-    baseColors,
-    type,
+    Styles.HostIcons.icons,
+    Styles.HostColorsBase.baseColors,
+    Styles.HostType.type,
+    Styles.HostColorScheme.match,
     css`
       * {
         box-sizing: border-box;
@@ -85,7 +84,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       :host {
         display: block;
         width: 240px;
-        background: var(--light-dark-n-100);
+        background: light-dark(var(--n-100), var(--n-20));
         height: 300px;
         overflow: scroll;
         scrollbar-width: none;
@@ -107,8 +106,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
         margin-bottom: var(--bb-grid-size-2);
         position: sticky;
         top: 0;
-        background: var(--light-dark-n-100);
-        box-shadow: 0 0 0 12px var(--light-dark-n-100);
+        background: light-dark(var(--n-100), var(--n-20));
+        box-shadow: 0 0 0 12px light-dark(var(--n-100), var(--n-20));
 
         & input {
           width: 100%;
@@ -148,7 +147,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
             background-color: var(--background);
             border: none;
             border-radius: var(--bb-grid-size-2);
-            color: var(--light-dark-n-10);
+            color: var(--n-10);
             margin: 0 0 var(--bb-grid-size-3) 0;
             height: var(--bb-grid-size-6);
             padding: 0 var(--bb-grid-size-2);
@@ -201,11 +200,11 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       }
 
       #tools menu button {
-        --background: var(--light-dark-n-90);
+        --background: var(--n-90);
       }
 
       section.tools menu button {
-        --background: var(--light-dark-n-90);
+        --background: var(--n-90);
       }
 
       #outputs menu button {
@@ -248,7 +247,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       }
 
       .integration menu button {
-        --background: var(--light-dark-n-90);
+        --background: var(--n-90);
       }
 
       #parameters {
@@ -261,8 +260,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
           border-radius: var(--bb-grid-size-16);
           height: var(--bb-grid-size-7);
           border: none;
-          background: var(--bb-icon-add) var(--light-dark-n-98) 4px center /
-            20px 20px no-repeat;
+          background: var(--bb-icon-add) var(--n-98) 4px center / 20px 20px
+            no-repeat;
           padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-8);
           font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
             var(--bb-font-family);
@@ -274,7 +273,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
 
             &:hover,
             &:focus {
-              background-color: var(--light-dark-n-90);
+              background-color: var(--n-90);
             }
           }
         }

@@ -125,6 +125,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
 
       #no-projects-panel {
         background: var(--sys-color--surface-container-low);
+        color: var(--sys-color--on-surface-low);
         padding: var(--bb-grid-size-4);
         border-radius: var(--bb-grid-size-3);
         text-align: center;

@@ -108,7 +108,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
 
       .board {
         position: relative;
-        background: var(--light-dark-n-100);
+        background: light-dark(var(--n-100), var(--n-0));
         outline: 1px solid transparent;
         border-radius: var(--bb-grid-size-3);
         cursor: pointer;
@@ -149,7 +149,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           height: calc(100% - 6px);
           z-index: 2;
           border-radius: calc(var(--bb-grid-size-3) - 3px);
-          outline: 7px solid var(--light-dark-n-0);
+          outline: 7px solid light-dark(var(--n-0), var(--n-80));
           opacity: 0;
           transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
         }
@@ -166,8 +166,8 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           top: var(--bb-grid-size-3);
           left: var(--bb-grid-size-3);
           height: var(--bb-grid-size-8);
-          background: var(--light-dark-n-0);
-          color: var(--light-dark-n-100);
+          background: light-dark(var(--n-0), var(--n-100));
+          color: light-dark(var(--n-100), var(--n-0));
           border-radius: var(--bb-grid-size-16);
           z-index: 10;
           display: flex;
