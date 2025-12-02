@@ -528,27 +528,14 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         : html` <header class="w-400 md-title-small sans-flex">
             <div class="left">${title}</div>
             <div class="right">
-              <button
+              <a
                 ${ref(this.#advancedEditorLink)}
                 href="${this.hostOrigin}?mode=canvas&flow=${this.tab?.graph
                   .url}"
-                @click=${() => {
-                  if (!this.#embedHandler || !this.tab?.graph.url) {
-                    this.snackbar(
-                      html`Unable to open Advanced Editor`,
-                      BreadboardUI.Types.SnackType.ERROR
-                    );
-                    return;
-                  }
-
-                  this.#embedHandler.sendToEmbedder({
-                    type: "open_in_advanced_editor",
-                    boardId: this.tab.graph.url,
-                  });
-                }}
+                target="_blank"
               >
                 <span class="g-icon">open_in_new</span>Open Advanced Editor
-              </button>
+              </a>
               <button
                 @click=${() => {
                   if (!this.#embedHandler || !this.tab?.graph.url) {
