@@ -23,6 +23,7 @@ import {
   Template,
 } from "@google-labs/breadboard";
 import { createContext } from "@lit/context";
+import { signal } from "signal-utils";
 
 export interface OneShotFlowGenRequest {
   intent: string;
@@ -73,6 +74,12 @@ export class FlowGenerator {
     this.#appCatalystApiClient = appCatalystApiClient;
     this.#flagManager = flagManager;
   }
+
+  @signal
+  accessor currentStatus: string | null = null;
+
+  @signal
+  accessor currentThought: string | null = null;
 
   async oneShot({
     intent,
@@ -204,6 +211,8 @@ export class FlowGenerator {
         );
       }
     }
+    this.currentStatus = null;
+    this.currentThought = null;
   }
 
   #processStreamPart(
@@ -220,8 +229,10 @@ export class FlowGenerator {
 
       if (isThought) {
         console.log(`[flowgen] Thought: ${part.text}`);
+        this.currentThought = part.text;
       } else if (isStatus) {
         console.log(`[flowgen] Status: ${part.text}`);
+        this.currentStatus = part.text;
       } else if (type === "breadboard") {
         try {
           responseFlows.push(JSON.parse(part.text));

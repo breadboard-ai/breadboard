@@ -19,6 +19,7 @@ import {
 import { Runtime } from "./runtime";
 import { RuntimeTabChangeEvent } from "./events";
 import { signal } from "signal-utils";
+import { FlowGenerator } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
 
 export { StateManager };
 
@@ -35,12 +36,15 @@ class StateManager implements RuntimeContext {
 
   readonly lite: LiteModeState;
 
+  readonly flowGenerator: FlowGenerator;
+
   constructor(
     // Omitting state to avoid circular references
     private readonly runtime: Omit<Runtime, "state">,
     store: MutableGraphStore
   ) {
     this.#store = store;
+    this.flowGenerator = this.runtime.flowGenerator;
     this.ui = State.createUIState(this.runtime.flags);
     this.lite = createLiteModeState(this);
     this.runtime.board.addEventListener(RuntimeTabChangeEvent.eventName, () => {
