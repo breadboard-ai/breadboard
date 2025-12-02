@@ -47,9 +47,6 @@ function discoverClientDeploymentConfiguration(): ClientDeploymentConfiguration 
     globalThis.document?.querySelector("template")?.content?.firstElementChild
       ?.textContent;
   if (!text) {
-    console.warn(
-      "Failed to discover deployment config: DOM element not found."
-    );
     return populateFlags({}) as ClientDeploymentConfiguration;
   }
   try {

@@ -7,6 +7,8 @@
 import { type RuntimeFlags } from "./flags.js";
 
 export type ClientDeploymentConfiguration = {
+  GEMINI_KEY?: string;
+  USE_API_KEY_LOCAL_DEV?: boolean;
   ALLOWED_REDIRECT_ORIGINS?: string[];
   MEASUREMENT_ID?: string;
   BACKEND_API_ENDPOINT?: string;

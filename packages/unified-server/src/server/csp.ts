@@ -95,10 +95,11 @@ export const MAIN_APP_CSP = {
     "data:",
     "https://*.google.com",
     "https://*.google-analytics.com",
+    "https://*.googleapis.com",
     ...(flags.SHELL_ENABLED
       ? []
       : [
-          "https://*.googleapis.com",
+        "https://*.googleapis.com",
           flags.BACKEND_API_ENDPOINT,
           flags.SHELL_GUEST_ORIGIN,
         ]),

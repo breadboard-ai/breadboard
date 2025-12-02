@@ -35,6 +35,8 @@ export async function createClientConfig(opts: {
   OAUTH_CLIENT: string;
 }): Promise<ClientDeploymentConfiguration> {
   return {
+    GEMINI_KEY: flags.GEMINI_KEY,
+    USE_API_KEY_LOCAL_DEV: flags.USE_API_KEY_LOCAL_DEV,
     ALLOWED_REDIRECT_ORIGINS: flags.ALLOWED_REDIRECT_ORIGINS,
     MEASUREMENT_ID: flags.MEASUREMENT_ID,
     BACKEND_API_ENDPOINT: flags.BACKEND_API_ENDPOINT,
