@@ -124,11 +124,6 @@ export type ProjectRun = {
    * Call when the user chooses to dismiss errors shown (if any)
    */
   dismissError(): void;
-
-  /**
-   * Represents step list view (aka lite)
-   */
-  stepList: StepListState;
 };
 
 export type StepListStateStatus = "planning" | "running" | "ready";

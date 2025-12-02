@@ -15,6 +15,7 @@ import {
 } from "./types";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import { ReactiveProjectRun } from "./project-run";
+import { StepList } from "./step-list";
 
 export { createLiteModeState };
 
@@ -25,7 +26,7 @@ function createLiteModeState(context: RuntimeContext) {
 const EXAMPLES: LiteModeIntentExample[] = [
   {
     intent:
-      "An app that reads current news and creates an alternative history fiction story based on these news",
+      "An app that takes a topic, then researches current news on the topic and creates an alternative history fiction story based on these news",
   },
   {
     intent:
@@ -128,8 +129,11 @@ class ReactiveLiteModeState implements LiteModeState {
     return "editor";
   }
 
+  @signal
   get stepList(): StepListState | undefined {
-    return this.context.project?.run.stepList;
+    const run = this.context.project?.run as ReactiveProjectRun | undefined;
+    if (!run) return;
+    return new StepList(run);
   }
 
   get examples() {
