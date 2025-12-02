@@ -6,6 +6,7 @@
 
 import { GraphDescriptor, LLMContent } from "@breadboard-ai/types";
 import { iteratorFromStream } from "@breadboard-ai/utils";
+import { FlowGenLLMContentPart } from "./flow-generator";
 
 export interface AppCatalystChatRequest {
   messages: AppCatalystContentChunk[];
@@ -15,6 +16,15 @@ export interface AppCatalystChatRequest {
   };
 }
 
+export interface AppCatalystChatRequestV2 {
+  reviseIntent?: string;
+  intent?: string;
+  appOptions: {
+    format: "FORMAT_GEMINI_FLOWS";
+    featureFlags?: Record<string, boolean>;
+  };
+  app?: { parts: FlowGenLLMContentPart[] };
+}
 
 export interface AppCatalystChatResponse {
   messages: AppCatalystContentChunk[];
@@ -147,9 +157,9 @@ export class AppCatalystApiClient {
     intent: string,
     agentMode = false
   ): AsyncGenerator<LLMContent> {
-    const request: any = {
+    const request: AppCatalystChatRequestV2 = {
       intent,
-      app_options: {
+      appOptions: {
         format: "FORMAT_GEMINI_FLOWS",
         ...(agentMode && {
           featureFlags: { enable_agent_mode_planner: true },
@@ -164,9 +174,9 @@ export class AppCatalystApiClient {
     flow: GraphDescriptor,
     agentMode = false
   ): AsyncGenerator<LLMContent> {
-    const request = {
-      revise_intent: intent,
-      app_options: {
+    const request: AppCatalystChatRequestV2 = {
+      reviseIntent: intent,
+      appOptions: {
         format: "FORMAT_GEMINI_FLOWS",
         ...(agentMode && {
           featureFlags: { enable_agent_mode_planner: true },
@@ -187,7 +197,7 @@ export class AppCatalystApiClient {
   }
 
   async *chatStream(
-    request: any,
+    request: AppCatalystChatRequestV2,
     endpoint:
       | "generateOpalStream"
       | "editOpalStream"
@@ -223,7 +233,7 @@ export class AppCatalystApiClient {
         result.canAccess = false;
       }
       return result;
-    } catch (e) {
+    } catch {
       return { canAccess: false, accessStatus: "Unable to check" };
     }
   }
