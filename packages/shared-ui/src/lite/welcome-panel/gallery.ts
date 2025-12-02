@@ -28,6 +28,7 @@ import { ActionTracker } from "../../utils/action-tracker.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import * as Styles from "../../styles/styles.js";
 
+const COLLAPSED_KEY = "gallery-lite-collapsed";
 const GlobalStrings = StringsHelper.forSection("Global");
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -447,7 +448,14 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   accessor forceCreatorToBeTeam = false;
 
   @state()
-  accessor #isCollapsed = true;
+  set isCollapsed(collapsed: boolean) {
+    this.#isCollapsed = collapsed;
+    sessionStorage.setItem(COLLAPSED_KEY, String(this.#isCollapsed));
+  }
+  get isCollapsed() {
+    return this.#isCollapsed;
+  }
+  #isCollapsed = true;
 
   /**
    * How many items to display per page. Set to -1 to disable pagination.
@@ -460,6 +468,13 @@ export class GalleryLite extends SignalWatcher(LitElement) {
 
   readonly #paginationContainer = createRef<HTMLElement>();
   readonly #boardsContainer = createRef<HTMLElement>();
+
+  constructor() {
+    super();
+
+    this.isCollapsed =
+      sessionStorage.getItem(COLLAPSED_KEY) === "false" ? false : true;
+  }
 
   #isPinned(url: string): boolean {
     const recentBoards = this.recentBoards;
@@ -479,9 +494,9 @@ export class GalleryLite extends SignalWatcher(LitElement) {
     const container = this.#boardsContainer.value;
     if (container) {
       const currentHeight = container.offsetHeight;
-      if (this.#isCollapsed) {
+      if (this.isCollapsed) {
         container.style.maxHeight = `${currentHeight}px`;
-        this.#isCollapsed = false;
+        this.isCollapsed = false;
         await this.updateComplete;
         const newHeight = container.scrollHeight;
         container.animate(
@@ -497,10 +512,10 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           container.style.maxHeight = "none";
         };
       } else {
-        this.#isCollapsed = true;
+        this.isCollapsed = true;
         await this.updateComplete;
         const newHeight = container.offsetHeight;
-        this.#isCollapsed = false;
+        this.isCollapsed = false;
         container.animate(
           [
             { maxHeight: `${currentHeight}px` },
@@ -512,7 +527,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           }
         ).onfinish = () => {
           container.style.maxHeight = "none";
-          this.#isCollapsed = true;
+          this.isCollapsed = true;
         };
       }
     }
@@ -627,12 +642,12 @@ export class GalleryLite extends SignalWatcher(LitElement) {
                 @click=${this.#toggleCollapsedState}
               >
                 ${Strings.from(
-                  this.#isCollapsed ? "COMMAND_SHOW_MORE" : "COMMAND_SHOW_LESS"
+                  this.isCollapsed ? "COMMAND_SHOW_MORE" : "COMMAND_SHOW_LESS"
                 )}
                 <span
                   class=${classMap({
                     "g-icon": true,
-                    collapsed: this.collapsable && this.#isCollapsed,
+                    collapsed: this.collapsable && this.isCollapsed,
                   })}
                 ></span>
               </button>
@@ -642,7 +657,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
       <div
         id="boards"
         ${ref(this.#boardsContainer)}
-        class=${classMap({ collapsed: this.collapsable && this.#isCollapsed })}
+        class=${classMap({ collapsed: this.collapsable && this.isCollapsed })}
       >
         ${pageItems.map((item) => {
           const isPinned = this.#isPinned(item[0]);
