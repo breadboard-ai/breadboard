@@ -90,4 +90,5 @@ export interface ShareDriveFilesOptions {
 
 export type GuestConfiguration = {
   consentMessage: string;
+  advancedEditorOrigin?: string;
 };
