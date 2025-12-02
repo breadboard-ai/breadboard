@@ -224,7 +224,7 @@ async function init() {
       });
     }
 
-    function handleSecondaryVideoIframeClick() {
+    const handleSecondaryVideoIframeClick = () => {
       setTimeout(() => {
         if (document.activeElement === secondaryVideo) {
           if (secondaryVideoContainer) {
@@ -236,7 +236,7 @@ async function init() {
       }, 0);
     }
 
-    // gain window focus so that blur even will fire for the first time
+    // gain window focus so that blur even will fire without any user interaction
     if (document.hasFocus() === false) {
       window.focus();
       document.body?.focus?.();
