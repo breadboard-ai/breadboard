@@ -63,7 +63,7 @@ export class NodeRunControl extends LitElement {
         background: none;
         border: none;
         pointer-events: auto;
-        opacity: 0.8;
+        opacity: 0.5;
         transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
         position: relative;
         color: light-dark(var(--n-0), var(--n-0));
