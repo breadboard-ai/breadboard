@@ -124,11 +124,6 @@ export type ProjectRun = {
    * Call when the user chooses to dismiss errors shown (if any)
    */
   dismissError(): void;
-
-  /**
-   * Represents step list view (aka lite)
-   */
-  stepList: StepListState;
 };
 
 export type StepListStateStatus = "planning" | "running" | "ready";
@@ -141,11 +136,6 @@ export type StepListState = {
    * - "ready" -- interactive state
    */
   status: StepListStateStatus;
-  /**
-   * The intent behind the app. This value is taken from the BGL
-   * "metadata.intent" property. If "null", no intent was specified.
-   */
-  intent: string | null;
 
   /**
    * The list of steps according to the current run plan
@@ -478,10 +468,13 @@ export type LiteModeState = {
    */
   graph: GraphDescriptor | null;
 
-  stepList: StepListState | undefined;
-
   examples: LiteModeIntentExample[];
   currentExampleIntent: string;
+
+  /**
+   * The list of steps according to the current run plan
+   */
+  steps: Map<string, StepListStepState>;
 };
 
 /**

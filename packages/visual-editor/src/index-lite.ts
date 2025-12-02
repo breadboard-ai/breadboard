@@ -445,8 +445,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
     return html`<bb-prompt-view
       .prompt=${prompt}
-      .viewType=${this.runtime.state.lite.viewType}
-      .status=${this.runtime.state.lite.status}
+      .state=${this.runtime.state.lite}
     ></bb-prompt-view>`;
   }
 
@@ -477,11 +476,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderList() {
     return html`
-      <bb-step-list-view
-        .stepList=${this.runtime.state.lite.stepList}
-        .status=${this.runtime.state.lite.status}
-        .viewType=${this.runtime.state.lite.viewType}
-      ></bb-step-list-view>
+      <bb-step-list-view .state=${this.runtime.state.lite}></bb-step-list-view>
     `;
   }
 

@@ -56,14 +56,12 @@ import {
   ProjectRunStatus,
   RendererRunState,
   StepEditor,
-  StepListState,
   UserInput,
 } from "./types";
 import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
 import { edgeToString } from "../utils/workspace";
 import { Signal } from "signal-polyfill";
-import { StepList } from "./step-list";
 
 export { createProjectRunStateFromFinalOutput, ReactiveProjectRun };
 
@@ -105,7 +103,6 @@ function error(msg: string) {
 
 class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
   app: ReactiveApp = new ReactiveApp(this);
-  readonly stepList: StepListState = new StepList(this);
 
   console: Map<string, ConsoleEntry> = new SignalMap();
 
