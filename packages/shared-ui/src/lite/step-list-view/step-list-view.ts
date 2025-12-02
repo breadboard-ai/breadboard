@@ -14,13 +14,7 @@ import { repeat } from "lit/directives/repeat.js";
 @customElement("bb-step-list-view")
 export class StepListView extends SignalWatcher(LitElement) {
   @property()
-  accessor steps: Map<string, StepListStepState> | null = null;
-
-  @property()
-  accessor status: LiteModeState["status"] | null = null;
-
-  @property()
-  accessor viewType: LiteModeState["viewType"] | null = null;
+  accessor state: LiteModeState | null = null;
 
   static styles = [
     Styles.HostIcons.icons,
@@ -282,9 +276,9 @@ export class StepListView extends SignalWatcher(LitElement) {
       `;
     };
 
-    const steps = this.steps;
+    const steps = this.state?.steps;
     if (!steps || steps.size === 0) {
-      if (this.viewType === "loading") {
+      if (this.state?.viewType === "loading") {
         return html`<ul id="list">
           ${repeat(new Array(4), () => {
             return html`<li>
@@ -305,7 +299,7 @@ export class StepListView extends SignalWatcher(LitElement) {
             </li>`;
           })}
         </ul>`;
-      } else if (this.status === "generating") {
+      } else if (this.state?.status === "generating") {
         return html`<ul id="list">
           <li>
             ${renderStep(

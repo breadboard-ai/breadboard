@@ -477,11 +477,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderList() {
     return html`
-      <bb-step-list-view
-        .steps=${this.runtime.state.lite.steps}
-        .status=${this.runtime.state.lite.status}
-        .viewType=${this.runtime.state.lite.viewType}
-      ></bb-step-list-view>
+      <bb-step-list-view .state=${this.runtime.state.lite}></bb-step-list-view>
     `;
   }
 
