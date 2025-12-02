@@ -11,11 +11,17 @@ import {
   LiteModeIntentExample,
   LiteModeState,
   RuntimeContext,
-  StepListState,
+  StepListStepState,
 } from "./types";
-import { GraphDescriptor } from "@breadboard-ai/types";
+import {
+  ConsoleEntry,
+  GraphDescriptor,
+  LLMContent,
+  NodeRunStatus,
+  TextCapabilityPart,
+} from "@breadboard-ai/types";
 import { ReactiveProjectRun } from "./project-run";
-import { StepList } from "./step-list";
+import { Template } from "@breadboard-ai/utils";
 
 export { createLiteModeState };
 
@@ -53,19 +59,13 @@ class ReactiveLiteModeState implements LiteModeState {
   accessor error: string | undefined;
 
   startGenerating(): void {
-    if (this.stepList) {
-      this.stepList.status = "planning";
-    }
     this.status = "generating";
   }
 
   finishGenerating(): void {
-    if (this.stepList) {
-      this.stepList.status = "ready";
-      // Consume intent.
-      this.#intent = undefined;
-      this.currentExampleIntent = "";
-    }
+    // Consume intent.
+    this.#intent = undefined;
+    this.currentExampleIntent = "";
     this.status = "initial";
   }
 
@@ -73,6 +73,38 @@ class ReactiveLiteModeState implements LiteModeState {
   get intent() {
     if (this.status !== "initial" && this.#intent) return this.#intent;
     return "";
+  }
+
+  @signal
+  get steps(): Map<string, StepListStepState> {
+    const run = this.context.project?.run as ReactiveProjectRun;
+    if (!run) return new Map();
+    return new Map(
+      Array.from(run.console.entries()).map(([id, entry]) => {
+        const status = getStatus(entry.status?.status, this.status);
+        const { icon, title, tags } = entry;
+        let prompt: string;
+        let label: string;
+        if (tags?.includes("input")) {
+          prompt = promptFromInput(entry);
+          label = labelFromInput(id, run.graph) || "Question from user";
+        } else {
+          prompt = promptFromIntent(id, run.graph) || "";
+          label = "Prompt";
+        }
+        return [
+          id,
+          {
+            icon,
+            title,
+            status,
+            prompt,
+            label,
+            tags,
+          } satisfies StepListStepState,
+        ];
+      })
+    );
   }
 
   @signal
@@ -125,15 +157,8 @@ class ReactiveLiteModeState implements LiteModeState {
         console.warn("Unknown UI load state", loadState);
         return "invalid";
     }
-    if (!this.stepList || this.empty) return "home";
+    if (this.empty) return "home";
     return "editor";
-  }
-
-  @signal
-  get stepList(): StepListState | undefined {
-    const run = this.context.project?.run as ReactiveProjectRun | undefined;
-    if (!run) return;
-    return new StepList(run);
   }
 
   get examples() {
@@ -144,4 +169,69 @@ class ReactiveLiteModeState implements LiteModeState {
   accessor currentExampleIntent: string = "";
 
   constructor(private readonly context: RuntimeContext) {}
+}
+
+function promptFromInput(entry: ConsoleEntry) {
+  return (
+    (
+      entry.output.values().next().value?.parts.at(0) as
+        | TextCapabilityPart
+        | undefined
+    )?.text || ""
+  );
+}
+
+function promptFromIntent(
+  id: string,
+  graph: GraphDescriptor | undefined
+): string | undefined {
+  const node = graph?.nodes.find((descriptor) => descriptor.id === id);
+  if (!node) return;
+
+  const intent = node.metadata?.step_intent;
+  if (intent) return intent;
+
+  const { configuration } = node;
+  if (!configuration) return;
+
+  // Fall back to the full prompt
+  const generatePrompt = textFromLLMContent(node.configuration?.config$prompt);
+  if (generatePrompt) return generatePrompt;
+
+  return textFromLLMContent(node.configuration?.text);
+}
+
+function textFromLLMContent(o: unknown): string | undefined {
+  const c = o as LLMContent | undefined;
+  const text = (c?.parts.at(0) as TextCapabilityPart | undefined)?.text;
+  if (!text) return;
+
+  return new Template(text).preview;
+}
+
+function labelFromInput(
+  id: string,
+  graph: GraphDescriptor | undefined
+): string | undefined {
+  const configuration = graph?.nodes.find(
+    (descriptor) => descriptor.id === id
+  )?.configuration;
+  if (!configuration) return;
+
+  return textFromLLMContent(configuration.description);
+}
+
+function getStatus(
+  stepStatus: NodeRunStatus | "failed" | undefined,
+  listStatus: FlowGenGenerationStatus
+): StepListStepState["status"] {
+  if (!stepStatus || listStatus === "generating") return "pending";
+  switch (stepStatus) {
+    case "working":
+    case "waiting":
+      return "working";
+    case "ready":
+    default:
+      return "ready";
+  }
 }

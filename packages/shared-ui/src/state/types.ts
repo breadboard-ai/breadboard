@@ -468,10 +468,13 @@ export type LiteModeState = {
    */
   graph: GraphDescriptor | null;
 
-  stepList: StepListState | undefined;
-
   examples: LiteModeIntentExample[];
   currentExampleIntent: string;
+
+  /**
+   * The list of steps according to the current run plan
+   */
+  steps: Map<string, StepListStepState>;
 };
 
 /**
