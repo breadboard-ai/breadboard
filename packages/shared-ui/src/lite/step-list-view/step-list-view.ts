@@ -240,8 +240,15 @@ export class StepListView extends SignalWatcher(LitElement) {
         </details>`;
       }
 
+      const title =
+        status !== "generating"
+          ? html`<h1 class="step-title w-400 md-body-small sans-flex">
+              ${step.tags?.includes("input") ? "Question to user:" : "Prompt"}
+            </h1>`
+          : nothing;
+
       return html`
-        <details>
+        <details ?open=${status === "generating"}>
           <summary>
             <span class="marker-container">
               <span class=${classMap(markerClasses)}></span>
@@ -261,9 +268,7 @@ export class StepListView extends SignalWatcher(LitElement) {
             >
           </summary>
           <div class="step-content sans md-body-medium w-400">
-            <h1 class="step-title w-400 md-body-small sans-flex">
-              ${step.tags?.includes("input") ? "Question to user:" : "Prompt"}
-            </h1>
+            ${title}
             <p>
               ${step.prompt && step.prompt.trim() !== ""
                 ? step.prompt
@@ -310,10 +315,10 @@ export class StepListView extends SignalWatcher(LitElement) {
                 working: true,
               },
               {
-                label: "Thinking...",
+                label: this.state?.planner.thought,
                 prompt: "",
                 status: "pending",
-                title: "Creating your app...",
+                title: this.state?.planner.status,
               },
               "generating"
             )}

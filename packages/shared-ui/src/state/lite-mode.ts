@@ -12,6 +12,7 @@ import {
   LiteModeState,
   RuntimeContext,
   StepListStepState,
+  LiteModePlannerState,
 } from "./types";
 import {
   ConsoleEntry,
@@ -22,6 +23,7 @@ import {
 } from "@breadboard-ai/types";
 import { ReactiveProjectRun } from "./project-run";
 import { Template } from "@breadboard-ai/utils";
+import { FlowGenerator } from "../flow-gen/flow-generator";
 
 export { createLiteModeState };
 
@@ -168,7 +170,11 @@ class ReactiveLiteModeState implements LiteModeState {
   @signal
   accessor currentExampleIntent: string = "";
 
-  constructor(private readonly context: RuntimeContext) {}
+  planner: LiteModePlannerState;
+
+  constructor(private readonly context: RuntimeContext) {
+    this.planner = new PlannerState(this.context.flowGenerator);
+  }
 }
 
 function promptFromInput(entry: ConsoleEntry) {
@@ -234,4 +240,28 @@ function getStatus(
     default:
       return "ready";
   }
+}
+
+class PlannerState implements LiteModePlannerState {
+  @signal
+  get status() {
+    return this.flowGenerator.currentStatus || "Creating your Opal";
+  }
+
+  @signal
+  get thought() {
+    return (
+      trimWithEllipsis(this.flowGenerator.currentThought, 10) || "Planning ..."
+    );
+  }
+
+  constructor(private readonly flowGenerator: FlowGenerator) {}
+}
+
+function trimWithEllipsis(text: string | null, length: number) {
+  // TODO: Implement this using word boundaries, not string length.
+  if (!text) return null;
+  const words = text.split(" ");
+  if (words.length <= length + 1) return text;
+  return words.slice(0, length).join(" ") + "...";
 }

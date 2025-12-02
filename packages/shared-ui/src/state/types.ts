@@ -42,6 +42,7 @@ import { AppTheme, ParsedUrlProvider, VisualEditorMode } from "../types/types";
 import { HTMLTemplateResult } from "lit";
 import type { AsyncComputedStatus } from "signal-utils/async-computed";
 import { FilteredMap } from "./utils/filtered-map";
+import type { FlowGenerator } from "../flow-gen/flow-generator";
 
 /**
  * Represents the result of AsyncComputed signals helper.
@@ -432,6 +433,11 @@ export type LiteModeIntentExample = {
   intent: string;
 };
 
+export type LiteModePlannerState = {
+  status: string;
+  thought: string;
+};
+
 /**
  * Represents the flow gen state
  */
@@ -452,6 +458,11 @@ export type LiteModeState = {
    * Call this to trigger the "error" view
    */
   viewError: string;
+
+  /**
+   * Planner bits
+   */
+  planner: LiteModePlannerState;
 
   // FlowGen bits
   status: FlowGenGenerationStatus;
@@ -485,6 +496,7 @@ export type RuntimeContext = {
   readonly project: Project | null;
   readonly ui: UI;
   readonly router: ParsedUrlProvider;
+  readonly flowGenerator: FlowGenerator;
 };
 
 export type IntegrationState = {

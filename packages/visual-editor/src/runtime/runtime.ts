@@ -209,14 +209,7 @@ export class Runtime extends EventTarget {
     this.util = Util;
     this.select = new Select();
     this.router = new Router();
-    this.state = new StateManager(this, graphStore);
-
     this.edit = new Edit(graphStore, autonamer, this.flags);
-
-    this.run = new Run(graphStore, this.state, this.flags, kits);
-
-    this.#setupPassthruHandlers();
-
     this.apiClient = new AppCatalystApiClient(
       this.fetchWithCreds,
       backendApiEndpoint
@@ -224,6 +217,11 @@ export class Runtime extends EventTarget {
     this.emailPrefsManager = new EmailPrefsManager(this.apiClient);
     this.flowGenerator = new FlowGenerator(this.apiClient, this.flags);
 
+    this.state = new StateManager(this, graphStore);
+
+    this.run = new Run(graphStore, this.state, this.flags, kits);
+
+    this.#setupPassthruHandlers();
     void this.recentBoardStore.restore();
   }
 

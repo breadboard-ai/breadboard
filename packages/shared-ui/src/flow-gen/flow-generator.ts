@@ -78,6 +78,9 @@ export class FlowGenerator {
   @signal
   accessor currentStatus: string | null = null;
 
+  @signal
+  accessor currentThought: string | null = null;
+
   async oneShot({
     intent,
     context,
@@ -209,6 +212,7 @@ export class FlowGenerator {
       }
     }
     this.currentStatus = null;
+    this.currentThought = null;
   }
 
   #processStreamPart(
@@ -225,6 +229,7 @@ export class FlowGenerator {
 
       if (isThought) {
         console.log(`[flowgen] Thought: ${part.text}`);
+        this.currentThought = part.text;
       } else if (isStatus) {
         console.log(`[flowgen] Status: ${part.text}`);
         this.currentStatus = part.text;
