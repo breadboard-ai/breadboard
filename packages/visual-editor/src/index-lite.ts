@@ -530,8 +530,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             <div class="right">
               <a
                 ${ref(this.#advancedEditorLink)}
-                href="${this.hostOrigin}?mode=canvas&flow=${this.tab?.graph
-                  .url}"
+                href="${this.guestConfiguration.advancedEditorOrigin ||
+                this.hostOrigin}?mode=canvas&flow=${this.tab?.graph.url}"
                 target="_blank"
               >
                 <span class="g-icon">open_in_new</span>Open Advanced Editor
