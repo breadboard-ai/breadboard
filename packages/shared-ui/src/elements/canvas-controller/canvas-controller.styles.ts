@@ -56,7 +56,7 @@ export const styles = [
         top: 50%;
         transform: translateY(-50%);
         right: var(--bb-grid-size-3);
-        z-index: 6;
+        z-index: 100;
         height: calc(100% - var(--bb-grid-size-6));
         width: 25svw;
         min-width: 280px;
