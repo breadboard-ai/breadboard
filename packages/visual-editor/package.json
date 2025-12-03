@@ -12,6 +12,10 @@
       "types": "./build/src/config.d.ts",
       "default": "./build/src/config.js"
     },
+    "./landing": {
+      "types": "./build/src/landing/main.d.ts",
+      "default": "./build/src/landing/main.js"
+    },
     "./public": "./public",
     "./index.html": "./index.html",
     "./preview.html": "./preview.html",
