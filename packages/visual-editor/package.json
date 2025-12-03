@@ -94,7 +94,8 @@
         "index.html",
         "icons/",
         "oauth",
-        "landing/"
+        "landing/",
+        "langs/"
       ]
     }
   },
