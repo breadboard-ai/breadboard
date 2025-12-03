@@ -6,7 +6,7 @@
 
 import { configureAssets } from "./src/configure-assets.js";
 import { tryGetGitHash } from "./src/build-info.js";
-import { defineConfig, loadEnv, UserConfig } from "vite";
+import { defineConfig, UserConfig } from "vite";
 import compression from "vite-plugin-compression2";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -14,11 +14,9 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export default defineConfig(async ({ mode }): Promise<UserConfig> => {
-  const envConfig = { ...loadEnv(mode!, __dirname) };
-
+export default defineConfig(async (): Promise<UserConfig> => {
   const [definedAssets, buildInfo] = await Promise.all([
-    configureAssets(__dirname, envConfig),
+    configureAssets(__dirname),
     tryGetGitHash(),
   ]);
 
