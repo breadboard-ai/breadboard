@@ -104,6 +104,7 @@ export class StepListView extends SignalWatcher(LitElement) {
                 cursor: pointer;
                 min-height: 48px;
 
+                &:has(> .marker-container > .pending),
                 &.loading {
                   --light: oklch(
                     from var(--sys-color--surface-container-high) l c h / 20%
@@ -137,13 +138,17 @@ export class StepListView extends SignalWatcher(LitElement) {
                   flex: 0 0 auto;
                   position: relative;
 
+                  &:has(> .marker.processing-generation) {
+                    width: 32px;
+                    height: 32px;
+                  }
+
                   & > .marker {
                     flex: 0 0 auto;
 
                     &::before {
                       content: "keyboard_arrow_down";
                     }
-
                     &.pending,
                     &.working {
                       animation: rotate 1s linear infinite;
@@ -152,15 +157,33 @@ export class StepListView extends SignalWatcher(LitElement) {
                         content: "progress_activity";
                       }
                     }
+
+                    &.processing-generation {
+                      animation: none;
+                      width: 32px;
+                      height: 32px;
+
+                      &::before {
+                        content: "";
+                        display: block;
+                        width: 32px;
+                        height: 32px;
+                        animation: rotate 1s linear infinite;
+                        background: url(/images/progress-md.svg) center center /
+                          100% 100% no-repeat;
+                        border-radius: 50%;
+                      }
+                    }
                   }
 
                   & > .generating {
                     flex: 0 0 auto;
                     position: absolute;
-                    font-size: 12px;
-                    left: 4px;
-                    top: 4px;
-                    color: light-dark(var(--p-40), var(--p-80));
+                    width: 20px;
+                    height: 20px;
+                    left: 6px;
+                    top: 6px;
+                    color: var(--sys-color--on-surface-variant);
                   }
                 }
               }
@@ -312,7 +335,7 @@ export class StepListView extends SignalWatcher(LitElement) {
                 marker: true,
                 "g-icon": true,
                 "filled-heavy": true,
-                working: true,
+                "processing-generation": true,
               },
               {
                 label: this.state?.planner.thought,
