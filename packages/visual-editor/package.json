@@ -89,7 +89,8 @@
         "public/",
         "index.html",
         "icons/",
-        "oauth"
+        "oauth",
+        "landing/"
       ]
     }
   },
