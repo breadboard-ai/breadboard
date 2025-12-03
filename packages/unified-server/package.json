@@ -120,14 +120,14 @@
         "../visual-editor#prepare-assets"
       ],
       "files": [
-        "scripts/copy-assets.ts",
-        "landing/styles/**/*.*"
+        "scripts/copy-assets.ts"
       ],
       "output": [
         "public/",
         "icons/",
         "index.html",
-        "oauth/"
+        "oauth/",
+        "landing/"
       ]
     }
   },
