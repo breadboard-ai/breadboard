@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ServerConfig } from "../types.js";
+import { ServerConfig } from "./types.js";
 import * as flags from "./flags.js";
 import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 

@@ -2,14 +2,13 @@
   "name": "@breadboard-ai/unified-server",
   "private": true,
   "version": "0.4.0",
-  "main": "./dist/src/server/main.js",
-  "exports": "./dist/src/server/main.js",
+  "main": "./dist/src/main.js",
+  "exports": "./dist/src/main.js",
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
     "build": "wireit",
     "build:tsc": "wireit",
-    "build:tsc:server": "wireit",
     "build:vite": "wireit",
     "dev": "npm run serve --watch",
     "dev-drive": "VITE_BOARD_SERVICE='drive:' npm run serve --watch",
@@ -43,20 +42,15 @@
       ]
     },
     "build:tsc": {
-      "dependencies": [
-        "build:tsc:server"
-      ]
-    },
-    "build:tsc:server": {
       "command": "tsc --pretty --project tsconfig.json",
       "clean": "if-file-deleted",
       "files": [
         "tsconfig.json",
-        "src/server/",
+        "src/",
         "tests/"
       ],
       "output": [
-        "dist/src/server/",
+        "dist/src/",
         "dist/tests/",
         "dist/server.tsbuildinfo"
       ],
@@ -72,7 +66,7 @@
         ".env"
       ],
       "dependencies": [
-        "build:tsc:server"
+        "build:tsc"
       ]
     },
     "test": {
@@ -90,19 +84,6 @@
   "files": [
     "dist/src"
   ],
-  "ava": {
-    "timeout": "30s",
-    "files": [
-      "tests/**/*.ts"
-    ],
-    "workerThreads": false,
-    "typescript": {
-      "rewritePaths": {
-        "./": "dist/"
-      },
-      "compile": false
-    }
-  },
   "keywords": [],
   "author": "Google Labs Team",
   "license": "Apache-2.0",
@@ -127,16 +108,11 @@
     "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {
-    "@breadboard-ai/a2": "0.6.0",
     "@breadboard-ai/google-drive-kit": "0.8.0",
-    "@breadboard-ai/mcp": "^0.1.0",
-    "@breadboard-ai/shared-ui": "1.27.0",
     "@breadboard-ai/types": "0.9.0",
     "@breadboard-ai/utils": "^0.1.0",
     "@breadboard-ai/visual-editor": "1.30.0",
     "@google-cloud/storage": "^7.15.2",
-    "@google-labs/breadboard": "0.36.0",
-    "@google/genai": "^1.27.0",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
