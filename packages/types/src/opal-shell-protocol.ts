@@ -6,6 +6,11 @@
 
 import type { BreadboardMessage, EmbedderMessage } from "./embedder.js";
 
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// IMPORTANT! All interfaces and types defined here must use the `declare`
+// keyword to prevent them from being renamed by Closure Compilier
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 export const SHELL_ORIGIN_URL_PARAMETER = "shellOrigin";
 
 export const SHELL_ESTABLISH_MESSAGE_CHANNEL_REQUEST =
@@ -13,7 +18,7 @@ export const SHELL_ESTABLISH_MESSAGE_CHANNEL_REQUEST =
 export const SHELL_ESTABLISH_MESSAGE_CHANNEL_RESPONSE =
   "opal_shell_establish_message_channel_response";
 
-export interface OpalShellHostProtocol {
+export declare interface OpalShellHostProtocol {
   getSignInState(): Promise<SignInState>;
 
   // TODO(aomarks) Do this within getSignInState so that we don't need this
@@ -39,11 +44,11 @@ export interface OpalShellHostProtocol {
   sendToEmbedder(message: BreadboardMessage): Promise<void>;
 }
 
-export interface OpalShellGuestProtocol {
+export declare interface OpalShellGuestProtocol {
   receiveFromEmbedder(message: EmbedderMessage): Promise<void>;
 }
 
-export type SignInState =
+export declare type SignInState =
   | { status: "signedout" }
   | {
       status: "signedin";
@@ -54,41 +59,43 @@ export type SignInState =
       scopes: string[];
     };
 
-export type ValidateScopesResult = { ok: true } | { ok: false; error: string };
+export declare type ValidateScopesResult = { ok: true } | { ok: false; error: string };
 
-export type SignInResult =
+export declare type SignInResult =
   | { ok: true; state: SignInState }
   | { ok: false; error: SignInError };
 
-export type SignInError =
+export declare type SignInError =
   | { code: "missing-scopes"; missingScopes: string[] }
   | { code: "geo-restriction" }
   | { code: "user-cancelled" }
   | { code: "other"; userMessage: string };
 
-export interface PickDriveFilesOptions {
+export declare interface PickDriveFilesOptions {
   mimeTypes: string[];
 }
 
-export type PickDriveFilesResult =
+export declare type PickDriveFilesResult =
   | { action: "picked"; docs: PickDriveFilesDocument[] }
   | { action: "cancel" }
   | { action: "error"; error: string };
 
-export interface PickDriveFilesDocument {
+export declare interface PickDriveFilesDocument {
   id: string;
   name?: string;
   mimeType?: string;
   resourceKey?: string;
 }
 
-export type CheckAppAccessResult = { canAccess: boolean };
+export declare interface CheckAppAccessResult {
+  canAccess: boolean;
+}
 
-export interface ShareDriveFilesOptions {
+export declare interface ShareDriveFilesOptions {
   fileIds: string[];
 }
 
-export type GuestConfiguration = {
+export declare type GuestConfiguration = {
   consentMessage: string;
   advancedEditorOrigin?: string;
 };
