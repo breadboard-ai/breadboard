@@ -144,7 +144,7 @@ export class LLMOutput extends LitElement {
         & .content {
           background: var(
             --output-lite-background-color,
-            var(--light-dark-n-100)
+            light-dark(var(--n-100), var(--n-15))
           );
 
           &:has(.html-view) {

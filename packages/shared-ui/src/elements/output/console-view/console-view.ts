@@ -177,7 +177,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
               }
 
               & .duration {
-                color: var(--light-dark-n-70);
+                color: light-dark(var(--n-70), var(--n-80));
                 margin-left: var(--bb-grid-size);
               }
             }
