@@ -116,7 +116,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
         & #message {
           text-align: center;
-          height: var(--bb-grid-size-4);
+          height: var(--bb-grid-size-7);
           margin: var(--bb-grid-size-2) 0;
           color: var(--sys-color--on-surface-variant);
 
@@ -137,7 +137,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           display: flex;
           flex-direction: column;
           overflow: hidden;
-          margin-bottom: var(--bb-grid-size-13);
+          margin-bottom: var(--bb-grid-size-16);
 
           & bb-snackbar {
             width: calc(100% - var(--bb-grid-size-12));
@@ -446,12 +446,14 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     return html`<bb-prompt-view
       .prompt=${prompt}
       .state=${this.runtime.state.lite}
+      ?inert=${this.#isInert()}
     ></bb-prompt-view>`;
   }
 
   #renderUserInput() {
     const { lite } = this.runtime.state;
     return html`<bb-editor-input-lite
+      ?inert=${this.#isInert()}
       .controller=${this}
       .state=${lite}
     ></bb-editor-input-lite>`;
@@ -476,7 +478,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderList() {
     return html`
-      <bb-step-list-view .state=${this.runtime.state.lite}></bb-step-list-view>
+      <bb-step-list-view
+        ?inert=${this.#isInert()}
+        .state=${this.runtime.state.lite}
+      ></bb-step-list-view>
     `;
   }
 
@@ -557,6 +562,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             </div>
           </header>`}
       <bb-app-controller
+        ?inert=${this.#isInert()}
         class=${classMap({ active: true })}
         .graph=${this.tab?.graph ?? null}
         .graphIsEmpty=${false}
@@ -590,7 +596,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       <h2 class="w-400 md-title-large sans-flex">
         Looking for inspiration? Try one of our prompts
       </h2>
-      <aside id="examples">
+      <aside id="examples" ?inert=${this.#isInert()}>
         <ul>
           ${repeat(this.runtime.state.lite.examples, (example) => {
             return html`<li>
@@ -620,6 +626,14 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       this.#renderOnboardingTooltip(),
       this.uiState.show.has("SignInModal") ? this.renderSignInModal() : nothing,
     ];
+  }
+
+  #isInert() {
+    return (
+      this.uiState.blockingAction ||
+      this.runtime.state.lite.status == "generating" ||
+      this.runtime.state.lite.viewType === "loading"
+    );
   }
 
   render() {
@@ -657,9 +671,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     }
 
     return html`<section
-        ?inert=${this.uiState.blockingAction ||
-        lite.status == "generating" ||
-        lite.viewType === "loading"}
         id="lite-shell"
         class=${classMap({
           full: this.showAppFullscreen,
