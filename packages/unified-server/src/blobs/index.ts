@@ -15,7 +15,7 @@ import {
 
 import { serveBlob } from "./serve.js";
 
-import type { ServerConfig } from "../../types.js";
+import type { ServerConfig } from "../types.js";
 import { isUUID } from "./blob-store.js";
 import { badRequest } from "./errors.js";
 
