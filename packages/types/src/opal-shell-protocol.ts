@@ -11,11 +11,11 @@ import type { BreadboardMessage, EmbedderMessage } from "./embedder.js";
 // keyword to prevent them from being renamed by Closure Compilier
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-export declare const SHELL_ORIGIN_URL_PARAMETER = "shellOrigin";
+export const SHELL_ORIGIN_URL_PARAMETER = "shellOrigin";
 
-export declare const SHELL_ESTABLISH_MESSAGE_CHANNEL_REQUEST =
+export const SHELL_ESTABLISH_MESSAGE_CHANNEL_REQUEST =
   "opal_shell_establish_message_channel_request";
-export declare const SHELL_ESTABLISH_MESSAGE_CHANNEL_RESPONSE =
+export const SHELL_ESTABLISH_MESSAGE_CHANNEL_RESPONSE =
   "opal_shell_establish_message_channel_response";
 
 export declare interface OpalShellHostProtocol {
@@ -87,7 +87,9 @@ export declare interface PickDriveFilesDocument {
   resourceKey?: string;
 }
 
-export declare type CheckAppAccessResult = { canAccess: boolean };
+export declare interface CheckAppAccessResult {
+  canAccess: boolean;
+}
 
 export declare interface ShareDriveFilesOptions {
   fileIds: string[];
