@@ -9,7 +9,6 @@
   "scripts": {
     "build": "wireit",
     "build:tsc": "wireit",
-    "build:tsc:client": "wireit",
     "build:tsc:server": "wireit",
     "build:vite": "wireit",
     "dev": "npm run serve --watch",
@@ -73,11 +72,7 @@
         ".env"
       ],
       "dependencies": [
-        "build:tsc:server",
-        {
-          "script": "build:tsc:client",
-          "cascade": false
-        }
+        "build:tsc:server"
       ]
     },
     "test": {
