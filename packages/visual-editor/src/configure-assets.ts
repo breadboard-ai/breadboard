@@ -6,11 +6,11 @@
 
 import path from "path";
 import fs from "fs/promises";
+import languagePack from "./opal-lang.js";
 
 export { configureAssets };
 
 
-const LANGUAGE_PACK = "../dist/src/opal-lang.js";
 const ASSET_PACK = "langs/icons";
 const FONT_FACE_MONO = '"Google Sans Code", "Courier New", Courier, monospace"';
 const FONT_FACE =
@@ -41,15 +41,6 @@ export type ConfigureAssetOutputs = {
 };
 
 async function configureAssets(root: string): Promise<ConfigureAssetOutputs> {
-  const languagePackUrl = import.meta.resolve(LANGUAGE_PACK);
-
-  let languagePack;
-  try {
-    languagePack = (await import(languagePackUrl)).default;
-  } catch {
-    throw new Error("Unable to import language pack");
-  }
-
   const assetPack = await processAssetPack(
     root,
     ASSET_PACK,
