@@ -74,11 +74,6 @@ export class ConnectionBroker extends HTMLElement {
       return;
     }
 
-    // Call the token grant API.
-    if (!import.meta.env.VITE_CONNECTION_SERVER_URL) {
-      displayError("Could not find a grant URL for this origin.");
-      return;
-    }
     // TODO(aomarks) Would it be better to send the code directly back to the
     // opener, so that it can check the nonce, and only then do this grant RPC
     // itself?
