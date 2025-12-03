@@ -8,7 +8,13 @@ import { cp } from "fs/promises";
 import { join } from "path";
 
 const unifiedServerRoot = join(import.meta.dirname, "..");
-const dirsToCopyFromVisualEditor = ["public", "icons", "oauth", "landing"];
+const dirsToCopyFromVisualEditor = [
+  "public",
+  "icons",
+  "oauth",
+  "landing",
+  "langs",
+];
 const filesToCopyFromVisualEditor = ["index.html"];
 
 const unifiedServerLandingStylesSrcDir = join(

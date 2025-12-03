@@ -127,7 +127,8 @@
         "icons/",
         "index.html",
         "oauth/",
-        "landing/"
+        "landing/",
+        "langs/"
       ]
     }
   },
