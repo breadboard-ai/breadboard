@@ -16,6 +16,10 @@
       "types": "./build/src/landing/main.d.ts",
       "default": "./build/src/landing/main.js"
     },
+    "./shell": {
+      "types": "./build/src/shell/opal-shell-host.d.ts",
+      "default": "./build/src/shell/opal-shell-host.js"
+    },
     "./public": "./public",
     "./index.html": "./index.html",
     "./preview.html": "./preview.html",
@@ -95,7 +99,8 @@
         "icons/",
         "oauth",
         "landing/",
-        "langs/"
+        "langs/",
+        "shell"
       ]
     }
   },

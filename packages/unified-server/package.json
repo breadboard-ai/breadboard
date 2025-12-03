@@ -128,7 +128,8 @@
         "index.html",
         "oauth/",
         "landing/",
-        "langs/"
+        "langs/",
+        "shell/"
       ]
     }
   },

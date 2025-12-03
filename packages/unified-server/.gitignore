@@ -4,5 +4,6 @@
 /oauth/
 /public/
 /secrets/
+/shell/
 
 /index.html

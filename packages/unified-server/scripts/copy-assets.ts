@@ -14,6 +14,7 @@ const dirsToCopyFromVisualEditor = [
   "oauth",
   "landing",
   "langs",
+  "shell",
 ];
 const filesToCopyFromVisualEditor = ["index.html"];
 
