@@ -7,25 +7,7 @@
     ".": {
       "types": "./build/src/index.d.ts",
       "default": "./build/src/index.js"
-    },
-    "./config.js": {
-      "types": "./build/src/config.d.ts",
-      "default": "./build/src/config.js"
-    },
-    "./landing": {
-      "types": "./build/src/landing/main.d.ts",
-      "default": "./build/src/landing/main.js"
-    },
-    "./shell": {
-      "types": "./build/src/shell/opal-shell-host.d.ts",
-      "default": "./build/src/shell/opal-shell-host.js"
-    },
-    "./public": "./public",
-    "./index.html": "./index.html",
-    "./preview.html": "./preview.html",
-    "./vite": "./build/src/configure-assets.js",
-    "./build-info": "./build/src/build-info.js",
-    "./bootstrap": "./build/src/bootstrap.js"
+    }
   },
   "types": "build/index.d.ts",
   "type": "module",
@@ -52,6 +34,7 @@
         "src/**/*.ts",
         "tests/**/*.ts",
         "tsconfig.json",
+        "vite.config.ts",
         "../../core/tsconfig/base.json",
         "package.json",
         "langs"
