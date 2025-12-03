@@ -161,7 +161,7 @@ function decodeIdToken(id_token?: string): DecodeIdTokenResponse {
       picture: decoded.picture,
       domain: decoded.hd,
     };
-  } catch (e) {
+  } catch {
     return {};
   }
 }

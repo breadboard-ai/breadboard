@@ -501,8 +501,6 @@ export class LLMOutput extends LitElement {
     return task;
   }
 
-  #renderOverflowMenu() {}
-
   #overflowMenuConfiguration = {
     idx: 0,
     y: 0,

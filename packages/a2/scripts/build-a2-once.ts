@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Module, GraphDescriptor } from "@breadboard-ai/types";
-import { readdir, readFile, writeFile } from "fs/promises";
+import { readdir, writeFile } from "fs/promises";
 import { join } from "path";
 
 /**

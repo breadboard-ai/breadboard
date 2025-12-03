@@ -39,7 +39,7 @@ export class ConnectionBroker extends HTMLElement {
     let state: OAuthStateParameter;
     try {
       state = JSON.parse(stateStr);
-    } catch (e) {
+    } catch {
       displayError('"state" contained invalid JSON.');
       return;
     }

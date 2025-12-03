@@ -47,7 +47,6 @@ session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
     ];
 
     if (only) {
-      // eslint-disable-next-line no-restricted-syntax
       session.evalOnly(...params);
     } else {
       session.eval(...params);

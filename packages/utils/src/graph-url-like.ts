@@ -19,14 +19,14 @@ export function graphUrlLike(s: string): boolean {
   if (s.startsWith("#")) {
     try {
       new URL(s, "http://example.com");
-    } catch (e) {
+    } catch {
       return false;
     }
     return true;
   } else if (s.includes(":") || s.startsWith("./")) {
     try {
       new URL(s, "http://example.com");
-    } catch (e) {
+    } catch {
       return false;
     }
     return true;

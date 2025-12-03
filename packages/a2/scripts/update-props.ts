@@ -60,7 +60,7 @@ async function main() {
       graph = JSON.parse(
         await readFile(`${OUT_DIR}/${item.name}`, "utf-8")
       ) as GraphDescriptor;
-    } catch (e) {
+    } catch {
       console.log(`Skipping "${item.name}"`);
       continue;
     }

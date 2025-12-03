@@ -822,11 +822,6 @@ export class GalleryLite extends SignalWatcher(LitElement) {
     `;
   }
 
-  #onClickPageNumber(event: PointerEvent & { target: HTMLElement }) {
-    this.page = Number(event.target.dataset.pageIdx);
-    this.#scrollCurrentPageNumberButtonIntoView();
-  }
-
   #onClickPrevPage() {
     this.page--;
     this.#scrollCurrentPageNumberButtonIntoView();

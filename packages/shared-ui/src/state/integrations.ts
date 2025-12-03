@@ -318,12 +318,6 @@ class IntegrationsImpl implements Integrations {
     if (!ok(adding)) return adding;
   }
 
-  #createId(url: string) {
-    return `connectors/${url
-      .replace(/[^a-zA-Z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")}`;
-  }
-
   async remove(id: McpServerIdentifier): Promise<Outcome<void>> {
     const servers = this.known.value;
     if (!servers) {
