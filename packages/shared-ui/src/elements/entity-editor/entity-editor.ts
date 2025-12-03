@@ -1411,8 +1411,7 @@ export class EntityEditor
         const extendedInfoOutput =
           extendedInfo && typeof extendedInfo !== "string"
             ? html`<div class="info">
-                <span class="g-icon round filled">warning</span
-                >${extendedInfo.info}
+                <span class="g-icon round">info</span>${extendedInfo.info}
               </div>`
             : nothing;
 
