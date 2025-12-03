@@ -228,7 +228,7 @@ export class Snackbar extends LitElement {
             class=${classMap({
               "g-icon": true,
               round: true,
-              filled: true,
+              "filled-heavy": true,
               rotate,
             })}
             >${icon}</span
@@ -282,7 +282,7 @@ export class Snackbar extends LitElement {
           this.dispatchEvent(new SnackbarActionEvent("dismiss"));
         }}
       >
-        <span class="g-icon">close</span>
+        <span class="g-icon filled-heavy round">close</span>
       </button>`;
   }
 }
