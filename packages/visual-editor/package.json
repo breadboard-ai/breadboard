@@ -2,14 +2,14 @@
   "name": "@breadboard-ai/visual-editor",
   "version": "1.30.0",
   "description": "The Visual Editor for Breadboard",
-  "main": "./build/index.js",
+  "main": "./dist/src/index.js",
   "exports": {
     ".": {
-      "types": "./build/src/index.d.ts",
-      "default": "./build/src/index.js"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
     }
   },
-  "types": "build/index.d.ts",
+  "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
@@ -50,8 +50,8 @@
       ],
       "files": [],
       "output": [
-        "build/",
-        "!build/**/*.min.js{,.map}"
+        "dist/",
+        "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
     },
@@ -93,10 +93,9 @@
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
-    "build/",
+    "dist/",
     "public",
-    "index.html",
-    "preview.html"
+    "index.html"
   ],
   "ava": {
     "timeout": "30s",

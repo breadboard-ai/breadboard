@@ -8,7 +8,6 @@ import { configureAssets } from "./src/configure-assets.js";
 import { tryGetGitHash } from "./src/build-info.js";
 import { defineConfig, loadEnv, UserConfig } from "vite";
 import compression from "vite-plugin-compression2";
-import tsconfigRaw from "./tsconfig.client.json" with { type: "json" };
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -33,9 +32,6 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
   };
 
   return {
-    esbuild: {
-      tsconfigRaw,
-    },
     optimizeDeps: { esbuildOptions: { target: "esnext" } },
     build: {
       target: "esnext",
