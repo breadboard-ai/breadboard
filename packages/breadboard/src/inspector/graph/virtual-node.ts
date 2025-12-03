@@ -40,14 +40,12 @@ function discernType(id: string): VirtualNodeType {
  * every capability it invokes shows up as a virtual node.
  */
 class VirtualNode implements InspectableNode {
-  #id: string;
   // Currently matches runModule capabilities.
   #type: VirtualNodeType;
   descriptor: NodeDescriptor;
 
   constructor(descriptor: Partial<NodeDescriptor>) {
     const { id = "", type, metadata } = descriptor;
-    this.#id = id;
     this.#type = (type as VirtualNodeType) || discernType(id);
     this.descriptor = {
       id,

@@ -88,8 +88,6 @@ export class MultipleChoice extends Root {
       return;
     }
 
-    this.selections;
-
     const selectionValue = this.processor.getData(
       this.component,
       this.selections.path!,

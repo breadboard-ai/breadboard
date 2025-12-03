@@ -133,7 +133,6 @@ class ListExpander {
   #list: ExpanderListItem[] = [];
   #originalListItems: LLMContent[][] = [];
   #id: string = "";
-  #instructions?: UnzippedResult;
   #expanded = false;
 
   constructor(

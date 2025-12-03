@@ -534,7 +534,6 @@ export interface BaseUrlInit {
    * Prefer camelCase names for consistency, and be sure to make all properties
    * ?optional.
    */
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   dev?: {
     forceSignInState?:
       | "sign-in"

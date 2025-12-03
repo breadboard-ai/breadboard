@@ -1,5 +1,4 @@
-import { generate, createSpec } from "./gemini";
-import particleTypes from "./types/particles?raw";
+import { createSpec } from "./gemini";
 
 // const p = `Examine the code before and write a companion guide for UX designers.
 // The purpose of this guide will be to help them write specs for this UI toolkit.

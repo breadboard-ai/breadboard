@@ -341,18 +341,22 @@ export class Graph implements EditableGraph {
       error = result.error;
     }
     if (error) {
-      !dryRun && this.#rollbackGraph(checkpoint, error);
+      if (!dryRun) {
+        this.#rollbackGraph(checkpoint, error);
+      }
       return { success: false, log, error };
     }
 
     if (noChange) {
-      !dryRun && this.#dispatchNoChange();
+      if (!dryRun) {
+        this.#dispatchNoChange();
+      }
       return { success: true, log };
     }
 
     this.#history.add(this.raw(), label, creator, Date.now());
 
-    !dryRun &&
+    if (!dryRun) {
       this.#updateGraph(
         visualOnly,
         unique(affectedNodes.flat()),
@@ -362,6 +366,7 @@ export class Graph implements EditableGraph {
         integrationsChange,
         label
       );
+    }
     return { success: true, log };
   }
 }

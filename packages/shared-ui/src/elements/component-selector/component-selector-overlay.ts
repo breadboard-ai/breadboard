@@ -337,7 +337,7 @@ export class ComponentSelectorOverlay extends LitElement {
       if (Array.isArray(kits)) {
         this.activeKits = kits;
       }
-    } catch (err) {
+    } catch {
       globalThis.localStorage.removeItem(ACTIVE_KITS_KEY);
     }
   }

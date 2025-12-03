@@ -12,7 +12,7 @@ export function getBoardFiles(directory: string) {
     try {
       const data = JSON.parse(fs.readFileSync(file, "utf-8"));
       return Array.isArray(data.edges) && Array.isArray(data.nodes);
-    } catch (e) {
+    } catch {
       return false;
     }
   });

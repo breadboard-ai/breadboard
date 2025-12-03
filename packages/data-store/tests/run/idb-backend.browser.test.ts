@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+
 import { expect } from "@esm-bundle/chai";
 import { Files, IDBBackend } from "../../src/file-system/idb-backend.js";
 import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
