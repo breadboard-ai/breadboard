@@ -99,6 +99,8 @@ export const SHELL_GUEST_ORIGIN = getString("SHELL_GUEST_ORIGIN");
 
 export const SHELL_HOST_ORIGINS = getStringList("SHELL_HOST_ORIGINS");
 
+export const SHELL_PREFIX = getString("SHELL_PREFIX");
+
 export const SHELL_ENABLED = !!(
   SHELL_GUEST_ORIGIN && SHELL_HOST_ORIGINS?.length
 );

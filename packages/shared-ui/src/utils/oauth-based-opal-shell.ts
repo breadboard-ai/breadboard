@@ -550,7 +550,10 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     history.replaceState(
       null,
       "",
-      new URL(pathname + search + hash, window.location.origin)
+      new URL(
+        CLIENT_DEPLOYMENT_CONFIG.SHELL_PREFIX + pathname + search + hash,
+        window.location.origin
+      )
     );
   };
 
