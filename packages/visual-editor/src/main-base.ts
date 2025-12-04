@@ -297,6 +297,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.embedHandler = args.embedHandler;
 
     this.#addRuntimeEventHandlers();
+    this.#addCustomEventHandlers();
 
     this.boardServer = this.runtime.googleDriveBoardServer;
     this.uiState = this.runtime.state.ui;
@@ -462,6 +463,21 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       [],
       true
     );
+  }
+
+  #addCustomEventHandlers() {
+    window.addEventListener("showCustomSnackbarEvent", ((evt: CustomEvent) => {
+      if (evt.detail) {
+        this.snackbar(
+          evt.detail.message,
+          evt.detail.snackType,
+          evt.detail.actions || [],
+          evt.detail.persistent || false,
+          evt.detail.snackbarId,
+          evt.detail.replaceAll || false
+        );
+      }
+    }) as EventListener);
   }
 
   #addRuntimeEventHandlers() {
