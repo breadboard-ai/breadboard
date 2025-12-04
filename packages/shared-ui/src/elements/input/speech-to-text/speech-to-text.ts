@@ -150,7 +150,8 @@ export class SpeechToText extends LitElement {
       }
 
       span:not(.final) {
-        opacity: 0.7;
+        opacity: 1;
+        color: var(--light-dark-n-0);
       }
 
       @keyframes pulse {

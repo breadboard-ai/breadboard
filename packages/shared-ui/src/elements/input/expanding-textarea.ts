@@ -154,7 +154,6 @@ export class ExpandingTextarea extends LitElement {
         background: none;
         border: none;
         color: var(--light-dark-n-30);
-        opacity: 0.5;
         padding: 4px;
         display: flex;
         align-items: center;
@@ -164,10 +163,6 @@ export class ExpandingTextarea extends LitElement {
 
         &:not([disabled]) {
           cursor: pointer;
-
-          &:hover {
-            opacity: 1;
-          }
         }
       }
 
