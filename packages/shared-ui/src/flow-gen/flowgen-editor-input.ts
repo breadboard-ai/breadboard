@@ -284,11 +284,15 @@ export class FlowgenEditorInput extends LitElement {
 
       ActionTracker.flowGenEdit(this.currentGraph?.url);
 
-      this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
 
       if (!this.flowGenerator) return;
       if (!this.currentGraph) return;
       if (!this.projectState) return;
+
+      this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
+      this.dispatchEvent(
+        new StateEvent({ eventType: "board.stop", clearLastRun: true })
+      );
 
       flowGenWithTheme(
         this.flowGenerator,
