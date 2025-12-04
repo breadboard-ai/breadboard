@@ -56,6 +56,7 @@ export class PromptView extends SignalWatcher(LitElement) {
         text-overflow: ellipsis;
         box-sizing: content-box;
         color: var(--sys-color--on-surface);
+        word-break: break-word;
 
         & .placeholder {
           border-radius: var(--bb-grid-size);
