@@ -141,6 +141,10 @@ export class TextEditor extends LitElement {
     this.#updateEditorValue();
   }
 
+  get value(): string {
+    return this.#rawValue;
+  }
+
   get type(): string {
     return "string";
   }
