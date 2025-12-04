@@ -13,8 +13,6 @@ export const FALLBACK_CSP = {
   ["default-src"]: ["'none'"],
   ["form-action"]: ["'none'"],
   ["frame-ancestors"]: ["'none'"],
-  ["require-trusted-types-for"]: ["'script'"],
-  ["trusted-types"]: ["'none'"],
 };
 
 export const OAUTH_REDIRECT_CSP = {
@@ -30,8 +28,6 @@ export const OAUTH_REDIRECT_CSP = {
   ["form-action"]: ["'none'"],
   ["frame-ancestors"]: noneIfEmpty(flags.ALLOWED_REDIRECT_ORIGINS),
   ["script-src"]: ["'self'"],
-  ["require-trusted-types-for"]: ["'script'"],
-  ["trusted-types"]: ["'none'"],
 };
 
 export const SHELL_CSP = {
@@ -57,8 +53,6 @@ export const SHELL_CSP = {
   ["img-src"]: ["https://*.gstatic.com"],
   ["script-src"]: ["'self'", "https://apis.google.com"],
   ["style-src"]: ["'unsafe-inline'"],
-  ["require-trusted-types-for"]: ["'script'"],
-  ["trusted-types"]: ["'none'"],
 };
 
 export const MAIN_APP_CSP = {
@@ -127,8 +121,6 @@ export const MAIN_APP_CSP = {
   ]),
   ["media-src"]: ["'self'", "blob:", "data:"],
   ["base-uri"]: ["'none'"],
-  ["require-trusted-types-for"]: ["'script'"],
-  ["trusted-types"]: ["lit-html", "opal-analytics-url", "opal-chiclet-html"],
 };
 
 function noneIfEmpty(directives: string[]): string[] {
