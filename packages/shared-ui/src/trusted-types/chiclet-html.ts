@@ -26,6 +26,19 @@ function createTrustedChicletHTMLImpl(
   if (!value) {
     return "";
   }
+  // Explanation:
+  //
+  // - Untrusted strings are split into two types via a regex: "parts" that are
+  //   parsed as JSON data, and "strings".
+  //
+  // - String parts are always escaped.
+  //
+  // - JSON data parts are converted into trusted HTML using chicletHtml.
+  //
+  // - chicletHtml uses DOM APIs to construct a DOM tree (which are subject to
+  //   Trusted Type policies themselves) before serializing with outerHTML. Even
+  //   though the JSON data is untrusted, because the DOM construction is
+  //   guaranteed to not use unsafe sinks, the outerHTML is also trusted.
   const template = new Template(value);
   template.substitute(
     (part) => chicletHtml(part, projectState ?? null, subGraphId ?? null),
