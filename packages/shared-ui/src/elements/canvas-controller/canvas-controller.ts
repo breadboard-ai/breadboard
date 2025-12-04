@@ -666,7 +666,12 @@ export class CanvasController extends SignalWatcher(LitElement) {
                 ${Strings.from("LABEL_SECTION_PREVIEW")}
               </button>
               <button
-                class="sans-flex w-500 round"
+                class=${classMap({
+                  "sans-flex": true,
+                  "w-500": true,
+                  round: true,
+                  invisible: graphIsEmpty,
+                })}
                 ?disabled=${this.sideNavItem === "activity"}
                 @click=${() => {
                   this.sideNavItem = "activity";
