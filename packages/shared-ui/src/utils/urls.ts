@@ -51,6 +51,7 @@ export function makeUrl(
   if (init?.oauthRedirect) {
     url.searchParams.set(OAUTH_REDIRECT, init.oauthRedirect);
   }
+  let shared = false;
   if (page === "home") {
     url.pathname = "/";
     url.searchParams.set(MODE, init.mode ?? MODE_CANVAS);
@@ -80,6 +81,7 @@ export function makeUrl(
       url.searchParams.set(REMIX, init.remix ? "true" : "false");
     }
     if (init.shared) {
+      shared = true;
       url.searchParams.set(SHARED, "");
     }
     if (init.results) {
@@ -145,9 +147,12 @@ export function makeUrl(
       url.searchParams.set(DEV_PREFIX + key, val);
     }
   }
+  // Here, the "shared" check is used to ensure that shared URLs are pointing
+  // to the host.
   if (
     CLIENT_DEPLOYMENT_CONFIG.SHELL_HOST_ORIGINS?.length &&
-    window !== window.parent
+    window !== window.parent &&
+    !shared
   ) {
     url.pathname = "/_app" + url.pathname;
   }

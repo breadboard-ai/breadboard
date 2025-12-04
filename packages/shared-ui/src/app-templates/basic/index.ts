@@ -87,6 +87,10 @@ import {
   ConsentManager,
   CONSENT_RENDER_INFO,
 } from "../../utils/consent-manager.js";
+import {
+  GlobalConfig,
+  globalConfigContext,
+} from "../../contexts/global-config.js";
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 const toFunctionString = (fn: Function, bindings?: Record<string, unknown>) => {
@@ -194,6 +198,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     mode: "light",
     splashImage: false,
   };
+
+  @consume({ context: globalConfigContext })
+  @property({ attribute: false })
+  accessor globalConfig: GlobalConfig | undefined;
 
   @provide({ context: ParticlesUI.Context.themeContext })
   accessor theme: ParticlesUI.Types.UITheme = uiTheme;
@@ -888,14 +896,17 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return;
     }
 
-    this.resultsUrl = makeUrl({
-      page: "graph",
-      mode: "app",
-      flow: shareableGraphUrl,
-      resourceKey: await shareableGraphResourceKeyPromise,
-      results: resultsFileId,
-      shared: true,
-    });
+    this.resultsUrl = makeUrl(
+      {
+        page: "graph",
+        mode: "app",
+        flow: shareableGraphUrl,
+        resourceKey: await shareableGraphResourceKeyPromise,
+        results: resultsFileId,
+        shared: true,
+      },
+      this.globalConfig?.hostOrigin
+    );
 
     ActionTracker.shareResults("save_to_drive");
 

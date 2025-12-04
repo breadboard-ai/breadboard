@@ -44,6 +44,9 @@ function setColorScheme(colorScheme?: "light" | "dark") {
 }
 
 async function bootstrap(bootstrapArgs: BootstrapArguments) {
+  const { shellHost, embedHandler, hostOrigin } =
+    await connectToOpalShellHost();
+
   const globalConfig: GlobalConfig = {
     environmentName: CLIENT_DEPLOYMENT_CONFIG.ENVIRONMENT_NAME,
     googleDrive: {
@@ -55,6 +58,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       gitCommitHash: GIT_HASH,
     },
     ...bootstrapArgs.deploymentConfiguration,
+    hostOrigin,
   };
 
   const { SettingsStore } = await import(
@@ -62,8 +66,6 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   );
   const settings = await SettingsStore.restoredInstance();
 
-  const { shellHost, embedHandler, hostOrigin } =
-    await connectToOpalShellHost();
   const signinAdapter = new SigninAdapter(
     shellHost,
     await shellHost.getSignInState()
