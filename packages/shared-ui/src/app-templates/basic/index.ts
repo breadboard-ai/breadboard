@@ -79,6 +79,7 @@ import {
   ConsentAction,
   ConsentType,
   ConsentUIType,
+  OutputValues,
 } from "@breadboard-ai/types";
 import { maybeTriggerNlToOpalSatisfactionSurvey } from "../../survey/nl-to-opal-satisfaction-survey.js";
 import { repeat } from "lit/directives/repeat.js";
@@ -188,6 +189,26 @@ function isHTMLOutput(screen: AppScreenOutput): string | null {
   }
 
   return null;
+}
+
+const DOC_MIME_TYPE = "application/vnd.google-apps.document";
+const SHEETS_MIME_TYPE = "application/vnd.google-apps.spreadsheet";
+const SLIDES_MIME_TYPE = "application/vnd.google-apps.presentation";
+
+function isDocSlidesOrSheetsOutput(output: OutputValues): boolean {
+  if (isLLMContentArray(output.context)) {
+    for (const el of output.context) {
+      for (const part of el.parts) {
+        if ("storedData" in part) {
+          const mimeType = part.storedData.mimeType;
+          if (mimeType === DOC_MIME_TYPE || mimeType === SHEETS_MIME_TYPE || mimeType === SLIDES_MIME_TYPE) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return false;
 }
 
 @customElement("app-basic")
@@ -555,6 +576,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     this.style.setProperty("--input-clearance", `0px`);
 
+    const isBtnDisabled = isDocSlidesOrSheetsOutput(this.run.finalOutput); 
+
     return html`
       <div id="save-results-button-container">
         ${this.resultsUrl
@@ -568,6 +591,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
             </button>`
           : html`<button
               id="save-results-button"
+              ?disabled=${isBtnDisabled}
               class="sans-flex w-500 round md-body-medium"
               @click=${this.#onClickSaveResults}
               ${ref(this.#shareResultsButton)}
@@ -577,6 +601,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
             </button>`}
         <button
           id="export-output-button"
+          ?disabled=${isBtnDisabled}
           @click=${this.#onClickExportOutput}
           class="sans-flex w-500 round md-body-medium"
         >
