@@ -10,14 +10,15 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { FastAccessSelectEvent } from "../../../events/events";
 import { Project } from "../../../state";
 import { FastAccessMenu } from "../../elements";
-import { isTemplatePart, Sanitizer } from "@breadboard-ai/utils";
+import { isTemplatePart } from "@breadboard-ai/utils";
 import { styles as ChicletStyles } from "../../../styles/chiclet.js";
 import { getAssetType } from "../../../utils/mime-type";
 import { icons } from "../../../styles/icons";
 import { expandChiclet } from "../../../utils/expand-chiclet";
 import { jsonStringify } from "../../../utils/json-stringify";
+import { createTrustedChicletHTML } from "../../../trusted-types/chiclet-html.js";
 
-function chicletHtml(
+export function chicletHtml(
   part: TemplatePart,
   projectState: Project | null,
   subGraphId: string | null
@@ -131,20 +132,17 @@ function chicletHtml(
 export class TextEditor extends LitElement {
   @property()
   set value(value: string) {
-    const template = new Template(value);
-    template.substitute(
-      (part) => {
-        return chicletHtml(part, this.projectState, this.subGraphId);
-      },
-      (part) => Sanitizer.escapeNodeText(part)
+    this.#rawValue = value;
+    this.#renderableValue = createTrustedChicletHTML(
+      value,
+      this.projectState,
+      this.subGraphId
     );
-    this.#value = template.raw;
-    this.#renderableValue = template.renderable;
     this.#updateEditorValue();
   }
 
   get value(): string {
-    return this.#value;
+    return this.#rawValue;
   }
 
   get type(): string {
@@ -242,8 +240,8 @@ export class TextEditor extends LitElement {
     `,
   ];
 
-  #value = "";
-  #renderableValue = "";
+  #rawValue = "";
+  #renderableValue: TrustedHTML = createTrustedChicletHTML("");
   #isUsingFastAccess = false;
   #showFastAccessMenuOnKeyUp = false;
   #fastAccessTarget: TemplatePart | null = null;
@@ -418,17 +416,14 @@ export class TextEditor extends LitElement {
         return;
       }
 
-      const escapedValue = JSON.stringify(part);
-      const template = new Template(`{${escapedValue}}`);
-
-      template.substitute(
-        (part) => chicletHtml(part, this.projectState, this.subGraphId),
-        (part) => Sanitizer.escapeNodeText(part)
-      );
-
       const fragment = document.createDocumentFragment();
       const tempEl = document.createElement("div");
-      tempEl.innerHTML = template.renderable;
+      (tempEl as { innerHTML: string | TrustedHTML }).innerHTML =
+        createTrustedChicletHTML(
+          `{${JSON.stringify(part)}}`,
+          this.projectState,
+          this.subGraphId
+        );
       let appendedEl: ChildNode | undefined;
       if (tempEl.firstChild) {
         // We can just take the last item even though this is using a while.
@@ -860,7 +855,7 @@ export class TextEditor extends LitElement {
       return;
     }
 
-    this.#value = (this.#editorRef.value.textContent ?? "").replace(
+    this.#rawValue = (this.#editorRef.value.textContent ?? "").replace(
       /\uFEFF/gim,
       ""
     );
@@ -880,7 +875,7 @@ export class TextEditor extends LitElement {
 
     this.#editorRef.value.classList.toggle(
       "placeholder",
-      forcedValue !== undefined ? forcedValue : this.#value === ""
+      forcedValue !== undefined ? forcedValue : this.#rawValue === ""
     );
   }
 
@@ -904,16 +899,18 @@ export class TextEditor extends LitElement {
       return;
     }
 
-    const escapedValue = evt.clipboardData.getData("text");
-    const template = new Template(escapedValue);
-    template.substitute(
-      (part) => chicletHtml(part, this.projectState, this.subGraphId),
-      (part) => Sanitizer.escapeNodeText(part)
-    );
-
     const fragment = document.createDocumentFragment();
     const tempEl = document.createElement("div");
-    tempEl.innerHTML = template.renderable;
+    (
+      tempEl as {
+        innerHTML: string | TrustedHTML;
+      }
+    ).innerHTML = createTrustedChicletHTML(
+      evt.clipboardData.getData("text"),
+      this.projectState,
+      this.subGraphId
+    );
+
     while (tempEl.firstChild) {
       fragment.append(tempEl.firstChild);
     }
@@ -1067,7 +1064,11 @@ export class TextEditor extends LitElement {
       return;
     }
 
-    this.#editorRef.value.innerHTML = this.#renderableValue;
+    (
+      this.#editorRef.value as {
+        innerHTML: string | TrustedHTML;
+      }
+    ).innerHTML = this.#renderableValue;
     this.#ensureAllChicletsHaveSpace();
     this.#togglePlaceholder();
   }
