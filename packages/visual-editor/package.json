@@ -16,7 +16,8 @@
     "dev": "npm run serve --watch",
     "build": "wireit",
     "build:vite": "wireit",
-    "build:tsc": "wireit"
+    "build:tsc": "wireit",
+    "test": "wireit"
   },
   "wireit": {
     "build": {
@@ -85,6 +86,14 @@
         "langs/",
         "shell"
       ]
+    },
+    "test": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/",
+      "files": [],
+      "output": [],
+      "dependencies": [
+        "build:tsc"
+      ]
     }
   },
   "repository": {
@@ -97,19 +106,6 @@
     "public",
     "index.html"
   ],
-  "ava": {
-    "timeout": "30s",
-    "files": [
-      "tests/**/*.ts"
-    ],
-    "workerThreads": false,
-    "typescript": {
-      "rewritePaths": {
-        "./": "dist/"
-      },
-      "compile": false
-    }
-  },
   "keywords": [],
   "author": "Google Labs Team",
   "license": "Apache-2.0",
