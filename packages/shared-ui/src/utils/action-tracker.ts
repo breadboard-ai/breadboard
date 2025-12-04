@@ -5,6 +5,7 @@
  */
 
 import { PartialPersistentBackend } from "@google-labs/breadboard";
+import { createTrustedAnalyticsURL } from "../trusted-types/analytics-url.js";
 
 export { ActionTracker, initializeAnalytics, createActionTrackerBackend };
 
@@ -46,7 +47,8 @@ function initializeAnalytics(id: string, signedIn: boolean) {
   });
 
   const tagManagerScript = document.createElement("script");
-  tagManagerScript.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
+  (tagManagerScript as { src: string | TrustedScriptURL }).src =
+    createTrustedAnalyticsURL(id);
   tagManagerScript.async = true;
   document.body.appendChild(tagManagerScript);
 
