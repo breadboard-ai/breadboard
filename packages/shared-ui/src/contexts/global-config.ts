@@ -16,6 +16,7 @@ export type GoogleDrivePermission =
 
 export type GlobalConfig = {
   environmentName: string | undefined;
+  hostOrigin: URL;
   googleDrive: {
     publishPermissions: GoogleDrivePermission[];
   };
