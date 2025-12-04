@@ -57,7 +57,7 @@ import {
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { isCtrlCommand } from "../../utils/is-ctrl-command";
 import { MAIN_BOARD_ID } from "../../constants/constants";
-import { Project, StepEditorSurface } from "../../state";
+import { Project, StepEditorSurface, UI } from "../../state";
 import {
   FastAccessSelectEvent,
   IterateOnPromptEvent,
@@ -84,6 +84,7 @@ import { baseColors } from "../../styles/host/base-colors";
 import { type } from "../../styles/host/type";
 import { iconSubstitute } from "../../utils/icon-substitute";
 import { ActionTracker } from "../../utils/action-tracker";
+import { uiStateContext } from "../../contexts/ui-state";
 
 const Strings = StringsHelper.forSection("Editor");
 
@@ -138,6 +139,9 @@ export class EntityEditor
 
   @state()
   accessor values: InputValues | undefined;
+
+  @consume({ context: uiStateContext })
+  accessor uiState!: UI;
 
   static styles = [
     icons,
@@ -1408,11 +1412,27 @@ export class EntityEditor
           return item.id === port.value && item.info !== undefined;
         });
 
+        let finalInfo = "";
+        if (extendedInfo && typeof extendedInfo !== "string") {
+          if (extendedInfo?.info) {
+            finalInfo = extendedInfo.info;
+          }
+
+          const dailyLimitReached = false; // @TODO Integrate the backend once the daily limit check is ready
+          const isGoogleUser = false; // @TODO Integrate the backend once the google user check is ready
+          if (
+            extendedInfo?.subscriberInfo &&
+            dailyLimitReached &&
+            isGoogleUser
+          ) {
+            finalInfo = extendedInfo?.subscriberInfo;
+          }
+        }
+
         const extendedInfoOutput =
           extendedInfo && typeof extendedInfo !== "string"
             ? html`<div class="info">
-                <span class="g-icon round filled">warning</span
-                >${extendedInfo.info}
+                <span class="g-icon round filled">warning</span>${finalInfo}
               </div>`
             : nothing;
 
