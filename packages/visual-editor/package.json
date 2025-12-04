@@ -13,7 +13,6 @@
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
-    "dev": "npm run serve --watch",
     "build": "wireit",
     "build:vite": "wireit",
     "build:tsc": "wireit",
