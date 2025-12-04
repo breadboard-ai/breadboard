@@ -63,6 +63,9 @@ export class EditorControls extends LitElement {
   @property()
   accessor showExperimentalComponents = false;
 
+  @property({ type: Boolean })
+  accessor requireFlowgenConfirmation = false;
+
   @state()
   accessor history: EditHistory | null = null;
 
@@ -1000,6 +1003,7 @@ export class EditorControls extends LitElement {
       <bb-flowgen-editor-input
         .hasEmptyGraph=${this.graph.raw().nodes.length === 0}
         .currentGraph=${this.graph.raw()}
+        .requireConfirmation=${this.requireFlowgenConfirmation}
         @pointerdown=${(evt: PointerEvent) => {
           // <bb-renderer> listens for pointerdown and retains focus so that
           // after selection updates the user can do things like delete nodes

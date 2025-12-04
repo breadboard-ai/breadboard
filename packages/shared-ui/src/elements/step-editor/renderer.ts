@@ -90,6 +90,9 @@ export class Renderer extends LitElement {
   @property()
   accessor runtimeFlags: RuntimeFlags | null = null;
 
+  @property({ type: Boolean })
+  accessor requireFlowgenConfirmation = false;
+
   @property()
   accessor debug = false;
 
@@ -1740,6 +1743,7 @@ export class Renderer extends LitElement {
         .showDefaultAdd=${showDefaultAdd}
         .showExperimentalComponents=${this.showExperimentalComponents}
         .readOnly=${this.readOnly}
+        .requireFlowgenConfirmation=${this.requireFlowgenConfirmation}
         @wheel=${(evt: WheelEvent) => {
           evt.stopImmediatePropagation();
         }}
