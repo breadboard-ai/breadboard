@@ -92,7 +92,10 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         &:not([disabled]) {
           &:hover,
           &:focus {
-            background: var(--sys-color--surface-container-low);
+            background: light-dark(
+              var(--sys-color--surface-container-low),
+              oklch(from var(--sys-color--primary) l c h / 8%)
+            );
           }
         }
 
