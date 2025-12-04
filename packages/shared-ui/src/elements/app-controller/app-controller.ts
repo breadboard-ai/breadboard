@@ -234,7 +234,7 @@ export class AppController extends SignalWatcher(LitElement) {
     options.theme = this.theme;
     options.additionalOptions = templateAdditionalOptionsChosen;
 
-    if (this.theme?.splashScreen) {
+    if (this.theme?.splashScreen && !options.isDefaultTheme) {
       options.splashImage = true;
 
       // Set the options here, then attempt to load the splash screen image.
