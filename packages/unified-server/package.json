@@ -34,6 +34,7 @@
     "build:vite": {
       "command": "vite build",
       "dependencies": [
+        "../shared-ui#build:tsc",
         "../visual-editor#build:tsc"
       ],
       "output": [
@@ -55,7 +56,7 @@
       ],
       "dependencies": [
         "<dependencies>#build:tsc",
-        "!../visual-editor#build:tsc"
+        "!../visual-editror#build:tsc"
       ]
     },
     "serve": {
