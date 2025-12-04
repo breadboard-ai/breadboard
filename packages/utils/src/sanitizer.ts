@@ -18,3 +18,13 @@ export function escapeNodeText(str: string | null | undefined) {
 
   return frag.innerHTML.replaceAll(/<!--([^-]*)-->/gim, "");
 }
+
+export function unescapeNodeText(str: string | null | undefined) {
+  if (!str) {
+    return "";
+  }
+
+  const frag = document.createElement("textarea");
+  frag.innerHTML = str;
+  return frag.value;
+}

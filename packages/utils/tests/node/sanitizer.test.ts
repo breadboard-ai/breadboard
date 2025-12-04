@@ -127,3 +127,62 @@ suite("escapeNodeText", () => {
     );
   });
 });
+
+suite("unescapeNodeText", () => {
+  let Sanitizer: typeof typeSanitizer;
+  beforeEach(async () => {
+    const dom = new JSDOM("<!doctype html><html><body></body></html>");
+    global.document = dom.window.document;
+
+    // Now that JSDOM is in place we can add in the Sanitizer (which uses Lit).
+    Sanitizer = await import("../../src/sanitizer.js");
+  });
+
+  test("handles empty values", () => {
+    assert.equal(Sanitizer.unescapeNodeText(null), "");
+    assert.equal(Sanitizer.unescapeNodeText(undefined), "");
+    assert.equal(Sanitizer.unescapeNodeText(""), "");
+  });
+
+  test("unescapes content", () => {
+    assert.equal(
+      Sanitizer.unescapeNodeText("&lt;script&gt;&lt;/script&gt;"),
+      "<script></script>"
+    );
+  });
+
+  test("unescapes double-escaped content", () => {
+    assert.equal(
+      Sanitizer.unescapeNodeText(
+        "&amp;amp; &amp;lt; &amp;gt; &amp;quot; &amp;#39;"
+      ),
+      "&amp; &lt; &gt; &quot; &#39;"
+    );
+  });
+
+  test("unescape does not strip HTML", () => {
+    assert.equal(Sanitizer.unescapeNodeText("<p>hello</p>"), "<p>hello</p>");
+  });
+
+  test("unescapes more complicated values", () => {
+    assert.equal(
+      Sanitizer.unescapeNodeText("Morecambe &amp; Wise"),
+      "Morecambe & Wise"
+    );
+
+    assert.equal(Sanitizer.unescapeNodeText("10 &gt; 8"), "10 > 8");
+    assert.equal(Sanitizer.unescapeNodeText("8 &lt; 18"), "8 < 18");
+    assert.equal(
+      Sanitizer.unescapeNodeText("They said &quot;Hello&quot;"),
+      'They said "Hello"'
+    );
+    assert.equal(
+      Sanitizer.unescapeNodeText("They said &#39;Hello&#39;"),
+      "They said 'Hello'"
+    );
+    assert.equal(
+      Sanitizer.unescapeNodeText("&amp;&lt;&gt;&#39;&quot;"),
+      "&<>'\""
+    );
+  });
+});
