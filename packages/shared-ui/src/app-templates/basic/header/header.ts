@@ -296,8 +296,8 @@ export class Header extends LitElement {
         this.dispatchEvent(
           new ShowTooltipEvent(
             this.fullScreenActive === "available"
-              ? "Fullscreen view"
-              : "Exit Fullscreen view",
+              ? "Expanded view"
+              : "Exit Expanded view",
             evt.clientX,
             evt.clientY
           )
@@ -382,11 +382,16 @@ export class Header extends LitElement {
     </button>`;
   }
 
-  #renderReplayButton() {
+  #renderReplayButton(stackRight = false) {
+    const showReplayWarning = this.progress > 0 && this.#showReplayWarning;
+
     return html`<button
       id="replay"
       ?disabled=${!this.replayActive}
       @pointerover=${(evt: PointerEvent) => {
+        if (showReplayWarning) {
+          return;
+        }
         this.dispatchEvent(
           new ShowTooltipEvent("Restart app", evt.clientX, evt.clientY)
         );
@@ -404,9 +409,10 @@ export class Header extends LitElement {
       }}
     >
       <span class="g-icon">replay</span>
-      ${this.progress > 0 && this.#showReplayWarning
+      ${showReplayWarning
         ? html`<bb-onboarding-tooltip
             delayed
+            ?stackRight=${stackRight}
             .tooltipTitle=${"Are you sure you want to refresh?"}
             .text=${"Share or download results, otherwise output will be lost."}
             @bbonboardingacknowledged=${() => {
@@ -461,7 +467,7 @@ export class Header extends LitElement {
   render() {
     const replay = this.replayAutoStart
       ? this.#renderReplayAutoStartButton()
-      : this.#renderReplayButton();
+      : this.#renderReplayButton(this.fullScreenActive !== null);
 
     if (this.fullScreenActive !== null) {
       return [replay, this.#renderProgress(), this.#renderFullScreen()];

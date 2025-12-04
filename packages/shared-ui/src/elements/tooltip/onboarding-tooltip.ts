@@ -21,6 +21,9 @@ export class OnboardingTooltip extends LitElement {
   @property({ reflect: true, type: Boolean })
   accessor delayed = false;
 
+  @property({ reflect: true, type: Boolean })
+  accessor stackRight = false;
+
   static styles = [
     icons,
     baseColors,
@@ -33,7 +36,7 @@ export class OnboardingTooltip extends LitElement {
       :host {
         cursor: auto;
         position: absolute;
-        right: var(--right, 0);
+        right: var(--right, -12px);
         top: var(--top, calc(100% + var(--bb-grid-size-8)));
         background: var(--light-dark-n-0);
         color: var(--light-dark-n-100);
@@ -71,9 +74,19 @@ export class OnboardingTooltip extends LitElement {
         height: 20px;
         border-radius: 4px;
         transform: scaleX(0.8) scaleY(1.4) rotate(45deg);
-        right: 32px;
+        right: 16px;
         top: -6px;
         background: var(--light-dark-n-0);
+      }
+
+      :host([stackright]) {
+        right: auto;
+        left: var(--left, -12px);
+
+        &::after {
+          left: 16px;
+          right: auto;
+        }
       }
 
       :host::before {
@@ -111,7 +124,6 @@ export class OnboardingTooltip extends LitElement {
 
   #onClickBound = this.#onClick.bind(this);
   #onClick(evt: Event) {
-    console.log(evt);
     evt.preventDefault();
     evt.stopImmediatePropagation();
   }
