@@ -220,6 +220,7 @@ export const styles: CSSResultGroup = [
           flex: 1;
           flex-direction: column;
           align-items: center;
+          justify-content: center;
           animation: fadeIn 1s cubic-bezier(0, 0, 0.3, 1);
           overflow: scroll;
           scrollbar-width: none;
@@ -252,7 +253,8 @@ export const styles: CSSResultGroup = [
             box-sizing: border-box;
             background-clip: content-box;
             flex: 1;
-            max-height: calc(45cqh - 54px);
+            max-width: 800px;
+            max-height: calc(55cqh - 54px);
             animation: glide 2150ms linear infinite;
           }
 
@@ -300,6 +302,10 @@ export const styles: CSSResultGroup = [
             max-width: 65%;
             width: max-content;
             text-align: center;
+
+            max-height: 5lh;
+            overflow: hidden;
+            text-overflow: ellipsis;
           }
         }
 
@@ -933,46 +939,6 @@ export const styles: CSSResultGroup = [
           & #input.stopped {
             justify-content: flex-start;
             padding-left: 0;
-          }
-
-          & #splash {
-            display: flex;
-            flex-direction: row;
-            flex: 1;
-
-            #splash-content-container {
-              height: 100%;
-              flex: 1;
-
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-              align-items: flex-start;
-
-              margin-left: var(--bb-grid-size-10);
-            }
-
-            &::before {
-              height: 100%;
-              flex: 1;
-              max-height: 100cqh;
-              aspect-ratio: initial;
-            }
-
-            &.default {
-              margin-top: 0;
-
-              &::before {
-                max-width: initial;
-                background-size: initial;
-              }
-            }
-
-            & h1,
-            & p {
-              width: auto;
-              text-align: left;
-            }
           }
         }
       }
