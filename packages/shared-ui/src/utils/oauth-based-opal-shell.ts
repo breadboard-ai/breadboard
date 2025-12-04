@@ -551,7 +551,10 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       null,
       "",
       new URL(
-        CLIENT_DEPLOYMENT_CONFIG.SHELL_PREFIX + pathname + search + hash,
+        (CLIENT_DEPLOYMENT_CONFIG.SHELL_PREFIX || "") +
+          pathname +
+          search +
+          hash,
         window.location.origin
       )
     );
