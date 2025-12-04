@@ -31,7 +31,7 @@ import {
   generatePaletteFromImage,
 } from "@breadboard-ai/theme";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { loadImage } from "@breadboard-ai/shared-ui/utils/image";
+import { loadImage } from "../ui/utils/image";
 
 export const MAIN_BOARD_ID = "Main board";
 

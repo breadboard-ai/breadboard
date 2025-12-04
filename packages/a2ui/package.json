@@ -70,6 +70,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/a2ui#readme",
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.2",
+    "@types/markdown-it": "^14.1.2",
     "typescript": "^5.8.3"
   },
   "dependencies": {

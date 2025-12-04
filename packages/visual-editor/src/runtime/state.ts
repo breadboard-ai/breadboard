@@ -4,13 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { State } from "@breadboard-ai/shared-ui";
-import { createLiteModeState } from "@breadboard-ai/shared-ui/state/lite-mode.js";
-import {
-  LiteModeState,
-  Project,
-  RuntimeContext,
-} from "@breadboard-ai/shared-ui/state/types.js";
+import { State } from "../ui/index.js";
+import { createLiteModeState } from "../ui/state/lite-mode.js";
+import { LiteModeState, Project, RuntimeContext } from "../ui/state/types.js";
 import {
   EditableGraph,
   MainGraphIdentifier,
@@ -19,7 +15,7 @@ import {
 import { Runtime } from "./runtime";
 import { RuntimeTabChangeEvent } from "./events";
 import { signal } from "signal-utils";
-import { FlowGenerator } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
+import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
 
 export { StateManager };
 

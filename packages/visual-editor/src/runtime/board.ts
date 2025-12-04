@@ -28,10 +28,10 @@ import {
   RuntimeNewerSharedVersionEvent,
   RuntimeRequestSignInEvent,
 } from "./events";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "../ui/index.js";
 import { GraphIdentifier, ModuleIdentifier } from "@breadboard-ai/types";
 import * as idb from "idb";
-import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
+import { BOARD_SAVE_STATUS } from "../ui/types/types.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { RecentBoardStore } from "../data/recent-boards";
 import { type RunResults } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
@@ -39,7 +39,7 @@ import {
   applyDefaultThemeInformationIfNonePresent,
   createAppPaletteIfNeeded,
 } from "./util";
-import type { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
+import type { SigninAdapter } from "../ui/utils/signin-adapter";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 const documentStyles = getComputedStyle(document.documentElement);

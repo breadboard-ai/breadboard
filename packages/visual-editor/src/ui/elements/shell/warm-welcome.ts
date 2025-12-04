@@ -9,7 +9,7 @@ import { baseColors } from "../../styles/host/base-colors";
 import { type } from "../../styles/host/type";
 import "@material/web/checkbox/checkbox.js";
 import type { MdCheckbox } from "@material/web/checkbox/checkbox.js";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "../../../ui/index.js";
 import { ModalDismissedEvent } from "../../events/events.js";
 import { EmailPrefsManager } from "../../utils/email-prefs-manager.js";
 

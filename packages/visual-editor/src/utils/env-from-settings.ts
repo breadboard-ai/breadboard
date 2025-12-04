@@ -4,10 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  SETTINGS_TYPE,
-  SettingsStore,
-} from "@breadboard-ai/shared-ui/types/types.js";
+import { SETTINGS_TYPE, SettingsStore } from "../ui/types/types.js";
 import { FileSystemEntry } from "@google-labs/breadboard";
 
 export { envFromSettings };

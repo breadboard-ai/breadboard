@@ -7,13 +7,13 @@
 
 import { describe, it, before, beforeEach } from "node:test";
 import assert from "node:assert";
-import type { ProjectRun } from "../state/types.js";
+import type { ProjectRun } from "../src/ui/state/types.js";
 import { SignalWatcher } from "./signal-watcher.js";
 import { Signal } from "signal-polyfill";
 
 describe("ReactiveApp", () => {
-  type AppStateModule = typeof import("../state/app.js");
-  type AppScreenModule = typeof import("../state/app-screen.js");
+  type AppStateModule = typeof import("../src/ui/state/app.js");
+  type AppScreenModule = typeof import("../src/ui/state/app-screen.js");
 
   let ReactiveApp: AppStateModule["ReactiveApp"];
   let ReactiveAppScreen: AppScreenModule["ReactiveAppScreen"];
@@ -37,8 +37,8 @@ describe("ReactiveApp", () => {
     }) as unknown as typeof global.setInterval;
 
     // Dynamic imports to ensure mocks are in place before modules load
-    const appModule = await import("../state/app.js");
-    const appScreenModule = await import("../state/app-screen.js");
+    const appModule = await import("../src/ui/state/app.js");
+    const appScreenModule = await import("../src/ui/state/app-screen.js");
 
     ReactiveApp = appModule.ReactiveApp;
     ReactiveAppScreen = appScreenModule.ReactiveAppScreen;

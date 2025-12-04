@@ -6,7 +6,7 @@
 
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
 
 export function createGoogleDriveBoardServer(

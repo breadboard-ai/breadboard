@@ -3,7 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import type * as BreadboardUI from "@breadboard-ai/shared-ui";
+import type * as BreadboardUI from "../ui/index.js";
 import { createGraphStore, createLoader, err } from "@google-labs/breadboard";
 import { Router } from "./router.js";
 import { Board } from "./board.js";
@@ -25,15 +25,15 @@ import {
   RuntimeToastEvent,
   RuntimeUnsnackbarEvent,
 } from "./events.js";
-import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import { inputsFromSettings } from "@breadboard-ai/shared-ui/data/inputs.js";
+import { SettingsStore } from "../ui/data/settings-store.js";
+import { inputsFromSettings } from "../ui/data/inputs.js";
 import {
   assetsFromGraphDescriptor,
   envFromGraphDescriptor,
 } from "@breadboard-ai/data";
 import { Autonamer } from "./autonamer.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
-import { createGoogleDriveBoardServer } from "@breadboard-ai/shared-ui/utils/create-server.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configuration.js";
+import { createGoogleDriveBoardServer } from "../ui/utils/create-server.js";
 import { createA2Server, createA2ModuleFactory } from "@breadboard-ai/a2";
 import {
   createFileSystemBackend,
@@ -55,15 +55,15 @@ import {
   ConsentRequest,
   FileSystem,
 } from "@breadboard-ai/types";
-import { ConsentManager } from "@breadboard-ai/shared-ui/utils/consent-manager.js";
-import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
-import { createActionTrackerBackend } from "@breadboard-ai/shared-ui/utils/action-tracker";
+import { ConsentManager } from "../ui/utils/consent-manager.js";
+import { SigninAdapter } from "../ui/utils/signin-adapter.js";
+import { createActionTrackerBackend } from "../ui/utils/action-tracker";
 import { envFromSettings } from "../utils/env-from-settings";
 import { builtInMcpClients } from "../mcp-clients";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
-import { FlowGenerator } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
-import { AppCatalystApiClient } from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
-import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
+import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
+import { AppCatalystApiClient } from "../ui/flow-gen/app-catalyst.js";
+import { EmailPrefsManager } from "../ui/utils/email-prefs-manager.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;

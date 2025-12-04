@@ -12,7 +12,7 @@ import { RuntimeFlags } from "@breadboard-ai/types";
 import { Task } from "@lit/task";
 import { repeat } from "lit/directives/repeat.js";
 
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "../../../ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 @customElement("bb-runtime-flags")

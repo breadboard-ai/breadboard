@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import { strictEqual } from "node:assert";
-import { FilteredIntegrationsImpl } from "../state/filtered-integrations.js";
-import { IntegrationState, Tool } from "../state/types";
+import { FilteredIntegrationsImpl } from "../src/ui/state/filtered-integrations.js";
+import { IntegrationState, Tool } from "../src/ui/state/types.js";
 import { SignalWatcher } from "./signal-watcher.js";
 import { Signal } from "signal-polyfill";
 

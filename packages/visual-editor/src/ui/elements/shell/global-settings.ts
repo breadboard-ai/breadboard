@@ -15,10 +15,10 @@ import "@material/web/tabs/tabs.js";
 import "@material/web/checkbox/checkbox.js";
 import type { MdCheckbox } from "@material/web/checkbox/checkbox.js";
 import type { MdTabs } from "@material/web/tabs/tabs.js";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "../../../ui/index.js";
 import { EmailPrefsManager } from "../../utils/email-prefs-manager.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../../../ui/config/client-deployment-configuration.js";
 
 const Strings = BreadboardUI.Strings.forSection("Global");
 

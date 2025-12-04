@@ -6,11 +6,11 @@
 
 import { EventRoute } from "../types";
 
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "../../ui/index.js";
 import { InputValues, ok } from "@google-labs/breadboard";
 import { RuntimeSnackbarEvent } from "../../runtime/events";
-import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
-import { StateEvent } from "@breadboard-ai/shared-ui/events/events.js";
+import { parseUrl } from "../../ui/utils/urls.js";
+import { StateEvent } from "../../ui/events/events.js";
 import {
   GraphMetadata,
   ConsentType,

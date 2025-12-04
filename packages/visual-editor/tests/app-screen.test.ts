@@ -10,7 +10,7 @@ import { Signal } from "signal-polyfill";
 import { SignalWatcher } from "./signal-watcher.js";
 
 describe("AppScreen", () => {
-  type AppScreenModule = typeof import("../state/app-screen.js");
+  type AppScreenModule = typeof import("../src/ui/state/app-screen.js");
   let ReactiveAppScreen: AppScreenModule["ReactiveAppScreen"];
   let getElasticProgress: AppScreenModule["getElasticProgress"];
   let intervalCallback: (() => void) | undefined;
@@ -34,7 +34,7 @@ describe("AppScreen", () => {
 
     // Dynamic import to ensure mocks are in place before module execution
     // We use a query param to bypass cache if needed, though usually not needed in this context
-    const module = await import("../state/app-screen.js");
+    const module = await import("../src/ui/state/app-screen.js");
     ReactiveAppScreen = module.ReactiveAppScreen;
     getElasticProgress = module.getElasticProgress;
   });

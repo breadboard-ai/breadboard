@@ -5,10 +5,10 @@
  */
 
 import * as idb from "idb";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "../ui/index";
 import { SignalArray } from "signal-utils/array";
 import { SignalObject } from "signal-utils/object";
-import { RecentBoard } from "@breadboard-ai/shared-ui/types/types.js";
+import { RecentBoard } from "../ui/types/types.js";
 
 interface RecentBoardsDB extends idb.DBSchema {
   boards: {
