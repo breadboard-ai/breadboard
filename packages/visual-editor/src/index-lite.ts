@@ -561,7 +561,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
                   });
                 }}
               >
-                <span class="g-icon">share</span>Share
+                <span class="g-icon">share</span>Share app
               </button>
             </div>
           </header>`}
