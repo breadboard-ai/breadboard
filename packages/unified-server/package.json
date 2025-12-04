@@ -55,7 +55,7 @@
       ],
       "dependencies": [
         "<dependencies>#build:tsc",
-        "!../visual-editror#build:tsc"
+        "!../visual-editor#build:tsc"
       ]
     },
     "serve": {
