@@ -362,7 +362,7 @@ export const baseColors = css`
         .join("\n")
     )}
 
-    --ui-scrim: rgba(0, 0, 0, 0.6);
+    --ui-scrim: light-dark(rgba(255, 255, 255, 0.6), rgba(0, 0, 0, 0.6));
     --ui-flowgen-step: light-dark(#e2e1f1, var(--n-20));
     --ui-theme-segment: light-dark(#f1f4f8, var(--n-10));
     --ui-theme-generating: light-dark(#d6e2fb, var(--n-50));
