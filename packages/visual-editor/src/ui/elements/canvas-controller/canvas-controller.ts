@@ -175,9 +175,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
   @state()
   accessor showAssetOrganizer = false;
 
-  @state()
-  accessor #showEditHistory = false;
-
   @consume({ context: googleDriveClientContext })
   @property({ attribute: false })
   accessor googleDriveClient: GoogleDriveClient | undefined;

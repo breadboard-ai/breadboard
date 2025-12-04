@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "./ui/config/client-deployment-configuration.js";
 import { bootstrap } from "./bootstrap.js";
-import { initializeAnalytics } from "@breadboard-ai/shared-ui/utils/action-tracker";
+import { initializeAnalytics } from "./ui/utils/action-tracker";
 import type { JsonSerializable, LLMContent } from "@breadboard-ai/types";
 
 const deploymentConfiguration = CLIENT_DEPLOYMENT_CONFIG;

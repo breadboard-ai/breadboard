@@ -6,7 +6,7 @@
 
 import { AssetMetadata } from "@breadboard-ai/types";
 import { EventRoute } from "../types";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "../../ui/index";
 
 export const ChangeEdgeRoute: EventRoute<"asset.changeedge"> = {
   event: "asset.changeedge",

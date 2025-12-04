@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "../index.js";
 import { SettingsStore } from "./settings-store.js";
 
 export class SettingsHelperImpl implements BreadboardUI.Types.SettingsHelper {

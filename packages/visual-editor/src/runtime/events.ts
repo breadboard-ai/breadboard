@@ -14,9 +14,9 @@ import {
   WorkspaceSelectionState,
   WorkspaceVisualChangeId,
 } from "./types";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "../ui/index.js";
 import { EditHistoryCreator, NodeIdentifier } from "@google-labs/breadboard";
-import { ToastType } from "@breadboard-ai/shared-ui/events/events.js";
+import { ToastType } from "../ui/events/events.js";
 
 const eventInit = {
   bubbles: true,

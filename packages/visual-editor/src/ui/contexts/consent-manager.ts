@@ -5,7 +5,7 @@
  */
 
 import { createContext } from "@lit/context";
-import { type ConsentManager } from "@breadboard-ai/shared-ui/utils/consent-manager.js";
+import { type ConsentManager } from "../utils/consent-manager.js";
 
 /** The consent manager for the project. */
 export const consentManagerContext = createContext<ConsentManager | undefined>(

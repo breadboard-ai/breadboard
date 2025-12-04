@@ -11,8 +11,8 @@ import {
   TextCapabilityPart,
 } from "@breadboard-ai/types";
 import { asBase64, MutableGraphStore } from "@google-labs/breadboard";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { isShortsUri } from "@breadboard-ai/shared-ui/utils/youtube.js";
+import * as BreadboardUI from "../ui/index.js";
+import { isShortsUri } from "../ui/utils/youtube.js";
 
 export { ClipboardReader };
 

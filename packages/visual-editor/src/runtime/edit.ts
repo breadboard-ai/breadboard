@@ -46,11 +46,8 @@ import {
   NodeMetadata,
 } from "@breadboard-ai/types";
 import { createGraphId, MAIN_BOARD_ID } from "./util";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import {
-  AssetEdge,
-  EdgeAttachmentPoint,
-} from "@breadboard-ai/shared-ui/types/types.js";
+import * as BreadboardUI from "../ui/index.js";
+import { AssetEdge, EdgeAttachmentPoint } from "../ui/types/types.js";
 import { Autonamer } from "./autonamer";
 import { filterUndefined, toJson } from "@breadboard-ai/utils";
 

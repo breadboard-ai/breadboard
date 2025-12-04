@@ -4,35 +4,32 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 import { html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { MainArguments } from "./types/types";
 
-import * as BBLite from "@breadboard-ai/shared-ui/lite";
+import * as BBLite from "./ui/lite/lite.js";
 import { MainBase } from "./main-base";
 import { classMap } from "lit/directives/class-map.js";
-import {
-  StateEvent,
-  StateEventDetailMap,
-} from "@breadboard-ai/shared-ui/events/events.js";
-import { LiteEditInputController } from "@breadboard-ai/shared-ui/lite/input/editor-input-lite.js";
+import { StateEvent, StateEventDetailMap } from "./ui/events/events.js";
+import { LiteEditInputController } from "./ui/lite/input/editor-input-lite.js";
 import { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
 import {
   RuntimeBoardLoadErrorEvent,
   RuntimeTabChangeEvent,
 } from "./runtime/events";
 import { eventRoutes } from "./event-routing/event-routing";
-import { blankBoard } from "@breadboard-ai/shared-ui/utils/utils.js";
+import { blankBoard } from "./ui/utils/utils.js";
 import { repeat } from "lit/directives/repeat.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { OneShotFlowGenFailureResponse } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
-import { flowGenWithTheme } from "@breadboard-ai/shared-ui/flow-gen/flowgen-with-theme.js";
+import { OneShotFlowGenFailureResponse } from "./ui/flow-gen/flow-generator.js";
+import { flowGenWithTheme } from "./ui/flow-gen/flowgen-with-theme.js";
 import { EmbedHandler } from "@breadboard-ai/types/embedder.js";
-import { markdown } from "@breadboard-ai/shared-ui/directives/markdown.js";
+import { markdown } from "./ui/directives/markdown.js";
 
 const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
 

@@ -21,8 +21,8 @@ import {
   ModuleIdentifier,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
+import { SettingsStore } from "../ui/data/settings-store.js";
+import type { GlobalConfig } from "../ui/contexts/global-config.js";
 import {
   OpalShellHostProtocol,
   SignInState,

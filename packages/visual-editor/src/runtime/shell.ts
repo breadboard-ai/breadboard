@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type * as BreadboardUI from "@breadboard-ai/shared-ui";
+import type * as BreadboardUI from "../ui/index.js";
 import { RuntimeHostStatusUpdateEvent } from "./events";
 
 const UPDATE_REFRESH_TIMEOUT = 10 * 60 * 1000; // 10 minutes

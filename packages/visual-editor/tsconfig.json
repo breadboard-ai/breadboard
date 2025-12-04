@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable", "ES2024.Promise"],
     "skipLibCheck": true,
     "useDefineForClassFields": false,
     "outDir": "dist",
@@ -16,7 +16,8 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "types": ["vite/client", "@types/gtag.js", "node", "trusted-types"]
   },
   "include": ["src/**/*.ts", "tests/**/*.ts", "scripts/*.ts", "vite.config.ts"],
   "extends": "@google-labs/tsconfig/base.json"

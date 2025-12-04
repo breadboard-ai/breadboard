@@ -7,19 +7,12 @@
 import * as pkg from "../package.json";
 import type { BootstrapArguments, MainArguments } from "./types/types.js";
 
-import {
-  LandingUrlInit,
-  type LanguagePack,
-} from "@breadboard-ai/shared-ui/types/types.js";
-import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
-import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
-import {
-  makeUrl,
-  OAUTH_REDIRECT,
-  parseUrl,
-} from "@breadboard-ai/shared-ui/utils/urls.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
-import { connectToOpalShellHost } from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
+import { LandingUrlInit, type LanguagePack } from "./ui/types/types.js";
+import type { GlobalConfig } from "./ui/contexts/global-config.js";
+import { SigninAdapter } from "./ui/utils/signin-adapter";
+import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "./ui/config/client-deployment-configuration.js";
+import { connectToOpalShellHost } from "./ui/utils/opal-shell-guest.js";
 
 export { bootstrap };
 
@@ -61,9 +54,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     hostOrigin,
   };
 
-  const { SettingsStore } = await import(
-    "@breadboard-ai/shared-ui/data/settings-store.js"
-  );
+  const { SettingsStore } = await import("./ui/data/settings-store.js");
   const settings = await SettingsStore.restoredInstance();
 
   const signinAdapter = new SigninAdapter(
@@ -71,7 +62,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     await shellHost.getSignInState()
   );
 
-  const StringsHelper = await import("@breadboard-ai/shared-ui/strings");
+  const StringsHelper = await import("./ui/strings/helper.js");
   await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
 
   const scopeValidation = await signinAdapter.validateScopes();

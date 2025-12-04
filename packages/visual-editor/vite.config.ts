@@ -53,11 +53,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
     ],
     server: {
       watch: {
-        ignored: [
-          "**/shared-ui/src/bgl/**",
-          "**/.wireit/**",
-          "**/*.kit.json/**",
-        ],
+        ignored: ["**/.wireit/**"],
       },
     },
   } satisfies UserConfig;
