@@ -9,7 +9,7 @@ import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AppPreview");
 const GlobalStrings = StringsHelper.forSection("Global");
 
-import { LitElement, type PropertyValues, html } from "lit";
+import { LitElement, type PropertyValues, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { isStoredData } from "@google-labs/breadboard";
 
@@ -31,6 +31,8 @@ import { projectRunContext } from "../../contexts/project-run.js";
 import { ProjectRun } from "../../state/types.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { Template } from "../../app-templates/basic/index.js";
+import { createRef, Ref, ref } from "lit/directives/ref.js";
+import { SharePanel } from "../share-panel/share-panel.js";
 
 const primaryColor = "#ffffff";
 const secondaryColor = "#7a7a7a";
@@ -138,6 +140,8 @@ export class AppController extends SignalWatcher(LitElement) {
 
   @state()
   accessor #appTemplate = new Template();
+
+  #sharePanelRef: Ref<SharePanel> = createRef();
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
@@ -391,15 +395,30 @@ export class AppController extends SignalWatcher(LitElement) {
       this.#appTemplate.headerConfig = this.headerConfig;
     }
 
-    return html`
-      <div id="container">
-        <div
-          id="content"
-          class=${classMap({ active: this.#appTemplate !== null })}
-        >
-          ${this.#appTemplate}
+    return [
+      html`
+        <div id="container">
+          <div
+            id="content"
+            class=${classMap({ active: this.#appTemplate !== null })}
+            @bbsharerequested=${() => {
+              this.openSharePanel();
+            }}
+          >
+            ${this.#appTemplate}
+          </div>
         </div>
-      </div>
-    `;
+      `,
+      this.#appTemplate !== null
+        ? html`
+            <bb-share-panel .graph=${this.graph} ${ref(this.#sharePanelRef)}>
+            </bb-share-panel>
+          `
+        : nothing,
+    ];
+  }
+
+  openSharePanel() {
+    this.#sharePanelRef?.value?.open();
   }
 }
