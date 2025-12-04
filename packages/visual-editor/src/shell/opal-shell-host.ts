@@ -33,8 +33,13 @@ async function initializeOpalShellGuest() {
     return;
   }
   const hostUrl = new URL(window.location.href);
+  const pathname = CLIENT_DEPLOYMENT_CONFIG.SHELL_PREFIX
+    ? hostUrl.pathname.startsWith(`${CLIENT_DEPLOYMENT_CONFIG.SHELL_PREFIX}/`)
+      ? hostUrl.pathname.slice(CLIENT_DEPLOYMENT_CONFIG.SHELL_PREFIX.length)
+      : hostUrl.pathname
+    : hostUrl.pathname;
   const guestUrl = new URL(
-    "_app" + hostUrl.pathname + hostUrl.search + hostUrl.hash,
+    "_app" + pathname + hostUrl.search + hostUrl.hash,
     guestOrigin
   );
   guestUrl.searchParams.set(SHELL_ORIGIN_URL_PARAMETER, window.location.origin);

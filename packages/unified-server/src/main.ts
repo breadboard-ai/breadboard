@@ -105,7 +105,7 @@ if (flags.SHELL_ENABLED) {
   // around so that this entire re-pathing middleware is not necessary.
   console.log("[unified-server startup] Serving in shell configuration");
   server.get(
-    ["/", "/landing/"],
+    ["/", "/landing/"].map((path) => `${flags.SHELL_PREFIX || ""}${path}`),
     makeCspHandler(SHELL_CSP),
     (req, _res, next) => {
       req.url = "/shell/index.html";
