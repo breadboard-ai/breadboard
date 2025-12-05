@@ -28,7 +28,6 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { OneShotFlowGenFailureResponse } from "./ui/flow-gen/flow-generator.js";
 import { flowGenWithTheme } from "./ui/flow-gen/flowgen-with-theme.js";
-import { EmbedHandler } from "@breadboard-ai/types/embedder.js";
 import { markdown } from "./ui/directives/markdown.js";
 import { type SharePanel } from "./ui/elements/elements.js";
 
@@ -324,14 +323,11 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #advancedEditorLink: Ref<HTMLElement> = createRef();
   #sharePanelRef: Ref<SharePanel> = createRef();
-  readonly #embedHandler?: EmbedHandler;
 
   constructor(args: MainArguments) {
     super(args);
 
-    const { parsedUrl, embedHandler } = args;
-
-    this.#embedHandler = embedHandler;
+    const { parsedUrl } = args;
 
     // Set the app to fullscreen if the parsed URL indicates that this was
     // opened from a share action.
