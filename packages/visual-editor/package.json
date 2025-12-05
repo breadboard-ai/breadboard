@@ -16,7 +16,11 @@
     "build": "wireit",
     "build:vite": "wireit",
     "build:tsc": "wireit",
-    "test": "wireit"
+    "test": "wireit",
+    "eval:agent": "tsx --experimental-test-module-mocks eval/sets/agent.ts",
+    "eval:a2ui": "tsx --experimental-test-module-mocks eval/sets/a2ui.ts",
+    "eval:autoname": "tsx --experimental-test-module-mocks eval/sets/autoname.ts",
+    "eval:viewer": "vite dev eval/viewer"
   },
   "wireit": {
     "build": {
@@ -113,21 +117,22 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor#readme",
   "devDependencies": {
+    "@cfworker/json-schema": "^4.1.1",
     "@google-labs/tsconfig": "^0.0.2",
-    "@types/node": "^22.0.0",
     "@types/flubber": "^0.4.0",
     "@types/gapi": "^0.0.47",
     "@types/gapi.client.drive-v3": "^0.0.5",
     "@types/google.picker": "^0.0.51",
     "@types/gtag.js": "^0.0.20",
+    "@types/har-format": "^1.2.16",
     "@types/markdown-it": "^14.1.2",
+    "@types/node": "^22.0.0",
     "dotenv": "^17.2.3",
     "tsx": "^4.20.6",
     "typescript": "^5.8.3",
     "vite": "^7.2.4"
   },
   "dependencies": {
-    "@breadboard-ai/a2": "0.6.0",
     "@breadboard-ai/a2ui": "^0.1.0",
     "@breadboard-ai/data": "^0.1.0",
     "@breadboard-ai/data-store": "0.5.0",
@@ -141,8 +146,8 @@
     "@breadboard-ai/types": "0.9.0",
     "@breadboard-ai/utils": "^0.1.0",
     "@google-labs/breadboard": "^0.36.0",
-    "@lit/context": "^1.1.6",
     "@lit-labs/signals": "^0.1.3",
+    "@lit/context": "^1.1.6",
     "@lit/task": "^1.0.2",
     "@material/web": "^2.3.0",
     "@types/gapi": "^0.0.47",
@@ -155,6 +160,7 @@
     "idb": "^8.0.3",
     "lit": "^3.3.1",
     "markdown-it": "^14.1.0",
+    "marked": "^16.3.0",
     "pdfjs-dist": "^5.2.133",
     "signal-polyfill": "^0.2.2",
     "signal-utils": "^0.21.1",

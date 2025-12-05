@@ -62,7 +62,7 @@ class AgentUI implements A2UIRenderer {
   #appScreenOutput: AppScreenOutput | undefined;
 
   constructor(
-    private readonly caps: Capabilities,
+    _caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs,
     private readonly translator: PidginTranslator
   ) {

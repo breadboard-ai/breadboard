@@ -31,7 +31,7 @@ import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { DATA_TYPE } from "./constants.js";
 import { CreateNewAssetsEvent, NodeAddEvent } from "./events/events.js";
-import { isA2 } from "@breadboard-ai/a2";
+import { isA2 } from "../../../a2/index.js";
 import { until } from "lit/directives/until.js";
 import { GoogleDriveFileId, ItemSelect } from "../elements.js";
 import { NewAsset } from "../../types/types.js";

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { llm } from "../../src/a2/utils";
+import { llm } from "../../../src/a2/a2/utils";
 
 export const title = "Simple poem w/picture";
 

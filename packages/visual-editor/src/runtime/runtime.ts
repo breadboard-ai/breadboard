@@ -34,7 +34,7 @@ import {
 import { Autonamer } from "./autonamer.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configuration.js";
 import { createGoogleDriveBoardServer } from "../ui/utils/create-server.js";
-import { createA2Server, createA2ModuleFactory } from "@breadboard-ai/a2";
+import { createA2Server, createA2ModuleFactory } from "../a2/index.js";
 import {
   createFileSystemBackend,
   createFlagManager,

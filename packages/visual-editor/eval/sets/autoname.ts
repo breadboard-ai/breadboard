@@ -5,9 +5,9 @@
  */
 
 import { config } from "dotenv";
-import { session } from "../scripts/eval";
+import { session } from "../eval";
 import { LLMContent } from "@breadboard-ai/types";
-import { Arguments } from "../src/autoname/types";
+import { Arguments } from "../../src/a2/autoname/types";
 import { ok, toJson } from "@breadboard-ai/utils";
 
 config();
@@ -35,7 +35,7 @@ function generateArgs(mode: string, text: string): LLMContent[] {
 }
 
 session({ name: "Autoname", apiKey: GEMINI_API_KEY }, async (s) => {
-  const autonamer = (await import("../src/autoname/main")).default;
+  const autonamer = (await import("../../src/a2/autoname/main")).default;
 
   function evalAutonamingGenerate(title: string, mode: string, text: string) {
     s.eval(title, async ({ moduleArgs, caps, logger }) => {
