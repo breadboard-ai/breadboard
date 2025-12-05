@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as ParticlesUI from "@breadboard-ai/particles-ui";
+import * as ParticlesUI from "../../../../particles-ui";
 import {
   a,
   audio,
