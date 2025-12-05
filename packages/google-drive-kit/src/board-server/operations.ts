@@ -27,7 +27,7 @@ import {
 } from "./utils.js";
 import type { GoogleDriveClient } from "../google-drive-client.js";
 import { DriveLookupCache } from "./drive-lookup-cache.js";
-import { purgeStoredDataInMemoryValues } from "@breadboard-ai/data";
+import { purgeStoredDataInMemoryValues } from "@breadboard-ai/utils";
 import { err } from "@breadboard-ai/utils";
 
 const PROTOCOL = "drive:";

@@ -10,8 +10,8 @@ import {
   isInlineData,
   isLLMContent,
   isLLMContentArray,
-  isStoredData,
 } from "@google-labs/breadboard";
+import { isStoredData } from "@breadboard-ai/utils";
 import { isTextCapabilityPart } from "@google-labs/breadboard";
 import {
   BehaviorHint,

@@ -1,11 +1,25 @@
 /**
  * @license
- * Copyright 2024 Google LLC
+ * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@breadboard-ai/types";
-import { isStoredData } from "./common.js";
+import type {
+  DataCapability,
+  GraphDescriptor,
+  StoredDataCapabilityPart,
+} from "@breadboard-ai/types";
+
+export const isStoredData = (
+  value: unknown
+): value is StoredDataCapabilityPart => {
+  if (typeof value !== "object" || value === null) return false;
+  const data = value as DataCapability;
+  if (!("storedData" in data)) return false;
+  if (typeof data.storedData.handle !== "string") return false;
+  return true;
+};
+
 
 /** Deletes all .data value from StoredDataCapabilityPart. */
 export const purgeStoredDataInMemoryValues = async (graph: GraphDescriptor) => {

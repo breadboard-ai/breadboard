@@ -9,10 +9,10 @@ import {
   isInlineData,
   isLLMContent,
   isLLMContentArray,
-  isStoredData,
   isTextCapabilityPart,
   Template,
 } from "@google-labs/breadboard";
+import { isStoredData } from "@breadboard-ai/utils";
 import { getAssetType } from "../../../utils/mime-type";
 import { html, HTMLTemplateResult, nothing } from "lit";
 import { expandChiclet } from "../../../utils/expand-chiclet";

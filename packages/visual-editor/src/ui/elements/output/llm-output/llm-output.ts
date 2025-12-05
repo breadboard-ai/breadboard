@@ -12,10 +12,10 @@ import {
   isJSONPart,
   isListPart,
   isLLMContent,
-  isStoredData,
   isTextCapabilityPart,
   Template,
 } from "@google-labs/breadboard";
+import { isStoredData } from "@breadboard-ai/utils";
 import {
   HTMLTemplateResult,
   LitElement,
