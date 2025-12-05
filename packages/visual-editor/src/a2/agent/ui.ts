@@ -16,7 +16,7 @@ import { PidginTranslator } from "./pidgin-translator";
 import { A2ModuleArgs } from "../runnable-module-factory";
 import { A2UIClientWorkItem } from "./a2ui/client-work-item";
 import { A2UIClientEventMessage } from "./a2ui/schemas";
-import { v0_8 } from "@breadboard-ai/a2ui";
+import { v0_8 } from "../../a2ui/index.js";
 import { A2UIClient } from "./a2ui/client";
 import { A2UIAppScreenOutput } from "./a2ui/app-screen-output";
 import { ProgressWorkItem } from "./progress-work-item";
