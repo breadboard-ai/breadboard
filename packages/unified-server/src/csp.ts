@@ -127,10 +127,10 @@ export const MAIN_APP_CSP = {
   ]),
   ["media-src"]: ["'self'", "blob:", "data:"],
   ["base-uri"]: ["'none'"],
-  ["require-trusted-types-for"]: ["'script'"],
   // TODO: b/466201117 Temporarily disabled while we change how the generated
   // app is iframed.
-  // ["trusted-types"]: ["lit-html", "opal-analytics-url", "opal-chiclet-html"],
+  // ["require-trusted-types-for"]: ["'script'"],
+  ["trusted-types"]: ["lit-html", "opal-analytics-url", "opal-chiclet-html"],
 };
 
 function noneIfEmpty(directives: string[]): string[] {
