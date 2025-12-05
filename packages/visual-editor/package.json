@@ -42,13 +42,33 @@
         "package.json"
       ]
     },
+    "check:tsc": {
+      "command": "tsc -b --pretty --noEmit",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
+      "files": []
+    },
+    "build:tsc": {
+      "command": "tsc -b --pretty",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
+      "files": []
+    },
     "build:vite": {
       "command": "vite build",
       "env": {
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "typescript-files-and-deps"
+        "check:tsc"
       ],
       "files": [
         "vite.config.ts",
@@ -78,7 +98,7 @@
       ]
     },
     "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/",
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tsc/tests/*.js",
       "files": [],
       "output": [],
       "dependencies": [

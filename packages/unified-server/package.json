@@ -50,7 +50,8 @@
         "dist/server.tsbuildinfo"
       ],
       "dependencies": [
-        "<dependencies>#build:tsc"
+        "<dependencies>#build:tsc",
+        "!../visual-editor#build:tsc"
       ]
     },
     "serve": {
@@ -60,7 +61,11 @@
         ".env"
       ],
       "dependencies": [
-        "build:tsc"
+        "build:tsc",
+        {
+          "script": "../visual-editor#check:tsc",
+          "cascade": false
+        }
       ]
     },
     "test": {
