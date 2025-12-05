@@ -79,6 +79,3 @@ export { FlowgenInStepButton } from "../flow-gen/flowgen-in-step-button.js";
 export { GoogleDriveFileId } from "./google-drive/google-drive-file-id.js";
 export { GoogleDriveFileViewer } from "./google-drive/google-drive-file-viewer.js";
 export { GoogleDriveSharePanel } from "./google-drive/google-drive-share-panel.js";
-
-// Misc.
-export { googleDriveFileIdInputPlugin } from "./google-drive/google-drive-file-id.js";

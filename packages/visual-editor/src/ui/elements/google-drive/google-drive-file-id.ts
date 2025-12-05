@@ -14,7 +14,6 @@ import { googleDriveClientContext } from "../../contexts/google-drive-client-con
 import {
   InputCancelEvent,
   InputChangeEvent,
-  type InputPlugin,
 } from "../../plugins/input-plugin.js";
 import { opalShellContext } from "../../utils/opal-shell-guest.js";
 
@@ -69,18 +68,6 @@ const ALLOWED_MIME_TYPES = [
   "audio/ogg",
   "audio/flac",
 ];
-
-export const googleDriveFileIdInputPlugin: InputPlugin = {
-  instantiate: {
-    customElementName: "bb-google-drive-file-id",
-  },
-  match: {
-    schema: {
-      type: "object",
-      behavior: ["google-drive-file-id"],
-    },
-  },
-};
 
 @customElement("bb-google-drive-file-id")
 export class GoogleDriveFileId extends LitElement {
