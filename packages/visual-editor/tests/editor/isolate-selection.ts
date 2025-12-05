@@ -7,7 +7,7 @@
 import { describe, it } from "node:test";
 import { testEditGraph } from "./test-graph.js";
 import { deepStrictEqual, ok } from "node:assert";
-import { IsolateSelectionTransform } from "../../../src/editor/transforms/isolate-selection.js";
+import { IsolateSelectionTransform } from "../../src/engine/editor/transforms/isolate-selection.js";
 
 describe("isolate selection transform", () => {
   it("correctly removes dangling nodes", async () => {

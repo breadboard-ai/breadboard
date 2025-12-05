@@ -7,7 +7,7 @@
 import { describe, it } from "node:test";
 import { testEditGraph, testSubGraph } from "./test-graph.js";
 import { deepStrictEqual, ok } from "assert";
-import { EditSpec } from "../../../src/index.js";
+import { EditSpec } from "@breadboard-ai/types";
 
 describe("Sub-graph editing operations", async () => {
   await it("allows adding subgraphs", async () => {

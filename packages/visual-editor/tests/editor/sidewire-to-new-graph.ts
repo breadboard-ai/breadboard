@@ -6,7 +6,7 @@
 
 import { describe, it } from "node:test";
 import { ok, testEditGraph } from "./test-graph.js";
-import { SidewireToNewGraphTransform } from "../../../src/editor/transforms/sidewire-to-new-graph.js";
+import { SidewireToNewGraphTransform } from "../../src/engine/editor/transforms/sidewire-to-new-graph.js";
 import { deepStrictEqual } from "assert";
 
 describe("SidewireToNewGraphTransform", async () => {

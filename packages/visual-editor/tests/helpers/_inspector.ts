@@ -5,9 +5,9 @@
  */
 
 import { GraphDescriptor } from "@breadboard-ai/types";
-import { Graph } from "../../src/inspector/graph/graph.js";
-import { MutableGraphImpl } from "../../src/inspector/graph/mutable-graph.js";
-import { InspectableGraphOptions } from "../../src/index.js";
+import { Graph } from "../../src/engine/inspector/graph/graph.js";
+import { MutableGraphImpl } from "../../src/engine/inspector/graph/mutable-graph.js";
+import { InspectableGraphOptions } from "../../src/engine/index.js";
 import { makeTestGraphStore } from "./_graph-store.js";
 
 export { inspector };

@@ -6,7 +6,7 @@
 
 import { describe, it } from "node:test";
 import { testEditGraph } from "./test-graph.js";
-import { computeSelection } from "../../../src/editor/selection.js";
+import { computeSelection } from "../../src/engine/editor/selection.js";
 import { deepStrictEqual, ok } from "node:assert";
 
 describe("Computing selection", async () => {

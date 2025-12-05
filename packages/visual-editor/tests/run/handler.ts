@@ -8,9 +8,12 @@ import test, { describe } from "node:test";
 import { getGraphHandler } from "@breadboard-ai/runtime/legacy.js";
 import { deepStrictEqual, ok } from "node:assert";
 import { GraphDescriptor } from "@breadboard-ai/types";
-import simple from "../../bgl/simple.bgl.json" with { type: "json" };
-import { NodeDescriberResult, NodeDescriberWires } from "../../../src/types.js";
-import { makeTestGraphStore } from "../../helpers/_graph-store.js";
+import simple from "../bgl/simple.bgl.json" with { type: "json" };
+import {
+  NodeDescriberResult,
+  NodeDescriberWires,
+} from "../../src/engine/types.js";
+import { makeTestGraphStore } from "../helpers/_graph-store.js";
 import type { GraphLoader, MutableGraphStore } from "@breadboard-ai/types";
 
 describe("getGraphHandler", () => {

@@ -8,8 +8,8 @@ import type {
   InspectableGraphOptions,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
-import { GraphStore } from "../../src/inspector/graph-store.js";
-import { makeFs } from "../node/test-file-system.js";
+import { GraphStore } from "../../src/engine/inspector/graph-store.js";
+import { makeFs } from "../test-file-system.js";
 
 export { makeTestGraphStore };
 

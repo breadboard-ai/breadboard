@@ -7,7 +7,7 @@
 
 import { describe, it } from "node:test";
 import { good, makeDataCx } from "../test-file-system.js";
-import { transformBlobs } from "../../../src/file-system/blob-transform.js";
+import { transformBlobs } from "../../src/engine/file-system/blob-transform.js";
 import { deepStrictEqual } from "node:assert";
 import { InlineDataCapabilityPart } from "@breadboard-ai/types";
 

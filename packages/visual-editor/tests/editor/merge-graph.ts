@@ -7,7 +7,7 @@
 import { describe, it } from "node:test";
 import { ok, testEditGraph, testSubGraph } from "./test-graph.js";
 import { deepStrictEqual } from "node:assert";
-import { MergeGraphTransform } from "../../../src/editor/transforms/merge-graph.js";
+import { MergeGraphTransform } from "../../src/engine/editor/transforms/merge-graph.js";
 
 describe("Merging graphs", async () => {
   await it("Correctly merges subgraph", async () => {

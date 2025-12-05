@@ -6,7 +6,7 @@
 
 import { deepStrictEqual } from "node:assert";
 import { describe, it } from "node:test";
-import { makeTestGraphStore } from "../../helpers/_graph-store.js";
+import { makeTestGraphStore } from "../helpers/_graph-store.js";
 import { testKit } from "../test-kit.js";
 
 describe("GraphStore.graphs", () => {

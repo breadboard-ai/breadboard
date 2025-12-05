@@ -101,7 +101,7 @@
       ]
     },
     "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/tsc/tests/*.js",
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tsc/tests/**/*.js dist/tsc/tests/*.js",
       "files": [],
       "output": [],
       "dependencies": [

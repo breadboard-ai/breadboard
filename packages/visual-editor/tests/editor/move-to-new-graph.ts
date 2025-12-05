@@ -7,7 +7,7 @@
 import { describe, it } from "node:test";
 import { notOk, ok, testEditGraph, testSubGraph } from "./test-graph.js";
 import { deepStrictEqual } from "node:assert";
-import { MoveToNewGraphTransform } from "../../../src/editor/transforms/move-to-new-graph.js";
+import { MoveToNewGraphTransform } from "../../src/engine/editor/transforms/move-to-new-graph.js";
 
 describe("Move-to-new-graph transform", async () => {
   await it("correctly creates a new subgraph", async () => {
