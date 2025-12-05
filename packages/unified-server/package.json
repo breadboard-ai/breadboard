@@ -32,12 +32,8 @@
       ]
     },
     "build:vite": {
-      "command": "vite build",
       "dependencies": [
-        "../visual-editor#build:tsc"
-      ],
-      "output": [
-        "dist/client"
+        "../visual-editor#build"
       ]
     },
     "build:tsc": {
@@ -65,7 +61,11 @@
         ".env"
       ],
       "dependencies": [
-        "build:tsc"
+        "build:tsc",
+        {
+          "script": "../visual-editor#check:tsc",
+          "cascade": false
+        }
       ]
     },
     "test": {

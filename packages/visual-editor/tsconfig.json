@@ -5,7 +5,7 @@
     "lib": ["ES2023", "DOM", "DOM.Iterable", "ES2024.Promise"],
     "skipLibCheck": true,
     "useDefineForClassFields": false,
-    "outDir": "dist",
+    "outDir": "dist/tsc",
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -19,6 +19,6 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["vite/client", "@types/gtag.js", "node", "trusted-types"]
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "eval/**/*.ts", "vite.config.ts"],
+  "include": ["src/**/*.ts", "tests/**/*.ts", "eval/**/*.ts"],
   "extends": "@google-labs/tsconfig/base.json"
 }
