@@ -15,7 +15,6 @@
     "prepack": "npm run build",
     "build": "wireit",
     "build:vite": "wireit",
-    "build:tsc": "wireit",
     "test": "wireit",
     "eval:agent": "tsx --experimental-test-module-mocks eval/sets/agent.ts",
     "eval:a2ui": "tsx --experimental-test-module-mocks eval/sets/a2ui.ts",
@@ -26,8 +25,7 @@
     "build": {
       "dependencies": [
         "<dependencies>#<this>",
-        "build:vite",
-        "build:tsc"
+        "build:vite"
       ]
     },
     "typescript-files-and-deps": {
@@ -36,28 +34,13 @@
       ],
       "files": [
         "src/**/*.ts",
+        "src/a2/**/*.bgl.json",
         "tests/**/*.ts",
         "tsconfig.json",
         "vite.config.ts",
         "../../core/tsconfig/base.json",
-        "package.json",
-        "langs"
+        "package.json"
       ]
-    },
-    "build:tsc": {
-      "command": "tsc -b --pretty",
-      "env": {
-        "FORCE_COLOR": "1"
-      },
-      "dependencies": [
-        "typescript-files-and-deps"
-      ],
-      "files": [],
-      "output": [
-        "dist/",
-        "!dist/**/*.min.js{,.map}"
-      ],
-      "clean": "if-file-deleted"
     },
     "build:vite": {
       "command": "vite build",
@@ -73,7 +56,11 @@
         "*.html",
         "oauth/",
         "experimental/",
-        "public/"
+        "public/",
+        "landing/",
+        "shell/",
+        "icons/",
+        "langs/"
       ],
       "output": [
         "dist/"

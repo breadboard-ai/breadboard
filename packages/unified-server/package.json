@@ -32,12 +32,8 @@
       ]
     },
     "build:vite": {
-      "command": "vite build",
       "dependencies": [
-        "../visual-editor#build:tsc"
-      ],
-      "output": [
-        "dist/client"
+        "../visual-editor#build"
       ]
     },
     "build:tsc": {
@@ -54,8 +50,7 @@
         "dist/server.tsbuildinfo"
       ],
       "dependencies": [
-        "<dependencies>#build:tsc",
-        "!../visual-editor#build:tsc"
+        "<dependencies>#build:tsc"
       ]
     },
     "serve": {
