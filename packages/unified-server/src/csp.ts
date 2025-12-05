@@ -57,7 +57,7 @@ export const SHELL_CSP = {
   ["img-src"]: ["https://*.gstatic.com"],
   ["script-src"]: ["'self'", "https://apis.google.com"],
   ["style-src"]: ["'unsafe-inline'"],
-  ["require-trusted-types-for"]: ["'script'"],
+  // ["require-trusted-types-for"]: ["'script'"],
   ["trusted-types"]: ["'none'"],
 };
 
