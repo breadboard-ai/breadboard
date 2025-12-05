@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createFileSystemBackend } from "@breadboard-ai/data-store";
+import { createFileSystemBackend } from "../idb/index.js";
 import { CapabilitiesManagerImpl } from "@breadboard-ai/runtime/legacy.js";
 import type {
   Kit,

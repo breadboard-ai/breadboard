@@ -134,7 +134,6 @@
   },
   "dependencies": {
     "@breadboard-ai/data": "^0.1.0",
-    "@breadboard-ai/data-store": "0.5.0",
     "@breadboard-ai/google-drive-kit": "0.8.0",
     "@breadboard-ai/gulf": "0.1.0",
     "@breadboard-ai/particles": "0.2.0",
