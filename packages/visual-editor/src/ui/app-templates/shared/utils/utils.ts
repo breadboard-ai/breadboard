@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ErrorObject } from "@google-labs/breadboard";
+import { ErrorObject } from "@breadboard-ai/types";
 
 export function extractError(err: string | ErrorObject) {
   if (typeof err === "string") {

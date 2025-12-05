@@ -15,7 +15,7 @@ import {
   MainGraphIdentifier,
   MutableGraphStore,
   NodeHandlerMetadata,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import { KitNodeChosenEvent } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";

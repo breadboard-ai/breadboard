@@ -13,7 +13,7 @@ import {
   GraphIdentifier,
   NodeConfiguration,
   NodeIdentifier,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import { AutoWireInPorts, InPort } from "./autowire-in-ports";
 import { UpdateNodeTitle } from "./update-node-title";
 import { UpdateParameterMetadata } from "./update-parameter-metadata";

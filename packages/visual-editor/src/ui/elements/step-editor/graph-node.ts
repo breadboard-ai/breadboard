@@ -30,7 +30,7 @@ import {
   InspectableNodePorts,
   NodeValue,
   SchemaEnumValue,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import { map } from "lit/directives/map.js";
 import {
   isLLMContentArrayBehavior,

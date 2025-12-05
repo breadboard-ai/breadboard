@@ -15,7 +15,7 @@ import {
   WorkspaceVisualChangeId,
 } from "./types";
 import * as BreadboardUI from "../ui/index.js";
-import { EditHistoryCreator, NodeIdentifier } from "@google-labs/breadboard";
+import { EditHistoryCreator, NodeIdentifier } from "../engine/index.js";
 import { ToastType } from "../ui/events/events.js";
 
 const eventInit = {

@@ -14,7 +14,7 @@ import {
   EditOperationContext,
   EditTransform,
   EditTransformResult,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 
 export { UpdateAssetData };
 

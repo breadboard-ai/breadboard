@@ -5,7 +5,7 @@
  */
 
 import { makeUrl, parseUrl } from "../ui/utils/urls.js";
-import { type EditHistoryCreator } from "@google-labs/breadboard";
+import { type EditHistoryCreator } from "../engine/index.js";
 import { RuntimeURLChangeEvent } from "./events.js";
 import { type TabId } from "./types.js";
 import { signal } from "signal-utils";

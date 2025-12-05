@@ -9,7 +9,7 @@ import {
   EditHistoryEntry,
   GraphDescriptor,
   MutableGraphStore,
-} from "@google-labs/breadboard";
+} from "../engine/index.js";
 import type {
   BoardServer,
   BoardServerSaveEventStatus,

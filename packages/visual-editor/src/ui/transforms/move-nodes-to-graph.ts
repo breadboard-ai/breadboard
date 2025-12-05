@@ -11,7 +11,7 @@ import {
   EditTransform,
   EditTransformResult,
   NodeIdentifier,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 
 export { MoveNodesToGraph };
 

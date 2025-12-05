@@ -9,7 +9,7 @@ import {
   InspectablePort,
   InspectablePortList,
   PortStatus,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 
 export enum EditorMode {
   MINIMAL = "minimal",

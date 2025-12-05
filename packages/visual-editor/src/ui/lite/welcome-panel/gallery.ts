@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphProviderItem } from "@google-labs/breadboard";
+import type { GraphProviderItem } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";

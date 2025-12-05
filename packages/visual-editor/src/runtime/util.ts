@@ -17,7 +17,7 @@ import {
   NodeDescriptor,
   NodeIdentifier,
   Schema,
-} from "@google-labs/breadboard";
+} from "../engine/index.js";
 import { isStoredData } from "@breadboard-ai/utils";
 import {
   EditChangeId,

@@ -35,7 +35,7 @@ import {
   Outcome,
   PortIdentifier,
   Schema,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import { ConnectorInstance, ConnectorType } from "../connectors/types";
 import { StateEvent, ToastType } from "../events/events";
 import { AppTheme, ParsedUrlProvider, VisualEditorMode } from "../types/types";

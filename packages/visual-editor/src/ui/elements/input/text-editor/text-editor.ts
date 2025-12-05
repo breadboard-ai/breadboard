@@ -3,7 +3,7 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { Template, TemplatePart } from "@google-labs/breadboard";
+import { Template, TemplatePart } from "@breadboard-ai/utils";
 import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";

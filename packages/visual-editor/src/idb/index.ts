@@ -5,7 +5,7 @@
  */
 
 import { RuntimeFlags } from "@breadboard-ai/types";
-import { EphemeralBlobStore, PersistentBackend } from "@google-labs/breadboard";
+import { EphemeralBlobStore, PersistentBackend } from "../engine/index.js";
 import { IDBBackend } from "./file-system/idb-backend.js";
 import { IdbFlagManager } from "./flags/idb-flag-manager.js";
 

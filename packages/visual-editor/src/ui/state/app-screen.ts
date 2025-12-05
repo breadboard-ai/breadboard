@@ -9,7 +9,7 @@ import {
   AppScreenOutput,
   NodeEndResponse,
 } from "@breadboard-ai/types";
-import { OutputResponse, Schema } from "@google-labs/breadboard";
+import { OutputResponse, Schema } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { idFromPath, isParticleMode } from "./common.js";

@@ -16,7 +16,7 @@ import {
   PersistentBackend,
   PersistentBlobHandle,
   transformBlobs,
-} from "@google-labs/breadboard";
+} from "../../engine/index.js";
 
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 

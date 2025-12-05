@@ -17,7 +17,7 @@ import {
   GraphTheme,
   InlineDataCapabilityPart,
 } from "@breadboard-ai/types";
-import { ok } from "@google-labs/breadboard";
+import { ok } from "@breadboard-ai/utils";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing, PropertyValues } from "lit";

@@ -9,13 +9,12 @@ import {
   EditOperationContext,
   EditTransform,
   EditTransformResult,
-  hash,
-  ok,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import { ConnectorConfiguration } from "../connectors/types";
 import { configFromData } from "../connectors/util";
 import { UpdateAssetWithRefs } from "./update-asset-with-refs";
 import { UpdateAssetRefs } from "./update-asset-refs";
+import { hash, ok } from "@breadboard-ai/utils";
 
 export { EditConnector };
 

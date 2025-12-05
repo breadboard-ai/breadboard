@@ -13,9 +13,8 @@ import {
   EditTransformResult,
   GraphIdentifier,
   InspectableNode,
-  Template,
-} from "@google-labs/breadboard";
-import { willCreateCycle } from "@breadboard-ai/utils";
+} from "@breadboard-ai/types";
+import { Template, willCreateCycle } from "@breadboard-ai/utils";
 import { MarkInPortsInvalid } from "./mark-in-ports-invalid";
 import { transformConfiguration } from "./transform-all-nodes";
 

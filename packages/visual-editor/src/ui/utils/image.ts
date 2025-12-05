@@ -1,6 +1,6 @@
+import { asBase64 } from "@breadboard-ai/data";
 import { isDriveFile } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { asBase64 } from "@google-labs/breadboard";
 import { html } from "lit";
 import { ClassInfo, classMap } from "lit/directives/class-map.js";
 import { until } from "lit/directives/until.js";

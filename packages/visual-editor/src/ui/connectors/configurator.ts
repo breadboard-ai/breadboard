@@ -4,9 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { err, ok, Outcome } from "@google-labs/breadboard";
+import {
+  JsonSerializable,
+  LLMContent,
+  Outcome,
+  UUID,
+} from "@breadboard-ai/types";
+import { err, ok } from "@breadboard-ai/utils";
 import { ConnectorInitializerResult, ConnectorView } from "./types";
-import { JsonSerializable, LLMContent, UUID } from "@breadboard-ai/types";
 
 export { Configurator };
 

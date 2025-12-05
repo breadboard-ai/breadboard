@@ -11,7 +11,7 @@ import {
   EditTransform,
   EditTransformResult,
   GraphIdentifier,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import { EdgeAttachmentPoint } from "../types/types";
 
 export class ChangeEdgeAttachmentPoint implements EditTransform {

@@ -18,7 +18,7 @@ import {
   WorkspaceSelectionState,
   MoveToSelection,
 } from "./types";
-import { InspectableGraph } from "@google-labs/breadboard";
+import { InspectableGraph } from "../engine/index.js";
 import {
   createEmptyGraphSelectionState,
   createEmptyWorkspaceSelectionState,

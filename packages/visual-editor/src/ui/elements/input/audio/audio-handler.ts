@@ -7,7 +7,7 @@ import * as StringsHelper from "../../../strings/helper.js";
 const Strings = StringsHelper.forSection("AudioHandler");
 
 import { LLMContent } from "@breadboard-ai/types";
-import { asBase64 } from "@google-labs/breadboard";
+import { asBase64 } from "@breadboard-ai/data";
 import { Task } from "@lit/task";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";

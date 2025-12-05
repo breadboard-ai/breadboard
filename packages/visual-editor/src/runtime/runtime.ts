@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import type * as BreadboardUI from "../ui/index.js";
-import { createGraphStore, createLoader, err } from "@google-labs/breadboard";
+import { createGraphStore, createLoader, err } from "../engine/index.js";
 import { Router } from "./router.js";
 import { Board } from "./board.js";
 import { Run } from "./run.js";
@@ -42,7 +42,7 @@ import {
   createEphemeralBlobStore,
   createFileSystem,
   PersistentBackend,
-} from "@google-labs/breadboard";
+} from "../engine/index.js";
 import { RecentBoardStore } from "../data/recent-boards";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { McpClientManager } from "../mcp/index.js";

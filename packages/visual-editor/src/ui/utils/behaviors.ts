@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Schema } from "@google-labs/breadboard";
+import type { Schema } from "@breadboard-ai/types";
 
 export function isControllerBehavior(schema: Schema): boolean {
   return schema.behavior?.includes("hint-controller") ?? false;

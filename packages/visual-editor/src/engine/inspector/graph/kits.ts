@@ -104,8 +104,7 @@ const createBuiltInInspectableKit = (): InspectableKit => {
 
 const collectKits = (
   mutable: MutableGraph,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  graph: GraphDescriptor
+  _graph: GraphDescriptor
 ): InspectableKit[] => {
   const kits = mutable.store.kits;
   return [

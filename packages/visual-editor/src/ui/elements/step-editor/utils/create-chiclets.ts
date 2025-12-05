@@ -5,18 +5,17 @@
  */
 
 import {
-  InspectablePort,
   isInlineData,
   isLLMContent,
   isLLMContentArray,
   isTextCapabilityPart,
-  Template,
-} from "@google-labs/breadboard";
-import { isStoredData } from "@breadboard-ai/utils";
-import { getAssetType } from "../../../utils/mime-type";
+} from "@breadboard-ai/data";
+import { InspectablePort } from "@breadboard-ai/types";
+import { isStoredData, Template } from "@breadboard-ai/utils";
 import { html, HTMLTemplateResult, nothing } from "lit";
-import { expandChiclet } from "../../../utils/expand-chiclet";
 import { Project } from "../../../state";
+import { expandChiclet } from "../../../utils/expand-chiclet";
+import { getAssetType } from "../../../utils/mime-type";
 
 export function createChiclets(
   port: InspectablePort | null,

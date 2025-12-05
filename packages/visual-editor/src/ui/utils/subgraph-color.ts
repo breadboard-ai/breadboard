@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { hash } from "@google-labs/breadboard";
+import { hash } from "@breadboard-ai/utils";
 
 const borderPresets = [
   0xef9a9a, 0xf48fb1, 0xce93d8, 0xb39ddb, 0x9fa8da, 0x90caf9, 0x81d4fa,

@@ -30,7 +30,7 @@ import {
   isInlineData,
   isLLMContentArray,
   ok,
-} from "@google-labs/breadboard";
+} from "../../../engine/index.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume, provide } from "@lit/context";
 import { classMap } from "lit/directives/class-map.js";

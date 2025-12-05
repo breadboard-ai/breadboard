@@ -3,27 +3,27 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { customElement, property, state } from "lit/decorators.js";
-import { Box } from "./box";
+import { InspectableAssetEdge, InspectableEdge } from "@breadboard-ai/types";
 import { css, html, HTMLTemplateResult, nothing, svg } from "lit";
-import { map } from "lit/directives/map.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { toCSSMatrix } from "./utils/to-css-matrix";
+import { map } from "lit/directives/map.js";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
-import { intersects } from "./utils/rect-intersection";
+import { styleMap } from "lit/directives/style-map.js";
+import { palette } from "../../styles/host/base-colors";
+import { icons } from "../../styles/icons";
 import { EdgeAttachmentPoint } from "../../types/types";
 import { inspectableEdgeToString } from "../../utils/workspace";
-import { InspectableAssetEdge, InspectableEdge } from "@google-labs/breadboard";
+import { Box } from "./box";
+import { Entity } from "./entity";
 import {
   GraphEdgeAttachmentMoveEvent,
   NodeBoundsUpdateRequestEvent,
 } from "./events/events";
 import { clamp } from "./utils/clamp";
-import { Entity } from "./entity";
 import { calculatePointsOnCubicBezierCurve } from "./utils/cubic-bezier";
-import { icons } from "../../styles/icons";
-import { palette } from "../../styles/host/base-colors";
+import { intersects } from "./utils/rect-intersection";
+import { toCSSMatrix } from "./utils/to-css-matrix";
 
 interface Connection {
   n1: DOMPoint;

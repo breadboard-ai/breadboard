@@ -18,7 +18,7 @@ import {
   ok,
   Outcome,
   PortIdentifier,
-} from "@google-labs/breadboard";
+} from "../engine/index.js";
 import {
   JsonSerializable,
   LLMContent,

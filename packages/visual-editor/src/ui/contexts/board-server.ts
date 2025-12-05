@@ -5,7 +5,7 @@
  */
 
 import { createContext } from "@lit/context";
-import { type BoardServer } from "@google-labs/breadboard";
+import { type BoardServer } from "@breadboard-ai/types";
 
 /** The current board server. */
 export const boardServerContext = createContext<BoardServer | undefined>(

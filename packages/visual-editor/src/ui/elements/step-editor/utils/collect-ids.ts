@@ -11,7 +11,7 @@ import type {
 } from "@breadboard-ai/types";
 import { Graph } from "../graph";
 import { GraphNode } from "../graph-node";
-import { PortIdentifier } from "@google-labs/breadboard";
+import { PortIdentifier } from "@breadboard-ai/types";
 import { GraphEdge } from "../graph-edge";
 import { GraphAsset } from "../graph-asset";
 

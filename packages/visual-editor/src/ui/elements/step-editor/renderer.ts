@@ -33,7 +33,7 @@ import {
   NodeDescriptor,
   NodeIdentifier,
   NodeValue,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import {
   CreateNewAssetsEvent,

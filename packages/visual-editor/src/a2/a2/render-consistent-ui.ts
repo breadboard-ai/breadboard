@@ -13,7 +13,7 @@ import {
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 import { isStoredData, ok, toJson } from "@breadboard-ai/utils";
-import { isInlineData, isTextCapabilityPart } from "@google-labs/breadboard";
+import { isInlineData, isTextCapabilityPart } from "../../engine/index.js";
 import { A2ModuleArgs } from "../runnable-module-factory";
 import { A2UI_SCHEMA } from "./au2ui-schema";
 import { GeminiPrompt } from "./gemini-prompt";

@@ -13,9 +13,8 @@ import {
   isListPart,
   isLLMContent,
   isTextCapabilityPart,
-  Template,
-} from "@google-labs/breadboard";
-import { isStoredData } from "@breadboard-ai/utils";
+} from "@breadboard-ai/data";
+import { isStoredData, Template } from "@breadboard-ai/utils";
 import {
   HTMLTemplateResult,
   LitElement,

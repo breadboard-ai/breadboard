@@ -3,16 +3,16 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
+import { ok } from "@breadboard-ai/utils";
+import { SignalWatcher } from "@lit-labs/signals";
+import { HTMLTemplateResult, LitElement, css, html, nothing } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
+import { repeat } from "lit/directives/repeat.js";
+import { markdown } from "../../directives/markdown";
+import { Project } from "../../state";
 import { baseColors } from "../../styles/host/base-colors";
 import { type } from "../../styles/host/type";
-import { Project } from "../../state";
-import { repeat } from "lit/directives/repeat.js";
 import { icons } from "../../styles/icons";
-import { markdown } from "../../directives/markdown";
-import { ok } from "@google-labs/breadboard";
-import { SignalWatcher } from "@lit-labs/signals";
 
 @customElement("bb-mcp-servers-settings")
 export class VEMCPServersSettings extends SignalWatcher(LitElement) {

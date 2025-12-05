@@ -14,7 +14,7 @@ import {
   NodeIdentifier,
   NodeTypeIdentifier,
   PortIdentifier,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 
 export { CreateNode };
 

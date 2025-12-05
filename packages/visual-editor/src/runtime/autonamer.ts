@@ -21,7 +21,7 @@ import {
   FileSystem,
   GraphStoreArgs,
   Outcome,
-} from "@google-labs/breadboard";
+} from "../engine/index.js";
 
 export { Autonamer };
 

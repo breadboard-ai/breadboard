@@ -14,7 +14,7 @@ import {
   RunError,
   WorkItem,
 } from "@breadboard-ai/types";
-import { InputResponse, OutputResponse, Schema } from "@google-labs/breadboard";
+import { InputResponse, OutputResponse, Schema } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { idFromPath, toLLMContentArray } from "./common";

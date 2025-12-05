@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ok, TemplatePart } from "@google-labs/breadboard";
+import { ok, TemplatePart } from "@breadboard-ai/utils";
 import { Project } from "../state";
-import { iconSubstitute } from "./icon-substitute";
 import { getStepIcon } from "./get-step-icon";
+import { iconSubstitute } from "./icon-substitute";
 
 export function expandChiclet(
   part: TemplatePart,

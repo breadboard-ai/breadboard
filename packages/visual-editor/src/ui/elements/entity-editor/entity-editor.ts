@@ -7,19 +7,18 @@ import {
   InspectableGraph,
   InspectableNode,
   InspectableNodePorts,
-  isLLMContent,
-  isLLMContentArray,
-  isTextCapabilityPart,
   MainGraphIdentifier,
   MutableGraphStore,
-  ok,
   Schema,
   SchemaEnumValue,
+} from "@breadboard-ai/types";
+import {
+  isStoredData,
+  ok,
   Template,
   TemplatePart,
   TemplatePartTransformCallback,
-} from "@google-labs/breadboard";
-import { isStoredData } from "@breadboard-ai/utils";
+} from "@breadboard-ai/utils";
 import {
   LitElement,
   html,
@@ -84,6 +83,11 @@ import { baseColors } from "../../styles/host/base-colors";
 import { type } from "../../styles/host/type";
 import { iconSubstitute } from "../../utils/icon-substitute";
 import { ActionTracker } from "../../utils/action-tracker";
+import {
+  isLLMContent,
+  isLLMContentArray,
+  isTextCapabilityPart,
+} from "@breadboard-ai/data";
 
 const Strings = StringsHelper.forSection("Editor");
 

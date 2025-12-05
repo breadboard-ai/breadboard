@@ -4,10 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  MainGraphIdentifier,
-  MutableGraphStore,
-} from "@google-labs/breadboard";
+import { MainGraphIdentifier, MutableGraphStore } from "../engine/index.js";
 import {
   HarnessRunner,
   Kit,

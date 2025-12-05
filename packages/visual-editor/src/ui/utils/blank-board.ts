@@ -5,7 +5,7 @@
  */
 
 import * as Strings from "../strings/helper.js";
-import { blank as breadboardBlank } from "@google-labs/breadboard";
+import { blank as breadboardBlank } from "../../engine/index.js";
 
 const GlobalStrings = Strings.forSection("Global");
 

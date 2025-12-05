@@ -12,7 +12,7 @@ import {
   MainGraphIdentifier,
   PortIdentifier,
   FileSystemEntry,
-} from "@google-labs/breadboard";
+} from "../engine/index.js";
 
 import {
   AssetPath,

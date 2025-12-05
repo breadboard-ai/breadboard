@@ -15,12 +15,7 @@ import type {
   ConformsToNodeValue,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
-import {
-  GraphDescriptor,
-  hash,
-  MutableGraphStore,
-  ok,
-} from "@google-labs/breadboard";
+import { GraphDescriptor, MutableGraphStore } from "@breadboard-ai/types";
 import { provide } from "@lit/context";
 import { html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { state } from "lit/decorators.js";
@@ -77,6 +72,7 @@ import { KeyboardCommandDeps } from "./commands/types";
 import { eventRoutes } from "./event-routing/event-routing";
 
 import { MainArguments } from "./types/types";
+import { hash, ok } from "@breadboard-ai/utils";
 
 export { MainBase };
 

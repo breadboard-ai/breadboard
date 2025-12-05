@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BoardServer } from "@google-labs/breadboard";
+import { BoardServer } from "../engine/index.js";
 
 import { bgl as a2Bgl } from "./a2/index";
 import { bgl as agentBgl } from "./agent/index";

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema } from "@google-labs/breadboard";
+import { Schema } from "@breadboard-ai/types";
 import { AllowedLLMContentTypes } from "../types/types.js";
 
 function updateAllowList(

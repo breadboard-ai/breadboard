@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { err, ok, Outcome } from "@google-labs/breadboard";
-import { ConnectorType } from "../connectors/types";
-import { ConnectorState, ProjectInternal } from "./types";
+import { Outcome } from "@breadboard-ai/types";
+import { err, ok } from "@breadboard-ai/utils";
 import { signal } from "signal-utils";
 import { Configurator } from "../connectors/configurator";
+import { ConnectorType } from "../connectors/types";
 import { CreateConnector } from "../transforms/create-connector";
+import { ConnectorState, ProjectInternal } from "./types";
 
 export { ConnectorStateImpl };
 

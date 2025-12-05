@@ -12,7 +12,8 @@ import {
 } from "@breadboard-ai/types";
 import { GraphAsset, ProjectInternal } from "./types";
 import { ConnectorInstance } from "../connectors/types";
-import { err, ok, Outcome } from "@google-labs/breadboard";
+import { err, ok } from "@breadboard-ai/utils";
+import { Outcome } from "@breadboard-ai/types";
 import { configFromData } from "../connectors/util";
 import { ConnectorInstanceImpl } from "./connector-instance";
 import { UpdateAssetWithRefs } from "../transforms/update-asset-with-refs";

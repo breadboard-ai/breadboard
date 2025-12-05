@@ -8,7 +8,7 @@ import {
   isFileDataCapabilityPart,
   isInlineData,
   isTextCapabilityPart,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/data";
 import { isStoredData } from "@breadboard-ai/utils";
 import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";

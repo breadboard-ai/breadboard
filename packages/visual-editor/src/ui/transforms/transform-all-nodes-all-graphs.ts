@@ -9,7 +9,7 @@ import {
   EditTransform,
   EditTransformResult,
   NodeIdentifier,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import {
   EditTransformFactory,
   TemplatePartTransformer,

@@ -6,7 +6,8 @@
 
 import { GroupParticle, Particle } from "../../../particles/index.js";
 import { LLMContent } from "@breadboard-ai/types";
-import { err, ok, Outcome } from "@google-labs/breadboard";
+import { Outcome } from "@breadboard-ai/types";
+import { err, ok } from "@breadboard-ai/utils";
 
 export { llmContentToParticles };
 

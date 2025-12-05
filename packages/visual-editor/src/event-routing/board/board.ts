@@ -7,7 +7,7 @@
 import { EventRoute } from "../types";
 
 import * as BreadboardUI from "../../ui/index.js";
-import { InputValues, ok } from "@google-labs/breadboard";
+import { InputValues, ok } from "../../engine/index.js";
 import { RuntimeSnackbarEvent } from "../../runtime/events";
 import { parseUrl } from "../../ui/utils/urls.js";
 import { StateEvent } from "../../ui/events/events.js";

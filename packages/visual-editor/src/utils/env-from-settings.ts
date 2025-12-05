@@ -5,7 +5,7 @@
  */
 
 import { SETTINGS_TYPE, SettingsStore } from "../ui/types/types.js";
-import { FileSystemEntry } from "@google-labs/breadboard";
+import { FileSystemEntry } from "@breadboard-ai/types";
 
 export { envFromSettings };
 
