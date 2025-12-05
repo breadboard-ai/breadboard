@@ -14,7 +14,7 @@
  limitations under the License.
  */
 
-import { v0_8 } from "@breadboard-ai/a2ui";
+import { v0_8 } from "../../../../src/a2ui/index.js";
 
 /** Elements */
 

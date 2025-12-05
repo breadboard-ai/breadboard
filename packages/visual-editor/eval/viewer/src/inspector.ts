@@ -22,8 +22,8 @@ import { theme as uiTheme } from "./theme/theme.js";
 import "./ui/ui.js";
 import { classMap } from "lit/directives/class-map.js";
 
-import { v0_8 } from "@breadboard-ai/a2ui";
-import * as UI from "@breadboard-ai/a2ui/ui";
+import { v0_8 } from "../../../src/a2ui/index.js";
+import * as UI from "../../../src/a2ui/0.8/ui/ui.js";
 import { map } from "lit/directives/map.js";
 import {
   FileSystemEvalBackend,

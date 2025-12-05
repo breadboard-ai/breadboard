@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { v0_8 } from "@breadboard-ai/a2ui";
+import { v0_8 } from "../../a2ui/index.js";
 
 /** Elements */
 

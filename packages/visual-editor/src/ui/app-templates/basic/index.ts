@@ -50,8 +50,8 @@ import { ActionTracker } from "../../utils/action-tracker.js";
 import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js";
 import { styles as appStyles } from "./index.styles.js";
 import { theme as uiTheme } from "./theme/light.js";
-import { v0_8 } from "@breadboard-ai/a2ui";
-import * as A2UI from "@breadboard-ai/a2ui/ui";
+import { v0_8 } from "../../../a2ui/index.js";
+import * as A2UI from "../../../a2ui/0.8/ui/ui.js";
 import { theme as a2uiTheme } from "../../a2ui-theme/a2ui-theme.js";
 
 import "./header/header.js";

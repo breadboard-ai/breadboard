@@ -133,7 +133,6 @@
     "vite": "^7.2.4"
   },
   "dependencies": {
-    "@breadboard-ai/a2ui": "^0.1.0",
     "@breadboard-ai/data": "^0.1.0",
     "@breadboard-ai/data-store": "0.5.0",
     "@breadboard-ai/google-drive-kit": "0.8.0",

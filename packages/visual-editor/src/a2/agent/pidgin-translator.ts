@@ -19,7 +19,7 @@ import { AgentFileSystem } from "./file-system";
 import { err, ok } from "@breadboard-ai/utils";
 import { SimplifiedToolManager, ToolManager } from "../a2/tool-manager";
 import { A2ModuleArgs } from "../runnable-module-factory";
-import { v0_8 } from "@breadboard-ai/a2ui";
+import { v0_8 } from "../../a2ui/index.js";
 
 export { PidginTranslator };
 
