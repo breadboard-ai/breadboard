@@ -927,13 +927,16 @@ export class SharePanel extends LitElement {
         state.status === "readonly") &&
       state.shareableFile
     ) {
-      return makeUrl({
-        page: "graph",
-        mode: "app",
-        flow: `drive:/${state.shareableFile.id}`,
-        resourceKey: state.shareableFile.resourceKey,
-        shared: true,
-      });
+      return makeUrl(
+        {
+          page: "graph",
+          mode: "app",
+          flow: `drive:/${state.shareableFile.id}`,
+          resourceKey: state.shareableFile.resourceKey,
+          shared: true,
+        },
+        this.globalConfig?.hostOrigin
+      );
     }
     return undefined;
   }

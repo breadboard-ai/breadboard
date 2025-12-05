@@ -35,7 +35,7 @@ export function createTruncatedValue(port: InspectablePort | null) {
       if (isLLMContent && port.schema.default) {
         try {
           value = JSON.parse(port.schema.default);
-        } catch (err) {
+        } catch {
           return "(empty)";
         }
       } else {
@@ -50,7 +50,7 @@ export function createTruncatedValue(port: InspectablePort | null) {
               if (items.length === 0) {
                 return "(Empty list)";
               }
-            } catch (err) {
+            } catch {
               return "(Empty)";
             }
           }

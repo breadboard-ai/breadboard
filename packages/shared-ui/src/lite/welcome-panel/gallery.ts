@@ -14,7 +14,6 @@ import { createRef, ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { OverflowMenuActionEvent, StateEvent } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
-import { icons } from "../../styles/icons.js";
 import { OverflowAction, RecentBoard } from "../../types/types.js";
 import {
   type SigninAdapter,
@@ -26,24 +25,25 @@ import { googleDriveClientContext } from "../../contexts/google-drive-client-con
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { guard } from "lit/directives/guard.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
-import { baseColors } from "../../styles/host/base-colors.js";
-import { type } from "../../styles/host/type.js";
 import { SignalWatcher } from "@lit-labs/signals";
+import * as Styles from "../../styles/styles.js";
 
+const COLLAPSED_KEY = "gallery-lite-collapsed";
 const GlobalStrings = StringsHelper.forSection("Global");
 const Strings = StringsHelper.forSection("ProjectListing");
 
 @customElement("bb-gallery-lite")
 export class GalleryLite extends SignalWatcher(LitElement) {
   static readonly styles = [
-    icons,
-    baseColors,
-    type,
+    Styles.HostIcons.icons,
+    Styles.HostColorsMaterial.baseColors,
+    Styles.HostType.type,
     css`
       :host {
         display: block;
         overflow: hidden;
       }
+
       bb-overflow-menu {
         position: fixed;
         right: auto;
@@ -68,7 +68,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        color: var(--welcome-text-color);
+        color: var(--sys-color--on-surface);
         padding-bottom: var(--bb-grid-size-4);
 
         & .gallery-title {
@@ -85,14 +85,17 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         border: none;
         height: var(--bb-grid-size-10);
         padding: 0 var(--bb-grid-size-4);
-        color: var(--welcome-button-color);
+        color: var(--sys-color--primary);
         cursor: pointer;
         transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
 
         &:not([disabled]) {
           &:hover,
           &:focus {
-            background: var(--welcome-surface-color);
+            background: light-dark(
+              var(--sys-color--surface-container-low),
+              oklch(from var(--sys-color--primary) l c h / 8%)
+            );
           }
         }
 
@@ -109,7 +112,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
 
       .board {
         position: relative;
-        background: var(--light-dark-n-100);
+        background: light-dark(var(--n-100), var(--n-0));
         outline: 1px solid transparent;
         border-radius: var(--bb-grid-size-3);
         cursor: pointer;
@@ -150,7 +153,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           height: calc(100% - 6px);
           z-index: 2;
           border-radius: calc(var(--bb-grid-size-3) - 3px);
-          outline: 7px solid var(--light-dark-n-0);
+          outline: 7px solid light-dark(var(--n-0), var(--n-80));
           opacity: 0;
           transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
         }
@@ -167,8 +170,8 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           top: var(--bb-grid-size-3);
           left: var(--bb-grid-size-3);
           height: var(--bb-grid-size-8);
-          background: var(--light-dark-n-0);
-          color: var(--light-dark-n-100);
+          background: light-dark(var(--n-0), var(--n-100));
+          color: light-dark(var(--n-100), var(--n-0));
           border-radius: var(--bb-grid-size-16);
           z-index: 10;
           display: flex;
@@ -362,6 +365,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         justify-content: flex-end;
         justify-self: flex-end;
         margin-top: var(--bb-grid-size-4);
+        color: var(--sys-color--on-surface);
 
         #page-numbers {
           margin-right: var(--bb-grid-size-3);
@@ -371,8 +375,9 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           width: var(--bb-grid-size-4);
           text-align: center;
           field-sizing: content;
-          border: 1px solid var(--light-dark-n-90);
+          border: 1px solid var(--sys-color--surface-container-highest);
           border-radius: var(--bb-grid-size);
+          background: var(--sys-color--surface);
         }
 
         input[type="number"]::-webkit-outer-spin-button,
@@ -387,7 +392,9 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           justify-content: center;
           background: none;
           border: none;
-          color: var(--light-dark-n-10);
+          color: oklch(
+            from var(--sys-color--on-surface) l c h / calc(alpha * 0.38)
+          );
           transition: color 0.2s cubic-bezier(0, 0, 0.3, 1);
           padding: 0;
 
@@ -396,12 +403,8 @@ export class GalleryLite extends SignalWatcher(LitElement) {
 
             &:hover,
             &:focus {
-              color: var(--light-dark-n-50);
+              color: var(--sys-color--on-surface);
             }
-          }
-
-          &[disabled] {
-            color: var(--light-dark-n-70);
           }
         }
       }
@@ -448,7 +451,14 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   accessor forceCreatorToBeTeam = false;
 
   @state()
-  accessor #isCollapsed = true;
+  set isCollapsed(collapsed: boolean) {
+    this.#isCollapsed = collapsed;
+    sessionStorage.setItem(COLLAPSED_KEY, String(this.#isCollapsed));
+  }
+  get isCollapsed() {
+    return this.#isCollapsed;
+  }
+  #isCollapsed = true;
 
   /**
    * How many items to display per page. Set to -1 to disable pagination.
@@ -461,6 +471,13 @@ export class GalleryLite extends SignalWatcher(LitElement) {
 
   readonly #paginationContainer = createRef<HTMLElement>();
   readonly #boardsContainer = createRef<HTMLElement>();
+
+  constructor() {
+    super();
+
+    this.isCollapsed =
+      sessionStorage.getItem(COLLAPSED_KEY) === "false" ? false : true;
+  }
 
   #isPinned(url: string): boolean {
     const recentBoards = this.recentBoards;
@@ -480,9 +497,9 @@ export class GalleryLite extends SignalWatcher(LitElement) {
     const container = this.#boardsContainer.value;
     if (container) {
       const currentHeight = container.offsetHeight;
-      if (this.#isCollapsed) {
+      if (this.isCollapsed) {
         container.style.maxHeight = `${currentHeight}px`;
-        this.#isCollapsed = false;
+        this.isCollapsed = false;
         await this.updateComplete;
         const newHeight = container.scrollHeight;
         container.animate(
@@ -498,10 +515,10 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           container.style.maxHeight = "none";
         };
       } else {
-        this.#isCollapsed = true;
+        this.isCollapsed = true;
         await this.updateComplete;
         const newHeight = container.offsetHeight;
-        this.#isCollapsed = false;
+        this.isCollapsed = false;
         container.animate(
           [
             { maxHeight: `${currentHeight}px` },
@@ -513,7 +530,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           }
         ).onfinish = () => {
           container.style.maxHeight = "none";
-          this.#isCollapsed = true;
+          this.isCollapsed = true;
         };
       }
     }
@@ -628,12 +645,12 @@ export class GalleryLite extends SignalWatcher(LitElement) {
                 @click=${this.#toggleCollapsedState}
               >
                 ${Strings.from(
-                  this.#isCollapsed ? "COMMAND_SHOW_MORE" : "COMMAND_SHOW_LESS"
+                  this.isCollapsed ? "COMMAND_SHOW_MORE" : "COMMAND_SHOW_LESS"
                 )}
                 <span
                   class=${classMap({
                     "g-icon": true,
-                    collapsed: this.collapsable && this.#isCollapsed,
+                    collapsed: this.collapsable && this.isCollapsed,
                   })}
                 ></span>
               </button>
@@ -643,7 +660,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
       <div
         id="boards"
         ${ref(this.#boardsContainer)}
-        class=${classMap({ collapsed: this.collapsable && this.#isCollapsed })}
+        class=${classMap({ collapsed: this.collapsable && this.isCollapsed })}
       >
         ${pageItems.map((item) => {
           const isPinned = this.#isPinned(item[0]);
@@ -806,11 +823,6 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         </button>
       </menu>
     `;
-  }
-
-  #onClickPageNumber(event: PointerEvent & { target: HTMLElement }) {
-    this.page = Number(event.target.dataset.pageIdx);
-    this.#scrollCurrentPageNumberButtonIntoView();
   }
 
   #onClickPrevPage() {

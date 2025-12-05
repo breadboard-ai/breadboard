@@ -12,7 +12,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { uiStateContext } from "../../contexts/ui-state.js";
 import "../../elements/input/expanding-textarea.js";
-import { SnackbarEvent } from "../../events/events.js";
+import { SnackbarEvent, UnsnackbarEvent } from "../../events/events.js";
 import { OneShotFlowGenFailureResponse } from "../../flow-gen/flow-generator.js";
 import { LiteModeState, UI } from "../../state/types.js";
 import * as StringsHelper from "../../strings/helper.js";
@@ -34,7 +34,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
   static styles = [
     Styles.HostIcons.icons,
     Styles.HostBehavior.behavior,
-    Styles.HostColors.baseColors,
+    Styles.HostColorsMaterial.baseColors,
     Styles.HostType.type,
     css`
       * {
@@ -54,8 +54,10 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
           --min-lines: 1;
           --max-lines: 4;
           --padding: var(--bb-grid-size-3);
-          --border-color: var(--light-dark-n-90);
+          --border-color: var(--sys-color--outline-variant);
           --border-radius: var(--bb-grid-size-6);
+          --background-color: var(--sys-color--body-background);
+          color: var(--sys-color--on-surface);
 
           &:focus-within {
             outline: 1px solid var(--light-dark-n-70);
@@ -112,6 +114,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
           .placeholder=${this.state.empty
             ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW_ALT")
             : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
+          .systemThemeOverride=${true}
           @change=${this.#onInputChange}
           @focus=${this.#onInputFocus}
           @blur=${this.#onInputBlur}
@@ -155,8 +158,15 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
   }
 
   #onGenerateError(error: string, suggestedIntent?: string) {
+    // Special case: an ignorable error. We use this special case to handle the
+    // case when the user isn't signed in and dismissed the sign in dialog
+    if (error.length === 0) {
+      return;
+    }
+
     console.error("Error generating board", error);
     console.error("Suggested intent", suggestedIntent);
+
     this.state.status = "error";
     this.state.error = error;
 
@@ -165,7 +175,21 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
         globalThis.crypto.randomUUID(),
         error,
         SnackType.INFORMATION,
-        [],
+        [
+          {
+            action: "copy",
+            title: "Copy Prompt",
+            value: suggestedIntent,
+            callback: async () => {
+              if (!suggestedIntent) {
+                return;
+              }
+
+              await navigator.clipboard.writeText(suggestedIntent);
+              this.dispatchEvent(new UnsnackbarEvent());
+            },
+          },
+        ],
         true,
         true
       )

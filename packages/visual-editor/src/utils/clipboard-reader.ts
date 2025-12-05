@@ -138,7 +138,7 @@ function tryParsingYouTubeUrl(s: string) {
 function tryParsingJson(s: string) {
   try {
     return JSON.parse(s);
-  } catch (e) {
+  } catch {
     return undefined;
   }
 }
@@ -167,7 +167,7 @@ function isUrl(urlLike: string, base?: string): boolean {
       new URL(urlLike);
     }
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 }

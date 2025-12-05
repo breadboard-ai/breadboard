@@ -33,6 +33,18 @@ const color = <C extends PaletteKeyVals>(src: PaletteKey<C>) =>
         })
         .join("\n")
     )}
+
+    .color-custom-header {
+      color: var(--custom-color-header);
+    }
+
+    .color-custom-text {
+      color: var(--custom-color-text);
+    }
+
+    .color-custom-button {
+      color: var(--custom-color-button);
+    }
   ` as CSSResultGroup;
 
 const keyFactory = <K extends PaletteKeyVals>(prefix: K) => {

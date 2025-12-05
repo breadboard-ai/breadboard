@@ -8,13 +8,12 @@ const Strings = StringsHelper.forSection("Global");
 
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { baseColors } from "../../styles/host/base-colors.js";
-import { type } from "../../styles/host/type";
+import * as Styles from "../../styles/styles.js";
 import { SigninAdapter } from "../../utils/signin-adapter.js";
 import { BOARD_SAVE_STATUS, EnumValue } from "../../types/types.js";
-import { icons } from "../../styles/icons.js";
 import {
   CloseEvent,
+  OverflowMenuActionEvent,
   ShareRequestedEvent,
   SignOutEvent,
   StateEvent,
@@ -74,9 +73,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
   accessor #uiState!: UI;
 
   static styles = [
-    icons,
-    baseColors,
-    type,
+    Styles.HostType.type,
+    Styles.HostIcons.icons,
+    Styles.HostColorsBase.baseColors,
+    Styles.HostColorScheme.match,
     css`
       * {
         box-sizing: border-box;
@@ -96,6 +96,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        background: light-dark(var(--n-100), var(--n-15));
         border-bottom: 1px solid var(--light-dark-n-90);
         padding: 0 var(--bb-grid-size-5);
         scrollbar-width: none;
@@ -125,6 +126,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
             display: flex;
             align-items: center;
 
+            color: var(--light-dark-n-0);
             background: var(--light-dark-n-90);
             cursor: pointer;
             height: var(--bb-grid-size-8);
@@ -133,7 +135,10 @@ export class VEHeader extends SignalWatcher(LitElement) {
 
             &:not([disabled]):hover,
             &.selected {
-              background: var(--ui-custom-o-25);
+              background: light-dark(
+                var(--ui-custom-o-25),
+                var(--ui-custom-o-30)
+              );
             }
 
             &.selected {
@@ -165,7 +170,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
           bb-item-select {
             --selected-item-padding-left: var(--bb-grid-size);
             --selected-item-padding-right: var(--bb-grid-size);
-            --selected-item-hover-color: var(--light-dark-n-95);
+            --selected-item-hover-color: light-dark(var(--n-95), var(--n-30));
             --selected-item-border-radius: 50%;
 
             margin: 0 0 0 var(--bb-grid-size-3);
@@ -175,7 +180,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
             display: none;
             font-size: 10px;
             line-height: 1;
-            color: var(--ui-secondary-text);
+            color: light-dark(var(--n-0), var(--n-70));
             margin: 0 0 0 var(--bb-grid-size-4);
             min-width: 45px;
           }
@@ -258,7 +263,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
               cursor: pointer;
 
               &:hover {
-                background: var(--light-dark-n-25);
+                background: light-dark(var(--n-25), var(--n-90));
               }
             }
           }
@@ -273,7 +278,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
       #tab-title {
         margin: 0;
         line-height: 1;
-        color: var(--light-dark-n-0);
+        color: light-dark(var(--n-0), var(--n-90));
         display: flex;
         align-items: center;
 
@@ -290,7 +295,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
         max-width: 200px;
         min-width: 10%;
         field-sizing: content;
-        color: var(--light-dark-p-0);
+        color: light-dark(var(--n-0), var(--n-90));
         margin-right: var(--bb-grid-size-2);
         outline: none;
         background: transparent;
@@ -318,9 +323,9 @@ export class VEHeader extends SignalWatcher(LitElement) {
         line-height: 1;
         padding: var(--bb-grid-size) var(--bb-grid-size-3);
         border-radius: var(--bb-grid-size-16);
-        border: 1px solid var(--light-dark-n-0);
+        border: 1px solid light-dark(var(--n-0), var(--n-70));
         text-transform: uppercase;
-        color: var(--light-dark-p-0);
+        color: light-dark(var(--n-0), var(--n-70));
       }
 
       #status {
@@ -342,6 +347,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
       #back-button {
         padding: 0;
         margin: 0 var(--bb-grid-size-3) 0 0;
+        color: var(--light-dark-n-0);
         background: none;
         border: none;
         transition: translate 0.2s cubic-bezier(0, 0, 0.3, 1);
@@ -765,10 +771,20 @@ export class VEHeader extends SignalWatcher(LitElement) {
       @bboverlaydismissed=${() => {
         this.#showAccountSwitcher = false;
       }}
-      @bboverflowmenuaction=${() => {
+      @bboverflowmenuaction=${(evt: OverflowMenuActionEvent) => {
         this.#showAccountSwitcher = false;
 
-        this.dispatchEvent(new SignOutEvent());
+        switch (evt.action) {
+          case "logout": {
+            this.dispatchEvent(new SignOutEvent());
+            break;
+          }
+
+          default: {
+            console.log("Action: ", evt.action);
+            break;
+          }
+        }
       }}
     ></bb-account-switcher>`;
   }

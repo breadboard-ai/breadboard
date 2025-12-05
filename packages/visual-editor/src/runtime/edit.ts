@@ -10,7 +10,6 @@ import {
   EditSpec,
   err,
   GraphDescriptor,
-  Kit,
   MoveToGraphTransform,
   MutableGraphStore,
   NodeConfiguration,
@@ -21,7 +20,6 @@ import {
   PortIdentifier,
 } from "@google-labs/breadboard";
 import {
-  GraphLoader,
   JsonSerializable,
   LLMContent,
   NodeExpectedOutput,
@@ -53,8 +51,6 @@ import {
   AssetEdge,
   EdgeAttachmentPoint,
 } from "@breadboard-ai/shared-ui/types/types.js";
-import { StateManager } from "./state";
-import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
 import { Autonamer } from "./autonamer";
 import { filterUndefined, toJson } from "@breadboard-ai/utils";
 
@@ -83,14 +79,9 @@ export class Edit extends EventTarget {
   #editors = new Map<TabId, EditableGraph>();
 
   constructor(
-    public readonly state: StateManager,
-    public readonly loader: GraphLoader,
-    public readonly kits: Kit[],
-    public readonly sandbox: RunnableModuleFactory,
     public readonly graphStore: MutableGraphStore,
-    public readonly autonamer: Autonamer,
-    public readonly flags: RuntimeFlagManager,
-    public readonly settings: BreadboardUI.Types.SettingsStore | null
+    private readonly autonamer: Autonamer,
+    private readonly flags: RuntimeFlagManager
   ) {
     super();
   }

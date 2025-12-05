@@ -17,6 +17,7 @@ import {
 } from "@breadboard-ai/types/oauth.js";
 import type {
   CheckAppAccessResult,
+  GuestConfiguration,
   OpalShellHostProtocol,
   PickDriveFilesOptions,
   PickDriveFilesResult,
@@ -39,7 +40,7 @@ import {
   type ShareClient,
 } from "../elements/google-drive/google-apis.js";
 import { SETTINGS_TYPE } from "../types/types.js";
-import { getEmbedderRedirectUri, getTopLevelOrigin } from "./embed-helpers.js";
+import { getTopLevelOrigin } from "./embed-helpers.js";
 import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { scopesFromUrl } from "./scopes-from-url.js";
@@ -162,6 +163,12 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     }
   };
 
+  getConfiguration = async (): Promise<GuestConfiguration> => {
+    return {
+      consentMessage: "",
+    };
+  };
+
   /** See https://cloud.google.com/docs/authentication/token-types#access */
   async #fetchScopesFromTokenInfoApi(): Promise<
     { ok: true; value: string[] } | { ok: false; error: string }
@@ -203,12 +210,14 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
      * Add the accessToken param to the backend API request that needs it
      * to transform files.
      */
-    if (url.endsWith("/uploadGeminiFile") || url.endsWith("/uploadBlobFile")) {
+    if (
+      url.endsWith("/uploadGeminiFile") ||
+      url.endsWith("/uploadBlobFile") ||
+      url.includes("/generateWebpageStream")
+    ) {
       const body = init.body;
       if (typeof body !== "string") {
-        console.warn(
-          "When augmenting /uploadGeminiFile, request body is not string, bailing..."
-        );
+        console.warn("When augmenting request, body is not string, bailing...");
         return init;
       }
       try {
@@ -219,7 +228,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
         };
       } catch {
         console.warn(
-          "When augmenting /uploadGeminiFile, request body is not JSON parsable, bailing"
+          "When augmenting request, body is not JSON parsable, bailing"
         );
         return init;
       }
@@ -307,11 +316,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     const url = new URL(AUTH_ENDPOINT);
     const params = url.searchParams;
     params.set("client_id", CLIENT_DEPLOYMENT_CONFIG.OAUTH_CLIENT);
-    params.set(
-      "redirect_uri",
-      getEmbedderRedirectUri() ??
-        new URL("/oauth/", window.location.origin).href
-    );
+    params.set("redirect_uri", new URL("/oauth/", window.location.origin).href);
     params.set("scope", uniqueScopes.join(" "));
     params.set(
       "state",
@@ -545,7 +550,13 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     history.replaceState(
       null,
       "",
-      new URL(pathname + search + hash, window.location.origin)
+      new URL(
+        (CLIENT_DEPLOYMENT_CONFIG.SHELL_PREFIX || "") +
+          pathname +
+          search +
+          hash,
+        window.location.origin
+      )
     );
   };
 

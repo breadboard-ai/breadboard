@@ -36,7 +36,6 @@ import {
   Schema,
 } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory";
-import { getBucketId } from "../a2/get-bucket-id";
 import { driveFileToBlob, toGcsAwareChunk } from "../a2/data-transforms";
 
 type Model = {
@@ -98,13 +97,6 @@ async function callVideoGen(
   aspectRatio: string,
   modelName: string
 ): Promise<Outcome<LLMContent>> {
-  const bucketId = await getBucketId(moduleArgs);
-  if (!ok(bucketId)) {
-    return err(
-      `Unable to call Gemini Image API: Storage bucket is not configured`
-    );
-  }
-
   const executionInputs: ContentMap = {};
   executionInputs["text_instruction"] = {
     chunks: [
@@ -132,7 +124,7 @@ async function callVideoGen(
         imageContent.parts.at(-1)!
       );
       if (!ok(blobStoredData)) return blobStoredData;
-      imageChunk = toGcsAwareChunk(bucketId, blobStoredData);
+      imageChunk = toGcsAwareChunk(blobStoredData);
     } else {
       const { inlineData } = imageContent.parts.at(
         -1
@@ -150,7 +142,7 @@ async function callVideoGen(
   } else {
     console.log("No image found, using t2v");
   }
-  let body: ExecuteStepRequest = {
+  const body: ExecuteStepRequest = {
     planStep: {
       stepName: "GenerateVideo",
       modelApi: "generate_video",
@@ -164,10 +156,6 @@ async function callVideoGen(
     },
     execution_inputs: executionInputs,
   };
-  if (bucketId !== null) {
-    body = { ...body, output_gcs_config: { bucket_name: bucketId } };
-  }
-
   const response = await executeStep(caps, moduleArgs, body);
   if (!ok(response)) return response;
 

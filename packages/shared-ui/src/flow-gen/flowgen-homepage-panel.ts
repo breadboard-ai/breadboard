@@ -147,7 +147,7 @@ export class FlowgenHomepagePanel extends LitElement {
           display: flex;
           align-items: center;
           justify-content: flex-end;
-          color: var(--light-dark-n-70);
+          color: light-dark(var(--n-70), var(--n-40));
           font-size: 30px;
           width: 30px;
           height: 30px;

@@ -20,14 +20,13 @@ import {
 import { StateEvent } from "../../events/events.js";
 import "../../flow-gen/flowgen-homepage-panel.js";
 import * as StringsHelper from "../../strings/helper.js";
-import { baseColors } from "../../styles/host/base-colors.js";
-import { type } from "../../styles/host/type.js";
-import { icons } from "../../styles/icons.js";
 import type { RecentBoard } from "../../types/types.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
 import { blankBoard } from "../../utils/blank-board.js";
 import "./gallery.js";
 import "../../elements/welcome-panel/homepage-search-button.js";
+
+import * as Styles from "../../styles/styles.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -51,9 +50,9 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
   accessor featuredFilter: string | null = null;
 
   static styles = [
-    icons,
-    baseColors,
-    type,
+    Styles.HostIcons.icons,
+    Styles.HostColorsMaterial.baseColors,
+    Styles.HostType.type,
     css`
       * {
         box-sizing: border-box;
@@ -61,7 +60,6 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
 
       :host {
         display: block;
-        background: var(--light-dark-n-100);
         --items-per-column: 4;
         --column-gap: 10px;
         --row-gap: 10px;
@@ -126,7 +124,8 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
       }
 
       #no-projects-panel {
-        background: var(--welcome-surface-color);
+        background: var(--sys-color--surface-container-low);
+        color: var(--sys-color--on-surface-low);
         padding: var(--bb-grid-size-4);
         border-radius: var(--bb-grid-size-3);
         text-align: center;
@@ -139,10 +138,10 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
       #create-new-button-inline {
         display: flex;
         align-items: center;
-        color: var(--light-dark-n-100);
+        color: var(--sys-color--on-primary);
         border-radius: var(--bb-grid-size-16);
         border: none;
-        background: var(--welcome-button-color);
+        background: var(--sys-color--primary);
         height: var(--bb-grid-size-10);
         padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
         transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
@@ -161,11 +160,11 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
 
         &:not([disabled]):focus,
         &:not([disabled]):hover {
-          background: oklch(from var(--welcome-button-color) calc(l * 0.9) c h);
+          background: oklch(from var(--sys-color--primary) calc(l * 0.9) c h);
         }
 
         .g-icon {
-          color: var(--light-dark-n-100);
+          color: var(--sys-color--on-primary);
           margin-right: var(--bb-grid-size-2);
         }
 

@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { resolveGraph } from "@breadboard-ai/loader";
 import {
-  GraphDescriptor,
   GraphToRun,
   InputValues,
   MutableGraph,
@@ -32,12 +30,10 @@ export {
 class GraphBasedNodeHandler implements NodeHandlerObject {
   #graph: GraphToRun;
   #type: NodeTypeIdentifier;
-  #descriptor: GraphDescriptor;
 
   constructor(graph: GraphToRun, type: NodeTypeIdentifier) {
     this.#graph = graph;
     this.#type = type;
-    this.#descriptor = resolveGraph(graph);
     this.invoke = this.invoke.bind(this);
     this.describe = this.describe.bind(this);
   }

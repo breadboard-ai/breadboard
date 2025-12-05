@@ -85,6 +85,7 @@ class NodeTypeDescriberManager implements DescribeResultTypeCacheArgs {
       }),
       wires: { incoming: {}, outgoing: {} },
       asType: true,
+      flags: this.store.flags,
     };
     try {
       return describer(

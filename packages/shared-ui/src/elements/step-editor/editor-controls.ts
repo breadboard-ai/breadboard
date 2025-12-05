@@ -24,7 +24,6 @@ import {
   GraphStoreEntry,
   GraphStoreUpdateEvent,
   InspectableGraph,
-  Kit,
   MainGraphIdentifier,
   MutableGraphStore,
 } from "@google-labs/breadboard";
@@ -48,9 +47,6 @@ import { parseBase64DataUrl } from "@breadboard-ai/utils";
 export class EditorControls extends LitElement {
   @property({ reflect: true, type: Boolean })
   accessor readOnly = false;
-
-  @property()
-  accessor boardServerKits: Kit[] | null = null;
 
   @property()
   accessor graph: InspectableGraph | null = null;
@@ -115,10 +111,10 @@ export class EditorControls extends LitElement {
         flex-direction: column;
         right: var(--bb-grid-size-6);
         bottom: var(--bb-grid-size-7);
-        background: var(--light-dark-n-100);
+        background: light-dark(var(--n-100), var(--n-20));
         border-radius: var(--bb-grid-size-16);
         padding: var(--bb-grid-size) var(--bb-grid-size);
-        box-shadow: var(--bb-elevation-16-light);
+        box-shadow: light-dark(var(--bb-elevation-16-light), none);
 
         &::before {
           content: "";
@@ -126,13 +122,14 @@ export class EditorControls extends LitElement {
           width: calc(100% - 2px);
           height: 1px;
           left: 1px;
-          top: var(--bb-grid-size-12);
-          background: var(--light-dark-n-90);
+          top: 113.5px;
+          background: light-dark(var(--n-90), var(--n-30));
         }
 
         & button {
-          background: var(--light-dark-n-100) center center / 20px 20px
-            no-repeat;
+          color: light-dark(var(--n-0), var(--n-80));
+          background: light-dark(var(--n-100), var(--n-20)) center center / 20px
+            20px no-repeat;
           width: var(--bb-grid-size-7);
           height: var(--bb-grid-size-7);
           padding: 0;
@@ -171,7 +168,7 @@ export class EditorControls extends LitElement {
 
             &:hover,
             &:focus {
-              background-color: var(--light-dark-n-98);
+              background-color: light-dark(var(--n-98), var(--n-30));
             }
           }
         }
@@ -206,7 +203,7 @@ export class EditorControls extends LitElement {
 
           border-radius: var(--bb-grid-size-16);
           height: var(--bb-grid-size-10);
-          background: var(--light-dark-n-100);
+          background: light-dark(var(--n-100), var(--n-20));
           padding: 0;
 
           & bb-item-select {
@@ -216,7 +213,7 @@ export class EditorControls extends LitElement {
             --menu-width: 200px;
             --selected-item-column-gap: var(--bb-grid-size);
             --selected-item-height: var(--bb-grid-size-9);
-            --selected-item-hover-color: var(--light-dark-n-98);
+            --selected-item-hover-color: light-dark(var(--n-98), var(--n-20));
             --selected-item-border-radius: var(--bb-grid-size-2)
               var(--bb-grid-size-16) var(--bb-grid-size-16)
               var(--bb-grid-size-2);
@@ -231,16 +228,16 @@ export class EditorControls extends LitElement {
               top: 4px;
               left: -3px;
               translate: -0.5px 0;
-              border-left: 1px solid var(--light-dark-n-90);
+              border-left: 1px solid light-dark(var(--n-90), var(--n-30));
             }
           }
 
           & button {
             display: flex;
             align-items: center;
-            color: var(--light-dark-n-0);
+            color: light-dark(var(--n-0), var(--n-90));
             margin-right: var(--bb-grid-size);
-            background-color: var(--light-dark-n-100);
+            background: light-dark(var(--n-100), var(--n-20));
             transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
 
             &:first-of-type {
@@ -252,11 +249,12 @@ export class EditorControls extends LitElement {
 
             & .g-icon {
               margin-right: var(--bb-grid-size-2);
+              color: light-dark(var(--n-0), var(--n-80));
             }
 
             &:hover,
             &:focus {
-              background-color: var(--light-dark-n-98);
+              background: light-dark(var(--n-98), var(--n-30));
             }
           }
         }

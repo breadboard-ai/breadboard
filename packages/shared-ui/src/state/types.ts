@@ -42,6 +42,7 @@ import { AppTheme, ParsedUrlProvider, VisualEditorMode } from "../types/types";
 import { HTMLTemplateResult } from "lit";
 import type { AsyncComputedStatus } from "signal-utils/async-computed";
 import { FilteredMap } from "./utils/filtered-map";
+import type { FlowGenerator } from "../flow-gen/flow-generator";
 
 /**
  * Represents the result of AsyncComputed signals helper.
@@ -124,11 +125,6 @@ export type ProjectRun = {
    * Call when the user chooses to dismiss errors shown (if any)
    */
   dismissError(): void;
-
-  /**
-   * Represents step list view (aka lite)
-   */
-  stepList: StepListState;
 };
 
 export type StepListStateStatus = "planning" | "running" | "ready";
@@ -141,11 +137,6 @@ export type StepListState = {
    * - "ready" -- interactive state
    */
   status: StepListStateStatus;
-  /**
-   * The intent behind the app. This value is taken from the BGL
-   * "metadata.intent" property. If "null", no intent was specified.
-   */
-  intent: string | null;
 
   /**
    * The list of steps according to the current run plan
@@ -424,28 +415,54 @@ export type UI = {
   blockingAction: boolean;
   lastSnackbarDetailsInfo: HTMLTemplateResult | string | null;
   flags: RuntimeFlags | null;
+  subscriptionStatus: SubscriptionStatus;
+  subscriptionCredits: number;
 };
+
+export type SubscriptionStatus =
+  | "indeterminate"
+  | "error"
+  | "subscribed"
+  | "not-subscribed";
 
 export type FlowGenGenerationStatus = "generating" | "initial" | "error";
 
-export type LiteModeType = "loading" | "home" | "editor" | "invalid";
+export type LiteModeType = "loading" | "home" | "editor" | "error" | "invalid";
 
 export type LiteModeIntentExample = {
   intent: string;
+};
+
+export type LiteModePlannerState = {
+  status: string;
+  thought: string;
 };
 
 /**
  * Represents the flow gen state
  */
 export type LiteModeState = {
+  /**
+   * The various view types:
+   * - "loading" -- the Load Opal ghostie that is presented whenever
+   * an opal is loaded.
+   * - "home" -- user can create a new opal from here
+   * - "editor" -- user can run/edit opal from here
+   * - "error" -- the distinct error state for when we're neither in home nor
+   *   in editor (like, trying to load an invalid/inacessible opal)
+   * - "invalid" -- some invalid state that we don't know about
+   */
   viewType: LiteModeType;
 
-  // Remix triggering bits
+  /**
+   * Call this to trigger the "error" view
+   */
+  viewError: string;
 
   /**
-   * The URL of the graph to remix. If null, there's nothing to remix.
+   * Planner bits
    */
-  remixUrl: string | null;
+  planner: LiteModePlannerState;
 
   // FlowGen bits
   status: FlowGenGenerationStatus;
@@ -462,10 +479,13 @@ export type LiteModeState = {
    */
   graph: GraphDescriptor | null;
 
-  stepList: StepListState | undefined;
-
   examples: LiteModeIntentExample[];
   currentExampleIntent: string;
+
+  /**
+   * The list of steps according to the current run plan
+   */
+  steps: Map<string, StepListStepState>;
 };
 
 /**
@@ -476,6 +496,7 @@ export type RuntimeContext = {
   readonly project: Project | null;
   readonly ui: UI;
   readonly router: ParsedUrlProvider;
+  readonly flowGenerator: FlowGenerator;
 };
 
 export type IntegrationState = {

@@ -12,6 +12,131 @@ export const custom = {
   c100: "#665ef6",
 };
 
+export const uiColorMapping: Map<string, string> = new Map([
+  // Neutral.
+  ["--n-0", "--n-100"],
+  ["--n-5", "--n-95"],
+  ["--n-10", "--n-90"],
+  ["--n-15", "--n-80"],
+  ["--n-20", "--n-80"],
+  ["--n-25", "--n-70"],
+  ["--n-30", "--n-70"],
+  ["--n-35", "--n-60"],
+  ["--n-40", "--n-60"],
+  ["--n-50", "--n-50"],
+  ["--n-60", "--n-40"],
+  ["--n-70", "--n-30"],
+  ["--n-80", "--n-20"],
+  ["--n-90", "--n-10"],
+  ["--n-95", "--n-5"],
+  ["--n-98", "--n-5"],
+  ["--n-99", "--n-5"],
+  ["--n-100", "--n-0"],
+
+  // Primary.
+  ["--p-0", "--p-100"],
+  ["--p-5", "--p-95"],
+  ["--p-10", "--p-90"],
+  ["--p-15", "--p-80"],
+  ["--p-20", "--p-80"],
+  ["--p-25", "--p-70"],
+  ["--p-30", "--p-70"],
+  ["--p-35", "--p-60"],
+  ["--p-40", "--p-60"],
+  ["--p-50", "--p-50"],
+  ["--p-60", "--p-40"],
+  ["--p-70", "--p-30"],
+  ["--p-80", "--p-20"],
+  ["--p-90", "--p-10"],
+  ["--p-95", "--p-5"],
+  ["--p-98", "--p-5"],
+  ["--p-99", "--p-5"],
+
+  // Secondary.
+  ["--s-100", "--s-0"],
+  ["--s-0", "--s-100"],
+  ["--s-5", "--s-95"],
+  ["--s-10", "--s-90"],
+  ["--s-15", "--s-80"],
+  ["--s-20", "--s-80"],
+  ["--s-25", "--s-70"],
+  ["--s-30", "--s-70"],
+  ["--s-35", "--s-60"],
+  ["--s-40", "--s-60"],
+  ["--s-50", "--s-50"],
+  ["--s-60", "--s-40"],
+  ["--s-70", "--s-30"],
+  ["--s-80", "--s-20"],
+  ["--s-90", "--s-10"],
+  ["--s-95", "--s-5"],
+  ["--s-98", "--s-5"],
+  ["--s-99", "--s-5"],
+  ["--s-100", "--s-0"],
+
+  // Tertiary.
+  ["--t-100", "--t-0"],
+  ["--t-0", "--t-100"],
+  ["--t-5", "--t-95"],
+  ["--t-10", "--t-90"],
+  ["--t-15", "--t-80"],
+  ["--t-20", "--t-80"],
+  ["--t-25", "--t-70"],
+  ["--t-30", "--t-70"],
+  ["--t-35", "--t-60"],
+  ["--t-40", "--t-60"],
+  ["--t-50", "--t-50"],
+  ["--t-60", "--t-40"],
+  ["--t-70", "--t-30"],
+  ["--t-80", "--t-20"],
+  ["--t-90", "--t-10"],
+  ["--t-95", "--t-5"],
+  ["--t-98", "--t-5"],
+  ["--t-99", "--t-5"],
+  ["--t-100", "--t-0"],
+
+  // Neutral Variant.
+  ["--nv-100", "--nv-0"],
+  ["--nv-0", "--nv-100"],
+  ["--nv-5", "--nv-95"],
+  ["--nv-10", "--nv-90"],
+  ["--nv-15", "--nv-80"],
+  ["--nv-20", "--nv-80"],
+  ["--nv-25", "--nv-70"],
+  ["--nv-30", "--nv-70"],
+  ["--nv-35", "--nv-60"],
+  ["--nv-40", "--nv-60"],
+  ["--nv-50", "--nv-50"],
+  ["--nv-60", "--nv-40"],
+  ["--nv-70", "--nv-30"],
+  ["--nv-80", "--nv-20"],
+  ["--nv-90", "--nv-10"],
+  ["--nv-95", "--nv-5"],
+  ["--nv-98", "--nv-5"],
+  ["--nv-99", "--nv-5"],
+  ["--nv-100", "--nv-0"],
+
+  // Error.
+  ["--e-100", "--e-0"],
+  ["--e-0", "--e-100"],
+  ["--e-5", "--e-95"],
+  ["--e-10", "--e-90"],
+  ["--e-15", "--e-80"],
+  ["--e-20", "--e-80"],
+  ["--e-25", "--e-70"],
+  ["--e-30", "--e-70"],
+  ["--e-35", "--e-60"],
+  ["--e-40", "--e-60"],
+  ["--e-50", "--e-50"],
+  ["--e-60", "--e-40"],
+  ["--e-70", "--e-30"],
+  ["--e-80", "--e-20"],
+  ["--e-90", "--e-10"],
+  ["--e-95", "--e-5"],
+  ["--e-98", "--e-5"],
+  ["--e-99", "--e-5"],
+  ["--e-100", "--e-0"],
+]);
+
 export const palette: ColorPalettes = {
   neutral: {
     n100: "#ffffff",
@@ -140,7 +265,18 @@ export const palette: ColorPalettes = {
   },
 } as ColorPalettes;
 
-export const steps = {
+export const stepsLight = {
+  generate: "#c2d5fb",
+  generateSecondary: "#e0eafe",
+  display: "#c4fcd4",
+  displaySecondary: "#d9ffe4",
+  getInput: "#effe96",
+  getInputSecondary: "#f2ffa3",
+  asset: "#f6c9ad",
+  assetSecondary: "#fceee9",
+};
+
+export const stepsDark = {
   generate: "#c2d5fb",
   generateSecondary: "#e0eafe",
   display: "#c4fcd4",
@@ -153,104 +289,86 @@ export const steps = {
 
 export const baseColors = css`
   :host {
-    --ui-custom-o-100: light-dark(
-      ${unsafeCSS(custom.c100)},
-      ${unsafeCSS(Theme.mapColor(custom.c100))}
-    );
-    --ui-custom-o-25: oklch(
-      from
-        light-dark(
-          var(--ui-custom-o-100),
-          ${unsafeCSS(Theme.mapColor("--ui-custom-o-100"))}
-        )
-        l c h / calc(alpha * 0.25)
-    );
-    --ui-custom-o-20: oklch(
-      from
-        light-dark(
-          var(--ui-custom-o-100),
-          ${unsafeCSS(Theme.mapColor("--ui-custom-o-100"))}
-        )
-        l c h / calc(alpha * 0.2)
-    );
-    --ui-custom-o-10: oklch(
-      from
-        light-dark(
-          var(--ui-custom-o-100),
-          ${unsafeCSS(Theme.mapColor("--ui-custom-o-100"))}
-        )
-        l c h / calc(alpha * 0.1)
-    );
-    --ui-custom-o-5: oklch(
-      from
-        light-dark(
-          var(--ui-custom-o-100),
-          ${unsafeCSS(Theme.mapColor("--ui-custom-o-100"))}
-        )
-        l c h / calc(alpha * 0.05)
-    );
-    --ui-scrim: rgba(0, 0, 0, 0.6);
-    --ui-flowgen-step: #e2e1f1;
-    --ui-theme-segment: #f1f4f8;
-    --ui-theme-generating: #d6e2fb;
+    ${unsafeCSS(
+      Object.entries(Theme.createThemeStyles(palette, uiColorMapping))
+        .map(([key, value]) => {
+          return `${key}: ${value};`;
+        })
+        .join("\n")
+    )}
+  }
 
-    --ui-warning-border-color: #b2affbff;
-    --ui-warning-background-color: #d8d7fe;
-    --ui-warning-text-color: #33324f;
+  :host {
+    ${unsafeCSS(
+      Object.entries(
+        Theme.createThemeStyles(palette, uiColorMapping, "original-")
+      )
+        .map(([key, value]) => {
+          return `${key}: ${value};`;
+        })
+        .join("\n")
+    )}
   }
 
   :host {
     --ui-generate: light-dark(
-      ${unsafeCSS(steps.generate)},
-      ${unsafeCSS(Theme.mapColor(steps.generate))}
+      ${unsafeCSS(stepsLight.generate)},
+      ${unsafeCSS(stepsDark.generate)}
     );
     --ui-generate-secondary: light-dark(
-      ${unsafeCSS(steps.generateSecondary)},
-      ${unsafeCSS(Theme.mapColor(steps.generateSecondary))}
+      ${unsafeCSS(stepsLight.generateSecondary)},
+      ${unsafeCSS(stepsDark.generateSecondary)}
     );
     --ui-display: light-dark(
-      ${unsafeCSS(steps.display)},
-      ${unsafeCSS(Theme.mapColor(steps.display))}
+      ${unsafeCSS(stepsLight.display)},
+      ${unsafeCSS(stepsDark.display)}
     );
     --ui-display-secondary: light-dark(
-      ${unsafeCSS(steps.displaySecondary)},
-      ${unsafeCSS(Theme.mapColor(steps.displaySecondary))}
+      ${unsafeCSS(stepsLight.displaySecondary)},
+      ${unsafeCSS(stepsDark.displaySecondary)}
     );
     --ui-get-input: light-dark(
-      ${unsafeCSS(steps.getInput)},
-      ${unsafeCSS(Theme.mapColor(steps.getInput))}
+      ${unsafeCSS(stepsLight.getInput)},
+      ${unsafeCSS(stepsDark.getInput)}
     );
     --ui-get-input-secondary: light-dark(
-      ${unsafeCSS(steps.getInputSecondary)},
-      ${unsafeCSS(Theme.mapColor(steps.getInputSecondary))}
+      ${unsafeCSS(stepsLight.getInputSecondary)},
+      ${unsafeCSS(stepsDark.getInputSecondary)}
     );
     --ui-asset: light-dark(
-      ${unsafeCSS(steps.asset)},
-      ${unsafeCSS(Theme.mapColor(steps.asset))}
+      ${unsafeCSS(stepsLight.asset)},
+      ${unsafeCSS(stepsDark.asset)}
     );
     --ui-asset-secondary: light-dark(
-      ${unsafeCSS(steps.assetSecondary)},
-      ${unsafeCSS(Theme.mapColor(steps.assetSecondary))}
+      ${unsafeCSS(stepsLight.assetSecondary)},
+      ${unsafeCSS(stepsDark.assetSecondary)}
     );
   }
 
   :host {
-    ${unsafeCSS(
-      Object.entries(Theme.createThemeMapping(palette))
-        .map(([key, value]) => {
-          return `${key}: ${value};`;
-        })
-        .join("\n")
-    )}
-  }
+    --ui-custom-o-100: ${unsafeCSS(custom.c100)};
 
-  :host {
     ${unsafeCSS(
-      Object.entries(Theme.createThemeStyles(palette))
-        .map(([key, value]) => {
-          return `${key}: ${value};`;
+      new Array(19)
+        .fill(0)
+        .map((_, idx) => {
+          const alpha = (idx + 1) * 0.05;
+          const opacity = (idx + 1) * 5;
+
+          return `--ui-custom-o-${opacity}: oklch(
+            from var(--ui-custom-o-100) l c h / calc(alpha * ${alpha})
+          );`;
         })
         .join("\n")
     )}
+
+    --ui-scrim: light-dark(rgba(255, 255, 255, 0.6), rgba(0, 0, 0, 0.6));
+    --ui-flowgen-step: light-dark(#e2e1f1, var(--n-20));
+    --ui-theme-segment: light-dark(#f1f4f8, var(--n-10));
+    --ui-theme-generating: light-dark(#d6e2fb, var(--n-50));
+
+    --ui-warning-border-color: light-dark(#b2affb, var(--n-20));
+    --ui-warning-background-color: light-dark(#d8d7fe, var(--n-20));
+    --ui-warning-text-color: light-dark(#33324f, var(--n-70));
   }
 ` as CSSResultGroup;

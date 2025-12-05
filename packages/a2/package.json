@@ -78,17 +78,16 @@
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.34.1",
-    "dotenv": "^16.4.7",
+    "dotenv": "^17.2.3",
     "idb": "^8.0.3",
     "inquirer": "^12.10.0",
-    "tsx": "^4.20.3",
+    "tsx": "^4.20.6",
     "typescript": "^5.8.3",
-    "vite": "^7.2.2"
+    "vite": "^7.2.4"
   },
   "dependencies": {
     "@breadboard-ai/a2ui": "^0.1.0",
     "@breadboard-ai/data": "^0.1.0",
-    "@breadboard-ai/embedded-board-server": "0.2.1",
     "@breadboard-ai/loader": "^0.0.3",
     "@breadboard-ai/mcp": "^0.1.0",
     "@breadboard-ai/types": "0.9.0",
@@ -99,7 +98,7 @@
     "mime": "^4.1.0",
     "signal-polyfill": "^0.2.2",
     "signal-utils": "^0.21.1",
-    "zod": "^3.23.8",
+    "zod": "^3.24.1",
     "zod-to-json-schema": "^3.24.6"
   }
 }

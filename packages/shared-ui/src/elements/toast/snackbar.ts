@@ -7,10 +7,8 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { SnackbarMessage, SnackbarUUID, SnackType } from "../../types/types";
 import { repeat } from "lit/directives/repeat.js";
-import { icons } from "../../styles/icons";
 import { SnackbarActionEvent } from "../../events/events";
-import { baseColors } from "../../styles/host/base-colors";
-import { type } from "../../styles/host/type";
+import * as Styles from "../../styles/styles.js";
 import { classMap } from "lit/directives/class-map.js";
 
 const DEFAULT_TIMEOUT = 8000;
@@ -30,9 +28,10 @@ export class Snackbar extends LitElement {
   #timeout = 0;
 
   static styles = [
-    icons,
-    baseColors,
-    type,
+    Styles.HostType.type,
+    Styles.HostIcons.icons,
+    Styles.HostColorsBase.baseColors,
+    Styles.HostColorScheme.match,
     css`
       :host {
         --text-color: var(--light-dark-n-100);
@@ -229,7 +228,7 @@ export class Snackbar extends LitElement {
             class=${classMap({
               "g-icon": true,
               round: true,
-              filled: true,
+              "filled-heavy": true,
               rotate,
             })}
             >${icon}</span
@@ -283,7 +282,7 @@ export class Snackbar extends LitElement {
           this.dispatchEvent(new SnackbarActionEvent("dismiss"));
         }}
       >
-        <span class="g-icon">close</span>
+        <span class="g-icon filled-heavy round">close</span>
       </button>`;
   }
 }

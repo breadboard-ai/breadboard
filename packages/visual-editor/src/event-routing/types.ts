@@ -11,6 +11,8 @@ import type * as BreadboardUI from "@breadboard-ai/shared-ui";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { type OAuthScope } from "@breadboard-ai/shared-ui/connection/oauth-scopes.js";
 import { BoardServer } from "@breadboard-ai/types";
+import { EmbedHandler } from "@breadboard-ai/shared-ui/embed/embed.js";
+import { UserSignInResponse } from "@breadboard-ai/shared-ui/types/types.js";
 
 type StateCustomEvent<K extends keyof BreadboardUI.Events.StateEventDetailMap> =
   BreadboardUI.Events.StateEvent<K>;
@@ -24,8 +26,9 @@ export interface EventRouteDeps<
   tab: Tab | null;
   uiState: BreadboardUI.State.UI;
   googleDriveClient: GoogleDriveClient | null;
-  askUserToSignInIfNeeded(scopes?: OAuthScope[]): Promise<boolean>;
+  askUserToSignInIfNeeded(scopes?: OAuthScope[]): Promise<UserSignInResponse>;
   boardServer: BoardServer;
+  embedHandler?: EmbedHandler;
 }
 
 export interface EventRoute<

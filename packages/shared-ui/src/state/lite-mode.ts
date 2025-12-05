@@ -11,10 +11,19 @@ import {
   LiteModeIntentExample,
   LiteModeState,
   RuntimeContext,
-  StepListState,
+  StepListStepState,
+  LiteModePlannerState,
 } from "./types";
-import { GraphDescriptor } from "@breadboard-ai/types";
+import {
+  ConsoleEntry,
+  GraphDescriptor,
+  LLMContent,
+  NodeRunStatus,
+  TextCapabilityPart,
+} from "@breadboard-ai/types";
 import { ReactiveProjectRun } from "./project-run";
+import { Template } from "@breadboard-ai/utils";
+import { FlowGenerator } from "../flow-gen/flow-generator";
 
 export { createLiteModeState };
 
@@ -25,7 +34,7 @@ function createLiteModeState(context: RuntimeContext) {
 const EXAMPLES: LiteModeIntentExample[] = [
   {
     intent:
-      "An app that reads current news and creates an alternative history fiction story based on these news",
+      "An app that takes a topic, then researches current news on the topic and creates an alternative history fiction story based on these news",
   },
   {
     intent:
@@ -43,22 +52,22 @@ const EXAMPLES: LiteModeIntentExample[] = [
 
 class ReactiveLiteModeState implements LiteModeState {
   @signal
+  accessor viewError: string = "";
+
+  @signal
   accessor status: FlowGenGenerationStatus = "initial";
 
   @signal
   accessor error: string | undefined;
 
   startGenerating(): void {
-    if (this.stepList) {
-      this.stepList.status = "planning";
-    }
     this.status = "generating";
   }
 
   finishGenerating(): void {
-    if (this.stepList) {
-      this.stepList.status = "ready";
-    }
+    // Consume intent.
+    this.#intent = undefined;
+    this.currentExampleIntent = "";
     this.status = "initial";
   }
 
@@ -69,20 +78,42 @@ class ReactiveLiteModeState implements LiteModeState {
   }
 
   @signal
+  get steps(): Map<string, StepListStepState> {
+    const run = this.context.project?.run as ReactiveProjectRun;
+    if (!run) return new Map();
+    return new Map(
+      Array.from(run.console.entries()).map(([id, entry]) => {
+        const status = getStatus(entry.status?.status, this.status);
+        const { icon, title, tags } = entry;
+        let prompt: string;
+        let label: string;
+        if (tags?.includes("input")) {
+          prompt = promptFromInput(entry);
+          label = labelFromInput(id, run.graph) || "Question from user";
+        } else {
+          prompt = promptFromIntent(id, run.graph) || "";
+          label = "Prompt";
+        }
+        return [
+          id,
+          {
+            icon,
+            title,
+            status,
+            prompt,
+            label,
+            tags,
+          } satisfies StepListStepState,
+        ];
+      })
+    );
+  }
+
+  @signal
   accessor #intent: string | undefined;
 
   setIntent(intent: string) {
     this.#intent = intent;
-  }
-
-  accessor #remixing = false;
-
-  @signal
-  get remixUrl() {
-    if (this.#remixing) return null;
-    this.#remixing = true;
-    const parsedUrl = this.context.router.parsedUrl;
-    return parsedUrl.page === "home" ? parsedUrl.remix || null : null;
   }
 
   get run(): ReactiveProjectRun | undefined {
@@ -101,12 +132,13 @@ class ReactiveLiteModeState implements LiteModeState {
   get viewType(): LiteModeType {
     let zeroState = false;
 
+    if (this.viewError) return "error";
+
     const { loadState } = this.context.ui;
     switch (loadState) {
       case "Home": {
         const parsedUrl = this.context.router.parsedUrl;
         if (parsedUrl.page === "home") {
-          if (parsedUrl.remix) return "loading";
           zeroState = !!parsedUrl.new;
           if (zeroState) return "home";
         }
@@ -127,12 +159,8 @@ class ReactiveLiteModeState implements LiteModeState {
         console.warn("Unknown UI load state", loadState);
         return "invalid";
     }
-    if (!this.stepList || this.empty) return "home";
+    if (this.empty) return "home";
     return "editor";
-  }
-
-  get stepList(): StepListState | undefined {
-    return this.context.project?.run.stepList;
   }
 
   get examples() {
@@ -142,5 +170,98 @@ class ReactiveLiteModeState implements LiteModeState {
   @signal
   accessor currentExampleIntent: string = "";
 
-  constructor(private readonly context: RuntimeContext) {}
+  planner: LiteModePlannerState;
+
+  constructor(private readonly context: RuntimeContext) {
+    this.planner = new PlannerState(this.context.flowGenerator);
+  }
+}
+
+function promptFromInput(entry: ConsoleEntry) {
+  return (
+    (
+      entry.output.values().next().value?.parts.at(0) as
+        | TextCapabilityPart
+        | undefined
+    )?.text || ""
+  );
+}
+
+function promptFromIntent(
+  id: string,
+  graph: GraphDescriptor | undefined
+): string | undefined {
+  const node = graph?.nodes.find((descriptor) => descriptor.id === id);
+  if (!node) return;
+
+  const intent = node.metadata?.step_intent;
+  if (intent) return intent;
+
+  const { configuration } = node;
+  if (!configuration) return;
+
+  // Fall back to the full prompt
+  const generatePrompt = textFromLLMContent(node.configuration?.config$prompt);
+  if (generatePrompt) return generatePrompt;
+
+  return textFromLLMContent(node.configuration?.text);
+}
+
+function textFromLLMContent(o: unknown): string | undefined {
+  const c = o as LLMContent | undefined;
+  const text = (c?.parts.at(0) as TextCapabilityPart | undefined)?.text;
+  if (!text) return;
+
+  return new Template(text).preview;
+}
+
+function labelFromInput(
+  id: string,
+  graph: GraphDescriptor | undefined
+): string | undefined {
+  const configuration = graph?.nodes.find(
+    (descriptor) => descriptor.id === id
+  )?.configuration;
+  if (!configuration) return;
+
+  return textFromLLMContent(configuration.description);
+}
+
+function getStatus(
+  stepStatus: NodeRunStatus | "failed" | undefined,
+  listStatus: FlowGenGenerationStatus
+): StepListStepState["status"] {
+  if (!stepStatus || listStatus === "generating") return "pending";
+  switch (stepStatus) {
+    case "working":
+    case "waiting":
+      return "working";
+    case "ready":
+    default:
+      return "ready";
+  }
+}
+
+class PlannerState implements LiteModePlannerState {
+  @signal
+  get status() {
+    return this.flowGenerator.currentStatus || "Creating your Opal";
+  }
+
+  @signal
+  get thought() {
+    return (
+      trimWithEllipsis(this.flowGenerator.currentThought, 10) || "Planning ..."
+    );
+  }
+
+  constructor(private readonly flowGenerator: FlowGenerator) {}
+}
+
+function trimWithEllipsis(text: string | null, length: number) {
+  // TODO: Implement this using word boundaries, not string length.
+  if (!text) return null;
+  const words = text.split(" ");
+  if (words.length <= length + 1) return text;
+  return words.slice(0, length).join(" ") + "...";
 }

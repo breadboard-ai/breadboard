@@ -220,6 +220,7 @@ class NodeDescriberManager implements DescribeResultCacheArgs {
         ),
         assets: assetsFromGraphDescriptor(handle.outerGraph()),
       }),
+      flags: this.mutable.store.flags,
       wires: {
         incoming: Object.fromEntries(
           (options?.incoming ?? []).map((edge) => [

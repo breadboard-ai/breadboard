@@ -76,7 +76,7 @@ async function invoke(
         );
         if (!ok(gettingCollector)) return gettingCollector;
         const { id, end } = gettingCollector;
-        const requests = await contextToRequests(caps, context, end!);
+        const requests = await contextToRequests(context, end!);
         const updating = await updateDoc(moduleArgs, id, { requests });
         if (!ok(updating)) return updating;
         return { context: contextFromId(id, DOC_MIME_TYPE) };

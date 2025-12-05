@@ -14,6 +14,8 @@ import {
 
 import { type AppPalette } from "@breadboard-ai/types";
 
+export { appColorMapping } from "./app-color-mappings.js";
+
 type ColorShade =
   | 0
   | 5
@@ -141,72 +143,6 @@ function toStyleName(key: string, tone: number, prefix = "") {
   return `--${prefix}${styleKey}-${tone}`;
 }
 
-export function createThemeMapping(
-  palettes: ColorPalettes
-): Record<string, string> {
-  const styles: Record<string, string> = {};
-  for (const palette of Object.values(palettes)) {
-    for (const [key, val] of Object.entries(palette)) {
-      const prop = toProp(key, "light-dark-");
-      const propTarget = toProp(key);
-      styles[prop] = `light-dark(${val}, ${mapColor(propTarget)})`;
-    }
-  }
-
-  return styles;
-}
-
-function toProp(key: string, prefix = "") {
-  if (key.startsWith("nv")) {
-    return `--${prefix}nv-${key.slice(2)}`;
-  }
-
-  return `--${prefix}${key[0]}-${key.slice(1)}`;
-}
-
-// TODO: Fill out a proper mapping.
-const mapping = new Map([
-  // Step colors.
-  ["#c2d5fb", "oklch(from #c2d5fb calc(l * 0.4) c h)"],
-  ["#e0eafe", "oklch(from #e0eafe calc(l * 0.4) c h)"],
-  ["#c4fcd4", "oklch(from #c4fcd4 calc(l * 0.4) c h)"],
-  ["#d9ffe4", "oklch(from #d9ffe4 calc(l * 0.4) c h)"],
-  ["#effe96", "oklch(from #effe96 calc(l * 0.4) c h)"],
-  ["#f2ffa3", "oklch(from #f2ffa3 calc(l * 0.4) c h)"],
-  ["#f6c9ad", "oklch(from #f6c9ad calc(l * 0.4) c h)"],
-  ["#fceee9", "oklch(from #fceee9 calc(l * 0.4) c h)"],
-
-  // Secondary.
-  ["--s-95", "--s-5"],
-  ["--s-90", "--s-10"],
-
-  // Primary.
-  ["--p-0", "--p-100"],
-  ["--p-10", "--p-90"],
-  ["--p-15", "--p-90"],
-  ["--p-20", "--p-80"],
-  ["--p-25", "--p-80"],
-  ["--p-30", "--p-70"],
-  ["--p-40", "--p-60"],
-  ["--p-50", "--p-50"],
-  ["--p-60", "--p-40"],
-  ["--p-70", "--p-30"],
-  ["--p-80", "--p-20"],
-  ["--p-90", "--p-10"],
-]);
-
-export function mapColor(col: string): string {
-  const remappedColor = mapping.get(col);
-  if (remappedColor) {
-    return remappedColor.startsWith("--")
-      ? `var(${remappedColor})`
-      : remappedColor;
-  }
-
-  const wrappedCol = col.startsWith("--") ? `var(${col})` : col;
-  return `rgb(from ${wrappedCol} calc(255 - r) calc(255 - g) calc(255 - b))`;
-}
-
 function isColorPalette(
   p: Record<string, Record<string | number, unknown>>
 ): p is ColorPalettes {
@@ -235,8 +171,27 @@ function convertColorPaletteToAppPalette(p: ColorPalettes): AppPalette {
 }
 
 const refPalette = paletteFactory();
+
+/**
+ * This will create a reference set of colors. For example, it will create
+ * --p-100: #{color}
+ * --p-90: #{color} etc.
+ *
+ * If will also create a light-dark variant of the color, which will use any
+ * mapping provided. For example, without a mapping you will get:
+ *
+ * --light-dark-p-100: var(--p-100);
+ *
+ * But if a mapping is provided, such as '--p-100' => '--p-0':
+ *
+ * --light-dark-p-100: light-dark(var(--p-100), var(--p-0));
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/light-dark
+ */
 export function createThemeStyles(
-  palette: AppPalette | ColorPalettes
+  palette: AppPalette | ColorPalettes,
+  mapping?: Map<string, string>,
+  prefix = ""
 ): Record<string, string> {
   if (isColorPalette(palette)) {
     palette = convertColorPaletteToAppPalette(palette);
@@ -244,14 +199,17 @@ export function createThemeStyles(
 
   const styles: Record<string, string> = {};
   const keys = Object.keys(refPalette) as Array<keyof typeof palette>;
-
   for (const k of keys) {
     for (const t of toneVals) {
-      const key = toStyleName(k, t);
-      const lightDarkKey = toStyleName(k, t, "light-dark-");
+      const key = toStyleName(k, t, prefix);
+      const lightDarkKey = toStyleName(k, t, `light-dark-${prefix}`);
       const col = palette[k][t] ?? "#000000";
       styles[key] = col;
-      styles[lightDarkKey] = `light-dark(${col}, ${mapColor(key)})`;
+
+      const remappedValue = mapping?.get(key);
+      styles[lightDarkKey] = remappedValue
+        ? `light-dark(var(${key}), var(${remappedValue}))`
+        : `var(${key})`;
     }
   }
 

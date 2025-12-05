@@ -6,16 +6,9 @@
 
 import { Loader } from "./loader.js";
 import { GraphLoader, BoardServer } from "@breadboard-ai/types";
-import { DefaultBoardServer } from "./default.js";
 
-export const createLoader = (
-  boardServers?: BoardServer[],
-  opts?: { disableDefaultProvider?: boolean }
-): GraphLoader => {
+export const createLoader = (boardServers?: BoardServer[]): GraphLoader => {
   const servers = [...(boardServers ?? [])];
-  if (!opts?.disableDefaultProvider) {
-    servers.push(new DefaultBoardServer());
-  }
   return new Loader(servers);
 };
 
@@ -28,8 +21,6 @@ export {
   urlComponentsFromString,
 } from "./loader.js";
 export { resolveGraphUrls } from "./resolve-graph-urls.js";
-
-export { loadWithFetch } from "./default.js";
 
 export {
   resolveBoardCapabilitiesInInputs,

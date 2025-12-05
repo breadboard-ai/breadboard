@@ -4,20 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  type DataStore,
-  createDefaultDataStore,
-  PersistentBackend,
-  EphemeralBlobStore,
-} from "@google-labs/breadboard";
+import { RuntimeFlags } from "@breadboard-ai/types";
+import { EphemeralBlobStore, PersistentBackend } from "@google-labs/breadboard";
 import { IDBBackend } from "./file-system/idb-backend.js";
 import { IdbFlagManager } from "./flags/idb-flag-manager.js";
-import { RuntimeFlags } from "@breadboard-ai/types";
-
-// TODO: Allow for other data stores.
-export function getDataStore(): DataStore {
-  return createDefaultDataStore();
-}
 
 export function createFileSystemBackend(
   store: EphemeralBlobStore

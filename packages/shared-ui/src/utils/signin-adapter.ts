@@ -22,7 +22,6 @@ export const signinAdapterContext = createContext<SigninAdapter | undefined>(
 
 export class SigninAdapter implements SignInInfo {
   readonly #opalShell: OpalShellHostProtocol;
-  readonly #handleSignInRequest?: (scopes?: OAuthScope[]) => Promise<boolean>;
   #state: SignInState;
   readonly fetchWithCreds: typeof globalThis.fetch;
 
@@ -30,11 +29,9 @@ export class SigninAdapter implements SignInInfo {
     opalShell: OpalShellHostProtocol,
     // TODO(aomarks) Hacky workaround for asynchrony, revisit the API for the
     // getters so that we don't need this.
-    initialState: SignInState,
-    handleSignInRequest?: () => Promise<boolean>
+    initialState: SignInState
   ) {
     this.#opalShell = opalShell;
-    this.#handleSignInRequest = handleSignInRequest;
     this.fetchWithCreds = opalShell.fetchWithCreds.bind(opalShell);
     this.#state = initialState;
   }

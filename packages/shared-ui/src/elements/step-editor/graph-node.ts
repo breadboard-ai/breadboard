@@ -53,7 +53,7 @@ import { type } from "../../styles/host/type.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import { NodeRunState } from "@breadboard-ai/types";
 
-const EDGE_STANDARD = palette.neutral.n80;
+const EDGE_STANDARD = palette.neutral.n70;
 const EDGE_SELECTED = custom.c100;
 const arrowSize = 4;
 
@@ -268,10 +268,10 @@ export class GraphNode extends Box implements DragConnectorReceiver {
       #container {
         width: 300px;
         border-radius: calc(var(--bb-grid-size-3) + 1px);
-        color: var(--light-dark-n-10);
+        color: light-dark(var(--n-10), var(--n-0));
         position: relative;
         cursor: pointer;
-        border: 1px solid var(--light-dark-n-90);
+        border: 1px solid light-dark(var(--n-90), var(--n-30));
 
         #edge {
           position: absolute;
@@ -338,6 +338,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           position: absolute;
           top: calc(100% + var(--bb-grid-size-10));
           width: 100%;
+          border: 1px solid light-dark(var(--n-90), var(--n-30));
           border-radius: var(--bb-grid-size-3);
           color: var(--light-dark-n-10);
           cursor: pointer;
@@ -373,6 +374,7 @@ export class GraphNode extends Box implements DragConnectorReceiver {
           line-height: 24px;
           position: relative;
           z-index: 3;
+          color: light-dark(var(--n-0), var(--n-10));
 
           & .node-title {
             flex: 1 auto;
@@ -443,12 +445,12 @@ export class GraphNode extends Box implements DragConnectorReceiver {
 
         & #content {
           position: relative;
-          background: var(--light-dark-n-100);
+          background: light-dark(var(--n-100), var(--n-20));
           padding: var(--bb-grid-size-3) var(--bb-grid-size-4)
             var(--bb-grid-size-4) var(--bb-grid-size-4);
           font: normal var(--bb-body-medium) / var(--bb-body-line-height-medium)
             var(--bb-font-family);
-          color: var(--light-dark-n-10);
+          color: light-dark(var(--n-10), var(--n-90));
           line-height: var(--bb-grid-size-6);
           border-radius: 0 0 var(--bb-grid-size-3) var(--bb-grid-size-3);
           pointer-events: none;

@@ -9,6 +9,7 @@ import {
   Directive,
   DirectiveParameters,
   Part,
+  PartInfo,
   directive,
 } from "lit/directive.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
@@ -35,6 +36,11 @@ class MarkdownDirective extends Directive {
   });
   #lastValue: string | null = null;
   #lastTagClassMap: string | null = null;
+
+  constructor(partInfo: PartInfo) {
+    super(partInfo);
+    this.#applyOpenInNewTab();
+  }
 
   update(_part: Part, [value, tagClassMap]: DirectiveParameters<this>) {
     if (
@@ -138,6 +144,44 @@ class MarkdownDirective extends Directive {
     this.#unapplyTagClassMap();
 
     return unsafeHTML(htmlString);
+  }
+
+  #applyOpenInNewTab() {
+    const defaultRender = this.#markdownIt.renderer.rules.link_open;
+
+    this.#markdownIt.renderer.rules.link_open = (
+      tokens,
+      idx,
+      options,
+      env,
+      self
+    ) => {
+      const token = tokens[idx];
+      const targetIndex = token.attrIndex("target");
+      if (targetIndex < 0) {
+        token.attrPush(["target", "_blank"]);
+      } else {
+        if (token.attrs) {
+          token.attrs[targetIndex][1] = "_blank";
+        }
+      }
+
+      const relIndex = token.attrIndex("rel");
+      if (relIndex < 0) {
+        token.attrPush(["rel", "noopener noreferrer"]);
+      } else {
+        if (token.attrs) {
+          const currentRel = token.attrs[relIndex][1];
+          if (!currentRel.includes("noopener")) {
+            token.attrs[relIndex][1] = `${currentRel} noopener noreferrer`;
+          }
+        }
+      }
+      return (
+        defaultRender?.(tokens, idx, options, env, self) ||
+        self.renderToken(tokens, idx, options)
+      );
+    };
   }
 }
 

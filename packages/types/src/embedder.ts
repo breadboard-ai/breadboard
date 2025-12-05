@@ -21,7 +21,9 @@ export type BreadboardMessage =
   | ResizeMessage
   | LoadBoardMessage
   | CreateBoardMessage
-  | RemixBoardMessage;
+  | RemixBoardMessage
+  | OpenInAdvancedEditorMessage
+  | TriggerShareMessage;
 
 /** Event for enabling debug. */
 export declare interface DebugMessage {
@@ -97,6 +99,22 @@ export declare interface RemixBoardMessage {
   boardId: string;
 }
 
+/**
+ * Event to notify the parent to open the standard view with the board
+ */
+export declare interface OpenInAdvancedEditorMessage {
+  type: "open_in_advanced_editor";
+  boardId: string;
+}
+
+/**
+ * Event to notify the parent to start the board sharing flow
+ */
+export declare interface TriggerShareMessage {
+  type: "trigger_share";
+  boardId: string;
+}
+
 /** Event when a new breadboard has been created. */
 export declare interface IterateOnPromptMessage {
   type: "iterate_on_prompt";
@@ -154,6 +172,7 @@ export declare interface HandshakeCompleteMessage {
   // The top-level origin from parent iframe.
   origin: string;
 }
+
 
 export type MessageType = EmbedderMessage["type"];
 

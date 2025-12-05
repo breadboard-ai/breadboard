@@ -9,18 +9,12 @@ import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("AppPreview");
 const GlobalStrings = StringsHelper.forSection("Global");
 
-import {
-  type HTMLTemplateResult,
-  LitElement,
-  type PropertyValues,
-  html,
-} from "lit";
+import { LitElement, type PropertyValues, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { isStoredData } from "@google-labs/breadboard";
 
 import { styles as appPreviewStyles } from "./app-controller.styles.js";
 import {
-  AppTemplate,
   AppTemplateOptions,
   AppTheme,
   FloatingInputFocusState,
@@ -36,6 +30,7 @@ import { loadPartAsDataUrl } from "../../utils/data-parts.js";
 import { projectRunContext } from "../../contexts/project-run.js";
 import { ProjectRun } from "../../state/types.js";
 import { SignalWatcher } from "@lit-labs/signals";
+import { Template } from "../../app-templates/basic/index.js";
 
 const primaryColor = "#ffffff";
 const secondaryColor = "#7a7a7a";
@@ -108,16 +103,17 @@ export class AppController extends SignalWatcher(LitElement) {
   accessor readOnly = false;
 
   @property()
-  accessor template = "basic";
-
-  @property()
-  accessor templates = [{ title: "Basic", value: "basic" }];
-
-  @property()
   accessor appTitle: string | null = null;
 
   @property()
   accessor appDescription: string | null = null;
+
+  /**
+   * If set this will override the light mode
+   * TODO: Remove this once light & dark themes are supported everywhere.
+   */
+  @property({ reflect: true, type: Boolean })
+  accessor systemThemeOverride = false;
 
   @property()
   accessor headerConfig = {
@@ -138,15 +134,10 @@ export class AppController extends SignalWatcher(LitElement) {
 
   static styles = appPreviewStyles;
 
-  #appTemplate: AppTemplate | null = null;
   #splashBlobUrls = new Map<number, string>();
 
   @state()
-  accessor #template: AppTemplate | HTMLTemplateResult = html`<div
-    class="loading"
-  >
-    <p class="loading-message">Loading...</p>
-  </div>`;
+  accessor #appTemplate = new Template();
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
@@ -197,6 +188,7 @@ export class AppController extends SignalWatcher(LitElement) {
     return this.#splashBlobUrls.get(themeHash);
   }
 
+  #retrievingSplashFor = "";
   #applyThemeToTemplate() {
     if (!this.#appTemplate) {
       return;
@@ -242,7 +234,7 @@ export class AppController extends SignalWatcher(LitElement) {
     options.theme = this.theme;
     options.additionalOptions = templateAdditionalOptionsChosen;
 
-    if (this.theme?.splashScreen) {
+    if (this.theme?.splashScreen && !options.isDefaultTheme) {
       options.splashImage = true;
 
       // Set the options here, then attempt to load the splash screen image.
@@ -255,11 +247,23 @@ export class AppController extends SignalWatcher(LitElement) {
         // Attempt to reuse the splash image.
         const splashImage = this.#getSplashUrl(themeHash);
         if (splashImage) {
+          const newSplash = `url(${splashImage})`;
+          if (this.#appTemplate.options.splashImage === newSplash) {
+            return;
+          }
+
           options.splashImage = `url(${splashImage})`;
           this.#appTemplate.options = { ...options };
           return;
         }
 
+        // Avoid double-requests.
+        const requestKey = `${themeHash}|${splashScreen.storedData.handle}`;
+        if (this.#retrievingSplashFor === requestKey) {
+          return;
+        }
+
+        this.#retrievingSplashFor = requestKey;
         // Stored Data splash screen.
         Promise.resolve()
           .then(() => loadPartAsDataUrl(this.googleDriveClient!, splashScreen))
@@ -285,7 +289,10 @@ export class AppController extends SignalWatcher(LitElement) {
             (reason: unknown) => {
               console.warn(`Unable to load theme image: ${reason}`);
             }
-          );
+          )
+          .finally(() => {
+            this.#retrievingSplashFor = "";
+          });
       } else {
         // Inline Data splash screen.
         const splashScreenData = splashScreen.inlineData;
@@ -298,37 +305,10 @@ export class AppController extends SignalWatcher(LitElement) {
     }
   }
 
-  #loadAppTemplate(theme: string) {
-    switch (theme) {
-      case "basic":
-        return import("../../app-templates/basic/index.js");
-
-      default:
-        throw new Error(`Unknown theme: ${theme}`);
-    }
-  }
-
   protected willUpdate(changedProperties: PropertyValues<this>): void {
-    if (
-      (changedProperties.has("template") ||
-        changedProperties.has("themeHash")) &&
-      this.template &&
-      this.themeHash
-    ) {
-      const templateToLoad = this.template;
-      const themeHashToLoad = this.themeHash;
-      this.#loadAppTemplate(templateToLoad).then(({ Template }) => {
-        if (
-          templateToLoad !== this.template ||
-          themeHashToLoad !== this.themeHash
-        ) {
-          // A newer template has arrived - bail.
-          return;
-        }
-        this.#appTemplate = new Template();
-        this.#applyThemeToTemplate();
-        this.#template = this.#appTemplate;
-      });
+    if (changedProperties.has("themeHash") && this.themeHash) {
+      this.#retrievingSplashFor = "";
+      this.#applyThemeToTemplate();
     }
 
     if (this.graph) {
@@ -359,7 +339,6 @@ export class AppController extends SignalWatcher(LitElement) {
             themes[theme]?.palette ?? generatePaletteFromColor("#363636");
           const themeColors = themes[theme]?.themeColors ?? {};
 
-          this.template = themes[theme].template ?? "basic";
           this.theme = {
             ...appPalette,
             primaryColor: themeColors?.["primaryColor"] ?? primaryColor,
@@ -385,8 +364,7 @@ export class AppController extends SignalWatcher(LitElement) {
     if (
       changedProperties.has("theme") ||
       changedProperties.has("appTitle") ||
-      changedProperties.has("appDescription") ||
-      changedProperties.has("template")
+      changedProperties.has("appDescription")
     ) {
       this.#applyThemeToTemplate();
     }
@@ -419,7 +397,7 @@ export class AppController extends SignalWatcher(LitElement) {
           id="content"
           class=${classMap({ active: this.#appTemplate !== null })}
         >
-          ${this.#template}
+          ${this.#appTemplate}
         </div>
       </div>
     `;

@@ -76,7 +76,10 @@ export class VEConsentRequestModal extends SignalWatcher(LitElement) {
       saveButtonLabel="Always Allow"
       @bbmodaldismissed=${this.#handleModalDismissed}
     >
-      ${renderInfo.description(this.consentRequest.request as any)}
+      ${renderInfo.description(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        this.consentRequest.request as any
+      )}
     </bb-modal>`;
   }
 }

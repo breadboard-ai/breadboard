@@ -55,15 +55,11 @@ export class Admin {
   get project(): Project | null {
     const tab = this.runtime.board.tabs.values().next().value;
     if (!tab) return null;
-    return this.runtime.state.getProjectState(tab.mainGraphId);
+    return this.runtime.state.project;
   }
 
   #gdriveBoardServer(): GoogleDriveBoardServer {
-    return this.runtime.board
-      .getBoardServers()
-      .find((s) =>
-        s.url.href.startsWith(GoogleDriveBoardServer.PROTOCOL)
-      ) as GoogleDriveBoardServer;
+    return this.runtime.board.googleDriveBoardServer;
   }
 
   get gdrive() {

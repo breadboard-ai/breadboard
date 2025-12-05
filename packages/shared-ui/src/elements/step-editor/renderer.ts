@@ -28,7 +28,6 @@ import {
   GraphIdentifier,
   InspectableGraph,
   InspectableNode,
-  Kit,
   MainGraphIdentifier,
   MutableGraphStore,
   NodeDescriptor,
@@ -102,9 +101,6 @@ export class Renderer extends LitElement {
 
   @property()
   accessor projectState: Project | null = null;
-
-  @property()
-  accessor boardServerKits: Kit[] | null = null;
 
   @property()
   accessor graph: InspectableGraph | null = null;
@@ -204,7 +200,7 @@ export class Renderer extends LitElement {
 
       :host {
         display: block;
-        background: var(--light-dark-n-95);
+        background: light-dark(var(--n-95), var(--n-10));
         overflow: hidden;
         transform: translate(0, 0);
         contain: strict;
@@ -232,7 +228,7 @@ export class Renderer extends LitElement {
         width: 100%;
         margin: 0;
         font: 500 10px / 1 var(--bb-font-family);
-        color: var(--light-dark-n-50, var(--light-dark-n-98));
+        color: light-dark(var(--s-30), var(--n-60));
         text-align: center;
         padding: var(--bb-grid-size);
         background: transparent;
@@ -1735,7 +1731,6 @@ export class Renderer extends LitElement {
       </div>`,
       html`<bb-editor-controls
         ${ref(this.#editorControls)}
-        .boardServerKits=${this.boardServerKits}
         .graph=${this.graph}
         .graphIsMine=${this.graphIsMine}
         .graphStore=${this.graphStore}

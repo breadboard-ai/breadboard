@@ -65,7 +65,7 @@ export class FlowgenInStepButton extends LitElement {
         padding: 0;
         margin: 0;
         border: none;
-        background: var(--ui-custom-o-10);
+        background: light-dark(var(--ui-custom-o-10), var(--ui-custom-o-30));
         border-radius: 50%;
         transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
 

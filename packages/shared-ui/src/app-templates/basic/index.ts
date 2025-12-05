@@ -23,7 +23,7 @@ import {
 } from "../../types/types";
 
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
-import { createThemeStyles } from "@breadboard-ai/theme";
+import * as Theme from "@breadboard-ai/theme";
 import {
   BoardServer,
   GraphDescriptor,
@@ -87,6 +87,10 @@ import {
   ConsentManager,
   CONSENT_RENDER_INFO,
 } from "../../utils/consent-manager.js";
+import {
+  GlobalConfig,
+  globalConfigContext,
+} from "../../contexts/global-config.js";
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 const toFunctionString = (fn: Function, bindings?: Record<string, unknown>) => {
@@ -195,6 +199,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     splashImage: false,
   };
 
+  @consume({ context: globalConfigContext })
+  @property({ attribute: false })
+  accessor globalConfig: GlobalConfig | undefined;
+
   @provide({ context: ParticlesUI.Context.themeContext })
   accessor theme: ParticlesUI.Types.UITheme = uiTheme;
 
@@ -225,7 +233,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   accessor isEmpty = false;
 
   @property()
-  accessor disclaimerContent = "";
+  accessor disclaimerContent: HTMLTemplateResult | string = "";
 
   @property({ reflect: true, type: Boolean })
   accessor hasRenderedSplash = false;
@@ -627,7 +635,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return;
     }
 
-    const boardServer = this.boardServer;
+    const boardServer = this.boardServer as GoogleDriveBoardServer;
     if (!boardServer) {
       console.error(`No board server`);
       unlockButton();
@@ -641,7 +649,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     }
 
     const outputs = await inlineAllContent(
-      boardServer,
+      boardServer.dataPartTransformer(),
       this.run.finalOutput,
       currentGraphUrl
     );
@@ -755,7 +763,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               {
                 title: "Share",
                 action: "callback",
-                callback: () => this.dispatchEvent(new ShareRequestedEvent()),
+                callback: () => {
+                  this.dispatchEvent(new ShareRequestedEvent());
+                },
               },
             ],
             true,
@@ -805,7 +815,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     const shareableGraphUrl = `drive:/${shareableGraphFileId}`;
     const finalOutputValues = await inlineAllContent(
-      boardServer,
+      boardServer.dataPartTransformer(),
       this.run.finalOutput,
       shareableGraphUrl
     );
@@ -886,14 +896,17 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return;
     }
 
-    this.resultsUrl = makeUrl({
-      page: "graph",
-      mode: "app",
-      flow: shareableGraphUrl,
-      resourceKey: await shareableGraphResourceKeyPromise,
-      results: resultsFileId,
-      shared: true,
-    });
+    this.resultsUrl = makeUrl(
+      {
+        page: "graph",
+        mode: "app",
+        flow: shareableGraphUrl,
+        resourceKey: await shareableGraphResourceKeyPromise,
+        results: resultsFileId,
+        shared: true,
+      },
+      this.globalConfig?.hostOrigin
+    );
 
     ActionTracker.shareResults("save_to_drive");
 
@@ -952,7 +965,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     if (this.options.theme) {
       styles = this.isEmpty
         ? emptyStyles
-        : createThemeStyles(this.options.theme);
+        : Theme.createThemeStyles(this.options.theme, Theme.appColorMapping);
     }
 
     // Special-case the default theme based on the mime types.
@@ -970,10 +983,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       styles["--splash-image"] = this.options.splashImage;
     }
 
-    if (
-      typeof this.options.splashImage === "boolean" &&
-      this.options.splashImage
-    ) {
+    if (!this.options.title) {
       if (!this.run || this.run.status === "stopped") {
         return html`<section
           class=${classMap(classes)}
@@ -986,10 +996,15 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       }
     }
 
+    const retrievingSplash =
+      typeof this.options.splashImage === "boolean" && this.options.splashImage;
     const splashScreen = html`
       <div
         id="splash"
-        class=${classMap({ default: this.options.isDefaultTheme ?? false })}
+        class=${classMap({
+          "retrieving-splash": retrievingSplash,
+          default: this.options.isDefaultTheme ?? false,
+        })}
         @animationend=${() => {
           this.hasRenderedSplash = true;
         }}

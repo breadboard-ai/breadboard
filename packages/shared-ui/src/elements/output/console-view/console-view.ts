@@ -7,14 +7,11 @@
 import { isParticle } from "@breadboard-ai/particles";
 import { ConsoleEntry } from "@breadboard-ai/types";
 import { SignalWatcher } from "@lit-labs/signals";
-import { consume } from "@lit/context";
 import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
-import { styleMap } from "lit/directives/style-map.js";
-import { uiStateContext } from "../../../contexts/ui-state.js";
-import { ProjectRun, UI } from "../../../state";
+import { ProjectRun } from "../../../state";
 import { baseColors } from "../../../styles/host/base-colors.js";
 import { type } from "../../../styles/host/type.js";
 import { icons } from "../../../styles/icons";
@@ -23,14 +20,8 @@ import { sharedStyles } from "./shared-styles.js";
 
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {
-  @consume({ context: uiStateContext })
-  accessor #uiState!: UI;
-
   @property()
   accessor run: ProjectRun | null = null;
-
-  @property()
-  accessor themeStyles: Record<string, string> | null = null;
 
   @property()
   accessor disclaimerContent = "";
@@ -49,6 +40,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         display: flex;
         flex-direction: column;
         height: 100%;
+        background: light-dark(var(--n-100), var(--n-15));
       }
 
       bb-header {
@@ -153,9 +145,9 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             border-radius: var(--bb-grid-size-3);
             list-style: none;
             padding: 0 var(--bb-grid-size-3);
-            background: var(--light-dark-n-98, var(--light-dark-n-98));
+            background: light-dark(var(--n-98), var(--n-20));
             font-size: 12px;
-            color: var(--light-dark-n-0, var(--light-dark-n-10));
+            color: light-dark(var(--n-0), var(--nv-98));
             cursor: pointer;
 
             > * {
@@ -185,7 +177,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
               }
 
               & .duration {
-                color: var(--light-dark-n-70);
+                color: light-dark(var(--n-70), var(--n-80));
                 margin-left: var(--bb-grid-size);
               }
             }
@@ -235,7 +227,8 @@ export class ConsoleView extends SignalWatcher(LitElement) {
         & > details {
           & > summary {
             height: var(--bb-grid-size-12);
-            background: var(--light-dark-n-98, var(--light-dark-n-90));
+            background: light-dark(var(--n-98), var(--n-10));
+            color: light-dark(var(--n-0), var(--n-100));
 
             & .title {
               flex: 0 1 auto;
@@ -243,6 +236,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
 
             &.chat_mirror {
               background: var(--ui-get-input);
+              color: var(--n-0);
             }
 
             &.responsive_layout,
@@ -251,6 +245,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             &.web,
             &.docs {
               background: var(--ui-display);
+              color: var(--n-0);
             }
 
             &.spark,
@@ -264,17 +259,16 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             &.generative,
             &.laps {
               background: var(--ui-generate);
+              color: var(--n-0);
             }
           }
         }
       }
 
       bb-floating-input {
-        --light-dark-s-90: var(--light-dark-n-100);
         --container-margin: 0;
         width: 100%;
         padding-bottom: var(--bb-grid-size-6);
-        background: var(--light-dark-n-100);
       }
 
       @keyframes rotate {
@@ -311,6 +305,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
       .schema=${input.schema}
       .focusWhenIn=${["canvas", "console"]}
       .disclaimerContent=${this.disclaimerContent}
+      .neutral=${true}
     ></bb-floating-input>`;
   }
 
@@ -564,10 +559,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
   }
 
   render() {
-    return html`<section
-      id="container"
-      style=${styleMap(this.themeStyles ?? {})}
-    >
+    return html`<section id="container">
       ${[
         html`<bb-app-header
           .neutral=${true}

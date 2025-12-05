@@ -4,44 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import type * as BreadboardUI from "@breadboard-ai/shared-ui";
-import {
-  createGraphStore,
-  createLoader,
-  err,
-  Kit,
-} from "@google-labs/breadboard";
+import { createGraphStore, createLoader, err } from "@google-labs/breadboard";
 import { Router } from "./router.js";
 import { Board } from "./board.js";
 import { Run } from "./run.js";
 import { Edit } from "./edit.js";
 import { Util } from "./util.js";
-import { RuntimeConfig, RuntimeConfigBoardServers, Tab } from "./types.js";
-
-import {
-  createDefaultLocalBoardServer,
-  getBoardServers,
-  migrateIDBGraphProviders,
-  migrateRemoteGraphProviders,
-  legacyGraphProviderExists,
-  BoardServerAwareDataStore,
-} from "@breadboard-ai/board-server-management";
+import { RuntimeConfig, Tab } from "./types.js";
 
 export * as Events from "./events.js";
 export * as Types from "./types.js";
 
 import { Select } from "./select.js";
 import { StateManager } from "./state.js";
-import { getDataStore } from "@breadboard-ai/data-store";
 import { Shell } from "./shell.js";
-import {
-  Outcome,
-  RunConfig,
-  RuntimeFlagManager,
-  ConsentManager,
-  BoardServer,
-  MutableGraphStore,
-  GraphLoader,
-} from "@breadboard-ai/types";
+import { Outcome, RunConfig, RuntimeFlagManager } from "@breadboard-ai/types";
 import {
   RuntimeHostStatusUpdateEvent,
   RuntimeSnackbarEvent,
@@ -56,6 +33,37 @@ import {
 } from "@breadboard-ai/data";
 import { Autonamer } from "./autonamer.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
+import { createGoogleDriveBoardServer } from "@breadboard-ai/shared-ui/utils/create-server.js";
+import { createA2Server, createA2ModuleFactory } from "@breadboard-ai/a2";
+import {
+  createFileSystemBackend,
+  createFlagManager,
+} from "@breadboard-ai/data-store";
+import {
+  addRunModule,
+  composeFileSystemBackends,
+  createEphemeralBlobStore,
+  createFileSystem,
+  PersistentBackend,
+} from "@google-labs/breadboard";
+import { RecentBoardStore } from "../data/recent-boards";
+import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { McpClientManager } from "@breadboard-ai/mcp";
+import {
+  ConsentAction,
+  ConsentUIType,
+  ConsentRequest,
+  FileSystem,
+} from "@breadboard-ai/types";
+import { ConsentManager } from "@breadboard-ai/shared-ui/utils/consent-manager.js";
+import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
+import { createActionTrackerBackend } from "@breadboard-ai/shared-ui/utils/action-tracker";
+import { envFromSettings } from "../utils/env-from-settings";
+import { builtInMcpClients } from "../mcp-clients";
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
+import { FlowGenerator } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
+import { AppCatalystApiClient } from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
+import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -63,86 +71,158 @@ export class Runtime extends EventTarget {
   public readonly board: Board;
   public readonly run: Run;
   public readonly edit: Edit;
-  public readonly kits: Kit[];
   public readonly select: Select;
-  public readonly autonamer: Autonamer;
   public readonly state: StateManager;
   public readonly flags: RuntimeFlagManager;
   public readonly util: typeof Util;
   public readonly fetchWithCreds: typeof globalThis.fetch;
   public readonly consentManager: ConsentManager;
+  public readonly signinAdapter: SigninAdapter;
+  public readonly googleDriveClient: GoogleDriveClient;
+  public readonly fileSystem: FileSystem;
+  public readonly mcpClientManager: McpClientManager;
+  public readonly recentBoardStore: RecentBoardStore;
+  public readonly googleDriveBoardServer: GoogleDriveBoardServer;
+  public readonly flowGenerator: FlowGenerator;
+  public readonly apiClient: AppCatalystApiClient;
+  public readonly emailPrefsManager: EmailPrefsManager;
 
-  constructor(config: {
-    shell: Shell;
-    router: Router;
-    board: Board;
-    kits: Kit[];
-    autonamer: Autonamer;
-    servers: BoardServer[];
-    config: RuntimeConfig;
-    graphStore: MutableGraphStore;
-    dataStore: BoardServerAwareDataStore;
-    loader: GraphLoader;
-  }) {
+  constructor(config: RuntimeConfig) {
     super();
 
-    const {
-      shell,
-      router,
-      board,
-      servers,
-      loader,
-      kits,
-      graphStore,
-      autonamer,
-      dataStore,
-      config: {
-        fetchWithCreds,
-        flags,
-        consentManager,
-        settings,
-        mcpClientManager,
-        sandbox,
+    this.flags = createFlagManager(config.globalConfig.flags);
+
+    this.signinAdapter = new SigninAdapter(
+      config.shellHost,
+      config.initialSignInState
+    );
+    this.fetchWithCreds = this.signinAdapter.fetchWithCreds;
+
+    const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
+      .href;
+    const apiBaseUrl =
+      this.signinAdapter.state === "signedout"
+        ? proxyApiBaseUrl
+        : config.globalConfig.GOOGLE_DRIVE_API_ENDPOINT ||
+          "https://www.googleapis.com";
+
+    this.googleDriveClient = new GoogleDriveClient({
+      apiBaseUrl,
+      proxyApiBaseUrl,
+      fetchWithCreds: this.fetchWithCreds,
+    });
+
+    this.fileSystem = createFileSystem({
+      env: [...envFromSettings(config.settings), ...(config.env || [])],
+      local: createFileSystemBackend(createEphemeralBlobStore()),
+      mnt: composeFileSystemBackends(
+        new Map<string, PersistentBackend>([
+          ["track", createActionTrackerBackend()],
+        ])
+      ),
+    });
+
+    let backendApiEndpoint = config.globalConfig.BACKEND_API_ENDPOINT;
+    if (!backendApiEndpoint) {
+      console.warn(`No BACKEND_API_ENDPOINT in ClientDeploymentConfiguration`);
+      backendApiEndpoint = window.location.href;
+    }
+
+    this.mcpClientManager = new McpClientManager(
+      builtInMcpClients,
+      {
+        fileSystem: this.fileSystem,
+        fetchWithCreds: this.fetchWithCreds,
       },
-    } = config;
-
-    const state = new StateManager(
-      this,
-      graphStore,
-      fetchWithCreds,
-      servers,
-      flags,
-      mcpClientManager
+      backendApiEndpoint
     );
 
-    const edit = new Edit(
-      state,
-      loader,
+    const sandbox = createA2ModuleFactory({
+      mcpClientManager: this.mcpClientManager,
+      fetchWithCreds: this.fetchWithCreds,
+    });
+
+    const kits = addRunModule(sandbox, []);
+
+    this.consentManager = new ConsentManager(
+      async (request: ConsentRequest, uiType: ConsentUIType) => {
+        return new Promise<ConsentAction>((resolve) => {
+          if (uiType === ConsentUIType.MODAL) {
+            const uiState = this.state.ui;
+            uiState.consentRequests.push({
+              request,
+              consentCallback: resolve,
+            });
+          } else {
+            const appState = this.state.project?.run.app;
+            if (appState) {
+              appState.consentRequests.push({
+                request,
+                consentCallback: resolve,
+              });
+            } else {
+              console.warn(
+                "In-app consent requested when no app state existed"
+              );
+              resolve(ConsentAction.DENY);
+            }
+          }
+        });
+      }
+    );
+
+    this.recentBoardStore = RecentBoardStore.instance();
+
+    this.googleDriveBoardServer = createGoogleDriveBoardServer(
+      this.signinAdapter,
+      this.googleDriveClient
+    );
+    const a2Server = createA2Server();
+
+    const loader = createLoader([this.googleDriveBoardServer, a2Server]);
+    const graphStoreArgs = {
       kits,
+      loader,
       sandbox,
-      graphStore,
-      autonamer,
-      flags,
-      settings
-    );
+      fileSystem: this.fileSystem,
+      flags: this.flags,
+    };
+    const graphStore = createGraphStore(graphStoreArgs);
 
-    this.shell = shell;
+    for (const [, item] of a2Server.userGraphs?.entries() || []) {
+      graphStore.addByURL(item.url, [], {});
+    }
+
+    const autonamer = new Autonamer(graphStoreArgs, this.fileSystem, sandbox);
+
+    const { appName, appSubName } = config;
+    this.shell = new Shell(appName, appSubName);
+
+    this.board = new Board(
+      loader,
+      graphStore,
+      this.googleDriveBoardServer,
+      this.recentBoardStore,
+      this.signinAdapter,
+      this.googleDriveClient
+    );
     this.util = Util;
     this.select = new Select();
-    this.router = router;
-    this.board = board;
-    this.state = state;
+    this.router = new Router();
+    this.edit = new Edit(graphStore, autonamer, this.flags);
+    this.apiClient = new AppCatalystApiClient(
+      this.fetchWithCreds,
+      backendApiEndpoint
+    );
+    this.emailPrefsManager = new EmailPrefsManager(this.apiClient);
+    this.flowGenerator = new FlowGenerator(this.apiClient, this.flags);
 
-    this.edit = edit;
-    this.run = new Run(graphStore, dataStore, state, flags, edit);
+    this.state = new StateManager(this, graphStore);
 
-    this.kits = kits;
-    this.autonamer = autonamer;
-    this.flags = flags;
-    this.fetchWithCreds = fetchWithCreds;
-    this.consentManager = consentManager;
+    this.run = new Run(graphStore, this.state, this.flags, kits);
 
     this.#setupPassthruHandlers();
+    void this.recentBoardStore.restore();
   }
 
   async prepareRun(tab: Tab, settings: SettingsStore): Promise<Outcome<void>> {
@@ -157,7 +237,7 @@ export class Runtime extends EventTarget {
       runner: graph,
       diagnostics: true,
       kits: [], // The kits are added by the runtime.
-      loader: this.board.getLoader(),
+      loader: this.board.loader,
       graphStore: this.edit.graphStore,
       fileSystem: this.edit.graphStore.fileSystem.createRunFileSystem({
         graphUrl: url,
@@ -170,7 +250,7 @@ export class Runtime extends EventTarget {
       inputs: inputsFromSettings(settings),
       fetchWithCreds: this.fetchWithCreds,
       getProjectRunState: () => {
-        return this.state.getProjectState(tab.mainGraphId)?.run;
+        return this.state.project?.run;
       },
       clientDeploymentConfiguration: CLIENT_DEPLOYMENT_CONFIG,
       flags: this.flags,
@@ -255,98 +335,4 @@ export class Runtime extends EventTarget {
       }
     );
   }
-}
-
-export async function create(config: RuntimeConfig): Promise<Runtime> {
-  const kits = config.kits;
-  let servers = await getBoardServers(
-    config.signinAdapter,
-    config.googleDriveClient
-  );
-
-  // First run - set everything up.
-  if (servers.length === 0) {
-    await createDefaultLocalBoardServer();
-
-    // Migrate any legacy data. We do this in order so that IDB doesn't get
-    // into a bad state with races and the like.
-    if (await legacyGraphProviderExists()) {
-      await migrateIDBGraphProviders(config.signinAdapter);
-      await migrateRemoteGraphProviders();
-    }
-
-    servers = await getBoardServers(
-      config.signinAdapter,
-      config.googleDriveClient
-    );
-  }
-
-  // Add board servers that are built into
-  servers.push(...config.builtInBoardServers);
-
-  const loader = createLoader(servers);
-  const graphStoreArgs = {
-    kits,
-    loader,
-    sandbox: config.sandbox,
-    fileSystem: config.fileSystem,
-  };
-  const graphStore = createGraphStore(graphStoreArgs);
-
-  servers.forEach((server) => {
-    server.ready().then(() => {
-      server.kits.forEach((kit) => {
-        graphStore.registerKit(kit, []);
-      });
-      if (server.preload) {
-        server.preload((item) => {
-          graphStore.addByURL(item.url, [], {});
-        });
-      }
-    });
-  });
-
-  const boardServers: RuntimeConfigBoardServers = {
-    servers,
-    loader,
-    graphStore,
-    builtInBoardServers: config.builtInBoardServers,
-  };
-
-  const dataStore = new BoardServerAwareDataStore(
-    getDataStore(),
-    servers,
-    undefined
-  );
-
-  const autonamer = new Autonamer(
-    graphStoreArgs,
-    config.fileSystem,
-    config.sandbox
-  );
-
-  const recentBoards = await config.recentBoardStore.restore();
-  const shell = new Shell(config.appName, config.appSubName);
-
-  return new Runtime({
-    router: new Router(),
-    board: new Board(
-      [],
-      loader,
-      kits,
-      boardServers,
-      config.recentBoardStore,
-      recentBoards,
-      config.signinAdapter,
-      config.googleDriveClient
-    ),
-    dataStore,
-    autonamer,
-    servers,
-    graphStore,
-    kits,
-    shell,
-    config,
-    loader,
-  });
 }

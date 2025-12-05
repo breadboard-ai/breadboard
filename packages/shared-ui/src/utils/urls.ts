@@ -26,6 +26,9 @@ const NEW = "new";
 const REMIX = "remix";
 const MODE_APP = "app" as const;
 const MODE_CANVAS = "canvas" as const;
+const COLOR_SCHEME = "color-scheme" as const;
+const COLOR_SCHEME_LIGHT = "light" as const;
+const COLOR_SCHEME_DARK = "dark" as const;
 const RESULTS = "results";
 const SHARED = "shared";
 const GEO_RESTRICTION = "geo-restriction";
@@ -48,24 +51,37 @@ export function makeUrl(
   if (init?.oauthRedirect) {
     url.searchParams.set(OAUTH_REDIRECT, init.oauthRedirect);
   }
+  let shared = false;
   if (page === "home") {
     url.pathname = "/";
     url.searchParams.set(MODE, init.mode ?? MODE_CANVAS);
     if (init.lite) {
       url.searchParams.set(LITE, init.lite === true ? "true" : "false");
     }
+    if (
+      init.colorScheme === COLOR_SCHEME_LIGHT ||
+      init.colorScheme === COLOR_SCHEME_DARK
+    ) {
+      url.searchParams.set(
+        COLOR_SCHEME,
+        init.colorScheme === COLOR_SCHEME_LIGHT
+          ? COLOR_SCHEME_LIGHT
+          : COLOR_SCHEME_DARK
+      );
+    }
     if (init.new) {
       url.searchParams.set(NEW, init.new === true ? "true" : "false");
-    }
-    if (init.remix) {
-      url.searchParams.set(REMIX, init.remix);
     }
   } else if (page === "graph") {
     url.searchParams.set(FLOW, init.flow);
     if (init.resourceKey) {
       url.searchParams.set(RESOURCE_KEY, init.resourceKey);
     }
+    if (init.remix) {
+      url.searchParams.set(REMIX, init.remix ? "true" : "false");
+    }
     if (init.shared) {
+      shared = true;
       url.searchParams.set(SHARED, "");
     }
     if (init.results) {
@@ -73,6 +89,17 @@ export function makeUrl(
     }
     if (init.lite) {
       url.searchParams.set(LITE, init.lite === true ? "true" : "false");
+    }
+    if (
+      init.colorScheme === COLOR_SCHEME_LIGHT ||
+      init.colorScheme === COLOR_SCHEME_DARK
+    ) {
+      url.searchParams.set(
+        COLOR_SCHEME,
+        init.colorScheme === COLOR_SCHEME_LIGHT
+          ? COLOR_SCHEME_LIGHT
+          : COLOR_SCHEME_DARK
+      );
     }
     url.searchParams.set(MODE, init.mode);
   } else if (page === "landing") {
@@ -85,6 +112,17 @@ export function makeUrl(
     }
     if (init.lite) {
       url.searchParams.set(LITE, init.lite === true ? "true" : "false");
+    }
+    if (
+      init.colorScheme === COLOR_SCHEME_LIGHT ||
+      init.colorScheme === COLOR_SCHEME_DARK
+    ) {
+      url.searchParams.set(
+        COLOR_SCHEME,
+        init.colorScheme === COLOR_SCHEME_LIGHT
+          ? COLOR_SCHEME_LIGHT
+          : COLOR_SCHEME_DARK
+      );
     }
     if (init.redirect.page === "graph") {
       // To encode the redirect URL, we just copy all the search params directly
@@ -109,9 +147,12 @@ export function makeUrl(
       url.searchParams.set(DEV_PREFIX + key, val);
     }
   }
+  // Here, the "shared" check is used to ensure that shared URLs are pointing
+  // to the host.
   if (
     CLIENT_DEPLOYMENT_CONFIG.SHELL_HOST_ORIGINS?.length &&
-    window !== window.parent
+    window !== window.parent &&
+    !shared
   ) {
     url.pathname = "/_app" + url.pathname;
   }
@@ -177,12 +218,14 @@ export function parseUrl(url: string | URL): MakeUrlInit {
         mode:
           url.searchParams.get("mode") === MODE_APP ? MODE_APP : MODE_CANVAS,
         lite: url.searchParams.get("lite") === "true",
+        colorScheme:
+          url.searchParams.get("color-scheme") === COLOR_SCHEME_LIGHT
+            ? COLOR_SCHEME_LIGHT
+            : url.searchParams.get("color-scheme") === COLOR_SCHEME_DARK
+              ? COLOR_SCHEME_DARK
+              : undefined,
         new: url.searchParams.get(NEW) === "true",
       };
-      const remix = url.searchParams.get(REMIX);
-      if (remix) {
-        home.remix = remix;
-      }
       if (dev) {
         home.dev = dev;
       }
@@ -195,9 +238,19 @@ export function parseUrl(url: string | URL): MakeUrlInit {
       page: "graph",
       mode: url.searchParams.get(MODE) === "app" ? "app" : "canvas",
       lite: url.searchParams.get(LITE) === "true",
+      colorScheme:
+        url.searchParams.get("color-scheme") === COLOR_SCHEME_LIGHT
+          ? COLOR_SCHEME_LIGHT
+          : url.searchParams.get("color-scheme") === COLOR_SCHEME_DARK
+            ? COLOR_SCHEME_DARK
+            : undefined,
       flow: flow,
       resourceKey: url.searchParams.get(RESOURCE_KEY) ?? undefined,
     };
+    const remix = url.searchParams.get(REMIX);
+    if (remix) {
+      graph.remix = remix === "true";
+    }
     const results = url.searchParams.get(RESULTS);
     if (results) {
       graph.results = results;

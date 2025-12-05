@@ -84,10 +84,8 @@ export class ShapeMorph extends LitElement {
   #idx = 6;
   #rotation = 0;
   #animator = new Animator({ id: this.id });
-  #visible = false;
   #intersectionObserver = new IntersectionObserver((entries) => {
     const [entry] = entries;
-    this.#visible = entry.isIntersecting;
 
     if (entry.isIntersecting) {
       this.#resumeAnimation();

@@ -63,14 +63,17 @@ export class NodeRunControl extends LitElement {
         background: none;
         border: none;
         pointer-events: auto;
-        opacity: 0.8;
+        opacity: 0.5;
         transition: opacity 0.2s cubic-bezier(0, 0, 0.3, 1);
         position: relative;
+        color: light-dark(var(--n-0), var(--n-0));
 
         &::before {
           content: "";
           border-radius: 50%;
-          background: oklch(from var(--light-dark-n-0) l c h / 0.05);
+          background: oklch(
+            from light-dark(var(--n-0), var(--n-0)) l c h / 0.05
+          );
           position: absolute;
           width: 100%;
           height: 100%;

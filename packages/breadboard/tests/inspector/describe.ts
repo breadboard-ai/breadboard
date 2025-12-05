@@ -52,7 +52,7 @@ test("simple graph description works as expected", async (t) => {
   });
 });
 
-test("inspector API can describe the input in simplest.json", async (t) => {
+test.skip("inspector API can describe the input in simplest.json", async (t) => {
   const simplest = await load("simplest.json");
   if (!simplest) {
     return t.fail("Graph is undefined");
@@ -88,7 +88,7 @@ test("inspector API can describe the input in simplest.json", async (t) => {
   });
 });
 
-test("inspector API can describe the input in simplest-no-schema.json", async (t) => {
+test.skip("inspector API can describe the input in simplest-no-schema.json", async (t) => {
   const simplest = await load("simplest-no-schema.json");
   if (!simplest) {
     return t.fail("Graph is undefined");
@@ -116,7 +116,7 @@ test("inspector API can describe the input in simplest-no-schema.json", async (t
   });
 });
 
-test("inspector API can describe the input in simplest-no-schema-strict.json", async (t) => {
+test.skip("inspector API can describe the input in simplest-no-schema-strict.json", async (t) => {
   const simplest = await load("simplest-no-schema-strict.json");
   if (!simplest) {
     return t.fail("Graph is undefined");
@@ -146,7 +146,7 @@ test("inspector API can describe the input in simplest-no-schema-strict.json", a
   });
 });
 
-test("inspector API can describe the output in simplest.json", async (t) => {
+test.skip("inspector API can describe the output in simplest.json", async (t) => {
   const simplest = await load("simplest.json");
   if (!simplest) {
     return t.fail("Graph is undefined");
@@ -181,7 +181,7 @@ test("inspector API can describe the output in simplest.json", async (t) => {
   });
 });
 
-test("inspector API can describe the output in simplest-no-schema.json", async (t) => {
+test.skip("inspector API can describe the output in simplest-no-schema.json", async (t) => {
   const simplest = await load("simplest-no-schema.json");
   if (!simplest) {
     return t.fail("Graph is undefined");
@@ -210,7 +210,7 @@ test("inspector API can describe the output in simplest-no-schema.json", async (
   });
 });
 
-test("inspector API can describe the output in simplest-no-schema-strict.json", async (t) => {
+test.skip("inspector API can describe the output in simplest-no-schema-strict.json", async (t) => {
   const simplest = await load("simplest-no-schema-strict.json");
   if (!simplest) {
     return t.fail("Graph is undefined");

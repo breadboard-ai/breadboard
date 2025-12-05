@@ -15,7 +15,6 @@ import {
   ParameterMetadata,
 } from "@breadboard-ai/types";
 import {
-  BoardServer,
   EditableGraph,
   EditSpec,
   EditTransform,
@@ -60,6 +59,7 @@ import { FilteredIntegrationsImpl } from "./filtered-integrations";
 import { McpClientManager } from "@breadboard-ai/mcp";
 import { StepEditorImpl } from "./step-editor";
 import { ThemeState } from "./theme-state";
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 
 export { createProjectState, ReactiveProject };
 
@@ -83,7 +83,7 @@ function createProjectState(
   mainGraphId: MainGraphIdentifier,
   store: MutableGraphStore,
   fetchWithCreds: typeof globalThis.fetch,
-  boardServerFinder: (url: URL) => BoardServer | null,
+  boardServer: GoogleDriveBoardServer,
   mcpClientManager: McpClientManager,
   editable?: EditableGraph
 ): Project {
@@ -91,7 +91,7 @@ function createProjectState(
     mainGraphId,
     store,
     fetchWithCreds,
-    boardServerFinder,
+    boardServer,
     mcpClientManager,
     editable
   );
@@ -99,13 +99,11 @@ function createProjectState(
 
 type ReactiveComponents = SignalMap<NodeIdentifier, Component>;
 
-type BoardServerFinder = (url: URL) => BoardServer | null;
-
 class ReactiveProject implements ProjectInternal {
   #mainGraphId: MainGraphIdentifier;
   #store: MutableGraphStore;
   #fetchWithCreds: typeof globalThis.fetch;
-  #boardServerFinder: BoardServerFinder;
+  #boardServer: GoogleDriveBoardServer;
   #editable?: EditableGraph;
   #connectorInstances: Set<string> = new Set();
   #connectorMap: SignalMap<string, ConnectorType>;
@@ -133,14 +131,14 @@ class ReactiveProject implements ProjectInternal {
     mainGraphId: MainGraphIdentifier,
     store: MutableGraphStore,
     fetchWithCreds: typeof globalThis.fetch,
-    boardServerFinder: BoardServerFinder,
+    boardServer: GoogleDriveBoardServer,
     clientManager: McpClientManager,
     editable?: EditableGraph
   ) {
     this.#mainGraphId = mainGraphId;
     this.#store = store;
     this.#fetchWithCreds = fetchWithCreds;
-    this.#boardServerFinder = boardServerFinder;
+    this.#boardServer = boardServer;
     this.#editable = editable;
     store.addEventListener("update", (event) => {
       if (event.mainGraphId === mainGraphId) {
@@ -249,28 +247,13 @@ class ReactiveProject implements ProjectInternal {
       return contents;
     }
 
-    const server = this.#boardServerFinder(new URL(urlString));
-    if (!server) {
-      console.warn(
-        `Failed to persist blob: no server found for url "${urlString}"`
-      );
-      return contents;
-    }
-
-    if (!server.dataPartTransformer) {
-      console.warn(
-        `Failed to persist blob: the server for url "${urlString} does not support dataPartTransformer`
-      );
-      return contents;
-    }
-
     const url = new URL(urlString);
 
     const transformed = await transformDataParts(
       url,
       contents,
       "persistent",
-      server.dataPartTransformer(url)
+      this.#boardServer.dataPartTransformer()
     );
     if (!ok(transformed)) {
       console.warn(`Failed to persist a blob: "${transformed.$error}"`);

@@ -81,8 +81,6 @@ class SlideBuilder {
     tokens.forEach((token) => this.#addToken(token));
   }
 
-  #hasContent() {}
-
   addInlineData(data: InlineDataCapabilityPart["inlineData"]) {
     let bodyText = this.#getBodyText();
     if (this.#slide.title || bodyText.text || bodyText.images?.length) {

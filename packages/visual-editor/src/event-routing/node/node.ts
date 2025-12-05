@@ -131,10 +131,10 @@ export const ChangeEdgeAttachmentPointRoute: EventRoute<"node.changeedgeattachme
 export const ActionRoute: EventRoute<"node.action"> = {
   event: "node.action",
 
-  async do({ runtime, tab, uiState, originalEvent }) {
+  async do({ runtime, uiState, originalEvent }) {
     uiState.blockingAction = true;
     try {
-      const project = runtime.state.getProjectState(tab?.mainGraphId);
+      const project = runtime.state.project;
       if (!project) {
         console.warn(`No project for "node.action"`);
         return false;

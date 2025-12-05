@@ -61,6 +61,7 @@ type Mode = {
 const PROMPT_PORT = "config$prompt";
 const ASK_USER_PORT = "config$ask-user";
 const LIST_PORT = "config$list";
+const LIMIT_MSG = "generation has a daily limit";
 
 const MODES: Mode[] = [
   {
@@ -180,7 +181,7 @@ const MODES: Mode[] = [
     icon: "photo_spark",
     promptPlaceholderText:
       "Type your image prompt here. Use @ to include other content.",
-    info: "Image generation has limited free quota",
+    info: `Image ${LIMIT_MSG}`,
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
   },
   {
@@ -206,7 +207,7 @@ const MODES: Mode[] = [
     modelName: "gemini-3-pro-image-preview",
     promptPlaceholderText:
       "Type your image prompt here. Use @ to include other content.",
-    info: "Image generation has limited free quota",
+    info: `Image ${LIMIT_MSG}`,
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
   },
   {
@@ -218,7 +219,7 @@ const MODES: Mode[] = [
     icon: "audio_magic_eraser",
     promptPlaceholderText:
       "Type the text to speak here. Use @ to include other content.",
-    info: "Audio generation has limited free quota",
+    info: `Audio ${LIMIT_MSG}`,
     portMap: new Map([[PROMPT_PORT, "text"]]),
   },
   {
@@ -230,7 +231,7 @@ const MODES: Mode[] = [
     icon: "videocam_auto",
     promptPlaceholderText:
       "Type your video prompt here. Use @ to include other content.",
-    info: "Video generation has limited free quota",
+    info: `Video ${LIMIT_MSG}`,
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
   },
   {
@@ -242,7 +243,7 @@ const MODES: Mode[] = [
     icon: "audio_magic_eraser",
     promptPlaceholderText:
       "Type your music prompt here. Use @ to include other content.",
-    info: "Music generation has limited free quota",
+    info: `Music ${LIMIT_MSG}`,
     portMap: new Map([[PROMPT_PORT, "text"]]),
   },
 ] as const;
@@ -303,11 +304,8 @@ async function invoke(
   moduleArgs: A2ModuleArgs
 ) {
   const { url: $board, type, modelName } = getMode(mode);
-  const flags = await readFlags(caps);
-  let generateForEach = false;
-  if (ok(flags)) {
-    generateForEach = flags.generateForEach && !!useForEach;
-  }
+  const generateForEach =
+    ((await readFlags(moduleArgs))?.generateForEach && !!useForEach) ?? false;
   // Model is treated as part of the Mode, but actually maps N:1
   // on actual underlying step type.
   if (modelName) {
@@ -329,7 +327,8 @@ async function invoke(
 
 async function describe(
   { inputs: { "generation-mode": mode, ...rest }, asType }: DescribeInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
 ) {
   const metadata = {
     title: "Generate",
@@ -351,10 +350,10 @@ async function describe(
     };
   }
 
-  const flags = await readFlags(caps);
+  const flags = await readFlags(moduleArgs);
   let generateForEachSchema: Schema["properties"] = {};
   const generateForEachBehavior: BehaviorSchema[] = [];
-  if (ok(flags) && flags.generateForEach) {
+  if (flags?.generateForEach) {
     generateForEachSchema = {
       "p-for-each": {
         type: "boolean",
@@ -382,7 +381,7 @@ async function describe(
     behavior.push(...(describing.inputSchema.behavior || []));
   }
 
-  const agentMode = ok(flags) && flags.agentMode;
+  const agentMode = flags?.agentMode;
   const filteredModes = MODES.filter(
     (mode) => agentMode || mode.id !== "agent"
   );

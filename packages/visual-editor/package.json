@@ -2,24 +2,14 @@
   "name": "@breadboard-ai/visual-editor",
   "version": "1.30.0",
   "description": "The Visual Editor for Breadboard",
-  "main": "./build/index.js",
+  "main": "./dist/src/index.js",
   "exports": {
     ".": {
-      "types": "./build/src/index.d.ts",
-      "default": "./build/src/index.js"
-    },
-    "./config.js": {
-      "types": "./build/src/config.d.ts",
-      "default": "./build/src/config.js"
-    },
-    "./public": "./public",
-    "./index.html": "./index.html",
-    "./preview.html": "./preview.html",
-    "./vite": "./build/src/configure-assets.js",
-    "./build-info": "./build/src/build-info.js",
-    "./bootstrap": "./build/src/bootstrap.js"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
   },
-  "types": "build/index.d.ts",
+  "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
@@ -44,6 +34,7 @@
         "src/**/*.ts",
         "tests/**/*.ts",
         "tsconfig.json",
+        "vite.config.ts",
         "../../core/tsconfig/base.json",
         "package.json",
         "langs"
@@ -59,8 +50,8 @@
       ],
       "files": [],
       "output": [
-        "build/",
-        "!build/**/*.min.js{,.map}"
+        "dist/",
+        "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
     },
@@ -89,7 +80,10 @@
         "public/",
         "index.html",
         "icons/",
-        "oauth"
+        "oauth",
+        "landing/",
+        "langs/",
+        "shell"
       ]
     }
   },
@@ -99,10 +93,9 @@
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
-    "build/",
+    "dist/",
     "public",
-    "index.html",
-    "preview.html"
+    "index.html"
   ],
   "ava": {
     "timeout": "30s",
@@ -127,17 +120,15 @@
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.2",
     "@types/node": "^22.0.0",
-    "dotenv": "^16.4.7",
-    "tsx": "^4.20.3",
+    "dotenv": "^17.2.3",
+    "tsx": "^4.20.6",
     "typescript": "^5.8.3",
-    "vite": "^7.2.2"
+    "vite": "^7.2.4"
   },
   "dependencies": {
-    "@breadboard-ai/board-server-management": "1.21.2",
     "@breadboard-ai/data": "^0.1.0",
     "@breadboard-ai/data-store": "0.5.0",
     "@breadboard-ai/google-drive-kit": "0.8.0",
-    "@breadboard-ai/idb-board-server": "1.19.6",
     "@breadboard-ai/mcp": "^0.1.0",
     "@breadboard-ai/runtime": "0.2.0",
     "@breadboard-ai/shared-ui": "1.27.0",

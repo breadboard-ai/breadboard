@@ -23,28 +23,30 @@ import { connectToOpalShellHost } from "@breadboard-ai/shared-ui/utils/opal-shel
 
 export { bootstrap };
 
-async function getUrlFromBoardServiceFlag(
-  boardService: string | undefined
-): Promise<URL | undefined> {
-  if (!boardService) return undefined;
+function setColorScheme(colorScheme?: "light" | "dark") {
+  const scheme = document.createElement("style");
+  if (colorScheme) {
+    scheme.textContent = `:root { --color-scheme: ${colorScheme}; }`;
+  } else {
+    const defaultScheme = window.matchMedia("(prefers-color-scheme: dark)");
+    const setScheme = (query: MediaQueryList) => {
+      const chosenScheme: "light" | "dark" = query.matches ? "dark" : "light";
+      scheme.textContent = `:root { --color-scheme: ${chosenScheme}; }`;
+    };
+    setScheme(defaultScheme);
 
-  const { GoogleDriveBoardServer } = await import(
-    "@breadboard-ai/google-drive-kit"
-  );
-
-  if (boardService.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
-    // Just say GDrive here, it will be appended with the folder ID once it's fetched in
-    // packages/visual-editor/src/index.ts
-    return new URL(boardService);
-  } else if (boardService.startsWith("/")) {
-    // Convert relative URLs.
-    return new URL(boardService, window.location.href);
+    // Watch for changes.
+    defaultScheme.addEventListener("change", () => {
+      setScheme(defaultScheme);
+    });
   }
-  // Fallback.
-  return new URL(boardService);
+  document.head.appendChild(scheme);
 }
 
 async function bootstrap(bootstrapArgs: BootstrapArguments) {
+  const { shellHost, embedHandler, hostOrigin } =
+    await connectToOpalShellHost();
+
   const globalConfig: GlobalConfig = {
     environmentName: CLIENT_DEPLOYMENT_CONFIG.ENVIRONMENT_NAME,
     googleDrive: {
@@ -56,6 +58,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       gitCommitHash: GIT_HASH,
     },
     ...bootstrapArgs.deploymentConfiguration,
+    hostOrigin,
   };
 
   const { SettingsStore } = await import(
@@ -63,7 +66,6 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   );
   const settings = await SettingsStore.restoredInstance();
 
-  const { shellHost, embedHandler } = await connectToOpalShellHost();
   const signinAdapter = new SigninAdapter(
     shellHost,
     await shellHost.getSignInState()
@@ -73,8 +75,9 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
 
   const scopeValidation = await signinAdapter.validateScopes();
+  const guestConfiguration = await shellHost.getConfiguration();
   const parsedUrl = parseUrl(window.location.href);
-  const { lite, page } = parsedUrl;
+  const { lite, page, colorScheme } = parsedUrl;
   if (
     (signinAdapter.state === "signedin" && scopeValidation.ok) ||
     (signinAdapter.state === "signedout" &&
@@ -108,20 +111,16 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
 
     const mainArgs: MainArguments = {
       settings,
-      boardServerUrl: await getUrlFromBoardServiceFlag(
-        BOARD_SERVICE || bootstrapArgs.defaultBoardService
-      ),
       enableTos: ENABLE_TOS,
       tosHtml: TOS_HTML,
-      kits: bootstrapArgs.kits,
-      graphStorePreloader: bootstrapArgs.graphStorePreloader,
-      moduleInvocationFilter: bootstrapArgs.moduleInvocationFilter,
       env: bootstrapArgs.env,
       embedHandler,
       globalConfig,
+      guestConfiguration,
       shellHost,
       initialSignInState: await shellHost.getSignInState(),
       parsedUrl,
+      hostOrigin,
     };
     if (mainArgs.globalConfig.googleDrive.publishPermissions.length === 0) {
       console.warn(
@@ -130,8 +129,9 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       );
     }
 
+    setColorScheme(colorScheme);
     if (lite) {
-      if (page === "home" && !parsedUrl.new && !parsedUrl.remix) {
+      if (page === "home" && !parsedUrl.new) {
         const { LiteHome } = await import("./index-lite-home.js");
         const liteHome = new LiteHome(mainArgs);
         document.body.appendChild(liteHome);

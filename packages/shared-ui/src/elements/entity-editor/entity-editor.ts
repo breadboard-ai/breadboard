@@ -146,7 +146,7 @@ export class EntityEditor
     css`
       :host {
         display: block;
-        background: var(--light-dark-n-100);
+        background: light-dark(var(--n-100), var(--n-15));
       }
 
       #invalid-item,
@@ -240,6 +240,11 @@ export class EntityEditor
         & h1 {
           --outer-border: var(--light-dark-n-80);
           background: var(--light-dark-n-90);
+          color: var(--n-0);
+        }
+
+        & input {
+          color: var(--n-0);
         }
 
         &.module {
@@ -263,7 +268,11 @@ export class EntityEditor
           }
         }
 
-        &.output {
+        &.responsive_layout,
+        &.drive_presentation,
+        &.web,
+        &.docs,
+        &.sheets {
           & h1 {
             --outer-border: oklch(from var(--ui-display) calc(l - 0.2) c h);
             background: var(--ui-display);
@@ -345,7 +354,7 @@ export class EntityEditor
             --text-editor-padding-bottom: var(--bb-grid-size-2);
             --text-editor-padding-left: var(--bb-grid-size-3);
             border-radius: var(--bb-grid-size-2);
-            border: 1px solid var(--light-dark-n-90);
+            border: 1px solid light-dark(var(--n-90), var(--n-70));
           }
 
           & .port {
@@ -358,6 +367,28 @@ export class EntityEditor
           align-items: center;
           font: 400 var(--bb-label-medium) / var(--bb-label-line-height-medium)
             var(--bb-font-family);
+
+          &:has(.info) {
+            display: grid;
+            grid-template-columns: 1fr 36px;
+          }
+
+          &.info {
+            height: var(--bb-grid-size-14);
+            background: light-dark(var(--n-95), var(--n-10));
+            border-top: 1px solid light-dark(var(--n-90), var(--n-10));
+            display: flex;
+            align-items: center;
+            padding: 0 var(--bb-grid-size-6);
+            margin-top: var(--bb-grid-size-3);
+            margin-left: calc(-1 * var(--bb-grid-size-6));
+            width: 100%;
+            grid-column: 1/3;
+
+            & .g-icon {
+              margin-right: var(--bb-grid-size-2);
+            }
+          }
 
           &.port {
             position: relative;
@@ -558,8 +589,17 @@ export class EntityEditor
               margin-right: var(--bb-grid-size-2);
 
               bb-item-select {
+                max-width: 100%;
                 --menu-width: 320px;
                 --selected-item-height: var(--bb-grid-size-9);
+                --selected-item-background-color: light-dark(
+                  var(--n-98),
+                  var(--n-30)
+                );
+                --selected-item-hover-color: light-dark(
+                  var(--n-95),
+                  var(--n-40)
+                );
               }
             }
           }
@@ -626,6 +666,10 @@ export class EntityEditor
             padding-bottom: var(--bb-grid-size-3);
             border-bottom: 1px solid var(--light-dark-n-90);
 
+            &:has(.info) {
+              padding-bottom: 0;
+            }
+
             &::after {
               content: "Prompt";
               font-family: var(--bb-font-family-flex);
@@ -638,21 +682,6 @@ export class EntityEditor
 
           &:not(.stretch):not(.info):has(+ :not(.stretch)) {
             margin-bottom: var(--bb-grid-size-2);
-          }
-
-          &.info {
-            height: var(--bb-grid-size-14);
-            background: var(--light-dark-n-95);
-            border-top: 1px solid var(--light-dark-n-90);
-            border-bottom: 1px solid var(--light-dark-n-90);
-            display: flex;
-            align-items: center;
-            padding: 0 var(--bb-grid-size-6);
-            margin-bottom: var(--bb-grid-size-3);
-
-            & .g-icon {
-              margin-right: var(--bb-grid-size-2);
-            }
           }
 
           &.stretch {
@@ -712,7 +741,7 @@ export class EntityEditor
                 width: 100%;
                 height: 100%;
                 border: none;
-                background: var(--light-dark-n-98);
+                background: light-dark(var(--n-98), var(--n-30));
                 transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
                 border-radius: 50%;
                 padding: 0;
@@ -1068,11 +1097,11 @@ export class EntityEditor
         return nothing;
       }
 
-      const metadata = node.type().currentMetadata();
+      const icon = node.currentDescribe().metadata?.icon;
       const classes: Record<string, boolean> = { node: true };
 
-      if (metadata.icon) {
-        classes[metadata.icon] = true;
+      if (icon) {
+        classes[icon] = true;
       }
 
       if (node.type().type().startsWith("#module")) {
@@ -1103,9 +1132,9 @@ export class EntityEditor
 
       return html`<div class=${classMap(classes)}>
         <h1 id="title">
-          ${metadata.icon
+          ${icon
             ? html`<span class="g-icon filled round"
-                >${iconSubstitute(metadata.icon)}</span
+                >${iconSubstitute(icon)}</span
               >`
             : nothing}
           <input
@@ -1371,6 +1400,22 @@ export class EntityEditor
 
       let controls: HTMLTemplateResult | symbol = nothing;
       if (isControllerBehavior(port.schema)) {
+        const extendedInfo = port.schema.enum?.find((item) => {
+          if (typeof item === "string") {
+            return false;
+          }
+
+          return item.id === port.value && item.info !== undefined;
+        });
+
+        const extendedInfoOutput =
+          extendedInfo && typeof extendedInfo !== "string"
+            ? html`<div class="info">
+                <span class="g-icon round filled">warning</span
+                >${extendedInfo.info}
+              </div>`
+            : nothing;
+
         controls = html`<div id="controls-container">
             <div id="controls">
               ${hasTextEditor
@@ -1399,6 +1444,7 @@ export class EntityEditor
             </div>
           </div>
 
+          ${extendedInfoOutput}
           ${this.graph
             ? html`<bb-flowgen-in-step-button
                 monochrome
@@ -1420,26 +1466,8 @@ export class EntityEditor
       }
 
       classes["read-only"] = this.readOnly;
-      const extendedInfo = port.schema.enum?.find((item) => {
-        if (typeof item === "string") {
-          return false;
-        }
 
-        return item.id === port.value && item.info !== undefined;
-      });
-
-      const extendedInfoOutput =
-        extendedInfo && typeof extendedInfo !== "string"
-          ? html`<div class="info">
-              <span class="g-icon round filled">warning</span
-              >${extendedInfo.info}
-            </div>`
-          : nothing;
-
-      return [
-        html`<div class=${classMap(classes)}>${value} ${controls}</div>`,
-        extendedInfoOutput,
-      ];
+      return [html`<div class=${classMap(classes)}>${value} ${controls}</div>`];
     };
 
     const basicPorts: PortLike[] = [];

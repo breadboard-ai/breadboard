@@ -505,16 +505,17 @@ function advancedSettings(renderType: RenderType): Record<string, Schema> {
 
 async function describe(
   { inputs: { text, "p-render-mode": renderMode } }: DescribeInputs,
-  caps: Capabilities
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
 ) {
-  const flags = await readFlags(caps);
-  const showConsistentUIMode = ok(flags) ? flags.consistentUI : false;
+  const flags = await readFlags(moduleArgs);
+  const showConsistentUIMode = flags?.consistentUI ?? false;
   const modes = showConsistentUIMode
     ? MODES
     : MODES.filter(({ id }) => id !== "consistent-ui");
 
   const template = new Template(caps, text);
-  const { renderType } = getMode(renderMode);
+  const { renderType, icon } = getMode(renderMode);
 
   return {
     inputSchema: {
@@ -557,7 +558,7 @@ async function describe(
     } satisfies Schema,
     title: "Output",
     metadata: {
-      icon: "output",
+      icon: icon,
       tags: ["quick-access", "core", "output"],
       order: 100,
     },

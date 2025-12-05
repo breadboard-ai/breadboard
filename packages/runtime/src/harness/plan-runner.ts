@@ -678,7 +678,6 @@ class InternalRunStateController {
 
     const {
       loader,
-      store,
       fileSystem,
       base,
       signal,
@@ -705,7 +704,6 @@ class InternalRunStateController {
       probe,
       kits,
       loader,
-      store,
       fileSystem,
       base,
       signal,

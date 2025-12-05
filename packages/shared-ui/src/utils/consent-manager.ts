@@ -5,7 +5,6 @@
  */
 
 import { openDB, DBSchema, IDBPDatabase } from "idb";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
 import {
   ConsentAction,
   ConsentRequest,
@@ -14,8 +13,6 @@ import {
   ConsentUIType,
 } from "@breadboard-ai/types";
 import { HTMLTemplateResult, html } from "lit";
-
-const Strings = BreadboardUI.Strings.forSection("Global");
 
 // Helper type to extract the specific ConsentRequest subtype based on the ConsentType
 type ConsentRequestOfType<T extends ConsentType> = Extract<

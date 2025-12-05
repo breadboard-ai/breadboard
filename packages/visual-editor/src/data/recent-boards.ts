@@ -29,10 +29,47 @@ export class RecentBoardStore {
     return this.#instance;
   }
 
+  readonly boards = new SignalArray<RecentBoard>();
+
   // Not instantiated directly.
   private constructor() {}
 
-  async store(boards: BreadboardUI.Types.RecentBoard[]) {
+  async add(board: RecentBoard) {
+    const index = this.boards.findIndex((b) => b.url === board.url);
+    if (index !== -1) {
+      const [existing] = this.boards.splice(index, 1);
+      if (board.title) {
+        existing.title = board.title;
+      }
+      this.boards.unshift(existing);
+    } else {
+      this.boards.unshift(board);
+    }
+
+    if (this.boards.length > 50) {
+      this.boards.length = 50;
+    }
+
+    await this.#store();
+  }
+
+  async remove(url: string) {
+    const index = this.boards.findIndex((b) => b.url === url);
+    if (index !== -1) {
+      this.boards.splice(index, 1);
+      await this.#store();
+    }
+  }
+
+  async setPin(url: string, pinned: boolean) {
+    const board = this.boards.find((b) => b.url === url);
+    if (board) {
+      board.pinned = pinned;
+      await this.#store();
+    }
+  }
+
+  async #store() {
     const recentBoardsDb = await idb.openDB<RecentBoardsDB>(
       RECENT_BOARDS_NAME,
       RECENT_BOARDS_VERSION
@@ -40,7 +77,7 @@ export class RecentBoardStore {
 
     // Flatten the SignalArray back down so that it can be stored in IDB.
     const storeBoards = [];
-    for (const board of boards) {
+    for (const board of this.boards) {
       storeBoards.push({
         title: board.title,
         url: board.url,
@@ -50,7 +87,7 @@ export class RecentBoardStore {
     recentBoardsDb.put("boards", storeBoards, "recent");
   }
 
-  async restore(): Promise<BreadboardUI.Types.RecentBoard[]> {
+  async restore(): Promise<void> {
     const recentBoardsDb = await idb.openDB<RecentBoardsDB>(
       RECENT_BOARDS_NAME,
       RECENT_BOARDS_VERSION,
@@ -63,13 +100,12 @@ export class RecentBoardStore {
     );
 
     const boards = await recentBoardsDb.get("boards", "recent");
-    const signalBoards = new SignalArray<RecentBoard>();
     if (!boards) {
-      return signalBoards;
+      return;
     }
 
     for (const board of boards) {
-      signalBoards.push(
+      this.boards.push(
         new SignalObject({
           url: board.url,
           title: board.title,
@@ -77,6 +113,5 @@ export class RecentBoardStore {
         })
       );
     }
-    return signalBoards;
   }
 }

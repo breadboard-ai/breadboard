@@ -10,7 +10,7 @@ import {
 } from "@breadboard-ai/types";
 import gemini, { type Candidate, type GeminiInputs } from "./gemini";
 import { ToolManager } from "./tool-manager";
-import { addUserTurn, err, ok } from "./utils";
+import { err, ok } from "./utils";
 import { A2ModuleArgs } from "../runnable-module-factory";
 
 export { GeminiPrompt };
@@ -74,31 +74,6 @@ class GeminiPrompt {
       return { toolManager: options };
     }
     return options;
-  }
-
-  #normalizeArgs(a: object, passContext?: boolean) {
-    if (!passContext) return a;
-    const args = a as Record<string, unknown>;
-    const context = [...this.inputs.body.contents];
-    const hasContext = "context" in args;
-    const contextArg = hasContext
-      ? {}
-      : {
-          context,
-        };
-    return {
-      ...contextArg,
-      ...Object.fromEntries(
-        Object.entries(args).map(([name, value]) => {
-          if (hasContext) {
-            value = addUserTurn(value as string, [
-              ...this.inputs.body.contents,
-            ]);
-          }
-          return [name, value];
-        })
-      ),
-    };
   }
 
   async invoke(): Promise<Outcome<GeminiPromptOutput>> {
