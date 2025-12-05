@@ -304,7 +304,7 @@ export class EntityEditor
         flex-direction: column;
         height: 100%;
         box-sizing: border-box;
-        overflow: auto;
+        overflow: hidden;
 
         > div {
           position: relative;
@@ -1277,7 +1277,7 @@ export class EntityEditor
     }
 
     if (heightDetails >= heightContainer) {
-      return [0.1, 0.9];
+      return [0.3, 0.7];
     }
 
     let percentage: number = Math.ceil(heightDetails / heightContainer * 100) / 100;
