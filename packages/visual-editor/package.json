@@ -160,6 +160,7 @@
     "idb": "^8.0.3",
     "lit": "^3.3.1",
     "markdown-it": "^14.1.0",
+    "marked": "^16.3.0",
     "pdfjs-dist": "^5.2.133",
     "signal-polyfill": "^0.2.2",
     "signal-utils": "^0.21.1",
