@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isParticle } from "@breadboard-ai/particles";
+import { isParticle } from "../../../../particles/index.js";
 import { ConsoleEntry } from "@breadboard-ai/types";
 import { SignalWatcher } from "@lit-labs/signals";
 import { css, html, LitElement, nothing, PropertyValues } from "lit";

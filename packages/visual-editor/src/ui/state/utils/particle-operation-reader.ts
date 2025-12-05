@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ParticleOperation } from "@breadboard-ai/particles";
+import { ParticleOperation } from "../../../particles/index.js";
 import { FileSystem, FileSystemPath } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import { toJson } from "../common";

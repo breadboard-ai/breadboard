@@ -20,7 +20,7 @@ import {
   GroupParticle,
   Particle,
   ParticleIdentifier,
-} from "@breadboard-ai/particles";
+} from "../../../../particles/index.js";
 import { SignalMap } from "signal-utils/map";
 import { partToDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 import {

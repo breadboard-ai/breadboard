@@ -8,7 +8,7 @@ import {
   GroupParticle,
   Particle,
   TextParticle,
-} from "@breadboard-ai/particles";
+} from "../../../../particles/index.js";
 import { html, SignalWatcher } from "@lit-labs/signals";
 import { LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";

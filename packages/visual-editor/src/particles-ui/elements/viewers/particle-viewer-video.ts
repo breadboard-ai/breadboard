@@ -10,7 +10,7 @@ import {
   FieldName,
   Orientation,
   ParticleData,
-} from "@breadboard-ai/particles";
+} from "../../../particles/index.js";
 import { classMap } from "lit/directives/class-map.js";
 import { consume } from "@lit/context";
 import { until } from "lit/directives/until.js";

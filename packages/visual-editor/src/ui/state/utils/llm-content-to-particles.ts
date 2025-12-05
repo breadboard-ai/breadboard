@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GroupParticle, Particle } from "@breadboard-ai/particles";
+import { GroupParticle, Particle } from "../../../particles/index.js";
 import { LLMContent } from "@breadboard-ai/types";
 import { err, ok, Outcome } from "@google-labs/breadboard";
 

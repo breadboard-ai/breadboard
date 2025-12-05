@@ -10,7 +10,7 @@ import {
   FieldName,
   Orientation,
   ParticleData,
-} from "@breadboard-ai/particles";
+} from "../../../particles/index.js";
 import { consume } from "@lit/context";
 import { themeContext } from "../../context/theme.js";
 import * as Styles from "../../styles/index.js";

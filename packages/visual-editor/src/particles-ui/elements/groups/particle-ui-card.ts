@@ -9,7 +9,7 @@ import { repeat } from "lit/directives/repeat.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import * as Styles from "../../styles/index.js";
-import { Orientation, Segment } from "@breadboard-ai/particles";
+import { Orientation, Segment } from "../../../particles/index.js";
 import { themeContext } from "../../context/theme.js";
 import { UITheme } from "../../types/types.js";
 

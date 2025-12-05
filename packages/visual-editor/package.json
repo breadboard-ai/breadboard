@@ -135,7 +135,6 @@
   "dependencies": {
     "@breadboard-ai/data": "^0.1.0",
     "@breadboard-ai/google-drive-kit": "0.8.0",
-    "@breadboard-ai/particles": "0.2.0",
     "@breadboard-ai/runtime": "0.2.0",
     "@breadboard-ai/types": "0.9.0",
     "@breadboard-ai/utils": "^0.1.0",
