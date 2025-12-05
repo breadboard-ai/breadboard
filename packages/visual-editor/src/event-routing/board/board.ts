@@ -416,6 +416,38 @@ export const ReplaceRoute: EventRoute<"board.replace"> = {
       );
     }
 
+    // If there is a theme applied it shouldn't be possible to revert this to
+    // the default theme with a board replacement, so we protect against that
+    // here.
+    //
+    // We instead check the current graph for a splash image, and the
+    // replacement as well. If the current graph has a splash image and the
+    // replacement does not, we copy the current theme across.
+    //
+    // TODO: Remove this when the Planner persists the existing theme.
+    const currentPresentation = tab?.graph.metadata?.visual?.presentation;
+    const currentTheme = currentPresentation?.theme;
+    const currentThemes = currentPresentation?.themes;
+    const currentThemeHasSplashScreen =
+      currentTheme &&
+      currentThemes &&
+      currentThemes[currentTheme] &&
+      currentThemes[currentTheme].splashScreen;
+
+    const replacementPresentation = replacement.metadata?.visual?.presentation;
+    const replacementTheme = replacementPresentation?.theme;
+    const replacementThemes = replacementPresentation?.themes;
+    const replacementThemeHasSplashScreen =
+      replacementTheme &&
+      replacementThemes &&
+      replacementThemes[replacementTheme] &&
+      replacementThemes[replacementTheme].splashScreen;
+
+    if (currentThemeHasSplashScreen && !replacementThemeHasSplashScreen) {
+      console.log("[board replacement] Persisting existing theme");
+      replacementThemes![replacementTheme!] = currentThemes![currentTheme!];
+    }
+
     await runtime.edit.replaceGraph(
       tab,
       replacement,

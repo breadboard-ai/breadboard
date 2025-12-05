@@ -297,7 +297,7 @@ export class StepListView extends SignalWatcher(LitElement) {
         <details
           ?open=${options.status === "generating"}
           class=${classMap({
-            animated: animated === true,
+            animated: options.animated === true,
           })}
           style=${styleMap({
             animationDelay,

@@ -151,12 +151,12 @@ export class PromptView extends SignalWatcher(LitElement) {
   render() {
     let content: HTMLTemplateResult | symbol;
     const { viewType, status } = this.state || {};
-    if (viewType === "loading" || status === "generating") {
+    if (this.prompt && this.prompt.trim() !== "") {
+      content = html`${this.prompt}`;
+    } else if (viewType === "loading" || status === "generating") {
       content = html`<div class="placeholder"></div>
         <div class="placeholder"></div>
         <div class="placeholder"></div>`;
-    } else if (this.prompt && this.prompt.trim() !== "") {
-      content = html`${this.prompt}`;
     } else {
       content = html`No prompt provided`;
     }
