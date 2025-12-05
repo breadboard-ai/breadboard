@@ -28,8 +28,8 @@ import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { OneShotFlowGenFailureResponse } from "./ui/flow-gen/flow-generator.js";
 import { flowGenWithTheme } from "./ui/flow-gen/flowgen-with-theme.js";
-import { EmbedHandler } from "@breadboard-ai/types/embedder.js";
 import { markdown } from "./ui/directives/markdown.js";
+import { type SharePanel } from "./ui/elements/elements.js";
 
 const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
 
@@ -322,14 +322,12 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   ];
 
   #advancedEditorLink: Ref<HTMLElement> = createRef();
-  readonly #embedHandler?: EmbedHandler;
+  #sharePanelRef: Ref<SharePanel> = createRef();
 
   constructor(args: MainArguments) {
     super(args);
 
-    const { parsedUrl, embedHandler } = args;
-
-    this.#embedHandler = embedHandler;
+    const { parsedUrl } = args;
 
     // Set the app to fullscreen if the parsed URL indicates that this was
     // opened from a share action.
@@ -543,22 +541,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
               >
                 <span class="g-icon">open_in_new</span>Open Advanced Editor
               </a>
-              <button
-                @click=${() => {
-                  if (!this.#embedHandler || !this.tab?.graph.url) {
-                    this.snackbar(
-                      html`Unable to share`,
-                      BreadboardUI.Types.SnackType.ERROR
-                    );
-                    return;
-                  }
-
-                  this.#embedHandler.sendToEmbedder({
-                    type: "trigger_share",
-                    boardId: this.tab.graph.url,
-                  });
-                }}
-              >
+              <button @click=${this.#onClickShareApp}>
                 <span class="g-icon">share</span>Share app
               </button>
             </div>
@@ -707,7 +690,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       >
         ${content}
       </section>
-      ${this.#renderShellUI()}`;
+      ${this.#renderShellUI()} ${this.#renderSharePanel()}`;
   }
 
   protected async invokeBoardReplaceRoute(
@@ -758,5 +741,19 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       lite.viewError = Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT");
     }
     return true;
+  }
+
+  #renderSharePanel() {
+    return html`
+      <bb-share-panel
+        .graph=${this.runtime.state.lite.graph}
+        ${ref(this.#sharePanelRef)}
+      >
+      </bb-share-panel>
+    `;
+  }
+
+  #onClickShareApp() {
+    this.#sharePanelRef.value?.open();
   }
 }
