@@ -8,7 +8,7 @@ import { isInlineData, isStoredData } from "@breadboard-ai/data";
 import {
   generatePaletteFromColor,
   generatePaletteFromImage,
-} from "@breadboard-ai/theme";
+} from "../../theme/index.js";
 import {
   EditableGraph,
   GraphMetadata,

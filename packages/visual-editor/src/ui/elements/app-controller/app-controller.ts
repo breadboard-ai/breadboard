@@ -25,7 +25,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { consume, provide } from "@lit/context";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { generatePaletteFromColor } from "@breadboard-ai/theme";
+import { generatePaletteFromColor } from "../../../theme/index.js";
 import { loadPartAsDataUrl } from "../../utils/data-parts.js";
 import { projectRunContext } from "../../contexts/project-run.js";
 import { ProjectRun } from "../../state/types.js";

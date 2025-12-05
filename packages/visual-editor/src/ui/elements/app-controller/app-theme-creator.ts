@@ -11,7 +11,7 @@ import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-
 import {
   generatePaletteFromColor,
   generatePaletteFromImage,
-} from "@breadboard-ai/theme";
+} from "../../../theme/index.js";
 import {
   GraphDescriptor,
   GraphTheme,

@@ -6,7 +6,7 @@
 
 import { css, CSSResultGroup, unsafeCSS } from "lit";
 import { ColorPalettes } from "../../types/types";
-import * as Theme from "@breadboard-ai/theme";
+import * as Theme from "../../../theme/index.js";
 
 export const palette: ColorPalettes = {
   neutral: {

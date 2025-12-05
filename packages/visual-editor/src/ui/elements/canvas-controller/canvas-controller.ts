@@ -75,7 +75,7 @@ import { isEmpty } from "../../utils/utils.js";
 import { uiStateContext } from "../../contexts/ui-state.js";
 import { Signal, SignalWatcher } from "@lit-labs/signals";
 import { projectStateContext } from "../../contexts/contexts.js";
-import * as Theme from "@breadboard-ai/theme";
+import * as Theme from "../../../theme/index.js";
 
 @customElement("bb-canvas-controller")
 export class CanvasController extends SignalWatcher(LitElement) {
