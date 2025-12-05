@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CallToolResultContent, McpClient } from "@breadboard-ai/mcp";
+import { CallToolResultContent, McpClient } from "../../mcp/index.js";
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 import { StreamableReporter } from "./output";
 import { A2ModuleArgs } from "../runnable-module-factory";

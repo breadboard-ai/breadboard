@@ -19,6 +19,6 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["vite/client", "@types/gtag.js", "node", "trusted-types"]
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "eval/**/*.ts"],
+  "include": ["src/**/*.ts", "tests/**/*.ts", "eval/**/*.ts", "vite.config.ts"],
   "extends": "@google-labs/tsconfig/base.json"
 }
