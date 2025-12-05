@@ -273,7 +273,6 @@ export const styles: CSSResultGroup = [
 
           &.default {
             flex: 1;
-            padding-top: 10%;
 
             &::before {
               flex: 1;
