@@ -32,10 +32,12 @@ async function initializeOpalShellGuest() {
     console.error(`Could not find #opal-app iframe`);
     return;
   }
+  const shellPrefix = CLIENT_DEPLOYMENT_CONFIG.SHELL_PREFIX;
   const hostUrl = new URL(window.location.href);
-  const pathname = CLIENT_DEPLOYMENT_CONFIG.SHELL_PREFIX
-    ? hostUrl.pathname.startsWith(`${CLIENT_DEPLOYMENT_CONFIG.SHELL_PREFIX}/`)
-      ? hostUrl.pathname.slice(CLIENT_DEPLOYMENT_CONFIG.SHELL_PREFIX.length)
+  const pathname = shellPrefix
+    ? hostUrl.pathname === shellPrefix ||
+      hostUrl.pathname.startsWith(`${shellPrefix}/`)
+      ? hostUrl.pathname.slice(shellPrefix.length)
       : hostUrl.pathname
     : hostUrl.pathname;
   const guestUrl = new URL(
