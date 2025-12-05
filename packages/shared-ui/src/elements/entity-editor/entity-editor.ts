@@ -292,76 +292,206 @@ export class EntityEditor
       }
 
       #content {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        width: 100%;
         height: 100%;
         overflow: auto;
         padding: var(--bb-grid-size-3) 0 0 0;
+      }
 
-        > details {
-          display: flex;
-          flex-direction: column;
-          border-top: 1px solid var(--light-dark-n-90);
-          color: var(--light-dark-n-10);
-          font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
-            var(--bb-font-family);
-          padding: var(--bb-grid-size-3) var(--bb-grid-size-6)
-            var(--bb-grid-size-3) var(--bb-grid-size-6);
+      #main-prompt {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        box-sizing: border-box;
+        overflow: auto;
 
-          & summary {
-            display: flex;
-            align-items: center;
-            list-style: none;
-            cursor: pointer;
-            user-select: none;
-            height: var(--bb-grid-size-5);
+        > div {
+          position: relative;
 
-            & .g-icon {
-              margin-right: var(--bb-grid-size-2);
+          &.port {
+            container-type: inline-size;
+          }
 
-              &::before {
-                content: "keyboard_arrow_down";
-              }
+          &.stretch:has(+ .port:not(.stretch)) {
+            margin-bottom: var(--bb-grid-size-3);
+            border-bottom: 1px solid var(--light-dark-n-90);
+          }
+
+          &:not(.stretch):not(.info):has(+ .stretch) {
+            margin-bottom: var(--bb-grid-size-14);
+            padding-bottom: var(--bb-grid-size-3);
+            border-bottom: 1px solid var(--light-dark-n-90);
+
+            &:has(.info) {
+              padding-bottom: 0;
+            }
+
+            &::after {
+              content: "Prompt";
+              font-family: var(--bb-font-family-flex);
+              font-size: 12px;
+              position: absolute;
+              left: var(--bb-grid-size-6);
+              bottom: calc(var(--bb-grid-size-9) * -1);
             }
           }
 
-          & summary::-webkit-details-marker {
-            display: none;
+          &:not(.stretch):not(.info):has(+ :not(.stretch)) {
+            margin-bottom: var(--bb-grid-size-2);
           }
 
-          &[open] {
-            summary {
-              margin-bottom: var(--bb-grid-size-3);
+          &.stretch {
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1 1 auto;
 
-              & .g-icon {
-                &::before {
-                  content: "keyboard_arrow_up";
+            &:not(:last-of-type) {
+              padding-bottom: var(--bb-grid-size-3);
+            }
+          }
+
+          &:not(.stretch) {
+            padding: 0 var(--bb-grid-size-6);
+            flex: 0 0 auto;
+
+            &:last-of-type {
+              padding-bottom: var(--bb-grid-size-3);
+            }
+          }
+
+          & bb-text-editor {
+            width: 100%;
+            height: 100%;
+            --text-editor-height: 100%;
+            --text-editor-padding-top: 0;
+            --text-editor-padding-right: var(--bb-grid-size-6);
+            --text-editor-padding-bottom: 0;
+            --text-editor-padding-left: var(--bb-grid-size-6);
+          }
+
+          &:has(bb-text-editor) {
+            &:not(:last-of-type) {
+              border-bottom: 1px solid var(--light-dark-n-90);
+            }
+          }
+
+          #controls-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            flex: 0 0 auto;
+
+            & #controls {
+              display: flex;
+              align-items: center;
+              gap: 2px;
+
+              width: var(--bb-grid-size-9);
+              height: var(--bb-grid-size-9);
+              border-radius: var(--bb-grid-size-16);
+
+              #tools {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                height: 100%;
+                border: none;
+                background: light-dark(var(--n-98), var(--n-30));
+                transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+                border-radius: 50%;
+                padding: 0;
+
+                &:not([disabled]) {
+                  cursor: pointer;
+
+                  &:hover,
+                  &:focus {
+                    background: var(--light-dark-n-95);
+                  }
                 }
               }
             }
           }
 
-          label {
-            display: block;
-            margin-bottom: var(--bb-grid-size);
+          bb-flowgen-in-step-button {
+            z-index: 1;
+            position: absolute;
+            bottom: calc(var(--bb-grid-size-11) * -1);
+            right: var(--bb-grid-size-6);
           }
+        }
+      }
 
-          bb-text-editor {
-            width: 100%;
-            height: 100%;
-            --text-editor-padding-top: var(--bb-grid-size-2);
-            --text-editor-padding-right: var(--bb-grid-size-3);
-            --text-editor-padding-bottom: var(--bb-grid-size-2);
-            --text-editor-padding-left: var(--bb-grid-size-3);
-            border-radius: var(--bb-grid-size-2);
-            border: 1px solid light-dark(var(--n-90), var(--n-70));
-          }
+      #advanced-settings {
+        height: 100%;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        border-top: 1px solid var(--light-dark-n-90);
+        color: var(--light-dark-n-10);
+        font: 400 var(--bb-body-small) / var(--bb-body-line-height-small)
+          var(--bb-font-family);
+        padding: var(--bb-grid-size-3) var(--bb-grid-size-6)
+          var(--bb-grid-size-3) var(--bb-grid-size-6);
+        box-sizing: border-box;
 
-          & .port {
-            margin-bottom: var(--bb-grid-size-2);
+        & summary {
+          display: flex;
+          align-items: center;
+          list-style: none;
+          cursor: pointer;
+          user-select: none;
+          height: var(--bb-grid-size-5);
+
+          & .g-icon {
+            margin-right: var(--bb-grid-size-2);
+
+            &::before {
+              content: "keyboard_arrow_down";
+            }
           }
         }
 
+        & summary::-webkit-details-marker {
+          display: none;
+        }
+
+        &[open] {
+          summary {
+            margin-bottom: var(--bb-grid-size-3);
+
+            & .g-icon {
+              &::before {
+                content: "keyboard_arrow_up";
+              }
+            }
+          }
+        }
+
+        label {
+          display: block;
+          margin-bottom: var(--bb-grid-size);
+        }
+
+        bb-text-editor {
+          width: 100%;
+          height: 100%;
+          --text-editor-padding-top: var(--bb-grid-size-2);
+          --text-editor-padding-right: var(--bb-grid-size-3);
+          --text-editor-padding-bottom: var(--bb-grid-size-2);
+          --text-editor-padding-left: var(--bb-grid-size-3);
+          border-radius: var(--bb-grid-size-2);
+          border: 1px solid light-dark(var(--n-90), var(--n-70));
+        }
+
+        & .port {
+          margin-bottom: var(--bb-grid-size-2);
+        }
+      }
+
+      #main-prompt, #advanced-settings {
         div {
           display: flex;
           align-items: center;
@@ -648,123 +778,6 @@ export class EntityEditor
             }
           }
         }
-
-        > div {
-          position: relative;
-
-          &.port {
-            container-type: inline-size;
-          }
-
-          &.stretch:has(+ .port:not(.stretch)) {
-            margin-bottom: var(--bb-grid-size-3);
-            border-bottom: 1px solid var(--light-dark-n-90);
-          }
-
-          &:not(.stretch):not(.info):has(+ .stretch) {
-            margin-bottom: var(--bb-grid-size-14);
-            padding-bottom: var(--bb-grid-size-3);
-            border-bottom: 1px solid var(--light-dark-n-90);
-
-            &:has(.info) {
-              padding-bottom: 0;
-            }
-
-            &::after {
-              content: "Prompt";
-              font-family: var(--bb-font-family-flex);
-              font-size: 12px;
-              position: absolute;
-              left: var(--bb-grid-size-6);
-              bottom: calc(var(--bb-grid-size-9) * -1);
-            }
-          }
-
-          &:not(.stretch):not(.info):has(+ :not(.stretch)) {
-            margin-bottom: var(--bb-grid-size-2);
-          }
-
-          &.stretch {
-            overflow-y: auto;
-            overflow-x: hidden;
-            flex: 1 1 auto;
-
-            &:not(:last-of-type) {
-              padding-bottom: var(--bb-grid-size-3);
-            }
-          }
-
-          &:not(.stretch) {
-            padding: 0 var(--bb-grid-size-6);
-            flex: 0 0 auto;
-
-            &:last-of-type {
-              padding-bottom: var(--bb-grid-size-3);
-            }
-          }
-
-          & bb-text-editor {
-            width: 100%;
-            height: 100%;
-            --text-editor-height: 100%;
-            --text-editor-padding-top: 0;
-            --text-editor-padding-right: var(--bb-grid-size-6);
-            --text-editor-padding-bottom: 0;
-            --text-editor-padding-left: var(--bb-grid-size-6);
-          }
-
-          &:has(bb-text-editor) {
-            &:not(:last-of-type) {
-              border-bottom: 1px solid var(--light-dark-n-90);
-            }
-          }
-
-          #controls-container {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            flex: 0 0 auto;
-
-            & #controls {
-              display: flex;
-              align-items: center;
-              gap: 2px;
-
-              width: var(--bb-grid-size-9);
-              height: var(--bb-grid-size-9);
-              border-radius: var(--bb-grid-size-16);
-
-              #tools {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 100%;
-                height: 100%;
-                border: none;
-                background: light-dark(var(--n-98), var(--n-30));
-                transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
-                border-radius: 50%;
-                padding: 0;
-
-                &:not([disabled]) {
-                  cursor: pointer;
-
-                  &:hover,
-                  &:focus {
-                    background: var(--light-dark-n-95);
-                  }
-                }
-              }
-            }
-          }
-
-          bb-flowgen-in-step-button {
-            z-index: 1;
-            position: absolute;
-            bottom: calc(var(--bb-grid-size-11) * -1);
-            right: var(--bb-grid-size-6);
-          }
-        }
       }
 
       bb-fast-access-menu {
@@ -800,6 +813,7 @@ export class EntityEditor
   #isUsingFastAccess = false;
   #onPointerDownBound = this.#onPointerDown.bind(this);
   #advancedOpen = false;
+  #split = [0.9, 0.1];
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -1249,6 +1263,43 @@ export class EntityEditor
     ></bb-text-editor>`;
   }
 
+  #calculateSplit(evt: Event): [number, number] {
+    const defaultSplit: [number, number] = [0.9, 0.1];
+    if (!(evt.target instanceof HTMLDetailsElement) || !evt.target.open) {
+      return defaultSplit;
+    }
+
+    const heightContainer = evt.target.parentElement?.scrollHeight || 0;
+    const heightDetails = evt.target.closest('#advanced-settings')?.scrollHeight || 0;
+
+    if (!heightContainer || !heightDetails) {
+      return defaultSplit;
+    }
+
+    if (heightDetails >= heightContainer) {
+      return [0.1, 0.9];
+    }
+
+    let percentage: number = Math.ceil(heightDetails / heightContainer * 100) / 100;
+
+    return [1 - percentage, percentage];
+  }
+
+  #toggleDetails(evt: Event) {
+    if (!(evt.target instanceof HTMLDetailsElement)) {
+      return;
+    }
+
+    const [a1, b1] = this.#split;
+    const [a2, b2] = this.#calculateSplit(evt);
+    if (a1 !== a2 || b1 !== b2) {
+      this.#split = [a2, b2];
+      this.requestUpdate();
+    }
+
+    this.#advancedOpen = evt.target.open;
+  }
+
   #renderPorts(
     graphId: GraphIdentifier,
     nodeId: NodeIdentifier,
@@ -1482,25 +1533,30 @@ export class EntityEditor
       basicPorts.push(port);
     }
 
-    return [
-      ...basicPorts.map(portRender),
-      advancedPorts.length > 0
-        ? html`<details
-            id="advanced-settings"
-            ?open=${this.#advancedOpen}
-            @toggle=${(evt: Event) => {
-              if (!(evt.target instanceof HTMLDetailsElement)) {
-                return;
-              }
-
-              this.#advancedOpen = evt.target.open;
-            }}
-          >
-            <summary><span class="g-icon"></span>Advanced settings</summary>
-            ${[...advancedPorts.map(portRender)]}
-          </details>`
-        : nothing,
-    ];
+    return html`
+      <bb-splitter
+        id="main-instructions"
+        direction=${"vertical"}
+        name="main-instructions"
+        .split=${this.#split}
+        minSegmentSizeVertical="45"
+      >
+        <div id="main-prompt" slot="slot-0">
+          ${basicPorts.map(portRender)}
+        </div>
+        ${advancedPorts.length > 0
+          ? html`<details
+              id="advanced-settings"
+              slot="slot-1"
+              ?open=${this.#advancedOpen}
+              @toggle=${this.#toggleDetails}
+            >
+              <summary><span class="g-icon"></span>Advanced settings</summary>
+              ${[...advancedPorts.map(portRender)]}
+            </details>`
+          : nothing}
+      </bb-splitter>
+    `;
   }
 
   #showFastAccess(bounds: DOMRect | undefined) {
