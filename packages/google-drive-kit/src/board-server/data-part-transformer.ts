@@ -5,16 +5,14 @@
  */
 
 import type {
+  DataPartTransformer,
   FileDataPart,
   InlineDataCapabilityPart,
+  Outcome,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
-import {
-  err,
-  type DataPartTransformer,
-  type Outcome,
-} from "@google-labs/breadboard";
 import type { DriveOperations } from "./operations.js";
+import { err } from "@breadboard-ai/utils";
 
 export { GoogleDriveDataPartTransformer };
 

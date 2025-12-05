@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor } from "@breadboard-ai/types";
-import { err, type Outcome } from "@google-labs/breadboard";
+import type { GraphDescriptor, Outcome } from "@breadboard-ai/types";
 import type { DriveOperations } from "./operations.js";
+import { err } from "@breadboard-ai/utils";
 
 export { SaveDebouncer };
 
