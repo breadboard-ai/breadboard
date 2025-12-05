@@ -10,6 +10,8 @@ import * as Styles from "../../styles/styles";
 import { classMap } from "lit/directives/class-map.js";
 import { LiteModeState, StepListStepState } from "../../state";
 import { repeat } from "lit/directives/repeat.js";
+import { styleMap } from "lit/directives/style-map.js";
+import { hash } from "@breadboard-ai/utils";
 
 @customElement("bb-step-list-view")
 export class StepListView extends SignalWatcher(LitElement) {
@@ -82,6 +84,10 @@ export class StepListView extends SignalWatcher(LitElement) {
 
           & > li {
             & > details {
+              &.animated {
+                animation: fadeIn 650ms ease-in-out 1 backwards;
+              }
+
               & > summary::-webkit-details-marker {
                 display: none;
               }
@@ -104,7 +110,6 @@ export class StepListView extends SignalWatcher(LitElement) {
                 cursor: pointer;
                 min-height: 48px;
 
-                &:has(> .marker-container > .pending),
                 &.loading {
                   --light: oklch(
                     from var(--sys-color--surface-container-high) l c h / 20%
@@ -241,6 +246,16 @@ export class StepListView extends SignalWatcher(LitElement) {
           rotate: 360deg;
         }
       }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
     `,
   ];
 
@@ -248,34 +263,50 @@ export class StepListView extends SignalWatcher(LitElement) {
     return html`<h1 class="w-400 sans-flex md-title-medium">Steps</h1>`;
   }
 
+  #lastStepListHash = 0;
   #renderList() {
     const renderStep = (
       markerClasses: Record<string, boolean>,
       step: StepListStepState,
-      status?: "generating" | "loading"
+      options: {
+        status?: "generating" | "loading";
+        animated?: boolean;
+        animationDelay?: number;
+      }
     ) => {
-      if (status === "loading") {
+      if (options.status === "loading") {
         return html`<details>
           <summary
             inert
-            class=${classMap({ loading: status === "loading" })}
+            class=${classMap({ loading: options.status === "loading" })}
           ></summary>
         </details>`;
       }
 
       const title =
-        status !== "generating"
+        options.status !== "generating"
           ? html`<h1 class="step-title w-400 md-body-small sans-flex">
               ${step.tags?.includes("input") ? "Question to user:" : "Prompt"}
             </h1>`
           : nothing;
 
+      const animationDelay = `${
+        options.animated ? (options.animationDelay ?? 0) : 0
+      }ms`;
       return html`
-        <details ?open=${status === "generating"}>
+        <details
+          ?open=${options.status === "generating"}
+          class=${classMap({
+            animated: animated === true,
+          })}
+          style=${styleMap({
+            animationDelay,
+          })}
+        >
           <summary>
             <span class="marker-container">
               <span class=${classMap(markerClasses)}></span>
-              ${status === "generating"
+              ${options.status === "generating"
                 ? html`<span class="generating g-icon filled-heavy round"
                     >pentagon</span
                   >`
@@ -322,7 +353,7 @@ export class StepListView extends SignalWatcher(LitElement) {
                   status: "loading",
                   title: "",
                 },
-                "loading"
+                { status: "loading" }
               )}
             </li>`;
           })}
@@ -343,7 +374,7 @@ export class StepListView extends SignalWatcher(LitElement) {
                 status: "pending",
                 title: this.state?.planner.status,
               },
-              "generating"
+              { status: "generating" }
             )}
           </li>
         </ul>`;
@@ -351,11 +382,13 @@ export class StepListView extends SignalWatcher(LitElement) {
       return nothing;
     }
 
+    const stepsHash = hash([...steps]);
+    const animated = this.#lastStepListHash !== stepsHash;
     return html`<ul id="list">
       ${repeat(
         steps,
         (entry) => entry[0],
-        ([, step]) => {
+        ([, step], idx) => {
           const markerClasses: Record<string, boolean> = {
             marker: true,
             "g-icon": true,
@@ -375,7 +408,10 @@ export class StepListView extends SignalWatcher(LitElement) {
             <li>
               ${step.status === "loading"
                 ? renderPlaceholder()
-                : renderStep(markerClasses, step)}
+                : renderStep(markerClasses, step, {
+                    animated,
+                    animationDelay: idx * 60,
+                  })}
             </li>
           `;
         }
