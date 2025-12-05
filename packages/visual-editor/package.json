@@ -50,7 +50,8 @@
       "dependencies": [
         "typescript-files-and-deps"
       ],
-      "files": []
+      "files": [],
+      "output": []
     },
     "build:tsc": {
       "command": "tsc -b --pretty",
@@ -60,7 +61,9 @@
       "dependencies": [
         "typescript-files-and-deps"
       ],
-      "files": []
+      "files": [
+        "dist/tsc/"
+      ]
     },
     "build:vite": {
       "command": "vite build",
