@@ -230,6 +230,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   accessor showGDrive = false;
 
   @property()
+  accessor isRefreshingAppTheme = false;
+
+  @property()
   accessor isEmpty = false;
 
   @property()
@@ -961,6 +964,11 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       }
     }
 
+    const retrievingSplash =
+      this.isRefreshingAppTheme ||
+      (typeof this.options.splashImage === "boolean" &&
+        this.options.splashImage);
+
     let styles: Record<string, string> = {};
     if (this.options.theme) {
       styles = this.isEmpty
@@ -971,7 +979,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     // Special-case the default theme based on the mime types.
     // TODO: Replace this with a more robust check.
     if (this.options.isDefaultTheme) {
-      styles["--splash-width"] = "50%";
+      if (!retrievingSplash) {
+        styles["--splash-width"] = "50%";
+      }
       styles["--splash-fill"] = "contain";
       styles["--start-border"] = "var(--secondary-color)";
       styles["--default-progress"] = "url(/images/progress-inverted.svg)";
@@ -996,14 +1006,12 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       }
     }
 
-    const retrievingSplash =
-      typeof this.options.splashImage === "boolean" && this.options.splashImage;
     const splashScreen = html`
       <div
         id="splash"
         class=${classMap({
           "retrieving-splash": retrievingSplash,
-          default: this.options.isDefaultTheme ?? false,
+          default: !retrievingSplash && (this.options.isDefaultTheme ?? false),
         })}
         @animationend=${() => {
           this.hasRenderedSplash = true;

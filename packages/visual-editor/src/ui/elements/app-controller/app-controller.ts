@@ -139,6 +139,22 @@ export class AppController extends SignalWatcher(LitElement) {
   @state()
   accessor #appTemplate = new Template();
 
+  @property()
+  set isRefreshingAppTheme(refreshing: boolean) {
+    if (!this.#appTemplate) {
+      return;
+    }
+
+    this.#appTemplate.isRefreshingAppTheme = refreshing;
+  }
+  get isRefreshingAppTheme() {
+    if (!this.#appTemplate) {
+      return false;
+    }
+
+    return this.#appTemplate.isRefreshingAppTheme;
+  }
+
   disconnectedCallback(): void {
     super.disconnectedCallback();
 

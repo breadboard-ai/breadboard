@@ -335,29 +335,40 @@ export class StepListView extends SignalWatcher(LitElement) {
       `;
     };
 
+    const renderPlaceholders = () => {
+      return html`<ul id="list">
+        ${repeat(new Array(4), () => {
+          return html`<li>
+            ${renderStep(
+              {
+                marker: true,
+                "g-icon": true,
+                "filled-heavy": true,
+              },
+              {
+                label: "",
+                prompt: "",
+                status: "loading",
+                title: "",
+              },
+              { status: "loading" }
+            )}
+          </li>`;
+        })}
+      </ul>`;
+    };
+
+    if (
+      this.state?.viewType === "editor" &&
+      this.state?.status === "generating"
+    ) {
+      return renderPlaceholders();
+    }
+
     const steps = this.state?.steps;
     if (!steps || steps.size === 0) {
       if (this.state?.viewType === "loading") {
-        return html`<ul id="list">
-          ${repeat(new Array(4), () => {
-            return html`<li>
-              ${renderStep(
-                {
-                  marker: true,
-                  "g-icon": true,
-                  "filled-heavy": true,
-                },
-                {
-                  label: "",
-                  prompt: "",
-                  status: "loading",
-                  title: "",
-                },
-                { status: "loading" }
-              )}
-            </li>`;
-          })}
-        </ul>`;
+        return renderPlaceholders();
       } else if (this.state?.status === "generating") {
         return html`<ul id="list">
           <li>

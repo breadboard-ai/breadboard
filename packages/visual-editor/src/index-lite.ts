@@ -525,6 +525,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         ? (this.tab?.graph.title ?? "Untitled app")
         : "...";
 
+    const isGenerating = this.runtime.state.lite.status === "generating";
     return html` <section
       id="app-view"
       slot=${this.showAppFullscreen ? nothing : "slot-1"}
@@ -582,6 +583,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           small: true,
         }}
         .systemThemeOverride=${true}
+        .isRefreshingAppTheme=${isGenerating}
       >
       </bb-app-controller>
       ${this.renderSnackbar()} ${this.#renderShellUI()}
