@@ -67,7 +67,7 @@ import {
 } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
 import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import * as ParticlesUI from "@breadboard-ai/particles-ui";
+import * as ParticlesUI from "../../../particles-ui";
 import { createRef, ref } from "lit/directives/ref.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { markdown } from "../../directives/markdown.js";
