@@ -21,13 +21,6 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["vite/client"]
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.js",
-    "scripts/eval.ts",
-    "eval/**/*.ts",
-    "bgl/**/*.bgl.json",
-    "src/environment.d.ts"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.js", "bgl/**/*.bgl.json", "src/environment.d.ts"],
   "extends": "@google-labs/tsconfig/base.json"
 }

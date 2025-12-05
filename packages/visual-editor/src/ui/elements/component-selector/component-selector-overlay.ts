@@ -20,7 +20,7 @@ import { KitNodeChosenEvent } from "../../events/events.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { cache } from "lit/directives/cache.js";
-import { isA2 } from "@breadboard-ai/a2";
+import { isA2 } from "../../../a2/index.js";
 
 const ACTIVE_KITS_KEY = "bb-component-selector-overlay-active-kits";
 const DATA_TYPE = "text/plain";

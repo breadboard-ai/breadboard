@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isA2 } from "@breadboard-ai/a2";
+import { isA2 } from "../../a2/index.js";
 import {
   AssetPath,
   GraphIdentifier,
