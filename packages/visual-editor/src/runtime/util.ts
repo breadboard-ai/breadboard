@@ -29,7 +29,7 @@ import { GraphTheme } from "@breadboard-ai/types";
 import {
   generatePaletteFromColor,
   generatePaletteFromImage,
-} from "@breadboard-ai/theme";
+} from "../theme/index.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { loadImage } from "../ui/utils/image";
 

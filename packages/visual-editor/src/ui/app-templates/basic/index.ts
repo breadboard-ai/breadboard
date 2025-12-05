@@ -23,7 +23,7 @@ import {
 } from "../../types/types";
 
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
-import * as Theme from "@breadboard-ai/theme";
+import * as Theme from "../../../theme/index.js";
 import {
   BoardServer,
   GraphDescriptor,
