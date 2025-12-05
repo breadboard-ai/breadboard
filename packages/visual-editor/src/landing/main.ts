@@ -226,13 +226,14 @@ async function init() {
 
     const handleSecondaryVideoIframeClick = () => {
       setTimeout(() => {
-        if (document.activeElement === secondaryVideo) {
-          if (secondaryVideoContainer) {
-            const secondaryVideoCover = secondaryVideoContainer.querySelector(".dimmed-cover");
-            secondaryVideoCover?.remove();
-          }
-          window.removeEventListener('blur', handleSecondaryVideoIframeClick);
+        if (document.activeElement !== secondaryVideo) {
+          return;
         }
+        if (secondaryVideoContainer) {
+          const secondaryVideoCover = secondaryVideoContainer.querySelector(".dimmed-cover");
+          secondaryVideoCover?.remove();
+        }
+        window.removeEventListener('blur', handleSecondaryVideoIframeClick);
       }, 0);
     }
 

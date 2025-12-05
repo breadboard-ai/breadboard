@@ -319,7 +319,7 @@
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
-  transition: opacity .25s ease-in-out, visibility .25s ease-in-out;
+  transition: opacity .25s ease-in-out, visibility .25s linear;
 }
 
 #video-container:hover .dimmed-cover {
