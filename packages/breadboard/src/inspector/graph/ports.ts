@@ -6,7 +6,6 @@
 
 import type {
   BehaviorSchema,
-  CanConnectAnalysis,
   InputValues,
   InspectableEdge,
   InspectableNode,
@@ -22,8 +21,6 @@ import type {
   Schema,
 } from "@breadboard-ai/types";
 import { PortStatus } from "@breadboard-ai/types";
-import { analyzeIsJsonSubSchema } from "@google-labs/breadboard-schema/subschema.js";
-import { JSONSchema4 } from "json-schema";
 import { DEFAULT_SCHEMA, EdgeType } from "./schemas.js";
 
 export { describerResultToPorts };
@@ -46,43 +43,6 @@ const computePortStatus = (
     return wiredContainsStar ? PortStatus.Indeterminate : PortStatus.Missing;
   }
   return PortStatus.Ready;
-};
-
-/**
- * A mapping from each Breadboard behavior to whether or not that behavior
- * matters for type-checking.
- */
-const BEHAVIOR_AFFECTS_TYPE_CHECKING: { [K in BehaviorSchema]: boolean } = {
-  deprecated: false,
-  transient: false,
-  config: false,
-  "google-drive-query": false,
-  "google-drive-file-id": false,
-
-  // TODO(aomarks) Not sure about many of these. Some affect the data type, some
-  // only affect formatting?
-  bubble: true,
-  board: true,
-  error: true,
-  "llm-content": true,
-  "json-schema": true,
-  "ports-spec": true,
-  "hint-text": false,
-  "hint-image": false,
-  "hint-audio": false,
-  "hint-code": false,
-  "hint-multimodal": false,
-  "hint-preview": false,
-  "hint-advanced": false,
-  "hint-chat-mode": false,
-  "hint-for-each-mode": false,
-  "hint-controller": false,
-  "hint-single-line": false,
-  module: true,
-  side: false,
-  "main-port": false,
-  "at-wireable": false,
-  reactive: false,
 };
 
 export const collectPorts = (
@@ -193,49 +153,6 @@ export class PortType implements InspectablePortType {
 
   hasBehavior(behavior: BehaviorSchema): boolean {
     return !!this.schema.behavior?.includes(behavior);
-  }
-
-  canConnect(to: InspectablePortType): boolean {
-    return this.analyzeCanConnect(to).canConnect;
-  }
-
-  analyzeCanConnect(to: InspectablePortType): CanConnectAnalysis {
-    // Check standard JSON Schema subset rules.
-    const subSchemaAnalysis = analyzeIsJsonSubSchema(
-      this.schema as JSONSchema4,
-      to.schema as JSONSchema4
-    );
-    if (!subSchemaAnalysis.isSubSchema) {
-      return {
-        canConnect: false,
-        details: subSchemaAnalysis.details.map((detail) => ({
-          message: "Incompatible schema",
-          detail: {
-            outputPath: detail.pathA,
-            inputPath: detail.pathB,
-          },
-        })),
-      };
-    }
-    // Check Breadboard-specific behaviors.
-    const fromBehaviors = new Set(this.schema.behavior);
-    for (const toBehavior of to.schema.behavior ?? []) {
-      if (
-        BEHAVIOR_AFFECTS_TYPE_CHECKING[toBehavior] &&
-        !fromBehaviors.has(toBehavior)
-      ) {
-        return {
-          canConnect: false,
-          details: [
-            {
-              message: "Incompatible behaviors",
-              detail: { outputPath: ["behavior"], inputPath: ["behavior"] },
-            },
-          ],
-        };
-      }
-    }
-    return { canConnect: true };
   }
 }
 

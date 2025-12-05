@@ -3,10 +3,7 @@
   "files": [],
   "references": [
     { "path": "packages/breadboard" },
-    { "path": "packages/gulf" },
     { "path": "packages/google-drive-kit" },
-    { "path": "packages/schema" },
-    { "path": "packages/particles-ui" },
     { "path": "packages/types" },
     { "path": "packages/visual-editor" }
   ]

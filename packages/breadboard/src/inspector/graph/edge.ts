@@ -11,7 +11,6 @@ import type {
   InspectableEdge,
   InspectablePort,
   MutableGraph,
-  ValidateResult,
 } from "@breadboard-ai/types";
 import { InspectableEdgeType } from "@breadboard-ai/types";
 export { Edge };
@@ -121,24 +120,6 @@ class Edge implements InspectableEdge {
   async inPort(): Promise<InspectablePort> {
     const ports = await this.to.ports();
     return ports.inputs.ports.find((port) => port.name === this.in)!;
-  }
-
-  async validate(): Promise<ValidateResult> {
-    const [outPort, inPort] = await Promise.all([
-      this.outPort(),
-      this.inPort(),
-    ]);
-    if (outPort === undefined || inPort === undefined) {
-      return { status: "unknown" };
-    }
-    const canConnectAnalysis = outPort.type.analyzeCanConnect(inPort.type);
-    if (!canConnectAnalysis.canConnect) {
-      return {
-        status: "invalid",
-        errors: canConnectAnalysis.details,
-      };
-    }
-    return { status: "valid" };
   }
 
   setDeleted() {
