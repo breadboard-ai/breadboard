@@ -11,7 +11,7 @@ const GlobalStrings = StringsHelper.forSection("Global");
 
 import { LitElement, type PropertyValues, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { isStoredData } from "@google-labs/breadboard";
+import { isStoredData } from "@breadboard-ai/utils";
 
 import { styles as appPreviewStyles } from "./app-controller.styles.js";
 import {

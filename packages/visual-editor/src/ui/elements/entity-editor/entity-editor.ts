@@ -9,7 +9,6 @@ import {
   InspectableNodePorts,
   isLLMContent,
   isLLMContentArray,
-  isStoredData,
   isTextCapabilityPart,
   MainGraphIdentifier,
   MutableGraphStore,
@@ -20,6 +19,7 @@ import {
   TemplatePart,
   TemplatePartTransformCallback,
 } from "@google-labs/breadboard";
+import { isStoredData } from "@breadboard-ai/utils";
 import {
   LitElement,
   html,

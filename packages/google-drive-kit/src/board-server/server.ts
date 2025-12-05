@@ -6,7 +6,7 @@
 
 /// <reference types="@types/gapi.client.drive-v3" />
 
-import { isStoredData } from "@breadboard-ai/data";
+import { isStoredData } from "@breadboard-ai/utils";
 import {
   type BoardServer,
   type BoardServerCapabilities,

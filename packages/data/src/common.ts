@@ -28,8 +28,11 @@ import {
   Outcome,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
+// TODO: Remove this import once we move all deps of isStoredData to point to 
+// utils.
+import { isStoredData } from "@breadboard-ai/utils";
 
-export { isCodeExecutionResultPart, isExecutableCodePart };
+export { isCodeExecutionResultPart, isExecutableCodePart, isStoredData };
 
 // Helpers for handling DataCapability objects.
 
@@ -140,16 +143,6 @@ export const asBlob = async (
   const response = await fetch(url);
   const data = await response.blob();
   return data;
-};
-
-export const isStoredData = (
-  value: unknown
-): value is StoredDataCapabilityPart => {
-  if (typeof value !== "object" || value === null) return false;
-  const data = value as DataCapability;
-  if (!("storedData" in data)) return false;
-  if (typeof data.storedData.handle !== "string") return false;
-  return true;
 };
 
 export const isChunk = (value: unknown): value is Chunk => {

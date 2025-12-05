@@ -9,10 +9,10 @@ import {
   isInlineData,
   isLLMContent,
   isLLMContentArray,
-  isStoredData,
   isTextCapabilityPart,
   Template,
 } from "@google-labs/breadboard";
+import { isStoredData } from "@breadboard-ai/utils";
 import {
   isConfigurableBehavior,
   isLLMContentArrayBehavior,

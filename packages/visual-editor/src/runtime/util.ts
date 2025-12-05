@@ -13,12 +13,12 @@ import {
   InspectableEdge,
   InspectableGraph,
   isLLMContentArray,
-  isStoredData,
   NodeConfiguration,
   NodeDescriptor,
   NodeIdentifier,
   Schema,
 } from "@google-labs/breadboard";
+import { isStoredData } from "@breadboard-ai/utils";
 import {
   EditChangeId,
   GraphSelectionState,

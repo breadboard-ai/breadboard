@@ -5,7 +5,7 @@
  */
 
 import { GraphDescriptor } from "@breadboard-ai/types";
-import { isStoredData } from "./common.js";
+import { isStoredData } from "@breadboard-ai/utils";
 
 /** Deletes all .data value from StoredDataCapabilityPart. */
 export const purgeStoredDataInMemoryValues = async (graph: GraphDescriptor) => {

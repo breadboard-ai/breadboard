@@ -61,7 +61,6 @@ export {
   isLLMContentArray,
   isMetadataEntry,
   isSerializedData,
-  isStoredData,
   isTextCapabilityPart,
   toInlineDataPart,
   toStoredDataPart,

@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isInlineData, isStoredData } from "@breadboard-ai/data";
+import { isInlineData } from "@breadboard-ai/data";
+import { isStoredData } from "@breadboard-ai/utils";
 import {
   generatePaletteFromColor,
   generatePaletteFromImage,
