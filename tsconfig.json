@@ -3,7 +3,6 @@
   "files": [],
   "references": [
     { "path": "packages/breadboard" },
-    { "path": "packages/data-store" },
     { "path": "packages/gulf" },
     { "path": "packages/google-drive-kit" },
     { "path": "packages/schema" },
