@@ -48,7 +48,7 @@ import {
 } from "@google-labs/breadboard";
 import { RecentBoardStore } from "../data/recent-boards";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { McpClientManager } from "@breadboard-ai/mcp";
+import { McpClientManager } from "../mcp/index.js";
 import {
   ConsentAction,
   ConsentUIType,

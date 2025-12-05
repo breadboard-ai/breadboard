@@ -29,7 +29,7 @@ import { err, filterUndefined, ok } from "@breadboard-ai/utils";
 
 import { a2 } from "./a2";
 import { urlComponentsFromString } from "@breadboard-ai/loader";
-import { McpClientManager } from "@breadboard-ai/mcp";
+import { McpClientManager } from "../mcp/index.js";
 
 export { createA2ModuleFactory };
 

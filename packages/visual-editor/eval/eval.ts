@@ -7,7 +7,7 @@
 import { Capabilities } from "@breadboard-ai/types";
 
 import { A2ModuleArgs } from "../src/a2/runnable-module-factory";
-import { McpClientManager } from "@breadboard-ai/mcp";
+import { McpClientManager } from "../src/mcp/index.js";
 import { Logger } from "./logger";
 import { mock } from "node:test";
 import type { callGeminiImage } from "../src/a2/a2/image-utils";

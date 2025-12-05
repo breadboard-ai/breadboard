@@ -137,7 +137,6 @@
     "@breadboard-ai/data-store": "0.5.0",
     "@breadboard-ai/google-drive-kit": "0.8.0",
     "@breadboard-ai/gulf": "0.1.0",
-    "@breadboard-ai/mcp": "^0.1.0",
     "@breadboard-ai/particles": "0.2.0",
     "@breadboard-ai/particles-ui": "0.2.0",
     "@breadboard-ai/runtime": "0.2.0",
@@ -148,8 +147,11 @@
     "@lit/context": "^1.1.6",
     "@lit/task": "^1.0.2",
     "@material/web": "^2.3.0",
+    "@modelcontextprotocol/sdk": "^1.17.1",
     "@types/gapi": "^0.0.47",
+    "@types/gapi.client.calendar-v3": "^0.0.4",
     "@types/gapi.client.drive-v3": "^0.0.5",
+    "@types/gapi.client.gmail-v1": "^0.0.4",
     "@types/google.picker": "^0.0.51",
     "@types/trusted-types": "^2.0.7",
     "ajv": "^8.17.1",
@@ -159,10 +161,12 @@
     "lit": "^3.3.1",
     "markdown-it": "^14.1.0",
     "marked": "^16.3.0",
+    "mimetext": "^3.0.27",
     "pdfjs-dist": "^5.2.133",
     "signal-polyfill": "^0.2.2",
     "signal-utils": "^0.21.1",
     "urlpattern-polyfill": "^10.1.0",
-    "zod": "^3.24.1"
+    "zod": "^3.24.1",
+    "zod-to-json-schema": "^3.24.6"
   }
 }

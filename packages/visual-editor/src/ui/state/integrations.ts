@@ -28,7 +28,7 @@ import {
   McpClient,
   McpClientManager,
   McpListToolResult,
-} from "@breadboard-ai/mcp";
+} from "../../mcp/index.js";
 import { signal } from "signal-utils";
 import { updateMapDynamic } from "./utils/update-map";
 
