@@ -22,7 +22,7 @@ import {
   isGroupParticle,
   Orientation,
   ParticleData,
-} from "@breadboard-ai/particles";
+} from "../../../particles/index.js";
 import { UITheme } from "../../types/types.js";
 import { merge } from "../../utils/utils.js";
 import { styleMap } from "lit/directives/style-map.js";

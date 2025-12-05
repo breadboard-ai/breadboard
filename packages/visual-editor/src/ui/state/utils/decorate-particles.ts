@@ -9,7 +9,7 @@ import {
   Field,
   Particle,
   Presentation,
-} from "@breadboard-ai/particles";
+} from "../../../particles/index.js";
 
 export { decorateParticle };
 

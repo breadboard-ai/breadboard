@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ParticleTree } from "@breadboard-ai/particles";
+import { ParticleTree } from "../../particles/index.js";
 import {
   App,
   AssetMetadata,

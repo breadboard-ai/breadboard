@@ -9,7 +9,7 @@ import type {
   FieldName,
   Orientation,
   Presentation,
-} from "@breadboard-ai/particles";
+} from "../../particles/index.js";
 
 export type ItemData = Record<string, string | boolean | Date>;
 

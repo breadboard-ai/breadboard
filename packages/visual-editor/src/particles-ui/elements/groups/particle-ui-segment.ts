@@ -15,7 +15,7 @@ import {
   FieldName,
   Orientation,
   ParticleData,
-} from "@breadboard-ai/particles";
+} from "../../../particles/index.js";
 import { ItemData, ParticleViewer, UITheme } from "../../types/types.js";
 import * as Styles from "../../styles/index.js";
 
