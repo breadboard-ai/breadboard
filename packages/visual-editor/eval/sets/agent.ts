@@ -5,8 +5,8 @@
  */
 
 import { config } from "dotenv";
-import { llm } from "../src/a2/utils";
-import { session } from "../scripts/eval";
+import { llm } from "../../src/a2/a2/utils";
+import { session } from "../eval";
 
 config();
 
@@ -14,7 +14,7 @@ const apiKey = process.env.GEMINI_API_KEY;
 
 session({ name: "Agent Loop", apiKey }, async (session) => {
   // Need to import dynamically to let the mocks do their job.
-  const Loop = (await import("../src/agent/loop")).Loop;
+  const Loop = (await import("../../src/a2/agent/loop")).Loop;
 
   session.eval("Halloween Mugs", async ({ caps, moduleArgs }) => {
     const loop = new Loop(caps, moduleArgs);

@@ -16,7 +16,11 @@
     "build": "wireit",
     "build:vite": "wireit",
     "build:tsc": "wireit",
-    "test": "wireit"
+    "test": "wireit",
+    "eval:agent": "tsx --experimental-test-module-mocks eval/sets/agent.ts",
+    "eval:a2ui": "tsx --experimental-test-module-mocks eval/sets/a2ui.ts",
+    "eval:autoname": "tsx --experimental-test-module-mocks eval/sets/autoname.ts",
+    "eval:viewer": "vite dev eval/viewer"
   },
   "wireit": {
     "build": {
@@ -120,6 +124,7 @@
     "@types/gapi.client.drive-v3": "^0.0.5",
     "@types/google.picker": "^0.0.51",
     "@types/gtag.js": "^0.0.20",
+    "@types/har-format": "^1.2.16",
     "@types/markdown-it": "^14.1.2",
     "dotenv": "^17.2.3",
     "tsx": "^4.20.6",

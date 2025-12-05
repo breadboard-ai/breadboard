@@ -6,11 +6,11 @@
 
 import { Capabilities } from "@breadboard-ai/types";
 
-import { A2ModuleArgs } from "../src/runnable-module-factory";
+import { A2ModuleArgs } from "../src/a2/runnable-module-factory";
 import { McpClientManager } from "@breadboard-ai/mcp";
 import { Logger } from "./logger";
 import { mock } from "node:test";
-import type { callGeminiImage } from "../src/a2/image-utils";
+import type { callGeminiImage } from "../src/a2/a2/image-utils";
 import { autoClearingInterval } from "./auto-clearing-interval";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -82,7 +82,7 @@ class EvalHarness {
     mock.method(globalThis, "setInterval", autoClearingInterval.setInterval);
 
     mockFunction<typeof callGeminiImage>(
-      "../src/a2/image-utils",
+      "../src/a2/a2/image-utils.js",
       "callGeminiImage",
       async () => {
         return [
