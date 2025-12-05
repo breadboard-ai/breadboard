@@ -98,6 +98,12 @@ export function obtainElements() {
     throw new Error("Unable to find carousel");
   }
 
+  const secondaryVideoContainer =
+    document.querySelector<HTMLAnchorElement>("#video-container");
+
+  const secondaryVideo =
+    document.querySelector<HTMLIFrameElement>("#video-player");
+
   return {
     signInButton,
     signInHeaderButton,
@@ -111,6 +117,8 @@ export function obtainElements() {
     sharedFlowDialogTitle,
     introVideo,
     landingCarousel,
+    secondaryVideoContainer,
+    secondaryVideo,
   };
 }
 
