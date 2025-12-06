@@ -7,7 +7,7 @@
 import * as Strings from "../../strings/helper.js";
 const GlobalStrings = Strings.forSection("Global");
 
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import {
   generatePaletteFromColor,
   generatePaletteFromImage,

@@ -6,7 +6,7 @@
 
 /// <reference types="@types/gapi.client.drive-v3" />
 
-import { retryableFetch } from "./board-server/utils.js";
+import { retryableFetch } from "./utils.js";
 
 type File = gapi.client.drive.File;
 type Permission = gapi.client.drive.Permission;
@@ -116,14 +116,17 @@ export type NarrowedDriveFile<
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 // $ExpectType { name: string; ownedByMe: boolean; properties?: { [x: string]: string; } | undefined;  }
+// @ts-expect-error
 type NarrowedDriveFile_Test1 = NarrowedDriveFile<
   "name" | "ownedByMe" | "properties"
 >;
 
 // $ExpectType { id: string; kind: string; mimeType: string; name: string; resourceKey?: string | undefined; }
+// @ts-expect-error
 type NarrowedDriveFile_Test2 = NarrowedDriveFile<void>;
 
 // $ExpectType { }
+// @ts-expect-error
 type NarrowedDriveFile_Test3 = NarrowedDriveFile<never>;
 
 /* eslint-enable @typescript-eslint/no-unused-vars */
@@ -147,16 +150,19 @@ type NarrowedDriveFileFromOptions<
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 // $ExpectType { name: string; ownedByMe: boolean; properties?: { [x: string]: string; } | undefined; }
+// @ts-expect-error
 type NarrowedDriveFileFromOptions_Test1 = NarrowedDriveFileFromOptions<{
   fields: Array<"name" | "ownedByMe" | "properties">;
 }>;
 
 // $ExpectType { id: string; kind: string; mimeType: string; name: string; resourceKey?: string | undefined; }
+// @ts-expect-error
 type NarrowedDriveFileFromOptions_Test2 = NarrowedDriveFileFromOptions<{
   fields: undefined;
 }>;
 
 // $ExpectType { }
+// @ts-expect-error
 type NarrowedDriveFileFromOptions_Test3 = NarrowedDriveFileFromOptions<{
   fields: [];
 }>;

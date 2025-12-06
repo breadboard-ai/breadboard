@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
-import { type RunResults } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit/board-server/server.js";
 import type {
   BoardServer,
   BoardServerSaveEventStatus,
@@ -21,6 +19,8 @@ import {
   ModuleIdentifier,
   MutableGraphStore,
 } from "@breadboard-ai/types";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { type RunResults } from "@breadboard-ai/utils/google-drive/operations.js";
 import * as idb from "idb";
 import { RecentBoardStore } from "../data/recent-boards";
 import * as BreadboardUI from "../ui/index.js";

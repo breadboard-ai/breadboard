@@ -25,7 +25,7 @@ import {
   readProperties,
   truncateValueForUtf8,
 } from "./utils.js";
-import type { GoogleDriveClient } from "../google-drive-client.js";
+import type { GoogleDriveClient } from "./google-drive-client.js";
 import { DriveLookupCache } from "./drive-lookup-cache.js";
 import { purgeStoredDataInMemoryValues } from "@breadboard-ai/utils";
 import { err } from "@breadboard-ai/utils";
@@ -114,7 +114,7 @@ class DriveOperations {
    * @param refreshProjectListCallback will be called when project list may have to be updated.
    */
   constructor(
-    private readonly refreshProjectListCallback: () => Promise<void>,
+    _refreshProjectListCallback: () => Promise<void>,
     userFolderName: string,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[]

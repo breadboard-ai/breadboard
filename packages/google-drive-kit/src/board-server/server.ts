@@ -19,21 +19,21 @@ import { ok } from "@breadboard-ai/utils";
 import {
   type DriveFileId,
   type GoogleDriveClient,
-} from "../google-drive-client.js";
+} from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { GoogleDriveDataPartTransformer } from "./data-part-transformer.js";
 import {
   extractGoogleDriveFileId,
   findGoogleDriveAssetsInGraph,
   readProperties,
   type AppProperties,
-} from "./utils.js";
+} from "@breadboard-ai/utils/google-drive/utils.js";
 import { RefreshEvent, SaveEvent } from "./events.js";
 import {
   DriveOperations,
   getFileId,
   getThumbnail,
   PROTOCOL,
-} from "./operations.js";
+} from "@breadboard-ai/utils/google-drive/operations.js";
 import { SaveDebouncer } from "./save-debouncer.js";
 import { DriveGalleryGraphCollection } from "./gallery-graph-collection.js";
 import { DriveUserGraphCollection } from "./user-graph-collection.js";

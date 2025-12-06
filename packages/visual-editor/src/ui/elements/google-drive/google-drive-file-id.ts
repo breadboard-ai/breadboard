@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import type { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";

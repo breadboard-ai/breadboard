@@ -10,7 +10,7 @@ import type {
   GraphTag,
   LLMContent,
 } from "@breadboard-ai/types";
-import type { DriveFileId, NarrowedDriveFile } from "../google-drive-client.js";
+import type { DriveFileId, NarrowedDriveFile } from "./google-drive-client.js";
 import type { GraphInfo, StoredProperties } from "./operations.js";
 
 /** Delay between GDrive API retries. */

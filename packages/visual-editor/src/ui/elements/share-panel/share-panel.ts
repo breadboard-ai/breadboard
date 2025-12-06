@@ -10,19 +10,19 @@ import {
   LATEST_SHARED_VERSION_PROPERTY,
   MAIN_TO_SHAREABLE_COPY_PROPERTY,
   SHAREABLE_COPY_TO_MAIN_PROPERTY,
-} from "@breadboard-ai/google-drive-kit/board-server/operations.js";
+} from "@breadboard-ai/utils/google-drive/operations.js";
 import {
   diffAssetReadPermissions,
   extractGoogleDriveFileId,
   findGoogleDriveAssetsInGraph,
   permissionMatchesAnyOf,
   type GoogleDriveAsset,
-} from "@breadboard-ai/google-drive-kit/board-server/utils.js";
+} from "@breadboard-ai/utils/google-drive/utils.js";
 import type {
   DriveFileId,
   GoogleDriveClient,
   NarrowedDriveFile,
-} from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+} from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { type GraphDescriptor } from "@breadboard-ai/types";
 import type { DomainConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 import { type BoardServer } from "@breadboard-ai/types";

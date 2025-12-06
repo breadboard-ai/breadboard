@@ -5,7 +5,7 @@
  */
 
 import type { GraphDescriptor, Outcome } from "@breadboard-ai/types";
-import type { DriveOperations } from "./operations.js";
+import type { DriveOperations } from "@breadboard-ai/utils/google-drive/operations.js";
 import { err } from "@breadboard-ai/utils";
 
 export { SaveDebouncer };

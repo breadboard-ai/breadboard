@@ -33,7 +33,7 @@ import { Task } from "@lit/task";
 import { icons } from "../../../styles/icons.js";
 import { OverflowAction } from "../../../types/types.js";
 import { OverflowMenuActionEvent } from "../../../events/events.js";
-import { partToDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
+import { partToDriveFileId } from "@breadboard-ai/utils/google-drive/utils.js";
 import {
   isCodeExecutionResultPart,
   isExecutableCodePart,

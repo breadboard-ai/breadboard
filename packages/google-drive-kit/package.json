@@ -25,15 +25,10 @@
       "types": null,
       "default": null
     },
-    "./internal/*.js": {
-      "types": "./dist/src/internal/*.d.ts",
-      "default": null
-    },
     "./*.js": {
       "types": "./dist/src/*.d.ts",
       "default": "./dist/src/*.js"
-    },
-    "./google-drive.kit.json": "./google-drive.kit.json"
+    }
   },
   "files": [
     "dist/**/*.{js,js.map,d.ts}",

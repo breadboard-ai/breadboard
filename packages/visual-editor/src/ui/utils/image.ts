@@ -1,10 +1,10 @@
-import { isDriveFile } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { html } from "lit";
 import { ClassInfo, classMap } from "lit/directives/class-map.js";
 import { until } from "lit/directives/until.js";
 import { blobHandleToUrl } from "./blob-handle-to-url.js";
 import { asBase64 } from "../../data/common.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { isDriveFile } from "@breadboard-ai/utils/google-drive/operations.js";
 
 declare const MAIN_ICON: string; // VITE variable
 

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { createFetchWithCreds, err } from "@breadboard-ai/utils";
 import express, { type Request } from "express";
 import { GoogleAuth } from "google-auth-library";
@@ -23,6 +22,7 @@ import * as flags from "./flags.js";
 import { CachingFeaturedGallery, makeGalleryMiddleware } from "./gallery.js";
 import { createUpdatesHandler } from "./updates.js";
 import { makeBlobsHandler } from "./blobs/index.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 
 const FEATURED_GALLERY_CACHE_REFRESH_SECONDS = 10 * 60;
 

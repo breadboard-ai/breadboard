@@ -1,8 +1,25 @@
 {
   "compilerOptions": {
-    "composite": true,
-    "outDir": "./dist"
+    "target": "ES2022",
+    "module": "NodeNext",
+    "lib": ["ES2023", "DOM", "DOM.Iterable", "ES2024.Promise"],
+    "skipLibCheck": true,
+    "useDefineForClassFields": false,
+    "outDir": "dist",
+    "rootDir": ".",
+
+    /* Bundler mode */
+    "moduleResolution": "NodeNext",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": ["vite/client", "@types/gtag.js", "node", "trusted-types"]
   },
-  "include": ["src/**/*", "tests/**/*"],
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
   "extends": "@google-labs/tsconfig/base.json"
 }

@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  GOOGLE_DRIVE_FOLDER_MIME_TYPE,
-  makeGraphListQuery,
-  quote,
-} from "@breadboard-ai/google-drive-kit/board-server/operations.js";
-import { findGoogleDriveAssetsInGraph } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
-import type {
-  GoogleDriveClient,
-  NarrowedDriveFile,
-} from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { GraphDescriptor } from "@breadboard-ai/types";
 
 import * as flags from "./flags.js";
@@ -25,6 +15,16 @@ import {
   type Response as ExpressResponse,
   type RequestHandler,
 } from "express";
+import {
+  GoogleDriveClient,
+  NarrowedDriveFile,
+} from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import {
+  GOOGLE_DRIVE_FOLDER_MIME_TYPE,
+  makeGraphListQuery,
+  quote,
+} from "@breadboard-ai/utils/google-drive/operations.js";
+import { findGoogleDriveAssetsInGraph } from "@breadboard-ai/utils/google-drive/utils.js";
 
 export interface GalleryMiddlewareInit {
   gallery: CachingFeaturedGallery;

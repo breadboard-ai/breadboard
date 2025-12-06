@@ -37,7 +37,7 @@ import { createGoogleDriveBoardServer } from "../ui/utils/create-server.js";
 import { createA2Server, createA2ModuleFactory } from "../a2/index.js";
 import { createFileSystemBackend, createFlagManager } from "../idb/index.js";
 import { RecentBoardStore } from "../data/recent-boards";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { McpClientManager } from "../mcp/index.js";
 import {
   ConsentAction,

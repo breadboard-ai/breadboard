@@ -11,8 +11,8 @@ import type {
   Outcome,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
-import type { DriveOperations } from "./operations.js";
 import { err } from "@breadboard-ai/utils";
+import type { DriveOperations } from "@breadboard-ai/utils/google-drive/operations.js";
 
 export { GoogleDriveDataPartTransformer };
 

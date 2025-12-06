@@ -11,8 +11,8 @@ import type {
 import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
-import type { NarrowedDriveFile } from "../google-drive-client.js";
-import { readProperties } from "./utils.js";
+import type { NarrowedDriveFile } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { readProperties } from "@breadboard-ai/utils/google-drive/utils.js";
 
 export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
   readonly #signInInfo: SignInInfo;
