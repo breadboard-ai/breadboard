@@ -13,12 +13,12 @@ import {
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 import { isStoredData, ok, toJson } from "@breadboard-ai/utils";
-import { A2ModuleArgs } from "../runnable-module-factory";
-import { A2UI_SCHEMA } from "./au2ui-schema";
-import { GeminiPrompt } from "./gemini-prompt";
-import { StreamableReporter } from "./output";
-import { llm } from "./utils";
-import { isInlineData, isTextCapabilityPart } from "@breadboard-ai/data";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { A2UI_SCHEMA } from "./au2ui-schema.js";
+import { GeminiPrompt } from "./gemini-prompt.js";
+import { StreamableReporter } from "./output.js";
+import { llm } from "./utils.js";
+import { isInlineData, isTextCapabilityPart } from "../../data/common.js";
 
 export { renderConsistentUI, A2UI_SCHEMA as UI_SCHEMA };
 

@@ -30,11 +30,11 @@ import {
   Template,
   TemplatePart,
 } from "@breadboard-ai/utils";
-import { isLLMContent, isLLMContentArray } from "@breadboard-ai/data";
 import { getModuleId, isModule } from "../utils.js";
 import { GraphNodeType } from "./graph-node-type.js";
 import { InspectableAssetImpl } from "./inspectable-asset.js";
 import { VirtualNode } from "./virtual-node.js";
+import { isLLMContent, isLLMContentArray } from "../../../data/common.js";
 
 export { GraphQueries };
 

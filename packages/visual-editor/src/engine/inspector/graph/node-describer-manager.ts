@@ -32,7 +32,7 @@ import {
 import {
   assetsFromGraphDescriptor,
   envFromGraphDescriptor,
-} from "@breadboard-ai/data";
+} from "../../../data/file-system.js";
 
 export { emptyResult, NodeDescriberManager };
 

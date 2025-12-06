@@ -16,8 +16,8 @@ import {
 } from "@breadboard-ai/types";
 
 import { openDB, DBSchema, IDBPDatabase } from "idb";
-import { transformBlobs } from "../../engine/file-system/blob-transform";
-import { asBase64, asBlob } from "@breadboard-ai/data";
+import { transformBlobs } from "../../engine/file-system/blob-transform.js";
+import { asBase64, asBlob } from "../../data/common.js";
 
 export { IDBBackend, type Files };
 

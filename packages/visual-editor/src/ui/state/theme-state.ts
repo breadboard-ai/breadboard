@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isInlineData } from "@breadboard-ai/data";
 import { isStoredData } from "@breadboard-ai/utils";
 import {
   generatePaletteFromColor,
@@ -23,13 +22,14 @@ import {
   createThemeGenerationPrompt,
   getThemeFromIntentGenerationPrompt,
 } from "../prompts/theme-generation";
-import { AppTheme } from "../types/types";
+import { AppTheme } from "../types/types.js";
 import {
   Project,
   ProjectThemeState,
   ThemePromptArgs,
   ThemeStatus,
-} from "./types";
+} from "./types.js";
+import { isInlineData } from "../../data/common.js";
 
 export { ThemeState };
 

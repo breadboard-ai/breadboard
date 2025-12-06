@@ -9,7 +9,7 @@ import type {
   GraphDescriptor,
   JsonSerializable,
 } from "@breadboard-ai/types";
-import { isLLMContentArray } from "@breadboard-ai/data";
+import { isLLMContentArray } from "./common.js";
 
 export { assetsFromGraphDescriptor, envFromGraphDescriptor };
 

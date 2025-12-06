@@ -31,10 +31,6 @@ import {
 } from "./events.js";
 import { SettingsStore } from "../ui/data/settings-store.js";
 import { inputsFromSettings } from "../ui/data/inputs.js";
-import {
-  assetsFromGraphDescriptor,
-  envFromGraphDescriptor,
-} from "@breadboard-ai/data";
 import { Autonamer } from "./autonamer.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configuration.js";
 import { createGoogleDriveBoardServer } from "../ui/utils/create-server.js";
@@ -65,6 +61,10 @@ import { composeFileSystemBackends } from "../engine/file-system/composed-perist
 import { addRunModule } from "../engine/add-run-module.js";
 import { createGraphStore } from "../engine/inspector/index.js";
 import { createLoader } from "../engine/loader/index.js";
+import {
+  assetsFromGraphDescriptor,
+  envFromGraphDescriptor,
+} from "../data/file-system.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;

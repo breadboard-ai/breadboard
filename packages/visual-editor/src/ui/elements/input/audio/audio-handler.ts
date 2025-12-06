@@ -7,7 +7,6 @@ import * as StringsHelper from "../../../strings/helper.js";
 const Strings = StringsHelper.forSection("AudioHandler");
 
 import { LLMContent } from "@breadboard-ai/types";
-import { asBase64 } from "@breadboard-ai/data";
 import { Task } from "@lit/task";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -15,6 +14,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { guard } from "lit/directives/guard.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { HideTooltipEvent, ShowTooltipEvent } from "../../../events/events";
+import { asBase64 } from "../../../../data/common.js";
 
 const PCM_AUDIO = "audio/l16;codec=pcm;rate=24000";
 

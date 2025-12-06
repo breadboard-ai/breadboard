@@ -13,7 +13,7 @@ import {
 } from "@breadboard-ai/types";
 import * as BreadboardUI from "../ui/index.js";
 import { isShortsUri } from "../ui/utils/youtube.js";
-import { asBase64 } from "@breadboard-ai/data";
+import { asBase64 } from "../data/common.js";
 
 export { ClipboardReader };
 

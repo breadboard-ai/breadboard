@@ -28,13 +28,13 @@ import {
 } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
-import { ConnectorType } from "../connectors/types";
-import { ConnectorStateImpl } from "./connectors";
-import { ReactiveFastAccess } from "./fast-access";
-import { GraphAssetImpl } from "./graph-asset";
-import { ReactiveOrganizer } from "./organizer";
-import { ReactiveProjectRun } from "./project-run";
-import { RendererStateImpl } from "./renderer";
+import { ConnectorType } from "../connectors/types.js";
+import { ConnectorStateImpl } from "./connectors.js";
+import { ReactiveFastAccess } from "./fast-access.js";
+import { GraphAssetImpl } from "./graph-asset.js";
+import { ReactiveOrganizer } from "./organizer.js";
+import { ReactiveProjectRun } from "./project-run.js";
+import { RendererStateImpl } from "./renderer.js";
 import {
   Component,
   ConnectorState,
@@ -58,7 +58,7 @@ import { StepEditorImpl } from "./step-editor";
 import { ThemeState } from "./theme-state";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { err, ok } from "@breadboard-ai/utils";
-import { transformDataParts } from "@breadboard-ai/data";
+import { transformDataParts } from "../../data/common.js";
 
 export { createProjectState, ReactiveProject };
 

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LLMContent } from "@breadboard-ai/types";
-import { isFileDataCapabilityPart, isInlineData } from "@breadboard-ai/data";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
@@ -18,6 +17,10 @@ import {
   videoIdFromWatchOrShortsOrEmbedUri,
 } from "../../../utils/youtube";
 import { icons } from "../../../styles/icons.js";
+import {
+  isFileDataCapabilityPart,
+  isInlineData,
+} from "../../../../data/common.js";
 
 @customElement("bb-asset-shelf")
 export class AssetShelf extends LitElement {

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isLLMContent, isTextCapabilityPart } from "@breadboard-ai/data";
 import type {
   DataPart,
   GraphDescriptor,
@@ -21,6 +20,7 @@ import type {
   AppCatalystChatRequest,
   AppCatalystContentChunk,
 } from "./app-catalyst.js";
+import { isLLMContent, isTextCapabilityPart } from "../../data/common.js";
 
 export interface OneShotFlowGenRequest {
   intent: string;
