@@ -8,6 +8,8 @@
 /// <reference types="@types/gapi.client.drive-v3" />
 /// <reference types="@types/google.picker" />
 
+import { createTrustedGapiURL } from "../../trusted-types/gapi-url.js";
+
 let gapiPromise: Promise<typeof globalThis.gapi>;
 /**
  * Load the top-level GAPI (Google API) library.
@@ -16,7 +18,7 @@ let gapiPromise: Promise<typeof globalThis.gapi>;
  */
 async function loadGapi(): Promise<typeof globalThis.gapi> {
   return (gapiPromise ??= (async () => {
-    await loadNonModuleWithHeadScriptTag("https://apis.google.com/js/api.js");
+    await loadNonModuleWithHeadScriptTag(createTrustedGapiURL(""));
     return globalThis.gapi;
   })());
 }
@@ -67,10 +69,12 @@ export async function loadDriveShareClient(): Promise<new () => ShareClient> {
  *
  * This function does NOT implement caching.
  */
-async function loadNonModuleWithHeadScriptTag(src: string): Promise<void> {
+async function loadNonModuleWithHeadScriptTag(
+  src: TrustedScriptURL
+): Promise<void> {
   const script = document.createElement("script");
   script.async = true;
-  script.src = src;
+  (script as { src: string | TrustedScriptURL }).src = src;
 
   let resolve: () => void;
   let reject: () => void;

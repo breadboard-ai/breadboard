@@ -57,8 +57,8 @@ export const SHELL_CSP = {
   ["img-src"]: ["https://*.gstatic.com"],
   ["script-src"]: ["'self'", "https://apis.google.com"],
   ["style-src"]: ["'unsafe-inline'"],
-  // ["require-trusted-types-for"]: ["'script'"],
-  ["trusted-types"]: ["'none'"],
+  ["require-trusted-types-for"]: ["'script'"],
+  ["trusted-types"]: ["opal-gapi-url", "gapi#gapi", "goog#html"],
 };
 
 export const MAIN_APP_CSP = {
@@ -130,7 +130,12 @@ export const MAIN_APP_CSP = {
   // TODO: b/466201117 Temporarily disabled while we change how the generated
   // app is iframed.
   // ["require-trusted-types-for"]: ["'script'"],
-  ["trusted-types"]: ["lit-html", "opal-analytics-url", "opal-chiclet-html"],
+  ["trusted-types"]: [
+    "lit-html",
+    "opal-analytics-url",
+    "opal-chiclet-html",
+    "opal-gapi-url",
+  ],
 };
 
 function noneIfEmpty(directives: string[]): string[] {
