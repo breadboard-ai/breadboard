@@ -4,8 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@breadboard-ai/types";
-import { EditableGraph, EditableGraphOptions } from "../../src/engine/index.js";
+import {
+  EditableGraph,
+  EditableGraphOptions,
+  GraphDescriptor,
+} from "@breadboard-ai/types";
 import { MutableGraphImpl } from "../../src/engine/inspector/graph/mutable-graph.js";
 import { Graph } from "../../src/engine/editor/graph.js";
 import { makeTestGraphStore } from "./_graph-store.js";
