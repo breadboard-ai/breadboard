@@ -9,7 +9,7 @@ import {
   invokeDescriber,
   invokeGraph,
   invokeMainDescriber,
-} from "@breadboard-ai/runtime/legacy.js";
+} from "../../runtime/legacy.js";
 import type {
   GraphDescriber,
   GraphIdentifier,

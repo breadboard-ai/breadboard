@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CapabilitiesManagerImpl } from "@breadboard-ai/runtime/legacy.js";
+import { CapabilitiesManagerImpl } from "../engine/runtime/legacy.js";
 import type {
   Kit,
   MutableGraph,

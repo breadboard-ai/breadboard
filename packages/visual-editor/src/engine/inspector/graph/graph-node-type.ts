@@ -7,7 +7,7 @@
 import {
   describerResultToNodeHandlerMetadata,
   getGraphHandlerFromMutableGraph,
-} from "@breadboard-ai/runtime/legacy.js";
+} from "../../runtime/legacy.js";
 import type {
   InspectableNodePorts,
   InspectableNodeType,

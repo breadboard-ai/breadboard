@@ -5,7 +5,7 @@
  */
 
 import test, { describe } from "node:test";
-import { getGraphHandler } from "@breadboard-ai/runtime/legacy.js";
+import { getGraphHandler } from "../../src/engine/runtime/legacy.js";
 import { deepStrictEqual, ok } from "node:assert";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import simple from "../bgl/simple.bgl.json" with { type: "json" };

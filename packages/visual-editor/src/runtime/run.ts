@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createPlanRunner } from "@breadboard-ai/runtime";
+import { createPlanRunner } from "../engine/runtime/harness/index.js";
 import {
   HarnessRunner,
   Kit,
