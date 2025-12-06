@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createLoader, urlComponentsFromString } from "@breadboard-ai/loader";
 import type {
   AddResult,
   EditableGraph,
@@ -47,6 +46,8 @@ import { createBuiltInKit } from "./graph/kits.js";
 import { MutableGraphImpl } from "./graph/mutable-graph.js";
 import { NodeTypeDescriberManager } from "./graph/node-type-describer-manager.js";
 import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
+import { createLoader } from "../loader/index.js";
+import { urlComponentsFromString } from "../loader/loader.js";
 
 export {
   contextFromMutableGraph,

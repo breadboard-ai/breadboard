@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  resolveBoardCapabilitiesInInputs,
-  resolveGraph,
-  SENTINEL_BASE_URL,
-} from "@breadboard-ai/loader";
+
 import type {
   GraphToRun,
   InputValues,
@@ -22,6 +18,8 @@ import { FileSystemEntry } from "@breadboard-ai/types";
 import { createOutputProvider, RequestedInputsManager } from "../bubble.js";
 import { callHandler, getHandler } from "../handler.js";
 import { RunResult } from "../run.js";
+import { resolveGraph, SENTINEL_BASE_URL } from "../../loader/loader.js";
+import { resolveBoardCapabilitiesInInputs } from "../../loader/capability.js";
 
 type ResultSupplier = (result: RunResult) => Promise<void>;
 

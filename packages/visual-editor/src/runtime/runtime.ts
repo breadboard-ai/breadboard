@@ -59,12 +59,12 @@ import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
 import { AppCatalystApiClient } from "../ui/flow-gen/app-catalyst.js";
 import { EmailPrefsManager } from "../ui/utils/email-prefs-manager.js";
 import { err } from "@breadboard-ai/utils";
-import { createLoader } from "@breadboard-ai/loader";
 import { createFileSystem } from "../engine/file-system/index.js";
 import { createEphemeralBlobStore } from "../engine/file-system/ephemeral-blob-store.js";
 import { composeFileSystemBackends } from "../engine/file-system/composed-peristent-backend.js";
 import { addRunModule } from "../engine/add-run-module.js";
 import { createGraphStore } from "../engine/inspector/index.js";
+import { createLoader } from "../engine/loader/index.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;

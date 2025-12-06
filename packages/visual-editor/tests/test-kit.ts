@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getGraphDescriptor } from "@breadboard-ai/loader";
+import { getGraphDescriptor } from "../src/engine/loader/capability.js";
 import { invokeGraph } from "../src/engine/runtime/legacy.js";
 import { InputValues, Kit, OutputValues } from "@breadboard-ai/types";
 

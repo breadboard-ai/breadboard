@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getGraphDescriptor } from "@breadboard-ai/loader";
 import {
   GraphInlineMetadata,
   InputValues,
@@ -25,6 +24,7 @@ import {
   Capability,
 } from "@breadboard-ai/types/sandbox.js";
 import { invokeGraph } from "../run/invoke-graph.js";
+import { getGraphDescriptor } from "../../loader/capability.js";
 
 export { CapabilitiesManagerImpl };
 

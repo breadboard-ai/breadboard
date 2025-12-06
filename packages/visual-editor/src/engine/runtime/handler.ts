@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getGraphUrl } from "@breadboard-ai/loader";
 import type {
   InputValues,
   Kit,
@@ -19,6 +18,7 @@ import type {
 } from "@breadboard-ai/types";
 import { graphUrlLike } from "@breadboard-ai/utils";
 import { GraphBasedNodeHandler } from "./graph-based-node-handler.js";
+import { getGraphUrl } from "../loader/loader.js";
 
 // TODO: Deduplicate.
 function contextFromMutableGraph(mutable: MutableGraph): NodeHandlerContext {

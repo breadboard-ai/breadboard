@@ -28,7 +28,7 @@ import {
 import { err, filterUndefined, ok } from "@breadboard-ai/utils";
 
 import { a2 } from "./a2";
-import { urlComponentsFromString } from "@breadboard-ai/loader";
+import { urlComponentsFromString } from "../engine/loader/loader.js";
 import { McpClientManager } from "../mcp/index.js";
 
 export { createA2ModuleFactory };
