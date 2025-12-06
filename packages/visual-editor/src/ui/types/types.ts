@@ -525,7 +525,11 @@ export type ParsedUrlProvider = {
   readonly parsedUrl: MakeUrlInit;
 };
 
-export type MakeUrlInit = HomeUrlInit | GraphInit | LandingUrlInit;
+export type MakeUrlInit =
+  | HomeUrlInit
+  | GraphUrlInit
+  | LandingUrlInit
+  | OpenUrlInit;
 
 export interface BaseUrlInit {
   /**
@@ -543,18 +547,18 @@ export interface BaseUrlInit {
     forceSurveySelection?: "true";
   };
   oauthRedirect?: string;
+  lite?: boolean;
+  colorScheme?: "light" | "dark";
 }
 
 export interface HomeUrlInit extends BaseUrlInit {
   page: "home";
   new?: boolean;
   mode?: VisualEditorMode;
-  lite?: boolean;
-  colorScheme?: "light" | "dark";
   redirectFromLanding?: boolean;
 }
 
-export interface GraphInit extends BaseUrlInit {
+export interface GraphUrlInit extends BaseUrlInit {
   page: "graph";
   mode: VisualEditorMode;
   flow: string;
@@ -562,8 +566,6 @@ export interface GraphInit extends BaseUrlInit {
   resourceKey?: string | undefined;
   results?: string;
   shared?: boolean;
-  lite?: boolean;
-  colorScheme?: "light" | "dark";
   redirectFromLanding?: boolean;
 }
 
@@ -571,8 +573,13 @@ export interface LandingUrlInit extends BaseUrlInit {
   page: "landing";
   redirect: MakeUrlInit;
   missingScopes?: boolean;
-  lite?: boolean;
-  colorScheme?: "light" | "dark";
   geoRestriction?: boolean;
 }
+
+export interface OpenUrlInit extends BaseUrlInit {
+  page: "open";
+  fileId: string;
+  resourceKey?: string;
+}
+
 export type UserSignInResponse = "success" | "failure" | "dismissed";

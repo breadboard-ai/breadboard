@@ -7,10 +7,11 @@
 import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 import {
   BaseUrlInit,
-  GraphInit,
+  GraphUrlInit,
   HomeUrlInit,
   LandingUrlInit,
   MakeUrlInit,
+  OpenUrlInit,
 } from "../types/types.js";
 
 export function devUrlParams(): Required<BaseUrlInit>["dev"] {
@@ -134,6 +135,11 @@ export function makeUrl(
         url.searchParams.set(redirectParam, redirectValue);
       }
     }
+  } else if (page === "open") {
+    url.pathname = `open/${encodeURIComponent(init.fileId)}`;
+    if (init.resourceKey) {
+      url.searchParams.set(RESOURCE_KEY, init.resourceKey);
+    }
   } else {
     page satisfies never;
     throw new Error(
@@ -193,7 +199,7 @@ export function parseUrl(url: string | URL): MakeUrlInit {
     const landing: LandingUrlInit = {
       page: "landing",
       redirect:
-        redirectParsed.page === "landing"
+        redirectParsed.page === "landing" || redirectParsed.page === "open"
           ? { page: "home", redirectFromLanding: true }
           : { ...redirectParsed, redirectFromLanding: true },
     };
@@ -210,6 +216,13 @@ export function parseUrl(url: string | URL): MakeUrlInit {
       landing.dev = dev;
     }
     return landing;
+  } else if (pathname.startsWith("/open/")) {
+    const open: OpenUrlInit = {
+      page: "open",
+      fileId: pathname.slice("/open/".length),
+      resourceKey: url.searchParams.get(RESOURCE_KEY) ?? undefined,
+    };
+    return open;
   } else {
     const flow = url.searchParams.get(FLOW) || url.searchParams.get(TAB0);
     if (!flow) {
@@ -234,7 +247,7 @@ export function parseUrl(url: string | URL): MakeUrlInit {
       }
       return home;
     }
-    const graph: GraphInit = {
+    const graph: GraphUrlInit = {
       page: "graph",
       mode: url.searchParams.get(MODE) === "app" ? "app" : "canvas",
       lite: url.searchParams.get(LITE) === "true",
