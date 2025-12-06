@@ -50,7 +50,7 @@ import { SigninAdapter } from "../ui/utils/signin-adapter.js";
 import { createActionTrackerBackend } from "../ui/utils/action-tracker";
 import { envFromSettings } from "../utils/env-from-settings";
 import { builtInMcpClients } from "../mcp-clients";
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
+import { GoogleDriveBoardServer } from "../board-server/server.js";
 import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
 import { AppCatalystApiClient } from "../ui/flow-gen/app-catalyst.js";
 import { EmailPrefsManager } from "../ui/utils/email-prefs-manager.js";

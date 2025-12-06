@@ -5,7 +5,7 @@
  */
 
 import { type OAuthScope } from "../connection/oauth-scopes.js";
-import { clearIdbGraphCache } from "@breadboard-ai/google-drive-kit/board-server/user-graph-collection.js";
+import { clearIdbGraphCache } from "../../board-server/user-graph-collection.js";
 import type {
   CheckAppAccessResult,
   OpalShellHostProtocol,

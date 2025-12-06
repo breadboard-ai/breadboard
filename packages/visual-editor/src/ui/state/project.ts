@@ -56,9 +56,9 @@ import { FilteredIntegrationsImpl } from "./filtered-integrations";
 import { McpClientManager } from "../../mcp/index.js";
 import { StepEditorImpl } from "./step-editor";
 import { ThemeState } from "./theme-state";
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { err, ok } from "@breadboard-ai/utils";
 import { transformDataParts } from "../../data/common.js";
+import { GoogleDriveBoardServer } from "../../board-server/server.js";
 
 export { createProjectState, ReactiveProject };
 

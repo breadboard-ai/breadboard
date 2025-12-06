@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import {
   IS_SHAREABLE_COPY_PROPERTY,
   LATEST_SHARED_VERSION_PROPERTY,
@@ -50,6 +49,7 @@ import {
 } from "../../utils/signin-adapter.js";
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { makeUrl } from "../../utils/urls.js";
+import { GoogleDriveBoardServer } from "../../../board-server/server.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");

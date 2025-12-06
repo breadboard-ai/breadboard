@@ -18,7 +18,6 @@ import { boardServerContext } from "./ui/contexts/board-server.js";
 import type { Outcome, UUID } from "@breadboard-ai/types";
 import { SigninAdapter } from "./ui/utils/signin-adapter.js";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit/board-server/server.js";
 import type {
   SnackbarActionEvent,
   StateEvent,
@@ -29,6 +28,7 @@ import { SnackbarMessage, SnackType } from "./ui/types/types.js";
 import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
 import { RecentBoardStore } from "./data/recent-boards";
 import { SignalWatcher } from "@lit-labs/signals";
+import { GoogleDriveBoardServer } from "./board-server/server.js";
 
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
