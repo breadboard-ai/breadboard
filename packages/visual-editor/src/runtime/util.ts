@@ -29,7 +29,7 @@ import {
   generatePaletteFromColor,
   generatePaletteFromImage,
 } from "../theme/index.js";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { loadImage } from "../ui/utils/image.js";
 import { isLLMContentArray } from "../data/common.js";
 

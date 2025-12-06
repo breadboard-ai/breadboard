@@ -11,10 +11,10 @@ import type {
 import { openDB, type DBSchema, type IDBPObjectStore } from "idb";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
-import type { GoogleDriveClient } from "../google-drive-client.js";
-import { makeGraphListQuery } from "./operations.js";
-import { readProperties } from "./utils.js";
 import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { makeGraphListQuery } from "@breadboard-ai/utils/google-drive/operations.js";
+import { readProperties } from "@breadboard-ai/utils/google-drive/utils.js";
 
 const DB_NAME = "graph-cache";
 const USER_GRAPHS_STORE_NAME = "user-graphs";

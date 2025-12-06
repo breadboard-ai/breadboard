@@ -17,8 +17,8 @@ import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
 import { boardServerContext } from "./ui/contexts/board-server.js";
 import type { Outcome, UUID } from "@breadboard-ai/types";
 import { SigninAdapter } from "./ui/utils/signin-adapter.js";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit/board-server/server.js";
 import type {
   SnackbarActionEvent,
   StateEvent,

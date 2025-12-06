@@ -30,7 +30,7 @@ import {
   WorkspaceVisualChangeId,
 } from "./runtime/types";
 
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 
 import {
   canonicalizeOAuthScope,

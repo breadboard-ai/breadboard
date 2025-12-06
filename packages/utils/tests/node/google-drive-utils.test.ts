@@ -9,7 +9,7 @@ import { suite, test } from "node:test";
 import {
   diffAssetReadPermissions,
   truncateValueForUtf8,
-} from "../../src/board-server/utils.js";
+} from "../../src/google-drive/utils.js";
 
 suite("truncateValueForUtf8", () => {
   test("truncates if needed", () => {

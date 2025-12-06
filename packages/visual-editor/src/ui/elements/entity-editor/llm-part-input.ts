@@ -15,7 +15,7 @@ import { DrawableInput } from "../input/drawable/drawable.js";
 import { resolveImage } from "../../utils/image.js";
 import { consume } from "@lit/context";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import {
   isFileDataCapabilityPart,
   isInlineData,

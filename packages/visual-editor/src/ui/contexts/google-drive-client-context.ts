@@ -5,7 +5,7 @@
  */
 
 import { createContext } from "@lit/context";
-import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { type GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 
 export const googleDriveClientContext = createContext<
   GoogleDriveClient | undefined

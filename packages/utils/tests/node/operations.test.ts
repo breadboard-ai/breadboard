@@ -6,10 +6,9 @@
 
 import { beforeEach, describe, it } from "node:test";
 import { deepEqual } from "node:assert";
-
-import { createProperties } from "../../src/board-server/operations.js";
-import { readProperties } from "../../src/board-server/utils.js";
-import type { NarrowedDriveFile } from "../../src/google-drive-client.js";
+import { NarrowedDriveFile } from "../../src/google-drive/google-drive-client.js";
+import { readProperties } from "../../src/google-drive/utils.js";
+import { createProperties } from "../../src/google-drive/operations.js";
 
 describe("create/readProperties", () => {
   let properties: Record<string, string>;

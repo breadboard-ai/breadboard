@@ -52,9 +52,9 @@ import "./header/header.js";
 import {
   MAIN_TO_SHAREABLE_COPY_PROPERTY,
   SHAREABLE_COPY_TO_MAIN_PROPERTY,
-} from "@breadboard-ai/google-drive-kit/board-server/operations.js";
-import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
-import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+} from "@breadboard-ai/utils/google-drive/operations.js";
+import { extractGoogleDriveFileId } from "@breadboard-ai/utils/google-drive/utils.js";
+import { type GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import * as ParticlesUI from "../../../particles-ui";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";

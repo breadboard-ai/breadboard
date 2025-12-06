@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { partToDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
+import { partToDriveFileId } from "@breadboard-ai/utils/google-drive/utils.js";
 import { AppScreenOutput, DataPart, LLMContent } from "@breadboard-ai/types";
 import { isStoredData } from "@breadboard-ai/utils";
 import { SignalMap } from "signal-utils/map";

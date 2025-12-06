@@ -8,7 +8,7 @@ import { SettingsStore } from "../ui/data/settings-store.js";
 import { Runtime } from "../runtime/runtime";
 import { Tab } from "../runtime/types";
 import type * as BreadboardUI from "../ui/index.js";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { type OAuthScope } from "../ui/connection/oauth-scopes.js";
 import { BoardServer } from "@breadboard-ai/types";
 import { EmbedHandler } from "../ui/embed/embed.js";

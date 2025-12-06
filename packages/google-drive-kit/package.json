@@ -25,30 +25,20 @@
       "types": null,
       "default": null
     },
-    "./internal/*.js": {
-      "types": "./dist/src/internal/*.d.ts",
-      "default": null
-    },
     "./*.js": {
       "types": "./dist/src/*.d.ts",
       "default": "./dist/src/*.js"
-    },
-    "./google-drive.kit.json": "./google-drive.kit.json"
+    }
   },
   "files": [
     "dist/**/*.{js,js.map,d.ts}",
-    "!dist/test/",
     "CHANGELOG.md"
   ],
   "scripts": {
     "prepack": "npm run build",
     "build": "wireit",
     "build:tsc": "wireit",
-    "test": "wireit",
-    "coverage": "wireit",
-    "lint": "wireit",
-    "test-and-lint": "wireit",
-    "dev": "npm run test-and-lint --watch"
+    "lint": "wireit"
   },
   "wireit": {
     "build": {
@@ -64,7 +54,6 @@
       ],
       "files": [
         "src/**/*.ts",
-        "tests/**/*.ts",
         "tsconfig.json",
         "package.json"
       ],
@@ -72,26 +61,6 @@
         "dist/"
       ],
       "clean": "if-file-deleted"
-    },
-    "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/tests/**/*.js",
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [
-        "tests/**/*.ts"
-      ],
-      "output": []
-    },
-    "coverage": {
-      "command": "node --test --enable-source-maps --experimental-test-coverage --test-reporter lcov --test-reporter-destination=lcov.info dist/test/*_test.js",
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [],
-      "output": [
-        "lcov.info"
-      ]
     },
     "lint": {
       "command": "eslint src/ --ext .ts",
@@ -103,12 +72,6 @@
         "../../.eslintrc.json"
       ],
       "output": []
-    },
-    "test-and-lint": {
-      "dependencies": [
-        "test",
-        "lint"
-      ]
     }
   },
   "dependencies": {

@@ -60,7 +60,7 @@ import { icons } from "../../styles/icons.js";
 import { EntityEditor } from "../elements.js";
 import { consume, provide } from "@lit/context";
 import { SharePanel } from "../share-panel/share-panel.js";
-import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { type GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { effects } from "../../styles/host/effects.js";
 import { GraphTheme } from "@breadboard-ai/types";

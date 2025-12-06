@@ -7,7 +7,7 @@
 import type {
   DriveFileId,
   GoogleDriveClient,
-} from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+} from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { consume } from "@lit/context";
 import { Task } from "@lit/task";
 import { LitElement, type PropertyValues, css, html } from "lit";
