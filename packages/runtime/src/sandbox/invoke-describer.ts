@@ -11,8 +11,8 @@ import {
   MutableGraph,
   NodeDescriberResult,
   NodeHandlerContext,
+  Schema,
 } from "@breadboard-ai/types";
-import { Schema } from "jsonschema";
 import { filterEmptyValues, ok } from "@breadboard-ai/utils";
 import { CapabilitiesManager } from "@breadboard-ai/types/sandbox.js";
 

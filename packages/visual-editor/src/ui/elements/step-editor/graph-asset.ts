@@ -4,28 +4,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { html, css, PropertyValues, nothing } from "lit";
+import { AssetPath, InspectableAsset, LLMContent } from "@breadboard-ai/types";
+import { ok } from "@breadboard-ai/utils";
+import { SignalWatcher } from "@lit-labs/signals";
+import { css, html, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { styleMap } from "lit/directives/style-map.js";
 import { classMap } from "lit/directives/class-map.js";
-import { toCSSMatrix } from "./utils/to-css-matrix";
+import { createRef, ref, Ref } from "lit/directives/ref.js";
+import { repeat } from "lit/directives/repeat.js";
+import { styleMap } from "lit/directives/style-map.js";
+import { DragConnectorStartEvent } from "../../events/events";
+import { GraphAsset as GraphAssetState } from "../../state/types.js";
+import { baseColors } from "../../styles/host/base-colors.js";
+import { type } from "../../styles/host/type.js";
+import { icons } from "../../styles/icons.js";
+import { DragConnectorReceiver } from "../../types/types";
 import { Box } from "./box";
 import {
   NodeBoundsUpdateRequestEvent,
   SelectionTranslateEvent,
 } from "./events/events";
-import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { repeat } from "lit/directives/repeat.js";
+import { toCSSMatrix } from "./utils/to-css-matrix";
 import { toGridSize } from "./utils/to-grid-size";
-import { DragConnectorReceiver } from "../../types/types";
-import { DragConnectorStartEvent } from "../../events/events";
-import { AssetPath, LLMContent } from "@breadboard-ai/types";
-import { InspectableAsset, ok } from "@google-labs/breadboard";
-import { SignalWatcher } from "@lit-labs/signals";
-import { GraphAsset as GraphAssetState } from "../../state/types.js";
-import { icons } from "../../styles/icons.js";
-import { baseColors } from "../../styles/host/base-colors.js";
-import { type } from "../../styles/host/type.js";
 
 @customElement("bb-graph-asset")
 export class GraphAsset

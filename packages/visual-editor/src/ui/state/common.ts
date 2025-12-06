@@ -5,7 +5,7 @@
  */
 
 import { FileDataPart, JSONPart, LLMContent } from "@breadboard-ai/types";
-import { OutputValues, Schema } from "@google-labs/breadboard";
+import { OutputValues, Schema } from "@breadboard-ai/types";
 
 export {
   getParticleStreamHandle,

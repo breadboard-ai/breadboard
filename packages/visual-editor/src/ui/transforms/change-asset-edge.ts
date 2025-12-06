@@ -4,23 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { isTextCapabilityPart } from "@breadboard-ai/data";
 import {
   EditOperationContext,
   EditTransform,
   EditTransformResult,
   GraphIdentifier,
-  isTextCapabilityPart,
-  Template,
-} from "@google-labs/breadboard";
-import { AssetEdge } from "../types/types";
-import { isLLMContentBehavior, isPreviewBehavior } from "../utils/behaviors";
-import {
   LLMContent,
   NodeValue,
   TextCapabilityPart,
 } from "@breadboard-ai/types";
-import { getMimeType } from "../utils/mime-type";
+import { Template } from "@breadboard-ai/utils";
+import { AssetEdge } from "../types/types";
+import { isLLMContentBehavior, isPreviewBehavior } from "../utils/behaviors";
 import { jsonStringify } from "../utils/json-stringify";
+import { getMimeType } from "../utils/mime-type";
 
 export { ChangeAssetEdge as ChangeAssetEdge };
 

@@ -23,18 +23,14 @@ import {
 } from "../../types/types";
 
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
-import * as Theme from "../../../theme/index.js";
-import {
-  BoardServer,
-  GraphDescriptor,
-  isInlineData,
-  isLLMContentArray,
-  ok,
-} from "@google-labs/breadboard";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume, provide } from "@lit/context";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
+import * as A2UI from "../../../a2ui/0.8/ui/ui.js";
+import { v0_8 } from "../../../a2ui/index.js";
+import * as Theme from "../../../theme/index.js";
+import { theme as a2uiTheme } from "../../a2ui-theme/a2ui-theme.js";
 import { boardServerContext } from "../../contexts/board-server.js";
 import { projectRunContext } from "../../contexts/project-run.js";
 import {
@@ -50,15 +46,14 @@ import { ActionTracker } from "../../utils/action-tracker.js";
 import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js";
 import { styles as appStyles } from "./index.styles.js";
 import { theme as uiTheme } from "./theme/light.js";
-import { v0_8 } from "../../../a2ui/index.js";
-import * as A2UI from "../../../a2ui/0.8/ui/ui.js";
-import { theme as a2uiTheme } from "../../a2ui-theme/a2ui-theme.js";
 
 import "./header/header.js";
 
 import {
   extensionFromMimeType,
   inlineAllContent,
+  isInlineData,
+  isLLMContentArray,
   saveOutputsAsFile,
 } from "@breadboard-ai/data";
 import {
@@ -67,30 +62,33 @@ import {
 } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
 import { extractGoogleDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
 import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import * as ParticlesUI from "../../../particles-ui";
 import { createRef, ref } from "lit/directives/ref.js";
+import * as ParticlesUI from "../../../particles-ui";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { markdown } from "../../directives/markdown.js";
 import { makeUrl } from "../../utils/urls.js";
 
 import {
   AppScreenOutput,
-  RuntimeFlags,
+  BoardServer,
   ConsentAction,
   ConsentType,
   ConsentUIType,
+  GraphDescriptor,
+  RuntimeFlags,
 } from "@breadboard-ai/types";
-import { maybeTriggerNlToOpalSatisfactionSurvey } from "../../survey/nl-to-opal-satisfaction-survey.js";
+import { ok } from "@breadboard-ai/utils";
 import { repeat } from "lit/directives/repeat.js";
 import { consentManagerContext } from "../../contexts/consent-manager.js";
-import {
-  ConsentManager,
-  CONSENT_RENDER_INFO,
-} from "../../utils/consent-manager.js";
 import {
   GlobalConfig,
   globalConfigContext,
 } from "../../contexts/global-config.js";
+import { maybeTriggerNlToOpalSatisfactionSurvey } from "../../survey/nl-to-opal-satisfaction-survey.js";
+import {
+  CONSENT_RENDER_INFO,
+  ConsentManager,
+} from "../../utils/consent-manager.js";
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 const toFunctionString = (fn: Function, bindings?: Record<string, unknown>) => {

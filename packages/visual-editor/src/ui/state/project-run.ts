@@ -4,20 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type ParticleTree, ParticleTreeImpl } from "../../particles/index.js";
 import {
   AppScreenOutput,
   ConsoleEntry,
   EditableGraph,
   ErrorObject,
   ErrorResponse,
+  FileSystem,
   GraphDescriptor,
   HarnessRunner,
+  InspectableGraph,
   InspectableNode,
+  MainGraphIdentifier,
+  MutableGraphStore,
   NodeIdentifier,
   NodeLifecycleState,
   NodeMetadata,
   NodeRunState,
+  Outcome,
+  OutputValues,
   RunConfig,
   RunError,
   RunErrorEvent,
@@ -30,21 +35,16 @@ import {
   Schema,
   SimplifiedProjectRunState,
 } from "@breadboard-ai/types";
-import {
-  err,
-  FileSystem,
-  InspectableGraph,
-  MainGraphIdentifier,
-  MutableGraphStore,
-  ok,
-  Outcome,
-  OutputValues,
-} from "@google-labs/breadboard";
+import { type ParticleTree, ParticleTreeImpl } from "../../particles/index.js";
+
+import { err, ok } from "@breadboard-ai/utils";
+import { Signal } from "signal-polyfill";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { SignalSet } from "signal-utils/set";
 import { StateEvent } from "../events/events";
 import { getStepIcon } from "../utils/get-step-icon";
+import { edgeToString } from "../utils/workspace";
 import { ReactiveApp } from "./app";
 import { ReactiveAppScreen } from "./app-screen";
 import { getParticleStreamHandle, idFromPath } from "./common";
@@ -60,8 +60,6 @@ import {
 } from "./types";
 import { decodeError, decodeErrorData } from "./utils/decode-error";
 import { ParticleOperationReader } from "./utils/particle-operation-reader";
-import { edgeToString } from "../utils/workspace";
-import { Signal } from "signal-polyfill";
 
 export { createProjectRunStateFromFinalOutput, ReactiveProjectRun };
 

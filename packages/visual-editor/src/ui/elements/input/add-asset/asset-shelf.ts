@@ -4,10 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LLMContent } from "@breadboard-ai/types";
-import {
-  isFileDataCapabilityPart,
-  isInlineData,
-} from "@google-labs/breadboard";
+import { isFileDataCapabilityPart, isInlineData } from "@breadboard-ai/data";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";

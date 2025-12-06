@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BehaviorSchema, Schema } from "@google-labs/breadboard";
+import { BehaviorSchema, Schema } from "@breadboard-ai/types";
 import Ajv, { AnySchema, ValidateFunction } from "ajv";
 
 const LLMContentSchema = {

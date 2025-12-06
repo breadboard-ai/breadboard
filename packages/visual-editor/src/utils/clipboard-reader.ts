@@ -8,11 +8,12 @@ import {
   FileDataPart,
   GraphDescriptor,
   InlineDataCapabilityPart,
+  MutableGraphStore,
   TextCapabilityPart,
 } from "@breadboard-ai/types";
-import { asBase64, MutableGraphStore } from "@google-labs/breadboard";
 import * as BreadboardUI from "../ui/index.js";
 import { isShortsUri } from "../ui/utils/youtube.js";
+import { asBase64 } from "@breadboard-ai/data";
 
 export { ClipboardReader };
 

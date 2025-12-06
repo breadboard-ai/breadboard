@@ -14,7 +14,7 @@ import {
   InspectableNode,
   NodeIdentifier,
   PortStatus,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import { willCreateCycle } from "@breadboard-ai/utils";
 import { transformConfiguration } from "./transform-all-nodes";
 

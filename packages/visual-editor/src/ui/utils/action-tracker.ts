@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PartialPersistentBackend } from "@google-labs/breadboard";
+import { PartialPersistentBackend } from "../../engine/file-system/partial-persistent-backend.js";
 import { createTrustedAnalyticsURL } from "../trusted-types/analytics-url.js";
 
 export { ActionTracker, initializeAnalytics, createActionTrackerBackend };

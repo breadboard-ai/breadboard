@@ -4,26 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { isLLMContent, isTextCapabilityPart } from "@breadboard-ai/data";
 import type {
+  DataPart,
   GraphDescriptor,
+  LLMContent,
   NodeConfiguration,
   NodeDescriptor,
-  LLMContent,
-  DataPart,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
+import { Template } from "@breadboard-ai/utils";
+import { createContext } from "@lit/context";
+import { signal } from "signal-utils";
 import type {
   AppCatalystApiClient,
   AppCatalystChatRequest,
   AppCatalystContentChunk,
 } from "./app-catalyst.js";
-import {
-  isLLMContent,
-  isTextCapabilityPart,
-  Template,
-} from "@google-labs/breadboard";
-import { createContext } from "@lit/context";
-import { signal } from "signal-utils";
 
 export interface OneShotFlowGenRequest {
   intent: string;

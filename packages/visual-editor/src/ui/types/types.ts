@@ -15,7 +15,7 @@ import type {
   NodeIdentifier,
   PortIdentifier,
   InspectableAssetEdgeDirection,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import type {
   AppPalette,
   AssetPath,

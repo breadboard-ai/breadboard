@@ -14,7 +14,7 @@ import type {
   EditHistoryCreator,
   EditHistoryEntry,
   GraphDescriptor,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import {
   type SigninAdapter,

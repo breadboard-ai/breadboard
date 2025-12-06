@@ -19,7 +19,7 @@ import {
   ToastType,
 } from "../../events/events";
 import { collectNodeIds } from "./utils/collect-ids";
-import { PortIdentifier } from "@google-labs/breadboard";
+import { PortIdentifier } from "@breadboard-ai/types";
 import { MAIN_BOARD_ID } from "../../constants/constants";
 import { NodeSelectEvent } from "./events/events";
 

@@ -12,7 +12,7 @@ import {
   WorkItem,
 } from "@breadboard-ai/types";
 import { timestamp } from "@breadboard-ai/utils";
-import { InputResponse, OutputResponse, Schema } from "@google-labs/breadboard";
+import { InputResponse, OutputResponse, Schema } from "@breadboard-ai/types";
 import { Signal } from "signal-polyfill";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";

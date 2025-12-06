@@ -15,7 +15,7 @@ import {
   GraphDescriptor,
   MainGraphIdentifier,
   MutableGraphStore,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import {
   HTMLTemplateResult,
   LitElement,

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InspectableNodePorts } from "@google-labs/breadboard";
+import { InspectableNodePorts } from "@breadboard-ai/types";
 import { isControllerBehavior } from "./behaviors";
 import { iconSubstitute } from "./icon-substitute";
 

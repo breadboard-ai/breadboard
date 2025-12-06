@@ -6,8 +6,6 @@
 
 import { LLMContent } from "@breadboard-ai/types";
 import {
-  asBase64,
-  asBlob,
   EphemeralBlobStore,
   FileSystemPath,
   FileSystemQueryResult,
@@ -15,10 +13,11 @@ import {
   Outcome,
   PersistentBackend,
   PersistentBlobHandle,
-  transformBlobs,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 
 import { openDB, DBSchema, IDBPDatabase } from "idb";
+import { transformBlobs } from "../../engine/file-system/blob-transform";
+import { asBase64, asBlob } from "@breadboard-ai/data";
 
 export { IDBBackend, type Files };
 

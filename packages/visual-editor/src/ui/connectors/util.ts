@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LLMContent, NodeValue } from "@breadboard-ai/types";
+import { LLMContent, NodeValue, Outcome } from "@breadboard-ai/types";
+import { err } from "@breadboard-ai/utils";
 import { ConnectorConfiguration } from "./types";
-import { err, Outcome } from "@google-labs/breadboard";
 
 export { configFromData };
 

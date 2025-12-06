@@ -7,23 +7,24 @@
 import type {
   GraphIdentifier,
   GraphMetadata,
+  InspectablePort,
   LLMContent,
   NodeIdentifier,
   NodeValue,
+  PortIdentifier,
 } from "@breadboard-ai/types";
-import type { InspectablePort, PortIdentifier } from "@google-labs/breadboard";
 import type { TemplatePartParameterType } from "@breadboard-ai/utils";
 import type {
   AppTemplateAdditionalOptionsAvailable,
   Command,
   EdgeData,
   Settings,
-  UserOutputValues,
-  Utterance,
-  WorkspaceVisualChangeId,
   SnackType,
   SnackbarAction,
   SnackbarUUID,
+  UserOutputValues,
+  Utterance,
+  WorkspaceVisualChangeId,
 } from "../types/types.js";
 
 const eventInit = {
@@ -41,13 +42,13 @@ export enum ToastType {
 
 /** State Event System */
 
+import { HTMLTemplateResult } from "lit";
+import type * as App from "./app/app.js";
+import type * as Asset from "./asset/asset.js";
+import { BaseEventDetail } from "./base.js";
 import type * as Board from "./board/board.js";
 import type * as Host from "./host/host.js";
 import type * as Node from "./node/node.js";
-import type * as Asset from "./asset/asset.js";
-import type * as App from "./app/app.js";
-import { BaseEventDetail } from "./base.js";
-import { HTMLTemplateResult } from "lit";
 
 type EnforceEventTypeMatch<T extends Record<string, BaseEventDetail<string>>> =
   {

@@ -5,7 +5,7 @@
  */
 
 import { JsonSerializable, LLMContent, UUID } from "@breadboard-ai/types";
-import { Outcome, Schema } from "@google-labs/breadboard";
+import { Outcome, Schema } from "@breadboard-ai/types";
 
 export type ConfiguratorStage = "initialize" | "read" | "write";
 

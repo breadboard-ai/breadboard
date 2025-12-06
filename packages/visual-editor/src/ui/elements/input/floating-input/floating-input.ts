@@ -13,12 +13,7 @@ import {
   StateEvent,
   UtteranceEvent,
 } from "../../../events/events";
-import {
-  isLLMContent,
-  NodeValue,
-  OutputValues,
-  Schema,
-} from "@google-labs/breadboard";
+import { isLLMContent } from "@breadboard-ai/data";
 import { repeat } from "lit/directives/repeat.js";
 import {
   isLLMContentArrayBehavior,
@@ -26,7 +21,12 @@ import {
 } from "../../../utils";
 import { AssetShelf } from "../add-asset/asset-shelf";
 import { maybeConvertToYouTube } from "../../../utils/substitute-input";
-import { LLMContent } from "@breadboard-ai/types";
+import {
+  LLMContent,
+  NodeValue,
+  OutputValues,
+  Schema,
+} from "@breadboard-ai/types";
 import { icons } from "../../../styles/icons";
 import { type } from "../../../styles/host/type";
 import { classMap } from "lit/directives/class-map.js";

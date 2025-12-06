@@ -13,7 +13,7 @@ import {
   InspectableEdge,
   InspectableNode,
   Outcome,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import { GraphNode } from "./graph-node";
 import {
   createEmptyGraphHighlightState,

@@ -10,7 +10,7 @@ import {
   EditTransformResult,
   GraphIdentifier,
   NodeIdentifier,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import { AutoWireInPorts } from "./autowire-in-ports";
 import { TransformAllNodes } from "./transform-all-nodes";
 

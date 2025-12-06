@@ -4,29 +4,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AppScreenOutput, DataPart, LLMContent } from "@breadboard-ai/types";
 import {
+  isCodeExecutionResultPart,
+  isExecutableCodePart,
   isFileDataCapabilityPart,
   isInlineData,
   isLLMContent,
   isLLMContentArray,
-} from "@google-labs/breadboard";
+  isTextCapabilityPart,
+} from "@breadboard-ai/data";
+import { partToDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
+import { AppScreenOutput, DataPart, LLMContent } from "@breadboard-ai/types";
 import { isStoredData } from "@breadboard-ai/utils";
-import { isTextCapabilityPart } from "@google-labs/breadboard";
+import { SignalMap } from "signal-utils/map";
 import {
   BehaviorHint,
-  Presentation,
   Field,
   GroupParticle,
   Particle,
   ParticleIdentifier,
+  Presentation,
 } from "../../../../particles/index.js";
-import { SignalMap } from "signal-utils/map";
-import { partToDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
-import {
-  isCodeExecutionResultPart,
-  isExecutableCodePart,
-} from "@breadboard-ai/data";
 
 function as(mimeType: string, isStored = false): Field["as"] {
   const mimePrefix = mimeType.split("/").at(0);

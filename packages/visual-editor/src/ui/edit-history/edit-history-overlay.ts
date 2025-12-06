@@ -8,7 +8,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { icons } from "../styles/icons.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import type { EditHistory } from "@google-labs/breadboard";
+import type { EditHistory } from "@breadboard-ai/types";
 import { HighlightEvent } from "../elements/step-editor/events/events.js";
 import { createRef, ref } from "lit/directives/ref.js";
 

@@ -10,8 +10,10 @@ import {
   InspectableAssetEdge,
   InspectableEdge,
   InspectableGraph,
+  ModuleIdentifier,
   NodeIdentifier,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
+import { MAIN_BOARD_ID } from "../constants/constants";
 import {
   GraphHighlightState,
   GraphSelectionState,
@@ -19,8 +21,6 @@ import {
   WorkspaceSelectionChangeId,
   WorkspaceSelectionState,
 } from "../types/types";
-import { MAIN_BOARD_ID } from "../constants/constants";
-import { ModuleIdentifier } from "@breadboard-ai/types";
 import { isBoardArrayBehavior, isBoardBehavior } from "./behaviors.js";
 
 export function edgeToString(edge: Edge): string {

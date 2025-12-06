@@ -9,7 +9,7 @@ import {
   Particle,
   TextParticle,
 } from "../../../../../particles/index.js";
-import { err, ok, Outcome } from "@google-labs/breadboard";
+import { err, ok } from "@breadboard-ai/utils";
 import { html, SignalWatcher } from "@lit-labs/signals";
 import { css, LitElement, nothing, TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
@@ -19,6 +19,7 @@ import { icons } from "../../../../styles/icons";
 import { sharedStyles } from "./../shared-styles";
 import { baseColors } from "../../../../styles/host/base-colors";
 import { type } from "../../../../styles/host/type";
+import { Outcome } from "@breadboard-ai/types";
 
 @customElement("bb-particle-update")
 export class ParticleUpdate extends SignalWatcher(LitElement) {

@@ -25,7 +25,7 @@ import type {
 } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { type GraphDescriptor } from "@breadboard-ai/types";
 import type { DomainConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
-import { type BoardServer } from "@google-labs/breadboard";
+import { type BoardServer } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import "@material/web/switch/switch.js";
 import { type MdSwitch } from "@material/web/switch/switch.js";

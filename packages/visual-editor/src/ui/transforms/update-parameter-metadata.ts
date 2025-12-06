@@ -4,19 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { isLLMContent, isLLMContentArray } from "@breadboard-ai/data";
 import { LLMContent, ParameterMetadata } from "@breadboard-ai/types";
 import {
   EditOperationContext,
   EditTransform,
   EditTransformResult,
   GraphIdentifier,
-  isLLMContent,
-  isLLMContentArray,
   NodeConfiguration,
   NodeIdentifier,
-  Template,
-  TemplatePart,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
+import { Template, TemplatePart } from "@breadboard-ai/utils";
 
 export { UpdateParameterMetadata };
 

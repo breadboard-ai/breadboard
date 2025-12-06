@@ -4,10 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  type BoardServer,
-  type GraphProviderItem,
-} from "@google-labs/breadboard";
+import { type BoardServer, type GraphProviderItem } from "@breadboard-ai/types";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing } from "lit";

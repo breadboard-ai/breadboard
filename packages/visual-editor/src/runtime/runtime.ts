@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import type * as BreadboardUI from "../ui/index.js";
-import { createGraphStore, createLoader, err } from "@google-labs/breadboard";
 import { Router } from "./router.js";
 import { Board } from "./board.js";
 import { Run } from "./run.js";
@@ -18,7 +17,12 @@ export * as Types from "./types.js";
 import { Select } from "./select.js";
 import { StateManager } from "./state.js";
 import { Shell } from "./shell.js";
-import { Outcome, RunConfig, RuntimeFlagManager } from "@breadboard-ai/types";
+import {
+  Outcome,
+  PersistentBackend,
+  RunConfig,
+  RuntimeFlagManager,
+} from "@breadboard-ai/types";
 import {
   RuntimeHostStatusUpdateEvent,
   RuntimeSnackbarEvent,
@@ -36,13 +40,6 @@ import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configu
 import { createGoogleDriveBoardServer } from "../ui/utils/create-server.js";
 import { createA2Server, createA2ModuleFactory } from "../a2/index.js";
 import { createFileSystemBackend, createFlagManager } from "../idb/index.js";
-import {
-  addRunModule,
-  composeFileSystemBackends,
-  createEphemeralBlobStore,
-  createFileSystem,
-  PersistentBackend,
-} from "@google-labs/breadboard";
 import { RecentBoardStore } from "../data/recent-boards";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { McpClientManager } from "../mcp/index.js";
@@ -61,6 +58,13 @@ import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
 import { AppCatalystApiClient } from "../ui/flow-gen/app-catalyst.js";
 import { EmailPrefsManager } from "../ui/utils/email-prefs-manager.js";
+import { err } from "@breadboard-ai/utils";
+import { createLoader } from "@breadboard-ai/loader";
+import { createFileSystem } from "../engine/file-system/index.js";
+import { createEphemeralBlobStore } from "../engine/file-system/ephemeral-blob-store.js";
+import { composeFileSystemBackends } from "../engine/file-system/composed-peristent-backend.js";
+import { addRunModule } from "../engine/add-run-module.js";
+import { createGraphStore } from "../engine/inspector/index.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;

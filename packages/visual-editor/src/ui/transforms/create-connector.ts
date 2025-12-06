@@ -9,7 +9,7 @@ import {
   EditOperationContext,
   EditTransform,
   EditTransformResult,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import { ConnectorInitializerResult } from "../connectors/types";
 
 export { CreateConnector };

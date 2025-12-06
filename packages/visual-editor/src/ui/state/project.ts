@@ -18,17 +18,14 @@ import {
   EditableGraph,
   EditSpec,
   EditTransform,
-  err,
   FileSystem,
   GraphStoreEntry,
   MainGraphIdentifier,
   MutableGraphStore,
   NodeHandlerMetadata,
-  ok,
   Outcome,
   PortIdentifier,
-  transformDataParts,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { ConnectorType } from "../connectors/types";
@@ -60,6 +57,8 @@ import { McpClientManager } from "../../mcp/index.js";
 import { StepEditorImpl } from "./step-editor";
 import { ThemeState } from "./theme-state";
 import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
+import { err, ok } from "@breadboard-ai/utils";
+import { transformDataParts } from "@breadboard-ai/data";
 
 export { createProjectState, ReactiveProject };
 

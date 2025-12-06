@@ -11,7 +11,7 @@ import {
   EditTransformResult,
   GraphIdentifier,
   NodeIdentifier,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import { TransformAllNodes } from "./transform-all-nodes";
 
 export { MarkInPortsInvalidSpec };

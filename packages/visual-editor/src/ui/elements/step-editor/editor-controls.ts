@@ -26,7 +26,7 @@ import {
   InspectableGraph,
   MainGraphIdentifier,
   MutableGraphStore,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { DATA_TYPE } from "./constants.js";

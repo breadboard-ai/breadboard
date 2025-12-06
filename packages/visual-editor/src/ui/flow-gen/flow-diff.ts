@@ -5,12 +5,12 @@
  */
 
 import type {
+  ChangeConfigurationSpec,
   GraphDescriptor,
   JsonSerializable,
   NodeConfiguration,
   NodeDescriptor,
 } from "@breadboard-ai/types";
-import type { ChangeConfigurationSpec } from "@google-labs/breadboard";
 
 export function findConfigurationChanges(
   oldFlow: GraphDescriptor,

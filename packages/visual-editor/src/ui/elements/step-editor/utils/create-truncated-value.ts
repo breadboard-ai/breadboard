@@ -5,14 +5,13 @@
  */
 
 import {
-  InspectablePort,
   isInlineData,
   isLLMContent,
   isLLMContentArray,
   isTextCapabilityPart,
-  Template,
-} from "@google-labs/breadboard";
-import { isStoredData } from "@breadboard-ai/utils";
+} from "@breadboard-ai/data";
+import { InspectablePort } from "@breadboard-ai/types";
+import { isStoredData, Template } from "@breadboard-ai/utils";
 import {
   isConfigurableBehavior,
   isLLMContentArrayBehavior,

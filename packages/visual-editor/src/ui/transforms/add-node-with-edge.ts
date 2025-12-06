@@ -11,7 +11,7 @@ import {
   EditTransformResult,
   GraphIdentifier,
   NodeDescriptor,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import { ChangeEdge } from "./change-edge";
 
 export { AddNodeWithEdge };

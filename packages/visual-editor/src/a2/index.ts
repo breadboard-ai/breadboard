@@ -4,12 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BoardServer } from "@google-labs/breadboard";
-
+import { BoardServer } from "@breadboard-ai/types";
 import { bgl as a2Bgl } from "./a2/index";
 import { bgl as agentBgl } from "./agent/index";
 import { bgl as audioGeneratorBgl } from "./audio-generator/index";
+import { bgl as autonameBgl } from "./autoname/index";
 import { bgl as deepResearchBgl } from "./deep-research/index";
+import {
+  EmbeddedBoardServer,
+  isFromEmbeddedServer,
+} from "./embedded-board-server";
 import { bgl as generateTextBgl } from "./generate-text/index";
 import { bgl as generateBgl } from "./generate/index";
 import { bgl as goOverListBgl } from "./go-over-list/index";
@@ -17,11 +21,6 @@ import { bgl as googleDriveBgl } from "./google-drive/index";
 import { bgl as musicGeneratorBgl } from "./music-generator/index";
 import { bgl as toolsBgl } from "./tools/index";
 import { bgl as videoGeneratorBgl } from "./video-generator/index";
-import { bgl as autonameBgl } from "./autoname/index";
-import {
-  EmbeddedBoardServer,
-  isFromEmbeddedServer,
-} from "./embedded-board-server";
 
 export { createA2ModuleFactory } from "./runnable-module-factory";
 export { createA2Server, isA2 };

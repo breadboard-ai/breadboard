@@ -9,7 +9,7 @@ import {
   EditOperationContext,
   EditTransform,
   EditTransformResult,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import { TransformAllNodesAllGraphs } from "./transform-all-nodes-all-graphs";
 
 export { UpdateAssetRefs };
