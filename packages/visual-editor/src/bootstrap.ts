@@ -75,7 +75,9 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       // Signed-out users can access public graphs
       (page === "graph" ||
         // The Lite gallery has a signed-out mode
-        (lite && page === "home")))
+        (lite && page === "home") ||
+        // The open page prompts to sign-in and then redirects.
+        page === "open"))
   ) {
     const icon = document.createElement("link");
     icon.rel = "icon";
@@ -121,7 +123,11 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     }
 
     setColorScheme(colorScheme);
-    if (lite) {
+    if (page === "open") {
+      const { OpenMain } = await import("./index-open.js");
+      const main = new OpenMain(mainArgs);
+      document.body.appendChild(main);
+    } else if (lite) {
       if (page === "home" && !parsedUrl.new) {
         const { LiteHome } = await import("./index-lite-home.js");
         const liteHome = new LiteHome(mainArgs);

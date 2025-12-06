@@ -8,7 +8,7 @@ import type {
   LandingUrlInit,
   MakeUrlInit,
   LanguagePack,
-  GraphInit,
+  GraphUrlInit,
 } from "../ui/types/types.js";
 import { SigninAdapter } from "../ui/utils/signin-adapter";
 import {
@@ -191,7 +191,7 @@ async function init() {
     signInHeaderButton.addEventListener("click", onClickSignIn);
     signInButton.addEventListener("click", onClickSignIn);
     document.addEventListener("loadgalleryflow", (event: Event) => {
-      const urlEvent = event as CustomEvent<GraphInit>;
+      const urlEvent = event as CustomEvent<GraphUrlInit>;
       onClickSignIn(event, urlEvent.detail);
     });
     scopesErrorSignInButton.addEventListener("click", (event) => {
