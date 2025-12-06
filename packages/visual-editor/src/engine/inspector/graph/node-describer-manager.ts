@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createLoader } from "@breadboard-ai/loader";
+import { createLoader } from "../../loader/index.js";
 import { getHandler, invokeMainDescriber } from "../../runtime/legacy.js";
 import type {
   DescribeResultCacheArgs,

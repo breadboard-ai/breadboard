@@ -4,8 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createLoader, SENTINEL_BASE_URL } from "@breadboard-ai/loader";
-import { getHandler } from "../../runtime/legacy.js";
+import {
+  assetsFromGraphDescriptor,
+  envFromGraphDescriptor,
+} from "@breadboard-ai/data";
 import type {
   DescribeResultTypeCacheArgs,
   GraphDescriptor,
@@ -16,14 +18,13 @@ import type {
   NodeHandler,
   NodeTypeIdentifier,
 } from "@breadboard-ai/types";
+import { createLoader } from "../../loader/index.js";
+import { SENTINEL_BASE_URL } from "../../loader/loader.js";
+import { getHandler } from "../../runtime/legacy.js";
 import { contextFromMutableGraphStore } from "../graph-store.js";
 import { UpdateEvent } from "./event.js";
 import { emptyResult, NodeDescriberManager } from "./node-describer-manager.js";
 import { describeInput, describeOutput } from "./schemas.js";
-import {
-  assetsFromGraphDescriptor,
-  envFromGraphDescriptor,
-} from "@breadboard-ai/data";
 
 export { NodeTypeDescriberManager };
 

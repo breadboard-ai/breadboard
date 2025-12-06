@@ -4,11 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  resolveBoardCapabilities,
-  resolveGraph,
-  resolveGraphUrls,
-} from "@breadboard-ai/loader";
 import type {
   BreadboardRunResult,
   GraphToRun,
@@ -26,6 +21,9 @@ import { bubbleUpInputsIfNeeded, bubbleUpOutputsIfNeeded } from "../bubble.js";
 import { InputStageResult, OutputStageResult } from "../run.js";
 import { TraversalMachine } from "../traversal/machine.js";
 import { NodeInvoker } from "./node-invoker.js";
+import { resolveGraphUrls } from "../../loader/resolve-graph-urls.js";
+import { resolveGraph } from "../../loader/loader.js";
+import { resolveBoardCapabilities } from "../../loader/capability.js";
 
 /**
  * Runs a graph in "run" mode. See

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { baseURLFromContext } from "@breadboard-ai/loader";
 import {
   GraphDescriptor,
   GraphLoaderResult,
@@ -18,6 +17,7 @@ import {
   ResolvedURLBoardCapability,
   UnresolvedPathBoardCapability,
 } from "@breadboard-ai/types/legacy.js";
+import { baseURLFromContext } from "./loader.js";
 
 // Helpers for BreadboardCapability
 

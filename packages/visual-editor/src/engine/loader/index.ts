@@ -11,19 +11,3 @@ export const createLoader = (boardServers?: BoardServer[]): GraphLoader => {
   const servers = [...(boardServers ?? [])];
   return new Loader(servers);
 };
-
-export {
-  SENTINEL_BASE_URL,
-  baseURLFromContext,
-  resolveGraph,
-  getGraphUrl,
-  baseURLFromString,
-  urlComponentsFromString,
-} from "./loader.js";
-export { resolveGraphUrls } from "./resolve-graph-urls.js";
-
-export {
-  resolveBoardCapabilitiesInInputs,
-  resolveBoardCapabilities,
-  getGraphDescriptor,
-} from "./capability.js";

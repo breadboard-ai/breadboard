@@ -4,10 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SENTINEL_BASE_URL, baseURLFromContext } from "@breadboard-ai/loader";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { deepStrictEqual } from "node:assert";
 import { describe } from "node:test";
+import {
+  baseURLFromContext,
+  SENTINEL_BASE_URL,
+} from "../src/engine/loader/loader.js";
 
 describe("relativeBasePath is relative to invoking board", () => {
   deepStrictEqual(

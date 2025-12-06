@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { baseURLFromString, SENTINEL_BASE_URL } from "@breadboard-ai/loader";
+import { baseURLFromString, SENTINEL_BASE_URL } from "../../loader/loader.js";
 import type {
   AssetPath,
   GraphDescriptor,

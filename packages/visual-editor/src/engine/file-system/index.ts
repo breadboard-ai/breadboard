@@ -31,7 +31,7 @@ import { noStreams } from "./utils.js";
 import { PersistentFile } from "./persistent-file.js";
 import { InMemoryBlobStore } from "./in-memory-blob-store.js";
 import { transformBlobs } from "./blob-transform.js";
-import { baseURLFromString } from "@breadboard-ai/loader";
+import { baseURLFromString } from "../loader/loader.js";
 import { ReadableStreamFile } from "./readable-stream-file.js";
 import { err, ok } from "@breadboard-ai/utils";
 
