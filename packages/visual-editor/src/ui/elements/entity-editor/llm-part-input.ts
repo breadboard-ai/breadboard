@@ -4,23 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { DataPart, InlineDataCapabilityPart } from "@breadboard-ai/types";
-import {
-  isFileDataCapabilityPart,
-  isInlineData,
-  isTextCapabilityPart,
-} from "@breadboard-ai/data";
 import { isStoredData } from "@breadboard-ai/utils";
 import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Project } from "../../state";
-import { TextEditor } from "../input/text-editor/text-editor";
+import { TextEditor } from "../input/text-editor/text-editor.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { icons } from "../../styles/icons.js";
-import { DrawableInput } from "../input/drawable/drawable";
-import { resolveImage } from "../../utils/image";
+import { DrawableInput } from "../input/drawable/drawable.js";
+import { resolveImage } from "../../utils/image.js";
 import { consume } from "@lit/context";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context";
+import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import {
+  isFileDataCapabilityPart,
+  isInlineData,
+  isTextCapabilityPart,
+} from "../../../data/common.js";
 
 @customElement("bb-llm-part-input")
 export class LLMPartInput extends LitElement {

@@ -23,15 +23,15 @@ import {
   GraphSelectionState,
   WorkspaceSelectionChangeId,
   WorkspaceSelectionState,
-} from "./types";
+} from "./types.js";
 import { GraphTheme } from "@breadboard-ai/types";
 import {
   generatePaletteFromColor,
   generatePaletteFromImage,
 } from "../theme/index.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { loadImage } from "../ui/utils/image";
-import { isLLMContentArray } from "@breadboard-ai/data";
+import { loadImage } from "../ui/utils/image.js";
+import { isLLMContentArray } from "../data/common.js";
 
 export const MAIN_BOARD_ID = "Main board";
 

@@ -73,21 +73,21 @@ import * as StringsHelper from "../../strings/helper.js";
 import { FlowGenConstraint } from "../../flow-gen/flow-generator";
 import { ConnectorView } from "../../connectors/types";
 import { SignalWatcher } from "@lit-labs/signals";
-import { icons } from "../../styles/icons";
+import { icons } from "../../styles/icons.js";
 import { consume } from "@lit/context";
-import { embedderContext } from "../../contexts/embedder";
+import { embedderContext } from "../../contexts/embedder.js";
 import { embedState } from "../../embed/embed.js";
 import type { EmbedState } from "@breadboard-ai/types/embedder.js";
 import { getBoardUrlFromCurrentWindow } from "../../utils/board-id.js";
-import { baseColors } from "../../styles/host/base-colors";
-import { type } from "../../styles/host/type";
-import { iconSubstitute } from "../../utils/icon-substitute";
-import { ActionTracker } from "../../utils/action-tracker";
+import { baseColors } from "../../styles/host/base-colors.js";
+import { type } from "../../styles/host/type.js";
+import { iconSubstitute } from "../../utils/icon-substitute.js";
+import { ActionTracker } from "../../utils/action-tracker.js";
 import {
   isLLMContent,
   isLLMContentArray,
   isTextCapabilityPart,
-} from "@breadboard-ai/data";
+} from "../../../data/common.js";
 
 const Strings = StringsHelper.forSection("Editor");
 

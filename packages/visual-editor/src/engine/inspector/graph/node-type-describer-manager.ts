@@ -4,10 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  assetsFromGraphDescriptor,
-  envFromGraphDescriptor,
-} from "@breadboard-ai/data";
 import type {
   DescribeResultTypeCacheArgs,
   GraphDescriptor,
@@ -25,6 +21,10 @@ import { contextFromMutableGraphStore } from "../graph-store.js";
 import { UpdateEvent } from "./event.js";
 import { emptyResult, NodeDescriberManager } from "./node-describer-manager.js";
 import { describeInput, describeOutput } from "./schemas.js";
+import {
+  assetsFromGraphDescriptor,
+  envFromGraphDescriptor,
+} from "../../../data/file-system.js";
 
 export { NodeTypeDescriberManager };
 

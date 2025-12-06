@@ -50,13 +50,6 @@ import { theme as uiTheme } from "./theme/light.js";
 import "./header/header.js";
 
 import {
-  extensionFromMimeType,
-  inlineAllContent,
-  isInlineData,
-  isLLMContentArray,
-  saveOutputsAsFile,
-} from "@breadboard-ai/data";
-import {
   MAIN_TO_SHAREABLE_COPY_PROPERTY,
   SHAREABLE_COPY_TO_MAIN_PROPERTY,
 } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
@@ -89,6 +82,12 @@ import {
   CONSENT_RENDER_INFO,
   ConsentManager,
 } from "../../utils/consent-manager.js";
+import { isInlineData, isLLMContentArray } from "../../../data/common.js";
+import { inlineAllContent } from "../../../data/inline-all-content.js";
+import {
+  extensionFromMimeType,
+  saveOutputsAsFile,
+} from "../../../data/save-outputs-as-file.js";
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 const toFunctionString = (fn: Function, bindings?: Record<string, unknown>) => {

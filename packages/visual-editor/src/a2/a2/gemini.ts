@@ -2,10 +2,10 @@
  * @fileoverview Gemini Model Family.
  */
 
-import { StreamableReporter } from "./output";
+import { StreamableReporter } from "./output.js";
 
-import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils";
-import { flattenContext } from "./lists";
+import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils.js";
+import { flattenContext } from "./lists.js";
 import {
   Capabilities,
   FileSystemReadWritePath,
@@ -13,10 +13,10 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
-import { transformDataParts } from "@breadboard-ai/data";
-import { A2ModuleArgs } from "../runnable-module-factory";
-import { createDataPartTansformer } from "./data-transforms";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { createDataPartTansformer } from "./data-transforms.js";
 import { iteratorFromStream } from "@breadboard-ai/utils";
+import { transformDataParts } from "../../data/common.js";
 
 export {
   invoke as default,

@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  isInlineData,
-  isLLMContent,
-  isLLMContentArray,
-  isTextCapabilityPart,
-} from "@breadboard-ai/data";
 import { InspectablePort } from "@breadboard-ai/types";
 import { isStoredData, Template } from "@breadboard-ai/utils";
 import {
   isConfigurableBehavior,
   isLLMContentArrayBehavior,
   isLLMContentBehavior,
-} from "../../../utils";
+} from "../../../utils/index.js";
+import {
+  isInlineData,
+  isLLMContent,
+  isLLMContentArray,
+  isTextCapabilityPart,
+} from "../../../../data/common.js";
 
 export function createTruncatedValue(port: InspectablePort | null) {
   const MAX_SIZE = 220;

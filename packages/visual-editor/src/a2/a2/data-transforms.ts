@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isFileDataCapabilityPart } from "@breadboard-ai/data";
 import {
   Chunk,
   DataPartTransformer,
@@ -14,7 +13,8 @@ import {
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { isFileDataCapabilityPart } from "../../data/common.js";
 
 export { createDataPartTansformer, driveFileToBlob, toGcsAwareChunk };
 

@@ -13,27 +13,27 @@ import {
   StateEvent,
   UtteranceEvent,
 } from "../../../events/events";
-import { isLLMContent } from "@breadboard-ai/data";
 import { repeat } from "lit/directives/repeat.js";
 import {
   isLLMContentArrayBehavior,
   isLLMContentBehavior,
 } from "../../../utils";
-import { AssetShelf } from "../add-asset/asset-shelf";
-import { maybeConvertToYouTube } from "../../../utils/substitute-input";
+import { AssetShelf } from "../add-asset/asset-shelf.js";
+import { maybeConvertToYouTube } from "../../../utils/substitute-input.js";
 import {
   LLMContent,
   NodeValue,
   OutputValues,
   Schema,
 } from "@breadboard-ai/types";
-import { icons } from "../../../styles/icons";
-import { type } from "../../../styles/host/type";
+import { icons } from "../../../styles/icons.js";
+import { type } from "../../../styles/host/type.js";
 import { classMap } from "lit/directives/class-map.js";
 import { consume } from "@lit/context";
-import { uiStateContext } from "../../../contexts/ui-state";
-import { UI } from "../../../state/types";
-import { FloatingInputFocusState } from "../../../types/types";
+import { uiStateContext } from "../../../contexts/ui-state.js";
+import { UI } from "../../../state/types.js";
+import { FloatingInputFocusState } from "../../../types/types.js";
+import { isLLMContent } from "../../../../data/common.js";
 
 interface SupportedActions {
   allowAddAssets: boolean;

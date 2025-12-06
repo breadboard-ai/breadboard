@@ -11,15 +11,15 @@ import {
   LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
-import { Params } from "../a2/common";
-import { isLLMContent, isLLMContentArray } from "@breadboard-ai/data";
-import { Template } from "../a2/template";
-import { mergeTextParts } from "../a2/utils";
-import { AgentFileSystem } from "./file-system";
+import { Params } from "../a2/common.js";
+import { Template } from "../a2/template.js";
+import { mergeTextParts } from "../a2/utils.js";
+import { AgentFileSystem } from "./file-system.js";
 import { err, ok } from "@breadboard-ai/utils";
-import { SimplifiedToolManager, ToolManager } from "../a2/tool-manager";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { SimplifiedToolManager, ToolManager } from "../a2/tool-manager.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { v0_8 } from "../../a2ui/index.js";
+import { isLLMContent, isLLMContentArray } from "../../data/common.js";
 
 export { PidginTranslator };
 

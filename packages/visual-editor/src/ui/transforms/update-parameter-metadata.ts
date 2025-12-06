@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isLLMContent, isLLMContentArray } from "@breadboard-ai/data";
 import { LLMContent, ParameterMetadata } from "@breadboard-ai/types";
 import {
   EditOperationContext,
@@ -15,6 +14,7 @@ import {
   NodeIdentifier,
 } from "@breadboard-ai/types";
 import { Template, TemplatePart } from "@breadboard-ai/utils";
+import { isLLMContent, isLLMContentArray } from "../../data/common.js";
 
 export { UpdateParameterMetadata };
 

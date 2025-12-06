@@ -4,18 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+
+import { InspectablePort } from "@breadboard-ai/types";
+import { isStoredData, Template } from "@breadboard-ai/utils";
+import { html, HTMLTemplateResult, nothing } from "lit";
+import { Project } from "../../../state/index.js";
+import { expandChiclet } from "../../../utils/expand-chiclet.js";
+import { getAssetType } from "../../../utils/mime-type.js";
 import {
   isInlineData,
   isLLMContent,
   isLLMContentArray,
   isTextCapabilityPart,
-} from "@breadboard-ai/data";
-import { InspectablePort } from "@breadboard-ai/types";
-import { isStoredData, Template } from "@breadboard-ai/utils";
-import { html, HTMLTemplateResult, nothing } from "lit";
-import { Project } from "../../../state";
-import { expandChiclet } from "../../../utils/expand-chiclet";
-import { getAssetType } from "../../../utils/mime-type";
+} from "../../../../data/common.js";
+
 
 export function createChiclets(
   port: InspectablePort | null,

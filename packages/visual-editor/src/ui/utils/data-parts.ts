@@ -13,7 +13,7 @@ import { blobHandleToUrl } from "./blob-handle-to-url";
 import { loadImage } from "./image";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { partToDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/utils.js";
-import { asBase64DataUrl } from "@breadboard-ai/data/common.js";
+import { asBase64DataUrl } from "../../data/common.js";
 
 /**
  * Note this is a WeakMap so that cached data will get GC'd if the DataPart

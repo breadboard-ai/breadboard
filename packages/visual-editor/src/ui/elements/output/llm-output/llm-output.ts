@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import type { DataPart, LLMContent } from "@breadboard-ai/types";
-import {
-  isFileDataCapabilityPart,
-  isFunctionCallCapabilityPart,
-  isFunctionResponseCapabilityPart,
-  isInlineData,
-  isJSONPart,
-  isListPart,
-  isLLMContent,
-  isTextCapabilityPart,
-} from "@breadboard-ai/data";
 import { isStoredData, Template } from "@breadboard-ai/utils";
 import {
   HTMLTemplateResult,
@@ -47,7 +37,15 @@ import { partToDriveFileId } from "@breadboard-ai/google-drive-kit/board-server/
 import {
   isCodeExecutionResultPart,
   isExecutableCodePart,
-} from "@breadboard-ai/data";
+  isFileDataCapabilityPart,
+  isFunctionCallCapabilityPart,
+  isFunctionResponseCapabilityPart,
+  isInlineData,
+  isJSONPart,
+  isListPart,
+  isLLMContent,
+  isTextCapabilityPart,
+} from "../../../../data/common.js";
 
 const SANDBOX_RESTRICTIONS = "allow-scripts allow-forms";
 

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isTextCapabilityPart } from "@breadboard-ai/data";
 import {
   EditOperationContext,
   EditTransform,
@@ -16,9 +15,10 @@ import {
 } from "@breadboard-ai/types";
 import { Template } from "@breadboard-ai/utils";
 import { AssetEdge } from "../types/types";
-import { isLLMContentBehavior, isPreviewBehavior } from "../utils/behaviors";
-import { jsonStringify } from "../utils/json-stringify";
-import { getMimeType } from "../utils/mime-type";
+import { isLLMContentBehavior, isPreviewBehavior } from "../utils/behaviors.js";
+import { jsonStringify } from "../utils/json-stringify.js";
+import { getMimeType } from "../utils/mime-type.js";
+import { isTextCapabilityPart } from "../../data/common.js";
 
 export { ChangeAssetEdge as ChangeAssetEdge };
 

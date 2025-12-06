@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isInlineData } from "@breadboard-ai/data";
 import {
   AssetMetadata,
   AssetPath,
@@ -13,9 +12,9 @@ import {
   Outcome,
   ParameterMetadata,
 } from "@breadboard-ai/types";
-import { RemoveAssetWithRefs } from "../transforms";
-import { ChangeParameterMetadata } from "../transforms/change-parameter-metadata";
-import { UpdateAssetWithRefs } from "../transforms/update-asset-with-refs";
+import { RemoveAssetWithRefs } from "../transforms/remove-asset-with-refs.js";
+import { ChangeParameterMetadata } from "../transforms/change-parameter-metadata.js";
+import { UpdateAssetWithRefs } from "../transforms/update-asset-with-refs.js";
 import {
   ConnectorState,
   GraphAsset,
@@ -23,6 +22,7 @@ import {
   Organizer,
   ProjectInternal,
 } from "./types";
+import { isInlineData } from "../../data/common.js";
 
 export { ReactiveOrganizer };
 

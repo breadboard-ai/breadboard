@@ -6,7 +6,7 @@
 
 import { GraphDescriptor, GraphToRun, LLMContent } from "@breadboard-ai/types";
 import { Template, graphUrlLike } from "@breadboard-ai/utils";
-import { isLLMContent, isLLMContentArray } from "@breadboard-ai/data";
+import { isLLMContent, isLLMContentArray } from "../../data/common.js";
 
 export { resolveGraphUrls };
 

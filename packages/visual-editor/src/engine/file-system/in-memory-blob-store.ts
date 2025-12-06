@@ -10,7 +10,7 @@ import type {
   FileSystemPath,
   Outcome,
 } from "@breadboard-ai/types";
-import { toInlineDataPart, toStoredDataPart } from "@breadboard-ai/data";
+import { toInlineDataPart, toStoredDataPart } from "../../data/common.js";
 
 export { InMemoryBlobStore };
 

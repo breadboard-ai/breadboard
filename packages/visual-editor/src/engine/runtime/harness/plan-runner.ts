@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isLLMContentArray } from "@breadboard-ai/data";
 import {
   AnyClientRunResult,
   BreakpointSpec,
@@ -54,6 +53,7 @@ import {
 } from "./events.js";
 
 import { fromProbe, fromRunnerResult } from "./local.js";
+import { isLLMContentArray } from "../../../data/common.js";
 
 export { PlanRunner };
 
