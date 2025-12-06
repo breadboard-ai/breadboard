@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@breadboard-ai/types";
+import { EditSpec, GraphDescriptor } from "@breadboard-ai/types";
 import { KeyboardCommand, KeyboardCommandDeps } from "./types";
 import * as BreadboardUI from "../ui/index";
-import { EditSpec } from "../engine/index.js";
 import { MAIN_BOARD_ID } from "../runtime/util";
 import { inspectableAssetEdgeToString } from "../ui/utils/workspace.js";
 import { ClipboardReader } from "../utils/clipboard-reader";

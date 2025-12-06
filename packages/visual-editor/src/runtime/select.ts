@@ -18,7 +18,7 @@ import {
   WorkspaceSelectionState,
   MoveToSelection,
 } from "./types";
-import { InspectableGraph } from "../engine/index.js";
+import { InspectableGraph } from "@breadboard-ai/types";
 import {
   createEmptyGraphSelectionState,
   createEmptyWorkspaceSelectionState,

@@ -5,13 +5,13 @@
  */
 
 import * as Strings from "../strings/helper.js";
-import { blank as breadboardBlank } from "../../engine/index.js";
+import { blank } from "../../engine/editor/blank.js";
 
 const GlobalStrings = Strings.forSection("Global");
 
 export function blankBoard() {
-  const blankBoard = breadboardBlank();
+  const blankBoard = blank();
   const title =
     GlobalStrings.from("TITLE_UNTITLED_PROJECT") || blankBoard.title;
-  return { ...breadboardBlank(), title };
+  return { ...blank(), title };
 }

@@ -11,7 +11,7 @@ import {
   EditableGraph,
   MainGraphIdentifier,
   MutableGraphStore,
-} from "../engine/index.js";
+} from "@breadboard-ai/types";
 import { Runtime } from "./runtime";
 import { RuntimeTabChangeEvent } from "./events";
 import { signal } from "signal-utils";

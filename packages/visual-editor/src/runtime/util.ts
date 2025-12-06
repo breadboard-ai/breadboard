@@ -12,12 +12,11 @@ import {
   GraphIdentifier,
   InspectableEdge,
   InspectableGraph,
-  isLLMContentArray,
   NodeConfiguration,
   NodeDescriptor,
   NodeIdentifier,
   Schema,
-} from "../engine/index.js";
+} from "@breadboard-ai/types";
 import { isStoredData } from "@breadboard-ai/utils";
 import {
   EditChangeId,
@@ -32,6 +31,7 @@ import {
 } from "../theme/index.js";
 import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
 import { loadImage } from "../ui/utils/image";
+import { isLLMContentArray } from "@breadboard-ai/data";
 
 export const MAIN_BOARD_ID = "Main board";
 

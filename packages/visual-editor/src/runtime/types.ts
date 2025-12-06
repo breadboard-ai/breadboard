@@ -6,27 +6,24 @@
 
 import type { BoardServer, OutputValues } from "@breadboard-ai/types";
 import {
+  AssetPath,
   EditHistoryCreator,
   EditHistoryEntry,
-  GraphDescriptor,
-  MainGraphIdentifier,
-  PortIdentifier,
   FileSystemEntry,
-} from "../engine/index.js";
-
-import {
-  AssetPath,
+  GraphDescriptor,
   GraphIdentifier,
   GraphMetadata,
+  MainGraphIdentifier,
   ModuleIdentifier,
   NodeIdentifier,
+  PortIdentifier,
 } from "@breadboard-ai/types";
-import { SettingsStore } from "../ui/data/settings-store.js";
-import type { GlobalConfig } from "../ui/contexts/global-config.js";
 import {
   OpalShellHostProtocol,
   SignInState,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
+import type { GlobalConfig } from "../ui/contexts/global-config.js";
+import { SettingsStore } from "../ui/data/settings-store.js";
 
 export enum TabType {
   URL,

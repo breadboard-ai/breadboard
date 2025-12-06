@@ -4,8 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { RuntimeFlags } from "@breadboard-ai/types";
-import { EphemeralBlobStore, PersistentBackend } from "../engine/index.js";
+import {
+  EphemeralBlobStore,
+  PersistentBackend,
+  RuntimeFlags,
+} from "@breadboard-ai/types";
 import { IDBBackend } from "./file-system/idb-backend.js";
 import { IdbFlagManager } from "./flags/idb-flag-manager.js";
 
