@@ -15,8 +15,8 @@ import {
 import { ok } from "@breadboard-ai/utils";
 import assert, { deepStrictEqual } from "node:assert";
 import { describe, it } from "node:test";
-import { createPlan } from "../../src/static/create-plan.js";
-import { Orchestrator } from "../../src/static/orchestrator.js";
+import { createPlan } from "../../src/engine/runtime/static/create-plan.js";
+import { Orchestrator } from "../../src/engine/runtime/static/orchestrator.js";
 
 const diamond: GraphDescriptor = {
   nodes: [
