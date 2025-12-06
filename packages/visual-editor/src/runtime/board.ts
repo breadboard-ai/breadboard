@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit/board-server/server.js";
 import type {
   BoardServer,
   BoardServerSaveEventStatus,
@@ -42,6 +41,7 @@ import {
   applyDefaultThemeInformationIfNonePresent,
   createAppPaletteIfNeeded,
 } from "./util";
+import { GoogleDriveBoardServer } from "../board-server/server";
 
 const documentStyles = getComputedStyle(document.documentElement);
 

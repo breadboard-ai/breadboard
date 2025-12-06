@@ -22,7 +22,6 @@ import {
   SnackType,
 } from "../../types/types";
 
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume, provide } from "@lit/context";
 import { classMap } from "lit/directives/class-map.js";
@@ -88,6 +87,7 @@ import {
   extensionFromMimeType,
   saveOutputsAsFile,
 } from "../../../data/save-outputs-as-file.js";
+import { GoogleDriveBoardServer } from "../../../board-server/server.js";
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 const toFunctionString = (fn: Function, bindings?: Record<string, unknown>) => {

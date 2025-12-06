@@ -6,7 +6,6 @@
 
 import { EventRoute } from "../types";
 
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
 import {
   ConsentType,
   ConsentUIType,
@@ -18,6 +17,7 @@ import { RuntimeSnackbarEvent } from "../../runtime/events";
 import { StateEvent } from "../../ui/events/events.js";
 import * as BreadboardUI from "../../ui/index.js";
 import { parseUrl } from "../../ui/utils/urls.js";
+import { GoogleDriveBoardServer } from "../../board-server/server";
 
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
