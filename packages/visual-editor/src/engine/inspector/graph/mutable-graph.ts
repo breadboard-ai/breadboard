@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphRepresentationImpl } from "@breadboard-ai/runtime/legacy.js";
+import { GraphRepresentationImpl } from "../../runtime/legacy.js";
 import type {
   AffectedNode,
   GraphDescriptor,

@@ -104,7 +104,7 @@ export class OutputStageResult extends RunResult {
     throw new Error('Input arguments are not available in the "output" stage');
   }
 
-  set inputs(inputs: InputValues) {
+  set inputs(_inputs: InputValues) {
     throw new Error('Setting inputs is not available in the "output" stage');
   }
 }

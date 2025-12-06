@@ -5,7 +5,7 @@
  */
 
 import { createLoader, SENTINEL_BASE_URL } from "@breadboard-ai/loader";
-import { getHandler } from "@breadboard-ai/runtime/legacy.js";
+import { getHandler } from "../../runtime/legacy.js";
 import type {
   DescribeResultTypeCacheArgs,
   GraphDescriptor,

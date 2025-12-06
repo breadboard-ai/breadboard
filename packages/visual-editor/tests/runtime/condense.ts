@@ -11,7 +11,7 @@ import type {
 } from "@breadboard-ai/types";
 import { strict as assert, deepStrictEqual } from "node:assert";
 import { describe, it } from "node:test";
-import { condense } from "../../src/static/condense.js";
+import { condense } from "../../src/engine/runtime/static/condense.js";
 
 class GraphAsserter {
   readonly nodeMap: Map<string, NodeDescriptor> = new Map();

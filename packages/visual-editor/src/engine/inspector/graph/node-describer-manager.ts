@@ -5,10 +5,7 @@
  */
 
 import { createLoader } from "@breadboard-ai/loader";
-import {
-  getHandler,
-  invokeMainDescriber,
-} from "@breadboard-ai/runtime/legacy.js";
+import { getHandler, invokeMainDescriber } from "../../runtime/legacy.js";
 import type {
   DescribeResultCacheArgs,
   GraphIdentifier,

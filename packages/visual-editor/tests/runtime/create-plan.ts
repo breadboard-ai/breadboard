@@ -7,7 +7,7 @@
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
-import { createPlan } from "../../src/static/create-plan.js";
+import { createPlan } from "../../src/engine/runtime/static/create-plan.js";
 
 describe("createPlan function", () => {
   describe("basic functionality", () => {
