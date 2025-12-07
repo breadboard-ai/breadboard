@@ -144,7 +144,7 @@ export const GENERATED_APP_CSP = {
   ["img-src"]: ["blob:", "data:"],
   ["style-src"]: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
   ["font-src"]: ["https://fonts.gstatic.com"],
-  ["connect-src"]: ["'self'"],
+  ["connect-src"]: ["'none'"],
   ["frame-src"]: ["'none'"],
   ["frame-ancestors"]: [
     "'self'",
