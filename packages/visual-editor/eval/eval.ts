@@ -19,7 +19,7 @@ import { collateContexts } from "./collate-context.js";
 export { session };
 
 const MODULE_DIR = dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = join(MODULE_DIR, "..");
+const ROOT_DIR = join(MODULE_DIR, "..", "..", "..");
 const OUT_DIR = join(ROOT_DIR, "out");
 
 export type EvalHarnessRuntimeArgs = {
