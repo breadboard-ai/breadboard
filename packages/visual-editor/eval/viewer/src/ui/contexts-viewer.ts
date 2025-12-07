@@ -81,7 +81,6 @@ class ContextsViewer extends LitElement {
   `;
 
   render() {
-    console.log(this.contexts);
     return map(this.contexts, (context, idx) => {
       return html`<details class="item" ?open=${idx === 0}>
         <summary>
