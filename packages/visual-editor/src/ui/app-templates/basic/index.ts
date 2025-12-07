@@ -399,6 +399,16 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         // can serve a different CSP for generated apps vs the main app. After
         // https://developer.mozilla.org/en-US/docs/Web/API/HTMLIFrameElement/csp
         // ships in all browsers, we can use that instead.
+        //
+        // The inner CSP adds access to some common CDNs, removes access to some
+        // resources needed only by the main app, and disables trusted types. We
+        // disable trusted types because generated apps do not currently know
+        // how to support them, and the inner iframe is isolated from sensitive
+        // resources at this outer origin using a sandbox with null origin.
+        //
+        // See also:
+        //   visual-editor#genapp-frame/main.ts
+        //   unified-server#csp.ts
         activityContents = html`<iframe
           src="/_app/_genapp-frame/"
           ${ref(this.outputHtmlIframeRef)}
