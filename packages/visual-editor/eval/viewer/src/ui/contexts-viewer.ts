@@ -4,11 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { html, LitElement } from "lit";
+import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { FinalChainReport } from "../../../collate-context.js";
 import { DataPart, LLMContent } from "@breadboard-ai/types";
+import { markdown } from "../../../../src/ui/directives/markdown.js";
+import "../../../../src/ui/elements/json-tree/json-tree.js";
 
 export { ContextsViewer };
 
@@ -17,7 +19,69 @@ class ContextsViewer extends LitElement {
   @property()
   accessor contexts: FinalChainReport[] = [];
 
+  static styles = css`
+    :host {
+      display: block;
+    }
+
+    details.item > summary {
+      padding: var(--bb-grid-size-2);
+    }
+
+    details {
+      border: 1px solid var(--border-color);
+      border-radius: var(--bb-grid-size-2);
+      margin-bottom: var(--bb-grid-size-2);
+
+      summary {
+        cursor: pointer;
+        list-style: none;
+        user-select: none;
+      }
+    }
+
+    .content {
+      background: var(--light-dark-n-100);
+      color: var(--light-dark-n-0);
+
+      .stats {
+        padding: var(--bb-grid-size-2);
+        background-color: var(--light-dark-n-95);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--bb-grid-size-2);
+        font-size: 12px;
+      }
+
+      ul.turns {
+        list-style: none;
+        padding: 0;
+        margin-bottom: var(--bb-grid-size-2);
+
+        li {
+          padding: var(--bb-grid-size-2);
+          list-style: none;
+
+          &.model,
+          &.unknown {
+            background-color: var(--light-dark-n-95);
+          }
+
+          ul {
+            padding: 0;
+
+            & li.part {
+              border-radius: var(--bb-grid-size-2);
+              border: 1px solid var(--light-dark-n-90);
+            }
+          }
+        }
+      }
+    }
+  `;
+
   render() {
+    console.log(this.contexts);
     return map(this.contexts, (context, idx) => {
       return html`<details class="item" ?open=${idx === 0}>
         <summary>
@@ -27,7 +91,14 @@ class ContextsViewer extends LitElement {
         <div class="content">
           <div class="stats">
             <div>
-              Started: ${new Date(context.startedDateTime).toLocaleString()}
+              Started:
+              ${new Date(context.startedDateTime).toLocaleString(
+                Intl.DateTimeFormat().resolvedOptions().locale,
+                {
+                  dateStyle: "short",
+                  timeStyle: "medium",
+                }
+              )}
             </div>
             <div>
               Request Time: ${Math.round(context.totalRequestTimeMs / 1000)}s
@@ -35,9 +106,9 @@ class ContextsViewer extends LitElement {
             <div>Thoughts: ${context.totalThoughts}</div>
             <div>Function Calls: ${context.totalFunctionCalls}</div>
           </div>
-          <div class="turns">
+          <ul class="turns">
             ${map(context.context, (turn) => this.#renderTurn(turn))}
-          </div>
+          </ul>
         </div>
       </details>`;
     });
@@ -45,37 +116,41 @@ class ContextsViewer extends LitElement {
 
   #renderTurn(turn: LLMContent) {
     const role = turn.role || "unknown";
-    return html`<div class="context-turn ${role}">
-      <div class="turn-header">${role}</div>
-      ${map(turn.parts || [], (part: DataPart) => this.#renderPart(part))}
-    </div>`;
+    return html`<li class="${role}">
+      <details class="turn-header" open>
+        <summary>${role}</summary>
+        <ul class="parts">
+          ${map(turn.parts || [], (part: DataPart) => this.#renderPart(part))}
+        </ul>
+      </details>
+    </li>`;
   }
 
   #renderPart(part: DataPart) {
     if (part.thought && "text" in part) {
-      return html`<div class="part-thought">
-        <strong>Thought:</strong> ${part.text}
-      </div>`;
+      return html`<li class="part thought">
+        <strong>Thought:</strong>${markdown(part.text)}
+      </li>`;
     }
 
     if ("functionCall" in part) {
-      return html`<div class="part-function-call">
+      return html`<li class="part function-call">
         <div class="name">call ${part.functionCall.name}</div>
-        <pre>${JSON.stringify(part.functionCall.args, null, 2)}</pre>
-      </div>`;
+        <bb-json-tree .json=${part.functionCall.args}></bb-json-tree>
+      </li>`;
     }
 
     if ("functionResponse" in part) {
-      return html`<div class="part-function-response">
+      return html`<li class="partfunction-response">
         <div class="name">response ${part.functionResponse.name}</div>
-        <pre>${JSON.stringify(part.functionResponse.response, null, 2)}</pre>
-      </div>`;
+        <bb-json-tree .json=${part.functionResponse.response}></bb-json-tree>
+      </li>`;
     }
 
     if ("text" in part) {
-      return html`<div class="part-text">${part.text}</div>`;
+      return html`<li class="part text">${markdown(part.text)}</li>`;
     }
 
-    return html`<pre>${JSON.stringify(part, null, 2)}</pre>`;
+    return html`<li>${JSON.stringify(part, null, 2)}</li>`;
   }
 }
