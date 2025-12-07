@@ -6,6 +6,7 @@
 
 import { PartialPersistentBackend } from "../../engine/file-system/partial-persistent-backend.js";
 import { createTrustedAnalyticsURL } from "../trusted-types/analytics-url.js";
+import { parseUrl } from "./urls.js";
 
 export { ActionTracker, initializeAnalytics, createActionTrackerBackend };
 
@@ -41,7 +42,11 @@ function initializeAnalytics(id: string, signedIn: boolean) {
   // IP anonymized per OOGA policy.
   const userId = signedIn ? { user_id: getUserId() } : {};
 
+  // Get site mode from the URL
+  const site_mode = parseUrl(window.location.href).lite ? "lite" : "standard";
+
   window.gtag("config", id, {
+    site_mode,
     anonymize_ip: true,
     ...userId,
   });
