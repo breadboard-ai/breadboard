@@ -36,12 +36,9 @@ import {
   FileSystemQueryResult,
 } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
+import { FinalChainReport } from "../../collate-context.js";
 
-type EvalFileData = Array<Context | A2UIData>;
-
-interface Context {
-  type: "context";
-}
+type EvalFileData = Array<FinalChainReport | A2UIData>;
 
 type A2UIData = {
   type: "a2ui";
@@ -62,6 +59,9 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
   @state()
   accessor #requesting = false;
+
+  @state()
+  accessor contexts: FinalChainReport[] = [];
 
   @property()
   accessor selectedPath: FileSystemEvalBackendHandle | null = null;
@@ -676,8 +676,11 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                   try {
                     const fileData = JSON.parse(data) as EvalFileData;
                     this.#surfaces = [];
-                    const a2ui: A2UIData[] = fileData.filter(
+                    const a2ui = fileData.filter(
                       (item) => item.type === "a2ui"
+                    );
+                    this.contexts = fileData.filter(
+                      (item) => item.type === "context"
                     );
 
                     this.#processor.clearSurfaces();
