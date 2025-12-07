@@ -8,7 +8,7 @@ import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { FinalChainReport } from "../../../collate-context.js";
-import { DataPart, LLMContent } from "@breadboard-ai/types";
+import { DataPart, LLMContent, TextCapabilityPart } from "@breadboard-ai/types";
 import { markdown } from "../../../../src/ui/directives/markdown.js";
 import "../../../../src/ui/elements/json-tree/json-tree.js";
 
@@ -89,6 +89,10 @@ class ContextsViewer extends LitElement {
       const isJsonOutput =
         context.config?.generationConfig?.responseMimeType ===
         "application/json";
+      const { generationConfig, systemInstruction } = context.config || {};
+      const systemInstructionText = (
+        systemInstruction?.parts?.[0] as TextCapabilityPart
+      )?.text;
       return html`<details class="item" ?open=${idx === 0}>
         <summary>
           Context ${idx + 1} (${context.turnCount} turns,
@@ -96,7 +100,14 @@ class ContextsViewer extends LitElement {
         </summary>
         <div class="content">
           <div class="config">
-            <bb-json-tree .json=${context.config}></bb-json-tree>
+            <details>
+              <summary>System Instruction</summary>
+              <div>${markdown(systemInstructionText)}</div>
+            </details>
+            <details>
+              <summary>Generation Config</summary>
+              <bb-json-tree .json=${generationConfig}></bb-json-tree>
+            </details>
           </div>
           <div class="stats">
             <div>
