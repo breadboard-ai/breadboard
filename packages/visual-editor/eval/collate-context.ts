@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DataPart, LLMContent } from "@breadboard-ai/types";
-import { Har } from "har-format";
-import { GeminiAPIOutputs, GeminiBody } from "../src/a2/a2/gemini.js";
+import type { DataPart, LLMContent } from "@breadboard-ai/types";
+import type { Har } from "har-format";
+import type { GeminiAPIOutputs, GeminiBody } from "../src/a2/a2/gemini.js";
 
 export { collateContexts };
 
@@ -243,7 +243,10 @@ function findLongestPrefixNode(
 ): ConvoNode | null {
   let longestPrefix: ConvoNode | null = null;
 
-  if (startsWith(turn.requestContext, node.turn.requestContext)) {
+  if (
+    startsWith(turn.requestContext, node.turn.requestContext) &&
+    JSON.stringify(turn.config) === JSON.stringify(node.turn.config)
+  ) {
     longestPrefix = node;
   } else {
     return null;
