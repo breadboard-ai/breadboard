@@ -45,7 +45,7 @@ type A2UIData = {
   data: v0_8.Types.ServerToClientMessage[][];
 };
 
-type RenderMode = "surfaces" | "messages";
+type RenderMode = "surfaces" | "messages" | "contexts";
 
 const RENDER_MODE_KEY = "eval-inspector-render-mode";
 
@@ -528,6 +528,10 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
       </section>`;
     }
 
+    if (this.renderMode === "contexts") {
+      return this.#renderContexts();
+    }
+
     const renderNoData = () =>
       html`<section id="surfaces">
         <div id="no-surfaces">
@@ -592,6 +596,26 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
       >
         <span class="g-icon filled round">content_copy</span> Copy to Clipboard
       </button>
+    </section>`;
+  }
+
+  #renderContexts() {
+    return html`<section id="messages">
+      ${map(this.contexts, (context, idx) => {
+        return html`<details>
+          <summary>
+            Context ${idx + 1} (${context.turnCount} turns,
+            ${context.totalDurationMs}ms)
+          </summary>
+          <div class="context-content">
+            <div>Started: ${context.startedDateTime}</div>
+            <div>Total Request Time: ${context.totalRequestTimeMs}ms</div>
+            <div>Thoughts: ${context.totalThoughts}</div>
+            <div>Function Calls: ${context.totalFunctionCalls}</div>
+            <pre>${JSON.stringify(context.context, null, 2)}</pre>
+          </div>
+        </details>`;
+      })}
     </section>`;
   }
 
@@ -753,8 +777,13 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
             <button
               id="render-mode"
               @click=${() => {
-                this.renderMode =
-                  this.renderMode === "messages" ? "surfaces" : "messages";
+                const modes: RenderMode[] = [
+                  "surfaces",
+                  "messages",
+                  "contexts",
+                ];
+                const currentIdx = modes.indexOf(this.renderMode);
+                this.renderMode = modes[(currentIdx + 1) % modes.length];
               }}
             >
               <span
@@ -767,6 +796,12 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                 class=${classMap({ active: this.#renderMode === "messages" })}
               >
                 <span class="g-icon filled round">communication</span>A2UI
+              </span>
+
+              <span
+                class=${classMap({ active: this.#renderMode === "contexts" })}
+              >
+                <span class="g-icon filled round">dataset</span>Contexts
               </span>
             </button>
           </h2>
