@@ -8,7 +8,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { galleryItems } from "./gallery-items";
+import { galleryItems } from "./gallery-items.js";
 import { fonts } from "./fonts.js";
 
 import "./carousel-modal.js";

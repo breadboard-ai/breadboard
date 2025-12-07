@@ -20,7 +20,7 @@ import {
   AppTemplateOptions,
   FloatingInputFocusState,
   SnackType,
-} from "../../types/types";
+} from "../../types/types.js";
 
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume, provide } from "@lit/context";
@@ -38,7 +38,7 @@ import {
   SnackbarEvent,
   StateEvent,
   UnsnackbarEvent,
-} from "../../events/events";
+} from "../../events/events.js";
 import { ProjectRun } from "../../state/types.js";
 import { emptyStyles } from "../../styles/host/colors-empty.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
@@ -55,7 +55,7 @@ import {
 import { extractGoogleDriveFileId } from "@breadboard-ai/utils/google-drive/utils.js";
 import { type GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import * as ParticlesUI from "../../../particles-ui";
+import * as ParticlesUI from "../../../particles-ui/index.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { markdown } from "../../directives/markdown.js";
 import { makeUrl } from "../../utils/urls.js";

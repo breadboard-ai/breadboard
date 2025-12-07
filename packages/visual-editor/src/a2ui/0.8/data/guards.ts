@@ -14,7 +14,7 @@
  limitations under the License.
  */
 
-import { BooleanValue, NumberValue, StringValue } from "../types/primitives";
+import { BooleanValue, NumberValue, StringValue } from "../types/primitives.js";
 import {
   AnyComponentNode,
   ComponentArrayReference,
@@ -37,7 +37,7 @@ import {
   ResolvedText,
   ResolvedTextField,
   ResolvedVideo,
-} from "../types/types";
+} from "../types/types.js";
 
 export function isPath(key: string, value: unknown): value is string {
   return key === "path" && typeof value === "string";

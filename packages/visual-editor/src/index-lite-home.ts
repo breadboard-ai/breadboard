@@ -10,7 +10,7 @@ import "./ui/elements/overflow-menu/overflow-menu.js";
 import { css, html, HTMLTemplateResult, LitElement } from "lit";
 import { ref } from "lit/directives/ref.js";
 import { customElement } from "lit/decorators.js";
-import { MainArguments } from "./types/types";
+import { MainArguments } from "./types/types.js";
 import { EmbedHandler } from "./ui/embed/embed.js";
 import { provide } from "@lit/context";
 import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
@@ -26,7 +26,7 @@ import type {
 import { err, ok } from "@breadboard-ai/utils";
 import { SnackbarMessage, SnackType } from "./ui/types/types.js";
 import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
-import { RecentBoardStore } from "./data/recent-boards";
+import { RecentBoardStore } from "./data/recent-boards.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { GoogleDriveBoardServer } from "./board-server/server.js";
 

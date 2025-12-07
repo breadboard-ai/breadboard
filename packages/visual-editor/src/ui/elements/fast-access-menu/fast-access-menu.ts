@@ -12,7 +12,7 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { Component, FastAccess, GraphAsset, Tool } from "../../state";
+import { Component, FastAccess, GraphAsset, Tool } from "../../state/index.js";
 import {
   GraphIdentifier,
   NodeIdentifier,
@@ -22,17 +22,17 @@ import {
   FastAccessDismissedEvent,
   FastAccessSelectEvent,
   ParamCreateEvent,
-} from "../../events/events";
+} from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { getAssetType, getMimeType } from "../../utils/mime-type";
+import { getAssetType, getMimeType } from "../../utils/mime-type.js";
 import { consume } from "@lit/context";
 import {
   GlobalConfig,
   globalConfigContext,
-} from "../../contexts/global-config";
-import { getStepIcon } from "../../utils/get-step-icon";
-import { iconSubstitute } from "../../utils/icon-substitute";
+} from "../../contexts/global-config.js";
+import { getStepIcon } from "../../utils/get-step-icon.js";
+import { iconSubstitute } from "../../utils/icon-substitute.js";
 import { repeat } from "lit/directives/repeat.js";
 import * as Styles from "../../styles/styles.js";
 

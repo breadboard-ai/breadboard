@@ -4,4 +4,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { Configurator } from "./configurator";
+export { Configurator } from "./configurator.js";

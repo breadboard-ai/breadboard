@@ -14,7 +14,7 @@ import {
   OverflowMenuActionEvent,
   OverlayDismissedEvent,
   SubscriberCreditRefreshEvent,
-} from "../../events/events";
+} from "../../events/events.js";
 import { icons } from "../../styles/icons.js";
 import { SigninAdapter } from "../../utils/signin-adapter.js";
 

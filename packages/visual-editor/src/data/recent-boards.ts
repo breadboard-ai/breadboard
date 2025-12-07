@@ -5,7 +5,7 @@
  */
 
 import * as idb from "idb";
-import * as BreadboardUI from "../ui/index";
+import * as BreadboardUI from "../ui/index.js";
 import { SignalArray } from "signal-utils/array";
 import { SignalObject } from "signal-utils/object";
 import { RecentBoard } from "../ui/types/types.js";

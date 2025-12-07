@@ -16,12 +16,12 @@ import {
   HTMLTemplateResult,
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { Graph } from "./graph";
-import { Camera } from "./camera";
+import { Graph } from "./graph.js";
+import { Camera } from "./camera.js";
 import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
-import { calculateBounds } from "./utils/calculate-bounds";
-import { clamp } from "./utils/clamp";
+import { calculateBounds } from "./utils/calculate-bounds.js";
+import { clamp } from "./utils/clamp.js";
 import {
   Edge,
   EditSpec,
@@ -34,7 +34,7 @@ import {
   NodeIdentifier,
   NodeValue,
 } from "@breadboard-ai/types";
-import { MAIN_BOARD_ID } from "../../constants/constants";
+import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import {
   CreateNewAssetsEvent,
   GraphEdgeAttachmentMoveEvent,
@@ -43,18 +43,18 @@ import {
   SelectGraphContentsEvent,
   SelectionMoveEvent,
   SelectionTranslateEvent,
-} from "./events/events";
+} from "./events/events.js";
 import {
   NewAsset,
   HighlightStateWithChangeId,
   WorkspaceSelectionStateWithChangeId,
-} from "../../types/types";
+} from "../../types/types.js";
 import {
   createEmptyGraphHighlightState,
   createEmptyGraphSelectionState,
   createEmptyWorkspaceSelectionState,
   createWorkspaceSelectionChangeId,
-} from "../../utils/workspace";
+} from "../../utils/workspace.js";
 import {
   DragConnectorStartEvent,
   EditorPointerPositionChangeEvent,
@@ -64,18 +64,18 @@ import {
   ZoomInEvent,
   ZoomOutEvent,
   StateEvent,
-} from "../../events/events";
+} from "../../events/events.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { Entity } from "./entity";
-import { toGridSize } from "./utils/to-grid-size";
-import { DragConnector } from "./drag-connector";
-import { collectAssetIds, collectNodeIds } from "./utils/collect-ids";
-import { EditorControls } from "./editor-controls";
+import { Entity } from "./entity.js";
+import { toGridSize } from "./utils/to-grid-size.js";
+import { DragConnector } from "./drag-connector.js";
+import { collectAssetIds, collectNodeIds } from "./utils/collect-ids.js";
+import { EditorControls } from "./editor-controls.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants";
+import { DATA_TYPE, MOVE_GRAPH_ID } from "./constants.js";
 import { AssetMetadata, EditHistory, RuntimeFlags } from "@breadboard-ai/types";
-import { isCtrlCommand, isMacPlatform } from "../../utils/is-ctrl-command";
-import { Project, RendererRunState, RendererState } from "../../state";
+import { isCtrlCommand, isMacPlatform } from "../../utils/is-ctrl-command.js";
+import { Project, RendererRunState, RendererState } from "../../state/index.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { ItemSelect } from "../elements.js";
 

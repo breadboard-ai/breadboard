@@ -11,17 +11,17 @@ import {
   conformGeminiBody,
   streamGenerateContent,
   Tool,
-} from "../../a2/gemini";
-import { callGeminiImage } from "../../a2/image-utils";
-import { A2ModuleArgs } from "../../runnable-module-factory";
-import { AgentFileSystem } from "../file-system";
-import { defineFunction, FunctionDefinition } from "../function-definition";
-import { defaultSystemInstruction } from "../../generate-text/system-instruction";
-import { mergeContent, mergeTextParts, toText, tr } from "../../a2/utils";
-import { callVideoGen, expandVeoError } from "../../video-generator/main";
-import { callAudioGen } from "../../audio-generator/main";
-import { callMusicGen } from "../../music-generator/main";
-import { PidginTranslator } from "../pidgin-translator";
+} from "../../a2/gemini.js";
+import { callGeminiImage } from "../../a2/image-utils.js";
+import { A2ModuleArgs } from "../../runnable-module-factory.js";
+import { AgentFileSystem } from "../file-system.js";
+import { defineFunction, FunctionDefinition } from "../function-definition.js";
+import { defaultSystemInstruction } from "../../generate-text/system-instruction.js";
+import { mergeContent, mergeTextParts, toText, tr } from "../../a2/utils.js";
+import { callVideoGen, expandVeoError } from "../../video-generator/main.js";
+import { callAudioGen } from "../../audio-generator/main.js";
+import { callMusicGen } from "../../music-generator/main.js";
+import { PidginTranslator } from "../pidgin-translator.js";
 
 export { defineGenerateFunctions };
 

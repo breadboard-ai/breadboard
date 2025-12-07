@@ -10,7 +10,7 @@ import {
   EditTransform,
   EditTransformResult,
 } from "@breadboard-ai/types";
-import { UpdateAssetRefs } from "./update-asset-refs";
+import { UpdateAssetRefs } from "./update-asset-refs.js";
 
 export { UpdateAssetWithRefs };
 

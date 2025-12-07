@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LanguagePackEntry } from "../../types/types";
+import { LanguagePackEntry } from "../../types/types.js";
 
 export default {
   APP_NAME: {
@@ -94,10 +94,10 @@ export default {
     str: "Manage MCP Servers",
   },
   COMMAND_GLOBAL_SETTINGS: {
-    str: "Global Settings"
+    str: "Global Settings",
   },
   COMMAND_CONFIRM: {
-    str: "Confirm"
+    str: "Confirm",
   },
 
   // Labels.
@@ -156,13 +156,13 @@ export default {
     str: "I’m interested in being invited to future research studies from Opal",
   },
   LABEL_SETTINGS_GENERAL: {
-    str: "General"
+    str: "General",
   },
   LABEL_SETTINGS_INTEGRATIONS: {
-    str: "Integrations"
+    str: "Integrations",
   },
   LABEL_SETTINGS_EXPERIMENTAL: {
-    str: "Experimental Features"
+    str: "Experimental Features",
   },
 
   // Statuses.
@@ -277,16 +277,15 @@ export default {
   },
 
   TEXT_WARM_WELCOME_TITLE: {
-    str: "Welcome to Opal"
+    str: "Welcome to Opal",
   },
   TEXT_WARM_WELCOME_INTRO: {
-    str: "We’re excited to see what you build with Opal, a no code tool to help you create, edit, and share AI workflows and mini-apps."
+    str: "We’re excited to see what you build with Opal, a no code tool to help you create, edit, and share AI workflows and mini-apps.",
   },
   TEXT_WARM_WELCOME_PRIVACY: {
-    str: "We respect your privacy, and we do not use your data to train Google’s AI models."
+    str: "We respect your privacy, and we do not use your data to train Google’s AI models.",
   },
   TEXT_WARM_WELCOME_EMAIL_UPDATES: {
-    str: "Let us know if you’d like to be involved with future research studies or hear about the latest and greatest from Opal!"
+    str: "Let us know if you’d like to be involved with future research studies or hear about the latest and greatest from Opal!",
   },
-
 } as LanguagePackEntry;

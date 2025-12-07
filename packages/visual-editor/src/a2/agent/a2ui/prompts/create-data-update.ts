@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { llm } from "../../../a2/utils";
-import type { GeminiBody } from "../../../a2/gemini";
+import { llm } from "../../../a2/utils.js";
+import type { GeminiBody } from "../../../a2/gemini.js";
 import type { LLMContent } from "@breadboard-ai/types";
 
 export { getUIDataUpdatePrompt };

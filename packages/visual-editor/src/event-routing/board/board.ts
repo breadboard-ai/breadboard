@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EventRoute } from "../types";
+import { EventRoute } from "../types.js";
 
 import {
   ConsentType,
@@ -13,11 +13,11 @@ import {
   InputValues,
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
-import { RuntimeSnackbarEvent } from "../../runtime/events";
+import { RuntimeSnackbarEvent } from "../../runtime/events.js";
 import { StateEvent } from "../../ui/events/events.js";
 import * as BreadboardUI from "../../ui/index.js";
 import { parseUrl } from "../../ui/utils/urls.js";
-import { GoogleDriveBoardServer } from "../../board-server/server";
+import { GoogleDriveBoardServer } from "../../board-server/server.js";
 
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",

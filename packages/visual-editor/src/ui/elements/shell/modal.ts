@@ -6,12 +6,12 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, query } from "lit/decorators.js";
 import { ref } from "lit/directives/ref.js";
-import { ModalDismissedEvent } from "../../events/events";
-import { baseColors } from "../../styles/host/base-colors";
-import { type } from "../../styles/host/type";
-import { icons } from "../../styles/icons";
-import { behavior } from "../../styles/host/behavior";
-import { isCtrlCommand } from "../../utils/is-ctrl-command";
+import { ModalDismissedEvent } from "../../events/events.js";
+import { baseColors } from "../../styles/host/base-colors.js";
+import { type } from "../../styles/host/type.js";
+import { icons } from "../../styles/icons.js";
+import { behavior } from "../../styles/host/behavior.js";
+import { isCtrlCommand } from "../../utils/is-ctrl-command.js";
 import { classMap } from "lit/directives/class-map.js";
 
 @customElement("bb-modal")

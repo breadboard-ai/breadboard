@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { StepEditor, StepEditorSurface } from "./types";
+import { StepEditor, StepEditorSurface } from "./types.js";
 import { signal } from "signal-utils";
 
 export { StepEditorImpl };

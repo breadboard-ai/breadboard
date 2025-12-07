@@ -5,18 +5,18 @@
  */
 
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
-import { AgentFileSystem } from "../file-system";
-import { PidginTranslator } from "../pidgin-translator";
-import { A2ModuleArgs } from "../../runnable-module-factory";
-import { Params } from "../../a2/common";
-import { generateSpec, SurfaceSpec } from "./generate-spec";
-import { llm, ok } from "../../a2/utils";
+import { AgentFileSystem } from "../file-system.js";
+import { PidginTranslator } from "../pidgin-translator.js";
+import { A2ModuleArgs } from "../../runnable-module-factory.js";
+import { Params } from "../../a2/common.js";
+import { generateSpec, SurfaceSpec } from "./generate-spec.js";
+import { llm, ok } from "../../a2/utils.js";
 import { err } from "@breadboard-ai/utils";
-import { generateTemplate } from "./generate-template";
-import { makeFunction } from "./make-function";
-import { generateOutputViaFunction } from "./generate-output";
-import { FunctionDefinition } from "../function-definition";
-import { A2UIRenderer } from "../types";
+import { generateTemplate } from "./generate-template.js";
+import { makeFunction } from "./make-function.js";
+import { generateOutputViaFunction } from "./generate-output.js";
+import { FunctionDefinition } from "../function-definition.js";
+import { A2UIRenderer } from "../types.js";
 
 export { SmartLayoutPipeline };
 

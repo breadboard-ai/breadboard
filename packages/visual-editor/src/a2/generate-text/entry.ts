@@ -8,12 +8,12 @@ import {
   LLMContent,
   Schema,
 } from "@breadboard-ai/types";
-import { type Params } from "../a2/common";
-import { readSettings } from "../a2/settings";
-import { Template } from "../a2/template";
-import { defaultLLMContent, ok } from "../a2/utils";
-import { defaultSystemInstruction } from "./system-instruction";
-import type { SharedContext } from "./types";
+import { type Params } from "../a2/common.js";
+import { readSettings } from "../a2/settings.js";
+import { Template } from "../a2/template.js";
+import { defaultLLMContent, ok } from "../a2/utils.js";
+import { defaultSystemInstruction } from "./system-instruction.js";
+import type { SharedContext } from "./types.js";
 
 export { invoke as default, describe };
 

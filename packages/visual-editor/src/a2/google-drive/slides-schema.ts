@@ -8,11 +8,11 @@ import {
   LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
-import { type GeminiSchema } from "../a2/gemini";
-import { GeminiPrompt } from "../a2/gemini-prompt";
-import { err, llm, ok } from "../a2/utils";
-import type { SimplePresentation } from "./types";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { type GeminiSchema } from "../a2/gemini.js";
+import { GeminiPrompt } from "../a2/gemini-prompt.js";
+import { err, llm, ok } from "../a2/utils.js";
+import type { SimplePresentation } from "./types.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { inferSlideStructure };
 

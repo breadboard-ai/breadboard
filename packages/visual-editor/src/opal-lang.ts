@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import DefaultLangPack from "./ui/strings/en_US";
+import DefaultLangPack from "./ui/strings/en_US/index.js";
 
 export default {
   ...DefaultLangPack,

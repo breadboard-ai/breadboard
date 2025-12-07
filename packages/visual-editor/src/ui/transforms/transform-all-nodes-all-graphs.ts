@@ -14,7 +14,7 @@ import {
   EditTransformFactory,
   TemplatePartTransformer,
   TransformAllNodes,
-} from "./transform-all-nodes";
+} from "./transform-all-nodes.js";
 
 export { TransformAllNodesAllGraphs };
 

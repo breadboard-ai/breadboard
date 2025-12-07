@@ -3,11 +3,11 @@
  */
 
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
-import { report } from "../a2/output";
-import { ok } from "../a2/utils";
-import { getPlan, plannerPrompt } from "./planner-prompt";
-import { type ExecuteStepFunction, type Strategist } from "./types";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { report } from "../a2/output.js";
+import { ok } from "../a2/utils.js";
+import { getPlan, plannerPrompt } from "./planner-prompt.js";
+import { type ExecuteStepFunction, type Strategist } from "./types.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { ParallelStrategist };
 

@@ -5,7 +5,7 @@
  */
 import { LitElement, html, css, nothing, PropertyValues, svg } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { AssetEdge, DragConnectorReceiver } from "../../types/types";
+import { AssetEdge, DragConnectorReceiver } from "../../types/types.js";
 import {
   AssetPath,
   Edge,
@@ -17,11 +17,11 @@ import {
   StateEvent,
   ToastEvent,
   ToastType,
-} from "../../events/events";
-import { collectNodeIds } from "./utils/collect-ids";
+} from "../../events/events.js";
+import { collectNodeIds } from "./utils/collect-ids.js";
 import { PortIdentifier } from "@breadboard-ai/types";
-import { MAIN_BOARD_ID } from "../../constants/constants";
-import { NodeSelectEvent } from "./events/events";
+import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { NodeSelectEvent } from "./events/events.js";
 
 const HEADER_ADJUSTMENT = 18;
 

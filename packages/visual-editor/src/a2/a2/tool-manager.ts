@@ -15,16 +15,16 @@ import type {
   DescriberResultTransformer,
   ExportDescriberResult,
   ToolOutput,
-} from "./common";
+} from "./common.js";
 import {
   type FunctionDeclaration,
   type GeminiSchema,
   type Tool,
-} from "./gemini";
-import { addUserTurn, ok } from "./utils";
+} from "./gemini.js";
+import { addUserTurn, ok } from "./utils.js";
 import { err } from "@breadboard-ai/utils";
-import { A2ModuleArgs } from "../runnable-module-factory";
-import { McpToolAdapter } from "./mcp-tool-adapter";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { McpToolAdapter } from "./mcp-tool-adapter.js";
 
 const CODE_EXECUTION_SUFFIX = "#module:code-execution";
 

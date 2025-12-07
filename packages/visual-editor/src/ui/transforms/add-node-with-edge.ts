@@ -12,7 +12,7 @@ import {
   GraphIdentifier,
   NodeDescriptor,
 } from "@breadboard-ai/types";
-import { ChangeEdge } from "./change-edge";
+import { ChangeEdge } from "./change-edge.js";
 
 export { AddNodeWithEdge };
 

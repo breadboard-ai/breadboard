@@ -2,18 +2,18 @@
  * @fileoverview Searching the Internet according to your plan.
  */
 import { Capabilities, LLMContent, Schema } from "@breadboard-ai/types";
-import { type Params } from "./common";
+import { type Params } from "./common.js";
 import invokeGemini, {
   defaultSafetySettings,
   type GeminiInputs,
   type Tool,
-} from "./gemini";
-import { ArgumentNameGenerator } from "./introducer";
-import { report } from "./output";
-import { Template } from "./template";
-import { ToolManager } from "./tool-manager";
-import { addUserTurn, err, llm, ok, toLLMContent, toText } from "./utils";
-import { A2ModuleArgs } from "../runnable-module-factory";
+} from "./gemini.js";
+import { ArgumentNameGenerator } from "./introducer.js";
+import { report } from "./output.js";
+import { Template } from "./template.js";
+import { ToolManager } from "./tool-manager.js";
+import { addUserTurn, err, llm, ok, toLLMContent, toText } from "./utils.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { invoke as default, describe };
 

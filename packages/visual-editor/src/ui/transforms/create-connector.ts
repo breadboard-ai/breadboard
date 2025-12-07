@@ -10,7 +10,7 @@ import {
   EditTransform,
   EditTransformResult,
 } from "@breadboard-ai/types";
-import { ConnectorInitializerResult } from "../connectors/types";
+import { ConnectorInitializerResult } from "../connectors/types.js";
 
 export { CreateConnector };
 

@@ -9,11 +9,11 @@ import {
   Schema,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
-import { err, ok } from "../a2/utils";
-import { exp, query } from "./api";
-import { DOC_MIME_TYPE, markdownToContext } from "./docs";
-import type { ConnectorConfiguration } from "./types";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { err, ok } from "../a2/utils.js";
+import { exp, query } from "./api.js";
+import { DOC_MIME_TYPE, markdownToContext } from "./docs.js";
+import type { ConnectorConfiguration } from "./types.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { invoke as default, describe };
 

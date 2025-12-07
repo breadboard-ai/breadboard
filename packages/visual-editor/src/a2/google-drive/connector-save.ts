@@ -8,7 +8,7 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
-import { err, ok } from "../a2/utils";
+import { err, ok } from "../a2/utils.js";
 import {
   appendSpreadsheetValues,
   create,
@@ -18,13 +18,13 @@ import {
   query,
   updateDoc,
   updatePresentation,
-} from "./api";
-import { contextToRequests, DOC_MIME_TYPE } from "./docs";
-import { inferSheetValues, SHEETS_MIME_TYPE } from "./sheets";
-import { SimpleSlideBuilder, SLIDES_MIME_TYPE } from "./slides";
-import { inferSlideStructure } from "./slides-schema";
-import type { ConnectorConfiguration } from "./types";
-import { A2ModuleArgs } from "../runnable-module-factory";
+} from "./api.js";
+import { contextToRequests, DOC_MIME_TYPE } from "./docs.js";
+import { inferSheetValues, SHEETS_MIME_TYPE } from "./sheets.js";
+import { SimpleSlideBuilder, SLIDES_MIME_TYPE } from "./slides.js";
+import { inferSlideStructure } from "./slides-schema.js";
+import type { ConnectorConfiguration } from "./types.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { invoke as default, describe };
 

@@ -5,7 +5,7 @@
  */
 
 import { NodeRunState } from "@breadboard-ai/types";
-import { EdgeRunState, RendererRunState } from "./types";
+import { EdgeRunState, RendererRunState } from "./types.js";
 import { SignalMap } from "signal-utils/map";
 
 export { ReactiveRendererRunState };

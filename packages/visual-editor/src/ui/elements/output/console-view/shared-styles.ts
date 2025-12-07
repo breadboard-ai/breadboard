@@ -5,7 +5,7 @@
  */
 
 import { css, CSSResultGroup } from "lit";
-import { baseColors } from "../../../styles/host/base-colors";
+import { baseColors } from "../../../styles/host/base-colors.js";
 
 export const sharedStyles = [
   baseColors,

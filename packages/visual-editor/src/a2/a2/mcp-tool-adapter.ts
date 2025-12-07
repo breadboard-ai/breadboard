@@ -6,12 +6,12 @@
 
 import { CallToolResultContent, McpClient } from "../../mcp/index.js";
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
-import { StreamableReporter } from "./output";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { StreamableReporter } from "./output.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { filterUndefined, ok } from "@breadboard-ai/utils";
-import { err, ErrorWithMetadata } from "./utils";
-import { DescriberResult } from "./common";
-import { ListToolResult } from "./connector-manager";
+import { err, ErrorWithMetadata } from "./utils.js";
+import { DescriberResult } from "./common.js";
+import { ListToolResult } from "./connector-manager.js";
 
 export { McpToolAdapter };
 

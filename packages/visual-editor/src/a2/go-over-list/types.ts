@@ -3,7 +3,7 @@
  */
 
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export type Task = {
   label: string;

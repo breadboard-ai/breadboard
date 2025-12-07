@@ -14,7 +14,7 @@ import {
   TextCapabilityPart,
 } from "@breadboard-ai/types";
 import { Template } from "@breadboard-ai/utils";
-import { AssetEdge } from "../types/types";
+import { AssetEdge } from "../types/types.js";
 import { isLLMContentBehavior, isPreviewBehavior } from "../utils/behaviors.js";
 import { jsonStringify } from "../utils/json-stringify.js";
 import { getMimeType } from "../utils/mime-type.js";

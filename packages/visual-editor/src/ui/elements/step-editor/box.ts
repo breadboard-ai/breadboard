@@ -5,7 +5,7 @@
  */
 import { html, css, CSSResultGroup } from "lit";
 import { customElement } from "lit/decorators.js";
-import { Entity } from "./entity";
+import { Entity } from "./entity.js";
 import { map } from "lit/directives/map.js";
 
 @customElement("bb-box")

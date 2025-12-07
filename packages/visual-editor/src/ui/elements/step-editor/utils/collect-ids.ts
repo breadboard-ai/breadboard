@@ -9,11 +9,11 @@ import type {
   GraphIdentifier,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import { Graph } from "../graph";
-import { GraphNode } from "../graph-node";
+import { Graph } from "../graph.js";
+import { GraphNode } from "../graph-node.js";
 import { PortIdentifier } from "@breadboard-ai/types";
-import { GraphEdge } from "../graph-edge";
-import { GraphAsset } from "../graph-asset";
+import { GraphEdge } from "../graph-edge.js";
+import { GraphAsset } from "../graph-asset.js";
 
 export function collectEdgeAndGraphId(evt: Event) {
   let graphId: GraphIdentifier | null = null;

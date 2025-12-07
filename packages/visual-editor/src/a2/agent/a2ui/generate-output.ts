@@ -10,12 +10,12 @@ import {
   GeminiSchema,
   generateContent,
   GenerationConfig,
-} from "../../a2/gemini";
-import { llm } from "../../a2/utils";
-import { A2ModuleArgs } from "../../runnable-module-factory";
-import { FunctionDefinition, mapDefinitions } from "../function-definition";
+} from "../../a2/gemini.js";
+import { llm } from "../../a2/utils.js";
+import { A2ModuleArgs } from "../../runnable-module-factory.js";
+import { FunctionDefinition, mapDefinitions } from "../function-definition.js";
 import { err, ok } from "@breadboard-ai/utils";
-import { parseJson } from "../../parse-json";
+import { parseJson } from "../../parse-json.js";
 
 export { generateOutputViaJson, generateOutputViaFunction };
 

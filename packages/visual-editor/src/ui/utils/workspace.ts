@@ -13,14 +13,14 @@ import {
   ModuleIdentifier,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import { MAIN_BOARD_ID } from "../constants/constants";
+import { MAIN_BOARD_ID } from "../constants/constants.js";
 import {
   GraphHighlightState,
   GraphSelectionState,
   HighlightState,
   WorkspaceSelectionChangeId,
   WorkspaceSelectionState,
-} from "../types/types";
+} from "../types/types.js";
 import { isBoardArrayBehavior, isBoardBehavior } from "./behaviors.js";
 
 export function edgeToString(edge: Edge): string {

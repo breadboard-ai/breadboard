@@ -3,16 +3,16 @@
  */
 
 import { InlineDataCapabilityPart } from "@breadboard-ai/types";
-import { generateId } from "../a2/utils";
+import { generateId } from "../a2/utils.js";
 import type {
   SlidesCreateSlideRequest,
   SlidesLayoutPlaceholderIdMapping,
   SlidesPredefinedLayout,
   SlidesRequest,
   SlidesTextStyle,
-} from "./api";
-import { SimpleSlide } from "./types";
-import { unescape } from "./unescape";
+} from "./api.js";
+import { SimpleSlide } from "./types.js";
+import { unescape } from "./unescape.js";
 
 import { Token, Tokens, marked } from "marked";
 

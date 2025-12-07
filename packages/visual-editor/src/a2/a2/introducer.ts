@@ -12,11 +12,11 @@ import {
 import {
   type DescriberResult,
   type DescriberResultTransformer,
-} from "./common";
-import { defaultSafetySettings, type GeminiSchema } from "./gemini";
-import { GeminiPrompt } from "./gemini-prompt";
-import { err, llm, ok } from "./utils";
-import { A2ModuleArgs } from "../runnable-module-factory";
+} from "./common.js";
+import { defaultSafetySettings, type GeminiSchema } from "./gemini.js";
+import { GeminiPrompt } from "./gemini-prompt.js";
+import { err, llm, ok } from "./utils.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { ArgumentNameGenerator };
 

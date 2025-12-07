@@ -43,11 +43,7 @@
         "theme": "5f3ca599-8fee-46fb-951f-0d47b16a6d56"
       }
     },
-    "tags": [
-      "published",
-      "tool",
-      "component"
-    ],
+    "tags": ["published", "tool", "component"],
     "userModified": true
   },
   "imports": {
@@ -73,9 +69,7 @@
                   "title": "Context",
                   "items": {
                     "type": "object",
-                    "behavior": [
-                      "llm-content"
-                    ]
+                    "behavior": ["llm-content"]
                   },
                   "default": "null"
                 }
@@ -198,9 +192,7 @@
     }
   },
   "modules": {},
-  "exports": [
-    "#module:main"
-  ],
+  "exports": ["#module:main"],
   "assets": {
     "@@thumbnail": {
       "metadata": {

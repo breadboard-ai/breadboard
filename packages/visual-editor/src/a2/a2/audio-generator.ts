@@ -8,10 +8,10 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
-import { type DescriberResult } from "./common";
-import gemini, { defaultSafetySettings } from "./gemini";
-import { err, ok } from "./utils";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { type DescriberResult } from "./common.js";
+import gemini, { defaultSafetySettings } from "./gemini.js";
+import { err, ok } from "./utils.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 type AudioGeneratorInputs = {
   context: LLMContent[];

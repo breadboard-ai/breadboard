@@ -3,7 +3,7 @@
  */
 
 import { LLMContent } from "@breadboard-ai/types";
-import type { Params } from "../a2/common";
+import type { Params } from "../a2/common.js";
 
 export type GenerateTextInputs = {
   /**

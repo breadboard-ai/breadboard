@@ -10,7 +10,7 @@ import type {
   LanguagePack,
   GraphUrlInit,
 } from "../ui/types/types.js";
-import { SigninAdapter } from "../ui/utils/signin-adapter";
+import { SigninAdapter } from "../ui/utils/signin-adapter.js";
 import {
   ActionTracker,
   initializeAnalytics,

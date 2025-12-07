@@ -2,9 +2,9 @@
  * @fileoverview Mega step for generation capabilities.
  */
 
-import { ok } from "../a2/utils";
-import { readFlags } from "../a2/settings";
-import { forEach } from "../a2/for-each";
+import { ok } from "../a2/utils.js";
+import { readFlags } from "../a2/settings.js";
+import { forEach } from "../a2/for-each.js";
 import {
   BehaviorSchema,
   Capabilities,
@@ -14,7 +14,7 @@ import {
   OutputValues,
   Schema,
 } from "@breadboard-ai/types";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { invoke as default, describe };
 

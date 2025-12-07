@@ -27,18 +27,18 @@ import { guard } from "lit/directives/guard.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
 import { until } from "lit/directives/until.js";
-import { googleDriveClientContext } from "../../contexts/google-drive-client-context";
+import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { OverlayDismissedEvent, SnackbarEvent } from "../../events/events.js";
 import { Project, UI } from "../../state/types.js";
 import { baseColors } from "../../styles/host/base-colors.js";
-import { type } from "../../styles/host/type";
-import { icons } from "../../styles/icons";
+import { type } from "../../styles/host/type.js";
+import { icons } from "../../styles/icons.js";
 import {
   AppTemplateAdditionalOptionsAvailable,
   AppTheme,
   SnackType,
 } from "../../types/types.js";
-import { renderThumbnail } from "../../utils/image";
+import { renderThumbnail } from "../../utils/image.js";
 import { convertImageToInlineData } from "./image-convert.js";
 import { uiStateContext } from "../../contexts/ui-state.js";
 

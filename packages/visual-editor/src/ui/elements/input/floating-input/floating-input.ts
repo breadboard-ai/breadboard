@@ -12,12 +12,12 @@ import {
   ResizeEvent,
   StateEvent,
   UtteranceEvent,
-} from "../../../events/events";
+} from "../../../events/events.js";
 import { repeat } from "lit/directives/repeat.js";
 import {
   isLLMContentArrayBehavior,
   isLLMContentBehavior,
-} from "../../../utils";
+} from "../../../utils/index.js";
 import { AssetShelf } from "../add-asset/asset-shelf.js";
 import { maybeConvertToYouTube } from "../../../utils/substitute-input.js";
 import {

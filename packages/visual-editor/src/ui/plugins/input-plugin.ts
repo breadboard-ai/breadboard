@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 /**
  * The event which should be dispatched by a Breadboard Input Widget to indicate
  * when there is a new value.

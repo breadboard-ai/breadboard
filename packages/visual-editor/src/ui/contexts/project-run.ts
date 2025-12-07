@@ -5,7 +5,7 @@
  */
 
 import { createContext } from "@lit/context";
-import { ProjectRun } from "../state";
+import { ProjectRun } from "../state/index.js";
 
 export const projectRunContext = createContext<ProjectRun | null>(
   "bb-project-run"

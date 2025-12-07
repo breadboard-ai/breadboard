@@ -8,9 +8,9 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
-import { err, ok, toLLMContent } from "../a2/utils";
-import { executeTool } from "../a2/step-executor";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { err, ok, toLLMContent } from "../a2/utils.js";
+import { executeTool } from "../a2/step-executor.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { invoke as default, describe };
 

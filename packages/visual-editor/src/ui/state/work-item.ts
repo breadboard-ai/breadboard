@@ -16,8 +16,8 @@ import { InputResponse, OutputResponse, Schema } from "@breadboard-ai/types";
 import { Signal } from "signal-polyfill";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
-import { idFromPath, toLLMContentArray } from "./common";
-import { EphemeralParticleTree } from "./types";
+import { idFromPath, toLLMContentArray } from "./common.js";
+import { EphemeralParticleTree } from "./types.js";
 
 export { ReactiveWorkItem };
 

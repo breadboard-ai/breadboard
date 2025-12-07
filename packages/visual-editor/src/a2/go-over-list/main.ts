@@ -7,19 +7,19 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
-import { type Params } from "../a2/common";
-import { ArgumentNameGenerator } from "../a2/introducer";
-import { fanOutContext } from "../a2/lists";
-import { readSettings } from "../a2/settings";
-import { Template } from "../a2/template";
-import { ToolManager } from "../a2/tool-manager";
-import { err, generateId, ok } from "../a2/utils";
-import { ParallelStrategist } from "./parallel-strategist";
-import { Runtime } from "./runtime";
-import { SequentialStrategist } from "./sequential-strategist";
-import { ThinkStrategist } from "./think-strategist";
-import { type Strategist } from "./types";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { type Params } from "../a2/common.js";
+import { ArgumentNameGenerator } from "../a2/introducer.js";
+import { fanOutContext } from "../a2/lists.js";
+import { readSettings } from "../a2/settings.js";
+import { Template } from "../a2/template.js";
+import { ToolManager } from "../a2/tool-manager.js";
+import { err, generateId, ok } from "../a2/utils.js";
+import { ParallelStrategist } from "./parallel-strategist.js";
+import { Runtime } from "./runtime.js";
+import { SequentialStrategist } from "./sequential-strategist.js";
+import { ThinkStrategist } from "./think-strategist.js";
+import { type Strategist } from "./types.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { invoke as default, describe };
 

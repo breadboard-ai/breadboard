@@ -31,7 +31,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import {
   EnumValue,
   WorkspaceSelectionStateWithChangeId,
-} from "../../types/types";
+} from "../../types/types.js";
 import {
   AssetPath,
   GraphDescriptor,
@@ -46,32 +46,35 @@ import {
 } from "@breadboard-ai/types";
 import { classMap } from "lit/directives/class-map.js";
 import { until } from "lit/directives/until.js";
-import { isConfigurableBehavior, isLLMContentBehavior } from "../../utils";
+import {
+  isConfigurableBehavior,
+  isLLMContentBehavior,
+} from "../../utils/index.js";
 import {
   FastAccessMenu,
   ItemSelect,
   LLMPartInput,
   TextEditor,
-} from "../elements";
+} from "../elements.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { isCtrlCommand } from "../../utils/is-ctrl-command";
-import { MAIN_BOARD_ID } from "../../constants/constants";
-import { Project, StepEditorSurface } from "../../state";
+import { isCtrlCommand } from "../../utils/is-ctrl-command.js";
+import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { Project, StepEditorSurface } from "../../state/index.js";
 import {
   FastAccessSelectEvent,
   IterateOnPromptEvent,
   StateEvent,
   ToastEvent,
   ToastType,
-} from "../../events/events";
+} from "../../events/events.js";
 import {
   isControllerBehavior,
   isLLMContentArrayBehavior,
-} from "../../utils/behaviors";
+} from "../../utils/behaviors.js";
 
 import * as StringsHelper from "../../strings/helper.js";
-import { FlowGenConstraint } from "../../flow-gen/flow-generator";
-import { ConnectorView } from "../../connectors/types";
+import { FlowGenConstraint } from "../../flow-gen/flow-generator.js";
+import { ConnectorView } from "../../connectors/types.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { icons } from "../../styles/icons.js";
 import { consume } from "@lit/context";

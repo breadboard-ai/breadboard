@@ -2,8 +2,8 @@
  * @fileoverview Manages connectors.
  */
 
-import { err, ok, isLLMContentArray } from "./utils";
-import type { ExportDescriberResult, ToolOutput } from "./common";
+import { err, ok, isLLMContentArray } from "./utils.js";
+import type { ExportDescriberResult, ToolOutput } from "./common.js";
 import {
   Capabilities,
   DescribeOutputs,
@@ -14,7 +14,7 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { ConnectorManager, createConfigurator };
 

@@ -2,8 +2,9 @@
   "extends": "@google-labs/tsconfig/base.json",
   "files": [],
   "references": [
-    { "path": "packages/google-drive-kit" },
     { "path": "packages/types" },
+    { "path": "packages/utils" },
+    { "path": "packages/unified-server" },
     { "path": "packages/visual-editor" }
   ]
 }

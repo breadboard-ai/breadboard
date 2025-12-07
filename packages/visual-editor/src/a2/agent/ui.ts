@@ -12,15 +12,15 @@ import {
   Outcome,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
-import { PidginTranslator } from "./pidgin-translator";
-import { A2ModuleArgs } from "../runnable-module-factory";
-import { A2UIClientWorkItem } from "./a2ui/client-work-item";
-import { A2UIClientEventMessage } from "./a2ui/schemas";
+import { PidginTranslator } from "./pidgin-translator.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { A2UIClientWorkItem } from "./a2ui/client-work-item.js";
+import { A2UIClientEventMessage } from "./a2ui/schemas.js";
 import { v0_8 } from "../../a2ui/index.js";
-import { A2UIClient } from "./a2ui/client";
-import { A2UIAppScreenOutput } from "./a2ui/app-screen-output";
-import { ProgressWorkItem } from "./progress-work-item";
-import { A2UIRenderer } from "./types";
+import { A2UIClient } from "./a2ui/client.js";
+import { A2UIAppScreenOutput } from "./a2ui/app-screen-output.js";
+import { ProgressWorkItem } from "./progress-work-item.js";
+import { A2UIRenderer } from "./types.js";
 
 export { AgentUI };
 

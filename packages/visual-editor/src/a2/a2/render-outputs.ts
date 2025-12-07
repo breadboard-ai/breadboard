@@ -11,10 +11,10 @@ import {
   StoredDataCapabilityPart,
   TextCapabilityPart,
 } from "@breadboard-ai/types";
-import { ConnectorManager } from "./connector-manager";
-import { callGenWebpage } from "./html-generator";
-import { flattenContext } from "./lists";
-import { Template } from "./template";
+import { ConnectorManager } from "./connector-manager.js";
+import { callGenWebpage } from "./html-generator.js";
+import { flattenContext } from "./lists.js";
+import { Template } from "./template.js";
 import {
   err,
   llm,
@@ -23,10 +23,10 @@ import {
   toJson,
   toLLMContent,
   toText,
-} from "./utils";
-import { readFlags } from "./settings";
-import { renderConsistentUI } from "./render-consistent-ui";
-import { A2ModuleArgs } from "../runnable-module-factory";
+} from "./utils.js";
+import { readFlags } from "./settings.js";
+import { renderConsistentUI } from "./render-consistent-ui.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { invoke as default, describe };
 

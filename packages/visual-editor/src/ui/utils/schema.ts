@@ -5,7 +5,7 @@
  */
 
 import { BehaviorSchema, Schema } from "@breadboard-ai/types";
-import Ajv, { AnySchema, ValidateFunction } from "ajv";
+import { Ajv, AnySchema, ValidateFunction } from "ajv";
 
 const LLMContentSchema = {
   $schema: "http://json-schema.org/draft-07/schema#",

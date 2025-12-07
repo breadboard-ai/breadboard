@@ -10,8 +10,8 @@ import {
   Outcome,
   SimplifiedA2UIClient,
 } from "@breadboard-ai/types";
-import { A2UIClientEventMessage } from "./schemas";
-import { FromPidginMessagesResult } from "../pidgin-translator";
+import { A2UIClientEventMessage } from "./schemas.js";
+import { FromPidginMessagesResult } from "../pidgin-translator.js";
 
 export { A2UIClient };
 

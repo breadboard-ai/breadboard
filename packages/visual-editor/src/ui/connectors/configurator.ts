@@ -11,7 +11,7 @@ import {
   UUID,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
-import { ConnectorInitializerResult, ConnectorView } from "./types";
+import { ConnectorInitializerResult, ConnectorView } from "./types.js";
 
 export { Configurator };
 

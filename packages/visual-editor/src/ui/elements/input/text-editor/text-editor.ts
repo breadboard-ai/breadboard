@@ -7,15 +7,15 @@ import { Template, TemplatePart } from "@breadboard-ai/utils";
 import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
-import { FastAccessSelectEvent } from "../../../events/events";
-import { Project } from "../../../state";
-import { FastAccessMenu } from "../../elements";
+import { FastAccessSelectEvent } from "../../../events/events.js";
+import { Project } from "../../../state/index.js";
+import { FastAccessMenu } from "../../elements.js";
 import { isTemplatePart } from "@breadboard-ai/utils";
 import { styles as ChicletStyles } from "../../../styles/chiclet.js";
-import { getAssetType } from "../../../utils/mime-type";
-import { icons } from "../../../styles/icons";
-import { expandChiclet } from "../../../utils/expand-chiclet";
-import { jsonStringify } from "../../../utils/json-stringify";
+import { getAssetType } from "../../../utils/mime-type.js";
+import { icons } from "../../../styles/icons.js";
+import { expandChiclet } from "../../../utils/expand-chiclet.js";
+import { jsonStringify } from "../../../utils/json-stringify.js";
 import { createTrustedChicletHTML } from "../../../trusted-types/chiclet-html.js";
 
 export function chicletHtml(

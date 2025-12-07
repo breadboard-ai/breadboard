@@ -16,7 +16,7 @@ import {
   PortStatus,
 } from "@breadboard-ai/types";
 import { willCreateCycle } from "@breadboard-ai/utils";
-import { transformConfiguration } from "./transform-all-nodes";
+import { transformConfiguration } from "./transform-all-nodes.js";
 
 export { AutoWireInPorts };
 

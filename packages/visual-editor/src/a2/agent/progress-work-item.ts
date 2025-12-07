@@ -15,12 +15,12 @@ import {
   WorkItem,
 } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
-import { now } from "./now";
+import { now } from "./now.js";
 import { SignalMap } from "signal-utils/map";
-import { GeminiBody } from "../a2/gemini";
-import { AgentProgressManager } from "./types";
-import { llm } from "../a2/utils";
-import { StatusUpdateCallbackOptions } from "./function-definition";
+import { GeminiBody } from "../a2/gemini.js";
+import { AgentProgressManager } from "./types.js";
+import { llm } from "../a2/utils.js";
+import { StatusUpdateCallbackOptions } from "./function-definition.js";
 
 export { ProgressWorkItem };
 

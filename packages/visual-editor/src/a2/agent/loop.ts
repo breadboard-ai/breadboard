@@ -6,24 +6,24 @@
 
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
-import { Params } from "../a2/common";
+import { Params } from "../a2/common.js";
 import {
   conformGeminiBody,
   GeminiBody,
   streamGenerateContent,
   Tool,
-} from "../a2/gemini";
-import { llm } from "../a2/utils";
-import { A2ModuleArgs } from "../runnable-module-factory";
-import { AgentFileSystem } from "./file-system";
-import { emptyDefinitions, mapDefinitions } from "./function-definition";
-import { defineSystemFunctions } from "./functions/system";
-import { PidginTranslator } from "./pidgin-translator";
-import { AgentUI } from "./ui";
-import { defineGenerateFunctions } from "./functions/generate";
-import { prompt as a2UIPrompt } from "./a2ui/prompt";
-import { FunctionCallerImpl } from "./function-caller";
-import { SmartLayoutPipeline } from "./a2ui/smart-layout-pipeline";
+} from "../a2/gemini.js";
+import { llm } from "../a2/utils.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { AgentFileSystem } from "./file-system.js";
+import { emptyDefinitions, mapDefinitions } from "./function-definition.js";
+import { defineSystemFunctions } from "./functions/system.js";
+import { PidginTranslator } from "./pidgin-translator.js";
+import { AgentUI } from "./ui.js";
+import { defineGenerateFunctions } from "./functions/generate.js";
+import { prompt as a2UIPrompt } from "./a2ui/prompt.js";
+import { FunctionCallerImpl } from "./function-caller.js";
+import { SmartLayoutPipeline } from "./a2ui/smart-layout-pipeline.js";
 
 export { Loop };
 

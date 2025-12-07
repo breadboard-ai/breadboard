@@ -21,10 +21,10 @@ import {
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { type RunResults } from "@breadboard-ai/utils/google-drive/operations.js";
 import * as idb from "idb";
-import { RecentBoardStore } from "../data/recent-boards";
+import { RecentBoardStore } from "../data/recent-boards.js";
 import * as BreadboardUI from "../ui/index.js";
 import { BOARD_SAVE_STATUS } from "../ui/types/types.js";
-import type { SigninAdapter } from "../ui/utils/signin-adapter";
+import type { SigninAdapter } from "../ui/utils/signin-adapter.js";
 import {
   RuntimeBoardLoadErrorEvent,
   RuntimeBoardSaveStatusChangeEvent,
@@ -35,13 +35,13 @@ import {
   RuntimeTabChangeEvent,
   RuntimeTabCloseEvent,
   RuntimeUnsnackbarEvent,
-} from "./events";
-import { Tab, TabId, TabType } from "./types";
+} from "./events.js";
+import { Tab, TabId, TabType } from "./types.js";
 import {
   applyDefaultThemeInformationIfNonePresent,
   createAppPaletteIfNeeded,
-} from "./util";
-import { GoogleDriveBoardServer } from "../board-server/server";
+} from "./util.js";
+import { GoogleDriveBoardServer } from "../board-server/server.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
 

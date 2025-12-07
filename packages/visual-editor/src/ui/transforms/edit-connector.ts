@@ -10,10 +10,10 @@ import {
   EditTransform,
   EditTransformResult,
 } from "@breadboard-ai/types";
-import { ConnectorConfiguration } from "../connectors/types";
-import { configFromData } from "../connectors/util";
-import { UpdateAssetWithRefs } from "./update-asset-with-refs";
-import { UpdateAssetRefs } from "./update-asset-refs";
+import { ConnectorConfiguration } from "../connectors/types.js";
+import { configFromData } from "../connectors/util.js";
+import { UpdateAssetWithRefs } from "./update-asset-with-refs.js";
+import { UpdateAssetRefs } from "./update-asset-refs.js";
 import { hash, ok } from "@breadboard-ai/utils";
 
 export { EditConnector };

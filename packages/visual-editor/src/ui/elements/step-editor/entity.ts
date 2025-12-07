@@ -7,9 +7,9 @@ import { LitElement, html, nothing, HTMLTemplateResult, svg } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { toCSSMatrix } from "./utils/to-css-matrix";
-import { intersects } from "./utils/rect-intersection";
-import { Project } from "../../state";
+import { toCSSMatrix } from "./utils/to-css-matrix.js";
+import { intersects } from "./utils/rect-intersection.js";
+import { Project } from "../../state/index.js";
 
 @customElement("bb-graph-entity")
 export class Entity extends LitElement {

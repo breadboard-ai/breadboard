@@ -15,14 +15,14 @@ import {
 import { customElement, property } from "lit/decorators.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { classMap } from "lit/directives/class-map.js";
-import { toCSSMatrix } from "./utils/to-css-matrix";
-import { Box } from "./box";
+import { toCSSMatrix } from "./utils/to-css-matrix.js";
+import { Box } from "./box.js";
 import {
   AutoFocusEditorRequest,
   NodeBoundsUpdateRequestEvent,
   SelectionMoveEvent,
   SelectionTranslateEvent,
-} from "./events/events";
+} from "./events/events.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
 import {
@@ -36,16 +36,16 @@ import {
   isLLMContentArrayBehavior,
   isLLMContentBehavior,
   isPreviewBehavior,
-} from "../../utils/behaviors";
-import { createTruncatedValue } from "./utils/create-truncated-value";
+} from "../../utils/behaviors.js";
+import { createTruncatedValue } from "./utils/create-truncated-value.js";
 import { styles as ChicletStyles } from "../../styles/chiclet.js";
-import { toGridSize } from "./utils/to-grid-size";
-import { DragConnectorReceiver } from "../../types/types";
+import { toGridSize } from "./utils/to-grid-size.js";
+import { DragConnectorReceiver } from "../../types/types.js";
 import {
   DragConnectorStartEvent,
   HideTooltipEvent,
   ShowTooltipEvent,
-} from "../../events/events";
+} from "../../events/events.js";
 import { createChiclets } from "./utils/create-chiclets.js";
 import { icons } from "../../styles/icons.js";
 import { baseColors, palette, custom } from "../../styles/host/base-colors.js";

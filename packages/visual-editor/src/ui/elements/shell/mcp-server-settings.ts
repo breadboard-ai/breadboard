@@ -8,11 +8,11 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { HTMLTemplateResult, LitElement, css, html, nothing } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
-import { markdown } from "../../directives/markdown";
-import { Project } from "../../state";
-import { baseColors } from "../../styles/host/base-colors";
-import { type } from "../../styles/host/type";
-import { icons } from "../../styles/icons";
+import { markdown } from "../../directives/markdown.js";
+import { Project } from "../../state/index.js";
+import { baseColors } from "../../styles/host/base-colors.js";
+import { type } from "../../styles/host/type.js";
+import { icons } from "../../styles/icons.js";
 
 @customElement("bb-mcp-servers-settings")
 export class VEMCPServersSettings extends SignalWatcher(LitElement) {

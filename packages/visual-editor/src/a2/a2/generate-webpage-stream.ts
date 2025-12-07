@@ -13,9 +13,9 @@ import {
   Outcome,
 } from "@breadboard-ai/types";
 import { iteratorFromStream } from "@breadboard-ai/utils";
-import { StreamableReporter } from "./output";
-import { err, ok, toLLMContentInline } from "./utils";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { StreamableReporter } from "./output.js";
+import { err, ok, toLLMContentInline } from "./utils.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 const DEFAULT_STREAM_BACKEND_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/generateWebpageStream";

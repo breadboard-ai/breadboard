@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AssetEdge, NewAsset } from "../../types/types";
-import { BaseEventDetail } from "../base";
+import { AssetEdge, NewAsset } from "../../types/types.js";
+import { BaseEventDetail } from "../base.js";
 
 type Namespace = "asset";
 

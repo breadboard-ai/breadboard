@@ -8,16 +8,16 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
-import { type DescriberResult } from "../a2/common";
-import { ArgumentNameGenerator } from "../a2/introducer";
-import { ListExpander } from "../a2/lists";
+import { type DescriberResult } from "../a2/common.js";
+import { ArgumentNameGenerator } from "../a2/introducer.js";
+import { ListExpander } from "../a2/lists.js";
 import {
   executeStep,
   type ContentMap,
   type ExecuteStepRequest,
-} from "../a2/step-executor";
-import { Template } from "../a2/template";
-import { ToolManager } from "../a2/tool-manager";
+} from "../a2/step-executor.js";
+import { Template } from "../a2/template.js";
+import { ToolManager } from "../a2/tool-manager.js";
 import {
   defaultLLMContent,
   encodeBase64,
@@ -26,8 +26,8 @@ import {
   toLLMContent,
   toText,
   toTextConcat,
-} from "../a2/utils";
-import { A2ModuleArgs } from "../runnable-module-factory";
+} from "../a2/utils.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 type AudioGeneratorInputs = {
   context: LLMContent[];

@@ -5,10 +5,10 @@
  */
 import { LitElement, html, css } from "lit";
 import { customElement } from "lit/decorators.js";
-import { baseColors } from "../../styles/host/base-colors";
-import { type } from "../../styles/host/type";
-import { icons } from "../../styles/icons";
-import { ModalDismissedEvent, StateEvent } from "../../events/events";
+import { baseColors } from "../../styles/host/base-colors.js";
+import { type } from "../../styles/host/type.js";
+import { icons } from "../../styles/icons.js";
+import { ModalDismissedEvent, StateEvent } from "../../events/events.js";
 
 @customElement("bb-better-on-desktop-modal")
 export class VEBetterOnDesktopModal extends LitElement {

@@ -5,12 +5,12 @@
  */
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { baseColors } from "../../styles/host/base-colors";
-import { type } from "../../styles/host/type";
-import { VisualEditorStatusUpdate } from "../../types/types";
+import { baseColors } from "../../styles/host/base-colors.js";
+import { type } from "../../styles/host/type.js";
+import { VisualEditorStatusUpdate } from "../../types/types.js";
 import { repeat } from "lit/directives/repeat.js";
-import { markdown } from "../../directives/markdown";
-import { icons } from "../../styles/icons";
+import { markdown } from "../../directives/markdown.js";
+import { icons } from "../../styles/icons.js";
 import { classMap } from "lit/directives/class-map.js";
 
 @customElement("bb-status-update-modal")

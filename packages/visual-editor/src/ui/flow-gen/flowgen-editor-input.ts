@@ -284,7 +284,6 @@ export class FlowgenEditorInput extends LitElement {
 
       ActionTracker.flowGenEdit(this.currentGraph?.url);
 
-
       if (!this.flowGenerator) return;
       if (!this.currentGraph) return;
       if (!this.projectState) return;

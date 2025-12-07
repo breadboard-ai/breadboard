@@ -16,10 +16,10 @@
     "build": "wireit",
     "build:vite": "wireit",
     "test": "wireit",
-    "eval:agent": "tsx --experimental-test-module-mocks eval/sets/agent.ts",
-    "eval:a2ui": "tsx --experimental-test-module-mocks eval/sets/a2ui.ts",
-    "eval:autoname": "tsx --experimental-test-module-mocks eval/sets/autoname.ts",
-    "eval:viewer": "vite dev eval/viewer"
+    "eval:agent": "wireit",
+    "eval:a2ui": "wireit",
+    "eval:autoname": "wireit",
+    "eval:viewer": "wireit"
   },
   "wireit": {
     "build": {
@@ -107,6 +107,35 @@
       "dependencies": [
         "build:tsc"
       ]
+    },
+    "eval:agent": {
+      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/agent.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "eval:a2ui": {
+      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/a2ui.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "eval:autoname": {
+      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/autoname.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "eval:viewer": {
+      "command": "vite dev eval/viewer",
+      "files": [],
+      "output": []
     }
   },
   "repository": {

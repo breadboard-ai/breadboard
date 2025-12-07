@@ -6,7 +6,7 @@
 
 import { config } from "dotenv";
 import { UserConfig } from "vite";
-import * as Middleware from "./middleware";
+import * as Middleware from "./middleware/index.js";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 

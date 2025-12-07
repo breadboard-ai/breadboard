@@ -21,7 +21,7 @@ import {
   GraphAssetDescriptor,
   Organizer,
   ProjectInternal,
-} from "./types";
+} from "./types.js";
 import { isInlineData } from "../../data/common.js";
 
 export { ReactiveOrganizer };

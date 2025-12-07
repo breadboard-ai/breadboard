@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as toolsCodeExecution from "./code-execution";
-import * as toolsGetWeather from "./get-weather";
-import * as toolsGetWebpage from "./get-webpage";
-import * as toolsSearchEnterprise from "./search-enterprise";
-import * as toolsSearchInternal from "./search-internal";
-import * as toolsSearchMaps from "./search-maps";
-import * as toolsSearchWeb from "./search-web";
+import * as toolsCodeExecution from "./code-execution.js";
+import * as toolsGetWeather from "./get-weather.js";
+import * as toolsGetWebpage from "./get-webpage.js";
+import * as toolsSearchEnterprise from "./search-enterprise.js";
+import * as toolsSearchInternal from "./search-internal.js";
+import * as toolsSearchMaps from "./search-maps.js";
+import * as toolsSearchWeb from "./search-web.js";
 
 import descriptor from "./bgl.json" with { type: "json" };
-import { createBgl } from "../create-bgl";
+import { createBgl } from "../create-bgl.js";
 
 export const exports = {
   "code-execution": toolsCodeExecution,

@@ -5,8 +5,8 @@
  */
 
 import { css, CSSResultGroup } from "lit";
-import { baseColors } from "./host/base-colors";
-import { type } from "./host/type";
+import { baseColors } from "./host/base-colors.js";
+import { type } from "./host/type.js";
 
 export const styles = [
   type,

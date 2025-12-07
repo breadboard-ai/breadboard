@@ -9,7 +9,7 @@ import {
   GraphDescriptor,
   GraphTheme,
 } from "@breadboard-ai/types";
-import { BaseEventDetail } from "../base";
+import { BaseEventDetail } from "../base.js";
 
 type Namespace = "board";
 

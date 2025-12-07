@@ -9,10 +9,10 @@ const Strings = BreadboardUI.Strings.forSection("Global");
 
 import { html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { MainArguments } from "./types/types";
+import { MainArguments } from "./types/types.js";
 
 import * as BBLite from "./ui/lite/lite.js";
-import { MainBase } from "./main-base";
+import { MainBase } from "./main-base.js";
 import { classMap } from "lit/directives/class-map.js";
 import { StateEvent, StateEventDetailMap } from "./ui/events/events.js";
 import { LiteEditInputController } from "./ui/lite/input/editor-input-lite.js";
@@ -20,8 +20,8 @@ import { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
 import {
   RuntimeBoardLoadErrorEvent,
   RuntimeTabChangeEvent,
-} from "./runtime/events";
-import { eventRoutes } from "./event-routing/event-routing";
+} from "./runtime/events.js";
+import { eventRoutes } from "./event-routing/event-routing.js";
 import { blankBoard } from "./ui/utils/utils.js";
 import { repeat } from "lit/directives/repeat.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";

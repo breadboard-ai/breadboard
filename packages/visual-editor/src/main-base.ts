@@ -21,14 +21,14 @@ import { html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { state } from "lit/decorators.js";
 
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
-import { RecentBoardStore } from "./data/recent-boards";
+import { RecentBoardStore } from "./data/recent-boards.js";
 import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 import {
   TabId,
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
-} from "./runtime/types";
+} from "./runtime/types.js";
 
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 
@@ -66,12 +66,12 @@ import {
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { SignalWatcher } from "@lit-labs/signals";
 
-import { Admin } from "./admin";
-import { keyboardCommands } from "./commands/commands";
-import { KeyboardCommandDeps } from "./commands/types";
-import { eventRoutes } from "./event-routing/event-routing";
+import { Admin } from "./admin.js";
+import { keyboardCommands } from "./commands/commands.js";
+import { KeyboardCommandDeps } from "./commands/types.js";
+import { eventRoutes } from "./event-routing/event-routing.js";
 
-import { MainArguments } from "./types/types";
+import { MainArguments } from "./types/types.js";
 import { hash, ok } from "@breadboard-ai/utils";
 
 export { MainBase };

@@ -12,8 +12,8 @@ import {
   MainGraphIdentifier,
   MutableGraphStore,
 } from "@breadboard-ai/types";
-import { Runtime } from "./runtime";
-import { RuntimeTabChangeEvent } from "./events";
+import { Runtime } from "./runtime.js";
+import { RuntimeTabChangeEvent } from "./events.js";
 import { signal } from "signal-utils";
 import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
 

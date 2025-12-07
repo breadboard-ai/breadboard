@@ -49,13 +49,13 @@ import {
   RendererState,
   StepEditor,
   Tool,
-} from "./types";
-import { IntegrationsImpl } from "./integrations";
-import { updateMap } from "./utils/update-map";
-import { FilteredIntegrationsImpl } from "./filtered-integrations";
+} from "./types.js";
+import { IntegrationsImpl } from "./integrations.js";
+import { updateMap } from "./utils/update-map.js";
+import { FilteredIntegrationsImpl } from "./filtered-integrations.js";
 import { McpClientManager } from "../../mcp/index.js";
-import { StepEditorImpl } from "./step-editor";
-import { ThemeState } from "./theme-state";
+import { StepEditorImpl } from "./step-editor.js";
+import { ThemeState } from "./theme-state.js";
 import { err, ok } from "@breadboard-ai/utils";
 import { transformDataParts } from "../../data/common.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";

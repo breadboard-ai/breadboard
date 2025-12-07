@@ -14,9 +14,9 @@ import {
   NodeConfiguration,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import { AutoWireInPorts, InPort } from "./autowire-in-ports";
-import { UpdateNodeTitle } from "./update-node-title";
-import { UpdateParameterMetadata } from "./update-parameter-metadata";
+import { AutoWireInPorts, InPort } from "./autowire-in-ports.js";
+import { UpdateNodeTitle } from "./update-node-title.js";
+import { UpdateParameterMetadata } from "./update-parameter-metadata.js";
 
 export { UpdateNode };
 

@@ -9,10 +9,10 @@ import {
   defineFunction,
   defineFunctionLoose,
   FunctionDefinition,
-} from "../function-definition";
-import { AgentFileSystem } from "../file-system";
+} from "../function-definition.js";
+import { AgentFileSystem } from "../file-system.js";
 import { ok } from "@breadboard-ai/utils";
-import { tr } from "../../a2/utils";
+import { tr } from "../../a2/utils.js";
 
 export { defineSystemFunctions };
 

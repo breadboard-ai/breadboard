@@ -7,10 +7,10 @@
 import { Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { signal } from "signal-utils";
-import { Configurator } from "../connectors/configurator";
-import { ConnectorType } from "../connectors/types";
-import { CreateConnector } from "../transforms/create-connector";
-import { ConnectorState, ProjectInternal } from "./types";
+import { Configurator } from "../connectors/configurator.js";
+import { ConnectorType } from "../connectors/types.js";
+import { CreateConnector } from "../transforms/create-connector.js";
+import { ConnectorState, ProjectInternal } from "./types.js";
 
 export { ConnectorStateImpl };
 

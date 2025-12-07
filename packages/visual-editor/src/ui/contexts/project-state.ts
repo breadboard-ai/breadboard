@@ -5,7 +5,7 @@
  */
 
 import { createContext } from "@lit/context";
-import { Project } from "../state/types";
+import { Project } from "../state/types.js";
 
 /** The current global UI state. */
 export const projectStateContext = createContext<Project | undefined>(

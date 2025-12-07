@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { llm } from "../../src/a2/a2/utils";
+import { llm } from "../../src/a2/a2/utils.js";
 import { config } from "dotenv";
 import { ok } from "@breadboard-ai/utils";
-import { session } from "../eval";
-import { AgentFileSystem } from "../../src/a2/agent/file-system";
-import { PidginTranslator } from "../../src/a2/agent/pidgin-translator";
+import { session } from "../eval.js";
+import { AgentFileSystem } from "../../src/a2/agent/file-system.js";
+import { PidginTranslator } from "../../src/a2/agent/pidgin-translator.js";
 
 config();
 
@@ -17,7 +17,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
   const SmartLayoutPipeline = (
-    await import("../../src/a2/agent/a2ui/smart-layout-pipeline")
+    await import("../../src/a2/agent/a2ui/smart-layout-pipeline.js")
   ).SmartLayoutPipeline;
 
   async function evalObjective(filename: string, only = false) {

@@ -3,7 +3,7 @@
  */
 
 import { LLMContent, Outcome, Schema } from "@breadboard-ai/types";
-import { err } from "./utils";
+import { err } from "./utils.js";
 
 export { invoke as default, describe };
 

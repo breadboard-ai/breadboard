@@ -5,8 +5,8 @@
  */
 
 import { Outcome } from "@breadboard-ai/types";
-import { err } from "../a2/utils";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { err } from "../a2/utils.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export {
   appendSpreadsheetValues,

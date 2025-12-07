@@ -5,7 +5,7 @@
  */
 
 import { ok } from "@breadboard-ai/utils";
-import { EventRoute } from "../types";
+import { EventRoute } from "../types.js";
 import * as BreadboardUI from "../../ui/index.js";
 
 export const AddWithEdgeRoute: EventRoute<"node.addwithedge"> = {

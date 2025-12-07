@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Entity } from "../entity";
+import { Entity } from "../entity.js";
 
 export function calculateBounds(
   entities: Map<string, Entity>,

@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as audioGeneratorMain from "./main";
+import * as audioGeneratorMain from "./main.js";
 
 import descriptor from "./bgl.json" with { type: "json" };
-import { createBgl } from "../create-bgl";
+import { createBgl } from "../create-bgl.js";
 
 export const exports = {
   main: audioGeneratorMain,

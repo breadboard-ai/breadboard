@@ -14,10 +14,10 @@ import {
 import {
   FunctionDefinition,
   StatusUpdateCallback,
-} from "./function-definition";
-import { SimplifiedToolManager } from "../a2/tool-manager";
+} from "./function-definition.js";
+import { SimplifiedToolManager } from "../a2/tool-manager.js";
 import { err, ok } from "@breadboard-ai/utils";
-import { FunctionCaller } from "./types";
+import { FunctionCaller } from "./types.js";
 
 export { FunctionCallerImpl };
 

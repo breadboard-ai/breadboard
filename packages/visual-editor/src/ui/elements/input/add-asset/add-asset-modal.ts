@@ -12,13 +12,16 @@ import {
   PropertyValues,
 } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { AddAssetEvent, OverlayDismissedEvent } from "../../../events/events";
+import {
+  AddAssetEvent,
+  OverlayDismissedEvent,
+} from "../../../events/events.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
-import { DrawableInput } from "../drawable/drawable";
-import { GoogleDriveFileId } from "../../google-drive/google-drive-file-id";
-import { WebcamVideoInput } from "../webcam/webcam-video";
-import { type } from "../../../styles/host/type";
+import { DrawableInput } from "../drawable/drawable.js";
+import { GoogleDriveFileId } from "../../google-drive/google-drive-file-id.js";
+import { WebcamVideoInput } from "../webcam/webcam-video.js";
+import { type } from "../../../styles/host/type.js";
 
 @customElement("bb-add-asset-modal")
 export class AddAssetModal extends LitElement {

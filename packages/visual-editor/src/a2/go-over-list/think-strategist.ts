@@ -2,18 +2,18 @@
  * @fileoverview Executes think-as-i strategy.
  */
 
-import { report } from "../a2/output";
-import { ok, toLLMContent } from "../a2/utils";
-import { organizerPrompt } from "./organizer-prompt";
-import { type ExecuteStepFunction, type Strategist } from "./types";
+import { report } from "../a2/output.js";
+import { ok, toLLMContent } from "../a2/utils.js";
+import { organizerPrompt } from "./organizer-prompt.js";
+import { type ExecuteStepFunction, type Strategist } from "./types.js";
 
 import {
   getPlan,
   plannerPrompt,
   thinkingPlannerPrompt,
-} from "./planner-prompt";
+} from "./planner-prompt.js";
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { ThinkStrategist };
 

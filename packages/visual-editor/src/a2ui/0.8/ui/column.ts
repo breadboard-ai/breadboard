@@ -18,7 +18,7 @@ import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
 import { classMap } from "lit/directives/class-map.js";
-import { ResolvedColumn } from "../types/types";
+import { ResolvedColumn } from "../types/types.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { structuralStyles } from "./styles.js";
 

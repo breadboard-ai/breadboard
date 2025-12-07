@@ -3,10 +3,10 @@
  */
 
 import { Capabilities, Outcome, Schema } from "@breadboard-ai/types";
-import { GeminiPrompt } from "../a2/gemini-prompt";
-import { ToolManager } from "../a2/tool-manager";
-import { ok, toText } from "../a2/utils";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { GeminiPrompt } from "../a2/gemini-prompt.js";
+import { ToolManager } from "../a2/tool-manager.js";
+import { ok, toText } from "../a2/utils.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { invoke as default, describe };
 

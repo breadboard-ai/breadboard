@@ -3,9 +3,9 @@
  */
 
 import { LLMContent, Schema } from "@breadboard-ai/types";
-import { type AgentContext } from "../a2/common";
-import { addContent } from "../a2/lists";
-import { isEmpty } from "../a2/utils";
+import { type AgentContext } from "../a2/common.js";
+import { addContent } from "../a2/lists.js";
+import { isEmpty } from "../a2/utils.js";
 
 export { invoke as default, describe };
 

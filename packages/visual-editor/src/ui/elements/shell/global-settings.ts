@@ -6,9 +6,9 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { baseColors } from "../../styles/host/base-colors";
-import { type } from "../../styles/host/type";
-import { Project } from "../../state";
+import { baseColors } from "../../styles/host/base-colors.js";
+import { type } from "../../styles/host/type.js";
+import { Project } from "../../state/index.js";
 import { RuntimeFlags } from "@breadboard-ai/types";
 import "@material/web/tabs/primary-tab.js";
 import "@material/web/tabs/tabs.js";

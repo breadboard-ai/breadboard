@@ -33,8 +33,8 @@ import {
   Text,
   TextField,
   Video,
-} from "./components";
-import { StringValue } from "./primitives";
+} from "./components.js";
+import { StringValue } from "./primitives.js";
 
 export type ModelProcessor = {
   getSurfaces(): ReadonlyMap<string, Surface>;

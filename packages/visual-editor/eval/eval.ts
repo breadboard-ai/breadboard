@@ -5,17 +5,16 @@
  */
 
 import { Capabilities } from "@breadboard-ai/types";
-
-import { A2ModuleArgs } from "../src/a2/runnable-module-factory";
+import { A2ModuleArgs } from "../src/a2/runnable-module-factory.js";
 import { McpClientManager } from "../src/mcp/index.js";
-import { Logger } from "./logger";
+import { Logger } from "./logger.js";
 import { mock } from "node:test";
-import type { callGeminiImage } from "../src/a2/a2/image-utils";
-import { autoClearingInterval } from "./auto-clearing-interval";
+import type { callGeminiImage } from "../src/a2/a2/image-utils.js";
+import { autoClearingInterval } from "./auto-clearing-interval.js";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { mkdir, writeFile } from "fs/promises";
-import { collateContexts } from "./collate-context";
+import { collateContexts } from "./collate-context.js";
 
 export { session };
 

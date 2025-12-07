@@ -5,7 +5,7 @@
  */
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { OverlayDismissedEvent } from "../../../events/events";
+import { OverlayDismissedEvent } from "../../../events/events.js";
 
 @customElement("bb-sidenav")
 export class SideNav extends LitElement {

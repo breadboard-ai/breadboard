@@ -10,20 +10,20 @@ import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { palette } from "../../styles/host/base-colors";
-import { icons } from "../../styles/icons";
-import { EdgeAttachmentPoint } from "../../types/types";
-import { inspectableEdgeToString } from "../../utils/workspace";
-import { Box } from "./box";
-import { Entity } from "./entity";
+import { palette } from "../../styles/host/base-colors.js";
+import { icons } from "../../styles/icons.js";
+import { EdgeAttachmentPoint } from "../../types/types.js";
+import { inspectableEdgeToString } from "../../utils/workspace.js";
+import { Box } from "./box.js";
+import { Entity } from "./entity.js";
 import {
   GraphEdgeAttachmentMoveEvent,
   NodeBoundsUpdateRequestEvent,
-} from "./events/events";
-import { clamp } from "./utils/clamp";
-import { calculatePointsOnCubicBezierCurve } from "./utils/cubic-bezier";
-import { intersects } from "./utils/rect-intersection";
-import { toCSSMatrix } from "./utils/to-css-matrix";
+} from "./events/events.js";
+import { clamp } from "./utils/clamp.js";
+import { calculatePointsOnCubicBezierCurve } from "./utils/cubic-bezier.js";
+import { intersects } from "./utils/rect-intersection.js";
+import { toCSSMatrix } from "./utils/to-css-matrix.js";
 
 interface Connection {
   n1: DOMPoint;

@@ -6,7 +6,7 @@
 
 import { LLMContent, NodeValue, Outcome } from "@breadboard-ai/types";
 import { err } from "@breadboard-ai/utils";
-import { ConnectorConfiguration } from "./types";
+import { ConnectorConfiguration } from "./types.js";
 
 export { configFromData };
 

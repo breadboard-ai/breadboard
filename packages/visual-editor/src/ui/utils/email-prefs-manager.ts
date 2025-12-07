@@ -5,18 +5,17 @@
  */
 
 import { signal } from "signal-utils";
-import { SignalMap } from 'signal-utils/map';
+import { SignalMap } from "signal-utils/map";
 import { AppCatalystApiClient } from "../flow-gen/app-catalyst.js";
 
 const PREFERENCE_KEYS = [
-  'OPAL_MARKETING_UPDATES',
-  'OPAL_USER_RESEARCH',
+  "OPAL_MARKETING_UPDATES",
+  "OPAL_USER_RESEARCH",
 ] as const;
 
 export type EmailPreferenceKey = (typeof PREFERENCE_KEYS)[number];
 
 export class EmailPrefsManager {
-
   #apiClient: AppCatalystApiClient;
 
   constructor(apiClient: AppCatalystApiClient) {
@@ -47,5 +46,4 @@ export class EmailPrefsManager {
     }
     this.#apiClient.setEmailPreferences(prefs);
   }
-
 }
