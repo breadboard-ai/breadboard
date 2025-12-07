@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isLLMContent, toText, llm } from "../a2/utils";
-import { type GeminiSchema } from "../a2/gemini";
-import { Template } from "../a2/template";
+import { isLLMContent, toText, llm } from "../a2/utils.js";
+import { type GeminiSchema } from "../a2/gemini.js";
+import { Template } from "../a2/template.js";
 
-import type { AutonameMode, Arguments } from "./types";
+import type { AutonameMode, Arguments } from "./types.js";
 import {
   Capabilities,
   JsonSerializable,

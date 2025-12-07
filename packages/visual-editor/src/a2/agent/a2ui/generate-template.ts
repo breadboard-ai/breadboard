@@ -4,17 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { llm } from "../../a2/utils";
+import { llm } from "../../a2/utils.js";
 import {
   generateContent,
   type GeminiBody,
   type GeminiSchema,
-} from "../../a2/gemini";
+} from "../../a2/gemini.js";
 import type { LLMContent, Outcome } from "@breadboard-ai/types";
-import { A2UI_SCHEMA } from "../../a2/au2ui-schema";
-import { SurfaceSpec } from "./generate-spec";
-import { A2ModuleArgs } from "../../runnable-module-factory";
-import { parseJson } from "../../parse-json";
+import { A2UI_SCHEMA } from "../../a2/au2ui-schema.js";
+import { SurfaceSpec } from "./generate-spec.js";
+import { A2ModuleArgs } from "../../runnable-module-factory.js";
+import { parseJson } from "../../parse-json.js";
 import { ok } from "@breadboard-ai/utils";
 
 export { generateTemplate };

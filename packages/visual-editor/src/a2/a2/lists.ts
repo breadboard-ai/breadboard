@@ -9,8 +9,8 @@ import {
   toLLMContent,
   llm,
   ErrorMetadata,
-} from "./utils";
-import { type GeminiSchema } from "./gemini";
+} from "./utils.js";
+import { type GeminiSchema } from "./gemini.js";
 import { DataPart, ListPart, LLMContent, Outcome } from "@breadboard-ai/types";
 
 export {

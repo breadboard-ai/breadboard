@@ -4,9 +4,9 @@
 
 export { invoke as default, describe, Template };
 
-import { type Params } from "./common";
-import { ok, err, isLLMContent, isLLMContentArray } from "./utils";
-import { ConnectorManager } from "./connector-manager";
+import { type Params } from "./common.js";
+import { ok, err, isLLMContent, isLLMContentArray } from "./utils.js";
+import { ConnectorManager } from "./connector-manager.js";
 import {
   Capabilities,
   DataPart,

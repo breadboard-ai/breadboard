@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeminiPrompt } from "../a2/gemini-prompt";
-import { defaultSafetySettings } from "../a2/gemini";
-import { err, ok } from "../a2/utils";
+import { GeminiPrompt } from "../a2/gemini-prompt.js";
+import { defaultSafetySettings } from "../a2/gemini.js";
+import { err, ok } from "../a2/utils.js";
 
-import type { AutonameMode, Arguments } from "./types";
-import { NodeConfigurationUpdateMode } from "./node-configuration-update";
+import type { AutonameMode, Arguments } from "./types.js";
+import { NodeConfigurationUpdateMode } from "./node-configuration-update.js";
 import {
   Capabilities,
   LLMContent,

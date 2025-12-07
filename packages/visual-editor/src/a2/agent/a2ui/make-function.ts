@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { defineFunctionLoose } from "../function-definition";
-import { SurfaceSpec } from "./generate-spec";
-import { A2UIRenderer } from "../types";
+import { defineFunctionLoose } from "../function-definition.js";
+import { SurfaceSpec } from "./generate-spec.js";
+import { A2UIRenderer } from "../types.js";
 
 export { makeFunction };
 

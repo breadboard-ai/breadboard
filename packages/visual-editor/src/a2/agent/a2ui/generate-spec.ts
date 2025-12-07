@@ -5,20 +5,20 @@
  */
 
 import { z } from "zod";
-import { defineResponseSchema } from "../function-definition";
-import { llm } from "../../a2/utils";
+import { defineResponseSchema } from "../function-definition.js";
+import { llm } from "../../a2/utils.js";
 import {
   type GeminiSchema,
   generateContent,
   type GeminiBody,
-} from "../../a2/gemini";
+} from "../../a2/gemini.js";
 import type {
   JsonSerializable,
   LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
-import { A2ModuleArgs } from "../../runnable-module-factory";
-import { parseJson } from "../../parse-json";
+import { A2ModuleArgs } from "../../runnable-module-factory.js";
+import { parseJson } from "../../parse-json.js";
 import { err, ok } from "@breadboard-ai/utils";
 import { Validator } from "@cfworker/json-schema";
 

@@ -14,7 +14,7 @@ import {
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import mime from "mime";
-import { toText } from "../a2/utils";
+import { toText } from "../a2/utils.js";
 
 export { AgentFileSystem };
 

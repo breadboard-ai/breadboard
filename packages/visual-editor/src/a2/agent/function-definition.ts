@@ -9,7 +9,7 @@
 import { Outcome, Schema } from "@breadboard-ai/types";
 import { z, ZodObject, ZodTypeAny } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
-import { FunctionDeclaration, GeminiSchema } from "../a2/gemini";
+import { FunctionDeclaration, GeminiSchema } from "../a2/gemini.js";
 
 export {
   defineFunction,

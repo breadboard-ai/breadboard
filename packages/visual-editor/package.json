@@ -109,17 +109,26 @@
       ]
     },
     "eval:agent": {
-      "command": "tsx --experimental-test-module-mocks eval/sets/agent.ts",
+      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/agent.js",
+      "dependencies": [
+        "build:tsc"
+      ],
       "files": [],
       "output": []
     },
     "eval:a2ui": {
-      "command": "tsx --experimental-test-module-mocks eval/sets/a2ui.ts",
+      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/a2ui.js",
+      "dependencies": [
+        "build:tsc"
+      ],
       "files": [],
       "output": []
     },
     "eval:autoname": {
-      "command": "tsx --experimental-test-module-mocks eval/sets/autoname.ts",
+      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/autoname.js",
+      "dependencies": [
+        "build:tsc"
+      ],
       "files": [],
       "output": []
     },

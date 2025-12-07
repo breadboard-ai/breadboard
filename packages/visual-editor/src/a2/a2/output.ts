@@ -10,7 +10,7 @@ import {
   NodeMetadata,
   Schema,
 } from "@breadboard-ai/types";
-import { ErrorMetadata, generateId, ok } from "./utils";
+import { ErrorMetadata, generateId, ok } from "./utils.js";
 
 type ReportInputs = {
   /**

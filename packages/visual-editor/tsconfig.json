@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
+    "module": "nodenext",
     "lib": ["ES2023", "DOM", "DOM.Iterable", "ES2024.Promise"],
     "skipLibCheck": true,
     "useDefineForClassFields": false,
     "outDir": "dist/tsc",
 
     /* Bundler mode */
-    "moduleResolution": "bundler",
+    "moduleResolution": "nodenext",
     "resolveJsonModule": true,
     "isolatedModules": true,
 

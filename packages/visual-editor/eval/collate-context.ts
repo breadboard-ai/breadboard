@@ -6,7 +6,7 @@
 
 import { DataPart, LLMContent } from "@breadboard-ai/types";
 import { Har } from "har-format";
-import { GeminiAPIOutputs, GeminiBody } from "../src/a2/a2/gemini";
+import { GeminiAPIOutputs, GeminiBody } from "../src/a2/a2/gemini.js";
 
 export { collateContexts };
 

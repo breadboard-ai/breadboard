@@ -8,10 +8,10 @@ import {
   LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
-import gemini, { type Candidate, type GeminiInputs } from "./gemini";
-import { ToolManager } from "./tool-manager";
-import { err, ok } from "./utils";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import gemini, { type Candidate, type GeminiInputs } from "./gemini.js";
+import { ToolManager } from "./tool-manager.js";
+import { err, ok } from "./utils.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { GeminiPrompt };
 
