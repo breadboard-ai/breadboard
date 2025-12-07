@@ -1,6 +1,6 @@
-import { mergeTextParts, toText } from "../a2/utils";
+import { mergeTextParts, toText } from "../a2/utils.js";
 import { marked, Token, Tokens } from "marked";
-import { unescape } from "./unescape";
+import { unescape } from "./unescape.js";
 import { DataPart, LLMContent } from "@breadboard-ai/types";
 import { parseBase64DataUrl } from "@breadboard-ai/utils";
 

@@ -5,7 +5,7 @@
  */
 
 import { css, CSSResultGroup, unsafeCSS } from "lit";
-import { ColorPalettes } from "../../types/types";
+import { ColorPalettes } from "../../types/types.js";
 import * as Theme from "../../../theme/index.js";
 
 export const custom = {

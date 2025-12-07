@@ -5,7 +5,7 @@
  */
 
 import { signal } from "signal-utils";
-import { FilteredIntegrations, IntegrationState, Tool } from "./types";
+import { FilteredIntegrations, IntegrationState, Tool } from "./types.js";
 
 export { FilteredIntegrationsImpl };
 

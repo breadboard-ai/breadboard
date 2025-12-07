@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { AddNodeWithEdge } from "./add-node-with-edge";
-export { AutoWireInPorts } from "./autowire-in-ports";
-export { ChangeAssetEdge } from "./change-asset-edge";
-export { ChangeEdge } from "./change-edge";
-export { ChangeEdgeAttachmentPoint } from "./change-edge-attachment-point";
-export { CreateNode } from "./create-node";
-export { CreateParam } from "./create-param";
-export { DeleteParam } from "./delete-param";
-export { MarkInPortsInvalidSpec } from "./mark-in-ports-invalid-spec";
-export { MoveNodesToGraph } from "./move-nodes-to-graph";
-export { RemoveAssetWithRefs } from "./remove-asset-with-refs";
-export { UpdateNode } from "./update-node";
-export { UpdateParameterMetadata } from "./update-parameter-metadata";
+export { AddNodeWithEdge } from "./add-node-with-edge.js";
+export { AutoWireInPorts } from "./autowire-in-ports.js";
+export { ChangeAssetEdge } from "./change-asset-edge.js";
+export { ChangeEdge } from "./change-edge.js";
+export { ChangeEdgeAttachmentPoint } from "./change-edge-attachment-point.js";
+export { CreateNode } from "./create-node.js";
+export { CreateParam } from "./create-param.js";
+export { DeleteParam } from "./delete-param.js";
+export { MarkInPortsInvalidSpec } from "./mark-in-ports-invalid-spec.js";
+export { MoveNodesToGraph } from "./move-nodes-to-graph.js";
+export { RemoveAssetWithRefs } from "./remove-asset-with-refs.js";
+export { UpdateNode } from "./update-node.js";
+export { UpdateParameterMetadata } from "./update-parameter-metadata.js";

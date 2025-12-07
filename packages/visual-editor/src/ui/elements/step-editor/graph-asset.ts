@@ -13,19 +13,19 @@ import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { DragConnectorStartEvent } from "../../events/events";
+import { DragConnectorStartEvent } from "../../events/events.js";
 import { GraphAsset as GraphAssetState } from "../../state/types.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
-import { DragConnectorReceiver } from "../../types/types";
-import { Box } from "./box";
+import { DragConnectorReceiver } from "../../types/types.js";
+import { Box } from "./box.js";
 import {
   NodeBoundsUpdateRequestEvent,
   SelectionTranslateEvent,
-} from "./events/events";
-import { toCSSMatrix } from "./utils/to-css-matrix";
-import { toGridSize } from "./utils/to-grid-size";
+} from "./events/events.js";
+import { toCSSMatrix } from "./utils/to-css-matrix.js";
+import { toGridSize } from "./utils/to-grid-size.js";
 
 @customElement("bb-graph-asset")
 export class GraphAsset

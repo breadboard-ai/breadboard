@@ -14,7 +14,7 @@
  limitations under the License.
  */
 
-import { StringValue } from "./primitives";
+import { StringValue } from "./primitives.js";
 
 export interface Action {
   /**

@@ -5,7 +5,7 @@
  */
 
 import { AssetPath } from "@breadboard-ai/types";
-import { GraphAsset, RendererState } from "./types";
+import { GraphAsset, RendererState } from "./types.js";
 
 export { RendererStateImpl };
 

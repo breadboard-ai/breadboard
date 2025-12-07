@@ -2,8 +2,8 @@
  * @fileoverview Add a description for your module here.
  */
 
-import { createConfigurator } from "../a2/connector-manager";
-import type { ConnectorConfiguration } from "./types";
+import { createConfigurator } from "../a2/connector-manager.js";
+import type { ConnectorConfiguration } from "./types.js";
 
 export { invoke as default, describe };
 

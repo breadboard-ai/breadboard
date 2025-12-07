@@ -10,7 +10,7 @@ import {
   EditTransform,
   EditTransformResult,
 } from "@breadboard-ai/types";
-import { TransformAllNodes } from "./transform-all-nodes";
+import { TransformAllNodes } from "./transform-all-nodes.js";
 
 export { RemoveAssetWithRefs };
 

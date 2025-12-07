@@ -3,10 +3,10 @@
  */
 
 import { Capabilities, LLMContent, Schema } from "@breadboard-ai/types";
-import { type AgentContext, type DescribeInputs } from "./common";
-import { readSettings } from "./settings";
-import { Template } from "./template";
-import { defaultLLMContent, ok } from "./utils";
+import { type AgentContext, type DescribeInputs } from "./common.js";
+import { readSettings } from "./settings.js";
+import { Template } from "./template.js";
+import { defaultLLMContent, ok } from "./utils.js";
 
 export { invoke as default, describe };
 

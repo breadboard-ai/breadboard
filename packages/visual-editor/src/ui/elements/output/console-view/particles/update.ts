@@ -15,10 +15,10 @@ import { css, LitElement, nothing, TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { signal } from "signal-utils";
 
-import { icons } from "../../../../styles/icons";
-import { sharedStyles } from "./../shared-styles";
-import { baseColors } from "../../../../styles/host/base-colors";
-import { type } from "../../../../styles/host/type";
+import { icons } from "../../../../styles/icons.js";
+import { sharedStyles } from "./../shared-styles.js";
+import { baseColors } from "../../../../styles/host/base-colors.js";
+import { type } from "../../../../styles/host/type.js";
 import { Outcome } from "@breadboard-ai/types";
 
 @customElement("bb-particle-update")

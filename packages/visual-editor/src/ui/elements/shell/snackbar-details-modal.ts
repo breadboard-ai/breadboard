@@ -5,9 +5,9 @@
  */
 import { LitElement, html, css, HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { baseColors } from "../../styles/host/base-colors";
-import { type } from "../../styles/host/type";
-import { icons } from "../../styles/icons";
+import { baseColors } from "../../styles/host/base-colors.js";
+import { type } from "../../styles/host/type.js";
+import { icons } from "../../styles/icons.js";
 
 @customElement("bb-snackbar-details-modal")
 export class VESnackbarDetailsModal extends LitElement {

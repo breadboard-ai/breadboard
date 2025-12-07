@@ -7,19 +7,19 @@ import {
   createKeepChattingResult,
   createKeepChattingTool,
   type ChatTool,
-} from "./chat-tools";
-import { createSystemInstruction } from "./system-instruction";
-import type { SharedContext } from "./types";
+} from "./chat-tools.js";
+import { createSystemInstruction } from "./system-instruction.js";
+import type { SharedContext } from "./types.js";
 
-import { ArgumentNameGenerator } from "../a2/introducer";
-import { ListExpander, listSchema, toList } from "../a2/lists";
-import { report } from "../a2/output";
-import { Template } from "../a2/template";
-import { ToolManager } from "../a2/tool-manager";
-import { defaultLLMContent, err, ok } from "../a2/utils";
+import { ArgumentNameGenerator } from "../a2/introducer.js";
+import { ListExpander, listSchema, toList } from "../a2/lists.js";
+import { report } from "../a2/output.js";
+import { Template } from "../a2/template.js";
+import { ToolManager } from "../a2/tool-manager.js";
+import { defaultLLMContent, err, ok } from "../a2/utils.js";
 
-import { defaultSafetySettings, type GeminiInputs } from "../a2/gemini";
-import { GeminiPrompt, type GeminiPromptOutput } from "../a2/gemini-prompt";
+import { defaultSafetySettings, type GeminiInputs } from "../a2/gemini.js";
+import { GeminiPrompt, type GeminiPromptOutput } from "../a2/gemini-prompt.js";
 import {
   Capabilities,
   LLMContent,
@@ -27,7 +27,7 @@ import {
   Schema,
 } from "@breadboard-ai/types";
 import { filterUndefined } from "@breadboard-ai/utils";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { invoke as default, describe };
 

@@ -21,7 +21,7 @@ import { signal } from "signal-utils";
 import {
   createThemeGenerationPrompt,
   getThemeFromIntentGenerationPrompt,
-} from "../prompts/theme-generation";
+} from "../prompts/theme-generation.js";
 import { AppTheme } from "../types/types.js";
 import {
   Project,

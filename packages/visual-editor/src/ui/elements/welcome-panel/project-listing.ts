@@ -14,7 +14,7 @@ import {
   globalConfigContext,
   type GlobalConfig,
 } from "../../contexts/global-config.js";
-import { StateEvent } from "../../events/events";
+import { StateEvent } from "../../events/events.js";
 import "../../flow-gen/flowgen-homepage-panel.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { baseColors } from "../../styles/host/base-colors.js";

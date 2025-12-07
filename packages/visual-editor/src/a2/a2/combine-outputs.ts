@@ -2,9 +2,9 @@
  * @fileoverview Combines multiple outputs into one.
  */
 
-import { Template } from "./template";
-import { ok } from "./utils";
-import { fanOutContext, flattenContext } from "./lists";
+import { Template } from "./template.js";
+import { ok } from "./utils.js";
+import { fanOutContext, flattenContext } from "./lists.js";
 import {
   Capabilities,
   LLMContent,

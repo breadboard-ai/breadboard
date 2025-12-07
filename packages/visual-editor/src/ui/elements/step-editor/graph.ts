@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { customElement, property } from "lit/decorators.js";
-import { Box } from "./box";
-import { calculateBounds } from "./utils/calculate-bounds";
+import { Box } from "./box.js";
+import { calculateBounds } from "./utils/calculate-bounds.js";
 import {
   GraphIdentifier,
   InspectableAsset,
@@ -14,34 +14,34 @@ import {
   InspectableNode,
   Outcome,
 } from "@breadboard-ai/types";
-import { GraphNode } from "./graph-node";
+import { GraphNode } from "./graph-node.js";
 import {
   createEmptyGraphHighlightState,
   createEmptyGraphSelectionState,
   inspectableAssetEdgeToString,
   inspectableEdgeToString,
-} from "../../utils/workspace";
-import { GraphEdge } from "./graph-edge";
+} from "../../utils/workspace.js";
+import { GraphEdge } from "./graph-edge.js";
 import {
   EdgeAttachmentPoint,
   GraphHighlightState,
   GraphSelectionState,
-} from "../../types/types";
+} from "../../types/types.js";
 import { css, html } from "lit";
-import { toCSSMatrix } from "./utils/to-css-matrix";
+import { toCSSMatrix } from "./utils/to-css-matrix.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { MAIN_BOARD_ID } from "../../constants/constants";
+import { MAIN_BOARD_ID } from "../../constants/constants.js";
 import {
   SelectGraphContentsEvent,
   SelectionTranslateEvent,
-} from "./events/events";
-import { OverflowMenuActionEvent } from "../../events/events";
-import { toGridSize } from "./utils/to-grid-size";
-import { GRID_SIZE, MOVE_GRAPH_ID } from "./constants";
-import { GraphAsset } from "./graph-asset";
+} from "./events/events.js";
+import { OverflowMenuActionEvent } from "../../events/events.js";
+import { toGridSize } from "./utils/to-grid-size.js";
+import { GRID_SIZE, MOVE_GRAPH_ID } from "./constants.js";
+import { GraphAsset } from "./graph-asset.js";
 import { AssetPath, NodeRunState } from "@breadboard-ai/types";
-import { RendererRunState, RendererState } from "../../state";
-import { getStepIcon } from "../../utils/get-step-icon";
+import { RendererRunState, RendererState } from "../../state/index.js";
+import { getStepIcon } from "../../utils/get-step-icon.js";
 
 @customElement("bb-graph")
 export class Graph extends Box {

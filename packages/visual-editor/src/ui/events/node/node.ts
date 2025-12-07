@@ -12,8 +12,8 @@ import {
   NodeDescriptor,
   NodeMetadata,
 } from "@breadboard-ai/types";
-import { EdgeAttachmentPoint } from "../../types/types";
-import { BaseEventDetail } from "../base";
+import { EdgeAttachmentPoint } from "../../types/types.js";
+import { BaseEventDetail } from "../base.js";
 
 type Namespace = "node";
 

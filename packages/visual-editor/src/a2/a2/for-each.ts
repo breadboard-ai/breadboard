@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { err, llm, ok } from "./utils";
-import { defaultSafetySettings, GeminiSchema } from "./gemini";
-import { GeminiPrompt } from "./gemini-prompt";
-import { Params } from "./common";
-import { Template } from "./template";
-import { flattenContext } from "./lists";
+import { err, llm, ok } from "./utils.js";
+import { defaultSafetySettings, GeminiSchema } from "./gemini.js";
+import { GeminiPrompt } from "./gemini-prompt.js";
+import { Params } from "./common.js";
+import { Template } from "./template.js";
+import { flattenContext } from "./lists.js";
 
 import {
   Capabilities,
@@ -20,7 +20,7 @@ import {
   Outcome,
   OutputValues,
 } from "@breadboard-ai/types";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { forEach };
 

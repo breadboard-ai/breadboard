@@ -10,8 +10,8 @@ import {
   VisualEditorMode,
   WorkspaceSelectionChangeId,
   WorkspaceSelectionState,
-} from "../../types/types";
-import { BaseEventDetail } from "../base";
+} from "../../types/types.js";
+import { BaseEventDetail } from "../base.js";
 
 type MoveToSelection = "immediate" | "animated" | false;
 type Namespace = "host";

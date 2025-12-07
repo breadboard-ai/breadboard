@@ -6,9 +6,9 @@
 import { Task } from "@lit/task";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Utterance } from "../../../types/types";
-import { UtteranceEvent } from "../../../events/events";
-import { icons } from "../../../styles/icons";
+import { Utterance } from "../../../types/types.js";
+import { UtteranceEvent } from "../../../events/events.js";
+import { icons } from "../../../styles/icons.js";
 
 declare global {
   interface SpeechRecognition extends EventTarget {

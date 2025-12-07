@@ -42,14 +42,14 @@ import { Signal } from "signal-polyfill";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { SignalSet } from "signal-utils/set";
-import { StateEvent } from "../events/events";
-import { getStepIcon } from "../utils/get-step-icon";
-import { edgeToString } from "../utils/workspace";
-import { ReactiveApp } from "./app";
-import { ReactiveAppScreen } from "./app-screen";
-import { getParticleStreamHandle, idFromPath } from "./common";
-import { ReactiveConsoleEntry } from "./console-entry";
-import { ReactiveRendererRunState } from "./renderer-run-state";
+import { StateEvent } from "../events/events.js";
+import { getStepIcon } from "../utils/get-step-icon.js";
+import { edgeToString } from "../utils/workspace.js";
+import { ReactiveApp } from "./app.js";
+import { ReactiveAppScreen } from "./app-screen.js";
+import { getParticleStreamHandle, idFromPath } from "./common.js";
+import { ReactiveConsoleEntry } from "./console-entry.js";
+import { ReactiveRendererRunState } from "./renderer-run-state.js";
 import {
   EphemeralParticleTree,
   ProjectRun,
@@ -57,9 +57,9 @@ import {
   RendererRunState,
   StepEditor,
   UserInput,
-} from "./types";
-import { decodeError, decodeErrorData } from "./utils/decode-error";
-import { ParticleOperationReader } from "./utils/particle-operation-reader";
+} from "./types.js";
+import { decodeError, decodeErrorData } from "./utils/decode-error.js";
+import { ParticleOperationReader } from "./utils/particle-operation-reader.js";
 
 export { createProjectRunStateFromFinalOutput, ReactiveProjectRun };
 

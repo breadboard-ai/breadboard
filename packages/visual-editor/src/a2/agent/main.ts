@@ -10,10 +10,10 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
-import { Template } from "../a2/template";
-import { A2ModuleArgs } from "../runnable-module-factory";
-import { Params } from "../a2/common";
-import { Loop } from "./loop";
+import { Template } from "../a2/template.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { Params } from "../a2/common.js";
+import { Loop } from "./loop.js";
 import { ok } from "@breadboard-ai/utils";
 
 export { invoke as default, describe };

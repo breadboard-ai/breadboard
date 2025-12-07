@@ -5,9 +5,9 @@
  */
 import { LitElement, html, css } from "lit";
 import { customElement } from "lit/decorators.js";
-import { type } from "../../styles/host/type";
-import { baseColors } from "../../styles/host/base-colors";
-import { ShowVideoModalEvent } from "../../events/events";
+import { type } from "../../styles/host/type.js";
+import { baseColors } from "../../styles/host/base-colors.js";
+import { ShowVideoModalEvent } from "../../events/events.js";
 
 @customElement("bb-empty-state")
 export class EmptyState extends LitElement {

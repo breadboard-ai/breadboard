@@ -6,7 +6,7 @@
 
 import { GraphDescriptor, LLMContent } from "@breadboard-ai/types";
 import { iteratorFromStream } from "@breadboard-ai/utils";
-import { FlowGenLLMContentPart } from "./flow-generator";
+import { FlowGenLLMContentPart } from "./flow-generator.js";
 
 export interface AppCatalystChatRequest {
   messages: AppCatalystContentChunk[];

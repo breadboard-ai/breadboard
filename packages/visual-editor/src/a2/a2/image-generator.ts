@@ -8,13 +8,13 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
-import { type DescriberResult, type Params } from "./common";
-import { GeminiPrompt } from "./gemini-prompt";
-import { callImageGen, promptExpander } from "./image-utils";
-import { ArgumentNameGenerator } from "./introducer";
-import { ListExpander } from "./lists";
-import { Template } from "./template";
-import { ToolManager } from "./tool-manager";
+import { type DescriberResult, type Params } from "./common.js";
+import { GeminiPrompt } from "./gemini-prompt.js";
+import { callImageGen, promptExpander } from "./image-utils.js";
+import { ArgumentNameGenerator } from "./introducer.js";
+import { ListExpander } from "./lists.js";
+import { Template } from "./template.js";
+import { ToolManager } from "./tool-manager.js";
 import {
   addUserTurn,
   defaultLLMContent,
@@ -27,8 +27,8 @@ import {
   toLLMContent,
   toText,
   toTextConcat,
-} from "./utils";
-import { A2ModuleArgs } from "../runnable-module-factory";
+} from "./utils.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 const MAKE_IMAGE_ICON = "generative-image";
 const ASPECT_RATIOS = ["1:1", "9:16", "16:9", "4:3", "3:4"];

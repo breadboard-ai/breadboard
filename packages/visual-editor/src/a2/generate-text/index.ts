@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as generateTextChatTools from "./chat-tools";
-import * as generateTextEntry from "./entry";
-import * as generateTextJoin from "./join";
-import * as generateTextMain from "./main";
-import * as generateTextSystemInstruction from "./system-instruction";
-import * as generateTextSystemInstructionTs from "./system-instruction-ts";
-import * as generateTextTypes from "./types";
+import * as generateTextChatTools from "./chat-tools.js";
+import * as generateTextEntry from "./entry.js";
+import * as generateTextJoin from "./join.js";
+import * as generateTextMain from "./main.js";
+import * as generateTextSystemInstruction from "./system-instruction.js";
+import * as generateTextSystemInstructionTs from "./system-instruction-ts.js";
+import * as generateTextTypes from "./types.js";
 
 import descriptor from "./bgl.json" with { type: "json" };
-import { createBgl } from "../create-bgl";
+import { createBgl } from "../create-bgl.js";
 
 export const exports = {
   "chat-tools": generateTextChatTools,

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BaseEventDetail } from "../base";
+import { BaseEventDetail } from "../base.js";
 
 type Namespace = "app";
 

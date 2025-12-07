@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LanguagePack, LanguagePackEntry } from "../types/types";
+import { LanguagePack, LanguagePackEntry } from "../types/types.js";
 
 class Strings<T extends LanguagePackEntry> {
   constructor(

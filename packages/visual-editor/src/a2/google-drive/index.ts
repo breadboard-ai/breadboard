@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as googleDriveApi from "./api";
-import * as googleDriveConfigurator from "./configurator";
-import * as googleDriveConnectorLoad from "./connector-load";
-import * as googleDriveConnectorSave from "./connector-save";
-import * as googleDriveDocs from "./docs";
-import * as googleDriveSheets from "./sheets";
-import * as googleDriveSlides from "./slides";
-import * as googleDriveSlidesSchema from "./slides-schema";
-import * as googleDriveTypes from "./types";
-import * as googleDriveUnescape from "./unescape";
+import * as googleDriveApi from "./api.js";
+import * as googleDriveConfigurator from "./configurator.js";
+import * as googleDriveConnectorLoad from "./connector-load.js";
+import * as googleDriveConnectorSave from "./connector-save.js";
+import * as googleDriveDocs from "./docs.js";
+import * as googleDriveSheets from "./sheets.js";
+import * as googleDriveSlides from "./slides.js";
+import * as googleDriveSlidesSchema from "./slides-schema.js";
+import * as googleDriveTypes from "./types.js";
+import * as googleDriveUnescape from "./unescape.js";
 
 import descriptor from "./bgl.json" with { type: "json" };
-import { createBgl } from "../create-bgl";
+import { createBgl } from "../create-bgl.js";
 
 export const exports = {
   api: googleDriveApi,

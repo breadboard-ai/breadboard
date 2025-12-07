@@ -5,7 +5,7 @@
  */
 
 import { err, ok } from "@breadboard-ai/utils";
-import type { GeminiAPIOutputs } from "./a2/gemini";
+import type { GeminiAPIOutputs } from "./a2/gemini.js";
 import { Outcome, TextCapabilityPart } from "@breadboard-ai/types";
 
 export { parseJson };

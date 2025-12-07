@@ -6,9 +6,9 @@
 import { LitElement, html, css, PropertyValues, HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
-import * as Styles from "../../styles/styles";
+import * as Styles from "../../styles/styles.js";
 import { createRef, Ref, ref } from "lit/directives/ref.js";
-import { LiteModeState } from "../../state";
+import { LiteModeState } from "../../state/index.js";
 
 @customElement("bb-prompt-view")
 export class PromptView extends SignalWatcher(LitElement) {

@@ -7,7 +7,7 @@ import { DataPart, InlineDataCapabilityPart } from "@breadboard-ai/types";
 import { isStoredData } from "@breadboard-ai/utils";
 import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Project } from "../../state";
+import { Project } from "../../state/index.js";
 import { TextEditor } from "../input/text-editor/text-editor.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { icons } from "../../styles/icons.js";

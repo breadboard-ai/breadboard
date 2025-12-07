@@ -19,7 +19,7 @@ import {
   Integrations,
   IntegrationState,
   Tool,
-} from "./types";
+} from "./types.js";
 import { err, ok } from "@breadboard-ai/utils";
 import { SignalMap } from "signal-utils/map";
 import { AsyncComputed } from "signal-utils/async-computed";
@@ -30,7 +30,7 @@ import {
   McpListToolResult,
 } from "../../mcp/index.js";
 import { signal } from "signal-utils";
-import { updateMapDynamic } from "./utils/update-map";
+import { updateMapDynamic } from "./utils/update-map.js";
 
 export { IntegrationsImpl };
 

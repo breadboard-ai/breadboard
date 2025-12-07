@@ -6,7 +6,7 @@
 import { LitElement, html, css, PropertyValues } from "lit";
 import { customElement, property, query } from "lit/decorators.js";
 import { ref } from "lit/directives/ref.js";
-import { galleryItems } from "./gallery-items";
+import { galleryItems } from "./gallery-items.js";
 import { fonts } from "./fonts.js";
 import { shortestPath } from "./utils.js";
 import { classMap } from "lit/directives/class-map.js";

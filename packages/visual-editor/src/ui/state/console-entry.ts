@@ -17,9 +17,9 @@ import {
 import { InputResponse, OutputResponse, Schema } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
-import { idFromPath, toLLMContentArray } from "./common";
-import { EphemeralParticleTree, RendererRunState } from "./types";
-import { ReactiveWorkItem } from "./work-item";
+import { idFromPath, toLLMContentArray } from "./common.js";
+import { EphemeralParticleTree, RendererRunState } from "./types.js";
+import { ReactiveWorkItem } from "./work-item.js";
 import { timestamp } from "@breadboard-ai/utils";
 
 export { ReactiveConsoleEntry };

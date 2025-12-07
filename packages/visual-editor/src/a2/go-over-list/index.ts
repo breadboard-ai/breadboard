@@ -4,20 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as goOverListConversationalPlannerPrompt from "./conversational-planner-prompt";
-import * as goOverListConversationalThinkStrategist from "./conversational-think-strategist";
-import * as goOverListMain from "./main";
-import * as goOverListOrganizerPrompt from "./organizer-prompt";
-import * as goOverListParallelStrategist from "./parallel-strategist";
-import * as goOverListPlannerPrompt from "./planner-prompt";
-import * as goOverListRuntime from "./runtime";
-import * as goOverListSequentialStrategist from "./sequential-strategist";
-import * as goOverListSystemInstruction from "./system-instruction";
-import * as goOverListThinkStrategist from "./think-strategist";
-import * as goOverListTypes from "./types";
+import * as goOverListConversationalPlannerPrompt from "./conversational-planner-prompt.js";
+import * as goOverListConversationalThinkStrategist from "./conversational-think-strategist.js";
+import * as goOverListMain from "./main.js";
+import * as goOverListOrganizerPrompt from "./organizer-prompt.js";
+import * as goOverListParallelStrategist from "./parallel-strategist.js";
+import * as goOverListPlannerPrompt from "./planner-prompt.js";
+import * as goOverListRuntime from "./runtime.js";
+import * as goOverListSequentialStrategist from "./sequential-strategist.js";
+import * as goOverListSystemInstruction from "./system-instruction.js";
+import * as goOverListThinkStrategist from "./think-strategist.js";
+import * as goOverListTypes from "./types.js";
 
 import descriptor from "./bgl.json" with { type: "json" };
-import { createBgl } from "../create-bgl";
+import { createBgl } from "../create-bgl.js";
 
 export const exports = {
   "conversational-planner-prompt": goOverListConversationalPlannerPrompt,

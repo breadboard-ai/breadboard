@@ -12,7 +12,7 @@ import {
   GraphIdentifier,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import { TransformAllNodes } from "./transform-all-nodes";
+import { TransformAllNodes } from "./transform-all-nodes.js";
 
 export { MarkInPortsInvalidSpec };
 

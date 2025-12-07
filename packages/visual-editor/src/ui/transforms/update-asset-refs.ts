@@ -10,7 +10,7 @@ import {
   EditTransform,
   EditTransformResult,
 } from "@breadboard-ai/types";
-import { TransformAllNodesAllGraphs } from "./transform-all-nodes-all-graphs";
+import { TransformAllNodesAllGraphs } from "./transform-all-nodes-all-graphs.js";
 
 export { UpdateAssetRefs };
 

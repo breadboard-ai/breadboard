@@ -11,7 +11,7 @@ import {
   GraphIdentifier,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import { transformConfiguration } from "./transform-all-nodes";
+import { transformConfiguration } from "./transform-all-nodes.js";
 
 export { MarkInPortsInvalid };
 

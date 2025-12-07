@@ -5,8 +5,8 @@
  */
 import { LitElement, html, css } from "lit";
 import { customElement, state, property } from "lit/decorators.js";
-import { baseColors } from "../../styles/host/base-colors";
-import { type } from "../../styles/host/type";
+import { baseColors } from "../../styles/host/base-colors.js";
+import { type } from "../../styles/host/type.js";
 import "@material/web/checkbox/checkbox.js";
 import type { MdCheckbox } from "@material/web/checkbox/checkbox.js";
 import * as BreadboardUI from "../../../ui/index.js";

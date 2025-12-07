@@ -9,7 +9,7 @@ import {
   EdgeAttachmentPoint,
   HighlightStateWithChangeId,
   NewAsset,
-} from "../../../types/types";
+} from "../../../types/types.js";
 
 const eventInit = {
   bubbles: true,

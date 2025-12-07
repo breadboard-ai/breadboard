@@ -3,8 +3,8 @@
  */
 
 import { LLMContent } from "@breadboard-ai/types";
-import { listPrompt } from "../a2/lists";
-import { llm } from "../a2/utils";
+import { listPrompt } from "../a2/lists.js";
+import { llm } from "../a2/utils.js";
 
 export { createSystemInstruction, defaultSystemInstruction };
 

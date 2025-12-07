@@ -17,7 +17,7 @@
 import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Root } from "./root.js";
-import { NumberValue, StringValue } from "../types/primitives";
+import { NumberValue, StringValue } from "../types/primitives.js";
 import { ResolvedTextField } from "../types/types.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
 import { classMap } from "lit/directives/class-map.js";

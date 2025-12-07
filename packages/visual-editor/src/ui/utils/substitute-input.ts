@@ -12,7 +12,7 @@ import {
   isShareUri,
   isWatchUri,
   videoIdFromWatchOrShortsOrEmbedUri,
-} from "./youtube";
+} from "./youtube.js";
 
 export function maybeConvertToYouTube(input: string): string | LLMContent {
   let converted: string | null = null;

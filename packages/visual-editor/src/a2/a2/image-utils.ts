@@ -8,12 +8,12 @@ import {
   LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
-import { GeminiPrompt } from "./gemini-prompt";
+import { GeminiPrompt } from "./gemini-prompt.js";
 import {
   type ContentMap,
   type ExecuteStepRequest,
   executeStep,
-} from "./step-executor";
+} from "./step-executor.js";
 import {
   addUserTurn,
   encodeBase64,
@@ -22,9 +22,9 @@ import {
   ok,
   toInlineData,
   toLLMContent,
-} from "./utils";
-import { driveFileToBlob, toGcsAwareChunk } from "./data-transforms";
-import { A2ModuleArgs } from "../runnable-module-factory";
+} from "./utils.js";
+import { driveFileToBlob, toGcsAwareChunk } from "./data-transforms.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { callGeminiImage, callImageGen, promptExpander };
 

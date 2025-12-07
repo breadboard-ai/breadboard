@@ -6,7 +6,7 @@
 
 import { CLIENT_DEPLOYMENT_CONFIG } from "./ui/config/client-deployment-configuration.js";
 import { bootstrap } from "./bootstrap.js";
-import { initializeAnalytics } from "./ui/utils/action-tracker";
+import { initializeAnalytics } from "./ui/utils/action-tracker.js";
 import type { JsonSerializable, LLMContent } from "@breadboard-ai/types";
 
 const deploymentConfiguration = CLIENT_DEPLOYMENT_CONFIG;

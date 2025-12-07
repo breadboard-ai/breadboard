@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as pkg from "../package.json";
+import * as pkg from "../package.json" with { type: "json" };
 import type { BootstrapArguments, MainArguments } from "./types/types.js";
 
 import { LandingUrlInit, type LanguagePack } from "./ui/types/types.js";
 import type { GlobalConfig } from "./ui/contexts/global-config.js";
-import { SigninAdapter } from "./ui/utils/signin-adapter";
+import { SigninAdapter } from "./ui/utils/signin-adapter.js";
 import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "./ui/config/client-deployment-configuration.js";
 import { connectToOpalShellHost } from "./ui/utils/opal-shell-guest.js";
@@ -47,7 +47,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
         CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [],
     },
     buildInfo: {
-      packageJsonVersion: pkg.version,
+      packageJsonVersion: pkg.default.version,
       gitCommitHash: GIT_HASH,
     },
     ...bootstrapArgs.deploymentConfiguration,
@@ -145,7 +145,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
 
     const Strings = StringsHelper.forSection("Global");
     console.log(
-      `[${Strings.from("APP_NAME")} Visual Editor: Version ${pkg.version}; Commit ${GIT_HASH}]`
+      `[${Strings.from("APP_NAME")} Visual Editor: Version ${pkg.default.version}; Commit ${GIT_HASH}]`
     );
   } else {
     // Prevent endless looping.

@@ -5,7 +5,7 @@
  */
 
 import type * as BreadboardUI from "../ui/index.js";
-import { RuntimeHostStatusUpdateEvent } from "./events";
+import { RuntimeHostStatusUpdateEvent } from "./events.js";
 
 const UPDATE_REFRESH_TIMEOUT = 10 * 60 * 1000; // 10 minutes
 

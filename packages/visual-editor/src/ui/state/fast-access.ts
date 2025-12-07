@@ -15,8 +15,8 @@ import {
   FilteredIntegrations,
   GraphAsset,
   Tool,
-} from "./types";
-import { FilteredMap } from "./utils/filtered-map";
+} from "./types.js";
+import { FilteredMap } from "./utils/filtered-map.js";
 
 export { ReactiveFastAccess };
 

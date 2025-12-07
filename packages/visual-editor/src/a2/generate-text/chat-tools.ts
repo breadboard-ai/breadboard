@@ -2,8 +2,8 @@
  * @fileoverview Tools for conversational ("chat") mode
  */
 
-import type { FunctionDeclaration } from "../a2/gemini";
-import type { ToolHandle } from "../a2/tool-manager";
+import type { FunctionDeclaration } from "../a2/gemini.js";
+import type { ToolHandle } from "../a2/tool-manager.js";
 
 export type ChatTool = {
   readonly name: string;

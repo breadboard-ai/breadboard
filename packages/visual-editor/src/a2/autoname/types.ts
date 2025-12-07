@@ -5,7 +5,7 @@
  */
 
 import { JsonSerializable, LLMContent } from "@breadboard-ai/types";
-import type { GeminiSchema } from "../a2/gemini";
+import type { GeminiSchema } from "../a2/gemini.js";
 
 export type NodeConfigurationUpdate = {
   configuration?: Record<string, JsonSerializable>;

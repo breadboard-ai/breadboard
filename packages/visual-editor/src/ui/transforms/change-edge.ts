@@ -15,8 +15,8 @@ import {
   InspectableNode,
 } from "@breadboard-ai/types";
 import { Template, willCreateCycle } from "@breadboard-ai/utils";
-import { MarkInPortsInvalid } from "./mark-in-ports-invalid";
-import { transformConfiguration } from "./transform-all-nodes";
+import { MarkInPortsInvalid } from "./mark-in-ports-invalid.js";
+import { transformConfiguration } from "./transform-all-nodes.js";
 
 export { ChangeEdge };
 

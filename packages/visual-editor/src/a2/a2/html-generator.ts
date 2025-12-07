@@ -3,11 +3,11 @@
  */
 
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
-import type { ContentMap, ExecuteStepRequest } from "./step-executor";
-import { executeStep } from "./step-executor";
-import { executeWebpageStream } from "./generate-webpage-stream";
-import { encodeBase64, err, mergeContent, ok } from "./utils";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import type { ContentMap, ExecuteStepRequest } from "./step-executor.js";
+import { executeStep } from "./step-executor.js";
+import { executeWebpageStream } from "./generate-webpage-stream.js";
+import { encodeBase64, err, mergeContent, ok } from "./utils.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { callGenWebpage };
 

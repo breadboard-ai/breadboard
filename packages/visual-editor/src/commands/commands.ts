@@ -5,12 +5,12 @@
  */
 
 import { EditSpec, GraphDescriptor } from "@breadboard-ai/types";
-import { KeyboardCommand, KeyboardCommandDeps } from "./types";
-import * as BreadboardUI from "../ui/index";
-import { MAIN_BOARD_ID } from "../runtime/util";
+import { KeyboardCommand, KeyboardCommandDeps } from "./types.js";
+import * as BreadboardUI from "../ui/index.js";
+import { MAIN_BOARD_ID } from "../runtime/util.js";
 import { inspectableAssetEdgeToString } from "../ui/utils/workspace.js";
-import { ClipboardReader } from "../utils/clipboard-reader";
-import { Tab } from "../runtime/types";
+import { ClipboardReader } from "../utils/clipboard-reader.js";
+import { Tab } from "../runtime/types.js";
 
 function isFocusedOnGraphRenderer(evt: Event) {
   return evt

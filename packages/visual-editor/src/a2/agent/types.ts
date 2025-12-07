@@ -9,12 +9,12 @@ import {
   LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
-import { GeminiBody } from "../a2/gemini";
+import { GeminiBody } from "../a2/gemini.js";
 import {
   FunctionDefinition,
   StatusUpdateCallback,
-} from "./function-definition";
-import { SimplifiedToolManager } from "../a2/tool-manager";
+} from "./function-definition.js";
+import { SimplifiedToolManager } from "../a2/tool-manager.js";
 
 export type FunctionCallerFactory = {
   create(

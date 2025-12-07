@@ -5,7 +5,7 @@
  */
 
 import { createContext } from "@lit/context";
-import { UI } from "../state/types";
+import { UI } from "../state/types.js";
 
 /** The current global UI state. */
 export const uiStateContext = createContext<UI>("bb-ui-state");

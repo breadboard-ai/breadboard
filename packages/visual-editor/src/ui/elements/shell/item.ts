@@ -5,16 +5,16 @@
  */
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { baseColors } from "../../styles/host/base-colors";
-import { type } from "../../styles/host/type";
+import { baseColors } from "../../styles/host/base-colors.js";
+import { type } from "../../styles/host/type.js";
 import { GraphDescriptor } from "@breadboard-ai/types";
 import {
   OverflowAction,
   WorkspaceSelectionStateWithChangeId,
-} from "../../types/types";
-import { MAIN_BOARD_ID } from "../../constants/constants";
-import { icons } from "../../styles/icons";
-import { OverflowMenuActionEvent } from "../../events/events";
+} from "../../types/types.js";
+import { MAIN_BOARD_ID } from "../../constants/constants.js";
+import { icons } from "../../styles/icons.js";
+import { OverflowMenuActionEvent } from "../../events/events.js";
 
 @customElement("bb-item-modal")
 export class ItemModal extends LitElement {

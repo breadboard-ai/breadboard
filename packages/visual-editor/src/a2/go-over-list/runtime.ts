@@ -9,12 +9,12 @@ import {
   Outcome,
   TextCapabilityPart,
 } from "@breadboard-ai/types";
-import { GeminiPrompt } from "../a2/gemini-prompt";
-import { ToolManager } from "../a2/tool-manager";
-import { ok, toLLMContent } from "../a2/utils";
-import { defaultSystemInstruction } from "./system-instruction";
-import { type ExecuteStepFunction, type Strategist, type Task } from "./types";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { GeminiPrompt } from "../a2/gemini-prompt.js";
+import { ToolManager } from "../a2/tool-manager.js";
+import { ok, toLLMContent } from "../a2/utils.js";
+import { defaultSystemInstruction } from "./system-instruction.js";
+import { type ExecuteStepFunction, type Strategist, type Task } from "./types.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { generateId, Runtime };
 

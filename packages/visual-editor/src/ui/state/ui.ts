@@ -5,12 +5,12 @@
  */
 
 import { signal } from "signal-utils";
-import { VisualEditorMode } from "../types/types";
+import { VisualEditorMode } from "../types/types.js";
 import { SignalSet } from "signal-utils/set";
 import { SignalMap } from "signal-utils/map";
 import { SignalArray } from "signal-utils/array";
-import { ToastType } from "../events/events";
-import { UI, UIOverlays, UILoadState, SubscriptionStatus } from "./types";
+import { ToastType } from "../events/events.js";
+import { UI, UIOverlays, UILoadState, SubscriptionStatus } from "./types.js";
 import {
   RuntimeFlagManager,
   RuntimeFlags,

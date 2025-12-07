@@ -5,9 +5,9 @@
  */
 
 import { ok, TemplatePart } from "@breadboard-ai/utils";
-import { Project } from "../state";
-import { getStepIcon } from "./get-step-icon";
-import { iconSubstitute } from "./icon-substitute";
+import { Project } from "../state/index.js";
+import { getStepIcon } from "./get-step-icon.js";
+import { iconSubstitute } from "./icon-substitute.js";
 
 export function expandChiclet(
   part: TemplatePart,

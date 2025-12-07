@@ -3,7 +3,7 @@
  */
 
 import { LLMContent } from "@breadboard-ai/types";
-import { llm } from "../a2/utils";
+import { llm } from "../a2/utils.js";
 
 export { defaultSystemInstruction };
 

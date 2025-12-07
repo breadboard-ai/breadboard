@@ -16,7 +16,7 @@
 
 import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { SurfaceID, Surface as SurfaceState } from "../types/types";
+import { SurfaceID, Surface as SurfaceState } from "../types/types.js";
 import { A2UIModelProcessor } from "../data/model-processor.js";
 import { Root } from "./root.js";
 import { styleMap } from "lit/directives/style-map.js";

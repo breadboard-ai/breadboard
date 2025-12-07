@@ -8,10 +8,10 @@ import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
-import { icons } from "../../../styles/icons";
-import { EnumValue } from "../../../types/types";
-import { baseColors } from "../../../styles/host/base-colors";
-import { type } from "../../../styles/host/type";
+import { icons } from "../../../styles/icons.js";
+import { EnumValue } from "../../../types/types.js";
+import { baseColors } from "../../../styles/host/base-colors.js";
+import { type } from "../../../styles/host/type.js";
 
 @customElement("bb-item-select")
 export class ItemSelect extends LitElement {

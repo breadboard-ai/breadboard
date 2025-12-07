@@ -5,7 +5,7 @@
  */
 
 import { Schema } from "@breadboard-ai/types";
-import { err } from "../a2/utils";
+import { err } from "../a2/utils.js";
 
 export { invoke as default, describe };
 

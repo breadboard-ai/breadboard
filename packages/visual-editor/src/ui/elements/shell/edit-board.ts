@@ -5,9 +5,9 @@
  */
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, query } from "lit/decorators.js";
-import { baseColors } from "../../styles/host/base-colors";
-import { type } from "../../styles/host/type";
-import { ModalDismissedEvent, StateEvent } from "../../events/events";
+import { baseColors } from "../../styles/host/base-colors.js";
+import { type } from "../../styles/host/type.js";
+import { ModalDismissedEvent, StateEvent } from "../../events/events.js";
 
 @customElement("bb-edit-board-modal")
 export class VEEditBoardModal extends LitElement {

@@ -16,10 +16,10 @@ import {
 } from "../../../../../particles/index.js";
 
 import { Outcome } from "@breadboard-ai/types";
-import { baseColors } from "../../../../styles/host/base-colors";
-import { type } from "../../../../styles/host/type";
-import { icons } from "../../../../styles/icons";
-import { sharedStyles } from "../shared-styles";
+import { baseColors } from "../../../../styles/host/base-colors.js";
+import { type } from "../../../../styles/host/type.js";
+import { icons } from "../../../../styles/icons.js";
+import { sharedStyles } from "../shared-styles.js";
 
 type Link = {
   uri: string;

@@ -2,14 +2,14 @@
  * @fileoverview Plumbing that handles organizing/summarizing content at the end.
  */
 
-import { defaultSafetySettings } from "../a2/gemini";
-import { llm, ok } from "../a2/utils";
-import { GeminiPrompt } from "../a2/gemini-prompt";
-import { type Invokable } from "./types";
-import { listPrompt, listSchema, toList } from "../a2/lists";
-import { defaultSystemInstruction } from "./system-instruction";
+import { defaultSafetySettings } from "../a2/gemini.js";
+import { llm, ok } from "../a2/utils.js";
+import { GeminiPrompt } from "../a2/gemini-prompt.js";
+import { type Invokable } from "./types.js";
+import { listPrompt, listSchema, toList } from "../a2/lists.js";
+import { defaultSystemInstruction } from "./system-instruction.js";
 import { Capabilities, LLMContent } from "@breadboard-ai/types";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { organizerPrompt };
 

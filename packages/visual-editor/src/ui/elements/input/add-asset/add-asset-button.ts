@@ -5,13 +5,13 @@
  */
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { OverflowAction } from "../../../types/types";
+import { OverflowAction } from "../../../types/types.js";
 import { styleMap } from "lit/directives/style-map.js";
 import {
   AddAssetRequestEvent,
   OverflowMenuActionEvent,
-} from "../../../events/events";
-import { icons } from "../../../styles/icons";
+} from "../../../events/events.js";
+import { icons } from "../../../styles/icons.js";
 
 const BUTTON_HEIGHT = 44;
 

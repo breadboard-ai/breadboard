@@ -5,9 +5,9 @@
  */
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { SnackbarMessage, SnackbarUUID, SnackType } from "../../types/types";
+import { SnackbarMessage, SnackbarUUID, SnackType } from "../../types/types.js";
 import { repeat } from "lit/directives/repeat.js";
-import { SnackbarActionEvent } from "../../events/events";
+import { SnackbarActionEvent } from "../../events/events.js";
 import * as Styles from "../../styles/styles.js";
 import { classMap } from "lit/directives/class-map.js";
 

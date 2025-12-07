@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { tr } from "../../a2/utils";
+import { tr } from "../../a2/utils.js";
 
 export const prompt = tr`
 

@@ -9,16 +9,16 @@ import {
   ConnectorConfiguration,
   ConnectorInstance,
   ConnectorType,
-} from "../connectors/types";
+} from "../connectors/types.js";
 import { AssetPath, JsonSerializable } from "@breadboard-ai/types";
-import { GraphAsset, ProjectInternal } from "./types";
+import { GraphAsset, ProjectInternal } from "./types.js";
 import { signal } from "signal-utils";
 import { AsyncComputed } from "signal-utils/async-computed";
 import { Signal } from "signal-polyfill";
 import { err, ok } from "@breadboard-ai/utils";
 import type { Outcome } from "@breadboard-ai/types";
-import { Configurator } from "../connectors/configurator";
-import { EditConnector } from "../transforms/edit-connector";
+import { Configurator } from "../connectors/configurator.js";
+import { EditConnector } from "../transforms/edit-connector.js";
 
 export { ConnectorInstanceImpl };
 

@@ -7,8 +7,8 @@
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { SignalArray } from "signal-utils/array";
-import { ReactiveAppScreen } from "./app-screen";
-import { ProjectRun } from "./types";
+import { ReactiveAppScreen } from "./app-screen.js";
+import { ProjectRun } from "./types.js";
 import {
   App,
   AppScreen,

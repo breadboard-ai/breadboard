@@ -36,7 +36,7 @@ import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configu
 import { createGoogleDriveBoardServer } from "../ui/utils/create-server.js";
 import { createA2Server, createA2ModuleFactory } from "../a2/index.js";
 import { createFileSystemBackend, createFlagManager } from "../idb/index.js";
-import { RecentBoardStore } from "../data/recent-boards";
+import { RecentBoardStore } from "../data/recent-boards.js";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { McpClientManager } from "../mcp/index.js";
 import {
@@ -47,9 +47,9 @@ import {
 } from "@breadboard-ai/types";
 import { ConsentManager } from "../ui/utils/consent-manager.js";
 import { SigninAdapter } from "../ui/utils/signin-adapter.js";
-import { createActionTrackerBackend } from "../ui/utils/action-tracker";
-import { envFromSettings } from "../utils/env-from-settings";
-import { builtInMcpClients } from "../mcp-clients";
+import { createActionTrackerBackend } from "../ui/utils/action-tracker.js";
+import { envFromSettings } from "../utils/env-from-settings.js";
+import { builtInMcpClients } from "../mcp-clients.js";
 import { GoogleDriveBoardServer } from "../board-server/server.js";
 import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
 import { AppCatalystApiClient } from "../ui/flow-gen/app-catalyst.js";

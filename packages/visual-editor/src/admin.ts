@@ -12,7 +12,7 @@ import { Types } from "./ui/index.js";
 import { Runtime } from "./runtime/runtime.js";
 import { RuntimeFlagManager } from "@breadboard-ai/types";
 import type { GlobalConfig } from "./ui/contexts/global-config.js";
-import { SigninAdapter } from "./ui/utils/signin-adapter";
+import { SigninAdapter } from "./ui/utils/signin-adapter.js";
 import { Project } from "./ui/state/types.js";
 import { GoogleDriveBoardServer } from "./board-server/server.js";
 

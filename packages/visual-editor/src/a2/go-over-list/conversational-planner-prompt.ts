@@ -3,11 +3,11 @@
  */
 
 import { Capabilities, LLMContent, Outcome } from "@breadboard-ai/types";
-import { type GeminiSchema, defaultSafetySettings } from "../a2/gemini";
-import { GeminiPrompt } from "../a2/gemini-prompt";
-import { err, llm } from "../a2/utils";
-import { type Plan } from "./types";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { type GeminiSchema, defaultSafetySettings } from "../a2/gemini.js";
+import { GeminiPrompt } from "../a2/gemini-prompt.js";
+import { err, llm } from "../a2/utils.js";
+import { type Plan } from "./types.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { getPlan, plannerPrompt, thinkingPlannerPrompt };
 

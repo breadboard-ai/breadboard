@@ -5,8 +5,8 @@
  */
 import { LitElement, html, css } from "lit";
 import { customElement } from "lit/decorators.js";
-import { baseColors } from "../../styles/host/base-colors";
-import { type } from "../../styles/host/type";
+import { baseColors } from "../../styles/host/base-colors.js";
+import { type } from "../../styles/host/type.js";
 
 @customElement("bb-video-modal")
 export class VEVideoModal extends LitElement {

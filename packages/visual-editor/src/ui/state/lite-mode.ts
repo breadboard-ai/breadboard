@@ -13,7 +13,7 @@ import {
   RuntimeContext,
   StepListStepState,
   LiteModePlannerState,
-} from "./types";
+} from "./types.js";
 import {
   ConsoleEntry,
   GraphDescriptor,
@@ -21,9 +21,9 @@ import {
   NodeRunStatus,
   TextCapabilityPart,
 } from "@breadboard-ai/types";
-import { ReactiveProjectRun } from "./project-run";
+import { ReactiveProjectRun } from "./project-run.js";
 import { Template } from "@breadboard-ai/utils";
-import { FlowGenerator } from "../flow-gen/flow-generator";
+import { FlowGenerator } from "../flow-gen/flow-generator.js";
 
 export { createLiteModeState };
 

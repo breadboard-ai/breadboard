@@ -7,9 +7,9 @@
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { ref } from "lit/directives/ref.js";
-import { icons } from "../../../styles/icons";
-import { baseColors } from "../../../styles/host/base-colors";
-import { type } from "../../../styles/host/type";
+import { icons } from "../../../styles/icons.js";
+import { baseColors } from "../../../styles/host/base-colors.js";
+import { type } from "../../../styles/host/type.js";
 
 @customElement("bb-webcam-video-input")
 export class WebcamVideoInput extends LitElement {

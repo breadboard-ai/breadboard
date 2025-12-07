@@ -9,10 +9,10 @@ const Strings = StringsHelper.forSection("Global");
 
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
-import { icons } from "../../../styles/icons";
+import { icons } from "../../../styles/icons.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { SideNav } from "./side-nav";
-import { type } from "../../../styles/host/type";
+import { SideNav } from "./side-nav.js";
+import { type } from "../../../styles/host/type.js";
 
 import "./side-nav.js";
 import {

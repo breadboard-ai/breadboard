@@ -16,9 +16,9 @@ import {
   RunLifecycleEvent,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
-import { RuntimeBoardRunEvent } from "./events";
-import { StateManager } from "./state";
-import { Tab, TabId } from "./types";
+import { RuntimeBoardRunEvent } from "./events.js";
+import { StateManager } from "./state.js";
+import { Tab, TabId } from "./types.js";
 
 export class Run extends EventTarget {
   #runs = new Map<

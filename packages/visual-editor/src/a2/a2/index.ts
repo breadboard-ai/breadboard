@@ -4,34 +4,34 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as a2AudioGenerator from "./audio-generator";
-import * as a2CombineOutputs from "./combine-outputs";
-import * as a2Common from "./common";
-import * as a2ConnectorManager from "./connector-manager";
-import * as a2Entry from "./entry";
-import * as a2ForEach from "./for-each";
-import * as a2Gemini from "./gemini";
-import * as a2GeminiPrompt from "./gemini-prompt";
-import * as a2HtmlGenerator from "./html-generator";
-import * as a2ImageEditor from "./image-editor";
-import * as a2ImageGenerator from "./image-generator";
-import * as a2ImageUtils from "./image-utils";
-import * as a2Introducer from "./introducer";
-import * as a2Lists from "./lists";
-import * as a2MakeCode from "./make-code";
-import * as a2Output from "./output";
-import * as a2RenderOutputs from "./render-outputs";
-import * as a2Researcher from "./researcher";
-import * as a2Settings from "./settings";
-import * as a2StepExecutor from "./step-executor";
-import * as a2Template from "./template";
-import * as a2TextEntry from "./text-entry";
-import * as a2TextMain from "./text-main";
-import * as a2ToolManager from "./tool-manager";
-import * as a2Utils from "./utils";
+import * as a2AudioGenerator from "./audio-generator.js";
+import * as a2CombineOutputs from "./combine-outputs.js";
+import * as a2Common from "./common.js";
+import * as a2ConnectorManager from "./connector-manager.js";
+import * as a2Entry from "./entry.js";
+import * as a2ForEach from "./for-each.js";
+import * as a2Gemini from "./gemini.js";
+import * as a2GeminiPrompt from "./gemini-prompt.js";
+import * as a2HtmlGenerator from "./html-generator.js";
+import * as a2ImageEditor from "./image-editor.js";
+import * as a2ImageGenerator from "./image-generator.js";
+import * as a2ImageUtils from "./image-utils.js";
+import * as a2Introducer from "./introducer.js";
+import * as a2Lists from "./lists.js";
+import * as a2MakeCode from "./make-code.js";
+import * as a2Output from "./output.js";
+import * as a2RenderOutputs from "./render-outputs.js";
+import * as a2Researcher from "./researcher.js";
+import * as a2Settings from "./settings.js";
+import * as a2StepExecutor from "./step-executor.js";
+import * as a2Template from "./template.js";
+import * as a2TextEntry from "./text-entry.js";
+import * as a2TextMain from "./text-main.js";
+import * as a2ToolManager from "./tool-manager.js";
+import * as a2Utils from "./utils.js";
 
 import descriptor from "./bgl.json" with { type: "json" };
-import { createBgl } from "../create-bgl";
+import { createBgl } from "../create-bgl.js";
 
 export const exports = {
   "audio-generator": a2AudioGenerator,

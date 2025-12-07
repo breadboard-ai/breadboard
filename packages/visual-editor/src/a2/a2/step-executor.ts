@@ -12,7 +12,7 @@ import {
   LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
-import { StreamableReporter } from "./output";
+import { StreamableReporter } from "./output.js";
 import {
   decodeBase64,
   encodeBase64,
@@ -22,8 +22,8 @@ import {
   ok,
   toLLMContentInline,
   toLLMContentStored,
-} from "./utils";
-import { A2ModuleArgs } from "../runnable-module-factory";
+} from "./utils.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 const DEFAULT_BACKEND_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";

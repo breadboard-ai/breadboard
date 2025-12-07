@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LanguagePack } from "../../types/types";
+import { LanguagePack } from "../../types/types.js";
 import ActivityLog from "./activity-log.js";
 import AppPreview from "./app-preview.js";
 import AssetOrganizer from "./asset-organizer.js";

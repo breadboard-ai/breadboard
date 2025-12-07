@@ -20,7 +20,7 @@ import {
   WorkspaceSelectionChangeId,
   WorkspaceSelectionState,
   WorkspaceVisualChangeId,
-} from "./types";
+} from "./types.js";
 
 const eventInit = {
   bubbles: true,

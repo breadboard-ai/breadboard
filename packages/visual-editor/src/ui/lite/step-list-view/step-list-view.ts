@@ -6,9 +6,9 @@
 import { SignalWatcher } from "@lit-labs/signals";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import * as Styles from "../../styles/styles";
+import * as Styles from "../../styles/styles.js";
 import { classMap } from "lit/directives/class-map.js";
-import { LiteModeState, StepListStepState } from "../../state";
+import { LiteModeState, StepListStepState } from "../../state/index.js";
 import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { hash } from "@breadboard-ai/utils";

@@ -10,14 +10,14 @@ import {
   AssetPath,
   LLMContent,
 } from "@breadboard-ai/types";
-import { GraphAsset, ProjectInternal } from "./types";
-import { ConnectorInstance } from "../connectors/types";
+import { GraphAsset, ProjectInternal } from "./types.js";
+import { ConnectorInstance } from "../connectors/types.js";
 import { err, ok } from "@breadboard-ai/utils";
 import { Outcome } from "@breadboard-ai/types";
-import { configFromData } from "../connectors/util";
-import { ConnectorInstanceImpl } from "./connector-instance";
-import { UpdateAssetWithRefs } from "../transforms/update-asset-with-refs";
-import { UpdateAssetData } from "../transforms/update-asset-data";
+import { configFromData } from "../connectors/util.js";
+import { ConnectorInstanceImpl } from "./connector-instance.js";
+import { UpdateAssetWithRefs } from "../transforms/update-asset-with-refs.js";
+import { UpdateAssetData } from "../transforms/update-asset-data.js";
 
 export { GraphAssetImpl };
 

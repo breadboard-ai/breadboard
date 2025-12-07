@@ -16,7 +16,7 @@ import { SnackbarEvent, UnsnackbarEvent } from "../../events/events.js";
 import { OneShotFlowGenFailureResponse } from "../../flow-gen/flow-generator.js";
 import { LiteModeState, UI } from "../../state/types.js";
 import * as StringsHelper from "../../strings/helper.js";
-import * as Styles from "../../styles/styles";
+import * as Styles from "../../styles/styles.js";
 import { SnackType } from "../../types/types.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
 

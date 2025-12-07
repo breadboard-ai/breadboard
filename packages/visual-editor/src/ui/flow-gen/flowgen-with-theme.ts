@@ -9,8 +9,8 @@ import {
   FlowGenerator,
   OneShotFlowGenFailureResponse,
   OneShotFlowGenResponse,
-} from "./flow-generator";
-import { Project } from "../state";
+} from "./flow-generator.js";
+import { Project } from "../state/index.js";
 import { err, ok } from "@breadboard-ai/utils";
 
 export { flowGenWithTheme };

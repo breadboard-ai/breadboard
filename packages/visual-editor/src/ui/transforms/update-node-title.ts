@@ -11,8 +11,8 @@ import {
   GraphIdentifier,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import { AutoWireInPorts } from "./autowire-in-ports";
-import { TransformAllNodes } from "./transform-all-nodes";
+import { AutoWireInPorts } from "./autowire-in-ports.js";
+import { TransformAllNodes } from "./transform-all-nodes.js";
 
 export { UpdateNodeTitle };
 

@@ -9,10 +9,10 @@ import {
   Schema,
   SchemaEnumValue,
 } from "@breadboard-ai/types";
-import { type Params } from "./common";
-import { report } from "./output";
-import { Template } from "./template";
-import { defaultLLMContent, llm, ok, toText } from "./utils";
+import { type Params } from "./common.js";
+import { report } from "./output.js";
+import { Template } from "./template.js";
+import { defaultLLMContent, llm, ok, toText } from "./utils.js";
 
 export { invoke as default, describe };
 

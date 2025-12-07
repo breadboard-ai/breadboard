@@ -8,8 +8,8 @@ import { SimplifiedA2UIClient, WorkItem } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 
-import { A2UIClient } from "./client";
-import { now } from "../now";
+import { A2UIClient } from "./client.js";
+import { now } from "../now.js";
 
 export { A2UIClientWorkItem };
 

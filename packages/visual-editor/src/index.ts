@@ -5,14 +5,14 @@
  */
 
 import { customElement } from "lit/decorators.js";
-import { MainBase, RenderValues } from "./main-base";
+import { MainBase, RenderValues } from "./main-base.js";
 import { html, nothing } from "lit";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { ref } from "lit/directives/ref.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import * as BreadboardUI from "./ui/index.js";
-import { ActionTracker } from "./ui/utils/action-tracker";
+import { ActionTracker } from "./ui/utils/action-tracker.js";
 import { makeUrl, parseUrl } from "./ui/utils/urls.js";
 import { IterateOnPromptEvent } from "./ui/events/events.js";
 import { IterateOnPromptMessage } from "./ui/embed/embed.js";

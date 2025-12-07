@@ -9,12 +9,12 @@ import {
   HideTooltipEvent,
   ShowTooltipEvent,
   StateEvent,
-} from "../../events/events";
+} from "../../events/events.js";
 import { LitElement, html, css, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { icons } from "../../styles/icons";
-import { type } from "../../styles/host/type";
-import { baseColors } from "../../styles/host/base-colors";
+import { icons } from "../../styles/icons.js";
+import { type } from "../../styles/host/type.js";
+import { baseColors } from "../../styles/host/base-colors.js";
 
 @customElement("bb-node-run-control")
 export class NodeRunControl extends LitElement {

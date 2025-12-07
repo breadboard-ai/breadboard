@@ -5,9 +5,9 @@
  */
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { baseColors } from "../../styles/host/base-colors";
-import { type } from "../../styles/host/type";
-import { StateEvent } from "../../events/events";
+import { baseColors } from "../../styles/host/base-colors.js";
+import { type } from "../../styles/host/type.js";
+import { StateEvent } from "../../events/events.js";
 import { RuntimeFlags } from "@breadboard-ai/types";
 import { Task } from "@lit/task";
 import { repeat } from "lit/directives/repeat.js";

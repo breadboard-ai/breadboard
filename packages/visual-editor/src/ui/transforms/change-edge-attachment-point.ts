@@ -12,7 +12,7 @@ import {
   EditTransformResult,
   GraphIdentifier,
 } from "@breadboard-ai/types";
-import { EdgeAttachmentPoint } from "../types/types";
+import { EdgeAttachmentPoint } from "../types/types.js";
 
 export class ChangeEdgeAttachmentPoint implements EditTransform {
   constructor(

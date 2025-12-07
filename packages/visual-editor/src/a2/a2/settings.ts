@@ -8,8 +8,8 @@ import {
   Outcome,
   RuntimeFlags,
 } from "@breadboard-ai/types";
-import { ok } from "./utils";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { ok } from "./utils.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { readSettings, readFlags };
 

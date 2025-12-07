@@ -8,14 +8,14 @@ import {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
-import { type Params } from "./common";
-import gemini, { defaultSafetySettings, type GeminiInputs } from "./gemini";
-import { ArgumentNameGenerator } from "./introducer";
-import { report } from "./output";
-import { Template } from "./template";
-import { ToolManager } from "./tool-manager";
-import { addUserTurn, err, ok, toLLMContent, toText } from "./utils";
-import { A2ModuleArgs } from "../runnable-module-factory";
+import { type Params } from "./common.js";
+import gemini, { defaultSafetySettings, type GeminiInputs } from "./gemini.js";
+import { ArgumentNameGenerator } from "./introducer.js";
+import { report } from "./output.js";
+import { Template } from "./template.js";
+import { ToolManager } from "./tool-manager.js";
+import { addUserTurn, err, ok, toLLMContent, toText } from "./utils.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 const MAKE_CODE_ICON = "generative-code";
 

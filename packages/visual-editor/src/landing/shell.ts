@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LandingCarousel } from "./carousel";
+import { LandingCarousel } from "./carousel.js";
 
 export function setPageTitle(
   title: string | null,
