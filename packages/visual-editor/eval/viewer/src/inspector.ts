@@ -34,6 +34,8 @@ import {
   FileSystemPath,
   FileSystemQueryEntry,
   FileSystemQueryResult,
+  LLMContent,
+  DataPart,
 } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 import { FinalChainReport } from "../../collate-context.js";
@@ -398,10 +400,6 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
             font-family: var(--font-family-mono);
             line-height: 1.5;
 
-            & div {
-              white-space: pre-wrap;
-            }
-
             & button {
               position: absolute;
               top: var(--bb-grid-size-3);
@@ -459,11 +457,6 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           }
         }
       }
-
-      @keyframes rotate {
-        from {
-          rotate: 0deg;
-        }
 
         to {
           rotate: 360deg;
@@ -610,21 +603,65 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   #renderContexts() {
     return html`<section id="messages">
       ${map(this.contexts, (context, idx) => {
-        return html`<details>
+        return html`<details class="context-item">
           <summary>
             Context ${idx + 1} (${context.turnCount} turns,
-            ${context.totalDurationMs}ms)
+            ${Math.round(context.totalDurationMs / 1000)}s)
           </summary>
           <div class="context-content">
-            <div>Started: ${context.startedDateTime}</div>
-            <div>Total Request Time: ${context.totalRequestTimeMs}ms</div>
-            <div>Thoughts: ${context.totalThoughts}</div>
-            <div>Function Calls: ${context.totalFunctionCalls}</div>
-            <pre>${JSON.stringify(context.context, null, 2)}</pre>
+            <div class="context-stats">
+              <div>
+                Started: ${new Date(context.startedDateTime).toLocaleString()}
+              </div>
+              <div>
+                Request Time: ${Math.round(context.totalRequestTimeMs / 1000)}s
+              </div>
+              <div>Thoughts: ${context.totalThoughts}</div>
+              <div>Function Calls: ${context.totalFunctionCalls}</div>
+            </div>
+            <div class="context-turns">
+              ${map(context.context, (turn) => this.#renderTurn(turn))}
+            </div>
           </div>
         </details>`;
       })}
     </section>`;
+  }
+
+  #renderTurn(turn: LLMContent) {
+    const role = turn.role || "unknown";
+    return html`<div class="context-turn ${role}">
+      <div class="turn-header">${role}</div>
+      ${map(turn.parts || [], (part: DataPart) => this.#renderPart(part))}
+    </div>`;
+  }
+
+  #renderPart(part: DataPart) {
+    if (part.thought && "text" in part) {
+      return html`<div class="part-thought">
+        <strong>Thought:</strong> ${part.text}
+      </div>`;
+    }
+
+    if ("functionCall" in part) {
+      return html`<div class="part-function-call">
+        <div class="name">call ${part.functionCall.name}</div>
+        <pre>${JSON.stringify(part.functionCall.args, null, 2)}</pre>
+      </div>`;
+    }
+
+    if ("functionResponse" in part) {
+      return html`<div class="part-function-response">
+        <div class="name">response ${part.functionResponse.name}</div>
+        <pre>${JSON.stringify(part.functionResponse.response, null, 2)}</pre>
+      </div>`;
+    }
+
+    if ("text" in part) {
+      return html`<div class="part-text">${part.text}</div>`;
+    }
+
+    return html`<pre>${JSON.stringify(part, null, 2)}</pre>`;
   }
 
   #renderInput() {
