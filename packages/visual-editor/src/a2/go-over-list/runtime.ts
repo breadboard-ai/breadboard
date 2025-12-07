@@ -13,7 +13,11 @@ import { GeminiPrompt } from "../a2/gemini-prompt.js";
 import { ToolManager } from "../a2/tool-manager.js";
 import { ok, toLLMContent } from "../a2/utils.js";
 import { defaultSystemInstruction } from "./system-instruction.js";
-import { type ExecuteStepFunction, type Strategist, type Task } from "./types.js";
+import {
+  type ExecuteStepFunction,
+  type Strategist,
+  type Task,
+} from "./types.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { generateId, Runtime };

@@ -19,8 +19,8 @@ export class WebcamInput extends LitElement {
 
   static styles = css`
     :host {
-      --default-bb-box-shadow: 0 6px 9px 0 rgba(0, 0, 0, 0.12),
-        0 2px 3px 0 rgba(0, 0, 0, 0.23);
+      --default-bb-box-shadow:
+        0 6px 9px 0 rgba(0, 0, 0, 0.12), 0 2px 3px 0 rgba(0, 0, 0, 0.23);
       --default-bb-border-radius: 8px;
       --default-bb-input-background-color: #fff;
       --default-bb-outline: transparent;

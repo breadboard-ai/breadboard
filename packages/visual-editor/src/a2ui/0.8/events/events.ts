@@ -37,7 +37,7 @@ export type StateEventDetailMap = EnforceEventTypeMatch<{
 }>;
 
 export class StateEvent<
-  T extends keyof StateEventDetailMap
+  T extends keyof StateEventDetailMap,
 > extends CustomEvent<StateEventDetailMap[T]> {
   static eventName = "a2uiaction";
 

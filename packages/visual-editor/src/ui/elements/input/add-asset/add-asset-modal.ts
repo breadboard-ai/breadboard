@@ -12,7 +12,10 @@ import {
   PropertyValues,
 } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { AddAssetEvent, OverlayDismissedEvent } from "../../../events/events.js";
+import {
+  AddAssetEvent,
+  OverlayDismissedEvent,
+} from "../../../events/events.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { InlineDataCapabilityPart, LLMContent } from "@breadboard-ai/types";
 import { DrawableInput } from "../drawable/drawable.js";

@@ -46,7 +46,10 @@ import {
 } from "@breadboard-ai/types";
 import { classMap } from "lit/directives/class-map.js";
 import { until } from "lit/directives/until.js";
-import { isConfigurableBehavior, isLLMContentBehavior } from "../../utils/index.js";
+import {
+  isConfigurableBehavior,
+  isLLMContentBehavior,
+} from "../../utils/index.js";
 import {
   FastAccessMenu,
   ItemSelect,

@@ -42,11 +42,7 @@
         "theme": "54f81cc4-5c04-4d9d-b831-985d556f0ed9"
       }
     },
-    "tags": [
-      "published",
-      "tool",
-      "component"
-    ],
+    "tags": ["published", "tool", "component"],
     "icon": "text"
   },
   "modules": {},
@@ -92,9 +88,7 @@
                   "title": "Context",
                   "items": {
                     "type": "object",
-                    "behavior": [
-                      "llm-content"
-                    ]
+                    "behavior": ["llm-content"]
                   },
                   "default": "null"
                 }

@@ -28,7 +28,7 @@ import {
   Outcome,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
-// TODO: Remove this import once we move all deps of isStoredData to point to 
+// TODO: Remove this import once we move all deps of isStoredData to point to
 // utils.
 import { isStoredData } from "@breadboard-ai/utils";
 

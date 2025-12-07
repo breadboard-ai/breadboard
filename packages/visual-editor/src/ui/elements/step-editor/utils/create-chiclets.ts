@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 import { InspectablePort } from "@breadboard-ai/types";
 import { isStoredData, Template } from "@breadboard-ai/utils";
 import { html, HTMLTemplateResult, nothing } from "lit";
@@ -17,7 +16,6 @@ import {
   isLLMContentArray,
   isTextCapabilityPart,
 } from "../../../../data/common.js";
-
 
 export function createChiclets(
   port: InspectablePort | null,
