@@ -45,7 +45,7 @@ const FETCH_ALLOWLIST: Array<{
       url.includes("/generateWebpageStream"),
   },
   {
-    canonicalPrefix: new URL(CANONICAL.GOOGLE_DRIVE_API_PREFIX),
+    canonicalPrefix: new URL(CANONICAL.GOOGLE_DRIVE_FILES_API_PREFIX),
     scopes: DRIVE_SCOPES,
     remapOrigin: urlOrUndefined(
       CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_API_ENDPOINT

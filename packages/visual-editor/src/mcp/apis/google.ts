@@ -11,7 +11,7 @@
 import {
   Outcome,
   GOOGLE_CALENDAR_API_PREFIX,
-  GOOGLE_DRIVE_API_PREFIX,
+  GOOGLE_DRIVE_FILES_API_PREFIX,
   GOOGLE_GMAIL_API_PREFIX,
 } from "@breadboard-ai/types";
 import { err, ok, filterUndefined } from "@breadboard-ai/utils";
@@ -183,7 +183,11 @@ class GoogleApis {
       filterUndefined(request as Record<string, string>)
     ).toString();
 
-    return this.#call(`${GOOGLE_DRIVE_API_PREFIX}?${query}`, "GET", undefined);
+    return this.#call(
+      `${GOOGLE_DRIVE_FILES_API_PREFIX}?${query}`,
+      "GET",
+      undefined
+    );
   }
 
   async driveGetFile(
@@ -196,7 +200,7 @@ class GoogleApis {
     ).toString();
 
     return this.#call(
-      `${GOOGLE_DRIVE_API_PREFIX}/${fileId}?${query}`,
+      `${GOOGLE_DRIVE_FILES_API_PREFIX}/${fileId}?${query}`,
       "GET",
       undefined
     );

@@ -19,7 +19,7 @@ import { StateManager } from "./state.js";
 import { Shell } from "./shell.js";
 import {
   BACKEND_API_PREFIX,
-  GOOGLE_DRIVE_API_PREFIX,
+  GOOGLE_DRIVE_FILES_API_PREFIX,
   Outcome,
   PersistentBackend,
   RunConfig,
@@ -106,7 +106,7 @@ export class Runtime extends EventTarget {
     const apiBaseUrl =
       this.signinAdapter.state === "signedout"
         ? proxyApiBaseUrl
-        : GOOGLE_DRIVE_API_PREFIX;
+        : GOOGLE_DRIVE_FILES_API_PREFIX;
 
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,

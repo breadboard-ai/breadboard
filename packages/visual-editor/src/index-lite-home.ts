@@ -16,7 +16,7 @@ import { provide } from "@lit/context";
 import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
 import { boardServerContext } from "./ui/contexts/board-server.js";
 import {
-  GOOGLE_DRIVE_API_PREFIX,
+  GOOGLE_DRIVE_FILES_API_PREFIX,
   type Outcome,
   type UUID,
 } from "@breadboard-ai/types";
@@ -105,7 +105,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
     const apiBaseUrl =
       signinAdapter.state === "signedout"
         ? proxyApiBaseUrl
-        : GOOGLE_DRIVE_API_PREFIX;
+        : GOOGLE_DRIVE_FILES_API_PREFIX;
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,
       proxyApiBaseUrl,

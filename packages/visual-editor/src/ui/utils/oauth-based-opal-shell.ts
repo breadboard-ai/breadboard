@@ -44,7 +44,7 @@ import { getTopLevelOrigin } from "./embed-helpers.js";
 import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { checkFetchAllowlist } from "./fetch-allowlist.js";
-import { GOOGLE_DRIVE_API_PREFIX } from "@breadboard-ai/types";
+import { GOOGLE_DRIVE_FILES_API_PREFIX } from "@breadboard-ai/types";
 
 const SIGN_IN_CONNECTION_ID = "$sign-in";
 
@@ -168,8 +168,8 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     return {
       consentMessage: "",
       isTestApi:
-        checkFetchAllowlist(GOOGLE_DRIVE_API_PREFIX)?.remappedUrl?.origin ===
-        "https://test-www.sandbox.googleapis.com",
+        checkFetchAllowlist(GOOGLE_DRIVE_FILES_API_PREFIX)?.remappedUrl
+          ?.origin === "https://test-www.sandbox.googleapis.com",
     };
   };
 

@@ -6,7 +6,7 @@
 
 import {
   GOOGLE_DOCS_API_PREFIX,
-  GOOGLE_DRIVE_API_PREFIX,
+  GOOGLE_DRIVE_FILES_API_PREFIX,
   GOOGLE_DRIVE_UPLOAD_API_PREFIX,
   GOOGLE_SHEETS_API_PREFIX,
   GOOGLE_SLIDES_API_PREFIX,
@@ -669,7 +669,7 @@ async function get(moduleArgs: A2ModuleArgs, id: string) {
   if (!id) {
     return err("Please supply file id.");
   }
-  return api(moduleArgs, `${GOOGLE_DRIVE_API_PREFIX}/${id}`, "GET");
+  return api(moduleArgs, `${GOOGLE_DRIVE_FILES_API_PREFIX}/${id}`, "GET");
 }
 
 async function create(
@@ -680,7 +680,7 @@ async function create(
     return err("Please supply the body of the file to create.");
   }
 
-  return api(moduleArgs, GOOGLE_DRIVE_API_PREFIX, "POST", body);
+  return api(moduleArgs, GOOGLE_DRIVE_FILES_API_PREFIX, "POST", body);
 }
 
 async function query(
@@ -693,7 +693,7 @@ async function query(
 
   return api(
     moduleArgs,
-    `${GOOGLE_DRIVE_API_PREFIX}?q=${encodeURIComponent(query)}`,
+    `${GOOGLE_DRIVE_FILES_API_PREFIX}?q=${encodeURIComponent(query)}`,
     "GET"
   );
 }
@@ -703,7 +703,7 @@ async function del(moduleArgs: A2ModuleArgs, id: string) {
     return err("Please supply the id of the file to delete");
   }
 
-  return api(moduleArgs, `${GOOGLE_DRIVE_API_PREFIX}/${id}`, "DELETE");
+  return api(moduleArgs, `${GOOGLE_DRIVE_FILES_API_PREFIX}/${id}`, "DELETE");
 }
 
 async function exp(moduleArgs: A2ModuleArgs, fileId: string, mimeType: string) {
@@ -712,7 +712,7 @@ async function exp(moduleArgs: A2ModuleArgs, fileId: string, mimeType: string) {
   }
   return api(
     moduleArgs,
-    `${GOOGLE_DRIVE_API_PREFIX}/${fileId}/export?mimeType=${mimeType}`,
+    `${GOOGLE_DRIVE_FILES_API_PREFIX}/${fileId}/export?mimeType=${mimeType}`,
     "GET"
   );
 }

@@ -9,7 +9,8 @@
 // shell host.
 
 export const BACKEND_API_PREFIX = "https://appcatalyst.pa.googleapis.com";
-export const GOOGLE_DRIVE_API_PREFIX = "https://www.googleapis.com/drive/v3/files";
+export const GOOGLE_DRIVE_FILES_API_PREFIX =
+  "https://www.googleapis.com/drive/v3/files";
 export const GOOGLE_DRIVE_UPLOAD_API_PREFIX = "https://www.googleapis.com/upload/drive/v3/files";
 export const GOOGLE_CALENDAR_API_PREFIX = "https://www.googleapis.com/calendar/v3/calendars";
 export const GOOGLE_GMAIL_API_PREFIX = "https://gmail.googleapis.com";

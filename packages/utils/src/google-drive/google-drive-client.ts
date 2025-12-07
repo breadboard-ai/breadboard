@@ -9,7 +9,7 @@
 import { retryableFetch } from "./utils.js";
 import {
   GOOGLE_DRIVE_UPLOAD_API_PREFIX,
-  GOOGLE_DRIVE_API_PREFIX,
+  GOOGLE_DRIVE_FILES_API_PREFIX,
 } from "@breadboard-ai/types";
 
 type File = gapi.client.drive.File;
@@ -185,7 +185,7 @@ export class GoogleDriveClient {
   readonly isTestApi: boolean;
 
   constructor(options: GoogleDriveClientOptions) {
-    this.#apiUrl = options.apiBaseUrl || GOOGLE_DRIVE_API_PREFIX;
+    this.#apiUrl = options.apiBaseUrl || GOOGLE_DRIVE_FILES_API_PREFIX;
     this.#publicProxy = options.proxyApiBaseUrl
       ? {
           apiUrl: options.proxyApiBaseUrl,
