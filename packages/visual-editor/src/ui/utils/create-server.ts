@@ -22,7 +22,6 @@ export function createGoogleDriveBoardServer(
     signInInfo,
     googleDriveClient,
     googleDrivePublishPermissions,
-    userFolderName,
-    CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT ?? ""
+    userFolderName
   );
 }

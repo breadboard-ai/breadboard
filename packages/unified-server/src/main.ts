@@ -70,6 +70,7 @@ const driveClient = new GoogleDriveClient({
     }
     return token;
   }),
+  isTestApi: false,
 });
 
 console.log("[unified-server startup] Mounting gallery");

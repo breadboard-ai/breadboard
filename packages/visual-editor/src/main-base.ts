@@ -248,6 +248,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.runtime = new Runtime.Runtime({
       globalConfig: this.globalConfig,
+      guestConfig: this.guestConfiguration,
       settings: this.settings,
       shellHost: this.opalShell,
       initialSignInState: args.initialSignInState,

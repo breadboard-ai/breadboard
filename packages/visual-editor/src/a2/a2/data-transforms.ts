@@ -5,6 +5,7 @@
  */
 
 import {
+  BACKEND_API_PREFIX,
   Chunk,
   DataPartTransformer,
   FileDataPart,
@@ -194,12 +195,7 @@ async function callBackend<Req, Res>(
   request: Req,
   endpoint: string
 ): Promise<Outcome<Res>> {
-  const backendApiEndpoint =
-    context.clientDeploymentConfiguration?.BACKEND_API_ENDPOINT;
-  if (!backendApiEndpoint) {
-    return err(`Unable to transform: backend API endpoint not specified`);
-  }
-  const url = new URL(endpoint, backendApiEndpoint);
+  const url = new URL(endpoint, BACKEND_API_PREFIX);
 
   try {
     const fetching = await fetchWithCreds(url, {
