@@ -98,7 +98,76 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
   #renderMode: RenderMode = "surfaces";
   #fileSystem = new FileSystemEvalBackend();
+  #urlRestored = false;
 
+  constructor() {
+    super();
+    this.#refresh();
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    window.addEventListener("popstate", this.#onPopState);
+    this.#restoreFromUrl();
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    window.removeEventListener("popstate", this.#onPopState);
+  }
+
+  #onPopState = () => {
+    this.#restoreFromUrl();
+  };
+
+  #restoreFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const file = params.get("file");
+    const mode = params.get("mode") as RenderMode | null;
+    const surface = parseInt(params.get("surface") || "0", 10);
+
+    if (mode && ["surfaces", "messages", "contexts"].includes(mode)) {
+      this.renderMode = mode;
+    }
+
+    if (!Number.isNaN(surface)) {
+      this.#selectedSurface = surface;
+    }
+
+    if (file && file !== this.selectedFilePath) {
+      this.selectedFilePath = file;
+    }
+
+    this.#urlRestored = true;
+  }
+
+  #updateUrl() {
+    if (!this.#urlRestored) {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    if (this.selectedFilePath) {
+      params.set("file", this.selectedFilePath);
+    } else {
+      params.delete("file");
+    }
+
+    if (this.renderMode) {
+      params.set("mode", this.renderMode);
+    } else {
+      params.delete("mode");
+    }
+
+    if (this.#selectedSurface > 0) {
+      params.set("surface", this.#selectedSurface.toString());
+    } else {
+      params.delete("surface");
+    }
+
+    const url = `${window.location.pathname}?${params.toString()}`;
+    window.history.pushState({}, "", url);
+  }
   static styles = [
     unsafeCSS(v0_8.Styles.structuralStyles),
     css`
@@ -458,6 +527,11 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
         }
       }
 
+      @keyframes rotate {
+        from {
+          rotate: 0deg;
+        }
+
         to {
           rotate: 360deg;
         }
@@ -465,19 +539,10 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     `,
   ];
 
-  constructor() {
-    super();
-
-    this.#renderMode =
-      (localStorage.getItem(RENDER_MODE_KEY) as RenderMode) ?? "surfaces";
-
-    this.#refresh();
-  }
-
-  protected willUpdate(changedProperties: PropertyValues<this>): void {
+  protected async willUpdate(changedProperties: PropertyValues<this>) {
     if (changedProperties.has("selectedPath")) {
       if (this.selectedPath) {
-        const path = this.selectedPath.path;
+        const path = this.selectedPath.path as FileSystemPath;
         this.#fileSystem.query(path).then((f) => this.#updateFiles(f, path));
       } else {
         this.#filesInMountedDir = [];
@@ -485,7 +550,49 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     }
 
     if (changedProperties.has("selectedFilePath")) {
-      this.#selectedSurface = 0;
+      if (this.selectedFilePath) {
+        await this.#loadFile(this.selectedFilePath);
+      } else {
+        this.#surfaces = [];
+        this.contexts = [];
+      }
+      this.#updateUrl();
+    }
+
+    if (changedProperties.has("renderMode")) {
+      this.#updateUrl();
+    }
+  }
+
+  async #loadFile(path: string) {
+    this.#processor.clearSurfaces();
+    const data = await this.#fileSystem.read(path as FileSystemPath);
+    if (!ok(data)) {
+      return;
+    }
+
+    try {
+      const fileData = JSON.parse(data) as EvalFileData;
+      this.#surfaces = [];
+      const a2ui = fileData.filter((item) => item.type === "a2ui");
+      this.contexts = fileData.filter((item) => item.type === "context");
+
+      this.#processor.clearSurfaces();
+      for (const { data } of a2ui.values()) {
+        for (let s = 0; s < data.length; s++) {
+          const surface = data[s];
+          this.#surfaces.push(surface);
+          if (s !== this.#selectedSurface) {
+            continue;
+          }
+
+          this.#processor.processMessages(surface);
+        }
+      }
+    } catch (err) {
+      console.warn(err);
+      this.renderMode = "messages";
+      return;
     }
   }
 
@@ -559,6 +666,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                 }
 
                 this.#selectedSurface = evt.target.selectedIndex;
+                this.#updateUrl();
                 this.#processor.clearSurfaces();
 
                 const selectedSurface = this.#surfaces?.at(
@@ -665,7 +773,6 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   }
 
   #renderInput() {
-    const selectedSurfaceIndex = this.#selectedSurface;
     return html`<div>
         ${this.#dirs.length > 0
           ? html`<select
@@ -734,41 +841,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
               <button
                 ?selected=${file.path === this.selectedFilePath}
                 @click=${async () => {
-                  this.#processor.clearSurfaces();
-
                   this.selectedFilePath = file.path;
-                  const data = await this.#fileSystem.read(file.path);
-                  if (!ok(data)) {
-                    return;
-                  }
-
-                  try {
-                    const fileData = JSON.parse(data) as EvalFileData;
-                    this.#surfaces = [];
-                    const a2ui = fileData.filter(
-                      (item) => item.type === "a2ui"
-                    );
-                    this.contexts = fileData.filter(
-                      (item) => item.type === "context"
-                    );
-
-                    this.#processor.clearSurfaces();
-                    for (const { data } of a2ui.values()) {
-                      for (let s = 0; s < data.length; s++) {
-                        const surface = data[s];
-                        this.#surfaces.push(surface);
-                        if (s !== selectedSurfaceIndex) {
-                          continue;
-                        }
-
-                        this.#processor.processMessages(surface);
-                      }
-                    }
-                  } catch (err) {
-                    console.warn(err);
-                    this.renderMode = "messages";
-                    return;
-                  }
                 }}
               >
                 ${fileName}
