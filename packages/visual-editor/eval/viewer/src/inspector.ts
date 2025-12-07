@@ -711,7 +711,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   #renderContexts() {
     return html`<section id="messages">
       ${map(this.contexts, (context, idx) => {
-        return html`<details class="context-item">
+        return html`<details class="context-item" ?open=${idx === 0}>
           <summary>
             Context ${idx + 1} (${context.turnCount} turns,
             ${Math.round(context.totalDurationMs / 1000)}s)
@@ -894,6 +894,14 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
             Generated UI
             <div id="render-mode">
               <button
+                class=${classMap({ active: this.#renderMode === "contexts" })}
+                @click=${() => (this.renderMode = "contexts")}
+                title="View Conversation Contexts"
+              >
+                <span class="g-icon filled round">dataset</span>Contexts
+              </button>
+
+              <button
                 class=${classMap({ active: this.#renderMode === "surfaces" })}
                 @click=${() => (this.renderMode = "surfaces")}
                 title="View Generated Surfaces"
@@ -907,14 +915,6 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                 title="View A2UI Messages"
               >
                 <span class="g-icon filled round">communication</span>A2UI
-              </button>
-
-              <button
-                class=${classMap({ active: this.#renderMode === "contexts" })}
-                @click=${() => (this.renderMode = "contexts")}
-                title="View Conversation Contexts"
-              >
-                <span class="g-icon filled round">dataset</span>Contexts
               </button>
             </div>
           </h2>
