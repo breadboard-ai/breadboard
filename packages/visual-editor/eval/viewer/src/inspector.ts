@@ -318,7 +318,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           gap: var(--bb-grid-size-4);
 
           & #render-mode,
-          & #render-mode > span {
+          & #render-mode > button {
             display: flex;
             align-items: center;
             background: none;
@@ -329,8 +329,9 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
           & #render-mode {
             gap: var(--bb-grid-size-3);
+            display: flex;
 
-            & > span {
+            & > button {
               border-radius: var(--bb-grid-size-2);
               background: oklch(from var(--primary) l c h / calc(alpha * 0.2));
               opacity: 0.4;
@@ -340,15 +341,22 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
               max-width: 420px;
               padding: var(--bb-grid-size-2) var(--bb-grid-size-5);
               pointer-events: auto;
+              color: var(--primary);
+              display: flex;
+              align-items: center;
+              cursor: pointer;
 
               &:not(.active):hover {
                 opacity: 1;
-                cursor: pointer;
               }
 
               &.active {
                 opacity: 1;
                 color: var(--text-color);
+              }
+
+              & .g-icon {
+                margin-right: var(--bb-grid-size-2);
               }
             }
           }
@@ -774,36 +782,31 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
             class="typography-w-400 typography-f-s typography-sz-tl layout-sp-bt"
           >
             Generated UI
-            <button
-              id="render-mode"
-              @click=${() => {
-                const modes: RenderMode[] = [
-                  "surfaces",
-                  "messages",
-                  "contexts",
-                ];
-                const currentIdx = modes.indexOf(this.renderMode);
-                this.renderMode = modes[(currentIdx + 1) % modes.length];
-              }}
-            >
-              <span
+            <div id="render-mode">
+              <button
                 class=${classMap({ active: this.#renderMode === "surfaces" })}
+                @click=${() => (this.renderMode = "surfaces")}
+                title="View Generated Surfaces"
               >
                 <span class="g-icon filled round">mobile_layout</span>Surfaces
-              </span>
+              </button>
 
-              <span
+              <button
                 class=${classMap({ active: this.#renderMode === "messages" })}
+                @click=${() => (this.renderMode = "messages")}
+                title="View A2UI Messages"
               >
                 <span class="g-icon filled round">communication</span>A2UI
-              </span>
+              </button>
 
-              <span
+              <button
                 class=${classMap({ active: this.#renderMode === "contexts" })}
+                @click=${() => (this.renderMode = "contexts")}
+                title="View Conversation Contexts"
               >
                 <span class="g-icon filled round">dataset</span>Contexts
-              </span>
-            </button>
+              </button>
+            </div>
           </h2>
           ${this.#renderSurfacesOrMessages()}
         </div>
