@@ -34,11 +34,10 @@ import {
   FileSystemPath,
   FileSystemQueryEntry,
   FileSystemQueryResult,
-  LLMContent,
-  DataPart,
 } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 import { FinalChainReport } from "../../collate-context.js";
+import "./ui/contexts-viewer.js";
 
 type EvalFileData = Array<FinalChainReport | A2UIData>;
 
@@ -433,7 +432,8 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           }
 
           & #messages,
-          & #surfaces {
+          & #surfaces,
+          & #contexts {
             display: flex;
             border-radius: var(--bb-grid-size-2);
             border: 1px dashed var(--border-color);
@@ -461,6 +461,11 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
               border: 1px solid var(--primary);
               border-radius: var(--bb-grid-size-2);
             }
+          }
+
+          & #contexts {
+            position: relative;
+            display: block;
           }
 
           & #messages {
@@ -623,7 +628,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     });
   }
 
-  #renderSurfacesOrMessages() {
+  #renderContents() {
     if (this.#requesting) {
       return html`<section id="surfaces">
         <div id="generating-surfaces">
@@ -637,7 +642,9 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     }
 
     if (this.renderMode === "contexts") {
-      return this.#renderContexts();
+      return html`<section id="contexts">
+        <ui-contexts-viewer .contexts=${this.contexts}></ui-contexts-viewer>
+      </section>`;
     }
 
     const renderNoData = () =>
@@ -706,70 +713,6 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
         <span class="g-icon filled round">content_copy</span> Copy to Clipboard
       </button>
     </section>`;
-  }
-
-  #renderContexts() {
-    return html`<section id="messages">
-      ${map(this.contexts, (context, idx) => {
-        return html`<details class="context-item" ?open=${idx === 0}>
-          <summary>
-            Context ${idx + 1} (${context.turnCount} turns,
-            ${Math.round(context.totalDurationMs / 1000)}s)
-          </summary>
-          <div class="context-content">
-            <div class="context-stats">
-              <div>
-                Started: ${new Date(context.startedDateTime).toLocaleString()}
-              </div>
-              <div>
-                Request Time: ${Math.round(context.totalRequestTimeMs / 1000)}s
-              </div>
-              <div>Thoughts: ${context.totalThoughts}</div>
-              <div>Function Calls: ${context.totalFunctionCalls}</div>
-            </div>
-            <div class="context-turns">
-              ${map(context.context, (turn) => this.#renderTurn(turn))}
-            </div>
-          </div>
-        </details>`;
-      })}
-    </section>`;
-  }
-
-  #renderTurn(turn: LLMContent) {
-    const role = turn.role || "unknown";
-    return html`<div class="context-turn ${role}">
-      <div class="turn-header">${role}</div>
-      ${map(turn.parts || [], (part: DataPart) => this.#renderPart(part))}
-    </div>`;
-  }
-
-  #renderPart(part: DataPart) {
-    if (part.thought && "text" in part) {
-      return html`<div class="part-thought">
-        <strong>Thought:</strong> ${part.text}
-      </div>`;
-    }
-
-    if ("functionCall" in part) {
-      return html`<div class="part-function-call">
-        <div class="name">call ${part.functionCall.name}</div>
-        <pre>${JSON.stringify(part.functionCall.args, null, 2)}</pre>
-      </div>`;
-    }
-
-    if ("functionResponse" in part) {
-      return html`<div class="part-function-response">
-        <div class="name">response ${part.functionResponse.name}</div>
-        <pre>${JSON.stringify(part.functionResponse.response, null, 2)}</pre>
-      </div>`;
-    }
-
-    if ("text" in part) {
-      return html`<div class="part-text">${part.text}</div>`;
-    }
-
-    return html`<pre>${JSON.stringify(part, null, 2)}</pre>`;
   }
 
   #renderInput() {
@@ -918,7 +861,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
               </button>
             </div>
           </h2>
-          ${this.#renderSurfacesOrMessages()}
+          ${this.#renderContents()}
         </div>
       </ui-splitter>
     </section>`;
