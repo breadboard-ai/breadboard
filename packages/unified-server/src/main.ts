@@ -132,10 +132,10 @@ if (flags.SHELL_ENABLED) {
     }
   );
   server.get(
-    "/_app/_genapp-frame/",
+    "/_app/_app-sandbox/",
     makeCspHandler(GENERATED_APP_CSP),
     (req, _res, next) => {
-      req.url = "/genapp-frame/index.html";
+      req.url = "/app-sandbox.html";
       next();
     }
   );

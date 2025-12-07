@@ -64,8 +64,6 @@ import {
   AppScreenOutput,
   BoardServer,
   ConsentAction,
-  ConsentType,
-  ConsentUIType,
   GraphDescriptor,
   RuntimeFlags,
 } from "@breadboard-ai/types";
@@ -88,85 +86,6 @@ import {
   saveOutputsAsFile,
 } from "../../../data/save-outputs-as-file.js";
 import { GoogleDriveBoardServer } from "../../../board-server/server.js";
-import {
-  type GenAppFrameSrcDocMessage,
-  isGenAppFrameReadyMessage,
-  isRequestOpenPopupMessage,
-} from "../../../genapp-frame/protocol.js";
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-const toFunctionString = (fn: Function, bindings?: Record<string, unknown>) => {
-  let str = fn.toString();
-  if (bindings) {
-    for (const [key, value] of Object.entries(bindings)) {
-      str = str.replace(key, `(${JSON.stringify(value)})`);
-    }
-  }
-  return str;
-};
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-const scriptifyFunction = (fn: Function, bindings?: Record<string, unknown>) =>
-  `<script>( ${toFunctionString(fn, bindings)} )();</script>`;
-
-// Will be bound into the iframe script as the targetOrigin for postMessage
-const PARENT_ORIGIN = window.location.origin;
-
-// This script will be run in the AppCat-generated iframe, and will intercept
-// any popups that are opened by the app to post back to Opal to request
-// opening after gaining consent. The iframe is sandboxed and does not allow
-// popups itself, so this is a best-effort to
-const interceptPopupsScript = scriptifyFunction(
-  () => {
-    const requestPopup = (url: URL) =>
-      window.parent.postMessage(
-        {
-          type: "request-open-popup",
-          url: url.toString(),
-        },
-        PARENT_ORIGIN
-      );
-    // This script is guaranteed to be run before any generated scripts, and
-    // we don't let the generated HTML override this
-    Object.defineProperty(window, "open", {
-      value: function (url?: string | URL) {
-        if (url) {
-          requestPopup(new URL(url));
-        }
-        return undefined;
-      },
-      writable: false,
-      configurable: false,
-      enumerable: false,
-    });
-    const findAncestorTag = <T extends keyof HTMLElementTagNameMap>(
-      event: Event,
-      tag: T
-    ) => {
-      const path = event.composedPath();
-      return path.find((el) => (el as HTMLElement).localName === tag) as
-        | HTMLElementTagNameMap[typeof tag]
-        | undefined;
-    };
-    // This listener is capturing and guaranteed to be run before any
-    // generated scripts, so we always get first crack at intercepting popups
-    window.addEventListener(
-      "click",
-      (evt) => {
-        const anchor = findAncestorTag(evt, "a");
-        if (anchor) {
-          requestPopup(new URL(anchor.href));
-          evt.preventDefault();
-          evt.stopImmediatePropagation();
-        }
-      },
-      true
-    );
-  },
-  {
-    PARENT_ORIGIN,
-  }
-);
 
 function getHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -279,9 +198,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   readonly #shareResultsButton = createRef<HTMLButtonElement>();
 
-  readonly outputHtmlIframeRef = createRef<HTMLIFrameElement>();
-  #messageListenerController: AbortController | null = null;
-
   get additionalOptions() {
     return {
       font: {
@@ -302,69 +218,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   static styles = appStyles;
-
-  connectedCallback() {
-    super.connectedCallback();
-    window.addEventListener(
-      "message",
-      async (event) => {
-        const iframeContentWindow =
-          this.outputHtmlIframeRef.value?.contentWindow;
-        if (
-          !(
-            event.isTrusted &&
-            iframeContentWindow &&
-            event.source === iframeContentWindow &&
-            event.origin === window.location.origin
-          )
-        ) {
-          return;
-        }
-
-        if (isGenAppFrameReadyMessage(event.data)) {
-          console.debug(
-            "[genapp-frame-parent] Received ready message, sending srcdoc"
-          );
-          const last = this.run?.app.last?.last;
-          const srcdoc =
-            (last && interceptPopupsScript + getHTMLOutput(last)) || "";
-          iframeContentWindow.postMessage(
-            {
-              type: "genapp-frame-srcdoc",
-              srcdoc,
-            } satisfies GenAppFrameSrcDocMessage,
-            window.location.origin
-          );
-        } else if (
-          this.runtimeFlags?.requireConsentForOpenWebpage &&
-          isRequestOpenPopupMessage(event.data)
-        ) {
-          const url = new URL(event.data.url);
-          const graphUrl = this.graph?.url;
-          if (this.consentManager && graphUrl) {
-            const allow = await this.consentManager.queryConsent(
-              {
-                graphUrl,
-                type: ConsentType.OPEN_WEBPAGE,
-                scope: url.origin,
-              },
-              ConsentUIType.MODAL
-            );
-            if (!allow) {
-              return;
-            }
-          }
-          window.open(url.toString(), "_blank");
-        }
-      },
-      { signal: this.#messageListenerController?.signal }
-    );
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this.#messageListenerController?.abort();
-  }
 
   #renderControls() {
     return html`<bb-app-header
@@ -394,28 +247,12 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     if (last) {
       const htmlOutput = getHTMLOutput(last);
       if (htmlOutput !== null) {
-        // Note there is another iframe within this one, which is what actually
-        // serves the generated html. This middle layer exists purely so that we
-        // can serve a different CSP for generated apps vs the main app. After
-        // https://developer.mozilla.org/en-US/docs/Web/API/HTMLIFrameElement/csp
-        // ships in all browsers, we can use that instead.
-        //
-        // The inner CSP adds access to some common CDNs, removes access to some
-        // resources needed only by the main app, and disables trusted types. We
-        // disable trusted types because generated apps do not currently know
-        // how to support them, and the inner iframe is isolated from sensitive
-        // resources at this outer origin using a sandbox with null origin.
-        //
-        // See also:
-        //   visual-editor#genapp-frame/main.ts
-        //   unified-server#csp.ts
-        activityContents = html`<iframe
-          src="/_app/_genapp-frame/"
-          ${ref(this.outputHtmlIframeRef)}
-          frameborder="0"
-          class="html-view"
-          sandbox="allow-scripts allow-forms allow-same-origin"
-        ></iframe>`;
+        activityContents = html`
+          <bb-app-sandbox
+            .srcdoc=${htmlOutput}
+            .graphUrl=${this.graph?.url ?? ""}
+          ></bb-app-sandbox>
+        `;
       } else if (
         isLLMContentArray(last.output.context) &&
         isInlineData(last.output.context[0]?.parts[0]) &&
