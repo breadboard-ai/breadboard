@@ -53,6 +53,10 @@ class ContextsViewer extends LitElement {
         font-size: 12px;
       }
 
+      .config {
+        padding: var(--bb-grid-size-2);
+      }
+
       ul.turns {
         list-style: none;
         padding: 0;
@@ -82,12 +86,18 @@ class ContextsViewer extends LitElement {
 
   render() {
     return map(this.contexts, (context, idx) => {
+      const isJsonOutput =
+        context.config?.generationConfig?.responseMimeType ===
+        "application/json";
       return html`<details class="item" ?open=${idx === 0}>
         <summary>
           Context ${idx + 1} (${context.turnCount} turns,
           ${Math.round(context.totalDurationMs / 1000)}s)
         </summary>
         <div class="content">
+          <div class="config">
+            <bb-json-tree .json=${context.config}></bb-json-tree>
+          </div>
           <div class="stats">
             <div>
               Started:
@@ -106,26 +116,30 @@ class ContextsViewer extends LitElement {
             <div>Function Calls: ${context.totalFunctionCalls}</div>
           </div>
           <ul class="turns">
-            ${map(context.context, (turn) => this.#renderTurn(turn))}
+            ${map(context.context, (turn) =>
+              this.#renderTurn(turn, isJsonOutput)
+            )}
           </ul>
         </div>
       </details>`;
     });
   }
 
-  #renderTurn(turn: LLMContent) {
+  #renderTurn(turn: LLMContent, isJsonOutput: boolean) {
     const role = turn.role || "unknown";
     return html`<li class="${role}">
-      <details class="turn-header" open>
+      <details open>
         <summary>${role}</summary>
         <ul class="parts">
-          ${map(turn.parts || [], (part: DataPart) => this.#renderPart(part))}
+          ${map(turn.parts || [], (part: DataPart) =>
+            this.#renderPart(part, role === "model" && isJsonOutput)
+          )}
         </ul>
       </details>
     </li>`;
   }
 
-  #renderPart(part: DataPart) {
+  #renderPart(part: DataPart, isJsonOutput: boolean) {
     if (part.thought && "text" in part) {
       return html`<li class="part thought">
         <strong>Thought:</strong>${markdown(part.text)}
@@ -140,13 +154,18 @@ class ContextsViewer extends LitElement {
     }
 
     if ("functionResponse" in part) {
-      return html`<li class="partfunction-response">
+      return html`<li class="part function-response">
         <div class="name">response ${part.functionResponse.name}</div>
         <bb-json-tree .json=${part.functionResponse.response}></bb-json-tree>
       </li>`;
     }
 
     if ("text" in part) {
+      if (isJsonOutput) {
+        return html`<li class="part text">
+          <bb-json-tree .json=${JSON.parse(part.text)}></bb-json-tree>
+        </li>`;
+      }
       return html`<li class="part text">${markdown(part.text)}</li>`;
     }
 

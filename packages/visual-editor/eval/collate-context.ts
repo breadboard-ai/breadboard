@@ -274,7 +274,7 @@ function collectLeafReports(node: ConvoNode, reports: FinalChainReport[]) {
 
     const context = [
       ...finalTurn.requestContext,
-      { parts: finalTurn.responseParts },
+      { parts: finalTurn.responseParts, role: "model" },
     ];
 
     context
