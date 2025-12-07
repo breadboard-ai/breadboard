@@ -54,12 +54,18 @@ export interface FinalChainReport {
    * The full conversation context (including final response).
    */
   context: LLMContent[];
+
+  /**
+   * The Gemini request  configuration for this chain.
+   */
+  config: Omit<GeminiBody, "contents"> | null;
 }
 
 type InternalTurn = {
   startedDateTime: string;
   timeMs: number;
   requestContext: LLMContent[];
+  config: Omit<GeminiBody, "contents"> | null;
   responseParts: DataPart[];
   contextKey: string;
 };
@@ -109,10 +115,13 @@ function collateAllInternalTurns(har: Har): InternalTurn[] {
     }
 
     let requestContext: LLMContent[] = [];
+    let config: Omit<GeminiBody, "contents"> | null = null;
     try {
       const requestBody: GeminiBody = JSON.parse(postDataText);
-      if (Array.isArray(requestBody.contents)) {
-        requestContext = requestBody.contents;
+      const { contents, ...rest } = requestBody;
+      config = rest;
+      if (Array.isArray(contents)) {
+        requestContext = contents;
       }
     } catch (e) {
       console.warn("Failed to parse request JSON, skipping entry:", e);
@@ -161,6 +170,7 @@ function collateAllInternalTurns(har: Har): InternalTurn[] {
       startedDateTime,
       timeMs,
       requestContext,
+      config,
       responseParts: allResponseParts,
       contextKey,
     });
@@ -283,6 +293,7 @@ function collectLeafReports(node: ConvoNode, reports: FinalChainReport[]) {
       totalRequestTimeMs: node.totalRequestTimeMs,
       totalThoughts,
       totalFunctionCalls,
+      config: finalTurn.config,
       context,
     });
     return;

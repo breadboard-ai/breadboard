@@ -5,16 +5,16 @@
  */
 
 import { Capabilities } from "@breadboard-ai/types";
-import { A2ModuleArgs } from "../src/a2/runnable-module-factory.js";
-import { McpClientManager } from "../src/mcp/index.js";
-import { Logger } from "./logger.js";
+import { mkdir, writeFile } from "fs/promises";
 import { mock } from "node:test";
-import type { callGeminiImage } from "../src/a2/a2/image-utils.js";
-import { autoClearingInterval } from "./auto-clearing-interval.js";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import { mkdir, writeFile } from "fs/promises";
+import type { callGeminiImage } from "../src/a2/a2/image-utils.js";
+import { A2ModuleArgs } from "../src/a2/runnable-module-factory.js";
+import { McpClientManager } from "../src/mcp/index.js";
+import { autoClearingInterval } from "./auto-clearing-interval.js";
 import { collateContexts } from "./collate-context.js";
+import { Logger } from "./logger.js";
 
 export { session };
 
@@ -130,7 +130,7 @@ class EvalHarness {
 
       const stats = log.map((entry) => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { context, startedDateTime, type, ...entryStats } = entry;
+        const { context, startedDateTime, type, config, ...entryStats } = entry;
         entryStats.totalDurationMs = entryStats.totalDurationMs | 0;
         entryStats.totalRequestTimeMs = entryStats.totalRequestTimeMs | 0;
         return entryStats;
