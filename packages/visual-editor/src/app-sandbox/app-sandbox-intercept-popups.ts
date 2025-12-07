@@ -6,20 +6,25 @@
 
 import { AppSandboxRequestOpenPopupMessage } from "./app-sandbox-protocol.js";
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-const toFunctionString = (fn: Function, bindings?: Record<string, unknown>) => {
+const toFunctionString = (
+  fn: (...unknown: []) => unknown,
+  replacements?: [string, string][]
+) => {
   let str = fn.toString();
-  if (bindings) {
-    for (const [key, value] of Object.entries(bindings)) {
-      str = str.replace(key, `(${JSON.stringify(value)})`);
+  if (replacements) {
+    for (const [key, value] of replacements) {
+      // Note this doesn't provide any kind of automatic escaping or quoting,
+      // it's just raw string substitution.
+      str = str.replaceAll(key, value);
     }
   }
   return str;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-const scriptifyFunction = (fn: Function, bindings?: Record<string, unknown>) =>
-  `<script>( ${toFunctionString(fn, bindings)} )();</script>`;
+const scriptifyFunction = (
+  fn: (...unknown: []) => unknown,
+  replacements?: [string, string][]
+) => `<script>( ${toFunctionString(fn, replacements)} )();</script>`;
 
 // Will be bound into the iframe script as the targetOrigin for postMessage
 const PARENT_ORIGIN = window.location.origin;
@@ -28,52 +33,49 @@ const PARENT_ORIGIN = window.location.origin;
 // any popups that are opened by the app to post back to Opal to request
 // opening after gaining consent. The iframe is sandboxed and does not allow
 // popups itself, so this is a best-effort to
-export const INTERCEPT_POPUPS_SCRIPT = scriptifyFunction(
-  () => {
-    const requestPopup = (url: URL) =>
-      window.parent.postMessage(
-        {
-          type: "app-sandbox-request-open-popup",
-          url: url.toString(),
-        } satisfies AppSandboxRequestOpenPopupMessage,
-        PARENT_ORIGIN
-      );
-    // This script is guaranteed to be run before any generated scripts, and
-    // we don't let the generated HTML override this
-    Object.defineProperty(window, "open", {
-      value: function (url?: string | URL) {
-        if (url) {
-          requestPopup(new URL(url));
-        }
-        return undefined;
-      },
-      writable: false,
-      configurable: false,
-      enumerable: false,
-    });
-    const findAncestorTag = <T extends keyof HTMLElementTagNameMap>(
-      event: Event,
-      tag: T
-    ) => {
-      const path = event.composedPath();
-      return path.find((el) => (el as HTMLElement).localName === tag) as
-        | HTMLElementTagNameMap[typeof tag]
-        | undefined;
-    };
-    // This listener is capturing and guaranteed to be run before any
-    // generated scripts, so we always get first crack at intercepting popups
-    window.addEventListener(
-      "click",
-      (evt) => {
-        const anchor = findAncestorTag(evt, "a");
-        if (anchor) {
-          requestPopup(new URL(anchor.href));
-          evt.preventDefault();
-          evt.stopImmediatePropagation();
-        }
-      },
-      true
+export const INTERCEPT_POPUPS_SCRIPT = scriptifyFunction(() => {
+  const requestPopup = (url: URL) =>
+    window.parent.postMessage(
+      {
+        type: "app-sandbox-request-open-popup",
+        url: url.toString(),
+      } satisfies AppSandboxRequestOpenPopupMessage,
+      "__PARENT_ORIGIN_TO_BE_REPLACED__"
     );
-  },
-  { PARENT_ORIGIN }
-);
+  // This script is guaranteed to be run before any generated scripts, and
+  // we don't let the generated HTML override this
+  Object.defineProperty(window, "open", {
+    value: function (url?: string | URL) {
+      if (url) {
+        requestPopup(new URL(url));
+      }
+      return undefined;
+    },
+    writable: false,
+    configurable: false,
+    enumerable: false,
+  });
+  const findAncestorTag = <T extends keyof HTMLElementTagNameMap>(
+    event: Event,
+    tag: T
+  ) => {
+    const path = event.composedPath();
+    return path.find((el) => (el as HTMLElement).localName === tag) as
+      | HTMLElementTagNameMap[typeof tag]
+      | undefined;
+  };
+  // This listener is capturing and guaranteed to be run before any
+  // generated scripts, so we always get first crack at intercepting popups
+  window.addEventListener(
+    "click",
+    (evt) => {
+      const anchor = findAncestorTag(evt, "a");
+      if (anchor) {
+        requestPopup(new URL(anchor.href));
+        evt.preventDefault();
+        evt.stopImmediatePropagation();
+      }
+    },
+    true
+  );
+}, [["__PARENT_ORIGIN_TO_BE_REPLACED__", PARENT_ORIGIN]]);
