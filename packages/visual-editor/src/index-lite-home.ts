@@ -100,8 +100,10 @@ export class LiteHome extends SignalWatcher(LitElement) {
     );
 
     // Board server
-    const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
-      .href;
+    const proxyApiBaseUrl = new URL(
+      "/api/drive-proxy/drive/v3/files",
+      window.location.href
+    ).href;
     const apiBaseUrl =
       signinAdapter.state === "signedout"
         ? proxyApiBaseUrl

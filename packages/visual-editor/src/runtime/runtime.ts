@@ -101,8 +101,10 @@ export class Runtime extends EventTarget {
     );
     this.fetchWithCreds = this.signinAdapter.fetchWithCreds;
 
-    const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
-      .href;
+    const proxyApiBaseUrl = new URL(
+      "/api/drive-proxy/drive/v3/files",
+      window.location.href
+    ).href;
     const apiBaseUrl =
       this.signinAdapter.state === "signedout"
         ? proxyApiBaseUrl
