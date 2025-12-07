@@ -207,7 +207,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
   }
 
   /**
-   * Use this method to tweak the body of the request if necessary.
+   * Attaches the access token to the body of the request.
    */
   #attachAccessToken(init: RequestInit, accessToken: string) {
     /**
@@ -278,7 +278,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     }
     const accessToken = token.grant.access_token;
 
-    if (allowedUrlInfo.attachAccessToken) {
+    if (allowedUrlInfo.shouldAttachAccessToken) {
       init = this.#attachAccessToken(init, accessToken);
     }
 

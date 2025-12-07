@@ -33,13 +33,13 @@ const FETCH_ALLOWLIST: Array<{
   canonicalPrefix: URL;
   scopes: OAuthScope[];
   remapOrigin?: URL;
-  attachAccessToken?: (url: string) => boolean;
+  shouldAttachAccessToken?: (url: string) => boolean;
 }> = [
   {
     canonicalPrefix: new URL(CANONICAL.BACKEND_API_PREFIX),
     scopes: GENAI_SCOPES,
     remapOrigin: urlOrUndefined(CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT),
-    attachAccessToken: (url: string) =>
+    shouldAttachAccessToken: (url: string) =>
       url.endsWith("/uploadGeminiFile") ||
       url.endsWith("/uploadBlobFile") ||
       url.includes("/generateWebpageStream"),
@@ -102,18 +102,18 @@ const FETCH_ALLOWLIST: Array<{
 export interface FetchAllowlistInfo {
   scopes: OAuthScope[];
   remappedUrl: URL | undefined;
-  attachAccessToken: boolean;
+  shouldAttachAccessToken: boolean;
 }
 
 export function checkFetchAllowlist(
   urlStr: string
 ): FetchAllowlistInfo | undefined {
-  let url = new URL(urlStr);
+  const url = new URL(urlStr);
   for (const {
     canonicalPrefix,
     scopes,
     remapOrigin,
-    attachAccessToken,
+    shouldAttachAccessToken,
   } of FETCH_ALLOWLIST) {
     if (
       url.origin === canonicalPrefix.origin &&
@@ -128,7 +128,7 @@ export function checkFetchAllowlist(
       return {
         scopes,
         remappedUrl,
-        attachAccessToken: !!attachAccessToken?.(urlStr),
+        shouldAttachAccessToken: !!shouldAttachAccessToken?.(urlStr),
       };
     }
   }
