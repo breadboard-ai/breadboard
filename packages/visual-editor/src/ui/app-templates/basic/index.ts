@@ -88,6 +88,11 @@ import {
   saveOutputsAsFile,
 } from "../../../data/save-outputs-as-file.js";
 import { GoogleDriveBoardServer } from "../../../board-server/server.js";
+import {
+  type GenAppFrameSrcDocMessage,
+  isGenAppFrameReadyMessage,
+  isRequestOpenPopupMessage,
+} from "../../../genapp-frame/protocol.js";
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 const toFunctionString = (fn: Function, bindings?: Record<string, unknown>) => {
@@ -163,7 +168,7 @@ const interceptPopupsScript = scriptifyFunction(
   }
 );
 
-function isHTMLOutput(screen: AppScreenOutput): string | null {
+function getHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
   const singleOutput = outputs.length === 1;
   if (!singleOutput) {
@@ -300,35 +305,60 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   connectedCallback() {
     super.connectedCallback();
-    if (this.runtimeFlags?.requireConsentForOpenWebpage) {
-      window.addEventListener(
-        "message",
-        async (event: MessageEvent<{ type: string; url: string }>) => {
-          if (
-            event.source === this.outputHtmlIframeRef.value?.contentWindow &&
-            event.data.type === "request-open-popup"
-          ) {
-            const url = new URL(event.data.url);
-            const graphUrl = this.graph?.url;
-            if (this.consentManager && graphUrl) {
-              const allow = await this.consentManager.queryConsent(
-                {
-                  graphUrl,
-                  type: ConsentType.OPEN_WEBPAGE,
-                  scope: url.origin,
-                },
-                ConsentUIType.MODAL
-              );
-              if (!allow) {
-                return;
-              }
+    window.addEventListener(
+      "message",
+      async (event) => {
+        const iframeContentWindow =
+          this.outputHtmlIframeRef.value?.contentWindow;
+        if (
+          !(
+            event.isTrusted &&
+            iframeContentWindow &&
+            event.source === iframeContentWindow &&
+            event.origin === window.location.origin
+          )
+        ) {
+          return;
+        }
+
+        if (isGenAppFrameReadyMessage(event.data)) {
+          console.debug(
+            "[genapp-frame-parent] Received ready message, sending srcdoc"
+          );
+          const last = this.run?.app.last?.last;
+          const srcdoc =
+            (last && interceptPopupsScript + getHTMLOutput(last)) || "";
+          iframeContentWindow.postMessage(
+            {
+              type: "genapp-frame-srcdoc",
+              srcdoc,
+            } satisfies GenAppFrameSrcDocMessage,
+            window.location.origin
+          );
+        } else if (
+          this.runtimeFlags?.requireConsentForOpenWebpage &&
+          isRequestOpenPopupMessage(event.data)
+        ) {
+          const url = new URL(event.data.url);
+          const graphUrl = this.graph?.url;
+          if (this.consentManager && graphUrl) {
+            const allow = await this.consentManager.queryConsent(
+              {
+                graphUrl,
+                type: ConsentType.OPEN_WEBPAGE,
+                scope: url.origin,
+              },
+              ConsentUIType.MODAL
+            );
+            if (!allow) {
+              return;
             }
-            window.open(url.toString(), "_blank");
           }
-        },
-        { signal: this.#messageListenerController?.signal }
-      );
-    }
+          window.open(url.toString(), "_blank");
+        }
+      },
+      { signal: this.#messageListenerController?.signal }
+    );
   }
 
   disconnectedCallback() {
@@ -362,14 +392,19 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       | symbol = nothing;
     const last = this.run.app.last?.last;
     if (last) {
-      const htmlOutput = isHTMLOutput(last);
+      const htmlOutput = getHTMLOutput(last);
       if (htmlOutput !== null) {
+        // Note there is another iframe within this one, which is what actually
+        // serves the generated html. This middle layer exists purely so that we
+        // can serve a different CSP for generated apps vs the main app. After
+        // https://developer.mozilla.org/en-US/docs/Web/API/HTMLIFrameElement/csp
+        // ships in all browsers, we can use that instead.
         activityContents = html`<iframe
-          srcdoc=${interceptPopupsScript + htmlOutput}
+          src="/_app/_genapp-frame/"
           ${ref(this.outputHtmlIframeRef)}
           frameborder="0"
           class="html-view"
-          sandbox="allow-scripts allow-forms"
+          sandbox="allow-scripts allow-forms allow-same-origin"
         ></iframe>`;
       } else if (
         isLLMContentArray(last.output.context) &&

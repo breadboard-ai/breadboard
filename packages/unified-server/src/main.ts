@@ -12,6 +12,7 @@ import { createClientConfig, createServerConfig } from "./config.js";
 import * as connectionServer from "./connection/server.js";
 import {
   FALLBACK_CSP,
+  GENERATED_APP_CSP,
   MAIN_APP_CSP,
   makeCspHandler,
   OAUTH_REDIRECT_CSP,
@@ -127,6 +128,14 @@ if (flags.SHELL_ENABLED) {
     makeCspHandler(MAIN_APP_CSP),
     (req, _res, next) => {
       req.url = "/landing/index.html";
+      next();
+    }
+  );
+  server.get(
+    "/_app/_genapp-frame/",
+    makeCspHandler(GENERATED_APP_CSP),
+    (req, _res, next) => {
+      req.url = "/genapp-frame/index.html";
       next();
     }
   );
