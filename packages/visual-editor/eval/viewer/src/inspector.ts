@@ -34,7 +34,11 @@ import { FileSystemPath, Outcome } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 import { FinalChainReport } from "../../collate-context.js";
 import "./ui/contexts-viewer.js";
-import { GroupedByType } from "./parse-file-name.js";
+import {
+  GroupedByType,
+  ParsedFileMedata,
+  parseFileName,
+} from "./parse-file-name.js";
 
 type EvalFileData = Array<FinalChainReport | A2UIData>;
 
@@ -78,6 +82,9 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
   @signal
   accessor #dirs: FileSystemEvalBackendHandle[] = [];
+
+  @signal
+  accessor selectedFile: ParsedFileMedata | null = null;
 
   @signal
   accessor #surfaces: v0_8.Types.ServerToClientMessage[][] | null = null;
@@ -132,6 +139,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
     if (file && file !== this.selectedFilePath) {
       this.selectedFilePath = file;
+      this.selectedFile = parseFileName(file);
     }
 
     this.#urlRestored = true;
@@ -793,6 +801,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                           <button
                             ?selected=${f.path === this.selectedFilePath}
                             @click=${async () => {
+                              this.selectedFile = f;
                               this.selectedFilePath = f.path;
                             }}
                           >
@@ -855,7 +864,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           <h2
             class="typography-w-400 typography-f-s typography-sz-tl layout-sp-bt"
           >
-            Generated UI
+            ${this.selectedFile?.name}
             <div id="render-mode">
               <button
                 class=${classMap({ active: this.#renderMode === "contexts" })}
