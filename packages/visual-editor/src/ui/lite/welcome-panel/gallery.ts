@@ -323,7 +323,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         }
 
         &.default {
-          background-color: var(--light-dark-n-100);
+          background-color: light-dark(var(--n-100), var(--n-0));
           object-fit: contain;
           box-sizing: border-box;
           padding: var(--bb-grid-size-8);
