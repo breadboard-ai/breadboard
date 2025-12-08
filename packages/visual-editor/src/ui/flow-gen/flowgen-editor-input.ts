@@ -133,6 +133,10 @@ export class FlowgenEditorInput extends LitElement {
 
         &:focus-within {
           outline: 1px solid var(--ui-custom-o-100);
+
+          [slot~="submit"] {
+            color: var(--light-dark-n-0);
+          }
         }
 
         > [slot~="submit"] {

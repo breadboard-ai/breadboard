@@ -140,17 +140,8 @@ export class SpeechToText extends LitElement {
 
         &:not([disabled]) {
           cursor: pointer;
-          opacity: 0.8;
-
-          &:hover,
-          &:focus {
-            opacity: 1;
-          }
+          opacity: 1;
         }
-      }
-
-      span:not(.final) {
-        opacity: 0.7;
       }
 
       @keyframes pulse {
