@@ -92,7 +92,8 @@ class GoogleDriveBoardServer
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
     userFolderName: string,
-    findUserOpalFolder: OpalShellHostProtocol["findUserOpalFolder"]
+    findUserOpalFolder: OpalShellHostProtocol["findUserOpalFolder"],
+    listUserOpals: OpalShellHostProtocol["listUserOpals"]
   ) {
     super();
 
@@ -119,10 +120,7 @@ class GoogleDriveBoardServer
       signInInfo,
       googleDriveClient.fetchWithCreds
     );
-    this.userGraphs = new DriveUserGraphCollection(
-      this.#googleDriveClient,
-      signInInfo
-    );
+    this.userGraphs = new DriveUserGraphCollection(listUserOpals);
   }
 
   #saving = new Map<string, SaveDebouncer>();

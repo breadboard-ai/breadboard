@@ -41,6 +41,8 @@ export declare interface OpalShellHostProtocol {
 
   findUserOpalFolder(): Promise<GetFolderResult>;
 
+  listUserOpals(): Promise<ListOpalFilesResult>;
+
   checkAppAccess(): Promise<CheckAppAccessResult>;
 
   sendToEmbedder(message: BreadboardMessage): Promise<void>;
@@ -83,8 +85,20 @@ export declare type GetFolderResult =
   | { ok: true; id: string }
   | { ok: false; error: string };
 
+export declare type ListOpalFileItem = {
+  id: string;
+  name: string;
+  modifiedTime: string;
+  properties: Record<string, string>;
+  appProperties: Record<string, string>;
+  isAppAuthorized: boolean;
+};
+
 export declare type ListOpalFilesResult =
-  | { ok: true; files: { id: string; name: string }[] }
+  | {
+      ok: true;
+      files: ListOpalFileItem[];
+    }
   | { ok: false; error: string };
 
 export declare type PickDriveFilesResult =

@@ -125,7 +125,8 @@ export class LiteHome extends SignalWatcher(LitElement) {
       this.googleDriveClient,
       googleDrivePublishPermissions,
       userFolderName,
-      opalShell.findUserOpalFolder
+      opalShell.findUserOpalFolder,
+      opalShell.listUserOpals
     );
     this.#recentBoardStore.restore();
   }

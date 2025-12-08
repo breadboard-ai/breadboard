@@ -13,7 +13,8 @@ import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.
 export function createGoogleDriveBoardServer(
   signInInfo: SignInInfo,
   googleDriveClient: GoogleDriveClient,
-  findUserOpalFolder: OpalShellHostProtocol["findUserOpalFolder"]
+  findUserOpalFolder: OpalShellHostProtocol["findUserOpalFolder"],
+  listUserOpals: OpalShellHostProtocol["listUserOpals"]
 ): GoogleDriveBoardServer {
   const googleDrivePublishPermissions =
     CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [];
@@ -25,6 +26,7 @@ export function createGoogleDriveBoardServer(
     googleDriveClient,
     googleDrivePublishPermissions,
     userFolderName,
-    findUserOpalFolder
+    findUserOpalFolder,
+    listUserOpals
   );
 }
