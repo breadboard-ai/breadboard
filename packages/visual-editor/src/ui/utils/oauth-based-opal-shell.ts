@@ -17,6 +17,7 @@ import {
 } from "@breadboard-ai/types/oauth.js";
 import type {
   CheckAppAccessResult,
+  GetFolderResult,
   GuestConfiguration,
   OpalShellHostProtocol,
   PickDriveFilesOptions,
@@ -45,6 +46,9 @@ import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { checkFetchAllowlist } from "./fetch-allowlist.js";
 import { GOOGLE_DRIVE_FILES_API_PREFIX } from "@breadboard-ai/types";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { DriveOperations } from "@breadboard-ai/utils/google-drive/operations.js";
+import { ok } from "@breadboard-ai/utils";
 
 const SIGN_IN_CONNECTION_ID = "$sign-in";
 
@@ -735,5 +739,42 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
 
   sendToEmbedder = async (message: BreadboardMessage): Promise<void> => {
     sendToAllowedEmbedderIfPresent(message);
+  };
+
+  getOpalFolder = async (): Promise<GetFolderResult> => {
+    const signInState = await this.getSignInState();
+    const proxyApiBaseUrl = new URL(
+      "/api/drive-proxy/drive/v3/files",
+      window.location.href
+    ).href;
+    let apiBaseUrl;
+    if (signInState.status === "signedout") {
+      apiBaseUrl = proxyApiBaseUrl;
+    } else {
+      apiBaseUrl = GOOGLE_DRIVE_FILES_API_PREFIX;
+    }
+    const googleDriveClient = new GoogleDriveClient({
+      proxyApiBaseUrl,
+      apiBaseUrl,
+      fetchWithCreds: this.fetchWithCreds,
+      isTestApi: !!(await this.getConfiguration()).isTestApi,
+    });
+    const googleDrivePublishPermissions =
+      CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [];
+    const userFolderName =
+      CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
+
+    const operations = new DriveOperations(
+      async () => {},
+      userFolderName,
+      googleDriveClient,
+      googleDrivePublishPermissions
+    );
+    const folder = await operations.findOrCreateFolder();
+    if (!ok(folder)) {
+      return { ok: false, error: folder.$error };
+    }
+    return { ok: true, id: folder };
+    // return { ok: true, id: "" };
   };
 }
