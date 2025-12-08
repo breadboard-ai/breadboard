@@ -224,8 +224,15 @@ async function init() {
       });
     }
 
+    // This funciton is a blur even handler and is used as a click detecting meachanism:
+    // 1. When the user clicks on the iframe, the click is not detected on the main page, 
+    // because it is part of the iframe.
+    // 2. But a blur event is detected on the main page and we check where that event is coming from.
+    // 3. Edge case: for the blur event to be detected, in case the user hasn't interacted with the page 
+    // at all, we need to make sure that the app is focusd initially, hence: window.focus();
     const handleSecondaryVideoIframeClick = () => {
-      setTimeout(() => {
+      // requestAnimationFrame is needed, because activeElement is updated at the end of the execution stack
+      requestAnimationFrame(() => {
         if (document.activeElement !== secondaryVideo) {
           return;
         }
@@ -234,7 +241,7 @@ async function init() {
           secondaryVideoCover?.remove();
         }
         window.removeEventListener('blur', handleSecondaryVideoIframeClick);
-      }, 0);
+      });
     }
 
     // gain window focus so that blur even will fire without any user interaction
