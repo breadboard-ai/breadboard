@@ -12,7 +12,7 @@ config();
 
 const apiKey = process.env.GEMINI_API_KEY;
 
-session({ name: "Agent Loop", apiKey }, async (session) => {
+session({ name: "Agent", apiKey }, async (session) => {
   // Need to import dynamically to let the mocks do their job.
   const Loop = (await import("../../src/a2/agent/loop.js")).Loop;
 

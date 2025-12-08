@@ -9,6 +9,7 @@ import { ok } from "@breadboard-ai/utils";
 import z from "zod";
 import {
   conformGeminiBody,
+  GenerationConfig,
   streamGenerateContent,
   Tool,
 } from "../../a2/gemini.js";
@@ -154,7 +155,7 @@ that involve generation of text. Supports multimodal content input.`.trim(),
         parameters: {
           prompt: z.string().describe(tr`
 
-Detailed prompt to use for text generation The prompt may include references to VFS files. For instance, if you have an existing file at "/vfs/text3.md", you can reference it as <file src="/vfs/text3.md"> in the prompt.
+Detailed prompt to use for text generation The prompt may include references to VFS files. For instance, if you have an existing file at "/vfs/text3.md", you can reference it as <file src="/vfs/text3.md" /> in the prompt. If you do not use <file> tags, the text generator will not be able to access the file.
 
 These references can point to files of any type, such as images, audio, videos, etc. Projects can also be referenced in this way.
 `),
@@ -172,6 +173,16 @@ The Gemini model to use for text generation. How to choose the right model:
 The output format. When "file" is specified, the output will be saved as a VFS file and the "file_path" response parameter will be provided as output. Use this when you expect a long output from the text generator. NOTE that choosing this option will prevent you from seeing the output directly: you only get back the VFS path to the file. You can read this file as a separate action, but if you do expect to read it, the "text" output format might be a better choice.
 
 When "text" is specified, the output will be returned as text directlty, and the "text" response parameter will be provided.`),
+          file_name: z
+            .string()
+            .describe(
+              tr`
+
+The name of the file to save the output to. This is the name that
+will come after "/vfs/" prefix in the file path. Use snake_case for
+naming. Only use when the "output_format" is set to "file".`
+            )
+            .optional(),
           project_path: z
             .string()
             .describe(
@@ -236,6 +247,7 @@ provided when the "output_format" is set to "text"`
           project_path,
           output_format,
           status_update,
+          file_name,
         },
         statusUpdater
       ) => {
@@ -262,6 +274,15 @@ provided when the "output_format" is set to "text"`
         if (maps_grounding) {
           tools.push({ googleMaps: {} });
         }
+        let thinkingConfig: GenerationConfig = {};
+        if (model === "pro") {
+          thinkingConfig = {
+            thinkingConfig: {
+              thinkingBudget: -1,
+              includeThoughts: true,
+            },
+          };
+        }
         if (tools.length === 0) tools = undefined;
         const translated = translator.fromPidginString(prompt);
         if (!ok(translated)) return { error: translated.$error };
@@ -269,12 +290,7 @@ provided when the "output_format" is set to "text"`
           systemInstruction: defaultSystemInstruction(),
           contents: [translated],
           tools,
-          generationConfig: {
-            thinkingConfig: {
-              thinkingBudget: -1,
-              includeThoughts: true,
-            },
-          },
+          generationConfig: { ...thinkingConfig },
         });
         if (!ok(body)) return body;
         const resolvedModel = resolveTextModel(model);
@@ -313,7 +329,7 @@ provided when the "output_format" is set to "text"`
           console.warn(`More than one part generated`, results);
         }
         const part = textParts[0];
-        const file_path = fileSystem.add(part);
+        const file_path = fileSystem.add(part, file_name);
         if (!ok(file_path)) return file_path;
         if (project_path) {
           fileSystem.addFilesToProject(project_path, [file_path]);

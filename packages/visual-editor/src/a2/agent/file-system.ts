@@ -203,20 +203,28 @@ class AgentFileSystem {
     return [...(project || [])];
   }
 
-  add(part: DataPart): Outcome<string> {
+  add(part: DataPart, fileName?: string): Outcome<string> {
+    const create = (mimeType: string) => {
+      if (fileName) {
+        const withoutExtension = fileName.replace(/\.[^/.]+$/, "");
+        return this.#createNamed(withoutExtension, mimeType);
+      }
+      return this.create(mimeType);
+    };
+
     if ("text" in part) {
       const mimeType = "text/markdown";
-      const name = this.create(mimeType);
+      const name = create(mimeType);
       this.#files.set(name, { type: "text", mimeType, data: part.text });
       return name;
     } else if ("inlineData" in part) {
       const { mimeType, data, title } = part.inlineData;
-      const name = this.create(mimeType);
+      const name = create(mimeType);
       this.#files.set(name, { type: "inlineData", mimeType, data, title });
       return name;
     } else if ("storedData" in part) {
       const { mimeType, handle: data, resourceKey } = part.storedData;
-      const name = this.create(mimeType);
+      const name = create(mimeType);
       this.#files.set(name, {
         type: "storedData",
         mimeType,
@@ -226,7 +234,7 @@ class AgentFileSystem {
       return name;
     } else if ("fileData" in part) {
       const { mimeType, fileUri: data, resourceKey } = part.fileData;
-      const name = this.create(mimeType);
+      const name = create(mimeType);
       this.#files.set(name, { type: "fileData", mimeType, data, resourceKey });
       return name;
     }
