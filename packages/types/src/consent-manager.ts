@@ -25,7 +25,8 @@ export enum ConsentUIType {
 export type ConsentRequest = (
   | {
       type: ConsentType.GET_ANY_WEBPAGE;
-      scope: {};
+      scope: /* eslint-disable-next-line @typescript-eslint/no-empty-object-type */
+      {};
     }
   | {
       type: ConsentType.OPEN_WEBPAGE;

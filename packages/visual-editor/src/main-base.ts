@@ -4,86 +4,75 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
-import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
+import { SettingsHelperImpl } from "./ui/data/settings-helper.js";
+import { SettingsStore } from "./ui/data/settings-store.js";
 import type {
   AppScreenOutput,
   BoardServer,
   ConformsToNodeValue,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
-import {
-  GraphDescriptor,
-  hash,
-  MutableGraphStore,
-  ok,
-} from "@google-labs/breadboard";
+import { GraphDescriptor, MutableGraphStore } from "@breadboard-ai/types";
 import { provide } from "@lit/context";
 import { html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { state } from "lit/decorators.js";
 
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
-import { RecentBoardStore } from "./data/recent-boards";
+import { RecentBoardStore } from "./data/recent-boards.js";
 import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 import {
   TabId,
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
-} from "./runtime/types";
+} from "./runtime/types.js";
 
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 
 import {
   canonicalizeOAuthScope,
   type OAuthScope,
-} from "@breadboard-ai/shared-ui/connection/oauth-scopes.js";
-import {
-  GlobalConfig,
-  globalConfigContext,
-} from "@breadboard-ai/shared-ui/contexts";
-import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
-import { consentManagerContext } from "@breadboard-ai/shared-ui/contexts/consent-manager.js";
-import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
-import { uiStateContext } from "@breadboard-ai/shared-ui/contexts/ui-state.js";
-import { VESignInModal } from "@breadboard-ai/shared-ui/elements/elements.js";
-import {
-  EmbedHandler,
-  embedState,
-  EmbedState,
-} from "@breadboard-ai/shared-ui/embed/embed.js";
+} from "./ui/connection/oauth-scopes.js";
+import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
+import { boardServerContext } from "./ui/contexts/board-server.js";
+import { consentManagerContext } from "./ui/contexts/consent-manager.js";
+import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
+import { uiStateContext } from "./ui/contexts/ui-state.js";
+import { VESignInModal } from "./ui/elements/elements.js";
+import { EmbedHandler, embedState, EmbedState } from "./ui/embed/embed.js";
 
-import { CheckAppAccessResponse } from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
+import { CheckAppAccessResponse } from "./ui/flow-gen/app-catalyst.js";
 import {
   FlowGenerator,
   flowGeneratorContext,
-} from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
-import { ReactiveAppScreen } from "@breadboard-ai/shared-ui/state/app-screen.js";
-import { UserSignInResponse } from "@breadboard-ai/shared-ui/types/types.js";
-import { ActionTracker } from "@breadboard-ai/shared-ui/utils/action-tracker";
-import { ConsentManager } from "@breadboard-ai/shared-ui/utils/consent-manager.js";
-import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
-import { opalShellContext } from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
+} from "./ui/flow-gen/flow-generator.js";
+import { ReactiveAppScreen } from "./ui/state/app-screen.js";
+import { UserSignInResponse } from "./ui/types/types.js";
+import { ActionTracker } from "./ui/utils/action-tracker.js";
+import { ConsentManager } from "./ui/utils/consent-manager.js";
+import { EmailPrefsManager } from "./ui/utils/email-prefs-manager.js";
+import { opalShellContext } from "./ui/utils/opal-shell-guest.js";
 import {
   SigninAdapter,
   signinAdapterContext,
-} from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
-import { makeUrl, parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
+} from "./ui/utils/signin-adapter.js";
+import { makeUrl, parseUrl } from "./ui/utils/urls.js";
 import {
   GuestConfiguration,
   OpalShellHostProtocol,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { SignalWatcher } from "@lit-labs/signals";
 
-import { Admin } from "./admin";
-import { keyboardCommands } from "./commands/commands";
-import { KeyboardCommandDeps } from "./commands/types";
-import { eventRoutes } from "./event-routing/event-routing";
+import { Admin } from "./admin.js";
+import { keyboardCommands } from "./commands/commands.js";
+import { KeyboardCommandDeps } from "./commands/types.js";
+import { eventRoutes } from "./event-routing/event-routing.js";
 
-import { MainArguments } from "./types/types";
+import { MainArguments } from "./types/types.js";
+import { hash, ok } from "@breadboard-ai/utils";
 
 export { MainBase };
 

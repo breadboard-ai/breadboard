@@ -11,7 +11,7 @@
  *
  * When changing flags, also make changes in
  *
- * 1) packages/shared-ui/src/config/client-deployment-configuration.ts,
+ * 1) packages/visual-editor/src/ui/config/client-deployment-configuration.ts,
  * where default values are set.
  *
  * Add a comment to explain what the flag does.

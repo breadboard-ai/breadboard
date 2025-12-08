@@ -3,8 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import type * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { createGraphStore, createLoader, err } from "@google-labs/breadboard";
+import type * as BreadboardUI from "../ui/index.js";
 import { Router } from "./router.js";
 import { Board } from "./board.js";
 import { Run } from "./run.js";
@@ -18,52 +17,54 @@ export * as Types from "./types.js";
 import { Select } from "./select.js";
 import { StateManager } from "./state.js";
 import { Shell } from "./shell.js";
-import { Outcome, RunConfig, RuntimeFlagManager } from "@breadboard-ai/types";
+import {
+  Outcome,
+  PersistentBackend,
+  RunConfig,
+  RuntimeFlagManager,
+} from "@breadboard-ai/types";
 import {
   RuntimeHostStatusUpdateEvent,
   RuntimeSnackbarEvent,
   RuntimeToastEvent,
   RuntimeUnsnackbarEvent,
 } from "./events.js";
-import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import { inputsFromSettings } from "@breadboard-ai/shared-ui/data/inputs.js";
-import {
-  assetsFromGraphDescriptor,
-  envFromGraphDescriptor,
-} from "@breadboard-ai/data";
+import { SettingsStore } from "../ui/data/settings-store.js";
+import { inputsFromSettings } from "../ui/data/inputs.js";
 import { Autonamer } from "./autonamer.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
-import { createGoogleDriveBoardServer } from "@breadboard-ai/shared-ui/utils/create-server.js";
-import { createA2Server, createA2ModuleFactory } from "@breadboard-ai/a2";
-import {
-  createFileSystemBackend,
-  createFlagManager,
-} from "@breadboard-ai/data-store";
-import {
-  addRunModule,
-  composeFileSystemBackends,
-  createEphemeralBlobStore,
-  createFileSystem,
-  PersistentBackend,
-} from "@google-labs/breadboard";
-import { RecentBoardStore } from "../data/recent-boards";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { McpClientManager } from "@breadboard-ai/mcp";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configuration.js";
+import { createGoogleDriveBoardServer } from "../ui/utils/create-server.js";
+import { createA2Server, createA2ModuleFactory } from "../a2/index.js";
+import { createFileSystemBackend, createFlagManager } from "../idb/index.js";
+import { RecentBoardStore } from "../data/recent-boards.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { McpClientManager } from "../mcp/index.js";
 import {
   ConsentAction,
   ConsentUIType,
   ConsentRequest,
   FileSystem,
 } from "@breadboard-ai/types";
-import { ConsentManager } from "@breadboard-ai/shared-ui/utils/consent-manager.js";
-import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
-import { createActionTrackerBackend } from "@breadboard-ai/shared-ui/utils/action-tracker";
-import { envFromSettings } from "../utils/env-from-settings";
-import { builtInMcpClients } from "../mcp-clients";
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
-import { FlowGenerator } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
-import { AppCatalystApiClient } from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
-import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
+import { ConsentManager } from "../ui/utils/consent-manager.js";
+import { SigninAdapter } from "../ui/utils/signin-adapter.js";
+import { createActionTrackerBackend } from "../ui/utils/action-tracker.js";
+import { envFromSettings } from "../utils/env-from-settings.js";
+import { builtInMcpClients } from "../mcp-clients.js";
+import { GoogleDriveBoardServer } from "../board-server/server.js";
+import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
+import { AppCatalystApiClient } from "../ui/flow-gen/app-catalyst.js";
+import { EmailPrefsManager } from "../ui/utils/email-prefs-manager.js";
+import { err } from "@breadboard-ai/utils";
+import { createFileSystem } from "../engine/file-system/index.js";
+import { createEphemeralBlobStore } from "../engine/file-system/ephemeral-blob-store.js";
+import { composeFileSystemBackends } from "../engine/file-system/composed-peristent-backend.js";
+import { addRunModule } from "../engine/add-run-module.js";
+import { createGraphStore } from "../engine/inspector/index.js";
+import { createLoader } from "../engine/loader/index.js";
+import {
+  assetsFromGraphDescriptor,
+  envFromGraphDescriptor,
+} from "../data/file-system.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;

@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "nodenext",
+    "lib": ["ES2023", "DOM", "DOM.Iterable", "ES2024.Promise"],
     "skipLibCheck": true,
     "useDefineForClassFields": false,
-    "outDir": "build",
+    "outDir": "dist/tsc",
 
     /* Bundler mode */
-    "moduleResolution": "bundler",
+    "moduleResolution": "nodenext",
     "resolveJsonModule": true,
     "isolatedModules": true,
 
@@ -16,8 +16,9 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "types": ["vite/client", "@types/gtag.js", "node", "trusted-types"]
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "scripts/*.ts", "vite.config.ts"],
+  "include": ["src/**/*.ts", "tests/**/*.ts", "eval/**/*.ts"],
   "extends": "@google-labs/tsconfig/base.json"
 }

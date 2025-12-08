@@ -14,6 +14,11 @@
     content="{{origin}}/images/share-card-{{bucket}}.png"
   />
   <style>
+    :root {
+      --sys-color--body-background-light: #ffffff;
+      --sys-color--body-background-dark: #131314;
+    }
+
     iframe#opal-app {
       width: 100vw;
       height: 100vh;
@@ -21,6 +26,13 @@
       position: fixed;
       top: 0;
       left: 0;
+      background: var(--sys-color--body-background-light);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      iframe#opal-app {
+        background: var(--sys-color--body-background-dark);
+      }
     }
   </style>
 </head>
@@ -35,5 +47,5 @@
       {{config}}
     </script>
   </template>
-  <script src="/src/shell.ts" type="module"></script>
+  <script src="/src/shell/opal-shell-host.ts" type="module"></script>
 </body>

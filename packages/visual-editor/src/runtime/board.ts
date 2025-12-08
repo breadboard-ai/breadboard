@@ -4,43 +4,44 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  EditHistoryCreator,
-  EditHistoryEntry,
-  GraphDescriptor,
-  MutableGraphStore,
-} from "@google-labs/breadboard";
 import type {
   BoardServer,
   BoardServerSaveEventStatus,
   GraphLoader,
   OutputValues,
 } from "@breadboard-ai/types";
-import { Tab, TabId, TabType } from "./types";
+import {
+  EditHistoryCreator,
+  EditHistoryEntry,
+  GraphDescriptor,
+  GraphIdentifier,
+  ModuleIdentifier,
+  MutableGraphStore,
+} from "@breadboard-ai/types";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { type RunResults } from "@breadboard-ai/utils/google-drive/operations.js";
+import * as idb from "idb";
+import { RecentBoardStore } from "../data/recent-boards.js";
+import * as BreadboardUI from "../ui/index.js";
+import { BOARD_SAVE_STATUS } from "../ui/types/types.js";
+import type { SigninAdapter } from "../ui/utils/signin-adapter.js";
 import {
   RuntimeBoardLoadErrorEvent,
-  RuntimeErrorEvent,
-  RuntimeTabChangeEvent,
-  RuntimeTabCloseEvent,
   RuntimeBoardSaveStatusChangeEvent,
-  RuntimeSnackbarEvent,
-  RuntimeUnsnackbarEvent,
+  RuntimeErrorEvent,
   RuntimeNewerSharedVersionEvent,
   RuntimeRequestSignInEvent,
-} from "./events";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { GraphIdentifier, ModuleIdentifier } from "@breadboard-ai/types";
-import * as idb from "idb";
-import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { RecentBoardStore } from "../data/recent-boards";
-import { type RunResults } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
+  RuntimeSnackbarEvent,
+  RuntimeTabChangeEvent,
+  RuntimeTabCloseEvent,
+  RuntimeUnsnackbarEvent,
+} from "./events.js";
+import { Tab, TabId, TabType } from "./types.js";
 import {
   applyDefaultThemeInformationIfNonePresent,
   createAppPaletteIfNeeded,
-} from "./util";
-import type { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
+} from "./util.js";
+import { GoogleDriveBoardServer } from "../board-server/server.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
 

@@ -6,13 +6,13 @@
 import { LitElement, html, css, PropertyValues } from "lit";
 import { customElement, property, query } from "lit/decorators.js";
 import { ref } from "lit/directives/ref.js";
-import { galleryItems } from "./gallery-items";
+import { galleryItems } from "./gallery-items.js";
 import { fonts } from "./fonts.js";
 import { shortestPath } from "./utils.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { map } from "lit/directives/map.js";
-import { makeUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
+import { makeUrl } from "../ui/utils/urls.js";
 
 @customElement("landing-carousel-modal")
 export class LandingCarouselModal extends LitElement {
