@@ -26,13 +26,11 @@ const scriptifyFunction = (
   replacements?: [string, string][]
 ) => `<script>( ${toFunctionString(fn, replacements)} )();</script>`;
 
-// Will be bound into the iframe script as the targetOrigin for postMessage
-const PARENT_ORIGIN = window.location.origin;
-
 // This script will be run in the AppCat-generated iframe, and will intercept
-// any popups that are opened by the app to post back to Opal to request
-// opening after gaining consent. The iframe is sandboxed and does not allow
-// popups itself, so this is a best-effort to
+// any popups that are opened by the app to post back to Opal to request opening
+// after gaining consent. The iframe is sandboxed and does not allow popups
+// itself, so this is a best-effort to capture common ways the generated HTML
+// may try to open a webpage.
 export const INTERCEPT_POPUPS_SCRIPT = scriptifyFunction(() => {
   const requestPopup = (url: URL) =>
     window.parent.postMessage(
@@ -43,7 +41,7 @@ export const INTERCEPT_POPUPS_SCRIPT = scriptifyFunction(() => {
       "__PARENT_ORIGIN_TO_BE_REPLACED__"
     );
   // This script is guaranteed to be run before any generated scripts, and
-  // we don't let the generated HTML override this
+  // we don't let the generated HTML overridea this
   Object.defineProperty(window, "open", {
     value: function (url?: string | URL) {
       if (url) {
@@ -78,4 +76,7 @@ export const INTERCEPT_POPUPS_SCRIPT = scriptifyFunction(() => {
     },
     true
   );
-}, [["__PARENT_ORIGIN_TO_BE_REPLACED__", PARENT_ORIGIN]]);
+}, [
+  // These are raw string substitutions, so only pass trusted strings here.
+  ["__PARENT_ORIGIN_TO_BE_REPLACED__", window.location.origin],
+]);
