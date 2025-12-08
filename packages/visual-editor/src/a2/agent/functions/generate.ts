@@ -9,6 +9,7 @@ import { ok } from "@breadboard-ai/utils";
 import z from "zod";
 import {
   conformGeminiBody,
+  GenerationConfig,
   streamGenerateContent,
   Tool,
 } from "../../a2/gemini.js";
@@ -273,6 +274,15 @@ provided when the "output_format" is set to "text"`
         if (maps_grounding) {
           tools.push({ googleMaps: {} });
         }
+        let thinkingConfig: GenerationConfig = {};
+        if (model === "pro") {
+          thinkingConfig = {
+            thinkingConfig: {
+              thinkingBudget: -1,
+              includeThoughts: true,
+            },
+          };
+        }
         if (tools.length === 0) tools = undefined;
         const translated = translator.fromPidginString(prompt);
         if (!ok(translated)) return { error: translated.$error };
@@ -280,12 +290,7 @@ provided when the "output_format" is set to "text"`
           systemInstruction: defaultSystemInstruction(),
           contents: [translated],
           tools,
-          generationConfig: {
-            thinkingConfig: {
-              thinkingBudget: -1,
-              includeThoughts: true,
-            },
-          },
+          generationConfig: { ...thinkingConfig },
         });
         if (!ok(body)) return body;
         const resolvedModel = resolveTextModel(model);
