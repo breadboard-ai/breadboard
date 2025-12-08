@@ -90,7 +90,9 @@ Applying the Cynefin framework, determine the domain of the problem into which f
 
 2) Complicated - the objective falls into the domain of complicated problems: fulfilling the object requires expertise, careful planning and preparation. In this case, create a detailed task tree and spend a bit of time thinking through the plan prior to engaging with the problem.
 
-3) Complex - the objective is from the complex domain. Usually, any objective that involves free text entry from the user or unreliable tool outputs fall into this domain: the user may or may not follow the instructions provided to them, which means that any plan will continue evolving. When dealing with complex problems, adopt the OODA loop approach: instead of devising a detailed plan, focus on observing what is happening, orienting toward the objective, deciding on the right next step, and acting. 
+3) Complex - the objective is from the complex domain. Usually, any objective that involves free text entry from the user or unreliable tool outputs fall into this domain: the user may or may not follow the instructions provided to them, which means that any plan will continue evolving. When dealing with complex problems, adopt the OODA loop approach: instead of devising a detailed plan, focus on observing what is happening, orienting toward the objective, deciding on the right next step, and acting.
+
+Ask yourself: what is the problem domain? Is it simple, complicated, or complex? If not sure, start with complicated and see if it works.
 
 ## Problem Domain Escalation
 
@@ -102,9 +104,9 @@ When working on a complicated problem, mentally create a dependency tree for the
 
 When faced with the choice of serial or concurrent execution, choose concurrency to save precious time.
 
-Finally, formulate the precise plan that will result in fulfilling the objective. Outline this plan on a scratchpad, so that it's clear to you how to execute it.
+Finally, formulate a precise plan that will result in fulfilling the objective. Outline this plan on a scratchpad, so that it's clear to you how to execute it.
 
-Now start to execute the plan. For concurrent tasks, make sure to generate  multiple function calls at the same time. 
+Now start executing the plan. For concurrent tasks, make sure to generate multiple function calls simultaneously. 
 
 After each task is completed, examine: is the plan still good? Did the results of the tasks affect the outcome? If not, keep going. Otherwise, reexamine the plan and adjust it accordingly.
 
@@ -330,6 +332,10 @@ class Loop {
           moduleArgs
         );
         if (!ok(generated)) return generated;
+        const functionCaller = new FunctionCallerImpl(
+          functionDefinitionMap,
+          objectivePidgin.tools
+        );
         for await (const chunk of generated) {
           const content = chunk.candidates?.at(0)?.content;
           if (!content) {
@@ -338,10 +344,6 @@ class Loop {
             );
           }
           contents.push(content);
-          const functionCaller = new FunctionCallerImpl(
-            functionDefinitionMap,
-            objectivePidgin.tools
-          );
           const parts = content.parts || [];
           for (const part of parts) {
             if (part.thought) {
@@ -359,14 +361,14 @@ class Loop {
               );
             }
           }
-          const functionResults = await functionCaller.getResults();
-          if (!functionResults) continue;
-          if (!ok(functionResults)) {
-            return err(`Agent unable to proceed: ${functionResults.$error}`);
-          }
-          ui.progress.functionResult(functionResults);
-          contents.push(functionResults);
         }
+        const functionResults = await functionCaller.getResults();
+        if (!functionResults) continue;
+        if (!ok(functionResults)) {
+          return err(`Agent unable to proceed: ${functionResults.$error}`);
+        }
+        ui.progress.functionResult(functionResults);
+        contents.push(functionResults);
       }
       return this.#finalizeResult(result);
     } finally {
