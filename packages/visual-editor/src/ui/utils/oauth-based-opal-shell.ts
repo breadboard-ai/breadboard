@@ -17,7 +17,9 @@ import {
 } from "@breadboard-ai/types/oauth.js";
 import type {
   CheckAppAccessResult,
+  GetFolderResult,
   GuestConfiguration,
+  ListOpalFilesResult,
   OpalShellHostProtocol,
   PickDriveFilesOptions,
   PickDriveFilesResult,
@@ -45,6 +47,10 @@ import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { checkFetchAllowlist } from "./fetch-allowlist.js";
 import { GOOGLE_DRIVE_FILES_API_PREFIX } from "@breadboard-ai/types";
+import {
+  findUserOpalFolder,
+  listUserOpals,
+} from "./google-drive-host-operations.js";
 
 const SIGN_IN_CONNECTION_ID = "$sign-in";
 
@@ -735,5 +741,35 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
 
   sendToEmbedder = async (message: BreadboardMessage): Promise<void> => {
     sendToAllowedEmbedderIfPresent(message);
+  };
+
+  findUserOpalFolder = async (): Promise<GetFolderResult> => {
+    const token = await this.#getToken([
+      "https://www.googleapis.com/auth/drive.readonly",
+    ]);
+    if (token.state !== "valid") {
+      return {
+        ok: false,
+        error: "User is signed out or doesn't have sufficient scope",
+      };
+    }
+    const userFolderName =
+      CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
+
+    return findUserOpalFolder(userFolderName, token.grant.access_token);
+  };
+
+  listUserOpals = async (): Promise<ListOpalFilesResult> => {
+    const token = await this.#getToken([
+      "https://www.googleapis.com/auth/drive.readonly",
+    ]);
+    if (token.state !== "valid") {
+      return {
+        ok: false,
+        error: "User is signed out or doesn't have sufficient scope",
+      };
+    }
+    const isTestApi = !!(await this.getConfiguration()).isTestApi;
+    return listUserOpals(token.grant.access_token, isTestApi);
   };
 }

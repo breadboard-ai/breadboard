@@ -39,6 +39,10 @@ export declare interface OpalShellHostProtocol {
 
   shareDriveFiles(options: ShareDriveFilesOptions): Promise<void>;
 
+  findUserOpalFolder(): Promise<GetFolderResult>;
+
+  listUserOpals(): Promise<ListOpalFilesResult>;
+
   checkAppAccess(): Promise<CheckAppAccessResult>;
 
   sendToEmbedder(message: BreadboardMessage): Promise<void>;
@@ -59,7 +63,9 @@ export declare type SignInState =
       scopes: string[];
     };
 
-export declare type ValidateScopesResult = { ok: true } | { ok: false; error: string };
+export declare type ValidateScopesResult =
+  | { ok: true }
+  | { ok: false; error: string };
 
 export declare type SignInResult =
   | { ok: true; state: SignInState }
@@ -74,6 +80,26 @@ export declare type SignInError =
 export declare interface PickDriveFilesOptions {
   mimeTypes: string[];
 }
+
+export declare type GetFolderResult =
+  | { ok: true; id: string }
+  | { ok: false; error: string };
+
+export declare type ListOpalFileItem = {
+  id: string;
+  name: string;
+  modifiedTime: string;
+  properties: Record<string, string>;
+  appProperties: Record<string, string>;
+  isAppAuthorized: boolean;
+};
+
+export declare type ListOpalFilesResult =
+  | {
+      ok: true;
+      files: ListOpalFileItem[];
+    }
+  | { ok: false; error: string };
 
 export declare type PickDriveFilesResult =
   | { action: "picked"; docs: PickDriveFilesDocument[] }

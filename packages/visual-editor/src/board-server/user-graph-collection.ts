@@ -11,10 +11,8 @@ import type {
 import { openDB, type DBSchema, type IDBPObjectStore } from "idb";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
-import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
-import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
-import { makeGraphListQuery } from "@breadboard-ai/utils/google-drive/operations.js";
 import { readProperties } from "@breadboard-ai/utils/google-drive/utils.js";
+import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 const DB_NAME = "graph-cache";
 const USER_GRAPHS_STORE_NAME = "user-graphs";
@@ -76,7 +74,6 @@ type IdbWriteTaskStore<
 
 export class DriveUserGraphCollection implements MutableGraphCollection {
   readonly #graphs = new SignalMap<string, GraphProviderItem>();
-  readonly #signInInfo: SignInInfo;
 
   has(url: string): boolean {
     return this.#graphs.has(url);
@@ -105,13 +102,11 @@ export class DriveUserGraphCollection implements MutableGraphCollection {
     return this.#error;
   }
 
-  readonly #drive: GoogleDriveClient;
-
   readonly #idb = openIdbGraphCache();
 
-  constructor(drive: GoogleDriveClient, signInInfo: SignInInfo) {
-    this.#drive = drive;
-    this.#signInInfo = signInInfo;
+  constructor(
+    private readonly listUserOpals: OpalShellHostProtocol["listUserOpals"]
+  ) {
     void this.#initialize();
   }
 
@@ -184,60 +179,26 @@ export class DriveUserGraphCollection implements MutableGraphCollection {
   }
 
   async #listDriveGraphs(): Promise<GraphProviderItem[]> {
-    if (this.#signInInfo.state === "signedout") {
-      return [];
-    }
-    const query = makeGraphListQuery({
-      kind: "editable",
-      owner: "me",
-      parent: undefined,
-    });
-    let response;
-    try {
-      response = await this.#drive.listFiles(query, {
-        fields: [
-          "id",
-          "name",
-          "modifiedTime",
-          "properties",
-          "appProperties",
-          "isAppAuthorized",
-        ],
-        orderBy: [{ field: "modifiedTime", dir: "desc" }],
-      });
-    } catch (e) {
+    const listOpals = await this.listUserOpals();
+    if (!listOpals.ok) {
       this.#setError(
-        new AggregateError([e], `error while listing user graphs from drive`)
+        new AggregateError([listOpals.error], `error while listing user opals`)
       );
       return [];
     }
-
-    return response.files
-      .filter(
-        (file) =>
-          // Filter down to graphs created by whatever the current OAuth app is.
-          // Otherwise, graphs from different OAuth apps will appear in this list
-          // too, and if they are selected, we won't be able to edit them. Note
-          // there is no way to do this in the query itself.
-          file.isAppAuthorized ||
-          // Note when running on testGaia, isAppAuthorized seems to always be false
-          // so just allow all files in that case (they should all be from the test
-          // client anyway)
-          this.#drive.isTestApi
-      )
-      .map((file): GraphProviderItem => {
-        const url = `drive:/${file.id}`;
-        const properties = readProperties(file);
-        return {
-          url,
-          title: file.name,
-          description: properties.description,
-          thumbnail: properties.thumbnailUrl,
-          mine: true,
-          readonly: false,
-          handle: null,
-        };
-      });
+    return listOpals.files.map((file): GraphProviderItem => {
+      const url = `drive:/${file.id}`;
+      const properties = readProperties(file);
+      return {
+        url,
+        title: file.name,
+        description: properties.description,
+        thumbnail: properties.thumbnailUrl,
+        mine: true,
+        readonly: false,
+        handle: null,
+      };
+    });
   }
 
   /** All IDB mutations are serialized to improve consistency. */

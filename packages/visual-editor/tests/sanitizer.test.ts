@@ -6,18 +6,17 @@
 
 import assert from "node:assert";
 import { suite, test, beforeEach } from "node:test";
-import { Template } from "../../src/template.js";
 import { JSDOM } from "jsdom";
-import { type Sanitizer as typeSanitizer } from "../../src/index.js";
+import { Template } from "@breadboard-ai/utils/template.js";
 
 suite("escapeNodeText", () => {
-  let Sanitizer: typeof typeSanitizer;
+  let Sanitizer: typeof import("../src/utils/sanitizer.js");
   beforeEach(async () => {
     const dom = new JSDOM("<!doctype html><html><body></body></html>");
     global.document = dom.window.document;
 
     // Now that JSDOM is in place we can add in the Sanitizer (which uses Lit).
-    Sanitizer = await import("../../src/sanitizer.js");
+    Sanitizer = await import("../src/utils/sanitizer.js");
   });
 
   test("handles empty values", () => {
