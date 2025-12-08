@@ -19,7 +19,6 @@ import type {
   CheckAppAccessResult,
   GetFolderResult,
   GuestConfiguration,
-  ListOpalFileItem,
   ListOpalFilesResult,
   OpalShellHostProtocol,
   PickDriveFilesOptions,
@@ -48,12 +47,12 @@ import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { checkFetchAllowlist } from "./fetch-allowlist.js";
 import { GOOGLE_DRIVE_FILES_API_PREFIX } from "@breadboard-ai/types";
+import {
+  findUserOpalFolder,
+  listUserOpals,
+} from "./google-drive-host-operations.js";
 
 const SIGN_IN_CONNECTION_ID = "$sign-in";
-
-export const GOOGLE_DRIVE_FOLDER_MIME_TYPE =
-  "application/vnd.google-apps.folder";
-export const GRAPH_MIME_TYPE = "application/vnd.breadboard.graph+json";
 
 const PROD_AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/auth";
 const AUTH_ENDPOINT =
@@ -751,45 +750,13 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     if (token.state !== "valid") {
       return {
         ok: false,
-        error: "User is signed-out or doesn't have sufficient scope",
+        error: "User is signed out or doesn't have sufficient scope",
       };
     }
     const userFolderName =
       CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
-    const query = `name=${quote(userFolderName)}
-and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"
-and trashed=false`;
 
-    const url = new URL(GOOGLE_DRIVE_FILES_API_PREFIX);
-    url.searchParams.set("q", query);
-    url.searchParams.set("fields", "files(id, mimeType)");
-    url.searchParams.set("orderBy", "createdTime desc");
-
-    try {
-      let { files } = (await fetch(url, {
-        headers: { Authorization: `Bearer ${token.grant.access_token}` },
-      }).then((r) => r.json())) as {
-        files: { id: string; mimeType: string }[];
-      };
-      // This shouldn't be required based on the query above, but for some reason
-      // the TestGaia drive endpoint doesn't seem to respect the mimeType query
-      files = files.filter((f) => f.mimeType === GOOGLE_DRIVE_FOLDER_MIME_TYPE);
-      if (files.length > 0) {
-        if (files.length > 1) {
-          console.warn(
-            "[Google Drive] Multiple candidate root folders found," +
-              " picking the first created one arbitrarily:",
-            files
-          );
-        }
-        const id = files[0]!.id;
-        console.log("[Google Drive] Found existing root folder", id);
-        return { ok: true, id };
-      }
-      return { ok: false, error: "No root folder found" };
-    } catch (e) {
-      return { ok: false, error: "Failed to find root folder" };
-    }
+    return findUserOpalFolder(userFolderName, token.grant.access_token);
   };
 
   listUserOpals = async (): Promise<ListOpalFilesResult> => {
@@ -799,60 +766,10 @@ and trashed=false`;
     if (token.state !== "valid") {
       return {
         ok: false,
-        error: "User is signed-out or doesn't have sufficient scope",
+        error: "User is signed out or doesn't have sufficient scope",
       };
     }
-    const fields = [
-      "id",
-      "name",
-      "modifiedTime",
-      "properties",
-      "appProperties",
-      "isAppAuthorized",
-    ];
-    const query = `mimeType = ${quote(GRAPH_MIME_TYPE)}
-and trashed = false
-and not properties has {
-  key = ${quote(IS_SHAREABLE_COPY_PROPERTY)}
-  and value = "true"
-}
-and 'me' in owners
-  `;
-    const url = new URL(GOOGLE_DRIVE_FILES_API_PREFIX);
-    url.searchParams.set("q", query);
-    url.searchParams.set("fields", `files(${fields.join(",")})`);
-    url.searchParams.set("orderBy", "modifiedTime desc");
-
     const isTestApi = !!(await this.getConfiguration()).isTestApi;
-
-    try {
-      let { files } = (await fetch(url, {
-        headers: { Authorization: `Bearer ${token.grant.access_token}` },
-      }).then((r) => r.json())) as {
-        files: ListOpalFileItem[];
-      };
-
-      files = files.filter(
-        (file) =>
-          // Filter down to graphs created by whatever the current OAuth app is.
-          // Otherwise, graphs from different OAuth apps will appear in this list
-          // too, and if they are selected, we won't be able to edit them. Note
-          // there is no way to do this in the query itself.
-          file.isAppAuthorized ||
-          // Note when running on testGaia, isAppAuthorized seems to always be false
-          // so just allow all files in that case (they should all be from the test
-          // client anyway)
-          isTestApi
-      );
-
-      return { ok: true, files };
-    } catch (e) {
-      return { ok: false, error: "Failed to list opals" };
-    }
+    return listUserOpals(token.grant.access_token, isTestApi);
   };
-}
-export const IS_SHAREABLE_COPY_PROPERTY = "isShareableCopy";
-
-function quote(value: string) {
-  return `'${value.replace(/'/g, "\\'")}'`;
 }
