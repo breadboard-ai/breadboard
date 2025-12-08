@@ -59,6 +59,7 @@ export async function createClientConfig(opts: {
     SHELL_HOST_ORIGINS: flags.SHELL_HOST_ORIGINS,
     SHELL_PREFIX: flags.SHELL_PREFIX,
     ENABLE_EMAIL_OPT_IN: flags.ENABLE_EMAIL_OPT_IN,
+    SHARE_SURFACE_URL_TEMPLATES: flags.SHARE_SURFACE_URL_TEMPLATES,
     domains: flags.DOMAIN_CONFIG,
     flags: {
       generateForEach: flags.ENABLE_GENERATE_FOR_EACH,
