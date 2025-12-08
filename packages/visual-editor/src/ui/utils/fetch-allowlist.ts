@@ -8,6 +8,14 @@ import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configurat
 import type { OAuthScope } from "../connection/oauth-scopes.js";
 import * as CANONICAL from "@breadboard-ai/types/canonical-endpoints.js";
 
+type AllowListParams = {
+  canonicalPrefix: URL;
+  scopes: OAuthScope[];
+  remapOrigin?: URL;
+  allowQueryParams?: (params: URLSearchParams) => boolean;
+  shouldAddAccessTokenToJsonBody?: (url: string) => boolean;
+};
+
 const CALENDAR_SCOPES: OAuthScope[] = [
   "https://www.googleapis.com/auth/calendar.readonly",
   "https://www.googleapis.com/auth/calendar.events.owned",
@@ -29,12 +37,7 @@ function urlOrUndefined(url: string | undefined): URL | undefined {
   return url ? new URL(url) : undefined;
 }
 
-const FETCH_ALLOWLIST: Array<{
-  canonicalPrefix: URL;
-  scopes: OAuthScope[];
-  remapOrigin?: URL;
-  shouldAddAccessTokenToJsonBody?: (url: string) => boolean;
-}> = [
+const FETCH_ALLOWLIST: AllowListParams[] = [
   {
     canonicalPrefix: new URL(CANONICAL.OPAL_BACKEND_API_PREFIX),
     scopes: GENAI_SCOPES,
@@ -109,16 +112,24 @@ export function checkFetchAllowlist(
   urlStr: string
 ): FetchAllowlistInfo | undefined {
   const url = new URL(urlStr);
-  for (const {
-    canonicalPrefix,
-    scopes,
-    remapOrigin,
-    shouldAddAccessTokenToJsonBody,
-  } of FETCH_ALLOWLIST) {
+  for (const params of FETCH_ALLOWLIST) {
+    const {
+      canonicalPrefix,
+      scopes,
+      remapOrigin,
+      shouldAddAccessTokenToJsonBody,
+      allowQueryParams,
+    } = params;
     if (
       url.origin === canonicalPrefix.origin &&
       url.pathname.startsWith(canonicalPrefix.pathname)
     ) {
+      if (
+        allowQueryParams &&
+        !allowQueryParams(new URLSearchParams(url.search))
+      ) {
+        return undefined;
+      }
       let remappedUrl: URL | undefined = undefined;
       if (remapOrigin && remapOrigin.origin !== url.origin) {
         remappedUrl = new URL(
@@ -128,7 +139,8 @@ export function checkFetchAllowlist(
       return {
         scopes,
         remappedUrl,
-        shouldAddAccessTokenToJsonBody: !!shouldAddAccessTokenToJsonBody?.(urlStr),
+        shouldAddAccessTokenToJsonBody:
+          !!shouldAddAccessTokenToJsonBody?.(urlStr),
       };
     }
   }
