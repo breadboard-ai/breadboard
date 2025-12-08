@@ -4,13 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  FileSystemPath,
-  FileSystemQueryResult,
-  Outcome,
-} from "@breadboard-ai/types";
+import { Outcome } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
 import { openDB, DBSchema } from "idb";
+import {
+  buildFileHierarchy,
+  GroupedByType,
+  ParsedFileMedata,
+  parseFileName,
+} from "./parse-file-name.js";
 
 export type FileSystemWalkerEntry =
   | FileSystemDirectoryHandle
@@ -78,11 +80,11 @@ const HANDLES_DB = "evalfilesystemhandles";
 
 type Mode = "read";
 
-type HandleKey = [path: FileSystemPath];
+type HandleKey = [path: string];
 
 export type FileSystemEvalBackendHandle = {
   handle: FileSystemDirectoryHandle;
-  path: FileSystemPath;
+  path: string;
   title: string;
 };
 
@@ -108,7 +110,7 @@ export class FileSystemEvalBackend {
     });
   }
 
-  #getKey(path: FileSystemPath, retainFullPath = false): HandleKey {
+  #getKey(path: string, retainFullPath = false): HandleKey {
     if (retainFullPath) {
       return [path];
     }
@@ -116,16 +118,16 @@ export class FileSystemEvalBackend {
     return [this.#getDirName(path)];
   }
 
-  #getDirName(path: FileSystemPath): FileSystemPath {
-    return path.split("/").with(-1, "").join("/") as FileSystemPath;
+  #getDirName(path: string): string {
+    return path.split("/").with(-1, "").join("/");
   }
 
-  #getFullFilePath(path: FileSystemPath, name: string): FileSystemPath {
-    return `${this.#getDirName(path)}${name}` as FileSystemPath;
+  #getFullFilePath(path: string, name: string): string {
+    return `${this.#getDirName(path)}${name}`;
   }
 
   async #createHandle(
-    path: FileSystemPath,
+    path: string,
     mode: Mode
   ): Promise<Outcome<FileSystemEvalBackendHandle>> {
     try {
@@ -179,7 +181,7 @@ export class FileSystemEvalBackend {
   }
 
   async #obtainDirHandle(
-    path: FileSystemPath,
+    path: string,
     mode: Mode,
     createIfNeeded = true
   ): Promise<FileSystemDirectoryHandle | null | "prompt"> {
@@ -188,7 +190,7 @@ export class FileSystemEvalBackend {
   }
 
   async #obtainFileDirHandle(
-    path: FileSystemPath,
+    path: string,
     mode: Mode,
     createIfNeeded = true
   ): Promise<FileSystemDirectoryHandle | null | "prompt"> {
@@ -203,7 +205,7 @@ export class FileSystemEvalBackend {
     return all;
   }
 
-  async refreshAccess(path: FileSystemPath): Promise<Outcome<boolean>> {
+  async refreshAccess(path: string): Promise<Outcome<boolean>> {
     const key = this.#getKey(path, false);
     const handlesDb = await this.#db();
     const handle = await handlesDb.get("handles", key);
@@ -221,7 +223,7 @@ export class FileSystemEvalBackend {
     return permission === "granted";
   }
 
-  async query(path: FileSystemPath): Promise<FileSystemQueryResult> {
+  async query(path: string): Promise<Outcome<GroupedByType[]>> {
     const handle = await this.#obtainDirHandle(path, "read");
     if (!handle) {
       return { $error: "Permission to read from directory was refused" };
@@ -231,28 +233,24 @@ export class FileSystemEvalBackend {
     }
 
     try {
-      const queryEntries: FileSystemQueryResult = { entries: [] };
+      const queryEntries: ParsedFileMedata[] = [];
       for await (const [name] of handle.entries()) {
         if (!name.endsWith(".json")) {
           continue;
         }
 
         const fullPath = this.#getFullFilePath(path, name);
-        queryEntries.entries.push({
-          stream: false,
-          path: fullPath,
-          length: 1,
-        });
+        queryEntries.push(parseFileName(fullPath));
       }
 
-      return queryEntries;
+      return buildFileHierarchy(queryEntries);
     } catch (err) {
       console.warn(err);
       return { $error: `Unable to read file in directory: ${path}` };
     }
   }
 
-  async read(path: FileSystemPath): Promise<Outcome<string>> {
+  async read(path: string): Promise<Outcome<string>> {
     const handle = await this.#obtainFileDirHandle(path, "read", false);
     if (!handle) {
       return { $error: "Permission to read from directory was refused" };

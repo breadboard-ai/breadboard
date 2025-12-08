@@ -30,14 +30,11 @@ import {
   FileSystemEvalBackendHandle,
 } from "./filesystem.js";
 import { ok } from "@breadboard-ai/utils";
-import {
-  FileSystemPath,
-  FileSystemQueryEntry,
-  FileSystemQueryResult,
-} from "@breadboard-ai/types";
+import { FileSystemPath, Outcome } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
 import { FinalChainReport } from "../../collate-context.js";
 import "./ui/contexts-viewer.js";
+import { GroupedByType } from "./parse-file-name.js";
 
 type EvalFileData = Array<FinalChainReport | A2UIData>;
 
@@ -74,10 +71,10 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   accessor #selectedSurface: number = 0;
 
   @signal
-  accessor #showPromptOption: FileSystemPath | null = null;
+  accessor #showPromptOption: string | null = null;
 
   @signal
-  accessor #filesInMountedDir: FileSystemQueryEntry[] = [];
+  accessor #filesInMountedDir: GroupedByType[] = [];
 
   @signal
   accessor #dirs: FileSystemEvalBackendHandle[] = [];
@@ -336,6 +333,16 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                 width: 100%;
                 overflow: auto;
 
+                h2 {
+                  font-size: 12px;
+                  font-weight: normal;
+                  margin: 0;
+                }
+
+                ul {
+                  padding-left: var(--bb-grid-size-2);
+                }
+
                 button {
                   background: oklch(
                     from var(--primary) l c h / calc(alpha * 0.2)
@@ -547,7 +554,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   protected async willUpdate(changedProperties: PropertyValues<this>) {
     if (changedProperties.has("selectedPath")) {
       if (this.selectedPath) {
-        const path = this.selectedPath.path as FileSystemPath;
+        const path = this.selectedPath.path;
         this.#fileSystem.query(path).then((f) => this.#updateFiles(f, path));
       } else {
         this.#filesInMountedDir = [];
@@ -601,7 +608,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     }
   }
 
-  #updateFiles(f: FileSystemQueryResult, path: FileSystemPath) {
+  #updateFiles(f: Outcome<GroupedByType[]>, path: string) {
     if (!ok(f)) {
       this.#filesInMountedDir = [];
       if (f.$error === "prompt") {
@@ -611,21 +618,16 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     }
 
     this.#showPromptOption = null;
-    this.#filesInMountedDir = f.entries.sort((a, b) => {
-      if (a.path > b.path) return 1;
-      if (a.path < b.path) return -1;
-      return 0;
-    });
+    this.#filesInMountedDir = f;
   }
 
-  #refresh() {
-    return this.#fileSystem.getAll().then((items) => {
-      this.#dirs = items;
-      if (!this.selectedPath && items.length) {
-        this.selectedPath = items.at(0) ?? null;
-      }
-      return items;
-    });
+  async #refresh() {
+    const items = await this.#fileSystem.getAll();
+    this.#dirs = items;
+    if (!this.selectedPath && items.length) {
+      this.selectedPath = items.at(0) ?? null;
+    }
+    return items;
   }
 
   #renderContents() {
@@ -779,16 +781,35 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           : nothing}
         <ul id="file-list">
           ${this.#filesInMountedDir.map((file) => {
-            const fileName = file.path.split("/").at(-1);
             return html`<li>
-              <button
-                ?selected=${file.path === this.selectedFilePath}
-                @click=${async () => {
-                  this.selectedFilePath = file.path;
-                }}
-              >
-                ${fileName}
-              </button>
+              <h2>${file.type}</h2>
+              <ul>
+                ${file.items.map((item) => {
+                  return html`<li>
+                    <h2>${item.name}</h2>
+                    <ul>
+                      ${item.files.map((f) => {
+                        return html`<li>
+                          <button
+                            ?selected=${f.path === this.selectedFilePath}
+                            @click=${async () => {
+                              this.selectedFilePath = f.path;
+                            }}
+                          >
+                            ${f.date.toLocaleString(
+                              Intl.DateTimeFormat().resolvedOptions().locale,
+                              {
+                                dateStyle: "short",
+                                timeStyle: "medium",
+                              }
+                            )}
+                          </button>
+                        </li>`;
+                      })}
+                    </ul>
+                  </li>`;
+                })}
+              </ul>
             </li>`;
           })}
         </ul>
