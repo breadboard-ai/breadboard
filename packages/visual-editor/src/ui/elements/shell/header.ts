@@ -717,7 +717,9 @@ export class VEHeader extends SignalWatcher(LitElement) {
           this.dispatchEvent(new ShareRequestedEvent());
         }}
       >
-        <span class="g-icon">share</span>Share app
+        <span class="g-icon">share</span>${Strings.from(
+          "COMMAND_COPY_APP_PREVIEW_URL"
+        )}
       </button>`;
     }
 
@@ -728,7 +730,9 @@ export class VEHeader extends SignalWatcher(LitElement) {
         this.dispatchEvent(new ShareRequestedEvent());
       }}
     >
-      <span class="g-icon">share</span>Share app
+      <span class="g-icon">share</span>${Strings.from(
+        "COMMAND_COPY_APP_PREVIEW_URL"
+      )}
     </button>`;
   }
 

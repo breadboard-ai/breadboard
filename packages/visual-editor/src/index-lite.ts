@@ -542,7 +542,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
                 <span class="g-icon">open_in_new</span>Open Advanced Editor
               </a>
               <button @click=${this.#onClickShareApp}>
-                <span class="g-icon">share</span>Share app
+                <span class="g-icon">share</span>${Strings.from(
+                  "COMMAND_COPY_APP_PREVIEW_URL"
+                )}
               </button>
             </div>
           </header>`}
