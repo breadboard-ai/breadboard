@@ -200,7 +200,7 @@
     "signal-polyfill": "^0.2.2",
     "signal-utils": "^0.21.1",
     "urlpattern-polyfill": "^10.1.0",
-    "zod": "^3.24.1",
+    "zod": "^4.1.12",
     "zod-to-json-schema": "^3.24.6"
   }
 }
