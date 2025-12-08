@@ -53,6 +53,7 @@ const FETCH_ALLOWLIST: AllowListParams[] = [
     remapOrigin: urlOrUndefined(
       CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_API_ENDPOINT
     ),
+    allowQueryParams: (params) => !params.get("q"),
   },
   {
     canonicalPrefix: new URL(CANONICAL.GOOGLE_DRIVE_UPLOAD_API_PREFIX),
