@@ -5,10 +5,10 @@
  */
 
 import {
-  IS_SHAREABLE_COPY_PROPERTY,
-  LATEST_SHARED_VERSION_PROPERTY,
-  MAIN_TO_SHAREABLE_COPY_PROPERTY,
-  SHAREABLE_COPY_TO_MAIN_PROPERTY,
+  DRIVE_PROPERTY_IS_SHAREABLE_COPY,
+  DRIVE_PROPERTY_LATEST_SHARED_VERSION,
+  DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY,
+  DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN,
 } from "@breadboard-ai/utils/google-drive/operations.js";
 import {
   diffAssetReadPermissions,
@@ -589,7 +589,7 @@ export class SharePanel extends LitElement {
       // Update the latest version property on the main file.
       this.googleDriveClient.updateFileMetadata(oldState.shareableFile.id, {
         properties: {
-          [LATEST_SHARED_VERSION_PROPERTY]: oldState.latestVersion,
+          [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: oldState.latestVersion,
         },
       }),
       // Ensure all assets have the same permissions as the shareable file,
@@ -997,7 +997,7 @@ export class SharePanel extends LitElement {
     );
 
     const thisFileIsAShareableCopy =
-      thisFileMetadata.properties?.[SHAREABLE_COPY_TO_MAIN_PROPERTY] !==
+      thisFileMetadata.properties?.[DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN] !==
       undefined;
     if (thisFileIsAShareableCopy) {
       this.#state = {
@@ -1011,7 +1011,7 @@ export class SharePanel extends LitElement {
     }
 
     const shareableCopyFileId =
-      thisFileMetadata.properties?.[MAIN_TO_SHAREABLE_COPY_PROPERTY];
+      thisFileMetadata.properties?.[DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY];
 
     if (!thisFileMetadata.ownedByMe) {
       this.#state = {
@@ -1080,7 +1080,7 @@ export class SharePanel extends LitElement {
         stale:
           thisFileMetadata.version !==
           shareableCopyFileMetadata.properties?.[
-            LATEST_SHARED_VERSION_PROPERTY
+            DRIVE_PROPERTY_LATEST_SHARED_VERSION
           ],
         permissions: shareableCopyFileMetadata.permissions ?? [],
       },
@@ -1441,7 +1441,7 @@ export class SharePanel extends LitElement {
       mainFileId,
       {
         properties: {
-          [MAIN_TO_SHAREABLE_COPY_PROPERTY]: shareableCopyFileId,
+          [DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY]: shareableCopyFileId,
         },
       },
       { fields: ["version"] }
@@ -1459,9 +1459,9 @@ export class SharePanel extends LitElement {
         shareableCopyFileId,
         {
           properties: {
-            [SHAREABLE_COPY_TO_MAIN_PROPERTY]: mainFileId,
-            [LATEST_SHARED_VERSION_PROPERTY]: updateMainResult.version,
-            [IS_SHAREABLE_COPY_PROPERTY]: "true",
+            [DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN]: mainFileId,
+            [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: updateMainResult.version,
+            [DRIVE_PROPERTY_IS_SHAREABLE_COPY]: "true",
           },
         },
         { fields: ["resourceKey"] }

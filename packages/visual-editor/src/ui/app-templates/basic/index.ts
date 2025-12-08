@@ -49,8 +49,8 @@ import { theme as uiTheme } from "./theme/light.js";
 import "./header/header.js";
 
 import {
-  MAIN_TO_SHAREABLE_COPY_PROPERTY,
-  SHAREABLE_COPY_TO_MAIN_PROPERTY,
+  DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY,
+  DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN,
 } from "@breadboard-ai/utils/google-drive/operations.js";
 import { extractGoogleDriveFileId } from "@breadboard-ai/utils/google-drive/utils.js";
 import { type GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
@@ -620,14 +620,18 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       { fields: ["properties", "capabilities"] }
     );
     const isShareableCopy =
-      !!currentGraphMetadata.properties?.[SHAREABLE_COPY_TO_MAIN_PROPERTY];
+      !!currentGraphMetadata.properties?.[
+        DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN
+      ];
     if (isShareableCopy) {
       // The user is already consuming the shareable copy, so just use that for
       // the results link.
       shareableGraphFileId = currentGraphFileId;
     } else {
       const linkedShareableCopyFileId =
-        currentGraphMetadata.properties?.[MAIN_TO_SHAREABLE_COPY_PROPERTY];
+        currentGraphMetadata.properties?.[
+          DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY
+        ];
       if (linkedShareableCopyFileId) {
         // The user is consuming the editable version, but it is shared, and we
         // know the file id of the shareable version. Automatically substitute

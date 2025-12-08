@@ -40,10 +40,10 @@ const RUN_RESULTS_MIME_TYPE = "application/vnd.breadboard.run-results+json";
 const RUN_RESULTS_GRAPH_URL_APP_PROPERTY = "graphUrl";
 
 // Properties related to sharing graphs.
-export const IS_SHAREABLE_COPY_PROPERTY = "isShareableCopy";
-export const LATEST_SHARED_VERSION_PROPERTY = "latestSharedVersion";
-export const MAIN_TO_SHAREABLE_COPY_PROPERTY = "mainToShareableCopy";
-export const SHAREABLE_COPY_TO_MAIN_PROPERTY = "shareableCopyToMain";
+export const DRIVE_PROPERTY_IS_SHAREABLE_COPY = "isShareableCopy";
+export const DRIVE_PROPERTY_LATEST_SHARED_VERSION = "latestSharedVersion";
+export const DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY = "mainToShareableCopy";
+export const DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN = "shareableCopyToMain";
 
 export interface MakeGraphListQueryInit {
   kind: "editable" | "shareable";
@@ -60,7 +60,7 @@ export function makeGraphListQuery({
     mimeType = ${quote(GRAPH_MIME_TYPE)}
     and trashed = false
     and ${kind === "editable" ? "not" : ""} properties has {
-      key = ${quote(IS_SHAREABLE_COPY_PROPERTY)}
+      key = ${quote(DRIVE_PROPERTY_IS_SHAREABLE_COPY)}
       and value = "true"
     }
     ${owner ? `and ${quote(owner)} in owners` : ""}
