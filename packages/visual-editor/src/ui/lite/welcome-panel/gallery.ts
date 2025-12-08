@@ -84,23 +84,35 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         border-radius: var(--bb-grid-size-16);
         border: none;
         height: var(--bb-grid-size-10);
-        padding: 0 var(--bb-grid-size-4);
+        padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-4);
         color: var(--sys-color--primary);
         cursor: pointer;
         transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
+        position: relative;
+        -webkit-font-smoothing: antialiased;
 
         &:not([disabled]) {
           &:hover,
           &:focus {
-            background: light-dark(
-              var(--sys-color--surface-container-low),
-              oklch(from var(--sys-color--primary) l c h / 8%)
-            );
+            &::after {
+              content: "";
+              pointer-events: none;
+              background: var(--sys-color--primary);
+              opacity: 0.08;
+              position: absolute;
+              inset: 0;
+              border-radius: var(--bb-grid-size-16);
+            }
           }
         }
 
         .g-icon {
+          font-size: 1.125rem;
+          font-variation-settings:
+            "ROND" 100,
+            "wght" 500;
           margin-left: var(--bb-grid-size-2);
+
           &::after {
             content: "collapse_all";
           }
@@ -641,7 +653,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           ? html`
               <button
                 id="show-more-button"
-                class="md-title-small sans-flex w-400"
+                class="md-title-small sans-flex w-500"
                 @click=${this.#toggleCollapsedState}
               >
                 ${Strings.from(
@@ -650,6 +662,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
                 <span
                   class=${classMap({
                     "g-icon": true,
+                    round: true,
                     collapsed: this.collapsable && this.isCollapsed,
                   })}
                 ></span>
