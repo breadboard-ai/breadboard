@@ -4,14 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@breadboard-ai/types";
-import { KeyboardCommand, KeyboardCommandDeps } from "./types";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { EditSpec } from "@google-labs/breadboard";
-import { MAIN_BOARD_ID } from "../runtime/util";
-import { inspectableAssetEdgeToString } from "@breadboard-ai/shared-ui/utils/workspace.js";
-import { ClipboardReader } from "../utils/clipboard-reader";
-import { Tab } from "../runtime/types";
+import { EditSpec, GraphDescriptor } from "@breadboard-ai/types";
+import { KeyboardCommand, KeyboardCommandDeps } from "./types.js";
+import * as BreadboardUI from "../ui/index.js";
+import { MAIN_BOARD_ID } from "../runtime/util.js";
+import { inspectableAssetEdgeToString } from "../ui/utils/workspace.js";
+import { ClipboardReader } from "../utils/clipboard-reader.js";
+import { Tab } from "../runtime/types.js";
 
 function isFocusedOnGraphRenderer(evt: Event) {
   return evt
@@ -140,10 +139,7 @@ const DeleteCommand: KeyboardCommand = {
       // Then delete any selected Assets.
       if (selectionGraph.assets.size) {
         if (!projectState) {
-          projectState = runtime.state.getOrCreateProjectState(
-            tab.mainGraphId,
-            editor
-          );
+          projectState = runtime.state.project;
         }
 
         if (!projectState) {

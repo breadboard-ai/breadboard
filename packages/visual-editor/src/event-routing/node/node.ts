@@ -5,8 +5,8 @@
  */
 
 import { ok } from "@breadboard-ai/utils";
-import { EventRoute } from "../types";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import { EventRoute } from "../types.js";
+import * as BreadboardUI from "../../ui/index.js";
 
 export const AddWithEdgeRoute: EventRoute<"node.addwithedge"> = {
   event: "node.addwithedge",
@@ -131,10 +131,10 @@ export const ChangeEdgeAttachmentPointRoute: EventRoute<"node.changeedgeattachme
 export const ActionRoute: EventRoute<"node.action"> = {
   event: "node.action",
 
-  async do({ runtime, tab, uiState, originalEvent }) {
+  async do({ runtime, uiState, originalEvent }) {
     uiState.blockingAction = true;
     try {
-      const project = runtime.state.getProjectState(tab?.mainGraphId);
+      const project = runtime.state.project;
       if (!project) {
         console.warn(`No project for "node.action"`);
         return false;

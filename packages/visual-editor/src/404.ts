@@ -6,7 +6,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 console.log(Strings);

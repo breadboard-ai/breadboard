@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DataPartTransformer } from "./data.js";
 import { GraphDescriptor, GraphTag } from "./graph-descriptor.js";
 import { GraphToRun } from "./node-handler.js";
 import {
@@ -74,7 +73,7 @@ export type GraphProvider = {
    * @returns Whether the currently signed-in user owns the given graph, or
    * `undefined` if we don't know because the graph hasn't been loaded yet.
    */
-  isMine?: (url: URL) => boolean | undefined;
+  isMine: (url: URL) => boolean;
 
   /**
    * Given a URL, loads a `GraphDescriptor` instance from that URL. May
@@ -126,12 +125,6 @@ export type GraphProvider = {
    */
   createURL: (location: string, fileName: string) => Promise<string | null>;
   /**
-   * Provides a map of locations and their respective stores (lists of files)
-   * that can be used to enumerate all items that the provider can provide.
-   * @deprecated Use {@link userGraphs} and {@link galleryGraphs} instead.
-   */
-  items?: () => Map<string, GraphProviderStore>;
-  /**
    * A signal-backed collection of graphs owned by the signed-in user.
    */
   userGraphs?: MutableGraphCollection;
@@ -139,10 +132,6 @@ export type GraphProvider = {
    * A signal-backed collection of featured gallery graphs.
    */
   galleryGraphs?: ImmutableGraphCollection;
-  /**
-   * Provides a way to transfom DataParts (InlineDataPart and StoredDataPart).
-   */
-  dataPartTransformer?: (graphUrl: URL) => DataPartTransformer;
 };
 
 /**

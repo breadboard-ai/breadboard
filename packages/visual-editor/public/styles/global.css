@@ -83,13 +83,8 @@ body.hide-cursor {
   --bb-elevation-1:
     0px 1px 2px rgb(0, 0, 0, 0.3), 0px 1px 3px rgb(0, 0, 0, 0.15);
 
-  color-scheme: light;
-}
-
-@media screen and (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-  }
+  --sys-color--body-background-light: #ffffff;
+  --sys-color--body-background-dark: #131314;
 }
 
 html,
@@ -103,10 +98,13 @@ body {
   height: 100svh;
   display: flex;
   flex-direction: column;
-  background: var(--n-100);
+  background: var(--sys-color--body-background-light);
   overflow: hidden;
 }
 
-body.dark-theme {
-  color-scheme: dark;
+@media (prefers-color-scheme: dark) {
+  html,
+  body {
+    background: var(--sys-color--body-background-dark);
+  }
 }

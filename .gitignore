@@ -142,8 +142,6 @@ packages/visual-editor/build
 
 lcov.info
 
-packages/data-store/bundled
-
 # VS Code code searches
 *.code-search
 
