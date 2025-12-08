@@ -514,11 +514,6 @@ export const styles: CSSResultGroup = [
             }
           }
 
-          & .html-view {
-            width: 100%;
-            height: 100cqh;
-          }
-
           & .empty-state {
             flex: 1;
             color: var(--light-dark-n-50);

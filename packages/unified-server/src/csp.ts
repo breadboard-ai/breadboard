@@ -65,11 +65,6 @@ export const MAIN_APP_CSP = {
   ["default-src"]: ["'none'"],
   ["script-src"]: [
     "'self'",
-    "'unsafe-inline'",
-    "https://cdn.tailwindcss.com",
-    "https://unpkg.com",
-    "https://cdn.jsdelivr.net",
-    "https://cdnjs.cloudflare.com",
     "https://support.google.com",
     "https://www.google-analytics.com",
     "https://www.google.com", // Feedback
@@ -127,15 +122,39 @@ export const MAIN_APP_CSP = {
   ]),
   ["media-src"]: ["'self'", "blob:", "data:"],
   ["base-uri"]: ["'none'"],
-  // TODO: b/466201117 Temporarily disabled while we change how the generated
-  // app is iframed.
-  // ["require-trusted-types-for"]: ["'script'"],
+  ["require-trusted-types-for"]: ["'script'"],
   ["trusted-types"]: [
     "lit-html",
     "opal-analytics-url",
     "opal-chiclet-html",
     "opal-gapi-url",
   ],
+};
+
+export const GENERATED_APP_CSP = {
+  ["default-src"]: ["'none'"],
+  ["script-src"]: [
+    "'self'",
+    "'unsafe-inline'",
+    "https://cdn.tailwindcss.com",
+    "https://unpkg.com",
+    "https://cdn.jsdelivr.net",
+    "https://cdnjs.cloudflare.com",
+  ],
+  ["img-src"]: ["blob:", "data:"],
+  ["style-src"]: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+  ["font-src"]: ["https://fonts.gstatic.com"],
+  ["connect-src"]: ["'none'"],
+  ["frame-src"]: ["'none'"],
+  ["frame-ancestors"]: [
+    "'self'",
+    // Note that frame-ancestors applies recursively. If A iframes B iframes C,
+    // then C must allow both B and A.
+    ...flags.ALLOWED_REDIRECT_ORIGINS,
+    ...(flags.SHELL_ENABLED ? flags.SHELL_HOST_ORIGINS : []),
+  ],
+  ["media-src"]: ["blob:", "data:"],
+  ["base-uri"]: ["'none'"],
 };
 
 function noneIfEmpty(directives: string[]): string[] {

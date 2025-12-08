@@ -64,8 +64,6 @@ import {
   AppScreenOutput,
   BoardServer,
   ConsentAction,
-  ConsentType,
-  ConsentUIType,
   GraphDescriptor,
   RuntimeFlags,
 } from "@breadboard-ai/types";
@@ -89,81 +87,7 @@ import {
 } from "../../../data/save-outputs-as-file.js";
 import { GoogleDriveBoardServer } from "../../../board-server/server.js";
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-const toFunctionString = (fn: Function, bindings?: Record<string, unknown>) => {
-  let str = fn.toString();
-  if (bindings) {
-    for (const [key, value] of Object.entries(bindings)) {
-      str = str.replace(key, `(${JSON.stringify(value)})`);
-    }
-  }
-  return str;
-};
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-const scriptifyFunction = (fn: Function, bindings?: Record<string, unknown>) =>
-  `<script>( ${toFunctionString(fn, bindings)} )();</script>`;
-
-// Will be bound into the iframe script as the targetOrigin for postMessage
-const PARENT_ORIGIN = window.location.origin;
-
-// This script will be run in the AppCat-generated iframe, and will intercept
-// any popups that are opened by the app to post back to Opal to request
-// opening after gaining consent. The iframe is sandboxed and does not allow
-// popups itself, so this is a best-effort to
-const interceptPopupsScript = scriptifyFunction(
-  () => {
-    const requestPopup = (url: URL) =>
-      window.parent.postMessage(
-        {
-          type: "request-open-popup",
-          url: url.toString(),
-        },
-        PARENT_ORIGIN
-      );
-    // This script is guaranteed to be run before any generated scripts, and
-    // we don't let the generated HTML override this
-    Object.defineProperty(window, "open", {
-      value: function (url?: string | URL) {
-        if (url) {
-          requestPopup(new URL(url));
-        }
-        return undefined;
-      },
-      writable: false,
-      configurable: false,
-      enumerable: false,
-    });
-    const findAncestorTag = <T extends keyof HTMLElementTagNameMap>(
-      event: Event,
-      tag: T
-    ) => {
-      const path = event.composedPath();
-      return path.find((el) => (el as HTMLElement).localName === tag) as
-        | HTMLElementTagNameMap[typeof tag]
-        | undefined;
-    };
-    // This listener is capturing and guaranteed to be run before any
-    // generated scripts, so we always get first crack at intercepting popups
-    window.addEventListener(
-      "click",
-      (evt) => {
-        const anchor = findAncestorTag(evt, "a");
-        if (anchor) {
-          requestPopup(new URL(anchor.href));
-          evt.preventDefault();
-          evt.stopImmediatePropagation();
-        }
-      },
-      true
-    );
-  },
-  {
-    PARENT_ORIGIN,
-  }
-);
-
-function isHTMLOutput(screen: AppScreenOutput): string | null {
+function getHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
   const singleOutput = outputs.length === 1;
   if (!singleOutput) {
@@ -274,9 +198,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   readonly #shareResultsButton = createRef<HTMLButtonElement>();
 
-  readonly outputHtmlIframeRef = createRef<HTMLIFrameElement>();
-  #messageListenerController: AbortController | null = null;
-
   get additionalOptions() {
     return {
       font: {
@@ -297,44 +218,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   static styles = appStyles;
-
-  connectedCallback() {
-    super.connectedCallback();
-    if (this.runtimeFlags?.requireConsentForOpenWebpage) {
-      window.addEventListener(
-        "message",
-        async (event: MessageEvent<{ type: string; url: string }>) => {
-          if (
-            event.source === this.outputHtmlIframeRef.value?.contentWindow &&
-            event.data.type === "request-open-popup"
-          ) {
-            const url = new URL(event.data.url);
-            const graphUrl = this.graph?.url;
-            if (this.consentManager && graphUrl) {
-              const allow = await this.consentManager.queryConsent(
-                {
-                  graphUrl,
-                  type: ConsentType.OPEN_WEBPAGE,
-                  scope: url.origin,
-                },
-                ConsentUIType.MODAL
-              );
-              if (!allow) {
-                return;
-              }
-            }
-            window.open(url.toString(), "_blank");
-          }
-        },
-        { signal: this.#messageListenerController?.signal }
-      );
-    }
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this.#messageListenerController?.abort();
-  }
 
   #renderControls() {
     return html`<bb-app-header
@@ -362,15 +245,14 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       | symbol = nothing;
     const last = this.run.app.last?.last;
     if (last) {
-      const htmlOutput = isHTMLOutput(last);
+      const htmlOutput = getHTMLOutput(last);
       if (htmlOutput !== null) {
-        activityContents = html`<iframe
-          srcdoc=${interceptPopupsScript + htmlOutput}
-          ${ref(this.outputHtmlIframeRef)}
-          frameborder="0"
-          class="html-view"
-          sandbox="allow-scripts allow-forms"
-        ></iframe>`;
+        activityContents = html`
+          <bb-app-sandbox
+            .srcdoc=${htmlOutput}
+            .graphUrl=${this.graph?.url ?? ""}
+          ></bb-app-sandbox>
+        `;
       } else if (
         isLLMContentArray(last.output.context) &&
         isInlineData(last.output.context[0]?.parts[0]) &&
