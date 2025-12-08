@@ -11,7 +11,7 @@
  *
  * When changing flags, also make changes in
  *
- * 1) packages/shared-ui/src/config/client-deployment-configuration.ts,
+ * 1) packages/visual-editor/src/ui/config/client-deployment-configuration.ts,
  * where default values are set.
  *
  * Add a comment to explain what the flag does.
@@ -42,10 +42,6 @@ export type RuntimeFlags = {
    */
   agentMode: boolean;
   /**
-   * Moves data transformations (B2F, D2F, D2B) to the backend
-   */
-  backendTransforms: boolean;
-  /**
    * Enables Google One Quotas
    */
   googleOne: boolean;
@@ -73,6 +69,10 @@ export type RuntimeFlags = {
    * Enables SSE streaming for planner calls.
    */
   streamPlanner: boolean;
+  /**
+   * Enables SSE streaming for GenerateWebpage (output node HTML generation).
+   */
+  streamGenWebpage: boolean;
 };
 
 /**

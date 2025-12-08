@@ -2,18 +2,9 @@
   "extends": "@google-labs/tsconfig/base.json",
   "files": [],
   "references": [
-    { "path": "packages/a2" },
-    { "path": "packages/board-server-management" },
-    { "path": "packages/breadboard" },
-    { "path": "packages/data-store" },
-    { "path": "packages/gulf" },
-    { "path": "packages/google-drive-kit" },
-    { "path": "packages/idb-board-server" },
-    { "path": "packages/schema" },
-    { "path": "packages/particles-ui" },
-    { "path": "packages/shared-ui" },
-    { "path": "packages/theme" },
     { "path": "packages/types" },
+    { "path": "packages/utils" },
+    { "path": "packages/unified-server" },
     { "path": "packages/visual-editor" }
   ]
 }

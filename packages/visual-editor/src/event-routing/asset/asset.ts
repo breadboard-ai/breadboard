@@ -5,8 +5,8 @@
  */
 
 import { AssetMetadata } from "@breadboard-ai/types";
-import { EventRoute } from "../types";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import { EventRoute } from "../types.js";
+import * as BreadboardUI from "../../ui/index.js";
 
 export const ChangeEdgeRoute: EventRoute<"asset.changeedge"> = {
   event: "asset.changeedge",
@@ -34,10 +34,7 @@ export const AddRoute: EventRoute<"asset.add"> = {
       return false;
     }
 
-    const projectState = runtime.state.getOrCreateProjectState(
-      tab.mainGraphId,
-      runtime.edit.getEditor(tab)
-    );
+    const projectState = runtime.state.project;
 
     if (!projectState) {
       return false;

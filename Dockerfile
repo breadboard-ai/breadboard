@@ -10,4 +10,4 @@ ARG VITE_BOARD_SERVICE="drive:"
 WORKDIR packages/unified-server
 RUN npm run build
 
-CMD ["node", "dist/src/server/main.js"]
+CMD ["node", "dist/src/main.js"]

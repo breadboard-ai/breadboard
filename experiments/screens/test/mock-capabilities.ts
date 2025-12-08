@@ -10,7 +10,6 @@ import {
   UserEvent,
   McpClient,
   Prompt,
-  SchemaValidated,
 } from "../src/types.js";
 import { prompts } from "../src/apps/adventure-game.js";
 import { replacer } from "./adventure-game.test.js";
@@ -29,9 +28,8 @@ export class MockCapabilities implements Capabilities {
   private screenHistory: ScreenInput[][] = [];
   private eventQueue: UserEvent[][] = [];
   private cannedResponses: Record<string, GeminiOutputs> = {};
-  private pendingResolve:
-    | ((value: GetUserEventsResponse) => void)
-    | null = null;
+  private pendingResolve: ((value: GetUserEventsResponse) => void) | null =
+    null;
   private pendingReject: ((reason?: Error) => void) | null = null;
   private timeoutId: NodeJS.Timeout | null = null;
 

@@ -38,13 +38,14 @@ import {
   NodeHandlerContext,
   NodeHandlerMetadata,
 } from "./node-handler.js";
-import { RunnableModule, RunnableModuleFactory, Sandbox } from "./sandbox.js";
+import { RunnableModuleFactory } from "./sandbox.js";
 import { BehaviorSchema, Schema } from "./schema.js";
 import {
   TypedEventTarget,
   TypedEventTargetType,
 } from "./typed-event-target.js";
 import { UUID } from "./uuid.js";
+import { RuntimeFlagManager } from "./flags.js";
 
 export type GraphVersion = number;
 
@@ -225,12 +226,6 @@ export type InspectableEdge = {
    * Get the inspectable input port.
    */
   inPort(): Promise<InspectablePort>;
-
-  /**
-   * Check if the input and output schemas are compatible (meaning that the
-   * output port type is a subtype of the input port type).
-   */
-  validate(): Promise<ValidateResult>;
 
   /**
    * Returns `true` if the edge has been deleted from the graph and this
@@ -564,28 +559,7 @@ export type InspectablePortType = {
    * Returns `true` if this port has specified behavior
    */
   hasBehavior(behavior: BehaviorSchema): boolean;
-  /**
-   * Returns `true` if the outgoing port of this type can connect to an
-   * incoming port of the specified type.
-   *
-   * @param to the incoming port type to which to connect.
-   */
-  canConnect(to: InspectablePortType): boolean;
-
-  analyzeCanConnect(to: InspectablePortType): CanConnectAnalysis;
 };
-
-export type CanConnectAnalysis =
-  | { canConnect: true; details?: never }
-  | { canConnect: false; details: CanConnectAnalysisDetail[] };
-
-export interface CanConnectAnalysisDetail {
-  message: string;
-  detail?: {
-    outputPath: Array<string | number>;
-    inputPath: Array<string | number>;
-  };
-}
 
 /**
  * Represents one side (input or output) of ports of a node.
@@ -794,7 +768,9 @@ export type GraphStoreEntry = NodeHandlerMetadata & {
   updating: boolean;
 };
 
-export type GraphStoreArgs = Required<InspectableGraphOptions>;
+export type GraphStoreArgs = Required<InspectableGraphOptions> & {
+  flags: RuntimeFlagManager;
+};
 
 export type GraphStoreUpdateEvent = Event & {
   mainGraphId: MainGraphIdentifier;
@@ -825,6 +801,7 @@ export type MutableGraphStore = TypedEventTargetType<GraphsStoreEventMap> &
     readonly loader: GraphLoader;
     readonly fileSystem: FileSystem;
     readonly types: InspectableDescriberResultTypeCache;
+    readonly flags: RuntimeFlagManager;
 
     get(mainGraphId: MainGraphIdentifier): MutableGraph | undefined;
 

@@ -24,6 +24,7 @@ export type ClientDeploymentConfiguration = {
   OAUTH_CLIENT: string;
   SHELL_GUEST_ORIGIN?: string;
   SHELL_HOST_ORIGINS?: string[];
+  SHELL_PREFIX?: string;
   /**
    * Allow running 3P modules (modules that are other than A2). Default
    * value is "false"
