@@ -223,7 +223,7 @@ export class DriveUserGraphCollection implements MutableGraphCollection {
           // Note when running on testGaia, isAppAuthorized seems to always be false
           // so just allow all files in that case (they should all be from the test
           // client anyway)
-          this.#drive.isTest()
+          this.#drive.isTestApi
       )
       .map((file): GraphProviderItem => {
         const url = `drive:/${file.id}`;

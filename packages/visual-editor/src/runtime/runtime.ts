@@ -18,6 +18,8 @@ import { Select } from "./select.js";
 import { StateManager } from "./state.js";
 import { Shell } from "./shell.js";
 import {
+  OPAL_BACKEND_API_PREFIX,
+  GOOGLE_DRIVE_FILES_API_PREFIX,
   Outcome,
   PersistentBackend,
   RunConfig,
@@ -99,18 +101,20 @@ export class Runtime extends EventTarget {
     );
     this.fetchWithCreds = this.signinAdapter.fetchWithCreds;
 
-    const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
-      .href;
+    const proxyApiBaseUrl = new URL(
+      "/api/drive-proxy/drive/v3/files",
+      window.location.href
+    ).href;
     const apiBaseUrl =
       this.signinAdapter.state === "signedout"
         ? proxyApiBaseUrl
-        : config.globalConfig.GOOGLE_DRIVE_API_ENDPOINT ||
-          "https://www.googleapis.com";
+        : GOOGLE_DRIVE_FILES_API_PREFIX;
 
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,
       proxyApiBaseUrl,
       fetchWithCreds: this.fetchWithCreds,
+      isTestApi: !!config.guestConfig?.isTestApi,
     });
 
     this.fileSystem = createFileSystem({
@@ -123,19 +127,13 @@ export class Runtime extends EventTarget {
       ),
     });
 
-    let backendApiEndpoint = config.globalConfig.BACKEND_API_ENDPOINT;
-    if (!backendApiEndpoint) {
-      console.warn(`No BACKEND_API_ENDPOINT in ClientDeploymentConfiguration`);
-      backendApiEndpoint = window.location.href;
-    }
-
     this.mcpClientManager = new McpClientManager(
       builtInMcpClients,
       {
         fileSystem: this.fileSystem,
         fetchWithCreds: this.fetchWithCreds,
       },
-      backendApiEndpoint
+      OPAL_BACKEND_API_PREFIX
     );
 
     const sandbox = createA2ModuleFactory({
@@ -213,7 +211,7 @@ export class Runtime extends EventTarget {
     this.edit = new Edit(graphStore, autonamer, this.flags);
     this.apiClient = new AppCatalystApiClient(
       this.fetchWithCreds,
-      backendApiEndpoint
+      OPAL_BACKEND_API_PREFIX
     );
     this.emailPrefsManager = new EmailPrefsManager(this.apiClient);
     this.flowGenerator = new FlowGenerator(this.apiClient, this.flags);

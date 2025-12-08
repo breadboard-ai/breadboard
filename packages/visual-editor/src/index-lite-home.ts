@@ -15,7 +15,11 @@ import { EmbedHandler } from "./ui/embed/embed.js";
 import { provide } from "@lit/context";
 import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
 import { boardServerContext } from "./ui/contexts/board-server.js";
-import type { Outcome, UUID } from "@breadboard-ai/types";
+import {
+  GOOGLE_DRIVE_FILES_API_PREFIX,
+  type Outcome,
+  type UUID,
+} from "@breadboard-ai/types";
 import { SigninAdapter } from "./ui/utils/signin-adapter.js";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import type {
@@ -96,17 +100,19 @@ export class LiteHome extends SignalWatcher(LitElement) {
     );
 
     // Board server
-    const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
-      .href;
+    const proxyApiBaseUrl = new URL(
+      "/api/drive-proxy/drive/v3/files",
+      window.location.href
+    ).href;
     const apiBaseUrl =
       signinAdapter.state === "signedout"
         ? proxyApiBaseUrl
-        : this.globalConfig.GOOGLE_DRIVE_API_ENDPOINT ||
-          "https://www.googleapis.com";
+        : GOOGLE_DRIVE_FILES_API_PREFIX;
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,
       proxyApiBaseUrl,
       fetchWithCreds: opalShell.fetchWithCreds,
+      isTestApi: !!mainArgs.guestConfiguration.isTestApi,
     });
     const googleDrivePublishPermissions =
       this.globalConfig.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [];
@@ -118,8 +124,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
       signinAdapter,
       this.googleDriveClient,
       googleDrivePublishPermissions,
-      userFolderName,
-      this.globalConfig.BACKEND_API_ENDPOINT ?? ""
+      userFolderName
     );
     this.#recentBoardStore.restore();
   }

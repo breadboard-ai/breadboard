@@ -90,8 +90,7 @@ class GoogleDriveBoardServer
     signInInfo: SignInInfo,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
-    userFolderName: string,
-    backendApiUrl: string
+    userFolderName: string
   ) {
     super();
 
@@ -115,8 +114,7 @@ class GoogleDriveBoardServer
     this.#googleDriveClient = googleDriveClient;
     this.galleryGraphs = new DriveGalleryGraphCollection(
       signInInfo,
-      googleDriveClient.fetchWithCreds,
-      backendApiUrl
+      googleDriveClient.fetchWithCreds
     );
     this.userGraphs = new DriveUserGraphCollection(
       this.#googleDriveClient,
