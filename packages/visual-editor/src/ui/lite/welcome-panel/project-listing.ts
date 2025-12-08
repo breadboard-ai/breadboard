@@ -140,8 +140,10 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
         border: none;
         background: var(--sys-color--primary);
         height: var(--bb-grid-size-10);
-        padding: 0 var(--bb-grid-size-4) 0 var(--bb-grid-size-3);
+        padding: 0 var(--bb-grid-size-5) 0 var(--bb-grid-size-4);
         transition: background-color 0.2s cubic-bezier(0, 0, 0.3, 1);
+        position: relative;
+        -webkit-font-smoothing: antialiased;
 
         &[disabled] .g-icon {
           animation: rotate 1s linear infinite;
@@ -157,10 +159,26 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
 
         &:not([disabled]):focus,
         &:not([disabled]):hover {
-          background: oklch(from var(--sys-color--primary) calc(l * 0.9) c h);
+          box-shadow:
+            0 2px 1px -1px rgba(0, 0, 0, 0.2),
+            0 1px 1px 0 rgba(0, 0, 0, 0.14),
+            0 1px 3px 0 rgba(0, 0, 0, 0.12);
+
+          &::after {
+            content: "";
+            pointer-events: none;
+            background: var(--sys-color--on-primary);
+            opacity: 0.08;
+            position: absolute;
+            inset: 0;
+            border-radius: var(--bb-grid-size-16);
+          }
         }
 
         .g-icon {
+          font-size: 1.125rem;
+          -webkit-font-smoothing: antialiased;
+
           color: var(--sys-color--on-primary);
           margin-right: var(--bb-grid-size-2);
         }
@@ -326,10 +344,10 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
           <button
             slot="actions"
             id="create-new-button-inline"
-            class="md-title-small sans-flex w-400"
+            class="md-title-small sans-flex w-500"
             @click=${this.#clickNewProjectButton}
           >
-            <span class="g-icon"></span>
+            <span class="g-icon round"></span>
             ${Strings.from("COMMAND_NEW_PROJECT")}
           </button>
         </bb-gallery-lite>
