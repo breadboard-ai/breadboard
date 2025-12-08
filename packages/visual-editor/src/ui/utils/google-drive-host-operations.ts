@@ -5,9 +5,9 @@
  */
 
 import type {
-  GetFolderResult,
+  FindUserOpalFolderResult,
   ListOpalFileItem,
-  ListOpalFilesResult,
+  ListUserOpalsResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { GOOGLE_DRIVE_FILES_API_PREFIX } from "@breadboard-ai/types/canonical-endpoints.js";
 
@@ -22,7 +22,7 @@ export const IS_SHAREABLE_COPY_PROPERTY = "isShareableCopy";
 async function findUserOpalFolder(
   userFolderName: string,
   accessToken: string
-): Promise<GetFolderResult> {
+): Promise<FindUserOpalFolderResult> {
   const query = `name=${quote(userFolderName)}
   and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"
   and trashed=false`;
@@ -62,7 +62,7 @@ async function findUserOpalFolder(
 async function listUserOpals(
   accessToken: string,
   isTestApi: boolean
-): Promise<ListOpalFilesResult> {
+): Promise<ListUserOpalsResult> {
   const fields = [
     "id",
     "name",

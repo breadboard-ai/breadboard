@@ -17,9 +17,9 @@ import {
 } from "@breadboard-ai/types/oauth.js";
 import type {
   CheckAppAccessResult,
-  GetFolderResult,
+  FindUserOpalFolderResult,
   GuestConfiguration,
-  ListOpalFilesResult,
+  ListUserOpalsResult,
   OpalShellHostProtocol,
   PickDriveFilesOptions,
   PickDriveFilesResult,
@@ -743,7 +743,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     sendToAllowedEmbedderIfPresent(message);
   };
 
-  findUserOpalFolder = async (): Promise<GetFolderResult> => {
+  findUserOpalFolder = async (): Promise<FindUserOpalFolderResult> => {
     const token = await this.#getToken([
       "https://www.googleapis.com/auth/drive.readonly",
     ]);
@@ -759,7 +759,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     return findUserOpalFolder(userFolderName, token.grant.access_token);
   };
 
-  listUserOpals = async (): Promise<ListOpalFilesResult> => {
+  listUserOpals = async (): Promise<ListUserOpalsResult> => {
     const token = await this.#getToken([
       "https://www.googleapis.com/auth/drive.readonly",
     ]);
