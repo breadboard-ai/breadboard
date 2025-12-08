@@ -30,25 +30,24 @@ import {
   FileSystemEvalBackendHandle,
 } from "./filesystem.js";
 import { ok } from "@breadboard-ai/utils";
-import {
-  FileSystemPath,
-  FileSystemQueryEntry,
-  FileSystemQueryResult,
-} from "@breadboard-ai/types";
+import { FileSystemPath, Outcome } from "@breadboard-ai/types";
 import { signal } from "signal-utils";
+import { FinalChainReport } from "../../collate-context.js";
+import "./ui/contexts-viewer.js";
+import {
+  GroupedByType,
+  ParsedFileMedata,
+  parseFileName,
+} from "./parse-file-name.js";
 
-type EvalFileData = Array<Context | A2UIData>;
-
-interface Context {
-  type: "context";
-}
+type EvalFileData = Array<FinalChainReport | A2UIData>;
 
 type A2UIData = {
   type: "a2ui";
   data: v0_8.Types.ServerToClientMessage[][];
 };
 
-type RenderMode = "surfaces" | "messages";
+type RenderMode = "surfaces" | "messages" | "contexts";
 
 const RENDER_MODE_KEY = "eval-inspector-render-mode";
 
@@ -63,6 +62,9 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   @state()
   accessor #requesting = false;
 
+  @state()
+  accessor contexts: FinalChainReport[] = [];
+
   @property()
   accessor selectedPath: FileSystemEvalBackendHandle | null = null;
 
@@ -73,13 +75,16 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   accessor #selectedSurface: number = 0;
 
   @signal
-  accessor #showPromptOption: FileSystemPath | null = null;
+  accessor #showPromptOption: string | null = null;
 
   @signal
-  accessor #filesInMountedDir: FileSystemQueryEntry[] = [];
+  accessor #filesInMountedDir: GroupedByType[] = [];
 
   @signal
   accessor #dirs: FileSystemEvalBackendHandle[] = [];
+
+  @signal
+  accessor selectedFile: ParsedFileMedata | null = null;
 
   @signal
   accessor #surfaces: v0_8.Types.ServerToClientMessage[][] | null = null;
@@ -96,7 +101,77 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
   #renderMode: RenderMode = "surfaces";
   #fileSystem = new FileSystemEvalBackend();
+  #urlRestored = false;
 
+  constructor() {
+    super();
+    this.#refresh();
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    window.addEventListener("popstate", this.#onPopState);
+    this.#restoreFromUrl();
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    window.removeEventListener("popstate", this.#onPopState);
+  }
+
+  #onPopState = () => {
+    this.#restoreFromUrl();
+  };
+
+  #restoreFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const file = params.get("file");
+    const mode = params.get("mode") as RenderMode | null;
+    const surface = parseInt(params.get("surface") || "0", 10);
+
+    if (mode && ["surfaces", "messages", "contexts"].includes(mode)) {
+      this.renderMode = mode;
+    }
+
+    if (!Number.isNaN(surface)) {
+      this.#selectedSurface = surface;
+    }
+
+    if (file && file !== this.selectedFilePath) {
+      this.selectedFilePath = file;
+      this.selectedFile = parseFileName(file);
+    }
+
+    this.#urlRestored = true;
+  }
+
+  #updateUrl() {
+    if (!this.#urlRestored) {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    if (this.selectedFilePath) {
+      params.set("file", this.selectedFilePath);
+    } else {
+      params.delete("file");
+    }
+
+    if (this.renderMode) {
+      params.set("mode", this.renderMode);
+    } else {
+      params.delete("mode");
+    }
+
+    if (this.#selectedSurface > 0) {
+      params.set("surface", this.#selectedSurface.toString());
+    } else {
+      params.delete("surface");
+    }
+
+    const url = `${window.location.pathname}?${params.toString()}`;
+    window.history.pushState({}, "", url);
+  }
   static styles = [
     unsafeCSS(v0_8.Styles.structuralStyles),
     css`
@@ -266,6 +341,16 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                 width: 100%;
                 overflow: auto;
 
+                h2 {
+                  font-size: 12px;
+                  font-weight: normal;
+                  margin: 0;
+                }
+
+                ul {
+                  padding-left: var(--bb-grid-size-2);
+                }
+
                 button {
                   background: oklch(
                     from var(--primary) l c h / calc(alpha * 0.2)
@@ -318,7 +403,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           gap: var(--bb-grid-size-4);
 
           & #render-mode,
-          & #render-mode > span {
+          & #render-mode > button {
             display: flex;
             align-items: center;
             background: none;
@@ -329,8 +414,9 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
           & #render-mode {
             gap: var(--bb-grid-size-3);
+            display: flex;
 
-            & > span {
+            & > button {
               border-radius: var(--bb-grid-size-2);
               background: oklch(from var(--primary) l c h / calc(alpha * 0.2));
               opacity: 0.4;
@@ -340,21 +426,29 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
               max-width: 420px;
               padding: var(--bb-grid-size-2) var(--bb-grid-size-5);
               pointer-events: auto;
+              color: var(--primary);
+              display: flex;
+              align-items: center;
+              cursor: pointer;
 
               &:not(.active):hover {
                 opacity: 1;
-                cursor: pointer;
               }
 
               &.active {
                 opacity: 1;
                 color: var(--text-color);
               }
+
+              & .g-icon {
+                margin-right: var(--bb-grid-size-2);
+              }
             }
           }
 
           & #messages,
-          & #surfaces {
+          & #surfaces,
+          & #contexts {
             display: flex;
             border-radius: var(--bb-grid-size-2);
             border: 1px dashed var(--border-color);
@@ -384,15 +478,16 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
             }
           }
 
+          & #contexts {
+            position: relative;
+            display: block;
+          }
+
           & #messages {
             position: relative;
             display: block;
             font-family: var(--font-family-mono);
             line-height: 1.5;
-
-            & div {
-              white-space: pre-wrap;
-            }
 
             & button {
               position: absolute;
@@ -464,16 +559,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     `,
   ];
 
-  constructor() {
-    super();
-
-    this.#renderMode =
-      (localStorage.getItem(RENDER_MODE_KEY) as RenderMode) ?? "surfaces";
-
-    this.#refresh();
-  }
-
-  protected willUpdate(changedProperties: PropertyValues<this>): void {
+  protected async willUpdate(changedProperties: PropertyValues<this>) {
     if (changedProperties.has("selectedPath")) {
       if (this.selectedPath) {
         const path = this.selectedPath.path;
@@ -484,11 +570,53 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     }
 
     if (changedProperties.has("selectedFilePath")) {
-      this.#selectedSurface = 0;
+      if (this.selectedFilePath) {
+        await this.#loadFile(this.selectedFilePath);
+      } else {
+        this.#surfaces = [];
+        this.contexts = [];
+      }
+      this.#updateUrl();
+    }
+
+    if (changedProperties.has("renderMode")) {
+      this.#updateUrl();
     }
   }
 
-  #updateFiles(f: FileSystemQueryResult, path: FileSystemPath) {
+  async #loadFile(path: string) {
+    this.#processor.clearSurfaces();
+    const data = await this.#fileSystem.read(path as FileSystemPath);
+    if (!ok(data)) {
+      return;
+    }
+
+    try {
+      const fileData = JSON.parse(data) as EvalFileData;
+      this.#surfaces = [];
+      const a2ui = fileData.filter((item) => item.type === "a2ui");
+      this.contexts = fileData.filter((item) => item.type === "context");
+
+      this.#processor.clearSurfaces();
+      for (const { data } of a2ui.values()) {
+        for (let s = 0; s < data.length; s++) {
+          const surface = data[s];
+          this.#surfaces.push(surface);
+          if (s !== this.#selectedSurface) {
+            continue;
+          }
+
+          this.#processor.processMessages(surface);
+        }
+      }
+    } catch (err) {
+      console.warn(err);
+      this.renderMode = "messages";
+      return;
+    }
+  }
+
+  #updateFiles(f: Outcome<GroupedByType[]>, path: string) {
     if (!ok(f)) {
       this.#filesInMountedDir = [];
       if (f.$error === "prompt") {
@@ -498,24 +626,19 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     }
 
     this.#showPromptOption = null;
-    this.#filesInMountedDir = f.entries.sort((a, b) => {
-      if (a.path > b.path) return 1;
-      if (a.path < b.path) return -1;
-      return 0;
-    });
+    this.#filesInMountedDir = f;
   }
 
-  #refresh() {
-    return this.#fileSystem.getAll().then((items) => {
-      this.#dirs = items;
-      if (!this.selectedPath && items.length) {
-        this.selectedPath = items.at(0) ?? null;
-      }
-      return items;
-    });
+  async #refresh() {
+    const items = await this.#fileSystem.getAll();
+    this.#dirs = items;
+    if (!this.selectedPath && items.length) {
+      this.selectedPath = items.at(0) ?? null;
+    }
+    return items;
   }
 
-  #renderSurfacesOrMessages() {
+  #renderContents() {
     if (this.#requesting) {
       return html`<section id="surfaces">
         <div id="generating-surfaces">
@@ -525,6 +648,12 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           </h2>
           <p class="typography-f-s typography-sz-bl">Working on it...</p>
         </div>
+      </section>`;
+    }
+
+    if (this.renderMode === "contexts") {
+      return html`<section id="contexts">
+        <ui-contexts-viewer .contexts=${this.contexts}></ui-contexts-viewer>
       </section>`;
     }
 
@@ -554,6 +683,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                 }
 
                 this.#selectedSurface = evt.target.selectedIndex;
+                this.#updateUrl();
                 this.#processor.clearSurfaces();
 
                 const selectedSurface = this.#surfaces?.at(
@@ -596,7 +726,6 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
   }
 
   #renderInput() {
-    const selectedSurfaceIndex = this.#selectedSurface;
     return html`<div>
         ${this.#dirs.length > 0
           ? html`<select
@@ -660,47 +789,36 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           : nothing}
         <ul id="file-list">
           ${this.#filesInMountedDir.map((file) => {
-            const fileName = file.path.split("/").at(-1);
             return html`<li>
-              <button
-                ?selected=${file.path === this.selectedFilePath}
-                @click=${async () => {
-                  this.#processor.clearSurfaces();
-
-                  this.selectedFilePath = file.path;
-                  const data = await this.#fileSystem.read(file.path);
-                  if (!ok(data)) {
-                    return;
-                  }
-
-                  try {
-                    const fileData = JSON.parse(data) as EvalFileData;
-                    this.#surfaces = [];
-                    const a2ui: A2UIData[] = fileData.filter(
-                      (item) => item.type === "a2ui"
-                    );
-
-                    this.#processor.clearSurfaces();
-                    for (const { data } of a2ui.values()) {
-                      for (let s = 0; s < data.length; s++) {
-                        const surface = data[s];
-                        this.#surfaces.push(surface);
-                        if (s !== selectedSurfaceIndex) {
-                          continue;
-                        }
-
-                        this.#processor.processMessages(surface);
-                      }
-                    }
-                  } catch (err) {
-                    console.warn(err);
-                    this.renderMode = "messages";
-                    return;
-                  }
-                }}
-              >
-                ${fileName}
-              </button>
+              <h2>${file.type}</h2>
+              <ul>
+                ${file.items.map((item) => {
+                  return html`<li>
+                    <h2>${item.name}</h2>
+                    <ul>
+                      ${item.files.map((f) => {
+                        return html`<li>
+                          <button
+                            ?selected=${f.path === this.selectedFilePath}
+                            @click=${async () => {
+                              this.selectedFile = f;
+                              this.selectedFilePath = f.path;
+                            }}
+                          >
+                            ${f.date.toLocaleString(
+                              Intl.DateTimeFormat().resolvedOptions().locale,
+                              {
+                                dateStyle: "short",
+                                timeStyle: "medium",
+                              }
+                            )}
+                          </button>
+                        </li>`;
+                      })}
+                    </ul>
+                  </li>`;
+                })}
+              </ul>
             </li>`;
           })}
         </ul>
@@ -746,28 +864,34 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
           <h2
             class="typography-w-400 typography-f-s typography-sz-tl layout-sp-bt"
           >
-            Generated UI
-            <button
-              id="render-mode"
-              @click=${() => {
-                this.renderMode =
-                  this.renderMode === "messages" ? "surfaces" : "messages";
-              }}
-            >
-              <span
+            ${this.selectedFile?.name}
+            <div id="render-mode">
+              <button
+                class=${classMap({ active: this.#renderMode === "contexts" })}
+                @click=${() => (this.renderMode = "contexts")}
+                title="View Conversation Contexts"
+              >
+                <span class="g-icon filled round">dataset</span>Contexts
+              </button>
+
+              <button
                 class=${classMap({ active: this.#renderMode === "surfaces" })}
+                @click=${() => (this.renderMode = "surfaces")}
+                title="View Generated Surfaces"
               >
                 <span class="g-icon filled round">mobile_layout</span>Surfaces
-              </span>
+              </button>
 
-              <span
+              <button
                 class=${classMap({ active: this.#renderMode === "messages" })}
+                @click=${() => (this.renderMode = "messages")}
+                title="View A2UI Messages"
               >
                 <span class="g-icon filled round">communication</span>A2UI
-              </span>
-            </button>
+              </button>
+            </div>
           </h2>
-          ${this.#renderSurfacesOrMessages()}
+          ${this.#renderContents()}
         </div>
       </ui-splitter>
     </section>`;
