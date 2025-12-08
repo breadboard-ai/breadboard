@@ -20,19 +20,16 @@ import { type AppProperties } from "./utils.js";
 
 export { DriveOperations, PROTOCOL };
 
-import {
-  extractGoogleDriveFileId,
-  readProperties,
-  truncateValueForUtf8,
-} from "./utils.js";
-import type { GoogleDriveClient } from "./google-drive-client.js";
-import { DriveLookupCache } from "./drive-lookup-cache.js";
-import { purgeStoredDataInMemoryValues } from "@breadboard-ai/utils";
-import { err } from "@breadboard-ai/utils";
-import {
-  GetFolderResult,
-  OpalShellHostProtocol,
-} from "@breadboard-ai/types/opal-shell-protocol.js";
+  import {
+    extractGoogleDriveFileId,
+    readProperties,
+    truncateValueForUtf8,
+  } from "./utils.js";
+  import type { GoogleDriveClient } from "./google-drive-client.js";
+  import { DriveLookupCache } from "./drive-lookup-cache.js";
+  import { purgeStoredDataInMemoryValues } from "@breadboard-ai/utils";
+  import { err } from "@breadboard-ai/utils";
+  import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 const PROTOCOL = "drive:";
 

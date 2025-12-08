@@ -38,7 +38,7 @@ import { SaveDebouncer } from "./save-debouncer.js";
 import { DriveGalleryGraphCollection } from "./gallery-graph-collection.js";
 import { DriveUserGraphCollection } from "./user-graph-collection.js";
 import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
-import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 export { GoogleDriveBoardServer };
 
