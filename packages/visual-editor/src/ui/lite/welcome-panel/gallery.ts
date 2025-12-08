@@ -135,6 +135,10 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         text-align: left;
         aspect-ratio: 35/39;
 
+        &.animatable {
+          animation: fadeIn 250ms cubic-bezier(0.2, 0, 0, 1) 200ms 1 backwards;
+        }
+
         &::before {
           content: "";
           position: absolute;
@@ -175,6 +179,10 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           &::after {
             opacity: 1;
           }
+        }
+
+        &.hidden {
+          opacity: 0;
         }
 
         .remix-button {
@@ -481,8 +489,13 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor recentBoards: RecentBoard[] = [];
 
+  @property({ reflect: true, type: Boolean })
+  accessor isAnimatingHeight = false;
+
   readonly #paginationContainer = createRef<HTMLElement>();
-  readonly #boardsContainer = createRef<HTMLElement>();
+  #boardsContainer: HTMLElement | undefined = undefined;
+  #boardIntersectionObserver: IntersectionObserver | null = null;
+  #isAnimating = false;
 
   constructor() {
     super();
@@ -506,12 +519,13 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   }
 
   async #toggleCollapsedState() {
-    const container = this.#boardsContainer.value;
+    const container = this.#boardsContainer;
     if (container) {
       const currentHeight = container.offsetHeight;
       if (this.isCollapsed) {
         container.style.maxHeight = `${currentHeight}px`;
         this.isCollapsed = false;
+        this.#isAnimating = true;
         await this.updateComplete;
         const newHeight = container.scrollHeight;
         container.animate(
@@ -520,14 +534,16 @@ export class GalleryLite extends SignalWatcher(LitElement) {
             { maxHeight: `${newHeight}px` },
           ],
           {
-            duration: 300,
-            easing: "ease-in-out",
+            duration: 200,
+            easing: "cubic-bezier(0.2, 0, 0, 1)",
           }
         ).onfinish = () => {
           container.style.maxHeight = "none";
+          this.#isAnimating = false;
         };
       } else {
         this.isCollapsed = true;
+        this.#isAnimating = true;
         await this.updateComplete;
         const newHeight = container.offsetHeight;
         this.isCollapsed = false;
@@ -537,12 +553,13 @@ export class GalleryLite extends SignalWatcher(LitElement) {
             { maxHeight: `${newHeight}px` },
           ],
           {
-            duration: 300,
-            easing: "ease-in-out",
+            duration: 150,
+            easing: "cubic-bezier(0.2, 0, 0, 1)",
           }
         ).onfinish = () => {
           container.style.maxHeight = "none";
           this.isCollapsed = true;
+          this.#isAnimating = false;
         };
       }
     }
@@ -643,6 +660,10 @@ export class GalleryLite extends SignalWatcher(LitElement) {
       ></bb-overflow-menu>`;
     }
 
+    if (this.#boardIntersectionObserver) {
+      this.#boardIntersectionObserver.disconnect();
+    }
+
     return html`
       <section class="gallery-header">
         <h2 class="gallery-title md-title-medium sans-flex w-400">
@@ -672,7 +693,33 @@ export class GalleryLite extends SignalWatcher(LitElement) {
       </section>
       <div
         id="boards"
-        ${ref(this.#boardsContainer)}
+        ${ref((el?: Element) => {
+          this.#boardsContainer = undefined;
+          if (!(el instanceof HTMLElement)) {
+            return;
+          }
+
+          this.#boardsContainer = el;
+
+          const THRESHOLD = 0.95;
+          this.#boardIntersectionObserver = new IntersectionObserver(
+            (entries) => {
+              for (const entry of entries) {
+                if (!(entry.target instanceof HTMLElement)) continue;
+                if (entry.intersectionRatio < THRESHOLD) {
+                  entry.target.classList.toggle(
+                    "animatable",
+                    this.#isAnimating
+                  );
+                  entry.target.classList.add("hidden");
+                } else {
+                  entry.target.classList.remove("hidden");
+                }
+              }
+            },
+            { root: this.#boardsContainer, threshold: THRESHOLD }
+          );
+        })}
         class=${classMap({ collapsed: this.collapsable && this.isCollapsed })}
       >
         ${pageItems.map((item) => {
@@ -700,6 +747,13 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         tabindex="0"
         @click=${(event: PointerEvent) => this.#onBoardClick(event, url)}
         @keydown=${(event: KeyboardEvent) => this.#onBoardKeydown(event, url)}
+        ${ref((el?: Element) => {
+          if (!el) return;
+          requestAnimationFrame(() => {
+            if (!this.#boardIntersectionObserver) return;
+            this.#boardIntersectionObserver.observe(el);
+          });
+        })}
       >
         ${keyed(
           thumbnail,
