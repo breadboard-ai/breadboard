@@ -8,7 +8,7 @@
 // These will be mapped to environment-appropriate endpoints in the
 // shell host.
 
-export const BACKEND_API_PREFIX = "https://appcatalyst.pa.googleapis.com";
+export const OPAL_BACKEND_API_PREFIX = "https://appcatalyst.pa.googleapis.com";
 export const GOOGLE_DRIVE_FILES_API_PREFIX =
   "https://www.googleapis.com/drive/v3/files";
 export const GOOGLE_DRIVE_UPLOAD_API_PREFIX = "https://www.googleapis.com/upload/drive/v3/files";

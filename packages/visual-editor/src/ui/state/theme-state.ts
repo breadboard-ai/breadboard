@@ -37,7 +37,7 @@ export { ThemeState };
 const IMAGE_GENERATOR = "gemini-2.5-flash-image";
 
 function endpointURL(model: string) {
-  return `${GOOGLE_GENAI_API_PREFIX}/${model}:generateContent`;
+  return `${GOOGLE_GENAI_API_PREFIX}/${encodeURIComponent(model)}:generateContent`;
 }
 
 class ThemeState implements ProjectThemeState {

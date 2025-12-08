@@ -18,7 +18,7 @@ import { Select } from "./select.js";
 import { StateManager } from "./state.js";
 import { Shell } from "./shell.js";
 import {
-  BACKEND_API_PREFIX,
+  OPAL_BACKEND_API_PREFIX,
   GOOGLE_DRIVE_FILES_API_PREFIX,
   Outcome,
   PersistentBackend,
@@ -133,7 +133,7 @@ export class Runtime extends EventTarget {
         fileSystem: this.fileSystem,
         fetchWithCreds: this.fetchWithCreds,
       },
-      BACKEND_API_PREFIX
+      OPAL_BACKEND_API_PREFIX
     );
 
     const sandbox = createA2ModuleFactory({
@@ -211,7 +211,7 @@ export class Runtime extends EventTarget {
     this.edit = new Edit(graphStore, autonamer, this.flags);
     this.apiClient = new AppCatalystApiClient(
       this.fetchWithCreds,
-      BACKEND_API_PREFIX
+      OPAL_BACKEND_API_PREFIX
     );
     this.emailPrefsManager = new EmailPrefsManager(this.apiClient);
     this.flowGenerator = new FlowGenerator(this.apiClient, this.flags);

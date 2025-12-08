@@ -56,6 +56,18 @@ export const GOOGLE_OAUTH_TOKEN_ENDPOINT: string = getString(
   "GOOGLE_OAUTH_TOKEN_ENDPOINT"
 );
 
+export const GOOGLE_DOCS_API_ENDPOINT: string = getString(
+  "GOOGLE_DOCS_API_ENDPOINT"
+);
+
+export const GOOGLE_SHEETS_API_ENDPOINT: string = getString(
+  "GOOGLE_SHEETS_API_ENDPOINT"
+);
+
+export const GOOGLE_SLIDES_API_ENDPOINT: string = getString(
+  "GOOGLE_SLIDES_API_ENDPOINT"
+);
+
 export const GOOGLE_DRIVE_API_ENDPOINT: string = getString(
   "GOOGLE_DRIVE_API_ENDPOINT"
 );

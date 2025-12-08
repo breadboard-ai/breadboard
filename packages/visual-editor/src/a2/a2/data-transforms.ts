@@ -5,7 +5,7 @@
  */
 
 import {
-  BACKEND_API_PREFIX,
+  OPAL_BACKEND_API_PREFIX,
   Chunk,
   DataPartTransformer,
   FileDataPart,
@@ -195,7 +195,7 @@ async function callBackend<Req, Res>(
   request: Req,
   endpoint: string
 ): Promise<Outcome<Res>> {
-  const url = new URL(endpoint, BACKEND_API_PREFIX);
+  const url = new URL(endpoint, OPAL_BACKEND_API_PREFIX);
 
   try {
     const fetching = await fetchWithCreds(url, {

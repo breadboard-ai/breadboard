@@ -207,9 +207,9 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
   }
 
   /**
-   * Attaches the access token to the body of the request.
+   * Adds the access token to the body of the request.
    */
-  #attachAccessToken(init: RequestInit, accessToken: string) {
+  #addAccessTokenToJsonBody(init: RequestInit, accessToken: string) {
     /**
      * Add the accessToken param to the backend API request that needs it
      * to transform files.
@@ -278,8 +278,8 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     }
     const accessToken = token.grant.access_token;
 
-    if (allowedUrlInfo.shouldAttachAccessToken) {
-      init = this.#attachAccessToken(init, accessToken);
+    if (allowedUrlInfo.shouldAddAccessTokenToJsonBody) {
+      init = this.#addAccessTokenToJsonBody(init, accessToken);
     }
 
     const headers = new Headers(init.headers);

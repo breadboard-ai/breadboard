@@ -33,13 +33,13 @@ const FETCH_ALLOWLIST: Array<{
   canonicalPrefix: URL;
   scopes: OAuthScope[];
   remapOrigin?: URL;
-  shouldAttachAccessToken?: (url: string) => boolean;
+  shouldAddAccessTokenToJsonBody?: (url: string) => boolean;
 }> = [
   {
-    canonicalPrefix: new URL(CANONICAL.BACKEND_API_PREFIX),
+    canonicalPrefix: new URL(CANONICAL.OPAL_BACKEND_API_PREFIX),
     scopes: GENAI_SCOPES,
     remapOrigin: urlOrUndefined(CLIENT_DEPLOYMENT_CONFIG.BACKEND_API_ENDPOINT),
-    shouldAttachAccessToken: (url: string) =>
+    shouldAddAccessTokenToJsonBody: (url: string) =>
       url.endsWith("/uploadGeminiFile") ||
       url.endsWith("/uploadBlobFile") ||
       url.includes("/generateWebpageStream"),
@@ -62,21 +62,21 @@ const FETCH_ALLOWLIST: Array<{
     canonicalPrefix: new URL(CANONICAL.GOOGLE_DOCS_API_PREFIX),
     scopes: DRIVE_SCOPES,
     remapOrigin: urlOrUndefined(
-      CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_API_ENDPOINT
+      CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DOCS_API_ENDPOINT
     ),
   },
   {
     canonicalPrefix: new URL(CANONICAL.GOOGLE_SLIDES_API_PREFIX),
     scopes: DRIVE_SCOPES,
     remapOrigin: urlOrUndefined(
-      CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_API_ENDPOINT
+      CLIENT_DEPLOYMENT_CONFIG.GOOGLE_SLIDES_API_ENDPOINT
     ),
   },
   {
     canonicalPrefix: new URL(CANONICAL.GOOGLE_SHEETS_API_PREFIX),
     scopes: DRIVE_SCOPES,
     remapOrigin: urlOrUndefined(
-      CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_API_ENDPOINT
+      CLIENT_DEPLOYMENT_CONFIG.GOOGLE_SHEETS_API_ENDPOINT
     ),
   },
   {
@@ -102,7 +102,7 @@ const FETCH_ALLOWLIST: Array<{
 export interface FetchAllowlistInfo {
   scopes: OAuthScope[];
   remappedUrl: URL | undefined;
-  shouldAttachAccessToken: boolean;
+  shouldAddAccessTokenToJsonBody: boolean;
 }
 
 export function checkFetchAllowlist(
@@ -113,7 +113,7 @@ export function checkFetchAllowlist(
     canonicalPrefix,
     scopes,
     remapOrigin,
-    shouldAttachAccessToken,
+    shouldAddAccessTokenToJsonBody,
   } of FETCH_ALLOWLIST) {
     if (
       url.origin === canonicalPrefix.origin &&
@@ -128,7 +128,7 @@ export function checkFetchAllowlist(
       return {
         scopes,
         remappedUrl,
-        shouldAttachAccessToken: !!shouldAttachAccessToken?.(urlStr),
+        shouldAddAccessTokenToJsonBody: !!shouldAddAccessTokenToJsonBody?.(urlStr),
       };
     }
   }

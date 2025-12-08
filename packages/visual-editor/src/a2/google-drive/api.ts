@@ -669,7 +669,11 @@ async function get(moduleArgs: A2ModuleArgs, id: string) {
   if (!id) {
     return err("Please supply file id.");
   }
-  return api(moduleArgs, `${GOOGLE_DRIVE_FILES_API_PREFIX}/${id}`, "GET");
+  return api(
+    moduleArgs,
+    `${GOOGLE_DRIVE_FILES_API_PREFIX}/${encodeURIComponent(id)}`,
+    "GET"
+  );
 }
 
 async function create(
@@ -703,7 +707,11 @@ async function del(moduleArgs: A2ModuleArgs, id: string) {
     return err("Please supply the id of the file to delete");
   }
 
-  return api(moduleArgs, `${GOOGLE_DRIVE_FILES_API_PREFIX}/${id}`, "DELETE");
+  return api(
+    moduleArgs,
+    `${GOOGLE_DRIVE_FILES_API_PREFIX}/${encodeURIComponent(id)}`,
+    "DELETE"
+  );
 }
 
 async function exp(moduleArgs: A2ModuleArgs, fileId: string, mimeType: string) {
@@ -712,7 +720,7 @@ async function exp(moduleArgs: A2ModuleArgs, fileId: string, mimeType: string) {
   }
   return api(
     moduleArgs,
-    `${GOOGLE_DRIVE_FILES_API_PREFIX}/${fileId}/export?mimeType=${mimeType}`,
+    `${GOOGLE_DRIVE_FILES_API_PREFIX}/${encodeURIComponent(fileId)}/export?mimeType=${mimeType}`,
     "GET"
   );
 }
@@ -721,7 +729,11 @@ async function getDoc(moduleArgs: A2ModuleArgs, id: string) {
   if (!id) {
     return err("Please supply the doc id to get.");
   }
-  return api(moduleArgs, `${GOOGLE_DOCS_API_PREFIX}/${id}`, "GET");
+  return api(
+    moduleArgs,
+    `${GOOGLE_DOCS_API_PREFIX}/${encodeURIComponent(id)}`,
+    "GET"
+  );
 }
 
 async function updateDoc(moduleArgs: A2ModuleArgs, id: string, body: unknown) {
@@ -733,7 +745,7 @@ async function updateDoc(moduleArgs: A2ModuleArgs, id: string, body: unknown) {
   }
   return api(
     moduleArgs,
-    `${GOOGLE_DOCS_API_PREFIX}/${id}:batchUpdate`,
+    `${GOOGLE_DOCS_API_PREFIX}/${encodeURIComponent(id)}:batchUpdate`,
     "POST",
     body
   );
@@ -743,7 +755,11 @@ async function getPresentation(
   moduleArgs: A2ModuleArgs,
   id: string
 ): Promise<Outcome<SlidesPresentation>> {
-  return api(moduleArgs, `${GOOGLE_SLIDES_API_PREFIX}/${id}`, "GET");
+  return api(
+    moduleArgs,
+    `${GOOGLE_SLIDES_API_PREFIX}/${encodeURIComponent(id)}`,
+    "GET"
+  );
 }
 
 async function createPresentation(
@@ -766,7 +782,7 @@ async function updatePresentation(
   }
   return api(
     moduleArgs,
-    `${GOOGLE_SLIDES_API_PREFIX}/${id}:batchUpdate`,
+    `${GOOGLE_SLIDES_API_PREFIX}/${encodeURIComponent(id)}:batchUpdate`,
     "POST",
     body
   );
@@ -778,7 +794,7 @@ async function getSpreadsheetMetadata(moduleArgs: A2ModuleArgs, id: string) {
   }
   return api<SheetList>(
     moduleArgs,
-    `${GOOGLE_SHEETS_API_PREFIX}/${id}?fields=sheets.properties`,
+    `${GOOGLE_SHEETS_API_PREFIX}/${encodeURIComponent(id)}?fields=sheets.properties`,
     "GET"
   );
 }
@@ -797,7 +813,7 @@ async function appendSpreadsheetValues(
   }
   return api(
     moduleArgs,
-    `${GOOGLE_SHEETS_API_PREFIX}/${id}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED`,
+    `${GOOGLE_SHEETS_API_PREFIX}/${encodeURIComponent(id)}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED`,
     "POST",
     body
   );

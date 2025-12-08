@@ -8,7 +8,7 @@ import type {
   GraphProviderItem,
   ImmutableGraphCollection,
 } from "@breadboard-ai/types";
-import { BACKEND_API_PREFIX } from "@breadboard-ai/types";
+import { OPAL_BACKEND_API_PREFIX } from "@breadboard-ai/types";
 import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
@@ -106,7 +106,7 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
     }
 
     const locationResponse = await this.#fetchWithCreds(
-      new URL(`${BACKEND_API_PREFIX}/v1beta1/getLocation`)
+      new URL(`${OPAL_BACKEND_API_PREFIX}/v1beta1/getLocation`)
     );
     if (!locationResponse.ok) {
       console.error(
