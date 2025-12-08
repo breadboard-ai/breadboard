@@ -125,4 +125,5 @@ export declare type GuestConfiguration = {
   consentMessage: string;
   advancedEditorOrigin?: string;
   isTestApi?: boolean;
+  shareSurface?: string;
 };

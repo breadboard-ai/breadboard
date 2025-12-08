@@ -8,6 +8,7 @@ import {
   DRIVE_PROPERTY_IS_SHAREABLE_COPY,
   DRIVE_PROPERTY_LATEST_SHARED_VERSION,
   DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY,
+  DRIVE_PROPERTY_OPAL_SHARE_SURFACE,
   DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN,
 } from "@breadboard-ai/utils/google-drive/operations.js";
 import {
@@ -50,6 +51,8 @@ import {
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { makeUrl } from "../../utils/urls.js";
 import { GoogleDriveBoardServer } from "../../../board-server/server.js";
+import { guestConfigurationContext } from "../../contexts/guest-configuration.js";
+import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
@@ -72,6 +75,7 @@ type State =
         resourceKey: string | undefined;
         stale: boolean;
         permissions: gapi.client.drive.Permission[];
+        shareSurface: string | undefined;
       };
       latestVersion: string;
     }
@@ -85,6 +89,7 @@ type State =
             resourceKey: string | undefined;
             stale: boolean;
             permissions: gapi.client.drive.Permission[];
+            shareSurface: string | undefined;
           }
         | undefined;
       latestVersion: string;
@@ -398,6 +403,9 @@ export class SharePanel extends LitElement {
 
   @consume({ context: boardServerContext, subscribe: true })
   accessor boardServer: BoardServer | undefined;
+
+  @consume({ context: guestConfigurationContext })
+  accessor guestConfiguration: GuestConfiguration | undefined;
 
   @property({ attribute: false })
   accessor graph: GraphDescriptor | undefined;
@@ -1083,6 +1091,10 @@ export class SharePanel extends LitElement {
             DRIVE_PROPERTY_LATEST_SHARED_VERSION
           ],
         permissions: shareableCopyFileMetadata.permissions ?? [],
+        shareSurface:
+          shareableCopyFileMetadata.properties?.[
+            DRIVE_PROPERTY_OPAL_SHARE_SURFACE
+          ],
       },
       latestVersion: thisFileMetadata.version,
     };
@@ -1132,6 +1144,7 @@ export class SharePanel extends LitElement {
         resourceKey: copyResult.shareableCopyResourceKey,
         stale: false,
         permissions: publishPermissions,
+        shareSurface: this.guestConfiguration?.shareSurface,
       };
       newLatestVersion = copyResult.newMainVersion;
     }
@@ -1454,6 +1467,7 @@ export class SharePanel extends LitElement {
     // component.
     await this.boardServer.flushSaveQueue(`drive:/${shareableCopyFileId}`);
 
+    const shareSurface = this.guestConfiguration?.shareSurface;
     const shareableCopyMetadata =
       await this.googleDriveClient.updateFileMetadata(
         shareableCopyFileId,
@@ -1462,6 +1476,9 @@ export class SharePanel extends LitElement {
             [DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN]: mainFileId,
             [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: updateMainResult.version,
             [DRIVE_PROPERTY_IS_SHAREABLE_COPY]: "true",
+            ...(shareSurface
+              ? { [DRIVE_PROPERTY_OPAL_SHARE_SURFACE]: shareSurface }
+              : {}),
           },
         },
         { fields: ["resourceKey"] }
