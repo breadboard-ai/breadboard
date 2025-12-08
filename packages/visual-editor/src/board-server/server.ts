@@ -38,6 +38,7 @@ import { SaveDebouncer } from "./save-debouncer.js";
 import { DriveGalleryGraphCollection } from "./gallery-graph-collection.js";
 import { DriveUserGraphCollection } from "./user-graph-collection.js";
 import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
+import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 export { GoogleDriveBoardServer };
 
@@ -90,7 +91,8 @@ class GoogleDriveBoardServer
     signInInfo: SignInInfo,
     googleDriveClient: GoogleDriveClient,
     publishPermissions: gapi.client.drive.Permission[],
-    userFolderName: string
+    userFolderName: string,
+    findUserOpalFolder: OpalShellHostProtocol["findUserOpalFolder"]
   ) {
     super();
 
@@ -107,7 +109,8 @@ class GoogleDriveBoardServer
       },
       userFolderName,
       googleDriveClient,
-      publishPermissions
+      publishPermissions,
+      findUserOpalFolder
     );
 
     this.capabilities = configuration.capabilities;

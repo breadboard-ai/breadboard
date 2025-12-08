@@ -39,7 +39,7 @@ export declare interface OpalShellHostProtocol {
 
   shareDriveFiles(options: ShareDriveFilesOptions): Promise<void>;
 
-  getOpalFolder(): Promise<GetFolderResult>;
+  findUserOpalFolder(): Promise<GetFolderResult>;
 
   checkAppAccess(): Promise<CheckAppAccessResult>;
 

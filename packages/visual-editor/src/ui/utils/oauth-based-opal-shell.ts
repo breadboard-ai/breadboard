@@ -46,11 +46,11 @@ import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
 import { checkFetchAllowlist } from "./fetch-allowlist.js";
 import { GOOGLE_DRIVE_FILES_API_PREFIX } from "@breadboard-ai/types";
-import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
-import { DriveOperations } from "@breadboard-ai/utils/google-drive/operations.js";
-import { ok } from "@breadboard-ai/utils";
 
 const SIGN_IN_CONNECTION_ID = "$sign-in";
+
+export const GOOGLE_DRIVE_FOLDER_MIME_TYPE =
+  "application/vnd.google-apps.folder";
 
 const PROD_AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/auth";
 const AUTH_ENDPOINT =
@@ -741,40 +741,50 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     sendToAllowedEmbedderIfPresent(message);
   };
 
-  getOpalFolder = async (): Promise<GetFolderResult> => {
-    const signInState = await this.getSignInState();
-    const proxyApiBaseUrl = new URL(
-      "/api/drive-proxy/drive/v3/files",
-      window.location.href
-    ).href;
-    let apiBaseUrl;
-    if (signInState.status === "signedout") {
-      apiBaseUrl = proxyApiBaseUrl;
-    } else {
-      apiBaseUrl = GOOGLE_DRIVE_FILES_API_PREFIX;
+  findUserOpalFolder = async (): Promise<GetFolderResult> => {
+    const token = await this.#getToken([
+      "https://www.googleapis.com/auth/drive.readonly",
+    ]);
+    if (token.state !== "valid") {
+      return {
+        ok: false,
+        error: "User is signed-out or doesn't have sufficient scope",
+      };
     }
-    const googleDriveClient = new GoogleDriveClient({
-      proxyApiBaseUrl,
-      apiBaseUrl,
-      fetchWithCreds: this.fetchWithCreds,
-      isTestApi: !!(await this.getConfiguration()).isTestApi,
-    });
-    const googleDrivePublishPermissions =
-      CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [];
     const userFolderName =
       CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
+    const query =
+      `name=${quote(userFolderName)}` +
+      ` and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"` +
+      ` and trashed=false`;
 
-    const operations = new DriveOperations(
-      async () => {},
-      userFolderName,
-      googleDriveClient,
-      googleDrivePublishPermissions
-    );
-    const folder = await operations.findOrCreateFolder();
-    if (!ok(folder)) {
-      return { ok: false, error: folder.$error };
+    const url = new URL(GOOGLE_DRIVE_FILES_API_PREFIX);
+    url.searchParams.set("q", query);
+    url.searchParams.set("fields", "files(id, mimeType)");
+    url.searchParams.set("orderBy", "createdTime desc");
+
+    let { files } = (await fetch(url, {
+      headers: { Authorization: `Bearer ${token.grant.access_token}` },
+    }).then((r) => r.json())) as { files: { id: string; mimeType: string }[] };
+    // This shouldn't be required based on the query above, but for some reason
+    // the TestGaia drive endpoint doesn't seem to respect the mimeType query
+    files = files.filter((f) => f.mimeType === GOOGLE_DRIVE_FOLDER_MIME_TYPE);
+    if (files.length > 0) {
+      if (files.length > 1) {
+        console.warn(
+          "[Google Drive] Multiple candidate root folders found," +
+            " picking the first created one arbitrarily:",
+          files
+        );
+      }
+      const id = files[0]!.id;
+      console.log("[Google Drive] Found existing root folder", id);
+      return { ok: true, id };
     }
-    return { ok: true, id: folder };
-    // return { ok: true, id: "" };
+    return { ok: false, error: "No root folder found" };
   };
+}
+
+function quote(value: string) {
+  return `'${value.replace(/'/g, "\\'")}'`;
 }

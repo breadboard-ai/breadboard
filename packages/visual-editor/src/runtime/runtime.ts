@@ -174,7 +174,8 @@ export class Runtime extends EventTarget {
 
     this.googleDriveBoardServer = createGoogleDriveBoardServer(
       this.signinAdapter,
-      this.googleDriveClient
+      this.googleDriveClient,
+      config.shellHost.findUserOpalFolder
     );
     const a2Server = createA2Server();
 
