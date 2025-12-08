@@ -39,9 +39,9 @@ export declare interface OpalShellHostProtocol {
 
   shareDriveFiles(options: ShareDriveFilesOptions): Promise<void>;
 
-  findUserOpalFolder(): Promise<GetFolderResult>;
+  findUserOpalFolder(): Promise<FindUserOpalFolderResult>;
 
-  listUserOpals(): Promise<ListOpalFilesResult>;
+  listUserOpals(): Promise<ListUserOpalsResult>;
 
   checkAppAccess(): Promise<CheckAppAccessResult>;
 
@@ -81,7 +81,7 @@ export declare interface PickDriveFilesOptions {
   mimeTypes: string[];
 }
 
-export declare type GetFolderResult =
+export declare type FindUserOpalFolderResult =
   | { ok: true; id: string }
   | { ok: false; error: string };
 
@@ -94,7 +94,7 @@ export declare type ListOpalFileItem = {
   isAppAuthorized: boolean;
 };
 
-export declare type ListOpalFilesResult =
+export declare type ListUserOpalsResult =
   | {
       ok: true;
       files: ListOpalFileItem[];

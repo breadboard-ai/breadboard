@@ -53,7 +53,7 @@ const FETCH_ALLOWLIST: AllowListParams[] = [
     remapOrigin: urlOrUndefined(
       CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_API_ENDPOINT
     ),
-    allowQueryParams: (params) => !params.get("q"),
+    allowQueryParams: (params) => !params.has("q"),
   },
   {
     canonicalPrefix: new URL(CANONICAL.GOOGLE_DRIVE_UPLOAD_API_PREFIX),
@@ -125,10 +125,7 @@ export function checkFetchAllowlist(
       url.origin === canonicalPrefix.origin &&
       url.pathname.startsWith(canonicalPrefix.pathname)
     ) {
-      if (
-        allowQueryParams &&
-        !allowQueryParams(new URLSearchParams(url.search))
-      ) {
+      if (allowQueryParams && !allowQueryParams(url.searchParams)) {
         return undefined;
       }
       let remappedUrl: URL | undefined = undefined;
