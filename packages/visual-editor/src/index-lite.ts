@@ -30,6 +30,10 @@ import { OneShotFlowGenFailureResponse } from "./ui/flow-gen/flow-generator.js";
 import { flowGenWithTheme } from "./ui/flow-gen/flowgen-with-theme.js";
 import { markdown } from "./ui/directives/markdown.js";
 import { type SharePanel } from "./ui/elements/elements.js";
+import {
+  CheckAppAccessResult,
+  GuestConfiguration,
+} from "@breadboard-ai/types/opal-shell-protocol.js";
 
 const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
 
@@ -324,6 +328,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   #advancedEditorLink: Ref<HTMLElement> = createRef();
   #sharePanelRef: Ref<SharePanel> = createRef();
 
+  private accessStatus: CheckAppAccessResult | null = null;
+
   constructor(args: MainArguments) {
     super(args);
 
@@ -365,13 +371,24 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         const remixUrl = parsedUrl.remix ? parsedUrl.flow : null;
         if (remixUrl) {
           await waitForBoardToLoad;
-          this.invokeRemixEventRouteWith(remixUrl);
+          if (this.accessStatus?.canAccess) {
+            this.invokeRemixEventRouteWith(remixUrl);
+          }
         }
         break;
       }
       case "home": {
         await this.askUserToSignInIfNeeded();
       }
+    }
+  }
+
+  override async handleAppAccessCheckResult(
+    result: CheckAppAccessResult
+  ): Promise<void> {
+    if (!result.canAccess) {
+      this.accessStatus = result;
+      this.uiState.show.add("NoAccessModal");
     }
   }
 
@@ -447,6 +464,25 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       .state=${this.runtime.state.lite}
       ?inert=${this.#isInert()}
     ></bb-prompt-view>`;
+  }
+
+  protected renderNoAccessModal() {
+    const content = getNoAccessModalContent(
+      this.accessStatus,
+      this.guestConfiguration
+    );
+    if (!content) return nothing;
+    const { title, message } = content;
+    return html`
+      <bb-modal
+        appearance="basic"
+        .modalTitle=${title}
+        @bbmodaldismissed=${(evt: Event) => {
+          evt.preventDefault();
+        }}
+        ><section id="container">${message}</section></bb-modal
+      >
+    `;
   }
 
   #renderUserInput() {
@@ -619,6 +655,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     return [
       this.renderTooltip(),
       this.#renderOnboardingTooltip(),
+      this.uiState.show.has("NoAccessModal")
+        ? this.renderNoAccessModal()
+        : nothing,
       this.uiState.show.has("SignInModal") ? this.renderSignInModal() : nothing,
     ];
   }
@@ -764,5 +803,35 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #onClickShareApp() {
     this.#sharePanelRef.value?.open();
+  }
+}
+
+function getNoAccessModalContent(
+  status: CheckAppAccessResult | null,
+  guestConfiguration: GuestConfiguration | undefined
+): { title: string; message: string } | null {
+  const title = "Access Denied";
+  if (!status) return null;
+  if (status.canAccess) return null;
+  switch (status.accessStatus) {
+    case "ACCESS_STATUS_DASHER_ACCOUNT":
+      return {
+        title,
+        message:
+          guestConfiguration?.noAccessDasherMessage ||
+          "Switch to a personal Google Account that you use to access Opal",
+      };
+    case "ACCESS_STATUS_REGION_RESTRICTED":
+      return {
+        title,
+        message:
+          guestConfiguration?.noAccessRegionRestrictedMessage ||
+          "It looks like Opal isn't available in your country yet. We're working hard to bring Opal to new countries soon.",
+      };
+    default:
+      return {
+        title,
+        message: "It looks like this account can't access Opal yet.",
+      };
   }
 }

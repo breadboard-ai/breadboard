@@ -715,7 +715,10 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     if (token.state === "valid") {
       return await this.#checkAppAccessWithToken(token.grant.access_token);
     } else {
-      return { canAccess: false };
+      return {
+        canAccess: false,
+        accessStatus: "ACCESS_STATUS_UNSPECIFIED",
+      };
     }
   };
 
@@ -726,7 +729,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       console.info(
         `[shell host] Using test gaia; Skipping geo restriction check`
       );
-      return { canAccess: true };
+      return { canAccess: true, accessStatus: "ACCESS_STATUS_OK" };
     }
     const response = await fetch(
       new URL(
@@ -738,8 +741,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} error checking geo restriction`);
     }
-    const result = (await response.json()) as { canAccess?: boolean };
-    return { canAccess: !!result.canAccess };
+    return (await response.json()) as CheckAppAccessResult;
   }
 
   sendToEmbedder = async (message: BreadboardMessage): Promise<void> => {

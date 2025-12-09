@@ -18,6 +18,7 @@ import { IterateOnPromptEvent } from "./ui/events/events.js";
 import { IterateOnPromptMessage } from "./ui/embed/embed.js";
 
 import { MakeUrlInit } from "./ui/types/types.js";
+import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 const Strings = BreadboardUI.Strings.forSection("Global");
 const parsedUrl = parseUrl(window.location.href);
@@ -26,7 +27,25 @@ export { Main };
 
 @customElement("bb-main")
 class Main extends MainBase {
-  async doPostInitWork() {}
+  override async doPostInitWork() {}
+
+  override async handleAppAccessCheckResult(
+    result: CheckAppAccessResult
+  ): Promise<void> {
+    if (!result.canAccess) {
+      await this.signinAdapter.signOut();
+      window.history.pushState(
+        undefined,
+        "",
+        makeUrl({
+          page: "landing",
+          geoRestriction: true,
+          redirect: { page: "home" },
+        })
+      );
+      window.location.reload();
+    }
+  }
 
   render() {
     const renderValues = this.getRenderValues();
