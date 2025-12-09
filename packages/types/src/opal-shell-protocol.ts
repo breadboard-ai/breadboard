@@ -130,6 +130,8 @@ export declare interface ShareDriveFilesOptions {
 
 export declare type GuestConfiguration = {
   consentMessage: string;
+  noAccessDasherMessage?: string;
+  noAccessRegionRestrictedMessage?: string;
   advancedEditorOrigin?: string;
   isTestApi?: boolean;
 

@@ -12,6 +12,10 @@ import { makeShareLinkFromTemplate } from "./utils/make-share-link-from-template
 
 @customElement("bb-open-main")
 export class OpenMain extends MainBase {
+  override async handleAppAccessCheckResult(): Promise<void> {
+    // Intentionally do nothing on open -- let the final destination handle it.
+  }
+
   override async doPostInitWork() {
     const url = parseUrl(window.location.href);
     if (url.page !== "open") {

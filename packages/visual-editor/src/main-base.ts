@@ -59,8 +59,9 @@ import {
   SigninAdapter,
   signinAdapterContext,
 } from "./ui/utils/signin-adapter.js";
-import { makeUrl, parseUrl } from "./ui/utils/urls.js";
+import { parseUrl } from "./ui/utils/urls.js";
 import {
+  CheckAppAccessResult,
   GuestConfiguration,
   OpalShellHostProtocol,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
@@ -265,21 +266,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     // Asyncronously check if the user has a geo-restriction and sign out if so.
     if (this.signinAdapter.state === "signedin") {
-      this.signinAdapter.checkAppAccess().then(async (access) => {
-        if (!access.canAccess) {
-          await this.signinAdapter.signOut();
-          window.history.pushState(
-            undefined,
-            "",
-            makeUrl({
-              page: "landing",
-              geoRestriction: true,
-              redirect: { page: "home" },
-            })
-          );
-          window.location.reload();
-        }
-      });
+      this.signinAdapter
+        .checkAppAccess()
+        .then(this.handleAppAccessCheckResult.bind(this));
     }
 
     this.emailPrefsManager = this.runtime.emailPrefsManager;
@@ -351,6 +340,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
     this.doPostInitWork();
   }
+
+  abstract handleAppAccessCheckResult(
+    result: CheckAppAccessResult
+  ): Promise<void>;
 
   abstract doPostInitWork(): Promise<void>;
 
