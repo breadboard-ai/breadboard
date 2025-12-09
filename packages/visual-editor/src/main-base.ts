@@ -73,6 +73,7 @@ import { eventRoutes } from "./event-routing/event-routing.js";
 
 import { MainArguments } from "./types/types.js";
 import { hash, ok } from "@breadboard-ai/utils";
+import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
 
 export { MainBase };
 
@@ -123,6 +124,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   @provide({ context: consentManagerContext })
   accessor #consentManager: ConsentManager;
+
+  @provide({ context: guestConfigurationContext })
+  protected accessor guestConfiguration: GuestConfiguration;
 
   @state()
   protected accessor tab: Runtime.Types.Tab | null = null;
@@ -218,9 +222,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected readonly settings: SettingsStore;
   readonly emailPrefsManager: EmailPrefsManager;
   protected readonly hostOrigin: URL;
-
-  // Configuration provided by shell host
-  protected readonly guestConfiguration: GuestConfiguration;
 
   // Event Handlers.
   readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
