@@ -838,7 +838,7 @@ export class Board extends EventTarget {
         messages.end,
         BreadboardUI.Types.SnackType.INFORMATION,
         [],
-        true,
+        false,
         true
       )
     );
