@@ -34,6 +34,7 @@ async function findUserOpalFolder(
 
   try {
     let { files } = (await fetch(url, {
+      // prettier-ignore prevent closure from munging the header key
       headers: { Authorization: `Bearer ${accessToken}` },
     }).then((r) => r.json())) as {
       files: { id: string; mimeType: string }[];
@@ -86,6 +87,7 @@ and 'me' in owners
 
   try {
     let { files } = (await fetch(url, {
+      // prettier-ignore prevent closure from munging the header key
       headers: { Authorization: `Bearer ${accessToken}` },
     }).then((r) => r.json())) as {
       files: ListOpalFileItem[];
