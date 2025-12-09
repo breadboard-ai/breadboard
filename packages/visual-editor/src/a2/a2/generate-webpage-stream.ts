@@ -45,6 +45,7 @@ type StreamingRequestBody = {
     parts: StreamingRequestPart[];
     role: string;
   }>;
+  driveResourceKeys?: Record<string, string>;
 };
 
 async function getStreamBackendUrl(caps: Capabilities): Promise<string> {
@@ -79,6 +80,7 @@ function buildStreamingRequestBody(
   modelName: string
 ): StreamingRequestBody {
   const contents: StreamingRequestBody["contents"] = [];
+  const driveResourceKeys: StreamingRequestBody["driveResourceKeys"] = {};
 
   let textCount = 0;
   let mediaCount = 0;
@@ -114,6 +116,10 @@ function buildStreamingRequestBody(
         mediaCount++;
         const handle = part.storedData.handle;
         const mimeType = part.storedData.mimeType;
+        const resourceKey = part.storedData.resourceKey;
+        if (resourceKey) {
+          driveResourceKeys[handle] = resourceKey;
+        }
 
         // Parse URL into appropriate fileUri format
         const fileUri = parseStoredDataUrl(handle);
@@ -134,12 +140,16 @@ function buildStreamingRequestBody(
     }
   }
 
-  return {
+  const requestBody: StreamingRequestBody = {
     intent: "",
     modelName,
     userInstruction: instruction,
     contents,
   };
+  if (Object.keys(driveResourceKeys).length > 0) {
+    requestBody.driveResourceKeys = driveResourceKeys;
+  }
+  return requestBody;
 }
 
 /**
