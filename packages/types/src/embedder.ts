@@ -73,6 +73,8 @@ export declare interface ResizeMessage {
   type: "resize";
   height: number;
   width: number;
+  /** Whether or not the embedder should animate to this new height. */
+  animate: boolean;
 }
 
 /**
