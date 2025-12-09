@@ -70,7 +70,6 @@ export const MAIN_APP_CSP = {
     "https://www.google.com", // Feedback
     "https://www.googletagmanager.com",
     "https://www.gstatic.com",
-    ...(flags.SHELL_ENABLED ? [] : ["https://apis.google.com"]),
   ],
   ["img-src"]: [
     "'self'",
@@ -96,13 +95,6 @@ export const MAIN_APP_CSP = {
     "data:",
     "https://*.google.com",
     "https://*.google-analytics.com",
-    ...(flags.SHELL_ENABLED
-      ? []
-      : [
-          "https://*.googleapis.com",
-          flags.BACKEND_API_ENDPOINT,
-          flags.SHELL_GUEST_ORIGIN,
-        ]),
   ],
   ["frame-src"]: [
     "'self'",
@@ -118,7 +110,7 @@ export const MAIN_APP_CSP = {
     // Note that frame-ancestors applies recursively. If A iframes B iframes C,
     // then C must allow both B and A.
     ...flags.ALLOWED_REDIRECT_ORIGINS,
-    ...(flags.SHELL_ENABLED ? flags.SHELL_HOST_ORIGINS : []),
+    ...flags.SHELL_HOST_ORIGINS,
   ]),
   ["media-src"]: ["'self'", "blob:", "data:"],
   ["base-uri"]: ["'none'"],
@@ -155,7 +147,7 @@ export const GENERATED_APP_CSP = {
     // Note that frame-ancestors applies recursively. If A iframes B iframes C,
     // then C must allow both B and A.
     ...flags.ALLOWED_REDIRECT_ORIGINS,
-    ...(flags.SHELL_ENABLED ? flags.SHELL_HOST_ORIGINS : []),
+    ...flags.SHELL_HOST_ORIGINS,
   ],
   ["media-src"]: [
     "'self'", // allow audio/video from /board/blobs
