@@ -24,23 +24,6 @@ export class OpenMain extends MainBase {
       return;
     }
 
-    // Check if the user is from a domain with a special configuration, and
-    // redirect to the /open/ page on that domain's preferred url if set.
-    const userDomain = this.signinAdapter.domain;
-    const userDomainPreferredUrl =
-      userDomain && this.globalConfig.domains?.[userDomain]?.preferredUrl;
-    if (userDomainPreferredUrl) {
-      const url = new URL(
-        window.location.pathname.replace(/^\/_app\//, "") +
-          window.location.search +
-          window.location.hash,
-        userDomainPreferredUrl
-      ).href;
-      console.log(`[open] Redirecting user to preferred domain`, url);
-      window.parent.location = url;
-      return;
-    }
-
     // Check if there is a share surface identifier written to this Opal's Drive
     // file properties, and redirect to it if we have a matching URL template in
     // our config.
@@ -73,6 +56,23 @@ export class OpenMain extends MainBase {
         window.parent.location.href = redirectUrl.href;
         return;
       }
+    }
+
+    // Check if the user is from a domain with a special configuration, and
+    // redirect to the /open/ page on that domain's preferred url if set.
+    const userDomain = this.signinAdapter.domain;
+    const userDomainPreferredUrl =
+      userDomain && this.globalConfig.domains?.[userDomain]?.preferredUrl;
+    if (userDomainPreferredUrl) {
+      const url = new URL(
+        window.location.pathname.replace(/^\/_app\//, "") +
+          window.location.search +
+          window.location.hash,
+        userDomainPreferredUrl
+      ).href;
+      console.log(`[open] Redirecting user to preferred domain`, url);
+      window.parent.location = url;
+      return;
     }
 
     // Fallback to viewing the Opal on this same deployment (note that we don't
