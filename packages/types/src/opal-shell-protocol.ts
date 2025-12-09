@@ -115,6 +115,12 @@ export declare interface PickDriveFilesDocument {
 
 export declare interface CheckAppAccessResult {
   canAccess: boolean;
+  accessStatus:
+    | "ACCESS_STATUS_OK"
+    | "ACCESS_STATUS_REGION_RESTRICTED"
+    | "ACCESS_STATUS_TOS_NOT_ACCEPTED"
+    | "ACCESS_STATUS_ENVIRONMENT_RESTRICTED"
+    | "ACCESS_STATUS_DASHER_ACCOUNT";
 }
 
 export declare interface ShareDriveFilesOptions {
