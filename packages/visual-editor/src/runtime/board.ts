@@ -4,43 +4,44 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  EditHistoryCreator,
-  EditHistoryEntry,
-  GraphDescriptor,
-  Kit,
-  MutableGraphStore,
-} from "@google-labs/breadboard";
 import type {
   BoardServer,
   BoardServerSaveEventStatus,
   GraphLoader,
   OutputValues,
 } from "@breadboard-ai/types";
-import { RuntimeConfigBoardServers, Tab, TabId, TabType } from "./types";
+import {
+  EditHistoryCreator,
+  EditHistoryEntry,
+  GraphDescriptor,
+  GraphIdentifier,
+  ModuleIdentifier,
+  MutableGraphStore,
+} from "@breadboard-ai/types";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { type RunResults } from "@breadboard-ai/utils/google-drive/operations.js";
+import * as idb from "idb";
+import { RecentBoardStore } from "../data/recent-boards.js";
+import * as BreadboardUI from "../ui/index.js";
+import { BOARD_SAVE_STATUS } from "../ui/types/types.js";
+import type { SigninAdapter } from "../ui/utils/signin-adapter.js";
 import {
   RuntimeBoardLoadErrorEvent,
-  RuntimeErrorEvent,
-  RuntimeTabChangeEvent,
-  RuntimeTabCloseEvent,
   RuntimeBoardSaveStatusChangeEvent,
-  RuntimeSnackbarEvent,
-  RuntimeUnsnackbarEvent,
+  RuntimeErrorEvent,
   RuntimeNewerSharedVersionEvent,
   RuntimeRequestSignInEvent,
-} from "./events";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { GraphIdentifier, ModuleIdentifier } from "@breadboard-ai/types";
-import * as idb from "idb";
-import { BOARD_SAVE_STATUS } from "@breadboard-ai/shared-ui/types/types.js";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { RecentBoardStore } from "../data/recent-boards";
-import { type RunResults } from "@breadboard-ai/google-drive-kit/board-server/operations.js";
+  RuntimeSnackbarEvent,
+  RuntimeTabChangeEvent,
+  RuntimeTabCloseEvent,
+  RuntimeUnsnackbarEvent,
+} from "./events.js";
+import { Tab, TabId, TabType } from "./types.js";
 import {
   applyDefaultThemeInformationIfNonePresent,
   createAppPaletteIfNeeded,
-} from "./util";
-import type { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
+} from "./util.js";
+import { GoogleDriveBoardServer } from "../board-server/server.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -83,17 +84,13 @@ export class Board extends EventTarget {
   constructor(
     public readonly loader: GraphLoader,
     public readonly graphStore: MutableGraphStore,
-    /**
-     * Extra Kits, supplied by the board server.
-     * */
-    public readonly boardServerKits: Kit[],
-    public readonly boardServers: RuntimeConfigBoardServers,
-    public readonly recentBoardStore: RecentBoardStore,
-    public readonly signinAdapter: SigninAdapter,
-    public readonly googleDriveClient?: GoogleDriveClient
+    public readonly googleDriveBoardServer: GoogleDriveBoardServer,
+    private readonly recentBoardStore: RecentBoardStore,
+    private readonly signinAdapter: SigninAdapter,
+    private readonly googleDriveClient?: GoogleDriveClient
   ) {
     super();
-    boardServers.googleDriveBoardServer.addEventListener(
+    this.googleDriveBoardServer.addEventListener(
       "savestatuschange",
       ({ url, status }) => {
         if (!this.#currentTabId) {
@@ -292,7 +289,6 @@ export class Board extends EventTarget {
     }
     this.#tabs.set(id, {
       id,
-      boardServerKits: this.boardServerKits,
       name: descriptor.title ?? "Untitled board",
       graph: descriptor,
       graphIsMine: true,
@@ -336,7 +332,7 @@ export class Board extends EventTarget {
 
       let graph: GraphDescriptor | null = null;
       if (this.#canParse(url, base.href)) {
-        boardServer = this.boardServers.googleDriveBoardServer;
+        boardServer = this.googleDriveBoardServer;
         const resourceKey = urlAtTimeOfCall
           ? new URL(urlAtTimeOfCall).searchParams.get("resourcekey")
           : null;
@@ -429,7 +425,6 @@ export class Board extends EventTarget {
 
       this.#tabs.set(id, {
         id,
-        boardServerKits: this.boardServerKits,
         name: graph.title ?? "Untitled board",
         graph,
         graphIsMine,
@@ -539,7 +534,7 @@ export class Board extends EventTarget {
     }
 
     const boardUrl = new URL(tab.graph.url);
-    const boardServer = this.boardServers.googleDriveBoardServer;
+    const boardServer = this.googleDriveBoardServer;
     if (!boardServer) {
       return false;
     }
@@ -554,7 +549,7 @@ export class Board extends EventTarget {
     }
 
     const boardUrl = new URL(url);
-    const boardServer = this.boardServers.googleDriveBoardServer;
+    const boardServer = this.googleDriveBoardServer;
     if (!boardServer) {
       return false;
     }
@@ -662,7 +657,7 @@ export class Board extends EventTarget {
       delete tab.graph.assets["@@thumbnail"];
 
       const boardUrl = new URL(tab.graph.url);
-      const boardServer = this.boardServers.googleDriveBoardServer;
+      const boardServer = this.googleDriveBoardServer;
 
       const capabilities = boardServer.canProvide(boardUrl);
       if (!capabilities || !capabilities.save) {
@@ -746,7 +741,7 @@ export class Board extends EventTarget {
     }
 
     const fail = { result: false, error: "Unable to save", url: undefined };
-    const boardServer = this.boardServers.googleDriveBoardServer;
+    const boardServer = this.googleDriveBoardServer;
     if (!boardServer) {
       this.#isSavingAs = false;
       if (snackbarId) {
@@ -825,7 +820,7 @@ export class Board extends EventTarget {
     );
 
     const fail = { result: false, error: "Unable to delete" };
-    const boardServer = this.boardServers.googleDriveBoardServer;
+    const boardServer = this.googleDriveBoardServer;
     if (!boardServer) {
       return fail;
     }

@@ -22,8 +22,7 @@ export type BreadboardMessage =
   | LoadBoardMessage
   | CreateBoardMessage
   | RemixBoardMessage
-  | OpenInAdvancedEditorMessage
-  | TriggerShareMessage;
+  | OpenInAdvancedEditorMessage;
 
 /** Event for enabling debug. */
 export declare interface DebugMessage {
@@ -107,14 +106,6 @@ export declare interface OpenInAdvancedEditorMessage {
   boardId: string;
 }
 
-/**
- * Event to notify the parent to start the board sharing flow
- */
-export declare interface TriggerShareMessage {
-  type: "trigger_share";
-  boardId: string;
-}
-
 /** Event when a new breadboard has been created. */
 export declare interface IterateOnPromptMessage {
   type: "iterate_on_prompt";
@@ -148,8 +139,7 @@ export declare interface IterateOnPromptMessage {
 export type EmbedderMessage =
   | ToggleIterateOnPromptMessage
   | CreateNewBoardMessage
-  | HandshakeCompleteMessage
-  | RequestConsentMessage;
+  | HandshakeCompleteMessage;
 
 /** Message to determine whether to display Iterate-on-prompt button. */
 export declare interface ToggleIterateOnPromptMessage {
@@ -172,16 +162,6 @@ export declare interface HandshakeCompleteMessage {
   type: "handshake_complete";
   // The top-level origin from parent iframe.
   origin: string;
-}
-
-/**
- * Message that tells Breadboard to use a consent dialog instead of the
- * standard sign-in dialog .
- */
-export declare interface RequestConsentMessage {
-  type: "request_consent";
-  // The message to show in the consent dialog, in markdown
-  consentMessage: string;
 }
 
 export type MessageType = EmbedderMessage["type"];

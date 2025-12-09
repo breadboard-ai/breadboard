@@ -228,12 +228,6 @@ export type InspectableEdge = {
   inPort(): Promise<InspectablePort>;
 
   /**
-   * Check if the input and output schemas are compatible (meaning that the
-   * output port type is a subtype of the input port type).
-   */
-  validate(): Promise<ValidateResult>;
-
-  /**
    * Returns `true` if the edge has been deleted from the graph and this
    * instance of `InspectableEdge` no longer represents a valid edge in
    * a graph. Returns `false` otherwise.
@@ -565,28 +559,7 @@ export type InspectablePortType = {
    * Returns `true` if this port has specified behavior
    */
   hasBehavior(behavior: BehaviorSchema): boolean;
-  /**
-   * Returns `true` if the outgoing port of this type can connect to an
-   * incoming port of the specified type.
-   *
-   * @param to the incoming port type to which to connect.
-   */
-  canConnect(to: InspectablePortType): boolean;
-
-  analyzeCanConnect(to: InspectablePortType): CanConnectAnalysis;
 };
-
-export type CanConnectAnalysis =
-  | { canConnect: true; details?: never }
-  | { canConnect: false; details: CanConnectAnalysisDetail[] };
-
-export interface CanConnectAnalysisDetail {
-  message: string;
-  detail?: {
-    outputPath: Array<string | number>;
-    inputPath: Array<string | number>;
-  };
-}
 
 /**
  * Represents one side (input or output) of ports of a node.

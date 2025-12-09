@@ -4,37 +4,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as BBLite from "@breadboard-ai/shared-ui/lite";
-import "@breadboard-ai/shared-ui/lite/welcome-panel/project-listing.js";
-import "@breadboard-ai/shared-ui/elements/overflow-menu/overflow-menu.js";
+import * as BBLite from "./ui/lite/lite.js";
+import "./ui/lite/welcome-panel/project-listing.js";
+import "./ui/elements/overflow-menu/overflow-menu.js";
 import { css, html, HTMLTemplateResult, LitElement } from "lit";
 import { ref } from "lit/directives/ref.js";
 import { customElement } from "lit/decorators.js";
-import { MainArguments } from "./types/types";
-import { EmbedHandler } from "@breadboard-ai/shared-ui/embed/embed.js";
+import { MainArguments } from "./types/types.js";
+import { EmbedHandler } from "./ui/embed/embed.js";
 import { provide } from "@lit/context";
-import {
-  GlobalConfig,
-  globalConfigContext,
-} from "@breadboard-ai/shared-ui/contexts";
-import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
+import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
+import { boardServerContext } from "./ui/contexts/board-server.js";
 import type { Outcome, UUID } from "@breadboard-ai/types";
-import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
+import { SigninAdapter } from "./ui/utils/signin-adapter.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import type {
   SnackbarActionEvent,
   StateEvent,
   StateEventDetailMap,
-} from "@breadboard-ai/shared-ui/events/events.js";
+} from "./ui/events/events.js";
 import { err, ok } from "@breadboard-ai/utils";
-import {
-  SnackbarMessage,
-  SnackType,
-} from "@breadboard-ai/shared-ui/types/types.js";
-import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
-import { RecentBoardStore } from "./data/recent-boards";
+import { SnackbarMessage, SnackType } from "./ui/types/types.js";
+import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
+import { RecentBoardStore } from "./data/recent-boards.js";
 import { SignalWatcher } from "@lit-labs/signals";
+import { GoogleDriveBoardServer } from "./board-server/server.js";
 
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
@@ -51,7 +45,6 @@ export class LiteHome extends SignalWatcher(LitElement) {
     css`
       :host {
         display: block;
-        min-height: 100%;
         background: var(--sys-color--body-background);
       }
     `,

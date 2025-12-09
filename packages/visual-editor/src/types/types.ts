@@ -4,16 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { EmbedHandler } from "@breadboard-ai/shared-ui/embed/embed.js";
-import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
-import type { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
+import type { EmbedHandler } from "../ui/embed/embed.js";
+import type { GlobalConfig } from "../ui/contexts/global-config.js";
+import type { SettingsStore } from "../ui/data/settings-store.js";
 import type { FileSystemEntry } from "@breadboard-ai/types";
 import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
-import {
+import type {
+  GuestConfiguration,
   OpalShellHostProtocol,
   SignInState,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { MakeUrlInit } from "@breadboard-ai/shared-ui/types/types.js";
+import { MakeUrlInit } from "../ui/types/types.js";
 
 export type BootstrapArguments = {
   deploymentConfiguration: ClientDeploymentConfiguration;
@@ -39,6 +40,7 @@ export type MainArguments = {
   env?: FileSystemEntry[];
   embedHandler?: EmbedHandler;
   globalConfig: GlobalConfig;
+  guestConfiguration: GuestConfiguration;
   shellHost: OpalShellHostProtocol;
   hostOrigin: URL;
   initialSignInState: SignInState;

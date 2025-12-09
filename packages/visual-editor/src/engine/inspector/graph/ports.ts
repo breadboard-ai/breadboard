@@ -1,0 +1,291 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import type {
+  BehaviorSchema,
+  InputValues,
+  InspectableEdge,
+  InspectableNode,
+  InspectableNodePorts,
+  InspectablePort,
+  InspectablePortList,
+  InspectablePortType,
+  NodeConfiguration,
+  NodeDescriberResult,
+  NodeHandler,
+  NodeTypeIdentifier,
+  OutputValues,
+  Schema,
+} from "@breadboard-ai/types";
+import { PortStatus } from "@breadboard-ai/types";
+import { DEFAULT_SCHEMA, EdgeType } from "./schemas.js";
+
+export { describerResultToPorts };
+
+const title = (schema: Schema, key: string) => {
+  return schema.properties?.[key]?.title || key;
+};
+
+const computePortStatus = (
+  wired: boolean,
+  expected: boolean,
+  required: boolean,
+  wiredContainsStar: boolean
+): PortStatus => {
+  if (wired) {
+    if (expected) return PortStatus.Connected;
+    return wiredContainsStar ? PortStatus.Indeterminate : PortStatus.Dangling;
+  }
+  if (required) {
+    return wiredContainsStar ? PortStatus.Indeterminate : PortStatus.Missing;
+  }
+  return PortStatus.Ready;
+};
+
+export const collectPorts = (
+  type: EdgeType,
+  edges: InspectableEdge[],
+  schema: Schema,
+  addErrorPort: boolean,
+  allowRequired: boolean,
+  values?: NodeConfiguration
+) => {
+  let wiredContainsStar = false;
+  // Get the list of all ports wired to this node.
+  const wiredPortNames = edges.map((edge) => {
+    if (edge.out === "*") {
+      wiredContainsStar = true;
+      return "*";
+    }
+    return type === EdgeType.In ? edge.in : edge.out;
+  });
+  schema ??= {};
+  const fixed = schema.additionalProperties === false;
+  const schemaPortNames = Object.keys(schema.properties || {});
+  if (addErrorPort) {
+    // Even if not specified in the schema, all non-built-in nodes always have
+    // an optional `$error` port.
+    schemaPortNames.push("$error");
+  }
+  const schemaContainsStar = schemaPortNames.includes("*");
+  const requiredPortNames = schema.required || [];
+  const valuePortNames = Object.keys(values || {});
+  const portNames = [
+    ...new Set([
+      ...wiredPortNames,
+      ...schemaPortNames,
+      ...valuePortNames,
+      "*", // Always include the star port.
+      "", // Always include the control port.
+    ]),
+  ];
+  portNames.sort();
+  return portNames
+    .map((port) => {
+      const star = port === "*" || port === "";
+      const configured = valuePortNames.includes(port);
+      const wired = wiredPortNames.includes(port);
+      const expected = schemaPortNames.includes(port) || star;
+      const required = requiredPortNames.includes(port);
+      const portSchema = schema.properties?.[port] || DEFAULT_SCHEMA;
+      const kind = computeKind(type, portSchema);
+      if (portSchema.behavior?.includes("deprecated") && !wired) return null;
+      return {
+        name: port,
+        title: title(schema, port),
+        configured,
+        value: values?.[port],
+        star,
+        get edges() {
+          if (!wired) return [];
+          return edges.filter((edge) => {
+            if (edge.out === "*" && star) return true;
+            return type === EdgeType.In ? edge.in === port : edge.out === port;
+          });
+        },
+        status: computePortStatus(
+          wired || configured,
+          !fixed || expected || schemaContainsStar,
+          allowRequired && required,
+          wiredContainsStar
+        ),
+        schema: portSchema,
+        type: new PortType(portSchema),
+        kind,
+      } satisfies InspectablePort;
+    })
+    .filter(Boolean) as InspectablePort[];
+};
+
+function computeKind(
+  type: EdgeType,
+  portSchema: Schema
+): "input" | "output" | "side" {
+  const behaviors: BehaviorSchema[] =
+    (portSchema.type === "array"
+      ? behaviorFromArray(portSchema.items)
+      : portSchema.behavior) || [];
+  if (type === EdgeType.Out) return "output";
+  const match: Set<BehaviorSchema> = new Set(["config", "board", "side"]);
+  let count = 0;
+  behaviors.forEach((behavior) => {
+    if (match.has(behavior)) ++count;
+  });
+  if (count == 3) return "side";
+  return "input";
+}
+
+function behaviorFromArray(
+  items: Schema | Schema[] | undefined
+): BehaviorSchema[] {
+  if (!items) return [];
+  if (Array.isArray(items)) {
+    return items.flatMap((item) => item.behavior || []) || [];
+  }
+  return items.behavior || [];
+}
+
+export class PortType implements InspectablePortType {
+  constructor(public schema: Schema) {}
+
+  hasBehavior(behavior: BehaviorSchema): boolean {
+    return !!this.schema.behavior?.includes(behavior);
+  }
+}
+
+const collectPortsForType = (
+  schema: Schema,
+  kind: "input" | "output"
+): InspectablePort[] => {
+  const portNames = Object.keys(schema.properties || {});
+  const requiredPortNames = schema.required || [];
+  portNames.sort();
+  return portNames.map((port) => {
+    const portSchema: Schema = schema.properties?.[port] || DEFAULT_SCHEMA;
+    return {
+      name: port,
+      title: title(schema, port),
+      configured: false,
+      star: false,
+      edges: [],
+      value: null,
+      status: computePortStatus(
+        false,
+        true,
+        requiredPortNames.includes(port),
+        false
+      ),
+      schema: portSchema,
+      type: new PortType(portSchema),
+      kind,
+    } satisfies InspectablePort;
+  });
+};
+
+/**
+ * CAUTION: Side-effectey. Will remove side-wire ports from `inputs`.
+ */
+function filterSidePorts(inputs: InspectablePortList) {
+  const sidePorts: InspectablePort[] = [];
+  const inputPorts = inputs.ports.filter((port) => {
+    if (port.kind === "side") {
+      sidePorts.push(port);
+      return false;
+    }
+    return true;
+  });
+  inputs.ports = inputPorts;
+  return sidePorts;
+}
+
+function describerResultToPorts(
+  node: InspectableNode,
+  described: NodeDescriberResult,
+  updating: boolean,
+  inputValues?: InputValues,
+  outputValues?: OutputValues
+): InspectableNodePorts {
+  const incoming = node.incoming();
+  const outgoing = node.outgoing();
+  const inputs: InspectablePortList = {
+    fixed: described.inputSchema?.additionalProperties === false,
+    behavior: described.inputSchema.behavior,
+    ports: collectPorts(
+      EdgeType.In,
+      incoming,
+      described.inputSchema,
+      false,
+      true,
+      { ...node.configuration(), ...inputValues }
+    ),
+  };
+  const side: InspectablePortList = {
+    fixed: true,
+    ports: filterSidePorts(inputs),
+  };
+  const addErrorPort =
+    node.descriptor.type !== "input" && node.descriptor.type !== "output";
+  const outputs: InspectablePortList = {
+    fixed: described.outputSchema?.additionalProperties === false,
+    ports: collectPorts(
+      EdgeType.Out,
+      outgoing,
+      described.outputSchema,
+      addErrorPort,
+      false,
+      outputValues
+    ),
+  };
+  return { inputs, outputs, side, updating };
+}
+
+const emptyPorts = (): InspectableNodePorts => ({
+  inputs: {
+    ports: [],
+    fixed: false,
+  },
+  outputs: {
+    ports: [],
+    fixed: false,
+  },
+  side: {
+    ports: [],
+    fixed: true,
+  },
+  updating: false,
+});
+
+export const portsFromHandler = async (
+  type: NodeTypeIdentifier,
+  handler: NodeHandler | undefined
+): Promise<InspectableNodePorts> => {
+  if (!handler || typeof handler === "function" || !handler.describe) {
+    return emptyPorts();
+  }
+  try {
+    const described = await handler.describe();
+    const inputs = {
+      fixed: described.inputSchema.additionalProperties === false,
+      ports: collectPortsForType(described.inputSchema, "input"),
+    };
+    const side = {
+      fixed: true,
+      ports: filterSidePorts(inputs),
+    };
+    return {
+      inputs,
+      outputs: {
+        fixed: described.outputSchema.additionalProperties === false,
+        ports: collectPortsForType(described.outputSchema, "output"),
+      },
+      side,
+      updating: false,
+    };
+  } catch (e) {
+    console.warn(`Error describing node type ${type}:`, e);
+    return emptyPorts();
+  }
+};

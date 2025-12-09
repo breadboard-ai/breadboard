@@ -9,7 +9,7 @@ import {
   ModuleIdentifier,
   NodeIdentifier,
 } from "@breadboard-ai/types";
-import { RuntimeSelectionChangeEvent } from "./events";
+import { RuntimeSelectionChangeEvent } from "./events.js";
 import {
   GraphSelectionState,
   TabId,
@@ -17,8 +17,8 @@ import {
   TabSelectionState,
   WorkspaceSelectionState,
   MoveToSelection,
-} from "./types";
-import { InspectableGraph } from "@google-labs/breadboard";
+} from "./types.js";
+import { InspectableGraph } from "@breadboard-ai/types";
 import {
   createEmptyGraphSelectionState,
   createEmptyWorkspaceSelectionState,
@@ -26,7 +26,7 @@ import {
   isBoardArrayBehavior,
   isBoardBehavior,
   MAIN_BOARD_ID,
-} from "./util";
+} from "./util.js";
 
 export class Select extends EventTarget {
   #selectionState: TabSelectionState = new Map<

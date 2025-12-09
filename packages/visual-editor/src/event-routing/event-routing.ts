@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type * as BreadboardUI from "@breadboard-ai/shared-ui";
+import type * as BreadboardUI from "../ui/index.js";
 import { EventRoute } from "./types.js";
 
 import * as Host from "./host/host.js";

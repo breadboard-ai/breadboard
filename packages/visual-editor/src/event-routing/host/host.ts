@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
-import { EventRoute } from "../types";
+import { parseUrl } from "../../ui/utils/urls.js";
+import { EventRoute } from "../types.js";
 
 export const ModeRoute: EventRoute<"host.modetoggle"> = {
   event: "host.modetoggle",

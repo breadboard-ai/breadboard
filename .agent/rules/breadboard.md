@@ -30,8 +30,7 @@ These are some significant packages:
   -- contain the core runtime engine for the project and all the data
   transformation/processing code.
 
-- `packages/shared-ui`, `packages/visual-editor` -- contain the majority of the
-  frontend code for the project.
+- `packages/visual-editor` -- contains the majority of the frontend code for the project.
 
 - `unified-server` -- contains the nodejs server, the backend of the project.
 
@@ -75,6 +74,6 @@ Name tests as `[name of tested file].test.ts` and place it into
 `packages/[package name]/tests/` directory. All packages are configured to pick
 up that file with `npm run test`.
 
-If you're writing a test in `packages/shared-ui/tests` and the code-to-be-tested
-contains signals, use the `packages/shared-ui/tests/signal-watcher.ts` helper
+If you're writing a test in `packages/visual-editor/tests` and the code-to-be-tested
+contains signals, use the `packages/visual-editor/tests/signal-watcher.ts` helper
 for easy reactivity testing.

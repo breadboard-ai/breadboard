@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000000" />
+
+    <meta
+      property="og:image"
+      content="{{origin}}/images/share-card-{{bucket}}.png"
+    />
+    <meta property="og:image:width" content="1440" />
+    <meta property="og:image:height" content="810" />
+    <meta
+      name="twitter:image"
+      content="{{origin}}/images/share-card-{{bucket}}.png"
+    />
+
+    <title>Welcome</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="/styles/global.css" />
+    <link rel="stylesheet" href="/styles/landing/landing.css" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Google+Symbols:opsz,wght,FILL,GRAD,ROND@20..48,100..700,0..1,-50..200,0..100&display=swap&icon_names=chevron_left,chevron_right,close,code_off,polyline,rocket_launch"
+    />
+  </head>
+  <body>
+    <nav>
+      <header>
+        <a
+          href="https://labs.google/"
+          target="_blank"
+          class="sans w-500 md-title-medium"
+          id="labs-link"
+        >
+          <img src="/styles/landing/images/labs.svg" alt="Google Labs Logo" />
+          <span>Google Labs</span></a
+        >
+        <div id="app-header">
+          <h1 class="sans-flex round w-500 md-headline-small" id="title"></h1>
+          <span id="experiment">Experiment</span>
+        </div>
+        <div id="app-btns">
+          <a
+            id="app-header-discord"
+            href="https://discord.gg/googlelabs"
+            target="_blank"
+            >Discord</a
+          >
+          <a
+            class="sans w-500 md-title-medium"
+            href="#"
+            target="_blank"
+            id="sign-in-header"
+            ><span></span
+          ></a>
+        </div>
+      </header>
+    </nav>
+
+    <main>
+      <header>
+        <div class="intro-video">
+          <picture>
+            <source
+              media="(max-width: 799px)"
+              srcset="/styles/landing/videos/mobile-poster.png"
+            />
+            <img
+              src="/styles/landing/videos/desktop-poster.png"
+              alt="Opal feature video"
+            />
+          </picture>
+          <noscript>
+            <img src="poster.png" />
+          </noscript>
+        </div>
+        <h1 class="sans-flex round w-400">
+          Build, edit, and share AI mini-apps using natural language
+        </h1>
+        <a
+          class="sans w-400 md-title-medium"
+          href="#"
+          target="_blank"
+          id="sign-in"
+        ></a>
+      </header>
+
+      <section id="gallery">
+        <h1 class="sans-flex round w-400">
+          Start from scratch or explore our gallery for instant inspiration
+        </h1>
+        <landing-carousel></landing-carousel>
+      </section>
+
+      <section id="build">
+        <h1 class="sans-flex round w-400">
+          Unleash your creativity and start building with
+          <span class="app-name"></span>
+        </h1>
+        <div class="sans-flex round w-500 md-title-large" id="video-container">
+          <iframe
+            width="100%"
+            height="100%"
+            src="https://www.youtube.com/embed/g9RBGnz-vqk"
+            title="Bring your app ideas to life with Opal"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </section>
+
+      <section id="features">
+        <h1 class="sans-flex round w-400">
+          Bring your ideas to life with <span class="app-name"></span>
+        </h1>
+        <ul>
+          <li>
+            <div class="feature-icon"><span class="g-icon">code_off</span></div>
+            <h2 class="sans w-400">No-Code Creation</h2>
+            <p>Build powerful AI mini-apps using natural language.</p>
+          </li>
+          <li>
+            <div class="feature-icon">
+              <span class="g-icon">rocket_launch</span>
+            </div>
+            <h2 class="sans w-400">Rapid Prototyping</h2>
+            <p>Turn ideas into working applications in minutes, not months.</p>
+          </li>
+          <li>
+            <div class="feature-icon"><span class="g-icon">polyline</span></div>
+            <h2 class="sans w-400">Intuitive Visual Editing</h2>
+            <p>
+              Edit and refine your app&rsquo;s logic with a node-based workflow.
+            </p>
+          </li>
+        </ul>
+      </section>
+
+      <section id="social">
+        <h1 class="sans-flex round w-400">
+          Join our Discord for support and sharing feedback
+        </h1>
+        <div id="discord-container">
+          <a href="https://discord.gg/googlelabs" target="_blank"
+            ><span>discord.gg/googlelabs</span></a
+          >
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <section id="connected">
+        <a
+          id="documentation"
+          href="https://developers.google.com/opal/"
+          target="_blank"
+          >Documentation</a
+        ><a id="discord" href="https://discord.gg/googlelabs" target="_blank"
+          >Stay connected</a
+        >
+      </section>
+      <section id="links">
+        <h1 class="sans w-500 md-title-large">Google</h1>
+        <ul>
+          <li><a href="https://about.google/" target="_blank">About Google</a></li>
+          <li><a href="https://about.google/products/" target="_blank">Google Products</a></li>
+          <li><a href="https://policies.google.com/privacy" target="_blank">Privacy</a></li>
+          <li><a href="https://policies.google.com/terms" target="_blank">Terms</a></li>
+          <li><a href="https://developers.google.com/opal/faq" target="_blank">FAQ</a></li>
+          <li><a href="https://support.google.com/" target="_blank">Help</a></li>
+        </ul>
+      </section>
+    </footer>
+
+    <dialog id="scopes-error-dialog" class="error-dialog">
+      <div class="content">
+        <h2 class="title sans-flex round w-500 md-title-large">
+          Additional access required
+        </h2>
+        <div class="detail">
+          <p class="sans md-body-large">
+            Please click
+            <em>Sign in</em> again, and choose <em>Select all</em> when you are
+            asked about access.
+          </p>
+          <div class="screenshot-container">
+            <img
+              class="screenshot"
+              src="/styles/landing/images/sign-in-scopes-screenshot.gif"
+              width="400"
+              height="365"
+            />
+          </div>
+        </div>
+        <a class="sign-in sans w-500 md-label-large" href="#" target="_blank"
+          >Sign in</a
+        >
+      </div>
+    </dialog>
+
+    <dialog id="shared-flow-dialog" class="error-dialog">
+      <div class="content">
+        <h2 class="title sans-flex round w-500 md-title-large"></h2>
+        <div class="detail">
+          <p class="sans md-body-large">
+            Mini-apps anyone can build. Sign in to view or make your own.
+          </p>
+        </div>
+        <a class="sign-in sans w-500 md-label-large" href="#" target="_blank"
+          >Sign in</a
+        >
+      </div>
+    </dialog>
+
+    <dialog id="generic-error-dialog" class="error-dialog">
+      <div class="content">
+        <h2 class="title sans-flex round w-500 md-title-large"></h2>
+        <p class="detail sans md-body-medium"></p>
+      </div>
+    </dialog>
+
+    <template
+      ><script type="application/json">
+        {{config}}
+      </script></template
+    >
+    <script src="/src/landing/main.ts" type="module"></script>
+  </body>
+</html>

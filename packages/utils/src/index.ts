@@ -29,3 +29,4 @@ export * from "./timestamp.js";
 export * from "./fetch-with-creds.js";
 export * from "./iterator-from-stream.js";
 export * from "./veo.js";
+export * from "./data.js";

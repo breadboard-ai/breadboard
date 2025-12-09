@@ -1,0 +1,875 @@
+/**
+ * @fileoverview Gemini Model Family.
+ */
+
+import { StreamableReporter } from "./output.js";
+
+import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils.js";
+import { flattenContext } from "./lists.js";
+import {
+  Capabilities,
+  FileSystemReadWritePath,
+  LLMContent,
+  Outcome,
+  Schema,
+} from "@breadboard-ai/types";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { createDataPartTansformer } from "./data-transforms.js";
+import { iteratorFromStream } from "@breadboard-ai/utils";
+import { transformDataParts } from "../../data/common.js";
+
+export {
+  invoke as default,
+  describe,
+  defaultSafetySettings,
+  generateContent,
+  streamGenerateContent,
+  conformBody as conformGeminiBody,
+};
+
+const defaultSafetySettings = (): SafetySetting[] => [
+  {
+    category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+    threshold: "BLOCK_NONE",
+  },
+  {
+    category: "HARM_CATEGORY_HARASSMENT",
+    threshold: "BLOCK_NONE",
+  },
+  {
+    category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+    threshold: "BLOCK_NONE",
+  },
+];
+
+function endpointURL(model: string) {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+}
+
+function streamEndpointURL(model: string) {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
+}
+
+const VALID_MODALITIES = ["Text", "Text and Image", "Audio"] as const;
+type ValidModalities = (typeof VALID_MODALITIES)[number];
+
+export type HarmBlockThreshold =
+  // Content with NEGLIGIBLE will be allowed.
+  | "BLOCK_LOW_AND_ABOVE"
+  // Content with NEGLIGIBLE and LOW will be allowed.
+  | "BLOCK_MEDIUM_AND_ABOVE"
+  // Content with NEGLIGIBLE, LOW, and MEDIUM will be allowed.
+  | "BLOCK_ONLY_HIGH"
+  // All content will be allowed.
+  | "BLOCK_NONE"
+  // Turn off the safety filter.
+  | "OFF";
+
+export type HarmCategory =
+  // Gemini - Harassment content
+  | "HARM_CATEGORY_HARASSMENT"
+  //	Gemini - Hate speech and content.
+  | "HARM_CATEGORY_HATE_SPEECH"
+  // Gemini - Sexually explicit content.
+  | "HARM_CATEGORY_SEXUALLY_EXPLICIT"
+  // 	Gemini - Dangerous content.
+  | "HARM_CATEGORY_DANGEROUS_CONTENT"
+  // Gemini - Content that may be used to harm civic integrity.
+  | "HARM_CATEGORY_CIVIC_INTEGRITY";
+
+export type GeminiSchema = {
+  type: "string" | "number" | "integer" | "boolean" | "object" | "array";
+  format?: string;
+  description?: string;
+  nullable?: boolean;
+  enum?: string[];
+  maxItems?: string;
+  minItems?: number;
+  properties?: Record<string, GeminiSchema>;
+  anyOf?: Schema[];
+  required?: string[];
+  items?: GeminiSchema;
+};
+
+export type Modality = "TEXT" | "IMAGE" | "AUDIO";
+
+export type GenerationConfig = {
+  responseMimeType?: "text/plain" | "application/json" | "text/x.enum";
+  responseSchema?: GeminiSchema;
+  responseJsonSchema?: Schema;
+  responseModalities?: Modality[];
+  thinkingConfig?: ThinkingConfig;
+  temperature?: number;
+  topP?: number;
+  topK?: number;
+};
+
+export type SafetySetting = {
+  category: HarmCategory;
+  threshold: HarmBlockThreshold;
+};
+
+export type Metadata = {
+  title?: string;
+  description?: string;
+};
+
+export type GeminiBody = {
+  contents: LLMContent[];
+  tools?: Tool[];
+  toolConfig?: ToolConfig;
+  systemInstruction?: LLMContent;
+  safetySettings?: SafetySetting[];
+  generationConfig?: GenerationConfig;
+};
+
+/** The thinking features configuration. */
+export type ThinkingConfig = {
+  /** Indicates whether to include thoughts in the response. If true, thoughts are returned only if the model supports thought and thoughts are available.
+   */
+  includeThoughts?: boolean;
+  /** Indicates the thinking budget in tokens. 0 is DISABLED. -1 is AUTOMATIC. The default values and allowed ranges are model dependent.
+   */
+  thinkingBudget?: number;
+};
+
+export type GeminiInputs = {
+  // The wireable/configurable properties.
+  model?: string;
+  context?: LLMContent[];
+  systemInstruction?: LLMContent;
+  prompt?: LLMContent;
+  modality?: ValidModalities;
+  // The "private API" properties
+  $metadata?: Metadata;
+  body: GeminiBody;
+};
+
+export type Tool = {
+  functionDeclarations?: FunctionDeclaration[];
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  googleSearch?: {};
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  googleMaps?: {};
+  codeExecution?: CodeExecution;
+};
+
+export type ToolConfig = {
+  functionCallingConfig?: FunctionCallingConfig;
+};
+
+export type FunctionCallingConfig = {
+  mode?: "MODE_UNSPECIFIED" | "AUTO" | "ANY" | "NONE";
+  allowedFunctionNames?: string[];
+};
+
+export type FunctionDeclaration = {
+  name: string;
+  description: string;
+  parameters?: GeminiSchema;
+  parametersJsonSchema?: unknown;
+  responseJsonSchema?: unknown;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export type CodeExecution = {
+  // Type contains no fields.
+};
+
+export type FinishReason =
+  // Natural stop point of the model or provided stop sequence.
+  | "STOP"
+  // The maximum number of tokens as specified in the request was reached.
+  | "MAX_TOKENS"
+  // The response candidate content was flagged for safety reasons.
+  | "SAFETY"
+  // The response candidate content was flagged for image safety reasons.
+  | "IMAGE_SAFETY"
+  // The response candidate content was flagged for recitation reasons.
+  | "RECITATION"
+  // The response candidate content was flagged for using an unsupported language.
+  | "LANGUAGE"
+  // Unknown reason.
+  | "OTHER"
+  // Token generation stopped because the content contains forbidden terms.
+  | "BLOCKLIST"
+  // Token generation stopped for potentially containing prohibited content.
+  | "PROHIBITED_CONTENT"
+  // Token generation stopped because the content potentially contains Sensitive Personally Identifiable Information (SPII).
+  | "SPII"
+  // The function call generated by the model is invalid.
+  | "MALFORMED_FUNCTION_CALL";
+
+export type GroundingMetadata = {
+  groundingChunks?: {
+    web?: {
+      uri: string;
+      title: string;
+    };
+    maps?: {
+      uri: string;
+      title: string;
+      text: string;
+      placeId: string;
+      placeAnswerSources: {
+        reviewSnippets: {
+          reviewId: string;
+          googleMapsUri: string;
+          title: string;
+        }[];
+      };
+    };
+  }[];
+  groundingSupports: {
+    groundingChunkIndices: number[];
+    confidenceScores: number[];
+    segment: {
+      partIndex: number;
+      startIndex: number;
+      endIndex: number;
+      text: string;
+    };
+  };
+  webSearchQueries: string[];
+  searchEntryPoint: {
+    renderedContent: string;
+    /**
+     * Base64 encoded JSON representing array of <search term, search url> tuple.
+     * A base64-encoded string.
+     */
+    sdkBlob: string;
+  };
+  retrievalMetadata: {
+    googleSearchDynamicRetrievalScore: number;
+  };
+};
+
+export type Candidate = {
+  content?: LLMContent;
+  finishReason?: FinishReason;
+  safetyRatings?: SafetySetting[];
+  tokenOutput: number;
+  groundingMetadata: GroundingMetadata;
+};
+
+export type GeminiAPIOutputs = {
+  candidates: Candidate[];
+};
+
+export type GeminiOutputs =
+  | GeminiAPIOutputs
+  | {
+      context: LLMContent[];
+    };
+
+const MODELS: readonly string[] = [
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+  "gemini-2.5-pro",
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-001",
+  "gemini-2.0-flash-lite-preview-02-05",
+  "gemini-2.0-flash-exp",
+  "gemini-2.0-flash-thinking-exp",
+  "gemini-2.0-flash-thinking-exp-01-21",
+  "gemini-2.0-pro-exp-02-05",
+  "gemini-1.5-flash-latest",
+  "gemini-1.5-pro-latest",
+  "gemini-exp-1206",
+  "gemini-exp-1121",
+  "learnlm-1.5-pro-experimental",
+  "gemini-1.5-pro-001",
+  "gemini-1.5-pro-002",
+  "gemini-1.5-pro-exp-0801",
+  "gemini-1.5-pro-exp-0827",
+  "gemini-1.5-flash-001",
+  "gemini-1.5-flash-002",
+  "gemini-1.5-flash-8b-exp-0924",
+  "gemini-1.5-flash-8b-exp-0827",
+  "gemini-1.5-flash-exp-0827",
+];
+
+const NO_RETRY_CODES: readonly number[] = [400, 429, 404, 403];
+
+const REASONS: Record<string, { $error: string; metadata?: ErrorMetadata }> = {
+  MAX_TOKENS: {
+    $error:
+      "The maximum number of tokens as specified in the request was reached.",
+    metadata: {
+      origin: "server",
+    },
+  },
+  SAFETY: {
+    $error: "The response candidate content was flagged for safety reasons.",
+    metadata: { origin: "server", kind: "safety" },
+  },
+  RECITATION: {
+    $error:
+      "The response candidate content was flagged for recitation reasons.",
+    metadata: { origin: "server", kind: "recitation" },
+  },
+  LANGUAGE: {
+    $error:
+      "The response candidate content was flagged for using an unsupported language.",
+    metadata: { origin: "server" },
+  },
+  BLOCKLIST: {
+    $error:
+      "Token generation stopped because the content contains forbidden terms.",
+    metadata: { origin: "server", kind: "safety" },
+  },
+  PROHIBITED_CONTENT: {
+    $error:
+      "Token generation stopped for potentially containing prohibited content.",
+    metadata: { origin: "server", kind: "safety" },
+  },
+  SPII: {
+    $error:
+      "Token generation stopped because the content potentially contains Sensitive Personally Identifiable Information (SPII).",
+    metadata: { origin: "server" },
+  },
+  MALFORMED_FUNCTION_CALL: {
+    $error: "The function call generated by the model is invalid.",
+    metadata: { origin: "server" },
+  },
+  IMAGE_SAFETY: {
+    $error:
+      "Token generation stopped because generated images contain safety violations.",
+    metadata: { origin: "server", kind: "safety" },
+  },
+  UNEXPECTED_TOOL_CALL: {
+    $error:
+      "Model generated a tool call but no tools were enabled in the request.",
+    metadata: { origin: "server" },
+  },
+};
+
+function errFromFinishReason(
+  reason: FinishReason,
+  model?: string
+): { $error: string; metadata?: ErrorMetadata } {
+  let e: { $error: string; metadata?: ErrorMetadata } = REASONS[reason];
+  if (!e) {
+    e = {
+      $error: "Model stopped generating tokens for unknown reason",
+      metadata: {
+        origin: "server",
+      },
+    };
+  }
+  if (model) {
+    e = { ...e, metadata: { ...e.metadata, model } };
+  }
+  return e;
+}
+
+/**
+ * Using
+ * `{"error":{"code":400,"message":"Invalid JSON paylo…'contents[0].parts[0]': Cannot find field."}]}]}
+ * as template for this type.
+ */
+type GeminiError = {
+  error: {
+    code: number;
+    details: {
+      type: string;
+      fieldViolations: {
+        description: string;
+        field: string;
+      }[];
+    }[];
+    message: string;
+    status: string;
+  };
+};
+
+function textToJson(content: LLMContent): LLMContent {
+  if (!content.parts) return content;
+  return {
+    ...content,
+    parts: content.parts.map((part) => {
+      if ("text" in part) {
+        try {
+          return { json: JSON.parse(part.text) };
+        } catch {
+          // fall through.
+        }
+      }
+      return part;
+    }),
+  };
+}
+
+/**
+ * Modifies the body to remove any
+ * Breadboard-specific extensions to LLM Content
+ */
+async function conformBody(
+  moduleArgs: A2ModuleArgs,
+  body: GeminiBody
+): Promise<Outcome<GeminiBody>> {
+  const preDataTransformContents = flattenContext(
+    body.contents.map((content) => {
+      if (!content.parts) {
+        return content;
+      }
+      return {
+        ...content,
+        parts: content.parts.map((part) => {
+          if ("json" in part) {
+            return { text: JSON.stringify(part.json) };
+          }
+          return part;
+        }),
+      };
+    }),
+    true
+  );
+  const contents = await transformDataParts(
+    new URL("unused://unused"), // unused
+    preDataTransformContents,
+    "file",
+    createDataPartTansformer(moduleArgs)
+  );
+  if (!ok(contents)) return contents;
+  return { ...body, contents };
+}
+
+async function callAPI(
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs,
+  retries: number,
+  model: string,
+  body: GeminiBody
+): Promise<Outcome<GeminiAPIOutputs>> {
+  const reporter = new StreamableReporter(caps, {
+    title: `Calling ${model}`,
+    icon: "spark",
+  });
+
+  try {
+    const conformedBody = await conformBody(moduleArgs, body);
+    if (!ok(conformedBody)) return conformedBody;
+
+    await reporter.start();
+    await reporter.sendUpdate("Model Input", conformedBody, "upload");
+
+    let $error: string = "Unknown error";
+    const maxRetries = retries;
+    while (retries) {
+      // Record model call with action tracker.
+      caps.write({
+        path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
+        data: [],
+      });
+      const result = await moduleArgs.fetchWithCreds(endpointURL(model), {
+        method: "POST",
+        body: JSON.stringify(conformedBody),
+        signal: moduleArgs.context.signal,
+      });
+      const json = await result.json();
+      if (!result.ok) {
+        // Fetch is a bit weird, because it returns various props
+        // along with the `$error`. Let's handle that here.
+        const errObject = json;
+        const status = result.status;
+        if (!status) {
+          if (errObject)
+            return reporter.sendError(
+              err(errObject, {
+                origin: "server",
+                model,
+              })
+            );
+          // This is not an error response, presume fatal error.
+          return reporter.sendError({
+            $error,
+            metadata: {
+              origin: "server",
+              model,
+            },
+          });
+        }
+        $error = maybeExtractError(errObject);
+        if (NO_RETRY_CODES.includes(status)) {
+          return reporter.sendError({
+            $error,
+            metadata: {
+              origin: "server",
+              kind: kindFromStatus(status),
+              model,
+            },
+          });
+        }
+        await reporter.sendError(
+          err(
+            `Got an error ${status} response, retrying (${maxRetries - retries + 1}/${maxRetries})`
+          )
+        );
+      } else {
+        const outputs = json as GeminiAPIOutputs;
+        const candidate = outputs?.candidates?.at(0);
+        if (!candidate) {
+          await reporter.sendUpdate(
+            "Model Response",
+            outputs || result,
+            "warning"
+          );
+          return reporter.sendError(
+            err("Unable to get a good response from Gemini", {
+              origin: "server",
+              model,
+            })
+          );
+        }
+        if (
+          "content" in candidate &&
+          candidate.content &&
+          candidate.content.parts
+        ) {
+          if (body.generationConfig?.responseMimeType === "application/json") {
+            candidate.content = textToJson(candidate.content);
+          }
+          const links = candidate.groundingMetadata?.groundingChunks
+            ?.map((chunk) => {
+              if (chunk.web) return { ...chunk.web, iconUri: chunk.web.title };
+              if (chunk.maps) {
+                return { ...chunk.maps, iconUri: "maps.google.com" };
+              }
+              return null;
+            })
+            .filter((item) => item !== null);
+          if (links && links.length > 0) {
+            await reporter.sendLinks("Grounding metadata", links, "link");
+          }
+          await reporter.sendUpdate(
+            "Model Response",
+            candidate.content,
+            "download"
+          );
+          return outputs;
+        }
+        await reporter.sendUpdate("Model response", outputs, "warning");
+        if (
+          candidate.finishReason &&
+          candidate.finishReason !== "STOP" &&
+          candidate.finishReason !== "MALFORMED_FUNCTION_CALL"
+        ) {
+          return reporter.sendError(
+            errFromFinishReason(candidate.finishReason, model)
+          );
+        }
+        await reporter.sendError(
+          err(
+            `Did not get a useful response, retrying (${maxRetries - retries + 1}/${maxRetries})`
+          )
+        );
+      }
+      retries--;
+    }
+    return reporter.sendError({
+      $error,
+      metadata: { origin: "server", kind: "bug" },
+    });
+  } catch (e) {
+    return err((e as Error).message);
+  } finally {
+    reporter.close();
+  }
+}
+
+function maybeExtractError(e: string): string {
+  try {
+    const parsed = JSON.parse(e) as GeminiError;
+    return parsed.error.message;
+  } catch {
+    return e;
+  }
+}
+
+function isEmptyLLMContent(content?: LLMContent): content is undefined {
+  if (!content || !content.parts || content.parts.length === 0) return true;
+  return content.parts.every((part) => {
+    if ("text" in part) {
+      return !part.text?.trim();
+    }
+    return true;
+  });
+}
+
+function addModality(body: GeminiBody, modality?: ValidModalities) {
+  if (!modality) return;
+  switch (modality) {
+    case "Text":
+      // No change, defaults.
+      break;
+    case "Text and Image":
+      body.generationConfig ??= {};
+      body.generationConfig.responseModalities = ["TEXT", "IMAGE"];
+      break;
+    case "Audio":
+      body.generationConfig ??= {};
+      body.generationConfig.responseModalities = ["AUDIO"];
+      break;
+  }
+}
+
+function constructBody(
+  context: LLMContent[] = [],
+  systemInstruction?: LLMContent,
+  prompt?: LLMContent,
+  modality?: ValidModalities
+): GeminiBody {
+  const contents = [...context];
+  if (!isEmptyLLMContent(prompt)) {
+    contents.push(prompt);
+  }
+  const body: GeminiBody = {
+    contents,
+    safetySettings: defaultSafetySettings(),
+  };
+  const canHaveSystemInstruction = modality === "Text";
+  if (!isEmptyLLMContent(systemInstruction) && canHaveSystemInstruction) {
+    body.systemInstruction = systemInstruction;
+  }
+  addModality(body, modality);
+  return body;
+}
+
+function augmentBody(
+  body: GeminiBody,
+  systemInstruction?: LLMContent,
+  prompt?: LLMContent,
+  modality?: ValidModalities
+): GeminiBody {
+  if (!body.systemInstruction || !isEmptyLLMContent(systemInstruction)) {
+    body.systemInstruction = systemInstruction;
+  }
+  if (!isEmptyLLMContent(prompt)) {
+    body.contents = [...body.contents, prompt];
+  }
+  addModality(body, modality);
+  return body;
+}
+
+function validateInputs(inputs: GeminiInputs): Outcome<void> {
+  if ("body" in (inputs as object)) {
+    return;
+  }
+  if (inputs.context) {
+    const { context } = inputs;
+    if (!Array.isArray(context)) {
+      return err("Incoming context must be an array.", {
+        kind: "bug",
+        origin: "client",
+      });
+    }
+    if (!isLLMContentArray(context)) {
+      return err("Malformed incoming context", {
+        kind: "bug",
+        origin: "client",
+      });
+    }
+    return;
+  }
+  return err("Either body or context is required", {
+    kind: "bug",
+    origin: "client",
+  });
+}
+
+function kindFromStatus(status: number): ErrorMetadata["kind"] {
+  if (status === 429) return "capacity";
+  return "unknown";
+}
+
+/**
+ * The new official API endpoint for non-streaming Gemini API.
+ */
+async function generateContent(
+  model: string,
+  body: GeminiBody,
+  { fetchWithCreds, context }: A2ModuleArgs
+): Promise<Outcome<GeminiAPIOutputs>> {
+  try {
+    const result = await fetchWithCreds(endpointURL(model), {
+      method: "POST",
+      body: JSON.stringify(body),
+      signal: context.signal,
+    });
+    if (!result.ok) {
+      const errObject = await result.text();
+      return err(maybeExtractError(errObject), { origin: "server", model });
+    } else {
+      return result.json();
+    }
+  } catch (e) {
+    return err((e as Error).message, { origin: "client", model });
+  }
+}
+
+async function streamGenerateContent(
+  model: string,
+  body: GeminiBody,
+  { fetchWithCreds, context }: A2ModuleArgs
+): Promise<Outcome<AsyncIterable<GeminiAPIOutputs>>> {
+  try {
+    const result = await fetchWithCreds(streamEndpointURL(model), {
+      method: "POST",
+      body: JSON.stringify(body),
+      signal: context.signal,
+    });
+    if (!result.ok) {
+      // Expect non-streaming error response.
+      const errObject = await result.text();
+      return err(maybeExtractError(errObject), { origin: "server", model });
+    } else {
+      if (!result.body) {
+        return err(`No stream returned`, { origin: "server", model });
+      }
+      return iteratorFromStream(result.body);
+    }
+  } catch (e) {
+    return err((e as Error).message, { origin: "client", model });
+  }
+}
+
+async function invoke(
+  inputs: GeminiInputs,
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
+): Promise<Outcome<GeminiOutputs>> {
+  const validatingInputs = validateInputs(inputs);
+  if (!ok(validatingInputs)) {
+    return validatingInputs;
+  }
+  let { model } = inputs;
+  if (!model) {
+    model = MODELS[0];
+  }
+  const { context, systemInstruction, prompt, modality, body } = inputs;
+  // TODO: Make this configurable.
+  const retries = 5;
+  if (!("body" in inputs)) {
+    // Public API is being used.
+    // Behave as if we're wired in.
+    const result = await callAPI(
+      caps,
+      moduleArgs,
+      retries,
+      model,
+      constructBody(context, systemInstruction, prompt, modality)
+    );
+    if (!ok(result)) {
+      return result;
+    }
+    const content = result.candidates.at(0)?.content;
+    if (!content) {
+      return err("Unable to get a good response from Gemini", {
+        origin: "server",
+        kind: "bug",
+        model,
+      });
+    }
+    return { context: [...context!, content] };
+  } else {
+    // Private API is being used.
+    // Behave as if we're being invoked.
+    return callAPI(
+      caps,
+      moduleArgs,
+      retries,
+      model,
+      augmentBody(body, systemInstruction, prompt, modality)
+    );
+  }
+}
+
+type DescribeInputs = {
+  inputs: {
+    modality?: ValidModalities;
+    model: string;
+  };
+};
+
+async function describe({ inputs }: DescribeInputs) {
+  const canHaveModalities = inputs.model === "gemini-2.0-flash-exp";
+  const canHaveSystemInstruction =
+    !canHaveModalities || (canHaveModalities && inputs.modality == "Text");
+  const maybeAddSystemInstruction: Schema["properties"] =
+    canHaveSystemInstruction
+      ? {
+          systemInstruction: {
+            type: "object",
+            behavior: ["llm-content", "config"],
+            title: "System Instruction",
+            default: '{"role":"user","parts":[{"text":""}]}',
+            description:
+              "(Optional) Give the model additional context on what to do," +
+              "like specific rules/guidelines to adhere to or specify behavior" +
+              "separate from the provided context",
+          },
+        }
+      : {};
+  const maybeAddModalities: Schema["properties"] = canHaveModalities
+    ? {
+        modality: {
+          type: "string",
+          enum: [...VALID_MODALITIES],
+          title: "Output Modality",
+          behavior: ["config"],
+          description:
+            "(Optional) Tell the model what kind of output you're looking for.",
+        },
+      }
+    : {};
+  return {
+    inputSchema: {
+      type: "object",
+      properties: {
+        model: {
+          type: "string",
+          behavior: ["config"],
+          title: "Model Name",
+          enum: MODELS as string[],
+          default: MODELS[0],
+        },
+        prompt: {
+          type: "object",
+          behavior: ["llm-content", "config"],
+          title: "Prompt",
+          default: '{"role":"user","parts":[{"text":""}]}',
+          description:
+            "(Optional) A prompt. Will be added to the end of the the conversation context.",
+        },
+        ...maybeAddSystemInstruction,
+        ...maybeAddModalities,
+        context: {
+          type: "array",
+          items: {
+            type: "object",
+            behavior: ["llm-content"],
+          },
+          title: "Context in",
+          behavior: ["main-port"],
+        },
+      },
+    } satisfies Schema,
+    outputSchema: {
+      type: "object",
+      properties: {
+        context: {
+          type: "array",
+          items: {
+            type: "object",
+            behavior: ["llm-content"],
+          },
+          title: "Context out",
+        },
+      },
+    } satisfies Schema,
+    metadata: {
+      icon: "generative",
+    },
+  };
+}

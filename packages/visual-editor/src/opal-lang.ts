@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import DefaultLangPack from "@breadboard-ai/shared-ui/strings/en_US";
+import DefaultLangPack from "./ui/strings/en_US/index.js";
 
 export default {
   ...DefaultLangPack,
@@ -75,6 +75,9 @@ export default {
     },
     LABEL_DISCLAIMER: {
       str: "Opal can make mistakes, so double-check it",
+    },
+    LABEL_DISCLAIMER_LITE: {
+      str: "Content submitted here is processed by Opal, not Gemini. Opal can make mistakes, so double-check it. [Learn more](https://developers.google.com/opal/faq).",
     },
     LABEL_SHARE: {
       str: "An Opal mini-app has been shared with you",
