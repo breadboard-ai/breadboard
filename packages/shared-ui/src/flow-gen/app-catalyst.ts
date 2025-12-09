@@ -35,13 +35,13 @@ export interface AppCatalystG1CreditsResponse {
 
 export type CheckAppAccessResponse =
   | {
-      canAccess: false;
-      accessStatus: string;
-      termsOfService?: {
-        version: number;
-        terms: string;
-      };
-    }
+    canAccess: false;
+    accessStatus: string;
+    termsOfService?: {
+      version: number;
+      terms: string;
+    };
+  }
   | { canAccess: true; accessStatus: string };
 
 export interface AppCatalystContentChunk {
@@ -99,12 +99,12 @@ export class AppCatalystApiClient {
     request: AppCatalystG1SubscriptionStatusRequest
   ): Promise<AppCatalystG1SubscriptionStatusResponse> {
     const url = new URL("v1beta1/getG1SubscriptionStatus", this.#apiBaseUrl);
-    url.searchParams.set(
-      "include_credit_data",
-      String(request.include_credit_data)
-    );
     const response = await this.#fetchWithCreds(url, {
-      method: "GET",
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(request),
     });
     if (!response.ok) {
       throw new Error(
@@ -119,7 +119,11 @@ export class AppCatalystApiClient {
   async getG1Credits(): Promise<AppCatalystG1CreditsResponse> {
     const url = new URL("v1beta1/getG1Credits", this.#apiBaseUrl);
     const response = await this.#fetchWithCreds(url, {
-      method: "GET",
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: "{}",
     });
     if (!response.ok) {
       throw new Error(`Failed to get G1 credits: ${response.statusText}`);
