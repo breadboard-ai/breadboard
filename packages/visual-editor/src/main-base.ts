@@ -559,9 +559,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           this.uiState.loadState = "Error";
         }
 
-        this.toast(
+        this.snackbar(
           Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT"),
-          BreadboardUI.Events.ToastType.ERROR
+          BreadboardUI.Types.SnackType.WARNING,
+          [],
+          true,
+          globalThis.crypto.randomUUID(),
+          true
         );
       }
     );
