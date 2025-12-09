@@ -6,29 +6,24 @@
 
 import type { BoardServer, OutputValues } from "@breadboard-ai/types";
 import {
+  AssetPath,
   EditHistoryCreator,
   EditHistoryEntry,
-  GraphDescriptor,
-  Kit,
-  MainGraphIdentifier,
-  PortIdentifier,
   FileSystemEntry,
-} from "@google-labs/breadboard";
-
-import {
-  AssetPath,
+  GraphDescriptor,
   GraphIdentifier,
   GraphMetadata,
+  MainGraphIdentifier,
   ModuleIdentifier,
   NodeIdentifier,
+  PortIdentifier,
 } from "@breadboard-ai/types";
-import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
 import {
   OpalShellHostProtocol,
   SignInState,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
+import type { GlobalConfig } from "../ui/contexts/global-config.js";
+import { SettingsStore } from "../ui/data/settings-store.js";
 
 export enum TabType {
   URL,
@@ -41,7 +36,6 @@ export type TabURL = string;
 export type TabName = string;
 export interface Tab {
   id: TabId;
-  boardServerKits: Kit[];
   name: TabName;
   mainGraphId: MainGraphIdentifier;
   graph: GraphDescriptor;
@@ -72,11 +66,6 @@ export interface RuntimeConfig {
   env?: FileSystemEntry[];
   appName: string;
   appSubName: string;
-}
-
-export interface RuntimeConfigBoardServers {
-  a2Server: BoardServer;
-  googleDriveBoardServer: GoogleDriveBoardServer;
 }
 
 export type ReferenceIdentifier =

@@ -5,19 +5,19 @@
  */
 
 import { customElement } from "lit/decorators.js";
-import { MainBase, RenderValues } from "./main-base";
+import { MainBase, RenderValues } from "./main-base.js";
 import { html, nothing } from "lit";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { ref } from "lit/directives/ref.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { ActionTracker } from "@breadboard-ai/shared-ui/utils/action-tracker";
-import { makeUrl, parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
-import { IterateOnPromptEvent } from "@breadboard-ai/shared-ui/events/events.js";
-import { IterateOnPromptMessage } from "@breadboard-ai/shared-ui/embed/embed.js";
+import * as BreadboardUI from "./ui/index.js";
+import { ActionTracker } from "./ui/utils/action-tracker.js";
+import { makeUrl, parseUrl } from "./ui/utils/urls.js";
+import { IterateOnPromptEvent } from "./ui/events/events.js";
+import { IterateOnPromptMessage } from "./ui/embed/embed.js";
 
-import { MakeUrlInit } from "@breadboard-ai/shared-ui/types/types.js";
+import { MakeUrlInit } from "./ui/types/types.js";
 
 const Strings = BreadboardUI.Strings.forSection("Global");
 const parsedUrl = parseUrl(window.location.href);
@@ -168,7 +168,6 @@ class Main extends MainBase {
     return html` <bb-canvas-controller
       ${ref(this.canvasControllerRef)}
       ?inert=${renderValues.showingOverlay}
-      .boardServerKits=${this.tab?.boardServerKits ?? []}
       .canRun=${this.uiState.canRunMain}
       .editor=${this.runtime.edit.getEditor(this.tab)}
       .graph=${this.tab?.graph ?? null}
@@ -409,8 +408,8 @@ class Main extends MainBase {
                 return;
               }
               evt.target.disabled = true;
-              await this.apiClient.acceptTos(tosVersion, true);
-              this.tosStatus = await this.apiClient.checkTos();
+              await this.runtime.apiClient.acceptTos(tosVersion, true);
+              this.tosStatus = await this.runtime.apiClient.checkTos();
             }}
           >
             Continue
@@ -495,7 +494,7 @@ class Main extends MainBase {
       @bbsubscribercreditrefresh=${async () => {
         try {
           this.uiState.subscriptionCredits = -1;
-          const response = await this.apiClient.getG1Credits();
+          const response = await this.runtime.apiClient.getG1Credits();
           this.uiState.subscriptionCredits = response.remaining_credits ?? 0;
         } catch (err) {
           this.uiState.subscriptionCredits = -2;

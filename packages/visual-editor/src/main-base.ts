@@ -4,86 +4,75 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
-import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
+import { SettingsHelperImpl } from "./ui/data/settings-helper.js";
+import { SettingsStore } from "./ui/data/settings-store.js";
 import type {
   AppScreenOutput,
   BoardServer,
   ConformsToNodeValue,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
-import {
-  GraphDescriptor,
-  hash,
-  MutableGraphStore,
-  ok,
-} from "@google-labs/breadboard";
+import { GraphDescriptor, MutableGraphStore } from "@breadboard-ai/types";
 import { provide } from "@lit/context";
 import { html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { state } from "lit/decorators.js";
 
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
-import { RecentBoardStore } from "./data/recent-boards";
+import { RecentBoardStore } from "./data/recent-boards.js";
 import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 import {
   TabId,
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
-} from "./runtime/types";
+} from "./runtime/types.js";
 
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 
 import {
   canonicalizeOAuthScope,
   type OAuthScope,
-} from "@breadboard-ai/shared-ui/connection/oauth-scopes.js";
-import {
-  GlobalConfig,
-  globalConfigContext,
-} from "@breadboard-ai/shared-ui/contexts";
-import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
-import { consentManagerContext } from "@breadboard-ai/shared-ui/contexts/consent-manager.js";
-import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
-import { uiStateContext } from "@breadboard-ai/shared-ui/contexts/ui-state.js";
-import { VESignInModal } from "@breadboard-ai/shared-ui/elements/elements.js";
-import {
-  EmbedHandler,
-  embedState,
-  EmbedState,
-} from "@breadboard-ai/shared-ui/embed/embed.js";
+} from "./ui/connection/oauth-scopes.js";
+import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
+import { boardServerContext } from "./ui/contexts/board-server.js";
+import { consentManagerContext } from "./ui/contexts/consent-manager.js";
+import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
+import { uiStateContext } from "./ui/contexts/ui-state.js";
+import { VESignInModal } from "./ui/elements/elements.js";
+import { EmbedHandler, embedState, EmbedState } from "./ui/embed/embed.js";
 
-import {
-  AppCatalystApiClient,
-  CheckAppAccessResponse,
-} from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
+import { CheckAppAccessResponse } from "./ui/flow-gen/app-catalyst.js";
 import {
   FlowGenerator,
   flowGeneratorContext,
-} from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
-import { ReactiveAppScreen } from "@breadboard-ai/shared-ui/state/app-screen.js";
-import { UserSignInResponse } from "@breadboard-ai/shared-ui/types/types.js";
-import { ActionTracker } from "@breadboard-ai/shared-ui/utils/action-tracker";
-import { ConsentManager } from "@breadboard-ai/shared-ui/utils/consent-manager.js";
-import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
-import { opalShellContext } from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
+} from "./ui/flow-gen/flow-generator.js";
+import { ReactiveAppScreen } from "./ui/state/app-screen.js";
+import { UserSignInResponse } from "./ui/types/types.js";
+import { ActionTracker } from "./ui/utils/action-tracker.js";
+import { ConsentManager } from "./ui/utils/consent-manager.js";
+import { EmailPrefsManager } from "./ui/utils/email-prefs-manager.js";
+import { opalShellContext } from "./ui/utils/opal-shell-guest.js";
 import {
   SigninAdapter,
   signinAdapterContext,
-} from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
-import { makeUrl, parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
-import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+} from "./ui/utils/signin-adapter.js";
+import { makeUrl, parseUrl } from "./ui/utils/urls.js";
+import {
+  GuestConfiguration,
+  OpalShellHostProtocol,
+} from "@breadboard-ai/types/opal-shell-protocol.js";
 import { SignalWatcher } from "@lit-labs/signals";
 
-import { Admin } from "./admin";
-import { keyboardCommands } from "./commands/commands";
-import { KeyboardCommandDeps } from "./commands/types";
-import { eventRoutes } from "./event-routing/event-routing";
+import { Admin } from "./admin.js";
+import { keyboardCommands } from "./commands/commands.js";
+import { KeyboardCommandDeps } from "./commands/types.js";
+import { eventRoutes } from "./event-routing/event-routing.js";
 
-import { MainArguments } from "./types/types";
+import { MainArguments } from "./types/types.js";
+import { hash, ok } from "@breadboard-ai/utils";
 
 export { MainBase };
 
@@ -226,10 +215,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected feedbackPanelRef: Ref<BreadboardUI.Elements.FeedbackPanel> =
     createRef();
   protected readonly embedHandler: EmbedHandler | undefined;
-  protected readonly apiClient: AppCatalystApiClient;
   protected readonly settings: SettingsStore;
   readonly emailPrefsManager: EmailPrefsManager;
   protected readonly hostOrigin: URL;
+
+  // Configuration provided by shell host
+  protected readonly guestConfiguration: GuestConfiguration;
 
   // Event Handlers.
   readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
@@ -243,6 +234,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     // Static deployment config
     this.globalConfig = args.globalConfig;
+
+    // Configuration provided by shell hos
+    this.guestConfiguration = args.guestConfiguration;
 
     // User settings
     this.settings = args.settings;
@@ -286,32 +280,14 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       });
     }
 
-    // API Clients
-    let backendApiEndpoint = this.globalConfig.BACKEND_API_ENDPOINT;
-    if (!backendApiEndpoint) {
-      console.warn(`No BACKEND_API_ENDPOINT in ClientDeploymentConfiguration`);
-      // Supply some value, so that we fail while calling the API, rather
-      // than at initialization.
-      // TODO: Come up with a more elegant solution.
-      backendApiEndpoint = window.location.href;
-    }
-
-    const fetchWithCreds = this.signinAdapter.fetchWithCreds;
-
-    this.apiClient = new AppCatalystApiClient(
-      fetchWithCreds,
-      backendApiEndpoint
-    );
-
-    this.emailPrefsManager = new EmailPrefsManager(this.apiClient);
+    this.emailPrefsManager = this.runtime.emailPrefsManager;
+    this.flowGenerator = this.runtime.flowGenerator;
 
     this.embedHandler = args.embedHandler;
 
     this.#addRuntimeEventHandlers();
 
-    this.flowGenerator = new FlowGenerator(this.apiClient, this.runtime.flags);
-
-    this.boardServer = this.runtime.board.boardServers.googleDriveBoardServer;
+    this.boardServer = this.runtime.googleDriveBoardServer;
     this.uiState = this.runtime.state.ui;
 
     if (this.globalConfig.ENABLE_EMAIL_OPT_IN) {
@@ -369,6 +345,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.router.init();
 
     void this.#checkSubscriptionStatus(this.runtime.flags);
+
     console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
     this.doPostInitWork();
   }
@@ -403,9 +380,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           .catch((error) => console.error("Error generating board", error));
       }
     });
-    this.embedHandler?.addEventListener("request_consent", ({ message }) => {
-      this.signInConsentMessage = message.consentMessage ?? null;
-    });
     this.embedHandler?.sendToEmbedder({ type: "handshake_ready" });
   }
 
@@ -423,7 +397,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       const flags = await flagManager.flags();
       if (flags.googleOne) {
         console.log(`[Google One] Checking subscriber status`);
-        const response = await this.apiClient.getG1SubscriptionStatus({
+        const response = await this.runtime.apiClient.getG1SubscriptionStatus({
           include_credit_data: true,
         });
         this.uiState.subscriptionStatus = response.is_member
@@ -835,9 +809,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       //
       // So, we need to wait for full initialization before we broadcast.
       const { url } = saveResult;
-      const boardServer =
-        this.runtime.board.boardServers.googleDriveBoardServer;
-      await boardServer?.flushSaveQueue?.(url.href);
+      const boardServer = this.runtime.board.googleDriveBoardServer;
+      await boardServer.flushSaveQueue(url.href);
       this.embedHandler.sendToEmbedder({
         type: "board_id_created",
         id: url.href,
@@ -1330,13 +1303,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return signInModal.openAndWaitForSignIn(scopes);
   }
 
-  protected signInConsentMessage: string | null = null;
   protected readonly signInModalRef = createRef<VESignInModal>();
   protected renderSignInModal() {
     return html`
       <bb-sign-in-modal
         ${ref(this.signInModalRef)}
-        .consentMessage=${this.signInConsentMessage}
+        .consentMessage=${this.guestConfiguration.consentMessage}
         @bbmodaldismissed=${() => {
           this.uiState.show.delete("SignInModal");
         }}

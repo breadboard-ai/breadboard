@@ -4,33 +4,32 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 import { html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { MainArguments } from "./types/types";
+import { MainArguments } from "./types/types.js";
 
-import * as BBLite from "@breadboard-ai/shared-ui/lite";
-import { MainBase } from "./main-base";
+import * as BBLite from "./ui/lite/lite.js";
+import { MainBase } from "./main-base.js";
 import { classMap } from "lit/directives/class-map.js";
-import {
-  StateEvent,
-  StateEventDetailMap,
-} from "@breadboard-ai/shared-ui/events/events.js";
-import { LiteEditInputController } from "@breadboard-ai/shared-ui/lite/input/editor-input-lite.js";
+import { StateEvent, StateEventDetailMap } from "./ui/events/events.js";
+import { LiteEditInputController } from "./ui/lite/input/editor-input-lite.js";
 import { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
 import {
   RuntimeBoardLoadErrorEvent,
   RuntimeTabChangeEvent,
-} from "./runtime/events";
-import { eventRoutes } from "./event-routing/event-routing";
-import { blankBoard } from "@breadboard-ai/shared-ui/utils/utils.js";
+} from "./runtime/events.js";
+import { eventRoutes } from "./event-routing/event-routing.js";
+import { blankBoard } from "./ui/utils/utils.js";
 import { repeat } from "lit/directives/repeat.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { OneShotFlowGenFailureResponse } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
-import { flowGenWithTheme } from "@breadboard-ai/shared-ui/flow-gen/flowgen-with-theme.js";
+import { OneShotFlowGenFailureResponse } from "./ui/flow-gen/flow-generator.js";
+import { flowGenWithTheme } from "./ui/flow-gen/flowgen-with-theme.js";
+import { markdown } from "./ui/directives/markdown.js";
+import { type SharePanel } from "./ui/elements/elements.js";
 
 const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
 
@@ -114,9 +113,17 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
         & #message {
           text-align: center;
-          height: var(--bb-grid-size-4);
+          height: var(--bb-grid-size-7);
           margin: var(--bb-grid-size-2) 0;
           color: var(--sys-color--on-surface-variant);
+
+          p {
+            margin: 0;
+          }
+
+          a {
+            color: var(--sys-color--on-surface);
+          }
         }
 
         & #app-view {
@@ -127,7 +134,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           display: flex;
           flex-direction: column;
           overflow: hidden;
-          margin-bottom: var(--bb-grid-size-13);
+          margin-bottom: var(--bb-grid-size-16);
 
           & bb-snackbar {
             width: calc(100% - var(--bb-grid-size-12));
@@ -315,6 +322,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   ];
 
   #advancedEditorLink: Ref<HTMLElement> = createRef();
+  #sharePanelRef: Ref<SharePanel> = createRef();
 
   constructor(args: MainArguments) {
     super(args);
@@ -378,6 +386,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       return { error: "" };
     }
     let projectState = this.runtime.state.project;
+    this.runtime.state.lite.currentExampleIntent = intent;
 
     if (!projectState) {
       // This is a zero state: we don't yet have a projectState.
@@ -411,6 +420,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       return { error: `No FlowGenerator was provided` };
     }
 
+    this.dispatchEvent(
+      new StateEvent({ eventType: "board.stop", clearLastRun: true })
+    );
+
     const generated = await flowGenWithTheme(
       this.flowGenerator,
       intent,
@@ -424,27 +437,31 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderOriginalPrompt() {
-    if (!this.tab?.graph.metadata?.intent) {
-      return nothing;
-    }
+    const prompt =
+      this.tab?.graph.metadata?.intent ??
+      this.runtime.state.lite.currentExampleIntent ??
+      null;
 
     return html`<bb-prompt-view
-      .prompt=${this.tab?.graph.metadata?.intent}
+      .prompt=${prompt}
+      .state=${this.runtime.state.lite}
+      ?inert=${this.#isInert()}
     ></bb-prompt-view>`;
   }
 
   #renderUserInput() {
     const { lite } = this.runtime.state;
     return html`<bb-editor-input-lite
+      ?inert=${this.#isInert()}
       .controller=${this}
       .state=${lite}
     ></bb-editor-input-lite>`;
   }
 
   #renderMessage() {
-    return html`<p id="message" class="w-400 md-body-small sans-flex">
-      ${Strings.from("LABEL_DISCLAIMER")}
-    </p>`;
+    return html`<div id="message" class="w-400 md-body-small sans-flex">
+      ${markdown(Strings.from("LABEL_DISCLAIMER_LITE"))}
+    </div>`;
   }
 
   #renderControls() {
@@ -461,7 +478,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   #renderList() {
     return html`
       <bb-step-list-view
-        .state=${this.runtime.state.lite.stepList}
+        ?inert=${this.#isInert()}
+        .state=${this.runtime.state.lite}
       ></bb-step-list-view>
     `;
   }
@@ -499,6 +517,13 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderApp() {
     const renderValues = this.getRenderValues();
+
+    const title =
+      this.runtime.state.lite.viewType === "editor"
+        ? (this.tab?.graph.title ?? "Untitled app")
+        : "...";
+
+    const isGenerating = this.runtime.state.lite.status === "generating";
     return html` <section
       id="app-view"
       slot=${this.showAppFullscreen ? nothing : "slot-1"}
@@ -506,19 +531,23 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       ${this.showAppFullscreen
         ? nothing
         : html` <header class="w-400 md-title-small sans-flex">
-            <div class="left">${this.tab?.graph.title ?? "Untitled app"}</div>
+            <div class="left">${title}</div>
             <div class="right">
               <a
                 ${ref(this.#advancedEditorLink)}
-                href="${this.hostOrigin}?mode=canvas&flow=${this.tab?.graph
-                  .url}"
+                href="${this.guestConfiguration.advancedEditorOrigin ||
+                this.hostOrigin}?mode=canvas&flow=${this.tab?.graph.url}"
                 target="_blank"
-                ><span class="g-icon">open_in_new</span>Open Advanced Editor</a
               >
-              <button><span class="g-icon">share</span>Share</button>
+                <span class="g-icon">open_in_new</span>Open Advanced Editor
+              </a>
+              <button @click=${this.#onClickShareApp}>
+                <span class="g-icon">share</span>Share app
+              </button>
             </div>
           </header>`}
       <bb-app-controller
+        ?inert=${this.#isInert()}
         class=${classMap({ active: true })}
         .graph=${this.tab?.graph ?? null}
         .graphIsEmpty=${false}
@@ -537,6 +566,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           small: true,
         }}
         .systemThemeOverride=${true}
+        .isRefreshingAppTheme=${isGenerating}
       >
       </bb-app-controller>
       ${this.renderSnackbar()} ${this.#renderShellUI()}
@@ -552,7 +582,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       <h2 class="w-400 md-title-large sans-flex">
         Looking for inspiration? Try one of our prompts
       </h2>
-      <aside id="examples">
+      <aside id="examples" ?inert=${this.#isInert()}>
         <ul>
           ${repeat(this.runtime.state.lite.examples, (example) => {
             return html`<li>
@@ -584,16 +614,27 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     ];
   }
 
+  #isInert() {
+    return (
+      this.uiState.blockingAction ||
+      this.runtime.state.lite.status == "generating" ||
+      this.runtime.state.lite.viewType === "loading"
+    );
+  }
+
   render() {
-    const lite = this.runtime.state.lite;
+    const lite: BreadboardUI.State.LiteModeState = this.runtime.state.lite;
 
     let content: HTMLTemplateResult | symbol = nothing;
     switch (lite.viewType) {
-      case "home": {
-        content = this.#renderWelcomeMat();
-        break;
-      }
-      case "editor": {
+      case "home":
+      case "editor":
+      case "loading": {
+        if (lite.viewType === "home" && lite.status !== "generating") {
+          content = this.#renderWelcomeMat();
+          break;
+        }
+
         content = html`${this.showAppFullscreen
           ? this.#renderApp()
           : html` <bb-splitter
@@ -605,14 +646,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             </bb-splitter>`}`;
         break;
       }
-      case "loading":
-        return html`<section id="lite-shell" @bbevent=${this.handleUserSignIn}>
-          <div id="loading">
-            <span class="g-icon heavy-filled round">progress_activity</span
-            >Loading
-          </div>
-          ${this.renderSnackbar()}${this.#renderShellUI()}
-        </section>`;
       case "error":
         return html`<section id="lite-shell" @bbevent=${this.handleUserSignIn}>
           <div id="error">${lite.viewError}</div>
@@ -629,7 +662,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           full: this.showAppFullscreen,
           welcome: lite.viewType === "home",
         })}
-        ?inert=${this.uiState.blockingAction || lite.status == "generating"}
         @bbsnackbar=${(snackbarEvent: BreadboardUI.Events.SnackbarEvent) => {
           this.snackbar(
             snackbarEvent.message,
@@ -658,7 +690,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       >
         ${content}
       </section>
-      ${this.#renderShellUI()}`;
+      ${this.#renderShellUI()} ${this.#renderSharePanel()}`;
   }
 
   protected async invokeBoardReplaceRoute(
@@ -709,5 +741,19 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       lite.viewError = Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT");
     }
     return true;
+  }
+
+  #renderSharePanel() {
+    return html`
+      <bb-share-panel
+        .graph=${this.runtime.state.lite.graph}
+        ${ref(this.#sharePanelRef)}
+      >
+      </bb-share-panel>
+    `;
+  }
+
+  #onClickShareApp() {
+    this.#sharePanelRef.value?.open();
   }
 }

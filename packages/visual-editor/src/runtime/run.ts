@@ -4,24 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { createPlanRunner } from "../engine/runtime/harness/index.js";
 import {
+  HarnessRunner,
   Kit,
   MainGraphIdentifier,
   MutableGraphStore,
-} from "@google-labs/breadboard";
-import {
-  HarnessRunner,
   RunConfig,
   RunEndEvent,
   RunErrorEvent,
   RunLifecycleEvent,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
-import { Tab, TabId } from "./types";
-import { createPlanRunner } from "@breadboard-ai/runtime";
-import { RuntimeBoardRunEvent } from "./events";
-import { StateManager } from "./state";
-import { Edit } from "./edit";
+import { RuntimeBoardRunEvent } from "./events.js";
+import { StateManager } from "./state.js";
+import { Tab, TabId } from "./types.js";
 
 export class Run extends EventTarget {
   #runs = new Map<
@@ -30,7 +27,6 @@ export class Run extends EventTarget {
       mainGraphId: MainGraphIdentifier;
       harnessRunner?: HarnessRunner;
       abortController?: AbortController;
-      kits: Kit[];
     }
   >();
 
@@ -38,7 +34,7 @@ export class Run extends EventTarget {
     public readonly graphStore: MutableGraphStore,
     public readonly state: StateManager,
     public readonly flags: RuntimeFlagManager,
-    public readonly edit: Edit
+    private readonly kits: Kit[]
   ) {
     super();
   }
@@ -46,7 +42,6 @@ export class Run extends EventTarget {
   create(tab: Tab) {
     this.#runs.set(tab.id, {
       mainGraphId: tab.mainGraphId,
-      kits: [...this.graphStore.kits, ...tab.boardServerKits],
     });
   }
 
@@ -108,7 +103,7 @@ export class Run extends EventTarget {
     const tabId = tab.id;
     config = {
       ...config,
-      kits: [...this.graphStore.kits, ...tab.boardServerKits],
+      kits: this.kits,
       signal: abortController.signal,
       graphStore: this.graphStore,
     };
@@ -198,7 +193,6 @@ export class Run extends EventTarget {
       mainGraphId,
       harnessRunner,
       abortController,
-      kits: config.kits,
     };
   }
 }
