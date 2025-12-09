@@ -56,7 +56,7 @@ export const SHELL_CSP = {
   ],
   ["img-src"]: ["https://*.gstatic.com"],
   ["script-src"]: ["'self'", "https://apis.google.com"],
-  ["style-src"]: ["'unsafe-inline'"],
+  ["style-src"]: ["'self'"],
   ["require-trusted-types-for"]: ["'script'"],
   ["trusted-types"]: ["opal-gapi-url", "gapi#gapi", "goog#html"],
 };

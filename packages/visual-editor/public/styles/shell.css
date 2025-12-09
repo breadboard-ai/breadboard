@@ -1,0 +1,26 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+:root {
+  --sys-color--body-background-light: #ffffff;
+  --sys-color--body-background-dark: #131314;
+}
+
+iframe#opal-app {
+  width: 100vw;
+  height: 100vh;
+  border: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: var(--sys-color--body-background-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  iframe#opal-app {
+    background: var(--sys-color--body-background-dark);
+  }
+}
