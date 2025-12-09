@@ -133,6 +133,12 @@ export class StepListView extends SignalWatcher(LitElement) {
                 & .step-title {
                   color: var(--sys-color--on-surface);
                   padding-right: var(--bb-grid-size-4);
+                  display: flex;
+                  flex-direction: column;
+
+                  & .step-thought {
+                    color: var(--sys-color--on-surface-variant);
+                  }
                 }
 
                 & .step-icon {
@@ -295,7 +301,7 @@ export class StepListView extends SignalWatcher(LitElement) {
       }ms`;
       return html`
         <details
-          ?open=${options.status === "generating"}
+          ?inert=${options.status === "generating"}
           class=${classMap({
             animated: options.animated === true,
           })}
@@ -318,8 +324,13 @@ export class StepListView extends SignalWatcher(LitElement) {
                 >`
               : nothing}
             <span class="step-title sans md-title-medium w-500"
-              >${step.title}</span
-            >
+              >${step.title}
+              ${options.status === "generating"
+                ? html`<span class="step-thought sans md-body-medium w-400"
+                    >${step.label}</span
+                  >`
+                : nothing}
+            </span>
           </summary>
           <div class="step-content sans md-body-medium w-400">
             ${title}
