@@ -51,6 +51,7 @@ export type GoogleDriveToGeminiResponse = {
 export type UploadGeminiFileRequest =
   | {
       driveFileId: string;
+      driveResourceKey?: string;
     }
   | { blobId: string };
 
@@ -88,16 +89,11 @@ async function driveFileToGeminiFile(
   part: FileDataPart
 ): Promise<Outcome<FileDataPart>> {
   const driveFileId = part.fileData.fileUri.replace(/^drive:\/+/, "");
-  const searchParams = new URLSearchParams();
-  const { resourceKey, mimeType } = part.fileData;
-  if (resourceKey) {
-    searchParams.set("resourceKey", resourceKey);
-  }
-  if (mimeType) {
-    searchParams.set("mimeType", mimeType);
-  }
-
+  const { resourceKey } = part.fileData;
   const request: UploadGeminiFileRequest = { driveFileId };
+  if (resourceKey) {
+    request.driveResourceKey = resourceKey;
+  }
   const response: Outcome<UploadGeminiFileResponse> = await callBackend(
     moduleArgs,
     request,
