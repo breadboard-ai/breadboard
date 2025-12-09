@@ -115,7 +115,8 @@ export declare interface PickDriveFilesDocument {
 
 export declare interface CheckAppAccessResult {
   canAccess: boolean;
-  accessStatus:
+  accessStatus?:
+    | "ACCESS_STATUS_UNSPECIFIED"
     | "ACCESS_STATUS_OK"
     | "ACCESS_STATUS_REGION_RESTRICTED"
     | "ACCESS_STATUS_TOS_NOT_ACCEPTED"

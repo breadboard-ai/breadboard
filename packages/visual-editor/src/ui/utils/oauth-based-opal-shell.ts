@@ -717,7 +717,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     } else {
       return {
         canAccess: false,
-        accessStatus: "ACCESS_STATUS_ENVIRONMENT_RESTRICTED",
+        accessStatus: "ACCESS_STATUS_UNSPECIFIED",
       };
     }
   };
