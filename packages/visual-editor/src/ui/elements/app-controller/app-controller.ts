@@ -155,6 +155,22 @@ export class AppController extends SignalWatcher(LitElement) {
     return this.#appTemplate.isRefreshingAppTheme;
   }
 
+  @property()
+  set isFreshGraph(refreshing: boolean) {
+    if (!this.#appTemplate) {
+      return;
+    }
+
+    this.#appTemplate.isFreshGraph = refreshing;
+  }
+  get isFreshGraph() {
+    if (!this.#appTemplate) {
+      return false;
+    }
+
+    return this.#appTemplate.isFreshGraph;
+  }
+
   disconnectedCallback(): void {
     super.disconnectedCallback();
 

@@ -524,6 +524,12 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         : "...";
 
     const isGenerating = this.runtime.state.lite.status === "generating";
+    const isFreshGraph =
+      isGenerating &&
+      this.runtime.state.lite.graph?.edges.length === 0 &&
+      this.runtime.state.lite.graph?.nodes.length === 0 &&
+      this.runtime.state.lite.graph?.title === "Untitled Opal app";
+
     return html` <section
       id="app-view"
       slot=${this.showAppFullscreen ? nothing : "slot-1"}
@@ -569,6 +575,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         }}
         .systemThemeOverride=${true}
         .isRefreshingAppTheme=${isGenerating}
+        .isFreshGraph=${isFreshGraph}
       >
       </bb-app-controller>
       ${this.renderSnackbar()} ${this.#renderShellUI()}
