@@ -176,6 +176,9 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       isTestApi:
         checkFetchAllowlist(GOOGLE_DRIVE_FILES_API_PREFIX)?.remappedUrl
           ?.origin === "https://test-www.sandbox.googleapis.com",
+      shareSurface: undefined,
+      shareSurfaceUrlTemplates:
+        CLIENT_DEPLOYMENT_CONFIG.SHARE_SURFACE_URL_TEMPLATES,
     };
   };
 

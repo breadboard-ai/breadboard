@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { DRIVE_PROPERTY_OPAL_SHARE_SURFACE } from "@breadboard-ai/utils/google-drive/operations.js";
 import { customElement } from "lit/decorators.js";
 import { MainBase } from "./main-base.js";
 import { makeUrl, parseUrl } from "./ui/utils/urls.js";
@@ -23,6 +24,63 @@ export class OpenMain extends MainBase {
       return;
     }
 
+    // Check if there is a share surface identifier written to this Opal's Drive
+    // file properties, and redirect to it if we have a matching URL template in
+    // our config.
+    let fileMetadata = undefined;
+    try {
+      fileMetadata = await this.googleDriveClient.getFileMetadata(
+        { id: url.fileId, resourceKey: url.resourceKey },
+        { fields: ["properties"] }
+      );
+    } catch (e) {
+      // TODO(aomarks) Add a user-visible not-found error here. Currently we
+      // just continue and rely on the fallback to render an error.
+      console.error(`[open] Error reading drive file ${url.fileId}`, e);
+    }
+    const shareSurface =
+      fileMetadata?.properties?.[DRIVE_PROPERTY_OPAL_SHARE_SURFACE];
+    if (shareSurface) {
+      const urlTemplate =
+        this.guestConfiguration?.shareSurfaceUrlTemplates?.[shareSurface];
+      if (urlTemplate) {
+        const redirectUrl = new URL(
+          urlTemplate
+            .replaceAll("{fileId}", url.fileId)
+            .replaceAll("{resourceKey}", url.resourceKey ?? "")
+        );
+        // Remove any empty parameters. A slightly hacky way to clean up
+        // resourceKey parameters when there is no resourceKey.
+        for (const [name, value] of redirectUrl.searchParams) {
+          if (!value) {
+            redirectUrl.searchParams.delete(name);
+          }
+        }
+        console.log(`[open] Redirecting to share surface`, redirectUrl);
+        window.parent.location.href = redirectUrl.href;
+        return;
+      }
+    }
+
+    // Check if the user is from a domain with a special configuration, and
+    // redirect to the /open/ page on that domain's preferred url if set.
+    const userDomain = this.signinAdapter.domain;
+    const userDomainPreferredUrl =
+      userDomain && this.globalConfig.domains?.[userDomain]?.preferredUrl;
+    if (userDomainPreferredUrl) {
+      const url = new URL(
+        window.location.pathname.replace(/^\/_app\//, "") +
+          window.location.search +
+          window.location.hash,
+        userDomainPreferredUrl
+      ).href;
+      console.log(`[open] Redirecting user to preferred domain`, url);
+      window.parent.location = url;
+      return;
+    }
+
+    // Fallback to viewing the Opal on this same deployment (note that we don't
+    // need window.parent.location here).
     window.location.href = makeUrl({
       page: "graph",
       mode: "app",
