@@ -34,6 +34,8 @@ export class OpenMain extends MainBase {
         { fields: ["properties"] }
       );
     } catch (e) {
+      // TODO(aomarks) Add a user-visible not-found error here. Currently we
+      // just continue and rely on the fallback to render an error.
       console.error(`[open] Error reading drive file ${url.fileId}`, e);
     }
     const shareSurface =
@@ -47,6 +49,8 @@ export class OpenMain extends MainBase {
             .replaceAll("{fileId}", url.fileId)
             .replaceAll("{resourceKey}", url.resourceKey ?? "")
         );
+        // Remove any empty parameters. A slightly hacky way to clean up
+        // resourceKey parameters when there is no resourceKey.
         for (const [name, value] of redirectUrl.searchParams) {
           if (!value) {
             redirectUrl.searchParams.delete(name);
