@@ -141,7 +141,11 @@ export const GENERATED_APP_CSP = {
     "https://cdn.jsdelivr.net",
     "https://cdnjs.cloudflare.com",
   ],
-  ["img-src"]: ["blob:", "data:"],
+  ["img-src"]: [
+    "'self'", // allow images from /board/blobs
+    "blob:",
+    "data:",
+  ],
   ["style-src"]: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
   ["font-src"]: ["https://fonts.gstatic.com"],
   ["connect-src"]: ["'none'"],
@@ -153,7 +157,11 @@ export const GENERATED_APP_CSP = {
     ...flags.ALLOWED_REDIRECT_ORIGINS,
     ...(flags.SHELL_ENABLED ? flags.SHELL_HOST_ORIGINS : []),
   ],
-  ["media-src"]: ["blob:", "data:"],
+  ["media-src"]: [
+    "'self'", // allow audio/video from /board/blobs
+    "blob:",
+    "data:",
+  ],
   ["base-uri"]: ["'none'"],
 };
 
