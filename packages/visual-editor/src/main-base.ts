@@ -236,7 +236,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // Static deployment config
     this.globalConfig = args.globalConfig;
 
-    // Configuration provided by shell hos
+    // Configuration provided by shell host
     this.guestConfiguration = args.guestConfiguration;
 
     // User settings
