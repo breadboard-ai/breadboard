@@ -665,6 +665,11 @@ export const styles: CSSResultGroup = [
             --transition-properties: opacity;
             transition: var(--transition);
 
+            &.hidden {
+              opacity: 0;
+              pointer-events: none;
+            }
+
             &.running {
               background: var(--light-dark-p-50) url(/images/progress-ui.svg)
                 8px center / 16px 16px no-repeat;

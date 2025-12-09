@@ -154,6 +154,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   accessor isRefreshingAppTheme = false;
 
   @property()
+  accessor isFreshGraph = false;
+
+  @property()
   accessor isEmpty = false;
 
   @property()
@@ -889,6 +892,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       }
     }
 
+    const editable = !this.readOnly && !this.isFreshGraph;
     const splashScreen = html`
       <div
         id="splash"
@@ -903,7 +907,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         <section id="splash-content-container">
           <h1
             class="w-500 round sans-flex md-display-small"
-            ?contenteditable=${!this.readOnly}
+            ?contenteditable=${editable}
             @blur=${(evt: Event) => {
               if (this.readOnly) {
                 return;
@@ -927,10 +931,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 })
               );
             }}
-            .innerText=${this.options.title}
+            .innerText=${this.isFreshGraph ? "" : this.options.title}
           ></h1>
           <p
-            ?contenteditable=${!this.readOnly}
+            ?contenteditable=${editable}
             class="w-500 round sans-flex md-title-medium"
             @blur=${(evt: Event) => {
               if (this.readOnly) {
@@ -961,12 +965,15 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 })
               );
             }}
-            .innerText=${this.options.description ?? ""}
+            .innerText=${this.isFreshGraph
+              ? ""
+              : (this.options.description ?? "")}
           ></p>
           <div id="input" class="stopped">
             <div>
               <button
                 id="run"
+                class=${classMap({ hidden: this.isFreshGraph })}
                 @click=${() => {
                   ActionTracker.runApp(this.graph?.url, "app_preview");
                   this.dispatchEvent(
