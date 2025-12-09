@@ -53,6 +53,7 @@ import { makeUrl } from "../../utils/urls.js";
 import { GoogleDriveBoardServer } from "../../../board-server/server.js";
 import { guestConfigurationContext } from "../../contexts/guest-configuration.js";
 import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
@@ -935,6 +936,17 @@ export class SharePanel extends LitElement {
         state.status === "readonly") &&
       state.shareableFile
     ) {
+      const shareSurface = this.guestConfiguration?.shareSurface;
+      const shareSurfaceUrlTemplate =
+        shareSurface &&
+        this.guestConfiguration?.shareSurfaceUrlTemplates?.[shareSurface];
+      if (shareSurfaceUrlTemplate) {
+        return makeShareLinkFromTemplate({
+          urlTemplate: shareSurfaceUrlTemplate,
+          fileId: state.shareableFile.id,
+          resourceKey: state.shareableFile.resourceKey,
+        });
+      }
       return makeUrl(
         {
           page: "graph",
