@@ -8,11 +8,11 @@ import type {
   GraphProviderItem,
   MutableGraphCollection,
 } from "@breadboard-ai/types";
+import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { readProperties } from "@breadboard-ai/utils/google-drive/utils.js";
 import { openDB, type DBSchema, type IDBPObjectStore } from "idb";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
-import { readProperties } from "@breadboard-ai/utils/google-drive/utils.js";
-import type { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 const DB_NAME = "graph-cache";
 const USER_GRAPHS_STORE_NAME = "user-graphs";
