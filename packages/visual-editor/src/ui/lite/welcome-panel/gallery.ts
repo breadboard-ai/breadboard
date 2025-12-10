@@ -894,33 +894,10 @@ export class GalleryLite extends SignalWatcher(LitElement) {
 
   #onClickPrevPage() {
     this.page--;
-    this.#scrollCurrentPageNumberButtonIntoView();
   }
 
   #onClickNextPage() {
     this.page++;
-    this.#scrollCurrentPageNumberButtonIntoView();
-  }
-
-  #scrollCurrentPageNumberButtonIntoView() {
-    const container = this.#paginationContainer.value;
-    if (!container) {
-      console.error("Could not find pagination container");
-      return;
-    }
-    const button = container.querySelector(`[data-page-idx="${this.page}"]`);
-    if (!button) {
-      console.error("Could not find page number button");
-      return;
-    }
-    const isOverflowing = container.scrollWidth > container.clientWidth;
-    if (isOverflowing) {
-      button.scrollIntoView({
-        block: "nearest",
-        inline: "center",
-        behavior: "smooth",
-      });
-    }
   }
 
   #onBoardClick(_event: PointerEvent | KeyboardEvent, url: string) {
