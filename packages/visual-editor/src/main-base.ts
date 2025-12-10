@@ -1312,6 +1312,16 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     `;
   }
 
+  protected renderSnackbarDetailsModal() {
+    return html`<bb-snackbar-details-modal
+      .details=${this.uiState.lastSnackbarDetailsInfo}
+      @bbmodaldismissed=${() => {
+        this.uiState.lastSnackbarDetailsInfo = null;
+        this.uiState.show.delete("SnackbarDetailsModal");
+      }}
+    ></bb-snackbar-details-modal>`;
+  }
+
   protected renderConsentRequests() {
     if (this.uiState.consentRequests[0]) {
       return html`

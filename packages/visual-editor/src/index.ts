@@ -122,7 +122,7 @@ class Main extends MainBase {
           ? this.#renderBoardEditModal()
           : nothing,
         this.uiState.show.has("SnackbarDetailsModal")
-          ? this.#renderSnackbarDetailsModal()
+          ? this.renderSnackbarDetailsModal()
           : nothing,
         this.uiState.show.has("BetterOnDesktopModal")
           ? this.#renderBetterOnDesktopModal()
@@ -250,16 +250,6 @@ class Main extends MainBase {
         this.uiState.show.delete("BetterOnDesktopModal");
       }}
     ></bb-better-on-desktop-modal>`;
-  }
-
-  #renderSnackbarDetailsModal() {
-    return html`<bb-snackbar-details-modal
-      .details=${this.uiState.lastSnackbarDetailsInfo}
-      @bbmodaldismissed=${() => {
-        this.uiState.lastSnackbarDetailsInfo = null;
-        this.uiState.show.delete("SnackbarDetailsModal");
-      }}
-    ></bb-snackbar-details-modal>`;
   }
 
   #renderVideoModal() {
