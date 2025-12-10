@@ -575,9 +575,26 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   async #onClickSaveResults() {
+    const snackbarId = globalThis.crypto.randomUUID();
+    this.dispatchEvent(
+      new SnackbarEvent(
+        snackbarId,
+        `Saving results to your Google Drive...`,
+        SnackType.PENDING,
+        [],
+        true,
+        true
+      )
+    );
+
+    const unsnackbar = () => {
+      this.dispatchEvent(new UnsnackbarEvent());
+    };
+
     const btn = this.#shareResultsButton.value;
     if (!btn) {
       console.error("No share results button");
+      unsnackbar();
       return;
     }
     this.resultsUrl = null;
@@ -594,6 +611,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     if (!this.run) {
       console.error(`No project run`);
       unlockButton();
+      unsnackbar();
       return;
     }
 
@@ -601,6 +619,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     if (!this.googleDriveClient) {
       console.error(`No google drive client`);
       unlockButton();
+      unsnackbar();
       return;
     }
 
@@ -608,12 +627,14 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     if (!currentGraphUrl) {
       console.error(`No graph url`);
       unlockButton();
+      unsnackbar();
       return;
     }
     const currentGraphFileId = extractGoogleDriveFileId(currentGraphUrl);
     if (!currentGraphFileId) {
       console.error(`Graph URL is not drive:`, currentGraphUrl);
       unlockButton();
+      unsnackbar();
       return;
     }
 
@@ -645,7 +666,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         // if they wanted to. Tell them to.
         this.dispatchEvent(
           new SnackbarEvent(
-            crypto.randomUUID(),
+            snackbarId,
             `Please share your ${Strings.from("APP_NAME")} first`,
             SnackType.ERROR,
             [
@@ -688,17 +709,20 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     if (!this.run.finalOutput) {
       unlockButton();
+      unsnackbar();
       return;
     }
     const boardServer = this.boardServer;
     if (!boardServer) {
       console.error(`No board server`);
       unlockButton();
+      unsnackbar();
       return;
     }
     if (!(boardServer instanceof GoogleDriveBoardServer)) {
       console.error(`Board server was not Google Drive`);
       unlockButton();
+      unsnackbar();
       return;
     }
 
@@ -712,7 +736,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       unlockButton();
       this.dispatchEvent(
         new SnackbarEvent(
-          globalThis.crypto.randomUUID(),
+          snackbarId,
           `Error packaging results prior to saving`,
           SnackType.ERROR,
           [],
@@ -723,7 +747,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return;
     }
 
-    const snackbarId = globalThis.crypto.randomUUID();
     this.dispatchEvent(
       new SnackbarEvent(
         snackbarId,

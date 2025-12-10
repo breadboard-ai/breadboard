@@ -725,6 +725,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         ) => {
           this.unsnackbar(unsnackbarEvent.snackbarId);
         }}
+        @bbsharerequested=${() => {
+          this.#onClickShareApp();
+        }}
         @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) => {
           if (evt.detail.eventType === "app.fullscreen") {
             this.showAppFullscreen = evt.detail.action === "activate";
