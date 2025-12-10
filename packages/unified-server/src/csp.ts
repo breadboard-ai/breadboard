@@ -120,6 +120,10 @@ export const MAIN_APP_CSP = {
     "opal-analytics-url",
     "opal-chiclet-html",
     "opal-gapi-url",
+    // feedback
+    "opal-feedback-url",
+    "goog#html",
+    "uf-api#html",
   ],
 };
 
