@@ -46,6 +46,12 @@ export declare interface OpalShellHostProtocol {
   checkAppAccess(): Promise<CheckAppAccessResult>;
 
   sendToEmbedder(message: BreadboardMessage): Promise<void>;
+
+  getDriveCollectorFile(
+    mimeType: string,
+    connectorId: string,
+    graphId: string
+  ): Promise<GetDriveCollectorFileResult>;
 }
 
 export declare interface OpalShellGuestProtocol {
@@ -85,7 +91,7 @@ export declare type FindUserOpalFolderResult =
   | { ok: true; id: string }
   | { ok: false; error: string };
 
-export declare type ListOpalFileItem = {
+export declare type ListDriveFileItem = {
   id: string;
   name: string;
   modifiedTime: string;
@@ -97,7 +103,7 @@ export declare type ListOpalFileItem = {
 export declare type ListUserOpalsResult =
   | {
       ok: true;
-      files: ListOpalFileItem[];
+      files: ListDriveFileItem[];
     }
   | { ok: false; error: string };
 
@@ -123,6 +129,10 @@ export declare interface CheckAppAccessResult {
     | "ACCESS_STATUS_ENVIRONMENT_RESTRICTED"
     | "ACCESS_STATUS_DASHER_ACCOUNT";
 }
+
+export declare type GetDriveCollectorFileResult =
+  | { ok: true; id: string }
+  | { ok: false; error: string };
 
 export declare interface ShareDriveFilesOptions {
   fileIds: string[];

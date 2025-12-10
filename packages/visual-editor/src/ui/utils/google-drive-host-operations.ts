@@ -7,18 +7,23 @@
 import { GOOGLE_DRIVE_FILES_API_PREFIX } from "@breadboard-ai/types/canonical-endpoints.js";
 import type {
   FindUserOpalFolderResult,
-  ListOpalFileItem,
+  GetDriveCollectorFileResult,
+  ListDriveFileItem,
   ListUserOpalsResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { fetchWithRetry } from "@breadboard-ai/utils/fetch-with-retry.js";
 
-export { findUserOpalFolder, listUserOpals };
+export { findUserOpalFolder, listUserOpals, getDriveCollectorFile };
 
 export const GOOGLE_DRIVE_FOLDER_MIME_TYPE =
   "application/vnd.google-apps.folder";
 export const GRAPH_MIME_TYPE = "application/vnd.breadboard.graph+json";
 
 export const IS_SHAREABLE_COPY_PROPERTY = "isShareableCopy";
+
+const DOC_MIME_TYPE = "application/vnd.google-apps.document";
+const SHEETS_MIME_TYPE = "application/vnd.google-apps.spreadsheet";
+const SLIDES_MIME_TYPE = "application/vnd.google-apps.presentation";
 
 async function findUserOpalFolder(
   userFolderName: string,
@@ -95,7 +100,7 @@ and 'me' in owners
       // prettier-ignore
       headers: { "Authorization": `Bearer ${accessToken}` },
     }).then((r) => r.json())) as {
-      files: ListOpalFileItem[];
+      files: ListDriveFileItem[];
     };
 
     files = files.filter(
@@ -115,6 +120,42 @@ and 'me' in owners
   } catch {
     return { ok: false, error: "Failed to list opals" };
   }
+}
+
+async function getDriveCollectorFile(
+  accessToken: string,
+  mimeType: string,
+  connectorId: string,
+  graphId: string
+): Promise<GetDriveCollectorFileResult> {
+  const fileKey = `${getTypeKey(mimeType)}${connectorId}${graphId}`;
+  const query = `appProperties has { key = 'google-drive-connector' and value = '${fileKey}' } and trashed = false`;
+  const url = new URL(GOOGLE_DRIVE_FILES_API_PREFIX);
+  url.searchParams.set("q", query);
+
+  try {
+    const { files } = (await fetchWithRetry(url, {
+      // Closure munges the header key so it needs to be quoted.
+      // But prettier likes to remove the quotes.
+      // prettier-ignore
+      headers: { "Authorization": `Bearer ${accessToken}` },
+    }).then((r) => r.json())) as {
+      files: ListDriveFileItem[];
+    };
+    if (files.length > 0) {
+      return { ok: true, id: files[0]!.id };
+    }
+    return { ok: false, error: "No files found" };
+  } catch {
+    return { ok: false, error: "Failed to list opals" };
+  }
+}
+
+function getTypeKey(mimeType: string) {
+  if (mimeType === DOC_MIME_TYPE) return "doc";
+  if (mimeType === SHEETS_MIME_TYPE) return "sheet";
+  if (mimeType === SLIDES_MIME_TYPE) return "slides";
+  return "";
 }
 
 function quote(value: string) {
