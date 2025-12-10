@@ -25,6 +25,22 @@ const DOC_MIME_TYPE = "application/vnd.google-apps.document";
 const SHEETS_MIME_TYPE = "application/vnd.google-apps.spreadsheet";
 const SLIDES_MIME_TYPE = "application/vnd.google-apps.presentation";
 
+type DriveErrorResponse = {
+  error: {
+    message: string;
+  };
+};
+
+type DriveFileItem = {
+  mimeType: string;
+} & ListDriveFileItem;
+
+type DriveListFilesResponse =
+  | {
+      files: DriveFileItem[];
+    }
+  | DriveErrorResponse;
+
 async function findUserOpalFolder(
   userFolderName: string,
   accessToken: string
@@ -39,17 +55,15 @@ async function findUserOpalFolder(
   url.searchParams.set("orderBy", "createdTime desc");
 
   try {
-    let { files } = (await fetchWithRetry(globalThis.fetch, url, {
-      // Closure munges the header key so it needs to be quoted.
-      // But prettier likes to remove the quotes.
-      // prettier-ignore
-      headers: { "Authorization": `Bearer ${accessToken}` },
-    }).then((r) => r.json())) as {
-      files: { id: string; mimeType: string }[];
-    };
+    const response = await listFiles(accessToken, url);
+    if ("error" in response) {
+      return { ok: false, error: response.error.message };
+    }
     // This shouldn't be required based on the query above, but for some reason
     // the TestGaia drive endpoint doesn't seem to respect the mimeType query
-    files = files.filter((f) => f.mimeType === GOOGLE_DRIVE_FOLDER_MIME_TYPE);
+    const files = response.files.filter(
+      (f) => f.mimeType === GOOGLE_DRIVE_FOLDER_MIME_TYPE
+    );
     if (files.length > 0) {
       if (files.length > 1) {
         console.warn(
@@ -63,8 +77,12 @@ async function findUserOpalFolder(
       return { ok: true, id };
     }
     return { ok: false, error: "No root folder found" };
-  } catch {
-    return { ok: false, error: "Failed to find root folder" };
+  } catch (e) {
+    console.error("Failed to find root folder", e);
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Failed to find root folder",
+    };
   }
 }
 
@@ -94,16 +112,11 @@ and 'me' in owners
   url.searchParams.set("orderBy", "modifiedTime desc");
 
   try {
-    let { files } = (await fetchWithRetry(globalThis.fetch, url, {
-      // Closure munges the header key so it needs to be quoted.
-      // But prettier likes to remove the quotes.
-      // prettier-ignore
-      headers: { "Authorization": `Bearer ${accessToken}` },
-    }).then((r) => r.json())) as {
-      files: ListDriveFileItem[];
-    };
-
-    files = files.filter(
+    const response = await listFiles(accessToken, url);
+    if ("error" in response) {
+      return { ok: false, error: response.error.message };
+    }
+    const files = response.files.filter(
       (file) =>
         // Filter down to graphs created by whatever the current OAuth app is.
         // Otherwise, graphs from different OAuth apps will appear in this list
@@ -117,8 +130,12 @@ and 'me' in owners
     );
 
     return { ok: true, files };
-  } catch {
-    return { ok: false, error: "Failed to list opals" };
+  } catch (e) {
+    console.error("Failed to list opals", e);
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Failed to list opals",
+    };
   }
 }
 
@@ -134,20 +151,22 @@ async function getDriveCollectorFile(
   url.searchParams.set("q", query);
 
   try {
-    const { files } = (await fetchWithRetry(url, {
-      // Closure munges the header key so it needs to be quoted.
-      // But prettier likes to remove the quotes.
-      // prettier-ignore
-      headers: { "Authorization": `Bearer ${accessToken}` },
-    }).then((r) => r.json())) as {
-      files: ListDriveFileItem[];
-    };
+    const response = await listFiles(accessToken, url);
+    if ("error" in response) {
+      return { ok: false, error: response.error.message };
+    }
+    const files = response.files;
     if (files.length > 0) {
       return { ok: true, id: files[0]!.id };
     }
-    return { ok: false, error: "No files found" };
-  } catch {
-    return { ok: false, error: "Failed to list opals" };
+    return { ok: true, id: null };
+  } catch (e) {
+    console.error("Failed to get drive collector file", e);
+    return {
+      ok: false,
+      error:
+        e instanceof Error ? e.message : "Failed to get drive collector file",
+    };
   }
 }
 
@@ -160,4 +179,23 @@ function getTypeKey(mimeType: string) {
 
 function quote(value: string) {
   return `'${value.replace(/'/g, "\\'")}'`;
+}
+
+/**
+ * Lists files in a Google Drive folder.
+ *
+ * @param accessToken The access token to use for authentication.
+ * @param url The URL to list files from.
+ * @returns A promise that resolves to a list of files.
+ */
+function listFiles(
+  accessToken: string,
+  url: URL
+): Promise<DriveListFilesResponse> {
+  return fetchWithRetry(globalThis.fetch, url, {
+    // Closure munges the header key so it needs to be quoted.
+    // But prettier likes to remove the quotes.
+    // prettier-ignore
+    headers: { "Authorization": `Bearer ${accessToken}` },
+  }).then((r) => r.json()) as Promise<DriveListFilesResponse>;
 }

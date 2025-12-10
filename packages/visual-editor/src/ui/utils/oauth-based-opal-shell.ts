@@ -795,10 +795,10 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       };
     }
     return getDriveCollectorFile(
+      token.grant.access_token,
       mimeType,
       connectorId,
-      graphId,
-      token.grant.access_token
+      graphId
     );
   };
 }

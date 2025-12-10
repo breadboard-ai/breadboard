@@ -26,7 +26,6 @@ export {
   getDoc,
   getPresentation,
   getSpreadsheetMetadata,
-  query,
   updateDoc,
   updatePresentation,
 };
@@ -685,21 +684,6 @@ async function create(
   }
 
   return api(moduleArgs, GOOGLE_DRIVE_FILES_API_PREFIX, "POST", body);
-}
-
-async function query(
-  moduleArgs: A2ModuleArgs,
-  query: string
-): Promise<Outcome<FileQueryResponse>> {
-  if (!query) {
-    return err("Please supply the query.");
-  }
-
-  return api(
-    moduleArgs,
-    `${GOOGLE_DRIVE_FILES_API_PREFIX}?q=${encodeURIComponent(query)}`,
-    "GET"
-  );
 }
 
 async function del(moduleArgs: A2ModuleArgs, id: string) {

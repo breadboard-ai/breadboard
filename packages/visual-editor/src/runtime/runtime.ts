@@ -139,6 +139,7 @@ export class Runtime extends EventTarget {
     const sandbox = createA2ModuleFactory({
       mcpClientManager: this.mcpClientManager,
       fetchWithCreds: this.fetchWithCreds,
+      shell: config.shellHost,
     });
 
     const kits = addRunModule(sandbox, []);

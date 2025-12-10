@@ -131,7 +131,7 @@ export declare interface CheckAppAccessResult {
 }
 
 export declare type GetDriveCollectorFileResult =
-  | { ok: true; id: string }
+  | { ok: true; id: string | null }
   | { ok: false; error: string };
 
 export declare interface ShareDriveFilesOptions {

@@ -15,6 +15,7 @@ import { McpClientManager } from "../src/mcp/index.js";
 import { autoClearingInterval } from "./auto-clearing-interval.js";
 import { collateContexts } from "./collate-context.js";
 import { Logger } from "./logger.js";
+import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 export { session };
 
@@ -313,5 +314,6 @@ class EvalRun implements EvalHarnessRuntimeArgs {
         };
       },
     },
+    shell: {} as unknown as OpalShellHostProtocol,
   };
 }
