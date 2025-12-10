@@ -1299,11 +1299,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   protected readonly signInModalRef = createRef<VESignInModal>();
-  protected renderSignInModal() {
+  protected renderSignInModal(blurBackground = true) {
     return html`
       <bb-sign-in-modal
         ${ref(this.signInModalRef)}
         .consentMessage=${this.guestConfiguration.consentMessage}
+        .blurBackground=${blurBackground}
         @bbmodaldismissed=${() => {
           this.uiState.show.delete("SignInModal");
         }}

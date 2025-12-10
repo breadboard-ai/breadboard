@@ -53,6 +53,9 @@ export class VESignInModal extends LitElement {
   @property()
   accessor consentMessage: string | undefined = undefined;
 
+  @property()
+  accessor blurBackground: boolean | null = null;
+
   @state()
   accessor #state: State = { status: "closed" };
 
@@ -259,7 +262,7 @@ export class VESignInModal extends LitElement {
     return html`
       <bb-modal
         appearance="basic"
-        blurBackground
+        ?blurBackground=${this.blurBackground}
         .modalTitle=${title}
         @bbmodaldismissed=${() => this.#close("dismissed")}
       >
