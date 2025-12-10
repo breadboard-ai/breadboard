@@ -6,11 +6,11 @@
 
 /// <reference types="@types/gapi.client.drive-v3" />
 
-import { retryableFetch } from "./utils.js";
 import {
-  GOOGLE_DRIVE_UPLOAD_API_PREFIX,
   GOOGLE_DRIVE_FILES_API_PREFIX,
+  GOOGLE_DRIVE_UPLOAD_API_PREFIX,
 } from "@breadboard-ai/types";
+import { fetchWithRetry } from "../fetch-with-retry.js";
 
 type File = gapi.client.drive.File;
 type Permission = gapi.client.drive.Permission;
@@ -217,7 +217,7 @@ export class GoogleDriveClient {
     const fetchToUse =
       authorization === "anonymous" ? globalThis.fetch : this.fetchWithCreds;
 
-    return retryableFetch(fetchToUse, url, { ...init, headers });
+    return fetchWithRetry(fetchToUse, url, { ...init, headers });
   }
 
   #makeFetchHeaders(resourceKeys: DriveFileId[] | undefined): Headers {
