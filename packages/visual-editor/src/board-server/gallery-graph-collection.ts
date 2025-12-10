@@ -16,8 +16,6 @@ import type { NarrowedDriveFile } from "@breadboard-ai/utils/google-drive/google
 import { readProperties } from "@breadboard-ai/utils/google-drive/utils.js";
 
 export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
-  readonly #signInInfo: SignInInfo;
-  readonly #fetchWithCreds: typeof globalThis.fetch;
   readonly #graphs = new SignalMap<string, GraphProviderItem>();
 
   has(url: string): boolean {
@@ -47,9 +45,10 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
     return this.#error;
   }
 
-  constructor(signInInfo: SignInInfo, fetchWithCreds: typeof globalThis.fetch) {
-    this.#signInInfo = signInInfo;
-    this.#fetchWithCreds = fetchWithCreds;
+  constructor(
+    private readonly signInInfo: SignInInfo,
+    private readonly fetchWithCreds: typeof globalThis.fetch
+  ) {
     void this.#initialize();
   }
 
@@ -101,11 +100,11 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
   }
 
   async #getUserLocation(): Promise<string | undefined> {
-    if (this.#signInInfo.state === "signedout") {
+    if (this.signInInfo.state === "signedout") {
       return undefined;
     }
 
-    const locationResponse = await this.#fetchWithCreds(
+    const locationResponse = await this.fetchWithCreds(
       new URL(`${OPAL_BACKEND_API_PREFIX}/v1beta1/getLocation`)
     );
     if (!locationResponse.ok) {
