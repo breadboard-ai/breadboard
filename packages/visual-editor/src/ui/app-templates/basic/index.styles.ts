@@ -306,6 +306,15 @@ export const styles: CSSResultGroup = [
             overflow: hidden;
             text-overflow: ellipsis;
           }
+
+          & h1,
+          & p {
+            transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+
+            &.invisible {
+              opacity: 0;
+            }
+          }
         }
 
         & #controls {
@@ -665,7 +674,7 @@ export const styles: CSSResultGroup = [
             --transition-properties: opacity;
             transition: var(--transition);
 
-            &.hidden {
+            &.invisible {
               opacity: 0;
               pointer-events: none;
             }
