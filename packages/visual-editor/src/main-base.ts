@@ -59,8 +59,9 @@ import {
   SigninAdapter,
   signinAdapterContext,
 } from "./ui/utils/signin-adapter.js";
-import { makeUrl, parseUrl } from "./ui/utils/urls.js";
+import { parseUrl } from "./ui/utils/urls.js";
 import {
+  CheckAppAccessResult,
   GuestConfiguration,
   OpalShellHostProtocol,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
@@ -73,6 +74,7 @@ import { eventRoutes } from "./event-routing/event-routing.js";
 
 import { MainArguments } from "./types/types.js";
 import { hash, ok } from "@breadboard-ai/utils";
+import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
 
 export { MainBase };
 
@@ -123,6 +125,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   @provide({ context: consentManagerContext })
   accessor #consentManager: ConsentManager;
+
+  @provide({ context: guestConfigurationContext })
+  protected accessor guestConfiguration: GuestConfiguration;
 
   @state()
   protected accessor tab: Runtime.Types.Tab | null = null;
@@ -219,9 +224,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   readonly emailPrefsManager: EmailPrefsManager;
   protected readonly hostOrigin: URL;
 
-  // Configuration provided by shell host
-  protected readonly guestConfiguration: GuestConfiguration;
-
   // Event Handlers.
   readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
   readonly #hideTooltipBound = this.#hideTooltip.bind(this);
@@ -235,7 +237,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // Static deployment config
     this.globalConfig = args.globalConfig;
 
-    // Configuration provided by shell hos
+    // Configuration provided by shell host
     this.guestConfiguration = args.guestConfiguration;
 
     // User settings
@@ -248,6 +250,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.runtime = new Runtime.Runtime({
       globalConfig: this.globalConfig,
+      guestConfig: this.guestConfiguration,
       settings: this.settings,
       shellHost: this.opalShell,
       initialSignInState: args.initialSignInState,
@@ -263,21 +266,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     // Asyncronously check if the user has a geo-restriction and sign out if so.
     if (this.signinAdapter.state === "signedin") {
-      this.signinAdapter.checkAppAccess().then(async (access) => {
-        if (!access.canAccess) {
-          await this.signinAdapter.signOut();
-          window.history.pushState(
-            undefined,
-            "",
-            makeUrl({
-              page: "landing",
-              geoRestriction: true,
-              redirect: { page: "home" },
-            })
-          );
-          window.location.reload();
-        }
-      });
+      this.signinAdapter
+        .checkAppAccess()
+        .then(this.handleAppAccessCheckResult.bind(this));
     }
 
     this.emailPrefsManager = this.runtime.emailPrefsManager;
@@ -349,6 +340,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
     this.doPostInitWork();
   }
+
+  abstract handleAppAccessCheckResult(
+    result: CheckAppAccessResult
+  ): Promise<void>;
 
   abstract doPostInitWork(): Promise<void>;
 

@@ -384,7 +384,8 @@ export type UIOverlays =
   | "VideoModal"
   | "StatusUpdateModal"
   | "SignInModal"
-  | "WarmWelcome";
+  | "WarmWelcome"
+  | "NoAccessModal";
 
 export type UILoadState = "Home" | "Loading" | "Loaded" | "Error";
 

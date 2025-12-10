@@ -7,6 +7,10 @@
 /// <reference types="@types/gapi.client.drive-v3" />
 
 import { retryableFetch } from "./utils.js";
+import {
+  GOOGLE_DRIVE_UPLOAD_API_PREFIX,
+  GOOGLE_DRIVE_FILES_API_PREFIX,
+} from "@breadboard-ai/types";
 
 type File = gapi.client.drive.File;
 type Permission = gapi.client.drive.Permission;
@@ -16,6 +20,7 @@ export interface GoogleDriveClientOptions {
   /** @see {@link GoogleDriveClient.markFileForReadingWithPublicProxy} */
   proxyApiBaseUrl?: string;
   fetchWithCreds: typeof globalThis.fetch;
+  isTestApi: boolean;
 }
 
 export interface BaseRequestOptions {
@@ -167,8 +172,6 @@ export type DriveFileId = { id: string; resourceKey?: string };
 
 type GoogleApiAuthorization = "fetchWithCreds" | "anonymous";
 
-const PROD_API_ENDPOINT = "https://www.googleapis.com";
-
 export class GoogleDriveClient {
   readonly #apiUrl: string;
   readonly #publicProxy:
@@ -179,9 +182,10 @@ export class GoogleDriveClient {
       }
     | undefined;
   readonly fetchWithCreds: typeof globalThis.fetch;
+  readonly isTestApi: boolean;
 
   constructor(options: GoogleDriveClientOptions) {
-    this.#apiUrl = options.apiBaseUrl || PROD_API_ENDPOINT;
+    this.#apiUrl = options.apiBaseUrl || GOOGLE_DRIVE_FILES_API_PREFIX;
     this.#publicProxy = options.proxyApiBaseUrl
       ? {
           apiUrl: options.proxyApiBaseUrl,
@@ -189,10 +193,7 @@ export class GoogleDriveClient {
         }
       : undefined;
     this.fetchWithCreds = options.fetchWithCreds;
-  }
-
-  isTest() {
-    return this.#apiUrl !== PROD_API_ENDPOINT;
+    this.isTestApi = options.isTestApi;
   }
 
   async #fetch(
@@ -282,13 +283,12 @@ export class GoogleDriveClient {
       options?.bypassProxy
     );
     const url = new URL(
-      `drive/v3/files/${encodeURIComponent(fileId.id)}`,
+      `${apiUrl}/${encodeURIComponent(fileId.id)}`
       // TODO(aomarks) We don't actually implement any caching for metadata yet.
       // We could, and the only slightly tricky part about it is applying the
       // field mask, because we'd likely want to always fetch "*" in the proxy,
       // regardless of which fields the triggering request had, so that we get
       // more cache hits. But, might as well route it in now.
-      apiUrl
     );
     if (options?.supportsAllDrives ?? true) {
       url.searchParams.set("supportsAllDrives", "true");
@@ -319,10 +319,7 @@ export class GoogleDriveClient {
   ): Promise<Response> {
     fileId = normalizeFileId(fileId);
     const { apiUrl, authorization } = await this.#maybeProxyApiUrl(fileId.id);
-    const url = new URL(
-      `drive/v3/files/${encodeURIComponent(fileId.id)}`,
-      apiUrl
-    );
+    const url = new URL(`${apiUrl}/${encodeURIComponent(fileId.id)}`);
     url.searchParams.set("alt", "media");
     return await this.#fetch(
       url,
@@ -340,10 +337,9 @@ export class GoogleDriveClient {
     fileId = normalizeFileId(fileId);
     const { apiUrl, authorization } = await this.#maybeProxyApiUrl(fileId.id);
     const url = new URL(
-      `drive/v3/files/${encodeURIComponent(fileId.id)}/export`,
+      `${apiUrl}/${encodeURIComponent(fileId.id)}/export`
       // TODO(aomarks) Use getBaseUrlForPossiblyProxiedFileRead, but need to
       // implement the server side first.
-      apiUrl
     );
     url.searchParams.set("mimeType", options.mimeType);
     return this.#fetch(
@@ -359,7 +355,7 @@ export class GoogleDriveClient {
     file: File & { name: string; mimeType: string },
     options?: T
   ): Promise<NarrowedDriveFileFromOptions<T>> {
-    const url = new URL(`drive/v3/files`, this.#apiUrl);
+    const url = new URL(this.#apiUrl);
     if (options?.fields) {
       url.searchParams.set("fields", options.fields.join(","));
     }
@@ -469,9 +465,8 @@ export class GoogleDriveClient {
 
     const url = new URL(
       isExistingFile
-        ? `upload/drive/v3/files/${encodeURIComponent(fileId)}`
-        : `upload/drive/v3/files`,
-      this.#apiUrl
+        ? `${GOOGLE_DRIVE_UPLOAD_API_PREFIX}/${encodeURIComponent(fileId)}`
+        : GOOGLE_DRIVE_UPLOAD_API_PREFIX
     );
     url.searchParams.set("uploadType", "multipart");
     if (options?.fields) {
@@ -512,10 +507,7 @@ export class GoogleDriveClient {
     metadata: File & { parents?: never },
     options?: T
   ): Promise<NarrowedDriveFileFromOptions<T>> {
-    const url = new URL(
-      `drive/v3/files/${encodeURIComponent(fileId)}`,
-      this.#apiUrl
-    );
+    const url = new URL(`${this.#apiUrl}/${encodeURIComponent(fileId)}`);
     if (options?.addParents) {
       url.searchParams.set("addParents", options.addParents.join(","));
     }
@@ -545,7 +537,7 @@ export class GoogleDriveClient {
     options?: BaseRequestOptions
   ): Promise<void> {
     const response = await this.#fetch(
-      new URL(`drive/v3/files/${encodeURIComponent(fileId)}`, this.#apiUrl),
+      new URL(`${this.#apiUrl}/${encodeURIComponent(fileId)}`),
       { method: "DELETE", signal: options?.signal }
     );
     if (!response.ok) {
@@ -579,7 +571,7 @@ export class GoogleDriveClient {
     options?: T
   ): Promise<ListFilesResponse<NarrowedDriveFileFromOptions<T>>> {
     // TODO(aomarks) Make this an async iterator.
-    const url = new URL(`drive/v3/files`, this.#apiUrl);
+    const url = new URL(this.#apiUrl);
     url.searchParams.set("q", query);
     if (options?.pageSize) {
       url.searchParams.set("pageSize", String(options.pageSize));
@@ -613,8 +605,7 @@ export class GoogleDriveClient {
     options: CreatePermissionOptions
   ): Promise<Permission> {
     const url = new URL(
-      `drive/v3/files/${encodeURIComponent(fileId)}/permissions`,
-      this.#apiUrl
+      `${this.#apiUrl}/${encodeURIComponent(fileId)}/permissions`
     );
     url.searchParams.set(
       "sendNotificationEmail",
@@ -646,9 +637,7 @@ export class GoogleDriveClient {
   ): Promise<void> {
     const response = await this.#fetch(
       new URL(
-        `drive/v3/files/${encodeURIComponent(fileId)}` +
-          `/permissions/${encodeURIComponent(permissionId)}`,
-        this.#apiUrl
+        `${this.#apiUrl}/${encodeURIComponent(fileId)}/permissions/${encodeURIComponent(permissionId)}`
       ),
       {
         method: "DELETE",
@@ -678,8 +667,7 @@ export class GoogleDriveClient {
   > {
     fileId = normalizeFileId(fileId);
     const url = new URL(
-      `drive/v3/files/${encodeURIComponent(fileId.id)}/copy`,
-      this.#apiUrl
+      `${this.#apiUrl}/${encodeURIComponent(fileId.id)}/copy`
     );
     if (options?.fields) {
       url.searchParams.set("fields", options.fields.join(","));
@@ -699,7 +687,7 @@ export class GoogleDriveClient {
     count: number,
     options?: BaseRequestOptions
   ): Promise<[string, ...string[]]> {
-    const url = new URL(`drive/v3/files/generateIds`, this.#apiUrl);
+    const url = new URL(`${this.#apiUrl}/generateIds`);
     url.searchParams.set("count", String(count));
     const response = await this.#fetch(url, { signal: options?.signal });
     if (!response.ok) {

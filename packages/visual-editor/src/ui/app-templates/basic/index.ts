@@ -49,8 +49,8 @@ import { theme as uiTheme } from "./theme/light.js";
 import "./header/header.js";
 
 import {
-  MAIN_TO_SHAREABLE_COPY_PROPERTY,
-  SHAREABLE_COPY_TO_MAIN_PROPERTY,
+  DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY,
+  DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN,
 } from "@breadboard-ai/utils/google-drive/operations.js";
 import { extractGoogleDriveFileId } from "@breadboard-ai/utils/google-drive/utils.js";
 import { type GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
@@ -64,8 +64,6 @@ import {
   AppScreenOutput,
   BoardServer,
   ConsentAction,
-  ConsentType,
-  ConsentUIType,
   GraphDescriptor,
   RuntimeFlags,
 } from "@breadboard-ai/types";
@@ -89,81 +87,7 @@ import {
 } from "../../../data/save-outputs-as-file.js";
 import { GoogleDriveBoardServer } from "../../../board-server/server.js";
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-const toFunctionString = (fn: Function, bindings?: Record<string, unknown>) => {
-  let str = fn.toString();
-  if (bindings) {
-    for (const [key, value] of Object.entries(bindings)) {
-      str = str.replace(key, `(${JSON.stringify(value)})`);
-    }
-  }
-  return str;
-};
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-const scriptifyFunction = (fn: Function, bindings?: Record<string, unknown>) =>
-  `<script>( ${toFunctionString(fn, bindings)} )();</script>`;
-
-// Will be bound into the iframe script as the targetOrigin for postMessage
-const PARENT_ORIGIN = window.location.origin;
-
-// This script will be run in the AppCat-generated iframe, and will intercept
-// any popups that are opened by the app to post back to Opal to request
-// opening after gaining consent. The iframe is sandboxed and does not allow
-// popups itself, so this is a best-effort to
-const interceptPopupsScript = scriptifyFunction(
-  () => {
-    const requestPopup = (url: URL) =>
-      window.parent.postMessage(
-        {
-          type: "request-open-popup",
-          url: url.toString(),
-        },
-        PARENT_ORIGIN
-      );
-    // This script is guaranteed to be run before any generated scripts, and
-    // we don't let the generated HTML override this
-    Object.defineProperty(window, "open", {
-      value: function (url?: string | URL) {
-        if (url) {
-          requestPopup(new URL(url));
-        }
-        return undefined;
-      },
-      writable: false,
-      configurable: false,
-      enumerable: false,
-    });
-    const findAncestorTag = <T extends keyof HTMLElementTagNameMap>(
-      event: Event,
-      tag: T
-    ) => {
-      const path = event.composedPath();
-      return path.find((el) => (el as HTMLElement).localName === tag) as
-        | HTMLElementTagNameMap[typeof tag]
-        | undefined;
-    };
-    // This listener is capturing and guaranteed to be run before any
-    // generated scripts, so we always get first crack at intercepting popups
-    window.addEventListener(
-      "click",
-      (evt) => {
-        const anchor = findAncestorTag(evt, "a");
-        if (anchor) {
-          requestPopup(new URL(anchor.href));
-          evt.preventDefault();
-          evt.stopImmediatePropagation();
-        }
-      },
-      true
-    );
-  },
-  {
-    PARENT_ORIGIN,
-  }
-);
-
-function isHTMLOutput(screen: AppScreenOutput): string | null {
+function getHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
   const singleOutput = outputs.length === 1;
   if (!singleOutput) {
@@ -230,6 +154,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   accessor isRefreshingAppTheme = false;
 
   @property()
+  accessor isFreshGraph = false;
+
+  @property()
   accessor isEmpty = false;
 
   @property()
@@ -274,9 +201,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   readonly #shareResultsButton = createRef<HTMLButtonElement>();
 
-  readonly outputHtmlIframeRef = createRef<HTMLIFrameElement>();
-  #messageListenerController: AbortController | null = null;
-
   get additionalOptions() {
     return {
       font: {
@@ -297,44 +221,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   static styles = appStyles;
-
-  connectedCallback() {
-    super.connectedCallback();
-    if (this.runtimeFlags?.requireConsentForOpenWebpage) {
-      window.addEventListener(
-        "message",
-        async (event: MessageEvent<{ type: string; url: string }>) => {
-          if (
-            event.source === this.outputHtmlIframeRef.value?.contentWindow &&
-            event.data.type === "request-open-popup"
-          ) {
-            const url = new URL(event.data.url);
-            const graphUrl = this.graph?.url;
-            if (this.consentManager && graphUrl) {
-              const allow = await this.consentManager.queryConsent(
-                {
-                  graphUrl,
-                  type: ConsentType.OPEN_WEBPAGE,
-                  scope: url.origin,
-                },
-                ConsentUIType.MODAL
-              );
-              if (!allow) {
-                return;
-              }
-            }
-            window.open(url.toString(), "_blank");
-          }
-        },
-        { signal: this.#messageListenerController?.signal }
-      );
-    }
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this.#messageListenerController?.abort();
-  }
 
   #renderControls() {
     return html`<bb-app-header
@@ -362,15 +248,14 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       | symbol = nothing;
     const last = this.run.app.last?.last;
     if (last) {
-      const htmlOutput = isHTMLOutput(last);
+      const htmlOutput = getHTMLOutput(last);
       if (htmlOutput !== null) {
-        activityContents = html`<iframe
-          srcdoc=${interceptPopupsScript + htmlOutput}
-          ${ref(this.outputHtmlIframeRef)}
-          frameborder="0"
-          class="html-view"
-          sandbox="allow-scripts allow-forms"
-        ></iframe>`;
+        activityContents = html`
+          <bb-app-sandbox
+            .srcdoc=${htmlOutput}
+            .graphUrl=${this.graph?.url ?? ""}
+          ></bb-app-sandbox>
+        `;
       } else if (
         isLLMContentArray(last.output.context) &&
         isInlineData(last.output.context[0]?.parts[0]) &&
@@ -690,9 +575,26 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   async #onClickSaveResults() {
+    const snackbarId = globalThis.crypto.randomUUID();
+    this.dispatchEvent(
+      new SnackbarEvent(
+        snackbarId,
+        `Saving results to your Google Drive...`,
+        SnackType.PENDING,
+        [],
+        true,
+        true
+      )
+    );
+
+    const unsnackbar = () => {
+      this.dispatchEvent(new UnsnackbarEvent());
+    };
+
     const btn = this.#shareResultsButton.value;
     if (!btn) {
       console.error("No share results button");
+      unsnackbar();
       return;
     }
     this.resultsUrl = null;
@@ -709,6 +611,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     if (!this.run) {
       console.error(`No project run`);
       unlockButton();
+      unsnackbar();
       return;
     }
 
@@ -716,6 +619,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     if (!this.googleDriveClient) {
       console.error(`No google drive client`);
       unlockButton();
+      unsnackbar();
       return;
     }
 
@@ -723,12 +627,14 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     if (!currentGraphUrl) {
       console.error(`No graph url`);
       unlockButton();
+      unsnackbar();
       return;
     }
     const currentGraphFileId = extractGoogleDriveFileId(currentGraphUrl);
     if (!currentGraphFileId) {
       console.error(`Graph URL is not drive:`, currentGraphUrl);
       unlockButton();
+      unsnackbar();
       return;
     }
 
@@ -738,14 +644,18 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       { fields: ["properties", "capabilities"] }
     );
     const isShareableCopy =
-      !!currentGraphMetadata.properties?.[SHAREABLE_COPY_TO_MAIN_PROPERTY];
+      !!currentGraphMetadata.properties?.[
+        DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN
+      ];
     if (isShareableCopy) {
       // The user is already consuming the shareable copy, so just use that for
       // the results link.
       shareableGraphFileId = currentGraphFileId;
     } else {
       const linkedShareableCopyFileId =
-        currentGraphMetadata.properties?.[MAIN_TO_SHAREABLE_COPY_PROPERTY];
+        currentGraphMetadata.properties?.[
+          DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY
+        ];
       if (linkedShareableCopyFileId) {
         // The user is consuming the editable version, but it is shared, and we
         // know the file id of the shareable version. Automatically substitute
@@ -756,7 +666,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         // if they wanted to. Tell them to.
         this.dispatchEvent(
           new SnackbarEvent(
-            crypto.randomUUID(),
+            snackbarId,
             `Please share your ${Strings.from("APP_NAME")} first`,
             SnackType.ERROR,
             [
@@ -799,17 +709,20 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     if (!this.run.finalOutput) {
       unlockButton();
+      unsnackbar();
       return;
     }
     const boardServer = this.boardServer;
     if (!boardServer) {
       console.error(`No board server`);
       unlockButton();
+      unsnackbar();
       return;
     }
     if (!(boardServer instanceof GoogleDriveBoardServer)) {
       console.error(`Board server was not Google Drive`);
       unlockButton();
+      unsnackbar();
       return;
     }
 
@@ -823,7 +736,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       unlockButton();
       this.dispatchEvent(
         new SnackbarEvent(
-          globalThis.crypto.randomUUID(),
+          snackbarId,
           `Error packaging results prior to saving`,
           SnackType.ERROR,
           [],
@@ -834,7 +747,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return;
     }
 
-    const snackbarId = globalThis.crypto.randomUUID();
     this.dispatchEvent(
       new SnackbarEvent(
         snackbarId,
@@ -1003,6 +915,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       }
     }
 
+    const editable = !this.readOnly && !this.isFreshGraph;
     const splashScreen = html`
       <div
         id="splash"
@@ -1017,7 +930,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         <section id="splash-content-container">
           <h1
             class="w-500 round sans-flex md-display-small"
-            ?contenteditable=${!this.readOnly}
+            ?contenteditable=${editable}
             @blur=${(evt: Event) => {
               if (this.readOnly) {
                 return;
@@ -1041,10 +954,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 })
               );
             }}
-            .innerText=${this.options.title}
+            .innerText=${this.isFreshGraph ? "" : this.options.title}
           ></h1>
           <p
-            ?contenteditable=${!this.readOnly}
+            ?contenteditable=${editable}
             class="w-500 round sans-flex md-title-medium"
             @blur=${(evt: Event) => {
               if (this.readOnly) {
@@ -1075,12 +988,15 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 })
               );
             }}
-            .innerText=${this.options.description ?? ""}
+            .innerText=${this.isFreshGraph
+              ? ""
+              : (this.options.description ?? "")}
           ></p>
           <div id="input" class="stopped">
             <div>
               <button
                 id="run"
+                class=${classMap({ hidden: this.isFreshGraph })}
                 @click=${() => {
                   ActionTracker.runApp(this.graph?.url, "app_preview");
                   this.dispatchEvent(

@@ -8,6 +8,7 @@ import type {
   GraphProviderItem,
   ImmutableGraphCollection,
 } from "@breadboard-ai/types";
+import { OPAL_BACKEND_API_PREFIX } from "@breadboard-ai/types";
 import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
 import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
@@ -15,10 +16,7 @@ import type { NarrowedDriveFile } from "@breadboard-ai/utils/google-drive/google
 import { readProperties } from "@breadboard-ai/utils/google-drive/utils.js";
 
 export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
-  readonly #signInInfo: SignInInfo;
-  readonly #fetchWithCreds: typeof globalThis.fetch;
   readonly #graphs = new SignalMap<string, GraphProviderItem>();
-  readonly #backendApiUrl: string;
 
   has(url: string): boolean {
     return this.#graphs.has(url);
@@ -48,13 +46,9 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
   }
 
   constructor(
-    signInInfo: SignInInfo,
-    fetchWithCreds: typeof globalThis.fetch,
-    backendApiUrl: string
+    private readonly signInInfo: SignInInfo,
+    private readonly fetchWithCreds: typeof globalThis.fetch
   ) {
-    this.#signInInfo = signInInfo;
-    this.#fetchWithCreds = fetchWithCreds;
-    this.#backendApiUrl = backendApiUrl;
     void this.#initialize();
   }
 
@@ -106,16 +100,12 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
   }
 
   async #getUserLocation(): Promise<string | undefined> {
-    const endpoint = this.#backendApiUrl;
-    if (!endpoint) {
-      return undefined;
-    }
-    if (this.#signInInfo.state === "signedout") {
+    if (this.signInInfo.state === "signedout") {
       return undefined;
     }
 
-    const locationResponse = await this.#fetchWithCreds(
-      new URL(`/v1beta1/getLocation`, endpoint)
+    const locationResponse = await this.fetchWithCreds(
+      new URL(`${OPAL_BACKEND_API_PREFIX}/v1beta1/getLocation`)
     );
     if (!locationResponse.ok) {
       console.error(

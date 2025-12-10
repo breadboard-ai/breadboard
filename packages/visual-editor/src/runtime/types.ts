@@ -24,6 +24,7 @@ import {
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import type { GlobalConfig } from "../ui/contexts/global-config.js";
 import { SettingsStore } from "../ui/data/settings-store.js";
+import { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 export enum TabType {
   URL,
@@ -60,6 +61,7 @@ export interface Tab {
 
 export interface RuntimeConfig {
   globalConfig: GlobalConfig;
+  guestConfig: GuestConfiguration;
   settings: SettingsStore;
   shellHost: OpalShellHostProtocol;
   initialSignInState: SignInState;

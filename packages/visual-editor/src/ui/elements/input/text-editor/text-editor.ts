@@ -199,6 +199,7 @@ export class TextEditor extends LitElement {
           var(--text-editor-padding-right, var(--bb-grid-size-2))
           var(--text-editor-padding-bottom, var(--bb-grid-size-2))
           var(--text-editor-padding-left, var(--bb-grid-size-2));
+        scrollbar-width: none;
 
         &.placeholder::before {
           content: "Type your prompt here";

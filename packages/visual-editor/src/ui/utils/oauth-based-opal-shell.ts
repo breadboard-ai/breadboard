@@ -17,7 +17,9 @@ import {
 } from "@breadboard-ai/types/oauth.js";
 import type {
   CheckAppAccessResult,
+  FindUserOpalFolderResult,
   GuestConfiguration,
+  ListUserOpalsResult,
   OpalShellHostProtocol,
   PickDriveFilesOptions,
   PickDriveFilesResult,
@@ -43,7 +45,12 @@ import { SETTINGS_TYPE } from "../types/types.js";
 import { getTopLevelOrigin } from "./embed-helpers.js";
 import { sendToAllowedEmbedderIfPresent } from "./embedder.js";
 import "./install-opal-shell-comlink-transfer-handlers.js";
-import { scopesFromUrl } from "./scopes-from-url.js";
+import { checkFetchAllowlist } from "./fetch-allowlist.js";
+import { GOOGLE_DRIVE_FILES_API_PREFIX } from "@breadboard-ai/types";
+import {
+  findUserOpalFolder,
+  listUserOpals,
+} from "./google-drive-host-operations.js";
 
 const SIGN_IN_CONNECTION_ID = "$sign-in";
 
@@ -166,6 +173,12 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
   getConfiguration = async (): Promise<GuestConfiguration> => {
     return {
       consentMessage: "",
+      isTestApi:
+        checkFetchAllowlist(GOOGLE_DRIVE_FILES_API_PREFIX)?.remappedUrl
+          ?.origin === "https://test-www.sandbox.googleapis.com",
+      shareSurface: undefined,
+      shareSurfaceUrlTemplates:
+        CLIENT_DEPLOYMENT_CONFIG.SHARE_SURFACE_URL_TEMPLATES,
     };
   };
 
@@ -203,37 +216,30 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
   }
 
   /**
-   * Use this method to tweak the body of the request if necessary.
+   * Adds the access token to the body of the request.
    */
-  #maybeAugmentInit(url: string, init: RequestInit, accessToken: string) {
+  #addAccessTokenToJsonBody(init: RequestInit, accessToken: string) {
     /**
      * Add the accessToken param to the backend API request that needs it
      * to transform files.
      */
-    if (
-      url.endsWith("/uploadGeminiFile") ||
-      url.endsWith("/uploadBlobFile") ||
-      url.includes("/generateWebpageStream")
-    ) {
-      const body = init.body;
-      if (typeof body !== "string") {
-        console.warn("When augmenting request, body is not string, bailing...");
-        return init;
-      }
-      try {
-        const json = JSON.parse(body);
-        return {
-          ...init,
-          body: JSON.stringify({ ...json, accessToken }),
-        };
-      } catch {
-        console.warn(
-          "When augmenting request, body is not JSON parsable, bailing"
-        );
-        return init;
-      }
+    const body = init.body;
+    if (typeof body !== "string") {
+      console.warn("When augmenting request, body is not string, bailing...");
+      return init;
     }
-    return init;
+    try {
+      const json = JSON.parse(body);
+      return {
+        ...init,
+        body: JSON.stringify({ ...json, accessToken }),
+      };
+    } catch {
+      console.warn(
+        "When augmenting request, body is not JSON parsable, bailing"
+      );
+      return init;
+    }
   }
 
   fetchWithCreds = async (
@@ -256,13 +262,20 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
         { status: 400 }
       );
     }
-    const scopes = scopesFromUrl(url);
-    if (!scopes) {
+    const allowedUrlInfo = checkFetchAllowlist(url);
+    if (!allowedUrlInfo) {
       const message = `URL is not in fetchWithCreds allowlist: ${url}`;
       console.error(`[shell host] ${message}`);
       return new Response(message, { status: 403 });
     }
-    const token = await this.#getToken(scopes);
+    if (allowedUrlInfo.remappedUrl) {
+      // The allowed URL was remapped from the canonical URL, so update the input
+      input =
+        input instanceof Request
+          ? { ...input, url: allowedUrlInfo.remappedUrl.href }
+          : allowedUrlInfo.remappedUrl.href;
+    }
+    const token = await this.#getToken(allowedUrlInfo.scopes);
     if (token.state === "signedout") {
       return new Response("User is signed-out", { status: 401 });
     }
@@ -272,13 +285,15 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
         { status: 401 }
       );
     }
-
     const accessToken = token.grant.access_token;
-    const maybeAugmentedInit = this.#maybeAugmentInit(url, init, accessToken);
 
-    const headers = new Headers(maybeAugmentedInit.headers);
+    if (allowedUrlInfo.shouldAddAccessTokenToJsonBody) {
+      init = this.#addAccessTokenToJsonBody(init, accessToken);
+    }
+
+    const headers = new Headers(init.headers);
     headers.set("Authorization", `Bearer ${accessToken}`);
-    return fetch(input, { ...maybeAugmentedInit, headers });
+    return fetch(input, { ...init, headers });
   };
 
   signIn = async (scopes: string[] = []): Promise<SignInResult> => {
@@ -394,30 +409,21 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
         error: { code: "other", userMessage: "Missing access token" },
       };
     }
-
-    if (AUTH_ENDPOINT !== PROD_AUTH_ENDPOINT) {
-      // TODO: AppCat doesn't support Test Gaia login, so we can't check geo
-      // restrictions.
-      console.info(
-        `[shell host] Using test gaia; Skipping geo restriction check`
+    console.info(`[shell host] Checking geo restriction`);
+    try {
+      const access = await this.#checkAppAccessWithToken(
+        grantResponse.access_token
       );
-    } else {
-      console.info(`[shell host] Checking geo restriction`);
-      try {
-        const access = await this.#checkAppAccessWithToken(
-          grantResponse.access_token
-        );
-        if (!access.canAccess) {
-          console.info(`[shell host] User is geo restricted`);
-          return { ok: false, error: { code: "geo-restriction" } };
-        }
-      } catch (e) {
-        console.error("[shell host] Error checking geo access", e);
-        return {
-          ok: false,
-          error: { code: "other", userMessage: `Error checking geo access` },
-        };
+      if (!access.canAccess) {
+        console.info(`[shell host] User is geo restricted`);
+        return { ok: false, error: { code: "geo-restriction" } };
       }
+    } catch (e) {
+      console.error("[shell host] Error checking geo access", e);
+      return {
+        ok: false,
+        error: { code: "other", userMessage: `Error checking geo access` },
+      };
     }
 
     // Check for any missing required scopes.
@@ -709,11 +715,22 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     if (token.state === "valid") {
       return await this.#checkAppAccessWithToken(token.grant.access_token);
     } else {
-      return { canAccess: false };
+      return {
+        canAccess: false,
+        accessStatus: "ACCESS_STATUS_UNSPECIFIED",
+      };
     }
   };
 
   async #checkAppAccessWithToken(token: string): Promise<CheckAppAccessResult> {
+    if ((await this.getConfiguration()).isTestApi) {
+      // TODO: AppCat doesn't support Test Gaia login, so we can't check geo
+      // restrictions.
+      console.info(
+        `[shell host] Using test gaia; Skipping geo restriction check`
+      );
+      return { canAccess: true, accessStatus: "ACCESS_STATUS_OK" };
+    }
     const response = await fetch(
       new URL(
         "/v1beta1/checkAppAccess",
@@ -724,11 +741,40 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} error checking geo restriction`);
     }
-    const result = (await response.json()) as { canAccess?: boolean };
-    return { canAccess: !!result.canAccess };
+    return (await response.json()) as CheckAppAccessResult;
   }
 
   sendToEmbedder = async (message: BreadboardMessage): Promise<void> => {
     sendToAllowedEmbedderIfPresent(message);
+  };
+
+  findUserOpalFolder = async (): Promise<FindUserOpalFolderResult> => {
+    const token = await this.#getToken([
+      "https://www.googleapis.com/auth/drive.readonly",
+    ]);
+    if (token.state !== "valid") {
+      return {
+        ok: false,
+        error: "User is signed out or doesn't have sufficient scope",
+      };
+    }
+    const userFolderName =
+      CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
+
+    return findUserOpalFolder(userFolderName, token.grant.access_token);
+  };
+
+  listUserOpals = async (): Promise<ListUserOpalsResult> => {
+    const token = await this.#getToken([
+      "https://www.googleapis.com/auth/drive.readonly",
+    ]);
+    if (token.state !== "valid") {
+      return {
+        ok: false,
+        error: "User is signed out or doesn't have sufficient scope",
+      };
+    }
+    const isTestApi = !!(await this.getConfiguration()).isTestApi;
+    return listUserOpals(token.grant.access_token, isTestApi);
   };
 }

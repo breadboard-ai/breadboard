@@ -15,7 +15,11 @@ import { EmbedHandler } from "./ui/embed/embed.js";
 import { provide } from "@lit/context";
 import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
 import { boardServerContext } from "./ui/contexts/board-server.js";
-import type { Outcome, UUID } from "@breadboard-ai/types";
+import {
+  GOOGLE_DRIVE_FILES_API_PREFIX,
+  type Outcome,
+  type UUID,
+} from "@breadboard-ai/types";
 import { SigninAdapter } from "./ui/utils/signin-adapter.js";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import type {
@@ -33,6 +37,7 @@ import { GoogleDriveBoardServer } from "./board-server/server.js";
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
 const DELETING_BOARD_MESSAGE = "Deleting gem";
+const MIN_OFFSET_HEIGHT = 250;
 
 @customElement("bb-lite-home")
 export class LiteHome extends SignalWatcher(LitElement) {
@@ -96,17 +101,19 @@ export class LiteHome extends SignalWatcher(LitElement) {
     );
 
     // Board server
-    const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
-      .href;
+    const proxyApiBaseUrl = new URL(
+      "/api/drive-proxy/drive/v3/files",
+      window.location.href
+    ).href;
     const apiBaseUrl =
       signinAdapter.state === "signedout"
         ? proxyApiBaseUrl
-        : this.globalConfig.GOOGLE_DRIVE_API_ENDPOINT ||
-          "https://www.googleapis.com";
+        : GOOGLE_DRIVE_FILES_API_PREFIX;
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,
       proxyApiBaseUrl,
       fetchWithCreds: opalShell.fetchWithCreds,
+      isTestApi: !!mainArgs.guestConfiguration.isTestApi,
     });
     const googleDrivePublishPermissions =
       this.globalConfig.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [];
@@ -119,7 +126,8 @@ export class LiteHome extends SignalWatcher(LitElement) {
       this.googleDriveClient,
       googleDrivePublishPermissions,
       userFolderName,
-      this.globalConfig.BACKEND_API_ENDPOINT ?? ""
+      opalShell.findUserOpalFolder,
+      opalShell.listUserOpals
     );
     this.#recentBoardStore.restore();
   }
@@ -134,18 +142,35 @@ export class LiteHome extends SignalWatcher(LitElement) {
     this.#addResizeController();
   }
 
+  #debounceResizeNotify = 0;
+  #debounceResizeAnimate = true;
   #addResizeController() {
-    const notifyResize = () => {
-      this.#embedHandler?.sendToEmbedder({
-        type: "resize",
-        width: this.offsetWidth,
-        height: this.offsetHeight,
-      });
+    // Here we debounce the call to notify the embedder because we may get a
+    // flurry of updates. Instead we schedule the update and, when the timeout
+    // expires, we issue the update.
+    const notifyResize = (debounceTimeout = 0) => {
+      // In some embedding contexts the height might be initially calculated as
+      // being less than the gallery height. So we effectively use this check to
+      // ignore such updates.
+      if (this.offsetHeight < MIN_OFFSET_HEIGHT) return;
+
+      clearTimeout(this.#debounceResizeNotify);
+      this.#debounceResizeNotify = window.setTimeout(() => {
+        this.#embedHandler?.sendToEmbedder({
+          type: "resize",
+          width: this.offsetWidth,
+          height: this.offsetHeight,
+          animate: this.#debounceResizeAnimate,
+        });
+
+        // After the first notification, we no longer animate.
+        this.#debounceResizeAnimate = false;
+      }, debounceTimeout);
     };
-    const resizeObserver = new ResizeObserver(notifyResize);
+    const resizeObserver = new ResizeObserver(() => notifyResize());
     resizeObserver.observe(this);
-    // Send initial notification
-    notifyResize();
+    // Send initial notification.
+    notifyResize(50);
   }
 
   handleRoutedEvent(evt: Event) {

@@ -12,6 +12,7 @@ import {
   LLMContent,
   Outcome,
   Schema,
+  GOOGLE_GENAI_API_PREFIX,
 } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { createDataPartTansformer } from "./data-transforms.js";
@@ -43,11 +44,11 @@ const defaultSafetySettings = (): SafetySetting[] => [
 ];
 
 function endpointURL(model: string) {
-  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  return `${GOOGLE_GENAI_API_PREFIX}/${model}:generateContent`;
 }
 
 function streamEndpointURL(model: string) {
-  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
+  return `${GOOGLE_GENAI_API_PREFIX}/${model}:streamGenerateContent?alt=sse`;
 }
 
 const VALID_MODALITIES = ["Text", "Text and Image", "Audio"] as const;

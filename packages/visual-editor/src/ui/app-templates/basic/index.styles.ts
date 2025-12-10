@@ -514,11 +514,6 @@ export const styles: CSSResultGroup = [
             }
           }
 
-          & .html-view {
-            width: 100%;
-            height: 100cqh;
-          }
-
           & .empty-state {
             flex: 1;
             color: var(--light-dark-n-50);
@@ -669,6 +664,11 @@ export const styles: CSSResultGroup = [
 
             --transition-properties: opacity;
             transition: var(--transition);
+
+            &.hidden {
+              opacity: 0;
+              pointer-events: none;
+            }
 
             &.running {
               background: var(--light-dark-p-50) url(/images/progress-ui.svg)

@@ -5,10 +5,11 @@
  */
 
 import {
-  IS_SHAREABLE_COPY_PROPERTY,
-  LATEST_SHARED_VERSION_PROPERTY,
-  MAIN_TO_SHAREABLE_COPY_PROPERTY,
-  SHAREABLE_COPY_TO_MAIN_PROPERTY,
+  DRIVE_PROPERTY_IS_SHAREABLE_COPY,
+  DRIVE_PROPERTY_LATEST_SHARED_VERSION,
+  DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY,
+  DRIVE_PROPERTY_OPAL_SHARE_SURFACE,
+  DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN,
 } from "@breadboard-ai/utils/google-drive/operations.js";
 import {
   diffAssetReadPermissions,
@@ -50,6 +51,9 @@ import {
 import { type GoogleDriveSharePanel } from "../elements.js";
 import { makeUrl } from "../../utils/urls.js";
 import { GoogleDriveBoardServer } from "../../../board-server/server.js";
+import { guestConfigurationContext } from "../../contexts/guest-configuration.js";
+import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
@@ -72,6 +76,7 @@ type State =
         resourceKey: string | undefined;
         stale: boolean;
         permissions: gapi.client.drive.Permission[];
+        shareSurface: string | undefined;
       };
       latestVersion: string;
     }
@@ -85,6 +90,7 @@ type State =
             resourceKey: string | undefined;
             stale: boolean;
             permissions: gapi.client.drive.Permission[];
+            shareSurface: string | undefined;
           }
         | undefined;
       latestVersion: string;
@@ -399,6 +405,9 @@ export class SharePanel extends LitElement {
   @consume({ context: boardServerContext, subscribe: true })
   accessor boardServer: BoardServer | undefined;
 
+  @consume({ context: guestConfigurationContext })
+  accessor guestConfiguration: GuestConfiguration | undefined;
+
   @property({ attribute: false })
   accessor graph: GraphDescriptor | undefined;
 
@@ -589,7 +598,7 @@ export class SharePanel extends LitElement {
       // Update the latest version property on the main file.
       this.googleDriveClient.updateFileMetadata(oldState.shareableFile.id, {
         properties: {
-          [LATEST_SHARED_VERSION_PROPERTY]: oldState.latestVersion,
+          [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: oldState.latestVersion,
         },
       }),
       // Ensure all assets have the same permissions as the shareable file,
@@ -927,6 +936,17 @@ export class SharePanel extends LitElement {
         state.status === "readonly") &&
       state.shareableFile
     ) {
+      const shareSurface = this.guestConfiguration?.shareSurface;
+      const shareSurfaceUrlTemplate =
+        shareSurface &&
+        this.guestConfiguration?.shareSurfaceUrlTemplates?.[shareSurface];
+      if (shareSurfaceUrlTemplate) {
+        return makeShareLinkFromTemplate({
+          urlTemplate: shareSurfaceUrlTemplate,
+          fileId: state.shareableFile.id,
+          resourceKey: state.shareableFile.resourceKey,
+        });
+      }
       return makeUrl(
         {
           page: "graph",
@@ -997,7 +1017,7 @@ export class SharePanel extends LitElement {
     );
 
     const thisFileIsAShareableCopy =
-      thisFileMetadata.properties?.[SHAREABLE_COPY_TO_MAIN_PROPERTY] !==
+      thisFileMetadata.properties?.[DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN] !==
       undefined;
     if (thisFileIsAShareableCopy) {
       this.#state = {
@@ -1011,7 +1031,7 @@ export class SharePanel extends LitElement {
     }
 
     const shareableCopyFileId =
-      thisFileMetadata.properties?.[MAIN_TO_SHAREABLE_COPY_PROPERTY];
+      thisFileMetadata.properties?.[DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY];
 
     if (!thisFileMetadata.ownedByMe) {
       this.#state = {
@@ -1080,9 +1100,13 @@ export class SharePanel extends LitElement {
         stale:
           thisFileMetadata.version !==
           shareableCopyFileMetadata.properties?.[
-            LATEST_SHARED_VERSION_PROPERTY
+            DRIVE_PROPERTY_LATEST_SHARED_VERSION
           ],
         permissions: shareableCopyFileMetadata.permissions ?? [],
+        shareSurface:
+          shareableCopyFileMetadata.properties?.[
+            DRIVE_PROPERTY_OPAL_SHARE_SURFACE
+          ],
       },
       latestVersion: thisFileMetadata.version,
     };
@@ -1132,6 +1156,7 @@ export class SharePanel extends LitElement {
         resourceKey: copyResult.shareableCopyResourceKey,
         stale: false,
         permissions: publishPermissions,
+        shareSurface: this.guestConfiguration?.shareSurface,
       };
       newLatestVersion = copyResult.newMainVersion;
     }
@@ -1441,7 +1466,7 @@ export class SharePanel extends LitElement {
       mainFileId,
       {
         properties: {
-          [MAIN_TO_SHAREABLE_COPY_PROPERTY]: shareableCopyFileId,
+          [DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY]: shareableCopyFileId,
         },
       },
       { fields: ["version"] }
@@ -1454,14 +1479,18 @@ export class SharePanel extends LitElement {
     // component.
     await this.boardServer.flushSaveQueue(`drive:/${shareableCopyFileId}`);
 
+    const shareSurface = this.guestConfiguration?.shareSurface;
     const shareableCopyMetadata =
       await this.googleDriveClient.updateFileMetadata(
         shareableCopyFileId,
         {
           properties: {
-            [SHAREABLE_COPY_TO_MAIN_PROPERTY]: mainFileId,
-            [LATEST_SHARED_VERSION_PROPERTY]: updateMainResult.version,
-            [IS_SHAREABLE_COPY_PROPERTY]: "true",
+            [DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN]: mainFileId,
+            [DRIVE_PROPERTY_LATEST_SHARED_VERSION]: updateMainResult.version,
+            [DRIVE_PROPERTY_IS_SHAREABLE_COPY]: "true",
+            ...(shareSurface
+              ? { [DRIVE_PROPERTY_OPAL_SHARE_SURFACE]: shareSurface }
+              : {}),
           },
         },
         { fields: ["resourceKey"] }

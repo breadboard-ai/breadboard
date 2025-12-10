@@ -84,23 +84,35 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         border-radius: var(--bb-grid-size-16);
         border: none;
         height: var(--bb-grid-size-10);
-        padding: 0 var(--bb-grid-size-4);
+        padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-4);
         color: var(--sys-color--primary);
         cursor: pointer;
         transition: background 0.2s cubic-bezier(0, 0, 0.3, 1);
+        position: relative;
+        -webkit-font-smoothing: antialiased;
 
         &:not([disabled]) {
           &:hover,
           &:focus {
-            background: light-dark(
-              var(--sys-color--surface-container-low),
-              oklch(from var(--sys-color--primary) l c h / 8%)
-            );
+            &::after {
+              content: "";
+              pointer-events: none;
+              background: var(--sys-color--primary);
+              opacity: 0.08;
+              position: absolute;
+              inset: 0;
+              border-radius: var(--bb-grid-size-16);
+            }
           }
         }
 
         .g-icon {
+          font-size: 1.125rem;
+          font-variation-settings:
+            "ROND" 100,
+            "wght" 500;
           margin-left: var(--bb-grid-size-2);
+
           &::after {
             content: "collapse_all";
           }
@@ -122,6 +134,10 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         padding: 0;
         text-align: left;
         aspect-ratio: 35/39;
+
+        &.animatable {
+          animation: fadeIn 250ms cubic-bezier(0.2, 0, 0, 1) 200ms 1 backwards;
+        }
 
         &::before {
           content: "";
@@ -163,6 +179,10 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           &::after {
             opacity: 1;
           }
+        }
+
+        &.hidden {
+          opacity: 0;
         }
 
         .remix-button {
@@ -303,7 +323,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         }
 
         &.default {
-          background-color: var(--light-dark-n-100);
+          background-color: light-dark(var(--n-100), var(--n-0));
           object-fit: contain;
           box-sizing: border-box;
           padding: var(--bb-grid-size-8);
@@ -469,8 +489,13 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor recentBoards: RecentBoard[] = [];
 
+  @property({ reflect: true, type: Boolean })
+  accessor isAnimatingHeight = false;
+
   readonly #paginationContainer = createRef<HTMLElement>();
-  readonly #boardsContainer = createRef<HTMLElement>();
+  #boardsContainer: HTMLElement | undefined = undefined;
+  #boardIntersectionObserver: IntersectionObserver | null = null;
+  #isAnimating = false;
 
   constructor() {
     super();
@@ -494,12 +519,13 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   }
 
   async #toggleCollapsedState() {
-    const container = this.#boardsContainer.value;
+    const container = this.#boardsContainer;
     if (container) {
       const currentHeight = container.offsetHeight;
       if (this.isCollapsed) {
         container.style.maxHeight = `${currentHeight}px`;
         this.isCollapsed = false;
+        this.#isAnimating = true;
         await this.updateComplete;
         const newHeight = container.scrollHeight;
         container.animate(
@@ -508,14 +534,16 @@ export class GalleryLite extends SignalWatcher(LitElement) {
             { maxHeight: `${newHeight}px` },
           ],
           {
-            duration: 300,
-            easing: "ease-in-out",
+            duration: 200,
+            easing: "cubic-bezier(0.2, 0, 0, 1)",
           }
         ).onfinish = () => {
           container.style.maxHeight = "none";
+          this.#isAnimating = false;
         };
       } else {
         this.isCollapsed = true;
+        this.#isAnimating = true;
         await this.updateComplete;
         const newHeight = container.offsetHeight;
         this.isCollapsed = false;
@@ -525,12 +553,13 @@ export class GalleryLite extends SignalWatcher(LitElement) {
             { maxHeight: `${newHeight}px` },
           ],
           {
-            duration: 300,
-            easing: "ease-in-out",
+            duration: 150,
+            easing: "cubic-bezier(0.2, 0, 0, 1)",
           }
         ).onfinish = () => {
           container.style.maxHeight = "none";
           this.isCollapsed = true;
+          this.#isAnimating = false;
         };
       }
     }
@@ -631,6 +660,10 @@ export class GalleryLite extends SignalWatcher(LitElement) {
       ></bb-overflow-menu>`;
     }
 
+    if (this.#boardIntersectionObserver) {
+      this.#boardIntersectionObserver.disconnect();
+    }
+
     return html`
       <section class="gallery-header">
         <h2 class="gallery-title md-title-medium sans-flex w-400">
@@ -641,7 +674,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
           ? html`
               <button
                 id="show-more-button"
-                class="md-title-small sans-flex w-400"
+                class="md-title-small sans-flex w-500"
                 @click=${this.#toggleCollapsedState}
               >
                 ${Strings.from(
@@ -650,6 +683,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
                 <span
                   class=${classMap({
                     "g-icon": true,
+                    round: true,
                     collapsed: this.collapsable && this.isCollapsed,
                   })}
                 ></span>
@@ -659,7 +693,33 @@ export class GalleryLite extends SignalWatcher(LitElement) {
       </section>
       <div
         id="boards"
-        ${ref(this.#boardsContainer)}
+        ${ref((el?: Element) => {
+          this.#boardsContainer = undefined;
+          if (!(el instanceof HTMLElement)) {
+            return;
+          }
+
+          this.#boardsContainer = el;
+
+          const THRESHOLD = 0.95;
+          this.#boardIntersectionObserver = new IntersectionObserver(
+            (entries) => {
+              for (const entry of entries) {
+                if (!(entry.target instanceof HTMLElement)) continue;
+                if (entry.intersectionRatio < THRESHOLD) {
+                  entry.target.classList.toggle(
+                    "animatable",
+                    this.#isAnimating
+                  );
+                  entry.target.classList.add("hidden");
+                } else {
+                  entry.target.classList.remove("hidden");
+                }
+              }
+            },
+            { root: this.#boardsContainer, threshold: THRESHOLD }
+          );
+        })}
         class=${classMap({ collapsed: this.collapsable && this.isCollapsed })}
       >
         ${pageItems.map((item) => {
@@ -687,6 +747,13 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         tabindex="0"
         @click=${(event: PointerEvent) => this.#onBoardClick(event, url)}
         @keydown=${(event: KeyboardEvent) => this.#onBoardKeydown(event, url)}
+        ${ref((el?: Element) => {
+          if (!el) return;
+          requestAnimationFrame(() => {
+            if (!this.#boardIntersectionObserver) return;
+            this.#boardIntersectionObserver.observe(el);
+          });
+        })}
       >
         ${keyed(
           thumbnail,
@@ -827,33 +894,10 @@ export class GalleryLite extends SignalWatcher(LitElement) {
 
   #onClickPrevPage() {
     this.page--;
-    this.#scrollCurrentPageNumberButtonIntoView();
   }
 
   #onClickNextPage() {
     this.page++;
-    this.#scrollCurrentPageNumberButtonIntoView();
-  }
-
-  #scrollCurrentPageNumberButtonIntoView() {
-    const container = this.#paginationContainer.value;
-    if (!container) {
-      console.error("Could not find pagination container");
-      return;
-    }
-    const button = container.querySelector(`[data-page-idx="${this.page}"]`);
-    if (!button) {
-      console.error("Could not find page number button");
-      return;
-    }
-    const isOverflowing = container.scrollWidth > container.clientWidth;
-    if (isOverflowing) {
-      button.scrollIntoView({
-        block: "nearest",
-        inline: "center",
-        behavior: "smooth",
-      });
-    }
   }
 
   #onBoardClick(_event: PointerEvent | KeyboardEvent, url: string) {
