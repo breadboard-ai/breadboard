@@ -366,7 +366,33 @@ export class StepListView extends SignalWatcher(LitElement) {
             )}
           </li>`;
         })}
+        ${this.state?.status === "generating"
+          ? renderPlannerProgress()
+          : nothing}
       </ul>`;
+    };
+
+    const renderPlannerProgress = () => {
+      if (!this.state?.planner) {
+        return nothing;
+      }
+      return html`<li>
+        ${renderStep(
+          {
+            marker: true,
+            "g-icon": true,
+            "filled-heavy": true,
+            "processing-generation": true,
+          },
+          {
+            label: this.state?.planner.thought,
+            prompt: "",
+            status: "pending",
+            title: this.state?.planner.status,
+          },
+          { status: "generating" }
+        )}
+      </li>`;
     };
 
     if (
@@ -382,23 +408,7 @@ export class StepListView extends SignalWatcher(LitElement) {
         return renderPlaceholders();
       } else if (this.state?.status === "generating") {
         return html`<ul id="list">
-          <li>
-            ${renderStep(
-              {
-                marker: true,
-                "g-icon": true,
-                "filled-heavy": true,
-                "processing-generation": true,
-              },
-              {
-                label: this.state?.planner.thought,
-                prompt: "",
-                status: "pending",
-                title: this.state?.planner.status,
-              },
-              { status: "generating" }
-            )}
-          </li>
+          ${renderPlannerProgress()}
         </ul>`;
       }
       return nothing;
@@ -439,6 +449,7 @@ export class StepListView extends SignalWatcher(LitElement) {
         }
       )}
     </ul>`;
+
   }
 
   render() {

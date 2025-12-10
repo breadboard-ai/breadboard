@@ -251,15 +251,23 @@ class PlannerState implements LiteModePlannerState {
   @signal
   get thought() {
     return (
-      trimWithEllipsis(this.flowGenerator.currentThought, 10) || "Planning ..."
+      trimWithEllipsis(
+        progressFromThought(this.flowGenerator.currentThought),
+        10
+      ) || "Planning ..."
     );
   }
 
   constructor(private readonly flowGenerator: FlowGenerator) {}
 }
 
+function progressFromThought(thought: string | null): string | null {
+  if (!thought) return null;
+  const match = thought.match(/\*\*(.*?)\*\*/);
+  return match ? match[1] : null;
+}
+
 function trimWithEllipsis(text: string | null, length: number) {
-  // TODO: Implement this using word boundaries, not string length.
   if (!text) return null;
   const words = text.split(" ");
   if (words.length <= length + 1) return text;
