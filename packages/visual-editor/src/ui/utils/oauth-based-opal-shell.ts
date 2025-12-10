@@ -18,6 +18,7 @@ import {
 import type {
   CheckAppAccessResult,
   FindUserOpalFolderResult,
+  GetDriveCollectorFileResult,
   GuestConfiguration,
   ListUserOpalsResult,
   OpalShellHostProtocol,
@@ -49,6 +50,7 @@ import { checkFetchAllowlist } from "./fetch-allowlist.js";
 import { GOOGLE_DRIVE_FILES_API_PREFIX } from "@breadboard-ai/types";
 import {
   findUserOpalFolder,
+  getDriveCollectorFile,
   listUserOpals,
 } from "./google-drive-host-operations.js";
 
@@ -776,5 +778,27 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     }
     const isTestApi = !!(await this.getConfiguration()).isTestApi;
     return listUserOpals(token.grant.access_token, isTestApi);
+  };
+
+  getDriveCollectorFile = async (
+    mimeType: string,
+    connectorId: string,
+    graphId: string
+  ): Promise<GetDriveCollectorFileResult> => {
+    const token = await this.#getToken([
+      "https://www.googleapis.com/auth/drive.readonly",
+    ]);
+    if (token.state !== "valid") {
+      return {
+        ok: false,
+        error: "User is signed out or doesn't have sufficient scope",
+      };
+    }
+    return getDriveCollectorFile(
+      token.grant.access_token,
+      mimeType,
+      connectorId,
+      graphId
+    );
   };
 }

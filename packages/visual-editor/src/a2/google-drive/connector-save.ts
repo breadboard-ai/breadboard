@@ -15,7 +15,6 @@ import {
   getDoc,
   getPresentation,
   getSpreadsheetMetadata,
-  query,
   updateDoc,
   updatePresentation,
 } from "./api.js";
@@ -171,13 +170,14 @@ async function getCollector(
   let id;
   if (!fileId) {
     const fileKey = `${getTypeKey(mimeType)}${connectorId}${graphId}`;
-    const findFile = await query(
-      moduleArgs,
-      `appProperties has { key = 'google-drive-connector' and value = '${fileKey}' } and trashed = false`
+    const findFile = await moduleArgs.shell.getDriveCollectorFile(
+      mimeType,
+      connectorId,
+      graphId
     );
-    if (!ok(findFile)) return findFile;
-    const file = findFile.files.at(0);
-    if (!file) {
+    if (!findFile.ok) return err(findFile.error);
+    id = findFile.id;
+    if (!id) {
       const createdFile = await create(moduleArgs, {
         name: title,
         mimeType,
@@ -208,7 +208,6 @@ async function getCollector(
         return err(`Unknown mimeType: ${mimeType}`);
       }
     }
-    id = file.id;
   } else {
     id = fileId;
   }
