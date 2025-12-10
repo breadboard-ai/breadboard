@@ -34,7 +34,7 @@ function createLiteModeState(context: RuntimeContext) {
 const EXAMPLES: LiteModeIntentExample[] = [
   {
     intent:
-      "An app that takes a topic, then researches current news on the topic and creates an alternative history fiction story based on these news",
+      "An app that takes a topic, then researches current news on the topic and writes a feel-good fiction story based on these news",
   },
   {
     intent:
