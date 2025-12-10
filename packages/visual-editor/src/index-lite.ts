@@ -578,7 +578,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
               <a
                 ${ref(this.#advancedEditorLink)}
                 href="${this.guestConfiguration.advancedEditorOrigin ||
-                this.hostOrigin}?mode=canvas&flow=${this.tab?.graph.url}"
+                this.hostOrigin}?mode=canvas&flow=${this.runtime.state.lite
+                  .graph?.url}"
                 target="_blank"
               >
                 <span class="g-icon">open_in_new</span>Open Advanced Editor
@@ -593,7 +594,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       <bb-app-controller
         ?inert=${this.#isInert()}
         class=${classMap({ active: true })}
-        .graph=${this.tab?.graph ?? null}
+        .graph=${this.runtime.state.lite.graph ?? null}
         .graphIsEmpty=${false}
         .graphTopologyUpdateId=${this.graphTopologyUpdateId}
         .isMine=${this.tab?.graphIsMine ?? false}
@@ -658,7 +659,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       this.uiState.show.has("NoAccessModal")
         ? this.renderNoAccessModal()
         : nothing,
-      this.uiState.show.has("SignInModal") ? this.renderSignInModal(false) : nothing,
+      this.uiState.show.has("SignInModal")
+        ? this.renderSignInModal(false)
+        : nothing,
     ];
   }
 

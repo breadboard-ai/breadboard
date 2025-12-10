@@ -929,8 +929,14 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       >
         <section id="splash-content-container">
           <h1
-            class="w-500 round sans-flex md-display-small"
             ?contenteditable=${editable}
+            class=${classMap({
+              "w-500": true,
+              round: true,
+              "sans-flex": true,
+              "md-display-small": true,
+              invisible: this.isFreshGraph,
+            })}
             @blur=${(evt: Event) => {
               if (this.readOnly) {
                 return;
@@ -954,11 +960,17 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 })
               );
             }}
-            .innerText=${this.isFreshGraph ? "" : this.options.title}
+            .innerText=${this.isFreshGraph ? "..." : this.options.title}
           ></h1>
           <p
             ?contenteditable=${editable}
-            class="w-500 round sans-flex md-title-medium"
+            class=${classMap({
+              "w-500": true,
+              round: true,
+              "sans-flex": true,
+              "md-title-medium": true,
+              invisible: this.isFreshGraph,
+            })}
             @blur=${(evt: Event) => {
               if (this.readOnly) {
                 return;
@@ -989,14 +1001,14 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               );
             }}
             .innerText=${this.isFreshGraph
-              ? ""
+              ? "..."
               : (this.options.description ?? "")}
           ></p>
           <div id="input" class="stopped">
             <div>
               <button
                 id="run"
-                class=${classMap({ hidden: this.isFreshGraph })}
+                class=${classMap({ invisible: this.isFreshGraph })}
                 @click=${() => {
                   ActionTracker.runApp(this.graph?.url, "app_preview");
                   this.dispatchEvent(
