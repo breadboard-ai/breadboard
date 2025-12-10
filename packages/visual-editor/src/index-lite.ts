@@ -675,6 +675,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       this.uiState.show.has("SignInModal")
         ? this.renderSignInModal(false)
         : nothing,
+      this.uiState.show.has("SnackbarDetailsModal")
+        ? this.renderSnackbarDetailsModal()
+        : nothing,
     ];
   }
 
