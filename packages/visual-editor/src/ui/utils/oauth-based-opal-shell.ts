@@ -763,7 +763,10 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     const userFolderName =
       CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
 
-    return findUserOpalFolder(userFolderName, token.grant.access_token);
+    return findUserOpalFolder({
+      userFolderName,
+      accessToken: token.grant.access_token,
+    });
   };
 
   listUserOpals = async (): Promise<ListUserOpalsResult> => {
@@ -777,7 +780,10 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       };
     }
     const isTestApi = !!(await this.getConfiguration()).isTestApi;
-    return listUserOpals(token.grant.access_token, isTestApi);
+    return listUserOpals({
+      accessToken: token.grant.access_token,
+      isTestApi,
+    });
   };
 
   getDriveCollectorFile = async (
@@ -794,11 +800,11 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
         error: "User is signed out or doesn't have sufficient scope",
       };
     }
-    return getDriveCollectorFile(
-      token.grant.access_token,
+    return getDriveCollectorFile({
+      accessToken: token.grant.access_token,
       mimeType,
       connectorId,
-      graphId
-    );
+      graphId,
+    });
   };
 }

@@ -21,6 +21,23 @@ export const GRAPH_MIME_TYPE = "application/vnd.breadboard.graph+json";
 
 export const IS_SHAREABLE_COPY_PROPERTY = "isShareableCopy";
 
+export type FindUserOpalFolderArgs = {
+  userFolderName: string;
+  accessToken: string;
+};
+
+export type ListUserOpalsArgs = {
+  accessToken: string;
+  isTestApi: boolean;
+};
+
+export type GetDriveCollectorFileArgs = {
+  accessToken: string;
+  mimeType: string;
+  connectorId: string;
+  graphId: string;
+};
+
 const DOC_MIME_TYPE = "application/vnd.google-apps.document";
 const SHEETS_MIME_TYPE = "application/vnd.google-apps.spreadsheet";
 const SLIDES_MIME_TYPE = "application/vnd.google-apps.presentation";
@@ -42,9 +59,9 @@ type DriveListFilesResponse =
   | DriveErrorResponse;
 
 async function findUserOpalFolder(
-  userFolderName: string,
-  accessToken: string
+  args: FindUserOpalFolderArgs
 ): Promise<FindUserOpalFolderResult> {
+  const { userFolderName, accessToken } = args;
   const query = `name=${quote(userFolderName)}
   and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"
   and trashed=false`;
@@ -87,9 +104,9 @@ async function findUserOpalFolder(
 }
 
 async function listUserOpals(
-  accessToken: string,
-  isTestApi: boolean
+  args: ListUserOpalsArgs
 ): Promise<ListUserOpalsResult> {
+  const { accessToken, isTestApi } = args;
   const fields = [
     "id",
     "name",
@@ -140,11 +157,9 @@ and 'me' in owners
 }
 
 async function getDriveCollectorFile(
-  accessToken: string,
-  mimeType: string,
-  connectorId: string,
-  graphId: string
+  args: GetDriveCollectorFileArgs
 ): Promise<GetDriveCollectorFileResult> {
+  const { accessToken, mimeType, connectorId, graphId } = args;
   const fileKey = `${getTypeKey(mimeType)}${connectorId}${graphId}`;
   const query = `appProperties has { key = 'google-drive-connector' and value = '${fileKey}' } and trashed = false`;
   const url = new URL(GOOGLE_DRIVE_FILES_API_PREFIX);
