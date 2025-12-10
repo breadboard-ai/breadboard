@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GOOGLE_DRIVE_FILES_API_PREFIX } from "@breadboard-ai/types/canonical-endpoints.js";
 import type {
   FindUserOpalFolderResult,
   ListOpalFileItem,
   ListUserOpalsResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { GOOGLE_DRIVE_FILES_API_PREFIX } from "@breadboard-ai/types/canonical-endpoints.js";
+import { fetchWithRetry } from "@breadboard-ai/utils/fetch-with-retry.js";
 
 export { findUserOpalFolder, listUserOpals };
 
@@ -33,7 +34,7 @@ async function findUserOpalFolder(
   url.searchParams.set("orderBy", "createdTime desc");
 
   try {
-    let { files } = (await fetchWithRetry(url, {
+    let { files } = (await fetchWithRetry(globalThis.fetch, url, {
       // Closure munges the header key so it needs to be quoted.
       // But prettier likes to remove the quotes.
       // prettier-ignore
@@ -88,7 +89,7 @@ and 'me' in owners
   url.searchParams.set("orderBy", "modifiedTime desc");
 
   try {
-    let { files } = (await fetchWithRetry(url, {
+    let { files } = (await fetchWithRetry(globalThis.fetch, url, {
       // Closure munges the header key so it needs to be quoted.
       // But prettier likes to remove the quotes.
       // prettier-ignore
@@ -118,55 +119,4 @@ and 'me' in owners
 
 function quote(value: string) {
   return `'${value.replace(/'/g, "\\'")}'`;
-}
-
-/** Delay between GDrive API retries. */
-const RETRY_MS = 200;
-
-/** Retries fetch() calls until status is not an internal server error. */
-async function fetchWithRetry(
-  input: string | Request | URL,
-  init?: RequestInit,
-  numAttempts: 1 | 2 | 3 | 4 | 5 = 3
-): Promise<Response> {
-  function shouldRetry(response: Response): boolean {
-    return 500 <= response.status && response.status <= 599;
-  }
-
-  async function recursiveHelper(numAttemptsLeft: number): Promise<Response> {
-    numAttemptsLeft -= 1;
-    let response: Response | null = null;
-    try {
-      response = await fetch(input, init);
-      if (shouldRetry(response)) {
-        console.warn(
-          `Error in fetch(${input}). Attempts left: ${numAttemptsLeft}/${numAttempts}. Response:`,
-          response
-        );
-      } else {
-        return response;
-      }
-    } catch (e) {
-      console.warn(
-        `Exception in fetch(${input}). Attempts left: ${numAttemptsLeft}/${numAttempts}`,
-        e
-      );
-      // return "403 Forbidden" response, as this is likely a CORS error
-      response = new Response(null, {
-        status: 403,
-      });
-    }
-
-    if (numAttemptsLeft <= 0) {
-      return response;
-    }
-
-    return await new Promise((resolve) => {
-      setTimeout(async () => {
-        resolve(await recursiveHelper(numAttemptsLeft));
-      }, RETRY_MS);
-    });
-  }
-
-  return recursiveHelper(numAttempts);
 }
