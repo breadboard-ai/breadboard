@@ -343,6 +343,19 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     this.#showAdvancedEditorOnboardingTooltip =
       (globalThis.localStorage.getItem(ADVANCED_EDITOR_KEY) ?? "true") ===
       "true";
+
+    this.addEventListener("bbevent", (e: Event) => {
+      const evt = e as StateEvent<keyof StateEventDetailMap>;
+
+      if (evt.detail.eventType === "app.fullscreen") {
+        this.showAppFullscreen = evt.detail.action === "activate";
+        return;
+      }
+
+      if (this.handleUserSignIn(evt)) return;
+
+      return this.handleRoutedEvent(evt);
+    });
   }
 
   override async doPostInitWork(): Promise<void> {
@@ -730,16 +743,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         }}
         @bbsharerequested=${() => {
           this.#onClickShareApp();
-        }}
-        @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) => {
-          if (evt.detail.eventType === "app.fullscreen") {
-            this.showAppFullscreen = evt.detail.action === "activate";
-            return;
-          }
-
-          if (this.handleUserSignIn(evt)) return;
-
-          return this.handleRoutedEvent(evt);
         }}
       >
         ${content}
