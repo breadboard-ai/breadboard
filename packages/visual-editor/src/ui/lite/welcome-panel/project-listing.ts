@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type BoardServer, type GraphProviderItem } from "@breadboard-ai/types";
+import {
+  MutableGraphCollection,
+  type BoardServer,
+  type GraphProviderItem,
+} from "@breadboard-ai/types";
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing } from "lit";
@@ -262,22 +266,18 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
       );
       return nothing;
     }
-    if (userGraphs.loading || galleryGraphs.loading) {
+    if (galleryGraphs.loading) {
       return html`
         <div id="loading-message">${Strings.from("STATUS_LOADING")}</div>
       `;
     }
-    const userHasAnyGraphs = userGraphs.size > 0 && !FORCE_NO_BOARDS;
-    const filteredGraphs = FORCE_NO_BOARDS ? [] : [...userGraphs.entries()];
     const featuredGraphs = this.#filterGraphs(
       [...galleryGraphs.entries()],
       this.featuredFilter
     );
-
     return [
       this.#renderFeaturedGraphs(featuredGraphs),
-      this.#renderUserGraphs(this.#sortUserGraphs(filteredGraphs)),
-      userHasAnyGraphs ? nothing : this.#renderNoUserGraphsPanel(),
+      this.#renderUserGraphs(userGraphs),
     ];
   }
 
@@ -330,7 +330,16 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
     });
   }
 
-  #renderUserGraphs(myItems: [string, GraphProviderItem][]) {
+  #renderUserGraphs(userGraphs: MutableGraphCollection) {
+    if (userGraphs.loading) {
+      return html`
+        <div id="loading-message">${Strings.from("STATUS_LOADING")}</div>
+      `;
+    }
+    if (userGraphs.size === 0 || FORCE_NO_BOARDS) {
+      return this.#renderNoUserGraphsPanel();
+    }
+    const sortedUserGraphs = this.#sortUserGraphs([...userGraphs.entries()]);
     return html`
       <div class="gallery-wrapper">
         <bb-gallery-lite
@@ -338,7 +347,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
             "LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS_LITE"
           )}
           .recentBoards=${this.recentBoards}
-          .items=${myItems}
+          .items=${sortedUserGraphs}
           .pageSize=${PAGE_SIZE}
         >
           <button
