@@ -53,6 +53,7 @@ import {
   getDriveCollectorFile,
   listUserOpals,
 } from "./google-drive-host-operations.js";
+import { createFetchWithCreds } from "@breadboard-ai/utils/fetch-with-creds.js";
 
 const SIGN_IN_CONNECTION_ID = "$sign-in";
 
@@ -765,8 +766,9 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
 
     return findUserOpalFolder({
       userFolderName,
-      accessToken: token.grant.access_token,
-      fetchToUse: globalThis.fetch,
+      fetchWithCreds: createFetchWithCreds(
+        async () => token.grant.access_token
+      ),
     });
   };
 
@@ -782,9 +784,10 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     }
     const isTestApi = !!(await this.getConfiguration()).isTestApi;
     return listUserOpals({
-      accessToken: token.grant.access_token,
       isTestApi,
-      fetchToUse: globalThis.fetch,
+      fetchWithCreds: createFetchWithCreds(
+        async () => token.grant.access_token
+      ),
     });
   };
 
@@ -803,11 +806,12 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       };
     }
     return getDriveCollectorFile({
-      accessToken: token.grant.access_token,
       mimeType,
       connectorId,
       graphId,
-      fetchToUse: globalThis.fetch,
+      fetchWithCreds: createFetchWithCreds(
+        async () => token.grant.access_token
+      ),
     });
   };
 }
