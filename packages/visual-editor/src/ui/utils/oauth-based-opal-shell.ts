@@ -53,6 +53,7 @@ import {
   getDriveCollectorFile,
   listUserOpals,
 } from "./google-drive-host-operations.js";
+import { createFetchWithCreds } from "@breadboard-ai/utils/fetch-with-creds.js";
 
 const SIGN_IN_CONNECTION_ID = "$sign-in";
 
@@ -763,7 +764,12 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     const userFolderName =
       CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_USER_FOLDER_NAME || "Breadboard";
 
-    return findUserOpalFolder(userFolderName, token.grant.access_token);
+    return findUserOpalFolder({
+      userFolderName,
+      fetchWithCreds: createFetchWithCreds(
+        async () => token.grant.access_token
+      ),
+    });
   };
 
   listUserOpals = async (): Promise<ListUserOpalsResult> => {
@@ -777,7 +783,12 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       };
     }
     const isTestApi = !!(await this.getConfiguration()).isTestApi;
-    return listUserOpals(token.grant.access_token, isTestApi);
+    return listUserOpals({
+      isTestApi,
+      fetchWithCreds: createFetchWithCreds(
+        async () => token.grant.access_token
+      ),
+    });
   };
 
   getDriveCollectorFile = async (
@@ -794,11 +805,13 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
         error: "User is signed out or doesn't have sufficient scope",
       };
     }
-    return getDriveCollectorFile(
-      token.grant.access_token,
+    return getDriveCollectorFile({
       mimeType,
       connectorId,
-      graphId
-    );
+      graphId,
+      fetchWithCreds: createFetchWithCreds(
+        async () => token.grant.access_token
+      ),
+    });
   };
 }

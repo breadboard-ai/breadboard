@@ -21,6 +21,23 @@ export const GRAPH_MIME_TYPE = "application/vnd.breadboard.graph+json";
 
 export const IS_SHAREABLE_COPY_PROPERTY = "isShareableCopy";
 
+export type FindUserOpalFolderArgs = {
+  userFolderName: string;
+  fetchWithCreds: typeof globalThis.fetch;
+};
+
+export type ListUserOpalsArgs = {
+  isTestApi: boolean;
+  fetchWithCreds: typeof globalThis.fetch;
+};
+
+export type GetDriveCollectorFileArgs = {
+  mimeType: string;
+  connectorId: string;
+  graphId: string;
+  fetchWithCreds: typeof globalThis.fetch;
+};
+
 const DOC_MIME_TYPE = "application/vnd.google-apps.document";
 const SHEETS_MIME_TYPE = "application/vnd.google-apps.spreadsheet";
 const SLIDES_MIME_TYPE = "application/vnd.google-apps.presentation";
@@ -42,9 +59,9 @@ type DriveListFilesResponse =
   | DriveErrorResponse;
 
 async function findUserOpalFolder(
-  userFolderName: string,
-  accessToken: string
+  args: FindUserOpalFolderArgs
 ): Promise<FindUserOpalFolderResult> {
+  const { userFolderName, fetchWithCreds } = args;
   const query = `name=${quote(userFolderName)}
   and mimeType="${GOOGLE_DRIVE_FOLDER_MIME_TYPE}"
   and trashed=false`;
@@ -55,7 +72,7 @@ async function findUserOpalFolder(
   url.searchParams.set("orderBy", "createdTime desc");
 
   try {
-    const response = await listFiles(accessToken, url);
+    const response = await listFiles(url, fetchWithCreds);
     if ("error" in response) {
       return { ok: false, error: response.error.message };
     }
@@ -87,9 +104,9 @@ async function findUserOpalFolder(
 }
 
 async function listUserOpals(
-  accessToken: string,
-  isTestApi: boolean
+  args: ListUserOpalsArgs
 ): Promise<ListUserOpalsResult> {
+  const { isTestApi, fetchWithCreds } = args;
   const fields = [
     "id",
     "name",
@@ -112,7 +129,7 @@ and 'me' in owners
   url.searchParams.set("orderBy", "modifiedTime desc");
 
   try {
-    const response = await listFiles(accessToken, url);
+    const response = await listFiles(url, fetchWithCreds);
     if ("error" in response) {
       return { ok: false, error: response.error.message };
     }
@@ -140,18 +157,16 @@ and 'me' in owners
 }
 
 async function getDriveCollectorFile(
-  accessToken: string,
-  mimeType: string,
-  connectorId: string,
-  graphId: string
+  args: GetDriveCollectorFileArgs
 ): Promise<GetDriveCollectorFileResult> {
+  const { mimeType, connectorId, graphId, fetchWithCreds } = args;
   const fileKey = `${getTypeKey(mimeType)}${connectorId}${graphId}`;
   const query = `appProperties has { key = 'google-drive-connector' and value = '${fileKey}' } and trashed = false`;
   const url = new URL(GOOGLE_DRIVE_FILES_API_PREFIX);
   url.searchParams.set("q", query);
 
   try {
-    const response = await listFiles(accessToken, url);
+    const response = await listFiles(url, fetchWithCreds);
     if ("error" in response) {
       return { ok: false, error: response.error.message };
     }
@@ -189,13 +204,10 @@ function quote(value: string) {
  * @returns A promise that resolves to a list of files.
  */
 function listFiles(
-  accessToken: string,
-  url: URL
+  url: URL,
+  fetchWithCreds: typeof globalThis.fetch
 ): Promise<DriveListFilesResponse> {
-  return fetchWithRetry(globalThis.fetch, url, {
-    // Closure munges the header key so it needs to be quoted.
-    // But prettier likes to remove the quotes.
-    // prettier-ignore
-    headers: { "Authorization": `Bearer ${accessToken}` },
-  }).then((r) => r.json()) as Promise<DriveListFilesResponse>;
+  return fetchWithRetry(fetchWithCreds, url).then((r) =>
+    r.json()
+  ) as Promise<DriveListFilesResponse>;
 }
