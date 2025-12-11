@@ -18,6 +18,7 @@ import {
   globalConfigContext,
   type GlobalConfig,
 } from "../../contexts/global-config.js";
+import "../../elements/welcome-panel/homepage-search-button.js";
 import { StateEvent } from "../../events/events.js";
 import "../../flow-gen/flowgen-homepage-panel.js";
 import * as StringsHelper from "../../strings/helper.js";
@@ -25,7 +26,6 @@ import type { RecentBoard } from "../../types/types.js";
 import { ActionTracker } from "../../utils/action-tracker.js";
 import { blankBoard } from "../../utils/blank-board.js";
 import "./gallery.js";
-import "../../elements/welcome-panel/homepage-search-button.js";
 
 import * as Styles from "../../styles/styles.js";
 
@@ -330,16 +330,15 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
     });
   }
 
-  #renderUserGraphs(userGraphs: MutableGraphCollection) {
-    if (userGraphs.loading) {
+  #renderUserGraphs(userGraphsCollection: MutableGraphCollection) {
+    if (!FORCE_NO_BOARDS && userGraphsCollection.loading) {
       return html`
         <div id="loading-message">${Strings.from("STATUS_LOADING")}</div>
       `;
     }
-    if (userGraphs.size === 0 || FORCE_NO_BOARDS) {
-      return this.#renderNoUserGraphsPanel();
-    }
-    const sortedUserGraphs = this.#sortUserGraphs([...userGraphs.entries()]);
+    const userGraphs = FORCE_NO_BOARDS
+      ? []
+      : this.#sortUserGraphs([...userGraphsCollection.entries()]);
     return html`
       <div class="gallery-wrapper">
         <bb-gallery-lite
@@ -347,7 +346,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
             "LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS_LITE"
           )}
           .recentBoards=${this.recentBoards}
-          .items=${sortedUserGraphs}
+          .items=${userGraphs}
           .pageSize=${PAGE_SIZE}
         >
           <button
@@ -361,6 +360,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
           </button>
         </bb-gallery-lite>
       </div>
+      ${userGraphs.length === 0 ? this.#renderNoUserGraphsPanel() : nothing}
     `;
   }
 
