@@ -33,6 +33,8 @@ import { googleDriveClientContext } from "./ui/contexts/google-drive-client-cont
 import { RecentBoardStore } from "./data/recent-boards.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { GoogleDriveBoardServer } from "./board-server/server.js";
+import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
+import { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
@@ -64,6 +66,9 @@ export class LiteHome extends SignalWatcher(LitElement) {
   @provide({ context: googleDriveClientContext })
   accessor googleDriveClient!: GoogleDriveClient;
 
+  @provide({ context: guestConfigurationContext })
+  protected accessor guestConfiguration: GuestConfiguration;
+
   /**
    * Indicates whether we're currently remixing or deleting boards.
    */
@@ -92,6 +97,9 @@ export class LiteHome extends SignalWatcher(LitElement) {
 
     // Communication with embedder
     this.#embedHandler = mainArgs.embedHandler;
+
+    // Configuration provided by shell host
+    this.guestConfiguration = mainArgs.guestConfiguration;
 
     // Authentication
     const opalShell = mainArgs.shellHost;
@@ -323,6 +331,12 @@ export class LiteHome extends SignalWatcher(LitElement) {
   render() {
     return html`<section id="home">
       <bb-project-listing-lite
+        .libraryTitle=${this.guestConfiguration.libraryTitle ?? null}
+        .libraryIcon=${this.guestConfiguration.libraryIcon ?? null}
+        .galleryTitle=${this.guestConfiguration.galleryTitle ?? null}
+        .galleryIcon=${this.guestConfiguration.galleryIcon ?? null}
+        .createNewTitle=${this.guestConfiguration.createNewTitle ?? null}
+        .createNewIcon=${this.guestConfiguration.createNewIcon ?? null}
         .recentBoards=${this.#recentBoardStore.boards}
         @bbevent=${this.handleRoutedEvent}
       ></bb-project-listing-lite>

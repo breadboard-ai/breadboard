@@ -28,6 +28,7 @@ import { blankBoard } from "../../utils/blank-board.js";
 import "./gallery.js";
 
 import * as Styles from "../../styles/styles.js";
+import { styleMap } from "lit/directives/style-map.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -49,6 +50,24 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
 
   @property()
   accessor featuredFilter: string | null = null;
+
+  @property()
+  accessor libraryTitle: string | null = null;
+
+  @property()
+  accessor libraryIcon: string | null = null;
+
+  @property()
+  accessor galleryTitle: string | null = null;
+
+  @property()
+  accessor galleryIcon: string | null = null;
+
+  @property()
+  accessor createNewTitle: string | null = null;
+
+  @property({ reflect: true, type: String })
+  accessor createNewIcon: string | null = null;
 
   static styles = [
     Styles.HostIcons.icons,
@@ -188,7 +207,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
         }
 
         .g-icon::after {
-          content: "add";
+          content: var(--create-new-icon, "add");
         }
       }
 
@@ -339,12 +358,15 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
     const userGraphs = FORCE_NO_BOARDS
       ? []
       : this.#sortUserGraphs([...userGraphsCollection.entries()]);
+    const createNewIcon = this.createNewIcon
+      ? `"${this.createNewIcon}"`
+      : '"add"';
     return html`
       <div class="gallery-wrapper">
         <bb-gallery-lite
-          .headerText=${Strings.from(
-            "LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS_LITE"
-          )}
+          .headerIcon=${this.libraryIcon}
+          .headerText=${this.libraryTitle ??
+          Strings.from("LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS_LITE")}
           .recentBoards=${this.recentBoards}
           .items=${userGraphs}
           .pageSize=${PAGE_SIZE}
@@ -353,10 +375,13 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
             slot="actions"
             id="create-new-button-inline"
             class="md-title-small sans-flex w-500"
+            style=${styleMap({
+              ["--create-new-icon"]: createNewIcon,
+            })}
             @click=${this.#clickNewProjectButton}
           >
             <span class="g-icon round"></span>
-            ${Strings.from("COMMAND_NEW_PROJECT")}
+            ${this.createNewTitle ?? Strings.from("COMMAND_NEW_PROJECT")}
           </button>
         </bb-gallery-lite>
       </div>
@@ -381,7 +406,9 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
           </div>`
         : html`<bb-gallery-lite
             collapsable
-            .headerText=${Strings.from("LABEL_SAMPLE_GALLERY_TITLE_LITE")}
+            .headerIcon=${this.galleryIcon}
+            .headerText=${this.galleryTitle ??
+            Strings.from("LABEL_SAMPLE_GALLERY_TITLE_LITE")}
             .items=${sampleItems}
             .pageSize=${/* Unlimited */ -1}
             forceCreatorToBeTeam
