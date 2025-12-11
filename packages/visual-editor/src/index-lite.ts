@@ -585,11 +585,12 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     >
       ${this.showAppFullscreen
         ? nothing
-        : html` <header class="w-400 md-title-small sans-flex">
-            <div class="left">${title}</div>
+        : html` <header>
+            <div class="left w-500 md-title-small sans-flex">${title}</div>
             <div class="right">
               <a
                 ${ref(this.#advancedEditorLink)}
+                class="w-400 md-title-small sans-flex unvaried"
                 href="${this.guestConfiguration.advancedEditorOrigin ||
                 this.hostOrigin}?mode=canvas&flow=${this.runtime.state.lite
                   .graph?.url}"
@@ -597,7 +598,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
               >
                 <span class="g-icon">open_in_new</span>Open Advanced Editor
               </a>
-              <button @click=${this.#onClickShareApp}>
+              <button
+                class="w-400 md-title-small sans-flex unvaried"
+                @click=${this.#onClickShareApp}
+              >
                 <span class="g-icon">share</span>${Strings.from(
                   "COMMAND_COPY_APP_PREVIEW_URL"
                 )}
