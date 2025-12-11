@@ -94,12 +94,9 @@ function embedIntroVideo(target: HTMLDivElement) {
 
 async function init() {
   const { shellHost, embedHandler } = await connectToOpalShellHost();
-  const signinAdapter = new SigninAdapter(
-    shellHost,
-    await shellHost.getSignInState()
-  );
+  const signinAdapter = new SigninAdapter(shellHost);
 
-  if (signinAdapter.state === "signedin") {
+  if ((await signinAdapter.state) === "signedin") {
     redirect();
     return;
   }

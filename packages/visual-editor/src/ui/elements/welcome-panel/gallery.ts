@@ -672,26 +672,30 @@ export class Gallery extends SignalWatcher(LitElement) {
     if (this.forceCreatorToBeTeam) {
       return html`<span class="g-icon">spark</span>`;
     }
-    if (item.mine && this.signinAdapter?.picture) {
-      return html`
-        <img
-          class="signed-in"
-          crossorigin="anonymous"
-          src=${this.signinAdapter.picture}
-        />
-      `;
+    const placeholder = html`<span class="g-icon">person</span>`;
+    if (!item.mine || !this.signinAdapter) {
+      return placeholder;
     }
-    return html`<span class="g-icon">person</span>`;
+    return until(
+      this.signinAdapter.picture.then(
+        (picture) => html`
+          <img class="signed-in" crossorigin="anonymous" src=${picture} />
+        `
+      ),
+      placeholder
+    );
   }
 
   #renderCreatorName(item: GraphProviderItem) {
     if (this.forceCreatorToBeTeam) {
       return Strings.from("LABEL_TEAM_NAME");
     }
-    if (item.mine && this.signinAdapter?.name) {
-      return this.signinAdapter.name;
+    if (!item.mine || !this.signinAdapter) {
+      return "Unknown User";
     }
-    return "Unknown User";
+    return until(
+      this.signinAdapter.name.then((name) => name || "Unknown User")
+    );
   }
 
   #renderPagination() {

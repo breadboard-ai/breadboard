@@ -12,7 +12,6 @@ import type { ClientDeploymentConfiguration } from "@breadboard-ai/types/deploym
 import type {
   GuestConfiguration,
   OpalShellHostProtocol,
-  SignInState,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { MakeUrlInit } from "../ui/types/types.js";
 
@@ -43,7 +42,6 @@ export type MainArguments = {
   guestConfiguration: GuestConfiguration;
   shellHost: OpalShellHostProtocol;
   hostOrigin: URL;
-  initialSignInState: SignInState;
   parsedUrl?: MakeUrlInit;
 };
 

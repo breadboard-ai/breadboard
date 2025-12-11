@@ -253,7 +253,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       guestConfig: this.guestConfiguration,
       settings: this.settings,
       shellHost: this.opalShell,
-      initialSignInState: args.initialSignInState,
       env: args.env,
       appName: Strings.from("APP_NAME"),
       appSubName: Strings.from("SUB_APP_NAME"),
@@ -265,11 +264,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.recentBoardStore = this.runtime.recentBoardStore;
 
     // Asyncronously check if the user has a geo-restriction and sign out if so.
-    if (this.signinAdapter.state === "signedin") {
-      this.signinAdapter
-        .checkAppAccess()
-        .then(this.handleAppAccessCheckResult.bind(this));
-    }
+    this.signinAdapter.state.then((state) => {
+      if (state === "signedin") {
+        this.signinAdapter
+          .checkAppAccess()
+          .then(this.handleAppAccessCheckResult.bind(this));
+      }
+    });
 
     this.emailPrefsManager = this.runtime.emailPrefsManager;
     this.flowGenerator = this.runtime.flowGenerator;
@@ -324,10 +325,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     });
 
     // Once we've determined the sign-in status, relay it to an embedder.
-    this.embedHandler?.sendToEmbedder({
-      type: "home_loaded",
-      isSignedIn: this.signinAdapter.state === "signedin",
-    });
+    this.signinAdapter.state.then((state) =>
+      this.embedHandler?.sendToEmbedder({
+        type: "home_loaded",
+        isSignedIn: state === "signedin",
+      })
+    );
 
     this.#maybeNotifyAboutPreferredUrlForDomain();
     this.#maybeNotifyAboutDesktopModality();
@@ -428,7 +431,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   }
 
   async #maybeNotifyAboutPreferredUrlForDomain() {
-    const domain = this.signinAdapter.domain;
+    const domain = await this.signinAdapter.domain;
     if (!domain) {
       return;
     }
@@ -1274,11 +1277,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected async askUserToSignInIfNeeded(
     scopes?: OAuthScope[]
   ): Promise<UserSignInResponse> {
-    if (this.signinAdapter.state === "signedin") {
+    if ((await this.signinAdapter.state) === "signedin") {
       if (!scopes?.length) {
         return "success";
       }
-      const currentScopes = this.signinAdapter.scopes;
+      const currentScopes = await this.signinAdapter.scopes;
       if (
         currentScopes &&
         scopes.every((scope) =>

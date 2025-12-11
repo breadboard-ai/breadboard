@@ -34,6 +34,7 @@ import {
   CheckAppAccessResult,
   GuestConfiguration,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { until } from "lit/directives/until.js";
 
 const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
 
@@ -579,62 +580,65 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       this.runtime.state.lite.graph?.nodes.length === 0 &&
       this.runtime.state.lite.graph?.title === "Untitled Opal app";
 
-    return html` <section
-      id="app-view"
-      slot=${this.showAppFullscreen ? nothing : "slot-1"}
-    >
-      ${this.showAppFullscreen
-        ? nothing
-        : html` <header>
-            <div class="left w-500 md-title-small sans-flex">${title}</div>
-            <div class="right">
-              <a
-                ${ref(this.#advancedEditorLink)}
-                class="w-400 md-title-small sans-flex unvaried"
-                href="${this.guestConfiguration.advancedEditorOrigin ||
-                this.hostOrigin}?mode=canvas&flow=${this.runtime.state.lite
-                  .graph?.url}"
-                target="_blank"
-              >
-                <span class="g-icon">open_in_new</span>Open Advanced Editor
-              </a>
-              <button
-                class="w-400 md-title-small sans-flex unvaried"
-                @click=${this.#onClickShareApp}
-              >
-                <span class="g-icon">share</span>${Strings.from(
-                  "COMMAND_COPY_APP_PREVIEW_URL"
-                )}
-              </button>
-            </div>
-          </header>`}
-      <bb-app-controller
-        ?inert=${this.#isInert()}
-        class=${classMap({ active: true })}
-        .graph=${this.runtime.state.lite.graph ?? null}
-        .graphIsEmpty=${false}
-        .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-        .isMine=${this.tab?.graphIsMine ?? false}
-        .projectRun=${renderValues.projectState?.run}
-        .readOnly=${true}
-        .runtimeFlags=${this.uiState.flags}
-        .showGDrive=${this.signinAdapter.state === "signedin"}
-        .status=${renderValues.tabStatus}
-        .themeHash=${renderValues.themeHash}
-        .headerConfig=${{
-          menu: false,
-          replay: true,
-          fullscreen: this.showAppFullscreen ? "active" : "available",
-          small: true,
-        }}
-        .systemThemeOverride=${true}
-        .isRefreshingAppTheme=${isGenerating}
-        .isFreshGraph=${isFreshGraph}
-      >
-      </bb-app-controller>
-      ${this.renderSnackbar()} ${this.#renderShellUI()}
-      ${this.renderConsentRequests()}
-    </section>`;
+    return until(
+      (async () =>
+        html` <section
+          id="app-view"
+          slot=${this.showAppFullscreen ? nothing : "slot-1"}
+        >
+          ${this.showAppFullscreen
+            ? nothing
+            : html` <header>
+                <div class="left w-500 md-title-small sans-flex">${title}</div>
+                <div class="right">
+                  <a
+                    ${ref(this.#advancedEditorLink)}
+                    class="w-400 md-title-small sans-flex unvaried"
+                    href="${this.guestConfiguration.advancedEditorOrigin ||
+                    this.hostOrigin}?mode=canvas&flow=${this.runtime.state.lite
+                      .graph?.url}"
+                    target="_blank"
+                  >
+                    <span class="g-icon">open_in_new</span>Open Advanced Editor
+                  </a>
+                  <button
+                    class="w-400 md-title-small sans-flex unvaried"
+                    @click=${this.#onClickShareApp}
+                  >
+                    <span class="g-icon">share</span>${Strings.from(
+                      "COMMAND_COPY_APP_PREVIEW_URL"
+                    )}
+                  </button>
+                </div>
+              </header>`}
+          <bb-app-controller
+            ?inert=${this.#isInert()}
+            class=${classMap({ active: true })}
+            .graph=${this.runtime.state.lite.graph ?? null}
+            .graphIsEmpty=${false}
+            .graphTopologyUpdateId=${this.graphTopologyUpdateId}
+            .isMine=${this.tab?.graphIsMine ?? false}
+            .projectRun=${renderValues.projectState?.run}
+            .readOnly=${true}
+            .runtimeFlags=${this.uiState.flags}
+            .showGDrive=${(await this.signinAdapter.state) === "signedin"}
+            .status=${renderValues.tabStatus}
+            .themeHash=${renderValues.themeHash}
+            .headerConfig=${{
+              menu: false,
+              replay: true,
+              fullscreen: this.showAppFullscreen ? "active" : "available",
+              small: true,
+            }}
+            .systemThemeOverride=${true}
+            .isRefreshingAppTheme=${isGenerating}
+            .isFreshGraph=${isFreshGraph}
+          >
+          </bb-app-controller>
+          ${this.renderSnackbar()} ${this.#renderShellUI()}
+          ${this.renderConsentRequests()}
+        </section>`)()
+    );
   }
 
   #renderWelcomeMat() {

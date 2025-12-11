@@ -95,21 +95,16 @@ export class Runtime extends EventTarget {
 
     this.flags = createFlagManager(config.globalConfig.flags);
 
-    this.signinAdapter = new SigninAdapter(
-      config.shellHost,
-      config.initialSignInState
-    );
+    this.signinAdapter = new SigninAdapter(config.shellHost);
     this.fetchWithCreds = this.signinAdapter.fetchWithCreds;
 
     const proxyApiBaseUrl = new URL(
       "/api/drive-proxy/drive/v3/files",
       window.location.href
     ).href;
-    const apiBaseUrl =
-      this.signinAdapter.state === "signedout"
-        ? proxyApiBaseUrl
-        : GOOGLE_DRIVE_FILES_API_PREFIX;
-
+    const apiBaseUrl = this.signinAdapter.state.then((state) =>
+      state === "signedout" ? proxyApiBaseUrl : GOOGLE_DRIVE_FILES_API_PREFIX
+    );
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,
       proxyApiBaseUrl,

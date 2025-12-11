@@ -23,6 +23,7 @@ import { consume } from "@lit/context";
 import { uiStateContext } from "../../contexts/ui-state.js";
 import { UI } from "../../state/types.js";
 import { type } from "../../styles/host/type.js";
+import { until } from "lit/directives/until.js";
 
 @customElement("bb-account-switcher")
 export class AccountSwitcher extends SignalWatcher(LitElement) {
@@ -320,14 +321,17 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
             : Strings.from("APP_NAME")}
         </h1>
         <section id="user-info">
-          ${this.signInAdapter.picture
-            ? html`<img
-                src=${this.signInAdapter.picture}
-                alt=${this.signInAdapter.name}
-              />`
-            : nothing}
+          ${until(
+            (async () =>
+              (await this.signInAdapter?.picture)
+                ? html`<img
+                    src=${await this.signInAdapter?.picture}
+                    alt=${await this.signInAdapter?.name}
+                  />`
+                : nothing)()
+          )}
           <div>
-            <p>${this.signInAdapter.name}</p>
+            <p>${until(this.signInAdapter.name.then((name) => name))}</p>
           </div>
         </section>
         ${this.uiState.flags?.googleOne &&

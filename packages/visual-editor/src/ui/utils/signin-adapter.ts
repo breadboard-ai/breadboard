@@ -22,46 +22,47 @@ export const signinAdapterContext = createContext<SigninAdapter | undefined>(
 
 export class SigninAdapter implements SignInInfo {
   readonly #opalShell: OpalShellHostProtocol;
-  #state: SignInState;
+  #state: Promise<SignInState>;
   readonly fetchWithCreds: typeof globalThis.fetch;
 
-  constructor(
-    opalShell: OpalShellHostProtocol,
-    // TODO(aomarks) Hacky workaround for asynchrony, revisit the API for the
-    // getters so that we don't need this.
-    initialState: SignInState
-  ) {
+  constructor(opalShell: OpalShellHostProtocol) {
     this.#opalShell = opalShell;
     this.fetchWithCreds = opalShell.fetchWithCreds.bind(opalShell);
-    this.#state = initialState;
+    this.#state = opalShell.getSignInState();
   }
 
   get state() {
-    return this.#state.status;
+    return this.#state.then(({ status }) => status);
   }
 
   get name() {
-    return this.#state.status === "signedin" ? this.#state.name : undefined;
+    return this.#state.then((state) =>
+      state.status === "signedin" ? state.name : undefined
+    );
   }
 
   get picture() {
-    return this.#state.status === "signedin" ? this.#state.picture : undefined;
+    return this.#state.then((state) =>
+      state.status === "signedin" ? state.picture : undefined
+    );
   }
 
   get domain() {
-    return this.#state.status === "signedin" ? this.#state.domain : undefined;
+    return this.#state.then((state) =>
+      state.status === "signedin" ? state.domain : undefined
+    );
   }
 
-  get scopes(): Set<string> | undefined {
-    return this.#state.status === "signedin"
-      ? new Set(this.#state.scopes)
-      : undefined;
+  get scopes(): Promise<Set<string> | undefined> {
+    return this.#state.then((state) =>
+      state.status === "signedin" ? new Set(state.scopes) : undefined
+    );
   }
 
   async signIn(scopes: OAuthScope[] = []): Promise<SignInResult> {
     const result = await this.#opalShell.signIn(scopes);
     if (result.ok) {
-      this.#state = result.state;
+      this.#state = Promise.resolve(result.state);
     }
     return result;
   }
@@ -79,7 +80,7 @@ export class SigninAdapter implements SignInInfo {
           )
         ))(),
     ]);
-    this.#state = { status: "signedout" };
+    this.#state = Promise.resolve({ status: "signedout" });
   }
 
   checkAppAccess(): Promise<CheckAppAccessResult> {

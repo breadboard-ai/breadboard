@@ -316,7 +316,9 @@ export class VESignInModal extends LitElement {
       return (await this.#state.request.outcomePromise) ? "success" : "failure";
     }
     status ??=
-      this.signinAdapter?.state === "signedin" ? "add-scope" : "sign-in";
+      (await this.signinAdapter?.state) === "signedin"
+        ? "add-scope"
+        : "sign-in";
     let resolve: (outcome: UserSignInResponse) => void;
     const outcomePromise = new Promise<UserSignInResponse>(
       (r) => (resolve = r)
