@@ -199,7 +199,10 @@ export class StepListView extends SignalWatcher(LitElement) {
                 }
               }
 
-              &[open] > summary > .marker:not(.pending):not(.working) {
+              &[open]
+                > summary
+                > .marker-container
+                > .marker:not(.pending):not(.working) {
                 &::before {
                   content: "keyboard_arrow_up";
                 }
@@ -449,7 +452,6 @@ export class StepListView extends SignalWatcher(LitElement) {
         }
       )}
     </ul>`;
-
   }
 
   render() {
