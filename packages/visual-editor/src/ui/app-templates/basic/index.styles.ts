@@ -80,6 +80,14 @@ export const styles: CSSResultGroup = [
       }
     }
 
+    :host([isrefreshingapptheme]) {
+      .app-template #content #input #run .g-icon::before {
+        content: "progress_activity";
+        display: inline-block;
+        animation: rotate 1s linear infinite;
+      }
+    }
+
     .app-template {
       --custom-color-text: light-dark(var(--p-25), var(--p-80));
       --custom-color-header: light-dark(var(--n-5), var(--n-95));

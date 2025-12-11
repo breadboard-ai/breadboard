@@ -150,7 +150,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @property()
   accessor showGDrive = false;
 
-  @property()
+  @property({ reflect: true, type: Boolean })
   accessor isRefreshingAppTheme = false;
 
   @property()
@@ -874,9 +874,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     }
 
     const retrievingSplash =
-      this.isRefreshingAppTheme ||
-      (typeof this.options.splashImage === "boolean" &&
-        this.options.splashImage);
+      typeof this.options.splashImage === "boolean" && this.options.splashImage;
 
     let styles: Record<string, string> = {};
     if (this.options.theme) {
@@ -1016,7 +1014,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                   );
                 }}
               >
-                <span class="g-icon"></span>Start
+                <span class="g-icon filled-heavy round"></span>${this
+                  .isRefreshingAppTheme
+                  ? "Updating..."
+                  : "Start"}
               </button>
             </div>
           </div>
