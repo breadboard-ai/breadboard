@@ -766,6 +766,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     return findUserOpalFolder({
       userFolderName,
       accessToken: token.grant.access_token,
+      fetchToUse: globalThis.fetch,
     });
   };
 
@@ -783,6 +784,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     return listUserOpals({
       accessToken: token.grant.access_token,
       isTestApi,
+      fetchToUse: globalThis.fetch,
     });
   };
 
@@ -805,6 +807,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       mimeType,
       connectorId,
       graphId,
+      fetchToUse: globalThis.fetch,
     });
   };
 }
