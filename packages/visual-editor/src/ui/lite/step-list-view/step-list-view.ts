@@ -348,6 +348,9 @@ export class StepListView extends SignalWatcher(LitElement) {
 
     const renderPlaceholders = () => {
       return html`<ul id="list">
+        ${this.state?.status === "generating"
+          ? renderPlannerProgress()
+          : nothing}
         ${repeat(new Array(4), () => {
           return html`<li>
             ${renderStep(
@@ -366,9 +369,6 @@ export class StepListView extends SignalWatcher(LitElement) {
             )}
           </li>`;
         })}
-        ${this.state?.status === "generating"
-          ? renderPlannerProgress()
-          : nothing}
       </ul>`;
     };
 
