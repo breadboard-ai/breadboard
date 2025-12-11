@@ -59,7 +59,7 @@ import {
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { isCtrlCommand } from "../../utils/is-ctrl-command.js";
 import { MAIN_BOARD_ID } from "../../constants/constants.js";
-import { Project, StepEditorSurface } from "../../state/index.js";
+import { Project, StepEditorSurface, UI } from "../../state/index.js";
 import {
   FastAccessSelectEvent,
   IterateOnPromptEvent,
@@ -82,6 +82,7 @@ import { embedderContext } from "../../contexts/embedder.js";
 import { embedState } from "../../embed/embed.js";
 import type { EmbedState } from "@breadboard-ai/types/embedder.js";
 import { getBoardUrlFromCurrentWindow } from "../../utils/board-id.js";
+import { uiStateContext } from "../../contexts/ui-state.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { iconSubstitute } from "../../utils/icon-substitute.js";
@@ -145,6 +146,9 @@ export class EntityEditor
 
   @state()
   accessor values: InputValues | undefined;
+
+  @consume({ context: uiStateContext })
+  accessor uiState!: UI;
 
   static styles = [
     icons,
@@ -1415,11 +1419,27 @@ export class EntityEditor
           return item.id === port.value && item.info !== undefined;
         });
 
+        let finalInfo = "";
+        if (extendedInfo && typeof extendedInfo !== "string") {
+          if (extendedInfo?.info) {
+            finalInfo = extendedInfo.info;
+          }
+
+          const dailyLimitReached = false; // @TODO Integrate the backend once the daily limit check is ready
+          const isGoogleUser = false; // @TODO Integrate the backend once the google user check is ready
+          if (
+            extendedInfo?.subscriberInfo &&
+            dailyLimitReached &&
+            isGoogleUser
+          ) {
+            finalInfo = extendedInfo?.subscriberInfo;
+          }
+        }
+
         const extendedInfoOutput =
           extendedInfo && typeof extendedInfo !== "string"
             ? html`<div class="info">
-                <span class="g-icon round filled">warning</span
-                >${extendedInfo.info}
+                <span class="g-icon round filled">warning</span>${finalInfo}
               </div>`
             : nothing;
 

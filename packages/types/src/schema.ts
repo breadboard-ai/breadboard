@@ -172,6 +172,7 @@ export type SchemaEnumValue =
        * When true, shows control flow tools.
        */
       showControlFlowTools?: boolean;
+      subscriberInfo?: string;
     };
 
 export type Schema = {
