@@ -55,6 +55,9 @@ export class ExpandingTextarea extends LitElement {
   @property({ reflect: true, type: Boolean })
   accessor systemThemeOverride = false;
 
+  @property({ reflect: true, type: Boolean })
+  accessor isPopulated = false;
+
   #measure = createRef<HTMLElement>();
   #textarea = createRef<HTMLTextAreaElement>();
   #resizeObserver = new ResizeObserver(() => this.#recomputeHeight());
@@ -176,6 +179,16 @@ export class ExpandingTextarea extends LitElement {
         }
       }
 
+      :host([ispopulated]) #submit {
+        opacity: 0.7;
+
+        &:not([disabled]) {
+          &:hover {
+            opacity: 1;
+          }
+        }
+      }
+
       ::slotted(.g-icon) {
         font-size: 22px;
       }
@@ -203,8 +216,15 @@ export class ExpandingTextarea extends LitElement {
 
   override updated(changes: PropertyValues<this>) {
     if (changes.has("value") || changes.has("placeholder")) {
-      this.updateComplete.then(() => this.#recomputeHeight());
+      this.updateComplete.then(() => {
+        this.#recomputeHeight();
+        this.#recomputeButtonState();
+      });
     }
+  }
+
+  #recomputeButtonState() {
+    this.isPopulated = this.value !== "";
   }
 
   override render() {
