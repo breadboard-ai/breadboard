@@ -18,10 +18,7 @@ import {
   NodeIdentifier,
   PortIdentifier,
 } from "@breadboard-ai/types";
-import {
-  OpalShellHostProtocol,
-  SignInState,
-} from "@breadboard-ai/types/opal-shell-protocol.js";
+import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import type { GlobalConfig } from "../ui/contexts/global-config.js";
 import { SettingsStore } from "../ui/data/settings-store.js";
 import { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
@@ -64,7 +61,6 @@ export interface RuntimeConfig {
   guestConfig: GuestConfiguration;
   settings: SettingsStore;
   shellHost: OpalShellHostProtocol;
-  initialSignInState: SignInState;
   env?: FileSystemEntry[];
   appName: string;
   appSubName: string;

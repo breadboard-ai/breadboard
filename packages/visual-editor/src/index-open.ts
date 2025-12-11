@@ -61,7 +61,7 @@ export class OpenMain extends MainBase {
 
     // Check if the user is from a domain with a special configuration, and
     // redirect to the /open/ page on that domain's preferred url if set.
-    const userDomain = this.signinAdapter.domain;
+    const userDomain = await this.signinAdapter.domain;
     const userDomainPreferredUrl =
       userDomain && this.globalConfig.domains?.[userDomain]?.preferredUrl;
     if (userDomainPreferredUrl) {

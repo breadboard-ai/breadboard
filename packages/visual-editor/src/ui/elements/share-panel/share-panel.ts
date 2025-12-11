@@ -24,7 +24,6 @@ import type {
   NarrowedDriveFile,
 } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { type GraphDescriptor } from "@breadboard-ai/types";
-import type { DomainConfiguration } from "@breadboard-ai/types/deployment-configuration.js";
 import { type BoardServer } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import "@material/web/switch/switch.js";
@@ -79,6 +78,7 @@ type State =
         shareSurface: string | undefined;
       };
       latestVersion: string;
+      userDomain: string;
     }
   | {
       status: "writable";
@@ -94,6 +94,7 @@ type State =
           }
         | undefined;
       latestVersion: string;
+      userDomain: string;
     }
   | {
       status: "updating";
@@ -102,6 +103,7 @@ type State =
       shareableFile:
         | { id: string; resourceKey: string | undefined; stale: boolean }
         | undefined;
+      userDomain: string;
     }
   | {
       status: "granular";
@@ -588,6 +590,7 @@ export class SharePanel extends LitElement {
       published: oldState.published,
       granularlyShared: oldState.granularlyShared,
       shareableFile: oldState.shareableFile,
+      userDomain: oldState.userDomain,
     };
 
     const shareableFileUrl = new URL(`drive:/${oldState.shareableFile.id}`);
@@ -631,10 +634,18 @@ export class SharePanel extends LitElement {
   }
 
   #renderDisallowedPublishingNotice() {
-    const {
-      domain,
-      config: { disallowPublicPublishing, preferredUrl },
-    } = this.#userDomain;
+    if (
+      this.#state.status !== "writable" &&
+      this.#state.status !== "updating"
+    ) {
+      return nothing;
+    }
+    const domain = this.#state.userDomain;
+    if (!domain) {
+      return nothing;
+    }
+    const { disallowPublicPublishing, preferredUrl } =
+      this.globalConfig?.domains?.[domain] ?? {};
     if (!disallowPublicPublishing) {
       return nothing;
     }
@@ -714,10 +725,17 @@ export class SharePanel extends LitElement {
 
   #renderPublishedSwitch() {
     const { status } = this.#state;
+    if (status !== "writable" && status !== "updating") {
+      return nothing;
+    }
     const published =
       (status === "writable" || status === "updating") && this.#state.published;
-    const disabled =
-      this.#userDomain.config.disallowPublicPublishing || status === "updating";
+
+    const domain = this.#state.userDomain;
+    const { disallowPublicPublishing } =
+      this.globalConfig?.domains?.[domain] ?? {};
+
+    const disabled = disallowPublicPublishing || status === "updating";
     return html`
       <div id="published-switch-container">
         ${status === "updating"
@@ -1069,6 +1087,7 @@ export class SharePanel extends LitElement {
         granularlyShared: false,
         shareableFile: undefined,
         latestVersion: thisFileMetadata.version,
+        userDomain: (await this.signinAdapter?.domain) ?? "",
       };
       return;
     }
@@ -1114,6 +1133,7 @@ export class SharePanel extends LitElement {
           ],
       },
       latestVersion: thisFileMetadata.version,
+      userDomain: (await this.signinAdapter?.domain) ?? "",
     };
 
     console.debug(
@@ -1151,6 +1171,7 @@ export class SharePanel extends LitElement {
       published: true,
       granularlyShared: oldState.granularlyShared,
       shareableFile,
+      userDomain: oldState.userDomain,
     };
 
     let newLatestVersion: string | undefined;
@@ -1190,6 +1211,7 @@ export class SharePanel extends LitElement {
       granularlyShared: oldState.granularlyShared,
       shareableFile,
       latestVersion: newLatestVersion ?? oldState.latestVersion,
+      userDomain: oldState.userDomain,
     };
   }
 
@@ -1378,6 +1400,7 @@ export class SharePanel extends LitElement {
       published: false,
       granularlyShared: oldState.granularlyShared,
       shareableFile,
+      userDomain: this.#state.userDomain,
     };
 
     console.debug(
@@ -1403,17 +1426,7 @@ export class SharePanel extends LitElement {
       granularlyShared: oldState.granularlyShared,
       shareableFile,
       latestVersion: oldState.latestVersion,
-    };
-  }
-
-  get #userDomain(): { domain: string; config: DomainConfiguration } {
-    const domain = this.signinAdapter?.domain;
-    if (!domain) {
-      return { domain: "unknown", config: {} };
-    }
-    return {
-      domain,
-      config: this.globalConfig?.domains?.[domain] ?? {},
+      userDomain: oldState.userDomain,
     };
   }
 

@@ -346,7 +346,7 @@ export class Board extends EventTarget {
       }
 
       if (!graph) {
-        if (this.signinAdapter && this.signinAdapter.state === "signedout") {
+        if ((await this.signinAdapter.state) === "signedout") {
           this.dispatchEvent(new RuntimeRequestSignInEvent());
         } else {
           this.dispatchEvent(new RuntimeErrorEvent("Unable to load board"));

@@ -107,7 +107,7 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
   }
 
   async #getUserLocation(): Promise<string | undefined> {
-    if (this.signInInfo.state === "signedout") {
+    if ((await this.signInInfo.state) === "signedout") {
       return undefined;
     }
 

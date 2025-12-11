@@ -103,20 +103,16 @@ export class LiteHome extends SignalWatcher(LitElement) {
 
     // Authentication
     const opalShell = mainArgs.shellHost;
-    const signinAdapter = new SigninAdapter(
-      opalShell,
-      mainArgs.initialSignInState
-    );
+    const signinAdapter = new SigninAdapter(opalShell);
 
     // Board server
     const proxyApiBaseUrl = new URL(
       "/api/drive-proxy/drive/v3/files",
       window.location.href
     ).href;
-    const apiBaseUrl =
-      signinAdapter.state === "signedout"
-        ? proxyApiBaseUrl
-        : GOOGLE_DRIVE_FILES_API_PREFIX;
+    const apiBaseUrl = signinAdapter.state.then((state) =>
+      state === "signedout" ? proxyApiBaseUrl : GOOGLE_DRIVE_FILES_API_PREFIX
+    );
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,
       proxyApiBaseUrl,

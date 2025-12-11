@@ -57,27 +57,24 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
   const { SettingsStore } = await import("./ui/data/settings-store.js");
   const settings = await SettingsStore.restoredInstance();
 
-  const signinAdapter = new SigninAdapter(
-    shellHost,
-    await shellHost.getSignInState()
-  );
+  const signinAdapter = new SigninAdapter(shellHost);
 
   const StringsHelper = await import("./ui/strings/helper.js");
   await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
 
-  const scopeValidation = await signinAdapter.validateScopes();
   const guestConfiguration = await shellHost.getConfiguration();
   const parsedUrl = parseUrl(window.location.href);
   const { lite, page, colorScheme } = parsedUrl;
   if (
-    (signinAdapter.state === "signedin" && scopeValidation.ok) ||
-    (signinAdapter.state === "signedout" &&
-      // Signed-out users can access public graphs
-      (page === "graph" ||
-        // The Lite gallery has a signed-out mode
-        (lite && page === "home") ||
-        // The open page prompts to sign-in and then redirects.
-        page === "open"))
+    // Signed-out users can access public graphs.
+    page === "graph" ||
+    // The open page prompts to sign-in and then redirects.
+    page === "open" ||
+    // The Lite gallery has a signed-out mode.
+    (page === "home" && lite) ||
+    // IMPORTANT: Keep this `await` as the last condition, so that we don't need
+    // to block on it in all of the above cases which don't care about signin.
+    (await signinAdapter.state) === "signedin"
   ) {
     const icon = document.createElement("link");
     icon.rel = "icon";
@@ -111,7 +108,6 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       globalConfig,
       guestConfiguration,
       shellHost,
-      initialSignInState: await shellHost.getSignInState(),
       parsedUrl,
       hostOrigin,
     };
@@ -168,7 +164,8 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
         new URL(window.location.href).searchParams.get(OAUTH_REDIRECT) ??
         undefined,
     };
-    if (signinAdapter.state === "signedin" && !scopeValidation.ok) {
+    const scopeValidation = await signinAdapter.validateScopes();
+    if ((await signinAdapter.state) === "signedin" && !scopeValidation.ok) {
       console.log(
         "[signin] oauth scopes were missing or unavailable, forcing signin.",
         scopeValidation.error
