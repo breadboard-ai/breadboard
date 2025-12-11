@@ -47,6 +47,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
       bb-overflow-menu {
         position: fixed;
         right: auto;
+        z-index: 100;
       }
 
       #boards {
