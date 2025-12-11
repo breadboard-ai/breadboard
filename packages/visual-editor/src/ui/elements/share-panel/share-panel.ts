@@ -211,6 +211,7 @@ export class SharePanel extends LitElement {
         padding: 0 var(--bb-grid-size-6);
         font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
           var(--bb-font-family);
+        color: var(--sys-color--inverse-on-surface);
 
         .g-icon {
           vertical-align: middle;
@@ -296,7 +297,7 @@ export class SharePanel extends LitElement {
           font: 500 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
           text-align: center;
-          color: var(--light-dark-n-98);
+          color: var(--sys-color--on-surface);
         }
       }
 
@@ -320,6 +321,10 @@ export class SharePanel extends LitElement {
           margin-left: var(--bb-grid-size-8);
           border-color: var(--light-dark-n-98);
           font-weight: 500;
+
+          &.bb-button-outlined {
+            color: var(--sys-color--on-surface-low);
+          }
         }
       }
 
