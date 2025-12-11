@@ -74,6 +74,7 @@ export class ExpandingTextarea extends LitElement {
         border-radius: var(--border-radius, 0.5lh);
         overflow-y: hidden;
         background: var(--background-color, currentColor);
+        cursor: text;
       }
 
       #outer-container {
@@ -184,11 +185,20 @@ export class ExpandingTextarea extends LitElement {
   override connectedCallback() {
     super.connectedCallback();
     this.#resizeObserver.observe(this);
+    this.addEventListener("click", this.#onClickBound);
   }
 
   override disconnectedCallback() {
     super.disconnectedCallback();
     this.#resizeObserver.disconnect();
+    this.removeEventListener("click", this.#onClickBound);
+  }
+
+  #onClickBound = this.#onClick.bind(this);
+  #onClick(evt: Event) {
+    const [top] = evt.composedPath();
+    if (!this.#textarea.value || top === this.#textarea) return;
+    this.#textarea.value.focus();
   }
 
   override updated(changes: PropertyValues<this>) {
