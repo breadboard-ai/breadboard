@@ -143,6 +143,12 @@ export declare type GuestConfiguration = {
   noAccessDasherMessage?: string;
   noAccessRegionRestrictedMessage?: string;
   advancedEditorOrigin?: string;
+  galleryTitle?: string;
+  galleryIcon?: string;
+  libraryTitle?: string;
+  libraryIcon?: string;
+  createNewTitle?: string;
+  createNewIcon?: string;
   isTestApi?: boolean;
 
   /**

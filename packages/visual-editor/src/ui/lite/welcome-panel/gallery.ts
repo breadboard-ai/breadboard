@@ -73,8 +73,14 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         padding-bottom: var(--bb-grid-size-4);
 
         & .gallery-title {
+          display: flex;
+          align-items: center;
           flex: 1 0 0;
           margin: 0;
+
+          & .g-icon {
+            margin-left: var(--bb-grid-size-2);
+          }
         }
       }
 
@@ -454,6 +460,9 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   accessor items: [string, GraphProviderItem][] | null = null;
 
   @property()
+  accessor headerIcon: string | null = null;
+
+  @property()
   accessor headerText: string | null = null;
 
   @property({ type: Boolean })
@@ -669,6 +678,11 @@ export class GalleryLite extends SignalWatcher(LitElement) {
       <section class="gallery-header">
         <h2 class="gallery-title md-title-medium sans-flex w-400">
           ${this.headerText}
+          ${this.headerIcon
+            ? html`<span class="g-icon filled-heavy round"
+                >${this.headerIcon}</span
+              >`
+            : nothing}
         </h2>
         <slot name="actions"></slot>
         ${this.collapsable
