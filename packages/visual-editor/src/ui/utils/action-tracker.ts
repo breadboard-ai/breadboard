@@ -48,6 +48,7 @@ function initializeAnalytics(id: string, signedIn: boolean) {
   window.gtag("config", id, {
     site_mode,
     anonymize_ip: true,
+    cookie_flags: "SameSite=None; Secure",
     ...userId,
   });
 
