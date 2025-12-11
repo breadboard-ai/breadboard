@@ -295,7 +295,9 @@ export class StepListView extends SignalWatcher(LitElement) {
       const title =
         options.status !== "generating"
           ? html`<h1 class="step-title w-400 md-body-small sans-flex">
-              ${step.tags?.includes("input") ? "Question to user:" : "Prompt"}
+              ${step.tags?.includes("input")
+                ? "Question to user:"
+                : "Prompt summary"}
             </h1>`
           : nothing;
 
