@@ -56,7 +56,10 @@ export const SHELL_CSP = {
   ],
   ["img-src"]: ["https://*.gstatic.com"],
   ["script-src"]: ["'self'", "https://apis.google.com"],
-  ["style-src"]: ["'self'"],
+  ["style-src"]: [
+    "'self'",
+    "'unsafe-inline'", // Needed for Drive picker and Drive share dialog
+  ],
   ["require-trusted-types-for"]: ["'script'"],
   ["trusted-types"]: ["opal-gapi-url", "gapi#gapi", "goog#html"],
 };
