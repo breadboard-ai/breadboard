@@ -253,7 +253,7 @@ export const styles: CSSResultGroup = [
             box-sizing: border-box;
             background-clip: content-box;
             flex: 1;
-            max-width: 800px;
+            max-width: 600px;
             max-height: calc(55cqh - 54px);
             animation: glide 2150ms linear infinite;
           }
