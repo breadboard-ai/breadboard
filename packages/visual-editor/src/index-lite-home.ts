@@ -35,6 +35,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { GoogleDriveBoardServer } from "./board-server/server.js";
 import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
 import { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { ActionTracker } from "./ui/utils/action-tracker.js";
 
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
@@ -134,6 +135,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
       opalShell.listUserOpals
     );
     this.#recentBoardStore.restore();
+    ActionTracker.load("landing", false);
   }
 
   connectedCallback() {
