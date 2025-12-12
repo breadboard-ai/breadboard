@@ -294,6 +294,21 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
       [...galleryGraphs.entries()],
       this.featuredFilter
     );
+
+    featuredGraphs.sort(([, a], [, b]) => {
+      const indexA = a.metadata?.liteModeFeaturedIndex;
+      const indexB = b.metadata?.liteModeFeaturedIndex;
+      if (indexA !== undefined && indexB !== undefined) {
+        return indexA - indexB;
+      }
+      if (indexA !== undefined) {
+        return -1;
+      }
+      if (indexB !== undefined) {
+        return 1;
+      }
+      return 0;
+    });
     return [
       this.#renderFeaturedGraphs(featuredGraphs),
       this.#renderUserGraphs(userGraphs),

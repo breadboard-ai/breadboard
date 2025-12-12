@@ -80,7 +80,11 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
       );
       return;
     }
-    let files: Array<NarrowedDriveFile<"id" | "name" | "properties">>;
+    let files: Array<
+      NarrowedDriveFile<"id" | "name" | "properties"> & {
+        liteModeFeaturedIndex?: number;
+      }
+    >;
     try {
       files = await response.json();
     } catch (e) {
@@ -100,6 +104,7 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
         mine: false,
         readonly: true,
         handle: null,
+        metadata: { liteModeFeaturedIndex: file.liteModeFeaturedIndex },
       });
     }
     this.#loading = false;

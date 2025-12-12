@@ -500,6 +500,12 @@ export type GraphMetadata = {
    * See https://github.com/breadboard-ai/breadboard/wiki/Parameters-Design
    */
   parameters?: Record<string, ParameterMetadata>;
+
+  /**
+   * If set, this graph is featured in the lite mode gallery.
+   * The value is the index of the graph in the gallery.
+   */
+  liteModeFeaturedIndex?: number;
 };
 
 /**
