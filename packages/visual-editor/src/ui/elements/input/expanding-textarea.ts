@@ -40,7 +40,7 @@ export class ExpandingTextarea extends LitElement {
   @property()
   accessor placeholder = "";
 
-  @property({ type: Boolean })
+  @property({ reflect: true, type: Boolean })
   accessor disabled = false;
 
   @property({ type: Boolean })
@@ -77,6 +77,9 @@ export class ExpandingTextarea extends LitElement {
         border-radius: var(--border-radius, 0.5lh);
         overflow-y: hidden;
         background: var(--background-color, currentColor);
+      }
+
+      :host(:not([disabled])) {
         cursor: text;
       }
 

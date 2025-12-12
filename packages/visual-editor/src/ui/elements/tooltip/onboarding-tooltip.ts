@@ -24,6 +24,9 @@ export class OnboardingTooltip extends LitElement {
   @property({ reflect: true, type: Boolean })
   accessor stackRight = false;
 
+  @property({ reflect: true, type: Boolean })
+  accessor stackTop = false;
+
   static styles = [
     icons,
     baseColors,
@@ -34,6 +37,7 @@ export class OnboardingTooltip extends LitElement {
       }
 
       :host {
+        user-select: none;
         cursor: auto;
         position: absolute;
         right: var(--right, -12px);
@@ -86,6 +90,15 @@ export class OnboardingTooltip extends LitElement {
         &::after {
           left: 16px;
           right: auto;
+        }
+      }
+
+      :host([stacktop]) {
+        transform: translateY(-100%);
+
+        &::after {
+          top: auto;
+          bottom: -6px;
         }
       }
 
