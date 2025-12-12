@@ -874,7 +874,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     }
 
     const retrievingSplash =
-      typeof this.options.splashImage === "boolean" && this.options.splashImage;
+      (typeof this.options.splashImage === "boolean" &&
+        this.options.splashImage) ||
+      (this.isFreshGraph && this.isRefreshingAppTheme);
 
     let styles: Record<string, string> = {};
     if (this.options.theme) {
