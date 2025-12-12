@@ -92,6 +92,8 @@ const LOADING_TIMEOUT = 1250;
 const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
 const UPDATE_HASH_KEY = "bb-main-update-hash";
 
+const SIGN_IN_CONSENT_KEY = "bb-has-sign-in-consent";
+
 const parsedUrl = parseUrl(window.location.href);
 
 abstract class MainBase extends SignalWatcher(LitElement) {
@@ -1277,9 +1279,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected async askUserToSignInIfNeeded(
     scopes?: OAuthScope[]
   ): Promise<UserSignInResponse> {
-    if ((await this.signinAdapter.state) === "signedin") {
+    const verifyScopes = async (): Promise<boolean> => {
       if (!scopes?.length) {
-        return "success";
+        return true;
       }
       const currentScopes = await this.signinAdapter.scopes;
       if (
@@ -1288,7 +1290,34 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           currentScopes.has(canonicalizeOAuthScope(scope))
         )
       ) {
-        return "success";
+        return true;
+      }
+      return false;
+    };
+
+    if ((await this.signinAdapter.state) === "signedin") {
+      if (await verifyScopes()) {
+        if (!this.guestConfiguration.consentMessage) {
+          return "success";
+        }
+        if (checkSignInConsent()) {
+          return "success";
+        } else {
+          this.uiState.show.add("SignInModal");
+          await this.updateComplete;
+          const signInModal = this.signInModalRef.value;
+          if (!signInModal) {
+            console.warn(`Could not find sign-in modal.`);
+            return "failure";
+          }
+          const result = await signInModal.openAndWaitForConsent();
+          if (result === "success") {
+            storeSignInConsent();
+            return "success";
+          } else {
+            return "failure";
+          }
+        }
       }
     }
     this.uiState.show.add("SignInModal");
@@ -1365,4 +1394,16 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       });
     }
   }
+}
+
+function checkSignInConsent(): boolean {
+  const consent = localStorage.getItem(SIGN_IN_CONSENT_KEY);
+  if (consent === "true") {
+    return true;
+  }
+  return false;
+}
+
+function storeSignInConsent() {
+  localStorage.setItem(SIGN_IN_CONSENT_KEY, "true");
 }
