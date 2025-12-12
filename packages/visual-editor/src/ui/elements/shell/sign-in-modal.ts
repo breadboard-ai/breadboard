@@ -280,7 +280,10 @@ export class VESignInModal extends LitElement {
         <button
           id="cancel-button"
           class="sans"
-          @click=${() => this.dispatchEvent(new ModalDismissedEvent())}
+          @click=${() => {
+            this.dispatchEvent(new ModalDismissedEvent());
+            this.#close("dismissed");
+          }}
         >
           Cancel
         </button>
