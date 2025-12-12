@@ -707,7 +707,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   #renderWelcomeMat() {
     return html`<section id="welcome">
       <h1 class="w-400 md-display-small sans-flex">
-        What do you want to build?
+        Describe the AI mini app you want to build
       </h1>
       <h2 class="w-400 md-title-large sans-flex">
         Looking for inspiration? Try one of our prompts
