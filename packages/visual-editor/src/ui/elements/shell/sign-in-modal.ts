@@ -28,6 +28,7 @@ type State =
         | "add-scope"
         | "geo-restriction"
         | "missing-scopes"
+        | "consent-only"
         | "other-error";
       request: SignInRequest;
     };
@@ -164,7 +165,7 @@ export class VESignInModal extends LitElement {
     if (status === "closed") {
       return nothing;
     }
-    if (status === "sign-in") {
+    if (status === "sign-in" || status === "consent-only") {
       return this.#renderSignIn();
     }
     if (status === "add-scope") {
@@ -283,7 +284,7 @@ export class VESignInModal extends LitElement {
         >
           Cancel
         </button>
-        <button id="sign-in-button" class="sans" @click=${this.#onClickSignIn}>
+        <button id="sign-in-button" class="sans" @click=${this.#onClickAccept}>
           Accept
         </button>
       </div>
@@ -306,6 +307,21 @@ export class VESignInModal extends LitElement {
         Grant access
       </button>
     `;
+  }
+
+  async openAndWaitForConsent(): Promise<UserSignInResponse> {
+    let resolve: (outcome: UserSignInResponse) => void;
+    const outcomePromise = new Promise<UserSignInResponse>(
+      (r) => (resolve = r)
+    );
+
+    this.#state = {
+      status: "consent-only",
+      request: { outcomePromise, outcomeResolve: resolve!, scopes: [] },
+    };
+    const result = await outcomePromise;
+    this.#state = { status: "closed" };
+    return result;
   }
 
   async openAndWaitForSignIn(
@@ -336,6 +352,13 @@ export class VESignInModal extends LitElement {
       new StateEvent({ eventType: "host.usersignin", result })
     );
     return result;
+  }
+
+  async #onClickAccept() {
+    if (this.#state.status !== "consent-only") {
+      return this.#onClickSignIn();
+    }
+    this.#close("success");
   }
 
   async #onClickSignIn() {
