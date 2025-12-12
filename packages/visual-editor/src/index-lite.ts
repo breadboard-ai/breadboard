@@ -500,11 +500,13 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderUserInput() {
+    const graphIsMine = this.tab?.graphIsMine ?? false;
     const { lite } = this.runtime.state;
     return html`<bb-editor-input-lite
       ?inert=${this.#isInert()}
       .controller=${this}
       .state=${lite}
+      .graphIsMine=${graphIsMine}
     ></bb-editor-input-lite>`;
   }
 
