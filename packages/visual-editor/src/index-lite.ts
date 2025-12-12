@@ -614,6 +614,52 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       this.runtime.state.lite.graph?.nodes.length === 0 &&
       this.runtime.state.lite.graph?.title === "Untitled Opal app";
 
+    const buttons: Array<HTMLTemplateResult | symbol> = [];
+    if (this.runtime.state.lite.viewType === "editor") {
+      buttons.push(
+        html`<a
+          ${ref(this.#advancedEditorLink)}
+          class="w-400 md-title-small sans-flex unvaried"
+          href="${this.guestConfiguration.advancedEditorOrigin ||
+          this.hostOrigin}?mode=canvas&flow=${this.runtime.state.lite.graph
+            ?.url}"
+          target="_blank"
+        >
+          <span class="g-icon">open_in_new</span>Open Advanced Editor
+        </a>`
+      );
+      if (graphIsMine) {
+        buttons.push(
+          html`<button
+            class="w-400 md-title-small sans-flex unvaried"
+            @click=${this.#onClickShareApp}
+          >
+            <span class="g-icon">share</span>${Strings.from(
+              "COMMAND_COPY_APP_PREVIEW_URL"
+            )}
+          </button>`
+        );
+      } else {
+        buttons.push(
+          html`<button
+            class="w-400 md-title-small sans-flex unvaried"
+            @click=${this.#onClickRemixApp}
+          >
+            <span class="g-icon">gesture</span>${Strings.from("COMMAND_REMIX")}
+            ${this.showRemixWarning
+              ? html`<bb-onboarding-tooltip
+                  id="show-remix-warning"
+                  .text=${"Remix to make a copy and edit the steps"}
+                  @bbonboardingacknowledged=${() => {
+                    this.showRemixWarning = false;
+                  }}
+                ></bb-onboarding-tooltip>`
+              : nothing}
+          </button>`
+        );
+      }
+    }
+
     return until(
       (async () =>
         html` <section
@@ -624,44 +670,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             ? nothing
             : html` <header>
                 <div class="left w-500 md-title-small sans-flex">${title}</div>
-                <div class="right">
-                  <a
-                    ${ref(this.#advancedEditorLink)}
-                    class="w-400 md-title-small sans-flex unvaried"
-                    href="${this.guestConfiguration.advancedEditorOrigin ||
-                    this.hostOrigin}?mode=canvas&flow=${this.runtime.state.lite
-                      .graph?.url}"
-                    target="_blank"
-                  >
-                    <span class="g-icon">open_in_new</span>Open Advanced Editor
-                  </a>
-                  ${graphIsMine
-                    ? html`<button
-                        class="w-400 md-title-small sans-flex unvaried"
-                        @click=${this.#onClickShareApp}
-                      >
-                        <span class="g-icon">share</span>${Strings.from(
-                          "COMMAND_COPY_APP_PREVIEW_URL"
-                        )}
-                      </button>`
-                    : html`<button
-                        class="w-400 md-title-small sans-flex unvaried"
-                        @click=${this.#onClickRemixApp}
-                      >
-                        <span class="g-icon">gesture</span>${Strings.from(
-                          "COMMAND_REMIX"
-                        )}
-                        ${this.showRemixWarning
-                          ? html`<bb-onboarding-tooltip
-                              id="show-remix-warning"
-                              .text=${"Remix to make a copy and edit the steps"}
-                              @bbonboardingacknowledged=${() => {
-                                this.showRemixWarning = false;
-                              }}
-                            ></bb-onboarding-tooltip>`
-                          : nothing}
-                      </button>`}
-                </div>
+                <div class="right">${buttons}</div>
               </header>`}
           <bb-app-controller
             ?inert=${this.#isInert()}
