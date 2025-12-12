@@ -147,6 +147,7 @@ export declare type GuestConfiguration = {
   galleryIcon?: string;
   libraryTitle?: string;
   libraryIcon?: string;
+  noLibraryAppsTitle?: string;
   createNewTitle?: string;
   createNewIcon?: string;
   isTestApi?: boolean;

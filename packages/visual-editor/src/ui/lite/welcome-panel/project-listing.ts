@@ -58,6 +58,9 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
   accessor libraryIcon: string | null = null;
 
   @property()
+  accessor noLibraryAppsTitle: string | null = null;
+
+  @property()
   accessor galleryTitle: string | null = null;
 
   @property()
@@ -408,7 +411,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
     return html`
       <div id="no-projects-panel">
         <span class="g-icon">pentagon</span>
-        ${Strings.from("LABEL_NO_OPALS_LITE")}
+        ${this.noLibraryAppsTitle ?? Strings.from("LABEL_NO_OPALS_LITE")}
       </div>
     `;
   }

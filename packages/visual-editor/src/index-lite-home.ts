@@ -331,6 +331,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
       <bb-project-listing-lite
         .libraryTitle=${this.guestConfiguration.libraryTitle ?? null}
         .libraryIcon=${this.guestConfiguration.libraryIcon ?? null}
+        .noLibraryAppsTitle=${this.guestConfiguration.noLibraryAppsTitle ?? null}
         .galleryTitle=${this.guestConfiguration.galleryTitle ?? null}
         .galleryIcon=${this.guestConfiguration.galleryIcon ?? null}
         .createNewTitle=${this.guestConfiguration.createNewTitle ?? null}
