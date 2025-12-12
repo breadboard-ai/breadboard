@@ -35,8 +35,10 @@ import {
   GuestConfiguration,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { until } from "lit/directives/until.js";
+import { EmbedHandler } from "@breadboard-ai/types/embedder.js";
 
 const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
+const REMIX_WARNING_KEY = "bb-lite-show-remix-warning";
 
 @customElement("bb-lite")
 export class LiteMain extends MainBase implements LiteEditInputController {
@@ -129,6 +131,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           a {
             color: var(--sys-color--on-surface);
           }
+
+          &[disabled] {
+            opacity: 0.3;
+          }
         }
 
         & #app-view {
@@ -152,7 +158,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-5);
+            padding: 0 var(--bb-grid-size-5);
             background: var(--sys-color--surface);
             color: var(--sys-color--on-surface);
 
@@ -178,9 +184,17 @@ export class LiteMain extends MainBase implements LiteEditInputController {
               padding: 0;
               cursor: pointer;
               text-decoration: none;
+              position: relative;
 
               & .g-icon {
                 margin-right: var(--bb-grid-size-2);
+              }
+
+              & bb-onboarding-tooltip {
+                z-index: 300;
+                white-space: normal;
+                --top: calc(100% + var(--bb-grid-size-5));
+                --right: 0;
               }
             }
           }
@@ -326,8 +340,19 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     `,
   ];
 
+  @state()
+  set showRemixWarning(show: boolean) {
+    this.#showRemixWarning = show;
+    globalThis.localStorage.setItem(REMIX_WARNING_KEY, String(show));
+  }
+  get showRemixWarning() {
+    return this.#showRemixWarning;
+  }
+
+  #showRemixWarning = false;
   #advancedEditorLink: Ref<HTMLElement> = createRef();
   #sharePanelRef: Ref<SharePanel> = createRef();
+  readonly #embedHandler?: EmbedHandler;
 
   private accessStatus: CheckAppAccessResult | null = null;
 
@@ -344,6 +369,12 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     this.#showAdvancedEditorOnboardingTooltip =
       (globalThis.localStorage.getItem(ADVANCED_EDITOR_KEY) ?? "true") ===
       "true";
+
+    // Communication with embedder
+    this.#embedHandler = args.embedHandler;
+
+    const remixWarning = globalThis.localStorage.getItem(REMIX_WARNING_KEY);
+    this.showRemixWarning = remixWarning === null || remixWarning === "true";
 
     this.addEventListener("bbevent", (e: Event) => {
       const evt = e as StateEvent<keyof StateEventDetailMap>;
@@ -511,7 +542,12 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderMessage() {
-    return html`<div id="message" class="w-400 md-body-small sans-flex">
+    const graphIsMine = this.tab?.graphIsMine ?? false;
+    return html`<div
+      ?disabled=${!graphIsMine}
+      id="message"
+      class="w-400 md-body-small sans-flex"
+    >
       ${markdown(Strings.from("LABEL_DISCLAIMER_LITE"))}
     </div>`;
   }
@@ -575,6 +611,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         ? (this.tab?.graph.title ?? "Untitled app")
         : "...";
 
+    const graphIsMine = this.tab?.graphIsMine ?? false;
     const isGenerating = this.runtime.state.lite.status === "generating";
     const isFreshGraph =
       isGenerating &&
@@ -603,14 +640,32 @@ export class LiteMain extends MainBase implements LiteEditInputController {
                   >
                     <span class="g-icon">open_in_new</span>Open Advanced Editor
                   </a>
-                  <button
-                    class="w-400 md-title-small sans-flex unvaried"
-                    @click=${this.#onClickShareApp}
-                  >
-                    <span class="g-icon">share</span>${Strings.from(
-                      "COMMAND_COPY_APP_PREVIEW_URL"
-                    )}
-                  </button>
+                  ${graphIsMine
+                    ? html`<button
+                        class="w-400 md-title-small sans-flex unvaried"
+                        @click=${this.#onClickShareApp}
+                      >
+                        <span class="g-icon">share</span>${Strings.from(
+                          "COMMAND_COPY_APP_PREVIEW_URL"
+                        )}
+                      </button>`
+                    : html`<button
+                        class="w-400 md-title-small sans-flex unvaried"
+                        @click=${this.#onClickRemixApp}
+                      >
+                        <span class="g-icon">gesture</span>${Strings.from(
+                          "COMMAND_REMIX"
+                        )}
+                        ${this.showRemixWarning
+                          ? html`<bb-onboarding-tooltip
+                              id="show-remix-warning"
+                              .text=${"Remix to make a copy and edit the steps"}
+                              @bbonboardingacknowledged=${() => {
+                                this.showRemixWarning = false;
+                              }}
+                            ></bb-onboarding-tooltip>`
+                          : nothing}
+                      </button>`}
                 </div>
               </header>`}
           <bb-app-controller
@@ -825,6 +880,18 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #onClickShareApp() {
     this.#sharePanelRef.value?.open();
+  }
+
+  #onClickRemixApp() {
+    const url = this.runtime.state.lite.graph?.url;
+    if (!url) {
+      return;
+    }
+
+    this.#embedHandler?.sendToEmbedder({
+      type: "remix_board",
+      boardId: url,
+    });
   }
 }
 

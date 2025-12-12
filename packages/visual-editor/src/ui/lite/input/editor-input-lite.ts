@@ -6,8 +6,8 @@
 
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
-import { LitElement, css, html, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { LitElement, css, html } from "lit";
+import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import { uiStateContext } from "../../contexts/ui-state.js";
@@ -63,11 +63,10 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
           &:focus-within {
             outline: 1px solid var(--light-dark-n-70);
           }
-        }
 
-        & bb-onboarding-tooltip {
-          --top: calc(var(--bb-grid-size-2) * -1);
-          --left: var(--bb-grid-size-2);
+          &[disabled] {
+            opacity: 0.3;
+          }
         }
       }
 
@@ -102,12 +101,6 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
   @property({ reflect: true, type: Boolean })
   accessor graphIsMine = false;
 
-  @state()
-  accessor #showRemixWarning = false;
-
-  // TODO: Decide whether or not to store this.
-  accessor #maybeShowRemixWarning = true;
-
   readonly #descriptionInput = createRef<HTMLTextAreaElement>();
 
   override render() {
@@ -119,16 +112,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
       rotate: isGenerating,
     };
     return html`
-      <div
-        id="container"
-        @pointerover=${() => {
-          if (this.graphIsMine || !this.#maybeShowRemixWarning) {
-            return;
-          }
-
-          this.#showRemixWarning = true;
-        }}
-      >
+      <div id="container">
         <bb-expanding-textarea
           ${ref(this.#descriptionInput)}
           .disabled=${isGenerating || !this.graphIsMine}
@@ -146,17 +130,6 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
             >${isGenerating ? "progress_activity" : "send"}</span
           ></bb-expanding-textarea
         >
-        ${this.#showRemixWarning
-          ? html`<bb-onboarding-tooltip
-              .stackRight=${true}
-              .stackTop=${true}
-              .text=${"Remix this to make changes"}
-              @bbonboardingacknowledged=${() => {
-                this.#maybeShowRemixWarning = false;
-                this.#showRemixWarning = false;
-              }}
-            ></bb-onboarding-tooltip>`
-          : nothing}
       </div>
     `;
   }
