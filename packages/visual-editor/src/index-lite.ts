@@ -35,7 +35,6 @@ import {
   GuestConfiguration,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { until } from "lit/directives/until.js";
-import { EmbedHandler } from "@breadboard-ai/types/embedder.js";
 
 const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
 const REMIX_WARNING_KEY = "bb-lite-show-remix-warning";
@@ -352,7 +351,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   #showRemixWarning = false;
   #advancedEditorLink: Ref<HTMLElement> = createRef();
   #sharePanelRef: Ref<SharePanel> = createRef();
-  readonly #embedHandler?: EmbedHandler;
 
   private accessStatus: CheckAppAccessResult | null = null;
 
@@ -370,11 +368,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       (globalThis.localStorage.getItem(ADVANCED_EDITOR_KEY) ?? "true") ===
       "true";
 
-    // Communication with embedder
-    this.#embedHandler = args.embedHandler;
-
-    const remixWarning = globalThis.localStorage.getItem(REMIX_WARNING_KEY);
-    this.showRemixWarning = remixWarning === null || remixWarning === "true";
+    this.showRemixWarning =
+      (globalThis.localStorage.getItem(REMIX_WARNING_KEY) ?? "true") === "true";
 
     this.addEventListener("bbevent", (e: Event) => {
       const evt = e as StateEvent<keyof StateEventDetailMap>;
@@ -888,10 +883,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       return;
     }
 
-    this.#embedHandler?.sendToEmbedder({
-      type: "remix_board",
-      boardId: url,
-    });
+    this.invokeRemixEventRouteWith(url);
   }
 }
 
