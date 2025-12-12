@@ -1327,7 +1327,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       console.warn(`Could not find sign-in modal.`);
       return "failure";
     }
-    return signInModal.openAndWaitForSignIn(scopes);
+    const result = await signInModal.openAndWaitForSignIn(scopes);
+    if (result === "success") {
+      storeSignInConsent();
+    }
+    return result;
   }
 
   protected readonly signInModalRef = createRef<VESignInModal>();
