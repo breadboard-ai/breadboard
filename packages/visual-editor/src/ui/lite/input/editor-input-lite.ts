@@ -99,7 +99,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
   accessor state!: LiteModeState;
 
   @property({ reflect: true, type: Boolean })
-  accessor graphIsMine = false;
+  accessor editable = false;
 
   readonly #descriptionInput = createRef<HTMLTextAreaElement>();
 
@@ -115,7 +115,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
       <div id="container">
         <bb-expanding-textarea
           ${ref(this.#descriptionInput)}
-          .disabled=${isGenerating || !this.graphIsMine}
+          .disabled=${isGenerating || !this.editable}
           .classes=${"sans-flex w-400 md-body-large"}
           .orientation=${"vertical"}
           .value=${this.state.currentExampleIntent}

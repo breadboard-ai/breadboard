@@ -526,20 +526,22 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderUserInput() {
-    const graphIsMine = this.tab?.graphIsMine ?? false;
+    const editable =
+      (this.tab?.graphIsMine ?? false) ||
+      this.runtime.state.lite.viewType !== "editor";
     const { lite } = this.runtime.state;
     return html`<bb-editor-input-lite
       ?inert=${this.#isInert()}
       .controller=${this}
       .state=${lite}
-      .graphIsMine=${graphIsMine}
+      .editable=${editable}
     ></bb-editor-input-lite>`;
   }
 
   #renderMessage() {
-    const graphIsMine = this.tab?.graphIsMine ?? false;
+    const editable = this.tab?.graphIsMine ?? false;
     return html`<div
-      ?disabled=${!graphIsMine}
+      ?disabled=${!editable}
       id="message"
       class="w-400 md-body-small sans-flex"
     >
