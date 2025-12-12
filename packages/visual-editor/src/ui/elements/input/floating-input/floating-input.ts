@@ -34,6 +34,7 @@ import { uiStateContext } from "../../../contexts/ui-state.js";
 import { UI } from "../../../state/types.js";
 import { FloatingInputFocusState } from "../../../types/types.js";
 import { isLLMContent } from "../../../../data/common.js";
+import { parseUrl } from "../../../utils/urls.js";
 
 interface SupportedActions {
   allowAddAssets: boolean;
@@ -48,6 +49,8 @@ interface SupportedActions {
     webcamVideo: boolean;
   };
 }
+
+const parsedUrl = parseUrl(window.location.href);
 
 @customElement("bb-floating-input")
 export class FloatingInput extends LitElement {
@@ -430,6 +433,7 @@ export class FloatingInput extends LitElement {
 
   render() {
     let inputContents: HTMLTemplateResult | symbol = nothing;
+    const showGDrive = !parsedUrl.lite;
     if (this.schema) {
       const props = Object.entries(this.schema.properties ?? {});
       const supportedActions = this.#determineSupportedActions(props);
@@ -444,7 +448,7 @@ export class FloatingInput extends LitElement {
               .anchor=${"above"}
               .supportedActions=${supportedActions.actions}
               .allowedUploadMimeTypes=${supportedActions.allowedUploadMimeTypes}
-              .showGDrive=${true}
+              .showGDrive=${showGDrive}
             ></bb-add-asset-button>`
           : nothing}
         ${repeat(props, ([name, schema]) => {
