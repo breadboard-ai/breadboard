@@ -150,7 +150,7 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
           ? html`<bb-onboarding-tooltip
               .stackRight=${true}
               .stackTop=${true}
-              .text=${"To make a change please Remix this first"}
+              .text=${"Remix this to make changes"}
               @bbonboardingacknowledged=${() => {
                 this.#maybeShowRemixWarning = false;
                 this.#showRemixWarning = false;
