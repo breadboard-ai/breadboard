@@ -44,6 +44,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   @property()
   accessor showAppFullscreen = false;
 
+  @property()
+  accessor compactView = false;
+
   @state()
   accessor #showAdvancedEditorOnboardingTooltip = true;
 
@@ -383,6 +386,17 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
       return this.handleRoutedEvent(evt);
     });
+
+    const sizeDetector = window.matchMedia("(max-width: 500px)");
+    const reactToScreenWidth = () => {
+      if (sizeDetector.matches) {
+        this.compactView = true;
+      } else {
+        this.compactView = false;
+      }
+    };
+    sizeDetector.addEventListener("change", reactToScreenWidth);
+    reactToScreenWidth();
   }
 
   override async doPostInitWork(): Promise<void> {
@@ -667,9 +681,11 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       (async () =>
         html` <section
           id="app-view"
-          slot=${this.showAppFullscreen ? nothing : "slot-1"}
+          slot=${this.showAppFullscreen || this.compactView
+            ? nothing
+            : "slot-1"}
         >
-          ${this.showAppFullscreen
+          ${this.showAppFullscreen || this.compactView
             ? nothing
             : html` <header>
                 <div class="left w-500 md-title-small sans-flex">${title}</div>
@@ -691,7 +707,12 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             .headerConfig=${{
               menu: false,
               replay: true,
-              fullscreen: this.showAppFullscreen ? "active" : "available",
+              fullscreen:
+                this.showAppFullscreen || this.compactView
+                  ? this.compactView
+                    ? "no-exit"
+                    : "active"
+                  : "available",
               small: true,
             }}
             .systemThemeOverride=${true}
@@ -774,7 +795,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           break;
         }
 
-        content = html`${this.showAppFullscreen
+        content = html`${this.showAppFullscreen || this.compactView
           ? this.#renderApp()
           : html` <bb-splitter
               direction=${"horizontal"}
@@ -798,7 +819,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     return html`<section
         id="lite-shell"
         class=${classMap({
-          full: this.showAppFullscreen,
+          full: this.showAppFullscreen || this.compactView,
           welcome: lite.viewType === "home",
         })}
         @bbsnackbar=${(snackbarEvent: BreadboardUI.Events.SnackbarEvent) => {
