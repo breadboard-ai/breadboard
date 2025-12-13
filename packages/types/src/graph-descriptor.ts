@@ -422,6 +422,10 @@ export type GraphMetadata = {
    */
   tags?: GraphTag[];
   /**
+   * The original intent that was submitted by user.
+   */
+  raw_intent?: string;
+  /**
    * The overall intent or goal of the application.
    */
   intent?: string;

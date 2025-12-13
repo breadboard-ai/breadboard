@@ -495,6 +495,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderOriginalPrompt() {
     const prompt =
+      this.tab?.graph.metadata?.raw_intent ??
       this.tab?.graph.metadata?.intent ??
       this.runtime.state.lite.currentExampleIntent ??
       null;
