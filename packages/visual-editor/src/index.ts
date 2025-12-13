@@ -28,7 +28,51 @@ export { Main };
 
 @customElement("bb-main")
 class Main extends MainBase {
-  override async doPostInitWork() {}
+  override async doPostInitWork() {
+    this.#maybeNotifyAboutPreferredUrlForDomain();
+    this.#maybeNotifyAboutDesktopModality();
+  }
+
+  async #maybeNotifyAboutPreferredUrlForDomain() {
+    const domain = await this.signinAdapter.domain;
+    if (!domain) {
+      return;
+    }
+    const url = this.globalConfig.domains?.[domain]?.preferredUrl;
+    if (!url) {
+      return;
+    }
+
+    this.snackbar(
+      html`
+        Users from ${domain} should prefer
+        <a href="${url}" target="_blank">${new URL(url).hostname}</a>
+      `,
+      BreadboardUI.Types.SnackType.WARNING,
+      [],
+      true
+    );
+  }
+
+  #maybeNotifyAboutDesktopModality() {
+    if (
+      parsedUrl.page !== "graph" ||
+      !parsedUrl.shared ||
+      parsedUrl.mode !== "canvas"
+    ) {
+      return;
+    }
+
+    // There's little point in attempting to differentiate between "mobile" and
+    // "desktop" here for any number of reasons, but as a reasonable proxy we
+    // will check that there's some screen estate available to show both the
+    // editor and the app preview before we show the modal.
+    if (window.innerWidth > 1280) {
+      return;
+    }
+
+    this.uiState.show.add("BetterOnDesktopModal");
+  }
 
   override async handleAppAccessCheckResult(
     result: CheckAppAccessResult
