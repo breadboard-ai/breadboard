@@ -69,6 +69,9 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
   @property()
   accessor createNewTitle: string | null = null;
 
+  @property()
+  accessor allowCreate: boolean = true;
+
   @property({ reflect: true, type: String })
   accessor createNewIcon: string | null = null;
 
@@ -389,18 +392,20 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
           .items=${userGraphs}
           .pageSize=${PAGE_SIZE}
         >
-          <button
-            slot="actions"
-            id="create-new-button-inline"
-            class="md-title-small sans-flex w-500"
-            style=${styleMap({
-              ["--create-new-icon"]: createNewIcon,
-            })}
-            @click=${this.#clickNewProjectButton}
-          >
-            <span class="g-icon round"></span>
-            ${this.createNewTitle ?? Strings.from("COMMAND_NEW_PROJECT")}
-          </button>
+          ${this.allowCreate
+            ? html`<button
+                slot="actions"
+                id="create-new-button-inline"
+                class="md-title-small sans-flex w-500"
+                style=${styleMap({
+                  ["--create-new-icon"]: createNewIcon,
+                })}
+                @click=${this.#clickNewProjectButton}
+              >
+                <span class="g-icon round"></span>
+                ${this.createNewTitle ?? Strings.from("COMMAND_NEW_PROJECT")}
+              </button>`
+            : nothing}
         </bb-gallery-lite>
       </div>
       ${userGraphs.length === 0 ? this.#renderNoUserGraphsPanel() : nothing}

@@ -9,7 +9,7 @@ import "./ui/lite/welcome-panel/project-listing.js";
 import "./ui/elements/overflow-menu/overflow-menu.js";
 import { css, html, HTMLTemplateResult, LitElement } from "lit";
 import { ref } from "lit/directives/ref.js";
-import { customElement } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { MainArguments } from "./types/types.js";
 import { EmbedHandler } from "./ui/embed/embed.js";
 import { provide } from "@lit/context";
@@ -69,6 +69,9 @@ export class LiteHome extends SignalWatcher(LitElement) {
 
   @provide({ context: guestConfigurationContext })
   protected accessor guestConfiguration: GuestConfiguration;
+
+  @state()
+  accessor compactView = false;
 
   /**
    * Indicates whether we're currently remixing or deleting boards.
@@ -135,6 +138,16 @@ export class LiteHome extends SignalWatcher(LitElement) {
       opalShell.listUserOpals
     );
     this.#recentBoardStore.restore();
+    const sizeDetector = window.matchMedia("(max-width: 500px)");
+    const reactToScreenWidth = () => {
+      if (sizeDetector.matches) {
+        this.compactView = true;
+      } else {
+        this.compactView = false;
+      }
+    };
+    sizeDetector.addEventListener("change", reactToScreenWidth);
+    reactToScreenWidth();
     ActionTracker.load("landing", false);
   }
 
@@ -331,12 +344,14 @@ export class LiteHome extends SignalWatcher(LitElement) {
       <bb-project-listing-lite
         .libraryTitle=${this.guestConfiguration.libraryTitle ?? null}
         .libraryIcon=${this.guestConfiguration.libraryIcon ?? null}
-        .noLibraryAppsTitle=${this.guestConfiguration.noLibraryAppsTitle ?? null}
+        .noLibraryAppsTitle=${this.guestConfiguration.noLibraryAppsTitle ??
+        null}
         .galleryTitle=${this.guestConfiguration.galleryTitle ?? null}
         .galleryIcon=${this.guestConfiguration.galleryIcon ?? null}
         .createNewTitle=${this.guestConfiguration.createNewTitle ?? null}
         .createNewIcon=${this.guestConfiguration.createNewIcon ?? null}
         .recentBoards=${this.#recentBoardStore.boards}
+        .allowCreate=${!this.compactView}
         @bbevent=${this.handleRoutedEvent}
       ></bb-project-listing-lite>
       ${this.#renderSnackbar()}
