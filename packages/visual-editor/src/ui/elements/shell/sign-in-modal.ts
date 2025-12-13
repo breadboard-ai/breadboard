@@ -133,6 +133,11 @@ export class VESignInModal extends LitElement {
           text-align: revert;
           font-size: revert;
         }
+
+        #scroll-sentinel {
+          height: 1px;
+          width: 1px;
+        }
       }
 
       div#buttons {
@@ -215,6 +220,7 @@ export class VESignInModal extends LitElement {
         html`<div id="consent">
             ${markdown(this.consentMessage)}
             <div
+              id="scroll-sentinel"
               ${ref((el?: Element) => {
                 if (el) {
                   // Element just mounted: Start Observing
@@ -224,6 +230,10 @@ export class VESignInModal extends LitElement {
                         this.userReadConsent = true;
                         this.scrollSentinelObserver?.disconnect();
                       }
+                    },
+                    {
+                      rootMargin: "50px",
+                      threshold: 0.0,
                     }
                   );
                   this.scrollSentinelObserver.observe(el);
