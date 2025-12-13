@@ -1039,6 +1039,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         case "progress":
           // Progress is always rendered but hidden (so as to avoid re-renders),
           // so this becomes a no-op here to ensure we cover all states.
+          // The only thing we need to do is clean up after input
+          this.style.setProperty("--input-clearance", `0px`);
           break;
 
         case "input":
