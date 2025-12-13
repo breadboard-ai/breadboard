@@ -245,7 +245,7 @@ function getStatus(
 class PlannerState implements LiteModePlannerState {
   @signal
   get status() {
-    return this.flowGenerator.currentStatus || "Creating your Opal";
+    return this.flowGenerator.currentStatus || "Creating your app";
   }
 
   @signal
