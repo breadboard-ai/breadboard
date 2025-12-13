@@ -29,11 +29,11 @@ export { Main };
 @customElement("bb-main")
 class Main extends MainBase {
   override async doPostInitWork() {
-    this.#maybeNotifyAboutPreferredUrlForDomain();
-    this.#maybeNotifyAboutDesktopModality();
+    this.maybeNotifyAboutPreferredUrlForDomain();
+    this.maybeNotifyAboutDesktopModality();
   }
 
-  async #maybeNotifyAboutPreferredUrlForDomain() {
+  async maybeNotifyAboutPreferredUrlForDomain() {
     const domain = await this.signinAdapter.domain;
     if (!domain) {
       return;
@@ -54,7 +54,7 @@ class Main extends MainBase {
     );
   }
 
-  #maybeNotifyAboutDesktopModality() {
+  maybeNotifyAboutDesktopModality() {
     if (
       parsedUrl.page !== "graph" ||
       !parsedUrl.shared ||
