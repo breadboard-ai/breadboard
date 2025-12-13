@@ -357,6 +357,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   private accessStatus: CheckAppAccessResult | null = null;
 
+  private boardLoaded: Promise<void>;
+
   constructor(args: MainArguments) {
     super(args);
 
@@ -387,6 +389,16 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       return this.handleRoutedEvent(evt);
     });
 
+    let resolve: (() => void) | undefined;
+    this.boardLoaded = new Promise<void>((r) => {
+      resolve = r;
+    });
+    this.runtime.board.addEventListener(
+      RuntimeTabChangeEvent.eventName,
+      () => resolve!(),
+      { once: true }
+    );
+
     const sizeDetector = window.matchMedia("(max-width: 500px)");
     const reactToScreenWidth = () => {
       if (sizeDetector.matches) {
@@ -410,31 +422,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     );
 
     const parsedUrl = this.runtime.router.parsedUrl;
-    switch (parsedUrl.page) {
-      case "graph": {
-        let resolve: () => void;
-        const waitForBoardToLoad = new Promise<void>((r) => {
-          resolve = r;
-        });
-        this.runtime.board.addEventListener(
-          RuntimeTabChangeEvent.eventName,
-          () => resolve!(),
-          { once: true }
-        );
-
-        const remixUrl = parsedUrl.remix ? parsedUrl.flow : null;
-        if (remixUrl) {
-          await waitForBoardToLoad;
-          if (this.accessStatus?.canAccess) {
-            this.invokeRemixEventRouteWith(remixUrl);
-          }
-        }
-        break;
-      }
-      case "home": {
-        await this.askUserToSignInIfNeeded();
-      }
-    }
+    if (parsedUrl.page !== "home") return;
+    await this.askUserToSignInIfNeeded();
   }
 
   override async handleAppAccessCheckResult(
@@ -443,6 +432,18 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     if (!result.canAccess) {
       this.accessStatus = result;
       this.uiState.show.add("NoAccessModal");
+    } else {
+      /**
+       * The remix triggering code goes here, though this is a bit of a hack.
+       * Ideally, we need some sort of lifecycle and a way to subscribe to
+       * events from it
+       */
+      const parsedUrl = this.runtime.router.parsedUrl;
+      if (parsedUrl.page !== "graph") return;
+      const remixUrl = parsedUrl.remix ? parsedUrl.flow : null;
+      if (!remixUrl) return;
+      await this.boardLoaded;
+      this.invokeRemixEventRouteWith(remixUrl);
     }
   }
 
