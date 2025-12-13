@@ -19,6 +19,7 @@ import { UserSignInResponse } from "../../types/types.js";
 import { ModalDismissedEvent, StateEvent } from "../../events/events.js";
 import { markdown } from "../../directives/markdown.js";
 import { classMap } from "lit/directives/class-map.js";
+import { ref } from "lit/directives/ref.js";
 
 type State =
   | { status: "closed" }
@@ -60,6 +61,11 @@ export class VESignInModal extends LitElement {
   @state()
   accessor #state: State = { status: "closed" };
 
+  @state()
+  accessor userReadConsent: boolean = false;
+
+  private scrollSentinelObserver: IntersectionObserver | null = null;
+
   static styles = [
     type,
     baseColors,
@@ -75,8 +81,15 @@ export class VESignInModal extends LitElement {
         max-width: 318px;
 
         &.large {
+          width: calc(100vw - 90px);
           max-width: 500px;
           align-items: flex-end;
+
+          #consent {
+            height: calc(100vh - 210px);
+            max-height: 450px;
+            overflow-y: auto;
+          }
         }
       }
 
@@ -103,6 +116,11 @@ export class VESignInModal extends LitElement {
         }
         &:hover {
           background: var(--light-dark-n-25);
+        }
+
+        &[disabled] {
+          cursor: not-allowed;
+          opacity: 0.5;
         }
       }
 
@@ -160,6 +178,11 @@ export class VESignInModal extends LitElement {
     }
   }
 
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.scrollSentinelObserver?.disconnect();
+  }
+
   render() {
     const { status } = this.#state;
     if (status === "closed") {
@@ -189,7 +212,27 @@ export class VESignInModal extends LitElement {
       return this.#renderModal(
         `Welcome to ${appName()}`,
         "large",
-        html`<div id="consent">${markdown(this.consentMessage)}</div>
+        html`<div id="consent">
+            ${markdown(this.consentMessage)}
+            <div
+              ${ref((el?: Element) => {
+                if (el) {
+                  // Element just mounted: Start Observing
+                  this.scrollSentinelObserver = new IntersectionObserver(
+                    (entries) => {
+                      if (entries[0].isIntersecting) {
+                        this.userReadConsent = true;
+                        this.scrollSentinelObserver?.disconnect();
+                      }
+                    }
+                  );
+                  this.scrollSentinelObserver.observe(el);
+                } else {
+                  this.scrollSentinelObserver?.disconnect();
+                }
+              })}
+            ></div>
+          </div>
           ${this.#renderAcceptCancelButtons()} `
       );
     } else {
@@ -287,7 +330,12 @@ export class VESignInModal extends LitElement {
         >
           Cancel
         </button>
-        <button id="sign-in-button" class="sans" @click=${this.#onClickAccept}>
+        <button
+          id="sign-in-button"
+          class="sans accept"
+          ?disabled=${!this.userReadConsent}
+          @click=${this.#onClickAccept}
+        >
           Accept
         </button>
       </div>
