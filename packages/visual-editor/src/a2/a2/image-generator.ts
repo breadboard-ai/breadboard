@@ -95,7 +95,7 @@ async function invoke(
   if (!instruction) {
     instruction = toLLMContent("");
   }
-  if (!aspectRatio) {
+  if (!aspectRatio || !ASPECT_RATIOS.includes(aspectRatio)) {
     aspectRatio = "1:1";
   }
   let imageContext = extractMediaData(incomingContext);
