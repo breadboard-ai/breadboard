@@ -86,7 +86,8 @@ export class VESignInModal extends LitElement {
           align-items: flex-end;
 
           #consent {
-            max-height: 400px;
+            height: calc(100vh - 210px);
+            max-height: 450px;
             overflow-y: auto;
           }
         }
