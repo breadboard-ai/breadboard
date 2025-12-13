@@ -182,7 +182,9 @@ async function invoke(
   if (instruction) {
     instructionText = toText(instruction).trim();
   }
-  aspectRatio ??= "16:9";
+  if (!aspectRatio || !ASPECT_RATIOS.includes(aspectRatio)) {
+    aspectRatio = "16:9";
+  }
   // Substitute variables and magic image reference.
   // Note: it is important that images are not subsituted in here as they will
   // not be handled properly. At this point, only text variables should be left.
