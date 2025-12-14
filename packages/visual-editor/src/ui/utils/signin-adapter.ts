@@ -42,6 +42,12 @@ export class SigninAdapter implements SignInInfo {
     });
   }
 
+  // TODO: Each signal also has a promise, since some code still depends
+  // on awaiting the current signin state vs. reactively rendering it.
+  // Ideally we audit those places and switch to signal-based patterns.
+  // Until then, each promise just returns the corresponding signal
+  // getter, so we don't have to duplicate the status guard logic.
+
   @signal
   accessor stateSignal: SignInState | undefined = undefined;
 
