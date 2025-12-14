@@ -915,8 +915,8 @@ export const styles: CSSResultGroup = [
           justify-content: center;
           width: 200px;
           height: var(--bb-grid-size-12);
-          background: var(--light-dark-p-15, var(--light-dark-p-98));
-          color: var(--light-dark-p-100, var(--light-dark-p-30));
+          background: light-dark(var(--p-15), var(--p-90));
+          color: light-dark(var(--p-100), var(--p-30));
           border-radius: var(--bb-grid-size-12);
           font: 400 var(--bb-label-large) / var(--bb-label-line-height-large)
             var(--bb-font-family);
