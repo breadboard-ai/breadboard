@@ -34,7 +34,6 @@ import {
   CheckAppAccessResult,
   GuestConfiguration,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { signal } from "signal-utils";
 
 const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
 const REMIX_WARNING_KEY = "bb-lite-show-remix-warning";
@@ -359,15 +358,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   private boardLoaded: Promise<void>;
   
-  @signal
-  accessor #signInStatus: "signedin" | "signedout" | "unknown" = "unknown";
 
   constructor(args: MainArguments) {
     super(args);
-
-    this.signinAdapter.state.then((state) => {
-      this.#signInStatus = state;
-    });
 
     const { parsedUrl } = args;
 
@@ -707,7 +700,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             .projectRun=${renderValues.projectState?.run}
             .readOnly=${true}
             .runtimeFlags=${this.uiState.flags}
-            .showGDrive=${this.#signInStatus === "signedin"}
+            .showGDrive=${this.signinAdapter.stateSignal?.status === "signedin"}
             .status=${renderValues.tabStatus}
             .themeHash=${renderValues.themeHash}
             .headerConfig=${{

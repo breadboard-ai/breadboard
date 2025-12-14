@@ -25,7 +25,6 @@ import { uiStateContext } from "../../contexts/ui-state.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { ActionTracker } from "../../utils/action-tracker.js";
 import { hasEnabledGlobalSettings } from "./global-settings.js";
-import { until } from "lit/directives/until.js";
 
 const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
 
@@ -738,40 +737,36 @@ export class VEHeader extends SignalWatcher(LitElement) {
   }
 
   #renderUser() {
-    return until(
-      (async () => {
-        if (
-          !this.signinAdapter ||
-          (await this.signinAdapter.state) !== "signedin"
-        ) {
-          return nothing;
-        }
-        const name = await this.signinAdapter.name;
-        const picture = await this.signinAdapter.picture;
+    if (
+      !this.signinAdapter ||
+      this.signinAdapter.stateSignal?.status !== "signedin"
+    ) {
+      return nothing;
+    }
+    const name = this.signinAdapter.nameSignal;
+    const picture = this.signinAdapter.pictureSignal;
 
-        return html`<button
-            id="toggle-user-menu"
-            @click=${() => {
-              this.#showAccountSwitcher = true;
-            }}
-          >
-            ${picture
-              ? html`<img
-                  id="user-pic"
-                  crossorigin
-                  .src=${picture}
-                  alt=${name ?? "No name"}
-                />`
-              : // For unknown reasons, the token info may not include a `picture` URL or `name`.
-                // Since we use the avatar as a button to access the menu, we render an icon in
-                // place of user picture if it's not available.
-                html`<span id="user-pic-unknown" class="g-icon filled"
-                  >person</span
-                >`}
-          </button>
-          ${this.#renderAccountSwitcher()}`;
-      })()
-    );
+    return html`<button
+        id="toggle-user-menu"
+        @click=${() => {
+          this.#showAccountSwitcher = true;
+        }}
+      >
+        ${picture
+          ? html`<img
+              id="user-pic"
+              crossorigin
+              .src=${picture}
+              alt=${name ?? "No name"}
+            />`
+          : // For unknown reasons, the token info may not include a `picture` URL or `name`.
+            // Since we use the avatar as a button to access the menu, we render an icon in
+            // place of user picture if it's not available.
+            html`<span id="user-pic-unknown" class="g-icon filled"
+              >person</span
+            >`}
+      </button>
+      ${this.#renderAccountSwitcher()}`;
   }
 
   #renderAccountSwitcher() {

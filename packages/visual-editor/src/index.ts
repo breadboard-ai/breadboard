@@ -19,7 +19,6 @@ import { IterateOnPromptMessage } from "./ui/embed/embed.js";
 
 import { MakeUrlInit } from "./ui/types/types.js";
 import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { until } from "lit/directives/until.js";
 
 const Strings = BreadboardUI.Strings.forSection("Global");
 const parsedUrl = parseUrl(window.location.href);
@@ -211,78 +210,72 @@ class Main extends MainBase {
     const active =
       this.uiState.mode === "app" && this.uiState.loadState !== "Home";
 
-    return until(
-      (async () =>
-        html`<bb-app-controller
-          class=${classMap({ active })}
-          .graph=${this.tab?.graph ?? null}
-          .graphIsEmpty=${graphIsEmpty}
-          .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-          .isMine=${this.tab?.graphIsMine ?? false}
-          .projectRun=${renderValues.projectState?.run}
-          .readOnly=${true}
-          .runtimeFlags=${this.uiState.flags}
-          .settings=${this.settings}
-          .showGDrive=${(await this.signinAdapter.state) === "signedin"}
-          .status=${renderValues.tabStatus}
-          .themeHash=${renderValues.themeHash}
-        >
-        </bb-app-controller>`)()
-    );
+    return html`<bb-app-controller
+      class=${classMap({ active })}
+      .graph=${this.tab?.graph ?? null}
+      .graphIsEmpty=${graphIsEmpty}
+      .graphTopologyUpdateId=${this.graphTopologyUpdateId}
+      .isMine=${this.tab?.graphIsMine ?? false}
+      .projectRun=${renderValues.projectState?.run}
+      .readOnly=${true}
+      .runtimeFlags=${this.uiState.flags}
+      .settings=${this.settings}
+      .showGDrive=${this.signinAdapter.stateSignal?.status === "signedin"}
+      .status=${renderValues.tabStatus}
+      .themeHash=${renderValues.themeHash}
+    >
+    </bb-app-controller>`
   }
 
   #renderCanvasController(renderValues: RenderValues) {
-    return until(
-      (async () =>
-        html` <bb-canvas-controller
-          ${ref(this.canvasControllerRef)}
-          ?inert=${renderValues.showingOverlay}
-          .canRun=${this.uiState.canRunMain}
-          .editor=${this.runtime.edit.getEditor(this.tab)}
-          .graph=${this.tab?.graph ?? null}
-          .graphIsMine=${this.tab?.graphIsMine ?? false}
-          .graphStore=${this.graphStore}
-          .graphStoreUpdateId=${this.graphStoreUpdateId}
-          .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-          .history=${this.runtime.edit.getHistory(this.tab)}
-          .mainGraphId=${this.tab?.mainGraphId}
-          .projectState=${renderValues.projectState}
-          .readOnly=${this.tab?.readOnly ?? true}
-          .selectionState=${this.selectionState}
-          .settings=${this.settings}
-          .signedIn=${(await this.signinAdapter.state) === "signedin"}
-          .status=${renderValues.tabStatus}
-          .themeHash=${renderValues.themeHash}
-          .visualChangeId=${this.lastVisualChangeId}
-          @bbshowvideomodal=${() => {
-            this.uiState.show.add("VideoModal");
-          }}
-          @bbeditorpositionchange=${(
-            evt: BreadboardUI.Events.EditorPointerPositionChangeEvent
-          ) => {
-            this.lastPointerPosition.x = evt.x;
-            this.lastPointerPosition.y = evt.y;
-          }}
-          @bbinteraction=${() => {
-            if (!this.tab) {
-              return;
-            }
+    return html` <bb-canvas-controller
+      ${ref(this.canvasControllerRef)}
+      ?inert=${renderValues.showingOverlay}
+      .canRun=${this.uiState.canRunMain}
+      .editor=${this.runtime.edit.getEditor(this.tab)}
+      .graph=${this.tab?.graph ?? null}
+      .graphIsMine=${this.tab?.graphIsMine ?? false}
+      .graphStore=${this.graphStore}
+      .graphStoreUpdateId=${this.graphStoreUpdateId}
+      .graphTopologyUpdateId=${this.graphTopologyUpdateId}
+      .history=${this.runtime.edit.getHistory(this.tab)}
+      .mainGraphId=${this.tab?.mainGraphId}
+      .projectState=${renderValues.projectState}
+      .readOnly=${this.tab?.readOnly ?? true}
+      .selectionState=${this.selectionState}
+      .settings=${this.settings}
+      .signedIn=${this.signinAdapter.stateSignal?.status === "signedin"}
+      .status=${renderValues.tabStatus}
+      .themeHash=${renderValues.themeHash}
+      .visualChangeId=${this.lastVisualChangeId}
+      @bbshowvideomodal=${() => {
+        this.uiState.show.add("VideoModal");
+      }}
+      @bbeditorpositionchange=${(
+        evt: BreadboardUI.Events.EditorPointerPositionChangeEvent
+      ) => {
+        this.lastPointerPosition.x = evt.x;
+        this.lastPointerPosition.y = evt.y;
+      }}
+      @bbinteraction=${() => {
+        if (!this.tab) {
+          return;
+        }
 
-            this.runtime.board.clearPendingBoardSave(this.tab.id);
-          }}
-          @bbiterateonprompt=${(iterateOnPromptEvent: IterateOnPromptEvent) => {
-            const message: IterateOnPromptMessage = {
-              type: "iterate_on_prompt",
-              title: iterateOnPromptEvent.title,
-              promptTemplate: iterateOnPromptEvent.promptTemplate,
-              boardId: iterateOnPromptEvent.boardId,
-              nodeId: iterateOnPromptEvent.nodeId,
-              modelId: iterateOnPromptEvent.modelId,
-            };
-            this.embedHandler?.sendToEmbedder(message);
-          }}
-        ></bb-canvas-controller>`)()
-    );
+        this.runtime.board.clearPendingBoardSave(this.tab.id);
+      }}
+      @bbiterateonprompt=${(iterateOnPromptEvent: IterateOnPromptEvent) => {
+        const message: IterateOnPromptMessage = {
+          type: "iterate_on_prompt",
+          title: iterateOnPromptEvent.title,
+          promptTemplate: iterateOnPromptEvent.promptTemplate,
+          boardId: iterateOnPromptEvent.boardId,
+          nodeId: iterateOnPromptEvent.nodeId,
+          modelId: iterateOnPromptEvent.modelId,
+        };
+        this.embedHandler?.sendToEmbedder(message);
+      }}
+    ></bb-canvas-controller>`;
   }
 
   #renderBoardEditModal() {
