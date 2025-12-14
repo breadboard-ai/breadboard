@@ -25,7 +25,6 @@ import { findChangedNodes } from "../flow-gen/flow-diff.js";
 import { HighlightEvent } from "../elements/step-editor/events/events.js";
 import { MAIN_BOARD_ID } from "../constants/constants.js";
 import { spinAnimationStyles } from "../styles/spin-animation.js";
-import { until } from "lit/directives/until.js";
 
 @customElement("bb-edit-history-panel")
 export class EditHistoryPanel extends SignalWatcher(LitElement) {
@@ -258,19 +257,12 @@ export class EditHistoryPanel extends SignalWatcher(LitElement) {
       // all change events to be explicit about creator.
       case "user":
       case "unknown": {
-        return until(
-          this.signinAdapter?.picture.then((picture) =>
-            picture
-              ? html`
-                  <img
-                    class="signed-in"
-                    crossorigin="anonymous"
-                    src=${picture}
-                  />
-                `
-              : html`<span class="g-icon filled placeholder">person</span>`
-          )
-        );
+        const picture = this.signinAdapter?.pictureSignal;
+        return picture
+          ? html`
+              <img class="signed-in" crossorigin="anonymous" src=${picture} />
+            `
+          : html`<span class="g-icon filled placeholder">person</span>`;
       }
       case "assistant": {
         return html`<span class="g-icon filled assistant">spark</span>`;
