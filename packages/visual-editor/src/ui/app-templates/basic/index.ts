@@ -58,7 +58,7 @@ import { createRef, ref } from "lit/directives/ref.js";
 import * as ParticlesUI from "../../../particles-ui/index.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { markdown } from "../../directives/markdown.js";
-import { makeUrl } from "../../utils/urls.js";
+import { makeUrl, parseUrl } from "../../utils/urls.js";
 
 import {
   AppScreenOutput,
@@ -110,6 +110,8 @@ function getHTMLOutput(screen: AppScreenOutput): string | null {
 
   return null;
 }
+
+const parsedUrl = parseUrl(window.location.href);
 
 @customElement("app-basic")
 export class Template extends SignalWatcher(LitElement) implements AppTemplate {
@@ -440,26 +442,30 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     this.style.setProperty("--input-clearance", `0px`);
 
+    const allowSharingOutputs = !parsedUrl.lite;
+
     return html`
       <div id="save-results-button-container">
-        ${this.resultsUrl
-          ? html`<button
-              id="save-results-button"
-              class="sans-flex w-500 round md-body-medium"
-              @click=${this.#onClickCopyShareUrl}
-            >
-              <span class="g-icon filled round">content_copy</span>
-              Copy share URL
-            </button>`
-          : html`<button
-              id="save-results-button"
-              class="sans-flex w-500 round md-body-medium"
-              @click=${this.#onClickSaveResults}
-              ${ref(this.#shareResultsButton)}
-            >
-              <span class="g-icon filled round">share</span>
-              Share output
-            </button>`}
+        ${allowSharingOutputs
+          ? this.resultsUrl
+            ? html`<button
+                id="save-results-button"
+                class="sans-flex w-500 round md-body-medium"
+                @click=${this.#onClickCopyShareUrl}
+              >
+                <span class="g-icon filled round">content_copy</span>
+                Copy share URL
+              </button>`
+            : html`<button
+                id="save-results-button"
+                class="sans-flex w-500 round md-body-medium"
+                @click=${this.#onClickSaveResults}
+                ${ref(this.#shareResultsButton)}
+              >
+                <span class="g-icon filled round">share</span>
+                Share output
+              </button>`
+          : nothing}
         <button
           id="export-output-button"
           @click=${this.#onClickExportOutput}
