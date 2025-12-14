@@ -34,7 +34,7 @@ import {
   CheckAppAccessResult,
   GuestConfiguration,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { until } from "lit/directives/until.js";
+import { signal } from "signal-utils";
 
 const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
 const REMIX_WARNING_KEY = "bb-lite-show-remix-warning";
@@ -358,9 +358,16 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   private accessStatus: CheckAppAccessResult | null = null;
 
   private boardLoaded: Promise<void>;
+  
+  @signal
+  accessor #signInStatus: "signedin" | "signedout" | "unknown" = "unknown";
 
   constructor(args: MainArguments) {
     super(args);
+
+    this.signinAdapter.state.then((state) => {
+      this.#signInStatus = state;
+    });
 
     const { parsedUrl } = args;
 
@@ -678,9 +685,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       }
     }
 
-    return until(
-      (async () =>
-        html` <section
+    return html` <section
           id="app-view"
           slot=${this.showAppFullscreen || this.compactView
             ? nothing
@@ -702,7 +707,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             .projectRun=${renderValues.projectState?.run}
             .readOnly=${true}
             .runtimeFlags=${this.uiState.flags}
-            .showGDrive=${(await this.signinAdapter.state) === "signedin"}
+            .showGDrive=${this.#signInStatus === "signedin"}
             .status=${renderValues.tabStatus}
             .themeHash=${renderValues.themeHash}
             .headerConfig=${{
@@ -723,8 +728,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           </bb-app-controller>
           ${this.renderSnackbar()} ${this.#renderShellUI()}
           ${this.renderConsentRequests()}
-        </section>`)()
-    );
+        </section>`;
   }
 
   #renderWelcomeMat() {
