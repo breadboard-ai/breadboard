@@ -394,7 +394,7 @@ For example, "Making a marketing video" or "Creating the video concept"`),
           caps,
           moduleArgs,
           prompt,
-          undefined,
+          [],
           false,
           aspect_ratio ?? "16:9",
           VIDEO_MODEL_NAME
