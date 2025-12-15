@@ -349,8 +349,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   get showRemixWarning() {
     return this.#showRemixWarning;
   }
-
   #showRemixWarning = false;
+
   #advancedEditorLink: Ref<HTMLElement> = createRef();
   #sharePanelRef: Ref<SharePanel> = createRef();
 
@@ -705,6 +705,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         .runtimeFlags=${this.uiState.flags}
         .showGDrive=${this.signinAdapter.stateSignal?.status === "signedin"}
         .status=${renderValues.tabStatus}
+        .shouldShowFirstRunMessage=${true}
+        .firstRunMessage=${Strings.from("LABEL_FIRST_RUN_LITE")}
         .themeHash=${renderValues.themeHash}
         .headerConfig=${{
           menu: false,

@@ -663,6 +663,10 @@ export const styles: CSSResultGroup = [
           position: relative;
           background: transparent;
 
+          & #run-container {
+            position: relative;
+          }
+
           & #sign-in,
           & #run {
             display: flex;

@@ -112,6 +112,7 @@ function getHTMLOutput(screen: AppScreenOutput): string | null {
 }
 
 const parsedUrl = parseUrl(window.location.href);
+const FIRST_RUN_KEY = "bb-first-run-warning";
 
 @customElement("app-basic")
 export class Template extends SignalWatcher(LitElement) implements AppTemplate {
@@ -201,6 +202,22 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @query("#export-output-button")
   accessor exportOutputsButton: HTMLButtonElement | null = null;
 
+  @property()
+  accessor shouldShowFirstRunMessage = true;
+
+  @property()
+  accessor firstRunMessage = Strings.from("LABEL_FIRST_RUN");
+
+  @state()
+  set showFirstRunMessage(show: boolean) {
+    this.#showFirstRunMessage = show;
+    globalThis.localStorage.setItem(FIRST_RUN_KEY, String(show));
+  }
+  get showFirstRunMessage() {
+    return this.#showFirstRunMessage;
+  }
+  #showFirstRunMessage = false;
+
   readonly #shareResultsButton = createRef<HTMLButtonElement>();
 
   get additionalOptions() {
@@ -223,6 +240,13 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   static styles = appStyles;
+
+  constructor() {
+    super();
+
+    this.showFirstRunMessage =
+      (globalThis.localStorage.getItem(FIRST_RUN_KEY) ?? "true") === "true";
+  }
 
   #renderControls() {
     return html`<bb-app-header
@@ -1011,11 +1035,13 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               : (this.options.description ?? "")}
           ></p>
           <div id="input" class="stopped">
-            <div>
+            <div id="run-container">
               <button
                 id="run"
                 class=${classMap({ invisible: this.isFreshGraph })}
                 @click=${() => {
+                  this.showFirstRunMessage = false;
+
                   ActionTracker.runApp(this.graph?.url, "app_preview");
                   this.dispatchEvent(
                     new StateEvent({ eventType: "board.run" })
@@ -1027,6 +1053,19 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                   ? "Updating..."
                   : "Start"}
               </button>
+              ${this.shouldShowFirstRunMessage && this.showFirstRunMessage
+                ? html`<bb-onboarding-tooltip
+                    @bbonboardingacknowledged=${() => {
+                      this.showFirstRunMessage = false;
+                    }}
+                    style=${styleMap({
+                      "--top": `-12px`,
+                      "--right": "8px",
+                    })}
+                    .stackTop=${true}
+                    .text=${this.firstRunMessage}
+                  ></bb-onboarding-tooltip>`
+                : nothing}
             </div>
           </div>
         </section>
