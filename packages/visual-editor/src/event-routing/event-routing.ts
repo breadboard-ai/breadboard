@@ -22,6 +22,7 @@ export const eventRoutes = new Map<
   [Host.LockRoute.event, Host.LockRoute],
   [Host.UnlockRoute.event, Host.UnlockRoute],
   [Host.FlagChangeRoute.event, Host.FlagChangeRoute],
+  [Host.UserSignInRoute.event, Host.UserSignInRoute],
 
   /** Board */
   [Board.CreateRoute.event, Board.CreateRoute],
