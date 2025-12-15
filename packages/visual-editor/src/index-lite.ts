@@ -34,6 +34,7 @@ import {
   CheckAppAccessResult,
   GuestConfiguration,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { extractGoogleDriveFileId } from "@breadboard-ai/utils/google-drive/utils.js";
 
 const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
 const REMIX_WARNING_KEY = "bb-lite-show-remix-warning";
@@ -367,6 +368,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     // opened from a share action.
     this.showAppFullscreen =
       (parsedUrl && "flow" in parsedUrl && parsedUrl.shared) ?? false;
+    this.runtime.board.addEventListener(RuntimeTabChangeEvent.eventName, () =>
+      this.#goFullScreenIfGraphIsProbablyShared()
+    );
 
     this.#showAdvancedEditorOnboardingTooltip =
       (globalThis.localStorage.getItem(ADVANCED_EDITOR_KEY) ?? "true") ===
@@ -423,6 +427,26 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     const parsedUrl = this.runtime.router.parsedUrl;
     if (parsedUrl.page !== "home") return;
     await this.askUserToSignInIfNeeded();
+  }
+
+  #goFullScreenIfGraphIsProbablyShared() {
+    const url = this.tab?.graph.url;
+    if (!url) {
+      return;
+    }
+    const fileId = extractGoogleDriveFileId(url);
+    if (!fileId) {
+      return;
+    }
+    const isMine = this.runtime.board.isMine(url);
+    const isFeaturedGalleryItem =
+      // This is a bit hacky and indirect, but an easy way to tell if something
+      // is from the public gallery is to check if the GoogleDriveClient has
+      // been configured to use the proxy for it.
+      this.googleDriveClient.fileIsMarkedForReadingWithPublicProxy(fileId);
+    if (!isMine && !isFeaturedGalleryItem) {
+      this.showAppFullscreen = true;
+    }
   }
 
   override async handleAppAccessCheckResult(
