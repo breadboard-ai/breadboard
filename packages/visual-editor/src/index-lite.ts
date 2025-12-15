@@ -587,9 +587,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderOnboardingTooltip() {
-    // if (this.showRemixWarning) {
-    //   this.#showAdvancedEditorOnboardingTooltip = false;
-    // }
+    if (this.showRemixWarning) {
+      this.#showAdvancedEditorOnboardingTooltip = false;
+    }
 
     if (
       !this.#showAdvancedEditorOnboardingTooltip ||
