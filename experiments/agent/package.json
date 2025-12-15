@@ -19,6 +19,6 @@
     "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
-    "tsx": "^4.20.6"
+    "tsx": "^4.21.0"
   }
 }
