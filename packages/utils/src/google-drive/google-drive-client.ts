@@ -241,13 +241,8 @@ export class GoogleDriveClient {
     }
   }
 
-  unmarkFileForReadingWithPublicProxy(...fileIds: string[]): void {
-    if (!this.#publicProxy) {
-      return;
-    }
-    for (const fileId of fileIds) {
-      this.#publicProxy.marked.delete(fileId);
-    }
+  fileIsMarkedForReadingWithPublicProxy(fileId: string): boolean {
+    return !!this.#publicProxy?.marked.has(fileId);
   }
 
   async #maybeProxyApiUrl(
