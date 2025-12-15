@@ -357,7 +357,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   private accessStatus: CheckAppAccessResult | null = null;
 
   private boardLoaded: Promise<void>;
-  
 
   constructor(args: MainArguments) {
     super(args);
@@ -555,7 +554,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderMessage() {
-    const editable = this.tab?.graphIsMine ?? false;
+    const editable =
+      (this.tab?.graphIsMine ?? false) ||
+      this.runtime.state.lite.viewType !== "editor";
     return html`<div
       ?disabled=${!editable}
       id="message"
@@ -586,6 +587,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderOnboardingTooltip() {
+    if (this.showRemixWarning) {
+      this.#showAdvancedEditorOnboardingTooltip = false;
+    }
+
     if (
       !this.#showAdvancedEditorOnboardingTooltip ||
       !this.#advancedEditorLink.value
@@ -679,49 +684,47 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     }
 
     return html` <section
-          id="app-view"
-          slot=${this.showAppFullscreen || this.compactView
-            ? nothing
-            : "slot-1"}
-        >
-          ${this.showAppFullscreen || this.compactView
-            ? nothing
-            : html` <header>
-                <div class="left w-500 md-title-small sans-flex">${title}</div>
-                <div class="right">${buttons}</div>
-              </header>`}
-          <bb-app-controller
-            ?inert=${this.#isInert()}
-            class=${classMap({ active: true })}
-            .graph=${this.runtime.state.lite.graph ?? null}
-            .graphIsEmpty=${false}
-            .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-            .isMine=${this.tab?.graphIsMine ?? false}
-            .projectRun=${renderValues.projectState?.run}
-            .readOnly=${true}
-            .runtimeFlags=${this.uiState.flags}
-            .showGDrive=${this.signinAdapter.stateSignal?.status === "signedin"}
-            .status=${renderValues.tabStatus}
-            .themeHash=${renderValues.themeHash}
-            .headerConfig=${{
-              menu: false,
-              replay: true,
-              fullscreen:
-                this.showAppFullscreen || this.compactView
-                  ? this.compactView
-                    ? "no-exit"
-                    : "active"
-                  : "available",
-              small: true,
-            }}
-            .systemThemeOverride=${true}
-            .isRefreshingAppTheme=${isGenerating}
-            .isFreshGraph=${isFreshGraph}
-          >
-          </bb-app-controller>
-          ${this.renderSnackbar()} ${this.#renderShellUI()}
-          ${this.renderConsentRequests()}
-        </section>`;
+      id="app-view"
+      slot=${this.showAppFullscreen || this.compactView ? nothing : "slot-1"}
+    >
+      ${this.showAppFullscreen || this.compactView
+        ? nothing
+        : html` <header>
+            <div class="left w-500 md-title-small sans-flex">${title}</div>
+            <div class="right">${buttons}</div>
+          </header>`}
+      <bb-app-controller
+        ?inert=${this.#isInert()}
+        class=${classMap({ active: true })}
+        .graph=${this.runtime.state.lite.graph ?? null}
+        .graphIsEmpty=${false}
+        .graphTopologyUpdateId=${this.graphTopologyUpdateId}
+        .isMine=${this.tab?.graphIsMine ?? false}
+        .projectRun=${renderValues.projectState?.run}
+        .readOnly=${true}
+        .runtimeFlags=${this.uiState.flags}
+        .showGDrive=${this.signinAdapter.stateSignal?.status === "signedin"}
+        .status=${renderValues.tabStatus}
+        .themeHash=${renderValues.themeHash}
+        .headerConfig=${{
+          menu: false,
+          replay: true,
+          fullscreen:
+            this.showAppFullscreen || this.compactView
+              ? this.compactView
+                ? "no-exit"
+                : "active"
+              : "available",
+          small: true,
+        }}
+        .systemThemeOverride=${true}
+        .isRefreshingAppTheme=${isGenerating}
+        .isFreshGraph=${isFreshGraph}
+      >
+      </bb-app-controller>
+      ${this.renderSnackbar()} ${this.#renderShellUI()}
+      ${this.renderConsentRequests()}
+    </section>`;
   }
 
   #renderWelcomeMat() {
