@@ -19,6 +19,7 @@ import { UserSignInResponse } from "../../types/types.js";
 import { ModalDismissedEvent, StateEvent } from "../../events/events.js";
 import { markdown } from "../../directives/markdown.js";
 import { classMap } from "lit/directives/class-map.js";
+import { ActionTracker } from "../../utils/action-tracker.js";
 
 type State =
   | { status: "closed" }
@@ -381,6 +382,7 @@ export class VESignInModal extends LitElement {
     if (this.#state.status !== "consent-only") {
       return this.#onClickSignIn();
     }
+    ActionTracker.signInSuccess();
     this.#close("success");
   }
 
@@ -407,6 +409,8 @@ export class VESignInModal extends LitElement {
         this.#state = { status: "other-error", request };
       }
       return;
+    } else {
+      ActionTracker.signInSuccess();
     }
     if (status === "sign-in") {
       // TODO(aomarks) Remove the reload after the app is fully reactive to a
