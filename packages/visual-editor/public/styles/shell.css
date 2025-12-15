@@ -19,6 +19,15 @@ iframe#opal-app {
   background: var(--sys-color--body-background-light);
 }
 
+/**
+ * Always set the Drive Picker frame to be color-scheme: light otherwise it will
+ * render with a solid white bg under color-scheme: dark.
+ */
+iframe[src^="https://drive"]
+{
+  color-scheme: light;
+}
+
 @media (prefers-color-scheme: dark) {
   iframe#opal-app {
     background: var(--sys-color--body-background-dark);
