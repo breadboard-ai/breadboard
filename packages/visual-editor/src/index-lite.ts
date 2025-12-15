@@ -194,7 +194,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
               & bb-onboarding-tooltip {
                 z-index: 300;
                 white-space: normal;
-                --top: calc(100% + var(--bb-grid-size-5));
+                --top: calc(100% + var(--bb-grid-size-7) + 2px);
                 --right: 0;
               }
             }
@@ -587,9 +587,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderOnboardingTooltip() {
-    if (this.showRemixWarning) {
-      this.#showAdvancedEditorOnboardingTooltip = false;
-    }
+    // if (this.showRemixWarning) {
+    //   this.#showAdvancedEditorOnboardingTooltip = false;
+    // }
 
     if (
       !this.#showAdvancedEditorOnboardingTooltip ||
