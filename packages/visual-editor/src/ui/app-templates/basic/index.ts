@@ -203,7 +203,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   accessor exportOutputsButton: HTMLButtonElement | null = null;
 
   @property()
-  accessor shouldShowFirstRunMessage = true;
+  accessor shouldShowFirstRunMessage = false;
 
   @property()
   accessor firstRunMessage = Strings.from("LABEL_FIRST_RUN");
