@@ -13,7 +13,10 @@ import {
   InputValues,
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
-import { RuntimeSnackbarEvent } from "../../runtime/events.js";
+import {
+  RuntimeSnackbarEvent,
+  RuntimeUnsnackbarEvent,
+} from "../../runtime/events.js";
 import { StateEvent } from "../../ui/events/events.js";
 import * as BreadboardUI from "../../ui/index.js";
 import { parseUrl } from "../../ui/utils/urls.js";
@@ -272,6 +275,8 @@ export const CreateRoute: EventRoute<"board.create"> = {
     embedHandler,
   }) {
     if ((await askUserToSignInIfNeeded()) !== "success") {
+      // The user didn't sign in, so hide any snackbars.
+      runtime.dispatchEvent(new RuntimeUnsnackbarEvent());
       return false;
     }
 
