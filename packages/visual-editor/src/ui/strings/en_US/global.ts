@@ -164,6 +164,12 @@ export default {
   LABEL_SETTINGS_EXPERIMENTAL: {
     str: "Experimental Features",
   },
+  LABEL_FIRST_RUN: {
+    str: "Click start to try this app",
+  },
+  LABEL_FIRST_RUN_LITE: {
+    str: "Click start to try this app",
+  },
 
   // Statuses.
   STATUS_REMIXING_PROJECT: {

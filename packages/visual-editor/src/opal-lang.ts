@@ -79,6 +79,12 @@ export default {
     LABEL_DISCLAIMER_LITE: {
       str: "This Gem is powered by Google Labs, not Gemini Apps. It can make mistakes, so double-check it. [Learn more](https://support.google.com/gemini?p=ai_apps)",
     },
+    LABEL_FIRST_RUN: {
+      str: "Click start to try this Opal",
+    },
+    LABEL_FIRST_RUN_LITE: {
+      str: "Click start to try this Gem",
+    },
     LABEL_SHARE: {
       str: "An Opal mini-app has been shared with you",
     },
