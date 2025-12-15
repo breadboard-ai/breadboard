@@ -1053,7 +1053,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                   ? "Updating..."
                   : "Start"}
               </button>
-              ${this.shouldShowFirstRunMessage && this.showFirstRunMessage
+              ${this.shouldShowFirstRunMessage &&
+              this.showFirstRunMessage &&
+              !this.isFreshGraph
                 ? html`<bb-onboarding-tooltip
                     @bbonboardingacknowledged=${() => {
                       this.showFirstRunMessage = false;
