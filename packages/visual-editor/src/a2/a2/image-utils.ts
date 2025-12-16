@@ -107,7 +107,9 @@ async function callGeminiImage(
     },
     execution_inputs: executionInputs,
   };
-  const response = await executeStep(caps, moduleArgs, body);
+  const response = await executeStep(caps, moduleArgs, body, {
+    expectedDurationInSec: 50,
+  });
   if (!ok(response)) return response;
 
   return response.chunks;
@@ -147,7 +149,9 @@ async function callImageGen(
     },
     execution_inputs: executionInputs,
   };
-  const response = await executeStep(caps, moduleArgs, body);
+  const response = await executeStep(caps, moduleArgs, body, {
+    expectedDurationInSec: 50,
+  });
   if (!ok(response)) return response;
 
   return response.chunks;

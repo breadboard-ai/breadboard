@@ -160,7 +160,9 @@ async function callVideoGen(
     },
     execution_inputs: executionInputs,
   };
-  const response = await executeStep(caps, moduleArgs, body);
+  const response = await executeStep(caps, moduleArgs, body, {
+    expectedDurationInSec: 70,
+  });
   if (!ok(response)) return response;
 
   // Only take the first video output. The model can't produce
