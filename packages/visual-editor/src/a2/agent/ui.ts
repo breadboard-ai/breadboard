@@ -21,6 +21,7 @@ import { A2UIClient } from "./a2ui/client.js";
 import { A2UIAppScreenOutput } from "./a2ui/app-screen-output.js";
 import { ProgressWorkItem } from "./progress-work-item.js";
 import { A2UIRenderer } from "./types.js";
+import { getCurrentStepState } from "../a2/output.js";
 
 export { AgentUI };
 
@@ -67,13 +68,9 @@ class AgentUI implements A2UIRenderer {
     private readonly translator: PidginTranslator
   ) {
     this.client = new A2UIClient();
-    const { currentStep, getProjectRunState } = this.moduleArgs.context;
-    const stepId = currentStep?.id;
-    if (stepId) {
-      const runState = getProjectRunState?.();
-      this.#consoleEntry = runState?.console.get(stepId);
-      this.#appScreen = runState?.app.screens.get(stepId);
-    }
+    const { appScreen, consoleEntry } = getCurrentStepState(this.moduleArgs);
+    this.#consoleEntry = consoleEntry;
+    this.#appScreen = appScreen;
     this.progress = new ProgressWorkItem("Agent", "spark", this.#appScreen!);
     if (!this.#consoleEntry) {
       console.warn(

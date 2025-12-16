@@ -2,7 +2,7 @@
  * @fileoverview Gemini Model Family.
  */
 
-import { StreamableReporter } from "./output.js";
+import { getCurrentStepState, StreamableReporter } from "./output.js";
 
 import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils.js";
 import { flattenContext } from "./lists.js";
@@ -436,6 +436,18 @@ async function conformBody(
   return { ...body, contents };
 }
 
+function calculateDuration(model: string) {
+  switch (model) {
+    case "gemini-2.5-flash":
+      return 20;
+    case "gemini-2.5-pro":
+    case "gemini-3-pro":
+      return 50;
+    default:
+      return 20;
+  }
+}
+
 async function callAPI(
   caps: Capabilities,
   moduleArgs: A2ModuleArgs,
@@ -443,6 +455,7 @@ async function callAPI(
   model: string,
   body: GeminiBody
 ): Promise<Outcome<GeminiAPIOutputs>> {
+  const { appScreen, title } = getCurrentStepState(moduleArgs);
   const reporter = new StreamableReporter(caps, {
     title: `Calling ${model}`,
     icon: "spark",
@@ -454,6 +467,10 @@ async function callAPI(
 
     await reporter.start();
     await reporter.sendUpdate("Model Input", conformedBody, "upload");
+    if (appScreen) {
+      appScreen.progress = title;
+      appScreen.expectedDuration = calculateDuration(model);
+    }
 
     let $error: string = "Unknown error";
     const maxRetries = retries;
