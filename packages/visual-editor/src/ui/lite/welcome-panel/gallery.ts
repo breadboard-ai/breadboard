@@ -7,7 +7,7 @@
 import type { GraphProviderItem } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import { css, html, HTMLTemplateResult, LitElement, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { keyed } from "lit/directives/keyed.js";
 import { createRef, ref } from "lit/directives/ref.js";
@@ -51,18 +51,48 @@ export class GalleryLite extends SignalWatcher(LitElement) {
       }
 
       #boards {
-        display: grid;
-        grid-template-columns: repeat(var(--items-per-column), 1fr);
-        grid-template-rows: auto;
-        grid-auto-rows: auto;
-        column-gap: var(--column-gap);
-        row-gap: var(--row-gap);
         overflow: hidden;
+        height: var(--expanded-height);
+        transition: height 200ms cubic-bezier(0.2, 0, 0, 1);
+
+        & #boards-inner {
+          display: grid;
+          grid-template-columns: repeat(var(--items-per-column), 1fr);
+          grid-template-rows: auto;
+          grid-auto-rows: auto;
+          column-gap: var(--column-gap);
+          row-gap: var(--row-gap);
+          position: relative;
+
+          & #sentinel-collapsed {
+            --gap-width: (var(--items-per-column) - 1) * var(--column-gap);
+            width: calc((100% - var(--gap-width)) / var(--items-per-column));
+            pointer-events: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: red;
+            aspect-ratio: 35 / 39;
+            opacity: 0;
+            z-index: -1;
+          }
+
+          & #sentinel-expanded {
+            width: 20px;
+            pointer-events: none;
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 100%;
+            background: green;
+            opacity: 0;
+            z-index: -1;
+          }
+        }
       }
 
-      #boards.collapsed {
-        grid-auto-rows: 0;
-        row-gap: 0;
+      :host([iscollapsed]) #boards {
+        height: var(--collapsed-height);
       }
 
       .gallery-header {
@@ -141,10 +171,8 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         padding: 0;
         text-align: left;
         aspect-ratio: 35/39;
-
-        &.animatable {
-          animation: fadeIn 250ms cubic-bezier(0.2, 0, 0, 1) 200ms 1 backwards;
-        }
+        transition: opacity 450ms cubic-bezier(0, 0, 0.3, 1) 20ms;
+        opacity: 1;
 
         &::before {
           content: "";
@@ -480,7 +508,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   @property({ type: Boolean })
   accessor forceCreatorToBeTeam = false;
 
-  @state()
+  @property({ type: Boolean, reflect: true })
   set isCollapsed(collapsed: boolean) {
     this.#isCollapsed = collapsed;
     sessionStorage.setItem(COLLAPSED_KEY, String(this.#isCollapsed));
@@ -503,9 +531,30 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   accessor isAnimatingHeight = false;
 
   readonly #paginationContainer = createRef<HTMLElement>();
+  readonly #boardsSentinelCollapsed = createRef<HTMLElement>();
+  readonly #boardsSentinelExpanded = createRef<HTMLElement>();
+
+  #collapsedHeight = 0;
+  #expandedHeight = 0;
   #boardsContainer: HTMLElement | undefined = undefined;
   #boardIntersectionObserver: IntersectionObserver | null = null;
-  #isAnimating = false;
+  #boardsContainerResizeObserver = new ResizeObserver(() => {
+    if (!this.#boardsContainer) {
+      return;
+    }
+
+    if (
+      !this.#boardsSentinelCollapsed.value ||
+      !this.#boardsSentinelExpanded.value
+    ) {
+      return;
+    }
+
+    this.#collapsedHeight = this.#boardsSentinelCollapsed.value.offsetHeight;
+    this.#expandedHeight = this.#boardsSentinelExpanded.value.offsetHeight;
+    this.style.setProperty(`--collapsed-height`, `${this.#collapsedHeight}px`);
+    this.style.setProperty(`--expanded-height`, `${this.#expandedHeight}px`);
+  });
 
   constructor() {
     super();
@@ -531,47 +580,8 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   async #toggleCollapsedState() {
     const container = this.#boardsContainer;
     if (container) {
-      const currentHeight = container.offsetHeight;
-      if (this.isCollapsed) {
-        container.style.maxHeight = `${currentHeight}px`;
-        this.isCollapsed = false;
-        this.#isAnimating = true;
-        await this.updateComplete;
-        const newHeight = container.scrollHeight;
-        container.animate(
-          [
-            { maxHeight: `${currentHeight}px` },
-            { maxHeight: `${newHeight}px` },
-          ],
-          {
-            duration: 200,
-            easing: "cubic-bezier(0.2, 0, 0, 1)",
-          }
-        ).onfinish = () => {
-          container.style.maxHeight = "none";
-          this.#isAnimating = false;
-        };
-      } else {
-        this.isCollapsed = true;
-        this.#isAnimating = true;
-        await this.updateComplete;
-        const newHeight = container.offsetHeight;
-        this.isCollapsed = false;
-        container.animate(
-          [
-            { maxHeight: `${currentHeight}px` },
-            { maxHeight: `${newHeight}px` },
-          ],
-          {
-            duration: 150,
-            easing: "cubic-bezier(0.2, 0, 0, 1)",
-          }
-        ).onfinish = () => {
-          container.style.maxHeight = "none";
-          this.isCollapsed = true;
-          this.#isAnimating = false;
-        };
-      }
+      this.isCollapsed = !this.isCollapsed;
+      await this.updateComplete;
     }
   }
 
@@ -711,25 +721,22 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         ${ref((el?: Element) => {
           this.#boardsContainer = undefined;
           if (!(el instanceof HTMLElement)) {
+            this.#boardsContainerResizeObserver.disconnect();
             return;
           }
 
           this.#boardsContainer = el;
+          this.#boardsContainerResizeObserver.observe(this.#boardsContainer);
 
           const THRESHOLD = 0.95;
           this.#boardIntersectionObserver = new IntersectionObserver(
             (entries) => {
               for (const entry of entries) {
                 if (!(entry.target instanceof HTMLElement)) continue;
-                if (entry.intersectionRatio < THRESHOLD) {
-                  entry.target.classList.toggle(
-                    "animatable",
-                    this.#isAnimating
-                  );
-                  entry.target.classList.add("hidden");
-                } else {
-                  entry.target.classList.remove("hidden");
-                }
+                entry.target.classList.toggle(
+                  "hidden",
+                  entry.intersectionRatio < THRESHOLD
+                );
               }
             },
             { root: this.#boardsContainer, threshold: THRESHOLD }
@@ -737,10 +744,21 @@ export class GalleryLite extends SignalWatcher(LitElement) {
         })}
         class=${classMap({ collapsed: this.collapsable && this.isCollapsed })}
       >
-        ${pageItems.map((item) => {
-          const isPinned = this.#isPinned(item[0]);
-          return this.#renderBoard(item, isPinned);
-        })}
+        <div id="boards-inner">
+          ${pageItems.map((item) => {
+            const isPinned = this.#isPinned(item[0]);
+            return this.#renderBoard(item, isPinned);
+          })}
+
+          <div
+            ${ref(this.#boardsSentinelCollapsed)}
+            id="sentinel-collapsed"
+          ></div>
+          <div
+            ${ref(this.#boardsSentinelExpanded)}
+            id="sentinel-expanded"
+          ></div>
+        </div>
       </div>
       ${this.#renderPagination()} ${boardOverflowMenu}
     `;
