@@ -89,6 +89,10 @@ export class GalleryLite extends SignalWatcher(LitElement) {
             z-index: -1;
           }
         }
+
+        &.empty #boards-inner #sentinel-collapsed {
+          aspect-ratio: initial;
+        }
       }
 
       :host([iscollapsed]) #boards {
@@ -742,7 +746,10 @@ export class GalleryLite extends SignalWatcher(LitElement) {
             { root: this.#boardsContainer, threshold: THRESHOLD }
           );
         })}
-        class=${classMap({ collapsed: this.collapsable && this.isCollapsed })}
+        class=${classMap({
+          collapsed: this.collapsable && this.isCollapsed,
+          empty: pageItems.length === 0,
+        })}
       >
         <div id="boards-inner">
           ${pageItems.map((item) => {
