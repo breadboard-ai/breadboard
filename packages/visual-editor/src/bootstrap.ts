@@ -17,7 +17,10 @@ import { connectToOpalShellHost } from "./ui/utils/opal-shell-guest.js";
 export { bootstrap };
 
 function setColorScheme(colorScheme?: "light" | "dark") {
-  const scheme = document.createElement("style");
+  const scheme =
+    document.head.querySelector("#scheme") ?? document.createElement("style");
+  scheme.id = "scheme";
+
   if (colorScheme) {
     scheme.textContent = `:root { --color-scheme: ${colorScheme}; }`;
   } else {
@@ -119,6 +122,14 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
     }
 
     setColorScheme(colorScheme);
+    embedHandler.addEventListener("theme_change", (evt) => {
+      if (evt.type !== "theme_change") {
+        return;
+      }
+
+      setColorScheme(evt.message.theme);
+    });
+
     if (page === "open") {
       const { OpenMain } = await import("./index-open.js");
       const main = new OpenMain(mainArgs);
