@@ -118,6 +118,9 @@ export default {
     LABEL_NO_OPALS_LITE: {
       str: "The Opal apps you create will appear here",
     },
+    LABEL_NO_CREATE_COMPACT: {
+      str: "To create a new Gem, go to Gemini on a desktop browser.",
+    },
     ERROR_LOADING_PROJECTS: {
       str: "Error loading Opal app server",
     },

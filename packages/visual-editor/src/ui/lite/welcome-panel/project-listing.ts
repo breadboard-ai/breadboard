@@ -149,7 +149,8 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
         margin: 0 0 var(--bb-grid-size) 0;
       }
 
-      #no-projects-panel {
+      #no-projects-panel,
+      #no-create-panel {
         background: var(--sys-color--surface-container-low);
         color: var(--sys-color--on-surface-low);
         padding: var(--bb-grid-size-4);
@@ -159,6 +160,10 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
         .g-icon {
           vertical-align: bottom;
         }
+      }
+
+      #no-create-panel {
+        margin-top: var(--bb-grid-size-3);
       }
 
       #create-new-button-inline {
@@ -409,6 +414,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
         </bb-gallery-lite>
       </div>
       ${userGraphs.length === 0 ? this.#renderNoUserGraphsPanel() : nothing}
+      ${this.allowCreate ? nothing : this.#renderNoCreatePanel()}
     `;
   }
 
@@ -417,6 +423,15 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
       <div id="no-projects-panel">
         <span class="g-icon">pentagon</span>
         ${this.noLibraryAppsTitle ?? Strings.from("LABEL_NO_OPALS_LITE")}
+      </div>
+    `;
+  }
+
+  #renderNoCreatePanel() {
+    return html`
+      <div id="no-create-panel">
+        <span class="g-icon">info</span>
+        ${Strings.from("LABEL_NO_CREATE_COMPACT")}
       </div>
     `;
   }
