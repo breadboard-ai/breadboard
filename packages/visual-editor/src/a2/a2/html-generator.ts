@@ -129,13 +129,22 @@ async function callGenWebpage(
 
   if (useStreaming) {
     console.log("[html-generator] Using streaming API for GenerateWebpage");
-    return executeWebpageStream(
+    const result = await executeWebpageStream(
       caps,
       moduleArgs,
       instruction,
       content,
       modelName
     );
+    if (!ok(result)) {
+      console.error(
+        "[html-generator] Streaming API failed:",
+        result.$error
+      );
+      // Return error so caller can handle fallback with proper variable-only content
+      return result;
+    }
+    return result;
   } else {
     console.log(
       "[html-generator] Using legacy executeStep for GenerateWebpage"

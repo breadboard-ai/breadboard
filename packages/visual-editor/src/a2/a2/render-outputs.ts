@@ -391,13 +391,13 @@ async function invoke(
         modelName
       );
       if (!ok(webPage)) {
-        console.error("Failed to generate html output", webPage.$error);
-        return webPage;
+        console.error("Failed to generate html output, falling back to manual layout:", webPage.$error);
+        // Fallback: same as Manual mode
+        return { context: [out] };
       } else {
         out = webPage;
         console.log(out);
       }
-      if (!ok(out)) return err(out);
       return { context: [out] };
     }
     case "GoogleDoc": {
