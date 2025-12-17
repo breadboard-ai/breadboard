@@ -354,13 +354,6 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     scopes: string[],
     popup: Window
   ): Promise<SignInResult> {
-    console.info(`[shell host] Listening for sign in`);
-    if (!scopes) {
-      return {
-        ok: false,
-        error: { code: "other", userMessage: "Unexpected sign-in attempt" },
-      };
-    }
     console.info(`[shell host] Awaiting grant response`);
     const abortCtl = new AbortController();
     const popupMessage = await new Promise<OAuthPopupMessage>((resolve) => {
@@ -430,7 +423,9 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     }
 
     // Check for any missing required scopes.
-    const requiredScopes = scopes ?? ALWAYS_REQUIRED_OAUTH_SCOPES;
+    const requiredScopes = scopes.length
+      ? scopes
+      : ALWAYS_REQUIRED_OAUTH_SCOPES;
     const actualScopes = new Set(grantResponse.scopes ?? []);
     const missingScopes = requiredScopes.filter(
       (scope) => !actualScopes.has(scope)
