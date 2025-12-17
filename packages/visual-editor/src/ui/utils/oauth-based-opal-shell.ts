@@ -108,53 +108,61 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
   };
 
   validateScopes = async (): Promise<
-    { ok: true } | { ok: false; error: string }
+    | { ok: true }
+    | {
+        ok: false;
+        code: "signed-out" | "missing-scopes" | "other";
+        error: string;
+      }
   > => {
-    const state = await this.getSignInState();
-    if (state.status !== "signedin") {
-      return { ok: false, error: "User was signed out" };
+    const scopesResult = await this.#fetchScopesFromTokenInfoApi();
+    if (!scopesResult.ok) {
+      return {
+        ok: false,
+        code:
+          scopesResult.code === "access-revoked"
+            ? "signed-out"
+            : scopesResult.code,
+        error: scopesResult.error,
+      };
     }
-
-    const settingsHelper = await this.#settingsHelper;
-    const settingsValueStr = (
-      await settingsHelper.get(SETTINGS_TYPE.CONNECTIONS, SIGN_IN_CONNECTION_ID)
-    )?.value as string | undefined;
-    if (!settingsValueStr) {
-      return { ok: false, error: "No local connection storage" };
-    }
-    const settingsValue = JSON.parse(settingsValueStr) as TokenGrant;
-
+    const scopes = scopesResult.value;
     const canonicalizedUserScopes = new Set<string>();
-    if (settingsValue.scopes) {
-      for (const scope of settingsValue.scopes) {
-        canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
-      }
-    } else {
-      // This is an older signin which doesn't have scopes stored locally. We
-      // can fetch them from an API and upgrade the storage for next time.
-      const tokenInfoScopes = await this.#fetchScopesFromTokenInfoApi();
-      if (!tokenInfoScopes.ok) {
-        console.error(
-          `[signin] Unable to fetch scopes from token info API:` +
-            ` ${tokenInfoScopes.error}`
-        );
-        return tokenInfoScopes;
-      }
-      for (const scope of tokenInfoScopes.value) {
-        canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
-      }
-      console.info(`[signin] Upgrading signin storage to include scopes`);
-      await settingsHelper.set(
-        SETTINGS_TYPE.CONNECTIONS,
-        SIGN_IN_CONNECTION_ID,
-        {
-          name: SIGN_IN_CONNECTION_ID,
-          value: JSON.stringify({
-            ...settingsValue,
-            scopes: tokenInfoScopes.value,
-          } satisfies TokenGrant),
+    for (const scope of scopes) {
+      canonicalizedUserScopes.add(canonicalizeOAuthScope(scope));
+    }
+
+    {
+      // Check if we have an older signin which doesn't have scopes stored
+      // locally, and update if necessary.
+      //
+      // TODO(aomarks) This might not be necessary now, but I think there is a
+      // spot elsewhere where we read these scopes that needs to be
+      // removed/updated first.
+      const settingsHelper = await this.#settingsHelper;
+      const settingsValueStr = (
+        await settingsHelper.get(
+          SETTINGS_TYPE.CONNECTIONS,
+          SIGN_IN_CONNECTION_ID
+        )
+      )?.value as string | undefined;
+      if (settingsValueStr) {
+        const settingsValue = JSON.parse(settingsValueStr) as TokenGrant;
+        if (!settingsValue.scopes) {
+          console.info(`[signin] Upgrading signin storage to include scopes`);
+          await settingsHelper.set(
+            SETTINGS_TYPE.CONNECTIONS,
+            SIGN_IN_CONNECTION_ID,
+            {
+              name: SIGN_IN_CONNECTION_ID,
+              value: JSON.stringify({
+                ...settingsValue,
+                scopes,
+              } satisfies TokenGrant),
+            }
+          );
         }
-      );
+      }
     }
 
     const canonicalizedRequiredScopes = new Set(
@@ -166,6 +174,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     if (missingScopes.length > 0) {
       return {
         ok: false,
+        code: "missing-scopes",
         error: `Missing scopes: ${missingScopes.join(", ")}`,
       };
     } else {
@@ -187,14 +196,19 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
 
   /** See https://cloud.google.com/docs/authentication/token-types#access */
   async #fetchScopesFromTokenInfoApi(): Promise<
-    { ok: true; value: string[] } | { ok: false; error: string }
+    | { ok: true; value: string[] }
+    | {
+        ok: false;
+        code: "signed-out" | "access-revoked" | "other";
+        error: string;
+      }
   > {
     const url = new URL("https://oauth2.googleapis.com/tokeninfo");
     // Make sure we have a fresh token, this API will return HTTP 400 for an
     // expired token.
     const token = await this.#getToken();
     if (token.state === "signedout") {
-      return { ok: false, error: "User was signed out" };
+      return { ok: false, code: "signed-out", error: "User was signed out" };
     }
     url.searchParams.set("access_token", token.grant.access_token);
 
@@ -202,17 +216,35 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     try {
       response = await fetch(url);
     } catch (e) {
-      return { ok: false, error: `Network error: ${e}` };
+      return { ok: false, code: "other", error: `Network error: ${e}` };
     }
     if (!response.ok) {
-      return { ok: false, error: `HTTP ${response.status} error` };
+      try {
+        const body = (await response.json()) as { error?: string };
+        if (body.error === "invalid_token") {
+          return {
+            ok: false,
+            code: "access-revoked",
+            error: JSON.stringify(body),
+          };
+        } else {
+          console.debug(`Unhandled tokeninfo error`, body);
+        }
+      } catch {
+        // ignore
+      }
+      return {
+        ok: false,
+        code: "other",
+        error: `HTTP ${response.status} error`,
+      };
     }
 
     let result: { scope: string };
     try {
       result = await response.json();
     } catch (e) {
-      return { ok: false, error: `JSON parse error: ${e}` };
+      return { ok: false, code: "other", error: `JSON parse error: ${e}` };
     }
 
     return { ok: true, value: result.scope.split(" ") };

@@ -21,8 +21,9 @@ export const SHELL_ESTABLISH_MESSAGE_CHANNEL_RESPONSE =
 export declare interface OpalShellHostProtocol {
   getSignInState(): Promise<SignInState>;
 
-  // TODO(aomarks) Do this within getSignInState so that we don't need this
-  // method.
+  // TODO(aomarks) Rename this validateSignInState or similar, because it now
+  // handles both missing scopes and the case where the user has revoked access
+  // through account settings.
   validateScopes(): Promise<ValidateScopesResult>;
 
   getConfiguration(): Promise<GuestConfiguration>;
@@ -71,7 +72,11 @@ export declare type SignInState =
 
 export declare type ValidateScopesResult =
   | { ok: true }
-  | { ok: false; error: string };
+  | {
+      ok: false;
+      code?: "signed-out" | "missing-scopes" | "other";
+      error: string;
+    };
 
 export declare type SignInResult =
   | { ok: true; state: SignInState }
