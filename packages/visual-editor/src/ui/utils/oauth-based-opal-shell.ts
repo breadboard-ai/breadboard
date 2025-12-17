@@ -206,7 +206,14 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     const url = new URL("https://oauth2.googleapis.com/tokeninfo");
     // Make sure we have a fresh token, this API will return HTTP 400 for an
     // expired token.
-    const token = await this.#getToken();
+    let token;
+    try {
+      token = await this.#getToken();
+    } catch (e) {
+      // This handles the case where the user signed in, then revoked access
+      // through settings, and the token we were using has expired.
+      return { ok: false, code: "signed-out", error: String(e) };
+    }
     if (token.state === "signedout") {
       return { ok: false, code: "signed-out", error: "User was signed out" };
     }
