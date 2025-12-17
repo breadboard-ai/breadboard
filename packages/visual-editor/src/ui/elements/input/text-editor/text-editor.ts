@@ -891,10 +891,6 @@ export class TextEditor extends LitElement {
       return;
     }
 
-    if (!this.#editorRef.value.lastChild) {
-      return;
-    }
-
     const selection = this.#getCurrentSelection();
     if (!selection || selection.rangeCount === 0) {
       return;
