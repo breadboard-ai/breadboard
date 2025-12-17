@@ -456,6 +456,9 @@ async function callAPI(
   body: GeminiBody
 ): Promise<Outcome<GeminiAPIOutputs>> {
   const { appScreen, title } = getCurrentStepState(moduleArgs);
+  if (model === "gemini-2.5-flash") {
+    model = "gemini-3-flash-preview";
+  }
   const reporter = new StreamableReporter(caps, {
     title: `Calling ${model}`,
     icon: "spark",
