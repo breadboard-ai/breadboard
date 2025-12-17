@@ -346,10 +346,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       `
     );
     if (!popup) {
-      return {
-        ok: false,
-        error: { code: "other", userMessage: "Popups are disabled" },
-      };
+      return this.#signInWithFallbackDialog(scopes);
     }
     return await this.#listenForSignIn(nonce, scopes, popup);
   };
@@ -379,6 +376,47 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     // Don't lose access to scopes we've previously asked for.
     params.set("include_granted_scopes", "true");
     return { url: url.href, nonce };
+  }
+
+  /**
+   * Display a sign-in dialog as fallback for when we were blocked from
+   * immediately calling window.open.
+
+   * Safari has a much shorter navigator.userActivation.isActive timeout than
+   * Chrome and Firefox, which means that too much time can elapse between the
+   * guest asking for a sign-in and the host calling window.open.
+   */
+  #signInWithFallbackDialog(scopes: string[]): Promise<SignInResult> {
+    const dialog = document.createElement("dialog");
+    dialog.id = "fallback-sign-in-dialog";
+
+    const h1 = document.createElement("h1");
+    h1.textContent = "Sign in to use Opal";
+    dialog.appendChild(h1);
+
+    const p = document.createElement("p");
+    p.textContent =
+      "To continue, you'll need to sign in with your Google account.";
+    dialog.appendChild(p);
+
+    const button = document.createElement("button");
+    button.appendChild(document.createTextNode("Sign in with Google"));
+    dialog.appendChild(button);
+
+    dialog.addEventListener("close", () => dialog.remove(), { once: true });
+    document.body.appendChild(dialog);
+
+    return new Promise((resolve) => {
+      button.addEventListener(
+        "click",
+        () => {
+          dialog.close();
+          resolve(this.signIn(scopes));
+        },
+        { once: true }
+      );
+      dialog.showModal();
+    });
   }
 
   async #listenForSignIn(

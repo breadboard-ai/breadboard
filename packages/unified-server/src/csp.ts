@@ -54,7 +54,7 @@ export const SHELL_CSP = {
     "https://drive.google.com",
     flags.SHELL_GUEST_ORIGIN,
   ],
-  ["img-src"]: ["https://*.gstatic.com"],
+  ["img-src"]: ["'self'", "https://*.gstatic.com"],
   ["script-src"]: ["'self'", "https://apis.google.com"],
   ["style-src"]: [
     "'self'",
