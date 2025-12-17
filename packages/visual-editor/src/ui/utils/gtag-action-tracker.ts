@@ -98,11 +98,6 @@ class GTagActionTracker implements ActionTracker {
     globalThis.gtag?.("event", "app_engage", { url });
   }
 
-  signInPageView() {
-    globalThis.gtag?.("event", "sign_in_page_view");
-    this.load("landing", false);
-  }
-
   signOutSuccess() {
     resetAnalyticsUserId();
     globalThis.gtag?.("event", "sign_out_success");

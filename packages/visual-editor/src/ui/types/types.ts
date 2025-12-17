@@ -596,7 +596,6 @@ export interface ActionTracker {
     source: "app_preview" | "app_view" | "console"
   ): void;
   publishApp(url: string | undefined): void;
-  signInPageView(): void;
   signOutSuccess(): void;
   signInSuccess(): void;
   errorUnknown(): void;

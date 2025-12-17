@@ -53,10 +53,6 @@ class GuestActionTracker implements ActionTracker {
     console.debug("[tracking] publishApp", url);
     this.tracker.publishApp(url);
   }
-  signInPageView(): void {
-    console.debug("[tracking] signInPageView");
-    this.tracker.signInPageView();
-  }
   signOutSuccess(): void {
     console.debug("[tracking] signOutSuccess");
     this.tracker.signOutSuccess();
