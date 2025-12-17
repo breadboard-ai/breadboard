@@ -59,11 +59,12 @@ import {
   SigninAdapter,
   signinAdapterContext,
 } from "./ui/utils/signin-adapter.js";
-import { parseUrl } from "./ui/utils/urls.js";
-import {
+import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
+import type {
   CheckAppAccessResult,
   GuestConfiguration,
   OpalShellHostProtocol,
+  ValidateScopesResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { SignalWatcher } from "@lit-labs/signals";
 
@@ -265,12 +266,16 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.#consentManager = this.runtime.consentManager;
     this.recentBoardStore = this.runtime.recentBoardStore;
 
-    // Asyncronously check if the user has a geo-restriction and sign out if so.
+    // Asyncronously check if the user has an access restriction (e.g. geo) and
+    // if they are signed in with all required scopes.
     this.signinAdapter.state.then((state) => {
       if (state === "signedin") {
         this.signinAdapter
           .checkAppAccess()
           .then(this.handleAppAccessCheckResult.bind(this));
+        this.opalShell
+          .validateScopes()
+          .then(this.handleValidateScopesResult.bind(this));
       }
     });
 
@@ -346,6 +351,24 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   abstract handleAppAccessCheckResult(
     result: CheckAppAccessResult
   ): Promise<void>;
+
+  async handleValidateScopesResult(result: ValidateScopesResult) {
+    if (!result.ok && (await this.signinAdapter.state) === "signedin") {
+      console.log(
+        "[signin] oauth scopes were missing or unavailable, forcing signin.",
+        result.error
+      );
+      await this.signinAdapter.signOut();
+      window.location.href = makeUrl({
+        page: "landing",
+        redirect: parseUrl(window.location.href),
+        missingScopes: true,
+        oauthRedirect:
+          new URL(window.location.href).searchParams.get(OAUTH_REDIRECT) ??
+          undefined,
+      });
+    }
+  }
 
   abstract doPostInitWork(): Promise<void>;
 
