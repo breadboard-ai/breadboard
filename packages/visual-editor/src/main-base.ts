@@ -1165,6 +1165,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     }
   ) {
     this.uiState.blockingAction = true;
+    this.runtime.actionTracker.remixApp(url, "editor");
     const remixRoute = eventRoutes.get("board.remix");
     const refresh = await remixRoute?.do(
       this.collectEventRouteDeps(
