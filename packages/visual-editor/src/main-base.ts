@@ -1136,6 +1136,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>
         this.askUserToSignInIfNeeded(scopes),
       boardServer: this.boardServer,
+      actionTracker: this.actionTracker,
       embedHandler: this.embedHandler,
     };
   }
