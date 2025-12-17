@@ -4,6 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { type BoardServer, type GraphDescriptor } from "@breadboard-ai/types";
+import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
+import type {
+  DriveFileId,
+  GoogleDriveClient,
+  NarrowedDriveFile,
+} from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import {
   DRIVE_PROPERTY_IS_SHAREABLE_COPY,
   DRIVE_PROPERTY_LATEST_SHARED_VERSION,
@@ -18,41 +25,34 @@ import {
   permissionMatchesAnyOf,
   type GoogleDriveAsset,
 } from "@breadboard-ai/utils/google-drive/utils.js";
-import type {
-  DriveFileId,
-  GoogleDriveClient,
-  NarrowedDriveFile,
-} from "@breadboard-ai/utils/google-drive/google-drive-client.js";
-import { type GraphDescriptor } from "@breadboard-ai/types";
-import { type BoardServer } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
 import "@material/web/switch/switch.js";
 import { type MdSwitch } from "@material/web/switch/switch.js";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
+import { GoogleDriveBoardServer } from "../../../board-server/server.js";
+import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
 import animations from "../../app-templates/shared/styles/animations.js";
+import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import { boardServerContext } from "../../contexts/board-server.js";
 import {
   globalConfigContext,
   type GlobalConfig,
 } from "../../contexts/global-config.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
+import { guestConfigurationContext } from "../../contexts/guest-configuration.js";
 import { ToastEvent, ToastType } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { buttonStyles } from "../../styles/button.js";
 import { icons } from "../../styles/icons.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
+import { ActionTracker } from "../../types/types.js";
 import {
   signinAdapterContext,
   type SigninAdapter,
 } from "../../utils/signin-adapter.js";
-import { type GoogleDriveSharePanel } from "../elements.js";
 import { makeUrl } from "../../utils/urls.js";
-import { GoogleDriveBoardServer } from "../../../board-server/server.js";
-import { guestConfigurationContext } from "../../contexts/guest-configuration.js";
-import type { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { makeShareLinkFromTemplate } from "../../../utils/make-share-link-from-template.js";
+import { type GoogleDriveSharePanel } from "../elements.js";
 
 const APP_NAME = StringsHelper.forSection("Global").from("APP_NAME");
 const Strings = StringsHelper.forSection("UIController");
@@ -414,6 +414,9 @@ export class SharePanel extends LitElement {
 
   @consume({ context: guestConfigurationContext })
   accessor guestConfiguration: GuestConfiguration | undefined;
+
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker | undefined;
 
   @property({ attribute: false })
   accessor graph: GraphDescriptor | undefined;
@@ -925,7 +928,7 @@ export class SharePanel extends LitElement {
     }
     const selected = input.selected;
     if (selected) {
-      ActionTracker.publishApp(this.graph.url);
+      this.actionTracker?.publishApp(this.graph.url);
       this.#publish();
     } else {
       this.#unpublish();

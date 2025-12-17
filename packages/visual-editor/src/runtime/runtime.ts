@@ -49,7 +49,10 @@ import {
 } from "@breadboard-ai/types";
 import { ConsentManager } from "../ui/utils/consent-manager.js";
 import { SigninAdapter } from "../ui/utils/signin-adapter.js";
-import { createActionTrackerBackend } from "../ui/utils/action-tracker.js";
+import {
+  createActionTracker,
+  createActionTrackerBackend,
+} from "../ui/utils/action-tracker.js";
 import { envFromSettings } from "../utils/env-from-settings.js";
 import { builtInMcpClients } from "../mcp-clients.js";
 import { GoogleDriveBoardServer } from "../board-server/server.js";
@@ -67,6 +70,7 @@ import {
   assetsFromGraphDescriptor,
   envFromGraphDescriptor,
 } from "../data/file-system.js";
+import { ActionTracker } from "../ui/types/types.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -88,6 +92,7 @@ export class Runtime extends EventTarget {
   public readonly googleDriveBoardServer: GoogleDriveBoardServer;
   public readonly flowGenerator: FlowGenerator;
   public readonly apiClient: AppCatalystApiClient;
+  public readonly actionTracker: ActionTracker;
   public readonly emailPrefsManager: EmailPrefsManager;
 
   constructor(config: RuntimeConfig) {
@@ -97,6 +102,8 @@ export class Runtime extends EventTarget {
 
     this.signinAdapter = new SigninAdapter(config.shellHost);
     this.fetchWithCreds = this.signinAdapter.fetchWithCreds;
+
+    this.actionTracker = createActionTracker(config.shellHost);
 
     const proxyApiBaseUrl = new URL(
       "/api/drive-proxy/drive/v3/files",

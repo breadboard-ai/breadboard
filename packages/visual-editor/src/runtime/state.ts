@@ -83,6 +83,7 @@ class StateManager implements RuntimeContext {
       this.#store,
       this.runtime.fetchWithCreds,
       this.runtime.googleDriveBoardServer,
+      this.runtime.actionTracker,
       this.runtime.mcpClientManager,
       editable || undefined
     );

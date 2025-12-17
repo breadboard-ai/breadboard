@@ -22,13 +22,13 @@ import "../../elements/welcome-panel/homepage-search-button.js";
 import { StateEvent } from "../../events/events.js";
 import "../../flow-gen/flowgen-homepage-panel.js";
 import * as StringsHelper from "../../strings/helper.js";
-import type { RecentBoard } from "../../types/types.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
+import type { ActionTracker, RecentBoard } from "../../types/types.js";
 import { blankBoard } from "../../utils/blank-board.js";
 import "./gallery.js";
 
 import * as Styles from "../../styles/styles.js";
 import { styleMap } from "lit/directives/style-map.js";
+import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -44,6 +44,9 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
   @consume({ context: boardServerContext, subscribe: true })
   @state()
   accessor boardServer: BoardServer | undefined;
+
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker | undefined;
 
   @property({ attribute: false })
   accessor recentBoards: RecentBoard[] = [];
@@ -460,7 +463,7 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
       return;
     }
 
-    ActionTracker.createNew();
+    this.actionTracker?.createNew();
 
     evt.target.disabled = true;
     this.dispatchEvent(

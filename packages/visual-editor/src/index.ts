@@ -4,21 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { customElement } from "lit/decorators.js";
-import { MainBase, RenderValues } from "./main-base.js";
 import { html, nothing } from "lit";
+import { customElement } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { ref } from "lit/directives/ref.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
-import * as BreadboardUI from "./ui/index.js";
-import { ActionTracker } from "./ui/utils/action-tracker.js";
-import { makeUrl, parseUrl } from "./ui/utils/urls.js";
-import { IterateOnPromptEvent } from "./ui/events/events.js";
+import { MainBase, RenderValues } from "./main-base.js";
 import { IterateOnPromptMessage } from "./ui/embed/embed.js";
+import { IterateOnPromptEvent } from "./ui/events/events.js";
+import * as BreadboardUI from "./ui/index.js";
+import { makeUrl, parseUrl } from "./ui/utils/urls.js";
 
-import { MakeUrlInit } from "./ui/types/types.js";
 import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { MakeUrlInit } from "./ui/types/types.js";
 
 const Strings = BreadboardUI.Strings.forSection("Global");
 const parsedUrl = parseUrl(window.location.href);
@@ -224,7 +223,7 @@ class Main extends MainBase {
       .status=${renderValues.tabStatus}
       .themeHash=${renderValues.themeHash}
     >
-    </bb-app-controller>`
+    </bb-app-controller>`;
   }
 
   #renderCanvasController(renderValues: RenderValues) {
@@ -512,7 +511,7 @@ class Main extends MainBase {
       .mode=${this.uiState.mode}
       @bbsignout=${async () => {
         await this.signinAdapter.signOut();
-        ActionTracker.signOutSuccess();
+        this.runtime.actionTracker.signOutSuccess();
         window.location.href = makeUrl({
           page: "landing",
           redirect: { page: "home" },
@@ -591,7 +590,7 @@ class Main extends MainBase {
               return;
             }
 
-            ActionTracker.remixApp(this.tab.graph.url, "editor");
+            this.runtime.actionTracker.remixApp(this.tab.graph.url, "editor");
             this.invokeRemixEventRouteWith(this.tab.graph.url, {
               start: Strings.from("STATUS_GENERIC_WORKING"),
               end: Strings.from("STATUS_PROJECT_CREATED"),

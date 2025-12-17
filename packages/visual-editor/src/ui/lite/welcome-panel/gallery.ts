@@ -14,7 +14,11 @@ import { createRef, ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { OverflowMenuActionEvent, StateEvent } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
-import { OverflowAction, RecentBoard } from "../../types/types.js";
+import {
+  ActionTracker,
+  OverflowAction,
+  RecentBoard,
+} from "../../types/types.js";
 import {
   type SigninAdapter,
   signinAdapterContext,
@@ -24,9 +28,9 @@ import { renderThumbnail } from "../../utils/image.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { guard } from "lit/directives/guard.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import * as Styles from "../../styles/styles.js";
+import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 
 const COLLAPSED_KEY = "gallery-lite-collapsed";
 const GlobalStrings = StringsHelper.forSection("Global");
@@ -488,6 +492,9 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   @consume({ context: googleDriveClientContext })
   accessor googleDriveClient!: GoogleDriveClient | undefined;
 
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker | undefined;
+
   @property({ attribute: false })
   accessor items: [string, GraphProviderItem][] | null = null;
 
@@ -941,7 +948,10 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   }
 
   #onBoardClick(_event: PointerEvent | KeyboardEvent, url: string) {
-    ActionTracker.openApp(url, this.forceCreatorToBeTeam ? "gallery" : "user");
+    this.actionTracker?.openApp(
+      url,
+      this.forceCreatorToBeTeam ? "gallery" : "user"
+    );
     this.dispatchEvent(
       new StateEvent({
         eventType: "board.load",
@@ -961,7 +971,10 @@ export class GalleryLite extends SignalWatcher(LitElement) {
     event: PointerEvent | KeyboardEvent | OverflowMenuActionEvent,
     url: string
   ) {
-    ActionTracker.remixApp(url, this.forceCreatorToBeTeam ? "gallery" : "user");
+    this.actionTracker?.remixApp(
+      url,
+      this.forceCreatorToBeTeam ? "gallery" : "user"
+    );
     event.stopPropagation();
     this.dispatchEvent(
       new StateEvent({

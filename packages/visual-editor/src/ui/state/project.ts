@@ -59,6 +59,7 @@ import { ThemeState } from "./theme-state.js";
 import { err, ok } from "@breadboard-ai/utils";
 import { transformDataParts } from "../../data/common.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
+import { ActionTracker } from "../types/types.js";
 
 export { createProjectState, ReactiveProject };
 
@@ -83,6 +84,7 @@ function createProjectState(
   store: MutableGraphStore,
   fetchWithCreds: typeof globalThis.fetch,
   boardServer: GoogleDriveBoardServer,
+  actionTracker: ActionTracker,
   mcpClientManager: McpClientManager,
   editable?: EditableGraph
 ): Project {
@@ -92,6 +94,7 @@ function createProjectState(
     fetchWithCreds,
     boardServer,
     mcpClientManager,
+    actionTracker,
     editable
   );
 }
@@ -132,6 +135,7 @@ class ReactiveProject implements ProjectInternal {
     fetchWithCreds: typeof globalThis.fetch,
     boardServer: GoogleDriveBoardServer,
     clientManager: McpClientManager,
+    private readonly actionTracker: ActionTracker,
     editable?: EditableGraph
   ) {
     this.#mainGraphId = mainGraphId;
@@ -203,6 +207,7 @@ class ReactiveProject implements ProjectInternal {
     this.run = ReactiveProjectRun.create(
       this.stepEditor,
       this.#mainGraphId,
+      this.actionTracker,
       this.#store,
       fileSystem,
       runner,

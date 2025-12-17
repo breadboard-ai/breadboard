@@ -4,22 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configuration.js";
 import type {
-  LandingUrlInit,
-  MakeUrlInit,
-  LanguagePack,
   GraphUrlInit,
+  LandingUrlInit,
+  LanguagePack,
+  MakeUrlInit,
 } from "../ui/types/types.js";
-import { SigninAdapter } from "../ui/utils/signin-adapter.js";
 import {
-  ActionTracker,
+  createActionTracker,
   initializeAnalytics,
 } from "../ui/utils/action-tracker.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configuration.js";
 import { connectToOpalShellHost } from "../ui/utils/opal-shell-guest.js";
-import * as Shell from "./shell.js";
-import { parseUrl, makeUrl } from "../ui/utils/urls.js";
+import { SigninAdapter } from "../ui/utils/signin-adapter.js";
+import { makeUrl, parseUrl } from "../ui/utils/urls.js";
 import "./carousel.js";
+import * as Shell from "./shell.js";
 
 const parsedUrl = parseUrl(window.location.href) as LandingUrlInit;
 if (parsedUrl.page !== "landing") {
@@ -101,7 +101,7 @@ async function init() {
     return;
   }
 
-  ActionTracker.signInPageView();
+  const actionTracker = createActionTracker(shellHost);
 
   embedHandler?.sendToEmbedder({
     type: "home_loaded",
@@ -173,7 +173,7 @@ async function init() {
         return;
       }
 
-      ActionTracker.signInSuccess();
+      actionTracker.signInSuccess();
       console.info(`[landing] Redirecting after sign-in`, event.target);
       redirect(destination);
     };
