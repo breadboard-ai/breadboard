@@ -304,12 +304,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       });
     }
 
-    if (parsedUrl.page === "graph") {
-      const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
-      this.actionTracker.load(this.uiState.mode, shared);
-    } else if (parsedUrl.page === "home") {
-      this.actionTracker.load("home", false);
-    }
     this.graphStore = this.runtime.board.graphStore;
 
     // Admin.
@@ -689,6 +683,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
         if (evt.mode) {
           this.uiState.mode = evt.mode;
+        }
+        const parsedUrl = this.runtime.router.parsedUrl;
+        const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
+        if (parsedUrl.page === "home") {
+          this.actionTracker.load("home", false);
+        } else {
+          this.actionTracker.load(this.uiState.mode, shared);
         }
 
         const urlWithoutMode = new URL(evt.url);
