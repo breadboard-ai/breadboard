@@ -355,14 +355,15 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   async handleValidateScopesResult(result: ValidateScopesResult) {
     if (!result.ok && (await this.signinAdapter.state) === "signedin") {
       console.log(
-        "[signin] oauth scopes were missing or unavailable, forcing signin.",
-        result.error
+        "[signin] oauth scopes were missing or the user revoked access, " +
+          "forcing signin.",
+        result
       );
       await this.signinAdapter.signOut();
       window.location.href = makeUrl({
         page: "landing",
         redirect: parseUrl(window.location.href),
-        missingScopes: true,
+        missingScopes: result.code === "missing-scopes",
         oauthRedirect:
           new URL(window.location.href).searchParams.get(OAUTH_REDIRECT) ??
           undefined,
