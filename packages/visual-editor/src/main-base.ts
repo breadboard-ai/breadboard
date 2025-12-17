@@ -94,9 +94,6 @@ const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
 const UPDATE_HASH_KEY = "bb-main-update-hash";
 
 const SIGN_IN_CONSENT_KEY = "bb-has-sign-in-consent";
-
-const parsedUrl = parseUrl(window.location.href);
-
 abstract class MainBase extends SignalWatcher(LitElement) {
   @provide({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig;

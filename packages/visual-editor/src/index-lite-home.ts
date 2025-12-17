@@ -33,9 +33,10 @@ import type {
 } from "./ui/events/events.js";
 import * as BBLite from "./ui/lite/lite.js";
 import "./ui/lite/welcome-panel/project-listing.js";
-import { SnackbarMessage, SnackType } from "./ui/types/types.js";
+import { ActionTracker, SnackbarMessage, SnackType } from "./ui/types/types.js";
 import { SigninAdapter } from "./ui/utils/signin-adapter.js";
 import { createActionTracker } from "./ui/utils/action-tracker.js";
+import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
 
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
@@ -69,6 +70,9 @@ export class LiteHome extends SignalWatcher(LitElement) {
 
   @provide({ context: guestConfigurationContext })
   protected accessor guestConfiguration: GuestConfiguration;
+
+  @provide({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker;
 
   @state()
   accessor compactView = false;
@@ -109,6 +113,8 @@ export class LiteHome extends SignalWatcher(LitElement) {
     const opalShell = mainArgs.shellHost;
     const signinAdapter = new SigninAdapter(opalShell);
 
+    this.actionTracker = createActionTracker(opalShell);
+
     // Board server
     const proxyApiBaseUrl = new URL(
       "/api/drive-proxy/drive/v3/files",
@@ -148,7 +154,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
     };
     sizeDetector.addEventListener("change", reactToScreenWidth);
     reactToScreenWidth();
-    createActionTracker(mainArgs.shellHost).load("landing", false);
+    this.actionTracker.load("landing", false);
   }
 
   connectedCallback() {
