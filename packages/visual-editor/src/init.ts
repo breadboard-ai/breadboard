@@ -6,7 +6,6 @@
 
 import { CLIENT_DEPLOYMENT_CONFIG } from "./ui/config/client-deployment-configuration.js";
 import { bootstrap } from "./bootstrap.js";
-import { initializeAnalytics } from "./ui/utils/action-tracker.js";
 import {
   OPAL_BACKEND_API_PREFIX,
   type JsonSerializable,
@@ -19,10 +18,6 @@ const executeStepEndpoint: string = new URL(
   "v1beta1/executeStep",
   OPAL_BACKEND_API_PREFIX
 ).href;
-
-if (deploymentConfiguration?.MEASUREMENT_ID) {
-  initializeAnalytics(deploymentConfiguration.MEASUREMENT_ID, true);
-}
 
 bootstrap({
   deploymentConfiguration,

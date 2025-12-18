@@ -11,10 +11,7 @@ import type {
   LanguagePack,
   MakeUrlInit,
 } from "../ui/types/types.js";
-import {
-  createActionTracker,
-  initializeAnalytics,
-} from "../ui/utils/action-tracker.js";
+import { createActionTracker } from "../ui/utils/action-tracker.js";
 import { connectToOpalShellHost } from "../ui/utils/opal-shell-guest.js";
 import { SigninAdapter } from "../ui/utils/signin-adapter.js";
 import { makeUrl, parseUrl } from "../ui/utils/urls.js";
@@ -26,8 +23,6 @@ if (parsedUrl.page !== "landing") {
   console.warn("unexpected parse of landing page url", parsedUrl);
 }
 
-const deploymentConfiguration = CLIENT_DEPLOYMENT_CONFIG;
-
 function redirect(target?: MakeUrlInit) {
   if (target) {
     window.location.href = makeUrl(target);
@@ -35,10 +30,6 @@ function redirect(target?: MakeUrlInit) {
   }
 
   window.location.href = makeUrl(parsedUrl.redirect);
-}
-
-if (deploymentConfiguration?.MEASUREMENT_ID) {
-  initializeAnalytics(deploymentConfiguration.MEASUREMENT_ID, false);
 }
 
 let lastVideo = 0;
@@ -101,7 +92,12 @@ async function init() {
     return;
   }
 
-  const actionTracker = createActionTracker(shellHost);
+  const guestConfiguration = await shellHost.getConfiguration();
+  const actionTracker = createActionTracker(
+    shellHost,
+    guestConfiguration,
+    CLIENT_DEPLOYMENT_CONFIG?.MEASUREMENT_ID
+  );
 
   embedHandler?.sendToEmbedder({
     type: "home_loaded",

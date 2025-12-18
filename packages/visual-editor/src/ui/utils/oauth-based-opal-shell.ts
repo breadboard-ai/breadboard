@@ -191,6 +191,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       shareSurface: undefined,
       shareSurfaceUrlTemplates:
         CLIENT_DEPLOYMENT_CONFIG.SHARE_SURFACE_URL_TEMPLATES,
+      supportsActionTracking: true,
     };
   };
 
@@ -885,5 +886,10 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
         async () => token.grant.access_token
       ),
     });
+  };
+
+  trackAction = async (action: string, payload: Record<string, string>) => {
+    console.info(`[shell track action] ${action}`, payload);
+    // TODO: Implement action tracking.
   };
 }

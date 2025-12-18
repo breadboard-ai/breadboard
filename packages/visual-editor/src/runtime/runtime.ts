@@ -103,7 +103,11 @@ export class Runtime extends EventTarget {
     this.signinAdapter = new SigninAdapter(config.shellHost);
     this.fetchWithCreds = this.signinAdapter.fetchWithCreds;
 
-    this.actionTracker = createActionTracker(config.shellHost);
+    this.actionTracker = createActionTracker(
+      config.shellHost,
+      config.guestConfig,
+      config.globalConfig.MEASUREMENT_ID
+    );
 
     const proxyApiBaseUrl = new URL(
       "/api/drive-proxy/drive/v3/files",
