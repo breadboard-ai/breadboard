@@ -12,21 +12,28 @@ import { PartialPersistentBackend } from "../../engine/file-system/partial-persi
 import { ActionTracker } from "../types/types.js";
 import { GTagActionTracker } from "./gtag-action-tracker.js";
 import { GuestActionTracker } from "./guest-action-tracker.js";
+import { ActionTrackerBase } from "./action-event-sender.js";
 
 export { createActionTracker, createActionTrackerBackend };
 
 function createActionTracker(
   host: OpalShellHostProtocol,
   guestConfiguration: GuestConfiguration,
-  measurementId: string | undefined
+  measurementId: string | undefined,
+  signedInCallback: () => Promise<boolean>
 ): ActionTracker {
   if (guestConfiguration.supportsActionTracking) {
+    console.log("[action tracker] Sending actions to host");
     return new GuestActionTracker(host);
   }
   if (!measurementId) {
-    throw new Error("Measurement ID is required for GTagActionTracker");
+    console.log(
+      "[action tracker] No measurement ID, using noop action tracker"
+    );
+    return new NoopActionTracker();
   }
-  return new GTagActionTracker(measurementId);
+  console.log("[action tracker] Sending actions directly to GA");
+  return new GTagActionTracker(measurementId, signedInCallback);
 }
 
 function createActionTrackerBackend() {
@@ -37,3 +44,12 @@ function createActionTrackerBackend() {
     },
   });
 }
+
+class NoopActionTracker extends ActionTrackerBase {
+  constructor() {
+    super(() => {
+      // Do nothing.
+    }, Promise.resolve());
+  }
+}
+  

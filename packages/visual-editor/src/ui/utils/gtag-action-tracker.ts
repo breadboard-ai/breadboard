@@ -5,11 +5,10 @@
  */
 
 import { createTrustedAnalyticsURL } from "../trusted-types/analytics-url.js";
-import { ActionEventSender } from "./action-event-sender.js";
+import { ActionTrackerBase } from "./action-event-sender.js";
 import { parseUrl } from "./urls.js";
 
-export { GTagActionTracker, getActionTrackerLocalStroageKey };
-
+export { GTagActionTracker, GTagEventSender };
 
 declare global {
   interface Window {
@@ -17,7 +16,7 @@ declare global {
   }
 }
 
-function getActionTrackerLocalStroageKey() {
+function getActionTrackerLocalStorageKey() {
   // b/458498343 This should be simply be a module-scope const
   // LOCAL_STORAGE_KEY. However there appears to be a bug affecting iOS 18 such
   // that exported functions can be invoked by importers before module-level
@@ -33,13 +32,26 @@ function getActionTrackerLocalStroageKey() {
  *
  * @param id - Google Analytics measurement ID
  */
-function initializeAnalytics(id: string, signedIn: boolean) {
+async function initializeAnalytics(
+  id: string,
+  signedInCallback: () => Promise<boolean>
+): Promise<void> {
   window.dataLayer = window.dataLayer || [];
   window.gtag = function () {
     // eslint-disable-next-line prefer-rest-params
     window.dataLayer.push(arguments);
   };
   window.gtag("js", new Date());
+
+  // Load the tag manager script.
+  const tagManagerScript = document.createElement("script");
+  (tagManagerScript as { src: string | TrustedScriptURL }).src =
+    createTrustedAnalyticsURL(id);
+  tagManagerScript.async = true;
+  document.body.appendChild(tagManagerScript);
+
+  const signedIn = await signedInCallback();
+
   // IP anonymized per OOGA policy.
   const userId = signedIn ? { user_id: getUserId() } : {};
 
@@ -53,33 +65,53 @@ function initializeAnalytics(id: string, signedIn: boolean) {
     ...userId,
   });
 
-  const tagManagerScript = document.createElement("script");
-  (tagManagerScript as { src: string | TrustedScriptURL }).src =
-    createTrustedAnalyticsURL(id);
-  tagManagerScript.async = true;
-  document.body.appendChild(tagManagerScript);
-
   function getUserId() {
-    let userId = window.localStorage.getItem(getActionTrackerLocalStroageKey());
+    let userId = window.localStorage.getItem(getActionTrackerLocalStorageKey());
     if (!userId) {
       // Generate a random GUUID that will be associated with this user.
       userId = crypto.randomUUID();
-      window.localStorage.setItem(getActionTrackerLocalStroageKey(), userId);
+      window.localStorage.setItem(getActionTrackerLocalStorageKey(), userId);
     }
     return userId;
   }
 }
 
-class GTagActionTracker extends ActionEventSender {
-  constructor(measurementId: string) {
-    super(
-      (action, params) => globalThis.gtag?.("event", action, params),
-      resetAnalyticsUserId
-    );
-    initializeAnalytics(measurementId, false);
+class GTagActionTracker extends ActionTrackerBase {
+  constructor(measurementId: string, signedInCallback: () => Promise<boolean>) {
+    super(sendGTagEvent, initializeAnalytics(measurementId, signedInCallback));
   }
 }
 
+class GTagEventSender {
+  private readonly noop: boolean = false;
+  constructor(
+    measurementId: string | undefined,
+    signedInCallback: () => Promise<boolean>
+  ) {
+    if (measurementId) {
+      initializeAnalytics(measurementId, signedInCallback);
+    } else {
+      this.noop = true;
+    }
+  }
+  sendEvent(action: string, params?: Record<string, string | undefined>) {
+    if (this.noop) {
+      return;
+    }
+    sendGTagEvent(action, params);
+  }
+}
+
+function sendGTagEvent(
+  action: string,
+  params?: Record<string, string | undefined>
+) {
+  if (action === "sign_out_success" || action === "sign_in_success") {
+    resetAnalyticsUserId();
+  }
+  globalThis.gtag?.("event", action, params);
+}
+
 function resetAnalyticsUserId() {
-  window.localStorage.removeItem(getActionTrackerLocalStroageKey());
+  window.localStorage.removeItem(getActionTrackerLocalStorageKey());
 }

@@ -106,7 +106,8 @@ export class Runtime extends EventTarget {
     this.actionTracker = createActionTracker(
       config.shellHost,
       config.guestConfig,
-      config.globalConfig.MEASUREMENT_ID
+      config.globalConfig.MEASUREMENT_ID,
+      () => this.signinAdapter.state.then((state) => state === "signedin")
     );
 
     const proxyApiBaseUrl = new URL(

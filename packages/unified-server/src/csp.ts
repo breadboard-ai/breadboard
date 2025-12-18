@@ -40,6 +40,7 @@ export const SHELL_CSP = {
     "'self'",
     "https://*.google.com",
     "https://*.googleapis.com",
+    "https://www.google-analytics.com",
     flags.BACKEND_API_ENDPOINT,
     // TODO(aomarks) Remove this after we have eliminated all credentialed RPCs
     // to the frontend server.
@@ -55,13 +56,22 @@ export const SHELL_CSP = {
     flags.SHELL_GUEST_ORIGIN,
   ],
   ["img-src"]: ["'self'", "https://*.gstatic.com"],
-  ["script-src"]: ["'self'", "https://apis.google.com"],
+  ["script-src"]: [
+    "'self'",
+    "https://apis.google.com",
+    "https://www.googletagmanager.com",
+  ],
   ["style-src"]: [
     "'self'",
     "'unsafe-inline'", // Needed for Drive picker and Drive share dialog
   ],
   ["require-trusted-types-for"]: ["'script'"],
-  ["trusted-types"]: ["opal-gapi-url", "gapi#gapi", "goog#html"],
+  ["trusted-types"]: [
+    "opal-analytics-url",
+    "opal-gapi-url",
+    "gapi#gapi",
+    "goog#html",
+  ],
 };
 
 export const MAIN_APP_CSP = {

@@ -96,7 +96,8 @@ async function init() {
   const actionTracker = createActionTracker(
     shellHost,
     guestConfiguration,
-    CLIENT_DEPLOYMENT_CONFIG?.MEASUREMENT_ID
+    CLIENT_DEPLOYMENT_CONFIG?.MEASUREMENT_ID,
+    () => signinAdapter.state.then((state) => state === "signedin")
   );
 
   embedHandler?.sendToEmbedder({

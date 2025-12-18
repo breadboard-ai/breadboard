@@ -5,12 +5,15 @@
  */
 
 import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { ActionEventSender } from "./action-event-sender.js";
+import { ActionTrackerBase } from "./action-event-sender.js";
 
 export { GuestActionTracker };
 
-class GuestActionTracker extends ActionEventSender {
+class GuestActionTracker extends ActionTrackerBase {
   constructor(host: OpalShellHostProtocol) {
-    super((action, params) => host.trackAction(action, params));
+    super(
+      (action, params) => host.trackAction(action, params),
+      Promise.resolve()
+    );
   }
 }
