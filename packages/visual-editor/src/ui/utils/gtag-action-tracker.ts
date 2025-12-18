@@ -83,20 +83,24 @@ class GTagActionTracker extends ActionTrackerBase {
 }
 
 class GTagEventSender {
-  private readonly noop: boolean = false;
+  private readonly initialized: Promise<void> | undefined;
+
   constructor(
     measurementId: string | undefined,
     signedInCallback: () => Promise<boolean>
   ) {
     if (measurementId) {
-      initializeAnalytics(measurementId, signedInCallback);
-    } else {
-      this.noop = true;
+      this.initialized = initializeAnalytics(measurementId, signedInCallback);
     }
   }
-  sendEvent(action: string, params?: Record<string, string | undefined>) {
-    if (this.noop) {
+
+  async sendEvent(action: string, params?: Record<string, string | undefined>) {
+    if (!this.initialized) {
       return;
+    }
+    await this.initialized;
+    if (action === "sign_out_success" || action === "sign_in_success") {
+      resetAnalyticsUserId();
     }
     sendGTagEvent(action, params);
   }
