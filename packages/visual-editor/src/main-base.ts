@@ -7,8 +7,6 @@
 import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import { SettingsHelperImpl } from "./ui/data/settings-helper.js";
-import { SettingsStore } from "./ui/data/settings-store.js";
 import type {
   AppScreenOutput,
   BoardServer,
@@ -19,6 +17,8 @@ import { GraphDescriptor, MutableGraphStore } from "@breadboard-ai/types";
 import { provide } from "@lit/context";
 import { html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { state } from "lit/decorators.js";
+import { SettingsHelperImpl } from "./ui/data/settings-helper.js";
+import { SettingsStore } from "./ui/data/settings-store.js";
 
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { RecentBoardStore } from "./data/recent-boards.js";
@@ -36,22 +36,28 @@ import {
   canonicalizeOAuthScope,
   type OAuthScope,
 } from "./ui/connection/oauth-scopes.js";
-import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
 import { boardServerContext } from "./ui/contexts/board-server.js";
 import { consentManagerContext } from "./ui/contexts/consent-manager.js";
+import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
 import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
 import { uiStateContext } from "./ui/contexts/ui-state.js";
 import { VESignInModal } from "./ui/elements/elements.js";
 import { EmbedHandler, embedState, EmbedState } from "./ui/embed/embed.js";
 
+import type {
+  CheckAppAccessResult,
+  GuestConfiguration,
+  OpalShellHostProtocol,
+  ValidateScopesResult,
+} from "@breadboard-ai/types/opal-shell-protocol.js";
+import { SignalWatcher } from "@lit-labs/signals";
 import { CheckAppAccessResponse } from "./ui/flow-gen/app-catalyst.js";
 import {
   FlowGenerator,
   flowGeneratorContext,
 } from "./ui/flow-gen/flow-generator.js";
 import { ReactiveAppScreen } from "./ui/state/app-screen.js";
-import { UserSignInResponse } from "./ui/types/types.js";
-import { ActionTracker } from "./ui/utils/action-tracker.js";
+import { ActionTracker, UserSignInResponse } from "./ui/types/types.js";
 import { ConsentManager } from "./ui/utils/consent-manager.js";
 import { EmailPrefsManager } from "./ui/utils/email-prefs-manager.js";
 import { opalShellContext } from "./ui/utils/opal-shell-guest.js";
@@ -60,21 +66,15 @@ import {
   signinAdapterContext,
 } from "./ui/utils/signin-adapter.js";
 import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
-import type {
-  CheckAppAccessResult,
-  GuestConfiguration,
-  OpalShellHostProtocol,
-  ValidateScopesResult,
-} from "@breadboard-ai/types/opal-shell-protocol.js";
-import { SignalWatcher } from "@lit-labs/signals";
 
 import { Admin } from "./admin.js";
 import { keyboardCommands } from "./commands/commands.js";
 import { KeyboardCommandDeps } from "./commands/types.js";
 import { eventRoutes } from "./event-routing/event-routing.js";
 
-import { MainArguments } from "./types/types.js";
 import { hash, ok } from "@breadboard-ai/utils";
+import { MainArguments } from "./types/types.js";
+import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
 import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
 
 export { MainBase };
@@ -94,9 +94,6 @@ const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
 const UPDATE_HASH_KEY = "bb-main-update-hash";
 
 const SIGN_IN_CONSENT_KEY = "bb-has-sign-in-consent";
-
-const parsedUrl = parseUrl(window.location.href);
-
 abstract class MainBase extends SignalWatcher(LitElement) {
   @provide({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig;
@@ -131,6 +128,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   @provide({ context: guestConfigurationContext })
   protected accessor guestConfiguration: GuestConfiguration;
+
+  @provide({ context: actionTrackerContext })
+  protected accessor actionTracker: ActionTracker;
 
   @state()
   protected accessor tab: Runtime.Types.Tab | null = null;
@@ -281,6 +281,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.emailPrefsManager = this.runtime.emailPrefsManager;
     this.flowGenerator = this.runtime.flowGenerator;
+    this.actionTracker = this.runtime.actionTracker;
 
     this.embedHandler = args.embedHandler;
 
@@ -300,12 +301,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       });
     }
 
-    if (parsedUrl.page === "graph") {
-      const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
-      ActionTracker.load(this.uiState.mode, shared);
-    } else if (parsedUrl.page === "home") {
-      ActionTracker.load("home", false);
-    }
     this.graphStore = this.runtime.board.graphStore;
 
     // Admin.
@@ -685,6 +680,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
         if (evt.mode) {
           this.uiState.mode = evt.mode;
+        }
+        const parsedUrl = this.runtime.router.parsedUrl;
+        const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
+        if (parsedUrl.page === "home") {
+          this.actionTracker.load("home", false);
+        } else {
+          this.actionTracker.load(this.uiState.mode, shared);
         }
 
         const urlWithoutMode = new URL(evt.url);
@@ -1134,6 +1136,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>
         this.askUserToSignInIfNeeded(scopes),
       boardServer: this.boardServer,
+      actionTracker: this.actionTracker,
       embedHandler: this.embedHandler,
     };
   }
@@ -1163,6 +1166,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     }
   ) {
     this.uiState.blockingAction = true;
+    this.runtime.actionTracker.remixApp(url, "editor");
     const remixRoute = eventRoutes.get("board.remix");
     const refresh = await remixRoute?.do(
       this.collectEventRouteDeps(

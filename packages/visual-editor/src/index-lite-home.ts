@@ -4,38 +4,39 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as BBLite from "./ui/lite/lite.js";
-import "./ui/lite/welcome-panel/project-listing.js";
-import "./ui/elements/overflow-menu/overflow-menu.js";
-import { css, html, HTMLTemplateResult, LitElement } from "lit";
-import { ref } from "lit/directives/ref.js";
-import { customElement, state } from "lit/decorators.js";
-import { MainArguments } from "./types/types.js";
-import { EmbedHandler } from "./ui/embed/embed.js";
-import { provide } from "@lit/context";
-import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
-import { boardServerContext } from "./ui/contexts/board-server.js";
 import {
   GOOGLE_DRIVE_FILES_API_PREFIX,
   type Outcome,
   type UUID,
 } from "@breadboard-ai/types";
-import { SigninAdapter } from "./ui/utils/signin-adapter.js";
+import { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { err, ok } from "@breadboard-ai/utils";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { SignalWatcher } from "@lit-labs/signals";
+import { provide } from "@lit/context";
+import { css, html, HTMLTemplateResult, LitElement } from "lit";
+import { customElement, state } from "lit/decorators.js";
+import { ref } from "lit/directives/ref.js";
+import { GoogleDriveBoardServer } from "./board-server/server.js";
+import { RecentBoardStore } from "./data/recent-boards.js";
+import { MainArguments } from "./types/types.js";
+import { boardServerContext } from "./ui/contexts/board-server.js";
+import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
+import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
+import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
+import "./ui/elements/overflow-menu/overflow-menu.js";
+import { EmbedHandler } from "./ui/embed/embed.js";
 import type {
   SnackbarActionEvent,
   StateEvent,
   StateEventDetailMap,
 } from "./ui/events/events.js";
-import { err, ok } from "@breadboard-ai/utils";
-import { SnackbarMessage, SnackType } from "./ui/types/types.js";
-import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
-import { RecentBoardStore } from "./data/recent-boards.js";
-import { SignalWatcher } from "@lit-labs/signals";
-import { GoogleDriveBoardServer } from "./board-server/server.js";
-import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
-import { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { ActionTracker } from "./ui/utils/action-tracker.js";
+import * as BBLite from "./ui/lite/lite.js";
+import "./ui/lite/welcome-panel/project-listing.js";
+import { ActionTracker, SnackbarMessage, SnackType } from "./ui/types/types.js";
+import { SigninAdapter } from "./ui/utils/signin-adapter.js";
+import { createActionTracker } from "./ui/utils/action-tracker.js";
+import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
 
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
@@ -69,6 +70,9 @@ export class LiteHome extends SignalWatcher(LitElement) {
 
   @provide({ context: guestConfigurationContext })
   protected accessor guestConfiguration: GuestConfiguration;
+
+  @provide({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker;
 
   @state()
   accessor compactView = false;
@@ -109,6 +113,13 @@ export class LiteHome extends SignalWatcher(LitElement) {
     const opalShell = mainArgs.shellHost;
     const signinAdapter = new SigninAdapter(opalShell);
 
+    this.actionTracker = createActionTracker(
+      opalShell,
+      mainArgs.guestConfiguration,
+      mainArgs.globalConfig.MEASUREMENT_ID,
+      () => signinAdapter.state.then((state) => state === "signedin")
+    );
+
     // Board server
     const proxyApiBaseUrl = new URL(
       "/api/drive-proxy/drive/v3/files",
@@ -148,7 +159,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
     };
     sizeDetector.addEventListener("change", reactToScreenWidth);
     reactToScreenWidth();
-    ActionTracker.load("landing", false);
+    this.actionTracker.load("landing", false);
   }
 
   connectedCallback() {

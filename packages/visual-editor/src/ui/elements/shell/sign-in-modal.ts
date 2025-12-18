@@ -3,23 +3,23 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { type OAuthScope } from "../../connection/oauth-scopes.js";
 import { consume } from "@lit/context";
 import { LitElement, css, html, nothing, type HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+import { type OAuthScope } from "../../connection/oauth-scopes.js";
+import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
+import { markdown } from "../../directives/markdown.js";
+import { ModalDismissedEvent, StateEvent } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
+import { ActionTracker, UserSignInResponse } from "../../types/types.js";
 import {
   signinAdapterContext,
   type SigninAdapter,
 } from "../../utils/signin-adapter.js";
 import { devUrlParams } from "../../utils/urls.js";
-import { UserSignInResponse } from "../../types/types.js";
-import { ModalDismissedEvent, StateEvent } from "../../events/events.js";
-import { markdown } from "../../directives/markdown.js";
-import { classMap } from "lit/directives/class-map.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
 
 type State =
   | { status: "closed" }
@@ -51,6 +51,9 @@ export class VESignInModal extends LitElement {
   @consume({ context: signinAdapterContext })
   @property({ attribute: false })
   accessor signinAdapter: SigninAdapter | undefined = undefined;
+
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker | undefined = undefined;
 
   @property()
   accessor consentMessage: string | undefined = undefined;
@@ -382,7 +385,7 @@ export class VESignInModal extends LitElement {
     if (this.#state.status !== "consent-only") {
       return this.#onClickSignIn();
     }
-    ActionTracker.signInSuccess();
+    this.actionTracker?.signInSuccess();
     this.#close("success");
   }
 
@@ -410,7 +413,7 @@ export class VESignInModal extends LitElement {
       }
       return;
     } else {
-      ActionTracker.signInSuccess();
+      this.actionTracker?.signInSuccess();
     }
     if (status === "sign-in") {
       // TODO(aomarks) Remove the reload after the app is fully reactive to a

@@ -195,6 +195,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
     uiState,
     askUserToSignInIfNeeded,
     boardServer,
+    actionTracker,
   }) {
     await StopRoute.do({
       tab,
@@ -209,6 +210,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       askUserToSignInIfNeeded,
       boardServer,
     });
+    actionTracker?.runApp(tab?.graph.url, "console");
     await RunRoute.do({
       tab,
       runtime,

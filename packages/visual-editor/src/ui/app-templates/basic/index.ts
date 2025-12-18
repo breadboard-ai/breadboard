@@ -16,6 +16,7 @@ import {
 } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
 import {
+  ActionTracker,
   AppTemplate,
   AppTemplateOptions,
   FloatingInputFocusState,
@@ -41,19 +42,18 @@ import {
 } from "../../events/events.js";
 import { ProjectRun } from "../../state/types.js";
 import { emptyStyles } from "../../styles/host/colors-empty.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
 import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js";
 import { styles as appStyles } from "./index.styles.js";
 import { theme as uiTheme } from "./theme/light.js";
 
 import "./header/header.js";
 
+import { type GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import {
   DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY,
   DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN,
 } from "@breadboard-ai/utils/google-drive/operations.js";
 import { extractGoogleDriveFileId } from "@breadboard-ai/utils/google-drive/utils.js";
-import { type GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import * as ParticlesUI from "../../../particles-ui/index.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
@@ -69,6 +69,14 @@ import {
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import { repeat } from "lit/directives/repeat.js";
+import { GoogleDriveBoardServer } from "../../../board-server/server.js";
+import { isInlineData, isLLMContentArray } from "../../../data/common.js";
+import { inlineAllContent } from "../../../data/inline-all-content.js";
+import {
+  extensionFromMimeType,
+  saveOutputsAsFile,
+} from "../../../data/save-outputs-as-file.js";
+import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import { consentManagerContext } from "../../contexts/consent-manager.js";
 import {
   GlobalConfig,
@@ -79,13 +87,6 @@ import {
   CONSENT_RENDER_INFO,
   ConsentManager,
 } from "../../utils/consent-manager.js";
-import { isInlineData, isLLMContentArray } from "../../../data/common.js";
-import { inlineAllContent } from "../../../data/inline-all-content.js";
-import {
-  extensionFromMimeType,
-  saveOutputsAsFile,
-} from "../../../data/save-outputs-as-file.js";
-import { GoogleDriveBoardServer } from "../../../board-server/server.js";
 
 function getHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -140,6 +141,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @state()
   @consume({ context: consentManagerContext })
   accessor consentManager: ConsentManager | undefined = undefined;
+
+  @state()
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker | undefined = undefined;
 
   @property()
   accessor focusWhenIn: FloatingInputFocusState = ["app"];
@@ -509,7 +514,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     await navigator.clipboard.writeText(decodeURIComponent(this.resultsUrl));
 
-    ActionTracker.shareResults("copy_share_link");
+    this.actionTracker?.shareResults("copy_share_link");
 
     this.dispatchEvent(
       new SnackbarEvent(
@@ -593,7 +598,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     unlockButton();
 
-    ActionTracker.shareResults("download");
+    this.actionTracker?.shareResults("download");
 
     function lockButton() {
       btn!.disabled = true;
@@ -850,7 +855,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       this.globalConfig?.hostOrigin
     );
 
-    ActionTracker.shareResults("save_to_drive");
+    this.actionTracker?.shareResults("save_to_drive");
 
     unlockButton();
 
@@ -1042,7 +1047,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 @click=${() => {
                   this.showFirstRunMessage = false;
 
-                  ActionTracker.runApp(this.graph?.url, "app_preview");
+                  this.actionTracker?.runApp(this.graph?.url, "app_preview");
                   this.dispatchEvent(
                     new StateEvent({ eventType: "board.run" })
                   );
