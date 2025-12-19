@@ -549,6 +549,7 @@ export interface BaseUrlInit {
   oauthRedirect?: string;
   lite?: boolean;
   colorScheme?: "light" | "dark";
+  guestPrefixed: boolean;
 }
 
 export interface HomeUrlInit extends BaseUrlInit {

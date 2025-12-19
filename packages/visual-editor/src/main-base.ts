@@ -362,6 +362,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         oauthRedirect:
           new URL(window.location.href).searchParams.get(OAUTH_REDIRECT) ??
           undefined,
+        guestPrefixed: true,
       });
     }
   }

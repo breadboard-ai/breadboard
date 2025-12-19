@@ -851,6 +851,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         resourceKey: await shareableGraphResourceKeyPromise,
         results: resultsFileId,
         shared: true,
+        guestPrefixed: false,
       },
       this.globalConfig?.hostOrigin
     );

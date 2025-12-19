@@ -83,6 +83,7 @@ export class OpenMain extends MainBase {
       mode: "app",
       flow: `drive:/${url.fileId}`,
       resourceKey: url.resourceKey,
+      guestPrefixed: true,
     });
   }
 

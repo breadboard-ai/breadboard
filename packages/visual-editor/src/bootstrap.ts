@@ -174,6 +174,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       oauthRedirect:
         new URL(window.location.href).searchParams.get(OAUTH_REDIRECT) ??
         undefined,
+      guestPrefixed: true,
     };
     const scopeValidation = await signinAdapter.validateScopes();
     if ((await signinAdapter.state) === "signedin" && !scopeValidation.ok) {
