@@ -261,6 +261,9 @@ export default {
   ERROR_UNABLE_TO_RETRIEVE_TYPE_INFO: {
     str: "Error retrieving type information; try adding it again",
   },
+  ERROR_INPUT_REQUIRED: {
+    str: "Please type or upload your response",
+  },
 
   // Titles.
   TITLE_CREATE_PROJECT: {

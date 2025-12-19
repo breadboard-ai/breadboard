@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as StringsHelper from "../../../strings/helper.js";
+const Strings = StringsHelper.forSection("Global");
+
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
 import {
@@ -21,6 +24,7 @@ import {
 import { AssetShelf } from "../add-asset/asset-shelf.js";
 import { maybeConvertToYouTube } from "../../../utils/substitute-input.js";
 import {
+  InputValues,
   LLMContent,
   NodeValue,
   OutputValues,
@@ -33,8 +37,15 @@ import { consume } from "@lit/context";
 import { uiStateContext } from "../../../contexts/ui-state.js";
 import { UI } from "../../../state/types.js";
 import { FloatingInputFocusState } from "../../../types/types.js";
-import { isLLMContent } from "../../../../data/common.js";
+import {
+  isFileDataCapabilityPart,
+  isInlineData,
+  isLLMContent,
+  isStoredData,
+  isTextCapabilityPart,
+} from "../../../../data/common.js";
 import { parseUrl } from "../../../utils/urls.js";
+import { createRef, ref } from "lit/directives/ref.js";
 
 interface SupportedActions {
   allowAddAssets: boolean;
@@ -131,6 +142,20 @@ export class FloatingInput extends LitElement {
         & #input-container {
           display: flex;
           align-items: flex-end;
+          position: relative;
+
+          & #reporting-button {
+            position: absolute;
+            overflow: hidden;
+            width: 2px;
+            height: 2px;
+            bottom: -4px;
+            left: 50%;
+            padding: 0;
+            margin: 0;
+            border: none;
+            background: transparent;
+          }
         }
 
         & .user-input {
@@ -214,6 +239,7 @@ export class FloatingInput extends LitElement {
     `,
   ];
 
+  readonly #reportingButton = createRef<HTMLButtonElement>();
   #addAssetType: string | null = null;
   #allowedMimeTypes: string | null = null;
   #resizeObserver = new ResizeObserver((entries) => {
@@ -329,7 +355,7 @@ export class FloatingInput extends LitElement {
     return { role: "user", parts: [{ text }] };
   }
 
-  #continueRun() {
+  #maybeContinueRun() {
     if (!this.container) {
       return;
     }
@@ -339,13 +365,7 @@ export class FloatingInput extends LitElement {
     >("input,select,textarea");
     const inputValues: OutputValues = {};
 
-    let canProceed = true;
     for (const input of inputs) {
-      if (!input.checkValidity()) {
-        input.reportValidity();
-        canProceed = false;
-      }
-
       let value: string | LLMContent = input.value;
       if (typeof value === "string") {
         value = maybeConvertToYouTube(input.value);
@@ -382,7 +402,20 @@ export class FloatingInput extends LitElement {
       }
     }
 
-    if (!canProceed) {
+    if (!this.#reportingButton.value) {
+      console.warn(
+        "Wanted to handle validity, but continue button is unavailable"
+      );
+      return;
+    }
+
+    this.#reportingButton.value.setCustomValidity("");
+    this.#reportingButton.value.reportValidity();
+    if (!this.#canSubmit(inputValues)) {
+      this.#reportingButton.value.setCustomValidity(
+        Strings.from("ERROR_INPUT_REQUIRED")
+      );
+      this.#reportingButton.value.reportValidity();
       return;
     }
 
@@ -429,6 +462,42 @@ export class FloatingInput extends LitElement {
     }
 
     this.textInput.focus();
+  }
+
+  #isPopulated(inputValue: NodeValue) {
+    if (isLLMContent(inputValue)) {
+      return inputValue.parts.some((part) => {
+        if (isTextCapabilityPart(part)) {
+          return part.text.trim() !== "";
+        } else if (isInlineData(part)) {
+          return part.inlineData.data !== "";
+        } else if (isStoredData(part)) {
+          return part.storedData.handle !== "";
+        } else if (isFileDataCapabilityPart(part)) {
+          return part.fileData.fileUri !== "";
+        }
+        return true;
+      });
+    } else if (typeof inputValue === "string") {
+      return inputValue !== "";
+    }
+
+    return true;
+  }
+
+  #canSubmit(inputValues: InputValues) {
+    if (!this.schema) return false;
+    const props = Object.entries(this.schema.properties ?? {});
+    for (const [name, prop] of props) {
+      if (prop.behavior?.includes("hint-required")) {
+        if (this.#isPopulated(inputValues[name])) {
+          continue;
+        }
+
+        return false;
+      }
+    }
+    return true;
   }
 
   render() {
@@ -479,7 +548,7 @@ export class FloatingInput extends LitElement {
                   @keydown=${(evt: KeyboardEvent) => {
                     if (evt.key === "Enter" && !evt.shiftKey) {
                       evt.preventDefault();
-                      this.#continueRun();
+                      this.#maybeContinueRun();
                       return;
                     }
                   }}
@@ -518,7 +587,7 @@ export class FloatingInput extends LitElement {
             id="continue"
             title="Submit"
             @click=${() => {
-              this.#continueRun();
+              this.#maybeContinueRun();
             }}
           >
             <span class="g-icon filled">send</span>
@@ -556,7 +625,16 @@ export class FloatingInput extends LitElement {
           }}
           id="asset-shelf"
         ></bb-asset-shelf>
-        <section id="input-container">${inputContents}</section>
+        <section id="input-container">
+          ${inputContents}
+          <button
+            tabindex="-1"
+            ${ref(this.#reportingButton)}
+            id="reporting-button"
+          >
+            Reporting Button
+          </button>
+        </section>
       </section>`,
       addAssetModal,
       this.disclaimerContent
