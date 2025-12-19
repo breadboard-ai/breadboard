@@ -94,6 +94,10 @@ export class FlowGenerator {
       await new Promise((resolve) => setTimeout(resolve, 3000));
       throw new Error(intent.slice("/force error ".length));
     }
+    let driveUrl = "";
+    if (context?.flow?.url) {
+      driveUrl = context.flow.url;
+    };
     const request: AppCatalystChatRequest = {
       messages: [
         {
@@ -103,6 +107,7 @@ export class FlowGenerator {
       ],
       appOptions: {
         format: "FORMAT_GEMINI_FLOWS",
+        appId: driveUrl,
         ...(flags.agentMode && {
           featureFlags: { enable_agent_mode_planner: true },
         }),
@@ -137,6 +142,7 @@ export class FlowGenerator {
     if (flags.streamPlanner && !constraint) {
       await this.#streamOneShot(
         intent,
+        driveUrl,
         context,
         responseFlows,
         responseMessages,
@@ -178,6 +184,7 @@ export class FlowGenerator {
 
   async #streamOneShot(
     intent: string,
+    appId: string,
     context: OneShotFlowGenRequest["context"],
     responseFlows: GraphDescriptor[],
     responseMessages: string[],
@@ -188,12 +195,14 @@ export class FlowGenerator {
     if (context?.flow && context.flow.nodes.length > 0) {
       stream = this.#appCatalystApiClient.editOpalStream(
         intent,
+        appId,
         context.flow,
         flags.agentMode
       );
     } else {
       stream = this.#appCatalystApiClient.generateOpalStream(
         intent,
+        appId,
         flags.agentMode
       );
     }
