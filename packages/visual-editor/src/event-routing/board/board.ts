@@ -93,6 +93,7 @@ export const LoadRoute: EventRoute<"board.load"> = {
       resourceKey: undefined,
       shared: originalEvent.detail.shared,
       dev: parseUrl(window.location.href).dev,
+      guestPrefixed: true,
     });
     return false;
   },
@@ -315,6 +316,7 @@ export const CreateRoute: EventRoute<"board.create"> = {
         // created it.
         resourceKey: undefined,
         dev,
+        guestPrefixed: true,
       },
       tab?.id,
       originalEvent.detail.editHistoryCreator

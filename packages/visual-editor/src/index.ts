@@ -83,7 +83,11 @@ class Main extends MainBase {
         makeUrl({
           page: "landing",
           geoRestriction: true,
-          redirect: { page: "home" },
+          redirect: {
+            page: "home",
+            guestPrefixed: true,
+          },
+          guestPrefixed: true,
         })
       );
       window.location.reload();
@@ -514,7 +518,11 @@ class Main extends MainBase {
         this.runtime.actionTracker.signOutSuccess();
         window.location.href = makeUrl({
           page: "landing",
-          redirect: { page: "home" },
+          redirect: {
+            page: "home",
+            guestPrefixed: true,
+          },
+          guestPrefixed: true,
         });
       }}
       @bbclose=${async () => {
@@ -528,6 +536,7 @@ class Main extends MainBase {
           page: "home",
           mode: this.uiState.mode,
           dev: parsedUrl.dev,
+          guestPrefixed: true,
         };
         if ((await this.signinAdapter.state) === "signedin") {
           this.runtime.router.go(homepage);
@@ -539,6 +548,7 @@ class Main extends MainBase {
               page: "landing",
               dev: parsedUrl.dev,
               redirect: homepage,
+              guestPrefixed: true,
             })
           );
         }

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CLIENT_DEPLOYMENT_CONFIG } from "../config/client-deployment-configuration.js";
 import {
   BaseUrlInit,
   GraphUrlInit,
@@ -52,7 +51,6 @@ export function makeUrl(
   if (init?.oauthRedirect) {
     url.searchParams.set(OAUTH_REDIRECT, init.oauthRedirect);
   }
-  let shared = false;
   if (page === "home") {
     url.pathname = "/";
     url.searchParams.set(MODE, init.mode ?? MODE_CANVAS);
@@ -82,7 +80,6 @@ export function makeUrl(
       url.searchParams.set(REMIX, init.remix ? "true" : "false");
     }
     if (init.shared) {
-      shared = true;
       url.searchParams.set(SHARED, "");
     }
     if (init.results) {
@@ -153,13 +150,7 @@ export function makeUrl(
       url.searchParams.set(DEV_PREFIX + key, val);
     }
   }
-  // Here, the "shared" check is used to ensure that shared URLs are pointing
-  // to the host.
-  if (
-    CLIENT_DEPLOYMENT_CONFIG.SHELL_HOST_ORIGINS?.length &&
-    window !== window.parent &&
-    !shared
-  ) {
+  if (init.guestPrefixed) {
     url.pathname = "/_app" + url.pathname;
   }
   return (
@@ -190,7 +181,10 @@ export function parseUrl(url: string | URL): MakeUrlInit {
       (dev as Record<string, string>)[keySansPrefix] = val;
     }
   }
-  const pathname = url.pathname.replace(/^\/_app/, "");
+  const guestPrefixed = url.pathname.startsWith("/_app/");
+  const pathname = guestPrefixed
+    ? url.pathname.slice("/_app".length)
+    : url.pathname;
   if (pathname === "/landing/") {
     // See note in `makeUrl` above about redirect URLs.
     const redirectUrl = new URL(url);
@@ -200,8 +194,17 @@ export function parseUrl(url: string | URL): MakeUrlInit {
       page: "landing",
       redirect:
         redirectParsed.page === "landing" || redirectParsed.page === "open"
-          ? { page: "home", redirectFromLanding: true }
-          : { ...redirectParsed, redirectFromLanding: true },
+          ? {
+              page: "home",
+              redirectFromLanding: true,
+              guestPrefixed: true,
+            }
+          : {
+              ...redirectParsed,
+              redirectFromLanding: true,
+              guestPrefixed: true,
+            },
+      guestPrefixed,
     };
     if (url.searchParams.has(GEO_RESTRICTION)) {
       landing.geoRestriction = true;
@@ -221,6 +224,7 @@ export function parseUrl(url: string | URL): MakeUrlInit {
       page: "open",
       fileId: pathname.slice("/open/".length),
       resourceKey: url.searchParams.get(RESOURCE_KEY) ?? undefined,
+      guestPrefixed,
     };
     return open;
   } else {
@@ -238,6 +242,7 @@ export function parseUrl(url: string | URL): MakeUrlInit {
               ? COLOR_SCHEME_DARK
               : undefined,
         new: url.searchParams.get(NEW) === "true",
+        guestPrefixed,
       };
       if (dev) {
         home.dev = dev;
@@ -259,6 +264,7 @@ export function parseUrl(url: string | URL): MakeUrlInit {
             : undefined,
       flow: flow,
       resourceKey: url.searchParams.get(RESOURCE_KEY) ?? undefined,
+      guestPrefixed,
     };
     const remix = url.searchParams.get(REMIX);
     if (remix) {

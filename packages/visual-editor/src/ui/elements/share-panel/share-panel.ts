@@ -980,6 +980,7 @@ export class SharePanel extends LitElement {
           flow: `drive:/${state.shareableFile.id}`,
           resourceKey: state.shareableFile.resourceKey,
           shared: true,
+          guestPrefixed: false,
         },
         this.globalConfig?.hostOrigin
       );
