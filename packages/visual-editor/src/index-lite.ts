@@ -574,6 +574,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       .controller=${this}
       .state=${lite}
       .editable=${editable}
+      @bbsnackbar=${this.#onSnackbar}
+      @bbunsnackbar=${this.#onUnSnackbar}
     ></bb-editor-input-lite>`;
   }
 
@@ -748,8 +750,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         .isFreshGraph=${isFreshGraph}
       >
       </bb-app-controller>
-      ${this.renderSnackbar()} ${this.#renderShellUI()}
-      ${this.renderConsentRequests()}
+      ${this.#renderShellUI()} ${this.renderConsentRequests()}
     </section>`;
   }
 
@@ -779,7 +780,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             </li>`;
           })}
         </ul>
-        ${this.renderSnackbar()}
       </aside>
       ${[this.#renderUserInput(), this.#renderMessage()]}
     </section>`;
@@ -836,7 +836,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       case "error":
         return html`<section id="lite-shell" @bbevent=${this.handleUserSignIn}>
           <div id="error">${lite.viewError}</div>
-          ${this.renderSnackbar()}${this.#renderShellUI()}
+          ${this.#renderShellUI()}
         </section>`;
       default:
         console.log("Invalid lite view state");
@@ -849,28 +849,29 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           full: this.showAppFullscreen || this.compactView,
           welcome: lite.viewType === "home",
         })}
-        @bbsnackbar=${(snackbarEvent: BreadboardUI.Events.SnackbarEvent) => {
-          this.snackbar(
-            snackbarEvent.message,
-            snackbarEvent.snackType,
-            snackbarEvent.actions,
-            snackbarEvent.persistent,
-            snackbarEvent.snackbarId,
-            snackbarEvent.replaceAll
-          );
-        }}
-        @bbunsnackbar=${(
-          unsnackbarEvent: BreadboardUI.Events.UnsnackbarEvent
-        ) => {
-          this.unsnackbar(unsnackbarEvent.snackbarId);
-        }}
-        @bbsharerequested=${() => {
-          this.#onClickShareApp();
-        }}
+        @bbsnackbar=${this.#onSnackbar}
+        @bbunsnackbar=${this.#onUnSnackbar}
+        @bbsharerequested=${this.#onClickShareApp}
       >
         ${content}
       </section>
-      ${this.#renderShellUI()} ${this.#renderSharePanel()}`;
+      ${this.#renderShellUI()} ${this.#renderSharePanel()}
+      ${this.renderSnackbar()} `;
+  }
+
+  #onSnackbar(event: BreadboardUI.Events.SnackbarEvent) {
+    this.snackbar(
+      event.message,
+      event.snackType,
+      event.actions,
+      event.persistent,
+      event.snackbarId,
+      event.replaceAll
+    );
+  }
+
+  #onUnSnackbar(event: BreadboardUI.Events.UnsnackbarEvent) {
+    this.unsnackbar(event.snackbarId);
   }
 
   protected async invokeBoardReplaceRoute(
