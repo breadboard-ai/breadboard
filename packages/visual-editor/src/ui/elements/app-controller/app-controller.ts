@@ -370,11 +370,6 @@ export class AppController extends SignalWatcher(LitElement) {
   }
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
-    if (changedProperties.has("themeHash") && this.themeHash) {
-      this.#retrievingSplashFor = "";
-      this.#applyThemeToTemplate();
-    }
-
     if (this.graph) {
       if (this.graph.title !== this.appTitle) {
         this.appTitle = this.graph.title ?? Strings.from("LABEL_UNTITLED_APP");
@@ -415,6 +410,15 @@ export class AppController extends SignalWatcher(LitElement) {
           };
 
           this.theme.splashScreen = themes[theme].splashScreen;
+
+          if (
+            changedProperties.has("themeHash") &&
+            this.themeHash &&
+            this.themeHash !== changedProperties.get("themeHash")
+          ) {
+            this.#retrievingSplashFor = "";
+            this.#applyThemeToTemplate();
+          }
         } else {
           setDefaultTheme();
         }
