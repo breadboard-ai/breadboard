@@ -206,13 +206,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected selectionState: WorkspaceSelectionStateWithChangeId | null = null;
   protected lastVisualChangeId: WorkspaceVisualChangeId | null = null;
   protected runtime: Runtime.Runtime;
-
-  protected snackbarElement: BreadboardUI.Elements.Snackbar | undefined =
-    undefined;
-  protected pendingSnackbarMessages: Array<{
-    message: BreadboardUI.Types.SnackbarMessage;
-    replaceAll: boolean;
-  }> = [];
+  protected readonly snackbarRef = createRef<BreadboardUI.Elements.Snackbar>();
 
   protected boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
   protected recentBoardStore: RecentBoardStore;
@@ -991,7 +985,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return id;
   }
 
-  snackbar(
+  async snackbar(
     message: string | HTMLTemplateResult,
     type: BreadboardUI.Types.SnackType,
     actions: BreadboardUI.Types.SnackbarAction[] = [],
@@ -999,45 +993,26 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     id = globalThis.crypto.randomUUID(),
     replaceAll = false
   ) {
-    if (!this.snackbarElement) {
-      this.pendingSnackbarMessages.push({
-        message: {
-          id,
-          message,
-          type,
-          persistent,
-          actions,
-        },
-        replaceAll,
-      });
-      return;
+    if (!this.snackbarRef.value) {
+      await this.updateComplete;
+      if (!this.snackbarRef.value) {
+        console.warn(
+          `[main-base] Could not render snackbar message ` +
+            `because snackbar element was not rendered`,
+          { id, message }
+        );
+        return;
+      }
     }
 
-    return this.snackbarElement.show(
-      {
-        id,
-        message,
-        type,
-        persistent,
-        actions,
-      },
+    return this.snackbarRef.value.show(
+      { id, message, type, persistent, actions },
       replaceAll
     );
   }
 
   unsnackbar(id?: BreadboardUI.Types.SnackbarUUID) {
-    if (!this.snackbarElement) {
-      if (!id) {
-        this.pendingSnackbarMessages.length = 0;
-      } else {
-        this.pendingSnackbarMessages = this.pendingSnackbarMessages.filter(
-          (message) => message.message.id !== id
-        );
-      }
-      return;
-    }
-
-    this.snackbarElement.hide(id);
+    this.snackbarRef.value?.hide(id);
   }
 
   protected attemptImportFromDrop(evt: DragEvent) {
@@ -1214,21 +1189,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   protected renderSnackbar() {
     return html`<bb-snackbar
-      ${ref((el: Element | undefined) => {
-        if (!el) {
-          this.snackbarElement = undefined;
-          return;
-        }
-
-        this.snackbarElement = el as BreadboardUI.Elements.Snackbar;
-        for (const pendingMessage of this.pendingSnackbarMessages) {
-          const { message, id, persistent, type, actions } =
-            pendingMessage.message;
-          this.snackbar(message, type, actions, persistent, id);
-        }
-
-        this.pendingSnackbarMessages.length = 0;
-      })}
+      ${ref(this.snackbarRef)}
       @bbsnackbaraction=${async (
         evt: BreadboardUI.Events.SnackbarActionEvent
       ) => {
