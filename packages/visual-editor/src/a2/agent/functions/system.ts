@@ -68,10 +68,14 @@ function defineSystemFunctions(args: SystemFunctionArgs): FunctionDefinition[] {
 Call only when the specified objective is entirely fulfilled`,
         parameters: {
           objective_outcomes: z
-            .array(z.string().describe(`A VFS path pointing at the outcome`))
-            .describe(
-              `The array of files that fulfill in the objective. Can be either a file or a project`
-            ),
+            .array(
+              z
+                .string()
+                .describe(
+                  `A VFS path pointing at the outcome. Eeach file can be either a file or a project`
+                )
+            )
+            .describe(`The array of files that fulfill in the objective.`),
           href: z
             .string()
             .describe(

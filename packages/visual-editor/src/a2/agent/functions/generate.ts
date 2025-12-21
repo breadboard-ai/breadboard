@@ -522,9 +522,9 @@ A status update to show in the UI that provides more detail on the reason why th
 function resolveTextModel(model: "pro" | "lite" | "flash"): string {
   switch (model) {
     case "pro":
-      return "gemini-2.5-pro";
+      return "gemini-3-pro-preview";
     case "flash":
-      return "gemini-2.5-flash";
+      return "gemini-3-flash-preview";
     default:
       return "gemini-2.5-lite";
   }
