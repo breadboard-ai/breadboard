@@ -15,15 +15,20 @@ import {
 } from "../a2/gemini.js";
 import { llm } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { prompt as a2UIPrompt } from "./a2ui/prompt.js";
+import { SmartLayoutPipeline } from "./a2ui/smart-layout-pipeline.js";
 import { AgentFileSystem } from "./file-system.js";
+import { FunctionCallerImpl } from "./function-caller.js";
 import { emptyDefinitions, mapDefinitions } from "./function-definition.js";
-import { defineSystemFunctions } from "./functions/system.js";
+import { defineGenerateFunctions } from "./functions/generate.js";
+import {
+  CREATE_TASK_TREE_SCRATCHPAD_FUNCTION,
+  defineSystemFunctions,
+  FAILED_TO_FULFILL_FUNCTION,
+  OBJECTIVE_FULFILLED_FUNCTION,
+} from "./functions/system.js";
 import { PidginTranslator } from "./pidgin-translator.js";
 import { AgentUI } from "./ui.js";
-import { defineGenerateFunctions } from "./functions/generate.js";
-import { prompt as a2UIPrompt } from "./a2ui/prompt.js";
-import { FunctionCallerImpl } from "./function-caller.js";
-import { SmartLayoutPipeline } from "./a2ui/smart-layout-pipeline.js";
 
 export { Loop };
 
@@ -65,10 +70,6 @@ type SystemInstructionArgs = {
 };
 
 const AGENT_MODEL = "gemini-3-flash-preview";
-
-const OBJECTIVE_FULFILLED_FUNCTION = "system_objective_fulfilled";
-const FAILED_TO_FULFILL_FUNCTION = "system_failed_to_fulfill_objective";
-const CREATE_TASK_TREE_SCRATCHPAD_FUNCTION = "create_task_tree_scratchpad";
 
 function createSystemInstruction(args: SystemInstructionArgs) {
   return llm`
