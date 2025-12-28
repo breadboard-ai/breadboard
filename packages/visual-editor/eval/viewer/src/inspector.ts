@@ -1,53 +1,50 @@
-/*
- Copyright 2025 Google LLC
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-      https://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, unsafeCSS, PropertyValues, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import { provide } from "@lit/context";
+import { LitElement, PropertyValues, css, html, nothing, unsafeCSS } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
 import { theme as uiTheme } from "./theme/theme.js";
 import "./ui/ui.js";
-import { classMap } from "lit/directives/class-map.js";
 
-import { v0_8 } from "../../../src/a2ui/index.js";
-import * as UI from "../../../src/a2ui/0.8/ui/ui.js";
+import { FileSystemPath, Outcome } from "@breadboard-ai/types";
+import { ok } from "@breadboard-ai/utils";
 import { map } from "lit/directives/map.js";
+import { signal } from "signal-utils";
+import * as UI from "../../../src/a2ui/0.8/ui/ui.js";
+import { v0_8 } from "../../../src/a2ui/index.js";
+import { FinalChainReport } from "../../collate-context.js";
 import {
   FileSystemEvalBackend,
   FileSystemEvalBackendHandle,
 } from "./filesystem.js";
-import { ok } from "@breadboard-ai/utils";
-import { FileSystemPath, Outcome } from "@breadboard-ai/types";
-import { signal } from "signal-utils";
-import { FinalChainReport } from "../../collate-context.js";
-import "./ui/contexts-viewer.js";
 import {
   GroupedByType,
   ParsedFileMedata,
   parseFileName,
 } from "./parse-file-name.js";
+import { OutcomeData } from "./types.js";
+import "./ui/contexts-viewer.js";
+import "./ui/outcome-viewer.js";
 
-type EvalFileData = Array<FinalChainReport | A2UIData>;
+type EvalFileData = Array<FinalChainReport | A2UIData | OutcomePayload>;
 
 type A2UIData = {
   type: "a2ui";
   data: v0_8.Types.ServerToClientMessage[][];
 };
 
-type RenderMode = "surfaces" | "messages" | "contexts";
+type OutcomePayload = {
+  type: "outcome";
+  outcome: Outcome<OutcomeData>;
+};
+
+type RenderMode = "surfaces" | "messages" | "contexts" | "outcome";
 
 const RENDER_MODE_KEY = "eval-inspector-render-mode";
 
@@ -64,6 +61,9 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
 
   @state()
   accessor contexts: FinalChainReport[] = [];
+
+  @state()
+  accessor outcome: OutcomePayload | null = null;
 
   @property()
   accessor selectedPath: FileSystemEvalBackendHandle | null = null;
@@ -129,7 +129,10 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     const mode = params.get("mode") as RenderMode | null;
     const surface = parseInt(params.get("surface") || "0", 10);
 
-    if (mode && ["surfaces", "messages", "contexts"].includes(mode)) {
+    if (
+      mode &&
+      ["surfaces", "messages", "contexts", "outcome"].includes(mode)
+    ) {
       this.renderMode = mode;
     }
 
@@ -575,6 +578,7 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
       } else {
         this.#surfaces = [];
         this.contexts = [];
+        this.outcome = null;
       }
       this.#updateUrl();
     }
@@ -596,6 +600,8 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
       this.#surfaces = [];
       const a2ui = fileData.filter((item) => item.type === "a2ui");
       this.contexts = fileData.filter((item) => item.type === "context");
+      this.outcome =
+        fileData.filter((item) => item.type === "outcome").at(0) || null;
 
       this.#processor.clearSurfaces();
       for (const { data } of a2ui.values()) {
@@ -654,6 +660,14 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
     if (this.renderMode === "contexts") {
       return html`<section id="contexts">
         <ui-contexts-viewer .contexts=${this.contexts}></ui-contexts-viewer>
+      </section>`;
+    }
+
+    if (this.renderMode === "outcome") {
+      return html`<section id="outcome">
+        <ui-outcome-viewer
+          .outcome=${this.outcome?.outcome}
+        ></ui-outcome-viewer>
       </section>`;
     }
 
@@ -871,7 +885,15 @@ export class A2UIEvalInspector extends SignalWatcher(LitElement) {
                 @click=${() => (this.renderMode = "contexts")}
                 title="View Conversation Contexts"
               >
-                <span class="g-icon filled round">dataset</span>Contexts
+                <span class="g-icon filled round">forum</span>Contexts
+              </button>
+
+              <button
+                class=${classMap({ active: this.#renderMode === "outcome" })}
+                @click=${() => (this.renderMode = "outcome")}
+                title="View Outcome"
+              >
+                <span class="g-icon filled round">data_check</span>Outcome
               </button>
 
               <button
