@@ -155,7 +155,7 @@ that involve generation of text. Supports multimodal content input.`.trim(),
         parameters: {
           prompt: z.string().describe(tr`
 
-Detailed prompt to use for text generation The prompt may include references to VFS files. For instance, if you have an existing file at "/vfs/text3.md", you can reference it as <file src="/vfs/text3.md" /> in the prompt. If you do not use <file> tags, the text generator will not be able to access the file.
+Detailed prompt to use for text generation. The prompt may include references to VFS files. For instance, if you have an existing file at "/vfs/text3.md", you can reference it as <file src="/vfs/text3.md" /> in the prompt. If you do not use <file> tags, the text generator will not be able to access the file.
 
 These references can point to files of any type, such as images, audio, videos, etc. Projects can also be referenced in this way.
 `),

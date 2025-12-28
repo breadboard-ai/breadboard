@@ -12,6 +12,7 @@ import { OutcomeData } from "../types.js";
 
 import "../../../../src/ui/elements/json-tree/json-tree.js";
 import "./llm-content-viewer.js";
+import { map } from "lit/directives/map.js";
 
 export { OutcomeViewer };
 
@@ -36,7 +37,14 @@ class OutcomeViewer extends LitElement {
       <dt>outcomes</dt>
       <dd><ui-llm-content-viewer .content=${outcomes}></ui-llm-content-viewer></dd>
       <dt>intermediate</dt>
-      <dd><bb-json-tree .json=${intermediate}></bb-json-tree></dd>
+      <dd><dl>${map(intermediate, (item) => {
+        return html`<dt>${item.path}</dt>
+          <dd>
+            <ui-llm-content-viewer
+              .content=${item.content}
+            ></ui-llm-content-viewer>
+          </dd>`;
+      })}</dl></dd>
     </dl>`;
   }
 }

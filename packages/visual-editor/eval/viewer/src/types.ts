@@ -5,10 +5,11 @@
  */
 
 import { LLMContent } from "@breadboard-ai/types/llm-content.js";
+import type { FileData } from "../../../src/a2/agent/loop.js";
 
 export type OutcomeData = {
   success?: boolean;
   href?: string;
   outcomes: LLMContent;
-  intermediate?: LLMContent;
+  intermediate?: FileData[];
 };

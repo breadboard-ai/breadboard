@@ -64,7 +64,7 @@ const TASK_TREE_SCHEMA = {
 
 export type SystemFunctionArgs = {
   fileSystem: AgentFileSystem;
-  successCallback(href: string, objective_outcomes: string[]): void;
+  successCallback(href: string, pidginString: string): void;
   terminateCallback(): void;
 };
 
@@ -76,15 +76,12 @@ function defineSystemFunctions(args: SystemFunctionArgs): FunctionDefinition[] {
         description: `Inidicates completion of the overall objective. 
 Call only when the specified objective is entirely fulfilled`,
         parameters: {
-          objective_outcomes: z
-            .array(
-              z
-                .string()
-                .describe(
-                  `A VFS path pointing at the outcome. Eeach file can be either a file or a project`
-                )
-            )
-            .describe(`The array of files that fulfill in the objective.`),
+          objective_outcome: z.string().describe(
+            tr`
+Your return value: the content of the fulfilled objective. The content may include references to VFS files. For instance, if you have an existing file at "/vfs/image4.png", you can reference it as <file src="/vfs/image4.ong" /> in content. If you do not use <file> tags, the contents of this file will not be included as part of the outcome.
+
+These references can point to files of any type, such as text, audio, videos, etc. Projects can also be referenced in this way.`
+          ),
           href: z
             .string()
             .describe(
@@ -97,8 +94,8 @@ If the objective specifies other agent URLs using the
             .default("/"),
         },
       },
-      async ({ objective_outcomes, href }) => {
-        args.successCallback(href || "/", objective_outcomes);
+      async ({ objective_outcome, href }) => {
+        args.successCallback(href || "/", objective_outcome);
         return {};
       }
     ),
@@ -225,9 +222,10 @@ existing project.`.trim()
         description: "Appends provided text to a file",
         parameters: {
           file_path: z.string().describe(
-            `
+            tr`
+  
 The VFS path of the file to which to append text. If a file does not
-exist, it will be created`.trim()
+exist, it will be created`
           ),
           project_path: z.string().describe(
             `

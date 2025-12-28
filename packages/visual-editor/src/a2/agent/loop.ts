@@ -42,7 +42,7 @@ export type AgentRunArgs = {
 export type AgentRawResult = {
   success: boolean;
   href: string;
-  objective_outcomes: string[];
+  objective_outcome: string;
 };
 
 export type AgentResult = {
@@ -62,7 +62,12 @@ export type AgentResult = {
    * Intermediate results that might be worth keeping around. Will be
    * `undefined` when success = false
    */
-  intermediate?: LLMContent;
+  intermediate?: FileData[];
+};
+
+export type FileData = {
+  path: string;
+  content: LLMContent;
 };
 
 type SystemInstructionArgs = {
@@ -75,7 +80,7 @@ function createSystemInstruction(args: SystemInstructionArgs) {
   return llm`
 You are an LLM-powered AI agent. You are embedded into an application. Your job is to fulfill the objective, specified at the start of the conversation context. The objective provided by the application and is not visible to the user of the application.
 
-You are linked with other AI agents via hyperlinks. The <a href="url">title</a> syntax points at another agent. If the objective calls for it, you can transfer control to this agent. To transfer control, use the url of the agent in the  "href" parameter when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function. As a result, the outcomes will be transferred to that agent.
+You are linked with other AI agents via hyperlinks. The <a href="url">title</a> syntax points at another agent. If the objective calls for it, you can transfer control to this agent. To transfer control, use the url of the agent in the  "href" parameter when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function. As a result, the outcome will be transferred to that agent.
 
 In your pursuit of fulfilling the objective, follow this meta-plan PRECISELY.
 
@@ -97,6 +102,8 @@ Applying the Cynefin framework, determine the domain of the problem into which f
 
 3) Complex - the objective is from the complex domain. Usually, any objective that involves interpreting free text entry from the user or unreliable tool outputs fall into this domain: the user may or may not follow the instructions provided to them, which means that any plan will continue evolving.
 
+NOTE: depending on what functions you're provided with, you may not have the means to interact with the user. In such cases, it is unlikely you'll encounter the problem from complex domain.
+
 Ask yourself: what is the problem domain? Is it simple, complicated, or complex? If not sure, start with complicated and see if it works.
 
 ## Third, Proceed with Fulfilling Objective.
@@ -109,9 +116,13 @@ When dealing with complex problems, adopt the OODA loop approach: instead of dev
 
 ## Fourth, Call the Completion Function
 
-Only after you've completely fulfilled the objective call the "${OBJECTIVE_FULFILLED_FUNCTION}" function. This is important. This function call signals the end of work and once called, no more work will be done. Pass the outcomes of your work as "objective_outcome" parameter.
+Only after you've completely fulfilled the objective call the "${OBJECTIVE_FULFILLED_FUNCTION}" function. This is important. This function call signals the end of work and once called, no more work will be done. Pass the outcome of your work as the "objective_outcome" parameter.
 
-NOTE ON WHAT TO RETURN: Only return what is asked for in the objective. Do not return any extraneous commentary or intermediate outcomes. For instance, when asked to evaluate multiple products for product market fit and return the verdict on which fits the best, you must only return the verdict and skip the rest of intermediate information you might have produced as a result of evaluation.
+NOTE ON WHAT TO RETURN: 
+
+1. Return outcome as a text content that can reference VFS files. They will be included as part of the outcome. For example, if you need to return multiple existing images or videos or even a whole project, just reference it in the "objective_outcome" parameter.
+
+2. Only return what is asked for in the objective. Do not return any extraneous commentary or intermediate outcomes. For instance, when asked to evaluate multiple products for product market fit and return the verdict on which fits the best, you must only return the verdict and skip the rest of intermediate information you might have produced as a result of evaluation.
 
 In rare cases when you failed to fulfill the objective, invoke the "${FAILED_TO_FULFILL_FUNCTION}" function.
 
@@ -158,7 +169,27 @@ Here is the rules of thumb:
 
 The system you're working in uses the virtual file system (VFS). The VFS paths are always prefixed with the "/vfs/". Every VFS file path will be of the form "/vfs/[name]". Use snake_case to name files.
 
-You can use the <file src="path" /> syntax to embed them in text.
+You can use the <file src="/vfs/path" /> syntax to embed them in text.
+
+NOTE: The post-processing parser that reads your generated output and replaces the <file src="/vfs/path" /> with the contents of the file. Make sure that your output still makes sense after the replacement.
+
+### Good example
+
+Evaluate the proposal below according to the provided rubric:
+
+Proposal:
+
+<file src="/vfs/proposal.md" />
+
+Rubric:
+
+<file src="/vfs/rubric.md" />
+
+### Bad example 
+
+Evaluate proposal <file src="/vfs/proposal.md" /> according to the rubric <file src="/vfs/rubric.md" />
+
+In the good example above, the replaced texts fit neatly under each heading. In the bad example, the replaced text is stuffed into the sentence.
 
 </agent-instructions>
 
@@ -259,7 +290,7 @@ class Loop {
       let result: AgentRawResult = {
         success: false,
         href: "",
-        objective_outcomes: [],
+        objective_outcome: "",
       };
 
       const systemFunctions = mapDefinitions(
@@ -268,15 +299,15 @@ class Loop {
           terminateCallback: () => {
             terminateLoop = true;
           },
-          successCallback: (href, objective_outcomes) => {
+          successCallback: (href, objective_outcome) => {
             terminateLoop = true;
             console.log("SUCCESS! Objective fulfilled");
             console.log("Transfer control to", href);
-            console.log("Objective outcomes:", objective_outcomes);
+            console.log("Objective outcomes:", objective_outcome);
             result = {
               success: true,
               href,
-              objective_outcomes,
+              objective_outcome,
             };
           },
         })
@@ -402,15 +433,25 @@ class Loop {
   }
 
   #finalizeResult(raw: AgentRawResult): Outcome<AgentResult> {
-    const { success, href, objective_outcomes } = raw;
+    const { success, href, objective_outcome } = raw;
     let outcomes: Outcome<LLMContent> | undefined = undefined;
-    let intermediate: Outcome<LLMContent> | undefined = undefined;
+    let intermediate: Outcome<FileData[]> | undefined = undefined;
     if (success) {
-      outcomes = this.translator.fromPidginFiles(objective_outcomes);
+      outcomes = this.translator.fromPidginString(objective_outcome);
       if (!ok(outcomes)) return outcomes;
       const intermediateFiles = [...this.fileSystem.files.keys()];
-      intermediate = this.translator.fromPidginFiles(intermediateFiles);
-      if (!ok(intermediate)) return intermediate;
+      const errors: string[] = [];
+      intermediate = intermediateFiles.flatMap((file) => {
+        const content = this.translator.fromPidginFiles([file]);
+        if (!ok(content)) {
+          errors.push(content.$error);
+          return [];
+        }
+        return { path: file, content };
+      });
+      if (errors.length > 0) {
+        return err(errors.join(","));
+      }
     }
     return { success, href, outcomes, intermediate };
   }
