@@ -180,7 +180,7 @@ class PidginTranslator {
             }
             const part = content?.at(-1)?.parts.at(0);
             if (!part) {
-              errors.push(`invalid asset format`);
+              errors.push(`Agent: Invalid asset format`);
               return "";
             }
             const name = this.fileSystem.add(part);

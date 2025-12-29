@@ -4,10 +4,10 @@
 
 export { invoke as default, describe, Template };
 
-import { type Params } from "./common.js";
+import type { Params } from "./common.js";
 import { ok, err, isLLMContent, isLLMContentArray } from "./utils.js";
 import { ConnectorManager } from "./connector-manager.js";
-import {
+import type {
   Capabilities,
   DataPart,
   FileSystemPath,
@@ -34,7 +34,13 @@ export type ToolParamPart = {
   type: "tool";
   path: string;
   title: string;
+  /**
+   * Additional information about the tool, necessary for correctly invoking it.
+   * When "mcp", contains the name of the tool.
+   * When "route", contains the id of the step to route to.
+   */
   instance?: string;
+  instanceType?: "mcp" | "route";
 };
 
 export type AssetParamPart = {
@@ -144,15 +150,6 @@ class Template {
           try {
             maybeTemplatePart = JSON.parse(json);
             if (isParamPart(maybeTemplatePart)) {
-              // Do some extra parsing for connector tools
-              // if (isTool(maybeTemplatePart)) {
-              //   const [path, connector] = maybeTemplatePart.path.split("|");
-              //   if (connector && connector.startsWith("connectors/")) {
-              //     maybeTemplatePart.path = path;
-              //     maybeTemplatePart.instance = connector;
-              //   }
-              //   console.log("TOOL", maybeTemplatePart);
-              // }
               parts.push(maybeTemplatePart);
             } else {
               maybeTemplatePart = null;
