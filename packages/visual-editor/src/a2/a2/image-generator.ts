@@ -107,7 +107,7 @@ async function invoke(
   );
   const substituting = await new Template(caps, instruction).substitute(
     params,
-    async ({ path: url, instance }) => toolManager.addTool(url, instance)
+    async (part) => toolManager.addTool(part)
   );
   if (!ok(substituting)) {
     return substituting;

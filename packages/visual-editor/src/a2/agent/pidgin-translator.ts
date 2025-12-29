@@ -211,10 +211,7 @@ class PidginTranslator {
             );
             return "";
           case "tool": {
-            const addingTool = await toolManager.addTool(
-              param.path,
-              param.instance
-            );
+            const addingTool = await toolManager.addTool(param);
             if (!ok(addingTool)) {
               errors.push(addingTool.$error);
               return "";

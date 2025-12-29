@@ -153,9 +153,8 @@ async function invoke(
   let content = context || [toLLMContent("Start the research")];
 
   const template = new Template(caps, query);
-  const substituting = await template.substitute(
-    params,
-    async ({ path: url, instance }) => toolManager.addTool(url, instance)
+  const substituting = await template.substitute(params, async (part) =>
+    toolManager.addTool(part)
   );
   if (!ok(substituting)) {
     return substituting;

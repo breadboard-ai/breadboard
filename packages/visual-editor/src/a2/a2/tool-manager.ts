@@ -25,6 +25,7 @@ import { addUserTurn, ok } from "./utils.js";
 import { err } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { McpToolAdapter } from "./mcp-tool-adapter.js";
+import { ToolParamPart } from "./template.js";
 
 const CODE_EXECUTION_SUFFIX = "#module:code-execution";
 
@@ -184,7 +185,8 @@ class ToolManager implements SimplifiedToolManager {
     this.tools.set(name, handle);
   }
 
-  async addTool(url: string, instance?: string): Promise<Outcome<string>> {
+  async addTool(part: ToolParamPart): Promise<Outcome<string>> {
+    const { path: url, instance } = part;
     if (url?.endsWith(CODE_EXECUTION_SUFFIX)) {
       this.#hasCodeExection = true;
       return "Code Execution";

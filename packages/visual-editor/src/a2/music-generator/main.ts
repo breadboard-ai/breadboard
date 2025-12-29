@@ -87,9 +87,8 @@ async function invoke(
     moduleArgs,
     new ArgumentNameGenerator(caps, moduleArgs)
   );
-  const substituting = await template.substitute(
-    params,
-    async ({ path: url, instance }) => toolManager.addTool(url, instance)
+  const substituting = await template.substitute(params, async (part) =>
+    toolManager.addTool(part)
   );
   if (!ok(substituting)) {
     return substituting;
