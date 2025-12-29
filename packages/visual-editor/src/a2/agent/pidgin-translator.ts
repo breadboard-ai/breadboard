@@ -16,7 +16,11 @@ import { Template } from "../a2/template.js";
 import { mergeTextParts } from "../a2/utils.js";
 import { AgentFileSystem } from "./file-system.js";
 import { err, ok } from "@breadboard-ai/utils";
-import { SimplifiedToolManager, ToolManager } from "../a2/tool-manager.js";
+import {
+  ROUTE_TOOL_PATH,
+  SimplifiedToolManager,
+  ToolManager,
+} from "../a2/tool-manager.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { v0_8 } from "../../a2ui/index.js";
 import { isLLMContent, isLLMContentArray } from "../../data/common.js";
@@ -180,7 +184,7 @@ class PidginTranslator {
             }
             const part = content?.at(-1)?.parts.at(0);
             if (!part) {
-              errors.push(`invalid asset format`);
+              errors.push(`Agent: Invalid asset format`);
               return "";
             }
             const name = this.fileSystem.add(part);
@@ -211,18 +215,24 @@ class PidginTranslator {
             );
             return "";
           case "tool": {
-            const addingTool = await toolManager.addTool(
-              param.path,
-              param.instance
-            );
-            if (!ok(addingTool)) {
-              errors.push(addingTool.$error);
-              return "";
+            if (param.path === ROUTE_TOOL_PATH) {
+              if (!param.instance) {
+                errors.push(`Agent: Malformed route, missing instance param`);
+                return "";
+              }
+              const routeName = this.fileSystem.addRoute(param.instance);
+              return `<a href="${routeName}">${param.title}</a>`;
+            } else {
+              const addingTool = await toolManager.addTool(param);
+              if (!ok(addingTool)) {
+                errors.push(addingTool.$error);
+                return "";
+              }
+              return addingTool;
             }
-            return addingTool;
           }
           default:
-            console.warn(`Unknown tyep of param`, param);
+            console.warn(`Unknown type of param`, param);
             return "";
         }
       }

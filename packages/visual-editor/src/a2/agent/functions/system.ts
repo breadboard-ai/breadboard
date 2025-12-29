@@ -13,6 +13,7 @@ import {
   defineFunctionLoose,
   FunctionDefinition,
 } from "../function-definition.js";
+import { Outcome } from "@breadboard-ai/types/data.js";
 
 export {
   CREATE_TASK_TREE_SCRATCHPAD_FUNCTION,
@@ -64,7 +65,7 @@ const TASK_TREE_SCHEMA = {
 
 export type SystemFunctionArgs = {
   fileSystem: AgentFileSystem;
-  successCallback(href: string, pidginString: string): void;
+  successCallback(href: string, pidginString: string): Outcome<void>;
   terminateCallback(): void;
 };
 
@@ -93,10 +94,20 @@ If the objective specifies other agent URLs using the
             )
             .default("/"),
         },
+        response: {
+          error: z
+            .string()
+            .describe(
+              `A detailed error message that usually indicates invalid parameters being passed into the function`
+            ),
+        },
       },
       async ({ objective_outcome, href }) => {
-        args.successCallback(href || "/", objective_outcome);
-        return {};
+        const result = args.successCallback(href || "/", objective_outcome);
+        if (!ok(result)) {
+          return { error: result.$error };
+        }
+        return { error: "" };
       }
     ),
     defineFunction(

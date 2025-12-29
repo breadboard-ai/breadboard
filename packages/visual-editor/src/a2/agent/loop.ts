@@ -300,13 +300,16 @@ class Loop {
             terminateLoop = true;
           },
           successCallback: (href, objective_outcome) => {
+            const originalRoute = fileSystem.getOriginalRoute(href);
+            if (!ok(originalRoute)) return originalRoute;
+
             terminateLoop = true;
             console.log("SUCCESS! Objective fulfilled");
-            console.log("Transfer control to", href);
+            console.log("Transfer control to", originalRoute);
             console.log("Objective outcomes:", objective_outcome);
             result = {
               success: true,
-              href,
+              href: originalRoute,
               objective_outcome,
             };
           },

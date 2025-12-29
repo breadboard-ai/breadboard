@@ -40,4 +40,5 @@ session({ name: "Agent", apiKey }, async (session) => {
   await evalObjective("./json-output.js");
   await evalObjective("./blog-post-writer.js");
   await evalObjective("./alien-names.js");
+  await evalObjective("./state-detector.js");
 });
