@@ -38,5 +38,6 @@ session({ name: "Agent", apiKey }, async (session) => {
   await evalObjective("./impossible-chat.js");
   await evalObjective("./print-or-display.js");
   await evalObjective("./json-output.js");
-  await evalObjective("./blog-post-writer.js", true);
+  await evalObjective("./blog-post-writer.js");
+  await evalObjective("./alien-names.js");
 });
