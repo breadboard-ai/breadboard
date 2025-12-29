@@ -209,7 +209,9 @@ class AgentFileSystem {
   }
 
   addRoute(originalRoute: string): string {
-    const routeName = `/route-${this.#routes.size + 1}`;
+    // The "- 1" is because by default, we add two routes. So now, the count for
+    // newly added routes will start at 1.
+    const routeName = `/route-${this.#routes.size - 1}`;
     this.#routes.set(routeName, originalRoute);
     return routeName;
   }
