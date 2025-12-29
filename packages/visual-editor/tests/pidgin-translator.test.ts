@@ -14,15 +14,6 @@ import { Template } from "../src/a2/a2/template.js";
 import { ROUTE_TOOL_PATH } from "../src/a2/a2/tool-manager.js";
 import { llm } from "../src/a2/a2/utils.js";
 
-function makeRoute(title: string, instance: string | undefined): string {
-  return Template.part({
-    type: "tool",
-    title,
-    path: ROUTE_TOOL_PATH,
-    instance,
-  });
-}
-
 describe("Pidgin Translator", () => {
   it("toPidgin correctly adds routes", async () => {
     const fileSystem = new AgentFileSystem();
@@ -33,7 +24,7 @@ describe("Pidgin Translator", () => {
     );
 
     const translated = await translator.toPidgin(
-      llm`Go to ${makeRoute("Route A", "/route-a")}`.asContent(),
+      llm`Go to ${Template.route("Route A", "/route-a")}`.asContent(),
       {}
     );
     if (!ok(translated)) {
@@ -52,7 +43,7 @@ describe("Pidgin Translator", () => {
     );
 
     const translated = await translator.toPidgin(
-      llm`Go to ${makeRoute("Route A", undefined)}`.asContent(),
+      llm`Go to ${Template.part({ type: "tool", title: "Route A", path: ROUTE_TOOL_PATH })}`.asContent(),
       {}
     );
     if (ok(translated)) {

@@ -15,6 +15,7 @@ import type {
   Outcome,
   Schema,
 } from "@breadboard-ai/types";
+import { ROUTE_TOOL_PATH } from "./tool-manager.js";
 
 type LLMContentWithMetadata = LLMContent & {
   $metadata: unknown;
@@ -363,6 +364,15 @@ class Template {
 
   static part(part: ParamPart) {
     return `{${JSON.stringify(part)}}`;
+  }
+
+  static route(title: string, instance: string) {
+    return Template.part({
+      type: "tool",
+      title,
+      path: ROUTE_TOOL_PATH,
+      instance,
+    });
   }
 
   /**

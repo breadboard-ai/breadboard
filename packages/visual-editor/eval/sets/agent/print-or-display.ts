@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Template } from "../../../src/a2/a2/template.js";
 import { llm } from "../../../src/a2/a2/utils.js";
 
 export const title = "Print or display";
 
 export const objective = llm`
-Depending on the directive below, either go to <a href="/print">Print</a> to print the page or to <a href="/display">Display</a> to display the page
+Depending on the directive below, either go to ${Template.route("Print", "/print")} to print the page or to ${Template.route("Display", "/display")} to display the page.
 
 Directive:
 
