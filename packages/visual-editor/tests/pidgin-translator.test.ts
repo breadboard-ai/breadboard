@@ -35,15 +35,24 @@ describe("Pidgin Translator", () => {
     });
 
     it("adds routes", async () => {
-      const translated = await makeTranslator().toPidgin(
-        llm`Go to ${Template.route("Route A", "/route-a")}`.asContent(),
+      const fileSystem = new AgentFileSystem();
+      const translator = new PidginTranslator(
+        stubCaps,
+        stubModuleArgs,
+        fileSystem
+      );
+
+      const translated = await translator.toPidgin(
+        llm`Go to ${Template.route("Route A", "cool-route")}`.asContent(),
         {}
       );
       if (!ok(translated)) {
         fail(translated.$error);
       }
       const { text } = translated;
-      deepStrictEqual(text, `Go to <a href="/route-a">Route A</a>`);
+      deepStrictEqual(text, `Go to <a href="/route-1">Route A</a>`);
+      const originalRoute = fileSystem.getOriginalRoute("/route-1");
+      deepStrictEqual(originalRoute, "cool-route");
     });
 
     it("fails when adding malformed routes", async () => {

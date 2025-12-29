@@ -220,7 +220,8 @@ class PidginTranslator {
                 errors.push(`Agent: Malformed route, missing instance param`);
                 return "";
               }
-              return `<a href="${param.instance}">${param.title}</a>`;
+              const routeName = this.fileSystem.addRoute(param.instance);
+              return `<a href="${routeName}">${param.title}</a>`;
             } else {
               const addingTool = await toolManager.addTool(param);
               if (!ok(addingTool)) {

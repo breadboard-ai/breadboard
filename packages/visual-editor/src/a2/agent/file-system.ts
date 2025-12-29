@@ -42,6 +42,8 @@ class AgentFileSystem {
 
   #files: Map<string, FileDescriptor> = new Map();
 
+  #routes: Map<string, string> = new Map();
+
   write(name: string, data: string, mimeType: string): string {
     const path = this.#createNamed(name, mimeType);
     this.#files.set(path, { data, mimeType, type: "text" });
@@ -201,6 +203,20 @@ class AgentFileSystem {
   listProjectContents(projectPath: string): string[] {
     const project = this.#projects.get(projectPath);
     return [...(project || [])];
+  }
+
+  addRoute(originalRoute: string): string {
+    const routeName = `/route-${this.#routes.size + 1}`;
+    this.#routes.set(routeName, originalRoute);
+    return routeName;
+  }
+
+  getOriginalRoute(routeName: string): Outcome<string> {
+    const originalRoute = this.#routes.get(routeName);
+    if (!originalRoute) {
+      return err(`Route "${routeName}" not found`);
+    }
+    return originalRoute;
   }
 
   add(part: DataPart, fileName?: string): Outcome<string> {
