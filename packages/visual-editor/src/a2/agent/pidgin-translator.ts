@@ -16,7 +16,11 @@ import { Template } from "../a2/template.js";
 import { mergeTextParts } from "../a2/utils.js";
 import { AgentFileSystem } from "./file-system.js";
 import { err, ok } from "@breadboard-ai/utils";
-import { SimplifiedToolManager, ToolManager } from "../a2/tool-manager.js";
+import {
+  ROUTE_TOOL_PATH,
+  SimplifiedToolManager,
+  ToolManager,
+} from "../a2/tool-manager.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { v0_8 } from "../../a2ui/index.js";
 import { isLLMContent, isLLMContentArray } from "../../data/common.js";
@@ -211,15 +215,23 @@ class PidginTranslator {
             );
             return "";
           case "tool": {
-            const addingTool = await toolManager.addTool(param);
-            if (!ok(addingTool)) {
-              errors.push(addingTool.$error);
-              return "";
+            if (param.path === ROUTE_TOOL_PATH) {
+              if (!param.instance) {
+                errors.push(`Agent: Malformed route, missing instance param`);
+                return "";
+              }
+              return `<a href="${param.instance}">${param.title}</a>`;
+            } else {
+              const addingTool = await toolManager.addTool(param);
+              if (!ok(addingTool)) {
+                errors.push(addingTool.$error);
+                return "";
+              }
+              return addingTool;
             }
-            return addingTool;
           }
           default:
-            console.warn(`Unknown tyep of param`, param);
+            console.warn(`Unknown type of param`, param);
             return "";
         }
       }
