@@ -109,7 +109,7 @@
       ]
     },
     "eval:agent": {
-      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/agent.js",
+      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/agent/index.js",
       "dependencies": [
         "build:tsc"
       ],
@@ -117,7 +117,7 @@
       "output": []
     },
     "eval:a2ui": {
-      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/a2ui.js",
+      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/a2ui/index.js",
       "dependencies": [
         "build:tsc"
       ],
