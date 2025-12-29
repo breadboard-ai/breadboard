@@ -1780,7 +1780,6 @@ export class EntityEditor
               type: evt.accessType,
               mimeType: evt.mimeType,
               instance: evt.instance,
-              parameterType: "none",
             };
 
             this.#editorRef.value.addItem(part);

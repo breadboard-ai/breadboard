@@ -574,14 +574,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     if (idx < controlFlowSize) {
       const [id, tool] = [...this.state!.controlFlow.results][idx];
       this.dispatchEvent(
-        new FastAccessSelectEvent(
-          id,
-          tool.title!,
-          "tool",
-          undefined,
-          tool.id,
-          "step"
-        )
+        new FastAccessSelectEvent(id, tool.title!, "tool", undefined, tool.id)
       );
       return;
     }
@@ -834,8 +827,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                                   tool.title!,
                                   "tool",
                                   undefined,
-                                  tool.id,
-                                  "step"
+                                  tool.id
                                 )
                               );
                             }}

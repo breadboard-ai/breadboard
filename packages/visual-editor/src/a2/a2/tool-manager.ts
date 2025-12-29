@@ -33,7 +33,7 @@ export { ROUTE_TOOL_PATH };
 
 const CODE_EXECUTION_SUFFIX = "#module:code-execution";
 
-const ROUTE_TOOL_PATH = "//route";
+const ROUTE_TOOL_PATH = "control-flow/routing";
 
 export type ToolHandle = {
   title?: string;
