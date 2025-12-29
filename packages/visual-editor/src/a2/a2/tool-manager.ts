@@ -1,5 +1,7 @@
 /**
- * @fileoverview Manages tools.
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 import {
@@ -27,7 +29,11 @@ import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { McpToolAdapter } from "./mcp-tool-adapter.js";
 import { ToolParamPart } from "./template.js";
 
+export { ROUTE_TOOL_PATH };
+
 const CODE_EXECUTION_SUFFIX = "#module:code-execution";
+
+const ROUTE_TOOL_PATH = "//route";
 
 export type ToolHandle = {
   title?: string;
@@ -191,23 +197,30 @@ class ToolManager implements SimplifiedToolManager {
       this.#hasCodeExection = true;
       return "Code Execution";
     }
-    const client = new McpToolAdapter(this.caps, this.moduleArgs, url);
     if (instance) {
-      // This is an integration. Use MCP connector.
-      const tools = await client.listTools();
-      if (!ok(tools)) return tools;
-      const names: string[] = [];
-      for (const tool of tools) {
-        const { url, description } = tool;
-        const { title } = description;
-        if (title !== instance) continue;
-        if (title) {
-          names.push(title);
+      if (url === ROUTE_TOOL_PATH) {
+        // This is a route, so it translates to nothing when using this method,
+        // and in effect ignore the route. This is because the agent loop code
+        // will handle routes in its own way.
+        return "";
+      } else {
+        const client = new McpToolAdapter(this.caps, this.moduleArgs, url);
+        // This is an integration. Use MCP connector.
+        const tools = await client.listTools();
+        if (!ok(tools)) return tools;
+        const names: string[] = [];
+        for (const tool of tools) {
+          const { url, description } = tool;
+          const { title } = description;
+          if (title !== instance) continue;
+          if (title) {
+            names.push(title);
+          }
+          console.log("DESCRIPTION", description);
+          this.#addOneTool(url, description, false, client);
         }
-        console.log("DESCRIPTION", description);
-        this.#addOneTool(url, description, false, client);
+        return names.join(", ");
       }
-      return names.join(", ");
     }
 
     let description = (await this.caps.describe({

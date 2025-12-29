@@ -1,0 +1,46 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { Capabilities } from "@breadboard-ai/types/capabilities.js";
+import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { A2ModuleArgs } from "../src/a2/runnable-module-factory.js";
+import { McpClientManager } from "../src/mcp/client-manager.js";
+
+export { stubCaps, stubModuleArgs };
+
+const stubCaps: Capabilities = {
+  invoke() {
+    throw new Error(`Not implemented`);
+  },
+  input() {
+    throw new Error(`Not implemented`);
+  },
+  async output(data) {
+    console.log(data.$metadata?.title);
+    return { delivered: true };
+  },
+  describe() {
+    throw new Error(`Not implemented`);
+  },
+  query() {
+    throw new Error(`Not implemented`);
+  },
+  read() {
+    throw new Error(`Not implemented`);
+  },
+  async write() {
+    // Do nothing
+  },
+};
+
+const stubModuleArgs: A2ModuleArgs = {
+  mcpClientManager: {} as unknown as McpClientManager,
+  fetchWithCreds: () => {
+    throw new Error(`fetchWithCreds not implemented`);
+  },
+  context: {},
+  shell: {} as unknown as OpalShellHostProtocol,
+};

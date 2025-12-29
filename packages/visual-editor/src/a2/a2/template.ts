@@ -34,13 +34,7 @@ export type ToolParamPart = {
   type: "tool";
   path: string;
   title: string;
-  /**
-   * Additional information about the tool, necessary for correctly invoking it.
-   * When "mcp", contains the name of the tool.
-   * When "route", contains the id of the step to route to.
-   */
   instance?: string;
-  instanceType?: "mcp" | "route";
 };
 
 export type AssetParamPart = {
