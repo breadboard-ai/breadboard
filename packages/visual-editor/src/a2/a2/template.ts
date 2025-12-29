@@ -16,6 +16,7 @@ import type {
   Schema,
 } from "@breadboard-ai/types";
 import { ROUTE_TOOL_PATH } from "./tool-manager.js";
+import { escapeHtml } from "../../utils/escape-html.js";
 
 type LLMContentWithMetadata = LLMContent & {
   $metadata: unknown;
@@ -225,6 +226,8 @@ class Template {
     for (const part of this.#parts) {
       if ("type" in part) {
         parts.push({ text: await callback(part) });
+      } else if ("text" in part && !part.thought) {
+        parts.push({ text: escapeHtml(part.text) });
       } else {
         parts.push(part);
       }
