@@ -42,7 +42,10 @@ class AgentFileSystem {
 
   #files: Map<string, FileDescriptor> = new Map();
 
-  #routes: Map<string, string> = new Map();
+  #routes: Map<string, string> = new Map([
+    ["", ""],
+    ["/", "/"],
+  ]);
 
   write(name: string, data: string, mimeType: string): string {
     const path = this.#createNamed(name, mimeType);
