@@ -22,6 +22,7 @@ import {
 } from "./types.js";
 import { FilteredMap } from "./utils/filtered-map.js";
 import { signal } from "signal-utils";
+import { willCreateCycle } from "@breadboard-ai/utils";
 
 export { ReactiveFastAccess };
 
@@ -59,12 +60,38 @@ class ReactiveFastAccess implements FastAccess {
     );
   }
 
+  @signal
+  get components(): Map<GraphIdentifier, Components> {
+    const nodeSelection = this.stepEditor.nodeSelection;
+    if (!nodeSelection) {
+      return this.allComponents;
+    }
+    const inspectable = this.editable?.inspect(nodeSelection.graph);
+    if (!inspectable) {
+      return this.allComponents;
+    }
+    const components = this.allComponents.get(nodeSelection.graph);
+    if (!components) {
+      return new Map();
+    }
+
+    const graph = inspectable.raw();
+
+    const validComponents = [...components].filter(
+      ([id]) => !willCreateCycle({ to: nodeSelection.node, from: id }, graph)
+    );
+
+    return new Map<GraphIdentifier, Components>([
+      [nodeSelection.graph, new Map(validComponents)],
+    ]);
+  }
+
   constructor(
     public readonly graphAssets: Map<AssetPath, GraphAsset>,
     public readonly tools: Map<string, Tool>,
     public readonly myTools: Map<string, Tool>,
     unfilteredControlFlow: Map<string, Tool>,
-    public readonly components: Map<GraphIdentifier, Components>,
+    private readonly allComponents: Map<GraphIdentifier, Components>,
     public readonly parameters: Map<string, ParameterMetadata>,
     public readonly integrations: FilteredIntegrations,
     private readonly editable: EditableGraph | undefined,
