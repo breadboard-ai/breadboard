@@ -14,6 +14,7 @@ import {
   Component,
   Components,
   FastAccess,
+  FilterableMap,
   FilteredIntegrations,
   GraphAsset,
   StepEditor,
@@ -25,10 +26,11 @@ import { signal } from "signal-utils";
 export { ReactiveFastAccess };
 
 class ReactiveFastAccess implements FastAccess {
-  readonly controlFlow: FilteredMap<Tool>;
+  readonly controlFlow: FilterableMap<Tool>;
+  readonly routes: FilterableMap<Component>;
 
   @signal
-  get routes(): Map<string, Component> {
+  get #routes(): Map<string, Component> {
     const nodeSelection = this.stepEditor.nodeSelection;
     if (!nodeSelection) {
       return new Map();
@@ -41,14 +43,16 @@ class ReactiveFastAccess implements FastAccess {
     if (!node) {
       return new Map();
     }
-    return new Map(
+    return new Map<string, Component>(
       node.outgoing().map((edge) => {
-        const id = edge.to.descriptor.id;
+        const node = edge.to;
+        const id = node.descriptor.id;
         return [
           id,
           {
             id,
-            title: edge.to.title(),
+            title: node.title(),
+            metadata: node.currentDescribe().metadata,
           },
         ];
       })
@@ -66,6 +70,7 @@ class ReactiveFastAccess implements FastAccess {
     private readonly editable: EditableGraph | undefined,
     private readonly stepEditor: Omit<StepEditor, "fastAccess">
   ) {
-    this.controlFlow = new FilteredMap(unfilteredControlFlow);
+    this.controlFlow = new FilteredMap(() => unfilteredControlFlow);
+    this.routes = new FilteredMap(() => this.#routes);
   }
 }

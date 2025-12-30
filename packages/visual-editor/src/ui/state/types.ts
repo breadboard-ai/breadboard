@@ -47,7 +47,6 @@ import {
 } from "../types/types.js";
 import { HTMLTemplateResult } from "lit";
 import type { AsyncComputedStatus } from "signal-utils/async-computed";
-import { FilteredMap } from "./utils/filtered-map.js";
 import type { FlowGenerator } from "../flow-gen/flow-generator.js";
 
 /**
@@ -335,6 +334,15 @@ export type Component = {
 
 export type Components = Map<NodeIdentifier, Component>;
 
+export type TitledItem = {
+  title?: string;
+};
+
+export type FilterableMap<T extends TitledItem> = {
+  results: ReadonlyMap<string, T>;
+  filter: string;
+};
+
 /**
  * Represents the Model+Controller for the "@" Menu.
  */
@@ -342,14 +350,14 @@ export type FastAccess = {
   graphAssets: Map<AssetPath, GraphAsset>;
   tools: Map<string, Tool>;
   myTools: Map<string, Tool>;
-  controlFlow: FilteredMap<Tool>;
+  controlFlow: FilterableMap<Tool>;
   components: Map<GraphIdentifier, Components>;
   parameters: Map<string, ParameterMetadata>;
   integrations: FilteredIntegrations;
   /**
    * Available routes for the current step.
    */
-  routes: Map<string, Component>;
+  routes: FilterableMap<Component>;
 };
 
 /**
