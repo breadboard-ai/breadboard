@@ -278,15 +278,6 @@ export type Organizer = {
   ): Promise<Outcome<void>>;
 
   /**
-   * Current graph's parameters.
-   */
-  parameters: Map<string, ParameterMetadata>;
-  changeParameterMetadata(
-    id: string,
-    metadata: ParameterMetadata
-  ): Promise<Outcome<void>>;
-
-  /**
    * Available connectors
    */
   connectors: ConnectorState;
@@ -597,14 +588,13 @@ export type Integrations = {
  * Contains all the state for the project.
  */
 export type Project = {
-  run: ProjectRun;
-  graphAssets: Map<AssetPath, GraphAsset>;
-  parameters: Map<string, ParameterMetadata>;
-  connectors: ConnectorState;
-  integrations: Integrations;
-  organizer: Organizer;
-  renderer: RendererState;
-  stepEditor: StepEditor;
+  readonly run: ProjectRun;
+  readonly graphAssets: Map<AssetPath, GraphAsset>;
+  readonly connectors: ConnectorState;
+  readonly integrations: Integrations;
+  readonly organizer: Organizer;
+  readonly renderer: RendererState;
+  readonly stepEditor: StepEditor;
   readonly themes: ProjectThemeState;
 
   /**
