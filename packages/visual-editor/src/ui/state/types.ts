@@ -26,6 +26,7 @@ import {
   RuntimeFlags,
   ConsentRequestWithCallback,
   GraphDescriptor,
+  EditableGraph,
 } from "@breadboard-ai/types";
 import {
   EditSpec,
@@ -345,6 +346,10 @@ export type FastAccess = {
   components: Map<GraphIdentifier, Components>;
   parameters: Map<string, ParameterMetadata>;
   integrations: FilteredIntegrations;
+  /**
+   * Available routes for the current step.
+   */
+  routes: Map<string, Component>;
 };
 
 /**
@@ -647,6 +652,7 @@ export type ProjectValues = {
   components: Map<GraphIdentifier, Map<NodeIdentifier, Component>>;
   parameters: Map<string, ParameterMetadata>;
   integrations: Integrations;
+  editable: EditableGraph | undefined;
 };
 
 export type EphemeralParticleTree = {

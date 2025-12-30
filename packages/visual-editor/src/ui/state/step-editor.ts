@@ -18,6 +18,7 @@ import {
 } from "./types.js";
 import { ReactiveFastAccess } from "./fast-access.js";
 import { FilteredIntegrationsImpl } from "./filtered-integrations.js";
+import { MAIN_BOARD_ID } from "../constants/constants.js";
 
 export { StepEditorImpl };
 
@@ -42,6 +43,7 @@ class StepEditorImpl implements StepEditor {
       components,
       parameters,
       integrations,
+      editable,
     } = projectValues;
     this.fastAccess = new ReactiveFastAccess(
       graphAssets,
@@ -50,7 +52,9 @@ class StepEditorImpl implements StepEditor {
       controlFlowTools,
       components,
       parameters,
-      new FilteredIntegrationsImpl(integrations.registered)
+      new FilteredIntegrationsImpl(integrations.registered),
+      editable,
+      this
     );
   }
 
@@ -66,9 +70,10 @@ class StepEditorImpl implements StepEditor {
     }
 
     const [id, graph] = candidate;
+
     if (graph.nodes.size) {
       this.nodeSelection = {
-        graph: id,
+        graph: id === MAIN_BOARD_ID ? "" : id,
         node: [...graph.nodes][0]!,
       };
     }

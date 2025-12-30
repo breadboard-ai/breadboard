@@ -58,6 +58,7 @@ import { err, ok } from "@breadboard-ai/utils";
 import { transformDataParts } from "../../data/common.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
 import { ActionTracker } from "../types/types.js";
+import { Signal } from "signal-polyfill";
 
 export { createProjectState, ReactiveProject };
 
@@ -100,13 +101,21 @@ function createProjectState(
 type ReactiveComponents = SignalMap<NodeIdentifier, Component>;
 
 class ReactiveProject implements ProjectInternal, ProjectValues {
-  #mainGraphId: MainGraphIdentifier;
-  #store: MutableGraphStore;
-  #fetchWithCreds: typeof globalThis.fetch;
-  #boardServer: GoogleDriveBoardServer;
-  #editable?: EditableGraph;
-  #connectorInstances: Set<string> = new Set();
-  #connectorMap: SignalMap<string, ConnectorType>;
+  readonly #mainGraphId: MainGraphIdentifier;
+  readonly #store: MutableGraphStore;
+  readonly #fetchWithCreds: typeof globalThis.fetch;
+  readonly #boardServer: GoogleDriveBoardServer;
+  readonly #connectorInstances: Set<string> = new Set();
+  readonly #connectorMap: SignalMap<string, ConnectorType>;
+
+  #graphChanged = new Signal.State({});
+  readonly #editable: EditableGraph | undefined;
+
+  @signal
+  get editable(): EditableGraph | undefined {
+    this.#graphChanged.get();
+    return this.#editable;
+  }
 
   @signal
   accessor run: ProjectRun;
@@ -147,6 +156,7 @@ class ReactiveProject implements ProjectInternal, ProjectValues {
         this.#updateParameters();
         this.#updateMyTools();
         this.#updateControlFlowTools();
+        this.#graphChanged.set({});
       }
       this.#updateConnectors();
       this.#updateTools();
