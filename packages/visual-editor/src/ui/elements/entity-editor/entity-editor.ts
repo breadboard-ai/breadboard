@@ -1786,7 +1786,7 @@ export class EntityEditor
           }}
           .graphId=${null}
           .nodeId=${null}
-          .state=${this.projectState?.fastAccess}
+          .state=${this.projectState?.stepEditor.fastAccess}
         ></bb-fast-access-menu>
         <div ${ref(this.#proxyRef)} id="proxy"></div>`,
     ];

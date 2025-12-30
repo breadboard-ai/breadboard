@@ -30,7 +30,6 @@ import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { ConnectorType } from "../connectors/types.js";
 import { ConnectorStateImpl } from "./connectors.js";
-import { ReactiveFastAccess } from "./fast-access.js";
 import { GraphAssetImpl } from "./graph-asset.js";
 import { ReactiveOrganizer } from "./organizer.js";
 import { ReactiveProjectRun } from "./project-run.js";
@@ -38,7 +37,6 @@ import { RendererStateImpl } from "./renderer.js";
 import {
   Component,
   ConnectorState,
-  FastAccess,
   GraphAsset,
   Integrations,
   Organizer,
@@ -46,13 +44,13 @@ import {
   ProjectInternal,
   ProjectRun,
   ProjectThemeState,
+  ProjectValues,
   RendererState,
   StepEditor,
   Tool,
 } from "./types.js";
 import { IntegrationsImpl } from "./integrations.js";
 import { updateMap } from "./utils/update-map.js";
-import { FilteredIntegrationsImpl } from "./filtered-integrations.js";
 import { McpClientManager } from "../../mcp/index.js";
 import { StepEditorImpl } from "./step-editor.js";
 import { ThemeState } from "./theme-state.js";
@@ -101,7 +99,7 @@ function createProjectState(
 
 type ReactiveComponents = SignalMap<NodeIdentifier, Component>;
 
-class ReactiveProject implements ProjectInternal {
+class ReactiveProject implements ProjectInternal, ProjectValues {
   #mainGraphId: MainGraphIdentifier;
   #store: MutableGraphStore;
   #fetchWithCreds: typeof globalThis.fetch;
@@ -120,7 +118,6 @@ class ReactiveProject implements ProjectInternal {
   readonly myTools: SignalMap<string, Tool>;
   readonly controlFlowTools: SignalMap<string, Tool>;
   readonly organizer: Organizer;
-  readonly fastAccess: FastAccess;
   readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
   readonly parameters: SignalMap<string, ParameterMetadata>;
   readonly connectors: ConnectorState;
@@ -162,7 +159,6 @@ class ReactiveProject implements ProjectInternal {
     }
     const graphUrlString = graph?.url;
     this.graphUrl = graphUrlString ? new URL(graphUrlString) : null;
-    this.stepEditor = new StepEditorImpl();
     this.graphAssets = new SignalMap();
     this.tools = new SignalMap();
     this.controlFlowTools = new SignalMap();
@@ -174,15 +170,7 @@ class ReactiveProject implements ProjectInternal {
     this.connectors = new ConnectorStateImpl(this, this.#connectorMap);
     this.organizer = new ReactiveOrganizer(this);
     this.integrations = new IntegrationsImpl(clientManager, editable);
-    this.fastAccess = new ReactiveFastAccess(
-      this.graphAssets,
-      this.tools,
-      this.myTools,
-      this.controlFlowTools,
-      this.components,
-      this.parameters,
-      new FilteredIntegrationsImpl(this.integrations.registered)
-    );
+    this.stepEditor = new StepEditorImpl(this);
     this.#updateGraphAssets();
     this.renderer = new RendererStateImpl(this.graphAssets);
     this.#updateComponents();

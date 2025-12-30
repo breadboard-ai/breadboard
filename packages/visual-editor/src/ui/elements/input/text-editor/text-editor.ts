@@ -1206,7 +1206,7 @@ export class TextEditor extends LitElement {
         this.#fastAccessTarget === null}
         .showAssets=${this.#fastAccessTarget === null}
         .showTools=${this.#fastAccessTarget === null}
-        .state=${this.projectState?.fastAccess}
+        .state=${this.projectState?.stepEditor.fastAccess}
       ></bb-fast-access-menu>
       <div ${ref(this.#proxyRef)} id="proxy"></div>`;
   }

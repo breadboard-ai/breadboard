@@ -10,7 +10,14 @@ import {
 } from "@breadboard-ai/types/graph-descriptor.js";
 import { signal } from "signal-utils";
 import { WorkspaceSelectionState } from "../types/types.js";
-import { StepEditor, StepEditorSurface } from "./types.js";
+import {
+  FastAccess,
+  ProjectValues,
+  StepEditor,
+  StepEditorSurface,
+} from "./types.js";
+import { ReactiveFastAccess } from "./fast-access.js";
+import { FilteredIntegrationsImpl } from "./filtered-integrations.js";
 
 export { StepEditorImpl };
 
@@ -23,6 +30,29 @@ class StepEditorImpl implements StepEditor {
 
   @signal
   accessor surface: StepEditorSurface | null = null;
+
+  fastAccess: FastAccess;
+
+  constructor(projectValues: ProjectValues) {
+    const {
+      graphAssets,
+      tools,
+      myTools,
+      controlFlowTools,
+      components,
+      parameters,
+      integrations,
+    } = projectValues;
+    this.fastAccess = new ReactiveFastAccess(
+      graphAssets,
+      tools,
+      myTools,
+      controlFlowTools,
+      components,
+      parameters,
+      new FilteredIntegrationsImpl(integrations.registered)
+    );
+  }
 
   updateSelection(selectionState: WorkspaceSelectionState): void {
     // This code is copied with minor modifications from entity-editor.ts.

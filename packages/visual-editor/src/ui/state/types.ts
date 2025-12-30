@@ -590,7 +590,6 @@ export type Project = {
   connectors: ConnectorState;
   integrations: Integrations;
   organizer: Organizer;
-  fastAccess: FastAccess;
   renderer: RendererState;
   stepEditor: StepEditor;
   readonly themes: ProjectThemeState;
@@ -640,6 +639,16 @@ export type ProjectInternal = Project & {
   addConnectorInstance(url: string): void;
 };
 
+export type ProjectValues = {
+  graphAssets: Map<AssetPath, GraphAsset>;
+  tools: Map<string, Tool>;
+  myTools: Map<string, Tool>;
+  controlFlowTools: Map<string, Tool>;
+  components: Map<GraphIdentifier, Map<NodeIdentifier, Component>>;
+  parameters: Map<string, ParameterMetadata>;
+  integrations: Integrations;
+};
+
 export type EphemeralParticleTree = {
   tree: ParticleTree;
   done: boolean;
@@ -658,6 +667,7 @@ export type RendererRunState = {
  * Represents the Model + Controler for the Step Editor.
  */
 export type StepEditor = {
+  fastAccess: FastAccess;
   updateSelection(selectionState: WorkspaceSelectionState): void;
   surface: StepEditorSurface | null;
   selectedNode: NodeIdentifier | null;
