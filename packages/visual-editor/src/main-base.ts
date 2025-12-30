@@ -481,6 +481,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.select.addEventListener(
       Runtime.Events.RuntimeSelectionChangeEvent.eventName,
       (evt: Runtime.Events.RuntimeSelectionChangeEvent) => {
+        // TODO: Consider plumbing project state directly into Select and
+        // calling it from there directly.
+        this.runtime.state.project?.stepEditor.updateSelection(
+          evt.selectionState
+        );
         this.selectionState = {
           selectionChangeId: evt.selectionChangeId,
           selectionState: evt.selectionState,

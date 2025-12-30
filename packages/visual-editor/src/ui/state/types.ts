@@ -42,6 +42,7 @@ import {
   AppTheme,
   ParsedUrlProvider,
   VisualEditorMode,
+  WorkspaceSelectionState,
 } from "../types/types.js";
 import { HTMLTemplateResult } from "lit";
 import type { AsyncComputedStatus } from "signal-utils/async-computed";
@@ -657,7 +658,10 @@ export type RendererRunState = {
  * Represents the Model + Controler for the Step Editor.
  */
 export type StepEditor = {
+  updateSelection(selectionState: WorkspaceSelectionState): void;
   surface: StepEditorSurface | null;
+  selectedNode: NodeIdentifier | null;
+  selectedGraph: GraphIdentifier | null;
 };
 
 /**
