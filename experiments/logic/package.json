@@ -46,11 +46,11 @@
   "license": "Apache-2.0",
   "description": "",
   "devDependencies": {
-    "tsx": "^4.20.6",
+    "tsx": "^4.21.0",
     "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {
-    "@google/genai": "^1.27.0",
+    "@google/genai": "^1.33.0",
     "dotenv": "^17.2.3"
   }
 }
