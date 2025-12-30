@@ -23,10 +23,10 @@ export { StepEditorImpl };
 
 class StepEditorImpl implements StepEditor {
   @signal
-  accessor selectedGraph: GraphIdentifier | null = null;
-
-  @signal
-  accessor selectedNode: NodeIdentifier | null = null;
+  accessor nodeSelection: {
+    graph: GraphIdentifier;
+    node: NodeIdentifier;
+  } | null = null;
 
   @signal
   accessor surface: StepEditorSurface | null = null;
@@ -61,15 +61,16 @@ class StepEditorImpl implements StepEditor {
       ([, graph]) => graph.nodes.size > 0
     );
     if (!candidate) {
-      this.selectedNode = null;
-      this.selectedGraph = null;
+      this.nodeSelection = null;
       return;
     }
 
     const [id, graph] = candidate;
     if (graph.nodes.size) {
-      this.selectedNode = [...graph.nodes][0]!;
-      this.selectedGraph = id;
+      this.nodeSelection = {
+        graph: id,
+        node: [...graph.nodes][0]!,
+      };
     }
   }
 }

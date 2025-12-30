@@ -670,8 +670,10 @@ export type StepEditor = {
   fastAccess: FastAccess;
   updateSelection(selectionState: WorkspaceSelectionState): void;
   surface: StepEditorSurface | null;
-  selectedNode: NodeIdentifier | null;
-  selectedGraph: GraphIdentifier | null;
+  nodeSelection: {
+    graph: GraphIdentifier;
+    node: NodeIdentifier;
+  } | null;
 };
 
 /**
