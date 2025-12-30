@@ -165,6 +165,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
               min-width: 0;
             }
 
+            & .route {
+              margin-right: var(--bb-grid-size-2);
+            }
             & .g-icon {
               margin-right: var(--bb-grid-size-2);
               flex: 0 0 auto;
@@ -904,6 +907,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                               );
                             }}
                           >
+                            <span class="g-icon filled round">start</span>
+                            <span class="title route">Go to</span>
                             <span class="g-icon filled round">${icon}</span>
                             <span class="title">${route.title}</span>
                           </button>

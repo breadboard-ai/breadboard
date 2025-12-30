@@ -78,11 +78,13 @@ export function createChiclets(
       subGraphId
     );
 
+    let sourceTitle = title;
     let targetIcon;
     let targetTitle;
     let metadataIcon = srcIcon;
     if (path === ROUTE_TOOL_PATH) {
       metadataIcon = "start";
+      sourceTitle = "Go to";
       if (instance) {
         const { icon, title } = expandChiclet(
           { path: instance, type: "in", title: "unknown" },
@@ -110,7 +112,8 @@ export function createChiclets(
             ></span>`
           : nothing}
         <span>${Template.preamble(part)}</span
-        ><span class="visible-after" data-label=${title}>${title}</span
+        ><span class="visible-after" data-label=${sourceTitle}
+          >${sourceTitle}</span
         >${targetIcon
           ? html`<span
               class="g-icon filled round target"

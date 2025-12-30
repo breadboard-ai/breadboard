@@ -34,6 +34,7 @@ export function chicletHtml(
 
   const { title, path, instance } = part;
   let metadataIcon = srcIcon;
+  let sourceTitle = title;
   const label = document.createElement("label");
   label.classList.add("chiclet");
 
@@ -60,6 +61,7 @@ export function chicletHtml(
 
   if (path === ROUTE_TOOL_PATH) {
     label.dataset.parameter = "step";
+    sourceTitle = "Go to";
     metadataIcon = "start";
   }
 
@@ -80,7 +82,7 @@ export function chicletHtml(
   preambleEl.textContent = Template.preamble(part);
   titleEl.textContent = jsonStringify(title);
   titleEl.classList.add("visible-after");
-  titleEl.dataset.label = title;
+  titleEl.dataset.label = sourceTitle;
   postambleEl.textContent = Template.postamble();
 
   label.appendChild(preambleEl);
