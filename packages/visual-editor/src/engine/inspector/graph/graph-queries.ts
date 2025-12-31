@@ -18,6 +18,7 @@ import type {
   InspectableNodeType,
   ModuleIdentifier,
   MutableGraph,
+  NodeConfiguration,
   NodeIdentifier,
   NodeTypeIdentifier,
   Outcome,
@@ -30,7 +31,7 @@ import { VirtualNode } from "./virtual-node.js";
 import { scanConfiguration } from "../../../utils/scan-configuration.js";
 import { ROUTE_TOOL_PATH } from "../../../a2/a2/tool-manager.js";
 
-export { GraphQueries };
+export { GraphQueries, toolsFromConfiguration, routesFromConfiguration };
 
 /**
  * Encapsulates common graph operations.
@@ -201,11 +202,7 @@ class GraphQueries {
   tools() {
     const tools: TemplatePart[] = [];
     for (const node of this.#mutable.nodes.nodes(this.#graphId)) {
-      scanConfiguration(node.configuration(), (part) => {
-        if (part.type === "tool") {
-          tools.push(part);
-        }
-      });
+      tools.push(...toolsFromConfiguration(node.configuration()));
     }
     return tools;
   }
@@ -214,9 +211,27 @@ class GraphQueries {
     return this.tools().some((tool) => tool.path === path);
   }
 
-  routes() {
-    return this.tools()
-      .filter((part) => part.path === ROUTE_TOOL_PATH && part.instance)
-      .map((part) => part.instance!);
+  routes(nodeId: NodeIdentifier) {
+    const node = this.#mutable.nodes.get(nodeId, this.#graphId);
+    if (!node) {
+      return [];
+    }
+    return routesFromConfiguration(node.configuration());
   }
+}
+
+function toolsFromConfiguration(configuration: NodeConfiguration) {
+  const tools: TemplatePart[] = [];
+  scanConfiguration(configuration, (part) => {
+    if (part.type === "tool") {
+      tools.push(part);
+    }
+  });
+  return tools;
+}
+
+function routesFromConfiguration(configuration: NodeConfiguration) {
+  return toolsFromConfiguration(configuration)
+    .filter((part) => part.path === ROUTE_TOOL_PATH && part.instance)
+    .map((part) => part.instance!);
 }

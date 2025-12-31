@@ -148,6 +148,8 @@ export class Node implements InspectableNode {
   }
 
   routes(): NodeIdentifier[] {
-    return new GraphQueries(this.#graph, this.#graphId).routes();
+    return new GraphQueries(this.#graph, this.#graphId).routes(
+      this.descriptor.id
+    );
   }
 }
