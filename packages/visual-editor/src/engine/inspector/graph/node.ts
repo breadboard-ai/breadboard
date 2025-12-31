@@ -15,6 +15,7 @@ import type {
   NodeConfiguration,
   NodeDescriberResult,
   NodeDescriptor,
+  NodeIdentifier,
   NodeMetadata,
   OutputValues,
 } from "@breadboard-ai/types";
@@ -144,5 +145,9 @@ export class Node implements InspectableNode {
 
   deleted() {
     return this.#deleted;
+  }
+
+  routes(): NodeIdentifier[] {
+    return new GraphQueries(this.#graph, this.#graphId).routes();
   }
 }
