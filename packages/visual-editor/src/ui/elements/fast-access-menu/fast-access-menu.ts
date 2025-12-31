@@ -422,6 +422,17 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     button.scrollIntoView({ block: "nearest" });
   }
 
+  updateFilter(filter: string) {
+    this.filter = filter;
+    if (!this.state) {
+      return;
+    }
+
+    this.state.integrations.filter = filter;
+    this.state.controlFlow.filter = filter;
+    this.state.routes.filter = filter;
+  }
+
   #onEscapeOrBackspace(evt: KeyboardEvent): void {
     if (!this.classList.contains("active")) {
       return;
@@ -651,12 +662,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
               return;
             }
 
-            this.filter = evt.target.value;
-            if (this.state) {
-              this.state.integrations.filter = this.filter;
-              this.state.controlFlow.filter = this.filter;
-              this.state.routes.filter = this.filter;
-            }
+            this.updateFilter(evt.target.value);
           }}
         />
       </header>
