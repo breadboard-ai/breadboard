@@ -53,14 +53,18 @@ class AutoWireInPorts implements EditTransform {
     const incoming = dedupeEdges(
       ins
         .map((v) => {
-          const out = getDefaultOutputPort(inspectableGraph.nodeById(v.path));
+          const receiver = inspectableNode.descriptor.id;
+          const out = getDefaultOutputPort(
+            inspectableGraph.nodeById(v.path),
+            receiver
+          );
           if (!out) {
             invalidReferences.push(v.path);
             return null;
           }
           return {
             from: v.path,
-            to: inspectableNode.descriptor.id,
+            to: receiver,
             out,
             in: `p-z-${v.path}`,
           };
@@ -139,9 +143,14 @@ class AutoWireInPorts implements EditTransform {
   }
 }
 
-
-function getDefaultOutputPort(from: InspectableNode | undefined) {
+function getDefaultOutputPort(
+  from: InspectableNode | undefined,
+  receiver: NodeIdentifier
+) {
   if (!from) return;
+  if (from.routes().length > 0) {
+    return receiver;
+  }
   const ports = from.currentPorts().outputs.ports;
   const mainPort = ports.find((port) =>
     port.schema.behavior?.includes("main-port")
