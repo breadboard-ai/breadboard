@@ -1033,6 +1033,8 @@ export class TextEditor extends LitElement {
     this.#fastAccessRef.value.selectedIndex = 0;
     this.#fastAccessRef.value.showAssets = this.#fastAccessTarget === null;
     this.#fastAccessRef.value.showTools = this.#fastAccessTarget === null;
+    this.#fastAccessRef.value.showComponents = this.#fastAccessTarget === null;
+    this.#fastAccessRef.value.showRoutes = this.#fastAccessTarget !== null;
     this.#fastAccessRef.value.showParameters = false;
     this.#fastAccessRef.value.showControlFlowTools =
       this.showControlFlowTools && this.#fastAccessTarget === null;
@@ -1193,6 +1195,7 @@ export class TextEditor extends LitElement {
             targetPart = {
               ...this.#fastAccessTarget,
               instance: evt.path,
+              title: evt.title,
             };
           }
 

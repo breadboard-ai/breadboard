@@ -64,6 +64,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   accessor showControlFlowTools = false;
 
   @property()
+  accessor showRoutes = false;
+
+  @property()
   accessor showComponents = true;
 
   @property()
@@ -821,7 +824,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
               })}
             </menu>`
           : this.showComponents
-            ? html`<div class="no-items">No components</div>`
+            ? html`<div class="no-items">No steps</div>`
             : nothing}
       </section>
 
@@ -876,7 +879,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       </section>
 
       <section class="group tools">
-        ${this.showControlFlowTools
+        ${this.showRoutes
           ? html`<h3 class="sans-flex w-400 round">Routes</h3>
               ${this.state?.routes.results.size
                 ? html`<menu>
@@ -898,7 +901,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                             @click=${() => {
                               this.dispatchEvent(
                                 new FastAccessSelectEvent(
-                                  ROUTE_TOOL_PATH,
+                                  route.id,
                                   route.title!,
                                   "tool",
                                   undefined,
@@ -907,8 +910,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                               );
                             }}
                           >
-                            <span class="g-icon filled round">start</span>
-                            <span class="title route">Go to</span>
                             <span class="g-icon filled round">${icon}</span>
                             <span class="title">${route.title}</span>
                           </button>
