@@ -150,6 +150,11 @@ export type InspectableNode = {
    * a graph. Returns `false` otherwise.
    */
   deleted(): boolean;
+
+  /**
+   * Returns all routes used in this step
+   */
+  routes(): NodeIdentifier[];
 };
 
 /**

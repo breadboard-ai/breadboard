@@ -29,7 +29,7 @@ import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { McpToolAdapter } from "./mcp-tool-adapter.js";
 import { ToolParamPart } from "./template.js";
 
-export { ROUTE_TOOL_PATH };
+export { ROUTE_TOOL_PATH, ToolManager };
 
 const CODE_EXECUTION_SUFFIX = "#module:code-execution";
 
@@ -73,8 +73,6 @@ export type SimplifiedToolManager = {
   callTool(part: FunctionCallCapabilityPart): Promise<Outcome<CallToolResult>>;
   list(): Tool[];
 };
-
-export { ToolManager };
 
 class ToolManager implements SimplifiedToolManager {
   #hasSearch = false;

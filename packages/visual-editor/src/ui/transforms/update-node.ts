@@ -17,6 +17,9 @@ import {
 import { AutoWireInPorts, InPort } from "./autowire-in-ports.js";
 import { UpdateNodeTitle } from "./update-node-title.js";
 import { UpdateParameterMetadata } from "./update-parameter-metadata.js";
+import { routesFromConfiguration } from "../../engine/inspector/graph/graph-queries.js";
+import { ChangeEdgesToBroadcastMode } from "./change-edges-to-broadcast-mode.js";
+import { ChangeEdgesToRoutingMode } from "./change-edges-to-routing-mode.js";
 
 export { UpdateNode };
 
@@ -48,7 +51,21 @@ class UpdateNode implements EditTransform {
 
     const edits: EditSpec[] = [];
 
+    let outWireTransform: EditTransform | null = null;
+
     if (configuration) {
+      const newRoutes = routesFromConfiguration(configuration);
+      const existingRoutes = inspectableNode.routes();
+      if (newRoutes.length === 0 && existingRoutes.length > 0) {
+        // Mode change: "routing" -> "broadcast"
+        console.log("MODE CHANGE: Routing -> Broadcast");
+        outWireTransform = new ChangeEdgesToBroadcastMode(id, graphId);
+      } else if (newRoutes.length > 0 && existingRoutes.length === 0) {
+        // Mode change: "broadcast" -> "routing"
+        console.log("MODE CHANGE: Broadcast -> Routing");
+        outWireTransform = new ChangeEdgesToRoutingMode(id, graphId);
+      }
+
       const existingConfiguration =
         inspectableNode?.descriptor.configuration ?? {};
       const updatedConfiguration = structuredClone(existingConfiguration);
@@ -105,6 +122,11 @@ class UpdateNode implements EditTransform {
       `Change partial configuration for "${id}"`
     );
     if (!editResult.success) return editResult;
+
+    if (outWireTransform) {
+      const outWireResult = await outWireTransform.apply(context);
+      if (!outWireResult.success) return outWireResult;
+    }
 
     if (portsToAutowire) {
       const autowiring = await new AutoWireInPorts(
