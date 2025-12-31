@@ -250,9 +250,16 @@ class PlanRunner
   #updateEdgeState(state: NodeLifecycleState, info: PlanNodeInfo) {
     switch (state) {
       case "inactive":
-      case "skipped":
         this.dispatchEvent(
           new EdgeStateChangeEvent({ edges: info.downstream, state: "initial" })
+        );
+        break;
+      case "skipped":
+        this.dispatchEvent(
+          new EdgeStateChangeEvent({
+            edges: [...info.upstream, ...info.downstream],
+            state: "initial",
+          })
         );
         break;
       case "working":

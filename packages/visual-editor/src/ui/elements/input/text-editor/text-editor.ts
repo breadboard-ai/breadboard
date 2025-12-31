@@ -1053,6 +1053,9 @@ export class TextEditor extends LitElement {
 
   #setFastAccessTarget(part: TemplatePart | null) {
     this.#fastAccessTarget = part;
+    if (this.#fastAccessRef.value && this.#fastAccessTarget !== null) {
+      this.#fastAccessRef.value.updateFilter("");
+    }
   }
 
   #updateEditorValue() {

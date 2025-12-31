@@ -180,7 +180,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     }
 
     const completed = [...this.renderer.nodes.values()].filter(
-      (node) => node.status === "succeeded"
+      (node) => node.status === "succeeded" || node.status === "skipped"
     ).length;
 
     return completed / this.estimatedEntryCount;
