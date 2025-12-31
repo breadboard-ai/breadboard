@@ -13,6 +13,7 @@ import {
 } from "@breadboard-ai/types";
 import { AutoWireInPorts } from "./autowire-in-ports.js";
 import { TransformAllNodes } from "./transform-all-nodes.js";
+import { ROUTE_TOOL_PATH } from "../../a2/a2/tool-manager.js";
 
 export { UpdateNodeTitle };
 
@@ -29,9 +30,16 @@ class UpdateNodeTitle implements EditTransform {
     return new TransformAllNodes(
       graphId,
       (part) => {
-        const { type, path } = part;
+        const { type, path, instance } = part;
         if (type === "in" && path === this.nodeId) {
           return { type, path, title: this.title };
+        }
+        if (
+          type === "tool" &&
+          path === ROUTE_TOOL_PATH &&
+          instance === this.nodeId
+        ) {
+          return { ...part, title: this.title };
         }
         return null;
       },
