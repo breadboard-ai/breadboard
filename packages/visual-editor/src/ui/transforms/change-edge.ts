@@ -56,12 +56,17 @@ class ChangeEdge implements EditTransform {
     }
     let outPort = from.out;
     if (outPort === undefined) {
-      const sourcePorts = await source.ports();
-      const sourceMainPort = sourcePorts.outputs.ports.find((port) =>
-        port.schema.behavior?.includes("main-port")
-      );
-      if (sourceMainPort) {
-        outPort = sourceMainPort.name;
+      if (source.routes().length > 0) {
+        // We're in "routing mode", assign the value of the destination node id.
+        outPort = id;
+      } else {
+        const sourcePorts = await source.ports();
+        const sourceMainPort = sourcePorts.outputs.ports.find((port) =>
+          port.schema.behavior?.includes("main-port")
+        );
+        if (sourceMainPort) {
+          outPort = sourceMainPort.name;
+        }
       }
     }
 
