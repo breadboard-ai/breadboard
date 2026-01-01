@@ -29,6 +29,14 @@ import {
 } from "./functions/system.js";
 import { PidginTranslator } from "./pidgin-translator.js";
 import { AgentUI } from "./ui.js";
+import {
+  defineMemoryFunctions,
+  MEMORY_CREATE_SHEET_FUNCTION,
+  MEMORY_DELETE_SHEET_FUNCTION,
+  MEMORY_GET_METADATA_FUNCTION,
+  MEMORY_READ_SHEET_FUNCTION,
+  MEMORY_UPDATE_SHEET_FUNCTION,
+} from "./functions/memory.js";
 
 export { Loop };
 
@@ -251,6 +259,22 @@ Thus, a solid plan to fulfill this objective would be to:
 
 <agent-instructions>
 
+## Using memory
+
+You have access to persistent memory that allows you to recall and remember data across your multiple invocations.
+
+The memory is stored in a single Google Spreadsheet. 
+
+You can create new sheets within this spreadsheet using "${MEMORY_CREATE_SHEET_FUNCTION}" function and delete existing sheets with the "${MEMORY_DELETE_SHEET_FUNCTION}" function. You can also get the list of existing sheets with the "${MEMORY_GET_METADATA_FUNCTION}" function.
+
+To recall, use the "${MEMORY_READ_SHEET_FUNCTION}" function with the standard Google Sheets ranges to pinpoint what you need to read.
+
+To remember, use the "${MEMORY_UPDATE_SHEET_FUNCTION}" function.
+
+</agent-instructions>
+
+<agent-instructions>
+
 ## Interacting with the User
 
 ${args.useUI ? a2UIPrompt : `You do not have a way to interact with the user during your session, aside from the final output when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function`}
@@ -332,6 +356,9 @@ class Loop {
           translator,
         })
       );
+      const memoryFunctions = mapDefinitions(
+        defineMemoryFunctions({ moduleArgs })
+      );
 
       let uiFunctions = emptyDefinitions();
 
@@ -362,6 +389,7 @@ class Loop {
             ...(objectiveTools?.functionDeclarations || []),
             ...systemFunctions.declarations,
             ...generateFunctions.declarations,
+            ...memoryFunctions.declarations,
             ...uiFunctions.declarations,
           ],
         },
@@ -369,6 +397,7 @@ class Loop {
       const functionDefinitionMap = new Map([
         ...systemFunctions.definitions,
         ...generateFunctions.definitions,
+        ...memoryFunctions.definitions,
         ...uiFunctions.definitions,
       ]);
 
