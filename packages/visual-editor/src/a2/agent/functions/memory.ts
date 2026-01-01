@@ -9,6 +9,7 @@ import { tr } from "../../a2/utils.js";
 import { A2ModuleArgs } from "../../runnable-module-factory.js";
 import { defineFunction, FunctionDefinition } from "../function-definition.js";
 import { SheetManager } from "../../google-drive/sheet-manager.js";
+import { memorySheetGetter } from "../../google-drive/memory-sheet-getter.js";
 
 export {
   defineMemoryFunctions,
@@ -30,12 +31,13 @@ export type MemoryFunctionArgs = {
 };
 
 function defineMemoryFunctions(args: MemoryFunctionArgs): FunctionDefinition[] {
-  const id = args.moduleArgs.context.currentStep?.id || "TO BE IMPLEMENTED";
+  const id = args.moduleArgs.context.currentStep?.id || "memory";
   if (!id) return [];
 
-  const memoryManager = new SheetManager(id, async () => {
-    return id;
-  });
+  const memoryManager = new SheetManager(
+    id,
+    memorySheetGetter(args.moduleArgs)
+  );
   return [
     defineFunction(
       {
