@@ -181,7 +181,7 @@
     "@lit/task": "^1.0.2",
     "@material/material-color-utilities": "^0.3.0",
     "@material/web": "^2.3.0",
-    "@modelcontextprotocol/sdk": "^1.17.1",
+    "@modelcontextprotocol/sdk": "^1.24.0",
     "@types/gapi": "^0.0.47",
     "@types/gapi.client.calendar-v3": "^0.0.4",
     "@types/gapi.client.gmail-v1": "^0.0.4",
