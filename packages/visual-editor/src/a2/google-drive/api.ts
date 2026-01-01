@@ -26,8 +26,11 @@ export {
   getDoc,
   getPresentation,
   getSpreadsheetMetadata,
+  getSpreadsheetValues,
+  setSpreadsheetValues,
   updateDoc,
   updatePresentation,
+  updateSpreadsheet,
 };
 
 // These are various Google Drive-specific types.
@@ -628,6 +631,10 @@ export type SlidesRequest =
   | { createImage: SlidesCreateImageRequest }
   | { updateTextStyle: SlidesUpdateTextStyleRequest };
 
+export type SpreadsheetRequest = {
+  addSheet: { properties: { title: string } };
+};
+
 export type SpreadsheetValueRange = {
   range?: string;
   majorDimension?: "ROWS" | "COLUMNS";
@@ -780,6 +787,45 @@ async function getSpreadsheetMetadata(moduleArgs: A2ModuleArgs, id: string) {
     moduleArgs,
     `${GOOGLE_SHEETS_API_PREFIX}/${encodeURIComponent(id)}?fields=sheets.properties`,
     "GET"
+  );
+}
+
+async function getSpreadsheetValues(
+  moduleArgs: A2ModuleArgs,
+  id: string,
+  range: string
+) {
+  return api<SpreadsheetValueRange>(
+    moduleArgs,
+    `${GOOGLE_SHEETS_API_PREFIX}/${encodeURIComponent(id)}/values/${range}`,
+    "GET"
+  );
+}
+
+async function updateSpreadsheet(
+  moduleArgs: A2ModuleArgs,
+  id: string,
+  requests: SpreadsheetRequest[]
+) {
+  return api(
+    moduleArgs,
+    `${GOOGLE_SHEETS_API_PREFIX}/${encodeURIComponent(id)}:batchUpdate`,
+    "POST",
+    { requests }
+  );
+}
+
+async function setSpreadsheetValues(
+  moduleArgs: A2ModuleArgs,
+  id: string,
+  range: string,
+  values: unknown[][]
+) {
+  return api(
+    moduleArgs,
+    `${GOOGLE_SHEETS_API_PREFIX}/${encodeURIComponent(id)}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+    "PUT",
+    { values }
   );
 }
 
