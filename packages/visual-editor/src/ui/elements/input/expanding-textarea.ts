@@ -53,9 +53,6 @@ export class ExpandingTextarea extends LitElement {
   accessor orientation: "horizontal" | "vertical" = "horizontal";
 
   @property({ reflect: true, type: Boolean })
-  accessor systemThemeOverride = false;
-
-  @property({ reflect: true, type: Boolean })
   accessor isPopulated = false;
 
   #measure = createRef<HTMLElement>();

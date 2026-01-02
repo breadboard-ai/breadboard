@@ -125,7 +125,6 @@ export class EditorInputLite extends SignalWatcher(LitElement) {
           .placeholder=${this.state.empty
             ? Strings.from("COMMAND_DESCRIBE_FRESH_FLOW_ALT")
             : Strings.from("COMMAND_DESCRIBE_EDIT_FLOW")}
-          .systemThemeOverride=${true}
           @change=${this.#onInputChange}
           @focus=${this.#onInputFocus}
           @blur=${this.#onInputBlur}

@@ -108,13 +108,6 @@ export class AppController extends SignalWatcher(LitElement) {
   @property()
   accessor appDescription: string | null = null;
 
-  /**
-   * If set this will override the light mode
-   * TODO: Remove this once light & dark themes are supported everywhere.
-   */
-  @property({ reflect: true, type: Boolean })
-  accessor systemThemeOverride = false;
-
   @property()
   accessor headerConfig = {
     replay: true,
