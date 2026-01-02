@@ -195,7 +195,7 @@
     "lit": "^3.3.1",
     "littlezipper": "^0.1.5",
     "markdown-it": "^14.1.0",
-    "marked": "^16.3.0",
+    "marked": "^17.0.0",
     "mimetext": "^3.0.27",
     "pdfjs-dist": "^5.4.449",
     "signal-polyfill": "^0.2.2",
