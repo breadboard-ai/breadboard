@@ -4,14 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { config } from "dotenv";
 import { session } from "../../eval.js";
 
-config();
-
-const apiKey = process.env.GEMINI_API_KEY;
-
-session({ name: "Agent", apiKey }, async (session) => {
+session({ name: "Agent" }, async (session) => {
   // Need to import dynamically to let the mocks do their job.
   const Loop = (await import("../../../src/a2/agent/loop.js")).Loop;
 
@@ -41,4 +36,5 @@ session({ name: "Agent", apiKey }, async (session) => {
   await evalObjective("./blog-post-writer.js");
   await evalObjective("./alien-names.js");
   await evalObjective("./state-detector.js");
+  await evalObjective("./news-tracker.js");
 });
