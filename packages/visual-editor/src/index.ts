@@ -113,10 +113,6 @@ class Main extends MainBase {
           ]}
     </div>`;
 
-    const containerClasses: Record<string, boolean> = {
-      systemTheme: this.uiState.flags?.observeSystemTheme ?? false,
-    };
-
     /**
      * bbevent is the container for most of the actions triggered within the UI.
      * It is something of a shapeshifting event, where the `eventType` property
@@ -128,7 +124,6 @@ class Main extends MainBase {
      */
     return html`<div
       id="container"
-      class=${classMap(containerClasses)}
       @bbevent=${async (
         evt: BreadboardUI.Events.StateEvent<
           keyof BreadboardUI.Events.StateEventDetailMap

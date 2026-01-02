@@ -745,7 +745,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
               : "available",
           small: true,
         }}
-        .systemThemeOverride=${true}
         .isRefreshingAppTheme=${isGenerating}
         .isFreshGraph=${isFreshGraph}
       >
