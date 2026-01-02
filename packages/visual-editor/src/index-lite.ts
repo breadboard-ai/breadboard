@@ -163,9 +163,15 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             padding: 0 var(--bb-grid-size-5);
             background: var(--sys-color--surface);
             color: var(--sys-color--on-surface);
+            container-type: inline-size;
 
             & .left {
               flex: 1;
+              gap: var(--bb-grid-size-2);
+            }
+
+            & .right {
+              gap: var(--bb-grid-size-8);
             }
 
             & .left,
@@ -173,7 +179,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
               display: flex;
               align-items: center;
               white-space: nowrap;
-              gap: var(--bb-grid-size-8);
             }
 
             button,
@@ -198,6 +203,21 @@ export class LiteMain extends MainBase implements LiteEditInputController {
                 --top: calc(100% + var(--bb-grid-size-7) + 2px);
                 --right: 0;
               }
+            }
+
+            & #experiment {
+              display: none;
+              font-size: 11px;
+              line-height: 1;
+              padding: var(--bb-grid-size) var(--bb-grid-size-3);
+              border-radius: var(--bb-grid-size-16);
+              border: 1px solid light-dark(var(--n-0), var(--n-70));
+              text-transform: uppercase;
+              color: light-dark(var(--n-0), var(--n-70));
+            }
+
+            #open-advanced-editor {
+              display: none;
             }
           }
 
@@ -326,6 +346,18 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
         &.active {
           z-index: 100;
+          display: block;
+        }
+      }
+
+      @container (min-width: 450px) {
+        #lite-shell #app-view header .right #open-advanced-editor {
+          display: flex;
+        }
+      }
+
+      @container (min-width: 600px) {
+        #lite-shell #app-view header .left #experiment {
           display: block;
         }
       }
@@ -669,6 +701,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         html`<a
           ${ref(this.#advancedEditorLink)}
           class="w-400 md-title-small sans-flex unvaried"
+          id="open-advanced-editor"
           href="${this.guestConfiguration.advancedEditorOrigin ||
           this.hostOrigin}?mode=canvas&flow=${this.runtime.state.lite.graph
             ?.url}"
@@ -716,7 +749,11 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       ${this.showAppFullscreen || this.compactView
         ? nothing
         : html` <header>
-            <div class="left w-500 md-title-small sans-flex">${title}</div>
+            <div class="left w-500 md-title-small sans-flex">
+              ${title}
+
+              <span class="sans" id="experiment">Experiment</span>
+            </div>
             <div class="right">${buttons}</div>
           </header>`}
       <bb-app-controller
