@@ -168,6 +168,7 @@
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.0.0",
     "dotenv": "^17.2.3",
+    "google-auth-library": "^10.1.0",
     "jsdom": "^27.3.0",
     "tsx": "^4.20.6",
     "typescript": "^5.8.3",

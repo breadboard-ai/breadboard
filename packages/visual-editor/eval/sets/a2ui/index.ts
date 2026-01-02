@@ -5,17 +5,12 @@
  */
 
 import { llm } from "../../../src/a2/a2/utils.js";
-import { config } from "dotenv";
 import { ok } from "@breadboard-ai/utils";
 import { session } from "../../eval.js";
 import { AgentFileSystem } from "../../../src/a2/agent/file-system.js";
 import { PidginTranslator } from "../../../src/a2/agent/pidgin-translator.js";
 
-config();
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-session({ name: "A2UI", apiKey: GEMINI_API_KEY }, async (session) => {
+session({ name: "A2UI" }, async (session) => {
   const SmartLayoutPipeline = (
     await import("../../../src/a2/agent/a2ui/smart-layout-pipeline.js")
   ).SmartLayoutPipeline;

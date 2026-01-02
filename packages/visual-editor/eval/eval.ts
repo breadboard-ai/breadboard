@@ -27,6 +27,7 @@ import {
   ValidateScopesResult,
 } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { getDriveCollectorFile } from "../src/ui/utils/google-drive-host-operations.js";
+import { getAuthenticatedClient } from "./authenticate.js";
 
 export { session };
 
@@ -59,7 +60,6 @@ export type EvalHarnessArgs = {
    * file.
    */
   name: string;
-  apiKey?: string;
 };
 
 export type EvalLogger = {
@@ -80,15 +80,19 @@ function session(
  * Given a GeminiInputs, runs it and returns GeminiAPIOutputs
  */
 class EvalHarness {
-  constructor(private readonly args: EvalHarnessArgs) {
-    if (!args.apiKey) {
-      throw new Error(`Unable to run: no Gemini API Key supplied`);
-    }
-  }
+  constructor(private readonly args: EvalHarnessArgs) {}
 
   async session(sessionFunction: EvalHarnessSessionFunction) {
+    const client = await getAuthenticatedClient();
+    const accessToken = (await client.getAccessToken()).token;
+    if (!accessToken) {
+      throw new Error("Unable to obtain access token");
+    }
+
     // @ts-expect-error "Can't define window? Haha"
-    globalThis.window = { location: new URL("https://example.com/") } as Window;
+    globalThis.window = {
+      location: new URL("https://example.com/"),
+    } as Window;
 
     mock.method(globalThis, "setInterval", autoClearingInterval.setInterval);
 
@@ -116,7 +120,8 @@ class EvalHarness {
       evalFunction: EvalHarnessFunction
     ): Promise<void> => {
       const logEntries: EvalLogEntry[] = [];
-      const run = new EvalRun(this.args, {
+
+      const run = new EvalRun(accessToken, {
         log: (entry) => logEntries.push(entry),
       });
       const outcome = await evalFunction(run);
@@ -234,7 +239,7 @@ function toKebabFilename(str: string): string {
 
 class EvalRun implements EvalHarnessRuntimeArgs {
   constructor(
-    private readonly args: EvalHarnessArgs,
+    private readonly accessToken: string,
     public readonly logger: EvalLogger
   ) {}
 
@@ -274,7 +279,7 @@ class EvalRun implements EvalHarnessRuntimeArgs {
       ...init,
       headers: {
         ...init?.headers,
-        "x-goog-api-key": this.args.apiKey!,
+        Authorization: `Bearer ${this.accessToken}`,
       },
     });
     this.requestLogger.response(entryId, response.clone());
