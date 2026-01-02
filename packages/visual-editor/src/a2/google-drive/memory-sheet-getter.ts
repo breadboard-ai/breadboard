@@ -17,8 +17,9 @@ function memorySheetGetter(moduleArgs: A2ModuleArgs): SheetGetter {
     const { url, title } = moduleArgs.context.board || {};
     const graphId = url ?? "";
     const name = `Memory for ${title ?? id}`;
+    const mimeType = SHEETS_MIME_TYPE;
     const findFile = await moduleArgs.shell.getDriveCollectorFile(
-      SHEETS_MIME_TYPE,
+      mimeType,
       id,
       graphId
     );
@@ -29,7 +30,7 @@ function memorySheetGetter(moduleArgs: A2ModuleArgs): SheetGetter {
     const fileKey = `sheet${id}${graphId}`;
     const createdFile = await create(moduleArgs, {
       name,
-      SHEETS_MIME_TYPE,
+      mimeType,
       appProperties: {
         "google-drive-connector": fileKey,
       },

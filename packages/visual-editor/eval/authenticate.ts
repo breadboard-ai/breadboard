@@ -17,6 +17,7 @@ const ROOT_DIR = path.join(import.meta.dirname, "../../..");
 
 const SCOPES: string[] = [
   "https://www.googleapis.com/auth/drive.readonly",
+  "https://www.googleapis.com/auth/drive.file",
   "https://www.googleapis.com/auth/generative-language.retriever",
 ];
 const TOKEN_PATH = path.join(ROOT_DIR, "token.local.json");

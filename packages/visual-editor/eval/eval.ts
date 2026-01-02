@@ -121,7 +121,7 @@ class EvalHarness {
     ): Promise<void> => {
       const logEntries: EvalLogEntry[] = [];
 
-      const run = new EvalRun(accessToken, {
+      const run = new EvalRun(accessToken, evalName, {
         log: (entry) => logEntries.push(entry),
       });
       const outcome = await evalFunction(run);
@@ -240,6 +240,7 @@ function toKebabFilename(str: string): string {
 class EvalRun implements EvalHarnessRuntimeArgs {
   constructor(
     private readonly accessToken: string,
+    private readonly title: string,
     public readonly logger: EvalLogger
   ) {}
 
@@ -290,6 +291,11 @@ class EvalRun implements EvalHarnessRuntimeArgs {
     mcpClientManager: {} as unknown as McpClientManager,
     fetchWithCreds: this.fetchWithCreds,
     context: {
+      board: {
+        title: this.title,
+        edges: [],
+        nodes: [],
+      },
       currentStep: {
         id: "current-step",
         type: "mock",

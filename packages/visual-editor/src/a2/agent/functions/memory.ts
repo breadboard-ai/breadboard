@@ -35,6 +35,7 @@ function defineMemoryFunctions(args: MemoryFunctionArgs): FunctionDefinition[] {
   if (!id) return [];
 
   const memoryManager = new SheetManager(
+    args.moduleArgs,
     id,
     memorySheetGetter(args.moduleArgs)
   );

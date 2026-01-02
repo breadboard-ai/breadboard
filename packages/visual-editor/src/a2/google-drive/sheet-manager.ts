@@ -5,7 +5,14 @@
  */
 
 import { Outcome } from "@breadboard-ai/types/data.js";
-import { ok } from "@breadboard-ai/utils/outcome.js";
+import { err, ok } from "@breadboard-ai/utils/outcome.js";
+import {
+  getSpreadsheetMetadata,
+  getSpreadsheetValues,
+  setSpreadsheetValues,
+  updateSpreadsheet,
+} from "./api.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { SheetManager };
 
@@ -15,12 +22,16 @@ class SheetManager {
   private sheetId: Promise<Outcome<string>> | null = null;
 
   constructor(
+    private readonly moduleArgs: A2ModuleArgs,
     private readonly id: string,
     private readonly sheetGetter: SheetGetter
   ) {}
 
   private ensureSheetId() {
-    return (this.sheetId ??= this.sheetGetter(this.id));
+    if (!this.sheetId) {
+      this.sheetId = this.sheetGetter(this.id);
+    }
+    return this.sheetId;
   }
 
   async createSheet(args: { name: string; columns: string[] }) {
@@ -31,7 +42,19 @@ class SheetManager {
     const sheetId = await this.ensureSheetId();
     if (!ok(sheetId)) return sheetId;
 
-    return {};
+    const addSheet = await updateSpreadsheet(this.moduleArgs, sheetId, [
+      { addSheet: { properties: { title: name } } },
+    ]);
+    if (!ok(addSheet)) return addSheet;
+
+    const creating = await setSpreadsheetValues(
+      this.moduleArgs,
+      sheetId,
+      `${name}!A1`,
+      [args.columns]
+    );
+    if (!ok(creating)) return creating;
+    return { success: true };
   }
 
   async readSheet(args: { range: string }) {
@@ -41,7 +64,7 @@ class SheetManager {
     const sheetId = await this.ensureSheetId();
     if (!ok(sheetId)) return sheetId;
 
-    return {};
+    return getSpreadsheetValues(this.moduleArgs, sheetId, range);
   }
 
   async updateSheet(args: { range: string; values: string[][] }) {
@@ -52,7 +75,15 @@ class SheetManager {
     const sheetId = await this.ensureSheetId();
     if (!ok(sheetId)) return sheetId;
 
-    return {};
+    const updating = await setSpreadsheetValues(
+      this.moduleArgs,
+      sheetId,
+      range,
+      values
+    );
+    if (!ok(updating)) return updating;
+
+    return { success: true };
   }
 
   async deleteSheet(args: { name: string }) {
@@ -62,7 +93,18 @@ class SheetManager {
     const sheetId = await this.ensureSheetId();
     if (!ok(sheetId)) return sheetId;
 
-    return {};
+    const metadata = await getSpreadsheetMetadata(this.moduleArgs, sheetId);
+    if (!ok(metadata)) return metadata;
+
+    const sheet = metadata.sheets.find((s) => s.properties.title === args.name);
+    if (!sheet) return err(`Sheet "${args.name}" not found.`);
+
+    const deleting = await updateSpreadsheet(this.moduleArgs, sheetId, [
+      { deleteSheet: { sheetId: sheet.properties.sheetId } },
+    ]);
+    if (!ok(deleting)) return deleting;
+
+    return { sucess: true };
   }
 
   async querySheet(args: { name: string; query: string }) {
@@ -82,8 +124,38 @@ class SheetManager {
     const sheetId = await this.ensureSheetId();
     if (!ok(sheetId)) return sheetId;
 
-    return {
-      sheets: [],
-    };
+    const metadata = await getSpreadsheetMetadata(this.moduleArgs, sheetId);
+    if (!ok(metadata)) return metadata;
+
+    const errors: string[] = [];
+    const sheetDetailsPromises = metadata.sheets.map(async (sheet) => {
+      const name = sheet.properties.title;
+
+      const valuesRes = await getSpreadsheetValues(
+        this.moduleArgs,
+        sheetId,
+        `${encodeURIComponent(name)}!1:1`
+      );
+      let columns: string[] = [];
+      if (!ok(valuesRes)) {
+        errors.push(valuesRes.$error);
+      } else {
+        if (valuesRes.values && valuesRes.values.length > 0) {
+          columns = valuesRes.values[0] as string[];
+        }
+      }
+
+      return { name, columns };
+    });
+
+    try {
+      const sheets = await Promise.all(sheetDetailsPromises);
+      if (errors.length > 0) {
+        return err(errors.join(","));
+      }
+      return { sheets };
+    } catch (e) {
+      return err((e as Error).message);
+    }
   }
 }
