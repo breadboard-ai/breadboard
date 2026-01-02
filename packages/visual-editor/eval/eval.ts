@@ -15,7 +15,18 @@ import { McpClientManager } from "../src/mcp/index.js";
 import { autoClearingInterval } from "./auto-clearing-interval.js";
 import { collateContexts } from "./collate-context.js";
 import { Logger } from "./logger.js";
-import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import {
+  CheckAppAccessResult,
+  FindUserOpalFolderResult,
+  GuestConfiguration,
+  ListUserOpalsResult,
+  OpalShellHostProtocol,
+  PickDriveFilesResult,
+  SignInResult,
+  SignInState,
+  ValidateScopesResult,
+} from "@breadboard-ai/types/opal-shell-protocol.js";
+import { getDriveCollectorFile } from "../src/ui/utils/google-drive-host-operations.js";
 
 export { session };
 
@@ -254,20 +265,25 @@ class EvalRun implements EvalHarnessRuntimeArgs {
     },
   };
 
+  private fetchWithCreds = async (
+    url: RequestInfo | URL,
+    init?: RequestInit
+  ) => {
+    const entryId = this.requestLogger.request(url as string, init);
+    const response = await fetch(url, {
+      ...init,
+      headers: {
+        ...init?.headers,
+        "x-goog-api-key": this.args.apiKey!,
+      },
+    });
+    this.requestLogger.response(entryId, response.clone());
+    return response;
+  };
+
   readonly moduleArgs: A2ModuleArgs = {
     mcpClientManager: {} as unknown as McpClientManager,
-    fetchWithCreds: async (url: RequestInfo | URL, init?: RequestInit) => {
-      const entryId = this.requestLogger.request(url as string, init);
-      const response = await fetch(url, {
-        ...init,
-        headers: {
-          ...init?.headers,
-          "x-goog-api-key": this.args.apiKey!,
-        },
-      });
-      this.requestLogger.response(entryId, response.clone());
-      return response;
-    },
+    fetchWithCreds: this.fetchWithCreds,
     context: {
       currentStep: {
         id: "current-step",
@@ -314,6 +330,55 @@ class EvalRun implements EvalHarnessRuntimeArgs {
         };
       },
     },
-    shell: {} as unknown as OpalShellHostProtocol,
+    shell: {
+      getDriveCollectorFile: (mimeType, connectorId, graphId) => {
+        return getDriveCollectorFile({
+          mimeType,
+          connectorId,
+          graphId,
+          fetchWithCreds: this.fetchWithCreds,
+        });
+      },
+      getSignInState: function (): Promise<SignInState> {
+        throw new Error("Function not implemented.");
+      },
+      validateScopes: function (): Promise<ValidateScopesResult> {
+        throw new Error("Function not implemented.");
+      },
+      getConfiguration: function (): Promise<GuestConfiguration> {
+        throw new Error("Function not implemented.");
+      },
+      fetchWithCreds: globalThis.fetch,
+      signIn: function (): Promise<SignInResult> {
+        throw new Error("Function not implemented.");
+      },
+      signOut: function (): Promise<void> {
+        throw new Error("Function not implemented.");
+      },
+      setUrl: function (): void {
+        throw new Error("Function not implemented.");
+      },
+      pickDriveFiles: function (): Promise<PickDriveFilesResult> {
+        throw new Error("Function not implemented.");
+      },
+      shareDriveFiles: function (): Promise<void> {
+        throw new Error("Function not implemented.");
+      },
+      findUserOpalFolder: function (): Promise<FindUserOpalFolderResult> {
+        throw new Error("Function not implemented.");
+      },
+      listUserOpals: function (): Promise<ListUserOpalsResult> {
+        throw new Error("Function not implemented.");
+      },
+      checkAppAccess: function (): Promise<CheckAppAccessResult> {
+        throw new Error("Function not implemented.");
+      },
+      sendToEmbedder: function (): Promise<void> {
+        throw new Error("Function not implemented.");
+      },
+      trackAction: function (): Promise<void> {
+        throw new Error("Function not implemented.");
+      },
+    } satisfies OpalShellHostProtocol,
   };
 }
