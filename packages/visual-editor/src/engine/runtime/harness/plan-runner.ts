@@ -486,7 +486,13 @@ class InternalRunStateController {
       env: context.fileSystem.env(),
     });
     const invoker = new NodeInvoker(
-      { ...context, fileSystem, signal, currentStep: task.node },
+      {
+        ...context,
+        fileSystem,
+        signal,
+        currentStep: task.node,
+        currentGraph: this.graph,
+      },
       { graph: this.graph },
       async (result) => {
         const harnessResult = fromRunnerResult(result);

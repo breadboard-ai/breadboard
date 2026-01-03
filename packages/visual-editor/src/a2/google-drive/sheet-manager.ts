@@ -16,20 +16,19 @@ import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { SheetManager };
 
-export type SheetGetter = (id: string) => Promise<Outcome<string>>;
+export type SheetGetter = () => Promise<Outcome<string>>;
 
 class SheetManager {
   private sheetId: Promise<Outcome<string>> | null = null;
 
   constructor(
     private readonly moduleArgs: A2ModuleArgs,
-    private readonly id: string,
     private readonly sheetGetter: SheetGetter
   ) {}
 
   private ensureSheetId() {
     if (!this.sheetId) {
-      this.sheetId = this.sheetGetter(this.id);
+      this.sheetId = this.sheetGetter();
     }
     return this.sheetId;
   }

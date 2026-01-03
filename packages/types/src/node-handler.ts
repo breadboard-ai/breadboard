@@ -397,6 +397,10 @@ export interface NodeHandlerContext {
    */
   currentStep?: NodeDescriptor;
   /**
+   * The current outermost graph -- the one that the planner is running.
+   */
+  currentGraph?: GraphDescriptor;
+  /**
    * A way to look at all the config flags.
    */
   readonly clientDeploymentConfiguration?: ClientDeploymentConfiguration;
