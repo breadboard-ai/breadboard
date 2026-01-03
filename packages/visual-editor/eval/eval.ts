@@ -291,8 +291,9 @@ class EvalRun implements EvalHarnessRuntimeArgs {
     mcpClientManager: {} as unknown as McpClientManager,
     fetchWithCreds: this.fetchWithCreds,
     context: {
-      board: {
+      currentGraph: {
         title: this.title,
+        url: encodeURIComponent(this.title),
         edges: [],
         nodes: [],
       },
