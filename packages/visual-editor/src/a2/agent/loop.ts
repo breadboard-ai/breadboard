@@ -357,7 +357,7 @@ class Loop {
         })
       );
       const memoryFunctions = mapDefinitions(
-        defineMemoryFunctions({ moduleArgs })
+        defineMemoryFunctions({ moduleArgs, translator, fileSystem })
       );
 
       let uiFunctions = emptyDefinitions();

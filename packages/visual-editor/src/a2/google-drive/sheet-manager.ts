@@ -80,7 +80,9 @@ class SheetManager {
       range,
       values
     );
-    if (!ok(updating)) return updating;
+    if (!ok(updating)) {
+      return { error: updating.$error };
+    }
 
     return { success: true };
   }
