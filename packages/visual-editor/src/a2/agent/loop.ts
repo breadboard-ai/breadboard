@@ -328,6 +328,7 @@ class Loop {
       const systemFunctions = mapDefinitions(
         defineSystemFunctions({
           fileSystem,
+          translator,
           terminateCallback: () => {
             terminateLoop = true;
           },

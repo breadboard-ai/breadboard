@@ -6,7 +6,7 @@
 
 import { ok } from "@breadboard-ai/utils";
 import z from "zod";
-import { tr } from "../../a2/utils.js";
+import { toText, tr } from "../../a2/utils.js";
 import { AgentFileSystem } from "../file-system.js";
 import {
   defineFunction,
@@ -14,6 +14,7 @@ import {
   FunctionDefinition,
 } from "../function-definition.js";
 import { Outcome } from "@breadboard-ai/types/data.js";
+import { PidginTranslator } from "../pidgin-translator.js";
 
 export {
   CREATE_TASK_TREE_SCRATCHPAD_FUNCTION,
@@ -65,6 +66,7 @@ const TASK_TREE_SCHEMA = {
 
 export type SystemFunctionArgs = {
   fileSystem: AgentFileSystem;
+  translator: PidginTranslator;
   successCallback(href: string, pidginString: string): Outcome<void>;
   terminateCallback(): void;
 };
@@ -168,15 +170,24 @@ existing project.`.trim()
         response: {
           file_path: z
             .string()
-            .describe("The VS path to the file containing the provided text"),
+            .describe("The VS path to the file containing the provided text")
+            .optional(),
+          error: z
+            .string()
+            .describe("The error message if the file could not be written")
+            .optional(),
         },
       },
       async ({ file_name, project_path, text }) => {
         console.log("FILE_NAME", file_name);
         console.log("TEXT TO WRITE", text);
+        const translatedContent = args.translator.fromPidginString(text);
+        if (!ok(translatedContent)) {
+          return { error: translatedContent.$error };
+        }
         const file_path = args.fileSystem.write(
           file_name,
-          text,
+          toText(translatedContent),
           "text/markdown"
         );
         if (project_path) {
