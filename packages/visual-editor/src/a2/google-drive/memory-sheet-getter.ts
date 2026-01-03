@@ -13,21 +13,21 @@ import { create } from "./api.js";
 export { memorySheetGetter };
 
 function memorySheetGetter(moduleArgs: A2ModuleArgs): SheetGetter {
-  return async (id: string) => {
-    const { url, title } = moduleArgs.context.board || {};
-    const graphId = url ?? "";
-    const name = `Memory for ${title ?? id}`;
+  return async () => {
+    const { url, title } = moduleArgs.context.currentGraph || {};
+    const graphId = url?.replace("drive:/", "") || "";
+    const name = `Memory for ${title ?? graphId}`;
     const mimeType = SHEETS_MIME_TYPE;
     const findFile = await moduleArgs.shell.getDriveCollectorFile(
       mimeType,
-      id,
+      graphId,
       graphId
     );
     if (!findFile.ok) return err(findFile.error);
     const fileId = findFile.id;
     if (fileId) return fileId;
 
-    const fileKey = `sheet${id}${graphId}`;
+    const fileKey = `sheet${graphId}${graphId}`;
     const createdFile = await create(moduleArgs, {
       name,
       mimeType,

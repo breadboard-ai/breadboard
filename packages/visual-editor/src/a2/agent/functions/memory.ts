@@ -31,12 +31,8 @@ export type MemoryFunctionArgs = {
 };
 
 function defineMemoryFunctions(args: MemoryFunctionArgs): FunctionDefinition[] {
-  const id = args.moduleArgs.context.currentStep?.id || "memory";
-  if (!id) return [];
-
   const memoryManager = new SheetManager(
     args.moduleArgs,
-    id,
     memorySheetGetter(args.moduleArgs)
   );
   return [
