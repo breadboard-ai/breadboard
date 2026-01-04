@@ -571,7 +571,11 @@ If the code environment generates an error, the model may decide to regenerate t
         `,
         parameters: {
           spec: z.string().describe(tr`
-Detailed spec for the code to generate. A spec can be in natural language or the exact Python code. When it's in natural language, the spec may include references to VFS files. For instance, if you have an existing file at "/vfs/text3.md", you can reference it as <file src="/vfs/text3.md" /> in the spec. If you do not use <file> tags, the text generator will not be able to access the file.
+Detailed spec for the code to generate. A spec can be in natural language or the exact Python code. 
+
+When it's in natural language, the spec may include references to VFS files. For instance, if you have an existing file at "/vfs/text3.md", you can reference it as <file src="/vfs/text3.md" /> in the spec. If you do not use <file> tags, the code generator will not be able to access the file.
+
+NOTE: The Python code execution environment has no access to the VFS. If you need to read or write files, you must use the natural language for the spec.
 
 These references can point to files of any type, such as images, audio, videos, etc. Projects can also be referenced in this way.
 
