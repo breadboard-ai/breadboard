@@ -113,7 +113,7 @@ For example, "Generating page 4 of the report" or "Combining the images into one
         });
         console.log("PROMPT", prompt);
 
-        const imageParts = fileSystem.getMany(inputImages);
+        const imageParts = await fileSystem.getMany(inputImages);
         if (!ok(imageParts)) return { error: imageParts.$error };
 
         const modelName =
@@ -284,7 +284,7 @@ provided when the "output_format" is set to "text"`
           };
         }
         if (tools.length === 0) tools = undefined;
-        const translated = translator.fromPidginString(prompt);
+        const translated = await translator.fromPidginString(prompt);
         if (!ok(translated)) return { error: translated.$error };
         const body = await conformGeminiBody(moduleArgs, {
           systemInstruction: defaultSystemInstruction(),
@@ -400,7 +400,9 @@ For example, "Making a marketing video" or "Creating the video concept"`),
           VIDEO_MODEL_NAME
         );
         if (!ok(generating)) {
-          return { error: expandVeoError(generating, VIDEO_MODEL_NAME).$error };
+          return {
+            error: expandVeoError(generating, VIDEO_MODEL_NAME).$error,
+          };
         }
         const dataPart = generating.parts.at(0);
         if (!dataPart || !("storedData" in dataPart)) {
@@ -571,7 +573,11 @@ If the code environment generates an error, the model may decide to regenerate t
         `,
         parameters: {
           spec: z.string().describe(tr`
-Detailed spec for the code to generate. A spec can be in natural language or the exact Python code. When it's in natural language, the spec may include references to VFS files. For instance, if you have an existing file at "/vfs/text3.md", you can reference it as <file src="/vfs/text3.md" /> in the spec. If you do not use <file> tags, the text generator will not be able to access the file.
+Detailed spec for the code to generate. A spec can be in natural language or the exact Python code. 
+
+When it's in natural language, the spec may include references to VFS files. For instance, if you have an existing file at "/vfs/text3.md", you can reference it as <file src="/vfs/text3.md" /> in the spec. If you do not use <file> tags, the code generator will not be able to access the file.
+
+NOTE: The Python code execution environment has no access to the VFS. If you need to read or write files, you must use the natural language for the spec.
 
 These references can point to files of any type, such as images, audio, videos, etc. Projects can also be referenced in this way.
 
@@ -623,7 +629,7 @@ For example, "Creating random values" or "Computing prime numbers"`),
         }
         tools.push({ codeExecution: {} });
         if (tools.length === 0) tools = undefined;
-        const translated = translator.fromPidginString(spec);
+        const translated = await translator.fromPidginString(spec);
         if (!ok(translated)) return { error: translated.$error };
         const body = await conformGeminiBody(moduleArgs, {
           systemInstruction: defaultSystemInstruction(),

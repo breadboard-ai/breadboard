@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { llm } from "../../../src/a2/a2/utils.js";
 import { ok } from "@breadboard-ai/utils";
-import { session } from "../../eval.js";
+import { llm } from "../../../src/a2/a2/utils.js";
 import { AgentFileSystem } from "../../../src/a2/agent/file-system.js";
 import { PidginTranslator } from "../../../src/a2/agent/pidgin-translator.js";
+import { session } from "../../eval.js";
 
 session({ name: "A2UI" }, async (session) => {
   const SmartLayoutPipeline = (
@@ -20,7 +20,7 @@ session({ name: "A2UI" }, async (session) => {
     const params: Parameters<typeof session.eval> = [
       title,
       async ({ caps, moduleArgs, logger }) => {
-        const fileSystem = new AgentFileSystem();
+        const fileSystem = new AgentFileSystem(null);
         const translator = new PidginTranslator(caps, moduleArgs, fileSystem);
         const pipeline = new SmartLayoutPipeline({
           caps,

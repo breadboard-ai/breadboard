@@ -6,7 +6,7 @@
 
 import { describe, it } from "node:test";
 import { PidginTranslator } from "../src/a2/agent/pidgin-translator.js";
-import { stubCaps, stubModuleArgs } from "./useful-stubs.js";
+import { stubCaps, stubMemoryManager, stubModuleArgs } from "./useful-stubs.js";
 import { AgentFileSystem } from "../src/a2/agent/file-system.js";
 import { deepStrictEqual, fail } from "node:assert";
 import { ok } from "@breadboard-ai/utils/outcome.js";
@@ -16,7 +16,7 @@ import { llm } from "../src/a2/a2/utils.js";
 import { escapeHtml } from "../src/utils/escape-html.js";
 
 function makeTranslator(): PidginTranslator {
-  const fileSystem = new AgentFileSystem();
+  const fileSystem = new AgentFileSystem(stubMemoryManager);
   return new PidginTranslator(stubCaps, stubModuleArgs, fileSystem);
 }
 
@@ -35,7 +35,7 @@ describe("Pidgin Translator", () => {
     });
 
     it("adds routes", async () => {
-      const fileSystem = new AgentFileSystem();
+      const fileSystem = new AgentFileSystem(stubMemoryManager);
       const translator = new PidginTranslator(
         stubCaps,
         stubModuleArgs,

@@ -8,8 +8,13 @@ import { Capabilities } from "@breadboard-ai/types/capabilities.js";
 import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { A2ModuleArgs } from "../src/a2/runnable-module-factory.js";
 import { McpClientManager } from "../src/mcp/client-manager.js";
+import {
+  MemoryManager,
+  SheetMetadataWithFilePath,
+} from "../src/a2/agent/types.js";
+import { Outcome } from "@breadboard-ai/types";
 
-export { stubCaps, stubModuleArgs };
+export { stubCaps, stubModuleArgs, stubMemoryManager };
 
 const stubCaps: Capabilities = {
   invoke() {
@@ -43,4 +48,22 @@ const stubModuleArgs: A2ModuleArgs = {
   },
   context: {},
   shell: {} as unknown as OpalShellHostProtocol,
+};
+
+
+const stubMemoryManager: MemoryManager = {
+  readSheet: () => {
+    throw new Error(`Not implemented`);
+  },
+  updateSheet: () => {
+    throw new Error(`Not implemented`);
+  },
+  deleteSheet: () => {
+    throw new Error(`Not implemented`);
+  },
+  getSheetMetadata: function (): Promise<
+    Outcome<{ sheets: SheetMetadataWithFilePath[] }>
+  > {
+    throw new Error("Function not implemented.");
+  },
 };

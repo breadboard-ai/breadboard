@@ -70,27 +70,31 @@ class PidginTranslator {
     private readonly fileSystem: AgentFileSystem
   ) {}
 
-  fromPidginString(content: string): Outcome<LLMContent> {
+  async fromPidginString(content: string): Promise<Outcome<LLMContent>> {
     const pidginParts = content.split(SPLIT_REGEX);
     const errors: string[] = [];
-    const parts: DataPart[] = pidginParts
-      .flatMap((pidginPart) => {
-        const fileMatch = pidginPart.match(FILE_PARSE_REGEX);
-        if (fileMatch) {
-          const path = fileMatch[1];
-          const parts = this.fileSystem.get(path);
-          if (!ok(parts)) {
-            errors.push(parts.$error);
-            return null;
+    const parts: DataPart[] = (
+      await Promise.all(
+        pidginParts.map(async (pidginPart) => {
+          const fileMatch = pidginPart.match(FILE_PARSE_REGEX);
+          if (fileMatch) {
+            const path = fileMatch[1];
+            const parts = await this.fileSystem.get(path);
+            if (!ok(parts)) {
+              errors.push(parts.$error);
+              return null;
+            }
+            return parts;
           }
-          return parts;
-        }
-        const linkMatch = pidginPart.match(LINK_PARSE_REGEX);
-        if (linkMatch) {
-          return { text: linkMatch[2].trim() };
-        }
-        return { text: pidginPart };
-      })
+          const linkMatch = pidginPart.match(LINK_PARSE_REGEX);
+          if (linkMatch) {
+            return { text: linkMatch[2].trim() };
+          }
+          return { text: pidginPart };
+        })
+      )
+    )
+      .flat()
       .filter((part) => part !== null);
 
     if (errors.length > 0) {
@@ -144,11 +148,12 @@ class PidginTranslator {
     };
   }
 
-  fromPidginFiles(files: string[]): Outcome<LLMContent> {
+  async fromPidginFiles(files: string[]): Promise<Outcome<LLMContent>> {
     const errors: string[] = [];
-    const parts: DataPart[] = files
-      .flatMap((path) => {
-        const parts = this.fileSystem.get(path);
+    const parts: DataPart[] = (
+      await Promise.all(files.map((path) => this.fileSystem.get(path)))
+    )
+      .flatMap((parts) => {
         if (!ok(parts)) {
           errors.push(parts.$error);
           return null;

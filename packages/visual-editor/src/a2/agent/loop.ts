@@ -37,6 +37,8 @@ import {
   MEMORY_READ_SHEET_FUNCTION,
   MEMORY_UPDATE_SHEET_FUNCTION,
 } from "./functions/memory.js";
+import { SheetManager } from "../google-drive/sheet-manager.js";
+import { memorySheetGetter } from "../google-drive/memory-sheet-getter.js";
 
 export { Loop };
 
@@ -267,7 +269,7 @@ The memory is stored in a single Google Spreadsheet.
 
 You can create new sheets within this spreadsheet using "${MEMORY_CREATE_SHEET_FUNCTION}" function and delete existing sheets with the "${MEMORY_DELETE_SHEET_FUNCTION}" function. You can also get the list of existing sheets with the "${MEMORY_GET_METADATA_FUNCTION}" function.
 
-To recall, use the "${MEMORY_READ_SHEET_FUNCTION}" function with the standard Google Sheets ranges to pinpoint what you need to read.
+To recall, use either the "${MEMORY_READ_SHEET_FUNCTION}" function with the standard Google Sheets ranges or read the entire sheet as a VFS file using the "/vfs/memory/sheet_name" path.
 
 To remember, use the "${MEMORY_UPDATE_SHEET_FUNCTION}" function.
 
@@ -291,12 +293,17 @@ class Loop {
   private readonly translator: PidginTranslator;
   private readonly fileSystem: AgentFileSystem;
   private readonly ui: AgentUI;
+  private readonly memoryManager: SheetManager;
 
   constructor(
     private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs
   ) {
-    this.fileSystem = new AgentFileSystem();
+    this.memoryManager = new SheetManager(
+      moduleArgs,
+      memorySheetGetter(moduleArgs)
+    );
+    this.fileSystem = new AgentFileSystem(this.memoryManager);
     this.translator = new PidginTranslator(caps, moduleArgs, this.fileSystem);
     this.ui = new AgentUI(caps, moduleArgs, this.translator);
   }
@@ -307,7 +314,8 @@ class Loop {
     uiPrompt,
     enableUI = false,
   }: AgentRunArgs): Promise<Outcome<AgentResult>> {
-    const { caps, moduleArgs, fileSystem, translator, ui } = this;
+    const { caps, moduleArgs, fileSystem, translator, ui, memoryManager } =
+      this;
 
     ui.progress.startAgent(objective);
     try {
@@ -328,6 +336,7 @@ class Loop {
       const systemFunctions = mapDefinitions(
         defineSystemFunctions({
           fileSystem,
+          translator,
           terminateCallback: () => {
             terminateLoop = true;
           },
@@ -357,7 +366,7 @@ class Loop {
         })
       );
       const memoryFunctions = mapDefinitions(
-        defineMemoryFunctions({ moduleArgs })
+        defineMemoryFunctions({ translator, fileSystem, memoryManager })
       );
 
       let uiFunctions = emptyDefinitions();
@@ -472,23 +481,27 @@ class Loop {
     }
   }
 
-  #finalizeResult(raw: AgentRawResult): Outcome<AgentResult> {
+  async #finalizeResult(raw: AgentRawResult): Promise<Outcome<AgentResult>> {
     const { success, href, objective_outcome } = raw;
     let outcomes: Outcome<LLMContent> | undefined = undefined;
     let intermediate: Outcome<FileData[]> | undefined = undefined;
     if (success) {
-      outcomes = this.translator.fromPidginString(objective_outcome);
+      outcomes = await this.translator.fromPidginString(objective_outcome);
       if (!ok(outcomes)) return outcomes;
       const intermediateFiles = [...this.fileSystem.files.keys()];
       const errors: string[] = [];
-      intermediate = intermediateFiles.flatMap((file) => {
-        const content = this.translator.fromPidginFiles([file]);
-        if (!ok(content)) {
-          errors.push(content.$error);
-          return [];
-        }
-        return { path: file, content };
-      });
+      intermediate = (
+        await Promise.all(
+          intermediateFiles.map(async (file) => {
+            const content = await this.translator.fromPidginFiles([file]);
+            if (!ok(content)) {
+              errors.push(content.$error);
+              return [];
+            }
+            return { path: file, content };
+          })
+        )
+      ).flat();
       if (errors.length > 0) {
         return err(errors.join(","));
       }

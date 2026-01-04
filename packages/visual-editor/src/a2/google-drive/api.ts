@@ -823,7 +823,7 @@ async function setSpreadsheetValues(
   range: string,
   values: unknown[][]
 ) {
-  return api(
+  return api<void>(
     moduleArgs,
     `${GOOGLE_SHEETS_API_PREFIX}/${encodeURIComponent(id)}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
     "PUT",
