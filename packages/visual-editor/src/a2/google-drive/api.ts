@@ -635,7 +635,13 @@ export type SpreadsheetRequest =
   | {
       addSheet: { properties: { title: string } };
     }
-  | { deleteSheet: { sheetId: number } };
+  | { deleteSheet: { sheetId: number } }
+  | {
+      updateSheetProperties: {
+        properties: { sheetId: number; title: string };
+        fields: string;
+      };
+    };
 
 export type SpreadsheetValueRange = {
   range?: string;
