@@ -8,7 +8,7 @@ import { err, ok } from "@breadboard-ai/utils/outcome.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import type { SheetGetter } from "./sheet-manager.js";
 import { SHEETS_MIME_TYPE } from "./sheets.js";
-import { create } from "./api.js";
+import { create, setSpreadsheetValues, updateSpreadsheet } from "./api.js";
 
 export { memorySheetGetter };
 
@@ -36,7 +36,24 @@ function memorySheetGetter(moduleArgs: A2ModuleArgs): SheetGetter {
       },
     });
     if (!ok(createdFile)) return createdFile;
+    const { id } = createdFile;
 
-    return createdFile.id;
+    const renameSheet = await updateSpreadsheet(moduleArgs, id, [
+      {
+        updateSheetProperties: {
+          properties: { sheetId: 0, title: "intro" },
+          fields: "title",
+        },
+      },
+    ]);
+    if (!ok(renameSheet)) return renameSheet;
+
+    const addIntro = await setSpreadsheetValues(moduleArgs, id, "intro!A1", [
+      ["This spreadsheet is used as agent memory. Do not modify it directly"],
+    ]);
+
+    if (!ok(addIntro)) return addIntro;
+
+    return id;
   };
 }
