@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { FileDataPart, JSONPart, LLMContent } from "@breadboard-ai/types";
+import {
+  FileDataPart,
+  JSONPart,
+  JsonSerializable,
+  LLMContent,
+} from "@breadboard-ai/types";
 import { OutputValues, Schema } from "@breadboard-ai/types";
 
 export {
@@ -125,7 +130,7 @@ function toLLMContentArray(schema: Schema, values: OutputValues): Products {
   return { products, chat, particleMode: false };
 
   function asJson(value: unknown): LLMContent {
-    return { parts: [{ json: JSON.stringify(value, null, 2) }] };
+    return { parts: [{ json: value as JsonSerializable }] };
   }
 }
 

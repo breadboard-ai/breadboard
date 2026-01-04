@@ -13,7 +13,12 @@ import {
 } from "@breadboard-ai/types";
 import { routesFromConfiguration } from "../engine/inspector/graph/graph-queries.js";
 
-export { computeControlState, computeSkipOutputs, augmentWithSkipOutputs };
+export {
+  computeControlState,
+  computeSkipOutputs,
+  augmentWithSkipOutputs,
+  hasControlPart,
+};
 
 const CONTROL_SENTINEL_VALUE = "$control";
 const EMPTY_INPUT: NodeValue = [
@@ -30,8 +35,12 @@ type ControlState = {
   adjustedInputs: InputValues;
 };
 
-function isControl(o: NodeValue): o is Control {
+function isControl(o: unknown): o is Control {
   return !!(o && typeof o === "object" && CONTROL_SENTINEL_VALUE in o);
+}
+
+function hasControlPart(o: LLMContent) {
+  return o.parts.some((part) => "json" in part && isControl(part.json));
 }
 
 function computeControlState(inputs: InputValues): ControlState {
