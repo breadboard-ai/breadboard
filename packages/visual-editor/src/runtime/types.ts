@@ -114,3 +114,5 @@ export type EditChangeId = ReturnType<typeof crypto.randomUUID>;
 export type MoveToSelection = "immediate" | "animated" | false;
 
 export type VisualEditorMode = "app" | "canvas";
+
+export type Control<T> = T | { $control: string };
