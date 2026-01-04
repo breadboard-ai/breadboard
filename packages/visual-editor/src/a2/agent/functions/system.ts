@@ -145,7 +145,7 @@ If the objective specifies other agent URLs using the
         return {};
       }
     ),
-    defineFunction(
+    (defineFunction(
       {
         name: "system_write_text_to_file",
         description: "Writes the provided text to a file",
@@ -181,7 +181,7 @@ existing project.`.trim()
       async ({ file_name, project_path, text }) => {
         console.log("FILE_NAME", file_name);
         console.log("TEXT TO WRITE", text);
-        const translatedContent = args.translator.fromPidginString(text);
+        const translatedContent = await args.translator.fromPidginString(text);
         if (!ok(translatedContent)) {
           return { error: translatedContent.$error };
         }
@@ -315,11 +315,11 @@ If an error has occurred, will contain a description of the error`
       },
       async ({ file_path }) => {
         console.log("FILE PATH", file_path);
-        const text = args.fileSystem.readText(file_path);
+        const text = await args.fileSystem.readText(file_path);
         if (!ok(text)) return { error: text.$error };
         return { text };
       }
-    ),
+    )),
     defineFunction(
       {
         name: "system_create_project",

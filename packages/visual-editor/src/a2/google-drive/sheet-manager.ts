@@ -13,12 +13,17 @@ import {
   updateSpreadsheet,
 } from "./api.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import {
+  MemoryManager,
+  SheetMetadata,
+  SheetMetadataWithFilePath,
+} from "../agent/types.js";
 
 export { SheetManager };
 
 export type SheetGetter = () => Promise<Outcome<string>>;
 
-class SheetManager {
+class SheetManager implements MemoryManager {
   private sheetId: Promise<Outcome<string>> | null = null;
 
   constructor(
@@ -33,7 +38,7 @@ class SheetManager {
     return this.sheetId;
   }
 
-  async createSheet(args: { name: string; columns: string[] }) {
+  async createSheet(args: SheetMetadata) {
     const { name, columns } = args;
     console.log("NAME", name);
     console.log("COLUMNS", columns);
@@ -66,7 +71,10 @@ class SheetManager {
     return getSpreadsheetValues(this.moduleArgs, sheetId, range);
   }
 
-  async updateSheet(args: { range: string; values: string[][] }) {
+  async updateSheet(args: {
+    range: string;
+    values: string[][];
+  }): Promise<Outcome<{ success: boolean; error?: string }>> {
     const { range, values } = args;
     console.log("RANGE", range);
     console.log("VALUES", values);
@@ -81,13 +89,15 @@ class SheetManager {
       values
     );
     if (!ok(updating)) {
-      return { error: updating.$error };
+      return { success: false, error: updating.$error };
     }
 
     return { success: true };
   }
 
-  async deleteSheet(args: { name: string }) {
+  async deleteSheet(args: {
+    name: string;
+  }): Promise<Outcome<{ success: boolean }>> {
     const { name } = args;
     console.log("NAME", name);
 
@@ -105,22 +115,11 @@ class SheetManager {
     ]);
     if (!ok(deleting)) return deleting;
 
-    return { sucess: true };
-  }
-
-  async querySheet(args: { name: string; query: string }) {
-    const { name, query } = args;
-    console.log(`NAME`, name);
-    console.log(`QUERY`, query);
-
-    const sheetId = await this.ensureSheetId();
-    if (!ok(sheetId)) return sheetId;
-
-    return {};
+    return { success: true };
   }
 
   async getSheetMetadata(): Promise<
-    Outcome<{ sheets: { name: string; columns: string[] }[] }>
+    Outcome<{ sheets: SheetMetadataWithFilePath[] }>
   > {
     const sheetId = await this.ensureSheetId();
     if (!ok(sheetId)) return sheetId;
@@ -130,7 +129,9 @@ class SheetManager {
 
     const errors: string[] = [];
     const sheetDetailsPromises = metadata.sheets.map(async (sheet) => {
-      const name = sheet.properties.title;
+      const { title: name, sheetId: id } = sheet.properties;
+      if (id === 0) return null;
+      const file_path = `/vfs/memory/${encodeURIComponent(name)}`;
 
       const valuesRes = await getSpreadsheetValues(
         this.moduleArgs,
@@ -146,11 +147,13 @@ class SheetManager {
         }
       }
 
-      return { name, columns };
+      return { name, file_path, columns };
     });
 
     try {
-      const sheets = await Promise.all(sheetDetailsPromises);
+      const sheets = (await Promise.all(sheetDetailsPromises)).filter(
+        (sheet) => sheet !== null
+      );
       if (errors.length > 0) {
         return err(errors.join(","));
       }

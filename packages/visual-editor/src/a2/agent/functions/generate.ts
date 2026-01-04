@@ -113,7 +113,7 @@ For example, "Generating page 4 of the report" or "Combining the images into one
         });
         console.log("PROMPT", prompt);
 
-        const imageParts = fileSystem.getMany(inputImages);
+        const imageParts = await fileSystem.getMany(inputImages);
         if (!ok(imageParts)) return { error: imageParts.$error };
 
         const modelName =
@@ -284,7 +284,7 @@ provided when the "output_format" is set to "text"`
           };
         }
         if (tools.length === 0) tools = undefined;
-        const translated = translator.fromPidginString(prompt);
+        const translated = await translator.fromPidginString(prompt);
         if (!ok(translated)) return { error: translated.$error };
         const body = await conformGeminiBody(moduleArgs, {
           systemInstruction: defaultSystemInstruction(),
@@ -400,7 +400,9 @@ For example, "Making a marketing video" or "Creating the video concept"`),
           VIDEO_MODEL_NAME
         );
         if (!ok(generating)) {
-          return { error: expandVeoError(generating, VIDEO_MODEL_NAME).$error };
+          return {
+            error: expandVeoError(generating, VIDEO_MODEL_NAME).$error,
+          };
         }
         const dataPart = generating.parts.at(0);
         if (!dataPart || !("storedData" in dataPart)) {
@@ -627,7 +629,7 @@ For example, "Creating random values" or "Computing prime numbers"`),
         }
         tools.push({ codeExecution: {} });
         if (tools.length === 0) tools = undefined;
-        const translated = translator.fromPidginString(spec);
+        const translated = await translator.fromPidginString(spec);
         if (!ok(translated)) return { error: translated.$error };
         const body = await conformGeminiBody(moduleArgs, {
           systemInstruction: defaultSystemInstruction(),

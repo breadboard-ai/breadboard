@@ -7,9 +7,7 @@
 import { err } from "@breadboard-ai/utils";
 import z from "zod";
 import { llm, ok, toText, tr } from "../../a2/utils.js";
-import { memorySheetGetter } from "../../google-drive/memory-sheet-getter.js";
 import { SheetManager } from "../../google-drive/sheet-manager.js";
-import { A2ModuleArgs } from "../../runnable-module-factory.js";
 import { AgentFileSystem } from "../file-system.js";
 import { defineFunction, FunctionDefinition } from "../function-definition.js";
 import { PidginTranslator } from "../pidgin-translator.js";
@@ -30,29 +28,26 @@ const MEMORY_DELETE_SHEET_FUNCTION = "memory_delete_sheet";
 const MEMORY_GET_METADATA_FUNCTION = "memory_get_metadata";
 
 export type MemoryFunctionArgs = {
-  moduleArgs: A2ModuleArgs;
   translator: PidginTranslator;
   fileSystem: AgentFileSystem;
+  memoryManager: SheetManager;
 };
 
 function defineMemoryFunctions(args: MemoryFunctionArgs): FunctionDefinition[] {
-  const { moduleArgs, translator, fileSystem } = args;
-  const memoryManager = new SheetManager(
-    moduleArgs,
-    memorySheetGetter(moduleArgs)
-  );
+  const { translator, fileSystem, memoryManager } = args;
   return [
     defineFunction(
       {
         name: MEMORY_CREATE_SHEET_FUNCTION,
         description: "Creates a new memory sheet",
         parameters: {
-          name: z.string().describe(tr`The name of the sheet`),
+          name: z.string().describe(tr`The name of the sheet. Use snake_case for
+naming.`),
           columns: z
             .array(z.string().describe(tr`The name of the column header`))
             .describe(
               tr`
-An array of strings representing the column headers (e.g., ['ID', 'Name', 'Status']). First column must always be titled "ID"`
+An array of strings representing the column headers (e.g., ['Name', 'Status']).`
             ),
         },
       },
@@ -141,16 +136,20 @@ The 2D array of data to write.
       async (args) => {
         const { range, values: pidginValues } = args;
         const errors: string[] = [];
-        const values = pidginValues.map((list) => {
-          return list.map((value) => {
-            const translated = translator.fromPidginString(value);
-            if (!ok(translated)) {
-              errors.push(translated.$error);
-              return "";
-            }
-            return toText(translated);
-          });
-        });
+        const values = await Promise.all(
+          pidginValues.map(async (list) => {
+            return await Promise.all(
+              list.map(async (value) => {
+                const translated = await translator.fromPidginString(value);
+                if (!ok(translated)) {
+                  errors.push(translated.$error);
+                  return "";
+                }
+                return toText(translated);
+              })
+            );
+          })
+        );
         if (errors.length > 0) {
           return { error: errors.join(", ") };
         }
@@ -168,19 +167,6 @@ Deletes a specific memory sheet`,
       },
       memoryManager.deleteSheet.bind(memoryManager)
     ),
-    //     defineFunction(
-    //       {
-    //         name: "memory_query_sheet",
-    //         description: tr`
-    // Runs a GViz SQL query to find specific memory data or row indexes.`,
-    //         parameters: {
-    //           name: z.string().describe(tr`The name of the sheet`),
-    //           query: z.string().describe(tr`
-    // SQL query like 'SELECT A, B WHERE C = \"Pending\"'`),
-    //         },
-    //       },
-    //       memoryManager.querySheet.bind(memoryManager)
-    //     ),
     defineFunction(
       {
         name: MEMORY_GET_METADATA_FUNCTION,
@@ -192,6 +178,9 @@ Returns the names and header rows of all memory sheets.`,
             z.object({
               name: z.string().describe(tr`
 The name of the memory sheet
+`),
+              file_path: z.string().describe(tr`
+The VFS file path to read the memory sheet
 `),
               columns: z.array(
                 z.string().describe(tr`
