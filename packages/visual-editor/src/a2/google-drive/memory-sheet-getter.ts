@@ -49,7 +49,9 @@ function memorySheetGetter(moduleArgs: A2ModuleArgs): SheetGetter {
     if (!ok(renameSheet)) return renameSheet;
 
     const addIntro = await setSpreadsheetValues(moduleArgs, id, "intro!A1", [
-      ["This spreadsheet is used as agent memory. Do not modify it directly"],
+      [
+        "This spreadsheet is used as agent memory. Do not modify it directly. To reset the memory for the agent, move this entire spreadsheet into trash.",
+      ],
     ]);
 
     if (!ok(addIntro)) return addIntro;
