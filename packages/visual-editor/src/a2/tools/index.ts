@@ -11,6 +11,7 @@ import * as toolsSearchEnterprise from "./search-enterprise.js";
 import * as toolsSearchInternal from "./search-internal.js";
 import * as toolsSearchMaps from "./search-maps.js";
 import * as toolsSearchWeb from "./search-web.js";
+import * as toolsDeepResearch from "./deep-research.js";
 
 import descriptor from "./bgl.json" with { type: "json" };
 import { createBgl } from "../create-bgl.js";
@@ -23,6 +24,7 @@ export const exports = {
   "search-internal": toolsSearchInternal,
   "search-maps": toolsSearchMaps,
   "search-web": toolsSearchWeb,
+  "deep-research": toolsDeepResearch,
 };
 
 export const bgl = createBgl(descriptor, exports);
