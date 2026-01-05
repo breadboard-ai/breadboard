@@ -275,7 +275,7 @@ export class Gallery extends SignalWatcher(LitElement) {
         }
 
         &.default {
-          background-color: light-dark(var(--n-100), var(--n-60));
+          background-color: var(--n-100);
           object-fit: contain;
           box-sizing: border-box;
           padding: var(--bb-grid-size-8);
