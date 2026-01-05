@@ -838,6 +838,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.tooltipRef.value.y = tooltipEvent.y;
     this.tooltipRef.value.message = tooltipEvent.message;
     this.tooltipRef.value.status = tooltipEvent.extendedOptions.status;
+    this.tooltipRef.value.isMultiLine =
+      tooltipEvent.extendedOptions?.isMultiLine || false;
     this.tooltipRef.value.visible = true;
   }
 
