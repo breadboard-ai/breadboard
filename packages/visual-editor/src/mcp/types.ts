@@ -19,7 +19,7 @@ import type {
   Tool,
   ToolAnnotations,
 } from "@modelcontextprotocol/sdk/types.js";
-import type z from "zod";
+import * as z4 from "zod/v4/core";
 
 export type CallToolResultContent = CallToolResult["content"];
 
@@ -129,10 +129,15 @@ export type McpServerStore = {
   list(): Promise<Outcome<McpServerInfo[]>>;
 };
 
+export type ZodArgs = Record<string, z4.$ZodType>;
+
+export type McpToolCallback<InputArgs extends ZodArgs> =
+  ToolCallback<InputArgs>;
+
 export interface McpBuiltInClient extends McpClient {
   info: McpServerInfo;
   tools: Tool[];
-  addTool<InputArgs extends z.ZodRawShape, OutputArgs extends z.ZodRawShape>(
+  addTool<InputArgs extends ZodArgs, OutputArgs extends ZodArgs>(
     name: string,
     config: {
       title?: string;
