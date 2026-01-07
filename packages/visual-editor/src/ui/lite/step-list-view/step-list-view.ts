@@ -133,6 +133,12 @@ export class StepListView extends SignalWatcher(LitElement) {
                 & .step-title {
                   color: var(--sys-color--on-surface);
                   padding-right: var(--bb-grid-size-4);
+                  display: flex;
+                  flex-direction: column;
+
+                  & .step-thought {
+                    color: var(--sys-color--on-surface-variant);
+                  }
                 }
 
                 & .step-icon {
@@ -193,7 +199,10 @@ export class StepListView extends SignalWatcher(LitElement) {
                 }
               }
 
-              &[open] > summary > .marker:not(.pending):not(.working) {
+              &[open]
+                > summary
+                > .marker-container
+                > .marker:not(.pending):not(.working) {
                 &::before {
                   content: "keyboard_arrow_up";
                 }
@@ -286,7 +295,9 @@ export class StepListView extends SignalWatcher(LitElement) {
       const title =
         options.status !== "generating"
           ? html`<h1 class="step-title w-400 md-body-small sans-flex">
-              ${step.tags?.includes("input") ? "Question to user:" : "Prompt"}
+              ${step.tags?.includes("input")
+                ? "Question to user:"
+                : "Prompt summary"}
             </h1>`
           : nothing;
 
@@ -295,7 +306,7 @@ export class StepListView extends SignalWatcher(LitElement) {
       }ms`;
       return html`
         <details
-          ?open=${options.status === "generating"}
+          ?inert=${options.status === "generating"}
           class=${classMap({
             animated: options.animated === true,
           })}
@@ -318,8 +329,13 @@ export class StepListView extends SignalWatcher(LitElement) {
                 >`
               : nothing}
             <span class="step-title sans md-title-medium w-500"
-              >${step.title}</span
-            >
+              >${step.title}
+              ${options.status === "generating"
+                ? html`<span class="step-thought sans md-body-medium w-400"
+                    >${step.label}</span
+                  >`
+                : nothing}
+            </span>
           </summary>
           <div class="step-content sans md-body-medium w-400">
             ${title}
@@ -337,6 +353,9 @@ export class StepListView extends SignalWatcher(LitElement) {
 
     const renderPlaceholders = () => {
       return html`<ul id="list">
+        ${this.state?.status === "generating"
+          ? renderPlannerProgress()
+          : nothing}
         ${repeat(new Array(4), () => {
           return html`<li>
             ${renderStep(
@@ -358,6 +377,29 @@ export class StepListView extends SignalWatcher(LitElement) {
       </ul>`;
     };
 
+    const renderPlannerProgress = () => {
+      if (!this.state?.planner) {
+        return nothing;
+      }
+      return html`<li>
+        ${renderStep(
+          {
+            marker: true,
+            "g-icon": true,
+            "filled-heavy": true,
+            "processing-generation": true,
+          },
+          {
+            label: this.state?.planner.thought,
+            prompt: "",
+            status: "pending",
+            title: this.state?.planner.status,
+          },
+          { status: "generating" }
+        )}
+      </li>`;
+    };
+
     if (
       this.state?.viewType === "editor" &&
       this.state?.status === "generating"
@@ -371,23 +413,7 @@ export class StepListView extends SignalWatcher(LitElement) {
         return renderPlaceholders();
       } else if (this.state?.status === "generating") {
         return html`<ul id="list">
-          <li>
-            ${renderStep(
-              {
-                marker: true,
-                "g-icon": true,
-                "filled-heavy": true,
-                "processing-generation": true,
-              },
-              {
-                label: this.state?.planner.thought,
-                prompt: "",
-                status: "pending",
-                title: this.state?.planner.status,
-              },
-              { status: "generating" }
-            )}
-          </li>
+          ${renderPlannerProgress()}
         </ul>`;
       }
       return nothing;

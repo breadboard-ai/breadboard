@@ -40,7 +40,7 @@ export class ExpandingTextarea extends LitElement {
   @property()
   accessor placeholder = "";
 
-  @property({ type: Boolean })
+  @property({ reflect: true, type: Boolean })
   accessor disabled = false;
 
   @property({ type: Boolean })
@@ -53,7 +53,7 @@ export class ExpandingTextarea extends LitElement {
   accessor orientation: "horizontal" | "vertical" = "horizontal";
 
   @property({ reflect: true, type: Boolean })
-  accessor systemThemeOverride = false;
+  accessor isPopulated = false;
 
   #measure = createRef<HTMLElement>();
   #textarea = createRef<HTMLTextAreaElement>();
@@ -74,6 +74,10 @@ export class ExpandingTextarea extends LitElement {
         border-radius: var(--border-radius, 0.5lh);
         overflow-y: hidden;
         background: var(--background-color, currentColor);
+      }
+
+      :host(:not([disabled])) {
+        cursor: text;
       }
 
       #outer-container {
@@ -175,6 +179,16 @@ export class ExpandingTextarea extends LitElement {
         }
       }
 
+      :host([ispopulated]) #submit {
+        opacity: 0.7;
+
+        &:not([disabled]) {
+          &:hover {
+            opacity: 1;
+          }
+        }
+      }
+
       ::slotted(.g-icon) {
         font-size: 22px;
       }
@@ -184,17 +198,33 @@ export class ExpandingTextarea extends LitElement {
   override connectedCallback() {
     super.connectedCallback();
     this.#resizeObserver.observe(this);
+    this.addEventListener("click", this.#onClickBound);
   }
 
   override disconnectedCallback() {
     super.disconnectedCallback();
     this.#resizeObserver.disconnect();
+    this.removeEventListener("click", this.#onClickBound);
+  }
+
+  #onClickBound = this.#onClick.bind(this);
+  #onClick(evt: Event) {
+    const [top] = evt.composedPath();
+    if (!this.#textarea.value || top === this.#textarea) return;
+    this.#textarea.value.focus();
   }
 
   override updated(changes: PropertyValues<this>) {
     if (changes.has("value") || changes.has("placeholder")) {
-      this.updateComplete.then(() => this.#recomputeHeight());
+      this.updateComplete.then(() => {
+        this.#recomputeHeight();
+        this.#recomputeButtonState();
+      });
     }
+  }
+
+  #recomputeButtonState() {
+    this.isPopulated = this.value !== "";
   }
 
   override render() {

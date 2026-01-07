@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { customElement } from "lit/decorators.js";
-import { MainBase, RenderValues } from "./main-base.js";
 import { html, nothing } from "lit";
+import { customElement } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { map } from "lit/directives/map.js";
 import { ref } from "lit/directives/ref.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
-import * as BreadboardUI from "./ui/index.js";
-import { ActionTracker } from "./ui/utils/action-tracker.js";
-import { makeUrl, parseUrl } from "./ui/utils/urls.js";
-import { IterateOnPromptEvent } from "./ui/events/events.js";
+import { MainBase, RenderValues } from "./main-base.js";
 import { IterateOnPromptMessage } from "./ui/embed/embed.js";
+import { IterateOnPromptEvent } from "./ui/events/events.js";
+import * as BreadboardUI from "./ui/index.js";
+import { makeUrl, parseUrl } from "./ui/utils/urls.js";
 
+import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { MakeUrlInit } from "./ui/types/types.js";
 
 const Strings = BreadboardUI.Strings.forSection("Global");
@@ -26,7 +26,73 @@ export { Main };
 
 @customElement("bb-main")
 class Main extends MainBase {
-  async doPostInitWork() {}
+  override async doPostInitWork() {
+    this.maybeNotifyAboutPreferredUrlForDomain();
+    this.maybeNotifyAboutDesktopModality();
+  }
+
+  async maybeNotifyAboutPreferredUrlForDomain() {
+    const domain = await this.signinAdapter.domain;
+    if (!domain) {
+      return;
+    }
+    const url = this.globalConfig.domains?.[domain]?.preferredUrl;
+    if (!url) {
+      return;
+    }
+
+    this.snackbar(
+      html`
+        Users from ${domain} should prefer
+        <a href="${url}" target="_blank">${new URL(url).hostname}</a>
+      `,
+      BreadboardUI.Types.SnackType.WARNING,
+      [],
+      true
+    );
+  }
+
+  maybeNotifyAboutDesktopModality() {
+    if (
+      parsedUrl.page !== "graph" ||
+      !parsedUrl.shared ||
+      parsedUrl.mode !== "canvas"
+    ) {
+      return;
+    }
+
+    // There's little point in attempting to differentiate between "mobile" and
+    // "desktop" here for any number of reasons, but as a reasonable proxy we
+    // will check that there's some screen estate available to show both the
+    // editor and the app preview before we show the modal.
+    if (window.innerWidth > 1280) {
+      return;
+    }
+
+    this.uiState.show.add("BetterOnDesktopModal");
+  }
+
+  override async handleAppAccessCheckResult(
+    result: CheckAppAccessResult
+  ): Promise<void> {
+    if (!result.canAccess) {
+      await this.signinAdapter.signOut();
+      window.history.pushState(
+        undefined,
+        "",
+        makeUrl({
+          page: "landing",
+          geoRestriction: true,
+          redirect: {
+            page: "home",
+            guestPrefixed: true,
+          },
+          guestPrefixed: true,
+        })
+      );
+      window.location.reload();
+    }
+  }
 
   render() {
     const renderValues = this.getRenderValues();
@@ -47,10 +113,6 @@ class Main extends MainBase {
           ]}
     </div>`;
 
-    const containerClasses: Record<string, boolean> = {
-      systemTheme: this.uiState.flags?.observeSystemTheme ?? false,
-    };
-
     /**
      * bbevent is the container for most of the actions triggered within the UI.
      * It is something of a shapeshifting event, where the `eventType` property
@@ -62,7 +124,6 @@ class Main extends MainBase {
      */
     return html`<div
       id="container"
-      class=${classMap(containerClasses)}
       @bbevent=${async (
         evt: BreadboardUI.Events.StateEvent<
           keyof BreadboardUI.Events.StateEventDetailMap
@@ -103,7 +164,7 @@ class Main extends MainBase {
           ? this.#renderBoardEditModal()
           : nothing,
         this.uiState.show.has("SnackbarDetailsModal")
-          ? this.#renderSnackbarDetailsModal()
+          ? this.renderSnackbarDetailsModal()
           : nothing,
         this.uiState.show.has("BetterOnDesktopModal")
           ? this.#renderBetterOnDesktopModal()
@@ -147,7 +208,7 @@ class Main extends MainBase {
     const active =
       this.uiState.mode === "app" && this.uiState.loadState !== "Home";
 
-    return html` <bb-app-controller
+    return html`<bb-app-controller
       class=${classMap({ active })}
       .graph=${this.tab?.graph ?? null}
       .graphIsEmpty=${graphIsEmpty}
@@ -157,7 +218,7 @@ class Main extends MainBase {
       .readOnly=${true}
       .runtimeFlags=${this.uiState.flags}
       .settings=${this.settings}
-      .showGDrive=${this.signinAdapter.state === "signedin"}
+      .showGDrive=${this.signinAdapter.stateSignal?.status === "signedin"}
       .status=${renderValues.tabStatus}
       .themeHash=${renderValues.themeHash}
     >
@@ -181,7 +242,7 @@ class Main extends MainBase {
       .readOnly=${this.tab?.readOnly ?? true}
       .selectionState=${this.selectionState}
       .settings=${this.settings}
-      .signedIn=${this.signinAdapter.state === "signedin"}
+      .signedIn=${this.signinAdapter.stateSignal?.status === "signedin"}
       .status=${renderValues.tabStatus}
       .themeHash=${renderValues.themeHash}
       .visualChangeId=${this.lastVisualChangeId}
@@ -231,16 +292,6 @@ class Main extends MainBase {
         this.uiState.show.delete("BetterOnDesktopModal");
       }}
     ></bb-better-on-desktop-modal>`;
-  }
-
-  #renderSnackbarDetailsModal() {
-    return html`<bb-snackbar-details-modal
-      .details=${this.uiState.lastSnackbarDetailsInfo}
-      @bbmodaldismissed=${() => {
-        this.uiState.lastSnackbarDetailsInfo = null;
-        this.uiState.show.delete("SnackbarDetailsModal");
-      }}
-    ></bb-snackbar-details-modal>`;
   }
 
   #renderVideoModal() {
@@ -459,13 +510,17 @@ class Main extends MainBase {
       .mode=${this.uiState.mode}
       @bbsignout=${async () => {
         await this.signinAdapter.signOut();
-        ActionTracker.signOutSuccess();
+        this.runtime.actionTracker.signOutSuccess();
         window.location.href = makeUrl({
           page: "landing",
-          redirect: { page: "home" },
+          redirect: {
+            page: "home",
+            guestPrefixed: true,
+          },
+          guestPrefixed: true,
         });
       }}
-      @bbclose=${() => {
+      @bbclose=${async () => {
         if (!this.tab) {
           return;
         }
@@ -476,8 +531,9 @@ class Main extends MainBase {
           page: "home",
           mode: this.uiState.mode,
           dev: parsedUrl.dev,
+          guestPrefixed: true,
         };
-        if (this.signinAdapter.state === "signedin") {
+        if ((await this.signinAdapter.state) === "signedin") {
           this.runtime.router.go(homepage);
         } else {
           // Note that router.go() can't navigate to the landing page, because
@@ -487,6 +543,7 @@ class Main extends MainBase {
               page: "landing",
               dev: parsedUrl.dev,
               redirect: homepage,
+              guestPrefixed: true,
             })
           );
         }
@@ -538,7 +595,7 @@ class Main extends MainBase {
               return;
             }
 
-            ActionTracker.remixApp(this.tab.graph.url, "editor");
+            this.runtime.actionTracker.remixApp(this.tab.graph.url, "editor");
             this.invokeRemixEventRouteWith(this.tab.graph.url, {
               start: Strings.from("STATUS_GENERIC_WORKING"),
               end: Strings.from("STATUS_PROJECT_CREATED"),

@@ -5,27 +5,25 @@
  */
 
 import { signal } from "signal-utils";
+import { FilterableMap, TitledItem } from "../types.js";
 
 export { FilteredMap };
 
-export type TitledItem = {
-  title?: string;
-};
-
-class FilteredMap<Item extends TitledItem> {
+class FilteredMap<Item extends TitledItem> implements FilterableMap<Item> {
   @signal
   accessor filter: string = "";
 
   @signal
   get results(): ReadonlyMap<string, Item> {
-    if (!this.filter) return this.items;
+    const items = this.getter();
+    if (!this.filter) return items;
     const filter = new RegExp(this.filter, "gim");
     const filtered = new Map<string, Item>();
-    this.items.forEach((item, url) => {
+    items.forEach((item, url) => {
       if (item.title && filter.test(item.title)) filtered.set(url, item);
     });
     return filtered;
   }
 
-  constructor(private readonly items: ReadonlyMap<string, Item>) {}
+  constructor(private readonly getter: () => ReadonlyMap<string, Item>) {}
 }

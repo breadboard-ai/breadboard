@@ -89,7 +89,7 @@ body.hide-cursor {
 
 html,
 body {
-  overscroll-behavior: none;
+  overscroll-behavior: auto;
   padding: 0;
   margin: 0;
   font-family: var(--bb-font-family, Arial);

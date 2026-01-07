@@ -4,15 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { config } from "dotenv";
 import { session } from "../eval.js";
 import { LLMContent } from "@breadboard-ai/types";
 import { Arguments } from "../../src/a2/autoname/types.js";
 import { ok, toJson } from "@breadboard-ai/utils";
-
-config();
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 function generateArgs(mode: string, text: string): LLMContent[] {
   const json: Arguments = {
@@ -34,7 +29,7 @@ function generateArgs(mode: string, text: string): LLMContent[] {
   return [{ parts: [{ json }] }];
 }
 
-session({ name: "Autoname", apiKey: GEMINI_API_KEY }, async (s) => {
+session({ name: "Autoname" }, async (s) => {
   const autonamer = (await import("../../src/a2/autoname/main.js")).default;
 
   function evalAutonamingGenerate(title: string, mode: string, text: string) {

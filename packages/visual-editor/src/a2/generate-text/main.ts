@@ -69,7 +69,7 @@ class GenerateText {
     const keepChattingTool = createKeepChattingTool();
     const substituting = await template.substitute(
       sharedContext.params,
-      async ({ path: url, instance }) => toolManager.addTool(url, instance)
+      async (part) => toolManager.addTool(part)
     );
     this.#hasTools = toolManager.hasTools();
     if (sharedContext.chat) {

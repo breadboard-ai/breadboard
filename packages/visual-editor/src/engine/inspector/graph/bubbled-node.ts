@@ -14,6 +14,7 @@ import type {
   NodeConfiguration,
   NodeDescriberResult,
   NodeDescriptor,
+  NodeIdentifier,
   NodeMetadata,
   OutputValues,
 } from "@breadboard-ai/types";
@@ -157,5 +158,9 @@ export class BubbledInspectableNode implements InspectableNode {
 
   deleted(): boolean {
     return this.#actual.deleted();
+  }
+
+  routes(): NodeIdentifier[] {
+    return this.#actual.routes();
   }
 }

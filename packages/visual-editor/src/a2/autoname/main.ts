@@ -63,7 +63,7 @@ async function invoke(
     return { context: cantAutoname() };
   }
   const naming = await new GeminiPrompt(caps, moduleArgs, {
-    model: "gemini-2.0-flash-lite",
+    model: "gemini-2.5-flash-lite",
     body: {
       contents: modeHandler.prompt(),
       safetySettings: defaultSafetySettings(),

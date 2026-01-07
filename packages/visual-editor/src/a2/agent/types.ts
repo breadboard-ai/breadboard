@@ -15,6 +15,7 @@ import {
   StatusUpdateCallback,
 } from "./function-definition.js";
 import { SimplifiedToolManager } from "../a2/tool-manager.js";
+import type { SpreadsheetValueRange } from "../google-drive/api.js";
 
 export type FunctionCallerFactory = {
   create(
@@ -69,4 +70,34 @@ export type A2UIRenderer = {
    * action context object.
    */
   render(a2UIPayload: unknown[]): Promise<Outcome<Record<string, unknown>>>;
+};
+
+export type SheetMetadata = {
+  name: string;
+  columns: string[];
+};
+
+export type SheetMetadataWithFilePath = SheetMetadata & {
+  file_path: string;
+};
+
+/**
+ * A generic type of outcome of an agent operation.
+ */
+export type AgentOutcome = {
+  success: boolean;
+  error?: string;
+};
+
+/**
+ * A generic type of managing memory, styled as a Google Sheet.
+ */
+export type MemoryManager = {
+  getSheetMetadata(): Promise<Outcome<{ sheets: SheetMetadataWithFilePath[] }>>;
+  readSheet(args: { range: string }): Promise<Outcome<SpreadsheetValueRange>>;
+  updateSheet(args: {
+    range: string;
+    values: string[][];
+  }): Promise<Outcome<AgentOutcome>>;
+  deleteSheet(args: { name: string }): Promise<Outcome<AgentOutcome>>;
 };

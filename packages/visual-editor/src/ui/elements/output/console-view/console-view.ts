@@ -17,6 +17,7 @@ import { type } from "../../../styles/host/type.js";
 import { icons } from "../../../styles/icons.js";
 import { iconSubstitute } from "../../../utils/icon-substitute.js";
 import { sharedStyles } from "./shared-styles.js";
+import { hasControlPart } from "../../../../runtime/control.js";
 
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {
@@ -524,12 +525,14 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                     ([key]) => key,
                     ([, item]) => {
                       return html`<div class="output" data-label="Output:">
-                        <bb-llm-output
-                          .lite=${true}
-                          .clamped=${false}
-                          .value=${item}
-                          .forceDrivePlaceholder=${true}
-                        ></bb-llm-output>
+                        ${hasControlPart(item)
+                          ? `Skipped`
+                          : html` <bb-llm-output
+                              .lite=${true}
+                              .clamped=${false}
+                              .value=${item}
+                              .forceDrivePlaceholder=${true}
+                            ></bb-llm-output>`}
                       </div>`;
                     }
                   )

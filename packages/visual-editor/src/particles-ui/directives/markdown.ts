@@ -14,34 +14,23 @@ import {
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import MarkdownIt from "markdown-it";
 import { RenderRule } from "markdown-it/lib/renderer.mjs";
+import { escapeHtml } from "../../utils/escape-html.js";
 
 class MarkdownDirective extends Directive {
   #markdownIt = MarkdownIt({
     highlight: (str, lang) => {
       switch (lang) {
         case "html": {
-          return `<iframe class="html-view" srcdoc="${this.#escapeSrcdoc(str)}" sandbox></iframe>`;
+          return `<iframe class="html-view" srcdoc="${escapeHtml(str)}" sandbox></iframe>`;
         }
 
         default:
-          return this.#escapeSrcdoc(str);
+          return escapeHtml(str);
       }
     },
   });
   #lastValue: string | null = null;
   #lastTagClassMap: string | null = null;
-
-  #escapeSrcdoc = (str: string) => {
-    const htmlEntities: Record<string, string> = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;",
-    };
-
-    return str.replace(/[&<>"']/g, (char) => htmlEntities[char]);
-  };
 
   update(_part: Part, [value, tagClassMap]: DirectiveParameters<this>) {
     if (
@@ -59,7 +48,7 @@ class MarkdownDirective extends Directive {
   #originalClassMap = new Map<string, RenderRule | undefined>();
   #applyTagClassMap(tagClassMap: Record<string, string[]>) {
     Object.entries(tagClassMap).forEach(([tag, classes]) => {
-      let tokenName;
+      let tokenName: string | undefined;
       switch (tag) {
         case "p":
           tokenName = "paragraph";
@@ -82,7 +71,7 @@ class MarkdownDirective extends Directive {
           tokenName = "list_item";
           break;
         case "a":
-          tokenName = "link_item";
+          tokenName = "link";
           break;
         case "strong":
           tokenName = "strong";
@@ -92,14 +81,14 @@ class MarkdownDirective extends Directive {
           break;
       }
 
-      if (!tokenName) {
-        return;
-      }
+      if (!tokenName) return;
 
       const key = `${tokenName}_open`;
-      const original: RenderRule | undefined =
-        this.#markdownIt.renderer.rules[key];
-      this.#originalClassMap.set(key, original);
+
+      // Save original only once to avoid losing it on multiple updates
+      if (!this.#originalClassMap.has(key)) {
+        this.#originalClassMap.set(key, this.#markdownIt.renderer.rules[key]);
+      }
 
       this.#markdownIt.renderer.rules[key] = (
         tokens,
@@ -109,12 +98,21 @@ class MarkdownDirective extends Directive {
         self
       ) => {
         const token = tokens[idx];
+
+        // 1. Apply the dynamic classes.
         for (const clazz of classes) {
           token.attrJoin("class", clazz);
         }
 
+        // 2. Add targets & rel for links.
+        if (tag === "a") {
+          token.attrSet("target", "_blank");
+          token.attrSet("rel", "noopener noreferrer");
+        }
+
+        const original = this.#originalClassMap.get(key);
         if (original) {
-          return original.call(this, tokens, idx, options, env, self);
+          return original(tokens, idx, options, env, self);
         } else {
           return self.renderToken(tokens, idx, options);
         }

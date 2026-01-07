@@ -95,7 +95,9 @@ async function callGenWebpageLegacy(
   // TODO(askerryryan): Remove once functional.
   console.log("request body");
   console.log(body);
-  const response = await executeStep(caps, moduleArgs, body);
+  const response = await executeStep(caps, moduleArgs, body, {
+    expectedDurationInSec: 70,
+  });
   if (!ok(response)) {
     let errorMessage;
     if (response.$error.includes("The service is currently unavailable")) {

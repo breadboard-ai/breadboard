@@ -13,6 +13,7 @@ import {
   HarnessRunResult,
   InputValues,
   NodeConfiguration,
+  NodeDescriptor,
   NodeHandlerContext,
   NodeIdentifier,
   NodeLifecycleState,
@@ -54,6 +55,11 @@ import {
 
 import { fromProbe, fromRunnerResult } from "./local.js";
 import { isLLMContentArray } from "../../../data/common.js";
+import {
+  augmentWithSkipOutputs,
+  computeControlState,
+  computeSkipOutputs,
+} from "../../../runtime/control.js";
 
 export { PlanRunner };
 
@@ -250,9 +256,16 @@ class PlanRunner
   #updateEdgeState(state: NodeLifecycleState, info: PlanNodeInfo) {
     switch (state) {
       case "inactive":
-      case "skipped":
         this.dispatchEvent(
           new EdgeStateChangeEvent({ edges: info.downstream, state: "initial" })
+        );
+        break;
+      case "skipped":
+        this.dispatchEvent(
+          new EdgeStateChangeEvent({
+            edges: [...info.upstream, ...info.downstream],
+            state: "initial",
+          })
         );
         break;
       case "working":
@@ -423,11 +436,15 @@ class InternalRunStateController {
     return error;
   }
 
-  fromTask(task: Task, config: NodeConfiguration): TraversalResult {
+  fromTask(
+    descriptor: NodeDescriptor,
+    inputs: InputValues,
+    config: NodeConfiguration
+  ): TraversalResult {
     // This is probably wrong, dig in later.
     return {
-      descriptor: task.node,
-      inputs: { ...config, ...task.inputs },
+      descriptor,
+      inputs: { ...config, ...inputs },
       missingInputs: [],
       current: { from: "", to: "" },
       opportunities: [],
@@ -479,7 +496,13 @@ class InternalRunStateController {
       env: context.fileSystem.env(),
     });
     const invoker = new NodeInvoker(
-      { ...context, fileSystem, signal, currentStep: task.node },
+      {
+        ...context,
+        fileSystem,
+        signal,
+        currentStep: task.node,
+        currentGraph: this.graph,
+      },
       { graph: this.graph },
       async (result) => {
         const harnessResult = fromRunnerResult(result);
@@ -508,10 +531,22 @@ class InternalRunStateController {
       outputs = nodeConfiguration as { $error: string };
       console.warn(`Can't get latest config`, outputs.$error);
     } else {
-      outputs = await invoker.invokeNode(
-        this.fromTask(task, nodeConfiguration),
-        path
-      );
+      const controlState = computeControlState(task.inputs);
+      if (controlState.skip) {
+        outputs = computeSkipOutputs(nodeConfiguration);
+      } else {
+        outputs = augmentWithSkipOutputs(
+          nodeConfiguration,
+          await invoker.invokeNode(
+            this.fromTask(
+              task.node,
+              controlState.adjustedInputs,
+              nodeConfiguration
+            ),
+            path
+          )
+        );
+      }
       if (signal.aborted) {
         const interrupting = this.orchestrator.setInterrupted(task.node.id);
         if (!ok(interrupting)) {

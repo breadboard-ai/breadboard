@@ -98,7 +98,7 @@ async function callVideoGen(
   caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   prompt: string,
-  imageContent: LLMContent | undefined,
+  imageContent: LLMContent[],
   disablePromptRewrite: boolean,
   aspectRatio: string,
   modelName: string
@@ -121,29 +121,33 @@ async function callVideoGen(
     ],
   };
   const inputParameters: string[] = ["text_instruction"];
-  if (imageContent) {
-    console.log("Image found, using i2v");
-    let imageChunk;
-    if (isStoredData(imageContent)) {
-      const blobStoredData = await driveFileToBlob(
-        moduleArgs,
-        imageContent.parts.at(-1)!
-      );
-      if (!ok(blobStoredData)) return blobStoredData;
-      imageChunk = toGcsAwareChunk(blobStoredData);
-    } else {
-      const { inlineData } = imageContent.parts.at(
-        -1
-      )! as InlineDataCapabilityPart;
-      imageChunk = {
-        mimetype: inlineData.mimeType,
-        data: inlineData.data,
-      };
+  if (imageContent.length > 0) {
+    console.log(`${imageContent.length} image(s) found, using i2v`);
+    const imageChunks = [];
+    for (const element of imageContent) {
+      let imageChunk;
+      if (isStoredData(element)) {
+        const blobStoredData = await driveFileToBlob(
+          moduleArgs,
+          element.parts.at(-1)!
+        );
+        if (!ok(blobStoredData)) return blobStoredData;
+        imageChunk = toGcsAwareChunk(blobStoredData);
+      } else {
+        const { inlineData } = element.parts.at(
+          -1
+        )! as InlineDataCapabilityPart;
+        imageChunk = {
+          mimetype: inlineData.mimeType,
+          data: inlineData.data,
+        };
+      }
+      if (!imageChunk || typeof imageChunk == "string") {
+        return err("Image input did not have the expected format");
+      }
+      imageChunks.push(imageChunk);
     }
-    if (!imageChunk || typeof imageChunk == "string") {
-      return err("Image input did not have the expected format");
-    }
-    executionInputs["reference_image"] = { chunks: [imageChunk] };
+    executionInputs["reference_image"] = { chunks: imageChunks };
     inputParameters.push("reference_image");
   } else {
     console.log("No image found, using t2v");
@@ -162,7 +166,9 @@ async function callVideoGen(
     },
     execution_inputs: executionInputs,
   };
-  const response = await executeStep(caps, moduleArgs, body);
+  const response = await executeStep(caps, moduleArgs, body, {
+    expectedDurationInSec: 70,
+  });
   if (!ok(response)) return response;
 
   // Only take the first video output. The model can't produce
@@ -188,7 +194,9 @@ async function invoke(
   if (instruction) {
     instructionText = toText(instruction).trim();
   }
-  aspectRatio ??= "16:9";
+  if (!aspectRatio || !ASPECT_RATIOS.includes(aspectRatio)) {
+    aspectRatio = "16:9";
+  }
   // Substitute variables and magic image reference.
   // Note: it is important that images are not subsituted in here as they will
   // not be handled properly. At this point, only text variables should be left.
@@ -198,9 +206,8 @@ async function invoke(
     moduleArgs,
     new ArgumentNameGenerator(caps, moduleArgs)
   );
-  const substituting = await template.substitute(
-    params,
-    async ({ path: url, instance }) => toolManager.addTool(url, instance)
+  const substituting = await template.substitute(params, async (part) =>
+    toolManager.addTool(part)
   );
   if (!ok(substituting)) {
     return substituting;
@@ -223,17 +230,7 @@ async function invoke(
       const refText = extractTextData([itemInstruction]);
 
       // 4) Combine with whatever data was extracted from context.
-      // Validate that we did not find any images, given this isn't supported yet.
       imageContext = imageContext.concat(refImages);
-      if (imageContext.length > 1) {
-        return err(
-          `Video generation expects either a single text description, or text plus a single image. Got ${imageContext.length} images.`,
-          {
-            kind: "config",
-            origin: "client",
-          }
-        );
-      }
       const combinedInstruction = toTextConcat(
         joinContent(toTextConcat(refText), textContext, false)
       );
@@ -253,7 +250,7 @@ async function invoke(
         caps,
         moduleArgs,
         combinedInstruction,
-        imageContext.at(0),
+        imageContext,
         disablePromptRewrite,
         aspectRatio,
         modelName

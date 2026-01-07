@@ -25,6 +25,7 @@ suite("home", () => {
     lite: false,
     new: false,
     colorScheme: undefined,
+    guestPrefixed: false,
   });
 
   testSymmetrical(`${BASE_URL}/?mode=app`, {
@@ -33,6 +34,7 @@ suite("home", () => {
     lite: false,
     new: false,
     colorScheme: undefined,
+    guestPrefixed: false,
   });
 
   testSymmetrical(`${BASE_URL}/?mode=app&lite=true&new=true`, {
@@ -41,6 +43,7 @@ suite("home", () => {
     lite: true,
     new: true,
     colorScheme: undefined,
+    guestPrefixed: false,
   });
 
   testSymmetrical(`${BASE_URL}/?mode=app&lite=true`, {
@@ -49,6 +52,7 @@ suite("home", () => {
     lite: true,
     new: false,
     colorScheme: undefined,
+    guestPrefixed: false,
   });
 
   test("default to home w/ canvas", () => {
@@ -58,7 +62,8 @@ suite("home", () => {
       lite: false,
       new: false,
       colorScheme: undefined,
-    });
+      guestPrefixed: false,
+    } satisfies MakeUrlInit);
   });
 
   test("preserves dev params", () => {
@@ -77,6 +82,7 @@ suite("home", () => {
         // dev properties a lot, we don't want to have to update this test, so
         // that's good.
       } as object as BaseUrlInit["dev"],
+      guestPrefixed: false,
     });
   });
 });
@@ -89,6 +95,7 @@ suite("app", () => {
     resourceKey: undefined,
     lite: false,
     colorScheme: undefined,
+    guestPrefixed: false,
   });
 
   testSymmetrical(
@@ -100,6 +107,7 @@ suite("app", () => {
       resourceKey: "ghi789",
       lite: false,
       colorScheme: undefined,
+      guestPrefixed: false,
     }
   );
 
@@ -111,6 +119,7 @@ suite("app", () => {
     remix: true,
     resourceKey: undefined,
     colorScheme: undefined,
+    guestPrefixed: false,
   });
 
   testSymmetrical(
@@ -124,6 +133,7 @@ suite("app", () => {
       shared: true,
       lite: false,
       colorScheme: undefined,
+      guestPrefixed: false,
     }
   );
 
@@ -135,6 +145,7 @@ suite("app", () => {
       resourceKey: undefined,
       colorScheme: undefined,
       lite: false,
+      guestPrefixed: false,
     } satisfies MakeUrlInit);
   });
 
@@ -146,6 +157,7 @@ suite("app", () => {
       resourceKey: undefined,
       lite: false,
       colorScheme: undefined,
+      guestPrefixed: false,
     } satisfies MakeUrlInit);
   });
 
@@ -163,6 +175,7 @@ suite("app", () => {
           foo: "hello",
           bar: "",
         } as object as BaseUrlInit["dev"],
+        guestPrefixed: false,
       }
     );
   });
@@ -176,6 +189,7 @@ suite("canvas", () => {
     resourceKey: undefined,
     lite: false,
     colorScheme: undefined,
+    guestPrefixed: false,
   });
 
   test("preserves dev params", () => {
@@ -192,6 +206,7 @@ suite("canvas", () => {
           foo: "hello",
           bar: "",
         } as object as BaseUrlInit["dev"],
+        guestPrefixed: false,
       }
     );
   });
@@ -207,7 +222,9 @@ suite("landing", () => {
       redirectFromLanding: true,
       lite: false,
       colorScheme: undefined,
+      guestPrefixed: true,
     },
+    guestPrefixed: false,
   });
 
   testSymmetrical(
@@ -221,9 +238,11 @@ suite("landing", () => {
         redirectFromLanding: true,
         lite: false,
         colorScheme: undefined,
+        guestPrefixed: true,
       },
       geoRestriction: true,
       missingScopes: true,
+      guestPrefixed: false,
     }
   );
 
@@ -237,7 +256,9 @@ suite("landing", () => {
       resourceKey: undefined,
       lite: false,
       colorScheme: undefined,
+      guestPrefixed: true,
     },
+    guestPrefixed: false,
   });
 
   testSymmetrical(
@@ -254,7 +275,9 @@ suite("landing", () => {
         shared: true,
         lite: false,
         colorScheme: undefined,
+        guestPrefixed: true,
       },
+      guestPrefixed: false,
     }
   );
 
@@ -272,7 +295,9 @@ suite("landing", () => {
         resourceKey: undefined,
         colorScheme: undefined,
         lite: false,
+        guestPrefixed: true,
       },
+      guestPrefixed: false,
     }
   );
 
@@ -290,12 +315,26 @@ suite("landing", () => {
         } as object as BaseUrlInit["dev"],
         lite: false,
         colorScheme: undefined,
+        guestPrefixed: true,
       },
       dev: {
         foo: "hello",
         bar: "",
       } as object as BaseUrlInit["dev"],
+      guestPrefixed: false,
     });
+  });
+});
+
+suite("guest prefix", () => {
+  testSymmetrical(`${BASE_URL}/_app/?flow=drive:/abc123&mode=app`, {
+    page: "graph",
+    mode: "app",
+    flow: "drive:/abc123",
+    resourceKey: undefined,
+    lite: false,
+    colorScheme: undefined,
+    guestPrefixed: true,
   });
 });
 

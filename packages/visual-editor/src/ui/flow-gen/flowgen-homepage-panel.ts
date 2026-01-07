@@ -4,23 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, type PropertyValues } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import * as StringsHelper from "../strings/helper.js";
-import { outlineButtonWithIcon } from "../styles/outline-button-with-icon.js";
-import { createRef, ref } from "lit/directives/ref.js";
 import type { GraphDescriptor } from "@breadboard-ai/types";
 import { consume } from "@lit/context";
-import { StateEvent, UtteranceEvent } from "../events/events.js";
-import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
-import { icons } from "../styles/icons.js";
-import "../elements/input/expanding-textarea.js";
-import { type FlowGenerator, flowGeneratorContext } from "./flow-generator.js";
+import { LitElement, css, html, type PropertyValues } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { spinAnimationStyles } from "../styles/spin-animation.js";
-import { ActionTracker } from "../utils/action-tracker.js";
+import { createRef, ref } from "lit/directives/ref.js";
+import { actionTrackerContext } from "../contexts/action-tracker-context.js";
+import "../elements/input/expanding-textarea.js";
+import type { ExpandingTextarea } from "../elements/input/expanding-textarea.js";
+import { StateEvent, UtteranceEvent } from "../events/events.js";
+import * as StringsHelper from "../strings/helper.js";
 import { baseColors } from "../styles/host/base-colors.js";
 import { type } from "../styles/host/type.js";
+import { icons } from "../styles/icons.js";
+import { outlineButtonWithIcon } from "../styles/outline-button-with-icon.js";
+import { spinAnimationStyles } from "../styles/spin-animation.js";
+import { ActionTracker } from "../types/types.js";
+import { flowGeneratorContext, type FlowGenerator } from "./flow-generator.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 const GlobalStrings = StringsHelper.forSection("Global");
@@ -160,6 +161,9 @@ export class FlowgenHomepagePanel extends LitElement {
   @consume({ context: flowGeneratorContext })
   accessor flowGenerator: FlowGenerator | undefined = undefined;
 
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker | undefined = undefined;
+
   @state()
   accessor #state: State = { status: "initial" };
 
@@ -296,7 +300,7 @@ export class FlowgenHomepagePanel extends LitElement {
         return;
       }
 
-      ActionTracker.flowGenCreate();
+      this.actionTracker?.flowGenCreate();
 
       this.#state = { status: "generating" };
       void this.#generateBoard(description)

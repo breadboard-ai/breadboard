@@ -2,7 +2,7 @@
  * @fileoverview Gemini Model Family.
  */
 
-import { StreamableReporter } from "./output.js";
+import { getCurrentStepState, StreamableReporter } from "./output.js";
 
 import { ok, err, isLLMContentArray, ErrorMetadata } from "./utils.js";
 import { flattenContext } from "./lists.js";
@@ -12,6 +12,7 @@ import {
   LLMContent,
   Outcome,
   Schema,
+  GOOGLE_GENAI_API_PREFIX,
 } from "@breadboard-ai/types";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { createDataPartTansformer } from "./data-transforms.js";
@@ -43,11 +44,11 @@ const defaultSafetySettings = (): SafetySetting[] => [
 ];
 
 function endpointURL(model: string) {
-  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  return `${GOOGLE_GENAI_API_PREFIX}/${model}:generateContent`;
 }
 
 function streamEndpointURL(model: string) {
-  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
+  return `${GOOGLE_GENAI_API_PREFIX}/${model}:streamGenerateContent?alt=sse`;
 }
 
 const VALID_MODALITIES = ["Text", "Text and Image", "Audio"] as const;
@@ -435,6 +436,18 @@ async function conformBody(
   return { ...body, contents };
 }
 
+function calculateDuration(model: string) {
+  switch (model) {
+    case "gemini-2.5-flash":
+      return 20;
+    case "gemini-2.5-pro":
+    case "gemini-3-pro":
+      return 50;
+    default:
+      return 20;
+  }
+}
+
 async function callAPI(
   caps: Capabilities,
   moduleArgs: A2ModuleArgs,
@@ -442,6 +455,7 @@ async function callAPI(
   model: string,
   body: GeminiBody
 ): Promise<Outcome<GeminiAPIOutputs>> {
+  const { appScreen, title } = getCurrentStepState(moduleArgs);
   const reporter = new StreamableReporter(caps, {
     title: `Calling ${model}`,
     icon: "spark",
@@ -453,6 +467,10 @@ async function callAPI(
 
     await reporter.start();
     await reporter.sendUpdate("Model Input", conformedBody, "upload");
+    if (appScreen) {
+      appScreen.progress = title;
+      appScreen.expectedDuration = calculateDuration(model);
+    }
 
     let $error: string = "Unknown error";
     const maxRetries = retries;

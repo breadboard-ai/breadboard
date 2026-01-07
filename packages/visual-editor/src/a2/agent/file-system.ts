@@ -15,6 +15,7 @@ import {
 import { err, ok } from "@breadboard-ai/utils";
 import mime from "mime";
 import { toText } from "../a2/utils.js";
+import { MemoryManager } from "./types.js";
 
 export { AgentFileSystem };
 
@@ -41,6 +42,13 @@ class AgentFileSystem {
   #projects: Map<string, Set<string>> = new Map();
 
   #files: Map<string, FileDescriptor> = new Map();
+
+  #routes: Map<string, string> = new Map([
+    ["", ""],
+    ["/", "/"],
+  ]);
+
+  constructor(private readonly memoryManager: MemoryManager | null) {}
 
   write(name: string, data: string, mimeType: string): string {
     const path = this.#createNamed(name, mimeType);
@@ -137,17 +145,28 @@ class AgentFileSystem {
     return files as DataPart[];
   }
 
-  readText(path: string): Outcome<string> {
-    const parts = this.get(path);
+  async #getMemoryFile(path: string): Promise<Outcome<DataPart[]>> {
+    const sheetName = path.replace("/vfs/memory/", "");
+    const sheet = await this.memoryManager?.readSheet({
+      range: `${sheetName}!A:ZZ`,
+    });
+    if (!sheet) return [];
+    if (!ok(sheet)) return sheet;
+    return [{ text: JSON.stringify(sheet.values) }];
+  }
+
+  async readText(path: string): Promise<Outcome<string>> {
+    const parts = await this.get(path);
     if (!ok(parts)) return parts;
 
     return toText({ parts });
   }
 
-  getMany(paths: string[]): Outcome<DataPart[]> {
+  async getMany(paths: string[]): Promise<Outcome<DataPart[]>> {
     const inputErrors: string[] = [];
-    const files: DataPart[] = paths
-      .map((path) => this.get(path))
+    const files: DataPart[] = (
+      await Promise.all(paths.map((path) => this.get(path)))
+    )
       .filter((part) => {
         if (!ok(part)) {
           inputErrors.push(part.$error);
@@ -162,7 +181,7 @@ class AgentFileSystem {
     return files;
   }
 
-  get(path: string): Outcome<DataPart[]> {
+  async get(path: string): Promise<Outcome<DataPart[]>> {
     // Do a path fix-up just in case: sometimes, Gemini decides to use
     // "vfs/file" instead of "/vfs/file".
     if (path.startsWith("vfs/")) {
@@ -170,6 +189,9 @@ class AgentFileSystem {
     }
     if (path.startsWith("/vfs/projects")) {
       return this.#getProjectFiles(path);
+    }
+    if (path.startsWith("/vfs/memory")) {
+      return this.#getMemoryFile(path);
     }
     const file = this.#getFile(path);
     if (!ok(file)) return file;
@@ -201,6 +223,22 @@ class AgentFileSystem {
   listProjectContents(projectPath: string): string[] {
     const project = this.#projects.get(projectPath);
     return [...(project || [])];
+  }
+
+  addRoute(originalRoute: string): string {
+    // The "- 1" is because by default, we add two routes. So now, the count for
+    // newly added routes will start at 1.
+    const routeName = `/route-${this.#routes.size - 1}`;
+    this.#routes.set(routeName, originalRoute);
+    return routeName;
+  }
+
+  getOriginalRoute(routeName: string): Outcome<string> {
+    const originalRoute = this.#routes.get(routeName);
+    if (!originalRoute) {
+      return err(`Route "${routeName}" not found`);
+    }
+    return originalRoute;
   }
 
   add(part: DataPart, fileName?: string): Outcome<string> {

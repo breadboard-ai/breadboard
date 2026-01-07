@@ -16,6 +16,7 @@ import {
 } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
 import {
+  ActionTracker,
   AppTemplate,
   AppTemplateOptions,
   FloatingInputFocusState,
@@ -41,36 +42,41 @@ import {
 } from "../../events/events.js";
 import { ProjectRun } from "../../state/types.js";
 import { emptyStyles } from "../../styles/host/colors-empty.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
 import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js";
 import { styles as appStyles } from "./index.styles.js";
 import { theme as uiTheme } from "./theme/light.js";
 
 import "./header/header.js";
 
+import { type GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import {
-  MAIN_TO_SHAREABLE_COPY_PROPERTY,
-  SHAREABLE_COPY_TO_MAIN_PROPERTY,
+  DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY,
+  DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN,
 } from "@breadboard-ai/utils/google-drive/operations.js";
 import { extractGoogleDriveFileId } from "@breadboard-ai/utils/google-drive/utils.js";
-import { type GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { createRef, ref } from "lit/directives/ref.js";
 import * as ParticlesUI from "../../../particles-ui/index.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { markdown } from "../../directives/markdown.js";
-import { makeUrl } from "../../utils/urls.js";
+import { makeUrl, parseUrl } from "../../utils/urls.js";
 
 import {
   AppScreenOutput,
   BoardServer,
   ConsentAction,
-  ConsentType,
-  ConsentUIType,
   GraphDescriptor,
   RuntimeFlags,
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import { repeat } from "lit/directives/repeat.js";
+import { GoogleDriveBoardServer } from "../../../board-server/server.js";
+import { isInlineData, isLLMContentArray } from "../../../data/common.js";
+import { inlineAllContent } from "../../../data/inline-all-content.js";
+import {
+  extensionFromMimeType,
+  saveOutputsAsFile,
+} from "../../../data/save-outputs-as-file.js";
+import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import { consentManagerContext } from "../../contexts/consent-manager.js";
 import {
   GlobalConfig,
@@ -81,89 +87,8 @@ import {
   CONSENT_RENDER_INFO,
   ConsentManager,
 } from "../../utils/consent-manager.js";
-import { isInlineData, isLLMContentArray } from "../../../data/common.js";
-import { inlineAllContent } from "../../../data/inline-all-content.js";
-import {
-  extensionFromMimeType,
-  saveOutputsAsFile,
-} from "../../../data/save-outputs-as-file.js";
-import { GoogleDriveBoardServer } from "../../../board-server/server.js";
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-const toFunctionString = (fn: Function, bindings?: Record<string, unknown>) => {
-  let str = fn.toString();
-  if (bindings) {
-    for (const [key, value] of Object.entries(bindings)) {
-      str = str.replace(key, `(${JSON.stringify(value)})`);
-    }
-  }
-  return str;
-};
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-const scriptifyFunction = (fn: Function, bindings?: Record<string, unknown>) =>
-  `<script>( ${toFunctionString(fn, bindings)} )();</script>`;
-
-// Will be bound into the iframe script as the targetOrigin for postMessage
-const PARENT_ORIGIN = window.location.origin;
-
-// This script will be run in the AppCat-generated iframe, and will intercept
-// any popups that are opened by the app to post back to Opal to request
-// opening after gaining consent. The iframe is sandboxed and does not allow
-// popups itself, so this is a best-effort to
-const interceptPopupsScript = scriptifyFunction(
-  () => {
-    const requestPopup = (url: URL) =>
-      window.parent.postMessage(
-        {
-          type: "request-open-popup",
-          url: url.toString(),
-        },
-        PARENT_ORIGIN
-      );
-    // This script is guaranteed to be run before any generated scripts, and
-    // we don't let the generated HTML override this
-    Object.defineProperty(window, "open", {
-      value: function (url?: string | URL) {
-        if (url) {
-          requestPopup(new URL(url));
-        }
-        return undefined;
-      },
-      writable: false,
-      configurable: false,
-      enumerable: false,
-    });
-    const findAncestorTag = <T extends keyof HTMLElementTagNameMap>(
-      event: Event,
-      tag: T
-    ) => {
-      const path = event.composedPath();
-      return path.find((el) => (el as HTMLElement).localName === tag) as
-        | HTMLElementTagNameMap[typeof tag]
-        | undefined;
-    };
-    // This listener is capturing and guaranteed to be run before any
-    // generated scripts, so we always get first crack at intercepting popups
-    window.addEventListener(
-      "click",
-      (evt) => {
-        const anchor = findAncestorTag(evt, "a");
-        if (anchor) {
-          requestPopup(new URL(anchor.href));
-          evt.preventDefault();
-          evt.stopImmediatePropagation();
-        }
-      },
-      true
-    );
-  },
-  {
-    PARENT_ORIGIN,
-  }
-);
-
-function isHTMLOutput(screen: AppScreenOutput): string | null {
+function getHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
   const singleOutput = outputs.length === 1;
   if (!singleOutput) {
@@ -186,6 +111,9 @@ function isHTMLOutput(screen: AppScreenOutput): string | null {
 
   return null;
 }
+
+const parsedUrl = parseUrl(window.location.href);
+const FIRST_RUN_KEY = "bb-first-run-warning";
 
 @customElement("app-basic")
 export class Template extends SignalWatcher(LitElement) implements AppTemplate {
@@ -214,6 +142,10 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @consume({ context: consentManagerContext })
   accessor consentManager: ConsentManager | undefined = undefined;
 
+  @state()
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker | undefined = undefined;
+
   @property()
   accessor focusWhenIn: FloatingInputFocusState = ["app"];
 
@@ -226,8 +158,11 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @property()
   accessor showGDrive = false;
 
-  @property()
+  @property({ reflect: true, type: Boolean })
   accessor isRefreshingAppTheme = false;
+
+  @property()
+  accessor isFreshGraph = false;
 
   @property()
   accessor isEmpty = false;
@@ -272,10 +207,23 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @query("#export-output-button")
   accessor exportOutputsButton: HTMLButtonElement | null = null;
 
-  readonly #shareResultsButton = createRef<HTMLButtonElement>();
+  @property()
+  accessor shouldShowFirstRunMessage = false;
 
-  readonly outputHtmlIframeRef = createRef<HTMLIFrameElement>();
-  #messageListenerController: AbortController | null = null;
+  @property()
+  accessor firstRunMessage = Strings.from("LABEL_FIRST_RUN");
+
+  @state()
+  set showFirstRunMessage(show: boolean) {
+    this.#showFirstRunMessage = show;
+    globalThis.localStorage.setItem(FIRST_RUN_KEY, String(show));
+  }
+  get showFirstRunMessage() {
+    return this.#showFirstRunMessage;
+  }
+  #showFirstRunMessage = false;
+
+  readonly #shareResultsButton = createRef<HTMLButtonElement>();
 
   get additionalOptions() {
     return {
@@ -298,42 +246,11 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
   static styles = appStyles;
 
-  connectedCallback() {
-    super.connectedCallback();
-    if (this.runtimeFlags?.requireConsentForOpenWebpage) {
-      window.addEventListener(
-        "message",
-        async (event: MessageEvent<{ type: string; url: string }>) => {
-          if (
-            event.source === this.outputHtmlIframeRef.value?.contentWindow &&
-            event.data.type === "request-open-popup"
-          ) {
-            const url = new URL(event.data.url);
-            const graphUrl = this.graph?.url;
-            if (this.consentManager && graphUrl) {
-              const allow = await this.consentManager.queryConsent(
-                {
-                  graphUrl,
-                  type: ConsentType.OPEN_WEBPAGE,
-                  scope: url.origin,
-                },
-                ConsentUIType.MODAL
-              );
-              if (!allow) {
-                return;
-              }
-            }
-            window.open(url.toString(), "_blank");
-          }
-        },
-        { signal: this.#messageListenerController?.signal }
-      );
-    }
-  }
+  constructor() {
+    super();
 
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this.#messageListenerController?.abort();
+    this.showFirstRunMessage =
+      (globalThis.localStorage.getItem(FIRST_RUN_KEY) ?? "true") === "true";
   }
 
   #renderControls() {
@@ -362,15 +279,14 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       | symbol = nothing;
     const last = this.run.app.last?.last;
     if (last) {
-      const htmlOutput = isHTMLOutput(last);
+      const htmlOutput = getHTMLOutput(last);
       if (htmlOutput !== null) {
-        activityContents = html`<iframe
-          srcdoc=${interceptPopupsScript + htmlOutput}
-          ${ref(this.outputHtmlIframeRef)}
-          frameborder="0"
-          class="html-view"
-          sandbox="allow-scripts allow-forms"
-        ></iframe>`;
+        activityContents = html`
+          <bb-app-sandbox
+            .srcdoc=${htmlOutput}
+            .graphUrl=${this.graph?.url ?? ""}
+          ></bb-app-sandbox>
+        `;
       } else if (
         isLLMContentArray(last.output.context) &&
         isInlineData(last.output.context[0]?.parts[0]) &&
@@ -555,26 +471,30 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     this.style.setProperty("--input-clearance", `0px`);
 
+    const allowSharingOutputs = !parsedUrl.lite;
+
     return html`
       <div id="save-results-button-container">
-        ${this.resultsUrl
-          ? html`<button
-              id="save-results-button"
-              class="sans-flex w-500 round md-body-medium"
-              @click=${this.#onClickCopyShareUrl}
-            >
-              <span class="g-icon filled round">content_copy</span>
-              Copy share URL
-            </button>`
-          : html`<button
-              id="save-results-button"
-              class="sans-flex w-500 round md-body-medium"
-              @click=${this.#onClickSaveResults}
-              ${ref(this.#shareResultsButton)}
-            >
-              <span class="g-icon filled round">share</span>
-              Share output
-            </button>`}
+        ${allowSharingOutputs
+          ? this.resultsUrl
+            ? html`<button
+                id="save-results-button"
+                class="sans-flex w-500 round md-body-medium"
+                @click=${this.#onClickCopyShareUrl}
+              >
+                <span class="g-icon filled round">content_copy</span>
+                Copy share URL
+              </button>`
+            : html`<button
+                id="save-results-button"
+                class="sans-flex w-500 round md-body-medium"
+                @click=${this.#onClickSaveResults}
+                ${ref(this.#shareResultsButton)}
+              >
+                <span class="g-icon filled round">share</span>
+                Share output
+              </button>`
+          : nothing}
         <button
           id="export-output-button"
           @click=${this.#onClickExportOutput}
@@ -594,7 +514,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     await navigator.clipboard.writeText(decodeURIComponent(this.resultsUrl));
 
-    ActionTracker.shareResults("copy_share_link");
+    this.actionTracker?.shareResults("copy_share_link");
 
     this.dispatchEvent(
       new SnackbarEvent(
@@ -678,7 +598,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     unlockButton();
 
-    ActionTracker.shareResults("download");
+    this.actionTracker?.shareResults("download");
 
     function lockButton() {
       btn!.disabled = true;
@@ -690,9 +610,26 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   }
 
   async #onClickSaveResults() {
+    const snackbarId = globalThis.crypto.randomUUID();
+    this.dispatchEvent(
+      new SnackbarEvent(
+        snackbarId,
+        `Saving results to your Google Drive...`,
+        SnackType.PENDING,
+        [],
+        true,
+        true
+      )
+    );
+
+    const unsnackbar = () => {
+      this.dispatchEvent(new UnsnackbarEvent());
+    };
+
     const btn = this.#shareResultsButton.value;
     if (!btn) {
       console.error("No share results button");
+      unsnackbar();
       return;
     }
     this.resultsUrl = null;
@@ -709,6 +646,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     if (!this.run) {
       console.error(`No project run`);
       unlockButton();
+      unsnackbar();
       return;
     }
 
@@ -716,6 +654,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     if (!this.googleDriveClient) {
       console.error(`No google drive client`);
       unlockButton();
+      unsnackbar();
       return;
     }
 
@@ -723,12 +662,14 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     if (!currentGraphUrl) {
       console.error(`No graph url`);
       unlockButton();
+      unsnackbar();
       return;
     }
     const currentGraphFileId = extractGoogleDriveFileId(currentGraphUrl);
     if (!currentGraphFileId) {
       console.error(`Graph URL is not drive:`, currentGraphUrl);
       unlockButton();
+      unsnackbar();
       return;
     }
 
@@ -738,14 +679,18 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       { fields: ["properties", "capabilities"] }
     );
     const isShareableCopy =
-      !!currentGraphMetadata.properties?.[SHAREABLE_COPY_TO_MAIN_PROPERTY];
+      !!currentGraphMetadata.properties?.[
+        DRIVE_PROPERTY_SHAREABLE_COPY_TO_MAIN
+      ];
     if (isShareableCopy) {
       // The user is already consuming the shareable copy, so just use that for
       // the results link.
       shareableGraphFileId = currentGraphFileId;
     } else {
       const linkedShareableCopyFileId =
-        currentGraphMetadata.properties?.[MAIN_TO_SHAREABLE_COPY_PROPERTY];
+        currentGraphMetadata.properties?.[
+          DRIVE_PROPERTY_MAIN_TO_SHAREABLE_COPY
+        ];
       if (linkedShareableCopyFileId) {
         // The user is consuming the editable version, but it is shared, and we
         // know the file id of the shareable version. Automatically substitute
@@ -756,7 +701,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         // if they wanted to. Tell them to.
         this.dispatchEvent(
           new SnackbarEvent(
-            crypto.randomUUID(),
+            snackbarId,
             `Please share your ${Strings.from("APP_NAME")} first`,
             SnackType.ERROR,
             [
@@ -799,17 +744,20 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     if (!this.run.finalOutput) {
       unlockButton();
+      unsnackbar();
       return;
     }
     const boardServer = this.boardServer;
     if (!boardServer) {
       console.error(`No board server`);
       unlockButton();
+      unsnackbar();
       return;
     }
     if (!(boardServer instanceof GoogleDriveBoardServer)) {
       console.error(`Board server was not Google Drive`);
       unlockButton();
+      unsnackbar();
       return;
     }
 
@@ -823,7 +771,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       unlockButton();
       this.dispatchEvent(
         new SnackbarEvent(
-          globalThis.crypto.randomUUID(),
+          snackbarId,
           `Error packaging results prior to saving`,
           SnackType.ERROR,
           [],
@@ -834,7 +782,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       return;
     }
 
-    const snackbarId = globalThis.crypto.randomUUID();
     this.dispatchEvent(
       new SnackbarEvent(
         snackbarId,
@@ -904,11 +851,12 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         resourceKey: await shareableGraphResourceKeyPromise,
         results: resultsFileId,
         shared: true,
+        guestPrefixed: false,
       },
       this.globalConfig?.hostOrigin
     );
 
-    ActionTracker.shareResults("save_to_drive");
+    this.actionTracker?.shareResults("save_to_drive");
 
     unlockButton();
 
@@ -962,9 +910,9 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
     }
 
     const retrievingSplash =
-      this.isRefreshingAppTheme ||
       (typeof this.options.splashImage === "boolean" &&
-        this.options.splashImage);
+        this.options.splashImage) ||
+      (this.isFreshGraph && this.isRefreshingAppTheme);
 
     let styles: Record<string, string> = {};
     if (this.options.theme) {
@@ -1003,6 +951,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       }
     }
 
+    const editable = !this.readOnly && !this.isFreshGraph;
     const splashScreen = html`
       <div
         id="splash"
@@ -1016,8 +965,14 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
       >
         <section id="splash-content-container">
           <h1
-            class="w-500 round sans-flex md-display-small"
-            ?contenteditable=${!this.readOnly}
+            ?contenteditable=${editable}
+            class=${classMap({
+              "w-500": true,
+              round: true,
+              "sans-flex": true,
+              "md-display-small": true,
+              invisible: this.isFreshGraph,
+            })}
             @blur=${(evt: Event) => {
               if (this.readOnly) {
                 return;
@@ -1041,11 +996,17 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 })
               );
             }}
-            .innerText=${this.options.title}
+            .innerText=${this.isFreshGraph ? "..." : this.options.title}
           ></h1>
           <p
-            ?contenteditable=${!this.readOnly}
-            class="w-500 round sans-flex md-title-medium"
+            ?contenteditable=${editable}
+            class=${classMap({
+              "w-500": true,
+              round: true,
+              "sans-flex": true,
+              "md-title-medium": true,
+              invisible: this.isFreshGraph,
+            })}
             @blur=${(evt: Event) => {
               if (this.readOnly) {
                 return;
@@ -1075,21 +1036,44 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
                 })
               );
             }}
-            .innerText=${this.options.description ?? ""}
+            .innerText=${this.isFreshGraph
+              ? "..."
+              : (this.options.description ?? "")}
           ></p>
           <div id="input" class="stopped">
-            <div>
+            <div id="run-container">
               <button
                 id="run"
+                class=${classMap({ invisible: this.isFreshGraph })}
                 @click=${() => {
-                  ActionTracker.runApp(this.graph?.url, "app_preview");
+                  this.showFirstRunMessage = false;
+
+                  this.actionTracker?.runApp(this.graph?.url, "app_preview");
                   this.dispatchEvent(
                     new StateEvent({ eventType: "board.run" })
                   );
                 }}
               >
-                <span class="g-icon"></span>Start
+                <span class="g-icon filled-heavy round"></span>${this
+                  .isRefreshingAppTheme
+                  ? "Updating..."
+                  : "Start"}
               </button>
+              ${this.shouldShowFirstRunMessage &&
+              this.showFirstRunMessage &&
+              !this.isFreshGraph
+                ? html`<bb-onboarding-tooltip
+                    @bbonboardingacknowledged=${() => {
+                      this.showFirstRunMessage = false;
+                    }}
+                    style=${styleMap({
+                      "--top": `-12px`,
+                      "--right": "8px",
+                    })}
+                    .stackTop=${true}
+                    .text=${this.firstRunMessage}
+                  ></bb-onboarding-tooltip>`
+                : nothing}
             </div>
           </div>
         </section>
@@ -1108,6 +1092,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
         case "progress":
           // Progress is always rendered but hidden (so as to avoid re-renders),
           // so this becomes a no-op here to ensure we cover all states.
+          // The only thing we need to do is clean up after input
+          this.style.setProperty("--input-clearance", `0px`);
           break;
 
         case "input":

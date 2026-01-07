@@ -9,6 +9,7 @@ import { SignalWatcher } from "@lit-labs/signals";
 import { consume } from "@lit/context";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
 import { boardServerContext } from "../../contexts/board-server.js";
 import {
   globalConfigContext,
@@ -21,7 +22,7 @@ import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
 import type { RecentBoard } from "../../types/types.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
+import { ActionTracker } from "../../types/types.js";
 import { blankBoard } from "../../utils/blank-board.js";
 import "./gallery.js";
 import "./homepage-search-button.js";
@@ -41,6 +42,9 @@ export class ProjectListing extends SignalWatcher(LitElement) {
   @consume({ context: boardServerContext, subscribe: true })
   @state()
   accessor boardServer: BoardServer | undefined;
+
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker | undefined;
 
   @property({ attribute: false })
   accessor recentBoards: RecentBoard[] = [];
@@ -565,7 +569,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
       return;
     }
 
-    ActionTracker.createNew();
+    this.actionTracker?.createNew();
 
     evt.target.disabled = true;
     this.dispatchEvent(

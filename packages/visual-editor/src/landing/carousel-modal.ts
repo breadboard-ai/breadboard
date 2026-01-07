@@ -397,6 +397,7 @@ export class LandingCarouselModal extends LitElement {
               page: "graph",
               mode: "app",
               flow: galleryItems[this.currentItem].url,
+              guestPrefixed: true,
             })}
           >
             Try now

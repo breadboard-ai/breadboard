@@ -4,17 +4,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ok } from "@breadboard-ai/utils";
 import z from "zod";
+import { toText, tr } from "../../a2/utils.js";
+import { AgentFileSystem } from "../file-system.js";
 import {
   defineFunction,
   defineFunctionLoose,
   FunctionDefinition,
 } from "../function-definition.js";
-import { AgentFileSystem } from "../file-system.js";
-import { ok } from "@breadboard-ai/utils";
-import { tr } from "../../a2/utils.js";
+import { Outcome } from "@breadboard-ai/types/data.js";
+import { PidginTranslator } from "../pidgin-translator.js";
 
-export { defineSystemFunctions };
+export {
+  CREATE_TASK_TREE_SCRATCHPAD_FUNCTION,
+  defineSystemFunctions,
+  FAILED_TO_FULFILL_FUNCTION,
+  OBJECTIVE_FULFILLED_FUNCTION,
+};
+
+const OBJECTIVE_FULFILLED_FUNCTION = "system_objective_fulfilled";
+const FAILED_TO_FULFILL_FUNCTION = "system_failed_to_fulfill_objective";
+const CREATE_TASK_TREE_SCRATCHPAD_FUNCTION = "create_task_tree_scratchpad";
 
 const TASK_TREE_SCHEMA = {
   type: "object",
@@ -55,7 +66,8 @@ const TASK_TREE_SCHEMA = {
 
 export type SystemFunctionArgs = {
   fileSystem: AgentFileSystem;
-  successCallback(href: string, objective_outcomes: string[]): void;
+  translator: PidginTranslator;
+  successCallback(href: string, pidginString: string): Outcome<void>;
   terminateCallback(): void;
 };
 
@@ -63,15 +75,16 @@ function defineSystemFunctions(args: SystemFunctionArgs): FunctionDefinition[] {
   return [
     defineFunction(
       {
-        name: "system_objective_fulfilled",
+        name: OBJECTIVE_FULFILLED_FUNCTION,
         description: `Inidicates completion of the overall objective. 
 Call only when the specified objective is entirely fulfilled`,
         parameters: {
-          objective_outcomes: z
-            .array(z.string().describe(`A VFS path pointing at the outcome`))
-            .describe(
-              `The array of files that fulfill in the objective. Can be either a file or a project`
-            ),
+          objective_outcome: z.string().describe(
+            tr`
+Your return value: the content of the fulfilled objective. The content may include references to VFS files. For instance, if you have an existing file at "/vfs/image4.png", you can reference it as <file src="/vfs/image4.ong" /> in content. If you do not use <file> tags, the contents of this file will not be included as part of the outcome.
+
+These references can point to files of any type, such as text, audio, videos, etc. Projects can also be referenced in this way.`
+          ),
           href: z
             .string()
             .describe(
@@ -83,15 +96,25 @@ If the objective specifies other agent URLs using the
             )
             .default("/"),
         },
+        response: {
+          error: z
+            .string()
+            .describe(
+              `A detailed error message that usually indicates invalid parameters being passed into the function`
+            ),
+        },
       },
-      async ({ objective_outcomes, href }) => {
-        args.successCallback(href || "/", objective_outcomes);
-        return {};
+      async ({ objective_outcome, href }) => {
+        const result = args.successCallback(href || "/", objective_outcome);
+        if (!ok(result)) {
+          return { error: result.$error };
+        }
+        return { error: "" };
       }
     ),
     defineFunction(
       {
-        name: "system_failed_to_fulfill_objective",
+        name: FAILED_TO_FULFILL_FUNCTION,
         description: `Inidicates that the agent failed to fulfill of the overall
 objective. Call ONLY when all means of fulfilling the objective have been
 exhausted.`,
@@ -122,7 +145,7 @@ If the objective specifies other agent URLs using the
         return {};
       }
     ),
-    defineFunction(
+    (defineFunction(
       {
         name: "system_write_text_to_file",
         description: "Writes the provided text to a file",
@@ -147,15 +170,24 @@ existing project.`.trim()
         response: {
           file_path: z
             .string()
-            .describe("The VS path to the file containing the provided text"),
+            .describe("The VS path to the file containing the provided text")
+            .optional(),
+          error: z
+            .string()
+            .describe("The error message if the file could not be written")
+            .optional(),
         },
       },
       async ({ file_name, project_path, text }) => {
         console.log("FILE_NAME", file_name);
         console.log("TEXT TO WRITE", text);
+        const translatedContent = await args.translator.fromPidginString(text);
+        if (!ok(translatedContent)) {
+          return { error: translatedContent.$error };
+        }
         const file_path = args.fileSystem.write(
           file_name,
-          text,
+          toText(translatedContent),
           "text/markdown"
         );
         if (project_path) {
@@ -212,9 +244,10 @@ existing project.`.trim()
         description: "Appends provided text to a file",
         parameters: {
           file_path: z.string().describe(
-            `
+            tr`
+  
 The VFS path of the file to which to append text. If a file does not
-exist, it will be created`.trim()
+exist, it will be created`
           ),
           project_path: z.string().describe(
             `
@@ -282,11 +315,11 @@ If an error has occurred, will contain a description of the error`
       },
       async ({ file_path }) => {
         console.log("FILE PATH", file_path);
-        const text = args.fileSystem.readText(file_path);
+        const text = await args.fileSystem.readText(file_path);
         if (!ok(text)) return { error: text.$error };
         return { text };
       }
-    ),
+    )),
     defineFunction(
       {
         name: "system_create_project",
@@ -382,7 +415,7 @@ The VFS path to a file that is in this project
     ),
     defineFunctionLoose(
       {
-        name: "create_task_tree_scratchpad",
+        name: CREATE_TASK_TREE_SCRATCHPAD_FUNCTION,
         description:
           "When working on complicated problem, use this throw-away scratch pad to reason about a dependency tree of tasks, like about the order of tasks, and which tasks can be executed concurrently and which ones must be executed serially. To better help yourself, make sure to include all meta-tasks: formatting/preparing the outputs, creating or updating projects, and so on.",
         parametersJsonSchema: TASK_TREE_SCHEMA,

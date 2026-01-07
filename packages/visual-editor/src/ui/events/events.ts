@@ -13,7 +13,6 @@ import type {
   NodeValue,
   PortIdentifier,
 } from "@breadboard-ai/types";
-import type { TemplatePartParameterType } from "@breadboard-ai/utils";
 import type {
   AppTemplateAdditionalOptionsAvailable,
   Command,
@@ -928,8 +927,7 @@ export class FastAccessSelectEvent extends Event {
     public readonly title: string,
     public readonly accessType: "asset" | "tool" | "in" | "param",
     public readonly mimeType?: string,
-    public readonly instance?: string,
-    public readonly parameterType: TemplatePartParameterType = "none"
+    public readonly instance?: string
   ) {
     super(FastAccessSelectEvent.eventName, { ...eventInit });
   }

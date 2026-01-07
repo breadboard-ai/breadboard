@@ -27,6 +27,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
     oauth: "./oauth/index.html",
     landing: "./landing/index.html",
     shell: "./shell/index.html",
+    ["app-sandbox"]: "./app-sandbox.html",
   };
 
   return {
