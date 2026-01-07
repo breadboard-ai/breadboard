@@ -257,13 +257,10 @@ export class EditHistoryPanel extends SignalWatcher(LitElement) {
       // all change events to be explicit about creator.
       case "user":
       case "unknown": {
-        return this.signinAdapter?.picture
+        const picture = this.signinAdapter?.pictureSignal;
+        return picture
           ? html`
-              <img
-                class="signed-in"
-                crossorigin="anonymous"
-                src=${this.signinAdapter.picture}
-              />
+              <img class="signed-in" crossorigin="anonymous" src=${picture} />
             `
           : html`<span class="g-icon filled placeholder">person</span>`;
       }

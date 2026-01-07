@@ -37,10 +37,8 @@ export class Header extends LitElement {
   @property()
   accessor replayActive = false;
 
-  // Note: if this is true it supersedes menuActive. It will also switch the
-  // order of the buttons, too.
   @property()
-  accessor fullScreenActive: "available" | "active" | null = null;
+  accessor fullScreenActive: "available" | "active" | "no-exit" | null = null;
 
   @property({ reflect: true, type: Boolean })
   accessor small = false;
@@ -286,7 +284,7 @@ export class Header extends LitElement {
   }
 
   #renderFullScreen() {
-    if (this.fullScreenActive === null) {
+    if (this.fullScreenActive === null || this.fullScreenActive === "no-exit") {
       return nothing;
     }
 

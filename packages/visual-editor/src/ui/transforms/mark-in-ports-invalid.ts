@@ -6,12 +6,14 @@
 
 import {
   EditOperationContext,
+  EditSpec,
   EditTransform,
   EditTransformResult,
   GraphIdentifier,
   NodeIdentifier,
 } from "@breadboard-ai/types";
 import { transformConfiguration } from "./transform-all-nodes.js";
+import { ROUTE_TOOL_PATH } from "../../a2/a2/tool-manager.js";
 
 export { MarkInPortsInvalid };
 
@@ -35,11 +37,12 @@ class MarkInPortsInvalid implements EditTransform {
     if (!node) {
       return {
         success: false,
-        error: `Unable to find the node by id "${this.to}"`,
+        error: `Unable to find the "to" node by id "${this.to}"`,
       };
     }
+    const edits: EditSpec[] = [];
 
-    const newConfig = transformConfiguration(
+    const newToConfig = transformConfiguration(
       this.to,
       node.configuration(),
       (part) => {
@@ -50,21 +53,50 @@ class MarkInPortsInvalid implements EditTransform {
         return null;
       }
     );
-    if (newConfig !== null) {
-      return context.apply(
-        [
-          {
-            type: "changeconfiguration",
-            id: this.to,
-            configuration: newConfig,
-            reset: true,
-            graphId,
-          },
-        ],
-        `Marking "@" in port as invalid`
-      );
+    if (newToConfig !== null) {
+      edits.push({
+        type: "changeconfiguration",
+        id: this.to,
+        configuration: newToConfig,
+        reset: true,
+        graphId,
+      });
     }
 
-    return { success: true };
+    // Check to see if the "from" node has any routes. And if so, mark the corresponding chips as invalid.
+    const fromNode = inspectable.nodeById(this.from);
+    if (!fromNode) {
+      return {
+        success: false,
+        error: `Unable to find the "from" node by id "${this.from}"`,
+      };
+    }
+
+    const newFromConfig = transformConfiguration(
+      this.from,
+      fromNode.configuration(),
+      (part) => {
+        const { path, type, instance } = part;
+        if (
+          path === ROUTE_TOOL_PATH &&
+          type === "tool" &&
+          instance === this.to
+        ) {
+          return { ...part, invalid: true };
+        }
+        return null;
+      }
+    );
+    if (newFromConfig !== null) {
+      edits.push({
+        type: "changeconfiguration",
+        id: this.from,
+        configuration: newFromConfig,
+        reset: true,
+        graphId,
+      });
+    }
+
+    return context.apply(edits, `Marking "${this.from}" in port as invalid`);
   }
 }

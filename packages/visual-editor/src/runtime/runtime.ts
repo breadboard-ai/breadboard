@@ -18,6 +18,8 @@ import { Select } from "./select.js";
 import { StateManager } from "./state.js";
 import { Shell } from "./shell.js";
 import {
+  OPAL_BACKEND_API_PREFIX,
+  GOOGLE_DRIVE_FILES_API_PREFIX,
   Outcome,
   PersistentBackend,
   RunConfig,
@@ -47,7 +49,10 @@ import {
 } from "@breadboard-ai/types";
 import { ConsentManager } from "../ui/utils/consent-manager.js";
 import { SigninAdapter } from "../ui/utils/signin-adapter.js";
-import { createActionTrackerBackend } from "../ui/utils/action-tracker.js";
+import {
+  createActionTracker,
+  createActionTrackerBackend,
+} from "../ui/utils/action-tracker.js";
 import { envFromSettings } from "../utils/env-from-settings.js";
 import { builtInMcpClients } from "../mcp-clients.js";
 import { GoogleDriveBoardServer } from "../board-server/server.js";
@@ -65,6 +70,7 @@ import {
   assetsFromGraphDescriptor,
   envFromGraphDescriptor,
 } from "../data/file-system.js";
+import { ActionTracker } from "../ui/types/types.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -86,6 +92,7 @@ export class Runtime extends EventTarget {
   public readonly googleDriveBoardServer: GoogleDriveBoardServer;
   public readonly flowGenerator: FlowGenerator;
   public readonly apiClient: AppCatalystApiClient;
+  public readonly actionTracker: ActionTracker;
   public readonly emailPrefsManager: EmailPrefsManager;
 
   constructor(config: RuntimeConfig) {
@@ -93,24 +100,28 @@ export class Runtime extends EventTarget {
 
     this.flags = createFlagManager(config.globalConfig.flags);
 
-    this.signinAdapter = new SigninAdapter(
-      config.shellHost,
-      config.initialSignInState
-    );
+    this.signinAdapter = new SigninAdapter(config.shellHost);
     this.fetchWithCreds = this.signinAdapter.fetchWithCreds;
 
-    const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
-      .href;
-    const apiBaseUrl =
-      this.signinAdapter.state === "signedout"
-        ? proxyApiBaseUrl
-        : config.globalConfig.GOOGLE_DRIVE_API_ENDPOINT ||
-          "https://www.googleapis.com";
+    this.actionTracker = createActionTracker(
+      config.shellHost,
+      config.guestConfig,
+      config.globalConfig.MEASUREMENT_ID,
+      () => this.signinAdapter.state.then((state) => state === "signedin")
+    );
 
+    const proxyApiBaseUrl = new URL(
+      "/api/drive-proxy/drive/v3/files",
+      window.location.href
+    ).href;
+    const apiBaseUrl = this.signinAdapter.state.then((state) =>
+      state === "signedout" ? proxyApiBaseUrl : GOOGLE_DRIVE_FILES_API_PREFIX
+    );
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,
       proxyApiBaseUrl,
       fetchWithCreds: this.fetchWithCreds,
+      isTestApi: !!config.guestConfig?.isTestApi,
     });
 
     this.fileSystem = createFileSystem({
@@ -123,24 +134,19 @@ export class Runtime extends EventTarget {
       ),
     });
 
-    let backendApiEndpoint = config.globalConfig.BACKEND_API_ENDPOINT;
-    if (!backendApiEndpoint) {
-      console.warn(`No BACKEND_API_ENDPOINT in ClientDeploymentConfiguration`);
-      backendApiEndpoint = window.location.href;
-    }
-
     this.mcpClientManager = new McpClientManager(
       builtInMcpClients,
       {
         fileSystem: this.fileSystem,
         fetchWithCreds: this.fetchWithCreds,
       },
-      backendApiEndpoint
+      OPAL_BACKEND_API_PREFIX
     );
 
     const sandbox = createA2ModuleFactory({
       mcpClientManager: this.mcpClientManager,
       fetchWithCreds: this.fetchWithCreds,
+      shell: config.shellHost,
     });
 
     const kits = addRunModule(sandbox, []);
@@ -176,7 +182,9 @@ export class Runtime extends EventTarget {
 
     this.googleDriveBoardServer = createGoogleDriveBoardServer(
       this.signinAdapter,
-      this.googleDriveClient
+      this.googleDriveClient,
+      config.shellHost.findUserOpalFolder,
+      config.shellHost.listUserOpals
     );
     const a2Server = createA2Server();
 
@@ -213,7 +221,7 @@ export class Runtime extends EventTarget {
     this.edit = new Edit(graphStore, autonamer, this.flags);
     this.apiClient = new AppCatalystApiClient(
       this.fetchWithCreds,
-      backendApiEndpoint
+      OPAL_BACKEND_API_PREFIX
     );
     this.emailPrefsManager = new EmailPrefsManager(this.apiClient);
     this.flowGenerator = new FlowGenerator(this.apiClient, this.flags);

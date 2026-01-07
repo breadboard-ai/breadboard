@@ -121,7 +121,38 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
       }
 
       md-tabs {
-        --md-sys-color-surface: var(--light-dark-n-100);
+        --md-primary-tab-active-pressed-state-layer-color: light-dark(
+          var(--p-50),
+          var(--p-80)
+        );
+
+        --md-primary-tab-active-hover-state-layer-color: light-dark(
+          var(--p-50),
+          var(--p-80)
+        );
+
+        --md-primary-tab-active-indicator-color: light-dark(
+          var(--p-50),
+          var(--p-70)
+        );
+
+        --md-primary-tab-active-focus-label-text-color: light-dark(
+          var(--p-50),
+          var(--p-70)
+        );
+
+        --md-primary-tab-active-label-text-color: light-dark(
+          var(--p-50),
+          var(--p-70)
+        );
+
+        --md-primary-tab-hover-label-text-color: light-dark(
+          var(--n-0),
+          var(--n-90)
+        );
+
+        --md-primary-tab-label-text-color: light-dark(var(--n-20), var(--n-80));
+        --md-sys-color-surface: light-dark(var(--n-100), var(--n-15));
       }
 
       .container {

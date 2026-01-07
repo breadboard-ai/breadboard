@@ -109,7 +109,7 @@
       ]
     },
     "eval:agent": {
-      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/agent.js",
+      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/agent/index.js",
       "dependencies": [
         "build:tsc"
       ],
@@ -117,7 +117,7 @@
       "output": []
     },
     "eval:a2ui": {
-      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/a2ui.js",
+      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/a2ui/index.js",
       "dependencies": [
         "build:tsc"
       ],
@@ -164,12 +164,15 @@
     "@types/google.picker": "^0.0.51",
     "@types/gtag.js": "^0.0.20",
     "@types/har-format": "^1.2.16",
+    "@types/jsdom": "^27.0.0",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.0.0",
     "dotenv": "^17.2.3",
+    "google-auth-library": "^10.1.0",
+    "jsdom": "^27.3.0",
     "tsx": "^4.20.6",
     "typescript": "^5.8.3",
-    "vite": "^7.2.4"
+    "vite": "^7.2.6"
   },
   "dependencies": {
     "@breadboard-ai/types": "0.9.0",
@@ -194,7 +197,7 @@
     "markdown-it": "^14.1.0",
     "marked": "^16.3.0",
     "mimetext": "^3.0.27",
-    "pdfjs-dist": "^5.2.133",
+    "pdfjs-dist": "^5.4.449",
     "signal-polyfill": "^0.2.2",
     "signal-utils": "^0.21.1",
     "urlpattern-polyfill": "^10.1.0",

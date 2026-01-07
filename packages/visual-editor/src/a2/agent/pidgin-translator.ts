@@ -16,7 +16,11 @@ import { Template } from "../a2/template.js";
 import { mergeTextParts } from "../a2/utils.js";
 import { AgentFileSystem } from "./file-system.js";
 import { err, ok } from "@breadboard-ai/utils";
-import { SimplifiedToolManager, ToolManager } from "../a2/tool-manager.js";
+import {
+  ROUTE_TOOL_PATH,
+  SimplifiedToolManager,
+  ToolManager,
+} from "../a2/tool-manager.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { v0_8 } from "../../a2ui/index.js";
 import { isLLMContent, isLLMContentArray } from "../../data/common.js";
@@ -66,27 +70,31 @@ class PidginTranslator {
     private readonly fileSystem: AgentFileSystem
   ) {}
 
-  fromPidginString(content: string): Outcome<LLMContent> {
+  async fromPidginString(content: string): Promise<Outcome<LLMContent>> {
     const pidginParts = content.split(SPLIT_REGEX);
     const errors: string[] = [];
-    const parts: DataPart[] = pidginParts
-      .flatMap((pidginPart) => {
-        const fileMatch = pidginPart.match(FILE_PARSE_REGEX);
-        if (fileMatch) {
-          const path = fileMatch[1];
-          const parts = this.fileSystem.get(path);
-          if (!ok(parts)) {
-            errors.push(parts.$error);
-            return null;
+    const parts: DataPart[] = (
+      await Promise.all(
+        pidginParts.map(async (pidginPart) => {
+          const fileMatch = pidginPart.match(FILE_PARSE_REGEX);
+          if (fileMatch) {
+            const path = fileMatch[1];
+            const parts = await this.fileSystem.get(path);
+            if (!ok(parts)) {
+              errors.push(parts.$error);
+              return null;
+            }
+            return parts;
           }
-          return parts;
-        }
-        const linkMatch = pidginPart.match(LINK_PARSE_REGEX);
-        if (linkMatch) {
-          return { text: linkMatch[2].trim() };
-        }
-        return { text: pidginPart };
-      })
+          const linkMatch = pidginPart.match(LINK_PARSE_REGEX);
+          if (linkMatch) {
+            return { text: linkMatch[2].trim() };
+          }
+          return { text: pidginPart };
+        })
+      )
+    )
+      .flat()
       .filter((part) => part !== null);
 
     if (errors.length > 0) {
@@ -140,11 +148,12 @@ class PidginTranslator {
     };
   }
 
-  fromPidginFiles(files: string[]): Outcome<LLMContent> {
+  async fromPidginFiles(files: string[]): Promise<Outcome<LLMContent>> {
     const errors: string[] = [];
-    const parts: DataPart[] = files
-      .flatMap((path) => {
-        const parts = this.fileSystem.get(path);
+    const parts: DataPart[] = (
+      await Promise.all(files.map((path) => this.fileSystem.get(path)))
+    )
+      .flatMap((parts) => {
         if (!ok(parts)) {
           errors.push(parts.$error);
           return null;
@@ -180,7 +189,7 @@ class PidginTranslator {
             }
             const part = content?.at(-1)?.parts.at(0);
             if (!part) {
-              errors.push(`invalid asset format`);
+              errors.push(`Agent: Invalid asset format`);
               return "";
             }
             const name = this.fileSystem.add(part);
@@ -211,18 +220,24 @@ class PidginTranslator {
             );
             return "";
           case "tool": {
-            const addingTool = await toolManager.addTool(
-              param.path,
-              param.instance
-            );
-            if (!ok(addingTool)) {
-              errors.push(addingTool.$error);
-              return "";
+            if (param.path === ROUTE_TOOL_PATH) {
+              if (!param.instance) {
+                errors.push(`Agent: Malformed route, missing instance param`);
+                return "";
+              }
+              const routeName = this.fileSystem.addRoute(param.instance);
+              return `<a href="${routeName}">${param.title}</a>`;
+            } else {
+              const addingTool = await toolManager.addTool(param);
+              if (!ok(addingTool)) {
+                errors.push(addingTool.$error);
+                return "";
+              }
+              return addingTool;
             }
-            return addingTool;
           }
           default:
-            console.warn(`Unknown tyep of param`, param);
+            console.warn(`Unknown type of param`, param);
             return "";
         }
       }

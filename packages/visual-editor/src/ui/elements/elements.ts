@@ -70,6 +70,7 @@ export { Splitter } from "./splitter/splitter.js";
 export { Toast } from "./toast/toast.js";
 export { Tooltip } from "./tooltip/tooltip.js";
 export { OnboardingTooltip } from "./tooltip/onboarding-tooltip.js";
+export { AppSandbox } from "../../app-sandbox/app-sandbox-element.js";
 
 // Flowgen.
 export { FlowgenEditorInput } from "../flow-gen/flowgen-editor-input.js";

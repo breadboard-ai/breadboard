@@ -47,8 +47,6 @@ import {
   isTextCapabilityPart,
 } from "../../../../data/common.js";
 
-const SANDBOX_RESTRICTIONS = "allow-scripts allow-forms";
-
 @customElement("bb-llm-output")
 export class LLMOutput extends LitElement {
   @property()
@@ -244,7 +242,8 @@ export class LLMOutput extends LitElement {
               var(--bb-font-family);
           }
 
-          & iframe {
+          & .youtube-embed,
+          bb-app-sandbox::part(iframe) {
             aspect-ratio: 16/9;
             margin: 0;
           }
@@ -351,10 +350,7 @@ export class LLMOutput extends LitElement {
         }
       }
 
-      iframe.html-view {
-        border: none;
-        width: 100%;
-        overflow-x: auto;
+      bb-app-sandbox::part(iframe) {
         height: var(--html-view-height, 100svh);
         max-height: calc(100cqh - var(--bb-grid-size-11));
       }
@@ -681,14 +677,12 @@ export class LLMOutput extends LitElement {
               }
               if (part.inlineData.mimeType.startsWith("text/html")) {
                 this.#outputLoaded();
-                return cache(
-                  html`<iframe
-                    srcdoc="${part.inlineData.data}"
-                    frameborder="0"
-                    class="html-view"
-                    sandbox="${SANDBOX_RESTRICTIONS}"
-                  ></iframe>`
-                );
+                return cache(html`
+                  <bb-app-sandbox
+                    .srcdoc=${part.inlineData.data}
+                    .graphUrl=${this.graphUrl?.href ?? ""}
+                  ></bb-app-sandbox>
+                `);
               }
               if (part.inlineData.mimeType.startsWith("video")) {
                 return cache(
@@ -805,12 +799,12 @@ export class LLMOutput extends LitElement {
                 if (mimeType.startsWith("text")) {
                   if (mimeType === "text/html") {
                     this.#outputLoaded();
-                    value = html`<iframe
-                      srcdoc="${until(getData())}"
-                      frameborder="0"
-                      class="html-view"
-                      sandbox="${SANDBOX_RESTRICTIONS}"
-                    ></iframe>`;
+                    value = html`
+                      <bb-app-sandbox
+                        .srcdoc=${until(getData())}
+                        .graphUrl=${this.graphUrl?.href ?? ""}
+                      ></bb-app-sandbox>
+                    `;
                   } else {
                     this.#outputLoaded();
                     // prettier-ignore

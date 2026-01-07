@@ -41,9 +41,21 @@ export class RecentBoardStore {
       if (board.title) {
         existing.title = board.title;
       }
-      this.boards.unshift(existing);
+      this.boards.unshift(
+        new SignalObject({
+          url: existing.url,
+          title: existing.title,
+          pinned: existing.pinned ?? false,
+        })
+      );
     } else {
-      this.boards.unshift(board);
+      this.boards.unshift(
+        new SignalObject({
+          url: board.url,
+          title: board.title,
+          pinned: board.pinned ?? false,
+        })
+      );
     }
 
     if (this.boards.length > 50) {

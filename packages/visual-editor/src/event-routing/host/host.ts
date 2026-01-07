@@ -75,3 +75,12 @@ export const FlagChangeRoute: EventRoute<"host.flagchange"> = {
     return false;
   },
 };
+
+export const UserSignInRoute: EventRoute<"host.usersignin"> = {
+  event: "host.usersignin",
+
+  async do() {
+    // Noop for main routing. This event is only handled in Lite mode.
+    return false;
+  },
+};

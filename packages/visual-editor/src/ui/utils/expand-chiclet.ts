@@ -58,7 +58,7 @@ export function expandChiclet(
           projectState.integrations.registered.get(path)?.tools.get(instance)
             ?.icon || "robot_server";
       } else {
-        const toolInfo = projectState?.fastAccess.tools.get(path);
+        const toolInfo = projectState?.stepEditor.fastAccess.tools.get(path);
         icon = iconSubstitute(toolInfo?.icon);
       }
       break;
@@ -67,7 +67,8 @@ export function expandChiclet(
     case "asset": {
       icon = "alternate_email";
 
-      const assetInfo = projectState?.fastAccess.graphAssets.get(path);
+      const assetInfo =
+        projectState?.stepEditor.fastAccess.graphAssets.get(path);
       if (assetInfo?.metadata?.type) {
         icon = iconSubstitute(assetInfo.metadata.type);
       }

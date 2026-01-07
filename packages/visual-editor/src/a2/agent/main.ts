@@ -25,7 +25,7 @@ type AgentInputs = {
 } & Params;
 
 type AgentOutputs = {
-  context: LLMContent[];
+  [key: string]: LLMContent[];
 };
 
 async function invoke(
@@ -49,7 +49,11 @@ async function invoke(
   if (result.outcomes) {
     context.push(result.outcomes);
   }
-  return { context };
+  let route = result.href;
+  if (!route || route === "/") {
+    route = "context";
+  }
+  return { [route]: context };
 }
 
 async function describe(

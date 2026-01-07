@@ -17,6 +17,7 @@ import {
 } from "@breadboard-ai/types";
 import { willCreateCycle } from "@breadboard-ai/utils";
 import { transformConfiguration } from "./transform-all-nodes.js";
+import { computeEdgeDiff, dedupeEdges } from "../../utils/edge-operations.js";
 
 export { AutoWireInPorts };
 
@@ -52,14 +53,18 @@ class AutoWireInPorts implements EditTransform {
     const incoming = dedupeEdges(
       ins
         .map((v) => {
-          const out = getDefaultOutputPort(inspectableGraph.nodeById(v.path));
+          const receiver = inspectableNode.descriptor.id;
+          const out = getDefaultOutputPort(
+            inspectableGraph.nodeById(v.path),
+            receiver
+          );
           if (!out) {
             invalidReferences.push(v.path);
             return null;
           }
           return {
             from: v.path,
-            to: inspectableNode.descriptor.id,
+            to: receiver,
             out,
             in: `p-z-${v.path}`,
           };
@@ -138,53 +143,14 @@ class AutoWireInPorts implements EditTransform {
   }
 }
 
-function dedupeEdges(edges: Edge[]) {
-  const seen = new Set<string>();
-  return edges.filter((edge) => {
-    const key = edgeKey(edge);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-function computeEdgeDiff(current: Edge[], incoming: Edge[]) {
-  const currentMap = new Map<string, Edge>();
-  const incomingMap = new Map<string, Edge>();
-
-  current.forEach((edge) => {
-    currentMap.set(edgeKey(edge), edge);
-  });
-  incoming.forEach((edge) => {
-    incomingMap.set(edgeKey(edge), edge);
-  });
-
-  const toDelete: Edge[] = [];
-  const toInsert: Edge[] = [];
-
-  current.forEach((edge) => {
-    const key = edgeKey(edge);
-    if (!incomingMap.has(key)) {
-      toDelete.push(edge);
-    }
-  });
-
-  incoming.forEach((edge) => {
-    const key = edgeKey(edge);
-    if (!currentMap.has(key)) {
-      toInsert.push(edge);
-    }
-  });
-
-  return { toInsert, toDelete };
-}
-
-function edgeKey({ metadata: _m, ...rest }: Edge) {
-  return JSON.stringify(rest);
-}
-
-function getDefaultOutputPort(from: InspectableNode | undefined) {
+function getDefaultOutputPort(
+  from: InspectableNode | undefined,
+  receiver: NodeIdentifier
+) {
   if (!from) return;
+  if (from.routes().length > 0) {
+    return receiver;
+  }
   const ports = from.currentPorts().outputs.ports;
   const mainPort = ports.find((port) =>
     port.schema.behavior?.includes("main-port")

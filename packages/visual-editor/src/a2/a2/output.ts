@@ -3,7 +3,9 @@
  */
 
 import {
+  AppScreen,
   Capabilities,
+  ConsoleEntry,
   FileSystemReadWritePath,
   JsonSerializable,
   LLMContent,
@@ -11,6 +13,7 @@ import {
   Schema,
 } from "@breadboard-ai/types";
 import { ErrorMetadata, generateId, ok } from "./utils.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 type ReportInputs = {
   /**
@@ -46,7 +49,7 @@ export type Link = {
   iconUri: string;
 };
 
-export { report, StreamableReporter };
+export { report, StreamableReporter, getCurrentStepState };
 
 const MIME_TYPE = "application/vnd.breadboard.report-stream";
 
@@ -377,4 +380,28 @@ async function report(
     details,
   });
   return delivered;
+}
+
+type StepState = {
+  title: string;
+  appScreen: AppScreen | undefined;
+  consoleEntry: ConsoleEntry | undefined;
+};
+
+function getCurrentStepState(moduleArgs: A2ModuleArgs): StepState {
+  const { currentStep, getProjectRunState } = moduleArgs.context;
+  const stepId = currentStep?.id;
+  if (!stepId) {
+    return {
+      title: "",
+      appScreen: undefined,
+      consoleEntry: undefined,
+    };
+  }
+  const runState = getProjectRunState?.();
+  return {
+    title: currentStep?.metadata?.title || "",
+    appScreen: runState?.app.screens.get(stepId),
+    consoleEntry: runState?.console.get(stepId),
+  };
 }

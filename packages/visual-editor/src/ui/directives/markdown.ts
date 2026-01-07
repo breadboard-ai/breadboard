@@ -15,7 +15,7 @@ import {
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import MarkdownIt from "markdown-it";
 import { RenderRule } from "markdown-it/lib/renderer.mjs";
-import { Sanitizer } from "@breadboard-ai/utils";
+import { escapeNodeText } from "../../utils/sanitizer.js";
 
 class MarkdownDirective extends Directive {
   #markdownIt = MarkdownIt({
@@ -30,7 +30,7 @@ class MarkdownDirective extends Directive {
         }
 
         default:
-          return Sanitizer.escapeNodeText(str);
+          return escapeNodeText(str);
       }
     },
   });

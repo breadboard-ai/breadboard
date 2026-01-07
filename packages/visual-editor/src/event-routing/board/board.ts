@@ -13,7 +13,10 @@ import {
   InputValues,
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
-import { RuntimeSnackbarEvent } from "../../runtime/events.js";
+import {
+  RuntimeSnackbarEvent,
+  RuntimeUnsnackbarEvent,
+} from "../../runtime/events.js";
 import { StateEvent } from "../../ui/events/events.js";
 import * as BreadboardUI from "../../ui/index.js";
 import { parseUrl } from "../../ui/utils/urls.js";
@@ -90,6 +93,7 @@ export const LoadRoute: EventRoute<"board.load"> = {
       resourceKey: undefined,
       shared: originalEvent.detail.shared,
       dev: parseUrl(window.location.href).dev,
+      guestPrefixed: true,
     });
     return false;
   },
@@ -192,6 +196,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
     uiState,
     askUserToSignInIfNeeded,
     boardServer,
+    actionTracker,
   }) {
     await StopRoute.do({
       tab,
@@ -206,6 +211,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       askUserToSignInIfNeeded,
       boardServer,
     });
+    actionTracker?.runApp(tab?.graph.url, "console");
     await RunRoute.do({
       tab,
       runtime,
@@ -272,6 +278,8 @@ export const CreateRoute: EventRoute<"board.create"> = {
     embedHandler,
   }) {
     if ((await askUserToSignInIfNeeded()) !== "success") {
+      // The user didn't sign in, so hide any snackbars.
+      runtime.dispatchEvent(new RuntimeUnsnackbarEvent());
       return false;
     }
 
@@ -308,6 +316,7 @@ export const CreateRoute: EventRoute<"board.create"> = {
         // created it.
         resourceKey: undefined,
         dev,
+        guestPrefixed: true,
       },
       tab?.id,
       originalEvent.detail.editHistoryCreator

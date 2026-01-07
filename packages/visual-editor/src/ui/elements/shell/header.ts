@@ -6,11 +6,13 @@
 import * as StringsHelper from "../../strings/helper.js";
 const Strings = StringsHelper.forSection("Global");
 
-import { LitElement, html, css, nothing, PropertyValues } from "lit";
+import { SignalWatcher } from "@lit-labs/signals";
+import { consume } from "@lit/context";
+import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import * as Styles from "../../styles/styles.js";
-import { SigninAdapter } from "../../utils/signin-adapter.js";
-import { BOARD_SAVE_STATUS, EnumValue } from "../../types/types.js";
+import { classMap } from "lit/directives/class-map.js";
+import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
+import { uiStateContext } from "../../contexts/ui-state.js";
 import {
   CloseEvent,
   OverflowMenuActionEvent,
@@ -18,18 +20,23 @@ import {
   SignOutEvent,
   StateEvent,
 } from "../../events/events.js";
-import { classMap } from "lit/directives/class-map.js";
 import { UI, UILoadState } from "../../state/types.js";
-import { consume } from "@lit/context";
-import { uiStateContext } from "../../contexts/ui-state.js";
-import { SignalWatcher } from "@lit-labs/signals";
-import { ActionTracker } from "../../utils/action-tracker.js";
+import * as Styles from "../../styles/styles.js";
+import {
+  ActionTracker,
+  BOARD_SAVE_STATUS,
+  EnumValue,
+} from "../../types/types.js";
+import { SigninAdapter } from "../../utils/signin-adapter.js";
 import { hasEnabledGlobalSettings } from "./global-settings.js";
 
 const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
 
 @customElement("bb-ve-header")
 export class VEHeader extends SignalWatcher(LitElement) {
+  @consume({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker | undefined = undefined;
+
   @property()
   accessor signinAdapter: SigninAdapter | null = null;
 
@@ -675,7 +682,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
           return;
         }
 
-        ActionTracker.remixApp(this.url, "editor");
+        this.actionTracker?.remixApp(this.url, "editor");
         this.dispatchEvent(
           new StateEvent({
             eventType: "board.remix",
@@ -717,7 +724,9 @@ export class VEHeader extends SignalWatcher(LitElement) {
           this.dispatchEvent(new ShareRequestedEvent());
         }}
       >
-        <span class="g-icon">share</span>Share app
+        <span class="g-icon">share</span>${Strings.from(
+          "COMMAND_COPY_APP_PREVIEW_URL"
+        )}
       </button>`;
     }
 
@@ -728,14 +737,21 @@ export class VEHeader extends SignalWatcher(LitElement) {
         this.dispatchEvent(new ShareRequestedEvent());
       }}
     >
-      <span class="g-icon">share</span>Share app
+      <span class="g-icon">share</span>${Strings.from(
+        "COMMAND_COPY_APP_PREVIEW_URL"
+      )}
     </button>`;
   }
 
   #renderUser() {
-    if (!this.signinAdapter || this.signinAdapter.state !== "signedin") {
+    if (
+      !this.signinAdapter ||
+      this.signinAdapter.stateSignal?.status !== "signedin"
+    ) {
       return nothing;
     }
+    const name = this.signinAdapter.nameSignal;
+    const picture = this.signinAdapter.pictureSignal;
 
     return html`<button
         id="toggle-user-menu"
@@ -743,12 +759,12 @@ export class VEHeader extends SignalWatcher(LitElement) {
           this.#showAccountSwitcher = true;
         }}
       >
-        ${this.signinAdapter.picture
+        ${picture
           ? html`<img
               id="user-pic"
               crossorigin
-              .src=${this.signinAdapter.picture}
-              alt=${this.signinAdapter.name ?? "No name"}
+              .src=${picture}
+              alt=${name ?? "No name"}
             />`
           : // For unknown reasons, the token info may not include a `picture` URL or `name`.
             // Since we use the avatar as a button to access the menu, we render an icon in

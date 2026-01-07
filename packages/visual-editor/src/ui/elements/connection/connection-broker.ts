@@ -18,6 +18,11 @@ export class ConnectionBroker extends HTMLElement {
   }
 
   async connectedCallback() {
+    if (!window.opener) {
+      console.error(`window.opener is not available, closing early.`);
+      window.close();
+    }
+
     const shadow = this.shadowRoot!;
     const displayError = (message: string) => {
       const p = document.createElement("p");

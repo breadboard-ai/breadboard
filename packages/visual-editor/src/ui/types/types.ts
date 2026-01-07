@@ -549,6 +549,7 @@ export interface BaseUrlInit {
   oauthRedirect?: string;
   lite?: boolean;
   colorScheme?: "light" | "dark";
+  guestPrefixed: boolean;
 }
 
 export interface HomeUrlInit extends BaseUrlInit {
@@ -583,3 +584,27 @@ export interface OpenUrlInit extends BaseUrlInit {
 }
 
 export type UserSignInResponse = "success" | "failure" | "dismissed";
+
+export interface ActionTracker {
+  load(type: "app" | "canvas" | "landing" | "home", shared: boolean): void;
+  openApp(url: string, source: "gallery" | "user"): void;
+  remixApp(url: string, source: "gallery" | "user" | "editor"): void;
+  createNew(): void;
+  flowGenCreate(): void;
+  flowGenEdit(url: string | undefined): void;
+  runApp(
+    url: string | undefined,
+    source: "app_preview" | "app_view" | "console"
+  ): void;
+  publishApp(url: string | undefined): void;
+  signOutSuccess(): void;
+  signInSuccess(): void;
+  errorUnknown(): void;
+  errorConfig(): void;
+  errorRecitation(): void;
+  errorCapacity(medium: string): void;
+  errorSafety(): void;
+  addNewStep(type?: string): void;
+  editStep(type: "manual" | "flowgen"): void;
+  shareResults(type: "download" | "save_to_drive" | "copy_share_link"): void;
+}

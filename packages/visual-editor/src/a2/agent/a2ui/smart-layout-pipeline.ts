@@ -86,7 +86,7 @@ class SmartLayoutPipeline {
 
   async run(content: LLMContent, params: Params): Promise<Outcome<unknown[]>> {
     const { caps, moduleArgs } = this.args;
-    const fileSystem = new AgentFileSystem();
+    const fileSystem = new AgentFileSystem(null);
     const translator = new PidginTranslator(caps, moduleArgs, fileSystem);
 
     const translated = await translator.toPidgin(content, params);

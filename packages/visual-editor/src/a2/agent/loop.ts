@@ -15,15 +15,30 @@ import {
 } from "../a2/gemini.js";
 import { llm } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { prompt as a2UIPrompt } from "./a2ui/prompt.js";
+import { SmartLayoutPipeline } from "./a2ui/smart-layout-pipeline.js";
 import { AgentFileSystem } from "./file-system.js";
+import { FunctionCallerImpl } from "./function-caller.js";
 import { emptyDefinitions, mapDefinitions } from "./function-definition.js";
-import { defineSystemFunctions } from "./functions/system.js";
+import { defineGenerateFunctions } from "./functions/generate.js";
+import {
+  CREATE_TASK_TREE_SCRATCHPAD_FUNCTION,
+  defineSystemFunctions,
+  FAILED_TO_FULFILL_FUNCTION,
+  OBJECTIVE_FULFILLED_FUNCTION,
+} from "./functions/system.js";
 import { PidginTranslator } from "./pidgin-translator.js";
 import { AgentUI } from "./ui.js";
-import { defineGenerateFunctions } from "./functions/generate.js";
-import { prompt as a2UIPrompt } from "./a2ui/prompt.js";
-import { FunctionCallerImpl } from "./function-caller.js";
-import { SmartLayoutPipeline } from "./a2ui/smart-layout-pipeline.js";
+import {
+  defineMemoryFunctions,
+  MEMORY_CREATE_SHEET_FUNCTION,
+  MEMORY_DELETE_SHEET_FUNCTION,
+  MEMORY_GET_METADATA_FUNCTION,
+  MEMORY_READ_SHEET_FUNCTION,
+  MEMORY_UPDATE_SHEET_FUNCTION,
+} from "./functions/memory.js";
+import { SheetManager } from "../google-drive/sheet-manager.js";
+import { memorySheetGetter } from "../google-drive/memory-sheet-getter.js";
 
 export { Loop };
 
@@ -37,7 +52,7 @@ export type AgentRunArgs = {
 export type AgentRawResult = {
   success: boolean;
   href: string;
-  objective_outcomes: string[];
+  objective_outcome: string;
 };
 
 export type AgentResult = {
@@ -57,58 +72,97 @@ export type AgentResult = {
    * Intermediate results that might be worth keeping around. Will be
    * `undefined` when success = false
    */
-  intermediate?: LLMContent;
+  intermediate?: FileData[];
+};
+
+export type FileData = {
+  path: string;
+  content: LLMContent;
 };
 
 type SystemInstructionArgs = {
   useUI: boolean;
 };
 
-const AGENT_MODEL = "gemini-2.5-pro";
-
-const OBJECTIVE_FULFILLED_FUNCTION = "system_objective_fulfilled";
-const FAILED_TO_FULFILL_FUNCTION = "system_failed_to_fulfill_objective";
+const AGENT_MODEL = "gemini-3-flash-preview";
 
 function createSystemInstruction(args: SystemInstructionArgs) {
   return llm`
 You are an LLM-powered AI agent. You are embedded into an application. Your job is to fulfill the objective, specified at the start of the conversation context. The objective provided by the application and is not visible to the user of the application.
 
-You are linked with other AI agents via hyperlinks. The <a href="url">title</a> syntax points at another agent. If the objective calls for it, you can transfer control to this agent. To transfer control, use the url of the agent in the  "href" parameter when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function. As a result, the outcomes will be transferred to that agent.
+You are linked with other AI agents via hyperlinks. The <a href="url">title</a> syntax points at another agent. If the objective calls for it, you can transfer control to this agent. To transfer control, use the url of the agent in the  "href" parameter when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function. As a result, the outcome will be transferred to that agent.
 
-## Evaluate If The Objective Can Be Fulfilled
+To help you orient in time, today is ${new Date().toLocaleString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  })}
 
-First, ask yourself: can the objective be fulfilled with the tools you have? Is there missing data? Can it be requested from the user? Answer these question 
-thoroughly and methodically. Do not make any assumptions.
+In your pursuit of fulfilling the objective, follow this meta-plan PRECISELY.
 
-If there aren't tools/capabilities available to fulfill the objective, admit failure, but make sure to explain to the user why the objective is impossible to fulfill and offer suggestions on what additional tools might make fulfilling the objective tractable.
+<meta-plan>
 
-## Determine Problem Domain and Overall Approach
+## First, Evaluate If The Objective Can Be Fulfilled
+
+Ask yourself: can the objective be fulfilled with the tools and capabilities you have? Is there missing data? Can it be requested from the user? Do not make any assumptions.
+
+If the required tools or capabilities are missing available to fulfill the objective, call "${FAILED_TO_FULFILL_FUNCTION}" function. Do not overthink it. It's better to exit quickly than waste time trying and fail at the end.
+
+## Second, Determine Problem Domain and Overall Approach
 
 Applying the Cynefin framework, determine the domain of the problem into which fulfilling the objective falls. Most of the time, it will be one of these:
 
-1) Simple -- the objective falls into the domain of simple problems: it's a simple task. In this case, the approach will be "just do it". No planning necessary, just perform the task.
+1) Simple -- the objective falls into the domain of simple problems: it's a simple task. 
 
-2) Complicated - the objective falls into the domain of complicated problems: fulfilling the object requires expertise, careful planning and preparation. In this case, create a detailed task tree and spend a bit of time thinking through the plan prior to engaging with the problem.
+2) Complicated - the objective falls into the domain of complicated problems: fulfilling the object requires expertise, careful planning and preparation.
 
-3) Complex - the objective is from the complex domain. Usually, any objective that involves free text entry from the user or unreliable tool outputs fall into this domain: the user may or may not follow the instructions provided to them, which means that any plan will continue evolving. When dealing with complex problems, adopt the OODA loop approach: instead of devising a detailed plan, focus on observing what is happening, orienting toward the objective, deciding on the right next step, and acting.
+3) Complex - the objective is from the complex domain. Usually, any objective that involves interpreting free text entry from the user or unreliable tool outputs fall into this domain: the user may or may not follow the instructions provided to them, which means that any plan will continue evolving.
+
+NOTE: depending on what functions you're provided with, you may not have the means to interact with the user. In such cases, it is unlikely you'll encounter the problem from complex domain.
 
 Ask yourself: what is the problem domain? Is it simple, complicated, or complex? If not sure, start with complicated and see if it works.
 
-## Problem Domain Escalation
+## Third, Proceed with Fulfilling Objective.
 
-While fulfilling the task, it might become apparent to you that your initial guess of the problem domain is wrong. Most commonly, this will cause the problem domain escalation: simple problems turn out complicated, and complicated become complex. Be deliberate about recognizing this change. When it happens, remind yourself about the problem domain escalation and adjust the strategy appropriately.
+For simple tasks, take the "just do it" approach. No planning necessary, just perform the task.
 
-## Creating a Task Tree
+For complicated tasks, create a detailed task tree and spend a bit of time thinking through the plan prior to engaging with the problem.
 
-When working on a complicated problem, mentally create a dependency tree for the tasks. Which tasks can be executed concurrently and which ones must be executed serially?
+When dealing with complex problems, adopt the OODA loop approach: instead of devising a detailed plan, focus on observing what is happening, orienting toward the objective, deciding on the right next step, and acting.
+
+## Fourth, Call the Completion Function
+
+Only after you've completely fulfilled the objective call the "${OBJECTIVE_FULFILLED_FUNCTION}" function. This is important. This function call signals the end of work and once called, no more work will be done. Pass the outcome of your work as the "objective_outcome" parameter.
+
+NOTE ON WHAT TO RETURN: 
+
+1. Return outcome as a text content that can reference VFS files. They will be included as part of the outcome. For example, if you need to return multiple existing images or videos or even a whole project, just reference it in the "objective_outcome" parameter.
+
+2. Only return what is asked for in the objective. Do not return any extraneous commentary or intermediate outcomes. For instance, when asked to evaluate multiple products for product market fit and return the verdict on which fits the best, you must only return the verdict and skip the rest of intermediate information you might have produced as a result of evaluation.
+
+In rare cases when you failed to fulfill the objective, invoke the "${FAILED_TO_FULFILL_FUNCTION}" function.
+
+### Creating and Using a Task Tree
+
+When working on a complicated problem, use the "${CREATE_TASK_TREE_SCRATCHPAD_FUNCTION}" function create a dependency tree for the tasks. Take the following approach:
+
+First, consider which tasks can be executed concurrently and which ones must be executed serially?
 
 When faced with the choice of serial or concurrent execution, choose concurrency to save precious time.
 
-Finally, formulate a precise plan that will result in fulfilling the objective. Outline this plan on a scratchpad, so that it's clear to you how to execute it.
+Then, formulate a precise plan that will result in fulfilling the objective. Outline this plan on a scratchpad, so that it's clear to you how to execute it.
 
 Now start executing the plan. For concurrent tasks, make sure to generate multiple function calls simultaneously. 
 
 After each task is completed, examine: is the plan still good? Did the results of the tasks affect the outcome? If not, keep going. Otherwise, reexamine the plan and adjust it accordingly.
+
+### Problem Domain Escalation
+
+While fulfilling the task, it may become apparent to you that your initial guess of the problem domain is wrong. Most commonly, this will cause the problem domain escalation: simple problems turn out complicated, and complicated become complex. Be deliberate about recognizing this change. When it happens, remind yourself about the problem domain escalation and adjust the strategy appropriately.
+
+</meta-plan>
 
 Here are the additional agent instructions for you. These will make your life a lot easier. Pay attention to them.
 
@@ -120,9 +174,9 @@ When evaluating the objective, make sure to determine whether calling "generate_
 
 Your job is to fulfill the objective as efficiently as possible, so weigh the need to invoke "generate_text" carefully.
 
-Here is the rule of thumb:
+Here is the rules of thumb:
 
-- For shorter responses like a chat conversation, just do the text generation yourself. You are an LLM and you can do it without.
+- For shorter responses like a chat conversation, just do the text generation yourself. You are an LLM and you can do it without calling "generate_text".
 - For longer responses like generating a chapter of a book or analyzing a large and complex set of files, use "generate_text".
 
 </agent-instructions>
@@ -133,7 +187,27 @@ Here is the rule of thumb:
 
 The system you're working in uses the virtual file system (VFS). The VFS paths are always prefixed with the "/vfs/". Every VFS file path will be of the form "/vfs/[name]". Use snake_case to name files.
 
-You can use the <file src="path" /> syntax to embed them in text.
+You can use the <file src="/vfs/path" /> syntax to embed them in text.
+
+NOTE: The post-processing parser that reads your generated output and replaces the <file src="/vfs/path" /> with the contents of the file. Make sure that your output still makes sense after the replacement.
+
+### Good example
+
+Evaluate the proposal below according to the provided rubric:
+
+Proposal:
+
+<file src="/vfs/proposal.md" />
+
+Rubric:
+
+<file src="/vfs/rubric.md" />
+
+### Bad example 
+
+Evaluate proposal <file src="/vfs/proposal.md" /> according to the rubric <file src="/vfs/rubric.md" />
+
+In the good example above, the replaced texts fit neatly under each heading. In the bad example, the replaced text is stuffed into the sentence.
 
 </agent-instructions>
 
@@ -187,6 +261,22 @@ Thus, a solid plan to fulfill this objective would be to:
 
 <agent-instructions>
 
+## Using memory
+
+You have access to persistent memory that allows you to recall and remember data across your multiple invocations.
+
+The memory is stored in a single Google Spreadsheet. 
+
+You can create new sheets within this spreadsheet using "${MEMORY_CREATE_SHEET_FUNCTION}" function and delete existing sheets with the "${MEMORY_DELETE_SHEET_FUNCTION}" function. You can also get the list of existing sheets with the "${MEMORY_GET_METADATA_FUNCTION}" function.
+
+To recall, use either the "${MEMORY_READ_SHEET_FUNCTION}" function with the standard Google Sheets ranges or read the entire sheet as a VFS file using the "/vfs/memory/sheet_name" path.
+
+To remember, use the "${MEMORY_UPDATE_SHEET_FUNCTION}" function.
+
+</agent-instructions>
+
+<agent-instructions>
+
 ## Interacting with the User
 
 ${args.useUI ? a2UIPrompt : `You do not have a way to interact with the user during your session, aside from the final output when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function`}
@@ -203,12 +293,17 @@ class Loop {
   private readonly translator: PidginTranslator;
   private readonly fileSystem: AgentFileSystem;
   private readonly ui: AgentUI;
+  private readonly memoryManager: SheetManager;
 
   constructor(
     private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs
   ) {
-    this.fileSystem = new AgentFileSystem();
+    this.memoryManager = new SheetManager(
+      moduleArgs,
+      memorySheetGetter(moduleArgs)
+    );
+    this.fileSystem = new AgentFileSystem(this.memoryManager);
     this.translator = new PidginTranslator(caps, moduleArgs, this.fileSystem);
     this.ui = new AgentUI(caps, moduleArgs, this.translator);
   }
@@ -219,7 +314,8 @@ class Loop {
     uiPrompt,
     enableUI = false,
   }: AgentRunArgs): Promise<Outcome<AgentResult>> {
-    const { caps, moduleArgs, fileSystem, translator, ui } = this;
+    const { caps, moduleArgs, fileSystem, translator, ui, memoryManager } =
+      this;
 
     ui.progress.startAgent(objective);
     try {
@@ -234,24 +330,28 @@ class Loop {
       let result: AgentRawResult = {
         success: false,
         href: "",
-        objective_outcomes: [],
+        objective_outcome: "",
       };
 
       const systemFunctions = mapDefinitions(
         defineSystemFunctions({
           fileSystem,
+          translator,
           terminateCallback: () => {
             terminateLoop = true;
           },
-          successCallback: (href, objective_outcomes) => {
+          successCallback: (href, objective_outcome) => {
+            const originalRoute = fileSystem.getOriginalRoute(href);
+            if (!ok(originalRoute)) return originalRoute;
+
             terminateLoop = true;
             console.log("SUCCESS! Objective fulfilled");
-            console.log("Transfer control to", href);
-            console.log("Objective outcomes:", objective_outcomes);
+            console.log("Transfer control to", originalRoute);
+            console.log("Objective outcomes:", objective_outcome);
             result = {
               success: true,
-              href,
-              objective_outcomes,
+              href: originalRoute,
+              objective_outcome,
             };
           },
         })
@@ -264,6 +364,9 @@ class Loop {
           moduleArgs,
           translator,
         })
+      );
+      const memoryFunctions = mapDefinitions(
+        defineMemoryFunctions({ translator, fileSystem, memoryManager })
       );
 
       let uiFunctions = emptyDefinitions();
@@ -295,6 +398,7 @@ class Loop {
             ...(objectiveTools?.functionDeclarations || []),
             ...systemFunctions.declarations,
             ...generateFunctions.declarations,
+            ...memoryFunctions.declarations,
             ...uiFunctions.declarations,
           ],
         },
@@ -302,6 +406,7 @@ class Loop {
       const functionDefinitionMap = new Map([
         ...systemFunctions.definitions,
         ...generateFunctions.definitions,
+        ...memoryFunctions.definitions,
         ...uiFunctions.definitions,
       ]);
 
@@ -309,7 +414,7 @@ class Loop {
         const body: GeminiBody = {
           contents,
           generationConfig: {
-            temperature: 0,
+            temperature: 1,
             topP: 1,
             thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
           },
@@ -376,16 +481,30 @@ class Loop {
     }
   }
 
-  #finalizeResult(raw: AgentRawResult): Outcome<AgentResult> {
-    const { success, href, objective_outcomes } = raw;
+  async #finalizeResult(raw: AgentRawResult): Promise<Outcome<AgentResult>> {
+    const { success, href, objective_outcome } = raw;
     let outcomes: Outcome<LLMContent> | undefined = undefined;
-    let intermediate: Outcome<LLMContent> | undefined = undefined;
+    let intermediate: Outcome<FileData[]> | undefined = undefined;
     if (success) {
-      outcomes = this.translator.fromPidginFiles(objective_outcomes);
+      outcomes = await this.translator.fromPidginString(objective_outcome);
       if (!ok(outcomes)) return outcomes;
       const intermediateFiles = [...this.fileSystem.files.keys()];
-      intermediate = this.translator.fromPidginFiles(intermediateFiles);
-      if (!ok(intermediate)) return intermediate;
+      const errors: string[] = [];
+      intermediate = (
+        await Promise.all(
+          intermediateFiles.map(async (file) => {
+            const content = await this.translator.fromPidginFiles([file]);
+            if (!ok(content)) {
+              errors.push(content.$error);
+              return [];
+            }
+            return { path: file, content };
+          })
+        )
+      ).flat();
+      if (errors.length > 0) {
+        return err(errors.join(","));
+      }
     }
     return { success, href, outcomes, intermediate };
   }
