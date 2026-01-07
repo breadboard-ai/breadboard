@@ -361,18 +361,9 @@ export class Header extends LitElement {
       @click=${() => {
         this.dispatchEvent(new HideTooltipEvent());
         if (this.running) {
-          this.dispatchEvent(
-            new StateEvent({
-              eventType: "board.stop",
-              clearLastRun: true,
-            })
-          );
+          this.dispatchEvent(new StateEvent({ eventType: "board.stop" }));
         } else {
-          this.dispatchEvent(
-            new StateEvent({
-              eventType: "board.restart",
-            })
-          );
+          this.dispatchEvent(new StateEvent({ eventType: "board.restart" }));
         }
       }}
     >
@@ -398,12 +389,7 @@ export class Header extends LitElement {
         this.dispatchEvent(new HideTooltipEvent());
       }}
       @click=${() => {
-        this.dispatchEvent(
-          new StateEvent({
-            eventType: "board.stop",
-            clearLastRun: true,
-          })
-        );
+        this.dispatchEvent(new StateEvent({ eventType: "board.stop" }));
       }}
     >
       <span class="g-icon">replay</span>

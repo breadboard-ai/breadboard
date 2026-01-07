@@ -140,7 +140,7 @@ export const TogglePinRoute: EventRoute<"board.togglepin"> = {
 export const StopRoute: EventRoute<"board.stop"> = {
   event: "board.stop",
 
-  async do({ tab, runtime, originalEvent, settings }) {
+  async do({ tab, runtime, settings }) {
     if (!tab) {
       return false;
     }
@@ -164,20 +164,14 @@ export const StopRoute: EventRoute<"board.stop"> = {
     }
 
     abortController.abort("Run stopped");
-    const runner = runtime.run.getRunner(tabId);
-    if (runner?.running()) {
-      await runner?.run();
-    }
 
-    if (originalEvent.detail.clearLastRun) {
-      await runtime.run.clearLastRun(tabId, tab?.graph.url);
-      if (!settings) {
-        console.warn(`No settings, unable to prepare next run.`);
-      } else {
-        const preparingNextRun = await runtime.prepareRun(tab, settings);
-        if (!ok(preparingNextRun)) {
-          console.warn(preparingNextRun.$error);
-        }
+    await runtime.run.clearLastRun(tabId, tab?.graph.url);
+    if (!settings) {
+      console.warn(`No settings, unable to prepare next run.`);
+    } else {
+      const preparingNextRun = await runtime.prepareRun(tab, settings);
+      if (!ok(preparingNextRun)) {
+        console.warn(preparingNextRun.$error);
       }
     }
 
@@ -203,7 +197,6 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       runtime,
       originalEvent: new StateEvent({
         eventType: "board.stop",
-        clearLastRun: true,
       }),
       settings,
       googleDriveClient,

@@ -293,9 +293,7 @@ export class FlowgenEditorInput extends LitElement {
       if (!this.projectState) return;
 
       this.dispatchEvent(new StateEvent({ eventType: "host.lock" }));
-      this.dispatchEvent(
-        new StateEvent({ eventType: "board.stop", clearLastRun: true })
-      );
+      this.dispatchEvent(new StateEvent({ eventType: "board.stop" }));
 
       flowGenWithTheme(
         this.flowGenerator,

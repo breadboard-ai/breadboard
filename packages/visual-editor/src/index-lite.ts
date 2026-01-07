@@ -547,9 +547,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       return { error: `No FlowGenerator was provided` };
     }
 
-    this.dispatchEvent(
-      new StateEvent({ eventType: "board.stop", clearLastRun: true })
-    );
+    this.dispatchEvent(new StateEvent({ eventType: "board.stop" }));
 
     const generated = await flowGenWithTheme(
       this.flowGenerator,
