@@ -4,17 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { MainArguments } from "./types/types.js";
 
-import { Types } from "@breadboard-ai/shared-ui";
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
+import { Types } from "./ui/index.js";
 
 import { Runtime } from "./runtime/runtime.js";
 import { RuntimeFlagManager } from "@breadboard-ai/types";
-import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
-import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
-import { Project } from "@breadboard-ai/shared-ui/state/types.js";
+import type { GlobalConfig } from "./ui/contexts/global-config.js";
+import { SigninAdapter } from "./ui/utils/signin-adapter.js";
+import { Project } from "./ui/state/types.js";
+import { GoogleDriveBoardServer } from "./board-server/server.js";
 
 /**
  * An interface for owners functionality - a command center console for executing operations which

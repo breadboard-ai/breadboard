@@ -5,10 +5,10 @@
  */
 
 import * as idb from "idb";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "../ui/index.js";
 import { SignalArray } from "signal-utils/array";
 import { SignalObject } from "signal-utils/object";
-import { RecentBoard } from "@breadboard-ai/shared-ui/types/types.js";
+import { RecentBoard } from "../ui/types/types.js";
 
 interface RecentBoardsDB extends idb.DBSchema {
   boards: {
@@ -41,9 +41,21 @@ export class RecentBoardStore {
       if (board.title) {
         existing.title = board.title;
       }
-      this.boards.unshift(existing);
+      this.boards.unshift(
+        new SignalObject({
+          url: existing.url,
+          title: existing.title,
+          pinned: existing.pinned ?? false,
+        })
+      );
     } else {
-      this.boards.unshift(board);
+      this.boards.unshift(
+        new SignalObject({
+          url: board.url,
+          title: board.title,
+          pinned: board.pinned ?? false,
+        })
+      );
     }
 
     if (this.boards.length > 50) {

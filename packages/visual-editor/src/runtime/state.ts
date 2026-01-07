@@ -4,22 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { State } from "@breadboard-ai/shared-ui";
-import { createLiteModeState } from "@breadboard-ai/shared-ui/state/lite-mode.js";
-import {
-  LiteModeState,
-  Project,
-  RuntimeContext,
-} from "@breadboard-ai/shared-ui/state/types.js";
+import { State } from "../ui/index.js";
+import { createLiteModeState } from "../ui/state/lite-mode.js";
+import { LiteModeState, Project, RuntimeContext } from "../ui/state/types.js";
 import {
   EditableGraph,
   MainGraphIdentifier,
   MutableGraphStore,
-} from "@google-labs/breadboard";
-import { Runtime } from "./runtime";
-import { RuntimeTabChangeEvent } from "./events";
+} from "@breadboard-ai/types";
+import { Runtime } from "./runtime.js";
+import { RuntimeTabChangeEvent } from "./events.js";
 import { signal } from "signal-utils";
-import { FlowGenerator } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
+import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
 
 export { StateManager };
 
@@ -87,6 +83,7 @@ class StateManager implements RuntimeContext {
       this.#store,
       this.runtime.fetchWithCreds,
       this.runtime.googleDriveBoardServer,
+      this.runtime.actionTracker,
       this.runtime.mcpClientManager,
       editable || undefined
     );

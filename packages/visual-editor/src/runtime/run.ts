@@ -4,23 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  MainGraphIdentifier,
-  MutableGraphStore,
-} from "@google-labs/breadboard";
+import { createPlanRunner } from "../engine/runtime/harness/index.js";
 import {
   HarnessRunner,
   Kit,
+  MainGraphIdentifier,
+  MutableGraphStore,
   RunConfig,
   RunEndEvent,
   RunErrorEvent,
   RunLifecycleEvent,
   RuntimeFlagManager,
 } from "@breadboard-ai/types";
-import { Tab, TabId } from "./types";
-import { createPlanRunner } from "@breadboard-ai/runtime";
-import { RuntimeBoardRunEvent } from "./events";
-import { StateManager } from "./state";
+import { RuntimeBoardRunEvent } from "./events.js";
+import { StateManager } from "./state.js";
+import { Tab, TabId } from "./types.js";
 
 export class Run extends EventTarget {
   #runs = new Map<

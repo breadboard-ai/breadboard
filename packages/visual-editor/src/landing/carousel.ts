@@ -8,12 +8,12 @@ import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { galleryItems } from "./gallery-items";
+import { galleryItems } from "./gallery-items.js";
 import { fonts } from "./fonts.js";
 
 import "./carousel-modal.js";
 import { shortestPath, toCSSMatrix } from "./utils.js";
-import { makeUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
+import { makeUrl } from "../ui/utils/urls.js";
 
 @customElement("landing-carousel")
 export class LandingCarousel extends LitElement {
@@ -280,6 +280,7 @@ export class LandingCarousel extends LitElement {
           page: "graph",
           mode: "app",
           flow: galleryItems[this.currentItem].url,
+          guestPrefixed: true,
         })}
       >
         Try now

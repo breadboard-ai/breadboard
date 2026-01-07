@@ -56,6 +56,18 @@ export const GOOGLE_OAUTH_TOKEN_ENDPOINT: string = getString(
   "GOOGLE_OAUTH_TOKEN_ENDPOINT"
 );
 
+export const GOOGLE_DOCS_API_ENDPOINT: string = getString(
+  "GOOGLE_DOCS_API_ENDPOINT"
+);
+
+export const GOOGLE_SHEETS_API_ENDPOINT: string = getString(
+  "GOOGLE_SHEETS_API_ENDPOINT"
+);
+
+export const GOOGLE_SLIDES_API_ENDPOINT: string = getString(
+  "GOOGLE_SLIDES_API_ENDPOINT"
+);
+
 export const GOOGLE_DRIVE_API_ENDPOINT: string = getString(
   "GOOGLE_DRIVE_API_ENDPOINT"
 );
@@ -64,8 +76,9 @@ export const GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID: string = getString(
   "GOOGLE_DRIVE_FEATURED_GALLERY_FOLDER_ID"
 );
 
-export const GOOGLE_DRIVE_PUBLISH_PERMISSIONS: GoogleDrivePermission[] =
-  getDrivePermissions("GOOGLE_DRIVE_PUBLISH_PERMISSIONS");
+export const GOOGLE_DRIVE_PUBLISH_PERMISSIONS =
+  (getJson("GOOGLE_DRIVE_PUBLISH_PERMISSIONS") as GoogleDrivePermission[]) ??
+  [];
 
 export const GOOGLE_DRIVE_USER_FOLDER_NAME: string = getString(
   "GOOGLE_DRIVE_USER_FOLDER_NAME"
@@ -99,9 +112,7 @@ export const SHELL_GUEST_ORIGIN = getString("SHELL_GUEST_ORIGIN");
 
 export const SHELL_HOST_ORIGINS = getStringList("SHELL_HOST_ORIGINS");
 
-export const SHELL_ENABLED = !!(
-  SHELL_GUEST_ORIGIN && SHELL_HOST_ORIGINS?.length
-);
+export const SHELL_PREFIX = getString("SHELL_PREFIX");
 
 export const ENABLE_EMAIL_OPT_IN = getBoolean("ENABLE_EMAIL_OPT_IN");
 
@@ -117,6 +128,9 @@ export const ENABLE_REQUIRE_CONSENT_FOR_GET_WEBPAGE = getBoolean(
 export const ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE = getBoolean(
   "ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE"
 );
+
+export const SHARE_SURFACE_URL_TEMPLATES =
+  (getJson("SHARE_SURFACE_URL_TEMPLATES") as Record<string, string>) ?? {};
 
 /** Get the value of the given flag as a string, or empty string if absent. */
 function getString(flagName: string): string {
@@ -143,16 +157,13 @@ function getBoolean(flagName: string): boolean {
   return getString(flagName).toLowerCase() === "true";
 }
 
-function getDrivePermissions(flagName: string): GoogleDrivePermission[] {
-  const permissions = getString(flagName);
-  if (!permissions) {
-    return [];
+function getJson(flagName: string): unknown {
+  const str = getString(flagName);
+  if (!str) {
+    return undefined;
   }
-
-  console.log(
-    `[unified-server startup] Parsing Drive permissions from ${flagName}`
-  );
-  return JSON.parse(permissions) as GoogleDrivePermission[];
+  console.log(`[unified-server startup] Parsing ${flagName}`);
+  return JSON.parse(str);
 }
 
 function getDomainConfig(

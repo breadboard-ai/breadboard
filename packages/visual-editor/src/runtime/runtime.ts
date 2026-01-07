@@ -3,8 +3,7 @@
  * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import type * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { createGraphStore, createLoader, err } from "@google-labs/breadboard";
+import type * as BreadboardUI from "../ui/index.js";
 import { Router } from "./router.js";
 import { Board } from "./board.js";
 import { Run } from "./run.js";
@@ -18,52 +17,60 @@ export * as Types from "./types.js";
 import { Select } from "./select.js";
 import { StateManager } from "./state.js";
 import { Shell } from "./shell.js";
-import { Outcome, RunConfig, RuntimeFlagManager } from "@breadboard-ai/types";
+import {
+  OPAL_BACKEND_API_PREFIX,
+  GOOGLE_DRIVE_FILES_API_PREFIX,
+  Outcome,
+  PersistentBackend,
+  RunConfig,
+  RuntimeFlagManager,
+} from "@breadboard-ai/types";
 import {
   RuntimeHostStatusUpdateEvent,
   RuntimeSnackbarEvent,
   RuntimeToastEvent,
   RuntimeUnsnackbarEvent,
 } from "./events.js";
-import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import { inputsFromSettings } from "@breadboard-ai/shared-ui/data/inputs.js";
-import {
-  assetsFromGraphDescriptor,
-  envFromGraphDescriptor,
-} from "@breadboard-ai/data";
+import { SettingsStore } from "../ui/data/settings-store.js";
+import { inputsFromSettings } from "../ui/data/inputs.js";
 import { Autonamer } from "./autonamer.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
-import { createGoogleDriveBoardServer } from "@breadboard-ai/shared-ui/utils/create-server.js";
-import { createA2Server, createA2ModuleFactory } from "@breadboard-ai/a2";
-import {
-  createFileSystemBackend,
-  createFlagManager,
-} from "@breadboard-ai/data-store";
-import {
-  addRunModule,
-  composeFileSystemBackends,
-  createEphemeralBlobStore,
-  createFileSystem,
-  PersistentBackend,
-} from "@google-labs/breadboard";
-import { RecentBoardStore } from "../data/recent-boards";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { McpClientManager } from "@breadboard-ai/mcp";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configuration.js";
+import { createGoogleDriveBoardServer } from "../ui/utils/create-server.js";
+import { createA2Server, createA2ModuleFactory } from "../a2/index.js";
+import { createFileSystemBackend, createFlagManager } from "../idb/index.js";
+import { RecentBoardStore } from "../data/recent-boards.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { McpClientManager } from "../mcp/index.js";
 import {
   ConsentAction,
   ConsentUIType,
   ConsentRequest,
   FileSystem,
 } from "@breadboard-ai/types";
-import { ConsentManager } from "@breadboard-ai/shared-ui/utils/consent-manager.js";
-import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
-import { createActionTrackerBackend } from "@breadboard-ai/shared-ui/utils/action-tracker";
-import { envFromSettings } from "../utils/env-from-settings";
-import { builtInMcpClients } from "../mcp-clients";
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
-import { FlowGenerator } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
-import { AppCatalystApiClient } from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
-import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
+import { ConsentManager } from "../ui/utils/consent-manager.js";
+import { SigninAdapter } from "../ui/utils/signin-adapter.js";
+import {
+  createActionTracker,
+  createActionTrackerBackend,
+} from "../ui/utils/action-tracker.js";
+import { envFromSettings } from "../utils/env-from-settings.js";
+import { builtInMcpClients } from "../mcp-clients.js";
+import { GoogleDriveBoardServer } from "../board-server/server.js";
+import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
+import { AppCatalystApiClient } from "../ui/flow-gen/app-catalyst.js";
+import { EmailPrefsManager } from "../ui/utils/email-prefs-manager.js";
+import { err } from "@breadboard-ai/utils";
+import { createFileSystem } from "../engine/file-system/index.js";
+import { createEphemeralBlobStore } from "../engine/file-system/ephemeral-blob-store.js";
+import { composeFileSystemBackends } from "../engine/file-system/composed-peristent-backend.js";
+import { addRunModule } from "../engine/add-run-module.js";
+import { createGraphStore } from "../engine/inspector/index.js";
+import { createLoader } from "../engine/loader/index.js";
+import {
+  assetsFromGraphDescriptor,
+  envFromGraphDescriptor,
+} from "../data/file-system.js";
+import { ActionTracker } from "../ui/types/types.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -85,6 +92,7 @@ export class Runtime extends EventTarget {
   public readonly googleDriveBoardServer: GoogleDriveBoardServer;
   public readonly flowGenerator: FlowGenerator;
   public readonly apiClient: AppCatalystApiClient;
+  public readonly actionTracker: ActionTracker;
   public readonly emailPrefsManager: EmailPrefsManager;
 
   constructor(config: RuntimeConfig) {
@@ -92,24 +100,28 @@ export class Runtime extends EventTarget {
 
     this.flags = createFlagManager(config.globalConfig.flags);
 
-    this.signinAdapter = new SigninAdapter(
-      config.shellHost,
-      config.initialSignInState
-    );
+    this.signinAdapter = new SigninAdapter(config.shellHost);
     this.fetchWithCreds = this.signinAdapter.fetchWithCreds;
 
-    const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
-      .href;
-    const apiBaseUrl =
-      this.signinAdapter.state === "signedout"
-        ? proxyApiBaseUrl
-        : config.globalConfig.GOOGLE_DRIVE_API_ENDPOINT ||
-          "https://www.googleapis.com";
+    this.actionTracker = createActionTracker(
+      config.shellHost,
+      config.guestConfig,
+      config.globalConfig.MEASUREMENT_ID,
+      () => this.signinAdapter.state.then((state) => state === "signedin")
+    );
 
+    const proxyApiBaseUrl = new URL(
+      "/api/drive-proxy/drive/v3/files",
+      window.location.href
+    ).href;
+    const apiBaseUrl = this.signinAdapter.state.then((state) =>
+      state === "signedout" ? proxyApiBaseUrl : GOOGLE_DRIVE_FILES_API_PREFIX
+    );
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,
       proxyApiBaseUrl,
       fetchWithCreds: this.fetchWithCreds,
+      isTestApi: !!config.guestConfig?.isTestApi,
     });
 
     this.fileSystem = createFileSystem({
@@ -122,24 +134,19 @@ export class Runtime extends EventTarget {
       ),
     });
 
-    let backendApiEndpoint = config.globalConfig.BACKEND_API_ENDPOINT;
-    if (!backendApiEndpoint) {
-      console.warn(`No BACKEND_API_ENDPOINT in ClientDeploymentConfiguration`);
-      backendApiEndpoint = window.location.href;
-    }
-
     this.mcpClientManager = new McpClientManager(
       builtInMcpClients,
       {
         fileSystem: this.fileSystem,
         fetchWithCreds: this.fetchWithCreds,
       },
-      backendApiEndpoint
+      OPAL_BACKEND_API_PREFIX
     );
 
     const sandbox = createA2ModuleFactory({
       mcpClientManager: this.mcpClientManager,
       fetchWithCreds: this.fetchWithCreds,
+      shell: config.shellHost,
     });
 
     const kits = addRunModule(sandbox, []);
@@ -175,7 +182,9 @@ export class Runtime extends EventTarget {
 
     this.googleDriveBoardServer = createGoogleDriveBoardServer(
       this.signinAdapter,
-      this.googleDriveClient
+      this.googleDriveClient,
+      config.shellHost.findUserOpalFolder,
+      config.shellHost.listUserOpals
     );
     const a2Server = createA2Server();
 
@@ -212,7 +221,7 @@ export class Runtime extends EventTarget {
     this.edit = new Edit(graphStore, autonamer, this.flags);
     this.apiClient = new AppCatalystApiClient(
       this.fetchWithCreds,
-      backendApiEndpoint
+      OPAL_BACKEND_API_PREFIX
     );
     this.emailPrefsManager = new EmailPrefsManager(this.apiClient);
     this.flowGenerator = new FlowGenerator(this.apiClient, this.flags);

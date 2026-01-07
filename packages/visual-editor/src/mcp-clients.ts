@@ -8,9 +8,9 @@ import {
   createFileSystemClient,
   createGdriveClient,
   McpBuiltInClientFactory,
-} from "@breadboard-ai/mcp";
-import { createGoogleCalendarClient } from "@breadboard-ai/mcp";
-import { createGmailClient } from "@breadboard-ai/mcp";
+} from "./mcp/index.js";
+import { createGoogleCalendarClient } from "./mcp/index.js";
+import { createGmailClient } from "./mcp/index.js";
 
 export const builtInMcpClients: [string, McpBuiltInClientFactory][] = [
   ["gcal", createGoogleCalendarClient],

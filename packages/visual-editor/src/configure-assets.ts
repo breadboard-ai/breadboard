@@ -10,15 +10,14 @@ import languagePack from "./opal-lang.js";
 
 export { configureAssets };
 
-
 const ASSET_PACK = "langs/icons";
-const FONT_FACE_MONO = '"Google Sans Code", "Courier New", Courier, monospace"';
+const FONT_FACE_MONO = '"Google Sans Code", "Courier New", Courier, monospace';
 const FONT_FACE =
-  '"Google Sans", "Helvetica Neue", Helvetica, Arial, sans-serif"';
+  '"Google Sans", "Helvetica Neue", Helvetica, Arial, sans-serif';
 const FONT_FACE_FLEX =
-  '"Google Sans Flex", "Helvetica Neue", Helvetica, Arial, sans-serif"';
+  '"Google Sans Flex", "Helvetica Neue", Helvetica, Arial, sans-serif';
 const FONT_LINK =
-  "https://fonts.googleapis.com/css2?family=Google+Sans+Code&family=Google+Sans+Flex:opsz,wght,ROND@6..144,1..1000,100&family=Google+Sans:opsz,wght@17..18,400..700&display=block";
+  "https://fonts.googleapis.com/css2?family=Google+Sans+Code&family=Google+Sans+Flex:opsz,wght,ROND@6..144,1..1000,0..100&family=Google+Sans:opsz,wght@17..18,400..700&display=block";
 
 const POLICY_HTML_PATH = "public/policy.html";
 const TOS_HTML_PATH = "public/tos.html";

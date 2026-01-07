@@ -13,21 +13,12 @@
     name="twitter:image"
     content="{{origin}}/images/share-card-{{bucket}}.png"
   />
-  <style>
-    iframe#opal-app {
-      width: 100vw;
-      height: 100vh;
-      border: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-    }
-  </style>
+  <link rel="stylesheet" href="/styles/shell.css" />
 </head>
 <body>
   <iframe
     id="opal-app"
-    sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals allow-storage-access-by-user-activation allow-downloads"
+    sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals allow-storage-access-by-user-activation allow-downloads allow-top-navigation"
     allow="clipboard-read; clipboard-write; microphone; camera"
   ></iframe>
   <template>
