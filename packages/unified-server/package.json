@@ -2,17 +2,14 @@
   "name": "@breadboard-ai/unified-server",
   "private": true,
   "version": "0.4.0",
-  "main": "./dist/src/server/main.js",
-  "exports": "./dist/src/server/main.js",
+  "main": "./dist/src/main.js",
+  "exports": "./dist/src/main.js",
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
     "build": "wireit",
     "build:tsc": "wireit",
-    "build:tsc:client": "wireit",
-    "build:tsc:server": "wireit",
     "build:vite": "wireit",
-    "copy-assets": "wireit",
     "dev": "npm run serve --watch",
     "dev-drive": "VITE_BOARD_SERVICE='drive:' npm run serve --watch",
     "docker-build": "docker build --build-context=breadboard=../.. --tag=unified-server .",
@@ -35,75 +32,38 @@
       ]
     },
     "build:vite": {
-      "command": "vite build",
       "dependencies": [
-        "copy-assets",
-        "../shared-ui#build:tsc",
-        "../visual-editor#build:tsc",
-        "build:tsc:client"
-      ],
-      "output": [
-        "dist/client"
+        "../visual-editor#build"
       ]
     },
     "build:tsc": {
-      "dependencies": [
-        "build:tsc:client",
-        "build:tsc:server"
-      ]
-    },
-    "build:tsc:client": {
-      "command": "tsc --pretty --project tsconfig.client.json",
+      "command": "tsc --pretty --project tsconfig.json",
       "clean": "if-file-deleted",
       "files": [
-        "tsconfig.client.json",
+        "tsconfig.json",
         "src/",
-        "!src/server/"
-      ],
-      "output": [
-        "dist/",
-        "!dist/src/server/",
-        "!dist/tests/",
-        "!dist/server.tsbuildinfo"
-      ],
-      "dependencies": [
-        "../visual-editor#build:tsc"
-      ]
-    },
-    "build:tsc:server": {
-      "command": "tsc --pretty --project tsconfig.server.json",
-      "clean": "if-file-deleted",
-      "files": [
-        "tsconfig.server.json",
-        "src/server/",
         "tests/"
       ],
       "output": [
-        "dist/src/server/",
+        "dist/src/",
         "dist/tests/",
         "dist/server.tsbuildinfo"
       ],
       "dependencies": [
         "<dependencies>#build:tsc",
-        "!../visual-editror#build:tsc"
+        "!../visual-editor#build:tsc"
       ]
     },
     "serve": {
       "command": "node --enable-source-maps .",
       "service": true,
       "files": [
-        ".env",
-        "vite.config.ts",
-        "secrets/*.json"
+        ".env"
       ],
       "dependencies": [
-        "build:tsc:server",
+        "build:tsc",
         {
-          "script": "build:tsc:client",
-          "cascade": false
-        },
-        {
-          "script": "copy-assets",
+          "script": "../visual-editor#check:tsc",
           "cascade": false
         }
       ]
@@ -112,24 +72,6 @@
       "command": "ava",
       "dependencies": [
         "build:tsc"
-      ]
-    },
-    "copy-assets": {
-      "command": "tsx scripts/copy-assets.ts",
-      "dependencies": [
-        "../visual-editor#prepare-assets"
-      ],
-      "files": [
-        "scripts/copy-assets.ts"
-      ],
-      "output": [
-        "public/",
-        "icons/",
-        "index.html",
-        "oauth/",
-        "landing/",
-        "langs/",
-        "shell/"
       ]
     }
   },
@@ -141,19 +83,6 @@
   "files": [
     "dist/src"
   ],
-  "ava": {
-    "timeout": "30s",
-    "files": [
-      "tests/**/*.ts"
-    ],
-    "workerThreads": false,
-    "typescript": {
-      "rewritePaths": {
-        "./": "dist/"
-      },
-      "compile": false
-    }
-  },
   "keywords": [],
   "author": "Google Labs Team",
   "license": "Apache-2.0",
@@ -178,23 +107,17 @@
     "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {
-    "@breadboard-ai/a2": "0.6.0",
-    "@breadboard-ai/google-drive-kit": "0.8.0",
-    "@breadboard-ai/mcp": "^0.1.0",
-    "@breadboard-ai/shared-ui": "1.27.0",
     "@breadboard-ai/types": "0.9.0",
     "@breadboard-ai/utils": "^0.1.0",
     "@breadboard-ai/visual-editor": "1.30.0",
     "@google-cloud/storage": "^7.15.2",
-    "@google-labs/breadboard": "0.36.0",
-    "@google/genai": "^1.27.0",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "google-auth-library": "^10.1.0",
     "jwt-decode": "^4.0.0",
-    "vite": "^7.2.2",
+    "vite": "^7.2.6",
     "vite-express": "^0.21.1"
   },
   "directories": {

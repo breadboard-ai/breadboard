@@ -8,11 +8,12 @@ import {
   FileDataPart,
   GraphDescriptor,
   InlineDataCapabilityPart,
+  MutableGraphStore,
   TextCapabilityPart,
 } from "@breadboard-ai/types";
-import { asBase64, MutableGraphStore } from "@google-labs/breadboard";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { isShortsUri } from "@breadboard-ai/shared-ui/utils/youtube.js";
+import * as BreadboardUI from "../ui/index.js";
+import { isShortsUri } from "../ui/utils/youtube.js";
+import { asBase64 } from "../data/common.js";
 
 export { ClipboardReader };
 
@@ -138,7 +139,7 @@ function tryParsingYouTubeUrl(s: string) {
 function tryParsingJson(s: string) {
   try {
     return JSON.parse(s);
-  } catch (e) {
+  } catch {
     return undefined;
   }
 }
@@ -167,7 +168,7 @@ function isUrl(urlLike: string, base?: string): boolean {
       new URL(urlLike);
     }
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 }

@@ -13,6 +13,9 @@ export type ClientDeploymentConfiguration = {
   ENVIRONMENT_NAME?: string;
   GOOGLE_OAUTH_TOKEN_ENDPOINT?: string;
   GOOGLE_OAUTH_AUTH_ENDPOINT?: string;
+  GOOGLE_DOCS_API_ENDPOINT?: string;
+  GOOGLE_SHEETS_API_ENDPOINT?: string;
+  GOOGLE_SLIDES_API_ENDPOINT?: string;
   GOOGLE_DRIVE_API_ENDPOINT?: string;
   GOOGLE_DRIVE_PUBLISH_PERMISSIONS?: GoogleDrivePermission[];
   GOOGLE_DRIVE_USER_FOLDER_NAME?: string;
@@ -24,12 +27,14 @@ export type ClientDeploymentConfiguration = {
   OAUTH_CLIENT: string;
   SHELL_GUEST_ORIGIN?: string;
   SHELL_HOST_ORIGINS?: string[];
+  SHELL_PREFIX?: string;
   /**
    * Allow running 3P modules (modules that are other than A2). Default
    * value is "false"
    */
   ALLOW_3P_MODULES?: boolean;
   ENABLE_EMAIL_OPT_IN?: boolean;
+  SHARE_SURFACE_URL_TEMPLATES: Record<string, string>;
   domains?: Record<string, DomainConfiguration>;
   flags: RuntimeFlags;
 };

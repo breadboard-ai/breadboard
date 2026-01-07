@@ -82,11 +82,14 @@ body.hide-cursor {
     0px 4px 8px 3px rgba(0, 0, 0, 0.05), 0px 1px 3px 0 rgba(0, 0, 0, 0.1);
   --bb-elevation-1:
     0px 1px 2px rgb(0, 0, 0, 0.3), 0px 1px 3px rgb(0, 0, 0, 0.15);
+
+  --sys-color--body-background-light: #ffffff;
+  --sys-color--body-background-dark: #131314;
 }
 
 html,
 body {
-  overscroll-behavior: none;
+  overscroll-behavior: auto;
   padding: 0;
   margin: 0;
   font-family: var(--bb-font-family, Arial);
@@ -95,6 +98,13 @@ body {
   height: 100svh;
   display: flex;
   flex-direction: column;
-  background: var(--n-100);
+  background: var(--sys-color--body-background-light);
   overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  html,
+  body {
+    background: var(--sys-color--body-background-dark);
+  }
 }
