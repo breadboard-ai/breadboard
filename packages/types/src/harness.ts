@@ -294,20 +294,16 @@ export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
   running(): boolean;
 
   /**
-   * Starts or resumes the running of the board.
-   * If the runner is waiting for input, the input arguments will be used
-   * to provide the input values.
-   *
-   * If the runner is done, it will return true. If the runner is waiting
-   * for input or secret, it will return false.
+   * Starts a run
+   */
+  start(): Promise<void>;
+
+  /**
+   * Resumes the running of the board.
    *
    * @param inputs -- input values to provide to the runner.
-   * @param interactiveMode -- whether or not this call stops right after
-   *    initialization, allowing to run in interactive mode.
-   * @returns -- true if the runner is done, or false if it is waiting
-   *             for input.
    */
-  run(inputs?: InputValues, interactiveMode?: boolean): Promise<boolean>;
+  resumeWithInputs(inputs: InputValues): Promise<void>;
 
   /**
    * For new runtime only: the current plan for the run.
@@ -350,7 +346,7 @@ export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
    * For new runtime only: A map of all steps that are currently waiting for
    * input.
    */
-  waiting: Map<string, OrchestratorNodeState>;
+  waiting: ReadonlyMap<string, DeepReadonly<OrchestratorNodeState>>;
 };
 
 /**
