@@ -7,8 +7,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { Outcome, Schema } from "@breadboard-ai/types";
-import { z, ZodObject, ZodTypeAny } from "zod";
-import { zodToJsonSchema } from "zod-to-json-schema";
+import { z, ZodObject, ZodType } from "zod";
 import { FunctionDeclaration, GeminiSchema } from "../a2/gemini.js";
 
 export {
@@ -35,7 +34,7 @@ export type ZodFunctionDefinition<
 };
 
 type ArgsRawShape = {
-  [k: string]: ZodTypeAny;
+  [k: string]: ZodType;
 };
 
 /**
@@ -87,7 +86,7 @@ function defineFunction<
 ): TypedFunctionDefinition<TParams, TResponse> {
   const { parameters, response, name, description } = definition;
   // Convert Zod schemas to JSON Schema
-  const parametersJsonSchema = zodToJsonSchema(z.object(parameters));
+  const parametersJsonSchema = z.object(parameters).toJSONSchema();
   const result: TypedFunctionDefinition<TParams, TResponse> = {
     name,
     description,
@@ -95,7 +94,7 @@ function defineFunction<
     handler,
   };
   if (response) {
-    result["responseJsonSchema"] = zodToJsonSchema(z.object(response));
+    result["responseJsonSchema"] = z.object(response).toJSONSchema();
   }
   return result;
 }
@@ -103,7 +102,7 @@ function defineFunction<
 function defineResponseSchema<TSchema extends ArgsRawShape>(
   schema: TSchema
 ): GeminiSchema {
-  const responseSchema = zodToJsonSchema(z.object(schema)) as Schema;
+  const responseSchema = z.object(schema).toJSONSchema() as Schema;
 
   return responseSchema as GeminiSchema;
 }
