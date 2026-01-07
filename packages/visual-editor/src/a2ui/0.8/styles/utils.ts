@@ -97,8 +97,8 @@ export function createThemeStyles(
 
 export function toProp(key: string) {
   if (key.startsWith("nv")) {
-    return `--nv-${key.slice(2)}`;
+    return `--light-dark-nv-${key.slice(2)}`;
   }
 
-  return `--${key[0]}-${key.slice(1)}`;
+  return `--light-dark-${key[0]}-${key.slice(1)}`;
 }

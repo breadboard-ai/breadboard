@@ -14,10 +14,12 @@ import {
 } from "lit/directive.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import MarkdownIt from "markdown-it";
-import { RenderRule } from "markdown-it/lib/renderer.mjs";
-import { escapeNodeText } from "../../utils/sanitizer.js";
+import * as Sanitizer from "../../utils/sanitizer.js";
 
 class MarkdownDirective extends Directive {
+  // Maintains the map as a class property so rules can access it dynamically
+  #currentTagClassMap: Record<string, string[]> = {};
+
   #markdownIt = MarkdownIt({
     highlight: (str, lang) => {
       switch (lang) {
@@ -28,19 +30,87 @@ class MarkdownDirective extends Directive {
           iframe.sandbox = "";
           return iframe.innerHTML;
         }
-
         default:
-          return escapeNodeText(str);
+          return Sanitizer.escapeNodeText(str);
       }
     },
   });
-  #lastValue: string | null = null;
-  #lastTagClassMap: string | null = null;
 
   constructor(partInfo: PartInfo) {
     super(partInfo);
-    this.#applyOpenInNewTab();
+    this.#setupDynamicClassRules();
   }
+
+  /**
+   * Sets up the rules once, reading from the #currentTagClassMap.
+   */
+  #setupDynamicClassRules() {
+    const rulesToPatch = [
+      "paragraph_open",
+      "heading_open",
+      "bullet_list_open",
+      "ordered_list_open",
+      "list_item_open",
+      "link_open",
+      "blockquote_open",
+      "table_open",
+      "tr_open",
+      "td_open",
+      "th_open",
+      "strong_open",
+      "em_open",
+    ];
+
+    const renderer = this.#markdownIt.renderer;
+
+    for (const ruleName of rulesToPatch) {
+      // Capture the original rule (or use default renderToken)
+      const original =
+        renderer.rules[ruleName] ||
+        ((tokens, idx, options, _env, self) => {
+          return self.renderToken(tokens, idx, options);
+        });
+
+      renderer.rules[ruleName] = (tokens, idx, options, env, self) => {
+        const token = tokens[idx];
+        const classes = this.#currentTagClassMap[token.tag];
+        if (classes) {
+          for (const clazz of classes) {
+            token.attrJoin("class", clazz);
+          }
+        }
+
+        // For links, also append the _blank target and rel info.
+        if (ruleName === "link_open") {
+          const targetIndex = token.attrIndex("target");
+          if (targetIndex < 0) {
+            token.attrPush(["target", "_blank"]);
+          } else {
+            if (token.attrs) {
+              token.attrs[targetIndex][1] = "_blank";
+            }
+          }
+
+          const relIndex = token.attrIndex("rel");
+          if (relIndex < 0) {
+            token.attrPush(["rel", "noopener noreferrer"]);
+          } else {
+            if (token.attrs) {
+              const currentRel = token.attrs[relIndex][1];
+              if (!currentRel.includes("noopener")) {
+                token.attrs[relIndex][1] = `${currentRel} noopener noreferrer`;
+              }
+            }
+          }
+        }
+
+        return original(tokens, idx, options, env, self);
+      };
+    }
+  }
+
+  #lastValue: string | null = null;
+  #lastTagClassMap: string | null = null;
 
   update(_part: Part, [value, tagClassMap]: DirectiveParameters<this>) {
     if (
@@ -55,133 +125,11 @@ class MarkdownDirective extends Directive {
     return this.render(value, tagClassMap);
   }
 
-  #originalClassMap = new Map<string, RenderRule | undefined>();
-  #applyTagClassMap(tagClassMap: Record<string, string[]>) {
-    Object.entries(tagClassMap).forEach(([tag, classes]) => {
-      let tokenName;
-      switch (tag) {
-        case "p":
-          tokenName = "paragraph";
-          break;
-        case "h1":
-        case "h2":
-        case "h3":
-        case "h4":
-        case "h5":
-        case "h6":
-          tokenName = "heading";
-          break;
-        case "ul":
-          tokenName = "bullet_list";
-          break;
-        case "ol":
-          tokenName = "ordered_list";
-          break;
-        case "li":
-          tokenName = "list_item";
-          break;
-        case "a":
-          tokenName = "link";
-          break;
-        case "strong":
-          tokenName = "strong";
-          break;
-        case "em":
-          tokenName = "em";
-          break;
-      }
-
-      if (!tokenName) {
-        return;
-      }
-
-      const key = `${tokenName}_open`;
-      const original: RenderRule | undefined =
-        this.#markdownIt.renderer.rules[key];
-      this.#originalClassMap.set(key, original);
-
-      this.#markdownIt.renderer.rules[key] = (
-        tokens,
-        idx,
-        options,
-        env,
-        self
-      ) => {
-        const token = tokens[idx];
-        for (const clazz of classes) {
-          token.attrJoin("class", clazz);
-        }
-
-        if (original) {
-          return original.call(this, tokens, idx, options, env, self);
-        } else {
-          return self.renderToken(tokens, idx, options);
-        }
-      };
-    });
-  }
-
-  #unapplyTagClassMap() {
-    for (const [key, original] of this.#originalClassMap) {
-      this.#markdownIt.renderer.rules[key] = original;
-    }
-
-    this.#originalClassMap.clear();
-  }
-
-  /**
-   * Renders the markdown string to HTML using MarkdownIt.
-   *
-   * Note: MarkdownIt doesn't enable HTML in its output, so we render the
-   * value directly without further sanitization.
-   * @see https://github.com/markdown-it/markdown-it/blob/master/docs/security.md
-   */
-  render(value: string, tagClassMap?: Record<string, string[]>) {
-    if (tagClassMap) {
-      this.#applyTagClassMap(tagClassMap);
-    }
+  render(value: string, tagClassMap: Record<string, string[]> = {}) {
+    this.#currentTagClassMap = tagClassMap;
     const htmlString = this.#markdownIt.render(value);
-    this.#unapplyTagClassMap();
 
     return unsafeHTML(htmlString);
-  }
-
-  #applyOpenInNewTab() {
-    const defaultRender = this.#markdownIt.renderer.rules.link_open;
-
-    this.#markdownIt.renderer.rules.link_open = (
-      tokens,
-      idx,
-      options,
-      env,
-      self
-    ) => {
-      const token = tokens[idx];
-      const targetIndex = token.attrIndex("target");
-      if (targetIndex < 0) {
-        token.attrPush(["target", "_blank"]);
-      } else {
-        if (token.attrs) {
-          token.attrs[targetIndex][1] = "_blank";
-        }
-      }
-
-      const relIndex = token.attrIndex("rel");
-      if (relIndex < 0) {
-        token.attrPush(["rel", "noopener noreferrer"]);
-      } else {
-        if (token.attrs) {
-          const currentRel = token.attrs[relIndex][1];
-          if (!currentRel.includes("noopener")) {
-            token.attrs[relIndex][1] = `${currentRel} noopener noreferrer`;
-          }
-        }
-      }
-      return (
-        defaultRender?.(tokens, idx, options, env, self) ||
-        self.renderToken(tokens, idx, options)
-      );
-    };
   }
 }
 
