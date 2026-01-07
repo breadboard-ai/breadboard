@@ -346,7 +346,7 @@ export type HarnessRunner = TypedEventTargetType<RunEventMap> & {
    * For new runtime only: A map of all steps that are currently waiting for
    * input.
    */
-  waiting: Map<string, OrchestratorNodeState>;
+  waiting: ReadonlyMap<string, DeepReadonly<OrchestratorNodeState>>;
 };
 
 /**
