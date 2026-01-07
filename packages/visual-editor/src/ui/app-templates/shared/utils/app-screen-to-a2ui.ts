@@ -236,7 +236,6 @@ export function appScreenToA2UIProcessor(
     },
   ];
 
-  console.log(66666, messages);
   const processor = A2UI.v0_8.Data.createSignalA2UIModelProcessor();
   processor.clearSurfaces();
   processor.processMessages(messages);
