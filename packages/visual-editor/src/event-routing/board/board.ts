@@ -236,7 +236,7 @@ export const InputRoute: EventRoute<"board.input"> = {
 
     const data = originalEvent.detail.data as InputValues;
     if (!runner.running()) {
-      runner.run(data);
+      runner.resumeWithInputs(data);
     }
 
     return false;
