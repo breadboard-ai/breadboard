@@ -5,7 +5,7 @@
  */
 
 import { openDB, IDBPDatabase } from "idb";
-import { PrimitiveType, Storage } from "../../types";
+import { PrimitiveType, Storage } from "../../types.js";
 
 export class IdbStorageWrapper implements Storage {
   #dbPromise: Promise<IDBPDatabase>;

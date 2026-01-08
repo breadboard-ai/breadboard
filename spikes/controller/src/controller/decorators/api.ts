@@ -5,10 +5,10 @@
  */
 
 import { Signal } from "@lit-labs/signals";
-import { WebStorageWrapper } from "./storage/local";
-import { PrimitiveType } from "../types";
-import { PENDING_HYDRATION } from "../utils/sentinel";
-import { IdbStorageWrapper } from "./storage/idb";
+import { WebStorageWrapper } from "./storage/local.js";
+import { PrimitiveType } from "../types.js";
+import { PENDING_HYDRATION } from "../utils/sentinel.js";
+import { IdbStorageWrapper } from "./storage/idb.js";
 
 const localStorageWrapper = new WebStorageWrapper("local");
 const sessionStorageWrapper = new WebStorageWrapper("session");

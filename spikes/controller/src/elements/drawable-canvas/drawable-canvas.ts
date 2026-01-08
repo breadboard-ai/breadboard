@@ -6,8 +6,8 @@
 
 import { css, html, nothing, svg } from "lit";
 import { customElement, query, state } from "lit/decorators.js";
-import * as Styles from "../../styles/styles";
-import { Root } from "../root";
+import * as Styles from "../../styles/styles.js";
+import { Root } from "../root.js";
 
 @customElement("drawable-canvas")
 export class DrawableCanvas extends Root {

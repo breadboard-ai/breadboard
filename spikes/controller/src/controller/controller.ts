@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DrawingStore } from "./subcontrollers/drawing";
-import { LayoutStore } from "./subcontrollers/layout";
-import { TextValueStore } from "./subcontrollers/text-value";
-import { ThemeStore } from "./subcontrollers/theme";
+import { DrawingStore } from "./subcontrollers/drawing.js";
+import { LayoutStore } from "./subcontrollers/layout.js";
+import { TextValueStore } from "./subcontrollers/text-value.js";
+import { ThemeStore } from "./subcontrollers/theme.js";
 
 export class Controller {
   theme = new ThemeStore();

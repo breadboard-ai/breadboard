@@ -5,8 +5,8 @@
  */
 import { html, css, nothing } from "lit";
 import { customElement } from "lit/decorators.js";
-import { Root } from "../root";
-import { isHydrating } from "../../controller/utils/hydration";
+import { Root } from "../root.js";
+import { isHydrating } from "../../controller/utils/hydration.js";
 import { styleMap } from "lit/directives/style-map.js";
 
 @customElement("ui-splitter")

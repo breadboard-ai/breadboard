@@ -5,9 +5,9 @@
  */
 import { html, css, nothing } from "lit";
 import { customElement, query } from "lit/decorators.js";
-import { Root } from "../root";
-import { isHydrating } from "../../controller/utils/hydration";
-import * as Styles from "../../styles/styles";
+import { Root } from "../root.js";
+import { isHydrating } from "../../controller/utils/hydration.js";
+import * as Styles from "../../styles/styles.js";
 
 // Regex to find tokens like {{chip:anything}} or {{chip:foo}}
 // We use capturing groups () to ensure the split includes the separators
