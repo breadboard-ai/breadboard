@@ -145,7 +145,7 @@ If the objective specifies other agent URLs using the
         return {};
       }
     ),
-    (defineFunction(
+    defineFunction(
       {
         name: "system_write_text_to_file",
         description: "Writes the provided text to a file",
@@ -319,7 +319,7 @@ If an error has occurred, will contain a description of the error`
         if (!ok(text)) return { error: text.$error };
         return { text };
       }
-    )),
+    ),
     defineFunction(
       {
         name: "system_create_project",
