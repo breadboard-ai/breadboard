@@ -1,0 +1,21 @@
+{
+  "name": "controller",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "@lit-labs/signals": "^0.2.0",
+    "@lit/context": "^1.1.6",
+    "idb": "^8.0.3",
+    "lit": "^3.3.2",
+    "signal-utils": "^0.21.1",
+    "vite": "^7.3.1"
+  }
+}
