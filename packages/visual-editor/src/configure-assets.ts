@@ -6,23 +6,24 @@
 
 import path from "path";
 import fs from "fs/promises";
+import languagePack from "./opal-lang.js";
 
 export { configureAssets };
 
-export type ConfigureAssetsInputs = {
-  VITE_LANGUAGE_PACK?: string;
-  VITE_ASSET_PACK?: string;
-  VITE_FONT_FACE_MONO?: string;
-  VITE_FONT_FACE?: string;
-  VITE_FONT_FACE_FLEX?: string;
-  VITE_FONT_LINK?: string;
-  /** Supported values are: "drive:" or "/board/". */
-  VITE_BOARD_SERVICE?: string;
-  VITE_ENABLE_TOS?: boolean;
-  VITE_TOS_HTML_PATH?: string;
-  VITE_ENABLE_POLICY?: boolean;
-  VITE_POLICY_HTML_PATH?: string;
-};
+const ASSET_PACK = "langs/icons";
+const FONT_FACE_MONO = '"Google Sans Code", "Courier New", Courier, monospace';
+const FONT_FACE =
+  '"Google Sans", "Helvetica Neue", Helvetica, Arial, sans-serif';
+const FONT_FACE_FLEX =
+  '"Google Sans Flex", "Helvetica Neue", Helvetica, Arial, sans-serif';
+const FONT_LINK =
+  "https://fonts.googleapis.com/css2?family=Google+Sans+Code&family=Google+Sans+Flex:opsz,wght,ROND@6..144,1..1000,0..100&family=Google+Sans:opsz,wght@17..18,400..700&display=block";
+
+const POLICY_HTML_PATH = "public/policy.html";
+const TOS_HTML_PATH = "public/tos.html";
+const ENABLE_TOS = true;
+const ENABLE_POLICY = true;
+const BOARD_SERVICE = "drive:";
 
 export type ConfigureAssetOutputs = {
   LANGUAGE_PACK: string;
@@ -38,41 +39,7 @@ export type ConfigureAssetOutputs = {
   POLICY_HTML: string;
 };
 
-async function configureAssets(
-  root: string,
-  config: ConfigureAssetsInputs
-): Promise<ConfigureAssetOutputs> {
-  const {
-    VITE_LANGUAGE_PACK: LANGUAGE_PACK,
-    VITE_ASSET_PACK: ASSET_PACK,
-    VITE_FONT_FACE: FONT_FACE,
-    VITE_FONT_FACE_FLEX: FONT_FACE_FLEX,
-    VITE_FONT_FACE_MONO: FONT_FACE_MONO,
-    VITE_FONT_LINK: FONT_LINK,
-    VITE_BOARD_SERVICE: BOARD_SERVICE,
-    VITE_ENABLE_TOS: ENABLE_TOS,
-    VITE_TOS_HTML_PATH: TOS_HTML_PATH,
-    VITE_ENABLE_POLICY: ENABLE_POLICY,
-    VITE_POLICY_HTML_PATH: POLICY_HTML_PATH,
-  } = config;
-
-  if (!LANGUAGE_PACK) {
-    throw new Error("Language Pack not specified");
-  }
-
-  if (!ASSET_PACK) {
-    throw new Error("Asset Pack not specified");
-  }
-
-  const languagePackUrl = import.meta.resolve(LANGUAGE_PACK);
-
-  let languagePack;
-  try {
-    languagePack = (await import(languagePackUrl)).default;
-  } catch {
-    throw new Error("Unable to import language pack");
-  }
-
+async function configureAssets(root: string): Promise<ConfigureAssetOutputs> {
   const assetPack = await processAssetPack(
     root,
     ASSET_PACK,
@@ -81,17 +48,12 @@ async function configureAssets(
     FONT_FACE_FLEX
   );
 
-  let tosHtml = "";
-  if (TOS_HTML_PATH) {
-    const tosHtmlPath = path.join(root, TOS_HTML_PATH);
-    tosHtml = await fs.readFile(tosHtmlPath, { encoding: "utf-8" });
-  }
-
-  let policyHtml = undefined;
-  if (POLICY_HTML_PATH) {
-    const policyHtmlPath = path.join(root, POLICY_HTML_PATH);
-    policyHtml = await fs.readFile(policyHtmlPath, { encoding: "utf-8" });
-  }
+  const tosHtml = await fs.readFile(path.join(root, TOS_HTML_PATH), {
+    encoding: "utf-8",
+  });
+  const policyHtml = await fs.readFile(path.join(root, POLICY_HTML_PATH), {
+    encoding: "utf-8",
+  });
 
   return {
     LANGUAGE_PACK: JSON.stringify(languagePack),
@@ -101,9 +63,9 @@ async function configureAssets(
     FONT_PACK: JSON.stringify(assetPack.fonts),
     FONT_LINK: JSON.stringify(FONT_LINK),
     BOARD_SERVICE: JSON.stringify(BOARD_SERVICE),
-    ENABLE_TOS: ENABLE_TOS ?? false,
+    ENABLE_TOS,
     TOS_HTML: JSON.stringify(tosHtml),
-    ENABLE_POLICY: ENABLE_POLICY ?? false,
+    ENABLE_POLICY,
     POLICY_HTML: JSON.stringify(policyHtml),
   };
 }

@@ -1,0 +1,42 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { llm } from "../../../src/a2/a2/utils.js";
+
+export const title = "JSON output";
+
+export const objective = llm`
+## Role
+You are an expert researcher, specialized in producing concise, exact market fit judgement (is it something that's worth investing into?) on a product idea, grounded in thorough product research.
+
+## Task Definition
+Your primary task is to process a list of product ideas. For each product ideas, you will conduct in-depth research to gather comprehensive details. Following the research, you will generate a concise, information-dense summary of the research. The final output must be a structured list containing each idea and the summary.
+
+## Definitions and Specifications
+*   **Input**:
+    * "bluetooth-powered tea kettle, battery-powered scissors, remote-controlled cereal jar": A list of product ideas
+*   **In-depth Research**: For each idea, conduct extensive online research to gather the following details for the hypothetical product, based on this idea:
+    *   Key potential features and functionalities
+    *   Potential benefits for the user
+    *   Potential target audiences
+    *   Unique Selling Propositions (USPs)
+    *   Competitive landscape (if available)
+    *   Typical use cases and applications
+
+## Capabilities Usage
+*   **Information Retrieval**: Leverage Google Search to conduct the "in-depth research" for each product idea, actively seeking out the specific details mentioned in the "Definitions and Specifications" section.
+*   **Generate Text**: Utilize your text generation capabilities to create the information-dense summary for each product idea, based on the gathered research.
+
+## Requirements for the Ending Response
+*   The final output MUST be a list, where each item in the list is a JSON object with the following three fields:
+    *   "product_idea": The name of the product idea
+    *   "researched_details": A concise summary of the key findings from your in-depth research for that product idea. This should be presented as a structured text block (e.g., bullet points or a short paragraph).
+    *   "judgement": The information-dense, concise judgement on the product potential.
+*   The response MUST strictly follow this output format.
+*   Output: Text only.
+
+## Output reminder
+Take a deep breath, read all the provided instructions carefully, read the input section again, think internally until the response meets the format constraints and all the requirements, and then directly output the final response without any additional text.`.asContent();

@@ -4,109 +4,78 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
-
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
-import {
-  createFileSystemBackend,
-  createFlagManager,
-} from "@breadboard-ai/data-store";
-import { SettingsHelperImpl } from "@breadboard-ai/shared-ui/data/settings-helper.js";
-import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
 import type {
   AppScreenOutput,
   BoardServer,
   ConformsToNodeValue,
-  FileSystem,
-  ConsentRequest,
+  RuntimeFlagManager,
 } from "@breadboard-ai/types";
-import { ConsentUIType, ConsentAction } from "@breadboard-ai/types";
-import {
-  addRunModule,
-  composeFileSystemBackends,
-  createEphemeralBlobStore,
-  createFileSystem,
-  GraphDescriptor,
-  hash,
-  MutableGraphStore,
-  ok,
-  PersistentBackend,
-} from "@google-labs/breadboard";
+import { GraphDescriptor, MutableGraphStore } from "@breadboard-ai/types";
 import { provide } from "@lit/context";
 import { html, HTMLTemplateResult, LitElement, nothing } from "lit";
 import { state } from "lit/decorators.js";
-import { map } from "lit/directives/map.js";
+import { SettingsHelperImpl } from "./ui/data/settings-helper.js";
+import { SettingsStore } from "./ui/data/settings-store.js";
+
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
-import { RecentBoardStore } from "./data/recent-boards";
+import { RecentBoardStore } from "./data/recent-boards.js";
 import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 import {
   TabId,
   WorkspaceSelectionStateWithChangeId,
   WorkspaceVisualChangeId,
-} from "./runtime/types";
+} from "./runtime/types.js";
 
-import { createA2ModuleFactory, createA2Server } from "@breadboard-ai/a2";
-import { getGoogleDriveBoardService } from "@breadboard-ai/board-server-management";
-import {
-  EmbedHandler,
-  embedState,
-  EmbedState,
-  IterateOnPromptMessage,
-} from "@breadboard-ai/shared-ui/embed/embed.js";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { opalShellContext } from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
-import { McpClientManager } from "@breadboard-ai/mcp";
-import {
-  GlobalConfig,
-  globalConfigContext,
-} from "@breadboard-ai/shared-ui/contexts";
-import { boardServerContext } from "@breadboard-ai/shared-ui/contexts/board-server.js";
-import { googleDriveClientContext } from "@breadboard-ai/shared-ui/contexts/google-drive-client-context.js";
-import { uiStateContext } from "@breadboard-ai/shared-ui/contexts/ui-state.js";
-import { IterateOnPromptEvent } from "@breadboard-ai/shared-ui/events/events.js";
-import {
-  AppCatalystApiClient,
-  CheckAppAccessResponse,
-} from "@breadboard-ai/shared-ui/flow-gen/app-catalyst.js";
-import {
-  FlowGenerator,
-  flowGeneratorContext,
-} from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
-import { ReactiveAppScreen } from "@breadboard-ai/shared-ui/state/app-screen.js";
-import {
-  ActionTracker,
-  createActionTrackerBackend,
-} from "@breadboard-ai/shared-ui/utils/action-tracker";
-import {
-  SigninAdapter,
-  signinAdapterContext,
-} from "@breadboard-ai/shared-ui/utils/signin-adapter.js";
-import { SignalWatcher } from "@lit-labs/signals";
-import { classMap } from "lit/directives/class-map.js";
-import { unsafeHTML } from "lit/directives/unsafe-html.js";
-import { Admin } from "./admin";
-import { keyboardCommands } from "./commands/commands";
-import { KeyboardCommandDeps } from "./commands/types";
-import { eventRoutes } from "./event-routing/event-routing";
-import { RuntimeBoardServerChangeEvent } from "./runtime/events.js";
-import { MainArguments } from "./types/types";
-import { envFromFlags } from "./utils/env-from-flags";
-import { envFromSettings } from "./utils/env-from-settings";
-import { makeUrl, parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
-import { VESignInModal } from "@breadboard-ai/shared-ui/elements/elements.js";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+
 import {
   canonicalizeOAuthScope,
   type OAuthScope,
-} from "@breadboard-ai/shared-ui/connection/oauth-scopes.js";
-import { builtInMcpClients } from "./mcp-clients";
-import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
-import { EmailPrefsManager } from "@breadboard-ai/shared-ui/utils/email-prefs-manager.js";
-import { ConsentManager } from "@breadboard-ai/shared-ui/utils/consent-manager.js";
-import { consentManagerContext } from "@breadboard-ai/shared-ui/contexts/consent-manager.js";
-import { MakeUrlInit } from "@breadboard-ai/shared-ui/types/types.js";
+} from "./ui/connection/oauth-scopes.js";
+import { boardServerContext } from "./ui/contexts/board-server.js";
+import { consentManagerContext } from "./ui/contexts/consent-manager.js";
+import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
+import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
+import { uiStateContext } from "./ui/contexts/ui-state.js";
+import { VESignInModal } from "./ui/elements/elements.js";
+import { EmbedHandler, embedState, EmbedState } from "./ui/embed/embed.js";
+
+import type {
+  CheckAppAccessResult,
+  GuestConfiguration,
+  OpalShellHostProtocol,
+  ValidateScopesResult,
+} from "@breadboard-ai/types/opal-shell-protocol.js";
+import { SignalWatcher } from "@lit-labs/signals";
+import { CheckAppAccessResponse } from "./ui/flow-gen/app-catalyst.js";
+import {
+  FlowGenerator,
+  flowGeneratorContext,
+} from "./ui/flow-gen/flow-generator.js";
+import { ReactiveAppScreen } from "./ui/state/app-screen.js";
+import { ActionTracker, UserSignInResponse } from "./ui/types/types.js";
+import { ConsentManager } from "./ui/utils/consent-manager.js";
+import { EmailPrefsManager } from "./ui/utils/email-prefs-manager.js";
+import { opalShellContext } from "./ui/utils/opal-shell-guest.js";
+import {
+  SigninAdapter,
+  signinAdapterContext,
+} from "./ui/utils/signin-adapter.js";
+import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
+
+import { Admin } from "./admin.js";
+import { keyboardCommands } from "./commands/commands.js";
+import { KeyboardCommandDeps } from "./commands/types.js";
+import { eventRoutes } from "./event-routing/event-routing.js";
+
+import { hash, ok } from "@breadboard-ai/utils";
+import { MainArguments } from "./types/types.js";
+import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
+import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
 
 export { MainBase };
 
@@ -120,17 +89,11 @@ export type RenderValues = {
   tabStatus: BreadboardUI.Types.STATUS;
 };
 
-type InitArgs = {
-  fetchWithCreds: typeof globalThis.fetch;
-  backendApiEndpoint: string;
-};
-
 const LOADING_TIMEOUT = 1250;
 const BOARD_AUTO_SAVE_TIMEOUT = 1_500;
 const UPDATE_HASH_KEY = "bb-main-update-hash";
 
-const parsedUrl = parseUrl(window.location.href);
-
+const SIGN_IN_CONSENT_KEY = "bb-has-sign-in-consent";
 abstract class MainBase extends SignalWatcher(LitElement) {
   @provide({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig;
@@ -151,23 +114,26 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   accessor embedState!: EmbedState;
 
   @provide({ context: boardServerContext })
-  accessor boardServer: BoardServer | undefined;
+  accessor boardServer: BoardServer;
 
   @provide({ context: uiStateContext })
   @state()
-  accessor uiState!: BreadboardUI.State.UI;
+  accessor uiState: BreadboardUI.State.UI;
 
   @provide({ context: opalShellContext })
   accessor opalShell: OpalShellHostProtocol;
 
   @provide({ context: consentManagerContext })
-  accessor #consentManager: ConsentManager | undefined = undefined;
+  accessor #consentManager: ConsentManager;
+
+  @provide({ context: guestConfigurationContext })
+  protected accessor guestConfiguration: GuestConfiguration;
+
+  @provide({ context: actionTrackerContext })
+  protected accessor actionTracker: ActionTracker;
 
   @state()
   protected accessor tab: Runtime.Types.Tab | null = null;
-
-  @state()
-  accessor #boardServers: BoardServer[] = [];
 
   /**
    * Monotonically increases whenever the graph topology of a graph in the
@@ -200,15 +166,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   accessor graphStoreUpdateId: number = 0;
 
   @state()
-  accessor #tosStatus: CheckAppAccessResponse | null = null;
+  protected accessor tosStatus: CheckAppAccessResponse | null = null;
 
   @state()
-  protected accessor ready = false;
-
-  #initPromise: Promise<void>;
-
-  @state()
-  set #statusUpdates(
+  protected set statusUpdates(
     values: ConformsToNodeValue<BreadboardUI.Types.VisualEditorStatusUpdate>[]
   ) {
     values.sort((a, b) => {
@@ -225,7 +186,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     }
 
     globalThis.localStorage.setItem(UPDATE_HASH_KEY, updateHash);
-    this.#statusUpdatesValues = values;
+    this.statusUpdatesValues = values;
 
     if (
       values[0]?.type !== "info" &&
@@ -234,43 +195,31 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       this.uiState.showStatusUpdateChip = true;
     }
   }
-  get #statusUpdates() {
-    return this.#statusUpdatesValues;
+  get statusUpdates() {
+    return this.statusUpdatesValues;
   }
-  #statusUpdatesValues: BreadboardUI.Types.VisualEditorStatusUpdate[] = [];
+  protected statusUpdatesValues: BreadboardUI.Types.VisualEditorStatusUpdate[] =
+    [];
 
   // References.
-  readonly #canvasControllerRef: Ref<BreadboardUI.Elements.CanvasController> =
+  protected graphStore: MutableGraphStore;
+  protected selectionState: WorkspaceSelectionStateWithChangeId | null = null;
+  protected lastVisualChangeId: WorkspaceVisualChangeId | null = null;
+  protected runtime: Runtime.Runtime;
+  protected readonly snackbarRef = createRef<BreadboardUI.Elements.Snackbar>();
+
+  protected boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
+  protected recentBoardStore: RecentBoardStore;
+  protected lastPointerPosition = { x: 0, y: 0 };
+  protected tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
+  protected canvasControllerRef: Ref<BreadboardUI.Elements.CanvasController> =
     createRef();
-  readonly #tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
-  readonly #feedbackPanelRef: Ref<BreadboardUI.Elements.FeedbackPanel> =
+  protected feedbackPanelRef: Ref<BreadboardUI.Elements.FeedbackPanel> =
     createRef();
-
-  // The snackbar is not held as a Ref because we need to track pending snackbar
-  // messages as they are coming in and, once the snackbar has rendered, we add
-  // them. This means we use the ref callback to handle this case instead of
-  // using to create and store the reference itself.
-  protected snackbarElement: BreadboardUI.Elements.Snackbar | undefined =
-    undefined;
-  protected pendingSnackbarMessages: Array<{
-    message: BreadboardUI.Types.SnackbarMessage;
-    replaceAll: boolean;
-  }> = [];
-
-  // Created or set up in the constructor / #init.
-  #graphStore!: MutableGraphStore;
-  #selectionState: WorkspaceSelectionStateWithChangeId | null = null;
-  #lastVisualChangeId: WorkspaceVisualChangeId | null = null;
-  protected runtime!: Runtime.Runtime;
-
-  // Various bits of state.
-  readonly #boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
-  readonly #recentBoardStore = RecentBoardStore.instance();
-  readonly #lastPointerPosition = { x: 0, y: 0 };
-  readonly #embedHandler?: EmbedHandler;
-  readonly #apiClient: AppCatalystApiClient;
-  readonly #settings: SettingsStore;
+  protected readonly embedHandler: EmbedHandler | undefined;
+  protected readonly settings: SettingsStore;
   readonly emailPrefsManager: EmailPrefsManager;
+  protected readonly hostOrigin: URL;
 
   // Event Handlers.
   readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
@@ -285,216 +234,55 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // Static deployment config
     this.globalConfig = args.globalConfig;
 
+    // Configuration provided by shell host
+    this.guestConfiguration = args.guestConfiguration;
+
     // User settings
-    this.#settings = args.settings;
-    this.settingsHelper = new SettingsHelperImpl(this.#settings);
+    this.settings = args.settings;
+    this.settingsHelper = new SettingsHelperImpl(this.settings);
 
     // Authentication
     this.opalShell = args.shellHost;
-    this.signinAdapter = new SigninAdapter(
-      this.opalShell,
-      args.initialSignInState,
-      (scopes?: OAuthScope[]) => this.#askUserToSignInIfNeeded(scopes)
-    );
+    this.hostOrigin = args.hostOrigin;
 
-    // Asyncronously check if the user has a geo-restriction and sign out if so.
-    if (this.signinAdapter.state === "signedin") {
-      this.signinAdapter.checkAppAccess().then(async (access) => {
-        if (!access.canAccess) {
-          await this.signinAdapter.signOut();
-          window.history.pushState(
-            undefined,
-            "",
-            makeUrl({
-              page: "landing",
-              geoRestriction: true,
-              redirect: { page: "home" },
-            })
-          );
-          window.location.reload();
-        }
-      });
-    }
-
-    // API Clients
-    let backendApiEndpoint = this.globalConfig.BACKEND_API_ENDPOINT;
-    if (!backendApiEndpoint) {
-      console.warn(`No BACKEND_API_ENDPOINT in ClientDeploymentConfiguration`);
-      // Supply some value, so that we fail while calling the API, rather
-      // than at initialization.
-      // TODO: Come up with a more elegant solution.
-      backendApiEndpoint = window.location.href;
-    }
-
-    const fetchWithCreds = this.signinAdapter.fetchWithCreds;
-
-    this.#apiClient = new AppCatalystApiClient(
-      fetchWithCreds,
-      backendApiEndpoint
-    );
-
-    this.flowGenerator = new FlowGenerator(this.#apiClient);
-
-    this.emailPrefsManager = new EmailPrefsManager(this.#apiClient);
-
-    const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
-      .href;
-    const apiBaseUrl =
-      this.signinAdapter.state === "signedout"
-        ? proxyApiBaseUrl
-        : this.globalConfig.GOOGLE_DRIVE_API_ENDPOINT ||
-          "https://www.googleapis.com";
-    this.googleDriveClient = new GoogleDriveClient({
-      apiBaseUrl,
-      proxyApiBaseUrl,
-      fetchWithCreds,
-    });
-
-    this.#embedHandler = args.embedHandler;
-
-    this.#initPromise = this.#init(args, {
-      fetchWithCreds,
-      backendApiEndpoint,
-    }).then(() => {
-      console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
-      this.ready = true;
-    });
-  }
-
-  connectedCallback(): void {
-    super.connectedCallback();
-
-    window.addEventListener("bbshowtooltip", this.#onShowTooltipBound);
-    window.addEventListener("bbhidetooltip", this.#hideTooltipBound);
-    window.addEventListener("pointerdown", this.#hideTooltipBound);
-    window.addEventListener("keydown", this.#onKeyboardShortCut);
-
-    if (this.#embedHandler) {
-      this.embedState = embedState();
-    }
-
-    this.#embedHandler?.addEventListener(
-      "toggle_iterate_on_prompt",
-      ({ message }) => {
-        this.embedState.showIterateOnPrompt = message.on;
-      }
-    );
-    this.#embedHandler?.addEventListener("create_new_board", ({ message }) => {
-      if (!message.prompt) {
-        // If no prompt provided, generate an empty board.
-        this.#generateBoardFromGraph(BreadboardUI.Utils.blankBoard());
-      } else {
-        void this.#generateGraph(message.prompt)
-          .then((graph) => this.#generateBoardFromGraph(graph))
-          .catch((error) => console.error("Error generating board", error));
-      }
-    });
-    this.#embedHandler?.sendToEmbedder({ type: "handshake_ready" });
-  }
-
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    window.removeEventListener("bbshowtooltip", this.#onShowTooltipBound);
-    window.removeEventListener("bbhidetooltip", this.#hideTooltipBound);
-    window.removeEventListener("pointerdown", this.#hideTooltipBound);
-    window.removeEventListener("keydown", this.#onKeyboardShortCut);
-  }
-
-  async #init(args: MainArguments, initArgs: InitArgs) {
-    const flagManager = createFlagManager(this.globalConfig.flags);
-    const flags = await flagManager.flags();
-
-    const { fetchWithCreds, backendApiEndpoint } = initArgs;
-
-    // eslint-disable-next-line prefer-const
-    let fileSystem: FileSystem;
-
-    const mcpClientManager = new McpClientManager(
-      builtInMcpClients,
-      {
-        get fileSystem() {
-          return fileSystem!;
-        },
-        fetchWithCreds,
-      },
-      backendApiEndpoint
-    );
-
-    fileSystem = createFileSystem({
-      env: [
-        ...envFromSettings(this.#settings),
-        ...(args.env || []),
-        ...envFromFlags(flags),
-      ],
-      local: createFileSystemBackend(createEphemeralBlobStore()),
-      mnt: composeFileSystemBackends(
-        new Map<string, PersistentBackend>([
-          ["track", createActionTrackerBackend()],
-        ])
-      ),
-    });
-
-    const moduleFactory = createA2ModuleFactory({
-      mcpClientManager,
-      fetchWithCreds,
-    });
-
-    this.#consentManager = new ConsentManager(
-      async (request: ConsentRequest, uiType: ConsentUIType) => {
-        return new Promise<ConsentAction>((resolve) => {
-          if (uiType === ConsentUIType.MODAL) {
-            this.uiState.consentRequests.push({
-              request,
-              consentCallback: resolve,
-            });
-          } else {
-            const appState = this.runtime.state.getProjectState(
-              this.tab?.mainGraphId
-            )?.run.app;
-            if (appState) {
-              appState.consentRequests.push({
-                request,
-                consentCallback: resolve,
-              });
-            } else {
-              console.warn(
-                "In-app consent requested when no app state existed"
-              );
-              resolve(ConsentAction.DENY);
-            }
-          }
-        });
-      }
-    );
-
-    this.runtime = await Runtime.create({
-      recentBoardStore: this.#recentBoardStore,
-      graphStore: this.#graphStore,
-      experiments: {},
+    this.runtime = new Runtime.Runtime({
       globalConfig: this.globalConfig,
-      signinAdapter: this.signinAdapter,
-      sandbox: moduleFactory,
-      settings: this.#settings,
-      fileSystem,
-      builtInBoardServers: [createA2Server()],
-      kits: addRunModule(
-        moduleFactory,
-        args.kits || [],
-        args.moduleInvocationFilter
-      ),
-      googleDriveClient: this.googleDriveClient,
+      guestConfig: this.guestConfiguration,
+      settings: this.settings,
+      shellHost: this.opalShell,
+      env: args.env,
       appName: Strings.from("APP_NAME"),
       appSubName: Strings.from("SUB_APP_NAME"),
-      flags: flagManager,
-      mcpClientManager,
-      fetchWithCreds,
-      consentManager: this.#consentManager,
     });
+
+    this.signinAdapter = this.runtime.signinAdapter;
+    this.googleDriveClient = this.runtime.googleDriveClient;
+    this.#consentManager = this.runtime.consentManager;
+    this.recentBoardStore = this.runtime.recentBoardStore;
+
+    // Asyncronously check if the user has an access restriction (e.g. geo) and
+    // if they are signed in with all required scopes.
+    this.signinAdapter.state.then((state) => {
+      if (state === "signedin") {
+        this.signinAdapter
+          .checkAppAccess()
+          .then(this.handleAppAccessCheckResult.bind(this));
+        this.opalShell
+          .validateScopes()
+          .then(this.handleValidateScopesResult.bind(this));
+      }
+    });
+
+    this.emailPrefsManager = this.runtime.emailPrefsManager;
+    this.flowGenerator = this.runtime.flowGenerator;
+    this.actionTracker = this.runtime.actionTracker;
+
+    this.embedHandler = args.embedHandler;
+
     this.#addRuntimeEventHandlers();
 
-    this.#boardServers = this.runtime.board.getBoardServers() || [];
-    this.uiState = this.runtime.state.getOrCreateUIState();
+    this.boardServer = this.runtime.googleDriveBoardServer;
+    this.uiState = this.runtime.state.ui;
 
     if (this.globalConfig.ENABLE_EMAIL_OPT_IN) {
       this.emailPrefsManager.refreshPrefs().then(() => {
@@ -507,43 +295,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       });
     }
 
-    if (parsedUrl.page === "graph") {
-      const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
-      ActionTracker.load(this.uiState.mode, shared);
-    } else if (parsedUrl.page === "home") {
-      ActionTracker.load("home", false);
-    }
-    this.#graphStore = this.runtime.board.getGraphStore();
-
-    const hasMountedBoardServer = this.#findSelectedBoardServer(args);
-    if (!hasMountedBoardServer && args.boardServerUrl) {
-      console.log(`[Status] Mounting server "${args.boardServerUrl.href}" ...`);
-      const connecting = await this.runtime.board.connect(
-        args.boardServerUrl.href
-      );
-      if (connecting?.success) {
-        this.#findSelectedBoardServer(args);
-        console.log(`[Status] Connected to server`);
-
-        // Since we late-mounted the server we have to add it to the state
-        // manager so it can be used by the Reactive Project.
-        const mountedServer = this.runtime.board.getBoardServerForURL(
-          new URL(args.boardServerUrl.href)
-        );
-
-        this.runtime.state.appendServer(mountedServer);
-      }
-    }
-
-    if (
-      args.boardServerUrl &&
-      args.boardServerUrl.protocol === GoogleDriveBoardServer.PROTOCOL
-    ) {
-      const gdrive = await getGoogleDriveBoardService();
-      if (gdrive) {
-        args.boardServerUrl = new URL(gdrive.url);
-      }
-    }
+    this.graphStore = this.runtime.board.graphStore;
 
     // Admin.
     const admin = new Admin(
@@ -555,11 +307,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     admin.runtime = this.runtime;
     admin.settingsHelper = this.settingsHelper;
 
-    // This is currently used only for legacy graph kits (Agent,
-    // Google Drive).
-    args.graphStorePreloader?.(this.#graphStore);
-
-    this.#graphStore.addEventListener("update", (evt) => {
+    this.graphStore.addEventListener("update", (evt) => {
       const { mainGraphId } = evt;
       const current = this.tab?.mainGraphId;
       this.graphStoreUpdateId++;
@@ -573,71 +321,106 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     });
 
     // Once we've determined the sign-in status, relay it to an embedder.
-    this.#embedHandler?.sendToEmbedder({
-      type: "home_loaded",
-      isSignedIn: this.signinAdapter.state === "signedin",
-    });
-
-    this.#maybeNotifyAboutPreferredUrlForDomain();
-    this.#maybeNotifyAboutDesktopModality();
+    this.signinAdapter.state.then((state) =>
+      this.embedHandler?.sendToEmbedder({
+        type: "home_loaded",
+        isSignedIn: state === "signedin",
+      })
+    );
 
     this.runtime.shell.startTrackUpdates();
-    await this.runtime.router.init();
+    this.runtime.router.init();
+
+    void this.#checkSubscriptionStatus(this.runtime.flags);
+
+    console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
+    this.doPostInitWork();
   }
 
-  #findSelectedBoardServer(args: MainArguments) {
-    let hasMountedBoardServer = false;
-    for (const server of this.#boardServers) {
-      if (server.url.href === args.boardServerUrl?.href) {
-        hasMountedBoardServer = true;
-        this.uiState.boardServer = server.name;
-        this.uiState.boardLocation = server.url.href;
-        this.boardServer = server;
-        break;
+  abstract handleAppAccessCheckResult(
+    result: CheckAppAccessResult
+  ): Promise<void>;
+
+  async handleValidateScopesResult(result: ValidateScopesResult) {
+    if (!result.ok && (await this.signinAdapter.state) === "signedin") {
+      console.log(
+        "[signin] oauth scopes were missing or the user revoked access, " +
+          "forcing signin.",
+        result
+      );
+      await this.signinAdapter.signOut();
+      window.location.href = makeUrl({
+        page: "landing",
+        redirect: parseUrl(window.location.href),
+        missingScopes: result.code === "missing-scopes",
+        oauthRedirect:
+          new URL(window.location.href).searchParams.get(OAUTH_REDIRECT) ??
+          undefined,
+        guestPrefixed: true,
+      });
+    }
+  }
+
+  abstract doPostInitWork(): Promise<void>;
+
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    window.addEventListener("bbshowtooltip", this.#onShowTooltipBound);
+    window.addEventListener("bbhidetooltip", this.#hideTooltipBound);
+    window.addEventListener("pointerdown", this.#hideTooltipBound);
+    window.addEventListener("keydown", this.#onKeyboardShortCut);
+
+    if (this.embedHandler) {
+      this.embedState = embedState();
+    }
+
+    this.embedHandler?.addEventListener(
+      "toggle_iterate_on_prompt",
+      ({ message }) => {
+        this.embedState.showIterateOnPrompt = message.on;
       }
-    }
-    return hasMountedBoardServer;
-  }
-
-  #maybeNotifyAboutDesktopModality() {
-    if (
-      parsedUrl.page !== "graph" ||
-      !parsedUrl.shared ||
-      parsedUrl.mode !== "canvas"
-    ) {
-      return;
-    }
-
-    // There's little point in attempting to differentiate between "mobile" and
-    // "desktop" here for any number of reasons, but as a reasonable proxy we
-    // will check that there's some screen estate available to show both the
-    // editor and the app preview before we show the modal.
-    if (window.innerWidth > 1280) {
-      return;
-    }
-
-    this.uiState.show.add("BetterOnDesktopModal");
-  }
-
-  async #maybeNotifyAboutPreferredUrlForDomain() {
-    const domain = this.signinAdapter.domain;
-    if (!domain) {
-      return;
-    }
-    const url = this.globalConfig.domains?.[domain]?.preferredUrl;
-    if (!url) {
-      return;
-    }
-
-    this.snackbar(
-      html`
-        Users from ${domain} should prefer
-        <a href="${url}">${new URL(url).hostname}</a>
-      `,
-      BreadboardUI.Types.SnackType.WARNING,
-      [],
-      true
     );
+    this.embedHandler?.addEventListener("create_new_board", ({ message }) => {
+      if (!message.prompt) {
+        // If no prompt provided, generate an empty board.
+        this.#generateBoardFromGraph(BreadboardUI.Utils.blankBoard());
+      } else {
+        void this.#generateGraph(message.prompt)
+          .then((graph) => this.#generateBoardFromGraph(graph))
+          .catch((error) => console.error("Error generating board", error));
+      }
+    });
+    this.embedHandler?.sendToEmbedder({ type: "handshake_ready" });
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    window.removeEventListener("bbshowtooltip", this.#onShowTooltipBound);
+    window.removeEventListener("bbhidetooltip", this.#hideTooltipBound);
+    window.removeEventListener("pointerdown", this.#hideTooltipBound);
+    window.removeEventListener("keydown", this.#onKeyboardShortCut);
+  }
+
+  async #checkSubscriptionStatus(flagManager: RuntimeFlagManager) {
+    try {
+      const flags = await flagManager.flags();
+      if (flags.googleOne) {
+        console.log(`[Google One] Checking subscriber status`);
+        const response = await this.runtime.apiClient.getG1SubscriptionStatus({
+          include_credit_data: true,
+        });
+        this.uiState.subscriptionStatus = response.is_member
+          ? "subscribed"
+          : "not-subscribed";
+        this.uiState.subscriptionCredits = response.remaining_credits;
+      }
+    } catch (err) {
+      console.warn(err);
+      this.uiState.subscriptionStatus = "error";
+      this.uiState.subscriptionCredits = -2;
+    }
   }
 
   #addRuntimeEventHandlers() {
@@ -649,13 +432,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     const currentUrl = new URL(window.location.href);
 
     this.runtime.board.addEventListener(
-      RuntimeBoardServerChangeEvent.eventName,
-      () => {
-        this.#boardServers = this.runtime.board.getBoardServers() || [];
-      }
-    );
-
-    this.runtime.board.addEventListener(
       Runtime.Events.RuntimeShareMissingEvent.eventName,
       () => {
         this.uiState.show.add("MissingShare");
@@ -664,7 +440,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.runtime.board.addEventListener(
       Runtime.Events.RuntimeRequestSignInEvent.eventName,
-      () => this.#askUserToSignInIfNeeded()
+      () => this.askUserToSignInIfNeeded()
     );
 
     this.runtime.addEventListener(
@@ -698,14 +474,19 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.addEventListener(
       Runtime.Events.RuntimeHostStatusUpdateEvent.eventName,
       (evt: Runtime.Events.RuntimeHostStatusUpdateEvent) => {
-        this.#statusUpdates = evt.updates;
+        this.statusUpdates = evt.updates;
       }
     );
 
     this.runtime.select.addEventListener(
       Runtime.Events.RuntimeSelectionChangeEvent.eventName,
       (evt: Runtime.Events.RuntimeSelectionChangeEvent) => {
-        this.#selectionState = {
+        // TODO: Consider plumbing project state directly into Select and
+        // calling it from there directly.
+        this.runtime.state.project?.stepEditor.updateSelection(
+          evt.selectionState
+        );
+        this.selectionState = {
           selectionChangeId: evt.selectionChangeId,
           selectionState: evt.selectionState,
           moveToSelection: evt.moveToSelection,
@@ -718,7 +499,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.edit.addEventListener(
       Runtime.Events.RuntimeVisualChangeEvent.eventName,
       (evt: Runtime.Events.RuntimeVisualChangeEvent) => {
-        this.#lastVisualChangeId = evt.visualChangeId;
+        this.lastVisualChangeId = evt.visualChangeId;
         this.requestUpdate();
       }
     );
@@ -792,7 +573,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
           const preparingNextRun = await this.runtime.prepareRun(
             this.tab,
-            this.#settings
+            this.settings
           );
           if (!ok(preparingNextRun)) {
             console.warn(preparingNextRun.$error);
@@ -811,20 +592,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     );
 
     this.runtime.board.addEventListener(
-      Runtime.Events.RuntimeModuleChangeEvent.eventName,
-      () => {
-        this.requestUpdate();
-      }
-    );
-
-    this.runtime.board.addEventListener(
-      Runtime.Events.RuntimeWorkspaceItemChangeEvent.eventName,
-      () => {
-        this.requestUpdate();
-      }
-    );
-
-    this.runtime.board.addEventListener(
       Runtime.Events.RuntimeTabCloseEvent.eventName,
       async (evt: Runtime.Events.RuntimeTabCloseEvent) => {
         if (!evt.tabId) {
@@ -836,13 +603,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         }
 
         if (
-          this.#boardRunStatus.get(evt.tabId) ===
+          this.boardRunStatus.get(evt.tabId) ===
           BreadboardUI.Types.STATUS.STOPPED
         ) {
           return;
         }
 
-        this.#boardRunStatus.set(evt.tabId, BreadboardUI.Types.STATUS.STOPPED);
+        this.boardRunStatus.set(evt.tabId, BreadboardUI.Types.STATUS.STOPPED);
         this.runtime.run.getAbortSignal(evt.tabId)?.abort();
         this.requestUpdate();
       }
@@ -863,15 +630,8 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         }
 
         switch (evt.runEvt.type) {
-          case "next":
-          case "graphstart":
-          case "skip": {
-            // Noops.
-            break;
-          }
-
           case "start": {
-            this.#boardRunStatus.set(
+            this.boardRunStatus.set(
               evt.tabId,
               BreadboardUI.Types.STATUS.RUNNING
             );
@@ -879,7 +639,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
 
           case "end": {
-            this.#boardRunStatus.set(
+            this.boardRunStatus.set(
               evt.tabId,
               BreadboardUI.Types.STATUS.STOPPED
             );
@@ -887,7 +647,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
 
           case "error": {
-            this.#boardRunStatus.set(
+            this.boardRunStatus.set(
               evt.tabId,
               BreadboardUI.Types.STATUS.STOPPED
             );
@@ -895,7 +655,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
 
           case "resume": {
-            this.#boardRunStatus.set(
+            this.boardRunStatus.set(
               evt.tabId,
               BreadboardUI.Types.STATUS.RUNNING
             );
@@ -903,7 +663,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
 
           case "pause": {
-            this.#boardRunStatus.set(
+            this.boardRunStatus.set(
               evt.tabId,
               BreadboardUI.Types.STATUS.PAUSED
             );
@@ -920,6 +680,13 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
         if (evt.mode) {
           this.uiState.mode = evt.mode;
+        }
+        const parsedUrl = this.runtime.router.parsedUrl;
+        const shared = parsedUrl.page === "graph" ? !!parsedUrl.shared : false;
+        if (parsedUrl.page === "home") {
+          this.actionTracker.load("home", false);
+        } else {
+          this.actionTracker.load(this.uiState.mode, shared);
         }
 
         const urlWithoutMode = new URL(evt.url);
@@ -1008,7 +775,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       return;
     }
 
-    if (this.#embedHandler) {
+    if (this.embedHandler) {
       // When the board server is asked to create a new graph, it first makes a
       // very fast RPC just to allocate a drive file id, returns that file id,
       // and finishes initializing the graph in the background (uploading the
@@ -1024,19 +791,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       //
       // So, we need to wait for full initialization before we broadcast.
       const { url } = saveResult;
-      const boardServer = this.runtime.board.getBoardServerForURL(url) as
-        | Partial<GoogleDriveBoardServer>
-        | undefined;
-      await boardServer?.flushSaveQueue?.(url.href);
-      this.notifyEmbeddedBoardCreated(url.href);
-    }
-  }
-
-  notifyEmbeddedBoardCreated(url: string) {
-    if (this.#embedHandler) {
-      this.#embedHandler.sendToEmbedder({
+      const boardServer = this.runtime.board.googleDriveBoardServer;
+      await boardServer.flushSaveQueue(url.href);
+      this.embedHandler.sendToEmbedder({
         type: "board_id_created",
-        id: url,
+        id: url.href,
       });
     }
   }
@@ -1063,11 +822,11 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   #onShowTooltip(evt: Event) {
     const tooltipEvent = evt as BreadboardUI.Events.ShowTooltipEvent;
-    if (!this.#tooltipRef.value) {
+    if (!this.tooltipRef.value) {
       return;
     }
 
-    const tooltips = this.#settings.getItem(
+    const tooltips = this.settings.getItem(
       BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
       "Show Tooltips"
     );
@@ -1075,19 +834,19 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       return;
     }
 
-    this.#tooltipRef.value.x = tooltipEvent.x;
-    this.#tooltipRef.value.y = tooltipEvent.y;
-    this.#tooltipRef.value.message = tooltipEvent.message;
-    this.#tooltipRef.value.status = tooltipEvent.extendedOptions.status;
-    this.#tooltipRef.value.visible = true;
+    this.tooltipRef.value.x = tooltipEvent.x;
+    this.tooltipRef.value.y = tooltipEvent.y;
+    this.tooltipRef.value.message = tooltipEvent.message;
+    this.tooltipRef.value.status = tooltipEvent.extendedOptions.status;
+    this.tooltipRef.value.visible = true;
   }
 
   #hideTooltip() {
-    if (!this.#tooltipRef.value) {
+    if (!this.tooltipRef.value) {
       return;
     }
 
-    this.#tooltipRef.value.visible = false;
+    this.tooltipRef.value.visible = false;
   }
 
   #receivesInputPreference(target: EventTarget) {
@@ -1133,12 +892,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     const deps: KeyboardCommandDeps = {
       runtime: this.runtime,
-      selectionState: this.#selectionState,
+      selectionState: this.selectionState,
       tab: this.tab,
       originalEvent: evt,
-      pointerLocation: this.#lastPointerPosition,
-      settings: this.#settings,
-      graphStore: this.#graphStore,
+      pointerLocation: this.lastPointerPosition,
+      settings: this.settings,
+      graphStore: this.graphStore,
       strings: Strings,
     } as const;
 
@@ -1231,7 +990,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     return id;
   }
 
-  snackbar(
+  async snackbar(
     message: string | HTMLTemplateResult,
     type: BreadboardUI.Types.SnackType,
     actions: BreadboardUI.Types.SnackbarAction[] = [],
@@ -1239,48 +998,29 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     id = globalThis.crypto.randomUUID(),
     replaceAll = false
   ) {
-    if (!this.snackbarElement) {
-      this.pendingSnackbarMessages.push({
-        message: {
-          id,
-          message,
-          type,
-          persistent,
-          actions,
-        },
-        replaceAll,
-      });
-      return;
+    if (!this.snackbarRef.value) {
+      await this.updateComplete;
+      if (!this.snackbarRef.value) {
+        console.warn(
+          `[main-base] Could not render snackbar message ` +
+            `because snackbar element was not rendered`,
+          { id, message }
+        );
+        return;
+      }
     }
 
-    return this.snackbarElement.show(
-      {
-        id,
-        message,
-        type,
-        persistent,
-        actions,
-      },
+    return this.snackbarRef.value.show(
+      { id, message, type, persistent, actions },
       replaceAll
     );
   }
 
   unsnackbar(id?: BreadboardUI.Types.SnackbarUUID) {
-    if (!this.snackbarElement) {
-      if (!id) {
-        this.pendingSnackbarMessages.length = 0;
-      } else {
-        this.pendingSnackbarMessages = this.pendingSnackbarMessages.filter(
-          (message) => message.message.id !== id
-        );
-      }
-      return;
-    }
-
-    this.snackbarElement.hide(id);
+    this.snackbarRef.value?.hide(id);
   }
 
-  #attemptImportFromDrop(evt: DragEvent) {
+  protected attemptImportFromDrop(evt: DragEvent) {
     if (
       !evt.dataTransfer ||
       !evt.dataTransfer.files ||
@@ -1308,7 +1048,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     let tabStatus = BreadboardUI.Types.STATUS.STOPPED;
     if (this.tab) {
       tabStatus =
-        this.#boardRunStatus.get(this.tab.id) ??
+        this.boardRunStatus.get(this.tab.id) ??
         BreadboardUI.Types.STATUS.STOPPED;
     }
 
@@ -1325,14 +1065,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       }
     }
 
-    const mainGraphId = this.tab?.mainGraphId;
-
-    const projectState = mainGraphId
-      ? this.runtime.state.getOrCreateProjectState(
-          mainGraphId,
-          this.runtime.edit.getEditor(this.tab)
-        )
-      : null;
+    const projectState = this.runtime.state.project;
 
     if (projectState && this.tab?.finalOutputValues) {
       const current = new ReactiveAppScreen("", undefined);
@@ -1345,7 +1078,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       projectState.run.app.screens.set("final", current);
     }
 
-    const showExperimentalComponents: boolean = this.#settings
+    const showExperimentalComponents: boolean = this.settings
       .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
       .items.get("Show Experimental Components")?.value as boolean;
 
@@ -1374,20 +1107,18 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       keyof BreadboardUI.Events.StateEventDetailMap
     >
   ) {
-    const boardServer = this.boardServer;
-    if (!boardServer) {
-      throw new Error("Expected board server to have been mounted");
-    }
     return {
       originalEvent: evt,
       runtime: this.runtime,
-      settings: this.#settings,
+      settings: this.settings,
       tab: this.tab,
       uiState: this.uiState,
       googleDriveClient: this.googleDriveClient,
       askUserToSignInIfNeeded: (scopes: OAuthScope[]) =>
-        this.#askUserToSignInIfNeeded(scopes),
-      boardServer,
+        this.askUserToSignInIfNeeded(scopes),
+      boardServer: this.boardServer,
+      actionTracker: this.actionTracker,
+      embedHandler: this.embedHandler,
     };
   }
 
@@ -1396,451 +1127,15 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       return;
     }
 
-    if (this.#tosStatus && !this.#tosStatus.canAccess) {
+    if (this.tosStatus && !this.tosStatus.canAccess) {
       this.uiState.show.add("TOS");
     } else {
       this.uiState.show.delete("TOS");
     }
   }
 
-  render() {
-    if (!this.ready) {
-      return nothing;
-    }
-
-    const renderValues = this.getRenderValues();
-
-    const content = html`<div
-      id="content"
-      ?inert=${renderValues.showingOverlay || this.uiState.blockingAction}
-    >
-      ${this.uiState.show.has("TOS") || this.uiState.show.has("MissingShare")
-        ? nothing
-        : [
-            this.#renderCanvasController(renderValues),
-            this.#renderAppController(renderValues),
-            this.#renderWelcomePanel(),
-            this.uiState.showStatusUpdateChip
-              ? this.#renderStatusUpdateBar()
-              : nothing,
-          ]}
-    </div>`;
-
-    const containerClasses: Record<string, boolean> = {
-      systemTheme: this.uiState.flags?.observeSystemTheme ?? false,
-    };
-
-    /**
-     * bbevent is the container for most of the actions triggered within the UI.
-     * It is something of a shapeshifting event, where the `eventType` property
-     * indicates which precise event it is. We do it this way because otherwise
-     * we end up with a vast array of named event listeners on the elements here
-     * and maintenance becomes tricky.
-     *
-     * @see BreadboardUI.Events.StateEventDetailMap for the list of all events.
-     */
-    return html`<div
-      id="container"
-      class=${classMap(containerClasses)}
-      @bbevent=${async (
-        evt: BreadboardUI.Events.StateEvent<
-          keyof BreadboardUI.Events.StateEventDetailMap
-        >
-      ) => this.handleRoutedEvent(evt)}
-      @bbsnackbar=${(snackbarEvent: BreadboardUI.Events.SnackbarEvent) => {
-        this.snackbar(
-          snackbarEvent.message,
-          snackbarEvent.snackType,
-          snackbarEvent.actions,
-          snackbarEvent.persistent,
-          snackbarEvent.snackbarId,
-          snackbarEvent.replaceAll
-        );
-      }}
-      @bbunsnackbar=${(evt: BreadboardUI.Events.UnsnackbarEvent) => {
-        this.unsnackbar(evt.snackbarId);
-      }}
-      @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-        this.toast(toastEvent.message, toastEvent.toastType);
-      }}
-      @dragover=${(evt: DragEvent) => {
-        evt.preventDefault();
-      }}
-      @drop=${(evt: DragEvent) => {
-        evt.preventDefault();
-        this.#attemptImportFromDrop(evt);
-      }}
-    >
-      ${[
-        this.#renderHeader(renderValues),
-        content,
-        this.uiState.show.has("MissingShare")
-          ? this.#renderMissingShareDialog()
-          : nothing,
-        this.uiState.show.has("TOS") ? this.#renderTosDialog() : nothing,
-        this.uiState.show.has("BoardEditModal")
-          ? this.#renderBoardEditModal()
-          : nothing,
-        this.uiState.show.has("SnackbarDetailsModal")
-          ? this.#renderSnackbarDetailsModal()
-          : nothing,
-        this.uiState.show.has("BetterOnDesktopModal")
-          ? this.#renderBetterOnDesktopModal()
-          : nothing,
-        this.uiState.show.has("VideoModal")
-          ? this.#renderVideoModal()
-          : nothing,
-        this.uiState.show.has("StatusUpdateModal")
-          ? this.#renderStatusUpdateModal()
-          : nothing,
-        this.uiState.show.has("GlobalSettings")
-          ? this.#renderGlobalSettingsModal(renderValues)
-          : nothing,
-        this.uiState.show.has("WarmWelcome")
-          ? this.#renderWarmWelcomeModal()
-          : nothing,
-        this.uiState.show.has("SignInModal")
-          ? this.#renderSignInModal()
-          : nothing,
-        this.renderTooltip(),
-        this.#renderToasts(),
-        this.renderSnackbar(),
-        this.#renderFeedbackPanel(),
-        this.#renderConsentRequests(),
-      ]}
-    </div>`;
-  }
-
-  #renderWelcomePanel() {
-    if (this.uiState.loadState !== "Home") {
-      return nothing;
-    }
-
-    return html`<bb-project-listing
-      .recentBoards=${this.runtime.board.getRecentBoards()}
-    ></bb-project-listing>`;
-  }
-
-  #renderAppController(renderValues: RenderValues) {
-    const graphIsEmpty = BreadboardUI.Utils.isEmpty(this.tab?.graph ?? null);
-    const active =
-      this.uiState.mode === "app" && this.uiState.loadState !== "Home";
-
-    return html` <bb-app-controller
-      class=${classMap({ active })}
-      .graph=${this.tab?.graph ?? null}
-      .graphIsEmpty=${graphIsEmpty}
-      .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-      .isMine=${this.tab?.graphIsMine ?? false}
-      .projectRun=${renderValues.projectState?.run}
-      .readOnly=${true}
-      .runtimeFlags=${this.uiState.flags}
-      .settings=${this.#settings}
-      .showGDrive=${this.signinAdapter.state === "signedin"}
-      .status=${renderValues.tabStatus}
-      .themeHash=${renderValues.themeHash}
-    >
-    </bb-app-controller>`;
-  }
-
-  #renderCanvasController(renderValues: RenderValues) {
-    return html` <bb-canvas-controller
-      ${ref(this.#canvasControllerRef)}
-      ?inert=${renderValues.showingOverlay}
-      .boardServerKits=${this.tab?.boardServerKits ?? []}
-      .boardServers=${this.#boardServers}
-      .canRun=${this.uiState.canRunMain}
-      .editor=${this.runtime.edit.getEditor(this.tab)}
-      .graph=${this.tab?.graph ?? null}
-      .graphIsMine=${this.tab?.graphIsMine ?? false}
-      .graphStore=${this.#graphStore}
-      .graphStoreUpdateId=${this.graphStoreUpdateId}
-      .graphTopologyUpdateId=${this.graphTopologyUpdateId}
-      .history=${this.runtime.edit.getHistory(this.tab)}
-      .mainGraphId=${this.tab?.mainGraphId}
-      .projectState=${renderValues.projectState}
-      .readOnly=${this.tab?.readOnly ?? true}
-      .selectionState=${this.#selectionState}
-      .settings=${this.#settings}
-      .signedIn=${this.signinAdapter.state === "signedin"}
-      .status=${renderValues.tabStatus}
-      .themeHash=${renderValues.themeHash}
-      .visualChangeId=${this.#lastVisualChangeId}
-      @bbshowvideomodal=${() => {
-        this.uiState.show.add("VideoModal");
-      }}
-      @bbeditorpositionchange=${(
-        evt: BreadboardUI.Events.EditorPointerPositionChangeEvent
-      ) => {
-        this.#lastPointerPosition.x = evt.x;
-        this.#lastPointerPosition.y = evt.y;
-      }}
-      @bbinteraction=${() => {
-        if (!this.tab) {
-          return;
-        }
-
-        this.runtime.board.clearPendingBoardSave(this.tab.id);
-      }}
-      @bbiterateonprompt=${(iterateOnPromptEvent: IterateOnPromptEvent) => {
-        const message: IterateOnPromptMessage = {
-          type: "iterate_on_prompt",
-          title: iterateOnPromptEvent.title,
-          promptTemplate: iterateOnPromptEvent.promptTemplate,
-          boardId: iterateOnPromptEvent.boardId,
-          nodeId: iterateOnPromptEvent.nodeId,
-          modelId: iterateOnPromptEvent.modelId,
-        };
-        this.#embedHandler?.sendToEmbedder(message);
-      }}
-    ></bb-canvas-controller>`;
-  }
-
-  #renderBoardEditModal() {
-    return html`<bb-edit-board-modal
-      .boardTitle=${this.tab?.graph.title ?? null}
-      .boardDescription=${this.tab?.graph.description ?? null}
-      @bbmodaldismissed=${() => {
-        this.uiState.show.delete("BoardEditModal");
-      }}
-    ></bb-edit-board-modal>`;
-  }
-
-  #renderBetterOnDesktopModal() {
-    return html`<bb-better-on-desktop-modal
-      @bbmodaldismissed=${() => {
-        this.uiState.show.delete("BetterOnDesktopModal");
-      }}
-    ></bb-better-on-desktop-modal>`;
-  }
-
-  #renderSnackbarDetailsModal() {
-    return html`<bb-snackbar-details-modal
-      .details=${this.uiState.lastSnackbarDetailsInfo}
-      @bbmodaldismissed=${() => {
-        this.uiState.lastSnackbarDetailsInfo = null;
-        this.uiState.show.delete("SnackbarDetailsModal");
-      }}
-    ></bb-snackbar-details-modal>`;
-  }
-
-  #renderVideoModal() {
-    return html`<bb-video-modal
-      @bbmodaldismissed=${() => {
-        this.uiState.show.delete("VideoModal");
-      }}
-    ></bb-video-modal>`;
-  }
-
-  #renderStatusUpdateBar() {
-    const classes: Record<string, boolean> = { "md-body-medium": true };
-    const newestUpdate = this.#statusUpdates.at(0);
-    if (!newestUpdate) {
-      return nothing;
-    }
-
-    classes[newestUpdate.type] = true;
-    let icon;
-    switch (newestUpdate.type) {
-      case "info":
-        icon = html`info`;
-        break;
-      case "warning":
-        icon = html`warning`;
-        break;
-      case "urgent":
-        icon = html`error`;
-        break;
-      default:
-        icon = nothing;
-        break;
-    }
-
-    return html`<div
-      id="status-update-bar"
-      class=${classMap(classes)}
-      aria-role="button"
-      @click=${() => {
-        this.uiState.show.add("StatusUpdateModal");
-        this.uiState.showStatusUpdateChip = false;
-      }}
-    >
-      <div>
-        <span class="g-icon round filled">${icon}</span>
-        <p>${newestUpdate.text}</p>
-      </div>
-      <button
-        class="close"
-        @click=${(evt: Event) => {
-          evt.preventDefault();
-          evt.stopImmediatePropagation();
-          this.uiState.showStatusUpdateChip = false;
-        }}
-      >
-        <span class="g-icon round filled">close</span>
-      </button>
-    </div>`;
-  }
-
-  #renderStatusUpdateModal() {
-    return html`<bb-status-update-modal
-      .updates=${this.#statusUpdates}
-      @bbmodaldismissed=${() => {
-        this.uiState.show.delete("StatusUpdateModal");
-        this.uiState.showStatusUpdateChip = false;
-      }}
-    ></bb-status-update-modal>`;
-  }
-
-  #renderGlobalSettingsModal(renderValues: RenderValues) {
-    return html`<bb-global-settings-modal
-      .flags=${this.runtime.flags.flags()}
-      .showExperimentalComponents=${renderValues.showExperimentalComponents}
-      .project=${renderValues.projectState}
-      .uiState=${this.uiState}
-      .emailPrefsManager=${this.emailPrefsManager}
-      @bbmodaldismissed=${() => {
-        this.uiState.show.delete("GlobalSettings");
-      }}
-    ></bb-global-settings-modal>`;
-  }
-
-  #renderWarmWelcomeModal() {
-    return html`<bb-warm-welcome-modal
-      .emailPrefsManager=${this.emailPrefsManager}
-      @bbmodaldismissed=${() => {
-        this.uiState.show.delete("WarmWelcome");
-      }}
-    ></bb-warm-welcome-modal>`;
-  }
-
-  #renderMissingShareDialog() {
-    return html`<dialog
-      id="missing-share-dialog"
-      @keydown=${(evt: KeyboardEvent) => {
-        if (evt.key !== "Escape") {
-          return;
-        }
-
-        evt.preventDefault();
-      }}
-      ${ref((el: Element | undefined) => {
-        const showModalIfNeeded = () => {
-          if (el && this.uiState.show.has("MissingShare") && el.isConnected) {
-            const dialog = el as HTMLDialogElement;
-            if (!dialog.open) {
-              dialog.showModal();
-            }
-          }
-        };
-
-        requestAnimationFrame(showModalIfNeeded);
-      })}
-    >
-      <form method="dialog">
-        <h1>Oops, something went wrong</h1>
-        <p class="share-content">
-          It has not been possible to open this app. Please ask the author to
-          check that the app was published successfully and then try again.
-        </p>
-      </form>
-    </dialog>`;
-  }
-
-  #renderTosDialog() {
-    const tosTitle = Strings.from("TOS_TITLE");
-    let tosHtml = "";
-    let tosVersion = 0;
-    if (!this.#tosStatus || !this.#tosStatus.canAccess) {
-      tosHtml =
-        this.#tosStatus?.termsOfService?.terms ?? "Unable to retrieve TOS";
-      tosVersion = this.#tosStatus?.termsOfService?.version ?? 0;
-    }
-
-    return html`<dialog
-      id="tos-dialog"
-      @keydown=${(evt: KeyboardEvent) => {
-        if (evt.key !== "Escape") {
-          return;
-        }
-
-        evt.preventDefault();
-      }}
-      ${ref((el: Element | undefined) => {
-        const showModalIfNeeded = () => {
-          if (el && this.uiState.show.has("TOS") && el.isConnected) {
-            const dialog = el as HTMLDialogElement;
-            if (!dialog.open) {
-              dialog.showModal();
-            }
-          }
-        };
-
-        requestAnimationFrame(showModalIfNeeded);
-      })}
-    >
-      <form method="dialog">
-        <h1>${tosTitle}</h1>
-        <div class="tos-content">${unsafeHTML(tosHtml)}</div>
-        <div class="controls">
-          <button
-            @click=${async (evt: Event) => {
-              if (!(evt.target instanceof HTMLButtonElement)) {
-                return;
-              }
-              evt.target.disabled = true;
-              await this.#apiClient.acceptTos(tosVersion, true);
-              this.#tosStatus = await this.#apiClient.checkTos();
-            }}
-          >
-            Continue
-          </button>
-        </div>
-      </form>
-    </dialog>`;
-  }
-
-  #renderFeedbackPanel() {
-    return html`
-      <bb-feedback-panel ${ref(this.#feedbackPanelRef)}></bb-feedback-panel>
-    `;
-  }
-
   protected renderTooltip() {
-    return html`<bb-tooltip ${ref(this.#tooltipRef)}></bb-tooltip>`;
-  }
-
-  #renderToasts() {
-    return html`${map(
-      this.uiState.toasts,
-      ([toastId, { message, type, persistent }], idx) => {
-        const offset = this.uiState.toasts.size - idx - 1;
-        return html`<bb-toast
-          .toastId=${toastId}
-          .offset=${offset}
-          .message=${message}
-          .type=${type}
-          .timeout=${persistent ? 0 : nothing}
-          @bbtoastremoved=${(evt: BreadboardUI.Events.ToastRemovedEvent) => {
-            this.uiState.toasts.delete(evt.toastId);
-          }}
-        ></bb-toast>`;
-      }
-    )}`;
-  }
-
-  #renderConsentRequests() {
-    if (this.uiState.consentRequests[0]) {
-      return html`
-        <bb-consent-request-modal
-          .consentRequest=${this.uiState.consentRequests[0]}
-          @bbmodaldismissed=${() => {
-            this.uiState.consentRequests.shift();
-          }}
-        ></bb-consent-request-modal>
-      `;
-    }
-    return nothing;
+    return html`<bb-tooltip ${ref(this.tooltipRef)}></bb-tooltip>`;
   }
 
   protected async invokeRemixEventRouteWith(
@@ -1852,6 +1147,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     }
   ) {
     this.uiState.blockingAction = true;
+    this.runtime.actionTracker.remixApp(url, "editor");
     const remixRoute = eventRoutes.get("board.remix");
     const refresh = await remixRoute?.do(
       this.collectEventRouteDeps(
@@ -1863,7 +1159,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       )
     );
     this.uiState.blockingAction = false;
-
     if (refresh) {
       requestAnimationFrame(() => {
         this.requestUpdate();
@@ -1871,7 +1166,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     }
   }
 
-  async #invokeDeleteEventRouteWith(url: string) {
+  protected async invokeDeleteEventRouteWith(url: string) {
     this.uiState.blockingAction = true;
     const deleteRoute = eventRoutes.get("board.delete");
     const refresh = await deleteRoute?.do(
@@ -1899,24 +1194,14 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   protected renderSnackbar() {
     return html`<bb-snackbar
-      ${ref((el: Element | undefined) => {
-        if (!el) {
-          this.snackbarElement = undefined;
-        }
-
-        this.snackbarElement = el as BreadboardUI.Elements.Snackbar;
-        for (const pendingMessage of this.pendingSnackbarMessages) {
-          const { message, id, persistent, type, actions } =
-            pendingMessage.message;
-          this.snackbar(message, type, actions, persistent, id);
-        }
-
-        this.pendingSnackbarMessages.length = 0;
-      })}
+      ${ref(this.snackbarRef)}
       @bbsnackbaraction=${async (
         evt: BreadboardUI.Events.SnackbarActionEvent
       ) => {
-        evt.callback?.();
+        if ("callback" in evt && evt.callback) {
+          await evt.callback();
+        }
+
         switch (evt.action) {
           case "remix": {
             if (!evt.value || typeof evt.value !== "string") {
@@ -1934,9 +1219,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
 
           case "dismiss": {
-            this.runtime.state
-              .getProjectState(this.tab?.mainGraphId)
-              ?.run?.dismissError();
+            this.runtime.state.project?.run?.dismissError();
             break;
           }
         }
@@ -1944,171 +1227,14 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     ></bb-snackbar>`;
   }
 
-  #renderHeader(renderValues: RenderValues) {
-    return html`<bb-ve-header
-      ?inert=${renderValues.showingOverlay || this.uiState.blockingAction}
-      .signinAdapter=${this.signinAdapter}
-      .hasActiveTab=${this.tab !== null}
-      .tabTitle=${this.tab?.graph?.title ?? null}
-      .url=${this.tab?.graph?.url ?? null}
-      .loadState=${this.uiState.loadState}
-      .canSave=${renderValues.canSave}
-      .isMine=${this.runtime.board.isMine(this.tab?.graph.url)}
-      .saveStatus=${renderValues.saveStatus}
-      .showExperimentalComponents=${renderValues.showExperimentalComponents}
-      .mode=${this.uiState.mode}
-      @bbsignout=${async () => {
-        await this.signinAdapter.signOut();
-        ActionTracker.signOutSuccess();
-        window.location.href = makeUrl({
-          page: "landing",
-          redirect: { page: "home" },
-        });
-      }}
-      @bbclose=${() => {
-        if (!this.tab) {
-          return;
-        }
-        this.#embedHandler?.sendToEmbedder({
-          type: "back_clicked",
-        });
-        const homepage: MakeUrlInit = {
-          page: "home",
-          mode: this.uiState.mode,
-          dev: parsedUrl.dev,
-        };
-        if (this.signinAdapter.state === "signedin") {
-          this.runtime.router.go(homepage);
-        } else {
-          // Note that router.go() can't navigate to the landing page, because
-          // it's a totally different entrypoint.
-          window.location.assign(
-            makeUrl({
-              page: "landing",
-              dev: parsedUrl.dev,
-              redirect: homepage,
-            })
-          );
-        }
-      }}
-      @bbsharerequested=${() => {
-        if (!this.#canvasControllerRef.value) {
-          return;
-        }
-
-        this.#canvasControllerRef.value.openSharePanel();
-      }}
-      @change=${async (evt: Event) => {
-        const [select] = evt.composedPath();
-        if (!(select instanceof BreadboardUI.Elements.ItemSelect)) {
-          return;
-        }
-
-        switch (select.value) {
-          case "edit-title-and-description": {
-            if (!this.tab) {
-              return;
-            }
-
-            this.uiState.show.add("BoardEditModal");
-            break;
-          }
-
-          case "delete": {
-            if (!this.tab?.graph || !this.tab.graph.url) {
-              return;
-            }
-
-            this.#invokeDeleteEventRouteWith(this.tab.graph.url);
-            break;
-          }
-
-          case "duplicate": {
-            if (!this.tab?.graph || !this.tab.graph.url) {
-              return;
-            }
-
-            ActionTracker.remixApp(this.tab.graph.url, "editor");
-            this.invokeRemixEventRouteWith(this.tab.graph.url, {
-              start: Strings.from("STATUS_GENERIC_WORKING"),
-              end: Strings.from("STATUS_PROJECT_CREATED"),
-              error: Strings.from("ERROR_GENERIC"),
-            });
-            break;
-          }
-
-          case "feedback": {
-            if (this.globalConfig.GOOGLE_FEEDBACK_PRODUCT_ID) {
-              if (this.#feedbackPanelRef.value) {
-                this.#feedbackPanelRef.value.open();
-              } else {
-                console.error(`Feedback panel was not rendered!`);
-              }
-            }
-            break;
-          }
-
-          case "chat": {
-            window.open("https://discord.gg/googlelabs", "_blank");
-            break;
-          }
-
-          case "demo-video": {
-            this.uiState.show.add("VideoModal");
-            break;
-          }
-
-          case "history": {
-            if (!this.#canvasControllerRef.value) {
-              return;
-            }
-
-            this.#canvasControllerRef.value.sideNavItem = "edit-history";
-            break;
-          }
-
-          case "show-global-settings": {
-            this.uiState.show.add("GlobalSettings");
-            break;
-          }
-
-          case "status-update": {
-            this.uiState.show.add("StatusUpdateModal");
-            this.uiState.showStatusUpdateChip = false;
-            break;
-          }
-
-          case "copy-board-contents": {
-            if (!this.tab) {
-              return;
-            }
-
-            await navigator.clipboard.writeText(
-              JSON.stringify(this.tab.graph, null, 2)
-            );
-            this.toast(
-              Strings.from("STATUS_PROJECT_CONTENTS_COPIED"),
-              BreadboardUI.Events.ToastType.INFORMATION
-            );
-            break;
-          }
-
-          default: {
-            console.log("Action:", select.value);
-            break;
-          }
-        }
-      }}
-    >
-    </bb-ve-header>`;
-  }
-
-  async #askUserToSignInIfNeeded(scopes?: OAuthScope[]): Promise<boolean> {
-    if (this.signinAdapter.state === "signedin") {
+  protected async askUserToSignInIfNeeded(
+    scopes?: OAuthScope[]
+  ): Promise<UserSignInResponse> {
+    const verifyScopes = async (): Promise<boolean> => {
       if (!scopes?.length) {
         return true;
       }
-      const currentScopes = this.signinAdapter.scopes;
+      const currentScopes = await this.signinAdapter.scopes;
       if (
         currentScopes &&
         scopes.every((scope) =>
@@ -2117,29 +1243,84 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       ) {
         return true;
       }
+      return false;
+    };
+
+    if ((await this.signinAdapter.state) === "signedin") {
+      if (await verifyScopes()) {
+        if (!this.guestConfiguration.consentMessage) {
+          return "success";
+        }
+        if (checkSignInConsent()) {
+          return "success";
+        } else {
+          this.uiState.show.add("SignInModal");
+          await this.updateComplete;
+          const signInModal = this.signInModalRef.value;
+          if (!signInModal) {
+            console.warn(`Could not find sign-in modal.`);
+            return "failure";
+          }
+          const result = await signInModal.openAndWaitForConsent();
+          if (result === "success") {
+            storeSignInConsent();
+            return "success";
+          } else {
+            return "failure";
+          }
+        }
+      }
     }
-    // this.#uiState won't exist until init is done.
-    await this.#initPromise;
     this.uiState.show.add("SignInModal");
     await this.updateComplete;
-    const signInModal = this.#signInModalRef.value;
+    const signInModal = this.signInModalRef.value;
     if (!signInModal) {
       console.warn(`Could not find sign-in modal.`);
-      return false;
+      return "failure";
     }
-    return signInModal.openAndWaitForSignIn(scopes);
+    const result = await signInModal.openAndWaitForSignIn(scopes);
+    if (result === "success") {
+      storeSignInConsent();
+    }
+    return result;
   }
 
-  readonly #signInModalRef = createRef<VESignInModal>();
-  #renderSignInModal() {
+  protected readonly signInModalRef = createRef<VESignInModal>();
+  protected renderSignInModal(blurBackground = true) {
     return html`
       <bb-sign-in-modal
-        ${ref(this.#signInModalRef)}
+        ${ref(this.signInModalRef)}
+        .consentMessage=${this.guestConfiguration.consentMessage}
+        .blurBackground=${blurBackground}
         @bbmodaldismissed=${() => {
           this.uiState.show.delete("SignInModal");
         }}
       ></bb-sign-in-modal>
     `;
+  }
+
+  protected renderSnackbarDetailsModal() {
+    return html`<bb-snackbar-details-modal
+      .details=${this.uiState.lastSnackbarDetailsInfo}
+      @bbmodaldismissed=${() => {
+        this.uiState.lastSnackbarDetailsInfo = null;
+        this.uiState.show.delete("SnackbarDetailsModal");
+      }}
+    ></bb-snackbar-details-modal>`;
+  }
+
+  protected renderConsentRequests() {
+    if (this.uiState.consentRequests[0]) {
+      return html`
+        <bb-consent-request-modal
+          .consentRequest=${this.uiState.consentRequests[0]}
+          @bbmodaldismissed=${() => {
+            this.uiState.consentRequests.shift();
+          }}
+        ></bb-consent-request-modal>
+      `;
+    }
+    return nothing;
   }
 
   protected async handleRoutedEvent(
@@ -2168,4 +1349,16 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       });
     }
   }
+}
+
+function checkSignInConsent(): boolean {
+  const consent = localStorage.getItem(SIGN_IN_CONSENT_KEY);
+  if (consent === "true") {
+    return true;
+  }
+  return false;
+}
+
+function storeSignInConsent() {
+  localStorage.setItem(SIGN_IN_CONSENT_KEY, "true");
 }

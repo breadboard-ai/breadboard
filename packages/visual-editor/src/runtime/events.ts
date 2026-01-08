@@ -4,7 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunner, RunEventMap } from "@breadboard-ai/types";
+import {
+  EditHistoryCreator,
+  HarnessRunner,
+  NodeIdentifier,
+  RunEventMap,
+} from "@breadboard-ai/types";
+import { ToastType } from "../ui/events/events.js";
+import * as BreadboardUI from "../ui/index.js";
 import {
   MoveToSelection,
   Tab,
@@ -13,10 +20,7 @@ import {
   WorkspaceSelectionChangeId,
   WorkspaceSelectionState,
   WorkspaceVisualChangeId,
-} from "./types";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { EditHistoryCreator, NodeIdentifier } from "@google-labs/breadboard";
-import { ToastType } from "@breadboard-ai/shared-ui/events/events.js";
+} from "./types.js";
 
 const eventInit = {
   bubbles: true,
@@ -136,17 +140,6 @@ export class RuntimeBoardEditEvent extends Event {
   }
 }
 
-export class RuntimeBoardServerChangeEvent extends Event {
-  static eventName = "runtimeboardserverchange" as const;
-
-  constructor(
-    public readonly connectedBoardServerName?: string,
-    public readonly connectedBoardServerURL?: string
-  ) {
-    super(RuntimeBoardServerChangeEvent.eventName, { ...eventInit });
-  }
-}
-
 export class RuntimeNewerSharedVersionEvent extends Event {
   static eventName = "runtimenewersharedversion" as const;
 
@@ -171,14 +164,6 @@ export class RuntimeTabCloseEvent extends Event {
   }
 }
 
-export class RuntimeModuleChangeEvent extends Event {
-  static eventName = "runtimemodulechange" as const;
-
-  constructor() {
-    super(RuntimeModuleChangeEvent.eventName, { ...eventInit });
-  }
-}
-
 export class RuntimeSelectionChangeEvent extends Event {
   static eventName = "runtimeselectionchange" as const;
 
@@ -196,14 +181,6 @@ export class RuntimeVisualChangeEvent extends Event {
 
   constructor(public readonly visualChangeId: WorkspaceVisualChangeId) {
     super(RuntimeVisualChangeEvent.eventName, { ...eventInit });
-  }
-}
-
-export class RuntimeWorkspaceItemChangeEvent extends Event {
-  static eventName = "runtimeworkspaceitemchange" as const;
-
-  constructor() {
-    super(RuntimeWorkspaceItemChangeEvent.eventName, { ...eventInit });
   }
 }
 

@@ -4,47 +4,45 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as pkg from "../package.json";
+import * as pkg from "../package.json" with { type: "json" };
 import type { BootstrapArguments, MainArguments } from "./types/types.js";
 
-import {
-  LandingUrlInit,
-  type LanguagePack,
-} from "@breadboard-ai/shared-ui/types/types.js";
-import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
-import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
-import {
-  makeUrl,
-  OAUTH_REDIRECT,
-  parseUrl,
-} from "@breadboard-ai/shared-ui/utils/urls.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
-import { connectToOpalShellHost } from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
+import { LandingUrlInit, type LanguagePack } from "./ui/types/types.js";
+import type { GlobalConfig } from "./ui/contexts/global-config.js";
+import { SigninAdapter } from "./ui/utils/signin-adapter.js";
+import { makeUrl, OAUTH_REDIRECT, parseUrl } from "./ui/utils/urls.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "./ui/config/client-deployment-configuration.js";
+import { connectToOpalShellHost } from "./ui/utils/opal-shell-guest.js";
 
 export { bootstrap };
 
-async function getUrlFromBoardServiceFlag(
-  boardService: string | undefined
-): Promise<URL | undefined> {
-  if (!boardService) return undefined;
+function setColorScheme(colorScheme?: "light" | "dark") {
+  const scheme =
+    document.head.querySelector("#scheme") ?? document.createElement("style");
+  scheme.id = "scheme";
 
-  const { GoogleDriveBoardServer } = await import(
-    "@breadboard-ai/google-drive-kit"
-  );
+  if (colorScheme) {
+    scheme.textContent = `:root { --color-scheme: ${colorScheme}; }`;
+  } else {
+    const defaultScheme = window.matchMedia("(prefers-color-scheme: dark)");
+    const setScheme = (query: MediaQueryList) => {
+      const chosenScheme: "light" | "dark" = query.matches ? "dark" : "light";
+      scheme.textContent = `:root { --color-scheme: ${chosenScheme}; }`;
+    };
+    setScheme(defaultScheme);
 
-  if (boardService.startsWith(GoogleDriveBoardServer.PROTOCOL)) {
-    // Just say GDrive here, it will be appended with the folder ID once it's fetched in
-    // packages/visual-editor/src/index.ts
-    return new URL(boardService);
-  } else if (boardService.startsWith("/")) {
-    // Convert relative URLs.
-    return new URL(boardService, window.location.href);
+    // Watch for changes.
+    defaultScheme.addEventListener("change", () => {
+      setScheme(defaultScheme);
+    });
   }
-  // Fallback.
-  return new URL(boardService);
+  document.head.appendChild(scheme);
 }
 
 async function bootstrap(bootstrapArgs: BootstrapArguments) {
+  const { shellHost, embedHandler, hostOrigin } =
+    await connectToOpalShellHost();
+
   const globalConfig: GlobalConfig = {
     environmentName: CLIENT_DEPLOYMENT_CONFIG.ENVIRONMENT_NAME,
     googleDrive: {
@@ -52,36 +50,34 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
         CLIENT_DEPLOYMENT_CONFIG.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [],
     },
     buildInfo: {
-      packageJsonVersion: pkg.version,
+      packageJsonVersion: pkg.default.version,
       gitCommitHash: GIT_HASH,
     },
     ...bootstrapArgs.deploymentConfiguration,
+    hostOrigin,
   };
 
-  const { SettingsStore } = await import(
-    "@breadboard-ai/shared-ui/data/settings-store.js"
-  );
+  const { SettingsStore } = await import("./ui/data/settings-store.js");
   const settings = await SettingsStore.restoredInstance();
 
-  const { shellHost, embedHandler } = await connectToOpalShellHost();
-  const signinAdapter = new SigninAdapter(
-    shellHost,
-    await shellHost.getSignInState()
-  );
+  const signinAdapter = new SigninAdapter(shellHost);
 
-  const StringsHelper = await import("@breadboard-ai/shared-ui/strings");
+  const StringsHelper = await import("./ui/strings/helper.js");
   await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
 
-  const scopeValidation = await signinAdapter.validateScopes();
+  const guestConfiguration = await shellHost.getConfiguration();
   const parsedUrl = parseUrl(window.location.href);
-  const { lite, page } = parsedUrl;
+  const { lite, page, colorScheme } = parsedUrl;
   if (
-    (signinAdapter.state === "signedin" && scopeValidation.ok) ||
-    (signinAdapter.state === "signedout" &&
-      // Signed-out users can access public graphs
-      (page === "graph" ||
-        // The Lite gallery has a signed-out mode
-        (lite && page === "home")))
+    // Signed-out users can access public graphs.
+    page === "graph" ||
+    // The open page prompts to sign-in and then redirects.
+    page === "open" ||
+    // The Lite gallery has a signed-out mode.
+    (page === "home" && lite) ||
+    // IMPORTANT: Keep this `await` as the last condition, so that we don't need
+    // to block on it in all of the above cases which don't care about signin.
+    (await signinAdapter.state) === "signedin"
   ) {
     const icon = document.createElement("link");
     icon.rel = "icon";
@@ -108,20 +104,15 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
 
     const mainArgs: MainArguments = {
       settings,
-      boardServerUrl: await getUrlFromBoardServiceFlag(
-        BOARD_SERVICE || bootstrapArgs.defaultBoardService
-      ),
       enableTos: ENABLE_TOS,
       tosHtml: TOS_HTML,
-      kits: bootstrapArgs.kits,
-      graphStorePreloader: bootstrapArgs.graphStorePreloader,
-      moduleInvocationFilter: bootstrapArgs.moduleInvocationFilter,
       env: bootstrapArgs.env,
       embedHandler,
       globalConfig,
+      guestConfiguration,
       shellHost,
-      initialSignInState: await shellHost.getSignInState(),
       parsedUrl,
+      hostOrigin,
     };
     if (mainArgs.globalConfig.googleDrive.publishPermissions.length === 0) {
       console.warn(
@@ -130,8 +121,21 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       );
     }
 
-    if (lite) {
-      if (page === "home" && !parsedUrl.new && !parsedUrl.remix) {
+    setColorScheme(colorScheme);
+    embedHandler.addEventListener("theme_change", (evt) => {
+      if (evt.type !== "theme_change") {
+        return;
+      }
+
+      setColorScheme(evt.message.theme);
+    });
+
+    if (page === "open") {
+      const { OpenMain } = await import("./index-open.js");
+      const main = new OpenMain(mainArgs);
+      document.body.appendChild(main);
+    } else if (lite) {
+      if (page === "home" && !parsedUrl.new) {
         const { LiteHome } = await import("./index-lite-home.js");
         const liteHome = new LiteHome(mainArgs);
         document.body.appendChild(liteHome);
@@ -148,7 +152,7 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
 
     const Strings = StringsHelper.forSection("Global");
     console.log(
-      `[${Strings.from("APP_NAME")} Visual Editor: Version ${pkg.version}; Commit ${GIT_HASH}]`
+      `[${Strings.from("APP_NAME")} Visual Editor: Version ${pkg.default.version}; Commit ${GIT_HASH}]`
     );
   } else {
     // Prevent endless looping.
@@ -170,8 +174,10 @@ async function bootstrap(bootstrapArgs: BootstrapArguments) {
       oauthRedirect:
         new URL(window.location.href).searchParams.get(OAUTH_REDIRECT) ??
         undefined,
+      guestPrefixed: true,
     };
-    if (signinAdapter.state === "signedin" && !scopeValidation.ok) {
+    const scopeValidation = await signinAdapter.validateScopes();
+    if ((await signinAdapter.state) === "signedin" && !scopeValidation.ok) {
       console.log(
         "[signin] oauth scopes were missing or unavailable, forcing signin.",
         scopeValidation.error
