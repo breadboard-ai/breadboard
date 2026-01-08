@@ -6,6 +6,11 @@
 
 import type { BreadboardMessage, EmbedderMessage } from "./embedder.js";
 
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// IMPORTANT! All interfaces and types defined here must use the `declare`
+// keyword to prevent them from being renamed by Closure Compilier
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 export const SHELL_ORIGIN_URL_PARAMETER = "shellOrigin";
 
 export const SHELL_ESTABLISH_MESSAGE_CHANNEL_REQUEST =
@@ -13,12 +18,15 @@ export const SHELL_ESTABLISH_MESSAGE_CHANNEL_REQUEST =
 export const SHELL_ESTABLISH_MESSAGE_CHANNEL_RESPONSE =
   "opal_shell_establish_message_channel_response";
 
-export interface OpalShellHostProtocol {
+export declare interface OpalShellHostProtocol {
   getSignInState(): Promise<SignInState>;
 
-  // TODO(aomarks) Do this within getSignInState so that we don't need this
-  // method.
+  // TODO(aomarks) Rename this validateSignInState or similar, because it now
+  // handles both missing scopes and the case where the user has revoked access
+  // through account settings.
   validateScopes(): Promise<ValidateScopesResult>;
+
+  getConfiguration(): Promise<GuestConfiguration>;
 
   fetchWithCreds: typeof fetch;
 
@@ -32,16 +40,31 @@ export interface OpalShellHostProtocol {
 
   shareDriveFiles(options: ShareDriveFilesOptions): Promise<void>;
 
+  findUserOpalFolder(): Promise<FindUserOpalFolderResult>;
+
+  listUserOpals(): Promise<ListUserOpalsResult>;
+
   checkAppAccess(): Promise<CheckAppAccessResult>;
 
   sendToEmbedder(message: BreadboardMessage): Promise<void>;
+
+  getDriveCollectorFile(
+    mimeType: string,
+    connectorId: string,
+    graphId: string
+  ): Promise<GetDriveCollectorFileResult>;
+
+  trackAction(
+    event: string,
+    payload?: Record<string, string | undefined>
+  ): Promise<void>;
 }
 
-export interface OpalShellGuestProtocol {
+export declare interface OpalShellGuestProtocol {
   receiveFromEmbedder(message: EmbedderMessage): Promise<void>;
 }
 
-export type SignInState =
+export declare type SignInState =
   | { status: "signedout" }
   | {
       status: "signedin";
@@ -52,36 +75,126 @@ export type SignInState =
       scopes: string[];
     };
 
-export type ValidateScopesResult = { ok: true } | { ok: false; error: string };
+export declare type ValidateScopesResult =
+  | { ok: true }
+  | {
+      ok: false;
+      code?: "signed-out" | "missing-scopes" | "other";
+      error: string;
+    };
 
-export type SignInResult =
+export declare type SignInResult =
   | { ok: true; state: SignInState }
   | { ok: false; error: SignInError };
 
-export type SignInError =
+export declare type SignInError =
   | { code: "missing-scopes"; missingScopes: string[] }
   | { code: "geo-restriction" }
   | { code: "user-cancelled" }
   | { code: "other"; userMessage: string };
 
-export interface PickDriveFilesOptions {
+export declare interface PickDriveFilesOptions {
   mimeTypes: string[];
 }
 
-export type PickDriveFilesResult =
+export declare type FindUserOpalFolderResult =
+  | { ok: true; id: string }
+  | { ok: false; error: string };
+
+export declare type ListDriveFileItem = {
+  id: string;
+  name: string;
+  modifiedTime: string;
+  properties: Record<string, string>;
+  appProperties: Record<string, string>;
+  isAppAuthorized: boolean;
+};
+
+export declare type ListUserOpalsResult =
+  | {
+      ok: true;
+      files: ListDriveFileItem[];
+    }
+  | { ok: false; error: string };
+
+export declare type PickDriveFilesResult =
   | { action: "picked"; docs: PickDriveFilesDocument[] }
   | { action: "cancel" }
   | { action: "error"; error: string };
 
-export interface PickDriveFilesDocument {
+export declare interface PickDriveFilesDocument {
   id: string;
   name?: string;
   mimeType?: string;
   resourceKey?: string;
 }
 
-export type CheckAppAccessResult = { canAccess: boolean };
+export declare interface CheckAppAccessResult {
+  canAccess: boolean;
+  accessStatus?:
+    | "ACCESS_STATUS_UNSPECIFIED"
+    | "ACCESS_STATUS_OK"
+    | "ACCESS_STATUS_REGION_RESTRICTED"
+    | "ACCESS_STATUS_TOS_NOT_ACCEPTED"
+    | "ACCESS_STATUS_ENVIRONMENT_RESTRICTED"
+    | "ACCESS_STATUS_DASHER_ACCOUNT";
+}
 
-export interface ShareDriveFilesOptions {
+export declare type GetDriveCollectorFileResult =
+  | { ok: true; id: string | null }
+  | { ok: false; error: string };
+
+export declare interface ShareDriveFilesOptions {
   fileIds: string[];
 }
+
+export declare type GuestConfiguration = {
+  consentMessage: string;
+  noAccessDasherMessage?: string;
+  noAccessRegionRestrictedMessage?: string;
+  advancedEditorOrigin?: string;
+  galleryTitle?: string;
+  galleryIcon?: string;
+  libraryTitle?: string;
+  libraryIcon?: string;
+  noLibraryAppsTitle?: string;
+  createNewTitle?: string;
+  createNewIcon?: string;
+  isTestApi?: boolean;
+
+  /**
+   * The share surface identifier that newly shared files should be tagged with.
+   *
+   * This identifier is used by the `/open/` page to redirect users to the
+   * correct surface (aka product) it was shared from. This is necessary because
+   * the share links generated by Google Drive are based entirely on MIME type,
+   * which is always the same.
+   */
+  shareSurface: string | undefined;
+
+  /**
+   * Mapping from share surface identifier to a URL template string. Used by the
+   * `/open/` page to redirect to other products/environments.
+   *
+   * The following substitutions are performed:
+   *
+   * `{fileId}`: The Google Drive file ID of the Opal being shared, without the
+   * `drive:/` prefix.
+   *
+   * `{resourceKey}`: The Google Drive file resource key, if needed by the Opal
+   * being shared.
+   *
+   * Example: `https://example.com/opal/{fileId}?resourcekey={resourceKey}`
+   *
+   * Note that any URL parameters that are empty after substitutions are
+   * performed will be removed.
+   */
+  shareSurfaceUrlTemplates: Record<string, string> | undefined;
+
+  /**
+   * If true, supports tracking actions. This is a transitional flag, which
+   * allows us to implement action tracking in the shell guest without breaking
+   * existing shell hosts.
+   */
+  supportsActionTracking?: boolean;
+};

@@ -1,5 +1,6 @@
 {
   "name": "screens",
+  "private": true,
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",
@@ -14,12 +15,12 @@
   "license": "Apache-2.0",
   "description": "",
   "devDependencies": {
-    "tsx": "^4.20.5"
+    "tsx": "^4.20.6"
   },
   "dependencies": {
-    "@google/genai": "^1.19.0",
-    "dotenv": "^17.2.2",
+    "@google/genai": "^1.27.0",
+    "dotenv": "^17.2.3",
     "lit": "^3.3.1",
-    "vite": "^6.3.6"
+    "vite": "^7.2.6"
   }
 }

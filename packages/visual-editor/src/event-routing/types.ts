@@ -4,13 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import { Runtime } from "../runtime/runtime";
-import { Tab } from "../runtime/types";
-import type * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { type OAuthScope } from "@breadboard-ai/shared-ui/connection/oauth-scopes.js";
 import { BoardServer } from "@breadboard-ai/types";
+import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { Runtime } from "../runtime/runtime.js";
+import { Tab } from "../runtime/types.js";
+import { type OAuthScope } from "../ui/connection/oauth-scopes.js";
+import { SettingsStore } from "../ui/data/settings-store.js";
+import { EmbedHandler } from "../ui/embed/embed.js";
+import type * as BreadboardUI from "../ui/index.js";
+import { ActionTracker, UserSignInResponse } from "../ui/types/types.js";
 
 type StateCustomEvent<K extends keyof BreadboardUI.Events.StateEventDetailMap> =
   BreadboardUI.Events.StateEvent<K>;
@@ -24,8 +26,10 @@ export interface EventRouteDeps<
   tab: Tab | null;
   uiState: BreadboardUI.State.UI;
   googleDriveClient: GoogleDriveClient | null;
-  askUserToSignInIfNeeded(scopes?: OAuthScope[]): Promise<boolean>;
+  askUserToSignInIfNeeded(scopes?: OAuthScope[]): Promise<UserSignInResponse>;
   boardServer: BoardServer;
+  embedHandler?: EmbedHandler;
+  actionTracker?: ActionTracker;
 }
 
 export interface EventRoute<

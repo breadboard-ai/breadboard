@@ -4,38 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  BoardServer,
-  GraphLoader,
-  OutputValues,
-  RuntimeFlagManager,
-  ConsentManager,
-} from "@breadboard-ai/types";
-import {
-  EditHistoryCreator,
-  EditHistoryEntry,
-  FileSystem,
-  GraphDescriptor,
-  Kit,
-  MainGraphIdentifier,
-  MutableGraphStore,
-  PortIdentifier,
-} from "@google-labs/breadboard";
-
+import type { BoardServer, OutputValues } from "@breadboard-ai/types";
 import {
   AssetPath,
+  EditHistoryCreator,
+  EditHistoryEntry,
+  FileSystemEntry,
+  GraphDescriptor,
   GraphIdentifier,
   GraphMetadata,
+  MainGraphIdentifier,
   ModuleIdentifier,
   NodeIdentifier,
+  PortIdentifier,
 } from "@breadboard-ai/types";
-import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import { type GoogleDriveClient } from "@breadboard-ai/google-drive-kit/google-drive-client.js";
-import { RecentBoardStore } from "../data/recent-boards";
-import type { GlobalConfig } from "@breadboard-ai/shared-ui/contexts/global-config.js";
-import { McpClientManager } from "@breadboard-ai/mcp";
-import { RunnableModuleFactory } from "@breadboard-ai/types/sandbox.js";
-import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
+import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
+import type { GlobalConfig } from "../ui/contexts/global-config.js";
+import { SettingsStore } from "../ui/data/settings-store.js";
+import { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 export enum TabType {
   URL,
@@ -48,7 +34,6 @@ export type TabURL = string;
 export type TabName = string;
 export interface Tab {
   id: TabId;
-  boardServerKits: Kit[];
   name: TabName;
   mainGraphId: MainGraphIdentifier;
   graph: GraphDescriptor;
@@ -72,35 +57,13 @@ export interface Tab {
 }
 
 export interface RuntimeConfig {
-  graphStore: MutableGraphStore;
-  sandbox: RunnableModuleFactory;
-  experiments: Record<string, boolean>;
-  globalConfig?: GlobalConfig;
-  signinAdapter: SigninAdapter;
+  globalConfig: GlobalConfig;
+  guestConfig: GuestConfiguration;
   settings: SettingsStore;
-  fileSystem: FileSystem;
-  // The board servers that are built in: initialized separately and come
-  // as part of the environment.
-  builtInBoardServers: BoardServer[];
-  kits: Kit[];
-  googleDriveClient?: GoogleDriveClient;
+  shellHost: OpalShellHostProtocol;
+  env?: FileSystemEntry[];
   appName: string;
   appSubName: string;
-  recentBoardStore: RecentBoardStore;
-  flags: RuntimeFlagManager;
-  mcpClientManager: McpClientManager;
-  fetchWithCreds: typeof globalThis.fetch;
-  consentManager: ConsentManager;
-}
-
-export interface RuntimeConfigBoardServers {
-  servers: BoardServer[];
-  loader: GraphLoader;
-  graphStore: MutableGraphStore;
-  // The board servers that are built in: initialized separately and come
-  // as part of the environment.
-
-  builtInBoardServers: BoardServer[];
 }
 
 export type ReferenceIdentifier =
@@ -151,3 +114,5 @@ export type EditChangeId = ReturnType<typeof crypto.randomUUID>;
 export type MoveToSelection = "immediate" | "animated" | false;
 
 export type VisualEditorMode = "app" | "canvas";
+
+export type Control<T> = T | { $control: string };

@@ -4,45 +4,57 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "./ui/index.js";
 const Strings = BreadboardUI.Strings.forSection("Global");
 
 import { html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { MainArguments } from "./types/types";
+import { MainArguments } from "./types/types.js";
 
-import * as BBLite from "@breadboard-ai/shared-ui/lite";
-import { MainBase } from "./main-base";
+import * as BBLite from "./ui/lite/lite.js";
+import { MainBase } from "./main-base.js";
 import { classMap } from "lit/directives/class-map.js";
-import {
-  StateEvent,
-  StateEventDetailMap,
-} from "@breadboard-ai/shared-ui/events/events.js";
-import { LiteEditInputController } from "@breadboard-ai/shared-ui/lite/input/editor-input-lite.js";
+import { StateEvent, StateEventDetailMap } from "./ui/events/events.js";
+import { LiteEditInputController } from "./ui/lite/input/editor-input-lite.js";
 import { GraphDescriptor, GraphTheme } from "@breadboard-ai/types";
-import { RuntimeTabChangeEvent } from "./runtime/events";
-import { eventRoutes } from "./event-routing/event-routing";
-import { blankBoard } from "@breadboard-ai/shared-ui/utils/utils.js";
+import {
+  RuntimeBoardLoadErrorEvent,
+  RuntimeTabChangeEvent,
+} from "./runtime/events.js";
+import { eventRoutes } from "./event-routing/event-routing.js";
+import { blankBoard } from "./ui/utils/utils.js";
 import { repeat } from "lit/directives/repeat.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { OneShotFlowGenFailureResponse } from "@breadboard-ai/shared-ui/flow-gen/flow-generator.js";
-import { flowGenWithTheme } from "@breadboard-ai/shared-ui/flow-gen/flowgen-with-theme.js";
+import { OneShotFlowGenFailureResponse } from "./ui/flow-gen/flow-generator.js";
+import { flowGenWithTheme } from "./ui/flow-gen/flowgen-with-theme.js";
+import { markdown } from "./ui/directives/markdown.js";
+import { type SharePanel } from "./ui/elements/elements.js";
+import {
+  CheckAppAccessResult,
+  GuestConfiguration,
+} from "@breadboard-ai/types/opal-shell-protocol.js";
+import { extractGoogleDriveFileId } from "@breadboard-ai/utils/google-drive/utils.js";
 
 const ADVANCED_EDITOR_KEY = "bb-lite-advanced-editor";
+const REMIX_WARNING_KEY = "bb-lite-show-remix-warning";
 
 @customElement("bb-lite")
 export class LiteMain extends MainBase implements LiteEditInputController {
   @property()
   accessor showAppFullscreen = false;
 
+  @property()
+  accessor compactView = false;
+
   @state()
   accessor #showAdvancedEditorOnboardingTooltip = true;
 
   static styles = [
+    BBLite.Styles.HostColorScheme.match,
     BBLite.Styles.HostIcons.icons,
     BBLite.Styles.HostBehavior.behavior,
-    BBLite.Styles.HostColors.baseColors,
+    BBLite.Styles.HostColorsMaterial.baseColors,
     BBLite.Styles.HostType.type,
     css`
       * {
@@ -52,19 +64,25 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       :host {
         display: block;
         flex: 1;
+        background: var(--sys-color--body-background);
 
-        --example-color: light-dark(#e9eef6, #000000);
+        --example-color: var(--sys-color--surface-container-low);
         --example-text-color: light-dark(#575b5f, #ffffff);
-        --example-icon-background-color: light-dark(#d9d7fd, #ffffff);
-        --example-icon-color: light-dark(#665ef6, #ffffff);
+        --example-icon-background-color: light-dark(
+          #d9d7fd,
+          var(--sys-color--on-surface-low)
+        );
+        --example-icon-color: light-dark(#665ef6, #665ef6);
       }
 
-      #loading {
+      #loading,
+      #error {
         display: flex;
         height: 100%;
         width: 100%;
         align-items: center;
         justify-content: center;
+        color: var(--sys-color--on-surface);
 
         & .g-icon {
           margin-right: var(--bb-grid-size-2);
@@ -104,20 +122,32 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
         & #message {
           text-align: center;
-          height: var(--bb-grid-size-4);
+          height: var(--bb-grid-size-7);
           margin: var(--bb-grid-size-2) 0;
-          color: light-dark(#575b5f, #fff);
+          color: var(--sys-color--on-surface-variant);
+
+          p {
+            margin: 0;
+          }
+
+          a {
+            color: var(--sys-color--on-surface);
+          }
+
+          &[disabled] {
+            opacity: 0.3;
+          }
         }
 
         & #app-view {
           position: relative;
           margin: 0 0 0 var(--bb-grid-size-3);
           border-radius: var(--bb-grid-size-4);
-          border: 1px solid var(--light-dark-n-90);
+          border: 1px solid var(--sys-color--surface-variant);
           display: flex;
           flex-direction: column;
           overflow: hidden;
-          margin-bottom: var(--bb-grid-size-13);
+          margin-bottom: var(--bb-grid-size-16);
 
           & bb-snackbar {
             width: calc(100% - var(--bb-grid-size-12));
@@ -130,11 +160,18 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 var(--bb-grid-size-3) 0 var(--bb-grid-size-5);
-            color: var(--light-dark-n-10);
+            padding: 0 var(--bb-grid-size-5);
+            background: var(--sys-color--surface);
+            color: var(--sys-color--on-surface);
+            container-type: inline-size;
 
             & .left {
               flex: 1;
+              gap: var(--bb-grid-size-2);
+            }
+
+            & .right {
+              gap: var(--bb-grid-size-8);
             }
 
             & .left,
@@ -142,23 +179,45 @@ export class LiteMain extends MainBase implements LiteEditInputController {
               display: flex;
               align-items: center;
               white-space: nowrap;
-              gap: var(--bb-grid-size-8);
             }
 
             button,
             a {
               display: flex;
               align-items: center;
-              color: var(--light-dark-n-10);
+              color: var(--sys-color--on-surface);
               border: none;
               background: none;
               padding: 0;
               cursor: pointer;
               text-decoration: none;
+              position: relative;
 
               & .g-icon {
                 margin-right: var(--bb-grid-size-2);
               }
+
+              & bb-onboarding-tooltip {
+                z-index: 300;
+                white-space: normal;
+                --top: calc(100% + var(--bb-grid-size-7) + 2px);
+                --right: 0;
+              }
+            }
+
+            & #experiment {
+              display: none;
+              font-size: 11px;
+              line-height: 1;
+              padding: var(--bb-grid-size) var(--bb-grid-size-3);
+              border-radius: var(--bb-grid-size-16);
+              border: 1px solid light-dark(var(--n-0), var(--n-70));
+              text-transform: uppercase;
+              color: light-dark(var(--n-0), var(--n-70));
+            }
+
+            #open-advanced-editor {
+              display: none;
             }
           }
 
@@ -172,12 +231,16 @@ export class LiteMain extends MainBase implements LiteEditInputController {
           flex-direction: column;
           gap: var(--bb-grid-size-4);
           height: 100%;
+          max-width: 800px;
+          margin: 0 auto;
 
           & > h1 {
+            color: var(--sys-color--on-surface);
             margin: 0 0 var(--bb-grid-size-11) 0;
           }
 
           & > h2 {
+            color: var(--sys-color--on-surface);
             margin: 0 0 var(--bb-grid-size-4) 0;
           }
 
@@ -287,6 +350,18 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         }
       }
 
+      @container (min-width: 450px) {
+        #lite-shell #app-view header .right #open-advanced-editor {
+          display: flex;
+        }
+      }
+
+      @container (min-width: 600px) {
+        #lite-shell #app-view header .left #experiment {
+          display: block;
+        }
+      }
+
       @keyframes rotate {
         from {
           rotate: 0deg;
@@ -299,20 +374,132 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     `,
   ];
 
+  @state()
+  set showRemixWarning(show: boolean) {
+    this.#showRemixWarning = show;
+    globalThis.localStorage.setItem(REMIX_WARNING_KEY, String(show));
+  }
+  get showRemixWarning() {
+    return this.#showRemixWarning;
+  }
+  #showRemixWarning = false;
+
   #advancedEditorLink: Ref<HTMLElement> = createRef();
+  #sharePanelRef: Ref<SharePanel> = createRef();
+
+  private accessStatus: CheckAppAccessResult | null = null;
+
+  private boardLoaded: Promise<void>;
 
   constructor(args: MainArguments) {
     super(args);
 
+    const { parsedUrl } = args;
+
     // Set the app to fullscreen if the parsed URL indicates that this was
     // opened from a share action.
     this.showAppFullscreen =
-      (args.parsedUrl && "flow" in args.parsedUrl && args.parsedUrl.shared) ??
-      false;
+      (parsedUrl && "flow" in parsedUrl && parsedUrl.shared) ?? false;
+    this.runtime.board.addEventListener(RuntimeTabChangeEvent.eventName, () =>
+      this.#goFullScreenIfGraphIsProbablyShared()
+    );
 
     this.#showAdvancedEditorOnboardingTooltip =
       (globalThis.localStorage.getItem(ADVANCED_EDITOR_KEY) ?? "true") ===
       "true";
+
+    this.showRemixWarning =
+      (globalThis.localStorage.getItem(REMIX_WARNING_KEY) ?? "true") === "true";
+
+    this.addEventListener("bbevent", (e: Event) => {
+      const evt = e as StateEvent<keyof StateEventDetailMap>;
+
+      if (evt.detail.eventType === "app.fullscreen") {
+        this.showAppFullscreen = evt.detail.action === "activate";
+        return;
+      }
+
+      if (this.handleUserSignIn(evt)) return;
+
+      return this.handleRoutedEvent(evt);
+    });
+
+    let resolve: (() => void) | undefined;
+    this.boardLoaded = new Promise<void>((r) => {
+      resolve = r;
+    });
+    this.runtime.board.addEventListener(
+      RuntimeTabChangeEvent.eventName,
+      () => resolve!(),
+      { once: true }
+    );
+
+    const sizeDetector = window.matchMedia("(max-width: 500px)");
+    const reactToScreenWidth = () => {
+      if (sizeDetector.matches) {
+        this.compactView = true;
+      } else {
+        this.compactView = false;
+      }
+    };
+    sizeDetector.addEventListener("change", reactToScreenWidth);
+    reactToScreenWidth();
+  }
+
+  override async doPostInitWork(): Promise<void> {
+    this.runtime.board.addEventListener(
+      RuntimeBoardLoadErrorEvent.eventName,
+      () => {
+        this.runtime.state.lite.viewError = Strings.from(
+          "ERROR_UNABLE_TO_LOAD_PROJECT"
+        );
+      }
+    );
+
+    const parsedUrl = this.runtime.router.parsedUrl;
+    if (parsedUrl.page !== "home") return;
+    await this.askUserToSignInIfNeeded();
+  }
+
+  #goFullScreenIfGraphIsProbablyShared() {
+    const url = this.tab?.graph.url;
+    if (!url) {
+      return;
+    }
+    const fileId = extractGoogleDriveFileId(url);
+    if (!fileId) {
+      return;
+    }
+    const isMine = this.runtime.board.isMine(url);
+    const isFeaturedGalleryItem =
+      // This is a bit hacky and indirect, but an easy way to tell if something
+      // is from the public gallery is to check if the GoogleDriveClient has
+      // been configured to use the proxy for it.
+      this.googleDriveClient.fileIsMarkedForReadingWithPublicProxy(fileId);
+    if (!isMine && !isFeaturedGalleryItem) {
+      this.showAppFullscreen = true;
+    }
+  }
+
+  override async handleAppAccessCheckResult(
+    result: CheckAppAccessResult
+  ): Promise<void> {
+    if (!result.canAccess) {
+      this.accessStatus = result;
+      this.uiState.show.add("NoAccessModal");
+    } else {
+      /**
+       * The remix triggering code goes here, though this is a bit of a hack.
+       * Ideally, we need some sort of lifecycle and a way to subscribe to
+       * events from it
+       */
+      const parsedUrl = this.runtime.router.parsedUrl;
+      if (parsedUrl.page !== "graph") return;
+      const remixUrl = parsedUrl.remix ? parsedUrl.flow : null;
+      if (!remixUrl) return;
+      await this.boardLoaded;
+      this.invokeRemixEventRouteWith(remixUrl);
+    }
   }
 
   /**
@@ -322,7 +509,11 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   async generate(
     intent: string
   ): Promise<OneShotFlowGenFailureResponse | undefined> {
+    if ((await this.askUserToSignInIfNeeded()) !== "success") {
+      return { error: "" };
+    }
     let projectState = this.runtime.state.project;
+    this.runtime.state.lite.currentExampleIntent = intent;
 
     if (!projectState) {
       // This is a zero state: we don't yet have a projectState.
@@ -341,10 +532,6 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       );
       await this.invokeBoardCreateRoute();
       await waitForTabToChange;
-      const url = this.tab?.graph.url;
-      if (url) {
-        this.notifyEmbeddedBoardCreated(url);
-      }
       projectState = this.runtime.state.project;
       if (!projectState) {
         return { error: `Failed to create a new opal.` };
@@ -360,6 +547,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
       return { error: `No FlowGenerator was provided` };
     }
 
+    this.dispatchEvent(
+      new StateEvent({ eventType: "board.stop", clearLastRun: true })
+    );
+
     const generated = await flowGenWithTheme(
       this.flowGenerator,
       intent,
@@ -373,27 +564,64 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   #renderOriginalPrompt() {
-    if (!this.tab?.graph.metadata?.intent) {
-      return nothing;
-    }
+    const prompt =
+      this.tab?.graph.metadata?.raw_intent ??
+      this.tab?.graph.metadata?.intent ??
+      this.runtime.state.lite.currentExampleIntent ??
+      null;
 
     return html`<bb-prompt-view
-      .prompt=${this.tab?.graph.metadata?.intent}
+      .prompt=${prompt}
+      .state=${this.runtime.state.lite}
+      ?inert=${this.#isInert()}
     ></bb-prompt-view>`;
   }
 
+  protected renderNoAccessModal() {
+    const content = getNoAccessModalContent(
+      this.accessStatus,
+      this.guestConfiguration
+    );
+    if (!content) return nothing;
+    const { title, message } = content;
+    return html`
+      <bb-modal
+        appearance="basic"
+        .modalTitle=${title}
+        @bbmodaldismissed=${(evt: Event) => {
+          evt.preventDefault();
+        }}
+        ><section id="container">${message}</section></bb-modal
+      >
+    `;
+  }
+
   #renderUserInput() {
+    const editable =
+      (this.tab?.graphIsMine ?? false) ||
+      this.runtime.state.lite.viewType !== "editor";
     const { lite } = this.runtime.state;
     return html`<bb-editor-input-lite
+      ?inert=${this.#isInert()}
       .controller=${this}
       .state=${lite}
+      .editable=${editable}
+      @bbsnackbar=${this.#onSnackbar}
+      @bbunsnackbar=${this.#onUnSnackbar}
     ></bb-editor-input-lite>`;
   }
 
   #renderMessage() {
-    return html`<p id="message" class="w-400 md-body-small sans-flex">
-      ${Strings.from("LABEL_DISCLAIMER")}
-    </p>`;
+    const editable =
+      (this.tab?.graphIsMine ?? false) ||
+      this.runtime.state.lite.viewType !== "editor";
+    return html`<div
+      ?disabled=${!editable}
+      id="message"
+      class="w-400 md-body-small sans-flex"
+    >
+      ${markdown(Strings.from("LABEL_DISCLAIMER_LITE"))}
+    </div>`;
   }
 
   #renderControls() {
@@ -410,12 +638,17 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   #renderList() {
     return html`
       <bb-step-list-view
-        .state=${this.runtime.state.lite.stepList}
+        ?inert=${this.#isInert()}
+        .state=${this.runtime.state.lite}
       ></bb-step-list-view>
     `;
   }
 
   #renderOnboardingTooltip() {
+    if (this.showRemixWarning) {
+      this.#showAdvancedEditorOnboardingTooltip = false;
+    }
+
     if (
       !this.#showAdvancedEditorOnboardingTooltip ||
       !this.#advancedEditorLink.value
@@ -448,57 +681,124 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #renderApp() {
     const renderValues = this.getRenderValues();
+
+    const title =
+      this.runtime.state.lite.viewType === "editor"
+        ? (this.tab?.graph.title ?? "Untitled app")
+        : "...";
+
+    const graphIsMine = this.tab?.graphIsMine ?? false;
+    const isGenerating = this.runtime.state.lite.status === "generating";
+    const isFreshGraph =
+      isGenerating &&
+      this.runtime.state.lite.graph?.edges.length === 0 &&
+      this.runtime.state.lite.graph?.nodes.length === 0 &&
+      this.runtime.state.lite.graph?.title === "Untitled Opal app";
+
+    const buttons: Array<HTMLTemplateResult | symbol> = [];
+    if (this.runtime.state.lite.viewType === "editor") {
+      buttons.push(
+        html`<a
+          ${ref(this.#advancedEditorLink)}
+          class="w-400 md-title-small sans-flex unvaried"
+          id="open-advanced-editor"
+          href="${this.guestConfiguration.advancedEditorOrigin ||
+          this.hostOrigin}?mode=canvas&flow=${this.runtime.state.lite.graph
+            ?.url}"
+          target="_blank"
+        >
+          <span class="g-icon">open_in_new</span>Open Advanced Editor
+        </a>`
+      );
+      if (graphIsMine) {
+        buttons.push(
+          html`<button
+            class="w-400 md-title-small sans-flex unvaried"
+            @click=${this.#onClickShareApp}
+          >
+            <span class="g-icon">share</span>${Strings.from(
+              "COMMAND_COPY_APP_PREVIEW_URL"
+            )}
+          </button>`
+        );
+      } else {
+        buttons.push(
+          html`<button
+            class="w-400 md-title-small sans-flex unvaried"
+            @click=${this.#onClickRemixApp}
+          >
+            <span class="g-icon">gesture</span>${Strings.from("COMMAND_REMIX")}
+            ${this.showRemixWarning
+              ? html`<bb-onboarding-tooltip
+                  id="show-remix-warning"
+                  .text=${"Remix to make a copy and edit the steps"}
+                  @bbonboardingacknowledged=${() => {
+                    this.showRemixWarning = false;
+                  }}
+                ></bb-onboarding-tooltip>`
+              : nothing}
+          </button>`
+        );
+      }
+    }
+
     return html` <section
       id="app-view"
-      slot=${this.showAppFullscreen ? nothing : "slot-1"}
+      slot=${this.showAppFullscreen || this.compactView ? nothing : "slot-1"}
     >
-      ${this.showAppFullscreen
+      ${this.showAppFullscreen || this.compactView
         ? nothing
-        : html` <header class="w-400 md-title-small sans-flex">
-            <div class="left">${this.tab?.name ?? "Untitled app"}</div>
-            <div class="right">
-              <a
-                ${ref(this.#advancedEditorLink)}
-                href="/?mode=canvas&flow=${this.tab?.graph.url}"
-                target="_blank"
-                ><span class="g-icon">open_in_new</span>Open Advanced Editor</a
-              >
-              <button><span class="g-icon">share</span>Share</button>
+        : html` <header>
+            <div class="left w-500 md-title-small sans-flex">
+              ${title}
+
+              <span class="sans" id="experiment">Experiment</span>
             </div>
+            <div class="right">${buttons}</div>
           </header>`}
       <bb-app-controller
+        ?inert=${this.#isInert()}
         class=${classMap({ active: true })}
-        .graph=${this.tab?.graph ?? null}
+        .graph=${this.runtime.state.lite.graph ?? null}
         .graphIsEmpty=${false}
         .graphTopologyUpdateId=${this.graphTopologyUpdateId}
         .isMine=${this.tab?.graphIsMine ?? false}
         .projectRun=${renderValues.projectState?.run}
         .readOnly=${true}
         .runtimeFlags=${this.uiState.flags}
-        .showGDrive=${this.signinAdapter.state === "signedin"}
+        .showGDrive=${this.signinAdapter.stateSignal?.status === "signedin"}
         .status=${renderValues.tabStatus}
+        .shouldShowFirstRunMessage=${true}
+        .firstRunMessage=${Strings.from("LABEL_FIRST_RUN_LITE")}
         .themeHash=${renderValues.themeHash}
         .headerConfig=${{
           menu: false,
           replay: true,
-          fullscreen: this.showAppFullscreen ? "active" : "available",
+          fullscreen:
+            this.showAppFullscreen || this.compactView
+              ? this.compactView
+                ? "no-exit"
+                : "active"
+              : "available",
           small: true,
         }}
+        .isRefreshingAppTheme=${isGenerating}
+        .isFreshGraph=${isFreshGraph}
       >
       </bb-app-controller>
-      ${this.renderSnackbar()}
+      ${this.#renderShellUI()} ${this.renderConsentRequests()}
     </section>`;
   }
 
   #renderWelcomeMat() {
     return html`<section id="welcome">
       <h1 class="w-400 md-display-small sans-flex">
-        What do you want to build?
+        Describe the AI mini app you want to build
       </h1>
       <h2 class="w-400 md-title-large sans-flex">
         Looking for inspiration? Try one of our prompts
       </h2>
-      <aside id="examples">
+      <aside id="examples" ?inert=${this.#isInert()}>
         <ul>
           ${repeat(this.runtime.state.lite.examples, (example) => {
             return html`<li>
@@ -516,32 +816,49 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             </li>`;
           })}
         </ul>
-        ${this.renderSnackbar()}
       </aside>
       ${[this.#renderUserInput(), this.#renderMessage()]}
     </section>`;
   }
 
   #renderShellUI() {
-    return [this.renderTooltip(), this.#renderOnboardingTooltip()];
+    return [
+      this.renderTooltip(),
+      this.#renderOnboardingTooltip(),
+      this.uiState.show.has("NoAccessModal")
+        ? this.renderNoAccessModal()
+        : nothing,
+      this.uiState.show.has("SignInModal")
+        ? this.renderSignInModal(false)
+        : nothing,
+      this.uiState.show.has("SnackbarDetailsModal")
+        ? this.renderSnackbarDetailsModal()
+        : nothing,
+    ];
+  }
+
+  #isInert() {
+    return (
+      this.uiState.blockingAction ||
+      this.runtime.state.lite.status == "generating" ||
+      this.runtime.state.lite.viewType === "loading"
+    );
   }
 
   render() {
-    if (!this.ready) return nothing;
-
-    const lite = this.runtime.state.lite;
-    if (lite.remixUrl) {
-      this.invokeRemixEventRouteWith(lite.remixUrl);
-    }
+    const lite: BreadboardUI.State.LiteModeState = this.runtime.state.lite;
 
     let content: HTMLTemplateResult | symbol = nothing;
     switch (lite.viewType) {
-      case "home": {
-        content = this.#renderWelcomeMat();
-        break;
-      }
-      case "editor": {
-        content = html`${this.showAppFullscreen
+      case "home":
+      case "editor":
+      case "loading": {
+        if (lite.viewType === "home" && lite.status !== "generating") {
+          content = this.#renderWelcomeMat();
+          break;
+        }
+
+        content = html`${this.showAppFullscreen || this.compactView
           ? this.#renderApp()
           : html` <bb-splitter
               direction=${"horizontal"}
@@ -552,11 +869,11 @@ export class LiteMain extends MainBase implements LiteEditInputController {
             </bb-splitter>`}`;
         break;
       }
-      case "loading":
-        return html`<div id="loading">
-          <span class="g-icon heavy-filled round">progress_activity</span
-          >Loading
-        </div>`;
+      case "error":
+        return html`<section id="lite-shell" @bbevent=${this.handleUserSignIn}>
+          <div id="error">${lite.viewError}</div>
+          ${this.#renderShellUI()}
+        </section>`;
       default:
         console.log("Invalid lite view state");
         return nothing;
@@ -565,32 +882,32 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     return html`<section
         id="lite-shell"
         class=${classMap({
-          full: this.showAppFullscreen,
+          full: this.showAppFullscreen || this.compactView,
           welcome: lite.viewType === "home",
         })}
-        ?inert=${this.uiState.blockingAction || lite.status == "generating"}
-        @bbsnackbar=${(snackbarEvent: BreadboardUI.Events.SnackbarEvent) => {
-          this.snackbar(
-            snackbarEvent.message,
-            snackbarEvent.snackType,
-            snackbarEvent.actions,
-            snackbarEvent.persistent,
-            snackbarEvent.snackbarId,
-            snackbarEvent.replaceAll
-          );
-        }}
-        @bbevent=${(evt: StateEvent<keyof StateEventDetailMap>) => {
-          if (evt.detail.eventType === "app.fullscreen") {
-            this.showAppFullscreen = evt.detail.action === "activate";
-            return;
-          }
-
-          return this.handleRoutedEvent(evt);
-        }}
+        @bbsnackbar=${this.#onSnackbar}
+        @bbunsnackbar=${this.#onUnSnackbar}
+        @bbsharerequested=${this.#onClickShareApp}
       >
         ${content}
       </section>
-      ${this.#renderShellUI()}`;
+      ${this.#renderShellUI()} ${this.#renderSharePanel()}
+      ${this.renderSnackbar()} `;
+  }
+
+  #onSnackbar(event: BreadboardUI.Events.SnackbarEvent) {
+    this.snackbar(
+      event.message,
+      event.snackType,
+      event.actions,
+      event.persistent,
+      event.snackbarId,
+      event.replaceAll
+    );
+  }
+
+  #onUnSnackbar(event: BreadboardUI.Events.UnsnackbarEvent) {
+    this.unsnackbar(event.snackbarId);
   }
 
   protected async invokeBoardReplaceRoute(
@@ -624,5 +941,75 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         })
       )
     );
+  }
+
+  private handleUserSignIn(
+    evt: StateEvent<keyof StateEventDetailMap>
+  ): boolean {
+    if (evt.detail.eventType !== "host.usersignin") return false;
+
+    const { result } = evt.detail;
+    const { lite } = this.runtime.state;
+
+    if (result === "success") return true;
+
+    if (lite.viewType === "loading") {
+      // Happens when loading an inacessible opal
+      lite.viewError = Strings.from("ERROR_UNABLE_TO_LOAD_PROJECT");
+    }
+    return true;
+  }
+
+  #renderSharePanel() {
+    return html`
+      <bb-share-panel
+        .graph=${this.runtime.state.lite.graph}
+        ${ref(this.#sharePanelRef)}
+      >
+      </bb-share-panel>
+    `;
+  }
+
+  #onClickShareApp() {
+    this.#sharePanelRef.value?.open();
+  }
+
+  #onClickRemixApp() {
+    const url = this.runtime.state.lite.graph?.url;
+    if (!url) {
+      return;
+    }
+
+    this.invokeRemixEventRouteWith(url);
+  }
+}
+
+function getNoAccessModalContent(
+  status: CheckAppAccessResult | null,
+  guestConfiguration: GuestConfiguration | undefined
+): { title: string; message: string } | null {
+  const title = "Access Denied";
+  if (!status) return null;
+  if (status.canAccess) return null;
+  switch (status.accessStatus) {
+    case "ACCESS_STATUS_DASHER_ACCOUNT":
+      return {
+        title,
+        message:
+          guestConfiguration?.noAccessDasherMessage ||
+          "Switch to a personal Google Account that you use to access Opal",
+      };
+    case "ACCESS_STATUS_REGION_RESTRICTED":
+      return {
+        title,
+        message:
+          guestConfiguration?.noAccessRegionRestrictedMessage ||
+          "It looks like Opal isn't available in your country yet. We're working hard to bring Opal to new countries soon.",
+      };
+    default:
+      return {
+        title,
+        message: "It looks like this account can't access Opal yet.",
+      };
   }
 }

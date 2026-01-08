@@ -4,4 +4,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import "@breadboard-ai/shared-ui/elements/connection/connection-broker.ts";
+import "./ui/elements/connection/connection-broker.ts";

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DataStore, FileSystem, Outcome } from "./data.js";
+import { FileSystem, Outcome } from "./data.js";
 import { DeepReadonly } from "./deep-read-only.js";
 import { ClientDeploymentConfiguration } from "./deployment-configuration.js";
 import { RuntimeFlagManager } from "./flags.js";
@@ -156,10 +156,6 @@ export type RunConfig = {
    * name without interrupting the run of the board.
    */
   inputs?: InputValues;
-  /**
-   * The data store to use for storing data.
-   */
-  store?: DataStore;
   /**
    * Graph Store: tracks all the graphs, changes to them, and their
    * dependencies.

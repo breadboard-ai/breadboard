@@ -3,7 +3,16 @@
   "version": "0.1.0",
   "description": "Various utils shareable across the Breadboard code base",
   "main": "./dist/src/index.js",
-  "exports": "./dist/src/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./*.js": {
+      "types": "./dist/src/*.d.ts",
+      "default": "./dist/src/*.js"
+    }
+  },
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
@@ -115,15 +124,13 @@
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.2",
     "@types/node": "^22.0.0",
-    "@types/jsdom": "^21.1.7",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.34.1",
-    "ava": "6.4.0",
-    "jsdom": "^26.1.0",
-    "lit": "^3.3.1",
+    "ava": "6.4.1",
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@types/gapi.client.drive-v3": "^0.0.5",
     "@breadboard-ai/types": "0.9.0"
   }
 }

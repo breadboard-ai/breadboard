@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunResult } from "./harness.js";
 import {
   DataStoreHandle,
   FileDataPart,
@@ -12,7 +11,6 @@ import {
   LLMContent,
   StoredDataCapabilityPart,
 } from "./llm-content.js";
-import { Schema } from "./schema.js";
 import { UUID } from "./uuid.js";
 
 export type SerializedStoredData = {
@@ -21,71 +19,10 @@ export type SerializedStoredData = {
 
 export type SerializedDataStoreGroup = SerializedStoredData[];
 
-export type DataInflator = {
-  retrieveAsBlob(part: StoredDataCapabilityPart, graphUrl?: URL): Promise<Blob>;
-  transformer?(graphUrl: URL): DataPartTransformer | undefined;
-};
-
 export type Chunk = {
   mimetype: string;
   data: string;
 };
-
-export type DataDeflator = {
-  store(blob: Blob, storeId?: string): Promise<StoredDataCapabilityPart>;
-};
-
-export type DataStore = DataInflator &
-  DataDeflator & {
-    createGroup(groupId: string): void;
-    drop(): Promise<void>;
-    has(groupId: string): boolean;
-    releaseAll(): void;
-    releaseGroup(group: string): void;
-    replaceDataParts(key: string, result: HarnessRunResult): Promise<void>;
-    serializeGroup(
-      group: string,
-      storeId?: string
-    ): Promise<SerializedDataStoreGroup | null>;
-
-    /**
-     * Store a value for later use.
-     *
-     * @param key -- the key to store the value under
-     * @param value -- the value to store, including null
-     * @param schema -- the schema of the data to store
-     * @param scope -- the scope to store the data in
-     */
-    storeData(
-      key: string,
-      value: object | null,
-      schema: Schema,
-      scope: DataStoreScope
-    ): Promise<StoreDataResult>;
-    retrieveData(key: string): Promise<RetrieveDataResult>;
-  };
-
-export type StoreDataResult =
-  | {
-      success: true;
-    }
-  | {
-      success: false;
-      error: string;
-    };
-
-export type RetrieveDataResult =
-  | {
-      success: true;
-      value: object | null;
-      schema: Schema;
-    }
-  | {
-      success: false;
-      error: string;
-    };
-
-export type DataStoreScope = "run" | "session" | "client";
 
 /**
  * Specifies the type of the transformation:

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DataStore, FileSystem } from "./data.js";
+import { FileSystem } from "./data.js";
 import { ClientDeploymentConfiguration } from "./deployment-configuration.js";
 import { RuntimeFlagManager } from "./flags.js";
 import {
@@ -137,6 +137,10 @@ export type NodeDescriberContext = {
    * describer to avoid doing extra work handling dynamic schemas, etc.
    */
   asType?: boolean;
+  /**
+   * Runtime Flags
+   */
+  flags?: RuntimeFlagManager;
 };
 
 export type NodeDescriberWires = {
@@ -364,10 +368,6 @@ export interface NodeHandlerContext {
    */
   readonly signal?: AbortSignal;
   /**
-   * The data store that can be used to store data across nodes.
-   */
-  readonly store?: DataStore;
-  /**
    * JS Sandbox that will be used to run the imperative graphs.
    */
   sandbox?: RunnableModuleFactory;
@@ -396,6 +396,10 @@ export interface NodeHandlerContext {
    * Information about the current step.
    */
   currentStep?: NodeDescriptor;
+  /**
+   * The current outermost graph -- the one that the planner is running.
+   */
+  currentGraph?: GraphDescriptor;
   /**
    * A way to look at all the config flags.
    */
