@@ -25,6 +25,7 @@ import {
   CREATE_TASK_TREE_SCRATCHPAD_FUNCTION,
   defineSystemFunctions,
   FAILED_TO_FULFILL_FUNCTION,
+  LIST_FILES_FUNCTION,
   OBJECTIVE_FULFILLED_FUNCTION,
 } from "./functions/system.js";
 import { PidginTranslator } from "./pidgin-translator.js";
@@ -188,6 +189,8 @@ Here is the rules of thumb:
 The system you're working in uses the virtual file system (VFS). The VFS paths are always prefixed with the "/vfs/". Every VFS file path will be of the form "/vfs/[name]". Use snake_case to name files.
 
 You can use the <file src="/vfs/path" /> syntax to embed them in text.
+
+Only reference files that you know to exist. If you aren't sure, call the "${LIST_FILES_FUNCTION}" function to confirm their existence.
 
 NOTE: The post-processing parser that reads your generated output and replaces the <file src="/vfs/path" /> with the contents of the file. Make sure that your output still makes sense after the replacement.
 
