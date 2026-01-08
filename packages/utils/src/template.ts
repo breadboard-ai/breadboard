@@ -32,7 +32,7 @@ export type TemplatePart = {
    * dangling autowire or missing asset
    */
   invalid?: true;
-  removed?: false;
+  removed?: boolean;
   mimeType?: string;
   /**
    * Connector instance. Used to point a tool that represents the
