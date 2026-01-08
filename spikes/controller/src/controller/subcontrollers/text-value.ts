@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { api } from "../decorators/api";
+import { api } from "../decorators/api.js";
 
 export class TextValueStore {
   @api({ persist: "local" })

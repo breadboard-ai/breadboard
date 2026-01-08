@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PrimitiveType, Storage } from "../../types";
+import { PrimitiveType, Storage } from "../../types.js";
 
 export class WebStorageWrapper implements Storage {
   constructor(private backend: "local" | "session") {}

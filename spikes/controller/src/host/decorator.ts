@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Controller } from "../controller/controller";
+import { Controller } from "../controller/controller.js";
 import { effect } from "signal-utils/subtle/microtask-effect";
-import { isHydrating } from "../controller/utils/hydration";
+import { isHydrating } from "../controller/utils/hydration.js";
 
 type Disposer = () => void;
 type Effect = () => void;

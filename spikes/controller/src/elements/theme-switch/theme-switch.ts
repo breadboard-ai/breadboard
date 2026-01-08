@@ -5,9 +5,9 @@
  */
 import { html, css, nothing } from "lit";
 import { customElement } from "lit/decorators.js";
-import { Root } from "../root";
-import { isHydrating } from "../../controller/utils/hydration";
-import * as Styles from "../../styles/styles";
+import { Root } from "../root.js";
+import { isHydrating } from "../../controller/utils/hydration.js";
+import * as Styles from "../../styles/styles.js";
 
 @customElement("theme-switch")
 export class ThemeSwitch extends Root {

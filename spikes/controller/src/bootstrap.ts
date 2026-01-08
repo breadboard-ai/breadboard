@@ -5,6 +5,6 @@
  */
 
 import { html, render } from "lit";
-import "./main";
+import "./main.js";
 
 render(html`<bb-main></bb-main>`, document.body);
