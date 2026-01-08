@@ -152,9 +152,9 @@ export const StopRoute: EventRoute<"board.stop"> = {
       if (url.searchParams.has("results")) {
         url.searchParams.delete("results");
         history.pushState(null, "", url);
+        
+        runtime.state.project?.resetRun();
       }
-      runtime.state.project?.resetRun();
-      return true;
     }
 
     const tabId = tab?.id ?? null;
