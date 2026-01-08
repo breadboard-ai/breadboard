@@ -198,6 +198,19 @@ class AgentFileSystem {
     return [file];
   }
 
+  async listFiles(): Promise<string> {
+    const files = [...this.#files.keys()];
+    const projects = [...this.#projects.keys()];
+    const memory = [];
+    const memoryMetadata = await this.memoryManager?.getSheetMetadata();
+    if (memoryMetadata && ok(memoryMetadata)) {
+      memory.push(
+        ...memoryMetadata.sheets.map((sheet) => `/vfs/memory/${sheet.name}`)
+      );
+    }
+    return [...files, ...memory, ...projects].join("\n");
+  }
+
   createProject(name: string): string {
     return `/vfs/projects/${name}`;
   }

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Outcome } from "@breadboard-ai/types/data.js";
 import { ok } from "@breadboard-ai/utils";
 import z from "zod";
 import { toText, tr } from "../../a2/utils.js";
@@ -13,16 +14,17 @@ import {
   defineFunctionLoose,
   FunctionDefinition,
 } from "../function-definition.js";
-import { Outcome } from "@breadboard-ai/types/data.js";
 import { PidginTranslator } from "../pidgin-translator.js";
 
 export {
   CREATE_TASK_TREE_SCRATCHPAD_FUNCTION,
   defineSystemFunctions,
   FAILED_TO_FULFILL_FUNCTION,
+  LIST_FILES_FUNCTION,
   OBJECTIVE_FULFILLED_FUNCTION,
 };
 
+const LIST_FILES_FUNCTION = "system_list_files";
 const OBJECTIVE_FULFILLED_FUNCTION = "system_objective_fulfilled";
 const FAILED_TO_FULFILL_FUNCTION = "system_failed_to_fulfill_objective";
 const CREATE_TASK_TREE_SCRATCHPAD_FUNCTION = "create_task_tree_scratchpad";
@@ -145,10 +147,23 @@ If the objective specifies other agent URLs using the
         return {};
       }
     ),
-    (defineFunction(
+    defineFunction(
+      {
+        name: LIST_FILES_FUNCTION,
+        description: "Lists all VFS files",
+        parameters: {},
+        response: {
+          list: z.string().describe("List of all files as VFS paths"),
+        },
+      },
+      async () => {
+        return { list: await args.fileSystem.listFiles() };
+      }
+    ),
+    defineFunction(
       {
         name: "system_write_text_to_file",
-        description: "Writes the provided text to a file",
+        description: "Writes the provided text to a VFS file",
         parameters: {
           file_name: z.string().describe(
             `
@@ -319,7 +334,7 @@ If an error has occurred, will contain a description of the error`
         if (!ok(text)) return { error: text.$error };
         return { text };
       }
-    )),
+    ),
     defineFunction(
       {
         name: "system_create_project",

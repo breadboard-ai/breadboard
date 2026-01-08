@@ -88,6 +88,10 @@ The Gemini model to use for image generation. How to choose the right model:
 A status update to show in the UI that provides more detail on the reason why this function was called.
 
 For example, "Generating page 4 of the report" or "Combining the images into one"`),
+          aspect_ratio: z
+            .enum(["1:1", "9:16", "16:9", "4:3", "3:4"])
+            .describe(`The aspect ratio for the generated images`)
+            .default("16:9"),
         },
         response: {
           error: z
@@ -105,7 +109,7 @@ For example, "Generating page 4 of the report" or "Combining the images into one
         },
       },
       async (
-        { prompt, images: inputImages, status_update, model },
+        { prompt, images: inputImages, status_update, model, aspect_ratio },
         statusUpdater
       ) => {
         statusUpdater(status_update || "Generating Image(s)", {
@@ -127,7 +131,8 @@ For example, "Generating page 4 of the report" or "Combining the images into one
           modelName,
           prompt,
           imageParts.map((part) => ({ parts: [part] })),
-          true
+          true,
+          aspect_ratio
         );
         if (!ok(generated)) return generated;
         const errors: string[] = [];
@@ -569,6 +574,8 @@ xlrd
 Code execution works best with text and CSV files.
 
 If the code environment generates an error, the model may decide to regenerate the code output. This can happen up to 5 times.
+
+NOTE: The Python code execution environment has no access to the virtual file system (VFS), so don't use it to access or manipulate the VFS files.
 
         `,
         parameters: {
