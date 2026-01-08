@@ -8,17 +8,14 @@ import {
   EditableGraph,
   EditHistoryCreator,
   EditSpec,
-  err,
   GraphDescriptor,
-  MoveToGraphTransform,
   MutableGraphStore,
   NodeConfiguration,
   NodeDescriptor,
   NodeIdentifier,
-  ok,
   Outcome,
   PortIdentifier,
-} from "@google-labs/breadboard";
+} from "@breadboard-ai/types";
 import {
   JsonSerializable,
   LLMContent,
@@ -31,12 +28,12 @@ import {
   WorkspaceSelectionState,
   WorkspaceVisualChangeId,
   WorkspaceVisualState,
-} from "./types";
+} from "./types.js";
 import {
   RuntimeBoardEditEvent,
   RuntimeErrorEvent,
   RuntimeVisualChangeEvent,
-} from "./events";
+} from "./events.js";
 import {
   CommentNode,
   Edge,
@@ -45,14 +42,12 @@ import {
   GraphTag,
   NodeMetadata,
 } from "@breadboard-ai/types";
-import { createGraphId, MAIN_BOARD_ID } from "./util";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import {
-  AssetEdge,
-  EdgeAttachmentPoint,
-} from "@breadboard-ai/shared-ui/types/types.js";
-import { Autonamer } from "./autonamer";
-import { filterUndefined, toJson } from "@breadboard-ai/utils";
+import { createGraphId, MAIN_BOARD_ID } from "./util.js";
+import * as BreadboardUI from "../ui/index.js";
+import { AssetEdge, EdgeAttachmentPoint } from "../ui/types/types.js";
+import { Autonamer } from "./autonamer.js";
+import { err, filterUndefined, ok, toJson } from "@breadboard-ai/utils";
+import { MoveToGraphTransform } from "../engine/editor/transforms/move-to-graph.js";
 
 export type AutonameArguments = {
   nodeConfigurationUpdate: {

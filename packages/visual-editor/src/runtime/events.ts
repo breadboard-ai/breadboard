@@ -4,7 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessRunner, RunEventMap } from "@breadboard-ai/types";
+import {
+  EditHistoryCreator,
+  HarnessRunner,
+  NodeIdentifier,
+  RunEventMap,
+} from "@breadboard-ai/types";
+import { ToastType } from "../ui/events/events.js";
+import * as BreadboardUI from "../ui/index.js";
 import {
   MoveToSelection,
   Tab,
@@ -13,10 +20,7 @@ import {
   WorkspaceSelectionChangeId,
   WorkspaceSelectionState,
   WorkspaceVisualChangeId,
-} from "./types";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { EditHistoryCreator, NodeIdentifier } from "@google-labs/breadboard";
-import { ToastType } from "@breadboard-ai/shared-ui/events/events.js";
+} from "./types.js";
 
 const eventInit = {
   bubbles: true,

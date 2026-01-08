@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
-import { addMessageEventListenerToAllowedEmbedderIfPresent } from "@breadboard-ai/shared-ui/utils/embedder.js";
-import "@breadboard-ai/shared-ui/utils/install-opal-shell-comlink-transfer-handlers.js";
-import { OAuthBasedOpalShell } from "@breadboard-ai/shared-ui/utils/oauth-based-opal-shell.js";
+import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configuration.js";
+import { addMessageEventListenerToAllowedEmbedderIfPresent } from "../ui/utils/embedder.js";
+import "../ui/utils/install-opal-shell-comlink-transfer-handlers.js";
+import { OAuthBasedOpalShell } from "../ui/utils/oauth-based-opal-shell.js";
 import type { EmbedderMessage } from "@breadboard-ai/types/embedder.js";
 import {
   type OpalShellGuestProtocol,
@@ -32,10 +32,12 @@ async function initializeOpalShellGuest() {
     console.error(`Could not find #opal-app iframe`);
     return;
   }
+  const shellPrefix = CLIENT_DEPLOYMENT_CONFIG.SHELL_PREFIX;
   const hostUrl = new URL(window.location.href);
-  const pathname = CLIENT_DEPLOYMENT_CONFIG.SHELL_PREFIX
-    ? hostUrl.pathname.startsWith(`${CLIENT_DEPLOYMENT_CONFIG.SHELL_PREFIX}/`)
-      ? hostUrl.pathname.slice(CLIENT_DEPLOYMENT_CONFIG.SHELL_PREFIX.length)
+  const pathname = shellPrefix
+    ? hostUrl.pathname === shellPrefix ||
+      hostUrl.pathname.startsWith(`${shellPrefix}/`)
+      ? hostUrl.pathname.slice(shellPrefix.length)
       : hostUrl.pathname
     : hostUrl.pathname;
   const guestUrl = new URL(
