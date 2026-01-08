@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SettingsStore } from "@breadboard-ai/shared-ui/data/settings-store.js";
-import { Runtime } from "../runtime/runtime";
-import { Tab, WorkspaceSelectionStateWithChangeId } from "../runtime/types";
-import type * as BreadboardUI from "@breadboard-ai/shared-ui";
+import { SettingsStore } from "../ui/data/settings-store.js";
+import { Runtime } from "../runtime/runtime.js";
+import { Tab, WorkspaceSelectionStateWithChangeId } from "../runtime/types.js";
+import type * as BreadboardUI from "../ui/index.js";
 import { MutableGraphStore } from "@breadboard-ai/types";
 
 export interface KeyboardCommandDeps {

@@ -22,8 +22,7 @@ export type BreadboardMessage =
   | LoadBoardMessage
   | CreateBoardMessage
   | RemixBoardMessage
-  | OpenInAdvancedEditorMessage
-  | TriggerShareMessage;
+  | OpenInAdvancedEditorMessage;
 
 /** Event for enabling debug. */
 export declare interface DebugMessage {
@@ -74,6 +73,8 @@ export declare interface ResizeMessage {
   type: "resize";
   height: number;
   width: number;
+  /** Whether or not the embedder should animate to this new height. */
+  animate: boolean;
 }
 
 /**
@@ -104,14 +105,6 @@ export declare interface RemixBoardMessage {
  */
 export declare interface OpenInAdvancedEditorMessage {
   type: "open_in_advanced_editor";
-  boardId: string;
-}
-
-/**
- * Event to notify the parent to start the board sharing flow
- */
-export declare interface TriggerShareMessage {
-  type: "trigger_share";
   boardId: string;
 }
 
@@ -148,7 +141,8 @@ export declare interface IterateOnPromptMessage {
 export type EmbedderMessage =
   | ToggleIterateOnPromptMessage
   | CreateNewBoardMessage
-  | HandshakeCompleteMessage;
+  | HandshakeCompleteMessage
+  | ThemeChangeMessage;
 
 /** Message to determine whether to display Iterate-on-prompt button. */
 export declare interface ToggleIterateOnPromptMessage {
@@ -173,6 +167,12 @@ export declare interface HandshakeCompleteMessage {
   origin: string;
 }
 
+/** Message that relays to Breadboard that the parent iframe theme changed. */
+export declare interface ThemeChangeMessage {
+  type: "theme_change";
+  // The theme from parent iframe.
+  theme: "light" | "dark";
+}
 
 export type MessageType = EmbedderMessage["type"];
 

@@ -4,19 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EventRoute } from "../types";
+import { EventRoute } from "../types.js";
 
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
-import { InputValues, ok } from "@google-labs/breadboard";
-import { RuntimeSnackbarEvent } from "../../runtime/events";
-import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
-import { StateEvent } from "@breadboard-ai/shared-ui/events/events.js";
 import {
-  GraphMetadata,
   ConsentType,
   ConsentUIType,
+  GraphMetadata,
+  InputValues,
 } from "@breadboard-ai/types";
-import { GoogleDriveBoardServer } from "@breadboard-ai/google-drive-kit";
+import { ok } from "@breadboard-ai/utils";
+import {
+  RuntimeSnackbarEvent,
+  RuntimeUnsnackbarEvent,
+} from "../../runtime/events.js";
+import { StateEvent } from "../../ui/events/events.js";
+import * as BreadboardUI from "../../ui/index.js";
+import { parseUrl } from "../../ui/utils/urls.js";
+import { GoogleDriveBoardServer } from "../../board-server/server.js";
 
 export const RunRoute: EventRoute<"board.run"> = {
   event: "board.run",
@@ -89,6 +93,7 @@ export const LoadRoute: EventRoute<"board.load"> = {
       resourceKey: undefined,
       shared: originalEvent.detail.shared,
       dev: parseUrl(window.location.href).dev,
+      guestPrefixed: true,
     });
     return false;
   },
@@ -191,6 +196,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
     uiState,
     askUserToSignInIfNeeded,
     boardServer,
+    actionTracker,
   }) {
     await StopRoute.do({
       tab,
@@ -205,6 +211,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       askUserToSignInIfNeeded,
       boardServer,
     });
+    actionTracker?.runApp(tab?.graph.url, "console");
     await RunRoute.do({
       tab,
       runtime,
@@ -271,6 +278,8 @@ export const CreateRoute: EventRoute<"board.create"> = {
     embedHandler,
   }) {
     if ((await askUserToSignInIfNeeded()) !== "success") {
+      // The user didn't sign in, so hide any snackbars.
+      runtime.dispatchEvent(new RuntimeUnsnackbarEvent());
       return false;
     }
 
@@ -307,6 +316,7 @@ export const CreateRoute: EventRoute<"board.create"> = {
         // created it.
         resourceKey: undefined,
         dev,
+        guestPrefixed: true,
       },
       tab?.id,
       originalEvent.detail.editHistoryCreator
@@ -414,6 +424,38 @@ export const ReplaceRoute: EventRoute<"board.replace"> = {
         replacement,
         googleDriveClient
       );
+    }
+
+    // If there is a theme applied it shouldn't be possible to revert this to
+    // the default theme with a board replacement, so we protect against that
+    // here.
+    //
+    // We instead check the current graph for a splash image, and the
+    // replacement as well. If the current graph has a splash image and the
+    // replacement does not, we copy the current theme across.
+    //
+    // TODO: Remove this when the Planner persists the existing theme.
+    const currentPresentation = tab?.graph.metadata?.visual?.presentation;
+    const currentTheme = currentPresentation?.theme;
+    const currentThemes = currentPresentation?.themes;
+    const currentThemeHasSplashScreen =
+      currentTheme &&
+      currentThemes &&
+      currentThemes[currentTheme] &&
+      currentThemes[currentTheme].splashScreen;
+
+    const replacementPresentation = replacement.metadata?.visual?.presentation;
+    const replacementTheme = replacementPresentation?.theme;
+    const replacementThemes = replacementPresentation?.themes;
+    const replacementThemeHasSplashScreen =
+      replacementTheme &&
+      replacementThemes &&
+      replacementThemes[replacementTheme] &&
+      replacementThemes[replacementTheme].splashScreen;
+
+    if (currentThemeHasSplashScreen && !replacementThemeHasSplashScreen) {
+      console.log("[board replacement] Persisting existing theme");
+      replacementThemes![replacementTheme!] = currentThemes![currentTheme!];
     }
 
     await runtime.edit.replaceGraph(

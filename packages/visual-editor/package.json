@@ -13,17 +13,19 @@
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
-    "dev": "npm run serve --watch",
     "build": "wireit",
     "build:vite": "wireit",
-    "build:tsc": "wireit"
+    "test": "wireit",
+    "eval:agent": "wireit",
+    "eval:a2ui": "wireit",
+    "eval:autoname": "wireit",
+    "eval:viewer": "wireit"
   },
   "wireit": {
     "build": {
       "dependencies": [
         "<dependencies>#<this>",
-        "build:vite",
-        "build:tsc"
+        "build:vite"
       ]
     },
     "typescript-files-and-deps": {
@@ -32,13 +34,24 @@
       ],
       "files": [
         "src/**/*.ts",
+        "src/a2/**/*.bgl.json",
         "tests/**/*.ts",
         "tsconfig.json",
         "vite.config.ts",
         "../../core/tsconfig/base.json",
-        "package.json",
-        "langs"
+        "package.json"
       ]
+    },
+    "check:tsc": {
+      "command": "tsc -b --pretty --noEmit",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
+      "files": [],
+      "output": []
     },
     "build:tsc": {
       "command": "tsc -b --pretty",
@@ -48,12 +61,9 @@
       "dependencies": [
         "typescript-files-and-deps"
       ],
-      "files": [],
-      "output": [
-        "dist/",
-        "!dist/**/*.min.js{,.map}"
-      ],
-      "clean": "if-file-deleted"
+      "files": [
+        "dist/tsc/"
+      ]
     },
     "build:vite": {
       "command": "vite build",
@@ -61,7 +71,7 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "typescript-files-and-deps"
+        "check:tsc"
       ],
       "files": [
         "vite.config.ts",
@@ -69,7 +79,11 @@
         "*.html",
         "oauth/",
         "experimental/",
-        "public/"
+        "public/",
+        "landing/",
+        "shell/",
+        "icons/",
+        "langs/"
       ],
       "output": [
         "dist/"
@@ -85,6 +99,43 @@
         "langs/",
         "shell"
       ]
+    },
+    "test": {
+      "command": "node --test --enable-source-maps --test-reporter spec dist/tsc/tests/**/*.js dist/tsc/tests/*.js",
+      "files": [],
+      "output": [],
+      "dependencies": [
+        "build:tsc"
+      ]
+    },
+    "eval:agent": {
+      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/agent/index.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "eval:a2ui": {
+      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/a2ui/index.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "eval:autoname": {
+      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/autoname.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "eval:viewer": {
+      "command": "vite dev eval/viewer",
+      "files": [],
+      "output": []
     }
   },
   "repository": {
@@ -97,19 +148,6 @@
     "public",
     "index.html"
   ],
-  "ava": {
-    "timeout": "30s",
-    "files": [
-      "tests/**/*.ts"
-    ],
-    "workerThreads": false,
-    "typescript": {
-      "rewritePaths": {
-        "./": "dist/"
-      },
-      "compile": false
-    }
-  },
   "keywords": [],
   "author": "Google Labs Team",
   "license": "Apache-2.0",
@@ -118,30 +156,52 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/visual-editor#readme",
   "devDependencies": {
+    "@cfworker/json-schema": "^4.1.1",
     "@google-labs/tsconfig": "^0.0.2",
-    "@types/node": "^22.0.0",
-    "dotenv": "^17.2.3",
-    "tsx": "^4.20.6",
-    "typescript": "^5.8.3",
-    "vite": "^7.2.4"
-  },
-  "dependencies": {
-    "@breadboard-ai/data": "^0.1.0",
-    "@breadboard-ai/data-store": "0.5.0",
-    "@breadboard-ai/google-drive-kit": "0.8.0",
-    "@breadboard-ai/mcp": "^0.1.0",
-    "@breadboard-ai/runtime": "0.2.0",
-    "@breadboard-ai/shared-ui": "1.27.0",
-    "@breadboard-ai/theme": "0.0.3",
-    "@breadboard-ai/types": "0.9.0",
-    "@breadboard-ai/utils": "^0.1.0",
-    "@google-labs/breadboard": "^0.36.0",
-    "@lit/context": "^1.1.6",
+    "@types/flubber": "^0.4.0",
     "@types/gapi": "^0.0.47",
     "@types/gapi.client.drive-v3": "^0.0.5",
     "@types/google.picker": "^0.0.51",
+    "@types/gtag.js": "^0.0.20",
+    "@types/har-format": "^1.2.16",
+    "@types/jsdom": "^27.0.0",
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^22.0.0",
+    "dotenv": "^17.2.3",
+    "google-auth-library": "^10.1.0",
+    "jsdom": "^27.3.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.3",
+    "vite": "^7.2.6"
+  },
+  "dependencies": {
+    "@breadboard-ai/types": "0.9.0",
+    "@breadboard-ai/utils": "^0.1.0",
+    "@lit-labs/signals": "^0.1.3",
+    "@lit/context": "^1.1.6",
+    "@lit/task": "^1.0.2",
+    "@material/material-color-utilities": "^0.3.0",
+    "@material/web": "^2.3.0",
+    "@modelcontextprotocol/sdk": "^1.17.1",
+    "@types/gapi": "^0.0.47",
+    "@types/gapi.client.calendar-v3": "^0.0.4",
+    "@types/gapi.client.gmail-v1": "^0.0.4",
+    "@types/google.picker": "^0.0.51",
+    "@types/trusted-types": "^2.0.7",
+    "ajv": "^8.17.1",
+    "comlink": "^4.4.2",
+    "flubber": "^0.4.2",
     "idb": "^8.0.3",
     "lit": "^3.3.1",
-    "signal-utils": "^0.21.1"
+    "littlezipper": "^0.1.5",
+    "markdown-it": "^14.1.0",
+    "marked": "^16.3.0",
+    "mimetext": "^3.0.27",
+    "pdfjs-dist": "^5.4.449",
+    "signal-polyfill": "^0.2.2",
+    "signal-utils": "^0.21.1",
+    "urlpattern-polyfill": "^10.1.0",
+    "zod": "^3.24.1",
+    "zod-to-json-schema": "^3.24.6"
   }
 }

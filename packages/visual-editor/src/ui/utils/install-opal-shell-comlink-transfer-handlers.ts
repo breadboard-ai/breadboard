@@ -1,0 +1,233 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { type TransferHandler, transferHandlers } from "comlink";
+
+const NULL_BODY_STATUS: ReadonlySet<number> = new Set([204, 205, 304]);
+
+console.debug(
+  `[shell ${window === window.parent ? "host" : "guest"}] ` +
+    `Installing comlink transfer handlers`
+);
+
+/**
+ * Serialize URL instances as strings.
+ */
+transferHandlers.set("URL", {
+  canHandle: (value) => value instanceof URL,
+  serialize: (url) => [url.href, []],
+  deserialize: (serialized) => new URL(serialized),
+} satisfies TransferHandler<URL, string>);
+
+/** As of December 2025, Safari does not support Transferable Stream
+ * (https://caniuse.com/mdn-api_readablestream_transferable), in which case we
+ * can bridge it with a MessageChannel.
+ */
+const BROWSER_SUPPORTS_TRANSFERABLE_STREAM = (() => {
+  const stream = new ReadableStream();
+  const { port1 } = new MessageChannel();
+  try {
+    port1.postMessage(stream, [stream]);
+    return true;
+  } catch {
+    return false;
+  }
+})();
+
+/**
+ * Serialize Responses as parameters for the Response constructor, and transfer
+ * the body stream memory to avoid a copy.
+ */
+transferHandlers.set("Response", {
+  canHandle: (value) => value instanceof Response,
+  serialize: (response) => {
+    const { headers, status, statusText } = response;
+
+    let body;
+    if (response.body === null || NULL_BODY_STATUS.has(status)) {
+      body = null;
+    } else if (BROWSER_SUPPORTS_TRANSFERABLE_STREAM) {
+      body = response.body;
+    } else {
+      const channel = new MessageChannel();
+      void sendBridgedBodyStream(response.body.getReader(), channel.port1);
+      body = channel.port2;
+    }
+
+    return [
+      {
+        body,
+        init: {
+          // Headers instances are not cloneable, but their entries arrays are,
+          // and conveniently those arrays are also valid as headers, so we can
+          // just convert.
+          headers: [...headers],
+          status,
+          statusText,
+        },
+      },
+      body ? [body] : [],
+    ];
+  },
+  deserialize: ({ body, init }) =>
+    new Response(
+      body instanceof MessagePort ? receiveBridgedBodyStream(body) : body,
+      init
+    ),
+} satisfies TransferHandler<Response, SerializedResponse>);
+
+type ReadableStreamBridgeMessage =
+  | { done: false; value: ArrayBuffer }
+  | { done: true };
+
+async function sendBridgedBodyStream(
+  reader: ReadableStreamDefaultReader<Uint8Array<ArrayBuffer>>,
+  sendPort: MessagePort
+) {
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+    sendPort.postMessage(
+      {
+        done: false,
+        value: value.buffer,
+      } satisfies ReadableStreamBridgeMessage,
+      [value.buffer]
+    );
+  }
+  reader.releaseLock();
+  sendPort.postMessage({ done: true } satisfies ReadableStreamBridgeMessage);
+  sendPort.close();
+}
+
+function receiveBridgedBodyStream(
+  recvPort: MessagePort
+): ReadableStream<ArrayBuffer> {
+  const stream = new TransformStream<Uint8Array>();
+  const writer = stream.writable.getWriter();
+  const abort = new AbortController();
+  recvPort.addEventListener(
+    "message",
+    (event) => {
+      const data = event.data as ReadableStreamBridgeMessage;
+      if (data.done) {
+        writer.close();
+        abort.abort();
+      } else {
+        writer.write(new Uint8Array(data.value));
+      }
+    },
+    { signal: abort.signal }
+  );
+  recvPort.start();
+  return stream.readable;
+}
+
+type SerializedResponse = {
+  body: ReadableStream<Uint8Array> | MessagePort | null;
+  init: ResponseInit;
+};
+
+const senderSignalFinalizationRegistry = new FinalizationRegistry<MessagePort>(
+  (port) => port.close()
+);
+
+/**
+ * Custom serialization for the non-cloneable portions of RequestInit.
+ */
+transferHandlers.set("RequestInit", {
+  canHandle: (value): value is RequestInit =>
+    // RequestInits are plain objects, so this is a good-enough detection
+    // heuristic.
+    typeof value === "object" &&
+    value !== null &&
+    ("headers" in value || "body" in value || "signal" in value) &&
+    // Response objects also match the above heuristic, and we handle those
+    // separately (technically we don't need this as long as this handler is
+    // installed after the Response handler, so this check is just defensive).
+    !(value instanceof Response),
+
+  serialize: (init) => {
+    init = { ...init };
+    const serialized: SerializedRequestInit = { init };
+    const transferables: Transferable[] = [];
+    if (init.headers instanceof Headers) {
+      // Headers instances are not cloneable, but their entries arrays are,
+      // and conveniently those arrays are also valid as headers, so we can
+      // just convert.
+      init.headers = [...init.headers];
+    }
+    // FormData is not cloneable, but its entries are. Pull the entries array
+    // out into a top-level field.
+    if (init.body instanceof FormData) {
+      serialized.formData = [...init.body];
+      delete init.body;
+    }
+    if (init.signal) {
+      // AbortSignals are not transferable, so we bridge them using a
+      // MessageChannel.
+      const signal = init.signal;
+      const channel = new MessageChannel();
+      const { port1: sendPort, port2: receivePort } = channel;
+      // Close the sendPort when the signal is garbage-collected. If we do not
+      // do this, the signals we create on the other side will never get
+      // garbage-collected (tested).
+      senderSignalFinalizationRegistry.register(init.signal, sendPort);
+      delete init.signal;
+      serialized.signal = receivePort;
+      transferables.push(receivePort);
+      sendPort.start();
+      if (signal.aborted) {
+        sendPort.postMessage(signal.reason);
+        sendPort.close();
+      } else {
+        signal.addEventListener(
+          "abort",
+          () => {
+            sendPort.postMessage(signal.reason);
+            sendPort.close();
+          },
+          { once: true }
+        );
+      }
+    }
+    return [serialized, transferables];
+  },
+
+  deserialize: (serialized) => {
+    const init = { ...serialized.init };
+    if (serialized.formData) {
+      init.body = new FormData();
+      for (const [name, value] of serialized.formData) {
+        init.body.set(name, value);
+      }
+    }
+    if (serialized.signal) {
+      const controller = new AbortController();
+      init.signal = controller.signal;
+      const receivePort = serialized.signal;
+      receivePort.addEventListener(
+        "message",
+        ({ data: reason }) => {
+          controller.abort(reason);
+          receivePort.close();
+        },
+        { once: true }
+      );
+      receivePort.start();
+    }
+    return init;
+  },
+} satisfies TransferHandler<RequestInit, SerializedRequestInit>);
+
+type SerializedRequestInit = {
+  init: RequestInit;
+  formData?: [string, FormDataEntryValue][];
+  signal?: MessagePort;
+};

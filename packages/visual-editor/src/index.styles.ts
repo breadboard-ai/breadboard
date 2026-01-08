@@ -5,7 +5,7 @@
  */
 
 import { css, CSSResultGroup } from "lit";
-import * as BreadboardUI from "@breadboard-ai/shared-ui";
+import * as BreadboardUI from "./ui/index.js";
 
 export const styles = [
   BreadboardUI.Styles.HostType.type,

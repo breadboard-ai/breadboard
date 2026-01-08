@@ -4,15 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { makeUrl, parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
-import { type EditHistoryCreator } from "@google-labs/breadboard";
+import { EditHistoryCreator } from "@breadboard-ai/types";
+import { signal } from "signal-utils";
+import { MakeUrlInit, ParsedUrlProvider } from "../ui/types/types.js";
+import { makeUrl, parseUrl } from "../ui/utils/urls.js";
 import { RuntimeURLChangeEvent } from "./events.js";
 import { type TabId } from "./types.js";
-import { signal } from "signal-utils";
-import {
-  MakeUrlInit,
-  ParsedUrlProvider,
-} from "@breadboard-ai/shared-ui/types/types.js";
 
 export class Router extends EventTarget implements ParsedUrlProvider {
   @signal

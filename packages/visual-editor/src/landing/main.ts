@@ -4,29 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configuration.js";
 import type {
+  GraphUrlInit,
   LandingUrlInit,
-  MakeUrlInit,
   LanguagePack,
-  GraphInit,
-} from "@breadboard-ai/shared-ui/types/types.js";
-import { SigninAdapter } from "@breadboard-ai/shared-ui/utils/signin-adapter";
-import {
-  ActionTracker,
-  initializeAnalytics,
-} from "@breadboard-ai/shared-ui/utils/action-tracker.js";
-import { CLIENT_DEPLOYMENT_CONFIG } from "@breadboard-ai/shared-ui/config/client-deployment-configuration.js";
-import { connectToOpalShellHost } from "@breadboard-ai/shared-ui/utils/opal-shell-guest.js";
-import * as Shell from "./shell.js";
-import { parseUrl, makeUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
+  MakeUrlInit,
+} from "../ui/types/types.js";
+import { createActionTracker } from "../ui/utils/action-tracker.js";
+import { connectToOpalShellHost } from "../ui/utils/opal-shell-guest.js";
+import { SigninAdapter } from "../ui/utils/signin-adapter.js";
+import { makeUrl, parseUrl } from "../ui/utils/urls.js";
 import "./carousel.js";
+import * as Shell from "./shell.js";
 
 const parsedUrl = parseUrl(window.location.href) as LandingUrlInit;
 if (parsedUrl.page !== "landing") {
   console.warn("unexpected parse of landing page url", parsedUrl);
 }
-
-const deploymentConfiguration = CLIENT_DEPLOYMENT_CONFIG;
 
 function redirect(target?: MakeUrlInit) {
   if (target) {
@@ -35,10 +30,6 @@ function redirect(target?: MakeUrlInit) {
   }
 
   window.location.href = makeUrl(parsedUrl.redirect);
-}
-
-if (deploymentConfiguration?.MEASUREMENT_ID) {
-  initializeAnalytics(deploymentConfiguration.MEASUREMENT_ID, false);
 }
 
 let lastVideo = 0;
@@ -94,24 +85,27 @@ function embedIntroVideo(target: HTMLDivElement) {
 
 async function init() {
   const { shellHost, embedHandler } = await connectToOpalShellHost();
-  const signinAdapter = new SigninAdapter(
-    shellHost,
-    await shellHost.getSignInState()
-  );
+  const signinAdapter = new SigninAdapter(shellHost);
 
-  if (signinAdapter.state === "signedin") {
+  if ((await signinAdapter.state) === "signedin") {
     redirect();
     return;
   }
 
-  ActionTracker.signInPageView();
+  const guestConfiguration = await shellHost.getConfiguration();
+  const actionTracker = createActionTracker(
+    shellHost,
+    guestConfiguration,
+    CLIENT_DEPLOYMENT_CONFIG?.MEASUREMENT_ID,
+    () => signinAdapter.state.then((state) => state === "signedin")
+  );
 
   embedHandler?.sendToEmbedder({
     type: "home_loaded",
     isSignedIn: false,
   });
 
-  const StringsHelper = await import("@breadboard-ai/shared-ui/strings");
+  const StringsHelper = await import("../ui/strings/helper.js");
   await StringsHelper.initFrom(LANGUAGE_PACK as LanguagePack);
   const Strings = StringsHelper.forSection("Global");
 
@@ -178,7 +172,7 @@ async function init() {
         return;
       }
 
-      ActionTracker.signInSuccess();
+      actionTracker.signInSuccess();
       console.info(`[landing] Redirecting after sign-in`, event.target);
       redirect(destination);
     };
@@ -193,7 +187,7 @@ async function init() {
     signInHeaderButton.addEventListener("click", onClickSignIn);
     signInButton.addEventListener("click", onClickSignIn);
     document.addEventListener("loadgalleryflow", (event: Event) => {
-      const urlEvent = event as CustomEvent<GraphInit>;
+      const urlEvent = event as CustomEvent<GraphUrlInit>;
       onClickSignIn(event, urlEvent.detail);
     });
     scopesErrorSignInButton.addEventListener("click", (event) => {

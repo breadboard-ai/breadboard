@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { parseUrl } from "@breadboard-ai/shared-ui/utils/urls.js";
-import { EventRoute } from "../types";
+import { parseUrl } from "../../ui/utils/urls.js";
+import { EventRoute } from "../types.js";
 
 export const ModeRoute: EventRoute<"host.modetoggle"> = {
   event: "host.modetoggle",
@@ -72,6 +72,15 @@ export const FlagChangeRoute: EventRoute<"host.flagchange"> = {
     } else {
       await runtime.flags.clearOverride(originalEvent.detail.flag);
     }
+    return false;
+  },
+};
+
+export const UserSignInRoute: EventRoute<"host.usersignin"> = {
+  event: "host.usersignin",
+
+  async do() {
+    // Noop for main routing. This event is only handled in Lite mode.
     return false;
   },
 };
