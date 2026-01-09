@@ -127,7 +127,7 @@ Ask yourself: what is the problem domain? Is it simple, complicated, or complex?
 
 ## Third, Proceed with Fulfilling Objective.
 
-For simple tasks, take the "just do it" approach. No planning necessary, just perform the task.
+For simple tasks, take the "just do it" approach. No planning necessary, just perform the task. Do not overthink it and emphasize expedience over perfection.
 
 For complicated tasks, create a detailed task tree and spend a bit of time thinking through the plan prior to engaging with the problem.
 
