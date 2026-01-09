@@ -260,8 +260,8 @@ export type GeminiAPIOutputs = {
 export type GeminiOutputs =
   | GeminiAPIOutputs
   | {
-      context: LLMContent[];
-    };
+    context: LLMContent[];
+  };
 
 const MODELS: readonly string[] = [
   "gemini-2.5-flash",
@@ -289,6 +289,14 @@ const MODELS: readonly string[] = [
   "gemini-1.5-flash-8b-exp-0827",
   "gemini-1.5-flash-exp-0827",
 ];
+
+/**
+ * Model fallback configuration for handling rate limits and service unavailability.
+ * Maps a model to its fallback chain (ordered by preference).
+ */
+const MODEL_FALLBACKS: Record<string, readonly string[]> = {
+  "gemini-3-pro": ["gemini-3-flash-preview", "gemini-2.5-pro"],
+};
 
 const NO_RETRY_CODES: readonly number[] = [400, 429, 404, 403];
 
@@ -768,39 +776,65 @@ async function invoke(
   const { context, systemInstruction, prompt, modality, body } = inputs;
   // TODO: Make this configurable.
   const retries = 5;
-  if (!("body" in inputs)) {
-    // Public API is being used.
-    // Behave as if we're wired in.
-    const result = await callAPI(
-      caps,
-      moduleArgs,
-      retries,
-      model,
-      constructBody(context, systemInstruction, prompt, modality)
-    );
-    if (!ok(result)) {
+
+  // Build the list of models to try (primary + fallbacks)
+  const modelsToTry = [model, ...(MODEL_FALLBACKS[model] || [])];
+  let lastError: Outcome<GeminiOutputs> | undefined;
+
+  for (const currentModel of modelsToTry) {
+    if (!("body" in inputs)) {
+      // Public API is being used.
+      // Behave as if we're wired in.
+      const result = await callAPI(
+        caps,
+        moduleArgs,
+        retries,
+        currentModel,
+        constructBody(context, systemInstruction, prompt, modality)
+      );
+      if (!ok(result)) {
+        // Always fallback to next model on any error
+        console.warn(
+          `Model ${currentModel} failed with ${result.$error}. Falling back to next model...`
+        );
+        lastError = result;
+        continue;
+      }
+      const content = result.candidates.at(0)?.content;
+      if (!content) {
+        return err("Unable to get a good response from Gemini", {
+          origin: "server",
+          kind: "bug",
+          model: currentModel,
+        });
+      }
+      return { context: [...context!, content] };
+    } else {
+      // Private API is being used.
+      // Behave as if we're being invoked.
+      const result = await callAPI(
+        caps,
+        moduleArgs,
+        retries,
+        currentModel,
+        augmentBody(body, systemInstruction, prompt, modality)
+      );
+      if (!ok(result)) {
+        // Always fallback to next model on any error
+        console.warn(
+          `Model ${currentModel} failed with ${result.$error}. Falling back to next model...`
+        );
+        lastError = result;
+        continue;
+      }
       return result;
     }
-    const content = result.candidates.at(0)?.content;
-    if (!content) {
-      return err("Unable to get a good response from Gemini", {
-        origin: "server",
-        kind: "bug",
-        model,
-      });
-    }
-    return { context: [...context!, content] };
-  } else {
-    // Private API is being used.
-    // Behave as if we're being invoked.
-    return callAPI(
-      caps,
-      moduleArgs,
-      retries,
-      model,
-      augmentBody(body, systemInstruction, prompt, modality)
-    );
   }
+
+  // All models failed, return the last error
+  return (
+    lastError || err("All fallback models failed", { origin: "server", kind: "capacity" })
+  );
 }
 
 type DescribeInputs = {
@@ -817,29 +851,29 @@ async function describe({ inputs }: DescribeInputs) {
   const maybeAddSystemInstruction: Schema["properties"] =
     canHaveSystemInstruction
       ? {
-          systemInstruction: {
-            type: "object",
-            behavior: ["llm-content", "config"],
-            title: "System Instruction",
-            default: '{"role":"user","parts":[{"text":""}]}',
-            description:
-              "(Optional) Give the model additional context on what to do," +
-              "like specific rules/guidelines to adhere to or specify behavior" +
-              "separate from the provided context",
-          },
-        }
+        systemInstruction: {
+          type: "object",
+          behavior: ["llm-content", "config"],
+          title: "System Instruction",
+          default: '{"role":"user","parts":[{"text":""}]}',
+          description:
+            "(Optional) Give the model additional context on what to do," +
+            "like specific rules/guidelines to adhere to or specify behavior" +
+            "separate from the provided context",
+        },
+      }
       : {};
   const maybeAddModalities: Schema["properties"] = canHaveModalities
     ? {
-        modality: {
-          type: "string",
-          enum: [...VALID_MODALITIES],
-          title: "Output Modality",
-          behavior: ["config"],
-          description:
-            "(Optional) Tell the model what kind of output you're looking for.",
-        },
-      }
+      modality: {
+        type: "string",
+        enum: [...VALID_MODALITIES],
+        title: "Output Modality",
+        behavior: ["config"],
+        description:
+          "(Optional) Tell the model what kind of output you're looking for.",
+      },
+    }
     : {};
   return {
     inputSchema: {
