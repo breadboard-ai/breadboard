@@ -103,7 +103,8 @@ If the objective specifies other agent URLs using the
             .string()
             .describe(
               `A detailed error message that usually indicates invalid parameters being passed into the function`
-            ),
+            )
+            .optional(),
         },
       },
       async ({ objective_outcome, href }) => {
