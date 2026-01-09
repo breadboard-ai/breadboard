@@ -3,7 +3,7 @@
  * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Controller } from "./controller/controller.js";
 import { SignalWatcher } from "@lit-labs/signals";
@@ -11,6 +11,13 @@ import { controllerContext } from "./controller/context/context.js";
 import { provide } from "@lit/context";
 import { WindowDecorator } from "./host/decorator.js";
 import * as Styles from "./styles/styles.js";
+import {
+  maybeRemoveDebugControls,
+  maybeAddDebugControls,
+} from "./debug/debug.js";
+
+import { ref } from "lit/directives/ref.js";
+import { guard } from "lit/directives/guard.js";
 
 import "./elements/drawable-canvas/drawable-canvas.js";
 import "./elements/splitter/splitter.js";
@@ -41,6 +48,18 @@ export class Main extends SignalWatcher(LitElement) {
         width: 100%;
         height: 100%;
         padding: 8px;
+      }
+
+      #num-readout {
+        font-size: 18px;
+      }
+
+      #debug-container {
+        width: 400px;
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        height: 10px;
       }
 
       ui-splitter {
@@ -77,19 +96,22 @@ export class Main extends SignalWatcher(LitElement) {
 
   #renderTextEditor() {
     return html` <div slot="s0">
-      <div id="controls">
-        <button
-          @click=${() => {
-            const textValue = this.controller.text.textValue;
-            this.controller.text.setTextValue(
-              textValue + `{{chip:${Date.now()}}}`
-            );
-          }}
-        >
-          Add a chip
-        </button>
+      <div>
+        <div id="num-readout">${this.controller.nested.simple.num}</div>
+        <div id="controls">
+          <button
+            @click=${() => {
+              const textValue = this.controller.text.textValue;
+              this.controller.text.setTextValue(
+                textValue + `{{chip:${Date.now()}}}`
+              );
+            }}
+          >
+            Add a chip
+          </button>
+        </div>
+        <text-editor></text-editor>
       </div>
-      <text-editor></text-editor>
     </div>`;
   }
 
@@ -103,7 +125,30 @@ export class Main extends SignalWatcher(LitElement) {
     </ui-splitter>`;
   }
 
+  #renderDebugContainer() {
+    return guard(
+      [],
+      () =>
+        html`<div
+          ${ref((el?: Element) => {
+            if (el) {
+              if (!(el instanceof HTMLElement)) return;
+              maybeAddDebugControls(this.controller, el);
+              return;
+            }
+
+            maybeRemoveDebugControls();
+          })}
+          id="debug-container"
+        ></div>`
+    );
+  }
+
   render() {
-    return [this.#renderThemeSwitch(), this.#renderControls()];
+    return [
+      this.#renderThemeSwitch(),
+      this.#renderControls(),
+      this.#renderDebugContainer(),
+    ];
   }
 }

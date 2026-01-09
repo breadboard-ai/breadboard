@@ -6,7 +6,7 @@
 
 import { Signal } from "@lit-labs/signals";
 import { WebStorageWrapper } from "./storage/local.js";
-import { LogLevel, PrimitiveType } from "../types.js";
+import { LogLevel, PrimitiveValue } from "../types.js";
 import { pending, PENDING_HYDRATION } from "../utils/sentinel.js";
 import { IdbStorageWrapper } from "./storage/idb.js";
 import { isHydratedStore } from "../utils/hydration.js";
@@ -15,7 +15,6 @@ const localStorageWrapper = new WebStorageWrapper("local");
 const sessionStorageWrapper = new WebStorageWrapper("session");
 const idbStorageWrapper = new IdbStorageWrapper("controller-ex", "cont-ex");
 
-type PrimitiveValue = PrimitiveType | null | pending;
 type StorageType = "local" | "session" | "idb";
 
 function getStore(type: StorageType) {
@@ -26,10 +25,10 @@ function getStore(type: StorageType) {
   throw new Error("Unsupported type or not yet implemented");
 }
 
-function getPersistenceName<
-  Context extends WeakKey,
-  Value extends PrimitiveValue,
->(target: Context, context: ClassAccessorDecoratorContext<Context, Value>) {
+function getName<Context extends WeakKey, Value extends PrimitiveValue>(
+  target: Context,
+  context: ClassAccessorDecoratorContext<Context, Value>
+) {
   return `${target.constructor.name}_${String(context.name)}`;
 }
 
@@ -57,7 +56,7 @@ export function field(apiOpts: { persist?: StorageType; log?: LogLevel } = {}) {
         state.set(newValue);
         if (apiOpts.persist) {
           const store = getStore(apiOpts.persist);
-          const name = getPersistenceName(this, context);
+          const name = getName(this, context);
           store.set(name, newValue).catch(console.error);
         }
       },
@@ -88,7 +87,7 @@ export function field(apiOpts: { persist?: StorageType; log?: LogLevel } = {}) {
           }
 
           const store = getStore(apiOpts.persist);
-          const name = getPersistenceName(this, context);
+          const name = getName(this, context);
           store.get(name).then((val) => {
             // Resolve the signal with either stored value or class default.
             if (val !== null) {
