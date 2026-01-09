@@ -17,6 +17,11 @@ export class WindowDecorator {
   constructor(private controller: Controller) {}
 
   connect() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("debug")) {
+      this.controller.debug.show = true;
+    }
+
     this.#register("theme", () => {
       const mode = this.controller.theme.mode;
       if (isHydrating(mode)) return;

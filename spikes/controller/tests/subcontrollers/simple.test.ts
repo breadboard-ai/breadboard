@@ -20,8 +20,8 @@ suite("SimpleStore", () => {
     const store = new SimpleStore();
     await store.isHydrated;
 
-    store.setNum(100);
-    store.setText("Foobar");
+    store.num = 100;
+    store.text = "Foobar";
 
     assert.strictEqual(store.num, 100);
     assert.strictEqual(store.text, "Foobar");

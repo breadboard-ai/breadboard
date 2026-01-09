@@ -10,6 +10,9 @@ import { RootStore } from "../root-store.js";
 
 @debugContainer({ path: "theme" })
 export class ThemeStore extends RootStore {
+  @field({ persist: "idb" })
+  private accessor _mode: "light" | "dark" = "light";
+
   @debug({
     view: "list",
     label: "Mode",
@@ -25,11 +28,11 @@ export class ThemeStore extends RootStore {
     ],
     value: "light",
   })
-  @field({ persist: "idb" })
-  private accessor _mode: "light" | "dark" = "light";
-
   get mode() {
     return this._mode;
+  }
+  set mode(mode: "light" | "dark") {
+    this._mode = mode;
   }
 
   toggleMode() {

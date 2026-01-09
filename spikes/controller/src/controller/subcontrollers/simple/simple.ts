@@ -8,44 +8,61 @@ import { debug, debugContainer } from "../../decorators/debug.js";
 import { field } from "../../decorators/field.js";
 import { RootStore } from "../root-store.js";
 
+function clamp(v: number, min = 10, max = 90) {
+  if (v < min) return min;
+  if (v > max) return max;
+  return v;
+}
+
 @debugContainer({ path: "simple/primitives" })
 export class SimpleStore extends RootStore {
   @field()
   private accessor _text = "";
 
-  @debug()
   @field({ persist: "session" })
   private accessor _color = { r: 255, g: 0, b: 255 };
 
-  @debug({
-    label: "Awesome value",
-  })
   @field({ persist: "local" })
-  private accessor _truefalse = false;
+  private accessor _boolean = false;
+
+  @field()
+  private accessor _num = 50;
+
+  @debug()
+  get text() {
+    return this._text;
+  }
+  set text(value: string) {
+    this._text = value.trim();
+  }
+
+  @debug({ label: "Awesome value" })
+  get boolean() {
+    return this._boolean;
+  }
+  set boolean(value: boolean) {
+    this._boolean = value;
+  }
 
   @debug({
     view: "slider",
     label: "Slide Value",
-    min: 10,
+    min: -10,
     max: 200,
     step: 1,
   })
-  @field()
-  private accessor _num = 0;
-
-  get text() {
-    return this._text;
-  }
-
-  setText(value: string) {
-    this._text = value;
-  }
-
   get num() {
     return this._num;
   }
+  set num(value: number) {
+    this._num = clamp(value, 10, 120);
+  }
 
-  setNum(value: number) {
-    this._num = value;
+  @debug()
+  get color() {
+    return this._color;
+  }
+  set color(value: { r: number; g: number; b: number }) {
+    this._color = value;
   }
 }

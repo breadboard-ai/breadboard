@@ -18,7 +18,7 @@ export class Controller {
   drawing = new DrawingStore();
   nested = { simple: new SimpleStore() };
   debug = {
-    show: true,
+    show: false,
     values: debugContextValues,
   };
 }

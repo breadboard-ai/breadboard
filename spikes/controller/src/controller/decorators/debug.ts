@@ -17,25 +17,25 @@ export function debugContainer(opts: DebugContainerOpts) {
 
 export function debug(config: BaseBladeParams = {}) {
   return function <Context, Value>(
-    target: ClassAccessorDecoratorTarget<Context, Value>,
-    context: ClassAccessorDecoratorContext<Context, Value>
+    target: (this: Context) => Value,
+    context: ClassGetterDecoratorContext<Context, Value>
   ) {
     context.addInitializer(function (this: Context) {
       if (typeof this !== "object") return;
       if (this === null) return;
 
       const section = debugContextPaths.get(this.constructor) ?? "";
+      const propertyName = String(context.name);
       const path = `${section}/${String(context.name)}`;
-      if (debugContextValues.get(path)) {
-        console.warn(`[Debug] Item already exists at ${path}`);
-      }
-
       debugContextValues.set(path, {
         config,
-        // We bind the target methods to the current 'this' instance
         binding: {
-          get: () => target.get.call(this),
-          set: (v: Value) => target.set.call(this, v),
+          get: () => target.call(this),
+          set: (v: Value) => {
+            // Dynamically call the setter for this property name
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (this as any)[propertyName] = v;
+          },
         },
       });
     });

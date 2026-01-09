@@ -97,7 +97,7 @@ function ensureFoldersExist(segments: string[], root: Pane): Pane | FolderApi {
     if (!folderCache.has(pathAccumulator)) {
       const folder = currentParent.addFolder({
         title: segment.charAt(0).toUpperCase() + segment.slice(1),
-        expanded: false,
+        expanded: true,
       });
       folderCache.set(pathAccumulator, folder);
     }
@@ -138,7 +138,8 @@ function createBinding(
     bladeRegistry.set(fullPath, { blade, path: fullPath.toLowerCase() });
 
     const dispose = effect(() => {
-      binding.get(); // Establish signal dependency
+      // Establish signal dependency
+      binding.get();
       blade.refresh();
     });
 
