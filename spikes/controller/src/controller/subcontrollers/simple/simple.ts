@@ -55,7 +55,7 @@ export class SimpleStore extends RootStore {
     return this._num;
   }
   set num(value: number) {
-    this._num = clamp(value, 10, 120);
+    this._num = clamp(value, 20, 120);
   }
 
   @debug()

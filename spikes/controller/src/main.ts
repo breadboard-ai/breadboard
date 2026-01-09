@@ -3,7 +3,7 @@
  * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, svg } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Controller } from "./controller/controller.js";
 import { SignalWatcher } from "@lit-labs/signals";
@@ -51,7 +51,13 @@ export class Main extends SignalWatcher(LitElement) {
       }
 
       #num-readout {
-        font-size: 18px;
+        width: 100%;
+        height: 200px;
+
+        svg {
+          width: 100%;
+          height: 100%;
+        }
       }
 
       #debug-container {
@@ -94,10 +100,30 @@ export class Main extends SignalWatcher(LitElement) {
     return html`<theme-switch></heme-switch>`;
   }
 
+  #renderCircle() {
+    const color = this.controller.nested.simple.color;
+    const colorStr = `rgb(${color.r.toFixed(0)}, ${color.g.toFixed(0)}, ${color.b.toFixed(0)})`;
+    return html` ${colorStr} ${svg`
+      <svg
+        viewBox="0 0 100 100"
+      >
+        <circle cx="50" cy="50" fill=${colorStr} r=${this.controller.nested.simple.num}></circle>
+        <text alignment-baseline="middle"
+          text-anchor="middle"
+          x="50" y="50"
+          fill=${
+            this.controller.nested.simple.boolean ? "white" : "black"
+          }>${this.controller.nested.simple.num}</text>
+
+      </svg>
+    `}`;
+  }
+
   #renderTextEditor() {
     return html` <div slot="s0">
       <div>
-        <div id="num-readout">${this.controller.nested.simple.num}</div>
+        <div id="num-readout">${this.#renderCircle()}</div>
+
         <div id="controls">
           <button
             @click=${() => {

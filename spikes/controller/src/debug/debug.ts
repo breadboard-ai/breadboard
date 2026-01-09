@@ -11,7 +11,7 @@ import { isHydrating } from "../controller/utils/hydration";
 import { DebugBinding } from "../controller/types";
 
 /**
- * Types and State Management
+ * Global state for the debug interface lifecycle.
  */
 let pane: Pane | undefined;
 
@@ -23,7 +23,7 @@ const bladeRegistry = new Map<
 >();
 
 /**
- * Main entry point for initializing the Tweakpane debug interface.
+ * Initializes the Tweakpane console if debugging is enabled.
  */
 export async function maybeAddDebugControls(
   controller: Controller,
@@ -40,23 +40,18 @@ export async function maybeAddDebugControls(
 }
 
 /**
- * Tweakpane injects default styles into the head; we move them to the
- * specific container to ensure proper encapsulation or rendering.
+ * Moves Tweakpane's global styles into the local container for correct rendering.
  */
 function injectStyles(element: HTMLElement) {
   const styles = document.querySelector(
     'style[data-tp-style="plugin-default"]'
   );
-  if (!styles) {
-    throw new Error(
-      "Unable to render debug console: Tweakpane styles not found."
-    );
-  }
+  if (!styles) throw new Error("Tweakpane styles not found.");
   element.appendChild(styles);
 }
 
 /**
- * Adds a search input to the top of the pane to filter bindings by path.
+ * Sets up the search bar to filter debug items.
  */
 function setupFilter(targetPane: Pane) {
   const filterState = { query: "" };
@@ -66,7 +61,7 @@ function setupFilter(targetPane: Pane) {
 }
 
 /**
- * Iterates through registered debug values and constructs the folder tree.
+ * Builds the folder structure and deferred bindings.
  */
 function buildHierarchy(controller: Controller, targetPane: Pane) {
   const sortedEntries = [...controller.debug.values.entries()].sort((a, b) =>
@@ -76,14 +71,95 @@ function buildHierarchy(controller: Controller, targetPane: Pane) {
   for (const [fullPath, { config, binding }] of sortedEntries) {
     const segments = fullPath.split("/").filter(Boolean);
     const propertyName = segments.pop() ?? "unknown";
-
     const parentFolder = ensureFoldersExist(segments, targetPane);
-    createBinding(fullPath, propertyName, config, binding, parentFolder);
+
+    waitForHydrationAndBind(
+      fullPath,
+      propertyName,
+      config,
+      binding,
+      parentFolder
+    );
   }
 }
 
 /**
- * Recursively creates or retrieves nested folders based on path segments.
+ * Watches the signal and only creates the UI binding once the data is ready.
+ */
+function waitForHydrationAndBind(
+  fullPath: string,
+  label: string,
+  config: BaseBladeParams,
+  binding: DebugBinding,
+  parent: Pane | FolderApi
+) {
+  let initialized = false;
+
+  const dispose = effect(() => {
+    const currentValue = binding.get();
+
+    if (isHydrating(currentValue)) return;
+
+    if (!initialized) {
+      initialized = true;
+      try {
+        const blade = finalizeBinding(label, config, binding, parent);
+        bladeRegistry.set(fullPath, { blade, path: fullPath.toLowerCase() });
+      } catch (e) {
+        console.warn(`[Debug] Failed to bind ${fullPath}:`, e);
+      }
+    } else {
+      const registered = bladeRegistry.get(fullPath);
+      if (registered) registered.blade.refresh();
+    }
+  });
+
+  debugDisposables.set(fullPath, dispose);
+}
+
+/**
+ * Creates the binding with specific handling for colors and objects.
+ */
+function finalizeBinding(
+  label: string,
+  config: BaseBladeParams,
+  binding: DebugBinding,
+  parent: Pane | FolderApi
+) {
+  const initialValue = binding.get();
+  const isObject = typeof initialValue === "object" && initialValue !== null;
+
+  const proxy = {
+    get value() {
+      return binding.get();
+    },
+    set value(v) {
+      const current = binding.get();
+      if (isHydrating(current)) return;
+
+      // Handle object reference identity (crucial for colors)
+      if (v !== current) {
+        const newValue = isObject ? (Array.isArray(v) ? [...v] : { ...v }) : v;
+        binding.set(newValue);
+      }
+    },
+  };
+
+  const blade = parent.addBinding(proxy, "value", {
+    ...config,
+    label: (config.label as string) ?? label,
+  });
+
+  // Explicit change listener bypasses proxy assignment issues for complex types
+  blade.on("change", (ev) => {
+    binding.set(structuredClone(ev.value));
+  });
+
+  return blade;
+}
+
+/**
+ * Creates nested folders and caches them to avoid duplication.
  */
 function ensureFoldersExist(segments: string[], root: Pane): Pane | FolderApi {
   let currentParent: Pane | FolderApi = root;
@@ -93,7 +169,6 @@ function ensureFoldersExist(segments: string[], root: Pane): Pane | FolderApi {
     pathAccumulator = pathAccumulator
       ? `${pathAccumulator}/${segment}`
       : segment;
-
     if (!folderCache.has(pathAccumulator)) {
       const folder = currentParent.addFolder({
         title: segment.charAt(0).toUpperCase() + segment.slice(1),
@@ -108,59 +183,14 @@ function ensureFoldersExist(segments: string[], root: Pane): Pane | FolderApi {
 }
 
 /**
- * Sets up the individual binding with a proxy for Signal synchronization
- * and an effect for reactive UI updates.
- */
-function createBinding(
-  fullPath: string,
-  label: string,
-  config: BaseBladeParams,
-  binding: DebugBinding,
-  parent: Pane | FolderApi
-) {
-  const proxy = {
-    get value() {
-      const v = binding.get();
-      // Handle hydration state to prevent Tweakpane from failing on null/undefined
-      return isHydrating(v) ? 0 : v;
-    },
-    set value(v) {
-      binding.set(v);
-    },
-  };
-
-  try {
-    const blade = parent.addBinding(proxy, "value", {
-      ...config,
-      label: (config.label as string) ?? label,
-    });
-
-    bladeRegistry.set(fullPath, { blade, path: fullPath.toLowerCase() });
-
-    const dispose = effect(() => {
-      // Establish signal dependency
-      binding.get();
-      blade.refresh();
-    });
-
-    debugDisposables.set(fullPath, dispose);
-  } catch (e) {
-    console.warn(`[Debug] Could not bind ${fullPath}:`, e);
-  }
-}
-
-/**
- * Hides/Shows blades and folders based on search query and auto-expands matches.
+ * Manages visibility and expansion state during filtering.
  */
 function applyFilter(query: string) {
   const isSearching = query.length > 0;
-
-  // Update visibility for individual bindings
   bladeRegistry.forEach(({ blade, path }) => {
     blade.hidden = !path.includes(query);
   });
 
-  // Update visibility and expansion for folders
   folderCache.forEach((folder, folderPath) => {
     const lowerPath = folderPath.toLowerCase();
     const hasVisibleChild = Array.from(bladeRegistry.values()).some(
@@ -172,21 +202,21 @@ function applyFilter(query: string) {
       folder.hidden = !hasVisibleChild;
     } else {
       folder.hidden = false;
-      // Note: We don't force collapse here to preserve user state
     }
   });
 }
 
 /**
- * Tears down the pane and cleans up all active signal effects.
+ * Disposes of the pane and all signal effects.
  */
 export function maybeRemoveDebugControls() {
   if (!pane) return;
 
   debugDisposables.forEach((dispose) => dispose());
-  pane.dispose();
 
+  pane.dispose();
   pane = undefined;
+
   debugDisposables.clear();
   folderCache.clear();
   bladeRegistry.clear();
