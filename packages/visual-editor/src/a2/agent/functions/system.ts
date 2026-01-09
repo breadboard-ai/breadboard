@@ -85,7 +85,9 @@ Call only when the specified objective is entirely fulfilled`,
             tr`
 Your return value: the content of the fulfilled objective. The content may include references to VFS files. For instance, if you have an existing file at "/vfs/image4.png", you can reference it as <file src="/vfs/image4.ong" /> in content. If you do not use <file> tags, the contents of this file will not be included as part of the outcome.
 
-These references can point to files of any type, such as text, audio, videos, etc. Projects can also be referenced in this way.`
+These references can point to files of any type, such as text, audio, videos, etc. Projects can also be referenced in this way.
+
+You are working as part of an AI system, so don't add chit-chat or meta-monologue, and don't explain what you did or why. Just the outcome, please.`
           ),
           href: z
             .string()
@@ -112,7 +114,7 @@ If the objective specifies other agent URLs using the
         if (!ok(result)) {
           return { error: result.$error };
         }
-        return { error: "" };
+        return {};
       }
     ),
     defineFunction(
