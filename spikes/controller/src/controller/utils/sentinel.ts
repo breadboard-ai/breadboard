@@ -5,3 +5,5 @@
  */
 
 export const PENDING_HYDRATION = Symbol("Pending");
+
+export type pending = typeof PENDING_HYDRATION;

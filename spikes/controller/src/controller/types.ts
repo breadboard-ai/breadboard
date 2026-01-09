@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { Signal } from "@lit-labs/signals";
+
 export type PrimitiveType =
   | Record<string, unknown>
   | boolean
@@ -20,4 +22,10 @@ export interface Storage {
   set<T extends PrimitiveType>(name: string, value: T): Promise<void>;
   clear(): Promise<void>;
   delete(name: string): Promise<void>;
+}
+
+export type LogLevel = "debug" | "info" | "verbose";
+
+export interface HydratedStore {
+  registerSignalHydration(signal: Signal.State<unknown>): void;
 }

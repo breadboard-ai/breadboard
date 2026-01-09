@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { api } from "../decorators/api.js";
+import { field } from "../../decorators/field.js";
+import { RootStore } from "../root-store.js";
 
-export class ThemeStore {
-  @api({ persist: "idb" })
+export class ThemeStore extends RootStore {
+  @field({ persist: "idb" })
   private accessor _mode: "light" | "dark" = "light";
 
   get mode() {

@@ -4,16 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { api } from "../decorators/api.js";
+import { field } from "../../decorators/field.js";
+import { RootStore } from "../root-store.js";
 
-export class LayoutStore {
-  @api({ persist: "session" })
+export class LayoutStore extends RootStore {
+  @field({ persist: "session" })
   private accessor _split = 0.5;
 
-  @api({ persist: "local" })
+  @field({ persist: "local" })
   private accessor _min = 0.1;
 
-  @api({ persist: "local" })
+  @field({ persist: "local" })
   private accessor _max = 0.9;
 
   get split() {
@@ -29,9 +30,9 @@ export class LayoutStore {
   }
 
   setMinMax(min = 0.1, max = 0.9) {
-    if (min < 0 || min > 1) throw new Error('Min out of bounds');
-    if (max < 0 || max > 1) throw new Error('Max out of bounds');
-    if (min > max) throw new Error('Min greater than max');
+    if (min < 0 || min > 1) throw new Error("Min out of bounds");
+    if (max < 0 || max > 1) throw new Error("Max out of bounds");
+    if (min > max) throw new Error("Min greater than max");
 
     this._min = min;
     this._max = max;

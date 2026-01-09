@@ -6,15 +6,16 @@
 
 import { Signal } from "@lit-labs/signals";
 import { WebStorageWrapper } from "./storage/local.js";
-import { PrimitiveType } from "../types.js";
-import { PENDING_HYDRATION } from "../utils/sentinel.js";
+import { LogLevel, PrimitiveType } from "../types.js";
+import { pending, PENDING_HYDRATION } from "../utils/sentinel.js";
 import { IdbStorageWrapper } from "./storage/idb.js";
+import { isHydratedStore } from "../utils/hydration.js";
 
 const localStorageWrapper = new WebStorageWrapper("local");
 const sessionStorageWrapper = new WebStorageWrapper("session");
 const idbStorageWrapper = new IdbStorageWrapper("controller-ex", "cont-ex");
 
-type PrimitiveValue = PrimitiveType | null | typeof PENDING_HYDRATION;
+type PrimitiveValue = PrimitiveType | null | pending;
 type StorageType = "local" | "session" | "idb";
 
 function getStore(type: StorageType) {
@@ -27,20 +28,17 @@ function getStore(type: StorageType) {
 
 function getPersistenceName<
   Context extends WeakKey,
-  Value extends PrimitiveValue
+  Value extends PrimitiveValue,
 >(target: Context, context: ClassAccessorDecoratorContext<Context, Value>) {
   return `${target.constructor.name}_${String(context.name)}`;
 }
 
-export function api(apiOpts: { persist?: StorageType } = {}) {
+export function field(apiOpts: { persist?: StorageType; log?: LogLevel } = {}) {
   return function <Context extends WeakKey, Value extends PrimitiveValue>(
     _target: ClassAccessorDecoratorTarget<Context, Value>,
     context: ClassAccessorDecoratorContext<Context, Value>
   ): ClassAccessorDecoratorResult<Context, Value> {
-    const signals = new WeakMap<
-      Context,
-      Signal.State<Value | typeof PENDING_HYDRATION>
-    >();
+    const signals = new WeakMap<Context, Signal.State<Value | pending>>();
 
     return {
       get(this: Context) {
@@ -66,18 +64,24 @@ export function api(apiOpts: { persist?: StorageType } = {}) {
 
       init(this: Context, initialValue: Value): Value {
         // Initialize Signal with the Pending Symbol.
-        const state = new Signal.State<Value | typeof PENDING_HYDRATION>(
-          PENDING_HYDRATION
-        );
+        const state = new Signal.State<Value | pending>(PENDING_HYDRATION);
         signals.set(this, state);
 
         if (apiOpts.persist) {
+          if (isHydratedStore(this)) {
+            // Set up a watcher for the Signal. When the value changes from the
+            // Pending Signal value to anything else has been hydrated, the root
+            // store can notify any consuming item that the controller is now
+            // fully hydrated.
+            this.registerSignalHydration(state);
+          }
+
           const store = getStore(apiOpts.persist);
           const name = getPersistenceName(this, context);
           store.get(name).then((val) => {
             // Resolve the signal with either stored value or class default.
             if (val !== null) {
-              state.set(val as any as Value);
+              state.set(val as unknown as Value);
             } else {
               state.set(initialValue);
               store.set(name, initialValue);

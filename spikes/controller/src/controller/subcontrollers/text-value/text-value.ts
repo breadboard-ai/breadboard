@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { api } from "../decorators/api.js";
+import { field } from "../../decorators/field.js";
+import { RootStore } from "../root-store.js";
 
-export class TextValueStore {
-  @api({ persist: "local" })
+export class TextValueStore extends RootStore {
+  @field({ persist: "local" })
   private accessor _textValue = "";
 
   get textValue() {
