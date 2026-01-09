@@ -365,8 +365,16 @@ The following elements should be included in your prompt:
 - Composition: [Optional] How the shot is framed, such as wide shot, close-up, single-shot or two-shot.
 - Focus and lens effects: [Optional] Use terms like shallow focus, deep focus, soft focus, macro lens, and wide-angle lens to achieve specific visual effects.
 - Ambiance: [Optional] How the color and light contribute to the scene, such as blue tones, night, or warm tones.
-
 `),
+          images: z
+            .array(
+              z
+                .string()
+                .describe("An reference input image, specified as a VS path")
+            )
+            .describe(
+              "A list of input reference images, specified as VFS paths"
+            ),
           status_update: z.string().describe(tr`
 A status update to show in the UI that provides more detail on the reason why this function was called.
 
@@ -389,17 +397,23 @@ For example, "Making a marketing video" or "Creating the video concept"`),
             .optional(),
         },
       },
-      async ({ prompt, status_update, aspect_ratio }, statusUpdateCallback) => {
+      async (
+        { prompt, status_update, aspect_ratio, images },
+        statusUpdateCallback
+      ) => {
         console.log("PROMPT", prompt);
         console.log("ASPECT RATIO", aspect_ratio);
         statusUpdateCallback(status_update || "Generating Video", {
           expectedDurationInSec: 70,
         });
+        const imageParts = await fileSystem.getMany(images);
+        if (!ok(imageParts)) return { error: imageParts.$error };
+
         const generating = await callVideoGen(
           caps,
           moduleArgs,
           prompt,
-          [],
+          imageParts.map((part) => ({ parts: [part] })),
           false,
           aspect_ratio ?? "16:9",
           VIDEO_MODEL_NAME
