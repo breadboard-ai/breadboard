@@ -13,6 +13,8 @@
     "allowJs": true,
     "useDefineForClassFields": false,
     "outDir": "dist",
+    "sourceMap": true,
+    "inlineSources": true
   },
   "exclude": ["dist"]
 }
