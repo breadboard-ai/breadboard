@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { api } from "../decorators/api.js";
+import { field } from "../../decorators/field.js";
+import { RootStore } from "../root-store.js";
 
-export class DrawingStore {
-  @api({ persist: "session" })
+export class DrawingStore extends RootStore {
+  @field({ persist: "session" })
   private accessor _shapes: string[] = [];
 
   get shapes(): readonly string[] {
