@@ -8,6 +8,7 @@ import { css, html, nothing, svg } from "lit";
 import { customElement, query, state } from "lit/decorators.js";
 import * as Styles from "../../styles/styles.js";
 import { Root } from "../root.js";
+import { styleMap } from "lit/directives/style-map.js";
 
 @customElement("drawable-canvas")
 export class DrawableCanvas extends Root {
@@ -24,6 +25,7 @@ export class DrawableCanvas extends Root {
         box-sizing: border-box;
         touch-action: none;
         overflow: auto;
+        --color: #999;
       }
 
       svg {
@@ -35,7 +37,7 @@ export class DrawableCanvas extends Root {
 
       path {
         fill: none;
-        stroke: light-dark(black, white);
+        stroke: var(--color);
         stroke-width: 2;
         stroke-linecap: round;
         stroke-linejoin: round;
@@ -166,16 +168,17 @@ export class DrawableCanvas extends Root {
     if (!this.controller.drawing.shapes) return nothing;
 
     const shapes = this.controller.drawing.shapes;
+    const color = this.controller.nested.simple.color;
+    const colorStr = `rgb(${color.r.toFixed(0)}, ${color.g.toFixed(0)}, ${color.b.toFixed(0)})`;
 
     return html`${svg`
       <svg
-        viewBox="${this.#adjustment.x} ${this.#adjustment.y} ${
-        this.#bounds.width
-      } ${this.#bounds.height}"
+        viewBox="${this.#adjustment.x} ${this.#adjustment.y} ${this.#bounds.width} ${this.#bounds.height}"
         @pointerdown=${this.#startDrawing}
         @pointermove=${this.#draw}
         @pointerup=${this.#stopDrawing}
         @pointerleave=${this.#stopDrawing}
+        style=${styleMap({ "--color": colorStr })}
       >
         ${shapes.map((shape) => this.#renderShape(shape))}
         ${this.#renderCurrentPath()}
