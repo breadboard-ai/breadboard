@@ -6,6 +6,7 @@
 
 import { DrawingStore } from "./subcontrollers/drawing/drawing.js";
 import { LayoutStore } from "./subcontrollers/layout/layout.js";
+import { SimpleStore } from "./subcontrollers/simple/simple.js";
 import { TextValueStore } from "./subcontrollers/text-value/text-value.js";
 import { ThemeStore } from "./subcontrollers/theme/theme.js";
 
@@ -14,4 +15,5 @@ export class Controller {
   text = new TextValueStore();
   layout = new LayoutStore();
   drawing = new DrawingStore();
+  simple = new SimpleStore();
 }

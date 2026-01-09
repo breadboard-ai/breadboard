@@ -15,4 +15,15 @@ suite("SimpleStore", () => {
 
     assert.strictEqual(store.hydrated.get(), true);
   });
+
+  test("Read and write", async () => {
+    const store = new SimpleStore();
+    await store.isHydrated;
+
+    store.setNum(100);
+    store.setText("Foobar");
+
+    assert.strictEqual(store.num, 100);
+    assert.strictEqual(store.text, "Foobar");
+  });
 });

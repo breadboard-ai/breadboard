@@ -32,5 +32,15 @@ suite("LayoutStore", () => {
     assert.throws(() => {
       store.setMinMax(0.5, 0.3);
     }, new Error("Min greater than max"));
+
+    store.setMinMax(0.2, 0.8);
+    assert.strictEqual(store.min, 0.2);
+    assert.strictEqual(store.max, 0.8);
+
+    store.setSplit(0.65);
+    assert.strictEqual(store.split, 0.65);
+
+    store.setSplit(0.9);
+    assert.strictEqual(store.split, 0.8);
   });
 });

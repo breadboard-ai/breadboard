@@ -12,25 +12,25 @@ import {
   IDBTransaction,
   IDBCursor,
   IDBIndex,
-  IDBObjectStore
+  IDBObjectStore,
 } from "fake-indexeddb";
 import { LocalStorage } from "node-localstorage";
 
 // Assign the factory and keyrange
-global.indexedDB = indexedDB;
-global.IDBKeyRange = IDBKeyRange;
+globalThis.indexedDB = indexedDB;
+globalThis.IDBKeyRange = IDBKeyRange;
 
 // Assign the constructors for 'instanceof' checks in the 'idb' library
-global.IDBRequest = IDBRequest;
-global.IDBDatabase = IDBDatabase;
-global.IDBTransaction = IDBTransaction;
-global.IDBCursor = IDBCursor;
-global.IDBIndex = IDBIndex;
-global.IDBObjectStore = IDBObjectStore;
+globalThis.IDBRequest = IDBRequest;
+globalThis.IDBDatabase = IDBDatabase;
+globalThis.IDBTransaction = IDBTransaction;
+globalThis.IDBCursor = IDBCursor;
+globalThis.IDBIndex = IDBIndex;
+globalThis.IDBObjectStore = IDBObjectStore;
 
 // Add Storage mocks
-global.localStorage = new LocalStorage('./storage/local-storage');
-global.sessionStorage = new LocalStorage('./storage/session-storage');
+globalThis.localStorage = new LocalStorage("./storage/local-storage");
+globalThis.sessionStorage = new LocalStorage("./storage/session-storage");
 
-global.localStorage.clear();
-global.sessionStorage.clear();
+globalThis.localStorage.clear();
+globalThis.sessionStorage.clear();
