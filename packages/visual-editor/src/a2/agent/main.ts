@@ -33,7 +33,7 @@ type AgentOutputs = {
 const UI_TYPES = [
   {
     id: "none",
-    title: "No",
+    title: "None",
     icon: "close",
     description: "This step can't interact with user",
   },
@@ -121,7 +121,7 @@ async function describe(
         "b-ui-enable": {
           type: "string",
           enum: UI_TYPES,
-          title: "Interact with user",
+          title: "User interaction",
           description: "Specifies the type of user interaction",
           behavior: ["config", "hint-advanced", "reactive"],
         },
