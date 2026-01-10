@@ -20,8 +20,8 @@ import { A2UIRenderer } from "../types.js";
 
 export { SmartLayoutPipeline };
 
-const SPEC_MODEL = "gemini-flash-latest";
-const TEMPLATE_MODEL = "gemini-flash-latest";
+const SPEC_MODEL = "gemini-3-flash-preview";
+const TEMPLATE_MODEL = "gemini-3-flash-preview";
 
 export type SmartLayoutPipelineArgs = {
   caps: Capabilities;

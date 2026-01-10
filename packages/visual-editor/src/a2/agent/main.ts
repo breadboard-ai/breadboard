@@ -31,7 +31,7 @@ type AgentOutputs = {
 async function invoke(
   {
     config$prompt: objective,
-    "b-ui-enable": enableUI,
+    "b-ui-enable": uiCheckbox,
     "b-ui-prompt": uiPrompt,
     ...rest
   }: AgentInputs,
@@ -41,6 +41,7 @@ async function invoke(
   const params = Object.fromEntries(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
+  const enableUI = uiCheckbox ? "a2ui" : "none";
   const loop = new Loop(caps, moduleArgs);
   const result = await loop.run({ objective, params, enableUI, uiPrompt });
   if (!ok(result)) return result;

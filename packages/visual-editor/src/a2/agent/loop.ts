@@ -46,7 +46,7 @@ export { Loop };
 export type AgentRunArgs = {
   objective: LLMContent;
   params: Params;
-  enableUI?: boolean;
+  enableUI?: "none" | "chat" | "a2ui";
   uiPrompt?: LLMContent;
 };
 
@@ -315,7 +315,7 @@ class Loop {
     objective,
     params,
     uiPrompt,
-    enableUI = false,
+    enableUI = "none",
   }: AgentRunArgs): Promise<Outcome<AgentResult>> {
     const { caps, moduleArgs, fileSystem, translator, ui, memoryManager } =
       this;
@@ -374,7 +374,7 @@ class Loop {
 
       let uiFunctions = emptyDefinitions();
 
-      if (enableUI) {
+      if (enableUI === "a2ui") {
         const layoutPipeline = new SmartLayoutPipeline({
           caps,
           moduleArgs,
@@ -422,7 +422,7 @@ class Loop {
             thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
           },
           systemInstruction: createSystemInstruction({
-            useUI: enableUI,
+            useUI: enableUI === "a2ui",
           }),
           toolConfig: {
             functionCallingConfig: { mode: "ANY" },
