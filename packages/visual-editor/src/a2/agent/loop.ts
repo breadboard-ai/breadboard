@@ -195,7 +195,7 @@ The system you're working in uses the virtual file system (VFS). The VFS paths a
 
 You can use the <file src="/vfs/path" /> syntax to embed them in text.
 
-Only reference files that you know to exist. If you aren't sure, call the "${LIST_FILES_FUNCTION}" function to confirm their existence.
+Only reference files or projects that you know to exist. If you aren't sure, call the "${LIST_FILES_FUNCTION}" function to confirm their existence. Do NOT make hypothetical file tags: they will cause processing errors.
 
 NOTE: The post-processing parser that reads your generated output and replaces the <file src="/vfs/path" /> with the contents of the file. Make sure that your output still makes sense after the replacement.
 
@@ -263,7 +263,7 @@ Thus, a solid plan to fulfill this objective would be to:
 3. Write each chapter of the report using "generate_text", referencing the "/vfs/projects/workarea" VFS path in the prompt and supplying this same path as the "project_path" for the output. This way, the "generate_text" will use all files in the project as context, and it will contribute the newly written chapter to the same project.
 4. When done generating information, create a new "report" project (path "/vfs/projects/report")
 5. Add only the chapters to that project, so that the initial background information is not part of the final output
-6. Call the "system_objective_fulfilled" function with the "/vfs/project/report" as the outcome.
+6. Call the "system_objective_fulfilled" function with <file src="/vfs/project/report" /> as the outcome.
 
 </agent-instructions>
 
