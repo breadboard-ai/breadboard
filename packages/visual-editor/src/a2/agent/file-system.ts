@@ -190,7 +190,7 @@ class AgentFileSystem {
     if (path.startsWith("/vfs/projects")) {
       return this.#getProjectFiles(path);
     }
-    if (path.startsWith("/vfs/memory")) {
+    if (path.startsWith("/vfs/memory/")) {
       return this.#getMemoryFile(path);
     }
     const file = this.#getFile(path);
