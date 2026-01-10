@@ -70,7 +70,7 @@ export type SystemFunctionArgs = {
   fileSystem: AgentFileSystem;
   translator: PidginTranslator;
   successCallback(href: string, pidginString: string): Outcome<void>;
-  terminateCallback(): void;
+  failureCallback(message: string): void;
 };
 
 function defineSystemFunctions(args: SystemFunctionArgs): FunctionDefinition[] {
@@ -128,7 +128,7 @@ exhausted.`,
             `
 Text to display to the user upon admitting failure to
 fulfill the objective. Provide a friendly explanation of why the objective
-is impossible to fulfill and offer helpful suggestions`.trim()
+is impossible to fulfill and offer helpful suggestions, but don't end with a question, since that would leave the user hanging: you've failed and can't answer that question`.trim()
           ),
           href: z
             .string()
@@ -146,7 +146,7 @@ If the objective specifies other agent URLs using the
       async ({ user_message }) => {
         console.log("FAILURE! Failed to fulfill the objective");
         console.log("User message:", user_message);
-        args.terminateCallback();
+        args.failureCallback(user_message);
         return {};
       }
     ),

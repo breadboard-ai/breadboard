@@ -16,7 +16,7 @@ session({ name: "Agent" }, async (session) => {
       title,
       async ({ caps, moduleArgs }) => {
         const loop = new Loop(caps, moduleArgs);
-        return loop.run({ objective, params: {}, enableUI: false });
+        return loop.run({ objective, params: {}, uiType: "none" });
       },
     ];
 

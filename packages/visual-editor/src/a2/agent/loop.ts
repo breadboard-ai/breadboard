@@ -46,7 +46,7 @@ export { Loop };
 export type AgentRunArgs = {
   objective: LLMContent;
   params: Params;
-  enableUI?: "none" | "chat" | "a2ui";
+  uiType?: "none" | "chat" | "a2ui";
   uiPrompt?: LLMContent;
 };
 
@@ -282,7 +282,7 @@ To remember, use the "${MEMORY_UPDATE_SHEET_FUNCTION}" function.
 
 ## Interacting with the User
 
-${args.useUI ? a2UIPrompt : `You do not have a way to interact with the user during your session, aside from the final output when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function`}
+${args.useUI ? a2UIPrompt : `You do not have a way to interact with the user during your session, aside from the final output when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function. If the objective calls for ANY user interaction, like asking user for input or presenting output and asking user to react to it, call "${FAILED_TO_FULFILL_FUNCTION}" function, since that's beyond your current capabilities.`}
 
 </agent-instructions>
 
@@ -315,7 +315,7 @@ class Loop {
     objective,
     params,
     uiPrompt,
-    enableUI = "none",
+    uiType = "none",
   }: AgentRunArgs): Promise<Outcome<AgentResult>> {
     const { caps, moduleArgs, fileSystem, translator, ui, memoryManager } =
       this;
@@ -340,8 +340,13 @@ class Loop {
         defineSystemFunctions({
           fileSystem,
           translator,
-          terminateCallback: () => {
+          failureCallback: (objective_outcome: string) => {
             terminateLoop = true;
+            result = {
+              success: false,
+              href: "/",
+              objective_outcome,
+            };
           },
           successCallback: (href, objective_outcome) => {
             const originalRoute = fileSystem.getOriginalRoute(href);
@@ -374,7 +379,7 @@ class Loop {
 
       let uiFunctions = emptyDefinitions();
 
-      if (enableUI === "a2ui") {
+      if (uiType === "a2ui") {
         const layoutPipeline = new SmartLayoutPipeline({
           caps,
           moduleArgs,
@@ -422,7 +427,7 @@ class Loop {
             thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
           },
           systemInstruction: createSystemInstruction({
-            useUI: enableUI === "a2ui",
+            useUI: uiType === "a2ui",
           }),
           toolConfig: {
             functionCallingConfig: { mode: "ANY" },
@@ -486,28 +491,27 @@ class Loop {
 
   async #finalizeResult(raw: AgentRawResult): Promise<Outcome<AgentResult>> {
     const { success, href, objective_outcome } = raw;
-    let outcomes: Outcome<LLMContent> | undefined = undefined;
-    let intermediate: Outcome<FileData[]> | undefined = undefined;
-    if (success) {
-      outcomes = await this.translator.fromPidginString(objective_outcome);
-      if (!ok(outcomes)) return outcomes;
-      const intermediateFiles = [...this.fileSystem.files.keys()];
-      const errors: string[] = [];
-      intermediate = (
-        await Promise.all(
-          intermediateFiles.map(async (file) => {
-            const content = await this.translator.fromPidginFiles([file]);
-            if (!ok(content)) {
-              errors.push(content.$error);
-              return [];
-            }
-            return { path: file, content };
-          })
-        )
-      ).flat();
-      if (errors.length > 0) {
-        return err(errors.join(","));
-      }
+    if (!success) {
+      return err(objective_outcome);
+    }
+    const outcomes = await this.translator.fromPidginString(objective_outcome);
+    if (!ok(outcomes)) return outcomes;
+    const intermediateFiles = [...this.fileSystem.files.keys()];
+    const errors: string[] = [];
+    const intermediate = (
+      await Promise.all(
+        intermediateFiles.map(async (file) => {
+          const content = await this.translator.fromPidginFiles([file]);
+          if (!ok(content)) {
+            errors.push(content.$error);
+            return [];
+          }
+          return { path: file, content };
+        })
+      )
+    ).flat();
+    if (errors.length > 0) {
+      return err(errors.join(","));
     }
     return { success, href, outcomes, intermediate };
   }
