@@ -5,6 +5,7 @@
  */
 
 import {
+  BehaviorSchema,
   Capabilities,
   LLMContent,
   Outcome,
@@ -73,6 +74,7 @@ async function describe(
         },
       }
     : {};
+  const chatSchema: BehaviorSchema[] = enableUI ? ["hint-chat-mode"] : [];
   const template = new Template(caps, config$prompt);
   return {
     inputSchema: {
@@ -100,7 +102,7 @@ async function describe(
         ...uiPromptSchema,
         ...template.schemas(),
       },
-      behavior: ["at-wireable"],
+      behavior: ["at-wireable", ...chatSchema],
       ...template.requireds(),
       additionalProperties: false,
     } satisfies Schema,
