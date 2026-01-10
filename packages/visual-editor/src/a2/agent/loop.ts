@@ -40,13 +40,18 @@ import {
 } from "./functions/memory.js";
 import { SheetManager } from "../google-drive/sheet-manager.js";
 import { memorySheetGetter } from "../google-drive/memory-sheet-getter.js";
+import { UIType } from "./types.js";
+import {
+  CHAT_REQUEST_USER_INPUT,
+  defineChatFunctions,
+} from "./functions/chat.js";
 
 export { Loop };
 
 export type AgentRunArgs = {
   objective: LLMContent;
   params: Params;
-  enableUI?: boolean;
+  uiType?: UIType;
   uiPrompt?: LLMContent;
 };
 
@@ -82,7 +87,7 @@ export type FileData = {
 };
 
 type SystemInstructionArgs = {
-  useUI: boolean;
+  uiType: UIType;
 };
 
 const AGENT_MODEL = "gemini-3-flash-preview";
@@ -190,7 +195,7 @@ The system you're working in uses the virtual file system (VFS). The VFS paths a
 
 You can use the <file src="/vfs/path" /> syntax to embed them in text.
 
-Only reference files that you know to exist. If you aren't sure, call the "${LIST_FILES_FUNCTION}" function to confirm their existence.
+Only reference files or projects that you know to exist. If you aren't sure, call the "${LIST_FILES_FUNCTION}" function to confirm their existence. Do NOT make hypothetical file tags: they will cause processing errors.
 
 NOTE: The post-processing parser that reads your generated output and replaces the <file src="/vfs/path" /> with the contents of the file. Make sure that your output still makes sense after the replacement.
 
@@ -258,7 +263,7 @@ Thus, a solid plan to fulfill this objective would be to:
 3. Write each chapter of the report using "generate_text", referencing the "/vfs/projects/workarea" VFS path in the prompt and supplying this same path as the "project_path" for the output. This way, the "generate_text" will use all files in the project as context, and it will contribute the newly written chapter to the same project.
 4. When done generating information, create a new "report" project (path "/vfs/projects/report")
 5. Add only the chapters to that project, so that the initial background information is not part of the final output
-6. Call the "system_objective_fulfilled" function with the "/vfs/project/report" as the outcome.
+6. Call the "system_objective_fulfilled" function with <file src="/vfs/project/report" /> as the outcome.
 
 </agent-instructions>
 
@@ -282,7 +287,7 @@ To remember, use the "${MEMORY_UPDATE_SHEET_FUNCTION}" function.
 
 ## Interacting with the User
 
-${args.useUI ? a2UIPrompt : `You do not have a way to interact with the user during your session, aside from the final output when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function`}
+${args.uiType === "a2ui" ? a2UIPrompt : args.uiType === "chat" ? `Use the "${CHAT_REQUEST_USER_INPUT}" function to interact with the user.` : `You do not have a way to interact with the user during your session, aside from the final output when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function. If the objective calls for ANY user interaction, like asking user for input or presenting output and asking user to react to it, call "${FAILED_TO_FULFILL_FUNCTION}" function, since that's beyond your current capabilities.`}
 
 </agent-instructions>
 
@@ -315,7 +320,7 @@ class Loop {
     objective,
     params,
     uiPrompt,
-    enableUI = false,
+    uiType = "none",
   }: AgentRunArgs): Promise<Outcome<AgentResult>> {
     const { caps, moduleArgs, fileSystem, translator, ui, memoryManager } =
       this;
@@ -340,8 +345,13 @@ class Loop {
         defineSystemFunctions({
           fileSystem,
           translator,
-          terminateCallback: () => {
+          failureCallback: (objective_outcome: string) => {
             terminateLoop = true;
+            result = {
+              success: false,
+              href: "/",
+              objective_outcome,
+            };
           },
           successCallback: (href, objective_outcome) => {
             const originalRoute = fileSystem.getOriginalRoute(href);
@@ -374,7 +384,7 @@ class Loop {
 
       let uiFunctions = emptyDefinitions();
 
-      if (enableUI) {
+      if (uiType === "a2ui") {
         const layoutPipeline = new SmartLayoutPipeline({
           caps,
           moduleArgs,
@@ -391,6 +401,9 @@ class Loop {
         console.timeEnd("LAYOUT GENERATION");
         if (!ok(layouts)) return layouts;
         uiFunctions = mapDefinitions(layouts);
+      } else if (uiType === "chat") {
+        console.log("CHAT UI");
+        uiFunctions = mapDefinitions(defineChatFunctions({ chatManager: ui }));
       }
 
       const objectiveTools = objectivePidgin.tools.list().at(0);
@@ -421,9 +434,7 @@ class Loop {
             topP: 1,
             thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
           },
-          systemInstruction: createSystemInstruction({
-            useUI: enableUI,
-          }),
+          systemInstruction: createSystemInstruction({ uiType }),
           toolConfig: {
             functionCallingConfig: { mode: "ANY" },
           },
@@ -486,28 +497,27 @@ class Loop {
 
   async #finalizeResult(raw: AgentRawResult): Promise<Outcome<AgentResult>> {
     const { success, href, objective_outcome } = raw;
-    let outcomes: Outcome<LLMContent> | undefined = undefined;
-    let intermediate: Outcome<FileData[]> | undefined = undefined;
-    if (success) {
-      outcomes = await this.translator.fromPidginString(objective_outcome);
-      if (!ok(outcomes)) return outcomes;
-      const intermediateFiles = [...this.fileSystem.files.keys()];
-      const errors: string[] = [];
-      intermediate = (
-        await Promise.all(
-          intermediateFiles.map(async (file) => {
-            const content = await this.translator.fromPidginFiles([file]);
-            if (!ok(content)) {
-              errors.push(content.$error);
-              return [];
-            }
-            return { path: file, content };
-          })
-        )
-      ).flat();
-      if (errors.length > 0) {
-        return err(errors.join(","));
-      }
+    if (!success) {
+      return err(objective_outcome);
+    }
+    const outcomes = await this.translator.fromPidginString(objective_outcome);
+    if (!ok(outcomes)) return outcomes;
+    const intermediateFiles = [...this.fileSystem.files.keys()];
+    const errors: string[] = [];
+    const intermediate = (
+      await Promise.all(
+        intermediateFiles.map(async (file) => {
+          const content = await this.translator.fromPidginFiles([file]);
+          if (!ok(content)) {
+            errors.push(content.$error);
+            return [];
+          }
+          return { path: file, content };
+        })
+      )
+    ).flat();
+    if (errors.length > 0) {
+      return err(errors.join(","));
     }
     return { success, href, outcomes, intermediate };
   }

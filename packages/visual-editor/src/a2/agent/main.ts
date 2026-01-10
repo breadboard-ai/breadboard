@@ -5,22 +5,25 @@
  */
 
 import {
+  BehaviorSchema,
   Capabilities,
   LLMContent,
   Outcome,
   Schema,
+  SchemaEnumValue,
 } from "@breadboard-ai/types";
+import { ok } from "@breadboard-ai/utils";
+import { Params } from "../a2/common.js";
 import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { Params } from "../a2/common.js";
 import { Loop } from "./loop.js";
-import { ok } from "@breadboard-ai/utils";
+import { UIType } from "./types.js";
 
 export { invoke as default, describe };
 
 type AgentInputs = {
   config$prompt: LLMContent;
-  "b-ui-enable": boolean;
+  "b-ui-enable": UIType;
   "b-ui-prompt": LLMContent;
 } & Params;
 
@@ -28,10 +31,33 @@ type AgentOutputs = {
   [key: string]: LLMContent[];
 };
 
+const UI_TYPES = [
+  {
+    id: "none",
+    title: "None",
+    icon: "close",
+    description: "This step can't interact with user",
+  },
+  {
+    id: "chat",
+    title: "Chat",
+    icon: "chat_mirror",
+    description: "This step can chat with the user",
+  },
+  {
+    id: "a2ui",
+    title: "Interactive UI",
+    icon: "web",
+    description: "This step can generate interactive UI",
+  },
+] satisfies SchemaEnumValue[];
+
+const UI_TYPE_VALUES = UI_TYPES.map((type) => type.id);
+
 async function invoke(
   {
     config$prompt: objective,
-    "b-ui-enable": enableUI,
+    "b-ui-enable": uiType = "none",
     "b-ui-prompt": uiPrompt,
     ...rest
   }: AgentInputs,
@@ -41,8 +67,9 @@ async function invoke(
   const params = Object.fromEntries(
     Object.entries(rest).filter(([key]) => key.startsWith("p-z-"))
   );
+  uiType = UI_TYPE_VALUES.includes(uiType) ? uiType : "none";
   const loop = new Loop(caps, moduleArgs);
-  const result = await loop.run({ objective, params, enableUI, uiPrompt });
+  const result = await loop.run({ objective, params, uiType, uiPrompt });
   if (!ok(result)) return result;
   console.log("LOOP", result);
   const context: LLMContent[] = [];
@@ -58,20 +85,23 @@ async function invoke(
 
 async function describe(
   {
-    inputs: { config$prompt, "b-ui-enable": enableUI },
+    inputs: { config$prompt, "b-ui-enable": enableUI = "none" },
   }: { inputs: AgentInputs },
   caps: Capabilities
 ) {
-  const uiPromptSchema: Schema["properties"] = enableUI
-    ? {
-        "b-ui-prompt": {
-          type: "object",
-          behavior: ["llm-content", "config", "hint-advanced"],
-          title: "UI Layout instructions",
-          description: "Instructions for UI layout",
-        },
-      }
-    : {};
+  const uiPromptSchema: Schema["properties"] =
+    enableUI === "a2ui"
+      ? {
+          "b-ui-prompt": {
+            type: "object",
+            behavior: ["llm-content", "config", "hint-advanced"],
+            title: "UI Layout instructions",
+            description: "Instructions for UI layout",
+          },
+        }
+      : {};
+  const chatSchema: BehaviorSchema[] =
+    enableUI !== "none" ? ["hint-chat-mode"] : [];
   const template = new Template(caps, config$prompt);
   return {
     inputSchema: {
@@ -90,16 +120,16 @@ async function describe(
           description: "The objective for the agent",
         },
         "b-ui-enable": {
-          type: "boolean",
-          title: "Interact with user",
-          description:
-            "If checked, enables the agent to interact with the user",
+          type: "string",
+          enum: UI_TYPES,
+          title: "User interaction",
+          description: "Specifies the type of user interaction",
           behavior: ["config", "hint-advanced", "reactive"],
         },
         ...uiPromptSchema,
         ...template.schemas(),
       },
-      behavior: ["at-wireable"],
+      behavior: ["at-wireable", ...chatSchema],
       ...template.requireds(),
       additionalProperties: false,
     } satisfies Schema,
