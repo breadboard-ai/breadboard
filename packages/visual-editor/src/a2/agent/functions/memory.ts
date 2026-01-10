@@ -125,7 +125,7 @@ The Google Sheets range which must include the name of the sheet
             z.array(
               z.string().describe(
                 tr`
-The data to write, may include references to VFS files. For instance, if you have an existing file at "/vfs/text3.md", you can reference it as <file src="/vfs/text3.md" /> in the prompt. `
+The data to write, may include references to VFS files. For instance, if you have an existing file at "/vfs/text3.md", you can reference it as <file src="/vfs/text3.md" /> in the in data. At update time, the tag will be replaced with the file contents.`
               )
             )
           ).describe(tr`
