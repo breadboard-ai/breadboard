@@ -20,7 +20,7 @@ import { v0_8 } from "../../a2ui/index.js";
 import { A2UIClient } from "./a2ui/client.js";
 import { A2UIAppScreenOutput } from "./a2ui/app-screen-output.js";
 import { ProgressWorkItem } from "./progress-work-item.js";
-import { A2UIRenderer } from "./types.js";
+import { A2UIRenderer, ChatManager, ChatResponse } from "./types.js";
 import { getCurrentStepState } from "../a2/output.js";
 
 export { AgentUI };
@@ -37,11 +37,7 @@ export type UserResponse = {
   text?: string;
 };
 
-export type RawUserResponse = {
-  text: string;
-};
-
-class AgentUI implements A2UIRenderer {
+class AgentUI implements A2UIRenderer, ChatManager {
   readonly client: A2UIClient;
 
   /**
@@ -63,7 +59,7 @@ class AgentUI implements A2UIRenderer {
   #appScreenOutput: AppScreenOutput | undefined;
 
   constructor(
-    _caps: Capabilities,
+    private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs,
     private readonly translator: PidginTranslator
   ) {
@@ -116,6 +112,23 @@ class AgentUI implements A2UIRenderer {
     return this.#outputWorkItem;
   }
 
+  async chat(pidginString: string): Promise<Outcome<ChatResponse>> {
+    const message = await this.translator.fromPidginString(pidginString);
+    if (!ok(message)) return message;
+    await this.caps.output({
+      schema: {
+        properties: { message: { type: "object", behavior: ["llm-content"] } },
+      },
+      message,
+    });
+    const response = (await this.caps.input({
+      schema: {
+        properties: { text: { type: "string", behavior: ["transient"] } },
+      },
+    })) as Outcome<ChatResponse>;
+    return response;
+  }
+
   async render(
     a2UIPayload: unknown[]
   ): Promise<Outcome<Record<string, unknown>>> {
@@ -126,7 +139,7 @@ class AgentUI implements A2UIRenderer {
     return this.awaitUserInput();
   }
 
-  renderUserInterface(
+  private renderUserInterface(
     messages: v0_8.Types.ServerToClientMessage[]
   ): Outcome<void> {
     const workItem = this.#updateWorkItem();
@@ -140,7 +153,7 @@ class AgentUI implements A2UIRenderer {
     workItem.renderUserInterface();
   }
 
-  async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {
+  private async awaitUserInput(): Promise<Outcome<A2UIClientEventMessage>> {
     const workItem = this.#updateWorkItem();
     if (!ok(workItem)) return workItem;
 

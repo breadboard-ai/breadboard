@@ -12,17 +12,18 @@ import {
   Schema,
   SchemaEnumValue,
 } from "@breadboard-ai/types";
+import { ok } from "@breadboard-ai/utils";
+import { Params } from "../a2/common.js";
 import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { Params } from "../a2/common.js";
-import { AgentRunArgs, Loop } from "./loop.js";
-import { ok } from "@breadboard-ai/utils";
+import { Loop } from "./loop.js";
+import { UIType } from "./types.js";
 
 export { invoke as default, describe };
 
 type AgentInputs = {
   config$prompt: LLMContent;
-  "b-ui-enable": AgentRunArgs["uiType"];
+  "b-ui-enable": UIType;
   "b-ui-prompt": LLMContent;
 } & Params;
 

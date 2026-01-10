@@ -40,13 +40,18 @@ import {
 } from "./functions/memory.js";
 import { SheetManager } from "../google-drive/sheet-manager.js";
 import { memorySheetGetter } from "../google-drive/memory-sheet-getter.js";
+import { UIType } from "./types.js";
+import {
+  CHAT_REQUEST_USER_INPUT,
+  defineChatFunctions,
+} from "./functions/chat.js";
 
 export { Loop };
 
 export type AgentRunArgs = {
   objective: LLMContent;
   params: Params;
-  uiType?: "none" | "chat" | "a2ui";
+  uiType?: UIType;
   uiPrompt?: LLMContent;
 };
 
@@ -82,7 +87,7 @@ export type FileData = {
 };
 
 type SystemInstructionArgs = {
-  useUI: boolean;
+  uiType: UIType;
 };
 
 const AGENT_MODEL = "gemini-3-flash-preview";
@@ -282,7 +287,7 @@ To remember, use the "${MEMORY_UPDATE_SHEET_FUNCTION}" function.
 
 ## Interacting with the User
 
-${args.useUI ? a2UIPrompt : `You do not have a way to interact with the user during your session, aside from the final output when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function. If the objective calls for ANY user interaction, like asking user for input or presenting output and asking user to react to it, call "${FAILED_TO_FULFILL_FUNCTION}" function, since that's beyond your current capabilities.`}
+${args.uiType === "a2ui" ? a2UIPrompt : args.uiType === "chat" ? `Use the "${CHAT_REQUEST_USER_INPUT}" function to interact with the user.` : `You do not have a way to interact with the user during your session, aside from the final output when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function. If the objective calls for ANY user interaction, like asking user for input or presenting output and asking user to react to it, call "${FAILED_TO_FULFILL_FUNCTION}" function, since that's beyond your current capabilities.`}
 
 </agent-instructions>
 
@@ -396,6 +401,9 @@ class Loop {
         console.timeEnd("LAYOUT GENERATION");
         if (!ok(layouts)) return layouts;
         uiFunctions = mapDefinitions(layouts);
+      } else if (uiType === "chat") {
+        console.log("CHAT UI");
+        uiFunctions = mapDefinitions(defineChatFunctions({ chatManager: ui }));
       }
 
       const objectiveTools = objectivePidgin.tools.list().at(0);
@@ -426,9 +434,7 @@ class Loop {
             topP: 1,
             thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
           },
-          systemInstruction: createSystemInstruction({
-            useUI: uiType === "a2ui",
-          }),
+          systemInstruction: createSystemInstruction({ uiType }),
           toolConfig: {
             functionCallingConfig: { mode: "ANY" },
           },

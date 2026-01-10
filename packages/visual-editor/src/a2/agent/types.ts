@@ -101,3 +101,13 @@ export type MemoryManager = {
   }): Promise<Outcome<AgentOutcome>>;
   deleteSheet(args: { name: string }): Promise<Outcome<AgentOutcome>>;
 };
+
+export type UIType = "none" | "chat" | "a2ui";
+
+export type ChatResponse = {
+  text: string;
+};
+
+export type ChatManager = {
+  chat(pidginString: string): Promise<Outcome<ChatResponse>>;
+};
