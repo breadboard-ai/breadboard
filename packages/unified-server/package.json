@@ -102,6 +102,7 @@
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.34.1",
     "dotenv": "^17.2.3",
+    "prettier": "^3.7.4",
     "typescript": "^5.8.3",
     "wireit": "^0.15.0-pre.2"
   },
