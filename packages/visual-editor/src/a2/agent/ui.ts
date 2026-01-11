@@ -20,7 +20,13 @@ import { v0_8 } from "../../a2ui/index.js";
 import { A2UIClient } from "./a2ui/client.js";
 import { A2UIAppScreenOutput } from "./a2ui/app-screen-output.js";
 import { ProgressWorkItem } from "./progress-work-item.js";
-import { A2UIRenderer, ChatManager, ChatResponse } from "./types.js";
+import {
+  A2UIRenderer,
+  ChatInputType,
+  ChatManager,
+  ChatResponse,
+  VALID_INPUT_TYPES,
+} from "./types.js";
 import { getCurrentStepState } from "../a2/output.js";
 
 export { AgentUI };
@@ -112,7 +118,15 @@ class AgentUI implements A2UIRenderer, ChatManager {
     return this.#outputWorkItem;
   }
 
-  async chat(pidginString: string): Promise<Outcome<ChatResponse>> {
+  async chat(
+    pidginString: string,
+    inputType: string
+  ): Promise<Outcome<ChatResponse>> {
+    const typedInputType = (VALID_INPUT_TYPES as readonly string[]).includes(
+      inputType
+    )
+      ? (inputType as ChatInputType)
+      : "any";
     const message = await this.translator.fromPidginString(pidginString);
     if (!ok(message)) return message;
     await this.caps.output({
@@ -123,7 +137,13 @@ class AgentUI implements A2UIRenderer, ChatManager {
     });
     const response = (await this.caps.input({
       schema: {
-        properties: { text: { type: "string", behavior: ["transient"] } },
+        properties: {
+          input: {
+            type: "object",
+            behavior: ["transient", "llm-content", "hint-required"],
+            format: computeFormat(typedInputType),
+          },
+        },
       },
     })) as Outcome<ChatResponse>;
     return response;
@@ -164,5 +184,16 @@ class AgentUI implements A2UIRenderer, ChatManager {
     const result = await this.client.awaitUserInput();
     this.#appScreen!.status = "processing";
     return result;
+  }
+}
+
+function computeFormat(inputType: ChatInputType): string {
+  switch (inputType) {
+    case "any":
+      return "asterisk";
+    case "file-upload":
+      return "upload";
+    case "text":
+      return "edit_note";
   }
 }
