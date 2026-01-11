@@ -20,7 +20,7 @@ import { SmartLayoutPipeline } from "./a2ui/smart-layout-pipeline.js";
 import { AgentFileSystem } from "./file-system.js";
 import { FunctionCallerImpl } from "./function-caller.js";
 import { emptyDefinitions, mapDefinitions } from "./function-definition.js";
-import { defineGenerateFunctions } from "./functions/generate.js";
+import { getGenerateFunctionGroup } from "./functions/generate.js";
 import {
   CREATE_TASK_TREE_SCRATCHPAD_FUNCTION,
   defineSystemFunctions,
@@ -88,6 +88,7 @@ export type FileData = {
 
 type SystemInstructionArgs = {
   uiType: UIType;
+  skills: (string | undefined)[];
 };
 
 const AGENT_MODEL = "gemini-3-flash-preview";
@@ -172,22 +173,9 @@ While fulfilling the task, it may become apparent to you that your initial guess
 
 Here are the additional agent instructions for you. These will make your life a lot easier. Pay attention to them.
 
-<agent-instructions>
+<additional-agent-instructions>
 
-## When to call generate_text
-
-When evaluating the objective, make sure to determine whether calling "generate_text" is warranted. The key tradeoff here is latency: because it's an additional model call, the "generate_text" will take longer to finish.
-
-Your job is to fulfill the objective as efficiently as possible, so weigh the need to invoke "generate_text" carefully.
-
-Here is the rules of thumb:
-
-- For shorter responses like a chat conversation, just do the text generation yourself. You are an LLM and you can do it without calling "generate_text".
-- For longer responses like generating a chapter of a book or analyzing a large and complex set of files, use "generate_text".
-
-</agent-instructions>
-
-<agent-instructions>
+${args.skills.filter((skill) => skill !== undefined).join("\n\n")}
 
 ## Using Files
 
@@ -216,10 +204,6 @@ Rubric:
 Evaluate proposal <file src="/vfs/proposal.md" /> according to the rubric <file src="/vfs/rubric.md" />
 
 In the good example above, the replaced texts fit neatly under each heading. In the bad example, the replaced text is stuffed into the sentence.
-
-</agent-instructions>
-
-<agent-instructions>
 
 ## Using Projects
 
@@ -265,10 +249,6 @@ Thus, a solid plan to fulfill this objective would be to:
 5. Add only the chapters to that project, so that the initial background information is not part of the final output
 6. Call the "system_objective_fulfilled" function with <file src="/vfs/project/report" /> as the outcome.
 
-</agent-instructions>
-
-<agent-instructions>
-
 ## Using memory
 
 You have access to persistent memory that allows you to recall and remember data across your multiple invocations.
@@ -280,10 +260,6 @@ You can create new sheets within this spreadsheet using "${MEMORY_CREATE_SHEET_F
 To recall, use either the "${MEMORY_READ_SHEET_FUNCTION}" function with the standard Google Sheets ranges or read the entire sheet as a VFS file using the "/vfs/memory/sheet_name" path.
 
 To remember, use the "${MEMORY_UPDATE_SHEET_FUNCTION}" function.
-
-</agent-instructions>
-
-<agent-instructions>
 
 ## Interacting with the User
 
@@ -305,7 +281,7 @@ The user does not need to see a wall of text and dread typing back another wall 
       : `You do not have a way to interact with the user during your session, aside from the final output when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function. If the objective calls for ANY user interaction, like asking user for input or presenting output and asking user to react to it, call "${FAILED_TO_FULFILL_FUNCTION}" function, since that's beyond your current capabilities.`
 }
 
-</agent-instructions>
+</additional-agent-instructions>
 
 `.asContent();
 }
@@ -386,14 +362,12 @@ class Loop {
         })
       );
 
-      const generateFunctions = mapDefinitions(
-        defineGenerateFunctions({
-          fileSystem,
-          caps,
-          moduleArgs,
-          translator,
-        })
-      );
+      const generateFunctions = getGenerateFunctionGroup({
+        fileSystem,
+        caps,
+        moduleArgs,
+        translator,
+      });
       const memoryFunctions = mapDefinitions(
         defineMemoryFunctions({ translator, fileSystem, memoryManager })
       );
@@ -452,7 +426,10 @@ class Loop {
             topP: 1,
             thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
           },
-          systemInstruction: createSystemInstruction({ uiType }),
+          systemInstruction: createSystemInstruction({
+            uiType,
+            skills: [generateFunctions.instruction],
+          }),
           toolConfig: {
             functionCallingConfig: { mode: "ANY" },
           },

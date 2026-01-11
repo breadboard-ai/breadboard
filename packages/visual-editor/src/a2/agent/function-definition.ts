@@ -9,6 +9,7 @@
 import { Outcome, Schema } from "@breadboard-ai/types";
 import { z, ZodObject, ZodType } from "zod";
 import { FunctionDeclaration, GeminiSchema } from "../a2/gemini.js";
+import { MappedDefinitions } from "./types.js";
 
 export {
   defineFunction,
@@ -16,11 +17,6 @@ export {
   defineResponseSchema,
   mapDefinitions,
   emptyDefinitions,
-};
-
-export type MappedDefinitions = {
-  definitions: Map<string, FunctionDefinition>;
-  declarations: FunctionDeclaration[];
 };
 
 export type ZodFunctionDefinition<
