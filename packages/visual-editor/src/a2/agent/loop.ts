@@ -30,14 +30,7 @@ import {
 } from "./functions/system.js";
 import { PidginTranslator } from "./pidgin-translator.js";
 import { AgentUI } from "./ui.js";
-import {
-  defineMemoryFunctions,
-  MEMORY_CREATE_SHEET_FUNCTION,
-  MEMORY_DELETE_SHEET_FUNCTION,
-  MEMORY_GET_METADATA_FUNCTION,
-  MEMORY_READ_SHEET_FUNCTION,
-  MEMORY_UPDATE_SHEET_FUNCTION,
-} from "./functions/memory.js";
+import { getMemoryFunctionGroup } from "./functions/memory.js";
 import { SheetManager } from "../google-drive/sheet-manager.js";
 import { memorySheetGetter } from "../google-drive/memory-sheet-getter.js";
 import { UIType } from "./types.js";
@@ -95,7 +88,7 @@ const AGENT_MODEL = "gemini-3-flash-preview";
 
 function createSystemInstruction(args: SystemInstructionArgs) {
   return llm`
-You are an LLM-powered AI agent. You are embedded into an application. Your job is to fulfill the objective, specified at the start of the conversation context. The objective provided by the application and is not visible to the user of the application.
+You are an LLM-powered AI agent. You are embedded into an application. During this session, your job is to fulfill the objective, specified at the start of the conversation context. The objective provided by the application and is not visible to the user of the application.
 
 You are linked with other AI agents via hyperlinks. The <a href="url">title</a> syntax points at another agent. If the objective calls for it, you can transfer control to this agent. To transfer control, use the url of the agent in the  "href" parameter when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function. As a result, the outcome will be transferred to that agent.
 
@@ -175,8 +168,6 @@ Here are the additional agent instructions for you. These will make your life a 
 
 <additional-agent-instructions>
 
-${args.skills.filter((skill) => skill !== undefined).join("\n\n")}
-
 ## Using Files
 
 The system you're working in uses the virtual file system (VFS). The VFS paths are always prefixed with the "/vfs/". Every VFS file path will be of the form "/vfs/[name]". Use snake_case to name files.
@@ -249,17 +240,7 @@ Thus, a solid plan to fulfill this objective would be to:
 5. Add only the chapters to that project, so that the initial background information is not part of the final output
 6. Call the "system_objective_fulfilled" function with <file src="/vfs/project/report" /> as the outcome.
 
-## Using memory
-
-You have access to persistent memory that allows you to recall and remember data across your multiple invocations.
-
-The memory is stored in a single Google Spreadsheet. 
-
-You can create new sheets within this spreadsheet using "${MEMORY_CREATE_SHEET_FUNCTION}" function and delete existing sheets with the "${MEMORY_DELETE_SHEET_FUNCTION}" function. You can also get the list of existing sheets with the "${MEMORY_GET_METADATA_FUNCTION}" function.
-
-To recall, use either the "${MEMORY_READ_SHEET_FUNCTION}" function with the standard Google Sheets ranges or read the entire sheet as a VFS file using the "/vfs/memory/sheet_name" path.
-
-To remember, use the "${MEMORY_UPDATE_SHEET_FUNCTION}" function.
+${args.skills.filter((skill) => skill !== undefined).join("\n\n")}
 
 ## Interacting with the User
 
@@ -278,7 +259,7 @@ If the user input requires multiple entries, split the conversation into multipl
 The user does not need to see a wall of text and dread typing back another wall of text as their input.
 
 `
-      : `You do not have a way to interact with the user during your session, aside from the final output when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function. If the objective calls for ANY user interaction, like asking user for input or presenting output and asking user to react to it, call "${FAILED_TO_FULFILL_FUNCTION}" function, since that's beyond your current capabilities.`
+      : `You do not have a way to interact with the user during this session, aside from the final output when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function. If the objective calls for ANY user interaction, like asking user for input or presenting output and asking user to react to it, call "${FAILED_TO_FULFILL_FUNCTION}" function, since that's beyond your current capabilities.`
 }
 
 </additional-agent-instructions>
@@ -368,9 +349,11 @@ class Loop {
         moduleArgs,
         translator,
       });
-      const memoryFunctions = mapDefinitions(
-        defineMemoryFunctions({ translator, fileSystem, memoryManager })
-      );
+      const memoryFunctions = getMemoryFunctionGroup({
+        translator,
+        fileSystem,
+        memoryManager,
+      });
 
       let uiFunctions = emptyDefinitions();
 
@@ -428,7 +411,10 @@ class Loop {
           },
           systemInstruction: createSystemInstruction({
             uiType,
-            skills: [generateFunctions.instruction],
+            skills: [
+              generateFunctions.instruction,
+              memoryFunctions.instruction,
+            ],
           }),
           toolConfig: {
             functionCallingConfig: { mode: "ANY" },
