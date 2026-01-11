@@ -103,7 +103,6 @@
     "@typescript-eslint/parser": "^8.34.1",
     "dotenv": "^17.2.3",
     "typescript": "^5.8.3",
-    "vite-plugin-compression2": "^2.2.0",
     "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {
