@@ -13,7 +13,7 @@ import {
   streamGenerateContent,
   Tool,
 } from "../a2/gemini.js";
-import { llm } from "../a2/utils.js";
+import { llm, tr } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { prompt as a2UIPrompt } from "./a2ui/prompt.js";
 import { SmartLayoutPipeline } from "./a2ui/smart-layout-pipeline.js";
@@ -287,7 +287,23 @@ To remember, use the "${MEMORY_UPDATE_SHEET_FUNCTION}" function.
 
 ## Interacting with the User
 
-${args.uiType === "a2ui" ? a2UIPrompt : args.uiType === "chat" ? `Use the "${CHAT_REQUEST_USER_INPUT}" function to interact with the user.` : `You do not have a way to interact with the user during your session, aside from the final output when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function. If the objective calls for ANY user interaction, like asking user for input or presenting output and asking user to react to it, call "${FAILED_TO_FULFILL_FUNCTION}" function, since that's beyond your current capabilities.`}
+${
+  args.uiType === "a2ui"
+    ? a2UIPrompt
+    : args.uiType === "chat"
+      ? tr`
+
+Use the "${CHAT_REQUEST_USER_INPUT}" function to interact with the user via a chat-like UI. Every function call is equivalent to a full conversation turn: your request, then user's input.
+
+Structure the requests to anticipate user's answers and minimize the amount of typing they need to do. If appropriate, offer choices, so that the user can just enter the letter and/or number of the choices.
+
+If the user input requires multiple entries, split the conversation into multiple turns. For example, if you have three questions to ask, ask them over three full conversation turns (three calls to "${CHAT_REQUEST_USER_INPUT}" function) rather than in one call.
+
+The user does not need to see a wall of text and dread typing back another wall of text as their input.
+
+`
+      : `You do not have a way to interact with the user during your session, aside from the final output when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function. If the objective calls for ANY user interaction, like asking user for input or presenting output and asking user to react to it, call "${FAILED_TO_FULFILL_FUNCTION}" function, since that's beyond your current capabilities.`
+}
 
 </agent-instructions>
 
