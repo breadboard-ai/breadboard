@@ -122,7 +122,9 @@ class AgentUI implements A2UIRenderer, ChatManager {
     pidginString: string,
     inputType: string
   ): Promise<Outcome<ChatResponse>> {
-    const typedInputType = VALID_INPUT_TYPES.includes(inputType)
+    const typedInputType = (VALID_INPUT_TYPES as readonly string[]).includes(
+      inputType
+    )
       ? (inputType as ChatInputType)
       : "any";
     const message = await this.translator.fromPidginString(pidginString);
@@ -189,10 +191,6 @@ function computeFormat(inputType: ChatInputType): string {
   switch (inputType) {
     case "any":
       return "asterisk";
-    case "microphone":
-      return "mic";
-    case "camera":
-      return "videocam";
     case "file-upload":
       return "upload";
     case "text":

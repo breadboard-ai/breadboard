@@ -104,20 +104,9 @@ export type MemoryManager = {
 
 export type UIType = "none" | "chat" | "a2ui";
 
-export const VALID_INPUT_TYPES = [
-  "any",
-  "text",
-  "file-upload",
-  "camera",
-  "microphone",
-];
+export const VALID_INPUT_TYPES = ["any", "text", "file-upload", "any"] as const;
 
-export type ChatInputType =
-  | "text"
-  | "file-upload"
-  | "camera"
-  | "microphone"
-  | "any";
+export type ChatInputType = (typeof VALID_INPUT_TYPES)[number];
 
 export type ChatResponse = {
   input: LLMContent;

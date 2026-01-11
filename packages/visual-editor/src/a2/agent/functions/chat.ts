@@ -38,7 +38,7 @@ Message to display to the user when requesting input. The content may include re
             .enum(VALID_INPUT_TYPES)
             .describe(
               tr`
-Input type hint, which allows to better present the chat user interface. If not specified, all kinds of inputs are accepted. When "text" is specified, the chat input is constrained to accept text only. If "file-upload" is specified, the input only allows uploading files. If "camera" or "microphone" specified, the input is constrained to only allow camera or microphone input, respectively.
+Input type hint, which allows to better present the chat user interface. If not specified, all kinds of inputs are accepted. When "text" is specified, the chat input is constrained to accept text only. If "file-upload" is specified, the input only allows uploading files.
 
 Unless the objective explicitly asks for a particular type of input, use the "any" value for "input_type" parameter, which does not constrain the input.
 `
