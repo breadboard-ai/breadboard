@@ -37,4 +37,5 @@ session({ name: "Agent" }, async (session) => {
   await evalObjective("./alien-names.js");
   await evalObjective("./state-detector.js");
   await evalObjective("./news-tracker.js");
+  await evalObjective("./get-recipe.js");
 });
