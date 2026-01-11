@@ -4,17 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   FunctionCallCapabilityPart,
   LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
-import { GeminiBody } from "../a2/gemini.js";
-import {
+import type { FunctionDeclaration, GeminiBody } from "../a2/gemini.js";
+import type {
   FunctionDefinition,
   StatusUpdateCallback,
 } from "./function-definition.js";
-import { SimplifiedToolManager } from "../a2/tool-manager.js";
+import type { SimplifiedToolManager } from "../a2/tool-manager.js";
 import type { SpreadsheetValueRange } from "../google-drive/api.js";
 
 export type FunctionCallerFactory = {
@@ -114,4 +114,13 @@ export type ChatResponse = {
 
 export type ChatManager = {
   chat(pidginString: string, inputType: string): Promise<Outcome<ChatResponse>>;
+};
+
+export type MappedDefinitions = {
+  definitions: [string, FunctionDefinition][];
+  declarations: FunctionDeclaration[];
+};
+
+export type FunctionGroup = MappedDefinitions & {
+  instruction?: string;
 };

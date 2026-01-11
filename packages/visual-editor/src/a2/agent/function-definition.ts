@@ -9,6 +9,7 @@
 import { Outcome, Schema } from "@breadboard-ai/types";
 import { z, ZodObject, ZodType } from "zod";
 import { FunctionDeclaration, GeminiSchema } from "../a2/gemini.js";
+import { MappedDefinitions } from "./types.js";
 
 export {
   defineFunction,
@@ -16,11 +17,6 @@ export {
   defineResponseSchema,
   mapDefinitions,
   emptyDefinitions,
-};
-
-export type MappedDefinitions = {
-  definitions: Map<string, FunctionDefinition>;
-  declarations: FunctionDeclaration[];
 };
 
 export type ZodFunctionDefinition<
@@ -129,9 +125,10 @@ function defineFunctionLoose(
 }
 
 function mapDefinitions(functions: FunctionDefinition[]): MappedDefinitions {
-  const definitions = new Map<string, FunctionDefinition>(
-    functions.map((item) => [item.name!, item])
-  );
+  const definitions: [string, FunctionDefinition][] = functions.map((item) => [
+    item.name!,
+    item,
+  ]);
   const declarations = functions.map(
     ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
   );
@@ -140,5 +137,5 @@ function mapDefinitions(functions: FunctionDefinition[]): MappedDefinitions {
 }
 
 function emptyDefinitions(): MappedDefinitions {
-  return { definitions: new Map(), declarations: [] };
+  return { definitions: [], declarations: [] };
 }
