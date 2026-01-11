@@ -17,13 +17,11 @@ import { llm } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { AgentFileSystem } from "./file-system.js";
 import { FunctionCallerImpl } from "./function-caller.js";
-import { mapDefinitions } from "./function-definition.js";
 import { getGenerateFunctionGroup } from "./functions/generate.js";
 import {
   CREATE_TASK_TREE_SCRATCHPAD_FUNCTION,
-  defineSystemFunctions,
+  getSystemFunctionGroup,
   FAILED_TO_FULFILL_FUNCTION,
-  LIST_FILES_FUNCTION,
   OBJECTIVE_FULFILLED_FUNCTION,
 } from "./functions/system.js";
 import { PidginTranslator } from "./pidgin-translator.js";
@@ -77,8 +75,7 @@ export type FileData = {
 };
 
 type SystemInstructionArgs = {
-  uiType: UIType;
-  skills: (string | undefined)[];
+  extra: (string | undefined)[];
 };
 
 const AGENT_MODEL = "gemini-3-flash-preview";
@@ -165,79 +162,7 @@ Here are the additional agent instructions for you. These will make your life a 
 
 <additional-agent-instructions>
 
-## Using Files
-
-The system you're working in uses the virtual file system (VFS). The VFS paths are always prefixed with the "/vfs/". Every VFS file path will be of the form "/vfs/[name]". Use snake_case to name files.
-
-You can use the <file src="/vfs/path" /> syntax to embed them in text.
-
-Only reference files or projects that you know to exist. If you aren't sure, call the "${LIST_FILES_FUNCTION}" function to confirm their existence. Do NOT make hypothetical file tags: they will cause processing errors.
-
-NOTE: The post-processing parser that reads your generated output and replaces the <file src="/vfs/path" /> with the contents of the file. Make sure that your output still makes sense after the replacement.
-
-### Good example
-
-Evaluate the proposal below according to the provided rubric:
-
-Proposal:
-
-<file src="/vfs/proposal.md" />
-
-Rubric:
-
-<file src="/vfs/rubric.md" />
-
-### Bad example 
-
-Evaluate proposal <file src="/vfs/proposal.md" /> according to the rubric <file src="/vfs/rubric.md" />
-
-In the good example above, the replaced texts fit neatly under each heading. In the bad example, the replaced text is stuffed into the sentence.
-
-## Using Projects
-
-Particularly when working on complicated problems, rely on projects to group work and to pass the work around. In particular, use projects when the expected length of final output is large.
-
-A "project" is a collection of files. Projects can be used to group files so  that they could be referenced together. For example, you can create a project to collect all files relevant to fulfilling the objective.
-
-Projects are more like groupings rather than folders. Files that are added to the project still retain their original paths, but now also belong to the project. Same file can be part of multiple projects.
-
-Projects can also be referenced as files and all have this VFS path structure: "/vfs/projects/[name_of_project]". Project names use snake_case for naming.
-
-Project file reference is equivalent to referencing all files within the project in their insertion order. For example, if a project "blah" contains three files "/vfs/image1.png", "/vfs/text7.md" and "/vfs/file10.pdf", then:  
-
-"<file src="/vfs/projects/blah" />" 
-
-is equivalent to:
-
-"<file src="/vfs/image1.png" />
-<file src="/vfs/text7.md" />
-<file src="/vfs/file10.pdf" />"
-
-Projects can be used to manage a growing set of files around the project.
-
-Many functions will have the "project_path" parameter. Use it to add their output directly to the project.
-
-Pay attention to the objective. If it requires multiple files to be produced and accumulated along the way, use the "Work Area Project" pattern:
-
-- create a project
-- add files to it as they are generated or otherwise produced.
-- reference the project as a file whenever you need to pass all of those files
-to the next task.
-
-Example: let's suppose that your objective is to write a multi-chapter report based on some provided background information.
-
-This is a great fit for the "Work Area Project" pattern, because you have some initial context (provided background information) and then each chapter is added to that context.
-
-Thus, a solid plan to fulfill this objective would be to:
-
-1. Create a "workarea" project (path "/vfs/projects/workarea")
-2. Write background information as one or more files, using "project_path" to add them directly to the project
-3. Write each chapter of the report using "generate_text", referencing the "/vfs/projects/workarea" VFS path in the prompt and supplying this same path as the "project_path" for the output. This way, the "generate_text" will use all files in the project as context, and it will contribute the newly written chapter to the same project.
-4. When done generating information, create a new "report" project (path "/vfs/projects/report")
-5. Add only the chapters to that project, so that the initial background information is not part of the final output
-6. Call the "system_objective_fulfilled" function with <file src="/vfs/project/report" /> as the outcome.
-
-${args.skills.filter((skill) => skill !== undefined).join("\n\n")}
+${args.extra.filter((instruction) => instruction !== undefined).join("\n\n")}
 
 </additional-agent-instructions>
 
@@ -291,34 +216,32 @@ class Loop {
         objective_outcome: "",
       };
 
-      const systemFunctions = mapDefinitions(
-        defineSystemFunctions({
-          fileSystem,
-          translator,
-          failureCallback: (objective_outcome: string) => {
-            terminateLoop = true;
-            result = {
-              success: false,
-              href: "/",
-              objective_outcome,
-            };
-          },
-          successCallback: (href, objective_outcome) => {
-            const originalRoute = fileSystem.getOriginalRoute(href);
-            if (!ok(originalRoute)) return originalRoute;
+      const systemFunctions = getSystemFunctionGroup({
+        fileSystem,
+        translator,
+        failureCallback: (objective_outcome: string) => {
+          terminateLoop = true;
+          result = {
+            success: false,
+            href: "/",
+            objective_outcome,
+          };
+        },
+        successCallback: (href, objective_outcome) => {
+          const originalRoute = fileSystem.getOriginalRoute(href);
+          if (!ok(originalRoute)) return originalRoute;
 
-            terminateLoop = true;
-            console.log("SUCCESS! Objective fulfilled");
-            console.log("Transfer control to", originalRoute);
-            console.log("Objective outcomes:", objective_outcome);
-            result = {
-              success: true,
-              href: originalRoute,
-              objective_outcome,
-            };
-          },
-        })
-      );
+          terminateLoop = true;
+          console.log("SUCCESS! Objective fulfilled");
+          console.log("Transfer control to", originalRoute);
+          console.log("Objective outcomes:", objective_outcome);
+          result = {
+            success: true,
+            href: originalRoute,
+            objective_outcome,
+          };
+        },
+      });
 
       const generateFunctions = getGenerateFunctionGroup({
         fileSystem,
@@ -382,8 +305,8 @@ class Loop {
             thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
           },
           systemInstruction: createSystemInstruction({
-            uiType,
-            skills: [
+            extra: [
+              systemFunctions.instruction,
               generateFunctions.instruction,
               memoryFunctions.instruction,
               uiFunctions.instruction,
