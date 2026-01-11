@@ -117,7 +117,7 @@ export type ChatManager = {
 };
 
 export type MappedDefinitions = {
-  definitions: Map<string, FunctionDefinition>;
+  definitions: [string, FunctionDefinition][];
   declarations: FunctionDeclaration[];
 };
 

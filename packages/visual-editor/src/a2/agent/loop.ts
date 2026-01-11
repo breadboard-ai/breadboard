@@ -29,7 +29,7 @@ import { AgentUI } from "./ui.js";
 import { getMemoryFunctionGroup } from "./functions/memory.js";
 import { SheetManager } from "../google-drive/sheet-manager.js";
 import { memorySheetGetter } from "../google-drive/memory-sheet-getter.js";
-import { UIType } from "./types.js";
+import { FunctionGroup, UIType } from "./types.js";
 import { getChatFunctionGroup } from "./functions/chat.js";
 import { getA2UIFunctionGroup } from "./functions/a2ui.js";
 import { getNoUiFunctionGroup } from "./functions/no-ui.js";
@@ -216,46 +216,52 @@ class Loop {
         objective_outcome: "",
       };
 
-      const systemFunctions = getSystemFunctionGroup({
-        fileSystem,
-        translator,
-        failureCallback: (objective_outcome: string) => {
-          terminateLoop = true;
-          result = {
-            success: false,
-            href: "/",
-            objective_outcome,
-          };
-        },
-        successCallback: (href, objective_outcome) => {
-          const originalRoute = fileSystem.getOriginalRoute(href);
-          if (!ok(originalRoute)) return originalRoute;
+      const functionGroups: FunctionGroup[] = [];
 
-          terminateLoop = true;
-          console.log("SUCCESS! Objective fulfilled");
-          console.log("Transfer control to", originalRoute);
-          console.log("Objective outcomes:", objective_outcome);
-          result = {
-            success: true,
-            href: originalRoute,
-            objective_outcome,
-          };
-        },
-      });
+      functionGroups.push(
+        getSystemFunctionGroup({
+          fileSystem,
+          translator,
+          failureCallback: (objective_outcome: string) => {
+            terminateLoop = true;
+            result = {
+              success: false,
+              href: "/",
+              objective_outcome,
+            };
+          },
+          successCallback: (href, objective_outcome) => {
+            const originalRoute = fileSystem.getOriginalRoute(href);
+            if (!ok(originalRoute)) return originalRoute;
 
-      const generateFunctions = getGenerateFunctionGroup({
-        fileSystem,
-        caps,
-        moduleArgs,
-        translator,
-      });
-      const memoryFunctions = getMemoryFunctionGroup({
-        translator,
-        fileSystem,
-        memoryManager,
-      });
+            terminateLoop = true;
+            console.log("SUCCESS! Objective fulfilled");
+            console.log("Transfer control to", originalRoute);
+            console.log("Objective outcomes:", objective_outcome);
+            result = {
+              success: true,
+              href: originalRoute,
+              objective_outcome,
+            };
+          },
+        })
+      );
 
-      let uiFunctions;
+      functionGroups.push(
+        getGenerateFunctionGroup({
+          fileSystem,
+          caps,
+          moduleArgs,
+          translator,
+        })
+      );
+      functionGroups.push(
+        getMemoryFunctionGroup({
+          translator,
+          fileSystem,
+          memoryManager,
+        })
+      );
 
       if (uiType === "a2ui") {
         const a2uiFunctionGroup = await getA2UIFunctionGroup({
@@ -269,11 +275,13 @@ class Loop {
           params,
         });
         if (!ok(a2uiFunctionGroup)) return a2uiFunctionGroup;
-        uiFunctions = a2uiFunctionGroup;
+        functionGroups.push(a2uiFunctionGroup);
       } else if (uiType === "chat") {
-        uiFunctions = getChatFunctionGroup({ chatManager: ui, translator });
+        functionGroups.push(
+          getChatFunctionGroup({ chatManager: ui, translator })
+        );
       } else {
-        uiFunctions = getNoUiFunctionGroup();
+        functionGroups.push(getNoUiFunctionGroup());
       }
 
       const objectiveTools = objectivePidgin.tools.list().at(0);
@@ -282,18 +290,12 @@ class Loop {
           ...objectiveTools,
           functionDeclarations: [
             ...(objectiveTools?.functionDeclarations || []),
-            ...systemFunctions.declarations,
-            ...generateFunctions.declarations,
-            ...memoryFunctions.declarations,
-            ...uiFunctions.declarations,
+            ...functionGroups.flatMap((group) => group.declarations),
           ],
         },
       ];
       const functionDefinitionMap = new Map([
-        ...systemFunctions.definitions,
-        ...generateFunctions.definitions,
-        ...memoryFunctions.definitions,
-        ...uiFunctions.definitions,
+        ...functionGroups.flatMap((group) => group.definitions),
       ]);
 
       while (!terminateLoop) {
@@ -305,12 +307,7 @@ class Loop {
             thinkingConfig: { includeThoughts: true, thinkingBudget: -1 },
           },
           systemInstruction: createSystemInstruction({
-            extra: [
-              systemFunctions.instruction,
-              generateFunctions.instruction,
-              memoryFunctions.instruction,
-              uiFunctions.instruction,
-            ],
+            extra: functionGroups.flatMap((group) => group.instruction),
           }),
           toolConfig: {
             functionCallingConfig: { mode: "ANY" },

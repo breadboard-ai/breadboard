@@ -125,9 +125,10 @@ function defineFunctionLoose(
 }
 
 function mapDefinitions(functions: FunctionDefinition[]): MappedDefinitions {
-  const definitions = new Map<string, FunctionDefinition>(
-    functions.map((item) => [item.name!, item])
-  );
+  const definitions: [string, FunctionDefinition][] = functions.map((item) => [
+    item.name!,
+    item,
+  ]);
   const declarations = functions.map(
     ({ handler: _handler, ...rest }) => rest as FunctionDeclaration
   );
@@ -136,5 +137,5 @@ function mapDefinitions(functions: FunctionDefinition[]): MappedDefinitions {
 }
 
 function emptyDefinitions(): MappedDefinitions {
-  return { definitions: new Map(), declarations: [] };
+  return { definitions: [], declarations: [] };
 }
