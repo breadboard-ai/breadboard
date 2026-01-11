@@ -104,10 +104,25 @@ export type MemoryManager = {
 
 export type UIType = "none" | "chat" | "a2ui";
 
+export const VALID_INPUT_TYPES = [
+  "any",
+  "text",
+  "file-upload",
+  "camera",
+  "microphone",
+];
+
+export type ChatInputType =
+  | "text"
+  | "file-upload"
+  | "camera"
+  | "microphone"
+  | "any";
+
 export type ChatResponse = {
-  text: string;
+  input: LLMContent;
 };
 
 export type ChatManager = {
-  chat(pidginString: string): Promise<Outcome<ChatResponse>>;
+  chat(pidginString: string, inputType: string): Promise<Outcome<ChatResponse>>;
 };

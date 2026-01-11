@@ -403,7 +403,9 @@ class Loop {
         uiFunctions = mapDefinitions(layouts);
       } else if (uiType === "chat") {
         console.log("CHAT UI");
-        uiFunctions = mapDefinitions(defineChatFunctions({ chatManager: ui }));
+        uiFunctions = mapDefinitions(
+          defineChatFunctions({ chatManager: ui, translator })
+        );
       }
 
       const objectiveTools = objectivePidgin.tools.list().at(0);

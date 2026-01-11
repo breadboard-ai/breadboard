@@ -289,6 +289,7 @@ export class FloatingInput extends LitElement {
         case "upload": {
           supportedActions.allowAddAssets = true;
           supportedActions.actions.upload = true;
+          supportedActions.actions.gdrive = true;
           return supportedActions;
         }
 
