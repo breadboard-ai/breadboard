@@ -13,13 +13,11 @@ import {
   streamGenerateContent,
   Tool,
 } from "../a2/gemini.js";
-import { llm, tr } from "../a2/utils.js";
+import { llm } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
-import { prompt as a2UIPrompt } from "./a2ui/prompt.js";
-import { SmartLayoutPipeline } from "./a2ui/smart-layout-pipeline.js";
 import { AgentFileSystem } from "./file-system.js";
 import { FunctionCallerImpl } from "./function-caller.js";
-import { emptyDefinitions, mapDefinitions } from "./function-definition.js";
+import { mapDefinitions } from "./function-definition.js";
 import { getGenerateFunctionGroup } from "./functions/generate.js";
 import {
   CREATE_TASK_TREE_SCRATCHPAD_FUNCTION,
@@ -34,10 +32,9 @@ import { getMemoryFunctionGroup } from "./functions/memory.js";
 import { SheetManager } from "../google-drive/sheet-manager.js";
 import { memorySheetGetter } from "../google-drive/memory-sheet-getter.js";
 import { UIType } from "./types.js";
-import {
-  CHAT_REQUEST_USER_INPUT,
-  defineChatFunctions,
-} from "./functions/chat.js";
+import { getChatFunctionGroup } from "./functions/chat.js";
+import { getA2UIFunctionGroup } from "./functions/a2ui.js";
+import { getNoUiFunctionGroup } from "./functions/no-ui.js";
 
 export { Loop };
 
@@ -242,26 +239,6 @@ Thus, a solid plan to fulfill this objective would be to:
 
 ${args.skills.filter((skill) => skill !== undefined).join("\n\n")}
 
-## Interacting with the User
-
-${
-  args.uiType === "a2ui"
-    ? a2UIPrompt
-    : args.uiType === "chat"
-      ? tr`
-
-Use the "${CHAT_REQUEST_USER_INPUT}" function to interact with the user via a chat-like UI. Every function call is equivalent to a full conversation turn: your request, then user's input.
-
-Structure the requests to anticipate user's answers and minimize the amount of typing they need to do. If appropriate, offer choices, so that the user can just enter the letter and/or number of the choices.
-
-If the user input requires multiple entries, split the conversation into multiple turns. For example, if you have three questions to ask, ask them over three full conversation turns (three calls to "${CHAT_REQUEST_USER_INPUT}" function) rather than in one call.
-
-The user does not need to see a wall of text and dread typing back another wall of text as their input.
-
-`
-      : `You do not have a way to interact with the user during this session, aside from the final output when calling "${OBJECTIVE_FULFILLED_FUNCTION}" or "${FAILED_TO_FULFILL_FUNCTION}" function. If the objective calls for ANY user interaction, like asking user for input or presenting output and asking user to react to it, call "${FAILED_TO_FULFILL_FUNCTION}" function, since that's beyond your current capabilities.`
-}
-
 </additional-agent-instructions>
 
 `.asContent();
@@ -355,30 +332,25 @@ class Loop {
         memoryManager,
       });
 
-      let uiFunctions = emptyDefinitions();
+      let uiFunctions;
 
       if (uiType === "a2ui") {
-        const layoutPipeline = new SmartLayoutPipeline({
+        const a2uiFunctionGroup = await getA2UIFunctionGroup({
           caps,
           moduleArgs,
           fileSystem,
           translator,
           ui,
+          uiPrompt,
+          objective,
+          params,
         });
-        ui.progress.generatingLayouts(uiPrompt);
-        console.time("LAYOUT GENERATION");
-        const layouts = await layoutPipeline.prepareFunctionDefinitions(
-          llm`${objective}\n\n${uiPrompt}`.asContent(),
-          params
-        );
-        console.timeEnd("LAYOUT GENERATION");
-        if (!ok(layouts)) return layouts;
-        uiFunctions = mapDefinitions(layouts);
+        if (!ok(a2uiFunctionGroup)) return a2uiFunctionGroup;
+        uiFunctions = a2uiFunctionGroup;
       } else if (uiType === "chat") {
-        console.log("CHAT UI");
-        uiFunctions = mapDefinitions(
-          defineChatFunctions({ chatManager: ui, translator })
-        );
+        uiFunctions = getChatFunctionGroup({ chatManager: ui, translator });
+      } else {
+        uiFunctions = getNoUiFunctionGroup();
       }
 
       const objectiveTools = objectivePidgin.tools.list().at(0);
@@ -414,6 +386,7 @@ class Loop {
             skills: [
               generateFunctions.instruction,
               memoryFunctions.instruction,
+              uiFunctions.instruction,
             ],
           }),
           toolConfig: {

@@ -1,17 +1,21 @@
 /**
  * @license
- * Copyright 2025 Google LLC
+ * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { ok } from "@breadboard-ai/utils/outcome.js";
 import z from "zod";
 import { tr } from "../../a2/utils.js";
-import { defineFunction, FunctionDefinition } from "../function-definition.js";
-import { ChatManager, VALID_INPUT_TYPES } from "../types.js";
+import {
+  defineFunction,
+  FunctionDefinition,
+  mapDefinitions,
+} from "../function-definition.js";
+import { ChatManager, FunctionGroup, VALID_INPUT_TYPES } from "../types.js";
 import { PidginTranslator } from "../pidgin-translator.js";
 
-export { CHAT_REQUEST_USER_INPUT, defineChatFunctions };
+export { getChatFunctionGroup };
 
 const CHAT_REQUEST_USER_INPUT = "chat_request_user_input";
 
@@ -19,6 +23,24 @@ export type ChatFunctionsArgs = {
   chatManager: ChatManager;
   translator: PidginTranslator;
 };
+
+const instruction = tr`
+
+## Interacting with the User
+
+Use the "${CHAT_REQUEST_USER_INPUT}" function to interact with the user via a chat-like UI. Every function call is equivalent to a full conversation turn: your request, then user's input.
+
+Structure the requests to anticipate user's answers and minimize the amount of typing they need to do. If appropriate, offer choices, so that the user can just enter the letter and/or number of the choices.
+
+If the user input requires multiple entries, split the conversation into multiple turns. For example, if you have three questions to ask, ask them over three full conversation turns (three calls to "${CHAT_REQUEST_USER_INPUT}" function) rather than in one call.
+
+The user does not need to see a wall of text and dread typing back another wall of text as their input.
+
+`;
+
+function getChatFunctionGroup(args: ChatFunctionsArgs): FunctionGroup {
+  return { ...mapDefinitions(defineChatFunctions(args)), instruction };
+}
 
 function defineChatFunctions(args: ChatFunctionsArgs): FunctionDefinition[] {
   return [
