@@ -132,6 +132,12 @@ export type ThinkingConfig = {
   /** Indicates the thinking budget in tokens. 0 is DISABLED. -1 is AUTOMATIC. The default values and allowed ranges are model dependent.
    */
   thinkingBudget?: number;
+  /**
+   * Indicates the level of thinking.
+   * You can set thinking level to "low" or "high" for Gemini 3 Pro, 
+   * and "minimal", "low", "medium", and "high" for Gemini 3 Flash.
+   */
+  thinkingLevel?: "minimal" | "low" | "medium" | "high"
 };
 
 export type GeminiInputs = {
@@ -152,6 +158,8 @@ export type Tool = {
   googleSearch?: {};
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   googleMaps?: {};
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  urlContext?: {};
   codeExecution?: CodeExecution;
 };
 

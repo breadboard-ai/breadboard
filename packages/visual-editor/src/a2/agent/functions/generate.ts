@@ -215,6 +215,23 @@ capabilities of Gemini with the rich, factual, and up-to-date data of Google
 Maps`
             )
             .optional(),
+          url_context: z
+            .boolean()
+            .describe(
+              tr`
+
+Set to true to allow Gemini to retrieve context from URLs. Useful for tasks like the following:
+
+- Extract Data: Pull specific info like prices, names, or key findings from multiple URLs.
+- Compare Documents: Using URLs, analyze multiple reports, articles, or PDFs to identify differences and track trends.
+- Synthesize & Create Content: Combine information from several source URLs to generate accurate summaries, blog posts, or reports.
+- Analyze Code & Docs: Point to a GitHub repository or technical documentation URL to explain code, generate setup instructions, or answer questions.
+
+Specify URLs in the prompt.
+
+`
+            )
+            .optional(),
           status_update: z.string().describe(tr`
 A status update to show in the UI that provides more detail on the reason why this function was called.
 
@@ -249,6 +266,7 @@ provided when the "output_format" is set to "text"`
           model,
           search_grounding,
           maps_grounding,
+          url_context,
           project_path,
           output_format,
           status_update,
@@ -279,13 +297,13 @@ provided when the "output_format" is set to "text"`
         if (maps_grounding) {
           tools.push({ googleMaps: {} });
         }
+        if (url_context) {
+          tools.push({ urlContext: {} });
+        }
         let thinkingConfig: GenerationConfig = {};
         if (model === "pro") {
           thinkingConfig = {
-            thinkingConfig: {
-              thinkingBudget: -1,
-              includeThoughts: true,
-            },
+            thinkingConfig: { includeThoughts: true, thinkingLevel: "high" },
           };
         }
         if (tools.length === 0) tools = undefined;
