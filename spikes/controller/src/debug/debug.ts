@@ -146,6 +146,7 @@ function finalizeBinding(
 
   // Explicit change listener bypasses proxy assignment issues for complex types
   blade.on("change", (ev) => {
+    if (typeof ev.value !== "object") return;
     binding.set(structuredClone(ev.value));
   });
 

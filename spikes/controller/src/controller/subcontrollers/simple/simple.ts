@@ -24,7 +24,7 @@ export class SimpleStore extends RootStore {
   private accessor _color = { r: 255, g: 0, b: 255 };
 
   @field({ persist: "local" })
-  private accessor _boolean = false;
+  private accessor _invert = false;
 
   @field()
   private accessor _num = 50;
@@ -36,12 +36,12 @@ export class SimpleStore extends RootStore {
     this._text = value.trim();
   }
 
-  @debug({ ui: { label: "Invert text color" } })
-  get boolean() {
-    return this._boolean;
+  @debug({ ui: { label: "Invert text color" }, log: true })
+  get invert() {
+    return this._invert;
   }
-  set boolean(value: boolean) {
-    this._boolean = value;
+  set invert(value: boolean) {
+    this._invert = value;
   }
 
   @debug({
@@ -53,7 +53,7 @@ export class SimpleStore extends RootStore {
       step: 1,
     },
     log: {
-      label: "Slider value",
+      label: "Radius",
       format: (val: number, host: DebugHost) => {
         if (val < 40) return host.error(val);
         if (val >= 40 && val < 50) return host.info(val);
