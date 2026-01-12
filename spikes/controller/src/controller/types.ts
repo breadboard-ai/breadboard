@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * @license
  * Copyright 2026 Google LLC
@@ -28,8 +29,6 @@ export interface Storage {
   delete(name: string): Promise<void>;
 }
 
-export type LogLevel = "debug" | "info" | "verbose";
-
 export interface HydratedStore {
   registerSignalHydration(signal: Signal.State<unknown>): void;
 }
@@ -42,7 +41,6 @@ export interface DebugContainerOpts {
   path: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface DebugBinding<T = any> {
   get: () => T;
   set: (value: T) => void;
@@ -51,4 +49,26 @@ export interface DebugBinding<T = any> {
 export interface DebugEntry {
   config: BaseBladeParams;
   binding: DebugBinding;
+}
+
+export interface DebugLog {
+  type: "error" | "info" | "warning" | "verbose";
+  args: any[];
+}
+
+export interface DebugHost {
+  error(...args: any[]): DebugLog;
+  info(...args: any[]): DebugLog;
+  warning(...args: any[]): DebugLog;
+  verbose(...args: any[]): DebugLog;
+}
+
+export interface DebugParams<Value> {
+  ui?: BaseBladeParams;
+  log?:
+    | boolean
+    | {
+        label?: string;
+        format(v: Value, host: DebugHost): DebugLog;
+      };
 }

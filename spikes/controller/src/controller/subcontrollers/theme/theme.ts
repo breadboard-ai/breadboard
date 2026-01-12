@@ -9,24 +9,26 @@ import { field } from "../../decorators/field.js";
 import { RootStore } from "../root-store.js";
 
 @debugContainer({ path: "theme" })
-export class ThemeStore extends RootStore {
+export class ThemeController extends RootStore {
   @field({ persist: "idb" })
   private accessor _mode: "light" | "dark" = "light";
 
   @debug({
-    view: "list",
-    label: "Mode",
-    options: [
-      {
-        text: "Dark Mode",
-        value: "dark",
-      },
-      {
-        text: "Light Mode",
-        value: "light",
-      },
-    ],
-    value: "light",
+    ui: {
+      view: "list",
+      label: "Mode",
+      options: [
+        {
+          text: "Dark Mode",
+          value: "dark",
+        },
+        {
+          text: "Light Mode",
+          value: "light",
+        },
+      ],
+      value: "light",
+    },
   })
   get mode() {
     return this._mode;

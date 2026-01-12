@@ -112,7 +112,7 @@ export class Main extends SignalWatcher(LitElement) {
           text-anchor="middle"
           x="50" y="50"
           fill=${
-            this.controller.nested.simple.boolean ? "white" : "black"
+            this.controller.nested.simple.invert ? "white" : "black"
           }>${this.controller.nested.simple.num}</text>
 
       </svg>
