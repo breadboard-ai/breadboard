@@ -132,6 +132,10 @@ export const ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE = getBoolean(
 export const SHARE_SURFACE_URL_TEMPLATES =
   (getJson("SHARE_SURFACE_URL_TEMPLATES") as Record<string, string>) ?? {};
 
+export const ENABLE_DRIVE_PICKER_IN_LITE_MODE = getBoolean(
+  "ENABLE_DRIVE_PICKER_IN_LITE_MODE"
+);
+
 /** Get the value of the given flag as a string, or empty string if absent. */
 function getString(flagName: string): string {
   return process.env[flagName] ?? "";

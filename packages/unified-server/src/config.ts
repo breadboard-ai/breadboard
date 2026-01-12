@@ -76,6 +76,7 @@ export async function createClientConfig(opts: {
         flags.ENABLE_REQUIRE_CONSENT_FOR_OPEN_WEBPAGE,
       streamPlanner: flags.STREAM_PLANNER,
       streamGenWebpage: flags.ENABLE_STREAM_GEN_WEBPAGE,
+      enableDrivePickerInLiteMode: flags.ENABLE_DRIVE_PICKER_IN_LITE_MODE,
     },
   };
 }
