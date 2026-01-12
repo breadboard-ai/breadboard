@@ -6,11 +6,11 @@
 
 import assert from "node:assert";
 import { suite, test } from "node:test";
-import { LayoutStore } from "../../src/controller/subcontrollers/layout/layout.js";
+import { LayoutController } from "../../src/controller/subcontrollers/layout/layout.js";
 
 suite("LayoutStore", () => {
   test("Basics", async () => {
-    const store = new LayoutStore();
+    const store = new LayoutController();
     await store.isHydrated;
 
     store.setSplit(0);
@@ -18,7 +18,7 @@ suite("LayoutStore", () => {
   });
 
   test("Min & Max errors", async () => {
-    const store = new LayoutStore();
+    const store = new LayoutController();
     await store.isHydrated;
 
     assert.throws(() => {

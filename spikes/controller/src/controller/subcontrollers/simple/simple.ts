@@ -16,7 +16,7 @@ function clamp(v: number, min = 10, max = 90) {
 }
 
 @debugContainer({ path: "Shape" })
-export class SimpleStore extends RootStore {
+export class SimpleController extends RootStore {
   @field()
   private accessor _text = "";
 

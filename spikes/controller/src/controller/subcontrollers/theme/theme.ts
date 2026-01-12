@@ -9,7 +9,7 @@ import { field } from "../../decorators/field.js";
 import { RootStore } from "../root-store.js";
 
 @debugContainer({ path: "theme" })
-export class ThemeStore extends RootStore {
+export class ThemeController extends RootStore {
   @field({ persist: "idb" })
   private accessor _mode: "light" | "dark" = "light";
 

@@ -7,7 +7,7 @@
 import { field } from "../../decorators/field.js";
 import { RootStore } from "../root-store.js";
 
-export class DrawingStore extends RootStore {
+export class DrawingController extends RootStore {
   @field({ persist: "session" })
   private accessor _shapes: string[] = [];
 

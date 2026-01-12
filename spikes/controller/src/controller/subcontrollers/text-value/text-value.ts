@@ -7,7 +7,7 @@
 import { field } from "../../decorators/field.js";
 import { RootStore } from "../root-store.js";
 
-export class TextValueStore extends RootStore {
+export class TextValueController extends RootStore {
   @field({ persist: "local" })
   private accessor _textValue = "";
 
