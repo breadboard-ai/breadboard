@@ -44,6 +44,7 @@ export class A2UICustomGoogleDrive extends A2UI.v0_8.UI.Root {
   #renderDriveElement(fileId: DriveFileId) {
     return html`<bb-google-drive-file-viewer
       .fileId=${fileId}
+      .forcePlaceholder=${true}
     ></bb-google-drive-file-viewer>`;
   }
 
