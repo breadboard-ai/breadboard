@@ -14,19 +14,21 @@ export class ThemeStore extends RootStore {
   private accessor _mode: "light" | "dark" = "light";
 
   @debug({
-    view: "list",
-    label: "Mode",
-    options: [
-      {
-        text: "Dark Mode",
-        value: "dark",
-      },
-      {
-        text: "Light Mode",
-        value: "light",
-      },
-    ],
-    value: "light",
+    ui: {
+      view: "list",
+      label: "Mode",
+      options: [
+        {
+          text: "Dark Mode",
+          value: "dark",
+        },
+        {
+          text: "Light Mode",
+          value: "light",
+        },
+      ],
+      value: "light",
+    },
   })
   get mode() {
     return this._mode;

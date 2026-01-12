@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { debugContextValues } from "./context/debug.js";
+import { debugContextValues, debugGlobalLogLevel } from "./context/debug.js";
 import { DrawingStore } from "./subcontrollers/drawing/drawing.js";
 import { LayoutStore } from "./subcontrollers/layout/layout.js";
 import { SimpleStore } from "./subcontrollers/simple/simple.js";
@@ -18,6 +18,7 @@ export class Controller {
   drawing = new DrawingStore();
   nested = { simple: new SimpleStore() };
   debug = {
+    log: debugGlobalLogLevel,
     show: false,
     values: debugContextValues,
   };

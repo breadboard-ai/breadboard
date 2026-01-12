@@ -33,9 +33,13 @@ export async function maybeAddDebugControls(
 
   const { Pane } = await import("tweakpane");
   pane = new Pane({ title: "Debug Console", container: element });
+  const g = pane.addFolder({ title: "Global", expanded: false });
+  g.addBinding(controller.debug.log.levels, "verbose", { label: "Verbose" });
+  g.addBinding(controller.debug.log.levels, "info", { label: "Info" });
+  g.addBinding(controller.debug.log.levels, "errors", { label: "Errors" });
+  g.addBinding(controller.debug.log.levels, "warnings", { label: "Warnings" });
 
   injectStyles(element);
-  setupFilter(pane);
   buildHierarchy(controller, pane);
 }
 
@@ -48,16 +52,6 @@ function injectStyles(element: HTMLElement) {
   );
   if (!styles) throw new Error("Tweakpane styles not found.");
   element.appendChild(styles);
-}
-
-/**
- * Sets up the search bar to filter debug items.
- */
-function setupFilter(targetPane: Pane) {
-  const filterState = { query: "" };
-  targetPane
-    .addBinding(filterState, "query", { label: "Filter" })
-    .on("change", (ev) => applyFilter(ev.value.toLowerCase()));
 }
 
 /**
@@ -180,30 +174,6 @@ function ensureFoldersExist(segments: string[], root: Pane): Pane | FolderApi {
   }
 
   return currentParent;
-}
-
-/**
- * Manages visibility and expansion state during filtering.
- */
-function applyFilter(query: string) {
-  const isSearching = query.length > 0;
-  bladeRegistry.forEach(({ blade, path }) => {
-    blade.hidden = !path.includes(query);
-  });
-
-  folderCache.forEach((folder, folderPath) => {
-    const lowerPath = folderPath.toLowerCase();
-    const hasVisibleChild = Array.from(bladeRegistry.values()).some(
-      (item) => item.path.startsWith(lowerPath) && !item.blade.hidden
-    );
-
-    if (isSearching) {
-      folder.expanded = hasVisibleChild;
-      folder.hidden = !hasVisibleChild;
-    } else {
-      folder.hidden = false;
-    }
-  });
 }
 
 /**

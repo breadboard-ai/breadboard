@@ -6,7 +6,7 @@
 
 import { Signal } from "@lit-labs/signals";
 import { WebStorageWrapper } from "./storage/local.js";
-import { LogLevel, PrimitiveValue } from "../types.js";
+import { PrimitiveValue } from "../types.js";
 import { pending, PENDING_HYDRATION } from "../utils/sentinel.js";
 import { IdbStorageWrapper } from "./storage/idb.js";
 import { isHydratedStore } from "../utils/hydration.js";
@@ -32,8 +32,10 @@ function getName<Context extends WeakKey, Value extends PrimitiveValue>(
   return `${target.constructor.name}_${String(context.name)}`;
 }
 
-export function field(apiOpts: { persist?: StorageType; log?: LogLevel } = {}) {
-  return function <Context extends WeakKey, Value extends PrimitiveValue>(
+export function field<Value extends PrimitiveValue>(
+  apiOpts: { persist?: StorageType } = {}
+) {
+  return function <Context extends WeakKey>(
     _target: ClassAccessorDecoratorTarget<Context, Value>,
     context: ClassAccessorDecoratorContext<Context, Value>
   ): ClassAccessorDecoratorResult<Context, Value> {
