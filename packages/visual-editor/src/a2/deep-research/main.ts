@@ -287,8 +287,8 @@ async function invoke(
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
-  //const flags = await moduleArgs.context.flags?.flags();
-  const opalAdkEnabled = true; // flags?.opalAdk || false;
+  const flags = await moduleArgs.context.flags?.flags();
+  const opalAdkEnabled = flags?.opalAdk || false;
   if (opalAdkEnabled) {
     return invokeOpalAdk({ context, query, summarize, ...params }, caps, moduleArgs);
   } else {
