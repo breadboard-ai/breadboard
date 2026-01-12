@@ -47,14 +47,6 @@ server.use(
   connectionServer.createServer(connectionServerConfig)
 );
 
-console.log("[unified-server startup] Mounting app view");
-server.use("/app", (req, res) => {
-  // Redirect the old standalone app view to the new unified view with the app
-  // tab opened.
-  const graphId = req.path.replace(/^\//, "");
-  res.redirect(301, `/?flow=${encodeURIComponent(graphId)}&mode=app`);
-});
-
 console.log("[unified-server startup] Mounting updates handler");
 server.use("/updates", createUpdatesHandler());
 
@@ -103,7 +95,7 @@ const clientConfig = await createClientConfig({
 });
 
 server.get(
-  ["/", "/landing/", "/open/:fileId"].map(
+  ["/", "/landing/", "/open/:fileId", "/app/:fileId", "/edit/:fileId"].map(
     (path) => `${flags.SHELL_PREFIX || ""}${path}`
   ),
   makeCspHandler(SHELL_CSP),
@@ -113,7 +105,7 @@ server.get(
   }
 );
 server.get(
-  ["/_app/", "/_app/open/:fileId"],
+  ["/_app/", "/_app/open/:fileId", "/_app/app/:fileId", "/_app/edit/:fileId"],
   makeCspHandler(MAIN_APP_CSP),
   (req, _res, next) => {
     req.url = "/index.html";

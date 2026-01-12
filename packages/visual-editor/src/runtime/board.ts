@@ -42,6 +42,7 @@ import {
   createAppPaletteIfNeeded,
 } from "./util.js";
 import { GoogleDriveBoardServer } from "../board-server/server.js";
+import { parseUrl } from "../ui/utils/urls.js";
 
 const documentStyles = getComputedStyle(document.documentElement);
 
@@ -197,24 +198,8 @@ export class Board extends EventTarget {
   }
 
   getBoardURL(url: URL): string | undefined {
-    const params = new URLSearchParams(url.search);
-
-    let t = 0;
-    const board = params.get("board");
-    if (board) {
-      params.set(`tab${t++}`, board);
-      params.delete("board");
-    }
-
-    const tabs = [...params]
-      .filter((param) => param[0].startsWith("flow"))
-      .sort(([idA], [idB]) => {
-        if (idA > idB) return 1;
-        if (idA < idB) return -1;
-        return 0;
-      });
-
-    return tabs[0]?.[1];
+    const parsed = parseUrl(url);
+    return parsed.page === "graph" ? parsed.flow : undefined;
   }
 
   async createTabsFromURL(url: URL, closeAllTabs = false) {
