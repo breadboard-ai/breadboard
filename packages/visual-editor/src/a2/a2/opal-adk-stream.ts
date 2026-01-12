@@ -9,26 +9,28 @@ import {
 } from "@breadboard-ai/types";
 import { StreamableReporter } from "./output.js";
 import {
-  decodeBase64,
-  encodeBase64,
   err,
   ok,
   toLLMContent,
+  toText,
 } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { iteratorFromStream } from "@breadboard-ai/utils";
 
 const DEFAULT_OPAL_ADK_ENDPOINT =
-  "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStepStream";
+  "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeAgentNodeStream";
+
+
 
 type StreamChunk = {
-  mimetype: string;
-  data: any;
-  metadata?: {
-    chunk_type: string;
-  };
+  parts?: Array<{
+    text?: string;
+    partMetadata?: {
+      chunk_type?: string;
+    };
+  }>;
+  role?: string;
 };
-
 
 export type Content = {
   chunks: StreamChunk[];
@@ -46,10 +48,18 @@ export type PlanStep = {
   output?: string;
 };
 
+type StreamingRequestPart = {
+  text?: string;
+  partMetadata?: { input_name: string };
+};
 
 type StreamingRequestBody = {
-  planStep: PlanStep;
-  executionInputs: ContentMap;
+  model_name?: string;
+  node_api?: string;
+  contents: Array<{
+    parts: StreamingRequestPart[];
+    role: string;
+  }>;
 };
 
 async function getOpalAdkBackendUrl(caps: Capabilities) {
@@ -62,7 +72,7 @@ async function getOpalAdkBackendUrl(caps: Capabilities) {
       if (settings?.endpoint_url) {
         // Extract base URL and append the streaming endpoint path
         const url = new URL(settings.endpoint_url);
-        url.pathname = "/v1beta1/executeStepStream";
+        url.pathname = "/v1beta1/executeAgentNodeStream";
         return url.toString();
       }
     }
@@ -71,41 +81,41 @@ async function getOpalAdkBackendUrl(caps: Capabilities) {
 }
 
 function buildStreamingRequestBody(
-  opal_adk_agent: string,
-  params: Record<string, string>
+  content: LLMContent[],
+  node_api: string = "deep_research",
 ): StreamingRequestBody {
-  const inputParameters = Object.keys(params);
-  const execution_inputs = Object.fromEntries(
-    Object.entries(params).map(([name, value]) => {
-      return [
-        name,
-        {
-          chunks: [
+  const contents: StreamingRequestBody["contents"] = [];
+
+  let textCount = 0;
+  for (const val of content) {
+    if (!val.parts) continue;
+    for (const part of val.parts) {
+      if ("text" in part) {
+        textCount++;
+        contents.push({
+          parts: [
             {
-              mimetype: "text/plain",
-              data: encodeBase64(value),
+              text: part.text,
+              partMetadata: { input_name: `text_${textCount}` },
             },
           ],
-        },
-      ];
-    })
-  );
+          role: "user",
+        });
+      }
+    }
+  }
+
   return {
-    planStep: {
-      stepName: "plan_step",
-      modelApi: opal_adk_agent,
-      inputParameters: inputParameters,
-    },
-    executionInputs: execution_inputs,
+    node_api: node_api,
+    contents: contents,
   };
 }
 
-
 async function executeOpalAdkStream(caps: Capabilities,
   moduleArgs: A2ModuleArgs,
-  params: Record<string, string>,
+  params: LLMContent[],
   opal_adk_agent: string): Promise<Outcome<LLMContent>> {
-  console.log("params: ", params);
+  console.log("params: ", toText(params));
   const reporter = new StreamableReporter(caps, {
     title: `Executing Opal Adk with ${opal_adk_agent}`,
     icon: "spark",
@@ -118,8 +128,8 @@ async function executeOpalAdkStream(caps: Capabilities,
     const url = new URL(baseUrl);
     url.searchParams.set("alt", "sse");
     const requestBody = buildStreamingRequestBody(
+      params,
       opal_adk_agent,
-      params
     );
 
     // Record model call with action tracker
@@ -150,29 +160,29 @@ async function executeOpalAdkStream(caps: Capabilities,
     let researchResult = "";
     let thoughtCount = 0;
     for await (const chunk of iteratorFromStream<StreamChunk>(response.body)) {
-      if (!chunk) continue;
-      console.log("chunk", chunk);
-      console.log("chunk data: ", decodeBase64(chunk.data))
-      const chunkType = chunk.mimetype;
-      const text = decodeBase64(chunk.data);
-
-      if (chunkType === "thought") {
-        thoughtCount++;
-        await reporter.sendUpdate(
-          `Thinking (${thoughtCount})`,
-          text,
-          "spark"
-        );
-      } else if (chunkType === "text/plain") {
-        researchResult = text;
-        console.log("Updating output")
-        await reporter.sendUpdate(
-          "Agent Thought",
-          researchResult,
-          "spark"
-        );
-      } else if (chunkType === "error") {
-        return reporter.sendError(err(`Generation error: ${text}`));
+      if (!chunk || !chunk.parts) continue;
+      console.log("part", chunk);
+      for (const part of chunk.parts) {
+        const type = part.partMetadata?.chunk_type;
+        const text = part.text || "";
+        if (type === "thought") {
+          thoughtCount++;
+          await reporter.sendUpdate(
+            `Thinking (${thoughtCount})`,
+            text,
+            "spark"
+          );
+        } else if (type === "result") {
+          researchResult = text;
+          console.log("Updating output")
+          await reporter.sendUpdate(
+            "Agent Thought",
+            researchResult,
+            "spark"
+          );
+        } else if (type === "error") {
+          return reporter.sendError(err(`Generation error: ${text}`));
+        }
       }
     }
 

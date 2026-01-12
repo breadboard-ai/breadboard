@@ -144,45 +144,25 @@ async function thought(
   });
 }
 
-export function unwrapParams(params: Params): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(params).map(([key, value]) => {
-      if (key.startsWith("p-z-")) {
-        return [key.slice(4), value];
-      }
-      return [key, value];
-    })
-  );
-}
-
-function extractTextFromLLMContent(content: [LLMContent]): string {
-  const query = content[0]
-  if (!query.parts || query.parts.length === 0) {
-    return "";
-  }
-  if (query.parts.length > 1) {
-    throw new Error("LLMContent contains more than one part.");
-  }
-  const firstPart = query.parts[0];
-  if ("text" in firstPart && typeof firstPart.text === "string") {
-    return firstPart.text;
-  }
-  return "";
-}
-
-
 async function invokeOpalAdk(
   { context, query, summarize, ...params }: ResearcherInputs,
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
-  const unwrappedParams = unwrapParams(params);
-  const userQuery = unwrappedParams['ask_user_research_query'] as [LLMContent];
-  if (!userQuery) {
-    return err("No query provided");
+  const template = new Template(caps, query);
+  const toolManager = new ToolManager(
+    caps,
+    moduleArgs,
+    new ArgumentNameGenerator(caps, moduleArgs)
+  );
+  const substituting = await template.substitute(params, async (part) =>
+    toolManager.addTool(part)
+  );
+  if (!ok(substituting)) {
+    return substituting;
   }
-  console.log("unwrapped params", unwrappedParams);
-  const results = await executeOpalAdkStream(caps, moduleArgs, { "query": extractTextFromLLMContent(userQuery) }, "deep_research");
+
+  const results = await executeOpalAdkStream(caps, moduleArgs, [substituting], "deep_research");
   console.log("deep-research results", results)
   return {
     context: [...(context || []), results]
