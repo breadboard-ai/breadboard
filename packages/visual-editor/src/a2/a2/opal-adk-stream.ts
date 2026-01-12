@@ -115,7 +115,6 @@ async function executeOpalAdkStream(caps: Capabilities,
   moduleArgs: A2ModuleArgs,
   params: LLMContent[],
   opal_adk_agent: string): Promise<Outcome<LLMContent>> {
-  console.log("params: ", toText(params));
   const reporter = new StreamableReporter(caps, {
     title: `Executing Opal Adk with ${opal_adk_agent}`,
     icon: "spark",
@@ -161,7 +160,6 @@ async function executeOpalAdkStream(caps: Capabilities,
     let thoughtCount = 0;
     for await (const chunk of iteratorFromStream<StreamChunk>(response.body)) {
       if (!chunk || !chunk.parts) continue;
-      console.log("part", chunk);
       for (const part of chunk.parts) {
         const type = part.partMetadata?.chunk_type;
         const text = part.text || "";
@@ -174,7 +172,6 @@ async function executeOpalAdkStream(caps: Capabilities,
           );
         } else if (type === "result") {
           researchResult = text;
-          console.log("Updating output")
           await reporter.sendUpdate(
             "Agent Thought",
             researchResult,
