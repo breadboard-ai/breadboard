@@ -20,7 +20,7 @@ const executeStepEndpoint: string = new URL(
 ).href;
 
 const executeOpalAdkStepEndpoint: string = new URL(
-  "v1beta1/executeStepStream",
+  "v1beta1/executeAgentNodeStream",
   OPAL_BACKEND_API_PREFIX
 ).href;
 
