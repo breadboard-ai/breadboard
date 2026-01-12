@@ -12,7 +12,6 @@ import {
   err,
   ok,
   toLLMContent,
-  toText,
 } from "./utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { iteratorFromStream } from "@breadboard-ai/utils";
