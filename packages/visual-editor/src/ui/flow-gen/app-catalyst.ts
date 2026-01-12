@@ -26,14 +26,6 @@ export interface AppCatalystChatRequestV2 {
   app?: { parts: FlowGenLLMContentPart[] };
 }
 
-export interface ExecuteStepStreamRequest {
-
-}
-
-export interface ExecuteStepStreamResponse {
-
-}
-
 export interface AppCatalystChatResponse {
   messages: AppCatalystContentChunk[];
 }
@@ -111,25 +103,6 @@ export class AppCatalystApiClient {
   constructor(fetchWithCreds: typeof globalThis.fetch, apiBaseUrl: string) {
     this.#fetchWithCreds = fetchWithCreds;
     this.#apiBaseUrl = apiBaseUrl;
-  }
-
-  async executeDeepResearch(request: ExecuteStepStreamRequest): Promise<ExecuteStepStreamRequest> {
-    const url = new URL("v1beta1/executeStepStream", this.#apiBaseUrl);
-    const response = await this.#fetchWithCreds(url, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(request),
-    });
-    if (!response.ok) {
-      throw new Error(
-        `Failed to execute deep research: ${response.statusText}`
-      );
-    }
-    const result =
-      (await response.json()) as ExecuteStepStreamResponse;
-    return result;
   }
 
   async getG1SubscriptionStatus(

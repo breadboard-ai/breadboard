@@ -19,12 +19,21 @@ const executeStepEndpoint: string = new URL(
   OPAL_BACKEND_API_PREFIX
 ).href;
 
+const executeOpalAdkStepEndpoint: string = new URL(
+  "v1beta1/executeStepStream",
+  OPAL_BACKEND_API_PREFIX
+).href;
+
 bootstrap({
   deploymentConfiguration,
   env: [
     {
       path: "/env/settings/backend",
       data: toLLMContent({ endpoint_url: executeStepEndpoint }),
+    },
+    {
+      path: "/env/settings/opalAdkBackend",
+      data: toLLMContent({ endpoint_url: executeOpalAdkStepEndpoint }),
     },
   ],
 });

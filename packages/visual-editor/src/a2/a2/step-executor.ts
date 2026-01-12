@@ -28,9 +28,6 @@ import { A2ModuleArgs } from "../runnable-module-factory.js";
 const DEFAULT_BACKEND_ENDPOINT =
   "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStep";
 
-const DEFAULT_OPAL_ADK_ENDPOINT =
-  "https://staging-appcatalyst.sandbox.googleapis.com/v1beta1/executeStepStream";
-
 type Chunk = {
   mimetype: string;
   data: string;
@@ -182,54 +179,6 @@ async function executeTool<
   }
 }
 
-
-async function executeAdkTool<
-  T extends JsonSerializable = Record<string, JsonSerializable>,
->(
-  caps: Capabilities,
-  moduleArgs: A2ModuleArgs,
-  api: string,
-  params: Record<string, string>
-): Promise<Outcome<T | string>> {
-  const inputParameters = Object.keys(params);
-  const execution_inputs = Object.fromEntries(
-    Object.entries(params).map(([name, value]) => {
-      return [
-        name,
-        {
-          chunks: [
-            {
-              mimetype: "text/plan",
-              data: encodeBase64(value),
-            },
-          ],
-        },
-      ];
-    })
-  );
-  const response = await executeStep(caps, moduleArgs, {
-    planStep: {
-      stepName: api,
-      modelApi: api,
-      output: "data",
-      inputParameters,
-      isListOutput: false,
-    },
-    execution_inputs,
-  });
-  if (!ok(response)) return response;
-
-  const {
-    inlineData: { data },
-  } = response.chunks.at(0)!.parts.at(0) as InlineDataCapabilityPart;
-  const jsonString = decodeBase64(data!);
-  try {
-    return JSON.parse(jsonString) as T;
-  } catch {
-    return jsonString;
-  }
-}
-
 type BackendSettings = {
   endpoint_url: string;
 };
@@ -251,97 +200,6 @@ type ProgressUpdateOptions = {
   message?: string;
   expectedDurationInSec?: number;
 };
-
-async function executeOpalAdkStep(
-  caps: Capabilities,
-  moduleArgs: A2ModuleArgs,
-  body: ExecuteStepRequest,
-  progressUpdateOptions?: ProgressUpdateOptions
-): Promise<Outcome<ExecutionOutput>> {
-  const { fetchWithCreds, context } = moduleArgs;
-  const model = body.planStep.options?.modelName || body.planStep.stepName;
-  const { appScreen, title } = getCurrentStepState(moduleArgs);
-  const reporter = new StreamableReporter(caps, {
-    title: `Calling ${model}`,
-    icon: "spark",
-  });
-  try {
-    if (appScreen) {
-      appScreen.progress = progressUpdateOptions?.message || title;
-      if (progressUpdateOptions?.expectedDurationInSec) {
-        appScreen.expectedDuration =
-          progressUpdateOptions.expectedDurationInSec;
-      } else {
-        appScreen.expectedDuration = -1;
-      }
-    }
-
-    await reporter.start();
-    await reporter.sendUpdate("Step Input", elideEncodedData(body), "upload");
-    // Call the API.
-    const url = await getBackendUrl(caps);
-    // Record model call with action tracker.
-    caps.write({
-      path: `/mnt/track/call_${model}` as FileSystemReadWritePath,
-      data: [],
-    });
-    let response: ExecuteStepResponse;
-    try {
-      const fetchResponse = await fetchWithCreds(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        signal: context.signal,
-        body: JSON.stringify(body),
-      });
-      if (!fetchResponse.ok) {
-        const { $error, metadata } = decodeFetchError(
-          await fetchResponse.text(),
-          model
-        );
-        return reporter.sendError(err($error, metadata));
-      }
-      response = await fetchResponse.json();
-    } catch (e) {
-      return reporter.sendError(
-        err((e as Error).message, {
-          origin: "server",
-          model,
-        })
-      );
-    }
-    if (!response) {
-      return await reporter.sendError(
-        err(`Request to "${model}" failed, please try again`, {
-          origin: "server",
-          kind: "bug",
-        })
-      );
-    }
-    if (response.errorMessage) {
-      const errorMessage = decodeMetadata(response.errorMessage, model);
-      return await reporter.sendError(
-        err(errorMessage.$error, errorMessage.metadata)
-      );
-    }
-    await reporter.sendUpdate(
-      "Step Output",
-      elideEncodedData(response),
-      "download"
-    );
-    const output_key = body.planStep.output || "";
-    return parseExecutionOutput(
-      response.executionOutputs[output_key]?.chunks
-    );
-  } finally {
-    await reporter.close();
-    if (appScreen) {
-      appScreen.progress = undefined;
-      appScreen.expectedDuration = -1;
-    }
-  }
-}
 
 async function executeStep(
   caps: Capabilities,
