@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DebugEntry } from "../types";
+import { DebugEntry } from "../types.js";
 
 export const debugContextPaths = new Map();
 export const debugContextValues = new Map<string, DebugEntry>();

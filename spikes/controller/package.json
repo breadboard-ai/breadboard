@@ -39,15 +39,19 @@
       },
       "files": [],
       "output": [
-        "lcov.info"
+        "lcov.info",
+        "./coverage/tmp",
+        "./storage/**/*.*"
       ],
       "dependencies": [
         "build:tsc"
       ]
     },
     "coverage": {
-      "command": "c8 report --reporter=html --src=src",
-      "files": [],
+      "command": "c8 --all report --reporter=html --src=src",
+      "files": [
+        ".c8rc.json"
+      ],
       "dependencies": [
         "test"
       ]

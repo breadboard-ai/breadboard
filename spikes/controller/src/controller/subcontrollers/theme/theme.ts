@@ -6,10 +6,10 @@
 
 import { debug, debugContainer } from "../../decorators/debug.js";
 import { field } from "../../decorators/field.js";
-import { RootStore } from "../root-store.js";
+import { RootController } from "../root-store.js";
 
 @debugContainer({ path: "theme" })
-export class ThemeController extends RootStore {
+export class ThemeController extends RootController {
   @field({ persist: "idb" })
   private accessor _mode: "light" | "dark" = "light";
 
