@@ -38,7 +38,11 @@ type AudioGeneratorOutputs = {
   context: LLMContent[] | DescriberResult;
 };
 
-export { invoke as default, describe, callMusicGen };
+export { invoke as default, describe, callMusicGen, makeMusicInstruction };
+
+function makeMusicInstruction() {
+  return `Generate music using this prompt:`;
+}
 
 async function callMusicGen(
   caps: Capabilities,

@@ -86,7 +86,21 @@ type VideoGeneratorOutputs = {
   context: LLMContent[] | DescriberResult;
 };
 
-export { invoke as default, describe, callVideoGen, expandVeoError };
+export {
+  invoke as default,
+  describe,
+  callVideoGen,
+  expandVeoError,
+  makeVideoInstruction,
+};
+
+function makeVideoInstruction(inputs: Record<string, unknown>) {
+  const aspectRatio = (inputs as VideoGeneratorInputs)["p-aspect-ratio"];
+  const aspectRatioHint = aspectRatio
+    ? ` Use ${aspectRatio} aspect ratio.`
+    : ``;
+  return `Generate a video using the following prompt.${aspectRatioHint}`;
+}
 
 async function callVideoGen(
   caps: Capabilities,

@@ -29,7 +29,7 @@ import {
 import { filterUndefined } from "@breadboard-ai/utils";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
-export { invoke as default, describe };
+export { invoke as default, describe, makeTextInstruction };
 
 /**
  * Maximum amount of function-calling turns that we take before bailing.
@@ -39,6 +39,8 @@ const MAX_TURN_COUNT = 10;
 type Inputs = {
   context: SharedContext;
 };
+
+const makeTextInstruction = () => "";
 
 class GenerateText {
   private toolManager!: ToolManager;

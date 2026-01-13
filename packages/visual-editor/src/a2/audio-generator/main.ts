@@ -51,7 +51,13 @@ type VoiceOption = keyof typeof VoiceMap;
 
 const VOICES: VoiceOption[] = Object.keys(VoiceMap) as VoiceOption[];
 
-export { invoke as default, describe };
+export { invoke as default, describe, makeSpeechInstruction };
+
+function makeSpeechInstruction(inputs: Record<string, unknown>) {
+  const voice = (inputs as AudioGeneratorInputs).voice;
+  const voiceHint = voice ? ` Use ${voice} voice.` : ``;
+  return `Generate speech from the text below.${voiceHint}`;
+}
 
 async function callAudioGen(
   caps: Capabilities,
