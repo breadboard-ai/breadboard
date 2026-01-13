@@ -3,6 +3,9 @@
  */
 import { Capabilities, LLMContent, Schema } from "@breadboard-ai/types";
 import { type Params } from "../a2/common.js";
+import { Template } from "../a2/template.js";
+import { A2ModuleArgs } from "../runnable-module-factory.js";
+import { executeOpalAdkStream } from "../a2/opal-adk-stream.js";
 import invokeGemini, {
   type GeminiInputs,
   type Tool,
@@ -10,10 +13,8 @@ import invokeGemini, {
 } from "../a2/gemini.js";
 import { ArgumentNameGenerator } from "../a2/introducer.js";
 import { report } from "../a2/output.js";
-import { Template } from "../a2/template.js";
 import { ToolManager } from "../a2/tool-manager.js";
 import { addUserTurn, err, llm, ok, toLLMContent } from "../a2/utils.js";
-import { A2ModuleArgs } from "../runnable-module-factory.js";
 
 export { invoke as default, describe, makeDeepResearchInstruction };
 
@@ -143,11 +144,57 @@ async function thought(
   });
 }
 
-async function invoke(
+export function unwrapParams(params: Params): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(params).map(([key, value]) => {
+      if (key.startsWith("p-z-")) {
+        return [key.slice(4), value];
+      }
+      return [key, value];
+    })
+  );
+}
+
+function extractTextFromLLMContent(content: [LLMContent]): string {
+  const query = content[0]
+  if (!query.parts || query.parts.length === 0) {
+    return "";
+  }
+  if (query.parts.length > 1) {
+    throw new Error("LLMContent contains more than one part.");
+  }
+  const firstPart = query.parts[0];
+  if ("text" in firstPart && typeof firstPart.text === "string") {
+    return firstPart.text;
+  }
+  return "";
+}
+
+
+async function invokeOpalAdk(
   { context, query, summarize, ...params }: ResearcherInputs,
   caps: Capabilities,
   moduleArgs: A2ModuleArgs
 ) {
+  const unwrappedParams = unwrapParams(params);
+  const userQuery = unwrappedParams['ask_user_research_query'] as [LLMContent];
+  if (!userQuery) {
+    return err("No query provided");
+  }
+  console.log("unwrapped params", unwrappedParams);
+  const results = await executeOpalAdkStream(caps, moduleArgs, { "query": extractTextFromLLMContent(userQuery) }, "deep_research");
+  console.log("deep-research results", results)
+  return {
+    context: [...(context || []), results]
+  };
+}
+
+async function invokeLegacy(
+  { context, query, summarize, ...params }: ResearcherInputs,
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
+) {
+  console.log('calling deep research agent.')
   const tools = RESEARCH_TOOLS.map((descriptor) => descriptor.url);
   const toolManager = new ToolManager(
     caps,
@@ -163,6 +210,7 @@ async function invoke(
   if (!ok(substituting)) {
     return substituting;
   }
+
   if (!toolManager.hasTools()) {
     // If no tools supplied (legacy case, actually), initialize
     // with a set of default tools.
@@ -236,6 +284,20 @@ async function invoke(
   return {
     context: [...(context || []), toLLMContent(results.join("\n\n\n"))],
   };
+}
+
+async function invoke(
+  { context, query, summarize, ...params }: ResearcherInputs,
+  caps: Capabilities,
+  moduleArgs: A2ModuleArgs
+) {
+  const flags = await moduleArgs.context.flags?.flags();
+  const opalAdkEnabled = flags?.opalAdk || false;
+  if (opalAdkEnabled) {
+    return invokeOpalAdk({ context, query, summarize, ...params }, caps, moduleArgs);
+  } else {
+    return invokeLegacy({ context, query, summarize, ...params }, caps, moduleArgs);
+  }
 }
 
 type DescribeInputs = {
