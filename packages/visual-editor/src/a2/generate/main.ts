@@ -93,7 +93,7 @@ const MODES: Mode[] = [
       [ASK_USER_PORT, "p-chat"],
       [LIST_PORT, "p-list"],
     ]),
-    makeInstruction: makeTextInstruction,
+    makeInstruction: makeTextInstruction({ pro: false }),
   },
   {
     id: "text",
@@ -110,7 +110,7 @@ const MODES: Mode[] = [
       [ASK_USER_PORT, "p-chat"],
       [LIST_PORT, "p-list"],
     ]),
-    makeInstruction: makeTextInstruction,
+    makeInstruction: makeTextInstruction({ pro: false }),
   },
   {
     id: "text-2.5-pro",
@@ -127,7 +127,7 @@ const MODES: Mode[] = [
       [ASK_USER_PORT, "p-chat"],
       [LIST_PORT, "p-list"],
     ]),
-    makeInstruction: makeTextInstruction,
+    makeInstruction: makeTextInstruction({ pro: true }),
   },
   {
     id: "text-3-pro",
@@ -144,7 +144,7 @@ const MODES: Mode[] = [
       [ASK_USER_PORT, "p-chat"],
       [LIST_PORT, "p-list"],
     ]),
-    makeInstruction: makeTextInstruction,
+    makeInstruction: makeTextInstruction({ pro: true }),
   },
   {
     id: "think",

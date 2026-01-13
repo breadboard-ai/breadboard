@@ -40,7 +40,13 @@ type Inputs = {
   context: SharedContext;
 };
 
-const makeTextInstruction = () => "";
+function makeTextInstruction({ pro }: { pro: boolean }) {
+  if (pro) {
+    return () =>
+      `For this session, the user strongly prefers to use the "pro" model for "generate_text" function.`;
+  }
+  return () => "";
+}
 
 class GenerateText {
   private toolManager!: ToolManager;
