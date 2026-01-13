@@ -272,6 +272,7 @@ export type GeminiOutputs =
   };
 
 const MODELS: readonly string[] = [
+  "gemini-3-flash-preview",
   "gemini-2.5-flash",
   "gemini-2.5-flash-lite",
   "gemini-2.5-pro",
@@ -304,6 +305,8 @@ const MODELS: readonly string[] = [
  */
 const MODEL_FALLBACKS: Record<string, readonly string[]> = {
   "gemini-3-pro": ["gemini-3-flash-preview", "gemini-2.5-pro"],
+  "gemini-2.5-pro": ["gemini-3-flash-preview"],
+  "gemini-3-flash-preview": ["gemini-2.5-flash"],
 };
 
 const NO_RETRY_CODES: readonly number[] = [400, 429, 404, 403];
