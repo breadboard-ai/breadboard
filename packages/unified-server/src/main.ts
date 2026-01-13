@@ -6,6 +6,9 @@
 
 import { createFetchWithCreds, err } from "@breadboard-ai/utils";
 import express, { type Request } from "express";
+import * as fs from "fs";
+import * as https from "https";
+import * as path from "path";
 import { GoogleAuth } from "google-auth-library";
 import ViteExpress from "vite-express";
 import { createClientConfig, createServerConfig } from "./config.js";
@@ -144,7 +147,7 @@ ViteExpress.config({
     const board = req.res?.locals.loadedBoard;
     const displayName = board?.displayName || "Loading ...";
     const serverUrl = new URL(
-      flags.SERVER_URL || `http://localhost:${serverConfig.port}`
+      flags.SERVER_URL || `https://localhost:${serverConfig.port}`
     );
     const clientConfigStr = JSON.stringify(clientConfig).replaceAll(
       "</script>",
@@ -165,7 +168,18 @@ ViteExpress.static({
   enableBrotli: true,
 });
 
-ViteExpress.listen(server, serverConfig.port, () => {
+const key = fs.readFileSync(
+  path.resolve(process.env.HOME!, ".config/dev-certs/localhost-key.pem")
+);
+const cert = fs.readFileSync(
+  path.resolve(process.env.HOME!, ".config/dev-certs/localhost-cert.pem")
+);
+
+const httpsServer = https.createServer({ key, cert }, server);
+
+ViteExpress.bind(server, httpsServer);
+
+httpsServer.listen(serverConfig.port, () => {
   console.log(
     `[unified-server startup] Listening for requests on port ${serverConfig.port}`
   );
