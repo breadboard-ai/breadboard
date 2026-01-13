@@ -147,20 +147,6 @@ const MODES: Mode[] = [
     makeInstruction: makeTextInstruction,
   },
   {
-    id: "agent",
-    type: "agent",
-    url: "embed://a2/agent.bgl.json#module:main",
-    title: "Agent",
-    description: "Iteratively works to solve the stated objective",
-    icon: "spark",
-    modelName: "gemini-pro-latest",
-    showControlFlowTools: true,
-    promptPlaceholderText:
-      "Type your goal here. Use @ to include other content.",
-    portMap: new Map(),
-    makeInstruction: makeTextInstruction,
-  },
-  {
     id: "think",
     type: "think",
     url: "embed://a2/go-over-list.bgl.json#module:main",
@@ -427,10 +413,6 @@ async function describe(
     modeSchema = { ...modeSchema, ...agentSchema.props };
     behavior = [...behavior, ...agentSchema.hints];
   }
-  const agentMode = flags?.agentMode;
-  const filteredModes = MODES.filter(
-    (mode) => agentMode || mode.id !== "agent"
-  );
 
   return {
     title: "Generate",
@@ -446,7 +428,7 @@ async function describe(
         "generation-mode": {
           type: "string",
           title: "Mode",
-          enum: filteredModes,
+          enum: MODES,
           behavior: ["config", "hint-preview", "reactive", "hint-controller"],
         },
         context: {
