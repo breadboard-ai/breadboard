@@ -41,7 +41,7 @@ type AudioGeneratorOutputs = {
 export { invoke as default, describe, callMusicGen, makeMusicInstruction };
 
 function makeMusicInstruction() {
-  return `Generate music using this prompt:`;
+  return `Generate music using the prompt below. Use that prompt exactly.\n\nPROMPT:`;
 }
 
 async function callMusicGen(

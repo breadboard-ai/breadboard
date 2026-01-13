@@ -97,9 +97,9 @@ export {
 function makeVideoInstruction(inputs: Record<string, unknown>) {
   const aspectRatio = (inputs as VideoGeneratorInputs)["p-aspect-ratio"];
   const aspectRatioHint = aspectRatio
-    ? ` Use ${aspectRatio} aspect ratio.`
+    ? ` Use the ${aspectRatio} aspect ratio.`
     : ``;
-  return `Generate a video using the following prompt.${aspectRatioHint}`;
+  return `Generate a video using the following prompt. Use that prompt exactly.${aspectRatioHint}\n\nPROMPT:`;
 }
 
 async function callVideoGen(

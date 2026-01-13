@@ -333,7 +333,13 @@ async function invoke(
   const flags = await readFlags(moduleArgs);
 
   if (flags?.agentMode) {
-    return agent(rest as AgentInputs, caps, moduleArgs);
+    const agentInputs: AgentInputs = {
+      "b-ui-enable": "none",
+      "b-ui-prompt": { parts: [] },
+      ...rest,
+      "b-si-instruction": resolvedMode.makeInstruction(rest),
+    };
+    return agent(agentInputs, caps, moduleArgs);
   } else {
     const { url: $board, type, modelName } = resolvedMode;
     const generateForEach = (flags?.generateForEach && !!useForEach) ?? false;

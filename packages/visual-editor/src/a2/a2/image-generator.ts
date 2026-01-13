@@ -51,7 +51,7 @@ function makeImageInstruction(inputs: Record<string, unknown>) {
   const aspectRatioHint = aspectRatio
     ? ` Provide image in ${aspectRatio} aspect ratio.`
     : ``;
-  return `Generate an image using the prompt below.${aspectRatioHint}`;
+  return `Generate an image using the prompt below. Use that prompt exactly.${aspectRatioHint}\n\nPROMPT:`;
 }
 
 function gatheringRequest(

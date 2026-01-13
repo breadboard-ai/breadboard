@@ -56,7 +56,7 @@ export { invoke as default, describe, makeSpeechInstruction };
 function makeSpeechInstruction(inputs: Record<string, unknown>) {
   const voice = (inputs as AudioGeneratorInputs).voice;
   const voiceHint = voice ? ` Use ${voice} voice.` : ``;
-  return `Generate speech from the text below.${voiceHint}`;
+  return `Generate speech from the text below. Use that prompt exactly.${voiceHint}\n\nPROMPT:`;
 }
 
 async function callAudioGen(

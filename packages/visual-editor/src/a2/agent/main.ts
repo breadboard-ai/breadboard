@@ -25,6 +25,7 @@ export type AgentInputs = {
   config$prompt: LLMContent;
   "b-ui-enable": UIType;
   "b-ui-prompt": LLMContent;
+  "b-si-instruction"?: string;
 } & Params;
 
 type AgentOutputs = {
@@ -98,6 +99,7 @@ async function invoke(
     config$prompt: objective,
     "b-ui-enable": uiType = "none",
     "b-ui-prompt": uiPrompt,
+    "b-si-instruction": extraInstruction,
     ...rest
   }: AgentInputs,
   caps: Capabilities,
@@ -108,7 +110,13 @@ async function invoke(
   );
   uiType = UI_TYPE_VALUES.includes(uiType) ? uiType : "none";
   const loop = new Loop(caps, moduleArgs);
-  const result = await loop.run({ objective, params, uiType, uiPrompt });
+  const result = await loop.run({
+    objective,
+    params,
+    extraInstruction,
+    uiType,
+    uiPrompt,
+  });
   if (!ok(result)) return result;
   console.log("LOOP", result);
   const context: LLMContent[] = [];
