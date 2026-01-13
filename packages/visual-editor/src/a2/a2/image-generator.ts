@@ -46,12 +46,15 @@ type ImageGeneratorOutputs = {
 
 export { invoke as default, describe, makeImageInstruction };
 
-function makeImageInstruction(inputs: Record<string, unknown>) {
-  const aspectRatio = (inputs as ImageGeneratorInputs)["p-aspect-ratio"];
-  const aspectRatioHint = aspectRatio
-    ? ` Provide image in ${aspectRatio} aspect ratio.`
-    : ``;
-  return `Generate an image using the prompt below. Use that prompt exactly.${aspectRatioHint}\n\nPROMPT:`;
+function makeImageInstruction({ pro }: { pro: boolean }) {
+  return (inputs: Record<string, unknown>) => {
+    const proHint = pro ? ` Use the "pro" model for image generation.` : ``;
+    const aspectRatio = (inputs as ImageGeneratorInputs)["p-aspect-ratio"];
+    const aspectRatioHint = aspectRatio
+      ? ` Provide image in ${aspectRatio} aspect ratio.`
+      : ``;
+    return `Generate an image using the prompt below. Use that prompt exactly.${aspectRatioHint}${proHint}\n\nPROMPT:`;
+  };
 }
 
 function gatheringRequest(

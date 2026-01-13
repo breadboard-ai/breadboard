@@ -203,7 +203,7 @@ const MODES: Mode[] = [
       "Type your image prompt here. Use @ to include other content.",
     info: `Image ${LIMIT_MSG}`,
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
-    makeInstruction: makeImageInstruction,
+    makeInstruction: makeImageInstruction({ pro: false }),
   },
   {
     id: "image",
@@ -217,7 +217,7 @@ const MODES: Mode[] = [
       "Type your image prompt here. Use @ to include other content.",
     info: "Image generation has limited free quota",
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
-    makeInstruction: makeImageInstruction,
+    makeInstruction: makeImageInstruction({ pro: false }),
   },
   {
     id: "image-pro",
@@ -231,7 +231,7 @@ const MODES: Mode[] = [
       "Type your image prompt here. Use @ to include other content.",
     info: `Image ${LIMIT_MSG}`,
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
-    makeInstruction: makeImageInstruction,
+    makeInstruction: makeImageInstruction({ pro: true }),
   },
   {
     id: "audio",

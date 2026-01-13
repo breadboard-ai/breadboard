@@ -98,14 +98,18 @@ Here are some possible applications:
 
 - High-Fidelity text rendering: Accurately generate images that contain legible and well-placed text, ideal for logos, diagrams, and posters.
 `),
-          model: z.enum(["pro", "flash"]).describe(tr`
+          model: z
+            .enum(["pro", "flash"])
+            .describe(
+              tr`
 
 The Gemini model to use for image generation. How to choose the right model:
 
 - choose "pro" to accurately generate images that contain legible and well-placed text, ideal for logos, diagrams, and posters. This model is designed for professional asset production and complex instructions
-- choose "flash" for speed and efficiency. This model is optimized for high-volume, low-latency tasks
-
-`),
+- choose "flash" for speed and efficiency. This model is optimized for high-volume, low-latency tasks.
+`
+            )
+            .default("flash"),
           images: z
             .array(
               z.string().describe("An input image, specified as a VS path")
