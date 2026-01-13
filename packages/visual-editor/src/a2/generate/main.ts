@@ -95,6 +95,23 @@ const MODES: Mode[] = [
     makeInstruction: makeTextInstruction({ pro: false }),
   },
   {
+    id: "text-3-flash",
+    type: "text",
+    url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
+    title: "Gemini 3 Flash",
+    description: "Use for everyday tasks",
+    icon: "text_analysis",
+    modelName: "gemini-3-flash-preview",
+    promptPlaceholderText:
+      "Type your prompt here. Use @ to include other content.",
+    portMap: new Map([
+      [PROMPT_PORT, "description"],
+      [ASK_USER_PORT, "p-chat"],
+      [LIST_PORT, "p-list"],
+    ]),
+    makeInstruction: makeTextInstruction({ pro: false }),
+  },
+  {
     id: "text",
     type: "text",
     url: "embed://a2/generate-text.bgl.json#daf082ca-c1aa-4aff-b2c8-abeb984ab66c",
@@ -128,6 +145,7 @@ const MODES: Mode[] = [
     ]),
     makeInstruction: makeTextInstruction({ pro: true }),
   },
+
   {
     id: "text-3-pro",
     type: "text",
