@@ -419,11 +419,12 @@ The following elements should be included in your prompt:
             .array(
               z
                 .string()
-                .describe("An reference input image, specified as a VS path")
+                .describe("A reference input image, specified as a VS path")
             )
             .describe(
-              "A list of input reference images, specified as VFS paths"
-            ),
+              "A list of input reference images, specified as VFS paths. Use reference images only when you need to start with a particular image."
+            )
+            .optional(),
           status_update: z.string().describe(tr`
 A status update to show in the UI that provides more detail on the reason why this function was called.
 
@@ -455,7 +456,7 @@ For example, "Making a marketing video" or "Creating the video concept"`),
         statusUpdateCallback(status_update || "Generating Video", {
           expectedDurationInSec: 70,
         });
-        const imageParts = await fileSystem.getMany(images);
+        const imageParts = await fileSystem.getMany(images || []);
         if (!ok(imageParts)) return { error: imageParts.$error };
 
         const generating = await callVideoGen(
