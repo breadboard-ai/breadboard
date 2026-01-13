@@ -36,6 +36,7 @@ export type AgentRunArgs = {
   params: Params;
   uiType?: UIType;
   uiPrompt?: LLMContent;
+  extraInstruction?: string;
 };
 
 export type AgentRawResult = {
@@ -98,6 +99,7 @@ class Loop {
     params,
     uiPrompt,
     uiType = "none",
+    extraInstruction = "",
   }: AgentRunArgs): Promise<Outcome<AgentResult>> {
     const { caps, moduleArgs, fileSystem, translator, ui, memoryManager } =
       this;
@@ -107,8 +109,12 @@ class Loop {
       const objectivePidgin = await translator.toPidgin(objective, params);
       if (!ok(objectivePidgin)) return objectivePidgin;
 
+      if (extraInstruction) {
+        extraInstruction = `${extraInstruction}\n\n`;
+      }
+
       const contents: LLMContent[] = [
-        llm`<objective>${objectivePidgin.text}</objective>`.asContent(),
+        llm`<objective>${extraInstruction}${objectivePidgin.text}</objective>`.asContent(),
       ];
 
       let terminateLoop = false;

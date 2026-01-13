@@ -19,12 +19,13 @@ import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { Loop } from "./loop.js";
 import { UIType } from "./types.js";
 
-export { invoke as default, describe };
+export { invoke as default, computeAgentSchema, describe };
 
-type AgentInputs = {
+export type AgentInputs = {
   config$prompt: LLMContent;
   "b-ui-enable": UIType;
   "b-ui-prompt": LLMContent;
+  "b-si-instruction"?: string;
 } & Params;
 
 type AgentOutputs = {
@@ -54,11 +55,51 @@ const UI_TYPES = [
 
 const UI_TYPE_VALUES = UI_TYPES.map((type) => type.id);
 
+function computeAgentSchema({
+  "b-ui-enable": enableUI = "none",
+}: Record<string, unknown>) {
+  enableUI = UI_TYPE_VALUES.includes(enableUI as string) ? enableUI : "none";
+  const uiPromptSchema: Schema["properties"] =
+    enableUI === "a2ui"
+      ? {
+          "b-ui-prompt": {
+            type: "object",
+            behavior: ["llm-content", "config", "hint-advanced"],
+            title: "UI Layout instructions",
+            description: "Instructions for UI layout",
+          },
+        }
+      : {};
+  const chatSchema: BehaviorSchema[] =
+    enableUI !== "none" ? ["hint-chat-mode"] : [];
+
+  return {
+    hints: chatSchema,
+    props: {
+      config$prompt: {
+        type: "object",
+        behavior: ["llm-content", "config", "hint-preview"],
+        title: "Objective",
+        description: "The objective for the agent",
+      },
+      "b-ui-enable": {
+        type: "string",
+        enum: UI_TYPES,
+        title: "User interaction",
+        description: "Specifies the type of user interaction",
+        behavior: ["config", "hint-advanced", "reactive"],
+      },
+      ...uiPromptSchema,
+    } as Schema["properties"],
+  };
+}
+
 async function invoke(
   {
     config$prompt: objective,
     "b-ui-enable": uiType = "none",
     "b-ui-prompt": uiPrompt,
+    "b-si-instruction": extraInstruction,
     ...rest
   }: AgentInputs,
   caps: Capabilities,
@@ -69,7 +110,13 @@ async function invoke(
   );
   uiType = UI_TYPE_VALUES.includes(uiType) ? uiType : "none";
   const loop = new Loop(caps, moduleArgs);
-  const result = await loop.run({ objective, params, uiType, uiPrompt });
+  const result = await loop.run({
+    objective,
+    params,
+    extraInstruction,
+    uiType,
+    uiPrompt,
+  });
   if (!ok(result)) return result;
   console.log("LOOP", result);
   const context: LLMContent[] = [];
@@ -84,24 +131,10 @@ async function invoke(
 }
 
 async function describe(
-  {
-    inputs: { config$prompt, "b-ui-enable": enableUI = "none" },
-  }: { inputs: AgentInputs },
+  { inputs: { config$prompt, ...rest } }: { inputs: AgentInputs },
   caps: Capabilities
 ) {
-  const uiPromptSchema: Schema["properties"] =
-    enableUI === "a2ui"
-      ? {
-          "b-ui-prompt": {
-            type: "object",
-            behavior: ["llm-content", "config", "hint-advanced"],
-            title: "UI Layout instructions",
-            description: "Instructions for UI layout",
-          },
-        }
-      : {};
-  const chatSchema: BehaviorSchema[] =
-    enableUI !== "none" ? ["hint-chat-mode"] : [];
+  const uiSchemas = computeAgentSchema(rest);
   const template = new Template(caps, config$prompt);
   return {
     inputSchema: {
@@ -113,23 +146,10 @@ async function describe(
           title: "Context in",
           behavior: ["main-port"],
         },
-        config$prompt: {
-          type: "object",
-          behavior: ["llm-content", "config", "hint-preview"],
-          title: "Objective",
-          description: "The objective for the agent",
-        },
-        "b-ui-enable": {
-          type: "string",
-          enum: UI_TYPES,
-          title: "User interaction",
-          description: "Specifies the type of user interaction",
-          behavior: ["config", "hint-advanced", "reactive"],
-        },
-        ...uiPromptSchema,
+        ...uiSchemas.props,
         ...template.schemas(),
       },
-      behavior: ["at-wireable", ...chatSchema],
+      behavior: ["at-wireable", ...uiSchemas.hints],
       ...template.requireds(),
       additionalProperties: false,
     } satisfies Schema,

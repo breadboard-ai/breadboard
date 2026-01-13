@@ -24,7 +24,7 @@ import {
 import { defaultSystemInstruction } from "../../generate-text/system-instruction.js";
 import { mergeContent, mergeTextParts, toText, tr } from "../../a2/utils.js";
 import { callVideoGen, expandVeoError } from "../../video-generator/main.js";
-import { callAudioGen } from "../../audio-generator/main.js";
+import { callAudioGen, VOICES } from "../../audio-generator/main.js";
 import { callMusicGen } from "../../music-generator/main.js";
 import { PidginTranslator } from "../pidgin-translator.js";
 import { FunctionGroup } from "../types.js";
@@ -98,14 +98,18 @@ Here are some possible applications:
 
 - High-Fidelity text rendering: Accurately generate images that contain legible and well-placed text, ideal for logos, diagrams, and posters.
 `),
-          model: z.enum(["pro", "flash"]).describe(tr`
+          model: z
+            .enum(["pro", "flash"])
+            .describe(
+              tr`
 
 The Gemini model to use for image generation. How to choose the right model:
 
 - choose "pro" to accurately generate images that contain legible and well-placed text, ideal for logos, diagrams, and posters. This model is designed for professional asset production and complex instructions
-- choose "flash" for speed and efficiency. This model is optimized for high-volume, low-latency tasks
-
-`),
+- choose "flash" for speed and efficiency. This model is optimized for high-volume, low-latency tasks.
+`
+            )
+            .default("flash"),
           images: z
             .array(
               z.string().describe("An input image, specified as a VS path")
@@ -487,6 +491,10 @@ For example, "Making a marketing video" or "Creating the video concept"`),
           text: z.string().describe("The verbatim text to turn into speech."),
           status_update: z.string().describe(tr`
 A status update to show in the UI that provides more detail on the reason why this function was called.`),
+          voice: z
+            .enum(VOICES)
+            .default("Female (English)")
+            .describe("The voice to use for speech generation"),
         },
         response: {
           error: z
@@ -501,16 +509,11 @@ A status update to show in the UI that provides more detail on the reason why th
             .optional(),
         },
       },
-      async ({ text, status_update }, statusUpdateCallback) => {
+      async ({ text, status_update, voice }, statusUpdateCallback) => {
         statusUpdateCallback(status_update || "Generating Speech", {
           expectedDurationInSec: 20,
         });
-        const generating = await callAudioGen(
-          caps,
-          moduleArgs,
-          text,
-          "Female (English)" // TODO: Make configurable
-        );
+        const generating = await callAudioGen(caps, moduleArgs, text, voice);
         if (!ok(generating)) return { error: generating.$error };
 
         const dataPart = generating.parts.at(0);
