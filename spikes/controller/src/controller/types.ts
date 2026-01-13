@@ -6,7 +6,7 @@
  */
 
 import type { Signal } from "@lit-labs/signals";
-import type { pending } from "./utils/sentinel";
+import type { pending } from "./utils/sentinel.js";
 import { type BaseBladeParams } from "tweakpane";
 
 export type PrimitiveType =
@@ -29,7 +29,7 @@ export interface Storage {
   delete(name: string): Promise<void>;
 }
 
-export interface HydratedStore {
+export interface HydratedController {
   registerSignalHydration(signal: Signal.State<unknown>): void;
 }
 

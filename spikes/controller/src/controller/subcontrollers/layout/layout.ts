@@ -5,9 +5,9 @@
  */
 
 import { field } from "../../decorators/field.js";
-import { RootStore } from "../root-store.js";
+import { RootController } from "../root-store.js";
 
-export class LayoutController extends RootStore {
+export class LayoutController extends RootController {
   @field({ persist: "session" })
   private accessor _split = 0.5;
 

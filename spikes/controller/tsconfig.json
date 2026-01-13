@@ -1,20 +1,26 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "lib": ["ESNext", "DOM"],
     "allowJs": true,
-    "useDefineForClassFields": false,
     "outDir": "dist",
     "sourceMap": true,
-    "inlineSources": true
+    "inlineSources": true,
+
+    "target": "ES2022",
+    "module": "nodenext",
+    "lib": ["ES2023", "DOM", "DOM.Iterable", "ES2024.Promise"],
+    "skipLibCheck": true,
+    "useDefineForClassFields": false,
+
+    /* Bundler mode */
+    "moduleResolution": "nodenext",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
   },
   "exclude": ["dist"]
 }

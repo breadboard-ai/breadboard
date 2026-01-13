@@ -5,10 +5,10 @@
  */
 
 import { effect } from "signal-utils/subtle/microtask-effect";
-import { Controller } from "../controller/controller";
+import { Controller } from "../controller/controller.js";
 import type { Pane, FolderApi, BaseBladeParams } from "tweakpane";
-import { isHydrating } from "../controller/utils/hydration";
-import { DebugBinding } from "../controller/types";
+import { isHydrating } from "../controller/utils/hydration.js";
+import { DebugBinding } from "../controller/types.js";
 
 /**
  * Global state for the debug interface lifecycle.

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HydratedStore } from "../types.js";
+import { HydratedController } from "../types.js";
 import { pending, PENDING_HYDRATION } from "./sentinel.js";
 
 /**
@@ -14,7 +14,7 @@ export function isHydrating<T>(value: T | pending): value is pending {
   return value === PENDING_HYDRATION;
 }
 
-export function isHydratedStore(v: unknown): v is HydratedStore {
+export function isHydratedStore(v: unknown): v is HydratedController {
   if (typeof v !== "object") return false;
   if (v === null) return false;
   return "registerSignalHydration" in v;

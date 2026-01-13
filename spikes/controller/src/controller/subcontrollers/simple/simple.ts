@@ -7,7 +7,7 @@
 import { debug, debugContainer } from "../../decorators/debug.js";
 import { field } from "../../decorators/field.js";
 import { DebugHost } from "../../types.js";
-import { RootStore } from "../root-store.js";
+import { RootController } from "../root-store.js";
 
 function clamp(v: number, min = 10, max = 90) {
   if (v < min) return min;
@@ -16,7 +16,7 @@ function clamp(v: number, min = 10, max = 90) {
 }
 
 @debugContainer({ path: "Shape" })
-export class SimpleController extends RootStore {
+export class SimpleController extends RootController {
   @field()
   private accessor _text = "";
 

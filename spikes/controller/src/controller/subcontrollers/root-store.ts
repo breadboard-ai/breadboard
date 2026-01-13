@@ -5,12 +5,12 @@
  */
 
 import { Signal } from "@lit-labs/signals";
-import { HydratedStore } from "../types";
+import { HydratedController } from "../types.js";
 import { pending, PENDING_HYDRATION } from "../utils/sentinel.js";
 import { isHydrating } from "../utils/hydration.js";
 import { effect } from "signal-utils/subtle/microtask-effect";
 
-export class RootStore implements HydratedStore {
+export class RootController implements HydratedController {
   #trackedSignals = new Set<Signal.State<unknown>>();
 
   public readonly hydrated = new Signal.Computed<boolean | pending>(() => {
