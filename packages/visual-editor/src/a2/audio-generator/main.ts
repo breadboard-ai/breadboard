@@ -29,7 +29,7 @@ import {
 } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
-export { callAudioGen };
+export { callAudioGen, VOICES };
 
 type AudioGeneratorInputs = {
   context: LLMContent[];
