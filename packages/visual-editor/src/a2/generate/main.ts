@@ -62,7 +62,6 @@ type Mode = {
    * but stop showing it for new values.
    */
   hidden?: boolean;
-  showControlFlowTools?: boolean;
   portMap: Map<string, string>;
   /**
    * The instruction to supply as a hint of user's intention.
