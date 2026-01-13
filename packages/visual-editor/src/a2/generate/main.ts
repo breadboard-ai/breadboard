@@ -394,7 +394,7 @@ async function describe(
   const flags = await readFlags(moduleArgs);
   let generateForEachSchema: Schema["properties"] = {};
   const generateForEachBehavior: BehaviorSchema[] = [];
-  if (flags?.generateForEach) {
+  if (flags?.generateForEach && !flags.agentMode) {
     generateForEachSchema = {
       "p-for-each": {
         type: "boolean",
