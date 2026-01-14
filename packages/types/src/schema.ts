@@ -172,10 +172,6 @@ export type SchemaEnumValue =
        * but stop showing it for new values.
        */
       hidden?: boolean;
-      /**
-       * When true, shows control flow tools.
-       */
-      showControlFlowTools?: boolean;
     };
 
 export type Schema = {

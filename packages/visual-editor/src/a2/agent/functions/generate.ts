@@ -16,15 +16,20 @@ import {
 import { callGeminiImage } from "../../a2/image-utils.js";
 import { A2ModuleArgs } from "../../runnable-module-factory.js";
 import { AgentFileSystem } from "../file-system.js";
-import { defineFunction, FunctionDefinition } from "../function-definition.js";
+import {
+  defineFunction,
+  FunctionDefinition,
+  mapDefinitions,
+} from "../function-definition.js";
 import { defaultSystemInstruction } from "../../generate-text/system-instruction.js";
 import { mergeContent, mergeTextParts, toText, tr } from "../../a2/utils.js";
 import { callVideoGen, expandVeoError } from "../../video-generator/main.js";
-import { callAudioGen } from "../../audio-generator/main.js";
+import { callAudioGen, VOICES } from "../../audio-generator/main.js";
 import { callMusicGen } from "../../music-generator/main.js";
 import { PidginTranslator } from "../pidgin-translator.js";
+import { FunctionGroup } from "../types.js";
 
-export { defineGenerateFunctions };
+export { getGenerateFunctionGroup };
 
 const VIDEO_MODEL_NAME = "veo-3.1-generate-preview";
 const RETRY_SLEEP_MS = 700;
@@ -35,6 +40,28 @@ export type GenerateFunctionArgs = {
   moduleArgs: A2ModuleArgs;
   translator: PidginTranslator;
 };
+
+const GENERATE_TEXT_FUNCTION = "generate_text";
+
+const instruction = tr`
+
+## When to call "${GENERATE_TEXT_FUNCTION}" function
+
+When evaluating the objective, make sure to determine whether calling "${GENERATE_TEXT_FUNCTION}" is warranted. The key tradeoff here is latency: because it's an additional model call, the "generate_text" will take longer to finish.
+
+Your job is to fulfill the objective as efficiently as possible, so weigh the need to invoke "${GENERATE_TEXT_FUNCTION}" carefully.
+
+Here is the rules of thumb:
+
+- For shorter responses like a chat conversation, just do the text generation yourself. You are an LLM and you can do it without calling "${GENERATE_TEXT_FUNCTION}".
+- For longer responses like generating a chapter of a book or analyzing a large and complex set of files, use "${GENERATE_TEXT_FUNCTION}".
+
+
+`;
+
+function getGenerateFunctionGroup(args: GenerateFunctionArgs): FunctionGroup {
+  return { ...mapDefinitions(defineGenerateFunctions(args)), instruction };
+}
 
 function defineGenerateFunctions(
   args: GenerateFunctionArgs
@@ -71,14 +98,18 @@ Here are some possible applications:
 
 - High-Fidelity text rendering: Accurately generate images that contain legible and well-placed text, ideal for logos, diagrams, and posters.
 `),
-          model: z.enum(["pro", "flash"]).describe(tr`
+          model: z
+            .enum(["pro", "flash"])
+            .describe(
+              tr`
 
 The Gemini model to use for image generation. How to choose the right model:
 
 - choose "pro" to accurately generate images that contain legible and well-placed text, ideal for logos, diagrams, and posters. This model is designed for professional asset production and complex instructions
-- choose "flash" for speed and efficiency. This model is optimized for high-volume, low-latency tasks
-
-`),
+- choose "flash" for speed and efficiency. This model is optimized for high-volume, low-latency tasks.
+`
+            )
+            .default("flash"),
           images: z
             .array(
               z.string().describe("An input image, specified as a VS path")
@@ -88,6 +119,10 @@ The Gemini model to use for image generation. How to choose the right model:
 A status update to show in the UI that provides more detail on the reason why this function was called.
 
 For example, "Generating page 4 of the report" or "Combining the images into one"`),
+          aspect_ratio: z
+            .enum(["1:1", "9:16", "16:9", "4:3", "3:4"])
+            .describe(`The aspect ratio for the generated images`)
+            .default("16:9"),
         },
         response: {
           error: z
@@ -105,7 +140,7 @@ For example, "Generating page 4 of the report" or "Combining the images into one
         },
       },
       async (
-        { prompt, images: inputImages, status_update, model },
+        { prompt, images: inputImages, status_update, model, aspect_ratio },
         statusUpdater
       ) => {
         statusUpdater(status_update || "Generating Image(s)", {
@@ -127,7 +162,8 @@ For example, "Generating page 4 of the report" or "Combining the images into one
           modelName,
           prompt,
           imageParts.map((part) => ({ parts: [part] })),
-          true
+          true,
+          aspect_ratio
         );
         if (!ok(generated)) return generated;
         const errors: string[] = [];
@@ -148,7 +184,7 @@ For example, "Generating page 4 of the report" or "Combining the images into one
     ),
     defineFunction(
       {
-        name: "generate_text",
+        name: GENERATE_TEXT_FUNCTION,
         description: `
 An extremely versatile text generator, powered by Gemini. Use it for any tasks
 that involve generation of text. Supports multimodal content input.`.trim(),
@@ -210,6 +246,23 @@ capabilities of Gemini with the rich, factual, and up-to-date data of Google
 Maps`
             )
             .optional(),
+          url_context: z
+            .boolean()
+            .describe(
+              tr`
+
+Set to true to allow Gemini to retrieve context from URLs. Useful for tasks like the following:
+
+- Extract Data: Pull specific info like prices, names, or key findings from multiple URLs.
+- Compare Documents: Using URLs, analyze multiple reports, articles, or PDFs to identify differences and track trends.
+- Synthesize & Create Content: Combine information from several source URLs to generate accurate summaries, blog posts, or reports.
+- Analyze Code & Docs: Point to a GitHub repository or technical documentation URL to explain code, generate setup instructions, or answer questions.
+
+Specify URLs in the prompt.
+
+`
+            )
+            .optional(),
           status_update: z.string().describe(tr`
 A status update to show in the UI that provides more detail on the reason why this function was called.
 
@@ -244,6 +297,7 @@ provided when the "output_format" is set to "text"`
           model,
           search_grounding,
           maps_grounding,
+          url_context,
           project_path,
           output_format,
           status_update,
@@ -274,13 +328,13 @@ provided when the "output_format" is set to "text"`
         if (maps_grounding) {
           tools.push({ googleMaps: {} });
         }
+        if (url_context) {
+          tools.push({ urlContext: {} });
+        }
         let thinkingConfig: GenerationConfig = {};
         if (model === "pro") {
           thinkingConfig = {
-            thinkingConfig: {
-              thinkingBudget: -1,
-              includeThoughts: true,
-            },
+            thinkingConfig: { includeThoughts: true, thinkingLevel: "high" },
           };
         }
         if (tools.length === 0) tools = undefined;
@@ -360,8 +414,17 @@ The following elements should be included in your prompt:
 - Composition: [Optional] How the shot is framed, such as wide shot, close-up, single-shot or two-shot.
 - Focus and lens effects: [Optional] Use terms like shallow focus, deep focus, soft focus, macro lens, and wide-angle lens to achieve specific visual effects.
 - Ambiance: [Optional] How the color and light contribute to the scene, such as blue tones, night, or warm tones.
-
 `),
+          images: z
+            .array(
+              z
+                .string()
+                .describe("A reference input image, specified as a VS path")
+            )
+            .describe(
+              "A list of input reference images, specified as VFS paths. Use reference images only when you need to start with a particular image."
+            )
+            .optional(),
           status_update: z.string().describe(tr`
 A status update to show in the UI that provides more detail on the reason why this function was called.
 
@@ -384,17 +447,23 @@ For example, "Making a marketing video" or "Creating the video concept"`),
             .optional(),
         },
       },
-      async ({ prompt, status_update, aspect_ratio }, statusUpdateCallback) => {
+      async (
+        { prompt, status_update, aspect_ratio, images },
+        statusUpdateCallback
+      ) => {
         console.log("PROMPT", prompt);
         console.log("ASPECT RATIO", aspect_ratio);
         statusUpdateCallback(status_update || "Generating Video", {
           expectedDurationInSec: 70,
         });
+        const imageParts = await fileSystem.getMany(images || []);
+        if (!ok(imageParts)) return { error: imageParts.$error };
+
         const generating = await callVideoGen(
           caps,
           moduleArgs,
           prompt,
-          [],
+          imageParts.map((part) => ({ parts: [part] })),
           false,
           aspect_ratio ?? "16:9",
           VIDEO_MODEL_NAME
@@ -423,6 +492,10 @@ For example, "Making a marketing video" or "Creating the video concept"`),
           text: z.string().describe("The verbatim text to turn into speech."),
           status_update: z.string().describe(tr`
 A status update to show in the UI that provides more detail on the reason why this function was called.`),
+          voice: z
+            .enum(VOICES)
+            .default("Female (English)")
+            .describe("The voice to use for speech generation"),
         },
         response: {
           error: z
@@ -437,16 +510,11 @@ A status update to show in the UI that provides more detail on the reason why th
             .optional(),
         },
       },
-      async ({ text, status_update }, statusUpdateCallback) => {
+      async ({ text, status_update, voice }, statusUpdateCallback) => {
         statusUpdateCallback(status_update || "Generating Speech", {
           expectedDurationInSec: 20,
         });
-        const generating = await callAudioGen(
-          caps,
-          moduleArgs,
-          text,
-          "Female (English)" // TODO: Make configurable
-        );
+        const generating = await callAudioGen(caps, moduleArgs, text, voice);
         if (!ok(generating)) return { error: generating.$error };
 
         const dataPart = generating.parts.at(0);
@@ -569,6 +637,8 @@ xlrd
 Code execution works best with text and CSV files.
 
 If the code environment generates an error, the model may decide to regenerate the code output. This can happen up to 5 times.
+
+NOTE: The Python code execution environment has no access to the virtual file system (VFS), so don't use it to access or manipulate the VFS files.
 
         `,
         parameters: {

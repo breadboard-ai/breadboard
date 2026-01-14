@@ -15,7 +15,11 @@ import { ToolManager } from "../a2/tool-manager.js";
 import { addUserTurn, err, llm, ok, toLLMContent } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 
-export { invoke as default, describe };
+export { invoke as default, describe, makeDeepResearchInstruction };
+
+function makeDeepResearchInstruction() {
+  return "Do deep, iterative research to fulfill the following objective:";
+}
 
 export type ResearcherInputs = {
   context?: LLMContent[];

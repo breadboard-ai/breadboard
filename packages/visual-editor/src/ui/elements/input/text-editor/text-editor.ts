@@ -150,9 +150,6 @@ export class TextEditor extends LitElement {
   accessor supportsFastAccess = true;
 
   @property()
-  accessor showControlFlowTools = false;
-
-  @property()
   accessor nodeId: string | null = null;
 
   @property()
@@ -1030,15 +1027,15 @@ export class TextEditor extends LitElement {
       this.#fastAccessRef.value.focusFilter();
     });
 
-    this.#fastAccessRef.value.selectedIndex = 0;
-    this.#fastAccessRef.value.showAssets = this.#fastAccessTarget === null;
-    this.#fastAccessRef.value.showTools = this.#fastAccessTarget === null;
-    this.#fastAccessRef.value.showComponents = this.#fastAccessTarget === null;
-    this.#fastAccessRef.value.showRoutes = this.#fastAccessTarget !== null;
-    this.#fastAccessRef.value.showParameters = false;
-    this.#fastAccessRef.value.showControlFlowTools =
-      this.showControlFlowTools && this.#fastAccessTarget === null;
+    const hasTarget = this.#fastAccessTarget !== null;
 
+    this.#fastAccessRef.value.selectedIndex = 0;
+    this.#fastAccessRef.value.showAssets = !hasTarget;
+    this.#fastAccessRef.value.showTools = !hasTarget;
+    this.#fastAccessRef.value.showComponents = !hasTarget;
+    this.#fastAccessRef.value.showRoutes = hasTarget;
+    this.#fastAccessRef.value.showParameters = false;
+    this.#fastAccessRef.value.showControlFlowTools = !hasTarget;
     this.#isUsingFastAccess = true;
   }
 
@@ -1210,8 +1207,7 @@ export class TextEditor extends LitElement {
         }}
         .graphId=${this.subGraphId}
         .nodeId=${this.nodeId}
-        .showControlFlowTools=${this.showControlFlowTools &&
-        this.#fastAccessTarget === null}
+        .showControlFlowTools=${this.#fastAccessTarget === null}
         .showAssets=${this.#fastAccessTarget === null}
         .showTools=${this.#fastAccessTarget === null}
         .state=${this.projectState?.stepEditor.fastAccess}
