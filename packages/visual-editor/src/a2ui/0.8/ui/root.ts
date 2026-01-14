@@ -30,7 +30,7 @@ import { map } from "lit/directives/map.js";
 import { effect } from "signal-utils/subtle/microtask-effect";
 import { A2UIModelProcessor } from "../data/model-processor.js";
 import { StringValue } from "../types/primitives.js";
-import { AnyComponentNode, SurfaceID } from "../types/types.js";
+import { AnyComponentNode, CustomNode, SurfaceID } from "../types/types.js";
 import { Theme } from "../types/types.js";
 import { themeContext } from "./context/theme.js";
 import { structuralStyles } from "./styles.js";
@@ -462,7 +462,7 @@ export class Root extends SignalWatcher(LitElement) {
             return;
           }
 
-          const node = component as AnyComponentNode;
+          const node = component as CustomNode;
           const elCtor = customElements.get(component.type);
           if (!elCtor) {
             return html`Unknown element ${component.type}`;
@@ -473,11 +473,19 @@ export class Root extends SignalWatcher(LitElement) {
           if (node.slotName) {
             el.slot = node.slotName;
           }
+          let childComponents: AnyComponentNode[] | null = node.properties
+            .children as AnyComponentNode[] | null;
+          if (!childComponents && node.properties.child) {
+            childComponents = [node.properties.child as AnyComponentNode];
+          }
+
           el.component = node;
           el.weight = node.weight ?? "initial";
           el.processor = this.processor;
           el.surfaceId = this.surfaceId;
           el.dataContextPath = node.dataContextPath ?? "/";
+          el.childComponents = childComponents;
+          el.enableCustomElements = this.enableCustomElements;
 
           for (const [prop, val] of Object.entries(component.properties)) {
             // @ts-expect-error We're off the books.

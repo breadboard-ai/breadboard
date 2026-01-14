@@ -50,7 +50,7 @@ export class Image extends Root {
       img {
         display: block;
         width: 100%;
-        height: 100%;
+        height: auto;
       }
     `,
   ];
@@ -92,7 +92,7 @@ export class Image extends Root {
       }
     }
 
-    return html``;
+    return html`Unable to render image`;
   }
 
   render() {

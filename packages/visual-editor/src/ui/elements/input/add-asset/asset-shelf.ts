@@ -193,6 +193,8 @@ export class AssetShelf extends LitElement {
             assetTypeLabel = "CSV";
             value = html`<div class="csv"></div>`;
           } else if (part.inlineData.mimeType.startsWith("text")) {
+            assetIcon = "text_fields";
+            assetTypeLabel = "Text";
             value = html`<div class="text"></div>`;
           } else if (part.inlineData.mimeType.startsWith("video")) {
             assetIcon = "movie";

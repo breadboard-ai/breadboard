@@ -36,6 +36,12 @@ export type AddFilesToProjectResult = {
   error?: string;
 };
 
+export type SystemFileGetter = () => Outcome<string>;
+
+export type AgentFileSystemArgs = {
+  memoryManager: MemoryManager | null;
+};
+
 class AgentFileSystem {
   #fileCount = 0;
 
@@ -48,7 +54,16 @@ class AgentFileSystem {
     ["/", "/"],
   ]);
 
-  constructor(private readonly memoryManager: MemoryManager | null) {}
+  private readonly memoryManager: MemoryManager | null;
+  private readonly systemFiles: Map<string, SystemFileGetter> = new Map();
+
+  constructor(args: AgentFileSystemArgs) {
+    this.memoryManager = args.memoryManager;
+  }
+
+  addSystemFile(path: string, getter: SystemFileGetter) {
+    this.systemFiles.set(path, getter);
+  }
 
   write(name: string, data: string, mimeType: string): string {
     const path = this.#createNamed(name, mimeType);
@@ -86,6 +101,14 @@ class AgentFileSystem {
       case "text":
         return undefined;
     }
+  }
+
+  #getSystemFile(path: string): Outcome<DataPart[]> {
+    const getter = this.systemFiles?.get(path);
+    if (!getter) return err(`File ${path} was not found`);
+    const text = getter();
+    if (!ok(text)) return text;
+    return [{ text }];
   }
 
   #getFile(path: string): Outcome<DataPart> {
@@ -187,15 +210,32 @@ class AgentFileSystem {
     if (path.startsWith("vfs/")) {
       path = `/${path}`;
     }
-    if (path.startsWith("/vfs/projects")) {
+    if (path.startsWith("/vfs/system/")) {
+      return this.#getSystemFile(path);
+    }
+    if (path.startsWith("/vfs/projects/")) {
       return this.#getProjectFiles(path);
     }
-    if (path.startsWith("/vfs/memory")) {
+    if (path.startsWith("/vfs/memory/")) {
       return this.#getMemoryFile(path);
     }
     const file = this.#getFile(path);
     if (!ok(file)) return file;
     return [file];
+  }
+
+  async listFiles(): Promise<string> {
+    const files = [...this.#files.keys()];
+    const projects = [...this.#projects.keys()];
+    const system = [...this.systemFiles.keys()];
+    const memory = [];
+    const memoryMetadata = await this.memoryManager?.getSheetMetadata();
+    if (memoryMetadata && ok(memoryMetadata)) {
+      memory.push(
+        ...memoryMetadata.sheets.map((sheet) => `/vfs/memory/${sheet.name}`)
+      );
+    }
+    return [...files, ...system, ...memory, ...projects].join("\n");
   }
 
   createProject(name: string): string {
