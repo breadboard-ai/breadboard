@@ -36,8 +36,11 @@ export type AddFilesToProjectResult = {
   error?: string;
 };
 
+export type SystemFileGetter = () => Outcome<string>;
+
 export type AgentFileSystemArgs = {
   memoryManager: MemoryManager | null;
+  systemFiles?: ReadonlyMap<string, SystemFileGetter>;
 };
 
 class AgentFileSystem {
@@ -53,9 +56,13 @@ class AgentFileSystem {
   ]);
 
   private readonly memoryManager: MemoryManager | null;
+  private readonly systemFiles:
+    | ReadonlyMap<string, SystemFileGetter>
+    | undefined;
 
   constructor(args: AgentFileSystemArgs) {
     this.memoryManager = args.memoryManager;
+    this.systemFiles = args.systemFiles;
   }
 
   write(name: string, data: string, mimeType: string): string {
@@ -94,6 +101,14 @@ class AgentFileSystem {
       case "text":
         return undefined;
     }
+  }
+
+  #getSystemFile(path: string): Outcome<DataPart[]> {
+    const getter = this.systemFiles?.get(path);
+    if (!getter) return err(`File ${path} was not found`);
+    const text = getter();
+    if (!ok(text)) return text;
+    return [{ text }];
   }
 
   #getFile(path: string): Outcome<DataPart> {
@@ -195,7 +210,10 @@ class AgentFileSystem {
     if (path.startsWith("vfs/")) {
       path = `/${path}`;
     }
-    if (path.startsWith("/vfs/projects")) {
+    if (path.startsWith("/vfs/system/")) {
+      return this.#getSystemFile(path);
+    }
+    if (path.startsWith("/vfs/projects/")) {
       return this.#getProjectFiles(path);
     }
     if (path.startsWith("/vfs/memory/")) {
