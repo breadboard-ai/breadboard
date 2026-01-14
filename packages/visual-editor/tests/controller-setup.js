@@ -31,6 +31,3 @@ globalThis.IDBObjectStore = IDBObjectStore;
 // Add Storage mocks
 globalThis.localStorage = new LocalStorage("./test-storage/local-storage");
 globalThis.sessionStorage = new LocalStorage("./test-storage/session-storage");
-
-globalThis.localStorage.clear();
-globalThis.sessionStorage.clear();
