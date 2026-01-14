@@ -524,7 +524,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     if (nodeState === "interrupted") {
       // When the input is in the "interrupted" state, we just resume running
       // and let the input-bubbling machinery handle the abort signals.
-      this.runner?.run({});
+      this.runner?.resumeWithInputs({});
       return;
     }
 

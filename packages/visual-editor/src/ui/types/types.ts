@@ -427,10 +427,6 @@ export type EnumValue = {
    * Currently used to provide proactive quota notification.
    */
   info?: string;
-  /**
-   * When true, shows control flow tools.
-   */
-  showControlFlowTools?: boolean;
 };
 
 export enum SnackType {

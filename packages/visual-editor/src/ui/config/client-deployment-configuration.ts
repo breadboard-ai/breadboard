@@ -28,6 +28,7 @@ const DEFAULT_FLAG_VALUES: RuntimeFlags = {
   requireConsentForOpenWebpage: false,
   streamPlanner: false,
   streamGenWebpage: false,
+  enableDrivePickerInLiteMode: false,
 };
 
 function populateFlags<T extends Partial<ClientDeploymentConfiguration>>(

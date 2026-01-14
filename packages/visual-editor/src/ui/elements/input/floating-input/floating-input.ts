@@ -289,6 +289,7 @@ export class FloatingInput extends LitElement {
         case "upload": {
           supportedActions.allowAddAssets = true;
           supportedActions.actions.upload = true;
+          supportedActions.actions.gdrive = true;
           return supportedActions;
         }
 
@@ -502,7 +503,8 @@ export class FloatingInput extends LitElement {
 
   render() {
     let inputContents: HTMLTemplateResult | symbol = nothing;
-    const showGDrive = !parsedUrl.lite;
+    const showGDrive =
+      !parsedUrl.lite || !!this.#uiState.flags?.enableDrivePickerInLiteMode;
     if (this.schema) {
       const props = Object.entries(this.schema.properties ?? {});
       const supportedActions = this.#determineSupportedActions(props);

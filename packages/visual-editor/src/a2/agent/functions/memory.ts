@@ -9,17 +9,15 @@ import z from "zod";
 import { llm, ok, toText, tr } from "../../a2/utils.js";
 import { SheetManager } from "../../google-drive/sheet-manager.js";
 import { AgentFileSystem } from "../file-system.js";
-import { defineFunction, FunctionDefinition } from "../function-definition.js";
+import {
+  defineFunction,
+  FunctionDefinition,
+  mapDefinitions,
+} from "../function-definition.js";
 import { PidginTranslator } from "../pidgin-translator.js";
+import { FunctionGroup } from "../types.js";
 
-export {
-  defineMemoryFunctions,
-  MEMORY_CREATE_SHEET_FUNCTION,
-  MEMORY_DELETE_SHEET_FUNCTION,
-  MEMORY_GET_METADATA_FUNCTION,
-  MEMORY_READ_SHEET_FUNCTION,
-  MEMORY_UPDATE_SHEET_FUNCTION,
-};
+export { getMemoryFunctionGroup };
 
 const MEMORY_CREATE_SHEET_FUNCTION = "memory_create_sheet";
 const MEMORY_READ_SHEET_FUNCTION = "memory_read_sheet";
@@ -32,6 +30,29 @@ export type MemoryFunctionArgs = {
   fileSystem: AgentFileSystem;
   memoryManager: SheetManager;
 };
+
+const instruction = tr`
+
+## Using memory
+
+You have access to persistent memory that allows you to recall and remember data across multiple sessions.
+
+The memory is stored in a single Google Spreadsheet. 
+
+You can create new sheets within this spreadsheet using "${MEMORY_CREATE_SHEET_FUNCTION}" function and delete existing sheets with the "${MEMORY_DELETE_SHEET_FUNCTION}" function. You can also get the list of existing sheets with the "${MEMORY_GET_METADATA_FUNCTION}" function.
+
+To recall, use either the "${MEMORY_READ_SHEET_FUNCTION}" function with the standard Google Sheets ranges or read the entire sheet as a VFS file using the "/vfs/memory/sheet_name" path.
+
+To remember, use the "${MEMORY_UPDATE_SHEET_FUNCTION}" function.
+
+`;
+
+function getMemoryFunctionGroup(args: MemoryFunctionArgs): FunctionGroup {
+  return {
+    ...mapDefinitions(defineMemoryFunctions(args)),
+    instruction,
+  };
+}
 
 function defineMemoryFunctions(args: MemoryFunctionArgs): FunctionDefinition[] {
   const { translator, fileSystem, memoryManager } = args;
@@ -125,7 +146,7 @@ The Google Sheets range which must include the name of the sheet
             z.array(
               z.string().describe(
                 tr`
-The data to write, may include references to VFS files. For instance, if you have an existing file at "/vfs/text3.md", you can reference it as <file src="/vfs/text3.md" /> in the prompt. `
+The data to write, may include references to VFS files. For instance, if you have an existing file at "/vfs/text3.md", you can reference it as <file src="/vfs/text3.md" /> in the in data. At update time, the tag will be replaced with the file contents.`
               )
             )
           ).describe(tr`
