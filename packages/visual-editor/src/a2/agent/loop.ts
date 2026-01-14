@@ -25,7 +25,7 @@ import { getMemoryFunctionGroup } from "./functions/memory.js";
 import { SheetManager } from "../google-drive/sheet-manager.js";
 import { memorySheetGetter } from "../google-drive/memory-sheet-getter.js";
 import { FunctionGroup, UIType } from "./types.js";
-import { getChatFunctionGroup } from "./functions/chat.js";
+import { CHAT_LOG_VFS_PATH, getChatFunctionGroup } from "./functions/chat.js";
 import { getA2UIFunctionGroup } from "./functions/a2ui.js";
 import { getNoUiFunctionGroup } from "./functions/no-ui.js";
 
@@ -89,7 +89,9 @@ class Loop {
       moduleArgs,
       memorySheetGetter(moduleArgs)
     );
-    this.fileSystem = new AgentFileSystem(this.memoryManager);
+    this.fileSystem = new AgentFileSystem({
+      memoryManager: this.memoryManager,
+    });
     this.translator = new PidginTranslator(caps, moduleArgs, this.fileSystem);
     this.ui = new AgentUI(caps, moduleArgs, this.translator);
   }
@@ -185,6 +187,9 @@ class Loop {
         if (!ok(a2uiFunctionGroup)) return a2uiFunctionGroup;
         functionGroups.push(a2uiFunctionGroup);
       } else if (uiType === "chat") {
+        fileSystem.addSystemFile(CHAT_LOG_VFS_PATH, () =>
+          JSON.stringify(ui.chatLog)
+        );
         functionGroups.push(
           getChatFunctionGroup({ chatManager: ui, translator })
         );

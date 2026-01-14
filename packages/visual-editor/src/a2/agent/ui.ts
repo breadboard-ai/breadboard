@@ -9,6 +9,8 @@ import {
   AppScreenOutput,
   Capabilities,
   ConsoleEntry,
+  DeepReadonly,
+  LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
 import { err, ok } from "@breadboard-ai/utils";
@@ -64,6 +66,8 @@ class AgentUI implements A2UIRenderer, ChatManager {
   readonly #appScreen: AppScreen | undefined;
   #appScreenOutput: AppScreenOutput | undefined;
 
+  readonly #chatLog: LLMContent[] = [];
+
   constructor(
     private readonly caps: Capabilities,
     private readonly moduleArgs: A2ModuleArgs,
@@ -118,6 +122,10 @@ class AgentUI implements A2UIRenderer, ChatManager {
     return this.#outputWorkItem;
   }
 
+  get chatLog(): DeepReadonly<LLMContent[]> {
+    return this.#chatLog;
+  }
+
   async chat(
     pidginString: string,
     inputType: string
@@ -129,6 +137,7 @@ class AgentUI implements A2UIRenderer, ChatManager {
       : "any";
     const message = await this.translator.fromPidginString(pidginString);
     if (!ok(message)) return message;
+    this.#chatLog.push({ ...message, role: "model" });
     await this.caps.output({
       schema: {
         properties: { message: { type: "object", behavior: ["llm-content"] } },
@@ -146,6 +155,8 @@ class AgentUI implements A2UIRenderer, ChatManager {
         },
       },
     })) as Outcome<ChatResponse>;
+    if (!ok(response)) return response;
+    this.#chatLog.push({ ...response.input, role: "user" });
     return response;
   }
 
