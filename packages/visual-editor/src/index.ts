@@ -529,7 +529,6 @@ class Main extends MainBase {
         });
         const homepage: MakeUrlInit = {
           page: "home",
-          mode: this.uiState.mode,
           dev: parsedUrl.dev,
           guestPrefixed: true,
         };
