@@ -15,9 +15,10 @@ import {
 import { ChatManager, FunctionGroup, VALID_INPUT_TYPES } from "../types.js";
 import { PidginTranslator } from "../pidgin-translator.js";
 
-export { getChatFunctionGroup };
+export { getChatFunctionGroup, CHAT_LOG_VFS_PATH };
 
 const CHAT_REQUEST_USER_INPUT = "chat_request_user_input";
+const CHAT_LOG_VFS_PATH = "/vfs/system/chat_log.json";
 
 export type ChatFunctionsArgs = {
   chatManager: ChatManager;
@@ -30,7 +31,7 @@ const instruction = tr`
 
 Use the "${CHAT_REQUEST_USER_INPUT}" function to interact with the user via a chat-like UI. Every function call is equivalent to a full conversation turn: your request, then user's input.
 
-The chat log is maintained automatically at the VFS file "/vfs/system/chat_log.json".
+The chat log is maintained automatically at the VFS file "${CHAT_LOG_VFS_PATH}".
 
 Structure the requests to anticipate user's answers and minimize the amount of typing they need to do. If appropriate, offer choices, so that the user can just enter the letter and/or number of the choices.
 
