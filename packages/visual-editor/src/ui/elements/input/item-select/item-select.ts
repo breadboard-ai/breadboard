@@ -261,6 +261,7 @@ export class ItemSelect extends LitElement {
       :host([alignment="bottom"]) #item-selector {
         top: var(--top);
         bottom: auto;
+        max-height: calc(100vh - var(--top));
       }
     `,
   ];

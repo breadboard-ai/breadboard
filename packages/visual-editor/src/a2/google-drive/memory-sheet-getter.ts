@@ -13,7 +13,7 @@ import { create, setSpreadsheetValues, updateSpreadsheet } from "./api.js";
 export { memorySheetGetter };
 
 function memorySheetGetter(moduleArgs: A2ModuleArgs): SheetGetter {
-  return async () => {
+  return async (readonly: boolean) => {
     const { url, title } = moduleArgs.context.currentGraph || {};
     const graphId = url?.replace("drive:/", "") || "";
     const name = `Memory for ${title ?? graphId}`;
@@ -26,6 +26,7 @@ function memorySheetGetter(moduleArgs: A2ModuleArgs): SheetGetter {
     if (!findFile.ok) return err(findFile.error);
     const fileId = findFile.id;
     if (fileId) return fileId;
+    if (readonly) return null;
 
     const fileKey = `sheet${graphId}${graphId}`;
     const createdFile = await create(moduleArgs, {

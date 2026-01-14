@@ -16,7 +16,6 @@ import { v0_8 } from "../../../../a2ui/index.js";
 import * as A2UI from "../../../../a2ui/0.8/ui/ui.js";
 import { theme as uiTheme } from "../../../a2ui-theme/a2ui-theme.js";
 
-import { baseColors } from "../../../styles/host/base-colors.js";
 import { type } from "../../../styles/host/type.js";
 import { icons } from "../../../styles/icons.js";
 import { sharedStyles } from "./shared-styles.js";
@@ -35,7 +34,6 @@ export class A2UIClientView extends SignalWatcher(LitElement) {
   static styles = [
     icons,
     sharedStyles,
-    baseColors,
     type,
     css`
       :host {
@@ -55,6 +53,7 @@ export class A2UIClientView extends SignalWatcher(LitElement) {
           .surfaceId=${surfaceId}
           .surface=${surface}
           .processor=${this.processor}
+          .enableCustomElements=${true}
           @a2uiaction=${async (evt: v0_8.Events.StateEvent<"a2ui.action">) => {
             const [target] = evt.composedPath();
             if (!(target instanceof HTMLElement)) {
