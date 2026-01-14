@@ -30,6 +30,8 @@ const instruction = tr`
 
 Use the "${CHAT_REQUEST_USER_INPUT}" function to interact with the user via a chat-like UI. Every function call is equivalent to a full conversation turn: your request, then user's input.
 
+The chat log is maintained automatically at the VFS file "/vfs/system/chat_log.json".
+
 Structure the requests to anticipate user's answers and minimize the amount of typing they need to do. If appropriate, offer choices, so that the user can just enter the letter and/or number of the choices.
 
 If the user input requires multiple entries, split the conversation into multiple turns. For example, if you have three questions to ask, ask them over three full conversation turns (three calls to "${CHAT_REQUEST_USER_INPUT}" function) rather than in one call.

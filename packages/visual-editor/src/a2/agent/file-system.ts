@@ -40,7 +40,6 @@ export type SystemFileGetter = () => Outcome<string>;
 
 export type AgentFileSystemArgs = {
   memoryManager: MemoryManager | null;
-  systemFiles?: ReadonlyMap<string, SystemFileGetter>;
 };
 
 class AgentFileSystem {
@@ -56,13 +55,14 @@ class AgentFileSystem {
   ]);
 
   private readonly memoryManager: MemoryManager | null;
-  private readonly systemFiles:
-    | ReadonlyMap<string, SystemFileGetter>
-    | undefined;
+  private readonly systemFiles: Map<string, SystemFileGetter> = new Map();
 
   constructor(args: AgentFileSystemArgs) {
     this.memoryManager = args.memoryManager;
-    this.systemFiles = args.systemFiles;
+  }
+
+  addSystemFile(path: string, getter: SystemFileGetter) {
+    this.systemFiles.set(path, getter);
   }
 
   write(name: string, data: string, mimeType: string): string {
@@ -227,6 +227,7 @@ class AgentFileSystem {
   async listFiles(): Promise<string> {
     const files = [...this.#files.keys()];
     const projects = [...this.#projects.keys()];
+    const system = [...this.systemFiles.keys()];
     const memory = [];
     const memoryMetadata = await this.memoryManager?.getSheetMetadata();
     if (memoryMetadata && ok(memoryMetadata)) {
@@ -234,7 +235,7 @@ class AgentFileSystem {
         ...memoryMetadata.sheets.map((sheet) => `/vfs/memory/${sheet.name}`)
       );
     }
-    return [...files, ...memory, ...projects].join("\n");
+    return [...files, ...system, ...memory, ...projects].join("\n");
   }
 
   createProject(name: string): string {

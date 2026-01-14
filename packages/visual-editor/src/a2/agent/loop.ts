@@ -187,6 +187,9 @@ class Loop {
         if (!ok(a2uiFunctionGroup)) return a2uiFunctionGroup;
         functionGroups.push(a2uiFunctionGroup);
       } else if (uiType === "chat") {
+        fileSystem.addSystemFile("/vfs/system/chat_log.json", () =>
+          JSON.stringify(ui.chatLog)
+        );
         functionGroups.push(
           getChatFunctionGroup({ chatManager: ui, translator })
         );

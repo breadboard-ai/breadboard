@@ -14,8 +14,8 @@ describe("Agent File System", () => {
   it("handles existing system files", async () => {
     const fileSystem = new AgentFileSystem({
       memoryManager: stubMemoryManager,
-      systemFiles: new Map([["/vfs/system/foo", () => "foo"]]),
     });
+    fileSystem.addSystemFile("/vfs/system/foo", () => "foo");
     const file = await fileSystem.get("/vfs/system/foo");
     if (!ok(file)) {
       fail(file.$error);
@@ -26,8 +26,8 @@ describe("Agent File System", () => {
   it("handles non-existing system files", async () => {
     const fileSystem = new AgentFileSystem({
       memoryManager: stubMemoryManager,
-      systemFiles: new Map([["/vfs/system/foo", () => "foo"]]),
     });
+    fileSystem.addSystemFile("/vfs/system/foo", () => "foo");
     const file = await fileSystem.get("/vfs/system/bar");
     if (!ok(file)) {
       success(file.$error);
@@ -39,8 +39,8 @@ describe("Agent File System", () => {
   it("handles failure to get a system file", async () => {
     const fileSystem = new AgentFileSystem({
       memoryManager: stubMemoryManager,
-      systemFiles: new Map([["/vfs/system/foo", () => err("Sorry")]]),
     });
+    fileSystem.addSystemFile("/vfs/system/foo", () => err("Sorry"));
     const file = await fileSystem.get("/vfs/system/foo");
     if (!ok(file)) {
       success(file.$error);
