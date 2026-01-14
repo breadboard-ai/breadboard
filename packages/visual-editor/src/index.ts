@@ -19,6 +19,9 @@ import { makeUrl, parseUrl } from "./ui/utils/urls.js";
 import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { MakeUrlInit } from "./ui/types/types.js";
 
+// Build constant.
+declare const ENABLE_DEBUG_TOOLING: boolean;
+
 const Strings = BreadboardUI.Strings.forSection("Global");
 const parsedUrl = parseUrl(window.location.href);
 
@@ -189,8 +192,24 @@ class Main extends MainBase {
         this.renderSnackbar(),
         this.#renderFeedbackPanel(),
         this.renderConsentRequests(),
+        this.#maybeRenderDebugPanel(),
       ]}
     </div>`;
+  }
+
+  #maybeRenderDebugPanel() {
+    if (typeof ENABLE_DEBUG_TOOLING !== "undefined" && !ENABLE_DEBUG_TOOLING) {
+      return nothing;
+    }
+
+    // TODO: Reenable this.
+    // if (this.appController.debug.enabled) {
+    //   addDebugPanel(this.appController);
+    // } else {
+    //   removeDebugPanel();
+    // }
+
+    return nothing;
   }
 
   #renderWelcomePanel() {

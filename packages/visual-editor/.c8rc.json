@@ -1,6 +1,7 @@
 {
+  "all": false,
   "src": ["src"],
-  "exclude": ["**/*.test.ts", "**/tests/**", "**"],
+  "exclude": ["**/*.test.ts", "**/tests/**", "**/types.ts", "**/context.ts"],
   "include": ["src/controller/**/*.ts"],
   "omit-empty": true,
   "check-coverage": false,
