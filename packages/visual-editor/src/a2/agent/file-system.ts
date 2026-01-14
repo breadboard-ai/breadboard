@@ -36,6 +36,10 @@ export type AddFilesToProjectResult = {
   error?: string;
 };
 
+export type AgentFileSystemArgs = {
+  memoryManager: MemoryManager | null;
+};
+
 class AgentFileSystem {
   #fileCount = 0;
 
@@ -48,7 +52,11 @@ class AgentFileSystem {
     ["/", "/"],
   ]);
 
-  constructor(private readonly memoryManager: MemoryManager | null) {}
+  private readonly memoryManager: MemoryManager | null;
+
+  constructor(args: AgentFileSystemArgs) {
+    this.memoryManager = args.memoryManager;
+  }
 
   write(name: string, data: string, mimeType: string): string {
     const path = this.#createNamed(name, mimeType);

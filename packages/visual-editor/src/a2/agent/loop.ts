@@ -89,7 +89,9 @@ class Loop {
       moduleArgs,
       memorySheetGetter(moduleArgs)
     );
-    this.fileSystem = new AgentFileSystem(this.memoryManager);
+    this.fileSystem = new AgentFileSystem({
+      memoryManager: this.memoryManager,
+    });
     this.translator = new PidginTranslator(caps, moduleArgs, this.fileSystem);
     this.ui = new AgentUI(caps, moduleArgs, this.translator);
   }

@@ -16,7 +16,7 @@ import { llm } from "../src/a2/a2/utils.js";
 import { escapeHtml } from "../src/utils/escape-html.js";
 
 function makeTranslator(): PidginTranslator {
-  const fileSystem = new AgentFileSystem(stubMemoryManager);
+  const fileSystem = new AgentFileSystem({ memoryManager: stubMemoryManager });
   return new PidginTranslator(stubCaps, stubModuleArgs, fileSystem);
 }
 
@@ -35,7 +35,9 @@ describe("Pidgin Translator", () => {
     });
 
     it("adds routes", async () => {
-      const fileSystem = new AgentFileSystem(stubMemoryManager);
+      const fileSystem = new AgentFileSystem({
+        memoryManager: stubMemoryManager,
+      });
       const translator = new PidginTranslator(
         stubCaps,
         stubModuleArgs,
