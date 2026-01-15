@@ -12,7 +12,7 @@ jobs:
 
     permissions:
       contents: read # Required for actions/checkout
-      statuses: write # Required for your coverage reporting
+      statuses: write # Required for coverage reporting
 
     strategy:
       matrix:
@@ -60,7 +60,7 @@ jobs:
       - name: Running coverage
         run: npm run coverage
 
-      - name: Publish Coverage Status
+      - name: Publish coverage status
         if: always()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
