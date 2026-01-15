@@ -427,10 +427,6 @@ export type EnumValue = {
    * Currently used to provide proactive quota notification.
    */
   info?: string;
-  /**
-   * When true, shows control flow tools.
-   */
-  showControlFlowTools?: boolean;
 };
 
 export enum SnackType {
@@ -555,7 +551,6 @@ export interface BaseUrlInit {
 export interface HomeUrlInit extends BaseUrlInit {
   page: "home";
   new?: boolean;
-  mode?: VisualEditorMode;
   redirectFromLanding?: boolean;
 }
 

@@ -4,17 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   FunctionCallCapabilityPart,
   LLMContent,
   Outcome,
 } from "@breadboard-ai/types";
-import { GeminiBody } from "../a2/gemini.js";
-import {
+import type { FunctionDeclaration, GeminiBody } from "../a2/gemini.js";
+import type {
   FunctionDefinition,
   StatusUpdateCallback,
 } from "./function-definition.js";
-import { SimplifiedToolManager } from "../a2/tool-manager.js";
+import type { SimplifiedToolManager } from "../a2/tool-manager.js";
 import type { SpreadsheetValueRange } from "../google-drive/api.js";
 
 export type FunctionCallerFactory = {
@@ -100,4 +100,27 @@ export type MemoryManager = {
     values: string[][];
   }): Promise<Outcome<AgentOutcome>>;
   deleteSheet(args: { name: string }): Promise<Outcome<AgentOutcome>>;
+};
+
+export type UIType = "none" | "chat" | "a2ui";
+
+export const VALID_INPUT_TYPES = ["any", "text", "file-upload", "any"] as const;
+
+export type ChatInputType = (typeof VALID_INPUT_TYPES)[number];
+
+export type ChatResponse = {
+  input: LLMContent;
+};
+
+export type ChatManager = {
+  chat(pidginString: string, inputType: string): Promise<Outcome<ChatResponse>>;
+};
+
+export type MappedDefinitions = {
+  definitions: [string, FunctionDefinition][];
+  declarations: FunctionDeclaration[];
+};
+
+export type FunctionGroup = MappedDefinitions & {
+  instruction?: string;
 };

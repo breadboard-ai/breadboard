@@ -69,6 +69,11 @@ export type RuntimeFlags = {
    * Enables SSE streaming for GenerateWebpage (output node HTML generation).
    */
   streamGenWebpage: boolean;
+  /**
+   * Enables the "Add from Drive" option in lite mode (it is always enabled in
+   * non-lite mode).
+   */
+  enableDrivePickerInLiteMode: boolean;
 };
 
 /**

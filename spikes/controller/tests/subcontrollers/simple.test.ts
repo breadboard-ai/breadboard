@@ -1,0 +1,29 @@
+/**
+ * @license
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import assert from "node:assert";
+import { suite, test } from "node:test";
+import { SimpleController } from "../../src/controller/subcontrollers/simple/simple.js";
+
+suite("SimpleStore", () => {
+  test("Basics", async () => {
+    const store = new SimpleController();
+    await store.isHydrated;
+
+    assert.strictEqual(store.hydrated.get(), true);
+  });
+
+  test("Read and write", async () => {
+    const store = new SimpleController();
+    await store.isHydrated;
+
+    store.num = 100;
+    store.text = "Foobar";
+
+    assert.strictEqual(store.num, 100);
+    assert.strictEqual(store.text, "Foobar");
+  });
+});

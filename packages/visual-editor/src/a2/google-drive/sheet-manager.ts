@@ -21,21 +21,27 @@ import {
 
 export { SheetManager };
 
-export type SheetGetter = () => Promise<Outcome<string>>;
+export type SheetGetter = (
+  readonly: boolean
+) => Promise<Outcome<string | null>>;
 
 class SheetManager implements MemoryManager {
-  private sheetId: Promise<Outcome<string>> | null = null;
+  private sheetId: Promise<Outcome<string | null>> | null = null;
 
   constructor(
     private readonly moduleArgs: A2ModuleArgs,
     private readonly sheetGetter: SheetGetter
   ) {}
 
-  private ensureSheetId() {
+  private checkSheetId() {
+    return this.sheetGetter(true);
+  }
+
+  private ensureSheetId(): Promise<string> {
     if (!this.sheetId) {
-      this.sheetId = this.sheetGetter();
+      this.sheetId = this.sheetGetter(false);
     }
-    return this.sheetId;
+    return this.sheetId as Promise<string>;
   }
 
   async createSheet(args: SheetMetadata) {
@@ -121,8 +127,12 @@ class SheetManager implements MemoryManager {
   async getSheetMetadata(): Promise<
     Outcome<{ sheets: SheetMetadataWithFilePath[] }>
   > {
-    const sheetId = await this.ensureSheetId();
+    const sheetId = await this.checkSheetId();
+    if (!sheetId) {
+      return { sheets: [] };
+    }
     if (!ok(sheetId)) return sheetId;
+    this.sheetId = Promise.resolve(sheetId);
 
     const metadata = await getSpreadsheetMetadata(this.moduleArgs, sheetId);
     if (!ok(metadata)) return metadata;

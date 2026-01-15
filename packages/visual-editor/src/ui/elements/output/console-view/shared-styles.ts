@@ -5,10 +5,8 @@
  */
 
 import { css, CSSResultGroup } from "lit";
-import { baseColors } from "../../../styles/host/base-colors.js";
 
 export const sharedStyles = [
-  baseColors,
   css`
     .output,
     .step-error {

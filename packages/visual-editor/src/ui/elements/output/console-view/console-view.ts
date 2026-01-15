@@ -185,6 +185,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
 
             & .chevron {
               margin-right: var(--bb-grid-size-4);
+              opacity: 0.6;
 
               &::before {
                 content: "keyboard_arrow_up";
@@ -210,6 +211,11 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             }
           }
 
+          &:not(:has(> :not(summary))) summary .chevron {
+            opacity: 0.3;
+            cursor: default;
+          }
+            
           &[open] > summary {
             margin-bottom: var(--bb-grid-size-3);
 

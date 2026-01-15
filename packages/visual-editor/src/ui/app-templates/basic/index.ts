@@ -23,6 +23,13 @@ import {
   SnackType,
 } from "../../types/types.js";
 
+// Custom Elements for the App.
+import "./a2ui-custom-elements/a2ui-custom-pdf-viewer.js";
+import "./a2ui-custom-elements/a2ui-custom-media-container.js";
+import "./a2ui-custom-elements/a2ui-custom-video.js";
+import "./a2ui-custom-elements/a2ui-custom-google-drive.js";
+import "./header/header.js";
+
 import { SignalWatcher } from "@lit-labs/signals";
 import { consume, provide } from "@lit/context";
 import { classMap } from "lit/directives/class-map.js";
@@ -42,11 +49,8 @@ import {
 } from "../../events/events.js";
 import { ProjectRun } from "../../state/types.js";
 import { emptyStyles } from "../../styles/host/colors-empty.js";
-import { appScreenToParticles } from "../shared/utils/app-screen-to-particles.js";
+import { appScreenToA2UIProcessor } from "../shared/utils/app-screen-to-a2ui.js";
 import { styles as appStyles } from "./index.styles.js";
-import { theme as uiTheme } from "./theme/light.js";
-
-import "./header/header.js";
 
 import { type GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import {
@@ -55,7 +59,6 @@ import {
 } from "@breadboard-ai/utils/google-drive/operations.js";
 import { extractGoogleDriveFileId } from "@breadboard-ai/utils/google-drive/utils.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import * as ParticlesUI from "../../../particles-ui/index.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { markdown } from "../../directives/markdown.js";
 import { makeUrl, parseUrl } from "../../utils/urls.js";
@@ -148,9 +151,6 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @consume({ context: globalConfigContext })
   @property({ attribute: false })
   accessor globalConfig: GlobalConfig | undefined;
-
-  @provide({ context: ParticlesUI.Context.themeContext })
-  accessor theme: ParticlesUI.Types.UITheme = uiTheme;
 
   @provide({ context: A2UI.Context.themeContext })
   accessor a2uitheme: v0_8.Types.Theme = a2uiTheme;
@@ -350,32 +350,24 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           console.warn(err);
           activityContents = html`Unable to parse response`;
         }
-      } else if (last.a2ui) {
-        const { processor, receiver } = last.a2ui;
+      } else {
+        let processor;
+        let receiver;
+
+        // A2UI payload received.
+        if (last.a2ui) {
+          processor = last.a2ui.processor;
+          receiver = last.a2ui.receiver;
+        } else {
+          // Likely a raw LLM Content that needs to be converted to A2UI.
+          processor = appScreenToA2UIProcessor(last);
+          receiver = null;
+        }
+
         activityContents = html`<section id="surfaces">
           <bb-a2ui-client-view .processor=${processor} .receiver=${receiver}>
           </bb-a2ui-client-view>
         </section>`;
-      } else {
-        // Convert app screen to particles. There's a belt-and-braces check
-        // afterwards to ensure that the top-level list has a valid
-        // presentation because by default a Particle doesn't have one but we
-        // still need it at this point.
-        // TODO: Remove this conversion when ProjectRun.app emits particles
-        const group = appScreenToParticles(last);
-        if (typeof group?.presentation === "string") {
-          group.presentation = {
-            behaviors: [],
-            orientation: "vertical",
-            type: "list",
-          };
-        }
-
-        activityContents = html` <particle-ui-list
-          class=${classMap(this.theme.groups.list)}
-          .group=${group}
-          .orientation=${group?.presentation?.orientation}
-        ></particle-ui-list>`;
       }
     }
 

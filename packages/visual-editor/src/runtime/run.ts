@@ -179,7 +179,7 @@ export class Run extends EventTarget {
       return;
     }
 
-    runner.run();
+    runner.start();
   }
 
   #createBoardRunner(
