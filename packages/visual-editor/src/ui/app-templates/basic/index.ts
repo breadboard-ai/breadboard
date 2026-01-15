@@ -69,7 +69,6 @@ import {
   ConsentAction,
   GraphDescriptor,
   RuntimeFlags,
-  OutputValues,
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import { repeat } from "lit/directives/repeat.js";
@@ -91,6 +90,7 @@ import {
   CONSENT_RENDER_INFO,
   ConsentManager,
 } from "../../utils/consent-manager.js";
+import { isDocSlidesOrSheetsOutput } from "../../../a2/a2/utils.js";
 
 function getHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -119,25 +119,7 @@ function getHTMLOutput(screen: AppScreenOutput): string | null {
 const parsedUrl = parseUrl(window.location.href);
 const FIRST_RUN_KEY = "bb-first-run-warning";
 
-const DOC_MIME_TYPE = "application/vnd.google-apps.document";
-const SHEETS_MIME_TYPE = "application/vnd.google-apps.spreadsheet";
-const SLIDES_MIME_TYPE = "application/vnd.google-apps.presentation";
 
-function isDocSlidesOrSheetsOutput(output: OutputValues): boolean {
-  if (isLLMContentArray(output.context)) {
-    for (const el of output.context) {
-      for (const part of el.parts) {
-        if ("storedData" in part) {
-          const mimeType = part.storedData.mimeType;
-          if (mimeType === DOC_MIME_TYPE || mimeType === SHEETS_MIME_TYPE || mimeType === SLIDES_MIME_TYPE) {
-            return true;
-          }
-        }
-      }
-    }
-  }
-  return false;
-}
 
 @customElement("app-basic")
 export class Template extends SignalWatcher(LitElement) implements AppTemplate {

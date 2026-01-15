@@ -4,6 +4,7 @@ import {
   JsonSerializable,
   LLMContent,
   Outcome,
+  OutputValues,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
 
@@ -40,6 +41,7 @@ export {
   toJson,
   fromJson,
   tr,
+  isDocSlidesOrSheetsOutput,
 };
 
 export type ErrorReason =
@@ -466,4 +468,25 @@ function tr(strings: TemplateStringsArray, ...values: unknown[]): string {
       return acc + str + (values[i] || "");
     }, "")
     .trim();
+}
+
+const DOC_MIME_TYPE = "application/vnd.google-apps.document";
+const SHEETS_MIME_TYPE = "application/vnd.google-apps.spreadsheet";
+const SLIDES_MIME_TYPE = "application/vnd.google-apps.presentation";
+
+function isDocSlidesOrSheetsOutput(output: OutputValues): boolean {
+  if (!isLLMContentArray(output.context)) {
+    return false;
+  }
+  for (const el of output.context) {
+    for (const part of el.parts) {
+      if ("storedData" in part) {
+        const mimeType = part.storedData.mimeType;
+        if (mimeType === DOC_MIME_TYPE || mimeType === SHEETS_MIME_TYPE || mimeType === SLIDES_MIME_TYPE) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
 }
