@@ -5,7 +5,7 @@
  */
 
 import path from "node:path";
-import { readFileSync, appendFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "url";
 
 function getCoverageStats() {
@@ -37,19 +37,7 @@ function getCoverageStats() {
 
 const stats = getCoverageStats();
 if (stats) {
-  const markdown = `
-### 🧪 Coverage Report
-| Category | Percentage |
-| :--- | :--- |
-| **Lines** | ${stats.lines}% |
-| **Functions** | ${stats.funcs}% |
-| **Branches** | ${stats.branches}% |
-`;
-
-  if (globalThis.process.env.GITHUB_STEP_SUMMARY) {
-    appendFileSync(globalThis.process.env.GITHUB_STEP_SUMMARY, markdown);
-    console.log("✅ Posted coverage to Job Summary");
-  } else {
-    console.warn(`⚠️ Could not post coverage summary`);
-  }
+  console.log(
+    `Lines: ${stats.lines}% | Functions: ${stats.funcs}% | Branches: ${stats.branches}%`
+  );
 }

@@ -61,5 +61,10 @@ jobs:
         run: npm run coverage
 
       - name: Publish coverage status
-        if: always()
-        run: node scripts/publish-coverage.js
+        run: |
+          STATS=$(node scripts/publish-coverage.js)
+          echo "::notice title=Code Coverage::$STATS"
+          {
+            echo "### Coverage Details"
+            echo "Stats: $STATS"
+          } >> "$GITHUB_STEP_SUMMARY"
