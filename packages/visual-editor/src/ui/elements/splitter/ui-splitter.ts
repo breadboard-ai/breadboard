@@ -39,6 +39,23 @@ export class UISplitter extends SignalWatcher(LitElement) {
         & #right {
           height: 100%;
           position: relative;
+          overflow: hidden;
+        }
+
+        & #left::after {
+          content: "";
+          position: absolute;
+          right: 0;
+          top: 0;
+          pointer-events: none;
+          z-index: 2;
+          width: 10px;
+          height: 100%;
+          background: linear-gradient(
+            to right,
+            rgba(0, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 0.06) 100%
+          );
         }
       }
 
