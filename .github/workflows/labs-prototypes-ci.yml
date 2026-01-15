@@ -10,10 +10,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read # Required for checkout
-      checks: write # Required to create the "Code Coverage" row
-
     strategy:
       matrix:
         node-version:
@@ -61,10 +57,10 @@ jobs:
         run: npm run coverage
 
       - name: Publish coverage status
-        if: always()
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          # Logic: Target the PR head if it exists, otherwise the commit SHA
-          COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: node scripts/publish-coverage.js
+        run: |
+          STATS=$(node scripts/publish-coverage.js)
+          echo "::notice title=Code Coverage::$STATS"
+          {
+            echo "### Coverage Details"
+            echo "Stats: $STATS"
+          } >> "$GITHUB_STEP_SUMMARY"
