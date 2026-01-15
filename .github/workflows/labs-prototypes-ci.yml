@@ -62,9 +62,4 @@ jobs:
 
       - name: Publish coverage status
         if: always()
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          # On PRs, tag the actual commit tip. On Main, tag the push SHA.
-          COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: node scripts/publish-coverage.js
