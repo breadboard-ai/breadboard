@@ -26,6 +26,11 @@ export const styles = [
       }
     }
 
+    ui-splitter {
+      overflow: hidden;
+      contain: strict;
+    }
+
     :host {
       display: grid;
       height: 100%;
