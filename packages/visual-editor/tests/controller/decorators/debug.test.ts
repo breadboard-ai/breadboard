@@ -57,10 +57,10 @@ suite("Debug Decorator", () => {
     const instance = new DebugTestController();
     const name = instance.name;
     assert.strictEqual(name, "test");
-    await instance.pendingWritesSettled();
+    await instance.isSettled;
 
     instance.name = "foo";
-    await instance.pendingWritesSettled();
+    await instance.isSettled;
     const name2 = instance.name;
     assert.strictEqual(name2, "foo");
 
@@ -116,10 +116,10 @@ suite("Debug Decorator", () => {
     const instance = new DebugTestController();
     const name = instance.name;
     assert.strictEqual(name, "test");
-    await instance.pendingWritesSettled();
+    await instance.isSettled;
 
     instance.name = "foo";
-    await instance.pendingWritesSettled();
+    await instance.isSettled;
     const name2 = instance.name;
     assert.strictEqual(name2, "foo");
 
