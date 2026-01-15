@@ -41,7 +41,7 @@
       "output": [
         "lcov.info",
         "./coverage/tmp",
-        "./storage/**/*.*"
+        "./test-storage/**/*.*"
       ],
       "dependencies": [
         "build:tsc"
@@ -67,7 +67,6 @@
     "idb": "^8.0.3",
     "lit": "^3.3.2",
     "signal-utils": "^0.21.1",
-    "tweakpane": "^4.0.5",
     "vite": "^7.3.1"
   },
   "devDependencies": {
@@ -77,6 +76,7 @@
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^27.4.0",
     "node-localstorage": "^3.0.5",
+    "tweakpane": "^4.0.5",
     "wireit": "^0.15.0-pre.2"
   }
 }

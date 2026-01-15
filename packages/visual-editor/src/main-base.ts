@@ -76,6 +76,8 @@ import { hash, ok } from "@breadboard-ai/utils";
 import { MainArguments } from "./types/types.js";
 import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
 import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
+import { appController, type AppController } from "./controller/controller.js";
+import { appControllerContext } from "./controller/context/context.js";
 
 export { MainBase };
 
@@ -131,6 +133,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
   @provide({ context: actionTrackerContext })
   protected accessor actionTracker: ActionTracker;
+
+  @provide({ context: appControllerContext })
+  protected accessor appController: AppController;
 
   @state()
   protected accessor tab: Runtime.Types.Tab | null = null;
@@ -244,6 +249,9 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // Authentication
     this.opalShell = args.shellHost;
     this.hostOrigin = args.hostOrigin;
+
+    // Controller
+    this.appController = appController;
 
     this.runtime = new Runtime.Runtime({
       globalConfig: this.globalConfig,
@@ -896,6 +904,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     const deps: KeyboardCommandDeps = {
       runtime: this.runtime,
+      appController: this.appController,
       selectionState: this.selectionState,
       tab: this.tab,
       originalEvent: evt,
