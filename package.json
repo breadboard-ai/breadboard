@@ -8,6 +8,7 @@
     "clean": "git clean -Xdf -e !.vscode/settings.json",
     "update": "rm package-lock.json && npm i",
     "test": "wireit",
+    "coverage": "wireit",
     "build": "wireit",
     "lint": "wireit",
     "dev": "npm run dev -w packages/unified-server --watch",
@@ -34,6 +35,11 @@
         "<workspaces>#<this>",
         "!./packages/ui-tests#<this>",
         "!./experiments/screens#<this>"
+      ]
+    },
+    "coverage": {
+      "dependencies": [
+        "<workspaces>#<this>"
       ]
     },
     "lint": {
