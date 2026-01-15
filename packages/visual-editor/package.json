@@ -118,7 +118,7 @@
       ]
     },
     "coverage": {
-      "command": "c8 --all report --reporter=html --src=src",
+      "command": "c8 --all report --reporter=html --reporter=json-summary --src=src",
       "files": [
         ".c8rc.json"
       ],
