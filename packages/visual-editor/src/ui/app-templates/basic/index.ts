@@ -119,8 +119,6 @@ function getHTMLOutput(screen: AppScreenOutput): string | null {
 const parsedUrl = parseUrl(window.location.href);
 const FIRST_RUN_KEY = "bb-first-run-warning";
 
-
-
 @customElement("app-basic")
 export class Template extends SignalWatcher(LitElement) implements AppTemplate {
   @property({ type: Object })
