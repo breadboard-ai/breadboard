@@ -37,11 +37,11 @@ suite("SettingsController", () => {
     await store.isHydrated;
 
     store.section = "console";
-    await store.pendingWritesSettled;
+    await store.isSettled;
     assert.strictEqual(store.section, "console");
 
     store.section = "preview";
-    await store.pendingWritesSettled;
+    await store.isSettled;
     assert.strictEqual(store.section, "preview");
   });
 });

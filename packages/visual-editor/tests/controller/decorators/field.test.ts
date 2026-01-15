@@ -56,7 +56,7 @@ suite("Field Decorator", () => {
     instance.foo = "foo2";
     instance.bar = "foo2";
     instance.baz = "foo2";
-    await instance.pendingWritesSettled();
+    await instance.isSettled;
 
     // Check on the field persistence by instantiating a new version.
     const instance2 = new PersistentController();
@@ -85,7 +85,7 @@ suite("Field Decorator", () => {
     assert.deepStrictEqual(instance.data, { user: "anon" });
 
     instance.data.user = "anon2";
-    await instance.pendingWritesSettled();
+    await instance.isSettled;
     assert.deepStrictEqual(instance.data, { user: "anon2" });
 
     const instance2 = new DeepController();
@@ -111,7 +111,7 @@ suite("Field Decorator", () => {
     ]);
 
     instance.data[1] = { b: 23 };
-    await instance.pendingWritesSettled();
+    await instance.isSettled;
     assert.deepStrictEqual(clean(instance.data), [
       { a: 1 },
       { b: 23 },
