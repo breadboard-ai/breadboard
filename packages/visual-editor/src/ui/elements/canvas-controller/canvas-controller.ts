@@ -601,15 +601,13 @@ export class CanvasController extends SignalWatcher(LitElement) {
     }
 
     const contentContainer = html`
-      <bb-splitter
-        direction=${"horizontal"}
+      <ui-splitter
         name="layout-main"
-        split="[0.70, 0.30]"
         @pointerdown=${() => {
           this.showThemeDesigner = false;
         }}
       >
-        <div id="graph-container" slot="slot-0">
+        <div id="graph-container" slot="s0">
           <bb-edit-history-overlay .history=${this.history}>
           </bb-edit-history-overlay>
           ${graphIsEmpty ? this.#maybeRenderEmptyState() : nothing}
@@ -618,7 +616,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
         <div
           id="side-nav"
           class="side-shadow"
-          slot="slot-1"
+          slot="s1"
           style=${styleMap(graphIsEmpty ? emptyStyles : themeStyles)}
         >
           <div
@@ -683,7 +681,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
           </div>
           <div id="side-nav-content">${sideNavItem}</div>
         </div>
-      </bb-splitter>
+      </ui-splitter>
     `;
 
     return [

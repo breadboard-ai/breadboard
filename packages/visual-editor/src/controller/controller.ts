@@ -10,6 +10,7 @@ import { DebuggableAppController } from "./types.js";
 
 class Controller {
   editor = {
+    main: new Editor.EditorController(),
     sidebar: {
       settings: new Editor.Sidebar.SettingsController(),
     },
@@ -22,6 +23,7 @@ setDebuggableAppController(appController);
 
 export interface AppController extends DebuggableAppController {
   editor: {
+    main: Editor.EditorController;
     sidebar: {
       settings: Editor.Sidebar.SettingsController;
     };
