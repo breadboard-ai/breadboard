@@ -9,6 +9,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read # Required for actions/checkout
+      statuses: write # Required for your coverage reporting
+
     strategy:
       matrix:
         node-version:
