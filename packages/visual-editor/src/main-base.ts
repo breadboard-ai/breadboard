@@ -454,7 +454,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.addEventListener(
       Runtime.Events.RuntimeToastEvent.eventName,
       (evt: Runtime.Events.RuntimeToastEvent) => {
-        this.toast(evt.message, evt.toastType, evt.persistent, evt.toastId);
+        this.appController.global.toasts.toast(
+          evt.message,
+          evt.toastType,
+          evt.persistent,
+          evt.toastId
+        );
       }
     );
 
@@ -528,7 +533,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       (evt: Runtime.Events.RuntimeErrorEvent) => {
         // Wait a frame so we don't end up accidentally spamming the render.
         requestAnimationFrame(() => {
-          this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
+          this.appController.global.toasts.toast(
+            evt.message,
+            BreadboardUI.Events.ToastType.ERROR
+          );
         });
       }
     );
@@ -554,7 +562,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.runtime.board.addEventListener(
       Runtime.Events.RuntimeErrorEvent.eventName,
       (evt: Runtime.Events.RuntimeErrorEvent) => {
-        this.toast(evt.message, BreadboardUI.Events.ToastType.ERROR);
+        this.appController.global.toasts.toast(
+          evt.message,
+          BreadboardUI.Events.ToastType.ERROR
+        );
       }
     );
 
@@ -924,7 +935,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         // Toast.
         let toastId;
         const notifyUser = () => {
-          toastId = this.toast(
+          toastId = this.appController.global.toasts.toast(
             command.messagePending ?? Strings.from("STATUS_GENERIC_WORKING"),
             BreadboardUI.Events.ToastType.PENDING,
             true
@@ -950,7 +961,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
           // Replace the toast.
           if (toastId) {
-            this.toast(
+            this.appController.global.toasts.toast(
               command.messageComplete ?? Strings.from("STATUS_GENERIC_WORKING"),
               command.messageType ?? BreadboardUI.Events.ToastType.INFORMATION,
               false,
@@ -959,7 +970,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           }
         } catch (err) {
           const commandErr = err as { message: string };
-          this.toast(
+          this.appController.global.toasts.toast(
             commandErr.message ?? Strings.from("ERROR_GENERIC"),
             BreadboardUI.Events.ToastType.ERROR,
             false,
@@ -977,30 +988,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         break;
       }
     }
-  }
-
-  untoast(id?: string) {
-    if (!id) {
-      return;
-    }
-
-    this.uiState.toasts.delete(id);
-    this.requestUpdate();
-  }
-
-  toast(
-    message: string,
-    type: BreadboardUI.Events.ToastType,
-    persistent = false,
-    id = globalThis.crypto.randomUUID()
-  ) {
-    if (message.length > 77) {
-      message = message.slice(0, 74) + "...";
-    }
-
-    console.warn(message);
-    this.uiState.toasts.set(id, { message, type, persistent });
-    return id;
   }
 
   async snackbar(
@@ -1049,7 +1036,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
         this.runtime.board.createTabFromDescriptor(runData);
       } catch (err) {
         console.warn(err);
-        this.toast(
+        this.appController.global.toasts.toast(
           Strings.from("ERROR_LOAD_FAILED"),
           BreadboardUI.Events.ToastType.ERROR
         );
