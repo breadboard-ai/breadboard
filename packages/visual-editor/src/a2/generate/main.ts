@@ -64,6 +64,10 @@ type Mode = {
   hidden?: boolean;
   portMap: Map<string, string>;
   /**
+   * Info message based on user role
+   */
+  subscriberInfo?: string;
+  /**
    * The instruction to supply as a hint of user's intention.
    * This instruction is added to the overall objective of the step,
    */
@@ -260,6 +264,8 @@ const MODES: Mode[] = [
       "Type your video prompt here. Use @ to include other content.",
     info: `Video ${LIMIT_MSG}`,
     portMap: new Map([[PROMPT_PORT, "instruction"]]),
+    subscriberInfo:
+      "Each video you create will use 20 AI credits from your Google AI plan because you’ve reached the daily limit",
     makeInstruction: makeVideoInstruction,
   },
   {
