@@ -266,7 +266,7 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
               & li {
                 width: 100%;
 
-                & > .generating-theme,
+                .generating-theme,
                 & > button {
                   display: block;
                   width: 100%;
@@ -312,7 +312,7 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
                   }
                 }
 
-                & > .generating-theme {
+                .generating-theme {
                   display: flex;
                   align-items: center;
                   justify-content: center;
@@ -594,7 +594,8 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
       url,
       this.googleDriveClient!,
       {},
-      "Theme thumbnail"
+      "Theme thumbnail",
+      true
     );
   }
 
