@@ -623,13 +623,7 @@ class Main extends MainBase {
           }
 
           case "feedback": {
-            if (this.globalConfig.GOOGLE_FEEDBACK_PRODUCT_ID) {
-              if (this.feedbackPanelRef.value) {
-                this.feedbackPanelRef.value.open();
-              } else {
-                console.error(`Feedback panel was not rendered!`);
-              }
-            }
+            this.appController.feedback.open(this.globalConfig);
             break;
           }
 

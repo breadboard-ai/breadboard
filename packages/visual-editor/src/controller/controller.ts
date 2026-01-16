@@ -5,6 +5,7 @@
  */
 import { setDebuggableAppController } from "./utils/logging/logger.js";
 import { DebugController } from "./subcontrollers/debug-controller.js";
+import { FeedbackController } from "./subcontrollers/feedback-controller.js";
 import * as Editor from "./subcontrollers/editor/editor.js";
 import { DebuggableAppController } from "./types.js";
 
@@ -16,6 +17,7 @@ class Controller {
     },
   };
   debug = new DebugController();
+  feedback = new FeedbackController();
 }
 
 export const appController = new Controller();
@@ -29,4 +31,5 @@ export interface AppController extends DebuggableAppController {
     };
   };
   debug: DebugController;
+  feedback: FeedbackController;
 }

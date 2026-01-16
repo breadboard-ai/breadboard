@@ -20,11 +20,6 @@
     "types": ["vite/client", "@types/gtag.js", "node", "trusted-types"],
     "allowJs": true
   },
-  "include": [
-    "src/**/*.ts",
-    "tests/**/*.ts",
-    "eval/**/*.ts",
-    "tests/controller-setup.js"
-  ],
+  "include": ["src/**/*.ts", "tests/**/*.ts", "eval/**/*.ts"],
   "extends": "@google-labs/tsconfig/base.json"
 }
