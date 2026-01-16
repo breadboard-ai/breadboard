@@ -1,8 +1,0 @@
-{
-  "all": false,
-  "src": ["src"],
-  "exclude": ["**/*.test.ts", "**/tests/**"],
-  "omit-empty": true,
-  "check-coverage": false,
-  "exclude-after-remap": true
-}

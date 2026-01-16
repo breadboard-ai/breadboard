@@ -68,7 +68,6 @@ import { styleMap } from "lit/directives/style-map.js";
 import { emptyStyles } from "../../styles/host/colors-empty.js";
 
 const focusAppControllerWhenIn = ["canvas", "preview"];
-const SIDE_ITEM_KEY = "bb-canvas-controller-side-nav-item";
 
 import "./empty-state.js";
 import { isEmpty } from "../../utils/utils.js";
@@ -76,11 +75,16 @@ import { uiStateContext } from "../../contexts/ui-state.js";
 import { Signal, SignalWatcher } from "@lit-labs/signals";
 import { projectStateContext } from "../../contexts/contexts.js";
 import * as Theme from "../../../theme/index.js";
+import { appControllerContext } from "../../../controller/context/context.js";
+import { AppController } from "../../../controller/controller.js";
 
 @customElement("bb-canvas-controller")
 export class CanvasController extends SignalWatcher(LitElement) {
   @consume({ context: uiStateContext })
   accessor #uiState!: UI;
+
+  @consume({ context: appControllerContext })
+  accessor #appController!: AppController;
 
   /**
    * Indicates whether or not the UI can currently run a flow or not.
@@ -145,28 +149,15 @@ export class CanvasController extends SignalWatcher(LitElement) {
   #themeOptions: AppTemplateAdditionalOptionsAvailable | null = null;
 
   @state()
-  set sideNavItem(
-    item: "activity" | "capabilities" | "edit-history" | "editor" | "app-view"
-  ) {
-    if (item === this.#sideNavItem) {
+  set sideNavItem(item: "console" | "edit-history" | "editor" | "preview") {
+    if (item === this.#appController.editor.sidebar.settings.section) {
       return;
     }
 
-    this.#sideNavItem = item;
-    if (item) {
-      globalThis.localStorage.setItem(SIDE_ITEM_KEY, item);
-    } else {
-      globalThis.localStorage.removeItem(SIDE_ITEM_KEY);
-    }
-
-    if (item === "app-view") {
-      this.#uiState.editorSection = "preview";
-    } else if (item === "activity") {
-      this.#uiState.editorSection = "console";
-    }
+    this.#appController.editor.sidebar.settings.section = item;
   }
   get sideNavItem() {
-    return this.#sideNavItem;
+    return this.#appController.editor.sidebar.settings.section;
   }
 
   @state()
@@ -179,12 +170,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
   @property({ attribute: false })
   accessor googleDriveClient: GoogleDriveClient | undefined;
 
-  #sideNavItem:
-    | "activity"
-    | "capabilities"
-    | "edit-history"
-    | "editor"
-    | "app-view" = "editor";
   #entityEditorRef: Ref<EntityEditor> = createRef();
   #sharePanelRef: Ref<SharePanel> = createRef();
   #lastKnownNlEditValue = "";
@@ -193,16 +178,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
 
   connectedCallback(): void {
     super.connectedCallback();
-
-    const sideNavItem = globalThis.localStorage.getItem(SIDE_ITEM_KEY) as
-      | typeof this.sideNavItem
-      | null;
-
-    if (!sideNavItem) {
-      this.sideNavItem = "app-view";
-    } else {
-      this.sideNavItem = sideNavItem;
-    }
   }
 
   editorRender = 0;
@@ -252,7 +227,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
     // view. Otherwise, if there's any change to the selection and the sidenav
     // isn't set to the editor, switch to it.
     if (newSelectionCount === 0 && this.sideNavItem === "editor") {
-      this.sideNavItem = "app-view";
+      this.sideNavItem = "preview";
     } else if (
       newSelectionCount > 0 &&
       changedProperties.has("selectionState") &&
@@ -268,7 +243,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
       this.mainGraphId &&
       !this.graphIsMine
     ) {
-      this.sideNavItem = "app-view";
+      this.sideNavItem = "preview";
     }
 
     // Set theme designer to hidden when navigating away
@@ -545,7 +520,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
         () => {
           return html`<bb-app-controller
             class=${classMap({
-              active: this.sideNavItem === "app-view",
+              active: this.sideNavItem === "preview",
             })}
             .focusWhenIn=${focusAppControllerWhenIn}
             .graph=${this.graph}
@@ -586,7 +561,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
       html`
         <bb-console-view
           class=${classMap({
-            active: this.sideNavItem === "activity",
+            active: this.sideNavItem === "console",
           })}
           .run=${this.projectState?.run}
           .themeStyles=${themeStyles}
@@ -626,15 +601,13 @@ export class CanvasController extends SignalWatcher(LitElement) {
     }
 
     const contentContainer = html`
-      <bb-splitter
-        direction=${"horizontal"}
+      <ui-splitter
         name="layout-main"
-        split="[0.70, 0.30]"
         @pointerdown=${() => {
           this.showThemeDesigner = false;
         }}
       >
-        <div id="graph-container" slot="slot-0">
+        <div id="graph-container" slot="s0">
           <bb-edit-history-overlay .history=${this.history}>
           </bb-edit-history-overlay>
           ${graphIsEmpty ? this.#maybeRenderEmptyState() : nothing}
@@ -643,21 +616,21 @@ export class CanvasController extends SignalWatcher(LitElement) {
         <div
           id="side-nav"
           class="side-shadow"
-          slot="slot-1"
+          slot="s1"
           style=${styleMap(graphIsEmpty ? emptyStyles : themeStyles)}
         >
           <div
             id="side-nav-controls"
             class=${classMap({
-              "showing-preview": this.sideNavItem === "app-view",
+              "showing-preview": this.sideNavItem === "preview",
             })}
           >
             <div id="side-nav-controls-left">
               <button
                 class="sans-flex w-500 round"
-                ?disabled=${this.sideNavItem === "app-view"}
+                ?disabled=${this.sideNavItem === "preview"}
                 @click=${() => {
-                  this.sideNavItem = "app-view";
+                  this.sideNavItem = "preview";
                 }}
               >
                 ${Strings.from("LABEL_SECTION_PREVIEW")}
@@ -669,9 +642,9 @@ export class CanvasController extends SignalWatcher(LitElement) {
                   round: true,
                   invisible: graphIsEmpty,
                 })}
-                ?disabled=${this.sideNavItem === "activity"}
+                ?disabled=${this.sideNavItem === "console"}
                 @click=${() => {
-                  this.sideNavItem = "activity";
+                  this.sideNavItem = "console";
                 }}
               >
                 ${Strings.from("LABEL_SECTION_CONSOLE")}
@@ -698,7 +671,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
                   invisible: !this.graphIsMine,
                 })}
                 @click=${() => {
-                  this.sideNavItem = "app-view";
+                  this.sideNavItem = "preview";
                   this.showThemeDesigner = true;
                 }}
               >
@@ -708,7 +681,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
           </div>
           <div id="side-nav-content">${sideNavItem}</div>
         </div>
-      </bb-splitter>
+      </ui-splitter>
     `;
 
     return [

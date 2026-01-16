@@ -7,7 +7,6 @@
 import { html, nothing } from "lit";
 import { customElement } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { map } from "lit/directives/map.js";
 import { ref } from "lit/directives/ref.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { MainBase, RenderValues } from "./main-base.js";
@@ -18,6 +17,11 @@ import { makeUrl, parseUrl } from "./ui/utils/urls.js";
 
 import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { MakeUrlInit } from "./ui/types/types.js";
+import { isHydrating } from "./controller/utils/hydration.js";
+import { repeat } from "lit/directives/repeat.js";
+
+// Build constant.
+declare const ENABLE_DEBUG_TOOLING: boolean;
 
 const Strings = BreadboardUI.Strings.forSection("Global");
 const parsedUrl = parseUrl(window.location.href);
@@ -143,7 +147,10 @@ class Main extends MainBase {
         this.unsnackbar(evt.snackbarId);
       }}
       @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-        this.toast(toastEvent.message, toastEvent.toastType);
+        this.appController.global.toasts.toast(
+          toastEvent.message,
+          toastEvent.toastType
+        );
       }}
       @dragover=${(evt: DragEvent) => {
         evt.preventDefault();
@@ -189,8 +196,24 @@ class Main extends MainBase {
         this.renderSnackbar(),
         this.#renderFeedbackPanel(),
         this.renderConsentRequests(),
+        this.#maybeRenderDebugPanel(),
       ]}
     </div>`;
+  }
+
+  #maybeRenderDebugPanel() {
+    if (typeof ENABLE_DEBUG_TOOLING !== "undefined" && !ENABLE_DEBUG_TOOLING) {
+      return nothing;
+    }
+
+    // TODO: Reenable this.
+    // if (this.appController.debug.enabled) {
+    //   addDebugPanel(this.appController);
+    // } else {
+    //   removeDebugPanel();
+    // }
+
+    return nothing;
   }
 
   #renderWelcomePanel() {
@@ -477,18 +500,22 @@ class Main extends MainBase {
   }
 
   #renderToasts() {
-    return html`${map(
-      this.uiState.toasts,
-      ([toastId, { message, type, persistent }], idx) => {
-        const offset = this.uiState.toasts.size - idx - 1;
+    if (isHydrating(this.appController.global.toasts.toasts)) return nothing;
+
+    const toastCount = this.appController.global.toasts.toasts.size;
+    return html`${repeat(
+      this.appController.global.toasts.toasts,
+      ([toastId]) => toastId,
+      ([toastId, toast], idx) => {
+        const offset = toastCount - idx - 1;
         return html`<bb-toast
           .toastId=${toastId}
           .offset=${offset}
-          .message=${message}
-          .type=${type}
-          .timeout=${persistent ? 0 : nothing}
+          .message=${toast.message}
+          .type=${toast.type}
+          .timeout=${toast.persistent ? 0 : nothing}
           @bbtoastremoved=${(evt: BreadboardUI.Events.ToastRemovedEvent) => {
-            this.uiState.toasts.delete(evt.toastId);
+            this.appController.global.toasts.untoast(evt.toastId);
           }}
         ></bb-toast>`;
       }
@@ -529,7 +556,6 @@ class Main extends MainBase {
         });
         const homepage: MakeUrlInit = {
           page: "home",
-          mode: this.uiState.mode,
           dev: parsedUrl.dev,
           guestPrefixed: true,
         };
@@ -605,18 +631,17 @@ class Main extends MainBase {
           }
 
           case "feedback": {
-            if (this.globalConfig.GOOGLE_FEEDBACK_PRODUCT_ID) {
-              if (this.feedbackPanelRef.value) {
-                this.feedbackPanelRef.value.open();
-              } else {
-                console.error(`Feedback panel was not rendered!`);
-              }
-            }
+            this.appController.global.feedback.open(this.globalConfig);
             break;
           }
 
           case "chat": {
             window.open("https://discord.gg/googlelabs", "_blank");
+            break;
+          }
+
+          case "documentation": {
+            window.open("https://developers.google.com/opal", "_blank");
             break;
           }
 
@@ -653,7 +678,7 @@ class Main extends MainBase {
             await navigator.clipboard.writeText(
               JSON.stringify(this.tab.graph, null, 2)
             );
-            this.toast(
+            this.appController.global.toasts.toast(
               Strings.from("STATUS_PROJECT_CONTENTS_COPIED"),
               BreadboardUI.Events.ToastType.INFORMATION
             );

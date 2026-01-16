@@ -200,6 +200,25 @@ const ToggleExperimentalComponentsCommand: KeyboardCommand = {
   },
 };
 
+let debugStatus = "Enabled";
+const ToggleDebugCommand: KeyboardCommand = {
+  keys: ["Cmd+Shift+d", "Ctrl+Shift+d"],
+  alwaysNotify: true,
+  get messageComplete() {
+    return `Debug ${debugStatus}`;
+  },
+
+  willHandle() {
+    return true;
+  },
+
+  async do({ appController }: KeyboardCommandDeps): Promise<void> {
+    appController.global.debug.enabled = !appController.global.debug.enabled;
+
+    debugStatus = appController.global.debug.enabled ? "Enabled" : "Disabled";
+  },
+};
+
 const SelectAllCommand: KeyboardCommand = {
   keys: ["Cmd+a", "Ctrl+a"],
 
@@ -693,6 +712,7 @@ export const keyboardCommands = new Map<string[], KeyboardCommand>([
     ToggleExperimentalComponentsCommand.keys,
     ToggleExperimentalComponentsCommand,
   ],
+  [ToggleDebugCommand.keys, ToggleDebugCommand],
   [UndoCommand.keys, UndoCommand],
   [RedoCommand.keys, RedoCommand],
   [DuplicateCommand.keys, DuplicateCommand],

@@ -551,7 +551,6 @@ export interface BaseUrlInit {
 export interface HomeUrlInit extends BaseUrlInit {
   page: "home";
   new?: boolean;
-  mode?: VisualEditorMode;
   redirectFromLanding?: boolean;
 }
 
