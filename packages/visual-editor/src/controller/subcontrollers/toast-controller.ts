@@ -20,7 +20,7 @@ type ToastMap = Map<
 const MAX_TOAST_LENGTH = 77;
 
 export class ToastController extends RootController {
-  @field()
+  @field({ persist: "session" })
   private accessor _toasts: ToastMap = new Map();
 
   get toasts(): Readonly<ToastMap> {

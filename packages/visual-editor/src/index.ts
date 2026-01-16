@@ -7,7 +7,6 @@
 import { html, nothing } from "lit";
 import { customElement } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { map } from "lit/directives/map.js";
 import { ref } from "lit/directives/ref.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { MainBase, RenderValues } from "./main-base.js";
@@ -18,6 +17,8 @@ import { makeUrl, parseUrl } from "./ui/utils/urls.js";
 
 import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { MakeUrlInit } from "./ui/types/types.js";
+import { isHydrating } from "./controller/utils/hydration.js";
+import { repeat } from "lit/directives/repeat.js";
 
 // Build constant.
 declare const ENABLE_DEBUG_TOOLING: boolean;
@@ -499,16 +500,20 @@ class Main extends MainBase {
   }
 
   #renderToasts() {
-    return html`${map(
+    if (isHydrating(this.appController.global.toasts.toasts)) return nothing;
+
+    const toastCount = this.appController.global.toasts.toasts.size;
+    return html`${repeat(
       this.appController.global.toasts.toasts,
-      ([toastId, { message, type, persistent }], idx) => {
-        const offset = this.appController.global.toasts.toasts.size - idx - 1;
+      ([toastId]) => toastId,
+      ([toastId, toast], idx) => {
+        const offset = toastCount - idx - 1;
         return html`<bb-toast
           .toastId=${toastId}
           .offset=${offset}
-          .message=${message}
-          .type=${type}
-          .timeout=${persistent ? 0 : nothing}
+          .message=${toast.message}
+          .type=${toast.type}
+          .timeout=${toast.persistent ? 0 : nothing}
           @bbtoastremoved=${(evt: BreadboardUI.Events.ToastRemovedEvent) => {
             this.appController.global.toasts.untoast(evt.toastId);
           }}
