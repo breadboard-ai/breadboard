@@ -79,7 +79,7 @@ suite("Logger", () => {
     const logger = getLogger();
     logConfig.global.debug.enabled = true;
 
-    logger.logItem("info", "get", "Item", "Info");
+    logger.logItem("info", "get", "Item", false, "Info");
 
     assert.strictEqual(
       infoMock.mock.calls[0].arguments[0],
