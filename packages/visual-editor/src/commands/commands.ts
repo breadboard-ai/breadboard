@@ -213,9 +213,9 @@ const ToggleDebugCommand: KeyboardCommand = {
   },
 
   async do({ appController }: KeyboardCommandDeps): Promise<void> {
-    appController.debug.enabled = !appController.debug.enabled;
+    appController.global.debug.enabled = !appController.global.debug.enabled;
 
-    debugStatus = appController.debug.enabled ? "Enabled" : "Disabled";
+    debugStatus = appController.global.debug.enabled ? "Enabled" : "Disabled";
   },
 };
 

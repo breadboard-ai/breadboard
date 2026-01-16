@@ -18,8 +18,10 @@ class Controller {
       ),
     },
   };
-  debug = new DebugController("Debug");
-  feedback = new FeedbackController("Feedback");
+  global = {
+    debug: new DebugController("Debug"),
+    feedback: new FeedbackController("Feedback"),
+  };
 }
 
 export const appController = new Controller();
@@ -32,6 +34,8 @@ export interface AppController extends DebuggableAppController {
       settings: Editor.Sidebar.SettingsController;
     };
   };
-  debug: DebugController;
-  feedback: FeedbackController;
+  global: {
+    debug: DebugController;
+    feedback: FeedbackController;
+  };
 }

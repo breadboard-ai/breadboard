@@ -16,7 +16,6 @@ type SerilializedSet = {
 type SerilializedMapSet = SerilializedMap | SerilializedSet;
 
 export function jsonReplacer(_key: string, value: SerilializedMapSet) {
-  console.log(_key, value);
   if (value instanceof Map) {
     return { __type: "Map", value: Array.from(value.entries()) };
   }
