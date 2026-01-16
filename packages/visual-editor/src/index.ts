@@ -146,7 +146,10 @@ class Main extends MainBase {
         this.unsnackbar(evt.snackbarId);
       }}
       @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-        this.toast(toastEvent.message, toastEvent.toastType);
+        this.appController.global.toasts.toast(
+          toastEvent.message,
+          toastEvent.toastType
+        );
       }}
       @dragover=${(evt: DragEvent) => {
         evt.preventDefault();
@@ -497,9 +500,9 @@ class Main extends MainBase {
 
   #renderToasts() {
     return html`${map(
-      this.uiState.toasts,
+      this.appController.global.toasts.toasts,
       ([toastId, { message, type, persistent }], idx) => {
-        const offset = this.uiState.toasts.size - idx - 1;
+        const offset = this.appController.global.toasts.toasts.size - idx - 1;
         return html`<bb-toast
           .toastId=${toastId}
           .offset=${offset}
@@ -507,7 +510,7 @@ class Main extends MainBase {
           .type=${type}
           .timeout=${persistent ? 0 : nothing}
           @bbtoastremoved=${(evt: BreadboardUI.Events.ToastRemovedEvent) => {
-            this.uiState.toasts.delete(evt.toastId);
+            this.appController.global.toasts.untoast(evt.toastId);
           }}
         ></bb-toast>`;
       }
@@ -670,7 +673,7 @@ class Main extends MainBase {
             await navigator.clipboard.writeText(
               JSON.stringify(this.tab.graph, null, 2)
             );
-            this.toast(
+            this.appController.global.toasts.toast(
               Strings.from("STATUS_PROJECT_CONTENTS_COPIED"),
               BreadboardUI.Events.ToastType.INFORMATION
             );
