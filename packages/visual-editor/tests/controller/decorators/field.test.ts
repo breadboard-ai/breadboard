@@ -9,6 +9,7 @@ import { suite, test } from "node:test";
 import { field } from "../../../src/controller/decorators/field.js";
 import { RootController } from "../../../src/controller/subcontrollers/root-controller.js";
 import { isHydrating } from "../../../src/controller/utils/hydration.js";
+import { unwrap } from "../../../src/controller/decorators/utils/wrap-unwrap.js";
 
 function clean(a: unknown) {
   return JSON.parse(JSON.stringify(a));
@@ -110,12 +111,17 @@ suite("Field Decorator", () => {
       { c: 3 },
     ]);
 
+    // Test replacing the whole object.
     instance.data[1] = { b: 23 };
+    await instance.isSettled;
+
+    // And a single value within the array.
+    instance.data[2].c = 90;
     await instance.isSettled;
     assert.deepStrictEqual(clean(instance.data), [
       { a: 1 },
       { b: 23 },
-      { c: 3 },
+      { c: 90 },
     ]);
 
     const instance2 = new ArrayController("Array");
@@ -123,7 +129,7 @@ suite("Field Decorator", () => {
     assert.deepStrictEqual(clean(instance2.data), [
       { a: 1 },
       { b: 23 },
-      { c: 3 },
+      { c: 90 },
     ]);
   });
 
@@ -147,12 +153,45 @@ suite("Field Decorator", () => {
     const instance = new SetMapController("Map");
     await instance.isHydrated;
 
-    assert.deepStrictEqual(new Map(instance.map), new Map(map));
-    assert.deepStrictEqual(new Map(instance.mapLocal), new Map(map));
-    assert.deepStrictEqual(new Map(instance.mapIdb), new Map(map));
+    assert.deepStrictEqual(unwrap(instance.map), map);
+    assert.deepStrictEqual(unwrap(instance.mapLocal), map);
+    assert.deepStrictEqual(unwrap(instance.mapIdb), map);
 
-    assert.deepStrictEqual(new Set(instance.set), new Set(set));
-    assert.deepStrictEqual(new Set(instance.setLocal), new Set(set));
-    assert.deepStrictEqual(new Set(instance.setIdb), new Set(set));
+    assert.deepStrictEqual(unwrap(instance.set), set);
+    assert.deepStrictEqual(unwrap(instance.setLocal), set);
+    assert.deepStrictEqual(unwrap(instance.setIdb), set);
+  });
+
+  test("should persist nested items", async () => {
+    const map = new Map([["a", new Map([["b", "c"]])]]);
+
+    class MapController extends RootController {
+      @field({ deep: true }) accessor map = new Map(map);
+      @field({ deep: true, persist: "local" }) accessor mapLocal = new Map(map);
+      @field({ deep: true, persist: "idb" }) accessor mapIdb = new Map(map);
+    }
+
+    const instance = new MapController("Map_2");
+    await instance.isHydrated;
+
+    instance.map.get("a")!.set("b", "d");
+    instance.mapLocal.get("a")!.set("b", "d");
+    instance.mapIdb.get("a")!.set("b", "d");
+
+    await instance.isSettled;
+
+    const mapAdjusted = new Map([["a", new Map([["b", "d"]])]]);
+
+    assert.deepStrictEqual(unwrap(instance.map), mapAdjusted);
+    assert.deepStrictEqual(unwrap(instance.mapLocal), mapAdjusted);
+    assert.deepStrictEqual(unwrap(instance.mapIdb), mapAdjusted);
+
+    // Check for persistence.
+    const instance2 = new MapController("Map_2");
+    await instance2.isHydrated;
+
+    assert.deepStrictEqual(unwrap(instance.map), mapAdjusted);
+    assert.deepStrictEqual(unwrap(instance.mapLocal), mapAdjusted);
+    assert.deepStrictEqual(unwrap(instance.mapIdb), mapAdjusted);
   });
 });
