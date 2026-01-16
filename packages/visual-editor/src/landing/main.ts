@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configuration.js";
 import type {
   GraphUrlInit,
   LandingUrlInit,
@@ -92,13 +91,7 @@ async function init() {
     return;
   }
 
-  const guestConfiguration = await shellHost.getConfiguration();
-  const actionTracker = createActionTracker(
-    shellHost,
-    guestConfiguration,
-    CLIENT_DEPLOYMENT_CONFIG?.MEASUREMENT_ID,
-    () => signinAdapter.state.then((state) => state === "signedin")
-  );
+  const actionTracker = createActionTracker(shellHost);
 
   embedHandler?.sendToEmbedder({
     type: "home_loaded",

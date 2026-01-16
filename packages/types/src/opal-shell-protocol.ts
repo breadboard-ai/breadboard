@@ -190,11 +190,4 @@ export declare type GuestConfiguration = {
    * performed will be removed.
    */
   shareSurfaceUrlTemplates: Record<string, string> | undefined;
-
-  /**
-   * If true, supports tracking actions. This is a transitional flag, which
-   * allows us to implement action tracking in the shell guest without breaking
-   * existing shell hosts.
-   */
-  supportsActionTracking?: boolean;
 };
