@@ -19,6 +19,9 @@ import { makeUrl, parseUrl } from "./ui/utils/urls.js";
 import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { MakeUrlInit } from "./ui/types/types.js";
 
+// Build constant.
+declare const ENABLE_DEBUG_TOOLING: boolean;
+
 const Strings = BreadboardUI.Strings.forSection("Global");
 const parsedUrl = parseUrl(window.location.href);
 
@@ -189,8 +192,24 @@ class Main extends MainBase {
         this.renderSnackbar(),
         this.#renderFeedbackPanel(),
         this.renderConsentRequests(),
+        this.#maybeRenderDebugPanel(),
       ]}
     </div>`;
+  }
+
+  #maybeRenderDebugPanel() {
+    if (typeof ENABLE_DEBUG_TOOLING !== "undefined" && !ENABLE_DEBUG_TOOLING) {
+      return nothing;
+    }
+
+    // TODO: Reenable this.
+    // if (this.appController.debug.enabled) {
+    //   addDebugPanel(this.appController);
+    // } else {
+    //   removeDebugPanel();
+    // }
+
+    return nothing;
   }
 
   #renderWelcomePanel() {
@@ -529,7 +548,6 @@ class Main extends MainBase {
         });
         const homepage: MakeUrlInit = {
           page: "home",
-          mode: this.uiState.mode,
           dev: parsedUrl.dev,
           guestPrefixed: true,
         };
@@ -605,18 +623,17 @@ class Main extends MainBase {
           }
 
           case "feedback": {
-            if (this.globalConfig.GOOGLE_FEEDBACK_PRODUCT_ID) {
-              if (this.feedbackPanelRef.value) {
-                this.feedbackPanelRef.value.open();
-              } else {
-                console.error(`Feedback panel was not rendered!`);
-              }
-            }
+            this.appController.feedback.open(this.globalConfig);
             break;
           }
 
           case "chat": {
             window.open("https://discord.gg/googlelabs", "_blank");
+            break;
+          }
+
+          case "documentation": {
+            window.open("https://developers.google.com/opal", "_blank");
             break;
           }
 

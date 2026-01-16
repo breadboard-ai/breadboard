@@ -1,7 +1,7 @@
 {
-  "all": false,
   "src": ["src"],
-  "exclude": ["**/*.test.ts", "**/tests/**"],
+  "exclude": ["**/*.test.ts", "**/tests/**", "**"],
+  "include": ["src/controller/**/*.ts"],
   "omit-empty": true,
   "check-coverage": false,
   "exclude-after-remap": true

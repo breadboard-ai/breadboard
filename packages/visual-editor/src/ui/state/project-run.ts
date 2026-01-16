@@ -61,6 +61,7 @@ import {
 import { decodeError, decodeErrorData } from "./utils/decode-error.js";
 import { ParticleOperationReader } from "./utils/particle-operation-reader.js";
 import { ActionTracker } from "../types/types.js";
+import { computeControlState } from "../../runtime/control.js";
 
 export { createProjectRunStateFromFinalOutput, ReactiveProjectRun };
 
@@ -451,6 +452,9 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     entry.rerun = rerun;
 
     this.renderer.nodes.set(id, { status: "working" });
+
+    const controlState = computeControlState(event.data.inputs);
+    if (controlState.skip) return;
 
     // This looks like duplication with the console logic above,
     // but it's a hedge toward the future where screens and console entries
