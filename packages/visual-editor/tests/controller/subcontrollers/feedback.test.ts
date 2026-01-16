@@ -54,7 +54,7 @@ suite("FeedbackController", () => {
 
   beforeEach(async () => {
     windowWithUserFeedback = globalThis.window as WindowWithUserFeedbackApi;
-    controller = new FeedbackController();
+    controller = new FeedbackController("Feedback");
     await controller.isHydrated;
 
     mockGlobalConfig = {

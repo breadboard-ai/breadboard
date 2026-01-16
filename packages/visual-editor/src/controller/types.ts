@@ -29,6 +29,8 @@ export type PrimitiveType =
   | symbol
   | { [key: string]: PrimitiveType }
   | object
+  | Map<string, PrimitiveValue>
+  | Set<PrimitiveType>
   | PrimitiveType[];
 
 export type PrimitiveValue = PrimitiveType | pending;

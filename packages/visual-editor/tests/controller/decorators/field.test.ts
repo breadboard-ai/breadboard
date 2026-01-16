@@ -20,7 +20,7 @@ suite("Field Decorator", () => {
       @field() accessor name = "default";
     }
 
-    const instance = new TestController();
+    const instance = new TestController("Test");
     assert.strictEqual(instance.name, "default");
   });
 
@@ -29,7 +29,7 @@ suite("Field Decorator", () => {
       class FooController extends RootController {
         @field({ persist: "foo" as "local" }) accessor name = "foo";
       }
-      new FooController();
+      new FooController("Foo");
     }, new Error("Unsupported type or not yet implemented"));
   });
 
@@ -41,7 +41,7 @@ suite("Field Decorator", () => {
     }
 
     // Check on the field hydration.
-    const instance = new PersistentController();
+    const instance = new PersistentController("Persistence");
     assert(isHydrating(instance.foo));
     assert(isHydrating(instance.bar));
     assert(isHydrating(instance.baz));
@@ -59,7 +59,7 @@ suite("Field Decorator", () => {
     await instance.isSettled;
 
     // Check on the field persistence by instantiating a new version.
-    const instance2 = new PersistentController();
+    const instance2 = new PersistentController("Persistence");
     await instance2.isHydrated;
     assert.strictEqual(instance2.foo, "foo2");
     assert.strictEqual(instance2.bar, "foo2");
@@ -71,7 +71,7 @@ suite("Field Decorator", () => {
       @field({ deep: true }) accessor data = { user: "anon" };
     }
 
-    const instance = new DeepController();
+    const instance = new DeepController("Deep_1");
     assert.deepStrictEqual(instance.data, { user: "anon" });
   });
 
@@ -80,7 +80,7 @@ suite("Field Decorator", () => {
       @field({ deep: true, persist: "idb" }) accessor data = { user: "anon" };
     }
 
-    const instance = new DeepController();
+    const instance = new DeepController("Deep_2");
     await instance.isHydrated;
     assert.deepStrictEqual(instance.data, { user: "anon" });
 
@@ -88,7 +88,7 @@ suite("Field Decorator", () => {
     await instance.isSettled;
     assert.deepStrictEqual(instance.data, { user: "anon2" });
 
-    const instance2 = new DeepController();
+    const instance2 = new DeepController("Deep_2");
     await instance2.isHydrated;
     assert.deepStrictEqual(instance2.data, { user: "anon2" });
   });
@@ -102,7 +102,7 @@ suite("Field Decorator", () => {
       ];
     }
 
-    const instance = new ArrayController();
+    const instance = new ArrayController("Array");
     await instance.isHydrated;
     assert.deepStrictEqual(clean(instance.data), [
       { a: 1 },
@@ -118,12 +118,41 @@ suite("Field Decorator", () => {
       { c: 3 },
     ]);
 
-    const instance2 = new ArrayController();
+    const instance2 = new ArrayController("Array");
     await instance2.isHydrated;
     assert.deepStrictEqual(clean(instance2.data), [
       { a: 1 },
       { b: 23 },
       { c: 3 },
     ]);
+  });
+
+  test("should persist Maps", async () => {
+    const map = new Map([
+      ["a", 1],
+      ["b", 2],
+    ]);
+
+    const set = new Set([1, 2, 3]);
+
+    class SetMapController extends RootController {
+      @field({ deep: true }) accessor map = new Map(map);
+      @field({ deep: true }) accessor set = new Set(set);
+      @field({ deep: true, persist: "local" }) accessor mapLocal = new Map(map);
+      @field({ deep: true, persist: "idb" }) accessor mapIdb = new Map(map);
+      @field({ deep: true, persist: "local" }) accessor setLocal = new Set(set);
+      @field({ deep: true, persist: "idb" }) accessor setIdb = new Set(set);
+    }
+
+    const instance = new SetMapController("Map");
+    await instance.isHydrated;
+
+    assert.deepStrictEqual(new Map(instance.map), new Map(map));
+    assert.deepStrictEqual(new Map(instance.mapLocal), new Map(map));
+    assert.deepStrictEqual(new Map(instance.mapIdb), new Map(map));
+
+    assert.deepStrictEqual(new Set(instance.set), new Set(set));
+    assert.deepStrictEqual(new Set(instance.setLocal), new Set(set));
+    assert.deepStrictEqual(new Set(instance.setIdb), new Set(set));
   });
 });

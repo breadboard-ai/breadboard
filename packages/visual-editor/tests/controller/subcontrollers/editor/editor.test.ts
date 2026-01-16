@@ -11,7 +11,7 @@ import { Rect } from "../../stubs/rect.js";
 
 suite("EditorController", () => {
   test("Basics", async () => {
-    const store = new EditorController();
+    const store = new EditorController("Editor_1");
     await store.isHydrated;
 
     store.setSplit(0.65);
@@ -28,7 +28,7 @@ suite("EditorController", () => {
   });
 
   test("Clamped values", async () => {
-    const store = new EditorController();
+    const store = new EditorController("Editor_2");
     await store.isHydrated;
 
     // 500px, 500px split - should be unclamped.
