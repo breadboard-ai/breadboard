@@ -538,9 +538,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
               this.showThemeDesigner = true;
               this.#themeOptions = evt.themeOptions;
             }}
-            @bbsharerequested=${() => {
-              this.openSharePanel();
-            }}
           ></bb-app-controller>`;
         }
       )}`,
