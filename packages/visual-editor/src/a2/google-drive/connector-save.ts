@@ -17,6 +17,7 @@ import {
   getSpreadsheetMetadata,
   updateDoc,
   updatePresentation,
+  addSheet
 } from "./api.js";
 import { contextToRequests, DOC_MIME_TYPE } from "./docs.js";
 import { inferSheetValues, SHEETS_MIME_TYPE } from "./sheets.js";
@@ -125,17 +126,15 @@ async function invoke(
         const sheetInfo = await getSpreadsheetMetadata(moduleArgs, id);
         if (!ok(sheetInfo)) return sheetInfo;
 
-        const sheet1 = sheetInfo.sheets.at(0)?.properties.title;
-        if (!sheet1) {
-          return err(
-            `Unable to save to Spreadsheet: the document appears to have no sheets`
-          );
-        }
+        const newSheetTitle = generateSheetName();
+        const creatingSheet = await addSheet(moduleArgs, id, newSheetTitle);
+
+        if (!ok(creatingSheet)) return creatingSheet;
 
         const appending = await appendSpreadsheetValues(
           moduleArgs,
           id,
-          sheet1,
+          newSheetTitle,
           { values: result }
         );
         if (!ok(appending)) return appending;
@@ -212,16 +211,7 @@ async function getCollector(
     id = fileId;
   }
   if (mimeType === DOC_MIME_TYPE) {
-    const gettingDoc = await getDoc(moduleArgs, id);
-    if (!ok(gettingDoc)) return gettingDoc;
-    const end =
-      (
-        gettingDoc as { body: { content: { endIndex: number }[] } }
-      ).body.content.reduce(
-        (acc, element) => Math.max(acc, element.endIndex || 0),
-        1
-      ) - 1;
-    return { id, end };
+    return { id, end: 1 };
   } else if (mimeType === SLIDES_MIME_TYPE) {
     const gettingPresentation = await getPresentation(moduleArgs, id);
     if (!ok(gettingPresentation)) return gettingPresentation;
@@ -267,4 +257,25 @@ async function describe() {
       },
     } satisfies Schema,
   } satisfies DescribeOutputs;
+}
+
+function generateSheetName(): string {
+  const now = new Date();
+
+  const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const year = String(now.getFullYear()).slice(-2);
+
+  const datePart = `${day}.${month}.${year}`;
+
+  const timePart = now
+    .toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    })
+    .toLowerCase()
+    .replace(/\s+/g, "");
+
+  return `${datePart} ${timePart}`;
 }
