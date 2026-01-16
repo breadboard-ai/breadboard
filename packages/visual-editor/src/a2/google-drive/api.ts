@@ -31,6 +31,7 @@ export {
   updateDoc,
   updatePresentation,
   updateSpreadsheet,
+  addSheet
 };
 
 // These are various Google Drive-specific types.
@@ -897,6 +898,33 @@ type BackendError = {
     status: string;
   };
 };
+
+async function addSheet(
+  moduleArgs: A2ModuleArgs,
+  id: string,
+  title: string
+): Promise<Outcome<unknown>> {
+  if (!id) {
+    return err("Please supply the id of the spreadsheet.");
+  }
+  return api(
+    moduleArgs,
+    `https://sheets.googleapis.com/v4/spreadsheets/${id}:batchUpdate`,
+    "POST",
+    {
+      requests: [
+        {
+          addSheet: {
+            properties: {
+              title: title,
+              index: 0,
+            },
+          },
+        },
+      ],
+    }
+  );
+}
 
 async function api<T>(
   { fetchWithCreds, context }: A2ModuleArgs,
