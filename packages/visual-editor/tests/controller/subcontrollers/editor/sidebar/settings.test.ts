@@ -12,14 +12,16 @@ import { setDebuggableAppController } from "../../../../../src/controller/utils/
 suite("SettingsController", () => {
   before(() => {
     setDebuggableAppController({
-      debug: {
-        enabled: false,
-        errors: true,
-        info: true,
-        verbose: true,
-        warnings: true,
-        setLogDefault() {
-          // Stubbed.
+      global: {
+        debug: {
+          enabled: false,
+          errors: true,
+          info: true,
+          verbose: true,
+          warnings: true,
+          setLogDefault() {
+            // Stubbed.
+          },
         },
       },
     });

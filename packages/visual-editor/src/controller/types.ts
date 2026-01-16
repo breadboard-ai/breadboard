@@ -18,7 +18,9 @@ export interface DebugController {
   setLogDefault(): void;
 }
 export interface DebuggableAppController {
-  debug: DebugController;
+  global: {
+    debug: DebugController;
+  };
 }
 
 export type PrimitiveType =

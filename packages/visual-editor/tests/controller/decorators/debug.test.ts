@@ -13,14 +13,16 @@ import { setDebuggableAppController } from "../../../src/controller/utils/loggin
 suite("Debug Decorator", () => {
   before(() => {
     setDebuggableAppController({
-      debug: {
-        enabled: true,
-        errors: true,
-        info: true,
-        verbose: true,
-        warnings: true,
-        setLogDefault() {
-          // Stubbed.
+      global: {
+        debug: {
+          enabled: true,
+          errors: true,
+          info: true,
+          verbose: true,
+          warnings: true,
+          setLogDefault() {
+            // Stubbed.
+          },
         },
       },
     });

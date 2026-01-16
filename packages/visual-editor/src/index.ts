@@ -623,7 +623,7 @@ class Main extends MainBase {
           }
 
           case "feedback": {
-            this.appController.feedback.open(this.globalConfig);
+            this.appController.global.feedback.open(this.globalConfig);
             break;
           }
 

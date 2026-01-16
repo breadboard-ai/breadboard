@@ -44,11 +44,14 @@ class Logger {
     }
 
     if (debuggableAppController) {
-      if (!debuggableAppController.debug.enabled) return;
-      if (type === "info" && !debuggableAppController.debug.info) return;
-      if (type === "warning" && !debuggableAppController.debug.warnings) return;
-      if (type === "error" && !debuggableAppController.debug.errors) return;
-      if (type === "verbose" && !debuggableAppController.debug.verbose) return;
+      if (!debuggableAppController.global.debug.enabled) return;
+      if (type === "info" && !debuggableAppController.global.debug.info) return;
+      if (type === "warning" && !debuggableAppController.global.debug.warnings)
+        return;
+      if (type === "error" && !debuggableAppController.global.debug.errors)
+        return;
+      if (type === "verbose" && !debuggableAppController.global.debug.verbose)
+        return;
     }
 
     const end = "\x1B[m";
