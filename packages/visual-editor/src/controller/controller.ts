@@ -11,13 +11,15 @@ import { DebuggableAppController } from "./types.js";
 
 class Controller {
   editor = {
-    main: new Editor.EditorController(),
+    main: new Editor.EditorController("Editor_Main"),
     sidebar: {
-      settings: new Editor.Sidebar.SettingsController(),
+      settings: new Editor.Sidebar.SettingsController(
+        "Editor_Sidebar_Settings"
+      ),
     },
   };
-  debug = new DebugController();
-  feedback = new FeedbackController();
+  debug = new DebugController("Debug");
+  feedback = new FeedbackController("Feedback");
 }
 
 export const appController = new Controller();
