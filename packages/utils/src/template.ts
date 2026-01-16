@@ -32,6 +32,7 @@ export type TemplatePart = {
    * dangling autowire or missing asset
    */
   invalid?: true;
+  removed?: boolean;
   mimeType?: string;
   /**
    * Connector instance. Used to point a tool that represents the
@@ -139,7 +140,7 @@ class Template {
   get recombined() {
     return this.#parsed
       .map((part) => {
-        if (typeof part === "string") return part;
+        if (typeof part === "string") return part.trim();
         return Template.part(part);
       })
       .join("");
@@ -149,7 +150,7 @@ class Template {
     for (const [index, part] of this.#parsed.entries()) {
       if (typeof part === "string") continue;
       const transformed = callback(part);
-      this.#parsed[index] = transformed;
+      this.#parsed[index] = transformed.removed ? "" : transformed;
     }
     return this.recombined;
   }
