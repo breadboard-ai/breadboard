@@ -30,6 +30,7 @@ type Modality = (typeof MODALITY)[number];
 type TextInputs = {
   description?: LLMContent;
   "p-modality"?: Modality;
+  "p-required"?: boolean;
 } & Params;
 
 type TextOutputs =
@@ -42,14 +43,19 @@ type TextOutputs =
       context: LLMContent;
     };
 
-function toInput(title: string, modality: Modality | undefined) {
+function toInput(
+  title: string,
+  modality: Modality | undefined,
+  required: boolean | undefined
+) {
+  const requiredBehavior: BehaviorSchema[] = required ? ["hint-required"] : [];
   const toInput: Schema = {
     type: "object",
     properties: {
       request: {
         type: "object",
         title,
-        behavior: ["transient", "llm-content"],
+        behavior: ["transient", "llm-content", ...requiredBehavior],
         examples: [defaultLLMContent()],
         format: computeIcon(modality),
       },
@@ -94,7 +100,12 @@ function combineModalities(modalities: readonly string[]): SchemaEnumValue[] {
 }
 
 async function invoke(
-  { description, "p-modality": modality, ...params }: TextInputs,
+  {
+    description,
+    "p-modality": modality,
+    "p-required": required,
+    ...params
+  }: TextInputs,
   caps: Capabilities
 ): Promise<Outcome<TextOutputs>> {
   const template = new Template(caps, description);
@@ -115,7 +126,7 @@ async function invoke(
     chat: true,
   });
   const title = toText(details);
-  return { context: "nothing", toInput: toInput(title, modality) };
+  return { context: "nothing", toInput: toInput(title, modality, required) };
 }
 
 type DescribeInputs = {
@@ -146,6 +157,13 @@ async function describe(
           icon,
           title: "Input type",
           description: "Set the type of input the user can provide",
+        },
+        "p-required": {
+          type: "boolean",
+          behavior: ["config", "hint-preview", "hint-advanced"],
+          icon,
+          title: "Input is required",
+          description: "Set whether or not the user's input is required",
         },
         ...template.schemas(),
       },

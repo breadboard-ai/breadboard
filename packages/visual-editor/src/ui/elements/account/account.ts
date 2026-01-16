@@ -320,14 +320,14 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
             : Strings.from("APP_NAME")}
         </h1>
         <section id="user-info">
-          ${this.signInAdapter.picture
+          ${this.signInAdapter?.pictureSignal
             ? html`<img
-                src=${this.signInAdapter.picture}
-                alt=${this.signInAdapter.name}
+                src=${this.signInAdapter?.pictureSignal}
+                alt=${this.signInAdapter?.nameSignal}
               />`
             : nothing}
           <div>
-            <p>${this.signInAdapter.name}</p>
+            <p>${this.signInAdapter.nameSignal}</p>
           </div>
         </section>
         ${this.uiState.flags?.googleOne &&

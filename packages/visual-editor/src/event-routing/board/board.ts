@@ -13,7 +13,10 @@ import {
   InputValues,
 } from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
-import { RuntimeSnackbarEvent } from "../../runtime/events.js";
+import {
+  RuntimeSnackbarEvent,
+  RuntimeUnsnackbarEvent,
+} from "../../runtime/events.js";
 import { StateEvent } from "../../ui/events/events.js";
 import * as BreadboardUI from "../../ui/index.js";
 import { parseUrl } from "../../ui/utils/urls.js";
@@ -90,6 +93,7 @@ export const LoadRoute: EventRoute<"board.load"> = {
       resourceKey: undefined,
       shared: originalEvent.detail.shared,
       dev: parseUrl(window.location.href).dev,
+      guestPrefixed: true,
     });
     return false;
   },
@@ -136,7 +140,7 @@ export const TogglePinRoute: EventRoute<"board.togglepin"> = {
 export const StopRoute: EventRoute<"board.stop"> = {
   event: "board.stop",
 
-  async do({ tab, runtime, originalEvent, settings }) {
+  async do({ tab, runtime, settings }) {
     if (!tab) {
       return false;
     }
@@ -148,9 +152,9 @@ export const StopRoute: EventRoute<"board.stop"> = {
       if (url.searchParams.has("results")) {
         url.searchParams.delete("results");
         history.pushState(null, "", url);
+        
+        runtime.state.project?.resetRun();
       }
-      runtime.state.project?.resetRun();
-      return true;
     }
 
     const tabId = tab?.id ?? null;
@@ -160,20 +164,14 @@ export const StopRoute: EventRoute<"board.stop"> = {
     }
 
     abortController.abort("Run stopped");
-    const runner = runtime.run.getRunner(tabId);
-    if (runner?.running()) {
-      await runner?.run();
-    }
 
-    if (originalEvent.detail.clearLastRun) {
-      await runtime.run.clearLastRun(tabId, tab?.graph.url);
-      if (!settings) {
-        console.warn(`No settings, unable to prepare next run.`);
-      } else {
-        const preparingNextRun = await runtime.prepareRun(tab, settings);
-        if (!ok(preparingNextRun)) {
-          console.warn(preparingNextRun.$error);
-        }
+    await runtime.run.clearLastRun(tabId, tab?.graph.url);
+    if (!settings) {
+      console.warn(`No settings, unable to prepare next run.`);
+    } else {
+      const preparingNextRun = await runtime.prepareRun(tab, settings);
+      if (!ok(preparingNextRun)) {
+        console.warn(preparingNextRun.$error);
       }
     }
 
@@ -192,13 +190,13 @@ export const RestartRoute: EventRoute<"board.restart"> = {
     uiState,
     askUserToSignInIfNeeded,
     boardServer,
+    actionTracker,
   }) {
     await StopRoute.do({
       tab,
       runtime,
       originalEvent: new StateEvent({
         eventType: "board.stop",
-        clearLastRun: true,
       }),
       settings,
       googleDriveClient,
@@ -206,6 +204,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       askUserToSignInIfNeeded,
       boardServer,
     });
+    actionTracker?.runApp(tab?.graph.url, "console");
     await RunRoute.do({
       tab,
       runtime,
@@ -237,7 +236,7 @@ export const InputRoute: EventRoute<"board.input"> = {
 
     const data = originalEvent.detail.data as InputValues;
     if (!runner.running()) {
-      runner.run(data);
+      runner.resumeWithInputs(data);
     }
 
     return false;
@@ -272,6 +271,8 @@ export const CreateRoute: EventRoute<"board.create"> = {
     embedHandler,
   }) {
     if ((await askUserToSignInIfNeeded()) !== "success") {
+      // The user didn't sign in, so hide any snackbars.
+      runtime.dispatchEvent(new RuntimeUnsnackbarEvent());
       return false;
     }
 
@@ -308,6 +309,7 @@ export const CreateRoute: EventRoute<"board.create"> = {
         // created it.
         resourceKey: undefined,
         dev,
+        guestPrefixed: true,
       },
       tab?.id,
       originalEvent.detail.editHistoryCreator

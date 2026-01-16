@@ -77,7 +77,13 @@ export default {
       str: "Opal can make mistakes, so double-check it",
     },
     LABEL_DISCLAIMER_LITE: {
-      str: "Content submitted here is processed by Opal, not Gemini. Opal can make mistakes, so double-check it. [Learn more](https://developers.google.com/opal/faq).",
+      str: "This Gem is powered by Google Labs, not Gemini Apps. It can make mistakes, so double-check it. [Learn more](https://support.google.com/gemini?p=ai_apps)",
+    },
+    LABEL_FIRST_RUN: {
+      str: "Click start to try this Opal",
+    },
+    LABEL_FIRST_RUN_LITE: {
+      str: "Click start to try this Gem",
     },
     LABEL_SHARE: {
       str: "An Opal mini-app has been shared with you",
@@ -111,6 +117,9 @@ export default {
     },
     LABEL_NO_OPALS_LITE: {
       str: "The Opal apps you create will appear here",
+    },
+    LABEL_NO_CREATE_COMPACT: {
+      str: "To create a new Gem from Labs, go to Gemini on a desktop browser.",
     },
     ERROR_LOADING_PROJECTS: {
       str: "Error loading Opal app server",

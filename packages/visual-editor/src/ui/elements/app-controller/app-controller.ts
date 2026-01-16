@@ -108,13 +108,6 @@ export class AppController extends SignalWatcher(LitElement) {
   @property()
   accessor appDescription: string | null = null;
 
-  /**
-   * If set this will override the light mode
-   * TODO: Remove this once light & dark themes are supported everywhere.
-   */
-  @property({ reflect: true, type: Boolean })
-  accessor systemThemeOverride = false;
-
   @property()
   accessor headerConfig = {
     replay: true,
@@ -153,6 +146,54 @@ export class AppController extends SignalWatcher(LitElement) {
     }
 
     return this.#appTemplate.isRefreshingAppTheme;
+  }
+
+  @property()
+  set shouldShowFirstRunMessage(showFirstRunMessage: boolean) {
+    if (!this.#appTemplate) {
+      return;
+    }
+
+    this.#appTemplate.shouldShowFirstRunMessage = showFirstRunMessage;
+  }
+  get shouldShowFirstRunMessage() {
+    if (!this.#appTemplate) {
+      return false;
+    }
+
+    return this.#appTemplate.showFirstRunMessage;
+  }
+
+  @property()
+  set firstRunMessage(firstRunMessage: string) {
+    if (!this.#appTemplate) {
+      return;
+    }
+
+    this.#appTemplate.firstRunMessage = firstRunMessage;
+  }
+  get firstRunMessage() {
+    if (!this.#appTemplate) {
+      return "";
+    }
+
+    return this.#appTemplate.firstRunMessage;
+  }
+
+  @property()
+  set isFreshGraph(refreshing: boolean) {
+    if (!this.#appTemplate) {
+      return;
+    }
+
+    this.#appTemplate.isFreshGraph = refreshing;
+  }
+  get isFreshGraph() {
+    if (!this.#appTemplate) {
+      return false;
+    }
+
+    return this.#appTemplate.isFreshGraph;
   }
 
   disconnectedCallback(): void {
@@ -322,11 +363,6 @@ export class AppController extends SignalWatcher(LitElement) {
   }
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
-    if (changedProperties.has("themeHash") && this.themeHash) {
-      this.#retrievingSplashFor = "";
-      this.#applyThemeToTemplate();
-    }
-
     if (this.graph) {
       if (this.graph.title !== this.appTitle) {
         this.appTitle = this.graph.title ?? Strings.from("LABEL_UNTITLED_APP");
@@ -367,6 +403,15 @@ export class AppController extends SignalWatcher(LitElement) {
           };
 
           this.theme.splashScreen = themes[theme].splashScreen;
+
+          if (
+            changedProperties.has("themeHash") &&
+            this.themeHash &&
+            this.themeHash !== changedProperties.get("themeHash")
+          ) {
+            this.#retrievingSplashFor = "";
+            this.#applyThemeToTemplate();
+          }
         } else {
           setDefaultTheme();
         }

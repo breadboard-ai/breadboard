@@ -14,7 +14,9 @@
   "scripts": {
     "prepack": "npm run build",
     "build": "wireit",
+    "coverage": "wireit",
     "build:vite": "wireit",
+    "build:tsc": "wireit",
     "test": "wireit",
     "eval:agent": "wireit",
     "eval:a2ui": "wireit",
@@ -101,15 +103,31 @@
       ]
     },
     "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/tsc/tests/**/*.js dist/tsc/tests/*.js",
+      "command": "node --import ./dist/tsc/tests/controller-setup.js --experimental-test-coverage --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info --test --enable-source-maps './dist/tsc/tests/**/*.js' './dist/tsc/tests/*.js'",
+      "env": {
+        "NODE_V8_COVERAGE": "./coverage/tmp"
+      },
       "files": [],
-      "output": [],
+      "output": [
+        "lcov.info",
+        "coverage/tmp",
+        "test-storage"
+      ],
       "dependencies": [
         "build:tsc"
       ]
     },
+    "coverage": {
+      "command": "c8 --all report --reporter=html --reporter=json-summary --src=src",
+      "files": [
+        ".c8rc.json"
+      ],
+      "dependencies": [
+        "test"
+      ]
+    },
     "eval:agent": {
-      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/agent.js",
+      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/agent/index.js",
       "dependencies": [
         "build:tsc"
       ],
@@ -117,7 +135,7 @@
       "output": []
     },
     "eval:a2ui": {
-      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/a2ui.js",
+      "command": "node --enable-source-maps --experimental-test-module-mocks dist/tsc/eval/sets/a2ui/index.js",
       "dependencies": [
         "build:tsc"
       ],
@@ -158,18 +176,30 @@
   "devDependencies": {
     "@cfworker/json-schema": "^4.1.1",
     "@google-labs/tsconfig": "^0.0.2",
+    "@tweakpane/core": "^2.0.5",
     "@types/flubber": "^0.4.0",
     "@types/gapi": "^0.0.47",
     "@types/gapi.client.drive-v3": "^0.0.5",
     "@types/google.picker": "^0.0.51",
     "@types/gtag.js": "^0.0.20",
     "@types/har-format": "^1.2.16",
+    "@types/jsdom": "^27.0.0",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.0.0",
+    "@types/node-localstorage": "^1.3.3",
+    "c8": "^10.1.3",
     "dotenv": "^17.2.3",
+    "fake-indexeddb": "^6.2.5",
+    "google-auth-library": "^10.1.0",
+    "jsdom": "^27.3.0",
+    "node-localstorage": "^3.0.5",
+    "prettier": "^3.7.4",
     "tsx": "^4.20.6",
+    "tweakpane": "^4.0.5",
     "typescript": "^5.8.3",
-    "vite": "^7.2.4"
+    "vite": "^7.2.6",
+    "vite-plugin-compression2": "^2.2.0",
+    "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {
     "@breadboard-ai/types": "0.9.0",
@@ -179,7 +209,7 @@
     "@lit/task": "^1.0.2",
     "@material/material-color-utilities": "^0.3.0",
     "@material/web": "^2.3.0",
-    "@modelcontextprotocol/sdk": "^1.17.1",
+    "@modelcontextprotocol/sdk": "^1.25.2",
     "@types/gapi": "^0.0.47",
     "@types/gapi.client.calendar-v3": "^0.0.4",
     "@types/gapi.client.gmail-v1": "^0.0.4",
@@ -193,12 +223,12 @@
     "littlezipper": "^0.1.5",
     "markdown-it": "^14.1.0",
     "marked": "^16.3.0",
+    "mime": "^4.1.0",
     "mimetext": "^3.0.27",
-    "pdfjs-dist": "^5.2.133",
+    "pdfjs-dist": "^5.4.449",
     "signal-polyfill": "^0.2.2",
     "signal-utils": "^0.21.1",
     "urlpattern-polyfill": "^10.1.0",
-    "zod": "^3.24.1",
-    "zod-to-json-schema": "^3.24.6"
+    "zod": "^4.3.5"
   }
 }

@@ -60,6 +60,8 @@ import {
 } from "./types.js";
 import { decodeError, decodeErrorData } from "./utils/decode-error.js";
 import { ParticleOperationReader } from "./utils/particle-operation-reader.js";
+import { ActionTracker } from "../types/types.js";
+import { computeControlState } from "../../runtime/control.js";
 
 export { createProjectRunStateFromFinalOutput, ReactiveProjectRun };
 
@@ -146,7 +148,10 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
           | ErrorResponse
           | undefined;
         if (!errorResponse) return;
-        errors.set(entry.node.id, decodeErrorData(errorResponse));
+        errors.set(
+          entry.node.id,
+          decodeErrorData(this.actionTracker, errorResponse)
+        );
       }
     });
     return errors;
@@ -176,7 +181,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     }
 
     const completed = [...this.renderer.nodes.values()].filter(
-      (node) => node.status === "succeeded"
+      (node) => node.status === "succeeded" || node.status === "skipped"
     ).length;
 
     return completed / this.estimatedEntryCount;
@@ -232,6 +237,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
   private constructor(
     private readonly stepEditor: StepEditor | undefined,
     private readonly mainGraphId: MainGraphIdentifier,
+    private readonly actionTracker: ActionTracker | undefined,
     private readonly graphStore?: MutableGraphStore,
     private readonly fileSystem?: FileSystem,
     private readonly runner?: HarnessRunner,
@@ -282,7 +288,8 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
         const { id, state, message } = e.data;
         if (state === "failed") {
           const errorMessage =
-            decodeErrorData(message as ErrorObject) ?? "Unknown error";
+            decodeErrorData(this.actionTracker, message as ErrorObject) ??
+            "Unknown error";
           this.renderer.nodes.set(id, {
             status: state,
             errorMessage: errorMessage.message,
@@ -326,7 +333,11 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
       } else {
         this.#setConsoleEntry(id);
       }
-      const status = toNodeRunState(state, outputs as OutputValues);
+      const status = toNodeRunState(
+        this.actionTracker,
+        state,
+        outputs as OutputValues
+      );
       if (!ok(status)) {
         console.warn(status.$error);
       } else {
@@ -442,6 +453,9 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
 
     this.renderer.nodes.set(id, { status: "working" });
 
+    const controlState = computeControlState(event.data.inputs);
+    if (controlState.skip) return;
+
     // This looks like duplication with the console logic above,
     // but it's a hedge toward the future where screens and console entries
     // might go out of sync.
@@ -480,7 +494,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
             | ErrorResponse
             | undefined;
           if (!errorResponse) return;
-          const error = decodeErrorData(errorResponse);
+          const error = decodeErrorData(this.actionTracker, errorResponse);
           entry.error = error;
           this.renderer.nodes.set(id, {
             status: "failed",
@@ -514,7 +528,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     if (nodeState === "interrupted") {
       // When the input is in the "interrupted" state, we just resume running
       // and let the input-bubbling machinery handle the abort signals.
-      this.runner?.run({});
+      this.runner?.resumeWithInputs({});
       return;
     }
 
@@ -590,7 +604,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
   }
 
   #error(event: RunErrorEvent) {
-    const error = decodeError(event);
+    const error = decodeError(this.actionTracker, event);
     this.input = null;
     this.#fatalError = error;
   }
@@ -759,6 +773,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     return new ReactiveProjectRun(
       undefined,
       mainGraphId,
+      undefined,
       graphStore,
       undefined,
       undefined,
@@ -769,6 +784,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
   static create(
     stepEditor: StepEditor,
     mainGraphId: MainGraphIdentifier,
+    actionTracker: ActionTracker,
     graphStore: MutableGraphStore,
     fileSystem: FileSystem,
     runner: HarnessRunner,
@@ -778,6 +794,7 @@ class ReactiveProjectRun implements ProjectRun, SimplifiedProjectRunState {
     return new ReactiveProjectRun(
       stepEditor,
       mainGraphId,
+      actionTracker,
       graphStore,
       fileSystem,
       runner,
@@ -833,6 +850,7 @@ class IdCache {
 }
 
 function toNodeRunState(
+  actionTracker: ActionTracker | undefined,
   state: NodeLifecycleState,
   outputs: OutputValues | null
 ): Outcome<NodeRunState> {
@@ -840,7 +858,7 @@ function toNodeRunState(
     if ("$error" in (outputs || {})) {
       const errorResponse = outputs?.$error as ErrorResponse | undefined;
       if (errorResponse) {
-        const error = decodeErrorData(errorResponse);
+        const error = decodeErrorData(actionTracker, errorResponse);
 
         return {
           status: state,

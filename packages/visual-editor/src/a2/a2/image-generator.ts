@@ -44,7 +44,18 @@ type ImageGeneratorOutputs = {
   context: LLMContent[] | DescriberResult;
 };
 
-export { invoke as default, describe };
+export { invoke as default, describe, makeImageInstruction };
+
+function makeImageInstruction({ pro }: { pro: boolean }) {
+  return (inputs: Record<string, unknown>) => {
+    const proHint = pro ? ` Use the "pro" model for image generation.` : ``;
+    const aspectRatio = (inputs as ImageGeneratorInputs)["p-aspect-ratio"];
+    const aspectRatioHint = aspectRatio
+      ? ` Provide image in ${aspectRatio} aspect ratio.`
+      : ``;
+    return `Generate an image using the prompt below. Use that prompt exactly.${aspectRatioHint}${proHint}\n\nPROMPT:`;
+  };
+}
 
 function gatheringRequest(
   caps: Capabilities,
@@ -95,7 +106,7 @@ async function invoke(
   if (!instruction) {
     instruction = toLLMContent("");
   }
-  if (!aspectRatio) {
+  if (!aspectRatio || !ASPECT_RATIOS.includes(aspectRatio)) {
     aspectRatio = "1:1";
   }
   let imageContext = extractMediaData(incomingContext);
@@ -107,7 +118,7 @@ async function invoke(
   );
   const substituting = await new Template(caps, instruction).substitute(
     params,
-    async ({ path: url, instance }) => toolManager.addTool(url, instance)
+    async (part) => toolManager.addTool(part)
   );
   if (!ok(substituting)) {
     return substituting;

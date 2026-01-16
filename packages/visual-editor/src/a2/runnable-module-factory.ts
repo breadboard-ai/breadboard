@@ -30,6 +30,7 @@ import { err, filterUndefined, ok } from "@breadboard-ai/utils";
 import { a2 } from "./a2.js";
 import { urlComponentsFromString } from "../engine/loader/loader.js";
 import { McpClientManager } from "../mcp/index.js";
+import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 
 export { createA2ModuleFactory };
 
@@ -39,6 +40,7 @@ const URL_SUFFIX = ".bgl.json";
 export type A2ModuleFactoryArgs = {
   mcpClientManager: McpClientManager;
   fetchWithCreds: typeof globalThis.fetch;
+  shell: OpalShellHostProtocol;
 };
 
 export type A2ModuleArgs = A2ModuleFactoryArgs & {

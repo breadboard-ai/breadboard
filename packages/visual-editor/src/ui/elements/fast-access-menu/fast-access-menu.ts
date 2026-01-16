@@ -35,6 +35,7 @@ import { getStepIcon } from "../../utils/get-step-icon.js";
 import { iconSubstitute } from "../../utils/icon-substitute.js";
 import { repeat } from "lit/directives/repeat.js";
 import * as Styles from "../../styles/styles.js";
+import { ROUTE_TOOL_PATH } from "../../../a2/a2/tool-manager.js";
 
 @customElement("bb-fast-access-menu")
 export class FastAccessMenu extends SignalWatcher(LitElement) {
@@ -60,7 +61,10 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
   accessor showTools = true;
 
   @property()
-  accessor showControlFlowTools = false;
+  accessor showControlFlowTools = true;
+
+  @property()
+  accessor showRoutes = false;
 
   @property()
   accessor showComponents = true;
@@ -164,6 +168,9 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
               min-width: 0;
             }
 
+            & .route {
+              margin-right: var(--bb-grid-size-2);
+            }
             & .g-icon {
               margin-right: var(--bb-grid-size-2);
               flex: 0 0 auto;
@@ -388,7 +395,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       this.#items.tools.length +
       this.#items.components.length +
       this.#items.parameters.length +
-      (this.state?.controlFlow.results.size ?? 0);
+      (this.state?.controlFlow.results.size ?? 0) +
+      (this.state?.routes.results.size ?? 0);
 
     this.selectedIndex = this.#clamp(this.selectedIndex, 0, totalSize - 1);
   }
@@ -412,6 +420,17 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     }
 
     button.scrollIntoView({ block: "nearest" });
+  }
+
+  updateFilter(filter: string) {
+    this.filter = filter;
+    if (!this.state) {
+      return;
+    }
+
+    this.state.integrations.filter = filter;
+    this.state.controlFlow.filter = filter;
+    this.state.routes.filter = filter;
   }
 
   #onEscapeOrBackspace(evt: KeyboardEvent): void {
@@ -447,7 +466,8 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       this.#items.tools.length +
       this.#items.parameters.length +
       this.#items.components.length +
-      (this.state?.controlFlow.results.size ?? 0);
+      (this.state?.controlFlow.results.size ?? 0) +
+      (this.state?.routes.results.size ?? 0);
 
     switch (evt.key) {
       case "Enter": {
@@ -500,6 +520,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
       this.#items.parameters.length === 0 &&
       this.#items.tools.length === 0 &&
       (this.state?.controlFlow.results.size ?? 0) === 0 &&
+      (this.state?.routes.results.size ?? 0) === 0 &&
       this.filter !== "";
 
     if (idx === -1) {
@@ -574,13 +595,22 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     if (idx < controlFlowSize) {
       const [id, tool] = [...this.state!.controlFlow.results][idx];
       this.dispatchEvent(
+        new FastAccessSelectEvent(id, tool.title!, "tool", undefined, tool.id)
+      );
+      return;
+    }
+
+    const routeSize = this.state?.routes.results.size ?? 0;
+    idx -= controlFlowSize;
+    if (idx < routeSize) {
+      const [, route] = [...this.state!.routes.results][idx];
+      this.dispatchEvent(
         new FastAccessSelectEvent(
-          id,
-          tool.title!,
+          ROUTE_TOOL_PATH,
+          route.title!,
           "tool",
           undefined,
-          tool.id,
-          "step"
+          route.id
         )
       );
       return;
@@ -632,11 +662,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
               return;
             }
 
-            this.filter = evt.target.value;
-            if (this.state) {
-              this.state.integrations.filter = this.filter;
-              this.state.controlFlow.filter = this.filter;
-            }
+            this.updateFilter(evt.target.value);
           }}
         />
       </header>
@@ -804,7 +830,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
               })}
             </menu>`
           : this.showComponents
-            ? html`<div class="no-items">No components</div>`
+            ? html`<div class="no-items">No steps</div>`
             : nothing}
       </section>
 
@@ -834,8 +860,7 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                                   tool.title!,
                                   "tool",
                                   undefined,
-                                  tool.id,
-                                  "step"
+                                  tool.id
                                 )
                               );
                             }}
@@ -856,6 +881,49 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
                     )}
                   </menu>`
                 : html`<div class="no-items">No utilities</div>`}`
+          : nothing}
+      </section>
+
+      <section class="group tools">
+        ${this.showRoutes
+          ? html`<h3 class="sans-flex w-400 round">Routes</h3>
+              ${this.state?.routes.results.size
+                ? html`<menu>
+                    ${repeat(
+                      this.state.routes.results,
+                      ([id]) => id,
+                      ([_, route]) => {
+                        const active = idx === this.selectedIndex;
+                        const globalIndex = idx;
+                        idx++;
+                        const icon = iconSubstitute(route.metadata?.icon);
+
+                        return html`<li>
+                          <button
+                            class=${classMap({ active })}
+                            @pointerover=${() => {
+                              this.selectedIndex = globalIndex;
+                            }}
+                            @click=${() => {
+                              this.dispatchEvent(
+                                new FastAccessSelectEvent(
+                                  route.id,
+                                  route.title!,
+                                  "tool",
+                                  undefined,
+                                  route.id
+                                )
+                              );
+                            }}
+                          >
+                            <span class="g-icon filled round">${icon}</span>
+                            <span class="title">${route.title}</span>
+                          </button>
+                        </li>`;
+                      }
+                    )}
+                  </menu>`
+                : html`<div class="no-items">No routes</div>`}`
           : nothing}
       </section>
 

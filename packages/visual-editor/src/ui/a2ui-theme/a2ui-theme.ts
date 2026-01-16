@@ -44,8 +44,6 @@ const button = {
   "border-bw-0": true,
   "border-c-n70": true,
   "border-bs-s": true,
-  "color-bgc-s30": true,
-  "color-c-n100": true,
   "behavior-ho-80": true,
 };
 
@@ -55,7 +53,6 @@ const heading = {
   "typography-w-500": true,
   "layout-mt-0": true,
   "layout-mb-2": true,
-  "color-c-n10": true,
 };
 
 const h1 = {
@@ -100,7 +97,6 @@ const p = {
   "layout-m-0": true,
   "typography-sz-bm": true,
   "layout-as-n": true,
-  "color-c-n10": true,
   "typography-ws-p": true,
 };
 
@@ -150,30 +146,25 @@ const video = {
   "layout-el-cv": true,
 };
 
-const aLight = v0_8.Styles.merge(a, { "color-c-n5": true });
-const inputLight = v0_8.Styles.merge(input, { "color-c-n5": true });
-const textareaLight = v0_8.Styles.merge(textarea, { "color-c-n5": true });
-const buttonLight = v0_8.Styles.merge(button, { "color-c-n100": true });
-const h1Light = v0_8.Styles.merge(h1, { "color-c-n5": true });
-const h2Light = v0_8.Styles.merge(h2, { "color-c-n5": true });
-const h3Light = v0_8.Styles.merge(h3, { "color-c-n5": true });
-const bodyLight = v0_8.Styles.merge(body, { "color-c-n5": true });
-const pLight = v0_8.Styles.merge(p, { "color-c-n35": true });
-const preLight = v0_8.Styles.merge(pre, { "color-c-n35": true });
-const orderedListLight = v0_8.Styles.merge(orderedList, {
-  "color-c-n35": true,
-});
-const unorderedListLight = v0_8.Styles.merge(unorderedList, {
-  "color-c-n35": true,
-});
-const listItemLight = v0_8.Styles.merge(listItem, {
-  "color-c-n35": true,
-});
+const aLight = v0_8.Styles.merge(a, {});
+const inputLight = v0_8.Styles.merge(input, {});
+const textareaLight = v0_8.Styles.merge(textarea, {});
+const buttonLight = v0_8.Styles.merge(button, {});
+const h1Light = v0_8.Styles.merge(h1, {});
+const h2Light = v0_8.Styles.merge(h2, {});
+const h3Light = v0_8.Styles.merge(h3, {});
+const bodyLight = v0_8.Styles.merge(body, {});
+const pLight = v0_8.Styles.merge(p, {});
+const preLight = v0_8.Styles.merge(pre, {});
+const orderedListLight = v0_8.Styles.merge(orderedList, {});
+const unorderedListLight = v0_8.Styles.merge(unorderedList, {});
+const listItemLight = v0_8.Styles.merge(listItem, {});
 
 export const theme: v0_8.Types.Theme = {
   additionalStyles: {
     Button: {
-      "--light-dark-n-35": "var(--light-dark-n-100)",
+      "--light-dark-p-20":
+        "light-dark(var(--original-n-100), var(--original-n-0))",
     },
   },
   components: {
@@ -186,9 +177,8 @@ export const theme: v0_8.Types.Theme = {
       "border-br-12": true,
       "border-bw-0": true,
       "border-bs-s": true,
-      "color-bgc-p30": true,
-      "color-c-n100": true,
       "behavior-ho-70": true,
+      "color-bgc-p15": true,
     },
     Card: { "border-br-9": true, "color-bgc-p100": true, "layout-p-6": true },
     CheckBox: {
@@ -199,13 +189,8 @@ export const theme: v0_8.Types.Theme = {
         "border-br-12": true,
         "border-bw-1": true,
         "border-bs-s": true,
-        "color-bgc-p100": true,
-        "color-bc-p60": true,
-        "color-c-n30": true,
-        "color-c-p30": true,
       },
       label: {
-        "color-c-p30": true,
         "typography-f-sf": true,
         "typography-v-r": true,
         "typography-w-400": true,
@@ -218,7 +203,8 @@ export const theme: v0_8.Types.Theme = {
       },
     },
     Column: {
-      "layout-g-2": true,
+      "layout-g-4": true,
+      "layout-p-3": true,
     },
     DateTimeInput: {
       element: {
@@ -229,10 +215,6 @@ export const theme: v0_8.Types.Theme = {
         "border-br-12": true,
         "border-bw-1": true,
         "border-bs-s": true,
-        "color-bgc-p100": true,
-        "color-bc-p60": true,
-        "color-c-n30": true,
-        "color-c-p30": true,
       },
       container: {},
       label: {},
@@ -252,9 +234,7 @@ export const theme: v0_8.Types.Theme = {
       mediumFeature: {},
       smallFeature: {},
     },
-    Icon: {
-      "color-c-n40": true,
-    },
+    Icon: {},
     List: {
       "layout-g-4": true,
       "layout-p-2": true,
@@ -276,26 +256,22 @@ export const theme: v0_8.Types.Theme = {
         "layout-dsp-flexhor": true,
         "layout-p-4": true,
         "border-br-3": true,
-        "color-bgc-p100": true,
         "layout-mt-2": true,
         "layout-mb-2": true,
         "layout-ml-0": true,
         "layout-mr-0": true,
         "border-bw-1": true,
         "border-bs-s": true,
-        "color-bc-n90": true,
       },
       element: {
         "layout-p-2": true,
         "border-br-3": true,
-        "color-bgc-p100": true,
         "layout-mt-2": true,
         "layout-mb-2": true,
         "layout-ml-0": true,
         "layout-mr-0": true,
         "border-bw-1": true,
         "border-bs-s": true,
-        "color-bc-n90": true,
       },
       label: {
         "layout-dsp-flexhor": true,
@@ -307,7 +283,6 @@ export const theme: v0_8.Types.Theme = {
         "layout-m-0": true,
         "typography-sz-bm": true,
         "layout-as-n": true,
-        "color-c-n35": true,
       },
     },
     Row: {
@@ -319,14 +294,12 @@ export const theme: v0_8.Types.Theme = {
         "layout-dsp-flexhor": true,
         "layout-p-4": true,
         "border-br-3": true,
-        "color-bgc-p100": true,
         "layout-mt-2": true,
         "layout-mb-2": true,
         "layout-ml-0": true,
         "layout-mr-0": true,
         "border-bw-1": true,
         "border-bs-s": true,
-        "color-bc-n90": true,
       },
       element: {},
       label: {},
@@ -339,7 +312,6 @@ export const theme: v0_8.Types.Theme = {
       },
       controls: {
         all: {
-          "color-c-p30": true,
           "typography-f-sf": true,
           "typography-v-r": true,
           "typography-w-400": true,
@@ -353,7 +325,6 @@ export const theme: v0_8.Types.Theme = {
       },
       container: {
         "layout-g-2": true,
-        "color-c-p30": true,
         "layout-dsp-flexvert": true,
       },
     },
@@ -362,15 +333,17 @@ export const theme: v0_8.Types.Theme = {
         "layout-dsp-flexvert": true,
         "layout-w-100": true,
         "layout-g-2": true,
-        "color-c-p30": true,
       },
       h1: {
         "typography-f-sf": true,
         "typography-ta-c": true,
         "typography-v-r": true,
-        "typography-w-400": true,
+        "typography-w-500": true,
         "layout-m-0": true,
-        "typography-sz-tl": true,
+        "typography-sz-hs": true,
+        "typography-fs-n": true,
+        "layout-as-n": true,
+        "layout-mb-2": true,
       },
       h2: {
         "typography-f-sf": true,
@@ -379,6 +352,7 @@ export const theme: v0_8.Types.Theme = {
         "typography-w-400": true,
         "layout-m-0": true,
         "typography-sz-tl": true,
+        "color-c-p20": true,
       },
       h3: {
         "typography-f-sf": true,
@@ -387,6 +361,7 @@ export const theme: v0_8.Types.Theme = {
         "typography-w-400": true,
         "layout-m-0": true,
         "typography-sz-ts": true,
+        "color-c-p20": true,
       },
       h4: {
         "typography-f-sf": true,
@@ -395,6 +370,7 @@ export const theme: v0_8.Types.Theme = {
         "typography-w-400": true,
         "layout-m-0": true,
         "typography-sz-bl": true,
+        "color-c-p20": true,
       },
       h5: {
         "typography-f-sf": true,
@@ -403,9 +379,14 @@ export const theme: v0_8.Types.Theme = {
         "typography-w-400": true,
         "layout-m-0": true,
         "typography-sz-bm": true,
+        "color-c-p20": true,
       },
-      caption: {},
-      body: {},
+      caption: {
+        "color-c-p20": true,
+      },
+      body: {
+        "color-c-p20": true,
+      },
     },
     TextField: {
       container: {
@@ -429,8 +410,6 @@ export const theme: v0_8.Types.Theme = {
         "border-bs-s": true,
         "color-bgc-p100": true,
         "color-bc-p60": true,
-        "color-c-n30": true,
-        "color-c-p30": true,
       },
     },
     Video: {

@@ -17,6 +17,7 @@ import {
 import { Template, willCreateCycle } from "@breadboard-ai/utils";
 import { MarkInPortsInvalid } from "./mark-in-ports-invalid.js";
 import { transformConfiguration } from "./transform-all-nodes.js";
+import { ROUTE_TOOL_PATH } from "../../a2/a2/tool-manager.js";
 
 export { ChangeEdge };
 
@@ -56,13 +57,51 @@ class ChangeEdge implements EditTransform {
     }
     let outPort = from.out;
     if (outPort === undefined) {
-      const sourcePorts = await source.ports();
-      const sourceMainPort = sourcePorts.outputs.ports.find((port) =>
-        port.schema.behavior?.includes("main-port")
-      );
-      if (sourceMainPort) {
-        outPort = sourceMainPort.name;
+      if (source.routes().length > 0) {
+        // We're in "routing mode", assign the value of the destination node id.
+        outPort = id;
+      } else {
+        const sourcePorts = await source.ports();
+        const sourceMainPort = sourcePorts.outputs.ports.find((port) =>
+          port.schema.behavior?.includes("main-port")
+        );
+        if (sourceMainPort) {
+          outPort = sourceMainPort.name;
+        }
       }
+    }
+
+    // Re-validate all currently invalid routing chips in the source.
+    const updatedSourceConfiguration = transformConfiguration(
+      source.descriptor.id,
+      source.configuration(),
+      (part) => {
+        const { type, path, instance, invalid } = part;
+        if (
+          type === "tool" &&
+          path === ROUTE_TOOL_PATH &&
+          instance === id &&
+          invalid
+        ) {
+          const updatedPart = { ...part };
+          delete updatedPart.invalid;
+          return updatedPart;
+        }
+        return null;
+      }
+    );
+    if (updatedSourceConfiguration !== null) {
+      context.apply(
+        [
+          {
+            type: "changeconfiguration",
+            graphId,
+            id: source.descriptor.id,
+            configuration: updatedSourceConfiguration,
+          },
+        ],
+        "Updating routing chips in source"
+      );
     }
 
     const destination = inspectableGraph.nodeById(id);

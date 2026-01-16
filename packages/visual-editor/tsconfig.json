@@ -17,8 +17,14 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "types": ["vite/client", "@types/gtag.js", "node", "trusted-types"]
+    "types": ["vite/client", "@types/gtag.js", "node", "trusted-types"],
+    "allowJs": true
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "eval/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "tests/**/*.ts",
+    "eval/**/*.ts",
+    "tests/controller-setup.js"
+  ],
   "extends": "@google-labs/tsconfig/base.json"
 }

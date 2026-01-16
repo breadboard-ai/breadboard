@@ -67,9 +67,7 @@ export interface Redo extends BaseEventDetail<`${Namespace}.redo`> {
   readonly eventType: `${Namespace}.redo`;
 }
 
-export interface Stop extends BaseEventDetail<`${Namespace}.stop`> {
-  readonly clearLastRun: boolean;
-}
+export type Stop = BaseEventDetail<`${Namespace}.stop`>;
 
 export interface Restart extends BaseEventDetail<`${Namespace}.restart`> {
   /* Duped to avoid @typescript-eslint/no-empty-object-type */

@@ -1,0 +1,72 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+:root {
+  --sys-color--body-background-light: #ffffff;
+  --sys-color--body-background-dark: #131314;
+}
+
+iframe#opal-app {
+  width: 100vw;
+  height: 100vh;
+  border: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: var(--sys-color--body-background-light);
+}
+
+/**
+ * Always set the Drive Picker frame to be color-scheme: light otherwise it will
+ * render with a solid white bg under color-scheme: dark.
+ */
+iframe[src^="https://drive"]
+{
+  color-scheme: light;
+}
+
+#fallback-sign-in-dialog {
+  align-items: center;
+  background: #fff;
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  font-family: "Google Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  justify-content: space-around;
+  padding: 36px;
+  text-align: center;
+  width: 258px;
+  h1 {
+    font-size: 24px;
+    font-weight: 500;
+    margin-top: 0;
+  }
+  button {
+    background-image: url("/styles/landing/images/g-logo.png");
+    background-position: 24px center;
+    background-repeat: no-repeat;
+    background-size: 20px 20px;
+    background-color: #000;
+    border-radius: 64px;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 16px;
+    padding: 16px 24px 16px 52px;
+    &:hover {
+      background-color: #3b3b3b;
+    }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  iframe#opal-app {
+    background: var(--sys-color--body-background-dark);
+  }
+}

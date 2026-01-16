@@ -50,10 +50,6 @@ export type RuntimeFlags = {
    */
   opalAdk: boolean;
   /**
-   * Enables the UI to switch based on the system theme.
-   */
-  observeSystemTheme: boolean;
-  /**
    * Enables output templates for consistent output.
    */
   outputTemplates: boolean;
@@ -73,6 +69,11 @@ export type RuntimeFlags = {
    * Enables SSE streaming for GenerateWebpage (output node HTML generation).
    */
   streamGenWebpage: boolean;
+  /**
+   * Enables the "Add from Drive" option in lite mode (it is always enabled in
+   * non-lite mode).
+   */
+  enableDrivePickerInLiteMode: boolean;
 };
 
 /**

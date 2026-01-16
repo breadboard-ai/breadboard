@@ -129,6 +129,7 @@ export class PDFViewer extends LitElement {
         & canvas {
           object-fit: contain;
           image-rendering: smooth;
+          max-width: 100%;
         }
       }
     }

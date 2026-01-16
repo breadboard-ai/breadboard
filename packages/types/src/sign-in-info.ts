@@ -5,5 +5,5 @@
  */
 
 export interface SignInInfo {
-  readonly state: "signedin" | "signedout";
+  readonly state: Promise<"signedin" | "signedout">;
 }

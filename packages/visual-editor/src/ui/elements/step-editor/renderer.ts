@@ -967,17 +967,6 @@ export class Renderer extends LitElement {
     }
 
     if (
-      changedProperties.has("runState") ||
-      changedProperties.has("runStateEffect")
-    ) {
-      const mainGraph = this.#graphs.get(MAIN_BOARD_ID);
-      const runState = this.runState;
-      if (mainGraph) {
-        mainGraph.highlightActivity(runState);
-      }
-    }
-
-    if (
       (changedProperties.has("graph") ||
         changedProperties.has("graphTopologyUpdateId") ||
         changedProperties.has("allowEdgeAttachmentMove") ||
@@ -1062,6 +1051,17 @@ export class Renderer extends LitElement {
 
       // Update disclaimer.
       this.showDisclaimer = this.graph.nodes().length !== 0;
+    }
+
+    if (
+      changedProperties.has("runState") ||
+      changedProperties.has("runStateEffect")
+    ) {
+      const mainGraph = this.#graphs.get(MAIN_BOARD_ID);
+      const runState = this.runState;
+      if (mainGraph) {
+        mainGraph.highlightActivity(runState);
+      }
     }
 
     if (

@@ -60,6 +60,9 @@ export default {
   COMMAND_SEND_FEEDBACK: {
     str: "Send feedback",
   },
+  COMMAND_DOCUMENTATION: {
+    str: "Read Documentation",
+  },
   COMMAND_JOIN_CHAT: {
     str: "Google Labs Discord",
   },
@@ -164,6 +167,12 @@ export default {
   LABEL_SETTINGS_EXPERIMENTAL: {
     str: "Experimental Features",
   },
+  LABEL_FIRST_RUN: {
+    str: "Click start to try this app",
+  },
+  LABEL_FIRST_RUN_LITE: {
+    str: "Click start to try this app",
+  },
 
   // Statuses.
   STATUS_REMIXING_PROJECT: {
@@ -254,6 +263,9 @@ export default {
   },
   ERROR_UNABLE_TO_RETRIEVE_TYPE_INFO: {
     str: "Error retrieving type information; try adding it again",
+  },
+  ERROR_INPUT_REQUIRED: {
+    str: "Please type or upload your response",
   },
 
   // Titles.
