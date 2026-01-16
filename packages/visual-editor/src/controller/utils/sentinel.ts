@@ -20,20 +20,18 @@ export const _HYDRATION = Symbol("Pending");
 export const PENDING_HYDRATION = new Proxy(
   {},
   {
-    /* c8 ignore next 20 */
+    /* c8 ignore next 18 */
     get(_target, prop, _receiver) {
-      // Allow safe inspection for debugging/logging
+      // Allow safe inspection for debugging/logging.
       if (prop === Symbol.toStringTag) return "PendingHydration";
       if (prop === Symbol.toPrimitive) return () => "PENDING_HYDRATION";
       if (prop === "toString") return () => "PENDING_HYDRATION";
       if (prop === "valueOf") return () => _HYDRATION;
 
-      // Throw on any actual property access (e.g. .size, .length, .foo)
+      // Throw on any actual property access (e.g. .size, .length, .foo).
+      const propName = String(prop);
       const msg = Formatter.error(
-        `You are trying to access property "${String(
-          prop
-        )}" on a @field that is still hydrating. ` +
-          `Always check "if (isHydrating(this.field))" before using it.`
+        `You are trying to access property "${propName}" on a @field that is still hydrating. Always check "if (isHydrating(this.field))" before using it.`
       );
       const logger = getLogger();
       logger.log(msg, "Hydration Error", false);
