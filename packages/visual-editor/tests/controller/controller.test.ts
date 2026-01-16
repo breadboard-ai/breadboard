@@ -5,10 +5,19 @@
  */
 
 import assert from "node:assert";
-import { suite, test } from "node:test";
+import { after, before, suite, test } from "node:test";
 import { appController } from "../../src/controller/controller.js";
+import { setDOM, unsetDOM } from "../fake-dom.js";
 
 suite("AppController", () => {
+  before(() => {
+    setDOM();
+  });
+
+  after(() => {
+    unsetDOM();
+  });
+
   test("Instantiates", async () => {
     assert.ok(appController);
   });

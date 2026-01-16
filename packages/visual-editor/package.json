@@ -103,7 +103,7 @@
       ]
     },
     "test": {
-      "command": "node --import ./dist/tsc/tests/controller-setup.js --experimental-test-coverage --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info --test --enable-source-maps './dist/tsc/tests/**/*.js' './dist/tsc/tests/*.js'",
+      "command": "node --import ./tests/controller-setup.js --experimental-test-coverage --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info --test --enable-source-maps './dist/tsc/tests/**/*.js' './dist/tsc/tests/*.js'",
       "env": {
         "NODE_V8_COVERAGE": "./coverage/tmp"
       },
@@ -191,7 +191,7 @@
     "dotenv": "^17.2.3",
     "fake-indexeddb": "^6.2.5",
     "google-auth-library": "^10.1.0",
-    "jsdom": "^27.3.0",
+    "jsdom": "^27.4.0",
     "node-localstorage": "^3.0.5",
     "prettier": "^3.7.4",
     "tsx": "^4.20.6",
