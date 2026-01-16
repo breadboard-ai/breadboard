@@ -8,12 +8,14 @@ import { consume } from "@lit/context";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
-import { icons } from "../../styles/icons.js";
-import { spinAnimationStyles } from "../../styles/spin-animation.js";
+import type { TrustedScriptURL } from "trusted-types/lib/index.js";
 import {
   type GlobalConfig,
   globalConfigContext,
 } from "../../contexts/global-config.js";
+import { icons } from "../../styles/icons.js";
+import { spinAnimationStyles } from "../../styles/spin-animation.js";
+import { createTrustedFeedbackURL } from "../../trusted-types/feedback-url.js";
 
 type UserFeedbackApi = {
   startFeedback(
@@ -37,7 +39,8 @@ let googleFeedbackApiPromise;
 function loadGoogleFeedbackApi(): Promise<UserFeedbackApi> {
   return (googleFeedbackApiPromise ??= new Promise((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = "https://support.google.com/inapp/api.js";
+    (script as { src: string | TrustedScriptURL }).src =
+      createTrustedFeedbackURL("");
     script.async = true;
     script.addEventListener(
       "load",

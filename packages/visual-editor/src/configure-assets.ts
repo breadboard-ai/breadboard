@@ -17,7 +17,7 @@ const FONT_FACE =
 const FONT_FACE_FLEX =
   '"Google Sans Flex", "Helvetica Neue", Helvetica, Arial, sans-serif';
 const FONT_LINK =
-  "https://fonts.googleapis.com/css2?family=Google+Sans+Code&family=Google+Sans+Flex:opsz,wght,ROND@6..144,1..1000,100&family=Google+Sans:opsz,wght@17..18,400..700&display=block";
+  "https://fonts.googleapis.com/css2?family=Google+Sans+Code&family=Google+Sans+Flex:opsz,wght,ROND@6..144,1..1000,0..100&family=Google+Sans:opsz,wght@17..18,400..700&display=block";
 
 const POLICY_HTML_PATH = "public/policy.html";
 const TOS_HTML_PATH = "public/tos.html";

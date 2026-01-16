@@ -4,35 +4,44 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as BBLite from "./ui/lite/lite.js";
-import "./ui/lite/welcome-panel/project-listing.js";
-import "./ui/elements/overflow-menu/overflow-menu.js";
-import { css, html, HTMLTemplateResult, LitElement } from "lit";
-import { ref } from "lit/directives/ref.js";
-import { customElement } from "lit/decorators.js";
-import { MainArguments } from "./types/types.js";
-import { EmbedHandler } from "./ui/embed/embed.js";
-import { provide } from "@lit/context";
-import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
-import { boardServerContext } from "./ui/contexts/board-server.js";
-import type { Outcome, UUID } from "@breadboard-ai/types";
-import { SigninAdapter } from "./ui/utils/signin-adapter.js";
+import {
+  GOOGLE_DRIVE_FILES_API_PREFIX,
+  type Outcome,
+  type UUID,
+} from "@breadboard-ai/types";
+import { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { err, ok } from "@breadboard-ai/utils";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
+import { SignalWatcher } from "@lit-labs/signals";
+import { provide } from "@lit/context";
+import { css, html, HTMLTemplateResult, LitElement } from "lit";
+import { customElement, state } from "lit/decorators.js";
+import { ref } from "lit/directives/ref.js";
+import { GoogleDriveBoardServer } from "./board-server/server.js";
+import { RecentBoardStore } from "./data/recent-boards.js";
+import { MainArguments } from "./types/types.js";
+import { boardServerContext } from "./ui/contexts/board-server.js";
+import { GlobalConfig, globalConfigContext } from "./ui/contexts/contexts.js";
+import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
+import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
+import "./ui/elements/overflow-menu/overflow-menu.js";
+import { EmbedHandler } from "./ui/embed/embed.js";
 import type {
   SnackbarActionEvent,
   StateEvent,
   StateEventDetailMap,
 } from "./ui/events/events.js";
-import { err, ok } from "@breadboard-ai/utils";
-import { SnackbarMessage, SnackType } from "./ui/types/types.js";
-import { googleDriveClientContext } from "./ui/contexts/google-drive-client-context.js";
-import { RecentBoardStore } from "./data/recent-boards.js";
-import { SignalWatcher } from "@lit-labs/signals";
-import { GoogleDriveBoardServer } from "./board-server/server.js";
+import * as BBLite from "./ui/lite/lite.js";
+import "./ui/lite/welcome-panel/project-listing.js";
+import { ActionTracker, SnackbarMessage, SnackType } from "./ui/types/types.js";
+import { SigninAdapter } from "./ui/utils/signin-adapter.js";
+import { createActionTracker } from "./ui/utils/action-tracker.js";
+import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
 
 const DELETE_BOARD_MESSAGE =
   "Are you sure you want to delete this gem? This cannot be undone";
 const DELETING_BOARD_MESSAGE = "Deleting gem";
+const MIN_OFFSET_HEIGHT = 250;
 
 @customElement("bb-lite-home")
 export class LiteHome extends SignalWatcher(LitElement) {
@@ -58,6 +67,15 @@ export class LiteHome extends SignalWatcher(LitElement) {
 
   @provide({ context: googleDriveClientContext })
   accessor googleDriveClient!: GoogleDriveClient;
+
+  @provide({ context: guestConfigurationContext })
+  protected accessor guestConfiguration: GuestConfiguration;
+
+  @provide({ context: actionTrackerContext })
+  accessor actionTracker: ActionTracker;
+
+  @state()
+  accessor compactView = false;
 
   /**
    * Indicates whether we're currently remixing or deleting boards.
@@ -88,25 +106,33 @@ export class LiteHome extends SignalWatcher(LitElement) {
     // Communication with embedder
     this.#embedHandler = mainArgs.embedHandler;
 
+    // Configuration provided by shell host
+    this.guestConfiguration = mainArgs.guestConfiguration;
+
     // Authentication
     const opalShell = mainArgs.shellHost;
-    const signinAdapter = new SigninAdapter(
+    const signinAdapter = new SigninAdapter(opalShell);
+
+    this.actionTracker = createActionTracker(
       opalShell,
-      mainArgs.initialSignInState
+      mainArgs.guestConfiguration,
+      mainArgs.globalConfig.MEASUREMENT_ID,
+      () => signinAdapter.state.then((state) => state === "signedin")
     );
 
     // Board server
-    const proxyApiBaseUrl = new URL("/api/drive-proxy/", window.location.href)
-      .href;
-    const apiBaseUrl =
-      signinAdapter.state === "signedout"
-        ? proxyApiBaseUrl
-        : this.globalConfig.GOOGLE_DRIVE_API_ENDPOINT ||
-          "https://www.googleapis.com";
+    const proxyApiBaseUrl = new URL(
+      "/api/drive-proxy/drive/v3/files",
+      window.location.href
+    ).href;
+    const apiBaseUrl = signinAdapter.state.then((state) =>
+      state === "signedout" ? proxyApiBaseUrl : GOOGLE_DRIVE_FILES_API_PREFIX
+    );
     this.googleDriveClient = new GoogleDriveClient({
       apiBaseUrl,
       proxyApiBaseUrl,
       fetchWithCreds: opalShell.fetchWithCreds,
+      isTestApi: !!mainArgs.guestConfiguration.isTestApi,
     });
     const googleDrivePublishPermissions =
       this.globalConfig.GOOGLE_DRIVE_PUBLISH_PERMISSIONS ?? [];
@@ -119,9 +145,21 @@ export class LiteHome extends SignalWatcher(LitElement) {
       this.googleDriveClient,
       googleDrivePublishPermissions,
       userFolderName,
-      this.globalConfig.BACKEND_API_ENDPOINT ?? ""
+      opalShell.findUserOpalFolder,
+      opalShell.listUserOpals
     );
     this.#recentBoardStore.restore();
+    const sizeDetector = window.matchMedia("(max-width: 500px)");
+    const reactToScreenWidth = () => {
+      if (sizeDetector.matches) {
+        this.compactView = true;
+      } else {
+        this.compactView = false;
+      }
+    };
+    sizeDetector.addEventListener("change", reactToScreenWidth);
+    reactToScreenWidth();
+    this.actionTracker.load("landing", false);
   }
 
   connectedCallback() {
@@ -134,18 +172,35 @@ export class LiteHome extends SignalWatcher(LitElement) {
     this.#addResizeController();
   }
 
+  #debounceResizeNotify = 0;
+  #debounceResizeAnimate = true;
   #addResizeController() {
-    const notifyResize = () => {
-      this.#embedHandler?.sendToEmbedder({
-        type: "resize",
-        width: this.offsetWidth,
-        height: this.offsetHeight,
-      });
+    // Here we debounce the call to notify the embedder because we may get a
+    // flurry of updates. Instead we schedule the update and, when the timeout
+    // expires, we issue the update.
+    const notifyResize = (debounceTimeout = 0) => {
+      // In some embedding contexts the height might be initially calculated as
+      // being less than the gallery height. So we effectively use this check to
+      // ignore such updates.
+      if (this.offsetHeight < MIN_OFFSET_HEIGHT) return;
+
+      clearTimeout(this.#debounceResizeNotify);
+      this.#debounceResizeNotify = window.setTimeout(() => {
+        this.#embedHandler?.sendToEmbedder({
+          type: "resize",
+          width: this.offsetWidth,
+          height: this.offsetHeight,
+          animate: this.#debounceResizeAnimate,
+        });
+
+        // After the first notification, we no longer animate.
+        this.#debounceResizeAnimate = false;
+      }, debounceTimeout);
     };
-    const resizeObserver = new ResizeObserver(notifyResize);
+    const resizeObserver = new ResizeObserver(() => notifyResize());
     resizeObserver.observe(this);
-    // Send initial notification
-    notifyResize();
+    // Send initial notification.
+    notifyResize(50);
   }
 
   handleRoutedEvent(evt: Event) {
@@ -298,7 +353,16 @@ export class LiteHome extends SignalWatcher(LitElement) {
   render() {
     return html`<section id="home">
       <bb-project-listing-lite
+        .libraryTitle=${this.guestConfiguration.libraryTitle ?? null}
+        .libraryIcon=${this.guestConfiguration.libraryIcon ?? null}
+        .noLibraryAppsTitle=${this.guestConfiguration.noLibraryAppsTitle ??
+        null}
+        .galleryTitle=${this.guestConfiguration.galleryTitle ?? null}
+        .galleryIcon=${this.guestConfiguration.galleryIcon ?? null}
+        .createNewTitle=${this.guestConfiguration.createNewTitle ?? null}
+        .createNewIcon=${this.guestConfiguration.createNewIcon ?? null}
         .recentBoards=${this.#recentBoardStore.boards}
+        .allowCreate=${!this.compactView}
         @bbevent=${this.handleRoutedEvent}
       ></bb-project-listing-lite>
       ${this.#renderSnackbar()}

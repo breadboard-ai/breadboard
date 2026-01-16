@@ -17,6 +17,7 @@ import { type } from "../../../styles/host/type.js";
 import { icons } from "../../../styles/icons.js";
 import { iconSubstitute } from "../../../utils/icon-substitute.js";
 import { sharedStyles } from "./shared-styles.js";
+import { hasControlPart } from "../../../../runtime/control.js";
 
 @customElement("bb-console-view")
 export class ConsoleView extends SignalWatcher(LitElement) {
@@ -184,6 +185,7 @@ export class ConsoleView extends SignalWatcher(LitElement) {
 
             & .chevron {
               margin-right: var(--bb-grid-size-4);
+              opacity: 0.6;
 
               &::before {
                 content: "keyboard_arrow_up";
@@ -209,6 +211,11 @@ export class ConsoleView extends SignalWatcher(LitElement) {
             }
           }
 
+          &:not(:has(> :not(summary))) summary .chevron {
+            opacity: 0.3;
+            cursor: default;
+          }
+            
           &[open] > summary {
             margin-bottom: var(--bb-grid-size-3);
 
@@ -524,12 +531,14 @@ export class ConsoleView extends SignalWatcher(LitElement) {
                     ([key]) => key,
                     ([, item]) => {
                       return html`<div class="output" data-label="Output:">
-                        <bb-llm-output
-                          .lite=${true}
-                          .clamped=${false}
-                          .value=${item}
-                          .forceDrivePlaceholder=${true}
-                        ></bb-llm-output>
+                        ${hasControlPart(item)
+                          ? `Skipped`
+                          : html` <bb-llm-output
+                              .lite=${true}
+                              .clamped=${false}
+                              .value=${item}
+                              .forceDrivePlaceholder=${true}
+                            ></bb-llm-output>`}
                       </div>`;
                     }
                   )

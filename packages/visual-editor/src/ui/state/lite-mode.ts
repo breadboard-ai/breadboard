@@ -34,7 +34,7 @@ function createLiteModeState(context: RuntimeContext) {
 const EXAMPLES: LiteModeIntentExample[] = [
   {
     intent:
-      "An app that takes a topic, then researches current news on the topic and creates an alternative history fiction story based on these news",
+      "Help me prepare for a quiz on a given topic by creating sample questions with hints as an interactive quiz",
   },
   {
     intent:
@@ -46,7 +46,7 @@ const EXAMPLES: LiteModeIntentExample[] = [
   },
   {
     intent:
-      "An app that invents a family board game based on the ideas I provide",
+      "An app that takes a given resume and a job description the candidate is interested in, then provides a critique of the resume",
   },
 ];
 
@@ -245,21 +245,29 @@ function getStatus(
 class PlannerState implements LiteModePlannerState {
   @signal
   get status() {
-    return this.flowGenerator.currentStatus || "Creating your Opal";
+    return this.flowGenerator.currentStatus || "Creating your app";
   }
 
   @signal
   get thought() {
     return (
-      trimWithEllipsis(this.flowGenerator.currentThought, 10) || "Planning ..."
+      trimWithEllipsis(
+        progressFromThought(this.flowGenerator.currentThought),
+        10
+      ) || "Planning ..."
     );
   }
 
   constructor(private readonly flowGenerator: FlowGenerator) {}
 }
 
+function progressFromThought(thought: string | null): string | null {
+  if (!thought) return null;
+  const match = thought.match(/\*\*(.*?)\*\*/);
+  return match ? match[1] : null;
+}
+
 function trimWithEllipsis(text: string | null, length: number) {
-  // TODO: Implement this using word boundaries, not string length.
   if (!text) return null;
   const words = text.split(" ");
   if (words.length <= length + 1) return text;

@@ -12,6 +12,7 @@ import { createClientConfig, createServerConfig } from "./config.js";
 import * as connectionServer from "./connection/server.js";
 import {
   FALLBACK_CSP,
+  GENERATED_APP_CSP,
   MAIN_APP_CSP,
   makeCspHandler,
   OAUTH_REDIRECT_CSP,
@@ -46,14 +47,6 @@ server.use(
   connectionServer.createServer(connectionServerConfig)
 );
 
-console.log("[unified-server startup] Mounting app view");
-server.use("/app", (req, res) => {
-  // Redirect the old standalone app view to the new unified view with the app
-  // tab opened.
-  const graphId = req.path.replace(/^\//, "");
-  res.redirect(301, `/?flow=${encodeURIComponent(graphId)}&mode=app`);
-});
-
 console.log("[unified-server startup] Mounting updates handler");
 server.use("/updates", createUpdatesHandler());
 
@@ -70,6 +63,7 @@ const driveClient = new GoogleDriveClient({
     }
     return token;
   }),
+  isTestApi: false,
 });
 
 console.log("[unified-server startup] Mounting gallery");
@@ -100,39 +94,40 @@ const clientConfig = await createClientConfig({
   OAUTH_CLIENT: connectionServerConfig.connection.oauth.client_id,
 });
 
-if (flags.SHELL_ENABLED) {
-  // TODO(aomarks) After we are fully in the iframe arrangement, move assets
-  // around so that this entire re-pathing middleware is not necessary.
-  console.log("[unified-server startup] Serving in shell configuration");
-  server.get(
-    ["/", "/landing/", "/open/:fileId"].map(
-      (path) => `${flags.SHELL_PREFIX || ""}${path}`
-    ),
-    makeCspHandler(SHELL_CSP),
-    (req, _res, next) => {
-      req.url = "/shell/index.html";
-      next();
-    }
-  );
-  server.get(
-    ["/_app/", "/_app/open/:fileId"],
-    makeCspHandler(MAIN_APP_CSP),
-    (req, _res, next) => {
-      req.url = "/index.html";
-      next();
-    }
-  );
-  server.get(
-    "/_app/landing/",
-    makeCspHandler(MAIN_APP_CSP),
-    (req, _res, next) => {
-      req.url = "/landing/index.html";
-      next();
-    }
-  );
-} else {
-  server.get(["/", "/landing/"], makeCspHandler(MAIN_APP_CSP));
-}
+server.get(
+  ["/", "/landing/", "/open/:fileId", "/app/:fileId", "/edit/:fileId"].map(
+    (path) => `${flags.SHELL_PREFIX || ""}${path}`
+  ),
+  makeCspHandler(SHELL_CSP),
+  (req, _res, next) => {
+    req.url = "/shell/index.html";
+    next();
+  }
+);
+server.get(
+  ["/_app/", "/_app/open/:fileId", "/_app/app/:fileId", "/_app/edit/:fileId"],
+  makeCspHandler(MAIN_APP_CSP),
+  (req, _res, next) => {
+    req.url = "/index.html";
+    next();
+  }
+);
+server.get(
+  "/_app/landing/",
+  makeCspHandler(MAIN_APP_CSP),
+  (req, _res, next) => {
+    req.url = "/landing/index.html";
+    next();
+  }
+);
+server.get(
+  "/_app/_app-sandbox/",
+  makeCspHandler(GENERATED_APP_CSP),
+  (req, _res, next) => {
+    req.url = "/app-sandbox.html";
+    next();
+  }
+);
 
 server.get("/oauth/", makeCspHandler(OAUTH_REDIRECT_CSP));
 

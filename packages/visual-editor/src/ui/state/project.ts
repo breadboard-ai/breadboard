@@ -30,7 +30,6 @@ import { signal } from "signal-utils";
 import { SignalMap } from "signal-utils/map";
 import { ConnectorType } from "../connectors/types.js";
 import { ConnectorStateImpl } from "./connectors.js";
-import { ReactiveFastAccess } from "./fast-access.js";
 import { GraphAssetImpl } from "./graph-asset.js";
 import { ReactiveOrganizer } from "./organizer.js";
 import { ReactiveProjectRun } from "./project-run.js";
@@ -38,7 +37,6 @@ import { RendererStateImpl } from "./renderer.js";
 import {
   Component,
   ConnectorState,
-  FastAccess,
   GraphAsset,
   Integrations,
   Organizer,
@@ -46,19 +44,21 @@ import {
   ProjectInternal,
   ProjectRun,
   ProjectThemeState,
+  ProjectValues,
   RendererState,
   StepEditor,
   Tool,
 } from "./types.js";
 import { IntegrationsImpl } from "./integrations.js";
 import { updateMap } from "./utils/update-map.js";
-import { FilteredIntegrationsImpl } from "./filtered-integrations.js";
 import { McpClientManager } from "../../mcp/index.js";
 import { StepEditorImpl } from "./step-editor.js";
 import { ThemeState } from "./theme-state.js";
 import { err, ok } from "@breadboard-ai/utils";
 import { transformDataParts } from "../../data/common.js";
 import { GoogleDriveBoardServer } from "../../board-server/server.js";
+import { ActionTracker } from "../types/types.js";
+import { Signal } from "signal-polyfill";
 
 export { createProjectState, ReactiveProject };
 
@@ -83,6 +83,7 @@ function createProjectState(
   store: MutableGraphStore,
   fetchWithCreds: typeof globalThis.fetch,
   boardServer: GoogleDriveBoardServer,
+  actionTracker: ActionTracker,
   mcpClientManager: McpClientManager,
   editable?: EditableGraph
 ): Project {
@@ -92,20 +93,29 @@ function createProjectState(
     fetchWithCreds,
     boardServer,
     mcpClientManager,
+    actionTracker,
     editable
   );
 }
 
 type ReactiveComponents = SignalMap<NodeIdentifier, Component>;
 
-class ReactiveProject implements ProjectInternal {
-  #mainGraphId: MainGraphIdentifier;
-  #store: MutableGraphStore;
-  #fetchWithCreds: typeof globalThis.fetch;
-  #boardServer: GoogleDriveBoardServer;
-  #editable?: EditableGraph;
-  #connectorInstances: Set<string> = new Set();
-  #connectorMap: SignalMap<string, ConnectorType>;
+class ReactiveProject implements ProjectInternal, ProjectValues {
+  readonly #mainGraphId: MainGraphIdentifier;
+  readonly #store: MutableGraphStore;
+  readonly #fetchWithCreds: typeof globalThis.fetch;
+  readonly #boardServer: GoogleDriveBoardServer;
+  readonly #connectorInstances: Set<string> = new Set();
+  readonly #connectorMap: SignalMap<string, ConnectorType>;
+
+  #graphChanged = new Signal.State({});
+  readonly #editable: EditableGraph | undefined;
+
+  @signal
+  get editable(): EditableGraph | undefined {
+    this.#graphChanged.get();
+    return this.#editable;
+  }
 
   @signal
   accessor run: ProjectRun;
@@ -117,7 +127,6 @@ class ReactiveProject implements ProjectInternal {
   readonly myTools: SignalMap<string, Tool>;
   readonly controlFlowTools: SignalMap<string, Tool>;
   readonly organizer: Organizer;
-  readonly fastAccess: FastAccess;
   readonly components: SignalMap<GraphIdentifier, ReactiveComponents>;
   readonly parameters: SignalMap<string, ParameterMetadata>;
   readonly connectors: ConnectorState;
@@ -132,6 +141,7 @@ class ReactiveProject implements ProjectInternal {
     fetchWithCreds: typeof globalThis.fetch,
     boardServer: GoogleDriveBoardServer,
     clientManager: McpClientManager,
+    private readonly actionTracker: ActionTracker,
     editable?: EditableGraph
   ) {
     this.#mainGraphId = mainGraphId;
@@ -146,6 +156,7 @@ class ReactiveProject implements ProjectInternal {
         this.#updateParameters();
         this.#updateMyTools();
         this.#updateControlFlowTools();
+        this.#graphChanged.set({});
       }
       this.#updateConnectors();
       this.#updateTools();
@@ -158,7 +169,6 @@ class ReactiveProject implements ProjectInternal {
     }
     const graphUrlString = graph?.url;
     this.graphUrl = graphUrlString ? new URL(graphUrlString) : null;
-    this.stepEditor = new StepEditorImpl();
     this.graphAssets = new SignalMap();
     this.tools = new SignalMap();
     this.controlFlowTools = new SignalMap();
@@ -170,15 +180,7 @@ class ReactiveProject implements ProjectInternal {
     this.connectors = new ConnectorStateImpl(this, this.#connectorMap);
     this.organizer = new ReactiveOrganizer(this);
     this.integrations = new IntegrationsImpl(clientManager, editable);
-    this.fastAccess = new ReactiveFastAccess(
-      this.graphAssets,
-      this.tools,
-      this.myTools,
-      this.controlFlowTools,
-      this.components,
-      this.parameters,
-      new FilteredIntegrationsImpl(this.integrations.registered)
-    );
+    this.stepEditor = new StepEditorImpl(this);
     this.#updateGraphAssets();
     this.renderer = new RendererStateImpl(this.graphAssets);
     this.#updateComponents();
@@ -203,6 +205,7 @@ class ReactiveProject implements ProjectInternal {
     this.run = ReactiveProjectRun.create(
       this.stepEditor,
       this.#mainGraphId,
+      this.actionTracker,
       this.#store,
       fileSystem,
       runner,

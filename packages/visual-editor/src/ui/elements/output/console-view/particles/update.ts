@@ -20,6 +20,7 @@ import { sharedStyles } from "./../shared-styles.js";
 import { baseColors } from "../../../../styles/host/base-colors.js";
 import { type } from "../../../../styles/host/type.js";
 import { Outcome } from "@breadboard-ai/types";
+import { hasControlPart } from "../../../../../runtime/control.js";
 
 @customElement("bb-particle-update")
 export class ParticleUpdate extends SignalWatcher(LitElement) {
@@ -59,16 +60,20 @@ export class ParticleUpdate extends SignalWatcher(LitElement) {
     } else if (mimeType == "application/vnd.breadboard.llm-content") {
       const parsed = parseJson(text);
       if (!parsed) return parsed;
-      // The mimeType here is a kludge. Instead, we should be sending
-      // a particle group that represents LLM Content and then convert them
-      // here to LLM Content to pass to `bb-llm-output`.
-      // And in the future, `bb-llm-content` is just a ParticleView.
-      value = html`<bb-llm-output
-        .lite=${true}
-        .clamped=${false}
-        .value=${parsed}
-        .forceDrivePlaceholder=${true}
-      ></bb-llm-output>`;
+      if (hasControlPart(parsed)) {
+        value = html`Skipped`;
+      } else {
+        // The mimeType here is a kludge. Instead, we should be sending
+        // a particle group that represents LLM Content and then convert them
+        // here to LLM Content to pass to `bb-llm-output`.
+        // And in the future, `bb-llm-content` is just a ParticleView.
+        value = html`<bb-llm-output
+          .lite=${true}
+          .clamped=${false}
+          .value=${parsed}
+          .forceDrivePlaceholder=${true}
+        ></bb-llm-output>`;
+      }
     } else if (mimeType?.startsWith("text/")) {
       // This is also a kludge. I only need the "render markdown nicely" part
       // of llm-output.

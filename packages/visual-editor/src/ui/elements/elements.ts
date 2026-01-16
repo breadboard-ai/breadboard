@@ -66,10 +66,12 @@ export { Renderer } from "./step-editor/renderer.js";
 export { ShapeMorph } from "./shape/shape-morph.js";
 export { SharePanel } from "./share-panel/share-panel.js";
 export { Snackbar } from "./toast/snackbar.js";
-export { Splitter } from "./splitter/splitter.js";
+// @deprecated for UISplitter export { Splitter } from "./splitter/splitter.js";
+export { UISplitter } from "./splitter/ui-splitter.js";
 export { Toast } from "./toast/toast.js";
 export { Tooltip } from "./tooltip/tooltip.js";
 export { OnboardingTooltip } from "./tooltip/onboarding-tooltip.js";
+export { AppSandbox } from "../../app-sandbox/app-sandbox-element.js";
 
 // Flowgen.
 export { FlowgenEditorInput } from "../flow-gen/flowgen-editor-input.js";

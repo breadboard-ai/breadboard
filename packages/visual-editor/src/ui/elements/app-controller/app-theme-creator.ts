@@ -247,6 +247,11 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
                     opacity: 1;
                   }
                 }
+
+                &[disabled] {
+                  opacity: 0.3;
+                  cursor: not-allowed;
+                }
               }
             }
 

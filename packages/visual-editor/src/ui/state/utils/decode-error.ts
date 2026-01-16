@@ -7,7 +7,7 @@
 import { ErrorResponse, RunError, RunErrorEvent } from "@breadboard-ai/types";
 import { ErrorMetadata } from "../types.js";
 import { formatError } from "../../utils/format-error.js";
-import { ActionTracker } from "../../utils/action-tracker.js";
+import { ActionTracker } from "../../types/types.js";
 
 export { decodeError, decodeErrorData };
 
@@ -68,7 +68,10 @@ function maybeExtractRichError(s: string): RichError {
   }
 }
 
-function decodeErrorData(error: ErrorResponse["error"]) {
+function decodeErrorData(
+  actionTracker: ActionTracker | undefined,
+  error: ErrorResponse["error"]
+) {
   const metadata =
     !(typeof error === "string") &&
     "metadata" in error &&
@@ -86,32 +89,32 @@ function decodeErrorData(error: ErrorResponse["error"]) {
   switch (kind) {
     case "unknown":
     case "bug": {
-      ActionTracker.errorUnknown();
+      actionTracker?.errorUnknown();
       return {
         message: `Something went wrong. ${TRY_AGAIN_POSTAMBLE}`,
         details: `${richError.message}\n\n${richError.details || ""}`,
       };
     }
     case "config": {
-      ActionTracker.errorConfig();
+      actionTracker?.errorConfig();
       return {
         message: richError.message,
       };
     }
     case "recitation": {
-      ActionTracker.errorRecitation();
+      actionTracker?.errorRecitation();
       return {
         message: `The generated ${medium.singular} was too similar to existing content. ${NEW_PROMPT_POSTAMBLE}`,
       };
     }
     case "capacity": {
-      ActionTracker.errorCapacity(medium.singular);
+      actionTracker?.errorCapacity(medium.singular);
       return {
         message: `No ${medium.plural} generated. Opal has limited quota and it was exceeded. ${TRY_LATER_POSTAMBLE}`,
       };
     }
     case "safety": {
-      ActionTracker.errorSafety();
+      actionTracker?.errorSafety();
       const preamble = `No ${medium.plural} generated`;
       const reasonDescriptions =
         reasons?.map((reason) => {
@@ -150,8 +153,11 @@ function decodeErrorData(error: ErrorResponse["error"]) {
   }
 }
 
-function decodeError(event: RunErrorEvent): RunError {
-  return decodeErrorData(event.data.error);
+function decodeError(
+  actionTracker: ActionTracker | undefined,
+  event: RunErrorEvent
+): RunError {
+  return decodeErrorData(actionTracker, event.data.error);
 }
 
 function mediumFromModel(model?: string): Readonly<Medium> {

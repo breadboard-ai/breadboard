@@ -40,6 +40,7 @@ export const SHELL_CSP = {
     "'self'",
     "https://*.google.com",
     "https://*.googleapis.com",
+    "https://www.google-analytics.com",
     flags.BACKEND_API_ENDPOINT,
     // TODO(aomarks) Remove this after we have eliminated all credentialed RPCs
     // to the frontend server.
@@ -54,28 +55,34 @@ export const SHELL_CSP = {
     "https://drive.google.com",
     flags.SHELL_GUEST_ORIGIN,
   ],
-  ["img-src"]: ["https://*.gstatic.com"],
-  ["script-src"]: ["'self'", "https://apis.google.com"],
-  ["style-src"]: ["'unsafe-inline'"],
+  ["img-src"]: ["'self'", "https://*.gstatic.com"],
+  ["script-src"]: [
+    "'self'",
+    "https://apis.google.com",
+    "https://www.googletagmanager.com",
+  ],
+  ["style-src"]: [
+    "'self'",
+    "'unsafe-inline'", // Needed for Drive picker and Drive share dialog
+  ],
   ["require-trusted-types-for"]: ["'script'"],
-  ["trusted-types"]: ["opal-gapi-url", "gapi#gapi", "goog#html"],
+  ["trusted-types"]: [
+    "opal-analytics-url",
+    "opal-gapi-url",
+    "gapi#gapi",
+    "goog#html",
+  ],
 };
 
 export const MAIN_APP_CSP = {
   ["default-src"]: ["'none'"],
   ["script-src"]: [
     "'self'",
-    "'unsafe-inline'",
-    "https://cdn.tailwindcss.com",
-    "https://unpkg.com",
-    "https://cdn.jsdelivr.net",
-    "https://cdnjs.cloudflare.com",
     "https://support.google.com",
     "https://www.google-analytics.com",
     "https://www.google.com", // Feedback
     "https://www.googletagmanager.com",
     "https://www.gstatic.com",
-    ...(flags.SHELL_ENABLED ? [] : ["https://apis.google.com"]),
   ],
   ["img-src"]: [
     "'self'",
@@ -101,13 +108,6 @@ export const MAIN_APP_CSP = {
     "data:",
     "https://*.google.com",
     "https://*.google-analytics.com",
-    ...(flags.SHELL_ENABLED
-      ? []
-      : [
-          "https://*.googleapis.com",
-          flags.BACKEND_API_ENDPOINT,
-          flags.SHELL_GUEST_ORIGIN,
-        ]),
   ],
   ["frame-src"]: [
     "'self'",
@@ -123,19 +123,55 @@ export const MAIN_APP_CSP = {
     // Note that frame-ancestors applies recursively. If A iframes B iframes C,
     // then C must allow both B and A.
     ...flags.ALLOWED_REDIRECT_ORIGINS,
-    ...(flags.SHELL_ENABLED ? flags.SHELL_HOST_ORIGINS : []),
+    ...flags.SHELL_HOST_ORIGINS,
   ]),
   ["media-src"]: ["'self'", "blob:", "data:"],
   ["base-uri"]: ["'none'"],
-  // TODO: b/466201117 Temporarily disabled while we change how the generated
-  // app is iframed.
-  // ["require-trusted-types-for"]: ["'script'"],
+  ["require-trusted-types-for"]: ["'script'"],
   ["trusted-types"]: [
     "lit-html",
     "opal-analytics-url",
     "opal-chiclet-html",
     "opal-gapi-url",
+    // feedback
+    "opal-feedback-url",
+    "goog#html",
+    "uf-api#html",
   ],
+};
+
+export const GENERATED_APP_CSP = {
+  ["default-src"]: ["'none'"],
+  ["script-src"]: [
+    "'self'",
+    "'unsafe-inline'",
+    "https://cdn.tailwindcss.com",
+    "https://unpkg.com",
+    "https://cdn.jsdelivr.net",
+    "https://cdnjs.cloudflare.com",
+  ],
+  ["img-src"]: [
+    "'self'", // allow images from /board/blobs
+    "blob:",
+    "data:",
+  ],
+  ["style-src"]: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+  ["font-src"]: ["https://fonts.gstatic.com"],
+  ["connect-src"]: ["'none'"],
+  ["frame-src"]: ["'none'"],
+  ["frame-ancestors"]: [
+    "'self'",
+    // Note that frame-ancestors applies recursively. If A iframes B iframes C,
+    // then C must allow both B and A.
+    ...flags.ALLOWED_REDIRECT_ORIGINS,
+    ...flags.SHELL_HOST_ORIGINS,
+  ],
+  ["media-src"]: [
+    "'self'", // allow audio/video from /board/blobs
+    "blob:",
+    "data:",
+  ],
+  ["base-uri"]: ["'none'"],
 };
 
 function noneIfEmpty(directives: string[]): string[] {

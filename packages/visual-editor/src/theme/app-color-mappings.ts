@@ -43,6 +43,7 @@ export const appColorMapping: Map<string, string> = new Map([
   ["--p-95", "--p-5"],
   ["--p-98", "--p-5"],
   ["--p-99", "--p-5"],
+  ["--p-100", "--p-0"],
 
   // Secondary.
   ["--s-100", "--s-0"],

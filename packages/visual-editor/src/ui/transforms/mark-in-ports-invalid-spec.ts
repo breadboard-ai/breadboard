@@ -13,6 +13,7 @@ import {
   NodeIdentifier,
 } from "@breadboard-ai/types";
 import { TransformAllNodes } from "./transform-all-nodes.js";
+import { ROUTE_TOOL_PATH } from "../../a2/a2/tool-manager.js";
 
 export { MarkInPortsInvalidSpec };
 
@@ -49,8 +50,15 @@ class MarkInPortsInvalidSpec implements EditTransform {
       const marking = await new TransformAllNodes(
         graphId,
         (part, nodeId) => {
-          const { path } = part;
+          const { path, type, instance } = part;
           if (items.nodes.has(path) || nodeId === items.edges.get(path)) {
+            return { ...part, invalid: true };
+          }
+          if (
+            type === "tool" &&
+            path === ROUTE_TOOL_PATH &&
+            instance === items.edges.get(nodeId)
+          ) {
             return { ...part, invalid: true };
           }
           return null;

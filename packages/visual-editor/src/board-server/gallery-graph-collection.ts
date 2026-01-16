@@ -8,17 +8,16 @@ import type {
   GraphProviderItem,
   ImmutableGraphCollection,
 } from "@breadboard-ai/types";
+import { OPAL_BACKEND_API_PREFIX } from "@breadboard-ai/types";
 import type { SignInInfo } from "@breadboard-ai/types/sign-in-info.js";
-import { signal } from "signal-utils";
-import { SignalMap } from "signal-utils/map";
 import type { NarrowedDriveFile } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { readProperties } from "@breadboard-ai/utils/google-drive/utils.js";
+import { signal } from "signal-utils";
+import { SignalMap } from "signal-utils/map";
+import { parseUrl } from "../ui/utils/urls.js";
 
 export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
-  readonly #signInInfo: SignInInfo;
-  readonly #fetchWithCreds: typeof globalThis.fetch;
   readonly #graphs = new SignalMap<string, GraphProviderItem>();
-  readonly #backendApiUrl: string;
 
   has(url: string): boolean {
     return this.#graphs.has(url);
@@ -48,21 +47,23 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
   }
 
   constructor(
-    signInInfo: SignInInfo,
-    fetchWithCreds: typeof globalThis.fetch,
-    backendApiUrl: string
+    private readonly signInInfo: SignInInfo,
+    private readonly fetchWithCreds: typeof globalThis.fetch
   ) {
-    this.#signInInfo = signInInfo;
-    this.#fetchWithCreds = fetchWithCreds;
-    this.#backendApiUrl = backendApiUrl;
     void this.#initialize();
   }
 
   async #initialize() {
     const url = new URL("/api/gallery/list", window.location.href);
-    const location = await this.#getUserLocation();
-    if (location) {
-      url.searchParams.set("location", location);
+    if (!parseUrl(window.location.href).lite) {
+      const location = await this.#getUserLocation();
+      if (location) {
+        url.searchParams.set("location", location);
+      }
+    } else {
+      console.debug(
+        `[gallery graphs] Skipping geo specific graphs because of lite mode`
+      );
     }
     let response;
     try {
@@ -79,7 +80,11 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
       );
       return;
     }
-    let files: Array<NarrowedDriveFile<"id" | "name" | "properties">>;
+    let files: Array<
+      NarrowedDriveFile<"id" | "name" | "properties"> & {
+        liteModeFeaturedIndex?: number;
+      }
+    >;
     try {
       files = await response.json();
     } catch (e) {
@@ -99,6 +104,7 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
         mine: false,
         readonly: true,
         handle: null,
+        metadata: { liteModeFeaturedIndex: file.liteModeFeaturedIndex },
       });
     }
     this.#loading = false;
@@ -106,16 +112,12 @@ export class DriveGalleryGraphCollection implements ImmutableGraphCollection {
   }
 
   async #getUserLocation(): Promise<string | undefined> {
-    const endpoint = this.#backendApiUrl;
-    if (!endpoint) {
-      return undefined;
-    }
-    if (this.#signInInfo.state === "signedout") {
+    if ((await this.signInInfo.state) === "signedout") {
       return undefined;
     }
 
-    const locationResponse = await this.#fetchWithCreds(
-      new URL(`/v1beta1/getLocation`, endpoint)
+    const locationResponse = await this.fetchWithCreds(
+      new URL(`${OPAL_BACKEND_API_PREFIX}/v1beta1/getLocation`)
     );
     if (!locationResponse.ok) {
       console.error(

@@ -7,8 +7,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FunctionDeclaration } from "@google/genai";
-import { z, ZodObject, ZodTypeAny } from "zod";
-import zodToJsonSchema from "zod-to-json-schema";
+import { z, ZodObject, ZodType } from "zod";
 
 export type ZodFunctionDefinition<
   TParams extends ArgsRawShape,
@@ -21,7 +20,7 @@ export type ZodFunctionDefinition<
 };
 
 type ArgsRawShape = {
-  [k: string]: ZodTypeAny;
+  [k: string]: ZodType;
 };
 
 export type Handler<
@@ -51,7 +50,7 @@ function defineFunction<
 ): TypedFunctionDefinition<TParams, TResponse> {
   const { parameters, response, name, description } = definition;
   // Convert Zod schemas to JSON Schema
-  const parametersJsonSchema = zodToJsonSchema(z.object(parameters));
+  const parametersJsonSchema = z.object(parameters).toJSONSchema();
   const result: TypedFunctionDefinition<TParams, TResponse> = {
     name,
     description,
@@ -59,14 +58,14 @@ function defineFunction<
     handler,
   };
   if (response) {
-    result["responseJsonSchema"] = zodToJsonSchema(z.object(response));
+    result["responseJsonSchema"] = z.object(response).toJSONSchema();
   }
   return result;
 }
 
 function defineFunctionLoose(
   definition: FunctionDeclaration,
-  handler: (args: Record<string, string>) => Promise<Record<string, string>>
+  handler: (args: Record<string, unknown>) => Promise<Record<string, string>>
 ): FunctionDefinition {
   const { parametersJsonSchema, responseJsonSchema, name, description } =
     definition;

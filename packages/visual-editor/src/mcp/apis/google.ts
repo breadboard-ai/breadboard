@@ -8,7 +8,12 @@
 /// <reference types="@types/gapi.client.drive-v3" />
 /// <reference types="@maxim_mazurok/gapi.client.gmail-v1" />
 
-import { Outcome } from "@breadboard-ai/types";
+import {
+  Outcome,
+  GOOGLE_CALENDAR_API_PREFIX,
+  GOOGLE_DRIVE_FILES_API_PREFIX,
+  GOOGLE_GMAIL_API_PREFIX,
+} from "@breadboard-ai/types";
 import { err, ok, filterUndefined } from "@breadboard-ai/utils";
 import { McpBuiltInClientFactoryContext } from "../types.js";
 
@@ -109,7 +114,7 @@ class GoogleApis {
     ).toString();
 
     return this.#call(
-      `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?${query}`,
+      `${GOOGLE_CALENDAR_API_PREFIX}/${calendarId}/events?${query}`,
       "GET",
       undefined
     );
@@ -128,7 +133,7 @@ class GoogleApis {
     ).toString();
 
     return this.#call(
-      `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?${query}`,
+      `${GOOGLE_CALENDAR_API_PREFIX}/${calendarId}/events?${query}`,
       "POST",
       body
     );
@@ -147,7 +152,7 @@ class GoogleApis {
     ).toString();
 
     return this.#call(
-      `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${eventId}?${query}`,
+      `${GOOGLE_CALENDAR_API_PREFIX}/${calendarId}/events/${eventId}?${query}`,
       "PUT",
       body
     );
@@ -165,7 +170,7 @@ class GoogleApis {
     ).toString();
 
     return this.#call(
-      `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${eventId}?${query}`,
+      `${GOOGLE_CALENDAR_API_PREFIX}/${calendarId}/events/${eventId}?${query}`,
       "DELETE",
       undefined
     );
@@ -179,7 +184,7 @@ class GoogleApis {
     ).toString();
 
     return this.#call(
-      `https://www.googleapis.com/drive/v3/files?${query}`,
+      `${GOOGLE_DRIVE_FILES_API_PREFIX}?${query}`,
       "GET",
       undefined
     );
@@ -195,7 +200,7 @@ class GoogleApis {
     ).toString();
 
     return this.#call(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?${query}`,
+      `${GOOGLE_DRIVE_FILES_API_PREFIX}/${fileId}?${query}`,
       "GET",
       undefined
     );
@@ -213,7 +218,7 @@ class GoogleApis {
     ).toString();
 
     const list = await this.#call<gapi.client.gmail.ListMessagesResponse>(
-      `https://gmail.googleapis.com/gmail/v1/users/${userId}/messages?${query}`,
+      `${GOOGLE_GMAIL_API_PREFIX}/gmail/v1/users/${userId}/messages?${query}`,
       "GET",
       undefined
     );
@@ -229,7 +234,7 @@ class GoogleApis {
       builder.add(`/gmail/v1/users/${userId}/messages/${message.id!}`, "GET");
     }
     const messages = await this.#callMultipart<gapi.client.gmail.Message>(
-      `https://gmail.googleapis.com/batch`,
+      `${GOOGLE_GMAIL_API_PREFIX}/batch`,
       "POST",
       builder
     );
@@ -251,7 +256,7 @@ class GoogleApis {
     ).toString();
 
     const list = await this.#call<gapi.client.gmail.ListThreadsResponse>(
-      `https://gmail.googleapis.com/gmail/v1/users/${userId}/threads?${query}`,
+      `${GOOGLE_GMAIL_API_PREFIX}/gmail/v1/users/${userId}/threads?${query}`,
       "GET",
       undefined
     );
@@ -269,7 +274,7 @@ class GoogleApis {
     }
 
     const threads = await this.#callMultipart<gapi.client.gmail.Thread>(
-      `https://gmail.googleapis.com/batch`,
+      `${GOOGLE_GMAIL_API_PREFIX}/batch`,
       "POST",
       builder
     );
@@ -290,7 +295,7 @@ class GoogleApis {
   ): Promise<Outcome<gapi.client.Response<gapi.client.gmail.Message>>> {
     const { userId } = request;
     return this.#call(
-      `https://gmail.googleapis.com/gmail/v1/users/${userId}/messages/send`,
+      `${GOOGLE_GMAIL_API_PREFIX}/gmail/v1/users/${userId}/messages/send`,
       "POST",
       body
     );
@@ -303,7 +308,7 @@ class GoogleApis {
     const { userId } = request;
 
     return this.#call(
-      `https://gmail.googleapis.com/gmail/v1/users/${userId}/drafts`,
+      `${GOOGLE_GMAIL_API_PREFIX}/gmail/v1/users/${userId}/drafts`,
       "POST",
       body
     );
