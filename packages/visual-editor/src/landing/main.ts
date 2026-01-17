@@ -91,7 +91,11 @@ async function init() {
     return;
   }
 
-  const actionTracker = createActionTracker(shellHost);
+  const { supportsPropertyTracking } = await shellHost.getConfiguration();
+  const actionTracker = createActionTracker(
+    shellHost,
+    !!supportsPropertyTracking
+  );
 
   embedHandler?.sendToEmbedder({
     type: "home_loaded",

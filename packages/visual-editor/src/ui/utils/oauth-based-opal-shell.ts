@@ -192,7 +192,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       shareSurface: undefined,
       shareSurfaceUrlTemplates:
         CLIENT_DEPLOYMENT_CONFIG.SHARE_SURFACE_URL_TEMPLATES,
-      supportPropertyTracking: true,
+      supportsPropertyTracking: true,
     };
   };
 

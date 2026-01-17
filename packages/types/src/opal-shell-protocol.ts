@@ -198,5 +198,5 @@ export declare type GuestConfiguration = {
    * which allows us to implement property tracking in the shell guest without
    * breaking existing shell hosts.
    */
-  supportPropertyTracking?: boolean;
+  supportsPropertyTracking?: boolean;
 };

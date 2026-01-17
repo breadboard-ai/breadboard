@@ -36,11 +36,15 @@ type ComputedPropertiesUpdate = {
 };
 
 class GuestActionTracker implements ActionTracker {
-  constructor(private readonly host: OpalShellHostProtocol) {}
+  constructor(
+    private readonly host: OpalShellHostProtocol,
+    private readonly supportsPropertyTracking: boolean | undefined
+  ) {}
 
   // Property tracking
 
   private trackProperty(updater: TrackedValuesUpdater): void {
+    if (!this.supportsPropertyTracking) return;
     const { changed, props } = computeProperties(updateValues(updater));
     if (changed) {
       this.host.trackProperties(props);
