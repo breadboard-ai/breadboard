@@ -87,9 +87,9 @@ describe("Guest Action Tracker", () => {
       const tracker = new GuestActionTracker(mockShellHostProtocol, true);
       tracker.updateCanAccessStatus(true);
       deepStrictEqual(currentUserType(), "can_access");
-      tracker.incrementOpalsCreated();
+      tracker.incrementCreatedOpals();
       deepStrictEqual(currentUserType(), "engaged");
-      tracker.incrementOpalsRan();
+      tracker.incrementStartedOpals();
       deepStrictEqual(currentUserType(), "engaged");
       deepStrictEqual(trackedProperties.length, 2);
     });
@@ -98,9 +98,9 @@ describe("Guest Action Tracker", () => {
       const tracker = new GuestActionTracker(mockShellHostProtocol, true);
       tracker.updateCanAccessStatus(true);
       deepStrictEqual(currentUserType(), "can_access");
-      tracker.incrementOpalsRan();
+      tracker.incrementStartedOpals();
       deepStrictEqual(currentUserType(), "engaged");
-      tracker.incrementOpalsCreated();
+      tracker.incrementCreatedOpals();
       deepStrictEqual(currentUserType(), "engaged");
       deepStrictEqual(trackedProperties.length, 2);
     });
@@ -109,7 +109,7 @@ describe("Guest Action Tracker", () => {
       const tracker = new GuestActionTracker(mockShellHostProtocol, true);
       tracker.updateCanAccessStatus(true);
       deepStrictEqual(currentUserType(), "can_access");
-      tracker.incrementOpalsRan();
+      tracker.incrementStartedOpals();
       deepStrictEqual(currentUserType(), "engaged");
       tracker.updateSignedInStatus(true);
       deepStrictEqual(currentUserType(), "engaged");
@@ -122,7 +122,7 @@ describe("Guest Action Tracker", () => {
       const tracker = new GuestActionTracker(mockShellHostProtocol, true);
       tracker.updateCanAccessStatus(true);
       deepStrictEqual(currentUserType(), "can_access");
-      tracker.incrementOpalsRan();
+      tracker.incrementStartedOpals();
       deepStrictEqual(currentUserType(), "engaged");
       tracker.updateSignedInStatus(false);
       deepStrictEqual(currentUserType(), "one_time");

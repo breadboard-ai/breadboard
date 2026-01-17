@@ -21,8 +21,8 @@ export type TrackedValues = {
   visitedPages: number;
   signedIn: boolean;
   canAccess: boolean;
-  opalsRun: number;
-  opalsCreated: number;
+  startedOpals: number;
+  createdOpals: number;
 };
 
 export type StorageUpdater = (props: TrackedValues) => TrackedValues;
@@ -45,7 +45,7 @@ export type ComputedProperties = {
   user_type: UserType;
 };
 
-const ACTION_TRACKER_STORAGE_KEY = "ga_tracked_properties";
+const ACTION_TRACKER_STORAGE_KEY = "ga_stats";
 
 class GuestActionTracker implements ActionTracker {
   constructor(
@@ -111,45 +111,51 @@ class GuestActionTracker implements ActionTracker {
   }
 
   updateCanAccessStatus(canAccess: boolean): void {
-    this.trackProperty(({ props: current, opalsCreated, opalsRun }) => {
-      let props: ComputedProperties | null = null;
-      if (canAccess) {
-        const { user_type } = current;
-        if (user_type !== "can_access" && user_type !== "engaged") {
-          if (opalsRun > 0 || opalsCreated > 0) {
-            props = { user_type: "engaged" };
-          } else {
-            props = { user_type: "can_access" };
+    this.trackProperty(
+      ({
+        props: current,
+        createdOpals: opalsCreated,
+        startedOpals: opalsRun,
+      }) => {
+        let props: ComputedProperties | null = null;
+        if (canAccess) {
+          const { user_type } = current;
+          if (user_type !== "can_access" && user_type !== "engaged") {
+            if (opalsRun > 0 || opalsCreated > 0) {
+              props = { user_type: "engaged" };
+            } else {
+              props = { user_type: "can_access" };
+            }
           }
+        } else {
+          props = { user_type: "signed_in" };
         }
-      } else {
-        props = { user_type: "signed_in" };
+        const update = { canAccess };
+        return { update, props };
       }
-      const update = { canAccess };
+    );
+  }
+
+  incrementStartedOpals(): void {
+    this.trackProperty(({ props: current, startedOpals }) => {
+      let props: ComputedProperties | null = null;
+      startedOpals++;
+      if (current.user_type === "can_access" && startedOpals > 0) {
+        props = { user_type: "engaged" };
+      }
+      const update = { startedOpals };
       return { update, props };
     });
   }
 
-  incrementOpalsRan(): void {
-    this.trackProperty(({ props: current, opalsRun }) => {
+  incrementCreatedOpals(): void {
+    this.trackProperty(({ props: current, createdOpals }) => {
       let props: ComputedProperties | null = null;
-      opalsRun++;
-      if (current.user_type === "can_access" && opalsRun > 0) {
+      createdOpals++;
+      if (current.user_type === "can_access" && createdOpals > 0) {
         props = { user_type: "engaged" };
       }
-      const update = { opalsRun };
-      return { update, props };
-    });
-  }
-
-  incrementOpalsCreated(): void {
-    this.trackProperty(({ props: current, opalsCreated }) => {
-      let props: ComputedProperties | null = null;
-      opalsCreated++;
-      if (current.user_type === "can_access" && opalsCreated > 0) {
-        props = { user_type: "engaged" };
-      }
-      const update = { opalsCreated };
+      const update = { createdOpals };
       return { update, props };
     });
   }
@@ -176,7 +182,7 @@ class GuestActionTracker implements ActionTracker {
   remixApp(url: string, source: "gallery" | "user" | "editor") {
     this.host.trackAction("app_remix", { url, source });
     this.host.trackAction("app_engage", { url });
-    this.incrementOpalsCreated();
+    this.incrementCreatedOpals();
 
     switch (source) {
       case "gallery":
@@ -194,13 +200,13 @@ class GuestActionTracker implements ActionTracker {
   createNew() {
     this.host.trackAction("app_create_new");
     this.host.trackAction("app_engage", { url: "new" });
-    this.incrementOpalsCreated();
+    this.incrementCreatedOpals();
   }
 
   flowGenCreate() {
     this.host.trackAction("app_flowgen_create");
     this.host.trackAction("app_engage", { url: "new_flowgen" });
-    this.incrementOpalsCreated();
+    this.incrementCreatedOpals();
   }
 
   flowGenEdit(url: string | undefined) {
@@ -219,7 +225,7 @@ class GuestActionTracker implements ActionTracker {
   ) {
     this.host.trackAction("app_run", { url, source });
     this.host.trackAction("app_engage", { url });
-    this.incrementOpalsRan();
+    this.incrementStartedOpals();
 
     switch (source) {
       case "app_preview":
@@ -311,8 +317,8 @@ function initializeValues(): TrackedValues {
     visitedPages: 0,
     signedIn: false,
     canAccess: false,
-    opalsRun: 0,
-    opalsCreated: 0,
+    startedOpals: 0,
+    createdOpals: 0,
     props: { user_type: "one_time" },
   };
 }
