@@ -894,7 +894,6 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     async () => (await this.getSignInState()).status === "signedin"
   );
   trackAction = async (action: string, payload: Record<string, string>) => {
-    console.info(`[shell track action] ${action}`, payload);
     this.actionEventSender.sendEvent(action, payload);
   };
 

@@ -75,6 +75,7 @@ class GuestActionTracker implements ActionTracker {
   load(type: "app" | "canvas" | "landing" | "home", shared: boolean) {
     const sharedSuffix = shared ? "_shared" : "";
     this.host.trackAction(`app_load_${type}${sharedSuffix}`);
+    this.incrementVisitedPages();
   }
 
   openApp(url: string, source: "gallery" | "user") {
@@ -91,6 +92,7 @@ class GuestActionTracker implements ActionTracker {
   remixApp(url: string, source: "gallery" | "user" | "editor") {
     this.host.trackAction("app_remix", { url, source });
     this.host.trackAction("app_engage", { url });
+    this.incrementOpalsCreated();
 
     switch (source) {
       case "gallery":
@@ -108,11 +110,13 @@ class GuestActionTracker implements ActionTracker {
   createNew() {
     this.host.trackAction("app_create_new");
     this.host.trackAction("app_engage", { url: "new" });
+    this.incrementOpalsCreated();
   }
 
   flowGenCreate() {
     this.host.trackAction("app_flowgen_create");
     this.host.trackAction("app_engage", { url: "new_flowgen" });
+    this.incrementOpalsCreated();
   }
 
   flowGenEdit(url: string | undefined) {
@@ -131,6 +135,7 @@ class GuestActionTracker implements ActionTracker {
   ) {
     this.host.trackAction("app_run", { url, source });
     this.host.trackAction("app_engage", { url });
+    this.incrementOpalsRan();
 
     switch (source) {
       case "app_preview":
@@ -152,10 +157,12 @@ class GuestActionTracker implements ActionTracker {
 
   signOutSuccess() {
     this.host.trackAction("sign_out_success");
+    this.updateSignedInStatus(false);
   }
 
   signInSuccess() {
     this.host.trackAction("sign_in_success");
+    this.updateSignedInStatus(true);
   }
 
   errorUnknown() {
