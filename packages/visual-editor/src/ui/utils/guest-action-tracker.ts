@@ -7,9 +7,17 @@
 import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { ActionTracker } from "../types/types.js";
 
-export { GuestActionTracker, computeProperties };
+export { GuestActionTracker, ACTION_TRACKER_STORAGE_KEY };
+
+export type UserType =
+  | "one_time"
+  | "visitor"
+  | "signed_in"
+  | "can_access"
+  | "engaged";
 
 export type TrackedValues = {
+  props: ComputedProperties;
   visitedPages: number;
   signedIn: boolean;
   canAccess: boolean;
@@ -17,23 +25,27 @@ export type TrackedValues = {
   opalsCreated: number;
 };
 
-export type TrackedValuesUpdater = (
-  props: TrackedValues
-) => Partial<TrackedValues>;
+export type StorageUpdater = (props: TrackedValues) => TrackedValues;
 
 export type TrackedValuesUpdate = {
-  before: TrackedValues;
-  after: TrackedValues;
+  current: TrackedValues;
+  change: Partial<TrackedValues>;
 };
 
+export type TrackedValuesUpdater = (values: TrackedValues) => {
+  update: Partial<Omit<TrackedValues, "props">>;
+  props: ComputedProperties | null;
+};
+
+/**
+ * The actual properties being sent to GA. Uses snake_case for property names,
+ * because this is a GA convention.
+ */
 export type ComputedProperties = {
-  user_type: "visitor" | "active" | "signed_in" | "can_access" | "engaged";
+  user_type: UserType;
 };
 
-type ComputedPropertiesUpdate = {
-  props: ComputedProperties;
-  changed: boolean;
-};
+const ACTION_TRACKER_STORAGE_KEY = "ga_tracked_properties";
 
 class GuestActionTracker implements ActionTracker {
   constructor(
@@ -45,33 +57,101 @@ class GuestActionTracker implements ActionTracker {
 
   private trackProperty(updater: TrackedValuesUpdater): void {
     if (!this.supportsPropertyTracking) return;
-    const { changed, props } = computeProperties(updateValues(updater));
-    if (changed) {
-      this.host.trackProperties(props);
-    }
+
+    updateStorage((current) => {
+      const { update, props } = updater(current);
+      let updated = { ...current, ...update };
+      if (props !== null) {
+        this.host.trackProperties(props);
+        updated = { ...updated, props };
+      }
+      return updated;
+    });
   }
 
   incrementVisitedPages(): void {
-    this.trackProperty((v) => ({ visitedPages: v.visitedPages + 1 }));
+    this.trackProperty(({ props: current, visitedPages }) => {
+      let props: ComputedProperties | null = null;
+      if (current.user_type === "one_time") {
+        if (visitedPages === 0) {
+          // Send props change for the very first time.
+          props = { user_type: "one_time" };
+        } else {
+          props = { user_type: "visitor" };
+        }
+      }
+      const update = { visitedPages: visitedPages + 1 };
+      return { update, props };
+    });
   }
 
   updateSignedInStatus(signedIn: boolean): void {
-    this.trackProperty(() => ({ signedIn }));
+    this.trackProperty(({ props: current, visitedPages }) => {
+      let props: ComputedProperties | null = null;
+      if (signedIn) {
+        const { user_type } = current;
+        // If currently below signed_in, send the "signed_in" property update.
+        if (
+          user_type !== "signed_in" &&
+          user_type !== "can_access" &&
+          user_type !== "engaged"
+        ) {
+          props = { user_type: "signed_in" };
+        }
+      } else {
+        if (visitedPages < 2) {
+          props = { user_type: "one_time" };
+        } else {
+          props = { user_type: "visitor" };
+        }
+      }
+      const update = { signedIn };
+      return { update, props };
+    });
   }
 
   updateCanAccessStatus(canAccess: boolean): void {
-    this.trackProperty(() => ({
-      signedIn: true, // must be true at this point
-      canAccess,
-    }));
+    this.trackProperty(({ props: current, opalsCreated, opalsRun }) => {
+      let props: ComputedProperties | null = null;
+      if (canAccess) {
+        const { user_type } = current;
+        if (user_type !== "can_access" && user_type !== "engaged") {
+          if (opalsRun > 0 || opalsCreated > 0) {
+            props = { user_type: "engaged" };
+          } else {
+            props = { user_type: "can_access" };
+          }
+        }
+      } else {
+        props = { user_type: "signed_in" };
+      }
+      const update = { canAccess };
+      return { update, props };
+    });
   }
 
   incrementOpalsRan(): void {
-    this.trackProperty((v) => ({ opalsRun: v.opalsRun + 1 }));
+    this.trackProperty(({ props: current, opalsRun }) => {
+      let props: ComputedProperties | null = null;
+      opalsRun++;
+      if (current.user_type === "can_access" && opalsRun > 0) {
+        props = { user_type: "engaged" };
+      }
+      const update = { opalsRun };
+      return { update, props };
+    });
   }
 
   incrementOpalsCreated(): void {
-    this.trackProperty((v) => ({ opalsCreated: v.opalsCreated + 1 }));
+    this.trackProperty(({ props: current, opalsCreated }) => {
+      let props: ComputedProperties | null = null;
+      opalsCreated++;
+      if (current.user_type === "can_access" && opalsCreated > 0) {
+        props = { user_type: "engaged" };
+      }
+      const update = { opalsCreated };
+      return { update, props };
+    });
   }
 
   // Event tracking
@@ -204,58 +284,62 @@ class GuestActionTracker implements ActionTracker {
   }
 }
 
-const LOCAL_STORAGE_KEY = "opal_ga_tracked_properties";
-function updateValues(updater: TrackedValuesUpdater): TrackedValuesUpdate {
+function updateStorage(updater: StorageUpdater): void {
   let before: TrackedValues;
-  const propsString = globalThis.localStorage.getItem(LOCAL_STORAGE_KEY);
+  const propsString = globalThis.localStorage.getItem(
+    ACTION_TRACKER_STORAGE_KEY
+  );
   if (!propsString) {
-    before = initializeProps();
+    before = initializeValues();
   } else {
     try {
       before = JSON.parse(propsString);
     } catch {
-      before = initializeProps();
+      before = initializeValues();
     }
   }
-  const after = { ...before, ...updater(before) };
+  const after = updater(before);
   const updatedPropsString = JSON.stringify(after);
-  globalThis.localStorage.setItem(LOCAL_STORAGE_KEY, updatedPropsString);
-  return { before, after };
+  globalThis.localStorage.setItem(
+    ACTION_TRACKER_STORAGE_KEY,
+    updatedPropsString
+  );
 }
 
-function initializeProps(): TrackedValues {
+function initializeValues(): TrackedValues {
   return {
     visitedPages: 0,
     signedIn: false,
     canAccess: false,
     opalsRun: 0,
     opalsCreated: 0,
+    props: { user_type: "one_time" },
   };
 }
 
-function computeProperties({
-  before,
-  after,
-}: TrackedValuesUpdate): ComputedPropertiesUpdate {
-  if (before.signedIn && after.signedIn) {
-    if (before.canAccess && after.canAccess) {
-      if (after.opalsCreated > 0 || after.opalsRun > 0) {
-        const changed = before.opalsCreated === 0 && before.opalsRun === 0;
-        return { props: { user_type: "engaged" }, changed };
-      }
-      return { props: { user_type: "can_access" }, changed: false };
-    }
-    if (after.canAccess) {
-      return { props: { user_type: "can_access" }, changed: true };
-    }
-    return { props: { user_type: "signed_in" }, changed: false };
-  }
-  if (after.signedIn) {
-    return { props: { user_type: "signed_in" }, changed: true };
-  }
-  if (after.visitedPages > 1) {
-    const changed = before.visitedPages <= 1 || before.signedIn;
-    return { props: { user_type: "active" }, changed };
-  }
-  return { props: { user_type: "visitor" }, changed: true };
-}
+// function computeProperties({
+//   current,
+//   change,
+// }: TrackedValuesUpdate): ComputedPropertiesUpdate {
+// if (before.signedIn && after.signedIn) {
+//   if (before.canAccess && after.canAccess) {
+//     if (after.opalsCreated > 0 || after.opalsRun > 0) {
+//       const changed = before.opalsCreated === 0 && before.opalsRun === 0;
+//       return { props: { user_type: "engaged" }, changed };
+//     }
+//     return { props: { user_type: "can_access" }, changed: false };
+//   }
+//   if (after.canAccess) {
+//     return { props: { user_type: "can_access" }, changed: true };
+//   }
+//   return { props: { user_type: "signed_in" }, changed: false };
+// }
+// if (after.signedIn) {
+//   return { props: { user_type: "signed_in" }, changed: true };
+// }
+// if (after.visitedPages > 1) {
+//   const changed = before.visitedPages <= 1 || before.signedIn;
+//   return { props: { user_type: "active" }, changed };
+// }
+// return { props: { user_type: "visitor" }, changed: true };
+// }
