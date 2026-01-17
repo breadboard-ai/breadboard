@@ -602,4 +602,40 @@ export interface ActionTracker {
   addNewStep(type?: string): void;
   editStep(type: "manual" | "flowgen"): void;
   shareResults(type: "download" | "save_to_drive" | "copy_share_link"): void;
+
+  // Updates GA properties
+
+  /**
+   * Adds a visit to the count of visited pages.
+   * Use this to track the user clicking around the app.
+   */
+  incrementVisitedPages(): void;
+
+  /**
+   * Updates the current status of the user. Call it whenever the sign in
+   * status of the user is determined.
+   *
+   * Will also be automatically called by:
+   * - `signInSuccess`
+   * - `signOutSuccess`
+   */
+  updateSignedInStatus(signedIn: boolean): void;
+
+  /**
+   * Updates the current eligibility status of the user. Call right after the
+   * checkAppAccess call.
+   */
+  updateCanAccessStatus(canAccess: boolean): void;
+
+  /**
+   * Increments the number of opals started. Use it to track how many opals
+   * the user ran.
+   */
+  incrementOpalsRan(): void;
+
+  /**
+   * Increments the number of opals created. Use it track the number of opals
+   * created by the user
+   */
+  incrementOpalsCreated(): void;
 }
