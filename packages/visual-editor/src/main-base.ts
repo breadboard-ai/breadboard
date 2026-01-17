@@ -272,6 +272,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     // if they are signed in with all required scopes.
     this.signinAdapter.state.then((state) => {
       if (state === "signedin") {
+        this.actionTracker.updateSignedInStatus(true);
         this.signinAdapter
           .checkAppAccess()
           .then(this.handleAppAccessCheckResult.bind(this));

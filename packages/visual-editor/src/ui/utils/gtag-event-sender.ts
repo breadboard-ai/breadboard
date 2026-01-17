@@ -5,10 +5,9 @@
  */
 
 import { createTrustedAnalyticsURL } from "../trusted-types/analytics-url.js";
-import { ActionTrackerBase } from "./action-event-sender.js";
 import { parseUrl } from "./urls.js";
 
-export { GTagActionTracker, GTagEventSender };
+export { GTagEventSender };
 
 declare global {
   interface Window {
@@ -76,12 +75,6 @@ async function initializeAnalytics(
   }
 }
 
-class GTagActionTracker extends ActionTrackerBase {
-  constructor(measurementId: string, signedInCallback: () => Promise<boolean>) {
-    super(sendGTagEvent, initializeAnalytics(measurementId, signedInCallback));
-  }
-}
-
 class GTagEventSender {
   private readonly initialized: Promise<void> | undefined;
 
@@ -92,6 +85,13 @@ class GTagEventSender {
     if (measurementId) {
       this.initialized = initializeAnalytics(measurementId, signedInCallback);
     }
+  }
+
+  async setProperties(properties: Record<string, string | undefined>) {
+    if (!this.initialized) return;
+
+    await this.initialized;
+    globalThis.gtag?.("set", "user_properties", properties);
   }
 
   async sendEvent(action: string, params?: Record<string, string | undefined>) {

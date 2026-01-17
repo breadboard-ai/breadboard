@@ -54,7 +54,7 @@ import {
   listUserOpals,
 } from "./google-drive-host-operations.js";
 import { createFetchWithCreds } from "@breadboard-ai/utils/fetch-with-creds.js";
-import { GTagEventSender } from "./gtag-action-tracker.js";
+import { GTagEventSender } from "./gtag-event-sender.js";
 
 const SIGN_IN_CONNECTION_ID = "$sign-in";
 
@@ -192,6 +192,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
       shareSurface: undefined,
       shareSurfaceUrlTemplates:
         CLIENT_DEPLOYMENT_CONFIG.SHARE_SURFACE_URL_TEMPLATES,
+      supportsPropertyTracking: true,
     };
   };
 
@@ -893,7 +894,10 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     async () => (await this.getSignInState()).status === "signedin"
   );
   trackAction = async (action: string, payload: Record<string, string>) => {
-    console.info(`[shell track action] ${action}`, payload);
     this.actionEventSender.sendEvent(action, payload);
+  };
+
+  trackProperties = async (payload: Record<string, string | undefined>) => {
+    this.actionEventSender.setProperties(payload);
   };
 }

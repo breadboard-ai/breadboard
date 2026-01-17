@@ -79,6 +79,7 @@ class Main extends MainBase {
   override async handleAppAccessCheckResult(
     result: CheckAppAccessResult
   ): Promise<void> {
+    this.actionTracker.updateCanAccessStatus(result.canAccess);
     if (!result.canAccess) {
       await this.signinAdapter.signOut();
       window.history.pushState(

@@ -484,6 +484,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   override async handleAppAccessCheckResult(
     result: CheckAppAccessResult
   ): Promise<void> {
+    this.actionTracker.updateCanAccessStatus(result.canAccess);
     if (!result.canAccess) {
       this.accessStatus = result;
       this.uiState.show.add("NoAccessModal");
