@@ -53,7 +53,6 @@ export async function flagsMigration(
 
   const flagStore = new IdbFlagManager(runtimeFlags);
   const flags = await flagStore.flags();
-  console.log(5655656, flags);
 
   flagController.migrate(flags);
   await flagController.isSettled;
