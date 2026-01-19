@@ -766,7 +766,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         .isMine=${this.tab?.graphIsMine ?? false}
         .projectRun=${renderValues.projectState?.run}
         .readOnly=${true}
-        .runtimeFlags=${this.uiState.flags}
+        .runtimeFlags=${this.appController.global.flags}
         .showGDrive=${this.signinAdapter.stateSignal?.status === "signedin"}
         .status=${renderValues.tabStatus}
         .shouldShowFirstRunMessage=${true}

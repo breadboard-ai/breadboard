@@ -11,41 +11,65 @@ import * as Home from "./subcontrollers/home/home.js";
 import { DebuggableAppController } from "./types.js";
 import { ToastController } from "./subcontrollers/toast-controller.js";
 import * as Migrations from "./migration/migrations.js";
+import { RuntimeFlags } from "@breadboard-ai/types";
+import { FlagController } from "./subcontrollers/flag-controller.js";
 
-class Controller {
-  editor = {
-    main: new Editor.EditorController("Editor_Main"),
-    sidebar: {
-      settings: new Editor.Sidebar.SettingsController(
-        "Editor_Sidebar_Settings"
-      ),
-    },
-  };
-  home = {
-    recent: new Home.RecentBoardsController("RecentBoards"),
-  };
-  global = {
-    debug: new DebugController("Debug"),
-    feedback: new FeedbackController("Feedback"),
-    toasts: new ToastController("Toasts"),
+class Controller implements AppController {
+  editor: AppController["editor"];
+  home: AppController["home"];
+  global: AppController["global"];
 
-    // Migrations are tested independently so this block is ignored for coverage
-    // However c8 needs to know the number of lines to ignore, so number below
-    // needs to be kept in sync with the size of performMigrations.
-    /* c8 ignore next 8 */
-    async performMigrations() {
-      if (!appController) {
-        console.warn("Unable to complete migrations; no controller instance");
-      }
+  constructor(flags: RuntimeFlags) {
+    const runtimeFlags = flags;
 
-      // List of migrations to await.
-      await Migrations.recentBoardsMigration(appController.home.recent);
-    },
-  };
+    this.editor = {
+      main: new Editor.EditorController("Editor_Main"),
+      sidebar: {
+        settings: new Editor.Sidebar.SettingsController(
+          "Editor_Sidebar_Settings"
+        ),
+      },
+    };
+
+    this.home = {
+      recent: new Home.RecentBoardsController("RecentBoards"),
+    };
+
+    this.global = {
+      flags: new FlagController("Flags", runtimeFlags),
+      debug: new DebugController("Debug"),
+      feedback: new FeedbackController("Feedback"),
+      toasts: new ToastController("Toasts"),
+
+      // Migrations are tested independently so this block is ignored for coverage
+      // However c8 needs to know the number of lines to ignore, so number below
+      // needs to be kept in sync with the size of performMigrations.
+      /* c8 ignore next 10 */
+      async performMigrations() {
+        const controller = appController();
+        if (!controller) {
+          console.warn("Unable to complete migrations; no controller instance");
+        }
+
+        // List of migrations to await.
+        await Migrations.recentBoardsMigration(controller.home.recent);
+        await Migrations.flagsMigration(controller.global.flags, runtimeFlags);
+      },
+    };
+  }
 }
 
-export const appController = new Controller();
-setDebuggableAppController(appController);
+let controller: Controller;
+export const appController = (flags?: RuntimeFlags) => {
+  if (!controller) {
+    if (!flags)
+      throw new Error("App Controller must be instantiated with flags");
+    controller = new Controller(flags);
+    setDebuggableAppController(controller);
+  }
+
+  return controller;
+};
 
 export interface AppController extends DebuggableAppController {
   editor: {
@@ -58,6 +82,7 @@ export interface AppController extends DebuggableAppController {
     recent: Home.RecentBoardsController;
   };
   global: {
+    flags: FlagController;
     debug: DebugController;
     feedback: FeedbackController;
     toasts: ToastController;

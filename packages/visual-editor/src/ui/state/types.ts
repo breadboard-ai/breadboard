@@ -23,7 +23,6 @@ import {
   OutputValues,
   ParameterMetadata,
   RunError,
-  RuntimeFlags,
   ConsentRequestWithCallback,
   GraphDescriptor,
   EditableGraph,
@@ -416,7 +415,6 @@ export type UI = {
   consentRequests: Array<ConsentRequestWithCallback>;
   blockingAction: boolean;
   lastSnackbarDetailsInfo: HTMLTemplateResult | string | null;
-  flags: RuntimeFlags | null;
   subscriptionStatus: SubscriptionStatus;
   subscriptionCredits: number;
 };

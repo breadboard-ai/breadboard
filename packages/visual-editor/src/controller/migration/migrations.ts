@@ -8,17 +8,18 @@ import { RecentBoardStore } from "../../data/recent-boards.js";
 import { RecentBoardsController } from "../subcontrollers/home/recent-boards-controller.js";
 import { unwrap } from "../decorators/utils/wrap-unwrap.js";
 import { RecentBoard } from "../../ui/types/types.js";
+import { FlagController } from "../subcontrollers/flag-controller.js";
+import { RuntimeFlags } from "@breadboard-ai/types";
+import { IdbFlagManager } from "../../idb/flags/idb-flag-manager.js";
 
 /**
  * Carries the boards over from the old RecentBoardStore to the new
  * RecentBoardController. The migration is tracked in the Controller so that it
  * does not happen multiple times.
- *
- * TODO: Remove the old board store.
  */
-export const recentBoardsMigration = async (
+export async function recentBoardsMigration(
   boardController: RecentBoardsController
-) => {
+) {
   // Wait for the board controller to boot so we can check its migration status.
   await boardController.isHydrated;
   if (boardController.isMigrated) return;
@@ -35,4 +36,25 @@ export const recentBoardsMigration = async (
   // Remove the boards from the old store.
   await boardStore.clear();
   await boardController.isSettled;
-};
+}
+
+/**
+ * Carries the flags over from the old IdbFlagManager to the new FlagController.
+ * The migration is tracked in the Controller so that it does not happen
+ * multiple times.
+ */
+export async function flagsMigration(
+  flagController: FlagController,
+  runtimeFlags: RuntimeFlags
+) {
+  // Wait for the flag controller to boot so we can check its migration status.
+  await flagController.isHydrated;
+  if (flagController.isMigrated) return;
+
+  const flagStore = new IdbFlagManager(runtimeFlags);
+  const flags = await flagStore.flags();
+  console.log(5655656, flags);
+
+  flagController.migrate(flags);
+  await flagController.isSettled;
+}

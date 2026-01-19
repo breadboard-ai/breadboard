@@ -9,18 +9,12 @@ import { VisualEditorMode } from "../types/types.js";
 import { SignalSet } from "signal-utils/set";
 import { SignalArray } from "signal-utils/array";
 import { UI, UIOverlays, UILoadState, SubscriptionStatus } from "./types.js";
-import {
-  RuntimeFlagManager,
-  RuntimeFlags,
-  ConsentRequestWithCallback,
-} from "@breadboard-ai/types";
-import { AsyncComputed } from "signal-utils/async-computed";
-import { devUrlParams } from "../utils/urls.js";
+import { ConsentRequestWithCallback } from "@breadboard-ai/types";
 
 export { createUIState };
 
-function createUIState(flags: RuntimeFlagManager): UI {
-  return new ReactiveUIState(flags);
+function createUIState(): UI {
+  return new ReactiveUIState();
 }
 
 class ReactiveUIState implements UI {
@@ -73,23 +67,4 @@ class ReactiveUIState implements UI {
    * Consent requests that will be displayed as a modal popup
    */
   accessor consentRequests = new SignalArray<ConsentRequestWithCallback>();
-
-  @signal
-  get flags(): RuntimeFlags | null {
-    return this.#flags.value || null;
-  }
-
-  #flagManager: RuntimeFlagManager;
-  #flags = new AsyncComputed<RuntimeFlags>(async (signal) => {
-    signal.throwIfAborted();
-
-    return this.#flagManager.flags();
-  });
-
-  constructor(flagManager: RuntimeFlagManager) {
-    this.#flagManager = flagManager;
-    if (devUrlParams().forceSignInState) {
-      this.show.add("SignInModal");
-    }
-  }
 }

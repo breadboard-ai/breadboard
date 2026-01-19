@@ -9,6 +9,9 @@ import { suite, test } from "node:test";
 import * as Migrations from "../../../src/controller/migration/migrations.js";
 import { RecentBoardsController } from "../../../src/controller/subcontrollers/home/recent-boards-controller.js";
 import { RecentBoardStore } from "../../../src/data/recent-boards.js";
+import { IdbFlagManager } from "../../../src/idb/flags/idb-flag-manager.js";
+import { defaultRuntimeFlags } from "../data/default-flags.js";
+import { FlagController } from "../../../src/controller/subcontrollers/flag-controller.js";
 
 suite("Migrations", () => {
   test("recentBoardsMigration", async () => {
@@ -27,9 +30,7 @@ suite("Migrations", () => {
     const recent = new RecentBoardsController("RecentBoard_Migration");
     await recent.isHydrated;
 
-    assert.ok(true);
     await Migrations.recentBoardsMigration(recent);
-    console.log(Migrations);
 
     // After migration the order should be the same as above.
     await recent.isSettled;
@@ -60,5 +61,39 @@ suite("Migrations", () => {
     await recent2.isSettled;
     assert.equal(recent2.boards.length, 1);
     assert.strictEqual(recent2.boards[0].url, boards[0].url);
+  });
+
+  test("flagsMigration", async () => {
+    // TEST 1: Put something in the old store and migrate it.
+    const oldStore = new IdbFlagManager(defaultRuntimeFlags);
+    await oldStore.override("agentMode", true);
+    await oldStore.override("consistentUI", true);
+
+    const flagController = new FlagController(
+      "Flag_Migration",
+      defaultRuntimeFlags
+    );
+    await flagController.isHydrated;
+
+    await Migrations.flagsMigration(flagController, defaultRuntimeFlags);
+    await flagController.isSettled;
+
+    let overrides = await flagController.overrides();
+    assert.deepStrictEqual(overrides, {
+      agentMode: true,
+      consistentUI: true,
+    });
+
+    // TEST 2: Check for double migration.
+    // Reset a value; this should not be carried forward.
+    await oldStore.override("agentMode", false);
+    await Migrations.flagsMigration(flagController, defaultRuntimeFlags);
+    await flagController.isSettled;
+
+    overrides = await flagController.overrides();
+    assert.deepStrictEqual(overrides, {
+      agentMode: true,
+      consistentUI: true,
+    });
   });
 });
