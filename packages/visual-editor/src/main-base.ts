@@ -21,7 +21,6 @@ import { SettingsHelperImpl } from "./ui/data/settings-helper.js";
 import { SettingsStore } from "./ui/data/settings-store.js";
 
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
-import { RecentBoardStore } from "./data/recent-boards.js";
 import { styles as mainStyles } from "./index.styles.js";
 import * as Runtime from "./runtime/runtime.js";
 import {
@@ -57,7 +56,11 @@ import {
   flowGeneratorContext,
 } from "./ui/flow-gen/flow-generator.js";
 import { ReactiveAppScreen } from "./ui/state/app-screen.js";
-import { ActionTracker, UserSignInResponse } from "./ui/types/types.js";
+import {
+  ActionTracker,
+  RecentBoard,
+  UserSignInResponse,
+} from "./ui/types/types.js";
 import { ConsentManager } from "./ui/utils/consent-manager.js";
 import { EmailPrefsManager } from "./ui/utils/email-prefs-manager.js";
 import { opalShellContext } from "./ui/utils/opal-shell-guest.js";
@@ -214,7 +217,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected readonly snackbarRef = createRef<BreadboardUI.Elements.Snackbar>();
 
   protected boardRunStatus = new Map<TabId, BreadboardUI.Types.STATUS>();
-  protected recentBoardStore: RecentBoardStore;
   protected lastPointerPosition = { x: 0, y: 0 };
   protected tooltipRef: Ref<BreadboardUI.Elements.Tooltip> = createRef();
   protected canvasControllerRef: Ref<BreadboardUI.Elements.CanvasController> =
@@ -266,7 +268,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.signinAdapter = this.runtime.signinAdapter;
     this.googleDriveClient = this.runtime.googleDriveClient;
     this.#consentManager = this.runtime.consentManager;
-    this.recentBoardStore = this.runtime.recentBoardStore;
 
     // Asyncronously check if the user has an access restriction (e.g. geo) and
     // if they are signed in with all required scopes.
@@ -601,6 +602,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
           );
           if (!ok(preparingNextRun)) {
             console.warn(preparingNextRun.$error);
+          }
+
+          if (this.tab.graph.url && this.tab.graphIsMine) {
+            const board: RecentBoard = { url: this.tab.graph.url };
+            if (this.tab.graph.title) board.title = this.tab.graph.title;
+            this.appController.home.recent.add(board);
           }
 
           this.uiState.loadState = "Loaded";
@@ -1120,6 +1127,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       boardServer: this.boardServer,
       actionTracker: this.actionTracker,
       embedHandler: this.embedHandler,
+      appController: this.appController,
     };
   }
 

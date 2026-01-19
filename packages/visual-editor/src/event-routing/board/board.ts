@@ -85,7 +85,7 @@ export const RunRoute: EventRoute<"board.run"> = {
 export const LoadRoute: EventRoute<"board.load"> = {
   event: "board.load",
 
-  async do({ runtime, originalEvent, uiState }) {
+  async do({ runtime, originalEvent, uiState, appController }) {
     runtime.router.go({
       page: "graph",
       mode: uiState.mode,
@@ -95,6 +95,7 @@ export const LoadRoute: EventRoute<"board.load"> = {
       dev: parseUrl(window.location.href).dev,
       guestPrefixed: true,
     });
+    appController.home.recent.add({ url: originalEvent.detail.url });
     return false;
   },
 };
@@ -128,10 +129,10 @@ export const RedoRoute: EventRoute<"board.redo"> = {
 export const TogglePinRoute: EventRoute<"board.togglepin"> = {
   event: "board.togglepin",
 
-  async do({ runtime, originalEvent }) {
-    runtime.board.setPinnedStatus(
+  async do({ appController, originalEvent }) {
+    appController.home.recent.setPin(
       originalEvent.detail.url,
-      originalEvent.detail.status
+      originalEvent.detail.status === "pin"
     );
     return false;
   },
@@ -152,7 +153,7 @@ export const StopRoute: EventRoute<"board.stop"> = {
       if (url.searchParams.has("results")) {
         url.searchParams.delete("results");
         history.pushState(null, "", url);
-        
+
         runtime.state.project?.resetRun();
       }
     }
@@ -191,6 +192,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
     askUserToSignInIfNeeded,
     boardServer,
     actionTracker,
+    appController,
   }) {
     await StopRoute.do({
       tab,
@@ -203,6 +205,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       uiState,
       askUserToSignInIfNeeded,
       boardServer,
+      appController,
     });
     actionTracker?.runApp(tab?.graph.url, "console");
     await RunRoute.do({
@@ -216,6 +219,7 @@ export const RestartRoute: EventRoute<"board.restart"> = {
       uiState,
       askUserToSignInIfNeeded,
       boardServer,
+      appController,
     });
     return false;
   },
@@ -372,7 +376,7 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
   event: "board.delete",
 
   async do(deps) {
-    const { tab, runtime, originalEvent, uiState } = deps;
+    const { tab, runtime, originalEvent, uiState, appController } = deps;
     const boardServer = runtime.board.googleDriveBoardServer;
     if (!confirm(originalEvent.detail.messages.query)) {
       return false;
@@ -384,6 +388,8 @@ export const DeleteRoute: EventRoute<"board.delete"> = {
       originalEvent.detail.url,
       originalEvent.detail.messages
     );
+    appController.home.recent.remove(originalEvent.detail.url);
+    await appController.home.recent.isSettled;
     uiState.blockingAction = false;
 
     if (tab) {

@@ -204,7 +204,7 @@ export function cloneEdgeData<T extends EdgeData | null>(edge: T): T {
 }
 
 export interface RecentBoard {
-  title: string;
+  title?: string;
   url: string;
   pinned?: boolean;
   [key: string]: unknown;

@@ -447,6 +447,8 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   override async doPostInitWork(): Promise<void> {
+    await this.appController.global.performMigrations();
+
     this.runtime.board.addEventListener(
       RuntimeBoardLoadErrorEvent.eventName,
       () => {

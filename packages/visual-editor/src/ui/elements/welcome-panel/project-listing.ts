@@ -21,12 +21,13 @@ import * as StringsHelper from "../../strings/helper.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
-import type { RecentBoard } from "../../types/types.js";
 import { ActionTracker } from "../../types/types.js";
 import { blankBoard } from "../../utils/blank-board.js";
 import "./gallery.js";
 import "./homepage-search-button.js";
 import { HomepageSearchButton } from "./homepage-search-button.js";
+import { appControllerContext } from "../../../controller/context/context.js";
+import { AppController } from "../../../controller/controller.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -36,6 +37,9 @@ const FORCE_NO_BOARDS = URL_PARAMS.has("forceNoBoards");
 
 @customElement("bb-project-listing")
 export class ProjectListing extends SignalWatcher(LitElement) {
+  @consume({ context: appControllerContext })
+  accessor appController!: AppController;
+
   @consume({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig | undefined;
 
@@ -45,9 +49,6 @@ export class ProjectListing extends SignalWatcher(LitElement) {
 
   @consume({ context: actionTrackerContext })
   accessor actionTracker: ActionTracker | undefined;
-
-  @property({ attribute: false })
-  accessor recentBoards: RecentBoard[] = [];
 
   @property()
   accessor userFilter: string | null = null;
@@ -440,7 +441,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
   #sortUserGraphs(
     items: [string, GraphProviderItem][]
   ): [string, GraphProviderItem][] {
-    const recentBoards = this.recentBoards;
+    const recentBoards = this.appController.home.recent.boards;
     return items.sort(([, dataA], [, dataB]) => {
       // Sort by pinned status first if possible.
       const boardA = recentBoards.find((board) => board.url === dataA.url);
@@ -494,11 +495,7 @@ export class ProjectListing extends SignalWatcher(LitElement) {
 
     return html`
       <div class="gallery-wrapper">
-        <bb-gallery
-          .recentBoards=${this.recentBoards}
-          .items=${myItems}
-          .pageSize=${PAGE_SIZE}
-        ></bb-gallery>
+        <bb-gallery .items=${myItems} .pageSize=${PAGE_SIZE}></bb-gallery>
       </div>
     `;
   }

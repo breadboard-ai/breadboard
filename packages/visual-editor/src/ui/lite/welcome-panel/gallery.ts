@@ -14,11 +14,7 @@ import { createRef, ref } from "lit/directives/ref.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { OverflowMenuActionEvent, StateEvent } from "../../events/events.js";
 import * as StringsHelper from "../../strings/helper.js";
-import {
-  ActionTracker,
-  OverflowAction,
-  RecentBoard,
-} from "../../types/types.js";
+import { ActionTracker, OverflowAction } from "../../types/types.js";
 import {
   type SigninAdapter,
   signinAdapterContext,
@@ -31,6 +27,8 @@ import { guard } from "lit/directives/guard.js";
 import { SignalWatcher } from "@lit-labs/signals";
 import * as Styles from "../../styles/styles.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
+import { appControllerContext } from "../../../controller/context/context.js";
+import { AppController } from "../../../controller/controller.js";
 
 const COLLAPSED_KEY = "gallery-lite-collapsed";
 const GlobalStrings = StringsHelper.forSection("Global");
@@ -486,6 +484,9 @@ export class GalleryLite extends SignalWatcher(LitElement) {
 
   #overflowMenuConfig: { x: number; y: number; value: string } | null = null;
 
+  @consume({ context: appControllerContext })
+  accessor appController!: AppController;
+
   @consume({ context: signinAdapterContext })
   accessor signinAdapter: SigninAdapter | undefined = undefined;
 
@@ -535,9 +536,6 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   @property({ type: Number })
   accessor pageSize = 4;
 
-  @property({ attribute: false })
-  accessor recentBoards: RecentBoard[] = [];
-
   @property({ reflect: true, type: Boolean })
   accessor isAnimatingHeight = false;
 
@@ -575,7 +573,7 @@ export class GalleryLite extends SignalWatcher(LitElement) {
   }
 
   #isPinned(url: string): boolean {
-    const recentBoards = this.recentBoards;
+    const recentBoards = this.appController.home.recent.boards;
     const currentItem = recentBoards.find((board) => {
       return url === board.url;
     });
