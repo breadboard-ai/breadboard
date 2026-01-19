@@ -6,7 +6,7 @@
 
 import assert from "node:assert";
 import { before, suite, test } from "node:test";
-import { SettingsController } from "../../../../../src/controller/subcontrollers/editor/sidebar/settings.js";
+import { SettingsController } from "../../../../../src/controller/subcontrollers/editor/sidebar/settings-controller.js";
 import { setDebuggableAppController } from "../../../../../src/controller/utils/logging/logger.js";
 
 suite("SettingsController", () => {

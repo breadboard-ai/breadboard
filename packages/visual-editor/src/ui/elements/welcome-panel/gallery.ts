@@ -23,16 +23,14 @@ import * as StringsHelper from "../../strings/helper.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
-import {
-  ActionTracker,
-  OverflowAction,
-  RecentBoard,
-} from "../../types/types.js";
+import { ActionTracker, OverflowAction } from "../../types/types.js";
 import { renderThumbnail } from "../../utils/image.js";
 import {
   type SigninAdapter,
   signinAdapterContext,
 } from "../../utils/signin-adapter.js";
+import { appControllerContext } from "../../../controller/context/context.js";
+import { AppController } from "../../../controller/controller.js";
 
 const GlobalStrings = StringsHelper.forSection("Global");
 const Strings = StringsHelper.forSection("ProjectListing");
@@ -414,6 +412,9 @@ export class Gallery extends SignalWatcher(LitElement) {
 
   #overflowMenuConfig: { x: number; y: number; value: string } | null = null;
 
+  @consume({ context: appControllerContext })
+  accessor appController!: AppController;
+
   @consume({ context: signinAdapterContext })
   accessor signinAdapter: SigninAdapter | undefined = undefined;
 
@@ -444,13 +445,10 @@ export class Gallery extends SignalWatcher(LitElement) {
   @property({ type: Number })
   accessor pageSize = 8;
 
-  @property({ attribute: false })
-  accessor recentBoards: RecentBoard[] = [];
-
   readonly #paginationContainer = createRef<HTMLElement>();
 
   #isPinned(url: string): boolean {
-    const recentBoards = this.recentBoards;
+    const recentBoards = this.appController.home.recent.boards;
     const currentItem = recentBoards.find((board) => {
       return url === board.url;
     });

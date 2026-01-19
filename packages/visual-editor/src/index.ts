@@ -31,6 +31,8 @@ export { Main };
 @customElement("bb-main")
 class Main extends MainBase {
   override async doPostInitWork() {
+    await this.appController.global.performMigrations();
+
     this.maybeNotifyAboutPreferredUrlForDomain();
     this.maybeNotifyAboutDesktopModality();
   }
@@ -222,9 +224,7 @@ class Main extends MainBase {
       return nothing;
     }
 
-    return html`<bb-project-listing
-      .recentBoards=${this.runtime.board.getRecentBoards()}
-    ></bb-project-listing>`;
+    return html`<bb-project-listing></bb-project-listing>`;
   }
 
   #renderAppController(renderValues: RenderValues) {

@@ -4,4 +4,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { SettingsController } from "./settings-controller.js";
+export { RecentBoardsController } from "./recent-boards-controller.js";

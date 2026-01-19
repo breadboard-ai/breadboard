@@ -38,7 +38,6 @@ import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configu
 import { createGoogleDriveBoardServer } from "../ui/utils/create-server.js";
 import { createA2Server, createA2ModuleFactory } from "../a2/index.js";
 import { createFileSystemBackend, createFlagManager } from "../idb/index.js";
-import { RecentBoardStore } from "../data/recent-boards.js";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { McpClientManager } from "../mcp/index.js";
 import {
@@ -88,7 +87,6 @@ export class Runtime extends EventTarget {
   public readonly googleDriveClient: GoogleDriveClient;
   public readonly fileSystem: FileSystem;
   public readonly mcpClientManager: McpClientManager;
-  public readonly recentBoardStore: RecentBoardStore;
   public readonly googleDriveBoardServer: GoogleDriveBoardServer;
   public readonly flowGenerator: FlowGenerator;
   public readonly apiClient: AppCatalystApiClient;
@@ -176,8 +174,6 @@ export class Runtime extends EventTarget {
       }
     );
 
-    this.recentBoardStore = RecentBoardStore.instance();
-
     this.googleDriveBoardServer = createGoogleDriveBoardServer(
       this.signinAdapter,
       this.googleDriveClient,
@@ -209,7 +205,6 @@ export class Runtime extends EventTarget {
       loader,
       graphStore,
       this.googleDriveBoardServer,
-      this.recentBoardStore,
       this.signinAdapter,
       this.googleDriveClient
     );
@@ -229,7 +224,6 @@ export class Runtime extends EventTarget {
     this.run = new Run(graphStore, this.state, this.flags, kits);
 
     this.#setupPassthruHandlers();
-    void this.recentBoardStore.restore();
   }
 
   async prepareRun(tab: Tab, settings: SettingsStore): Promise<Outcome<void>> {
