@@ -112,7 +112,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
     const opalShell = mainArgs.shellHost;
     const signinAdapter = new SigninAdapter(opalShell);
 
-    this.appController = appController;
+    this.appController = appController(mainArgs.globalConfig.flags);
 
     this.actionTracker = createActionTracker(
       opalShell,

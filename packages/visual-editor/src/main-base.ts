@@ -253,9 +253,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
     this.hostOrigin = args.hostOrigin;
 
     // Controller
-    this.appController = appController;
+    this.appController = appController(args.globalConfig.flags);
 
     this.runtime = new Runtime.Runtime({
+      appController: this.appController,
       globalConfig: this.globalConfig,
       guestConfig: this.guestConfiguration,
       settings: this.settings,

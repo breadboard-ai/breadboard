@@ -23,11 +23,16 @@ import { consume } from "@lit/context";
 import { uiStateContext } from "../../contexts/ui-state.js";
 import { UI } from "../../state/types.js";
 import { type } from "../../styles/host/type.js";
+import { appControllerContext } from "../../../controller/context/context.js";
+import { AppController } from "../../../controller/controller.js";
 
 @customElement("bb-account-switcher")
 export class AccountSwitcher extends SignalWatcher(LitElement) {
   @property()
   accessor signInAdapter: SigninAdapter | null = null;
+
+  @consume({ context: appControllerContext })
+  accessor appController!: AppController;
 
   @consume({ context: uiStateContext })
   accessor uiState!: UI;
@@ -295,7 +300,7 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
           }
 
           if (
-            this.uiState.flags?.googleOne &&
+            this.appController.global.flags?.googleOne &&
             (this.uiState.subscriptionStatus === "error" ||
               this.uiState.subscriptionStatus === "subscribed")
           ) {
@@ -330,7 +335,7 @@ export class AccountSwitcher extends SignalWatcher(LitElement) {
             <p>${this.signInAdapter.nameSignal}</p>
           </div>
         </section>
-        ${this.uiState.flags?.googleOne &&
+        ${this.appController.global.flags?.googleOne &&
         (this.uiState.subscriptionStatus === "subscribed" ||
           this.uiState.subscriptionStatus === "error")
           ? html` <section

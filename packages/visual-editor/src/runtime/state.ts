@@ -16,6 +16,7 @@ import { Runtime } from "./runtime.js";
 import { RuntimeTabChangeEvent } from "./events.js";
 import { signal } from "signal-utils";
 import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
+import { devUrlParams } from "../ui/utils/urls.js";
 
 export { StateManager };
 
@@ -41,7 +42,7 @@ class StateManager implements RuntimeContext {
   ) {
     this.#store = store;
     this.flowGenerator = this.runtime.flowGenerator;
-    this.ui = State.createUIState(this.runtime.flags);
+    this.ui = State.createUIState();
     this.lite = createLiteModeState(this);
     this.runtime.board.addEventListener(RuntimeTabChangeEvent.eventName, () => {
       const tab = this.runtime.board.currentTab;
@@ -60,6 +61,10 @@ class StateManager implements RuntimeContext {
       const editor = this.runtime.edit.getEditor(tab);
       this.project = this.createProjectState(mainGraphId, editor);
     });
+
+    if (devUrlParams().forceSignInState) {
+      this.ui.show.add("SignInModal");
+    }
   }
 
   get router() {

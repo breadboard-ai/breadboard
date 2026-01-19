@@ -6,12 +6,18 @@
 
 import assert from "node:assert";
 import { after, before, suite, test } from "node:test";
-import { appController } from "../../src/controller/controller.js";
+import {
+  AppController,
+  appController,
+} from "../../src/controller/controller.js";
 import { setDOM, unsetDOM } from "../fake-dom.js";
+import { defaultRuntimeFlags } from "./data/default-flags.js";
 
 suite("AppController", () => {
+  let controller: AppController;
   before(() => {
     setDOM();
+    controller = appController(defaultRuntimeFlags);
   });
 
   after(() => {
@@ -19,36 +25,36 @@ suite("AppController", () => {
   });
 
   test("Instantiates", async () => {
-    assert.ok(appController);
+    assert.ok(controller);
   });
 
   test("Debug settings", async () => {
-    assert.ok(appController);
+    assert.ok(controller);
 
     // Default debug settings.
-    assert.strictEqual(appController.global.debug.enabled, false);
-    assert.strictEqual(appController.global.debug.errors, true);
-    assert.strictEqual(appController.global.debug.warnings, true);
-    assert.strictEqual(appController.global.debug.info, true);
-    assert.strictEqual(appController.global.debug.verbose, false);
+    assert.strictEqual(controller.global.debug.enabled, false);
+    assert.strictEqual(controller.global.debug.errors, true);
+    assert.strictEqual(controller.global.debug.warnings, true);
+    assert.strictEqual(controller.global.debug.info, true);
+    assert.strictEqual(controller.global.debug.verbose, false);
 
     // Invert
-    appController.global.debug.enabled = true;
-    appController.global.debug.errors = false;
-    appController.global.debug.warnings = false;
-    appController.global.debug.info = false;
-    appController.global.debug.verbose = true;
+    controller.global.debug.enabled = true;
+    controller.global.debug.errors = false;
+    controller.global.debug.warnings = false;
+    controller.global.debug.info = false;
+    controller.global.debug.verbose = true;
 
-    assert.strictEqual(appController.global.debug.enabled, true);
-    assert.strictEqual(appController.global.debug.errors, false);
-    assert.strictEqual(appController.global.debug.warnings, false);
-    assert.strictEqual(appController.global.debug.info, false);
-    assert.strictEqual(appController.global.debug.verbose, true);
+    assert.strictEqual(controller.global.debug.enabled, true);
+    assert.strictEqual(controller.global.debug.errors, false);
+    assert.strictEqual(controller.global.debug.warnings, false);
+    assert.strictEqual(controller.global.debug.info, false);
+    assert.strictEqual(controller.global.debug.verbose, true);
 
-    appController.global.debug.setLogDefault();
-    assert.strictEqual(appController.global.debug.errors, true);
-    assert.strictEqual(appController.global.debug.warnings, true);
-    assert.strictEqual(appController.global.debug.info, true);
-    assert.strictEqual(appController.global.debug.verbose, false);
+    controller.global.debug.setLogDefault();
+    assert.strictEqual(controller.global.debug.errors, true);
+    assert.strictEqual(controller.global.debug.warnings, true);
+    assert.strictEqual(controller.global.debug.info, true);
+    assert.strictEqual(controller.global.debug.verbose, false);
   });
 });

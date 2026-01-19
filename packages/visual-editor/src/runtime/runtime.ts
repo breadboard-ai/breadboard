@@ -37,7 +37,7 @@ import { Autonamer } from "./autonamer.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configuration.js";
 import { createGoogleDriveBoardServer } from "../ui/utils/create-server.js";
 import { createA2Server, createA2ModuleFactory } from "../a2/index.js";
-import { createFileSystemBackend, createFlagManager } from "../idb/index.js";
+import { createFileSystemBackend } from "../idb/index.js";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { McpClientManager } from "../mcp/index.js";
 import {
@@ -96,7 +96,7 @@ export class Runtime extends EventTarget {
   constructor(config: RuntimeConfig) {
     super();
 
-    this.flags = createFlagManager(config.globalConfig.flags);
+    this.flags = config.appController.global.flags;
 
     this.signinAdapter = new SigninAdapter(config.shellHost);
     this.fetchWithCreds = this.signinAdapter.fetchWithCreds;

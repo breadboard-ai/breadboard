@@ -22,6 +22,7 @@ import { OpalShellHostProtocol } from "@breadboard-ai/types/opal-shell-protocol.
 import type { GlobalConfig } from "../ui/contexts/global-config.js";
 import { SettingsStore } from "../ui/data/settings-store.js";
 import { GuestConfiguration } from "@breadboard-ai/types/opal-shell-protocol.js";
+import { AppController } from "../controller/controller.js";
 
 export enum TabType {
   URL,
@@ -57,6 +58,7 @@ export interface Tab {
 }
 
 export interface RuntimeConfig {
+  appController: Readonly<AppController>;
   globalConfig: GlobalConfig;
   guestConfig: GuestConfiguration;
   settings: SettingsStore;
