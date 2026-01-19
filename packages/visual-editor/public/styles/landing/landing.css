@@ -939,7 +939,7 @@ footer {
     }
 
     &#features {
-      padding: 60px;
+      padding: 0 60px 60px 60px;
 
       ul {
         flex-direction: row;
@@ -952,7 +952,7 @@ footer {
     }
 
     &#build {
-      padding: 60px;
+      padding: 0 60px 60px 60px;
 
       & #video-container {
         border-radius: 70px;
