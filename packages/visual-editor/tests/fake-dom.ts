@@ -38,6 +38,4 @@ export function unsetDOM() {
   unsetGlobalThis.Node = undefined;
   unsetGlobalThis.Event = undefined;
   unsetGlobalThis.CustomEvent = undefined;
-  unsetGlobalThis.localStorage = undefined;
-  unsetGlobalThis.sessionStorage = undefined;
 }

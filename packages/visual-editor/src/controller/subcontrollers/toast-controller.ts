@@ -14,6 +14,8 @@ type ToastMap = Map<
     message: string;
     type: ToastType;
     persistent: boolean;
+    state: "active" | "closing";
+    timeoutId?: number;
   }
 >;
 
@@ -22,6 +24,13 @@ const MAX_TOAST_LENGTH = 77;
 export class ToastController extends RootController {
   @field({ persist: "session" })
   private accessor _toasts: ToastMap = new Map();
+
+  constructor(
+    id: string,
+    private readonly defaultTimeout = 8000
+  ) {
+    super(id);
+  }
 
   get toasts(): Readonly<ToastMap> {
     return this._toasts;
@@ -37,14 +46,44 @@ export class ToastController extends RootController {
       message = message.slice(0, MAX_TOAST_LENGTH - 3) + "...";
     }
 
-    this._toasts.set(id, { message, type, persistent });
+    let timeoutId = -1;
+    if (!persistent) {
+      timeoutId = globalThis.window.setTimeout(() => {
+        const toast = this._toasts.get(id);
+        // Belt-and-braces check because untoasting should clear this timeout
+        // and so it shouldn't be possible for the toast to not be here when the
+        // timeout fires.
+        /* c8 ignore next 3 */
+        if (!toast) {
+          return;
+        }
+
+        this._toasts.set(id, { ...toast, state: "closing" });
+      }, this.defaultTimeout);
+    }
+
+    this._toasts.set(id, {
+      message,
+      type,
+      persistent,
+      state: "active",
+      timeoutId,
+    });
     return id;
   }
 
   untoast(id?: string) {
     if (!id) {
+      for (const toast of this._toasts.values()) {
+        globalThis.window.clearTimeout(toast.timeoutId);
+      }
       this._toasts.clear();
       return;
+    }
+
+    const toast = this._toasts.get(id);
+    if (toast) {
+      globalThis.window.clearTimeout(toast.timeoutId);
     }
 
     this._toasts.delete(id);
