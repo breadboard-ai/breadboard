@@ -5,7 +5,7 @@
  */
 
 import assert from "node:assert";
-import { suite, test } from "node:test";
+import { after, before, suite, test } from "node:test";
 import {
   isHydratedController,
   isHydrating,
@@ -13,8 +13,30 @@ import {
 import { PENDING_HYDRATION } from "../../../src/controller/utils/sentinel.js";
 import { RootController } from "../../../src/controller/subcontrollers/root-controller.js";
 import { field } from "../../../src/controller/decorators/field.js";
+import { setDebuggableAppController } from "../../../src/controller/utils/logging/logger.js";
 
 suite("Hydration", () => {
+  before(() => {
+    setDebuggableAppController({
+      global: {
+        debug: {
+          enabled: false,
+          errors: true,
+          info: true,
+          verbose: true,
+          warnings: true,
+          setLogDefault() {
+            // Stubbed.
+          },
+        },
+      },
+    });
+  });
+
+  after(() => {
+    setDebuggableAppController(null);
+  });
+
   test("isHydrating", async () => {
     assert.ok(isHydrating(PENDING_HYDRATION));
     assert.ok(!isHydrating("foo"));

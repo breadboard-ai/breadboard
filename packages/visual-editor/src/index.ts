@@ -514,10 +514,7 @@ class Main extends MainBase {
           .offset=${offset}
           .message=${toast.message}
           .type=${toast.type}
-          .timeout=${toast.persistent ? 0 : nothing}
-          @bbtoastremoved=${(evt: BreadboardUI.Events.ToastRemovedEvent) => {
-            this.appController.global.toasts.untoast(evt.toastId);
-          }}
+          .closing=${toast.state === "closing"}
         ></bb-toast>`;
       }
     )}`;
