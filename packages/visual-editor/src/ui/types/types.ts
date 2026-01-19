@@ -419,6 +419,7 @@ export type EnumValue = {
   title: string;
   id: string;
   icon?: string;
+  svgIcon?: string;
   description?: string;
   tag?: string; // Typically used for keyboard shortcuts.
   hidden?: boolean;
