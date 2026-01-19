@@ -115,9 +115,7 @@ export class LiteHome extends SignalWatcher(LitElement) {
 
     this.actionTracker = createActionTracker(
       opalShell,
-      mainArgs.guestConfiguration,
-      mainArgs.globalConfig.MEASUREMENT_ID,
-      () => signinAdapter.state.then((state) => state === "signedin")
+      !!this.guestConfiguration.supportsPropertyTracking
     );
 
     // Board server

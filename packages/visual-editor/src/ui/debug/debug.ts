@@ -25,10 +25,10 @@ export async function addDebugPanel(controller: AppController) {
 
   pane = new Pane({ title: "Debug Console", container });
   const g = pane.addFolder({ title: "Global", expanded: false });
-  g.addBinding(controller.debug, "verbose", { label: "Verbose" });
-  g.addBinding(controller.debug, "info", { label: "Info" });
-  g.addBinding(controller.debug, "errors", { label: "Errors" });
-  g.addBinding(controller.debug, "warnings", { label: "Warnings" });
+  g.addBinding(controller.global.debug, "verbose", { label: "Verbose" });
+  g.addBinding(controller.global.debug, "info", { label: "Info" });
+  g.addBinding(controller.global.debug, "errors", { label: "Errors" });
+  g.addBinding(controller.global.debug, "warnings", { label: "Warnings" });
 }
 
 export function removeDebugPanel() {

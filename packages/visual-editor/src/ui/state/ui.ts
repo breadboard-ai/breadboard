@@ -7,9 +7,7 @@
 import { signal } from "signal-utils";
 import { VisualEditorMode } from "../types/types.js";
 import { SignalSet } from "signal-utils/set";
-import { SignalMap } from "signal-utils/map";
 import { SignalArray } from "signal-utils/array";
-import { ToastType } from "../events/events.js";
 import { UI, UIOverlays, UILoadState, SubscriptionStatus } from "./types.js";
 import {
   RuntimeFlagManager,
@@ -70,15 +68,6 @@ class ReactiveUIState implements UI {
   accessor subscriptionCredits: number = -1;
 
   accessor show = new SignalSet<UIOverlays>();
-
-  accessor toasts = new SignalMap<
-    string,
-    {
-      message: string;
-      type: ToastType;
-      persistent: boolean;
-    }
-  >();
 
   /**
    * Consent requests that will be displayed as a modal popup

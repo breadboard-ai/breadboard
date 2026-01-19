@@ -49,7 +49,7 @@ suite("escapeNodeText", () => {
     );
   });
 
-  test.only("double-encodes already-encoded chars", () => {
+  test("double-encodes already-encoded chars", () => {
     assert.equal(
       Sanitizer.escapeNodeText("Morecambe &amp; Wise"),
       "Morecambe &amp;amp; Wise"

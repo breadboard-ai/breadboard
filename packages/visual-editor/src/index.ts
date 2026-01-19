@@ -7,7 +7,6 @@
 import { html, nothing } from "lit";
 import { customElement } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { map } from "lit/directives/map.js";
 import { ref } from "lit/directives/ref.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { MainBase, RenderValues } from "./main-base.js";
@@ -18,6 +17,8 @@ import { makeUrl, parseUrl } from "./ui/utils/urls.js";
 
 import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { MakeUrlInit } from "./ui/types/types.js";
+import { isHydrating } from "./controller/utils/hydration.js";
+import { repeat } from "lit/directives/repeat.js";
 
 // Build constant.
 declare const ENABLE_DEBUG_TOOLING: boolean;
@@ -78,6 +79,7 @@ class Main extends MainBase {
   override async handleAppAccessCheckResult(
     result: CheckAppAccessResult
   ): Promise<void> {
+    this.actionTracker.updateCanAccessStatus(result.canAccess);
     if (!result.canAccess) {
       await this.signinAdapter.signOut();
       window.history.pushState(
@@ -146,7 +148,10 @@ class Main extends MainBase {
         this.unsnackbar(evt.snackbarId);
       }}
       @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-        this.toast(toastEvent.message, toastEvent.toastType);
+        this.appController.global.toasts.toast(
+          toastEvent.message,
+          toastEvent.toastType
+        );
       }}
       @dragover=${(evt: DragEvent) => {
         evt.preventDefault();
@@ -496,19 +501,20 @@ class Main extends MainBase {
   }
 
   #renderToasts() {
-    return html`${map(
-      this.uiState.toasts,
-      ([toastId, { message, type, persistent }], idx) => {
-        const offset = this.uiState.toasts.size - idx - 1;
+    if (isHydrating(this.appController.global.toasts.toasts)) return nothing;
+
+    const toastCount = this.appController.global.toasts.toasts.size;
+    return html`${repeat(
+      this.appController.global.toasts.toasts,
+      ([toastId]) => toastId,
+      ([toastId, toast], idx) => {
+        const offset = toastCount - idx - 1;
         return html`<bb-toast
           .toastId=${toastId}
           .offset=${offset}
-          .message=${message}
-          .type=${type}
-          .timeout=${persistent ? 0 : nothing}
-          @bbtoastremoved=${(evt: BreadboardUI.Events.ToastRemovedEvent) => {
-            this.uiState.toasts.delete(evt.toastId);
-          }}
+          .message=${toast.message}
+          .type=${toast.type}
+          .closing=${toast.state === "closing"}
         ></bb-toast>`;
       }
     )}`;
@@ -623,13 +629,7 @@ class Main extends MainBase {
           }
 
           case "feedback": {
-            if (this.globalConfig.GOOGLE_FEEDBACK_PRODUCT_ID) {
-              if (this.feedbackPanelRef.value) {
-                this.feedbackPanelRef.value.open();
-              } else {
-                console.error(`Feedback panel was not rendered!`);
-              }
-            }
+            this.appController.global.feedback.open(this.globalConfig);
             break;
           }
 
@@ -676,7 +676,7 @@ class Main extends MainBase {
             await navigator.clipboard.writeText(
               JSON.stringify(this.tab.graph, null, 2)
             );
-            this.toast(
+            this.appController.global.toasts.toast(
               Strings.from("STATUS_PROJECT_CONTENTS_COPIED"),
               BreadboardUI.Events.ToastType.INFORMATION
             );

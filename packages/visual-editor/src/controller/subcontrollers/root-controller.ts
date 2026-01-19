@@ -15,6 +15,8 @@ export class RootController implements HydratedController {
   #trackedSignals = new Set<Signal.State<unknown>>();
   #isHydratedPromise?: Promise<number>;
 
+  constructor(public readonly id: string) {}
+
   public readonly hydrated = new Signal.Computed<boolean | pending>(() => {
     if (this.#trackedSignals.size === 0) return true;
 

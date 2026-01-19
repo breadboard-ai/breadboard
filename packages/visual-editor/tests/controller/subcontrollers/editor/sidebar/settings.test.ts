@@ -12,28 +12,30 @@ import { setDebuggableAppController } from "../../../../../src/controller/utils/
 suite("SettingsController", () => {
   before(() => {
     setDebuggableAppController({
-      debug: {
-        enabled: false,
-        errors: true,
-        info: true,
-        verbose: true,
-        warnings: true,
-        setLogDefault() {
-          // Stubbed.
+      global: {
+        debug: {
+          enabled: false,
+          errors: true,
+          info: true,
+          verbose: true,
+          warnings: true,
+          setLogDefault() {
+            // Stubbed.
+          },
         },
       },
     });
   });
 
   test("Basics", async () => {
-    const store = new SettingsController();
+    const store = new SettingsController("Settings_1");
     await store.isHydrated;
 
     assert.strictEqual(store.hydrated.get(), true);
   });
 
   test("Read and write", async () => {
-    const store = new SettingsController();
+    const store = new SettingsController("Settings_2");
     await store.isHydrated;
 
     store.section = "console";

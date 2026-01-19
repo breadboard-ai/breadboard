@@ -5,14 +5,38 @@
  */
 
 import assert from "node:assert";
-import { suite, test } from "node:test";
+import { after, before, suite, test } from "node:test";
 import {
   isHydratedController,
   isHydrating,
 } from "../../../src/controller/utils/hydration.js";
 import { PENDING_HYDRATION } from "../../../src/controller/utils/sentinel.js";
+import { RootController } from "../../../src/controller/subcontrollers/root-controller.js";
+import { field } from "../../../src/controller/decorators/field.js";
+import { setDebuggableAppController } from "../../../src/controller/utils/logging/logger.js";
 
 suite("Hydration", () => {
+  before(() => {
+    setDebuggableAppController({
+      global: {
+        debug: {
+          enabled: false,
+          errors: true,
+          info: true,
+          verbose: true,
+          warnings: true,
+          setLogDefault() {
+            // Stubbed.
+          },
+        },
+      },
+    });
+  });
+
+  after(() => {
+    setDebuggableAppController(null);
+  });
+
   test("isHydrating", async () => {
     assert.ok(isHydrating(PENDING_HYDRATION));
     assert.ok(!isHydrating("foo"));
@@ -36,5 +60,19 @@ suite("Hydration", () => {
     assert.ok(!isHydratedController(3));
     assert.ok(!isHydratedController("foo"));
     assert.ok(!isHydratedController([]));
+  });
+
+  test("throws on unhydrated values", async () => {
+    class HydratingController extends RootController {
+      @field({ persist: "local" })
+      accessor person = { name: "default" };
+    }
+
+    const h = new HydratingController("Controller");
+    assert.throws(() => {
+      // Accessing h.person.name before hydration should throw an Error.
+      const name = h.person.name;
+      assert.fail(name);
+    }, new Error("Access attempted to unhydrated value"));
   });
 });

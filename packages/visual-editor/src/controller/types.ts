@@ -18,7 +18,9 @@ export interface DebugController {
   setLogDefault(): void;
 }
 export interface DebuggableAppController {
-  debug: DebugController;
+  global: {
+    debug: DebugController;
+  };
 }
 
 export type PrimitiveType =
@@ -29,6 +31,8 @@ export type PrimitiveType =
   | symbol
   | { [key: string]: PrimitiveType }
   | object
+  | Map<string, PrimitiveValue>
+  | Set<PrimitiveType>
   | PrimitiveType[];
 
 export type PrimitiveValue = PrimitiveType | pending;

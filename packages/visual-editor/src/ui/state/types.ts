@@ -38,7 +38,7 @@ import {
   Schema,
 } from "@breadboard-ai/types";
 import { ConnectorInstance, ConnectorType } from "../connectors/types.js";
-import { StateEvent, ToastType } from "../events/events.js";
+import { StateEvent } from "../events/events.js";
 import {
   AppTheme,
   ParsedUrlProvider,
@@ -410,14 +410,6 @@ export type UI = {
   loadState: UILoadState;
   show: Set<UIOverlays>;
   showStatusUpdateChip: boolean | null;
-  toasts: Map<
-    string,
-    {
-      message: string;
-      type: ToastType;
-      persistent: boolean;
-    }
-  >;
   /**
    * Consent requests that will be displayed as a modal popup
    */

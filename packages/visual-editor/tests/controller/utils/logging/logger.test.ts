@@ -12,14 +12,16 @@ import {
 } from "../../../../src/controller/utils/logging/logger.js";
 
 const logConfig = {
-  debug: {
-    enabled: false,
-    errors: true,
-    info: true,
-    verbose: true,
-    warnings: true,
-    setLogDefault() {
-      // Stubbed.
+  global: {
+    debug: {
+      enabled: false,
+      errors: true,
+      info: true,
+      verbose: true,
+      warnings: true,
+      setLogDefault() {
+        // Stubbed.
+      },
     },
   },
 };
@@ -45,7 +47,7 @@ suite("Logger", () => {
 
   test("does not log when disabled", async () => {
     const logger = getLogger();
-    logConfig.debug.enabled = false;
+    logConfig.global.debug.enabled = false;
 
     logger.log({ type: "info", args: ["Info"] });
     logger.log({ type: "warning", args: ["Warning"] });
@@ -60,7 +62,7 @@ suite("Logger", () => {
 
   test("logs when disabled", async () => {
     const logger = getLogger();
-    logConfig.debug.enabled = true;
+    logConfig.global.debug.enabled = true;
 
     logger.log({ type: "info", args: ["Info"] });
     logger.log({ type: "warning", args: ["Warning"] });
@@ -75,9 +77,9 @@ suite("Logger", () => {
 
   test("logs a set/get name", async () => {
     const logger = getLogger();
-    logConfig.debug.enabled = true;
+    logConfig.global.debug.enabled = true;
 
-    logger.logItem("info", "get", "Item", "Info");
+    logger.logItem("info", "get", "Item", false, "Info");
 
     assert.strictEqual(
       infoMock.mock.calls[0].arguments[0],
@@ -89,11 +91,11 @@ suite("Logger", () => {
   test("does not log for disabled categories", () => {
     const logger = getLogger();
 
-    logConfig.debug.enabled = true;
-    logConfig.debug.info = false;
-    logConfig.debug.warnings = false;
-    logConfig.debug.errors = false;
-    logConfig.debug.verbose = false;
+    logConfig.global.debug.enabled = true;
+    logConfig.global.debug.info = false;
+    logConfig.global.debug.warnings = false;
+    logConfig.global.debug.errors = false;
+    logConfig.global.debug.verbose = false;
 
     logger.log({ type: "info", args: ["Info"] });
     logger.log({ type: "warning", args: ["Warning"] });
