@@ -381,7 +381,7 @@ provided when the "output_format" is set to "text"`
           await new Promise((resolve) => setTimeout(resolve, RETRY_SLEEP_MS));
         } while (maxRetries-- > 0);
         statusUpdater(null);
-        const textParts = mergeTextParts(results, "\n");
+        const textParts = mergeTextParts(results);
         if (textParts.length === 0) {
           return { error: `No text was generated. Please try again` };
         }
@@ -741,7 +741,7 @@ For example, "Creating random values" or "Computing prime numbers"`),
           await new Promise((resolve) => setTimeout(resolve, RETRY_SLEEP_MS));
         } while (maxRetries-- > 0);
         statusUpdater(null);
-        const textParts = mergeTextParts(results, "\n");
+        const textParts = mergeTextParts(results);
         if (textParts.length === 0) {
           return { error: `No text was generated. Please try again` };
         }
