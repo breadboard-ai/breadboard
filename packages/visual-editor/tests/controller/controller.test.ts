@@ -6,30 +6,30 @@
 
 import assert from "node:assert";
 import { after, before, suite, test } from "node:test";
-import {
-  AppController,
-  appController,
-} from "../../src/controller/controller.js";
+import { appController } from "../../src/controller/controller.js";
 import { setDOM, unsetDOM } from "../fake-dom.js";
 import { defaultRuntimeFlags } from "./data/default-flags.js";
 
 suite("AppController", () => {
-  let controller: AppController;
   before(() => {
     setDOM();
-    controller = appController(defaultRuntimeFlags);
   });
 
   after(() => {
     unsetDOM();
   });
 
-  test("Instantiates", async () => {
-    assert.ok(controller);
+  // Note: this test must come first since appController stores a singleton
+  // instacnce, which will be used between tests.
+  test("Errors without flags", async () => {
+    assert.throws(() => {
+      appController();
+    }, new Error("App Controller must be instantiated with flags"));
   });
 
   test("Debug settings", async () => {
-    assert.ok(controller);
+    const controller = appController(defaultRuntimeFlags);
+    await controller.global.debug.hydrated;
 
     // Default debug settings.
     assert.strictEqual(controller.global.debug.enabled, false);
