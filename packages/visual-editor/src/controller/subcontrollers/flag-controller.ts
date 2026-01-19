@@ -10,7 +10,7 @@ import { RootController } from "./root-controller.js";
 
 export class FlagController
   extends RootController
-  implements RuntimeFlagManager
+  implements RuntimeFlagManager, RuntimeFlags
 {
   @field({ persist: "idb" })
   private accessor _agentMode: boolean | null = null;
@@ -55,58 +55,87 @@ export class FlagController
   private accessor _streamPlanner: boolean | null = null;
 
   get agentMode() {
+    if (this._agentMode === null)
+      throw new Error("agentMode was not set by environment");
     return this._agentMode;
   }
 
   get consistentUI() {
+    if (this._consistentUI === null)
+      throw new Error("consistentUI was not set by environment");
     return this._consistentUI;
   }
 
   get enableDrivePickerInLiteMode() {
+    if (this._enableDrivePickerInLiteMode === null)
+      throw new Error("enableDrivePickerInLiteMode was not set by environment");
     return this._enableDrivePickerInLiteMode;
   }
 
   get force2DGraph() {
+    if (this._force2DGraph === null)
+      throw new Error("force2DGraph was not set by environment");
     return this._force2DGraph;
   }
 
   get generateForEach() {
+    if (this._generateForEach === null)
+      throw new Error("generateForEach was not set by environment");
     return this._generateForEach;
   }
 
   get googleOne() {
+    if (this._googleOne === null)
+      throw new Error("googleOne was not set by environment");
     return this._googleOne;
   }
 
   get gulfRenderer() {
+    if (this._gulfRenderer === null)
+      throw new Error("gulfRenderer was not set by environment");
     return this._gulfRenderer;
   }
 
   get mcp() {
+    if (this._mcp === null) throw new Error("mcp was not set by environment");
     return this._mcp;
   }
 
   get opalAdk() {
+    if (this._opalAdk === null)
+      throw new Error("opalAdk was not set by environment");
     return this._opalAdk;
   }
 
   get outputTemplates() {
+    if (this._outputTemplates === null)
+      throw new Error("outputTemplates was not set by environment");
     return this._outputTemplates;
   }
 
   get requireConsentForGetWebpage() {
+    if (this._requireConsentForGetWebpage === null)
+      throw new Error("requireConsentForGetWebpage was not set by environment");
     return this._requireConsentForGetWebpage;
   }
 
   get requireConsentForOpenWebpage() {
+    if (this._requireConsentForOpenWebpage === null)
+      throw new Error(
+        "requireConsentForOpenWebpage was not set by environment"
+      );
     return this._requireConsentForOpenWebpage;
   }
 
   get streamGenWebpage() {
+    if (this._streamGenWebpage === null)
+      throw new Error("streamGenWebpage was not set by environment");
     return this._streamGenWebpage;
   }
 
   get streamPlanner() {
+    if (this._streamPlanner === null)
+      throw new Error("streamPlanner was not set by environment");
     return this._streamPlanner;
   }
 
@@ -135,6 +164,7 @@ export class FlagController
   }
 
   #set(flag: keyof RuntimeFlags, value: boolean, onlyIfNull = false) {
+    if (typeof value !== "boolean") value = null as unknown as boolean;
     switch (flag) {
       case "agentMode": {
         if (onlyIfNull && this._agentMode !== null) return;
