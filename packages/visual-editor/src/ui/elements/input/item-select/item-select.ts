@@ -297,7 +297,6 @@ export class ItemSelect extends LitElement {
     return nothing;
   }
 
-
   #handleChange() {
     this.#selected = this.#highlighted;
     if (this.#selectorRef.value) {
@@ -461,7 +460,6 @@ export class ItemSelect extends LitElement {
 
               return html`<li>
                 <button
-                  ?autofocus=${idx === this.#highlighted}
                   @pointerover=${() => {
                     this.#highlighted = idx;
                     this.requestUpdate();
