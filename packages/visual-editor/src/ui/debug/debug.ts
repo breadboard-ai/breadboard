@@ -16,7 +16,7 @@ container.id = "debug-controls";
 let pane: Pane | undefined;
 let active = false;
 
-export async function addDebugPanel(controller: AppController) {
+export async function addDebugPanel(_controller: AppController) {
   if (active) return;
   active = true;
 
@@ -24,11 +24,7 @@ export async function addDebugPanel(controller: AppController) {
   document.body.appendChild(container);
 
   pane = new Pane({ title: "Debug Console", container });
-  const g = pane.addFolder({ title: "Global", expanded: false });
-  g.addBinding(controller.global.debug, "verbose", { label: "Verbose" });
-  g.addBinding(controller.global.debug, "info", { label: "Info" });
-  g.addBinding(controller.global.debug, "errors", { label: "Errors" });
-  g.addBinding(controller.global.debug, "warnings", { label: "Warnings" });
+  pane.addFolder({ title: "Global", expanded: false });
 }
 
 export function removeDebugPanel() {

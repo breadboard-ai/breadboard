@@ -21,23 +21,4 @@ export class DebugController
   set enabled(value: boolean) {
     this._enabled = value;
   }
-
-  @field({ persist: "local" })
-  accessor verbose = false;
-
-  @field({ persist: "local" })
-  accessor warnings = true;
-
-  @field({ persist: "local" })
-  accessor info = true;
-
-  @field({ persist: "local" })
-  accessor errors = true;
-
-  setLogDefault() {
-    this.verbose = false;
-    this.warnings = true;
-    this.info = true;
-    this.errors = true;
-  }
 }

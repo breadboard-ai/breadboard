@@ -8,24 +8,14 @@ import assert from "node:assert";
 import { before, mock, suite, test } from "node:test";
 import { debug } from "../../../src/controller/decorators/debug.js";
 import { RootController } from "../../../src/controller/subcontrollers/root-controller.js";
-import { setDebuggableAppController } from "../../../src/controller/utils/logging/logger.js";
+import {
+  setDebuggableAppController,
+  stubAppController,
+} from "../../../src/controller/utils/logging/logger.js";
 
 suite("Debug Decorator", () => {
   before(() => {
-    setDebuggableAppController({
-      global: {
-        debug: {
-          enabled: true,
-          errors: true,
-          info: true,
-          verbose: true,
-          warnings: true,
-          setLogDefault() {
-            // Stubbed.
-          },
-        },
-      },
-    });
+    setDebuggableAppController(stubAppController);
   });
 
   test("should work", async () => {

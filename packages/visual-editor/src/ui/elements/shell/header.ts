@@ -30,11 +30,15 @@ import { SigninAdapter } from "../../utils/signin-adapter.js";
 import { hasEnabledGlobalSettings } from "./global-settings.js";
 import { appControllerContext } from "../../../controller/context/context.js";
 import { AppController } from "../../../controller/controller.js";
+import { isHydrating } from "../../../controller/utils/hydration.js";
 
 const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
 
 @customElement("bb-ve-header")
 export class VEHeader extends SignalWatcher(LitElement) {
+  @consume({ context: appControllerContext })
+  accessor #appController!: AppController;
+
   @consume({ context: actionTrackerContext })
   accessor actionTracker: ActionTracker | undefined = undefined;
 
@@ -543,7 +547,12 @@ export class VEHeader extends SignalWatcher(LitElement) {
       },
     ];
 
-    if (this.showExperimentalComponents) {
+    if (
+      !isHydrating(
+        () => this.#appController.global.main.experimentalComponents
+      ) &&
+      this.#appController.global.main.experimentalComponents
+    ) {
       options.push({
         id: "copy-board-contents",
         title: Strings.from("COMMAND_COPY_PROJECT_CONTENTS"),
@@ -588,10 +597,7 @@ export class VEHeader extends SignalWatcher(LitElement) {
         svgIcon:
           "var(--bb-icon-discord, url(/styles/landing/images/third_party/discord-logo.svg))",
       },
-      ...(hasEnabledGlobalSettings(
-        this.appController,
-        this.showExperimentalComponents
-      )
+      ...(hasEnabledGlobalSettings(this.appController)
         ? [
             {
               id: "show-global-settings",

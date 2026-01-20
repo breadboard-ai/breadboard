@@ -79,6 +79,11 @@ import { actionTrackerContext } from "./ui/contexts/action-tracker-context.js";
 import { guestConfigurationContext } from "./ui/contexts/guest-configuration.js";
 import { appController, type AppController } from "./controller/controller.js";
 import { appControllerContext } from "./controller/context/context.js";
+import {
+  getLogger,
+  setDebuggableAppController,
+} from "./controller/utils/logging/logger.js";
+import * as Formatter from "./controller/utils/logging/formatter.js";
 
 export { MainBase };
 
@@ -87,7 +92,6 @@ export type RenderValues = {
   saveStatus: BreadboardUI.Types.BOARD_SAVE_STATUS;
   projectState: BreadboardUI.State.Project | null;
   showingOverlay: boolean;
-  showExperimentalComponents: boolean;
   themeHash: number;
   tabStatus: BreadboardUI.Types.STATUS;
 };
@@ -221,6 +225,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
   protected readonly settings: SettingsStore;
   readonly emailPrefsManager: EmailPrefsManager;
   protected readonly hostOrigin: URL;
+  protected readonly logger: ReturnType<typeof getLogger> = getLogger();
 
   // Event Handlers.
   readonly #onShowTooltipBound = this.#onShowTooltip.bind(this);
@@ -248,6 +253,7 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     // Controller
     this.appController = appController(args.globalConfig.flags);
+    setDebuggableAppController(this.appController);
 
     this.runtime = new Runtime.Runtime({
       appController: this.appController,
@@ -337,7 +343,12 @@ abstract class MainBase extends SignalWatcher(LitElement) {
 
     this.#checkSubscriptionStatus();
 
-    console.log(`[${Strings.from("APP_NAME")} Visual Editor Initialized]`);
+    this.logger.log(
+      Formatter.info("Visual Editor Initialized"),
+      Strings.from("APP_NAME"),
+      false
+    );
+
     this.doPostInitWork();
   }
 
@@ -412,7 +423,10 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       await this.appController.isHydrated;
       const flags = await this.appController.global.flags.flags();
       if (flags.googleOne) {
-        console.log(`[Google One] Checking subscriber status`);
+        this.logger.log(
+          Formatter.verbose(`Checking subscriber status`),
+          "Google One"
+        );
         const response = await this.runtime.apiClient.getG1SubscriptionStatus({
           include_credit_data: true,
         });
@@ -1082,10 +1096,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       projectState.run.app.screens.set("final", current);
     }
 
-    const showExperimentalComponents: boolean = this.settings
-      .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
-      .items.get("Show Experimental Components")?.value as boolean;
-
     const canSave = this.tab
       ? this.runtime.board.canSave(this.tab.id) && !this.tab.readOnly
       : false;
@@ -1100,7 +1110,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       projectState,
       saveStatus,
       showingOverlay: this.appController.global.main.show.size > 0,
-      showExperimentalComponents,
       themeHash,
       tabStatus,
     } satisfies RenderValues;

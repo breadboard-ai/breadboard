@@ -321,12 +321,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
           .items.get("Highlight Invalid Wires")?.value
       : false;
 
-    const showExperimentalComponents = this.settings
-      ? this.settings
-          .getSection(SETTINGS_TYPE.GENERAL)
-          .items.get("Show Experimental Components")?.value
-      : false;
-
     const showSubgraphsInline = this.settings
       ? this.settings
           .getSection(SETTINGS_TYPE.GENERAL)
@@ -366,7 +360,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
         invertZoomScrollDirection,
         showPortTooltips,
         highlightInvalidWires,
-        showExperimentalComponents,
         showSubgraphsInline,
         showCustomStepEditing,
       ],
@@ -388,7 +381,6 @@ export class CanvasController extends SignalWatcher(LitElement) {
           .highlightState=${this.highlightState}
           .mainGraphId=${this.mainGraphId}
           .readOnly=${this.readOnly}
-          .showExperimentalComponents=${showExperimentalComponents}
           @input=${(evt: Event) => {
             const composedPath = evt.composedPath();
             const isFromNLInput = composedPath.some((el) => {

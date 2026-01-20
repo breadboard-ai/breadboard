@@ -11,11 +11,6 @@ import { type BaseBladeParams } from "tweakpane";
 
 export interface DebugController {
   enabled: boolean;
-  verbose: boolean;
-  warnings: boolean;
-  info: boolean;
-  errors: boolean;
-  setLogDefault(): void;
 }
 export interface DebuggableAppController {
   global: {
