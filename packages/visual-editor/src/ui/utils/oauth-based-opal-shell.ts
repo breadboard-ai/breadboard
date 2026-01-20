@@ -457,7 +457,7 @@ export class OAuthBasedOpalShell implements OpalShellHostProtocol {
     if (popupMessage.nonce !== nonce) {
       return {
         ok: false,
-        error: { code: "other", userMessage: "Mismatched nonce" },
+        error: { code: "other", userMessage: "Verification failed" },
       };
     }
     const { grantResponse } = popupMessage;
