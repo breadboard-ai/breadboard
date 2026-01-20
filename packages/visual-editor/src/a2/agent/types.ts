@@ -104,7 +104,7 @@ export type MemoryManager = {
 
 export type UIType = "none" | "chat" | "a2ui";
 
-export const VALID_INPUT_TYPES = ["any", "text", "file-upload", "any"] as const;
+export const VALID_INPUT_TYPES = ["any", "text", "file-upload"] as const;
 
 export type ChatInputType = (typeof VALID_INPUT_TYPES)[number];
 
