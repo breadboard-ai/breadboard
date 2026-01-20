@@ -27,13 +27,13 @@ const logConfig = {
 };
 
 suite("Logger", () => {
-  let logMock: ReturnType<(typeof mock)["method"]>;
+  let debugMock: ReturnType<(typeof mock)["method"]>;
   let infoMock: ReturnType<(typeof mock)["method"]>;
   let warnMock: ReturnType<(typeof mock)["method"]>;
   let errorMock: ReturnType<(typeof mock)["method"]>;
 
   beforeEach(() => {
-    logMock = mock.method(console, "log");
+    debugMock = mock.method(console, "debug");
     infoMock = mock.method(console, "info");
     warnMock = mock.method(console, "warn");
     errorMock = mock.method(console, "error");
@@ -54,13 +54,13 @@ suite("Logger", () => {
     logger.log({ type: "error", args: ["Error"] });
     logger.log({ type: "verbose", args: ["Verbose"] });
 
-    assert.strictEqual(logMock.mock.callCount(), 0);
+    assert.strictEqual(debugMock.mock.callCount(), 0);
     assert.strictEqual(infoMock.mock.callCount(), 0);
     assert.strictEqual(warnMock.mock.callCount(), 0);
     assert.strictEqual(errorMock.mock.callCount(), 0);
   });
 
-  test("logs when disabled", async () => {
+  test("logs when enabled", async () => {
     const logger = getLogger();
     logConfig.global.debug.enabled = true;
 
@@ -69,7 +69,7 @@ suite("Logger", () => {
     logger.log({ type: "error", args: ["Error"] });
     logger.log({ type: "verbose", args: ["Verbose"] });
 
-    assert.strictEqual(logMock.mock.callCount(), 1);
+    assert.strictEqual(debugMock.mock.callCount(), 1);
     assert.strictEqual(infoMock.mock.callCount(), 1);
     assert.strictEqual(warnMock.mock.callCount(), 1);
     assert.strictEqual(errorMock.mock.callCount(), 1);
@@ -100,7 +100,7 @@ suite("Logger", () => {
       "Logger called without app controller"
     );
 
-    assert.strictEqual(logMock.mock.callCount(), 0);
+    assert.strictEqual(debugMock.mock.callCount(), 0);
     assert.strictEqual(infoMock.mock.callCount(), 1);
     assert.strictEqual(warnMock.mock.callCount(), 1);
     assert.strictEqual(errorMock.mock.callCount(), 0);
