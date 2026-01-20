@@ -640,7 +640,6 @@ export class FastAccessMenu extends SignalWatcher(LitElement) {
     return html` <div ${ref(this.#itemContainerRef)}>
       <header>
         <input
-          autofocus
           type="text"
           autocomplete="off"
           .placeholder=${"Search"}
