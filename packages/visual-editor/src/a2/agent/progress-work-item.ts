@@ -19,7 +19,7 @@ import { now } from "./now.js";
 import { SignalMap } from "signal-utils/map";
 import { GeminiBody } from "../a2/gemini.js";
 import { AgentProgressManager } from "./types.js";
-import { llm } from "../a2/utils.js";
+import { llm, progressFromThought } from "../a2/utils.js";
 import { StatusUpdateCallbackOptions } from "./function-definition.js";
 import { StarterPhraseVendor } from "./starter-phrase-vendor.js";
 
@@ -189,9 +189,4 @@ function createUpdate(title: string, icon: string, body: unknown) {
     ["icon", { text: icon }],
   ]);
   return { type: "update", group };
-}
-
-function progressFromThought(thought: string): string | undefined {
-  const match = thought.match(/\*\*(.*?)\*\*/);
-  return match ? match[1] : undefined;
 }
