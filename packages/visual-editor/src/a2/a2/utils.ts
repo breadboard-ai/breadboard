@@ -43,6 +43,7 @@ export {
   fromJson,
   tr,
   isDocSlidesOrSheetsOutput,
+  progressFromThought,
 };
 
 export type ErrorReason =
@@ -483,11 +484,20 @@ function isDocSlidesOrSheetsOutput(output: OutputValues): boolean {
     for (const part of el.parts) {
       if (isStoredDataPart(part)) {
         const mimeType = part.storedData.mimeType;
-        if (mimeType === DOC_MIME_TYPE || mimeType === SHEETS_MIME_TYPE || mimeType === SLIDES_MIME_TYPE) {
+        if (
+          mimeType === DOC_MIME_TYPE ||
+          mimeType === SHEETS_MIME_TYPE ||
+          mimeType === SLIDES_MIME_TYPE
+        ) {
           return true;
         }
       }
     }
   }
   return false;
+}
+
+function progressFromThought(thought: string): string | undefined {
+  const match = thought.match(/\*\*(.*?)\*\*/);
+  return match ? match[1] : undefined;
 }
