@@ -43,9 +43,14 @@ import { GoogleDriveFileId, ItemSelect } from "../elements.js";
 import type { PickedValue } from "../google-drive/google-drive-file-id.js";
 import { DATA_TYPE } from "./constants.js";
 import { CreateNewAssetsEvent, NodeAddEvent } from "./events/events.js";
+import { appControllerContext } from "../../../controller/context/context.js";
+import { AppController } from "../../../controller/controller.js";
 
 @customElement("bb-editor-controls")
 export class EditorControls extends LitElement {
+  @consume({ context: appControllerContext })
+  accessor #appController!: AppController;
+
   @consume({ context: actionTrackerContext })
   accessor actionTracker!: ActionTracker | undefined;
 
@@ -662,40 +667,42 @@ export class EditorControls extends LitElement {
   willUpdate() {
     this.#storeReady = Promise.resolve();
     if (this.graphStore) {
-      this.#storeReady = new Promise((resolve) => {
-        if (!this.graphStore) {
-          resolve();
-          return;
-        }
+      this.#storeReady = this.#appController.isHydrated.then(() => {
+        return new Promise((resolve) => {
+          if (!this.graphStore) {
+            resolve();
+            return;
+          }
 
-        const awaitingUpdate = new Set<string>();
-        const onGraphUpdate = (evt: GraphStoreUpdateEvent) => {
-          if (awaitingUpdate.has(evt.mainGraphId)) {
-            awaitingUpdate.delete(evt.mainGraphId);
+          const awaitingUpdate = new Set<string>();
+          const onGraphUpdate = (evt: GraphStoreUpdateEvent) => {
+            if (awaitingUpdate.has(evt.mainGraphId)) {
+              awaitingUpdate.delete(evt.mainGraphId);
+            }
+
+            if (awaitingUpdate.size === 0) {
+              this.graphStore?.removeEventListener(
+                "update",
+                onGraphUpdate as EventListener
+              );
+              resolve();
+            }
+          };
+
+          this.graphStore.addEventListener("update", onGraphUpdate);
+
+          for (const graph of this.graphStore.graphs()) {
+            if (!graph.updating) {
+              continue;
+            }
+
+            awaitingUpdate.add(graph.mainGraph.id);
           }
 
           if (awaitingUpdate.size === 0) {
-            this.graphStore?.removeEventListener(
-              "update",
-              onGraphUpdate as EventListener
-            );
             resolve();
           }
-        };
-
-        this.graphStore.addEventListener("update", onGraphUpdate);
-
-        for (const graph of this.graphStore.graphs()) {
-          if (!graph.updating) {
-            continue;
-          }
-
-          awaitingUpdate.add(graph.mainGraph.id);
-        }
-
-        if (awaitingUpdate.size === 0) {
-          resolve();
-        }
+        });
       });
     }
   }

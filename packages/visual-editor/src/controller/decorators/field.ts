@@ -9,7 +9,10 @@ import { WebStorageWrapper } from "./storage/local.js";
 import { PrimitiveValue } from "../types.js";
 import { pending, PENDING_HYDRATION } from "../utils/sentinel.js";
 import { IdbStorageWrapper } from "./storage/idb.js";
-import { isHydratedController } from "../utils/hydration.js";
+import {
+  isHydratedController,
+  PendingHydrationError,
+} from "../utils/hydration.js";
 import { pendingStorageWrites } from "../context/writes.js";
 import { typesMatch } from "./utils/types-match.js";
 import { wrap, unwrap } from "./utils/wrap-unwrap.js";
@@ -58,7 +61,12 @@ export function field<Value extends PrimitiveValue>(
 
         // We return the actual state of the signal.
         // If it's PENDING_HYDRATION, the UI can react to it.
-        return state.get() as Value;
+        const value = state.get();
+        if (value === PENDING_HYDRATION) {
+          throw new PendingHydrationError(String(context.name));
+        }
+
+        return value as Value;
       },
 
       set(this: Context, newValue: Value) {

@@ -114,7 +114,7 @@ export class UISplitter extends SignalWatcher(LitElement) {
     if (!this.#appController) return nothing;
 
     const split = this.#appController.editor.main.split;
-    if (isHydrating(split)) return nothing;
+    if (isHydrating(() => split)) return nothing;
 
     const [left, right] = this.#appController.editor.main.getClampedValues(
       split,

@@ -70,6 +70,7 @@ import {
   envFromGraphDescriptor,
 } from "../data/file-system.js";
 import { ActionTracker } from "../ui/types/types.js";
+import { AppController } from "../controller/controller.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -92,11 +93,13 @@ export class Runtime extends EventTarget {
   public readonly apiClient: AppCatalystApiClient;
   public readonly actionTracker: ActionTracker;
   public readonly emailPrefsManager: EmailPrefsManager;
+  private readonly appController: AppController;
 
   constructor(config: RuntimeConfig) {
     super();
 
-    this.flags = config.appController.global.flags;
+    this.appController = config.appController;
+    this.flags = this.appController.global.flags;
 
     this.signinAdapter = new SigninAdapter(config.shellHost);
     this.fetchWithCreds = this.signinAdapter.fetchWithCreds;
@@ -151,8 +154,7 @@ export class Runtime extends EventTarget {
       async (request: ConsentRequest, uiType: ConsentUIType) => {
         return new Promise<ConsentAction>((resolve) => {
           if (uiType === ConsentUIType.MODAL) {
-            const uiState = this.state.ui;
-            uiState.consentRequests.push({
+            this.appController.global.main.consentRequests.push({
               request,
               consentCallback: resolve,
             });
@@ -219,7 +221,7 @@ export class Runtime extends EventTarget {
     this.emailPrefsManager = new EmailPrefsManager(this.apiClient);
     this.flowGenerator = new FlowGenerator(this.apiClient, this.flags);
 
-    this.state = new StateManager(this, graphStore);
+    this.state = new StateManager(this, graphStore, this.appController);
 
     this.run = new Run(graphStore, this.state, this.flags, kits);
 

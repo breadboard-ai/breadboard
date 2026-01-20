@@ -494,7 +494,6 @@ export type LiteModeState = {
  */
 export type RuntimeContext = {
   readonly project: Project | null;
-  readonly ui: UI;
   readonly router: ParsedUrlProvider;
   readonly flowGenerator: FlowGenerator;
 };

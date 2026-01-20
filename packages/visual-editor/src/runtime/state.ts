@@ -16,7 +16,7 @@ import { Runtime } from "./runtime.js";
 import { RuntimeTabChangeEvent } from "./events.js";
 import { signal } from "signal-utils";
 import { FlowGenerator } from "../ui/flow-gen/flow-generator.js";
-import { devUrlParams } from "../ui/utils/urls.js";
+import { AppController } from "../controller/controller.js";
 
 export { StateManager };
 
@@ -24,7 +24,6 @@ export { StateManager };
  * Holds various important bits of UI state
  */
 class StateManager implements RuntimeContext {
-  ui: State.UI;
   #currentMainGraphId: MainGraphIdentifier | null = null;
   #store: MutableGraphStore;
 
@@ -38,12 +37,12 @@ class StateManager implements RuntimeContext {
   constructor(
     // Omitting state to avoid circular references
     private readonly runtime: Omit<Runtime, "state">,
-    store: MutableGraphStore
+    store: MutableGraphStore,
+    appController: AppController
   ) {
     this.#store = store;
     this.flowGenerator = this.runtime.flowGenerator;
-    this.ui = State.createUIState();
-    this.lite = createLiteModeState(this);
+    this.lite = createLiteModeState(this, appController);
     this.runtime.board.addEventListener(RuntimeTabChangeEvent.eventName, () => {
       const tab = this.runtime.board.currentTab;
       if (!tab) {
@@ -61,10 +60,6 @@ class StateManager implements RuntimeContext {
       const editor = this.runtime.edit.getEditor(tab);
       this.project = this.createProjectState(mainGraphId, editor);
     });
-
-    if (devUrlParams().forceSignInState) {
-      this.ui.show.add("SignInModal");
-    }
   }
 
   get router() {

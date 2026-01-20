@@ -13,10 +13,17 @@ import { ConsentRequestWithCallback } from "@breadboard-ai/types";
 
 export { createUIState };
 
+/**
+ * @deprecated
+ */
 function createUIState(): UI {
+  throw new Error("ReactiveUI State is no longer instatiable");
   return new ReactiveUIState();
 }
 
+/**
+ * @deprecated
+ */
 class ReactiveUIState implements UI {
   @signal
   accessor mode: VisualEditorMode = "canvas";

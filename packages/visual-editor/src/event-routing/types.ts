@@ -25,7 +25,6 @@ export interface EventRouteDeps<
   runtime: Runtime;
   settings: SettingsStore | null;
   tab: Tab | null;
-  uiState: BreadboardUI.State.UI;
   appController: AppController;
   googleDriveClient: GoogleDriveClient | null;
   askUserToSignInIfNeeded(scopes?: OAuthScope[]): Promise<UserSignInResponse>;
