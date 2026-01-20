@@ -32,6 +32,14 @@ import { FunctionGroup } from "../types.js";
 export { getGenerateFunctionGroup };
 
 const VIDEO_MODEL_NAME = "veo-3.1-generate-preview";
+
+const FLASH_MODEL_NAME = "gemini-2.5-flash";
+const PRO_MODEL_NAME = "gemini-3-pro-preview";
+const LITE_MODEL_NAME = "gemini-2.5-flash-lite";
+
+const IMAGE_FLASH_MODEL_NAME = "gemini-2.5-flash-image";
+const IMAGE_PRO_MODEL_NAME = "gemini-3-pro-image-preview";
+
 const RETRY_SLEEP_MS = 700;
 
 export type GenerateFunctionArgs = {
@@ -152,9 +160,7 @@ For example, "Generating page 4 of the report" or "Combining the images into one
         if (!ok(imageParts)) return { error: imageParts.$error };
 
         const modelName =
-          model == "pro"
-            ? "gemini-3-pro-image-preview"
-            : "gemini-2.5-flash-image";
+          model == "pro" ? IMAGE_PRO_MODEL_NAME : IMAGE_FLASH_MODEL_NAME;
 
         const generated = await callGeminiImage(
           caps,
@@ -375,7 +381,7 @@ provided when the "output_format" is set to "text"`
           await new Promise((resolve) => setTimeout(resolve, RETRY_SLEEP_MS));
         } while (maxRetries-- > 0);
         statusUpdater(null);
-        const textParts = mergeTextParts(results, "\n");
+        const textParts = mergeTextParts(results);
         if (textParts.length === 0) {
           return { error: `No text was generated. Please try again` };
         }
@@ -735,7 +741,7 @@ For example, "Creating random values" or "Computing prime numbers"`),
           await new Promise((resolve) => setTimeout(resolve, RETRY_SLEEP_MS));
         } while (maxRetries-- > 0);
         statusUpdater(null);
-        const textParts = mergeTextParts(results, "\n");
+        const textParts = mergeTextParts(results);
         if (textParts.length === 0) {
           return { error: `No text was generated. Please try again` };
         }
@@ -751,10 +757,10 @@ For example, "Creating random values" or "Computing prime numbers"`),
 function resolveTextModel(model: "pro" | "lite" | "flash"): string {
   switch (model) {
     case "pro":
-      return "gemini-3-pro-preview";
+      return PRO_MODEL_NAME;
     case "flash":
-      return "gemini-3-flash-preview";
+      return FLASH_MODEL_NAME;
     default:
-      return "gemini-2.5-lite";
+      return LITE_MODEL_NAME;
   }
 }

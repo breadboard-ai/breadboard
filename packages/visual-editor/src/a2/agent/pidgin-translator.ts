@@ -24,6 +24,7 @@ import {
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { v0_8 } from "../../a2ui/index.js";
 import { isLLMContent, isLLMContentArray } from "../../data/common.js";
+import { substituteDefaultTool } from "./substitute-default-tool.js";
 
 export { PidginTranslator };
 
@@ -235,6 +236,10 @@ class PidginTranslator {
               const routeName = this.fileSystem.addRoute(param.instance);
               return `<a href="${routeName}">${param.title}</a>`;
             } else {
+              const substitute = substituteDefaultTool(param);
+              if (substitute !== null) {
+                return substitute;
+              }
               const addingTool = await toolManager.addTool(param);
               if (!ok(addingTool)) {
                 errors.push(addingTool.$error);

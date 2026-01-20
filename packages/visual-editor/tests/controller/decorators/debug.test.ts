@@ -13,14 +13,16 @@ import { setDebuggableAppController } from "../../../src/controller/utils/loggin
 suite("Debug Decorator", () => {
   before(() => {
     setDebuggableAppController({
-      debug: {
-        enabled: true,
-        errors: true,
-        info: true,
-        verbose: true,
-        warnings: true,
-        setLogDefault() {
-          // Stubbed.
+      global: {
+        debug: {
+          enabled: true,
+          errors: true,
+          info: true,
+          verbose: true,
+          warnings: true,
+          setLogDefault() {
+            // Stubbed.
+          },
         },
       },
     });
@@ -33,7 +35,7 @@ suite("Debug Decorator", () => {
       }
     }
 
-    const instance = new DebugTestController();
+    const instance = new DebugTestController("DebugTest");
     assert.strictEqual(instance.name, "test");
   });
 
@@ -54,13 +56,13 @@ suite("Debug Decorator", () => {
     // Mock the console.info calls.
     const infoMock = mock.method(console, "info");
 
-    const instance = new DebugTestController();
+    const instance = new DebugTestController("DebugTest_2");
     const name = instance.name;
     assert.strictEqual(name, "test");
-    await instance.pendingWritesSettled();
+    await instance.isSettled;
 
     instance.name = "foo";
-    await instance.pendingWritesSettled();
+    await instance.isSettled;
     const name2 = instance.name;
     assert.strictEqual(name2, "foo");
 
@@ -113,13 +115,13 @@ suite("Debug Decorator", () => {
     // Mock the console.info calls.
     const infoMock = mock.method(console, "info");
 
-    const instance = new DebugTestController();
+    const instance = new DebugTestController("DebugTest_3");
     const name = instance.name;
     assert.strictEqual(name, "test");
-    await instance.pendingWritesSettled();
+    await instance.isSettled;
 
     instance.name = "foo";
-    await instance.pendingWritesSettled();
+    await instance.isSettled;
     const name2 = instance.name;
     assert.strictEqual(name2, "foo");
 

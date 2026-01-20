@@ -19,5 +19,6 @@ export function createFileSystemBackend(
 }
 
 export function createFlagManager(env: RuntimeFlags) {
+  throw new Error("createFlagManager no longer in use");
   return new IdbFlagManager(env);
 }

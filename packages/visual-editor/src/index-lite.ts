@@ -447,6 +447,9 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   }
 
   override async doPostInitWork(): Promise<void> {
+    await this.appController.global.performMigrations();
+    await this.appController.isHydrated;
+
     this.runtime.board.addEventListener(
       RuntimeBoardLoadErrorEvent.eventName,
       () => {
@@ -484,9 +487,10 @@ export class LiteMain extends MainBase implements LiteEditInputController {
   override async handleAppAccessCheckResult(
     result: CheckAppAccessResult
   ): Promise<void> {
+    this.actionTracker.updateCanAccessStatus(result.canAccess);
     if (!result.canAccess) {
       this.accessStatus = result;
-      this.uiState.show.add("NoAccessModal");
+      this.appController.global.main.show.add("NoAccessModal");
     } else {
       /**
        * The remix triggering code goes here, though this is a bit of a hack.
@@ -763,7 +767,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
         .isMine=${this.tab?.graphIsMine ?? false}
         .projectRun=${renderValues.projectState?.run}
         .readOnly=${true}
-        .runtimeFlags=${this.uiState.flags}
+        .runtimeFlags=${this.appController.global.flags}
         .showGDrive=${this.signinAdapter.stateSignal?.status === "signedin"}
         .status=${renderValues.tabStatus}
         .shouldShowFirstRunMessage=${true}
@@ -823,13 +827,13 @@ export class LiteMain extends MainBase implements LiteEditInputController {
     return [
       this.renderTooltip(),
       this.#renderOnboardingTooltip(),
-      this.uiState.show.has("NoAccessModal")
+      this.appController.global.main.show.has("NoAccessModal")
         ? this.renderNoAccessModal()
         : nothing,
-      this.uiState.show.has("SignInModal")
+      this.appController.global.main.show.has("SignInModal")
         ? this.renderSignInModal(false)
         : nothing,
-      this.uiState.show.has("SnackbarDetailsModal")
+      this.appController.global.main.show.has("SnackbarDetailsModal")
         ? this.renderSnackbarDetailsModal()
         : nothing,
     ];
@@ -837,7 +841,7 @@ export class LiteMain extends MainBase implements LiteEditInputController {
 
   #isInert() {
     return (
-      this.uiState.blockingAction ||
+      this.appController.global.main.blockingAction ||
       this.runtime.state.lite.status == "generating" ||
       this.runtime.state.lite.viewType === "loading"
     );

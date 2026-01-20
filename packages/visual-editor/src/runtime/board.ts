@@ -21,7 +21,6 @@ import {
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { type RunResults } from "@breadboard-ai/utils/google-drive/operations.js";
 import * as idb from "idb";
-import { RecentBoardStore } from "../data/recent-boards.js";
 import * as BreadboardUI from "../ui/index.js";
 import { BOARD_SAVE_STATUS } from "../ui/types/types.js";
 import type { SigninAdapter } from "../ui/utils/signin-adapter.js";
@@ -86,7 +85,6 @@ export class Board extends EventTarget {
     public readonly loader: GraphLoader,
     public readonly graphStore: MutableGraphStore,
     public readonly googleDriveBoardServer: GoogleDriveBoardServer,
-    private readonly recentBoardStore: RecentBoardStore,
     private readonly signinAdapter: SigninAdapter,
     private readonly googleDriveClient?: GoogleDriveClient
   ) {
@@ -110,32 +108,6 @@ export class Board extends EventTarget {
   }
 
   currentURL: URL | null = null;
-
-  getRecentBoards(): readonly BreadboardUI.Types.RecentBoard[] {
-    return this.recentBoardStore.boards;
-  }
-
-  async setPinnedStatus(url: string, status: "pin" | "unpin" = "unpin") {
-    url = url.replace(window.location.origin, "");
-    await this.recentBoardStore.setPin(url, status === "pin");
-  }
-
-  async #trackRecentBoard(url?: string) {
-    if (!this.currentTab || !url) {
-      return;
-    }
-
-    url = url.replace(window.location.origin, "");
-    await this.recentBoardStore.add({
-      title: this.currentTab.graph.title ?? "Untitled",
-      url,
-    });
-  }
-
-  async #removeRecentUrl(url: string) {
-    url = url.replace(window.location.origin, "");
-    await this.recentBoardStore.remove(url);
-  }
 
   #canParse(url: string, base?: string) {
     // TypeScript assumes that if `canParse` does not exist, then URL is
@@ -441,7 +413,6 @@ export class Board extends EventTarget {
         return;
       }
 
-      await this.#trackRecentBoard(graph.url);
       const isNewerVersionOfSharedGraph =
         !graphIsMine && lastLoadedVersion !== -1 && lastLoadedVersion < version;
 
@@ -812,7 +783,6 @@ export class Board extends EventTarget {
 
     const result = await boardServer.delete(new URL(url));
 
-    await this.#removeRecentUrl(url);
     if (this.#currentTabId) {
       this.closeTab(this.#currentTabId);
     }

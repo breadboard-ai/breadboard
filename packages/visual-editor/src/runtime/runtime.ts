@@ -37,8 +37,7 @@ import { Autonamer } from "./autonamer.js";
 import { CLIENT_DEPLOYMENT_CONFIG } from "../ui/config/client-deployment-configuration.js";
 import { createGoogleDriveBoardServer } from "../ui/utils/create-server.js";
 import { createA2Server, createA2ModuleFactory } from "../a2/index.js";
-import { createFileSystemBackend, createFlagManager } from "../idb/index.js";
-import { RecentBoardStore } from "../data/recent-boards.js";
+import { createFileSystemBackend } from "../idb/index.js";
 import { GoogleDriveClient } from "@breadboard-ai/utils/google-drive/google-drive-client.js";
 import { McpClientManager } from "../mcp/index.js";
 import {
@@ -71,6 +70,7 @@ import {
   envFromGraphDescriptor,
 } from "../data/file-system.js";
 import { ActionTracker } from "../ui/types/types.js";
+import { AppController } from "../controller/controller.js";
 
 export class Runtime extends EventTarget {
   public readonly shell: Shell;
@@ -88,26 +88,25 @@ export class Runtime extends EventTarget {
   public readonly googleDriveClient: GoogleDriveClient;
   public readonly fileSystem: FileSystem;
   public readonly mcpClientManager: McpClientManager;
-  public readonly recentBoardStore: RecentBoardStore;
   public readonly googleDriveBoardServer: GoogleDriveBoardServer;
   public readonly flowGenerator: FlowGenerator;
   public readonly apiClient: AppCatalystApiClient;
   public readonly actionTracker: ActionTracker;
   public readonly emailPrefsManager: EmailPrefsManager;
+  private readonly appController: AppController;
 
   constructor(config: RuntimeConfig) {
     super();
 
-    this.flags = createFlagManager(config.globalConfig.flags);
+    this.appController = config.appController;
+    this.flags = this.appController.global.flags;
 
     this.signinAdapter = new SigninAdapter(config.shellHost);
     this.fetchWithCreds = this.signinAdapter.fetchWithCreds;
 
     this.actionTracker = createActionTracker(
       config.shellHost,
-      config.guestConfig,
-      config.globalConfig.MEASUREMENT_ID,
-      () => this.signinAdapter.state.then((state) => state === "signedin")
+      !!config.guestConfig.supportsPropertyTracking
     );
 
     const proxyApiBaseUrl = new URL(
@@ -155,8 +154,7 @@ export class Runtime extends EventTarget {
       async (request: ConsentRequest, uiType: ConsentUIType) => {
         return new Promise<ConsentAction>((resolve) => {
           if (uiType === ConsentUIType.MODAL) {
-            const uiState = this.state.ui;
-            uiState.consentRequests.push({
+            this.appController.global.main.consentRequests.push({
               request,
               consentCallback: resolve,
             });
@@ -177,8 +175,6 @@ export class Runtime extends EventTarget {
         });
       }
     );
-
-    this.recentBoardStore = RecentBoardStore.instance();
 
     this.googleDriveBoardServer = createGoogleDriveBoardServer(
       this.signinAdapter,
@@ -211,7 +207,6 @@ export class Runtime extends EventTarget {
       loader,
       graphStore,
       this.googleDriveBoardServer,
-      this.recentBoardStore,
       this.signinAdapter,
       this.googleDriveClient
     );
@@ -226,12 +221,11 @@ export class Runtime extends EventTarget {
     this.emailPrefsManager = new EmailPrefsManager(this.apiClient);
     this.flowGenerator = new FlowGenerator(this.apiClient, this.flags);
 
-    this.state = new StateManager(this, graphStore);
+    this.state = new StateManager(this, graphStore, this.appController);
 
     this.run = new Run(graphStore, this.state, this.flags, kits);
 
     this.#setupPassthruHandlers();
-    void this.recentBoardStore.restore();
   }
 
   async prepareRun(tab: Tab, settings: SettingsStore): Promise<Outcome<void>> {

@@ -5,41 +5,56 @@
  */
 
 import assert from "node:assert";
-import { suite, test } from "node:test";
+import { after, before, suite, test } from "node:test";
 import { appController } from "../../src/controller/controller.js";
+import { setDOM, unsetDOM } from "../fake-dom.js";
+import { defaultRuntimeFlags } from "./data/default-flags.js";
 
 suite("AppController", () => {
-  test("Instantiates", async () => {
-    assert.ok(appController);
+  before(() => {
+    setDOM();
+  });
+
+  after(() => {
+    unsetDOM();
+  });
+
+  // Note: this test must come first since appController stores a singleton
+  // instacnce, which will be used between tests.
+  test("Errors without flags", async () => {
+    assert.throws(() => {
+      appController();
+    }, new Error("App Controller must be instantiated with flags"));
   });
 
   test("Debug settings", async () => {
-    assert.ok(appController);
+    const controller = appController(defaultRuntimeFlags);
+    await controller.global.debug.hydrated;
 
     // Default debug settings.
-    assert.strictEqual(appController.debug.enabled, false);
-    assert.strictEqual(appController.debug.errors, true);
-    assert.strictEqual(appController.debug.warnings, true);
-    assert.strictEqual(appController.debug.info, true);
-    assert.strictEqual(appController.debug.verbose, false);
+    assert.strictEqual(controller.global.debug.enabled, false);
+    assert.strictEqual(controller.global.debug.errors, true);
+    assert.strictEqual(controller.global.debug.warnings, true);
+    assert.strictEqual(controller.global.debug.info, true);
+    assert.strictEqual(controller.global.debug.verbose, false);
 
     // Invert
-    appController.debug.enabled = true;
-    appController.debug.errors = false;
-    appController.debug.warnings = false;
-    appController.debug.info = false;
-    appController.debug.verbose = true;
+    controller.global.debug.enabled = true;
+    controller.global.debug.errors = false;
+    controller.global.debug.warnings = false;
+    controller.global.debug.info = false;
+    controller.global.debug.verbose = true;
 
-    assert.strictEqual(appController.debug.enabled, true);
-    assert.strictEqual(appController.debug.errors, false);
-    assert.strictEqual(appController.debug.warnings, false);
-    assert.strictEqual(appController.debug.info, false);
-    assert.strictEqual(appController.debug.verbose, true);
+    assert.strictEqual(controller.global.debug.enabled, true);
+    assert.strictEqual(controller.global.debug.errors, false);
+    assert.strictEqual(controller.global.debug.warnings, false);
+    assert.strictEqual(controller.global.debug.info, false);
+    assert.strictEqual(controller.global.debug.verbose, true);
 
-    appController.debug.setLogDefault();
-    assert.strictEqual(appController.debug.errors, true);
-    assert.strictEqual(appController.debug.warnings, true);
-    assert.strictEqual(appController.debug.info, true);
-    assert.strictEqual(appController.debug.verbose, false);
+    controller.global.debug.setLogDefault();
+    assert.strictEqual(controller.global.debug.errors, true);
+    assert.strictEqual(controller.global.debug.warnings, true);
+    assert.strictEqual(controller.global.debug.info, true);
+    assert.strictEqual(controller.global.debug.verbose, false);
   });
 });

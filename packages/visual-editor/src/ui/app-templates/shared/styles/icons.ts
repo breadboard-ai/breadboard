@@ -484,6 +484,8 @@ export default css`
 
       --bb-icon-generative: var(--bb-add-icon-generative);
       --bb-icon-generative-inverted: var(--bb-add-icon-generative-inverted);
+
+      --bb-icon-discord: url(/styles/landing/images/third_party/discord-logo.svg);
     }
   }
 

@@ -9,30 +9,26 @@ import { HydratedController } from "../types.js";
 import { pending, PENDING_HYDRATION } from "../utils/sentinel.js";
 import { isHydrating } from "../utils/hydration.js";
 import { effect } from "signal-utils/subtle/microtask-effect";
-import { getLogger } from "../utils/logging/logger.js";
-import * as Formatter from "../utils/logging/formatter.js";
 import { pendingStorageWrites } from "../context/writes.js";
 
-export class RootController implements HydratedController {
+export abstract class RootController implements HydratedController {
   #trackedSignals = new Set<Signal.State<unknown>>();
-  #logger = getLogger();
   #isHydratedPromise?: Promise<number>;
-  readonly log = this.#logger.log.bind(this.#logger);
-  readonly formatter = Formatter;
+
+  constructor(public readonly id: string) {}
 
   public readonly hydrated = new Signal.Computed<boolean | pending>(() => {
     if (this.#trackedSignals.size === 0) return true;
 
     for (const sig of this.#trackedSignals) {
-      if (isHydrating(sig.get())) return PENDING_HYDRATION;
+      if (isHydrating(() => sig.get())) return PENDING_HYDRATION;
     }
 
     return true;
   });
 
   /**
-   * We use a getter so that the promise is only created when
-   * someone actually wants to wait for it.
+   * Indicates that the controller has fully hydrated.
    */
   get isHydrated(): Promise<number> {
     if (this.#isHydratedPromise) return this.#isHydratedPromise;
@@ -57,17 +53,17 @@ export class RootController implements HydratedController {
   }
 
   /**
+   * Used by tests particularly to ensure that a value has been persisted. This
+   * is populated by the @field decorator indirectly.
+   */
+  get isSettled(): Promise<void[]> {
+    return Promise.all(pendingStorageWrites.get(this) ?? []);
+  }
+
+  /**
    * Called by the @field decorator in the 'init' hook.
    */
   registerSignalHydration(sig: Signal.State<unknown>) {
     this.#trackedSignals.add(sig);
-  }
-
-  /**
-   * Used by tests particularly to ensure that a value has been persisted. This
-   * is populated by the @field decorator indirectly.
-   */
-  async pendingWritesSettled() {
-    return Promise.all(pendingStorageWrites.get(this) ?? []);
   }
 }

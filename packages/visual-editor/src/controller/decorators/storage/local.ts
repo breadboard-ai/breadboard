@@ -5,6 +5,7 @@
  */
 
 import { PrimitiveType, Storage } from "../../types.js";
+import { jsonReplacer, jsonReviver } from "../../utils/serialization.js";
 
 export class WebStorageWrapper implements Storage {
   constructor(private backend: "local" | "session") {}
@@ -19,7 +20,7 @@ export class WebStorageWrapper implements Storage {
 
     try {
       // JSON.parse allows "true" -> true, "100" -> 100, etc.
-      return JSON.parse(raw) as T;
+      return JSON.parse(raw, jsonReviver) as T;
     } catch {
       // Fallback for values that aren't valid JSON (like raw strings)
       return raw as unknown as T;
@@ -27,7 +28,7 @@ export class WebStorageWrapper implements Storage {
   }
 
   async set<T extends PrimitiveType>(name: string, value: T): Promise<void> {
-    this.store.setItem(name, JSON.stringify(value));
+    this.store.setItem(name, JSON.stringify(value, jsonReplacer));
   }
 
   async clear() {

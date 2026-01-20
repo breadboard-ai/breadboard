@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         node-version:
@@ -51,3 +52,15 @@ jobs:
 
       - name: Running tests
         run: npm run test
+
+      - name: Running coverage
+        run: npm run coverage
+
+      - name: Publish coverage status
+        run: |
+          STATS=$(node scripts/publish-coverage.js)
+          echo "::notice title=Code Coverage::$STATS"
+          {
+            echo "### Coverage Details"
+            echo "Stats: $STATS"
+          } >> "$GITHUB_STEP_SUMMARY"

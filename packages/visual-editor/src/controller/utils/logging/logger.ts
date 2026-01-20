@@ -28,27 +28,43 @@ class Logger {
     }
   }
 
-  log(logMsg: DebugLog, label = "") {
-    this.logItem(logMsg.type, "", label, ...logMsg.args);
+  log(logMsg: DebugLog, label = "", checkDebuggableAppControllerStatus = true) {
+    this.logItem(
+      logMsg.type,
+      "",
+      label,
+      checkDebuggableAppControllerStatus,
+      ...logMsg.args
+    );
   }
 
   logItem(
     type: "info" | "warning" | "error" | "verbose",
     fn: "get" | "set" | "",
     name: string,
+    checkDebuggableAppControllerStatus = true,
     ...args: unknown[]
   ) {
-    if (!debuggableAppController && !this.warned) {
-      this.warned = true;
-      console.warn("Logger called without app controller");
-    }
+    if (checkDebuggableAppControllerStatus) {
+      if (!debuggableAppController && !this.warned) {
+        this.warned = true;
+        console.warn("Logger called without app controller");
+      }
 
-    if (debuggableAppController) {
-      if (!debuggableAppController.debug.enabled) return;
-      if (type === "info" && !debuggableAppController.debug.info) return;
-      if (type === "warning" && !debuggableAppController.debug.warnings) return;
-      if (type === "error" && !debuggableAppController.debug.errors) return;
-      if (type === "verbose" && !debuggableAppController.debug.verbose) return;
+      if (debuggableAppController) {
+        if (!debuggableAppController.global.debug.enabled) return;
+        if (type === "info" && !debuggableAppController.global.debug.info)
+          return;
+        if (
+          type === "warning" &&
+          !debuggableAppController.global.debug.warnings
+        )
+          return;
+        if (type === "error" && !debuggableAppController.global.debug.errors)
+          return;
+        if (type === "verbose" && !debuggableAppController.global.debug.verbose)
+          return;
+      }
     }
 
     const end = "\x1B[m";

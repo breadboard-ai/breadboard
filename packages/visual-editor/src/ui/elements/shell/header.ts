@@ -12,7 +12,6 @@ import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
-import { uiStateContext } from "../../contexts/ui-state.js";
 import {
   CloseEvent,
   OverflowMenuActionEvent,
@@ -20,7 +19,7 @@ import {
   SignOutEvent,
   StateEvent,
 } from "../../events/events.js";
-import { UI, UILoadState } from "../../state/types.js";
+import { UILoadState } from "../../state/types.js";
 import * as Styles from "../../styles/styles.js";
 import {
   ActionTracker,
@@ -29,6 +28,8 @@ import {
 } from "../../types/types.js";
 import { SigninAdapter } from "../../utils/signin-adapter.js";
 import { hasEnabledGlobalSettings } from "./global-settings.js";
+import { appControllerContext } from "../../../controller/context/context.js";
+import { AppController } from "../../../controller/controller.js";
 
 const REMIX_INFO_KEY = "bb-veheader-show-remix-notification";
 
@@ -76,8 +77,8 @@ export class VEHeader extends SignalWatcher(LitElement) {
   @state()
   accessor #showRemixInfo = false;
 
-  @consume({ context: uiStateContext })
-  accessor #uiState!: UI;
+  @consume({ context: appControllerContext })
+  accessor appController!: AppController;
 
   static styles = [
     Styles.HostType.type,
@@ -584,10 +585,11 @@ export class VEHeader extends SignalWatcher(LitElement) {
       {
         id: "chat",
         title: Strings.from("COMMAND_JOIN_CHAT"),
-        icon: "open_in_new",
+        svgIcon:
+          "var(--bb-icon-discord, url(/styles/landing/images/third_party/discord-logo.svg))",
       },
       ...(hasEnabledGlobalSettings(
-        this.#uiState,
+        this.appController,
         this.showExperimentalComponents
       )
         ? [

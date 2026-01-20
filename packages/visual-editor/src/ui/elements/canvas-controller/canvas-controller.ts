@@ -48,7 +48,7 @@ import {
   MAIN_BOARD_ID,
 } from "../../constants/constants.js";
 import { classMap } from "lit/directives/class-map.js";
-import { Project, RendererRunState, UI } from "../../state/types.js";
+import { Project, RendererRunState } from "../../state/types.js";
 import "../../edit-history/edit-history-panel.js";
 import "../../edit-history/edit-history-overlay.js";
 import {
@@ -71,7 +71,6 @@ const focusAppControllerWhenIn = ["canvas", "preview"];
 
 import "./empty-state.js";
 import { isEmpty } from "../../utils/utils.js";
-import { uiStateContext } from "../../contexts/ui-state.js";
 import { Signal, SignalWatcher } from "@lit-labs/signals";
 import { projectStateContext } from "../../contexts/contexts.js";
 import * as Theme from "../../../theme/index.js";
@@ -80,9 +79,6 @@ import { AppController } from "../../../controller/controller.js";
 
 @customElement("bb-canvas-controller")
 export class CanvasController extends SignalWatcher(LitElement) {
-  @consume({ context: uiStateContext })
-  accessor #uiState!: UI;
-
   @consume({ context: appControllerContext })
   accessor #appController!: AppController;
 
@@ -362,7 +358,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
         this.highlightState,
         this.visualChangeId,
         this.graphTopologyUpdateId,
-        this.#uiState.flags,
+        this.#appController.global.flags,
         collapseNodesByDefault,
         hideSubboardSelectorWhenEmpty,
         showNodeShortcuts,
@@ -379,7 +375,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
           .projectState=${this.projectState}
           .runState=${runState}
           .runStateEffect=${this.#runStateEffect}
-          .runtimeFlags=${this.#uiState.flags}
+          .runtimeFlags=${this.#appController.global.flags}
           .graph=${graph}
           .graphIsMine=${this.graphIsMine}
           .graphTopologyUpdateId=${this.graphTopologyUpdateId}
@@ -515,7 +511,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
           selectionCount,
           this.sideNavItem,
           this.graphTopologyUpdateId,
-          this.#uiState.flags,
+          this.#appController.global.flags,
         ],
         () => {
           return html`<bb-app-controller
@@ -529,7 +525,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
             .isMine=${this.graphIsMine}
             .projectRun=${this.projectState?.run}
             .readOnly=${!this.graphIsMine}
-            .runtimeFlags=${this.#uiState.flags}
+            .runtimeFlags=${this.#appController.global.flags}
             .settings=${this.settings}
             .showGDrive=${this.signedIn}
             .status=${this.status}
@@ -601,15 +597,13 @@ export class CanvasController extends SignalWatcher(LitElement) {
     }
 
     const contentContainer = html`
-      <bb-splitter
-        direction=${"horizontal"}
+      <ui-splitter
         name="layout-main"
-        split="[0.70, 0.30]"
         @pointerdown=${() => {
           this.showThemeDesigner = false;
         }}
       >
-        <div id="graph-container" slot="slot-0">
+        <div id="graph-container" slot="s0">
           <bb-edit-history-overlay .history=${this.history}>
           </bb-edit-history-overlay>
           ${graphIsEmpty ? this.#maybeRenderEmptyState() : nothing}
@@ -618,7 +612,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
         <div
           id="side-nav"
           class="side-shadow"
-          slot="slot-1"
+          slot="s1"
           style=${styleMap(graphIsEmpty ? emptyStyles : themeStyles)}
         >
           <div
@@ -683,7 +677,7 @@ export class CanvasController extends SignalWatcher(LitElement) {
           </div>
           <div id="side-nav-content">${sideNavItem}</div>
         </div>
-      </bb-splitter>
+      </ui-splitter>
     `;
 
     return [
