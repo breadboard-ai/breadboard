@@ -7,24 +7,14 @@
 import assert from "node:assert";
 import { before, suite, test } from "node:test";
 import { SettingsController } from "../../../../../src/controller/subcontrollers/editor/sidebar/settings-controller.js";
-import { setDebuggableAppController } from "../../../../../src/controller/utils/logging/logger.js";
+import {
+  setDebuggableAppController,
+  stubAppController,
+} from "../../../../../src/controller/utils/logging/logger.js";
 
 suite("SettingsController", () => {
   before(() => {
-    setDebuggableAppController({
-      global: {
-        debug: {
-          enabled: false,
-          errors: true,
-          info: true,
-          verbose: true,
-          warnings: true,
-          setLogDefault() {
-            // Stubbed.
-          },
-        },
-      },
-    });
+    setDebuggableAppController(stubAppController);
   });
 
   test("Basics", async () => {

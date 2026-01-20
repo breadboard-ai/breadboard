@@ -20,41 +20,16 @@ suite("AppController", () => {
   });
 
   // Note: this test must come first since appController stores a singleton
-  // instacnce, which will be used between tests.
+  // instance, which will be used between tests.
   test("Errors without flags", async () => {
     assert.throws(() => {
       appController();
     }, new Error("App Controller must be instantiated with flags"));
   });
 
-  test("Debug settings", async () => {
-    const controller = appController(defaultRuntimeFlags);
-    await controller.global.debug.hydrated;
-
-    // Default debug settings.
-    assert.strictEqual(controller.global.debug.enabled, false);
-    assert.strictEqual(controller.global.debug.errors, true);
-    assert.strictEqual(controller.global.debug.warnings, true);
-    assert.strictEqual(controller.global.debug.info, true);
-    assert.strictEqual(controller.global.debug.verbose, false);
-
-    // Invert
-    controller.global.debug.enabled = true;
-    controller.global.debug.errors = false;
-    controller.global.debug.warnings = false;
-    controller.global.debug.info = false;
-    controller.global.debug.verbose = true;
-
-    assert.strictEqual(controller.global.debug.enabled, true);
-    assert.strictEqual(controller.global.debug.errors, false);
-    assert.strictEqual(controller.global.debug.warnings, false);
-    assert.strictEqual(controller.global.debug.info, false);
-    assert.strictEqual(controller.global.debug.verbose, true);
-
-    controller.global.debug.setLogDefault();
-    assert.strictEqual(controller.global.debug.errors, true);
-    assert.strictEqual(controller.global.debug.warnings, true);
-    assert.strictEqual(controller.global.debug.info, true);
-    assert.strictEqual(controller.global.debug.verbose, false);
+  test("Instantiates with flags", async () => {
+    assert.doesNotThrow(() => {
+      appController(defaultRuntimeFlags);
+    });
   });
 });
