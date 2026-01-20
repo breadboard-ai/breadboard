@@ -52,7 +52,9 @@ export class ConnectionBroker extends HTMLElement {
     // Figure out where we are going to send the response.
     const nonce = state.nonce;
     if (!nonce) {
-      displayError('No "nonce" parameter could be found in "state".');
+      displayError(
+        'No "number used once" parameter could be found in "state".'
+      );
       return;
     }
 
