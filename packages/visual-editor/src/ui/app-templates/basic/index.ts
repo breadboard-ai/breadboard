@@ -90,6 +90,7 @@ import {
   CONSENT_RENDER_INFO,
   ConsentManager,
 } from "../../utils/consent-manager.js";
+import { isDocSlidesOrSheetsOutput } from "../../../a2/a2/utils.js";
 
 function getHTMLOutput(screen: AppScreenOutput): string | null {
   const outputs = Object.values(screen.output);
@@ -465,6 +466,8 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
 
     const allowSharingOutputs = !parsedUrl.lite;
 
+    const isBtnDisabled = isDocSlidesOrSheetsOutput(this.run.finalOutput);
+
     return html`
       <div id="save-results-button-container">
         ${allowSharingOutputs
@@ -479,6 +482,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
               </button>`
             : html`<button
                 id="save-results-button"
+                ?disabled=${isBtnDisabled}
                 class="sans-flex w-500 round md-body-medium"
                 @click=${this.#onClickSaveResults}
                 ${ref(this.#shareResultsButton)}
@@ -489,6 +493,7 @@ export class Template extends SignalWatcher(LitElement) implements AppTemplate {
           : nothing}
         <button
           id="export-output-button"
+          ?disabled=${isBtnDisabled}
           @click=${this.#onClickExportOutput}
           class="sans-flex w-500 round md-body-medium"
         >
