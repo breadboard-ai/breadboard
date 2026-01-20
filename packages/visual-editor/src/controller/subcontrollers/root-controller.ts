@@ -11,7 +11,7 @@ import { isHydrating } from "../utils/hydration.js";
 import { effect } from "signal-utils/subtle/microtask-effect";
 import { pendingStorageWrites } from "../context/writes.js";
 
-export class RootController implements HydratedController {
+export abstract class RootController implements HydratedController {
   #trackedSignals = new Set<Signal.State<unknown>>();
   #isHydratedPromise?: Promise<number>;
 
@@ -21,15 +21,14 @@ export class RootController implements HydratedController {
     if (this.#trackedSignals.size === 0) return true;
 
     for (const sig of this.#trackedSignals) {
-      if (isHydrating(sig.get())) return PENDING_HYDRATION;
+      if (isHydrating(() => sig.get())) return PENDING_HYDRATION;
     }
 
     return true;
   });
 
   /**
-   * We use a getter so that the promise is only created when
-   * someone actually wants to wait for it.
+   * Indicates that the controller has fully hydrated.
    */
   get isHydrated(): Promise<number> {
     if (this.#isHydratedPromise) return this.#isHydratedPromise;

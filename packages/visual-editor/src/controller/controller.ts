@@ -13,6 +13,7 @@ import { ToastController } from "./subcontrollers/toast-controller.js";
 import * as Migrations from "./migration/migrations.js";
 import { RuntimeFlags } from "@breadboard-ai/types";
 import { FlagController } from "./subcontrollers/flag-controller.js";
+import { GlobalController } from "./subcontrollers/global/global.js";
 
 class Controller implements AppController {
   editor: AppController["editor"];
@@ -36,6 +37,7 @@ class Controller implements AppController {
     };
 
     this.global = {
+      main: new GlobalController("Global"),
       flags: new FlagController("Flags", runtimeFlags),
       debug: new DebugController("Debug"),
       feedback: new FeedbackController("Feedback"),
@@ -56,6 +58,20 @@ class Controller implements AppController {
         await Migrations.flagsMigration(controller.global.flags, runtimeFlags);
       },
     };
+  }
+
+  /* c8 ignore next 12 */
+  get isHydrated(): Promise<number[]> {
+    return Promise.all([
+      this.editor.main.isHydrated,
+      this.editor.sidebar.settings.isHydrated,
+      this.home.recent.isHydrated,
+      this.global.main.isHydrated,
+      this.global.flags.isHydrated,
+      this.global.debug.isHydrated,
+      this.global.feedback.isHydrated,
+      this.global.toasts.isHydrated,
+    ]);
   }
 }
 
@@ -82,10 +98,12 @@ export interface AppController extends DebuggableAppController {
     recent: Home.RecentBoardsController;
   };
   global: {
+    main: GlobalController;
     flags: FlagController;
     debug: DebugController;
     feedback: FeedbackController;
     toasts: ToastController;
     performMigrations(): Promise<void>;
   };
+  isHydrated: Promise<number[]>;
 }

@@ -43,9 +43,9 @@ suite("Field Decorator", () => {
 
     // Check on the field hydration.
     const instance = new PersistentController("Persistence");
-    assert(isHydrating(instance.foo));
-    assert(isHydrating(instance.bar));
-    assert(isHydrating(instance.baz));
+    assert(isHydrating(() => instance.foo));
+    assert(isHydrating(() => instance.bar));
+    assert(isHydrating(() => instance.baz));
     await instance.isHydrated;
 
     // Should be the default values.
@@ -133,7 +133,7 @@ suite("Field Decorator", () => {
     ]);
   });
 
-  test("should persist Maps", async () => {
+  test("should persist Maps and Sets", async () => {
     const map = new Map([
       ["a", 1],
       ["b", 2],
@@ -160,6 +160,17 @@ suite("Field Decorator", () => {
     assert.deepStrictEqual(unwrap(instance.set), set);
     assert.deepStrictEqual(unwrap(instance.setLocal), set);
     assert.deepStrictEqual(unwrap(instance.setIdb), set);
+
+    const instance2 = new SetMapController("Map");
+    await instance2.isHydrated;
+
+    assert.deepStrictEqual(unwrap(instance2.map), map);
+    assert.deepStrictEqual(unwrap(instance2.mapLocal), map);
+    assert.deepStrictEqual(unwrap(instance2.mapIdb), map);
+
+    assert.deepStrictEqual(unwrap(instance2.set), set);
+    assert.deepStrictEqual(unwrap(instance2.setLocal), set);
+    assert.deepStrictEqual(unwrap(instance2.setIdb), set);
   });
 
   test("should persist nested items", async () => {
