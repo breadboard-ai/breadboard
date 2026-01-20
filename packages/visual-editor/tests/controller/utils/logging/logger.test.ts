@@ -88,26 +88,6 @@ suite("Logger", () => {
     assert.strictEqual(infoMock.mock.calls[0].arguments[1], "Info");
   });
 
-  test("does not log for disabled categories", () => {
-    const logger = getLogger();
-
-    logConfig.global.debug.enabled = true;
-    logConfig.global.debug.info = false;
-    logConfig.global.debug.warnings = false;
-    logConfig.global.debug.errors = false;
-    logConfig.global.debug.verbose = false;
-
-    logger.log({ type: "info", args: ["Info"] });
-    logger.log({ type: "warning", args: ["Warning"] });
-    logger.log({ type: "error", args: ["Error"] });
-    logger.log({ type: "verbose", args: ["Verbose"] });
-
-    assert.strictEqual(logMock.mock.callCount(), 0);
-    assert.strictEqual(infoMock.mock.callCount(), 0);
-    assert.strictEqual(warnMock.mock.callCount(), 0);
-    assert.strictEqual(errorMock.mock.callCount(), 0);
-  });
-
   test("warns if there is no controller", async () => {
     const logger = getLogger();
 

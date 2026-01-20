@@ -14,6 +14,14 @@ export function setDebuggableAppController(
   debuggableAppController = appController;
 }
 
+export const stubAppController: DebuggableAppController = {
+  global: {
+    debug: {
+      enabled: true,
+    },
+  },
+};
+
 export function getLogger() {
   if (loggerInstance) return loggerInstance;
   loggerInstance = new Logger();
@@ -51,19 +59,11 @@ class Logger {
         console.warn("Logger called without app controller");
       }
 
-      if (debuggableAppController) {
-        if (!debuggableAppController.global.debug.enabled) return;
-        if (type === "info" && !debuggableAppController.global.debug.info)
-          return;
-        if (
-          type === "warning" &&
-          !debuggableAppController.global.debug.warnings
-        )
-          return;
-        if (type === "error" && !debuggableAppController.global.debug.errors)
-          return;
-        if (type === "verbose" && !debuggableAppController.global.debug.verbose)
-          return;
+      if (
+        debuggableAppController &&
+        !debuggableAppController.global.debug.enabled
+      ) {
+        return;
       }
     }
 
@@ -82,6 +82,10 @@ class Logger {
       case "info":
         code = "\x1B[104;97m";
         method = console.info;
+        break;
+      case "verbose":
+        code = "\x1B[42;97m";
+        method = console.debug;
         break;
       default:
         code = "\x1B[107;30m";
