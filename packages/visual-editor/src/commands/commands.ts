@@ -175,28 +175,13 @@ const ToggleExperimentalComponentsCommand: KeyboardCommand = {
     return true;
   },
 
-  async do({ settings }: KeyboardCommandDeps): Promise<void> {
-    if (!settings) {
-      return;
-    }
+  async do({ appController }: KeyboardCommandDeps): Promise<void> {
+    appController.global.main.experimentalComponents =
+      !appController.global.main.experimentalComponents;
 
-    const setting = settings.getItem(
-      BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
-      "Show Experimental Components"
-    );
-
-    if (setting && typeof setting.value === "boolean") {
-      const newSetting = structuredClone(setting);
-      newSetting.value = !newSetting.value;
-      componentStatus = newSetting.value ? "Enabled" : "Disabled";
-
-      settings.setItem(
-        BreadboardUI.Types.SETTINGS_TYPE.GENERAL,
-        "Show Experimental Components",
-        newSetting
-      );
-      settings.saveItem(BreadboardUI.Types.SETTINGS_TYPE.GENERAL, newSetting);
-    }
+    componentStatus = appController.global.main.experimentalComponents
+      ? "Enabled"
+      : "Disabled";
   },
 };
 

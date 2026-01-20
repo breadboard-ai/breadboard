@@ -31,13 +31,14 @@ enum TabId {
 }
 
 function getTabEnabledMap(
-  appController: AppController | undefined,
-  showExperimentalComponents: boolean
+  appController: AppController | undefined
 ): Record<TabId, boolean> {
   return {
     [TabId.GENERAL]: Boolean(CLIENT_DEPLOYMENT_CONFIG.ENABLE_EMAIL_OPT_IN),
     [TabId.INTEGRATIONS]: Boolean(appController?.global?.flags?.mcp),
-    [TabId.EXPERIMENTAL]: showExperimentalComponents,
+    [TabId.EXPERIMENTAL]: Boolean(
+      appController?.global.main.experimentalComponents
+    ),
   };
 }
 
@@ -54,23 +55,15 @@ function shouldShowTabs(enabledTabs: Record<TabId, boolean>) {
  * Returns whether there are any enabled global settings
  */
 export function hasEnabledGlobalSettings(
-  appController: AppController | undefined,
-  showExperimentalComponents: boolean
+  appController: AppController | undefined
 ) {
-  return (
-    countEnabledTabs(
-      getTabEnabledMap(appController, showExperimentalComponents)
-    ) > 0
-  );
+  return countEnabledTabs(getTabEnabledMap(appController)) > 0;
 }
 
 @customElement("bb-global-settings-modal")
 export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
   @consume({ context: appControllerContext })
   accessor appController!: AppController;
-
-  @property()
-  accessor showExperimentalComponents: boolean = false;
 
   @property()
   accessor project: Project | null = null;
@@ -244,10 +237,7 @@ export class VEGlobalSettingsModal extends SignalWatcher(LitElement) {
   }
 
   willUpdate() {
-    this.enabledTabs = getTabEnabledMap(
-      this.appController,
-      this.showExperimentalComponents
-    );
+    this.enabledTabs = getTabEnabledMap(this.appController);
     // Changing settings might cause the currently selected tab to become disabled;
     // In this case, change the active tab to the first enabled one
     const enabledTabs = this.enabledTabs;

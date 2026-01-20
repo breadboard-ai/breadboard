@@ -19,6 +19,7 @@ import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.j
 import { MakeUrlInit } from "./ui/types/types.js";
 import { isHydrating } from "./controller/utils/hydration.js";
 import { repeat } from "lit/directives/repeat.js";
+import { getLogger } from "./controller/utils/logging/logger.js";
 
 // Build constant.
 declare const ENABLE_DEBUG_TOOLING: boolean;
@@ -35,6 +36,40 @@ class Main extends MainBase {
 
     this.maybeNotifyAboutPreferredUrlForDomain();
     this.maybeNotifyAboutDesktopModality();
+    this.addExperimentalToggleToWindow();
+  }
+
+  private addExperimentalToggleToWindow() {
+    const windowWithExperimentalFeatures = globalThis.window as unknown as {
+      toggleExperimentalFeatures(): Promise<unknown>;
+    };
+    windowWithExperimentalFeatures.toggleExperimentalFeatures = async () => {
+      // Ignore the call if the value is still hydrating.
+      if (
+        isHydrating(() => this.appController.global.main.experimentalComponents)
+      ) {
+        return;
+      }
+
+      // Toggle the value and await the set.
+      this.appController.global.main.experimentalComponents =
+        !this.appController.global.main.experimentalComponents;
+      await this.appController.global.main.isSettled;
+
+      // Inform the user.
+      const logger = getLogger();
+      logger.logItem(
+        "info",
+        "",
+        "Experimental Features",
+        false,
+        this.appController.global.main.experimentalComponents
+          ? "Enabled"
+          : "Disabled"
+      );
+
+      return this.appController.global.main.experimentalComponents.valueOf();
+    };
   }
 
   async maybeNotifyAboutPreferredUrlForDomain() {
@@ -394,7 +429,6 @@ class Main extends MainBase {
   #renderGlobalSettingsModal(renderValues: RenderValues) {
     return html`<bb-global-settings-modal
       .flags=${this.runtime.flags.flags()}
-      .showExperimentalComponents=${renderValues.showExperimentalComponents}
       .project=${renderValues.projectState}
       .uiState=${this.appController.global.main}
       .emailPrefsManager=${this.emailPrefsManager}
@@ -546,7 +580,6 @@ class Main extends MainBase {
       .canSave=${renderValues.canSave}
       .isMine=${this.runtime.board.isMine(this.tab?.graph.url)}
       .saveStatus=${renderValues.saveStatus}
-      .showExperimentalComponents=${renderValues.showExperimentalComponents}
       .mode=${this.appController.global.main.mode}
       @bbsignout=${async () => {
         await this.signinAdapter.signOut();
