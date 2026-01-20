@@ -7,7 +7,7 @@ import {
   OutputValues,
   StoredDataCapabilityPart,
 } from "@breadboard-ai/types";
-import { isStoredData as isStoredDataBreadboardAI } from "@breadboard-ai/utils";
+import { isStoredData as isStoredDataPart } from "@breadboard-ai/utils";
 
 /**
  * @fileoverview Common utils for manipulating LLM Content and other relevant types.
@@ -481,7 +481,7 @@ function isDocSlidesOrSheetsOutput(output: OutputValues): boolean {
   }
   for (const el of output.context) {
     for (const part of el.parts) {
-      if (isStoredDataBreadboardAI(part)) {
+      if (isStoredDataPart(part)) {
         const mimeType = part.storedData.mimeType;
         if (mimeType === DOC_MIME_TYPE || mimeType === SHEETS_MIME_TYPE || mimeType === SLIDES_MIME_TYPE) {
           return true;
