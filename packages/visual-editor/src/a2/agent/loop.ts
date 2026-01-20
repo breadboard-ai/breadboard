@@ -17,7 +17,10 @@ import { llm } from "../a2/utils.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { AgentFileSystem } from "./file-system.js";
 import { FunctionCallerImpl } from "./function-caller.js";
-import { getGenerateFunctionGroup } from "./functions/generate.js";
+import {
+  getGenerateFunctionGroup,
+  ModelConstraint,
+} from "./functions/generate.js";
 import { getSystemFunctionGroup } from "./functions/system.js";
 import { PidginTranslator } from "./pidgin-translator.js";
 import { AgentUI } from "./ui.js";
@@ -37,6 +40,7 @@ export type AgentRunArgs = {
   uiType?: UIType;
   uiPrompt?: LLMContent;
   extraInstruction?: string;
+  modelConstraint?: ModelConstraint;
 };
 
 export type AgentRawResult = {
@@ -102,6 +106,7 @@ class Loop {
     uiPrompt,
     uiType = "none",
     extraInstruction = "",
+    modelConstraint = "none",
   }: AgentRunArgs): Promise<Outcome<AgentResult>> {
     const { caps, moduleArgs, fileSystem, translator, ui, memoryManager } =
       this;
@@ -163,6 +168,7 @@ class Loop {
           caps,
           moduleArgs,
           translator,
+          modelConstraint,
         })
       );
       functionGroups.push(

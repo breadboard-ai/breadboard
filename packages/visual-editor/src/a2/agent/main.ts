@@ -18,6 +18,7 @@ import { Template } from "../a2/template.js";
 import { A2ModuleArgs } from "../runnable-module-factory.js";
 import { Loop } from "./loop.js";
 import { UIType } from "./types.js";
+import type { ModelConstraint } from "./functions/generate.js";
 
 export { invoke as default, computeAgentSchema, describe };
 
@@ -26,6 +27,7 @@ export type AgentInputs = {
   "b-ui-enable": UIType;
   "b-ui-prompt": LLMContent;
   "b-si-instruction"?: string;
+  "b-si-constraint": ModelConstraint;
 } & Params;
 
 type AgentOutputs = {
@@ -100,6 +102,7 @@ async function invoke(
     "b-ui-enable": uiType = "none",
     "b-ui-prompt": uiPrompt,
     "b-si-instruction": extraInstruction,
+    "b-si-constraint": modelConstraint,
     ...rest
   }: AgentInputs,
   caps: Capabilities,
@@ -116,6 +119,7 @@ async function invoke(
     extraInstruction,
     uiType,
     uiPrompt,
+    modelConstraint,
   });
   if (!ok(result)) return result;
   console.log("LOOP", result);
