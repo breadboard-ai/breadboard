@@ -29,7 +29,7 @@ import { repeat } from "lit/directives/repeat.js";
 import { until } from "lit/directives/until.js";
 import { googleDriveClientContext } from "../../contexts/google-drive-client-context.js";
 import { OverlayDismissedEvent, SnackbarEvent } from "../../events/events.js";
-import { Project, UI } from "../../state/types.js";
+import { Project } from "../../state/types.js";
 import { baseColors } from "../../styles/host/base-colors.js";
 import { type } from "../../styles/host/type.js";
 import { icons } from "../../styles/icons.js";
@@ -40,14 +40,15 @@ import {
 } from "../../types/types.js";
 import { renderThumbnail } from "../../utils/image.js";
 import { convertImageToInlineData } from "./image-convert.js";
-import { uiStateContext } from "../../contexts/ui-state.js";
+import { appControllerContext } from "../../../controller/context/context.js";
+import { AppController } from "../../../controller/controller.js";
 
 const MAX_UPLOAD_SIZE = 5_242_880; // 5MB.
 
 @customElement("bb-app-theme-creator")
 export class AppThemeCreator extends SignalWatcher(LitElement) {
-  @consume({ context: uiStateContext })
-  accessor #uiState!: UI;
+  @consume({ context: appControllerContext })
+  accessor appController!: AppController;
 
   @property()
   accessor projectState: Project | null = null;
@@ -543,7 +544,7 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
       if (!this.projectState) {
         throw new Error("Unable to generate theme: project is not initialized");
       }
-      this.#uiState.blockingAction = true;
+      this.appController.global.main.blockingAction = true;
       const newTheme = await this.projectState.themes.generateTheme(
         {
           random,
@@ -553,7 +554,7 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
         },
         this.#abortController.signal
       );
-      this.#uiState.blockingAction = false;
+      this.appController.global.main.blockingAction = false;
       if (!ok(newTheme)) {
         throw new Error(newTheme.$error);
       }
@@ -680,12 +681,12 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
                   return;
                 }
 
-                this.#uiState.blockingAction = true;
+                this.appController.global.main.blockingAction = true;
 
                 const deleting = await this.projectState.themes.deleteTheme(
                   this.theme
                 );
-                this.#uiState.blockingAction = false;
+                this.appController.global.main.blockingAction = false;
 
                 if (!ok(deleting)) {
                   this.#displayError(deleting.$error);
@@ -719,9 +720,9 @@ export class AppThemeCreator extends SignalWatcher(LitElement) {
                       }
 
                       this.#changed = true;
-                      this.#uiState.blockingAction = true;
+                      this.appController.global.main.blockingAction = true;
                       this.projectState.themes.setCurrent(id);
-                      this.#uiState.blockingAction = false;
+                      this.appController.global.main.blockingAction = false;
                     }}
                   >
                     ${guard(

@@ -34,8 +34,6 @@ import { icons } from "../../../styles/icons.js";
 import { type } from "../../../styles/host/type.js";
 import { classMap } from "lit/directives/class-map.js";
 import { consume } from "@lit/context";
-import { uiStateContext } from "../../../contexts/ui-state.js";
-import { UI } from "../../../state/types.js";
 import { FloatingInputFocusState } from "../../../types/types.js";
 import {
   isFileDataCapabilityPart,
@@ -94,9 +92,6 @@ export class FloatingInput extends SignalWatcher(LitElement) {
 
   @state()
   accessor showAddAssetModal = false;
-
-  @consume({ context: uiStateContext })
-  accessor #uiState!: UI;
 
   static styles = [
     icons,
@@ -453,10 +448,11 @@ export class FloatingInput extends SignalWatcher(LitElement) {
     }
 
     let attemptFocus = false;
-    if (this.focusWhenIn[0] === this.#uiState.mode) {
+    if (this.focusWhenIn[0] === this.appController.global.main.mode) {
       if (
         this.focusWhenIn[1] !== undefined &&
-        this.#uiState.editorSection === this.focusWhenIn[1]
+        this.appController.editor.sidebar.settings.section ===
+          this.focusWhenIn[1]
       ) {
         attemptFocus = true;
       } else if (this.focusWhenIn[1] === undefined) {
