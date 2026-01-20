@@ -17,6 +17,9 @@ import { HTMLTemplateResult } from "lit";
 
 export class GlobalController extends RootController {
   @field({ persist: "local" })
+  accessor experimentalComponents = false;
+
+  @field({ persist: "local" })
   accessor mode: VisualEditorMode = "canvas";
 
   @field({ persist: "local" })

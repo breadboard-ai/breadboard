@@ -87,7 +87,6 @@ export type RenderValues = {
   saveStatus: BreadboardUI.Types.BOARD_SAVE_STATUS;
   projectState: BreadboardUI.State.Project | null;
   showingOverlay: boolean;
-  showExperimentalComponents: boolean;
   themeHash: number;
   tabStatus: BreadboardUI.Types.STATUS;
 };
@@ -1082,10 +1081,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       projectState.run.app.screens.set("final", current);
     }
 
-    const showExperimentalComponents: boolean = this.settings
-      .getSection(BreadboardUI.Types.SETTINGS_TYPE.GENERAL)
-      .items.get("Show Experimental Components")?.value as boolean;
-
     const canSave = this.tab
       ? this.runtime.board.canSave(this.tab.id) && !this.tab.readOnly
       : false;
@@ -1100,7 +1095,6 @@ abstract class MainBase extends SignalWatcher(LitElement) {
       projectState,
       saveStatus,
       showingOverlay: this.appController.global.main.show.size > 0,
-      showExperimentalComponents,
       themeHash,
       tabStatus,
     } satisfies RenderValues;
