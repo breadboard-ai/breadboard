@@ -54,21 +54,41 @@ export class UISplitter extends SignalWatcher(LitElement) {
           background: linear-gradient(
             to right,
             rgba(0, 0, 0, 0) 0%,
-            rgba(0, 0, 0, 0.06) 100%
+            rgba(0, 0, 0, 0.08) 100%
           );
         }
       }
 
-      #control {
+      #control-overlay {
         position: absolute;
-        height: 100%;
-        width: 16px;
+        display: grid;
+        grid-template-columns: var(--left) var(--right);
+        inset: 0;
         top: 0;
-        background: transparent;
-        left: 0px;
-        translate: -50% 0;
-        z-index: 20;
-        cursor: ew-resize;
+        left: 0;
+        z-index: 40;
+        pointer-events: none;
+
+        & #control {
+          position: relative;
+
+          & #control-bar {
+            pointer-events: auto;
+            position: absolute;
+            height: 100%;
+            width: 16px;
+            top: 0;
+            background: transparent;
+            right: 0px;
+            transform: translateX(8px);
+            z-index: 20;
+            cursor: ew-resize;
+          }
+        }
+
+        &::after {
+          content: "";
+        }
       }
     `,
   ];
@@ -94,7 +114,7 @@ export class UISplitter extends SignalWatcher(LitElement) {
     if (!this.#appController) return nothing;
 
     const split = this.#appController.editor.main.split;
-    if (isHydrating(split)) return nothing;
+    if (isHydrating(() => split)) return nothing;
 
     const [left, right] = this.#appController.editor.main.getClampedValues(
       split,
@@ -109,23 +129,27 @@ export class UISplitter extends SignalWatcher(LitElement) {
       </div>
       <div id="right">
         <slot name="s1"></slot>
-        <div
-          id="control"
-          @pointerdown=${(evt: PointerEvent) => {
-            (evt.target as HTMLElement).setPointerCapture(evt.pointerId);
-            this.#isDragging = true;
-            this.#bounds = this.getBoundingClientRect();
-          }}
-          @pointermove=${(evt: PointerEvent) => {
-            if (!this.#isDragging) return;
-            this.#appController.editor.main.setSplit(
-              (evt.pageX - this.#bounds.x) / this.#bounds.width
-            );
-          }}
-          @pointerup=${() => {
-            this.#isDragging = false;
-          }}
-        ></div>
+      </div>
+      <div id="control-overlay">
+        <div id="control">
+          <div
+            id="control-bar"
+            @pointerdown=${(evt: PointerEvent) => {
+              (evt.target as HTMLElement).setPointerCapture(evt.pointerId);
+              this.#isDragging = true;
+              this.#bounds = this.getBoundingClientRect();
+            }}
+            @pointermove=${(evt: PointerEvent) => {
+              if (!this.#isDragging) return;
+              this.#appController.editor.main.setSplit(
+                (evt.pageX - this.#bounds.x) / this.#bounds.width
+              );
+            }}
+            @pointerup=${() => {
+              this.#isDragging = false;
+            }}
+          ></div>
+        </div>
       </div>
     </section>`;
   }

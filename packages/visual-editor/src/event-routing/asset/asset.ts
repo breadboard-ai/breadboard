@@ -11,8 +11,8 @@ import * as BreadboardUI from "../../ui/index.js";
 export const ChangeEdgeRoute: EventRoute<"asset.changeedge"> = {
   event: "asset.changeedge",
 
-  async do({ runtime, tab, originalEvent, uiState }) {
-    uiState.blockingAction = true;
+  async do({ runtime, tab, originalEvent, appController }) {
+    appController.global.main.blockingAction = true;
     await runtime.edit.changeAssetEdge(
       tab,
       originalEvent.detail.changeType,
@@ -20,7 +20,7 @@ export const ChangeEdgeRoute: EventRoute<"asset.changeedge"> = {
       originalEvent.detail.subGraphId
     );
 
-    uiState.blockingAction = false;
+    appController.global.main.blockingAction = false;
     return false;
   },
 };

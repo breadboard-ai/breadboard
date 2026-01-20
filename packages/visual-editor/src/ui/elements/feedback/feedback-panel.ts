@@ -65,7 +65,7 @@ export class FeedbackPanel extends SignalWatcher(LitElement) {
 
   override render() {
     if (!this.#appController) return nothing;
-    const status = this.#appController.feedback.status;
+    const status = this.#appController.global.feedback.status;
     if (status === "loading") {
       return this.#renderLoadingPanel();
     }
@@ -88,14 +88,14 @@ export class FeedbackPanel extends SignalWatcher(LitElement) {
   }
 
   #onLoadingPanelClose() {
-    this.#appController.feedback.close();
+    this.#appController.global.feedback.close();
   }
 
   override updated(changedProperties: PropertyValues): void {
     super.updated(changedProperties);
     if (!this.#appController) return;
 
-    if (this.#appController.feedback.status === "loading") {
+    if (this.#appController.global.feedback.status === "loading") {
       const panel = this.#loadingPanel.value;
       if (panel) {
         panel.showModal();

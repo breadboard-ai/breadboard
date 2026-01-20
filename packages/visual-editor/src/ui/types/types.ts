@@ -204,7 +204,7 @@ export function cloneEdgeData<T extends EdgeData | null>(edge: T): T {
 }
 
 export interface RecentBoard {
-  title: string;
+  title?: string;
   url: string;
   pinned?: boolean;
   [key: string]: unknown;
@@ -419,6 +419,7 @@ export type EnumValue = {
   title: string;
   id: string;
   icon?: string;
+  svgIcon?: string;
   description?: string;
   tag?: string; // Typically used for keyboard shortcuts.
   hidden?: boolean;
@@ -602,4 +603,22 @@ export interface ActionTracker {
   addNewStep(type?: string): void;
   editStep(type: "manual" | "flowgen"): void;
   shareResults(type: "download" | "save_to_drive" | "copy_share_link"): void;
+
+  // Updates GA properties
+
+  /**
+   * Updates the current status of the user. Call it whenever the sign in
+   * status of the user is determined.
+   *
+   * Will also be automatically called by:
+   * - `signInSuccess`
+   * - `signOutSuccess`
+   */
+  updateSignedInStatus(signedIn: boolean): void;
+
+  /**
+   * Updates the current eligibility status of the user. Call right after the
+   * checkAppAccess call.
+   */
+  updateCanAccessStatus(canAccess: boolean): void;
 }

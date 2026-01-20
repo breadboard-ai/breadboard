@@ -5,13 +5,17 @@
  */
 
 import { Signal } from "@lit-labs/signals";
-import { deep } from "signal-utils/deep";
 import { WebStorageWrapper } from "./storage/local.js";
 import { PrimitiveValue } from "../types.js";
 import { pending, PENDING_HYDRATION } from "../utils/sentinel.js";
 import { IdbStorageWrapper } from "./storage/idb.js";
-import { isHydratedController } from "../utils/hydration.js";
+import {
+  isHydratedController,
+  PendingHydrationError,
+} from "../utils/hydration.js";
 import { pendingStorageWrites } from "../context/writes.js";
+import { typesMatch } from "./utils/types-match.js";
+import { wrap, unwrap } from "./utils/wrap-unwrap.js";
 
 const localStorageWrapper = new WebStorageWrapper("local");
 const sessionStorageWrapper = new WebStorageWrapper("session");
@@ -34,7 +38,9 @@ function getName<Context extends WeakKey, Value extends PrimitiveValue>(
   target: Context,
   context: ClassAccessorDecoratorContext<Context, Value>
 ) {
-  return `${target.constructor.name}_${String(context.name)}`;
+  const id = (target as unknown as { id?: string }).id;
+  const suffix = id ? `_${id}` : "";
+  return `${target.constructor.name}_${String(context.name)}${suffix}`;
 }
 
 export function field<Value extends PrimitiveValue>(
@@ -55,7 +61,12 @@ export function field<Value extends PrimitiveValue>(
 
         // We return the actual state of the signal.
         // If it's PENDING_HYDRATION, the UI can react to it.
-        return state.get() as Value;
+        const value = state.get();
+        if (value === PENDING_HYDRATION) {
+          throw new PendingHydrationError(String(context.name));
+        }
+
+        return value as Value;
       },
 
       set(this: Context, newValue: Value) {
@@ -63,7 +74,7 @@ export function field<Value extends PrimitiveValue>(
         if (!state) throw new Error("Uninitialized");
 
         // Any persistence is handled by the Watcher in init().
-        state.set(createDeep ? deep(newValue) : newValue);
+        state.set((createDeep ? wrap(newValue) : newValue) as Value);
       },
 
       init(this: Context, initialValue: Value): Value {
@@ -72,7 +83,7 @@ export function field<Value extends PrimitiveValue>(
         signals.set(this, state);
 
         const signalInitialValue = createDeep
-          ? deep(initialValue)
+          ? (wrap(initialValue) as Value)
           : initialValue;
 
         // By using a Computed/Watcher, we react to internal mutations of deep
@@ -84,18 +95,13 @@ export function field<Value extends PrimitiveValue>(
 
           // We use a Computed signal to track dependencies deeply.
           // The Watcher only observes the signal it watches; it does not
-          // recurse. By calling JSON.stringify within a Computed, we force the
-          // Computed to subscribe to all nested signals in the deep proxy.
+          // recurse.
           const persistenceSignal = new Signal.Computed(() => {
             const val = state.get();
             if (val === PENDING_HYDRATION) return val;
 
             if (createDeep && typeof val === "object" && val !== null) {
-              try {
-                JSON.stringify(val);
-              } catch {
-                // Ignore serialization errors here; handled in write
-              }
+              return unwrap(val);
             }
             return val;
           });
@@ -117,21 +123,8 @@ export function field<Value extends PrimitiveValue>(
           });
 
           const processWrite = () => {
-            const currentValue = persistenceSignal.get();
-            if (currentValue === PENDING_HYDRATION) return;
-
-            // If this is a deep proxy, signal-utils/deep usually needs
-            // to be accessed to trigger the signal.
-            let dataToStore = currentValue;
-            if (createDeep && typeof dataToStore === "object") {
-              try {
-                // Cloning forces the Proxy to resolve all its current values
-                // in a way that works for IDB etc.
-                dataToStore = JSON.parse(JSON.stringify(dataToStore));
-              } catch (e) {
-                console.error("Failed to serialize deep field", e);
-              }
-            }
+            const dataToStore = persistenceSignal.get();
+            if (dataToStore === PENDING_HYDRATION) return;
 
             // Now track the write operation so that we know when it has
             // finished. This is made available through the RootController.
@@ -203,7 +196,12 @@ export function field<Value extends PrimitiveValue>(
           const name = getName(this, context);
           store.get(name).then((val) => {
             if (val !== null) {
-              state.set((createDeep ? deep(val) : val) as unknown as Value);
+              if (typesMatch(initialValue, val)) {
+                state.set((createDeep ? wrap(val) : val) as unknown as Value);
+              } else {
+                state.set(signalInitialValue);
+                // store.set is handled by the watcher automatically.
+              }
             } else {
               state.set(signalInitialValue);
               // store.set is handled by the watcher automatically.

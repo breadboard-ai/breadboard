@@ -22,13 +22,15 @@ import "../../elements/welcome-panel/homepage-search-button.js";
 import { StateEvent } from "../../events/events.js";
 import "../../flow-gen/flowgen-homepage-panel.js";
 import * as StringsHelper from "../../strings/helper.js";
-import type { ActionTracker, RecentBoard } from "../../types/types.js";
+import type { ActionTracker } from "../../types/types.js";
 import { blankBoard } from "../../utils/blank-board.js";
 import "./gallery.js";
 
 import * as Styles from "../../styles/styles.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { actionTrackerContext } from "../../contexts/action-tracker-context.js";
+import { appControllerContext } from "../../../controller/context/context.js";
+import { AppController } from "../../../controller/controller.js";
 
 const Strings = StringsHelper.forSection("ProjectListing");
 
@@ -41,15 +43,15 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
   @consume({ context: globalConfigContext })
   accessor globalConfig: GlobalConfig | undefined;
 
+  @consume({ context: appControllerContext })
+  accessor appController!: AppController;
+
   @consume({ context: boardServerContext, subscribe: true })
   @state()
   accessor boardServer: BoardServer | undefined;
 
   @consume({ context: actionTrackerContext })
   accessor actionTracker: ActionTracker | undefined;
-
-  @property({ attribute: false })
-  accessor recentBoards: RecentBoard[] = [];
 
   @property()
   accessor featuredFilter: string | null = null;
@@ -348,7 +350,8 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
   #sortUserGraphs(
     items: [string, GraphProviderItem][]
   ): [string, GraphProviderItem][] {
-    const recentBoards = this.recentBoards;
+    const recentBoards = this.appController.home.recent.boards;
+    console.log(recentBoards);
     return items.sort(([, dataA], [, dataB]) => {
       // Sort by pinned status first if possible.
       const boardA = recentBoards.find((board) => board.url === dataA.url);
@@ -396,7 +399,6 @@ export class ProjectListingLite extends SignalWatcher(LitElement) {
           .headerIcon=${this.libraryIcon}
           .headerText=${this.libraryTitle ??
           Strings.from("LABEL_TABLE_DESCRIPTION_YOUR_PROJECTS_LITE")}
-          .recentBoards=${this.recentBoards}
           .items=${userGraphs}
           .pageSize=${PAGE_SIZE}
         >

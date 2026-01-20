@@ -7,7 +7,6 @@
 import { html, nothing } from "lit";
 import { customElement } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
-import { map } from "lit/directives/map.js";
 import { ref } from "lit/directives/ref.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { MainBase, RenderValues } from "./main-base.js";
@@ -18,6 +17,8 @@ import { makeUrl, parseUrl } from "./ui/utils/urls.js";
 
 import { CheckAppAccessResult } from "@breadboard-ai/types/opal-shell-protocol.js";
 import { MakeUrlInit } from "./ui/types/types.js";
+import { isHydrating } from "./controller/utils/hydration.js";
+import { repeat } from "lit/directives/repeat.js";
 
 // Build constant.
 declare const ENABLE_DEBUG_TOOLING: boolean;
@@ -30,6 +31,8 @@ export { Main };
 @customElement("bb-main")
 class Main extends MainBase {
   override async doPostInitWork() {
+    await this.appController.global.performMigrations();
+
     this.maybeNotifyAboutPreferredUrlForDomain();
     this.maybeNotifyAboutDesktopModality();
   }
@@ -72,12 +75,13 @@ class Main extends MainBase {
       return;
     }
 
-    this.uiState.show.add("BetterOnDesktopModal");
+    this.appController.global.main.show.add("BetterOnDesktopModal");
   }
 
   override async handleAppAccessCheckResult(
     result: CheckAppAccessResult
   ): Promise<void> {
+    this.actionTracker.updateCanAccessStatus(result.canAccess);
     if (!result.canAccess) {
       await this.signinAdapter.signOut();
       window.history.pushState(
@@ -102,15 +106,17 @@ class Main extends MainBase {
 
     const content = html`<div
       id="content"
-      ?inert=${renderValues.showingOverlay || this.uiState.blockingAction}
+      ?inert=${renderValues.showingOverlay ||
+      this.appController.global.main.blockingAction}
     >
-      ${this.uiState.show.has("TOS") || this.uiState.show.has("MissingShare")
+      ${this.appController.global.main.show.has("TOS") ||
+      this.appController.global.main.show.has("MissingShare")
         ? nothing
         : [
             this.#renderCanvasController(renderValues),
             this.#renderAppController(renderValues),
             this.#renderWelcomePanel(),
-            this.uiState.showStatusUpdateChip
+            this.appController.global.main.showStatusUpdateChip
               ? this.#renderStatusUpdateBar()
               : nothing,
           ]}
@@ -146,7 +152,10 @@ class Main extends MainBase {
         this.unsnackbar(evt.snackbarId);
       }}
       @bbtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-        this.toast(toastEvent.message, toastEvent.toastType);
+        this.appController.global.toasts.toast(
+          toastEvent.message,
+          toastEvent.toastType
+        );
       }}
       @dragover=${(evt: DragEvent) => {
         evt.preventDefault();
@@ -159,32 +168,34 @@ class Main extends MainBase {
       ${[
         this.#renderHeader(renderValues),
         content,
-        this.uiState.show.has("MissingShare")
+        this.appController.global.main.show.has("MissingShare")
           ? this.#renderMissingShareDialog()
           : nothing,
-        this.uiState.show.has("TOS") ? this.#renderTosDialog() : nothing,
-        this.uiState.show.has("BoardEditModal")
+        this.appController.global.main.show.has("TOS")
+          ? this.#renderTosDialog()
+          : nothing,
+        this.appController.global.main.show.has("BoardEditModal")
           ? this.#renderBoardEditModal()
           : nothing,
-        this.uiState.show.has("SnackbarDetailsModal")
+        this.appController.global.main.show.has("SnackbarDetailsModal")
           ? this.renderSnackbarDetailsModal()
           : nothing,
-        this.uiState.show.has("BetterOnDesktopModal")
+        this.appController.global.main.show.has("BetterOnDesktopModal")
           ? this.#renderBetterOnDesktopModal()
           : nothing,
-        this.uiState.show.has("VideoModal")
+        this.appController.global.main.show.has("VideoModal")
           ? this.#renderVideoModal()
           : nothing,
-        this.uiState.show.has("StatusUpdateModal")
+        this.appController.global.main.show.has("StatusUpdateModal")
           ? this.#renderStatusUpdateModal()
           : nothing,
-        this.uiState.show.has("GlobalSettings")
+        this.appController.global.main.show.has("GlobalSettings")
           ? this.#renderGlobalSettingsModal(renderValues)
           : nothing,
-        this.uiState.show.has("WarmWelcome")
+        this.appController.global.main.show.has("WarmWelcome")
           ? this.#renderWarmWelcomeModal()
           : nothing,
-        this.uiState.show.has("SignInModal")
+        this.appController.global.main.show.has("SignInModal")
           ? this.renderSignInModal()
           : nothing,
         this.renderTooltip(),
@@ -213,19 +224,18 @@ class Main extends MainBase {
   }
 
   #renderWelcomePanel() {
-    if (this.uiState.loadState !== "Home") {
+    if (this.appController.global.main.loadState !== "Home") {
       return nothing;
     }
 
-    return html`<bb-project-listing
-      .recentBoards=${this.runtime.board.getRecentBoards()}
-    ></bb-project-listing>`;
+    return html`<bb-project-listing></bb-project-listing>`;
   }
 
   #renderAppController(renderValues: RenderValues) {
     const graphIsEmpty = BreadboardUI.Utils.isEmpty(this.tab?.graph ?? null);
     const active =
-      this.uiState.mode === "app" && this.uiState.loadState !== "Home";
+      this.appController.global.main.mode === "app" &&
+      this.appController.global.main.loadState !== "Home";
 
     return html`<bb-app-controller
       class=${classMap({ active })}
@@ -235,7 +245,7 @@ class Main extends MainBase {
       .isMine=${this.tab?.graphIsMine ?? false}
       .projectRun=${renderValues.projectState?.run}
       .readOnly=${true}
-      .runtimeFlags=${this.uiState.flags}
+      .runtimeFlags=${this.appController.global.flags}
       .settings=${this.settings}
       .showGDrive=${this.signinAdapter.stateSignal?.status === "signedin"}
       .status=${renderValues.tabStatus}
@@ -248,7 +258,7 @@ class Main extends MainBase {
     return html` <bb-canvas-controller
       ${ref(this.canvasControllerRef)}
       ?inert=${renderValues.showingOverlay}
-      .canRun=${this.uiState.canRunMain}
+      .canRun=${this.appController.global.main.canRunMain}
       .editor=${this.runtime.edit.getEditor(this.tab)}
       .graph=${this.tab?.graph ?? null}
       .graphIsMine=${this.tab?.graphIsMine ?? false}
@@ -266,7 +276,7 @@ class Main extends MainBase {
       .themeHash=${renderValues.themeHash}
       .visualChangeId=${this.lastVisualChangeId}
       @bbshowvideomodal=${() => {
-        this.uiState.show.add("VideoModal");
+        this.appController.global.main.show.add("VideoModal");
       }}
       @bbeditorpositionchange=${(
         evt: BreadboardUI.Events.EditorPointerPositionChangeEvent
@@ -300,7 +310,7 @@ class Main extends MainBase {
       .boardTitle=${this.tab?.graph.title ?? null}
       .boardDescription=${this.tab?.graph.description ?? null}
       @bbmodaldismissed=${() => {
-        this.uiState.show.delete("BoardEditModal");
+        this.appController.global.main.show.delete("BoardEditModal");
       }}
     ></bb-edit-board-modal>`;
   }
@@ -308,7 +318,7 @@ class Main extends MainBase {
   #renderBetterOnDesktopModal() {
     return html`<bb-better-on-desktop-modal
       @bbmodaldismissed=${() => {
-        this.uiState.show.delete("BetterOnDesktopModal");
+        this.appController.global.main.show.delete("BetterOnDesktopModal");
       }}
     ></bb-better-on-desktop-modal>`;
   }
@@ -316,7 +326,7 @@ class Main extends MainBase {
   #renderVideoModal() {
     return html`<bb-video-modal
       @bbmodaldismissed=${() => {
-        this.uiState.show.delete("VideoModal");
+        this.appController.global.main.show.delete("VideoModal");
       }}
     ></bb-video-modal>`;
   }
@@ -350,8 +360,8 @@ class Main extends MainBase {
       class=${classMap(classes)}
       aria-role="button"
       @click=${() => {
-        this.uiState.show.add("StatusUpdateModal");
-        this.uiState.showStatusUpdateChip = false;
+        this.appController.global.main.show.add("StatusUpdateModal");
+        this.appController.global.main.showStatusUpdateChip = false;
       }}
     >
       <div>
@@ -363,7 +373,7 @@ class Main extends MainBase {
         @click=${(evt: Event) => {
           evt.preventDefault();
           evt.stopImmediatePropagation();
-          this.uiState.showStatusUpdateChip = false;
+          this.appController.global.main.showStatusUpdateChip = false;
         }}
       >
         <span class="g-icon round filled">close</span>
@@ -375,8 +385,8 @@ class Main extends MainBase {
     return html`<bb-status-update-modal
       .updates=${this.statusUpdates}
       @bbmodaldismissed=${() => {
-        this.uiState.show.delete("StatusUpdateModal");
-        this.uiState.showStatusUpdateChip = false;
+        this.appController.global.main.show.delete("StatusUpdateModal");
+        this.appController.global.main.showStatusUpdateChip = false;
       }}
     ></bb-status-update-modal>`;
   }
@@ -386,10 +396,10 @@ class Main extends MainBase {
       .flags=${this.runtime.flags.flags()}
       .showExperimentalComponents=${renderValues.showExperimentalComponents}
       .project=${renderValues.projectState}
-      .uiState=${this.uiState}
+      .uiState=${this.appController.global.main}
       .emailPrefsManager=${this.emailPrefsManager}
       @bbmodaldismissed=${() => {
-        this.uiState.show.delete("GlobalSettings");
+        this.appController.global.main.show.delete("GlobalSettings");
       }}
     ></bb-global-settings-modal>`;
   }
@@ -398,7 +408,7 @@ class Main extends MainBase {
     return html`<bb-warm-welcome-modal
       .emailPrefsManager=${this.emailPrefsManager}
       @bbmodaldismissed=${() => {
-        this.uiState.show.delete("WarmWelcome");
+        this.appController.global.main.show.delete("WarmWelcome");
       }}
     ></bb-warm-welcome-modal>`;
   }
@@ -415,7 +425,11 @@ class Main extends MainBase {
       }}
       ${ref((el: Element | undefined) => {
         const showModalIfNeeded = () => {
-          if (el && this.uiState.show.has("MissingShare") && el.isConnected) {
+          if (
+            el &&
+            this.appController.global.main.show.has("MissingShare") &&
+            el.isConnected
+          ) {
             const dialog = el as HTMLDialogElement;
             if (!dialog.open) {
               dialog.showModal();
@@ -457,7 +471,11 @@ class Main extends MainBase {
       }}
       ${ref((el: Element | undefined) => {
         const showModalIfNeeded = () => {
-          if (el && this.uiState.show.has("TOS") && el.isConnected) {
+          if (
+            el &&
+            this.appController.global.main.show.has("TOS") &&
+            el.isConnected
+          ) {
             const dialog = el as HTMLDialogElement;
             if (!dialog.open) {
               dialog.showModal();
@@ -496,19 +514,21 @@ class Main extends MainBase {
   }
 
   #renderToasts() {
-    return html`${map(
-      this.uiState.toasts,
-      ([toastId, { message, type, persistent }], idx) => {
-        const offset = this.uiState.toasts.size - idx - 1;
+    if (isHydrating(() => this.appController.global.toasts.toasts))
+      return nothing;
+
+    const toastCount = this.appController.global.toasts.toasts.size;
+    return html`${repeat(
+      this.appController.global.toasts.toasts,
+      ([toastId]) => toastId,
+      ([toastId, toast], idx) => {
+        const offset = toastCount - idx - 1;
         return html`<bb-toast
           .toastId=${toastId}
           .offset=${offset}
-          .message=${message}
-          .type=${type}
-          .timeout=${persistent ? 0 : nothing}
-          @bbtoastremoved=${(evt: BreadboardUI.Events.ToastRemovedEvent) => {
-            this.uiState.toasts.delete(evt.toastId);
-          }}
+          .message=${toast.message}
+          .type=${toast.type}
+          .closing=${toast.state === "closing"}
         ></bb-toast>`;
       }
     )}`;
@@ -516,17 +536,18 @@ class Main extends MainBase {
 
   #renderHeader(renderValues: RenderValues) {
     return html`<bb-ve-header
-      ?inert=${renderValues.showingOverlay || this.uiState.blockingAction}
+      ?inert=${renderValues.showingOverlay ||
+      this.appController.global.main.blockingAction}
       .signinAdapter=${this.signinAdapter}
       .hasActiveTab=${this.tab !== null}
       .tabTitle=${this.tab?.graph?.title ?? null}
       .url=${this.tab?.graph?.url ?? null}
-      .loadState=${this.uiState.loadState}
+      .loadState=${this.appController.global.main.loadState}
       .canSave=${renderValues.canSave}
       .isMine=${this.runtime.board.isMine(this.tab?.graph.url)}
       .saveStatus=${renderValues.saveStatus}
       .showExperimentalComponents=${renderValues.showExperimentalComponents}
-      .mode=${this.uiState.mode}
+      .mode=${this.appController.global.main.mode}
       @bbsignout=${async () => {
         await this.signinAdapter.signOut();
         this.runtime.actionTracker.signOutSuccess();
@@ -568,11 +589,12 @@ class Main extends MainBase {
       }}
       @bbsubscribercreditrefresh=${async () => {
         try {
-          this.uiState.subscriptionCredits = -1;
+          this.appController.global.main.subscriptionCredits = -1;
           const response = await this.runtime.apiClient.getG1Credits();
-          this.uiState.subscriptionCredits = response.remaining_credits ?? 0;
+          this.appController.global.main.subscriptionCredits =
+            response.remaining_credits ?? 0;
         } catch (err) {
-          this.uiState.subscriptionCredits = -2;
+          this.appController.global.main.subscriptionCredits = -2;
           console.warn(err);
         }
       }}
@@ -595,7 +617,7 @@ class Main extends MainBase {
               return;
             }
 
-            this.uiState.show.add("BoardEditModal");
+            this.appController.global.main.show.add("BoardEditModal");
             break;
           }
 
@@ -623,7 +645,7 @@ class Main extends MainBase {
           }
 
           case "feedback": {
-            this.appController.feedback.open(this.globalConfig);
+            this.appController.global.feedback.open(this.globalConfig);
             break;
           }
 
@@ -638,7 +660,7 @@ class Main extends MainBase {
           }
 
           case "demo-video": {
-            this.uiState.show.add("VideoModal");
+            this.appController.global.main.show.add("VideoModal");
             break;
           }
 
@@ -652,13 +674,13 @@ class Main extends MainBase {
           }
 
           case "show-global-settings": {
-            this.uiState.show.add("GlobalSettings");
+            this.appController.global.main.show.add("GlobalSettings");
             break;
           }
 
           case "status-update": {
-            this.uiState.show.add("StatusUpdateModal");
-            this.uiState.showStatusUpdateChip = false;
+            this.appController.global.main.show.add("StatusUpdateModal");
+            this.appController.global.main.showStatusUpdateChip = false;
             break;
           }
 
@@ -670,7 +692,7 @@ class Main extends MainBase {
             await navigator.clipboard.writeText(
               JSON.stringify(this.tab.graph, null, 2)
             );
-            this.toast(
+            this.appController.global.toasts.toast(
               Strings.from("STATUS_PROJECT_CONTENTS_COPIED"),
               BreadboardUI.Events.ToastType.INFORMATION
             );

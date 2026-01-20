@@ -18,6 +18,7 @@
     "build:vite": "wireit",
     "build:tsc": "wireit",
     "test": "wireit",
+    "test:only": "wireit",
     "eval:agent": "wireit",
     "eval:a2ui": "wireit",
     "eval:autoname": "wireit",
@@ -100,6 +101,13 @@
         "landing/",
         "langs/",
         "shell"
+      ]
+    },
+    "test:only": {
+      "command": "node --import ./tests/controller-setup.js --test-reporter=dot --test --test-only --enable-source-maps './dist/tsc/tests/**/*.js' './dist/tsc/tests/*.js'",
+      "files": [],
+      "dependencies": [
+        "build:tsc"
       ]
     },
     "test": {

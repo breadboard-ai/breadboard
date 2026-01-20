@@ -522,7 +522,7 @@ main {
       width: calc(100% - 60px);
       max-width: 500px;
       margin: 0 auto var(--bb-grid-size-8) auto;
-      font-size: 22px;
+      font-size: 20px;
       line-height: 28px;
     }
 
@@ -552,7 +552,7 @@ main {
 
     & > h1 {
       margin: 72px 0;
-      font-size: 16px;
+      font-size: 18px;
       line-height: 24px;
       text-align: center;
       width: calc(100% - 60px);
@@ -962,7 +962,7 @@ footer {
     }
 
     &#features {
-      padding: 60px;
+      padding: 0 60px 60px 60px;
 
       ul {
         flex-direction: row;
@@ -975,7 +975,7 @@ footer {
     }
 
     &#build {
-      padding: 60px;
+      padding: 0 60px 60px 60px;
 
       & #video-container {
         border-radius: 70px;

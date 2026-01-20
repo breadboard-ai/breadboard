@@ -46,6 +46,9 @@ import {
 } from "../../../../data/common.js";
 import { parseUrl } from "../../../utils/urls.js";
 import { createRef, ref } from "lit/directives/ref.js";
+import { SignalWatcher } from "@lit-labs/signals";
+import { appControllerContext } from "../../../../controller/context/context.js";
+import { AppController } from "../../../../controller/controller.js";
 
 interface SupportedActions {
   allowAddAssets: boolean;
@@ -64,7 +67,10 @@ interface SupportedActions {
 const parsedUrl = parseUrl(window.location.href);
 
 @customElement("bb-floating-input")
-export class FloatingInput extends LitElement {
+export class FloatingInput extends SignalWatcher(LitElement) {
+  @consume({ context: appControllerContext })
+  accessor appController!: AppController;
+
   @property()
   accessor schema: Schema | null = null;
 
@@ -504,7 +510,8 @@ export class FloatingInput extends LitElement {
   render() {
     let inputContents: HTMLTemplateResult | symbol = nothing;
     const showGDrive =
-      !parsedUrl.lite || !!this.#uiState.flags?.enableDrivePickerInLiteMode;
+      !parsedUrl.lite ||
+      !!this.appController.global.flags?.enableDrivePickerInLiteMode;
     if (this.schema) {
       const props = Object.entries(this.schema.properties ?? {});
       const supportedActions = this.#determineSupportedActions(props);

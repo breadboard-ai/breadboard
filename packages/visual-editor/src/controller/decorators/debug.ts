@@ -39,11 +39,11 @@ export function debug<Context, Value>(opts: DebugParams<Value> = { ui: {} }) {
         if (opts.log) {
           const logger = getLogger();
           if (typeof opts.log === "boolean") {
-            logger.logItem("info", "get", label, value);
+            logger.logItem("info", "get", label, true, value);
           } else {
             const logMsg = opts.log.format(value, LogFormatter);
             const logLabel = opts.log.label ?? label;
-            logger.logItem(logMsg.type, "get", logLabel, ...logMsg.args);
+            logger.logItem(logMsg.type, "get", logLabel, true, ...logMsg.args);
           }
         }
         return value;
@@ -58,11 +58,11 @@ export function debug<Context, Value>(opts: DebugParams<Value> = { ui: {} }) {
         if (opts.log) {
           const logger = getLogger();
           if (typeof opts.log === "boolean") {
-            logger.logItem("info", "set", label, value);
+            logger.logItem("info", "set", label, true, value);
           } else {
             const logMsg = opts.log.format(value, LogFormatter);
             const logLabel = opts.log.label ?? label;
-            logger.logItem(logMsg.type, "set", logLabel, ...logMsg.args);
+            logger.logItem(logMsg.type, "set", logLabel, true, ...logMsg.args);
           }
         }
       } as T;
