@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities } from "@breadboard-ai/types";
+import { Capabilities, ConsentManager } from "@breadboard-ai/types";
 import { mkdir, writeFile } from "fs/promises";
 import { mock } from "node:test";
 import { dirname, join } from "path";
@@ -290,6 +290,11 @@ class EvalRun implements EvalHarnessRuntimeArgs {
   readonly moduleArgs: A2ModuleArgs = {
     mcpClientManager: {} as unknown as McpClientManager,
     fetchWithCreds: this.fetchWithCreds,
+    consentManager: {
+      async queryConsent() {
+        return true;
+      },
+    } as Partial<ConsentManager> as ConsentManager,
     context: {
       currentGraph: {
         title: this.title,

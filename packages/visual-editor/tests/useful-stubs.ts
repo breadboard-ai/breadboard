@@ -12,7 +12,7 @@ import {
   MemoryManager,
   SheetMetadataWithFilePath,
 } from "../src/a2/agent/types.js";
-import { Outcome } from "@breadboard-ai/types";
+import { ConsentManager, Outcome } from "@breadboard-ai/types";
 
 export { stubCaps, stubModuleArgs, stubMemoryManager };
 
@@ -48,8 +48,12 @@ const stubModuleArgs: A2ModuleArgs = {
   },
   context: {},
   shell: {} as unknown as OpalShellHostProtocol,
+  consentManager: {
+    async queryConsent() {
+      return true;
+    },
+  } as Partial<ConsentManager> as ConsentManager,
 };
-
 
 const stubMemoryManager: MemoryManager = {
   readSheet: () => {

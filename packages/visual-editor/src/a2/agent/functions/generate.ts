@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Capabilities, TextCapabilityPart } from "@breadboard-ai/types";
+import {
+  Capabilities,
+  ConsentType,
+  ConsentUIType,
+  TextCapabilityPart,
+} from "@breadboard-ai/types";
 import { ok } from "@breadboard-ai/utils";
 import z from "zod";
 import {
@@ -342,6 +347,17 @@ provided when the "output_format" is set to "text"`
         tools.push({ googleMaps: {} });
       }
       if (url_context) {
+        const consent = await moduleArgs.consentManager.queryConsent(
+          {
+            type: ConsentType.GET_ANY_WEBPAGE,
+            scope: {},
+            graphUrl: moduleArgs.context.currentGraph?.url || "",
+          },
+          ConsentUIType.MODAL
+        );
+        if (!consent) {
+          return { error: "User declined to consent to access URLs" };
+        }
         tools.push({ urlContext: {} });
       }
       let thinkingConfig: GenerationConfig = {};
