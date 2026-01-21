@@ -88,4 +88,12 @@ suite("Hydration", () => {
       });
     }, new Error("propagated error"));
   });
+
+  test("hydration throws for async callbacks", async () => {
+    assert.throws(() => {
+      isHydrating(async () => {
+        // No body.
+      });
+    }, new Error("isHydrating accessors must be synchronous"));
+  });
 });

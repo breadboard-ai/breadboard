@@ -14,6 +14,8 @@ import {
   wrap,
   unwrap,
 } from "../../../../src/controller/decorators/utils/wrap-unwrap.js";
+import { html } from "lit";
+import { isLitTemplateResult } from "../../../../src/controller/decorators/utils/is-lit-template.js";
 
 suite("Serialization Utilities", () => {
   suite("wrap()", () => {
@@ -86,6 +88,23 @@ suite("Serialization Utilities", () => {
       assert(result.list[1] instanceof SignalObject);
       assert(result.map instanceof SignalMap);
       assert(result.map.get("key") instanceof SignalSet);
+    });
+
+    test("should not wrap class instances", () => {
+      class Foo {
+        bar = 1;
+      }
+      const input = new Foo();
+      const result = wrap(input);
+      assert.strictEqual(result, input);
+      assert(!(result instanceof SignalObject));
+    });
+
+    test("should not wrap HTMLTemplateInstances", () => {
+      const input = html`Template String`;
+      const result = wrap(input);
+      assert.strictEqual(result, input);
+      assert(isLitTemplateResult(result));
     });
   });
 

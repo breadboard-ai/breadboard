@@ -9,6 +9,8 @@ import { getLogger } from "./logging/logger.js";
 import { HydratedController } from "../types.js";
 import { PENDING_HYDRATION } from "./sentinel.js";
 
+let ignoreHydrationErrors = false;
+
 /**
  * Checks if a property decorated with @field is still loading from storage.
  *
@@ -26,7 +28,18 @@ import { PENDING_HYDRATION } from "./sentinel.js";
  * accessor runs without Error and the value is not the hydration symbol.
  */
 export function isHydrating<T>(accessor: () => T): boolean {
+  const restore = ignoreHydrationErrors;
+  ignoreHydrationErrors = true;
   try {
+    if (accessor.constructor.name === "AsyncFunction") {
+      const logger = getLogger();
+      logger.log(
+        Formatter.warning("isHydrating accessors must be synchronous"),
+        "Hydration Error",
+        false
+      );
+      throw new Error("isHydrating accessors must be synchronous");
+    }
     const value = accessor();
     return value === PENDING_HYDRATION;
   } catch (err) {
@@ -35,13 +48,17 @@ export function isHydrating<T>(accessor: () => T): boolean {
     }
 
     throw err;
+  } finally {
+    ignoreHydrationErrors = restore;
   }
 }
 
-export function isHydratedController(v: unknown): v is HydratedController {
-  if (typeof v !== "object") return false;
-  if (v === null) return false;
-  return "registerSignalHydration" in v;
+export function isHydratedController(
+  value: unknown
+): value is HydratedController {
+  if (typeof value !== "object") return false;
+  if (value === null) return false;
+  return "registerSignalHydration" in value;
 }
 
 export class PendingHydrationError extends Error {
@@ -52,8 +69,10 @@ export class PendingHydrationError extends Error {
     );
 
     // Log immediately so it's visible even if the error is swallowed somewhere
-    const logger = getLogger();
-    logger.log(msg, "Hydration Error", false);
+    if (!ignoreHydrationErrors) {
+      const logger = getLogger();
+      logger.log(msg, "Hydration Error", false);
+    }
 
     super(`PendingHydrationError on ${fieldName}`);
     this.name = "PendingHydrationError";
