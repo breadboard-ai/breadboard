@@ -237,14 +237,6 @@ will come after "/vfs/" prefix in the file path. Use snake_case for
 naming. Only use when the "output_format" is set to "file".`
           )
           .optional(),
-        project_path: z
-          .string()
-          .describe(
-            `
-The VFS path to a project. If specified, the result will be added to that
-project. Use this parameter as a convenient way to add the generated output to an existing project.`.trim()
-          )
-          .optional(),
         search_grounding: z
           .boolean()
           .describe(
@@ -316,7 +308,6 @@ provided when the "output_format" is set to "text"`
         search_grounding,
         maps_grounding,
         url_context,
-        project_path,
         output_format,
         status_update,
         file_name,
@@ -327,7 +318,6 @@ provided when the "output_format" is set to "text"`
       console.log("MODEL", model);
       console.log("SEARCH_GROUNDING", search_grounding);
       console.log("MAPS_GROUNDING", maps_grounding);
-      console.log("PROJECT_PATH", project_path);
       console.log("OUTPUT_PATH", output_format);
 
       if (status_update) {
@@ -414,9 +404,6 @@ provided when the "output_format" is set to "text"`
       const part = textParts[0];
       const file_path = fileSystem.add(part, file_name);
       if (!ok(file_path)) return file_path;
-      if (project_path) {
-        fileSystem.addFilesToProject(project_path, [file_path]);
-      }
       if (output_format === "text") {
         return { text: toText({ parts: textParts }) };
       }
