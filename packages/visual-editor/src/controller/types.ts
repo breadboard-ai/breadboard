@@ -40,6 +40,8 @@ export interface Storage {
 }
 
 export interface HydratedController {
+  isHydrated: Promise<number>;
+  isSettled: Promise<void[]>;
   registerSignalHydration(signal: Signal.State<unknown>): void;
 }
 

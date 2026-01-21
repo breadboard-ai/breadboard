@@ -1495,6 +1495,8 @@ export class Renderer extends LitElement {
 
     const selectionChangeId = createWorkspaceSelectionChangeId();
 
+    console.log(newState);
+
     this.dispatchEvent(
       new StateEvent({
         eventType: "host.selectionstatechange",

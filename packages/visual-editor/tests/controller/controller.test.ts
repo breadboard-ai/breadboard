@@ -28,8 +28,9 @@ suite("AppController", () => {
   });
 
   test("Instantiates with flags", async () => {
-    assert.doesNotThrow(() => {
-      appController(defaultRuntimeFlags);
+    assert.doesNotReject(async () => {
+      const controller = appController(defaultRuntimeFlags);
+      await controller.isHydrated;
     });
   });
 });
