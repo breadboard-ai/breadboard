@@ -55,7 +55,7 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
   constructor(
     public readonly title: string,
     public readonly icon: string,
-    private readonly screen: AppScreen
+    private readonly screen: AppScreen | undefined
   ) {
     this.start = performance.now();
   }
@@ -75,14 +75,18 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
    * The agent started execution.
    */
   startAgent(objective: LLMContent) {
-    this.screen.progress = StarterPhraseVendor.instance.phrase();
-    this.screen.expectedDuration = -1;
+    if (this.screen) {
+      this.screen.progress = StarterPhraseVendor.instance.phrase();
+      this.screen.expectedDuration = -1;
+    }
     this.#add("Objective", "summarize", objective);
   }
 
   generatingLayouts(uiPrompt: LLMContent | undefined) {
-    this.screen.progress = "Generating layouts";
-    this.screen.expectedDuration = 70;
+    if (this.screen) {
+      this.screen.progress = "Generating layouts";
+      this.screen.expectedDuration = 70;
+    }
     this.#add("Generating Layouts", "web", uiPrompt ?? llm``.asContent());
   }
 
@@ -101,9 +105,11 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
    */
   thought(text: string) {
     this.#add("Thought", "spark", llm`${text}`.asContent());
-    this.#previousStatus = this.screen.progress;
-    this.screen.progress = progressFromThought(text);
-    this.screen.expectedDuration = -1;
+    if (this.screen) {
+      this.#previousStatus = this.screen.progress;
+      this.screen.progress = progressFromThought(text);
+      this.screen.expectedDuration = -1;
+    }
   }
 
   /**
@@ -129,6 +135,8 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
       if (!status) return;
       this.thought(status);
     } else {
+      if (!this.screen) return;
+
       if (status == null) {
         if (this.#previousStatus) {
           this.screen.progress = this.#previousStatus;
@@ -160,8 +168,10 @@ class ProgressWorkItem implements WorkItem, AgentProgressManager {
    * The agent finished executing.
    */
   finish() {
-    this.screen.progress = undefined;
-    this.screen.expectedDuration = -1;
+    if (this.screen) {
+      this.screen.progress = undefined;
+      this.screen.expectedDuration = -1;
+    }
     this.end = performance.now();
   }
 }
